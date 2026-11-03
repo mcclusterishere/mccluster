@@ -56,8 +56,9 @@ kept at its size and place, and an opening view within the existing preview budg
 
 Northside sits north-west of Civic Center (X −296…−168, Z −170…45). The area directly north of the original
 block, X −165…165, Z −345…−58, is reserved in `places.v1.json → frame.reserved` and kept free of land, streets,
-parcels, props, chunks and blockers for the separately built Bridgeport (Robbery 1s) neighbourhood, which joins
-the original block by two walk links at X ±32, Z −58. A test enforces this.
+parcels, props, chunks and blockers for the separately built Bridgeport (Robbery 1s) neighbourhood (PR #721,
+`district.v1.json → neighborhoods`, `js/fictional-city/bridgeport-geometry.mjs`), which joins the original block
+by two walk links at X ±32, Z −58. A test enforces that this contract never draws there.
 
 The island, its footbridge and the HQ are untouched: same 72 ft plate, same position, same doorway. The bay
 between the two new wharves keeps the island an island; the HQ faces you from both wharf walks, both piers and
@@ -153,8 +154,8 @@ places.
 
 `here.universe.mccluster-fictional-city.state` is now version 2. A v1 save keeps credits, inventory, receipts,
 met, visited, story chapter and position (the original block kept its coordinates); v2 adds `discoveries` and
-`payments` and widens the bounded local position to the city's frame (including the reserved area). A
-`storyProgress` collection written by another city feature is kept as bounded plain JSON. A v1 position outside the old bounds falls back
+`payments` and widens the bounded local position to the city's frame. The Bridgeport story's `arcs` progress
+(PR #721, written as v1) migrates intact. A v1 position outside the old bounds falls back
 to the spawn. Later travel state (regions, planet) will be a separate field; the city position stays local.
 
 ## 9. Implemented / partial / future

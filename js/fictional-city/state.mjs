@@ -1,3 +1,5 @@
+import { cityPlaces, citySurfaces, storyArcs, storyBeat } from './content.mjs';
+
 export const STATE_KEY = 'here.universe.mccluster-fictional-city.state';
 export const STATE_VERSION = 2;
 /* v1 (the first district, 2026-11-03) → v2 (the expanded city): every v1 field keeps its meaning and value.
@@ -17,12 +19,12 @@ export function initialState(manifest) {
     credits: manifest.district.currency.startingBalance,
     position: { x: manifest.district.spawn[0], z: manifest.district.spawn[1], interior: null },
     inventory: {}, met: [], visited: [], receipts: [], story: { chapter: null },
-    discoveries: [], payments: []
+    arcs: {}, discoveries: [], payments: []
   };
 }
 // IDs a save may reference: lore buildings plus geography parcels (enterable generic buildings) and landmarks.
 function knownPlaces(manifest, places) {
-  const buildings = new Set([...manifest.businesses, manifest.garage].map(b => b.id));
+  const buildings = new Set(cityPlaces(manifest).map(b => b.id));
   for (const p of places?.parcels || []) buildings.add(p.id);
   const discoverable = new Set([...(places?.landmarks || []).map(l => l.id), ...(places?.neighborhoods || []).map(n => n.id)]);
   return { buildings, discoverable };
@@ -61,18 +63,27 @@ export function sanitizeState(raw, manifest, places = null) {
   }
   // Spatial collision validation occurs again inside the scene. Persist only finite bounded coordinates.
   const p = raw.position;
+  // v1 keeps its own bounds (plus any neighbourhood walk surface); v2 uses the city's local frame
+  const inExtension = p && citySurfaces(manifest).some(s => p.x >= s.minX && p.x <= s.maxX && p.z >= s.minZ && p.z <= s.maxZ);
   const bounds = raw.version === 1 ? V1_BOUNDS : CITY_BOUNDS;
-  if (p && Number.isFinite(p.x) && Number.isFinite(p.z) && p.x >= bounds.minX && p.x <= bounds.maxX && p.z >= bounds.minZ && p.z <= bounds.maxZ) {
+  if (p && Number.isFinite(p.x) && Number.isFinite(p.z) && ((p.x >= bounds.minX && p.x <= bounds.maxX && p.z >= bounds.minZ && p.z <= bounds.maxZ) || inExtension)) {
     state.position = { x: p.x, z: p.z, interior: buildings.has(p.interior) ? p.interior : null };
   }
   state.receipts = (Array.isArray(raw.receipts) ? raw.receipts : []).filter(r =>
     r && items.has(r.itemId) && r.price === items.get(r.itemId).price && Number.isSafeInteger(r.at) && r.at >= 0
   ).slice(-50).map(r => ({ itemId: r.itemId, price: r.price, at: r.at }));
   if (typeof raw.story?.chapter === 'string' && /^[a-z0-9-]{1,60}$/.test(raw.story.chapter)) state.story.chapter = raw.story.chapter;
-  // A story-progress collection written by another city feature is kept as-is (bounded plain JSON), so a save
-  // never loses it here; that feature validates its own contents.
-  if (raw.storyProgress && typeof raw.storyProgress === 'object' && !Array.isArray(raw.storyProgress)) {
-    try { const text = JSON.stringify(raw.storyProgress); if (text.length <= 20000) state.storyProgress = JSON.parse(text); } catch { /* dropped */ }
+  // Only a contiguous prefix survives: a newer/partial/corrupt save cannot skip
+  // to the funeral or splice a discarded draft into the current story.
+  for (const arc of storyArcs(manifest)) {
+    const saved = raw.arcs?.[arc.id]?.completed;
+    if (!Array.isArray(saved)) continue;
+    const completed = [];
+    for (const beat of arc.beats) {
+      if (saved[completed.length] !== beat.id) break;
+      completed.push(beat.id);
+    }
+    if (completed.length) state.arcs[arc.id] = { completed };
   }
   if (raw.version === STATE_VERSION) {
     state.discoveries = unique(raw.discoveries, discoverable);
@@ -131,4 +142,24 @@ export function recordDiscovery(state, id, places) {
   const allowed = new Set([...(places?.landmarks || []).map(l => l.id), ...(places?.neighborhoods || []).map(n => n.id)]);
   if (!allowed.has(id) || (state.discoveries || []).includes(id)) return state;
   return { ...state, discoveries: [...(state.discoveries || []), id] };
+}
+
+export function storyProgress(state, arc) {
+  const completed = state.arcs?.[arc.id]?.completed || [];
+  return { completed, next: arc.beats[completed.length] || null, finished: completed.length === arc.beats.length };
+}
+
+export function atStoryBeat(state, beat) {
+  const p = state.position;
+  return (beat.allowInterior === true && p.interior === beat.placeId) || (!p.interior && Math.hypot(p.x - beat.position[0], p.z - beat.position[1]) <= 4.2);
+}
+
+export function completeStoryBeat(state, id, manifest) {
+  const found = storyBeat(manifest, id);
+  if (!found) return { ok: false, reason: 'unknown-beat', state };
+  const { arc, beat } = found, { completed, next } = storyProgress(state, arc);
+  if (completed.includes(id)) return { ok: true, unchanged: true, state };
+  if (next?.id !== id) return { ok: false, reason: 'out-of-order', state };
+  if (!atStoryBeat(state, beat)) return { ok: false, reason: 'visit-location', state };
+  return { ok: true, state: { ...state, arcs: { ...state.arcs, [arc.id]: { completed: [...completed, id] } } } };
 }

@@ -19,7 +19,7 @@ const sources = [
   '.gitignore', 'tools/publish-fictional-city.mjs', 'core/data/fictional-city/district.v1.json',
   'core/data/fictional-city/places.v1.json', 'js/fictional-city/places.mjs', 'js/fictional-city/chunks.mjs', 'js/fictional-city/spatial.mjs',
   'docs/music/whip-equipped/CANON.json', 'docs/music/whip-equipped/SCREENPLAY.md',
-  'docs/music/whip-equipped/ROAD-YEARS.md'
+  'docs/music/whip-equipped/ROAD-YEARS.md', 'js/fictional-city/content.mjs'
 ];
 
 // Extract and execute the checked-in workflow blocks, so a missing force-add

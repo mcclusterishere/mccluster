@@ -110,7 +110,9 @@ try {
     const dimensions = await page.evaluate(() => ({ width: document.documentElement.clientWidth, scroll: document.documentElement.scrollWidth, canvas: document.querySelector('#city-canvas').getBoundingClientRect().width }));
     check(width + ': no horizontal page overflow', dimensions.width === dimensions.scroll, dimensions);
     const stats = await page.evaluate(() => MCC_CITY.stats());
-    check(width + ': all ' + PEOPLE + ' people, the nine original buildings and ' + places.parcels.length + ' parcels are instantiated', stats.npcCount === PEOPLE && stats.buildings === 9 && stats.parcels === places.parcels.length, stats);
+    const expectedPlaces = city.businesses.length + 1 + (city.neighborhoods || []).reduce((count, area) => count + area.places.length, 0);
+    check(width + ': all ' + PEOPLE + ' people, the original and Bridgeport places and ' + places.parcels.length + ' parcels are instantiated', stats.npcCount === PEOPLE && stats.buildings === expectedPlaces && stats.parcels === places.parcels.length, stats);
+    check(width + ': all 13 Robbery 1s scene stops are instantiated', stats.storyStops === 13, stats);
     check(width + ': measured scene stays inside the preview geometry budget', stats.triangles < 150000 && stats.drawCalls < 300, stats);
     await page.screenshot({ path: join(out, 'city-' + width + '.png'), fullPage: false });
     await page.locator('.city-garage-card').scrollIntoViewIfNeeded();

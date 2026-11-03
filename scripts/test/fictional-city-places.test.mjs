@@ -285,9 +285,16 @@ test('the area north of the original block (X −165…165, Z −345…−58) st
   for (const b of world.blockers) assert.ok(!inside(b), 'blocker ' + b.id);
 });
 
-test('a save carrying a separate story-progress collection keeps it through load and save', () => {
-  const save = { ...initialState(city), storyProgress: { 'some-story': { completed: ['scene-01'] } } };
-  const s = sanitizeState(save, city, places);
-  assert.deepEqual(s.storyProgress, save.storyProgress);
-  assert.equal(sanitizeState({ ...save, storyProgress: 'x' }, city, places).storyProgress, undefined);
+test('Bridgeport story progress (arcs) survives the v1 → v2 migration and v2 round trips', () => {
+  const arc = (city.storyArcs || [])[0];
+  if (!arc) return;
+  const done = arc.beats.slice(0, 2).map(b => b.id);
+  const v1 = { version: 1, credits: 200, position: { x: 0, z: 2.5, interior: null }, inventory: {}, met: [], visited: [], receipts: [], story: { chapter: null }, arcs: { [arc.id]: { completed: done } } };
+  const s = sanitizeState(v1, city, places);
+  assert.equal(s.version, 2); assert.deepEqual(s.arcs, { [arc.id]: { completed: done } });
+  assert.deepEqual(sanitizeState(s, city, places).arcs, s.arcs);
+  // a position in the Bridgeport neighbourhood restores from a v1 save
+  const area = (city.neighborhoods || [])[0];
+  const v1b = sanitizeState({ ...v1, position: { x: area.spawn[0], z: area.spawn[1], interior: null } }, city, places);
+  assert.deepEqual([v1b.position.x, v1b.position.z], area.spawn);
 });

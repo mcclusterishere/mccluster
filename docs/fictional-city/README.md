@@ -2,7 +2,32 @@
 
 This is the first playable district of the owner's fictional city: eight businesses, 24 newly
 authored adult neighbors, and a Whip Equipped garage occupied by McCluster, Majid and Gunny.
-It is a Bridgeport-inspired harbor setting, not a geographic reconstruction.
+The original harbor district remains in place. Its connected northern extension uses selected
+downtown Bridgeport footprints and street centerlines for **The Robbery 1s**, adapted from the
+owner's **Designer Kicks** script. See [the story contract](ROBBERY-1S.md) and
+[Bridgeport geography and attribution](BRIDGEPORT-GEOGRAPHY.md).
+
+## Bridgeport and The Robbery 1s
+
+Open **Enter the story** from the city sidebar, or use `fictional-city.html?entry=bridgeport`.
+The district map switches between Harbor & Uprise and the Bridgeport neighborhood. The new
+area keeps 16 government-source footprint polygons, nine renamed story locations and surrounding
+storefronts. Seven story buildings have authored cutaway interiors; Common Yard and Railside Yard
+are open spaces. Main, Middle, Fairfield, Golden Hill, Broad and Elm retain their sourced street
+centerlines. Heights, façades, interiors, doorways and connecting paths are game adaptations.
+
+Follow 13 location-based scenes across the screenplay's seven acts. Amber markers show the next
+scene; completed scenes can be reread and later scenes remain concealed. The journal offers both
+a bounded walking route and the same convenience travel used by the existing map. Continuing a
+scene saves its progress without changing the pocket, shop inventory or Whip reader position.
+The donation-bin scene requires visiting its exterior marker. Designated indoor scenes can be
+read at their own building's story point. This implementation is narrative exploration; staged
+actor performances, voiced scenes and the Block Olympics as playable minigames are not implemented.
+
+Saved state remains under the existing key. Older saves gain an empty story-progress collection;
+new outside positions and enterable interiors restore normally. The no-WebGL interface retains
+the complete map and story route. Source lives in Core's existing district manifest and the
+browser export remains byte-identical to it.
 
 ## Open and play
 
@@ -12,7 +37,7 @@ direction controls, or a tap on the street. Drag to turn the camera; use the + /
 or scroll to change zoom.
 Approach a person or door and press E, tap Interact, or tap the person/building to approach it.
 
-Every shop has an enterable cutaway interior. Counters expose the shop's fictional goods.
+Every original harbor shop has an enterable cutaway interior. Counters expose the shop's fictional goods.
 Dialogue panels offer three authored conversation topics per new resident and a personal history.
 The directory provides the same interactions for keyboard users and devices unable to render WebGL.
 The district map can move the player to a known doorway. That is a convenience travel action,
@@ -150,7 +175,7 @@ Run:
 
 ```sh
 node tools/publish-fictional-city.mjs
-node --test scripts/test/fictional-city*.test.mjs scripts/test/equity-uprise-mission-screens.test.mjs
+node --test scripts/test/bridgeport-story.test.mjs scripts/test/fictional-city*.test.mjs scripts/test/equity-uprise-mission-screens.test.mjs
 node --test scripts/test/owner-only.test.mjs scripts/test/publish-strip-parity.test.mjs
 npm --prefix core run check
 npm --prefix core test

@@ -7,6 +7,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validatePlaces, bindCity, ORIGINAL_BUSINESS_IDS } from '../js/fictional-city/places.mjs';
 import { buildChunks } from '../js/fictional-city/chunks.mjs';
+import { validateCityExtensions } from '../js/fictional-city/content.mjs';
 
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export async function buildCityExport(root = ROOT) {
@@ -34,6 +35,7 @@ export async function buildCityExport(root = ROOT) {
   // Schema revision 2 adds parcel-bound expansion lore beside the unchanged v1 arrays.
   if (manifest.schemaRevision === 2 && !(['expansionNeighborhoods', 'parcels', 'expansionBusinesses', 'expansionNpcs', 'families', 'expansionItems']
     .every(key => Array.isArray(manifest[key]) && manifest[key].length) && manifest.families.length === 10)) throw new Error('Invalid city expansion');
+  validateCityExtensions(manifest);
   const canon = JSON.parse(await readFile(resolve(root, 'docs/music/whip-equipped/CANON.json'), 'utf8'));
   const screenplay = await readFile(resolve(root, 'docs/music/whip-equipped/SCREENPLAY.md'), 'utf8');
   const roadYears = await readFile(resolve(root, 'docs/music/whip-equipped/ROAD-YEARS.md'), 'utf8');

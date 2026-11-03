@@ -10268,5 +10268,4432 @@
     "expansionMinors": "Students at the School of Hard Knocks and Municipal High No. 9, and listed children in families, are minors and carry minor: true where they are residents. Their comedy is privilege, posturing and their school. No sexual content, no graphic injury, no bribes, purchases or adult transactions involving them.",
     "expansionPolice": "Precinct Zero bribes are a game hook described as interactions of type bribe with a price in City credits. They spend fictional City credits only, record a fictional receipt and line of dialogue, and imply no real policing, legal advice or record change.",
     "expansionCount": "The owner asked for three suffering Wiggers Anonymous members and then named four jobs; the fellowship has four members, one per job."
-  }
+  },
+  "neighborhoods": [
+    {
+      "id": "bridgeport-robbery-1s",
+      "name": "Bridgeport · Robbery 1s",
+      "city": "Bridgeport, Connecticut",
+      "description": "A separate story block beyond the original commercial district. Follow the Robbery 1s from an industrial shell to the neighborhood altar.",
+      "spawn": [
+        -32,
+        -80
+      ],
+      "bounds": {
+        "minX": -165,
+        "maxX": 165,
+        "minZ": -345,
+        "maxZ": -58
+      },
+      "surfaces": [
+        {
+          "minX": -165,
+          "maxX": 165,
+          "minZ": -345,
+          "maxZ": -58
+        }
+      ],
+      "roads": [
+        {
+          "id": "bridgeport-osm-10165307-0",
+          "name": "",
+          "points": [
+            [
+              -133.6282,
+              -212.2076
+            ],
+            [
+              -137.3398,
+              -221.7255
+            ],
+            [
+              -140.0042,
+              -228.1709
+            ],
+            [
+              -143.1461,
+              -235.7518
+            ]
+          ],
+          "width": 2,
+          "sourceWayId": "10165307",
+          "source": "OpenStreetMap",
+          "highway": "footway",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-10169925-0",
+          "name": "Fairfield Avenue",
+          "points": [
+            [
+              150.8124,
+              -177.306
+            ],
+            [
+              148.6089,
+              -176.7633
+            ],
+            [
+              140.0796,
+              -174.6594
+            ],
+            [
+              132.1536,
+              -172.6667
+            ],
+            [
+              79.83,
+              -159.5087
+            ],
+            [
+              72.3313,
+              -157.594
+            ]
+          ],
+          "width": 12,
+          "sourceWayId": "10169925",
+          "source": "OpenStreetMap",
+          "highway": "secondary",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-10173135-0",
+          "name": "Elm Street",
+          "points": [
+            [
+              51.1422,
+              -253.0175
+            ],
+            [
+              44.7829,
+              -250.0898
+            ],
+            [
+              -61.7493,
+              -200.9643
+            ],
+            [
+              -118.8988,
+              -174.6148
+            ]
+          ],
+          "width": 6,
+          "sourceWayId": "10173135",
+          "source": "OpenStreetMap",
+          "highway": "residential",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-10180837-0",
+          "name": "Middle Street",
+          "points": [
+            [
+              140.0796,
+              -174.6594
+            ],
+            [
+              139.0574,
+              -180.0027
+            ],
+            [
+              115.715,
+              -302.2877
+            ],
+            [
+              114.408,
+              -309.1673
+            ],
+            [
+              113.8801,
+              -311.9281
+            ],
+            [
+              113.478,
+              -313.698
+            ],
+            [
+              112.6904,
+              -317.1378
+            ],
+            [
+              112.2044,
+              -319.2418
+            ],
+            [
+              109.4455,
+              -331.32
+            ]
+          ],
+          "width": 6,
+          "sourceWayId": "10180837",
+          "source": "OpenStreetMap",
+          "highway": "residential",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-10181430-0",
+          "name": "Golden Hill Street",
+          "points": [
+            [
+              -150.8124,
+              -233.1559
+            ],
+            [
+              -143.1461,
+              -235.7518
+            ],
+            [
+              -86.5998,
+              -255.4888
+            ],
+            [
+              -74.8867,
+              -259.5854
+            ],
+            [
+              -55.7419,
+              -266.2646
+            ],
+            [
+              -8.0517,
+              -280.6917
+            ],
+            [
+              36.1531,
+              -294.0723
+            ],
+            [
+              42.7721,
+              -296.0761
+            ],
+            [
+              50.3127,
+              -297.5455
+            ],
+            [
+              52.5497,
+              -297.9797
+            ],
+            [
+              101.8738,
+              -309.2564
+            ],
+            [
+              104.89,
+              -309.9243
+            ],
+            [
+              110.9225,
+              -311.2713
+            ],
+            [
+              113.8801,
+              -311.9281
+            ],
+            [
+              116.0585,
+              -312.3845
+            ],
+            [
+              121.1694,
+              -313.442
+            ],
+            [
+              150.8124,
+              -319.5877
+            ]
+          ],
+          "width": 8,
+          "sourceWayId": "10181430",
+          "source": "OpenStreetMap",
+          "highway": "tertiary",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-186839735-0",
+          "name": "Main Street",
+          "points": [
+            [
+              35.4869,
+              -331.32
+            ],
+            [
+              41.5907,
+              -301.4751
+            ],
+            [
+              42.7721,
+              -296.0761
+            ],
+            [
+              44.431,
+              -287.5601
+            ],
+            [
+              51.1422,
+              -253.0175
+            ],
+            [
+              70.8148,
+              -164.4736
+            ],
+            [
+              72.3313,
+              -157.594
+            ]
+          ],
+          "width": 12,
+          "sourceWayId": "186839735",
+          "source": "OpenStreetMap",
+          "highway": "secondary",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-295029394-0",
+          "name": "Broad Street",
+          "points": [
+            [
+              -118.8988,
+              -174.6148
+            ],
+            [
+              -116.2177,
+              -168.136
+            ],
+            [
+              -95.7324,
+              -118.5875
+            ],
+            [
+              -93.1267,
+              -112.2979
+            ]
+          ],
+          "width": 6,
+          "sourceWayId": "295029394",
+          "source": "OpenStreetMap",
+          "highway": "residential",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-295029418-0",
+          "name": "Fairfield Avenue",
+          "points": [
+            [
+              -93.1267,
+              -112.2979
+            ],
+            [
+              -99.8546,
+              -110.1717
+            ],
+            [
+              -104.0858,
+              -108.68
+            ]
+          ],
+          "width": 12,
+          "sourceWayId": "295029418",
+          "source": "OpenStreetMap",
+          "highway": "secondary",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-395442208-0",
+          "name": "",
+          "points": [
+            [
+              -131.0811,
+              -205.829
+            ],
+            [
+              -133.6282,
+              -212.2076
+            ]
+          ],
+          "width": 2,
+          "sourceWayId": "395442208",
+          "source": "OpenStreetMap",
+          "highway": "steps",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-395442209-0",
+          "name": "",
+          "points": [
+            [
+              -120.6918,
+              -178.5444
+            ],
+            [
+              -129.2211,
+              -200.7082
+            ]
+          ],
+          "width": 2,
+          "sourceWayId": "395442209",
+          "source": "OpenStreetMap",
+          "highway": "steps",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-395442210-0",
+          "name": "",
+          "points": [
+            [
+              -131.0811,
+              -205.829
+            ],
+            [
+              -129.2211,
+              -200.7082
+            ]
+          ],
+          "width": 2,
+          "sourceWayId": "395442210",
+          "source": "OpenStreetMap",
+          "highway": "footway",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-395442212-0",
+          "name": "",
+          "points": [
+            [
+              -127.2522,
+              -175.3273
+            ],
+            [
+              -150.8124,
+              -164.6487
+            ]
+          ],
+          "width": 2,
+          "sourceWayId": "395442212",
+          "source": "OpenStreetMap",
+          "highway": "footway",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-398619639-0",
+          "name": "",
+          "points": [
+            [
+              19.6585,
+              -108.68
+            ],
+            [
+              15.7515,
+              -118.6209
+            ],
+            [
+              7.8506,
+              -115.3258
+            ],
+            [
+              -1.7846,
+              -110.3387
+            ],
+            [
+              -2.3512,
+              -108.68
+            ]
+          ],
+          "width": 2,
+          "sourceWayId": "398619639",
+          "source": "OpenStreetMap",
+          "highway": "pedestrian",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-398619641-0",
+          "name": "",
+          "points": [
+            [
+              -41.6524,
+              -108.68
+            ],
+            [
+              -30.2463,
+              -113.1439
+            ],
+            [
+              -26.233,
+              -114.6579
+            ],
+            [
+              -21.5494,
+              -122.0829
+            ],
+            [
+              -15.9526,
+              -125.3112
+            ],
+            [
+              13.9837,
+              -134.1278
+            ],
+            [
+              28.579,
+              -139.0592
+            ],
+            [
+              48.6286,
+              -144.4916
+            ],
+            [
+              60.7606,
+              -147.4305
+            ],
+            [
+              63.1318,
+              -147.0075
+            ],
+            [
+              63.802,
+              -146.1392
+            ],
+            [
+              65.0839,
+              -144.4582
+            ],
+            [
+              67.4634,
+              -135.2076
+            ],
+            [
+              69.491,
+              -127.3484
+            ],
+            [
+              74.4249,
+              -108.68
+            ]
+          ],
+          "width": 2,
+          "sourceWayId": "398619641",
+          "source": "OpenStreetMap",
+          "highway": "footway",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-398619646-0",
+          "name": "",
+          "points": [
+            [
+              -26.233,
+              -114.6579
+            ],
+            [
+              -24.6715,
+              -108.68
+            ]
+          ],
+          "width": 2,
+          "sourceWayId": "398619646",
+          "source": "OpenStreetMap",
+          "highway": "footway",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-398619649-0",
+          "name": "",
+          "points": [
+            [
+              67.4634,
+              -135.2076
+            ],
+            [
+              58.666,
+              -131.7344
+            ]
+          ],
+          "width": 2,
+          "sourceWayId": "398619649",
+          "source": "OpenStreetMap",
+          "highway": "steps",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-398619661-0",
+          "name": "",
+          "points": [
+            [
+              -9.1105,
+              -108.68
+            ],
+            [
+              -11.5874,
+              -109.2143
+            ],
+            [
+              -20.1921,
+              -108.9583
+            ],
+            [
+              -22.5408,
+              -108.68
+            ]
+          ],
+          "width": 2,
+          "sourceWayId": "398619661",
+          "source": "OpenStreetMap",
+          "highway": "footway",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-398631622-0",
+          "name": "",
+          "points": [
+            [
+              43.0653,
+              -255.4777
+            ],
+            [
+              44.7829,
+              -250.0898
+            ],
+            [
+              46.467,
+              -243.6444
+            ],
+            [
+              62.9726,
+              -165.7872
+            ],
+            [
+              64.0115,
+              -163.327
+            ],
+            [
+              60.2412,
+              -161.5013
+            ],
+            [
+              6.5352,
+              -146.9963
+            ],
+            [
+              -0.1592,
+              -145.1596
+            ],
+            [
+              -9.1325,
+              -142.6883
+            ],
+            [
+              -37.8539,
+              -134.7734
+            ],
+            [
+              -76.1435,
+              -124.0088
+            ],
+            [
+              -89.4737,
+              -120.5578
+            ],
+            [
+              -91.0237,
+              -120.4688
+            ],
+            [
+              -110.956,
+              -171.4533
+            ],
+            [
+              -109.5317,
+              -172.9896
+            ],
+            [
+              -59.462,
+              -196.2443
+            ],
+            [
+              -16.8994,
+              -216.0147
+            ],
+            [
+              43.5513,
+              -243.7334
+            ],
+            [
+              46.467,
+              -243.6444
+            ]
+          ],
+          "width": 2,
+          "sourceWayId": "398631622",
+          "source": "OpenStreetMap",
+          "highway": "footway",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-398631623-0",
+          "name": "",
+          "points": [
+            [
+              34.6533,
+              -299.8164
+            ],
+            [
+              32.3074,
+              -297.8127
+            ],
+            [
+              -9.3671,
+              -285.5786
+            ],
+            [
+              -74.6521,
+              -266.4093
+            ],
+            [
+              -77.0149,
+              -265.7191
+            ],
+            [
+              -88.7028,
+              -262.2905
+            ],
+            [
+              -96.7713,
+              -259.9194
+            ],
+            [
+              -136.8036,
+              -244.6462
+            ],
+            [
+              -150.8124,
+              -239.0082
+            ]
+          ],
+          "width": 2,
+          "sourceWayId": "398631623",
+          "source": "OpenStreetMap",
+          "highway": "footway",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-398631624-0",
+          "name": "",
+          "points": [
+            [
+              90.231,
+              -108.68
+            ],
+            [
+              82.1509,
+              -151.4714
+            ]
+          ],
+          "width": 2,
+          "sourceWayId": "398631624",
+          "source": "OpenStreetMap",
+          "highway": "footway",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-398631625-0",
+          "name": "",
+          "points": [
+            [
+              106.0965,
+              -299.8721
+            ],
+            [
+              130.5952,
+              -183.3089
+            ],
+            [
+              131.4749,
+              -177.5759
+            ],
+            [
+              139.0574,
+              -180.0027
+            ],
+            [
+              148.1313,
+              -183.0529
+            ],
+            [
+              148.6089,
+              -176.7633
+            ],
+            [
+              150.6281,
+              -168.1694
+            ],
+            [
+              141.5207,
+              -165.8317
+            ],
+            [
+              133.3014,
+              -164.3289
+            ]
+          ],
+          "width": 2,
+          "sourceWayId": "398631625",
+          "source": "OpenStreetMap",
+          "highway": "footway",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-398631626-0",
+          "name": "",
+          "points": [
+            [
+              82.1509,
+              -151.4714
+            ],
+            [
+              129.9249,
+              -164.2398
+            ],
+            [
+              133.3014,
+              -164.3289
+            ],
+            [
+              132.1536,
+              -172.6667
+            ],
+            [
+              131.4749,
+              -177.5759
+            ],
+            [
+              80.0563,
+              -165.3307
+            ],
+            [
+              78.0454,
+              -165.6981
+            ],
+            [
+              77.4087,
+              -168.982
+            ],
+            [
+              52.3403,
+              -288.5063
+            ]
+          ],
+          "width": 2,
+          "sourceWayId": "398631626",
+          "source": "OpenStreetMap",
+          "highway": "footway",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-398631627-0",
+          "name": "",
+          "points": [
+            [
+              123.1132,
+              -303.8685
+            ],
+            [
+              122.8535,
+              -299.6161
+            ],
+            [
+              135.3625,
+              -239.0135
+            ],
+            [
+              145.9361,
+              -185.6244
+            ],
+            [
+              148.1313,
+              -183.0529
+            ],
+            [
+              150.8124,
+              -183.911
+            ]
+          ],
+          "width": 2,
+          "sourceWayId": "398631627",
+          "source": "OpenStreetMap",
+          "highway": "footway",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-398631627-1",
+          "name": "",
+          "points": [
+            [
+              150.8124,
+              -311.2972
+            ],
+            [
+              128.5257,
+              -306.3175
+            ],
+            [
+              124.9229,
+              -305.2823
+            ],
+            [
+              123.1132,
+              -303.8685
+            ]
+          ],
+          "width": 2,
+          "sourceWayId": "398631627",
+          "source": "OpenStreetMap",
+          "highway": "footway",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-398631638-0",
+          "name": "",
+          "points": [
+            [
+              150.8124,
+              -168.2204
+            ],
+            [
+              150.6281,
+              -168.1694
+            ],
+            [
+              150.8124,
+              -165.1708
+            ]
+          ],
+          "width": 2,
+          "sourceWayId": "398631638",
+          "source": "OpenStreetMap",
+          "highway": "footway",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-398631653-0",
+          "name": "",
+          "points": [
+            [
+              34.6533,
+              -299.8164
+            ],
+            [
+              28.2498,
+              -331.32
+            ]
+          ],
+          "width": 2,
+          "sourceWayId": "398631653",
+          "source": "OpenStreetMap",
+          "highway": "footway",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-398631657-0",
+          "name": "",
+          "points": [
+            [
+              119.7618,
+              -318.9523
+            ],
+            [
+              150.8124,
+              -327.0132
+            ]
+          ],
+          "width": 2,
+          "sourceWayId": "398631657",
+          "source": "OpenStreetMap",
+          "highway": "footway",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-398631660-0",
+          "name": "",
+          "points": [
+            [
+              -75.4397,
+              -117.1403
+            ],
+            [
+              -60.3585,
+              -108.7357
+            ],
+            [
+              -52.2481,
+              -109.9268
+            ],
+            [
+              -38.5661,
+              -116.0383
+            ],
+            [
+              -31.0925,
+              -121.415
+            ],
+            [
+              -29.1068,
+              -129.8197
+            ]
+          ],
+          "width": 6,
+          "sourceWayId": "398631660",
+          "source": "OpenStreetMap",
+          "highway": "service",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-398631666-0",
+          "name": "",
+          "points": [
+            [
+              133.3014,
+              -164.3289
+            ],
+            [
+              134.3822,
+              -157.85
+            ],
+            [
+              142.655,
+              -108.68
+            ]
+          ],
+          "width": 2,
+          "sourceWayId": "398631666",
+          "source": "OpenStreetMap",
+          "highway": "footway",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-398631669-0",
+          "name": "",
+          "points": [
+            [
+              -102.3514,
+              -115.9492
+            ],
+            [
+              -120.3902,
+              -161.7351
+            ],
+            [
+              -122.2083,
+              -165.4309
+            ],
+            [
+              -125.124,
+              -165.5645
+            ],
+            [
+              -150.8124,
+              -153.5999
+            ]
+          ],
+          "width": 2,
+          "sourceWayId": "398631669",
+          "source": "OpenStreetMap",
+          "highway": "footway",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-398631672-0",
+          "name": "",
+          "points": [
+            [
+              -86.1303,
+              -108.68
+            ],
+            [
+              -88.175,
+              -113.6003
+            ],
+            [
+              -91.0237,
+              -120.4688
+            ]
+          ],
+          "width": 2,
+          "sourceWayId": "398631672",
+          "source": "OpenStreetMap",
+          "highway": "footway",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-398631681-0",
+          "name": "",
+          "points": [
+            [
+              -125.473,
+              -108.68
+            ],
+            [
+              -108.3671,
+              -114.8583
+            ],
+            [
+              -102.3514,
+              -115.9492
+            ]
+          ],
+          "width": 2,
+          "sourceWayId": "398631681",
+          "source": "OpenStreetMap",
+          "highway": "footway",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-398632260-0",
+          "name": "",
+          "points": [
+            [
+              49.0559,
+              -303.3675
+            ],
+            [
+              43.3152,
+              -331.32
+            ]
+          ],
+          "width": 2,
+          "sourceWayId": "398632260",
+          "source": "OpenStreetMap",
+          "highway": "footway",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-414184727-0",
+          "name": "",
+          "points": [
+            [
+              -150.8124,
+              -224.3634
+            ],
+            [
+              -140.0042,
+              -228.1709
+            ],
+            [
+              -68.8542,
+              -254.2977
+            ],
+            [
+              37.2758,
+              -287.6603
+            ],
+            [
+              44.2634,
+              -256.0454
+            ],
+            [
+              43.0653,
+              -255.4777
+            ],
+            [
+              -31.2098,
+              -220.1447
+            ],
+            [
+              -88.242,
+              -193.6283
+            ],
+            [
+              -120.6918,
+              -178.5444
+            ],
+            [
+              -127.2522,
+              -175.3273
+            ],
+            [
+              -125.4005,
+              -171.6315
+            ],
+            [
+              -122.2083,
+              -165.4309
+            ],
+            [
+              -116.2177,
+              -168.136
+            ],
+            [
+              -110.956,
+              -171.4533
+            ]
+          ],
+          "width": 2,
+          "sourceWayId": "414184727",
+          "source": "OpenStreetMap",
+          "highway": "footway",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-659169064-0",
+          "name": "Broad Street",
+          "points": [
+            [
+              -93.1267,
+              -112.2979
+            ],
+            [
+              -91.8025,
+              -108.68
+            ]
+          ],
+          "width": 8,
+          "sourceWayId": "659169064",
+          "source": "OpenStreetMap",
+          "highway": "tertiary",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-659214168-0",
+          "name": "Main Street",
+          "points": [
+            [
+              72.3313,
+              -157.594
+            ],
+            [
+              73.6551,
+              -150.425
+            ],
+            [
+              81.5166,
+              -108.68
+            ]
+          ],
+          "width": 12,
+          "sourceWayId": "659214168",
+          "source": "OpenStreetMap",
+          "highway": "secondary",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-659214169-0",
+          "name": "Fairfield Avenue",
+          "points": [
+            [
+              72.3313,
+              -157.594
+            ],
+            [
+              65.5029,
+              -155.7016
+            ],
+            [
+              -7.2725,
+              -135.7976
+            ],
+            [
+              -29.1068,
+              -129.8197
+            ],
+            [
+              -36.2871,
+              -127.8493
+            ],
+            [
+              -72.281,
+              -118.0086
+            ],
+            [
+              -75.4397,
+              -117.1403
+            ],
+            [
+              -88.175,
+              -113.6003
+            ],
+            [
+              -93.1267,
+              -112.2979
+            ]
+          ],
+          "width": 12,
+          "sourceWayId": "659214169",
+          "source": "OpenStreetMap",
+          "highway": "secondary",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-823296826-0",
+          "name": "",
+          "points": [
+            [
+              -7.2725,
+              -135.7976
+            ],
+            [
+              -9.1325,
+              -142.6883
+            ],
+            [
+              -9.8782,
+              -145.0594
+            ],
+            [
+              -12.2912,
+              -152.7627
+            ],
+            [
+              -24.574,
+              -190.4
+            ],
+            [
+              -27.1043,
+              -193.0049
+            ],
+            [
+              -28.9308,
+              -194.2628
+            ],
+            [
+              -32.5168,
+              -194.8305
+            ],
+            [
+              -35.6839,
+              -194.3407
+            ],
+            [
+              -55.2811,
+              -186.2255
+            ]
+          ],
+          "width": 6,
+          "sourceWayId": "823296826",
+          "source": "OpenStreetMap",
+          "highway": "service",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-823296827-0",
+          "name": "",
+          "points": [
+            [
+              -55.2811,
+              -186.2255
+            ],
+            [
+              -44.0037,
+              -152.2952
+            ],
+            [
+              -38.9096,
+              -137.8013
+            ],
+            [
+              -37.8539,
+              -134.7734
+            ],
+            [
+              -36.2871,
+              -127.8493
+            ]
+          ],
+          "width": 6,
+          "sourceWayId": "823296827",
+          "source": "OpenStreetMap",
+          "highway": "service",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-823296828-0",
+          "name": "",
+          "points": [
+            [
+              -55.2811,
+              -186.2255
+            ],
+            [
+              -59.462,
+              -196.2443
+            ],
+            [
+              -61.7493,
+              -200.9643
+            ]
+          ],
+          "width": 6,
+          "sourceWayId": "823296828",
+          "source": "OpenStreetMap",
+          "highway": "service",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-836255022-0",
+          "name": "",
+          "points": [
+            [
+              -74.8867,
+              -259.5854
+            ],
+            [
+              -77.0149,
+              -265.7191
+            ],
+            [
+              -93.9561,
+              -318.6184
+            ],
+            [
+              -105.8619,
+              -314.6777
+            ],
+            [
+              -88.7028,
+              -262.2905
+            ],
+            [
+              -86.5998,
+              -255.4888
+            ]
+          ],
+          "width": 6,
+          "sourceWayId": "836255022",
+          "source": "OpenStreetMap",
+          "highway": "service",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-836255023-0",
+          "name": "",
+          "points": [
+            [
+              -93.9561,
+              -318.6184
+            ],
+            [
+              -52.4328,
+              -331.32
+            ]
+          ],
+          "width": 6,
+          "sourceWayId": "836255023",
+          "source": "OpenStreetMap",
+          "highway": "service",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-836255023-1",
+          "name": "",
+          "points": [
+            [
+              -21.6927,
+              -331.32
+            ],
+            [
+              -9.9285,
+              -287.6492
+            ],
+            [
+              -9.3671,
+              -285.5786
+            ],
+            [
+              -8.0517,
+              -280.6917
+            ]
+          ],
+          "width": 6,
+          "sourceWayId": "836255023",
+          "source": "OpenStreetMap",
+          "highway": "service",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-850347983-0",
+          "name": "Elm Street",
+          "points": [
+            [
+              -150.8124,
+              -159.9651
+            ],
+            [
+              -125.4005,
+              -171.6315
+            ],
+            [
+              -118.8988,
+              -174.6148
+            ]
+          ],
+          "width": 6,
+          "sourceWayId": "850347983",
+          "source": "OpenStreetMap",
+          "highway": "residential",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-981121075-0",
+          "name": "",
+          "points": [
+            [
+              -2.9859,
+              -331.32
+            ],
+            [
+              0.4273,
+              -315.2565
+            ],
+            [
+              12.0817,
+              -318.2733
+            ],
+            [
+              16.1118,
+              -325.4868
+            ],
+            [
+              14.7624,
+              -331.32
+            ]
+          ],
+          "width": 6,
+          "sourceWayId": "981121075",
+          "source": "OpenStreetMap",
+          "highway": "service",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-1223179017-0",
+          "name": "",
+          "points": [
+            [
+              -72.281,
+              -118.0086
+            ],
+            [
+              -76.1435,
+              -124.0088
+            ],
+            [
+              -92.9088,
+              -164.7185
+            ]
+          ],
+          "width": 6,
+          "sourceWayId": "1223179017",
+          "source": "OpenStreetMap",
+          "highway": "service",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-1353524675-0",
+          "name": "Middle Street",
+          "points": [
+            [
+              140.0796,
+              -174.6594
+            ],
+            [
+              141.5207,
+              -165.8317
+            ],
+            [
+              150.8124,
+              -109.0506
+            ]
+          ],
+          "width": 6,
+          "sourceWayId": "1353524675",
+          "source": "OpenStreetMap",
+          "highway": "residential",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-1353524680-0",
+          "name": "",
+          "points": [
+            [
+              63.802,
+              -146.1392
+            ],
+            [
+              65.9553,
+              -148.3878
+            ],
+            [
+              68.1086,
+              -149.7459
+            ],
+            [
+              73.6551,
+              -150.425
+            ],
+            [
+              82.1509,
+              -151.4714
+            ]
+          ],
+          "width": 2,
+          "sourceWayId": "1353524680",
+          "source": "OpenStreetMap",
+          "highway": "footway",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-1353524681-0",
+          "name": "",
+          "points": [
+            [
+              78.0454,
+              -165.6981
+            ],
+            [
+              70.8148,
+              -164.4736
+            ],
+            [
+              64.0115,
+              -163.327
+            ]
+          ],
+          "width": 2,
+          "sourceWayId": "1353524681",
+          "source": "OpenStreetMap",
+          "highway": "footway",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-1353524682-0",
+          "name": "",
+          "points": [
+            [
+              82.1509,
+              -151.4714
+            ],
+            [
+              79.83,
+              -159.5087
+            ],
+            [
+              78.0454,
+              -165.6981
+            ]
+          ],
+          "width": 2,
+          "sourceWayId": "1353524682",
+          "source": "OpenStreetMap",
+          "highway": "footway",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-1353524683-0",
+          "name": "",
+          "points": [
+            [
+              64.0115,
+              -163.327
+            ],
+            [
+              65.5029,
+              -155.7016
+            ],
+            [
+              66.2653,
+              -151.8165
+            ],
+            [
+              65.3102,
+              -148.8665
+            ],
+            [
+              63.802,
+              -146.1392
+            ]
+          ],
+          "width": 2,
+          "sourceWayId": "1353524683",
+          "source": "OpenStreetMap",
+          "highway": "footway",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-1353525955-0",
+          "name": "",
+          "points": [
+            [
+              -102.3514,
+              -115.9492
+            ],
+            [
+              -99.8546,
+              -110.1717
+            ],
+            [
+              -99.2114,
+              -108.68
+            ]
+          ],
+          "width": 2,
+          "sourceWayId": "1353525955",
+          "source": "OpenStreetMap",
+          "highway": "footway",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-1353525957-0",
+          "name": "",
+          "points": [
+            [
+              -91.0237,
+              -120.4688
+            ],
+            [
+              -95.7324,
+              -118.5875
+            ],
+            [
+              -102.3514,
+              -115.9492
+            ]
+          ],
+          "width": 2,
+          "sourceWayId": "1353525957",
+          "source": "OpenStreetMap",
+          "highway": "footway",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-1414741165-0",
+          "name": "",
+          "points": [
+            [
+              52.3403,
+              -288.5063
+            ],
+            [
+              50.3127,
+              -297.5455
+            ],
+            [
+              49.0559,
+              -303.3675
+            ]
+          ],
+          "width": 2,
+          "sourceWayId": "1414741165",
+          "source": "OpenStreetMap",
+          "highway": "footway",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-1414741166-0",
+          "name": "",
+          "points": [
+            [
+              106.0965,
+              -299.8721
+            ],
+            [
+              115.715,
+              -302.2877
+            ],
+            [
+              123.1132,
+              -303.8685
+            ],
+            [
+              121.1694,
+              -313.442
+            ],
+            [
+              119.7618,
+              -318.9523
+            ],
+            [
+              112.6904,
+              -317.1378
+            ],
+            [
+              103.6416,
+              -314.3103
+            ],
+            [
+              104.89,
+              -309.9243
+            ],
+            [
+              106.0965,
+              -299.8721
+            ]
+          ],
+          "width": 2,
+          "sourceWayId": "1414741166",
+          "source": "OpenStreetMap",
+          "highway": "footway",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-1434937908-0",
+          "name": "",
+          "points": [
+            [
+              49.0559,
+              -303.3675
+            ],
+            [
+              41.5907,
+              -301.4751
+            ],
+            [
+              34.6533,
+              -299.8164
+            ]
+          ],
+          "width": 2,
+          "sourceWayId": "1434937908",
+          "source": "OpenStreetMap",
+          "highway": "footway",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-1434937909-0",
+          "name": "",
+          "points": [
+            [
+              34.6533,
+              -299.8164
+            ],
+            [
+              36.1531,
+              -294.0723
+            ],
+            [
+              37.2758,
+              -287.6603
+            ]
+          ],
+          "width": 2,
+          "sourceWayId": "1434937909",
+          "source": "OpenStreetMap",
+          "highway": "footway",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-1434937910-0",
+          "name": "",
+          "points": [
+            [
+              37.2758,
+              -287.6603
+            ],
+            [
+              44.431,
+              -287.5601
+            ],
+            [
+              52.3403,
+              -288.5063
+            ]
+          ],
+          "width": 2,
+          "sourceWayId": "1434937910",
+          "source": "OpenStreetMap",
+          "highway": "footway",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-1525669912-0",
+          "name": "",
+          "points": [
+            [
+              -16.4288,
+              -331.32
+            ],
+            [
+              -9.7693,
+              -306.7183
+            ]
+          ],
+          "width": 6,
+          "sourceWayId": "1525669912",
+          "source": "OpenStreetMap",
+          "highway": "service",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-osm-1525669914-0",
+          "name": "",
+          "points": [
+            [
+              -95.7749,
+              -331.32
+            ],
+            [
+              -115.028,
+              -323.4051
+            ]
+          ],
+          "width": 6,
+          "sourceWayId": "1525669914",
+          "source": "OpenStreetMap",
+          "highway": "service",
+          "widthBasis": "authored estimate"
+        },
+        {
+          "id": "bridgeport-west-neighborhood-link",
+          "name": "West Neighborhood Link",
+          "points": [
+            [
+              -32,
+              -58
+            ],
+            [
+              -32,
+              -100
+            ],
+            [
+              -4,
+              -132
+            ]
+          ],
+          "width": 6,
+          "source": "authored connection to original commercial district"
+        },
+        {
+          "id": "bridgeport-east-neighborhood-link",
+          "name": "East Neighborhood Link",
+          "points": [
+            [
+              32,
+              -58
+            ],
+            [
+              72,
+              -75
+            ],
+            [
+              80,
+              -108
+            ]
+          ],
+          "width": 6,
+          "source": "authored connection to original commercial district"
+        }
+      ],
+      "places": [
+        {
+          "id": "bridgeport-ashline-works",
+          "name": "Ashline Works",
+          "category": "Industrial story location",
+          "position": [
+            -50.0258,
+            -305.7594
+          ],
+          "size": [
+            67.2567,
+            55.6682,
+            10
+          ],
+          "entrance": [
+            -63.709,
+            -275.893
+          ],
+          "color": "#d6d0c5",
+          "style": "industrial",
+          "description": "A boarded industrial shell where Dave wakes into the aftermath of the shoes.",
+          "provenance": "new_city_adaptation; fictional name, no real business affiliation",
+          "staffIds": [],
+          "itemIds": [],
+          "storyArcId": "robbery-1s",
+          "storyBeatIds": [
+            "robbery-1s-aftermath"
+          ],
+          "entranceWall": [
+            -64.491,
+            -278.79
+          ],
+          "entranceNormal": [
+            0.260726,
+            0.965413
+          ],
+          "footprint": [
+            [
+              -34.6944,
+              -333.5935
+            ],
+            [
+              -34.0234,
+              -331.0901
+            ],
+            [
+              -26.9573,
+              -332.9983
+            ],
+            [
+              -23.7145,
+              -320.8985
+            ],
+            [
+              -22.0518,
+              -321.3474
+            ],
+            [
+              -18.4735,
+              -307.9958
+            ],
+            [
+              -19.3048,
+              -307.7714
+            ],
+            [
+              -16.3974,
+              -296.9232
+            ],
+            [
+              -21.8008,
+              -295.464
+            ],
+            [
+              -21.2977,
+              -293.5865
+            ],
+            [
+              -22.3368,
+              -293.3058
+            ],
+            [
+              -22.0013,
+              -292.0542
+            ],
+            [
+              -27.4048,
+              -290.5949
+            ],
+            [
+              -27.8521,
+              -292.2638
+            ],
+            [
+              -43.2313,
+              -288.1106
+            ],
+            [
+              -43.9582,
+              -290.8226
+            ],
+            [
+              -48.946,
+              -289.4756
+            ],
+            [
+              -48.6105,
+              -288.2239
+            ],
+            [
+              -49.6497,
+              -287.9433
+            ],
+            [
+              -49.2023,
+              -286.2743
+            ],
+            [
+              -62.5032,
+              -282.6822
+            ],
+            [
+              -62.0559,
+              -281.0134
+            ],
+            [
+              -63.5107,
+              -280.6205
+            ],
+            [
+              -63.1193,
+              -279.1601
+            ],
+            [
+              -67.6915,
+              -277.9253
+            ],
+            [
+              -67.9711,
+              -278.9685
+            ],
+            [
+              -69.218,
+              -278.6317
+            ],
+            [
+              -72.5727,
+              -291.1488
+            ],
+            [
+              -75.4824,
+              -290.363
+            ],
+            [
+              -78.278,
+              -300.7939
+            ],
+            [
+              -78.9015,
+              -300.6255
+            ],
+            [
+              -83.6541,
+              -318.358
+            ],
+            [
+              -77.4193,
+              -320.0418
+            ],
+            [
+              -76.8602,
+              -317.9556
+            ],
+            [
+              -67.9236,
+              -320.369
+            ],
+            [
+              -68.6505,
+              -323.0811
+            ],
+            [
+              -58.2592,
+              -325.8873
+            ],
+            [
+              -57.7,
+              -323.8012
+            ],
+            [
+              -39.619,
+              -328.6841
+            ],
+            [
+              -40.5136,
+              -332.0219
+            ],
+            [
+              -34.6944,
+              -333.5935
+            ]
+          ],
+          "footprintHoles": [],
+          "sourceFootprintId": 279819,
+          "sourceGeometry": {
+            "dataset": "CT State GIS Office 2023 Connecticut Buildings",
+            "horizontalFootprint": "Original source ring projected into metres and translated; no reshaping or clipping.",
+            "height": "Authored game height; not supplied by the footprint dataset.",
+            "entrance": "Authored road-facing game doorway; actual entrance location is unknown.",
+            "interior": "Authored game scene; no surveyed interior is claimed."
+          },
+          "enterable": true
+        },
+        {
+          "id": "bridgeport-last-light-market",
+          "name": "Last Light Market",
+          "category": "Corner bodega",
+          "position": [
+            25.7787,
+            -274.5248
+          ],
+          "size": [
+            28.238,
+            23.0378,
+            12
+          ],
+          "entrance": [
+            27.655,
+            -286.551
+          ],
+          "color": "#e3dac7",
+          "style": "market",
+          "description": "The corner counter where an ordinary errand becomes Malik’s first encounter with the shoes’ reputation.",
+          "provenance": "new_city_adaptation; fictional name, no real business affiliation",
+          "staffIds": [],
+          "itemIds": [],
+          "storyArcId": "robbery-1s",
+          "storyBeatIds": [
+            "robbery-1s-donation-bin",
+            "robbery-1s-bodega"
+          ],
+          "entranceWall": [
+            28.579,
+            -283.697
+          ],
+          "entranceNormal": [
+            -0.307913,
+            -0.951415
+          ],
+          "footprint": [
+            [
+              39.8977,
+              -270.5632
+            ],
+            [
+              16.5467,
+              -263.0059
+            ],
+            [
+              11.6597,
+              -278.2213
+            ],
+            [
+              35.83,
+              -286.0437
+            ],
+            [
+              38.1415,
+              -278.8473
+            ],
+            [
+              37.3221,
+              -278.5821
+            ],
+            [
+              39.8977,
+              -270.5632
+            ]
+          ],
+          "footprintHoles": [],
+          "sourceFootprintId": 250870,
+          "sourceGeometry": {
+            "dataset": "CT State GIS Office 2023 Connecticut Buildings",
+            "horizontalFootprint": "Original source ring projected into metres and translated; no reshaping or clipping.",
+            "height": "Authored game height; not supplied by the footprint dataset.",
+            "entrance": "Authored road-facing game doorway; actual entrance location is unknown.",
+            "interior": "Authored game scene; no surveyed interior is claimed."
+          },
+          "enterable": true
+        },
+        {
+          "id": "bridgeport-northline-walkups",
+          "name": "Northline Walkups",
+          "category": "Apartments and stairwell",
+          "position": [
+            -102.0846,
+            -198.447
+          ],
+          "size": [
+            33.0181,
+            23.5911,
+            15
+          ],
+          "entrance": [
+            -98.227,
+            -186.997
+          ],
+          "color": "#c6b5a6",
+          "style": "walkup",
+          "description": "Family rooms above the street, a shared hallway, and a concrete stairwell facing the block.",
+          "provenance": "new_city_adaptation; fictional name, no real business affiliation",
+          "staffIds": [],
+          "itemIds": [],
+          "storyArcId": "robbery-1s",
+          "storyBeatIds": [
+            "robbery-1s-family",
+            "robbery-1s-stairwell",
+            "robbery-1s-hallway"
+          ],
+          "entranceWall": [
+            -99.577,
+            -189.676
+          ],
+          "entranceNormal": [
+            0.450061,
+            0.892998
+          ],
+          "footprint": [
+            [
+              -95.2224,
+              -210.2425
+            ],
+            [
+              -93.2911,
+              -206.3811
+            ],
+            [
+              -90.9832,
+              -207.5444
+            ],
+            [
+              -85.5756,
+              -196.7325
+            ],
+            [
+              -105.5782,
+              -186.6514
+            ],
+            [
+              -108.282,
+              -192.0573
+            ],
+            [
+              -113.2827,
+              -189.537
+            ],
+            [
+              -118.5937,
+              -200.1558
+            ],
+            [
+              -115.3241,
+              -201.8036
+            ],
+            [
+              -115.0344,
+              -201.2245
+            ],
+            [
+              -111.7647,
+              -202.8723
+            ],
+            [
+              -111.3785,
+              -202.1
+            ],
+            [
+              -95.2224,
+              -210.2425
+            ]
+          ],
+          "footprintHoles": [],
+          "sourceFootprintId": 264675,
+          "sourceGeometry": {
+            "dataset": "CT State GIS Office 2023 Connecticut Buildings",
+            "horizontalFootprint": "Original source ring projected into metres and translated; no reshaping or clipping.",
+            "height": "Authored game height; not supplied by the footprint dataset.",
+            "entrance": "Authored road-facing game doorway; actual entrance location is unknown.",
+            "interior": "Authored game scene; no surveyed interior is claimed."
+          },
+          "enterable": true
+        },
+        {
+          "id": "bridgeport-second-spin-laundry",
+          "name": "Second Spin Laundry",
+          "category": "Laundromat",
+          "position": [
+            -121.3103,
+            -220.6275
+          ],
+          "size": [
+            14.5247,
+            15.0224,
+            8
+          ],
+          "entrance": [
+            -121.885,
+            -229.982
+          ],
+          "color": "#cad8d5",
+          "style": "laundromat",
+          "description": "A neighborhood laundry with a low backroom beneath the sound of the dryers.",
+          "provenance": "new_city_adaptation; fictional name, no real business affiliation",
+          "staffIds": [],
+          "itemIds": [],
+          "storyArcId": "robbery-1s",
+          "storyBeatIds": [
+            "robbery-1s-laundry"
+          ],
+          "entranceWall": [
+            -120.839,
+            -227.17
+          ],
+          "entranceNormal": [
+            -0.348632,
+            -0.93726
+          ],
+          "footprint": [
+            [
+              -118.2356,
+              -228.1387
+            ],
+            [
+              -114.048,
+              -216.7944
+            ],
+            [
+              -123.9365,
+              -213.1163
+            ],
+            [
+              -128.5727,
+              -225.676
+            ],
+            [
+              -127.3619,
+              -226.1264
+            ],
+            [
+              -126.9132,
+              -224.9109
+            ],
+            [
+              -118.2356,
+              -228.1387
+            ]
+          ],
+          "footprintHoles": [],
+          "sourceFootprintId": 264674,
+          "sourceGeometry": {
+            "dataset": "CT State GIS Office 2023 Connecticut Buildings",
+            "horizontalFootprint": "Original source ring projected into metres and translated; no reshaping or clipping.",
+            "height": "Authored game height; not supplied by the footprint dataset.",
+            "entrance": "Authored road-facing game doorway; actual entrance location is unknown.",
+            "interior": "Authored game scene; no surveyed interior is claimed."
+          },
+          "enterable": true
+        },
+        {
+          "id": "bridgeport-common-yard",
+          "name": "Common Yard",
+          "category": "Alley and gathering yard",
+          "position": [
+            -140,
+            -300
+          ],
+          "size": [
+            20,
+            14,
+            1
+          ],
+          "entrance": [
+            -140,
+            -290.0
+          ],
+          "color": "#c9c4b5",
+          "style": "yard",
+          "description": "A back-lot gathering place for the Block Olympics, the dice circle, and the story’s changing neighborhood audience.",
+          "provenance": "new_city_adaptation; fictional name, no real business affiliation",
+          "staffIds": [],
+          "itemIds": [],
+          "storyArcId": "robbery-1s",
+          "storyBeatIds": [
+            "robbery-1s-block-olympics"
+          ],
+          "enterable": false,
+          "sourceGeometry": {
+            "horizontalFootprint": "Authored open gathering space checked clear of all retained building polygons and mapped road widths.",
+            "structures": "Open yard only; no building footprint is removed or replaced."
+          }
+        },
+        {
+          "id": "bridgeport-night-shift-club",
+          "name": "Night Shift Club",
+          "category": "Story headquarters",
+          "position": [
+            -6.919,
+            -242.9188
+          ],
+          "size": [
+            36.5562,
+            30.9226,
+            14
+          ],
+          "entrance": [
+            3.559,
+            -233.872
+          ],
+          "color": "#bac2c8",
+          "style": "club",
+          "description": "A modest front room conceals the organization’s absurdly corporate backroom office.",
+          "provenance": "new_city_adaptation; fictional name, no real business affiliation",
+          "staffIds": [],
+          "itemIds": [],
+          "storyArcId": "robbery-1s",
+          "storyBeatIds": [
+            "robbery-1s-promotion",
+            "robbery-1s-positions"
+          ],
+          "entranceWall": [
+            2.359,
+            -236.621
+          ],
+          "entranceNormal": [
+            0.399948,
+            0.916538
+          ],
+          "footprint": [
+            [
+              3.6371,
+              -258.3801
+            ],
+            [
+              11.3591,
+              -240.5488
+            ],
+            [
+              -18.6415,
+              -227.4575
+            ],
+            [
+              -19.4994,
+              -229.4388
+            ],
+            [
+              -23.0521,
+              -227.8885
+            ],
+            [
+              -25.1971,
+              -232.8416
+            ],
+            [
+              -21.6444,
+              -234.3919
+            ],
+            [
+              -22.5025,
+              -236.3731
+            ],
+            [
+              -21.9103,
+              -236.6316
+            ],
+            [
+              -23.4547,
+              -240.1978
+            ],
+            [
+              -11.6124,
+              -245.3654
+            ],
+            [
+              -10.7544,
+              -243.3841
+            ],
+            [
+              -7.2017,
+              -244.9344
+            ],
+            [
+              -7.8881,
+              -246.5195
+            ],
+            [
+              -4.9275,
+              -247.8113
+            ],
+            [
+              -7.4157,
+              -253.557
+            ],
+            [
+              3.6371,
+              -258.3801
+            ]
+          ],
+          "footprintHoles": [],
+          "sourceFootprintId": 283266,
+          "sourceGeometry": {
+            "dataset": "CT State GIS Office 2023 Connecticut Buildings",
+            "horizontalFootprint": "Original source ring projected into metres and translated; no reshaping or clipping.",
+            "height": "Authored game height; not supplied by the footprint dataset.",
+            "entrance": "Authored road-facing game doorway; actual entrance location is unknown.",
+            "interior": "Authored game scene; no surveyed interior is claimed."
+          },
+          "enterable": true
+        },
+        {
+          "id": "bridgeport-brickline-school",
+          "name": "Brickline School",
+          "category": "School story location",
+          "position": [
+            92.639,
+            -231.6909
+          ],
+          "size": [
+            52.7698,
+            25.0065,
+            14
+          ],
+          "entrance": [
+            64.224,
+            -227.168
+          ],
+          "color": "#d7cebd",
+          "style": "school",
+          "description": "An ordinary school day reveals what Malik’s new reputation costs him.",
+          "provenance": "new_city_adaptation; fictional name, no real business affiliation",
+          "staffIds": [],
+          "itemIds": [],
+          "storyArcId": "robbery-1s",
+          "storyBeatIds": [
+            "robbery-1s-legend-tax"
+          ],
+          "entranceWall": [
+            67.142,
+            -227.864
+          ],
+          "entranceNormal": [
+            -0.972672,
+            0.232182
+          ],
+          "footprint": [
+            [
+              119.0239,
+              -231.1686
+            ],
+            [
+              69.2129,
+              -219.1877
+            ],
+            [
+              66.2541,
+              -231.5829
+            ],
+            [
+              97.6476,
+              -239.134
+            ],
+            [
+              97.4972,
+              -239.7643
+            ],
+            [
+              115.9147,
+              -244.1942
+            ],
+            [
+              119.0239,
+              -231.1686
+            ]
+          ],
+          "footprintHoles": [],
+          "sourceFootprintId": 250913,
+          "sourceGeometry": {
+            "dataset": "CT State GIS Office 2023 Connecticut Buildings",
+            "horizontalFootprint": "Original source ring projected into metres and translated; no reshaping or clipping.",
+            "height": "Authored game height; not supplied by the footprint dataset.",
+            "entrance": "Authored road-facing game doorway; actual entrance location is unknown.",
+            "interior": "Authored game scene; no surveyed interior is claimed."
+          },
+          "enterable": true
+        },
+        {
+          "id": "bridgeport-second-light-chapel",
+          "name": "Second Light Chapel",
+          "category": "Neighborhood church",
+          "position": [
+            -63.4856,
+            -215.7418
+          ],
+          "size": [
+            27.452,
+            24.2331,
+            16
+          ],
+          "entrance": [
+            -57.815,
+            -205.611
+          ],
+          "color": "#e6dfd1",
+          "style": "chapel",
+          "description": "Wooden pews, colored glass, and the altar where the original pair changes hands again.",
+          "provenance": "new_city_adaptation; fictional name, no real business affiliation",
+          "staffIds": [],
+          "itemIds": [],
+          "storyArcId": "robbery-1s",
+          "storyBeatIds": [
+            "robbery-1s-altar"
+          ],
+          "entranceWall": [
+            -59.065,
+            -208.338
+          ],
+          "entranceNormal": [
+            0.416798,
+            0.908999
+          ],
+          "footprint": [
+            [
+              -65.7006,
+              -227.8583
+            ],
+            [
+              -65.0747,
+              -226.4828
+            ],
+            [
+              -62.1383,
+              -227.8293
+            ],
+            [
+              -61.5124,
+              -226.4537
+            ],
+            [
+              -60.9251,
+              -226.723
+            ],
+            [
+              -57.08,
+              -218.2733
+            ],
+            [
+              -51.0115,
+              -221.0558
+            ],
+            [
+              -49.7596,
+              -218.3048
+            ],
+            [
+              -56.024,
+              -215.4325
+            ],
+            [
+              -54.4144,
+              -211.8953
+            ],
+            [
+              -55.1974,
+              -211.5362
+            ],
+            [
+              -54.6609,
+              -210.3572
+            ],
+            [
+              -69.3428,
+              -203.6252
+            ],
+            [
+              -77.2116,
+              -220.9176
+            ],
+            [
+              -76.4287,
+              -221.2767
+            ],
+            [
+              -77.0546,
+              -222.6523
+            ],
+            [
+              -65.7006,
+              -227.8583
+            ]
+          ],
+          "footprintHoles": [],
+          "sourceFootprintId": 279373,
+          "sourceGeometry": {
+            "dataset": "CT State GIS Office 2023 Connecticut Buildings",
+            "horizontalFootprint": "Original source ring projected into metres and translated; no reshaping or clipping.",
+            "height": "Authored game height; not supplied by the footprint dataset.",
+            "entrance": "Authored road-facing game doorway; actual entrance location is unknown.",
+            "interior": "Authored game scene; no surveyed interior is claimed."
+          },
+          "enterable": true
+        },
+        {
+          "id": "bridgeport-railside-yard",
+          "name": "Railside Yard",
+          "category": "Fenced vehicle lot",
+          "position": [
+            142,
+            -280
+          ],
+          "size": [
+            14,
+            12,
+            1
+          ],
+          "entrance": [
+            142,
+            -271.0
+          ],
+          "color": "#bfc9c5",
+          "style": "yard",
+          "description": "A fenced back lot with parked cars, narrow lanes, and a separate New Turf story stop.",
+          "provenance": "new_city_adaptation; fictional name, no real business affiliation",
+          "staffIds": [],
+          "itemIds": [],
+          "storyArcId": "robbery-1s",
+          "storyBeatIds": [
+            "robbery-1s-fence-lot"
+          ],
+          "enterable": false,
+          "sourceGeometry": {
+            "horizontalFootprint": "Authored open gathering space checked clear of all retained building polygons and mapped road widths.",
+            "structures": "Open yard only; no building footprint is removed or replaced."
+          },
+          "yardType": "vehicle"
+        },
+        {
+          "id": "bridgeport-golden-hour-records",
+          "name": "Golden Hour Records",
+          "category": "Neighborhood storefront",
+          "position": [
+            11.3457,
+            -304.6764
+          ],
+          "size": [
+            42.2451,
+            32.8447,
+            18
+          ],
+          "entrance": [
+            20.874,
+            -292.886
+          ],
+          "color": "#cfbca7",
+          "style": "brick-row",
+          "description": "A neighborhood storefront on the Bridgeport street grid.",
+          "provenance": "new_city_storefront_name_on_retained_public_source_footprint",
+          "staffIds": [],
+          "itemIds": [],
+          "enterable": false,
+          "entranceWall": [
+            20.048,
+            -295.77
+          ],
+          "entranceNormal": [
+            0.275539,
+            0.96129
+          ],
+          "footprint": [
+            [
+              27.6818,
+              -321.0987
+            ],
+            [
+              32.4682,
+              -304.2723
+            ],
+            [
+              31.4334,
+              -303.9757
+            ],
+            [
+              32.3199,
+              -300.8598
+            ],
+            [
+              30.8713,
+              -300.4446
+            ],
+            [
+              31.2849,
+              -298.9905
+            ],
+            [
+              -6.1722,
+              -288.254
+            ],
+            [
+              -9.7769,
+              -300.9258
+            ],
+            [
+              6.5719,
+              -305.6118
+            ],
+            [
+              6.8673,
+              -304.5732
+            ],
+            [
+              20.5257,
+              -308.4881
+            ],
+            [
+              17.7484,
+              -318.2516
+            ],
+            [
+              27.6818,
+              -321.0987
+            ]
+          ],
+          "footprintHoles": [],
+          "sourceFootprintId": 250867,
+          "sourceGeometry": {
+            "dataset": "CT State GIS Office 2023 Connecticut Buildings",
+            "horizontalFootprint": "Original source ring projected into metres and translated; no reshaping or clipping.",
+            "height": "Authored game height; not supplied by the footprint dataset.",
+            "entrance": "Authored road-facing game doorway; actual entrance location is unknown.",
+            "interior": "Authored game scene; no surveyed interior is claimed."
+          }
+        },
+        {
+          "id": "bridgeport-cinder-and-thread",
+          "name": "Cinder & Thread",
+          "category": "Neighborhood storefront",
+          "position": [
+            -97.8648,
+            -227.6919
+          ],
+          "size": [
+            40.3525,
+            39.8566,
+            12
+          ],
+          "entrance": [
+            -96.695,
+            -246.786
+          ],
+          "color": "#d5c9ba",
+          "style": "brick-row",
+          "description": "A neighborhood storefront on the Bridgeport street grid.",
+          "provenance": "new_city_storefront_name_on_retained_public_source_footprint",
+          "staffIds": [],
+          "itemIds": [],
+          "enterable": false,
+          "entranceWall": [
+            -95.631,
+            -243.981
+          ],
+          "entranceNormal": [
+            -0.354379,
+            -0.935102
+          ],
+          "footprint": [
+            [
+              -94.6114,
+              -233.7448
+            ],
+            [
+              -92.863,
+              -229.0963
+            ],
+            [
+              -81.1851,
+              -233.522
+            ],
+            [
+              -77.6885,
+              -224.2248
+            ],
+            [
+              -109.2994,
+              -212.245
+            ],
+            [
+              -108.6152,
+              -210.426
+            ],
+            [
+              -110.226,
+              -209.8156
+            ],
+            [
+              -109.7698,
+              -208.6029
+            ],
+            [
+              -111.9847,
+              -207.7636
+            ],
+            [
+              -114.113,
+              -213.4227
+            ],
+            [
+              -113.1063,
+              -213.8042
+            ],
+            [
+              -112.9543,
+              -213.4
+            ],
+            [
+              -110.1355,
+              -214.4682
+            ],
+            [
+              -112.796,
+              -221.5422
+            ],
+            [
+              -100.9168,
+              -226.0441
+            ],
+            [
+              -102.7411,
+              -230.8948
+            ],
+            [
+              -114.6204,
+              -226.3928
+            ],
+            [
+              -118.041,
+              -235.4879
+            ],
+            [
+              -86.0274,
+              -247.6202
+            ],
+            [
+              -82.5308,
+              -238.3232
+            ],
+            [
+              -94.6114,
+              -233.7448
+            ]
+          ],
+          "footprintHoles": [],
+          "sourceFootprintId": 279372,
+          "sourceGeometry": {
+            "dataset": "CT State GIS Office 2023 Connecticut Buildings",
+            "horizontalFootprint": "Original source ring projected into metres and translated; no reshaping or clipping.",
+            "height": "Authored game height; not supplied by the footprint dataset.",
+            "entrance": "Authored road-facing game doorway; actual entrance location is unknown.",
+            "interior": "Authored game scene; no surveyed interior is claimed."
+          }
+        },
+        {
+          "id": "bridgeport-park-city-print",
+          "name": "Park City Print",
+          "category": "Neighborhood storefront",
+          "position": [
+            100.4566,
+            -196.1492
+          ],
+          "size": [
+            58.0595,
+            57.4699,
+            10
+          ],
+          "entrance": [
+            95.809,
+            -168.094
+          ],
+          "color": "#bfae9f",
+          "style": "brick-row",
+          "description": "A neighborhood storefront on the Bridgeport street grid.",
+          "provenance": "new_city_storefront_name_on_retained_public_source_footprint",
+          "staffIds": [],
+          "itemIds": [],
+          "enterable": false,
+          "entranceWall": [
+            95.071,
+            -171.002
+          ],
+          "entranceNormal": [
+            0.245813,
+            0.969317
+          ],
+          "footprint": [
+            [
+              128.0807,
+              -179.3729
+            ],
+            [
+              80.9242,
+              -167.4143
+            ],
+            [
+              74.8093,
+              -191.7111
+            ],
+            [
+              75.6441,
+              -191.9227
+            ],
+            [
+              71.4269,
+              -208.6792
+            ],
+            [
+              72.4702,
+              -208.9437
+            ],
+            [
+              71.5213,
+              -212.7139
+            ],
+            [
+              119.5129,
+              -224.8842
+            ],
+            [
+              125.2585,
+              -202.0536
+            ],
+            [
+              124.2152,
+              -201.789
+            ],
+            [
+              129.4864,
+              -180.8435
+            ],
+            [
+              127.8172,
+              -180.4202
+            ],
+            [
+              128.0807,
+              -179.3729
+            ]
+          ],
+          "footprintHoles": [],
+          "sourceFootprintId": 282456,
+          "sourceGeometry": {
+            "dataset": "CT State GIS Office 2023 Connecticut Buildings",
+            "horizontalFootprint": "Original source ring projected into metres and translated; no reshaping or clipping.",
+            "height": "Authored game height; not supplied by the footprint dataset.",
+            "entrance": "Authored road-facing game doorway; actual entrance location is unknown.",
+            "interior": "Authored game scene; no surveyed interior is claimed."
+          }
+        },
+        {
+          "id": "bridgeport-broad-street-books",
+          "name": "Broad Street Books",
+          "category": "Neighborhood storefront",
+          "position": [
+            22.6794,
+            -193.5711
+          ],
+          "size": [
+            76.2164,
+            95.5563,
+            14
+          ],
+          "entrance": [
+            8.431,
+            -228.836
+          ],
+          "color": "#cfbca7",
+          "style": "brick-row",
+          "description": "A neighborhood storefront on the Bridgeport street grid.",
+          "provenance": "new_city_storefront_name_on_retained_public_source_footprint",
+          "staffIds": [],
+          "itemIds": [],
+          "enterable": false,
+          "entranceWall": [
+            9.666,
+            -226.102
+          ],
+          "entranceNormal": [
+            -0.411687,
+            -0.911325
+          ],
+          "footprint": [
+            [
+              14.2814,
+              -203.871
+            ],
+            [
+              14.7082,
+              -202.4207
+            ],
+            [
+              19.0424,
+              -203.7065
+            ],
+            [
+              17.5786,
+              -208.6788
+            ],
+            [
+              10.9742,
+              -206.7196
+            ],
+            [
+              8.5546,
+              -212.76
+            ],
+            [
+              7.587,
+              -215.1759
+            ],
+            [
+              6.2158,
+              -218.5991
+            ],
+            [
+              4.1996,
+              -223.6327
+            ],
+            [
+              5.7841,
+              -224.3485
+            ],
+            [
+              18.725,
+              -230.1945
+            ],
+            [
+              21.63,
+              -231.5068
+            ],
+            [
+              43.4181,
+              -241.3493
+            ],
+            [
+              58.7176,
+              -175.603
+            ],
+            [
+              59.5024,
+              -172.2305
+            ],
+            [
+              60.7876,
+              -166.708
+            ],
+            [
+              60.3124,
+              -165.0378
+            ],
+            [
+              59.9624,
+              -163.8076
+            ],
+            [
+              31.4248,
+              -155.5485
+            ],
+            [
+              28.3229,
+              -154.6508
+            ],
+            [
+              7.4367,
+              -148.606
+            ],
+            [
+              -2.2826,
+              -145.793
+            ],
+            [
+              -3.7144,
+              -150.3242
+            ],
+            [
+              -15.4288,
+              -187.3981
+            ],
+            [
+              -9.0308,
+              -189.2961
+            ],
+            [
+              -5.7982,
+              -178.3157
+            ],
+            [
+              11.5386,
+              -183.4587
+            ],
+            [
+              6.8421,
+              -199.4114
+            ],
+            [
+              9.1311,
+              -200.7836
+            ],
+            [
+              14.2814,
+              -203.871
+            ]
+          ],
+          "footprintHoles": [],
+          "sourceFootprintId": 283235,
+          "sourceGeometry": {
+            "dataset": "CT State GIS Office 2023 Connecticut Buildings",
+            "horizontalFootprint": "Original source ring projected into metres and translated; no reshaping or clipping.",
+            "height": "Authored game height; not supplied by the footprint dataset.",
+            "entrance": "Authored road-facing game doorway; actual entrance location is unknown.",
+            "interior": "Authored game scene; no surveyed interior is claimed."
+          }
+        },
+        {
+          "id": "bridgeport-harbor-hardware",
+          "name": "Harbor Hardware",
+          "category": "Neighborhood storefront",
+          "position": [
+            -29.9474,
+            -162.0791
+          ],
+          "size": [
+            32.1655,
+            49.9389,
+            10
+          ],
+          "entrance": [
+            -25.065,
+            -136.003
+          ],
+          "color": "#d5c9ba",
+          "style": "brick-row",
+          "description": "A neighborhood storefront on the Bridgeport street grid.",
+          "provenance": "new_city_storefront_name_on_retained_public_source_footprint",
+          "staffIds": [],
+          "itemIds": [],
+          "enterable": false,
+          "entranceWall": [
+            -26.015,
+            -138.848
+          ],
+          "entranceNormal": [
+            0.316698,
+            0.948526
+          ],
+          "footprint": [
+            [
+              -30.3056,
+              -187.0486
+            ],
+            [
+              -30.1019,
+              -186.4335
+            ],
+            [
+              -28.4681,
+              -186.979
+            ],
+            [
+              -13.8646,
+              -142.9053
+            ],
+            [
+              -31.2227,
+              -137.1097
+            ],
+            [
+              -46.0301,
+              -181.7984
+            ],
+            [
+              -30.3056,
+              -187.0486
+            ]
+          ],
+          "footprintHoles": [],
+          "sourceFootprintId": 278987,
+          "sourceGeometry": {
+            "dataset": "CT State GIS Office 2023 Connecticut Buildings",
+            "horizontalFootprint": "Original source ring projected into metres and translated; no reshaping or clipping.",
+            "height": "Authored game height; not supplied by the footprint dataset.",
+            "entrance": "Authored road-facing game doorway; actual entrance location is unknown.",
+            "interior": "Authored game scene; no surveyed interior is claimed."
+          }
+        },
+        {
+          "id": "bridgeport-corner-signal",
+          "name": "Corner Signal Electronics",
+          "category": "Neighborhood storefront",
+          "position": [
+            -76.2881,
+            -159.5139
+          ],
+          "size": [
+            65.4064,
+            63.8652,
+            20
+          ],
+          "entrance": [
+            -102.204,
+            -178.697
+          ],
+          "color": "#bfae9f",
+          "style": "brick-row",
+          "description": "A neighborhood storefront on the Bridgeport street grid.",
+          "provenance": "new_city_storefront_name_on_retained_public_source_footprint",
+          "staffIds": [],
+          "itemIds": [],
+          "enterable": false,
+          "entranceWall": [
+            -101.055,
+            -175.926
+          ],
+          "entranceNormal": [
+            -0.382984,
+            -0.923755
+          ],
+          "footprint": [
+            [
+              -66.4363,
+              -191.4465
+            ],
+            [
+              -52.7989,
+              -158.3002
+            ],
+            [
+              -53.7935,
+              -157.888
+            ],
+            [
+              -50.4253,
+              -149.7012
+            ],
+            [
+              -49.8285,
+              -149.9486
+            ],
+            [
+              -49.2534,
+              -148.5508
+            ],
+            [
+              -50.0491,
+              -148.221
+            ],
+            [
+              -46.763,
+              -140.2339
+            ],
+            [
+              -45.9673,
+              -140.5638
+            ],
+            [
+              -43.5849,
+              -134.7732
+            ],
+            [
+              -49.5523,
+              -132.2992
+            ],
+            [
+              -49.8809,
+              -133.0979
+            ],
+            [
+              -57.6386,
+              -129.8816
+            ],
+            [
+              -58.0494,
+              -130.88
+            ],
+            [
+              -66.0059,
+              -127.5813
+            ],
+            [
+              -84.0796,
+              -171.5101
+            ],
+            [
+              -104.9657,
+              -162.8509
+            ],
+            [
+              -108.9913,
+              -172.635
+            ],
+            [
+              -82.5356,
+              -183.6034
+            ],
+            [
+              -75.4703,
+              -166.4312
+            ],
+            [
+              -70.4975,
+              -168.4929
+            ],
+            [
+              -69.8402,
+              -166.8955
+            ],
+            [
+              -64.6684,
+              -169.0396
+            ],
+            [
+              -71.4051,
+              -185.4131
+            ],
+            [
+              -69.4158,
+              -186.2378
+            ],
+            [
+              -70.0731,
+              -187.8351
+            ],
+            [
+              -69.0786,
+              -188.2475
+            ],
+            [
+              -69.8178,
+              -190.0446
+            ],
+            [
+              -66.4363,
+              -191.4465
+            ]
+          ],
+          "footprintHoles": [],
+          "sourceFootprintId": 279371,
+          "sourceGeometry": {
+            "dataset": "CT State GIS Office 2023 Connecticut Buildings",
+            "horizontalFootprint": "Original source ring projected into metres and translated; no reshaping or clipping.",
+            "height": "Authored game height; not supplied by the footprint dataset.",
+            "entrance": "Authored road-facing game doorway; actual entrance location is unknown.",
+            "interior": "Authored game scene; no surveyed interior is claimed."
+          }
+        },
+        {
+          "id": "bridgeport-second-hand-sun",
+          "name": "Second Hand Sun",
+          "category": "Neighborhood storefront",
+          "position": [
+            -129.7358,
+            -133.1938
+          ],
+          "size": [
+            47.8726,
+            55.3005,
+            12
+          ],
+          "entrance": [
+            -144.622,
+            -158.977
+          ],
+          "color": "#cfbca7",
+          "style": "brick-row",
+          "description": "A neighborhood storefront on the Bridgeport street grid.",
+          "provenance": "new_city_storefront_name_on_retained_public_source_footprint",
+          "staffIds": [],
+          "itemIds": [],
+          "enterable": false,
+          "entranceWall": [
+            -143.482,
+            -156.202
+          ],
+          "entranceNormal": [
+            -0.380149,
+            -0.924925
+          ],
+          "footprint": [
+            [
+              -124.2362,
+              -160.8441
+            ],
+            [
+              -121.8715,
+              -155.0463
+            ],
+            [
+              -120.2781,
+              -155.7011
+            ],
+            [
+              -118.3212,
+              -150.9029
+            ],
+            [
+              -117.5245,
+              -151.2302
+            ],
+            [
+              -117.1167,
+              -150.2306
+            ],
+            [
+              -118.1125,
+              -149.8214
+            ],
+            [
+              -105.7995,
+              -119.6322
+            ],
+            [
+              -107.3928,
+              -118.9774
+            ],
+            [
+              -106.822,
+              -117.5779
+            ],
+            [
+              -112.9961,
+              -115.0404
+            ],
+            [
+              -113.3223,
+              -115.84
+            ],
+            [
+              -121.488,
+              -112.484
+            ],
+            [
+              -121.8957,
+              -113.4837
+            ],
+            [
+              -141.2146,
+              -105.5436
+            ],
+            [
+              -147.6567,
+              -121.3378
+            ],
+            [
+              -145.0675,
+              -122.402
+            ],
+            [
+              -145.7199,
+              -124.0014
+            ],
+            [
+              -149.1057,
+              -122.6098
+            ],
+            [
+              -153.6721,
+              -133.8058
+            ],
+            [
+              -146.7014,
+              -136.6708
+            ],
+            [
+              -147.3537,
+              -138.2701
+            ],
+            [
+              -141.9763,
+              -140.4803
+            ],
+            [
+              -141.5686,
+              -139.4806
+            ],
+            [
+              -140.1745,
+              -140.0536
+            ],
+            [
+              -146.2902,
+              -155.0482
+            ],
+            [
+              -136.9295,
+              -158.8955
+            ],
+            [
+              -135.7879,
+              -156.0965
+            ],
+            [
+              -124.2362,
+              -160.8441
+            ]
+          ],
+          "footprintHoles": [],
+          "sourceFootprintId": 265207,
+          "sourceGeometry": {
+            "dataset": "CT State GIS Office 2023 Connecticut Buildings",
+            "horizontalFootprint": "Original source ring projected into metres and translated; no reshaping or clipping.",
+            "height": "Authored game height; not supplied by the footprint dataset.",
+            "entrance": "Authored road-facing game doorway; actual entrance location is unknown.",
+            "interior": "Authored game scene; no surveyed interior is claimed."
+          }
+        },
+        {
+          "id": "bridgeport-north-window-cafe",
+          "name": "North Window Café",
+          "category": "Neighborhood storefront",
+          "position": [
+            39.296,
+            -113.5917
+          ],
+          "size": [
+            52.8776,
+            49.8688,
+            16
+          ],
+          "entrance": [
+            34.384,
+            -138.021
+          ],
+          "color": "#d5c9ba",
+          "style": "brick-row",
+          "description": "A neighborhood storefront on the Bridgeport street grid.",
+          "provenance": "new_city_storefront_name_on_retained_public_source_footprint",
+          "staffIds": [],
+          "itemIds": [],
+          "enterable": false,
+          "entranceWall": [
+            35.516,
+            -135.243
+          ],
+          "entranceNormal": [
+            -0.377277,
+            -0.9261
+          ],
+          "footprint": [
+            [
+              47.0092,
+              -138.5261
+            ],
+            [
+              48.7895,
+              -134.1221
+            ],
+            [
+              49.5872,
+              -134.4471
+            ],
+            [
+              50.0727,
+              -133.246
+            ],
+            [
+              53.064,
+              -134.4646
+            ],
+            [
+              53.5496,
+              -133.2636
+            ],
+            [
+              55.9426,
+              -134.2384
+            ],
+            [
+              65.7348,
+              -110.0166
+            ],
+            [
+              62.5441,
+              -108.7168
+            ],
+            [
+              63.0297,
+              -107.5157
+            ],
+            [
+              60.6366,
+              -106.5409
+            ],
+            [
+              62.5789,
+              -101.7365
+            ],
+            [
+              30.4731,
+              -88.6573
+            ],
+            [
+              28.6118,
+              -93.2614
+            ],
+            [
+              24.0252,
+              -91.3929
+            ],
+            [
+              12.8572,
+              -119.0177
+            ],
+            [
+              17.6432,
+              -120.9675
+            ],
+            [
+              15.7009,
+              -125.7717
+            ],
+            [
+              20.088,
+              -127.559
+            ],
+            [
+              19.6024,
+              -128.76
+            ],
+            [
+              42.3358,
+              -138.0212
+            ],
+            [
+              42.8214,
+              -136.8201
+            ],
+            [
+              47.0092,
+              -138.5261
+            ]
+          ],
+          "footprintHoles": [],
+          "sourceFootprintId": 283267,
+          "sourceGeometry": {
+            "dataset": "CT State GIS Office 2023 Connecticut Buildings",
+            "horizontalFootprint": "Original source ring projected into metres and translated; no reshaping or clipping.",
+            "height": "Authored game height; not supplied by the footprint dataset.",
+            "entrance": "Authored road-facing game doorway; actual entrance location is unknown.",
+            "interior": "Authored game scene; no surveyed interior is claimed."
+          }
+        },
+        {
+          "id": "bridgeport-last-stop-repairs",
+          "name": "Last Stop Repairs",
+          "category": "Neighborhood storefront",
+          "position": [
+            116.4524,
+            -110.1591
+          ],
+          "size": [
+            62.0893,
+            103.259,
+            10
+          ],
+          "entrance": [
+            137.072,
+            -152.667
+          ],
+          "color": "#bfae9f",
+          "style": "brick-row",
+          "description": "A neighborhood storefront on the Bridgeport street grid.",
+          "provenance": "new_city_storefront_name_on_retained_public_source_footprint",
+          "staffIds": [],
+          "itemIds": [],
+          "enterable": false,
+          "entranceWall": [
+            134.122,
+            -152.123
+          ],
+          "entranceNormal": [
+            0.983422,
+            -0.181332
+          ],
+          "footprint": [
+            [
+              132.34,
+              -161.7886
+            ],
+            [
+              134.886,
+              -147.9808
+            ],
+            [
+              132.3466,
+              -147.509
+            ],
+            [
+              133.3649,
+              -141.9859
+            ],
+            [
+              131.0372,
+              -141.5533
+            ],
+            [
+              131.7814,
+              -137.5172
+            ],
+            [
+              133.4743,
+              -137.8318
+            ],
+            [
+              134.1401,
+              -134.2205
+            ],
+            [
+              136.468,
+              -134.653
+            ],
+            [
+              140.6589,
+              -111.9232
+            ],
+            [
+              140.0241,
+              -111.8053
+            ],
+            [
+              141.2383,
+              -105.22
+            ],
+            [
+              139.9686,
+              -104.9842
+            ],
+            [
+              140.2819,
+              -103.2847
+            ],
+            [
+              140.9168,
+              -103.4026
+            ],
+            [
+              147.497,
+              -67.7148
+            ],
+            [
+              144.1111,
+              -67.0857
+            ],
+            [
+              144.3853,
+              -65.5987
+            ],
+            [
+              140.153,
+              -64.8123
+            ],
+            [
+              139.918,
+              -66.0869
+            ],
+            [
+              131.0301,
+              -64.4355
+            ],
+            [
+              131.3435,
+              -62.7361
+            ],
+            [
+              125.8415,
+              -61.7139
+            ],
+            [
+              125.6848,
+              -62.5636
+            ],
+            [
+              121.8758,
+              -61.8558
+            ],
+            [
+              121.9932,
+              -61.2185
+            ],
+            [
+              110.9893,
+              -59.1739
+            ],
+            [
+              110.8326,
+              -60.0236
+            ],
+            [
+              102.7912,
+              -58.5296
+            ],
+            [
+              93.6257,
+              -108.2376
+            ],
+            [
+              93.4141,
+              -108.1983
+            ],
+            [
+              92.2782,
+              -114.3587
+            ],
+            [
+              92.0665,
+              -114.3193
+            ],
+            [
+              85.4077,
+              -150.432
+            ],
+            [
+              94.2956,
+              -152.0835
+            ],
+            [
+              94.0998,
+              -153.1456
+            ],
+            [
+              106.3736,
+              -155.426
+            ],
+            [
+              106.1777,
+              -156.4883
+            ],
+            [
+              121.4142,
+              -159.3192
+            ],
+            [
+              121.7668,
+              -157.4074
+            ],
+            [
+              123.4597,
+              -157.7219
+            ],
+            [
+              123.0289,
+              -160.0586
+            ],
+            [
+              132.34,
+              -161.7886
+            ]
+          ],
+          "footprintHoles": [],
+          "sourceFootprintId": 282451,
+          "sourceGeometry": {
+            "dataset": "CT State GIS Office 2023 Connecticut Buildings",
+            "horizontalFootprint": "Original source ring projected into metres and translated; no reshaping or clipping.",
+            "height": "Authored game height; not supplied by the footprint dataset.",
+            "entrance": "Authored road-facing game doorway; actual entrance location is unknown.",
+            "interior": "Authored game scene; no surveyed interior is claimed."
+          }
+        }
+      ],
+      "provenance": {
+        "setting": "Owner direction, 2026-11-03: place the story in Bridgeport, away from Equity Uprise.",
+        "placeNames": "New fictional adaptation names; none identifies a real business, school, church, owner, or resident.",
+        "layout": "Verified 2023 CT building-footprint polygons and OSM street centerlines from downtown Bridgeport, projected into metres and translated north of the existing city. All 16 selected footprints remain; story tenants, heights, entrances, interiors, yards and connecting walks are authored game adaptations.",
+        "existingCity": "Additive neighborhood. The original eight businesses, 24 adult staff, garage, island, and portal targets remain separate and retain their identities."
+      },
+      "geography": {
+        "kind": "public_source_footprints_and_street_centerlines_with_authored_story_tenants",
+        "location": "Downtown Bridgeport, Connecticut",
+        "sourceYear": 2023,
+        "sourceFootprintCount": 16,
+        "sourceFootprintIds": [
+          250867,
+          250870,
+          250913,
+          264674,
+          264675,
+          265207,
+          278987,
+          279371,
+          279372,
+          279373,
+          279819,
+          282451,
+          282456,
+          283235,
+          283266,
+          283267
+        ],
+        "projection": "x=(lon-lon0)*111320*cos(lat0)+offsetX; z=-(lat-lat0)*111320+offsetZ",
+        "geographicOrigin": [
+          -73.1903,
+          41.1798
+        ],
+        "worldOffsetXZ": [
+          0,
+          -220
+        ],
+        "requestedBboxLonLat": [
+          -73.1921,
+          41.1788,
+          -73.1885,
+          41.1808
+        ],
+        "fullSourceBoundsXZ": {
+          "minX": -153.6721,
+          "minZ": -333.5935,
+          "maxX": 150.8124,
+          "maxZ": -58.5296
+        },
+        "footprintSource": {
+          "title": "2023 Connecticut Buildings",
+          "publisher": "State of Connecticut GIS Office",
+          "url": "https://geodata.ct.gov/datasets/ctmaps::2023-connecticut-buildings/about",
+          "overview": "https://maps.cteco.uconn.edu/data/flight2023/",
+          "service": "https://services3.arcgis.com/3FL1kr7L4LvwA2Kb/arcgis/rest/services/CT_Buildings/FeatureServer/0",
+          "metadata": "https://cteco.uconn.edu/download/metadata/CT_Statewide_BuildingFootprints_2023.xml",
+          "accessConstraints": "No restrictions apply to these data.",
+          "useConstraints": "None; account for temporal changes and dataset limitations."
+        },
+        "streetSource": {
+          "publisher": "OpenStreetMap contributors",
+          "attribution": "© OpenStreetMap contributors",
+          "url": "https://www.openstreetmap.org/copyright",
+          "license": "ODbL 1.0",
+          "retrieved": "2026-11-03",
+          "apiRequest": "https://api.openstreetmap.org/api/0.6/map?bbox=-73.192,41.178,-73.188,41.181"
+        },
+        "authoredElements": [
+          "Story tenant names and uses",
+          "All heights, façades, door positions and interiors",
+          "Open yards and district connectors",
+          "Road-width estimates"
+        ],
+        "sourceLimitations": "2023 automated footprint capture can combine adjacent structures or be affected by tree cover; actual heights, doors and interiors are not supplied.",
+        "evidence": "docs/fictional-city/geography/bridgeport-footprints-2023.geojson"
+      }
+    }
+  ],
+  "storyArcs": [
+    {
+      "id": "robbery-1s",
+      "title": "The Robbery 1s",
+      "series": "Designer Kicks",
+      "setting": "Bridgeport, Connecticut",
+      "neighborhoodId": "bridgeport-robbery-1s",
+      "description": "Follow the original pair through seven acts of neighborhood comedy, temptation, betrayal, and an unanswered altar reveal.",
+      "provenance": {
+        "kind": "owner_story_adapted_for_city",
+        "sourceTitle": "Designer Kicks.docx",
+        "sourceInternalTitle": "Episode 1: THE ROBBERY 1s (Working Title)",
+        "sourceModified": "2026-02-03",
+        "adaptationDate": "2026-11-03",
+        "versionPolicy": "The latest recovered seven-act script governs. The January 3 pilot’s Rico, Dre, Jayla, younger Malik, and alternate events are not merged into this version.",
+        "text": "New concise game prose paraphrases the recovered story. The pastor’s final short line is retained; the raw script and private source links are excluded.",
+        "settingAuthority": "The owner placed this story in Bridgeport on 2026-11-03. The recovered script gives no exact street or address.",
+        "spatialAdaptation": "The connected story block, fictional place names, repeated exterior encounter positions, and read-and-continue actions are new game adaptations. Several around-town scenes are represented at these local stops.",
+        "olderContext": "Earlier conversational backstory about a grandfather, a mob boss, imprisonment, or correctional-facility laces is not added to this seven-act adaptation.",
+        "unresolved": "The pastor recognizes the shoes and calls them his first pair. This does not resolve their origin, identify him as the first crime lord, or create a new ending."
+      },
+      "cast": [
+        {
+          "id": "robbery-dave",
+          "name": "Dave",
+          "ageRange": "20s–30s",
+          "role": "Opening wearer who gives up the pair."
+        },
+        {
+          "id": "robbery-malik",
+          "name": "Malik",
+          "ageRange": "16–18",
+          "role": "Teenage protagonist whose need for relief becomes entangled with the shoes."
+        },
+        {
+          "id": "robbery-kiara",
+          "name": "Kiara",
+          "ageRange": "16–18",
+          "role": "Malik’s friend, offering legitimate work and a way back to ordinary life."
+        },
+        {
+          "id": "robbery-harold",
+          "name": "Harold",
+          "ageRange": "25",
+          "role": "Recruiter and enforcer who takes the pair after Malik’s death and brings it to the altar."
+        },
+        {
+          "id": "robbery-mama",
+          "name": "Mama",
+          "ageRange": "40s",
+          "role": "Malik’s protective mother, facing unpaid bills and fearing for her son."
+        },
+        {
+          "id": "robbery-ocho-gr8",
+          "name": "Ocho Gr8 / Mr. GREAT",
+          "ageRange": "40s",
+          "role": "The organization’s leader and logistics authority."
+        },
+        {
+          "id": "robbery-low-ski",
+          "name": "Low-Ski",
+          "ageRange": "Unspecified",
+          "role": "The organization’s dice specialist."
+        },
+        {
+          "id": "robbery-og",
+          "name": "The Old Head",
+          "ageRange": "50s–60s",
+          "role": "Recognizes the pair and repeats the neighborhood legend."
+        },
+        {
+          "id": "robbery-shopkeeper",
+          "name": "The Shopkeeper",
+          "ageRange": "50s–60s",
+          "role": "Recognizes and fears the Robbery 1s at the corner store."
+        },
+        {
+          "id": "robbery-pastor",
+          "name": "The Pastor",
+          "ageRange": "50s–60s",
+          "role": "Presides over Malik’s funeral and recognizes the shoes at the altar."
+        }
+      ],
+      "canon": {
+        "shoeCustody": [
+          "Dave",
+          "donation bin",
+          "Malik",
+          "Harold",
+          "altar"
+        ],
+        "firstCollection": {
+          "collected": 15000,
+          "malikPaid": 1000,
+          "currency": "USD in the fictional story"
+        },
+        "finalCollection": {
+          "collected": 25000,
+          "requestedSharePercent": 50,
+          "currency": "USD in the fictional story"
+        },
+        "ending": "Malik dies; Harold brings the pair to the altar; the pastor recognizes his first pair. The next chapter is unresolved.",
+        "teenageCast": "Malik and Kiara are recovered story characters aged 16–18. They are separate from the 24 newly authored adult shop staff.",
+        "exchangeBoundary": "The existing Robbery 1s Exchange and its replica goods remain a separate fictional shop. They do not transfer the original pair or assign a new canonical wearer."
+      },
+      "interaction": {
+        "mode": "chronological-location-reader",
+        "completion": "Visit the current stop, read the scene, then choose Continue.",
+        "adaptedActions": "Location interaction advances an authored story. It does not perform the depicted collections, cuff trick, violence, or shoe powers.",
+        "rewards": null,
+        "playerRole": "Visitor following the story, not a new wearer of the original shoes."
+      },
+      "beats": [
+        {
+          "id": "robbery-1s-aftermath",
+          "title": "The Aftermath",
+          "act": 1,
+          "placeId": "bridgeport-ashline-works",
+          "position": [
+            -63.709,
+            -275.893
+          ],
+          "summary": "Dave wakes beside four people who will not wake. The shoes are impossibly clean.",
+          "paragraphs": [
+            "A failing streetlight catches the boarded windows of Ashline Works. Inside, Dave comes to on the concrete. Four people lie dead nearby; a bag of cash sits open. He cannot account for what happened.",
+            "He looks down at the pristine Robbery 1s. The neighborhood has a story about those shoes: their wearers finish in a grave or a cell unless they let go. Dave removes them, grabs them by the laces, and runs barefoot into the night.",
+            "An old head at a nearby dice game recognizes the pair. His warning follows Dave through the alleys. Whatever the shoes promised, Dave wants no part of it now."
+          ],
+          "actionLabel": "Continue",
+          "objective": "Find Ashline Works and begin Dave’s story.",
+          "allowInterior": true
+        },
+        {
+          "id": "robbery-1s-donation-bin",
+          "title": "A Pair in the Bin",
+          "act": 2,
+          "placeId": "bridgeport-last-light-market",
+          "position": [
+            10.655,
+            -278.751
+          ],
+          "summary": "Dave throws the pair away. By morning, Malik finds what looks like a way out.",
+          "paragraphs": [
+            "Dave reaches a donation bin, drops the Robbery 1s inside, and leaves. The shoes have changed hands before anyone has agreed to a bargain.",
+            "Morning brings buses, opening storefronts, and Malik walking in sneakers with loose soles. He spots the pair in the bin, checks the street, and slips them on. A chill passes through him; his stance changes.",
+            "Kiara notices both the shoes and the new attitude. Across the street, Harold notices something else: this is the original pair. Malik does not yet understand what Harold recognizes."
+          ],
+          "actionLabel": "Continue",
+          "objective": "Visit the donation bin near Last Light Market.",
+          "prop": "donation-bin",
+          "allowInterior": false,
+          "propPosition": [
+            10.655,
+            -276.551
+          ],
+          "propPlacement": "Authored donation-bin prop on clear land outside retained building footprints and mapped road widths."
+        },
+        {
+          "id": "robbery-1s-bodega",
+          "title": "The First Door",
+          "act": 2,
+          "placeId": "bridgeport-last-light-market",
+          "position": [
+            31.08,
+            -287.659
+          ],
+          "summary": "The shopkeeper recognizes the shoes before Malik understands their reputation.",
+          "paragraphs": [
+            "Harold offers to buy the pair. When Malik refuses, he tells him to test their reputation at the corner store. Kiara stays close, already uneasy.",
+            "The shopkeeper sees Malik’s feet and his welcome turns to fear. He gives away the snacks, empties the day’s takings, and asks Malik to keep other people from shaking down the shop.",
+            "Malik calls it an easy errand. Kiara sees a threshold he has crossed. Harold offers a place at the neighborhood trials, while Kiara reminds Malik that her aunt has legitimate work available."
+          ],
+          "actionLabel": "Continue",
+          "objective": "Approach the market and hear what happened at the counter.",
+          "allowInterior": true
+        },
+        {
+          "id": "robbery-1s-family",
+          "title": "Rent by Friday",
+          "act": 3,
+          "placeId": "bridgeport-northline-walkups",
+          "position": [
+            -98.227,
+            -186.997
+          ],
+          "summary": "Mama’s bills and Kiara’s offer show what Malik is trying to escape, and what he could still choose.",
+          "paragraphs": [
+            "At home, Mama’s desk is covered in late notices. She studies the new shoes, then her son. Her first concern is where he has been; his attention keeps returning to the unpaid rent.",
+            "She wants him fed, in school, and home safely. Kiara’s offer of a real shift is still there. Neither of them can promise an instant answer to every bill.",
+            "Malik sits with the pair and decides to find out what being special will pay. The next morning, he heads toward the trials instead of his ordinary day."
+          ],
+          "actionLabel": "Continue",
+          "objective": "Visit Northline Walkups and hear Malik’s family scene.",
+          "allowInterior": true
+        },
+        {
+          "id": "robbery-1s-block-olympics",
+          "title": "The Block Olympics",
+          "act": 3,
+          "placeId": "bridgeport-common-yard",
+          "position": [
+            -140,
+            -290.0
+          ],
+          "summary": "An alley competition turns impossible luck into neighborhood fame.",
+          "paragraphs": [
+            "A crooked banner, folding-table officials, a whistle, and an overworked speaker turn the yard into a ridiculous local stadium. Harold watches Malik arrive. Kiara has come looking for him.",
+            "The Robbery 1s carry Malik through extraordinary feats: a single bound over the fence, an impossible cuff reversal, and three sevens at dice. He insists on paying during the bodega receipt challenge, but even a polite purchase makes the shopkeeper afraid.",
+            "During the money weigh-in and the final dodging circle, the crowd turns Malik into a celebrity. Kiara sees fear disguised as generosity. Harold announces that Malik has qualified for real work. Malik asks what it pays."
+          ],
+          "actionLabel": "Continue",
+          "objective": "Reach Common Yard and follow the neighborhood trials.",
+          "allowInterior": false
+        },
+        {
+          "id": "robbery-1s-promotion",
+          "title": "The Promotion",
+          "act": 4,
+          "placeId": "bridgeport-night-shift-club",
+          "position": [
+            3.559,
+            -233.872
+          ],
+          "summary": "Mr. GREAT makes the organization look like an employer and Malik look like a recruit.",
+          "paragraphs": [
+            "In the club’s backroom, folding chairs face a whiteboard welcoming new enforcement. A clipboard, a lanyard, and a probationary badge turn a dangerous offer into absurd workplace ceremony.",
+            "Ocho Gr8, addressed as Mr. GREAT, assigns Malik to collect neighborhood dues with Harold. The instructions are about hierarchy and obedience. Malik is being welcomed for his usefulness.",
+            "The first route makes the job seem effortless until a resistant man exposes how quickly Malik’s anger is growing. Back in the car, Harold praises him. Mr. GREAT studies the shoes without explaining what he sees."
+          ],
+          "actionLabel": "Continue",
+          "objective": "Visit Night Shift Club and hear the promotion scene.",
+          "allowInterior": true
+        },
+        {
+          "id": "robbery-1s-legend-tax",
+          "title": "Legend Tax",
+          "act": 5,
+          "placeId": "bridgeport-brickline-school",
+          "position": [
+            64.224,
+            -227.168
+          ],
+          "summary": "Fear clears the hallway. A $15,000 bag earns Malik $1,000.",
+          "paragraphs": [
+            "Malik returns home with money. Mama knows the bills are real, but she will not confuse cash with safety. The next day, neighbors lower their eyes as he passes.",
+            "At school, classmates make room and his closest friend looks away. The attention that felt like belonging in the yard feels like isolation here. Malik leaves early and returns to Harold.",
+            "That night, the organization counts $15,000 from the route and gives Malik $1,000. On the walk home, he compares the two amounts. His need to help Mama is turning into a conviction that the whole operation should answer to him."
+          ],
+          "actionLabel": "Continue",
+          "objective": "Go to Brickline School and hear the cost of Malik’s reputation.",
+          "allowInterior": false
+        },
+        {
+          "id": "robbery-1s-stairwell",
+          "title": "New Turf · The Stairwell",
+          "act": 6,
+          "placeId": "bridgeport-northline-walkups",
+          "position": [
+            -101.442,
+            -185.377
+          ],
+          "summary": "The first new route refuses to make room for Harold and Malik.",
+          "paragraphs": [
+            "Harold warns Malik that today’s stops are different. Under a concrete stairwell, the waiting circle closes instead of welcoming them. A local leader rejects the organization’s claim on the place.",
+            "The confrontation turns physical. Malik moves with the shoes’ uncanny timing, takes the envelope, and walks out with more confidence than caution. Harold is still calling it a collection; the neighborhood is living through the consequences."
+          ],
+          "actionLabel": "Continue",
+          "objective": "Reach the walkups’ stairwell approach for the first New Turf scene.",
+          "allowInterior": false
+        },
+        {
+          "id": "robbery-1s-laundry",
+          "title": "New Turf · The Laundry",
+          "act": 6,
+          "placeId": "bridgeport-second-spin-laundry",
+          "position": [
+            -121.885,
+            -229.982
+          ],
+          "summary": "Dryers drown out the backroom until the encounter spills into the street.",
+          "paragraphs": [
+            "Behind the laundromat, a low basement room is too crowded and too tense. Harold notices before Malik does. The door closes behind them.",
+            "The meeting breaks into chaos among laundry carts and folding tables. Malik’s unnatural reflexes get them through, and he pulls Harold away from danger. They emerge into daylight with another envelope and one more reason to believe the shoes will always save them."
+          ],
+          "actionLabel": "Continue",
+          "objective": "Visit Second Spin Laundry and continue the New Turf route.",
+          "allowInterior": true
+        },
+        {
+          "id": "robbery-1s-fence-lot",
+          "title": "New Turf · The Fence Lot",
+          "act": 6,
+          "placeId": "bridgeport-railside-yard",
+          "position": [
+            142,
+            -271.0
+          ],
+          "summary": "A fenced lot makes the route’s danger impossible to ignore.",
+          "paragraphs": [
+            "Parked cars crowd the lanes inside the fence. The local crew refuses to pay. Then a dark car passes outside, shots interrupt the argument, and everyone scatters.",
+            "Malik brings Harold out of the confusion. For a moment, Harold sees the teenager who just saved him. Malik checks the envelope instead. Survival has started to feel routine to him."
+          ],
+          "actionLabel": "Continue",
+          "objective": "Find the entrance to Railside Yard for the next New Turf scene.",
+          "allowInterior": false
+        },
+        {
+          "id": "robbery-1s-hallway",
+          "title": "New Turf · The Hallway",
+          "act": 6,
+          "placeId": "bridgeport-northline-walkups",
+          "position": [
+            -104.657,
+            -183.757
+          ],
+          "summary": "Watching neighbors see how little space Malik leaves for anyone else.",
+          "paragraphs": [
+            "The final stop runs along an apartment hallway. Neighbors watch from half-open doors while another local leader blocks the way. A struggle brings Malik dangerously close to the stairs.",
+            "He leaves with the envelope and an anger that survives the encounter. In the car, Harold thanks him for the earlier rescue. Malik tells the older man to fend for himself. The partnership has changed, and Harold hears it."
+          ],
+          "actionLabel": "Continue",
+          "objective": "Return to the walkups’ hallway approach and finish the New Turf route.",
+          "allowInterior": false
+        },
+        {
+          "id": "robbery-1s-positions",
+          "title": "Positions",
+          "act": 6,
+          "placeId": "bridgeport-night-shift-club",
+          "position": [
+            0.259,
+            -232.432
+          ],
+          "summary": "Malik brings back $25,000 and demands half. The organization answers with its hierarchy.",
+          "paragraphs": [
+            "At the headquarters dice circle, Malik opens the bag in public: $25,000. He says he wants fifty percent. The yard goes quiet.",
+            "Mr. GREAT asks Harold to explain the operation. Harold names Low-Ski’s dice work, enforcement, logistics, and security. The speech is buying time while people at the crowd’s edges move into position.",
+            "Malik is killed. Harold removes the Robbery 1s from his feet. Mr. GREAT sends everyone back to their roles, and the dice begin moving again. The pair has a new keeper; the cost has fallen on Malik and the people who loved him."
+          ],
+          "actionLabel": "Continue",
+          "objective": "Return to Night Shift Club and hear the organization’s answer.",
+          "allowInterior": true
+        },
+        {
+          "id": "robbery-1s-altar",
+          "title": "The Altar",
+          "act": 7,
+          "placeId": "bridgeport-second-light-chapel",
+          "position": [
+            -57.815,
+            -205.611
+          ],
+          "summary": "Harold brings the original pair to Malik’s funeral. The pastor recognizes them.",
+          "paragraphs": [
+            "At Malik’s funeral, Mama sits before a closed casket. Classmates, neighbors, Harold, and members of the organization occupy the same church. The pastor speaks about the kind of temptation that looks like help while it takes a life apart.",
+            "Harold walks forward and places the Robbery 1s at the altar. He confesses what he knows about the curse and what he watched it do to Malik. He is afraid of being the next person it takes.",
+            "The pastor kneels beside the shoes. Recognition changes his face. He says, “This was my first pair.” The story ends there, with the meaning of that recognition still unresolved."
+          ],
+          "actionLabel": "Continue",
+          "objective": "Reach Second Light Chapel and hear the final scene.",
+          "allowInterior": true
+        }
+      ]
+    }
+  ]
 }
