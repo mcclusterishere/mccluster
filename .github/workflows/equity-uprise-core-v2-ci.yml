@@ -127,6 +127,9 @@ jobs:
       - name: Verify Lab Runtime Step 8 3D viewer integration
         run: node docs/design/equity-uprise-building/production/lab-runtime/verify_viewer_lab_integration_v1.mjs
 
+      - name: Verify Server Lab (rack/server hardware, IT-LAB-041..051)
+        run: node docs/design/equity-uprise-building/production/lab-runtime/verify_server_lab_v1.mjs
+
       - name: Verify B1-to-roof human walkability
         run: python docs/design/equity-uprise-building/production/audit_vertical_circulation_walkability.py
 

@@ -1148,6 +1148,18 @@ Current learner-facing floor-native coverage:
 This is the first usable layman diagnostic layer, not the final embodied simulation ceiling. Remaining learner-experience work is room-by-room camera/inspection coverage beyond Floor 1, richer synthetic people/report interactions, and visible physical consequences (for example lights, displays, connectivity and environmental behavior) driven by the existing sandbox state. One shared runtime, asset registry and canonical viewer remain authoritative.
 
 
+## Server Lab — STEP 10 HANDS-ON RACK / SERVER HARDWARE IMPLEMENTED (2026-11-03)
+
+Owner direction, 2026-11-03: the building is a real test environment: walk to a rack in 3D, open a server, identify its components, rebuild it and troubleshoot it like a real server, in levels. B1 is an open floor.
+
+Implemented (authority `SERVER-LAB-SPEC.md`):
+- MDF rack 01 (42U EIA-310; 482.6 mm / 44.45 mm per U; 600 × 1200 × 2000 mm) on the Step 4B manifest MDF data-rack anchor, mirroring `B1-TELECOM-RACKS-01-I001` and its registry assets; generic unbranded 2U and 1U two-socket server models and a component catalog with real dimensions, rules and failure-mode symptoms (`production/electronics/server-lab-hardware-v1.json`);
+- runtime `production/lab-runtime/equity-uprise-server-lab-runtime.mjs` + L4 pack + `verify_server_lab_v1.mjs` (Core V2 CI);
+- catalog IT-LAB-041..051 (51 labs); sandbox 1.2.0 server hardware faults;
+- owner-gated page `equity-uprise-server-lab-3d.html` (three.js 0.180): explore, L1 Identify, L2 Rebuild, L3 Bring-up, L4 Troubleshoot (8 fault scenarios), Step 6 assessment; Playwright run at 390 px and desktop (`scripts/e2e/server-lab.e2e.mjs`).
+
+Open: the B1 detailed builder places the telecom enclosure at X32–52 / Y22–34 while the electronics manifest anchors the MDF rack at (45, 62.8); recorded in the spec, not reconciled here. The lab page shows the MDF room, not the stacked building; entering it from the building viewer is next. Rack network devices remain schematic until promoted through Step 4C. Game Hub entry recommended in the spec (the hub is not on main yet).
+
 ## B1 Workplace Derived-Artifact Refresh — 2026-09-24
 
 The B1 workplace canon now lives in source authority and deterministic generators. This reconciliation regenerates and commits the derived B1/Floor 1 production packages, plan references and verification reports so main-source and generated artifacts remain byte-current under the Core V2 freshness gate.

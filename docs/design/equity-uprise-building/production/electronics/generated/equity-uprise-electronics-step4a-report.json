@@ -42,7 +42,7 @@
   "step4c_componentized_fire_alarm_control_panel_total": 1,
   "step4c_componentized_fire_alarm_read_only_gateway_total": 1,
   "wireless_links_total": 45,
-  "lab_scenarios_total": 40,
+  "lab_scenarios_total": 51,
   "new_asset_type_counts": {
     "access_controller": 8,
     "access_reader": 10,
@@ -680,7 +680,7 @@
     {
       "name": "at least forty IT labs generated",
       "passed": true,
-      "detail": 40
+      "detail": 51
     },
     {
       "name": "overlay GLB generated",

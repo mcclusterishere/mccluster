@@ -517,3 +517,12 @@ The first PRIM3 reinforcement binding is `IT-LAB-017`: once the learner successf
 Generated roof electronics use the `L7-` prefix. Spatial binding therefore explicitly recognizes both canonical `F7-` scene anchors and generated `L7-` electronics IDs as Level 7; no fallback coordinates are introduced.
 
 Boundary: Step 9 adds no live device control, no construction/as-built claims, and no automatic human competency awards. Cross-floor traces remain scenario-scoped rather than exposing the complete cable graph.
+
+## Step 10 — Server Lab (hands-on rack and server hardware)
+
+Owner, 2026-11-03: the building is a real test environment where people walk to a rack, open a server, identify its parts, rebuild it and troubleshoot it, in levels. Full specification: `SERVER-LAB-SPEC.md`.
+
+- Catalog: IT-LAB-041..051 appended to the Step 4A ladder (FOUNDATION identify, TECHNICIAN rebuild, ADMIN bring-up, ADVANCED/EXPERT hardware faults). The catalog now holds 51 labs; Step 1 and Step 2 verifiers pin 51.
+- Step 2 sandbox 1.2.0 supports seven server hardware faults (`dimm_uncorrectable_error`, `raid_member_failed`, `psu_failed`, `fan_failed`, `server_nic_link_down`, `cmos_battery_depleted`, `firmware_mismatch`) on the canonical host asset, with the NIC fault taking the canonical DAC connection down and CMOS drift reaching the hosted NTP service.
+- L1–L3 run as `ServerLabExercise` (semantic validators: memory population, seating order, cabling plan, RAID math); L4 runs the Step 3 `GuidedScenarioRunner` over `server-lab-scenario-pack-v1.json`. All four wrap in the Step 6 `AssessedExercise`.
+- Boundary unchanged: SIMULATION, SANDBOX, no live control, `credential_is_not_competency`, no automated Verified / Applied / Mentor.

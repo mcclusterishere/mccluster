@@ -3965,6 +3965,41 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "The one Control Room navigation definition; names the existing Equity Uprise operations views (missions, fellows, funding) as a System section entry and adds no distinct program capability."
+    },
+    {
+      "path": "equity-uprise-server-lab-3d.html",
+      "classification": "presentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Server Lab (SERVER-LAB-SPEC.md): owner-gated hands-on 3D rack/server lab that presents the B1 MDF sandbox clone and runs the canonical Lab Runtime (IT-LAB-041..051); presentation of existing lab-runtime authority, not an independent program capability."
+    },
+    {
+      "path": "js/server-lab/app.mjs",
+      "classification": "presentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Server Lab (SERVER-LAB-SPEC.md): owner-gated hands-on 3D rack/server lab that presents the B1 MDF sandbox clone and runs the canonical Lab Runtime (IT-LAB-041..051); presentation of existing lab-runtime authority, not an independent program capability."
+    },
+    {
+      "path": "css/server-lab.css",
+      "classification": "presentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Server Lab (SERVER-LAB-SPEC.md): owner-gated hands-on 3D rack/server lab that presents the B1 MDF sandbox clone and runs the canonical Lab Runtime (IT-LAB-041..051); presentation of existing lab-runtime authority, not an independent program capability."
+    },
+    {
+      "path": "scripts/e2e/server-lab.e2e.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Browser acceptance for the Server Lab page (owner gate, L1-L4 at 390 px and desktop)."
+    },
+    {
+      "path": "scripts/test/server-lab.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Server Lab page contract test (owner gate, published runtime files, mobile rules, unbranded hardware)."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",

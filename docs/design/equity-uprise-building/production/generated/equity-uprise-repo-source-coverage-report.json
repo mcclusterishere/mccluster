@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 528,
+  "candidate_count": 533,
   "capability_source_count": 102,
-  "support_only_count": 426,
-  "checks_total": 2012,
-  "checks_passed": 2012,
+  "support_only_count": 431,
+  "checks_total": 2032,
+  "checks_passed": 2032,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -85,6 +85,7 @@
     "css/music-director.css",
     "css/offers.css",
     "css/onboard.css",
+    "css/server-lab.css",
     "css/style.css",
     "css/world-audio-continuity.css",
     "data/README.md",
@@ -211,6 +212,7 @@
     "docs/uprise-world/AUDIT-REPORT.md",
     "ecosystem.html",
     "engineering/mccluster-platform.html",
+    "equity-uprise-server-lab-3d.html",
     "equity-uprise.html",
     "fbi.html",
     "feed.xml",
@@ -260,6 +262,7 @@
     "js/onboard.js",
     "js/payments.js",
     "js/policy-fellowship-ladder.js",
+    "js/server-lab/app.mjs",
     "js/site-navigation.js",
     "js/tabbar.js",
     "js/travel/world-travel.mjs",
@@ -299,6 +302,7 @@
     "receipt.html",
     "resume-it-support.html",
     "scripts/e2e/fixtures/axe-baseline.json",
+    "scripts/e2e/server-lab.e2e.mjs",
     "scripts/e2e/world-screen.e2e.mjs",
     "scripts/funding/validate-register-db.mjs",
     "scripts/kb-build.mjs",
@@ -332,6 +336,7 @@
     "scripts/test/security-reaudit.test.mjs",
     "scripts/test/seo-authority.test.mjs",
     "scripts/test/seo-contract.test.mjs",
+    "scripts/test/server-lab.test.mjs",
     "scripts/test/signup-authority.test.mjs",
     "scripts/test/song-test.test.mjs",
     "scripts/test/supabase-functions-deploy.test.mjs",
@@ -542,7 +547,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "528 entries"
+      "detail": "533 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -10596,6 +10601,106 @@
     },
     {
       "name": "js/control-room/nav.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "equity-uprise-server-lab-3d.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "equity-uprise-server-lab-3d.html classified",
+      "passed": true,
+      "detail": "classification='presentation_support'"
+    },
+    {
+      "name": "equity-uprise-server-lab-3d.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "equity-uprise-server-lab-3d.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/server-lab/app.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/server-lab/app.mjs classified",
+      "passed": true,
+      "detail": "classification='presentation_support'"
+    },
+    {
+      "name": "js/server-lab/app.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/server-lab/app.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "css/server-lab.css capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "css/server-lab.css classified",
+      "passed": true,
+      "detail": "classification='presentation_support'"
+    },
+    {
+      "name": "css/server-lab.css support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "css/server-lab.css support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/server-lab.e2e.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/server-lab.e2e.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/e2e/server-lab.e2e.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/e2e/server-lab.e2e.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/server-lab.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/server-lab.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/server-lab.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/server-lab.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     }
