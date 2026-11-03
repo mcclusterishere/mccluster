@@ -329,7 +329,13 @@ function onSheet(act) {
   if (act === 'back') { ui.preview = null; render(); return; }
   if (act === 'confirm-move') {
     const pv = ui.preview;
-    try { state = moveUnit(state, sel.id, { x: pv.x, y: pv.y, z: 0 }, pv.dash ? 'DASH' : 'MOVE'); ui.toast = `${sel.id} moved to (${pv.x}, ${pv.y}).`; ui.lastMove = { id: sel.id, path: pv.path }; }
+    try {
+      // the route the player saw is the route the resolver checks and walks (preview = execution)
+      state = moveUnit(state, sel.id, { x: pv.x, y: pv.y, z: 0 }, pv.dash ? 'DASH' : 'MOVE', { path: pv.path });
+      const ev = state.events[state.events.length - 1];
+      if (ev.type === 'MOVE_INTERRUPTED') { ui.toast = `${sel.id} was stopped at (${ev.at.x}, ${ev.at.y}): something blocks the way.`; ui.lastMove = { id: sel.id, path: ev.path }; }
+      else { ui.toast = `${sel.id} moved to (${pv.x}, ${pv.y}).`; ui.lastMove = { id: sel.id, path: ev.path }; }
+    }
     catch (e) { ui.toast = 'The move was refused: ' + esc(e.message) + '.'; }
     ui.mode = null; ui.preview = null; afterChange(); return;
   }

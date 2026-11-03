@@ -181,7 +181,8 @@ else for(const vp of [{width:390,height:844},{width:1280,height:900}]){
   const settle=async()=>{for(let i=0;i<60&&await page.evaluate(()=>window.__tac.busy3d());i++)await page.waitForTimeout(100);};
   const tap=async(x,y,h=0)=>{await settle();const p=await page.evaluate(([x,y,h])=>window.__tac.screenOf(x,y,h),[x,y,h]);await page.mouse.click(p.x,p.y);await page.waitForTimeout(150);};
   check(scope,'3D is the default view and draws into a WebGL canvas',await page.locator('#tac3d canvas').count()===1&&await page.evaluate(()=>getComputedStyle(document.getElementById('tacBoard')).display==='none'));
-  const painted=await page.evaluate(()=>{const c=document.querySelector('#tac3d canvas');const g=c.getContext('webgl2')||c.getContext('webgl');const px=new Uint8Array(4);g.readPixels(Math.floor(c.width/2),Math.floor(c.height/2),1,1,g.RGBA,g.UNSIGNED_BYTE,px);return px[0]+px[1]+px[2];});
+  // textures and the HDR stream in after first paint; sample a few times so a mid-load frame is not a false failure
+  let painted=0;for(let i=0;i<10&&painted<=30;i++){painted=await page.evaluate(()=>{const c=document.querySelector('#tac3d canvas');const g=c.getContext('webgl2')||c.getContext('webgl');const px=new Uint8Array(4);g.readPixels(Math.floor(c.width/2),Math.floor(c.height/2),1,1,g.RGBA,g.UNSIGNED_BYTE,px);return px[0]+px[1]+px[2];});if(painted<=30)await page.waitForTimeout(300);}
   check(scope,'the canvas actually renders the courtyard (centre pixel is not empty)',painted>30,painted);
   await tap(1,2,0.8);
   check(scope,'tapping E1 in 3D (body raycast) opens its menu beside it',await page.evaluate(()=>window.__tac.ui.menu&&window.__tac.ui.selected==='E1')&&await page.locator('#tacMenu.is-float').count()===1);
