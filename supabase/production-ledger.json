@@ -2,10 +2,10 @@
   "schema_version": "mccluster-supabase-production-ledger/v1",
   "project_ref": "zmnhbrjyhxzhkxmhkexs",
   "production_sql_cutover_version": "20260919020830",
-  "migration_count": 355,
-  "latest_version": "20261031180839",
-  "latest_name": "music_direct_sales_v1",
-  "ledger_sha256": "1bcd0b6d4bf143c0b4b9917d8a5a2994e8be5ffcf3f75eb2c94a06d85f75eecd",
+  "migration_count": 356,
+  "latest_version": "20261103003049",
+  "latest_name": "prim3_agent_news_desk_v1",
+  "ledger_sha256": "e90cbbbfe8a5d275f10c4d7bcf02a7919633b9062aa8e711c529048185817c4d",
   "migrations": [
     {
       "version": "0001",
@@ -1426,6 +1426,10 @@
     {
       "version": "20261031180839",
       "name": "music_direct_sales_v1"
+    },
+    {
+      "version": "20261103003049",
+      "name": "prim3_agent_news_desk_v1"
     }
   ]
 }
