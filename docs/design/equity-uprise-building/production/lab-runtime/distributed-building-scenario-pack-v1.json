@@ -152,7 +152,62 @@
           "action_id": "b1-idf-power-validate",
           "input": {}
         }
-      ]
+      ],
+      "hseep": {
+        "exercise_type": "drill",
+        "exercise_category": "operations-based",
+        "objectives": [
+          {
+            "objective_id": "OBJ-B1-IDF-POWER-DIAGNOSE",
+            "text": "Inspect the scoped building equipment and diagnose the simulated fault."
+          },
+          {
+            "objective_id": "OBJ-B1-IDF-POWER-RESTORE",
+            "text": "Restore the affected sandbox equipment/path."
+          },
+          {
+            "objective_id": "OBJ-B1-IDF-POWER-VALIDATE",
+            "text": "Validate the scoped system after restoration."
+          }
+        ],
+        "eeg": [
+          {
+            "criterion_id": "EU-DIST-B1-IDF-POWER-V1-EEG-1",
+            "objective_id": "OBJ-B1-IDF-POWER-DIAGNOSE",
+            "task": "Inspect the scoped building equipment and diagnose the simulated fault.",
+            "action_ids": [
+              "b1-idf-power-inspect-1",
+              "b1-idf-power-inspect-2",
+              "b1-idf-power-diagnose"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-DIST-B1-IDF-POWER-V1-EEG-2",
+            "objective_id": "OBJ-B1-IDF-POWER-RESTORE",
+            "task": "Restore the affected sandbox equipment/path.",
+            "action_ids": [
+              "b1-idf-power-restore"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-DIST-B1-IDF-POWER-V1-EEG-3",
+            "objective_id": "OBJ-B1-IDF-POWER-VALIDATE",
+            "task": "Validate the scoped system after restoration.",
+            "action_ids": [
+              "b1-idf-power-validate"
+            ],
+            "critical": true
+          }
+        ],
+        "hotwash_prompts": [
+          "What went well, and why? (strengths)",
+          "What should be done differently next time? (areas for improvement)",
+          "Was any step unclear, missing or unsafe?",
+          "Who should own each fix, and by when?"
+        ]
+      }
     },
     {
       "scenario_id": "EU-DIST-F1-WORKSTATION-LINK-V1",
@@ -278,7 +333,61 @@
           "action_id": "f1-workstation-link-validate",
           "input": {}
         }
-      ]
+      ],
+      "hseep": {
+        "exercise_type": "drill",
+        "exercise_category": "operations-based",
+        "objectives": [
+          {
+            "objective_id": "OBJ-F1-WORKSTATION-LINK-DIAGNOSE",
+            "text": "Inspect the scoped building equipment and diagnose the simulated fault."
+          },
+          {
+            "objective_id": "OBJ-F1-WORKSTATION-LINK-RESTORE",
+            "text": "Restore the affected sandbox equipment/path."
+          },
+          {
+            "objective_id": "OBJ-F1-WORKSTATION-LINK-VALIDATE",
+            "text": "Validate the scoped system after restoration."
+          }
+        ],
+        "eeg": [
+          {
+            "criterion_id": "EU-DIST-F1-WORKSTATION-LINK-V1-EEG-1",
+            "objective_id": "OBJ-F1-WORKSTATION-LINK-DIAGNOSE",
+            "task": "Inspect the scoped building equipment and diagnose the simulated fault.",
+            "action_ids": [
+              "f1-workstation-link-inspect-1",
+              "f1-workstation-link-diagnose"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-DIST-F1-WORKSTATION-LINK-V1-EEG-2",
+            "objective_id": "OBJ-F1-WORKSTATION-LINK-RESTORE",
+            "task": "Restore the affected sandbox equipment/path.",
+            "action_ids": [
+              "f1-workstation-link-restore"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-DIST-F1-WORKSTATION-LINK-V1-EEG-3",
+            "objective_id": "OBJ-F1-WORKSTATION-LINK-VALIDATE",
+            "task": "Validate the scoped system after restoration.",
+            "action_ids": [
+              "f1-workstation-link-validate"
+            ],
+            "critical": true
+          }
+        ],
+        "hotwash_prompts": [
+          "What went well, and why? (strengths)",
+          "What should be done differently next time? (areas for improvement)",
+          "Was any step unclear, missing or unsafe?",
+          "Who should own each fix, and by when?"
+        ]
+      }
     },
     {
       "scenario_id": "EU-DIST-F2-WIFI-OFFLINE-V1",
@@ -421,7 +530,62 @@
           "action_id": "f2-wifi-validate",
           "input": {}
         }
-      ]
+      ],
+      "hseep": {
+        "exercise_type": "drill",
+        "exercise_category": "operations-based",
+        "objectives": [
+          {
+            "objective_id": "OBJ-F2-WIFI-DIAGNOSE",
+            "text": "Inspect the local wireless path and diagnose the simulated outage."
+          },
+          {
+            "objective_id": "OBJ-F2-WIFI-RESTORE",
+            "text": "Restore the affected sandbox access-point path."
+          },
+          {
+            "objective_id": "OBJ-F2-WIFI-VALIDATE",
+            "text": "Validate wireless service after restoration."
+          }
+        ],
+        "eeg": [
+          {
+            "criterion_id": "EU-DIST-F2-WIFI-OFFLINE-V1-EEG-1",
+            "objective_id": "OBJ-F2-WIFI-DIAGNOSE",
+            "task": "Inspect the local wireless path and diagnose the simulated outage.",
+            "action_ids": [
+              "f2-wifi-inspect-1",
+              "f2-wifi-inspect-2",
+              "f2-wifi-diagnose"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-DIST-F2-WIFI-OFFLINE-V1-EEG-2",
+            "objective_id": "OBJ-F2-WIFI-RESTORE",
+            "task": "Restore the affected sandbox access-point path.",
+            "action_ids": [
+              "f2-wifi-restore"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-DIST-F2-WIFI-OFFLINE-V1-EEG-3",
+            "objective_id": "OBJ-F2-WIFI-VALIDATE",
+            "task": "Validate wireless service after restoration.",
+            "action_ids": [
+              "f2-wifi-validate"
+            ],
+            "critical": true
+          }
+        ],
+        "hotwash_prompts": [
+          "What went well, and why? (strengths)",
+          "What should be done differently next time? (areas for improvement)",
+          "Was any step unclear, missing or unsafe?",
+          "Who should own each fix, and by when?"
+        ]
+      }
     },
     {
       "scenario_id": "EU-DIST-F2-AV-MULTICAST-V1",
@@ -566,7 +730,62 @@
           "action_id": "f2-av-multicast-validate",
           "input": {}
         }
-      ]
+      ],
+      "hseep": {
+        "exercise_type": "drill",
+        "exercise_category": "operations-based",
+        "objectives": [
+          {
+            "objective_id": "OBJ-F2-AV-MULTICAST-DIAGNOSE",
+            "text": "Inspect the scoped building equipment and diagnose the simulated fault."
+          },
+          {
+            "objective_id": "OBJ-F2-AV-MULTICAST-RESTORE",
+            "text": "Restore the affected sandbox equipment/path."
+          },
+          {
+            "objective_id": "OBJ-F2-AV-MULTICAST-VALIDATE",
+            "text": "Validate the scoped system after restoration."
+          }
+        ],
+        "eeg": [
+          {
+            "criterion_id": "EU-DIST-F2-AV-MULTICAST-V1-EEG-1",
+            "objective_id": "OBJ-F2-AV-MULTICAST-DIAGNOSE",
+            "task": "Inspect the scoped building equipment and diagnose the simulated fault.",
+            "action_ids": [
+              "f2-av-multicast-inspect-1",
+              "f2-av-multicast-inspect-2",
+              "f2-av-multicast-diagnose"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-DIST-F2-AV-MULTICAST-V1-EEG-2",
+            "objective_id": "OBJ-F2-AV-MULTICAST-RESTORE",
+            "task": "Restore the affected sandbox equipment/path.",
+            "action_ids": [
+              "f2-av-multicast-restore"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-DIST-F2-AV-MULTICAST-V1-EEG-3",
+            "objective_id": "OBJ-F2-AV-MULTICAST-VALIDATE",
+            "task": "Validate the scoped system after restoration.",
+            "action_ids": [
+              "f2-av-multicast-validate"
+            ],
+            "critical": true
+          }
+        ],
+        "hotwash_prompts": [
+          "What went well, and why? (strengths)",
+          "What should be done differently next time? (areas for improvement)",
+          "Was any step unclear, missing or unsafe?",
+          "Who should own each fix, and by when?"
+        ]
+      }
     },
     {
       "scenario_id": "EU-DIST-F3-VOICE-VLAN-V1",
@@ -692,7 +911,61 @@
           "action_id": "f3-voice-vlan-validate",
           "input": {}
         }
-      ]
+      ],
+      "hseep": {
+        "exercise_type": "drill",
+        "exercise_category": "operations-based",
+        "objectives": [
+          {
+            "objective_id": "OBJ-F3-VOICE-VLAN-DIAGNOSE",
+            "text": "Inspect the scoped building equipment and diagnose the simulated fault."
+          },
+          {
+            "objective_id": "OBJ-F3-VOICE-VLAN-RESTORE",
+            "text": "Restore the affected sandbox equipment/path."
+          },
+          {
+            "objective_id": "OBJ-F3-VOICE-VLAN-VALIDATE",
+            "text": "Validate the scoped system after restoration."
+          }
+        ],
+        "eeg": [
+          {
+            "criterion_id": "EU-DIST-F3-VOICE-VLAN-V1-EEG-1",
+            "objective_id": "OBJ-F3-VOICE-VLAN-DIAGNOSE",
+            "task": "Inspect the scoped building equipment and diagnose the simulated fault.",
+            "action_ids": [
+              "f3-voice-vlan-inspect-1",
+              "f3-voice-vlan-diagnose"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-DIST-F3-VOICE-VLAN-V1-EEG-2",
+            "objective_id": "OBJ-F3-VOICE-VLAN-RESTORE",
+            "task": "Restore the affected sandbox equipment/path.",
+            "action_ids": [
+              "f3-voice-vlan-restore"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-DIST-F3-VOICE-VLAN-V1-EEG-3",
+            "objective_id": "OBJ-F3-VOICE-VLAN-VALIDATE",
+            "task": "Validate the scoped system after restoration.",
+            "action_ids": [
+              "f3-voice-vlan-validate"
+            ],
+            "critical": true
+          }
+        ],
+        "hotwash_prompts": [
+          "What went well, and why? (strengths)",
+          "What should be done differently next time? (areas for improvement)",
+          "Was any step unclear, missing or unsafe?",
+          "Who should own each fix, and by when?"
+        ]
+      }
     },
     {
       "scenario_id": "EU-DIST-F4-AV-QOS-V1",
@@ -837,7 +1110,62 @@
           "action_id": "f4-av-qos-validate",
           "input": {}
         }
-      ]
+      ],
+      "hseep": {
+        "exercise_type": "drill",
+        "exercise_category": "operations-based",
+        "objectives": [
+          {
+            "objective_id": "OBJ-F4-AV-QOS-DIAGNOSE",
+            "text": "Inspect the scoped building equipment and diagnose the simulated fault."
+          },
+          {
+            "objective_id": "OBJ-F4-AV-QOS-RESTORE",
+            "text": "Restore the affected sandbox equipment/path."
+          },
+          {
+            "objective_id": "OBJ-F4-AV-QOS-VALIDATE",
+            "text": "Validate the scoped system after restoration."
+          }
+        ],
+        "eeg": [
+          {
+            "criterion_id": "EU-DIST-F4-AV-QOS-V1-EEG-1",
+            "objective_id": "OBJ-F4-AV-QOS-DIAGNOSE",
+            "task": "Inspect the scoped building equipment and diagnose the simulated fault.",
+            "action_ids": [
+              "f4-av-qos-inspect-1",
+              "f4-av-qos-inspect-2",
+              "f4-av-qos-diagnose"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-DIST-F4-AV-QOS-V1-EEG-2",
+            "objective_id": "OBJ-F4-AV-QOS-RESTORE",
+            "task": "Restore the affected sandbox equipment/path.",
+            "action_ids": [
+              "f4-av-qos-restore"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-DIST-F4-AV-QOS-V1-EEG-3",
+            "objective_id": "OBJ-F4-AV-QOS-VALIDATE",
+            "task": "Validate the scoped system after restoration.",
+            "action_ids": [
+              "f4-av-qos-validate"
+            ],
+            "critical": true
+          }
+        ],
+        "hotwash_prompts": [
+          "What went well, and why? (strengths)",
+          "What should be done differently next time? (areas for improvement)",
+          "Was any step unclear, missing or unsafe?",
+          "Who should own each fix, and by when?"
+        ]
+      }
     },
     {
       "scenario_id": "EU-DIST-F5-WORKSTATION-VLAN-V1",
@@ -963,7 +1291,61 @@
           "action_id": "f5-workstation-vlan-validate",
           "input": {}
         }
-      ]
+      ],
+      "hseep": {
+        "exercise_type": "drill",
+        "exercise_category": "operations-based",
+        "objectives": [
+          {
+            "objective_id": "OBJ-F5-WORKSTATION-VLAN-DIAGNOSE",
+            "text": "Inspect the scoped building equipment and diagnose the simulated fault."
+          },
+          {
+            "objective_id": "OBJ-F5-WORKSTATION-VLAN-RESTORE",
+            "text": "Restore the affected sandbox equipment/path."
+          },
+          {
+            "objective_id": "OBJ-F5-WORKSTATION-VLAN-VALIDATE",
+            "text": "Validate the scoped system after restoration."
+          }
+        ],
+        "eeg": [
+          {
+            "criterion_id": "EU-DIST-F5-WORKSTATION-VLAN-V1-EEG-1",
+            "objective_id": "OBJ-F5-WORKSTATION-VLAN-DIAGNOSE",
+            "task": "Inspect the scoped building equipment and diagnose the simulated fault.",
+            "action_ids": [
+              "f5-workstation-vlan-inspect-1",
+              "f5-workstation-vlan-diagnose"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-DIST-F5-WORKSTATION-VLAN-V1-EEG-2",
+            "objective_id": "OBJ-F5-WORKSTATION-VLAN-RESTORE",
+            "task": "Restore the affected sandbox equipment/path.",
+            "action_ids": [
+              "f5-workstation-vlan-restore"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-DIST-F5-WORKSTATION-VLAN-V1-EEG-3",
+            "objective_id": "OBJ-F5-WORKSTATION-VLAN-VALIDATE",
+            "task": "Validate the scoped system after restoration.",
+            "action_ids": [
+              "f5-workstation-vlan-validate"
+            ],
+            "critical": true
+          }
+        ],
+        "hotwash_prompts": [
+          "What went well, and why? (strengths)",
+          "What should be done differently next time? (areas for improvement)",
+          "Was any step unclear, missing or unsafe?",
+          "Who should own each fix, and by when?"
+        ]
+      }
     },
     {
       "scenario_id": "EU-DIST-F6-CAMERA-VMS-V1",
@@ -1109,7 +1491,62 @@
           "action_id": "f6-camera-vms-validate",
           "input": {}
         }
-      ]
+      ],
+      "hseep": {
+        "exercise_type": "drill",
+        "exercise_category": "operations-based",
+        "objectives": [
+          {
+            "objective_id": "OBJ-F6-CAMERA-VMS-DIAGNOSE",
+            "text": "Inspect the scoped building equipment and diagnose the simulated fault."
+          },
+          {
+            "objective_id": "OBJ-F6-CAMERA-VMS-RESTORE",
+            "text": "Restore the affected sandbox equipment/path."
+          },
+          {
+            "objective_id": "OBJ-F6-CAMERA-VMS-VALIDATE",
+            "text": "Validate the scoped system after restoration."
+          }
+        ],
+        "eeg": [
+          {
+            "criterion_id": "EU-DIST-F6-CAMERA-VMS-V1-EEG-1",
+            "objective_id": "OBJ-F6-CAMERA-VMS-DIAGNOSE",
+            "task": "Inspect the scoped building equipment and diagnose the simulated fault.",
+            "action_ids": [
+              "f6-camera-vms-inspect-1",
+              "f6-camera-vms-inspect-2",
+              "f6-camera-vms-diagnose"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-DIST-F6-CAMERA-VMS-V1-EEG-2",
+            "objective_id": "OBJ-F6-CAMERA-VMS-RESTORE",
+            "task": "Restore the affected sandbox equipment/path.",
+            "action_ids": [
+              "f6-camera-vms-restore"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-DIST-F6-CAMERA-VMS-V1-EEG-3",
+            "objective_id": "OBJ-F6-CAMERA-VMS-VALIDATE",
+            "task": "Validate the scoped system after restoration.",
+            "action_ids": [
+              "f6-camera-vms-validate"
+            ],
+            "critical": true
+          }
+        ],
+        "hotwash_prompts": [
+          "What went well, and why? (strengths)",
+          "What should be done differently next time? (areas for improvement)",
+          "Was any step unclear, missing or unsafe?",
+          "Who should own each fix, and by when?"
+        ]
+      }
     },
     {
       "scenario_id": "EU-DIST-F7-BAS-V1",
@@ -1235,7 +1672,61 @@
           "action_id": "f7-bas-validate",
           "input": {}
         }
-      ]
+      ],
+      "hseep": {
+        "exercise_type": "drill",
+        "exercise_category": "operations-based",
+        "objectives": [
+          {
+            "objective_id": "OBJ-F7-BAS-DIAGNOSE",
+            "text": "Inspect the scoped building equipment and diagnose the simulated fault."
+          },
+          {
+            "objective_id": "OBJ-F7-BAS-RESTORE",
+            "text": "Restore the affected sandbox equipment/path."
+          },
+          {
+            "objective_id": "OBJ-F7-BAS-VALIDATE",
+            "text": "Validate the scoped system after restoration."
+          }
+        ],
+        "eeg": [
+          {
+            "criterion_id": "EU-DIST-F7-BAS-V1-EEG-1",
+            "objective_id": "OBJ-F7-BAS-DIAGNOSE",
+            "task": "Inspect the scoped building equipment and diagnose the simulated fault.",
+            "action_ids": [
+              "f7-bas-inspect-1",
+              "f7-bas-diagnose"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-DIST-F7-BAS-V1-EEG-2",
+            "objective_id": "OBJ-F7-BAS-RESTORE",
+            "task": "Restore the affected sandbox equipment/path.",
+            "action_ids": [
+              "f7-bas-restore"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-DIST-F7-BAS-V1-EEG-3",
+            "objective_id": "OBJ-F7-BAS-VALIDATE",
+            "task": "Validate the scoped system after restoration.",
+            "action_ids": [
+              "f7-bas-validate"
+            ],
+            "critical": true
+          }
+        ],
+        "hotwash_prompts": [
+          "What went well, and why? (strengths)",
+          "What should be done differently next time? (areas for improvement)",
+          "Was any step unclear, missing or unsafe?",
+          "Who should own each fix, and by when?"
+        ]
+      }
     },
     {
       "scenario_id": "EU-DIST-XF-F4-UPLINK-V1",
@@ -1362,7 +1853,61 @@
           "action_id": "xf-f4-uplink-validate",
           "input": {}
         }
-      ]
+      ],
+      "hseep": {
+        "exercise_type": "drill",
+        "exercise_category": "operations-based",
+        "objectives": [
+          {
+            "objective_id": "OBJ-XF-F4-UPLINK-DIAGNOSE",
+            "text": "Inspect the scoped building equipment and diagnose the simulated fault."
+          },
+          {
+            "objective_id": "OBJ-XF-F4-UPLINK-RESTORE",
+            "text": "Restore the affected sandbox equipment/path."
+          },
+          {
+            "objective_id": "OBJ-XF-F4-UPLINK-VALIDATE",
+            "text": "Validate the scoped system after restoration."
+          }
+        ],
+        "eeg": [
+          {
+            "criterion_id": "EU-DIST-XF-F4-UPLINK-V1-EEG-1",
+            "objective_id": "OBJ-XF-F4-UPLINK-DIAGNOSE",
+            "task": "Inspect the scoped building equipment and diagnose the simulated fault.",
+            "action_ids": [
+              "xf-f4-uplink-inspect-1",
+              "xf-f4-uplink-diagnose"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-DIST-XF-F4-UPLINK-V1-EEG-2",
+            "objective_id": "OBJ-XF-F4-UPLINK-RESTORE",
+            "task": "Restore the affected sandbox equipment/path.",
+            "action_ids": [
+              "xf-f4-uplink-restore"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-DIST-XF-F4-UPLINK-V1-EEG-3",
+            "objective_id": "OBJ-XF-F4-UPLINK-VALIDATE",
+            "task": "Validate the scoped system after restoration.",
+            "action_ids": [
+              "xf-f4-uplink-validate"
+            ],
+            "critical": true
+          }
+        ],
+        "hotwash_prompts": [
+          "What went well, and why? (strengths)",
+          "What should be done differently next time? (areas for improvement)",
+          "Was any step unclear, missing or unsafe?",
+          "Who should own each fix, and by when?"
+        ]
+      }
     },
     {
       "scenario_id": "EU-DIST-XF-F6-FIBER-V1",
@@ -1489,7 +2034,66 @@
           "action_id": "xf-f6-fiber-validate",
           "input": {}
         }
-      ]
+      ],
+      "hseep": {
+        "exercise_type": "drill",
+        "exercise_category": "operations-based",
+        "objectives": [
+          {
+            "objective_id": "OBJ-XF-F6-FIBER-DIAGNOSE",
+            "text": "Inspect the scoped building equipment and diagnose the simulated fault."
+          },
+          {
+            "objective_id": "OBJ-XF-F6-FIBER-RESTORE",
+            "text": "Restore the affected sandbox equipment/path."
+          },
+          {
+            "objective_id": "OBJ-XF-F6-FIBER-VALIDATE",
+            "text": "Validate the scoped system after restoration."
+          }
+        ],
+        "eeg": [
+          {
+            "criterion_id": "EU-DIST-XF-F6-FIBER-V1-EEG-1",
+            "objective_id": "OBJ-XF-F6-FIBER-DIAGNOSE",
+            "task": "Inspect the scoped building equipment and diagnose the simulated fault.",
+            "action_ids": [
+              "xf-f6-fiber-inspect-1",
+              "xf-f6-fiber-diagnose"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-DIST-XF-F6-FIBER-V1-EEG-2",
+            "objective_id": "OBJ-XF-F6-FIBER-RESTORE",
+            "task": "Restore the affected sandbox equipment/path.",
+            "action_ids": [
+              "xf-f6-fiber-restore"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-DIST-XF-F6-FIBER-V1-EEG-3",
+            "objective_id": "OBJ-XF-F6-FIBER-VALIDATE",
+            "task": "Validate the scoped system after restoration.",
+            "action_ids": [
+              "xf-f6-fiber-validate"
+            ],
+            "critical": true
+          }
+        ],
+        "hotwash_prompts": [
+          "What went well, and why? (strengths)",
+          "What should be done differently next time? (areas for improvement)",
+          "Was any step unclear, missing or unsafe?",
+          "Who should own each fix, and by when?"
+        ]
+      }
     }
-  ]
+  ],
+  "hseep": {
+    "doctrine_ref": "hseep-building-safety-scenario-pack-v1.json#/doctrine",
+    "aar_ip_fields_ref": "hseep-building-safety-scenario-pack-v1.json#/doctrine/aar_ip_fields",
+    "automation_boundary": "The runtime drafts EEG ratings and an AAR/IP; a human evaluator finalises them and assigns improvement owners."
+  }
 }

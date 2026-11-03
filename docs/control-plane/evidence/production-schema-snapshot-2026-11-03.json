@@ -3,7 +3,7 @@
  "source": "production via Supabase MCP execute_sql",
  "captured_at": null,
  "sections": {
-  "ledger": {"sql_sha256": "06df2edb6ebff516f11917098c87a4466b8e15f08c9566387b78c675cb65eb89", "md5": "049d707e95c6a15c4183fbd6829d061f", "rows": [
+  "ledger": {"sql_sha256": "06df2edb6ebff516f11917098c87a4466b8e15f08c9566387b78c675cb65eb89", "md5": "bfc2d24cfe7beab943c8c4ac9b81674b", "rows": [
    ["0001","crm",12,"a2de7a029cad25e5bfa01ef322c3dbfb","11388f4dd961442667306b4ba2fd6a95"],
    ["0002","connect_saas",12,"8d58c18c5daafcd72852f635a652c801","fbe7cba3f5d438ea1c6f3631e95f3d74"],
    ["0003","creator_cuts",19,"610ed001a4cb7d58af2cea8ef8647e7e","6bf4fbf828edefeb2d5e5c0e8ece094e"],
@@ -361,7 +361,8 @@
    ["20261031180839","music_direct_sales_v1",1,"037044a65154d1d0958e812b5daec77b","66bba8c08a7d918cf107b3aa80351cb1"],
    ["20261103003049","prim3_agent_news_desk_v1",1,"bb29feb59bd21d2e4a583676ff110fe0","822d0273f5d52157142f596c6786654f"],
    ["20261103010802","prim3_agent_news_longer_v1",1,"42384bd273dba6cee816a2c01db8d208","5d8481b9f8ff737b512b68fc458d4c7c"],
-   ["20261103012656","world_news_pairs_v1",1,"6ae58d56a8393367ccb4a98ddd2f6a38","f03db01513a4308476b7b5a2608ac928"]
+   ["20261103012656","world_news_pairs_v1",1,"6ae58d56a8393367ccb4a98ddd2f6a38","f03db01513a4308476b7b5a2608ac928"],
+   ["20261103182544","learning_evidence_v1",1,"c686165d783ddbe12ae8e9ac28a09bf7","32441a54e17dde39d9ccabf4fd3438bc"]
   ]},
   "schemas": {"sql_sha256": "c264a3a8ea04c581764f0c8e91b3f46db00c180ee0aa460f05daf6f369d7390c", "md5": "4bc7ab380f6f1bafa7f05b59ff051e54", "rows": [
    ["ai_context","postgres",""],
@@ -382,7 +383,7 @@
    ["uuid-ossp","1.1","extensions"],
    ["vector","0.8.2","public"]
   ]},
-  "relations": {"sql_sha256": "4f21607c9f2439a94f92ca3d8189cef3a3b382b52b33c1f781cf817503cd3a94", "md5": "8c1f3fd2e29eaf750cae5f0141da74e1", "rows": [
+  "relations": {"sql_sha256": "4f21607c9f2439a94f92ca3d8189cef3a3b382b52b33c1f781cf817503cd3a94", "md5": "9eced4e202c880c02d8ddfafe1773fb7", "rows": [
    ["ai_context","artifact_links","r",true,false,"",13,"b774fceb642e","b3b16d106caf","ff696abe0b16","",""],
    ["ai_context","context_snapshots","r",true,false,"",11,"5a3dd3b31e14","763fdc6a8354","bbf14d876094","",""],
    ["ai_context","conversations","r",true,false,"",13,"73aa22ced17b","882731ea3d27","e574df182ad5","",""],
@@ -683,6 +684,19 @@
    ["public","l3_products","r",true,false,"",21,"768a04f1e1a1","a8e73254c95c","d92d742b7e5e","","anon=damrw;authenticated=damrw"],
    ["public","l3_store_settings","r",true,false,"",16,"7538d8690827","de34174058fe","fd49d30735ac","","anon=damrw;authenticated=damrw"],
    ["public","leads","r",true,false,"",14,"ad0cef6776d0","d2bb7709ec5e","7851cd2fa5ff","","anon=damrw;authenticated=damr"],
+   ["public","learning_competency_ratings","r",true,false,"",12,"26414f31867c","575fb35a1e29","6206f934fbf1","","authenticated=ar"],
+   ["public","learning_evidence_events","r",true,false,"",13,"31eb6fd2c946","d2bf252ffee1","e8682b91c5b4","","authenticated=ar"],
+   ["public","learning_external_credentials","r",true,false,"",20,"3e40c9323fbe","adcb5da91a3c","7f85c3275048","","authenticated=ar"],
+   ["public","learning_hseep_aar","r",true,false,"",11,"096ed5735a28","82b6834073ad","807fe3fa5952","","authenticated=r"],
+   ["public","learning_hseep_evaluations","r",true,false,"",10,"2a7d883a6e37","fd6620aa280c","78291d56f3ae","","authenticated=r"],
+   ["public","learning_hseep_exercises","r",true,false,"",18,"7a0042edbed5","17d3e707c77e","e59065f1e0d7","","authenticated=r"],
+   ["public","learning_hseep_improvement_items","r",true,false,"",16,"688a5b70979d","9cc1e286fcec","07075e522aa3","","authenticated=r"],
+   ["public","learning_hseep_participants","r",true,false,"",7,"a6e56040dbc9","a4dd8b6a152e","801966d8b1f2","","authenticated=r"],
+   ["public","learning_ics214_entries","r",true,false,"",9,"de5790bf2d77","1f1961e6ad0b","1693b44340e7","","authenticated=r"],
+   ["public","learning_lab_sessions","r",true,false,"",18,"dc954f571b89","411564f907d3","c3feb72ccfb9","","authenticated=ar"],
+   ["public","learning_pathway_enrollments","r",true,false,"",8,"ea6ace5d8190","be13972cceb2","b2c5599c2e55","","authenticated=ar"],
+   ["public","learning_pathway_step_progress","r",true,false,"",8,"4aca4b9d5a3c","6485cf806e4d","635fefe59daf","","authenticated=r"],
+   ["public","learning_reviewers","r",true,false,"",5,"1f3baae8d4a0","6f311d7d5dd3","fb3630fd4274","","authenticated=r"],
    ["public","licence_scopes","r",true,false,"",5,"cb9f0c3b32c4","4af2a6caeaa8","e5f4144425ae","","anon=damrw;authenticated=damrw"],
    ["public","listener_state","r",true,true,"",3,"546a51b38113","52bb57bf9b7f","436a3b6595c4","","authenticated=arw"],
    ["public","m_auth_user_links","r",true,false,"",5,"c80846fac57b","823909fbf04b","da362f42b5b0","","authenticated=r"],
@@ -927,7 +941,7 @@
    ["public","world_news_pairs","r",true,false,"",14,"5de761fbdc0f","76b13db8ea63","55500d48ba73","",""],
    ["public","world_region_sharing","r",true,true,"",5,"4b843b55af0a","24a36f9e1660","42bce73daf3b","",""]
   ]},
-  "functions": {"sql_sha256": "098f140bd90448d45ab6c333fa98638ad43c659c2744f2bae3e47e087676e78f", "md5": "3f28cae118311bc6e48ff469213789cd", "rows": [
+  "functions": {"sql_sha256": "098f140bd90448d45ab6c333fa98638ad43c659c2744f2bae3e47e087676e78f", "md5": "65a475b21058c704fba73adad25bb48b", "rows": [
    ["private","clip_audit","p_org uuid, p_event text, p_type text, p_id text, p_detail jsonb","void",true,"v","search_path=\"\"","60b42e062739",""],
    ["private","clip_canonical_url","p_platform text, p_media text","text",false,"i","search_path=\"\"","485e72ed39b5",""],
    ["private","clip_code","","text",false,"v","search_path=\"\"","f5d91b3988d5",""],
@@ -1215,6 +1229,15 @@
    ["public","l3_public_products","","TABLE(id uuid, title text, slug text, short_description text, description text, price_cents integer, currency text, cover_path text, version text, sort_order integer, published_at timestamp with time zone)",true,"s","search_path=public","aff08cc267ca","anon=X;authenticated=X"],
    ["public","l3_public_storefront","","jsonb",true,"s","search_path=public","08624418022d","anon=X;authenticated=X"],
    ["public","l3_update_store_profile","p_store_name text, p_store_description text, p_support_email text, p_refund_policy text, p_terms_url text, p_storefront_enabled boolean","jsonb",true,"v","search_path=public","2bdb45c88988","authenticated=X"],
+   ["public","learning_append_only","","trigger",false,"v","search_path=\"\"","363fe62baa19","PUBLIC=X"],
+   ["public","learning_credential_guard","","trigger",true,"v","search_path=\"\"","9667489a6cd0",""],
+   ["public","learning_event_digest","p_prev text, p_session uuid, p_seq integer, p_type text, p_action text, p_status text, p_role text, p_payload jsonb, p_at timestamp with time zone","text",false,"s","search_path=\"\"","66e722bb4aa1","PUBLIC=X"],
+   ["public","learning_evidence_chain","","trigger",true,"v","search_path=\"\"","aab955ef64a3",""],
+   ["public","learning_in_exercise","p_exercise uuid","boolean",true,"s","search_path=\"\"","60e7856d1934","authenticated=X"],
+   ["public","learning_is_reviewer","","boolean",true,"s","search_path=\"\"","607e817f9f23","authenticated=X"],
+   ["public","learning_rating_reviewer_guard","","trigger",true,"v","search_path=\"\"","47d69718ca31",""],
+   ["public","learning_touch_updated_at","","trigger",false,"v","search_path=\"\"","602fd0db8728","PUBLIC=X"],
+   ["public","learning_user_is_reviewer","p_user uuid","boolean",true,"s","search_path=\"\"","73236685211e",""],
    ["public","live_can_host","","boolean",true,"s","search_path=\"\"","68f5a628f20b","authenticated=X"],
    ["public","live_host_context","","jsonb",true,"s","search_path=\"\"","70048eefa670","authenticated=X"],
    ["public","m_auth_user_after_insert","","trigger",true,"v","search_path=pg_catalog, public","4bfc8917c0a0",""],
@@ -1427,7 +1450,7 @@
    ["public","world_region_sharing_get","","TABLE(country_code text, subdivision_code text, consented_at timestamp with time zone)",true,"s","search_path=\"\"","8abf5cf315e3","authenticated=X"],
    ["public","world_region_sharing_set","p_country_code text, p_subdivision_code text","TABLE(country_code text, subdivision_code text, consented_at timestamp with time zone)",true,"v","search_path=\"\"","f4b7eb59636b","authenticated=X"]
   ]},
-  "policies": {"sql_sha256": "c515d8133196624ec8df5055bb1e182dbfbdb863ae9f41c9619b6f730379eb5c", "md5": "e17c0280f77402bf34be7bab4ba10861", "rows": [
+  "policies": {"sql_sha256": "c515d8133196624ec8df5055bb1e182dbfbdb863ae9f41c9619b6f730379eb5c", "md5": "25e69d1317c93ea2b9455b63a248e8e1", "rows": [
    ["public","action_antisocial_levels","owner reads own antisocial levels","PERMISSIVE","SELECT","authenticated","65f25830dac2",""],
    ["public","action_archive_events","action_archive_events_public","PERMISSIVE","SELECT","anon,authenticated","368b0c7d0476",""],
    ["public","action_archive_participants","action_archive_participants_public","PERMISSIVE","SELECT","anon,authenticated","7f168821b2d6",""],
@@ -1661,6 +1684,25 @@
    ["public","leads","leads_in","PERMISSIVE","INSERT","anon,authenticated","","af9b1478be11"],
    ["public","leads","leads_org_read","PERMISSIVE","SELECT","authenticated","2097049269db",""],
    ["public","leads","leads_work","PERMISSIVE","UPDATE","authenticated","ba97143b40f1",""],
+   ["public","learning_competency_ratings","learning_ratings_read","PERMISSIVE","SELECT","authenticated","615e5c3f0936",""],
+   ["public","learning_competency_ratings","learning_ratings_review","PERMISSIVE","INSERT","authenticated","","1ca46c4205aa"],
+   ["public","learning_evidence_events","learning_events_append","PERMISSIVE","INSERT","authenticated","","6a6b7c2a3a52"],
+   ["public","learning_evidence_events","learning_events_read","PERMISSIVE","SELECT","authenticated","615e5c3f0936",""],
+   ["public","learning_external_credentials","learning_credentials_claim","PERMISSIVE","INSERT","authenticated","","3bebe8c7c0de"],
+   ["public","learning_external_credentials","learning_credentials_read","PERMISSIVE","SELECT","authenticated","615e5c3f0936",""],
+   ["public","learning_external_credentials","learning_credentials_review","PERMISSIVE","UPDATE","authenticated","0517ef53de10","4daf22bd0750"],
+   ["public","learning_hseep_aar","learning_aar_read","PERMISSIVE","SELECT","authenticated","871f4d503e20",""],
+   ["public","learning_hseep_evaluations","learning_evaluations_read","PERMISSIVE","SELECT","authenticated","871f4d503e20",""],
+   ["public","learning_hseep_exercises","learning_exercises_read","PERMISSIVE","SELECT","authenticated","da91a21c35a5",""],
+   ["public","learning_hseep_improvement_items","learning_improvements_read","PERMISSIVE","SELECT","authenticated","757795fe912e",""],
+   ["public","learning_hseep_participants","learning_participants_read","PERMISSIVE","SELECT","authenticated","871f4d503e20",""],
+   ["public","learning_ics214_entries","learning_ics214_read","PERMISSIVE","SELECT","authenticated","e9f6b0ca80f2",""],
+   ["public","learning_lab_sessions","learning_sessions_read","PERMISSIVE","SELECT","authenticated","615e5c3f0936",""],
+   ["public","learning_lab_sessions","learning_sessions_start","PERMISSIVE","INSERT","authenticated","","f2a40ae41ff5"],
+   ["public","learning_pathway_enrollments","learning_enrollments_join","PERMISSIVE","INSERT","authenticated","","2858af013a00"],
+   ["public","learning_pathway_enrollments","learning_enrollments_read","PERMISSIVE","SELECT","authenticated","615e5c3f0936",""],
+   ["public","learning_pathway_step_progress","learning_steps_read","PERMISSIVE","SELECT","authenticated","615e5c3f0936",""],
+   ["public","learning_reviewers","learning_reviewers_read","PERMISSIVE","SELECT","authenticated","615e5c3f0936",""],
    ["public","licence_scopes","ls_admin","PERMISSIVE","ALL","authenticated","ba97143b40f1","ba97143b40f1"],
    ["public","licence_scopes","ls_read","PERMISSIVE","SELECT","anon,authenticated","b326b5062b2f",""],
    ["public","listener_state","listener_state_own","PERMISSIVE","ALL","authenticated","f67db3caa02f","f67db3caa02f"],
@@ -1861,6 +1903,8 @@
    ["storage","objects","l3_public_staff_delete","PERMISSIVE","DELETE","authenticated","03b0d1de4ca4",""],
    ["storage","objects","l3_public_staff_insert","PERMISSIVE","INSERT","authenticated","","03b0d1de4ca4"],
    ["storage","objects","l3_public_staff_update","PERMISSIVE","UPDATE","authenticated","03b0d1de4ca4","03b0d1de4ca4"],
+   ["storage","objects","learning credentials: learners upload to their own folder","PERMISSIVE","INSERT","authenticated","","43aaab282c56"],
+   ["storage","objects","learning credentials: owner and reviewers read","PERMISSIVE","SELECT","authenticated","777f260a3284",""],
    ["storage","objects","mnet avatars are removed by their owner","PERMISSIVE","DELETE","authenticated","85dd2bc5267e",""],
    ["storage","objects","mnet avatars are replaced by their owner","PERMISSIVE","UPDATE","authenticated","85dd2bc5267e",""],
    ["storage","objects","mnet avatars are world readable","PERMISSIVE","SELECT","public","56430ad1c851",""],
@@ -1870,7 +1914,7 @@
    ["storage","objects","mnet media owner update","PERMISSIVE","UPDATE","authenticated","97da7ab7aa90","97da7ab7aa90"],
    ["storage","objects","mnet media owner upload","PERMISSIVE","INSERT","authenticated","","97da7ab7aa90"]
   ]},
-  "triggers": {"sql_sha256": "7ad73e80c147d3e2af44fdacd3e0622b7152340a2968582e34e45b47c52c3987", "md5": "e204d130706469591694b7d33b5c9a4c", "rows": [
+  "triggers": {"sql_sha256": "7ad73e80c147d3e2af44fdacd3e0622b7152340a2968582e34e45b47c52c3987", "md5": "b61e033ecd6c2ed71f55cddb6553bf75", "rows": [
    ["ai_context","decisions","intel_decision_approval_v2","O","6bd9376e62fb"],
    ["public","action_clip_earnings","action_clip_earnings_guard","O","afb9ecb05b26"],
    ["public","action_mission_assignments","action_bounty_sync_claim_trg","O","d14981d81826"],
@@ -1945,6 +1989,17 @@
    ["public","intel_mission_decisions","intel_mission_basis_v2","O","08d4640f106a"],
    ["public","kb_documents","ops_ingest_kb_document_t","O","3bd72efd8139"],
    ["public","leads","leads_anon_rate_limit","O","fc2afff24082"],
+   ["public","learning_competency_ratings","learning_rating_reviewer_guard","O","d1ee1da365ab"],
+   ["public","learning_competency_ratings","learning_ratings_append_only","O","948eaab0f51e"],
+   ["public","learning_evidence_events","learning_evidence_append_only","O","36708a525c74"],
+   ["public","learning_evidence_events","learning_evidence_chain","O","4c13b184d153"],
+   ["public","learning_external_credentials","learning_credential_guard","O","1926f244758d"],
+   ["public","learning_hseep_aar","learning_touch","O","12ff9b5c9055"],
+   ["public","learning_hseep_exercises","learning_touch","O","bc39dc93ff9d"],
+   ["public","learning_hseep_improvement_items","learning_touch","O","6bf7cd5442f1"],
+   ["public","learning_ics214_entries","learning_ics214_append_only","O","cc6501f2d270"],
+   ["public","learning_pathway_enrollments","learning_touch","O","6fbf87387eac"],
+   ["public","learning_pathway_step_progress","learning_touch","O","ed32c433f72e"],
    ["public","listener_state","listener_state_touch","O","4feb53e701ba"],
    ["public","m_auth_user_links","network_profile_after_auth_link_trg","O","260797c0190e"],
    ["public","mail_users","mail_users_guard_t","O","1b4378d153c9"],
@@ -2010,7 +2065,7 @@
    ["public","work_renewals","work_renewals_touch","O","5c0d87adec1d"],
    ["public","work_tasks","work_tasks_touch","O","1885937e0af0"]
   ]},
-  "buckets": {"sql_sha256": "3e68feff361f7820d7bd1b334db54433665c05aa0289f1d03f6dfea88db485da", "md5": "86e40cbda33461cd714951d5b31eaf20", "rows": [
+  "buckets": {"sql_sha256": "3e68feff361f7820d7bd1b334db54433665c05aa0289f1d03f6dfea88db485da", "md5": "ab5934a1b2086d4a1dce10382d03ed92", "rows": [
    ["creator-artwork","creator-artwork",true,20971520,["image/jpeg","image/png","image/webp","image/avif"]],
    ["creator-masters","creator-masters",false,524288000,["audio/mpeg","audio/mp4","audio/x-m4a","audio/wav","audio/flac"]],
    ["creator-previews","creator-previews",true,52428800,["audio/mpeg","audio/mp4","audio/x-m4a","audio/wav"]],
@@ -2019,6 +2074,7 @@
    ["equity-uprise-public","equity-uprise-public",true,52428800,["text/html","application/pdf","application/xml","application/vnd.jats+xml","application/x-bibtex","application/x-research-info-systems","application/json","text/plain","text/markdown","image/png","image/jpeg","image/webp"]],
    ["l3-product-files","l3-product-files",false,536870912,null],
    ["l3-public","l3-public",true,52428800,null],
+   ["learning-credentials","learning-credentials",false,10485760,["application/pdf","image/png","image/jpeg","image/webp"]],
    ["masters","masters",false,null,null],
    ["mcc-gated-audio","mcc-gated-audio",false,524288000,["audio/mpeg","audio/mp4","audio/x-m4a","audio/wav","audio/flac"]],
    ["mnet-avatars","mnet-avatars",true,5242880,["image/png","image/jpeg","image/webp","image/gif"]],
