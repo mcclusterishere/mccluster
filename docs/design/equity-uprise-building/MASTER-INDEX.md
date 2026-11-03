@@ -348,6 +348,16 @@ The canonical learner presentation is now **symptom-first rather than engineerin
 
 The first explicit PRIM3 reinforcement binding is the Floor 2 Wi-Fi outage (`IT-LAB-017`): after successful diagnosis and verification, the learner can open **Got WiFi?** as a post-lab refresher. This is reinforcement, not the primary lesson or proof of mastery.
 
+### Step 10 Server Lab — hands-on rack / server hardware (owner, 2026-11-03)
+- `SERVER-LAB-SPEC.md`
+- `production/electronics/server-lab-hardware-v1.json`
+- `production/lab-runtime/equity-uprise-server-lab-runtime.mjs`
+- `production/lab-runtime/server-lab-scenario-pack-v1.json`
+- `production/lab-runtime/verify_server_lab_v1.mjs`
+- page: `equity-uprise-server-lab-3d.html` (owner-gated), `js/server-lab/`, `css/server-lab.css`
+
+MDF rack 01 in B1 (42U EIA-310, mirrors `B1-TELECOM-RACKS-01-I001`) and a generic 2U/1U server built from data. Four levels on the existing runtime chain: L1 Identify (IT-LAB-041), L2 Rebuild (IT-LAB-042), L3 Bring-up (IT-LAB-043), L4 Troubleshoot (IT-LAB-044..051, injected hardware faults on the sandbox clone of `B1-SRV-HYP-01-I001`). Step 6 assessment; SANDBOX only; generic unbranded hardware.
+
 
 ## v3 interiors, brand slots and model consistency (2026-11-03)
 
@@ -356,3 +366,12 @@ The first explicit PRIM3 reinforcement binding is the Floor 2 Wi-Fi outage (`IT-
 - `production/interiors/audit_interior_consistency.py` — model-consistency audit (CI + deploy); report `production/generated/equity-uprise-interior-consistency-report.json`.
 - `production/basement-b1/basement-b1-interior-layout-v3.json`, `production/floor-0{1..6}/floor-0X-interior-layout-v3.json` — per-floor furnishing layouts.
 - `production/brand/brand-manifest.json`, `eu_brand_slots.py`, `equity-uprise-brand-slots.mjs` — brand-slot contract (assign a new logo by changing the manifest artwork).
+
+## Screens and screen apps
+- `SCREENS-AND-SCREEN-APPS-SPEC.md`
+- `production/screens/build_screen_registry_v1.mjs`
+- `production/screens/equity-uprise-screen-registry-v1.json`
+- `production/screens/roof-destination-registry-v1.json`
+- published apps: `screens/*.html`, `js/eu-screens/`; demo `screens/building.html`
+
+Every display surface (148 screens, B1–L7) is bound to its canonical asset id and opens a full phone-first app (terminal, kiosk, NOC, cameras, studio, evidence, departures, wall) over the Lab Runtime sandbox, with an enter/return contract that brings you back to the same floor, pose and mode.

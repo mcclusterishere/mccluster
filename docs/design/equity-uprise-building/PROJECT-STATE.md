@@ -24,6 +24,18 @@ Core V2 is the active geometry authority:
 - Stair A X60–72 / Y54–72;
 - MEP/riser approximately X50–60 / Y66–72.
 
+## McCluster City expansion around the HQ — 2026-11-03
+
+The city grew four neighbourhoods around the unchanged HQ island (`docs/fictional-city/EXPANSION.md`). Its placement
+authority `core/data/fictional-city/places.v1.json` places the 72 ft plate rotated 180° at city (0, 88) so the Floor 1
+public entrance faces the footbridge; the island doorway still opens `prim3-transit.html?level=equity-uprise-hq`.
+Frames stay distinct (city metres Y-up, HQ GLBs metres Z-up, HQ adapter 12 ft cells, tactics 3.54 m tiles). No
+building source, package or program changed. New checks: an ordinary operative walks street → Stair B → B1 → Stair A
+→ Floor 1 on the real resolver with no role or unlock; the B1 mission's live camera outages now reach the screens'
+MISSION session (`HOOKS.screenFaults`), never WORKPLACE. Seven support-only sources were added to the source map
+(599 sources, 2,294/2,294 checks). The #714 server lab is not integrated into the stacked HQ; its MDF location conflict
+recorded below is unchanged.
+
 ## Repo-source coverage — fictional-city integration, 2026-11-03
 
 The source ledger now classifies the nine new fictional-city and universe references as support-only, with no capability ownership. The regenerated `production/generated/equity-uprise-repo-source-coverage-report.json` covers **549 tracked-checkout sources: 102 capability sources and 447 support-only sources**. The city contributes a derived exterior/portal view and its documentation, navigation and tests; headquarters geometry, floor programs and existing capability mappings remain unchanged.
@@ -1197,6 +1209,18 @@ Current learner-facing floor-native coverage:
 This is the first usable layman diagnostic layer, not the final embodied simulation ceiling. Remaining learner-experience work is room-by-room camera/inspection coverage beyond Floor 1, richer synthetic people/report interactions, and visible physical consequences (for example lights, displays, connectivity and environmental behavior) driven by the existing sandbox state. One shared runtime, asset registry and canonical viewer remain authoritative.
 
 
+## Server Lab — STEP 10 HANDS-ON RACK / SERVER HARDWARE IMPLEMENTED (2026-11-03)
+
+Owner direction, 2026-11-03: the building is a real test environment: walk to a rack in 3D, open a server, identify its components, rebuild it and troubleshoot it like a real server, in levels. B1 is an open floor.
+
+Implemented (authority `SERVER-LAB-SPEC.md`):
+- MDF rack 01 (42U EIA-310; 482.6 mm / 44.45 mm per U; 600 × 1200 × 2000 mm) on the Step 4B manifest MDF data-rack anchor, mirroring `B1-TELECOM-RACKS-01-I001` and its registry assets; generic unbranded 2U and 1U two-socket server models and a component catalog with real dimensions, rules and failure-mode symptoms (`production/electronics/server-lab-hardware-v1.json`);
+- runtime `production/lab-runtime/equity-uprise-server-lab-runtime.mjs` + L4 pack + `verify_server_lab_v1.mjs` (Core V2 CI);
+- catalog IT-LAB-041..051 (51 labs); sandbox 1.2.0 server hardware faults;
+- owner-gated page `equity-uprise-server-lab-3d.html` (three.js 0.180): explore, L1 Identify, L2 Rebuild, L3 Bring-up, L4 Troubleshoot (8 fault scenarios), Step 6 assessment; Playwright run at 390 px and desktop (`scripts/e2e/server-lab.e2e.mjs`).
+
+Open: the B1 detailed builder places the telecom enclosure at X32–52 / Y22–34 while the electronics manifest anchors the MDF rack at (45, 62.8); recorded in the spec, not reconciled here. The lab page shows the MDF room, not the stacked building; entering it from the building viewer is next. Rack network devices remain schematic until promoted through Step 4C. Game Hub entry recommended in the spec (the hub is not on main yet).
+
 ## B1 Workplace Derived-Artifact Refresh — 2026-09-24
 
 The B1 workplace canon now lives in source authority and deterministic generators. This reconciliation regenerates and commits the derived B1/Floor 1 production packages, plan references and verification reports so main-source and generated artifacts remain byte-current under the Core V2 freshness gate.
@@ -1205,3 +1229,16 @@ The B1 workplace canon now lives in source authority and deterministic generator
 ## Playable-Building Audit Derived-Report Refresh — 2026-09-24
 
 The playable-building audit and machine gap ledger are now tracked building context. This deterministic reconciliation refreshes the authority-hygiene report so its check count includes those new tracked sources.
+
+
+## Screens and screen apps — V1 IMPLEMENTED (2026-11-03)
+
+Owner, 2026-11-03: every screen in the building opens a whole page on your phone, with a way back into the building, "with a terminal".
+
+- `production/screens/build_screen_registry_v1.mjs` derives **148 screens** (B1 26 · F1 18 · F2 9 · F3 13 · F4 30 · F5 26 · F6 21 · L7 5) from the asset registry, floor inventories, B1 GLB, floor programs, electronics manifest and workplace occupancy; each bound to its canonical asset id, room, position (feet, Core V2 frame, with source), app, modes (WORKPLACE / TRAINING / PRIM3 MISSION) and access (B1 open per owner; SANDBOX only).
+- Apps: terminal (bash / IOS switch / BMC / UPS contexts over `equity-uprise-electronics-sandbox.mjs`), reception/check-in kiosk, NOC, camera console, F4 studio, F5 evidence browser, L7 departure board (data-driven from `data/seo/domain-architecture.json`), wall displays.
+- Enter/return contract and the viewer/game hook: `js/eu-screens/contract.mjs`, `js/eu-screens/enter.mjs`; demo `screens/building.html`. The canonical viewer itself is unchanged; it can adopt the hook.
+- TRAINING seeds one ticket per floor from the distributed scenario pack; every seed is fixable from a console (unit-tested). MISSION outages come from the PRIM3 game and never reach WORKPLACE.
+- Authority: `SCREENS-AND-SCREEN-APPS-SPEC.md`. The registry is derived data and not geometry authority; placement sources are recorded per screen.
+
+**NEXT:** wire `enter.mjs` into the canonical viewer's Room Mode and the PRIM3 game adapter; owner visual review of the apps on a phone.

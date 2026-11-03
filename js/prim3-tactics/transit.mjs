@@ -9,7 +9,8 @@
    What the player sees is the engine's player projection (fog of war): unseen hostiles are never
    drawn, listed, animated or used for previews. */
 import { createState, beginPlayerPhase, beginThreatPhase, resolveClockStatePhase, moveUnit, fireWeapon,
-  enterOverwatch, hunkerDown, reload, shotPreview, stabilize, technicalAction, extractUnit, missionComplete, drawRolls, hasLineOfSight, gridDistance } from './tactical-resolver.mjs';
+  enterOverwatch, hunkerDown, reload, shotPreview, stabilize, technicalAction, extractUnit, missionComplete, drawRolls, hasLineOfSight, gridDistance,
+  techActionPreview, jamMachine, syncPulse, markMachine } from './tactical-resolver.mjs';
 import { playerProjection, knownPaths } from './tactical-hints.mjs';
 import { runThreatPhase } from './tactical-threat-ai.mjs';
 import { loadLevel } from './levels/index.mjs';
@@ -20,7 +21,9 @@ const LEVEL = await loadLevel(new URLSearchParams(location.search).get('level'))
 const { SCENE, W, H, toDisplay } = LEVEL;
 // each level keeps its own save; Transit keeps the key it always had
 const SAVE_KEY = 'prim3.transit.v1';
-const SAVE = LEVEL.LEVEL_ID === 'transit-relay' ? SAVE_KEY : `prim3.level.${LEVEL.LEVEL_ID}.v1`;
+const SAVE = LEVEL.LEVEL_ID === 'transit-relay' ? SAVE_KEY : `prim3.level.${LEVEL.SAVE_ID || LEVEL.LEVEL_ID}.v1`;
+// a level with a mission layer (Equity Uprise B1) hands the page its hooks; the rules stay the resolver's
+const HOOKS = LEVEL.HOOKS || null;
 // level copy: Transit's words are the defaults, so that level reads exactly as before
 const LM = LEVEL.MISSION || {};
 const OBJ_NODE = LM.node || 'RELAY', SIDE_NODE = LM.sideNode || 'GATE';
@@ -65,14 +68,23 @@ const D = (x, y) => { const d = toDisplay(x, y); return `(${d.X}, ${d.Y})`; };
 // cannot re-roll a shot, a reaction or a hostile turn.
 
 /* ---------- state, save ---------- */
-function fresh() { return beginPlayerPhase(createState(LEVEL.engineConfig({ seed: Number(PARAMS.get('seed')) || (Date.now() % 1e9) }))); }
+function fresh() { const seed = Number(PARAMS.get('seed')) || (Date.now() % 1e9); return HOOKS ? HOOKS.createState(seed) : beginPlayerPhase(createState(LEVEL.engineConfig({ seed }))); }
 function load() {
   try { const s = JSON.parse(localStorage.getItem(SAVE) || 'null'); return s && s.v === 1 && s.state && Array.isArray(s.state.units) ? s.state : null; } catch (e) { return null; }
 }
-function save() { try { localStorage.setItem(SAVE, JSON.stringify({ v: 1, at: Date.now(), state, log: log.slice(-60) })); } catch (e) {} }
+function save() { try { localStorage.setItem(SAVE, JSON.stringify({ v: 1, at: Date.now(), state, log: log.slice(-60) })); } catch (e) {} syncScreens(); }
+// A level whose mission drives the building's sandbox (B1) mirrors its live outages into the screens' MISSION
+// session, so a camera the game cut shows no signal on the NOC/camera screens; WORKPLACE/TRAINING never see it.
+let screensState = null, lastScreenFaults = '';
+function syncScreens() {
+  if (!HOOKS || !HOOKS.screenFaults || !state) return;
+  const faults = HOOKS.screenFaults(state), key = JSON.stringify(faults);
+  if (key === lastScreenFaults) return; lastScreenFaults = key;
+  (screensState ||= import('../eu-screens/state.mjs')).then((m) => m.setMissionFaults(faults, { presetId: LEVEL.LEVEL_ID })).catch(() => {});
+}
 let state = (PARAMS.get('new') === '1' ? null : load()) || fresh();
 let log = (() => { try { const s = JSON.parse(localStorage.getItem(SAVE) || 'null'); return (s && s.log) || []; } catch (e) { return []; } })();
-let ui = { sel: 'T1', mode: null, preview: null, busy: false, mapOpen: false, setOpen: false, ended: null };
+let ui = { sel: 'T1', mode: null, preview: null, busy: false, mapOpen: false, setOpen: false, ended: null, objOpen: false, briefed: false };
 /* A World mission (prim3-world.html → ?mission=<id>&new=1) only dresses this level: its title, character and briefing go in
    the objective card and the first log line. Rules, map and saves are the level's own. An unknown id is ignored. */
 const MISSION_ID = PARAMS.get('mission');
@@ -118,13 +130,15 @@ function reach(u, dash) {
    Only the shade is drawn from this; hostiles are still shown only through the player projection. */
 let explored = new Uint8Array(W * H);
 function visibleTiles() {
-  const vis = new Uint8Array(W * H);
-  for (const u of state.units) {
-    if (u.faction !== 'PLAYER' || u.dead || u.downed || extracted(u)) continue;
+  const vis = new Uint8Array(W * H), sel = unitOf(ui.sel), selZ = sel ? sel.z : 0;
+  // the squad's own working cameras see for it (the engine's rule); a blinded camera sees nothing
+  const eyes = [...state.units.filter((u) => u.faction === 'PLAYER' && !u.dead && !u.downed && !extracted(u)),
+    ...(state.machines || []).filter((m) => m.kind === 'CAMERA' && m.faction === 'PLAYER' && (m.state === 'ACTIVE' || m.state === 'CONTROLLED'))];
+  for (const u of eyes) {
     const r = u.detectionRadius;
     for (let y = Math.max(0, u.y - r); y <= Math.min(H - 1, u.y + r); y += 1) for (let x = Math.max(0, u.x - r); x <= Math.min(W - 1, u.x + r); x += 1) {
       const i = y * W + x; if (vis[i]) continue;
-      const t = { x, y, z: LEVEL.fogFloor ? LEVEL.fogFloor(x, y) : 0 };
+      const t = { x, y, z: LEVEL.fogFloor ? LEVEL.fogFloor(x, y, selZ) : 0 };
       if (gridDistance(u, t, state) <= r && (x === u.x && y === u.y || safeLos(u, t))) vis[i] = 1;
     }
   }
@@ -151,18 +165,35 @@ function actionsFor(u) {
   add('watch', 'Watch', '1 AP', u && u.ap >= 1 && !u.overwatch && u.ammo > 0);
   add('hunker', 'Hunker', '1 AP', u && u.ap >= 1 && !u.hunkered);
   add('reload', 'Reload', '1 AP', u && u.ap >= 1 && u.ammo < u.magazineSize && u.reserveAmmo > 0);
-  if (u && u.role === 'T' && nodeState(OBJ_NODE) !== 'VERIFIED') {
+  if (HOOKS && u && ok) for (const a of HOOKS.actions(state, u.id)) add(a.id, a.label, a.sub, true, true);
+  // T technology control and R marks, offered only when the resolver's own preview says they are legal
+  if (u && ok && Array.isArray(state.machines)) for (const a of machineActions(u)) add(a.id, a.label, a.sub, true, true);
+  if (!HOOKS && u && u.role === 'T' && nodeState(OBJ_NODE) !== 'VERIFIED') {
     const act = nodeState(OBJ_NODE) === 'OBSERVED' ? 'LINK_1' : 'LINK_2';
     const can = ok && !!tryRun(() => technicalAction(state, u.id, OBJ_NODE, act));
     if (can) add('link', `${TXT.link} ${relayLinks() + 1}/2`, '1 AP', true, true);
   }
-  if (u && u.role === 'E' && !gateOpen() && ok && tryRun(() => technicalAction(state, u.id, SIDE_NODE, 'BREACH'))) add('breach', LM.breachWord || 'Breach', '1 AP', true, true);
+  if (!HOOKS && u && u.role === 'E' && !gateOpen() && ok && tryRun(() => technicalAction(state, u.id, SIDE_NODE, 'BREACH'))) add('breach', LM.breachWord || 'Breach', '1 AP', true, true);
   if (u && ok) for (const d of state.units.filter((x) => x.faction === 'PLAYER' && x.downed && !x.dead && x.id !== u.id)) {
     if (tryRun(() => stabilize(state, u.id, d.id))) add('stab:' + d.id, 'Stabilize ' + d.role, '1 AP', true, true);
   }
   if (u && ok && nodeState(OBJ_NODE) === 'VERIFIED' && tryRun(() => extractUnit(state, u.id))) add('extract', TXT.extract, 'free', true, true);
   return A;
 }
+
+// machines: the first legal Jam, one Sync Pulse at a camera's cell, one Mark (labels stay short on a phone)
+function machineActions(u) {
+  const out = [], cams = (state.machines || []).filter((m) => m.kind === 'CAMERA' && m.faction !== 'PLAYER');
+  if (u.role === 'T') {
+    const jam = cams.find((m) => techActionPreview(state, 'JAM', u.id, m.id).legal);
+    if (jam) out.push({ id: 'jam:' + jam.id, label: 'Jam ' + shortId(jam.id), sub: '1 AP' });
+    const pulse = cams.find((m) => m.state === 'ACTIVE' && techActionPreview(state, 'SYNC_PULSE', u.id, { x: m.x, y: m.y, z: m.z }).legal);
+    if (pulse) out.push({ id: 'pulse:' + pulse.id, label: 'Sync Pulse', sub: '1 AP · once' });
+  }
+  if (u.role === 'R') { const mk = cams.find((m) => techActionPreview(state, 'MARK', u.id, m.id).legal); if (mk) out.push({ id: 'mark:' + mk.id, label: 'Mark ' + shortId(mk.id), sub: '1 AP' }); }
+  return out;
+}
+const shortId = (id) => String(id).replace(/^[A-Z0-9]+-SEC-/, '');
 
 /* ---------- 3D ---------- */
 let r3 = null, r3loading = null;
@@ -173,7 +204,9 @@ function ensure3d() {
     r3 = mod.createLevel3D($('tx3d'), { level: LEVEL, look, fx: PARAMS.get('fx') || (gfx === 'auto' ? null : gfx), reducedMotion: REDUCED, onTap, onView: null });
     r3loading = null; fogKey = ''; // a new board needs its fog
     r3.setGrid(gridOn);
-    const s = unitOf(ui.sel); if (s) r3.focus((s.x + OBJ.x) / 2, (s.y + OBJ.y) / 2 + Math.min(4, H / 16), 0, LEVEL.OPENING_DIST || Math.min(30, Math.max(W, H) * 1.2)); // a level may open wider (a tower)
+    const s = unitOf(ui.sel);
+    if (LEVEL.OPENING && state.round <= 1 && r3.frame) r3.frame(LEVEL.OPENING); // a level's own opening shot (the tower, large)
+    else if (s) r3.focus((s.x + OBJ.x) / 2, (s.y + OBJ.y) / 2 + Math.min(4, H / 16), 0, LEVEL.OPENING_DIST || Math.min(30, Math.max(W, H) * 1.2)); // a level may open wider (a tower)
     render();
   }).catch((e) => { r3loading = null; toast('The 3D view could not load here. ' + esc(e.message || '')); });
 }
@@ -190,15 +223,37 @@ function cutStorey(sel) {
 function boardModel() {
   const p = view(), sel = unitOf(ui.sel);
   const units = p.units.filter((u) => !extracted(u));
-  const m = { units, selected: ui.sel, labels: [], gateOpen: gateOpen(), cut: cutStorey(sel), coverAt: (u) => { const c = state.cover.find((k) => k.x === u.x && k.y === u.y && (k.z || 0) === (u.z || 0)); return c ? c.type : null; } };
+  const m = { units, selected: ui.sel, labels: [], extraction: SCENE.showExtraction === false ? null : undefined, gateOpen: gateOpen(), cut: cutStorey(sel), coverAt: (u) => { const c = state.cover.find((k) => k.x === u.x && k.y === u.y && (k.z || 0) === (u.z || 0)); return c ? c.type : null; } };
   if (ui.mode === 'move' || ui.mode === 'dash') { m.reach = ui.reach.tiles; }
   if (ui.preview && ui.preview.kind === 'move') { m.path = ui.preview.path.slice(0, -1); m.dest = ui.preview.dest; m.pathLine = [{ x: sel.x, y: sel.y, z: sel.z }, ...ui.preview.path]; }
   if (ui.preview && ui.preview.kind === 'fire') m.target = ui.preview.target;
   for (const u of units) if (!u.dead) m.labels.push({ id: u.id, x: u.x, y: u.y, z: u.z, h: operatorHeight(LEVEL.WORLD_M || LEVEL.TILE_M) + 0.3, kind: u.faction === 'PLAYER' ? 'ally' : 'hostile', text: u.faction === 'PLAYER' ? u.role : esc(u.id) });
-  m.labels.push({ x: OBJ.x, y: OBJ.y, z: OBJ.z || 0, h: LEVEL.OBJ_LABEL_H || 2.6, kind: 'obj', text: `${TXT.noun} ${relayLinks()}/2` });
-  if (nodeState(OBJ_NODE) === 'VERIFIED') m.labels.push({ x: SCENE.extraction.x, y: SCENE.extraction.y, h: 0.4, kind: 'obj', text: TXT.extract });
+  if (HOOKS) {
+    m.labels.push({ x: OBJ.x, y: OBJ.y, z: OBJ.z || 0, h: 0.5, kind: 'obj', text: 'Console' });
+    if (SCENE.rack) m.labels.push({ x: SCENE.rack.x, y: SCENE.rack.y, z: SCENE.rack.z, h: 0.5, kind: 'obj', text: 'Rack' });
+  } else m.labels.push({ x: OBJ.x, y: OBJ.y, z: OBJ.z || 0, h: LEVEL.OBJ_LABEL_H || 2.6, kind: 'obj', text: `${TXT.noun} ${relayLinks()}/2` });
+  for (const g of cameraGroups()) m.labels.push({ x: g.x, y: g.y, z: g.z, h: 2.1, kind: `machine ${g.live ? 'is-live' : 'is-down'}`, text: `CAM ${g.live}/${g.n}` });
+  if (!HOOKS && nodeState(OBJ_NODE) === 'VERIFIED') m.labels.push({ x: SCENE.extraction.x, y: SCENE.extraction.y, h: 0.4, kind: 'obj', text: TXT.extract });
   if (ui.preview && ui.preview.kind === 'move') { const d = ui.preview.dest; m.labels.push({ x: d.x, y: d.y, z: d.z, h: 0.1, kind: 'info', text: `${D(d.x, d.y)} · ${ui.preview.steps} steps` }); }
   return m;
+}
+
+// cameras the player knows of, grouped by cell (B1's four share the telecom core)
+function cameraGroups() {
+  const known = (view().machines || []).filter((m) => m.kind === 'CAMERA');
+  const by = new Map();
+  for (const m of known) { const k = `${m.x}:${m.y}:${m.z}`; const g = by.get(k) || { x: m.x, y: m.y, z: m.z, n: 0, live: 0 }; g.n += 1; if (m.state === 'ACTIVE' || m.state === 'CONTROLLED') g.live += 1; by.set(k, g); }
+  return [...by.values()];
+}
+function objectiveModel() {
+  const clock = state.mission ? `${state.mission.escalation} · clock ${state.mission.clock}` : '';
+  const brief = MISSION ? esc(MISSION.briefing) : (LM.brief ? esc(LM.brief) : '');
+  const small = MISSION ? `${MISSION.deployment === 'wildcard-call' ? 'Wildcard call' : 'Mission'} · ${esc(MISSION.character.name)}` : 'Objective';
+  // a World mission dresses the strip: its title up front, the level's objective in the details
+  if (MISSION) return { small, title: esc(MISSION.title), progress: HOOKS ? esc(HOOKS.objective(state).progress) : `${relayLinks()}/2`, line: `${TXT.objective}: ${TXT.objLine} ${esc(clock)}`, brief };
+  if (HOOKS) { const o = HOOKS.objective(state); return { small, title: esc(o.title), progress: esc(o.progress), line: esc(o.line), brief }; }
+  if (nodeState(OBJ_NODE) === 'VERIFIED') return { small, title: TXT.extract, progress: `${TXT.link} 2/2`, line: `${TXT.doneLine} Everyone standing to ${TXT.pad} ${D(SCENE.extraction.x, SCENE.extraction.y)}. ${esc(clock)}`, brief };
+  return { small, title: TXT.objective, progress: `${relayLinks()}/2`, line: `${TXT.objLine} ${TXT.link} ${relayLinks()}/2. ${esc(clock)}`, brief };
 }
 
 /* ---------- rendering ---------- */
@@ -206,7 +261,7 @@ function render() {
   const sel = unitOf(ui.sel);
   if (!r3 && !r3loading) ensure3d();
   if (r3 && !ui.holdBoard) r3.update(boardModel()); // frozen while engine events play out
-  if (r3 && !ui.holdBoard) { const k = state.units.filter((u) => u.faction === 'PLAYER').map((u) => `${u.x},${u.y},${u.z},${u.dead},${u.downed}`).join('|') + state.round; if (k !== fogKey) { fogKey = k; lastVis = visibleTiles(); r3.setFog(fogCells(lastVis)); } }
+  if (r3 && !ui.holdBoard) { const k = state.units.filter((u) => u.faction === 'PLAYER').map((u) => `${u.x},${u.y},${u.z},${u.dead},${u.downed}`).join('|') + state.round + (state.machines || []).map((q) => q.state).join() + ui.sel; if (k !== fogKey) { fogKey = k; lastVis = visibleTiles(); r3.setFog(fogCells(lastVis)); } }
   // top bar
   $('txTurn').textContent = String(state.round).padStart(2, '0');
   const ph = $('txPhase'); ph.textContent = ui.ended ? (ui.ended === 'win' ? 'Complete' : 'Failed') : state.phase === 'PLAYER' && !ui.busy ? 'Your move' : 'Threat move';
@@ -217,10 +272,10 @@ function render() {
   // objective
   const links = relayLinks();
   const clock = state.mission ? `${state.mission.escalation} · clock ${state.mission.clock}` : '';
-  $('txObj').innerHTML = (MISSION ? `<small>${MISSION.deployment === 'wildcard-call' ? 'Wildcard call' : 'Mission'} · ${esc(MISSION.character.name)}</small><b>${esc(MISSION.title)}</b><span class="tx-brief" id="txBrief">${esc(MISSION.briefing)}</span>` : '') + (nodeState(OBJ_NODE) === 'VERIFIED'
-    ? `<small>Objective</small><b>${TXT.extract}</b><span>${TXT.doneLine} Everyone standing to ${TXT.pad} ${D(SCENE.extraction.x, SCENE.extraction.y)}. ${esc(clock)}</span>`
-    : `<small>Objective</small><b>${TXT.objective}</b><span>${TXT.objLine} ${TXT.link} ${links}/2. ${esc(clock)}</span>`);
-  $('txObj').classList.toggle('has-mission', !!MISSION);
+  const O = objectiveModel();
+  $('txObj').innerHTML = `<button type="button" class="tx-objbtn" id="txObjBtn" aria-expanded="${ui.objOpen}" aria-controls="txObjMore"><small>${O.small}</small><b>${O.title}</b><span class="tx-objprog">${O.progress}</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>`
+    + `<div class="tx-objmore" id="txObjMore"><span>${O.line}</span>${O.brief ? `<span class="tx-brief">${O.brief}</span>` : ''}</div>`;
+  $('txObj').classList.toggle('is-open', !!ui.objOpen);
   // selected operative
   if (sel) {
     const R = ROLE[sel.role];
@@ -293,8 +348,9 @@ function drawMap() {
   g.fillStyle = col.prop; for (const c of [...(SCENE.containers || []), ...(SCENE.barricades || []), ...(SCENE.crates || []), SCENE.tent].filter(Boolean)) g.fillRect(c.x * S, c.y * S, c.w * S, c.d * S);
   if (SCENE.fence) { g.strokeStyle = gateOpen() ? col.prop : col.ink; g.lineWidth = 2; g.beginPath(); g.moveTo(SCENE.fence.x0 * S, (SCENE.fence.y + 0.5) * S); g.lineTo((SCENE.fence.x1 + 1) * S, (SCENE.fence.y + 0.5) * S); g.stroke(); }
   }
-  // extraction, objective
-  g.strokeStyle = '#ffd23a'; g.lineWidth = 2; g.beginPath(); g.arc((SCENE.extraction.x + 0.5) * S, (SCENE.extraction.y + 0.5) * S, (SCENE.extraction.r + 0.5) * S, 0, Math.PI * 2); g.stroke();
+  // extraction, objective, cameras
+  if (SCENE.showExtraction !== false) { g.strokeStyle = '#ffd23a'; g.lineWidth = 2; g.beginPath(); g.arc((SCENE.extraction.x + 0.5) * S, (SCENE.extraction.y + 0.5) * S, (SCENE.extraction.r + 0.5) * S, 0, Math.PI * 2); g.stroke(); }
+  for (const c of cameraGroups()) { g.fillStyle = c.live ? col.sq : col.th; g.beginPath(); g.arc((c.x + 0.82) * S, (c.y + 0.18) * S, MK * 0.7, 0, Math.PI * 2); g.fill(); }
   const rx = (OBJ.x + 0.5) * S, ry = (OBJ.y + 0.5) * S, rk = MK * 1.4; // marks keep their size on a small map
   g.strokeStyle = col.amber; g.lineWidth = 3; g.beginPath(); g.moveTo(rx, ry - rk); g.lineTo(rx + rk, ry); g.lineTo(rx, ry + rk); g.lineTo(rx - rk, ry); g.closePath(); g.stroke();
   // reach and path
@@ -374,6 +430,10 @@ async function onAct(id) {
     if (id === 'watch') { state = enterOverwatch(state, sel.id); say(`${sel.role} on overwatch.`); }
     else if (id === 'hunker') { state = hunkerDown(state, sel.id); say(`${sel.role} hunkers down.`); }
     else if (id === 'reload') { state = reload(state, sel.id); say(`${sel.role} reloads.`); }
+    else if (id.startsWith('eu:')) { const out = HOOKS.perform(state, id, sel.id); state = out.state; if (out.log) say(out.log); }
+    else if (id.startsWith('jam:')) { state = HOOKS ? HOOKS.sync(jamMachine(state, sel.id, id.slice(4))) : jamMachine(state, sel.id, id.slice(4)); say(`T jams ${shortId(id.slice(4))} until T's next turn.`); }
+    else if (id.startsWith('pulse:')) { const m = state.machines.find((x) => x.id === id.slice(6)); state = syncPulse(state, sel.id, { x: m.x, y: m.y, z: m.z }); if (HOOKS) state = HOOKS.sync(state); say('T fires the Sync Pulse: every machine within 3 is jammed for a round, nearby hostiles lose their network.'); }
+    else if (id.startsWith('mark:')) { state = markMachine(state, sel.id, id.slice(5)); say(`R marks ${shortId(id.slice(5))}.`); }
     else if (id === 'link') { const act = nodeState(OBJ_NODE) === 'OBSERVED' ? 'LINK_1' : 'LINK_2'; const out = technicalAction(state, sel.id, OBJ_NODE, act); if (!out.accepted) throw new Error(TXT.refused); state = out.state; say(TXT.logLink(relayLinks())); if (relayLinks() === 2) say(TXT.logDone); }
     else if (id === 'breach') { const out = technicalAction(state, sel.id, SIDE_NODE, 'BREACH'); if (!out.accepted) throw new Error(TXT.held); state = out.state; say(TXT.logBreach); }
     else if (id.startsWith('stab:')) { const t = id.slice(5); state = stabilize(state, sel.id, t); say(`${sel.role} stabilizes ${unitOf(t).role}.`); }
@@ -466,10 +526,12 @@ async function endTurn() {
   const before = state;
   let next = beginThreatPhase(state);
   try { next = runThreatPhase(next).state; } catch (e) { say('Threat phase error: ' + e.message); }
+  if (HOOKS) { const a = HOOKS.afterThreat(next); next = a.state; for (const l of a.log) say(l); }
   const events = next.events.slice(before.events.length);
   // the whole hostile turn is resolved and saved before any of it is shown: a reload mid-turn lands
   // on the outcome, never back before End turn
   state = beginPlayerPhase(resolveClockStatePhase(next));
+  if (HOOKS) state = HOOKS.sync(state);
   save();
   await play(events, before);
   say(`New round. Escalation ${state.mission.escalation}.`);
@@ -477,7 +539,9 @@ async function endTurn() {
   afterChange();
 }
 
+const LOSE = { 'lose-t': () => TXT.failT, 'lose-all': () => 'No one is left standing.', 'lose-clock': () => 'The exercise window closed.', 'lose-verified': () => 'A defender verified a live picture: the red team is on camera.', 'lose-downed': () => 'A downed operative cannot be brought out: the exercise cannot be completed.' };
 function checkEnd() {
+  if (HOOKS) return HOOKS.outcome(state);
   const t = unitOf('T1');
   const squad = state.units.filter((u) => u.faction === 'PLAYER');
   if (missionComplete(state)) return 'win';
@@ -492,28 +556,35 @@ function afterChange() {
     const squad = state.units.filter((u) => u.faction === 'PLAYER');
     const out = squad.filter(extracted).length;
     $('txEnd').innerHTML = end === 'win'
-      ? `<div><h2>${TXT.doneTitle}</h2><p>Turn ${state.round}. ${out} of ${squad.length} extracted.</p><button type="button" class="sh-btn sh-btn--go" data-sheet="restart">Play again</button></div>`
-      : `<div><h2>Mission failed</h2><p>${end === 'lose-t' ? TXT.failT : 'No one is left standing.'}</p><button type="button" class="sh-btn sh-btn--go" data-sheet="restart">Try again</button></div>`;
+      ? `<div><h2>${TXT.doneTitle}</h2><p>Turn ${state.round}.${state.mission.extractionRequired ? ` ${out} of ${squad.length} extracted.` : ''}</p>${debriefHtml()}<button type="button" class="sh-btn sh-btn--go" data-sheet="restart">Play again</button></div>`
+      : `<div><h2>Mission failed</h2><p>${(LOSE[end] || LOSE['lose-all'])()}</p>${debriefHtml()}<button type="button" class="sh-btn sh-btn--go" data-sheet="restart">Try again</button></div>`;
     $('txEnd').hidden = false;
     say(end === 'win' ? 'Mission complete.' : 'Mission failed.');
   }
   save(); render();
 }
+function debriefHtml() { return HOOKS ? `<ul class="sh-list" style="text-align:left;max-width:34rem;margin:0 auto 12px">${HOOKS.debrief(state).map((l) => `<li>${esc(l)}</li>`).join('')}</ul>` : ''; }
+// the briefing: a mission level opens on its brief, over the board (Start dismisses it)
+function showBrief() {
+  if (!HOOKS || ui.briefed || state.round > 1 || ui.ended) return;
+  $('txEnd').innerHTML = `<div><h2>${esc(TXT.title)}</h2><p style="max-width:34rem;margin:0 auto 12px;text-align:left">${esc(LM.brief || '')}</p><button type="button" class="sh-btn sh-btn--go" data-sheet="brief-go">Start</button></div>`;
+  $('txEnd').hidden = false;
+}
 function restart() {
   try { localStorage.removeItem(SAVE); } catch (e) {}
   explored = new Uint8Array(W * H); fogKey = '';
   state = fresh(); log = []; ui = { ...ui, sel: 'T1', mode: null, preview: null, reach: null, busy: false, ended: null };
-  $('txEnd').hidden = true; say(`Deployed. ${TXT.objective}.`);
+  $('txEnd').hidden = true; say(`Deployed. ${TXT.objective}.`); ui.briefed = false;
   if (MISSION) log.unshift(missionLine(MISSION));
   if (r3) { r3.destroy(); r3 = null; }
-  save(); render();
+  save(); render(); showBrief();
 }
 
 /* ---------- wiring ---------- */
 $('txSquad').addEventListener('click', (e) => { const b = e.target.closest('[data-unit]'); if (b && !ui.busy) select(b.dataset.unit); });
 $('txActs').addEventListener('click', (e) => { const b = e.target.closest('[data-act]'); if (b && !b.disabled) onAct(b.dataset.act); });
 $('txSheet').addEventListener('click', (e) => { const b = e.target.closest('[data-sheet]'); if (b) onSheet(b.dataset.sheet); });
-$('txEnd').addEventListener('click', (e) => { if (e.target.closest('[data-sheet="restart"]')) restart(); });
+$('txEnd').addEventListener('click', (e) => { if (e.target.closest('[data-sheet="restart"]')) restart(); else if (e.target.closest('[data-sheet="brief-go"]')) { ui.briefed = true; $('txEnd').hidden = true; } });
 $('txEndTurn').addEventListener('click', endTurn);
 $('camIn').addEventListener('click', () => { if (r3) { r3.zoom(1); render(); } });
 $('camOut').addEventListener('click', () => { if (r3) { r3.zoom(-1); render(); } });
@@ -532,7 +603,15 @@ document.addEventListener('keydown', (e) => {
   else if (e.key === 'Enter' && ui.preview) onSheet(ui.preview.kind === 'move' ? 'confirm-move' : 'confirm-fire');
 });
 if (!log.length) say(`Deployed. ${TXT.objective}.`);
+if (HOOKS && HOOKS.sideSwitch) { // a side switch in the settings: each side is its own exercise and save
+  const row = document.createElement('div'); row.className = 'set-row';
+  const p = new URLSearchParams(location.search); p.set('side', HOOKS.sideSwitch); p.set('new', '1');
+  row.innerHTML = `<span class="sh-eye">Side</span><div class="seg"><a class="seg-a" href="?${esc(p.toString())}">Play the ${HOOKS.sideSwitch === 'attack' ? 'red team: Blind the Floor' : 'defenders: Restore the Picture'}</a></div>`;
+  $('txSet').insertBefore(row, $('txSet').children[2]);
+}
 render();
+showBrief();
+if (HOOKS && ui.ended == null) { const end = checkEnd(); if (end) afterChange(); }
 if (MISSION_ID) {
   const fromDraft = () => { try { return findMission(JSON.parse(localStorage.getItem(WORLD_DRAFTS) || 'null'), MISSION_ID); } catch (e) { return null; } };
   fetch(WORLD_MISSIONS).then((r) => (r.ok ? r.json() : null)).catch(() => null)
@@ -545,5 +624,5 @@ if (MISSION_ID) {
       render();
     });
 }
-$('txObj').addEventListener('click', () => { if (MISSION) $('txObj').classList.toggle('is-open'); });
+$('txObj').addEventListener('click', (e) => { if (e.target.closest('#txObjBtn')) { ui.objOpen = !ui.objOpen; render(); } });
 window.__tx = { get state() { return state; }, get ui() { return ui; }, get r3() { return r3; }, get busy() { return ui.busy || !!(r3 && r3.isAnimating()); }, select, onAct, onSheet, onTap, endTurn, restart, reach: () => ui.reach, SAVE_KEY: SAVE };

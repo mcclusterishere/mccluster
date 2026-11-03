@@ -48,6 +48,8 @@
 .city-world-footer p{font-size:11px;color:var(--city-muted);margin:0;line-height:1.6}
 .city-world-footer kbd{font-family:inherit;font-weight:700}
 .city-world-footer button{font-size:13px;border:0;background:transparent;padding:4px 8px}
+.city-world-footer .city-geo-credit{flex-basis:100%;font-size:10px;overflow-wrap:anywhere}
+.city-geo-credit a{color:inherit;text-decoration:underline}
 #city-pocket-count{background:#e7eddf;border-radius:99px;padding:2px 7px;margin-left:6px}
 .city-sidebar{min-width:0;display:grid;grid-template-columns:minmax(0,1fr);gap:18px;align-content:start}
 .city-garage-card{position:relative;border-radius:14px;background:#243d3d;color:#fff5df;padding:24px;overflow:hidden}
@@ -72,10 +74,15 @@
 .city-person-text small{font-size:11px;color:var(--city-muted);line-height:1.4}
 .city-text-button{font-size:13px!important;padding-left:0!important;border:0!important;background:transparent!important;color:var(--city-teal)!important}
 .city-side-links{display:grid;gap:7px}
+.city-story-card{padding:22px;border:1px solid #d8c298;border-radius:14px;background:#eee5d0;color:#203a3b;min-width:0}
+.city-story-card h2{font-size:26px;line-height:1.15;margin:10px 0}
+.city-story-card p{font-size:14px;line-height:1.6;overflow-wrap:anywhere}
+.city-story-card button{width:100%;text-align:left;font-weight:700;background:#203a3b;color:#fff5df;border-color:#203a3b}
+.city-story-card .city-bio-meta{font-size:12px!important}
 .city-side-links button{font-size:13px;text-align:left;background:transparent}
 .city-note{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 20px;color:#708179;font-size:10px;line-height:1.6;margin-top:20px}
 .city-note p{margin:0}
-.city-dialog{width:min(760px,calc(100% - 24px));max-height:calc(100svh - 44px);padding:0;border:1px solid #c5cfc2;border-radius:18px;background:var(--city-paper,#f6f3e9);color:#203a3b;box-shadow:0 30px 100px #08282355;font-family:Arial,Helvetica,sans-serif}
+.city-dialog{width:min(760px,calc(100% - 24px));max-height:calc(100svh - 44px);margin:auto;inset:0;padding:0;border:1px solid #c5cfc2;border-radius:18px;background:var(--city-paper,#f6f3e9);color:#203a3b;box-shadow:0 30px 100px #08282355;font-family:Arial,Helvetica,sans-serif}
 .city-dialog::backdrop{background:#0c282b99;backdrop-filter:blur(5px)}
 .city-dialog-head{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:16px;background:#f6f3e9;padding:22px;border-bottom:1px solid #dcded3}
 .city-dialog-head h2{font-size:25px;line-height:1.18;margin:5px 0 0;overflow-wrap:anywhere}
@@ -117,3 +124,9 @@
 
 .city-camera-controls{position:absolute;right:12px;top:12px;display:flex;gap:5px}.city-camera-controls button{width:44px;height:44px;padding:0;background:#fffdf4e8;color:#294941;border-color:#ffffff88;font-size:23px;box-shadow:0 2px 8px #163a3120}
 .city-world-footer button,.city-garage-card button,.city-text-button,.city-side-links button,.city-place-card button{font-size:16px!important}.city-person-text strong{font-size:16px}.city-person-text small{font-size:12px}
+/* the whole-city map: sized for the phone first (SVG user units shrink with the viewBox), roomier above */
+.city-map-wide{max-height:none;aspect-ratio:auto}
+.city-map .city-map-area{font-size:14px;letter-spacing:.03em;fill:#22403b;paint-order:stroke;stroke:#f4efdf;stroke-width:3.5px}
+.city-area-list{margin:14px 0;border-top:1px solid rgba(40,70,64,.18);padding-top:10px}
+.city-area-list>summary{cursor:pointer;font-weight:700;min-height:44px;display:flex;align-items:center}
+@media (min-width:900px){.city-map-wide{max-height:560px}}

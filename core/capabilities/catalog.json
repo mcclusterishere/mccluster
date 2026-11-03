@@ -719,7 +719,10 @@
               "businesses",
               "npcs",
               "items",
-              "portals"
+              "portals",
+              "neighborhoods",
+              "families",
+              "parcels"
             ],
             "default": "manifest"
           },

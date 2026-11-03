@@ -64,13 +64,21 @@
     .tx-gridtog{position:absolute;right:62px;bottom:8px;min-height:44px;display:inline-flex;align-items:center;gap:6px;font-size:12px;letter-spacing:.12em;text-transform:uppercase}
     .tx-gridtog[aria-pressed="true"]{border-color:var(--squad);color:var(--squad)}
     .b3-label--info{translate:-50% 30%;border-color:var(--amber);color:#fff}
-    .tx-obj{position:absolute;left:8px;top:8px;max-width:min(260px,62%);padding:8px 10px;border:1px solid var(--amber);border-radius:6px;background:var(--panel);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
-    .tx-obj small{display:block;color:var(--amber);font-size:11px;letter-spacing:.18em}
-    .tx-obj b{display:block;font-size:16px;letter-spacing:.1em;text-transform:uppercase}
-    .tx-obj span{display:block;color:var(--dim);font-size:13px}
-    .tx-obj.has-mission{cursor:pointer}
-    .tx-brief{display:-webkit-box!important;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;margin:2px 0 6px;color:var(--ink)!important;font-size:13px}
-    .tx-obj.is-open .tx-brief{-webkit-line-clamp:unset;display:block!important}
+    .b3-label--machine{border:1px solid var(--line2);font-size:11px;letter-spacing:.06em}
+    .b3-label--machine.is-down{border-color:var(--threat);color:#ffb3b3}
+    .b3-label--machine.is-live{border-color:var(--ok)}
+    /* the objective: a compact strip docked above the battlefield (it never covers the board); tap for details */
+    .tx-obj{border:1px solid var(--amber);border-radius:var(--r);background:var(--panel);min-width:0}
+    .tx-objbtn{width:100%;min-height:44px;display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;align-items:center;gap:8px;padding:4px 10px;border:0;background:none;cursor:pointer;text-align:left}
+    .tx-objbtn small{color:var(--amber);font-size:11px;letter-spacing:.16em;text-transform:uppercase}
+    .tx-objbtn b{font-size:15px;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+    .tx-objprog{padding:2px 7px;border:1px solid var(--amber);border-radius:4px;color:var(--amber);font:700 13px/1.2 ui-monospace,monospace;white-space:nowrap}
+    .tx-objbtn svg{width:18px;height:18px;transition:transform .15s}
+    .tx-obj.is-open .tx-objbtn svg{transform:rotate(180deg)}
+    .tx-objmore{display:none;padding:0 10px 8px;color:var(--dim);font-size:13px;font-weight:500}
+    .tx-objmore span{display:block}
+    .tx-obj.is-open .tx-objmore{display:block}
+    .tx-brief{margin-top:4px;color:var(--ink)}
     .tx-maptog{position:absolute;right:8px;top:8px}
     .tx-cam{position:absolute;right:8px;bottom:8px;display:flex;flex-direction:column;gap:6px}
     .tx-busy{position:absolute;left:50%;bottom:10px;translate:-50% 0;padding:6px 12px;border-radius:999px;background:var(--panel);border:1px solid var(--threat);color:var(--threat);font-size:13px;letter-spacing:.14em;text-transform:uppercase}
@@ -142,6 +150,7 @@
     .tx-end-screen[hidden]{display:none}
     .tx-end-screen h2{margin:0 0 6px;font-size:28px;letter-spacing:.14em;text-transform:uppercase;color:#fff}
     .tx-end-screen p{margin:0 0 12px;color:rgba(255,255,255,.8)}
+    .tx-end-screen .sh-list{color:rgba(255,255,255,.88)}
     .reduce-motion *{transition:none!important;animation:none!important}
     /* tablet: squad cards gain portraits; actions in one row */
     @media (min-width:700px){
@@ -155,10 +164,13 @@
     }
     /* desktop: the reference layout. Battlefield left, sector map + operative right, command bar below */
     @media (min-width:1100px){
-      .tx{grid-template-columns:minmax(0,1fr) minmax(0,380px);grid-template-areas:"top top" "stage side" "bar bar" "sheet sheet" "about about";align-items:start}
+      .tx{grid-template-columns:minmax(0,1fr) minmax(0,380px);grid-template-areas:"top top" "obj side" "stage side" "bar bar" "sheet sheet" "about about";align-items:start}
+      .tx-obj{grid-area:obj}
+      .tx-objmore{display:block;padding-top:0}
+      .tx-objbtn svg{display:none}
       .tx-top{grid-area:top}
       .tx-stage{grid-area:stage;aspect-ratio:16/10;max-height:none}
-      .tx-side{grid-area:side;display:grid;gap:8px}
+      .tx-side{grid-area:side;display:grid;gap:8px;align-self:start}
       .tx-map[hidden]{display:block}
       .tx-maptog{display:none}
       .tx-bar{grid-area:bar;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1.5fr) minmax(0,200px);gap:8px;align-items:stretch}
@@ -192,9 +204,9 @@
       <div class="set-row"><span class="sh-eye">Mission</span><div class="seg"><button type="button" id="setRestart">Restart mission</button><a class="seg-a" href="prim3-tactics-preview.html">Main menu</a></div></div>
       <div class="set-row"><span class="sh-eye">Mission log</span><ol class="tx-log" id="txLog"></ol></div>
     </section>
+    <section class="tx-obj" id="txObj" aria-live="polite" aria-label="Objective"></section>
     <section class="tx-stage" id="txStage" aria-label="Battlefield">
       <div class="tx-3d" id="tx3d"></div>
-      <div class="tx-obj" id="txObj" aria-live="polite"></div>
       <button type="button" class="ibtn tx-maptog" id="txMapTog" aria-controls="txMap" aria-expanded="false">Map</button>
       <div class="tx-cam">
         <button type="button" class="ibtn" id="camIn" aria-label="Zoom in">+</button>

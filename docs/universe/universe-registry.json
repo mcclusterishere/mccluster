@@ -65,7 +65,7 @@
     },
     {
       "id": "mccluster-fictional-city",
-      "title": "McCluster City — Commercial District",
+      "title": "McCluster City — Harbor & Bridgeport",
       "playStyle": "exploration",
       "status": "owner-only playable preview, authorized 2026-11-03",
       "engine": "Independent Three.js 0.180 procedural district in js/fictional-city; no cross-universe engine imports",
@@ -91,9 +91,16 @@
           "id": "city.island",
           "route": "fictional-city.html?entry=island",
           "note": "Explicit island footbridge arrival; detailed HQ entrance remains on Floor 1."
+        },
+        {
+          "id": "city.bridgeport",
+          "route": "fictional-city.html?entry=bridgeport",
+          "note": "Enter the connected Bridgeport story neighborhood at the next Robbery 1s scene; preserve existing city inventory and story progress."
         }
       ],
       "portalData": "core/data/fictional-city/district.v1.json#/portals",
+      "placesData": "core/data/fictional-city/places.v1.json",
+      "placesNote": "Geography authority: the original block and island plus Civic Center, HQ Waterfront, Northside and Workshop Wharf; lore binds by parcel/anchor ID. Save v2 keeps the v1 fields and adds discoveries and payments; the saved position stays a bounded local city position.",
       "portals": [
         {
           "id": "city.departure-desk",
