@@ -170,3 +170,27 @@ enterable; no free-roam HQ interior in the city (the doorway opens the existing 
 
 Future, not claimed: driving, traffic, combat, generative NPCs, voiced or filmed scenes, Bridgeport or any other
 real-geography ingestion, region/planet travel, per-business interiors, cloud saves.
+
+## 10. Integration notes (after #720, #721 and #723 merged)
+
+- **Authored vs surveyed ground.** Everything in `places.v1.json` is an authored plan, not a survey. The
+  Bridgeport neighbourhood (#721, `district.v1.json → neighborhoods`) is the only surveyed ground (CT State GIS
+  Office 2023 footprints, © OpenStreetMap contributors streets, ODbL); the city map says so under the map and
+  draws both. This contract never places parcels, streets or lore on the Bridgeport ground.
+- **Lore display names.** Neighbourhood names shown to players come from the lore's `expansionNeighborhoods`
+  (e.g. `northside-residential` is shown as its lore name); IDs and the places file's plain names are unchanged.
+  The new neighbourhoods are not promoted into #721's `neighborhoods` array: that array is for playable areas with
+  their own surfaces/roads/places and its validator; the new areas' geography lives here and lore stays in the
+  expansion arrays, so there is one data contract per concern.
+- **Civic institutions.** The lore's police precinct, public school and church occupy the authored parcels
+  `civic-center/police-station`, `northside-residential/public-school` and `civic-center/church`. Those parcels are
+  in the authored harbor plan, not on surveyed Bridgeport ground, and never replace a real government site.
+  Their naming is with the owner; geography does not depend on it.
+- **Stable IDs for future portals.** Parcel IDs (`<neighbourhood>/<parcel>`) and the original business IDs are the
+  stable place IDs a later `placeId` game portal can target; nothing here builds arcade or Designer Kicks mechanics.
+- **A region as a second tile source (#723).** The scene's chunk loader takes `{ chunks: [{ id, bounds, file }] }`
+  and `loadChunk(id)`. A region (e.g. `regions/connecticut-pilot.v1.json`) plugs in by supplying its hashed chunk
+  index in city metres (after `georeference.mjs` projects it) and a loader that returns `{ id, roads, props,
+  parcels }` or a richer shape the scene learns to draw; its collision must be supplied outside the authored mask.
+  The authored frame is `frame.bounds` X −296…168, Z −170…140 plus Bridgeport X ±165, Z −345…−58; a mask for the
+  region should use those, not the original X ±168 estimate. Not wired in this PR.
