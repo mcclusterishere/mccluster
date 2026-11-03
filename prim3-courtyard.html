@@ -43,6 +43,13 @@
 </head>
 <body class="prim3-courtyard-host">
   <a class="p3-study-skip" href="#courtyard-frame">Skip to courtyard</a>
+  <!-- Nothing but this panel exists until the server says this is the house owner (js/owner-only.mjs); the study's
+       frame is created only after that yes (owner, 2026-11-03: "keep it on my private account"). -->
+  <section class="owner-gate" aria-live="polite" data-owner-gate data-owner-template="cyTpl">
+    <h1>Owner only</h1>
+    <p data-owner-msg>Checking access with the server…</p>
+  </section>
+  <template id="cyTpl">
   <main class="p3-study-host">
     <header class="p3-study-heading">
       <nav class="p3-study-links" aria-label="Courtyard study">
@@ -62,10 +69,12 @@
       referrerpolicy="strict-origin-when-cross-origin">
     </iframe>
   </main>
+  </template>
   <script>
     // This trusted, same-origin demo has no account bridge or duplicate site navigation.
     // Fit the frame to its content so the host remains the scrolling surface.
-    (function () {
+    // runs once js/owner-only.mjs has put the study's markup in place
+    addEventListener('mcc:owner-open', function () {
       'use strict';
       var frame = document.getElementById('courtyard-frame');
       var observer = null;
@@ -102,8 +111,9 @@
         if (observer) observer.disconnect();
         if (pending) window.cancelAnimationFrame(pending);
       });
-    }());
+    }, { once: true });
   </script>
+  <script type="module" src="js/owner-only.mjs?v=__STAMP__"></script>
   <script src="js/mcc-auth.js?v=__STAMP__"></script>
   <script src="js/tabbar.js?v=__STAMP__"></script>
 </body>
