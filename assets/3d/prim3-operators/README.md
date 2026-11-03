@@ -8,9 +8,11 @@
 | `H` | A known hostile. Defense / SOI-01 security officer: shirt, ultra-thin vest, body camera, one holstered sidearm, cyberdeck; no helmet, no long gun | `assets/canon/brands/mccluster-corp/security-officer-identity/MCC-SOI-01-authority-black-v01.jpg` (left panel) |
 
 **Field operator looks:** the dressed mannequin and labeled loadout for each operator live in one place, Prim3 [`phenotypes/operators/LOADOUTS.md`](https://github.com/mcclusterishere/Prim3/blob/design/operator-loadouts-20261102/phenotypes/operators/LOADOUTS.md) (branch `design/operator-loadouts-20261102` until merged). As of 2026-11-02:
-- **Entry (FO-E-AE):** photographed; owner-supplied.
-- **Recon (FO-R-SO):** photographed; Codex, Prim3 PR #17.
-- **Technical:** not photographed yet.
+- **Entry (FO-E-AE):** `assets/reference/field-entry/FO-E-AE-mannequin-v01.png`; owner-supplied.
+- **Recon (FO-R-SO):** `assets/reference/field-recon/FO-R-SO-mannequin-v02.png`; owner-supplied, the active reference ("This is R"). Codex's v01 in Prim3 PR #17 is history.
+- **Technical (FO-T-STD):** `assets/reference/field-technical/FO-T-STD-mannequin-v01.png`; owner-supplied.
+
+Mark check on those three photographs (2026-11-02): none shows the M or Dual Sight. The Technical body recorder (centre chest) carries small red diagonal stripes that read as the red `//`; prompt the generator to leave the recorder plain black and check the texture afterwards. Entry's red record light and "MED" pouch label, and Technical's "T" sling tab, are equipment, not marks.
 
 Use the mannequin photograph as the image-to-3D reference for that role. Prime −1 (`assets/canon/characters/prime-negative-one/`) is protected: never generate, trace or approximate the M helmet.
 
@@ -35,4 +37,4 @@ The procedural mannequins draw no marks.
 4. Save it here as `E.glb` / `R.glb` / `T.glb` / `H.glb` and list it in `manifest.json`, for example `"models": { "H": "H.glb" }`.
 5. Run `scripts/e2e/prim3-tactics-hints.e2e.mjs` with `THREE_DIR` set. It must stay green.
 
-Status (2026-11-02): no GLB has been generated. This session could not reach the McCluster Core connector ("Authentication required"), so no fal spend has happened.
+Status (2026-11-02): no GLB has been generated. Two sessions have now been blocked the same way: the McCluster Core connector answers `system_health` but every media tool (`media_models_search`, `media_model_recommend`, `model3d_generate`) returns "Authentication required". No fal spend has happened. The connector has to be re-authorized before generation can run.
