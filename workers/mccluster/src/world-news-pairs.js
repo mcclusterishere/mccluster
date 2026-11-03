@@ -10,7 +10,10 @@
    with Supabase, failing closed), every answer is `private, no-store`, and
    Supabase is read with the service role, read only. An article's location
    is where it MENTIONS a place, and a pair is a match, not a verified fact:
-   each carries its method, score and reason. */
+   each carries its method, score and reason. A layer the owner withdrew
+   (WORLD_GLOBE_WITHDRAWN) stays withdrawn here too: asking by it is refused
+   and its pairs are left out of an answer by article. */
+import { globeRelease } from '../../../packages/release-policy/globe.mjs';
 import { fail, reply } from './lib/http.js';
 import { houseOwnerOf } from './world-halo-ops.js';
 import { service, uuid } from './world-cctv.js';
@@ -58,13 +61,16 @@ export async function handleWorldNewsPairs(request, env, { fetchImpl = fetch } =
   if (!(await houseOwnerOf(request, env, fetchImpl))) return send(request, env, { ok: false, code: 'owner_only', error: 'Only the house owner may see this.' }, 403);
   const query = parsePairsQuery(url);
   if (query.error) return send(request, env, { ok: false, code: 'invalid_query', error: query.error }, 400);
+  const withdrawn = (layer) => globeRelease(layer, env) === 'withdrawn';
+  if (query.by === 'entity' && withdrawn(query.layer)) return send(request, env, { ok: false, code: 'feature_withdrawn', error: 'This globe feature is withdrawn.' }, 403);
 
   const filter = query.by === 'article'
     ? `article_id=eq.${query.articleId}&order=score.desc,created_at.desc`
     : `layer=eq.${query.layer}&entity_key=eq.${encodeURIComponent(query.key)}&order=created_at.desc`;
   let pairs, articles;
   try {
-    pairs = await service(env, `world_news_pairs?${filter}&select=${PAIR_FIELDS}&limit=${query.limit}`, fetchImpl);
+    pairs = (await service(env, `world_news_pairs?${filter}&select=${PAIR_FIELDS}&limit=${query.limit}`, fetchImpl))
+      .filter((p) => NEWS_PAIR_LAYERS.includes(p.layer) && !withdrawn(p.layer));
     const ids = [...new Set(pairs.map((p) => p.article_id).filter(uuid))];
     articles = ids.length ? await service(env, `media_news_articles?id=in.(${ids.join(',')})&select=id,title,canonical_url,published_at,headline_location_label`, fetchImpl) : [];
   } catch {

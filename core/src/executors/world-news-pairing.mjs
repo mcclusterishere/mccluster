@@ -159,7 +159,7 @@ export async function worldNewsPairing(job, {
     model.calls += 1;
     model.asked += batch.length;
     model.wall_ms += Date.now() - t0;
-    model.model = response?.model || PAIRING_MODEL;
+    model.model = String(response?.model || PAIRING_MODEL).slice(0, 120); // the column holds 120
     const answers = parseConfirmations(response?.message?.content, batch);
     slice.forEach((group, k) => {
       const answer = answers.get(k + 1);

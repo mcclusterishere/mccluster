@@ -218,3 +218,69 @@ test('the shipped platform entry gates a Core signature before every other API h
   const old = readFileSync(new URL('../src/entry.js', import.meta.url), 'utf8');
   assert.ok(old.indexOf('await coreSignedGate(request, env)') < old.indexOf("path === '/v1/media/mcp'"), 'and first in the old entry too');
 });
+
+/* ---------- security review, 2026-11-03 ---------- */
+test('a Core signature reaches no route by case, encoding, double slash, suffix or HEAD', async () => {
+  for (const path of ['/v1/world/layers/Quakes', '/V1/world/layers/quakes', '/v1/world/layers/%71uakes', '/v1/world/layers/quakes%2F', '//v1/world/layers/quakes', '/v1/world//layers/quakes', '/v1/world/layers/quakes.json', '/v1/world/layers/quakesx', '/v1/world/layers/quakes/x', '/v1/world/layers/military%2Fquakes', '/v1/world/layers/../layers/military']) {
+    __resetCoreNonces();
+    await withFetch(async (asked) => {
+      const res = await entry.fetch(signed(path), env, ctx);
+      assert.equal(res.status, 403, path);
+      assert.equal((await res.json()).code, 'core_route_not_allowed', path);
+      assert.deepEqual(asked, [], `${path}: refused before any lookup`);
+    });
+  }
+  __resetCoreNonces();
+  await withFetch(async (asked) => {
+    const res = await entry.fetch(signed('/v1/world/layers/quakes', { method: 'HEAD' }), env, ctx);
+    assert.equal(res.status, 405);
+    assert.deepEqual(asked, []);
+  });
+});
+
+test('a protocol value that is not exactly Core is an ordinary request, never an owner', async () => {
+  __resetCoreNonces();
+  await withFetch(async (asked) => {
+    const req = signed('/v1/world/layers/quakes');
+    req.headers.set('x-mccluster-edge-protocol', 'MCCLUSTER-CORE/V1');
+    const res = await entry.fetch(req, env, ctx);
+    assert.equal(res.status, 403);
+    assert.equal((await res.json()).code, 'admin_preview', 'the ordinary owner guard answers');
+    assert.ok(!asked.some((u) => u.startsWith('https://earthquake.usgs.gov/')));
+  });
+});
+
+test('ordinary requests are untouched by the Core gate', async () => {
+  await withFetch(async () => {
+    const res = await entry.fetch(new Request('https://api.mccluster.org/healthz'), env, ctx);
+    assert.equal(res.status, 200);
+    assert.equal((await res.json()).service, 'mccluster');
+  });
+});
+
+test('a correctly signed media call still reaches media and keeps its nonce', async () => {
+  __resetCoreNonces();
+  await withFetch(async (asked) => {
+    const body = '{"jsonrpc":"2.0","id":1,"method":"tools/list"}';
+    const res = await entry.fetch(signed('/v1/media/mcp', { method: 'POST', body }), env, ctx);
+    assert.notEqual(res.status, 401, 'the gate did not consume or refuse the signature');
+    assert.notEqual(res.status, 403);
+    assert.notEqual(res.status, 409);
+    assert.ok(asked.some((u) => u.includes('/rest/v1/org_members?')), 'media resolved the house owner itself');
+  });
+});
+
+test('a withdrawn layer stays withdrawn on the pairs route', async () => {
+  const withdrawnEnv = { ...env, WORLD_GLOBE_WITHDRAWN: 'quakes' };
+  await withFetch(async (asked) => {
+    const res = await entry.fetch(new Request('https://api.mccluster.org/v1/world/news-pairs?layer=quakes&entity_key=us7000abcd', { headers: { authorization: 'Bearer owner-token' } }), withdrawnEnv, ctx);
+    assert.equal(res.status, 403);
+    assert.equal((await res.json()).code, 'feature_withdrawn');
+    assert.ok(!asked.some((u) => u.includes('world_news_pairs')));
+  }, { bearerUser: { id: OWNER } });
+  await withFetch(async () => {
+    const res = await entry.fetch(new Request(`https://api.mccluster.org/v1/world/news-pairs?article_id=${ARTICLE}`, { headers: { authorization: 'Bearer owner-token' } }), withdrawnEnv, ctx);
+    assert.equal(res.status, 200);
+    assert.equal((await res.json()).count, 0, 'the withdrawn layer pair is left out');
+  }, { bearerUser: { id: OWNER } });
+});
