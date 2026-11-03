@@ -412,6 +412,27 @@
         "js/policy-fellowship-desk.js"
       ]
     },
+    "prim3_level_mutate": {
+      "kind": "function",
+      "pending": "prim3_level_builder_v1.sql",
+      "callers": [
+        "workers/mccluster/src/prim3/levels.js"
+      ]
+    },
+    "prim3_level_versions": {
+      "kind": "table",
+      "pending": "prim3_level_builder_v1.sql",
+      "callers": [
+        "workers/mccluster/src/prim3/levels.js"
+      ]
+    },
+    "prim3_levels": {
+      "kind": "table",
+      "pending": "prim3_level_builder_v1.sql",
+      "callers": [
+        "workers/mccluster/src/prim3/levels.js"
+      ]
+    },
     "profile_edit_review_decide": {
       "kind": "function",
       "pending": "20261016010000_profile_edit_gate_v1.sql",

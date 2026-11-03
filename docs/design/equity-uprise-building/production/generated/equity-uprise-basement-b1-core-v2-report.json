@@ -1,11 +1,1420 @@
 {
   "schema_version": "1.0.0",
   "scene_id": "equity-uprise-basement-b1",
+  "interior_layout": "basement-b1-interior-layout-v3.json",
+  "furniture": {
+    "furniture_items": 35,
+    "furniture_types": 12,
+    "furniture_type_list": [
+      "desk",
+      "desk_dual",
+      "desk_operator",
+      "kitchenette",
+      "lockers",
+      "side_chair",
+      "stool_counter",
+      "table_rect",
+      "table_round",
+      "task_chair",
+      "tool_chest",
+      "workbench"
+    ],
+    "furniture_unique_meshes": 15,
+    "furniture_triangles_instanced": 8120,
+    "furniture_triangles_unique": 2436
+  },
+  "furniture_placements": [
+    {
+      "id": "B1-DESK-HASSAN-RAZA",
+      "type": "desk_operator",
+      "category": "work",
+      "x": 58.0,
+      "y": 45.4,
+      "rot_deg": 0.0,
+      "w_ft": 6.0,
+      "d_ft": 2.6667,
+      "h_ft": 2.4167,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "tech-security-pod",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "front": 42
+      },
+      "footprint": [
+        [
+          55.0,
+          44.0667
+        ],
+        [
+          61.0,
+          44.0667
+        ],
+        [
+          61.0,
+          46.7333
+        ],
+        [
+          55.0,
+          46.7333
+        ]
+      ]
+    },
+    {
+      "id": "B1-DESK-HASSAN-RAZA-CHAIR",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 58.0,
+      "y": 48.0,
+      "rot_deg": 180.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "tech-security-pod",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          59.0833,
+          49.0833
+        ],
+        [
+          56.9167,
+          49.0833
+        ],
+        [
+          56.9167,
+          46.9167
+        ],
+        [
+          59.0833,
+          46.9167
+        ]
+      ]
+    },
+    {
+      "id": "B1-DESK-EMRE-YILDIZ",
+      "type": "desk_dual",
+      "category": "work",
+      "x": 55.4,
+      "y": 50.6,
+      "rot_deg": -90.0,
+      "w_ft": 5.0,
+      "d_ft": 2.5,
+      "h_ft": 2.4167,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "tech-security-pod",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "front": 42
+      },
+      "footprint": [
+        [
+          54.15,
+          53.1
+        ],
+        [
+          54.15,
+          48.1
+        ],
+        [
+          56.65,
+          48.1
+        ],
+        [
+          56.65,
+          53.1
+        ]
+      ]
+    },
+    {
+      "id": "B1-DESK-EMRE-YILDIZ-CHAIR",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 57.9,
+      "y": 50.9,
+      "rot_deg": 90.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "tech-security-pod",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          58.9833,
+          49.8167
+        ],
+        [
+          58.9833,
+          51.9833
+        ],
+        [
+          56.8167,
+          51.9833
+        ],
+        [
+          56.8167,
+          49.8167
+        ]
+      ]
+    },
+    {
+      "id": "B1-COMMONS-PANTRY-01",
+      "type": "kitchenette",
+      "category": "equipment",
+      "x": 70.0,
+      "y": 38.6,
+      "rot_deg": 90.0,
+      "w_ft": 8.0,
+      "d_ft": 2.0833,
+      "h_ft": 3.0,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "staff-commons",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": false,
+      "clearance_in": {
+        "front": 42
+      },
+      "footprint": [
+        [
+          71.0417,
+          34.6
+        ],
+        [
+          71.0417,
+          42.6
+        ],
+        [
+          68.9583,
+          42.6
+        ],
+        [
+          68.9583,
+          34.6
+        ]
+      ]
+    },
+    {
+      "id": "B1-COMMONS-TABLE-01",
+      "type": "table_round",
+      "category": "table",
+      "x": 65.6,
+      "y": 44.6,
+      "rot_deg": 0.0,
+      "w_ft": 3.5,
+      "d_ft": 3.5,
+      "h_ft": 2.4167,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "staff-commons",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "all": 36
+      },
+      "footprint": [
+        [
+          63.85,
+          42.85
+        ],
+        [
+          67.35,
+          42.85
+        ],
+        [
+          67.35,
+          46.35
+        ],
+        [
+          63.85,
+          46.35
+        ]
+      ]
+    },
+    {
+      "id": "B1-COMMONS-CHAIR-1",
+      "type": "side_chair",
+      "category": "seating",
+      "x": 62.9,
+      "y": 44.6,
+      "rot_deg": -90.0,
+      "w_ft": 1.5833,
+      "d_ft": 1.75,
+      "h_ft": 2.75,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "staff-commons",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          62.025,
+          45.3917
+        ],
+        [
+          62.025,
+          43.8083
+        ],
+        [
+          63.775,
+          43.8083
+        ],
+        [
+          63.775,
+          45.3917
+        ]
+      ]
+    },
+    {
+      "id": "B1-COMMONS-CHAIR-2",
+      "type": "side_chair",
+      "category": "seating",
+      "x": 65.6,
+      "y": 41.9,
+      "rot_deg": 0.0,
+      "w_ft": 1.5833,
+      "d_ft": 1.75,
+      "h_ft": 2.75,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "staff-commons",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          64.8083,
+          41.025
+        ],
+        [
+          66.3917,
+          41.025
+        ],
+        [
+          66.3917,
+          42.775
+        ],
+        [
+          64.8083,
+          42.775
+        ]
+      ]
+    },
+    {
+      "id": "B1-COMMONS-CHAIR-3",
+      "type": "side_chair",
+      "category": "seating",
+      "x": 68.3,
+      "y": 44.6,
+      "rot_deg": 90.0,
+      "w_ft": 1.5833,
+      "d_ft": 1.75,
+      "h_ft": 2.75,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "staff-commons",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          69.175,
+          43.8083
+        ],
+        [
+          69.175,
+          45.3917
+        ],
+        [
+          67.425,
+          45.3917
+        ],
+        [
+          67.425,
+          43.8083
+        ]
+      ]
+    },
+    {
+      "id": "B1-COMMONS-CHAIR-4",
+      "type": "side_chair",
+      "category": "seating",
+      "x": 65.6,
+      "y": 47.3,
+      "rot_deg": -180.0,
+      "w_ft": 1.5833,
+      "d_ft": 1.75,
+      "h_ft": 2.75,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "staff-commons",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          66.3917,
+          48.175
+        ],
+        [
+          64.8083,
+          48.175
+        ],
+        [
+          64.8083,
+          46.425
+        ],
+        [
+          66.3917,
+          46.425
+        ]
+      ]
+    },
+    {
+      "id": "B1-COMMONS-LOCKERS-01",
+      "type": "lockers",
+      "category": "storage",
+      "x": 70.4,
+      "y": 47.8,
+      "rot_deg": 90.0,
+      "w_ft": 5.0,
+      "d_ft": 1.5,
+      "h_ft": 6.0,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "staff-commons",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": false,
+      "clearance_in": {
+        "front": 42
+      },
+      "footprint": [
+        [
+          71.15,
+          45.3
+        ],
+        [
+          71.15,
+          50.3
+        ],
+        [
+          69.65,
+          50.3
+        ],
+        [
+          69.65,
+          45.3
+        ]
+      ]
+    },
+    {
+      "id": "B1-WORKSHOP-BENCH-01",
+      "type": "workbench",
+      "category": "work",
+      "x": 8.0,
+      "y": 31.65,
+      "rot_deg": 0.0,
+      "w_ft": 10.0,
+      "d_ft": 2.5,
+      "h_ft": 3.0,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "B1-WORKSHOP-BENCH-01",
+      "zone": "workshop",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "front": 42
+      },
+      "footprint": [
+        [
+          3.0,
+          30.4
+        ],
+        [
+          13.0,
+          30.4
+        ],
+        [
+          13.0,
+          32.9
+        ],
+        [
+          3.0,
+          32.9
+        ]
+      ]
+    },
+    {
+      "id": "B1-WORKSHOP-BENCH-STOOL-01",
+      "type": "stool_counter",
+      "category": "seating",
+      "x": 6.5,
+      "y": 34.3,
+      "rot_deg": 180.0,
+      "w_ft": 1.3333,
+      "d_ft": 1.3333,
+      "h_ft": 2.1667,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "workshop",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 18
+      },
+      "footprint": [
+        [
+          7.1667,
+          34.9667
+        ],
+        [
+          5.8333,
+          34.9667
+        ],
+        [
+          5.8333,
+          33.6333
+        ],
+        [
+          7.1667,
+          33.6333
+        ]
+      ]
+    },
+    {
+      "id": "B1-WORKSHOP-BENCH-STOOL-02",
+      "type": "stool_counter",
+      "category": "seating",
+      "x": 11.0,
+      "y": 34.3,
+      "rot_deg": 180.0,
+      "w_ft": 1.3333,
+      "d_ft": 1.3333,
+      "h_ft": 2.1667,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "workshop",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 18
+      },
+      "footprint": [
+        [
+          11.6667,
+          34.9667
+        ],
+        [
+          10.3333,
+          34.9667
+        ],
+        [
+          10.3333,
+          33.6333
+        ],
+        [
+          11.6667,
+          33.6333
+        ]
+      ]
+    },
+    {
+      "id": "B1-WORKSHOP-TOOL-CHEST-01",
+      "type": "tool_chest",
+      "category": "storage",
+      "x": 9.1,
+      "y": 37.4,
+      "rot_deg": 0.0,
+      "w_ft": 3.0,
+      "d_ft": 1.6667,
+      "h_ft": 3.3333,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "workshop",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": false,
+      "clearance_in": {
+        "front": 36
+      },
+      "footprint": [
+        [
+          7.6,
+          36.5667
+        ],
+        [
+          10.6,
+          36.5667
+        ],
+        [
+          10.6,
+          38.2333
+        ],
+        [
+          7.6,
+          38.2333
+        ]
+      ]
+    },
+    {
+      "id": "B1-LAB-LIAISON-CONSOLE-JONAS-WEBER",
+      "type": "desk_operator",
+      "category": "work",
+      "x": 23.6,
+      "y": 50.4,
+      "rot_deg": 180.0,
+      "w_ft": 6.0,
+      "d_ft": 2.6667,
+      "h_ft": 2.4167,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "systems-lab",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "front": 42
+      },
+      "footprint": [
+        [
+          26.6,
+          51.7333
+        ],
+        [
+          20.6,
+          51.7333
+        ],
+        [
+          20.6,
+          49.0667
+        ],
+        [
+          26.6,
+          49.0667
+        ]
+      ]
+    },
+    {
+      "id": "B1-LAB-LIAISON-CONSOLE-CHAIR",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 23.6,
+      "y": 48.0,
+      "rot_deg": 0.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "systems-lab",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          22.5167,
+          46.9167
+        ],
+        [
+          24.6833,
+          46.9167
+        ],
+        [
+          24.6833,
+          49.0833
+        ],
+        [
+          22.5167,
+          49.0833
+        ]
+      ]
+    },
+    {
+      "id": "B1-LAB-TABLE-01",
+      "type": "table_rect",
+      "category": "table",
+      "x": 35.0,
+      "y": 44.0,
+      "rot_deg": 0.0,
+      "w_ft": 18.0,
+      "d_ft": 4.5,
+      "h_ft": 2.4167,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "B1-LAB-TABLE-01",
+      "zone": "systems-lab",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "all": 36
+      },
+      "footprint": [
+        [
+          26.0,
+          41.75
+        ],
+        [
+          44.0,
+          41.75
+        ],
+        [
+          44.0,
+          46.25
+        ],
+        [
+          26.0,
+          46.25
+        ]
+      ]
+    },
+    {
+      "id": "B1-LAB-CONSOLE-01",
+      "type": "desk",
+      "category": "work",
+      "x": 47.5,
+      "y": 39.25,
+      "rot_deg": 0.0,
+      "w_ft": 5.0,
+      "d_ft": 2.5,
+      "h_ft": 2.4167,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "B1-LAB-CONSOLE-01",
+      "zone": "systems-lab",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "front": 42
+      },
+      "footprint": [
+        [
+          45.0,
+          38.0
+        ],
+        [
+          50.0,
+          38.0
+        ],
+        [
+          50.0,
+          40.5
+        ],
+        [
+          45.0,
+          40.5
+        ]
+      ]
+    },
+    {
+      "id": "B1-TELECOM-CONSOLE-01",
+      "type": "desk",
+      "category": "work",
+      "x": 37.5,
+      "y": 32.75,
+      "rot_deg": 180.0,
+      "w_ft": 7.0,
+      "d_ft": 1.6667,
+      "h_ft": 2.4167,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "B1-TELECOM-CONSOLE-01",
+      "zone": "telecom",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "front": 42
+      },
+      "footprint": [
+        [
+          41.0,
+          33.5833
+        ],
+        [
+          34.0,
+          33.5833
+        ],
+        [
+          34.0,
+          31.9167
+        ],
+        [
+          41.0,
+          31.9167
+        ]
+      ]
+    },
+    {
+      "id": "B1-TELECOM-CONSOLE-CHAIR",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 37.5,
+      "y": 30.9,
+      "rot_deg": 0.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "telecom",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          36.4167,
+          29.8167
+        ],
+        [
+          38.5833,
+          29.8167
+        ],
+        [
+          38.5833,
+          31.9833
+        ],
+        [
+          36.4167,
+          31.9833
+        ]
+      ]
+    },
+    {
+      "id": "B1-OPS-DESK-01",
+      "type": "desk_operator",
+      "category": "work",
+      "x": 34.0,
+      "y": 59.0,
+      "rot_deg": 180.0,
+      "w_ft": 14.0,
+      "d_ft": 2.5,
+      "h_ft": 2.4167,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "B1-OPS-DESK-01",
+      "zone": "ops-concourse",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "front": 42
+      },
+      "footprint": [
+        [
+          41.0,
+          60.25
+        ],
+        [
+          27.0,
+          60.25
+        ],
+        [
+          27.0,
+          57.75
+        ],
+        [
+          41.0,
+          57.75
+        ]
+      ]
+    },
+    {
+      "id": "B1-OPS-ROUTE-01",
+      "type": "desk",
+      "category": "work",
+      "x": 44.25,
+      "y": 59.2,
+      "rot_deg": 180.0,
+      "w_ft": 4.5,
+      "d_ft": 2.5,
+      "h_ft": 2.4167,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "B1-OPS-ROUTE-01",
+      "zone": "ops-concourse",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "front": 42
+      },
+      "footprint": [
+        [
+          46.5,
+          60.45
+        ],
+        [
+          42.0,
+          60.45
+        ],
+        [
+          42.0,
+          57.95
+        ],
+        [
+          46.5,
+          57.95
+        ]
+      ]
+    },
+    {
+      "id": "B1-LAB-CHAIRS-01-01",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 28,
+      "y": 40.3,
+      "rot_deg": 0.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "B1-LAB-CHAIRS-01",
+      "zone": "systems-lab",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          26.9167,
+          39.2167
+        ],
+        [
+          29.0833,
+          39.2167
+        ],
+        [
+          29.0833,
+          41.3833
+        ],
+        [
+          26.9167,
+          41.3833
+        ]
+      ]
+    },
+    {
+      "id": "B1-LAB-CHAIRS-01-02",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 35,
+      "y": 40.3,
+      "rot_deg": 0.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "B1-LAB-CHAIRS-01",
+      "zone": "systems-lab",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          33.9167,
+          39.2167
+        ],
+        [
+          36.0833,
+          39.2167
+        ],
+        [
+          36.0833,
+          41.3833
+        ],
+        [
+          33.9167,
+          41.3833
+        ]
+      ]
+    },
+    {
+      "id": "B1-LAB-CHAIRS-01-03",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 42,
+      "y": 40.3,
+      "rot_deg": 0.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "B1-LAB-CHAIRS-01",
+      "zone": "systems-lab",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          40.9167,
+          39.2167
+        ],
+        [
+          43.0833,
+          39.2167
+        ],
+        [
+          43.0833,
+          41.3833
+        ],
+        [
+          40.9167,
+          41.3833
+        ]
+      ]
+    },
+    {
+      "id": "B1-LAB-CHAIRS-01-04",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 28,
+      "y": 48.7,
+      "rot_deg": 180.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "B1-LAB-CHAIRS-01",
+      "zone": "systems-lab",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          29.0833,
+          49.7833
+        ],
+        [
+          26.9167,
+          49.7833
+        ],
+        [
+          26.9167,
+          47.6167
+        ],
+        [
+          29.0833,
+          47.6167
+        ]
+      ]
+    },
+    {
+      "id": "B1-LAB-CHAIRS-01-05",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 35,
+      "y": 48.7,
+      "rot_deg": 180.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "B1-LAB-CHAIRS-01",
+      "zone": "systems-lab",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          36.0833,
+          49.7833
+        ],
+        [
+          33.9167,
+          49.7833
+        ],
+        [
+          33.9167,
+          47.6167
+        ],
+        [
+          36.0833,
+          47.6167
+        ]
+      ]
+    },
+    {
+      "id": "B1-LAB-CHAIRS-01-06",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 42,
+      "y": 48.7,
+      "rot_deg": 180.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "B1-LAB-CHAIRS-01",
+      "zone": "systems-lab",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          43.0833,
+          49.7833
+        ],
+        [
+          40.9167,
+          49.7833
+        ],
+        [
+          40.9167,
+          47.6167
+        ],
+        [
+          43.0833,
+          47.6167
+        ]
+      ]
+    },
+    {
+      "id": "B1-OPS-GUARD-DMITRI-VOLKOV",
+      "type": "desk_dual",
+      "category": "work",
+      "x": 19.4,
+      "y": 59.6,
+      "rot_deg": -90.0,
+      "w_ft": 5.0,
+      "d_ft": 2.5,
+      "h_ft": 2.4167,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "ops-concourse",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "front": 42
+      },
+      "footprint": [
+        [
+          18.15,
+          62.1
+        ],
+        [
+          18.15,
+          57.1
+        ],
+        [
+          20.65,
+          57.1
+        ],
+        [
+          20.65,
+          62.1
+        ]
+      ]
+    },
+    {
+      "id": "B1-OPS-GUARD-DMITRI-VOLKOV-CHAIR",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 21.95,
+      "y": 59.6,
+      "rot_deg": 90.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "ops-concourse",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          23.0333,
+          58.5167
+        ],
+        [
+          23.0333,
+          60.6833
+        ],
+        [
+          20.8667,
+          60.6833
+        ],
+        [
+          20.8667,
+          58.5167
+        ]
+      ]
+    },
+    {
+      "id": "B1-OPS-CHAIRS-01-01",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 28.6,
+      "y": 56.6,
+      "rot_deg": 0.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "B1-OPS-CHAIRS-01",
+      "zone": "ops-concourse",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          27.5167,
+          55.5167
+        ],
+        [
+          29.6833,
+          55.5167
+        ],
+        [
+          29.6833,
+          57.6833
+        ],
+        [
+          27.5167,
+          57.6833
+        ]
+      ]
+    },
+    {
+      "id": "B1-OPS-CHAIRS-01-02",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 31.6,
+      "y": 56.6,
+      "rot_deg": 0.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "B1-OPS-CHAIRS-01",
+      "zone": "ops-concourse",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          30.5167,
+          55.5167
+        ],
+        [
+          32.6833,
+          55.5167
+        ],
+        [
+          32.6833,
+          57.6833
+        ],
+        [
+          30.5167,
+          57.6833
+        ]
+      ]
+    },
+    {
+      "id": "B1-OPS-CHAIRS-01-03",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 37.4,
+      "y": 56.6,
+      "rot_deg": 0.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "B1-OPS-CHAIRS-01",
+      "zone": "ops-concourse",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          36.3167,
+          55.5167
+        ],
+        [
+          38.4833,
+          55.5167
+        ],
+        [
+          38.4833,
+          57.6833
+        ],
+        [
+          36.3167,
+          57.6833
+        ]
+      ]
+    },
+    {
+      "id": "B1-OPS-CHAIRS-01-04",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 40.2,
+      "y": 56.6,
+      "rot_deg": 0.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "B1-OPS-CHAIRS-01",
+      "zone": "ops-concourse",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          39.1167,
+          55.5167
+        ],
+        [
+          41.2833,
+          55.5167
+        ],
+        [
+          41.2833,
+          57.6833
+        ],
+        [
+          39.1167,
+          57.6833
+        ]
+      ]
+    }
+  ],
   "not_for_construction": true,
-  "public_navigation": false,
-  "glb_bytes": 250092,
-  "sha256": "2cf95b25d6b40568b3039f2cdb5dad55a54e989339f824e64ff40c65037f4a37",
-  "mesh_count": 382,
+  "public_navigation": true,
+  "access_model": "normal staffed floor (owner 2026-11-03); plant rooms keep safety doors; live systems simulation-only",
+  "glb_bytes": 269784,
+  "sha256": "b054de2c5e02d15c17a14d5570798defe0b8daee27411c8d41dc60a01325a6e8",
+  "mesh_count": 328,
   "inventory_records": 67,
   "inventory_modeled": 67,
   "checks_total": 18,

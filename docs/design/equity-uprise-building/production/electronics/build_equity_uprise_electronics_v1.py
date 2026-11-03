@@ -225,7 +225,7 @@ def default_pos(n,kind,i=0,count=1):
 B1_DETAILED_POSITIONS={
     "B1-ELEC-UPS-01-I001":[36.5,15.5,2.85],
     "B1-ELEC-UPS-01-I002":[42.5,15.5,2.85],
-    "B1-TELECOM-CONSOLE-01":[37.5,24.0,3.15],
+    "B1-TELECOM-CONSOLE-01":[37.5,32.75,3.15],  # v3: console moved off the rack row
     "B1-LAB-CONSOLE-01":[47.5,39.25,3.2],
     "B1-LAB-DASHBOARD-01":[35.0,52.325,5.7],
     "B1-OPS-STATUS-01":[26.5,61.325,5.3],
@@ -1239,6 +1239,23 @@ expert=[
  ("IT-LAB-040","Commissioning / As-Built Audit",["asset registry","cable certification","documentation"],["documentation_mismatch"],["whole_building"],["reconcile digital and physical evidence"],["registry/test records agree"])
 ]
 for x in expert: lab(x[0],"EXPERT",x[1],x[2],x[3],x[4],x[5],x[6],"restore baseline")
+# Server Lab ladder (owner, 2026-11-03): hands-on rack/server hardware labs on the
+# B1 MDF virtualization host. Authority: production/electronics/server-lab-hardware-v1.json,
+# production/lab-runtime/server-lab-scenario-pack-v1.json and SERVER-LAB-SPEC.md.
+server_labs=[
+ ("IT-LAB-041","FOUNDATION","Server Rack & Component Identification",["rack units","server components","identification"],["none"],["B1-SRV-HYP-01-I001","collapsed_core_switch","rack_ups","pdu"],["identify rack equipment and server components"],["every prompted item identified"]),
+ ("IT-LAB-042","TECHNICIAN","Server Rebuild: CPU, Memory, Storage, Power",["CPU/heatsink","memory population","drives/RAID card","redundant power","cabling"],["none"],["B1-SRV-HYP-01-I001","pdu","collapsed_core_switch"],["rebuild a stripped 2U server to specification"],["build validated with no seating, order or population error"]),
+ ("IT-LAB-043","ADMIN","Server Bring-Up: POST, Out-of-Band, RAID",["POST","BMC/SEL","RAID levels","link verification"],["none"],["B1-SRV-HYP-01-I001","LOGIC-VLAN-MGMT"],["power on, read POST/BMC, configure RAID, verify links"],["virtual disk meets requirement and both links verified"]),
+ ("IT-LAB-044","ADVANCED","Server Memory Failure",["ECC","POST","DIMM replacement"],["dimm_uncorrectable_error"],["B1-SRV-HYP-01-I001"],["locate and replace the failed DIMM"],["full memory restored"]),
+ ("IT-LAB-045","ADVANCED","Degraded RAID Member",["RAID","hot-swap","rebuild"],["raid_member_failed"],["B1-SRV-HYP-01-I001"],["replace the failed member only"],["virtual disk optimal"]),
+ ("IT-LAB-046","ADVANCED","Server PSU Failure",["redundant power","hot-swap"],["psu_failed"],["B1-SRV-HYP-01-I001"],["restore 1+1 redundancy"],["redundancy regained"]),
+ ("IT-LAB-047","ADVANCED","Server Fan Failure / Thermal Throttle",["cooling","sensors"],["fan_failed"],["B1-SRV-HYP-01-I001"],["replace the failed fan"],["temperatures and clocks normal"]),
+ ("IT-LAB-048","ADVANCED","Server NIC Link Down",["NIC bonding","DAC/transceivers"],["server_nic_link_down"],["B1-SRV-HYP-01-I001"],["restore the failed bond member"],["both links up at 10 Gb/s"]),
+ ("IT-LAB-049","ADVANCED","CMOS Battery / Clock Drift",["RTC","firmware settings","NTP"],["cmos_battery_depleted"],["B1-SRV-HYP-01-I001"],["replace battery and restore time"],["clock synchronized and settings persist"]),
+ ("IT-LAB-050","EXPERT","Server Firmware Baseline Mismatch",["firmware","update order"],["firmware_mismatch"],["B1-SRV-HYP-01-I001"],["apply the baseline in dependency order"],["inventory matches baseline"]),
+ ("IT-LAB-051","EXPERT","Multi-Fault Server Incident",["prioritization","redundancy","RAID"],["psu_failed","raid_member_failed"],["B1-SRV-HYP-01-I001"],["restore power redundancy before the rebuild"],["redundancy regained and virtual disk optimal"]),
+]
+for x in server_labs: lab(x[0],x[1],x[2],x[3],x[4],x[5],x[6],x[7],"restore baseline")
 
 # overlay geometry
 scene=trimesh.Scene()

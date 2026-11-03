@@ -1,4 +1,4 @@
--- Behaviour gate for supabase/migrations/20261103160000_learning_evidence_v1.sql.
+-- Behaviour gate for supabase/migrations/20261103182544_learning_evidence_v1.sql.
 -- Every person, ID and hash below is an invented fixture. Run only through
 -- scripts/test-learning-evidence-db.sh. Assertions run as the real API roles.
 set client_min_messages = warning;

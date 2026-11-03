@@ -518,9 +518,18 @@ Generated roof electronics use the `L7-` prefix. Spatial binding therefore expli
 
 Boundary: Step 9 adds no live device control, no construction/as-built claims, and no automatic human competency awards. Cross-floor traces remain scenario-scoped rather than exposing the complete cable graph.
 
-## Step 10 — HSEEP building-safety exercises, team roles and the durable evidence record
+## Step 10 — Server Lab (hands-on rack and server hardware)
 
-FEMA structures exercises with HSEEP (January 2020): an exercise type, objectives, Exercise Evaluation Guide (EEG) criteria rated **P / S / M / U**, a player hotwash, and an After-Action Report / Improvement Plan (AAR/IP) whose improvement items are owned and tracked to closure. Step 10 gives the runtime that shape.
+Owner, 2026-11-03: the building is a real test environment where people walk to a rack, open a server, identify its parts, rebuild it and troubleshoot it, in levels. Full specification: `SERVER-LAB-SPEC.md`.
+
+- Catalog: IT-LAB-041..051 appended to the Step 4A ladder (FOUNDATION identify, TECHNICIAN rebuild, ADMIN bring-up, ADVANCED/EXPERT hardware faults). The catalog now holds 51 labs; Step 1 and Step 2 verifiers pin 51.
+- Step 2 sandbox 1.2.0 supports seven server hardware faults (`dimm_uncorrectable_error`, `raid_member_failed`, `psu_failed`, `fan_failed`, `server_nic_link_down`, `cmos_battery_depleted`, `firmware_mismatch`) on the canonical host asset, with the NIC fault taking the canonical DAC connection down and CMOS drift reaching the hosted NTP service.
+- L1–L3 run as `ServerLabExercise` (semantic validators: memory population, seating order, cabling plan, RAID math); L4 runs the Step 3 `GuidedScenarioRunner` over `server-lab-scenario-pack-v1.json`. All four wrap in the Step 6 `AssessedExercise`.
+- Boundary unchanged: SIMULATION, SANDBOX, no live control, `credential_is_not_competency`, no automated Verified / Applied / Mentor.
+
+## Step 11 — HSEEP building-safety exercises, team roles and the durable evidence record
+
+FEMA structures exercises with HSEEP (January 2020): an exercise type, objectives, Exercise Evaluation Guide (EEG) criteria rated **P / S / M / U**, a player hotwash, and an After-Action Report / Improvement Plan (AAR/IP) whose improvement items are owned and tracked to closure. Step 11 gives the runtime that shape.
 
 Canonical files:
 - `production/lab-runtime/hseep-building-safety-scenario-pack-v1.json` (`pack_id` `hseep-building-safety`, `pack_version` 1.0.0)
@@ -547,6 +556,6 @@ Content rules: the active-threat exercise is a tabletop, non-graphic, opt-out wi
 
 The existing CISA, building-operations, public-service and distributed packs now carry an `hseep` block per scenario (type, objectives, EEG criteria, hotwash prompts) pointing at this pack's doctrine. `EU-CISA-ITOT-039-V1` is classed as a functional exercise; the rest are drills.
 
-Durable record: lab sessions, hash-chained evidence events, competency ratings (automated ceiling Demonstrated, enforced by a database check), uploaded external certificates, pathway enrolment and the HSEEP exercise/EEG/AAR/IP/ICS-214 records live in Supabase `learning_*` tables (`supabase/migrations/20261103160000_learning_evidence_v1.sql`), written through Worker `mccluster` (`workers/mccluster/src/prim3/learning.js`). The browser runtime stays the simulator; it is no longer the only place evidence exists.
+Durable record: lab sessions, hash-chained evidence events, competency ratings (automated ceiling Demonstrated, enforced by a database check), uploaded external certificates, pathway enrolment and the HSEEP exercise/EEG/AAR/IP/ICS-214 records live in Supabase `learning_*` tables (`supabase/migrations/20261103182544_learning_evidence_v1.sql`, applied to production 2026-11-03), written through Worker `mccluster` (`workers/mccluster/src/prim3/learning.js`). The browser runtime stays the simulator; it is no longer the only place evidence exists.
 
-Boundary: Step 10 adds no live control, no compliance certification of the virtual building, no medical, hazmat or tactical instruction, and no automated Verified/Applied/Mentor award. Viewer (`equity-uprise-building-core-v2-3d.html`) integration of the Step 10 pack is next work.
+Boundary: Step 11 adds no live control, no compliance certification of the virtual building, no medical, hazmat or tactical instruction, and no automated Verified/Applied/Mentor award. Viewer (`equity-uprise-building-core-v2-3d.html`) integration of the Step 11 pack is next work.

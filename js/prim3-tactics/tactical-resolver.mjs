@@ -8,6 +8,23 @@ const SLAB_THICKNESS = 0.3;           // metres: a roof surface blocks sight bet
 const REACTION_AIM_PENALTY = 15;      // overwatch reaction shots (canon silent; conventional value)
 const DEFAULT_SEED = 1;
 
+// Technology control (game/TACTICAL-T-CONTROL-RULES.md). Ranges, AP costs, the pulse radius and limit
+// and the 3-round re-take protection: owner, 2026-11-02. The rest are engine defaults ("chosen").
+const TECH_RULES = Object.freeze({
+  JAM_AP: 1, JAM_RANGE: 8,                          // owner 2026-11-02
+  CONTROL_AP: 2, CONTROL_RANGE: 6,                  // owner 2026-11-02
+  PULSE_AP: 1, PULSE_RANGE: 5, PULSE_RADIUS: 3,     // owner 2026-11-02
+  PULSE_PER_MISSION: 1,                             // owner 2026-11-02 (config.syncPulsePerMission)
+  RETAKE_AP: 2, RETAKE_RANGE: 6, RETAKE_PROTECTION_ROUNDS: 3, // owner 2026-11-02
+  SWITCH_WEAPON_AP: 1,                              // owner 2026-11-02 "engine default", config.switchWeaponAp
+  DOOR_AP: 1, DOOR_RANGE: 6,                        // chosen (same reach as control)
+  MARK_AP: 1,                                       // chosen; reach = the R's detection radius
+  MACHINE_DETECTION_RADIUS: 5,                      // chosen (the unit default)
+  TURRET_AIM: 70, TURRET_DAMAGE: 3, TURRET_CRIT: 10, TURRET_CRIT_BONUS: 2 // chosen (the unit defaults)
+});
+const MACHINE_KINDS = ['CAMERA', 'TURRET', 'DOOR'];
+const WEAPON_STATS = ['aim', 'crit', 'weaponDamage', 'critBonus', 'ammo', 'magazineSize'];
+
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, Number(value)));
 }
@@ -42,7 +59,7 @@ function stableHash(value) {
 }
 
 function normalizeUnit(unit) {
-  return {
+  const out = {
     id: String(unit.id),
     faction: unit.faction || 'PLAYER',
     role: unit.role || null,
@@ -70,8 +87,106 @@ function normalizeUnit(unit) {
     canBeDowned: unit.canBeDowned !== false,
     statuses: Array.isArray(unit.statuses) ? [...unit.statuses] : [],
     ...(unit.weaponRange != null ? { weaponRange: Number(unit.weaponRange) } : {}),
-    ...(Array.isArray(unit.patrol) ? { patrol: unit.patrol.map((c) => ({ x: Number(c.x), y: Number(c.y), z: Number(c.z || 0) })) } : {})
+    ...(Array.isArray(unit.patrol) ? { patrol: unit.patrol.map((c) => ({ x: Number(c.x), y: Number(c.y), z: Number(c.z || 0) })) } : {}),
+    ...(unit.level != null ? { level: Number(unit.level) } : {}),
+    ...(unit.syncPulsesUsed != null ? { syncPulsesUsed: Number(unit.syncPulsesUsed) } : {}),
+    // Optional per-unit pulse allowance (the level-2 Overclock upgrade); overrides rules.syncPulsePerMission.
+    ...(unit.syncPulsePerMission != null ? { syncPulsePerMission: Number(unit.syncPulsePerMission) } : {})
   };
+  if (unit.weapons && typeof unit.weapons === 'object') applyWeapons(out, unit);
+  return out;
+}
+
+// ---------- weapons (optional, per unit) ----------
+
+// A missing weapon stat falls back to the unit's own value. The unit's top-level shot stats always
+// mirror the ready weapon, so every rule that reads them (and the threat AI) keeps working.
+function normalizeWeapon(weapon, base) {
+  const out = {};
+  for (const key of WEAPON_STATS) out[key] = Number(weapon[key] ?? base[key]);
+  if (weapon.magazineSize == null && weapon.ammo != null) out.magazineSize = Number(weapon.ammo);
+  const range = weapon.weaponRange ?? base.weaponRange;
+  if (range != null) out.weaponRange = Number(range);
+  return out;
+}
+
+function applyWeapons(out, unit) {
+  const weapons = {};
+  for (const slot of ['main', 'sidearm']) if (unit.weapons[slot]) weapons[slot] = normalizeWeapon(unit.weapons[slot], out);
+  if (!weapons.main && !weapons.sidearm) throw new Error(`Unit ${out.id} weapons must include main or sidearm`);
+  const ready = unit.readyWeapon != null ? String(unit.readyWeapon) : weapons.main ? 'main' : 'sidearm';
+  if (!weapons[ready]) throw new Error(`Unit ${out.id} readyWeapon ${ready} is not carried`);
+  out.weapons = weapons;
+  out.readyWeapon = ready;
+  loadReadyWeapon(out);
+}
+
+function loadReadyWeapon(unit) {
+  const w = unit.weapons[unit.readyWeapon];
+  for (const key of WEAPON_STATS) unit[key] = w[key];
+  if (w.weaponRange != null) unit.weaponRange = w.weaponRange;
+  else delete unit.weaponRange;
+}
+
+// The stats a shot uses: the ready weapon when the unit carries weapons, else the unit itself.
+function readyStats(unit) {
+  return unit.weapons && unit.weapons[unit.readyWeapon] ? unit.weapons[unit.readyWeapon] : unit;
+}
+
+function copyUnit(unit) {
+  const out = { ...unit, statuses: [...unit.statuses] };
+  if (unit.weapons) out.weapons = Object.fromEntries(Object.entries(unit.weapons).map(([k, w]) => [k, { ...w }]));
+  return out;
+}
+
+// ---------- machines (optional) ----------
+
+function normalizeMachine(item, index) {
+  const id = String(item.id ?? `machine-${index}`);
+  const kind = String(item.kind || '').toUpperCase();
+  if (!MACHINE_KINDS.includes(kind)) throw new Error(`Machine ${id} kind must be CAMERA, TURRET or DOOR`);
+  const x = Number(item.x), y = Number(item.y), z = Number(item.z || 0);
+  const out = {
+    id, kind, x, y, z,
+    faction: item.faction === 'PLAYER' ? 'PLAYER' : 'THREAT',
+    state: 'ACTIVE',
+    jammedUntilRound: null, jammedPhase: null, resumeState: null,
+    controlledSinceRound: null, controlledBy: null, homeFaction: null,
+    markedBy: Array.isArray(item.markedBy) ? item.markedBy.map(String) : [],
+    detectionRadius: Number(item.detectionRadius ?? TECH_RULES.MACHINE_DETECTION_RADIUS),
+    playerSeen: null
+  };
+  if (kind === 'TURRET') {
+    out.aim = Number(item.aim ?? TECH_RULES.TURRET_AIM);
+    out.weaponDamage = Number(item.weaponDamage ?? TECH_RULES.TURRET_DAMAGE);
+    out.crit = Number(item.crit ?? TECH_RULES.TURRET_CRIT);
+    out.critBonus = Number(item.critBonus ?? TECH_RULES.TURRET_CRIT_BONUS);
+    if (item.weaponRange != null) out.weaponRange = Number(item.weaponRange);
+  }
+  if (kind === 'DOOR') {
+    const cells = Array.isArray(item.cells) && item.cells.length ? item.cells : [{ x, y, z }];
+    out.cells = cells.map((c) => ({ x: Number(c.x), y: Number(c.y), z: Number(c.z ?? z) }));
+    out.open = Boolean(item.open);
+  }
+  return out;
+}
+
+function copyMachine(m) {
+  return { ...m, markedBy: [...m.markedBy], ...(m.cells ? { cells: m.cells.map((c) => ({ ...c })) } : {}),
+    playerSeen: m.playerSeen ? { ...m.playerSeen } : null };
+}
+
+function doorBlockers(door) {
+  return door.cells.map((c) => ({ x: c.x, y: c.y, z: c.z, door: door.id }));
+}
+
+function machineWorking(m) {
+  return m.state === 'ACTIVE' || m.state === 'CONTROLLED';
+}
+
+function rulesOf(state) {
+  const r = state.rules || {};
+  return { switchWeaponAp: Number(r.switchWeaponAp ?? TECH_RULES.SWITCH_WEAPON_AP), syncPulsePerMission: Number(r.syncPulsePerMission ?? TECH_RULES.PULSE_PER_MISSION) };
 }
 
 function normalizeSurface(item) {
@@ -98,7 +213,7 @@ function normalizeNode(node) {
 function copyState(state) {
   return {
     ...state,
-    units: state.units.map((unit) => ({ ...unit, statuses: [...unit.statuses] })),
+    units: state.units.map(copyUnit),
     cover: state.cover.map((item) => ({ ...item, sides: [...item.sides] })),
     blockers: state.blockers.map((item) => ({ ...item })),
     surfaces: Array.isArray(state.surfaces) ? state.surfaces.map((item) => ({ ...item })) : null,
@@ -111,13 +226,15 @@ function copyState(state) {
     events: [...state.events],
     technicalTruth: state.technicalTruth,
     technicalTruthHash: state.technicalTruthHash,
-    learnerProfile: state.learnerProfile ? clone(state.learnerProfile) : null
+    learnerProfile: state.learnerProfile ? clone(state.learnerProfile) : null,
+    ...(Array.isArray(state.machines) ? { machines: state.machines.map(copyMachine) } : {}),
+    ...(state.rules ? { rules: { ...state.rules } } : {})
   };
 }
 
 function createState(config = {}) {
   const technicalTruth = deepFreeze(clone(config.technicalTruth || { nodes: {} }));
-  return {
+  const state = {
     version: '0.1.0',
     width: Number(config.width || 20),
     height: Number(config.height || 20),
@@ -151,6 +268,24 @@ function createState(config = {}) {
     technicalTruthHash: stableHash(technicalTruth),
     learnerProfile: config.learnerProfile ? clone(config.learnerProfile) : null
   };
+  // machines and the tunable control rules: present only when configured, so an older board is unchanged
+  if (Array.isArray(config.machines)) {
+    state.machines = config.machines.map(normalizeMachine);
+    const ids = new Set();
+    for (const m of state.machines) {
+      if (ids.has(m.id)) throw new Error(`Duplicate machine id ${m.id}`);
+      ids.add(m.id);
+      if (m.kind === 'DOOR' && !m.open) state.blockers.push(...doorBlockers(m));
+    }
+    noteSightings(state);
+  }
+  if (config.switchWeaponAp != null || config.syncPulsePerMission != null) {
+    state.rules = {
+      ...(config.switchWeaponAp != null ? { switchWeaponAp: Number(config.switchWeaponAp) } : {}),
+      ...(config.syncPulsePerMission != null ? { syncPulsePerMission: Number(config.syncPulsePerMission) } : {})
+    };
+  }
+  return state;
 }
 
 function unitById(state, unitId) {
@@ -176,6 +311,7 @@ function beginPlayerPhase(state) {
     unit.hunkered = false;
   }
   next.events.push({ type: 'PLAYER_PHASE_BEGIN', round: next.round });
+  phaseUpkeep(next, 'PLAYER');
   return next;
 }
 
@@ -189,7 +325,30 @@ function beginThreatPhase(state) {
     unit.hunkered = false;
   }
   next.events.push({ type: 'THREAT_PHASE_BEGIN', round: next.round });
+  phaseUpkeep(next, 'THREAT');
   return next;
+}
+
+// Start-of-phase upkeep for machines and the alert network (mutates the copy it is given).
+// JAMMED ends at the start of the jamming side's next phase; NETWORK_SILENCED ends at the start of the
+// THREAT phase it was timed to. Overwatch and hunker are handled above, unchanged.
+function phaseUpkeep(next, side) {
+  if (Array.isArray(next.machines)) {
+    for (const m of next.machines) {
+      if (m.state !== 'JAMMED' || m.jammedPhase !== side || next.round < m.jammedUntilRound) continue;
+      m.state = m.resumeState || 'ACTIVE';
+      m.jammedUntilRound = null; m.jammedPhase = null; m.resumeState = null;
+      next.events.push({ type: 'MACHINE_RESTORED', machineId: m.id, state: m.state });
+    }
+  }
+  if (side === 'THREAT') {
+    for (const u of next.units) {
+      if (u.networkSilencedUntilRound == null || next.round < u.networkSilencedUntilRound) continue;
+      delete u.networkSilencedUntilRound;
+      u.statuses = u.statuses.filter((s) => s !== 'NETWORK_SILENCED');
+    }
+  }
+  if (Array.isArray(next.machines)) noteSightings(next);
 }
 
 function resolveClockStatePhase(state) {
@@ -353,7 +512,17 @@ function hasLineOfSight(state, a, b) {
   const dx = b.x - a.x, dy = b.y - a.y;
   const len2 = dx * dx + dy * dy;
   const half = len2 ? 0.5 / Math.sqrt(len2) : 0; // half a tile, as a fraction of the line
-  for (const cell of lineCells(a, b)) {
+  const between = lineCells(a, b);
+  if (!between.length && az !== bz) {
+    // adjacent (or stacked) cells on different floors: no intermediate column is crossed, so the slab between
+    // them is checked here. A slab over the lower unit's head, at or below the upper unit's floor, blocks
+    // (a unit on Floor 1 does not see the basement through its own floor); open air over the lower cell
+    // (a roof edge over the street) does not.
+    const sa = geo.standHeight(a.x, a.y, az), sb = geo.standHeight(b.x, b.y, bz);
+    const low = sa <= sb ? a : b, loStand = Math.min(sa, sb), hiStand = Math.max(sa, sb);
+    for (const s of geo.columnSurfaces.get(low.y * geo.W + low.x) || []) if (s.height > loStand + 1e-9 && s.height <= hiStand + 1e-9) return false;
+  }
+  for (const cell of between) {
     const t = len2 ? ((cell.x - a.x) * dx + (cell.y - a.y) * dy) / len2 : 0;
     const h1 = ha + (hb - ha) * clamp(t - half, 0, 1);
     const h2 = ha + (hb - ha) * clamp(t + half, 0, 1);
@@ -381,29 +550,34 @@ function coverForAttack(state, target, attacker) {
 }
 
 // options.reaction: an overwatch reaction shot (REACTION_AIM_PENALTY applies before the clamp).
+// With unit.weapons, the ready weapon's aim, damage, crit, crit bonus, ammo and range are used.
 function shotPreview(state, attackerId, targetId, options = {}) {
   const attacker = unitById(state, attackerId);
-  const target = unitById(state, targetId);
+  return previewShot(state, attacker, readyStats(attacker), unitById(state, targetId), options);
+}
+
+// attacker: a unit or a turret view (position, faction); stats: where aim/crit/damage/ammo/range live.
+function previewShot(state, attacker, stats, target, options = {}) {
   if (attacker.dead || attacker.downed || target.dead) return { legal: false, reason: 'INVALID_UNIT_STATE' };
   if (attacker.faction === target.faction) return { legal: false, reason: 'FRIENDLY_TARGET' };
   if (!hasLineOfSight(state, attacker, target)) return { legal: false, reason: 'NO_LINE_OF_SIGHT' };
-  if (attacker.ammo <= 0) return { legal: false, reason: 'EMPTY_MAGAZINE' };
+  if (stats.ammo <= 0) return { legal: false, reason: 'EMPTY_MAGAZINE' };
   const distance = gridDistance(attacker, target, state);
-  if (attacker.weaponRange != null && distance > attacker.weaponRange) return { legal: false, reason: 'OUT_OF_RANGE' };
+  if (stats.weaponRange != null && distance > stats.weaponRange) return { legal: false, reason: 'OUT_OF_RANGE' };
   const cover = coverForAttack(state, target, attacker);
   const rangePenalty = Math.max(0, distance - 6) * 4;
   const elevationBonus = attacker.z > target.z ? 10 : 0;
   const hunkerPenalty = target.hunkered ? 20 : 0;
   const flankBonus = cover.flanked ? 15 : 0;
   const reactionPenalty = options.reaction ? REACTION_AIM_PENALTY : 0;
-  const chance = clamp(attacker.aim - cover.bonus - rangePenalty - hunkerPenalty + elevationBonus + flankBonus - reactionPenalty, 5, 95);
-  const critChance = clamp(attacker.crit + (cover.flanked ? 20 : 0), 0, 75);
+  const chance = clamp(stats.aim - cover.bonus - rangePenalty - hunkerPenalty + elevationBonus + flankBonus - reactionPenalty, 5, 95);
+  const critChance = clamp(stats.crit + (cover.flanked ? 20 : 0), 0, 75);
   return {
     legal: true,
     hitChance: Math.round(chance),
     critChance: Math.round(critChance),
-    damage: attacker.weaponDamage,
-    critDamage: attacker.weaponDamage + attacker.critBonus,
+    damage: stats.weaponDamage,
+    critDamage: stats.weaponDamage + stats.critBonus,
     cover: cover.type,
     flanked: cover.flanked,
     distance,
@@ -420,11 +594,14 @@ function detects(state, watcher, target) {
   return gridDistance(watcher, target, state) <= watcher.detectionRadius && hasLineOfSight(state, watcher, target);
 }
 
+// Opposing units, and opposing working cameras (ACTIVE or CONTROLLED, not JAMMED), detect the mover.
 function detectAtPosition(state, mover) {
-  return state.units.some((enemy) => {
+  const byUnit = state.units.some((enemy) => {
     if (enemy.faction === mover.faction || enemy.dead || enemy.downed) return false;
     return detects(state, enemy, mover);
   });
+  if (byUnit || !Array.isArray(state.machines)) return byUnit;
+  return state.machines.some((m) => m.kind === 'CAMERA' && machineWorking(m) && m.faction !== mover.faction && detects(state, m, mover));
 }
 
 function isBlockedCell(state, x, y, z) {
@@ -566,8 +743,14 @@ function linkBetween(state, a, b) {
 // ---------- shots ----------
 
 function applyShot(state, attacker, target, preview, roll, critRoll) {
-  attacker.ammo -= 1;
+  const stats = readyStats(attacker);
+  stats.ammo -= 1;
+  if (stats !== attacker) attacker.ammo = stats.ammo;
   attacker.concealed = false;
+  return applyHit(target, preview, roll, critRoll);
+}
+
+function applyHit(target, preview, roll, critRoll) {
   const hit = Number(roll) < preview.hitChance;
   const critical = hit && Number(critRoll) < preview.critChance;
   const damage = hit ? (critical ? preview.critDamage : preview.damage) : 0;
@@ -585,7 +768,9 @@ function applyShot(state, attacker, target, preview, roll, critRoll) {
 // is consumed, no AP is spent, ammo is used, the reaction aim penalty applies. A concealed mover is a
 // target only once the watcher detects it (which breaks its concealment). Returns true if the mover
 // is downed or dead.
-function resolveReactions(state, mover, roll) {
+// Then every opposing working turret fires the same way (always on overwatch: it re-arms, firing at most
+// once per mover per move; no ammo; TURRET_SHOT). firedTurrets: the turret ids that already fired this move.
+function resolveReactions(state, mover, roll, firedTurrets = new Set()) {
   const watchers = state.units.filter((w) => w.overwatch && !w.dead && !w.downed && w.faction !== mover.faction);
   for (const watcher of watchers) {
     if (!watcher.overwatch) continue;
@@ -604,7 +789,31 @@ function resolveReactions(state, mover, roll) {
       hit: result.hit, critical: result.critical, damage: result.damage, hitChance: preview.hitChance });
     if (mover.dead || mover.downed) return true;
   }
+  if (!Array.isArray(state.machines)) return false;
+  for (const turret of state.machines) {
+    if (turret.kind !== 'TURRET' || !machineWorking(turret) || turret.faction === mover.faction || firedTurrets.has(turret.id)) continue;
+    if (mover.concealed) {
+      if (!detects(state, turret, mover)) continue;
+      mover.concealed = false;
+      state.events.push({ type: 'CONCEALMENT_BROKEN', unitId: mover.id, reason: 'DETECTION' });
+    }
+    const gun = turretView(turret);
+    const preview = previewShot(state, gun, gun, mover, { reaction: true });
+    if (!preview.legal) continue;
+    const hitRoll = roll();
+    const critRoll = roll();
+    firedTurrets.add(turret.id);
+    const result = applyHit(mover, preview, hitRoll, critRoll);
+    state.events.push({ type: 'TURRET_SHOT', watcherId: turret.id, targetId: mover.id, at: { x: mover.x, y: mover.y, z: mover.z },
+      hit: result.hit, critical: result.critical, damage: result.damage, hitChance: preview.hitChance, machineId: turret.id });
+    if (mover.dead || mover.downed) return true;
+  }
   return false;
+}
+
+function turretView(t) {
+  return { id: t.id, faction: t.faction, x: t.x, y: t.y, z: t.z, dead: false, downed: false, aim: t.aim, crit: t.crit,
+    weaponDamage: t.weaponDamage, critBonus: t.critBonus, ammo: Infinity, ...(t.weaponRange != null ? { weaponRange: t.weaponRange } : {}) };
 }
 
 // options.path: the route the player chose (from the start or its first step, ending at the destination).
@@ -623,10 +832,19 @@ function moveUnit(state, unitId, destination, mode = 'MOVE', options = {}) {
   if (![dest.x, dest.y, dest.z].every(Number.isInteger)) throw new Error('Destination must be a whole tile');
   if (!inBounds(next, dest.x, dest.y, dest.z)) throw new Error('Destination out of bounds');
   if (dest.z !== unit.z && !next.links.length) throw new Error('Destination is on another floor');
-  if (isBlockedCell(next, dest.x, dest.y, dest.z)) throw new Error('Destination is a wall');
-  if (dest.x === unit.x && dest.y === unit.y && dest.z === unit.z) throw new Error('Unit is already there');
+  // A closed door the player side does not know is closed is treated like an unseen unit on a supplied
+  // route: the move is interrupted there, and nothing is revealed before contact.
+  const hiddenDoors = options.path && unit.faction === 'PLAYER' ? hiddenDoorCells(next) : null;
+  const isHidden = (c) => Boolean(hiddenDoors && hiddenDoors.has(`${c.x}:${c.y}:${c.z}`));
   const geo = geometry(next);
-  if (!geo.walkable(dest.x, dest.y, dest.z)) throw new Error('Destination is not a walkable surface');
+  const surfaceOk = (x, y, z) => inBounds(next, x, y, z) && (!geo.configured || z === 0 || !Number.isNaN(geo.surfaceHeight[geo.cellKey(x, y, z)]));
+  if (isHidden(dest)) {
+    if (!surfaceOk(dest.x, dest.y, dest.z)) throw new Error('Destination is not a walkable surface');
+  } else {
+    if (isBlockedCell(next, dest.x, dest.y, dest.z)) throw new Error('Destination is a wall');
+  }
+  if (dest.x === unit.x && dest.y === unit.y && dest.z === unit.z) throw new Error('Unit is already there');
+  if (!isHidden(dest) && !geo.walkable(dest.x, dest.y, dest.z)) throw new Error('Destination is not a walkable surface');
   const isDash = mode === 'DASH';
   const maxDistance = unit.moveRange * (isDash ? 2 : 1);
   const cost = isDash ? 2 : 1;
@@ -649,6 +867,11 @@ function moveUnit(state, unitId, destination, mode = 'MOVE', options = {}) {
         else if (step.z !== at.z) throw new Error('Route leaves the floor or the grid');
         else throw new Error('Route is not a connected path');
       }
+      if (isHidden(step)) {
+        if (!surfaceOk(step.x, step.y, step.z)) throw new Error('Route leaves the walkable surface');
+        at = step;
+        continue;
+      }
       if (!inBounds(next, step.x, step.y, step.z) || isBlockedCell(next, step.x, step.y, step.z)) throw new Error('Route crosses a wall');
       if (!geo.walkable(step.x, step.y, step.z)) throw new Error('Route leaves the walkable surface');
       at = step;
@@ -664,12 +887,14 @@ function moveUnit(state, unitId, destination, mode = 'MOVE', options = {}) {
   const walked = [];
   let interruptedBy = null;
   let downedOnRoute = false;
+  const firedTurrets = new Set();
   for (const step of path) {
+    if (isHidden(step)) { interruptedBy = { x: step.x, y: step.y, z: step.z }; break; }
     const blocker = next.units.find((other) => !other.dead && other.id !== unit.id && other.x === step.x && other.y === step.y && other.z === step.z);
     if (blocker) { interruptedBy = { x: step.x, y: step.y, z: step.z }; break; }
     walked.push(step);
     unit.x = step.x; unit.y = step.y; unit.z = step.z;
-    if (resolveReactions(next, unit, roll)) { downedOnRoute = true; break; }
+    if (resolveReactions(next, unit, roll, firedTurrets)) { downedOnRoute = true; break; }
   }
   const stop = walked.length ? walked[walked.length - 1] : { x: unit.x, y: unit.y, z: unit.z };
   unit.x = stop.x; unit.y = stop.y; unit.z = stop.z;
@@ -680,6 +905,7 @@ function moveUnit(state, unitId, destination, mode = 'MOVE', options = {}) {
   if (interruptedBy) next.events.push({ type: 'MOVE_INTERRUPTED', unitId: unit.id, at: { ...stop }, blockedAt: interruptedBy, path: walked, apRemaining: unit.ap });
   else if (downedOnRoute) next.events.push({ type: isDash ? 'DASH' : 'MOVE', unitId: unit.id, destination: { ...stop }, path: walked, apRemaining: unit.ap, interrupted: 'OVERWATCH', requestedDestination: dest });
   else next.events.push({ type: isDash ? 'DASH' : 'MOVE', unitId: unit.id, destination: dest, path, apRemaining: unit.ap });
+  if (Array.isArray(next.machines)) noteSightings(next);
   return next;
 }
 
@@ -705,11 +931,13 @@ function reload(state, unitId) {
   const next = copyState(state);
   const unit = unitById(next, unitId);
   spendAp(unit, 1);
-  const needed = Math.max(0, unit.magazineSize - unit.ammo);
+  const stats = readyStats(unit); // with weapons: the ready weapon's magazine (reserve ammo is shared)
+  const needed = Math.max(0, stats.magazineSize - stats.ammo);
   const loaded = Math.min(needed, unit.reserveAmmo);
-  unit.ammo += loaded;
+  stats.ammo += loaded;
+  if (stats !== unit) unit.ammo = stats.ammo;
   unit.reserveAmmo -= loaded;
-  next.events.push({ type: 'RELOAD', unitId, loaded, ammo: unit.ammo, reserveAmmo: unit.reserveAmmo });
+  next.events.push({ type: 'RELOAD', unitId, loaded, ammo: stats.ammo, reserveAmmo: unit.reserveAmmo });
   return next;
 }
 
@@ -778,9 +1006,288 @@ function technicalAction(state, actorId, nodeId, actionId) {
       const removed = next.blockers.filter((b) => gone.has(`${b.x}:${b.y}:${b.z}`)).map((b) => ({ x: b.x, y: b.y, z: b.z }));
       next.blockers = next.blockers.filter((b) => !gone.has(`${b.x}:${b.y}:${b.z}`));
       next.events.push({ type: 'BLOCKERS_REMOVED', nodeId, cells: removed });
+      if (Array.isArray(next.machines)) noteSightings(next);
     }
   }
   return { state: next, accepted: true, nodeState: node.state };
+}
+
+// ---------- technology control: observation ----------
+
+// The player side's eyes: living, standing player units, and working player cameras (owned or controlled).
+function playerObservers(state) {
+  const units = state.units.filter((u) => u.faction === 'PLAYER' && !u.dead && !u.downed);
+  const cameras = (state.machines || []).filter((m) => m.kind === 'CAMERA' && m.faction === 'PLAYER' && machineWorking(m));
+  return [...units, ...cameras];
+}
+
+// Observed by the player side right now: a player observer has it within its detection radius and in
+// line of sight, a player unit has marked it, or it serves the squad (owned or controlled).
+function machineObserved(state, machineOrId) {
+  const m = typeof machineOrId === 'object' ? machineOrId : (state.machines || []).find((x) => x.id === String(machineOrId));
+  if (!m) return false;
+  if (m.faction === 'PLAYER') return true;
+  if (m.markedBy.some((id) => state.units.some((u) => u.id === id && u.faction === 'PLAYER'))) return true;
+  return playerObservers(state).some((o) => gridDistance(o, m, state) <= o.detectionRadius && hasLineOfSight(state, o, m));
+}
+
+function sighting(m, round) {
+  return { round, state: m.state, faction: m.faction, controlledBy: m.controlledBy, controlledSinceRound: m.controlledSinceRound,
+    ...(m.kind === 'DOOR' ? { open: m.open } : {}) };
+}
+
+// Updates the player side's memory of every machine it observes now (mutates the copy it is given).
+function noteSightings(state) {
+  for (const m of state.machines || []) if (machineObserved(state, m)) m.playerSeen = sighting(m, state.round);
+}
+
+// What the player side knows about machines: live values for observed machines, the last sighting for
+// machines seen before, nothing at all for machines never observed.
+function knownMachines(state) {
+  if (!Array.isArray(state.machines)) return [];
+  const out = [];
+  for (const m of state.machines) {
+    const live = machineObserved(state, m);
+    const seen = live ? sighting(m, state.round) : m.playerSeen;
+    if (!seen) continue;
+    out.push({
+      id: m.id, kind: m.kind, x: m.x, y: m.y, z: m.z, detectionRadius: m.detectionRadius,
+      ...(m.kind === 'TURRET' ? { aim: m.aim, weaponDamage: m.weaponDamage, crit: m.crit, critBonus: m.critBonus, ...(m.weaponRange != null ? { weaponRange: m.weaponRange } : {}) } : {}),
+      ...(m.kind === 'DOOR' ? { cells: m.cells.map((c) => ({ ...c })), open: seen.open } : {}),
+      faction: seen.faction, state: seen.state, controlledBy: seen.controlledBy, controlledSinceRound: seen.controlledSinceRound,
+      observed: live, lastSeenRound: seen.round
+    });
+  }
+  return out;
+}
+
+// Cells of closed doors the player side does not know to be closed.
+function hiddenDoorCells(state) {
+  const cells = new Set();
+  if (!Array.isArray(state.machines)) return cells;
+  const known = new Map(knownMachines(state).map((k) => [k.id, k]));
+  for (const door of state.machines) {
+    if (door.kind !== 'DOOR' || door.open) continue;
+    const k = known.get(door.id);
+    if (k && !k.open) continue;
+    for (const c of door.cells) cells.add(`${c.x}:${c.y}:${c.z}`);
+  }
+  return cells;
+}
+
+// T may use technology control at level 1, or at any level while the sidearm is the ready weapon.
+function techControlAllowed(unit) {
+  return Number(unit.level ?? 1) === 1 || unit.readyWeapon === 'sidearm';
+}
+
+function sideOf(unit) {
+  return unit.faction === 'PLAYER' ? 'PLAYER' : 'THREAT';
+}
+
+// When a jam by `side` ends: the start of that side's next phase.
+function jamExpiry(state, side) {
+  if (side === 'PLAYER') return { round: state.round + 1, phase: 'PLAYER' };
+  return { round: state.phase === 'THREAT' || state.phase === 'CLOCK_STATE' ? state.round + 1 : state.round, phase: 'THREAT' };
+}
+
+function jam(m, until) {
+  if (m.state !== 'JAMMED') { m.resumeState = m.state; m.jammedUntilRound = until.round; }
+  else m.jammedUntilRound = Math.max(m.jammedUntilRound, until.round);
+  m.state = 'JAMMED';
+  m.jammedPhase = until.phase;
+}
+
+function clearJam(m) {
+  m.jammedUntilRound = null; m.jammedPhase = null; m.resumeState = null;
+}
+
+function setDoor(state, door, open) {
+  door.open = open;
+  state.blockers = state.blockers.filter((b) => b.door !== door.id);
+  if (!open) state.blockers.push(...doorBlockers(door));
+}
+
+// ---------- technology control: preview and actions ----------
+
+// action: 'JAM' | 'TAKE_CONTROL' | 'OPERATE_DOOR' | 'SYNC_PULSE' | 'RETAKE' | 'MARK'.
+// subject: a machine id, or for SYNC_PULSE a target tile {x, y, z}. extra.open: OPERATE_DOOR's wish.
+// Deterministic (no rolls). Returns { legal: true, apCost, distance, range, ... } or { legal: false, reason }.
+// Pulses this unit may use per mission: its own syncPulsePerMission when set, else the mission rule.
+function pulseAllowance(state, unit) {
+  return unit.syncPulsePerMission != null ? Number(unit.syncPulsePerMission) : rulesOf(state).syncPulsePerMission;
+}
+
+function techActionPreview(state, action, actorId, subject, extra = {}) {
+  const fail = (reason) => ({ legal: false, reason });
+  const actor = state.units.find((u) => u.id === String(actorId));
+  if (!actor) return fail('UNKNOWN_UNIT');
+  if (actor.dead || actor.downed) return fail('INVALID_UNIT_STATE');
+  if (action === 'RETAKE') {
+    if (actor.faction === 'PLAYER') return fail('NOT_HOSTILE');
+  } else if (action === 'MARK') {
+    if (actor.role !== 'R') return fail('NOT_RECON');
+  } else if (['JAM', 'TAKE_CONTROL', 'OPERATE_DOOR', 'SYNC_PULSE'].includes(action)) {
+    if (actor.role !== 'T') return fail('NOT_TECHNICIAN');
+    if (!techControlAllowed(actor)) return fail('MAIN_ARM_READY');
+  } else return fail('UNKNOWN_ACTION');
+  let apCost, range, point, machine = null;
+  if (action === 'SYNC_PULSE') {
+    point = { x: Number(subject && subject.x), y: Number(subject && subject.y), z: Number((subject && subject.z) || 0) };
+    if (![point.x, point.y, point.z].every(Number.isInteger) || !inBounds(state, point.x, point.y, point.z)) return fail('INVALID_TARGET');
+    if (Number(actor.syncPulsesUsed ?? 0) >= pulseAllowance(state, actor)) return fail('PULSE_SPENT');
+    apCost = TECH_RULES.PULSE_AP; range = TECH_RULES.PULSE_RANGE;
+  } else {
+    machine = (state.machines || []).find((m) => m.id === String(subject));
+    if (!machine) return fail('UNKNOWN_MACHINE');
+    if (action === 'JAM') {
+      if (machine.faction === actor.faction) return fail('FRIENDLY_MACHINE');
+      if (machine.state === 'JAMMED') return fail('ALREADY_JAMMED');
+      if (!machineObserved(state, machine)) return fail('NOT_OBSERVED');
+      apCost = TECH_RULES.JAM_AP; range = TECH_RULES.JAM_RANGE;
+    } else if (action === 'TAKE_CONTROL') {
+      if (machine.faction === actor.faction) return fail('FRIENDLY_MACHINE');
+      if (!machineObserved(state, machine)) return fail('NOT_OBSERVED');
+      apCost = TECH_RULES.CONTROL_AP; range = TECH_RULES.CONTROL_RANGE;
+    } else if (action === 'OPERATE_DOOR') {
+      if (machine.kind !== 'DOOR') return fail('NOT_A_DOOR');
+      if (machine.faction !== 'PLAYER' || !machine.controlledBy) return fail('NOT_CONTROLLED');
+      if (machine.state === 'JAMMED') return fail('MACHINE_JAMMED');
+      const open = Boolean(extra.open);
+      if (machine.open === open) return fail(open ? 'ALREADY_OPEN' : 'ALREADY_CLOSED');
+      if (!open && machine.cells.some((c) => occupied(state, c.x, c.y, c.z))) return fail('DOOR_OCCUPIED');
+      apCost = TECH_RULES.DOOR_AP; range = TECH_RULES.DOOR_RANGE;
+    } else if (action === 'RETAKE') {
+      if (machine.faction !== 'PLAYER' || !machine.controlledBy) return fail('NOT_CONTROLLED');
+      if (state.round - machine.controlledSinceRound < TECH_RULES.RETAKE_PROTECTION_ROUNDS) return fail('PROTECTED');
+      apCost = TECH_RULES.RETAKE_AP; range = TECH_RULES.RETAKE_RANGE;
+    } else { // MARK
+      if (machine.faction === actor.faction) return fail('FRIENDLY_MACHINE');
+      if (machine.markedBy.includes(actor.id)) return fail('ALREADY_MARKED');
+      apCost = TECH_RULES.MARK_AP; range = actor.detectionRadius;
+    }
+    point = machine;
+  }
+  const distance = gridDistance(actor, point, state);
+  if (distance > range) return fail('OUT_OF_RANGE');
+  if (!hasLineOfSight(state, actor, point)) return fail('NO_LINE_OF_SIGHT');
+  if (actor.ap < apCost) return fail('NOT_ENOUGH_AP');
+  return { legal: true, action, apCost, distance, range,
+    ...(machine ? { machineId: machine.id, kind: machine.kind }
+      : { at: { ...point }, radius: TECH_RULES.PULSE_RADIUS, pulsesLeft: pulseAllowance(state, actor) - Number(actor.syncPulsesUsed ?? 0) }) };
+}
+
+function techStart(state, action, actorId, subject, extra) {
+  const preview = techActionPreview(state, action, actorId, subject, extra);
+  if (!preview.legal) throw new Error(preview.reason);
+  const next = copyState(state);
+  const actor = unitById(next, String(actorId));
+  actor.ap -= preview.apCost;
+  const machine = preview.machineId ? next.machines.find((m) => m.id === preview.machineId) : null;
+  return { next, actor, machine, preview };
+}
+
+function techFinish(next) {
+  if (Array.isArray(next.machines)) noteSightings(next);
+  return next;
+}
+
+// JAM (T): 1 AP, observed, ≤ 8 tiles, line of sight. JAMMED until the start of the actor's next phase.
+function jamMachine(state, actorId, machineId) {
+  const { next, actor, machine } = techStart(state, 'JAM', actorId, machineId);
+  const until = jamExpiry(next, sideOf(actor));
+  jam(machine, until);
+  next.events.push({ type: 'MACHINE_JAMMED', actorId: actor.id, machineId: machine.id, kind: machine.kind, untilRound: until.round, untilPhase: until.phase });
+  return techFinish(next);
+}
+
+// TAKE CONTROL (T): 2 AP, observed, ≤ 6 tiles, line of sight. One controlled machine per actor: the
+// previous one goes back to its own faction, ACTIVE.
+function takeControl(state, actorId, machineId) {
+  const { next, actor, machine } = techStart(state, 'TAKE_CONTROL', actorId, machineId);
+  for (const prev of next.machines) {
+    if (prev.controlledBy !== actor.id || prev.id === machine.id) continue;
+    prev.faction = prev.homeFaction || 'THREAT';
+    prev.state = 'ACTIVE';
+    prev.controlledBy = null; prev.controlledSinceRound = null; prev.homeFaction = null;
+    clearJam(prev);
+    next.events.push({ type: 'MACHINE_RELEASED', actorId: actor.id, machineId: prev.id, kind: prev.kind, faction: prev.faction });
+  }
+  machine.homeFaction = machine.faction;
+  machine.faction = 'PLAYER';
+  machine.state = 'CONTROLLED';
+  machine.controlledBy = actor.id;
+  machine.controlledSinceRound = next.round;
+  clearJam(machine);
+  next.events.push({ type: 'MACHINE_CONTROLLED', actorId: actor.id, machineId: machine.id, kind: machine.kind, round: next.round });
+  return techFinish(next);
+}
+
+// OPERATE (T): 1 AP, a door the squad controls, ≤ 6 tiles, line of sight. Never closes on a unit.
+function operateDoor(state, actorId, machineId, open) {
+  const { next, actor, machine } = techStart(state, 'OPERATE_DOOR', actorId, machineId, { open });
+  setDoor(next, machine, Boolean(open));
+  next.events.push({ type: 'DOOR_OPERATED', actorId: actor.id, machineId: machine.id, open: machine.open, cells: machine.cells.map((c) => ({ ...c })) });
+  return techFinish(next);
+}
+
+// SYNC PULSE (T): 1 AP, a tile ≤ 5 away in line of sight, limited per mission (syncPulsesUsed).
+// Radius 3 (Manhattan, the target's floor): machines JAMMED until the actor's next phase; opposing units
+// NETWORK_SILENCED until the start of their next-but-one THREAT phase.
+function syncPulse(state, actorId, target) {
+  const { next, actor, preview } = techStart(state, 'SYNC_PULSE', actorId, target);
+  const at = preview.at, radius = TECH_RULES.PULSE_RADIUS;
+  const inside = (c) => Number(c.z || 0) === at.z && Math.abs(c.x - at.x) + Math.abs(c.y - at.y) <= radius;
+  actor.syncPulsesUsed = Number(actor.syncPulsesUsed ?? 0) + 1;
+  const until = jamExpiry(next, sideOf(actor));
+  const machines = [];
+  for (const m of next.machines || []) if (inside(m)) { jam(m, until); machines.push(m.id); }
+  const silencedUntil = next.round + (next.phase === 'PLAYER' || next.phase === 'BRIEF' ? 1 : 2);
+  const units = [];
+  for (const u of next.units) {
+    if (u.dead || u.faction === actor.faction || !inside(u)) continue;
+    u.statuses = [...new Set([...u.statuses, 'NETWORK_SILENCED'])];
+    u.networkSilencedUntilRound = Math.max(Number(u.networkSilencedUntilRound ?? 0), silencedUntil);
+    units.push(u.id);
+  }
+  next.events.push({ type: 'SYNC_PULSE', actorId: actor.id, at: { ...at }, radius, machines, units });
+  return techFinish(next);
+}
+
+// RE-TAKE (hostile): 2 AP, ≤ 6 tiles, line of sight, only once the machine has been squad-controlled for
+// 3 rounds. It serves the threat again, ACTIVE. The squad's deck notices the lost link at once.
+function retakeMachine(state, hostileId, machineId) {
+  const { next, actor, machine } = techStart(state, 'RETAKE', hostileId, machineId);
+  machine.faction = 'THREAT';
+  machine.state = 'ACTIVE';
+  machine.controlledBy = null; machine.controlledSinceRound = null; machine.homeFaction = null;
+  clearJam(machine);
+  machine.playerSeen = sighting(machine, next.round);
+  next.events.push({ type: 'MACHINE_RETAKEN', hostileId: actor.id, machineId: machine.id, kind: machine.kind });
+  return techFinish(next);
+}
+
+// MARK (R): 1 AP, line of sight, within the R's detection radius. Marked machines stay observed.
+function markMachine(state, actorId, machineId) {
+  const { next, actor, machine } = techStart(state, 'MARK', actorId, machineId);
+  machine.markedBy = [...machine.markedBy, actor.id];
+  next.events.push({ type: 'MACHINE_MARKED', actorId: actor.id, machineId: machine.id, kind: machine.kind });
+  return techFinish(next);
+}
+
+// Switch the ready weapon (main <-> sidearm): config.switchWeaponAp (default 1).
+function switchWeapon(state, unitId) {
+  const next = copyState(state);
+  const unit = unitById(next, unitId);
+  if (unit.dead || unit.downed) throw new Error('INVALID_UNIT_STATE');
+  const other = unit.readyWeapon === 'main' ? 'sidearm' : 'main';
+  if (!unit.weapons || !unit.weapons[other]) throw new Error('NO_OTHER_WEAPON');
+  const apCost = rulesOf(next).switchWeaponAp;
+  if (unit.ap < apCost) throw new Error('NOT_ENOUGH_AP');
+  unit.ap -= apCost;
+  unit.readyWeapon = other;
+  loadReadyWeapon(unit);
+  next.events.push({ type: 'WEAPON_SWITCHED', unitId: unit.id, readyWeapon: other, apCost });
+  return next;
 }
 
 function extractUnit(state, unitId) {
@@ -867,6 +1374,17 @@ export {
   applyDirectorPressure,
   threatView,
   stableHash,
+  switchWeapon,
+  jamMachine,
+  takeControl,
+  operateDoor,
+  syncPulse,
+  retakeMachine,
+  markMachine,
+  techActionPreview,
+  machineObserved,
+  knownMachines,
+  TECH_RULES,
   EYE_HEIGHT,
   SLAB_THICKNESS,
   REACTION_AIM_PENALTY

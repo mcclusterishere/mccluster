@@ -5,7 +5,7 @@ Deterministic digital-twin / visualization geometry only.
 NOT FOR CONSTRUCTION, FABRICATION, CODE APPROVAL, OR ENERGY COMPLIANCE.
 """
 from pathlib import Path
-import json, hashlib, math
+import json, hashlib, math, re
 from collections import Counter
 import trimesh
 from trimesh.visual.material import PBRMaterial
@@ -13,7 +13,10 @@ from trimesh.visual.material import PBRMaterial
 HERE=Path(__file__).resolve().parent
 INV_RAW=json.loads((HERE/"facade-module-inventory.json").read_text())
 FINISH_RAW=json.loads((HERE/"facade-finish-inventory.json").read_text())
-LOGO_RAW=json.loads((HERE/"equity-uprise-logo-vector.json").read_text())
+SITE=json.loads((HERE.parent/"floor-01"/"floor-01-site-egress.json").read_text())
+import sys
+sys.path.insert(0,str(HERE.parent/"brand"))
+from eu_brand_slots import MANIFEST as BRAND, slots_for, add_brand_slots
 OUTDIR=HERE.parent/"generated"
 OUTDIR.mkdir(parents=True,exist_ok=True)
 OUT=OUTDIR/"equity-uprise-facade-core-v2.glb"
@@ -27,11 +30,8 @@ C={
  "FAC-OPAQUE-01":[50,52,54,255],
  "FAC-MINERAL-01":[117,113,106,255],
  "FAC-WARM-01":[111,78,54,255],
- "FAC-SIGN-01":[232,219,188,255],
  "FAC-LOUVER-01":[61,64,67,255],
  "FAC-SHADOW-01":[24,27,29,255],
- "FAC-LOGO-NAVY":[4,45,82,255],
- "FAC-SIGN-PLATE":[229,227,218,255],
  "FAC-PAVER-01":[82,81,78,255],
  "FAC-PAVER-02":[106,103,97,255],
  "FAC-SITE-EDGE":[48,50,52,255],
@@ -47,11 +47,8 @@ PBR_SPECS={
  "FAC-OPAQUE-01":{"metallicFactor":0.18,"roughnessFactor":0.68,"doubleSided":True},
  "FAC-MINERAL-01":{"metallicFactor":0.0,"roughnessFactor":0.90,"doubleSided":True},
  "FAC-WARM-01":{"metallicFactor":0.28,"roughnessFactor":0.48,"doubleSided":True},
- "FAC-SIGN-01":{"metallicFactor":0.42,"roughnessFactor":0.36,"doubleSided":True},
  "FAC-LOUVER-01":{"metallicFactor":0.64,"roughnessFactor":0.42,"doubleSided":True},
  "FAC-SHADOW-01":{"metallicFactor":0.0,"roughnessFactor":0.96,"doubleSided":True},
- "FAC-LOGO-NAVY":{"metallicFactor":0.20,"roughnessFactor":0.34,"doubleSided":True},
- "FAC-SIGN-PLATE":{"metallicFactor":0.0,"roughnessFactor":0.72,"doubleSided":True},
  "FAC-PAVER-01":{"metallicFactor":0.0,"roughnessFactor":0.96,"doubleSided":True},
  "FAC-PAVER-02":{"metallicFactor":0.0,"roughnessFactor":0.90,"doubleSided":True},
  "FAC-SITE-EDGE":{"metallicFactor":0.34,"roughnessFactor":0.58,"doubleSided":True},
@@ -141,98 +138,9 @@ def add_cylinder_z(name,x,y,z,radius,height,color,obj=None,sections=24):
     if obj: finish_mark(obj)
     return m
 
-def add_south_line(name,x1,z1,x2,z2,front_y,stroke,depth,color,obj=None):
-    dx=x2-x1; dz=z2-z1
-    length=(dx*dx+dz*dz)**0.5
-    if length <= 1e-9: return
-    m=trimesh.creation.box(extents=(length*FT,depth*FT,stroke*FT))
-    angle=-math.atan2(dz,dx)
-    m.apply_transform(trimesh.transformations.rotation_matrix(angle,[0,1,0]))
-    m.apply_translation((((x1+x2)/2)*FT,(front_y-depth/2)*FT,((z1+z2)/2)*FT))
-    apply_pbr(m,color)
-    scene.add_geometry(m,node_name=name,geom_name=name)
-    records.append({"name":name,"bounds_ft":[min(x1,x2)-stroke,front_y-depth,min(z1,z2)-stroke,max(x1,x2)+stroke,front_y,max(z1,z2)+stroke]})
-    if obj: finish_mark(obj)
-    return m
-
-def add_south_triangle(name,pts,front_y,depth,color,obj=None):
-    verts=[]
-    for y in (front_y,front_y-depth):
-        for x,z in pts: verts.append([x*FT,y*FT,z*FT])
-    faces=[[0,1,2],[5,4,3],[0,3,4],[0,4,1],[1,4,5],[1,5,2],[2,5,3],[2,3,0]]
-    m=trimesh.Trimesh(vertices=verts,faces=faces,process=False)
-    apply_pbr(m,color)
-    scene.add_geometry(m,node_name=name,geom_name=name)
-    xs=[p[0] for p in pts]; zs=[p[1] for p in pts]
-    records.append({"name":name,"bounds_ft":[min(xs),front_y-depth,min(zs),max(xs),front_y,max(zs)]})
-    if obj: finish_mark(obj)
-    return m
-
-def south_logo_mark(prefix,center_x,front_y,base_z,width_ft,finish_id,legacy_obj=None):
-    """Exact approved Equity Uprise repo mark: E + equals + growth bars/arrow."""
-    vb=LOGO_RAW["vector_source"]["view_box"]; vb_w=vb[2]; vb_h=vb[3]
-    scale=width_ft/vb_w
-    x0=center_x-width_ft/2
-    color=C["FAC-LOGO-NAVY"]; depth=.12
-    def map_x(x): return x0+x*scale
-    def map_z(y): return base_z+(vb_h-y)*scale
-    def rect_part(name,rect):
-        x,y,w,h=rect
-        add_box(name,map_x(x),front_y-depth,map_z(y+h),map_x(x+w),front_y,map_z(y),color)
-    for group in ("e_rects","equals_rects","bars"):
-        for i,rect in enumerate(LOGO_RAW["geometry"][group]):
-            rect_part(f"{prefix}::{group}-{i+1:02d}",rect)
-    curve=LOGO_RAW["geometry"]["arrow_curve"]
-    p0=curve["start"]; p1=curve["control_1"]; p2=curve["control_2"]; p3=curve["end"]
-    def bezier(t):
-        u=1-t
-        return (
-            u*u*u*p0[0]+3*u*u*t*p1[0]+3*u*t*t*p2[0]+t*t*t*p3[0],
-            u*u*u*p0[1]+3*u*u*t*p1[1]+3*u*t*t*p2[1]+t*t*t*p3[1]
-        )
-    prev=bezier(0)
-    for i in range(1,15):
-        cur=bezier(i/14)
-        add_south_line(
-            f"{prefix}::arrow-{i:02d}",
-            map_x(prev[0]),map_z(prev[1]),map_x(cur[0]),map_z(cur[1]),
-            front_y,curve["stroke_width"]*scale,depth,color
-        )
-        prev=cur
-    tri=[(map_x(x),map_z(y)) for x,y in LOGO_RAW["geometry"]["arrowhead"]]
-    add_south_triangle(prefix+"::arrowhead",tri,front_y,depth,color)
-    finish_mark(finish_id)
-    if legacy_obj: modeled.add(legacy_obj)
-
-STROKE_FONT={
- "E":[((0,0),(0,1)),((0,1),(.8,1)),((0,.5),(.68,.5)),((0,0),(.8,0))],
- "Q":[((0,0),(.72,0)),((.72,0),(.72,1)),((.72,1),(0,1)),((0,1),(0,0)),((.48,.28),(.88,-.08))],
- "U":[((0,1),(0,.18)),((0,.18),(.18,0)),((.18,0),(.62,0)),((.62,0),(.8,.18)),((.8,.18),(.8,1))],
- "I":[((0,1),(.8,1)),((.4,1),(.4,0)),((0,0),(.8,0))],
- "T":[((0,1),(.8,1)),((.4,1),(.4,0))],
- "Y":[((0,1),(.4,.55)),((.8,1),(.4,.55)),((.4,.55),(.4,0))],
- "P":[((0,0),(0,1)),((0,1),(.68,1)),((.68,1),(.8,.84)),((.8,.84),(.8,.58)),((.8,.58),(.68,.5)),((.68,.5),(0,.5))],
- "R":[((0,0),(0,1)),((0,1),(.68,1)),((.68,1),(.8,.84)),((.8,.84),(.8,.58)),((.8,.58),(.68,.5)),((.68,.5),(0,.5)),((.45,.5),(.85,0))],
- "S":[((.8,1),(0,1)),((0,1),(0,.52)),((0,.52),(.8,.52)),((.8,.52),(.8,0)),((.8,0),(0,0))],
-}
-
-def south_stroke_wordmark(prefix,text,center_x,front_y,base_z,height,color,finish_id,legacy_obj=None):
-    glyph_w=.8*height; gap=.26*height; space=.62*height
-    widths=[space if ch==" " else glyph_w for ch in text]
-    total=sum(widths)+gap*(len(text)-1)
-    cursor=center_x-total/2
-    first_mark=True
-    for ci,ch in enumerate(text):
-        if ch==" ":
-            cursor+=space+gap
-            continue
-        for si,(p1,p2) in enumerate(STROKE_FONT[ch]):
-            x1=cursor+p1[0]*glyph_w/.8; z1=base_z+p1[1]*height
-            x2=cursor+p2[0]*glyph_w/.8; z2=base_z+p2[1]*height
-            add_south_line(f"{prefix}::{ci:02d}-{si:02d}",x1,z1,x2,z2,front_y,.075*height,.10,color)
-        cursor+=glyph_w+gap
-    finish_mark(finish_id)
-    if legacy_obj: modeled.add(legacy_obj)
+# v3: the facade carries brand SLOTS only. The former helpers that rebuilt the
+# Equity Uprise mark from rectangles/arrow strokes and extruded stroke-font
+# lettering were removed (root AGENTS.md: THE LOGOS ARE NOT YOURS TO DRAW).
 
 def story_bands(level,z0):
     if level==1:
@@ -240,6 +148,12 @@ def story_bands(level,z0):
     if level==6:
         return (z0,z0+1.0,z0+10.25,z0+13.5)
     return (z0,z0+1.5,z0+10.5,z0+13.5)
+
+EGRESS_DOORS=[]
+
+def add_door_leaf(name,elev,a,b,z1,z2):
+    """Opaque insulated exit leaf set 0.1 ft into the opening (exterior face)."""
+    panel(name,elev,a,b,z1,z2,.14,C["FAC-METAL-01"],extra_out=-.12)
 
 def build_module(m):
     obj=m["id"]; elev=m["elevation"]; a,b=m["span_ft"]; level=m["level"]; z0=m["z0_ft"]
@@ -272,6 +186,23 @@ def build_module(m):
         panel(obj+"::lower-opaque",elev,aa,bb,zbase,z0+7.4,.28,C["FAC-OPAQUE-01"],obj)
         panel(obj+"::clerestory",elev,aa,bb,z0+7.4,z0+10.25,.08,C["FAC-GLASS-02"],extra_out=.02)
         panel(obj+"::upper-opaque",elev,aa,bb,z0+10.25,ztop,.28,C["FAC-OPAQUE-01"])
+    elif cls=="egress_door":
+        # Real exit-door openings cut into the module (floor-01-site-egress.json).
+        cur=aa
+        for k,op in enumerate(sorted(m["door_openings"],key=lambda o:o["span_ft"][0])):
+            d1,d2=op["span_ft"]; dh=op["height_ft"]
+            if d1-cur>1e-6: panel(obj+f"::solid-{k}",elev,cur,d1-.18,zbase,ztop,.28,C["FAC-OPAQUE-01"],obj)
+            panel(obj+f"::head-{k}",elev,d1-.18,d2+.18,z0+dh+.18,ztop,.28,C["FAC-OPAQUE-01"],obj)
+            for side,(f1,f2) in (("L",(d1-.18,d1)),("R",(d2,d2+.18))):
+                panel(obj+f"::frame-{k}-{side}",elev,f1,f2,z0,z0+dh+.18,.34,C["FAC-METAL-01"])
+            panel(obj+f"::frame-{k}-H",elev,d1-.18,d2+.18,z0+dh,z0+dh+.18,.34,C["FAC-METAL-01"])
+            add_door_leaf(f"{op['object_id']}::exterior-leaf",elev,d1+.03,d2-.03,z0+.05,z0+dh-.03)
+            panel(obj+f"::threshold-{k}",elev,d1-.18,d2+.18,z0,z0+.06,.9,C["FAC-MINERAL-01"])
+            # exit-discharge lighting above every exterior exit door
+            panel(obj+f"::exit-light-{k}",elev,(d1+d2)/2-.25,(d1+d2)/2+.25,z0+dh+.45,z0+dh+.75,.16,C["LIGHT-WARM-ARCH"],extra_out=.28)
+            EGRESS_DOORS.append({"object_id":op["object_id"],"elevation":elev,"span_ft":[d1,d2],"height_ft":dh,"module":obj})
+            cur=d2+.18
+        if bb-cur>1e-6: panel(obj+"::solid-end",elev,cur,bb,zbase,ztop,.28,C["FAC-OPAQUE-01"],obj)
     elif cls=="louver_service":
         panel(obj+"::back",elev,aa,bb,zbase,ztop,.28,C["FAC-OPAQUE-01"],obj)
         # Visible louver blades live slightly outside the backing panel.
@@ -482,20 +413,18 @@ finish_mark("FAC-ENTRY-FASCIA-01")
 for i,x in enumerate((27.5,30.9,34.3,37.7,41.1,44.5),1):
     add_cylinder_z(f"FAC-ENTRY-DOWNLIGHT-01::{i:02d}",x,-2.85,9.29,.14,.045,C["LIGHT-WARM-ARCH"],"FAC-ENTRY-DOWNLIGHT-01",20)
 
-# Exact approved Equity Uprise logo: pale architectural plate preserves canonical navy.
-add_box("FAC-SIGN-HALO-ENTRY-01",33.20,-.64,10.86,38.80,-.57,13.39,C["LIGHT-WARM-ARCH"]); finish_mark("FAC-SIGN-HALO-ENTRY-01")
-add_box("FAC-SIGN-BACKER-ENTRY-01",33.35,-.84,10.94,38.65,-.64,13.32,C["FAC-SIGN-PLATE"]); finish_mark("FAC-SIGN-BACKER-ENTRY-01")
-south_logo_mark("FAC-SIGN-LOGO-ENTRY-01",36,-.96,11.05,4.20,"FAC-SIGN-LOGO-ENTRY-01","FAC-BRAND-ENTRY-01")
-
-# Architectural institutional wordmark on canopy fascia, no pixel/block text.
-south_stroke_wordmark("FAC-SIGN-LETTER-WORDMARK-ENTRY-01","EQUITY UPRISE",36,-5.84,9.51,.48,C["FAC-SIGN-01"],"FAC-SIGN-LETTER-WORDMARK-ENTRY-01","FAC-WORDMARK-ENTRY-01")
+# Brand slots (v3): empty named anchors only. The entry portal, canopy fascia and
+# crown carry no drawn mark, plate, halo box or lettering; the runtime places the
+# owner-supplied artwork from production/brand/brand-manifest.json.
+def brand_mark(rec):
+    modeled.add(rec); finish_modeled.add(rec); finish_counts[rec]+=1
+BRAND_SLOT_NODES=add_brand_slots(scene,slots_for("facade/"),0.0,brand_mark)
+for _f in ("FAC-BRAND-ENTRY-01","FAC-WORDMARK-ENTRY-01","FAC-BRAND-CROWN-01"): modeled.add(_f)
 
 # Crown identity correction only: replace the old false E=U text with the exact approved mark.
 # Full crown band/parapet/screen finish remains deferred.
 for elev in ("south","east","north","west"):
     panel(f"FAC-CROWN-CAP-01::{elev}",elev,0,72,80.55,81.0,.42,C["FAC-METAL-01"],"FAC-CROWN-CAP-01" if elev=="south" else None)
-add_box("FAC-SIGN-BACKER-CROWN-01",33.45,-.58,77.66,38.55,-.42,80.10,C["FAC-SIGN-PLATE"]); finish_mark("FAC-SIGN-BACKER-CROWN-01")
-south_logo_mark("FAC-SIGN-LOGO-CROWN-01",36,-.70,77.78,4.00,"FAC-SIGN-LOGO-CROWN-01","FAC-BRAND-CROWN-01")
 
 # Entry architectural lighting objects; renderer/night material refinement remains a later viewer/material pass.
 for i,(x,z) in enumerate(((24.65,2.0),(24.65,6.0),(47.35,2.0),(47.35,6.0)),1):
@@ -579,9 +508,6 @@ add_box("FAC-CROWN-ELEVATOR-TRIM-01::east-cap",61.78,34.0,88.72,62.22,44.0,89.04
 add_box("FAC-CROWN-ELEVATOR-TRIM-01::west-cap",53.78,34.0,88.72,54.22,44.0,89.04,C["FAC-OPAQUE-01"])
 finish_mark("FAC-CROWN-ELEVATOR-TRIM-01")
 
-# Crown logo halo sits behind the already-correct approved logo.
-add_box("FAC-SIGN-HALO-CROWN-01",33.18,-.48,77.48,38.82,-.39,80.28,C["LIGHT-WARM-ARCH"])
-finish_mark("FAC-SIGN-HALO-CROWN-01")
 
 # Six restrained crown/service-screen light fixtures: three south, three north.
 for i,x in enumerate((18,36,54),1):
@@ -643,18 +569,29 @@ ck("corner piers modeled","FAC-CORNER-PIERS-01" in modeled)
 ck("finish inventory has 68 records",len(required_finish)==68,str(len(required_finish)))
 ck("step 4 finish scope has 32 records",len(step4_required)==32,str(len(step4_required)))
 ck("all step 4 finish records modeled",not step4_missing,", ".join(step4_missing))
-ck("238 window-like modules detailed",finished_window_modules==238,str(finished_window_modules))
+ck("237 window-like modules detailed (238 minus the Stair A egress-door module)",finished_window_modules==237,str(finished_window_modules))
 ck("all four finish corners resolved",all(x in finish_modeled for x in ("FAC-CORNER-FINISH-SW-01","FAC-CORNER-FINISH-SE-01","FAC-CORNER-FINISH-NW-01","FAC-CORNER-FINISH-NE-01")))
 ck("all four base plinths + reveal modeled",all(x in finish_modeled for x in ("FAC-BASE-PLINTH-SOUTH-01","FAC-BASE-PLINTH-EAST-01","FAC-BASE-PLINTH-NORTH-01","FAC-BASE-PLINTH-WEST-01","FAC-BASE-REVEAL-01")))
 ck("step 5 entrance/logo scope has 22 records",len(step5_required)==22,str(len(step5_required)))
 ck("all step 5 entrance/logo records modeled",not step5_missing,", ".join(step5_missing))
-ck("canonical logo asset bound",LOGO_RAW["source_asset"]["path"]=="assets/img/equity-uprise-logo.webp")
-ck("canonical logo hash bound",LOGO_RAW["source_asset"]["sha256"]=="3dd74068b984173a3c88bfd124f150653cdf04e35657006df2cf8961e57ce29f")
-ck("literal E=U substitution prohibited",LOGO_RAW["source_asset"]["note"].find("Do not redraw")>=0)
+ck("brand manifest default artwork is the owner-supplied emblem",BRAND["artwork"]["default"]["path"]=="assets/img/equity-uprise-logo.webp" and BRAND["artwork"]["default"]["source"]=="owner-supplied")
+ck("brand manifest default artwork hash bound",BRAND["artwork"]["default"]["sha256"]=="3dd74068b984173a3c88bfd124f150653cdf04e35657006df2cf8961e57ce29f")
+ck("facade brand slots emitted as empty nodes",len(BRAND_SLOT_NODES)==len(slots_for("facade/")) and all(n not in scene.geometry for n in BRAND_SLOT_NODES),str(BRAND_SLOT_NODES))
+ck("no drawn mark or lettering geometry in facade",not any(re.search(r"FAC-SIGN-(LOGO|LETTER|BACKER|HALO)|::(e_rects|equals_rects|bars|arrow)",n) for n in scene.graph.nodes_geometry),"")
+_egress={d["object_id"]:d for d in EGRESS_DOORS}
+_site={o["object_id"]:o for o in SITE["exterior_openings"]}
+def _door_matches(oid):
+    d=_egress.get(oid); loc=_site.get(oid,{}).get("location",{})
+    if not d or not loc: return False
+    span=[loc.get("y1",loc.get("x1")),loc.get("y2",loc.get("x2"))]
+    return d["elevation"]==loc.get("facade") and abs(d["span_ft"][0]-span[0])<1e-6 and abs(d["span_ft"][1]-span[1])<1e-6
+ck("Stair A exit door exists where the egress plan says",_door_matches("F1-DOOR-STAIR-A-DISCHARGE"),str(_egress.get("F1-DOOR-STAIR-A-DISCHARGE")))
+ck("Stair B exit door exists where the egress plan says",_door_matches("F1-DOOR-STAIR-B-DISCHARGE"),str(_egress.get("F1-DOOR-STAIR-B-DISCHARGE")))
+ck("west service door exists where the egress plan says",_door_matches("F1-DOOR-SERVICE-WEST"),str(_egress.get("F1-DOOR-SERVICE-WEST")))
 ck("complete south entry assembly",all(x in finish_modeled for x in ("FAC-ENTRY-PORTAL-FINISH-01","FAC-DOOR-LEAF-01","FAC-DOOR-FRAME-01","FAC-DOOR-HARDWARE-01","FAC-ENTRY-TRANSOM-01","FAC-ENTRY-SIDELIGHT-W-01","FAC-ENTRY-SIDELIGHT-E-01","FAC-ENTRY-THRESHOLD-01")))
 ck("canopy soffit fascia downlights complete",all(x in finish_modeled for x in ("FAC-ENTRY-SOFFIT-01","FAC-ENTRY-FASCIA-01","FAC-ENTRY-DOWNLIGHT-01")))
-ck("exact approved entry logo + wordmark modeled",all(x in finish_modeled for x in ("FAC-SIGN-BACKER-ENTRY-01","FAC-SIGN-LOGO-ENTRY-01","FAC-SIGN-LETTER-WORDMARK-ENTRY-01")))
-ck("false crown E=U replaced by approved logo",all(x in finish_modeled for x in ("FAC-SIGN-BACKER-CROWN-01","FAC-SIGN-LOGO-CROWN-01")))
+ck("entry identity carried by brand slots",all(x in finish_modeled for x in ("FAC-SIGN-BACKER-ENTRY-01","FAC-SIGN-LOGO-ENTRY-01","FAC-SIGN-LETTER-WORDMARK-ENTRY-01")))
+ck("crown identity carried by a brand slot",all(x in finish_modeled for x in ("FAC-SIGN-BACKER-CROWN-01","FAC-SIGN-LOGO-CROWN-01")))
 ck("entry ground contact complete",all(x in finish_modeled for x in ("FAC-SITE-APRON-01","FAC-SITE-APRON-EDGE-01","FAC-SITE-THRESHOLD-PAVING-01")))
 ck("step 6 crown scope has 14 records",len(step6_required)==14,str(len(step6_required)))
 ck("all step 6 crown records modeled",not step6_missing,", ".join(step6_missing))
@@ -669,7 +606,8 @@ ck("Step 7 PBR library covers every facade color role",set(PBR_SPECS)==set(C),st
 ck("clear and privacy glass use alpha blend",PBR_SPECS["FAC-GLASS-01"]["alphaMode"]=="BLEND" and PBR_SPECS["FAC-GLASS-02"]["alphaMode"]=="BLEND")
 ck("metal and mineral material response differentiated",PBR_SPECS["FAC-METAL-01"]["metallicFactor"]>.7 and PBR_SPECS["FAC-MINERAL-01"]["roughnessFactor"]>.85)
 ck("architectural light material is emissive","emissiveFactor" in PBR_SPECS["LIGHT-WARM-ARCH"])
-ck("substantial finished facade geometry",len(scene.geometry)>=3900,str(len(scene.geometry)))
+# v3: ~100 drawn-mark/lettering meshes were removed in favour of brand slots.
+ck("substantial finished facade geometry",len(scene.geometry)>=3850,str(len(scene.geometry)))
 
 scene.metadata.update({
  "scene_id":"equity-uprise-facade-core-v2",
@@ -706,8 +644,11 @@ report={
  "finish_step6_records":len(step6_required),
  "finish_step6_modeled":len(step6_required)-len(step6_missing),
  "finish_step6_missing":step6_missing,
- "canonical_logo_asset":LOGO_RAW["source_asset"]["path"],
- "canonical_logo_sha256":LOGO_RAW["source_asset"]["sha256"],
+ "brand_manifest":"../brand/brand-manifest.json",
+ "brand_slots":[n.split("::",1)[1] for n in BRAND_SLOT_NODES],
+ "brand_default_artwork":BRAND["artwork"]["default"]["path"],
+ "brand_default_artwork_sha256":BRAND["artwork"]["default"]["sha256"],
+ "egress_doors":EGRESS_DOORS,
  "finish_records_modeled_total":len(finish_modeled),
  "finish_future_records_remaining":len(required_finish-finish_modeled),
  "finished_window_modules":finished_window_modules,

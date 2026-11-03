@@ -4,7 +4,7 @@ Revision: **2026-11-03 UTC**.
 
 This is the stable entrypoint for the Whip Equipped album, film, and narrative game experience. It records the owner's controlling creative decisions and explains how the current screenplay, manifest, timing plan, and historical treatment fit together. The owner has authorized preserving the current work as repository canon.
 
-**Fiction and project identity.** Whip Equipped is Matthew McCluster's music and screen project, performed as McCluster. The story's businesses, criminal events, characters, compounds, and deaths are fictional. The project shares a name with the separate real **Whip Equipped LLC**; the screenplay does not document that company's conduct or establish biographical events. A future chronology of remembered real car sales must retain its own evidence and provenance.
+**Fiction and project identity.** Whip Equipped is Matthew McCluster's music and screen project, performed as McCluster. The story's businesses, criminal events, characters, compounds, and deaths are fictional. The project shares a name with the separate real **Whip Equipped LLC**; the screenplay does not document that company's conduct or establish biographical events. The separate car-flip chronicle now contains an initial batch of owner recollections and retains its own evidence and provenance.
 
 ## Authoritative files and precedence
 
@@ -15,6 +15,8 @@ This is the stable entrypoint for the Whip Equipped album, film, and narrative g
 | [TIMING.json](./whip-equipped/TIMING.json) | Recording-specific working durations, chapter targets, and dialogue counts. |
 | [DECISIONS.md](./whip-equipped/DECISIONS.md) | Accepted decisions, superseded readings, and unresolved production choices. |
 | [LYRIC-SOURCES.md](./whip-equipped/LYRIC-SOURCES.md) | Owner lyric-source index, preserved author sheets, and links to existing repository lyrics. |
+| [CAR-FLIP-CHRONICLE.md](./whip-equipped/CAR-FLIP-CHRONICLE.md) | First three real-source oral-history entries, with uncertain dates, vehicles, costs, and recollections preserved. |
+| [ROAD-YEARS.md](./whip-equipped/ROAD-YEARS.md) | Three extended fictionalized earlier-life scenes drawn from those entries; additional to the timed song chapters. |
 | [Original treatment](./whip-equipped/archive/2026-10-31-original-treatment.md) | Preserved owner treatment from 2026-10-31, retained as historical source material. |
 
 The latest explicit owner decisions control creative continuity. Owner lyric sheets and the original treatment supply song meaning and imagery where later instructions have not changed them. The screenplay realizes that material through newly written dialogue and staging. Its preservation does not make each invented line a quotation from the owner or a claim about real life. The archive remains useful evidence of the project's development; conflicting older decisions do not override this guide or the current manifest.
@@ -94,7 +96,7 @@ The fictional compound thread includes Lazarus, black liquid, and pills, and exp
 
 For a song of duration **T**, each chapter has **before dialogue 2T → complete music video T → after dialogue 2T**. Every before and after is separately written. A bridge cannot count toward both adjacent chapters. The full recording plays without new exposition competing with its vocal or an early fade to reach another scene.
 
-The core contains 24 dialogue scenes and 12 video treatments. Including the optional Jet interlude gives **26 dialogue scenes and 13 full-video treatments**. These counts describe the screenplay, not completed video assets. The current text contains 11,868 spoken words, counted without speaker labels, directions, lyrics, or video prose.
+The core contains 24 dialogue scenes and 12 video treatments. Including the optional Jet interlude gives **26 dialogue scenes and 13 full-video treatments**. These counts describe the screenplay, not completed video assets. The current text contains 11,872 spoken words, counted without speaker labels, directions, lyrics, or video prose.
 
 | Scope | Current exact target | Display clock |
 | --- | ---: | ---: |
@@ -118,10 +120,16 @@ Ten selected song lengths come from [catalog metadata](../../data/albums.json). 
 
 The [lyric-source index](./whip-equipped/LYRIC-SOURCES.md) connects preserved owner sheets with [existing repository source lyrics](../../data/lyrics/src/). Owner sheets take precedence over faulty automatic transcripts. Repo Guy's broad plot is anchored in the owner treatment; Towyard Killer also has a later author sheet. Preserve uncertain transcription as uncertainty rather than inventing exact lyrics. Documenting these sources does not modify runtime lyric files, audio assets, or catalog order.
 
-## Adaptation and future factual chronology
+## Adaptation and the first car-flip recollections
 
 The screenplay's precise conversations, supporting exchanges, props, affectionate callbacks, contracts, care arrangements, and most transitions are newly written dramatic choices. That includes the tablet's physical appearance, the family's photograph jokes, the two-coffee motif, exact confrontation staging, and the final calls. They may remain in the authorized current version while their provenance stays clear. No raw private conversation or private source-access link is needed to explain them.
 
-The owner plans to reconstruct at least two or three years of real used-car work from retained photographs and approximate recollections. That evidence set has not yet been supplied as a complete chronology. Future entries should identify the vehicle, remembered purchase and sale timing, work, people, outcome, and supporting material. Label uncertain dates; a photograph's timestamp does not itself prove a transaction date. Keep remembered events, verified records, and invented dialogue distinct.
+The owner supplied the first three oral-history entries on 2026-11-03, recalled as around 2024: a $100 towable camper transported to Georgia with help from Majid and his younger brother; an approximately $800 G20 bought in Michigan, lived in while doing delivery work for fuel, and later sold on Long Island; and a green Econoline bought for $1,500 and sold around Boston for approximately $2,600 or $2,700. The Boston customer first came through the G20 inquiry. The camper's place before the G20 is tentative. Exact dates, the Econoline year, some travel details, and many costs remain open. These are owner recollections, not independently verified accounts.
+
+The [source chronicle](./whip-equipped/CAR-FLIP-CHRONICLE.md) preserves the Boston buyer's reported racism, surprise at meeting McCluster, apology and gift, McCluster's safety check with his sister, and the shed visit that became an ordinary demonstration. The buyer is anonymized. McCluster's feeling that he may have changed the man's heart remains a personal interpretation rather than a proven lasting transformation. The gift remains separate from the vehicle's cash sale price.
+
+The [Road Years scenes](./whip-equipped/ROAD-YEARS.md) expand the three stories through fictionalized dialogue and situations. Selected memories are integrated into Test Drive's living-in-a-vehicle background, Hundun's earned independence and Majid support, and All in the Details' customer/coaching conversation. The full extended scenes have no assigned song or locked duration; their minutes are additional to the current song-chapter totals. This does not move Alana's first appearance, the final flight, or Salvage's closing position. The remembered legitimate flips are not evidence for the fictional criminal plot.
+
+The broader two-to-three-year chronology remains incomplete. No photographs or transaction records accompanied this new batch; later entries can add them. Record approximate dates as approximate, and do not treat a photograph's timestamp as proof of a transaction date. Keep remembered events, corroborating records, and invented dialogue distinct.
 
 When continuity changes, update this guide, the manifest, decision record, timing when affected, and the relevant screenplay scenes together. Preserve the archive as history. The authorized creative work can proceed while unresolved recording choices and forthcoming factual material remain explicitly identified.

@@ -111,12 +111,12 @@
       "note": "Serves B1 and Floors 1–6. Level 7 direct service remains unassumed. B1 emergency-use behavior depends on the selected simulation code/accessibility profile.",
       "b1_access_policy": {
         "physical_stop": true,
-        "visible_in_normal_floor_selector": false,
+        "visible_in_normal_floor_selector": true,
         "authorized_roles": [
-          "mccluster_house_owner",
-          "underground_operations_admin"
+          "everyone"
         ],
-        "ordinary_equity_uprise_admin_sufficient": false
+        "ordinary_equity_uprise_admin_sufficient": true,
+        "owner_decision": "Owner, 2026-11-03: \"We can have B1. Everybody's welcome to B1 ... Make it normal.\""
       }
     },
     "service_freight_elevator": {
@@ -203,8 +203,9 @@
       "note": "Continuous B1 through Level 7. Floor 1 is the level of exit discharge and requires discharge-direction control so occupants do not unintentionally continue below grade.",
       "b1_access_policy": {
         "physical_connection": true,
-        "floor1_downward_entry": "access-controlled-restricted",
-        "b1_to_floor1_egress": "preserved"
+        "floor1_downward_entry": "open-normal-use; discharge-direction barrier engages only in evacuation mode",
+        "b1_to_floor1_egress": "preserved",
+        "owner_decision": "Owner, 2026-11-03: \"We can have B1. Everybody's welcome to B1 ... Make it normal.\""
       }
     },
     "stair_b": {
@@ -255,8 +256,9 @@
       "note": "Continuous B1 through Level 7. Floor 1 is the level of exit discharge and requires discharge-direction control so occupants do not unintentionally continue below grade.",
       "b1_access_policy": {
         "physical_connection": true,
-        "floor1_downward_entry": "access-controlled-restricted",
-        "b1_to_floor1_egress": "preserved"
+        "floor1_downward_entry": "open-normal-use; discharge-direction barrier engages only in evacuation mode",
+        "b1_to_floor1_egress": "preserved",
+        "owner_decision": "Owner, 2026-11-03: \"We can have B1. Everybody's welcome to B1 ... Make it normal.\""
       }
     },
     "mep_riser": {
@@ -384,11 +386,12 @@
     "display_level": "B1",
     "finished_floor_elevation_ft": -13.5,
     "developmental_floor": false,
-    "normal_public_access": false,
+    "normal_public_access": true,
     "program_ref": "basement-b1-program.json",
-    "note": "B1 is restricted underground operations, technical/service infrastructure, and the gateway to the future tunnel backbone. Learner/instructor work uses a sandboxed clone and B1 does not alter the six-letter EQUITY progression.",
-    "access": "mccluster-house-owner-or-underground-operations-admin",
-    "training_access": "sandboxed-clone-only",
-    "tunnel_network_ref": "underground-tunnel-network.json"
+    "note": "B1 is a normal, open, staffed floor (technical operations, infrastructure, workshop, systems lab, staff commons). Plant, electrical, fire/water, flood, telecom and transfer-lock rooms keep their safety doors; building systems are simulation-only (never live control). B1 does not alter the six-letter EQUITY progression.",
+    "access": "open-normal-floor",
+    "training_access": "canonical-geometry-sandbox-for-live-systems",
+    "tunnel_network_ref": "underground-tunnel-network.json",
+    "owner_decision": "Owner, 2026-11-03: \"We can have B1. Everybody's welcome to B1 ... Make it normal.\""
   }
 }

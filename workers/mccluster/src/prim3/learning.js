@@ -2,7 +2,7 @@
 
    What a learner did in the SANDBOX building, what they earned elsewhere, where
    they are in a pathway, and the FEMA HSEEP exercise record. Tables:
-   supabase/migrations/20261103160000_learning_evidence_v1.sql (learning_*), the
+   supabase/migrations/20261103182544_learning_evidence_v1.sql (learning_*), the
    private bucket `learning-credentials`. Scenario packs, the federal and industry
    catalogs and the pathways are read from the repository at build time, so a
    session can only name a scenario and pack version that exist.

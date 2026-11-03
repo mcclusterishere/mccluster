@@ -162,3 +162,7 @@ body.gh-body{font:var(--gh-font);letter-spacing:.01em;min-height:100svh;padding-
   .mr-missed ol{grid-template-columns:repeat(2,minmax(0,1fr))}
   .mr-structure{width:min(100%,320px,36svh)}
 }
+
+/* The fictional story world is a separate owner-gated experience beside the course games. */
+.gh-city-link{display:inline-flex;align-items:center;min-height:44px;margin-top:12px;padding:10px 16px;border:1px solid #3b6d64;border-radius:10px;color:#c7e9d8;font-size:16px;text-decoration:none}.gh-city-link:hover,.gh-city-link:focus-visible{background:#173a32;border-color:#7cbd9e}
+.gh-worlds{display:flex;flex-wrap:wrap;gap:0 10px}
