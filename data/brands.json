@@ -259,11 +259,6 @@
       ],
       "links": [
         {
-          "label": "Open PRIM3",
-          "href": "prim3.html",
-          "cta": "eco-prim3-open"
-        },
-        {
           "label": "Hear the study tapes",
           "href": "album.html?album=prim3",
           "cta": "eco-prim3-album"

@@ -1,0 +1,2132 @@
+{
+ "duration_seconds": 120,
+ "language": "en",
+ "songTitle": "Repo Guy (B-Side)",
+ "source": "auto",
+ "reviewed": false,
+ "machine": {
+  "version": "lyrics-machine/1",
+  "engine": {
+   "separator": "demucs htdemucs_6s",
+   "asr": "faster-whisper medium.en",
+   "aligner": "wav2vec2-ctc WAV2VEC2_ASR_BASE_960H"
+  },
+  "generated_at": "2026-10-31T18:29:00.134Z",
+  "confidence": 0.85,
+  "mismatched_lines": 1,
+  "sheet_lines": 0,
+  "heard_words": 332,
+  "ctc_aligned_lines": 41,
+  "timing": {
+   "align_seconds": 12.8,
+   "separate_seconds": 65.9,
+   "asr_seconds": 71,
+   "map_seconds": 0
+  }
+ },
+ "plain": "I'm that repo guy, I go creep at night\nGot that heat right by my side, brother please\nI'm\ndon't try If you knew you couldn't pay, why'd\nyou even sign?\nIf you breached what's on the page, I'm gon'\nseize what's mine Finance this repo guy, I had\nthe repo guy Said his deposit got delayed and\nhe needs some time I can be so kind,\nI let Rico slide Then I called his company,\nthey said Rico lied That's when something activated my\nevil side Had to draw a couple lines like\nthe equal sign Cause the Libro sign was securitized\nI can levy all his wages and keep it\nwith mine That's when he gon' cry Where's the\nhonor though?\nSoon as I try to work with you, you\na no -call, no -show Why you have to\nmake me search for you?\nI was looking high and low Shit had a\nrent, I hurt you Hoping nigga die real slow\nCatch him on the side of the road Now\nit's time for a tow Oh, you wanna go\nto the tow I got like ten of those\nTwo forty -five in a scope rifle The type\nto switch modes Burst fire through your skull Use\nrifles in your soul I'm in control Of liens,\ntitles, and loans Deeds, bonds, T -notes What you\ngot?\nDesigner clothes What you thought?\nYou try to ghost?\nThis is fun to me Let you run from\nme just to find you, lo Parked an armed\nsquad from the company We ride outside y 'all,\nI go creep at night Got that heat right\nby my side, brother please don't try If you\nknew you couldn't pay, why'd you even sign?\nIf you preach what's on the page, I'm gon'\nseize what's mine\nAnd the trap stay strapped, my shantas Hit your\nback, send it back to the trap shop And\nthe trap,\nhit your back, shoot, set Thank you.\nThank Thank you.",
+ "timed": {
+  "line": [
+   {
+    "begin": 12.225,
+    "end": 14.383,
+    "content": "I'm that repo guy, I go creep at night",
+    "confidence": 0.884,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 12.225,
+      "end": 12.325,
+      "content": "I'm"
+     },
+     {
+      "begin": 12.405,
+      "end": 12.546,
+      "content": "that"
+     },
+     {
+      "begin": 12.606,
+      "end": 12.888,
+      "content": "repo"
+     },
+     {
+      "begin": 12.988,
+      "end": 13.189,
+      "content": "guy,"
+     },
+     {
+      "begin": 13.772,
+      "end": 13.792,
+      "content": "I"
+     },
+     {
+      "begin": 13.913,
+      "end": 13.973,
+      "content": "go"
+     },
+     {
+      "begin": 14.114,
+      "end": 14.295,
+      "content": "creep"
+     },
+     {
+      "begin": 14.375,
+      "end": 14.383,
+      "content": "at"
+     },
+     {
+      "begin": 14.383,
+      "end": 14.383,
+      "content": "night"
+     }
+    ],
+    "align_score": 0.786
+   },
+   {
+    "begin": 14.383,
+    "end": 14.749,
+    "content": "I'm",
+    "confidence": 0.779,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 14.383,
+      "end": 14.749,
+      "content": "I'm"
+     }
+    ],
+    "align_score": 0.3
+   },
+   {
+    "begin": 14.8,
+    "end": 14.8,
+    "content": "Got that heat right by my side, brother please",
+    "confidence": 0.918,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 14.8,
+      "end": 14.8,
+      "content": "Got"
+     },
+     {
+      "begin": 14.8,
+      "end": 14.8,
+      "content": "that"
+     },
+     {
+      "begin": 14.8,
+      "end": 14.8,
+      "content": "heat"
+     },
+     {
+      "begin": 14.8,
+      "end": 14.8,
+      "content": "right"
+     },
+     {
+      "begin": 14.8,
+      "end": 14.8,
+      "content": "by"
+     },
+     {
+      "begin": 14.8,
+      "end": 14.8,
+      "content": "my"
+     },
+     {
+      "begin": 14.8,
+      "end": 14.8,
+      "content": "side,"
+     },
+     {
+      "begin": 14.8,
+      "end": 14.8,
+      "content": "brother"
+     },
+     {
+      "begin": 14.8,
+      "end": 14.8,
+      "content": "please"
+     }
+    ],
+    "align_score": 0.034
+   },
+   {
+    "begin": 17.383,
+    "end": 19.944,
+    "content": "don't try If you knew you couldn't pay, why'd",
+    "confidence": 0.965,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 17.383,
+      "end": 17.524,
+      "content": "don't"
+     },
+     {
+      "begin": 17.564,
+      "end": 17.765,
+      "content": "try"
+     },
+     {
+      "begin": 18.368,
+      "end": 18.408,
+      "content": "If"
+     },
+     {
+      "begin": 18.469,
+      "end": 18.549,
+      "content": "you"
+     },
+     {
+      "begin": 18.67,
+      "end": 18.79,
+      "content": "knew"
+     },
+     {
+      "begin": 18.871,
+      "end": 18.951,
+      "content": "you"
+     },
+     {
+      "begin": 19.072,
+      "end": 19.373,
+      "content": "couldn't"
+     },
+     {
+      "begin": 19.454,
+      "end": 19.755,
+      "content": "pay,"
+     },
+     {
+      "begin": 19.876,
+      "end": 19.944,
+      "content": "why'd"
+     }
+    ],
+    "align_score": 0.935
+   },
+   {
+    "begin": 19.944,
+    "end": 20.914,
+    "content": "you even sign?",
+    "confidence": 0.995,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 19.944,
+      "end": 20.207,
+      "content": "you"
+     },
+     {
+      "begin": 20.308,
+      "end": 20.53,
+      "content": "even"
+     },
+     {
+      "begin": 20.611,
+      "end": 20.914,
+      "content": "sign?"
+     }
+    ],
+    "align_score": 0.767
+   },
+   {
+    "begin": 21.384,
+    "end": 23.203,
+    "content": "If you breached what's on the page, I'm gon'",
+    "confidence": 0.92,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 21.384,
+      "end": 21.424,
+      "content": "If"
+     },
+     {
+      "begin": 21.485,
+      "end": 21.565,
+      "content": "you"
+     },
+     {
+      "begin": 21.686,
+      "end": 21.908,
+      "content": "breached"
+     },
+     {
+      "begin": 21.928,
+      "end": 22.089,
+      "content": "what's"
+     },
+     {
+      "begin": 22.149,
+      "end": 22.21,
+      "content": "on"
+     },
+     {
+      "begin": 22.29,
+      "end": 22.351,
+      "content": "the"
+     },
+     {
+      "begin": 22.471,
+      "end": 22.834,
+      "content": "page,"
+     },
+     {
+      "begin": 22.914,
+      "end": 22.995,
+      "content": "I'm"
+     },
+     {
+      "begin": 23.035,
+      "end": 23.203,
+      "content": "gon'"
+     }
+    ],
+    "align_score": 0.757
+   },
+   {
+    "begin": 23.203,
+    "end": 25.822,
+    "content": "seize what's mine Finance this repo guy, I had",
+    "confidence": 0.842,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 23.203,
+      "end": 23.384,
+      "content": "seize"
+     },
+     {
+      "begin": 23.424,
+      "end": 23.564,
+      "content": "what's"
+     },
+     {
+      "begin": 23.645,
+      "end": 23.926,
+      "content": "mine"
+     },
+     {
+      "begin": 24.188,
+      "end": 24.569,
+      "content": "Finance"
+     },
+     {
+      "begin": 24.59,
+      "end": 24.71,
+      "content": "this"
+     },
+     {
+      "begin": 24.771,
+      "end": 25.052,
+      "content": "repo"
+     },
+     {
+      "begin": 25.132,
+      "end": 25.353,
+      "content": "guy,"
+     },
+     {
+      "begin": 25.776,
+      "end": 25.796,
+      "content": "I"
+     },
+     {
+      "begin": 25.822,
+      "end": 25.822,
+      "content": "had"
+     }
+    ],
+    "align_score": 0.381
+   },
+   {
+    "begin": 25.822,
+    "end": 28.58,
+    "content": "the repo guy Said his deposit got delayed and",
+    "confidence": 0.859,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 25.822,
+      "end": 26.143,
+      "content": "the"
+     },
+     {
+      "begin": 26.244,
+      "end": 26.545,
+      "content": "repo"
+     },
+     {
+      "begin": 26.646,
+      "end": 26.846,
+      "content": "guy"
+     },
+     {
+      "begin": 27.188,
+      "end": 27.389,
+      "content": "Said"
+     },
+     {
+      "begin": 27.449,
+      "end": 27.57,
+      "content": "his"
+     },
+     {
+      "begin": 27.61,
+      "end": 28.132,
+      "content": "deposit"
+     },
+     {
+      "begin": 28.193,
+      "end": 28.353,
+      "content": "got"
+     },
+     {
+      "begin": 28.394,
+      "end": 28.58,
+      "content": "delayed"
+     },
+     {
+      "begin": 28.58,
+      "end": 28.58,
+      "content": "and"
+     }
+    ],
+    "align_score": 0.637
+   },
+   {
+    "begin": 28.58,
+    "end": 31.401,
+    "content": "he needs some time I can be so kind,",
+    "confidence": 0.863,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 28.58,
+      "end": 28.781,
+      "content": "he"
+     },
+     {
+      "begin": 29.063,
+      "end": 29.405,
+      "content": "needs"
+     },
+     {
+      "begin": 29.485,
+      "end": 29.646,
+      "content": "some"
+     },
+     {
+      "begin": 29.706,
+      "end": 30.008,
+      "content": "time"
+     },
+     {
+      "begin": 30.531,
+      "end": 30.551,
+      "content": "I"
+     },
+     {
+      "begin": 30.632,
+      "end": 30.752,
+      "content": "can"
+     },
+     {
+      "begin": 30.833,
+      "end": 30.913,
+      "content": "be"
+     },
+     {
+      "begin": 30.994,
+      "end": 31.094,
+      "content": "so"
+     },
+     {
+      "begin": 31.215,
+      "end": 31.401,
+      "content": "kind,"
+     }
+    ],
+    "align_score": 0.78
+   },
+   {
+    "begin": 31.401,
+    "end": 34.942,
+    "content": "I let Rico slide Then I called his company,",
+    "confidence": 0.931,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 31.401,
+      "end": 31.421,
+      "content": "I"
+     },
+     {
+      "begin": 32.125,
+      "end": 32.265,
+      "content": "let"
+     },
+     {
+      "begin": 32.326,
+      "end": 32.567,
+      "content": "Rico"
+     },
+     {
+      "begin": 32.687,
+      "end": 33.029,
+      "content": "slide"
+     },
+     {
+      "begin": 33.471,
+      "end": 33.592,
+      "content": "Then"
+     },
+     {
+      "begin": 33.712,
+      "end": 33.732,
+      "content": "I"
+     },
+     {
+      "begin": 33.853,
+      "end": 34.074,
+      "content": "called"
+     },
+     {
+      "begin": 34.114,
+      "end": 34.215,
+      "content": "his"
+     },
+     {
+      "begin": 34.255,
+      "end": 34.942,
+      "content": "company,"
+     }
+    ],
+    "align_score": 0.834
+   },
+   {
+    "begin": 34.942,
+    "end": 38.141,
+    "content": "they said Rico lied That's when something activated my",
+    "confidence": 0.849,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 34.942,
+      "end": 35.103,
+      "content": "they"
+     },
+     {
+      "begin": 35.163,
+      "end": 35.304,
+      "content": "said"
+     },
+     {
+      "begin": 35.384,
+      "end": 35.665,
+      "content": "Rico"
+     },
+     {
+      "begin": 35.766,
+      "end": 36.047,
+      "content": "lied"
+     },
+     {
+      "begin": 36.509,
+      "end": 36.67,
+      "content": "That's"
+     },
+     {
+      "begin": 36.71,
+      "end": 36.81,
+      "content": "when"
+     },
+     {
+      "begin": 36.891,
+      "end": 37.232,
+      "content": "something"
+     },
+     {
+      "begin": 37.413,
+      "end": 38.141,
+      "content": "activated"
+     },
+     {
+      "begin": 38.141,
+      "end": 38.141,
+      "content": "my"
+     }
+    ],
+    "align_score": 0.552
+   },
+   {
+    "begin": 38.141,
+    "end": 41.343,
+    "content": "evil side Had to draw a couple lines like",
+    "confidence": 0.953,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 38.141,
+      "end": 38.624,
+      "content": "evil"
+     },
+     {
+      "begin": 38.805,
+      "end": 39.126,
+      "content": "side"
+     },
+     {
+      "begin": 39.609,
+      "end": 39.77,
+      "content": "Had"
+     },
+     {
+      "begin": 39.81,
+      "end": 39.87,
+      "content": "to"
+     },
+     {
+      "begin": 39.93,
+      "end": 40.172,
+      "content": "draw"
+     },
+     {
+      "begin": 40.272,
+      "end": 40.292,
+      "content": "a"
+     },
+     {
+      "begin": 40.332,
+      "end": 40.654,
+      "content": "couple"
+     },
+     {
+      "begin": 40.754,
+      "end": 41.096,
+      "content": "lines"
+     },
+     {
+      "begin": 41.156,
+      "end": 41.343,
+      "content": "like"
+     }
+    ],
+    "align_score": 0.615
+   },
+   {
+    "begin": 41.343,
+    "end": 45.223,
+    "content": "the equal sign Cause the Libro sign was securitized",
+    "confidence": 0.758,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 41.343,
+      "end": 41.423,
+      "content": "the"
+     },
+     {
+      "begin": 41.563,
+      "end": 41.784,
+      "content": "equal"
+     },
+     {
+      "begin": 41.885,
+      "end": 42.186,
+      "content": "sign"
+     },
+     {
+      "begin": 42.628,
+      "end": 42.828,
+      "content": "Cause"
+     },
+     {
+      "begin": 42.848,
+      "end": 42.929,
+      "content": "the"
+     },
+     {
+      "begin": 43.029,
+      "end": 43.29,
+      "content": "Libro"
+     },
+     {
+      "begin": 43.411,
+      "end": 43.732,
+      "content": "sign"
+     },
+     {
+      "begin": 44.133,
+      "end": 44.234,
+      "content": "was"
+     },
+     {
+      "begin": 44.314,
+      "end": 45.223,
+      "content": "securitized"
+     }
+    ],
+    "align_score": 0.66
+   },
+   {
+    "begin": 45.223,
+    "end": 47.28,
+    "content": "I can levy all his wages and keep it",
+    "confidence": 0.762,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 45.223,
+      "end": 45.243,
+      "content": "I"
+     },
+     {
+      "begin": 45.826,
+      "end": 45.927,
+      "content": "can"
+     },
+     {
+      "begin": 46.007,
+      "end": 46.309,
+      "content": "levy"
+     },
+     {
+      "begin": 46.49,
+      "end": 46.61,
+      "content": "all"
+     },
+     {
+      "begin": 46.651,
+      "end": 46.731,
+      "content": "his"
+     },
+     {
+      "begin": 46.791,
+      "end": 47.28,
+      "content": "wages"
+     },
+     {
+      "begin": 47.28,
+      "end": 47.28,
+      "content": "and"
+     },
+     {
+      "begin": 47.28,
+      "end": 47.28,
+      "content": "keep"
+     },
+     {
+      "begin": 47.28,
+      "end": 47.28,
+      "content": "it"
+     }
+    ],
+    "align_score": 0.624
+   },
+   {
+    "begin": 47.28,
+    "end": 50.425,
+    "content": "with mine That's when he gon' cry Where's the",
+    "confidence": 0.81,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 47.28,
+      "end": 47.522,
+      "content": "with"
+     },
+     {
+      "begin": 47.964,
+      "end": 48.265,
+      "content": "mine"
+     },
+     {
+      "begin": 48.687,
+      "end": 48.848,
+      "content": "That's"
+     },
+     {
+      "begin": 48.909,
+      "end": 49.029,
+      "content": "when"
+     },
+     {
+      "begin": 49.089,
+      "end": 49.17,
+      "content": "he"
+     },
+     {
+      "begin": 49.25,
+      "end": 49.431,
+      "content": "gon'"
+     },
+     {
+      "begin": 49.491,
+      "end": 49.793,
+      "content": "cry"
+     },
+     {
+      "begin": 50.215,
+      "end": 50.425,
+      "content": "Where's"
+     },
+     {
+      "begin": 50.425,
+      "end": 50.425,
+      "content": "the"
+     }
+    ],
+    "align_score": 0.495
+   },
+   {
+    "begin": 50.425,
+    "end": 51.444,
+    "content": "honor though?",
+    "confidence": 0.766,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 50.425,
+      "end": 50.909,
+      "content": "honor"
+     },
+     {
+      "begin": 51.031,
+      "end": 51.444,
+      "content": "though?"
+     }
+    ],
+    "align_score": 0.549
+   },
+   {
+    "begin": 51.444,
+    "end": 53.035,
+    "content": "Soon as I try to work with you, you",
+    "confidence": 0.95,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 51.444,
+      "end": 51.625,
+      "content": "Soon"
+     },
+     {
+      "begin": 51.706,
+      "end": 51.786,
+      "content": "as"
+     },
+     {
+      "begin": 51.867,
+      "end": 51.887,
+      "content": "I"
+     },
+     {
+      "begin": 51.948,
+      "end": 52.068,
+      "content": "try"
+     },
+     {
+      "begin": 52.169,
+      "end": 52.209,
+      "content": "to"
+     },
+     {
+      "begin": 52.29,
+      "end": 52.451,
+      "content": "work"
+     },
+     {
+      "begin": 52.532,
+      "end": 52.653,
+      "content": "with"
+     },
+     {
+      "begin": 52.693,
+      "end": 52.774,
+      "content": "you,"
+     },
+     {
+      "begin": 52.955,
+      "end": 53.035,
+      "content": "you"
+     }
+    ],
+    "align_score": 0.811
+   },
+   {
+    "begin": 53.104,
+    "end": 54.946,
+    "content": "a no -call, no -show Why you have to",
+    "confidence": 0.829,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 53.104,
+      "end": 53.124,
+      "content": "a"
+     },
+     {
+      "begin": 53.225,
+      "end": 53.305,
+      "content": "no"
+     },
+     {
+      "begin": 53.426,
+      "end": 53.708,
+      "content": "-call,"
+     },
+     {
+      "begin": 53.789,
+      "end": 53.889,
+      "content": "no"
+     },
+     {
+      "begin": 54.01,
+      "end": 54.232,
+      "content": "-show"
+     },
+     {
+      "begin": 54.393,
+      "end": 54.493,
+      "content": "Why"
+     },
+     {
+      "begin": 54.574,
+      "end": 54.634,
+      "content": "you"
+     },
+     {
+      "begin": 54.715,
+      "end": 54.815,
+      "content": "have"
+     },
+     {
+      "begin": 54.946,
+      "end": 54.946,
+      "content": "to"
+     }
+    ],
+    "align_score": 0.738
+   },
+   {
+    "begin": 54.946,
+    "end": 55.421,
+    "content": "make me search for you?",
+    "confidence": 0.996,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 54.946,
+      "end": 55.107,
+      "content": "make"
+     },
+     {
+      "begin": 55.148,
+      "end": 55.208,
+      "content": "me"
+     },
+     {
+      "begin": 55.329,
+      "end": 55.421,
+      "content": "search"
+     },
+     {
+      "begin": 55.421,
+      "end": 55.421,
+      "content": "for"
+     },
+     {
+      "begin": 55.421,
+      "end": 55.421,
+      "content": "you?"
+     }
+    ],
+    "align_score": 0.963
+   },
+   {
+    "begin": 55.421,
+    "end": 58.083,
+    "content": "I was looking high and low Shit had a",
+    "confidence": 0.739,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 55.421,
+      "end": 55.441,
+      "content": "I"
+     },
+     {
+      "begin": 56.044,
+      "end": 56.165,
+      "content": "was"
+     },
+     {
+      "begin": 56.205,
+      "end": 56.467,
+      "content": "looking"
+     },
+     {
+      "begin": 56.547,
+      "end": 56.789,
+      "content": "high"
+     },
+     {
+      "begin": 56.91,
+      "end": 56.99,
+      "content": "and"
+     },
+     {
+      "begin": 57.05,
+      "end": 57.211,
+      "content": "low"
+     },
+     {
+      "begin": 57.513,
+      "end": 57.714,
+      "content": "Shit"
+     },
+     {
+      "begin": 57.775,
+      "end": 57.916,
+      "content": "had"
+     },
+     {
+      "begin": 58.083,
+      "end": 58.083,
+      "content": "a"
+     }
+    ],
+    "align_score": 0.744
+   },
+   {
+    "begin": 58.083,
+    "end": 60.276,
+    "content": "rent, I hurt you Hoping nigga die real slow",
+    "confidence": 0.747,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 58.083,
+      "end": 58.224,
+      "content": "rent,"
+     },
+     {
+      "begin": 58.265,
+      "end": 58.285,
+      "content": "I"
+     },
+     {
+      "begin": 58.365,
+      "end": 58.627,
+      "content": "hurt"
+     },
+     {
+      "begin": 58.707,
+      "end": 58.767,
+      "content": "you"
+     },
+     {
+      "begin": 58.989,
+      "end": 59.23,
+      "content": "Hoping"
+     },
+     {
+      "begin": 59.29,
+      "end": 59.472,
+      "content": "nigga"
+     },
+     {
+      "begin": 59.572,
+      "end": 59.834,
+      "content": "die"
+     },
+     {
+      "begin": 59.914,
+      "end": 60.075,
+      "content": "real"
+     },
+     {
+      "begin": 60.095,
+      "end": 60.276,
+      "content": "slow"
+     }
+    ],
+    "align_score": 0.573
+   },
+   {
+    "begin": 60.525,
+    "end": 62.404,
+    "content": "Catch him on the side of the road Now",
+    "confidence": 0.943,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 60.525,
+      "end": 60.706,
+      "content": "Catch"
+     },
+     {
+      "begin": 60.766,
+      "end": 60.827,
+      "content": "him"
+     },
+     {
+      "begin": 60.867,
+      "end": 60.947,
+      "content": "on"
+     },
+     {
+      "begin": 60.967,
+      "end": 61.028,
+      "content": "the"
+     },
+     {
+      "begin": 61.108,
+      "end": 61.39,
+      "content": "side"
+     },
+     {
+      "begin": 61.45,
+      "end": 61.491,
+      "content": "of"
+     },
+     {
+      "begin": 61.531,
+      "end": 61.591,
+      "content": "the"
+     },
+     {
+      "begin": 61.652,
+      "end": 62.404,
+      "content": "road"
+     },
+     {
+      "begin": 62.404,
+      "end": 62.404,
+      "content": "Now"
+     }
+    ],
+    "align_score": 0.54
+   },
+   {
+    "begin": 62.404,
+    "end": 64.042,
+    "content": "it's time for a tow Oh, you wanna go",
+    "confidence": 0.898,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 62.404,
+      "end": 62.585,
+      "content": "it's"
+     },
+     {
+      "begin": 62.665,
+      "end": 62.867,
+      "content": "time"
+     },
+     {
+      "begin": 62.907,
+      "end": 63.048,
+      "content": "for"
+     },
+     {
+      "begin": 63.108,
+      "end": 63.128,
+      "content": "a"
+     },
+     {
+      "begin": 63.189,
+      "end": 63.37,
+      "content": "tow"
+     },
+     {
+      "begin": 63.611,
+      "end": 63.652,
+      "content": "Oh,"
+     },
+     {
+      "begin": 63.752,
+      "end": 63.833,
+      "content": "you"
+     },
+     {
+      "begin": 63.893,
+      "end": 64.042,
+      "content": "wanna"
+     },
+     {
+      "begin": 64.042,
+      "end": 64.042,
+      "content": "go"
+     }
+    ],
+    "align_score": 0.55
+   },
+   {
+    "begin": 64.042,
+    "end": 66.584,
+    "content": "to the tow I got like ten of those",
+    "confidence": 0.799,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 64.042,
+      "end": 64.263,
+      "content": "to"
+     },
+     {
+      "begin": 64.444,
+      "end": 64.625,
+      "content": "the"
+     },
+     {
+      "begin": 64.706,
+      "end": 64.907,
+      "content": "tow"
+     },
+     {
+      "begin": 65.33,
+      "end": 65.35,
+      "content": "I"
+     },
+     {
+      "begin": 65.45,
+      "end": 65.571,
+      "content": "got"
+     },
+     {
+      "begin": 65.652,
+      "end": 65.813,
+      "content": "like"
+     },
+     {
+      "begin": 65.913,
+      "end": 66.054,
+      "content": "ten"
+     },
+     {
+      "begin": 66.316,
+      "end": 66.497,
+      "content": "of"
+     },
+     {
+      "begin": 66.577,
+      "end": 66.584,
+      "content": "those"
+     }
+    ],
+    "align_score": 0.708
+   },
+   {
+    "begin": 66.584,
+    "end": 68.582,
+    "content": "Two forty -five in a scope rifle The type",
+    "confidence": 0.73,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 66.584,
+      "end": 66.685,
+      "content": "Two"
+     },
+     {
+      "begin": 66.826,
+      "end": 67.047,
+      "content": "forty"
+     },
+     {
+      "begin": 67.147,
+      "end": 67.389,
+      "content": "-five"
+     },
+     {
+      "begin": 67.489,
+      "end": 67.53,
+      "content": "in"
+     },
+     {
+      "begin": 67.59,
+      "end": 67.61,
+      "content": "a"
+     },
+     {
+      "begin": 67.67,
+      "end": 67.932,
+      "content": "scope"
+     },
+     {
+      "begin": 68.073,
+      "end": 68.394,
+      "content": "rifle"
+     },
+     {
+      "begin": 68.455,
+      "end": 68.515,
+      "content": "The"
+     },
+     {
+      "begin": 68.582,
+      "end": 68.582,
+      "content": "type"
+     }
+    ],
+    "align_score": 0.869
+   },
+   {
+    "begin": 68.582,
+    "end": 71.577,
+    "content": "to switch modes Burst fire through your skull Use",
+    "confidence": 0.87,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 68.582,
+      "end": 68.683,
+      "content": "to"
+     },
+     {
+      "begin": 68.964,
+      "end": 69.145,
+      "content": "switch"
+     },
+     {
+      "begin": 69.205,
+      "end": 69.466,
+      "content": "modes"
+     },
+     {
+      "begin": 69.828,
+      "end": 70.029,
+      "content": "Burst"
+     },
+     {
+      "begin": 70.13,
+      "end": 70.371,
+      "content": "fire"
+     },
+     {
+      "begin": 70.451,
+      "end": 70.592,
+      "content": "through"
+     },
+     {
+      "begin": 70.612,
+      "end": 70.693,
+      "content": "your"
+     },
+     {
+      "begin": 70.713,
+      "end": 71.054,
+      "content": "skull"
+     },
+     {
+      "begin": 71.456,
+      "end": 71.577,
+      "content": "Use"
+     }
+    ],
+    "align_score": 0.547
+   },
+   {
+    "begin": 71.663,
+    "end": 74.703,
+    "content": "rifles in your soul I'm in control Of liens,",
+    "confidence": 0.852,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 71.663,
+      "end": 71.944,
+      "content": "rifles"
+     },
+     {
+      "begin": 72.005,
+      "end": 72.045,
+      "content": "in"
+     },
+     {
+      "begin": 72.105,
+      "end": 72.226,
+      "content": "your"
+     },
+     {
+      "begin": 72.286,
+      "end": 72.547,
+      "content": "soul"
+     },
+     {
+      "begin": 73.311,
+      "end": 73.432,
+      "content": "I'm"
+     },
+     {
+      "begin": 73.492,
+      "end": 73.532,
+      "content": "in"
+     },
+     {
+      "begin": 73.592,
+      "end": 73.994,
+      "content": "control"
+     },
+     {
+      "begin": 74.135,
+      "end": 74.175,
+      "content": "Of"
+     },
+     {
+      "begin": 74.336,
+      "end": 74.703,
+      "content": "liens,"
+     }
+    ],
+    "align_score": 0.694
+   },
+   {
+    "begin": 74.703,
+    "end": 77.457,
+    "content": "titles, and loans Deeds, bonds, T -notes What you",
+    "confidence": 0.866,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 74.703,
+      "end": 75.044,
+      "content": "titles,"
+     },
+     {
+      "begin": 75.125,
+      "end": 75.205,
+      "content": "and"
+     },
+     {
+      "begin": 75.286,
+      "end": 75.647,
+      "content": "loans"
+     },
+     {
+      "begin": 75.869,
+      "end": 76.09,
+      "content": "Deeds,"
+     },
+     {
+      "begin": 76.17,
+      "end": 76.472,
+      "content": "bonds,"
+     },
+     {
+      "begin": 76.552,
+      "end": 76.572,
+      "content": "T"
+     },
+     {
+      "begin": 76.793,
+      "end": 77.035,
+      "content": "-notes"
+     },
+     {
+      "begin": 77.196,
+      "end": 77.296,
+      "content": "What"
+     },
+     {
+      "begin": 77.376,
+      "end": 77.457,
+      "content": "you"
+     }
+    ],
+    "align_score": 0.719
+   },
+   {
+    "begin": 77.529,
+    "end": 77.692,
+    "content": "got?",
+    "confidence": 0.986,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 77.529,
+      "end": 77.692,
+      "content": "got?"
+     }
+    ],
+    "align_score": 0.939
+   },
+   {
+    "begin": 77.764,
+    "end": 78.882,
+    "content": "Designer clothes What you thought?",
+    "confidence": 0.817,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 77.764,
+      "end": 78.227,
+      "content": "Designer"
+     },
+     {
+      "begin": 78.288,
+      "end": 78.59,
+      "content": "clothes"
+     },
+     {
+      "begin": 78.752,
+      "end": 78.852,
+      "content": "What"
+     },
+     {
+      "begin": 78.882,
+      "end": 78.882,
+      "content": "you"
+     },
+     {
+      "begin": 78.882,
+      "end": 78.882,
+      "content": "thought?"
+     }
+    ],
+    "align_score": 0.769
+   },
+   {
+    "begin": 78.882,
+    "end": 80.264,
+    "content": "You try to ghost?",
+    "confidence": 0.865,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 78.882,
+      "end": 79.327,
+      "content": "You"
+     },
+     {
+      "begin": 79.428,
+      "end": 79.569,
+      "content": "try"
+     },
+     {
+      "begin": 79.67,
+      "end": 79.711,
+      "content": "to"
+     },
+     {
+      "begin": 79.792,
+      "end": 80.264,
+      "content": "ghost?"
+     }
+    ],
+    "align_score": 0.579
+   },
+   {
+    "begin": 80.264,
+    "end": 81.884,
+    "content": "This is fun to me Let you run from",
+    "confidence": 0.967,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 80.264,
+      "end": 80.385,
+      "content": "This"
+     },
+     {
+      "begin": 80.445,
+      "end": 80.506,
+      "content": "is"
+     },
+     {
+      "begin": 80.607,
+      "end": 80.748,
+      "content": "fun"
+     },
+     {
+      "begin": 80.869,
+      "end": 80.929,
+      "content": "to"
+     },
+     {
+      "begin": 81.01,
+      "end": 81.07,
+      "content": "me"
+     },
+     {
+      "begin": 81.171,
+      "end": 81.271,
+      "content": "Let"
+     },
+     {
+      "begin": 81.332,
+      "end": 81.412,
+      "content": "you"
+     },
+     {
+      "begin": 81.533,
+      "end": 81.634,
+      "content": "run"
+     },
+     {
+      "begin": 81.715,
+      "end": 81.884,
+      "content": "from"
+     }
+    ],
+    "align_score": 0.855
+   },
+   {
+    "begin": 81.884,
+    "end": 83.984,
+    "content": "me just to find you, lo Parked an armed",
+    "confidence": 0.805,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 81.884,
+      "end": 81.944,
+      "content": "me"
+     },
+     {
+      "begin": 82.025,
+      "end": 82.206,
+      "content": "just"
+     },
+     {
+      "begin": 82.266,
+      "end": 82.327,
+      "content": "to"
+     },
+     {
+      "begin": 82.427,
+      "end": 82.729,
+      "content": "find"
+     },
+     {
+      "begin": 82.749,
+      "end": 82.81,
+      "content": "you,"
+     },
+     {
+      "begin": 82.83,
+      "end": 82.951,
+      "content": "lo"
+     },
+     {
+      "begin": 83.313,
+      "end": 83.534,
+      "content": "Parked"
+     },
+     {
+      "begin": 83.574,
+      "end": 83.655,
+      "content": "an"
+     },
+     {
+      "begin": 83.756,
+      "end": 83.984,
+      "content": "armed"
+     }
+    ],
+    "align_score": 0.528
+   },
+   {
+    "begin": 83.984,
+    "end": 86.021,
+    "content": "squad from the company We ride outside y 'all,",
+    "confidence": 0.778,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 83.984,
+      "end": 84.266,
+      "content": "squad"
+     },
+     {
+      "begin": 84.326,
+      "end": 84.407,
+      "content": "from"
+     },
+     {
+      "begin": 84.467,
+      "end": 84.527,
+      "content": "the"
+     },
+     {
+      "begin": 84.608,
+      "end": 85.05,
+      "content": "company"
+     },
+     {
+      "begin": 85.111,
+      "end": 85.151,
+      "content": "We"
+     },
+     {
+      "begin": 85.171,
+      "end": 85.332,
+      "content": "ride"
+     },
+     {
+      "begin": 85.372,
+      "end": 85.775,
+      "content": "outside"
+     },
+     {
+      "begin": 85.795,
+      "end": 85.815,
+      "content": "y"
+     },
+     {
+      "begin": 86.021,
+      "end": 86.021,
+      "content": "'all,"
+     }
+    ],
+    "align_score": 0.574
+   },
+   {
+    "begin": 86.021,
+    "end": 88.944,
+    "content": "I go creep at night Got that heat right",
+    "confidence": 0.924,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 86.021,
+      "end": 86.041,
+      "content": "I"
+     },
+     {
+      "begin": 86.785,
+      "end": 86.885,
+      "content": "go"
+     },
+     {
+      "begin": 87.006,
+      "end": 87.207,
+      "content": "creep"
+     },
+     {
+      "begin": 87.308,
+      "end": 87.348,
+      "content": "at"
+     },
+     {
+      "begin": 87.449,
+      "end": 87.71,
+      "content": "night"
+     },
+     {
+      "begin": 88.153,
+      "end": 88.314,
+      "content": "Got"
+     },
+     {
+      "begin": 88.354,
+      "end": 88.495,
+      "content": "that"
+     },
+     {
+      "begin": 88.555,
+      "end": 88.897,
+      "content": "heat"
+     },
+     {
+      "begin": 88.944,
+      "end": 88.944,
+      "content": "right"
+     }
+    ],
+    "align_score": 0.598
+   },
+   {
+    "begin": 88.944,
+    "end": 91.564,
+    "content": "by my side, brother please don't try If you",
+    "confidence": 0.923,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 88.944,
+      "end": 89.024,
+      "content": "by"
+     },
+     {
+      "begin": 89.145,
+      "end": 89.205,
+      "content": "my"
+     },
+     {
+      "begin": 89.305,
+      "end": 89.647,
+      "content": "side,"
+     },
+     {
+      "begin": 89.728,
+      "end": 90.009,
+      "content": "brother"
+     },
+     {
+      "begin": 90.089,
+      "end": 90.27,
+      "content": "please"
+     },
+     {
+      "begin": 90.311,
+      "end": 90.451,
+      "content": "don't"
+     },
+     {
+      "begin": 90.471,
+      "end": 90.672,
+      "content": "try"
+     },
+     {
+      "begin": 91.296,
+      "end": 91.336,
+      "content": "If"
+     },
+     {
+      "begin": 91.564,
+      "end": 91.564,
+      "content": "you"
+     }
+    ],
+    "align_score": 0.838
+   },
+   {
+    "begin": 91.564,
+    "end": 93.837,
+    "content": "knew you couldn't pay, why'd you even sign?",
+    "confidence": 0.973,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 91.564,
+      "end": 91.705,
+      "content": "knew"
+     },
+     {
+      "begin": 91.785,
+      "end": 91.865,
+      "content": "you"
+     },
+     {
+      "begin": 91.966,
+      "end": 92.288,
+      "content": "couldn't"
+     },
+     {
+      "begin": 92.348,
+      "end": 92.65,
+      "content": "pay,"
+     },
+     {
+      "begin": 92.771,
+      "end": 92.972,
+      "content": "why'd"
+     },
+     {
+      "begin": 93.012,
+      "end": 93.092,
+      "content": "you"
+     },
+     {
+      "begin": 93.233,
+      "end": 93.434,
+      "content": "even"
+     },
+     {
+      "begin": 93.515,
+      "end": 93.837,
+      "content": "sign?"
+     }
+    ],
+    "align_score": 0.806
+   },
+   {
+    "begin": 94.304,
+    "end": 96.105,
+    "content": "If you preach what's on the page, I'm gon'",
+    "confidence": 0.915,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 94.304,
+      "end": 94.344,
+      "content": "If"
+     },
+     {
+      "begin": 94.405,
+      "end": 94.465,
+      "content": "you"
+     },
+     {
+      "begin": 94.606,
+      "end": 94.787,
+      "content": "preach"
+     },
+     {
+      "begin": 94.828,
+      "end": 94.989,
+      "content": "what's"
+     },
+     {
+      "begin": 95.049,
+      "end": 95.15,
+      "content": "on"
+     },
+     {
+      "begin": 95.19,
+      "end": 95.271,
+      "content": "the"
+     },
+     {
+      "begin": 95.391,
+      "end": 95.754,
+      "content": "page,"
+     },
+     {
+      "begin": 95.814,
+      "end": 95.895,
+      "content": "I'm"
+     },
+     {
+      "begin": 95.955,
+      "end": 96.105,
+      "content": "gon'"
+     }
+    ],
+    "align_score": 0.751
+   },
+   {
+    "begin": 96.105,
+    "end": 96.913,
+    "content": "seize what's mine",
+    "confidence": 0.958,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 96.105,
+      "end": 96.307,
+      "content": "seize"
+     },
+     {
+      "begin": 96.348,
+      "end": 96.469,
+      "content": "what's"
+     },
+     {
+      "begin": 96.529,
+      "end": 96.913,
+      "content": "mine"
+     }
+    ],
+    "align_score": 0.594
+   },
+   {
+    "begin": 98.084,
+    "end": 101.338,
+    "content": "And the trap stay strapped, my shantas Hit your",
+    "confidence": 0.656,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 98.084,
+      "end": 98.144,
+      "content": "And"
+     },
+     {
+      "begin": 98.184,
+      "end": 98.245,
+      "content": "the"
+     },
+     {
+      "begin": 98.345,
+      "end": 98.606,
+      "content": "trap"
+     },
+     {
+      "begin": 98.666,
+      "end": 98.928,
+      "content": "stay"
+     },
+     {
+      "begin": 99.048,
+      "end": 99.389,
+      "content": "strapped,"
+     },
+     {
+      "begin": 99.63,
+      "end": 99.731,
+      "content": "my"
+     },
+     {
+      "begin": 99.871,
+      "end": 100.675,
+      "content": "shantas"
+     },
+     {
+      "begin": 101.076,
+      "end": 101.157,
+      "content": "Hit"
+     },
+     {
+      "begin": 101.217,
+      "end": 101.338,
+      "content": "your"
+     }
+    ],
+    "align_score": 0.542
+   },
+   {
+    "begin": 101.403,
+    "end": 104.237,
+    "content": "back, send it back to the trap shop And",
+    "confidence": 0.85,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 101.403,
+      "end": 101.665,
+      "content": "back,"
+     },
+     {
+      "begin": 101.765,
+      "end": 101.926,
+      "content": "send"
+     },
+     {
+      "begin": 101.966,
+      "end": 102.046,
+      "content": "it"
+     },
+     {
+      "begin": 102.207,
+      "end": 102.408,
+      "content": "back"
+     },
+     {
+      "begin": 102.569,
+      "end": 102.669,
+      "content": "to"
+     },
+     {
+      "begin": 102.931,
+      "end": 103.051,
+      "content": "the"
+     },
+     {
+      "begin": 103.071,
+      "end": 103.152,
+      "content": "trap"
+     },
+     {
+      "begin": 103.292,
+      "end": 103.574,
+      "content": "shop"
+     },
+     {
+      "begin": 104.177,
+      "end": 104.237,
+      "content": "And"
+     }
+    ],
+    "align_score": 0.306
+   },
+   {
+    "begin": 104.24,
+    "end": 104.9,
+    "content": "the trap,",
+    "confidence": 0.934,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 104.24,
+      "end": 104.52,
+      "content": "the"
+     },
+     {
+      "begin": 104.52,
+      "end": 104.9,
+      "content": "trap,"
+     }
+    ],
+    "align_score": 0.061
+   },
+   {
+    "begin": 106.404,
+    "end": 108.357,
+    "content": "hit your back, shoot, set Thank you.",
+    "confidence": 0.605,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 106.404,
+      "end": 106.485,
+      "content": "hit"
+     },
+     {
+      "begin": 106.525,
+      "end": 106.626,
+      "content": "your"
+     },
+     {
+      "begin": 106.787,
+      "end": 107.048,
+      "content": "back,"
+     },
+     {
+      "begin": 107.068,
+      "end": 107.27,
+      "content": "shoot,"
+     },
+     {
+      "begin": 107.33,
+      "end": 107.451,
+      "content": "set"
+     },
+     {
+      "begin": 107.552,
+      "end": 107.733,
+      "content": "Thank"
+     },
+     {
+      "begin": 107.753,
+      "end": 108.357,
+      "content": "you."
+     }
+    ],
+    "align_score": 0.148
+   },
+   {
+    "begin": 118.08,
+    "end": 120.18,
+    "content": "Thank Thank you.",
+    "confidence": 0.391,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 118.08,
+      "end": 119.12,
+      "content": "Thank"
+     },
+     {
+      "begin": 118.78,
+      "end": 120.18,
+      "content": "Thank"
+     },
+     {
+      "begin": 120.18,
+      "end": 120.18,
+      "content": "you."
+     }
+    ],
+    "align_score": 0.022
+   }
+  ]
+ }
+}

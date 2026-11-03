@@ -34,6 +34,13 @@ body[data-admin-navigation] .appbar [aria-expanded="true"]{background:#30252a;co
 .mcc-destinations input{box-sizing:border-box;width:100%;min-width:0;min-height:44px;padding:10px 12px;border:1px solid #3b3541;border-radius:10px;background:#0c0b0f;color:#f5f2f8;font-size:16px}
 .mcc-destinations__groups{display:flex;gap:6px;overflow:auto;flex:none;overscroll-behavior-x:contain;scrollbar-width:thin;padding-bottom:4px}
 .mcc-destinations__groups [aria-pressed="true"]{background:#44232e;border-color:#a54960;color:#fff}
+.mcc-sections{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;flex:none}
+.mcc-section{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-width:0;min-height:62px;box-sizing:border-box;padding:8px 6px;border:1px solid #302c35;border-radius:14px;background:#1b191f;color:#f2eef5;text-decoration:none}
+.mcc-section svg{width:22px;height:22px;flex:none}
+.mcc-section strong{font-size:12px;font-weight:600;line-height:1.1;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mcc-section[aria-current="true"]{background:#44232e;border-color:#a54960}
+.mcc-section__badge{position:absolute;top:6px;right:8px;min-width:18px;height:18px;padding:0 5px;box-sizing:border-box;border-radius:99px;background:#e5383b;color:#fff;font:700 10px/18px system-ui;text-align:center}
+.mcc-section:focus-visible{outline:2px solid #eee2f7;outline-offset:2px}
 #mccDestinationList{overflow:auto;overscroll-behavior:contain;min-height:0;scrollbar-width:thin;padding:2px 3px 4px}
 .mcc-destinations__group{margin:0 0 16px}
 .mcc-destinations__group h3{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#b5aebd;margin:0 0 8px}
@@ -50,13 +57,21 @@ body[data-admin-navigation] .appbar [aria-expanded="true"]{background:#30252a;co
 .mcc-profile-menu :is(a,button):hover,.mcc-destination:hover{background:#2b242f}
 /* Remove global duplicates only after the shared destination module is ready.
    Editors, local filters and their own section tabs keep their behavior. */
-html body.cr[data-site-navigation][data-admin-navigation] .cr-rail,
-html body.cr[data-site-navigation][data-admin-navigation] .cr-bottom,
+html body.cr[data-site-navigation][data-admin-navigation] #crAccount,
 html body.cr[data-site-navigation][data-admin-navigation] .cw-pages,
 html body.cr[data-site-navigation][data-admin-navigation] #cwAccount,
 html body.cr[data-site-navigation][data-admin-navigation] #cwRouteWrap{display:none!important}
 html body.cr[data-site-navigation][data-admin-navigation]:not([data-control-workspace]) .cr-shell{
   grid-template-columns:minmax(0,1fr)!important;grid-template-areas:"top" "main"!important;
+}
+/* The Control sections (js/control-room/nav.js) are this page's own index,
+   not a second global bar (owner-approved consolidation, 2026-10-30): on a
+   phone they are a row under the topbar, because the shared bar keeps the
+   bottom (css/control-room-v2.css, body.cr.has-appbar); from 1024px they
+   are the sidebar. The shared bar's Control panel lists the same NAV. */
+@media(min-width:1024px){
+  html body.cr[data-site-navigation][data-admin-navigation]:not([data-control-workspace]) .cr-shell{grid-template-columns:var(--cr-side,248px) minmax(0,1fr)!important;grid-template-areas:"nav top" "nav main"!important}
+  html body.cr[data-site-navigation][data-admin-navigation][data-cr-surface="analytics"]:not([data-control-workspace]) .cr-shell{grid-template-areas:"nav main"!important}
 }
 html body.cr[data-site-navigation][data-admin-navigation] .cr-topbar{padding-right:118px;min-height:68px;box-sizing:border-box}
 html body.cr[data-site-navigation][data-admin-navigation] .cr-topbar .cr-command{min-width:0;min-height:44px}
@@ -66,6 +81,7 @@ html body.cr[data-site-navigation][data-admin-navigation] .cw-actions{grid-colum
 html body.cr[data-site-navigation] #crAccountMenu{position:fixed;top:calc(max(12px,env(safe-area-inset-top)) + 52px);right:12px;bottom:auto;left:auto;z-index:1000;max-width:calc(100vw - 24px)}
 html body.cr[data-site-navigation] #crAccountMenu :is(a,button){min-height:44px}
 @media(min-width:600px){
+  .mcc-sections{grid-template-columns:repeat(6,minmax(0,1fr))}
   .mcc-destinations{padding:22px;max-height:calc(100dvh - 180px)}
   .mcc-destinations h2{font-size:25px}
   .mcc-destinations__grid{grid-template-columns:repeat(3,minmax(0,1fr))}

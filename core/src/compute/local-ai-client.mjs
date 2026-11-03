@@ -26,6 +26,8 @@ export async function localAiChat({
   think = false,
   numPredict = 1024,
   tools,
+  schema,
+  model,
   priority = -20,
   timeoutMs = Number(process.env.MCCLUSTER_OLLAMA_TIMEOUT_MS || 10 * 60_000),
   metadata = {},
@@ -53,6 +55,8 @@ export async function localAiChat({
           think: think === true,
           ...(Array.isArray(tools) && tools.length ? { tools } : {}),
           json: Boolean(json),
+          ...(schema && typeof schema === 'object' ? { schema, json: true } : {}),
+          ...(model ? { model: String(model) } : {}),
         },
         metadata: {
           source: 'core-local-ai-client',
@@ -89,6 +93,24 @@ export async function localAiChat({
     total_duration: data?.usage?.total_duration_ns ?? null,
     queue_wait_ms: data?.queue_wait_ms ?? null,
   };
+}
+
+export async function localAiEmbed(input, { model, fetchImpl = globalThis.fetch, timeoutMs = 130_000 } = {}) {
+  const response = await fetchImpl(`${ADAPTER}/embed`, {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ input, ...(model ? { model: String(model) } : {}) }), signal: AbortSignal.timeout(timeoutMs),
+  });
+  const data = await response.json().catch(() => null);
+  if (!response.ok) throw Object.assign(new Error(data?.error || `Local embedding returned ${response.status}`), { status: response.status, code: data?.code || null, retryable: response.status >= 500 });
+  return data;
+}
+
+export async function localAiPullModel(model, { fetchImpl = globalThis.fetch, timeoutMs = 1_560_000 } = {}) {
+  const response = await fetchImpl(`${ADAPTER}/models/pull`, {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ model: String(model || '') }), signal: AbortSignal.timeout(timeoutMs),
+  });
+  return response.json().catch(() => ({ ok: false, error: `adapter returned ${response.status}` }));
 }
 
 export async function localAiDiagnostics({ fetchImpl = globalThis.fetch } = {}) {

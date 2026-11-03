@@ -8,8 +8,8 @@
   "elevation_ft": -13.5,
   "developmental_stage": null,
   "acronym_role": "none-supporting-infrastructure-only",
-  "normal_public_access": false,
-  "access": "role-and-safety-authorized",
+  "normal_public_access": true,
+  "access": "open-normal-floor",
   "purpose": "Serve as the staffed Equity Uprise technical-operations, infrastructure, security and hands-on lab floor while providing the operational interface to the known underground logistics/tunnel network.",
   "code_model": {
     "level_of_exit_discharge": 1,
@@ -56,7 +56,7 @@
       "bounds_ft": {
         "x1": 32,
         "y1": 4,
-        "x2": 52,
+        "x2": 51,
         "y2": 20
       },
       "systems": [
@@ -79,7 +79,7 @@
       "label": "Fire Protection / Water",
       "kind": "room",
       "bounds_ft": {
-        "x1": 54,
+        "x1": 55,
         "y1": 4,
         "x2": 70,
         "y2": 20
@@ -105,7 +105,7 @@
       "bounds_ft": {
         "x1": 32,
         "y1": 22,
-        "x2": 52,
+        "x2": 50,
         "y2": 34
       },
       "systems": [
@@ -128,7 +128,7 @@
       "label": "Sump / Flood Management",
       "kind": "room",
       "bounds_ft": {
-        "x1": 54,
+        "x1": 55.5,
         "y1": 22,
         "x2": 70,
         "y2": 32
@@ -154,8 +154,8 @@
       "bounds_ft": {
         "x1": 2,
         "y1": 30,
-        "x2": 16,
-        "y2": 52
+        "x2": 14.5,
+        "y2": 50
       },
       "systems": [
         "maintenance tools",
@@ -175,9 +175,9 @@
       "label": "Building Systems Lab / Observation",
       "kind": "zone",
       "bounds_ft": {
-        "x1": 18,
-        "y1": 36,
-        "x2": 52,
+        "x1": 20,
+        "y1": 37.5,
+        "x2": 50.5,
         "y2": 54
       },
       "systems": [
@@ -424,10 +424,11 @@
   "tunnel_network_ref": "underground-tunnel-network.json",
   "live_access": {
     "allowed": [
-      "equity_uprise_staff",
+      "equity_uprise_facilities",
       "equity_uprise_instructor",
       "equity_uprise_security",
-      "equity_uprise_facilities",
+      "equity_uprise_staff",
+      "everyone",
       "field_t",
       "mobility_operations",
       "supervised_equity_uprise_learner"
@@ -435,7 +436,8 @@
     "floor_hidden": false,
     "room_level_restrictions": true,
     "competency_alone_sufficient": false,
-    "audit_required": true
+    "audit_required": true,
+    "note": "Open floor. Room-level safety doors remain on plant, electrical, fire/water, flood, telecom and transfer-lock rooms; that is life safety, not floor access."
   },
   "training_access": {
     "mode": "canonical_sandbox_same_geometry",
@@ -447,5 +449,7 @@
   },
   "normal_staff_access": true,
   "learner_instructor_access": true,
-  "directory_visibility": "staff-and-authorized-participant"
+  "directory_visibility": "public",
+  "v3_circulation_note": "2026-11-03: room extents trimmed so B1 has real corridors (the elevator landing, Stair B approach and east service spine were 2 ft slots). Room programs, contents and safety doors unchanged.",
+  "owner_decision": "Owner, 2026-11-03: \"We can have B1. Everybody's welcome to B1 ... Make it normal.\""
 }

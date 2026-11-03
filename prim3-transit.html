@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>PRIM3 Transit / Relay</title>
+  <meta name="description" content="PRIM3 tactical level: lead Entry, Recon and Technical across a canal compound at night, connect the relay twice and extract. Turn-based, on the canonical Prim3 rules.">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#0a0e12">
+  <meta name="color-scheme" content="dark">
+  <!-- the shared bottom bar's styles (every page carrying js/tabbar.js links it); the level's own styles follow and win -->
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <style>
+    :root{
+      --bg:#080b0e;--panel:rgba(14,19,24,.88);--panel2:rgba(20,27,33,.92);--line:rgba(190,205,215,.16);--line2:rgba(190,205,215,.28);
+      --ink:#e6edf1;--dim:rgba(230,237,241,.66);--squad:#2fe0f0;--squad-soft:rgba(47,224,240,.16);--threat:#ff3b3b;--amber:#ffb547;--amber-ink:#1b1206;--ok:#7be38a;
+      --r:10px;--font:600 15px/1.25 "Rajdhani","Barlow Condensed",system-ui,-apple-system,"Segoe UI",sans-serif
+    }
+    :root[data-look="day"]{--bg:#e9edef;--panel:rgba(250,251,251,.94);--panel2:rgba(241,244,245,.96);--line:rgba(20,30,36,.14);--line2:rgba(20,30,36,.26);--ink:#16202a;--dim:rgba(22,32,42,.62);--squad:#0fa9ba;--squad-soft:rgba(15,169,186,.18);--threat:#d81f2a;--amber:#d98a0a;--amber-ink:#1b1206}
+    :root[data-look="day"] .tx-stage{background:#cfdfe8}
+    :root[data-look="day"] .b3-ruler{background:rgba(250,251,251,.92);border-color:rgba(15,169,186,.55);color:#16202a}
+    :root[data-look="studio"]{--bg:#d9dcde;--panel:rgba(244,245,246,.92);--panel2:rgba(236,238,239,.95);--line:rgba(20,26,30,.16);--line2:rgba(20,26,30,.3);--ink:#14191c;--dim:rgba(20,25,28,.64);--squad:#ff2a3a;--squad-soft:rgba(255,42,58,.14);--threat:#3d8bff;--amber:#2a3136;--amber-ink:#f4f5f6}
+    *{box-sizing:border-box}
+    html,body{margin:0;background:var(--bg);color:var(--ink)}
+    body{font:var(--font);min-height:100svh;letter-spacing:.02em}
+    button{font:inherit;color:inherit}
+    .tx{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;padding:calc(8px + env(safe-area-inset-top)) 12px calc(112px + env(safe-area-inset-bottom));max-width:1500px;margin:0 auto}
+    h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+    .owner-gate h1{position:static;width:auto;height:auto;overflow:visible;clip:auto}
+    /* top bar */
+    .tx-top{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;padding:6px 10px;border:1px solid var(--line);border-radius:var(--r);background:linear-gradient(180deg,var(--panel2),var(--panel))}
+    .tx-logo{width:40px;height:40px;object-fit:contain}
+    .tx-title{min-width:0;display:grid;line-height:1.05}
+    .tx-title b{font-size:15px;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .tx-title small{display:none;color:var(--dim);font-size:12px;letter-spacing:.14em;text-transform:uppercase}
+    .tx-turn{display:flex;align-items:center;gap:6px;min-width:0}
+    .tx-bar{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+    .tx-turnno{font-size:13px;letter-spacing:.1em;color:var(--dim);white-space:nowrap}
+    .tl{display:none}
+    .tx-phase{padding:5px 9px;border:1px solid var(--squad);border-radius:4px;color:var(--squad);font-size:13px;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap}
+    .tx-phase.is-threat{border-color:var(--threat);color:var(--threat)}
+    .ibtn{min-width:44px;min-height:44px;border:1px solid var(--line2);border-radius:8px;background:var(--panel2);cursor:pointer;display:grid;place-items:center;padding:0 10px}
+    .ibtn svg{width:20px;height:20px}
+    .ibtn:disabled{opacity:.4}
+    /* stage */
+    .tx-stage{position:relative;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;aspect-ratio:3/4;max-height:72svh;background:#05080b}
+    :root[data-look="studio"] .tx-stage{background:#e9ebec}
+    .tx-3d{position:absolute;inset:0}
+    .b3-canvas{display:block;width:100%;height:100%}
+    .b3-labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+    .b3-label{position:absolute;left:0;top:0;white-space:nowrap;font:700 12px/1 system-ui,sans-serif;padding:4px 6px;border-radius:3px;translate:-50% -100%;background:rgba(8,12,16,.86);border:1px solid var(--line2);color:#fff}
+    .b3-label--ally{border:2px solid var(--squad);box-shadow:0 0 10px var(--squad-soft);min-width:24px;text-align:center;font-size:14px}
+    .b3-label--hostile{border:2px solid var(--threat);background:rgba(60,8,10,.82);min-width:24px;text-align:center}
+    :root[data-look="studio"] .b3-label--hostile{background:rgba(8,20,48,.82)}
+    .b3-label--obj{border:1px solid var(--amber);color:var(--amber);letter-spacing:.14em;font-size:12px;background:rgba(20,14,4,.85)}
+    :root[data-look="studio"] .b3-label--obj{color:#fff}
+    .b3-label--axis{translate:-50% -50%;background:transparent;border:0;color:rgba(230,237,241,.7);font:700 11px/1 ui-monospace,monospace;text-shadow:0 1px 2px #000}
+    :root[data-look="studio"] .b3-label--axis{color:#1b2226;text-shadow:0 0 3px #fff}
+    .b3-ruler{position:absolute;left:0;top:0;white-space:nowrap;font:700 11px/1 ui-monospace,monospace;padding:4px 6px;border-radius:3px;background:rgba(8,14,18,.82);border:1px solid rgba(95,230,242,.45);color:#d9f7fa;letter-spacing:.06em}
+    .b3-ruler--x{translate:-50% -50%}.b3-ruler--y{translate:0 -50%}
+    :root[data-look="studio"] .b3-ruler{background:rgba(244,245,246,.9);border-color:rgba(20,26,30,.35);color:#14191c}
+    .tx-coord{position:absolute;left:8px;bottom:8px;padding:6px 9px;border-radius:4px;border:1px solid var(--line2);background:var(--panel);font:700 13px/1 ui-monospace,monospace;letter-spacing:.04em}
+    .tx-coord:empty{display:none}
+    .tx-gridtog{position:absolute;right:62px;bottom:8px;min-height:44px;display:inline-flex;align-items:center;gap:6px;font-size:12px;letter-spacing:.12em;text-transform:uppercase}
+    .tx-gridtog[aria-pressed="true"]{border-color:var(--squad);color:var(--squad)}
+    .b3-label--info{translate:-50% 30%;border-color:var(--amber);color:#fff}
+    .b3-label--machine{border:1px solid var(--line2);font-size:11px;letter-spacing:.06em}
+    .b3-label--machine.is-down{border-color:var(--threat);color:#ffb3b3}
+    .b3-label--machine.is-live{border-color:var(--ok)}
+    /* the objective: a compact strip docked above the battlefield (it never covers the board); tap for details */
+    .tx-obj{border:1px solid var(--amber);border-radius:var(--r);background:var(--panel);min-width:0}
+    .tx-objbtn{width:100%;min-height:44px;display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;align-items:center;gap:8px;padding:4px 10px;border:0;background:none;cursor:pointer;text-align:left}
+    .tx-objbtn small{color:var(--amber);font-size:11px;letter-spacing:.16em;text-transform:uppercase}
+    .tx-objbtn b{font-size:15px;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+    .tx-objprog{padding:2px 7px;border:1px solid var(--amber);border-radius:4px;color:var(--amber);font:700 13px/1.2 ui-monospace,monospace;white-space:nowrap}
+    .tx-objbtn svg{width:18px;height:18px;transition:transform .15s}
+    .tx-obj.is-open .tx-objbtn svg{transform:rotate(180deg)}
+    .tx-objmore{display:none;padding:0 10px 8px;color:var(--dim);font-size:13px;font-weight:500}
+    .tx-objmore span{display:block}
+    .tx-obj.is-open .tx-objmore{display:block}
+    .tx-brief{margin-top:4px;color:var(--ink)}
+    .tx-maptog{position:absolute;right:8px;top:8px}
+    .tx-cam{position:absolute;right:8px;bottom:8px;display:flex;flex-direction:column;gap:6px}
+    .tx-busy{position:absolute;left:50%;bottom:10px;translate:-50% 0;padding:6px 12px;border-radius:999px;background:var(--panel);border:1px solid var(--threat);color:var(--threat);font-size:13px;letter-spacing:.14em;text-transform:uppercase}
+    .tx-busy[hidden]{display:none}
+    /* sector map */
+    .tx-map{border:1px solid var(--line);border-radius:var(--r);background:var(--panel);padding:8px}
+    .tx-map[hidden]{display:none}
+    .tx-maphead{display:flex;justify-content:space-between;align-items:center;margin:0 0 6px;font-size:13px;letter-spacing:.16em;text-transform:uppercase}
+    .tx-maphead small{color:var(--dim);letter-spacing:.08em}
+    .tx-map canvas{display:block;width:100%;aspect-ratio:1;border-radius:4px;touch-action:manipulation;cursor:crosshair}
+    .tx-legend{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:6px;color:var(--dim);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+    .lg{display:inline-flex;align-items:center;gap:5px}.lg i{width:10px;height:10px;display:inline-block;border:2px solid currentColor}
+    .lg--sq{color:var(--squad)}.lg--th{color:var(--threat)}.lg--re{color:var(--amber)}.lg--re i{transform:rotate(45deg)}
+    /* selected operative */
+    .tx-sel{display:grid;grid-template-columns:72px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px;border:1px solid var(--line);border-radius:var(--r);background:var(--panel)}
+    .tx-sel img{width:72px;height:72px;object-fit:cover;border-radius:6px;border:1px solid var(--line2);background:#fff}
+    .tx-sel h2{margin:0;font-size:20px;letter-spacing:.12em;text-transform:uppercase}
+    .tx-sel p{margin:2px 0 0;color:var(--dim);font-size:14px;font-weight:500}
+    .tx-stats{display:grid;justify-items:end;gap:4px}
+    .chip{padding:4px 8px;border:1px solid var(--squad);color:var(--squad);border-radius:4px;font-size:13px;white-space:nowrap}
+    .chip--hp{border-color:var(--line2);color:var(--ink)}
+    /* squad */
+    .tx-squad{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+    .sq{display:grid;grid-template-columns:minmax(0,1fr);gap:2px;justify-items:start;min-height:64px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--panel);cursor:pointer;text-align:left}
+    .sq b{font-size:14px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+    .sq small{color:var(--dim);font-size:12px}
+    .sq .ap{color:var(--squad);font-size:12px;letter-spacing:.2em}
+    .sq img{display:none}
+    .sq[aria-pressed="true"]{border-color:var(--squad);box-shadow:inset 0 0 0 1px var(--squad),0 0 14px var(--squad-soft)}
+    .sq.is-down{opacity:.55}.sq.is-out{opacity:.4}
+    /* actions */
+    .tx-acts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+    .act{min-height:52px;border:1px solid var(--line2);border-radius:8px;background:var(--panel2);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:14px;letter-spacing:.14em;text-transform:uppercase;padding:4px}
+    .act svg{width:20px;height:20px}
+    .act small{font-size:10px;letter-spacing:.06em;color:var(--dim);text-transform:none}
+    .act[aria-pressed="true"]{border-color:var(--squad);color:var(--squad);box-shadow:inset 0 0 0 1px var(--squad)}
+    .act:disabled{opacity:.35;cursor:default}
+    .act--ctx{border-color:var(--amber);color:var(--amber)}
+    .tx-end{min-height:56px;border:0;border-radius:8px;cursor:pointer;font-size:18px;letter-spacing:.16em;text-transform:uppercase;background:linear-gradient(180deg,#ffc35e,#e2972a);color:var(--amber-ink);display:flex;align-items:center;justify-content:center;gap:10px}
+    :root[data-look="studio"] .tx-end{background:linear-gradient(180deg,#3a4248,#1d2327)}
+    .tx-end:disabled{opacity:.45}
+    /* sheet */
+    .tx-sheet{border:1px solid var(--line);border-radius:var(--r);background:var(--panel);padding:10px 12px}
+    .tx-sheet[hidden]{display:none}
+    .sh-eye{margin:0 0 4px;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+    .sh-main{margin:0 0 4px;font-size:17px}.sh-main b{color:var(--amber)}
+    .sh-sub{margin:4px 0 0;color:var(--dim);font-weight:500;font-size:14px;overflow-wrap:anywhere}
+    .sh-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+    .sh-btn{min-height:46px;padding:0 16px;border-radius:8px;border:1px solid var(--line2);background:var(--panel2);cursor:pointer;letter-spacing:.1em;text-transform:uppercase}
+    .sh-btn--go{border:0;background:linear-gradient(180deg,#ffc35e,#e2972a);color:#1b1206}
+    :root[data-look="studio"] .sh-btn--go{background:#1d2327;color:#f4f5f6}
+    .sh-list{margin:6px 0 0;padding-left:1.1rem;display:grid;gap:3px;font-weight:500;font-size:14px}
+    .sh-targets{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px;margin-top:8px}
+    .tgt{min-height:46px;border:1px solid var(--threat);border-radius:8px;background:var(--panel2);cursor:pointer;color:var(--ink);display:flex;justify-content:space-between;align-items:center;padding:0 10px}
+    .tgt b{color:var(--threat)}
+    /* settings */
+    .tx-set{border:1px solid var(--line);border-radius:var(--r);background:var(--panel);padding:10px 12px;display:grid;gap:8px}
+    .tx-set[hidden]{display:none}
+    .set-row{display:grid;grid-template-columns:minmax(0,1fr);gap:6px}
+    .seg{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:4px}
+    .seg button{min-height:44px;border:1px solid var(--line2);border-radius:8px;background:var(--panel2);cursor:pointer;letter-spacing:.08em}
+    .seg-a{min-height:44px;border:1px solid var(--line2);border-radius:8px;background:var(--panel2);display:grid;place-items:center;color:inherit;text-decoration:none;letter-spacing:.08em}
+    .seg button[aria-pressed="true"]{border-color:var(--squad);color:var(--squad)}
+    .tx-log{max-height:9.5em;overflow:auto;margin:0;padding-left:1.1rem;color:var(--dim);font-size:13px;font-weight:500}
+    .tx-about{color:var(--dim);font-size:14px;font-weight:500}
+    .tx-about summary{min-height:44px;display:flex;align-items:center;cursor:pointer;color:var(--ink);letter-spacing:.1em;text-transform:uppercase}
+    .tx-about a{color:var(--squad)}
+    .tx-end-screen{position:absolute;inset:0;display:grid;place-items:center;background:rgba(5,8,11,.72);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);padding:16px;text-align:center}
+    .tx-end-screen[hidden]{display:none}
+    .tx-end-screen h2{margin:0 0 6px;font-size:28px;letter-spacing:.14em;text-transform:uppercase;color:#fff}
+    .tx-end-screen p{margin:0 0 12px;color:rgba(255,255,255,.8)}
+    .tx-end-screen .sh-list{color:rgba(255,255,255,.88)}
+    .reduce-motion *{transition:none!important;animation:none!important}
+    /* tablet: squad cards gain portraits; actions in one row */
+    @media (min-width:700px){
+      .tx-title small{display:block}
+      .tx-title b{font-size:17px;letter-spacing:.12em}
+      .tl{display:inline}
+      .tx-stage{aspect-ratio:4/3}
+      .sq{grid-template-columns:44px minmax(0,1fr);align-items:center;column-gap:8px}
+      .sq img{display:block;width:44px;height:44px;object-fit:cover;border-radius:4px;grid-row:span 3;background:#fff}
+      .tx-acts{grid-template-columns:repeat(8,minmax(0,1fr))}
+    }
+    /* desktop: the reference layout. Battlefield left, sector map + operative right, command bar below */
+    @media (min-width:1100px){
+      .tx{grid-template-columns:minmax(0,1fr) minmax(0,380px);grid-template-areas:"top top" "obj side" "stage side" "bar bar" "sheet sheet" "about about";align-items:start}
+      .tx-obj{grid-area:obj}
+      .tx-objmore{display:block;padding-top:0}
+      .tx-objbtn svg{display:none}
+      .tx-top{grid-area:top}
+      .tx-stage{grid-area:stage;aspect-ratio:16/10;max-height:none}
+      .tx-side{grid-area:side;display:grid;gap:8px;align-self:start}
+      .tx-map[hidden]{display:block}
+      .tx-maptog{display:none}
+      .tx-bar{grid-area:bar;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1.5fr) minmax(0,200px);gap:8px;align-items:stretch}
+      .tx-squad,.tx-acts{min-width:0}
+      .tx-sheet{grid-area:sheet}
+      .tx-about{grid-area:about}
+      .tx-end{min-height:64px}
+    }
+  </style>
+</head>
+<body>
+  <!-- Nothing but this panel exists until the server says this is the house owner (js/owner-only.mjs); the level,
+       its rules and any mission load only after that yes (owner, 2026-11-03: "keep it on my private account"). -->
+  <section class="owner-gate" aria-live="polite" data-owner-gate data-owner-template="txTpl" data-owner-load="js/prim3-tactics/transit.mjs">
+    <img class="owner-gate__mark" src="assets/img/prim3-logo.png" alt="PRIM3" width="40" height="40">
+    <h1>Owner only</h1>
+    <p data-owner-msg>Checking access with the server…</p>
+  </section>
+  <template id="txTpl">
+  <main class="tx" id="tx">
+    <h1>PRIM3 · Transit / Relay</h1>
+    <header class="tx-top">
+      <img class="tx-logo" src="assets/img/prim3-logo.png" alt="PRIM3" width="40" height="40">
+      <span class="tx-title"><b>Transit / Relay</b><small>Tactical operations</small></span>
+      <span class="tx-turn"><span class="tx-turnno"><span class="tl">Turn </span><span id="txTurn">01</span></span><span class="tx-phase" id="txPhase">Your move</span>
+        <button type="button" class="ibtn" id="txSettings" aria-label="Settings" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button></span>
+    </header>
+    <section class="tx-set" id="txSet" aria-label="Settings" hidden>
+      <div class="set-row"><span class="sh-eye">Look</span><div class="seg" id="setLook"><button type="button" data-look="day">Day</button><button type="button" data-look="field">Night (rain)</button><button type="button" data-look="studio">Studio (grayscale)</button></div></div>
+      <div class="set-row"><span class="sh-eye">Graphics</span><div class="seg" id="setGfx"><button type="button" data-gfx="auto">Auto</button><button type="button" data-gfx="high">High</button><button type="button" data-gfx="mid">Balanced</button><button type="button" data-gfx="low">Battery</button></div></div>
+      <div class="set-row"><span class="sh-eye">Mission</span><div class="seg"><button type="button" id="setRestart">Restart mission</button><a class="seg-a" href="prim3-tactics-preview.html">Main menu</a></div></div>
+      <div class="set-row"><span class="sh-eye">Mission log</span><ol class="tx-log" id="txLog"></ol></div>
+    </section>
+    <section class="tx-obj" id="txObj" aria-live="polite" aria-label="Objective"></section>
+    <section class="tx-stage" id="txStage" aria-label="Battlefield">
+      <div class="tx-3d" id="tx3d"></div>
+      <button type="button" class="ibtn tx-maptog" id="txMapTog" aria-controls="txMap" aria-expanded="false">Map</button>
+      <div class="tx-cam">
+        <button type="button" class="ibtn" id="camIn" aria-label="Zoom in">+</button>
+        <button type="button" class="ibtn" id="camOut" aria-label="Zoom out">−</button>
+        <button type="button" class="ibtn" id="camRot" aria-label="Rotate the camera a quarter turn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v5h-5"/></svg></button>
+        <button type="button" class="ibtn" id="camAll" aria-label="Show the whole compound">All</button>
+      </div>
+      <span class="tx-coord" id="txCoord" aria-live="polite"></span>
+      <button type="button" class="ibtn tx-gridtog" id="txGrid" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 3h18v18H3zM3 9h18M3 15h18M9 3v18M15 3v18"/></svg>Grid on</button>
+      <p class="tx-busy" id="txBusy" hidden>Threat activity</p>
+      <div class="tx-end-screen" id="txEnd" hidden></div>
+    </section>
+    <aside class="tx-side">
+      <section class="tx-map" id="txMap" aria-label="Sector map" hidden>
+        <p class="tx-maphead">Sector map <small>64 × 64 · tap to look</small></p>
+        <canvas id="txMini" width="512" height="512" role="img" aria-label="Sector map: buildings, the canal, the squad, known threats and the relay"></canvas>
+        <p class="tx-legend"><span class="lg lg--sq"><i></i>Squad</span><span class="lg lg--th"><i></i>Threat</span><span class="lg lg--re"><i></i>Relay</span><span id="txCursor"></span></p>
+      </section>
+      <section class="tx-sel" id="txSel" aria-label="Selected operative" aria-live="polite"></section>
+    </aside>
+    <section class="tx-bar">
+      <nav class="tx-squad" id="txSquad" aria-label="Squad"></nav>
+      <nav class="tx-acts" id="txActs" aria-label="Actions"></nav>
+      <button type="button" class="tx-end" id="txEndTurn">End turn <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M5 5l7 7-7 7M12 5l7 7-7 7"/></svg></button>
+    </section>
+    <section class="tx-sheet" id="txSheet" aria-live="polite" hidden></section>
+    <details class="tx-about">
+      <summary>How to play</summary>
+      <p>Tap an operative or a squad card. <b>Move</b> and <b>Dash</b> light the tiles they can reach (stairs count their climb); tap a tile to preview the route and who could shoot you there, then <b>Confirm</b>. Nothing is spent until you confirm.</p>
+      <p><b>Fire</b> lists only known hostiles you have a shot at, with the engine's hit chance. <b>Watch</b> sets overwatch: the first hostile to move into your sight takes a reaction shot. <b>Hunker</b> makes you harder to hit until your next turn.</p>
+      <p>Entry can <b>Breach</b> the service gate. Technical must stand next to the relay and <b>Link</b> twice. Then everyone still standing reaches the yellow pad and <b>Extracts</b>. If Technical is lost, the mission fails.</p>
+      <p>Coordinates: X grows east, Y grows north; the relay is near (−1, 1). Rules are the Prim3 canonical engine; this page only draws them. Progress is saved in this browser.</p>
+    </details>
+  </main>
+  </template>
+  <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
+  <script type="module" src="js/owner-only.mjs?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+</body>
+</html>

@@ -135,3 +135,47 @@
 .crd .cro-meta.crd-bad{color:#ffb7bb}
 .crd-waiting{border-color:rgba(240,198,116,.45)}
 .crd code{font-size:inherit;overflow-wrap:anywhere}
+/* Create · Music · Lyrics (js/control-room/lyrics-review.js). Phone first; the desk only gets room. */
+.crl{display:grid;gap:10px;min-width:0}
+.crl-pick{display:grid;gap:4px;font:700 12px/1.2 var(--ui,system-ui);color:var(--cr-dim)}
+.crl-pick select,.crl-text{width:100%;min-width:0;min-height:44px;border:1px solid var(--cr-line);border-radius:10px;background:var(--cr-panel);color:inherit;padding:8px 10px;font-size:max(16px,1rem)}
+.crl-body{display:grid;gap:10px;min-width:0}
+.crl-status{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.crl-status .cro-meta{overflow-wrap:anywhere}
+.crl-ok{color:#9be7b0;border-color:rgba(155,231,176,.45)}
+.crl-audio{width:100%;min-width:0;position:sticky;top:0;z-index:1}
+.crl-lines{list-style:none;margin:0;padding:0;display:grid;gap:8px;max-height:60vh;max-height:60svh;overflow-y:auto;overscroll-behavior:contain}
+.crl-line{display:grid;gap:6px;min-width:0;padding:8px;border:1px solid var(--cr-line);border-radius:10px}
+.crl-line.is-flag{border-color:rgba(240,198,116,.6);background:rgba(240,198,116,.07)}
+.crl-line.is-live{border-color:rgba(229,56,59,.8);box-shadow:inset 3px 0 0 rgba(229,56,59,.9)}
+.crl-time{display:grid;grid-template-columns:minmax(0,1fr) 44px 44px 56px;gap:6px}
+.crl-t,.crl-nudge{min-height:44px;border:1px solid var(--cr-line);border-radius:9px;background:transparent;color:inherit;font:700 13px/1 ui-monospace,SFMono-Regular,Menlo,monospace}
+.crl-t{text-align:left;padding:0 10px}
+.crl-heard{color:#f0c674;overflow-wrap:anywhere}
+.crl-foot{display:grid;gap:8px}
+.crl-check{display:flex;gap:8px;align-items:center;min-height:44px}
+.crl-check input{width:22px;height:22px}
+.crl-msg{min-height:1.2em;color:var(--cr-dim);overflow-wrap:anywhere}
+@media (min-width:760px){
+  .crl-line{grid-template-columns:220px minmax(0,1fr);align-items:center}
+  .crl-heard{grid-column:2}
+}
+/* Create · Music · Stems (js/control-room/stems-panel.js). Phone first. */
+.crs-transport{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;align-items:center}
+.crs-transport .crs-time{grid-column:1/-1;font:700 12px/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--cr-dim)}
+.crs-play{min-height:44px;min-width:88px}
+.crs-seek{width:100%;min-width:0;min-height:44px;accent-color:#e5383b}
+.crs-stems{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.crs-stem{display:grid;gap:8px;min-width:0;padding:10px;border:1px solid var(--cr-line);border-radius:10px;opacity:.6}
+.crs-stem.is-on{opacity:1}
+.crs-name{display:grid;gap:2px;min-width:0}
+.crs-name small{overflow-wrap:anywhere}
+.crs-btns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.crs-btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;border:1px solid var(--cr-line);border-radius:9px;background:transparent;color:inherit;font:700 13px/1 var(--ui,system-ui);text-decoration:none}
+.crs-btn.is-on{border-color:rgba(229,56,59,.8);background:rgba(229,56,59,.15)}
+.crs-msg{min-height:1.2em;color:var(--cr-dim);overflow-wrap:anywhere}
+@media (min-width:760px){
+  .crs-transport{grid-template-columns:auto minmax(0,1fr) auto}
+  .crs-transport .crs-time{grid-column:auto}
+  .crs-stem{grid-template-columns:minmax(0,1fr) 300px;align-items:center}
+}

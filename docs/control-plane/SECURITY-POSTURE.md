@@ -123,6 +123,8 @@ fails when `config.toml` gains one that is missing here.
 | `l3-login` | sign-in | 12 failures per IP per 15 min; exact username shape and `eq` lookup; app access checked after the password |
 | `l3-checkout` | anonymous buyers | product price read server-side; checkout created on the seller's connected account |
 | `l3-download` | buyers without accounts | **download token**: the Stripe checkout-session id; payment re-verified with Stripe on every request; 300-second signed storage URL; every download logged with a hashed IP |
+| `music-direct-checkout` | anonymous buyers of Matthew McCluster's recordings | the request names an offer only; price, currency and title from the server's `music_direct_offers` row (on sale now); platform account only; the order stores the session id the server created, and the database refuses an order at any other price (`supabase/pending/music_direct_sales_v1.sql`); CORS `https://matthew.mccluster.org` only |
+| `music-direct-access` | buyers without accounts, and the owner's Direct sales desk | fulfilment found by the **stored** session id and bound to it (platform account, same session, amount, currency, paid, payable: `supabase/functions/_shared/music-direct.ts`, re-bound in `music_direct_fulfil`); the session id reveals the entitlement token only for 24 hours after payment; each token downloads at most `max_downloads` times (default 5) within `download_window_days` (default 30), counted under a row lock; a refund revokes; 300-second signed URLs from the private `mcc-gated-audio/direct-sales/` prefix; `operator-*` actions verify the bearer token and `ops.use` in-function (`_shared/house-ops.ts`) |
 
 Worker `mccluster` routes reachable without a session are listed here too.
 

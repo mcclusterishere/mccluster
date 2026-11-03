@@ -57,8 +57,9 @@
         "id": "learning",
         "name": "PRIM3",
         "role": "Technology and cybersecurity learning product using the PRIM Method: Principles, Rhythm, Immersion and Missions.",
+        "access": "Owner only (owner, 2026-11-03): the course runs on the house owner's private account.",
         "surfaces": [
-          "https://matthew.mccluster.org/prim3.html"
+          "https://mccluster.org/company"
         ]
       },
       {
