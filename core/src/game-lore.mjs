@@ -10,7 +10,9 @@ const SCHEMA = 'mccluster.fictional-city/v1';
 const ID = /^[a-z0-9][a-z0-9-]{0,79}$/;
 const MAX_SOURCE_BYTES = 512 * 1024;
 const MAX_RESPONSE_BYTES = 64 * 1024;
-const SECTIONS = ['manifest', 'brands', 'businesses', 'npcs', 'items', 'portals'];
+const SECTIONS = ['manifest', 'brands', 'businesses', 'npcs', 'items', 'portals', 'neighborhoods', 'families', 'parcels'];
+const PARCEL = /^[a-z0-9][a-z0-9-]{0,39}\/[a-z0-9][a-z0-9-]{0,39}$/;
+const ROUTE_ANCHORS = ['garage', 'hq-bridge', 'hq-doorway'];
 const ARGUMENTS = new Set(['universe_id', 'section', 'id', 'business_id', 'offset', 'limit']);
 
 export const GAME_LORE_INPUT_SCHEMA = Object.freeze({
@@ -101,15 +103,39 @@ export function parseGameLore(bytes) {
     throw invalidManifest();
   }
 
+  if (data.schemaRevision !== undefined && data.schemaRevision !== 1 && data.schemaRevision !== 2) throw invalidManifest();
+  const optional = (key) => (data[key] === undefined ? [] : data[key]);
   const brands = collection(data.brands, 64);
-  const businesses = collection([...collection(data.businesses, 64), data.garage], 65);
-  const npcs = collection([...collection(data.npcs, 256), ...collection(data.garageCrew, 16)], 272);
-  const items = collection(data.items, 256);
+  const original = collection(data.businesses, 64);
+  const expansionBusinesses = collection(optional('expansionBusinesses'), 64);
+  const businesses = collection([...original, data.garage, ...expansionBusinesses], 129);
+  const expansionNpcs = collection(optional('expansionNpcs'), 256);
+  const npcs = collection([...collection(data.npcs, 256), ...collection(data.garageCrew, 16), ...expansionNpcs], 528);
+  const items = collection([...collection(data.items, 256), ...collection(optional('expansionItems'), 256)], 512);
   const portals = collection(data.portals, 32);
+  const neighborhoods = collection(optional('neighborhoods'), 32);
+  const families = collection(optional('families'), 64);
+  const parcels = optional('parcels');
+  if (!Array.isArray(parcels) || parcels.length > 256) throw invalidManifest();
   const brandIds = new Set(brands.map((row) => row.id));
   const businessIds = new Set(businesses.map((row) => row.id));
+  const familyIds = new Set(families.map((row) => row.id));
+  const neighborhoodIds = new Set(neighborhoods.map((row) => row.id));
   const npcById = new Map(npcs.map((row) => [row.id, row]));
   const itemById = new Map(items.map((row) => [row.id, row]));
+  const parcelIds = new Set();
+  for (const parcel of parcels) {
+    if (!object(parcel) || typeof parcel.parcelId !== 'string' || !PARCEL.test(parcel.parcelId) || parcelIds.has(parcel.parcelId) ||
+        !neighborhoodIds.has(parcel.neighborhoodId) || parcel.parcelId.split('/')[0] !== parcel.neighborhoodId ||
+        (parcel.businessId === undefined) === (parcel.familyId === undefined) ||
+        (parcel.businessId !== undefined && !businessIds.has(parcel.businessId)) ||
+        (parcel.familyId !== undefined && !familyIds.has(parcel.familyId))) {
+      throw invalidManifest();
+    }
+    parcelIds.add(parcel.parcelId);
+  }
+  const anchors = new Set([...parcelIds, ...original.map((row) => row.id), ...ROUTE_ANCHORS]);
+  const ids = (value) => value === undefined || (Array.isArray(value) && value.every((id) => npcById.has(id)));
   for (const business of businesses) {
     if (business.brandId !== undefined && !brandIds.has(business.brandId)) throw invalidManifest();
     if (!Array.isArray(business.staffIds) || !Array.isArray(business.itemIds)) throw invalidManifest();
@@ -117,10 +143,33 @@ export function parseGameLore(bytes) {
         business.itemIds.some((id) => itemById.get(id)?.businessId !== business.id)) {
       throw invalidManifest();
     }
+    if (!ids(business.memberIds) || !ids(business.affiliatedStaffIds) || !ids(business.studentIds) ||
+        !ids(business.attendees?.map((row) => row?.npcId))) throw invalidManifest();
+    for (const interaction of business.interactions || []) {
+      if (!object(interaction) || interaction.type !== 'bribe' || typeof interaction.id !== 'string' || !ID.test(interaction.id) ||
+          !Number.isSafeInteger(interaction.price) || interaction.price <= 0 || !ids(interaction.npcIds) ||
+          interaction.npcIds.some((id) => npcById.get(id).minor)) throw invalidManifest();
+    }
   }
-  if (npcs.some((npc) => !businessIds.has(npc.businessId)) ||
+  for (const business of expansionBusinesses) if (!parcelIds.has(business.parcelId)) throw invalidManifest();
+  for (const family of families) {
+    if (!parcelIds.has(family.parcelId) || !npcById.has(family.representativeNpcId) || !Array.isArray(family.members) ||
+        family.members.some((member) => !object(member) || (member.npcId !== undefined && !npcById.has(member.npcId)))) {
+      throw invalidManifest();
+    }
+  }
+  if (npcs.some((npc) => !businessIds.has(npc.businessId) && !(npc.businessId === undefined && familyIds.has(npc.familyId))) ||
       items.some((item) => !businessIds.has(item.businessId) || !Number.isSafeInteger(item.price) || item.price < 0)) {
     throw invalidManifest();
+  }
+  for (const npc of expansionNpcs) {
+    // Expansion residents bind to geography by parcel ID only; adults and minors are explicit.
+    if (!parcelIds.has(npc.homeParcelId) || !['interior', 'route'].includes(npc.placement) ||
+        (npc.placement === 'route' && (!Array.isArray(npc.routeAnchors) || npc.routeAnchors.length < 2 || npc.routeAnchors.some((id) => !anchors.has(id)))) ||
+        !Number.isSafeInteger(npc.age) || (npc.age < 18) !== (npc.minor === true) ||
+        (npc.familyId !== undefined && !familyIds.has(npc.familyId))) {
+      throw invalidManifest();
+    }
   }
 
   return {
@@ -134,7 +183,7 @@ export function parseGameLore(bytes) {
     },
     district: data.district,
     constraints: data.constraints,
-    collections: { brands, businesses, npcs, items, portals },
+    collections: { brands, businesses, npcs, items, portals, neighborhoods, families, parcels },
     counts: {
       brands: brands.length,
       businesses: businesses.length,
@@ -143,7 +192,13 @@ export function parseGameLore(bytes) {
       portals: portals.length,
       commercial_businesses: data.businesses.length,
       new_npcs: data.npcs.length,
-      garage_crew: data.garageCrew.length
+      garage_crew: data.garageCrew.length,
+      neighborhoods: neighborhoods.length,
+      families: families.length,
+      parcels: parcels.length,
+      expansion_businesses: expansionBusinesses.length,
+      expansion_npcs: expansionNpcs.length,
+      expansion_items: items.length - data.items.length
     }
   };
 }
