@@ -463,6 +463,7 @@ function menuOptions() {
     saved && { key: 'continue', label: 'Continue mission', sub: `Turn ${String(state.round).padStart(2, '0')} · saved in this browser`, go: 'Continue mission' },
     { key: 'new', label: saved ? 'New mission' : 'Deploy', sub: saved ? 'Secure the relay from the start (replaces your saved progress)' : 'Secure the relay · squad of three', go: saved ? 'Start a new mission' : 'Deploy' },
     { key: 'transit', label: 'Transit / Relay', sub: 'New level: canal compound at night · roofs, stairs, overwatch, hostile turns', go: 'Deploy to Transit / Relay' },
+    { key: 'hq', label: 'Equity Uprise HQ', sub: 'New level: an emergency exercise on Floor 1, from the building plans · Stairs A and B to the roof', go: 'Deploy to Equity Uprise HQ' },
     ownerWorld && { key: 'world', label: 'World', sub: 'Owner: a mission in every cast nation, on the globe', go: 'Open World' },
     { key: 'training', label: 'Training', sub: 'Optional grid-math hint on the live board; it never moves anyone', go: 'Start training' },
     { key: 'graphics', label: `Graphics: ${GFX_NAME[gfx]}`, sub: 'Tap again to change · Automatic, High, Balanced, Battery saver', go: saved ? 'Continue mission' : 'Deploy' }
@@ -511,6 +512,7 @@ $('pmList').addEventListener('click', (e) => {
 $('pmGo').addEventListener('click', () => {
   if (menuBusy) return;
   if (menuSel === 'transit') { location.href = 'prim3-transit.html'; return; }
+  if (menuSel === 'hq') { location.href = 'prim3-transit.html?level=equity-uprise-hq'; return; }
   if (menuSel === 'world' && ownerWorld) { location.href = 'prim3-world.html'; return; }
   const action = menuSel === 'graphics' ? (hasSave() ? 'continue' : 'new') : menuSel;
   menuBusy = true;
