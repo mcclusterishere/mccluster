@@ -134,21 +134,14 @@ Still designed only:
 - hostile AI;
 - a real-device performance budget.
 
-## 3D main menu (owner, 2026-11-02: reference packs of toy-style 3D models, "rebuild and animate some of them for the game menu")
+## Main menu and realism pass (owner, 2026-11-02: "forget that shit i sent you … just use hyper realistic shit")
 
-The owner supplied two reference packs as Blender + GLB files:
-- jet, tank, excavator, VR operator, room-scale VR frame;
-- helicopter, cement mixer, quadcopter, space plane, dump truck.
-
-They are soft, glossy, untextured toy models with no animation. **None of those files is copied, loaded or committed.** The look is rebuilt in code in `js/prim3-tactics/menu3d.mjs`, so no third-party file is redistributed from this public repository.
+The owner withdrew the toy-style reference packs. A toy-style menu built from them was replaced the same day, and **nothing from those packs remains**: no file, no geometry, no style.
 
 | Item | Status | Evidence / note |
 |---|---|---|
-| Menu flow | implemented · verified | A first visit opens the menu; the battlefield's 3D does not load until it closes. **Choices:** Continue (only with a save), Deploy / New mission, Training, Graphics. A Menu button in the top bar reopens it. `?menu=0` skips it. e2e at 390 and 1280: the options, the toy swap, the launch, Continue keeping the round, New mission resetting, the menu after a reload, 44px targets, no sideways scroll, no page errors. |
-| Toys | implemented | **Pedestal toys:** jet = Continue; tank = Deploy / New; VR operator at floating panels = Training; excavator = Graphics. **Frame:** the room-scale VR frame turns around the focused toy. **Ambient:** a quadcopter circles the frame and a utility helicopter loops behind it. **Animation:** the tank's turret sweeps; the jet hovers with its exhaust flickering; the excavator runs a dig cycle; the operator's head turns and his hand taps. **Launch on Go:** the tank fires (muzzle flash and smoke), the jet blasts off, the excavator speeds up, the operator's panels fly out. Only then does the game open. |
-| Training | implemented · verified | Opens the game with the optional hint for the selected operative. e2e checks nobody moved and nothing was spent. |
-| Graphics | implemented · verified | Automatic / High / Balanced / Battery saver, kept in this browser. The battlefield is built at that tier (e2e: Battery saver → `low`). |
-| Reduced motion | implemented | No fly-bys, no parallax, no launch animation. |
-| No WebGL / three.js blocked | implemented · verified | The menu keeps its buttons with a flat backdrop, and Go still enters the game (e2e fallback). |
-
-Not built yet: the cement mixer, dump truck and space plane (good candidates for a base-building or loading screen later).
+| Photo-scanned materials | implemented | Board tiles use Concrete Pavement; the plaza uses Cobblestone Square; the facade and wall pillars use Red Brick 03; barriers, caps, sills, steps, side walls and planters use Concrete Wall 006. Each has colour, normal and roughness maps. All are Poly Haven, CC0, recorded in `assets/3d/prim3-tactics/CREDITS.md`, and downscaled to 512 px (about 0.5 MB in total). They load after first paint; the procedural textures stand in until then, or if they fail. |
+| Real lighting | implemented | Poly Haven's *Courtyard Night* HDR (CC0, 1.6 MB) drives the image-based lighting and reflections and is a blurred backdrop. The sun, rim and sodium lamps stay as direct lights for shadows. |
+| Facade | implemented | Real window geometry: concrete surrounds and sills, dark glass, some windows lit from inside. Foliage is smooth and organic instead of faceted. |
+| Main menu | implemented · verified | **Backdrop:** the real battlefield in a slow, low cinematic orbit (`board3d` showcase mode: no input, no labels, only what the player can see). Go plays a camera dive into the board, then the game opens. **Choices:** Continue (only with a save), Deploy / New mission, Training (opens the optional hint; moves nobody), Graphics (Automatic / High / Balanced / Battery saver, kept in this browser and applied to both scenes). A Menu button in the top bar reopens it; `?menu=0` skips it. **Without WebGL or three.js:** the buttons remain over a flat backdrop. e2e at 390 and 1280, plus the fallback. |
+| Characters | unchanged | Still the canon matte-black mannequins. Realistic people need authored or generated models (`assets/3d/prim3-operators/README.md`): **blocked** on the McCluster Core connector being authenticated, so no fal spend has happened. |

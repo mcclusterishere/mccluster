@@ -262,7 +262,7 @@ if(THREE_DIR){
   check(scope,'no page errors',!errors.length,errors);
   await ctx.close();await browser3.close();
 }
-/* main menu: real buttons over a 3D toy scene; Deploy / Continue / New / Training / Graphics */
+/* main menu: real buttons over the battlefield in showcase; Deploy / Continue / New / Training / Graphics */
 if(THREE_DIR) for(const vp of [{width:390,height:844},{width:1280,height:900}]){
   const scope='menu-'+vp.width;
   const browser3=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE||undefined,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
@@ -278,18 +278,18 @@ if(THREE_DIR) for(const vp of [{width:390,height:844},{width:1280,height:900}]){
   const opts=()=>page.evaluate(()=>[...document.querySelectorAll('#pmList [data-pm]')].map(b=>b.dataset.pm));
   check(scope,'a first visit opens the main menu; the battlefield waits behind it',await page.evaluate(()=>window.__tac.menuOpen&&!document.getElementById('p3Menu').hidden&&getComputedStyle(document.querySelector('.tac-stage')).display==='none'&&!window.__tac.mode3d));
   check(scope,'with no save the choices are Deploy, Training and Graphics',JSON.stringify(await opts())===JSON.stringify(['new','training','graphics']),await opts());
-  await page.waitForTimeout(800);const painted=await page.evaluate(()=>{const c=document.querySelector('#menu3d canvas');const g=c.getContext('webgl2')||c.getContext('webgl');const px=new Uint8Array(4);let n=0;for(let i=1;i<10;i++){g.readPixels(Math.floor(c.width*i/10),Math.floor(c.height*0.3),1,1,g.RGBA,g.UNSIGNED_BYTE,px);if(px[3]>0)n++;}return n;});
-  check(scope,'the menu scene renders a toy on the pedestal',painted>0&&await page.evaluate(()=>window.__tac.menuKey)==='new',painted);
+  await page.waitForTimeout(800);const painted=await page.evaluate(()=>{const c=document.querySelector('#menu3d canvas');const g=c.getContext('webgl2')||c.getContext('webgl');const px=new Uint8Array(4);g.readPixels(Math.floor(c.width/2),Math.floor(c.height/2),1,1,g.RGBA,g.UNSIGNED_BYTE,px);return px[0]+px[1]+px[2];});
+  check(scope,'the menu backdrop renders the battlefield courtyard',painted>20&&await page.evaluate(()=>window.__tac.menuKey)==='new',painted);
   check(scope,'menu buttons are at least 44px tall',await page.evaluate(()=>[...document.querySelectorAll('#p3Menu button')].every(b=>b.getBoundingClientRect().height>=44)));
   check(scope,'no sideways scroll on the menu',(await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth))===0);
   await page.locator('[data-pm="training"]').click();
-  check(scope,'choosing Training swaps the toy and the button',await page.evaluate(()=>window.__tac.menuKey)==='training'&&(await page.locator('#pmGo').textContent())==='Start training');
+  check(scope,'choosing Training changes the Go button',await page.evaluate(()=>window.__tac.menuKey)==='training'&&(await page.locator('#pmGo').textContent())==='Start training');
   await page.locator('[data-pm="graphics"]').click();await page.locator('[data-pm="graphics"]').click();
   check(scope,'tapping Graphics again changes the setting and keeps it',await page.evaluate(()=>window.__tac.gfx)==='high'&&await page.evaluate(()=>localStorage.getItem('prim3.tactics.preview.gfx'))==='high');
   await page.locator('[data-pm="graphics"]').click();await page.locator('[data-pm="graphics"]').click();
   check(scope,'Graphics cycles to Battery saver',await page.evaluate(()=>window.__tac.gfx)==='low');
   await page.locator('[data-pm="training"]').click();await page.locator('#pmGo').click();
-  check(scope,'Go plays the launch before leaving',await page.evaluate(()=>window.__tac.menuLaunching));
+  check(scope,'Go plays the camera dive before leaving',await page.evaluate(()=>window.__tac.menuLaunching));
   await page.waitForFunction(()=>!window.__tac.menuOpen,null,{timeout:20000});
   await page.waitForFunction(()=>window.__tac.mode3d,null,{timeout:20000});
   check(scope,'Start training opens the game with the optional hint card',!!(await page.evaluate(()=>window.__tac.session))&&await page.locator('#tacSheet').isVisible());

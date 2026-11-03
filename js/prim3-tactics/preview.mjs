@@ -34,7 +34,7 @@ let gfx = (() => { try { const v = localStorage.getItem(GFX_KEY); return GFX.inc
 const fxChoice = () => PARAMS.get('fx') || (gfx === 'auto' ? null : gfx);
 // The main menu opens first (?menu=0 skips it); the battlefield's 3D loads only once it closes.
 let menuOpen = PARAMS.get('menu') !== '0';
-let menu3d = null, menuLoading = null, menuSel = null, menuBusy = false;
+let menuScene = null, menuLoading = null, menuSel = null, menuBusy = false; // the menu's backdrop: the real battlefield, in showcase
 function webglAvailable() {
   try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; }
 }
@@ -453,24 +453,25 @@ function renderMainMenu() {
   if (!opts.some((o) => o.key === menuSel)) menuSel = opts[0].key;
   $('pmList').innerHTML = opts.map((o) => `<button type="button" class="pm-opt" data-pm="${o.key}" aria-pressed="${o.key === menuSel}">${esc(o.label)}<small>${esc(o.sub)}</small></button>`).join('');
   $('pmGo').textContent = opts.find((o) => o.key === menuSel).go;
-  if (menu3d) menu3d.show(menuSel);
 }
 function openMainMenu() {
   menuOpen = true; ui.menu = false; ui.preview = null; ui.mode = null;
   if (board3d) board3d.setActive(false);
   document.querySelector('main.tac').classList.add('menu-open'); $('p3Menu').hidden = false;
   renderMainMenu();
-  if (!menu3d && !menuLoading && webglAvailable()) {
-    menuLoading = import('./menu3d.mjs').then((mod) => {
+  if (!menuScene && !menuLoading && webglAvailable()) {
+    menuLoading = import('./board3d.mjs').then((mod) => {
       menuLoading = null; if (!menuOpen) return;
-      menu3d = mod.createMenu3D($('menu3d'), { reducedMotion: REDUCED }); menu3d.show(menuSel);
+      const p = view(); // the player's view only: nothing hidden reaches the backdrop either
+      menuScene = mod.createBoard3D($('menu3d'), { width: W, height: H, reducedMotion: REDUCED, fx: fxChoice(), showcase: true, onTap: () => {} });
+      menuScene.update({ units: p.units, blockers: p.blockers, cover: p.cover, objectiveTiles: p.objectiveTiles, selected: null, labels: [] });
     }).catch(() => { menuLoading = null; $('menu3d').classList.add('no-3d'); });
   } else if (!webglAvailable()) $('menu3d').classList.add('no-3d');
   window.scrollTo(0, 0);
 }
 function closeMainMenu(action) {
   menuOpen = false; menuBusy = false;
-  if (menu3d) { menu3d.destroy(); menu3d = null; }
+  if (menuScene) { menuScene.destroy(); menuScene = null; }
   document.querySelector('main.tac').classList.remove('menu-open'); $('p3Menu').hidden = true;
   if (action === 'new') { clearSave(); state = fresh(); ui = { selected: 'E1', menu: false, mode: null, preview: null, hint: null, session: null, suggestion: null, toast: 'New mission. Secure the relay.' }; zoom = { s: 1, tx: 0, ty: 0 }; if (board3d) board3d.resetView(); save(); }
   if (board3d) board3d.setActive(true);
@@ -483,6 +484,7 @@ $('pmList').addEventListener('click', (e) => {
     gfx = GFX[(GFX.indexOf(gfx) + 1) % GFX.length];
     try { localStorage.setItem(GFX_KEY, gfx); } catch (err) {}
     if (board3d) { board3d.destroy(); board3d = null; } // rebuilt at the new tier when the menu closes
+    if (menuScene) { menuScene.destroy(); menuScene = null; $('menu3d').innerHTML = ''; openMainMenu(); return; } // backdrop too
   }
   menuSel = b.dataset.pm; renderMainMenu();
 });
@@ -490,7 +492,7 @@ $('pmGo').addEventListener('click', () => {
   if (menuBusy) return;
   const action = menuSel === 'graphics' ? (hasSave() ? 'continue' : 'new') : menuSel;
   menuBusy = true;
-  if (menu3d) menu3d.play(menuSel, () => closeMainMenu(action)); else closeMainMenu(action);
+  if (menuScene) menuScene.dive(() => closeMainMenu(action)); else closeMainMenu(action);
 });
 $('tacMenuOpen').addEventListener('click', openMainMenu);
 
@@ -509,4 +511,4 @@ if (REDUCED) document.documentElement.classList.add('reduce-motion');
 bindGestures();
 if (menuOpen) openMainMenu();
 render();
-window.__tac = { get state() { return state; }, get session() { return ui.session; }, get ui() { return ui; }, SAVE_KEY, get mode3d() { return mode3d && !!board3d; }, get loading3d() { return !!loading3d; }, screenOf: (x, y, h) => board3d && board3d.screenOf(x, y, h), zoomLevel: () => board3d && board3d.zoomLevel(), busy3d: () => !!(board3d && board3d.isAnimating()), get tier() { return board3d && board3d.tier; }, get menuOpen() { return menuOpen; }, get menuKey() { return menu3d && menu3d.key; }, get menuLaunching() { return !!(menu3d && menu3d.launching); }, get gfx() { return gfx; }, unitPosition: (id) => board3d && board3d.unitPosition(id) };
+window.__tac = { get state() { return state; }, get session() { return ui.session; }, get ui() { return ui; }, SAVE_KEY, get mode3d() { return mode3d && !!board3d; }, get loading3d() { return !!loading3d; }, screenOf: (x, y, h) => board3d && board3d.screenOf(x, y, h), zoomLevel: () => board3d && board3d.zoomLevel(), busy3d: () => !!(board3d && board3d.isAnimating()), get tier() { return board3d && board3d.tier; }, get menuOpen() { return menuOpen; }, get menuKey() { return menuScene ? menuSel : null; }, get menuLaunching() { return !!(menuScene && menuScene.diving); }, get gfx() { return gfx; }, unitPosition: (id) => board3d && board3d.unitPosition(id) };

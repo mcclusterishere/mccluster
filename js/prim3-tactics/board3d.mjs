@@ -25,6 +25,9 @@ const C = {
 };
 const ROLE = { E: 0x7fe3ee, R: 0xb9e98a, T: 0xffcf7a };
 const MODEL_ROOT = new URL('../../assets/3d/prim3-operators/', import.meta.url);
+// Photo-scanned PBR materials and a real night-courtyard HDR (Poly Haven, CC0; see assets/3d/prim3-tactics/CREDITS.md).
+// Loaded after first paint; until they arrive (or if they cannot), the procedural textures stand in.
+const PBR_ROOT = new URL('../../assets/3d/prim3-tactics/', import.meta.url);
 
 /* ---------- procedural textures (no image downloads) ---------- */
 function canvasTex(w, h, draw, srgb = true) {
@@ -65,13 +68,6 @@ function brickTex(windows) {
     }
   });
 }
-function windowGlow() { // emissive map: a few lit windows on the facade
-  return canvasTex(512, 512, (g, w, h) => {
-    g.fillStyle = '#000'; g.fillRect(0, 0, w, h);
-    const lit = [[0, 1], [2, 0], [3, 2], [1, 2]];
-    for (const [col, row] of lit) { const x = 40 + col * 120, y = 60 + row * 150; const gr = g.createLinearGradient(x, y, x, y + 90); gr.addColorStop(0, '#ffcf8a'); gr.addColorStop(1, '#b86a2a'); g.fillStyle = gr; g.fillRect(x, y, 60, 90); }
-  });
-}
 function skyTex() {
   return canvasTex(8, 256, (g, w, h) => {
     const gr = g.createLinearGradient(0, 0, 0, h);
@@ -93,7 +89,7 @@ function pickTier(renderer, fx) {
   return matchMedia('(pointer: coarse)').matches ? 'mid' : 'high';
 }
 
-export function createBoard3D(host, { width, height, onTap, onView = null, reducedMotion = false, fx = null }) {
+export function createBoard3D(host, { width, height, onTap, onView = null, reducedMotion = false, fx = null, showcase = false }) {
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, preserveDrawingBuffer: true, powerPreference: 'high-performance' });
   const tier = pickTier(renderer, fx);
   renderer.setPixelRatio(Math.min(tier === 'high' ? 2 : 1.5, window.devicePixelRatio || 1));
@@ -128,9 +124,11 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
   const plazaTex = stoneTex(11, '#2b3135'); plazaTex.repeat.set(width + 14, height + 14);
   const plazaRough = rough.clone(); plazaRough.repeat.set((width + 14) / 4, (height + 14) / 4);
   const plaza = new THREE.Mesh(new THREE.PlaneGeometry(width + 14, height + 14), new THREE.MeshStandardMaterial({ map: plazaTex, roughnessMap: plazaRough, roughness: 1, metalness: 0.05, color: 0x9aa0a4 }));
+  plaza.material.userData.pbr = { set: 'cobblestone_square', repeat: [(width + 14) / 2, (height + 14) / 2] };
   plaza.rotation.x = -Math.PI / 2; plaza.position.set(cx, -0.02, cz + 2); plaza.receiveShadow = true; scene.add(plaza);
   const tileGeo = new THREE.BoxGeometry(0.97, 0.06, 0.97);
   const tileMats = [stoneTex(21, '#4b5257'), stoneTex(22, '#444b51'), stoneTex(23, '#4f555a')].map((t) => new THREE.MeshStandardMaterial({ map: t, roughnessMap: rough, roughness: 1, metalness: 0.08 }));
+  for (const [i, m] of tileMats.entries()) m.userData.pbr = { set: 'concrete_pavement', repeat: [0.5, 0.5], offset: [i * 0.5, i * 0.25], tint: [0xffffff, 0xe9e9e9, 0xf4f1ec][i] };
   const tiles = new THREE.InstancedMesh(tileGeo, tileMats[0], width * height);
   const tiles2 = new THREE.InstancedMesh(tileGeo, tileMats[1], width * height);
   { const mm = new THREE.Matrix4(); let a = 0, b = 0; const r = rng(5);
@@ -149,6 +147,8 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
   /* ---------- the courtyard around the board (set dressing only: never on a tile) ---------- */
   const glow = glowTex();
   const std = (o) => new THREE.MeshStandardMaterial(o);
+  const pbrTargets = [];
+  const concrete = (color, rx, ry) => { const m = std({ color, roughness: 0.85 }); m.userData.pbr = { set: 'concrete_wall_006', repeat: [rx, ry], tint: color }; pbrTargets.push(m); return m; };
   const add = (geo, mat, x, y, z, { cast = true, recv = true, parent = scene } = {}) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = cast; m.receiveShadow = recv; parent.add(m); return m; };
   const lamps = [];
   function lampPost(x, z) {
@@ -160,12 +160,18 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
     sp.scale.set(1.6, 1.6, 1); sp.position.copy(head.position); scene.add(sp);
     const l = new THREE.PointLight(0xffa860, 9, 9, 1.7); l.position.set(x + 0.45, 2.85, z); scene.add(l); lamps.push(l);
   }
+  function blob(radius, seed) { // a lumpy, smooth-shaded foliage clump
+    const geo = new THREE.SphereGeometry(radius, 20, 14), pos = geo.attributes.position, v = new THREE.Vector3(), r = rng(seed);
+    const k = [r() * 6, r() * 6, r() * 6];
+    for (let i = 0; i < pos.count; i += 1) { v.fromBufferAttribute(pos, i); const n = 1 + 0.16 * Math.sin(v.x * 9 + k[0]) * Math.sin(v.y * 8 + k[1]) + 0.1 * Math.sin(v.z * 13 + k[2]); v.multiplyScalar(n); pos.setXYZ(i, v.x, v.y, v.z); }
+    geo.computeVertexNormals(); return geo;
+  }
   function tree(x, z, s = 1) {
-    const bark = std({ color: 0x2d2219, roughness: 1 }), leaf = std({ color: C.leaf, roughness: 0.9, flatShading: true });
-    add(new THREE.BoxGeometry(1.1 * s, 0.45, 1.1 * s), std({ color: 0x3d4246, roughness: 0.9 }), x, 0.22, z);
+    const bark = std({ color: 0x2d2219, roughness: 1 }), leaf = std({ color: 0x2f4523, roughness: 0.85 });
+    add(new THREE.BoxGeometry(1.1 * s, 0.45, 1.1 * s), concrete(0x9d9a94, 1, 0.4), x, 0.22, z);
     add(new THREE.CylinderGeometry(0.07 * s, 0.11 * s, 1.9 * s, 8), bark, x, 0.45 + 0.95 * s, z);
     const r = rng(Math.round(x * 13 + z * 7));
-    for (let i = 0; i < 6; i += 1) { const b = add(new THREE.IcosahedronGeometry((0.45 + r() * 0.35) * s, 0), leaf, x + (r() - 0.5) * 0.9 * s, (1.9 + r() * 0.9) * s, z + (r() - 0.5) * 0.9 * s); b.rotation.set(r() * 3, r() * 3, 0); }
+    for (let i = 0; i < 6; i += 1) { const b = add(blob((0.45 + r() * 0.35) * s, i * 7 + 3), leaf, x + (r() - 0.5) * 0.9 * s, (1.9 + r() * 0.9) * s, z + (r() - 0.5) * 0.9 * s); b.rotation.set(r() * 3, r() * 3, 0); }
   }
   function bench(x, z, rot) {
     const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = rot; scene.add(g);
@@ -180,23 +186,35 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
     m.rotation.x = -Math.PI / 2; m.scale.set(sx, sz, 1); m.position.set(x, 0.001, z); m.receiveShadow = true; scene.add(m);
   }
   { // north: brick block with lit windows, a cornice, a doorway, steps up to it and a railing
-    const facadeMat = std({ map: brickTex(true), emissiveMap: windowGlow(), emissive: 0xffffff, emissiveIntensity: 1.4, roughness: 0.85 });
-    facadeMat.map.repeat.set(2, 1); facadeMat.emissiveMap.repeat.set(2, 1);
+    const facadeMat = std({ map: brickTex(false), roughness: 0.85 }); facadeMat.map.repeat.set(2, 1);
+    facadeMat.userData.pbr = { set: 'red_brick_03', repeat: [(width + 10) / 2.2, 7 / 2.2] }; pbrTargets.push(facadeMat);
     add(new THREE.BoxGeometry(width + 10, 7, 1), facadeMat, cx, 3.5, -3.4);
-    add(new THREE.BoxGeometry(width + 10.4, 0.3, 1.3), std({ color: 0x4b4744, roughness: 0.7 }), cx, 7.1, -3.3);
+    // windows: dark glass panes in concrete surrounds; a few lit from inside
+    const paneDark = std({ color: 0x0b1116, roughness: 0.06, metalness: 0.4 });
+    const paneLit = std({ color: 0x2a1a0c, roughness: 0.2, emissive: 0xffb36b, emissiveIntensity: 1.6 });
+    const sill = std({ color: 0x6d6c69, roughness: 0.8 }); sill.userData.pbr = { set: 'concrete_wall_006', repeat: [0.5, 0.5] }; pbrTargets.push(sill);
+    const lit = new Set(['0,1', '2,0', '3,2', '1,2', '5,0', '6,1']);
+    for (let rp = 0; rp < 2; rp += 1) for (let col = 0; col < 4; col += 1) for (let row = 0; row < 3; row += 1) {
+      const x = cx - (width + 10) / 2 + rp * (width + 10) / 2 + (70 + col * 120) / 512 * (width + 10) / 2;
+      const y = 7 - (105 + row * 150) / 512 * 7;
+      add(new THREE.BoxGeometry(1.42, 1.48, 0.12), sill, x, y, -2.92, { cast: false });
+      add(new THREE.BoxGeometry(1.2, 1.26, 0.06), lit.has((rp * 4 + col) + ',' + row) ? paneLit : paneDark, x, y, -2.84, { cast: false });
+      add(new THREE.BoxGeometry(1.5, 0.08, 0.3), sill, x, y - 0.78, -2.8);
+    }
+    add(new THREE.BoxGeometry(width + 10.4, 0.3, 1.3), concrete(0x8a857f, 10, 0.3), cx, 7.1, -3.3);
     add(new THREE.BoxGeometry(1.6, 2.4, 0.2), std({ color: 0x0e1418, roughness: 0.3, metalness: 0.4 }), cx, 2.0, -2.86);
     add(new THREE.BoxGeometry(2.4, 0.08, 1.0), std({ color: 0x2c3237, roughness: 0.6, metalness: 0.5 }), cx, 3.3, -2.5);
-    for (let s = 0; s < 3; s += 1) add(new THREE.BoxGeometry(width + 3, 0.18, 0.55), std({ color: 0x5a5d60, roughness: 0.8 }), cx, 0.09 + s * 0.18, -1.0 - s * 0.55);
+    for (let s = 0; s < 3; s += 1) add(new THREE.BoxGeometry(width + 3, 0.18, 0.55), concrete(0xb8b4ae, 6, 0.2), cx, 0.09 + s * 0.18, -1.0 - s * 0.55);
     const rail = std({ color: 0x15191c, roughness: 0.4, metalness: 0.8 });
     for (let i = 0; i <= 6; i += 1) add(new THREE.CylinderGeometry(0.025, 0.025, 0.9, 6), rail, -1 + i * (width + 1) / 6, 0.99, -2.15, { recv: false });
     add(new THREE.BoxGeometry(width + 1.1, 0.05, 0.05), rail, cx, 1.44, -2.15);
   }
   { // west: concrete and glass; east: low wall with a planter run
     const glass = std({ color: 0x0f1a22, roughness: 0.08, metalness: 0.9, emissive: 0x0a2230, emissiveIntensity: 0.6 });
-    add(new THREE.BoxGeometry(1, 5, height + 4), std({ color: 0x5c6064, roughness: 0.9 }), -3.4, 2.5, cz);
+    add(new THREE.BoxGeometry(1, 5, height + 4), concrete(0xa9a6a0, 5, 2), -3.4, 2.5, cz);
     for (let i = 0; i < 4; i += 1) add(new THREE.BoxGeometry(0.06, 2.6, 2.1), glass, -2.88, 2.0, -0.6 + i * 2.7, { cast: false });
-    add(new THREE.BoxGeometry(0.5, 0.9, height + 4), std({ color: 0x55595d, roughness: 0.9 }), width + 1.9, 0.45, cz);
-    add(new THREE.BoxGeometry(0.4, 0.08, height + 4), std({ color: C.leaf, roughness: 1, flatShading: true }), width + 1.9, 0.94, cz);
+    add(new THREE.BoxGeometry(0.5, 0.9, height + 4), concrete(0xa9a6a0, 6, 0.5), width + 1.9, 0.45, cz);
+    add(new THREE.BoxGeometry(0.4, 0.08, height + 4), std({ color: 0x2f4523, roughness: 0.9 }), width + 1.9, 0.94, cz);
   }
   tree(-1.9, -1.2, 1.05); tree(width + 0.8, -1.3, 0.95); tree(width + 1.1, height + 0.6, 1.1);
   lampPost(-1.5, height * 0.45); lampPost(width + 0.7, height * 0.3);
@@ -229,12 +247,14 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
   const unitsGroup = new THREE.Group(); scene.add(unitsGroup);
   const relayGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.2), new THREE.MeshStandardMaterial({ color: C.amber, emissive: C.amber, emissiveIntensity: 3, toneMapped: false }));
   let propsKey = '';
-  const brickMat = std({ map: brickTex(false), roughness: 0.9 });
+  const brickMat = std({ map: brickTex(false), roughness: 0.9 }); brickMat.userData.pbr = { set: 'red_brick_03', repeat: [0.45, 0.8] };
   const capMat = std({ color: 0x3c2f2a, roughness: 0.6 });
-  const concMat = std({ color: C.concrete, roughness: 0.85 });
+  const concMat = std({ color: C.concrete, roughness: 0.85 }); concMat.userData.pbr = { set: 'concrete_wall_006', repeat: [1, 1] };
   const hazard = std({ color: 0xd9a136, roughness: 0.6 });
   const planterMat = std({ color: C.planter, roughness: 0.85 });
-  const shrubMat = std({ color: C.leaf, roughness: 0.95, flatShading: true });
+  const shrubMat = std({ color: 0x2f4523, roughness: 0.85 });
+  pbrTargets.push(plaza.material, ...tileMats, brickMat, concMat, capMat, planterMat);
+  capMat.userData.pbr = { set: 'concrete_wall_006', repeat: [1, 1] }; planterMat.userData.pbr = { set: 'concrete_wall_006', repeat: [0.8, 0.5] };
 
   function buildProps(m) {
     props.clear();
@@ -255,7 +275,7 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
           add(new THREE.BoxGeometry(0.93, 0.08, 0.13), hazard, 0, 0.82, 0, { parent: g, cast: false });
         } else { // a planter box with shrubs
           add(new THREE.BoxGeometry(0.92, 0.48, 0.24), planterMat, 0, 0.24, 0, { parent: g });
-          for (let i = -1; i <= 1; i += 1) { const sh = add(new THREE.IcosahedronGeometry(0.17, 0), shrubMat, i * 0.28, 0.56, 0, { parent: g }); sh.scale.set(1.2, 0.8, 0.8); sh.rotation.y = i; }
+          for (let i = -1; i <= 1; i += 1) { const sh = add(blob(0.17, i + 11), shrubMat, i * 0.28, 0.56, 0, { parent: g }); sh.scale.set(1.2, 0.8, 0.8); sh.rotation.y = i; }
         }
       }
     }
@@ -435,7 +455,7 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
       ]);
       if (destroyed) return;
       const pmrem = new THREE.PMREMGenerator(renderer);
-      scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture; scene.environmentIntensity = 0.32; pmrem.dispose();
+      if (!hdrLoaded) { scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture; scene.environmentIntensity = 0.32; } pmrem.dispose();
       const r = host.getBoundingClientRect(), w = Math.max(1, r.width), h = Math.max(1, r.height);
       const c = new EffectComposer(renderer); c.setPixelRatio(renderer.getPixelRatio()); c.setSize(w, h);
       c.addPass(new RenderPass(scene, camera));
@@ -445,6 +465,33 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
       c.addPass(new SMAAPass(w * renderer.getPixelRatio(), h * renderer.getPixelRatio()));
       composer = c; needs = true;
     } catch (e) { composer = null; } // addons unreachable: the forward render stays, same board
+  }
+  let hdrLoaded = false;
+  async function loadPBR() {
+    const tl = new THREE.TextureLoader(), cache = {};
+    const tex = (name, srgb) => { const t = tl.load(new URL('pbr/' + name + '.jpg', PBR_ROOT).href); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; if (srgb) t.colorSpace = THREE.SRGBColorSpace; return t; };
+    const setOf = (set) => cache[set] || (cache[set] = { map: tex(set + '_diff', true), normalMap: tex(set + '_nor_gl', false), roughnessMap: tex(set + '_rough', false) });
+    const probe = await fetch(new URL('pbr/concrete_pavement_diff.jpg', PBR_ROOT), { method: 'HEAD' }).catch(() => null);
+    if (!probe || !probe.ok || destroyed) return;
+    for (const m of pbrTargets) {
+      const spec = m.userData.pbr; if (!spec) continue;
+      const base = setOf(spec.set);
+      for (const k of ['map', 'normalMap', 'roughnessMap']) {
+        const t = base[k].clone(); t.repeat.set(spec.repeat[0], spec.repeat[1]); if (spec.offset) t.offset.set(spec.offset[0], spec.offset[1]); t.needsUpdate = true; m[k] = t;
+      }
+      m.color.set(spec.tint || 0xffffff); m.roughness = 1; m.metalness = 0; m.normalScale.set(1, 1); m.needsUpdate = true;
+    }
+    needs = true;
+    try { // the courtyard's real night light: image-based lighting and reflections
+      const { HDRLoader } = await import('three/addons/loaders/HDRLoader.js');
+      const hdr = await new HDRLoader().loadAsync(new URL('hdri/courtyard_night_1k.hdr', PBR_ROOT).href);
+      if (destroyed) return;
+      hdr.mapping = THREE.EquirectangularReflectionMapping;
+      const pm = new THREE.PMREMGenerator(renderer);
+      scene.environment = pm.fromEquirectangular(hdr).texture; scene.environmentIntensity = 0.55; pm.dispose();
+      scene.background = hdr; scene.backgroundBlurriness = 0.35; scene.backgroundIntensity = 0.45;
+      hdrLoaded = true; needs = true;
+    } catch (e) { /* keep the procedural sky */ }
   }
   async function loadModels() { // authored GLBs replace stand-ins only when the manifest lists them
     try {
@@ -470,6 +517,8 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
     return best ? Math.atan2(best.x - u.x, best.y - u.y) : (u.faction === 'PLAYER' ? Math.PI : 0);
   }
 
+  let diveAnim = null;
+  if (showcase) { view.dist = 16; view.pitch = 0.5; view.target.set(cx, 0.4, cz); view.goal.copy(view.target); }
   let model = null, needs = true, t0 = performance.now(), destroyed = false;
   const flashes = [];
   let active = true;
@@ -478,6 +527,13 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
     const dt = Math.min(0.25, (now - t0) / 1000); t0 = now; // capped so a stalled tab does not jump, loose enough that slow GPUs still finish on time
     const t = now / 1000;
     let moving = false;
+    // showcase (the main menu's backdrop): a slow, low cinematic orbit; a dive when the player deploys
+    if (showcase) {
+      if (!reducedMotion) { view.yaw = view.yawGoal = 0.35 + Math.sin(now / 1000 * 0.07) * 0.9; }
+      if (diveAnim) { diveAnim.t += dt; const k = Math.min(1, diveAnim.t / 0.9), e = k * k * (3 - 2 * k);
+        view.dist = 16 - e * 8; view.pitch = 0.5 + e * 0.5; if (k >= 1) { const d = diveAnim.done; diveAnim = null; if (d) d(); } }
+      moving = true;
+    }
     // camera easing
     if (view.target.distanceToSquared(view.goal) > 1e-5) { view.target.lerp(view.goal, reducedMotion ? 1 : 1 - Math.exp(-dt * 6)); moving = true; }
     if (Math.abs(view.yaw - view.yawGoal) > 1e-4) { view.yaw = reducedMotion ? view.yawGoal : view.yaw + (view.yawGoal - view.yaw) * (1 - Math.exp(-dt * 7)); moving = true; }
@@ -521,7 +577,7 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
   let busy = false;
   let raf = requestAnimationFrame(frame);
   const ro = new ResizeObserver(() => { needs = true; }); ro.observe(host);
-  loadFx(); loadModels();
+  loadFx(); loadModels(); loadPBR();
 
   /* ---------- fire: turn, shoulder, three-round burst, tracer, impact; then hand back ---------- */
   function tracer(from, to, color) {
@@ -639,13 +695,13 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
   }
   const pointers = new Map(); let pinch = null, pan = null, moved = false;
   const el = renderer.domElement;
-  el.style.touchAction = 'none';
-  el.addEventListener('pointerdown', (e) => {
+  if (!showcase) el.style.touchAction = 'none';
+  if (!showcase) el.addEventListener('pointerdown', (e) => {
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY }); moved = false;
     if (pointers.size === 2) { const [a, b] = [...pointers.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), dist: view.dist }; pan = null; }
     else pan = { x: e.clientX, y: e.clientY, tx: view.goal.x, tz: view.goal.z };
   });
-  el.addEventListener('pointermove', (e) => {
+  if (!showcase) el.addEventListener('pointermove', (e) => {
     if (!pointers.has(e.pointerId)) return;
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pointers.size === 2 && pinch) { const [a, b] = [...pointers.values()]; setDist(pinch.dist * pinch.d / Math.max(20, Math.hypot(a.x - b.x, a.y - b.y))); moved = true; return; }
@@ -666,8 +722,8 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
     pointers.delete(e.pointerId); if (pointers.size < 2) pinch = null; if (!pointers.size) pan = null;
     if (wasTap && e.type === 'pointerup' && !fireAnim) { const t = tileAt(e.clientX, e.clientY); if (t) onTap(t.x, t.y); }
   };
-  el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
-  el.addEventListener('wheel', (e) => { e.preventDefault(); setDist(view.dist * (e.deltaY > 0 ? 1.1 : 0.9)); }, { passive: false });
+  if (!showcase) { el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end); }
+  if (!showcase) el.addEventListener('wheel', (e) => { e.preventDefault(); setDist(view.dist * (e.deltaY > 0 ? 1.1 : 0.9)); }, { passive: false });
   function setDist(d) { view.dist = Math.min(view.maxDist, Math.max(view.minDist, d)); needs = true; }
 
   return {
@@ -694,6 +750,9 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
       shotCam = { from: from.clone().addScaledVector(back, -2.2).addScaledVector(side, -0.75).add(new THREE.Vector3(0, 1.9, 0)), look: from.clone().lerp(aimAt, 0.65).add(new THREE.Vector3(0, 0.3, 0)), k: 0 };
       fireAnim = { attacker: attackerId, target: targetId, from, face, shots, hit: !!(result && result.hit), killed: !!(result && result.killed), t: 0, len: 1.9, done };
     },
+    // showcase only: the camera dives into the board, then calls done
+    dive(done) { if (reducedMotion || !showcase) { if (done) queueMicrotask(done); return; } diveAnim = { t: 0, done }; },
+    get diving() { return !!diveAnim; },
     isAnimating() { return busy || !!fireAnim || [...actors.values()].some((a) => a.walk || a.dying); },
     unitPosition(id) { const a = actors.get(id); return a ? { x: a.g.position.x, y: a.g.position.z } : null; },
     // test/accessibility hook: where a tile's centre is on screen right now (client coordinates)
