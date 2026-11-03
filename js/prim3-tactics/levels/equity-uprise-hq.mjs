@@ -293,6 +293,9 @@ export const MODEL = {
 };
 // the opening camera stands back far enough to show the whole tower from the public way
 export const OPENING_DIST = 24;
+// the opening shot (owner, 2026-11-03: "the tower looks small in the opening view"): low and close from the
+// public way, so the tower fills the board and the squad stands in the foreground, tappable
+export const OPENING = { x: 5.5, y: 7.6, z: 0, lift: 2.6, dist: 16.5, pitch: 0.36 };
 // the objective's label sits just over Floor 1's ceiling (11 ft), so it marks Floor 1 even when the whole tower is drawn
 export const OBJ_LABEL_H = 1.2;
 // the storey the cutaway shows for a unit on engine floor z (the site and Floor 1 are both storey 1)

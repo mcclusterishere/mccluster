@@ -185,7 +185,8 @@ test('the transit page reads ?mission=<id> from the mission file and shows it; r
   assert.match(tx, /const MISSION_ID = PARAMS\.get\('mission'\);/);
   assert.match(tx, /import \{ DATA_URL as WORLD_MISSIONS, DRAFT_KEY as WORLD_DRAFTS, findMission \} from '\.\.\/prim3-world\/missions\.mjs';/);
   assert.match(tx, /fetch\(WORLD_MISSIONS\)/);
-  assert.match(tx, /<b>\$\{esc\(MISSION\.title\)\}<\/b><span class="tx-brief" id="txBrief">\$\{esc\(MISSION\.briefing\)\}<\/span>/);
+  assert.match(tx, /if \(MISSION\) return \{ small, title: esc\(MISSION\.title\)/, 'the mission title leads the objective strip');
+  assert.match(tx, /const brief = MISSION \? esc\(MISSION\.briefing\)/, 'its briefing is in the strip\'s details');
   assert.match(tx, /if \(!m \|\| typeof m\.title !== 'string'/, 'an unknown mission is ignored');
   assert.match(tx, /const SAVE_KEY = 'prim3\.transit\.v1';/, 'save key unchanged');
   assert.match(tx, /log\.unshift\(missionLine\(m\)\)/, 'the briefing is the first log line');

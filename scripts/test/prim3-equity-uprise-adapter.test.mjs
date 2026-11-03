@@ -179,6 +179,20 @@ test('mode separation: the mission is TRAINING in the SANDBOX; its ledger lives 
   assert.equal(s.battlefield.eu.mode, 'TRAINING'); assert.equal(s.battlefield.eu.execution_target, 'SANDBOX'); assert.equal(s.battlefield.eu.live_control_allowed, false);
   assert.equal(s.battlefield.eu.ledger.length, 4, 'the red team cut all four before the squad is called');
   const page = await readFile(new URL('js/prim3-tactics/transit.mjs', ROOT), 'utf8');
-  assert.match(page, /prim3\.level\.\$\{LEVEL\.LEVEL_ID\}/, 'the mission saves under its own PRIM3 key');
+  assert.match(page, /prim3\.level\.\$\{LEVEL\.SAVE_ID \|\| LEVEL\.LEVEL_ID\}/, 'the mission saves under its own PRIM3 key, one per side');
   for (const f of ['adapter.mjs', 'sandbox.mjs', 'pipeline.mjs']) assert.doesNotMatch(await readFile(new URL(`js/prim3-tactics/adapters/equity-uprise/${f}`, ROOT), 'utf8'), /writeFile|localStorage|fetch\([^)]*method/, f);
+});
+
+test('the B1 level is registered, loads, draws no mark, and hands the page the mission hooks', async () => {
+  const { LEVELS, loadLevel } = await import('../../js/prim3-tactics/levels/index.mjs');
+  assert.ok(LEVELS['equity-uprise-b1']);
+  const L = await loadLevel('equity-uprise-b1');
+  assert.equal(L.LEVEL_ID, 'equity-uprise-b1'); assert.equal(L.SIDE, 'defend'); assert.equal(L.SAVE_ID, 'equity-uprise-b1.defend');
+  for (const k of ['createState', 'sync', 'actions', 'perform', 'afterThreat', 'outcome', 'debrief', 'objective']) assert.equal(typeof L.HOOKS[k], 'function', k);
+  const s = L.HOOKS.createState(3);
+  assert.equal(L.HOOKS.objective(s).progress, '0/4');
+  assert.ok(L.SCENE.gridSurfaces.some((g) => g.z === 8 && g.height < 0), 'a grid on B1');
+  for (const f of ['levels/equity-uprise-b1.mjs', 'missions/blind-the-floor.mjs', 'adapters/equity-uprise/adapter.mjs']) assert.doesNotMatch(await readFile(new URL(`js/prim3-tactics/${f}`, ROOT), 'utf8'), /\.(png|jpe?g|svg|webp)\b|logo|emblem/i, f);
+  const menu = await readFile(new URL('js/prim3-tactics/preview.mjs', ROOT), 'utf8');
+  assert.match(menu, /prim3-transit\.html\?level=equity-uprise-b1&side=defend/);
 });

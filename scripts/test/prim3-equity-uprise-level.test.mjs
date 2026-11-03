@@ -185,3 +185,16 @@ test('full strength (the roof shooters exactly as defined) is hard but winnable:
   const g = playHq(fx.seed, fx.policy);
   assert.equal(g.outcome, 'win'); assert.deepEqual(g.trace, fx.trace, 'the recorded winning run replays exactly');
 });
+
+test('phone layout: the objective is a strip docked above the battlefield, never over it; mobile-first queries only', async () => {
+  const html = await readFile(new URL('../../prim3-transit.html', import.meta.url), 'utf8');
+  assert.ok(html.indexOf('id="txObj"') < html.indexOf('id="txStage"') && html.indexOf('id="txObj"') < html.indexOf('class="tx-3d"'), 'the strip comes before the stage');
+  assert.ok(!/<section class="tx-stage"[^]*id="txObj"[^]*<\/section>\s*<aside/.test(html.slice(html.indexOf('class="tx-stage"'), html.indexOf('<aside'))), 'the strip is not inside the stage');
+  const css = html.slice(html.indexOf('<style>'), html.indexOf('</style>'));
+  assert.doesNotMatch(css.match(/\.tx-obj\{[^}]*\}/)[0], /position:\s*absolute/);
+  assert.doesNotMatch(css, /@media\s*\(max-width/, 'min-width queries only');
+  assert.match(css, /grid-template-areas:"top top" "obj side" "stage side"/, 'desktop docks it above the stage too');
+  const page = await readFile(new URL('../../js/prim3-tactics/transit.mjs', import.meta.url), 'utf8');
+  assert.match(page, /r3\.frame\(LEVEL\.OPENING\)/, 'a level frames its own opening shot');
+  assert.ok(L.OPENING && L.OPENING.dist < L.OPENING_DIST && L.OPENING.pitch < 0.86, 'the HQ opening is closer and lower than the old one');
+});

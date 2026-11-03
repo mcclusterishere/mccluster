@@ -142,10 +142,43 @@ These are local review files and are not committed. In the scratchpad folder `hq
   engine are the real fix (an upstream Prim3 change).
 - **Upper-floor stair landings are the only places to stand on Floors 2–6.** Their detailed rooms are
   scenery here.
-- **Phone layout.** The objective card covers the top-left of the board at 390, and the tower is small
-  in the opening shot. This is page chrome, not the building.
 - **Delivery size.** The 2.5 MB facade shrinks to 229 KB when compressed. If GitHub Pages does not
   compress `.glb`, a compressed copy, or a facade without its 3,000 finish trims, would help phones.
+
+## Owner decisions, 2026-11-03, and what changed
+
+**Phone layout.** Before: the objective card sat over the top-left of the board (at 390 px it covered
+226 × 121 px of a 366 × 488 board) and the opening view showed a small tower from far above. Now the objective
+is a one-line strip docked above the battlefield (title, progress chip, a chevron for the details), at every
+width; on desktop it shows its details, still above the board. The opening shot is the level's own
+(`OPENING` in `levels/equity-uprise-hq.mjs`): low and close from the public way, so the tower fills the board
+and the squad stands in the foreground. Edge rulers no longer print coordinates beyond the board. Checked at
+360, 390 and 1440 px: no horizontal scroll, the strip and the board do not overlap
+(`scripts/prim3/check-tactics-layout.mjs` measures it in a real browser, including that every operative's
+tile takes a tap). Screenshots: scratchpad `hq-floors/before/` and `hq-floors/after/`.
+
+**Roof shooters at full strength.** Unchanged: H3 (5 HP, aim 62, sight 8) and H4 (5 HP, aim 58, sight 6) on
+Level 7. Evidence that it is hard but winnable, with no weakening: `scripts/prim3/hq-drill-sim.mjs` plays the
+drill with a heuristic squad (it sees only the player projection and moves by the engine's known paths) against
+the canonical threat AI. Over 100 seeds it wins 9; the AI wins 91, almost all by downing an operative. A
+recorded full-strength win (seed 8) is a test fixture and replays move for move.
+
+The intended solution, read off the winning games:
+1. Get through the public entrance in rounds 1–2. The roof sees the public way and the approach, not Floor 1:
+   Floor 1 sits under Floor 2's slab.
+2. Clear the two inside role-players from inside (E and T first; the reception desk is low cover).
+3. T reports twice next to the security interface.
+4. Cross to Assembly Area A in one turn per operative (two moves), and assemble at once: never stand in the
+   roof's arc for a whole threat phase.
+
+Hunker and overwatch are there; there is no smoke in the engine. The entrance canopy is real
+(`FAC-ENTRY-CANOPY-01`, 24–48 × −5.5–0 ft at 9.5 ft) but the resolver cannot yet shelter a unit under a slab
+over its own cell; that is an upstream item, as is evacuating a downed operative (the engine counts a downed
+operative as someone who must assemble, so one downed operative loses the drill).
+
+**B1.** A normal floor: both stairs go down to it, the plant rooms are shut like Floor 1's, the cutaway goes below
+grade and draws the detailed B1 model. B1's mission is Blind the Floor / Restore the Picture
+(`EQUITY-UPRISE-X-PRIM3-INTEGRATION-MATRIX.md`).
 
 ## Decisions for the owner
 

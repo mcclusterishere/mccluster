@@ -3,7 +3,8 @@
    toDisplay, SCENE, MISSION, surfaces(), engineConfig(); optional floorName(z). */
 export const LEVELS = {
   'transit-relay': { title: 'Transit / Relay', load: () => import('./transit-relay.mjs') },
-  'equity-uprise-hq': { title: 'Equity Uprise HQ', load: () => import('./equity-uprise-hq.mjs') }
+  'equity-uprise-hq': { title: 'Equity Uprise HQ', load: () => import('./equity-uprise-hq.mjs') },
+  'equity-uprise-b1': { title: 'Equity Uprise B1 · Blind the Floor / Restore the Picture', load: () => import('./equity-uprise-b1.mjs') }
 };
 export const DEFAULT_LEVEL = 'transit-relay';
 export function loadLevel(id) { return (LEVELS[id] || LEVELS[DEFAULT_LEVEL]).load(); }
