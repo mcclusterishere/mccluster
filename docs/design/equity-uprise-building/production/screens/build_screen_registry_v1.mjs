@@ -285,7 +285,7 @@ export function buildScreenRegistry() {
     const n = CARDINAL[facing];
     /* two viewpoints, both viewer conventions (not geometry): a cutaway framing from above the clipped walls, and a
        standing eye in front of the screen for walk/room modes */
-    const eye = [r2(x + n[0] * 8), r2(y + n[1] * 8), 14];
+    const eye = [r2(x + n[0] * 13), r2(y + n[1] * 13), 24];
     const standing = [r2(x + n[0] * 5.5), r2(y + n[1] * 5.5), 5.25];
     const room = roomFor(rooms, lv.id, x, y, asset.location.zone_id);
     const app = APPS[cls.app];

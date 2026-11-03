@@ -98,7 +98,8 @@ async function ensureFloor(lv) {
     for (const [id, meshes] of hooks.bound) for (const m of meshes) {
       if (m.userData.euGlow) continue;
       const mat = (Array.isArray(m.material) ? m.material[0] : m.material).clone();
-      if (/::(screen|surface)$/.test(m.name) || !/::/.test(m.name)) { mat.emissive = new THREE.Color(0x3fd6ae); mat.emissiveIntensity = 0.55; }
+      const nm = (m.userData && m.userData.name) || m.name;
+      if (/::(screen|surface)$/.test(nm) || !/::/.test(nm)) { mat.emissive = new THREE.Color(0x3fd6ae); mat.emissiveIntensity = 0.55; }
       m.material = mat; m.userData.euGlow = true;
     }
   } catch (e) { r = null; }
