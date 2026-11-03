@@ -219,6 +219,70 @@ export function buildCover(blockers) {
   return out;
 }
 
+// the grid is drawn on the walkable raised surfaces only: the stair landings of Floors 2–6 and the roof
+// (Floor 1 is at grade, on the ground grid; the rest of each closed floor is not a place to stand)
+SCENE.gridSurfaces = [
+  ...[2, 3, 4, 5, 6].flatMap((z) => [...STAIRS.A, ...STAIRS.B].map((c) => ({ z, x: c.x, y: c.y, w: 1, d: 1, height: floorHeight(z) }))),
+  { z: 7, x: PLATE.x, y: PLATE.y, w: PLATE.w, d: PLATE.d, height: floorHeight(7) }
+];
+
+/* ---------- the building's own 3D model: the look (the rules above stay on the plan data) ----------
+   The renderer draws the Equity Uprise building from the GLBs its own pipeline builds
+   (docs/design/equity-uprise-building/production/, deploy-pages.yml publishes them to equity-uprise-preview/).
+   They are derived artifacts: they never change a blocker, a link or a height here, and the test
+   scripts/test/prim3-equity-uprise-level.test.mjs checks that they land on the plan rectangles above.
+
+   One scale. The plan is laid at 12 ft a tile, so this level is drawn at 12 ft (3.6576 m) a world unit
+   in every direction: the model is scaled uniformly, and the operatives keep their real 1.75 m against
+   it. The rules keep the shared 3.54 m tile (TILE_M) and real metres for heights. */
+export const WORLD_M = FT_PER_TILE * FT;
+// building metres (x east, y north, z up, as the GLBs are authored; Floor 1's finished floor is z 0) → world
+export function modelToWorld(xm, ym, zm, ffeFt = 0) { const o = ftToTile(0, 0); return { X: o.x + xm / WORLD_M, Y: (zm + ffeFt * FT) / WORLD_M, Z: o.y - ym / WORLD_M }; }
+const GENERATED = 'docs/design/equity-uprise-building/production/generated/';
+const ROOT = new URL('../../../', import.meta.url);
+const floorPart = (n) => ({
+  id: `floor-0${n}`, file: `equity-uprise-floor-0${n}-core-v2.glb`, ffeFt: (n - 1) * 13.5, storey: n, lazy: true,
+  // the combined chassis supplies the shared cores; the facade supplies the perimeter (as the building viewer does)
+  drop: /^(stair_|pass_|freight_|mep)/,
+  replacedBy: [[/^(north_wall|west_wall|east_wall|south_mullion_)|^F[2-6]-SOUTH-GLAZING-01::pane-/, 'facade']]
+});
+export const MODEL = {
+  // published copies first (the web root has no docs/), then the repository checkout
+  roots: [new URL('equity-uprise-preview/', ROOT).href, new URL(GENERATED, ROOT).href],
+  up: 'z', units: 'm', storeyFt: 13.5,
+  // the height above a storey's finished floor where the cutaway slices the building (ceilings, lights and
+  // everything above go): 8 ft, under the 11 ft ceilings and over the 7 ft door heads
+  cutFt: 8,
+  parts: [
+    { id: 'chassis', file: 'equity-uprise-building-core-v2.glb', ffeFt: 0, required: true,
+      // never drawn: B1 and its stair runs (not in the drill), the diagnostic program pads, door/egress/equipment
+      // markers and every storey's program blocks (the detailed floors carry the real rooms)
+      drop: /^(L0_|B1_)|_L-13\.5_|^L[1-7]_(program|circle|support|sphere|zone)|^SITE_(door|discharge_barrier|equipment)/,
+      replacedBy: [
+        [/^L1_/, 'floor-01'],
+        [/^L7_(slab|parapet)/, 'roof'],
+        ...[2, 3, 4, 5, 6].map((n) => [new RegExp(`^L${n}_slab`), `floor-0${n}`]),
+        [/^L[2-6]_(north_wall|west_wall|east_wall|south_glazing)/, 'facade']
+      ] },
+    { id: 'floor-01', file: 'equity-uprise-floor-01-core-v2.glb', ffeFt: 0, storey: 1,
+      // the shared cores come from the chassis; the glazed perimeter from the facade (or plain glass on the battery
+      // tier); the public entrance leaves stand open for the drill
+      drop: /^(stair_|passenger_|freight_|mep)|^(north|west|east)_exterior_wall|^south_exterior_(left|right)|^F1-ENTRY-DOOR-(OUTER|INNER)::leaf/ },
+    { id: 'roof', file: 'equity-uprise-floor-07-core-v2.glb', ffeFt: 81, storey: 7 },
+    // the curtain wall, crown and entry; 2.5 MB, so not on the battery tier. Its signage reconstructs the
+    // Equity Uprise mark and lettering from primitives: never drawn here (AGENTS.md, hard rule 11)
+    { id: 'facade', file: 'equity-uprise-facade-core-v2.glb', ffeFt: 0, tiers: ['mid', 'high'],
+      drop: /^FAC-SIGN-|^FAC-DOOR-LEAF-/ },
+    floorPart(2), floorPart(3), floorPart(4), floorPart(5), floorPart(6)
+  ]
+};
+// the opening camera stands back far enough to show the whole tower from the public way
+export const OPENING_DIST = 24;
+// the objective's label sits just over Floor 1's ceiling (11 ft), so it marks Floor 1 even when the whole tower is drawn
+export const OBJ_LABEL_H = 1.2;
+// the storey the cutaway shows for a unit on engine floor z (the site and Floor 1 are both storey 1)
+export const storeyOf = (z) => Math.max(1, Math.min(7, z || 1));
+
 export const DISCHARGE_CELLS = [{ x: dischargeOut.x, y: dischargeOut.y, z: 0 }];
 
 export const MISSION = {

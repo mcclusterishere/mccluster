@@ -73,10 +73,10 @@ way down closed, and the passenger elevator's B1 stop stays hidden.
 1. **Edge walls in the resolver** (an upstream Prim3 change, never a local edit of the vendored
    engine). That would let the facade block sight and bring back the journey wall, the restrooms and
    the support rooms as rooms.
-2. **Use the authority's generated GLBs for the look.** `production/generated/equity-uprise-building-core-v2.glb`
-   (523 KB, metres, the working stack) and `equity-uprise-floor-07-core-v2.glb` could replace the
-   massing drawn from the plan rectangles. Scale them at 12 ft a tile, and check them against the
-   PLAN tiles in a test. They are derived artifacts, so the rules stay on the JSON authority.
+2. ~~Use the authority's generated GLBs for the look.~~ Done (2026-11-03): the level now draws the
+   building from its own GLBs (chassis, Floor 1, Level 7 roof, facade; Floors 2–6 on demand), at one
+   uniform 12 ft-a-unit scale, checked against the plan in `scripts/test/prim3-equity-uprise-model.test.mjs`.
+   See `EQUITY-UPRISE-HQ-REVIEW.md`.
 3. **More floors as missions.** Floors 2–6 have reconciled programs. Each could open as a z-level
    with its own rooms, using the same covering rule and test pattern. B1 needs its sandboxed-clone
    rule (learners never touch live B1) and owner approval first.
