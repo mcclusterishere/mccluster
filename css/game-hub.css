@@ -1,0 +1,164 @@
+/* THE GAME HUB (game-hub.html). Mobile first: drawn at phone width, and the min-width queries below only add room.
+   Dark ground in the PRIM3 tactics palette (prim3-transit.html); each module brings its own accent (--accent, from
+   data/game-hub/modules.json, never purple). The dock (music + course icons) sits just above the shared app bar. */
+:root{
+  --gh-bg:#080b0e;--gh-panel:rgba(16,22,28,.92);--gh-panel2:rgba(24,32,39,.95);--gh-line:rgba(190,205,215,.16);--gh-line2:rgba(190,205,215,.3);
+  --gh-ink:#e6edf1;--gh-dim:rgba(230,237,241,.68);--gh-ok:#5fe08a;--gh-bad:#ff5a5a;--gh-amber:#ffb547;--accent:#2fe0f0;
+  --gh-r:12px;--gh-font:600 16px/1.3 "Rajdhani","Barlow Condensed",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --gh-dock-h:8.4rem;--gh-bar-gap:calc(var(--appbar-h,4.6rem) + .85rem + env(safe-area-inset-bottom))
+}
+/* css/style.css opts pages into cross-document view transitions; the game pages this links to do not */
+@view-transition{navigation:none}
+*{box-sizing:border-box}
+html,body.gh-body{margin:0;background:var(--gh-bg);color:var(--gh-ink)}
+body.gh-body{font:var(--gh-font);letter-spacing:.01em;min-height:100svh;padding-bottom:calc(var(--gh-bar-gap) + var(--gh-dock-h) + 1rem)}
+.gh-body button,.gh-body select{font:inherit;color:inherit}
+.gh-body select{font-size:max(16px,1rem);font-weight:500}
+.gh-body [hidden]{display:none!important}
+.gh-skip{position:absolute;left:-999px;top:8px;z-index:400;padding:10px 14px;background:var(--gh-panel2);color:var(--gh-ink);border-radius:8px}
+.gh-skip:focus{left:8px}
+.gh-body :focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+/* the page: clear of the bar's fixed Profile chip at the top right */
+.gh{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;padding:calc(64px + env(safe-area-inset-top)) 16px 8px;max-width:1180px;margin:0 auto;outline:none}
+.gh-top small,.gh-course small,.gh-game small,.mr-head small{display:block;color:var(--accent);font-size:12px;letter-spacing:.18em;text-transform:uppercase}
+.gh-top h1{margin:2px 0 4px;font-size:30px;letter-spacing:.08em;text-transform:uppercase;line-height:1}
+.gh-top p{margin:0;color:var(--gh-dim);font-weight:500;max-width:40em}
+.gh-loading,.gh-error,.mr-loading{color:var(--gh-dim)}
+/* while a game is open the hub's title steps aside so the round fits above the dock */
+.gh.is-playing .gh-top{display:none}
+
+/* a module's panel */
+.gh-course{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:center;padding:12px;border:1px solid var(--gh-line);border-left:3px solid var(--accent);border-radius:var(--gh-r);background:var(--gh-panel)}
+.gh-course__icon{display:grid;place-items:center;width:56px;height:56px;color:var(--accent)}
+.gh-course__icon img{width:56px;height:56px;object-fit:contain}
+.gh-course__icon .gh-glyph svg{width:44px;height:44px}
+.gh-course h2{margin:2px 0;font-size:21px;letter-spacing:.04em;line-height:1.1}
+.gh-course p{margin:0;color:var(--gh-dim);font-weight:500;font-size:15px}
+.gh-games{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+.gh-game{display:grid;gap:3px;width:100%;min-height:44px;padding:14px;text-align:left;text-decoration:none;color:var(--gh-ink);border:1px solid var(--gh-line2);border-radius:var(--gh-r);background:linear-gradient(180deg,var(--gh-panel2),var(--gh-panel));cursor:pointer}
+.gh-game b{font-size:20px;letter-spacing:.03em}
+.gh-game span{color:var(--gh-dim);font-weight:500;font-size:15px}
+.gh-game em{font-style:normal;color:var(--accent);font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin-top:4px}
+.gh-game:hover{border-color:var(--accent)}
+
+/* the dock: music above, one icon per course below, both above the shared app bar */
+.gh-dock{position:fixed;left:0;right:0;bottom:var(--gh-bar-gap);z-index:190;display:grid;grid-template-columns:minmax(0,1fr);gap:6px;width:min(100% - 16px,560px);margin:0 auto;padding:6px;border:1px solid var(--gh-line2);border-radius:18px;background:rgba(10,14,18,.94);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 14px 40px -12px rgba(0,0,0,.8)}
+.gh-music{position:relative;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:8px;padding:2px 2px 6px;overflow:hidden}
+.gh-music__btn{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;border:1px solid var(--gh-line2);background:var(--gh-panel2);cursor:pointer;padding:0}
+.gh-music__btn svg{width:20px;height:20px;fill:currentColor}
+.gh-music__btn:disabled{opacity:.4;cursor:default}
+.gh-music [data-music-play]{background:var(--accent);color:#06100c;border-color:transparent}
+.gh-music [data-state="paused"] .gh-i-pause,.gh-music [data-state="playing"] .gh-i-play{display:none}
+.gh-music__meta{min-width:0;display:grid;line-height:1.15}
+.gh-music__meta b{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gh-music__meta small{color:var(--gh-dim);font-size:12px;letter-spacing:.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gh-music[data-role="rhythm"] .gh-music__meta small{color:var(--accent)}
+.gh-music__progress{position:absolute;left:8px;right:8px;bottom:0;height:2px;background:var(--gh-line)}
+.gh-music__progress i{display:block;height:100%;background:var(--accent);transform-origin:left;transform:scaleX(0)}
+.gh-modules{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:6px}
+.gh-mod{display:grid;justify-items:center;align-content:center;gap:2px;min-height:58px;padding:4px 6px;border:1px solid transparent;border-radius:12px;background:transparent;cursor:pointer;color:var(--gh-dim)}
+.gh-mod img{width:36px;height:36px;object-fit:contain}
+.gh-mod .gh-glyph{display:grid;place-items:center;width:36px;height:36px;color:var(--accent)}
+.gh-glyph svg{width:30px;height:30px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linejoin:round;stroke-linecap:round}
+.gh-mod span{font-size:13px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.gh-mod[aria-pressed="true"]{color:var(--gh-ink);border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,transparent)}
+
+/* ---- Molecule Rush ---- */
+.mr-setup,.mr-play,.mr-end{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+.mr-head{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:center}
+.mr-end .mr-head{grid-template-columns:minmax(0,1fr)}
+.mr-head h2{margin:0;font-size:26px;letter-spacing:.05em;text-transform:uppercase;line-height:1.05}
+.mr-back,.mr-quit{min-height:44px;min-width:44px;padding:0 12px;border:1px solid var(--gh-line2);border-radius:10px;background:var(--gh-panel2);cursor:pointer}
+.mr-modes{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;margin:0;padding:0;border:0}
+.mr-modes legend{padding:0;margin-bottom:6px;color:var(--gh-dim);font-size:13px;letter-spacing:.14em;text-transform:uppercase}
+.mr-mode{display:grid;gap:2px;text-align:left;min-height:44px;padding:10px 12px;border:1px solid var(--gh-line2);border-radius:var(--gh-r);background:var(--gh-panel);cursor:pointer}
+.mr-mode b{font-size:18px}
+.mr-mode span{color:var(--gh-dim);font-weight:500;font-size:14px}
+.mr-mode small{color:var(--gh-dim);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+.mr-mode[aria-pressed="true"]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--gh-panel))}
+.mr-mode[aria-pressed="true"] small{color:var(--accent)}
+.mr-topic{display:grid;gap:4px;color:var(--gh-dim);font-size:13px;letter-spacing:.12em;text-transform:uppercase}
+.mr-topic select{min-height:48px;width:100%;padding:0 10px;border:1px solid var(--gh-line2);border-radius:10px;background:var(--gh-panel2);letter-spacing:0;text-transform:none}
+.mr-btn{min-height:52px;padding:0 18px;border:0;border-radius:12px;background:var(--accent);color:#06100c;font-size:18px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+.mr-btn--quiet{background:var(--gh-panel2);color:var(--gh-ink);border:1px solid var(--gh-line2)}
+.mr-rules,.mr-best,.mr-clean{margin:0;color:var(--gh-dim);font-weight:500;font-size:15px}
+.mr-best b{color:var(--gh-ink)}
+.mr-newbest{margin:0;color:var(--gh-amber);font-size:18px;letter-spacing:.12em;text-transform:uppercase}
+.mr-acc h3,.mr-missed h3{margin:4px 0 8px;font-size:14px;letter-spacing:.16em;text-transform:uppercase;color:var(--gh-dim)}
+.mr-acc ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.mr-acc li{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,5rem) auto auto;gap:8px;align-items:center;font-size:14px}
+.mr-acc li span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mr-acc li i{height:6px;border-radius:3px;background:linear-gradient(90deg,var(--accent) var(--p),var(--gh-line) var(--p))}
+.mr-acc li small{color:var(--gh-dim)}
+
+/* the round */
+.mr-hud{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:8px;align-items:center}
+.mr-hud small{display:block;color:var(--gh-dim);font-size:11px;letter-spacing:.16em;text-transform:uppercase}
+.mr-hud b{display:inline-block;font-size:22px;line-height:1.1}
+.mr-streak em{font-style:normal;margin-left:4px;color:var(--gh-dim);font-size:15px}
+.mr-streak.is-hot em{color:var(--gh-amber)}
+.mr-lives b{color:var(--gh-bad);letter-spacing:.06em}
+.is-pop{animation:mr-pop .3s ease-out}
+@keyframes mr-pop{40%{transform:scale(1.25)}}
+.mr-time{position:relative;height:10px;border-radius:5px;background:var(--gh-line);overflow:hidden}
+.mr-time i{position:absolute;inset:0;background:var(--accent);transform-origin:left}
+.mr-time.is-low i{background:var(--gh-bad)}
+.mr-time span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.mr-q{display:grid;justify-items:center;gap:6px;padding:10px 12px;border:1px solid var(--gh-line);border-radius:var(--gh-r);background:var(--gh-panel);text-align:center;min-height:10rem;align-content:center}
+.mr-qtopic{color:var(--accent);font-size:12px;letter-spacing:.16em;text-transform:uppercase}
+.mr-structure{margin:0;width:min(100%,220px,26svh);aspect-ratio:1;border-radius:10px;background:#fff;padding:6px}
+.mr-structure svg{display:block;width:100%;height:100%}
+.mr-miss .mr-structure{width:96px;padding:3px}
+.mr-big{margin:0;font-size:52px;line-height:1.05;letter-spacing:.02em;overflow-wrap:anywhere}
+.mr-big--sm{font-size:28px;min-width:3rem}
+.mr-symbol{margin:0;font-size:30px;color:var(--accent)}
+.mr-prompt{margin:0;font-size:18px;font-weight:600}
+.mr-opts{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+/* short answers (names, symbols, families) sit two by two even on a phone, so all four stay above the dock */
+.mr-opts.is-short{grid-template-columns:repeat(2,minmax(0,1fr))}
+.mr-opts.is-short .mr-opt{grid-template-columns:minmax(0,1fr);justify-items:start;gap:2px;font-size:17px}
+.mr-opts.is-short .mr-opt kbd{width:22px;height:22px;font-size:12px}
+.mr-opt{position:relative;display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:center;min-height:54px;padding:8px 12px;text-align:left;border:1px solid var(--gh-line2);border-radius:12px;background:var(--gh-panel2);cursor:pointer;font-size:18px;overflow-wrap:anywhere;touch-action:manipulation}
+.mr-opt kbd{display:grid;place-items:center;width:26px;height:26px;border-radius:6px;border:1px solid var(--gh-line2);font:700 13px/1 ui-monospace,monospace;color:var(--gh-dim)}
+.mr-opt:disabled{cursor:default}
+.mr-opt.is-right{border-color:var(--gh-ok);background:rgba(95,224,138,.16)}
+.mr-opt.is-wrong{border-color:var(--gh-bad);background:rgba(255,90,90,.16)}
+.mr-points{position:absolute;right:12px;top:50%;translate:0 -50%;color:var(--gh-ok);font-size:18px;animation:mr-rise .5s ease-out forwards}
+@keyframes mr-rise{to{translate:0 -120%;opacity:0}}
+
+/* the end screen: what you missed is the lesson */
+.mr-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0}
+.mr-stats div{padding:10px;border:1px solid var(--gh-line);border-radius:10px;background:var(--gh-panel)}
+.mr-stats dt{color:var(--gh-dim);font-size:11px;letter-spacing:.14em;text-transform:uppercase}
+.mr-stats dd{margin:2px 0 0;font-size:22px}
+.mr-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.mr-missed ol{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.mr-miss{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:start;padding:10px;border:1px solid var(--gh-line);border-left:3px solid var(--gh-bad);border-radius:10px;background:var(--gh-panel)}
+.mr-miss p{margin:0}
+.mr-miss__q{color:var(--gh-dim);font-size:14px;font-weight:500}
+.mr-miss__a{font-size:19px;color:var(--gh-ok)}
+.mr-miss__a small{color:var(--gh-dim);font-size:13px}
+.mr-miss__alias,.mr-miss__you{font-size:14px;color:var(--gh-dim);font-weight:500}
+.mr-miss__why{font-size:14px;font-weight:500;margin-top:4px!important}
+.mr-card{padding:14px;border:1px solid var(--gh-line);border-radius:var(--gh-r);background:var(--gh-panel)}
+
+@media (prefers-reduced-motion:reduce){.is-pop,.mr-points{animation:none}.gh-music__progress i{transition:none}}
+
+/* room on wider screens: only adds */
+@media (min-width:640px){
+  .gh-top h1{font-size:38px}
+  .gh-games{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .mr-modes{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .mr-opts{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .mr-structure{width:min(100%,280px,32svh)}
+}
+@media (min-width:1024px){
+  .gh{padding-top:calc(72px + env(safe-area-inset-top))}
+  .gh-games{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .mr-modes{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .mr-play{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start}
+  .mr-play .mr-hud,.mr-play .mr-time{grid-column:1 / -1}
+  .mr-missed ol{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .mr-structure{width:min(100%,320px,36svh)}
+}
