@@ -5,7 +5,8 @@ export const STATE_VERSION = 2;
    `discoveries` (landmark/neighbourhood IDs reached on foot) and `payments` (credits spent on authored
    interactions such as a bribe), and widens the saved-position bounds to the larger city. */
 export const MIGRATIONS = Object.freeze({ 1: 'v1→v2: keep credits, inventory, receipts, met, visited, story chapter, position; add discoveries/payments' });
-const CITY_BOUNDS = { minX: -200, maxX: 200, minZ: -200, maxZ: 200 };
+// the city's local frame, with room for neighbourhoods built separately (e.g. north of the original block)
+const CITY_BOUNDS = { minX: -400, maxX: 400, minZ: -400, maxZ: 300 };
 const V1_BOUNDS = { minX: -100, maxX: 100, minZ: -70, maxZ: 120 };
 const integer = (value, fallback, max = 1000000) => Number.isSafeInteger(value) && value >= 0 && value <= max ? value : fallback;
 const unique = (values, allowed) => [...new Set(Array.isArray(values) ? values.filter(id => allowed.has(id)) : [])];
@@ -68,6 +69,11 @@ export function sanitizeState(raw, manifest, places = null) {
     r && items.has(r.itemId) && r.price === items.get(r.itemId).price && Number.isSafeInteger(r.at) && r.at >= 0
   ).slice(-50).map(r => ({ itemId: r.itemId, price: r.price, at: r.at }));
   if (typeof raw.story?.chapter === 'string' && /^[a-z0-9-]{1,60}$/.test(raw.story.chapter)) state.story.chapter = raw.story.chapter;
+  // A story-progress collection written by another city feature is kept as-is (bounded plain JSON), so a save
+  // never loses it here; that feature validates its own contents.
+  if (raw.storyProgress && typeof raw.storyProgress === 'object' && !Array.isArray(raw.storyProgress)) {
+    try { const text = JSON.stringify(raw.storyProgress); if (text.length <= 20000) state.storyProgress = JSON.parse(text); } catch { /* dropped */ }
+  }
   if (raw.version === STATE_VERSION) {
     state.discoveries = unique(raw.discoveries, discoverable);
     const interactions = interactionsOf(manifest);

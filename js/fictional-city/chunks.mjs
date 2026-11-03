@@ -8,7 +8,11 @@
    always resident, so a slow or failed chunk download can never let a body fall into the harbour.
 
    The original block, the footbridge and the island are the resident hub drawn by scene.mjs exactly as before;
-   chunk detail is clipped out of the hub so nothing is drawn twice. Pure module: no DOM, no three.js. */
+   chunk detail is clipped out of the hub so nothing is drawn twice. Pure module: no DOM, no three.js.
+
+   Tile-source contract (what scene.mjs consumes, so a second source, e.g. a georeferenced region, can feed it):
+     index  { chunks: [{ id, bounds: { minX, maxX, minZ, maxZ }, file?, sha256? }] }   in city metres
+     loadChunk(id) → Promise<{ id, roads: [rect & { kind }], props: [{ kind, x, z }], parcels: [parcelId] }> */
 import { chunkIdAt, chunkBounds, footprintBounds } from './places.mjs';
 
 export const CHUNK_SCHEMA = 'mccluster.fictional-city.chunk/v1';

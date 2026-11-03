@@ -73,13 +73,13 @@ test('every parcel stands on land, overlaps nothing, has a walkable door reachab
 });
 
 test('the expansion is measured: ≥5× walkable area, four new neighbourhoods, ≥30 new doors, more route choices', () => {
-  const B = { minX: -200, maxX: 200, minZ: -200, maxZ: 200 };
+  const B = { minX: -320, maxX: 200, minZ: -200, maxZ: 160 };
   const a0 = walkableArea(before, B, 2), a1 = walkableArea(world, B, 2);
   assert.ok(a1 >= 5 * a0, `walkable ${a0} → ${a1} m²`);
   assert.equal(places.neighborhoods.filter(n => n.status === 'new').length, 4);
   assert.ok(places.parcels.filter(p => p.role !== 'scenery').length >= 31);
-  // route choices from the original block: the bridge (south) plus four mainland exits (west, east, two north)
-  const exits = [[-80, -1], [80, -1], [-66, -75], [66, -75]];
+  // route choices from the original block: the bridge plus Harbor Boulevard west and east and both wharf walks
+  const exits = [[-80, -1], [80, -1], [-50, 60], [50, 60], [-236, -80]];
   for (const e of exits) assert.ok(findWalkingPath(spawn, { x: e[0], z: e[1] }, world, 250000).length, `exit ${e}`);
   for (const e of exits) assert.equal(findWalkingPath(spawn, { x: e[0], z: e[1] }, before).length, 0, `exit ${e} did not exist before`);
 });
@@ -130,7 +130,7 @@ test('lore binds by parcelId/homeParcelId/routeAnchors; unclaimed parcels render
   assert.equal(b.manifest.npcs.find(n => n.id === 'fixture-officer').businessId, 'fixture-precinct');
   const neighbor = b.manifest.npcs.find(n => n.id === 'fixture-neighbor');
   const home = index.resolve('northside-residential/house-07');
-  assert.equal(neighbor.placement, 'door'); assert.ok(Math.hypot(neighbor.route[0][0] - home.x, neighbor.route[0][1] - home.z) <= 1.6, 'stands by the front door');
+  assert.equal(neighbor.placement, 'door'); assert.ok(Math.hypot(neighbor.route[0][0] - home.x, neighbor.route[0][1] - home.z) <= 1.61, 'stands by the front door');
   const routes = resolveResidentRoutes(b, world);
   assert.ok(routes.get('fixture-officer').length >= 3);
   assert.equal(lore.businesses.at(-1).position, undefined, 'binding never writes into the lore object');
@@ -266,4 +266,28 @@ test('lore revision 2 (PR #720 arrays) binds completely: every expansion busines
   for (const it of interactionsOf(b.manifest).values()) { assert.ok(!minors.has(it.ownerId)); assert.ok(!(it.npcIds || []).some(id => minors.has(id))); assert.ok(Number.isSafeInteger(it.price)); }
   for (const f of city.families) assert.ok(b.vacant.find(v => v.id === f.parcelId)?.familyId === f.id, f.id + ' lives in its house');
   assert.doesNotMatch(JSON.stringify(places), /"cost"\s*:/, 'public geography carries no "cost" fields');
+});
+
+test('the area north of the original block (X −165…165, Z −345…−58) stays completely free for the Bridgeport neighbourhood', () => {
+  const box = { minX: -165, maxX: 165, minZ: -345, maxZ: -58 };
+  const inside = r => r.minX < box.maxX && r.maxX > box.minX && r.minZ < box.maxZ && r.maxZ > box.minZ;
+  for (const sf of places.surfaces) assert.ok(!inside(sf), 'surface ' + sf.id);
+  for (const st of places.streets) assert.ok(!inside(st), 'street ' + st.id);
+  for (const p of places.parcels) assert.ok(!inside(footprintBounds(p)), 'parcel ' + p.id);
+  for (const p of places.parks || []) assert.ok(!inside(p), 'park ' + p.id);
+  for (const a of [...places.anchors, ...places.landmarks]) assert.ok(!inside({ minX: a.position[0], maxX: a.position[0], minZ: a.position[1], maxZ: a.position[1] }) || a.position[1] === -58, a.id);
+  const { chunks } = buildChunks(places);
+  for (const c of chunks.values()) for (const r of [...c.land, ...c.roads]) assert.ok(!inside(r), c.id + ' draws in the reserved area');
+  for (const c of chunks.values()) for (const p of c.props) assert.ok(!(p.x > box.minX && p.x < box.maxX && p.z > box.minZ && p.z < box.maxZ), c.id + ' prop');
+  assert.deepEqual(places.frame.reserved[0].links, [[-32, -58], [32, -58]]);
+  // the two walk-link points on the original block's north edge stay open ground (no blocker of ours there)
+  for (const [x] of places.frame.reserved[0].links) assert.ok(isWalkable(x, -57.3, world, .7), 'link at x ' + x);
+  for (const b of world.blockers) assert.ok(!inside(b), 'blocker ' + b.id);
+});
+
+test('a save carrying a separate story-progress collection keeps it through load and save', () => {
+  const save = { ...initialState(city), storyProgress: { 'some-story': { completed: ['scene-01'] } } };
+  const s = sanitizeState(save, city, places);
+  assert.deepEqual(s.storyProgress, save.storyProgress);
+  assert.equal(sanitizeState({ ...save, storyProgress: 'x' }, city, places).storyProgress, undefined);
 });

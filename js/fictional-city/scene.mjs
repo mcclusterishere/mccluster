@@ -89,7 +89,9 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
   }
 
   // A connected main district, small island and bridge. Harbour edges are physical walk boundaries.
-  box(COLORS.water, 0, -.8, places ? 0 : 50, places ? 560 : 400, 1, places ? 520 : 340);
+  const wb = places?.frame?.bounds;
+  if (wb) box(COLORS.water, (wb.minX + wb.maxX) / 2, -.8, (wb.minZ + wb.maxZ) / 2, wb.maxX - wb.minX + 240, 1, wb.maxZ - wb.minZ + 240);
+  else box(COLORS.water, 0, -.8, 50, 400, 1, 340);
   // The expanded city's land, quays and piers (always resident: a few boxes; detail streams per chunk).
   if (places) for (const sf of places.surfaces) {
     if (sf.id === 'original-mainland' || sf.id === 'hq-bridge-deck' || sf.id === 'hq-island') continue;
@@ -174,7 +176,7 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
     // Ordinary shop lettering, not an invented logo or redrawn owner mark.
     const sign = kit.sign(worldGroup, b.name, b.tagline || '', { x, y: Math.min(height - .8, 5.35), z: fz + front * .4, width: w - 1.1, height: 2.05, yaw, background: '#2b3d40', accent: '#efd3a2' });
     sign.userData.target = target; pickables.push(sign);
-    const awning = b.id === 'hordash' ? '#94708a' : isTea ? '#6e8b70' : b.id === 'mike-hawk' ? '#a96455' : color;
+    const awning = b.id === 'hordash' ? '#b5706a' : isTea ? '#6e8b70' : b.id === 'mike-hawk' ? '#a96455' : color;
     if (!isGarage) {
       box(awning, x, 3.82, fz + front * 1.05, w - .7, .18, 2.2, [-front * .10, 0, 0]);
       box(awning, x, 3.55, fz + front * 2.1, w - .7, .43, .1);

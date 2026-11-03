@@ -7,20 +7,59 @@
     "units": "metres",
     "axes": "+X east, +Z south (north is -Z), +Y up",
     "origin": "Harbor Boulevard centreline at the original block centre",
+    "georeference": {
+      "status": "unanchored",
+      "originLocal": [
+        0,
+        0,
+        0
+      ],
+      "wgs84": null,
+      "headingDeg": null,
+      "enu": "local X = east, local Z = -north, Y = up",
+      "note": "Fill wgs84 [lon, lat, h] and headingDeg when a region anchors this district; do not move the local origin."
+    },
+    "distinctFrames": {
+      "city": "metres, Y-up (this file)",
+      "hqGlb": "metres, Z-up (canonical HQ GLBs)",
+      "hqGrid": "12 ft = 3.6576 m per cell (HQ adapter)",
+      "tactics": "3.54 m per tile (js/prim3-tactics/scale.mjs)",
+      "note": "Never resized to match each other. An engine floor index (B1 = z8) is not an altitude."
+    },
     "groundY": 0.16,
     "chunkMeters": 64,
     "chunkId": "c{floor(x/chunkMeters)}_{floor(z/chunkMeters)}",
     "bounds": {
-      "minX": -168,
+      "minX": -296,
       "maxX": 168,
-      "minZ": -150,
+      "minZ": -170,
       "maxZ": 140
     },
+    "reserved": [
+      {
+        "id": "bridgeport-neighborhood",
+        "minX": -165,
+        "maxX": 165,
+        "minZ": -345,
+        "maxZ": -58,
+        "links": [
+          [
+            -32,
+            -58
+          ],
+          [
+            32,
+            -58
+          ]
+        ],
+        "note": "Kept free of geography, parcels and collision for the separately built Bridgeport (Robbery 1s) neighbourhood; it joins the original block by walk links at X ±32, Z −58."
+      }
+    ],
     "tactical": {
       "tileSource": "js/prim3-tactics/scale.mjs TILE_M",
       "origin": [
-        -168,
-        -150
+        -296,
+        -170
       ],
       "note": "tile x = floor((X - originX) / TILE_M), tile y = floor((Z - originZ) / TILE_M); tactical y grows north→south exactly as city +Z does, so no axis flip"
     },
@@ -97,10 +136,10 @@
       "name": "Northside",
       "kind": "residential",
       "bounds": {
-        "minX": -168,
-        "maxX": 168,
-        "minZ": -150,
-        "maxZ": -58
+        "minX": -296,
+        "maxX": -168,
+        "minZ": -170,
+        "maxZ": 45
       },
       "status": "new"
     },
@@ -176,10 +215,10 @@
     },
     {
       "id": "northside-land",
-      "minX": -168,
-      "maxX": 168,
-      "minZ": -150,
-      "maxZ": -58,
+      "minX": -296,
+      "maxX": -168,
+      "minZ": -170,
+      "maxZ": 45,
       "kind": "land"
     },
     {
@@ -203,7 +242,7 @@
     {
       "id": "harbor-boulevard",
       "name": "Harbor Boulevard",
-      "minX": -168,
+      "minX": -296,
       "maxX": 168,
       "minZ": -10,
       "maxZ": 8,
@@ -212,20 +251,20 @@
     {
       "id": "northside-avenue",
       "name": "Northside Avenue",
-      "minX": -168,
-      "maxX": 168,
-      "minZ": -80,
-      "maxZ": -70,
+      "minX": -183,
+      "maxX": -175,
+      "minZ": -170,
+      "maxZ": 45,
       "kind": "road"
     },
     {
-      "id": "west-cross",
-      "name": "Quay Street",
-      "minX": -71,
-      "maxX": -61,
-      "minZ": -150,
-      "maxZ": -58,
-      "kind": "road"
+      "id": "hillside-lane",
+      "name": "Hillside Lane",
+      "minX": -296,
+      "maxX": -183,
+      "minZ": -84,
+      "maxZ": -76,
+      "kind": "lane"
     },
     {
       "id": "west-cross-south",
@@ -234,15 +273,6 @@
       "maxX": -61,
       "minZ": 45,
       "maxZ": 140,
-      "kind": "road"
-    },
-    {
-      "id": "east-cross",
-      "name": "Lantern Street",
-      "minX": 61,
-      "maxX": 71,
-      "minZ": -150,
-      "maxZ": -58,
       "kind": "road"
     },
     {
@@ -940,8 +970,8 @@
       "use": "school",
       "footprint": {
         "center": [
-          0,
-          -106
+          -236,
+          -32
         ],
         "size": [
           60,
@@ -954,12 +984,12 @@
         {
           "id": "main",
           "position": [
-            0,
-            -86.4
+            -236,
+            -12.4
           ]
         }
       ],
-      "chunk": "c0_-2",
+      "chunk": "c-4_-1",
       "label": "Public school",
       "enterable": true,
       "roof": "flat"
@@ -970,8 +1000,8 @@
       "use": "house",
       "footprint": {
         "center": [
-          -152,
-          -92
+          -284,
+          -95
         ],
         "size": [
           12,
@@ -984,12 +1014,12 @@
         {
           "id": "main",
           "position": [
-            -152,
-            -85.4
+            -284,
+            -88.4
           ]
         }
       ],
-      "chunk": "c-3_-2",
+      "chunk": "c-5_-2",
       "label": "101",
       "enterable": false,
       "roof": "gable"
@@ -1000,8 +1030,8 @@
       "use": "house",
       "footprint": {
         "center": [
-          -132,
-          -92
+          -262,
+          -95
         ],
         "size": [
           12,
@@ -1014,12 +1044,12 @@
         {
           "id": "main",
           "position": [
-            -132,
-            -85.4
+            -262,
+            -88.4
           ]
         }
       ],
-      "chunk": "c-3_-2",
+      "chunk": "c-5_-2",
       "label": "103",
       "enterable": false,
       "roof": "gable"
@@ -1030,8 +1060,8 @@
       "use": "house",
       "footprint": {
         "center": [
-          -112,
-          -92
+          -240,
+          -95
         ],
         "size": [
           12,
@@ -1044,12 +1074,12 @@
         {
           "id": "main",
           "position": [
-            -112,
-            -85.4
+            -240,
+            -88.4
           ]
         }
       ],
-      "chunk": "c-2_-2",
+      "chunk": "c-4_-2",
       "label": "105",
       "enterable": false,
       "roof": "gable"
@@ -1060,8 +1090,8 @@
       "use": "house",
       "footprint": {
         "center": [
-          -92,
-          -92
+          -218,
+          -95
         ],
         "size": [
           12,
@@ -1074,12 +1104,12 @@
         {
           "id": "main",
           "position": [
-            -92,
-            -85.4
+            -218,
+            -88.4
           ]
         }
       ],
-      "chunk": "c-2_-2",
+      "chunk": "c-4_-2",
       "label": "107",
       "enterable": false,
       "roof": "gable"
@@ -1090,8 +1120,8 @@
       "use": "house",
       "footprint": {
         "center": [
-          -46,
-          -92
+          -196,
+          -95
         ],
         "size": [
           12,
@@ -1104,12 +1134,12 @@
         {
           "id": "main",
           "position": [
-            -46,
-            -85.4
+            -196,
+            -88.4
           ]
         }
       ],
-      "chunk": "c-1_-2",
+      "chunk": "c-4_-2",
       "label": "109",
       "enterable": false,
       "roof": "gable"
@@ -1120,27 +1150,27 @@
       "use": "house",
       "footprint": {
         "center": [
-          46,
-          -92
+          -284,
+          -65
         ],
         "size": [
           12,
           10
         ]
       },
-      "height": 8,
-      "front": "south",
+      "height": 7,
+      "front": "north",
       "entrances": [
         {
           "id": "main",
           "position": [
-            46,
-            -85.4
+            -284,
+            -71.6
           ]
         }
       ],
-      "chunk": "c0_-2",
-      "label": "111",
+      "chunk": "c-5_-2",
+      "label": "102",
       "enterable": false,
       "roof": "gable"
     },
@@ -1150,27 +1180,27 @@
       "use": "house",
       "footprint": {
         "center": [
-          92,
-          -92
+          -262,
+          -65
         ],
         "size": [
           12,
           10
         ]
       },
-      "height": 6,
-      "front": "south",
+      "height": 8,
+      "front": "north",
       "entrances": [
         {
           "id": "main",
           "position": [
-            92,
-            -85.4
+            -262,
+            -71.6
           ]
         }
       ],
-      "chunk": "c1_-2",
-      "label": "113",
+      "chunk": "c-5_-2",
+      "label": "104",
       "enterable": false,
       "roof": "gable"
     },
@@ -1180,27 +1210,27 @@
       "use": "house",
       "footprint": {
         "center": [
-          112,
-          -92
+          -240,
+          -65
         ],
         "size": [
           12,
           10
         ]
       },
-      "height": 7,
-      "front": "south",
+      "height": 6,
+      "front": "north",
       "entrances": [
         {
           "id": "main",
           "position": [
-            112,
-            -85.4
+            -240,
+            -71.6
           ]
         }
       ],
-      "chunk": "c1_-2",
-      "label": "115",
+      "chunk": "c-4_-2",
+      "label": "106",
       "enterable": false,
       "roof": "gable"
     },
@@ -1210,27 +1240,27 @@
       "use": "house",
       "footprint": {
         "center": [
-          132,
-          -92
+          -218,
+          -65
         ],
         "size": [
           12,
           10
         ]
       },
-      "height": 8,
-      "front": "south",
+      "height": 7,
+      "front": "north",
       "entrances": [
         {
           "id": "main",
           "position": [
-            132,
-            -85.4
+            -218,
+            -71.6
           ]
         }
       ],
-      "chunk": "c2_-2",
-      "label": "117",
+      "chunk": "c-4_-2",
+      "label": "108",
       "enterable": false,
       "roof": "gable"
     },
@@ -1240,27 +1270,27 @@
       "use": "house",
       "footprint": {
         "center": [
-          152,
-          -92
+          -196,
+          -65
         ],
         "size": [
           12,
           10
         ]
       },
-      "height": 6,
-      "front": "south",
+      "height": 8,
+      "front": "north",
       "entrances": [
         {
           "id": "main",
           "position": [
-            152,
-            -85.4
+            -196,
+            -71.6
           ]
         }
       ],
-      "chunk": "c2_-2",
-      "label": "119",
+      "chunk": "c-4_-2",
+      "label": "110",
       "enterable": false,
       "roof": "gable"
     },
@@ -1536,28 +1566,19 @@
       "kind": "junction"
     },
     {
-      "id": "junction/northside-west",
+      "id": "junction/northside-avenue",
       "position": [
-        -66,
-        -75
+        -179,
+        -1
       ],
       "neighborhood": "northside-residential",
       "kind": "junction"
     },
     {
-      "id": "junction/northside-centre",
+      "id": "junction/hillside-lane",
       "position": [
-        0,
-        -75
-      ],
-      "neighborhood": "northside-residential",
-      "kind": "junction"
-    },
-    {
-      "id": "junction/northside-east",
-      "position": [
-        66,
-        -75
+        -236,
+        -80
       ],
       "neighborhood": "northside-residential",
       "kind": "junction"
@@ -1641,8 +1662,8 @@
       "id": "northside-commons",
       "name": "Northside Commons",
       "position": [
-        -110,
-        -130
+        -240,
+        -140
       ],
       "radius": 12,
       "neighborhood": "northside-residential",
@@ -1663,17 +1684,17 @@
   "parks": [
     {
       "id": "northside-commons",
-      "minX": -168,
-      "maxX": -40,
-      "minZ": -150,
-      "maxZ": -118
+      "minX": -296,
+      "maxX": -186,
+      "minZ": -170,
+      "maxZ": -110
     },
     {
       "id": "northside-field",
-      "minX": 40,
-      "maxX": 168,
-      "minZ": -150,
-      "maxZ": -118
+      "minX": -296,
+      "maxX": -186,
+      "minZ": 16,
+      "maxZ": 45
     }
   ]
 }

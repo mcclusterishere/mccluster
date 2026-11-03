@@ -23,7 +23,8 @@ const STATE_KEY = 'here.universe.mccluster-fictional-city.state';
 // the original 27 plus any parcel-bound residents from lore revision 2 (PR #720)
 const PEOPLE = city.npcs.length + city.garageCrew.length + (city.expansionNpcs?.length || 0);
 const LORE_PARCELS = new Set((city.expansionBusinesses || []).map(b => b.parcelId));
-const PLACES_SUMMARY = JSON.stringify({ neighborhoods: 6, parcels: places.parcels.length, vacant: places.parcels.filter(p => !LORE_PARCELS.has(p.id)).length, chunks: 36 });
+const CHUNKS = JSON.parse(await readFile(join(root, 'data/fictional-city/chunks/index.v1.json'), 'utf8')).chunks.length;
+const PLACES_SUMMARY = JSON.stringify({ neighborhoods: 6, parcels: places.parcels.length, vacant: places.parcels.filter(p => !LORE_PARCELS.has(p.id)).length, chunks: CHUNKS });
 const metrics = [];
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined, args: ['--no-sandbox', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp', '.jpg': 'image/jpeg', '.woff2': 'font/woff2' };
@@ -219,7 +220,7 @@ try {
     const s = await page.evaluate(() => MCC_CITY.snapshot());
     check('v1 save migrates to v2 keeping credits, inventory, receipts, met, visited, chapter and position',
       s.version === 2 && s.credits === 199 && s.inventory[item.id] === 1 && s.receipts.length === 1 && s.receipts[0].at === v1.receipts[0].at && s.met[0] === 'mike-hawk' && s.visited.includes('hordash') && s.story.chapter === 'tears-wont-fall' && s.position.x === -16 && Array.isArray(s.discoveries), s);
-    check('the city reports its geography: 5 neighbourhoods + the island, every parcel, 36 chunks; lore claims its parcels', JSON.stringify(await page.evaluate(() => MCC_CITY.places())) === PLACES_SUMMARY);
+    check('the city reports its geography: 5 neighbourhoods + the island, every parcel, every chunk; lore claims its parcels', JSON.stringify(await page.evaluate(() => MCC_CITY.places())) === PLACES_SUMMARY);
     // all eight original businesses: enter and leave each one
     for (const b of city.businesses) {
       await page.getByRole('button', { name: 'District map' }).click();
@@ -290,28 +291,32 @@ try {
   {
     // walk across neighbourhood and chunk boundaries; water stops a body; doors and interiors in new areas
     const { context, page, errors } = await contextFor(1280);
-    await withSave(context, v2({ x: -60, z: -50, interior: null }));
+    // west along Harbor Boulevard from Civic Center into Northside, across the x = −192 chunk edge
+    await withSave(context, v2({ x: -160, z: -1, interior: null }));
     await page.goto(site + '/fictional-city.html'); await ready(page); await settled(page);
     const s0 = await page.evaluate(() => MCC_CITY.stats().chunks);
-    await holdUntil(page, "w", () => MCC_CITY.snapshot().position.z < -70);
+    await holdUntil(page, 'a', () => MCC_CITY.snapshot().position.x < -195);
     await settled(page);
     const s1 = await page.evaluate(() => ({ chunks: MCC_CITY.stats().chunks, p: MCC_CITY.snapshot(), area: document.querySelector('#city-location').textContent }));
-    check('walked from the original block across a chunk edge into Northside', s1.area === 'Northside' && s1.p.discoveries.includes('northside-residential'), s1);
+    check('walked from Civic Center across a neighbourhood and chunk edge into Northside', s1.area === 'Northside' && s1.p.discoveries.includes('northside-residential'), s1);
     check('chunks ahead loaded while walking (bounded active set)', s1.chunks.loads > s0.loads && s1.chunks.active <= 16, { s0, s1: s1.chunks });
     await page.locator('.city-stage').screenshot({ path: join(out, 'after-northside.png') });
     await measure(page, 'northside (1280)');
     // map travel to a far neighbourhood unloads what is behind
     await page.getByRole('button', { name: 'District map' }).click();
-    await page.locator('details.city-area-list').filter({ hasText: 'Workshop Wharf' }).locator('summary').click();
-    const wharf = page.locator('.city-place-card').filter({ has: page.getByRole('heading', { name: 'Workshop' }) }).first();
+    // the first wharf workshop: a lore business once lore claims the parcel, otherwise the generic workshop
+    const wharfBiz = (city.expansionBusinesses || []).find(x => x.parcelId === 'workshop-waterfront/shop-01');
+    const wharfName = wharfBiz ? wharfBiz.name : 'Workshop', wharfId = wharfBiz ? wharfBiz.id : 'workshop-waterfront/shop-01';
+    if (!wharfBiz) await page.locator('details.city-area-list').filter({ hasText: 'Workshop Wharf' }).locator('summary').click();
+    const wharf = page.locator('.city-place-card').filter({ has: page.getByRole('heading', { name: wharfName, exact: true }) }).first();
     await wharf.getByRole('button', { name: 'Go to the door' }).click();
     await page.waitForFunction(() => MCC_CITY.snapshot().position.z > 60);
     await settled(page); await page.waitForTimeout(700); await settled(page);
     const s2 = await page.evaluate(() => MCC_CITY.stats().chunks);
     check('far chunks unload with hysteresis; active set stays bounded', s2.unloads > 0 && s2.active <= 16, s2);
-    await page.waitForFunction(() => /Workshop/.test(document.querySelector('#city-prompt').textContent));
+    await page.waitForFunction(name => document.querySelector('#city-prompt').textContent.includes(name), wharfName);
     await page.getByRole('button', { name: 'Interact' }).click();
-    await page.waitForFunction(() => /^workshop-waterfront\//.test(MCC_CITY.snapshot().position.interior || ''));
+    await page.waitForFunction(id => MCC_CITY.snapshot().position.interior === id, wharfId);
     check('a new-neighbourhood workshop is an entered interior', true);
     await page.getByRole('button', { name: 'Leave building' }).click();
     await page.waitForFunction(() => !MCC_CITY.snapshot().position.interior);
