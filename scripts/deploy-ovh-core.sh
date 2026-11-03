@@ -256,7 +256,9 @@ fi
 # not fatal: the adapter runs those requests on the default model. Ten minutes
 # per attempt keeps the release inside the reconciler's 20-minute limit;
 # Ollama keeps downloaded layers, so the next release resumes the pull.
-EXTRA_MODELS="$(sed -n 's/^Environment=MCCLUSTER_OLLAMA_EXTRA_MODELS=//p' "${SOURCE_DIR}/core/systemd/mccluster-ollama-adapter.service" | tail -n 1 | tr ',' ' ')"
+# Only the small resident models are pulled here (the release has a 20-minute
+# limit); larger on-demand models are installed by ai_diagnostics pull_missing.
+EXTRA_MODELS="$(sed -n 's/^Environment=MCCLUSTER_OLLAMA_DEPLOY_PULL=//p' "${SOURCE_DIR}/core/systemd/mccluster-ollama-adapter.service" | tail -n 1 | tr ',' ' ')"
 for model in ${EXTRA_MODELS}; do
   [[ "${model}" =~ ^[a-z0-9][a-z0-9._:-]{1,80}$ ]] || continue
   if ! curl -fsS --max-time 5 http://127.0.0.1:11434/api/tags 2>/dev/null | grep -qF "\"name\":\"${model}\""; then
