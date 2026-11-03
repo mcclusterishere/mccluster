@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0",
-  "catalogVersion": "2026-09-22.1",
+  "catalogVersion": "2026-11-03.1",
   "capabilities": [
     {
       "id": "core.resume",
@@ -686,6 +686,75 @@
         "media",
         "3d",
         "prim3"
+      ]
+    },
+    {
+      "id": "game.lore.read",
+      "title": "Read city lore",
+      "description": "Read the versioned city manifest or bounded authored business, NPC, item, brand and portal records. Read-only release data; no private memory, inference or purchases.",
+      "domain": "game",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "universe_id": {
+            "type": "string",
+            "enum": [
+              "mccluster-fictional-city"
+            ]
+          },
+          "section": {
+            "type": "string",
+            "enum": [
+              "manifest",
+              "brands",
+              "businesses",
+              "npcs",
+              "items",
+              "portals"
+            ],
+            "default": "manifest"
+          },
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]{0,79}$",
+            "maxLength": 80
+          },
+          "business_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]{0,79}$",
+            "maxLength": 80
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 24,
+            "default": 8
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "game",
+        "lore",
+        "city",
+        "read-only"
       ]
     },
     {
@@ -2811,6 +2880,24 @@
         "separator": "demucs htdemucs_6s",
         "private_storage": true,
         "paid_provider": false
+      }
+    },
+    {
+      "id": "core.game-lore-read",
+      "capability": "game.lore.read",
+      "provider": "mccluster-core",
+      "tool": "core.game.lore.read",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 200,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "read_only": true,
+        "self_hosted": true,
+        "release_data": true
       }
     }
   ]

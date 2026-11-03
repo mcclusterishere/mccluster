@@ -24,6 +24,10 @@ Core V2 is the active geometry authority:
 - Stair A X60–72 / Y54–72;
 - MEP/riser approximately X50–60 / Y66–72.
 
+## Repo-source coverage — fictional-city integration, 2026-11-03
+
+The source ledger now classifies the nine new fictional-city and universe references as support-only, with no capability ownership. The regenerated `production/generated/equity-uprise-repo-source-coverage-report.json` covers **549 tracked-checkout sources: 102 capability sources and 447 support-only sources**. The city contributes a derived exterior/portal view and its documentation, navigation and tests; headquarters geometry, floor programs and existing capability mappings remain unchanged.
+
 ## v3 INTERIORS + BRAND SLOTS + EGRESS RECONCILIATION + B1 NORMAL — 2026-11-03
 
 Owner, 2026-11-03: "I need different floor plans … at least the interior furniture … it's just too similar across and certain things aren't making sense as what they're shaped like … we should have a productized version of this where we could assign the building a new logo … the Stair A exit doesn't exist in the model. We have to make it … make everything better."

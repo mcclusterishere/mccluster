@@ -1,6 +1,6 @@
 {
   "schema": "here.universe-registry/v1",
-  "revision": "2026-08-15",
+  "revision": "2026-11-03",
   "shell": {
     "tabBar": "js/tabbar.js",
     "transitionVeil": ".pt-veil",
@@ -10,7 +10,8 @@
   },
   "playStyles": {
     "visual": "Decision-tree play: tap a picture/choice, a generated transition clip carries you A to B, you arrive. Level 1 of the game is the decision layer.",
-    "fps": "First-person shooter play: independent engine, pointer lock, WASD. You relearn the game on purpose."
+    "fps": "First-person shooter play: independent engine, pointer lock, WASD. You relearn the game on purpose.",
+    "exploration": "Independent third-person walking exploration: keyboard, touch controls and tap-to-walk, scripted NPC conversations, enterable shops and fictional game-credit inventory. No shooter mechanics."
   },
   "universes": [
     {
@@ -59,6 +60,53 @@
           "trigger": "site0.player reaches a registered exit portal",
           "transition": "planned:generated clip (two-track: batch API / Higgsfield hero)",
           "spawnAt": "uprise.deep-end"
+        }
+      ]
+    },
+    {
+      "id": "mccluster-fictional-city",
+      "title": "McCluster City — Commercial District",
+      "playStyle": "exploration",
+      "status": "owner-only playable preview, authorized 2026-11-03",
+      "engine": "Independent Three.js 0.180 procedural district in js/fictional-city; no cross-universe engine imports",
+      "entry": "fictional-city.html",
+      "contract": "docs/fictional-city/AGENTS.md",
+      "stateKey": "here.universe.mccluster-fictional-city.state",
+      "tab": {
+        "appnav": null,
+        "exists": false
+      },
+      "entrances": [
+        {
+          "id": "city.boulevard",
+          "route": "fictional-city.html",
+          "note": "Restore last position by default; new save begins on Harbor Boulevard."
+        },
+        {
+          "id": "city.garage",
+          "route": "fictional-city.html?entry=garage",
+          "note": "Explicit garage entrance overrides only player position."
+        },
+        {
+          "id": "city.island",
+          "route": "fictional-city.html?entry=island",
+          "note": "Explicit island footbridge arrival; detailed HQ entrance remains on Floor 1."
+        }
+      ],
+      "portalData": "core/data/fictional-city/district.v1.json#/portals",
+      "portals": [
+        {
+          "id": "city.departure-desk",
+          "targetType": "existing-route-directory",
+          "trigger": "Garage desk or island entrance interaction, then explicit destination selection",
+          "transition": "Save local city state; load the registered existing route",
+          "destinations": [
+            "prim3-transit.html?level=equity-uprise-hq",
+            "action-globe.html?explore=1&halo=1",
+            "prim3-world.html",
+            "album.html?album=whip-equipped"
+          ],
+          "return": "Reopen fictional-city.html or browser Back; city restores its own state. No reciprocal portal implementation is asserted."
         }
       ]
     }
