@@ -6,6 +6,7 @@ import {handleAtNight} from './at-night.js';
 import prim3 from './prim3/index.js';
 import { handlePrim3Levels, PRIM3_LEVELS_PREFIX } from './prim3/levels.js';
 import { handleNewsDesk, NEWS_DESK_PATH } from './prim3/news-desk.js';
+import { handleLearning, LEARNING_PATH } from './prim3/learning.js';
 import seekFirst from './seek-first/index.js';
 import { buildEquityUpriseHaloProjection } from './seek-first/equity-uprise-halo.js';
 import { handleWorldLayers } from './world-layers.js';
@@ -158,6 +159,11 @@ export default {
       /* PRIM3 news desk: the 24 agents' briefs and reactions, owner only (./prim3/news-desk.js) */
       if (path === NEWS_DESK_PATH) {
         return handleNewsDesk(request, env, { requireHouseOwner });
+      }
+
+      /* PRIM3 learning evidence: lab sessions, certificates, pathways, HSEEP exercises; house owner only for now (./prim3/learning.js) */
+      if (path === LEARNING_PATH || path.startsWith(`${LEARNING_PATH}/`)) {
+        return handleLearning(request, env, { requireHouseOwner, authUser });
       }
 
       if (path === '/v1/prim3' || path.startsWith('/v1/prim3/')) {

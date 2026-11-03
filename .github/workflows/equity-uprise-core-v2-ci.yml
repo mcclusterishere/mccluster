@@ -133,6 +133,12 @@ jobs:
       - name: Verify Lab Runtime Step 8 3D viewer integration
         run: node docs/design/equity-uprise-building/production/lab-runtime/verify_viewer_lab_integration_v1.mjs
 
+      - name: Verify HSEEP building-safety exercises, ICS roles and AAR/IP drafts
+        run: node docs/design/equity-uprise-building/production/lab-runtime/verify_hseep_scenarios_v1.mjs
+
+      - name: Verify learning pathways and industry certification map
+        run: python docs/design/equity-uprise-development/verify_learning_pathways.py
+
       - name: Verify Server Lab (rack/server hardware, IT-LAB-041..051)
         run: node docs/design/equity-uprise-building/production/lab-runtime/verify_server_lab_v1.mjs
 
