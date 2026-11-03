@@ -111,13 +111,13 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
   const view = { dist: HOME.dist, minDist: 8, maxDist: 26, target: new THREE.Vector3(HOME.x, 0, HOME.z), goal: new THREE.Vector3(HOME.x, 0, HOME.z), pitch: 0.98, yaw: 0, yawGoal: 0 };
 
   /* ---------- light: dusk. Warm low sun, cool sky, cool rim, sodium lamps ---------- */
-  scene.add(new THREE.HemisphereLight(0x9cc0de, 0x2a1d14, tier === 'low' ? 1.1 : 0.7));
-  const sun = new THREE.DirectionalLight(0xffb878, 2.6);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0xb9bec2, tier === 'low' ? 0.95 : 0.7));
+  const sun = new THREE.DirectionalLight(0xfffaf2, 1.9);
   sun.position.set(cx - 8, 9, cz - 7); sun.target.position.set(cx, 0, cz);
   sun.castShadow = true; sun.shadow.mapSize.set(tier === 'low' ? 1024 : 2048, tier === 'low' ? 1024 : 2048);
   Object.assign(sun.shadow.camera, { left: -11, right: 11, top: 11, bottom: -11, near: 1, far: 45 });
   sun.shadow.bias = -0.0006; sun.shadow.normalBias = 0.02; scene.add(sun, sun.target);
-  const rim = new THREE.DirectionalLight(0x7fb2ff, 0.9); rim.position.set(cx + 9, 6, cz + 10); scene.add(rim);
+  const rim = new THREE.DirectionalLight(0xf2f6ff, 0.6); rim.position.set(cx + 9, 6, cz + 10); scene.add(rim);
 
   /* ---------- ground: wet flagstone tiles, plaza margin, readable grid ---------- */
   const rough = wetRough(3);
@@ -128,6 +128,8 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
   plaza.rotation.x = -Math.PI / 2; plaza.position.set(cx, -0.02, cz + 2); plaza.receiveShadow = true; scene.add(plaza);
   const tileGeo = new THREE.BoxGeometry(0.97, 0.06, 0.97);
   const tileMats = [stoneTex(21, '#4b5257'), stoneTex(22, '#444b51'), stoneTex(23, '#4f555a')].map((t) => new THREE.MeshStandardMaterial({ map: t, roughnessMap: rough, roughness: 1, metalness: 0.08 }));
+  for (const [i, m] of tileMats.entries()) m.userData.tone = [0xe4e5e5, 0xdfe0e0, 0xe7e7e6][i];
+  plaza.material.userData.tone = 0xf6f6f4;
   for (const [i, m] of tileMats.entries()) m.userData.pbr = { set: 'concrete_pavement', repeat: [0.5, 0.5], offset: [i * 0.5, i * 0.25], tint: [0xffffff, 0xe9e9e9, 0xf4f1ec][i] };
   const tiles = new THREE.InstancedMesh(tileGeo, tileMats[0], width * height);
   const tiles2 = new THREE.InstancedMesh(tileGeo, tileMats[1], width * height);
@@ -139,9 +141,9 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
   for (let x = 0; x <= width; x += 1) gp.push(x - 0.5, 0.035, -0.5, x - 0.5, 0.035, height - 0.5);
   for (let y = 0; y <= height; y += 1) gp.push(-0.5, 0.035, y - 0.5, width - 0.5, 0.035, y - 0.5);
   const gridGeo = new THREE.BufferGeometry(); gridGeo.setAttribute('position', new THREE.Float32BufferAttribute(gp, 3));
-  scene.add(new THREE.LineSegments(gridGeo, new THREE.LineBasicMaterial({ color: C.grid, transparent: true, opacity: 0.2 })));
+  scene.add(new THREE.LineSegments(gridGeo, new THREE.LineBasicMaterial({ color: 0x7d878d, transparent: true, opacity: 0.45 })));
   // board edge: a thin lit trim so the play area reads against the plaza
-  const trim = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(width + 0.04, 0.02, height + 0.04)), new THREE.LineBasicMaterial({ color: C.cyan, transparent: true, opacity: 0.55 }));
+  const trim = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(width + 0.04, 0.02, height + 0.04)), new THREE.LineBasicMaterial({ color: 0x1b2024, transparent: true, opacity: 0.7 }));
   trim.position.set(cx, 0.04, cz); scene.add(trim);
 
   /* ---------- the courtyard around the board (set dressing only: never on a tile) ---------- */
@@ -222,6 +224,30 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
   crate(width + 0.9, height * 0.05, 0.6, 0.3); crate(width + 0.95, height * 0.05 + 0.7, 0.45, -0.2); crate(-1.6, height + 0.4, 0.55, 0.6);
   puddle(-1.2, height * 0.2, 1.4, 0.8); puddle(width + 0.6, height * 0.85, 1.1, 1.6); puddle(cx + 1, height + 1.2, 2.2, 0.9);
 
+  /* ---------- art direction (owner, 2026-11-02): the world is white, the people are black ----------
+     Every surface of the environment is a white "clay" material: real geometry, normal and roughness
+     detail, soft shadows and ambient occlusion, no colour. Only the operatives (black), the game's own
+     overlays (cyan / amber / red) and the relay beacon carry colour. */
+  const WHITE = true;
+  function whiteout(root) {
+    root.traverse((o) => {
+      if (!o.isMesh || !o.material || !o.material.isMeshStandardMaterial) return;
+      const m = o.material; if (m.userData.keepColor || m.userData.white) return;
+      m.userData.white = true;
+      m.map = null; m.emissiveMap = null; m.emissive.set(0x000000); m.emissiveIntensity = 0;
+      m.color.set(m.userData.tone || 0xe9e9e7); m.metalness = 0; m.roughness = Math.max(0.55, m.roughness);
+      m.transparent = false; m.opacity = 1; m.needsUpdate = true;
+    });
+  }
+  if (WHITE) {
+    scene.background = new THREE.Color(0xeceeef);
+    scene.fog = new THREE.Fog(0xeceeef, 42, 95);
+    renderer.toneMappingExposure = 0.92;
+    for (const l of lamps) { l.visible = false; }
+    whiteout(scene); // the courtyard built so far; the operatives are added later and stay black
+    scene.traverse((o) => { if (o.isSprite) o.visible = false; });
+  }
+
   /* ---------- per-tile overlays (reach / path / dest / hint / runs), shown or hidden by update() ---------- */
   const overlayGeo = new THREE.PlaneGeometry(0.9, 0.9); overlayGeo.rotateX(-Math.PI / 2);
   const ovMat = (color, opacity) => new THREE.MeshBasicMaterial({ color, transparent: true, opacity, depthWrite: false, toneMapped: false });
@@ -246,6 +272,7 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
   const props = new THREE.Group(); scene.add(props);
   const unitsGroup = new THREE.Group(); scene.add(unitsGroup);
   const relayGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.2), new THREE.MeshStandardMaterial({ color: C.amber, emissive: C.amber, emissiveIntensity: 3, toneMapped: false }));
+  relayGem.material.userData.keepColor = true;
   let propsKey = '';
   const brickMat = std({ map: brickTex(false), roughness: 0.9 }); brickMat.userData.pbr = { set: 'red_brick_03', repeat: [0.45, 0.8] };
   const capMat = std({ color: 0x3c2f2a, roughness: 0.6 });
@@ -289,6 +316,7 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
       const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: glow, color: C.amber, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.7 }));
       sp.scale.set(1.2, 1.2, 1); sp.position.set(t.x, 1.35, t.y); props.add(sp);
     }
+    if (WHITE) { whiteout(props); props.traverse((o) => { if (o.isSprite) o.visible = false; if (o.isPointLight) o.intensity = 1.5; }); }
   }
 
   /* ---------- operatives: articulated procedural stand-ins, per phenotype ---------- */
@@ -300,84 +328,138 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
     const end = new THREE.Group(); end.position.y = -len; piv.add(end);
     piv.userData.end = end; return piv;
   }
-  // Canon look (Prim3 phenotypes): faceless matte-black atelier mannequins. The squad wears Wear-01
-  // Company Black (the Cohort-02 Trainee default, per CFI-01); known hostiles are Defense / SOI-01
-  // security officers: shirt, ultra-thin vest, high-chest body camera, one holstered sidearm and a
-  // cyberdeck; no helmet, no long gun (SECURITY-OFFICER-STYLE-SHEET.md). No mark is drawn on any
-  // garment: the canon says omit a mark rather than approximate it. The small role-coloured tab on
-  // the squad's shoulder is a game readability cue, not an insignia.
+  // Field operators as the owner's loadout photographs show them (Prim3 phenotypes/operators/LOADOUTS.md):
+  // faceless black mannequins, everything they wear and carry in black. The figure faces +Z, so its
+  // own right side is −X.
+  //   E · FO-E-AE  protective carrier, knee pads, over-ear headset, body camera (its right chest),
+  //                belt pouches, right-hip holster, entry tool at the right thigh, compact carbine slung left
+  //   R · FO-R-SO  light chest rig, binoculars in a sternum pouch, recorder (its right chest), one-ear
+  //                headset, belt radio, right-hip holster, scoped rifle slung left
+  //   T · FO-T-STD short sleeves, zip soft vest, centre-chest recorder, radio on the left strap, deck
+  //                sling over the right shoulder, open cyberdeck held at the waist, belt pouches, sidearm
+  //   H · SOI-01   short sleeves, thin vest, body camera, holstered sidearm, cyberdeck; no helmet
+  // No marks are drawn (the canon omits a mark rather than approximating it). Long guns hang on the
+  // sling at rest and come to the hands only to shoot.
   function operative(u) {
     const ally = u.faction === 'PLAYER', role = ally ? u.role : 'H';
-    const tint = ally ? (ROLE[u.role] || C.cyan) : C.hostile;
-    const body = std({ color: 0x0b0b0c, roughness: 0.3, metalness: 0.1 }); // glossy mannequin
-    const cloth = std({ color: 0x131416, roughness: 0.92 });
-    const cloth2 = std({ color: 0x18191b, roughness: 0.85 });
-    const shoe = std({ color: 0x070707, roughness: 0.3, metalness: 0.1 });
-    const steel = std({ color: 0x121416, roughness: 0.45, metalness: 0.6 });
-    const band = std({ color: tint, emissive: tint, emissiveIntensity: 1.6, roughness: 0.4 });
+    const body = std({ color: 0x0a0a0b, roughness: 0.32, metalness: 0.08 });   // mannequin
+    const cloth = std({ color: 0x111214, roughness: 0.93 });                    // field fabric
+    const gear = std({ color: 0x18191b, roughness: 0.78 });                     // nylon webbing, pouches
+    const hard = std({ color: 0x0d0e10, roughness: 0.42, metalness: 0.35 });    // weapons, devices
+    const boot = std({ color: 0x080808, roughness: 0.55 });
     const g = new THREE.Group(); g.userData.unitId = u.id;
-    const rig = {};
+    const rig = { role };
     const hips = new THREE.Group(); hips.position.y = 0.92; g.add(hips); rig.hips = hips;
-    add(new THREE.BoxGeometry(0.32, 0.16, 0.2), cloth, 0, 0, 0, { parent: hips });
-    add(new THREE.BoxGeometry(0.33, 0.035, 0.21), shoe, 0, 0.06, 0, { parent: hips }); // belt
+    add(new THREE.BoxGeometry(0.31, 0.16, 0.2), cloth, 0, 0, 0, { parent: hips });
+    add(new THREE.BoxGeometry(0.33, 0.045, 0.215), gear, 0, 0.065, 0, { parent: hips });                 // belt
+    add(new THREE.BoxGeometry(0.05, 0.035, 0.02), hard, 0, 0.065, 0.11, { parent: hips });                // buckle
     const spine = new THREE.Group(); spine.position.y = 0.08; hips.add(spine); rig.spine = spine;
     const chest = new THREE.Group(); spine.add(chest); rig.chest = chest;
-    const torso = add(new THREE.CapsuleGeometry(0.165, 0.27, 4, 14), cloth, 0, 0.25, 0, { parent: chest }); torso.scale.set(1.12, 1, 0.78);
-    add(new THREE.CylinderGeometry(0.07, 0.085, 0.06, 12), cloth2, 0, 0.47, 0, { parent: chest }); // collar
-    if (!ally) { // SOI-01: ultra-thin vest, body camera with a red record light
-      const vest = add(new THREE.CapsuleGeometry(0.17, 0.2, 4, 14), cloth2, 0, 0.27, 0, { parent: chest }); vest.scale.set(1.14, 1, 0.84);
-      add(new THREE.BoxGeometry(0.055, 0.08, 0.03), steel, -0.08, 0.36, 0.145, { parent: chest });
-      add(new THREE.CircleGeometry(0.014, 12), new THREE.MeshBasicMaterial({ color: 0x1a1d20 }), -0.08, 0.37, 0.161, { parent: chest, cast: false });
-      add(new THREE.SphereGeometry(0.008, 8, 6), new THREE.MeshBasicMaterial({ color: C.hostile, toneMapped: false }), -0.065, 0.335, 0.16, { parent: chest, cast: false });
-      add(new THREE.BoxGeometry(0.05, 0.14, 0.09), steel, 0.19, -0.08, 0.02, { parent: hips }); // holster
-    } else {
-      add(new THREE.BoxGeometry(0.05, 0.03, 0.12), band, 0.2, 0.43, 0, { parent: chest, cast: false }); // role tab (readability)
-    }
+    const torso = add(new THREE.CapsuleGeometry(0.16, 0.27, 4, 14), cloth, 0, 0.25, 0, { parent: chest }); torso.scale.set(1.12, 1, 0.76);
+    add(new THREE.CylinderGeometry(0.068, 0.08, 0.075, 14), cloth, 0, 0.47, 0, { parent: chest });       // collar / quarter-zip
     const neck = new THREE.Group(); neck.position.y = 0.5; chest.add(neck); rig.neck = neck;
-    add(new THREE.CylinderGeometry(0.045, 0.05, 0.08, 10), body, 0, 0.02, 0, { parent: neck });
-    const head = add(new THREE.SphereGeometry(0.1, 24, 18), body, 0, 0.14, 0.01, { parent: neck }); head.scale.set(0.92, 1.25, 1.02); // faceless
-    // arms: squad in long sleeves; officers in short sleeves (mannequin forearms show)
-    const armL = limb(0.3, 0.055, 0.048, cloth), armR = limb(0.3, 0.055, 0.048, cloth);
-    armL.position.set(-0.21, 0.42, 0); armR.position.set(0.21, 0.42, 0); chest.add(armL, armR);
-    const foreMat = ally ? cloth : body;
-    const foreL = limb(0.28, 0.045, 0.038, foreMat), foreR = limb(0.28, 0.045, 0.038, foreMat);
+    add(new THREE.CylinderGeometry(0.043, 0.05, 0.08, 12), body, 0, 0.02, 0, { parent: neck });
+    const head = add(new THREE.SphereGeometry(0.1, 24, 18), body, 0, 0.145, 0.01, { parent: neck }); head.scale.set(0.9, 1.26, 1.0);
+    const camLight = (x, y, z, parent) => add(new THREE.SphereGeometry(0.007, 8, 6), new THREE.MeshBasicMaterial({ color: 0xff3344, toneMapped: false }), x, y, z, { parent, cast: false });
+    const recorder = (x, y, z) => { add(new THREE.BoxGeometry(0.05, 0.065, 0.028), hard, x, y, z, { parent: chest }); add(new THREE.CircleGeometry(0.013, 14), std({ color: 0x050505, roughness: 0.05, metalness: 0.6 }), x, y + 0.008, z + 0.015, { parent: chest, cast: false }); };
+    // torso equipment
+    if (role === 'E') { // protective carrier: front and back plates, side cummerbund, shoulder straps
+      add(new THREE.BoxGeometry(0.36, 0.3, 0.07), gear, 0, 0.25, 0.115, { parent: chest });
+      add(new THREE.BoxGeometry(0.35, 0.3, 0.06), gear, 0, 0.25, -0.115, { parent: chest });
+      for (const sx of [-1, 1]) { add(new THREE.BoxGeometry(0.04, 0.16, 0.24), gear, sx * 0.18, 0.2, 0, { parent: chest }); add(new THREE.BoxGeometry(0.07, 0.02, 0.27), gear, sx * 0.1, 0.415, 0, { parent: chest }); }
+      add(new THREE.BoxGeometry(0.12, 0.05, 0.005), cloth, 0.05, 0.33, 0.152, { parent: chest, cast: false });      // blank ID panel
+      recorder(-0.1, 0.36, 0.16); camLight(-0.085, 0.34, 0.176, chest);
+    } else if (role === 'R') { // light chest rig: thin straps, binocular pouch at the sternum, recorder high on its right chest
+      for (const sx of [-1, 1]) add(new THREE.BoxGeometry(0.035, 0.36, 0.012), gear, sx * 0.09, 0.3, 0.125, { parent: chest }).rotation.z = sx * 0.12;
+      add(new THREE.BoxGeometry(0.17, 0.11, 0.07), gear, 0, 0.17, 0.14, { parent: chest });
+      for (const sx of [-1, 1]) { const b = add(new THREE.CylinderGeometry(0.026, 0.026, 0.08, 14), hard, sx * 0.035, 0.24, 0.15, { parent: chest }); void b; }
+      add(new THREE.BoxGeometry(0.1, 0.035, 0.005), cloth, 0, 0.34, 0.125, { parent: chest, cast: false });
+      recorder(-0.11, 0.37, 0.135);
+    } else if (role === 'T') { // zip soft vest, centre recorder, radio on the left strap, deck sling over the right shoulder
+      const vest = add(new THREE.CapsuleGeometry(0.168, 0.22, 4, 14), gear, 0, 0.25, 0, { parent: chest }); vest.scale.set(1.14, 1, 0.82);
+      add(new THREE.BoxGeometry(0.008, 0.3, 0.005), hard, 0, 0.25, 0.14, { parent: chest, cast: false });           // zip
+      recorder(0, 0.37, 0.14);
+      add(new THREE.BoxGeometry(0.04, 0.09, 0.025), hard, 0.1, 0.33, 0.135, { parent: chest });                    // radio, its left
+      add(new THREE.CylinderGeometry(0.004, 0.004, 0.08, 5), hard, 0.11, 0.4, 0.135, { parent: chest });
+      const sling = add(new THREE.BoxGeometry(0.045, 0.62, 0.012), gear, -0.02, 0.22, 0.145, { parent: chest, cast: false }); sling.rotation.z = -0.62;
+      // the open field cyberdeck, held at the waist on its sling
+      const deck = new THREE.Group(); deck.position.set(0.02, -0.06, 0.27); deck.rotation.x = -0.12; chest.add(deck); rig.deck = deck;
+      add(new THREE.BoxGeometry(0.26, 0.022, 0.18), hard, 0, 0, 0, { parent: deck });
+      const lid = new THREE.Group(); lid.position.set(0, 0.011, -0.088); lid.rotation.x = -1.85; deck.add(lid);
+      add(new THREE.BoxGeometry(0.26, 0.016, 0.18), hard, 0, 0, 0.09, { parent: lid });
+      add(new THREE.PlaneGeometry(0.22, 0.14), new THREE.MeshBasicMaterial({ color: 0x1f8f8a, toneMapped: false }), 0, -0.009, 0.09, { parent: lid, cast: false }).rotation.x = Math.PI / 2;
+    } else { // SOI-01 officer: thin vest, body camera
+      const vest = add(new THREE.CapsuleGeometry(0.167, 0.2, 4, 14), gear, 0, 0.27, 0, { parent: chest }); vest.scale.set(1.14, 1, 0.8);
+      recorder(-0.08, 0.36, 0.14); camLight(-0.065, 0.34, 0.156, chest);
+    }
+    // head equipment
+    if (role === 'E') { // over-ear headset with a boom
+      const band = add(new THREE.TorusGeometry(0.105, 0.012, 6, 20, Math.PI), hard, 0, 0.15, 0, { parent: neck }); band.rotation.y = Math.PI / 2;
+      for (const sx of [-1, 1]) add(new THREE.CylinderGeometry(0.045, 0.045, 0.035, 14), hard, sx * 0.1, 0.13, 0, { parent: neck }).rotation.z = Math.PI / 2;
+      add(new THREE.BoxGeometry(0.1, 0.008, 0.008), hard, -0.07, 0.08, 0.07, { parent: neck }).rotation.y = 0.7;
+    } else if (role === 'R') { // low-profile single-ear headset
+      const band = add(new THREE.TorusGeometry(0.1, 0.006, 6, 20, Math.PI), hard, 0, 0.16, 0, { parent: neck }); band.rotation.y = Math.PI / 2;
+      add(new THREE.CylinderGeometry(0.032, 0.032, 0.025, 12), hard, 0.095, 0.13, 0, { parent: neck }).rotation.z = Math.PI / 2;
+      add(new THREE.BoxGeometry(0.11, 0.006, 0.006), hard, 0.06, 0.08, 0.07, { parent: neck }).rotation.y = -0.7;
+    } else if (role === 'T') { // earpiece
+      add(new THREE.SphereGeometry(0.018, 10, 8), hard, 0.093, 0.13, 0.01, { parent: neck });
+    }
+    // arms: long sleeves for E and R; short sleeves (black mannequin forearms) for T and officers
+    const shortSleeve = role === 'T' || role === 'H';
+    const armL = limb(0.3, 0.055, 0.047, cloth), armR = limb(0.3, 0.055, 0.047, cloth);
+    armL.position.set(0.205, 0.42, 0); armR.position.set(-0.205, 0.42, 0); chest.add(armL, armR);
+    if (shortSleeve) for (const a of [armL, armR]) { const lower = a.children[0]; lower.scale.y = 0.55; lower.position.y = -0.09; add(new THREE.CapsuleGeometry(0.04, 0.12, 4, 10), body, 0, -0.22, 0, { parent: a }); }
+    const foreL = limb(0.28, 0.043, 0.036, shortSleeve ? body : cloth), foreR = limb(0.28, 0.043, 0.036, shortSleeve ? body : cloth);
     armL.userData.end.add(foreL); armR.userData.end.add(foreR);
-    for (const f of [foreL, foreR]) { const h = add(new THREE.SphereGeometry(0.042, 12, 10), body, 0, -0.3, 0.005, { parent: f }); h.scale.set(0.8, 1.2, 1); }
+    for (const f of [foreL, foreR]) { const h = add(new THREE.SphereGeometry(0.043, 12, 10), gear, 0, -0.3, 0.005, { parent: f }); h.scale.set(0.8, 1.25, 1); } // gloves
     Object.assign(rig, { armL, armR, foreL, foreR });
-    // weapon: squad long gun by role; officers a sidearm drawn from the holster
-    const gun = new THREE.Group(); chest.add(gun); rig.gun = gun;
-    let glen;
-    if (ally) {
-      gun.position.set(0.06, 0.2, 0.26);
-      glen = role === 'R' ? 0.95 : role === 'E' ? 0.62 : 0.72;
-      add(new THREE.BoxGeometry(0.06, 0.09, glen * 0.55), steel, 0, 0, 0.02, { parent: gun });
-      add(new THREE.CylinderGeometry(0.018, 0.018, glen * 0.5, 8), steel, 0, 0.015, glen * 0.5, { parent: gun }).rotation.x = Math.PI / 2;
-      add(new THREE.BoxGeometry(0.05, 0.12, 0.05), steel, 0, -0.08, 0.05, { parent: gun });
-      add(new THREE.BoxGeometry(0.05, 0.08, 0.2), steel, 0, -0.01, -0.27, { parent: gun });
-      if (role === 'R') add(new THREE.CylinderGeometry(0.028, 0.028, 0.22, 10), steel, 0, 0.08, 0.05, { parent: gun }).rotation.x = Math.PI / 2;
-    } else {
-      gun.position.set(0.14, 0.12, 0.3); glen = 0.26;
-      add(new THREE.BoxGeometry(0.035, 0.05, 0.17), steel, 0, 0.02, 0.03, { parent: gun });
-      add(new THREE.BoxGeometry(0.03, 0.09, 0.04), steel, 0, -0.04, -0.03, { parent: gun });
-    }
-    const muzzle = new THREE.Group(); muzzle.position.set(0, 0.015, glen * 0.76); gun.add(muzzle); rig.muzzle = muzzle;
-    // a cyberdeck: carried by officers, and by the squad's Technical operator
-    if (!ally || role === 'T') {
-      const deck = add(new THREE.BoxGeometry(0.2, 0.03, 0.15), steel, 0.02, -0.2, 0.06, { parent: foreL }); deck.rotation.z = Math.PI / 2;
-      if (role === 'T') add(new THREE.PlaneGeometry(0.12, 0.08), new THREE.MeshBasicMaterial({ color: tint, toneMapped: false }), 0.04, -0.2, 0.06, { parent: foreL, cast: false }).rotation.y = Math.PI / 2;
-    }
-    // legs: trousers and dress shoes
+    // belt kit: right-hip holster and sidearm; pouches by role
+    add(new THREE.BoxGeometry(0.05, 0.15, 0.09), gear, -0.19, -0.05, 0.02, { parent: hips });
+    add(new THREE.BoxGeometry(0.028, 0.05, 0.07), hard, -0.19, 0.05, 0.03, { parent: hips });
+    const pouch = (x, w = 0.07, h = 0.08) => add(new THREE.BoxGeometry(w, h, 0.045), gear, x, 0.0, 0.115, { parent: hips });
+    if (role === 'E') { pouch(-0.07); pouch(0.07); add(new THREE.BoxGeometry(0.035, 0.1, 0.03), hard, 0.15, 0.03, 0.06, { parent: hips }); }
+    if (role === 'R') { add(new THREE.BoxGeometry(0.04, 0.09, 0.03), hard, -0.13, 0.02, 0.1, { parent: hips }); pouch(0.08, 0.06, 0.07); }
+    if (role === 'T') { pouch(-0.06, 0.06, 0.08); pouch(0.02, 0.05, 0.07); pouch(0.13, 0.08, 0.11); }
+    // legs: trousers, boots; knee pads and the entry tool on E
     const legL = limb(0.42, 0.072, 0.062, cloth), legR = limb(0.42, 0.072, 0.062, cloth);
-    legL.position.set(-0.095, -0.04, 0); legR.position.set(0.095, -0.04, 0); hips.add(legL, legR);
+    legL.position.set(0.095, -0.04, 0); legR.position.set(-0.095, -0.04, 0); hips.add(legL, legR);
     const shinL = limb(0.42, 0.058, 0.05, cloth), shinR = limb(0.42, 0.058, 0.05, cloth);
     legL.userData.end.add(shinL); legR.userData.end.add(shinR);
-    for (const s of [shinL, shinR]) { const sh = add(new THREE.CapsuleGeometry(0.045, 0.15, 4, 10), shoe, 0, -0.43, 0.04, { parent: s }); sh.rotation.x = Math.PI / 2; }
+    for (const sh of [shinL, shinR]) {
+      add(new THREE.BoxGeometry(0.105, 0.1, 0.13), boot, 0, -0.42, 0.025, { parent: sh });
+      add(new THREE.BoxGeometry(0.11, 0.03, 0.2), boot, 0, -0.465, 0.04, { parent: sh });
+      if (role === 'E') add(new THREE.BoxGeometry(0.1, 0.11, 0.035), gear, 0, -0.02, 0.065, { parent: sh });
+    }
+    if (role === 'E') { const tool = add(new THREE.BoxGeometry(0.025, 0.3, 0.04), hard, -0.2, -0.22, 0.02, { parent: hips }); tool.rotation.z = 0.05; }
+    for (const sx of [-1, 1]) add(new THREE.BoxGeometry(0.03, 0.09, 0.07), gear, sx * 0.08, -0.15, 0.06, { parent: hips }); // cargo pockets
     Object.assign(rig, { legL, legR, shinL, shinR });
+    // weapons. held = the gun in the hands when shooting; slung = the same gun on the body at rest
+    const longGun = (scale, scoped) => {
+      const w = new THREE.Group(); const L = 0.62 * scale;
+      add(new THREE.BoxGeometry(0.05, 0.08, L * 0.5), hard, 0, 0, 0, { parent: w });
+      add(new THREE.CylinderGeometry(0.014, 0.014, L * 0.55, 8), hard, 0, 0.012, L * 0.5, { parent: w }).rotation.x = Math.PI / 2;
+      add(new THREE.BoxGeometry(0.04, 0.1, 0.04), hard, 0, -0.07, 0.04, { parent: w });
+      add(new THREE.BoxGeometry(0.045, 0.08, 0.18), hard, 0, -0.01, -L * 0.36, { parent: w });
+      if (scoped) add(new THREE.CylinderGeometry(0.022, 0.022, 0.2, 10), hard, 0, 0.07, 0.03, { parent: w }).rotation.x = Math.PI / 2;
+      else add(new THREE.BoxGeometry(0.03, 0.035, 0.05), hard, 0, 0.055, 0.04, { parent: w });     // red-dot housing
+      const mz = new THREE.Group(); mz.position.set(0, 0.012, L * 0.78); w.add(mz); w.userData.muzzle = mz; return w;
+    };
+    const pistol = () => { const w = new THREE.Group(); add(new THREE.BoxGeometry(0.032, 0.045, 0.16), hard, 0, 0.02, 0.03, { parent: w }); add(new THREE.BoxGeometry(0.03, 0.085, 0.04), hard, 0, -0.035, -0.03, { parent: w }); const mz = new THREE.Group(); mz.position.set(0, 0.02, 0.12); w.add(mz); w.userData.muzzle = mz; return w; };
+    let held, slung = null;
+    if (role === 'E' || role === 'R') {
+      held = longGun(role === 'R' ? 1.45 : 1.0, role === 'R');
+      slung = longGun(role === 'R' ? 1.45 : 1.0, role === 'R');
+      slung.position.set(0.23, 0.05, 0.02); slung.rotation.set(Math.PI / 2 + 0.12, 0, 0.08); chest.add(slung);   // muzzle down, its left side
+      const strap = add(new THREE.BoxGeometry(0.035, 0.6, 0.01), gear, 0.04, 0.24, 0.13, { parent: chest, cast: false }); strap.rotation.z = 0.6;
+      held.position.set(-0.05, 0.22, 0.26);
+    } else { held = pistol(); held.position.set(-0.12, 0.16, 0.34); }
+    chest.add(held); held.visible = false;
+    Object.assign(rig, { gun: held, slung, muzzle: held.userData.muzzle, heldBase: held.position.clone() });
     if (!ally) { // a red ground ring marks a known hostile (game UI)
-      const ring = new THREE.Mesh(new THREE.RingGeometry(0.3, 0.34, 40), new THREE.MeshBasicMaterial({ color: C.hostile, transparent: true, opacity: 0.8, toneMapped: false, depthWrite: false }));
+      const ring = new THREE.Mesh(new THREE.RingGeometry(0.3, 0.34, 40), new THREE.MeshBasicMaterial({ color: C.hostile, transparent: true, opacity: 0.85, toneMapped: false, depthWrite: false }));
       ring.rotation.x = -Math.PI / 2; ring.position.y = 0.02; g.add(ring);
     }
-    g.scale.setScalar(1.18); // heroic scale: readable at phone size, the way tactics games frame their squads
+    g.scale.setScalar(1.18);
     return { g, rig };
   }
   function glbOperative(u) { // an authored model, when present for this role
@@ -399,10 +481,16 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
     r.spine.rotation.x = cr * 0.42 + w * 0.1 - a.flinch * 0.5 + breathe;
     r.chest.rotation.y = -0.25 * (1 - w * 0.5) + Math.sin(ph) * 0.08 * w;
     r.neck.rotation.y = 0.22 * (1 - w * 0.5); r.neck.rotation.x = -cr * 0.3;
-    const aim = a.aim; // 0 = low ready, 1 = shouldered
-    r.armR.rotation.set(-0.55 - aim * 0.6, 0, -0.15); r.foreR.rotation.set(-1.2 + aim * 0.3, 0, 0);
-    r.armL.rotation.set(-1.0 - aim * 0.35, 0, 0.35); r.foreL.rotation.set(-0.9, 0, 0.1);
-    r.gun.rotation.x = -0.12 + aim * 0.12 - a.recoil * 0.25; r.gun.position.z = 0.26 + aim * 0.06 - a.recoil * 0.05;
+    // arms: relaxed at the sides (as on the mannequins) and swinging when walking; raised to shoot
+    const aim = a.aim, rest = 1 - aim, swing = Math.sin(ph) * 0.45 * w * rest;
+    const holdDeck = r.role === 'T' && aim < 0.5;
+    r.armR.rotation.set(0.02 - swing + aim * (r.role === 'T' || r.role === 'H' ? -1.45 : -1.15), 0, -0.1 * rest - 0.12 * aim);
+    r.foreR.rotation.set(-0.12 * rest + aim * (r.role === 'T' || r.role === 'H' ? -0.1 : -0.85), 0, 0);
+    r.armL.rotation.set(holdDeck ? -0.35 : 0.02 + swing + aim * -1.35, 0, holdDeck ? 0.05 : 0.1 * rest + 0.35 * aim);
+    r.foreL.rotation.set(holdDeck ? -1.15 : -0.12 * rest - aim * 0.9, 0, 0);
+    r.gun.visible = aim > 0.3; if (r.slung) r.slung.visible = !r.gun.visible;
+    if (r.deck) r.deck.visible = !(r.role === 'T' && aim > 0.3);
+    r.gun.rotation.x = -a.recoil * 0.25; r.gun.position.z = r.heldBase.z - a.recoil * 0.05;
   }
 
   /* ---------- labels (DOM, projected each frame: crisp text, never inside the WebGL canvas) ---------- */
@@ -460,7 +548,7 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
       const c = new EffectComposer(renderer); c.setPixelRatio(renderer.getPixelRatio()); c.setSize(w, h);
       c.addPass(new RenderPass(scene, camera));
       if (gtao) { const ao = new gtao.GTAOPass(scene, camera, w, h); ao.updateGtaoMaterial({ radius: 0.45, distanceExponent: 1.5, thickness: 1, scale: 1.2 }); ao.blendIntensity = 0.9; c.addPass(ao); }
-      c.addPass(new UnrealBloomPass(new THREE.Vector2(w, h), 0.55, 0.5, 0.82));
+      if (!WHITE) c.addPass(new UnrealBloomPass(new THREE.Vector2(w, h), 0.55, 0.5, 0.82)); // bloom would haze a white world
       c.addPass(new OutputPass());
       c.addPass(new SMAAPass(w * renderer.getPixelRatio(), h * renderer.getPixelRatio()));
       composer = c; needs = true;
@@ -476,12 +564,22 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
     for (const m of pbrTargets) {
       const spec = m.userData.pbr; if (!spec) continue;
       const base = setOf(spec.set);
-      for (const k of ['map', 'normalMap', 'roughnessMap']) {
+      for (const k of (WHITE ? ['normalMap', 'roughnessMap'] : ['map', 'normalMap', 'roughnessMap'])) {
         const t = base[k].clone(); t.repeat.set(spec.repeat[0], spec.repeat[1]); if (spec.offset) t.offset.set(spec.offset[0], spec.offset[1]); t.needsUpdate = true; m[k] = t;
       }
-      m.color.set(spec.tint || 0xffffff); m.roughness = 1; m.metalness = 0; m.normalScale.set(1, 1); m.needsUpdate = true;
+      m.color.set(WHITE ? (m.userData.tone || 0xf1f1ef) : (spec.tint || 0xffffff)); if (WHITE) m.map = null; m.roughness = 1; m.metalness = 0; m.normalScale.set(1, 1); m.needsUpdate = true;
     }
     needs = true;
+    if (WHITE) {
+      try {
+        const { RoomEnvironment } = await import('three/addons/environments/RoomEnvironment.js');
+        if (destroyed) return;
+        const pm = new THREE.PMREMGenerator(renderer);
+        scene.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture; scene.environmentIntensity = 0.22; pm.dispose();
+        hdrLoaded = true; needs = true;
+      } catch (e) { /* hemisphere + sun still light the white world */ }
+      return;
+    }
     try { // the courtyard's real night light: image-based lighting and reflections
       const { HDRLoader } = await import('three/addons/loaders/HDRLoader.js');
       const hdr = await new HDRLoader().loadAsync(new URL('hdri/courtyard_night_1k.hdr', PBR_ROOT).href);

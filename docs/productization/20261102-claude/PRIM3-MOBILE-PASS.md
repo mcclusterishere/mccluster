@@ -159,3 +159,14 @@ The handoff's ordered steps, and what happened to each:
 | 5–7. Learning restoration, authored assets and AI, publish | not started | Publication to the site needs the owner's approval through the existing gate. |
 
 **Owner direction, the same day: battlefield size.** No level may be under ±100 on either axis. Training is at least ±100; real scenarios at least ±150. Recorded in Prim3 `game/BATTLEFIELD-SIZE-AUTHORITY.md`. Both 10 × 10 courtyards (this preview and the study) are mechanics test beds, not levels.
+
+## White world, black operatives (owner, 2026-11-02)
+
+> "I want all the characters to look exactly like their loadouts … on black mannequin bodies … simple, low poly … super realistic, but it's white against black. So all the players are black and the entire environment is white."
+
+| Item | Status | Evidence / note |
+|---|---|---|
+| White environment | implemented · verified | **Surfaces:** every environment surface is a white clay material: paving, plaza, buildings, walls, cover, trees, props and the menu backdrop. It keeps the photo-scanned normal and roughness detail but no colour map, with tones of grey so the board reads. **Light:** a neutral studio light (RoomEnvironment), a white sun and soft shadows; GTAO on the high tier. **Removed:** bloom, which hazed white, and the warm lamps. **Colour left:** only the game's overlays (cyan reach, amber path and target, red hostile ring) and the relay beacon. **Readability:** the axis numbers are now dark. Screenshots: `evidence/prim3-mobile/390-white-*.jpg`, `390-menu.jpg`. e2e 146/146. |
+| Operatives built from the loadout photographs | implemented | Black faceless mannequins with all gear in black, per Prim3 `phenotypes/operators/LOADOUTS.md`. **E:** carrier, knee pads, over-ear headset, body camera with a red record light, belt pouches, right-hip holster, entry tool at the thigh, compact carbine slung left. **R:** light chest rig with binoculars in the sternum pouch, recorder, one-ear headset, belt radio, holster, scoped rifle slung left. **T:** short sleeves with mannequin forearms, zip soft vest, centre recorder, radio on the left strap, deck sling, open cyberdeck held at the waist, belt pouches, sidearm. **Known hostiles:** SOI-01 officers. Arms hang relaxed and swing when walking; long guns come off the sling only to shoot, and T fires the sidearm. No marks. **Still procedural:** these are not authored GLBs; the model slot is unchanged. |
+| T reference | done | Owner's FO-T Standard mannequin and loadout added to the Prim3 loadout index (branch `design/operator-loadouts-20261102`), so E, R and T are complete. |
+| Pre-mission loadout editor ("like Call of Duty … upgrade the loadouts … mission points") | designed only | Next: see the proposal in HANDOFF / the next turn. |
