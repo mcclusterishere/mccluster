@@ -19,7 +19,7 @@ only answers yes/no on the ambiguous few.
 | Matching | `core/src/world/news-pairing.mjs` (pure functions, `core/test/world-news-pairing.test.mjs`) |
 | Job | `world_news_pairing` (`core/src/executors/world-news-pairing.mjs`), one job per tick, priority 4 (the PRIM3 news desk is 5) |
 | Schedule | `mccluster-core-world-news-pairing.timer`, every 15 minutes, `core/src/seed-world-news-pairing.mjs` (queues one job only when none is queued or running; prunes pairs older than 7 days) |
-| Storage | `public.world_news_pairs` (`supabase/migrations/20261103120000_world_news_pairs_v1.sql`): one row per (article, layer, item), RLS on, no client policies, `on delete cascade` with the article, `world_news_pairs_prune()` for service_role only |
+| Storage | `public.world_news_pairs` (`supabase/migrations/20261103012656_world_news_pairs_v1.sql`): one row per (article, layer, item), RLS on, no client policies, `on delete cascade` with the article, `world_news_pairs_prune()` for service_role only |
 | Read | `GET /v1/world/news-pairs?layer=&entity_key=` (news about this item) or `?article_id=` (map items for this headline), Worker `mccluster`, house owner only, `private, no-store` (`workers/mccluster/src/world-news-pairs.js`) |
 
 ## Core reads the map as the house owner, narrowly
@@ -137,11 +137,9 @@ Box: 8 vCPU, no GPU, local generation about 8–10 tokens/s, prompt about
 
 ## Before it runs
 
-1. Apply the migration (it is named by its intended version; rename to the
-   applied version) and refresh `supabase/schema-manifest.json` from the CI
-   reset artifact and the production schema evidence, as for every migration.
-   Until then `scripts/test/rpc-names-exist.test.mjs` reports
-   `world_news_pairs` as called but not deployed, which is true.
+1. The migration is applied to production as `20261103012656`
+   (`world_news_pairs_v1`), recorded in `supabase/production-ledger.json`, the
+   drift contract and the 2026-11-03 production schema evidence.
 2. Deploy Worker `mccluster` (the Core read gate and the pairs route).
 3. Promote Core through `deploy/ovh-production`; the deploy installs and
    enables `mccluster-core-world-news-pairing.timer`.
