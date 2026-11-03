@@ -4,6 +4,7 @@ import { allowedOrigins, applyCors, corsHeaders, fail, logEvent, reply } from '.
 import whip from './whip/booking-gate.js';
 import {handleAtNight} from './at-night.js';
 import prim3 from './prim3/index.js';
+import { handlePrim3Levels, PRIM3_LEVELS_PREFIX } from './prim3/levels.js';
 import { handleNewsDesk, NEWS_DESK_PATH } from './prim3/news-desk.js';
 import seekFirst from './seek-first/index.js';
 import { buildEquityUpriseHaloProjection } from './seek-first/equity-uprise-halo.js';
@@ -148,6 +149,10 @@ export default {
 
       if (path === '/v1' && request.method === 'GET') {
         return reply(request, env, CATALOG);
+      }
+
+      if (path === PRIM3_LEVELS_PREFIX || path.startsWith(`${PRIM3_LEVELS_PREFIX}/`)) {
+        return handlePrim3Levels(request, env, { requireHouseOwner });
       }
 
       /* PRIM3 news desk: the 24 agents' briefs and reactions, owner only (./prim3/news-desk.js) */

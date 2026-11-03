@@ -225,7 +225,7 @@ def default_pos(n,kind,i=0,count=1):
 B1_DETAILED_POSITIONS={
     "B1-ELEC-UPS-01-I001":[36.5,15.5,2.85],
     "B1-ELEC-UPS-01-I002":[42.5,15.5,2.85],
-    "B1-TELECOM-CONSOLE-01":[37.5,24.0,3.15],
+    "B1-TELECOM-CONSOLE-01":[37.5,32.75,3.15],  # v3: console moved off the rack row
     "B1-LAB-CONSOLE-01":[47.5,39.25,3.2],
     "B1-LAB-DASHBOARD-01":[35.0,52.325,5.7],
     "B1-OPS-STATUS-01":[26.5,61.325,5.3],

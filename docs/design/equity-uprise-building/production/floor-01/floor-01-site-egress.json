@@ -58,30 +58,27 @@
     },
     {
       "id": "site-north-egress-walk",
-      "label": "North / Rear Exit Discharge Walk",
+      "label": "West Exit Discharge Walk (Stair B)",
       "kind": "egress_walk",
       "polyline_ft": [
         [
-          13.5,
-          72
+          0,
+          55.7
         ],
         [
-          13.5,
-          90
+          -12,
+          55.7
         ],
         [
-          84,
-          90
-        ],
-        [
-          84,
+          -12,
           -24
         ]
       ],
       "connects": [
         "F1-DOOR-STAIR-B-DISCHARGE",
         "site-public-way-south"
-      ]
+      ],
+      "model_note": "v3: follows the relocated Stair B / west exit leaf south to the public way; marked lane across the service apron."
     },
     {
       "id": "site-service-apron-west",
@@ -173,8 +170,8 @@
       "location": {
         "facade": "east",
         "x": 72,
-        "y1": 56,
-        "y2": 60
+        "y1": 55.0,
+        "y2": 58.2
       },
       "access_class": "exit-only-from-interior",
       "normal_state": "secured-from-exterior",
@@ -184,16 +181,17 @@
         "open",
         "blocked",
         "failed"
-      ]
+      ],
+      "model_note": "v3 2026-11-03: opening sits on the Stair A Floor 1 landing (Y54.75-58.25); the former Y56-60 span ran onto the top tread of the B1 flight and no door existed in the model. Door + leaf now modeled in the combined chassis, Floor 1 and facade."
     },
     {
       "object_id": "F1-DOOR-STAIR-B-DISCHARGE",
       "label": "Stair B Exit Discharge",
       "location": {
-        "facade": "north",
-        "y": 72,
-        "x1": 12,
-        "x2": 15
+        "facade": "west",
+        "x": 0,
+        "y1": 54.3,
+        "y2": 57.1
       },
       "access_class": "exit-only-from-interior",
       "normal_state": "secured-from-exterior",
@@ -203,7 +201,9 @@
         "open",
         "blocked",
         "failed"
-      ]
+      ],
+      "discharge_path": "Stair B Floor 1 door (X14-17 / Y54) -> west service approach X0-18 / Y54-60 (kept clear) -> west exit leaf; IBC 1028.1 exception 1 model (one of two stairs discharges through the level of exit discharge).",
+      "model_note": "v3 2026-11-03: the former north door (Y72, X12-15) was physically impossible: Stair B's north end is the mid-landing at -6.75 / +6.75 ft, with no Floor 1 landing there. Relocated to the west wall beside the service leaf."
     },
     {
       "object_id": "F1-DOOR-SERVICE-WEST",
@@ -211,8 +211,8 @@
       "location": {
         "facade": "west",
         "x": 0,
-        "y1": 56,
-        "y2": 59
+        "y1": 57.1,
+        "y2": 59.9
       },
       "access_class": "authorized-service",
       "normal_state": "locked",
@@ -222,7 +222,8 @@
         "open",
         "locked",
         "failed"
-      ]
+      ],
+      "model_note": "v3 2026-11-03: paired with the Stair B exit leaf in one west door frame; service leaf keeps card access from outside."
     }
   ],
   "floor1_discharge_controls": [
@@ -237,7 +238,7 @@
         "failed"
       ],
       "scenario_controllable": true,
-      "normal_access_policy": "downward-to-b1-restricted-to-house-owner-or-underground-operations-admin",
+      "normal_access_policy": "open-normal-use; barrier engages only in evacuation mode (owner 2026-11-03: B1 is a normal floor)",
       "b1_to_floor1_egress": "preserved",
       "training_behavior": "sandbox-only-no-live-unlock"
     },
@@ -252,7 +253,7 @@
         "failed"
       ],
       "scenario_controllable": true,
-      "normal_access_policy": "downward-to-b1-restricted-to-house-owner-or-underground-operations-admin",
+      "normal_access_policy": "open-normal-use; barrier engages only in evacuation mode (owner 2026-11-03: B1 is a normal floor)",
       "b1_to_floor1_egress": "preserved",
       "training_behavior": "sandbox-only-no-live-unlock"
     }
@@ -410,11 +411,12 @@
     }
   ],
   "underground_access_controls": {
-    "passenger_elevator_b1_stop": "hidden-unless-house-owner-or-underground-operations-admin",
-    "stair_a_down": "access-controlled",
-    "stair_b_down": "access-controlled",
+    "passenger_elevator_b1_stop": "visible-normal-stop",
+    "stair_a_down": "open-normal-use (evacuation barrier only)",
+    "stair_b_down": "open-normal-use (evacuation barrier only)",
     "service_freight_b1": "restricted-operational",
     "egress_from_b1_upward": "preserved",
-    "public_directory_visibility": false
+    "public_directory_visibility": true,
+    "owner_decision": "Owner, 2026-11-03: \"We can have B1. Everybody's welcome to B1 ... Make it normal.\""
   }
 }

@@ -357,3 +357,12 @@ The first explicit PRIM3 reinforcement binding is the Floor 2 Wi-Fi outage (`IT-
 - page: `equity-uprise-server-lab-3d.html` (owner-gated), `js/server-lab/`, `css/server-lab.css`
 
 MDF rack 01 in B1 (42U EIA-310, mirrors `B1-TELECOM-RACKS-01-I001`) and a generic 2U/1U server built from data. Four levels on the existing runtime chain: L1 Identify (IT-LAB-041), L2 Rebuild (IT-LAB-042), L3 Bring-up (IT-LAB-043), L4 Troubleshoot (IT-LAB-044..051, injected hardware faults on the sandbox clone of `B1-SRV-HYP-01-I001`). Step 6 assessment; SANDBOX only; generic unbranded hardware.
+
+
+## v3 interiors, brand slots and model consistency (2026-11-03)
+
+- `production/interiors/furniture-catalog-v3.json` — shared furniture types with real dimensions.
+- `production/interiors/eu_furniture_kit.py` — catalog → instanced meshes for every floor builder.
+- `production/interiors/audit_interior_consistency.py` — model-consistency audit (CI + deploy); report `production/generated/equity-uprise-interior-consistency-report.json`.
+- `production/basement-b1/basement-b1-interior-layout-v3.json`, `production/floor-0{1..6}/floor-0X-interior-layout-v3.json` — per-floor furnishing layouts.
+- `production/brand/brand-manifest.json`, `eu_brand_slots.py`, `equity-uprise-brand-slots.mjs` — brand-slot contract (assign a new logo by changing the manifest artwork).

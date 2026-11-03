@@ -88,6 +88,7 @@ jobs:
           python docs/design/equity-uprise-building/production/services/build_equity_uprise_services_v2.py
           python docs/design/equity-uprise-building/production/build_equity_uprise_building_v2.py
           python docs/design/equity-uprise-building/production/audit_vertical_circulation_walkability.py
+          python docs/design/equity-uprise-building/production/interiors/audit_interior_consistency.py
 
       - name: Verify Equity Uprise Services Step 8 deploy contract
         run: |
@@ -176,6 +177,9 @@ jobs:
           cp docs/design/equity-uprise-building/references/floor-01-site/equity-uprise-floor-01-site-egress-core-v2-schematic-v1.png equity-uprise-preview/floor-01-site-egress.png
           cp docs/design/equity-uprise-building/references/floor-01-site/equity-uprise-floor-01-site-egress-core-v2-schematic-v1.svg equity-uprise-preview/floor-01-site-egress.svg
           mkdir -p equity-uprise-preview/lab-runtime equity-uprise-preview/electronics
+          mkdir -p equity-uprise-preview/brand
+          cp docs/design/equity-uprise-building/production/brand/brand-manifest.json equity-uprise-preview/brand/brand-manifest.json
+          cp docs/design/equity-uprise-building/production/brand/equity-uprise-brand-slots.mjs equity-uprise-preview/brand/equity-uprise-brand-slots.mjs
           cp docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-electronics-fabric-v1.glb equity-uprise-preview/equity-uprise-electronics-fabric-v1.glb
           cp docs/design/equity-uprise-building/production/electronics/equity-uprise-electronics-spatial-bindings-v1.mjs equity-uprise-preview/electronics/
           cp docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-electronics-manifest-v1.json equity-uprise-preview/equity-uprise-electronics-manifest-v1.json

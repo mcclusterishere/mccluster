@@ -5300,7 +5300,7 @@
       "maturity": "componentized",
       "position_ft": [
         37.68,
-        24.0,
+        32.75,
         -12.2
       ],
       "components": [
@@ -23069,7 +23069,7 @@
       "archetype": "network_display_decoder",
       "maturity": "componentized",
       "position_ft": [
-        8.0,
+        5.7,
         15.88,
         31.0
       ],
@@ -23135,7 +23135,7 @@
       "archetype": "data_jack",
       "maturity": "componentized",
       "position_ft": [
-        7.78,
+        5.48,
         15.88,
         28.4
       ],
@@ -23201,7 +23201,7 @@
       "archetype": "receptacle",
       "maturity": "componentized",
       "position_ft": [
-        8.18,
+        5.88,
         15.88,
         28.3
       ],
@@ -23265,7 +23265,7 @@
       "archetype": "network_display_decoder",
       "maturity": "componentized",
       "position_ft": [
-        22.0,
+        19.7,
         15.88,
         31.0
       ],
@@ -23331,7 +23331,7 @@
       "archetype": "data_jack",
       "maturity": "componentized",
       "position_ft": [
-        21.78,
+        19.48,
         15.88,
         28.4
       ],
@@ -23397,7 +23397,7 @@
       "archetype": "receptacle",
       "maturity": "componentized",
       "position_ft": [
-        22.18,
+        19.88,
         15.88,
         28.3
       ],
