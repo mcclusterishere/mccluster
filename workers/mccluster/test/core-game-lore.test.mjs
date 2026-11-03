@@ -67,6 +67,11 @@ test('owner lore request keeps fixed selectors and uses verified signed actor co
     assert.deepEqual(forwarded.params.arguments, args);
     assert.deepEqual(forwarded.params._meta['mccluster/actor'], { user_id: owner.id, kind: 'owner', source: 'cloudflare-owner-session' });
     assert.equal(result.body.result.content[0].text, '{"read_only":true}');
+    // Expansion sections (families, neighborhoods, parcels) cross the same fixed-selector bridge unchanged.
+    const families = { universe_id: 'mccluster-fictional-city', section: 'families', id: 'delgado-family' };
+    assert.equal((await handleCoreMcp(request('game.lore.read', families), env, owner)).status, 200);
+    const forwardedFamily = JSON.parse(Buffer.from(calls.filter((call) => call.href === `${env.CORE_BROKER_URL}/mcp`).at(-1).init.body).toString());
+    assert.deepEqual(forwardedFamily.params.arguments, families);
   });
 });
 

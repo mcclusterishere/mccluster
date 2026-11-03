@@ -36,7 +36,8 @@ test('manifest reports exact source bytes and includes garage staff without dump
   assert.equal(result.manifest.sha256, createHash('sha256').update(raw).digest('hex'));
   assert.equal(result.manifest.source, 'core/data/fictional-city/district.v1.json');
   assert.equal(result.read_only, true);
-  assert.deepEqual(result.counts, { brands: 1, businesses: 2, npcs: 2, items: 1, portals: 1, commercial_businesses: 1, new_npcs: 1, garage_crew: 1 });
+  assert.deepEqual(result.counts, { brands: 1, businesses: 2, npcs: 2, items: 1, portals: 1, commercial_businesses: 1, new_npcs: 1, garage_crew: 1,
+    neighborhoods: 0, families: 0, parcels: 0, expansion_businesses: 0, expansion_npcs: 0, expansion_items: 0 });
   assert.equal(result.records, undefined);
 });
 
@@ -104,7 +105,10 @@ test('invalid pagination, paths, private-context arguments and ambiguous queries
 
 test('malformed or oversized releases fail closed instead of becoming partial canon', () => {
   assert.throws(() => parseGameLore('{broken'), { code: 'GAME_LORE_UNAVAILABLE' });
-  assert.throws(() => parseGameLore('x'.repeat(512 * 1024 + 1)), { code: 'GAME_LORE_UNAVAILABLE' });
+  assert.throws(() => parseGameLore('x'.repeat(1024 * 1024 + 1)), { code: 'GAME_LORE_UNAVAILABLE' });
+  // A canon above the former 512 KiB cap still parses; only the 64 KiB response cap bounds a read.
+  const large = fixture(); large.constraints.padding = 'p'.repeat(600 * 1024);
+  assert.equal(parseGameLore(Buffer.from(JSON.stringify(large))).counts.npcs, 2);
   for (const mutate of [
     (data) => { data.schema = 'other'; },
     (data) => { data.npcs.push(data.npcs[0]); },
@@ -143,6 +147,9 @@ test('owned capability resolves to the installed manifest without network, memor
     assert.equal(lore.counts.commercial_businesses, 8);
     assert.equal(lore.counts.new_npcs, 24);
     assert.equal(lore.counts.garage_crew, 3);
+    assert.equal(lore.counts.families, 10);
+    assert.ok(lore.counts.neighborhoods >= 5);
+    assert.ok(lore.counts.expansion_npcs >= 40 && lore.counts.expansion_businesses >= 17);
     const raw = await readFile(new URL('../data/fictional-city/district.v1.json', import.meta.url));
     assert.equal(lore.manifest.sha256, createHash('sha256').update(raw).digest('hex'));
   } finally { globalThis.fetch = original; }
@@ -160,4 +167,51 @@ test('reader works in an installed Core tree with no repository-root data direct
     assert.equal(result.records[0].id, 'whip-equipped-garage');
     assert.equal(result.manifest.sha256, (await readGameLore()).manifest.sha256);
   } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+function expansionFixture() {
+  const data = fixture();
+  data.schemaRevision = 2;
+  data.expansionNeighborhoods = [{ id: 'civic-center', name: 'Precinct Square' }, { id: 'northside-residential', name: 'Northside' }];
+  data.parcels = [
+    { parcelId: 'civic-center/police-station', neighborhoodId: 'civic-center', businessId: 'precinct' },
+    { parcelId: 'northside-residential/house-01', neighborhoodId: 'northside-residential', familyId: 'smith-family' }
+  ];
+  data.expansionBusinesses = [{ id: 'precinct', name: 'Precinct', parcelId: 'civic-center/police-station', staffIds: ['cop'], itemIds: [],
+    interactions: [{ type: 'bribe', id: 'bribe-ticket', label: 'Tear up a ticket', price: 20, npcIds: ['cop'] }] }];
+  const talk = { greeting: 'Hi.', topics: [{ id: 't', label: 'T', lines: [{ speaker: 'You', text: 'Hi.' }] }], farewell: 'Bye.' };
+  data.expansionNpcs = [
+    { id: 'cop', name: 'Cop', age: 40, businessId: 'precinct', placement: 'route', homeParcelId: 'civic-center/police-station', routeAnchors: ['civic-center/police-station', 'tea-shop', 'hq-bridge'], dialogue: talk },
+    { id: 'kid', name: 'Kid', age: 14, minor: true, familyId: 'smith-family', placement: 'interior', homeParcelId: 'northside-residential/house-01', dialogue: talk }
+  ];
+  data.families = [{ id: 'smith-family', name: 'The Smiths', parcelId: 'northside-residential/house-01', representativeNpcId: 'kid', members: [{ name: 'Kid', age: 14, minor: true, npcId: 'kid' }] }];
+  data.expansionItems = [];
+  return data;
+}
+
+test('schema revision 2 serves parcel-bound expansion lore through the same bounded sections', () => {
+  const source = snapshot(expansionFixture());
+  assert.equal(queryGameLore(source).counts.expansion_npcs, 2);
+  assert.equal(queryGameLore(source).counts.parcels, 2);
+  assert.equal(queryGameLore(source, { section: 'npcs', business_id: 'precinct' }).records[0].id, 'cop');
+  assert.equal(queryGameLore(source, { section: 'families', id: 'smith-family' }).records[0].representativeNpcId, 'kid');
+  assert.equal(queryGameLore(source, { section: 'parcels' }).records.length, 2);
+  assert.equal(queryGameLore(source, { section: 'neighborhoods' }).pagination.total, 2);
+});
+
+test('expansion lore fails closed on unbound parcels, unknown route anchors, unlabelled minors and bribes involving minors', () => {
+  for (const mutate of [
+    (data) => { data.expansionNpcs[0].homeParcelId = 'civic-center/missing'; },
+    (data) => { data.expansionNpcs[0].routeAnchors.push('nowhere'); },
+    (data) => { delete data.expansionNpcs[1].minor; },
+    (data) => { data.expansionBusinesses[0].interactions[0].npcIds = ['kid']; },
+    (data) => { data.expansionBusinesses[0].interactions[0].price = 0; },
+    (data) => { data.parcels[0].parcelId = '../etc/passwd'; },
+    (data) => { data.parcels.push({ ...data.parcels[0] }); },
+    (data) => { data.families[0].representativeNpcId = 'missing'; },
+    (data) => { data.schemaRevision = 3; }
+  ]) {
+    const data = expansionFixture(); mutate(data);
+    assert.throws(() => snapshot(data), { code: 'GAME_LORE_UNAVAILABLE' });
+  }
 });

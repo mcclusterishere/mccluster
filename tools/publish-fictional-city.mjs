@@ -14,6 +14,9 @@ export async function buildCityExport(root = ROOT) {
   const manifest = JSON.parse(bytes);
   if (manifest.schema !== 'mccluster.fictional-city/v1' || manifest.npcs.length !== 24 || manifest.businesses.length !== 8) throw new Error('Invalid city manifest');
   validateCityExtensions(manifest);
+  // Schema revision 2 adds parcel-bound expansion lore beside the unchanged v1 arrays.
+  if (manifest.schemaRevision === 2 && !(['expansionNeighborhoods', 'parcels', 'expansionBusinesses', 'expansionNpcs', 'families', 'expansionItems']
+    .every(key => Array.isArray(manifest[key]) && manifest[key].length) && manifest.families.length === 10)) throw new Error('Invalid city expansion');
   const canon = JSON.parse(await readFile(resolve(root, 'docs/music/whip-equipped/CANON.json'), 'utf8'));
   const screenplay = await readFile(resolve(root, 'docs/music/whip-equipped/SCREENPLAY.md'), 'utf8');
   const roadYears = await readFile(resolve(root, 'docs/music/whip-equipped/ROAD-YEARS.md'), 'utf8');
@@ -49,7 +52,10 @@ export async function publishCity(root = ROOT) {
   // Do not reserialize: Core and browser use the identical bytes and SHA256.
   await writeFile(resolve(out, 'district.v1.json'), result.bytes);
   await writeFile(resolve(out, 'whip-story.v1.json'), JSON.stringify(result.story) + '\n');
-  return { manifestSha256: result.sha256, businesses: result.manifest.businesses.length, newResidents: result.manifest.npcs.length, chapters: result.story.chapters.length };
+  const m = result.manifest;
+  return { manifestSha256: result.sha256, businesses: m.businesses.length, newResidents: m.npcs.length,
+    expansionBusinesses: m.expansionBusinesses?.length || 0, expansionResidents: m.expansionNpcs?.length || 0,
+    families: m.families?.length || 0, parcels: m.parcels?.length || 0, chapters: result.story.chapters.length };
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   console.log(JSON.stringify(await publishCity()));
