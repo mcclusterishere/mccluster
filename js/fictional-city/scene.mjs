@@ -4,8 +4,9 @@
 import * as THREE from 'three';
 import { createGeometryKit } from './geometry.mjs';
 import { buildingBounds, createSpatialWorld, interiorWorld, isWalkable, moveWithCollisions, findWalkingPath } from './spatial.mjs';
-import { buildNeighborhoodGround, buildNeighborhoodPlace, buildStoryInteriorFixtures, buildStoryProp } from './bridgeport-geometry.mjs';
+import { buildNeighborhoodChunk, buildNeighborhoodGround, buildStoryInteriorFixtures, buildStoryProp } from './bridgeport-geometry.mjs';
 import { chunkWanted } from './chunks.mjs';
+import { neighborhoodChunks, isNeighborhoodChunkId } from './neighborhood-chunks.mjs';
 
 const FLOOR_Y = 0.16;
 const WALK_SPEED = 6.8;
@@ -28,6 +29,10 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
   const neighborhoods = manifest.neighborhoods || source.neighborhoods || [];
   const neighborhoodPlaces = neighborhoods.flatMap(n => n.places || []);
   const neighborhoodIds = new Set(neighborhoodPlaces.map(b => b.id));
+  const neighborhoodById = new Map(neighborhoodPlaces.map(b => [b.id, b]));
+  // Surveyed neighbourhoods stream through the same tile contract as the authored city (nothing is drawn at start-up
+  // but their land); the index is derived from the neighbourhood data here, so N footprints need no published files.
+  const neighborhoodTiles = neighborhoodChunks(neighborhoods);
   const storyBeats = (manifest.storyArcs || source.storyArcs || []).flatMap(arc => arc.beats || [])
     .filter(beat => Array.isArray(beat.position) && beat.position.length === 2);
   const allLore = [...shops, ...(garage ? [garage] : []), ...neighborhoodPlaces]
@@ -148,7 +153,7 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
     for (const dx of [-1.2, 1.2]) box(COLORS.iron, x + dx, .45, 39.5, .1, .85, .6);
     tree(x + 6, 40, x);
   }
-  buildNeighborhoodGround({ neighborhoods, batch: B, parent: worldGroup, kit, tree, lamp });
+  buildNeighborhoodGround({ neighborhoods, batch: B });
 
   const buildingTargets = new Map();
   function storefront(b, index) {
@@ -160,10 +165,7 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
     B.setTarget(target);
     buildingTargets.set(b.id, target);
     worldTargets.push({ target, x: b.entrance[0], z: b.entrance[1], radius: 3.3, label: `${b.style === 'yard' || b.enterable === false ? 'Visit' : 'Enter'} ${b.name}` });
-    if (neighborhoodIds.has(b.id)) {
-      buildNeighborhoodPlace(b, { batch: B, parent: worldGroup, kit, target, pickables });
-      return;
-    }
+    if (neighborhoodIds.has(b.id)) { B.setTarget(null); return; } // drawn by its chunk (buildNeighborhoodChunk)
     const color = b.color || ['#d3b48c', '#b87f73', '#c4b6a0', '#57656a'][index % 4];
     box(color, x, height / 2 + FLOOR_Y, z, w, height, d, null, target);
     box('#b9aa90', x, .48, z, w + .25, .6, d + .25);
@@ -275,6 +277,7 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
   HF.add('box', '#9fb2b0', 0, roofH / 2 + FLOOR_Y, 88, hqW, roofH, hqD, null, hqTarget);
   HF.add('box', '#ece8d6', 0, roofH + FLOOR_Y - .09, 88, hqW + .2, .18, hqD + .2);
   const hqMeshes = [...HN.finish(), ...HF.finish()];
+  for (const m of hqMeshes) m.userData.region = 'hq-proxy';
   let hqLod = 'near';
   box('#dac9a8', 0, .15, 73, 7, .1, 10);
   const hqSign = kit.sign(worldGroup, 'Equity Uprise HQ', 'ISLAND ENTRANCE', { x: 0, y: 2.1, z: 73.5, width: 9, height: 1.65, yaw: Math.PI });
@@ -283,7 +286,8 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
   for (const x of [-15.5, 15.5]) { tree(x, 73, x); lamp(x, 99); }
   // Public wayfinding is plain text; no substitute brand mark is fabricated.
   kit.sign(worldGroup, 'THE COMMERCIAL DISTRICT', 'SHOP FRONTS · ROAD STORIES · HARBOUR WALK', { x: -39, y: 4.8, z: 43.5, width: 23, height: 2.7, yaw: Math.PI });
-  const staticMeshes = [...B.finish(), ...hqMeshes];
+  const hubMeshes = B.finish(); for (const m of hubMeshes) m.userData.region = 'original-district';
+  const staticMeshes = [...hubMeshes, ...hqMeshes];
   for (const m of staticMeshes) if (m.userData.instanceTargets.some(Boolean)) pickables.push(m);
   // Parcel doors and landmark lookouts are global data, so they work before (or without) their chunk's detail.
   for (const b of parcelBuildings) {
@@ -299,7 +303,8 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
 
   /* ---------- streamed chunks ---------- */
   const chunkGroup = new THREE.Group(); worldGroup.add(chunkGroup);
-  const chunkMeta = new Map((chunkIndex?.chunks || []).map(c => [c.id, c]));
+  const chunkMeta = new Map([...(chunkIndex?.chunks || []), ...neighborhoodTiles.index.chunks].map(c => [c.id, c]));
+  const fetchChunk = id => neighborhoodTiles.has(id) ? neighborhoodTiles.loadChunk(id) : loadChunk ? loadChunk(id) : Promise.reject(new Error('no chunk source'));
   const chunks = new Map(); // id → { state: 'loading'|'ready'|'fallback'|'failed', group, meshes, pickables, occluders, retryAt, attempts }
   const chunkCounters = { loads: 0, unloads: 0, failures: 0, fallbacks: 0 };
   function parcelBuilding(batch, group, b, index, extra) {
@@ -365,9 +370,21 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
       batch.add('cylinder', '#d8ccb0', p.x, 1.6, p.z, 1, 2.4, 1); batch.add('sphere', '#d8ccb0', p.x, 2.9, p.z, 1.6, .7, 1.6);
     }
   }
+  const tagRegion = (mesh, region) => { mesh.userData.region = region; };
   function buildChunk(id, data, detail) {
     const group = new THREE.Group(), batch = kit.batch(group), extra = { pickables: [], occluders: [], detail };
     const meta = chunkMeta.get(id) || data;
+    if (data.neighborhood) {
+      // a surveyed neighbourhood chunk: exact footprint bodies always; streets, furniture, windows and signs with detail
+      const chunk = detail ? data.neighborhood : { places: data.neighborhood.places };
+      const nb = kit.batch(group), nbTree = (x, z, v) => { nb.add('cylinder', '#856348', x, 1.6, z, .45, 3, .45); nb.add('sphere', v % 2 ? '#82976a' : COLORS.foliage, x, 4.0, z, 4.1, 4.3, 3.7); nb.add('sphere', '#78966e', x + .8, 3.7, z - .4, 2.8, 3.2, 2.8); nb.add('cylinder', '#dbccae', x, .3, z, 2.2, .5, 2.2); nb.add('cylinder', '#70674c', x, .56, z, 1.9, .05, 1.9); };
+      const nbLamp = (x, z) => { nb.add('cylinder', COLORS.iron, x, 2.7, z, .16, 5.3, .16); nb.add('cylinder', COLORS.iron, x, .25, z, .45, .4, .45); nb.add('cone', COLORS.iron, x, 5.3, z, 1.2, .4, 1.2); nb.add('sphere', '#ffe7ad', x, 5.05, z, .55, .38, .55, null, null, { basic: true }); };
+      buildNeighborhoodChunk(chunk, { batch: nb, placeBatch: () => kit.batch(group), parent: group, kit, tree: nbTree, lamp: nbLamp, placeById: neighborhoodById, targetFor: pid => buildingTargets.get(pid), pickables: extra.pickables, tag: tagRegion });
+      const streets = nb.finish(); for (const m of streets) tagRegion(m, 'neighborhood:streets');
+      const meshes = [...streets, ...group.children.filter(o => o.isInstancedMesh && !streets.includes(o))];
+      chunkGroup.add(group);
+      return { group, meshes, pickables: extra.pickables, occluders: [] };
+    }
     if (detail) {
       for (const r of data.roads) {
         const color = r.kind === 'road' ? COLORS.road : r.kind === 'lane' ? '#6d7271' : r.kind === 'plaza' ? COLORS.stone : COLORS.brick;
@@ -384,7 +401,7 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
     const parcelIds = data.parcels || [];
     parcelIds.forEach((pid, i) => { const b = parcelByParcelId.get(pid); if (b) parcelBuilding(batch, group, b, i, extra); });
     const meshes = batch.finish();
-    for (const m of meshes) if (m.userData.instanceTargets.some(Boolean)) extra.pickables.push(m);
+    for (const m of meshes) { tagRegion(m, 'chunks:authored-city'); if (m.userData.instanceTargets.some(Boolean)) extra.pickables.push(m); }
     chunkGroup.add(group);
     return { group, meshes, pickables: extra.pickables, occluders: extra.occluders };
   }
@@ -413,6 +430,11 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
   // massing only (from always-resident places data) while a chunk's detail is missing
   function fallbackChunk(id) {
     const meta = chunkMeta.get(id); if (!meta) return;
+    if (isNeighborhoodChunkId(id)) { // a neighbourhood tile never downloads, but its massing path is the exact footprints
+      const tile = neighborhoodTiles.chunks.get(id); if (!tile) return;
+      attachChunk(id, buildChunk(id, { id, roads: [], props: [], parcels: [], neighborhood: { id: tile.neighborhood, places: tile.places } }, false), 'fallback');
+      chunkCounters.fallbacks++; return;
+    }
     const parcels = (places?.parcels || []).filter(p => { const [x, z] = p.footprint.center; return x >= meta.bounds.minX && x < meta.bounds.maxX && z >= meta.bounds.minZ && z < meta.bounds.maxZ; }).map(p => p.id);
     attachChunk(id, buildChunk(id, { roads: [], props: [], parcels, bounds: meta.bounds }, false), 'fallback');
     chunkCounters.fallbacks++;
@@ -420,7 +442,7 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
   function requestChunk(id) {
     const rec = chunks.get(id) || { attempts: 0 };
     rec.state = rec.group ? rec.state : 'loading'; rec.loading = true; rec.attempts = (rec.attempts || 0) + 1; chunks.set(id, rec);
-    Promise.resolve().then(() => loadChunk(id)).then(data => {
+    Promise.resolve().then(() => fetchChunk(id)).then(data => {
       if (disposed || !chunks.has(id)) return;
       if (!data || data.id !== id || !Array.isArray(data.parcels)) throw new Error('chunk ' + id + ' is malformed');
       chunks.get(id).loading = false;
@@ -434,7 +456,7 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
   }
   let chunkClock = 0;
   function updateChunks(dt, force = false) {
-    if (!chunkMeta.size || !loadChunk) return;
+    if (!chunkMeta.size) return;
     chunkClock += dt; if (!force && chunkClock < .25) return; chunkClock = 0;
     const px = player.x, pz = player.z, outside = !currentInterior;
     for (const meta of chunkMeta.values()) {
@@ -513,7 +535,7 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
     mesh.instanceColor.needsUpdate = true;
     mesh.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 220);
     mesh.userData.instanceTargets = bin.parts.map(p => p.actor.target || null);
-    actorsGroup.add(mesh); bin.mesh = mesh; dynamicMeshes.push(mesh); pickables.push(mesh);
+    mesh.userData.region = 'actors'; actorsGroup.add(mesh); bin.mesh = mesh; dynamicMeshes.push(mesh); pickables.push(mesh);
   }
   const ringMaterial = new THREE.MeshBasicMaterial({ color: '#f9d795', transparent: true, opacity: .9, depthWrite: false });
   const ringGeometry = new THREE.RingGeometry(.64, .82, 32);
@@ -877,8 +899,27 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
   for (const [target, event, handler, options] of listeners) target.addEventListener(event, handler, options);
   const oldTouchAction = canvas.style.touchAction; canvas.style.touchAction = 'pinch-zoom';
 
+  /* Development-only: triangles and draws per region for the current camera (what the renderer would draw this
+     frame after frustum culling), computed on demand by whoever calls getStats(), never per frame. */
+  const statFrustum = new THREE.Frustum(), statMatrix = new THREE.Matrix4();
+  function breakdown() {
+    statMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse); statFrustum.setFromProjectionMatrix(statMatrix);
+    const out = {};
+    scene.traverse(o => {
+      if (!o.isMesh || !o.visible || !o.geometry) return;
+      let p = o.parent, shown = true; while (p) { if (!p.visible) { shown = false; break; } p = p.parent; }
+      if (!shown) return;
+      const g = o.geometry, perInstance = (g.index ? g.index.count : g.attributes.position?.count || 0) / 3;
+      const count = o.isInstancedMesh ? o.count : 1;
+      if (!count || (o.frustumCulled && !statFrustum.intersectsObject(o))) return;
+      const region = o.userData.region || (o.parent === interiorGroup || o.parent?.parent === interiorGroup ? 'interior' : o.userData.ownedTexture ? 'signs' : 'other');
+      out[region] ??= { draws: 0, triangles: 0 };
+      out[region].draws++; out[region].triangles += Math.round(perInstance * count);
+    });
+    return out;
+  }
   function getStats() {
-    return { engine: 'Three.js 0.180.0', drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles,
+    return { engine: 'Three.js 0.180.0', drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles, breakdown: breakdown(),
       geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures,
       npcCount: actors.length, visibleNpcs, buildings: buildings.length, interior: currentInterior, storyStops: storyMarkers.length,
       fps: Math.round(fps * 10) / 10, dpr, viewport: [currentWidth, currentHeight],
