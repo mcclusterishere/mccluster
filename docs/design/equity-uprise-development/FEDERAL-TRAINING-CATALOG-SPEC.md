@@ -2,7 +2,7 @@
 
 > Status: **CANONICAL V1 — FEDERAL TRAINING SOURCE OF TRUTH**
 >
-> Last issuer verification: **2026-09-22**
+> Last issuer verification: **2026-11-03** (cleanup); 2026-09-22 (V1)
 >
 > This is an instructional/evidence architecture. It does **not** turn federal course completion into Equity Uprise competency mastery, construction authority, professional licensure, or permission to operate live building systems.
 
@@ -74,3 +74,19 @@ Re-verify:
 - **dynamic catalogs** (DOE/FEMP, NOAA, NASA, EPA) before each cohort;
 - **CISA in-person dates/eligibility** at enrollment;
 - **all federal URLs/titles** at least annually or when CI/provenance review detects a change.
+
+## 2026-11-03 cleanup
+
+Fixes to the V1 bindings, each enforced by `verify_federal_training_catalog.py`:
+- **IS-238** is *Critical Concepts of Supply Chain Flow and Resilience*: unbound from the lobby public-service queue surge (a queue is not a supply chain). It stays on power continuity and the freight/service area.
+- **CISA ICS 300/401/301** are *Industrial Control Systems* (OT) cybersecurity: unbound from the directory/IdP check-in outage, which is IT. That outage now aligns to CompTIA A+/Network+ in `INDUSTRY-CERTIFICATION-MAP.json`.
+- **IS-235.C** teaches jurisdictional (community) emergency operations planning, not a workplace emergency action plan: unbound from the evacuation, blocked-stair and elevator drills; rebound to the plan tabletop, shelter-in-place and power continuity. OSHA 29 CFR 1910.38 is the workplace EAP reference.
+- **IS-139.A** is retired without replacement: listed under `retired_do_not_cite`; no record, pathway or pack may cite it.
+- Added **IS-700.B, IS-800.D, IS-317.A, IS-907.A**, the rest of the **FEMA Professional Development Series** (IS-230.E, 240.C, 241.C, 242.C, 244.B; IS-120.C and IS-235.C were already present) and **CISA ICS 100W / 210W**. `credential_programs` records the PDS certificate's seven courses. Hours/CEU for the five PDS additions are to be re-confirmed on each course page.
+- **NFPA 1660 (2024)** supersedes NFPA 1600 (with 1616 and 1620) as a reference; cite 1660.
+- **IRS VITA/TCE** records stay pinned to tax year 2025 and now carry `refresh_due` 2026-11-30: refresh and rename them, with the public-service pack, before the next cohort.
+- Every record carries `hseep_scenario_ids`, kept two-way consistent with `hseep-building-safety-scenario-pack-v1.json`.
+
+Learner wording rule, everywhere: "prepares you for" plus the issuer link. Never "certified", never "earn your FEMA certificate here".
+
+Industry (non-federal) certifications live in `INDUSTRY-CERTIFICATION-MAP.json` (CompTIA A+ V15, Network+ N10-009, Security+ SY0-701 with V8 expected about 2026-11-17, Server+ SK0-005, BICSI INST1), mapped to all 40 IT labs at objective level where the repository holds the objectives. The seven learner pathways are `LEARNING-PATHWAYS.json`, verified by `verify_learning_pathways.py`.

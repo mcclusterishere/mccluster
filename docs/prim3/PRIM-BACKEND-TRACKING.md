@@ -175,3 +175,7 @@ Do not send raw private learner data into autonomous coding tools.
 Do not let a local model independently modify learner mastery.
 
 Derived recommendations may suggest review, but Principles mastery continues to come from the approved course and assessment rules.
+
+## Learning evidence (Equity Uprise labs, external credentials, HSEEP)
+
+Lab and drill evidence, uploaded external certificates, competency ratings, pathway progress and HSEEP exercise records use the same plane: Worker `mccluster` routes under `/v1/prim3/learning` (`workers/mccluster/src/prim3/learning.js`) over Supabase `learning_*` tables (`supabase/migrations/20261103160000_learning_evidence_v1.sql`) and the private `learning-credentials` bucket. The schema is per learner; the routes are house-owner only until `LEARNING_AUDIENCE` is switched to `'learners'`. Equity Uprise records evidence and prepares learners; it never issues FEMA, CISA, IRS, CompTIA or BICSI credentials, and simulation alone never rates a competency above Demonstrated.
