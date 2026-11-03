@@ -210,7 +210,10 @@ The shape is the same for each data kind:
 - When a feed is missing, the record is `simulated`, with `derived_from: []` and a visible label. The city always
   loads.
 
-No ingestion job was added.
+The ingestion job now exists, off by default: `weather_region_snapshot` on Core, read through
+`GET /v1/world/weather/connecticut-pilot`. See `docs/control-plane/CONNECTICUT-WEATHER.md`. A missing feed is a
+`missing` record (or the previous record, `carried_forward`, with its original times), never an invented value;
+`simulated` is reserved for game weather (`js/weather/game-weather.mjs`).
 
 ## Remaining wiring (for the city/scene owner)
 
