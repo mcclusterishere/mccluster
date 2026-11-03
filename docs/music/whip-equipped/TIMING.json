@@ -26,9 +26,9 @@
       "before_target_ms": 190400,
       "after_target_ms": 190400,
       "chapter_target_ms": 476000,
-      "spoken_before": 423,
+      "spoken_before": 426,
       "spoken_after": 419,
-      "spoken_total": 842
+      "spoken_total": 845
     },
     {
       "id": "mr-lock-changer",
@@ -134,9 +134,9 @@
       "before_target_ms": 286000,
       "after_target_ms": 286000,
       "chapter_target_ms": 715000,
-      "spoken_before": 615,
+      "spoken_before": 618,
       "spoken_after": 619,
-      "spoken_total": 1234
+      "spoken_total": 1237
     },
     {
       "id": "all-in-the-details",
@@ -156,9 +156,9 @@
       "before_target_ms": 310000,
       "after_target_ms": 310000,
       "chapter_target_ms": 775000,
-      "spoken_before": 662,
+      "spoken_before": 660,
       "spoken_after": 674,
-      "spoken_total": 1336
+      "spoken_total": 1334
     },
     {
       "id": "towyard-killer",
@@ -295,7 +295,7 @@
     "core_target_ms": 6438300,
     "earlier_interlude_target_ms": 377640,
     "combined_target_ms": 6815940,
-    "spoken_words": 11868
+    "spoken_words": 11872
   },
   "provisional_title": {
     "id": "whip-equipped",
@@ -306,6 +306,15 @@
     "filename": "2. TEARS WONT FALL 8.3.24.mp3",
     "measured_duration_ms": 114600
   },
-  "note": "Durations do not verify final masters or rendered scenes. Display clocks may round; arithmetic uses the integers above."
+  "note": "Durations do not verify final masters or rendered scenes. Display clocks may round; arithmetic uses the integers above. Spoken-word and runtime totals cover the song chapters, including optional Jet, and exclude the additional Road Years scenes.",
+  "supplemental_material": [
+    {
+      "file": "ROAD-YEARS.md",
+      "scene_groups": 3,
+      "assigned_song": null,
+      "duration_ms": null,
+      "included_in_song_chapter_totals": false,
+      "status": "Extended earlier-life dramatizations; final placement and performance timing are not locked. The main screenplay uses separately counted callbacks."
+    }
+  ]
 }
-

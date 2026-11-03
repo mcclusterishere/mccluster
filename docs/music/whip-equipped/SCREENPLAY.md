@@ -73,6 +73,8 @@ The owner explicitly establishes the two perspectives in Mr. Lock Changer: McClu
 
 **Confirmed character continuity:** Alana is the woman McCluster meets during Test Drive, the recurring romantic lead the audience comes to love, and the woman who dies aboard the aircraft in the penultimate Tears Won't Fall chapter. The owner confirms this continuous identity. Alana also personifies Atlanta: the promise of love, glamour, expansion, and escape becomes entangled with a trap. Her death carries the history of the whole relationship into the final Salvage Title departure.
 
+**Earlier road history:** The owner recollections in [CAR-FLIP-CHRONICLE.md](CAR-FLIP-CHRONICLE.md) and their fictionalized [ROAD-YEARS.md](ROAD-YEARS.md) adaptation supply the earlier G20 living-and-travel background. Alana first meets McCluster here; she is not inserted into the remembered transactions.
+
 ## Before the song
 
 *Target 3:10.4.*
@@ -87,7 +89,7 @@ The owner explicitly establishes the two perspectives in Mr. Lock Changer: McClu
 
 **ALANA:** I meant the blanket. You can just say you are having a difficult month.
 
-**MCCLUSTER:** I am having a difficult month. The car still starts, and people still call. It could be worse.
+**MCCLUSTER:** I am. I lived in a G20 from Michigan to Georgia, doing DoorDash for gas. Some of those days were good.
 
 **ALANA:** That sounded rehearsed.
 
@@ -917,6 +919,8 @@ No shots are fired. The visual peak ends with the confrontation subdued and the 
 
 **Timing basis:** Catalog B-Side song 2:23.0. Before target 4:46.0; music video 2:23.0; after target 4:46.0. This applies to the catalog mix, not the unavailable alternative August mix. Performance timing remains to be measured.
 
+**Earlier road history:** [CAR-FLIP-CHRONICLE.md](CAR-FLIP-CHRONICLE.md) distinguishes the towable camper from the later G20 and preserves the remembered costs and unresolved details. [ROAD-YEARS.md](ROAD-YEARS.md) dramatizes those earlier journeys. Majid’s support supplies a personal basis for this fictional penthouse conversation; the remembered sales are separate from Bosco’s criminal partnership.
+
 ## Before the song
 
 *The penthouse, after midnight. Majid has put food on the table. McCluster sets the disputed vehicle account beside it, then keeps standing.*
@@ -933,27 +937,23 @@ No shots are fired. The visual peak ends with the confrontation subdued and the 
 
 **MCCLUSTER:** I am tired of a mistake becoming evidence that I cannot run my own company. I handled the account badly. That does not make everything his.
 
-**MAJID:** What is yours without him?
+**MAJID:** What was yours before him? Remember getting that camper to Georgia?
 
-**MCCLUSTER:** The customers came for my work. The people trust me. He did not build those relationships.
+**MCCLUSTER:** A hundred for the camper, six hundred for your brother, at least three hundred for gas. Maybe four. Sold it around twenty-five hundred.
 
-**MAJID:** I asked what you own. You are answering with things you value. Both matter, but they will not all pay the same bill.
+**MAJID:** And the G20?
 
-**MCCLUSTER:** There is money in the account.
+**MCCLUSTER:** Eight hundred for the van, a hundred to fly to Michigan. AAA towed it; I did DoorDash for gas heading south.
 
-**MAJID:** Money for what? Wages? Repairs? Deposits you may have to return? Tell me what remains after the people you already owe are covered.
+**MAJID:** I remember keeping you company on the telephone. You were fighting sleep and trying to reach the next stop.
 
-**MCCLUSTER:** Less than the balance makes it look like.
+**MCCLUSTER:** You stayed with me. I got it to Georgia, lived in it, and eventually sold it on Long Island. I did that without Bosco.
 
-**MAJID:** That is where we begin. You need an amount you can use without borrowing from next week's obligations.
+**MAJID:** Yes. I know you can work. Now tell me what this business has left after wages, repairs, and deposits you might have to return.
 
-**MCCLUSTER:** I thought the second location would give me that. More vehicles, more turnover, enough margin to stop needing his permission.
+**MCCLUSTER:** Less than the balance makes it look like. I thought the second location would give me enough to leave.
 
-**MAJID:** Expansion gives you more commitments before it gives you freedom. You are exhausted now. What happens when two offices need you at the same time?
-
-**MCCLUSTER:** I hire the people I keep postponing.
-
-**MAJID:** With money that keeps postponing your exit.
+**MAJID:** More work also costs money. You need something you can keep without borrowing from next week's obligations.
 
 *McCluster finally sits. He looks around the apartment before opening the folder.*
 
@@ -1007,7 +1007,7 @@ The video expresses the repeated advice through visible work: customer handovers
 
 The VW and the older Nissan recur. A glamorous roofline gives way to hands working on an inexpensive vehicle. The contrast shows that progress includes the unglamorous work McCluster still understands.
 
-Family and tribe imagery expands the frame. Roadside help, shared meals, children greeting returning relatives, and colleagues covering one another’s shifts answer the song’s claims of being there for people. Repeat the group's arrival beside someone who is relieved to see them, then beside someone whose smile disappears. A shoulder clasp can offer support and quietly hold a person in place. The biblical compositions carry leadership, loyalty, and the uncertain price of belonging. Care and menace remain in the same group.
+Family and tribe imagery expands the frame. During the roadside refrain, explicitly earlier memories show the towable camper being hauled, then the separate G20’s sleeping space and delivery stops on the journey south. An earlier phone call with Majid supplies the human connection. Return to present-day shared meals, children greeting returning relatives, and colleagues covering one another’s shifts. Repeat the group's arrival beside someone who is relieved to see them, then beside someone whose smile disappears. A shoulder clasp can offer support and quietly hold a person in place. The biblical compositions carry leadership, loyalty, and the uncertain price of belonging. Care and menace remain in the same group.
 
 Memories of rental betrayal and danger intrude briefly, but they do not replace the earning-and-independence sequence. The final repetition carries the group into a functioning shop. A calendar shows that weeks have passed. The reserve is real, though still smaller than McCluster wants.
 
@@ -1099,6 +1099,8 @@ Memories of rental betrayal and danger intrude briefly, but they do not replace 
 
 **Timing basis:** Catalog song 2:35.0. Before target 5:10.0; music video 2:35.0; after target 5:10.0. Spoken-word targets are planning tools; exact duration requires a performance pass.
 
+**Earlier road history:** The [owner chronicle](CAR-FLIP-CHRONICLE.md) and [Road Years adaptation](ROAD-YEARS.md) distinguish the G20’s Long Island buyer from the green Econoline’s later Boston buyer. The coaching exchange recalls an inquiry that became a different vehicle sale. Neither remembered customer is the fictional Cadillac client.
+
 ## Before the song
 
 *The detailing bay, morning. Alana is producing a paid promotional shoot. McCluster has asked for a campaign that brings work to the location they can afford to retain. Darrel is covering receiving for an absent employee.*
@@ -1113,15 +1115,17 @@ Memories of rental betrayal and danger intrude briefly, but they do not replace 
 
 **ALANA:** Yes, and I need someone watching on a telephone to remember how to ask for one.
 
-**ALANA:** What about the coaching inquiries? One caller thinks the session will give him a business ready to open by Monday.
+**ALANA:** The coaching caller wants a business by Monday. What can we teach him in one morning?
 
-**MCCLUSTER:** Then someone needs to correct that before we take his payment. We can show him the work, the costs, and the questions he needs to answer.
+**MCCLUSTER:** Ask what someone needs. The Boston buyer first asked about my G20. I sold that to somebody on Long Island. He later bought the green Econoline.
 
-**DARREL:** He asked whether he could bring his brother. They want to see a normal working day together.
+**DARREL:** He wasn't the person who bought the G20?
 
-**DETAILER:** Let them help with the setup. People always arrive in time to see the finished car.
+**MCCLUSTER:** No. He was still looking. His first call helped me understand what he wanted, even when that van went to someone else.
 
-**MCCLUSTER:** Offer them a morning next week. Tell them what the session includes and let them decide.
+**DETAILER:** Let the coaching caller help before he sees the finished car.
+
+**MCCLUSTER:** Offer him next week. Explain the session before taking payment.
 
 **DETAILER:** Please remember that two people are doing the cleaning. We cannot accept a week's work because the advertisement looks good.
 
@@ -1887,13 +1891,13 @@ Only spoken text is counted below. Directions, speaker names, song words, and mu
 
 | Chapter | Before spoken words | After spoken words |
 | --- | ---: | ---: |
-| Test Drive | 423 | 419 |
+| Test Drive | 426 | 419 |
 | Mr. Lock Changer Remix | 467 | 465 |
 | Whip Equipped working bounce | 422 | 423 |
 | Lana B Side | 372 | 370 |
 | Repo Guy B Side | 514 | 525 |
-| Hundun B Side | 615 | 619 |
-| All in the Details | 662 | 674 |
+| Hundun B Side | 618 | 619 |
+| All in the Details | 660 | 674 |
 | Towyard Killer | 293 | 290 |
 | Stand On Business B Side | 522 | 523 |
 | Jet Pass and Jet Pack earlier interlude | 337 | 329 |
@@ -1901,7 +1905,7 @@ Only spoken text is counted below. Directions, speaker names, song words, and mu
 | Tears Won’t Fall | 489 | 493 |
 | Salvage Title B Side | 388 | 384 |
 
-Total new spoken dialogue: **11,868 words** across twenty-six scenes. Every before and after is independently written; no passage supplies minutes to two chapters.
+Total new spoken dialogue: **11,872 words** across twenty-six scenes. Every before and after is independently written; no passage supplies minutes to two chapters.
 
 # Source and adaptation notes
 
@@ -1921,7 +1925,10 @@ The recovered Repo Guy machine transcript contains errors, so its plot is ground
 
 # Car flip chronicle
 
-Matthew plans to reconstruct at least two or three years of his used-car sales work using the photographs he kept and his approximate recollections of purchases and sales. That real chronology can supply the sequence of deals, recurring cars, cash pressures, relationships, and conversations beneath later revisions of Whip Equipped.
+The first three owner recollections are recorded in [CAR-FLIP-CHRONICLE.md](CAR-FLIP-CHRONICLE.md): the inexpensive towable camper transported to Georgia, the G20 bought in Michigan and later sold on Long Island, and the green Econoline sold to a Boston lead first encountered through the G20. The owner places them around 2024 with uncertainty. Supporting photographs and transaction records for this batch remain to be added.
 
-Start with whichever cars are easiest to remember. For each one, connect the photos to the vehicle, approximate purchase date, approximate sale date, what happened between them, who was involved, and any remembered conversation or turning point. Purchase and sale prices, work done, and the outcome can be added where remembered. Mark uncertain dates as approximate; a photograph's date is a clue rather than automatic proof of either transaction date. Keep the remembered events distinct from newly written dialogue and fictional additions.
+[ROAD-YEARS.md](ROAD-YEARS.md) contains three extended dramatizations, including the Boston encounter, apology gift, sister's location check, and shed demonstration. These earlier-life scenes have no assigned recording or locked duration and are not included in the song-chapter word counts or 5T totals. Their selected callbacks in Test Drive, Hundun, and All in the Details are included in the dialogue counts above. Alana remains the woman first introduced in Test Drive; she is not made a witness to the remembered transactions.
 
+The chronicle preserves uncertain dates, costs, vehicles, and the owner's interpretation that he may have changed the Boston buyer's heart. The extended scenes develop dialogue and situations from that source; they do not establish exact quotations or new evidence. The remembered sales are distinct from the story's fictional crimes.
+
+Further entries can build the planned two-to-three-year history from photographs, approximate purchase and sale dates, work done, people involved, and remembered turning points. A photograph's date is a clue rather than automatic proof of a transaction date. Keep remembered events, corroborating records, and fictional additions distinguishable.
