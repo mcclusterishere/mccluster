@@ -2,10 +2,10 @@
   "schema_version": "mccluster-supabase-production-ledger/v1",
   "project_ref": "zmnhbrjyhxzhkxmhkexs",
   "production_sql_cutover_version": "20260919020830",
-  "migration_count": 356,
-  "latest_version": "20261103003049",
-  "latest_name": "prim3_agent_news_desk_v1",
-  "ledger_sha256": "e90cbbbfe8a5d275f10c4d7bcf02a7919633b9062aa8e711c529048185817c4d",
+  "migration_count": 357,
+  "latest_version": "20261103010802",
+  "latest_name": "prim3_agent_news_longer_v1",
+  "ledger_sha256": "a8b1bb2b215ba2f58475529358ac2c0704e4da4a339abe9060c1e287b8cb6b02",
   "migrations": [
     {
       "version": "0001",
@@ -1430,6 +1430,10 @@
     {
       "version": "20261103003049",
       "name": "prim3_agent_news_desk_v1"
+    },
+    {
+      "version": "20261103010802",
+      "name": "prim3_agent_news_longer_v1"
     }
   ]
 }

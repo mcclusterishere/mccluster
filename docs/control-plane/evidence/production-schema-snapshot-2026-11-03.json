@@ -3,7 +3,7 @@
  "source": "production via Supabase MCP execute_sql",
  "captured_at": null,
  "sections": {
-  "ledger": {"sql_sha256": "06df2edb6ebff516f11917098c87a4466b8e15f08c9566387b78c675cb65eb89", "md5": "8b1e120acbaf0ded43df468eb4cbe7da", "rows": [
+  "ledger": {"sql_sha256": "06df2edb6ebff516f11917098c87a4466b8e15f08c9566387b78c675cb65eb89", "md5": "9b1d5929443ff1c51ac1e6e7b5f93827", "rows": [
    ["0001","crm",12,"a2de7a029cad25e5bfa01ef322c3dbfb","11388f4dd961442667306b4ba2fd6a95"],
    ["0002","connect_saas",12,"8d58c18c5daafcd72852f635a652c801","fbe7cba3f5d438ea1c6f3631e95f3d74"],
    ["0003","creator_cuts",19,"610ed001a4cb7d58af2cea8ef8647e7e","6bf4fbf828edefeb2d5e5c0e8ece094e"],
@@ -359,7 +359,8 @@
    ["20261029011534","eu_runtime_and_media_rollup_v1",1,"ee09f3d6a096a3cee11c53400a2a14d9","89702b378d3a743d823889826da7997f"],
    ["20261030001000","music_release_payment_integrity_v1",0,"d41d8cd98f00b204e9800998ecf8427e","d41d8cd98f00b204e9800998ecf8427e"],
    ["20261031180839","music_direct_sales_v1",1,"037044a65154d1d0958e812b5daec77b","66bba8c08a7d918cf107b3aa80351cb1"],
-   ["20261103003049","prim3_agent_news_desk_v1",1,"bb29feb59bd21d2e4a583676ff110fe0","822d0273f5d52157142f596c6786654f"]
+   ["20261103003049","prim3_agent_news_desk_v1",1,"bb29feb59bd21d2e4a583676ff110fe0","822d0273f5d52157142f596c6786654f"],
+   ["20261103010802","prim3_agent_news_longer_v1",1,"42384bd273dba6cee816a2c01db8d208","5d8481b9f8ff737b512b68fc458d4c7c"]
   ]},
   "schemas": {"sql_sha256": "c264a3a8ea04c581764f0c8e91b3f46db00c180ee0aa460f05daf6f369d7390c", "md5": "4bc7ab380f6f1bafa7f05b59ff051e54", "rows": [
    ["ai_context","postgres",""],
@@ -380,7 +381,7 @@
    ["uuid-ossp","1.1","extensions"],
    ["vector","0.8.2","public"]
   ]},
-  "relations": {"sql_sha256": "4f21607c9f2439a94f92ca3d8189cef3a3b382b52b33c1f781cf817503cd3a94", "md5": "34fe431cd7d8f8ffcfaf5c358172cc38", "rows": [
+  "relations": {"sql_sha256": "4f21607c9f2439a94f92ca3d8189cef3a3b382b52b33c1f781cf817503cd3a94", "md5": "d54ead0302b5e1d48ad2236f7107d230", "rows": [
    ["ai_context","artifact_links","r",true,false,"",13,"b774fceb642e","b3b16d106caf","ff696abe0b16","",""],
    ["ai_context","context_snapshots","r",true,false,"",11,"5a3dd3b31e14","763fdc6a8354","bbf14d876094","",""],
    ["ai_context","conversations","r",true,false,"",13,"73aa22ced17b","882731ea3d27","e574df182ad5","",""],
@@ -835,7 +836,7 @@
    ["public","platform_user_apps","r",true,false,"",7,"a628c070e1f7","949a97dd65f7","7df73b32dbac","","anon=damrw;authenticated=damrw"],
    ["public","platform_user_devices","r",true,false,"",8,"a7229d735ded","4c3362cd2059","c76c7b480d73","","authenticated=damrw"],
    ["public","prim3_agent_news_briefs","r",true,false,"",11,"2e9b167daffb","321c778e22e5","61a174b01095","",""],
-   ["public","prim3_agent_news_comments","r",true,false,"",10,"0a0149c67b09","8cb6f64c422b","2d41eee15596","",""],
+   ["public","prim3_agent_news_comments","r",true,false,"",10,"0a0149c67b09","4d74953442fa","2d41eee15596","",""],
    ["public","prim3_course_progress","r",true,false,"",11,"e0479bacb297","0a180702832e","14353473d2eb","","anon=damrw;authenticated=damrw"],
    ["public","print_orders","r",true,false,"",12,"c774f6d07b7d","065fafefa8c2","88baedeb191d","","anon=damrw;authenticated=damrw"],
    ["public","private_song_asset_chunks","r",true,false,"",5,"f641d7e635c1","0daf6a6a3688","8d3df9162221","",""],
