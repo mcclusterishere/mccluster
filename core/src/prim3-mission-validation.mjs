@@ -7,7 +7,10 @@
      ("President X", "Dr Y"). A real name that is not in the headline and has no title passes.
    - country or group as the enemy: any country name (every ISO 3166 region Intl knows) or a listed demonym/group word
      in the opposition, or such a word directly followed by forces/army/regime/government/... anywhere in the mission.
-     Misspellings, other languages, unlisted groups, real company names and paraphrase all pass. */
+     Misspellings, other languages, unlisted groups, real company names and paraphrase all pass.
+   - the real event explained: "false flag" anywhere, or a phrase that tells the reader what really happened in the
+     real event ("the real outage was caused by", "the news report was a cover", "in real life"). A headline is never
+     evidence of a cause, a culprit or a staged event; the mission keeps only its theme. Paraphrase passes. */
 const SCHEMA = 'prim3-mission/1';
 const THEMES = ['power', 'comms', 'data', 'logistics', 'water', 'transport', 'finance', 'industrial'];
 const KEYS = ['schema', 'title', 'codename', 'country', 'place_label', 'lat', 'lon', 'theme', 'briefing', 'objective', 't_task', 'e_task', 'r_task',
@@ -23,6 +26,9 @@ const DEMONYMS = ['american', 'russian', 'chinese', 'ukrainian', 'iranian', 'isr
   'jewish', 'muslim', 'christian', 'hindu', 'sikh', 'buddhist', 'catholic', 'sunni', 'shia', 'shiite', 'roma', 'african', 'asian', 'latino', 'hispanic',
   'european', 'indigenous', 'tribal', 'immigrant', 'migrant', 'refugee'];
 const ENEMY_NOUN = '(?:forces?|army|armies|military|troops|soldiers|navy|regime|government|agents?|operatives?|spies|militias?|nationals?|people|cartel|mob|gangs?)';
+// The fiction may not tell the reader who or what really caused the real event behind the headline.
+const FALSE_FLAG = /\bfalse[\s-]+flag/iu;
+const REAL_EVENT_CLAIM = /\b(?:in real life|in the real world|the (?:real|actual|true) (?:story|cause|culprit|outage|attack|fault|incident|event|blackout|breach)|(?:really|actually|secretly) (?:caused|behind|staged|orchestrated)|the (?:news|headline|media|press|report|reports|story)(?: (?:report|reports|story|stories|coverage))? (?:was|were|is|are) (?:a |an )?(?:cover|cover-up|lie|lies|fake|hoax|staged))\b/iu;
 let COUNTRY_NAMES = null;
 function countryNames() {
   if (COUNTRY_NAMES) return COUNTRY_NAMES;
@@ -101,6 +107,9 @@ export function validatePrim3Mission(analysis, evidence, targetId) {
   if (enemyWord) reject('opposition names a real country or group');
   const enemyPhrase = [...countryNames(), ...DEMONYMS].find((w) => new RegExp(`(?:^|[^\\p{L}])${escape(w)}\\s+${ENEMY_NOUN}\\b`, 'iu').test(story));
   if (enemyPhrase) reject('treats a real country or group as a hostile force');
+
+  if (FALSE_FLAG.test(story)) reject('claims a false flag');
+  if (REAL_EVENT_CLAIM.test(story)) reject('explains the real event behind the headline');
 
   return { ...base, outcome: 'mission' };
 }

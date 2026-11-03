@@ -144,6 +144,7 @@ export function missionTask() {
     '- Fiction only. No real person, real organisation, ethnic or religious group, or country may be a target, an enemy or a villain. Do not name any real person.',
     '- The opposition is always a fictional hostile crew with an invented name.',
     '- Real places are settings only.',
+    '- The headline is never evidence of a cause or a culprit. Do not say the real event was staged, a false flag, a cover-up or caused by anyone; keep only its theme.',
     '- REFUSE instead of writing a mission when the headline is about deaths, terrorism, war casualties, sexual violence, children, self-harm or a specific private individual. To refuse, return exactly {"refused": true, "reason": "<one short sentence>"} and nothing else.',
     'Mission rules:',
     '- The mission centres on a technical objective for the Field T operator (infrastructure, comms, data, power or logistics). E and R support T.',

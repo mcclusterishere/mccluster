@@ -32,6 +32,7 @@ owner ─GET /v1/prim3/missions/drafts/:job_id─▶ {status, mission | refused 
 
 - Inspired by the headline's **theme** only. Headline and context are untrusted data, never instructions.
 - No real person, organisation, ethnic or religious group, or country is a target or an enemy. The opposition is a fictional hostile crew. Real places are settings only.
+- The headline is never evidence of a cause, a culprit or a staged event. The mission never says what "really" happened (no "false flag", no "the real outage was caused by").
 - The model refuses with `{"refused": true, "reason"}` for headlines about deaths, terrorism, war casualties, sexual violence, children, self-harm or specific private individuals. A refusal is a completed job (`editorial_status: refused`).
 - The mission centres on a technical objective for the Field T operator (infrastructure, comms, data, power, logistics), with E and R supporting. Market context may set the stakes, the difficulty or the clock.
 
@@ -40,7 +41,8 @@ owner ─GET /v1/prim3/missions/drafts/:job_id─▶ {status, mission | refused 
 - an honorific followed by a name ("President X", "Dr Y");
 - a capitalised word pair copied from the headline (usually a name or an organisation);
 - any country name or listed demonym or group word in `opposition`;
-- such a word followed by forces, army, regime, government or similar anywhere in the mission.
+- such a word followed by forces, army, regime, government or similar anywhere in the mission;
+- "false flag" anywhere, or a phrase that explains the real event ("the real outage was caused by", "the news report was a cover", "in real life", "secretly orchestrated"). A headline is never evidence of a cause or a culprit; the mission keeps only the theme.
 
 It does **not** catch an untitled real name that is absent from the headline, unlisted groups, real companies, misspellings, other languages or paraphrase. Title Case headlines also make the pair check reject some harmless drafts. A person reads every draft.
 

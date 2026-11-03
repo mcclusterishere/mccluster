@@ -102,3 +102,19 @@ test('the setting may name the real place and country without making it the enem
   const ok = { ...mission, briefing: 'A fictional crew has taken a substation outside Nairobi, Kenya. Restore the grid before morning.' };
   assert.equal(validatePrim3Mission(ok, evidence, ARTICLE).outcome, 'mission');
 });
+
+test('the mission may not explain the real event: no false flag, no "what really happened"', () => {
+  invalid({ briefing: 'The substation fault was a false flag. Find out who planted it before dawn.' }, /false flag/);
+  invalid({ stakes: 'If the False-Flag story holds, the city blames the wrong people.' }, /false flag/);
+  invalid({ briefing: 'The real outage was caused by an insider at the utility. Prove it before the crew wipes the logs.' }, /real event/);
+  invalid({ objective: 'Show the news report was a cover for the theft of grid data.' }, /real event/);
+  invalid({ e_task: 'In real life the breakers were cycled by hand; find the panel.' }, /real event/);
+  invalid({ briefing: 'Someone secretly orchestrated the blackout. Restore the grid before the second wave.' }, /real event/);
+});
+
+test('fictional cause inside the fiction is fine: the crew is invented and the event is the game\'s own', () => {
+  const ok = { ...mission, briefing: 'The Ash Static has cycled the breakers at a fictional substation outside Nairobi. Restore control before the second wave.' };
+  assert.equal(validatePrim3Mission(ok, evidence, ARTICLE).outcome, 'mission');
+  const flagOk = { ...mission, r_task: 'Hold the yard gate and flag any vehicle that stops by the relay towers.' };
+  assert.equal(validatePrim3Mission(flagOk, evidence, ARTICLE).outcome, 'mission');
+});
