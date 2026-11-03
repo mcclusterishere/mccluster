@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="McCluster City Arcade: quick free games connected to a fictional Bridgeport world.">
+  <meta name="theme-color" content="#0b1017">
+  <title>City Arcade · McCluster City</title>
+  <link rel="stylesheet" href="css/city-arcade.css?v=__STAMP__">
+</head>
+<body>
+  <a class="skip" href="#arcade-play">Skip to game</a>
+  <main class="arcade-shell">
+    <header class="arcade-head">
+      <div class="eyebrow">MCCLUSTER CITY / ARCADE PILOT</div>
+      <h1>Every storefront.<br><em>A different game.</em></h1>
+      <p>Quick web mini-games from a connected fictional city. No account or purchase required for this public prototype.</p>
+      <nav aria-label="Related destinations">
+        <a href="fictional-city.html">Enter 3D City <span>(owner preview)</span></a>
+        <a href="game-hub.html">Course Game Hub <span>(owner preview)</span></a>
+      </nav>
+    </header>
+    <div class="arcade-layout">
+      <section class="arcade-catalog" aria-labelledby="catalog-title">
+        <h2 id="catalog-title">Games on the block</h2>
+        <p class="hint">Two playable prototypes. More shop games have reserved IDs and unique concepts.</p>
+        <div id="arcade-list" class="game-list" aria-label="Available game list">
+          <p role="status">Loading the arcade…</p>
+        </div>
+      </section>
+      <section class="arcade-play" id="arcade-play" aria-live="polite" aria-labelledby="play-title">
+        <h2 id="play-title">Select a game</h2>
+        <p>The world is bigger than any single storefront.</p>
+      </section>
+    </div>
+    <footer>
+      <p>Prototype arcade points and police response are fictional and local to this browser. Nothing here changes the 3D city's saves, cash, accounts or the original Robbery 1s screenplay.</p>
+      <p>City geometry, businesses and characters are dramatized; real Bridgeport streets and government places remain distinct from fiction.</p>
+    </footer>
+  </main>
+  <script type="module" src="js/city-arcade/app.mjs?v=__STAMP__"></script>
+</body>
+</html>
