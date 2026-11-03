@@ -19,7 +19,7 @@
 // - The suggestion is "strong given what you know", never "perfect" or "guaranteed".
 // - Bounded game rules only; nothing here is real-world weapon or trajectory guidance.
 
-import { createState, gridDistance, hasLineOfSight, shotPreview, stableHash, computeReach } from './tactical-resolver.mjs';
+import { createState, gridDistance, hasLineOfSight, shotPreview, stableHash, computeReach, knownMachines } from './tactical-resolver.mjs';
 
 export const HINT_VERSION = 'tactical-hints/0.1.0';
 
@@ -37,11 +37,13 @@ const OPEN_OBJECTIVE_STATES = new Set(['OPEN', 'ACTIVE', 'IN_PROGRESS']);
 // ---------- fog of war ----------
 
 // The default "known enemy" rule uses only supported mechanics: an enemy is known when a living
-// player unit has line of sight to it and it is within that player unit's detectionRadius, or
-// when the host lists it in knownEnemyIds (its own fog layer: DETECTED/INFERRED/... states).
+// player unit (or a working camera the squad owns or controls) has line of sight to it and it is within
+// that observer's detectionRadius, or when the host lists it in knownEnemyIds (its own fog layer:
+// DETECTED/INFERRED/... states).
 export function knownEnemyIds(state, knownEnemyIdsFromHost = null) {
   if (Array.isArray(knownEnemyIdsFromHost)) return new Set(knownEnemyIdsFromHost.map(String));
-  const players = state.units.filter((u) => u.faction === 'PLAYER' && !u.dead && !u.downed);
+  const players = [...state.units.filter((u) => u.faction === 'PLAYER' && !u.dead && !u.downed),
+    ...(state.machines || []).filter((m) => m.kind === 'CAMERA' && m.faction === 'PLAYER' && (m.state === 'ACTIVE' || m.state === 'CONTROLLED'))];
   const known = new Set();
   for (const enemy of state.units) {
     if (enemy.faction === 'PLAYER' || enemy.dead) continue;
@@ -51,11 +53,18 @@ export function knownEnemyIds(state, knownEnemyIdsFromHost = null) {
 }
 
 // What the player is entitled to see. Everything downstream takes ONLY this object.
+// Machines: only those the player side has observed (live) or observed before (last sighting). A closed
+// door the player knows of is a wall in `blockers`; a door the player has never observed is absent, so
+// a route through it is interrupted by the resolver on contact, like an unseen unit.
 export function playerProjection(state, { knownEnemyIds: hostKnown = null } = {}) {
   const known = knownEnemyIds(state, hostKnown);
   const units = state.units
     .filter((u) => u.faction === 'PLAYER' || known.has(u.id))
-    .map((u) => ({ ...u, statuses: [...u.statuses] }));
+    .map((u) => ({ ...u, statuses: [...u.statuses],
+      ...(u.weapons ? { weapons: Object.fromEntries(Object.entries(u.weapons).map(([k, w]) => [k, { ...w }])) } : {}) }));
+  const machines = Array.isArray(state.machines) ? knownMachines(state) : null;
+  const blockers = state.blockers.filter((b) => b.door == null).map((b) => ({ ...b }));
+  for (const m of machines || []) if (m.kind === 'DOOR' && !m.open) for (const c of m.cells) blockers.push({ ...c, door: m.id });
   return {
     version: state.version,
     width: state.width,
@@ -65,7 +74,7 @@ export function playerProjection(state, { knownEnemyIds: hostKnown = null } = {}
     phase: state.phase,
     units,
     cover: state.cover.map((c) => ({ ...c, sides: [...c.sides] })),
-    blockers: state.blockers.map((b) => ({ ...b })),
+    blockers,
     objectives: state.objectives.map((o) => ({ ...o })),
     objectiveTiles: Array.isArray(state.battlefield && state.battlefield.objectiveTiles)
       ? state.battlefield.objectiveTiles.map((t) => ({ id: String(t.id), x: Number(t.x), y: Number(t.y), z: Number(t.z || 0) }))
@@ -75,7 +84,8 @@ export function playerProjection(state, { knownEnemyIds: hostKnown = null } = {}
     // projection (and every binding) of an older board is byte-for-byte what it was
     ...(Array.isArray(state.surfaces) ? { surfaces: state.surfaces.map((x) => ({ ...x })) } : {}),
     ...(Array.isArray(state.links) && state.links.length ? { links: state.links.map((l) => ({ ...l, from: { ...l.from }, to: { ...l.to } })) } : {}),
-    ...(frameOf(state.battlefield) ? { coordinateFrame: { ...frameOf(state.battlefield) } } : {})
+    ...(frameOf(state.battlefield) ? { coordinateFrame: { ...frameOf(state.battlefield) } } : {}),
+    ...(machines ? { machines } : {})
   };
 }
 
@@ -324,6 +334,7 @@ export function evaluate(projection, unitId, weights = WEIGHTS) {
   const base = projectedState(projection);
   const unit = base.units.find((u) => u.id === unitId);
   const enemies = base.units.filter((u) => u.faction !== 'PLAYER' && !u.dead && !u.downed);
+  const cameras = (projection.machines || []).filter((m) => m.kind === 'CAMERA' && m.faction !== 'PLAYER' && m.state === 'ACTIVE');
   const startObj = nearestObjectiveDistance(projection, unit);
   const scored = legalCandidates(projection, unitId).map((cand) => {
     const s = { ...base, units: base.units.map((u) => (u.id === unitId ? { ...u, x: cand.x, y: cand.y, z: cand.z } : u)) };
@@ -340,6 +351,7 @@ export function evaluate(projection, unitId, weights = WEIGHTS) {
       }
       if (unit.concealed && gridDistance(e, cand, s) <= e.detectionRadius && hasLineOfSight(s, e, cand)) detected = true;
     }
+    if (unit.concealed && cameras.some((c) => gridDistance(c, cand, s) <= c.detectionRadius && hasLineOfSight(s, c, cand))) detected = true;
     const obj = nearestObjectiveDistance(projection, cand);
     const progress = Number.isFinite(startObj.distance) && Number.isFinite(obj.distance) ? startObj.distance - obj.distance : 0;
     const score = weights.objectiveProgressPerTile * progress - weights.incomingExpectedDamage * incoming

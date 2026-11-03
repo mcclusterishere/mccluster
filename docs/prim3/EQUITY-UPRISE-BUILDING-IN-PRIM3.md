@@ -51,10 +51,11 @@ No render or generated image was used. No mark, sign or lettering of the buildin
 | 1 | Floor 1 (0 ft): the plate, entered only by its doors |
 | 2–6 | Floors 2–6 (13.5 ft each): only the stair landings are open; the drill keeps the floor doors shut |
 | 7 | Level 7, the open-air roof (81 ft): parapet cover, overruns, screens, mechanical units, beacon |
+| 8 | B1 (−13.5 ft): a normal floor (owner, 2026-11-03). Its cells, rooms and stairs come from the building package through the PRIM3 adapter; the plant rooms are shut like Floor 1's |
 
 Each stair climbs one storey per link (cost 3), switching back between its two enclosure tiles, so
-reaching the roof takes several moves. B1 is not in the drill: the Floor 1 stair barriers keep the
-way down closed, and the passenger elevator's B1 stop stays hidden.
+reaching the roof takes several moves. Both stairs also go down to B1, a normal floor; the cutaway goes
+below grade and draws the detailed B1 model. Elevators are not used by PRIM3 missions unless one permits them.
 
 ## Known limits of v1 (the engine has whole-tile walls only)
 
@@ -77,8 +78,9 @@ way down closed, and the passenger elevator's B1 stop stays hidden.
    building from its own GLBs (chassis, Floor 1, Level 7 roof, facade; Floors 2–6 on demand), at one
    uniform 12 ft-a-unit scale, checked against the plan in `scripts/test/prim3-equity-uprise-model.test.mjs`.
    See `EQUITY-UPRISE-HQ-REVIEW.md`.
-3. **More floors as missions.** Floors 2–6 have reconciled programs. Each could open as a z-level
-   with its own rooms, using the same covering rule and test pattern. B1 needs its sandboxed-clone
-   rule (learners never touch live B1) and owner approval first.
+3. **More floors as missions.** The adapter (`js/prim3-tactics/adapters/equity-uprise/`) now loads every
+   level, B1 to L7, with stairs between them. The first mission on it is B1's Blind the Floor / Restore the
+   Picture; see `EQUITY-UPRISE-X-PRIM3-INTEGRATION-MATRIX.md`. (B1's program allows the canonical geometry in
+   SANDBOX training; no separate clone is required.)
 4. **Owner review** of the drill framing, the role-player opposition, and whether this level should
    appear outside the review menu.
