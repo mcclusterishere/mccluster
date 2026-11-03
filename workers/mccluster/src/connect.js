@@ -41,7 +41,7 @@ function sbHeaders(env, extra = {}) {
   };
 }
 
-export async function sb(env, path, init = {}) {
+async function sb(env, path, init = {}) {
   const res = await fetch(`${env.SUPABASE_URL}/rest/v1/${path}`, {
     ...init,
     headers: sbHeaders(env, init.headers || {})
@@ -62,7 +62,7 @@ export async function sb(env, path, init = {}) {
    `livemode` column and the key that wrote the row is the kind of bug that
    is only discovered by a real customer's card. */
 function livemode(env) {
-  return /^(sk|rk)_live_/.test(String(env.STRIPE_SECRET_KEY || ''));
+  return String(env.STRIPE_SECRET_KEY || '').startsWith('sk_live');
 }
 
 async function currentUser(req, env) {
@@ -83,7 +83,7 @@ async function orgBySlug(env, slug) {
 /* Connect mutations are an owner power, not a member power. Reading the rail
    is enough to render a status badge; creating the account that money lands
    in is not something a `viewer` on the org should be able to do. */
-export async function requireOrgRole(req, env, slug, roles = ['owner']) {
+async function requireOrgRole(req, env, slug, roles = ['owner']) {
   const user = await currentUser(req, env);
   if (!user) throw Object.assign(new Error('Authentication required'), { status: 401 });
   const org = await orgBySlug(env, slug);
@@ -99,7 +99,7 @@ export async function requireOrgRole(req, env, slug, roles = ['owner']) {
   return { user, org, role };
 }
 
-export async function railFor(env, orgId) {
+async function railFor(env, orgId) {
   const rows = await sb(
     env,
     `org_stripe_accounts?org_id=eq.${encodeURIComponent(orgId)}&livemode=is.${livemode(env)}&select=*`
@@ -107,7 +107,7 @@ export async function railFor(env, orgId) {
   return rows?.[0] || null;
 }
 
-export async function patchRail(env, orgId, patch) {
+async function patchRail(env, orgId, patch) {
   const rows = await sb(
     env,
     `org_stripe_accounts?org_id=eq.${encodeURIComponent(orgId)}&livemode=is.${livemode(env)}`,
@@ -130,7 +130,7 @@ function statusFor(account) {
   return account.details_submitted ? 'restricted' : 'onboarding';
 }
 
-export function railPatchFromAccount(account) {
+function railPatchFromAccount(account) {
   return {
     stripe_account_id: account.id,
     charges_enabled: Boolean(account.charges_enabled),
@@ -142,7 +142,7 @@ export function railPatchFromAccount(account) {
   };
 }
 
-export function publicRail(rail) {
+function publicRail(rail) {
   if (!rail) return { connected: false, ready: false, onboarding_status: 'not_started' };
   return {
     connected: Boolean(rail.stripe_account_id),
@@ -168,7 +168,7 @@ export function publicRail(rail) {
    takes the product description from the caller instead of asserting the
    client sells rideshare — Stripe reads that field during review, and a
    musician described as a rental operator gets held up for it. */
-export async function createClientAccount(env, { org, email, productDescription, url }) {
+async function createClientAccount(env, { org, email, productDescription, url }) {
   return stripeRequest(env, 'accounts', {
     type: 'express',
     country: 'US',
@@ -186,7 +186,7 @@ export async function createClientAccount(env, { org, email, productDescription,
       mccluster_org_id: org.id,
       mccluster_org_slug: org.slug
     }
-  }, {idempotencyKey:'creator-connect-'+org.id+'-'+(livemode(env)?'live':'test')});
+  });
 }
 
 /* Webhook events are processed at most once. `stripe_events` has event_id as

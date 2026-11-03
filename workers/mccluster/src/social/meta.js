@@ -84,35 +84,6 @@ export async function tokenFor(env, account) {
   if (!parsed) return null;
   if (parsed.kind === 'env') return env[parsed.name] || null;
   if (parsed.kind === 'vault') {
-    if (env.CREATOR_SOCIAL_MODULE_ACCESS_ENABLED === 'true' && env.CUSTOMER_SOCIAL_ENABLED === 'true') {
-      // Managed token read and entitlement decision share one SQL transaction.
-      // Operator credentials retain their existing path; no new provider call.
-      const result = await db(env, 'rpc/customer_social_token_v2', {
-        method: 'POST', body: JSON.stringify({ p_org: account.org_id, p_secret: parsed.id })
-      });
-      if (typeof result?.managed !== 'boolean') throw Object.assign(new Error('Social credential authorization unavailable'), { status: 503 });
-      if (result.managed) {
-        if (!['legacy_paid', 'module'].includes(result.mode) || typeof result.token !== 'string' || !result.token) throw Object.assign(new Error('Social credential authorization denied'), { status: 403 });
-        return result.token;
-      }
-    }
-    // The private registry is authoritative; neither account settings nor job payload
-    // can remove a customer's entitlement gate. Also prevents copying a Vault id
-    // into a different organization owned by the same user.
-    let access;
-    try {
-      access = await db(env, 'rpc/customer_social_credential_access', {
-        method: 'POST', body: JSON.stringify({ p_org: account.org_id, p_secret: parsed.id })
-      });
-    } catch (error) {
-      // Before the migration there can be no customer OAuth credentials. Keep
-      // existing operator Vault bindings working; other failures are closed.
-      if (error.detail?.code !== 'PGRST202') throw error;
-      if (env.CUSTOMER_SOCIAL_ENABLED === 'true') throw error;
-    }
-    if (access?.managed && (env.CUSTOMER_SOCIAL_ENABLED !== 'true' || !access.allowed || (access.mode === 'module' && env.CREATOR_SOCIAL_MODULE_ACCESS_ENABLED !== 'true'))) {
-      throw Object.assign(new Error('Customer Instagram publishing requires an enabled service and current authorization; reconnect if access expired'), { status: 402 });
-    }
     const token = await db(env, 'rpc/vault_secret', {
       method: 'POST',
       body: JSON.stringify({ p_id: parsed.id })
@@ -126,9 +97,9 @@ export async function tokenFor(env, account) {
    Meta fetches it from a link signed for a day, long enough for Meta's own
    processing and retries, and the file itself never becomes public. */
 export const OUTBOX_BUCKET = 'social-outbox';
-async function signOutboxUrl(env, storagePath, bucket = OUTBOX_BUCKET) {
+async function signOutboxUrl(env, storagePath) {
   const objectPath = String(storagePath).split('/').map(encodeURIComponent).join('/');
-  const res = await fetch(`${env.SUPABASE_URL}/storage/v1/object/sign/${bucket}/${objectPath}`, {
+  const res = await fetch(`${env.SUPABASE_URL}/storage/v1/object/sign/${OUTBOX_BUCKET}/${objectPath}`, {
     method: 'POST',
     headers: headers(env),
     body: JSON.stringify({ expiresIn: 86400 })
@@ -140,10 +111,6 @@ async function signOutboxUrl(env, storagePath, bucket = OUTBOX_BUCKET) {
 }
 
 async function resolveVideoUrl(env, job) {
-  if (job.payload?.world_delivery === true) {
-    const asset = await db(env, 'rpc/world_social_video', {method:'POST',body:JSON.stringify({p_job:job.id})});
-    return signOutboxUrl(env,asset.object_path,'mnet-media');
-  }
   if (job.payload?.video_url) return job.payload.video_url;
   if (job.payload?.storage_path) return signOutboxUrl(env, job.payload.storage_path);
   if (!job.payload?.video_asset_id) return null;
@@ -246,10 +213,7 @@ async function processPublishJob(env, job) {
     return { state: job.state, deferred: true, reason: 'credential_secret_not_configured' };
   }
   if (job.state === 'queued') return beginInstagramPublish(env, job, account, token);
-  if (job.state === 'processing') {
-    if(job.payload?.world_delivery === true) await db(env,'rpc/world_social_video',{method:'POST',body:JSON.stringify({p_job:job.id})});
-    return finishInstagramPublish(env, job, account, token);
-  }
+  if (job.state === 'processing') return finishInstagramPublish(env, job, account, token);
   await patch(env, 'social_publish_jobs', job.id, { lease_owner: null, lease_expires_at: null });
   return { state: job.state, skipped: true };
 }
@@ -268,9 +232,6 @@ async function claimPublishJobs(env, limit) {
 }
 
 export async function processInstagramPublishQueue(env, { limit = 10 } = {}) {
-  if (env.CUSTOMER_SOCIAL_ENABLED !== undefined) {
-    await db(env, 'rpc/customer_social_selection_gc', { method: 'POST', body: '{}' });
-  }
   const safeLimit = Math.min(25, Math.max(1, Number(limit) || 10));
   const jobs = await claimPublishJobs(env, safeLimit);
   const results = [];
@@ -350,15 +311,7 @@ export async function checkInstagramConnectionHealth(env, { limit = 10, maxAgeMi
       continue;
     }
 
-    let token;
-    try { token = await tokenFor(env, account); }
-    catch (error) {
-      // A lapsed customer connection must not stop the health pass for other orgs.
-      const message = error.status === 402 ? 'customer_social_access_expired' : 'credential_lookup_unavailable';
-      await patchInstagramChannel(env, orgId, { last_error: message, last_error_at: checkedAt });
-      results.push({ org_id: orgId, account_id: account.id, connected: false, reason: message });
-      continue;
-    }
+    const token = await tokenFor(env, account);
     if (!token) {
       const message = 'credential_secret_not_configured';
       await patchInstagramChannel(env, orgId, { last_error: message, last_error_at: checkedAt });

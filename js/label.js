@@ -410,5 +410,50 @@
     }).catch(function () {});
   }
 
-  /* The sleep timer (the old "nightcap") was removed on the owner's direction, 2026-11-02. */
+  /* ============ THE NIGHTCAP: the record tucks the listener in ============ */
+  var napAt = 0, napTick = 0, napBtn = null;
+  var NAPS = [0, 15, 30, 60];
+  function napPaint(mins) {
+    if (!napBtn) return;
+    napBtn.textContent = mins ? "Sleep in " + mins + " min" : "Sleep timer";
+    napBtn.classList.toggle("on", !!mins);
+  }
+  function napSet(mins) {
+    clearInterval(napTick);
+    if (!mins) { napAt = 0; napPaint(0); return; }
+    napAt = Date.now() + mins * 60000;
+    napPaint(mins);
+    napTick = setInterval(function () {
+      var left = napAt - Date.now();
+      if (left > 10000) {
+        if (napBtn) napBtn.textContent = "Sleep in " + Math.ceil(left / 60000) + " min";
+        return;
+      }
+      /* the last ten seconds dim the lamp (iOS keeps its own volume; pause still lands) */
+      try { deck.volume = Math.max(0, left / 10000); } catch (e) {}
+      if (left <= 0) {
+        clearInterval(napTick);
+        deck.pause();
+        try { deck.volume = 1; } catch (e) {}
+        napAt = 0; napPaint(0);
+        toast("The record tucked you in. Goodnight.");
+        track("nightcap_done", {});
+      }
+    }, 1000);
+  }
+  var doors = document.querySelector(".now__doors");
+  if (doors) {
+    napBtn = document.createElement("button");
+    napBtn.type = "button";
+    napBtn.id = "nowNap";
+    napPaint(0);
+    var napIdx = 0;
+    napBtn.addEventListener("click", function () {
+      napIdx = (napIdx + 1) % NAPS.length;
+      napSet(NAPS[napIdx]);
+      track("nightcap_set", { minutes: NAPS[napIdx] });
+    });
+    doors.appendChild(napBtn);
+  }
+  window.MCC_NIGHTCAP = { set: napSet };
 })();

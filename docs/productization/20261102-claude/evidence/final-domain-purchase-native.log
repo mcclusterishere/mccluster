@@ -1,4 +1,0 @@
-PASS concurrent duplicate funding: one recorded paid order, idempotent status
-PASS concurrent same-host claims: one durable attempt; loser rolls back funded state, no second provider submit authority
-PASS concurrent same-order claims: exactly one submission authority
-exit=0

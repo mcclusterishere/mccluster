@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 562,
+  "candidate_count": 563,
   "capability_source_count": 102,
-  "support_only_count": 460,
+  "support_only_count": 461,
   "entries": [
     {
       "path": ".cursorrules",
@@ -1210,6 +1210,13 @@
       "rationale": "Review note for the owner-only PRIM3 Equity Uprise HQ drill: which building models the game reads and its open decisions; a derived game view that defers to REFERENCE-AUTHORITY.md, never geometry authority."
     },
     {
+      "path": "docs/prim3/EQUITY-UPRISE-X-PRIM3-INTEGRATION-MATRIX.md",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "PRIM3 x Equity Uprise integration matrix and the B1 vertical-slice spec; describes how the game reads the building authority read-only through its adapter. A game projection that defers to REFERENCE-AUTHORITY.md, never geometry authority."
+    },
+    {
       "path": "docs/sales-redesign/BRANCH-HARVEST-REPORT.md",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -1572,11 +1579,53 @@
       "rationale": "Shared Action Network frontend/runtime module with Equity Uprise context; not an independent Equity Uprise capability."
     },
     {
+      "path": "js/prim3-tactics/SOURCE.json",
+      "classification": "governance_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pins the vendored Prim3 tactical engine files by sha256; its note names the Equity Uprise levels that use them. No building capability."
+    },
+    {
+      "path": "js/prim3-tactics/adapters/equity-uprise/adapter.mjs",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "PRIM3 game adapter: a reversible feet-to-grid frame, cells, traversal, cover and device placement derived read-only from the building package. A derived game view, never geometry authority."
+    },
+    {
+      "path": "js/prim3-tactics/adapters/equity-uprise/equity-uprise-package.json",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Generated, read-only extract of the building authority for the PRIM3 game, with the sha256 of every source; rebuilt by scripts/prim3/build-equity-uprise-package.mjs and checked for drift. Never authority."
+    },
+    {
+      "path": "js/prim3-tactics/adapters/equity-uprise/pipeline.mjs",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "PRIM3 gameplay pipeline: turns mission data plus the adapter's derived cells and cameras into a resolver config. Game runtime, no building capability."
+    },
+    {
+      "path": "js/prim3-tactics/adapters/equity-uprise/sandbox.mjs",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Binds a PRIM3 mission's fault ledger to the electronics SANDBOX's own packaged consequences (SANDBOX only, live control refused). It never writes the building or the sandbox baseline."
+    },
+    {
       "path": "js/prim3-tactics/level3d.mjs",
       "classification": "building_projection_support",
       "capability_ids": [],
       "support_only": true,
       "rationale": "PRIM3 tactics level renderer; draws the Equity Uprise HQ drill from the level module's plan data, a derived game view of the Core V2 plate, not a source program capability."
+    },
+    {
+      "path": "js/prim3-tactics/levels/equity-uprise-b1.mjs",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Owner-only PRIM3 B1 level (Blind the Floor / Restore the Picture) drawn on the canonical B1 through the adapter; a derived game projection, adding no program capability."
     },
     {
       "path": "js/prim3-tactics/levels/equity-uprise-hq.mjs",
@@ -1591,6 +1640,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "PRIM3 level registry; names the Equity Uprise HQ drill level so the game can load it. No building program or physical capability is added."
+    },
+    {
+      "path": "js/prim3-tactics/missions/blind-the-floor.mjs",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "PRIM3 training mission data and rules on canonical B1 (cameras, patch panel, console from the registry); game content in SANDBOX, not a building capability."
     },
     {
       "path": "js/prim3-tactics/preview.mjs",
@@ -1797,7 +1853,7 @@
       "classification": "shared_site_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Role-tailored cut of the r\u00e9sum\u00e9 (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
+      "rationale": "Role-tailored cut of the résumé (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
     },
     {
       "path": "scripts/e2e/world-screen.e2e.mjs",
@@ -1821,6 +1877,34 @@
       ],
       "support_only": false,
       "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "scripts/prim3/blind-the-floor-sim.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Plays the PRIM3 B1 mission with a heuristic squad against the threat AI to measure win rates; test tooling, no building capability."
+    },
+    {
+      "path": "scripts/prim3/build-equity-uprise-package.mjs",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Builds the read-only PRIM3 building package from the authority (reads only, records source hashes, runs the electronics sandbox for fault consequences). Never writes the authority."
+    },
+    {
+      "path": "scripts/prim3/check-tactics-layout.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Browser layout check for the PRIM3 tactics page on the Equity Uprise levels (phone widths); test tooling, no building capability."
+    },
+    {
+      "path": "scripts/prim3/hq-drill-sim.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Plays the PRIM3 Equity Uprise HQ drill at full strength with a heuristic squad; test tooling, no building capability."
     },
     {
       "path": "scripts/sites-buy-smoke.mjs",
@@ -1907,6 +1991,13 @@
       "rationale": "Tests that keep the company and personal properties and entities separate; checks Equity Uprise's parent organization. Not a building capability."
     },
     {
+      "path": "scripts/test/fixtures/hq-drill-full-strength-win.json",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Recorded full-strength PRIM3 HQ drill game replayed by the tests; test fixture, no building capability."
+    },
+    {
       "path": "scripts/test/homelessness-action.test.mjs",
       "classification": "test_support",
       "capability_ids": [],
@@ -1947,6 +2038,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Test or behaviour harness for shared Action Network / intelligence governance; references Equity Uprise context but defines no program capability."
+    },
+    {
+      "path": "scripts/test/prim3-equity-uprise-adapter.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Tests the PRIM3 adapter against the building authority (package drift, frame, placement, coverage, sandbox equivalence, authority files unchanged); adds no program capability."
     },
     {
       "path": "scripts/test/prim3-equity-uprise-level.test.mjs",
@@ -4051,249 +4149,67 @@
       "rationale": "The one Control Room navigation definition; names the existing Equity Uprise operations views (missions, fellows, funding) as a System section entry and adds no distinct program capability."
     },
     {
-      "path": "data/equity-uprise-offers-template.json",
-      "classification": "operational_support",
+      "path": "core/data/fictional-city/district.v1.json",
+      "classification": "building_projection_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
+      "rationale": "Canonical fictional-city content and portal data includes a simplified exterior derived from the existing Equity Uprise footprint and roof datum; it does not define building geometry, floor programs or a new building capability."
     },
     {
-      "path": "docs/selfservice/FIRST-OFFER-ACTIVATION.md",
-      "classification": "operational_support",
+      "path": "docs/fictional-city/LORE.md",
+      "classification": "documentation_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
+      "rationale": "Fictional district lore distinguishes the Equity Uprise island landmark from the existing headquarters and preserves its authority boundary; narrative support only, with no building program or capability ownership."
     },
     {
-      "path": "docs/selfservice/PR638-PROPOSED-METADATA.md",
-      "classification": "operational_support",
+      "path": "docs/fictional-city/README.md",
+      "classification": "documentation_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
+      "rationale": "Owner-only city implementation contract records the existing HQ destination, simplified exterior, source authority and validation limits; integration documentation rather than a building program capability."
     },
     {
-      "path": "docs/selfservice/platform-offers.md",
-      "classification": "operational_support",
+      "path": "docs/universe/UNIVERSE-SCHEMA.md",
+      "classification": "governance_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
+      "rationale": "Cross-universe registry, state and portal contract includes the fictional-city connection to the existing Equity Uprise HQ; it governs navigation boundaries and adds no headquarters capability or geometry authority."
     },
     {
-      "path": "docs/selfservice/reconciliation/branch-inventory.json",
-      "classification": "operational_support",
+      "path": "docs/universe/universe-registry.json",
+      "classification": "navigation_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
+      "rationale": "Universe registration declares the fictional-city entrance and existing Equity Uprise HQ destination as data-only navigation; no building capability, floor program or access policy is created."
     },
     {
-      "path": "docs/selfservice/reconciliation/live-migration-ledger.json",
-      "classification": "operational_support",
+      "path": "js/fictional-city/app.mjs",
+      "classification": "navigation_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
+      "rationale": "Owner-only fictional-city host opens the existing Equity Uprise HQ route through declared portal data; city dialogs and navigation do not implement or change headquarters capabilities."
     },
     {
-      "path": "docs/selfservice/reconciliation/pr-inventory.json",
-      "classification": "operational_support",
+      "path": "js/fictional-city/scene.mjs",
+      "classification": "building_projection_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
+      "rationale": "Original fictional-city renderer displays a simplified Core V2 dimension-derived HQ exterior and portal on its island; the scene is a derived game projection, not building geometry or program authority."
     },
     {
-      "path": "js/front-studio.js",
-      "classification": "operational_support",
+      "path": "js/fictional-city/spatial.mjs",
+      "classification": "building_projection_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
+      "rationale": "Fictional-city walking and collision support treats the supplied HQ footprint as an exterior blocker; it does not change canonical building circulation, interior geometry or capabilities."
     },
     {
-      "path": "js/platform-home.js",
-      "classification": "operational_support",
+      "path": "scripts/e2e/fictional-city.e2e.mjs",
+      "classification": "test_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
-    },
-    {
-      "path": "platform-home.html",
-      "classification": "operational_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
-    },
-    {
-      "path": "scripts/e2e/canonical-artist-owner.e2e.mjs",
-      "classification": "operational_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
-    },
-    {
-      "path": "scripts/e2e/composer-overlay.e2e.mjs",
-      "classification": "operational_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
-    },
-    {
-      "path": "scripts/e2e/equity-offers-artist.e2e.mjs",
-      "classification": "operational_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
-    },
-    {
-      "path": "scripts/e2e/managed-projects.e2e.mjs",
-      "classification": "operational_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
-    },
-    {
-      "path": "scripts/test/customer-site-addresses-db.mjs",
-      "classification": "operational_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
-    },
-    {
-      "path": "scripts/test/free-site-minimum-db.mjs",
-      "classification": "operational_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
-    },
-    {
-      "path": "scripts/test/platform-center-nav.browser.mjs",
-      "classification": "operational_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
-    },
-    {
-      "path": "scripts/test/site-offers.test.mjs",
-      "classification": "operational_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
-    },
-    {
-      "path": "supabase/pending/canonical_artist_bindings_v1.sql",
-      "classification": "operational_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
-    },
-    {
-      "path": "workers/mccluster/src/canonical-artists.js",
-      "classification": "operational_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
-    },
-    {
-      "path": "workers/mccluster/test/managed-projects.test.mjs",
-      "classification": "operational_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
-    },
-    {
-      "path": "docs/productization/20261102/CLAUDE-PROMPT.md",
-      "classification": "operational_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Productization audit, source evidence or disposable permission fixture; references existing Equity Uprise identities without introducing or changing a building capability."
-    },
-    {
-      "path": "docs/productization/20261102/PR-INVENTORY.md",
-      "classification": "operational_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Productization audit, source evidence or disposable permission fixture; references existing Equity Uprise identities without introducing or changing a building capability."
-    },
-    {
-      "path": "docs/productization/20261102/WHOLE-SITE-ACCEPTANCE.md",
-      "classification": "operational_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Productization audit, source evidence or disposable permission fixture; references existing Equity Uprise identities without introducing or changing a building capability."
-    },
-    {
-      "path": "docs/productization/20261102/evidence/branches.json",
-      "classification": "operational_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Productization audit, source evidence or disposable permission fixture; references existing Equity Uprise identities without introducing or changing a building capability."
-    },
-    {
-      "path": "docs/productization/20261102/evidence/ci-reviews.json",
-      "classification": "operational_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Productization audit, source evidence or disposable permission fixture; references existing Equity Uprise identities without introducing or changing a building capability."
-    },
-    {
-      "path": "docs/productization/20261102/evidence/open-pr-snapshot.json",
-      "classification": "operational_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Productization audit, source evidence or disposable permission fixture; references existing Equity Uprise identities without introducing or changing a building capability."
-    },
-    {
-      "path": "docs/productization/20261102/evidence/portability.json",
-      "classification": "operational_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Productization audit, source evidence or disposable permission fixture; references existing Equity Uprise identities without introducing or changing a building capability."
-    },
-    {
-      "path": "docs/productization/20261102/evidence/pr-change-inventory.json",
-      "classification": "operational_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Productization audit, source evidence or disposable permission fixture; references existing Equity Uprise identities without introducing or changing a building capability."
-    },
-    {
-      "path": "docs/productization/20261102/evidence/production-migrations.json",
-      "classification": "operational_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Productization audit, source evidence or disposable permission fixture; references existing Equity Uprise identities without introducing or changing a building capability."
-    },
-    {
-      "path": "docs/productization/20261102/evidence/semantic-overlap-candidates.json",
-      "classification": "operational_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Productization audit, source evidence or disposable permission fixture; references existing Equity Uprise identities without introducing or changing a building capability."
-    },
-    {
-      "path": "docs/productization/20261102/prepared/canonical_artist_bindings_v1.sql",
-      "classification": "operational_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Productization audit, source evidence or disposable permission fixture; references existing Equity Uprise identities without introducing or changing a building capability."
-    },
-    {
-      "path": "supabase/tests/editor-versioned/api-roles.sql",
-      "classification": "operational_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Productization audit, source evidence or disposable permission fixture; references existing Equity Uprise identities without introducing or changing a building capability."
-    },
-    {
-      "path": "docs/productization/20261102-claude/ANTI-SOCIAL-CAMPAIGN.md",
-      "classification": "operational_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Productization audit, source evidence or disposable permission fixture; references existing Equity Uprise identities without introducing or changing a building capability."
-    },
-    {
-      "path": "docs/productization/20261102-claude/HANDOFF.md",
-      "classification": "operational_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Productization audit, source evidence or disposable permission fixture; references existing Equity Uprise identities without introducing or changing a building capability."
+      "rationale": "Browser checks for the owner-only fictional city verify the existing Equity Uprise portal and game integration; verification support only, with no building program or geometry implementation."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",

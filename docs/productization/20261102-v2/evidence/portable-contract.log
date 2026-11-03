@@ -1,1 +1,0 @@
-PASS: 77 assertions; SQL roles/ACLs, own/cross-account, first/stale/legacy writes, restore/audit, rollback, private publication, personal takedown fencing, real HTTP adapter over SQL. Native simultaneous sessions tested separately.

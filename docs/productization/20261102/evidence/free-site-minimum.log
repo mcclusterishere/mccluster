@@ -1,1 +1,0 @@
-PASS: minimal free schema create/edit/publish/private read/modules/address/quota; canonical grant/bind/revoke SQL authority, owner isolation, no name privilege, immutable identity, privacy and audit provenance. No paid/provider/Studio schema or live data.

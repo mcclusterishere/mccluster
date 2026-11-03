@@ -135,23 +135,6 @@
 .crd .cro-meta.crd-bad{color:#ffb7bb}
 .crd-waiting{border-color:rgba(240,198,116,.45)}
 .crd code{font-size:inherit;overflow-wrap:anywhere}
-/* front page: revision-aware saving (a stale save waits for a decision; saved revisions can be restored live) */
-.cfp-conflict{display:grid;gap:8px}
-.cfp-conflict p{margin:0}
-.cfp-history{display:grid;gap:8px;margin-top:10px;padding:10px;border:1px solid var(--cr-line);border-radius:10px}
-.cfp-revisions{list-style:none;margin:0;padding:0;display:grid;gap:6px}
-.cfp-revisions li{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.04);font-size:14px}
-.cfp-revisions small{opacity:.75}
-.cfp-revisions .cr-btn{min-height:36px;padding:6px 12px;margin-left:auto}
-/* member fronts (moderation): one record, one reason, one takedown */
-.cmf{display:grid;gap:12px}
-.cmf-form{gap:8px}
-.cmf-reason{display:grid;gap:4px}
-.cmf-reason textarea{width:100%;min-height:80px;font:400 max(16px,1rem)/1.4 system-ui,sans-serif}
-.cmf-history{margin-top:10px}
-.cmf-revisions{list-style:none;margin:0;padding:0;display:grid;gap:6px}
-.cmf-revisions li{padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.04);font-size:14px}
-.cmf-revisions small{opacity:.75}
 /* Create · Music · Lyrics (js/control-room/lyrics-review.js). Phone first; the desk only gets room. */
 .crl{display:grid;gap:10px;min-width:0}
 .crl-pick{display:grid;gap:4px;font:700 12px/1.2 var(--ui,system-ui);color:var(--cr-dim)}

@@ -1,2 +1,0 @@
-PASS 28 assertions: seven pinned SQL definitions, role-specific RPC permissions, cross-account refusal, owner storage visibility/deletion, and restrictive INSERT/UPDATE quota semantics under competing permissive policies.
-exit=0

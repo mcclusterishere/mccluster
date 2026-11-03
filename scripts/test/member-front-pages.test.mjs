@@ -110,22 +110,14 @@ test('the editor: every signed-in account, its own folder, its draft through the
   assert.match(html, /<meta name="robots" content="noindex,follow">/);
   assert.match(html, /js\/front-media\.js/);
   assert.match(html, /js\/front-studio\.js/);
-  /* revision-aware writes (js/editor-revisions.js): the versioned API carries the revision; the legacy POST/DELETE remain
-     only for a deployment where that API reports itself unconfigured, and then only after a readback guard */
-  assert.match(js, /client\(\)\.save\(S\.v2\.revision, sent, publish\)/);
-  assert.match(js, /client\(\)\.unpublish\(S\.v2\.revision\)/);
-  assert.match(js, /legacyGuard\(\)\.then\(function \(\) \{ return api\(ownPath, \{ method: "POST", body: \{ config: sent, publish: publish \} \}\); \}\)/);
-  assert.match(js, /legacyGuard\(\)\.then\(function \(\) \{ return api\(publishedPath, \{ method: "DELETE" \}\); \}\)/);
-  assert.match(html, /js\/editor-revisions\.js/);
-  assert.match(js, /var ownPath = projectMode.*"\/v1\/fronts\/me"/);
-  assert.match(js, /var publishedPath = projectMode.*"\/v1\/fronts\/me\/published"/);
+  assert.match(js, /api\("\/v1\/fronts\/me", \{ method: "POST", body: \{ config: S\.draft, publish: publish \} \}\)/);
+  assert.match(js, /api\("\/v1\/fronts\/me\/published", \{ method: "DELETE" \}\)/);
   /* uploads go to the account's folder named by the Worker, with the account's own session */
-  assert.match(media, /x\.open\("POST", "https:\/\/api\.mccluster\.org\/v1\/customer-site\/media\?path=" \+ encodeURIComponent\(path\)\)/);
-  assert.match(media, /"x-site-bytes", String\(blob\.size\)/);
+  assert.match(media, /x\.open\("POST", sb\(\)\.url \+ "\/storage\/v1\/object\/" \+ BUCKET \+ "\/" \+ path\)/);
   assert.match(media, /"authorization", "Bearer " \+ token/);
   /* what a page no longer uses leaves the account's folder after each save, publish and take-down */
   assert.match(media, /function sweep\(prefixPath, configs\)/);
-  assert.equal((js.match(/ sweep\(\);/g) || []).length, 4, 'versioned save, legacy save, take-down and a confirmed-after-readback save all sweep');
+  assert.equal((js.match(/ sweep\(\);/g) || []).length, 2, 'save/publish and take-down both sweep');
   assert.match(js, /var start = S\.sweeping \|\| Promise\.resolve\(\);/);
   assert.doesNotMatch(media + js, /service_role|SERVICE_ROLE/);
   /* phone first */

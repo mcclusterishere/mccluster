@@ -169,6 +169,8 @@ const eventRows = [
   ["music_videos_view", "view", "The canonical Music Videos catalog surface was opened.", []],
   ["native_share", "unclassified", "", []],
   ["network_change", "ops", "", ["js/mc-analytics.js"]],
+  ["nightcap_done", "unclassified", "", ["js/label.js"]],
+  ["nightcap_set", "unclassified", "", ["js/label.js"]],
   ["now_sheet_open", "engage", "", []],
   ["offer_buy_click", "checkout", "", ["js/offers.js"]],
   ["offer_mode_view", "content", "", ["js/offers.js"]],

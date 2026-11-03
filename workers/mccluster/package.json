@@ -10,7 +10,6 @@
     "test": "node --import ./test/support/offline-network.mjs --test test/*.test.mjs"
   },
   "dependencies": {
-    "@cfworker/json-schema": "4.1.1",
     "@fal-ai/client": "1.10.1"
   },
   "devDependencies": {

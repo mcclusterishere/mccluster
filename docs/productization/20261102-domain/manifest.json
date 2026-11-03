@@ -1,9 +1,0 @@
-{
-  "base": "ed61dd59bc288058ee06a5a7ec560ff35b4518ba",
-  "pending_sql": "supabase/pending/creator_domain_orders_v1.sql",
-  "sha256": "cd82c370a0707ee445f1e0360f964d93a832c510684236c929314715a0918ccc",
-  "production_applied": false,
-  "live_provider_calls": false,
-  "read_only_runtime_metadata": true,
-  "replay": "disposable PGlite and native PostgreSQL16"
-}

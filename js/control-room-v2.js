@@ -1676,8 +1676,6 @@
         ? (window.CR.buildCode ? window.CR.buildCode.render() : empty("Build unavailable", "The native Control module did not load."))
       : state.createView === "front-page"
         ? (window.CR.frontPage ? window.CR.frontPage.render() : empty("Front page unavailable", "The native Control module did not load."))
-      : state.createView === "member-fronts"
-        ? (window.CR.memberFronts ? window.CR.memberFronts.render() : empty("Member fronts unavailable", "The native Control module did not load."))
         : renderSchedule();
     return body;
   }
@@ -3764,7 +3762,6 @@
     if (window.CR.songTest) window.CR.songTest.bind($("crSurface"));
     if (window.CR.buildCode) window.CR.buildCode.bind($("crSurface"));
     if (window.CR.frontPage) window.CR.frontPage.bind($("crSurface"));
-    if (window.CR.memberFronts) window.CR.memberFronts.bind($("crSurface"));
     /* a NAV mount point whose module has registered binds its own view */
     var slotMod = state.leaf && state.leaf.leaf.renderer === "slot" && window.CR[state.leaf.leaf.module];
     if (slotMod && typeof slotMod.bind === "function") slotMod.bind($("crSurface"));

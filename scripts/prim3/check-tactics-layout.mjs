@@ -6,7 +6,8 @@
      - nothing but the corner controls sits over the board's middle: the squad's tiles are tappable
        (a tap at each operative's screen position selects that operative).
    Usage: node scripts/prim3/check-tactics-layout.mjs [base=http://127.0.0.1:8763]
-   (serve the repository root first, e.g. python3 -m http.server 8763)                                   */
+   (serve the repository root first, e.g. python3 -m http.server 8763). The page is owner-gated (js/owner-only.mjs):
+   the check signs in a stand-in session and answers the owner check locally; nothing reaches the real API.  */
 const base = process.argv[2] || 'http://127.0.0.1:8763';
 let chromium;
 try { ({ chromium } = await import('playwright')); } catch (e) { ({ chromium } = await import('/opt/node22/lib/node_modules/playwright/index.mjs')); }
@@ -16,6 +17,8 @@ const b = await chromium.launch({ args: ['--ignore-gpu-blocklist', '--enable-web
 let failed = 0;
 for (const level of levels) for (const [w, h] of widths) {
   const p = await b.newPage({ viewport: { width: w, height: h } });
+  await p.addInitScript(() => { try { localStorage.setItem('mccdb_session', JSON.stringify({ access_token: 'layout-check' })); } catch (e) {} });
+  await p.route('https://api.mccluster.org/**', (r) => r.fulfill({ status: new URL(r.request().url()).pathname === '/v1/status' ? 200 : 404, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: '{"ok":true}' }));
   await p.goto(`${base}/prim3-transit.html?level=${level}&look=day&fx=low&new=1&seed=7`, { waitUntil: 'load' });
   await p.waitForFunction(() => window.__tx && window.__tx.r3, null, { timeout: 60000 });
   await p.evaluate(() => { const g = document.querySelector('[data-sheet="brief-go"]'); if (g) g.click(); });
