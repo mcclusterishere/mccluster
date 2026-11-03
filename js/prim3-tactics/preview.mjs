@@ -184,6 +184,9 @@ function render() {
     }
     for (let x = 0; x < W; x += 1) m.labels.push({ x, y: -0.95, h: 0, kind: 'axis', text: String(x) });
     for (let y = 0; y < H; y += 1) m.labels.push({ x: -0.95, y, h: 0, kind: 'axis', text: String(y) });
+    // the same coordinates on the far edges, so they read from any camera rotation
+    for (let x = 0; x < W; x += 1) m.labels.push({ x, y: H - 0.05, h: 0, kind: 'axis', text: String(x) });
+    for (let y = 0; y < H; y += 1) m.labels.push({ x: W - 0.05, y, h: 0, kind: 'axis', text: String(y) });
     m.labels.push({ x: -0.95, y: -0.95, h: 0, kind: 'axis', text: 'y\\x' });
     if (ui.lastMove) { m.moves = { [ui.lastMove.id]: ui.lastMove.path }; ui.lastMove = null; }
     board3d.update(m);

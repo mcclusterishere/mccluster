@@ -24,6 +24,11 @@ const C = {
   cyan: 0x36d6e7, amber: 0xffb547, hostile: 0xff4d5c, relay: 0x30353a
 };
 const ROLE = { E: 0x7fe3ee, R: 0xb9e98a, T: 0xffcf7a };
+// Owner, 2026-11-02: a black, white and grey game. The only colour on the board is each team's glow
+// (an accent on their kit, like the red tabs on T's loadout, and a halo when selected), plus nature.
+const TEAM = { PLAYER: 0xff2a3a, THREAT: 0x3d8bff };
+const G = { reach: 0x30373c, path: 0x0e1113, runx: 0x16191c, runy: 0x6a7277, origin: 0x0e1113, target: 0x4c5459, line: 0x0e1113 };
+const NATURE = { leaf: 0x4b6a31, leaf2: 0x5a7a3a, bark: 0x5a4030, grass: 0x5f7f3b };
 const MODEL_ROOT = new URL('../../assets/3d/prim3-operators/', import.meta.url);
 // Photo-scanned PBR materials and a real night-courtyard HDR (Poly Haven, CC0; see assets/3d/prim3-tactics/CREDITS.md).
 // Loaded after first paint; until they arrive (or if they cannot), the procedural textures stand in.
@@ -141,13 +146,14 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
   for (let x = 0; x <= width; x += 1) gp.push(x - 0.5, 0.035, -0.5, x - 0.5, 0.035, height - 0.5);
   for (let y = 0; y <= height; y += 1) gp.push(-0.5, 0.035, y - 0.5, width - 0.5, 0.035, y - 0.5);
   const gridGeo = new THREE.BufferGeometry(); gridGeo.setAttribute('position', new THREE.Float32BufferAttribute(gp, 3));
-  scene.add(new THREE.LineSegments(gridGeo, new THREE.LineBasicMaterial({ color: 0x7d878d, transparent: true, opacity: 0.45 })));
+  scene.add(new THREE.LineSegments(gridGeo, new THREE.LineBasicMaterial({ color: 0x5c6469, transparent: true, opacity: 0.6 })));
   // board edge: a thin lit trim so the play area reads against the plaza
   const trim = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(width + 0.04, 0.02, height + 0.04)), new THREE.LineBasicMaterial({ color: 0x1b2024, transparent: true, opacity: 0.7 }));
   trim.position.set(cx, 0.04, cz); scene.add(trim);
 
   /* ---------- the courtyard around the board (set dressing only: never on a tile) ---------- */
   const glow = glowTex();
+  const haloTex = canvasTex(64, 64, (g2) => { const gr = g2.createRadialGradient(32, 32, 4, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,.9)'); gr.addColorStop(0.55, 'rgba(255,255,255,.35)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g2.fillStyle = gr; g2.fillRect(0, 0, 64, 64); });
   const std = (o) => new THREE.MeshStandardMaterial(o);
   const pbrTargets = [];
   const concrete = (color, rx, ry) => { const m = std({ color, roughness: 0.85 }); m.userData.pbr = { set: 'concrete_wall_006', repeat: [rx, ry], tint: color }; pbrTargets.push(m); return m; };
@@ -169,7 +175,7 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
     geo.computeVertexNormals(); return geo;
   }
   function tree(x, z, s = 1) {
-    const bark = std({ color: 0x2d2219, roughness: 1 }), leaf = std({ color: 0x2f4523, roughness: 0.85 });
+    const bark = std({ color: NATURE.bark, roughness: 1 }), leaf = std({ color: NATURE.leaf, roughness: 0.85 }); bark.userData.keepColor = leaf.userData.keepColor = true;
     add(new THREE.BoxGeometry(1.1 * s, 0.45, 1.1 * s), concrete(0x9d9a94, 1, 0.4), x, 0.22, z);
     add(new THREE.CylinderGeometry(0.07 * s, 0.11 * s, 1.9 * s, 8), bark, x, 0.45 + 0.95 * s, z);
     const r = rng(Math.round(x * 13 + z * 7));
@@ -216,7 +222,7 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
     add(new THREE.BoxGeometry(1, 5, height + 4), concrete(0xa9a6a0, 5, 2), -3.4, 2.5, cz);
     for (let i = 0; i < 4; i += 1) add(new THREE.BoxGeometry(0.06, 2.6, 2.1), glass, -2.88, 2.0, -0.6 + i * 2.7, { cast: false });
     add(new THREE.BoxGeometry(0.5, 0.9, height + 4), concrete(0xa9a6a0, 6, 0.5), width + 1.9, 0.45, cz);
-    add(new THREE.BoxGeometry(0.4, 0.08, height + 4), std({ color: 0x2f4523, roughness: 0.9 }), width + 1.9, 0.94, cz);
+    add(new THREE.BoxGeometry(0.4, 0.08, height + 4), (() => { const m = std({ color: NATURE.grass, roughness: 0.95 }); m.userData.keepColor = true; return m; })(), width + 1.9, 0.94, cz);
   }
   tree(-1.9, -1.2, 1.05); tree(width + 0.8, -1.3, 0.95); tree(width + 1.1, height + 0.6, 1.1);
   lampPost(-1.5, height * 0.45); lampPost(width + 0.7, height * 0.3);
@@ -251,27 +257,27 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
   /* ---------- per-tile overlays (reach / path / dest / hint / runs), shown or hidden by update() ---------- */
   const overlayGeo = new THREE.PlaneGeometry(0.9, 0.9); overlayGeo.rotateX(-Math.PI / 2);
   const ovMat = (color, opacity) => new THREE.MeshBasicMaterial({ color, transparent: true, opacity, depthWrite: false, toneMapped: false });
-  const mats = { reach: ovMat(C.cyan, 0.2), path: ovMat(C.amber, 0.3), runx: ovMat(C.cyan, 0.42), runy: ovMat(C.amber, 0.42) };
+  const mats = { reach: ovMat(G.reach, 0.2), path: ovMat(G.path, 0.32), runx: ovMat(G.runx, 0.45), runy: ovMat(G.runy, 0.45) };
   const overlays = [];
   for (let y = 0; y < height; y += 1) for (let x = 0; x < width; x += 1) {
     const m = new THREE.Mesh(overlayGeo, mats.reach); m.position.set(x, 0.04, y); m.visible = false; m.renderOrder = 2; scene.add(m); overlays.push(m);
   }
   const frameGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(0.9, 0.02, 0.9));
   const lineMat = (color) => new THREE.LineBasicMaterial({ color, toneMapped: false });
-  const destFrame = new THREE.LineSegments(frameGeo, lineMat(C.amber)); destFrame.visible = false; scene.add(destFrame);
-  const hintFrame = new THREE.LineSegments(frameGeo, lineMat(C.amber)); hintFrame.visible = false; scene.add(hintFrame);
+  const destFrame = new THREE.LineSegments(frameGeo, lineMat(G.line)); destFrame.visible = false; scene.add(destFrame);
+  const hintFrame = new THREE.LineSegments(frameGeo, lineMat(G.line)); hintFrame.visible = false; scene.add(hintFrame);
   const ringGeo = new THREE.TorusGeometry(0.38, 0.03, 8, 48); ringGeo.rotateX(Math.PI / 2);
   const ringMat = (color) => new THREE.MeshBasicMaterial({ color, toneMapped: false });
-  const selRing = new THREE.Mesh(ringGeo, ringMat(C.cyan)); selRing.visible = false; scene.add(selRing);
-  const originRing = new THREE.Mesh(ringGeo, ringMat(C.cyan)); originRing.visible = false; scene.add(originRing);
-  const targetRing = new THREE.Mesh(ringGeo, ringMat(C.amber)); targetRing.visible = false; scene.add(targetRing);
-  const pathLine = new THREE.Line(new THREE.BufferGeometry(), lineMat(C.amber)); pathLine.visible = false; scene.add(pathLine);
-  const destGhost = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.02, 32), new THREE.MeshBasicMaterial({ color: C.amber, transparent: true, opacity: 0.35, depthWrite: false, toneMapped: false })); destGhost.visible = false; scene.add(destGhost);
+  const selRing = new THREE.Mesh(ringGeo, ringMat(TEAM.PLAYER)); selRing.visible = false; scene.add(selRing);
+  const originRing = new THREE.Mesh(ringGeo, ringMat(G.origin)); originRing.visible = false; scene.add(originRing);
+  const targetRing = new THREE.Mesh(ringGeo, ringMat(G.target)); targetRing.visible = false; scene.add(targetRing);
+  const pathLine = new THREE.Line(new THREE.BufferGeometry(), lineMat(G.line)); pathLine.visible = false; scene.add(pathLine);
+  const destGhost = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.02, 32), new THREE.MeshBasicMaterial({ color: G.path, transparent: true, opacity: 0.35, depthWrite: false, toneMapped: false })); destGhost.visible = false; scene.add(destGhost);
 
   /* ---------- board props from the model: walls, cover, the relay ---------- */
   const props = new THREE.Group(); scene.add(props);
   const unitsGroup = new THREE.Group(); scene.add(unitsGroup);
-  const relayGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.2), new THREE.MeshStandardMaterial({ color: C.amber, emissive: C.amber, emissiveIntensity: 3, toneMapped: false }));
+  const relayGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.2), new THREE.MeshStandardMaterial({ color: 0x0b0c0d, roughness: 0.15, metalness: 0.6 }));
   relayGem.material.userData.keepColor = true;
   let propsKey = '';
   const brickMat = std({ map: brickTex(false), roughness: 0.9 }); brickMat.userData.pbr = { set: 'red_brick_03', repeat: [0.45, 0.8] };
@@ -279,7 +285,8 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
   const concMat = std({ color: C.concrete, roughness: 0.85 }); concMat.userData.pbr = { set: 'concrete_wall_006', repeat: [1, 1] };
   const hazard = std({ color: 0xd9a136, roughness: 0.6 });
   const planterMat = std({ color: C.planter, roughness: 0.85 });
-  const shrubMat = std({ color: 0x2f4523, roughness: 0.85 });
+  const shrubMat = std({ color: NATURE.leaf2, roughness: 0.85 }); shrubMat.userData.keepColor = true;
+  const soilGrass = std({ color: NATURE.grass, roughness: 0.95 }); soilGrass.userData.keepColor = true;
   pbrTargets.push(plaza.material, ...tileMats, brickMat, concMat, capMat, planterMat);
   capMat.userData.pbr = { set: 'concrete_wall_006', repeat: [1, 1] }; planterMat.userData.pbr = { set: 'concrete_wall_006', repeat: [0.8, 0.5] };
 
@@ -302,6 +309,7 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
           add(new THREE.BoxGeometry(0.93, 0.08, 0.13), hazard, 0, 0.82, 0, { parent: g, cast: false });
         } else { // a planter box with shrubs
           add(new THREE.BoxGeometry(0.92, 0.48, 0.24), planterMat, 0, 0.24, 0, { parent: g });
+          add(new THREE.BoxGeometry(0.86, 0.02, 0.19), soilGrass, 0, 0.49, 0, { parent: g, cast: false });
           for (let i = -1; i <= 1; i += 1) { const sh = add(blob(0.17, i + 11), shrubMat, i * 0.28, 0.56, 0, { parent: g }); sh.scale.set(1.2, 0.8, 0.8); sh.rotation.y = i; }
         }
       }
@@ -309,7 +317,7 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
     for (const t of m.objectiveTiles) { // relay: a cabinet with an antenna mast, a lit panel and a beacon
       const metal = std({ color: C.relay, roughness: 0.35, metalness: 0.7 });
       add(new THREE.BoxGeometry(0.52, 0.85, 0.46), metal, t.x, 0.46, t.y, { parent: props });
-      add(new THREE.PlaneGeometry(0.3, 0.36), new THREE.MeshBasicMaterial({ color: C.amber, toneMapped: false }), t.x, 0.5, t.y + 0.235, { parent: props, cast: false });
+      add(new THREE.PlaneGeometry(0.3, 0.36), new THREE.MeshBasicMaterial({ color: 0x0b0c0d, toneMapped: false }), t.x, 0.5, t.y + 0.235, { parent: props, cast: false });
       add(new THREE.CylinderGeometry(0.018, 0.018, 1.0), std({ color: 0x1a1a1a, metalness: 0.8, roughness: 0.4 }), t.x + 0.17, 1.38, t.y - 0.12, { parent: props });
       relayGem.position.set(t.x, 1.35, t.y); props.add(relayGem);
       const l = new THREE.PointLight(C.amber, 5, 3.4, 2); l.position.set(t.x, 1.2, t.y); props.add(l);
@@ -387,7 +395,7 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
       add(new THREE.BoxGeometry(0.26, 0.022, 0.18), hard, 0, 0, 0, { parent: deck });
       const lid = new THREE.Group(); lid.position.set(0, 0.011, -0.088); lid.rotation.x = -1.85; deck.add(lid);
       add(new THREE.BoxGeometry(0.26, 0.016, 0.18), hard, 0, 0, 0.09, { parent: lid });
-      add(new THREE.PlaneGeometry(0.22, 0.14), new THREE.MeshBasicMaterial({ color: 0x1f8f8a, toneMapped: false }), 0, -0.009, 0.09, { parent: lid, cast: false }).rotation.x = Math.PI / 2;
+      add(new THREE.PlaneGeometry(0.22, 0.14), new THREE.MeshBasicMaterial({ color: 0xd9dee1, toneMapped: false }), 0, -0.009, 0.09, { parent: lid, cast: false }).rotation.x = Math.PI / 2;
     } else { // SOI-01 officer: thin vest, body camera
       const vest = add(new THREE.CapsuleGeometry(0.167, 0.2, 4, 14), gear, 0, 0.27, 0, { parent: chest }); vest.scale.set(1.14, 1, 0.8);
       recorder(-0.08, 0.36, 0.14); camLight(-0.065, 0.34, 0.156, chest);
@@ -455,10 +463,17 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
     } else { held = pistol(); held.position.set(-0.12, 0.16, 0.34); }
     chest.add(held); held.visible = false;
     Object.assign(rig, { gun: held, slung, muzzle: held.userData.muzzle, heldBase: held.position.clone() });
-    if (!ally) { // a red ground ring marks a known hostile (game UI)
-      const ring = new THREE.Mesh(new THREE.RingGeometry(0.3, 0.34, 40), new THREE.MeshBasicMaterial({ color: C.hostile, transparent: true, opacity: 0.85, toneMapped: false, depthWrite: false }));
-      ring.rotation.x = -Math.PI / 2; ring.position.y = 0.02; g.add(ring);
-    }
+    // team identity: small glowing accents on the kit (like the red tabs on T's loadout) and a soft
+    // ground glow; both brighten when the unit is selected
+    const teamColor = TEAM[u.faction] || TEAM.THREAT;
+    const accent = new THREE.MeshStandardMaterial({ color: teamColor, emissive: teamColor, emissiveIntensity: 1.2, roughness: 0.4 });
+    accent.userData.keepColor = true;
+    for (const sx of [-1, 1]) add(new THREE.BoxGeometry(0.012, 0.05, 0.05), accent, sx * 0.19, 0.17, 0.05, { parent: chest, cast: false });   // side tabs
+    add(new THREE.BoxGeometry(0.04, 0.012, 0.012), accent, 0.12, 0.43, 0.02, { parent: chest, cast: false });                                 // shoulder
+    for (const sh of [shinL, shinR]) add(new THREE.BoxGeometry(0.03, 0.03, 0.012), accent, 0, -0.39, -0.045, { parent: sh, cast: false });  // boot heels
+    const halo = new THREE.Mesh(new THREE.CircleGeometry(0.42, 40), new THREE.MeshBasicMaterial({ map: haloTex, color: teamColor, transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
+    halo.rotation.x = -Math.PI / 2; halo.position.y = 0.015; halo.renderOrder = 3; g.add(halo);
+    Object.assign(rig, { accent, halo });
     g.scale.setScalar(1.18);
     return { g, rig };
   }
@@ -759,7 +774,9 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
     destFrame.visible = destGhost.visible = !!m.dest; if (m.dest) { destFrame.position.set(m.dest.x, 0.06, m.dest.y); destGhost.position.set(m.dest.x, 0.05, m.dest.y); }
     hintFrame.visible = !!m.hint; if (m.hint) hintFrame.position.set(m.hint.x, 0.07, m.hint.y);
     const sel = m.units.find((u) => u.id === m.selected && !u.dead);
-    selRing.visible = !!sel; if (sel) selRing.position.set(sel.x, 0.06, sel.y);
+    selRing.visible = false; // selection is the team glow brightening, not a ring
+    for (const [id, a] of actors) { if (!a.rig || !a.rig.halo) continue; const on = !!sel && id === sel.id;
+      a.rig.halo.material.opacity = on ? 1 : 0.5; a.rig.halo.scale.setScalar(on ? 1.35 : 1); a.rig.accent.emissiveIntensity = on ? 3.2 : 1.2; }
     if (sel && sel.id !== lastSel) { focus(sel.x, sel.y); }
     lastSel = sel ? sel.id : null;
     originRing.visible = !!m.origin; if (m.origin) originRing.position.set(m.origin.x, 0.07, m.origin.y);
