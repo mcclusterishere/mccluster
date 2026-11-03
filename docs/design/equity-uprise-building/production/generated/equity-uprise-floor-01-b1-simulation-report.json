@@ -460,77 +460,77 @@
     {
       "name": "canonical Floor 1 long-form authority exists",
       "passed": true,
-      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/FLOOR-01-ARRIVAL-ORIENTATION-INTAKE-360-SPEC.md"
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/FLOOR-01-ARRIVAL-ORIENTATION-INTAKE-360-SPEC.md"
     },
     {
       "name": "canonical B1 long-form authority exists",
       "passed": true,
-      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/BASEMENT-B1-UNDERGROUND-OPERATIONS-PROGRAM.md"
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/BASEMENT-B1-UNDERGROUND-OPERATIONS-PROGRAM.md"
     },
     {
       "name": "old Floor 1 authority is compatibility stub",
       "passed": true,
-      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/FLOOR-01-LOBBY-INTAKE-360-SPEC.md"
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/FLOOR-01-LOBBY-INTAKE-360-SPEC.md"
     },
     {
       "name": "old B1 authority is compatibility stub",
       "passed": true,
-      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md"
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md"
     },
     {
       "name": "B1 package file exists: README.md",
       "passed": true,
-      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/production/basement-b1/README.md"
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/production/basement-b1/README.md"
     },
     {
       "name": "B1 package file exists: basement-b1-scene-manifest.json",
       "passed": true,
-      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/production/basement-b1/basement-b1-scene-manifest.json"
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/production/basement-b1/basement-b1-scene-manifest.json"
     },
     {
       "name": "B1 package file exists: basement-b1-object-inventory.json",
       "passed": true,
-      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/production/basement-b1/basement-b1-object-inventory.json"
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/production/basement-b1/basement-b1-object-inventory.json"
     },
     {
       "name": "B1 package file exists: build_equity_uprise_basement_b1_v2.py",
       "passed": true,
-      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/production/basement-b1/build_equity_uprise_basement_b1_v2.py"
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/production/basement-b1/build_equity_uprise_basement_b1_v2.py"
     },
     {
       "name": "B1 package file exists: basement-b1-materials.json",
       "passed": true,
-      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/production/basement-b1/basement-b1-materials.json"
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/production/basement-b1/basement-b1-materials.json"
     },
     {
       "name": "B1 package file exists: basement-b1-lighting.json",
       "passed": true,
-      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/production/basement-b1/basement-b1-lighting.json"
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/production/basement-b1/basement-b1-lighting.json"
     },
     {
       "name": "B1 package file exists: basement-b1-camera.json",
       "passed": true,
-      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/production/basement-b1/basement-b1-camera.json"
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/production/basement-b1/basement-b1-camera.json"
     },
     {
       "name": "B1 package file exists: basement-b1-hotspots.json",
       "passed": true,
-      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/production/basement-b1/basement-b1-hotspots.json"
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/production/basement-b1/basement-b1-hotspots.json"
     },
     {
       "name": "B1 package file exists: basement-b1-routing.json",
       "passed": true,
-      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/production/basement-b1/basement-b1-routing.json"
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/production/basement-b1/basement-b1-routing.json"
     },
     {
       "name": "B1 package file exists: basement-b1-states.json",
       "passed": true,
-      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/production/basement-b1/basement-b1-states.json"
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/production/basement-b1/basement-b1-states.json"
     },
     {
       "name": "B1 package file exists: basement-b1-geometry-notes.md",
       "passed": true,
-      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/production/basement-b1/basement-b1-geometry-notes.md"
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/production/basement-b1/basement-b1-geometry-notes.md"
     },
     {
       "name": "B1 scene manifest active controlled",
@@ -585,7 +585,7 @@
     {
       "name": "detailed B1 report exists",
       "passed": true,
-      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/production/generated/equity-uprise-basement-b1-core-v2-report.json"
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/production/generated/equity-uprise-basement-b1-core-v2-report.json"
     },
     {
       "name": "detailed B1 builder passes",
