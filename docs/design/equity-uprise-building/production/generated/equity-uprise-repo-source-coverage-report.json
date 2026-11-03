@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 599,
+  "candidate_count": 600,
   "capability_source_count": 104,
-  "support_only_count": 495,
-  "checks_total": 2294,
-  "checks_passed": 2294,
+  "support_only_count": 496,
+  "checks_total": 2298,
+  "checks_passed": 2298,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -211,6 +211,7 @@
     "docs/releases/mission-content-cleanup-2026-10-31.md",
     "docs/sales-redesign/BRANCH-HARVEST-REPORT.md",
     "docs/sales-redesign/CRM-MIGRATION.md",
+    "docs/sales-redesign/EVENT-PHOTOGRAPHY-MINIMUM-20261103.md",
     "docs/sales-redesign/MOBBIN-REFERENCES.md",
     "docs/seo-matthew-mccluster.md",
     "docs/seo/evidence-review.json",
@@ -613,7 +614,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "599 entries"
+      "detail": "600 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -3607,6 +3608,26 @@
     },
     {
       "name": "docs/sales-redesign/MOBBIN-REFERENCES.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/sales-redesign/EVENT-PHOTOGRAPHY-MINIMUM-20261103.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/sales-redesign/EVENT-PHOTOGRAPHY-MINIMUM-20261103.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/sales-redesign/EVENT-PHOTOGRAPHY-MINIMUM-20261103.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/sales-redesign/EVENT-PHOTOGRAPHY-MINIMUM-20261103.md support rationale present",
       "passed": true,
       "detail": ""
     },
