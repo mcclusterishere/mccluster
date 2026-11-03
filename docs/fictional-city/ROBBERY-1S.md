@@ -1,6 +1,6 @@
 # The Robbery 1s — Bridgeport story block
 
-The owner’s November 3, 2026 direction places the designer-sneaker story in a new Bridgeport block away from the Equity Uprise building. This is an addition to the existing McCluster City. Its eight businesses, 24 adult staff, Whip Equipped garage, island, colors, IDs, and destination routes remain intact.
+The owner’s November 3, 2026 direction places the designer-sneaker story in a new Bridgeport block away from the HQ island building. This is an addition to the existing McCluster City. Its eight businesses, 24 adult staff, Whip Equipped garage, island, colors, IDs, and destination routes remain intact.
 
 ## Source and version
 
@@ -24,7 +24,7 @@ The original pair passes from **Dave → donation bin → Malik → Harold → a
 | 6 | Four distinct New Turf settings escalate the danger. Malik returns with $25,000, demands 50%, and is killed. Harold takes the pair. | Stairwell approach; Second Spin Laundry; Railside Yard; hallway approach; Night Shift Club |
 | 7 | Harold confesses at Malik’s funeral. The pastor recognizes the shoes and says they were his first pair. | Second Light Chapel |
 
-The pastor’s recognition remains an unanswered reveal. This adaptation does not identify him as the original crime lord, explain the curse, invent its designer, connect it to Equity Uprise, or provide a new ending. Older conversational backstory about a grandfather, a mob boss, prison, or correctional-facility laces is not silently inserted into the latest seven-act script.
+The pastor’s recognition remains an unanswered reveal. This adaptation does not identify him as the original crime lord, explain the curse, invent its designer, connect it to the HQ, or provide a new ending. Older conversational backstory about a grandfather, a mob boss, prison, or correctional-facility laces is not silently inserted into the latest seven-act script.
 
 Malik and Kiara remain **16–18** as written. They are story cast inside `storyArcs[].cast`, not members of the existing 24-person adult business-staff roster. Dave, Harold, Mama, Ocho Gr8 / Mr. GREAT, Low-Ski, the OG, shopkeeper, and pastor retain their source identities. The older pilot’s Rico, Dre, Jayla, and younger Malik do not replace them.
 
