@@ -149,6 +149,16 @@ Contract tests that read them: `scripts/test/action-economy-*.test.mjs`,
 - `20261015210000_intel_mission_canon_v1.rollback.sql`: the rollback of a
   promoted file (`20261017030617_intel_mission_canon_v1`), kept on purpose.
 
+## 6. MNET character cast (written 2026-11-03)
+
+| File (+ rollback) | Creates | Callers | Proof before apply |
+|---|---|---|---|
+| `mnet_character_cast_v1.sql` (+ `mnet_character_cast_v1.rollback.sql`) | `ops_character_publications`, `ops_character_provision()`, `ops_character_publish_post()`; additive, nothing existing is altered | McCluster Core only: `core/src/executors/character-post.mjs`, `core/src/seed-character-posts.mjs`, `core/scripts/provision-characters.mjs`, all behind `MCCLUSTER_CHARACTER_POSTS=live` (off by default). No browser or Worker caller. | `scripts/test-mnet-character-cast-db.sh` (apply twice, behaviour, rollback, re-apply, behaviour). Design: `docs/fictional-city/MNET-CHARACTER-CAST.md` |
+
+No prerequisite beyond what production has (`ops_platform_actors`, `network_posts`, `network_post_comments`,
+`media_news_articles`, `ops_agent_jobs`). After apply: provision (profiles are created disabled), then enable, then
+switch the flag and the timer on; each is a separate owner step.
+
 ## Names with no SQL anywhere
 
 `live-callers.json` → `missing_everywhere`: the `crm_*` tables

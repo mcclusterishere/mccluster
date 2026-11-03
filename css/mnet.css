@@ -235,6 +235,9 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
 .mn__author-meta { flex: 1; min-width: 0; text-align: left; }
 .mn__author-name { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--mn-ink); font-weight: 800; font-size: 0.98rem; line-height: 1.25; }
 .mn__author-sub { margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--mn-faint); font-weight: 600; font-size: 0.82rem; }
+/* Story characters on MNET: one small outlined badge, in the existing ink tokens. */
+.mn__character-badge { display: inline-block; margin-left: 6px; padding: 0 6px; border: 1px solid currentColor; border-radius: 999px; color: var(--mn-dim); font-size: 0.68rem; font-weight: 700; line-height: 1.5; letter-spacing: 0.02em; vertical-align: 1px; white-space: nowrap; }
+.mn__author-sub > .mn__character-badge { margin: 0 4px 0 0; }
 .mn__post-body { margin: 12px 0 0; color: var(--mn-ink); white-space: pre-wrap; overflow-wrap: anywhere; font-size: 1.02rem; line-height: 1.55; }
 .mn__post-media { display: grid; gap: 6px; margin: 12px 0 0; }
 .mn__post-media.is-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }

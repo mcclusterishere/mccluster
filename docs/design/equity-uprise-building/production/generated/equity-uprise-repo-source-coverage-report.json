@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 592,
+  "candidate_count": 593,
   "capability_source_count": 104,
-  "support_only_count": 488,
-  "checks_total": 2266,
-  "checks_passed": 2266,
+  "support_only_count": 489,
+  "checks_total": 2270,
+  "checks_passed": 2270,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -76,6 +76,7 @@
     "catalogue.html",
     "cohort-profile.html",
     "control.html",
+    "core/data/characters/cast.v1.json",
     "core/data/fictional-city/district.v1.json",
     "create.html",
     "css/equity-uprise-app.css",
@@ -606,7 +607,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "592 entries"
+      "detail": "593 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -11930,6 +11931,26 @@
     },
     {
       "name": "scripts/test/server-lab.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "core/data/characters/cast.v1.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "core/data/characters/cast.v1.json classified",
+      "passed": true,
+      "detail": "classification='incidental_text_match'"
+    },
+    {
+      "name": "core/data/characters/cast.v1.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "core/data/characters/cast.v1.json support rationale present",
       "passed": true,
       "detail": ""
     }
