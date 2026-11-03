@@ -9,6 +9,7 @@ import { ONTOLOGY_TOOLS, callOntologyTool } from './ontology.mjs';
 import { INGESTION_TOOLS, callIngestionTool } from './ingestion.mjs';
 import { activeMeetingTools, callMeetingTool } from './meeting.mjs';
 import { submitResidentAiTurn, getResidentAiTurn } from '../resident-ai.mjs';
+import { GAME_LORE_INPUT_SCHEMA, readGameLore } from '../game-lore.mjs';
 
 const REPO = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const PREVIEW_CONFIGURED = previewConfigured();
@@ -30,6 +31,11 @@ function requireOrg(value) {
 }
 
 const BASE_TOOLS = [
+  {
+    name: 'core.game.lore.read', title: 'Read city lore',
+    description: 'Read the versioned city manifest or bounded authored business, NPC, item, brand and portal records. Read-only release data; no private memory, inference or purchases.',
+    inputSchema: GAME_LORE_INPUT_SCHEMA
+  },
   {
     /* The rehydration call. A fresh model session — or the same one
        after its context window rolled — asks this first and gets the
@@ -127,6 +133,8 @@ if (PREVIEW_CONFIGURED) {
 export const CONTROL_TOOLS = Object.freeze(BASE_TOOLS);
 
 export async function callControlTool(name, args = {}, options = {}) {
+  if (name === 'core.game.lore.read') return readGameLore(args);
+
   if (name === 'core.resume') {
     return coreResume({
       orgId: requireOrg(args.org_id),

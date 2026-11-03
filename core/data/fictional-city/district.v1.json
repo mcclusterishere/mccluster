@@ -1,0 +1,4179 @@
+{
+  "schema": "mccluster.fictional-city/v1",
+  "id": "mccluster-fictional-city",
+  "revision": "2026-11-03",
+  "title": "McCluster City — Commercial District",
+  "district": {
+    "spawn": [
+      0,
+      0
+    ],
+    "bounds": {
+      "minX": -72,
+      "maxX": 72,
+      "minZ": -58,
+      "maxZ": 45
+    },
+    "island": {
+      "center": [
+        0,
+        88
+      ],
+      "size": [
+        40,
+        40
+      ],
+      "hq": {
+        "footprintMeters": [
+          21.9456,
+          21.9456
+        ],
+        "roofHeightMeters": 24.6888,
+        "floorHeightMeters": 4.1148,
+        "occupiedFloors": 6,
+        "entry": [
+          0,
+          74
+        ],
+        "portalId": "equity-uprise-hq",
+        "representation": "simplified_exterior",
+        "source": "docs/design/equity-uprise-building/production/building-core-v2.json"
+      }
+    },
+    "currency": {
+      "name": "City credits",
+      "startingBalance": 250
+    }
+  },
+  "brands": [
+    {
+      "id": "gauranfucking-tea",
+      "name": "GAURANFUCKING TEA",
+      "aliases": [
+        "Guarana fucking tea",
+        "Guarana Fucking Tea",
+        "Garen fucking T",
+        "Garana fucking T",
+        "Grana fucking T"
+      ],
+      "tagline": "We guarantee you'll like it, or else fuck you.",
+      "summary": "A tea brand whose excessive satisfaction guarantee powers chaotic 1990s VHS-style commercials.",
+      "provenance": {
+        "kind": "recovered_owner_idea",
+        "source": "mccluster_media_universe_13_v1(1).json; 2026-10-19",
+        "note": "Recovered name/idea from the owner project registry. The source marks the universe proposal_only and the brand proposed_not_provisioned. This district storefront and its staff are newly authored fiction; this is not evidence of a provisioned real business. The registry uses GAURANFUCKING TEA; an earlier owner-spoken form is Guarana fucking tea. Garen/Garana/Grana are remembered phonetic variants, not confirmed replacement spellings. Historical country of origin remains unknown."
+      }
+    },
+    {
+      "id": "hordash",
+      "name": "Hordash",
+      "aliases": [],
+      "tagline": "Your evening has been reassigned.",
+      "summary": "An adult escort and delivery-app parody about impossible ETAs, ratings, assumptions, and people being treated as app inventory.",
+      "provenance": {
+        "kind": "current_owner_direction",
+        "source": "Owner city direction; 2026-11-03",
+        "note": "The owner supplied the Hordash concept in the current city brief. Staff, dialogue, visual goods, and this storefront are newly authored. No earlier source was recovered for an exact prior spelling beyond the current name."
+      }
+    },
+    {
+      "id": "mike-hawk",
+      "name": "Mike Hawk",
+      "aliases": [
+        "Mike Hawk campaign office"
+      ],
+      "tagline": "Long on commitment. Hard on excuses.",
+      "summary": "A fictional local politician whose campaigning keeps turning everyday civic policy into double entendre.",
+      "provenance": {
+        "kind": "current_owner_direction",
+        "source": "Owner city direction; 2026-11-03",
+        "note": "The owner supplied Mike Hawk, the name joke, the political office, two roaming recruits, and the long-and-hard campaigning premise. This campaign, policies, recruits, and specific exchanges are new fiction, unrelated to any real election."
+      }
+    },
+    {
+      "id": "robbery-1s",
+      "name": "Robbery 1s",
+      "aliases": [
+        "Robbery1s"
+      ],
+      "tagline": "Fresh soles. Questionable history.",
+      "summary": "The existing cursed-sneaker story becomes a neighborhood exchange where receipts, replicas, and contradictory legends compete.",
+      "provenance": {
+        "kind": "recovered_owner_idea",
+        "source": "mccluster_media_universe_13_v1(1).json; 2026-10-19",
+        "note": "Recovered name/idea from the owner project registry. The source marks the universe proposal_only and the brand proposed_not_provisioned. This district storefront and its staff are newly authored fiction; this is not evidence of a provisioned real business. The original shoe-story cast includes Malik, Harold, Dave, and Ocho. This district does not identify a new wearer or settle the original curse, ownership chain, or character fates."
+      }
+    },
+    {
+      "id": "hitman-gear",
+      "name": "Hitman Gear",
+      "aliases": [],
+      "tagline": "Dress like the budget cleared.",
+      "summary": "Overdramatic creator wardrobe, film props, and equipment culture; ordinary production problems receive threateningly serious presentation.",
+      "provenance": {
+        "kind": "recovered_owner_name",
+        "source": "Owner Hitman Gear concept; 2025-12-29",
+        "note": "The owner-established name and creator/photography tone were recovered from prior project context. This three-person film-gear shop and its products are newly authored fiction."
+      }
+    },
+    {
+      "id": "real-camera-men",
+      "name": "RealCameraMen",
+      "aliases": [
+        "Real Camera Men"
+      ],
+      "tagline": "Your lens is innocent. Your quote is not.",
+      "summary": "A straight-faced camera-industry hot-take persona with deliberately unreasonable equipment rules and production-price philosophies, adapted into a production storefront.",
+      "provenance": {
+        "kind": "recovered_owner_idea",
+        "source": "mccluster_media_universe_13_v1(1).json; 2026-10-19",
+        "note": "Recovered name/idea from the owner project registry. The source marks the universe proposal_only and the brand proposed_not_provisioned. This district storefront and its staff are newly authored fiction; this is not evidence of a provisioned real business. The recovered concept uses short monologues on lenses, LUTs, gimbals, memory cards, batteries, and clients. The source blueprint treats rollout as proposed; this lore does not claim a historical operational studio."
+      }
+    },
+    {
+      "id": "pressure-tv",
+      "name": "PressureTV Network",
+      "aliases": [
+        "PressureTV"
+      ],
+      "tagline": "Breaking: everybody wants exposure.",
+      "summary": "The owner-discussed entertainment channel becomes a fictional local studio selling attention while trying to cover the same block that buys its advertisements.",
+      "provenance": {
+        "kind": "recovered_owner_idea",
+        "source": "mccluster_media_universe_13_v1(1).json; 2026-10-19",
+        "note": "Recovered name/idea from the owner project registry. The source marks the universe proposal_only and the brand proposed_not_provisioned. This district storefront and its staff are newly authored fiction; this is not evidence of a provisioned real business."
+      }
+    },
+    {
+      "id": "baddies-on-wheels",
+      "name": "Baddies on Wheels",
+      "aliases": [],
+      "tagline": "The entrance is part of the ride.",
+      "summary": "Vehicle and personality media becomes a dispatch-and-promo garage whose glamorous image still depends on ordinary maintenance and punctual people.",
+      "provenance": {
+        "kind": "recovered_owner_idea",
+        "source": "mccluster_media_universe_13_v1(1).json; 2026-10-19",
+        "note": "Recovered name/idea from the owner project registry. The source marks the universe proposal_only and the brand proposed_not_provisioned. This district storefront and its staff are newly authored fiction; this is not evidence of a provisioned real business."
+      }
+    },
+    {
+      "id": "prim3-exe",
+      "name": "PRIM3.exe",
+      "aliases": [],
+      "tagline": "A channel with an executable attitude.",
+      "summary": "A recovered media-universe name referenced on PressureTV programming notes; its exact relationship to canonical PRIM3 remains unresolved.",
+      "provenance": {
+        "kind": "recovered_owner_idea",
+        "source": "mccluster_media_universe_13_v1(1).json; 2026-10-19",
+        "note": "Recovered name/idea from the owner project registry. The source marks the universe proposal_only and the brand proposed_not_provisioned. This district storefront and its staff are newly authored fiction; this is not evidence of a provisioned real business. Used here as a fictional channel reference only. No new learning product, software executable, infrastructure, or PRIM3 jurisdiction is asserted."
+      }
+    },
+    {
+      "id": "the-drop-watch",
+      "name": "The Drop Watch",
+      "aliases": [],
+      "tagline": "Watching the drop. Questioning the receipt.",
+      "summary": "A sneaker-drop media tenant on the Robbery 1s Exchange noticeboard.",
+      "provenance": {
+        "kind": "recovered_owner_idea",
+        "source": "mccluster_media_universe_13_v1(1).json; 2026-10-19",
+        "note": "Recovered name/idea from the owner project registry. The source marks the universe proposal_only and the brand proposed_not_provisioned. This district storefront and its staff are newly authored fiction; this is not evidence of a provisioned real business. Tenant placement and this tagline are new city adaptations."
+      }
+    },
+    {
+      "id": "designer-kicks",
+      "name": "Designer Kicks",
+      "aliases": [],
+      "tagline": "Every pair gets a second look.",
+      "summary": "An owner-discussed name retained as a fictional retail-tenant reference within the sneaker exchange.",
+      "provenance": {
+        "kind": "recovered_owner_idea",
+        "source": "mccluster_media_universe_13_v1(1).json; 2026-10-19",
+        "note": "Recovered name/idea from the owner project registry. The source marks the universe proposal_only and the brand proposed_not_provisioned. This district storefront and its staff are newly authored fiction; this is not evidence of a provisioned real business. External brand rights and the exact relationship require reconfirmation before an actual commercial integration, mark, product feed, or licensed merchandise. This reference authorizes none of those."
+      }
+    },
+    {
+      "id": "diamond-girls-radio",
+      "name": "Diamond Girls Radio",
+      "aliases": [],
+      "tagline": "Turn the block up.",
+      "summary": "Recovered Nigeria/Ghana-focused programming under the Diamond Girls x McCluster Network, represented as a channel tenant at PressureTV.",
+      "provenance": {
+        "kind": "recovered_owner_idea",
+        "source": "mccluster_media_universe_13_v1(1).json; 2026-10-19",
+        "note": "Recovered name/idea from the owner project registry. The source marks the universe proposal_only and the brand proposed_not_provisioned. This district storefront and its staff are newly authored fiction; this is not evidence of a provisioned real business. Programming geography comes from the recovered source; the new staff biographies do not rewrite ownership, origin, or an existing real broadcast schedule."
+      }
+    },
+    {
+      "id": "who-did-the-shoot",
+      "name": "Who Did the Shoot?",
+      "aliases": [
+        "Who did the shoot?"
+      ],
+      "tagline": "Everybody has an invoice. Nobody has the footage.",
+      "summary": "The production-industry skit/song concept about absurd deposits, requests for free work, and production conflicts gets a new dialogue situation at RealCameraMen.",
+      "provenance": {
+        "kind": "recovered_owner_idea",
+        "source": "mccluster_media_universe_13_v1(1).json; 2026-10-19",
+        "note": "Recovered name/idea from the owner project registry. The source marks the universe proposal_only and the brand proposed_not_provisioned. This district storefront and its staff are newly authored fiction; this is not evidence of a provisioned real business. New city dialogue is not represented as recovered song lyrics or a replacement for the existing skit/song."
+      }
+    },
+    {
+      "id": "whip-equipped",
+      "name": "Whip Equipped",
+      "aliases": [],
+      "tagline": "The shop is where the next chapter starts.",
+      "summary": "The existing fictional album, film, and narrative-game story receives a garage chapter hub with McCluster, Majid, and Gunny.",
+      "provenance": {
+        "kind": "existing_story_canon",
+        "source": "docs/music/WHIP-EQUIPPED-STORY.md; docs/music/whip-equipped/CANON.json; revision 2026-11-03",
+        "note": "Whip Equipped LLC remains the owner’s separate real company. The fictional garage, crimes, and dramatic dialogue do not describe the real company or substantiate accusations about real people. The three existing story characters receive new city dialogue, not invented historical ages or origins."
+      }
+    }
+  ],
+  "businesses": [
+    {
+      "id": "gauranfucking-tea",
+      "brandId": "gauranfucking-tea",
+      "name": "GAURANFUCKING TEA",
+      "category": "Tea shop and VHS ad counter",
+      "tagline": "We guarantee you'll like it, or else fuck you.",
+      "description": "A cheerful tea counter with the least reassuring guarantee on the block. Lin performs the slogan outside while Mara and Eli keep the actual service warmer than the advertising.",
+      "backstory": "Mara rented a small counter and recorded a rough commercial to make it look established. The tape’s awkward pause before the guarantee became the part everyone quoted. Now people arrive to make her say the line, film their friends reacting, and argue about whether a satisfaction promise can sound like a threat. Lin turned that embarrassment into a deliberate street performance. Eli made the menu small enough that the shop could still serve what it advertised. Their recurring problem is simple: the louder the ad gets, the harder it is to hear what a customer actually wants. Mara’s test is to honor a real complaint while the whole block expects another punch line.",
+      "color": "#e2b84b",
+      "position": [
+        -48,
+        -25
+      ],
+      "size": [
+        23,
+        19,
+        8
+      ],
+      "entrance": [
+        -48,
+        -14
+      ],
+      "staffIds": [
+        "mara-costa",
+        "lin-qiao",
+        "eli-mensah"
+      ],
+      "itemIds": [
+        "tea-guarantee-cup",
+        "tea-vhs-sticker",
+        "tea-guarantee-shirt"
+      ],
+      "secondaryBrands": [],
+      "ads": [
+        "We guarantee you'll like it, or else fuck you.",
+        "NOW WITH A PAUSE LONG ENOUGH TO RECONSIDER THE SLOGAN.",
+        "PressureTV special: one cup, three takes, zero indoor voices."
+      ],
+      "interior": {
+        "style": "Warm counter, tea tins, and a deliberately overplayed VHS monitor",
+        "description": "A compact tasting counter faces a shelf of fictional tins. A small television loops ad cards. Plain text signs carry the joke; no recovered logo is imitated."
+      }
+    },
+    {
+      "id": "hordash",
+      "brandId": "hordash",
+      "name": "Hordash",
+      "category": "Adult nightlife dispatch parody",
+      "tagline": "Your evening has been reassigned.",
+      "description": "An adult escort dispatch satire where the customer-service problem is usually a customer assuming the app has booked an entire human being.",
+      "backstory": "Nadia opened an office because a contact button was being mistaken for an answer to every question. Tasha wanted a place to finish a shift without being scored by somebody who had ordered the wrong thing. Ren wanted the word available to refer to a person’s decision rather than a green dot. Their arguments are about schedules, refunds, false certainty, and an app that calls every delay a premium experience. The office makes no attempt to hide the adult premise, but its front counter sells clothing, stickers, and empty prop bags. The people behind the logo are witty, impatient, and competent, even when a customer expects them to be just an app notification. The recurring city situation is a mislabeled promotional vehicle booking that several shops think is theirs.",
+      "color": "#e76e98",
+      "position": [
+        -16,
+        -25
+      ],
+      "size": [
+        23,
+        19,
+        9
+      ],
+      "entrance": [
+        -16,
+        -14
+      ],
+      "staffIds": [
+        "nadia-vale",
+        "tasha-bell",
+        "ren-okafor"
+      ],
+      "itemIds": [
+        "hordash-reassigned-shirt",
+        "hordash-eta-sticker",
+        "hordash-prop-bag"
+      ],
+      "secondaryBrands": [],
+      "ads": [
+        "YOUR EVENING HAS BEEN REASSIGNED. Same shoes. Different expectations.",
+        "A premium fee for a basic misunderstanding.",
+        "Five stars for the outfit. One star for your reading comprehension."
+      ],
+      "interior": {
+        "style": "After-hours dispatch desk with playful delivery-app signage",
+        "description": "A bright bookings desk, coat hooks, and a whiteboard of fictional shifts. Interactions stay at the front desk; the shop offers virtual merchandise."
+      }
+    },
+    {
+      "id": "mike-hawk",
+      "brandId": "mike-hawk",
+      "name": "Mike Hawk Campaign Office",
+      "category": "Fictional civic campaign",
+      "tagline": "Long on commitment. Hard on excuses.",
+      "description": "Mike and his two recruits roam the commercial sidewalks, making every pitch sound suggestive while arguing over actual neighborhood problems.",
+      "backstory": "Mike built his campaign around the conviction that nobody forgets a promise if it sounds a little inappropriate. That leaves Ada translating his speeches into ordinary requests and Noah trying to get a budget sentence through the slogan printer. Their office has a pothole map, a volunteer kettle, and stacks of posters awaiting increasingly questionable revisions. Mike wants the block to see him everywhere. Ada wants one shopkeeper to feel listened to. Noah wants somebody to read page two. The three can agree that a broken street needs fixing; they cannot agree on how to say it without the crowd laughing. Their next big campaign moment begins with a small problem: their own signs have blocked Mara’s loading space. Ada wants them moved before anybody announces another initiative.",
+      "color": "#738bd1",
+      "position": [
+        16,
+        -25
+      ],
+      "size": [
+        23,
+        19,
+        10
+      ],
+      "entrance": [
+        16,
+        -14
+      ],
+      "staffIds": [
+        "mike-hawk",
+        "ada-reyes",
+        "noah-bennett"
+      ],
+      "itemIds": [
+        "hawk-commitment-pin",
+        "hawk-hard-topics-shirt",
+        "hawk-policy-poster"
+      ],
+      "secondaryBrands": [],
+      "ads": [
+        "MIKE HAWK: I stand with my people long and hard on these topics.",
+        "A stronger platform. A longer commitment. Please read the policy.",
+        "Mike Hawk wants to fill the holes in this city. Public Works would appreciate a date."
+      ],
+      "interior": {
+        "style": "Overenthusiastic neighborhood campaign office",
+        "description": "Poster stacks surround a folding table and a pothole map. Mike, Ada, and Noah are usually outside canvassing; their merchandise counter remains inspectable."
+      }
+    },
+    {
+      "id": "robbery-1s",
+      "brandId": "robbery-1s",
+      "name": "Robbery 1s Exchange",
+      "category": "Sneaker exchange and rumor archive",
+      "tagline": "Fresh soles. Questionable history.",
+      "description": "June checks receipts, Leo repairs sneakers, and Samira records the stories people attach to them. The shop sells clearly labeled fictional replicas.",
+      "backstory": "A story about dangerous shoes became easier to retell than to document. June built the Exchange around that gap: every incoming pair gets a condition note, every claim gets a source, and every replica gets a label. Leo soon discovered that customers would pay attention to a supposed curse before they noticed excellent stitching. Samira made room for the stories without making them certificates of truth. The Drop Watch and Designer Kicks share a crowded retail noticeboard. June leaves the original-pair plinth empty until she can explain exactly what belongs there. The empty space irritates Hugo, who thinks every surface should make a sale; Samira thinks it might be the most honest exhibit on the block.",
+      "color": "#bf654d",
+      "position": [
+        48,
+        -25
+      ],
+      "size": [
+        23,
+        19,
+        8
+      ],
+      "entrance": [
+        48,
+        -14
+      ],
+      "staffIds": [
+        "june-park",
+        "leo-mercer",
+        "samira-diallo"
+      ],
+      "itemIds": [
+        "robbery-replica-pair",
+        "robbery-second-chance-laces",
+        "robbery-rumor-zine"
+      ],
+      "secondaryBrands": [
+        "the-drop-watch",
+        "designer-kicks"
+      ],
+      "ads": [
+        "FRESH SOLES. QUESTIONABLE HISTORY. Receipts welcome.",
+        "The replica is labeled. The confidence is authentic.",
+        "The Drop Watch board: late releases, early opinions."
+      ],
+      "interior": {
+        "style": "Repair bench, shoe display, and conflicting-story noticeboard",
+        "description": "Replicas sit apart from an empty story-display plinth. A repair counter and zine rack make the shop useful without declaring custody of the original shoes."
+      }
+    },
+    {
+      "id": "hitman-gear",
+      "brandId": "hitman-gear",
+      "name": "Hitman Gear",
+      "category": "Creator wardrobe and film props",
+      "tagline": "Dress like the budget cleared.",
+      "description": "A fiercely serious film-gear boutique where Plot Armor is a vest, a threat is probably a lighting note, and nobody can find the batteries.",
+      "backstory": "Vik learned that a client who ignored a practical lighting suggestion would listen if it sounded like the beginning of an operation. Marisol gave that absurd confidence a wardrobe. Owen supplied the noise. Together they made a shop that looks ready for a cinematic confrontation and spends most of its time discussing return dates, fabric, and missing adapters. Their products are fictional costume pieces and production props, with no weapons or claims of protective performance. The block treats the shop as the place to get ready for a big entrance. The staff treats every big entrance as another chance for somebody to forget the deposit. Their continuing dispute with RealCameraMen is over whose tiny practical contribution saved the shoot.",
+      "color": "#596b75",
+      "position": [
+        -48,
+        23
+      ],
+      "size": [
+        23,
+        19,
+        8
+      ],
+      "entrance": [
+        -48,
+        12
+      ],
+      "staffIds": [
+        "vik-rao",
+        "marisol-vega",
+        "owen-price"
+      ],
+      "itemIds": [
+        "hitman-plot-armor-vest",
+        "hitman-dramatic-clapboard",
+        "hitman-silence-badge"
+      ],
+      "secondaryBrands": [],
+      "ads": [
+        "PLOT ARMOR. Great silhouette. Absolutely no plot guarantees.",
+        "You bring the tension. Owen brings the empty biscuit tin.",
+        "A serious look for a very unserious budget."
+      ],
+      "interior": {
+        "style": "Compact film wardrobe and prop counter",
+        "description": "Garment rails, a clapboard shelf, and harmless sound props face the shop counter. There are no functional weapons on sale."
+      }
+    },
+    {
+      "id": "real-camera-men",
+      "brandId": "real-camera-men",
+      "name": "RealCameraMen",
+      "category": "Camera hot takes and production studio",
+      "tagline": "Your lens is innocent. Your quote is not.",
+      "description": "A production counter whose straight-faced equipment manifestos get louder whenever the client asks for a discount.",
+      "backstory": "Zofia could explain why a camera choice mattered in thirty seconds. The problem was that the block preferred the version where she pretended the wrong memory card was a moral failure. Cleo gave those monologues a setting, and Kwame started scheduling them between paid jobs. Their public persona announces ridiculous rules about lenses, LUTs, gimbals, batteries, and who is allowed to call themselves professional. In quieter conversations the same staff solve practical problems with whatever works. Who Did the Shoot? supplies the recurring production dispute: several people can prove they contributed, but nobody can agree which contribution the invoice should celebrate. Their professionalism and their ridiculous advertising coexist; the joke does not require the crew to be incompetent.",
+      "color": "#64a6a0",
+      "position": [
+        -16,
+        23
+      ],
+      "size": [
+        23,
+        19,
+        9
+      ],
+      "entrance": [
+        -16,
+        12
+      ],
+      "staffIds": [
+        "zofia-nowak",
+        "cleo-baptiste",
+        "kwame-addo"
+      ],
+      "itemIds": [
+        "camera-empty-card-prop",
+        "camera-exposure-invoice",
+        "camera-rulebook-zine"
+      ],
+      "secondaryBrands": [
+        "who-did-the-shoot"
+      ],
+      "ads": [
+        "REAL CAMERAMEN DO NOT RUN OUT OF BATTERY. We call it an intentional ending.",
+        "Who Did the Shoot? Everybody submitted a deposit request.",
+        "Thirty seconds of lens philosophy. Forty-five minutes of invoice discussion."
+      ],
+      "interior": {
+        "style": "Small practical studio with a grandiose hot-take wall",
+        "description": "A simple set, a camera-prop shelf, and a production counter surround handwritten equipment rules. The rules contradict one another on purpose."
+      }
+    },
+    {
+      "id": "pressure-tv",
+      "brandId": "pressure-tv",
+      "name": "PressureTV Network",
+      "category": "Entertainment studio and radio tenants",
+      "tagline": "Breaking: everybody wants exposure.",
+      "description": "A local entertainment studio where tiny block events get huge headlines and every sponsor thinks it owns the commercial break.",
+      "backstory": "Darnell can make a delayed kettle sound like a developing emergency. Priya can find out who unplugged it. Hugo can sell the kettle company a response segment before either of them has finished. That is the studio’s daily rhythm. The studio’s entertainment desk faces the street, which makes ignoring an annoyed neighbor almost impossible. A programming board lists Diamond Girls Radio and its Nigeria/Ghana focus under Diamond Girls x McCluster Network. PRIM3.exe sits in the programming notes while Priya waits for a description she can actually schedule. The central conflict is proximity: everybody covered by the studio can walk over and complain, and everybody buying an ad still expects to be called a friend.",
+      "color": "#9b7bbb",
+      "position": [
+        16,
+        23
+      ],
+      "size": [
+        23,
+        19,
+        13
+      ],
+      "entrance": [
+        16,
+        12
+      ],
+      "staffIds": [
+        "darnell-brooks",
+        "priya-nair",
+        "hugo-soto"
+      ],
+      "itemIds": [
+        "pressure-breaking-mug",
+        "pressure-studio-badge",
+        "pressure-radio-sticker"
+      ],
+      "secondaryBrands": [
+        "diamond-girls-radio",
+        "prim3-exe"
+      ],
+      "ads": [
+        "BREAKING: THE SAME STORY, LOUDER.",
+        "Diamond Girls Radio on the programming board. Turn the block up.",
+        "Exclusive sponsorship available. Please define exclusive before paying."
+      ],
+      "interior": {
+        "style": "Street-facing entertainment desk, booth, and ad-sales counter",
+        "description": "A small desk faces the window. A radio booth, correction board, and fictional programme cards share the back wall. No real live news or private operational feeds are loaded."
+      }
+    },
+    {
+      "id": "baddies-on-wheels",
+      "brandId": "baddies-on-wheels",
+      "name": "Baddies on Wheels",
+      "category": "Vehicle and personality media",
+      "tagline": "The entrance is part of the ride.",
+      "description": "A driver-led vehicle-media business where dispatch, maintenance, and presentation have to fit in the same working day.",
+      "backstory": "Amina likes a beautiful arrival but measures a good day by everyone getting where they agreed to go. Tomas knows how quickly a filmed entrance can become tomorrow’s repair job. Beatrice remembers the appointment before the client remembers making it. Their brand celebrates vehicles and personalities, combining promotional work with a small service relationship to the Whip garage. The recurring mistake is assuming that a shiny van on camera is a spare van in the schedule. A promotional booking links them to Hordash and RealCameraMen, whose descriptions sound alike until someone asks what must actually be carried. Their souvenir ride pass looks glamorous enough that Beatrice has to remind visitors it belongs on a shelf; the actual schedule remains on her desk, where adjectives cannot change it.",
+      "color": "#d776a2",
+      "position": [
+        48,
+        23
+      ],
+      "size": [
+        23,
+        19,
+        7
+      ],
+      "entrance": [
+        48,
+        12
+      ],
+      "staffIds": [
+        "amina-noor",
+        "tomas-silva",
+        "beatrice-cole"
+      ],
+      "itemIds": [
+        "baddies-cosmetic-ride-pass",
+        "baddies-arrival-shirt",
+        "baddies-dashboard-charm"
+      ],
+      "secondaryBrands": [],
+      "ads": [
+        "THE ENTRANCE IS PART OF THE RIDE. Being on time is the other part.",
+        "Baddies on Wheels: main-character energy, scheduled maintenance.",
+        "Your appearance has a booking. Your luggage should have a description."
+      ],
+      "interior": {
+        "style": "Dispatch lounge and vehicle-media prep counter",
+        "description": "A key board, a bench, and a shoot schedule share a modest storefront. A stylized display bay evokes vehicle work without duplicating the Whip garage."
+      }
+    }
+  ],
+  "npcs": [
+    {
+      "id": "mara-costa",
+      "name": "Mara Costa",
+      "age": 39,
+      "origin": "Recife, Brazil",
+      "role": "Owner and reluctant face of the guarantee",
+      "businessId": "gauranfucking-tea",
+      "backstory": "Mara grew up helping a relative run a neighborhood snack counter in Recife, where remembering an order mattered more than having a slogan. Years later she opened the city shop with a small menu and borrowed recording equipment. One furious practice take became the commercial everybody wanted. She is proud of the attention and embarrassed that people sometimes leave quoting the ad without remembering the tea. Mara keeps a notebook of regulars’ preferences behind the till and quietly replaces drinks customers dislike. Her ambition is to make the guarantee honest without becoming a bland version of herself. She trusts Eli with the stock and Lin with the performance; she needs both of them to tell her when she has confused being memorable with being right.",
+      "personality": "Blunt, hospitable, ambitious, and capable of apologizing without losing her nerve.",
+      "appearance": {
+        "shirt": "#c58835",
+        "skin": "#b47e58",
+        "hair": "#302821"
+      },
+      "placement": "interior",
+      "route": [
+        [
+          -53,
+          -27
+        ]
+      ],
+      "dialogue": {
+        "greeting": "Welcome. The tea is hot. The guarantee is unnecessarily personal.",
+        "topics": [
+          {
+            "id": "mara-costa-guarantee",
+            "label": "Explain that guarantee.",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "So what happens if I don’t like the tea?"
+              },
+              {
+                "speaker": "Mara Costa",
+                "text": "I make you another one. I run a shop, not a hostage situation."
+              },
+              {
+                "speaker": "You",
+                "text": "Your sign has a different energy."
+              },
+              {
+                "speaker": "Mara Costa",
+                "text": "We guarantee you'll like it, or else fuck you."
+              },
+              {
+                "speaker": "You",
+                "text": "There it is."
+              },
+              {
+                "speaker": "Mara Costa",
+                "text": "And there’s the kettle. One of those things actually solves your problem."
+              }
+            ]
+          },
+          {
+            "id": "mara-costa-tape",
+            "label": "How did the VHS ad happen?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Did you deliberately make the ad look thirty years old?"
+              },
+              {
+                "speaker": "Mara Costa",
+                "text": "At first? No. That was the camera we had."
+              },
+              {
+                "speaker": "You",
+                "text": "And the dramatic zoom?"
+              },
+              {
+                "speaker": "Mara Costa",
+                "text": "The table moved. Cleo called it a creative decision, then sent an invoice."
+              },
+              {
+                "speaker": "You",
+                "text": "Did the ad work?"
+              },
+              {
+                "speaker": "Mara Costa",
+                "text": "People know every word. Now I’m trying the radical next step of selling them tea."
+              }
+            ]
+          },
+          {
+            "id": "mara-costa-block",
+            "label": "What do you want from this block?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "PressureTV says you’re taking over the neighborhood."
+              },
+              {
+                "speaker": "Mara Costa",
+                "text": "I asked for a thirty-second commercial. Hugo sold me an era."
+              },
+              {
+                "speaker": "You",
+                "text": "You don’t want an empire?"
+              },
+              {
+                "speaker": "Mara Costa",
+                "text": "I want Eli to get a lunch break and Lin to stop shouting at delivery drivers."
+              },
+              {
+                "speaker": "You",
+                "text": "That sounds smaller."
+              },
+              {
+                "speaker": "Mara Costa",
+                "text": "It sounds achievable. Buy a cup and we can fund the revolution slowly."
+              }
+            ]
+          }
+        ],
+        "farewell": "Come back. Tell me what you actually liked this time."
+      },
+      "provenance": "new_fiction"
+    },
+    {
+      "id": "lin-qiao",
+      "name": "Lin Qiao",
+      "age": 26,
+      "origin": "Hangzhou, China",
+      "role": "Street promoter and ad performer",
+      "businessId": "gauranfucking-tea",
+      "backstory": "Lin worked backstage on small performances in Hangzhou before deciding she preferred the moment when an audience could answer back. She moved to the city with a habit of studying timing: when a passerby looks up, when a joke needs silence, when a sales pitch should end. Mara’s ad gave her an unusually rude line to perform with perfect composure. She knows the guarantee sounds absurd and makes that awareness part of the act. Off the pavement she is quieter, rehearsing her own short comedy pieces and helping Eli move crates. Her conflict is with being remembered only as the person who says the slogan. She wants to direct the next commercial and make the whole shop take her ideas as seriously as her ability to draw a crowd.",
+      "personality": "Observant, playful, self-possessed; a performer rather than an accent joke.",
+      "appearance": {
+        "shirt": "#efcf75",
+        "skin": "#d7ad87",
+        "hair": "#211d23"
+      },
+      "placement": "door",
+      "route": [
+        [
+          -52,
+          -12
+        ],
+        [
+          -44,
+          -12
+        ]
+      ],
+      "dialogue": {
+        "greeting": "You heard the slogan from across the street. That means I’m doing my job.",
+        "topics": [
+          {
+            "id": "lin-qiao-slogan",
+            "label": "Give me the full pitch.",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "All right. Sell me the tea."
+              },
+              {
+                "speaker": "Lin Qiao",
+                "text": "We guarantee you'll like it, or else fuck you."
+              },
+              {
+                "speaker": "You",
+                "text": "That’s your customer-service voice?"
+              },
+              {
+                "speaker": "Lin Qiao",
+                "text": "No. My customer-service voice asks whether you want the lid on."
+              },
+              {
+                "speaker": "You",
+                "text": "Lid on, then."
+              },
+              {
+                "speaker": "Lin Qiao",
+                "text": "Excellent. We’ve built a relationship without even calling security."
+              }
+            ]
+          },
+          {
+            "id": "lin-qiao-timing",
+            "label": "Why does everyone stop for you?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "You make that line sound almost polite."
+              },
+              {
+                "speaker": "Lin Qiao",
+                "text": "The pause does the work. You need time to think the guarantee is normal."
+              },
+              {
+                "speaker": "You",
+                "text": "Then you ruin it."
+              },
+              {
+                "speaker": "Lin Qiao",
+                "text": "Then I reveal the product. That is a theatrical distinction."
+              },
+              {
+                "speaker": "You",
+                "text": "Ever want to perform something else?"
+              },
+              {
+                "speaker": "Lin Qiao",
+                "text": "Yes. My next production includes a chair and a scene where nobody asks me to shout."
+              }
+            ]
+          },
+          {
+            "id": "lin-qiao-campaign",
+            "label": "What do you think of Mike Hawk?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Mike’s recruiters are competing with your pitch."
+              },
+              {
+                "speaker": "Lin Qiao",
+                "text": "Ada and I have an agreement. Tea first, civic disappointment second."
+              },
+              {
+                "speaker": "You",
+                "text": "And Mike?"
+              },
+              {
+                "speaker": "Lin Qiao",
+                "text": "He said he could go all day. I asked him to cover my afternoon break."
+              },
+              {
+                "speaker": "You",
+                "text": "Did he?"
+              },
+              {
+                "speaker": "Lin Qiao",
+                "text": "He made a statement supporting breaks. Mara is still waiting for the actual person."
+              }
+            ]
+          }
+        ],
+        "farewell": "Try the tea. If you quote me, at least get the timing right."
+      },
+      "provenance": "new_fiction"
+    },
+    {
+      "id": "eli-mensah",
+      "name": "Eli Mensah",
+      "age": 32,
+      "origin": "Accra, Ghana",
+      "role": "Tea and stock manager",
+      "businessId": "gauranfucking-tea",
+      "backstory": "Eli learned stock work in Accra and developed a private affection for lists that solve actual problems. After moving to the city he took a temporary job counting tea tins and stayed because Mara would admit when his quiet corrections saved a disastrous promotion. He knows which customers really enjoy a limited edition and which only want to photograph the sign. He is neither the shop’s stern parent nor its silent background helper: he makes dry jokes, has strong opinions about the playlist, and refuses to hide behind a clipboard. He wants a tasting evening where customers can disagree without becoming content. His obstacle is that Hugo keeps calling every modest idea a launch, and Mara sometimes believes him long enough to order too many cups.",
+      "personality": "Patient, exact, dryly funny; enjoys useful systems and unhurried conversation.",
+      "appearance": {
+        "shirt": "#556e52",
+        "skin": "#76503b",
+        "hair": "#29221e"
+      },
+      "placement": "interior",
+      "route": [
+        [
+          -44,
+          -29
+        ]
+      ],
+      "dialogue": {
+        "greeting": "If you want the ad, Lin is outside. If you want a recommendation, tell me what you like.",
+        "topics": [
+          {
+            "id": "eli-mensah-menu",
+            "label": "What is actually good here?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "What do you recommend?"
+              },
+              {
+                "speaker": "Eli Mensah",
+                "text": "Something you will finish. The biggest cup is not a personality test."
+              },
+              {
+                "speaker": "You",
+                "text": "Mara said everything was guaranteed."
+              },
+              {
+                "speaker": "Eli Mensah",
+                "text": "Mara handles certainty. I handle stock."
+              },
+              {
+                "speaker": "You",
+                "text": "Those ever disagree?"
+              },
+              {
+                "speaker": "Eli Mensah",
+                "text": "Every Friday. Certainty has never carried a crate upstairs."
+              }
+            ]
+          },
+          {
+            "id": "eli-mensah-limited",
+            "label": "Why is everything limited edition?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Is this tin genuinely limited?"
+              },
+              {
+                "speaker": "Eli Mensah",
+                "text": "We have six. That is a limit, yes."
+              },
+              {
+                "speaker": "You",
+                "text": "The poster makes it sound historic."
+              },
+              {
+                "speaker": "Eli Mensah",
+                "text": "Hugo put FINAL CHANCE on a product that had not arrived yet."
+              },
+              {
+                "speaker": "You",
+                "text": "What happened?"
+              },
+              {
+                "speaker": "Eli Mensah",
+                "text": "We had a first chance the next morning. Nobody issued a correction."
+              }
+            ]
+          },
+          {
+            "id": "eli-mensah-tasting",
+            "label": "Tell me about your tasting night.",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "What would you do with the shop for one evening?"
+              },
+              {
+                "speaker": "Eli Mensah",
+                "text": "Small cups. Actual questions. No one yelling a slogan over the answers."
+              },
+              {
+                "speaker": "You",
+                "text": "Would Lin agree?"
+              },
+              {
+                "speaker": "Eli Mensah",
+                "text": "She asked whether silence counts as a paid performance. I said yes."
+              },
+              {
+                "speaker": "You",
+                "text": "And Mara?"
+              },
+              {
+                "speaker": "Eli Mensah",
+                "text": "She’s worried people might dislike something. I told her that’s when a guarantee gets interesting."
+              }
+            ]
+          }
+        ],
+        "farewell": "Enjoy it. An honest opinion is more useful than a five-star reflex."
+      },
+      "provenance": "new_fiction"
+    },
+    {
+      "id": "nadia-vale",
+      "name": "Nadia Vale",
+      "age": 35,
+      "origin": "Lisbon, Portugal",
+      "role": "Dispatch lead",
+      "businessId": "hordash",
+      "backstory": "Nadia spent years arranging nightlife schedules in Lisbon and learned that a clear question prevents more trouble than a confident promise. In the city she opened Hordash’s dispatch desk after watching customers treat a loading icon as consent to everything they imagined. She keeps an old paper diary beside the brightly branded screen because the diary has never announced that a person is arriving before the person has agreed to leave. Her wit is brisk, but she is affectionate toward the people who work with her. She wants a week where the bookings mean what they say. Tasha respects her boundaries; Ren insists that Nadia apply the same patience to herself. The recurring vehicle mix-up tests whether she can ask for help before her whole shift becomes everybody else’s emergency.",
+      "personality": "Fast, practical, dry; asks precise questions and hates decorative certainty.",
+      "appearance": {
+        "shirt": "#b73b70",
+        "skin": "#c18d73",
+        "hair": "#40302c"
+      },
+      "placement": "interior",
+      "route": [
+        [
+          -21,
+          -27
+        ]
+      ],
+      "dialogue": {
+        "greeting": "Before you tell me the app said five minutes, tell me what you actually ordered.",
+        "topics": [
+          {
+            "id": "nadia-vale-eta",
+            "label": "Why does the ETA keep changing?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "It said five minutes twenty minutes ago."
+              },
+              {
+                "speaker": "Nadia Vale",
+                "text": "That was emotional distance. Geography has submitted a correction."
+              },
+              {
+                "speaker": "You",
+                "text": "So what am I paying the premium fee for?"
+              },
+              {
+                "speaker": "Nadia Vale",
+                "text": "A larger version of the same apology."
+              },
+              {
+                "speaker": "You",
+                "text": "Can you give me an honest answer?"
+              },
+              {
+                "speaker": "Nadia Vale",
+                "text": "Yes. Ask a person before you trust a spinning circle."
+              }
+            ]
+          },
+          {
+            "id": "nadia-vale-orders",
+            "label": "What does this office actually do?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "The name suggests you can deliver anything."
+              },
+              {
+                "speaker": "Nadia Vale",
+                "text": "The name suggests our marketing department needs supervision."
+              },
+              {
+                "speaker": "You",
+                "text": "So you arrange nightlife bookings?"
+              },
+              {
+                "speaker": "Nadia Vale",
+                "text": "With actual adults who decide their own availability. Shocking business model."
+              },
+              {
+                "speaker": "You",
+                "text": "And this counter?"
+              },
+              {
+                "speaker": "Nadia Vale",
+                "text": "Merchandise. The empty bag is twenty-one credits. Your assumptions cost extra elsewhere."
+              }
+            ]
+          },
+          {
+            "id": "nadia-vale-van",
+            "label": "Why are three shops asking about one van?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Amina says you borrowed her promotional booking."
+              },
+              {
+                "speaker": "Nadia Vale",
+                "text": "I booked a vehicle for a night-shift promo. Kwame booked a promo with a night vehicle."
+              },
+              {
+                "speaker": "You",
+                "text": "That sounds almost identical."
+              },
+              {
+                "speaker": "Nadia Vale",
+                "text": "Exactly. Everyone read the adjective and skipped the noun."
+              },
+              {
+                "speaker": "You",
+                "text": "What would fix it?"
+              },
+              {
+                "speaker": "Nadia Vale",
+                "text": "Ask who is driving, what is being carried, and where it must go. Then write the answers down."
+              }
+            ]
+          }
+        ],
+        "farewell": "Read the description. It’s the least expensive part of the experience."
+      },
+      "provenance": "new_fiction"
+    },
+    {
+      "id": "tasha-bell",
+      "name": "Tasha Bell",
+      "age": 29,
+      "origin": "New Haven, USA",
+      "role": "Adult entertainer and promotional courier",
+      "businessId": "hordash",
+      "backstory": "Tasha grew up in New Haven and has held enough service jobs to recognize the smile people expect when they are being unreasonable. She now works as an adult entertainer and sometimes carries promotional orders between the district’s shops, arranging her own shifts through Nadia. She is proud of her performance skills and protective of the time when she is simply a neighbor buying tea. Her public ratings annoy her because they turn wildly different expectations into the same five stars. She enjoys the road, knows the block’s shortcuts, and keeps a notebook of comedy observations for a possible radio appearance. Her next step is a paid hosting segment with PressureTV, where she wants to tell the story herself instead of appearing as somebody else’s punch line.",
+      "personality": "Quick, funny, independent, and generous with people who ask instead of presume.",
+      "appearance": {
+        "shirt": "#f08aad",
+        "skin": "#8d5b42",
+        "hair": "#292328"
+      },
+      "placement": "door",
+      "route": [
+        [
+          -20,
+          -12
+        ],
+        [
+          -12,
+          -12
+        ]
+      ],
+      "dialogue": {
+        "greeting": "If this is about a rating, I hope you rated your own behavior first.",
+        "topics": [
+          {
+            "id": "tasha-bell-stars",
+            "label": "What is your worst review?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Somebody gave you one star for being early?"
+              },
+              {
+                "speaker": "Tasha Bell",
+                "text": "He said it put pressure on him to be ready. Being late would have ruined his evening."
+              },
+              {
+                "speaker": "You",
+                "text": "So there was no winning."
+              },
+              {
+                "speaker": "Tasha Bell",
+                "text": "There was. I finished the shift and bought tea."
+              },
+              {
+                "speaker": "You",
+                "text": "Did you answer him?"
+              },
+              {
+                "speaker": "Tasha Bell",
+                "text": "I drafted a beautiful reply. Nadia reminded me that silence can also be a refund to my nervous system."
+              }
+            ]
+          },
+          {
+            "id": "tasha-bell-outside",
+            "label": "What do you do off shift?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Do you ever stop doing the sales pitch?"
+              },
+              {
+                "speaker": "Tasha Bell",
+                "text": "Sure. This is my regular voice. No subscription required."
+              },
+              {
+                "speaker": "You",
+                "text": "What are you writing in that notebook?"
+              },
+              {
+                "speaker": "Tasha Bell",
+                "text": "Stories. People get very original when they think they’re the first person to be rude."
+              },
+              {
+                "speaker": "You",
+                "text": "PressureTV material?"
+              },
+              {
+                "speaker": "Tasha Bell",
+                "text": "Maybe. First I need Hugo to understand that exposure is not a hosting fee."
+              }
+            ]
+          },
+          {
+            "id": "tasha-bell-route",
+            "label": "Who knows this block best?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Who should I ask for directions?"
+              },
+              {
+                "speaker": "Tasha Bell",
+                "text": "Beatrice if you want to arrive. Mike if you want to hear how committed he is to arriving."
+              },
+              {
+                "speaker": "You",
+                "text": "What about you?"
+              },
+              {
+                "speaker": "Tasha Bell",
+                "text": "I’ll give you the route and tell you which tea line is shortest."
+              },
+              {
+                "speaker": "You",
+                "text": "That’s a premium service."
+              },
+              {
+                "speaker": "Tasha Bell",
+                "text": "Exactly. Now watch an app charge you for the same information with a worse attitude."
+              }
+            ]
+          }
+        ],
+        "farewell": "Take care. If the story is about me, let me finish the sentence."
+      },
+      "provenance": "new_fiction"
+    },
+    {
+      "id": "ren-okafor",
+      "name": "Ren Okafor",
+      "age": 31,
+      "origin": "Lagos, Nigeria",
+      "role": "Bookings and support coordinator",
+      "businessId": "hordash",
+      "backstory": "Ren worked customer support in Lagos before arriving in the city and becoming the person everyone asks to make confusing instructions sound human. At Hordash they handle bookings, disputes, and the gap between a customer’s imagination and the actual agreement. They have a mischievous love of formal language and sometimes read a ridiculous complaint as if it were a prestigious literary work. Behind the jokes is a practical goal: a shift that ends when it is supposed to end. Ren likes helping Tasha develop her on-air voice and has started keeping a list of app phrases that mean nothing. They want Nadia to print one honest poster, even if it has to say that somebody does not know the answer yet.",
+      "personality": "Calm, sharp, theatrical with paperwork; protective of clear agreements.",
+      "appearance": {
+        "shirt": "#7d427d",
+        "skin": "#81553f",
+        "hair": "#252325"
+      },
+      "placement": "interior",
+      "route": [
+        [
+          -12,
+          -29
+        ]
+      ],
+      "dialogue": {
+        "greeting": "Welcome to support. Start with the part that happened, then we’ll discuss the part you expected.",
+        "topics": [
+          {
+            "id": "ren-okafor-misread",
+            "label": "What is the usual misunderstanding?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "What do people get wrong most often?"
+              },
+              {
+                "speaker": "Ren Okafor",
+                "text": "They mistake a person being online for a person being available to them."
+              },
+              {
+                "speaker": "You",
+                "text": "That sounds like a design problem."
+              },
+              {
+                "speaker": "Ren Okafor",
+                "text": "The button is green. Apparently that is a binding philosophical argument."
+              },
+              {
+                "speaker": "You",
+                "text": "What do you tell them?"
+              },
+              {
+                "speaker": "Ren Okafor",
+                "text": "Green is a color. Ask a question."
+              }
+            ]
+          },
+          {
+            "id": "ren-okafor-fee",
+            "label": "Explain the service fee.",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "The fee has a fee under it."
+              },
+              {
+                "speaker": "Ren Okafor",
+                "text": "That’s the fee-recognition fee. It helps the first fee feel seen."
+              },
+              {
+                "speaker": "You",
+                "text": "You’re joking."
+              },
+              {
+                "speaker": "Ren Okafor",
+                "text": "Yes. The frightening part is how long you needed to check."
+              },
+              {
+                "speaker": "You",
+                "text": "Could you write the app copy?"
+              },
+              {
+                "speaker": "Ren Okafor",
+                "text": "I tried putting WE DO NOT KNOW YET on a button. They said it lacked confidence."
+              }
+            ]
+          },
+          {
+            "id": "ren-okafor-after",
+            "label": "What happens after the shift?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "You sound like you could do this all night."
+              },
+              {
+                "speaker": "Ren Okafor",
+                "text": "I sound professional. Those are different schedules."
+              },
+              {
+                "speaker": "You",
+                "text": "What’s waiting after work?"
+              },
+              {
+                "speaker": "Ren Okafor",
+                "text": "Tasha’s radio draft, a quiet meal, and a phone I’m allowed to ignore."
+              },
+              {
+                "speaker": "You",
+                "text": "Does Nadia actually let you leave?"
+              },
+              {
+                "speaker": "Ren Okafor",
+                "text": "Yes. Then she answers three more calls. We’re working on her ending too."
+              }
+            ]
+          }
+        ],
+        "farewell": "Agreement before assumption. It saves everyone an entire conversation."
+      },
+      "provenance": "new_fiction"
+    },
+    {
+      "id": "mike-hawk",
+      "name": "Mike Hawk",
+      "age": 45,
+      "origin": "The fictional Bridgeport-inspired city",
+      "role": "Fictional candidate and street canvasser",
+      "businessId": "mike-hawk",
+      "backstory": "Mike has spent most of his adult life turning small public appearances into occasions. He remembers shop openings, waits for cameras, and has a remarkable ability to make a basic promise sound like an intimate threat. He is not secretly a policy genius or only a walking name joke: he does care that the block’s broken pavement keeps hurting local trade, and he dislikes the patient work needed to fix it. Ada knows he listens better without a microphone. Noah suspects he could be useful if he would read his own briefing. Mike’s immediate goal is to earn one endorsement for something he actually completes. His temptation is to substitute another memorable line for that completion and trust everyone to applaud before asking when.",
+      "personality": "Genial, vain, shameless with wordplay; capable of sincerity when the performance pauses.",
+      "appearance": {
+        "shirt": "#3f5ba4",
+        "skin": "#bf947c",
+        "hair": "#54483e"
+      },
+      "placement": "patrol",
+      "route": [
+        [
+          8,
+          -12
+        ],
+        [
+          28,
+          -12
+        ],
+        [
+          40,
+          -12
+        ],
+        [
+          20,
+          -12
+        ]
+      ],
+      "dialogue": {
+        "greeting": "Mike Hawk. A name you can stand behind. Preferably where the camera can see us.",
+        "topics": [
+          {
+            "id": "mike-hawk-pitch",
+            "label": "Give me your campaign pitch.",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "What can Mike Hawk do for this city?"
+              },
+              {
+                "speaker": "Mike Hawk",
+                "text": "I stand with my people long and hard on these topics."
+              },
+              {
+                "speaker": "You",
+                "text": "Which topics?"
+              },
+              {
+                "speaker": "Mike Hawk",
+                "text": "The big ones. The difficult ones. The ones nobody else wants to touch."
+              },
+              {
+                "speaker": "You",
+                "text": "Could you name one?"
+              },
+              {
+                "speaker": "Mike Hawk",
+                "text": "Potholes. I am deeply committed to filling the holes in this community."
+              }
+            ]
+          },
+          {
+            "id": "mike-hawk-policy",
+            "label": "What is the actual pothole plan?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "No slogans. What happens to the broken pavement?"
+              },
+              {
+                "speaker": "Mike Hawk",
+                "text": "We log the locations, rank urgent repairs, and publish when crews are scheduled."
+              },
+              {
+                "speaker": "You",
+                "text": "That was almost a normal answer."
+              },
+              {
+                "speaker": "Mike Hawk",
+                "text": "Noah wrote it. I’m trying to respect his process."
+              },
+              {
+                "speaker": "You",
+                "text": "Can you promise a date?"
+              },
+              {
+                "speaker": "Mike Hawk",
+                "text": "A date, yes. An intimate relationship with the asphalt, no. Ada told me to stop saying that."
+              }
+            ]
+          },
+          {
+            "id": "mike-hawk-promise",
+            "label": "Can you finish what you start?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "People say your promises are bigger than your results."
+              },
+              {
+                "speaker": "Mike Hawk",
+                "text": "My commitment has impressive reach."
+              },
+              {
+                "speaker": "You",
+                "text": "There. You did it again."
+              },
+              {
+                "speaker": "Mike Hawk",
+                "text": "Fair. Mara wants her loading spot clear. That is something I can help organize today."
+              },
+              {
+                "speaker": "You",
+                "text": "Without a press conference?"
+              },
+              {
+                "speaker": "Mike Hawk",
+                "text": "A small one. No? All right. One completed favor. Let’s see how the body politic handles it."
+              }
+            ]
+          }
+        ],
+        "farewell": "Stand with Mike Hawk. Read the platform before you repeat the slogan."
+      },
+      "provenance": "new_fiction"
+    },
+    {
+      "id": "ada-reyes",
+      "name": "Ada Reyes",
+      "age": 28,
+      "origin": "San Juan, Puerto Rico",
+      "role": "Campaign recruiter and neighborhood listener",
+      "businessId": "mike-hawk",
+      "backstory": "Ada helped organize small community events in San Juan before moving to the city. She joined Mike’s campaign because she could get people to stop walking and because she hoped the office might become useful between speeches. She carries a notebook of practical requests: a difficult curb, a blocked loading spot, a streetlight somebody keeps reporting. Her talent is delivering an outrageous line with an entirely straight face, then asking the follow-up that reveals what the neighbor really needs. She gets on well with Lin because both know the difference between a performance and a promise. Ada wants a public record of completed requests, starting with one achievable task. She is prepared to make Mike do it even if she has to take the microphone away herself.",
+      "personality": "Composed, amused, persistent; uses a sales pitch to begin an honest conversation.",
+      "appearance": {
+        "shirt": "#e8ad64",
+        "skin": "#bd855e",
+        "hair": "#342c2a"
+      },
+      "placement": "patrol",
+      "route": [
+        [
+          -60,
+          -12
+        ],
+        [
+          -30,
+          -12
+        ],
+        [
+          -2,
+          -12
+        ],
+        [
+          18,
+          -12
+        ]
+      ],
+      "dialogue": {
+        "greeting": "I have the short pitch and the useful answer. You’re allowed to ask for both.",
+        "topics": [
+          {
+            "id": "ada-reyes-recruit",
+            "label": "Why should I stand with Mike Hawk?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Why should I stand with Mike Hawk?"
+              },
+              {
+                "speaker": "Ada Reyes",
+                "text": "He offers firm support, lasting commitment, and a platform that can take the pressure."
+              },
+              {
+                "speaker": "You",
+                "text": "You practiced saying that without smiling."
+              },
+              {
+                "speaker": "Ada Reyes",
+                "text": "For twenty minutes. Then Noah asked me to explain storm drains."
+              },
+              {
+                "speaker": "You",
+                "text": "Can you?"
+              },
+              {
+                "speaker": "Ada Reyes",
+                "text": "Yes. That’s why they keep sending me outside instead of the candidate."
+              }
+            ]
+          },
+          {
+            "id": "ada-reyes-notebook",
+            "label": "What is in your notebook?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Is that a list of potential voters?"
+              },
+              {
+                "speaker": "Ada Reyes",
+                "text": "In this campaign it’s a list of things people asked us to fix."
+              },
+              {
+                "speaker": "You",
+                "text": "What’s at the top?"
+              },
+              {
+                "speaker": "Ada Reyes",
+                "text": "A loading space Mara can use without moving three campaign signs."
+              },
+              {
+                "speaker": "You",
+                "text": "Your own signs are the problem?"
+              },
+              {
+                "speaker": "Ada Reyes",
+                "text": "Democracy occasionally begins with cleaning up your own bullshit."
+              }
+            ]
+          },
+          {
+            "id": "ada-reyes-tea",
+            "label": "You and Lin seem friendly.",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "You keep passing people to the tea shop."
+              },
+              {
+                "speaker": "Ada Reyes",
+                "text": "A person can have civic opinions and be thirsty."
+              },
+              {
+                "speaker": "You",
+                "text": "Does Mike approve?"
+              },
+              {
+                "speaker": "Ada Reyes",
+                "text": "He asked whether the cup could carry his face."
+              },
+              {
+                "speaker": "You",
+                "text": "What did Mara say?"
+              },
+              {
+                "speaker": "Ada Reyes",
+                "text": "She asked whether the face would help the kettle boil. The negotiations are ongoing."
+              }
+            ]
+          }
+        ],
+        "farewell": "If you want a promise written down, find me before Mike finds a camera."
+      },
+      "provenance": "new_fiction"
+    },
+    {
+      "id": "noah-bennett",
+      "name": "Noah Bennett",
+      "age": 33,
+      "origin": "Bristol, UK",
+      "role": "Campaign recruiter and policy writer",
+      "businessId": "mike-hawk",
+      "backstory": "Noah wrote explanatory material in Bristol and moved to the city believing he could make public decisions less exhausting to understand. He accepted Mike’s campaign job because the candidate could hold an audience that would otherwise walk away. He did not anticipate seeing a paragraph about road maintenance reduced to a poster about endurance. Noah is funny in a quieter way than his employer: he reads the slogan aloud, waits, and lets the absurdity do its work. He keeps earlier drafts because revisions sometimes remove the only measurable promise. His ambition is to publish a one-page plan the neighborhood can check against reality. Ada is his ally; Mike is both the audience for his work and its most enthusiastic editor.",
+      "personality": "Patient, literate, deadpan; values a promise that can be checked afterward.",
+      "appearance": {
+        "shirt": "#8599bc",
+        "skin": "#d7b499",
+        "hair": "#6b5140"
+      },
+      "placement": "patrol",
+      "route": [
+        [
+          24,
+          -12
+        ],
+        [
+          48,
+          -12
+        ],
+        [
+          60,
+          -12
+        ],
+        [
+          32,
+          -12
+        ]
+      ],
+      "dialogue": {
+        "greeting": "If you have a policy question, please ask it before somebody gives you a shirt.",
+        "topics": [
+          {
+            "id": "noah-bennett-draft",
+            "label": "Did you write those slogans?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Did you write LONG AND HARD ON THE ISSUES?"
+              },
+              {
+                "speaker": "Noah Bennett",
+                "text": "I wrote a paragraph about durable road surfaces and sustained funding."
+              },
+              {
+                "speaker": "You",
+                "text": "Then what happened?"
+              },
+              {
+                "speaker": "Noah Bennett",
+                "text": "Mike discovered that the printer charges by the page and charisma charges by the omission."
+              },
+              {
+                "speaker": "You",
+                "text": "Do you keep the original?"
+              },
+              {
+                "speaker": "Noah Bennett",
+                "text": "Several copies. One day an archaeologist will find out we had a drainage policy."
+              }
+            ]
+          },
+          {
+            "id": "noah-bennett-measure",
+            "label": "How do you judge a promise?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "What makes a campaign promise useful?"
+              },
+              {
+                "speaker": "Noah Bennett",
+                "text": "You should know what would count as doing it and when to check."
+              },
+              {
+                "speaker": "You",
+                "text": "Mike promises strong support."
+              },
+              {
+                "speaker": "Noah Bennett",
+                "text": "Very difficult to measure with a clipboard."
+              },
+              {
+                "speaker": "You",
+                "text": "So ask him for something specific?"
+              },
+              {
+                "speaker": "Noah Bennett",
+                "text": "Yes. A cleared loading space would be an excellent first date with accountability."
+              }
+            ]
+          },
+          {
+            "id": "noah-bennett-poster",
+            "label": "What is on page two?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Why does your poster say PLEASE READ PAGE TWO?"
+              },
+              {
+                "speaker": "Noah Bennett",
+                "text": "Page one has Mike’s face. Page two explains where the money is meant to go."
+              },
+              {
+                "speaker": "You",
+                "text": "Which one gets photographed?"
+              },
+              {
+                "speaker": "Noah Bennett",
+                "text": "The face. It has fewer footnotes and a stronger relationship with ring lights."
+              },
+              {
+                "speaker": "You",
+                "text": "Why stay?"
+              },
+              {
+                "speaker": "Noah Bennett",
+                "text": "Because Ada remembers every request, and occasionally Mike listens. I would like to build on that occasion."
+              }
+            ]
+          }
+        ],
+        "farewell": "Take the policy sheet. It folds more easily than the candidate admits."
+      },
+      "provenance": "new_fiction"
+    },
+    {
+      "id": "june-park",
+      "name": "June Park",
+      "age": 34,
+      "origin": "Toronto, Canada",
+      "role": "Exchange proprietor and provenance clerk",
+      "businessId": "robbery-1s",
+      "backstory": "June started cataloguing secondhand clothing in Toronto and discovered that an ordinary receipt can puncture an extraordinary sales pitch. She came to the city for a retail opportunity and stayed because the neighborhood’s sneaker stories never seemed to end at the same place twice. She opened the Exchange with a condition report, a pencil, and an insistence that a replica is allowed to be good without pretending to be original. She does not dismiss the Robbery 1s story; she refuses to turn uncertainty into a surcharge. Samira helps her keep the accounts distinct, while Leo reminds her that shoes can be useful even when their paperwork is a mess. June wants one exhibit that shows what is known, who said it, and where the gaps remain.",
+      "personality": "Skeptical without sneering, patient with evidence, impatient with inflated certainty.",
+      "appearance": {
+        "shirt": "#857c65",
+        "skin": "#c99775",
+        "hair": "#2f2b2a"
+      },
+      "placement": "interior",
+      "route": [
+        [
+          43,
+          -27
+        ]
+      ],
+      "dialogue": {
+        "greeting": "Welcome. If you brought a story, I’ll ask who told you. If you brought shoes, I’ll check the soles.",
+        "topics": [
+          {
+            "id": "june-park-original",
+            "label": "Are those the actual Robbery 1s?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Is that the original pair?"
+              },
+              {
+                "speaker": "June Park",
+                "text": "Read the label. Clearly Labeled Replica 1s."
+              },
+              {
+                "speaker": "You",
+                "text": "That is aggressively clear."
+              },
+              {
+                "speaker": "June Park",
+                "text": "It needs to survive a customer saying, But I thought."
+              },
+              {
+                "speaker": "You",
+                "text": "So where is the original?"
+              },
+              {
+                "speaker": "June Park",
+                "text": "I won’t claim to have it just because an empty display looks less impressive. A good story is no excuse for a bad label."
+              }
+            ]
+          },
+          {
+            "id": "june-park-receipt",
+            "label": "What would convince you?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Would you believe a curse if everybody told the same story?"
+              },
+              {
+                "speaker": "June Park",
+                "text": "I’d ask whether they all heard it from the same person."
+              },
+              {
+                "speaker": "You",
+                "text": "You make this sound unromantic."
+              },
+              {
+                "speaker": "June Park",
+                "text": "A receipt can be romantic. It says somebody remembered a date and made a commitment."
+              },
+              {
+                "speaker": "You",
+                "text": "And a missing receipt?"
+              },
+              {
+                "speaker": "June Park",
+                "text": "That says we have more questions. It does not automatically say haunted."
+              }
+            ]
+          },
+          {
+            "id": "june-park-tenants",
+            "label": "What are those names on the board?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "The Drop Watch and Designer Kicks share this counter?"
+              },
+              {
+                "speaker": "June Park",
+                "text": "They share space on the noticeboard. The Drop Watch keeps the release gossip moving; Designer Kicks gets people arguing about style."
+              },
+              {
+                "speaker": "You",
+                "text": "What does The Drop Watch cover?"
+              },
+              {
+                "speaker": "June Park",
+                "text": "The moment a release becomes a personality contest."
+              },
+              {
+                "speaker": "You",
+                "text": "And your job?"
+              },
+              {
+                "speaker": "June Park",
+                "text": "Make sure the thing in the box is still described correctly after the personality leaves."
+              }
+            ]
+          }
+        ],
+        "farewell": "Keep the receipt. It is the quietest character in a very loud story."
+      },
+      "provenance": "new_fiction"
+    },
+    {
+      "id": "leo-mercer",
+      "name": "Leo Mercer",
+      "age": 24,
+      "origin": "Detroit, USA",
+      "role": "Sneaker repairer",
+      "businessId": "robbery-1s",
+      "backstory": "Leo learned to repair shoes in Detroit because replacing every worn pair was beyond his budget. What began as necessity became a craft he enjoys: stitching that holds, balanced repairs, and the moment someone recognizes a favorite pair again. He joined June’s shop hoping to be known for that work. Instead people keep asking whether the glue can stop a curse. He answers with a joke, then shows them the repair anyway. Leo is the youngest new employee in the district but has no desire to play the reckless apprentice. He wants a small demonstration bench where customers can watch a patient process. His friendship with Tomas rests on a shared frustration: everyone applauds the reveal and forgets the maintenance that made it possible.",
+      "personality": "Warm, practical, proud of craft; enjoys jokes without endorsing every legend.",
+      "appearance": {
+        "shirt": "#bf724e",
+        "skin": "#895e46",
+        "hair": "#322820"
+      },
+      "placement": "interior",
+      "route": [
+        [
+          53,
+          -29
+        ]
+      ],
+      "dialogue": {
+        "greeting": "I can fix the sole. If you mean the other kind of soul, Samira has a longer conversation ready.",
+        "topics": [
+          {
+            "id": "leo-mercer-repair",
+            "label": "Can you repair cursed shoes?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Can you take a curse out of a sneaker?"
+              },
+              {
+                "speaker": "Leo Mercer",
+                "text": "I can take a nail out of one. Let’s start with the documented problem."
+              },
+              {
+                "speaker": "You",
+                "text": "June doesn’t believe the stories either?"
+              },
+              {
+                "speaker": "Leo Mercer",
+                "text": "June believes you told her a story. That’s different from certifying it."
+              },
+              {
+                "speaker": "You",
+                "text": "And you?"
+              },
+              {
+                "speaker": "Leo Mercer",
+                "text": "I believe these stitches need doing before the next dramatic entrance."
+              }
+            ]
+          },
+          {
+            "id": "leo-mercer-skill",
+            "label": "How did you learn this?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Why repair shoes instead of chasing every new drop?"
+              },
+              {
+                "speaker": "Leo Mercer",
+                "text": "Because I liked the pair I had, and the new pair liked money I didn’t have."
+              },
+              {
+                "speaker": "You",
+                "text": "So you taught yourself?"
+              },
+              {
+                "speaker": "Leo Mercer",
+                "text": "With help, mistakes, and one repair I will never photograph."
+              },
+              {
+                "speaker": "You",
+                "text": "Would you show someone else?"
+              },
+              {
+                "speaker": "Leo Mercer",
+                "text": "Absolutely. Watching a thing get fixed is a better flex than pretending it never broke."
+              }
+            ]
+          },
+          {
+            "id": "leo-mercer-maintenance",
+            "label": "You know Tomas next door?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Tomas says you understand his problems."
+              },
+              {
+                "speaker": "Leo Mercer",
+                "text": "He makes vehicles ready for the camera. I make shoes ready for the pavement."
+              },
+              {
+                "speaker": "You",
+                "text": "Same job?"
+              },
+              {
+                "speaker": "Leo Mercer",
+                "text": "Different invoices. Same customer asking whether the glue can dry faster because they’re late."
+              },
+              {
+                "speaker": "You",
+                "text": "Can it?"
+              },
+              {
+                "speaker": "Leo Mercer",
+                "text": "Urgency is a feeling. Drying is a process. They have never signed a cooperation agreement."
+              }
+            ]
+          }
+        ],
+        "farewell": "Walk carefully until it sets. Confidence is not a substitute for drying time."
+      },
+      "provenance": "new_fiction"
+    },
+    {
+      "id": "samira-diallo",
+      "name": "Samira Diallo",
+      "age": 30,
+      "origin": "Dakar, Senegal",
+      "role": "Story curator and zine editor",
+      "businessId": "robbery-1s",
+      "backstory": "Samira grew up in Dakar loving the way different people could remember the same event without telling the same story. She later worked on small print projects and came to the city to make an oral-history zine. The Robbery 1s legend attracted her because people revealed as much about themselves as about the shoes. She works at the Exchange to record those versions without flattening them into one convenient advertisement. She can enjoy an extravagant tale and still ask when the speaker was actually present. Her first issue keeps spaces for unresolved details rather than filling them with invented certainty. June values that restraint. Samira’s private challenge is that an unanswered question sells fewer copies than a shocking conclusion.",
+      "personality": "Curious, vivid, discerning; likes a great story enough to preserve its uncertainty.",
+      "appearance": {
+        "shirt": "#b89755",
+        "skin": "#754c37",
+        "hair": "#242122"
+      },
+      "placement": "door",
+      "route": [
+        [
+          44,
+          -12
+        ],
+        [
+          52,
+          -12
+        ]
+      ],
+      "dialogue": {
+        "greeting": "Tell me the version you heard. Start with who told you, not with trust me.",
+        "topics": [
+          {
+            "id": "samira-diallo-versions",
+            "label": "Which version is true?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Who wore the shoes first?"
+              },
+              {
+                "speaker": "Samira Diallo",
+                "text": "That depends which version somebody is trying to sell you. Let me find the account before I give you a confident name."
+              },
+              {
+                "speaker": "You",
+                "text": "But you keep everyone’s version?"
+              },
+              {
+                "speaker": "Samira Diallo",
+                "text": "I keep who said it and what they claimed. A rumor deserves quotation marks."
+              },
+              {
+                "speaker": "You",
+                "text": "Does that ruin the fun?"
+              },
+              {
+                "speaker": "Samira Diallo",
+                "text": "No. Sometimes the difference between two stories is the most interesting part."
+              }
+            ]
+          },
+          {
+            "id": "samira-diallo-zine",
+            "label": "Why call the zine Unconfirmed?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "UNCONFIRMED is a strange title for something you want me to buy."
+              },
+              {
+                "speaker": "Samira Diallo",
+                "text": "It’s a very accurate description of what I am selling."
+              },
+              {
+                "speaker": "You",
+                "text": "Hugo would put SHOCKING TRUTH on it."
+              },
+              {
+                "speaker": "Samira Diallo",
+                "text": "Hugo would sponsor the word shocking and invoice the truth separately."
+              },
+              {
+                "speaker": "You",
+                "text": "Will the next issue have answers?"
+              },
+              {
+                "speaker": "Samira Diallo",
+                "text": "It will have better questions if I’m doing my work properly."
+              }
+            ]
+          },
+          {
+            "id": "samira-diallo-player",
+            "label": "Am I part of the curse now?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "If I buy the replica, am I in the story?"
+              },
+              {
+                "speaker": "Samira Diallo",
+                "text": "You’re in a story about buying a replica."
+              },
+              {
+                "speaker": "You",
+                "text": "No sudden legend attached?"
+              },
+              {
+                "speaker": "Samira Diallo",
+                "text": "If June sold you an original with that much history, the receipt would need a second page."
+              },
+              {
+                "speaker": "You",
+                "text": "That’s almost disappointing."
+              },
+              {
+                "speaker": "Samira Diallo",
+                "text": "Live a little. Give me something worth writing down that isn’t a receipt misunderstanding."
+              }
+            ]
+          }
+        ],
+        "farewell": "If the story changes, bring the reason it changed."
+      },
+      "provenance": "new_fiction"
+    },
+    {
+      "id": "vik-rao",
+      "name": "Vik Rao",
+      "age": 37,
+      "origin": "Bengaluru, India",
+      "role": "Gear-shop owner and lighting technician",
+      "businessId": "hitman-gear",
+      "backstory": "Vik began on small production crews in Bengaluru, carrying equipment and learning how much a scene depends on the person who arrives early with the right adapter. In the city he found that the same practical advice sounded more impressive when delivered like a mission briefing. Hitman Gear grew from that running joke. He takes the craft seriously while enjoying a presentation that treats finding an outlet as a strategic breakthrough. Marisol stops him promising wardrobe miracles; Owen knows when to puncture the mood with an embarrassingly ordinary sound prop. Vik wants to produce one beautifully simple commercial using the equipment they already own. His weakness is the temptation to make the preparation more dramatic than the finished scene.",
+      "personality": "Precise, theatrical, generous with practical knowledge; occasionally intoxicated by his own briefing.",
+      "appearance": {
+        "shirt": "#405969",
+        "skin": "#a57450",
+        "hair": "#292629"
+      },
+      "placement": "interior",
+      "route": [
+        [
+          -53,
+          25
+        ]
+      ],
+      "dialogue": {
+        "greeting": "Welcome to Hitman Gear. State your scene, your budget, and whether anyone remembered batteries.",
+        "topics": [
+          {
+            "id": "vik-rao-briefing",
+            "label": "Why does buying a clapboard feel dangerous?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Why are you whispering about a lighting stand?"
+              },
+              {
+                "speaker": "Vik Rao",
+                "text": "Because this stand is the difference between a sinister silhouette and a man beside a lamp."
+              },
+              {
+                "speaker": "You",
+                "text": "Couldn’t you just say that normally?"
+              },
+              {
+                "speaker": "Vik Rao",
+                "text": "I tried. Nobody remembered the adapter."
+              },
+              {
+                "speaker": "You",
+                "text": "Do they remember it now?"
+              },
+              {
+                "speaker": "Vik Rao",
+                "text": "No. But they forget with a much more professional posture."
+              }
+            ]
+          },
+          {
+            "id": "vik-rao-props",
+            "label": "What does the Plot Armor do?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Does the Plot Armor vest protect me?"
+              },
+              {
+                "speaker": "Vik Rao",
+                "text": "From an uninteresting silhouette. Marisol handles the fit."
+              },
+              {
+                "speaker": "You",
+                "text": "Anything else?"
+              },
+              {
+                "speaker": "Vik Rao",
+                "text": "It is a costume, not a miracle. I prefer customers who remain clear on the difference."
+              },
+              {
+                "speaker": "You",
+                "text": "Why call it Plot Armor?"
+              },
+              {
+                "speaker": "Vik Rao",
+                "text": "Because Unnecessarily Confident Vest was too accurate for Hugo’s ad copy."
+              }
+            ]
+          },
+          {
+            "id": "vik-rao-shoot",
+            "label": "Who actually saved the shoot?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "RealCameraMen says they saved the commercial."
+              },
+              {
+                "speaker": "Vik Rao",
+                "text": "They did. We lit it. Owen made the sound. Cleo directed it. Kwame kept everyone fed."
+              },
+              {
+                "speaker": "You",
+                "text": "That sounds like a team."
+              },
+              {
+                "speaker": "Vik Rao",
+                "text": "Please don’t say that too loudly. We have an entire promotional feud to maintain."
+              },
+              {
+                "speaker": "You",
+                "text": "What did you personally contribute?"
+              },
+              {
+                "speaker": "Vik Rao",
+                "text": "The adapter. History eventually returns to the adapter."
+              }
+            ]
+          }
+        ],
+        "farewell": "Check the case before you leave. The dramatic reveal should not be an empty compartment."
+      },
+      "provenance": "new_fiction"
+    },
+    {
+      "id": "marisol-vega",
+      "name": "Marisol Vega",
+      "age": 32,
+      "origin": "Ponce, Puerto Rico",
+      "role": "Wardrobe specialist",
+      "businessId": "hitman-gear",
+      "backstory": "Marisol learned alterations around family celebrations in Ponce and later worked on outfits meant to survive long evenings, quick changes, and people moving unpredictably. After arriving in the city she discovered that film wardrobe involves the same demands with more people using the word vision. She joined Vik because he would give a practical repair the same solemn attention as an expensive new purchase. She designs the shop’s fictional Plot Armor costume as a joke about confidence, never as protective equipment. Marisol wants repeat clients who return garments in one piece and tell her what actually happened on set. Her friendship with Beatrice is built on a shared refusal to let glamorous branding erase the people doing careful work behind it.",
+      "personality": "Direct, inventive, observant; laughs at grand poses while respecting real effort.",
+      "appearance": {
+        "shirt": "#99646d",
+        "skin": "#bf8a62",
+        "hair": "#352b26"
+      },
+      "placement": "interior",
+      "route": [
+        [
+          -44,
+          27
+        ]
+      ],
+      "dialogue": {
+        "greeting": "Turn around once before you tell me it fits. Confidence has hidden a lot of bad tailoring.",
+        "topics": [
+          {
+            "id": "marisol-vega-fit",
+            "label": "Can you make me look important?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Can this outfit make me look like I run things?"
+              },
+              {
+                "speaker": "Marisol Vega",
+                "text": "It can fit. The rest depends on whether you know where you’re going."
+              },
+              {
+                "speaker": "You",
+                "text": "Vik promised presence."
+              },
+              {
+                "speaker": "Marisol Vega",
+                "text": "Vik can create presence with a table lamp. I work with shoulders."
+              },
+              {
+                "speaker": "You",
+                "text": "Is that a yes?"
+              },
+              {
+                "speaker": "Marisol Vega",
+                "text": "It’s a yes to the fitting. Don’t embroider a promotion onto it."
+              }
+            ]
+          },
+          {
+            "id": "marisol-vega-armor",
+            "label": "Why does Plot Armor have a return date?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Why put a return date on Plot Armor?"
+              },
+              {
+                "speaker": "Marisol Vega",
+                "text": "Because every main character thinks the costume becomes theirs when the camera turns off."
+              },
+              {
+                "speaker": "You",
+                "text": "What if the plot needs it longer?"
+              },
+              {
+                "speaker": "Marisol Vega",
+                "text": "Then the plot can call before Friday."
+              },
+              {
+                "speaker": "You",
+                "text": "You’ve said that before."
+              },
+              {
+                "speaker": "Marisol Vega",
+                "text": "To a man wearing my jacket in an interview about his signature personal style."
+              }
+            ]
+          },
+          {
+            "id": "marisol-vega-baddies",
+            "label": "What did Beatrice order?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Beatrice says you understand her brand."
+              },
+              {
+                "speaker": "Marisol Vega",
+                "text": "She wanted a jacket she could dispatch in all day and still wear on camera."
+              },
+              {
+                "speaker": "You",
+                "text": "So you made it glamorous?"
+              },
+              {
+                "speaker": "Marisol Vega",
+                "text": "I gave it pockets where her hands actually go. Then we chose the color."
+              },
+              {
+                "speaker": "You",
+                "text": "That’s the secret?"
+              },
+              {
+                "speaker": "Marisol Vega",
+                "text": "The person has to live in the thing. The advertisement only borrows it."
+              }
+            ]
+          }
+        ],
+        "farewell": "Keep the garment bag. It has done nothing to deserve being abandoned."
+      },
+      "provenance": "new_fiction"
+    },
+    {
+      "id": "owen-price",
+      "name": "Owen Price",
+      "age": 42,
+      "origin": "Cardiff, Wales",
+      "role": "Sound and harmless-prop specialist",
+      "businessId": "hitman-gear",
+      "backstory": "Owen worked on small theatre and audio projects in Cardiff, where a carefully timed ordinary noise could persuade a room to imagine something enormous. He moved to the city with a collection of practical sound tricks and no desire to pretend the objects themselves were magical. At Hitman Gear he builds ominous effects from harmless household props, then spoils his own mystique by showing how mundane the setup looks. He and Vik enjoy the same joke from opposite ends: Vik builds tension, Owen reveals the biscuit tin. Owen wants a listening event where people judge a scene before seeing the equipment. He is quietly sensitive about credit because sound is often the first thing praised vaguely and the last contribution named correctly.",
+      "personality": "Dry, patient, mischievous; cares deeply about listening and accurate credits.",
+      "appearance": {
+        "shirt": "#627a6e",
+        "skin": "#cba487",
+        "hair": "#766657"
+      },
+      "placement": "door",
+      "route": [
+        [
+          -52,
+          10
+        ],
+        [
+          -44,
+          10
+        ]
+      ],
+      "dialogue": {
+        "greeting": "If you heard something expensive, it was probably an inexpensive object in the next room.",
+        "topics": [
+          {
+            "id": "owen-price-sound",
+            "label": "What made that dramatic noise?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "That sounded like a huge metal door."
+              },
+              {
+                "speaker": "Owen Price",
+                "text": "Biscuit tin. Slightly damaged. Very committed performance."
+              },
+              {
+                "speaker": "You",
+                "text": "Seriously?"
+              },
+              {
+                "speaker": "Owen Price",
+                "text": "The door you imagined had a larger budget than the door we could afford."
+              },
+              {
+                "speaker": "You",
+                "text": "Does telling me ruin it?"
+              },
+              {
+                "speaker": "Owen Price",
+                "text": "Only if you think imagination comes with a purchase receipt."
+              }
+            ]
+          },
+          {
+            "id": "owen-price-credit",
+            "label": "Who did the shoot?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Who did the shoot?"
+              },
+              {
+                "speaker": "Owen Price",
+                "text": "Several people. Who did the sound is a question I hear less often."
+              },
+              {
+                "speaker": "You",
+                "text": "You did the sound?"
+              },
+              {
+                "speaker": "Owen Price",
+                "text": "Yes. You noticed it, which means we are already having a very good day."
+              },
+              {
+                "speaker": "You",
+                "text": "What credit do you want?"
+              },
+              {
+                "speaker": "Owen Price",
+                "text": "My name in the right place. Not thanks to everyone, followed by four paragraphs about the lens."
+              }
+            ]
+          },
+          {
+            "id": "owen-price-quiet",
+            "label": "Why sell a Silence on Set badge?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Does that badge make people quiet?"
+              },
+              {
+                "speaker": "Owen Price",
+                "text": "No. It makes the moment they ignore you look official."
+              },
+              {
+                "speaker": "You",
+                "text": "Ever managed complete silence here?"
+              },
+              {
+                "speaker": "Owen Price",
+                "text": "Once. Mike paused before a speech and Mara’s kettle had finished."
+              },
+              {
+                "speaker": "You",
+                "text": "How long did it last?"
+              },
+              {
+                "speaker": "Owen Price",
+                "text": "Long enough for Hugo to ask whether silence had a sponsor."
+              }
+            ]
+          }
+        ],
+        "farewell": "Listen to the street on your way out. It has a more honest soundtrack than the ads."
+      },
+      "provenance": "new_fiction"
+    },
+    {
+      "id": "zofia-nowak",
+      "name": "Zofia Nowak",
+      "age": 41,
+      "origin": "Łódź, Poland",
+      "role": "Camera lead and hot-take performer",
+      "businessId": "real-camera-men",
+      "backstory": "Zofia trained on practical camera work in Łódź and spent enough productions solving mundane problems to distrust equipment worship. Her RealCameraMen persona deliberately says the opposite with a straight face: a lens becomes a moral position, a memory card becomes a test of character, and a battery failure becomes artistic intent. Off camera she recommends what fits the job and budget. She wants the joke to reward people who recognize the contradiction rather than mislead newcomers. Cleo can tell when a monologue needs cutting. Kwame can tell when another unpaid take is eating the lunch break. Zofia’s ongoing irritation is a client crediting whoever happened to stand nearest the camera.",
+      "personality": "Deadpan, capable, skeptical of gear status; sharply separates her comic persona from practical advice.",
+      "appearance": {
+        "shirt": "#4f777a",
+        "skin": "#d8b293",
+        "hair": "#6c5545"
+      },
+      "placement": "interior",
+      "route": [
+        [
+          -21,
+          25
+        ]
+      ],
+      "dialogue": {
+        "greeting": "Before I judge your lens as a joke, tell me what you actually need to film.",
+        "topics": [
+          {
+            "id": "zofia-nowak-hot-take",
+            "label": "Give me a RealCameraMen rule.",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "What is today’s equipment rule?"
+              },
+              {
+                "speaker": "Zofia Nowak",
+                "text": "RealCameraMen never change batteries. We wait until the camera respects the schedule."
+              },
+              {
+                "speaker": "You",
+                "text": "That sounds impossible."
+              },
+              {
+                "speaker": "Zofia Nowak",
+                "text": "Good. You have identified the comic persona."
+              },
+              {
+                "speaker": "You",
+                "text": "What is the actual advice?"
+              },
+              {
+                "speaker": "Zofia Nowak",
+                "text": "Charge the batteries and label them. It works beautifully and ruins the monologue."
+              }
+            ]
+          },
+          {
+            "id": "zofia-nowak-lens",
+            "label": "Is the expensive lens always better?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Will a more expensive lens fix my scene?"
+              },
+              {
+                "speaker": "Zofia Nowak",
+                "text": "In the advertisement, yes. It will also repair your childhood and negotiate the invoice."
+              },
+              {
+                "speaker": "You",
+                "text": "And at this counter?"
+              },
+              {
+                "speaker": "Zofia Nowak",
+                "text": "Tell me about the light, the space, and the shot. Then we can stop shopping at your anxiety."
+              },
+              {
+                "speaker": "You",
+                "text": "You sound reasonable now."
+              },
+              {
+                "speaker": "Zofia Nowak",
+                "text": "Keep it down. We have a reputation for unreasonable confidence."
+              }
+            ]
+          },
+          {
+            "id": "zofia-nowak-credit",
+            "label": "Who gets credit for the image?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Who did the shoot?"
+              },
+              {
+                "speaker": "Zofia Nowak",
+                "text": "Cleo directed, I operated, Vik lit, Owen recorded, and Kwame kept it happening."
+              },
+              {
+                "speaker": "You",
+                "text": "The client thanked the camera brand."
+              },
+              {
+                "speaker": "Zofia Nowak",
+                "text": "The camera brand did not carry the cases down the stairs."
+              },
+              {
+                "speaker": "You",
+                "text": "What do you want instead?"
+              },
+              {
+                "speaker": "Zofia Nowak",
+                "text": "An accurate credit and a paid invoice. My demands become less mysterious when written down."
+              }
+            ]
+          }
+        ],
+        "farewell": "Make the picture you need. The loudest equipment opinion is rarely in it."
+      },
+      "provenance": "new_fiction"
+    },
+    {
+      "id": "cleo-baptiste",
+      "name": "Cleo Baptiste",
+      "age": 33,
+      "origin": "Port of Spain, Trinidad and Tobago",
+      "role": "Director and commercial performer",
+      "businessId": "real-camera-men",
+      "backstory": "Cleo began directing short local performances in Port of Spain and became interested in the difference between a person being funny and a camera allowing the joke to land. She moved to the city for production work and found an entire commercial block that behaved like a cast. At RealCameraMen she shapes Zofia’s stern equipment rants and helps small shops turn vague ambitions into shootable scenes. She loves surprise when it reveals character and hates surprise when it means a client secretly changed the job. Mara’s tea commercial and Mike’s campaign give her recurring exercises in controlling tone without sanding off personality. Her private ambition is a quiet scene between ordinary people; everyone currently hiring her wants a bigger explosion of attention.",
+      "personality": "Playful, perceptive, decisive; notices pauses, interruptions, and the moment a performance becomes honest.",
+      "appearance": {
+        "shirt": "#e6aa71",
+        "skin": "#986b4b",
+        "hair": "#282021"
+      },
+      "placement": "interior",
+      "route": [
+        [
+          -12,
+          27
+        ]
+      ],
+      "dialogue": {
+        "greeting": "You have an idea. Good. Tell me what happens in the scene before you tell me it should feel expensive.",
+        "topics": [
+          {
+            "id": "cleo-baptiste-tea-ad",
+            "label": "Why is the tea commercial so funny?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Why does Mara’s guarantee land every time?"
+              },
+              {
+                "speaker": "Cleo Baptiste",
+                "text": "Because she sounds like she means the nice part right up until the other part arrives."
+              },
+              {
+                "speaker": "You",
+                "text": "So you make it louder?"
+              },
+              {
+                "speaker": "Cleo Baptiste",
+                "text": "Sometimes I make it quieter. A pause lets the audience do some work."
+              },
+              {
+                "speaker": "You",
+                "text": "Mara says the zoom was an accident."
+              },
+              {
+                "speaker": "Cleo Baptiste",
+                "text": "It was. Keeping it was a decision. Both can be true."
+              }
+            ]
+          },
+          {
+            "id": "cleo-baptiste-campaign-shoot",
+            "label": "How is Mike’s campaign shoot going?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Can you make Mike look sincere?"
+              },
+              {
+                "speaker": "Cleo Baptiste",
+                "text": "I can film him listening. First we have to convince him listening is a visible action."
+              },
+              {
+                "speaker": "You",
+                "text": "What does he want?"
+              },
+              {
+                "speaker": "Cleo Baptiste",
+                "text": "A heroic walk, a firm stance, and a long statement. You see my problem."
+              },
+              {
+                "speaker": "You",
+                "text": "What would you shoot instead?"
+              },
+              {
+                "speaker": "Cleo Baptiste",
+                "text": "Ada hands him the notebook. He reads one request. Then he does it."
+              }
+            ]
+          },
+          {
+            "id": "cleo-baptiste-quiet-scene",
+            "label": "What would you make for yourself?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "What if nobody bought an ad for a day?"
+              },
+              {
+                "speaker": "Cleo Baptiste",
+                "text": "I’d film two people waiting for a repaired vehicle, slowly deciding to trust each other."
+              },
+              {
+                "speaker": "You",
+                "text": "No slogan?"
+              },
+              {
+                "speaker": "Cleo Baptiste",
+                "text": "No slogan. A situation. The funny part can arrive because somebody is nervous."
+              },
+              {
+                "speaker": "You",
+                "text": "Sounds like the garage."
+              },
+              {
+                "speaker": "Cleo Baptiste",
+                "text": "Exactly. That place already has a story. It doesn’t need me to shout over it."
+              }
+            ]
+          }
+        ],
+        "farewell": "Come back with a situation. We can find the scene inside it."
+      },
+      "provenance": "new_fiction"
+    },
+    {
+      "id": "kwame-addo",
+      "name": "Kwame Addo",
+      "age": 28,
+      "origin": "Kumasi, Ghana",
+      "role": "Producer and deposit negotiator",
+      "businessId": "real-camera-men",
+      "backstory": "Kwame organized small events in Kumasi before moving into production coordination. In the city he discovered that people who can describe a twelve-part cinematic universe sometimes struggle to name the person approving a thirty-second advertisement. He joined RealCameraMen to keep creative ideas attached to dates, meals, and agreements. He enjoys the absurdity and has his own running joke about the different denominations of exposure clients offer as payment. Still, he wants work to finish with relationships intact. His current problem is a promotional van booking that sounds suspiciously like Nadia’s and Amina’s bookings. He hopes to solve it through one shared description rather than another energetic phone call. He is saving time for a small film that does not expand every time somebody says one more thing.",
+      "personality": "Organized, sociable, wry; protects time and collaboration without treating imagination as the enemy.",
+      "appearance": {
+        "shirt": "#527b6d",
+        "skin": "#7e543a",
+        "hair": "#28221e"
+      },
+      "placement": "door",
+      "route": [
+        [
+          -20,
+          10
+        ],
+        [
+          -12,
+          10
+        ]
+      ],
+      "dialogue": {
+        "greeting": "Before we discuss the cinematic universe, who approves the invoice?",
+        "topics": [
+          {
+            "id": "kwame-addo-deposit",
+            "label": "Why does everyone mention deposits?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "The client says the deposit is absurd."
+              },
+              {
+                "speaker": "Kwame Addo",
+                "text": "The client requested three locations, two nights, and payment in future opportunities."
+              },
+              {
+                "speaker": "You",
+                "text": "How much is an opportunity worth?"
+              },
+              {
+                "speaker": "Kwame Addo",
+                "text": "Try feeding a crew with one. Tell me which aisle stocks them."
+              },
+              {
+                "speaker": "You",
+                "text": "Could you make the job smaller?"
+              },
+              {
+                "speaker": "Kwame Addo",
+                "text": "Yes. That’s a useful conversation. Free and unlimited is not a smaller job."
+              }
+            ]
+          },
+          {
+            "id": "kwame-addo-one-more",
+            "label": "Why does a small ad take so long?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "It’s only a thirty-second ad."
+              },
+              {
+                "speaker": "Kwame Addo",
+                "text": "Correct. Now count the twelve things somebody wants to happen inside it."
+              },
+              {
+                "speaker": "You",
+                "text": "You can cut a few."
+              },
+              {
+                "speaker": "Kwame Addo",
+                "text": "I did. They called back with a prequel."
+              },
+              {
+                "speaker": "You",
+                "text": "What did you say?"
+              },
+              {
+                "speaker": "Kwame Addo",
+                "text": "Finish the tea commercial. Then earn the right to build the tea cinematic universe."
+              }
+            ]
+          },
+          {
+            "id": "kwame-addo-van-booking",
+            "label": "Which van did you book?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Did you book the same van as Hordash?"
+              },
+              {
+                "speaker": "Kwame Addo",
+                "text": "I booked a vehicle for a promo about a booking. Nadia booked a promo vehicle for a shift."
+              },
+              {
+                "speaker": "You",
+                "text": "You two should talk."
+              },
+              {
+                "speaker": "Kwame Addo",
+                "text": "We should talk while looking at the same sentence. That is the crucial improvement."
+              },
+              {
+                "speaker": "You",
+                "text": "Who has the keys?"
+              },
+              {
+                "speaker": "Kwame Addo",
+                "text": "Beatrice. Notice how the person with the keys has made the fewest promises."
+              }
+            ]
+          }
+        ],
+        "farewell": "Send a clear brief. It is the cheapest special effect we have."
+      },
+      "provenance": "new_fiction"
+    },
+    {
+      "id": "darnell-brooks",
+      "name": "Darnell Brooks",
+      "age": 36,
+      "origin": "Baltimore, USA",
+      "role": "Entertainment anchor and neighborhood interviewer",
+      "businessId": "pressure-tv",
+      "backstory": "Darnell first hosted small events in Baltimore and found that he could make a room care about a person simply by giving the introduction his full attention. In the city that gift became PressureTV’s comically oversized sense of urgency. A delayed delivery becomes a developing situation; a disagreement over a kettle becomes a special report. He knows he is performing, but the neighbors sometimes hear only the alarming headline. Priya keeps him attached to what actually happened, and Hugo keeps trying to turn his pauses into sponsorship slots. Darnell wants one long interview where someone finishes a difficult story without interruption. Tasha might be that guest, if he can persuade the studio that listening has entertainment value too.",
+      "personality": "Expressive, curious, easily carried away by presentation; capable of becoming a thoughtful listener.",
+      "appearance": {
+        "shirt": "#6c4d85",
+        "skin": "#81563d",
+        "hair": "#2d2725"
+      },
+      "placement": "interior",
+      "route": [
+        [
+          11,
+          25
+        ]
+      ],
+      "dialogue": {
+        "greeting": "We are following a developing conversation. You appear to be the source.",
+        "topics": [
+          {
+            "id": "darnell-brooks-breaking",
+            "label": "What is breaking today?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "What’s the big story?"
+              },
+              {
+                "speaker": "Darnell Brooks",
+                "text": "A kettle has stopped working at a location we can currently confirm is across the street."
+              },
+              {
+                "speaker": "You",
+                "text": "Is anyone investigating?"
+              },
+              {
+                "speaker": "Darnell Brooks",
+                "text": "Priya asked whether it was plugged in. We are awaiting a dramatic answer."
+              },
+              {
+                "speaker": "You",
+                "text": "Was it?"
+              },
+              {
+                "speaker": "Darnell Brooks",
+                "text": "No. An ordinary resolution has struck this developing situation."
+              }
+            ]
+          },
+          {
+            "id": "darnell-brooks-interview",
+            "label": "Who do you want to interview?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Who would you give the whole programme to?"
+              },
+              {
+                "speaker": "Darnell Brooks",
+                "text": "Tasha. She has stories about working this block that don’t need my voice over them."
+              },
+              {
+                "speaker": "You",
+                "text": "Could you stay quiet that long?"
+              },
+              {
+                "speaker": "Darnell Brooks",
+                "text": "That is an unkind but relevant production question."
+              },
+              {
+                "speaker": "You",
+                "text": "What would you ask first?"
+              },
+              {
+                "speaker": "Darnell Brooks",
+                "text": "What do people assume before they let you speak? Then I’d try not to demonstrate the problem."
+              }
+            ]
+          },
+          {
+            "id": "darnell-brooks-size",
+            "label": "Do you make everything too big?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "This block is smaller than your headlines."
+              },
+              {
+                "speaker": "Darnell Brooks",
+                "text": "A small event can matter very much to the person inside it."
+              },
+              {
+                "speaker": "You",
+                "text": "That’s a good answer. What about the ominous music?"
+              },
+              {
+                "speaker": "Darnell Brooks",
+                "text": "Owen gave me a biscuit-tin sound and I exercised insufficient restraint."
+              },
+              {
+                "speaker": "You",
+                "text": "Can you report something quietly?"
+              },
+              {
+                "speaker": "Darnell Brooks",
+                "text": "Yes. But you will have to lean in. That might be an improvement."
+              }
+            ]
+          }
+        ],
+        "farewell": "Stay with the story. You are allowed to turn down the volume."
+      },
+      "provenance": "new_fiction"
+    },
+    {
+      "id": "priya-nair",
+      "name": "Priya Nair",
+      "age": 29,
+      "origin": "Kochi, India",
+      "role": "Producer and corrections editor",
+      "businessId": "pressure-tv",
+      "backstory": "Priya worked on modest media projects in Kochi where the person making the schedule also had to check the names, dates, and final edit. She brought that habit to the city’s PressureTV studio. She likes entertainment and thinks accuracy makes a joke sharper because the audience knows where the exaggeration begins. Her desk holds a corrections board that she refuses to hide behind Hugo’s advertising easel. She makes room for Diamond Girls Radio’s Nigeria/Ghana-focused programming without letting Hugo improvise facts about its guests. The PRIM3.exe notes remain on her desk because she would rather leave a slot open than announce a programme nobody can describe. Priya wants the studio to publish one correction as visibly as it published the mistake. Darnell understands why; Hugo worries about the available wall space.",
+      "personality": "Clear, dry, curious; insists that getting the small facts right is part of respecting the audience.",
+      "appearance": {
+        "shirt": "#657887",
+        "skin": "#b17b53",
+        "hair": "#292529"
+      },
+      "placement": "interior",
+      "route": [
+        [
+          20,
+          27
+        ]
+      ],
+      "dialogue": {
+        "greeting": "If you heard it in the headline, I may have a slightly more accurate sentence for you.",
+        "topics": [
+          {
+            "id": "priya-nair-correction",
+            "label": "What are you correcting?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Why is the correction board bigger than the headline board?"
+              },
+              {
+                "speaker": "Priya Nair",
+                "text": "Because the correction has to hold the context the headline left out."
+              },
+              {
+                "speaker": "You",
+                "text": "Does Darnell mind?"
+              },
+              {
+                "speaker": "Priya Nair",
+                "text": "He minds when I interrupt his dramatic pause with the correct street number."
+              },
+              {
+                "speaker": "You",
+                "text": "Do you wait?"
+              },
+              {
+                "speaker": "Priya Nair",
+                "text": "No. Suspense is useful. Sending somebody to the wrong building is less useful."
+              }
+            ]
+          },
+          {
+            "id": "priya-nair-radio",
+            "label": "What is Diamond Girls Radio?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "What’s Diamond Girls Radio on the programme board?"
+              },
+              {
+                "speaker": "Priya Nair",
+                "text": "Nigeria and Ghana-focused programming under the Diamond Girls x McCluster Network."
+              },
+              {
+                "speaker": "You",
+                "text": "So every person in this studio comes from those places?"
+              },
+              {
+                "speaker": "Priya Nair",
+                "text": "No. Programming geography is not an employee biography. I’m from Kochi."
+              },
+              {
+                "speaker": "You",
+                "text": "And PRIM3.exe?"
+              },
+              {
+                "speaker": "Priya Nair",
+                "text": "A name in the notes while its relationship gets sorted. I don’t make a schedule out of an assumption."
+              }
+            ]
+          },
+          {
+            "id": "priya-nair-sponsors",
+            "label": "Can a sponsor buy the story?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Hugo says everybody gets exclusive treatment."
+              },
+              {
+                "speaker": "Priya Nair",
+                "text": "Hugo sells attention. I still ask what actually happened."
+              },
+              {
+                "speaker": "You",
+                "text": "Does that create arguments?"
+              },
+              {
+                "speaker": "Priya Nair",
+                "text": "Only on days when we are open."
+              },
+              {
+                "speaker": "You",
+                "text": "Why stay here?"
+              },
+              {
+                "speaker": "Priya Nair",
+                "text": "Because Darnell can make people care, and I can help him care about the right detail."
+              }
+            ]
+          }
+        ],
+        "farewell": "Bring a detail you can explain. We can build a better story around it."
+      },
+      "provenance": "new_fiction"
+    },
+    {
+      "id": "hugo-soto",
+      "name": "Hugo Soto",
+      "age": 44,
+      "origin": "Montevideo, Uruguay",
+      "role": "Advertising sales and promotions",
+      "businessId": "pressure-tv",
+      "backstory": "Hugo sold event advertising in Montevideo and developed a talent for making small budgets feel capable of enormous ambitions. In the city he knows every shopkeeper, remembers their preferred pitch, and occasionally promises overlapping forms of exclusivity. He is more hopeful than malicious: each conversation feels like a chance to make the whole block succeed, and the conflict arrives when the promises meet. Priya makes him specify what a sponsor actually receives. Darnell supplies a voice grand enough for his most optimistic copy. Hugo wants one district-wide commercial package that everyone understands and still wants to buy. To get there he has to admit that a genuine shared opportunity may be less flattering than telling eight businesses they each own the entire street.",
+      "personality": "Effusive, inventive, persuasive; often outpaces his own ability to deliver.",
+      "appearance": {
+        "shirt": "#aa7963",
+        "skin": "#ba8b6c",
+        "hair": "#51463d"
+      },
+      "placement": "door",
+      "route": [
+        [
+          12,
+          10
+        ],
+        [
+          20,
+          10
+        ]
+      ],
+      "dialogue": {
+        "greeting": "I can already see your campaign. First, tell me whether you have a campaign budget.",
+        "topics": [
+          {
+            "id": "hugo-soto-exclusive",
+            "label": "Who has the exclusive sponsorship?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Mara says she has exclusive sponsorship. So does Mike."
+              },
+              {
+                "speaker": "Hugo Soto",
+                "text": "Mara has exclusive refreshment confidence. Mike has exclusive civic firmness."
+              },
+              {
+                "speaker": "You",
+                "text": "You invented those categories just now."
+              },
+              {
+                "speaker": "Hugo Soto",
+                "text": "I clarified them just now. That is an important emotional difference."
+              },
+              {
+                "speaker": "You",
+                "text": "Will they agree?"
+              },
+              {
+                "speaker": "Hugo Soto",
+                "text": "Priya says I should ask before printing anything else. I’m trying this new sequence."
+              }
+            ]
+          },
+          {
+            "id": "hugo-soto-exposure",
+            "label": "Can I pay you in exposure?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Can I pay for advertising with exposure?"
+              },
+              {
+                "speaker": "Hugo Soto",
+                "text": "A cruel question to ask a man standing beside an unpaid lighting invoice."
+              },
+              {
+                "speaker": "You",
+                "text": "You offered that to Tasha."
+              },
+              {
+                "speaker": "Hugo Soto",
+                "text": "I offered an opportunity. She requested a number. Fairly, I now admit."
+              },
+              {
+                "speaker": "You",
+                "text": "So what will you pay?"
+              },
+              {
+                "speaker": "Hugo Soto",
+                "text": "We are having an actual budget conversation. It has fewer sparkles and better outcomes."
+              }
+            ]
+          },
+          {
+            "id": "hugo-soto-honest-ad",
+            "label": "Could you write an honest ad?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Sell the whole block without promising the moon."
+              },
+              {
+                "speaker": "Hugo Soto",
+                "text": "Eight unusual businesses. Real personalities. Something entertaining around every corner."
+              },
+              {
+                "speaker": "You",
+                "text": "That’s good. Stop there."
+              },
+              {
+                "speaker": "Hugo Soto",
+                "text": "And the most unprecedented—"
+              },
+              {
+                "speaker": "You",
+                "text": "Hugo."
+              },
+              {
+                "speaker": "Hugo Soto",
+                "text": "Fine. I’ll leave room for the place to surprise you. Priya will be unbearable about this."
+              }
+            ]
+          }
+        ],
+        "farewell": "Think about it. I will try to let you finish thinking before the follow-up."
+      },
+      "provenance": "new_fiction"
+    },
+    {
+      "id": "amina-noor",
+      "name": "Amina Noor",
+      "age": 40,
+      "origin": "Mombasa, Kenya",
+      "role": "Driver-owner and vehicle-media host",
+      "businessId": "baddies-on-wheels",
+      "backstory": "Amina worked around passenger transport in Mombasa and learned that a good driver’s reputation depends on the ordinary things people notice only when they fail. She moved to the city with an interest in vehicle media and a dislike of advertising that makes responsibility look dull. Baddies on Wheels gave her room for both a polished entrance and a carefully kept schedule. She hosts the promotional pieces but does not expect a camera to excuse arriving late. Tomas handles practical vehicle preparation; Beatrice controls the bookings with a memory that humbles everybody else’s app. Amina wants their next film to show the work behind the image without losing the enjoyment. The mistaken van booking tests whether she can protect the business while staying friendly with the neighbors who helped build it.",
+      "personality": "Confident, attentive, stylish, and unwilling to confuse spectacle with dependable service.",
+      "appearance": {
+        "shirt": "#a44570",
+        "skin": "#875a3e",
+        "hair": "#282321"
+      },
+      "placement": "interior",
+      "route": [
+        [
+          43,
+          25
+        ]
+      ],
+      "dialogue": {
+        "greeting": "A good entrance starts with actually arriving. You would be surprised how many ads skip that part.",
+        "topics": [
+          {
+            "id": "amina-noor-brand",
+            "label": "What makes the ride special?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "What does Baddies on Wheels promise?"
+              },
+              {
+                "speaker": "Amina Noor",
+                "text": "Presence, personality, and somebody who remembers where you’re going."
+              },
+              {
+                "speaker": "You",
+                "text": "Which part looks best on camera?"
+              },
+              {
+                "speaker": "Amina Noor",
+                "text": "The arrival. Which is why Tomas and Beatrice deserve more screen time."
+              },
+              {
+                "speaker": "You",
+                "text": "You want to film dispatch?"
+              },
+              {
+                "speaker": "Amina Noor",
+                "text": "Watch Beatrice solve a bad booking in thirty seconds. That woman has action scenes."
+              }
+            ]
+          },
+          {
+            "id": "amina-noor-van",
+            "label": "Who gets the promotional van?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Nadia and Kwame both think they booked your van."
+              },
+              {
+                "speaker": "Amina Noor",
+                "text": "Then we have one vehicle and two descriptions that need improvement."
+              },
+              {
+                "speaker": "You",
+                "text": "Could you just give it to the first person?"
+              },
+              {
+                "speaker": "Amina Noor",
+                "text": "I could. Or I could find out whether the times actually conflict."
+              },
+              {
+                "speaker": "You",
+                "text": "That sounds less dramatic."
+              },
+              {
+                "speaker": "Amina Noor",
+                "text": "Good. Save the drama for the commercial. A useful answer is allowed to be quiet."
+              }
+            ]
+          },
+          {
+            "id": "amina-noor-garage",
+            "label": "How do you know the Whip garage?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Why send people to the garage?"
+              },
+              {
+                "speaker": "Amina Noor",
+                "text": "Because a vehicle can look perfect on a screen and still need someone to listen to it."
+              },
+              {
+                "speaker": "You",
+                "text": "You trust the people there?"
+              },
+              {
+                "speaker": "Amina Noor",
+                "text": "I trust a clear agreement and work someone will stand behind. That is how we build a relationship."
+              },
+              {
+                "speaker": "You",
+                "text": "Is your pass an actual booking?"
+              },
+              {
+                "speaker": "Amina Noor",
+                "text": "It’s a souvenir. Beatrice would never let a shiny card pretend it knew her schedule."
+              }
+            ]
+          }
+        ],
+        "farewell": "Enjoy the entrance. Remember the people who made it possible."
+      },
+      "provenance": "new_fiction"
+    },
+    {
+      "id": "tomas-silva",
+      "name": "Tomas Silva",
+      "age": 27,
+      "origin": "Porto, Portugal",
+      "role": "Vehicle technician and shoot-prep coordinator",
+      "businessId": "baddies-on-wheels",
+      "backstory": "Tomas learned practical vehicle work in Porto and found satisfaction in problems that stopped being mysterious after someone paid close attention. In the city he prepares Baddies on Wheels’ working vehicles for their second life as media subjects. That means fitting a polished shoot into the same schedule as inspections, cleaning, and ordinary repairs. He likes the cameras when they show a finished job and dislikes requests to conceal a problem because it is out of frame. Leo at the shoe exchange understands the same argument on a smaller scale. Tomas wants to produce a short maintenance feature with Amina that is useful enough to keep and funny enough to finish watching. His immediate wish is more modest: a booking description that leaves time for the vehicle to return before the next shoot begins.",
+      "personality": "Methodical, easygoing, quietly proud; respects maintenance more than magical fixes.",
+      "appearance": {
+        "shirt": "#4f7e81",
+        "skin": "#bd9171",
+        "hair": "#4a352a"
+      },
+      "placement": "interior",
+      "route": [
+        [
+          52,
+          27
+        ]
+      ],
+      "dialogue": {
+        "greeting": "If the request begins with just a quick shot, show me the schedule before the camera.",
+        "topics": [
+          {
+            "id": "tomas-silva-camera",
+            "label": "Why are you arguing with a camera crew?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "The camera only sees the left side. Why fix the other one?"
+              },
+              {
+                "speaker": "Tomas Silva",
+                "text": "Because the vehicle has to drive away with both sides afterward."
+              },
+              {
+                "speaker": "You",
+                "text": "That was the producer’s question."
+              },
+              {
+                "speaker": "Tomas Silva",
+                "text": "Then send the producer this answer. I can wait while you put it in a dramatic font."
+              },
+              {
+                "speaker": "You",
+                "text": "Does Amina back you up?"
+              },
+              {
+                "speaker": "Tomas Silva",
+                "text": "Yes. Her entrance still has to get home."
+              }
+            ]
+          },
+          {
+            "id": "tomas-silva-leo",
+            "label": "What do you and Leo talk about?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "You and Leo keep talking about drying time."
+              },
+              {
+                "speaker": "Tomas Silva",
+                "text": "He repairs shoes. I prepare vehicles. We both meet people who think urgency changes materials."
+              },
+              {
+                "speaker": "You",
+                "text": "Doesn’t a bigger budget help?"
+              },
+              {
+                "speaker": "Tomas Silva",
+                "text": "It can buy a better plan. It cannot buy yesterday."
+              },
+              {
+                "speaker": "You",
+                "text": "You should put that on a shirt."
+              },
+              {
+                "speaker": "Tomas Silva",
+                "text": "Hugo already offered. He asked whether I could have it printed yesterday."
+              }
+            ]
+          },
+          {
+            "id": "tomas-silva-maintenance-show",
+            "label": "What would your own show be?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Would you host a maintenance segment?"
+              },
+              {
+                "speaker": "Tomas Silva",
+                "text": "With Amina, yes. Show the real problem, the useful check, and when to get proper help."
+              },
+              {
+                "speaker": "You",
+                "text": "What is the joke?"
+              },
+              {
+                "speaker": "Tomas Silva",
+                "text": "Everybody expects the camera to reveal a glamorous secret. Sometimes the secret is somebody remembered the appointment."
+              },
+              {
+                "speaker": "You",
+                "text": "Will people watch?"
+              },
+              {
+                "speaker": "Tomas Silva",
+                "text": "Leo says they will if we let them see a thing get better."
+              }
+            ]
+          }
+        ],
+        "farewell": "Leave time for the return trip. The schedule also has to come home."
+      },
+      "provenance": "new_fiction"
+    },
+    {
+      "id": "beatrice-cole",
+      "name": "Beatrice Cole",
+      "age": 58,
+      "origin": "Bridgeport, USA",
+      "role": "Dispatcher and keeper of the keys",
+      "businessId": "baddies-on-wheels",
+      "backstory": "Beatrice spent years coordinating work and family trips around Bridgeport before taking a dispatch role in the fictional neighboring city. She remembers a booking because she listens to why it matters, and she remembers an unpaid favor because the person tends to ask again. The Baddies on Wheels name amuses her; she sees no age limit on arriving with style. She is the business’s calm center and occasionally its funniest person, although the younger staff are still learning when she is winding them up. Marisol makes her clothes that work through a whole shift. Amina trusts her to say no when the schedule requires it. Beatrice wants the next promotional film to show her as part of the brand rather than someone moving out of the frame before the glamorous people arrive.",
+      "personality": "Unhurried, formidable, warm; carries exact memories without making every favor a debt.",
+      "appearance": {
+        "shirt": "#ae687e",
+        "skin": "#986e52",
+        "hair": "#a49a90"
+      },
+      "placement": "door",
+      "route": [
+        [
+          44,
+          10
+        ],
+        [
+          52,
+          10
+        ]
+      ],
+      "dialogue": {
+        "greeting": "Yes, I have the keys. No, confidence is not a booking reference.",
+        "topics": [
+          {
+            "id": "beatrice-cole-keys",
+            "label": "How do you keep this straight?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Three businesses want the same van."
+              },
+              {
+                "speaker": "Beatrice Cole",
+                "text": "Then three businesses can tell me a time, a destination, and what goes inside it."
+              },
+              {
+                "speaker": "You",
+                "text": "They sent dramatic descriptions."
+              },
+              {
+                "speaker": "Beatrice Cole",
+                "text": "Lovely. I’ll put those in the dramatic-description drawer, which is also the bin."
+              },
+              {
+                "speaker": "You",
+                "text": "You sound very calm."
+              },
+              {
+                "speaker": "Beatrice Cole",
+                "text": "The keys do not get more available when I panic."
+              }
+            ]
+          },
+          {
+            "id": "beatrice-cole-baddie",
+            "label": "You are in the promo too?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "You’re going to be in the next Baddies shoot?"
+              },
+              {
+                "speaker": "Beatrice Cole",
+                "text": "Was there an age limit on arriving properly dressed that somebody forgot to send me?"
+              },
+              {
+                "speaker": "You",
+                "text": "No, I meant—"
+              },
+              {
+                "speaker": "Beatrice Cole",
+                "text": "I know what you meant. Marisol made the jacket. You can survive the reveal."
+              },
+              {
+                "speaker": "You",
+                "text": "What is your scene?"
+              },
+              {
+                "speaker": "Beatrice Cole",
+                "text": "I open the door, look excellent, and ask whether everybody signed the vehicle back in."
+              }
+            ]
+          },
+          {
+            "id": "beatrice-cole-favor",
+            "label": "Do you remember every favor?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "People say you remember everything."
+              },
+              {
+                "speaker": "Beatrice Cole",
+                "text": "Only the important parts. Who needed help, who turned up, and who called being late a personal brand."
+              },
+              {
+                "speaker": "You",
+                "text": "Do you hold it against them?"
+              },
+              {
+                "speaker": "Beatrice Cole",
+                "text": "Not forever. I like giving people a chance to become easier to rely on."
+              },
+              {
+                "speaker": "You",
+                "text": "And if they don’t?"
+              },
+              {
+                "speaker": "Beatrice Cole",
+                "text": "They can enjoy a very clear answer the next time they ask for the keys."
+              }
+            ]
+          }
+        ],
+        "farewell": "Get where you’re going. Let somebody know when you arrive."
+      },
+      "provenance": "new_fiction"
+    }
+  ],
+  "items": [
+    {
+      "id": "tea-guarantee-cup",
+      "businessId": "gauranfucking-tea",
+      "name": "Guaranteed Tea Cup",
+      "description": "A virtual tea collectible with the whole guarantee printed much too small. Inventory keepsake; no timed buff.",
+      "price": 12,
+      "kind": "virtual_collectible"
+    },
+    {
+      "id": "tea-vhs-sticker",
+      "businessId": "gauranfucking-tea",
+      "name": "Tracking Error Sticker",
+      "description": "A fictional VHS-style tea sticker for the inventory collection.",
+      "price": 7,
+      "kind": "virtual_collectible"
+    },
+    {
+      "id": "tea-guarantee-shirt",
+      "businessId": "gauranfucking-tea",
+      "name": "Or Else Shirt",
+      "description": "A virtual shirt collectible quoting the shop’s aggressive guarantee; wardrobe application is not implied.",
+      "price": 28,
+      "kind": "virtual_cosmetic"
+    },
+    {
+      "id": "hordash-reassigned-shirt",
+      "businessId": "hordash",
+      "name": "Reassigned Shirt",
+      "description": "A virtual merchandise shirt that says YOUR EVENING HAS BEEN REASSIGNED.",
+      "price": 26,
+      "kind": "virtual_cosmetic"
+    },
+    {
+      "id": "hordash-eta-sticker",
+      "businessId": "hordash",
+      "name": "Emotionally Five Minutes Away",
+      "description": "A virtual ETA joke sticker. It books nothing and nobody.",
+      "price": 8,
+      "kind": "virtual_collectible"
+    },
+    {
+      "id": "hordash-prop-bag",
+      "businessId": "hordash",
+      "name": "Premium Misunderstanding Bag",
+      "description": "An empty fictional delivery-bag prop collectible with an oversized service-fee label.",
+      "price": 21,
+      "kind": "virtual_prop"
+    },
+    {
+      "id": "hawk-commitment-pin",
+      "businessId": "mike-hawk",
+      "name": "Long Commitment Pin",
+      "description": "A fictional campaign souvenir. It is a virtual item, not a political contribution.",
+      "price": 9,
+      "kind": "virtual_collectible"
+    },
+    {
+      "id": "hawk-hard-topics-shirt",
+      "businessId": "mike-hawk",
+      "name": "Hard Topics Shirt",
+      "description": "A virtual campaign shirt collectible reading LONG ON COMMITMENT. HARD ON EXCUSES.",
+      "price": 25,
+      "kind": "virtual_cosmetic"
+    },
+    {
+      "id": "hawk-policy-poster",
+      "businessId": "mike-hawk",
+      "name": "Please Read Page Two",
+      "description": "A fictional civic-poster collectible with Noah’s unusually detailed pothole notes.",
+      "price": 14,
+      "kind": "virtual_collectible"
+    },
+    {
+      "id": "robbery-replica-pair",
+      "businessId": "robbery-1s",
+      "name": "Clearly Labeled Replica 1s",
+      "description": "A virtual replica-shoe collectible. It is not the original cursed pair and adds no wearer to the story.",
+      "price": 65,
+      "kind": "virtual_cosmetic"
+    },
+    {
+      "id": "robbery-second-chance-laces",
+      "businessId": "robbery-1s",
+      "name": "Second Chance Laces",
+      "description": "A virtual lace collectible celebrating repairs; no supernatural protection or gameplay buff.",
+      "price": 13,
+      "kind": "virtual_collectible"
+    },
+    {
+      "id": "robbery-rumor-zine",
+      "businessId": "robbery-1s",
+      "name": "Unconfirmed, Issue One",
+      "description": "Samira’s fictional zine collectible about why a good story still needs a source.",
+      "price": 17,
+      "kind": "virtual_collectible"
+    },
+    {
+      "id": "hitman-plot-armor-vest",
+      "businessId": "hitman-gear",
+      "name": "Plot Armor Vest",
+      "description": "A virtual costume-vest collectible with no protection statistics or real protective claim.",
+      "price": 38,
+      "kind": "virtual_cosmetic"
+    },
+    {
+      "id": "hitman-dramatic-clapboard",
+      "businessId": "hitman-gear",
+      "name": "Extremely Serious Clapboard",
+      "description": "A harmless fictional film-prop collectible for imaginary takes.",
+      "price": 22,
+      "kind": "virtual_prop"
+    },
+    {
+      "id": "hitman-silence-badge",
+      "businessId": "hitman-gear",
+      "name": "Silence on Set Badge",
+      "description": "A virtual badge collectible that politely fails to control the block’s volume.",
+      "price": 11,
+      "kind": "virtual_collectible"
+    },
+    {
+      "id": "camera-empty-card-prop",
+      "businessId": "real-camera-men",
+      "name": "Intentional Ending Card",
+      "description": "A fictional memory-card prop collectible with no storage, files, or device access.",
+      "price": 16,
+      "kind": "virtual_prop"
+    },
+    {
+      "id": "camera-exposure-invoice",
+      "businessId": "real-camera-men",
+      "name": "Paid in Exposure Invoice",
+      "description": "A novelty virtual invoice prop; it creates no real bill, agreement, or payment request.",
+      "price": 10,
+      "kind": "virtual_prop"
+    },
+    {
+      "id": "camera-rulebook-zine",
+      "businessId": "real-camera-men",
+      "name": "Rules We Changed Yesterday",
+      "description": "A fictional zine collectible of mutually contradictory camera hot takes.",
+      "price": 19,
+      "kind": "virtual_collectible"
+    },
+    {
+      "id": "pressure-breaking-mug",
+      "businessId": "pressure-tv",
+      "name": "Developing Situation Mug",
+      "description": "A virtual mug collectible for announcing that the kettle is nearly ready.",
+      "price": 15,
+      "kind": "virtual_collectible"
+    },
+    {
+      "id": "pressure-studio-badge",
+      "businessId": "pressure-tv",
+      "name": "Guest Until the Break Badge",
+      "description": "A fictional studio-pass collectible with no real access credential.",
+      "price": 18,
+      "kind": "virtual_cosmetic"
+    },
+    {
+      "id": "pressure-radio-sticker",
+      "businessId": "pressure-tv",
+      "name": "Turn the Block Up Sticker",
+      "description": "A virtual radio souvenir collectible; it grants no streaming subscription.",
+      "price": 9,
+      "kind": "virtual_collectible"
+    },
+    {
+      "id": "baddies-cosmetic-ride-pass",
+      "businessId": "baddies-on-wheels",
+      "name": "Main Character Ride Pass",
+      "description": "A display-only virtual pass collectible. It does not book transport or unlock unimplemented driving.",
+      "price": 30,
+      "kind": "virtual_cosmetic"
+    },
+    {
+      "id": "baddies-arrival-shirt",
+      "businessId": "baddies-on-wheels",
+      "name": "Scheduled Entrance Shirt",
+      "description": "A virtual merchandise shirt collectible celebrating a punctual dramatic arrival.",
+      "price": 27,
+      "kind": "virtual_cosmetic"
+    },
+    {
+      "id": "baddies-dashboard-charm",
+      "businessId": "baddies-on-wheels",
+      "name": "On Time, Eventually Charm",
+      "description": "A fictional dashboard-charm collectible for the inventory shelf.",
+      "price": 14,
+      "kind": "virtual_collectible"
+    }
+  ],
+  "garage": {
+    "id": "whip-equipped-garage",
+    "brandId": "whip-equipped",
+    "name": "Whip Equipped Garage",
+    "category": "Story hub, workshop, and tire bay",
+    "tagline": "Every vehicle has a before and after.",
+    "description": "McCluster, Majid, and Gunny anchor an enterable garage where district stories meet the existing Whip Equipped chapters.",
+    "backstory": "The garage is a new playable setting for the existing fictional story, presented as a visit before the finale. Its workshop and tire bay give the cast a practical reason to gather. The chapter hub opens the separately maintained screenplay and road-years material rather than replacing long scenes with short NPC exchanges.",
+    "color": "#d4a952",
+    "position": [
+      0,
+      -52
+    ],
+    "size": [
+      30,
+      12,
+      8
+    ],
+    "entrance": [
+      0,
+      -44
+    ],
+    "staffIds": [
+      "mccluster",
+      "majid",
+      "gunny"
+    ],
+    "itemIds": [],
+    "secondaryBrands": [],
+    "ads": [
+      "WHIP EQUIPPED. Pull into the story.",
+      "The next job starts with the whole situation."
+    ],
+    "interior": {
+      "style": "Familiar working garage with a tire bay and chapter desk",
+      "description": "A workshop bench, tire stack, and three gathering spots keep the garage readable. A chapter desk leads into the existing long-form story; it is not a replacement for its before/song/after structure."
+    },
+    "story": {
+      "framing": "pre-finale chapter hub",
+      "canon": "docs/music/whip-equipped/CANON.json",
+      "storyGuide": "docs/music/WHIP-EQUIPPED-STORY.md",
+      "screenplay": "docs/music/whip-equipped/SCREENPLAY.md",
+      "roadYears": "docs/music/whip-equipped/ROAD-YEARS.md",
+      "chronicle": "docs/music/whip-equipped/CAR-FLIP-CHRONICLE.md",
+      "runtimeStoryData": "data/fictional-city/whip-story.v1.json",
+      "albumPortalId": "whip-album",
+      "chapterContract": "Each chapter preserves before-dialogue 2× song length, the complete uninterrupted song, and after-dialogue 2× song length. Adjacent scenes are not counted twice; the music video has its own expressive staging.",
+      "endingOrder": [
+        "dealer-plates",
+        "tears-wont-fall",
+        "salvage-title"
+      ],
+      "mrLockChanger": "Keep both perspectives: McCluster’s legitimate service work and the cousin’s criminal misuse of the tablet received from him, with police anxiety, imitation, and humor. This is not a technical theft tutorial.",
+      "alana": "Alana is the same loved character from Test Drive, personifies Atlanta becoming a trap, and dies in Tears Won’t Fall. She is not a permanent post-ending city resident; later appearances require clearly framed memory or subjective imagery.",
+      "roadYearEvidence": "The three initial camper/G20/Econoline entries are owner recollections, tentatively 2024. Photos, dates, transaction amounts, and costs need later reconciliation; the two van sales remain different deals."
+    }
+  },
+  "garageCrew": [
+    {
+      "id": "mccluster",
+      "name": "McCluster",
+      "age": null,
+      "origin": null,
+      "role": "Garage owner and Whip Equipped story contact",
+      "businessId": "whip-equipped-garage",
+      "backstory": "McCluster is the existing fictional Whip Equipped protagonist. The garage puts his practical work, relationships, and business ambitions in the same room rather than turning him into a detached mission dispenser. Current story canon preserves his legitimate service work alongside knowingly accepted criminal capital and the choices that follow. The city does not rewrite that tension as either complete innocence or a claim about the owner’s real company. His dialogue here belongs to a chapter-selection visit before the finale. The road-years material provides separate remembered legitimate flips whose approximate dates and costs remain qualified in their source documents. Ages, historical origin, likeness, and any new personal biography remain unassigned by this city expansion.",
+      "personality": "Resourceful, restless, humorous; wants ownership of his work and must answer for his choices.",
+      "appearance": {
+        "shirt": "#dbad4f",
+        "skin": "#9ca3af",
+        "hair": "#374151"
+      },
+      "placement": "interior",
+      "route": [
+        [
+          -8,
+          -51
+        ]
+      ],
+      "dialogue": {
+        "greeting": "You made it to the shop. Pull up. There’s work on the lift and a story behind most of it.",
+        "topics": [
+          {
+            "id": "mccluster-shop",
+            "label": "What makes this the home spot?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Everybody on this block sends people here."
+              },
+              {
+                "speaker": "McCluster",
+                "text": "Because a vehicle still has to work after somebody finishes talking about it."
+              },
+              {
+                "speaker": "You",
+                "text": "And the people?"
+              },
+              {
+                "speaker": "McCluster",
+                "text": "Same problem, harder diagnosis. Majid checks the plan. Gunny asks who actually agreed to it."
+              },
+              {
+                "speaker": "You",
+                "text": "What do you do?"
+              },
+              {
+                "speaker": "McCluster",
+                "text": "Try to build something I can stand behind when the noise dies down."
+              }
+            ]
+          },
+          {
+            "id": "mccluster-lock-changer",
+            "label": "What is behind Mr. Lock Changer?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "That tablet story sounds different depending on who is telling it."
+              },
+              {
+                "speaker": "McCluster",
+                "text": "Exactly. My service work is one thing. My cousin got a tablet from me and made his own choices with it."
+              },
+              {
+                "speaker": "You",
+                "text": "So the police anxiety belongs to another angle too?"
+              },
+              {
+                "speaker": "McCluster",
+                "text": "Keep your eyes on who is holding the tool and what job they’re really doing."
+              },
+              {
+                "speaker": "You",
+                "text": "Same object, different intentions."
+              },
+              {
+                "speaker": "McCluster",
+                "text": "And the joke gets darker when somebody thinks looking like the business means doing the business."
+              }
+            ]
+          },
+          {
+            "id": "mccluster-road-years",
+            "label": "Tell me about the van run.",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "You really lived out of a van while flipping it?"
+              },
+              {
+                "speaker": "McCluster",
+                "text": "That G20 got me through a stretch. Michigan, down to Georgia, back up. Making gas money as I went."
+              },
+              {
+                "speaker": "You",
+                "text": "And then the green van?"
+              },
+              {
+                "speaker": "McCluster",
+                "text": "Different vehicle. A lead from the G20 turned into the Econoline sale. Keep those two deals straight."
+              },
+              {
+                "speaker": "You",
+                "text": "Do you have the whole timeline?"
+              },
+              {
+                "speaker": "McCluster",
+                "text": "Pieces. Photos will help put the dates back where they belong. The road stays vivid even when the numbers need checking."
+              }
+            ]
+          }
+        ],
+        "farewell": "Stay a minute if you need to. Just don’t promise the next job before you hear the whole situation."
+      },
+      "provenance": "existing_character_new_city_dialogue"
+    },
+    {
+      "id": "majid",
+      "name": "Majid",
+      "age": null,
+      "origin": null,
+      "role": "Garage regular, advisor, and roadside story contact",
+      "businessId": "whip-equipped-garage",
+      "backstory": "Majid is an existing Whip Equipped character whose role includes advising independent money before an exit from the criminal entanglement. The owner’s road recollections also identify him as a supportive voice during the lean van-driving period, while his brother helped tow the earlier camper. This city version uses those established roles without inventing a birthplace, age, mechanic’s qualification, or historical transaction record. He can be funny and skeptical in the garage, but the point of his presence is continuity: the person supporting the protagonist on the road is available when another big plan arrives. New city dialogue dramatizes that relationship. It does not upgrade approximate recollections into verified costs or use legitimate flips as corroboration of fictional crime.",
+      "personality": "Steady, candid, supportive; asks how a plan works when the excitement wears off.",
+      "appearance": {
+        "shirt": "#576ea4",
+        "skin": "#9ca3af",
+        "hair": "#374151"
+      },
+      "placement": "interior",
+      "route": [
+        [
+          0,
+          -53
+        ]
+      ],
+      "dialogue": {
+        "greeting": "What’s the plan, and what’s the plan if the first plan eats all the gas money?",
+        "topics": [
+          {
+            "id": "majid-roadside",
+            "label": "What were those roadside calls like?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "McCluster says you were on the phone through the van run."
+              },
+              {
+                "speaker": "Majid",
+                "text": "You stay with your people when the road starts feeling bigger than the plan."
+              },
+              {
+                "speaker": "You",
+                "text": "Were you giving directions?"
+              },
+              {
+                "speaker": "Majid",
+                "text": "Sometimes. Sometimes you just need another voice while you figure out the next stop."
+              },
+              {
+                "speaker": "You",
+                "text": "Sounds like a lot of uncertainty."
+              },
+              {
+                "speaker": "Majid",
+                "text": "It was. Don’t edit that out just because the flip eventually has a selling price."
+              }
+            ]
+          },
+          {
+            "id": "majid-costs",
+            "label": "What counts as a good flip?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Buy cheap, sell higher. Simple, right?"
+              },
+              {
+                "speaker": "Majid",
+                "text": "Then remember the tow, the gas, the flight, the days, and the ride home."
+              },
+              {
+                "speaker": "You",
+                "text": "McCluster has rough numbers for those."
+              },
+              {
+                "speaker": "Majid",
+                "text": "Rough numbers are a place to start. Let the records help before you call it exact profit."
+              },
+              {
+                "speaker": "You",
+                "text": "What matters beyond the number?"
+              },
+              {
+                "speaker": "Majid",
+                "text": "Whether you can make the next move without somebody owning the decision for you."
+              }
+            ]
+          },
+          {
+            "id": "majid-independence",
+            "label": "Why keep talking about independent money?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Why not leave a bad arrangement as soon as you hate it?"
+              },
+              {
+                "speaker": "Majid",
+                "text": "Because wanting out and being able to stand on your own are different problems."
+              },
+              {
+                "speaker": "You",
+                "text": "So wait forever?"
+              },
+              {
+                "speaker": "Majid",
+                "text": "No. Build the way out while you can still choose what it looks like."
+              },
+              {
+                "speaker": "You",
+                "text": "And if somebody keeps changing the terms?"
+              },
+              {
+                "speaker": "Majid",
+                "text": "Then stop confusing their next promise with your own plan."
+              }
+            ]
+          }
+        ],
+        "farewell": "Check in when you get there. A successful deal includes the trip home."
+      },
+      "provenance": "existing_character_new_city_dialogue"
+    },
+    {
+      "id": "gunny",
+      "name": "Gunny",
+      "age": null,
+      "origin": null,
+      "role": "Garage regular and crew/dispatch contact",
+      "businessId": "whip-equipped-garage",
+      "backstory": "Gunny is the existing story character whose commitments protect autonomy over crews and decisions. The city assigns him a practical point of contact at the garage without inventing an earlier technical career or making him the unconfirmed mechanic behind every repair. He listens to requests, asks who is available, and refuses to treat another person’s time as already promised. That makes him useful in a district where almost every business is advertising more certainty than it possesses. His new conversations connect a funny booking dispute to the story’s more serious concern with who controls a person’s labor and choices. His age, origin, and precise appearance remain unresolved rather than receiving biographical filler.",
+      "personality": "Direct, grounded, wry; values a clear commitment and the freedom to make it.",
+      "appearance": {
+        "shirt": "#6b8562",
+        "skin": "#9ca3af",
+        "hair": "#374151"
+      },
+      "placement": "interior",
+      "route": [
+        [
+          8,
+          -51
+        ]
+      ],
+      "dialogue": {
+        "greeting": "Tell me what needs doing. Then we’ll find out who actually agreed to do it.",
+        "topics": [
+          {
+            "id": "gunny-crew",
+            "label": "Can I borrow your crew?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Can you send your people to help with a shoot?"
+              },
+              {
+                "speaker": "Gunny",
+                "text": "I can ask people. Start there."
+              },
+              {
+                "speaker": "You",
+                "text": "I thought you handled the crew."
+              },
+              {
+                "speaker": "Gunny",
+                "text": "Handling a schedule doesn’t make somebody mine."
+              },
+              {
+                "speaker": "You",
+                "text": "So what do you need?"
+              },
+              {
+                "speaker": "Gunny",
+                "text": "The job, the time, the pay, and enough room for somebody to answer honestly."
+              }
+            ]
+          },
+          {
+            "id": "gunny-district",
+            "label": "What is wrong with this block’s bookings?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Three shops promised the same van."
+              },
+              {
+                "speaker": "Gunny",
+                "text": "Did any of them talk to the person holding the keys?"
+              },
+              {
+                "speaker": "You",
+                "text": "They talked to each other."
+              },
+              {
+                "speaker": "Gunny",
+                "text": "Then they built a very confident conversation around an absent vehicle."
+              },
+              {
+                "speaker": "You",
+                "text": "How do we fix it?"
+              },
+              {
+                "speaker": "Gunny",
+                "text": "Start with Beatrice. The keys usually have a better understanding of the schedule than the advertisement."
+              }
+            ]
+          },
+          {
+            "id": "gunny-stand",
+            "label": "What does standing on business mean here?",
+            "lines": [
+              {
+                "speaker": "You",
+                "text": "Everybody keeps saying they stand on business."
+              },
+              {
+                "speaker": "Gunny",
+                "text": "Then ask what happens when the promise gets inconvenient."
+              },
+              {
+                "speaker": "You",
+                "text": "That’s when you find out?"
+              },
+              {
+                "speaker": "Gunny",
+                "text": "That’s when the slogan has to put shoes on."
+              },
+              {
+                "speaker": "You",
+                "text": "And the shop?"
+              },
+              {
+                "speaker": "Gunny",
+                "text": "We’ve got enough work without making somebody else’s choice for them. Be clear about what you’re committing to."
+              }
+            ]
+          }
+        ],
+        "farewell": "If the plan changes, tell the people carrying it."
+      },
+      "provenance": "existing_character_new_city_dialogue"
+    }
+  ],
+  "portals": [
+    {
+      "id": "equity-uprise-hq",
+      "name": "Equity Uprise HQ",
+      "route": "prim3-transit.html?level=equity-uprise-hq",
+      "description": "Open the existing HQ emergency exercise with the detailed canonical building. It uses its own tactical controls."
+    },
+    {
+      "id": "transportation-globe",
+      "name": "Transportation globe",
+      "route": "action-globe.html?explore=1&halo=1",
+      "description": "Open the existing owner-directed globe destination from the city’s transport connection."
+    },
+    {
+      "id": "prim3-world",
+      "name": "PRIM3 world",
+      "route": "prim3-world.html",
+      "description": "Open the existing PRIM3 world through a declared route, without importing its engine into the city."
+    },
+    {
+      "id": "whip-album",
+      "name": "Whip Equipped album",
+      "route": "album.html?album=whip-equipped",
+      "description": "Open the existing album destination. The garage’s chapter desk carries the separate narrative reading experience."
+    }
+  ],
+  "constraints": {
+    "cityName": "McCluster City is a working fictional title. The Bridgeport inspiration does not rename or replace the real city.",
+    "canonPrecedence": [
+      "Newer explicit owner decisions",
+      "Existing Whip Equipped story canon for its cast and events",
+      "Recovered owner brand sources for names and established premises",
+      "This newly authored district adaptation"
+    ],
+    "newNpcCount": 24,
+    "staffPerBusiness": 3,
+    "garageCrewCount": 3,
+    "allNewNpcsAdults": true,
+    "npcOrigins": "All new staff ages and origins are fictional biographical choices. They are not recovered historical facts, brand-country claims, or changes to PRIM3 jurisdiction assignments.",
+    "dialogue": "All playable dialogue here is newly written city material. It is not a recovered transcript, song lyric, or replacement for the long Whip Equipped screenplay.",
+    "proposedBrandOperations": "The 2026-10-19 media registry is proposal_only; its 13 entries are prior_user_project_or_idea with lifecycle proposed_not_provisioned. A fictional shop does not prove an operational company.",
+    "realEntities": "Keep the fictional brand registry separate from data/brands.json and the real company, vendor, customer, and affiliate registries. Whip Equipped LLC remains a separate real company. Equity Uprise and Apprise Music Studios are not invented gag businesses.",
+    "gameEconomy": "City credits and inventory goods are fictional, local game state only. No legal tender, real billing, real donation, real adult-service booking, external product feed, or weapons transaction.",
+    "items": "Goods are virtual inventory collectibles, cosmetic records, or harmless film props. No unequipped wardrobe skin, functional vehicle, real ride, audio stream, or gameplay buff is promised by an inventory purchase.",
+    "hordash": "All workers are adults. Adult-industry/app satire remains non-graphic; merchandise interactions do not sell a person or schedule a real service.",
+    "mikeHawk": "Fictional civic satire and adult double entendre; no real election, voter targeting, contact harvesting, or political fundraising.",
+    "robbery1s": "Do not add a canonical wearer, settle the curse, change the recovered cast, or equate a replica checkout with the original shoe-story chain.",
+    "designerKicks": "Fictional tenant reference only. Reconfirm external rights before actual commercial integration, licensed merchandise, a product feed, or a real mark.",
+    "prim3Exe": "Recovered channel-name reference only; relation to canonical PRIM3 remains unresolved. Do not create a competing product or executable.",
+    "humor": "Jokes target personalities, business promises, media habits, and contradictions. No joke depends on ethnicity, an imitation foreign accent, or an employee being a child.",
+    "appearance": "New NPCs use original generic low-poly color swatches, not real likenesses. Garage crew swatches are neutral placeholders; historical physical appearance remains unassigned.",
+    "branding": "Use plain text signage until owner-supplied artwork is present. Do not invent, redraw, recolor, trace, or approximate logos.",
+    "equityUprise": "The island exterior uses supplied canonical Core V2 dimensions. Do not invent rooms, floors, departments, or a new floor entrance. The HQ portal opens the existing tactical emergency exercise in the detailed building, with its own controls; it does not continue the city’s free-walk engine.",
+    "dataBoundary": "Fictional inventory and dialogue stay outside live CRM, Halo Ops, private AI context, operational feeds, and real service bookings. Public source summaries contain no raw private transcripts, private URLs, credentials, or Library identifiers.",
+    "transportation": "Declared portals lead to existing destinations. Their presence does not implement multiplayer, vehicle driving, procedural traffic, or new travel booking.",
+    "quests": "Cross-business situations in the lore are conversation hooks. Mission progression and reward logic are not implied unless implemented separately.",
+    "storyContinuity": "Garage conversations are framed before the finale. Preserve Tears Won’t Fall before Salvage Title, the Alana/Atlanta identity and sacrifice, and the simultaneous legitimate/cousin perspectives of Mr. Lock Changer.",
+    "realFlipChronology": "Retain the source chronicle’s approximate prices, model-year uncertainty, separate van buyers, and unknown costs. Do not turn gross spread into verified profit or real recollections into proof of fictional crime."
+  }
+}
