@@ -1,4 +1,5 @@
 # McCluster City / Bridgeport / OVH Core — post-merge #722 engineering handoff
+> **Owner's next build addition, 2026-11-03:** Read [Jimmy's-location shoe store + industrial factory continuation](JIMMYS-STOREFRONT-CONTINUATION-2026-11-03.md) before resuming. Add it to this ongoing city/Bridgeport work; do not replace the existing city, #725 arcade, or civic/cinematic branch. The brief records the verified 996–1000 Main Street footprint and the unresolved overlap with occupied authored parcels. It is a specification, not implemented/live store evidence.
 
 **Date:** 2026-11-03  
 **Status:** Research and review specification only. Not an implementation, runtime audit, approval to deploy, or performance claim.  
