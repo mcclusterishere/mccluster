@@ -217,7 +217,7 @@ test('Wiggers Anonymous has three reformed staff (one inside, two walking) and f
   const jobs = members.map(n => n.workplace);
   assert.ok(jobs.some(w => w.kind === 'self-employed' && /drug dealer/i.test(w.description)));
   assert.ok(jobs.some(w => w.businessId === 'hitman-gear'));
-  assert.ok(jobs.some(w => w.portalId === 'equity-uprise-hq' && city.portals.some(p => p.id === w.portalId)));
+  assert.ok(jobs.some(w => w.portalId === city.district.island.hq.portalId && city.portals.some(p => p.id === w.portalId)), 'the courier works at the HQ island');
   assert.ok(jobs.some(w => w.businessId === 'thugged-out-apparel'));
   assert.equal(wa.twelveSteps.length, 12); assert.match(wa.memberNote, /four/);
   const toa = expansionBusiness('thugged-out-apparel');
