@@ -150,9 +150,12 @@ test('no purple anywhere in the new page, scripts or styles (owner rule)', () =>
   }
 });
 
-test('the owner gate: nothing but "Owner only" ships in the page, and the mission file is fetched only after a yes', () => {
+test('the owner gate: nothing but "Owner only" ships in the page, and the app and mission file load only after a yes', () => {
   assert.match(PAGE, /<h1>Owner only<\/h1>/);
-  assert.match(PAGE, /<div id="pwApp" hidden><\/div>/);
+  assert.match(PAGE, /<template id="pwTpl"><div id="pwApp" hidden><\/div><\/template>/);
+  assert.match(PAGE, /data-owner-gate data-owner-template="pwTpl" data-owner-load="js\/prim3-world\/news-desk\.mjs js\/prim3-world\/app\.mjs"/);
+  assert.doesNotMatch(PAGE, /<script[^>]+src="js\/prim3-world\//, 'no app module is a page script: js/owner-only.mjs imports them after a yes');
+  assert.match(PAGE, /<script type="module" src="js\/owner-only\.mjs\?v=__STAMP__"><\/script>/);
   for (const m of DOC.missions) {
     assert.ok(!PAGE.includes(m.title), `page source holds no mission title (${m.title})`);
     assert.ok(!PAGE.includes(m.briefing.slice(0, 40)), 'page source holds no briefing');
@@ -162,8 +165,7 @@ test('the owner gate: nothing but "Owner only" ships in the page, and the missio
   const unlock = app.slice(app.indexOf('async function unlock()'), app.indexOf('/* ---------- shell'));
   assert.match(unlock, /fetch\(DATA_URL/, 'the mission file is requested inside unlock()');
   assert.equal(app.split('fetch(DATA_URL').length, 2, 'and nowhere else');
-  assert.match(app, /checkOwner\(\)\.then\(\(r\) => \{ checking = null; if \(r\.owner\) \{ if \(!open\) unlock\(\); \} else lock\(r\.reason\)/);
-  assert.match(app, /\nverify\(\);\n$/, 'the check is the first thing the page does');
+  assert.match(app, /\nunlock\(\);\n$/, 'the module runs only behind the gate, so it opens straight away');
 });
 
 test('checkOwner asks GET /v1/status with the session token and only a 2xx is the owner', async () => {
@@ -228,7 +230,7 @@ test('no pins on the globe; a country card names the stationed agent and holds t
   assert.deepEqual(evt, { country: 'KR', name: 'South Korea', el });
 });
 
-test('canon guardrails: fiction, non-canon side operations, no spoilers, McCluster only calls his mission in', () => {
+test('canon guardrails: non-canon side operations, no spoilers, no disclaimers, McCluster only calls his mission in', () => {
   assert.equal(DOC.canon_status, 'side-operation-draft');
   for (const m of DOC.missions) {
     assert.equal(m.side_operation, true, m.id);
@@ -246,8 +248,9 @@ test('canon guardrails: fiction, non-canon side operations, no spoilers, McClust
   assert.match(mc.objective, /The squad \(Entry, Recon, Technical\)/);
   assert.match(DOC.notes.join(' '), /on assignment there from HQ/);
   const app = read('js/prim3-world/app.mjs');
-  assert.match(app, /class="pw-fiction"[^>]*>Fiction<\/span>/);
-  assert.match(app, /McCluster Corp and Equity Uprise are fiction/);
+  /* owner, 2026-11-03: "ditch the, oh, this is fictional ... Let this platform be itself. Don't disclaimer it just for existing" */
+  for (const src of [app, PAGE, read('js/prim3-world/news-desk.mjs'), DOC.notes.join(' ')]) assert.doesNotMatch(src, /\bfiction(al)?\b/i);
+  assert.match(DOC.notes.join(' '), /Real countries are settings, never enemies/, 'the real-world rule stays');
   assert.match(app, /he is not a deployable unit\. The squad \(Entry, Recon, Technical\) deploys\./);
   assert.match(app, /on assignment from HQ in the United States/);
   assert.doesNotMatch(app, /<code>\$\{esc\(s\.file\)\}/, 'cards list no source file names (they can carry spoilers); Edit does');
@@ -267,7 +270,8 @@ test('news desk card: brief and reactions are escaped, links are http(s) only, e
   assert.ok(html.includes('href="https://news.example/a"'));
   assert.ok(!html.includes('javascript:'));
   assert.ok(html.includes('2 h ago') && html.includes('12 headlines'));
-  assert.ok(html.includes('Fiction voiced by McCluster'));
+  assert.ok(html.includes('Headlines link to their publishers.'), 'attribution stays');
+  assert.ok(!/fiction/i.test(html), 'no disclaimer');
   assert.match(deskHtml({ brief: null, comments: [] }, { name: 'Ethiopia' }), /has not filed/);
   assert.equal(ago('2026-11-03T00:00:30Z', Date.parse('2026-11-03T00:00:40Z')), 'just now');
 });

@@ -1,5 +1,5 @@
 import os from 'node:os';
-import { localAiChat, localAiDiagnostics } from '../compute/local-ai-client.mjs';
+import { localAiChat, localAiDiagnostics, localAiPullModel } from '../compute/local-ai-client.mjs';
 import { run } from '../process.mjs';
 
 export async function aiDiagnostics(job = {}, dependencies = {}) {
@@ -7,7 +7,18 @@ export async function aiDiagnostics(job = {}, dependencies = {}) {
   const chat = dependencies.chat || localAiChat;
   const shell = dependencies.run || run;
   const limits = await shell('systemctl', ['show', 'ollama.service', '--property=CPUQuotaPerSecUSec,MemoryMax,TasksMax'], { timeoutMs: 5000 }).then(result => result.stdout.trim()).catch(() => null);
-  const installed = await inspect();
+  let installed = await inspect();
+  // Optional repair: install allowlisted extra models that are missing and
+  // record what the daemon answered (owner request 2026-11-03).
+  const pulls = [];
+  if (job.input?.pull_missing === true) {
+    const pull = dependencies.pull || localAiPullModel;
+    for (const extra of installed?.extra_models || []) {
+      if (extra.installed) continue;
+      pulls.push(await pull(extra.name).catch(error => ({ ok: false, model: extra.name, error: String(error?.message || error).slice(0, 300) })));
+    }
+    if (pulls.length) installed = await inspect();
+  }
   const benchmarks = [];
   // Fixed synthetic prompts only. Diagnostics cannot run caller-provided code,
   // arbitrary HTTP, shell commands, or private conversation benchmarks.
@@ -20,5 +31,5 @@ export async function aiDiagnostics(job = {}, dependencies = {}) {
       }
     }
   }
-  return { executor: 'ai_diagnostics:v1', observed_at: new Date().toISOString(), installed, host: { platform: os.platform(), arch: os.arch(), logical_cpus: os.cpus().length, cpu_model: os.cpus()[0]?.model || null, total_memory_bytes: os.totalmem(), free_memory_bytes: os.freemem(), load_average: os.loadavg(), ollama_service_limits: limits }, configuration: { private_context_configured: Boolean(process.env.MCCLUSTER_CONTEXT_TOKEN || process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY), private_context_transport: process.env.MCCLUSTER_CONTEXT_TOKEN ? 'context_core' : 'service_rpc', recent_history_limit: 120, resident_context_tokens: 16384 }, benchmarks, summary: 'Measured installed local inference runtime and optional fixed synthetic benchmarks.' };
+  return { executor: 'ai_diagnostics:v1', observed_at: new Date().toISOString(), installed, host: { platform: os.platform(), arch: os.arch(), logical_cpus: os.cpus().length, cpu_model: os.cpus()[0]?.model || null, total_memory_bytes: os.totalmem(), free_memory_bytes: os.freemem(), load_average: os.loadavg(), ollama_service_limits: limits }, configuration: { private_context_configured: Boolean(process.env.MCCLUSTER_CONTEXT_TOKEN || process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY), private_context_transport: process.env.MCCLUSTER_CONTEXT_TOKEN ? 'context_core' : 'service_rpc', recent_history_limit: 120, resident_context_tokens: 16384 }, benchmarks, pulls, summary: 'Measured installed local inference runtime and optional fixed synthetic benchmarks.' };
 }

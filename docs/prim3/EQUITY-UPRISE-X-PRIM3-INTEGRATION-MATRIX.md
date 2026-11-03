@@ -1,6 +1,6 @@
 # Equity Uprise × PRIM3 — integration matrix and the first vertical slice
 
-Status: review branch `claude/equity-uprise-hq-floors-20261103` (2026-11-03). Not merged, not public canon.
+Status: review branch `claude/equity-uprise-hq-floors-20261103` (2026-11-03), rebuilt on building v3 (#709). Not public canon.
 Play: `prim3-transit.html?level=equity-uprise-b1&side=defend` (Restore the Picture) or `&side=attack`
 (Blind the Floor). The tactics menu lists it as **Equity Uprise B1 · Restore the Picture**.
 
@@ -33,7 +33,7 @@ A mission is data plus a few rules: `js/prim3-tactics/missions/blind-the-floor.m
 
 | Prerequisite | Status | Evidence |
 | --- | --- | --- |
-| Authoritative B1 spatial bounds | **Satisfied** | `basement-b1-program.json` zones (10 zones in feet) + Core V2 cores; B1 doorways and equipment bounds from the B1 production model's own room shells (`equity-uprise-basement-b1-core-v2.glb`, lintels and nodes). Test: "placements go through the frame". |
+| Authoritative B1 spatial bounds | **Satisfied** | `basement-b1-program.json` zones (10 zones in feet) + Core V2 cores; B1 doorways and equipment bounds from the B1 production model's own room shells (`equity-uprise-basement-b1-core-v2.glb`: door lintels, and each equipment record's nodes through the model's node hierarchy). Test: "placements go through the frame". Building v3 moved several B1 walls and doors (the telecom core's door now faces east, onto a 48–55 ft service corridor that is now an open lane); the package picked them up on rebuild. |
 | Explicit operator / role assignment | **Satisfied in the adapter** | The program gives B1 `live_access` roles (staff, instructor, security, facilities, field_t, supervised learner) and `training_access: canonical_sandbox_same_geometry`; the mission binds them: R/E/T squads (E1/R1/T1) with role-gated nodes (`RACK` T only; `CONSOLE` T to verify, T or E to pull). |
 | Mission-driven sandbox fault / restoration state | **Was missing; built** | The sandbox has `injectFault` and whole-floor `reset()` but no per-fault restore. The binding keeps a fault ledger; restoring = reset and replay the remaining ledger, proven identical to the real engine. |
 | Deterministic feet-to-grid transform | **Was implicit; built and tested** | `adapter.mjs` frame; round-trip and corner tests; the HQ level's hand rule is the same function (tested on every core). |
@@ -50,7 +50,7 @@ BROKEN = wrong today; NOT STARTED.
 | Stairs between consecutive levels (switchback, cost 3 a storey) | IMPLEMENTED | `adapter.mjs` `traversal` | B1→F1→…→L7, 7 links per stair; street → B1 and street → roof reachable |
 | Exterior doors (site ↔ Floor 1) from site-egress openings | IMPLEMENTED | `traversal` | public entrance lands where the HQ level puts it |
 | Elevators only where a mission permits | IMPLEMENTED | `traversal({ elevators })` | off by default; on, the passenger cab links its served levels |
-| Interior doors as gates between rooms | PARTIAL | `adapter.mjs` | Doorways are placed through the frame, but the engine has whole-tile walls only: rooms are open to their open neighbours (the telecom core's south door opens into a 2 ft gap below cell size). Needs edge walls upstream. |
+| Interior doors as gates between rooms | PARTIAL | `adapter.mjs` | Doorways are placed through the frame, but the engine has whole-tile walls only: rooms are open to their open neighbours, not only through their doors. Needs edge walls upstream. |
 | B1 as a normal floor in the HQ drill | IMPLEMENTED | `levels/equity-uprise-hq.mjs` | "B1 is a normal floor" (both stairs down, plant rooms shut) |
 | **Combat** — AP, move/dash, fire, hit chance, cover, elevation, overwatch, hunker, reload, stabilize | IMPLEMENTED (engine) | vendored resolver | Prim3 tests (98); missions play on it |
 | Cover from authority geometry (rooms, shafts, B1 perimeter, equipment) | IMPLEMENTED | `buildCover` | equipment: LOW, HIGH over 5.5 ft |
@@ -58,8 +58,8 @@ BROKEN = wrong today; NOT STARTED.
 | A slab over a unit's own cell (e.g. the entry canopy) | NOT STARTED | — | The engine checks slabs on intermediate cells only, so a canopy cannot shelter the unit under it. Upstream item. |
 | A downed operative and extraction | PARTIAL | resolver | The engine counts a downed operative as a survivor who must extract but cannot move: such a mission can never complete. The missions score it as lost (`lose-downed`). Upstream: carry or evacuate. |
 | **Assault / defense** — both sides, opponent on the canonical threat AI | IMPLEMENTED | `missions/blind-the-floor.mjs`, `scripts/prim3/blind-the-floor-sim.mjs` | win rates below; replay fixtures |
-| **Interactive infrastructure** — cameras as engine CAMERA machines (detection = authority range on the grid, engine LOS) | IMPLEMENTED | `camerasOn`, `pipeline.mjs` | coverage on the grid equals the engine machine's sight over B1's walkable cells |
-| Camera FOV (92° wedge) in the engine | PARTIAL | — | The engine camera is radius + LOS, no facing. On B1 the wedge and the engine's sight coincide on walkable cells (tested); elsewhere they may not. |
+| **Interactive infrastructure** — cameras as engine CAMERA machines (detection = authority range on the grid, engine LOS) | IMPLEMENTED | `camerasOn`, `pipeline.mjs` | the engine machine sees the authority wedge; the only extra cells (behind the lens) are pinned in the test |
+| Camera FOV (92° wedge) in the engine | PARTIAL | — | The engine camera is radius + LOS, no facing. On B1 it sees the whole optical wedge plus two cells behind the lens (the v3 east corridor, (7,6) and (7,7)); the test pins exactly that difference. |
 | T technology control (Jam, Sync Pulse, Take control, Door, Mark, Re-take) | IMPLEMENTED (engine) / PARTIAL (page) | resolver; `transit.mjs` | The page offers Jam, Sync Pulse and Mark when the engine's preview is legal; Take control and Door are not offered on B1 (no hostile doors in this slice). |
 | Sandbox faults → camera availability → fog / AI | IMPLEMENTED | `sandbox.mjs`, `bindCameras`, mission `sync` | "consequences": the squad's fog (defend) and the threat AI's knowledge and moves (attack) change |
 | Restore + separate VERIFY | IMPLEMENTED | mission `CONSOLE` node | The console has nothing to verify while the sandbox shows no live camera (the engine itself refuses VERIFY in the `DARK` state) |
@@ -92,11 +92,11 @@ all four links at the rack (four AP), pulls the core log next to the console and
 Defenders at the rack restore links; a defender next to the console with a live picture verifies it, and the
 exercise is lost. Floor 1 security (H4) answers by Stair A.
 
-Evidence (`node scripts/prim3/blind-the-floor-sim.mjs 100`, heuristic squad vs the canonical threat AI):
+Evidence (`node scripts/prim3/blind-the-floor-sim.mjs 100`, heuristic squad vs the canonical threat AI, on building v3; on the defend side the escort leads down the stairs and T follows):
 
 | Side the squad plays | Squad wins | Threat AI wins | Losses by type |
 | --- | --- | --- | --- |
-| defend (Restore the Picture) | 30 / 100 | 70 / 100 | everyone down 38, clock 32 |
+| defend (Restore the Picture) | 11 / 100 | 89 / 100 | clock 59 (almost always T downed in the dark), everyone down 30 |
 | attack (Blind the Floor) | 48 / 100 | 52 / 100 | clock 41, downed operative 11 |
 
 Replays: `scripts/test/fixtures/blind-the-floor-replays.json` holds four whole games (each side winning in each

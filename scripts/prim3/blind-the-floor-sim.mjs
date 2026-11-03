@@ -122,7 +122,8 @@ export function playGame(pkg, side, seed, { maxRounds = 20 } = {}) {
   let s = M.createMission(pkg, { side, seed });
   const trace = [];
   for (let r = 0; r < maxRounds; r += 1) {
-    for (const id of ['T1', 'E1', 'R1']) { s = unitTurn(pkg, s, id, trace); if (M.outcome(s)) break; }
+    // the escort leads: on the defend side E and R go down first and T follows into a lane they have cleared
+    for (const id of side === 'defend' ? ['E1', 'R1', 'T1'] : ['T1', 'E1', 'R1']) { s = unitTurn(pkg, s, id, trace); if (M.outcome(s)) break; }
     let o = M.outcome(s); if (o) return { side, seed, outcome: o, round: s.round, trace, state: s };
     let n = R.beginThreatPhase(s);
     n = runThreatPhase(n).state;

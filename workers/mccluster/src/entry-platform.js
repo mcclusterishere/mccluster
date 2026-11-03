@@ -15,11 +15,9 @@ import { humanUpriseResponse } from './human-uprise/router.js';
 import { handleAuthHandoff } from './auth-handoff.js';
 import { preflightResponse } from './preflight.js';
 import { handleCreatorCheckout } from './creator-billing.js';
-import { handleCreatorCommerce } from './creator-commerce.js';
-import { handleCreatorStore, recordCreatorStorePayment, recordCreatorStoreRefund } from './creator-store.js';
 import { handleActionConnect } from './action-connect.js';
 import { handleCreatorBillingWebhook } from './creator-billing-webhook.js';
-import { handleCreatorEntitlement, hasActiveSitePlan } from './creator-entitlement.js';
+import { handleCreatorEntitlement } from './creator-entitlement.js';
 import { handleCreatorPublish } from './creator-site-publish.js';
 import { handleCreatorSiteView } from './creator-site-view.js';
 import { handleLiveMissions, runLiveMaintenance } from './live/index.js';
@@ -28,25 +26,8 @@ import { handleActionArchive } from './action-archive.js';
 import { handleTravelRouting } from './travel-routing.js';
 import { handleAudioRooms } from './audio-sfu-rooms.js';
 import { handleRegionScope } from './world-region-feed.js';
-import { handleWorldDirectory } from './world-directory.js';
-import { handleMusicWorkspace } from './music-workspace.js';
 import { handleMemberFronts } from './member-fronts.js';
-import { handleCustomerSiteModules } from './customer-site-modules.js';
-import { handleCustomerSiteStorage } from './customer-site-storage.js';
-import { handleCustomerSiteWorld } from './customer-site-world.js';
-import { handleCustomerSiteAddress } from './customer-site-addresses.js';
-import { handleCustomerSiteAdvertising } from './customer-site-advertising.js';
-import { handleManagedProjects } from './managed-projects.js';
-import { handleCanonicalArtists } from './canonical-artists.js';
-import { handleProjectTiles } from './project-tiles.js';
-import { handleCreatorDomains } from './creator-domains.js';
-import { handleCreatorDomainOrders, handleVerifiedCloudflareDomainFunding } from './creator-domain-orders.js';
-import { configuredCloudflareRegistration } from './domains/cloudflare-registration.js';
-import { createCreatorDomainCheckout } from './creator-domain-billing.js';
-import { handleCreatorDomainHost } from './creator-domain-host.js';
-import { handleCustomerSocial } from './social/customer.js';
-import { handlePlatformModuleAccess } from './platform-module-access.js';
-import { handleVersionedEditor } from './editor-versioned.js';
+import { coreSignedGate } from './world-core-reads.js';
 
 export { HereTenantAgent } from './here-tenant-agent.js';
 
@@ -76,8 +57,6 @@ export default {
        at its root, the company page at /company. Null for every other host,
        so the API below is untouched. Inert until the owner routes the apex
        to this Worker: docs/control-plane/DOMAINS-AND-ENTITIES.md */
-    const domain = await handleCreatorDomainHost(request, env, { authorizeEntitlement: hasActiveSitePlan, projectPublic: handleManagedProjects, projectTilesPublic: handleProjectTiles });
-    if (domain) return domain;
     const company = await companySiteResponse(request, env);
     if (company) return company;
     /* Human Uprise's own door (humanuprise.com, www): the World by host, the
@@ -86,6 +65,11 @@ export default {
     const humanUprise = await humanUpriseResponse(request, env);
     if (humanUprise) return humanUprise;
     try {
+      /* McCluster Core's signature reaches only POST /v1/media/mcp and the
+         read-only World layers the news pairing reads; anything else that
+         announces it is refused before any other handler (./world-core-reads.js) */
+      const coreRead = await coreSignedGate(request, env);
+      if (coreRead) return coreRead;
       const url = new URL(request.url);
       if (request.method === 'GET' && (url.pathname === '/healthz' || url.pathname === '/v1/health')) {
         return healthResponse(request, env);
@@ -101,12 +85,10 @@ export default {
       const briefs = await handleNewsBriefs(request, env);
       if (briefs) return briefs;
       // Public coarse-country discovery; never enters the member auth gate.
-      const directory = await handleWorldDirectory(request, env);
-      if (directory) return directory;
       const regional = await handleRegionScope(request, env);
       if (regional) return regional;
 
-      const billingWebhook = await handleCreatorBillingWebhook(request, env, { onStorePaid: recordCreatorStorePayment, onStoreRefunded: recordCreatorStoreRefund, onDomainPaid: (event) => handleVerifiedCloudflareDomainFunding(event, env, { provider: configuredCloudflareRegistration(env) }) });
+      const billingWebhook = await handleCreatorBillingWebhook(request, env);
       if (billingWebhook) return billingWebhook;
       /* live missions (./live/index.js): flagged off with LIVE_MISSIONS_ENABLED;
          its Cloudflare webhooks authenticate themselves, so it sits before the key gate */
@@ -119,16 +101,6 @@ export default {
       if (identity) return identity;
       const rateLimitResponse = await enforceApiRateLimit(request, env);
       if (rateLimitResponse) return rateLimitResponse;
-      const siteModules = await handleCustomerSiteModules(request, env);
-      if (siteModules) return siteModules;
-      const siteWorld = await handleCustomerSiteWorld(request, env);
-      if (siteWorld) return siteWorld;
-      const siteStorage = await handleCustomerSiteStorage(request, env);
-      if (siteStorage) return siteStorage;
-      const siteAddress = await handleCustomerSiteAddress(request, env);
-      if (siteAddress) return siteAddress;
-      const siteAdvertising = await handleCustomerSiteAdvertising(request, env);
-      if (siteAdvertising) return siteAdvertising;
       /* one M Account, every host: the sign-in handoff (auth-handoff.js) */
       const handoff = await handleAuthHandoff(request, env);
       if (handoff) return handoff;
@@ -136,25 +108,8 @@ export default {
       const archive = await handleActionArchive(request, env);
       if (archive) return archive;
       /* every account's front page: the house page's experience with its own words and media (./member-fronts.js) */
-      // Purchases remain unavailable without a complete reviewed registrar/checkout adapter.
-      const domainProvider = url.pathname.startsWith('/v1/creator-domain-orders') ? configuredCloudflareRegistration(env) : null;
-      const domainOrders = await handleCreatorDomainOrders(request, env, { authorizeEntitlement: hasActiveSitePlan, provider: domainProvider,
-        createDomainCheckout: domainProvider ? (order) => createCreatorDomainCheckout(order, env, { registrarReady: domainProvider.capabilities?.mode === 'sandbox' }) : undefined });
-      if (domainOrders) return domainOrders;
-      const domains = await handleCreatorDomains(request, env, { authorizeEntitlement: hasActiveSitePlan, projectPublic: handleManagedProjects, projectTilesPublic: handleProjectTiles });
-      if (domains) return domains;
-      const artists = await handleCanonicalArtists(request, env);
-      if (artists) return artists;
-      const projects = await handleManagedProjects(request, env);
-      if (projects) return projects;
-      const social = await handleCustomerSocial(request, env);
-      if (social) return social;
       const fronts = await handleMemberFronts(request, env);
       if (fronts) return fronts;
-      const moduleAccess = await handlePlatformModuleAccess(request, env);
-      if (moduleAccess) return moduleAccess;
-      const versionedEditor = await handleVersionedEditor(request, env);
-      if (versionedEditor) return versionedEditor;
 
       const creatorSiteView = await handleCreatorSiteView(request, env);
       if (creatorSiteView) return creatorSiteView;
@@ -164,12 +119,6 @@ export default {
       if (creatorEntitlement) return creatorEntitlement;
       const actionConnect = await handleActionConnect(request, env);
       if (actionConnect) return actionConnect;
-      const musicWorkspace = await handleMusicWorkspace(request, env);
-      if (musicWorkspace) return musicWorkspace;
-      const creatorStore = await handleCreatorStore(request, env);
-      if (creatorStore) return creatorStore;
-      const creatorCommerce = await handleCreatorCommerce(request, env);
-      if (creatorCommerce) return creatorCommerce;
       const creatorCheckout = await handleCreatorCheckout(request, env);
       if (creatorCheckout) return creatorCheckout;
       const computeResponse = await handleComputeApi(request, env);

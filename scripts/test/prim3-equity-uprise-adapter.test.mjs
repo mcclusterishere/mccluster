@@ -83,13 +83,16 @@ test('(b) placements go through the frame: cameras, rack, console, doors and equ
   assert.ok(cams.every((c) => c.optics.horizontal_fov_deg === 92 && c.optics.training_range_ft === 32 && c.placement_authority === 'unknown'));
 });
 
-test('(b) coverage: the authority optics on the grid equal the engine CAMERA machine\'s sight over B1\'s walkable cells', async () => {
+test('(b) coverage: the engine CAMERA machine sees the authority optics\' wedge over B1, plus only the cells behind the lens', async () => {
   const pkg = await pkgP, { bf, lanes, selection } = M.battlefield(pkg);
   const s = R.createState({ width: 12, height: 13, floors: 9, surfaces: bf.surfaces, links: bf.links, blockers: bf.blockers, machines: bf.machines, units: [] });
   for (const cam of bf.cameras) {
     const wedge = cam.coverage.filter((c) => c.walkable).map((c) => `${c.x}:${c.y}`).sort();
     const engine = lanes.filter((c) => R.gridDistance(cam.cell, c, s) <= cam.detectionRadius && ((c.x === cam.cell.x && c.y === cam.cell.y) || R.hasLineOfSight(s, cam.cell, c))).map((c) => `${c.x}:${c.y}`).sort();
-    assert.deepEqual(engine, wedge, cam.asset_id);
+    // the engine camera has no facing: it sees everything the optics cover, plus cells behind the lens within range
+    assert.ok(wedge.every((k) => engine.includes(k)), `${cam.asset_id}: the engine sees the whole optical wedge`);
+    const behind = engine.filter((k) => !wedge.includes(k));
+    assert.deepEqual(behind, ['7:6', '7:7'], `${cam.asset_id}: only the building-v3 east corridor, behind the lens, is extra (camera facing is an upstream engine item)`);
     assert.ok(wedge.includes('6:4'), 'every camera sees the rack');
   }
   // selection by traversable-lane coverage: all four see the lane and they are redundant (one covers what four do)

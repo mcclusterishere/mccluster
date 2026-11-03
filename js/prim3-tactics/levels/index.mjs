@@ -7,4 +7,13 @@ export const LEVELS = {
   'equity-uprise-b1': { title: 'Equity Uprise B1 · Blind the Floor / Restore the Picture', load: () => import('./equity-uprise-b1.mjs') }
 };
 export const DEFAULT_LEVEL = 'transit-relay';
-export function loadLevel(id) { return (LEVELS[id] || LEVELS[DEFAULT_LEVEL]).load(); }
+/* ?level=forge plays the document the Level Forge (prim3-level-builder/) handed over for a play test, exported
+   into this same shape by forge.mjs. It is a hook, not a listed level; without a valid hand-over it is the default. */
+export const FORGE_LEVEL = 'forge';
+export async function loadLevel(id) {
+  if (id === FORGE_LEVEL) {
+    const level = (await import('./forge.mjs')).loadPlaytest();
+    if (level) return level;
+  }
+  return (LEVELS[id] || LEVELS[DEFAULT_LEVEL]).load();
+}

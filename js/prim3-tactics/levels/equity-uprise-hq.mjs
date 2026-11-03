@@ -84,9 +84,11 @@ export const PLAN = {
   },
   doors: {
     publicOuter: { facade: 'south', x1: 31, x2: 41 },
-    stairADischarge: { facade: 'east', x: 72, y1: 56, y2: 60 },
-    stairBDischarge: { facade: 'north', y: 72, x1: 12, x2: 15 },
-    serviceWest: { facade: 'west', x: 0, y1: 56, y2: 59 }
+    // building v3 (2026-11-03): Stair A's exit sits on its Floor 1 landing; Stair B's former north exit faced the
+    // stair mid-landing and could not exist, so it shares the paired west frame with the service leaf
+    stairADischarge: { facade: 'east', x: 72, y1: 55, y2: 58.2 },
+    stairBDischarge: { facade: 'west', x: 0, y1: 54.3, y2: 57.1 },
+    serviceWest: { facade: 'west', x: 0, y1: 57.1, y2: 59.9 }
   },
   roof: {
     passengerOverrun: { x1: 54, y1: 34, x2: 62, y2: 44, h_ft: 8 },
@@ -255,7 +257,7 @@ const ROOT = new URL('../../../', import.meta.url);
 const floorPart = (n) => ({
   id: `floor-0${n}`, file: `equity-uprise-floor-0${n}-core-v2.glb`, ffeFt: (n - 1) * 13.5, storey: n, lazy: true,
   // the combined chassis supplies the shared cores; the facade supplies the perimeter (as the building viewer does)
-  drop: /^(stair_|pass_|freight_|mep)|IDENTITY-SIGN/, // the identity-sign slot is the building's brand slot: never drawn here
+  drop: /^(stair_|pass_|freight_|mep)|IDENTITY-SIGN|^brand-slot::/, // the identity-sign slot is the building's brand slot: never drawn here
   replacedBy: [[/^(north_wall|west_wall|east_wall|south_mullion_)|^F[2-6]-SOUTH-GLAZING-01::pane-/, 'facade']]
 });
 export const MODEL = {
@@ -269,7 +271,7 @@ export const MODEL = {
     { id: 'chassis', file: 'equity-uprise-building-core-v2.glb', ffeFt: 0, required: true,
       // never drawn: the diagnostic program pads, door/egress/equipment markers and every storey's program blocks
       // (the detailed floors carry the real rooms). B1's chassis pieces give way to the detailed B1 model.
-      drop: /^B1_program|^L[0-7]_(program|circle|support|sphere|zone)|^SITE_(door|discharge_barrier|equipment)/,
+      drop: /^B1_program|^L[0-7]_(program|circle|support|sphere|zone)|^SITE_(door|discharge_barrier|equipment)|^F1-DOOR-/,
       replacedBy: [
         [/^(L0_|B1_)|_L-13\.5_/, 'basement'],
         [/^L1_/, 'floor-01'],
@@ -280,12 +282,13 @@ export const MODEL = {
     { id: 'floor-01', file: 'equity-uprise-floor-01-core-v2.glb', ffeFt: 0, storey: 1,
       // the shared cores come from the chassis; the glazed perimeter from the facade (or plain glass on the battery
       // tier); the public entrance leaves stand open for the drill
-      drop: /IDENTITY-SIGN|^(stair_|passenger_|freight_|mep)|^(north|west|east)_exterior_wall|^south_exterior_(left|right)|^F1-ENTRY-DOOR-(OUTER|INNER)::leaf/ },
+      drop: /IDENTITY-SIGN|^brand-slot::|^(stair_|passenger_|freight_|mep)|^(north|west|east)_exterior_wall|^south_exterior_(left|right)|^F1-ENTRY-DOOR-(OUTER|INNER)::leaf/ },
     { id: 'roof', file: 'equity-uprise-floor-07-core-v2.glb', ffeFt: 81, storey: 7 },
-    // the curtain wall, crown and entry; 2.5 MB, so not on the battery tier. Its signage reconstructs the
-    // Equity Uprise mark and lettering from primitives: never drawn here (AGENTS.md, hard rule 11)
+    // the curtain wall, crown and entry; 2.5 MB, so not on the battery tier. Since building v3 the facade carries
+    // no mark geometry at all, only empty brand-slot nodes (production/brand/brand-manifest.json); any legacy sign
+    // geometry is still never drawn here (AGENTS.md, hard rule 11)
     { id: 'facade', file: 'equity-uprise-facade-core-v2.glb', ffeFt: 0, tiers: ['mid', 'high'],
-      drop: /^FAC-SIGN-|^FAC-DOOR-LEAF-/ },
+      drop: /^FAC-SIGN-|^FAC-DOOR-LEAF-|^brand-slot::/ },
     floorPart(2), floorPart(3), floorPart(4), floorPart(5), floorPart(6),
     // B1, the detailed basement (in git; loads the first time the cutaway goes below grade)
     { id: 'basement', file: 'equity-uprise-basement-b1-core-v2.glb', ffeFt: -13.5, storey: 0, lazy: true }

@@ -22,6 +22,8 @@ Canonical vector source:
 
 The approved mark is the navy **E + equals + rising arrow / ascending bars** symbol. It is **not** literal `E = U` typography.
 
+> **v3 brand-slot contract (2026-11-03) — supersedes any instruction below to model the mark or the wordmark as geometry.** No builder draws, traces, extrudes, plates, haloes or letters a mark (root `AGENTS.md`: THE LOGOS ARE NOT YOURS TO DRAW). The facade and every identity wall carry **brand slots**: empty named nodes (`brand-slot::<id>`) whose glTF extras hold the slot record from `production/brand/brand-manifest.json` (centre, normal, up, max width/height, mount, fit `contain`). At runtime `production/brand/equity-uprise-brand-slots.mjs` places the owner-supplied artwork on each enabled slot as one textured plane, scaled proportionally, never cropped or recoloured. Default artwork: `assets/img/equity-uprise-logo.webp` (owner-supplied emblem, includes its own tile). The canopy-fascia slot is empty until the owner supplies a horizontal lockup; the mark is never written out in words. **To assign the building a new logo:** add the owner's file, point `artwork.default` (or a slot's `artwork` variant) at it, update `sha256`, enable any optional slots — no GLB rebuild needed.
+
 Primary institutional wordmark: **Equity Uprise**.
 
 ## Brand-color rule

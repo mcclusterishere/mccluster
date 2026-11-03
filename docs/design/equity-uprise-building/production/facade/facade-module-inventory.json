@@ -83,7 +83,8 @@
     "restroom_clerestory",
     "support_clerestory",
     "louver_service",
-    "entrance_door"
+    "entrance_door",
+    "egress_door"
   ],
   "modules": [
     {
@@ -434,9 +435,20 @@
         54,
         60
       ],
-      "classification": "stair_core_glazing",
-      "material_id": "FAC-GLASS-02",
-      "rationale": "Stair A / north core band with narrow controlled daylight"
+      "classification": "egress_door",
+      "material_id": "FAC-METAL-01",
+      "rationale": "Stair A exit discharge door (floor-01-site-egress.json F1-DOOR-STAIR-A-DISCHARGE) opening from the Stair A Floor 1 landing straight to the east discharge walk; replaces the former stair glass slit at this one module.",
+      "door_openings": [
+        {
+          "object_id": "F1-DOOR-STAIR-A-DISCHARGE",
+          "span_ft": [
+            55.0,
+            58.2
+          ],
+          "height_ft": 7.5,
+          "leaf": "single exit-only insulated metal leaf, swings out, no exterior hardware"
+        }
+      ]
     },
     {
       "id": "FAC-EAST-F1-M11",
@@ -818,9 +830,29 @@
         54,
         60
       ],
-      "classification": "service_opaque",
-      "material_id": "FAC-OPAQUE-01",
-      "rationale": "west freight / Stair B service-core expression"
+      "classification": "egress_door",
+      "material_id": "FAC-METAL-01",
+      "rationale": "Paired west door: Stair B exit discharge leaf (via the Floor 1 west service approach) + secure service entry leaf (floor-01-site-egress.json).",
+      "door_openings": [
+        {
+          "object_id": "F1-DOOR-STAIR-B-DISCHARGE",
+          "span_ft": [
+            54.3,
+            57.1
+          ],
+          "height_ft": 7.5,
+          "leaf": "exit leaf, free egress from inside, secured from outside"
+        },
+        {
+          "object_id": "F1-DOOR-SERVICE-WEST",
+          "span_ft": [
+            57.1,
+            59.9
+          ],
+          "height_ft": 7.5,
+          "leaf": "service leaf, card access from outside"
+        }
+      ]
     },
     {
       "id": "FAC-WEST-F1-M11",
@@ -4770,30 +4802,33 @@
     },
     {
       "id": "FAC-BRAND-ENTRY-01",
-      "kind": "architectural_mark",
-      "text": "E=U",
+      "kind": "brand_slot",
       "elevation": "south",
       "center_x_ft": 36,
       "base_z_ft": 11.15,
-      "material_id": "FAC-SIGN-01"
+      "material_id": "FAC-SIGN-01",
+      "brand_slot": "facade-entry-portal",
+      "note": "Position only. No drawn mark or lettering; owner-supplied artwork applied at runtime from ../brand/brand-manifest.json."
     },
     {
       "id": "FAC-WORDMARK-ENTRY-01",
-      "kind": "architectural_wordmark",
-      "text": "EQUITY UPRISE",
+      "kind": "brand_slot",
       "elevation": "south_canopy_fascia",
       "center_x_ft": 36,
       "base_z_ft": 9.48,
-      "material_id": "FAC-SIGN-01"
+      "material_id": "FAC-SIGN-01",
+      "brand_slot": "facade-entry-canopy-fascia",
+      "note": "Position only. No drawn mark or lettering; owner-supplied artwork applied at runtime from ../brand/brand-manifest.json."
     },
     {
       "id": "FAC-BRAND-CROWN-01",
-      "kind": "architectural_mark",
-      "text": "E=U",
+      "kind": "brand_slot",
       "elevation": "south",
       "center_x_ft": 36,
       "base_z_ft": 78.25,
-      "material_id": "FAC-SIGN-01"
+      "material_id": "FAC-SIGN-01",
+      "brand_slot": "facade-crown-south",
+      "note": "Position only. No drawn mark or lettering; owner-supplied artwork applied at runtime from ../brand/brand-manifest.json."
     },
     {
       "id": "FAC-CROWN-CAP-01",

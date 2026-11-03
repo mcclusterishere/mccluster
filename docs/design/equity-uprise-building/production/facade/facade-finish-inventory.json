@@ -882,10 +882,16 @@
         "entry_sign_mounting_plane"
       ],
       "description": "Real backing/mounting plane for entry identity.",
-      "implementation_status": "implemented_and_verified_step_5",
+      "implementation_status": "superseded_by_brand_slot_v3",
       "authority_status": "locked_for_next_modeling_pass",
       "implementation_commit": "57d179edbd97e380ff1581b944cb4601ca3a7b2f",
-      "verification_snapshot": "39305ef8b27a5c521aa7c8de68e1dac73691dc3b"
+      "verification_snapshot": "39305ef8b27a5c521aa7c8de68e1dac73691dc3b",
+      "superseded_v3": {
+        "date": "2026-11-03",
+        "by": "brand slot facade-entry-portal",
+        "manifest": "../brand/brand-manifest.json",
+        "reason": "Builders may not rebuild, letter, back-plate or halo a mark (root AGENTS.md: THE LOGOS ARE NOT YOURS TO DRAW). The geometry this record produced (rectangles + arrow strokes, stroke-font lettering, pale plate, halo box) is removed; the position survives as a named empty brand-slot node and the owner-supplied artwork is applied at runtime."
+      }
     },
     {
       "id": "FAC-SIGN-LOGO-ENTRY-01",
@@ -901,10 +907,16 @@
         "pale_mounting_plate"
       ],
       "description": "Use the exact approved repo Equity Uprise logo geometry at the main entrance; literal E=U substitution is prohibited.",
-      "implementation_status": "implemented_and_verified_step_5",
+      "implementation_status": "superseded_by_brand_slot_v3",
       "authority_status": "locked_for_next_modeling_pass",
       "implementation_commit": "57d179edbd97e380ff1581b944cb4601ca3a7b2f",
-      "verification_snapshot": "39305ef8b27a5c521aa7c8de68e1dac73691dc3b"
+      "verification_snapshot": "39305ef8b27a5c521aa7c8de68e1dac73691dc3b",
+      "superseded_v3": {
+        "date": "2026-11-03",
+        "by": "brand slot facade-entry-portal",
+        "manifest": "../brand/brand-manifest.json",
+        "reason": "Builders may not rebuild, letter, back-plate or halo a mark (root AGENTS.md: THE LOGOS ARE NOT YOURS TO DRAW). The geometry this record produced (rectangles + arrow strokes, stroke-font lettering, pale plate, halo box) is removed; the position survives as a named empty brand-slot node and the owner-supplied artwork is applied at runtime."
+      }
     },
     {
       "id": "FAC-SIGN-LETTER-WORDMARK-ENTRY-01",
@@ -918,10 +930,16 @@
         "dimensional_Equity_Uprise_wordmark"
       ],
       "description": "Replace block wordmark with architectural lettering.",
-      "implementation_status": "implemented_and_verified_step_5",
+      "implementation_status": "superseded_by_brand_slot_v3",
       "authority_status": "locked_for_next_modeling_pass",
       "implementation_commit": "57d179edbd97e380ff1581b944cb4601ca3a7b2f",
-      "verification_snapshot": "39305ef8b27a5c521aa7c8de68e1dac73691dc3b"
+      "verification_snapshot": "39305ef8b27a5c521aa7c8de68e1dac73691dc3b",
+      "superseded_v3": {
+        "date": "2026-11-03",
+        "by": "brand slot facade-entry-canopy-fascia",
+        "manifest": "../brand/brand-manifest.json",
+        "reason": "Builders may not rebuild, letter, back-plate or halo a mark (root AGENTS.md: THE LOGOS ARE NOT YOURS TO DRAW). The geometry this record produced (rectangles + arrow strokes, stroke-font lettering, pale plate, halo box) is removed; the position survives as a named empty brand-slot node and the owner-supplied artwork is applied at runtime."
+      }
     },
     {
       "id": "FAC-SIGN-HALO-ENTRY-01",
@@ -935,10 +953,16 @@
         "restrained_entry_sign_halo"
       ],
       "description": "Subtle night identity lighting.",
-      "implementation_status": "implemented_and_verified_step_5",
+      "implementation_status": "superseded_by_brand_slot_v3",
       "authority_status": "locked_for_next_modeling_pass",
       "implementation_commit": "57d179edbd97e380ff1581b944cb4601ca3a7b2f",
-      "verification_snapshot": "39305ef8b27a5c521aa7c8de68e1dac73691dc3b"
+      "verification_snapshot": "39305ef8b27a5c521aa7c8de68e1dac73691dc3b",
+      "superseded_v3": {
+        "date": "2026-11-03",
+        "by": "brand slot facade-entry-portal",
+        "manifest": "../brand/brand-manifest.json",
+        "reason": "Builders may not rebuild, letter, back-plate or halo a mark (root AGENTS.md: THE LOGOS ARE NOT YOURS TO DRAW). The geometry this record produced (rectangles + arrow strokes, stroke-font lettering, pale plate, halo box) is removed; the position survives as a named empty brand-slot node and the owner-supplied artwork is applied at runtime."
+      }
     },
     {
       "id": "FAC-SIGN-BACKER-CROWN-01",
@@ -952,10 +976,16 @@
         "crown_sign_mounting_plane"
       ],
       "description": "Mounting plane for the single allowed crown E = U mark.",
-      "implementation_status": "implemented_and_verified_step_5",
+      "implementation_status": "superseded_by_brand_slot_v3",
       "authority_status": "locked_for_next_modeling_pass",
       "implementation_commit": "57d179edbd97e380ff1581b944cb4601ca3a7b2f",
-      "verification_snapshot": "39305ef8b27a5c521aa7c8de68e1dac73691dc3b"
+      "verification_snapshot": "39305ef8b27a5c521aa7c8de68e1dac73691dc3b",
+      "superseded_v3": {
+        "date": "2026-11-03",
+        "by": "brand slot facade-crown-south",
+        "manifest": "../brand/brand-manifest.json",
+        "reason": "Builders may not rebuild, letter, back-plate or halo a mark (root AGENTS.md: THE LOGOS ARE NOT YOURS TO DRAW). The geometry this record produced (rectangles + arrow strokes, stroke-font lettering, pale plate, halo box) is removed; the position survives as a named empty brand-slot node and the owner-supplied artwork is applied at runtime."
+      }
     },
     {
       "id": "FAC-SIGN-LOGO-CROWN-01",
@@ -971,10 +1001,16 @@
         "restrained_crown_scale"
       ],
       "description": "Future crown identity must use the same exact approved repo Equity Uprise logo geometry; literal E=U substitution is prohibited.",
-      "implementation_status": "implemented_and_verified_step_5",
+      "implementation_status": "superseded_by_brand_slot_v3",
       "authority_status": "locked_for_next_modeling_pass",
       "implementation_commit": "57d179edbd97e380ff1581b944cb4601ca3a7b2f",
-      "verification_snapshot": "39305ef8b27a5c521aa7c8de68e1dac73691dc3b"
+      "verification_snapshot": "39305ef8b27a5c521aa7c8de68e1dac73691dc3b",
+      "superseded_v3": {
+        "date": "2026-11-03",
+        "by": "brand slot facade-crown-south",
+        "manifest": "../brand/brand-manifest.json",
+        "reason": "Builders may not rebuild, letter, back-plate or halo a mark (root AGENTS.md: THE LOGOS ARE NOT YOURS TO DRAW). The geometry this record produced (rectangles + arrow strokes, stroke-font lettering, pale plate, halo box) is removed; the position survives as a named empty brand-slot node and the owner-supplied artwork is applied at runtime."
+      }
     },
     {
       "id": "FAC-SIGN-HALO-CROWN-01",
@@ -988,10 +1024,16 @@
         "restrained_crown_sign_halo"
       ],
       "description": "Subtle night backlighting for crown mark.",
-      "implementation_status": "implemented_and_verified_step_6",
+      "implementation_status": "superseded_by_brand_slot_v3",
       "authority_status": "locked_for_next_modeling_pass",
       "implementation_commit": "1a824eb2be3609a75f2a0b13e64f8833ec281b86",
-      "verification_snapshot": "65a0bd0f886b1dc2714a8dd4685d92fefc12be52"
+      "verification_snapshot": "65a0bd0f886b1dc2714a8dd4685d92fefc12be52",
+      "superseded_v3": {
+        "date": "2026-11-03",
+        "by": "brand slot facade-crown-south",
+        "manifest": "../brand/brand-manifest.json",
+        "reason": "Builders may not rebuild, letter, back-plate or halo a mark (root AGENTS.md: THE LOGOS ARE NOT YOURS TO DRAW). The geometry this record produced (rectangles + arrow strokes, stroke-font lettering, pale plate, halo box) is removed; the position survives as a named empty brand-slot node and the owner-supplied artwork is applied at runtime."
+      }
     },
     {
       "id": "FAC-CROWN-BAND-FINISH-SOUTH-01",
@@ -1368,17 +1410,16 @@
     }
   },
   "brand_authority": {
-    "canonical_asset": "assets/img/equity-uprise-logo.webp",
-    "asset_git_blob_sha": "53b9a07ee14c107e45cb13b871bd1637db7bebe6",
-    "asset_sha256": "3dd74068b984173a3c88bfd124f150653cdf04e35657006df2cf8961e57ce29f",
-    "vector_source": "equity-uprise.html::.appbar__eq",
-    "machine_vector_ref": "equity-uprise-logo-vector.json",
-    "canonical_rgb": [
-      4,
-      45,
-      82
-    ],
-    "recolor_allowed": false,
-    "literal_e_equals_u_substitution_allowed": false
+    "contract": "../brand/brand-manifest.json",
+    "rule": "Brand marks are runtime brand slots filled only from owner-supplied artwork, scaled proportionally, never cropped, recoloured, traced, lettered or plated.",
+    "superseded_records": [
+      "FAC-SIGN-BACKER-CROWN-01",
+      "FAC-SIGN-BACKER-ENTRY-01",
+      "FAC-SIGN-HALO-CROWN-01",
+      "FAC-SIGN-HALO-ENTRY-01",
+      "FAC-SIGN-LETTER-WORDMARK-ENTRY-01",
+      "FAC-SIGN-LOGO-CROWN-01",
+      "FAC-SIGN-LOGO-ENTRY-01"
+    ]
   }
 }

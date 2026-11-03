@@ -2,9 +2,9 @@
   "schema_version": "1.0.0",
   "scene_id": "equity-uprise-facade-core-v2",
   "not_for_construction": true,
-  "glb_bytes": 2490740,
-  "sha256": "6a186e78f0e3ce5d5378394ae367dd6f3ca4451f62d9b7d8e558a89020878e67",
-  "mesh_count": 3975,
+  "glb_bytes": 2428280,
+  "sha256": "43fc1db6d429a701ae040d2f2b2970a1387866f6a1462cc9f509c387ad1efebb",
+  "mesh_count": 3875,
   "inventory_modules": 288,
   "inventory_modules_modeled": 288,
   "inventory_features": 9,
@@ -19,17 +19,56 @@
   "finish_step6_records": 14,
   "finish_step6_modeled": 14,
   "finish_step6_missing": [],
-  "canonical_logo_asset": "assets/img/equity-uprise-logo.webp",
-  "canonical_logo_sha256": "3dd74068b984173a3c88bfd124f150653cdf04e35657006df2cf8961e57ce29f",
-  "finish_records_modeled_total": 68,
+  "brand_manifest": "../brand/brand-manifest.json",
+  "brand_slots": [
+    "facade-entry-portal",
+    "facade-entry-canopy-fascia",
+    "facade-crown-south",
+    "facade-crown-east",
+    "facade-crown-west"
+  ],
+  "brand_default_artwork": "assets/img/equity-uprise-logo.webp",
+  "brand_default_artwork_sha256": "3dd74068b984173a3c88bfd124f150653cdf04e35657006df2cf8961e57ce29f",
+  "egress_doors": [
+    {
+      "object_id": "F1-DOOR-STAIR-A-DISCHARGE",
+      "elevation": "east",
+      "span_ft": [
+        55.0,
+        58.2
+      ],
+      "height_ft": 7.5,
+      "module": "FAC-EAST-F1-M10"
+    },
+    {
+      "object_id": "F1-DOOR-STAIR-B-DISCHARGE",
+      "elevation": "west",
+      "span_ft": [
+        54.3,
+        57.1
+      ],
+      "height_ft": 7.5,
+      "module": "FAC-WEST-F1-M10"
+    },
+    {
+      "object_id": "F1-DOOR-SERVICE-WEST",
+      "elevation": "west",
+      "span_ft": [
+        57.1,
+        59.9
+      ],
+      "height_ft": 7.5,
+      "module": "FAC-WEST-F1-M10"
+    }
+  ],
+  "finish_records_modeled_total": 71,
   "finish_future_records_remaining": 0,
-  "finished_window_modules": 238,
+  "finished_window_modules": 237,
   "material_system_version": "pbr-v1",
-  "pbr_materials_embedded": 15,
+  "pbr_materials_embedded": 12,
   "pbr_material_roles": [
     "FAC-GLASS-01",
     "FAC-GLASS-02",
-    "FAC-LOGO-NAVY",
     "FAC-LOUVER-01",
     "FAC-METAL-01",
     "FAC-MINERAL-01",
@@ -37,22 +76,20 @@
     "FAC-PAVER-01",
     "FAC-PAVER-02",
     "FAC-SHADOW-01",
-    "FAC-SIGN-01",
-    "FAC-SIGN-PLATE",
     "FAC-SITE-EDGE",
     "FAC-WARM-01",
     "LIGHT-WARM-ARCH"
   ],
   "finish_geometry_counts": {
     "FAC-WIN-JAMB-CLEAR-01": 304,
-    "FAC-WIN-HEAD-01": 238,
-    "FAC-WIN-SILL-01": 238,
-    "FAC-WIN-REVEAL-01": 476,
-    "FAC-WIN-GASKET-01": 476,
+    "FAC-WIN-HEAD-01": 237,
+    "FAC-WIN-SILL-01": 237,
+    "FAC-WIN-REVEAL-01": 474,
+    "FAC-WIN-GASKET-01": 474,
     "FAC-WIN-ASSEMBLY-SOUTH-CLEAR-01": 47,
     "FAC-WIN-ASSEMBLY-EAST-CLEAR-01": 54,
-    "FAC-WIN-JAMB-CORE-01": 132,
-    "FAC-WIN-ASSEMBLY-EAST-STAIR-01": 18,
+    "FAC-WIN-JAMB-CORE-01": 130,
+    "FAC-WIN-ASSEMBLY-EAST-STAIR-01": 17,
     "FAC-WIN-ASSEMBLY-NORTH-STAIR-01": 18,
     "FAC-WIN-ASSEMBLY-NORTH-RESTROOM-CLERESTORY-01": 12,
     "FAC-WIN-ASSEMBLY-NORTH-SUPPORT-CLERESTORY-01": 18,
@@ -63,7 +100,7 @@
     "FAC-PRIMARY-FIN-FINISH-01": 20,
     "FAC-SPANDREL-REVEAL-FINISH-01": 24,
     "FAC-SERVICE-OPAQUE-NORTH-01": 18,
-    "FAC-SERVICE-OPAQUE-WEST-01": 18,
+    "FAC-SERVICE-OPAQUE-WEST-01": 17,
     "FAC-ACOUSTIC-OPAQUE-SOUTH-F4-01": 3,
     "FAC-ACOUSTIC-OPAQUE-WEST-F4-01": 3,
     "FAC-SERVICE-LOUVER-FINISH-01": 12,
@@ -87,12 +124,16 @@
     "FAC-ENTRY-SOFFIT-01": 1,
     "FAC-ENTRY-FASCIA-01": 1,
     "FAC-ENTRY-DOWNLIGHT-01": 6,
-    "FAC-SIGN-HALO-ENTRY-01": 1,
-    "FAC-SIGN-BACKER-ENTRY-01": 1,
+    "FAC-BRAND-ENTRY-01": 1,
     "FAC-SIGN-LOGO-ENTRY-01": 1,
+    "FAC-SIGN-BACKER-ENTRY-01": 1,
+    "FAC-SIGN-HALO-ENTRY-01": 1,
+    "FAC-WORDMARK-ENTRY-01": 1,
     "FAC-SIGN-LETTER-WORDMARK-ENTRY-01": 1,
-    "FAC-SIGN-BACKER-CROWN-01": 1,
+    "FAC-BRAND-CROWN-01": 1,
     "FAC-SIGN-LOGO-CROWN-01": 1,
+    "FAC-SIGN-BACKER-CROWN-01": 1,
+    "FAC-SIGN-HALO-CROWN-01": 1,
     "FAC-EXTERIOR-LIGHT-ENTRY-GRAZE-01": 4,
     "FAC-EXTERIOR-LIGHT-BASE-01": 4,
     "FAC-SITE-APRON-01": 1,
@@ -110,14 +151,14 @@
     "FAC-CROWN-HEADHOUSE-TRIM-A-01": 1,
     "FAC-CROWN-HEADHOUSE-TRIM-B-01": 1,
     "FAC-CROWN-ELEVATOR-TRIM-01": 1,
-    "FAC-SIGN-HALO-CROWN-01": 1,
     "FAC-EXTERIOR-LIGHT-CROWN-01": 6
   },
   "classification_counts": {
     "clear_vision": 152,
     "entrance_door": 2,
-    "stair_core_glazing": 36,
-    "service_opaque": 36,
+    "egress_door": 2,
+    "stair_core_glazing": 35,
+    "service_opaque": 35,
     "restroom_clerestory": 12,
     "support_clerestory": 18,
     "louver_service": 6,
@@ -126,18 +167,18 @@
   },
   "bounds_m": [
     [
-      -0.24384000000000003,
+      -0.27432,
       -4.2672,
       -0.054864
     ],
     [
-      22.18944,
+      22.219920000000002,
       22.207728000000003,
       27.139392
     ]
   ],
-  "checks_total": 44,
-  "checks_passed": 44,
+  "checks_total": 48,
+  "checks_passed": 48,
   "checks_failed": 0,
   "passed": true,
   "checks": [
@@ -227,9 +268,9 @@
       "detail": ""
     },
     {
-      "name": "238 window-like modules detailed",
+      "name": "237 window-like modules detailed (238 minus the Stair A egress-door module)",
       "passed": true,
-      "detail": "238"
+      "detail": "237"
     },
     {
       "name": "all four finish corners resolved",
@@ -252,19 +293,39 @@
       "detail": ""
     },
     {
-      "name": "canonical logo asset bound",
+      "name": "brand manifest default artwork is the owner-supplied emblem",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "canonical logo hash bound",
+      "name": "brand manifest default artwork hash bound",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "literal E=U substitution prohibited",
+      "name": "facade brand slots emitted as empty nodes",
+      "passed": true,
+      "detail": "['brand-slot::facade-entry-portal', 'brand-slot::facade-entry-canopy-fascia', 'brand-slot::facade-crown-south', 'brand-slot::facade-crown-east', 'brand-slot::facade-crown-west']"
+    },
+    {
+      "name": "no drawn mark or lettering geometry in facade",
       "passed": true,
       "detail": ""
+    },
+    {
+      "name": "Stair A exit door exists where the egress plan says",
+      "passed": true,
+      "detail": "{'object_id': 'F1-DOOR-STAIR-A-DISCHARGE', 'elevation': 'east', 'span_ft': [55.0, 58.2], 'height_ft': 7.5, 'module': 'FAC-EAST-F1-M10'}"
+    },
+    {
+      "name": "Stair B exit door exists where the egress plan says",
+      "passed": true,
+      "detail": "{'object_id': 'F1-DOOR-STAIR-B-DISCHARGE', 'elevation': 'west', 'span_ft': [54.3, 57.1], 'height_ft': 7.5, 'module': 'FAC-WEST-F1-M10'}"
+    },
+    {
+      "name": "west service door exists where the egress plan says",
+      "passed": true,
+      "detail": "{'object_id': 'F1-DOOR-SERVICE-WEST', 'elevation': 'west', 'span_ft': [57.1, 59.9], 'height_ft': 7.5, 'module': 'FAC-WEST-F1-M10'}"
     },
     {
       "name": "complete south entry assembly",
@@ -277,12 +338,12 @@
       "detail": ""
     },
     {
-      "name": "exact approved entry logo + wordmark modeled",
+      "name": "entry identity carried by brand slots",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "false crown E=U replaced by approved logo",
+      "name": "crown identity carried by a brand slot",
       "passed": true,
       "detail": ""
     },
@@ -359,7 +420,7 @@
     {
       "name": "substantial finished facade geometry",
       "passed": true,
-      "detail": "3975"
+      "detail": "3875"
     }
   ]
 }

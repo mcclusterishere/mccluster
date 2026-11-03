@@ -52,23 +52,19 @@
       "object_id": "site-north-egress-walk",
       "system": "site_egress",
       "type": "egress_walk",
-      "label": "North / Rear Exit Discharge Walk",
+      "label": "West Exit Discharge Walk (Stair B)",
       "geometry": {
         "polyline_ft": [
           [
-            13.5,
-            72
+            0,
+            55.7
           ],
           [
-            13.5,
-            90
+            -12,
+            55.7
           ],
           [
-            84,
-            90
-          ],
-          [
-            84,
+            -12,
             -24
           ]
         ]
@@ -179,8 +175,8 @@
       "location": {
         "facade": "east",
         "x": 72,
-        "y1": 56,
-        "y2": 60
+        "y1": 55.0,
+        "y2": 58.2
       },
       "access_class": "exit-only-from-interior",
       "normal_state": "secured-from-exterior",
@@ -198,10 +194,10 @@
       "type": "exterior_opening",
       "label": "Stair B Exit Discharge",
       "location": {
-        "facade": "north",
-        "y": 72,
-        "x1": 12,
-        "x2": 15
+        "facade": "west",
+        "x": 0,
+        "y1": 54.3,
+        "y2": 57.1
       },
       "access_class": "exit-only-from-interior",
       "normal_state": "secured-from-exterior",
@@ -221,8 +217,8 @@
       "location": {
         "facade": "west",
         "x": 0,
-        "y1": 56,
-        "y2": 59
+        "y1": 57.1,
+        "y2": 59.9
       },
       "access_class": "authorized-service",
       "normal_state": "locked",
@@ -246,7 +242,7 @@
         "failed"
       ],
       "scenario_controllable": true,
-      "normal_access_policy": "downward-to-b1-restricted-to-house-owner-or-underground-operations-admin",
+      "normal_access_policy": "open-normal-use; barrier engages only in evacuation mode (owner 2026-11-03: B1 is a normal floor)",
       "b1_to_floor1_egress": "preserved"
     },
     {
@@ -261,7 +257,7 @@
         "failed"
       ],
       "scenario_controllable": true,
-      "normal_access_policy": "downward-to-b1-restricted-to-house-owner-or-underground-operations-admin",
+      "normal_access_policy": "open-normal-use; barrier engages only in evacuation mode (owner 2026-11-03: B1 is a normal floor)",
       "b1_to_floor1_egress": "preserved"
     },
     {

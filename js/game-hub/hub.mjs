@@ -1,9 +1,11 @@
 /* The Game Hub (owner, 2026-11-03: "The learning hub is now the game hub"): one icon per learning module in the bar at
    the bottom of the screen, that module's games in the main panel, and its paired album in the music bar above the
-   icons. Embedded games run inside this page, so the music keeps playing while you play. */
+   icons. Embedded games run inside this page, so the music keeps playing while you play.
+
+   The hub is the house owner's (owner, 2026-11-03: "keep it on my private account"): game-hub.html loads this module
+   only after js/owner-only.mjs has heard yes from the server, so every card, the owner-only ones included, is shown. */
 import { validateModules, albumFor, parseHash, hashFor } from './modules.mjs';
 import { createPlayer } from './player.mjs';
-import { checkOwner } from '../prim3-world/owner-gate.mjs';
 
 const $ = (s) => document.querySelector(s);
 const esc = (x) => String(x ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -33,7 +35,8 @@ async function boot() {
   if (errors.length) console.warn('Game Hub modules:', errors);
   const modules = doc.modules;
   const player = createPlayer({ root: $('#ghMusic') });
-  let current = null, view = null, owner = false;
+  let current = null, view = null;
+  const owner = true; // this module runs only behind the owner gate
 
   const nav = $('#ghModules');
   nav.innerHTML = modules.map((m) => `<button type="button" class="gh-mod" data-module="${esc(m.id)}" style="--accent:${esc(m.accent)}" aria-pressed="false" aria-label="${esc(m.label)}">${iconHtml(m)}<span>${esc(m.short)}</span></button>`).join('');
@@ -94,9 +97,6 @@ async function boot() {
   let last = null; try { last = localStorage.getItem(LAST_KEY); } catch (e) { /* none */ }
   await select(want.module || last || doc.default, want.play, false);
   addEventListener('hashchange', () => { const h = parseHash(location.hash); select(h.module || current.id, h.play, false); });
-
-  /* PRIM3 World is the owner's app: its card appears only when the server says this session is the house owner */
-  checkOwner().then((r) => { owner = r.owner; if (owner && !view) renderPanel(current); });
 }
 
 boot().catch((e) => {

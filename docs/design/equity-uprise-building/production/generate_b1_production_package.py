@@ -145,7 +145,7 @@ routing={
     "routes":{
         "building_return":{"type":"scene","scene_id":"equity-uprise-building-core-v2","access":"authorized"},
         "authorized_floor1_return":{"type":"scene","scene_id":"equity-uprise-floor-01","access":"authorized"},
-        "underground_operations":{"type":"ui_state","target":"underground_operations","access":"role-and-safety-authorized","known_floor":True,"sandbox_environment":True,"live_real_world_control":False},
+        "underground_operations":{"type":"ui_state","target":"underground_operations","access":"open-normal-floor","known_floor":True,"sandbox_environment":True,"live_real_world_control":False},
         "tunnel_network":{"type":"ui_state","target":"underground_tunnel_network","access":"role-and-safety-authorized","known_infrastructure":True,"sandbox_environment":True,"live_real_world_control":False},
         "building_systems_training_sandbox":{"type":"ui_state","target":"canonical_b1_tunnel_sandbox","access":"authorized-learner-or-instructor","simulation":True,"canonical_geometry":True,"separate_clone":False,"live_real_world_control":False}
     },

@@ -7,6 +7,7 @@ import { createBakeoff } from './media/orchestrator.js';
 import { recommendModels } from './media/recommend.js';
 import { handleMediaMcp } from './media/mcp.js';
 import { houseOwnerActor, isCoreSigned, verifyCoreSignature } from './media/core-signature.js';
+import { coreSignedGate } from './world-core-reads.js';
 import { handleCoreMcp, handleCoreStatus } from './core/mcp.js';
 import { coreOAuthChallenge, coreOAuthMetadataResponse } from './core/oauth-resource.js';
 import { attachCompletedVariantAssets, handleSocialRequest } from './social/router.js';
@@ -47,6 +48,13 @@ export { HereTenantAgent } from './here-tenant-agent.js';
 async function dispatchRequest(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/+$/, '') || '/';
+
+    /* A request that announces McCluster Core's signature reaches exactly two
+       places: POST /v1/media/mcp (below) and GETs of the read-only World layers
+       the news pairing reads (./world-core-reads.js). Anything else that
+       announces it is refused here, never treated as anonymous. */
+    const coreRead = await coreSignedGate(request, env);
+    if (coreRead) return coreRead;
 
     // Activated only after the isolated transport is deployed and verified.
     // Forward the original request once: retrying a tools/call can duplicate work.

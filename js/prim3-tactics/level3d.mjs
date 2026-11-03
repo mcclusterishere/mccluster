@@ -217,6 +217,12 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
     for (const px of [s.x + 2, s.x + s.w - 3]) add(new THREE.BoxGeometry(M(0.6), hh, M(0.6)), M_CONC, px, hh / 2, s.y + s.d);
     add(new THREE.BoxGeometry(s.w, M(0.6), M(0.3)), M_IRON, s.x + s.w / 2 - 0.5, hh - M(0.6), s.y + s.d - 0.5);
   }
+  for (const s of SCENE.decks || []) { // a Level Forge catwalk or raised bridge: a grate deck at its surface height, railed
+    const hh = M(s.h);
+    const deck = add(boxUV(s.w, M(0.3), s.d, 1.5), M_GRATE, s.x + s.w / 2 - 0.5, hh - M(0.15) + 0.004, s.y + s.d / 2 - 0.5); deck.userData.roofZ = 1; roofs.push(deck);
+    for (const sz of [s.y - 0.45, s.y + s.d - 0.55]) add(new THREE.BoxGeometry(s.w, M(0.06), M(0.06)), M_IRON, s.x + s.w / 2 - 0.5, hh + M(1.05), sz);
+    for (const [px, pz] of [[s.x, s.y], [s.x + s.w - 1, s.y], [s.x, s.y + s.d - 1], [s.x + s.w - 1, s.y + s.d - 1]]) add(new THREE.BoxGeometry(M(0.3), hh, M(0.3)), M_IRON, px, hh / 2, pz);
+  }
   for (const st of SCENE.stairs || []) { // a steel flight from the foot tile up to the roof landing
     const a = st.from, b = st.to, h1 = surfaceHeight(b.x, b.y, 1);
     const steps = Math.max(12, Math.round(h1 / M(0.6))), dx = (b.x - a.x), dz = (b.y - a.y);
@@ -232,8 +238,11 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
   }
 
   /* ---------- props: containers, barriers, crates, tent, fence and gate, relay, extraction ---------- */
-  const proc = { container: new THREE.Group(), barrier: new THREE.Group(), crate: new THREE.Group(), hvac: new THREE.Group(), tree: new THREE.Group() };
+  const proc = { container: new THREE.Group(), barrier: new THREE.Group(), crate: new THREE.Group(), hvac: new THREE.Group(), tree: new THREE.Group(), props: new THREE.Group() };
   for (const g of Object.values(proc)) world.add(g);
+  // Level Forge props (levels/forge.mjs): kit pieces at their exact authored place and size, in world units; a plain
+  // stand-in box until the kit mesh arrives. Scenery only: the rules already have them as tiles.
+  for (const p of SCENE.props || []) add(new THREE.BoxGeometry(p.w, Math.max(p.h, 0.01), p.d), p.kind === 'water' ? M_WATER : M_CONC, p.x, p.y + Math.max(p.h, 0.01) / 2, p.z, { cast: p.kind !== 'water' && p.kind !== 'ground', parent: proc.props });
   // a container is a real 40 ft box (12.19 × 2.44 m) standing in the middle of its 4 × 1 tile footprint
   const BOX_L = M(12.19), BOX_W = M(2.44);
   const boxDims = (c) => { const long = c.w >= c.d; return { long, w: long ? Math.min(BOX_L, c.w) : Math.min(BOX_W, c.w), d: long ? Math.min(BOX_W, c.d) : Math.min(BOX_L, c.d) }; };
@@ -662,11 +671,12 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
       for (const r of SCENE.rooftop || []) jobs.push(place('hvac-3', r.x + r.w / 2 - 0.5, r.y + r.d / 2 - 0.5, Math.min(r.w - 0.1, M(3)), Math.min(r.d - 0.1, M(3)), M(r.h), surfaceHeight(r.x, r.y, 1)));
       for (const t of SCENE.trees || []) jobs.push(place('tree-8', t.x, t.y, M(4.2), M(4.2), M(6.5)));
       if (SCENE.relay) jobs.push(place('relay-terminal', SCENE.relay.x, SCENE.relay.y, M(1.44), M(1.44), M(2.2)));
+      for (const p of SCENE.props || []) jobs.push(place(p.id, p.x, p.z, p.w, p.d, Math.max(p.h, 0.01), p.y, p.yaw));
       // dressing beyond the playable edge only (never on a tile the rules use); [id, x, z, w m, d m, h m, yaw]
       if (SCENE.canal) for (const [id, x, z, w, d, h, yaw] of [['pipe-stack-6', -4, 18, 3.2, 6.4, 1.8, 0], ['rock-cluster', 67, 38, 4.8, 3.2, 1.8, 0.4], ['rock-cluster', -5, 52, 4.2, 2.7, 1.4, 1.2], ['pipe-stack-6', 68, 12, 3.2, 6.4, 1.8, Math.PI / 2], ['tree-8', -6, 30, 4.5, 4.5, 6.7, 0], ['tree-8', 70, 56, 4.8, 4.8, 7.4, 0]]) jobs.push(place(id, x, z, M(w), M(d), M(h), 0, yaw));
       await Promise.all(jobs);
       if (destroyed) return;
-      for (const g of [proc.container, proc.barrier, proc.crate, proc.hvac, proc.tree]) g.visible = false;
+      for (const g of [proc.container, proc.barrier, proc.crate, proc.hvac, proc.tree, proc.props]) g.visible = false;
       for (const m of relayGroup.children) if (m !== beacon && !(m.userData && m.userData.overlay)) m.visible = false;
       needs = true;
     } catch (e) { /* the procedural stand-ins stay */ }

@@ -4,8 +4,8 @@
    The 24 agents read their country's headlines on the OVH box (McCluster Core, executor prim3_agent_news) and write
    one reaction per story plus a regional brief every 4 hours. This module asks the owner-only Worker route
    GET https://api.mccluster.org/v1/prim3/news-desk?country=XX with the signed-in session and fills the card's
-   <section id="pwNews"> above the "News → mission" placeholder. Reactions are fiction voiced by McCluster about
-   real headlines; each headline links out to its publisher. Nothing is cached in the browser. */
+   <section id="pwNews"> above the "News → mission" placeholder. Each agent reacts in their own voice to real
+   headlines; each headline links out to its publisher. Nothing is cached in the browser. */
 import { onCountryCard } from './hooks.mjs';
 import { API_ORIGIN, storedToken } from './owner-gate.mjs';
 
@@ -31,7 +31,7 @@ export function deskHtml(data, { name, now = Date.now() } = {}) {
   }).join('');
   return `${brief ? `<p class="pw-desk-brief">${esc(brief.text)}<small>Brief · ${esc(ago(brief.created_at, now))} · from ${Number(brief.headline_count) || 0} headlines</small></p>` : ''}
     ${list ? `<ul class="pw-desk-list" aria-label="Agent reactions">${list}</ul>` : ''}
-    <p class="pw-note">Fiction voiced by McCluster about real headlines. Headlines link to their publishers.</p>`;
+    <p class="pw-note">Headlines link to their publishers.</p>`;
 }
 
 export async function loadDesk(country, { fetchImpl = globalThis.fetch, storage, timeoutMs = 8000 } = {}) {

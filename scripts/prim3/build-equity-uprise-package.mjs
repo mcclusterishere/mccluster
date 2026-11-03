@@ -45,20 +45,34 @@ const r6 = (v) => Math.round(v * 1e6) / 1e6;
 const r2 = (v) => Math.round(v * 100) / 100;
 const rect = (b) => ({ x1: b.x1, y1: b.y1, x2: b.x2, y2: b.y2 });
 
-// metres GLB → feet bounds per node, from the accessor min/max (nodes are only translated)
+// metres GLB → feet bounds per node: every mesh node's accessor box, carried through the node hierarchy (TRS)
 function glbNodeBounds(buf) {
   const len = buf.readUInt32LE(12), json = JSON.parse(buf.subarray(20, 20 + len).toString('utf8'));
+  const mul = (a, b) => { const o = new Array(16).fill(0); for (let c = 0; c < 4; c += 1) for (let r = 0; r < 4; r += 1) for (let k = 0; k < 4; k += 1) o[c * 4 + r] += a[k * 4 + r] * b[c * 4 + k]; return o; };
+  const trs = (n) => {
+    if (n.matrix) return n.matrix;
+    const [x, y, z, w] = n.rotation || [0, 0, 0, 1], [sx, sy, sz] = n.scale || [1, 1, 1], [tx, ty, tz] = n.translation || [0, 0, 0];
+    return [(1 - 2 * (y * y + z * z)) * sx, 2 * (x * y + z * w) * sx, 2 * (x * z - y * w) * sx, 0, 2 * (x * y - z * w) * sy, (1 - 2 * (x * x + z * z)) * sy, 2 * (y * z + x * w) * sy, 0, 2 * (x * z + y * w) * sz, 2 * (y * z - x * w) * sz, (1 - 2 * (x * x + y * y)) * sz, 0, tx, ty, tz, 1];
+  };
   const out = new Map();
-  for (const n of json.nodes) {
-    if (n.mesh == null) continue;
-    const t = n.translation || [0, 0, 0];
-    let lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
-    for (const p of json.meshes[n.mesh].primitives) {
-      const a = json.accessors[p.attributes.POSITION];
-      for (let i = 0; i < 3; i += 1) { lo[i] = Math.min(lo[i], a.min[i] + t[i]); hi[i] = Math.max(hi[i], a.max[i] + t[i]); }
+  const visit = (i, parent) => {
+    const n = json.nodes[i], m = mul(parent, trs(n));
+    if (n.mesh != null) {
+      let lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
+      for (const p of json.meshes[n.mesh].primitives) {
+        const a = json.accessors[p.attributes.POSITION];
+        for (let k = 0; k < 8; k += 1) {
+          const v = [k & 1 ? a.max[0] : a.min[0], k & 2 ? a.max[1] : a.min[1], k & 4 ? a.max[2] : a.min[2]];
+          const w = [0, 1, 2].map((r) => m[r] * v[0] + m[4 + r] * v[1] + m[8 + r] * v[2] + m[12 + r]);
+          for (let d = 0; d < 3; d += 1) { lo[d] = Math.min(lo[d], w[d]); hi[d] = Math.max(hi[d], w[d]); }
+        }
+      }
+      out.set(n.name, { x1: r2(lo[0] / 0.3048), y1: r2(lo[1] / 0.3048), z1: r2(lo[2] / 0.3048), x2: r2(hi[0] / 0.3048), y2: r2(hi[1] / 0.3048), z2: r2(hi[2] / 0.3048) });
     }
-    out.set(n.name, { x1: r2(lo[0] / 0.3048), y1: r2(lo[1] / 0.3048), z1: r2(lo[2] / 0.3048), x2: r2(hi[0] / 0.3048), y2: r2(hi[1] / 0.3048), z2: r2(hi[2] / 0.3048) });
-  }
+    for (const c of n.children || []) visit(c, m);
+  };
+  const I = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+  for (const r of json.scenes[json.scene || 0].nodes) visit(r, I);
   return out;
 }
 
@@ -98,9 +112,11 @@ export async function buildPackage(root = ROOT) {
   }
   for (const id of ['B1-LOCK-INNER-DOOR-01', 'B1-LOCK-OUTER-DOOR-01']) { const b = nb.get(id); B1.doors.push({ id, zone: 'b1-tunnel-transfer-lock', side: id.includes('OUTER') ? 'north' : 'south', x: r2((b.x1 + b.x2) / 2), y: id.includes('OUTER') ? b.y2 : b.y1, width_ft: r2(b.x2 - b.x1), leaf: true }); }
   B1.doors.sort((a, b) => a.id.localeCompare(b.id));
-  const equipIds = { 'B1-TELECOM-CONSOLE-01::desk': 'B1-TELECOM-CONSOLE-01', 'B1-LAB-TABLE-01': 'B1-LAB-TABLE-01', 'B1-LAB-CONSOLE-01::desk': 'B1-LAB-CONSOLE-01', 'B1-OPS-DESK-01': 'B1-OPS-DESK-01', 'B1-WORKSHOP-BENCH-01::top': 'B1-WORKSHOP-BENCH-01', 'B1-STAGING-RACK-01::frame': 'B1-STAGING-RACK-01', 'B1-LAB-GLASS-01': 'B1-LAB-GLASS-01', 'B1-LOCK-PANEL-01': 'B1-LOCK-PANEL-01' };
-  B1.equipment = Object.entries(equipIds).map(([node, id]) => { const b = nb.get(node); return { id, node, bounds_ft: { x1: b.x1, y1: b.y1, x2: b.x2, y2: b.y2 }, top_ft: b.z2 }; });
-  for (let j = 0; j < 4; j += 1) { const b = nb.get(`B1-TELECOM-RACKS-01::${j}`); if (b) B1.equipment.push({ id: `B1-TELECOM-RACKS-01::${j}`, node: `B1-TELECOM-RACKS-01::${j}`, bounds_ft: { x1: b.x1, y1: b.y1, x2: b.x2, y2: b.y2 }, top_ft: b.z2 }); }
+  // equipment: the union of a record's nodes (the record id itself and its '::part' children), so a builder that
+  // renames a part does not lose the record
+  const union = (prefix) => { let o = null; for (const [name, b] of nb) if (name === prefix || name.startsWith(prefix + '::')) o = o ? { x1: Math.min(o.x1, b.x1), y1: Math.min(o.y1, b.y1), x2: Math.max(o.x2, b.x2), y2: Math.max(o.y2, b.y2), z2: Math.max(o.z2, b.z2) } : { ...b }; return o; };
+  const EQUIP = ['B1-TELECOM-CONSOLE-01', 'B1-LAB-TABLE-01', 'B1-LAB-CONSOLE-01', 'B1-OPS-DESK-01', 'B1-WORKSHOP-BENCH-01', 'B1-STAGING-RACK-01', 'B1-LAB-GLASS-01', 'B1-LOCK-PANEL-01', ...[0, 1, 2, 3].map((j) => `B1-TELECOM-RACKS-01::${j}`)];
+  B1.equipment = EQUIP.map((id) => { const b = union(id); return b && { id, bounds_ft: { x1: b.x1, y1: b.y1, x2: b.x2, y2: b.y2 }, top_ft: b.z2 }; }).filter(Boolean);
 
   /* cores and site */
   const vs = core.vertical_systems;

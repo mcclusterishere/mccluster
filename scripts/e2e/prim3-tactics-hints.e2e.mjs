@@ -34,7 +34,7 @@ const WAVS={};const secondsBySrc={};
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE||process.env.CHROMIUM_PATH||undefined,args:['--no-sandbox','--disable-dev-shm-usage','--autoplay-policy=no-user-gesture-required','--mute-audio']});
 async function context(viewport){
   const ctx=await browser.newContext({viewport,deviceScaleFactor:1,hasTouch:viewport.width<1000,serviceWorkers:'block'});
-  await ctx.addInitScript(()=>{try{localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));sessionStorage.setItem('mcc_premiere','1');}catch(e){}});
+  await ctx.addInitScript(()=>{try{localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));localStorage.setItem('mccdb_session',JSON.stringify({access_token:'e2e-owner',expires_at:Math.floor(Date.now()/1000)+3600}));sessionStorage.setItem('mcc_premiere','1');}catch(e){}});
   await ctx.route('**/*',async route=>{
     const req=route.request(),u=new URL(req.url()),p=decodeURIComponent(u.pathname);
     if(u.origin===BASE){
@@ -61,6 +61,8 @@ async function context(viewport){
 }
 
 
+/* the games are the house owner's (owner, 2026-11-03): every context carries a session and api.mccluster.org answers
+   200, so GET /v1/status says owner and js/owner-only.mjs opens the page */
 const overflow=page=>page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
 const unit=(page,id)=>page.evaluate(id=>{const u=window.__tac.state.units.find(u=>u.id===id);return {x:u.x,y:u.y,ap:u.ap};},id);
 const cell=(page,x,y)=>page.locator(`#tacBoard .tb-cell[data-x="${x}"][data-y="${y}"]`);
@@ -157,7 +159,8 @@ for(const vp of [{width:390,height:844},{width:1280,height:900}]){
 /* reduced motion */
 {
   const ctx=await browser.newContext({viewport:{width:390,height:844},reducedMotion:'reduce',serviceWorkers:'block'});
-  await ctx.route('**/*',async route=>{const u=new URL(route.request().url());if(u.origin!==BASE)return route.abort();const f=resolve(ROOT,decodeURIComponent(u.pathname).slice(1));try{return route.fulfill({body:await readFile(f),contentType:TYPES[extname(f)]||'application/octet-stream'})}catch{return route.fulfill({status:404,body:''})}});
+  await ctx.addInitScript(()=>{try{localStorage.setItem('mccdb_session',JSON.stringify({access_token:'e2e-owner',expires_at:Math.floor(Date.now()/1000)+3600}));}catch(e){}});
+  await ctx.route('**/*',async route=>{const u=new URL(route.request().url());if(u.href.startsWith('https://api.mccluster.org/v1/status'))return route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:'{"ok":true}'});if(u.origin!==BASE)return route.abort();const f=resolve(ROOT,decodeURIComponent(u.pathname).slice(1));try{return route.fulfill({body:await readFile(f),contentType:TYPES[extname(f)]||'application/octet-stream'})}catch{return route.fulfill({status:404,body:''})}});
   const page=await ctx.newPage();await page.goto(`${BASE}/prim3-tactics-preview.html?view=2d&menu=0`);await page.waitForSelector('#tacBoard .tb-cell');
   check('reduced-motion','reduced motion turns animation off',await page.evaluate(()=>document.documentElement.classList.contains('reduce-motion')&&getComputedStyle(document.querySelector('.tac-board')).transitionDuration==='0s'));
   await ctx.close();
@@ -170,8 +173,8 @@ else for(const vp of [{width:390,height:844},{width:1280,height:900}]){
   const scope='3d-'+vp.width;
   const browser3=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE||undefined,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
   const ctx=await browser3.newContext({viewport:vp,serviceWorkers:'block',hasTouch:vp.width<1000});
-  await ctx.addInitScript(()=>{try{localStorage.clear();localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));}catch(e){}});
-  await ctx.route('**/*',async route=>{const u=new URL(route.request().url());
+  await ctx.addInitScript(()=>{try{localStorage.clear();localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));localStorage.setItem('mccdb_session',JSON.stringify({access_token:'e2e-owner',expires_at:Math.floor(Date.now()/1000)+3600}));}catch(e){}});
+  await ctx.route('**/*',async route=>{const u=new URL(route.request().url());if(u.href.startsWith('https://api.mccluster.org/v1/status'))return route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:'{"ok":true}'});
     if(u.hostname==='cdn.jsdelivr.net'&&u.pathname.startsWith('/npm/three@0.180.0/'))return route.fulfill({body:await readFile(join(THREE_DIR,u.pathname.replace('/npm/three@0.180.0/',''))),contentType:'text/javascript',headers:{'access-control-allow-origin':'*'}});
     if(u.origin!==BASE)return route.abort();const f=resolve(ROOT,decodeURIComponent(u.pathname).slice(1));if(!f.startsWith(resolve(ROOT)+sep))return route.abort();
     try{return route.fulfill({body:await readFile(f),contentType:TYPES[extname(f)]||'application/octet-stream'})}catch{return route.fulfill({status:404,body:''})}});
@@ -228,8 +231,8 @@ if(THREE_DIR){
   const scope='3d-fire';
   const browser3=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE||undefined,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
   const ctx=await browser3.newContext({viewport:{width:390,height:844},serviceWorkers:'block',hasTouch:true});
-  await ctx.addInitScript(()=>{try{localStorage.clear();localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));}catch(e){}});
-  await ctx.route('**/*',async route=>{const u=new URL(route.request().url());
+  await ctx.addInitScript(()=>{try{localStorage.clear();localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));localStorage.setItem('mccdb_session',JSON.stringify({access_token:'e2e-owner',expires_at:Math.floor(Date.now()/1000)+3600}));}catch(e){}});
+  await ctx.route('**/*',async route=>{const u=new URL(route.request().url());if(u.href.startsWith('https://api.mccluster.org/v1/status'))return route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:'{"ok":true}'});
     if(u.hostname==='cdn.jsdelivr.net'&&u.pathname.startsWith('/npm/three@0.180.0/'))return route.fulfill({body:await readFile(join(THREE_DIR,u.pathname.replace('/npm/three@0.180.0/',''))),contentType:'text/javascript',headers:{'access-control-allow-origin':'*'}});
     if(u.origin!==BASE)return route.abort();const f=resolve(ROOT,decodeURIComponent(u.pathname).slice(1));if(!f.startsWith(resolve(ROOT)+sep))return route.abort();
     try{return route.fulfill({body:await readFile(f),contentType:TYPES[extname(f)]||'application/octet-stream'})}catch{return route.fulfill({status:404,body:''})}});
@@ -268,8 +271,8 @@ if(THREE_DIR) for(const vp of [{width:390,height:844},{width:1280,height:900}]){
   const scope='menu-'+vp.width;
   const browser3=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE||undefined,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
   const ctx=await browser3.newContext({viewport:vp,serviceWorkers:'block',hasTouch:vp.width<1000});
-  await ctx.addInitScript(()=>{try{if(!sessionStorage.getItem('seeded')){localStorage.clear();sessionStorage.setItem('seeded','1');}localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));}catch(e){}});
-  await ctx.route('**/*',async route=>{const u=new URL(route.request().url());
+  await ctx.addInitScript(()=>{try{if(!sessionStorage.getItem('seeded')){localStorage.clear();sessionStorage.setItem('seeded','1');}localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));localStorage.setItem('mccdb_session',JSON.stringify({access_token:'e2e-owner',expires_at:Math.floor(Date.now()/1000)+3600}));}catch(e){}});
+  await ctx.route('**/*',async route=>{const u=new URL(route.request().url());if(u.href.startsWith('https://api.mccluster.org/v1/status'))return route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:'{"ok":true}'});
     if(u.hostname==='cdn.jsdelivr.net'&&u.pathname.startsWith('/npm/three@0.180.0/'))return route.fulfill({body:await readFile(join(THREE_DIR,u.pathname.replace('/npm/three@0.180.0/',''))),contentType:'text/javascript',headers:{'access-control-allow-origin':'*'}});
     if(u.origin!==BASE)return route.abort();const f=resolve(ROOT,decodeURIComponent(u.pathname).slice(1));if(!f.startsWith(resolve(ROOT)+sep))return route.abort();
     try{return route.fulfill({body:await readFile(f),contentType:TYPES[extname(f)]||'application/octet-stream'})}catch{return route.fulfill({status:404,body:''})}});
@@ -316,7 +319,8 @@ if(THREE_DIR) for(const vp of [{width:390,height:844},{width:1280,height:900}]){
 /* three.js unreachable: the game falls back to the 2D grid and still plays */
 {
   const ctx=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});
-  await ctx.route('**/*',async route=>{const u=new URL(route.request().url());if(u.origin!==BASE)return route.abort();const f=resolve(ROOT,decodeURIComponent(u.pathname).slice(1));try{return route.fulfill({body:await readFile(f),contentType:TYPES[extname(f)]||'application/octet-stream'})}catch{return route.fulfill({status:404,body:''})}});
+  await ctx.addInitScript(()=>{try{localStorage.setItem('mccdb_session',JSON.stringify({access_token:'e2e-owner',expires_at:Math.floor(Date.now()/1000)+3600}));}catch(e){}});
+  await ctx.route('**/*',async route=>{const u=new URL(route.request().url());if(u.href.startsWith('https://api.mccluster.org/v1/status'))return route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:'{"ok":true}'});if(u.origin!==BASE)return route.abort();const f=resolve(ROOT,decodeURIComponent(u.pathname).slice(1));try{return route.fulfill({body:await readFile(f),contentType:TYPES[extname(f)]||'application/octet-stream'})}catch{return route.fulfill({status:404,body:''})}});
   const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(`${BASE}/prim3-tactics-preview.html?menu=0`);await page.waitForSelector('#tacBoard .tb-cell');
   await page.waitForFunction(()=>window.__tac&&!window.__tac.loading3d,null,{timeout:10000});

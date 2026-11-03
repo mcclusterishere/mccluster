@@ -112,7 +112,7 @@
         v("schedule", "Schedule", "create.schedule", ["#create:schedule", "Create · Schedule", "calendar", "published", "publishing queue"])
       ] }),
       v("front-page", "Front page", "create.front-page", ["#create:front-page", "Create · Front page", "homepage", "site"]),
-      v("member-fronts", "Member fronts", "create.member-fronts", ["#create:member-fronts", "Create · Member fronts", "members", "member front", "moderation", "takedown"]),
+      v("level-forge", "PRIM3 Level Forge", "slot", ["level builder", "level forge", "prim3 levels", "sector editor", "tactical map"], { module: "prim3Levels" }),
       v("clipping", "Clipping", "create.clipping", ["#create:clipping", "Create · Clipping", "clips"]),
       v("song-test", "Song test", "create.song-test", ["#create:song-test", "Create · Song test", "song testing", "listening test"])
     ] },
@@ -169,7 +169,7 @@
      normalizeSystemView) and the bare surfaces, kept so every old link lands. */
   var LEGACY_ALIASES = {
     work: { crm: "pipeline", "front-desk": "pipeline", desk: "outreach", "outreach-desk": "outreach", admin: "operations", "back-office": "operations", "client-console": "clients", console: "clients" },
-    create: { campaigns: "projects", canvas: "projects", studio: "projects", assets: "library", calendar: "schedule", published: "schedule", management: "channels", socials: "channels", "socials-room": "channels", "social-agent": "instagram", ig: "instagram", reels: "instagram", "music-review": "music", vault: "music", lanes: "music", "review-desk": "music", action: "action-network", uprise: "action-network", mobilize: "action-network", grants: "funding", "opportunity-intelligence": "funding", "bounties-funding": "funding", "build-code": "build", code: "build", front: "front-page", site: "front-page", homepage: "front-page", "home-page": "front-page", index: "front-page", members: "member-fronts", "member-front": "member-fronts", moderation: "member-fronts", takedown: "member-fronts" },
+    create: { campaigns: "projects", canvas: "projects", studio: "projects", assets: "library", calendar: "schedule", published: "schedule", management: "channels", socials: "channels", "socials-room": "channels", "social-agent": "instagram", ig: "instagram", reels: "instagram", "music-review": "music", vault: "music", lanes: "music", "review-desk": "music", action: "action-network", uprise: "action-network", mobilize: "action-network", grants: "funding", "opportunity-intelligence": "funding", "bounties-funding": "funding", "build-code": "build", code: "build", front: "front-page", site: "front-page", homepage: "front-page", "home-page": "front-page", index: "front-page" },
     system: { agents: "workload", runs: "workload", infrastructure: "overview", deployments: "overview", logs: "observability", api: "resources", integrations: "resources", usage: "resources" }
   };
   var LEGACY_DEFAULT = { work: "#work:inbox", create: "#create:projects", system: "#system:overview" };
