@@ -453,6 +453,7 @@ function menuOptions() {
   return [
     saved && { key: 'continue', label: 'Continue mission', sub: `Turn ${String(state.round).padStart(2, '0')} · saved in this browser`, go: 'Continue mission' },
     { key: 'new', label: saved ? 'New mission' : 'Deploy', sub: saved ? 'Secure the relay from the start (replaces your saved progress)' : 'Secure the relay · squad of three', go: saved ? 'Start a new mission' : 'Deploy' },
+    { key: 'transit', label: 'Transit / Relay', sub: 'New level: canal compound at night · roofs, stairs, overwatch, hostile turns', go: 'Deploy to Transit / Relay' },
     { key: 'training', label: 'Training', sub: 'Optional grid-math hint on the live board; it never moves anyone', go: 'Start training' },
     { key: 'graphics', label: `Graphics: ${GFX_NAME[gfx]}`, sub: 'Tap again to change · Automatic, High, Balanced, Battery saver', go: saved ? 'Continue mission' : 'Deploy' }
   ].filter(Boolean);
@@ -499,6 +500,7 @@ $('pmList').addEventListener('click', (e) => {
 });
 $('pmGo').addEventListener('click', () => {
   if (menuBusy) return;
+  if (menuSel === 'transit') { location.href = 'prim3-transit.html'; return; }
   const action = menuSel === 'graphics' ? (hasSave() ? 'continue' : 'new') : menuSel;
   menuBusy = true;
   if (menuScene) menuScene.dive(() => closeMainMenu(action)); else closeMainMenu(action);
