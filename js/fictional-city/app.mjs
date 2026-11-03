@@ -1,5 +1,7 @@
-import { loadState, saveState, purchase, recordMeeting, recordVisit } from './state.mjs';
+import { loadState, saveState, purchase, recordMeeting, recordVisit, payInteraction, recordDiscovery, interactionsOf } from './state.mjs';
 import { createCoreLoreLink, manifestDigest } from './core-link.mjs';
+import { bindCity, resolveResidentRoutes, ORIGINAL_BUSINESS_IDS } from './places.mjs';
+import { createSpatialWorld } from './spatial.mjs';
 
 const $ = id => document.getElementById(id);
 const el = (tag, text, className) => {
@@ -13,6 +15,7 @@ const button = (label, action, className) => {
   node.type = 'button'; node.addEventListener('click', action); return node;
 };
 let manifest, state, scene, storage, toastTimer, saveTimer, adTimer, previousFocus;
+let places = null, bound = null, vacant = [], chunkIndex = null;
 let storyCache;
 let coreLink;
 let pageClosed = false;
@@ -24,7 +27,9 @@ const dialog = $('city-dialog');
 const body = $('city-dialog-body');
 const buildings = () => [...manifest.businesses, manifest.garage];
 const residents = () => [...manifest.npcs, ...manifest.garageCrew];
-const findBuilding = id => buildings().find(b => b.id === id);
+// lore buildings first; a parcel no lore has claimed yet is a generic place with the same position fields
+const findBuilding = id => buildings().find(b => b.id === id) || vacant.find(p => p.id === id);
+const neighborhoodName = id => places?.neighborhoods.find(n => n.id === id)?.name || '';
 const findResident = id => coreResidents.get(id) || residents().find(n => n.id === id);
 
 function notify(message) {
@@ -65,14 +70,14 @@ dialog.addEventListener('click', event => { if (event.target === dialog) {
   if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) closePanel();
 }});
 
-function markVisit(id) { state = recordVisit(state, id, manifest); persist(); }
+function markVisit(id) { state = recordVisit(state, id, manifest, places); persist(); }
 function moveToBuilding(id, enter = false) {
   const place = findBuilding(id); if (!place) return;
   closePanel();
   if (scene) {
     scene.teleport({ x: place.entrance[0], z: place.entrance[1], interior: null });
     if (enter) scene.enterBuilding(id);
-  } else if (enter) {
+  } else if (enter && place.enterable !== false) {
     state.position = { x: 0, z: 6, interior: id };
     markVisit(id); openBuilding(id);
   } else {
@@ -80,7 +85,7 @@ function moveToBuilding(id, enter = false) {
     openBuilding(id);
   }
   markVisit(id);
-  if (enter) notify('Inside ' + place.name);
+  if (enter && place.enterable !== false) notify('Inside ' + place.name);
   else notify('Arrived outside ' + place.name + '. Walk to the door or press E.');
   updateLocation(state.position);
   if (scene) $('city-canvas').focus({ preventScroll: true });
@@ -89,17 +94,21 @@ function moveToBuilding(id, enter = false) {
 function updateLocation(position) {
   state.position = position;
   const inside = position.interior && findBuilding(position.interior);
-  $('city-location').textContent = inside ? inside.name : position.z > 48 ? 'Equity Uprise Island' : 'Harbor Boulevard';
+  const area = bound?.index.neighborhoodAt(position.x, position.z);
+  $('city-location').textContent = inside ? inside.name : area ? area.name : position.z > 48 && Math.abs(position.x) < 22 ? 'Equity Uprise Island' : 'Harbor Boulevard';
+  $('city-area').textContent = inside ? neighborhoodName(inside.neighborhood) || 'Harbor Boulevard' : area?.kind === 'landmark' ? 'THE ISLAND' : (area?.name || 'Harbor Boulevard').toUpperCase();
   $('city-exit').hidden = !inside;
-  if (inside) state = recordVisit(state, inside.id, manifest);
+  if (inside) state = recordVisit(state, inside.id, manifest, places);
   clearTimeout(saveTimer); saveTimer = setTimeout(persist, 500);
 }
 function openBuilding(id) {
   const place = findBuilding(id); if (!place) return;
-  const root = panel(place.category || 'The garage', place.name);
+  if (place.generic) { openParcel(id); return; }
+  const root = panel(place.category || (place.parcelId ? neighborhoodName(place.neighborhood) : 'The garage'), place.name);
   root.append(el('p', place.tagline, 'city-quote'), el('p', place.description), el('p', place.backstory));
   const actions = el('div', undefined, 'city-dialog-actions');
   actions.append(button('Walk inside', () => moveToBuilding(id, true), 'city-primary'));
+  appendInteractions(actions, place);
   if (place.itemIds?.length) actions.append(button('Browse the counter', () => openShop(id)));
   if (id === manifest.garage.id) actions.append(button('Open the story desk', () => openStory()), button('Open the transportation globe', () => openTravel()));
   root.append(actions, el('h3', 'The people here'));
@@ -144,11 +153,58 @@ function openResident(id, topicId) {
   biography.append(content); root.append(biography);
   const actions = el('div', undefined, 'city-dialog-actions');
   if (place?.itemIds?.length) actions.append(button('Browse ' + place.name, () => openShop(place.id), 'city-primary'));
+  appendInteractions(actions, person);
   if (person.businessId === manifest.garage.id) actions.append(button('Whip Equipped story desk', openStory, 'city-primary'));
   actions.append(button('See you around', closePanel)); root.append(actions);
 }
+/* Authored interactions bind generically: lore declares `interactions: [{ type, cost, ... }]` on a business or a
+   resident and this host renders it. `bribe` spends city credits through the same rules as a purchase.
+   Unknown types are ignored, so newer lore never breaks an older host. */
+const INTERACTIONS = {
+  bribe(it) {
+    return button(it.label || ('Offer ' + it.cost + ' credits'), () => {
+      const result = payInteraction(state, it.id, manifest);
+      if (!result.ok) { notify(it.refusal || (result.reason === 'insufficient-credits' ? 'You need more city credits for that.' : 'That offer is not available.')); return; }
+      state = result.state; persist(); stats();
+      notify((it.success || 'Paid.') + ' ' + it.cost + ' credits spent.');
+    }, 'city-primary');
+  }
+};
+function appendInteractions(actions, entity) {
+  const all = interactionsOf(manifest);
+  for (const it of all.values()) {
+    if (it.ownerId !== entity.id || !INTERACTIONS[it.type] || !Number.isSafeInteger(it.cost)) continue;
+    const node = INTERACTIONS[it.type](it);
+    node.dataset.interaction = it.id;
+    node.disabled = state.credits < it.cost;
+    actions.append(node);
+  }
+}
+function openParcel(id) {
+  const place = vacant.find(p => p.id === id); if (!place) return;
+  const root = panel(neighborhoodName(place.neighborhood), place.name);
+  const actions = el('div', undefined, 'city-dialog-actions');
+  if (place.enterable) {
+    root.append(el('p', 'The door is open. Nobody is behind the counter yet.'));
+    actions.append(button('Walk inside', () => moveToBuilding(id, true), 'city-primary'));
+  } else root.append(el('p', 'You knock. Nobody answers the door.'));
+  actions.append(button('Back to the street', closePanel)); root.append(actions);
+}
+function openLandmark(id) {
+  const l = places?.landmarks.find(x => x.id === id); if (!l) return;
+  const root = panel(neighborhoodName(l.neighborhood), l.name);
+  if (l.hqView) {
+    const d = Math.round(Math.hypot(l.position[0], l.position[1] - 88));
+    root.append(el('p', 'Equity Uprise HQ stands on its island ' + d + ' metres across the water: a 72-foot square tower, six floors and an open roof at 81 feet. The footbridge from Harbor Boulevard is the way over.'));
+  }
+  const actions = el('div', undefined, 'city-dialog-actions');
+  actions.append(button('Go to the footbridge', () => { closePanel(); scene?.teleport({ x: 0, z: 46, interior: null }); notify('At the footbridge. Walk south to the island.'); }, 'city-primary'));
+  actions.append(button('HQ doorway', () => openTravel('equity-uprise-hq')));
+  root.append(actions);
+}
 function openShop(id) {
   const place = findBuilding(id); if (!place) return;
+  if (place.generic) { openParcel(id); return; }
   const root = panel('The counter · ' + state.credits + ' credits in your pocket', place.name);
   root.append(el('p', place.tagline, 'city-quote'));
   const grid = el('div', undefined, 'city-card-grid');
@@ -191,6 +247,7 @@ function openPocket() {
 function drawMap() {
   const ns = 'http://www.w3.org/2000/svg';
   const svg = document.createElementNS(ns, 'svg');
+  if (places) return drawCityMap(ns, svg);
   svg.setAttribute('viewBox', '0 0 350 390'); svg.setAttribute('class', 'city-map');
   svg.setAttribute('role', 'img'); svg.setAttribute('aria-label', 'Two shopping blocks around Harbor Boulevard. Garage to the north; a bridge reaches Equity Uprise island to the south.');
   const shape = (tag, attrs, label) => {
@@ -216,18 +273,61 @@ function drawMap() {
   }
   return svg;
 }
-function openMap() {
-  const root = panel('Harbor Boulevard & Equity Uprise Island', 'The district');
-  root.append(drawMap());
-  const grid = el('div', undefined, 'city-card-grid');
-  for (const place of buildings()) {
-    const card = el('article', undefined, 'city-place-card');
-    card.append(el('p', place.category || 'Story hub', 'city-eyebrow'), el('h3', place.name), el('p', place.description));
-    const actions = el('div', undefined, 'city-dialog-actions');
-    actions.append(button('Go to the door', () => moveToBuilding(place.id)), button('About this spot', () => openBuilding(place.id)));
-    card.append(actions); grid.append(card);
+/* The whole city at one scale: north up (−Z), land, streets, every parcel and the island HQ. */
+function drawCityMap(ns, svg) {
+  const b = places.frame.bounds, pad = 6, k = 1.05;
+  const W = (b.maxX - b.minX) * k + pad * 2, H = (b.maxZ - b.minZ + 20) * k + pad * 2;
+  svg.setAttribute('viewBox', `0 0 ${W.toFixed(0)} ${H.toFixed(0)}`); svg.setAttribute('class', 'city-map city-map-wide');
+  svg.setAttribute('role', 'img');
+  svg.setAttribute('aria-label', 'McCluster City. Harbor Boulevard runs east to west through the original block, Civic Center to the west and the HQ Waterfront to the east. Northside homes lie north of the garage. Two wharves wrap the harbor, where a footbridge reaches Equity Uprise island.');
+  const mx = x => pad + (x - b.minX) * k, mz = z => pad + (z - b.minZ) * k;
+  const shape = (tag, attrs, label) => { const n = document.createElementNS(ns, tag); Object.entries(attrs).forEach(([key, v]) => n.setAttribute(key, v)); if (label) n.textContent = label; svg.append(n); return n; };
+  const rect = (r, fill, extra = {}) => shape('rect', { x: mx(r.minX), y: mz(r.minZ), width: (r.maxX - r.minX) * k, height: (r.maxZ - r.minZ) * k, fill, ...extra });
+  shape('rect', { x: 0, y: 0, width: W, height: H, fill: '#9cc2c0', rx: 8 });
+  for (const s of places.surfaces) rect(s, s.kind === 'pier' || s.kind === 'bridge' ? '#c9b48f' : s.kind === 'quay' ? '#e3d6b8' : '#e9e4cf');
+  for (const p of places.parks || []) rect(p, '#bcd0a8');
+  for (const s of places.streets) rect(s, s.kind === 'road' || s.kind === 'lane' ? '#8d9595' : s.kind === 'plaza' ? '#efe6cf' : '#d7b9a0');
+  for (const p of [...buildings(), ...vacant]) {
+    const [x, z] = p.position, [w, d] = p.size;
+    rect({ minX: x - w / 2, maxX: x + w / 2, minZ: z - d / 2, maxZ: z + d / 2 }, p.generic ? '#b7a68c' : (p.color || '#7a8a7d'), { rx: 1.5, 'data-place': p.id });
   }
-  root.append(grid, button('Walk to Equity Uprise Island', () => {
+  rect({ minX: -10.97, maxX: 10.97, minZ: 77.03, maxZ: 98.97 }, '#47676a');
+  for (const n of places.neighborhoods) {
+    const c = n.bounds;
+    const t = shape('text', { x: mx((c.minX + c.maxX) / 2), y: mz(n.id === 'hq-island' ? 106 : n.id === 'northside-residential' ? -141 : n.id === 'original-block' ? 30 : (c.minZ + c.maxZ) / 2 + (n.id.includes('waterfront') ? 20 : 0)), class: 'city-map-area' }, n.name.toUpperCase());
+    t.setAttribute('text-anchor', 'middle');
+  }
+  if (!state.position.interior) shape('circle', { cx: mx(state.position.x), cy: mz(state.position.z), r: 4, fill: '#eb763e', stroke: '#fff', 'stroke-width': 1.5 });
+  return svg;
+}
+function placeCard(place) {
+  const card = el('article', undefined, 'city-place-card');
+  card.append(el('p', place.generic ? neighborhoodName(place.neighborhood) : (place.category || neighborhoodName(place.neighborhood) || 'Story hub'), 'city-eyebrow'), el('h3', place.name));
+  if (place.description) card.append(el('p', place.description));
+  const actions = el('div', undefined, 'city-dialog-actions');
+  actions.append(button('Go to the door', () => moveToBuilding(place.id)), button('About this spot', () => openBuilding(place.id)));
+  card.append(actions); return card;
+}
+function openMap() {
+  const root = panel(places ? 'Harbor Boulevard & four new neighborhoods' : 'Harbor Boulevard & Equity Uprise Island', places ? 'The city' : 'The district');
+  root.append(drawMap());
+  if (places) {
+    const found = (state.discoveries || []).filter(id => places.landmarks.some(l => l.id === id) || places.neighborhoods.some(n => n.id === id)).length;
+    root.append(el('p', found + ' of ' + (places.landmarks.length + places.neighborhoods.length) + ' places found on foot.', 'city-bio-meta'));
+  }
+  const grid = el('div', undefined, 'city-card-grid');
+  for (const place of buildings()) grid.append(placeCard(place));
+  root.append(grid);
+  for (const n of places?.neighborhoods.filter(n => n.status === 'new') || []) {
+    const inArea = vacant.filter(p => p.neighborhood === n.id && p.role !== 'scenery');
+    if (!inArea.length) continue;
+    const details = el('details', undefined, 'city-area-list');
+    details.append(el('summary', n.name + ' · ' + inArea.length + ' doors'));
+    const g = el('div', undefined, 'city-card-grid');
+    for (const p of inArea) g.append(placeCard(p));
+    details.append(g); root.append(details);
+  }
+  root.append(button('Walk to Equity Uprise Island', () => {
     closePanel(); scene?.teleport({ x: 0, z: 73, interior: null });
     if (!scene) openTravel('equity-uprise-hq');
   }, 'city-primary'));
@@ -310,6 +410,30 @@ async function openStory(chapterId) {
     root.append(source);
   }
 }
+/* Chunk detail: published per-chunk JSON, checked against the index's SHA-256 when the browser can hash. */
+async function loadChunk(id) {
+  const meta = chunkIndex?.chunks.find(c => c.id === id); if (!meta) throw new Error('unknown chunk');
+  const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 15000);
+  try {
+    const response = await fetch('data/fictional-city/' + meta.file + '?v=__STAMP__', { cache: 'no-cache', signal: controller.signal });
+    if (!response.ok) throw new Error('chunk ' + id + ' answered ' + response.status);
+    const buffer = await response.arrayBuffer();
+    if (meta.sha256 && globalThis.crypto?.subtle) {
+      const digest = [...new Uint8Array(await crypto.subtle.digest('SHA-256', buffer))].map(b => b.toString(16).padStart(2, '0')).join('');
+      if (digest !== meta.sha256) throw new Error('chunk ' + id + ' failed its integrity check');
+    }
+    return JSON.parse(new TextDecoder().decode(buffer));
+  } finally { clearTimeout(timer); }
+}
+/* On approach to the island, warm the browser cache with the canonical HQ geometry the doorway opens first. */
+let hqPrefetched = false;
+function prefetchHq() {
+  if (hqPrefetched) return; hqPrefetched = true;
+  for (const file of ['equity-uprise-building-core-v2.glb', 'equity-uprise-floor-01-core-v2.glb']) {
+    const link = document.createElement('link'); link.rel = 'prefetch'; link.as = 'fetch'; link.href = 'equity-uprise-preview/' + file;
+    link.dataset.cityPrefetch = 'hq'; document.head.append(link);
+  }
+}
 function handleTarget(target) {
   if (!target) return;
   if (target.kind === 'npc') openResident(target.id);
@@ -318,7 +442,11 @@ function handleTarget(target) {
     notify('Inside ' + findBuilding(target.id).name + '. Walk to the counter or talk to the crew.');
   } else if (target.kind === 'counter') {
     if (target.id === manifest.garage.id) openStory(); else openShop(target.id);
-  } else if (target.kind === 'portal') openTravel(target.id);
+  } else if (target.kind === 'parcel') {
+    const p = vacant.find(v => v.id === target.id);
+    if (p?.enterable) { scene.enterBuilding(p.id); markVisit(p.id); notify('Inside ' + p.name + '.'); } else openParcel(target.id);
+  } else if (target.kind === 'landmark') openLandmark(target.id);
+  else if (target.kind === 'portal') openTravel(target.id);
   else if (target.kind === 'exit') scene.exitBuilding();
 }
 function bindControls() {
@@ -352,9 +480,24 @@ async function start() {
     const text = await response.text();
     if (text.length > 1024 * 1024) throw new Error('The district data is too large.');
     manifest = JSON.parse(text);
-    if (manifest.schema !== 'mccluster.fictional-city/v1' || manifest.businesses?.length !== 8 || manifest.npcs?.length !== 24 || manifest.garageCrew?.length !== 3) throw new Error('The district data is incomplete.');
+    // The eight original businesses, 24 residents and the garage crew must be present; newer lore may add more.
+    if (!/^mccluster\.fictional-city\/v\d+$/.test(manifest.schema || '') || !ORIGINAL_BUSINESS_IDS.every(id => manifest.businesses?.some(b => b.id === id)) || !(manifest.npcs?.length >= 24) || manifest.garageCrew?.length !== 3) throw new Error('The district data is incomplete.');
+    // Geography is a separate authority. Without it the original district still plays exactly as before.
+    try {
+      const [placesResponse, indexResponse] = await Promise.all([
+        fetch('data/fictional-city/places.v1.json?v=__STAMP__', { cache: 'no-cache' }),
+        fetch('data/fictional-city/chunks/index.v1.json?v=__STAMP__', { cache: 'no-cache' })
+      ]);
+      if (!placesResponse.ok) throw new Error('places');
+      places = await placesResponse.json();
+      chunkIndex = indexResponse.ok ? await indexResponse.json() : null;
+      bound = bindCity(manifest, places);
+      manifest = bound.manifest; vacant = bound.vacant;
+      const routes = resolveResidentRoutes(bound, createSpatialWorld([...manifest.businesses.filter(b => !b.parcelId), manifest.garage], manifest.district.island?.hq, places));
+      if (routes.size) manifest = { ...manifest, npcs: manifest.npcs.map(n => routes.has(n.id) ? { ...n, route: routes.get(n.id), placement: 'patrol' } : n) };
+    } catch (error) { places = null; bound = null; vacant = []; chunkIndex = null; console.warn('City geography unavailable; the original district remains playable.', error?.message || error); }
     try { storage = localStorage; } catch { storage = { getItem: () => null, setItem: () => { throw new Error('storage'); } }; }
-    state = loadState(storage, manifest);
+    state = loadState(storage, manifest, places);
     bindControls(); stats(); updateLocation(state.position); persist();
     const neighbors = [manifest.npcs.find(n => n.name === 'Lin Qiao'), manifest.npcs.find(n => n.name === 'Mike Hawk'), manifest.garageCrew.find(n => /Majid/i.test(n.name))].filter(Boolean);
     neighbors.forEach(n => $('city-neighbor-list').append(personButton(n)));
@@ -366,7 +509,17 @@ async function start() {
       const { createCityScene } = await import('./scene.mjs?v=__STAMP__');
       const restoredPosition = { ...state.position };
       scene = createCityScene({
-        canvas: $('city-canvas'), manifest, onInteract: handleTarget,
+        canvas: $('city-canvas'), manifest, places, vacant, chunkIndex, loadChunk, onInteract: handleTarget,
+        onDiscover: id => {
+          const before = state.discoveries?.length || 0;
+          state = recordDiscovery(state, id, places);
+          if ((state.discoveries?.length || 0) > before) {
+            const l = places?.landmarks.find(x => x.id === id) || places?.neighborhoods.find(x => x.id === id && x.status === 'new');
+            if (l) notify('Found: ' + l.name);
+            clearTimeout(saveTimer); saveTimer = setTimeout(persist, 300);
+          }
+        },
+        onApproachHq: prefetchHq,
         onPrompt: prompt => {
           $('city-prompt').textContent = prompt?.label || 'Walk up to a door or a neighbor.';
           $('city-interact').disabled = !prompt;
@@ -398,6 +551,7 @@ async function start() {
     // Read-only diagnostics for support and deterministic browser verification; no auth bypass or state mutator.
     Object.defineProperty(globalThis, 'MCC_CITY', { configurable: true, value: Object.freeze({
       snapshot: () => structuredClone(state), stats: () => scene?.getStats() || null, revision: manifest.revision,
+      places: () => places ? { neighborhoods: places.neighborhoods.length, parcels: places.parcels.length, vacant: vacant.length, chunks: chunkIndex?.chunks.length || 0 } : null,
       loreSource: () => coreLink?.status() || 'static'
     }) });
     addEventListener('pagehide', () => { persist(); clearInterval(adTimer); clearTimeout(toastTimer); coreLink?.dispose(); scene?.dispose(); }, { once: true });
