@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>PRIM3 Tactical Hints Preview</title>
+  <meta name="description" content="Preview of PRIM3's optional learning-unlocked tactical hints on the real square-grid tactical resolver.">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#030303">
+  <style>
+    :root{--bg:#050505;--panel:#111;--line:rgba(244,239,230,.14);--ink:#f4efe6;--dim:rgba(244,239,230,.66);--ally:#3ea0ff;--hostile:#ef5a63;--hint:#f0c674;--reach:rgba(62,160,255,.18)}
+    @media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#f6f3ee;--panel:#fff;--line:rgba(10,10,10,.14);--ink:#141210;--dim:rgba(20,18,16,.66)}}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+    main{max-width:1100px;margin:0 auto;padding:16px 16px calc(110px + env(safe-area-inset-bottom));display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}
+    h1{font-size:1.35rem;margin:0}
+    .tac-lede{margin:0;color:var(--dim)}
+    .tac-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+    .tac-btn{min-height:44px;padding:0 14px;border-radius:10px;border:1px solid var(--line);background:transparent;color:inherit;font:600 15px/1 inherit;cursor:pointer}
+    .tac-btn--go{background:#c7222b;border-color:#c7222b;color:#fff}
+    #tacRound{color:var(--dim);font-weight:600}
+    .tac-squad{display:flex;flex-wrap:wrap;gap:6px}
+    .tac-unit{min-height:44px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:transparent;color:inherit;font:600 14px/1 inherit}
+    .tac-unit.is-on{border-color:var(--ally);box-shadow:inset 0 0 0 1px var(--ally)}
+    .tac-grid{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:2px;width:100%;max-width:560px;aspect-ratio:1}
+    .tac-cell{min-width:0;border:1px solid var(--line);background:var(--panel);color:inherit;font:700 11px/1 ui-monospace,monospace;padding:0;cursor:pointer;border-radius:4px}
+    .tac-cell.is-reach{background:var(--reach)}
+    .tac-cell.is-wall{background:repeating-linear-gradient(45deg,#333 0 4px,#222 4px 8px);cursor:default}
+    .tac-cell.is-high{box-shadow:inset 0 0 0 3px #8a8f98}
+    .tac-cell.is-low{box-shadow:inset 0 0 0 2px #5f646b}
+    .tac-cell.is-obj{color:var(--hint);font-size:16px}
+    .tac-cell.is-ally{color:var(--ally)}
+    .tac-cell.is-hostile{color:var(--hostile)}
+    .tac-cell.is-sel{outline:2px solid var(--ally);outline-offset:-2px}
+    .tac-cell.is-hint{outline:3px solid var(--hint);outline-offset:-3px;background:rgba(240,198,116,.18)}
+    .tac-panel{border:1px solid var(--line);border-radius:12px;padding:12px;min-height:3rem;background:var(--panel)}
+    .tac-eyebrow{margin:0 0 6px;font:700 12px/1.2 inherit;letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
+    .tac-q{margin:0 0 8px;font-weight:600}
+    .tac-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:end}
+    .tac-form label{grid-column:1/-1;font-size:13px;color:var(--dim)}
+    .tac-form input{min-height:44px;border-radius:10px;border:1px solid var(--line);background:transparent;color:inherit;padding:0 12px;font-size:max(16px,1rem);min-width:0}
+    .tac-msg{margin:6px 0 0;overflow-wrap:anywhere}
+    .tac-msg.is-bad{color:var(--hostile)}
+    .tac-why{margin:6px 0 0;padding-left:1.1rem;display:grid;gap:4px}
+    .tac-legend{margin:0;color:var(--dim);font-size:13px}
+    @media (min-width:900px){
+      main{grid-template-columns:minmax(0,560px) minmax(0,1fr);align-items:start}
+      main>header,main>.tac-bar{grid-column:1/-1}
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>PRIM3 · tactical hints (preview)</h1>
+      <p class="tac-lede">Play normally: pick a squad member, tap a lit tile to move. Want help? <b>Get a hint</b>, solve a quick problem from your field, and see a suggested move and why. Optional, every time.</p>
+    </header>
+    <div class="tac-bar">
+      <span id="tacRound"></span>
+      <button type="button" class="tac-btn tac-btn--go" id="tacHint">Get a hint</button>
+      <button type="button" class="tac-btn" id="tacEnd">End turn</button>
+      <button type="button" class="tac-btn" id="tacReset">Reset</button>
+    </div>
+    <section aria-label="Board">
+      <div class="tac-squad" id="tacSquad"></div>
+      <div class="tac-grid" id="tacGrid" role="grid" aria-label="Square battlefield, 10 by 10"></div>
+      <p class="tac-legend">Blue: your squad · red: hostiles you can see · ◎ objective · grey edge: cover · hatched: wall · gold: the hint's suggestion.</p>
+    </section>
+    <section class="tac-panel" id="tacPanel" aria-live="polite"></section>
+  </main>
+  <script type="module" src="js/prim3-tactics/preview.mjs"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+</body>
+</html>
