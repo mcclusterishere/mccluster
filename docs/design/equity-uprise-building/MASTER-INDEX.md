@@ -347,3 +347,12 @@ Step 9 adds floor-scoped asset/cable selectors, executable labs on B1 and every 
 The canonical learner presentation is now **symptom-first rather than engineering-first**. `learner-experience-v1.json` maps the existing deterministic scenarios into plain-language work tickets using the loop **OBSERVE → HYPOTHESIZE → TEST → FIX → VERIFY**. Foundation and Technician users begin with a human report, friendly action labels and bounded diagnosis choices; raw target selectors, JSON input and assessment internals are moved behind instructor/technical disclosure. Beginner sessions do **not** force Engineering/X-Ray on startup. Advanced/Admin/Expert use may still reveal engineering state according to difficulty and instructor intent.
 
 The first explicit PRIM3 reinforcement binding is the Floor 2 Wi-Fi outage (`IT-LAB-017`): after successful diagnosis and verification, the learner can open **Got WiFi?** as a post-lab refresher. This is reinforcement, not the primary lesson or proof of mastery.
+
+## Screens and screen apps
+- `SCREENS-AND-SCREEN-APPS-SPEC.md`
+- `production/screens/build_screen_registry_v1.mjs`
+- `production/screens/equity-uprise-screen-registry-v1.json`
+- `production/screens/roof-destination-registry-v1.json`
+- published apps: `screens/*.html`, `js/eu-screens/`; demo `screens/building.html`
+
+Every display surface (148 screens, B1–L7) is bound to its canonical asset id and opens a full phone-first app (terminal, kiosk, NOC, cameras, studio, evidence, departures, wall) over the Lab Runtime sandbox, with an enter/return contract that brings you back to the same floor, pose and mode.

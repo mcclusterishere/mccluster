@@ -20,7 +20,7 @@ import { basename, dirname, join, resolve, sep } from 'node:path';
 const allowedDirectories = new Set([
   'assets','auth','oauth','action','closet','css','data','demos',
   'engineering','equity-uprise-preview','js','portfolio','site0',
-  'tracks','walls','whip','vendor'
+  'screens','tracks','walls','whip','vendor'
 ]);
 /* This list is for web-delivered assets only. Site 0 authoring GLBs,
    CAD manifests and tools under assets/3d are NOT runtime assets:

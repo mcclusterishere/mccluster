@@ -1156,3 +1156,16 @@ The B1 workplace canon now lives in source authority and deterministic generator
 ## Playable-Building Audit Derived-Report Refresh — 2026-09-24
 
 The playable-building audit and machine gap ledger are now tracked building context. This deterministic reconciliation refreshes the authority-hygiene report so its check count includes those new tracked sources.
+
+
+## Screens and screen apps — V1 IMPLEMENTED (2026-11-03)
+
+Owner, 2026-11-03: every screen in the building opens a whole page on your phone, with a way back into the building, "with a terminal".
+
+- `production/screens/build_screen_registry_v1.mjs` derives **148 screens** (B1 26 · F1 18 · F2 9 · F3 13 · F4 30 · F5 26 · F6 21 · L7 5) from the asset registry, floor inventories, B1 GLB, floor programs, electronics manifest and workplace occupancy; each bound to its canonical asset id, room, position (feet, Core V2 frame, with source), app, modes (WORKPLACE / TRAINING / PRIM3 MISSION) and access (B1 open per owner; SANDBOX only).
+- Apps: terminal (bash / IOS switch / BMC / UPS contexts over `equity-uprise-electronics-sandbox.mjs`), reception/check-in kiosk, NOC, camera console, F4 studio, F5 evidence browser, L7 departure board (data-driven from `data/seo/domain-architecture.json`), wall displays.
+- Enter/return contract and the viewer/game hook: `js/eu-screens/contract.mjs`, `js/eu-screens/enter.mjs`; demo `screens/building.html`. The canonical viewer itself is unchanged; it can adopt the hook.
+- TRAINING seeds one ticket per floor from the distributed scenario pack; every seed is fixable from a console (unit-tested). MISSION outages come from the PRIM3 game and never reach WORKPLACE.
+- Authority: `SCREENS-AND-SCREEN-APPS-SPEC.md`. The registry is derived data and not geometry authority; placement sources are recorded per screen.
+
+**NEXT:** wire `enter.mjs` into the canonical viewer's Room Mode and the PRIM3 game adapter; owner visual review of the apps on a phone.

@@ -25,7 +25,7 @@
       "GEMINI.md"
     ]
   },
-  "tracked_count": 329,
+  "tracked_count": 333,
   "categories": {
     "active_references": [
       "docs/design/equity-uprise-building/references/basement-b1/README.md",
@@ -129,6 +129,7 @@
       "docs/design/equity-uprise-building/LAB-RUNTIME-SPEC.md",
       "docs/design/equity-uprise-building/PLAYABLE-BUILDING-SYSTEMS-AUDIT-2026-09-24.md",
       "docs/design/equity-uprise-building/REFERENCE-AUTHORITY.md",
+      "docs/design/equity-uprise-building/SCREENS-AND-SCREEN-APPS-SPEC.md",
       "docs/design/equity-uprise-building/SIMULATION-CODE-REFERENCE-PROFILE.md",
       "docs/design/equity-uprise-building/UNDERGROUND-TUNNEL-NETWORK-SPEC.md",
       "docs/design/equity-uprise-building/VERTICAL-DISTRIBUTION-AND-RISER-SPEC.md",
@@ -358,6 +359,9 @@
       "docs/design/equity-uprise-building/production/lab-runtime/verify_public_service_scenarios_v1.mjs",
       "docs/design/equity-uprise-building/production/lab-runtime/verify_viewer_lab_integration_v1.mjs",
       "docs/design/equity-uprise-building/production/playable-building-gap-ledger-v1.json",
+      "docs/design/equity-uprise-building/production/screens/build_screen_registry_v1.mjs",
+      "docs/design/equity-uprise-building/production/screens/equity-uprise-screen-registry-v1.json",
+      "docs/design/equity-uprise-building/production/screens/roof-destination-registry-v1.json",
       "docs/design/equity-uprise-building/production/services/build_equity_uprise_services_v2.py",
       "docs/design/equity-uprise-building/production/services/floor-services-addenda.json",
       "docs/design/equity-uprise-building/production/underground-tunnel-network.json",
