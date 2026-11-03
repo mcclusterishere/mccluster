@@ -25,8 +25,16 @@ const MISSION = 'Secure the relay';
 // accessible view: every tile is a labelled button.
 let mode3d = new URLSearchParams(location.search).get('view') !== '2d';
 let board3d = null, loading3d = null;
-// ?fx=high|mid|low forces a presentation tier (otherwise chosen from the GPU); it never changes the game
-const FX = new URLSearchParams(location.search).get('fx');
+// Graphics: ?fx=high|mid|low, or the menu's Graphics choice (kept in this browser); otherwise chosen
+// from the GPU. It never changes the game.
+const PARAMS = new URLSearchParams(location.search);
+const GFX_KEY = 'prim3.tactics.preview.gfx';
+const GFX = ['auto', 'high', 'mid', 'low'], GFX_NAME = { auto: 'Automatic', high: 'High', mid: 'Balanced', low: 'Battery saver' };
+let gfx = (() => { try { const v = localStorage.getItem(GFX_KEY); return GFX.includes(v) ? v : 'auto'; } catch (e) { return 'auto'; } })();
+const fxChoice = () => PARAMS.get('fx') || (gfx === 'auto' ? null : gfx);
+// The main menu opens first (?menu=0 skips it); the battlefield's 3D loads only once it closes.
+let menuOpen = PARAMS.get('menu') !== '0';
+let menu3d = null, menuLoading = null, menuSel = null, menuBusy = false;
 function webglAvailable() {
   try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; }
 }
@@ -35,7 +43,7 @@ function webglAvailable() {
 function ensure3d() {
   if (board3d || loading3d) return;
   loading3d = import('./board3d.mjs').then((mod) => {
-    board3d = mod.createBoard3D($('tac3d'), { width: W, height: H, reducedMotion: REDUCED, fx: FX, onTap: (x, y) => onBoardTap(x, y), onView: () => placeMenu() });
+    board3d = mod.createBoard3D($('tac3d'), { width: W, height: H, reducedMotion: REDUCED, fx: fxChoice(), onTap: (x, y) => onBoardTap(x, y), onView: () => placeMenu() });
     loading3d = null; render(); syncZoom3d();
   }).catch(() => { loading3d = null; mode3d = false; ui.toast = 'The 3D view could not load here, so the board is shown as a 2D grid.'; render(); });
 }
@@ -155,7 +163,7 @@ function render() {
   // 3D view: same model, drawn in the courtyard
   $('tacViewport').classList.toggle('is-3d', mode3d && !!board3d);
   if (mode3d && !webglAvailable()) mode3d = false;
-  if (mode3d && !board3d) ensure3d();
+  if (mode3d && !board3d && !menuOpen) ensure3d();
   if (mode3d && board3d) {
     const m = { units: p.units, blockers: p.blockers, cover: p.cover, objectiveTiles: p.objectiveTiles, selected: ui.selected, labels: [] };
     if (reachInfo) { m.reach = []; for (let y = 0; y < H; y += 1) for (let x = 0; x < W; x += 1) { const st = reachInfo.dist.get(reachInfo.key(x, y)); if (st !== undefined && st > 0) m.reach.push({ x, y }); } }
@@ -429,6 +437,63 @@ function bindGestures() {
   });
 }
 
+/* ---------- main menu ---------- */
+function hasSave() { try { return !!localStorage.getItem(SAVE_KEY); } catch (e) { return false; } }
+function menuOptions() {
+  const saved = hasSave() && state.round >= 1;
+  return [
+    saved && { key: 'continue', label: 'Continue mission', sub: `Turn ${String(state.round).padStart(2, '0')} · saved in this browser`, go: 'Continue mission' },
+    { key: 'new', label: saved ? 'New mission' : 'Deploy', sub: saved ? 'Secure the relay from the start (replaces your saved progress)' : 'Secure the relay · squad of three', go: saved ? 'Start a new mission' : 'Deploy' },
+    { key: 'training', label: 'Training', sub: 'Optional grid-math hint on the live board; it never moves anyone', go: 'Start training' },
+    { key: 'graphics', label: `Graphics: ${GFX_NAME[gfx]}`, sub: 'Tap again to change · Automatic, High, Balanced, Battery saver', go: saved ? 'Continue mission' : 'Deploy' }
+  ].filter(Boolean);
+}
+function renderMainMenu() {
+  const opts = menuOptions();
+  if (!opts.some((o) => o.key === menuSel)) menuSel = opts[0].key;
+  $('pmList').innerHTML = opts.map((o) => `<button type="button" class="pm-opt" data-pm="${o.key}" aria-pressed="${o.key === menuSel}">${esc(o.label)}<small>${esc(o.sub)}</small></button>`).join('');
+  $('pmGo').textContent = opts.find((o) => o.key === menuSel).go;
+  if (menu3d) menu3d.show(menuSel);
+}
+function openMainMenu() {
+  menuOpen = true; ui.menu = false; ui.preview = null; ui.mode = null;
+  if (board3d) board3d.setActive(false);
+  document.querySelector('main.tac').classList.add('menu-open'); $('p3Menu').hidden = false;
+  renderMainMenu();
+  if (!menu3d && !menuLoading && webglAvailable()) {
+    menuLoading = import('./menu3d.mjs').then((mod) => {
+      menuLoading = null; if (!menuOpen) return;
+      menu3d = mod.createMenu3D($('menu3d'), { reducedMotion: REDUCED }); menu3d.show(menuSel);
+    }).catch(() => { menuLoading = null; $('menu3d').classList.add('no-3d'); });
+  } else if (!webglAvailable()) $('menu3d').classList.add('no-3d');
+  window.scrollTo(0, 0);
+}
+function closeMainMenu(action) {
+  menuOpen = false; menuBusy = false;
+  if (menu3d) { menu3d.destroy(); menu3d = null; }
+  document.querySelector('main.tac').classList.remove('menu-open'); $('p3Menu').hidden = true;
+  if (action === 'new') { clearSave(); state = fresh(); ui = { selected: 'E1', menu: false, mode: null, preview: null, hint: null, session: null, suggestion: null, toast: 'New mission. Secure the relay.' }; zoom = { s: 1, tx: 0, ty: 0 }; if (board3d) board3d.resetView(); save(); }
+  if (board3d) board3d.setActive(true);
+  render();
+  if (action === 'training') { ui.selected = ui.selected || 'E1'; startHint(null); }
+}
+$('pmList').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-pm]'); if (!b || menuBusy) return;
+  if (b.dataset.pm === 'graphics' && menuSel === 'graphics') {
+    gfx = GFX[(GFX.indexOf(gfx) + 1) % GFX.length];
+    try { localStorage.setItem(GFX_KEY, gfx); } catch (err) {}
+    if (board3d) { board3d.destroy(); board3d = null; } // rebuilt at the new tier when the menu closes
+  }
+  menuSel = b.dataset.pm; renderMainMenu();
+});
+$('pmGo').addEventListener('click', () => {
+  if (menuBusy) return;
+  const action = menuSel === 'graphics' ? (hasSave() ? 'continue' : 'new') : menuSel;
+  menuBusy = true;
+  if (menu3d) menu3d.play(menuSel, () => closeMainMenu(action)); else closeMainMenu(action);
+});
+$('tacMenuOpen').addEventListener('click', openMainMenu);
+
 /* ---------- wire up ---------- */
 $('tacMenu').addEventListener('click', (e) => { const b = e.target.closest('[data-act]'); if (b) onMenu(b.dataset.act); });
 $('tacSheet').addEventListener('click', (e) => { const b = e.target.closest('[data-sheet]'); if (b) onSheet(b.dataset.sheet); });
@@ -442,5 +507,6 @@ $('tacView').addEventListener('click', () => { mode3d = !mode3d; ui.menu = false
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { if (ui.preview) ui.preview = null; else if (ui.mode) ui.mode = null; else ui.menu = false; render(); } });
 if (REDUCED) document.documentElement.classList.add('reduce-motion');
 bindGestures();
+if (menuOpen) openMainMenu();
 render();
-window.__tac = { get state() { return state; }, get session() { return ui.session; }, get ui() { return ui; }, SAVE_KEY, get mode3d() { return mode3d && !!board3d; }, get loading3d() { return !!loading3d; }, screenOf: (x, y, h) => board3d && board3d.screenOf(x, y, h), zoomLevel: () => board3d && board3d.zoomLevel(), busy3d: () => !!(board3d && board3d.isAnimating()), get tier() { return board3d && board3d.tier; }, unitPosition: (id) => board3d && board3d.unitPosition(id) };
+window.__tac = { get state() { return state; }, get session() { return ui.session; }, get ui() { return ui; }, SAVE_KEY, get mode3d() { return mode3d && !!board3d; }, get loading3d() { return !!loading3d; }, screenOf: (x, y, h) => board3d && board3d.screenOf(x, y, h), zoomLevel: () => board3d && board3d.zoomLevel(), busy3d: () => !!(board3d && board3d.isAnimating()), get tier() { return board3d && board3d.tier; }, get menuOpen() { return menuOpen; }, get menuKey() { return menu3d && menu3d.key; }, get menuLaunching() { return !!(menu3d && menu3d.launching); }, get gfx() { return gfx; }, unitPosition: (id) => board3d && board3d.unitPosition(id) };

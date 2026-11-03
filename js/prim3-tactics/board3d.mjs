@@ -472,7 +472,9 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
 
   let model = null, needs = true, t0 = performance.now(), destroyed = false;
   const flashes = [];
+  let active = true;
   function frame(now) {
+    if (!active) { t0 = now; raf = requestAnimationFrame(frame); return; }
     const dt = Math.min(0.25, (now - t0) / 1000); t0 = now; // capped so a stalled tab does not jump, loose enough that slow GPUs still finish on time
     const t = now / 1000;
     let moving = false;
@@ -671,6 +673,7 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
   return {
     update,
     tier,
+    setActive(on) { active = !!on; needs = true; }, // paused while the main menu is open
     zoom(step) { setDist(view.dist * (step > 0 ? 0.82 : 1.22)); },
     zoomLevel() { return view.dist; },
     canZoom() { return { in: view.dist > view.minDist + 0.01, out: view.dist < view.maxDist - 0.01 }; },

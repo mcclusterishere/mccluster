@@ -68,7 +68,7 @@ const answerOf=page=>page.evaluate(()=>{const a=window.__tac.session.challenge.s
 for(const vp of [{width:390,height:844},{width:1280,height:900}]){
   const scope=String(vp.width);
   const {page,errors,ctx}=await context(vp);
-  await page.goto(`${BASE}/prim3-tactics-preview.html?view=2d`,{waitUntil:'domcontentloaded'});
+  await page.goto(`${BASE}/prim3-tactics-preview.html?view=2d&menu=0`,{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>document.querySelectorAll('#tacBoard .tb-cell').length===100,null,{timeout:15000});
   await page.evaluate(()=>{try{localStorage.clear()}catch(e){}});await page.reload({waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>document.querySelectorAll('#tacBoard .tb-cell').length===100);
@@ -158,7 +158,7 @@ for(const vp of [{width:390,height:844},{width:1280,height:900}]){
 {
   const ctx=await browser.newContext({viewport:{width:390,height:844},reducedMotion:'reduce',serviceWorkers:'block'});
   await ctx.route('**/*',async route=>{const u=new URL(route.request().url());if(u.origin!==BASE)return route.abort();const f=resolve(ROOT,decodeURIComponent(u.pathname).slice(1));try{return route.fulfill({body:await readFile(f),contentType:TYPES[extname(f)]||'application/octet-stream'})}catch{return route.fulfill({status:404,body:''})}});
-  const page=await ctx.newPage();await page.goto(`${BASE}/prim3-tactics-preview.html?view=2d`);await page.waitForSelector('#tacBoard .tb-cell');
+  const page=await ctx.newPage();await page.goto(`${BASE}/prim3-tactics-preview.html?view=2d&menu=0`);await page.waitForSelector('#tacBoard .tb-cell');
   check('reduced-motion','reduced motion turns animation off',await page.evaluate(()=>document.documentElement.classList.contains('reduce-motion')&&getComputedStyle(document.querySelector('.tac-board')).transitionDuration==='0s'));
   await ctx.close();
 }
@@ -176,7 +176,7 @@ else for(const vp of [{width:390,height:844},{width:1280,height:900}]){
     if(u.origin!==BASE)return route.abort();const f=resolve(ROOT,decodeURIComponent(u.pathname).slice(1));if(!f.startsWith(resolve(ROOT)+sep))return route.abort();
     try{return route.fulfill({body:await readFile(f),contentType:TYPES[extname(f)]||'application/octet-stream'})}catch{return route.fulfill({status:404,body:''})}});
   const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto(`${BASE}/prim3-tactics-preview.html`);
+  await page.goto(`${BASE}/prim3-tactics-preview.html?menu=0`);
   await page.waitForFunction(()=>window.__tac&&window.__tac.mode3d,null,{timeout:20000});await page.waitForTimeout(400);
   const settle=async()=>{for(let i=0;i<60&&await page.evaluate(()=>window.__tac.busy3d());i++)await page.waitForTimeout(100);};
   const tap=async(x,y,h=0)=>{await settle();const p=await page.evaluate(([x,y,h])=>window.__tac.screenOf(x,y,h),[x,y,h]);await page.mouse.click(p.x,p.y);await page.waitForTimeout(150);};
@@ -233,7 +233,7 @@ if(THREE_DIR){
     if(u.origin!==BASE)return route.abort();const f=resolve(ROOT,decodeURIComponent(u.pathname).slice(1));if(!f.startsWith(resolve(ROOT)+sep))return route.abort();
     try{return route.fulfill({body:await readFile(f),contentType:TYPES[extname(f)]||'application/octet-stream'})}catch{return route.fulfill({status:404,body:''})}});
   const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto(`${BASE}/prim3-tactics-preview.html?fx=high`);
+  await page.goto(`${BASE}/prim3-tactics-preview.html?fx=high&menu=0`);
   await page.waitForFunction(()=>window.__tac&&window.__tac.mode3d,null,{timeout:20000});await page.waitForTimeout(2500);
   check(scope,'the high tier is active when asked for',await page.evaluate(()=>window.__tac.tier)==='high');
   const painted=await page.evaluate(()=>{const c=document.querySelector('#tac3d canvas');const g=c.getContext('webgl2')||c.getContext('webgl');const px=new Uint8Array(4);g.readPixels(Math.floor(c.width/2),Math.floor(c.height/2),1,1,g.RGBA,g.UNSIGNED_BYTE,px);return px[0]+px[1]+px[2];});
@@ -262,16 +262,71 @@ if(THREE_DIR){
   check(scope,'no page errors',!errors.length,errors);
   await ctx.close();await browser3.close();
 }
+/* main menu: real buttons over a 3D toy scene; Deploy / Continue / New / Training / Graphics */
+if(THREE_DIR) for(const vp of [{width:390,height:844},{width:1280,height:900}]){
+  const scope='menu-'+vp.width;
+  const browser3=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE||undefined,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+  const ctx=await browser3.newContext({viewport:vp,serviceWorkers:'block',hasTouch:vp.width<1000});
+  await ctx.addInitScript(()=>{try{if(!sessionStorage.getItem('seeded')){localStorage.clear();sessionStorage.setItem('seeded','1');}localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));}catch(e){}});
+  await ctx.route('**/*',async route=>{const u=new URL(route.request().url());
+    if(u.hostname==='cdn.jsdelivr.net'&&u.pathname.startsWith('/npm/three@0.180.0/'))return route.fulfill({body:await readFile(join(THREE_DIR,u.pathname.replace('/npm/three@0.180.0/',''))),contentType:'text/javascript',headers:{'access-control-allow-origin':'*'}});
+    if(u.origin!==BASE)return route.abort();const f=resolve(ROOT,decodeURIComponent(u.pathname).slice(1));if(!f.startsWith(resolve(ROOT)+sep))return route.abort();
+    try{return route.fulfill({body:await readFile(f),contentType:TYPES[extname(f)]||'application/octet-stream'})}catch{return route.fulfill({status:404,body:''})}});
+  const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto(`${BASE}/prim3-tactics-preview.html`);
+  await page.waitForFunction(()=>window.__tac&&window.__tac.menuKey,null,{timeout:20000});await page.waitForTimeout(500);
+  const opts=()=>page.evaluate(()=>[...document.querySelectorAll('#pmList [data-pm]')].map(b=>b.dataset.pm));
+  check(scope,'a first visit opens the main menu; the battlefield waits behind it',await page.evaluate(()=>window.__tac.menuOpen&&!document.getElementById('p3Menu').hidden&&getComputedStyle(document.querySelector('.tac-stage')).display==='none'&&!window.__tac.mode3d));
+  check(scope,'with no save the choices are Deploy, Training and Graphics',JSON.stringify(await opts())===JSON.stringify(['new','training','graphics']),await opts());
+  await page.waitForTimeout(800);const painted=await page.evaluate(()=>{const c=document.querySelector('#menu3d canvas');const g=c.getContext('webgl2')||c.getContext('webgl');const px=new Uint8Array(4);let n=0;for(let i=1;i<10;i++){g.readPixels(Math.floor(c.width*i/10),Math.floor(c.height*0.3),1,1,g.RGBA,g.UNSIGNED_BYTE,px);if(px[3]>0)n++;}return n;});
+  check(scope,'the menu scene renders a toy on the pedestal',painted>0&&await page.evaluate(()=>window.__tac.menuKey)==='new',painted);
+  check(scope,'menu buttons are at least 44px tall',await page.evaluate(()=>[...document.querySelectorAll('#p3Menu button')].every(b=>b.getBoundingClientRect().height>=44)));
+  check(scope,'no sideways scroll on the menu',(await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth))===0);
+  await page.locator('[data-pm="training"]').click();
+  check(scope,'choosing Training swaps the toy and the button',await page.evaluate(()=>window.__tac.menuKey)==='training'&&(await page.locator('#pmGo').textContent())==='Start training');
+  await page.locator('[data-pm="graphics"]').click();await page.locator('[data-pm="graphics"]').click();
+  check(scope,'tapping Graphics again changes the setting and keeps it',await page.evaluate(()=>window.__tac.gfx)==='high'&&await page.evaluate(()=>localStorage.getItem('prim3.tactics.preview.gfx'))==='high');
+  await page.locator('[data-pm="graphics"]').click();await page.locator('[data-pm="graphics"]').click();
+  check(scope,'Graphics cycles to Battery saver',await page.evaluate(()=>window.__tac.gfx)==='low');
+  await page.locator('[data-pm="training"]').click();await page.locator('#pmGo').click();
+  check(scope,'Go plays the launch before leaving',await page.evaluate(()=>window.__tac.menuLaunching));
+  await page.waitForFunction(()=>!window.__tac.menuOpen,null,{timeout:20000});
+  await page.waitForFunction(()=>window.__tac.mode3d,null,{timeout:20000});
+  check(scope,'Start training opens the game with the optional hint card',!!(await page.evaluate(()=>window.__tac.session))&&await page.locator('#tacSheet').isVisible());
+  check(scope,'the battlefield uses the chosen graphics tier',await page.evaluate(()=>window.__tac.tier)==='low');
+  const before=await page.evaluate(()=>JSON.stringify(window.__tac.state.units.find(u=>u.id==='E1')));
+  check(scope,'training moved nobody and spent nothing',before===JSON.stringify(await page.evaluate(()=>window.__tac.state.units.find(u=>u.id==='E1'))));
+  // a played turn → the menu offers Continue first, and New mission resets
+  await page.evaluate(()=>window.__tac.ui);await page.locator('#tacEnd').click();await page.waitForTimeout(200);
+  const round=await page.evaluate(()=>window.__tac.state.round);
+  await page.locator('#tacMenuOpen').click();await page.waitForFunction(()=>window.__tac.menuKey,null,{timeout:20000});
+  check(scope,'the Menu button reopens the menu with Continue first',(await opts())[0]==='continue'&&/Turn 0?\d+/.test(await page.locator('[data-pm="continue"]').textContent()),await opts());
+  await page.locator('#pmGo').click();await page.waitForFunction(()=>!window.__tac.menuOpen,null,{timeout:20000});
+  check(scope,'Continue returns to the same mission',await page.evaluate(()=>window.__tac.state.round)===round);
+  await page.locator('#tacMenuOpen').click();await page.waitForFunction(()=>window.__tac.menuKey,null,{timeout:20000});
+  await page.locator('[data-pm="new"]').click();await page.locator('#pmGo').click();await page.waitForFunction(()=>!window.__tac.menuOpen,null,{timeout:20000});
+  check(scope,'New mission starts over at turn 1',await page.evaluate(()=>window.__tac.state.round)<round);
+  await page.reload();await page.waitForFunction(()=>window.__tac&&window.__tac.menuOpen,null,{timeout:20000});
+  check(scope,'after a reload the menu offers Continue',(await opts())[0]==='continue',await opts());
+  if(vp.width===390){await page.waitForTimeout(800);await page.screenshot({path:join(OUT,'prim3-tactics-menu-390.png')});}
+  check(scope,'no page errors',!errors.length,errors);
+  await ctx.close();await browser3.close();
+}
 /* three.js unreachable: the game falls back to the 2D grid and still plays */
 {
   const ctx=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});
   await ctx.route('**/*',async route=>{const u=new URL(route.request().url());if(u.origin!==BASE)return route.abort();const f=resolve(ROOT,decodeURIComponent(u.pathname).slice(1));try{return route.fulfill({body:await readFile(f),contentType:TYPES[extname(f)]||'application/octet-stream'})}catch{return route.fulfill({status:404,body:''})}});
   const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto(`${BASE}/prim3-tactics-preview.html`);await page.waitForSelector('#tacBoard .tb-cell');
+  await page.goto(`${BASE}/prim3-tactics-preview.html?menu=0`);await page.waitForSelector('#tacBoard .tb-cell');
   await page.waitForFunction(()=>window.__tac&&!window.__tac.loading3d,null,{timeout:10000});
   check('fallback','with three.js blocked the 2D grid is shown and says why',await page.evaluate(()=>!window.__tac.mode3d&&getComputedStyle(document.getElementById('tacBoard')).display!=='none')&&/2D grid/.test(await page.locator('#tacSheet').innerText()));
   await page.locator('#tacBoard .tb-cell[data-x="1"][data-y="2"]').click();
   check('fallback','the fallback board still plays (menu opens)',await page.locator('#tacMenu [data-act="move"]').count()===1);
+  await page.goto(`${BASE}/prim3-tactics-preview.html`);await page.waitForSelector('#pmList [data-pm]');
+  await page.waitForFunction(()=>document.getElementById('menu3d').classList.contains('no-3d'),null,{timeout:10000});
+  check('fallback','with three.js blocked the main menu still shows its buttons (no scene)',await page.locator('#pmList [data-pm]').count()>=3);
+  await page.locator('#pmGo').click();
+  check('fallback','and its Go button still enters the game',await page.evaluate(()=>!window.__tac.menuOpen)&&await page.locator('#tacBoard').isVisible());
   check('fallback','no page errors',!errors.length,errors);
   await ctx.close();
 }
