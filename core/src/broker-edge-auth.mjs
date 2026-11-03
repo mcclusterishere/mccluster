@@ -35,7 +35,8 @@ export function sha256Body(bodyBytes = Buffer.alloc(0)) {
   return b64url(crypto.createHash('sha256').update(bodyBytes).digest());
 }
 
-// The reverse hop, Core -> Worker `mccluster` (/v1/media/mcp only), reuses the
+// The reverse hop, Core -> Worker `mccluster` (POST /v1/media/mcp and GETs of the
+// World layers the news pairing reads; nothing else), reuses the
 // same key with its own protocol and canonical label. The label is part of the
 // HMAC input, so a signature made for one direction never verifies in the
 // other, even for an identical method, path and body.

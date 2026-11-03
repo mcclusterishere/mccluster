@@ -3,7 +3,7 @@
  "source": "production via Supabase MCP execute_sql",
  "captured_at": null,
  "sections": {
-  "ledger": {"sql_sha256": "06df2edb6ebff516f11917098c87a4466b8e15f08c9566387b78c675cb65eb89", "md5": "9b1d5929443ff1c51ac1e6e7b5f93827", "rows": [
+  "ledger": {"sql_sha256": "06df2edb6ebff516f11917098c87a4466b8e15f08c9566387b78c675cb65eb89", "md5": "049d707e95c6a15c4183fbd6829d061f", "rows": [
    ["0001","crm",12,"a2de7a029cad25e5bfa01ef322c3dbfb","11388f4dd961442667306b4ba2fd6a95"],
    ["0002","connect_saas",12,"8d58c18c5daafcd72852f635a652c801","fbe7cba3f5d438ea1c6f3631e95f3d74"],
    ["0003","creator_cuts",19,"610ed001a4cb7d58af2cea8ef8647e7e","6bf4fbf828edefeb2d5e5c0e8ece094e"],
@@ -360,7 +360,8 @@
    ["20261030001000","music_release_payment_integrity_v1",0,"d41d8cd98f00b204e9800998ecf8427e","d41d8cd98f00b204e9800998ecf8427e"],
    ["20261031180839","music_direct_sales_v1",1,"037044a65154d1d0958e812b5daec77b","66bba8c08a7d918cf107b3aa80351cb1"],
    ["20261103003049","prim3_agent_news_desk_v1",1,"bb29feb59bd21d2e4a583676ff110fe0","822d0273f5d52157142f596c6786654f"],
-   ["20261103010802","prim3_agent_news_longer_v1",1,"42384bd273dba6cee816a2c01db8d208","5d8481b9f8ff737b512b68fc458d4c7c"]
+   ["20261103010802","prim3_agent_news_longer_v1",1,"42384bd273dba6cee816a2c01db8d208","5d8481b9f8ff737b512b68fc458d4c7c"],
+   ["20261103012656","world_news_pairs_v1",1,"6ae58d56a8393367ccb4a98ddd2f6a38","f03db01513a4308476b7b5a2608ac928"]
   ]},
   "schemas": {"sql_sha256": "c264a3a8ea04c581764f0c8e91b3f46db00c180ee0aa460f05daf6f369d7390c", "md5": "4bc7ab380f6f1bafa7f05b59ff051e54", "rows": [
    ["ai_context","postgres",""],
@@ -381,7 +382,7 @@
    ["uuid-ossp","1.1","extensions"],
    ["vector","0.8.2","public"]
   ]},
-  "relations": {"sql_sha256": "4f21607c9f2439a94f92ca3d8189cef3a3b382b52b33c1f781cf817503cd3a94", "md5": "d54ead0302b5e1d48ad2236f7107d230", "rows": [
+  "relations": {"sql_sha256": "4f21607c9f2439a94f92ca3d8189cef3a3b382b52b33c1f781cf817503cd3a94", "md5": "8c1f3fd2e29eaf750cae5f0141da74e1", "rows": [
    ["ai_context","artifact_links","r",true,false,"",13,"b774fceb642e","b3b16d106caf","ff696abe0b16","",""],
    ["ai_context","context_snapshots","r",true,false,"",11,"5a3dd3b31e14","763fdc6a8354","bbf14d876094","",""],
    ["ai_context","conversations","r",true,false,"",13,"73aa22ced17b","882731ea3d27","e574df182ad5","",""],
@@ -923,9 +924,10 @@
    ["public","work_relationships","r",true,true,"",15,"3cff34a13873","18f61a3850e2","7ab11f473a0d","",""],
    ["public","work_renewals","r",true,true,"",20,"bfa4fe3bcc1a","a5f42ab18872","5b6616c0c2db","",""],
    ["public","work_tasks","r",true,false,"",13,"2963669335e0","6159eb3b84f2","298029dd3cf8","",""],
+   ["public","world_news_pairs","r",true,false,"",14,"5de761fbdc0f","76b13db8ea63","55500d48ba73","",""],
    ["public","world_region_sharing","r",true,true,"",5,"4b843b55af0a","24a36f9e1660","42bce73daf3b","",""]
   ]},
-  "functions": {"sql_sha256": "098f140bd90448d45ab6c333fa98638ad43c659c2744f2bae3e47e087676e78f", "md5": "f7e230a3e93bd3a4b1d2144f20c853ad", "rows": [
+  "functions": {"sql_sha256": "098f140bd90448d45ab6c333fa98638ad43c659c2744f2bae3e47e087676e78f", "md5": "3f28cae118311bc6e48ff469213789cd", "rows": [
    ["private","clip_audit","p_org uuid, p_event text, p_type text, p_id text, p_detail jsonb","void",true,"v","search_path=\"\"","60b42e062739",""],
    ["private","clip_canonical_url","p_platform text, p_media text","text",false,"i","search_path=\"\"","485e72ed39b5",""],
    ["private","clip_code","","text",false,"v","search_path=\"\"","f5d91b3988d5",""],
@@ -1419,6 +1421,7 @@
    ["public","withdraw_connection","p_connection_id uuid","jsonb",true,"v","search_path=\"\"","d6c0ffa85fde","authenticated=X"],
    ["public","withdraw_fellowship_application","p_application_id uuid","jsonb",true,"v","search_path=\"\"","47b5a063ada0","authenticated=X"],
    ["public","work_touch_updated_at","","trigger",false,"v","search_path=\"\"","1c4318bee424","PUBLIC=X"],
+   ["public","world_news_pairs_prune","","void",true,"v","search_path=public","07b2033a2a95",""],
    ["public","world_public_member_counts","","TABLE(scope_key text, country_code text, subdivision_code text, member_count bigint)",true,"s","search_path=\"\"","fcabbef2cc5c","anon=X;authenticated=X"],
    ["public","world_region_sharing_clear","","boolean",true,"v","search_path=\"\"","7716de4c5613","authenticated=X"],
    ["public","world_region_sharing_get","","TABLE(country_code text, subdivision_code text, consented_at timestamp with time zone)",true,"s","search_path=\"\"","8abf5cf315e3","authenticated=X"],

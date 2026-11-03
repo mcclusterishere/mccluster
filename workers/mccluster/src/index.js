@@ -18,6 +18,7 @@ import { handlePublicComment } from './public-comment.js';
 import { handleWorldIon, WORLD_ION_PATH } from './world-ion.js';
 import { AccessError, verifyAccess } from './seek-first/access.js';
 import { handleWorldNews, handleWorldNewsHeat, NEWS_PATH, NEWS_HEAT_PATH } from './world-news.js';
+import { handleWorldNewsPairs, NEWS_PAIRS_PATH } from './world-news-pairs.js';
 import SEEK_FIRST_CONSOLE_HTML from './seek-first/console.html';
 import { CATALOG } from './ai/envelope.js';
 
@@ -167,6 +168,11 @@ export default {
       if (path === NEWS_HEAT_PATH) {
         const heat = await handleWorldNewsHeat(request, env);
         if (heat) return heat;
+      }
+      /* headlines paired with Halo map items by McCluster Core, house owner only (./world-news-pairs.js) */
+      if (path === NEWS_PAIRS_PATH) {
+        const pairs = await handleWorldNewsPairs(request, env);
+        if (pairs) return pairs;
       }
       /* accounts by the IP place of their latest signed-in visit: exact for the house owner, countries of five or more for
          everyone else (./world-members.js) */
