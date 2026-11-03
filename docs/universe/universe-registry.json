@@ -115,5 +115,358 @@
         }
       ]
     }
-  ]
+  ],
+  "gamesWorld": {
+    "schema": "here.games-world/v1",
+    "status": "experimental: the globe's Games overlay, house owner only (owner, 2026-11-03)",
+    "access": "The server's owner answer: GET /v1/world/access release.admin_preview (js/action-globe.js isOwner). Each destination keeps its own gate.",
+    "surface": "action-globe.html → Games (js/globe-games.js, css/globe-games.css)",
+    "published": "data/games/world.v1.json",
+    "publisher": "tools/publish-games-world.mjs",
+    "rules": [
+      "Places are country → state → town. A town lists only destinations that exist in this repository; nothing is listed as coming soon.",
+      "Blurbs are quoted from the cited source file, never newly written.",
+      "Storylines run on repeat from scheduleEpoch: the scene playing at time t is found by (t - epoch) mod periodMs over the ordered scene durations.",
+      "Scene durations are schedule slots unless the source supplies timing (Whip Equipped uses TIMING.json chapter targets). A slot is not story timing."
+    ],
+    "scheduleEpoch": "2026-11-03T00:00:00Z",
+    "places": [
+      {
+        "id": "us",
+        "name": "United States",
+        "region": "Americas",
+        "states": [
+          {
+            "id": "connecticut",
+            "name": "Connecticut",
+            "towns": [
+              {
+                "id": "bridgeport",
+                "name": "Bridgeport",
+                "lat": 41.1865,
+                "lon": -73.1952,
+                "neighborhoods": [
+                  {
+                    "id": "mccluster-city-commercial",
+                    "name": "McCluster City — Commercial District",
+                    "blurb": {
+                      "text": "Restore last position by default; new save begins on Harbor Boulevard.",
+                      "source": "docs/universe/universe-registry.json"
+                    }
+                  },
+                  {
+                    "id": "bridgeport-robbery-1s",
+                    "name": "Bridgeport · Robbery 1s",
+                    "blurb": {
+                      "text": "A separate story block beyond the original commercial district. Follow the Robbery 1s from an industrial shell to the neighborhood altar.",
+                      "source": "core/data/fictional-city/district.v1.json"
+                    }
+                  },
+                  {
+                    "id": "equity-uprise-island",
+                    "name": "Equity Uprise island",
+                    "blurb": {
+                      "text": "Explicit island footbridge arrival; detailed HQ entrance remains on Floor 1.",
+                      "source": "docs/universe/universe-registry.json"
+                    }
+                  }
+                ],
+                "entries": [
+                  {
+                    "id": "city-boulevard",
+                    "title": "McCluster City — Commercial District",
+                    "kind": "place",
+                    "neighborhood": "mccluster-city-commercial",
+                    "universe": "mccluster-fictional-city",
+                    "route": "fictional-city.html",
+                    "blurb": {
+                      "text": "Restore last position by default; new save begins on Harbor Boulevard.",
+                      "source": "docs/universe/universe-registry.json"
+                    }
+                  },
+                  {
+                    "id": "whip-equipped-garage",
+                    "title": "Whip Equipped Garage",
+                    "kind": "story",
+                    "neighborhood": "mccluster-city-commercial",
+                    "universe": "mccluster-fictional-city",
+                    "route": "fictional-city.html?entry=garage",
+                    "blurb": {
+                      "text": "McCluster, Majid, and Gunny anchor an enterable garage where district stories meet the existing Whip Equipped chapters.",
+                      "source": "core/data/fictional-city/district.v1.json"
+                    }
+                  },
+                  {
+                    "id": "bridgeport-robbery-1s",
+                    "title": "Bridgeport · Robbery 1s",
+                    "kind": "story",
+                    "neighborhood": "bridgeport-robbery-1s",
+                    "universe": "mccluster-fictional-city",
+                    "route": "fictional-city.html?entry=bridgeport",
+                    "blurb": {
+                      "text": "A separate story block beyond the original commercial district. Follow the Robbery 1s from an industrial shell to the neighborhood altar.",
+                      "source": "core/data/fictional-city/district.v1.json"
+                    }
+                  },
+                  {
+                    "id": "equity-uprise-island",
+                    "title": "Equity Uprise island",
+                    "kind": "place",
+                    "neighborhood": "equity-uprise-island",
+                    "universe": "mccluster-fictional-city",
+                    "route": "fictional-city.html?entry=island",
+                    "blurb": {
+                      "text": "Explicit island footbridge arrival; detailed HQ entrance remains on Floor 1.",
+                      "source": "docs/universe/universe-registry.json"
+                    }
+                  },
+                  {
+                    "id": "equity-uprise-hq",
+                    "title": "Equity Uprise HQ · Emergency Exercise",
+                    "kind": "mission",
+                    "neighborhood": "equity-uprise-island",
+                    "route": "prim3-transit.html?level=equity-uprise-hq",
+                    "blurb": {
+                      "text": "Emergency Exercise on Floor 1. T reports at the security interface behind reception (two steps), then the squad assembles at Assembly Area A.",
+                      "source": "js/prim3-tactics/levels/equity-uprise-hq.mjs"
+                    }
+                  },
+                  {
+                    "id": "b1-restore-the-picture",
+                    "title": "B1 · Restore the Picture",
+                    "kind": "mission",
+                    "neighborhood": "equity-uprise-island",
+                    "route": "prim3-transit.html?level=equity-uprise-b1&side=defend",
+                    "blurb": {
+                      "text": "Come down from Floor 1, restore a link at the rack (T, next to it), then VERIFY the picture at the network operations console in the telecom core (T, next to it) before the clock runs out.",
+                      "source": "js/prim3-tactics/missions/blind-the-floor.mjs"
+                    }
+                  },
+                  {
+                    "id": "b1-blind-the-floor",
+                    "title": "B1 · Blind the Floor",
+                    "kind": "mission",
+                    "neighborhood": "equity-uprise-island",
+                    "route": "prim3-transit.html?level=equity-uprise-b1&side=attack",
+                    "blurb": {
+                      "text": "You are the red team, in through the tunnel transfer lock under concealment.",
+                      "source": "js/prim3-tactics/missions/blind-the-floor.mjs"
+                    }
+                  }
+                ],
+                "storylines": [
+                  "robbery-1s",
+                  "whip-equipped",
+                  "b1-blind-the-floor"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "imports": [
+      {
+        "kind": "prim3-world-missions",
+        "source": "data/prim3/world-missions.json",
+        "route": "prim3-transit.html?mission={id}&new=1",
+        "note": "PRIM3 World side operations that name a real place. Draft, non-canon side operations per their own file; the town is the mission's place, the state its first-level division.",
+        "places": {
+          "us-road-kit": {
+            "state": "District of Columbia",
+            "town": "Washington"
+          },
+          "jp-bad-input": {
+            "state": "Aichi",
+            "town": "Kariya"
+          },
+          "kr-fails-safely": {
+            "state": "Ulsan",
+            "town": "Ulsan"
+          },
+          "in-safe-access": {
+            "state": "Delhi",
+            "town": "New Delhi"
+          },
+          "cn-exposure": {
+            "state": "Beijing",
+            "town": "Beijing"
+          },
+          "id-elastic": {
+            "state": "Jakarta",
+            "town": "Jakarta"
+          },
+          "pk-tech-zone": {
+            "state": "Islamabad Capital Territory",
+            "town": "Islamabad"
+          },
+          "ng-four-colors": {
+            "state": "Federal Capital Territory",
+            "town": "Abuja"
+          },
+          "br-one-detail": {
+            "state": "Federal District",
+            "town": "Brasília"
+          },
+          "bd-permission-slip": {
+            "state": "Dhaka Division",
+            "town": "Dhaka"
+          },
+          "ru-patient-zero": {
+            "state": "Moscow",
+            "town": "Moscow"
+          },
+          "ua-open-book": {
+            "state": "Kyiv",
+            "town": "Kyiv"
+          },
+          "et-dead-air": {
+            "state": "Addis Ababa",
+            "town": "Addis Ababa"
+          },
+          "mx-clean-install": {
+            "state": "Mexico City",
+            "town": "Mexico City"
+          },
+          "eg-own-the-exit": {
+            "state": "Cairo Governorate",
+            "town": "Cairo"
+          },
+          "ph-credential-chain": {
+            "state": "Metro Manila",
+            "town": "Manila"
+          },
+          "cd-dumpster-signal": {
+            "state": "Kinshasa",
+            "town": "Kinshasa"
+          },
+          "vn-firmware-truth": {
+            "state": "Hanoi",
+            "town": "Hanoi"
+          },
+          "ir-trust-model": {
+            "state": "Tehran Province",
+            "town": "Tehran"
+          },
+          "tr-gravity": {
+            "state": "Ankara Province",
+            "town": "Ankara"
+          },
+          "de-house-of-eyes": {
+            "state": "Berlin",
+            "town": "Berlin"
+          },
+          "th-human-layer": {
+            "state": "Bangkok",
+            "town": "Bangkok"
+          },
+          "gb-shared-responsibility": {
+            "state": "England",
+            "town": "London"
+          },
+          "fr-line-item": {
+            "state": "Île-de-France",
+            "town": "Paris"
+          },
+          "za-consent-line": {
+            "state": "Gauteng",
+            "town": "Pretoria"
+          }
+        }
+      }
+    ],
+    "storylines": [
+      {
+        "id": "robbery-1s",
+        "town": "us/connecticut/bridgeport",
+        "neighborhood": "bridgeport-robbery-1s",
+        "start": "fictional-city.html?entry=bridgeport",
+        "scenesFrom": {
+          "kind": "fictional-city-story-arc",
+          "source": "core/data/fictional-city/district.v1.json",
+          "arc": "robbery-1s"
+        },
+        "sceneSlotMs": 300000
+      },
+      {
+        "id": "whip-equipped",
+        "town": "us/connecticut/bridgeport",
+        "neighborhood": "mccluster-city-commercial",
+        "start": "fictional-city.html?entry=garage",
+        "scenesFrom": {
+          "kind": "whip-equipped-chapters",
+          "source": "docs/music/whip-equipped/CANON.json",
+          "sequence": "core_sequence",
+          "timing": "docs/music/whip-equipped/TIMING.json",
+          "titles": "docs/music/WHIP-EQUIPPED-STORY.md",
+          "anchor": {
+            "frame": "fictional-city",
+            "source": "core/data/fictional-city/district.v1.json",
+            "placeId": "whip-equipped-garage"
+          }
+        }
+      },
+      {
+        "id": "b1-blind-the-floor",
+        "title": "Equity Uprise B1 · Blind the Floor / Restore the Picture",
+        "town": "us/connecticut/bridgeport",
+        "neighborhood": "equity-uprise-island",
+        "start": "prim3-transit.html?level=equity-uprise-b1&side=attack",
+        "source": "js/prim3-tactics/missions/blind-the-floor.mjs",
+        "sceneSlotMs": 600000,
+        "scenes": [
+          {
+            "id": "b1-attack-blind",
+            "title": "Blind the cameras",
+            "side": "attack",
+            "anchor": {
+              "frame": "equity-uprise-b1",
+              "device": "B1-NET-PATCH-PANEL-01"
+            },
+            "route": "prim3-transit.html?level=equity-uprise-b1&side=attack"
+          },
+          {
+            "id": "b1-attack-log",
+            "title": "Pull the core log",
+            "side": "attack",
+            "anchor": {
+              "frame": "equity-uprise-b1",
+              "equipment": "B1-TELECOM-CONSOLE-01"
+            },
+            "route": "prim3-transit.html?level=equity-uprise-b1&side=attack"
+          },
+          {
+            "id": "b1-attack-leave",
+            "title": "Leave by the lock",
+            "side": "attack",
+            "anchor": {
+              "frame": "equity-uprise-b1",
+              "door": "B1-LOCK-OUTER-DOOR-01"
+            },
+            "route": "prim3-transit.html?level=equity-uprise-b1&side=attack"
+          },
+          {
+            "id": "b1-defend-restore",
+            "title": "Restore a camera link",
+            "side": "defend",
+            "anchor": {
+              "frame": "equity-uprise-b1",
+              "device": "B1-NET-PATCH-PANEL-01"
+            },
+            "route": "prim3-transit.html?level=equity-uprise-b1&side=defend"
+          },
+          {
+            "id": "b1-defend-verify",
+            "title": "Verify the picture",
+            "side": "defend",
+            "anchor": {
+              "frame": "equity-uprise-b1",
+              "equipment": "B1-TELECOM-CONSOLE-01"
+            },
+            "route": "prim3-transit.html?level=equity-uprise-b1&side=defend"
+          }
+        ]
+      }
+    ]
+  }
 }
