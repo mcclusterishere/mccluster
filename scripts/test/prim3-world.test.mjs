@@ -253,3 +253,32 @@ test('canon guardrails: fiction, non-canon side operations, no spoilers, McClust
   const bad = structuredClone(DOC); bad.missions[0].side_operation = false;
   assert.ok(Object.values(validate(bad).records).flat().some((e) => /Side operation/.test(e)));
 });
+
+/* News desk in the country card (owner, 2026-11-03). */
+import { deskHtml, loadDesk, ago } from '../../js/prim3-world/news-desk.mjs';
+test('news desk card: brief and reactions are escaped, links are http(s) only, empty state is honest', () => {
+  const html = deskHtml({ brief: { text: 'Japan <b>news</b>', headline_count: 12, created_at: '2026-11-03T00:00:00Z' }, comments: [
+    { headline: 'Launch <script>', comment: 'Relay "up".', url: 'https://news.example/a' },
+    { headline: 'Bad link', comment: 'x', url: 'javascript:alert(1)' },
+  ] }, { name: 'Japan', now: Date.parse('2026-11-03T02:00:00Z') });
+  assert.ok(html.includes('Japan &lt;b&gt;news&lt;/b&gt;'));
+  assert.ok(html.includes('Launch &lt;script&gt;'));
+  assert.ok(html.includes('href="https://news.example/a"'));
+  assert.ok(!html.includes('javascript:'));
+  assert.ok(html.includes('2 h ago') && html.includes('12 headlines'));
+  assert.ok(html.includes('Fiction voiced by McCluster'));
+  assert.match(deskHtml({ brief: null, comments: [] }, { name: 'Ethiopia' }), /has not filed/);
+  assert.equal(ago('2026-11-03T00:00:30Z', Date.parse('2026-11-03T00:00:40Z')), 'just now');
+});
+test('news desk card: asks the owner-only route with the session and never without one', async () => {
+  const storage = { getItem: () => JSON.stringify({ access_token: 'tok' }) };
+  let seen = null;
+  const ok = await loadDesk('JP', { storage, fetchImpl: async (url, init) => { seen = { url, init }; return { ok: true, status: 200, json: async () => ({ brief: null, comments: [] }) }; } });
+  assert.equal(seen.url, 'https://api.mccluster.org/v1/prim3/news-desk?country=JP');
+  assert.equal(seen.init.headers.authorization, 'Bearer tok');
+  assert.ok(ok.data);
+  assert.deepEqual(await loadDesk('JP', { storage, fetchImpl: async () => ({ ok: false, status: 403 }) }), { error: 'not-owner' });
+  let called = false;
+  assert.deepEqual(await loadDesk('JP', { storage: { getItem: () => null }, fetchImpl: async () => { called = true; } }), { error: 'signed-out' });
+  assert.equal(called, false);
+});

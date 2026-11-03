@@ -73,6 +73,14 @@
     .pw-agent small{display:block;color:var(--dim);font-weight:500;font-size:14px}
     .pw-feat{display:inline-block;margin-left:6px;padding:1px 6px;border:1px solid var(--amber);border-radius:4px;color:var(--amber-text);font-size:12px;letter-spacing:.08em;text-transform:uppercase;vertical-align:middle}
     .pw-news{border-top-style:dashed}
+    .pw-desk{display:grid;gap:6px;min-width:0;padding-bottom:10px;margin-bottom:4px;border-bottom:1px dashed var(--line)}
+    .pw-desk-brief{margin:0;padding:8px 10px;border-left:3px solid var(--squad);background:var(--squad-soft);border-radius:0 8px 8px 0;font-size:16px;line-height:1.4}
+    .pw-desk-brief small{display:block;margin-top:4px;color:var(--dim);font-size:13px;font-weight:500}
+    .pw-desk-list{list-style:none;margin:0;padding:0;display:grid;gap:6px;max-height:min(46vh,420px);overflow:auto;overscroll-behavior:contain}
+    .pw-desk-item{display:grid;gap:2px;padding:6px 0;border-bottom:1px solid var(--line);min-width:0;overflow-wrap:anywhere}
+    .pw-desk-item small{color:var(--dim);font-size:13px}
+    .pw-desk-item small a{color:inherit}
+    .pw-desk-item span{font-size:15px;line-height:1.35}
     .pw-who{margin:0;font-size:16px}
     .pw-who small{display:block;color:var(--dim);font-weight:500;font-size:14px}
     .pw-meta{display:flex;flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none}
@@ -146,6 +154,7 @@
     <div id="pwApp" hidden></div>
   </main>
   <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
+  <script type="module" src="js/prim3-world/news-desk.mjs"></script>
   <script type="module" src="js/prim3-world/app.mjs"></script>
   <script src="js/tabbar.js?v=__STAMP__"></script>
 </body>
