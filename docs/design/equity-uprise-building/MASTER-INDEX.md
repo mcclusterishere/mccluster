@@ -348,6 +348,16 @@ The canonical learner presentation is now **symptom-first rather than engineerin
 
 The first explicit PRIM3 reinforcement binding is the Floor 2 Wi-Fi outage (`IT-LAB-017`): after successful diagnosis and verification, the learner can open **Got WiFi?** as a post-lab refresher. This is reinforcement, not the primary lesson or proof of mastery.
 
+### Step 10 Server Lab — hands-on rack / server hardware (owner, 2026-11-03)
+- `SERVER-LAB-SPEC.md`
+- `production/electronics/server-lab-hardware-v1.json`
+- `production/lab-runtime/equity-uprise-server-lab-runtime.mjs`
+- `production/lab-runtime/server-lab-scenario-pack-v1.json`
+- `production/lab-runtime/verify_server_lab_v1.mjs`
+- page: `equity-uprise-server-lab-3d.html` (owner-gated), `js/server-lab/`, `css/server-lab.css`
+
+MDF rack 01 in B1 (42U EIA-310, mirrors `B1-TELECOM-RACKS-01-I001`) and a generic 2U/1U server built from data. Four levels on the existing runtime chain: L1 Identify (IT-LAB-041), L2 Rebuild (IT-LAB-042), L3 Bring-up (IT-LAB-043), L4 Troubleshoot (IT-LAB-044..051, injected hardware faults on the sandbox clone of `B1-SRV-HYP-01-I001`). Step 6 assessment; SANDBOX only; generic unbranded hardware.
+
 
 ## v3 interiors, brand slots and model consistency (2026-11-03)
 
