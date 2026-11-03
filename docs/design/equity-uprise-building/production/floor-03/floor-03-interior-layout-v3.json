@@ -1,0 +1,644 @@
+{
+ "schema_version": "3.0.0",
+ "layout_id": "equity-uprise-f3-interior-layout-v3",
+ "status": "canonical-v3-interior-furnishing-layout",
+ "not_for_construction": true,
+ "level": 3,
+ "level_id": "F3",
+ "floor_identity": "Fellowship + Field Operations",
+ "finished_floor_elevation_ft": 27.0,
+ "catalog_ref": "../interiors/furniture-catalog-v3.json",
+ "design_intent": "A working network floor: the long Opportunity Exchange table, booth-style networking by the west glass, two different interview rooms (a formal round table and a soft mentorship room), and the field-operations room along the south glass with a plan table, technical bench and the field team's named desks. Deep green upholstery and walnut.",
+ "authority_refs": [
+  "../../FLOOR-03-FELLOWSHIP-NETWORK-360-SPEC.md",
+  "../../FLOOR-03-PROGRAM-RECONCILIATION.md",
+  "floor-03-object-inventory.json",
+  "../workplace-occupancy-v1.json"
+ ],
+ "rules": [
+  "Furniture lives inside this floor's approved program zones; no function moves between levels.",
+  "Positions are feet in the shared Core V2 frame (origin SW exterior corner, X east, Y north).",
+  "Items that realize an existing object-inventory id keep that id; new pieces carry new stable ids and a program/occupancy source.",
+  "No logo, mark or lettering is furniture; identity walls carry runtime brand slots only."
+ ],
+ "palette": {
+  "upholstery": [
+   44,
+   78,
+   70,
+   255
+  ],
+  "upholstery_alt": [
+   58,
+   96,
+   86,
+   255
+  ],
+  "wood": [
+   98,
+   70,
+   50,
+   255
+  ],
+  "wood_dark": [
+   66,
+   46,
+   34,
+   255
+  ],
+  "rug": [
+   52,
+   64,
+   60,
+   255
+  ],
+  "laminate": [
+   176,
+   170,
+   158,
+   255
+  ]
+ },
+ "zones": [
+  {
+   "id": "opportunity-exchange",
+   "label": "Opportunity Exchange",
+   "bounds_ft": {
+    "x1": 24,
+    "y1": 34,
+    "x2": 48,
+    "y2": 50
+   },
+   "purpose": "16x4 ft shared table, six seats",
+   "source": "FLOOR-03 spec / historical A3"
+  },
+  {
+   "id": "people-network-lounge",
+   "label": "People + Network Lounge",
+   "bounds_ft": {
+    "x1": 2,
+    "y1": 18,
+    "x2": 18,
+    "y2": 34
+   },
+   "purpose": "booth networking + standing table",
+   "source": "FLOOR-03 spec"
+  },
+  {
+   "id": "interview-a",
+   "label": "Interview / Stakeholder Meeting A",
+   "bounds_ft": {
+    "x1": 2,
+    "y1": 4,
+    "x2": 14,
+    "y2": 16
+   },
+   "purpose": "formal interview, round table",
+   "source": "FLOOR-03 spec"
+  },
+  {
+   "id": "interview-b",
+   "label": "Interview / Mentorship B",
+   "bounds_ft": {
+    "x1": 16,
+    "y1": 4,
+    "x2": 28,
+    "y2": 16
+   },
+   "purpose": "soft mentorship conversation",
+   "source": "FLOOR-03 spec"
+  },
+  {
+   "id": "field-ops",
+   "label": "Field Operations Room",
+   "bounds_ft": {
+    "x1": 30,
+    "y1": 1,
+    "x2": 71.25,
+    "y2": 26
+   },
+   "purpose": "Field-R / Field-E / Field-T desks, plan table, technical bench",
+   "source": "workplace-occupancy-v1.json F3 people"
+  }
+ ],
+ "keep_clear": [
+  {
+   "id": "north-support-corridor",
+   "bounds_ft": {
+    "x1": 18,
+    "y1": 54,
+    "x2": 60,
+    "y2": 60
+   },
+   "reason": "6 ft north public/support corridor (schematic basis 9)"
+  },
+  {
+   "id": "west-service-approach",
+   "bounds_ft": {
+    "x1": 0,
+    "y1": 54,
+    "x2": 18,
+    "y2": 60
+   },
+   "reason": "freight lift / Stair B service approach (schematic basis 9)"
+  },
+  {
+   "id": "passenger-elevator-approach",
+   "bounds_ft": {
+    "x1": 48,
+    "y1": 32,
+    "x2": 54,
+    "y2": 46
+   },
+   "reason": "clear landing in front of the west-facing passenger elevator door (X54 / Y37-41)"
+  }
+ ],
+ "items": [
+  {
+   "id": "F3-OPPORTUNITY-TABLE-01",
+   "type": "table_rect",
+   "x": 36,
+   "y": 41,
+   "rot_deg": 0,
+   "zone": "opportunity-exchange",
+   "realizes_inventory_id": "F3-OPPORTUNITY-TABLE-01",
+   "size": {
+    "w_in": 192,
+    "d_in": 48,
+    "power_module": true
+   },
+   "finish": {
+    "top": "wood"
+   }
+  },
+  {
+   "id": "F3-OPPORTUNITY-CHAIR-01",
+   "type": "task_chair",
+   "x": 29.5,
+   "y": 37.6,
+   "rot_deg": -0.0,
+   "zone": "opportunity-exchange",
+   "realizes_inventory_id": "F3-OPPORTUNITY-CHAIR-01"
+  },
+  {
+   "id": "F3-OPPORTUNITY-CHAIR-02",
+   "type": "task_chair",
+   "x": 36,
+   "y": 37.6,
+   "rot_deg": 0.0,
+   "zone": "opportunity-exchange",
+   "realizes_inventory_id": "F3-OPPORTUNITY-CHAIR-02"
+  },
+  {
+   "id": "F3-OPPORTUNITY-CHAIR-03",
+   "type": "task_chair",
+   "x": 42.5,
+   "y": 37.6,
+   "rot_deg": -0.0,
+   "zone": "opportunity-exchange",
+   "realizes_inventory_id": "F3-OPPORTUNITY-CHAIR-03"
+  },
+  {
+   "id": "F3-OPPORTUNITY-CHAIR-04",
+   "type": "task_chair",
+   "x": 29.5,
+   "y": 44.4,
+   "rot_deg": -180.0,
+   "zone": "opportunity-exchange",
+   "realizes_inventory_id": "F3-OPPORTUNITY-CHAIR-04"
+  },
+  {
+   "id": "F3-OPPORTUNITY-CHAIR-05",
+   "type": "task_chair",
+   "x": 36,
+   "y": 44.4,
+   "rot_deg": 180.0,
+   "zone": "opportunity-exchange",
+   "realizes_inventory_id": "F3-OPPORTUNITY-CHAIR-05"
+  },
+  {
+   "id": "F3-OPPORTUNITY-CHAIR-06",
+   "type": "task_chair",
+   "x": 42.5,
+   "y": 44.4,
+   "rot_deg": -180.0,
+   "zone": "opportunity-exchange",
+   "realizes_inventory_id": "F3-OPPORTUNITY-CHAIR-06"
+  },
+  {
+   "id": "F3-LOUNGE-SOFA-01",
+   "type": "banquette",
+   "x": 6.6,
+   "y": 21.6,
+   "rot_deg": 0,
+   "zone": "people-network-lounge",
+   "realizes_inventory_id": "F3-LOUNGE-SOFA-01",
+   "size": {
+    "w_in": 84,
+    "d_in": 26
+   },
+   "placement_override_reason": "networking booth bench (banquette) facing its pair across a table"
+  },
+  {
+   "id": "F3-LOUNGE-BOOTH-02",
+   "type": "banquette",
+   "x": 6.6,
+   "y": 29.4,
+   "rot_deg": 180,
+   "zone": "people-network-lounge",
+   "size": {
+    "w_in": 84,
+    "d_in": 26
+   },
+   "source": "FLOOR-03 People + Network lounge (booth pair)"
+  },
+  {
+   "id": "F3-LOUNGE-TABLE-01",
+   "type": "table_rect",
+   "x": 6.6,
+   "y": 25.5,
+   "rot_deg": 0,
+   "zone": "people-network-lounge",
+   "realizes_inventory_id": "F3-LOUNGE-TABLE-01",
+   "size": {
+    "w_in": 72,
+    "d_in": 30
+   },
+   "placement_override_reason": "booth table between the two banquettes (was a floating round table)"
+  },
+  {
+   "id": "F3-LOUNGE-HIGH-TABLE-01",
+   "type": "high_table",
+   "x": 15.0,
+   "y": 25.5,
+   "rot_deg": 90,
+   "zone": "people-network-lounge",
+   "size": {
+    "w_in": 60,
+    "d_in": 30
+   }
+  },
+  {
+   "id": "F3-LOUNGE-CHAIR-01",
+   "type": "stool_bar",
+   "x": 13.0,
+   "y": 24.2,
+   "rot_deg": -90.0,
+   "zone": "people-network-lounge",
+   "realizes_inventory_id": "F3-LOUNGE-CHAIR-01",
+   "placement_override_reason": "standing-table stool"
+  },
+  {
+   "id": "F3-LOUNGE-CHAIR-02",
+   "type": "stool_bar",
+   "x": 13.0,
+   "y": 26.8,
+   "rot_deg": -90.0,
+   "zone": "people-network-lounge",
+   "realizes_inventory_id": "F3-LOUNGE-CHAIR-02",
+   "placement_override_reason": "standing-table stool"
+  },
+  {
+   "id": "F3-LOUNGE-STOOL-03",
+   "type": "stool_bar",
+   "x": 17.0,
+   "y": 24.2,
+   "rot_deg": 90.0,
+   "zone": "people-network-lounge"
+  },
+  {
+   "id": "F3-LOUNGE-STOOL-04",
+   "type": "stool_bar",
+   "x": 17.0,
+   "y": 26.8,
+   "rot_deg": 90.0,
+   "zone": "people-network-lounge"
+  },
+  {
+   "id": "F3-LOUNGE-RUG-01",
+   "type": "rug",
+   "x": 8.0,
+   "y": 25.5,
+   "rot_deg": 0,
+   "zone": "people-network-lounge",
+   "realizes_inventory_id": "F3-LOUNGE-RUG-01",
+   "size": {
+    "w_in": 156,
+    "d_in": 144
+   }
+  },
+  {
+   "id": "F3-LOUNGE-PLANT-01",
+   "type": "planter_tall",
+   "x": 2.9,
+   "y": 33.0,
+   "rot_deg": 0,
+   "zone": "people-network-lounge",
+   "realizes_inventory_id": "F3-LOUNGE-PLANT-01"
+  },
+  {
+   "id": "F3-LOUNGE-PLANT-02",
+   "type": "planter_trough",
+   "x": 9.0,
+   "y": 18.9,
+   "rot_deg": 0,
+   "zone": "people-network-lounge",
+   "realizes_inventory_id": "F3-LOUNGE-PLANT-02",
+   "placement_override_reason": "trough planter screens the booths from the interview-room frontage"
+  },
+  {
+   "id": "F3-INTERVIEW-A-TABLE-01",
+   "type": "table_round",
+   "x": 8.0,
+   "y": 9.6,
+   "rot_deg": 0,
+   "zone": "interview-a",
+   "realizes_inventory_id": "F3-INTERVIEW-A-TABLE-01",
+   "size": {
+    "w_in": 48,
+    "d_in": 48
+   }
+  },
+  {
+   "id": "F3-INTERVIEW-A-CHAIR-01",
+   "type": "side_chair",
+   "x": 5.0,
+   "y": 9.6,
+   "rot_deg": -90.0,
+   "zone": "interview-a",
+   "realizes_inventory_id": "F3-INTERVIEW-A-CHAIR-01"
+  },
+  {
+   "id": "F3-INTERVIEW-A-CHAIR-02",
+   "type": "side_chair",
+   "x": 11.0,
+   "y": 9.6,
+   "rot_deg": 90.0,
+   "zone": "interview-a",
+   "realizes_inventory_id": "F3-INTERVIEW-A-CHAIR-02"
+  },
+  {
+   "id": "F3-INTERVIEW-A-CHAIR-03",
+   "type": "side_chair",
+   "x": 8.0,
+   "y": 6.6,
+   "rot_deg": -0.0,
+   "zone": "interview-a",
+   "realizes_inventory_id": "F3-INTERVIEW-A-CHAIR-03"
+  },
+  {
+   "id": "F3-INTERVIEW-A-CHAIR-04",
+   "type": "side_chair",
+   "x": 8.0,
+   "y": 12.6,
+   "rot_deg": -180.0,
+   "zone": "interview-a",
+   "realizes_inventory_id": "F3-INTERVIEW-A-CHAIR-04"
+  },
+  {
+   "id": "F3-INTERVIEW-A-CREDENZA-01",
+   "type": "credenza",
+   "x": 3.0,
+   "y": 10.0,
+   "rot_deg": -90,
+   "zone": "interview-a",
+   "size": {
+    "w_in": 60,
+    "d_in": 18
+   }
+  },
+  {
+   "id": "F3-INTERVIEW-B-TABLE-01",
+   "type": "coffee_table",
+   "x": 21.0,
+   "y": 9.3,
+   "rot_deg": 0,
+   "zone": "interview-b",
+   "realizes_inventory_id": "F3-INTERVIEW-B-TABLE-01",
+   "placement_override_reason": "mentorship room: low table between four lounge chairs"
+  },
+  {
+   "id": "F3-INTERVIEW-B-CHAIR-01",
+   "type": "armchair_lounge",
+   "x": 19.5,
+   "y": 12.0,
+   "rot_deg": 180,
+   "zone": "interview-b",
+   "realizes_inventory_id": "F3-INTERVIEW-B-CHAIR-01"
+  },
+  {
+   "id": "F3-INTERVIEW-B-CHAIR-02",
+   "type": "armchair_lounge",
+   "x": 22.5,
+   "y": 12.0,
+   "rot_deg": 180,
+   "zone": "interview-b",
+   "realizes_inventory_id": "F3-INTERVIEW-B-CHAIR-02"
+  },
+  {
+   "id": "F3-INTERVIEW-B-CHAIR-03",
+   "type": "armchair_lounge",
+   "x": 19.5,
+   "y": 6.6,
+   "rot_deg": 0,
+   "zone": "interview-b",
+   "realizes_inventory_id": "F3-INTERVIEW-B-CHAIR-03"
+  },
+  {
+   "id": "F3-INTERVIEW-B-CHAIR-04",
+   "type": "armchair_lounge",
+   "x": 22.5,
+   "y": 6.6,
+   "rot_deg": 0,
+   "zone": "interview-b",
+   "realizes_inventory_id": "F3-INTERVIEW-B-CHAIR-04"
+  },
+  {
+   "id": "F3-INTERVIEW-B-PLANT-01",
+   "type": "planter_floor",
+   "x": 26.6,
+   "y": 14.4,
+   "rot_deg": 0,
+   "zone": "interview-b"
+  },
+  {
+   "id": "F3-FIELD-PLAN-TABLE-01",
+   "type": "flat_file",
+   "x": 50.5,
+   "y": 15.0,
+   "rot_deg": 0,
+   "zone": "field-ops",
+   "size": {
+    "w_in": 72,
+    "d_in": 42
+   },
+   "source": "production/workplace-occupancy-v1.json F3 Field-E / Field-R planning"
+  },
+  {
+   "id": "F3-FIELD-PLAN-STOOL-1",
+   "type": "stool_bar",
+   "x": 47.0,
+   "y": 15.0,
+   "rot_deg": -90.0,
+   "zone": "field-ops"
+  },
+  {
+   "id": "F3-FIELD-PLAN-STOOL-2",
+   "type": "stool_bar",
+   "x": 54.0,
+   "y": 15.0,
+   "rot_deg": 90.0,
+   "zone": "field-ops"
+  },
+  {
+   "id": "F3-FIELD-PLAN-STOOL-3",
+   "type": "stool_bar",
+   "x": 49.0,
+   "y": 18.4,
+   "rot_deg": -156.19,
+   "zone": "field-ops"
+  },
+  {
+   "id": "F3-FIELD-PLAN-STOOL-4",
+   "type": "stool_bar",
+   "x": 52.0,
+   "y": 18.4,
+   "rot_deg": 156.19,
+   "zone": "field-ops"
+  },
+  {
+   "id": "F3-FIELD-PLAN-BOARD-01",
+   "type": "pinboard_mobile",
+   "x": 50.5,
+   "y": 22.6,
+   "rot_deg": -180.0,
+   "zone": "field-ops"
+  },
+  {
+   "id": "F3-DESK-NUSRAT-RAHMAN",
+   "type": "desk_dual",
+   "x": 34.0,
+   "y": 2.25,
+   "rot_deg": 0,
+   "zone": "field-ops",
+   "occupant": "Nusrat Rahman",
+   "source": "production/workplace-occupancy-v1.json F3",
+   "purpose": "Access Policy / Operations Desk"
+  },
+  {
+   "id": "F3-DESK-NUSRAT-RAHMAN-CHAIR",
+   "type": "task_chair",
+   "x": 34.0,
+   "y": 4.9,
+   "rot_deg": 180,
+   "zone": "field-ops"
+  },
+  {
+   "id": "F3-DESK-ARJUN-MEHTA",
+   "type": "desk_dual",
+   "x": 40.0,
+   "y": 2.25,
+   "rot_deg": 0,
+   "zone": "field-ops",
+   "occupant": "Arjun Mehta",
+   "source": "production/workplace-occupancy-v1.json F3",
+   "purpose": "Field-E Entry / Safety Planning Desk"
+  },
+  {
+   "id": "F3-DESK-ARJUN-MEHTA-CHAIR",
+   "type": "task_chair",
+   "x": 40.0,
+   "y": 4.9,
+   "rot_deg": 180,
+   "zone": "field-ops"
+  },
+  {
+   "id": "F3-DESK-RAFAEL-COSTA",
+   "type": "desk_operator",
+   "x": 46.4,
+   "y": 2.25,
+   "rot_deg": 0,
+   "zone": "field-ops",
+   "occupant": "Rafael Costa",
+   "source": "production/workplace-occupancy-v1.json F3",
+   "purpose": "Field-R Overwatch Workstation"
+  },
+  {
+   "id": "F3-DESK-RAFAEL-COSTA-CHAIR",
+   "type": "task_chair",
+   "x": 46.4,
+   "y": 4.9,
+   "rot_deg": 180,
+   "zone": "field-ops"
+  },
+  {
+   "id": "F3-DESK-MCCLUSTER-FELLOWSHIP",
+   "type": "desk",
+   "x": 57.6,
+   "y": 2.25,
+   "rot_deg": 0,
+   "zone": "field-ops",
+   "occupant": "McCluster",
+   "source": "production/workplace-occupancy-v1.json F3",
+   "purpose": "Wildcard / Fellowship Desk"
+  },
+  {
+   "id": "F3-DESK-MCCLUSTER-FELLOWSHIP-CHAIR",
+   "type": "task_chair",
+   "x": 57.6,
+   "y": 4.9,
+   "rot_deg": 180,
+   "zone": "field-ops"
+  },
+  {
+   "id": "F3-BENCH-AYA-SHINODA",
+   "type": "workbench",
+   "x": 68.95,
+   "y": 12.0,
+   "rot_deg": 90,
+   "zone": "field-ops",
+   "size": {
+    "w_in": 96,
+    "d_in": 30
+   },
+   "occupant": "Aya Shinoda",
+   "source": "production/workplace-occupancy-v1.json F3",
+   "purpose": "Field-T Technical Bench"
+  },
+  {
+   "id": "F3-BENCH-AYA-SHINODA-STOOL",
+   "type": "stool_counter",
+   "x": 66.3,
+   "y": 12.0,
+   "rot_deg": -90,
+   "zone": "field-ops"
+  },
+  {
+   "id": "F3-FIELD-TOOL-CHEST-01",
+   "type": "tool_chest",
+   "x": 69.4,
+   "y": 19.6,
+   "rot_deg": 90,
+   "zone": "field-ops"
+  },
+  {
+   "id": "F3-FIELD-FILE-01",
+   "type": "lateral_file",
+   "x": 69.6,
+   "y": 4.2,
+   "rot_deg": 90,
+   "zone": "field-ops"
+  },
+  {
+   "id": "F3-FIELD-RACK-01",
+   "type": "bookcase_low",
+   "x": 63.0,
+   "y": 1.95,
+   "rot_deg": 0,
+   "zone": "field-ops",
+   "size": {
+    "w_in": 60
+   }
+  }
+ ]
+}

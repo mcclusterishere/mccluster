@@ -1,0 +1,620 @@
+{
+ "schema_version": "3.0.0",
+ "layout_id": "equity-uprise-f4-interior-layout-v3",
+ "status": "canonical-v3-interior-furnishing-layout",
+ "not_for_construction": true,
+ "level": 4,
+ "level_id": "F4",
+ "floor_identity": "Media + Culture",
+ "finished_floor_elevation_ft": 40.5,
+ "catalog_ref": "../interiors/furniture-catalog-v3.json",
+ "design_intent": "A production floor: a deep sectional facing the LISTEN / WATCH / ARCHIVE wall, a gallery with plinths and a backless bench under the west-wall frames, a real recording booth and edit suite, an interview set with backdrop, lights and camera, and the brand / communications desks. Black, charcoal and burnt-orange accents.",
+ "authority_refs": [
+  "../../FLOOR-04-MEDIA-CULTURE-360-SPEC.md",
+  "../../FLOOR-04-PROGRAM-RECONCILIATION.md",
+  "floor-04-object-inventory.json",
+  "../workplace-occupancy-v1.json"
+ ],
+ "rules": [
+  "Furniture lives inside this floor's approved program zones; no function moves between levels.",
+  "Positions are feet in the shared Core V2 frame (origin SW exterior corner, X east, Y north).",
+  "Items that realize an existing object-inventory id keep that id; new pieces carry new stable ids and a program/occupancy source.",
+  "No logo, mark or lettering is furniture; identity walls carry runtime brand slots only."
+ ],
+ "palette": {
+  "upholstery": [
+   36,
+   36,
+   38,
+   255
+  ],
+  "upholstery_alt": [
+   52,
+   52,
+   54,
+   255
+  ],
+  "accent": [
+   168,
+   82,
+   36,
+   255
+  ],
+  "wood": [
+   84,
+   62,
+   46,
+   255
+  ],
+  "wood_dark": [
+   40,
+   34,
+   30,
+   255
+  ],
+  "rug": [
+   48,
+   44,
+   42,
+   255
+  ],
+  "white": [
+   232,
+   230,
+   226,
+   255
+  ]
+ },
+ "zones": [
+  {
+   "id": "media-listening",
+   "label": "Media / Listening",
+   "bounds_ft": {
+    "x1": 24,
+    "y1": 28,
+    "x2": 48,
+    "y2": 50
+   },
+   "purpose": "screening sectional facing the media wall",
+   "source": "FLOOR-04 spec"
+  },
+  {
+   "id": "culture-gallery",
+   "label": "Culture Archive / Rally Gallery",
+   "bounds_ft": {
+    "x1": 2,
+    "y1": 18,
+    "x2": 18,
+    "y2": 38
+   },
+   "purpose": "frames + plinths + gallery bench",
+   "source": "FLOOR-04 spec"
+  },
+  {
+   "id": "creator-recording",
+   "label": "Creator Recording Room",
+   "bounds_ft": {
+    "x1": 2,
+    "y1": 4,
+    "x2": 15,
+    "y2": 16
+   },
+   "purpose": "two-person recording",
+   "source": "FLOOR-04 spec"
+  },
+  {
+   "id": "edit-suite",
+   "label": "Edit / Review Suite",
+   "bounds_ft": {
+    "x1": 17,
+    "y1": 4,
+    "x2": 31,
+    "y2": 16
+   },
+   "purpose": "editor desk + producer seating",
+   "source": "FLOOR-04 spec"
+  },
+  {
+   "id": "interview-set",
+   "label": "Interview Set",
+   "bounds_ft": {
+    "x1": 33,
+    "y1": 3,
+    "x2": 49,
+    "y2": 24
+   },
+   "purpose": "backdrop, two chairs, key/fill lights, camera",
+   "source": "workplace-occupancy-v1.json F4 archetypes: Producer, Audio/Video Technician, Creator"
+  },
+  {
+   "id": "brand-comms",
+   "label": "Brand + Communications Desks",
+   "bounds_ft": {
+    "x1": 51,
+    "y1": 1,
+    "x2": 71.25,
+    "y2": 26
+   },
+   "purpose": "named recurring desks",
+   "source": "workplace-occupancy-v1.json F4 people"
+  }
+ ],
+ "keep_clear": [
+  {
+   "id": "north-support-corridor",
+   "bounds_ft": {
+    "x1": 18,
+    "y1": 54,
+    "x2": 60,
+    "y2": 60
+   },
+   "reason": "6 ft north public/support corridor (schematic basis 9)"
+  },
+  {
+   "id": "west-service-approach",
+   "bounds_ft": {
+    "x1": 0,
+    "y1": 54,
+    "x2": 18,
+    "y2": 60
+   },
+   "reason": "freight lift / Stair B service approach (schematic basis 9)"
+  },
+  {
+   "id": "passenger-elevator-approach",
+   "bounds_ft": {
+    "x1": 48,
+    "y1": 32,
+    "x2": 54,
+    "y2": 46
+   },
+   "reason": "clear landing in front of the west-facing passenger elevator door (X54 / Y37-41)"
+  }
+ ],
+ "items": [
+  {
+   "id": "F4-LISTENING-SECTIONAL-01",
+   "type": "sectional_l",
+   "x": 36.0,
+   "y": 37.0,
+   "rot_deg": 0,
+   "zone": "media-listening",
+   "realizes_inventory_id": "F4-LISTENING-SECTIONAL-01",
+   "size": {
+    "w_in": 132,
+    "d_in": 84
+   },
+   "finish": {
+    "upholstery": "upholstery",
+    "upholstery_alt": "upholstery_alt"
+   },
+   "placement_override_reason": "true L-sectional facing the media wall (north)"
+  },
+  {
+   "id": "F4-LISTENING-CHAIR-01",
+   "type": "armchair_lounge",
+   "x": 28.6,
+   "y": 40.4,
+   "rot_deg": -32.54,
+   "zone": "media-listening",
+   "realizes_inventory_id": "F4-LISTENING-CHAIR-01"
+  },
+  {
+   "id": "F4-LISTENING-CHAIR-02",
+   "type": "armchair_lounge",
+   "x": 43.4,
+   "y": 40.4,
+   "rot_deg": 32.54,
+   "zone": "media-listening",
+   "realizes_inventory_id": "F4-LISTENING-CHAIR-02"
+  },
+  {
+   "id": "F4-LISTENING-TABLE-01",
+   "type": "coffee_table",
+   "x": 36.5,
+   "y": 43.6,
+   "rot_deg": 0,
+   "zone": "media-listening",
+   "realizes_inventory_id": "F4-LISTENING-TABLE-01",
+   "size": {
+    "w_in": 60,
+    "d_in": 26
+   }
+  },
+  {
+   "id": "F4-LISTENING-RUG-01",
+   "type": "rug",
+   "x": 36.0,
+   "y": 39.5,
+   "rot_deg": 0,
+   "zone": "media-listening",
+   "realizes_inventory_id": "F4-LISTENING-RUG-01",
+   "size": {
+    "w_in": 192,
+    "d_in": 156
+   }
+  },
+  {
+   "id": "F4-GALLERY-SOFA-01",
+   "type": "bench_gallery",
+   "x": 8.6,
+   "y": 27.6,
+   "rot_deg": 90,
+   "zone": "culture-gallery",
+   "realizes_inventory_id": "F4-GALLERY-SOFA-01",
+   "size": {
+    "w_in": 84,
+    "d_in": 20
+   },
+   "placement_override_reason": "backless gallery bench facing the west-wall frames"
+  },
+  {
+   "id": "F4-GALLERY-CHAIR-01",
+   "type": "armchair_lounge",
+   "x": 14.6,
+   "y": 21.2,
+   "rot_deg": 63.07,
+   "zone": "culture-gallery",
+   "realizes_inventory_id": "F4-GALLERY-CHAIR-01"
+  },
+  {
+   "id": "F4-GALLERY-CHAIR-02",
+   "type": "armchair_lounge",
+   "x": 14.6,
+   "y": 34.0,
+   "rot_deg": 116.93,
+   "zone": "culture-gallery",
+   "realizes_inventory_id": "F4-GALLERY-CHAIR-02"
+  },
+  {
+   "id": "F4-GALLERY-TABLE-01",
+   "type": "side_table",
+   "x": 14.6,
+   "y": 27.6,
+   "rot_deg": 0,
+   "zone": "culture-gallery",
+   "realizes_inventory_id": "F4-GALLERY-TABLE-01"
+  },
+  {
+   "id": "F4-GALLERY-PLINTH-01",
+   "type": "plinth_display",
+   "x": 5.0,
+   "y": 19.8,
+   "rot_deg": 90,
+   "zone": "culture-gallery",
+   "source": "FLOOR-04 Culture Archive / Rally Gallery"
+  },
+  {
+   "id": "F4-GALLERY-PLINTH-02",
+   "type": "plinth_display",
+   "x": 5.0,
+   "y": 35.4,
+   "rot_deg": 90,
+   "zone": "culture-gallery",
+   "source": "FLOOR-04 Culture Archive / Rally Gallery"
+  },
+  {
+   "id": "F4-GALLERY-PLINTH-03",
+   "type": "plinth_display",
+   "x": 11.8,
+   "y": 19.8,
+   "rot_deg": 90,
+   "zone": "culture-gallery",
+   "source": "FLOOR-04 Culture Archive / Rally Gallery"
+  },
+  {
+   "id": "F4-GALLERY-PLINTH-04",
+   "type": "plinth_display",
+   "x": 11.8,
+   "y": 35.4,
+   "rot_deg": 90,
+   "zone": "culture-gallery",
+   "source": "FLOOR-04 Culture Archive / Rally Gallery"
+  },
+  {
+   "id": "F4-GALLERY-RUG-01",
+   "type": "rug",
+   "x": 9.0,
+   "y": 27.6,
+   "rot_deg": 0,
+   "zone": "culture-gallery",
+   "realizes_inventory_id": "F4-GALLERY-RUG-01",
+   "size": {
+    "w_in": 96,
+    "d_in": 132
+   }
+  },
+  {
+   "id": "F4-GALLERY-PLANT-01",
+   "type": "planter_tall",
+   "x": 16.6,
+   "y": 37.2,
+   "rot_deg": 0,
+   "zone": "culture-gallery",
+   "realizes_inventory_id": "F4-GALLERY-PLANT-01"
+  },
+  {
+   "id": "F4-RECORDING-WORKSURFACE-01",
+   "type": "desk",
+   "x": 6.6,
+   "y": 7.0,
+   "rot_deg": 0,
+   "zone": "creator-recording",
+   "realizes_inventory_id": "F4-RECORDING-WORKSURFACE-01",
+   "size": {
+    "w_in": 60,
+    "d_in": 24,
+    "monitors": 0,
+    "pedestal": false
+   },
+   "finish": {
+    "top": "wood_dark"
+   }
+  },
+  {
+   "id": "F4-RECORDING-CHAIR-01",
+   "type": "task_chair",
+   "x": 5.4,
+   "y": 9.7,
+   "rot_deg": 180,
+   "zone": "creator-recording",
+   "realizes_inventory_id": "F4-RECORDING-CHAIR-01"
+  },
+  {
+   "id": "F4-RECORDING-CHAIR-02",
+   "type": "task_chair",
+   "x": 8.2,
+   "y": 9.7,
+   "rot_deg": 180,
+   "zone": "creator-recording",
+   "realizes_inventory_id": "F4-RECORDING-CHAIR-02"
+  },
+  {
+   "id": "F4-RECORDING-LIGHT-01",
+   "type": "light_stand",
+   "x": 4.1,
+   "y": 13.3,
+   "rot_deg": -145.22,
+   "zone": "creator-recording"
+  },
+  {
+   "id": "F4-RECORDING-SCREEN-01",
+   "type": "acoustic_screen",
+   "x": 10.4,
+   "y": 13.6,
+   "rot_deg": 135.74,
+   "zone": "creator-recording",
+   "size": {
+    "w_in": 48
+   }
+  },
+  {
+   "id": "F4-EDIT-DESK-01",
+   "type": "desk",
+   "x": 23.0,
+   "y": 8.5,
+   "rot_deg": 0,
+   "zone": "edit-suite",
+   "realizes_inventory_id": "F4-EDIT-DESK-01",
+   "size": {
+    "w_in": 96,
+    "d_in": 36,
+    "monitors": 0
+   },
+   "finish": {
+    "top": "wood_dark"
+   }
+  },
+  {
+   "id": "F4-EDIT-CHAIR-01",
+   "type": "task_chair",
+   "x": 21.5,
+   "y": 11.6,
+   "rot_deg": 180,
+   "zone": "edit-suite",
+   "realizes_inventory_id": "F4-EDIT-CHAIR-01"
+  },
+  {
+   "id": "F4-EDIT-CHAIR-02",
+   "type": "task_chair",
+   "x": 24.5,
+   "y": 11.6,
+   "rot_deg": 180,
+   "zone": "edit-suite",
+   "realizes_inventory_id": "F4-EDIT-CHAIR-02"
+  },
+  {
+   "id": "F4-EDIT-VISITOR-CHAIR-01",
+   "type": "armchair_lounge",
+   "x": 19.3,
+   "y": 14.1,
+   "rot_deg": -146.55,
+   "zone": "edit-suite",
+   "realizes_inventory_id": "F4-EDIT-VISITOR-CHAIR-01",
+   "placement_override_reason": "producer seating behind the editors, with a sight line to the display (was behind the monitors)"
+  },
+  {
+   "id": "F4-EDIT-VISITOR-CHAIR-02",
+   "type": "armchair_lounge",
+   "x": 29.4,
+   "y": 9.0,
+   "rot_deg": 94.47,
+   "zone": "edit-suite",
+   "realizes_inventory_id": "F4-EDIT-VISITOR-CHAIR-02",
+   "placement_override_reason": "producer seating at the side of the edit desk (was behind the monitors)"
+  },
+  {
+   "id": "F4-SET-BACKDROP-01",
+   "type": "backdrop",
+   "x": 41.0,
+   "y": 4.2,
+   "rot_deg": 0,
+   "zone": "interview-set",
+   "source": "workplace-occupancy-v1.json F4 Producer / Creator"
+  },
+  {
+   "id": "F4-SET-CHAIR-01",
+   "type": "armchair_lounge",
+   "x": 39.1,
+   "y": 10.2,
+   "rot_deg": -61.61,
+   "zone": "interview-set"
+  },
+  {
+   "id": "F4-SET-CHAIR-02",
+   "type": "armchair_lounge",
+   "x": 42.9,
+   "y": 10.2,
+   "rot_deg": 61.61,
+   "zone": "interview-set"
+  },
+  {
+   "id": "F4-SET-SIDE-TABLE-01",
+   "type": "side_table",
+   "x": 41.0,
+   "y": 7.9,
+   "rot_deg": 0,
+   "zone": "interview-set"
+  },
+  {
+   "id": "F4-SET-CAMERA-01",
+   "type": "camera_tripod",
+   "x": 41.0,
+   "y": 17.6,
+   "rot_deg": -180.0,
+   "zone": "interview-set"
+  },
+  {
+   "id": "F4-SET-LIGHT-01",
+   "type": "light_stand",
+   "x": 35.6,
+   "y": 13.0,
+   "rot_deg": -122.2,
+   "zone": "interview-set"
+  },
+  {
+   "id": "F4-SET-LIGHT-02",
+   "type": "light_stand",
+   "x": 46.4,
+   "y": 13.0,
+   "rot_deg": 122.2,
+   "zone": "interview-set"
+  },
+  {
+   "id": "F4-SET-MONITOR-01",
+   "type": "monitor_cart",
+   "x": 46.0,
+   "y": 20.4,
+   "rot_deg": 142.0,
+   "zone": "interview-set"
+  },
+  {
+   "id": "F4-DESK-PRIYA-SRISAWAT",
+   "type": "desk_dual",
+   "x": 56.0,
+   "y": 2.25,
+   "rot_deg": 0,
+   "zone": "brand-comms",
+   "finish": {
+    "top": "wood"
+   },
+   "occupant": "Priya Srisawat",
+   "source": "production/workplace-occupancy-v1.json F4",
+   "purpose": "Brand / Public Identity Desk"
+  },
+  {
+   "id": "F4-DESK-PRIYA-SRISAWAT-CHAIR",
+   "type": "task_chair",
+   "x": 56.0,
+   "y": 4.9,
+   "rot_deg": 180,
+   "zone": "brand-comms"
+  },
+  {
+   "id": "F4-DESK-MAREN-QUILL",
+   "type": "desk_dual",
+   "x": 62.4,
+   "y": 2.25,
+   "rot_deg": 0,
+   "zone": "brand-comms",
+   "finish": {
+    "top": "wood"
+   },
+   "occupant": "Maren Quill",
+   "source": "production/workplace-occupancy-v1.json F4",
+   "purpose": "Communications / Media Desk"
+  },
+  {
+   "id": "F4-DESK-MAREN-QUILL-CHAIR",
+   "type": "task_chair",
+   "x": 62.4,
+   "y": 4.9,
+   "rot_deg": 180,
+   "zone": "brand-comms"
+  },
+  {
+   "id": "F4-BRAND-MOODBOARD-01",
+   "type": "pinboard_mobile",
+   "x": 59.2,
+   "y": 13.4,
+   "rot_deg": -180.0,
+   "zone": "brand-comms"
+  },
+  {
+   "id": "F4-BRAND-EASEL-01",
+   "type": "easel",
+   "x": 54.0,
+   "y": 14.6,
+   "rot_deg": -168.23,
+   "zone": "brand-comms"
+  },
+  {
+   "id": "F4-BRAND-REVIEW-TABLE-01",
+   "type": "table_round",
+   "x": 65.8,
+   "y": 17.6,
+   "rot_deg": 0,
+   "zone": "brand-comms",
+   "size": {
+    "w_in": 42,
+    "d_in": 42
+   }
+  },
+  {
+   "id": "F4-BRAND-REVIEW-CHAIR-1",
+   "type": "side_chair",
+   "x": 63.263,
+   "y": 16.677,
+   "rot_deg": -70.0,
+   "zone": "brand-comms"
+  },
+  {
+   "id": "F4-BRAND-REVIEW-CHAIR-2",
+   "type": "side_chair",
+   "x": 68.337,
+   "y": 16.677,
+   "rot_deg": 70.0,
+   "zone": "brand-comms"
+  },
+  {
+   "id": "F4-BRAND-REVIEW-CHAIR-3",
+   "type": "side_chair",
+   "x": 65.8,
+   "y": 20.3,
+   "rot_deg": -180.0,
+   "zone": "brand-comms"
+  },
+  {
+   "id": "F4-BRAND-STORAGE-01",
+   "type": "credenza",
+   "x": 70.3,
+   "y": 9.0,
+   "rot_deg": 90,
+   "zone": "brand-comms",
+   "size": {
+    "w_in": 72,
+    "d_in": 20
+   }
+  }
+ ]
+}

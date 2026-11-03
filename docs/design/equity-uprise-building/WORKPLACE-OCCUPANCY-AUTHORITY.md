@@ -31,7 +31,7 @@ The two files must remain semantically synchronized.
 
 B1 is **Technical Operations + Infrastructure + Security + Hands-On Lab**.
 
-It is a known, staffed floor.
+It is a known, staffed floor — and, per the owner on 2026-11-03 ("Everybody's welcome to B1 … Make it normal."), a normal open floor; room-level safety doors on hazardous rooms remain.
 
 It is not a secret owner-only level.
 

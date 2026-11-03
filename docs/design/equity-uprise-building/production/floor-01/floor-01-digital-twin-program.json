@@ -581,13 +581,14 @@
   "basement_relationship": {
     "exists": true,
     "display_level": "B1",
-    "normal_public_access": false,
+    "normal_public_access": true,
     "floor1_is_level_of_exit_discharge": true,
-    "role": "restricted underground operations + technical/service backbone; training uses sandboxed clone",
+    "role": "normal open technical-operations floor; live building systems are simulation-only",
     "developmental_stage": null,
-    "live_access": "mccluster-house-owner-or-underground-operations-admin",
-    "training_access": "sandboxed-clone-only",
-    "normal_navigation_visibility": false
+    "live_access": "open-normal-floor",
+    "training_access": "canonical-geometry-sandbox-for-live-systems",
+    "normal_navigation_visibility": true,
+    "owner_decision": "Owner, 2026-11-03: \"We can have B1. Everybody's welcome to B1 ... Make it normal.\""
   },
   "resolved_geometry_requirements": [
     {
@@ -631,7 +632,7 @@
       "6",
       "↑"
     ],
-    "b1_selector_visibility": "visible-controlled-technical-floor",
+    "b1_selector_visibility": "visible-normal-floor",
     "ordinary_equity_uprise_admin_can_see_b1": true,
     "journey_wall_shows_b1": false,
     "public_directory_shows_b1": true,
@@ -639,11 +640,11 @@
     "passenger_elevator": {
       "physical_b1_stop": true,
       "b1_control_hidden_by_default": false,
-      "access": "staff-or-authorized-participant"
+      "access": "everyone"
     },
     "stairs": {
       "physical_b1_connection": true,
-      "floor1_downward_access": "controlled-technical-floor",
+      "floor1_downward_access": "open-normal-use (evacuation-mode discharge barrier only)",
       "b1_to_floor1_egress": "preserved"
     },
     "freight_elevator": {

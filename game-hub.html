@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Game Hub · Course mini games</title>
+  <meta name="description" content="The house owner's Game Hub.">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#0a0e12">
+  <meta name="color-scheme" content="dark">
+  <!-- the shared bottom bar's styles (every page carrying js/tabbar.js links it); the hub's own sheet follows and wins -->
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/game-hub.css?v=__STAMP__">
+</head>
+<body class="gh-body">
+  <!-- Nothing but this panel exists until the server says this is the house owner (js/owner-only.mjs); the hub, its
+       course list and every game load only after that yes (owner, 2026-11-03: "keep it on my private account"). -->
+  <section class="owner-gate gh-gate" aria-live="polite" data-owner-gate data-owner-template="ghTpl" data-owner-load="js/game-hub/hub.mjs?v=__STAMP__">
+    <h1>Owner only</h1>
+    <p data-owner-msg>Checking access with the server…</p>
+  </section>
+  <template id="ghTpl">
+  <a class="gh-skip" href="#ghMain">Skip to the games</a>
+  <main class="gh" id="ghMain" tabindex="-1">
+    <header class="gh-top">
+      <small>Matthew McCluster · Courses</small>
+      <h1>Game Hub</h1>
+      <p>One mini game for every course. Pick a course at the bottom; its music comes with it.</p>
+      <nav aria-label="Story worlds"><a class="gh-city-link" href="fictional-city.html">Explore McCluster City ↗</a></nav>
+    </header>
+    <section class="gh-panel" id="ghPanel" aria-live="polite"><p class="gh-loading" role="status">Loading courses…</p></section>
+    <section class="gh-play" id="ghPlay" hidden aria-label="Game"></section>
+  </main>
+
+  <div class="gh-dock">
+    <div class="gh-music" id="ghMusic" aria-label="Course music" role="region">
+      <button type="button" class="gh-music__btn" data-music-play aria-pressed="false" aria-label="Play music" data-state="paused">
+        <svg class="gh-i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+        <svg class="gh-i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>
+      </button>
+      <div class="gh-music__meta">
+        <b data-music-title>—</b>
+        <small data-music-role></small>
+      </div>
+      <button type="button" class="gh-music__btn" data-music-next aria-label="Next track">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5v14l9-7zM16 5h3v14h-3z"/></svg>
+      </button>
+      <span class="gh-music__progress" aria-hidden="true"><i data-music-progress></i></span>
+    </div>
+    <nav class="gh-modules" id="ghModules" aria-label="Courses"></nav>
+  </div>
+  </template>
+
+  <script type="module" src="js/owner-only.mjs?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "note": "The Game Hub's learning modules, one icon each in the bottom bar of game-hub.html (owner, 2026-11-03: \"each learning module as an icon at the bottom of the screen\"). Schema and how to add a course: docs/game-hub/README.md. scripts/test/game-hub.test.mjs holds this file to that schema.",
+  "default": "prim3-security",
+  "modules": [
+    {
+      "id": "prim3-security",
+      "label": "PRIM3 · Security",
+      "short": "Security",
+      "course": "PRIM3 cybersecurity",
+      "blurb": "Security, taught four ways. Run the tactical level, open the course, and keep the study tapes playing.",
+      "accent": "#2fe0f0",
+      "icon": { "kind": "image", "src": "assets/img/prim3-mark-180.png", "width": 180, "height": 180 },
+      "music": { "album": "prim3", "role": "rhythm", "label": "Rhythm · the PRIM3 study tapes" },
+      "games": [
+        { "id": "prim3-transit", "kind": "link", "title": "Transit / Relay", "tag": "Tactics", "href": "prim3-transit.html", "blurb": "Lead Entry, Recon and Technical across a canal compound. Turn-based, on the canonical PRIM3 rules." },
+        { "id": "prim3-equity-uprise-hq", "kind": "link", "title": "Equity Uprise HQ", "tag": "Drill", "href": "prim3-transit.html?level=equity-uprise-hq", "blurb": "An emergency exercise in the Equity Uprise building, laid out from its own floor plans: enter, report in, open the stair exit, assemble." },
+        { "id": "prim3-course", "kind": "link", "title": "The PRIM3 course", "tag": "Course", "href": "prim3.html", "blurb": "Principles, Rhythm, Immersion, Missions: the full course, with progress on your M Account." },
+        { "id": "prim3-world", "kind": "link", "title": "PRIM3 World", "tag": "Owner", "href": "prim3-world.html", "gate": "owner", "blurb": "The mission globe and World builder. Shown to the house owner only; the page checks again itself." }
+      ]
+    },
+    {
+      "id": "chem108",
+      "label": "Chem 108 · Organic chemistry",
+      "short": "Chem 108",
+      "course": "Chem 108 organic chemistry",
+      "blurb": "Read structures, spot functional groups and drill the periodic table, on the Chem-108 study deck.",
+      "accent": "#3ddc97",
+      "icon": { "kind": "glyph", "glyph": "ring" },
+      "music": { "album": "here", "role": "soundtrack", "label": "Study soundtrack — no chemistry lyrics" },
+      "games": [
+        { "id": "molecule-rush", "kind": "embedded", "view": "chem108/molecule-rush", "title": "Molecule Rush", "tag": "Arcade", "blurb": "Sixty seconds, three lives, a streak multiplier. Name It, Spot the Group, Element Sprint and Topic Blitz." }
+      ]
+    }
+  ]
+}

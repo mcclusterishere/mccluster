@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 527,
+  "candidate_count": 549,
   "capability_source_count": 102,
-  "support_only_count": 425,
+  "support_only_count": 447,
   "entries": [
     {
       "path": ".cursorrules",
@@ -598,6 +598,13 @@
       "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
     },
     {
+      "path": "data/game-hub/modules.json",
+      "classification": "shared_data_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Owner-only Game Hub module list; names the PRIM3 Equity Uprise HQ drill as one game level and links to it. Game content, not a building capability."
+    },
+    {
       "path": "data/lyrics/money-or-the-power.json",
       "classification": "capability_source",
       "capability_ids": [
@@ -630,6 +637,13 @@
       ],
       "support_only": false,
       "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "data/prim3/world-missions.json",
+      "classification": "shared_data_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Owner-only PRIM3 World draft missions (non-canon side operations); one entry cites a Prim3 canon section title that names Equity Uprise. Game content, not a building capability."
     },
     {
       "path": "data/product-context.json",
@@ -1182,6 +1196,20 @@
       "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
     },
     {
+      "path": "docs/prim3/EQUITY-UPRISE-BUILDING-IN-PRIM3.md",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Explains how the owner-only PRIM3 Equity Uprise HQ drill level is derived from the Core V2 building plans; a game projection that defers to REFERENCE-AUTHORITY.md and is never geometry authority."
+    },
+    {
+      "path": "docs/prim3/EQUITY-UPRISE-HQ-REVIEW.md",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Review note for the owner-only PRIM3 Equity Uprise HQ drill: which building models the game reads and its open decisions; a derived game view that defers to REFERENCE-AUTHORITY.md, never geometry authority."
+    },
+    {
       "path": "docs/sales-redesign/BRANCH-HARVEST-REPORT.md",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -1544,6 +1572,41 @@
       "rationale": "Shared Action Network frontend/runtime module with Equity Uprise context; not an independent Equity Uprise capability."
     },
     {
+      "path": "js/prim3-tactics/level3d.mjs",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "PRIM3 tactics level renderer; draws the Equity Uprise HQ drill from the level module's plan data, a derived game view of the Core V2 plate, not a source program capability."
+    },
+    {
+      "path": "js/prim3-tactics/levels/equity-uprise-hq.mjs",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Owner-only PRIM3 drill level built from the Core V2 Floor 1 plan and shared vertical systems; a derived game projection, never geometry authority, adding no program capability."
+    },
+    {
+      "path": "js/prim3-tactics/levels/index.mjs",
+      "classification": "navigation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "PRIM3 level registry; names the Equity Uprise HQ drill level so the game can load it. No building program or physical capability is added."
+    },
+    {
+      "path": "js/prim3-tactics/preview.mjs",
+      "classification": "navigation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "PRIM3 tactics menu lists the Equity Uprise HQ drill as a level to deploy to; game navigation only, no building capability."
+    },
+    {
+      "path": "js/prim3-tactics/transit.mjs",
+      "classification": "navigation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "PRIM3 Transit loader comment names the Equity Uprise HQ level as one loadable level module; game runtime, not a building capability."
+    },
+    {
       "path": "js/tabbar.js",
       "classification": "shared_frontend_support",
       "capability_ids": [],
@@ -1734,7 +1797,7 @@
       "classification": "shared_site_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Role-tailored cut of the résumé (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
+      "rationale": "Role-tailored cut of the r\u00e9sum\u00e9 (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
     },
     {
       "path": "scripts/e2e/world-screen.e2e.mjs",
@@ -1884,6 +1947,27 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Test or behaviour harness for shared Action Network / intelligence governance; references Equity Uprise context but defines no program capability."
+    },
+    {
+      "path": "scripts/test/prim3-equity-uprise-level.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Checks that the PRIM3 Equity Uprise HQ drill level stays consistent with the Core V2 plan data it is derived from; adds no program capability."
+    },
+    {
+      "path": "scripts/test/prim3-equity-uprise-model.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Checks that the PRIM3 HQ drill reads the building's own generated models within the Core V2 plan rectangles and that its manifest matches the publish workflow; adds no program capability."
+    },
+    {
+      "path": "scripts/test/prim3-transit-level.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "PRIM3 Transit level tests; names the Equity Uprise HQ drill only as one loadable level. Adds no program capability."
     },
     {
       "path": "scripts/test/product-context.test.mjs",
@@ -3965,6 +4049,69 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "The one Control Room navigation definition; names the existing Equity Uprise operations views (missions, fellows, funding) as a System section entry and adds no distinct program capability."
+    },
+    {
+      "path": "core/data/fictional-city/district.v1.json",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Canonical fictional-city content and portal data includes a simplified exterior derived from the existing Equity Uprise footprint and roof datum; it does not define building geometry, floor programs or a new building capability."
+    },
+    {
+      "path": "docs/fictional-city/LORE.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Fictional district lore distinguishes the Equity Uprise island landmark from the existing headquarters and preserves its authority boundary; narrative support only, with no building program or capability ownership."
+    },
+    {
+      "path": "docs/fictional-city/README.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Owner-only city implementation contract records the existing HQ destination, simplified exterior, source authority and validation limits; integration documentation rather than a building program capability."
+    },
+    {
+      "path": "docs/universe/UNIVERSE-SCHEMA.md",
+      "classification": "governance_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Cross-universe registry, state and portal contract includes the fictional-city connection to the existing Equity Uprise HQ; it governs navigation boundaries and adds no headquarters capability or geometry authority."
+    },
+    {
+      "path": "docs/universe/universe-registry.json",
+      "classification": "navigation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Universe registration declares the fictional-city entrance and existing Equity Uprise HQ destination as data-only navigation; no building capability, floor program or access policy is created."
+    },
+    {
+      "path": "js/fictional-city/app.mjs",
+      "classification": "navigation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Owner-only fictional-city host opens the existing Equity Uprise HQ route through declared portal data; city dialogs and navigation do not implement or change headquarters capabilities."
+    },
+    {
+      "path": "js/fictional-city/scene.mjs",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Original fictional-city renderer displays a simplified Core V2 dimension-derived HQ exterior and portal on its island; the scene is a derived game projection, not building geometry or program authority."
+    },
+    {
+      "path": "js/fictional-city/spatial.mjs",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Fictional-city walking and collision support treats the supplied HQ footprint as an exterior blocker; it does not change canonical building circulation, interior geometry or capabilities."
+    },
+    {
+      "path": "scripts/e2e/fictional-city.e2e.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Browser checks for the owner-only fictional city verify the existing Equity Uprise portal and game integration; verification support only, with no building program or geometry implementation."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",

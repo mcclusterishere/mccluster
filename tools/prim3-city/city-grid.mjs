@@ -31,7 +31,9 @@
      and a short ladder between adjacent roof patches within ROOF_STEP_MAX_M of each other.
      Taller roofs are reachable only once interiors (lobbies, stairs, lifts) are modelled. */
 
-export const TILE_M = 3.54;          // mirrors js/prim3-tactics/scale.mjs
+import { TILE_M } from '../../js/prim3-tactics/scale.mjs';
+import { engineConfig as transitConfig } from '../../js/prim3-tactics/levels/transit-relay.mjs';
+export { TILE_M };
 export const STOREY_M = 3.2;         // assumed floor-to-floor when only levels are tagged
 export const ROOF_JOIN_M = 0.75;     // neighbouring roof tiles closer than this are one walkable roof
 export const GROUND_ACCESS_MAX_M = 18;
@@ -371,8 +373,9 @@ export function buildCityLevel(extract, { tileM = TILE_M, seed = 20261103 } = {}
       if (groundOK(x, y) && open >= 3 && start.every((t) => Math.abs(t.x - x) + Math.abs(t.y - y) >= 2)) start.push({ x, y });
       for (const [dx, dy] of NB) { const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < W && ny < H && !seen[idx(nx, ny)]) { seen[idx(nx, ny)] = 1; q.push([nx, ny]); } }
     } }
-  const ROLES = ['E', 'R', 'T'];
-  const units = start.map((t, i) => ({ id: `${ROLES[i]}1`, faction: 'PLAYER', role: ROLES[i], x: t.x, y: t.y, hp: 6, maxHp: 6, moveRange: 7, aim: 70, weaponDamage: 3, ammo: 4, magazineSize: 4, reserveAmmo: 8, detectionRadius: 10 }));
+  // the squad's numbers are Transit / Relay's own (as the Level Forge does); only the start tiles are ours
+  const squad = transitConfig().units.filter((u) => u.faction === 'PLAYER');
+  const units = start.map((t, i) => ({ ...squad[i], x: t.x, y: t.y }));
 
   const levelId = `city-${extract.id}`;
   const attribution = `${extract.licence?.attribution || '© OpenStreetMap contributors'} · ${extract.licence?.name || 'ODbL 1.0'}`;

@@ -15,7 +15,7 @@ entrance, its own engine, and its own play style. Universes are **separate but c
 you teleport between them through registered **portals**, and every universe keeps its own
 saved state, so you **continue exactly where you left off** in each one.
 
-Two play styles exist:
+The original two play styles are described below. The owner-authorized November 3 city adds `exploration`; see the current addendum at the end and the machine registry.
 
 - **`visual`** — a decision tree. You click/tap things; each choice plays a **generated
   transition clip** that carries you from A to B (Google-Earth feel, real animation instead
@@ -278,3 +278,14 @@ Mapping the existing branch sprawl onto this schema. Execution order follows
 3. Naming/branding of the Hitman universe on the tab bar (`data-appnav` key, icon).
 4. When do Higgsfield transition clips enter production (which A→B routes first)?
 5. Supabase `universe_state` sync: tie to existing `MCC_AUTH` sign-in, or stay local-first?
+
+
+## 15. Current addition — McCluster fictional city (2026-11-03)
+
+The owner has explicitly authorized a new commercial district with original joke storefronts, walking NPCs, a Whip Equipped garage and an Equity Uprise island. Its primary style is `exploration`: independent third-person free roaming with keyboard, touch and tap-to-walk controls, dialogue and game-credit inventory. It is neither a shooter nor the earlier tap-only generated-clip style.
+
+`fictional-city.html` uses the existing owner-only server check. Its engine and state are independent, and its contract is `docs/fictional-city/AGENTS.md`. The canonical authored data lives in Core and is exported byte-for-byte for the browser.
+
+The city records existing-route handoffs separately from universe-to-universe portals because the HQ viewer, Halo globe, PRIM3 world and album are already independent surfaces. A handoff saves city state and opens the actual destination route; each destination retains its own permissions and state rules. This does not claim a reciprocal portal or named spawn feature those destinations do not implement.
+
+The older inventory and phased-Uprise references above are historical. The machine registry continues to mark Uprise World as shelved. This city does not revive it.

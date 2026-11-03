@@ -6,6 +6,13 @@ Owner direction, 2026-11-03: *"I really want this to be part of a big city, like
 Prototype: `tools/prim3-city-grid.html` (owner tool, noindex; `tools/` is stripped from the published site) over
 `tools/prim3-city/city-grid.mjs`, with tests in `scripts/test/prim3-city-grid.test.mjs`.
 
+How this sits with what landed on `main` the same day: the **Level Forge** (`js/prim3-tactics/levels/forge.mjs`,
+`docs/control-plane/PRIM3-LEVEL-BUILDER.md`) is the one authored-level format, and its rules (tile snap,
+Transit / Relay's squad numbers, cover by `buildCover`, playability by the resolver's `computeReach`) are the
+rules this converter follows; a real-city level is the same level-module shape with a different source.
+The **McCluster fictional city** (`docs/fictional-city/`) is a separate free-roam universe and stays
+fictional; real-city tactical levels could be one of its portals, never a replacement for it.
+
 ---
 
 ## 1. Recommendation (read this first)
@@ -76,7 +83,8 @@ coastline, piers, parks, streets, with the ODbL block inside the file.
 | Roofs | Every roof is a walkable surface. Neighbouring roof tiles within 0.75 m form one patch; neighbouring patches get different `z` by greedy colouring (tallest first). The resolver walks freely between same-`z` neighbours, so this is what stops a unit stepping up a 30 m wall. `z` is a roof *layer*, not a storey; the block needs 4 layers. |
 | Links | A fire-escape ladder street→roof for each patch ≤ 18 m (cost 2 + storeys); a roof-to-roof step between neighbouring patches ≤ 4.5 m apart. Towers are reachable only once interiors exist. |
 | Cover | Derived, never placed: street tiles beside a building wall get HIGH cover on that side; roof edges get LOW (parapet) or HIGH (a taller neighbour). |
-| Output | `{ W, H, FLOORS, FRAME, SCENE, MISSION, engineConfig, attribution, licence, geo, stats }`; `engineConfig` is `createState()` input. A `levels/city-<id>.mjs` adapter is `export const engineConfig = () => structuredClone(data.engineConfig)` plus the same constants. |
+| Squad | Transit / Relay's own player units (as the Forge uses them), placed on the three open street tiles nearest the grid centre, two tiles apart. |
+| Output | `{ W, H, FLOORS, FRAME, SCENE, MISSION, engineConfig, attribution, licence, geo, stats }`; `engineConfig` is `createState()` input (a test plays it on the vendored resolver: Entry moves, a ladder path reaches a roof). A `levels/city-<id>.mjs` adapter is `export const engineConfig = () => structuredClone(data.engineConfig)` plus the same constants, registered in `levels/index.mjs` like `forge`. |
 
 Jersey City block: 28,054 tiles, 8,386 building tiles, 6,059 water tiles, 116 roof patches on 4 layers,
 56 ladders/steps, 5,639 cover entries, level JSON 838 KB raw (76 KB gzipped).
@@ -158,7 +166,7 @@ vertex colour), pixel ratio ≤ 1.5 on coarse pointers.
 | Phase | Deliverable | Where it runs |
 | --- | --- | --- |
 | 0 (this PR) | Converter + tests, committed Jersey City extract, owner tool page, research | repo |
-| 1 | `js/prim3-tactics/levels/city-<id>.mjs` adapter; the first city mission on the existing renderer (`level3d.mjs`) with authored objectives on top of the real block; OSM attribution in the briefing and credits | repo (after the whole-platform tactics branch lands) |
+| 1 | `js/prim3-tactics/levels/city-<id>.mjs` adapter; the first city mission on the existing renderer (`level3d.mjs`) with objectives authored in the Level Forge on top of the real block; OSM attribution in the briefing and credits | repo |
 | 2 | Heights from USGS 3DEP lidar per footprint; interiors for mission buildings only (lobby, stair, lift links); street furniture from OSM points (benches, lamps, trees) as cover | OVH Core batch → Supabase Storage |
 | 3 | Procedural facades: storey bands/windows/storefront rules per building type, roof kit, chunked GLB (meshopt + KTX2), one atlas; 3D Tiles 1.1 tileset for streaming via 3DTilesRendererJS | OVH Core |
 | 4 | Area pipeline: owner picks an area → Worker `mccluster` queues a job (existing ops job tables) → Core builds rules + visual chunks → rows in Supabase + files in Storage → game fetches the manifest from `api.mccluster.org` | Worker + Core + Supabase |

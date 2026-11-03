@@ -108,7 +108,8 @@
       "id": "https://matthew.mccluster.org/prim3.html#prim3",
       "owner": "mccluster_corp",
       "relation": "McCluster Corp learning project / product. Not Matthew's recording alias; its study tapes are music made for it.",
-      "current_url": "https://matthew.mccluster.org/prim3.html"
+      "access": "Owner only (owner, 2026-11-03: the whole learning management system and every game are on the house owner's private account). /prim3.html, /prim3-range.html, /game-hub.html and the PRIM3 game pages are noindex, out of the sitemap and out of public navigation; the Project node keeps its stable @id on /prim3.html and its public url is the company page.",
+      "current_url": "https://mccluster.org/company"
     },
     "mccluster_platform": {
       "type": "SoftwareSourceCode",

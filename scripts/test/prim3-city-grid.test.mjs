@@ -183,3 +183,15 @@ test('the extract reducer reads OSM XML and keeps only what the grid needs', () 
   assert.deepEqual(out.features[0].tags, { building: 'yes', height: '12' });
   assert.match(out.licence.attribution, /OpenStreetMap contributors/);
 });
+
+test('the canonical resolver plays the real block: the squad moves and a ladder reaches a roof', async () => {
+  const { createState, computeReach, findPath } = await import('../../js/prim3-tactics/tactical-resolver.mjs');
+  const L = levelToJSON(buildCityLevel(EXTRACT));
+  const state = createState(structuredClone(L.engineConfig));
+  const reach = computeReach(state, 'E1', 12);
+  assert.ok(reach.cells.length > 20, 'Entry can move from its start');
+  const ladder = L.engineConfig.links.find((l) => l.id.startsWith('ladder-'));
+  const path = findPath(state, 'E1', ladder.to, 500);
+  assert.ok(path && path.length, 'a street ladder leads onto a roof');
+  assert.deepEqual(path[path.length - 1], ladder.to);
+});

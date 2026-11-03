@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 528,
+  "candidate_count": 549,
   "capability_source_count": 102,
-  "support_only_count": 426,
-  "checks_total": 2012,
-  "checks_passed": 2012,
+  "support_only_count": 447,
+  "checks_total": 2096,
+  "checks_passed": 2096,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -76,6 +76,7 @@
     "catalogue.html",
     "cohort-profile.html",
     "control.html",
+    "core/data/fictional-city/district.v1.json",
     "create.html",
     "css/equity-uprise-app.css",
     "css/equity-uprise-institutional.css",
@@ -101,10 +102,12 @@
     "data/eu-topics.json",
     "data/fellows.json",
     "data/gallery.json",
+    "data/game-hub/modules.json",
     "data/lyrics/money-or-the-power.json",
     "data/merch.json",
     "data/offers.json",
     "data/playlists.json",
+    "data/prim3/world-missions.json",
     "data/product-context.json",
     "data/roles.json",
     "data/seo/company-site.json",
@@ -188,6 +191,8 @@
     "docs/design/equity-uprise-development/verify_federal_training_catalog.py",
     "docs/design/redesign-before-after.html",
     "docs/equity-uprise-platform.md",
+    "docs/fictional-city/LORE.md",
+    "docs/fictional-city/README.md",
     "docs/gated-audio.md",
     "docs/here-inventory.md",
     "docs/here-url-migration-map.csv",
@@ -195,6 +200,8 @@
     "docs/legal/EXPOSURE-AUDIT.md",
     "docs/music-platform.md",
     "docs/pay-now.md",
+    "docs/prim3/EQUITY-UPRISE-BUILDING-IN-PRIM3.md",
+    "docs/prim3/EQUITY-UPRISE-HQ-REVIEW.md",
     "docs/products/DISTRIBUTABLE-PRODUCT.md",
     "docs/releases/mission-content-cleanup-2026-10-31.md",
     "docs/sales-redesign/BRANCH-HARVEST-REPORT.md",
@@ -208,6 +215,8 @@
     "docs/stocksy-shot-list.md",
     "docs/the-mission-fund.md",
     "docs/travel/TRAVEL-FIRST-WORLD-STANDARD-20261017.md",
+    "docs/universe/UNIVERSE-SCHEMA.md",
+    "docs/universe/universe-registry.json",
     "docs/uprise-world/AUDIT-REPORT.md",
     "ecosystem.html",
     "engineering/mccluster-platform.html",
@@ -244,6 +253,9 @@
     "js/eu-api.js",
     "js/fan-intake.js",
     "js/fbi.js",
+    "js/fictional-city/app.mjs",
+    "js/fictional-city/scene.mjs",
+    "js/fictional-city/spatial.mjs",
     "js/gateway.js",
     "js/hire-offers.js",
     "js/insights.js",
@@ -260,6 +272,11 @@
     "js/onboard.js",
     "js/payments.js",
     "js/policy-fellowship-ladder.js",
+    "js/prim3-tactics/level3d.mjs",
+    "js/prim3-tactics/levels/equity-uprise-hq.mjs",
+    "js/prim3-tactics/levels/index.mjs",
+    "js/prim3-tactics/preview.mjs",
+    "js/prim3-tactics/transit.mjs",
     "js/site-navigation.js",
     "js/tabbar.js",
     "js/travel/world-travel.mjs",
@@ -298,6 +315,7 @@
     "production.html",
     "receipt.html",
     "resume-it-support.html",
+    "scripts/e2e/fictional-city.e2e.mjs",
     "scripts/e2e/fixtures/axe-baseline.json",
     "scripts/e2e/world-screen.e2e.mjs",
     "scripts/funding/validate-register-db.mjs",
@@ -327,6 +345,9 @@
     "scripts/test/music-direct-sales.test.mjs",
     "scripts/test/native-action-network.test.mjs",
     "scripts/test/policy-fellowship-ladder.test.mjs",
+    "scripts/test/prim3-equity-uprise-level.test.mjs",
+    "scripts/test/prim3-equity-uprise-model.test.mjs",
+    "scripts/test/prim3-transit-level.test.mjs",
     "scripts/test/product-context.test.mjs",
     "scripts/test/rpc-names-exist.test.mjs",
     "scripts/test/security-reaudit.test.mjs",
@@ -542,7 +563,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "528 entries"
+      "detail": "549 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -1855,6 +1876,26 @@
       "detail": "support-only sources must not also claim capability ownership"
     },
     {
+      "name": "data/game-hub/modules.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "data/game-hub/modules.json classified",
+      "passed": true,
+      "detail": "classification='shared_data_support'"
+    },
+    {
+      "name": "data/game-hub/modules.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "data/game-hub/modules.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "data/lyrics/money-or-the-power.json capability ids known",
       "passed": true,
       "detail": ""
@@ -1918,6 +1959,26 @@
       "name": "data/playlists.json support-only semantics coherent",
       "passed": true,
       "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "data/prim3/world-missions.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "data/prim3/world-missions.json classified",
+      "passed": true,
+      "detail": "classification='shared_data_support'"
+    },
+    {
+      "name": "data/prim3/world-missions.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "data/prim3/world-missions.json support rationale present",
+      "passed": true,
+      "detail": ""
     },
     {
       "name": "data/product-context.json capability ids known",
@@ -3380,6 +3441,46 @@
       "detail": "support-only sources must not also claim capability ownership"
     },
     {
+      "name": "docs/prim3/EQUITY-UPRISE-BUILDING-IN-PRIM3.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/prim3/EQUITY-UPRISE-BUILDING-IN-PRIM3.md classified",
+      "passed": true,
+      "detail": "classification='building_projection_support'"
+    },
+    {
+      "name": "docs/prim3/EQUITY-UPRISE-BUILDING-IN-PRIM3.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/prim3/EQUITY-UPRISE-BUILDING-IN-PRIM3.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/prim3/EQUITY-UPRISE-HQ-REVIEW.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/prim3/EQUITY-UPRISE-HQ-REVIEW.md classified",
+      "passed": true,
+      "detail": "classification='building_projection_support'"
+    },
+    {
+      "name": "docs/prim3/EQUITY-UPRISE-HQ-REVIEW.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/prim3/EQUITY-UPRISE-HQ-REVIEW.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "docs/sales-redesign/BRANCH-HARVEST-REPORT.md capability ids known",
       "passed": true,
       "detail": ""
@@ -4226,6 +4327,106 @@
     },
     {
       "name": "js/policy-fellowship-ladder.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/prim3-tactics/level3d.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/prim3-tactics/level3d.mjs classified",
+      "passed": true,
+      "detail": "classification='building_projection_support'"
+    },
+    {
+      "name": "js/prim3-tactics/level3d.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/prim3-tactics/level3d.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/prim3-tactics/levels/equity-uprise-hq.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/prim3-tactics/levels/equity-uprise-hq.mjs classified",
+      "passed": true,
+      "detail": "classification='building_projection_support'"
+    },
+    {
+      "name": "js/prim3-tactics/levels/equity-uprise-hq.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/prim3-tactics/levels/equity-uprise-hq.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/prim3-tactics/levels/index.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/prim3-tactics/levels/index.mjs classified",
+      "passed": true,
+      "detail": "classification='navigation_support'"
+    },
+    {
+      "name": "js/prim3-tactics/levels/index.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/prim3-tactics/levels/index.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/prim3-tactics/preview.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/prim3-tactics/preview.mjs classified",
+      "passed": true,
+      "detail": "classification='navigation_support'"
+    },
+    {
+      "name": "js/prim3-tactics/preview.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/prim3-tactics/preview.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/prim3-tactics/transit.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/prim3-tactics/transit.mjs classified",
+      "passed": true,
+      "detail": "classification='navigation_support'"
+    },
+    {
+      "name": "js/prim3-tactics/transit.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/prim3-tactics/transit.mjs support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -5111,6 +5312,66 @@
     },
     {
       "name": "scripts/test/policy-fellowship-ladder.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/prim3-equity-uprise-level.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/prim3-equity-uprise-level.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/prim3-equity-uprise-level.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/prim3-equity-uprise-level.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/prim3-equity-uprise-model.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/prim3-equity-uprise-model.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/prim3-equity-uprise-model.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/prim3-equity-uprise-model.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/prim3-transit-level.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/prim3-transit-level.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/prim3-transit-level.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/prim3-transit-level.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -10596,6 +10857,186 @@
     },
     {
       "name": "js/control-room/nav.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "core/data/fictional-city/district.v1.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "core/data/fictional-city/district.v1.json classified",
+      "passed": true,
+      "detail": "classification='building_projection_support'"
+    },
+    {
+      "name": "core/data/fictional-city/district.v1.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "core/data/fictional-city/district.v1.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/fictional-city/LORE.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/fictional-city/LORE.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/fictional-city/LORE.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/fictional-city/LORE.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/fictional-city/README.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/fictional-city/README.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/fictional-city/README.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/fictional-city/README.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/universe/UNIVERSE-SCHEMA.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/universe/UNIVERSE-SCHEMA.md classified",
+      "passed": true,
+      "detail": "classification='governance_support'"
+    },
+    {
+      "name": "docs/universe/UNIVERSE-SCHEMA.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/universe/UNIVERSE-SCHEMA.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/universe/universe-registry.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/universe/universe-registry.json classified",
+      "passed": true,
+      "detail": "classification='navigation_support'"
+    },
+    {
+      "name": "docs/universe/universe-registry.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/universe/universe-registry.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/fictional-city/app.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/fictional-city/app.mjs classified",
+      "passed": true,
+      "detail": "classification='navigation_support'"
+    },
+    {
+      "name": "js/fictional-city/app.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/fictional-city/app.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/fictional-city/scene.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/fictional-city/scene.mjs classified",
+      "passed": true,
+      "detail": "classification='building_projection_support'"
+    },
+    {
+      "name": "js/fictional-city/scene.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/fictional-city/scene.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/fictional-city/spatial.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/fictional-city/spatial.mjs classified",
+      "passed": true,
+      "detail": "classification='building_projection_support'"
+    },
+    {
+      "name": "js/fictional-city/spatial.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/fictional-city/spatial.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/fictional-city.e2e.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/fictional-city.e2e.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/e2e/fictional-city.e2e.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/e2e/fictional-city.e2e.mjs support rationale present",
       "passed": true,
       "detail": ""
     }
