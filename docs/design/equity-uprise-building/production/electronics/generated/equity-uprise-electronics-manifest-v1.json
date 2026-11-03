@@ -1583,5 +1583,5 @@
   "device_component_catalog": "docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-device-components-v1.json",
   "step4c_componentized_devices_total": 819,
   "overlay_glb": "docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-electronics-fabric-v1.glb",
-  "overlay_sha256": "c6d9a5594a42e3931464dc60b8fadceae1af87aa5b218c1aee28c52125489716"
+  "overlay_sha256": "5dbb51b5a9fd786be055aae30ee401a9c5f8d8a701566ceef631fade075a2d42"
 }

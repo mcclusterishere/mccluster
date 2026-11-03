@@ -13,17 +13,25 @@ const GEN = new URL('../../docs/design/equity-uprise-building/production/generat
 const FT = 0.3048;
 const exists = (u) => access(u).then(() => true, () => false);
 
-// a GLB's nodes with their mesh bounds in building feet (the pipeline exports translations only; checked)
+// a GLB's nodes with their mesh bounds in building feet. Architecture is exported translated only (checked);
+// v3 instanced furniture nodes (`<id>::<catalog type>`) carry a rotation matrix, applied here to the bounds.
 async function glbNodes(file) {
   const buf = await readFile(new URL(file, GEN));
   let off = 12, json = null;
   while (off < buf.length) { const len = buf.readUInt32LE(off), type = buf.readUInt32LE(off + 4); if (type === 0x4E4F534A) json = JSON.parse(buf.subarray(off + 8, off + 8 + len).toString('utf8')); off += 8 + len; }
   const out = new Map();
   for (const n of json.nodes) {
-    assert.ok(!n.rotation && !n.scale && !n.matrix, `${file}: ${n.name} is translated only`);
+    const furniture = /::[a-z0-9_]+$/.test(n.name) && n.mesh != null && /-FURN-/.test(json.meshes[n.mesh].name || '');
+    assert.ok(!n.rotation && !n.scale && (!n.matrix || furniture), `${file}: ${n.name} is translated only`);
     if (n.mesh == null) continue;
-    const t = n.translation || [0, 0, 0], lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
-    for (const p of json.meshes[n.mesh].primitives) { const a = json.accessors[p.attributes.POSITION]; for (let k = 0; k < 3; k += 1) { lo[k] = Math.min(lo[k], a.min[k] + t[k]); hi[k] = Math.max(hi[k], a.max[k] + t[k]); } }
+    const t = n.translation || [0, 0, 0], m = n.matrix, lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
+    for (const p of json.meshes[n.mesh].primitives) {
+      const a = json.accessors[p.attributes.POSITION];
+      for (const cx of [a.min[0], a.max[0]]) for (const cy of [a.min[1], a.max[1]]) for (const cz of [a.min[2], a.max[2]]) {
+        const v = m ? [0, 1, 2].map((k) => m[k] * cx + m[4 + k] * cy + m[8 + k] * cz + m[12 + k]) : [cx + t[0], cy + t[1], cz + t[2]];
+        for (let k = 0; k < 3; k += 1) { lo[k] = Math.min(lo[k], v[k]); hi[k] = Math.max(hi[k], v[k]); }
+      }
+    }
     out.set(n.name, { x1: lo[0] / FT, y1: lo[1] / FT, z1: lo[2] / FT, x2: hi[0] / FT, y2: hi[1] / FT, z2: hi[2] / FT });
   }
   return out;
@@ -80,9 +88,12 @@ test('the facade wraps the plate and none of its signage is drawn', async () => 
   const vision = union(n, /^FAC-(SOUTH|NORTH|EAST|WEST)-F1-M\d+::vision$/);
   near(vision.x1, 0, 'west face', 0.5); near(vision.x2, 72, 'east face', 0.5); near(vision.y1, 0, 'south face', 0.5);
   near(vision.z1, 0.5, 'Floor 1 glass starts at the sill'); near(vision.z2, 11, 'Floor 1 glass to 11 ft');
+  // building v3: no mark, plate or lettering geometry at all; identity positions are empty brand-slot nodes
   const marks = [...n.keys()].filter((k) => /LOGO|WORDMARK|LETTER|SIGN/i.test(k));
-  assert.ok(marks.length > 0, 'the facade model carries signage');
   for (const k of marks) assert.match(k, part.drop, `${k} is dropped, never drawn`);
+  const buf = await readFile(new URL('equity-uprise-facade-core-v2.glb', GEN)); const jl = buf.readUInt32LE(12);
+  const slots = JSON.parse(buf.subarray(20, 20 + jl).toString('utf8')).nodes.filter((x) => x.name.startsWith('brand-slot::'));
+  assert.ok(slots.length >= 3 && slots.every((x) => x.mesh == null && x.extras && x.extras.brand_slot), 'the facade carries empty brand slots');
   assert.deepEqual(part.tiers, ['mid', 'high'], 'the 2.5 MB facade stays off the battery tier');
 });
 
