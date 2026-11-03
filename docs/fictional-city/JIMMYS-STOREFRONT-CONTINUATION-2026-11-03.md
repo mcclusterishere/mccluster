@@ -2,6 +2,12 @@
 
 Owner direction captured 2026-11-03; prepared for the approximately 13:00 America/New_York resume (18:00 UTC on this date). **Add to the existing Claude build. Do not replace, restart, reset, or reduce the city, its features, or its wider production work.** This is a build brief and source audit, not a claim that the store or factory is already live. Branch publication is authorized for this handoff; merge and deployment remain separate approvals.
 
+## New authored lore: Get It Back
+
+The owner added **Get It Back**, a distinct Connecticut Whip Equipped chapter/song direction. [Read the complete authored review draft](../music/whip-equipped/GET-IT-BACK-CROSSOVER-DRAFT-2026-11-03.md): shoe pickup, mistaken vehicle/VIN mismatch, failed recovery, an unconfirmed crash report, and a commercial-replica repair clue that can connect to Designer Kicks without requiring either audience to see both stories. The dialogue and scenes are written, not left as future-agent TODOs.
+
+Supporting people, vehicle, streets and office are composites. No identifying private account, real allegation, vehicle identifier or alleged threat is published. **Do not fold this into Acworth's Repo Guy or invent a Rico visit to Bridgeport.** That earlier exploratory bridge was not adopted or published as lore. The existing original-pair custody, cast and final three-song ending stay unchanged. Exact chapter placement, recording/lyrics/duration, new role casting, McCluster's shoe model, and any Hitman/PRIM3 identity remain unassigned. Read the draft's continuity contract before adding it to any runtime export or canon manifest.
+
 ## Start here, then continue the existing work
 
 Verified 16:16 UTC on 2026-11-03:

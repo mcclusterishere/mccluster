@@ -1,6 +1,8 @@
 # McCluster City / Bridgeport / OVH Core — post-merge #722 engineering handoff
 > **Owner's next build addition, 2026-11-03:** Read [Jimmy's-location shoe store + industrial factory continuation](JIMMYS-STOREFRONT-CONTINUATION-2026-11-03.md) before resuming. Add it to this ongoing city/Bridgeport work; do not replace the existing city, #725 arcade, or civic/cinematic branch. The brief records the verified 996–1000 Main Street footprint and the unresolved overlap with occupied authored parcels. It is a specification, not implemented/live store evidence.
 
+> **Authored story addition:** [Get It Back, complete Connecticut chapter draft](../music/whip-equipped/GET-IT-BACK-CROSSOVER-DRAFT-2026-11-03.md) adds standalone scenes and a Designer Kicks replica-repair clue. It is separate from Acworth's Repo Guy, does not change the current music manifest or ending, and leaves exact casting, song placement and recording open. The source-audited showroom/factory model is in [draft PR #730](https://github.com/mcclusterishere/mccluster/pull/730); it remains unplaced.
+
 **Date:** 2026-11-03  
 **Status:** Research and review specification only. Not an implementation, runtime audit, approval to deploy, or performance claim.  
 **Scope:** McCluster City expansion and its boundary with surveyed Bridgeport, Equity Uprise HQ, PRIM3, and OVH Core.  
