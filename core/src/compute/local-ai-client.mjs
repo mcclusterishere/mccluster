@@ -95,6 +95,16 @@ export async function localAiChat({
   };
 }
 
+export async function localAiEmbed(input, { model, fetchImpl = globalThis.fetch, timeoutMs = 130_000 } = {}) {
+  const response = await fetchImpl(`${ADAPTER}/embed`, {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ input, ...(model ? { model: String(model) } : {}) }), signal: AbortSignal.timeout(timeoutMs),
+  });
+  const data = await response.json().catch(() => null);
+  if (!response.ok) throw Object.assign(new Error(data?.error || `Local embedding returned ${response.status}`), { status: response.status, code: data?.code || null, retryable: response.status >= 500 });
+  return data;
+}
+
 export async function localAiPullModel(model, { fetchImpl = globalThis.fetch, timeoutMs = 1_560_000 } = {}) {
   const response = await fetchImpl(`${ADAPTER}/models/pull`, {
     method: 'POST', headers: { 'content-type': 'application/json' },

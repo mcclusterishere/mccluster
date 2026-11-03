@@ -11,7 +11,11 @@ WorkingDirectory=/opt/mccluster/core
 Environment=MCCLUSTER_OLLAMA_URL=http://127.0.0.1:11434
 Environment=MCCLUSTER_OLLAMA_MODEL=qwen3:8b
 Environment=MCCLUSTER_OLLAMA_NUM_THREAD=6
-Environment=MCCLUSTER_OLLAMA_EXTRA_MODELS=qwen3:4b-instruct-2507-q4_K_M
+Environment=MCCLUSTER_OLLAMA_EXTRA_MODELS=qwen3:4b-instruct-2507-q4_K_M,nomic-embed-text:v1.5,qwen2.5-coder:7b,qwen2.5vl:3b
+Environment=MCCLUSTER_OLLAMA_RESIDENT_MODELS=qwen3:4b-instruct-2507-q4_K_M,nomic-embed-text:v1.5
+Environment=MCCLUSTER_OLLAMA_EMBED_MODEL=nomic-embed-text:v1.5
+Environment=MCCLUSTER_OLLAMA_ON_DEMAND_KEEP_ALIVE=5m
+Environment=MCCLUSTER_OLLAMA_DEPLOY_PULL=qwen3:4b-instruct-2507-q4_K_M,nomic-embed-text:v1.5
 Environment=MCCLUSTER_OLLAMA_ADAPTER_PORT=4790
 Environment=MCCLUSTER_OLLAMA_ADAPTER_MAX_QUEUE=32
 ExecStart=/usr/bin/node /opt/mccluster/core/src/compute/ollama-adapter.mjs

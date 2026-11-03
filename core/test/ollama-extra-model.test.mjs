@@ -81,3 +81,34 @@ test('the adapter refuses to pull a model outside the allowlist', { timeout: 150
     assert.ok(ok.error);
   } finally { child.kill(); await once(child, 'exit'); }
 });
+
+test('embeddings use the allowlisted model; on-demand models unload quickly while resident ones stay', { timeout: 15000 }, async () => {
+  const requests = [];
+  const upstream = http.createServer(async (req, res) => {
+    let raw = ''; for await (const chunk of req) raw += chunk;
+    const body = raw ? JSON.parse(raw) : {}; requests.push({ url: req.url, body });
+    res.setHeader('content-type', 'application/json');
+    if (req.url === '/api/embed') return res.end(JSON.stringify({ embeddings: body.input.map(() => [0.1, 0.2, 0.3]) }));
+    if (req.url === '/api/chat') return res.end(JSON.stringify({ message: { role: 'assistant', content: 'ok' }, done_reason: 'stop' }));
+    res.end('{}');
+  });
+  upstream.listen(0, '127.0.0.1'); await once(upstream, 'listening');
+  const reservation = http.createServer(); reservation.listen(0, '127.0.0.1'); await once(reservation, 'listening');
+  const port = reservation.address().port; await new Promise(r => reservation.close(r));
+  const child = spawn(process.execPath, [new URL('../src/compute/ollama-adapter.mjs', import.meta.url).pathname], { env: { ...process.env, MCCLUSTER_OLLAMA_ADAPTER_PORT: String(port), MCCLUSTER_OLLAMA_URL: `http://127.0.0.1:${upstream.address().port}`, MCCLUSTER_OLLAMA_EXTRA_MODELS: 'fast:4b,embed:v1,coder:7b', MCCLUSTER_OLLAMA_RESIDENT_MODELS: 'fast:4b,embed:v1', MCCLUSTER_OLLAMA_EMBED_MODEL: 'embed:v1' }, stdio: ['ignore', 'pipe', 'pipe'] });
+  try {
+    await once(child.stdout, 'data');
+    const post = (path, body) => fetch(`http://127.0.0.1:${port}${path}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+    const emb = await post('/embed', { input: ['a satellite launch', 'a cyclone'] }).then(r => r.json());
+    assert.equal(emb.model, 'embed:v1'); assert.equal(emb.embeddings.length, 2); assert.equal(emb.dims, 3);
+    assert.equal((await post('/embed', { model: 'other:1b', input: ['x'] })).status, 400);
+    assert.equal((await post('/embed', { input: [] })).status, 400);
+    await post('/execute', { capability: 'ai.chat', input: { prompt: 'x', model: 'coder:7b' } }).then(r => r.json());
+    await post('/execute', { capability: 'ai.chat', input: { prompt: 'x', model: 'fast:4b' } }).then(r => r.json());
+    const chats = requests.filter(r => r.url === '/api/chat').map(r => [r.body.model, r.body.keep_alive]);
+    assert.deepEqual(chats, [['coder:7b', '5m'], ['fast:4b', '24h']]);
+  } finally {
+    child.kill(); await once(child, 'exit');
+    upstream.closeAllConnections(); await new Promise(r => upstream.close(r));
+  }
+});

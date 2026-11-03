@@ -8,6 +8,13 @@ const MODEL = process.env.MCCLUSTER_OLLAMA_MODEL || 'qwen3:8b';
 // Extra local models a caller may name (comma-separated allowlist). Anything
 // else, or an extra model that is not installed yet, runs on MODEL instead.
 const EXTRA_MODELS = String(process.env.MCCLUSTER_OLLAMA_EXTRA_MODELS || '').split(',').map(s => s.trim()).filter(Boolean);
+// Resident models stay loaded (keep_alive from inference-settings); every other
+// allowlisted model is on demand and unloads after a short idle window so it
+// never pushes the resident ones out of memory.
+const RESIDENT_MODELS = new Set([MODEL, ...String(process.env.MCCLUSTER_OLLAMA_RESIDENT_MODELS || '').split(',').map(s => s.trim()).filter(Boolean)]);
+const ON_DEMAND_KEEP_ALIVE = /^(?:\d{1,4}[smh])$/.test(String(process.env.MCCLUSTER_OLLAMA_ON_DEMAND_KEEP_ALIVE || '')) ? String(process.env.MCCLUSTER_OLLAMA_ON_DEMAND_KEEP_ALIVE) : '5m';
+const EMBED_MODEL = String(process.env.MCCLUSTER_OLLAMA_EMBED_MODEL || 'nomic-embed-text:v1.5');
+function keepAliveFor(model, settings) { return RESIDENT_MODELS.has(model) ? settings.keep_alive : ON_DEMAND_KEEP_ALIVE; }
 function pickModel(requested) { return requested && EXTRA_MODELS.includes(String(requested)) ? String(requested) : MODEL; }
 const MAX_QUEUE = Math.max(1, Math.min(256, Number(process.env.MCCLUSTER_OLLAMA_ADAPTER_MAX_QUEUE || 32)));
 
@@ -34,7 +41,8 @@ async function readJson(req) {
   let size = 0;
   for await (const chunk of req) {
     size += chunk.length;
-    if (size > 1024 * 1024) throw Object.assign(new Error('request too large'), { status: 413 });
+    // Loopback only; large enough for a vision request's base64 image.
+    if (size > 8 * 1024 * 1024) throw Object.assign(new Error('request too large'), { status: 413 });
     chunks.push(chunk);
   }
   return JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
@@ -79,7 +87,7 @@ async function execute(body, queuedAt, callerSignal) {
       messages,
       // Only the default model is a thinking model; instruct-only models reject the flag.
       ...(model === MODEL ? { think: settings.think } : {}),
-      keep_alive: settings.keep_alive,
+      keep_alive: keepAliveFor(model, settings),
       tools: Array.isArray(input.tools) ? input.tools.slice(0, 16) : undefined,
       // A JSON Schema object constrains decoding to that shape (Ollama structured
       // outputs); plain json:true keeps the old free-form JSON mode.
@@ -244,6 +252,25 @@ const server = http.createServer(async (req, res) => {
     // Install an allowlisted extra model (MCCLUSTER_OLLAMA_EXTRA_MODELS) through
     // the Ollama daemon and report exactly what it said. Loopback only, like
     // every route here; any other model name is refused.
+    // Embeddings: text in, vectors out, on the allowlisted embedding model.
+    if (req.method === 'POST' && req.url === '/embed') {
+      const body = await readJson(req);
+      const model = body.model ? String(body.model) : EMBED_MODEL;
+      if (model !== EMBED_MODEL && !EXTRA_MODELS.includes(model)) return send(res, 400, { error: 'model is not an allowlisted embedding model', code: 'MODEL_NOT_ALLOWED' });
+      const input = (Array.isArray(body.input) ? body.input : [body.input]).map(t => String(t ?? '').slice(0, 8000));
+      if (!input.length || input.length > 64 || input.some(t => !t.trim())) return send(res, 400, { error: 'input must be 1 to 64 non-empty texts', code: 'INPUT_REQUIRED' });
+      const started = Date.now();
+      const response = await fetch(`${OLLAMA}/api/embed`, {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ model, input, keep_alive: '24h' }),
+        signal: AbortSignal.timeout(120_000),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) return send(res, response.status === 404 ? 503 : 502, { error: data?.error || `Ollama returned HTTP ${response.status}`, code: 'OLLAMA_UPSTREAM_ERROR', model });
+      const embeddings = Array.isArray(data?.embeddings) ? data.embeddings : [];
+      return send(res, 200, { model, embeddings, dims: embeddings[0]?.length || 0, wall_ms: Date.now() - started });
+    }
+
     if (req.method === 'POST' && req.url === '/models/pull') {
       const body = await readJson(req);
       const name = String(body.model || '');
