@@ -33,6 +33,9 @@ Identity of record: [ORCID 0009-0000-8988-8955](https://orcid.org/0009-0000-8988
 *I AM HERE* — Who Did The Shoot · Lightroom · Runway Walk · Write a Song ·
 Here · Antisocial
 
+The current Whip Equipped album and film storyline, full screenplay, source
+precedence, and timing map are indexed in [Whip Equipped canon](docs/music/WHIP-EQUIPPED-STORY.md).
+
 ## The Equity Uprise platform
 
 A fellowship of fellowships: people say what they care about, and the

@@ -397,7 +397,7 @@
       "@type": "Project",
       "@id": "https://matthew.mccluster.org/prim3.html#prim3",
       "name": "PRIM3",
-      "url": "https://matthew.mccluster.org/prim3.html",
+      "url": "https://mccluster.org/company",
       "parentOrganization": {
         "@id": "https://matthew.mccluster.org/#mccluster-corp"
       },

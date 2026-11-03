@@ -1,0 +1,311 @@
+{
+  "schema_version": 1,
+  "revision": "2026-11-03",
+  "status": "working_production_targets",
+  "authority": "../WHIP-EQUIPPED-STORY.md",
+  "units": "milliseconds",
+  "dialogue_planning_words_per_minute": 130,
+  "performance_timing_verified": false,
+  "complete_lyric_alignment_verified": false,
+  "tracks": [
+    {
+      "id": "test-drive",
+      "title": "Test Drive",
+      "scope": "core",
+      "core_position": 1,
+      "document_position": 1,
+      "recording": {
+        "basis": "catalog_metadata",
+        "catalog_path": "data/albums.json",
+        "catalog_blob_sha": "d0480aaaf6fd67e6feabe91da924ef7c74b28c67",
+        "catalog_title": "Test Drive",
+        "repository_audio_path": "assets/audio/test-drive.mp3",
+        "qualification": "Catalog duration; not a newly measured or locked final master."
+      },
+      "song_ms": 95200,
+      "before_target_ms": 190400,
+      "after_target_ms": 190400,
+      "chapter_target_ms": 476000,
+      "spoken_before": 423,
+      "spoken_after": 419,
+      "spoken_total": 842
+    },
+    {
+      "id": "mr-lock-changer",
+      "title": "Mr. Lock Changer Remix",
+      "scope": "core",
+      "core_position": 2,
+      "document_position": 2,
+      "recording": {
+        "basis": "catalog_metadata",
+        "catalog_path": "data/albums.json",
+        "catalog_blob_sha": "d0480aaaf6fd67e6feabe91da924ef7c74b28c67",
+        "catalog_title": "Mr. Lock Changer (Remix)",
+        "repository_audio_path": "assets/audio/mr-lock-changer-remix.mp3",
+        "qualification": "Catalog duration; not a newly measured or locked final master."
+      },
+      "song_ms": 108100,
+      "before_target_ms": 216200,
+      "after_target_ms": 216200,
+      "chapter_target_ms": 540500,
+      "spoken_before": 467,
+      "spoken_after": 465,
+      "spoken_total": 932
+    },
+    {
+      "id": "whip-equipped",
+      "title": "Whip Equipped working bounce",
+      "scope": "core",
+      "core_position": 3,
+      "document_position": 3,
+      "recording": {
+        "basis": "measured_file_duration",
+        "method": "ffprobe format.duration",
+        "filename": "WHIP EQUIP B SIDE 8.3.24.mp3",
+        "qualification": "Provisional bounce; match to the opening-location lyric sheet is unresolved."
+      },
+      "song_ms": 95496,
+      "before_target_ms": 190992,
+      "after_target_ms": 190992,
+      "chapter_target_ms": 477480,
+      "spoken_before": 422,
+      "spoken_after": 423,
+      "spoken_total": 845
+    },
+    {
+      "id": "lana",
+      "title": "Lana B Side",
+      "scope": "core",
+      "core_position": 4,
+      "document_position": 4,
+      "recording": {
+        "basis": "catalog_metadata",
+        "catalog_path": "data/albums.json",
+        "catalog_blob_sha": "d0480aaaf6fd67e6feabe91da924ef7c74b28c67",
+        "catalog_title": "Lana (B-Side)",
+        "repository_audio_path": "assets/audio/lana-b-side.mp3",
+        "qualification": "Catalog duration; not a newly measured or locked final master."
+      },
+      "song_ms": 85300,
+      "before_target_ms": 170600,
+      "after_target_ms": 170600,
+      "chapter_target_ms": 426500,
+      "spoken_before": 372,
+      "spoken_after": 370,
+      "spoken_total": 742
+    },
+    {
+      "id": "repo-guy",
+      "title": "Repo Guy B Side",
+      "scope": "core",
+      "core_position": 5,
+      "document_position": 5,
+      "recording": {
+        "basis": "catalog_metadata",
+        "catalog_path": "data/albums.json",
+        "catalog_blob_sha": "d0480aaaf6fd67e6feabe91da924ef7c74b28c67",
+        "catalog_title": "Repo Guy (B-Side)",
+        "repository_audio_path": "assets/audio/repo-guy-b-side.mp3",
+        "qualification": "Catalog duration; not a newly measured or locked final master."
+      },
+      "song_ms": 120200,
+      "before_target_ms": 240400,
+      "after_target_ms": 240400,
+      "chapter_target_ms": 601000,
+      "spoken_before": 514,
+      "spoken_after": 525,
+      "spoken_total": 1039
+    },
+    {
+      "id": "hundun",
+      "title": "Hundun B Side",
+      "scope": "core",
+      "core_position": 6,
+      "document_position": 6,
+      "recording": {
+        "basis": "catalog_metadata",
+        "catalog_path": "data/albums.json",
+        "catalog_blob_sha": "d0480aaaf6fd67e6feabe91da924ef7c74b28c67",
+        "catalog_title": "Hundun (B-Side)",
+        "repository_audio_path": "assets/audio/hundun-b-side.mp3",
+        "qualification": "143-second April catalog B-Side; do not substitute the alternative August mix."
+      },
+      "song_ms": 143000,
+      "before_target_ms": 286000,
+      "after_target_ms": 286000,
+      "chapter_target_ms": 715000,
+      "spoken_before": 615,
+      "spoken_after": 619,
+      "spoken_total": 1234
+    },
+    {
+      "id": "all-in-the-details",
+      "title": "All in the Details",
+      "scope": "core",
+      "core_position": 7,
+      "document_position": 7,
+      "recording": {
+        "basis": "catalog_metadata",
+        "catalog_path": "data/albums.json",
+        "catalog_blob_sha": "d0480aaaf6fd67e6feabe91da924ef7c74b28c67",
+        "catalog_title": "All in the Details",
+        "repository_audio_path": "assets/audio/all-in-the-details.mp3",
+        "qualification": "Catalog duration; not a newly measured or locked final master."
+      },
+      "song_ms": 155000,
+      "before_target_ms": 310000,
+      "after_target_ms": 310000,
+      "chapter_target_ms": 775000,
+      "spoken_before": 662,
+      "spoken_after": 674,
+      "spoken_total": 1336
+    },
+    {
+      "id": "towyard-killer",
+      "title": "Towyard Killer",
+      "scope": "core",
+      "core_position": 8,
+      "document_position": 8,
+      "recording": {
+        "basis": "catalog_metadata",
+        "catalog_path": "data/albums.json",
+        "catalog_blob_sha": "d0480aaaf6fd67e6feabe91da924ef7c74b28c67",
+        "catalog_title": "Towyard Killer",
+        "repository_audio_path": "assets/audio/towyard-killer.m4a",
+        "qualification": "Catalog duration; not a newly measured or locked final master."
+      },
+      "song_ms": 65700,
+      "before_target_ms": 131400,
+      "after_target_ms": 131400,
+      "chapter_target_ms": 328500,
+      "spoken_before": 293,
+      "spoken_after": 290,
+      "spoken_total": 583
+    },
+    {
+      "id": "stand-on-business",
+      "title": "Stand On Business B Side",
+      "scope": "core",
+      "core_position": 9,
+      "document_position": 9,
+      "recording": {
+        "basis": "catalog_metadata",
+        "catalog_path": "data/albums.json",
+        "catalog_blob_sha": "d0480aaaf6fd67e6feabe91da924ef7c74b28c67",
+        "catalog_title": "Stand On Business (B-Side)",
+        "repository_audio_path": "assets/audio/stand-on-business-b-side.m4a",
+        "qualification": "Catalog duration; not a newly measured or locked final master."
+      },
+      "song_ms": 120700,
+      "before_target_ms": 241400,
+      "after_target_ms": 241400,
+      "chapter_target_ms": 603500,
+      "spoken_before": 522,
+      "spoken_after": 523,
+      "spoken_total": 1045
+    },
+    {
+      "id": "dealer-plates",
+      "title": "Dealer Plates A Side basis",
+      "scope": "core",
+      "core_position": 10,
+      "document_position": 10,
+      "recording": {
+        "basis": "catalog_metadata",
+        "catalog_path": "data/albums.json",
+        "catalog_blob_sha": "d0480aaaf6fd67e6feabe91da924ef7c74b28c67",
+        "catalog_title": "Dealer Plates (A-Side)",
+        "repository_audio_path": "assets/audio/dealer-plates.mp3",
+        "qualification": "A-Side lyric basis; B-Side's equal duration does not prove identical lyrics."
+      },
+      "song_ms": 97400,
+      "before_target_ms": 194800,
+      "after_target_ms": 194800,
+      "chapter_target_ms": 487000,
+      "spoken_before": 429,
+      "spoken_after": 421,
+      "spoken_total": 850
+    },
+    {
+      "id": "jet-pack",
+      "title": "Jet Pass and Jet Pack earlier interlude",
+      "scope": "earlier_optional_interlude",
+      "core_position": null,
+      "document_position": 11,
+      "recording": {
+        "basis": "measured_file_duration",
+        "method": "ffprobe format.duration",
+        "filename": "2. JET PACK 3.26.24.mp3",
+        "qualification": "Jet Pass is the lyric-sheet title; exact performed-text match remains unresolved."
+      },
+      "song_ms": 75528,
+      "before_target_ms": 151056,
+      "after_target_ms": 151056,
+      "chapter_target_ms": 377640,
+      "spoken_before": 337,
+      "spoken_after": 329,
+      "spoken_total": 666
+    },
+    {
+      "id": "tears-wont-fall",
+      "title": "Tears Won’t Fall",
+      "scope": "core",
+      "core_position": 11,
+      "document_position": 12,
+      "recording": {
+        "basis": "measured_file_duration",
+        "method": "ffprobe format.duration",
+        "filename": "2. TEARS WONT FALL.mp3",
+        "qualification": "Selected reference; distinct from 2. TEARS WONT FALL 8.3.24.mp3 (114.600 seconds)."
+      },
+      "song_ms": 112464,
+      "before_target_ms": 224928,
+      "after_target_ms": 224928,
+      "chapter_target_ms": 562320,
+      "spoken_before": 489,
+      "spoken_after": 493,
+      "spoken_total": 982
+    },
+    {
+      "id": "salvage-title",
+      "title": "Salvage Title B Side",
+      "scope": "core",
+      "core_position": 12,
+      "document_position": 13,
+      "recording": {
+        "basis": "catalog_metadata",
+        "catalog_path": "data/albums.json",
+        "catalog_blob_sha": "d0480aaaf6fd67e6feabe91da924ef7c74b28c67",
+        "catalog_title": "Salvage Title (B-Side)",
+        "repository_audio_path": "assets/audio/salvage-title-b-side.m4a",
+        "qualification": "Catalog duration; not a newly measured or locked final master."
+      },
+      "song_ms": 89100,
+      "before_target_ms": 178200,
+      "after_target_ms": 178200,
+      "chapter_target_ms": 445500,
+      "spoken_before": 388,
+      "spoken_after": 384,
+      "spoken_total": 772
+    }
+  ],
+  "totals": {
+    "core_song_ms": 1287660,
+    "core_dialogue_target_ms": 5150640,
+    "core_target_ms": 6438300,
+    "earlier_interlude_target_ms": 377640,
+    "combined_target_ms": 6815940,
+    "spoken_words": 11868
+  },
+  "provisional_title": {
+    "id": "whip-equipped",
+    "other_core_chapters_target_ms": 5960820,
+    "final_core_formula": "5960820 + 5 * selected_title_recording_duration_ms"
+  },
+  "alternate_recording_not_selected": {
+    "filename": "2. TEARS WONT FALL 8.3.24.mp3",
+    "measured_duration_ms": 114600
+  },
+  "note": "Durations do not verify final masters or rendered scenes. Display clocks may round; arithmetic uses the integers above."
+}
+
