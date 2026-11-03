@@ -20,6 +20,9 @@ import { isNewsCandidate } from './actor-news-comment.mjs';
 import { PRIM3_AGENT_BY_KEY } from '../prim3/agents.mjs';
 
 export const BATCH = 8;
+// The desk runs on the box's fast model; the adapter falls back to the default
+// model if it is not installed. Owner chat keeps the larger default model.
+export const DESK_MODEL = 'qwen3:4b-instruct-2507-q4_K_M';
 export const BRIEF_EVERY_HOURS = 4;
 const DAY_MS = 86_400_000;
 
@@ -107,7 +110,7 @@ export async function prim3AgentNews(job, { query = rest, chat = localAiChat, re
         { role: 'system', content: COMMENT_SYSTEM },
         { role: 'user', content: JSON.stringify({ agent: agentCard, headlines: batch.map((a, i) => ({ n: i + 1, t: String(a.title).slice(0, 300) })) }) },
       ],
-      schema: COMMENT_SCHEMA, think: false, numPredict: 90 * batch.length + 60, temperature: 0.7, priority: -40,
+      schema: COMMENT_SCHEMA, model: DESK_MODEL, think: false, numPredict: 90 * batch.length + 60, temperature: 0.7, priority: -40,
       metadata: { job_type: 'prim3_agent_news', job_id: job.id, agent_key: agent.key },
     });
     const rows = parseComments(response?.message?.content, batch);
@@ -137,7 +140,7 @@ export async function prim3AgentNews(job, { query = rest, chat = localAiChat, re
         { role: 'system', content: BRIEF_SYSTEM },
         { role: 'user', content: JSON.stringify({ agent: agentCard, headlines: sample }) },
       ],
-      schema: BRIEF_SCHEMA, think: false, numPredict: 220, temperature: 0.4, priority: -40,
+      schema: BRIEF_SCHEMA, model: DESK_MODEL, think: false, numPredict: 220, temperature: 0.4, priority: -40,
       metadata: { job_type: 'prim3_agent_news_brief', job_id: job.id, agent_key: agent.key },
     });
     let brief = null;

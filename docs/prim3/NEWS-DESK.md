@@ -54,7 +54,13 @@ chat waits behind at most one batch (~60 s), never a whole country.
   `MCCLUSTER_OLLAMA_NUM_THREAD`; it stays unset until a benchmark on the box
   shows 6 (matching the 6-CPU quota) beats Ollama's own choice.
 
-Not done here, and why: fine-tuning (training) needs a GPU this box does not
-have; a faster or larger model (e.g. a 4B instruct, or a 30B mixture-of-experts)
-needs a model pull and a larger service memory cap on the host, which is a
-separate host change to propose with measurements.
+- **Two resident models** (owner, 2026-11-03: "if we need ... a 4B model, like
+  that's twice as fast. Let's try to max out this box"). The desk runs on
+  `qwen3:4b-instruct-2507-q4_K_M` (2.5 GB, roughly twice the 8B's speed on
+  CPU); owner chat and reasoning keep `qwen3:8b`. Both stay loaded
+  (`OLLAMA_MAX_LOADED_MODELS=2`, 14 GB cap of the box's 24 GB), so switching
+  between them costs no reload. The deploy installs the Ollama drop-in and pulls
+  the 4B model; the adapter falls back to the 8B if it is missing.
+
+Not done, and why: fine-tuning (training) needs a GPU this box does not have.
+A 30B mixture-of-experts model would not fit beside the 8B in this memory.
