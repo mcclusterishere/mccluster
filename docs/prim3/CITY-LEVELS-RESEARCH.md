@@ -110,7 +110,7 @@ Dates are publication/last-updated dates as shown by the source when retrieved o
 | Draw-call batching | `BatchedMesh`: many geometries, one material, multi-draw where `WEBGL_multi_draw` exists, per-instance culling/sorting; helps only when draw-call overhead is the bottleneck. | [BatchedTilesPlugin docs](https://gkjohnson.github.io/tools/docs/3d-tiles-renderer/three/plugins/BatchedTilesPlugin/); [three.js forum](https://discourse.threejs.org/t/why-did-the-performance-worsen-significantly-when-i-used-multidrawinstances-in-batchedmesh/78581) |
 | Navmesh | `recast-navigation-js` 0.43.x: Recast/Detour in WASM; `@recast-navigation/three` builds solo/tiled navmeshes and tile caches from `THREE.Mesh`; crowd simulation. | [npm recast-navigation](https://npmjs.com/package/recast-navigation); [three README](https://cdn.jsdelivr.net/npm/@recast-navigation/three@0.43.1/README.md) |
 | Public-domain heights | USGS 3DEP lidar is public domain; NJ coverage includes 2014 post-Sandy lidar for all of Hudson County; NJGIN publishes the lidar project extents. | [NOAA InPort: 2014 USGS CMGP LiDAR Post Sandy (NJ)](https://www.fisheries.noaa.gov/inport/item/49867); [USGS 3DEP](https://pubs.usgs.gov/fs/2014/3091) |
-| Mesh compression measured here | On the Equity Uprise GLBs: meshopt (EXT_meshopt_compression, medium) cut gzipped bytes 44% (616 → 348 KB); the real cost was 8,566 separate primitives. See `docs/design/EQUITY-UPRISE-VIEWER-UPGRADE-PLAN.md`. | measured 2026-11-03 |
+| Mesh compression measured here | On the HQ building GLBs: meshopt (EXT_meshopt_compression, medium) cut gzipped bytes 44% (616 → 348 KB); the real cost was 8,566 separate primitives. See `docs/design/HQ-BUILDING-VIEWER-UPGRADE-PLAN.md`. | measured 2026-11-03 |
 
 ---
 
@@ -164,6 +164,6 @@ vertex colour), pixel ratio ≤ 1.5 on coarse pointers.
 | 4 | Area pipeline: owner picks an area → Worker `mccluster` queues a job (existing ops job tables) → Core builds rules + visual chunks → rows in Supabase + files in Storage → game fetches the manifest from `api.mccluster.org` | Worker + Core + Supabase |
 | 5 | WebGPU renderer path (TSL port of the field look), navmesh for ambient crowds, optional Spark splat interiors captured on site (our own captures only) | repo + Core |
 
-Open questions for the owner: which neighbourhoods; whether the Level 7 roof of the Equity Uprise building
+Open questions for the owner: which neighbourhoods; whether the Level 7 roof of the HQ building
 should look out on a real city chunk built this way (the roof spec already asks for an overlook and dynamic
 destinations); whether a Google-tiles establishing shot is worth the cost and terms at all.
