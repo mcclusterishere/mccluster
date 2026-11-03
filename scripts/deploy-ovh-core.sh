@@ -15,6 +15,19 @@ DEPLOY_MANIFEST="${CORE_TARGET}/.mccluster-deploy.json"
 # Set once the live install is about to change; rollback restarts and verifies
 # only when there is something live to recover.
 LIVE_TOUCHED=0
+# Local model runtime: Ollama's service settings are a drop-in shipped by the
+# repo (core/systemd/ollama-mccluster.conf); restarted only when it changes.
+OLLAMA_DROPIN_DIR="${SYSTEMD_DIR}/ollama.service.d"
+OLLAMA_DROPIN="${OLLAMA_DROPIN_DIR}/mccluster.conf"
+OLLAMA_RESTART=0
+mcc_wait_ollama() {
+  local i
+  for i in $(seq 1 60); do
+    if curl -fsS --max-time 2 http://127.0.0.1:11434/api/tags >/dev/null 2>&1; then return 0; fi
+    sleep 1
+  done
+  return 1
+}
 
 # Shared restart + health probe: the forward gate and rollback use one probe.
 # shellcheck source=scripts/ovh-core-health.sh
@@ -53,6 +66,7 @@ popd >/dev/null
 
 rollback() {
   local rc=$?
+  local ollama_restore=0
   # Recovery is handled explicitly below: a failing step inside rollback must
   # neither re-enter this trap nor exit silently under errexit.
   trap - ERR
@@ -90,12 +104,23 @@ rollback() {
     elif [[ -f "${BACKUP_DIR}/new-preview-rule" ]]; then
       rm -f /etc/polkit-1/rules.d/50-mccluster-preview-build.rules
     fi
+    if [[ -f "${BACKUP_DIR}/ollama-mccluster.conf" ]]; then
+      install -m 0644 "${BACKUP_DIR}/ollama-mccluster.conf" "${SYSTEMD_DIR}/ollama.service.d/mccluster.conf"
+      ollama_restore=1
+    elif [[ -f "${BACKUP_DIR}/new-ollama-dropin" ]]; then
+      rm -f "${SYSTEMD_DIR}/ollama.service.d/mccluster.conf"
+      ollama_restore=1
+    fi
     if [[ -f "${BACKUP_DIR}/node-capabilities.json" ]]; then
       install -o root -g mccluster-node -m 0640 "${BACKUP_DIR}/node-capabilities.json" /etc/mccluster-node/capabilities.json
     elif [[ -f "${BACKUP_DIR}/new-node-capabilities" ]]; then
       rm -f /etc/mccluster-node/capabilities.json
     fi
     systemctl daemon-reload || mcc_log "rollback: systemctl daemon-reload failed"
+    if [[ ${ollama_restore} -eq 1 ]]; then
+      systemctl restart ollama.service || mcc_log "rollback: ollama restart failed"
+      mcc_wait_ollama || mcc_log "rollback: ollama did not answer after restart"
+    fi
   fi
   # The reconciler has its own backup marker so it can be restored even if this
   # was the first Core deployment and there was no prior Core tree to restore.
@@ -204,7 +229,38 @@ if [[ -r /etc/mccluster-node/node.env ]]; then
   fi
 fi
 
+# Ollama service settings (loaded models, keep-alive, memory/CPU caps).
+if systemctl list-unit-files ollama.service --no-legend 2>/dev/null | grep -q '^ollama.service'; then
+  if ! cmp -s "${SOURCE_DIR}/core/systemd/ollama-mccluster.conf" "${OLLAMA_DROPIN}"; then
+    if [[ -f "${OLLAMA_DROPIN}" ]]; then
+      cp -p "${OLLAMA_DROPIN}" "${BACKUP_DIR}/ollama-mccluster.conf"
+    else
+      touch "${BACKUP_DIR}/new-ollama-dropin"
+    fi
+    install -d -m 0755 "${OLLAMA_DROPIN_DIR}"
+    install -m 0644 "${SOURCE_DIR}/core/systemd/ollama-mccluster.conf" "${OLLAMA_DROPIN}"
+    OLLAMA_RESTART=1
+  fi
+fi
+
 systemctl daemon-reload
+
+if [[ ${OLLAMA_RESTART} -eq 1 ]]; then
+  systemctl restart ollama.service
+  mcc_wait_ollama
+fi
+
+# Extra local models named by the adapter unit are pulled when missing. A pull
+# that fails is not fatal: the adapter runs those requests on the default model.
+if command -v ollama >/dev/null 2>&1; then
+  EXTRA_MODELS="$(sed -n 's/^Environment=MCCLUSTER_OLLAMA_EXTRA_MODELS=//p' "${SOURCE_DIR}/core/systemd/mccluster-ollama-adapter.service" | tail -n 1 | tr ',' ' ')"
+  for model in ${EXTRA_MODELS}; do
+    [[ "${model}" =~ ^[a-z0-9][a-z0-9._:-]{1,80}$ ]] || continue
+    if ! ollama list 2>/dev/null | awk 'NR>1 {print $1}' | grep -qxF "${model}"; then
+      timeout 1500 ollama pull "${model}" >/dev/null 2>&1 || mcc_log "extra model ${model} not pulled; the adapter falls back to the default model"
+    fi
+  done
+fi
 
 # Keep timers enabled; restart only services that already exist on this host.
 for timer in mccluster-core-actors.timer mccluster-core-prim3-news.timer mccluster-core-knowledge.timer mccluster-core-digest.timer mccluster-core-portfolio-plan.timer mccluster-core-reflection.timer mccluster-core-system-health.timer mccluster-vps-reconcile.timer; do

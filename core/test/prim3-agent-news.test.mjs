@@ -50,6 +50,7 @@ test('one job comments on one batch of new headlines and writes a due brief', as
   assert.equal(out.briefed, true);
   assert.equal(deps.inferences.length, 2);
   assert.equal(deps.inferences[0].priority, -40);
+  assert.equal(deps.inferences[0].model, 'qwen3:4b-instruct-2507-q4_K_M');
   assert.equal(deps.inferences[0].messages[0].content.includes('Aya'), false, 'the system prompt is a shared, cacheable prefix');
   assert.equal(deps.inserted.comments.length, BATCH);
   assert.ok(deps.inserted.comments.every(row => row.agent_key === 'aya-shinoda' && row.country_iso === 'JP' && row.org_id === 'house'));
