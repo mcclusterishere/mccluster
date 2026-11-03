@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -7,6 +7,7 @@
   <meta name="description" content="Phone-first preview of PRIM3's tactical board on the real square-grid resolver, with optional learning-unlocked hints.">
   <meta name="robots" content="noindex, nofollow">
   <meta name="theme-color" content="#05080b">
+  <meta name="color-scheme" content="dark">
   <link rel="stylesheet" href="css/style.css?v=__STAMP__">
   <style>
     :root{
@@ -14,16 +15,13 @@
       --p3-cyan:#36d6e7;--p3-cyan-soft:rgba(54,214,231,.20);--p3-amber:#ffb547;--p3-amber-soft:rgba(255,181,71,.22);--p3-hostile:#ff5d6a;
       --p3-wall:#2a3640;--p3-cover:#9fb3bf;--p3-r:12px
     }
-    @media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--p3-bg:#eef3f5;--p3-bg2:#e2eaee;--p3-tile:#f9fbfc;--p3-tile2:#eef3f5;--p3-line:rgba(10,40,50,.14);--p3-ink:#0b1a20;--p3-dim:rgba(11,26,32,.70);--p3-cyan:#0a8fa0;--p3-cyan-soft:rgba(10,143,160,.16);--p3-amber:#b56a00;--p3-amber-soft:rgba(181,106,0,.16);--p3-wall:#93a3ad;--p3-cover:#44555f}}
     :root[data-theme="dark"]{--p3-bg:#05080b;--p3-ink:#e8f1f3}
     *{box-sizing:border-box}
     html,body{margin:0}
     html,body{background-color:#05080b}
-    @media (prefers-color-scheme: light){:root:not([data-theme="dark"]),:root:not([data-theme="dark"]) body{background-color:#eef3f5}}
     body{background:radial-gradient(120% 70% at 50% -10%,rgba(54,214,231,.10),transparent 60%),linear-gradient(180deg,var(--p3-bg2),var(--p3-bg));color:var(--p3-ink);font:400 16px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100svh;padding-bottom:calc(96px + env(safe-area-inset-bottom))}
     .tac{max-width:1100px;margin:0 auto;padding:calc(64px + env(safe-area-inset-top)) 16px calc(130px + env(safe-area-inset-bottom));display:grid;gap:10px;grid-template-columns:minmax(0,1fr)}
     .tac-hud{position:relative;z-index:5;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 10px;align-items:center;padding:8px 10px;border:1px solid var(--p3-line);border-radius:var(--p3-r);background:rgba(8,14,19,.82);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
-    @media (prefers-color-scheme: light){:root:not([data-theme="dark"]) .tac-hud{background:rgba(255,255,255,.86)}}
     .hud-unit{font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .hud-ap{color:var(--p3-cyan);letter-spacing:.06em}
     .hud-meta{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px 12px;color:var(--p3-dim);font-size:13px}
@@ -70,13 +68,11 @@
     .tbtn--zoom{font-size:20px;padding:0}
     .tac-menu[hidden],.tac-sheet[hidden]{display:none}
     .tac-menu{position:relative;z-index:4;width:100%;max-width:620px;padding:6px;border-radius:12px;border:1px solid rgba(54,214,231,.35);background:rgba(8,14,19,.95);box-shadow:0 18px 40px rgba(0,0,0,.6);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
-    @media (prefers-color-scheme: light){:root:not([data-theme="dark"]) .tac-menu{background:rgba(255,255,255,.97)}}
     .tm-head{grid-column:1/-1;margin:2px 6px 2px;font:700 12px/1.2 inherit;letter-spacing:.06em;text-transform:uppercase;color:var(--p3-dim)}
     .tm-btn{min-height:44px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:2px;padding:4px 10px;border-radius:9px;border:0;background:rgba(54,214,231,.08);color:inherit;font:600 14px/1.1 inherit;text-align:left;cursor:pointer;min-width:0}
     .tm-btn small{color:var(--p3-dim);font-weight:500;font-size:11px}
     .tm-btn--ghost{background:transparent;border:1px solid var(--p3-line)}
     .tac-sheet{border:1px solid var(--p3-line);border-radius:var(--p3-r);padding:12px;background:rgba(8,14,19,.88)}
-    @media (prefers-color-scheme: light){:root:not([data-theme="dark"]) .tac-sheet{background:#fff}}
     .ts-eye{margin:0 0 4px;font:700 12px/1.2 inherit;letter-spacing:.06em;text-transform:uppercase;color:var(--p3-dim)}
     .ts-main{margin:0 0 4px;font-size:17px}.ts-main b{color:var(--p3-amber)}
     .ts-q{margin:0 0 6px;font-weight:600}
@@ -100,33 +96,78 @@
       .tac-side{position:sticky;top:12px;display:grid;gap:10px}
     }
     .reduce-motion *{transition:none!important;animation:none!important}
+    /* mockup layout: top turn bar, objective strip, 3D board, preview/challenge, unit dock */
+    .tac{padding-top:calc(70px + env(safe-area-inset-top))}
+    .p3-top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 12px;border:1px solid var(--p3-line);border-radius:var(--p3-r);background:linear-gradient(100deg,rgba(255,93,106,.10),transparent 30%),rgba(8,14,19,.85)}
+    .p3-mark{width:44px;height:44px;object-fit:contain}
+    .p3-turn{display:grid;justify-items:end;line-height:1.05}
+    .p3-turn b{font:800 20px/1 system-ui,sans-serif;letter-spacing:.04em}
+    .p3-turn span{color:var(--p3-cyan);font:700 14px/1.2 system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase}
+    .p3-obj{margin:0;display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:var(--p3-r);background:rgba(8,14,19,.7);border:1px solid var(--p3-line);font:700 14px/1.2 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase}
+    .p3-obj i{color:var(--p3-amber);font-style:normal;font-size:18px}
+    .tac-3d{position:absolute;inset:0;display:none}
+    .tac-viewport.is-3d .tac-3d{display:block}
+    .tac-viewport.is-3d .tac-board{display:none}
+    .tac-viewport.is-3d{aspect-ratio:3/4;max-width:640px}
+    @media (min-width:900px){.tac-viewport.is-3d{aspect-ratio:4/3}}
+    .b3-canvas{display:block;width:100%;height:100%}
+    .b3-labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+    .b3-label{position:absolute;left:0;top:0;white-space:nowrap;font:700 12px/1 system-ui,sans-serif;padding:4px 7px;border-radius:7px;translate:-50% -100%;background:rgba(6,12,16,.86);border:1px solid var(--p3-line);color:var(--p3-ink)}
+    .b3-label--ally{color:var(--p3-cyan);border-color:rgba(54,214,231,.7);min-width:22px;text-align:center}
+    .b3-label--hostile{color:#ffd0d4;border-color:var(--p3-hostile);background:rgba(70,10,16,.86)}
+    .b3-label--origin{color:var(--p3-cyan);border-color:rgba(54,214,231,.7);translate:-50% 45%}
+    .b3-label--target,.b3-label--obj{color:var(--p3-amber);border-color:rgba(255,181,71,.7)}
+    .b3-label--target{translate:-50% 45%}
+    .b3-label--cover{font-weight:600;color:var(--p3-dim)}
+    .b3-label--step{translate:-50% -150%;background:transparent;border:0;color:var(--p3-ink);font-size:11px}
+    .b3-label--axis{translate:-50% -50%;background:transparent;border:0;color:var(--p3-dim);font:700 11px/1 ui-monospace,monospace;padding:0}
+    .tac-menu.is-float{position:absolute;width:min(210px,58vw);grid-template-columns:minmax(0,1fr);z-index:6;gap:3px;padding:5px;background:rgba(8,14,19,.9)}
+    .tac-menu.is-float .tm-head{font-size:11px}
+    .tac-menu.is-float .tm-btn small{display:none}
+    .tac-menu.is-float .tm-btn--ghost{min-height:40px}
+    .tac-menu.is-float .tm-btn{flex-direction:row;justify-content:space-between;align-items:center}
+    .p3-dock{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:8px;border:1px solid var(--p3-line);border-radius:var(--p3-r);background:rgba(8,14,19,.88)}
+    .dock-unit{display:flex;align-items:center;gap:10px;min-width:0;font-weight:700}
+    .dock-token{width:44px;height:44px;flex:none;border-radius:12px;display:grid;place-items:center;font:800 20px/1 system-ui,sans-serif;background:radial-gradient(circle at 35% 30%,#2b3d49,#0d151b);box-shadow:inset 0 0 0 2px var(--p3-cyan)}
+    .dock-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .dock-ap{justify-self:end;padding:6px 12px;border-radius:999px;border:1px solid var(--p3-cyan);color:var(--p3-cyan);font:800 15px/1 system-ui,sans-serif}
+    .dock-tools{display:flex;gap:6px}
+    .p3-dock .tbtn--end{min-height:52px;font-size:18px;color:#fff;border:0;background:linear-gradient(180deg,#d8323e,#9c1621);box-shadow:0 8px 20px -8px rgba(216,50,62,.7)}
+    .tbtn--view{font-size:14px}
+
   </style>
 </head>
 <body>
   <main class="tac">
     <h1>PRIM3 tactical preview</h1>
-    <header class="tac-hud" aria-label="Status">
-      <span class="hud-unit" id="hudUnit"></span>
-      <span class="hud-btns"><button type="button" class="tbtn tbtn--zoom" id="zoomOut" aria-label="Zoom out">−</button><button type="button" class="tbtn tbtn--zoom" id="zoomIn" aria-label="Zoom in">+</button><button type="button" class="tbtn tbtn--end" id="tacEnd">End turn</button></span>
-      <span class="hud-meta"><span id="hudRound"></span><b id="hudObj"></b><span>Tap a squad member to act</span></span>
+    <header class="p3-top" aria-label="Turn">
+      <img class="p3-mark" src="assets/img/prim3-logo.png" alt="PRIM3" width="44" height="44">
+      <span class="p3-turn"><b id="hudRound"></b><span id="hudPhase"></span></span>
     </header>
+    <p class="p3-obj"><i aria-hidden="true">◇</i><span id="hudObj"></span></p>
     <section class="tac-stage" aria-label="Battlefield">
       <div class="tac-viewport" id="tacViewport">
+        <div class="tac-3d" id="tac3d"></div>
         <div class="tac-board" id="tacBoard" role="grid" aria-label="Square battlefield, 10 by 10; x is the column, y is the row"></div>
       </div>
       <div class="tac-menu" id="tacMenu" role="menu" hidden></div>
     </section>
-    <div class="tac-side">
-      <section class="tac-sheet" id="tacSheet" aria-live="polite" hidden></section>
-      <details class="tac-about">
-        <summary>How this works</summary>
-        <p>Tap a squad member on the board for their actions. Move and Dash light up where they can go; tap a tile to preview the path, then Confirm. Nothing is spent until you confirm.</p>
-        <p><b>Get hint</b> is optional: answer a short problem from that member's field (E math, R science, T IT) and the board shows a suggested tile and why. It never moves anyone. Normal play never needs it.</p>
-        <p>x is the column (0 at the left), y is the row (0 at the top). Grey bars are cover on that side of the tile; dark blocks are walls; the diamond is the objective. Pinch or use + / − to zoom; drag to pan when zoomed.</p>
-        <p>Progress is saved in this browser. <button type="button" class="ts-btn" id="tacReset">Start over</button></p>
-      </details>
-    </div>
+    <section class="tac-sheet" id="tacSheet" aria-live="polite" hidden></section>
+    <footer class="p3-dock" aria-label="Selected operative">
+      <span class="dock-unit" id="hudUnit"></span>
+      <span class="dock-ap" id="hudAp"></span>
+      <span class="dock-tools"><button type="button" class="tbtn tbtn--zoom" id="zoomOut" aria-label="Zoom out">−</button><button type="button" class="tbtn tbtn--zoom" id="zoomIn" aria-label="Zoom in">+</button><button type="button" class="tbtn tbtn--view" id="tacView" aria-pressed="false">2D grid</button></span>
+      <button type="button" class="tbtn tbtn--end" id="tacEnd">End turn</button>
+    </footer>
+    <details class="tac-about">
+      <summary>How this works</summary>
+      <p>Tap an operative for their actions. Move and Dash light up where they can go; tap a tile to preview the path, then Confirm. Nothing is spent until you confirm.</p>
+      <p><b>Get hint</b> is optional: answer a short problem from that operative's field (E math, R science, T IT) and the board shows a suggested tile and why. It never moves anyone. Normal play never needs it.</p>
+      <p>x is the column (0 at the left), y is the row (0 at the back). Slabs are cover on that side of the tile; brick pillars are walls; the glowing marker is the relay. Pinch or use + / − to zoom; drag to pan. <b>2D grid</b> shows the same board as labelled tiles.</p>
+      <p>Progress is saved in this browser. <button type="button" class="ts-btn" id="tacReset">Start over</button></p>
+    </details>
   </main>
+  <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js"}}</script>
   <script type="module" src="js/prim3-tactics/preview.mjs"></script>
   <script src="js/tabbar.js?v=__STAMP__"></script>
 </body>

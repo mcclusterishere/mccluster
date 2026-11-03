@@ -19,6 +19,24 @@ const BIND = { tenantId: 'preview', playerId: 'you', missionId: 'TR02-PREVIEW' }
 const SAVE_KEY = 'prim3.tactics.preview.v1:' + BIND.tenantId + ':' + BIND.playerId + ':' + BIND.missionId;
 const W = 10, H = 10;
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const ROLE_NAME = { E: 'Entry', R: 'Recon', T: 'Technical' };
+const MISSION = 'Secure the relay';
+// 3D by default where WebGL exists; ?view=2d (or the toggle) shows the flat grid, which is also the
+// accessible view: every tile is a labelled button.
+let mode3d = new URLSearchParams(location.search).get('view') !== '2d';
+let board3d = null, loading3d = null;
+function webglAvailable() {
+  try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; }
+}
+// three.js is loaded only when the 3D view is used; if it cannot load (offline, blocked CDN) the
+// game falls back to the 2D grid, which plays exactly the same.
+function ensure3d() {
+  if (board3d || loading3d) return;
+  loading3d = import('./board3d.mjs').then((mod) => {
+    board3d = mod.createBoard3D($('tac3d'), { width: W, height: H, reducedMotion: REDUCED, onTap: (x, y) => onBoardTap(x, y) });
+    loading3d = null; render(); syncZoom3d();
+  }).catch(() => { loading3d = null; mode3d = false; ui.toast = 'The 3D view could not load here, so the board is shown as a 2D grid.'; render(); });
+}
 
 function fresh() {
   return beginPlayerPhase(createState({
@@ -132,11 +150,42 @@ function render() {
   }
   board.innerHTML = html;
   applyZoom();
-  // HUD
-  $('hudUnit').innerHTML = sel ? `<b>${sel.id}</b> · <span class="hud-ap">${'●'.repeat(sel.ap)}${'○'.repeat(Math.max(0, sel.maxAp - sel.ap))}</span> ${sel.ap} AP` : 'Tap a squad member';
+  // 3D view: same model, drawn in the courtyard
+  $('tacViewport').classList.toggle('is-3d', mode3d && !!board3d);
+  if (mode3d && !webglAvailable()) mode3d = false;
+  if (mode3d && !board3d) ensure3d();
+  if (mode3d && board3d) {
+    const m = { units: p.units, blockers: p.blockers, cover: p.cover, objectiveTiles: p.objectiveTiles, selected: ui.selected, labels: [] };
+    if (reachInfo) { m.reach = []; for (let y = 0; y < H; y += 1) for (let x = 0; x < W; x += 1) { const st = reachInfo.dist.get(reachInfo.key(x, y)); if (st !== undefined && st > 0) m.reach.push({ x, y }); } }
+    if (ui.preview && ui.preview.kind === 'move') { m.path = ui.preview.path.slice(0, -1); m.dest = { x: ui.preview.x, y: ui.preview.y }; m.pathLine = [{ x: sel.x, y: sel.y }, ...ui.preview.path]; }
+    if (ui.suggestion) m.hint = { x: ui.suggestion.x, y: ui.suggestion.y };
+    if (geo) {
+      m.origin = geo.origin; m.target = geo.target;
+      m.runs = [...runs.entries()].filter(([k]) => k.split(':').length === 2).map(([k, a]) => { const [x, y] = k.split(':').map(Number); return { x, y, axis: a }; });
+      m.labels.push({ x: geo.origin.x, y: geo.origin.y, h: 0, kind: 'origin', text: `Origin (${geo.origin.x}, ${geo.origin.y})` });
+      m.labels.push({ x: geo.target.x, y: geo.target.y, h: 0, kind: 'target', text: `Target (${geo.target.x}, ${geo.target.y})` });
+      for (const [k, v] of runs) { const parts = k.split(':'); if (parts.length === 3) m.labels.push({ x: +parts[0], y: +parts[1], h: 0.1, kind: 'step', text: v }); }
+    }
+    for (const u of p.units) if (!u.dead) m.labels.push({ x: u.x, y: u.y, h: 1.85, kind: u.faction === 'PLAYER' ? 'ally' : 'hostile', text: u.faction === 'PLAYER' ? u.role : esc(u.id) });
+    for (const t of p.objectiveTiles) m.labels.push({ x: t.x, y: t.y, h: 1.75, kind: 'obj', text: `Relay (${t.x}, ${t.y})` });
+    if (ui.preview && ui.preview.kind === 'move') {
+      const cv = p.cover.find((c) => c.x === ui.preview.x && c.y === ui.preview.y);
+      if (cv) m.labels.push({ x: ui.preview.x + 0.9, y: ui.preview.y, h: 0.3, kind: 'cover', text: `${cv.type === 'HIGH' ? 'High' : 'Low'} cover` });
+    }
+    for (let x = 0; x < W; x += 1) m.labels.push({ x, y: -0.95, h: 0, kind: 'axis', text: String(x) });
+    for (let y = 0; y < H; y += 1) m.labels.push({ x: -0.95, y, h: 0, kind: 'axis', text: String(y) });
+    m.labels.push({ x: -0.95, y: -0.95, h: 0, kind: 'axis', text: 'y\\x' });
+    board3d.update(m);
+  }
+  // HUD: turn + objective on top, the selected unit in the dock
   const obj = p.objectiveTiles[0];
-  $('hudObj').textContent = obj ? `Objective ◇ (${obj.x}, ${obj.y})` : 'No objective known';
-  $('hudRound').textContent = `Round ${state.round}`;
+  $('hudRound').textContent = `Turn ${String(state.round).padStart(2, '0')}`;
+  $('hudPhase').textContent = state.phase === 'PLAYER' ? 'Your move' : state.phase;
+  $('hudObj').textContent = obj ? `${MISSION} · (${obj.x}, ${obj.y})` : MISSION;
+  $('hudUnit').innerHTML = sel ? `<span class="dock-token tb-role-${sel.role}">${sel.role}</span><span class="dock-name">${sel.role} · ${ROLE_NAME[sel.role] || ''}</span>` : 'Tap a squad member';
+  $('hudAp').textContent = sel ? `${sel.ap} AP` : '';
+  $('tacView').textContent = mode3d ? '2D grid' : '3D view';
+  $('tacView').setAttribute('aria-pressed', String(!mode3d));
   renderMenu(); renderSheet();
 }
 
@@ -160,10 +209,24 @@ function renderMenu() {
   const menu = $('tacMenu'), sel = unitOf(ui.selected);
   if (!ui.menu || !sel) { menu.hidden = true; return; }
   const acts = legalActions(sel);
-  menu.innerHTML = `<p class="tm-head">${sel.id} · Field ${sel.role} at (${sel.x}, ${sel.y}) · ${sel.ap} AP</p>` +
-    acts.map((a) => `<button type="button" class="tm-btn" data-act="${a.id}">${esc(a.label)}${a.sub ? `<small>${esc(a.sub)}</small>` : ''}</button>`).join('') +
-    `<button type="button" class="tm-btn tm-btn--ghost" data-act="close">Close</button>`;
-  menu.hidden = false; // docked under the board so it never covers a tile
+  // floating 3D menu: Move / Fire / Inspect / Get hint first, the rest under More; the docked 2D menu shows all
+  const floating = mode3d && !!board3d;
+  const primary = floating ? acts.filter((a) => a.id === 'move' || a.id.startsWith('fire:') || a.id === 'inspect' || a.id === 'hint') : acts;
+  const more = acts.filter((a) => !primary.includes(a));
+  const btn = (a) => `<button type="button" class="tm-btn" data-act="${a.id}"><span>${esc(a.label)}</span>${a.sub ? `<small>${esc(a.sub)}</small>` : ''}</button>`;
+  menu.innerHTML = `<p class="tm-head">${sel.id} · ${ROLE_NAME[sel.role] || ''} · ${sel.ap} AP</p>` + primary.map(btn).join('') +
+    (more.length ? (ui.more ? more.map(btn).join('') : `<button type="button" class="tm-btn tm-btn--ghost" data-act="more"><span>More</span><small>${more.map((a) => a.label).join(' · ')}</small></button>`) : '') +
+    `<button type="button" class="tm-btn tm-btn--ghost" data-act="close"><span>Close</span></button>`;
+  menu.hidden = false;
+  if (!mode3d || !board3d) { menu.classList.remove('is-float'); menu.style.left = menu.style.top = ''; return; }
+  // 3D: float beside the operative, kept inside the board
+  menu.classList.add('is-float');
+  const vp = $('tacViewport').getBoundingClientRect(), pt = board3d.screenOf(sel.x, sel.y, 1.0);
+  const mw = menu.offsetWidth, mh = menu.offsetHeight;
+  let left = pt.x - vp.left + 28; if (left + mw > vp.width - 6) left = pt.x - vp.left - mw - 28;
+  left = Math.max(6, Math.min(vp.width - mw - 6, left));
+  const top = Math.max(6, Math.min(vp.height - mh - 6, pt.y - vp.top - mh / 2));
+  menu.style.left = left + 'px'; menu.style.top = top + 'px';
 }
 
 function renderSheet() {
@@ -172,8 +235,9 @@ function renderSheet() {
   let html = '';
   if (ui.preview && ui.preview.kind === 'move') {
     const pv = ui.preview;
+    const cv = view().cover.find((c) => c.x === pv.x && c.y === pv.y);
     html = `<p class="ts-eye">${pv.dash ? 'Dash' : 'Move'} preview</p>
-      <p class="ts-main">${sel.id} → <b>(${pv.x}, ${pv.y})</b> · ${pv.steps} step${pv.steps === 1 ? '' : 's'} · ${pv.dash ? 2 : 1} AP</p>
+      <p class="ts-main">(${sel.x}, ${sel.y}) → <b>(${pv.x}, ${pv.y})</b> · ${pv.steps} step${pv.steps === 1 ? '' : 's'} · ${pv.dash ? 2 : 1} AP${cv ? ' · ' + (cv.type === 'HIGH' ? 'High' : 'Low') + ' cover' : ''} · ${Math.max(0, sel.ap - (pv.dash ? 2 : 1))} AP left</p>
       <p class="ts-sub">${pv.exposure.length ? 'Known hostiles with a shot there: ' + pv.exposure.map((e) => `${e.id} ${e.hit}%${e.cover !== 'NONE' ? ' (your ' + e.cover.toLowerCase() + ' cover)' : ''}`).join(', ') : 'No known hostile has a shot there.'}</p>
       <div class="ts-row"><button type="button" class="ts-btn ts-btn--go" data-sheet="confirm-move">Confirm ${pv.dash ? 'dash' : 'move'}</button><button type="button" class="ts-btn" data-sheet="back">Back</button></div>
       <button type="button" class="ts-link" data-sheet="practice">Optional: how far is that? (practice)</button>`;
@@ -190,7 +254,8 @@ function renderSheet() {
       <form class="ts-form" id="tacForm"><label for="tacAns">Your answer</label><input id="tacAns" inputmode="decimal" autocomplete="off" maxlength="32" value="${esc(h.draft || '')}">
       <button type="submit" class="ts-btn ts-btn--go">Check</button></form>
       <p class="ts-sub" id="tacStep" role="status">${h.msg || ''}</p>
-      <div class="ts-row">${h.geometry ? `<button type="button" class="ts-btn" data-sheet="trace">Trace</button>` : ''}${h.canReveal ? '<button type="button" class="ts-btn" data-sheet="reveal">Show worked answer</button>' : ''}<button type="button" class="ts-btn" data-sheet="close-hint">Close</button></div>`;
+      <div class="ts-row">${h.geometry ? `<button type="button" class="ts-btn" data-sheet="trace">Trace</button>` : ''}${h.canReveal ? '<button type="button" class="ts-btn" data-sheet="reveal">Show worked answer</button>' : ''}</div>
+      <button type="button" class="ts-link" data-sheet="close-hint">Continue playing</button>`;
   } else if (ui.result) {
     html = ui.result;
   } else if (ui.toast) {
@@ -219,8 +284,9 @@ function onBoardTap(x, y) {
 
 function onMenu(act) {
   const sel = unitOf(ui.selected);
-  ui.menu = false; ui.result = ''; ui.toast = '';
-  if (act === 'close') { render(); return; }
+  ui.menu = false; ui.more = false; ui.result = ''; ui.toast = '';
+  if (act === 'close') { ui.more = false; render(); return; }
+  if (act === 'more') { ui.more = true; ui.menu = true; render(); return; }
   if (act === 'move' || act === 'dash') { ui.mode = act; ui.preview = null; ui.toast = `Tap a lit tile to preview the ${act}. Tap ${sel.id} again to cancel.`; render(); return; }
   if (act.startsWith('fire:')) {
     const id = act.slice(5), pv = shotPreview(state, sel.id, id);
@@ -267,7 +333,7 @@ function startHint(target) {
   try {
     const r = openHint(BIND, state, ui.selected, target ? { target } : {});
     ui.session = r.session; ui.suggestion = null;
-    ui.hint = { unitId: ui.selected, field: r.response.field, prompt: r.response.prompt, geometry: r.response.geometry, stage: 0, msg: '', canReveal: false, keepPreview: !!target };
+    ui.more = false; ui.hint = { unitId: ui.selected, field: r.response.field, prompt: r.response.prompt, geometry: r.response.geometry, stage: 0, msg: '', canReveal: false, keepPreview: !!target };
     // the sheet shows the challenge; leave move mode so the board shows only the math (origin, target, runs)
     ui.preview = null; ui.mode = null; ui.menu = false;
     render();
@@ -311,6 +377,7 @@ function endTurn() {
 
 /* ---------- zoom & pan ---------- */
 function applyZoom() {
+  if (mode3d && board3d) return;
   const b = $('tacBoard'), vp = $('tacViewport');
   const max = (zoom.s - 1) * vp.clientWidth;
   zoom.tx = Math.min(0, Math.max(-max, zoom.tx)); zoom.ty = Math.min(0, Math.max(-max, zoom.ty));
@@ -328,6 +395,7 @@ const pointers = new Map(); let pinch0 = null, pan0 = null, moved = false;
 function bindGestures() {
   const vp = $('tacViewport');
   vp.addEventListener('pointerdown', (e) => {
+    if (mode3d && board3d) return;
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY }); moved = false;
     if (pointers.size === 2) { const [a, b] = [...pointers.values()]; pinch0 = { d: Math.hypot(a.x - b.x, a.y - b.y), s: zoom.s, cx: (a.x + b.x) / 2, cy: (a.y + b.y) / 2 }; }
     else pan0 = { x: e.clientX, y: e.clientY, tx: zoom.tx, ty: zoom.ty };
@@ -341,6 +409,7 @@ function bindGestures() {
   const end = (e) => { pointers.delete(e.pointerId); if (pointers.size < 2) pinch0 = null; if (!pointers.size) pan0 = null; };
   vp.addEventListener('pointerup', end); vp.addEventListener('pointercancel', end);
   vp.addEventListener('click', (e) => {
+    if (mode3d && board3d) return; // the 3D canvas reports its own taps
     if (moved) { moved = false; return; } // a pan or pinch is never a tap
     const c = e.target.closest('.tb-cell'); if (!c || !$('tacBoard').contains(c)) return;
     onBoardTap(Number(c.dataset.x), Number(c.dataset.y));
@@ -351,11 +420,13 @@ function bindGestures() {
 $('tacMenu').addEventListener('click', (e) => { const b = e.target.closest('[data-act]'); if (b) onMenu(b.dataset.act); });
 $('tacSheet').addEventListener('click', (e) => { const b = e.target.closest('[data-sheet]'); if (b) onSheet(b.dataset.sheet); });
 $('tacEnd').addEventListener('click', endTurn);
-$('tacReset').addEventListener('click', () => { clearSave(); state = fresh(); ui = { selected: 'E1', menu: false, mode: null, preview: null, hint: null, session: null, suggestion: null, toast: 'New mission.' }; zoom = { s: 1, tx: 0, ty: 0 }; render(); });
-$('zoomIn').addEventListener('click', () => setZoom(zoom.s + 0.5));
-$('zoomOut').addEventListener('click', () => setZoom(zoom.s - 0.5));
+$('tacReset').addEventListener('click', () => { clearSave(); state = fresh(); ui = { selected: 'E1', menu: false, mode: null, preview: null, hint: null, session: null, suggestion: null, toast: 'New mission.' }; zoom = { s: 1, tx: 0, ty: 0 }; if (board3d) board3d.resetView(); render(); });
+$('zoomIn').addEventListener('click', () => { if (mode3d && board3d) { board3d.zoom(1); syncZoom3d(); } else setZoom(zoom.s + 0.5); });
+$('zoomOut').addEventListener('click', () => { if (mode3d && board3d) { board3d.zoom(-1); syncZoom3d(); } else setZoom(zoom.s - 0.5); });
+function syncZoom3d() { if (!board3d) return; const z = board3d.canZoom(); $('zoomIn').disabled = !z.in; $('zoomOut').disabled = !z.out; renderMenu(); }
+$('tacView').addEventListener('click', () => { mode3d = !mode3d; ui.menu = false; render(); if (mode3d) syncZoom3d(); else applyZoom(); });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { if (ui.preview) ui.preview = null; else if (ui.mode) ui.mode = null; else ui.menu = false; render(); } });
 if (REDUCED) document.documentElement.classList.add('reduce-motion');
 bindGestures();
 render();
-window.__tac = { get state() { return state; }, get session() { return ui.session; }, get ui() { return ui; }, SAVE_KEY };
+window.__tac = { get state() { return state; }, get session() { return ui.session; }, get ui() { return ui; }, SAVE_KEY, get mode3d() { return mode3d && !!board3d; }, get loading3d() { return !!loading3d; }, screenOf: (x, y, h) => board3d && board3d.screenOf(x, y, h), zoomLevel: () => board3d && board3d.zoomLevel() };
