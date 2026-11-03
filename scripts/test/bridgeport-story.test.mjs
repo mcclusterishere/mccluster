@@ -20,7 +20,7 @@ test('Bridgeport extends the original city with actual sourced footprints and a 
   assert.ok(area.bounds.maxZ <= city.district.bounds.minZ);
   assert.equal(new Set(cityPlaces(city).map(p => p.id)).size, cityPlaces(city).length);
   const roads = new Set(area.roads.map(r => r.name));
-  for (const name of ['Main Street', 'Middle Street', 'Fairfield Avenue', 'Golden Hill Street', 'Elm Street']) assert.ok(roads.has(name), name);
+  for (const name of ['Main Street', 'Middle Street', 'Fairfield Avenue', 'Golden Hill Street', 'Broad Street', 'Elm Street']) assert.ok(roads.has(name), name);
   assert.equal(arc.series, 'Designer Kicks'); assert.equal(arc.title, 'The Robbery 1s');
   assert.deepEqual([...new Set(arc.beats.map(b => b.act))], [1, 2, 3, 4, 5, 6, 7]);
   assert.equal(arc.beats.length, 13);
@@ -110,4 +110,40 @@ test('malformed extension IDs, geometry and story references fail validation', (
     c => { c.storyArcs[0].beats[0].placeId = 'missing'; },
     c => { c.storyArcs[0].beats[1].id = c.storyArcs[0].beats[0].id; }
   ]) { const broken = structuredClone(city); change(broken); assert.throws(() => validateCityExtensions(broken)); }
+});
+
+test('government identities stay intact and the story crew uses its owner-selected nearby street name', async () => {
+  const evidence = JSON.parse(await readFile(new URL('../../docs/fictional-city/geography/bridgeport-government-classification.json', import.meta.url), 'utf8'));
+  const protectedPlaces = area.places.filter(p => p.publicIdentity?.kind === 'government');
+  assert.equal(protectedPlaces.length, 2);
+  assert.deepEqual(protectedPlaces.map(p => p.sourceFootprintId).sort((a, b) => a - b), [279819, 283267]);
+  for (const place of protectedPlaces) {
+    assert.equal(place.name, place.publicIdentity.officialName);
+    assert.equal(place.publicIdentity.publicFunction, 'Superior Court');
+    assert.equal(place.enterable, false);
+    assert.equal(place.storyArcId, undefined);
+    assert.equal(arc.beats.some(b => b.placeId === place.id), false);
+    assert.equal(evidence.records.find(r => r.sourceFootprintId === place.sourceFootprintId).ownershipClassification, 'government');
+    const renamed = structuredClone(city);
+    renamed.neighborhoods[0].places.find(p => p.id === place.id).name = 'Invented Shop';
+    assert.throws(() => validateCityExtensions(renamed), /government identity/);
+    const unprotected = structuredClone(city);
+    delete unprotected.neighborhoods[0].places.find(p => p.id === place.id).publicIdentity;
+    assert.throws(() => validateCityExtensions(unprotected), /government identity/);
+  }
+  const works = area.places.find(p => p.id === 'bridgeport-ashline-works');
+  assert.equal(works.sourceFootprintId, 250867);
+  assert.deepEqual(arc.beats[0].position, works.entrance);
+  for (const place of area.places) {
+    const record = place.footprint && evidence.records.find(r => r.sourceFootprintId === place.sourceFootprintId);
+    if (record) assert.equal(place.sourceParcel.parcelId, record.parcelId);
+    if (place.storyArcId) assert.ok(place.sourceParcel.ownershipClassification.startsWith('private'), place.id);
+  }
+  const faction = arc.factions.find(f => f.id === 'elm-street-willy-whackers');
+  assert.equal(faction.name, 'Elm Street Willy Whackers');
+  assert.equal(faction.streetName, 'Elm Street');
+  assert.equal(faction.basePlaceId, 'bridgeport-night-shift-club');
+  assert.ok(area.roads.some(r => r.name === faction.streetName));
+  for (const id of faction.associatedCastIds) assert.ok(arc.cast.some(p => p.id === id), id);
+  assert.ok(arc.beats.find(b => b.id === 'robbery-1s-promotion').paragraphs.some(p => p.includes(faction.name)));
 });

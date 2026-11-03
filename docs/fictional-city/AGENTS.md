@@ -68,3 +68,15 @@ Validate old-save migration, ordered scene progression, all story-stop walking r
 parity with public source evidence, and exterior-only donation-bin custody. Later scene titles
 and cast outcomes must remain hidden until reached. Do not turn narrative completion into a
 shoe power, money payout, new canonical wearer, or explanation of the pastor's unresolved reveal.
+
+## Real geography and government identity — owner correction, 2026-11-03
+
+- Preserve real city names, street names, official geographic names and sourced street layout.
+- Preserve verified government institutions, buildings, addresses and public functions. Do not assign a fictional commercial tenant to a government site.
+- Author non-government businesses, premises and story people. Check both parcel ownership and institutional use before placement; unknown ownership is not private ownership, and private ownership does not rule out a government tenant.
+- Preserve public offices and roles. Whether a named incumbent or a fictional officeholder performs a role remains an undecided casting choice; do not fill it by assumption.
+- The existing story crew is now the **Elm Street Willy Whackers**, based near the authored Night Shift Club. This adds a group name, not new members, events or an alternate ending.
+- `geography/bridgeport-government-classification.json` records the checked parcels and limits. The two courts are protected public landmarks; Ashline and the two yards occupy the corrected private parcels. Keep all 16 original CT footprint rings.
+- Expansion lore remains separate from playable geography. Review invented government proposals such as Municipal High No. 9 and Precinct Zero before spatial binding; their lore IDs do not authorize replacing an actual public institution. Also resolve authored neighborhood labels against actual geographic names.
+- Read `CLAUDE-HANDOFF.md` before integration and `EPISODE-PRODUCTION.md` before cinematic work. The existing city has already been merged through #721; #720's lore uses `expansionNeighborhoods`. Do not build another city from the README.
+- The owner authorized branch publication for review and explicitly withheld main integration in this session. Keep this follow-up on its review branch; a previous merge by another session does not extend that authorization.

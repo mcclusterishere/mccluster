@@ -10267,7 +10267,8 @@
     "expansionSatire": "Owner-directed adult satire. Wiggers Anonymous targets white men who wear a caricature of Black and hip-hop culture as a costume; the School of Hard Knocks targets a rich school and its students who turn other people’s lives into enrichment programming. The joke is always on the posers, the school, the store that sells the costume and the corrupt institutions, never on Black people or public-school students. No slurs beyond the owner-chosen business name, no n-word, no phonetic racial accent or dialect spelling, no real gang names, no real people or real businesses.",
     "expansionMinors": "Students at the School of Hard Knocks and Municipal High No. 9, and listed children in families, are minors and carry minor: true where they are residents. Their comedy is privilege, posturing and their school. No sexual content, no graphic injury, no bribes, purchases or adult transactions involving them.",
     "expansionPolice": "Precinct Zero bribes are a game hook described as interactions of type bribe with a price in City credits. They spend fictional City credits only, record a fictional receipt and line of dialogue, and imply no real policing, legal advice or record change.",
-    "expansionCount": "The owner asked for three suffering Wiggers Anonymous members and then named four jobs; the fellowship has four members, one per job."
+    "expansionCount": "The owner asked for three suffering Wiggers Anonymous members and then named four jobs; the fellowship has four members, one per job.",
+    "realWorldIdentity": "Owner direction, 2026-11-03: preserve real city names, street names, official geographic names and verified government entities, buildings and public functions. Fictionalize non-government premises, businesses and story people. Public-office roles remain real; individual official casting is undecided. Apply this rule before spatially binding expansion lore; invented public-institution proposals do not authorize renaming real institutions."
   },
   "neighborhoods": [
     {
@@ -12185,6 +12186,791 @@
           "name": "Ashline Works",
           "category": "Industrial story location",
           "position": [
+            11.3457,
+            -304.6764
+          ],
+          "size": [
+            42.2451,
+            32.8447,
+            18
+          ],
+          "entrance": [
+            20.874,
+            -292.886
+          ],
+          "color": "#d6d0c5",
+          "style": "industrial",
+          "description": "A boarded industrial shell where Dave wakes into the aftermath of the shoes.",
+          "provenance": "new_city_adaptation_on_verified_private_parcel; fictional industrial tenant, no real business affiliation",
+          "staffIds": [],
+          "itemIds": [],
+          "storyArcId": "robbery-1s",
+          "storyBeatIds": [
+            "robbery-1s-aftermath"
+          ],
+          "entranceWall": [
+            20.048,
+            -295.77
+          ],
+          "entranceNormal": [
+            0.275539,
+            0.96129
+          ],
+          "footprint": [
+            [
+              27.6818,
+              -321.0987
+            ],
+            [
+              32.4682,
+              -304.2723
+            ],
+            [
+              31.4334,
+              -303.9757
+            ],
+            [
+              32.3199,
+              -300.8598
+            ],
+            [
+              30.8713,
+              -300.4446
+            ],
+            [
+              31.2849,
+              -298.9905
+            ],
+            [
+              -6.1722,
+              -288.254
+            ],
+            [
+              -9.7769,
+              -300.9258
+            ],
+            [
+              6.5719,
+              -305.6118
+            ],
+            [
+              6.8673,
+              -304.5732
+            ],
+            [
+              20.5257,
+              -308.4881
+            ],
+            [
+              17.7484,
+              -318.2516
+            ],
+            [
+              27.6818,
+              -321.0987
+            ]
+          ],
+          "footprintHoles": [],
+          "sourceFootprintId": 250867,
+          "sourceGeometry": {
+            "dataset": "CT State GIS Office 2023 Connecticut Buildings",
+            "horizontalFootprint": "Original source ring projected into metres and translated; no reshaping or clipping.",
+            "height": "Authored game height; not supplied by the footprint dataset.",
+            "entrance": "Authored road-facing game doorway; actual entrance location is unknown.",
+            "interior": "Authored game scene; no surveyed interior is claimed."
+          },
+          "enterable": true,
+          "sourceParcel": {
+            "parcelId": "908-20C",
+            "siteAddress": "144 GOLDEN HILL ST",
+            "ownershipClassification": "private_corporate",
+            "evidence": "docs/fictional-city/geography/bridgeport-government-classification.json"
+          }
+        },
+        {
+          "id": "bridgeport-last-light-market",
+          "name": "Last Light Market",
+          "category": "Corner bodega",
+          "position": [
+            25.7787,
+            -274.5248
+          ],
+          "size": [
+            28.238,
+            23.0378,
+            12
+          ],
+          "entrance": [
+            27.655,
+            -286.551
+          ],
+          "color": "#e3dac7",
+          "style": "market",
+          "description": "The corner counter where an ordinary errand becomes Malik’s first encounter with the shoes’ reputation.",
+          "provenance": "new_city_adaptation; fictional name, no real business affiliation",
+          "staffIds": [],
+          "itemIds": [],
+          "storyArcId": "robbery-1s",
+          "storyBeatIds": [
+            "robbery-1s-donation-bin",
+            "robbery-1s-bodega"
+          ],
+          "entranceWall": [
+            28.579,
+            -283.697
+          ],
+          "entranceNormal": [
+            -0.307913,
+            -0.951415
+          ],
+          "footprint": [
+            [
+              39.8977,
+              -270.5632
+            ],
+            [
+              16.5467,
+              -263.0059
+            ],
+            [
+              11.6597,
+              -278.2213
+            ],
+            [
+              35.83,
+              -286.0437
+            ],
+            [
+              38.1415,
+              -278.8473
+            ],
+            [
+              37.3221,
+              -278.5821
+            ],
+            [
+              39.8977,
+              -270.5632
+            ]
+          ],
+          "footprintHoles": [],
+          "sourceFootprintId": 250870,
+          "sourceGeometry": {
+            "dataset": "CT State GIS Office 2023 Connecticut Buildings",
+            "horizontalFootprint": "Original source ring projected into metres and translated; no reshaping or clipping.",
+            "height": "Authored game height; not supplied by the footprint dataset.",
+            "entrance": "Authored road-facing game doorway; actual entrance location is unknown.",
+            "interior": "Authored game scene; no surveyed interior is claimed."
+          },
+          "enterable": true,
+          "sourceParcel": {
+            "parcelId": "915-9B",
+            "siteAddress": "1163 MAIN ST",
+            "ownershipClassification": "private_corporate",
+            "evidence": "docs/fictional-city/geography/bridgeport-government-classification.json"
+          }
+        },
+        {
+          "id": "bridgeport-northline-walkups",
+          "name": "Northline Walkups",
+          "category": "Apartments and stairwell",
+          "position": [
+            -102.0846,
+            -198.447
+          ],
+          "size": [
+            33.0181,
+            23.5911,
+            15
+          ],
+          "entrance": [
+            -98.227,
+            -186.997
+          ],
+          "color": "#c6b5a6",
+          "style": "walkup",
+          "description": "Family rooms above the street, a shared hallway, and a concrete stairwell facing the block.",
+          "provenance": "new_city_adaptation; fictional name, no real business affiliation",
+          "staffIds": [],
+          "itemIds": [],
+          "storyArcId": "robbery-1s",
+          "storyBeatIds": [
+            "robbery-1s-family",
+            "robbery-1s-stairwell",
+            "robbery-1s-hallway"
+          ],
+          "entranceWall": [
+            -99.577,
+            -189.676
+          ],
+          "entranceNormal": [
+            0.450061,
+            0.892998
+          ],
+          "footprint": [
+            [
+              -95.2224,
+              -210.2425
+            ],
+            [
+              -93.2911,
+              -206.3811
+            ],
+            [
+              -90.9832,
+              -207.5444
+            ],
+            [
+              -85.5756,
+              -196.7325
+            ],
+            [
+              -105.5782,
+              -186.6514
+            ],
+            [
+              -108.282,
+              -192.0573
+            ],
+            [
+              -113.2827,
+              -189.537
+            ],
+            [
+              -118.5937,
+              -200.1558
+            ],
+            [
+              -115.3241,
+              -201.8036
+            ],
+            [
+              -115.0344,
+              -201.2245
+            ],
+            [
+              -111.7647,
+              -202.8723
+            ],
+            [
+              -111.3785,
+              -202.1
+            ],
+            [
+              -95.2224,
+              -210.2425
+            ]
+          ],
+          "footprintHoles": [],
+          "sourceFootprintId": 264675,
+          "sourceGeometry": {
+            "dataset": "CT State GIS Office 2023 Connecticut Buildings",
+            "horizontalFootprint": "Original source ring projected into metres and translated; no reshaping or clipping.",
+            "height": "Authored game height; not supplied by the footprint dataset.",
+            "entrance": "Authored road-facing game doorway; actual entrance location is unknown.",
+            "interior": "Authored game scene; no surveyed interior is claimed."
+          },
+          "enterable": true,
+          "sourceParcel": {
+            "parcelId": "915-2",
+            "siteAddress": "1208 BROAD ST",
+            "ownershipClassification": "private_corporate",
+            "evidence": "docs/fictional-city/geography/bridgeport-government-classification.json"
+          }
+        },
+        {
+          "id": "bridgeport-second-spin-laundry",
+          "name": "Second Spin Laundry",
+          "category": "Laundromat",
+          "position": [
+            -121.3103,
+            -220.6275
+          ],
+          "size": [
+            14.5247,
+            15.0224,
+            8
+          ],
+          "entrance": [
+            -121.885,
+            -229.982
+          ],
+          "color": "#cad8d5",
+          "style": "laundromat",
+          "description": "A neighborhood laundry with a low backroom beneath the sound of the dryers.",
+          "provenance": "new_city_adaptation; fictional name, no real business affiliation",
+          "staffIds": [],
+          "itemIds": [],
+          "storyArcId": "robbery-1s",
+          "storyBeatIds": [
+            "robbery-1s-laundry"
+          ],
+          "entranceWall": [
+            -120.839,
+            -227.17
+          ],
+          "entranceNormal": [
+            -0.348632,
+            -0.93726
+          ],
+          "footprint": [
+            [
+              -118.2356,
+              -228.1387
+            ],
+            [
+              -114.048,
+              -216.7944
+            ],
+            [
+              -123.9365,
+              -213.1163
+            ],
+            [
+              -128.5727,
+              -225.676
+            ],
+            [
+              -127.3619,
+              -226.1264
+            ],
+            [
+              -126.9132,
+              -224.9109
+            ],
+            [
+              -118.2356,
+              -228.1387
+            ]
+          ],
+          "footprintHoles": [],
+          "sourceFootprintId": 264674,
+          "sourceGeometry": {
+            "dataset": "CT State GIS Office 2023 Connecticut Buildings",
+            "horizontalFootprint": "Original source ring projected into metres and translated; no reshaping or clipping.",
+            "height": "Authored game height; not supplied by the footprint dataset.",
+            "entrance": "Authored road-facing game doorway; actual entrance location is unknown.",
+            "interior": "Authored game scene; no surveyed interior is claimed."
+          },
+          "enterable": true,
+          "sourceParcel": {
+            "parcelId": "915-1",
+            "siteAddress": "239 GOLDEN HILL ST",
+            "ownershipClassification": "private_individual",
+            "evidence": "docs/fictional-city/geography/bridgeport-government-classification.json"
+          }
+        },
+        {
+          "id": "bridgeport-common-yard",
+          "name": "Common Yard",
+          "category": "Alley and gathering yard",
+          "position": [
+            6,
+            -340
+          ],
+          "size": [
+            14,
+            10,
+            1
+          ],
+          "entrance": [
+            1,
+            -337
+          ],
+          "color": "#c9c4b5",
+          "style": "yard",
+          "description": "A back-lot gathering place for the Block Olympics, the dice circle, and the story’s changing neighborhood audience.",
+          "provenance": "new_city_adaptation; fictional name, no real business affiliation",
+          "staffIds": [],
+          "itemIds": [],
+          "storyArcId": "robbery-1s",
+          "storyBeatIds": [
+            "robbery-1s-block-olympics"
+          ],
+          "enterable": false,
+          "sourceGeometry": {
+            "horizontalFootprint": "Authored open gathering space checked clear of all retained building polygons and mapped road widths.",
+            "structures": "Open yard only; no building footprint is removed or replaced."
+          },
+          "sourceParcel": {
+            "parcelId": "908-20C",
+            "siteAddress": "144 GOLDEN HILL ST",
+            "ownershipClassification": "private_corporate",
+            "evidence": "docs/fictional-city/geography/bridgeport-government-classification.json"
+          }
+        },
+        {
+          "id": "bridgeport-night-shift-club",
+          "name": "Night Shift Club",
+          "category": "Story headquarters",
+          "position": [
+            -6.919,
+            -242.9188
+          ],
+          "size": [
+            36.5562,
+            30.9226,
+            14
+          ],
+          "entrance": [
+            3.559,
+            -233.872
+          ],
+          "color": "#bac2c8",
+          "style": "club",
+          "description": "The Elm Street Willy Whackers run their absurdly corporate backroom office behind this modest club front.",
+          "provenance": "new_city_adaptation; fictional name, no real business affiliation",
+          "staffIds": [],
+          "itemIds": [],
+          "storyArcId": "robbery-1s",
+          "storyBeatIds": [
+            "robbery-1s-promotion",
+            "robbery-1s-positions"
+          ],
+          "entranceWall": [
+            2.359,
+            -236.621
+          ],
+          "entranceNormal": [
+            0.399948,
+            0.916538
+          ],
+          "footprint": [
+            [
+              3.6371,
+              -258.3801
+            ],
+            [
+              11.3591,
+              -240.5488
+            ],
+            [
+              -18.6415,
+              -227.4575
+            ],
+            [
+              -19.4994,
+              -229.4388
+            ],
+            [
+              -23.0521,
+              -227.8885
+            ],
+            [
+              -25.1971,
+              -232.8416
+            ],
+            [
+              -21.6444,
+              -234.3919
+            ],
+            [
+              -22.5025,
+              -236.3731
+            ],
+            [
+              -21.9103,
+              -236.6316
+            ],
+            [
+              -23.4547,
+              -240.1978
+            ],
+            [
+              -11.6124,
+              -245.3654
+            ],
+            [
+              -10.7544,
+              -243.3841
+            ],
+            [
+              -7.2017,
+              -244.9344
+            ],
+            [
+              -7.8881,
+              -246.5195
+            ],
+            [
+              -4.9275,
+              -247.8113
+            ],
+            [
+              -7.4157,
+              -253.557
+            ],
+            [
+              3.6371,
+              -258.3801
+            ]
+          ],
+          "footprintHoles": [],
+          "sourceFootprintId": 283266,
+          "sourceGeometry": {
+            "dataset": "CT State GIS Office 2023 Connecticut Buildings",
+            "horizontalFootprint": "Original source ring projected into metres and translated; no reshaping or clipping.",
+            "height": "Authored game height; not supplied by the footprint dataset.",
+            "entrance": "Authored road-facing game doorway; actual entrance location is unknown.",
+            "interior": "Authored game scene; no surveyed interior is claimed."
+          },
+          "enterable": true,
+          "sourceParcel": {
+            "parcelId": "915-8A",
+            "siteAddress": "30 ELM ST",
+            "ownershipClassification": "private_nonprofit",
+            "evidence": "docs/fictional-city/geography/bridgeport-government-classification.json"
+          }
+        },
+        {
+          "id": "bridgeport-brickline-school",
+          "name": "Brickline School",
+          "category": "School story location",
+          "position": [
+            92.639,
+            -231.6909
+          ],
+          "size": [
+            52.7698,
+            25.0065,
+            14
+          ],
+          "entrance": [
+            64.224,
+            -227.168
+          ],
+          "color": "#d7cebd",
+          "style": "school",
+          "description": "An ordinary school day reveals what Malik’s new reputation costs him.",
+          "provenance": "new_city_adaptation; fictional name, no real business affiliation",
+          "staffIds": [],
+          "itemIds": [],
+          "storyArcId": "robbery-1s",
+          "storyBeatIds": [
+            "robbery-1s-legend-tax"
+          ],
+          "entranceWall": [
+            67.142,
+            -227.864
+          ],
+          "entranceNormal": [
+            -0.972672,
+            0.232182
+          ],
+          "footprint": [
+            [
+              119.0239,
+              -231.1686
+            ],
+            [
+              69.2129,
+              -219.1877
+            ],
+            [
+              66.2541,
+              -231.5829
+            ],
+            [
+              97.6476,
+              -239.134
+            ],
+            [
+              97.4972,
+              -239.7643
+            ],
+            [
+              115.9147,
+              -244.1942
+            ],
+            [
+              119.0239,
+              -231.1686
+            ]
+          ],
+          "footprintHoles": [],
+          "sourceFootprintId": 250913,
+          "sourceGeometry": {
+            "dataset": "CT State GIS Office 2023 Connecticut Buildings",
+            "horizontalFootprint": "Original source ring projected into metres and translated; no reshaping or clipping.",
+            "height": "Authored game height; not supplied by the footprint dataset.",
+            "entrance": "Authored road-facing game doorway; actual entrance location is unknown.",
+            "interior": "Authored game scene; no surveyed interior is claimed."
+          },
+          "enterable": true,
+          "sourceParcel": {
+            "parcelId": "914-6",
+            "siteAddress": "1126 MAIN ST",
+            "ownershipClassification": "private_corporate",
+            "evidence": "docs/fictional-city/geography/bridgeport-government-classification.json"
+          }
+        },
+        {
+          "id": "bridgeport-second-light-chapel",
+          "name": "Second Light Chapel",
+          "category": "Neighborhood church",
+          "position": [
+            -63.4856,
+            -215.7418
+          ],
+          "size": [
+            27.452,
+            24.2331,
+            16
+          ],
+          "entrance": [
+            -57.815,
+            -205.611
+          ],
+          "color": "#e6dfd1",
+          "style": "chapel",
+          "description": "Wooden pews, colored glass, and the altar where the original pair changes hands again.",
+          "provenance": "new_city_adaptation; fictional name, no real business affiliation",
+          "staffIds": [],
+          "itemIds": [],
+          "storyArcId": "robbery-1s",
+          "storyBeatIds": [
+            "robbery-1s-altar"
+          ],
+          "entranceWall": [
+            -59.065,
+            -208.338
+          ],
+          "entranceNormal": [
+            0.416798,
+            0.908999
+          ],
+          "footprint": [
+            [
+              -65.7006,
+              -227.8583
+            ],
+            [
+              -65.0747,
+              -226.4828
+            ],
+            [
+              -62.1383,
+              -227.8293
+            ],
+            [
+              -61.5124,
+              -226.4537
+            ],
+            [
+              -60.9251,
+              -226.723
+            ],
+            [
+              -57.08,
+              -218.2733
+            ],
+            [
+              -51.0115,
+              -221.0558
+            ],
+            [
+              -49.7596,
+              -218.3048
+            ],
+            [
+              -56.024,
+              -215.4325
+            ],
+            [
+              -54.4144,
+              -211.8953
+            ],
+            [
+              -55.1974,
+              -211.5362
+            ],
+            [
+              -54.6609,
+              -210.3572
+            ],
+            [
+              -69.3428,
+              -203.6252
+            ],
+            [
+              -77.2116,
+              -220.9176
+            ],
+            [
+              -76.4287,
+              -221.2767
+            ],
+            [
+              -77.0546,
+              -222.6523
+            ],
+            [
+              -65.7006,
+              -227.8583
+            ]
+          ],
+          "footprintHoles": [],
+          "sourceFootprintId": 279373,
+          "sourceGeometry": {
+            "dataset": "CT State GIS Office 2023 Connecticut Buildings",
+            "horizontalFootprint": "Original source ring projected into metres and translated; no reshaping or clipping.",
+            "height": "Authored game height; not supplied by the footprint dataset.",
+            "entrance": "Authored road-facing game doorway; actual entrance location is unknown.",
+            "interior": "Authored game scene; no surveyed interior is claimed."
+          },
+          "enterable": true,
+          "sourceParcel": {
+            "parcelId": "915-5",
+            "siteAddress": "78 ELM ST #80",
+            "ownershipClassification": "private_corporate",
+            "evidence": "docs/fictional-city/geography/bridgeport-government-classification.json"
+          }
+        },
+        {
+          "id": "bridgeport-railside-yard",
+          "name": "Railside Yard",
+          "category": "Fenced vehicle lot",
+          "position": [
+            17,
+            -255
+          ],
+          "size": [
+            14,
+            12,
+            1
+          ],
+          "entrance": [
+            17,
+            -250.3
+          ],
+          "color": "#bfc9c5",
+          "style": "yard",
+          "description": "A fenced back lot with parked cars, narrow lanes, and a separate New Turf story stop.",
+          "provenance": "new_city_adaptation; fictional name, no real business affiliation",
+          "staffIds": [],
+          "itemIds": [],
+          "storyArcId": "robbery-1s",
+          "storyBeatIds": [
+            "robbery-1s-fence-lot"
+          ],
+          "enterable": false,
+          "sourceGeometry": {
+            "horizontalFootprint": "Authored open gathering space checked clear of all retained building polygons and mapped road widths.",
+            "structures": "Open yard only; no building footprint is removed or replaced."
+          },
+          "yardType": "vehicle",
+          "sourceParcel": {
+            "parcelId": "915-9B",
+            "siteAddress": "1163 MAIN ST",
+            "ownershipClassification": "private_corporate",
+            "evidence": "docs/fictional-city/geography/bridgeport-government-classification.json"
+          }
+        },
+        {
+          "id": "bridgeport-golden-hill-courthouse",
+          "name": "Bridgeport Superior Court · G.A. 2",
+          "category": "Connecticut courthouse",
+          "position": [
             -50.0258,
             -305.7594
           ],
@@ -12198,15 +12984,11 @@
             -275.893
           ],
           "color": "#d6d0c5",
-          "style": "industrial",
-          "description": "A boarded industrial shell where Dave wakes into the aftermath of the shoes.",
-          "provenance": "new_city_adaptation; fictional name, no real business affiliation",
+          "style": "civic",
+          "description": "Connecticut Superior Court at 172 Golden Hill Street, Bridgeport, CT.",
+          "provenance": "verified_government_identity_preserved; CT DCJ directory and MetroCOG Bridgeport parcel evidence",
           "staffIds": [],
           "itemIds": [],
-          "storyArcId": "robbery-1s",
-          "storyBeatIds": [
-            "robbery-1s-aftermath"
-          ],
           "entranceWall": [
             -64.491,
             -278.79
@@ -12388,735 +13170,23 @@
             "horizontalFootprint": "Original source ring projected into metres and translated; no reshaping or clipping.",
             "height": "Authored game height; not supplied by the footprint dataset.",
             "entrance": "Authored road-facing game doorway; actual entrance location is unknown.",
-            "interior": "Authored game scene; no surveyed interior is claimed."
+            "interior": "No interior is modeled for this public building."
           },
-          "enterable": true
-        },
-        {
-          "id": "bridgeport-last-light-market",
-          "name": "Last Light Market",
-          "category": "Corner bodega",
-          "position": [
-            25.7787,
-            -274.5248
-          ],
-          "size": [
-            28.238,
-            23.0378,
-            12
-          ],
-          "entrance": [
-            27.655,
-            -286.551
-          ],
-          "color": "#e3dac7",
-          "style": "market",
-          "description": "The corner counter where an ordinary errand becomes Malik’s first encounter with the shoes’ reputation.",
-          "provenance": "new_city_adaptation; fictional name, no real business affiliation",
-          "staffIds": [],
-          "itemIds": [],
-          "storyArcId": "robbery-1s",
-          "storyBeatIds": [
-            "robbery-1s-donation-bin",
-            "robbery-1s-bodega"
-          ],
-          "entranceWall": [
-            28.579,
-            -283.697
-          ],
-          "entranceNormal": [
-            -0.307913,
-            -0.951415
-          ],
-          "footprint": [
-            [
-              39.8977,
-              -270.5632
-            ],
-            [
-              16.5467,
-              -263.0059
-            ],
-            [
-              11.6597,
-              -278.2213
-            ],
-            [
-              35.83,
-              -286.0437
-            ],
-            [
-              38.1415,
-              -278.8473
-            ],
-            [
-              37.3221,
-              -278.5821
-            ],
-            [
-              39.8977,
-              -270.5632
-            ]
-          ],
-          "footprintHoles": [],
-          "sourceFootprintId": 250870,
-          "sourceGeometry": {
-            "dataset": "CT State GIS Office 2023 Connecticut Buildings",
-            "horizontalFootprint": "Original source ring projected into metres and translated; no reshaping or clipping.",
-            "height": "Authored game height; not supplied by the footprint dataset.",
-            "entrance": "Authored road-facing game doorway; actual entrance location is unknown.",
-            "interior": "Authored game scene; no surveyed interior is claimed."
-          },
-          "enterable": true
-        },
-        {
-          "id": "bridgeport-northline-walkups",
-          "name": "Northline Walkups",
-          "category": "Apartments and stairwell",
-          "position": [
-            -102.0846,
-            -198.447
-          ],
-          "size": [
-            33.0181,
-            23.5911,
-            15
-          ],
-          "entrance": [
-            -98.227,
-            -186.997
-          ],
-          "color": "#c6b5a6",
-          "style": "walkup",
-          "description": "Family rooms above the street, a shared hallway, and a concrete stairwell facing the block.",
-          "provenance": "new_city_adaptation; fictional name, no real business affiliation",
-          "staffIds": [],
-          "itemIds": [],
-          "storyArcId": "robbery-1s",
-          "storyBeatIds": [
-            "robbery-1s-family",
-            "robbery-1s-stairwell",
-            "robbery-1s-hallway"
-          ],
-          "entranceWall": [
-            -99.577,
-            -189.676
-          ],
-          "entranceNormal": [
-            0.450061,
-            0.892998
-          ],
-          "footprint": [
-            [
-              -95.2224,
-              -210.2425
-            ],
-            [
-              -93.2911,
-              -206.3811
-            ],
-            [
-              -90.9832,
-              -207.5444
-            ],
-            [
-              -85.5756,
-              -196.7325
-            ],
-            [
-              -105.5782,
-              -186.6514
-            ],
-            [
-              -108.282,
-              -192.0573
-            ],
-            [
-              -113.2827,
-              -189.537
-            ],
-            [
-              -118.5937,
-              -200.1558
-            ],
-            [
-              -115.3241,
-              -201.8036
-            ],
-            [
-              -115.0344,
-              -201.2245
-            ],
-            [
-              -111.7647,
-              -202.8723
-            ],
-            [
-              -111.3785,
-              -202.1
-            ],
-            [
-              -95.2224,
-              -210.2425
-            ]
-          ],
-          "footprintHoles": [],
-          "sourceFootprintId": 264675,
-          "sourceGeometry": {
-            "dataset": "CT State GIS Office 2023 Connecticut Buildings",
-            "horizontalFootprint": "Original source ring projected into metres and translated; no reshaping or clipping.",
-            "height": "Authored game height; not supplied by the footprint dataset.",
-            "entrance": "Authored road-facing game doorway; actual entrance location is unknown.",
-            "interior": "Authored game scene; no surveyed interior is claimed."
-          },
-          "enterable": true
-        },
-        {
-          "id": "bridgeport-second-spin-laundry",
-          "name": "Second Spin Laundry",
-          "category": "Laundromat",
-          "position": [
-            -121.3103,
-            -220.6275
-          ],
-          "size": [
-            14.5247,
-            15.0224,
-            8
-          ],
-          "entrance": [
-            -121.885,
-            -229.982
-          ],
-          "color": "#cad8d5",
-          "style": "laundromat",
-          "description": "A neighborhood laundry with a low backroom beneath the sound of the dryers.",
-          "provenance": "new_city_adaptation; fictional name, no real business affiliation",
-          "staffIds": [],
-          "itemIds": [],
-          "storyArcId": "robbery-1s",
-          "storyBeatIds": [
-            "robbery-1s-laundry"
-          ],
-          "entranceWall": [
-            -120.839,
-            -227.17
-          ],
-          "entranceNormal": [
-            -0.348632,
-            -0.93726
-          ],
-          "footprint": [
-            [
-              -118.2356,
-              -228.1387
-            ],
-            [
-              -114.048,
-              -216.7944
-            ],
-            [
-              -123.9365,
-              -213.1163
-            ],
-            [
-              -128.5727,
-              -225.676
-            ],
-            [
-              -127.3619,
-              -226.1264
-            ],
-            [
-              -126.9132,
-              -224.9109
-            ],
-            [
-              -118.2356,
-              -228.1387
-            ]
-          ],
-          "footprintHoles": [],
-          "sourceFootprintId": 264674,
-          "sourceGeometry": {
-            "dataset": "CT State GIS Office 2023 Connecticut Buildings",
-            "horizontalFootprint": "Original source ring projected into metres and translated; no reshaping or clipping.",
-            "height": "Authored game height; not supplied by the footprint dataset.",
-            "entrance": "Authored road-facing game doorway; actual entrance location is unknown.",
-            "interior": "Authored game scene; no surveyed interior is claimed."
-          },
-          "enterable": true
-        },
-        {
-          "id": "bridgeport-common-yard",
-          "name": "Common Yard",
-          "category": "Alley and gathering yard",
-          "position": [
-            -140,
-            -300
-          ],
-          "size": [
-            20,
-            14,
-            1
-          ],
-          "entrance": [
-            -140,
-            -290.0
-          ],
-          "color": "#c9c4b5",
-          "style": "yard",
-          "description": "A back-lot gathering place for the Block Olympics, the dice circle, and the story’s changing neighborhood audience.",
-          "provenance": "new_city_adaptation; fictional name, no real business affiliation",
-          "staffIds": [],
-          "itemIds": [],
-          "storyArcId": "robbery-1s",
-          "storyBeatIds": [
-            "robbery-1s-block-olympics"
-          ],
           "enterable": false,
-          "sourceGeometry": {
-            "horizontalFootprint": "Authored open gathering space checked clear of all retained building polygons and mapped road widths.",
-            "structures": "Open yard only; no building footprint is removed or replaced."
-          }
-        },
-        {
-          "id": "bridgeport-night-shift-club",
-          "name": "Night Shift Club",
-          "category": "Story headquarters",
-          "position": [
-            -6.919,
-            -242.9188
-          ],
-          "size": [
-            36.5562,
-            30.9226,
-            14
-          ],
-          "entrance": [
-            3.559,
-            -233.872
-          ],
-          "color": "#bac2c8",
-          "style": "club",
-          "description": "A modest front room conceals the organization’s absurdly corporate backroom office.",
-          "provenance": "new_city_adaptation; fictional name, no real business affiliation",
-          "staffIds": [],
-          "itemIds": [],
-          "storyArcId": "robbery-1s",
-          "storyBeatIds": [
-            "robbery-1s-promotion",
-            "robbery-1s-positions"
-          ],
-          "entranceWall": [
-            2.359,
-            -236.621
-          ],
-          "entranceNormal": [
-            0.399948,
-            0.916538
-          ],
-          "footprint": [
-            [
-              3.6371,
-              -258.3801
-            ],
-            [
-              11.3591,
-              -240.5488
-            ],
-            [
-              -18.6415,
-              -227.4575
-            ],
-            [
-              -19.4994,
-              -229.4388
-            ],
-            [
-              -23.0521,
-              -227.8885
-            ],
-            [
-              -25.1971,
-              -232.8416
-            ],
-            [
-              -21.6444,
-              -234.3919
-            ],
-            [
-              -22.5025,
-              -236.3731
-            ],
-            [
-              -21.9103,
-              -236.6316
-            ],
-            [
-              -23.4547,
-              -240.1978
-            ],
-            [
-              -11.6124,
-              -245.3654
-            ],
-            [
-              -10.7544,
-              -243.3841
-            ],
-            [
-              -7.2017,
-              -244.9344
-            ],
-            [
-              -7.8881,
-              -246.5195
-            ],
-            [
-              -4.9275,
-              -247.8113
-            ],
-            [
-              -7.4157,
-              -253.557
-            ],
-            [
-              3.6371,
-              -258.3801
-            ]
-          ],
-          "footprintHoles": [],
-          "sourceFootprintId": 283266,
-          "sourceGeometry": {
-            "dataset": "CT State GIS Office 2023 Connecticut Buildings",
-            "horizontalFootprint": "Original source ring projected into metres and translated; no reshaping or clipping.",
-            "height": "Authored game height; not supplied by the footprint dataset.",
-            "entrance": "Authored road-facing game doorway; actual entrance location is unknown.",
-            "interior": "Authored game scene; no surveyed interior is claimed."
+          "publicIdentity": {
+            "kind": "government",
+            "officialName": "Bridgeport Superior Court · G.A. 2",
+            "agency": "Connecticut Judicial Branch",
+            "publicFunction": "Superior Court",
+            "address": "172 Golden Hill Street, Bridgeport, CT",
+            "parcelId": "908-9",
+            "sourceUrl": "https://portal.ct.gov/dcj/states-attorneys/bridgeport/office-court-locations"
           },
-          "enterable": true
-        },
-        {
-          "id": "bridgeport-brickline-school",
-          "name": "Brickline School",
-          "category": "School story location",
-          "position": [
-            92.639,
-            -231.6909
-          ],
-          "size": [
-            52.7698,
-            25.0065,
-            14
-          ],
-          "entrance": [
-            64.224,
-            -227.168
-          ],
-          "color": "#d7cebd",
-          "style": "school",
-          "description": "An ordinary school day reveals what Malik’s new reputation costs him.",
-          "provenance": "new_city_adaptation; fictional name, no real business affiliation",
-          "staffIds": [],
-          "itemIds": [],
-          "storyArcId": "robbery-1s",
-          "storyBeatIds": [
-            "robbery-1s-legend-tax"
-          ],
-          "entranceWall": [
-            67.142,
-            -227.864
-          ],
-          "entranceNormal": [
-            -0.972672,
-            0.232182
-          ],
-          "footprint": [
-            [
-              119.0239,
-              -231.1686
-            ],
-            [
-              69.2129,
-              -219.1877
-            ],
-            [
-              66.2541,
-              -231.5829
-            ],
-            [
-              97.6476,
-              -239.134
-            ],
-            [
-              97.4972,
-              -239.7643
-            ],
-            [
-              115.9147,
-              -244.1942
-            ],
-            [
-              119.0239,
-              -231.1686
-            ]
-          ],
-          "footprintHoles": [],
-          "sourceFootprintId": 250913,
-          "sourceGeometry": {
-            "dataset": "CT State GIS Office 2023 Connecticut Buildings",
-            "horizontalFootprint": "Original source ring projected into metres and translated; no reshaping or clipping.",
-            "height": "Authored game height; not supplied by the footprint dataset.",
-            "entrance": "Authored road-facing game doorway; actual entrance location is unknown.",
-            "interior": "Authored game scene; no surveyed interior is claimed."
-          },
-          "enterable": true
-        },
-        {
-          "id": "bridgeport-second-light-chapel",
-          "name": "Second Light Chapel",
-          "category": "Neighborhood church",
-          "position": [
-            -63.4856,
-            -215.7418
-          ],
-          "size": [
-            27.452,
-            24.2331,
-            16
-          ],
-          "entrance": [
-            -57.815,
-            -205.611
-          ],
-          "color": "#e6dfd1",
-          "style": "chapel",
-          "description": "Wooden pews, colored glass, and the altar where the original pair changes hands again.",
-          "provenance": "new_city_adaptation; fictional name, no real business affiliation",
-          "staffIds": [],
-          "itemIds": [],
-          "storyArcId": "robbery-1s",
-          "storyBeatIds": [
-            "robbery-1s-altar"
-          ],
-          "entranceWall": [
-            -59.065,
-            -208.338
-          ],
-          "entranceNormal": [
-            0.416798,
-            0.908999
-          ],
-          "footprint": [
-            [
-              -65.7006,
-              -227.8583
-            ],
-            [
-              -65.0747,
-              -226.4828
-            ],
-            [
-              -62.1383,
-              -227.8293
-            ],
-            [
-              -61.5124,
-              -226.4537
-            ],
-            [
-              -60.9251,
-              -226.723
-            ],
-            [
-              -57.08,
-              -218.2733
-            ],
-            [
-              -51.0115,
-              -221.0558
-            ],
-            [
-              -49.7596,
-              -218.3048
-            ],
-            [
-              -56.024,
-              -215.4325
-            ],
-            [
-              -54.4144,
-              -211.8953
-            ],
-            [
-              -55.1974,
-              -211.5362
-            ],
-            [
-              -54.6609,
-              -210.3572
-            ],
-            [
-              -69.3428,
-              -203.6252
-            ],
-            [
-              -77.2116,
-              -220.9176
-            ],
-            [
-              -76.4287,
-              -221.2767
-            ],
-            [
-              -77.0546,
-              -222.6523
-            ],
-            [
-              -65.7006,
-              -227.8583
-            ]
-          ],
-          "footprintHoles": [],
-          "sourceFootprintId": 279373,
-          "sourceGeometry": {
-            "dataset": "CT State GIS Office 2023 Connecticut Buildings",
-            "horizontalFootprint": "Original source ring projected into metres and translated; no reshaping or clipping.",
-            "height": "Authored game height; not supplied by the footprint dataset.",
-            "entrance": "Authored road-facing game doorway; actual entrance location is unknown.",
-            "interior": "Authored game scene; no surveyed interior is claimed."
-          },
-          "enterable": true
-        },
-        {
-          "id": "bridgeport-railside-yard",
-          "name": "Railside Yard",
-          "category": "Fenced vehicle lot",
-          "position": [
-            142,
-            -280
-          ],
-          "size": [
-            14,
-            12,
-            1
-          ],
-          "entrance": [
-            142,
-            -271.0
-          ],
-          "color": "#bfc9c5",
-          "style": "yard",
-          "description": "A fenced back lot with parked cars, narrow lanes, and a separate New Turf story stop.",
-          "provenance": "new_city_adaptation; fictional name, no real business affiliation",
-          "staffIds": [],
-          "itemIds": [],
-          "storyArcId": "robbery-1s",
-          "storyBeatIds": [
-            "robbery-1s-fence-lot"
-          ],
-          "enterable": false,
-          "sourceGeometry": {
-            "horizontalFootprint": "Authored open gathering space checked clear of all retained building polygons and mapped road widths.",
-            "structures": "Open yard only; no building footprint is removed or replaced."
-          },
-          "yardType": "vehicle"
-        },
-        {
-          "id": "bridgeport-golden-hour-records",
-          "name": "Golden Hour Records",
-          "category": "Neighborhood storefront",
-          "position": [
-            11.3457,
-            -304.6764
-          ],
-          "size": [
-            42.2451,
-            32.8447,
-            18
-          ],
-          "entrance": [
-            20.874,
-            -292.886
-          ],
-          "color": "#cfbca7",
-          "style": "brick-row",
-          "description": "A neighborhood storefront on the Bridgeport street grid.",
-          "provenance": "new_city_storefront_name_on_retained_public_source_footprint",
-          "staffIds": [],
-          "itemIds": [],
-          "enterable": false,
-          "entranceWall": [
-            20.048,
-            -295.77
-          ],
-          "entranceNormal": [
-            0.275539,
-            0.96129
-          ],
-          "footprint": [
-            [
-              27.6818,
-              -321.0987
-            ],
-            [
-              32.4682,
-              -304.2723
-            ],
-            [
-              31.4334,
-              -303.9757
-            ],
-            [
-              32.3199,
-              -300.8598
-            ],
-            [
-              30.8713,
-              -300.4446
-            ],
-            [
-              31.2849,
-              -298.9905
-            ],
-            [
-              -6.1722,
-              -288.254
-            ],
-            [
-              -9.7769,
-              -300.9258
-            ],
-            [
-              6.5719,
-              -305.6118
-            ],
-            [
-              6.8673,
-              -304.5732
-            ],
-            [
-              20.5257,
-              -308.4881
-            ],
-            [
-              17.7484,
-              -318.2516
-            ],
-            [
-              27.6818,
-              -321.0987
-            ]
-          ],
-          "footprintHoles": [],
-          "sourceFootprintId": 250867,
-          "sourceGeometry": {
-            "dataset": "CT State GIS Office 2023 Connecticut Buildings",
-            "horizontalFootprint": "Original source ring projected into metres and translated; no reshaping or clipping.",
-            "height": "Authored game height; not supplied by the footprint dataset.",
-            "entrance": "Authored road-facing game doorway; actual entrance location is unknown.",
-            "interior": "Authored game scene; no surveyed interior is claimed."
+          "sourceParcel": {
+            "parcelId": "908-9",
+            "siteAddress": "172 GOLDEN HILL ST",
+            "ownershipClassification": "government",
+            "evidence": "docs/fictional-city/geography/bridgeport-government-classification.json"
           }
         },
         {
@@ -13245,6 +13315,12 @@
             "height": "Authored game height; not supplied by the footprint dataset.",
             "entrance": "Authored road-facing game doorway; actual entrance location is unknown.",
             "interior": "Authored game scene; no surveyed interior is claimed."
+          },
+          "sourceParcel": {
+            "parcelId": "915-14",
+            "siteAddress": "213 GOLDEN HILL ST #231",
+            "ownershipClassification": "private_corporate",
+            "evidence": "docs/fictional-city/geography/bridgeport-government-classification.json"
           }
         },
         {
@@ -13341,6 +13417,12 @@
             "height": "Authored game height; not supplied by the footprint dataset.",
             "entrance": "Authored road-facing game doorway; actual entrance location is unknown.",
             "interior": "Authored game scene; no surveyed interior is claimed."
+          },
+          "sourceParcel": {
+            "parcelId": "914-9A",
+            "siteAddress": "100 FAIRFIELD AV",
+            "ownershipClassification": "private_corporate",
+            "evidence": "docs/fictional-city/geography/bridgeport-government-classification.json"
           }
         },
         {
@@ -13505,6 +13587,12 @@
             "height": "Authored game height; not supplied by the footprint dataset.",
             "entrance": "Authored road-facing game doorway; actual entrance location is unknown.",
             "interior": "Authored game scene; no surveyed interior is claimed."
+          },
+          "sourceParcel": {
+            "parcelId": "916-14",
+            "siteAddress": "1115 MAIN ST #1127",
+            "ownershipClassification": "private_corporate",
+            "evidence": "docs/fictional-city/geography/bridgeport-government-classification.json"
           }
         },
         {
@@ -13577,6 +13665,12 @@
             "height": "Authored game height; not supplied by the footprint dataset.",
             "entrance": "Authored road-facing game doorway; actual entrance location is unknown.",
             "interior": "Authored game scene; no surveyed interior is claimed."
+          },
+          "sourceParcel": {
+            "parcelId": "916-6A",
+            "siteAddress": "180 FAIRFIELD AV",
+            "ownershipClassification": "private_nonprofit",
+            "evidence": "docs/fictional-city/geography/bridgeport-government-classification.json"
           }
         },
         {
@@ -13737,6 +13831,12 @@
             "height": "Authored game height; not supplied by the footprint dataset.",
             "entrance": "Authored road-facing game doorway; actual entrance location is unknown.",
             "interior": "Authored game scene; no surveyed interior is claimed."
+          },
+          "sourceParcel": {
+            "parcelId": "916-4A",
+            "siteAddress": "202 FAIRFIELD AV",
+            "ownershipClassification": "private_corporate",
+            "evidence": "docs/fictional-city/geography/bridgeport-government-classification.json"
           }
         },
         {
@@ -13897,12 +13997,18 @@
             "height": "Authored game height; not supplied by the footprint dataset.",
             "entrance": "Authored road-facing game doorway; actual entrance location is unknown.",
             "interior": "Authored game scene; no surveyed interior is claimed."
+          },
+          "sourceParcel": {
+            "parcelId": "918-10",
+            "siteAddress": "232 FAIRFIELD AV #252",
+            "ownershipClassification": "private_corporate",
+            "evidence": "docs/fictional-city/geography/bridgeport-government-classification.json"
           }
         },
         {
-          "id": "bridgeport-north-window-cafe",
-          "name": "North Window Café",
-          "category": "Neighborhood storefront",
+          "id": "bridgeport-main-street-courthouse",
+          "name": "Bridgeport Superior Court · Judicial District",
+          "category": "Connecticut courthouse",
           "position": [
             39.296,
             -113.5917
@@ -13917,9 +14023,9 @@
             -138.021
           ],
           "color": "#d5c9ba",
-          "style": "brick-row",
-          "description": "A neighborhood storefront on the Bridgeport street grid.",
-          "provenance": "new_city_storefront_name_on_retained_public_source_footprint",
+          "style": "civic",
+          "description": "Connecticut Superior Court at 1061 Main Street, Bridgeport, CT.",
+          "provenance": "verified_government_identity_preserved; CT DCJ directory and MetroCOG Bridgeport parcel evidence",
           "staffIds": [],
           "itemIds": [],
           "enterable": false,
@@ -14032,7 +14138,22 @@
             "horizontalFootprint": "Original source ring projected into metres and translated; no reshaping or clipping.",
             "height": "Authored game height; not supplied by the footprint dataset.",
             "entrance": "Authored road-facing game doorway; actual entrance location is unknown.",
-            "interior": "Authored game scene; no surveyed interior is claimed."
+            "interior": "No interior is modeled for this public building."
+          },
+          "publicIdentity": {
+            "kind": "government",
+            "officialName": "Bridgeport Superior Court · Judicial District",
+            "agency": "Connecticut Judicial Branch",
+            "publicFunction": "Superior Court",
+            "address": "1061 Main Street, Bridgeport, CT",
+            "parcelId": "933-1A",
+            "sourceUrl": "https://portal.ct.gov/dcj/states-attorneys/bridgeport/office-court-locations"
+          },
+          "sourceParcel": {
+            "parcelId": "933-1A",
+            "siteAddress": "1061 MAIN ST",
+            "ownershipClassification": "government",
+            "evidence": "docs/fictional-city/geography/bridgeport-government-classification.json"
           }
         },
         {
@@ -14249,12 +14370,18 @@
             "height": "Authored game height; not supplied by the footprint dataset.",
             "entrance": "Authored road-facing game doorway; actual entrance location is unknown.",
             "interior": "Authored game scene; no surveyed interior is claimed."
+          },
+          "sourceParcel": {
+            "parcelId": "934-1A",
+            "siteAddress": "1070 MAIN ST",
+            "ownershipClassification": "private_corporate",
+            "evidence": "docs/fictional-city/geography/bridgeport-government-classification.json"
           }
         }
       ],
       "provenance": {
         "setting": "Owner direction, 2026-11-03: place the story in Bridgeport, away from Equity Uprise.",
-        "placeNames": "New fictional adaptation names; none identifies a real business, school, church, owner, or resident.",
+        "placeNames": "Real geographic and verified government names are retained. Non-government tenant and story-location names are authored game adaptations.",
         "layout": "Verified 2023 CT building-footprint polygons and OSM street centerlines from downtown Bridgeport, projected into metres and translated north of the existing city. All 16 selected footprints remain; story tenants, heights, entrances, interiors, yards and connecting walks are authored game adaptations.",
         "existingCity": "Additive neighborhood. The original eight businesses, 24 adult staff, garage, island, and portal targets remain separate and retain their identities."
       },
@@ -14321,13 +14448,23 @@
           "apiRequest": "https://api.openstreetmap.org/api/0.6/map?bbox=-73.192,41.178,-73.188,41.181"
         },
         "authoredElements": [
-          "Story tenant names and uses",
+          "Non-government story tenant names and uses; government identities retained",
           "All heights, façades, door positions and interiors",
           "Open yards and district connectors",
           "Road-width estimates"
         ],
         "sourceLimitations": "2023 automated footprint capture can combine adjacent structures or be affected by tree cover; actual heights, doors and interiors are not supplied.",
-        "evidence": "docs/fictional-city/geography/bridgeport-footprints-2023.geojson"
+        "evidence": "docs/fictional-city/geography/bridgeport-footprints-2023.geojson",
+        "ownershipEvidence": "docs/fictional-city/geography/bridgeport-government-classification.json"
+      },
+      "namingPolicy": {
+        "authority": "Owner direction, 2026-11-03",
+        "geography": "Preserve real city, street, official neighborhood and geographic names, and the sourced street layout.",
+        "government": "Preserve verified government institutions, public-building identities, addresses and public functions. Do not replace them with fictional commercial tenants.",
+        "nonGovernment": "Use authored names and characters for non-government businesses and story premises, with ownership and public-use classification checked before assignment.",
+        "people": "Story residents and businesses use authored characters. Existing cast identities and ages remain canonical.",
+        "publicOfficials": "Preserve the real government office and role. Casting a named incumbent or a fictional officeholder is a separate undecided production choice; this build adds neither.",
+        "unverified": "Do not assume an unclassified building is privately owned or that private ownership excludes government use; check official parcel and institutional evidence before assigning a fictional tenant."
       }
     }
   ],
@@ -14350,7 +14487,8 @@
         "settingAuthority": "The owner placed this story in Bridgeport on 2026-11-03. The recovered script gives no exact street or address.",
         "spatialAdaptation": "The connected story block, fictional place names, repeated exterior encounter positions, and read-and-continue actions are new game adaptations. Several around-town scenes are represented at these local stops.",
         "olderContext": "Earlier conversational backstory about a grandfather, a mob boss, imprisonment, or correctional-facility laces is not added to this seven-act adaptation.",
-        "unresolved": "The pastor recognizes the shoes and calls them his first pair. This does not resolve their origin, identify him as the first crime lord, or create a new ending."
+        "unresolved": "The pastor recognizes the shoes and calls them his first pair. This does not resolve their origin, identify him as the first crime lord, or create a new ending.",
+        "factionName": "Elm Street Willy Whackers is the owner-requested 2026-11-03 group name, added to the recovered script adaptation."
       },
       "cast": [
         {
@@ -14450,8 +14588,8 @@
           "act": 1,
           "placeId": "bridgeport-ashline-works",
           "position": [
-            -63.709,
-            -275.893
+            20.874,
+            -292.886
           ],
           "summary": "Dave wakes beside four people who will not wake. The shoes are impossibly clean.",
           "paragraphs": [
@@ -14532,8 +14670,8 @@
           "act": 3,
           "placeId": "bridgeport-common-yard",
           "position": [
-            -140,
-            -290.0
+            1,
+            -337
           ],
           "summary": "An alley competition turns impossible luck into neighborhood fame.",
           "paragraphs": [
@@ -14556,7 +14694,7 @@
           ],
           "summary": "Mr. GREAT makes the organization look like an employer and Malik look like a recruit.",
           "paragraphs": [
-            "In the club’s backroom, folding chairs face a whiteboard welcoming new enforcement. A clipboard, a lanyard, and a probationary badge turn a dangerous offer into absurd workplace ceremony.",
+            "In the Elm Street Willy Whackers’ club backroom, folding chairs face a whiteboard welcoming new enforcement. A clipboard, a lanyard, and a probationary badge turn a dangerous offer into absurd workplace ceremony.",
             "Ocho Gr8, addressed as Mr. GREAT, assigns Malik to collect neighborhood dues with Harold. The instructions are about hierarchy and obedience. Malik is being welcomed for his usefulness.",
             "The first route makes the job seem effortless until a resistant man exposes how quickly Malik’s anger is growing. Back in the car, Harold praises him. Mr. GREAT studies the shoes without explaining what he sees."
           ],
@@ -14577,7 +14715,7 @@
           "paragraphs": [
             "Malik returns home with money. Mama knows the bills are real, but she will not confuse cash with safety. The next day, neighbors lower their eyes as he passes.",
             "At school, classmates make room and his closest friend looks away. The attention that felt like belonging in the yard feels like isolation here. Malik leaves early and returns to Harold.",
-            "That night, the organization counts $15,000 from the route and gives Malik $1,000. On the walk home, he compares the two amounts. His need to help Mama is turning into a conviction that the whole operation should answer to him."
+            "That night, the Elm Street Willy Whackers count $15,000 from the route and gives Malik $1,000. On the walk home, he compares the two amounts. His need to help Mama is turning into a conviction that the whole operation should answer to him."
           ],
           "actionLabel": "Continue",
           "objective": "Go to Brickline School and hear the cost of Malik’s reputation.",
@@ -14625,8 +14763,8 @@
           "act": 6,
           "placeId": "bridgeport-railside-yard",
           "position": [
-            142,
-            -271.0
+            17,
+            -250.3
           ],
           "summary": "A fenced lot makes the route’s danger impossible to ignore.",
           "paragraphs": [
@@ -14685,13 +14823,34 @@
           ],
           "summary": "Harold brings the original pair to Malik’s funeral. The pastor recognizes them.",
           "paragraphs": [
-            "At Malik’s funeral, Mama sits before a closed casket. Classmates, neighbors, Harold, and members of the organization occupy the same church. The pastor speaks about the kind of temptation that looks like help while it takes a life apart.",
+            "At Malik’s funeral, Mama sits before a closed casket. Classmates, neighbors, Harold, and members of the Elm Street Willy Whackers occupy the same church. The pastor speaks about the kind of temptation that looks like help while it takes a life apart.",
             "Harold walks forward and places the Robbery 1s at the altar. He confesses what he knows about the curse and what he watched it do to Malik. He is afraid of being the next person it takes.",
             "The pastor kneels beside the shoes. Recognition changes his face. He says, “This was my first pair.” The story ends there, with the meaning of that recognition still unresolved."
           ],
           "actionLabel": "Continue",
           "objective": "Reach Second Light Chapel and hear the final scene.",
           "allowInterior": true
+        }
+      ],
+      "factions": [
+        {
+          "id": "elm-street-willy-whackers",
+          "name": "Elm Street Willy Whackers",
+          "kind": "fictional_gang",
+          "streetName": "Elm Street",
+          "basePlaceId": "bridgeport-night-shift-club",
+          "associatedCastIds": [
+            "robbery-ocho-gr8",
+            "robbery-harold",
+            "robbery-low-ski",
+            "robbery-malik"
+          ],
+          "description": "The crew around Mr. GREAT and Harold: street swagger, petty hierarchy and absurd corporate ceremony.",
+          "provenance": {
+            "kind": "owner_direction",
+            "date": "2026-11-03",
+            "note": "The owner requested a nearby-street Willy Whackers name. Elm Street is the sourced street nearest the authored Night Shift Club headquarters. This new group label does not change the recovered cast, events or ending."
+          }
         }
       ]
     }
