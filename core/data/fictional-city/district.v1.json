@@ -4826,7 +4826,7 @@
         },
         {
           "type": "bribe",
-          "id": "bribe-motorcade",
+          "id": "bribe-police-escort",
           "label": "Rent a “motorcade” to the tea shop",
           "price": 120,
           "npcIds": [
@@ -14868,10 +14868,9 @@
     }
   ],
   "idAliases": {
-    "note": "Replaced IDs stay resolvable for saves, Core reads and stacked PRs. Owner decision 2026-11-03: the invented police precinct and public school became the real institutions on the same parcels; the escort payoff no longer names police.",
+    "note": "Replaced IDs stay resolvable for saves, Core reads and stacked PRs. Owner decision 2026-11-03: the invented police precinct and public school became the real institutions on the same parcels; the escort payoff keeps its internal ID bribe-police-escort for saved payment logs, but no longer involves police.",
     "precinct-zero": "bridgeport-police-department",
-    "municipal-high-9": "warren-harding-high-school",
-    "bribe-police-escort": "bribe-motorcade"
+    "municipal-high-9": "warren-harding-high-school"
   },
   "publicRecordArcs": [
     {

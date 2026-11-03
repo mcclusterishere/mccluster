@@ -38,8 +38,20 @@ Retain CT source metadata and visible OpenStreetMap attribution for derived road
   `parcels`, `expansionBusinesses`, `expansionNpcs`, `families`, `expansionItems`. These records carry
   parcel IDs and route anchors, never coordinates; the spatial layer binds them. Expansion students
   are minors (`minor: true`): no sexual content, injury, purchases or bribes involving them. The
-  satire targets posers, the rich school and corrupt institutions, never Black people or public-school
-  kids, and uses no phonetic dialect.
+  satire targets posers, the rich school and middlemen who sell influence they do not have, never Black
+  people or public-school kids, and uses no phonetic dialect.
+- Real places (owner, 2026-11-03): real streets, the city and its government buildings keep their real,
+  sourced names; fictional private businesses, occupants and people are the overlay. No invented police
+  precinct, public school or government office. `civic-center/police-station` is the Bridgeport Police
+  Department and `northside-residential/public-school` is Warren Harding High School, each with a sourced
+  `realInstitution` block, staffed only by fictional civilians, teachers and students; `idAliases` keeps
+  `precinct-zero` and `municipal-high-9` resolvable. Payoff interactions (`type: "bribe"`, `price` in
+  credits) belong only to fictional private middlemen (Bail Mary's expediting desk), never to a real
+  institution or person.
+- Corruption storylines reenact only real, proven public-record cases (`publicRecordArcs`): conviction,
+  plea, court finding or official record, each scene with `basis` and `sources: [{title, url, date}]`,
+  real people shown only doing what the record establishes, pending charges reported as pending. Read
+  `PUBLIC-RECORD-STORYLINES.md` before changing them.
 - All 24 v1 residents are adults. Humor is in the businesses, interactions, wordplay
   and unreliable pitches. Do not substitute a fake racial accent for character writing.
 - Preserve the existing shared navigation and private audience. Static authored fiction is public-safe

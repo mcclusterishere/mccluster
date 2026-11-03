@@ -237,7 +237,7 @@ function realInstitutionFixture() {
   data.publicRecordArcs = [{ id: 'record-arc', title: 'Record', cast: [{ id: 'real-official', name: 'A. Official', realPerson: true, basis: 'conviction' }],
     beats: [{ id: 'record-beat', title: 'Verdict', basis: 'conviction', realPeople: ['real-official'],
       sources: [{ title: 'Court release', url: 'https://court.example/verdict', date: '2003-03-19' }], paragraphs: ['A jury convicts.'] }] }];
-  data.idAliases = { note: 'replaced', precinct: 'real-police', 'bribe-police-escort': 'bribe-motorcade' };
+  data.idAliases = { note: 'replaced', precinct: 'real-police', 'old-escort': 'bribe-motorcade' };
   return data;
 }
 
