@@ -101,10 +101,33 @@ test('catalog rejects invented shop ownership and duplicate game ids', () => {
   assert.ok(validateArcadeCatalog(duplicate, source.businesses.map(x => x.id)).length);
 });
 
-test('public arcade entry never imports owner-only city state or original screenplay', async () => {
+test('the arcade is owner only: noindex, the shared server gate, and no game code before the yes', async () => {
   const app = await readFile(new URL('../../js/city-arcade/app.mjs', import.meta.url), 'utf8');
   const html = await readFile(new URL('../../city-arcade.html', import.meta.url), 'utf8');
-  assert.doesNotMatch(app, /fictional-city\/state\.mjs|owner-only|mcc-auth/);
-  assert.doesNotMatch(html, /data-owner-load|data-owner-template/);
-  assert.match(html, /js\/city-arcade\/app\.mjs/);
+  /* owner, 2026-11-03: private at first, like the rest of the games, until playtested */
+  assert.match(html, /<meta name="robots" content="noindex, nofollow">/);
+  assert.doesNotMatch(html, /<link rel="canonical"/);
+  const gate = html.match(/<section class="owner-gate"[^>]*data-owner-gate[^>]*>/);
+  assert.ok(gate, 'the gate panel');
+  assert.match(gate[0], /data-owner-template="arcadeTpl"/);
+  assert.match(gate[0], /data-owner-load="js\/city-arcade\/app\.mjs\?v=__STAMP__"/);
+  assert.match(html, /<template id="arcadeTpl">[\s\S]*id="arcade-list"[\s\S]*id="arcade-play"[\s\S]*<\/template>/);
+  assert.match(html, /<script type="module" src="js\/owner-only\.mjs\?v=__STAMP__"><\/script>/);
+  /* outside the inert template, nothing loads the arcade: only the gate, auth and the bar */
+  const outside = html.replace(/<template[\s\S]*?<\/template>/g, '');
+  assert.doesNotMatch(outside, /<script[^>]+src="[^"]*(city-arcade\/|engine\.mjs)/);
+  assert.deepEqual([...outside.matchAll(/<script[^>]*src="([^"?]+)/g)].map(m => m[1]),
+    ['js/owner-only.mjs', 'js/mcc-auth.js', 'js/tabbar.js']);
+  /* the arcade does not reach into the city's save or the screenplay */
+  assert.doesNotMatch(app, /fictional-city\/state\.mjs|mcc-auth/);
+  const sitemap = JSON.parse(await readFile(new URL('../../data/seo/sitemap-pages.json', import.meta.url), 'utf8'));
+  assert.ok(!sitemap.pages.some(p => p.url.endsWith('/city-arcade.html')), 'out of the sitemap');
+});
+
+test('arcade copy carries no public-prototype or "this is fictional" disclaimers', async () => {
+  const files = ['../../city-arcade.html', '../../js/city-arcade/app.mjs', '../../js/city-arcade/engine.mjs'];
+  const text = (await Promise.all(files.map(f => readFile(new URL(f, import.meta.url), 'utf8')))).join('\n')
+    .replace(/^\s*\/\/.*$/gm, '').replace(/<!--[\s\S]*?-->/g, '');
+  assert.doesNotMatch(text, /public prototype|No account or purchase|owner preview|\bfictional\b(?!-city)|dramatized|distinct from fiction/i);
+  for (const g of catalog.games) assert.doesNotMatch(g.blurb, /\bfictional\b/i, g.id);
 });

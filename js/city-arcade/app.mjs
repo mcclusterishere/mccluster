@@ -82,9 +82,9 @@ function renderSole() {
   }
   const canStore = run.player.x === STORE.x && run.player.y === STORE.y;
   $('#arcade-play').innerHTML = `
-    <div class="mini-badge">Designer Kicks / shoe collector prototype</div>
+    <div class="mini-badge">Designer Kicks / shoe collector</div>
     <h2 id="play-title">Sole Run</h2>
-    <p class="muted">Collect four unique pairs and reach the ⌂ exit in ${MAX_TURNS} turns. Move using the arrows, WASD, or touch controls. A store challenge is legal; a fictional grab creates police heat.</p>
+    <p class="muted">Collect four unique pairs and reach the ⌂ exit in ${MAX_TURNS} turns. Move using the arrows, WASD, or touch controls. A store challenge is legal; a risky grab draws police heat.</p>
     <div class="run-hud">
       <div class="stat"><small>Collection</small><b>${run.collected.length}/${SHOES.length}</b></div>
       <div class="stat"><small>Score</small><b>${run.score}</b></div>
@@ -94,7 +94,7 @@ function renderSole() {
       <div class="stat"><small>Fines / detentions</small><b>${run.fines} / ${run.detentions}</b></div>
     </div>
     <p class="message" role="status">${esc(run.message)}</p>
-    <div class="arcade-grid" role="grid" aria-label="Seven-by-seven fictional city arcade board">${grid.join('')}</div>
+    <div class="arcade-grid" role="grid" aria-label="Seven-by-seven city block board">${grid.join('')}</div>
     <div class="legend" aria-label="Map legend"><span>● You</span><span>✥ Police</span><span>◆ Shoe</span><span>⌂ Exit</span><span>▣ Store</span><span>▨ Blocked</span></div>
     <div class="pad" aria-label="Movement">
       <button type="button" class="n" data-dir="north" aria-label="Move north" ${active ? '' : 'disabled'}>↑</button>
@@ -116,7 +116,7 @@ function renderSole() {
       <button class="action" type="button" data-restart>Restart</button>
     </div>
     ${active ? '' : '<p class="gameover" role="status">' + esc(run.status === 'won' ? 'You won!' : 'Run ended.') + '</p>'}
-    <p class="muted">Standalone prototype: abstract fictional patrol logic, not a real-world map or law-enforcement simulator. Scores only save locally.</p>`;
+    <p class="muted">Best scores are saved on this device.</p>`;
 }
 function renderTea() {
   const order = ORDERS[run.index];
@@ -136,7 +136,7 @@ function renderTea() {
       '</div>' : '<p class="gameover">Round complete! ' + run.correct + ' of ' + ORDERS.length +
       ' customers served correctly.</p>'}
     <div class="actions"><button class="action primary" type="button" data-restart>New round</button></div>
-    <p class="muted">A one-minute, touch-friendly example of a shop-owned standalone mini-game.</p>`;
+    <p class="muted">One minute, five customers. Best scores are saved on this device.</p>`;
 }
 function render() {
   if (!selected || !run) return;

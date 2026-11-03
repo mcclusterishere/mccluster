@@ -1,4 +1,4 @@
-// Public-safe, deterministic City Arcade game rules. No Core/owner city-save mutations.
+// Deterministic City Arcade game rules (owner-only page, js/owner-only.mjs gate). No Core/owner city-save mutations.
 export const BOARD_SIZE = 7;
 export const START = Object.freeze({ x: 3, y: 3 });
 export const EXIT = Object.freeze({ x: 6, y: 6 });
@@ -72,7 +72,7 @@ function tick(run) {
     run.police = { x: 0, y: 0 };
     run.heat = 0;
     run.boost = null;
-    run.message = 'Detained in the fictional arcade. 50-point fine; returned to the start.';
+    run.message = 'Detained. 50-point fine; back to the start.';
   }
   run.veil = Math.max(0, run.veil - 1);
   if (run.turn % 4 === 0) run.heat = Math.max(0, run.heat - 1);
@@ -138,7 +138,7 @@ export function visitStore(run, choice) {
   } else {
     next.score += 120;
     next.heat = clamp(next.heat + 6, 0, 10);
-    next.message = 'Fictional smash-and-grab: report filed, police searching. +120 points, heavy heat.';
+    next.message = 'Smash-and-grab: report filed, police searching. +120 points, heavy heat.';
   }
   return tick(next);
 }

@@ -3,28 +3,36 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="description" content="McCluster City Arcade: quick free games connected to a fictional Bridgeport world.">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="description" content="The house owner's City Arcade: quick games from the storefronts of McCluster City.">
   <meta name="theme-color" content="#0b1017">
   <title>City Arcade · McCluster City</title>
   <link rel="stylesheet" href="css/style.css?v=__STAMP__">
   <link rel="stylesheet" href="css/city-arcade.css?v=__STAMP__">
 </head>
 <body>
+  <!-- Nothing but this panel exists until the server says this is the house owner (js/owner-only.mjs); the arcade and
+       its games load only after that yes (owner, 2026-11-03: private like the rest of the games until playtested). -->
+  <section class="owner-gate" aria-live="polite" data-owner-gate data-owner-template="arcadeTpl" data-owner-load="js/city-arcade/app.mjs?v=__STAMP__">
+    <h1>City Arcade</h1>
+    <p data-owner-msg>Checking access with the server…</p>
+  </section>
+  <template id="arcadeTpl">
   <a class="skip" href="#arcade-play">Skip to game</a>
   <main class="arcade-shell">
     <header class="arcade-head">
-      <div class="eyebrow">MCCLUSTER CITY / ARCADE PILOT</div>
+      <div class="eyebrow">MCCLUSTER CITY / ARCADE</div>
       <h1>Every storefront.<br><em>A different game.</em></h1>
-      <p>Quick web mini-games from a connected fictional city. No account or purchase required for this public prototype.</p>
+      <p>Quick mini-games from the shops of McCluster City.</p>
       <nav aria-label="Related destinations">
-        <a href="fictional-city.html">Enter 3D City <span>(owner preview)</span></a>
-        <a href="game-hub.html">Course Game Hub <span>(owner preview)</span></a>
+        <a href="fictional-city.html">Enter 3D City</a>
+        <a href="game-hub.html">Course Game Hub</a>
       </nav>
     </header>
     <div class="arcade-layout">
       <section class="arcade-catalog" aria-labelledby="catalog-title">
         <h2 id="catalog-title">Games on the block</h2>
-        <p class="hint">Two playable prototypes. More shop games have reserved IDs and unique concepts.</p>
+        <p class="hint">Two games are playable now. Every other shop has its own game on the way.</p>
         <div id="arcade-list" class="game-list" aria-label="Available game list">
           <p role="status">Loading the arcade…</p>
         </div>
@@ -35,11 +43,12 @@
       </section>
     </div>
     <footer>
-      <p>Prototype arcade points and police response are fictional and local to this browser. Nothing here changes the 3D city's saves, cash, accounts or the original Robbery 1s screenplay.</p>
-      <p>City geometry, businesses and characters are dramatized; real Bridgeport streets and government places remain distinct from fiction.</p>
+      <p>Arcade scores are saved on this device and stay separate from your city save, credits and story progress.</p>
     </footer>
   </main>
+  </template>
+  <script type="module" src="js/owner-only.mjs?v=__STAMP__"></script>
+  <script src="js/mcc-auth.js?v=__STAMP__"></script>
   <script src="js/tabbar.js?v=__STAMP__"></script>
-  <script type="module" src="js/city-arcade/app.mjs?v=__STAMP__"></script>
 </body>
 </html>
