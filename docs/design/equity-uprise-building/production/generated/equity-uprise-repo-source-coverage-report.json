@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 527,
+  "candidate_count": 528,
   "capability_source_count": 102,
-  "support_only_count": 425,
-  "checks_total": 2008,
-  "checks_passed": 2008,
+  "support_only_count": 426,
+  "checks_total": 2012,
+  "checks_passed": 2012,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -169,6 +169,7 @@
     "docs/control-plane/evidence/production-schema-snapshot-2026-10-29.json",
     "docs/control-plane/evidence/production-schema-snapshot-2026-10-30.json",
     "docs/control-plane/evidence/production-schema-snapshot-2026-10-31.json",
+    "docs/control-plane/evidence/production-schema-snapshot-2026-11-03.json",
     "docs/control-plane/registry.json",
     "docs/design/HERE-BRAND-LIBRARY.md",
     "docs/design/HERE-CURRENT-STATE-AUDIT.md",
@@ -541,7 +542,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "527 entries"
+      "detail": "528 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -8875,6 +8876,26 @@
     },
     {
       "name": "docs/control-plane/evidence/production-schema-snapshot-2026-10-31.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/production-schema-snapshot-2026-11-03.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/production-schema-snapshot-2026-11-03.json classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/control-plane/evidence/production-schema-snapshot-2026-11-03.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/evidence/production-schema-snapshot-2026-11-03.json support rationale present",
       "passed": true,
       "detail": ""
     },
