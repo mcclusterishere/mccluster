@@ -98,6 +98,9 @@ test('the page offers the level from the tactics menu, is noindex and never ship
   assert.doesNotMatch(html, /user-scalable=no|maximum-scale=1/);
   assert.doesNotMatch(html, /@media \(max-width/);
   assert.doesNotMatch(html, /[^/]\/\/\/[^/]/, 'no drawn /// beside the wordmark');
+  const page = await readFile(new URL('../../js/prim3-tactics/transit.mjs', import.meta.url), 'utf8');
+  assert.doesNotMatch(page, /getRandomValues|Math\.random/, 'rolls come only from the engine seed saved with the state');
+  assert.match(page, /An unseen shooter/, 'the log never names a hostile the player cannot see');
   const menu = await readFile(new URL('../../js/prim3-tactics/preview.mjs', import.meta.url), 'utf8');
   assert.match(menu, /prim3-transit\.html/);
   const man = JSON.parse(await readFile(new URL('../../assets/3d/prim3-operators/manifest.json', import.meta.url), 'utf8'));
