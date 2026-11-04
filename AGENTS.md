@@ -165,6 +165,17 @@ implementations before adding another framework. A local test or preview does no
 authorize production migrations, merges, deployments, purchases or release flags;
 existing approval and product-specific gates still apply.
 
+Preserve reviewable work remotely. After a bounded implementation and meaningful
+local checks, promptly commit and push to a review branch and open or update a
+**draft PR** against `main`, or a clearly documented stacked base. Check existing
+PRs and concurrent edits first; reuse the appropriate PR instead of duplicating
+work. Let CI and existing bot reviews evaluate integration, then address their
+findings. Report the exact branch/head, dependencies, actual checks, failures and
+remaining gaps honestly; local fixtures are not production proof. Do not leave
+completed work only in an agent workspace while waiting for release approval.
+This review-publication direction does not authorize merge, deployment, production
+SQL, spending or bypassing an approval denial; report any publication blocker.
+
 ### Shared website navigation
 
 Owner direction, 2026-10-16: all admin destinations are reachable from the shared
