@@ -189,7 +189,7 @@ real-geography ingestion, region/planet travel, per-business interiors, cloud sa
   at their surveyed locations: their identity and address are `verified` and their footprint and coordinates are
   `authored` in each record's `realInstitution.fieldProvenance`. Placing them at their real addresses is a later,
   sourced geography change (CT footprint plus OSM ODbL attribution). The lore's paid
-  interactions now sit on `hq-waterfront/shop-01` (Bail Mary Bail Bonds), never on a real institution.
+  interactions now sit on `hq-waterfront/shop-01` (Hail Mary Bail Bonds), never on a real institution.
 - **Stable IDs for future portals.** Parcel IDs (`<neighbourhood>/<parcel>`) and the original business IDs are the
   stable place IDs a later `placeId` game portal can target; nothing here builds arcade or Designer Kicks mechanics.
 - **A region as a second tile source (#723).** The scene's chunk loader takes `{ chunks: [{ id, bounds, file }] }`

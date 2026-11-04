@@ -4168,7 +4168,7 @@
     {
       "id": "civic-center",
       "name": "Precinct Square",
-      "lore": "The city’s civic heart, in the sense that something is technically beating. The Bridgeport Police Department’s headquarters holds one corner under its own name; everything around it is private enterprise with ambitions. St. Copay’s, a private hospital, measures its emergency-room wait in fiscal quarters. The church shares a parking lot with the bank, a sermon schedule with the bank’s overdraft calendar, and a boot technician with Bail Mary’s expediting desk. The School of Hard Knocks sits behind an ivy-covered wall it imported from a richer city, and directly across the square, in a former dentist’s office, Wiggers Anonymous meets every night with fresh coffee and very low expectations.",
+      "lore": "The city’s civic heart, in the sense that something is technically beating. The Bridgeport Police Department’s headquarters holds one corner under its own name; everything around it is private enterprise with ambitions. St. Copay’s, a private hospital, measures its emergency-room wait in fiscal quarters. The church shares a parking lot with the bank, a sermon schedule with the bank’s overdraft calendar, and a boot technician with Hail Mary’s expediting desk. The School of Hard Knocks sits behind an ivy-covered wall it imported from a richer city, and directly across the square, in a former dentist’s office, Wiggers Anonymous meets every night with fresh coffee and very low expectations.",
       "parcelIds": [
         "civic-center/church",
         "civic-center/hospital",
@@ -4755,7 +4755,7 @@
       "category": "Hospital and emergency room",
       "tagline": "Now accepting insurance, collateral and livestock.",
       "description": "A private hospital with a charity name. The emergency-room wait is measured in fiscal quarters, the vending machine sells aspirin by the half-tablet, and the cosmetic wing is nicer than the cardiology wing because cosmetic pays up front.",
-      "backstory": "St. Copay’s was a charity hospital until a private-equity firm bought it, renamed the chapel the Revenue Cycle Center, and installed a card reader on the defibrillator. Charge nurse Rosa Delgado holds the emergency room together with tape, sarcasm and a personal stash of saline. Dr. Margaux Vanderhoff runs the cosmetic emergency department, which treats crises like asymmetric lip filler, and is the hospital’s most profitable physician. Bail Mary’s expediting desk sells “priority intake” wristbands in the waiting room. The emergency room does not recognize them, and Rosa keeps the confiscated ones in a jar.",
+      "backstory": "St. Copay’s was a charity hospital until a private-equity firm bought it, renamed the chapel the Revenue Cycle Center, and installed a card reader on the defibrillator. Charge nurse Rosa Delgado holds the emergency room together with tape, sarcasm and a personal stash of saline. Dr. Margaux Vanderhoff runs the cosmetic emergency department, which treats crises like asymmetric lip filler, and is the hospital’s most profitable physician. Hail Mary’s expediting desk sells “priority intake” wristbands in the waiting room. The emergency room does not recognize them, and Rosa keeps the confiscated ones in a jar.",
       "color": "#c7d0c8",
       "staffIds": [
         "rosa-delgado",
@@ -4779,7 +4779,7 @@
       "category": "Municipal police department headquarters",
       "tagline": "300 Congress Street, Bridgeport, Connecticut",
       "description": "Headquarters of the City of Bridgeport’s police department, at 300 Congress Street. Residents come to the records window for reports, copies and case numbers. Imani Abernathy comes every Friday with a binder.",
-      "backstory": "Odalys Fairweather has worked the records window for nineteen years and spends a surprising part of each week explaining that the “expediting” fees Frank Mulrooney collects at Bail Mary Bail Bonds buy nothing: there is no back door, no friend inside and no menu. The department’s own history includes the 2018 police-chief exam scheme, which ended in two guilty pleas; Ignacio Delgado keeps that story, from the court record, in his second ledger.",
+      "backstory": "Odalys Fairweather has worked the records window for nineteen years and spends a surprising part of each week explaining that the “expediting” fees Frank Mulrooney collects at Hail Mary Bail Bonds buy nothing: there is no back door, no friend inside and no menu. The department’s own history includes the 2018 police-chief exam scheme, which ended in two guilty pleas; Ignacio Delgado keeps that story, from the court record, in his second ledger.",
       "color": "#5d7385",
       "staffIds": [
         "odalys-fairweather"
@@ -4852,7 +4852,7 @@
       "id": "bail-mary-bonds",
       "parcelId": "hq-waterfront/shop-01",
       "neighborhoodId": "hq-waterfront",
-      "name": "Bail Mary Bail Bonds",
+      "name": "Hail Mary Bail Bonds",
       "category": "Bail bonds, devotional candles and a back-counter “expediting” desk",
       "tagline": "Hail Mary, full of bail.",
       "color": "#c08a52",
@@ -4892,7 +4892,7 @@
             "frank-mulrooney"
           ],
           "payee": "private-middleman",
-          "outcome": "Brenda drops your Bail Mary customer folder into a shredder labeled ARCHIVE. Ray still has a copy. Ray always has a copy."
+          "outcome": "Brenda drops your Hail Mary customer folder into a shredder labeled ARCHIVE. Ray still has a copy. Ray always has a copy."
         },
         {
           "type": "bribe",
@@ -4917,7 +4917,7 @@
           "outcome": "Frank nods slowly. A man in a hard hat from the “Neighborhood Standards Committee” appears. He is also Frank, in a different hat. The committee does not exist, and the competitor knows it."
         }
       ],
-      "bribeRules": "Payoffs cost game credits only and buy nothing real. Every one is paid to a fictional private middleman at Bail Mary’s back counter, never to a police department, government office or real person. A payoff records a fictional receipt and a line of dialogue; it does not unlock real services, change any real record, or imply real legal advice. Minors cannot be offered or accept one."
+      "bribeRules": "Payoffs cost game credits only and buy nothing real. Every one is paid to a fictional private middleman at Hail Mary’s back counter, never to a police department, government office or real person. A payoff records a fictional receipt and a line of dialogue; it does not unlock real services, change any real record, or imply real legal advice. Minors cannot be offered or accept one."
     },
     {
       "authorship": "new-2026-11-03",
@@ -5271,7 +5271,7 @@
         "kayleigh-spurlock"
       ],
       "description": "The regional headquarters of an essential-oil opportunity with three employees and nine thousand Diamond Executive Founders.",
-      "backstory": "Kayleigh Spurlock is a Diamond Executive Platinum Founder, which means she recruited Tammy Pruitt, who recruited the entire Bail Mary Bombers softball team. The oils are mostly lavender. The business model is mostly Tammy. Kayleigh has a car the company technically owns and a garage full of inventory she technically bought.",
+      "backstory": "Kayleigh Spurlock is a Diamond Executive Platinum Founder, which means she recruited Tammy Pruitt, who recruited the entire Hail Mary Bombers softball team. The oils are mostly lavender. The business model is mostly Tammy. Kayleigh has a car the company technically owns and a garage full of inventory she technically bought.",
       "interior": {
         "style": "Pastel office with a vision board",
         "description": "Shelves of tiny bottles, a ring light, a recruitment pyramid labeled TEAM TREE, and a closet of unsold starter kits."
@@ -5603,7 +5603,7 @@
       "role": "Wiggers Anonymous member; “pharmaceutical entrepreneur” (sells oregano)",
       "businessId": "wiggers-anonymous",
       "familyId": "babbitt-family",
-      "backstory": "Gary lives in his mother’s basement in Cul-de-Sadness and calls it the trap. He calls himself G-Babb$ and says he is a drug dealer, which would be serious if anything he sold were a drug. His supplier is the spice aisle. His bestseller is oregano. His premium product is loose tea he buys retail at GAURANFUCKING TEA and resells in sandwich bags at a loss. Nobody has ever arrested him, because nothing in the bag is illegal, so every month he pays Frank Mulrooney’s laminated-menu price at Bail Mary to keep it that way, out of respect for the process. His mother, Linda, prays for him by name at the Tabernacle. He comes to Wiggers Anonymous because she drives him. He has three days.",
+      "backstory": "Gary lives in his mother’s basement in Cul-de-Sadness and calls it the trap. He calls himself G-Babb$ and says he is a drug dealer, which would be serious if anything he sold were a drug. His supplier is the spice aisle. His bestseller is oregano. His premium product is loose tea he buys retail at GAURANFUCKING TEA and resells in sandwich bags at a loss. Nobody has ever arrested him, because nothing in the bag is illegal, so every month he pays Frank Mulrooney’s laminated-menu price at Hail Mary to keep it that way, out of respect for the process. His mother, Linda, prays for him by name at the Tabernacle. He comes to Wiggers Anonymous because she drives him. He has three days.",
       "personality": "Self-important, broke, deeply loyal to his mom; the least dangerous dealer in America.",
       "appearance": {
         "shirt": "#bc7964",
@@ -7380,7 +7380,7 @@
       "name": "Frank “the Captain” Mulrooney",
       "age": 58,
       "origin": "Cul-de-Sadness, McCluster City",
-      "role": "Owner, Mulrooney & Son Expediting (the back counter at Bail Mary Bail Bonds); captain of the Bail Mary Bombers softball team",
+      "role": "Owner, Mulrooney & Son Expediting (the back counter at Hail Mary Bail Bonds); captain of the Hail Mary Bombers softball team",
       "businessId": "bail-mary-bonds",
       "familyId": "mulrooney-family",
       "backstory": "Frank inherited Mulrooney & Son Expediting from his father the way other men inherit a watch: a desk, a rubber stamp and a promise to make problems go away for a fee. He believes every problem is a revenue opportunity that has not been invoiced yet. The secret of the business, which his mother taught him and Brenda Szabo has written down, is that the fee buys nothing: Frank knows nobody in any office, has never reached anyone who could fix anything, and relies on most problems going away by themselves. He sits in the front pew of the Tabernacle and has never put a cent in the plate; Mother Odessa has a file on him. The Ashbys and the Whitmore-Sterlings keep him on retainer and sponsor his softball team. He lives with his mother, Peg, who still corrects his arithmetic.",
@@ -7686,7 +7686,7 @@
       "businessId": "bridgeport-police-department",
       "fictionalCharacter": true,
       "holdsRealOffice": false,
-      "backstory": "Odalys has worked the records window for nineteen years. She has photocopied every kind of paper a city produces and can tell a real form from a laminated fake across the lobby. A surprising part of her week goes to explaining that the “expediting” fees Frank Mulrooney collects at Bail Mary Bail Bonds buy nothing: there is no back door, no friend inside and no menu. She keeps a copy of Imani Abernathy’s binder because it is the best-organized document anyone has ever handed her, and she gives Imani a case number every Friday.",
+      "backstory": "Odalys has worked the records window for nineteen years. She has photocopied every kind of paper a city produces and can tell a real form from a laminated fake across the lobby. A surprising part of her week goes to explaining that the “expediting” fees Frank Mulrooney collects at Hail Mary Bail Bonds buy nothing: there is no back door, no friend inside and no menu. She keeps a copy of Imani Abernathy’s binder because it is the best-organized document anyone has ever handed her, and she gives Imani a case number every Friday.",
       "personality": "Unhurried, exact, quietly funny; treats paperwork as a public service and a laminated menu as a personal insult.",
       "appearance": {
         "shirt": "#5d7385",
@@ -7734,7 +7734,7 @@
             "lines": [
               {
                 "speaker": "You",
-                "text": "A man at Bail Mary says he can make my ticket go away for a fee."
+                "text": "A man at Hail Mary says he can make my ticket go away for a fee."
               },
               {
                 "speaker": "Odalys Fairweather",
@@ -7769,7 +7769,7 @@
       "name": "Deacon Ray Fitch",
       "age": 55,
       "origin": "Biloxi, Mississippi, USA",
-      "role": "Owner, Bail Mary Bail Bonds; Tabernacle deacon",
+      "role": "Owner, Hail Mary Bail Bonds; Tabernacle deacon",
       "businessId": "bail-mary-bonds",
       "backstory": "Ray realized his Sunday congregation and his weekday clientele were the same people on different days, and he built a bundle. He sells bonds Monday through Saturday and forgiveness on Sunday, with a combo rate. He rents his back counter to Frank Mulrooney’s expediting desk, which refers clients to him for a cut; he refers them back for a cut of the cut. He hands out business cards with the church bulletin and has never seen a conflict of interest he couldn’t monetize.",
       "personality": "Folksy, quick, pious in a way that keeps receipts.",
@@ -8803,7 +8803,7 @@
       "origin": "Reno, Nevada, USA",
       "role": "Front desk and owner, The No-Tell Motel",
       "businessId": "no-tell-motel",
-      "backstory": "Patti runs the front desk behind plexiglass and has never once told anybody anything, which is why everybody tells her everything. She knows which councilman rents room 9, which deacon rents room 11, and where Celeste Ashby actually goes on her wellness retreat. She will take every secret to her grave, at standard rates, unless someone offers more. She is the only private intelligence service in the city and it costs less than the laminated menu at Bail Mary’s expediting desk.",
+      "backstory": "Patti runs the front desk behind plexiglass and has never once told anybody anything, which is why everybody tells her everything. She knows which councilman rents room 9, which deacon rents room 11, and where Celeste Ashby actually goes on her wellness retreat. She will take every secret to her grave, at standard rates, unless someone offers more. She is the only private intelligence service in the city and it costs less than the laminated menu at Hail Mary’s expediting desk.",
       "personality": "Deadpan, discreet, mercenary with a heart of brass.",
       "appearance": {
         "shirt": "#5f7f9a",
@@ -8888,7 +8888,7 @@
       "origin": "Provo, Utah, USA",
       "role": "Diamond Executive Platinum Founder, Uplineage Essential Oils",
       "businessId": "uplineage-oils",
-      "backstory": "Kayleigh is a Diamond Executive Platinum Founder, a title she earned by recruiting Tammy Pruitt, who recruited the Bail Mary Bombers softball team, who recruited their wives, who recruited nobody. Uplineage’s regional headquarters has three employees and nine thousand executives. The oils are mostly lavender. The business model is mostly Tammy. Kayleigh drives a car the company technically owns and lives above a garage of inventory she technically bought.",
+      "backstory": "Kayleigh is a Diamond Executive Platinum Founder, a title she earned by recruiting Tammy Pruitt, who recruited the Hail Mary Bombers softball team, who recruited their wives, who recruited nobody. Uplineage’s regional headquarters has three employees and nine thousand executives. The oils are mostly lavender. The business model is mostly Tammy. Kayleigh drives a car the company technically owns and lives above a garage of inventory she technically bought.",
       "personality": "Relentlessly upbeat, glazed, financially in freefall with a smile.",
       "appearance": {
         "shirt": "#c4a35a",
@@ -8973,7 +8973,7 @@
       "origin": "Greenwich, Connecticut, USA",
       "role": "Gala chair and School of Hard Knocks board member",
       "familyId": "whitmore-sterling-family",
-      "backstory": "Ainsley chairs the School of Hard Knocks gala, funds the Willy Whackers uniforms through Thugged Out Apparel, and has never let anybody finish a sentence. She keeps Frank Mulrooney on retainer and sponsors his Bail Mary Bombers softball team so her son’s practicum is never interrupted. She has a gala table at the Tabernacle and has never attended a service. She describes her family as “so normal” in a voice that makes everyone around her nervous.",
+      "backstory": "Ainsley chairs the School of Hard Knocks gala, funds the Willy Whackers uniforms through Thugged Out Apparel, and has never let anybody finish a sentence. She keeps Frank Mulrooney on retainer and sponsors his Hail Mary Bombers softball team so her son’s practicum is never interrupted. She has a gala table at the Tabernacle and has never attended a service. She describes her family as “so normal” in a voice that makes everyone around her nervous.",
       "personality": "Gracious, overbearing, unaware; philanthropy as a social weapon.",
       "appearance": {
         "shirt": "#9c7b54",
@@ -9355,9 +9355,9 @@
       "name": "Tammy Pruitt",
       "age": 37,
       "origin": "Cul-de-Sadness, McCluster City",
-      "role": "Uplineage Silver Founder; Bail Mary Bombers softball booster",
+      "role": "Uplineage Silver Founder; Hail Mary Bombers softball booster",
       "familyId": "pruitt-family",
-      "backstory": "Tammy is a Silver Founder at Uplineage Essential Oils, down eleven thousand credits, with two thousand bottles of lavender stacked to the ceiling of the garage. She sells oils in the Tabernacle lobby between services, at Bail Mary Bombers softball games and, once, at a funeral. Her husband boots cars to cover her inventory. She has enrolled her children as junior founders. She is not a villain; she is a woman who believed a woman named Kayleigh, and now cannot stop.",
+      "backstory": "Tammy is a Silver Founder at Uplineage Essential Oils, down eleven thousand credits, with two thousand bottles of lavender stacked to the ceiling of the garage. She sells oils in the Tabernacle lobby between services, at Hail Mary Bombers softball games and, once, at a funeral. Her husband boots cars to cover her inventory. She has enrolled her children as junior founders. She is not a villain; she is a woman who believed a woman named Kayleigh, and now cannot stop.",
       "personality": "Bubbly, desperate, kind; a hostage to her own enthusiasm.",
       "appearance": {
         "shirt": "#879166",
@@ -9543,7 +9543,7 @@
       "origin": "Hartford, Connecticut, USA",
       "role": "Substitute teacher and Little League umpire",
       "familyId": "abernathy-family",
-      "backstory": "Curtis is a substitute teacher at every school in the city except one, a Little League umpire, and the most patient man in the city, a reputation he protects by never going near the School of Hard Knocks. He umpires the Bail Mary Bombers, the softball team Frank Mulrooney captains and the Ashbys and Whitmore-Sterlings sponsor, and he calls every attempted bribe a balk, loudly, in front of the bleachers. He is married to Harding High School’s debate coach and is the proudest father of a debate captain in Cul-de-Sadness.",
+      "backstory": "Curtis is a substitute teacher at every school in the city except one, a Little League umpire, and the most patient man in the city, a reputation he protects by never going near the School of Hard Knocks. He umpires the Hail Mary Bombers, the softball team Frank Mulrooney captains and the Ashbys and Whitmore-Sterlings sponsor, and he calls every attempted bribe a balk, loudly, in front of the bleachers. He is married to Harding High School’s debate coach and is the proudest father of a debate captain in Cul-de-Sadness.",
       "personality": "Calm, funny, principled; enjoys enforcing small rules on powerful people.",
       "appearance": {
         "shirt": "#4f7c78",
@@ -9558,7 +9558,7 @@
         "hq-waterfront/shop-01",
         "northside-residential/house-07"
       ],
-      "note": "Umpires the Bail Mary Bombers’ softball games.",
+      "note": "Umpires the Hail Mary Bombers’ softball games.",
       "dialogue": {
         "greeting": "Afternoon. You look like you’re about to do something against the rules. I’m off duty. Mostly.",
         "topics": [
@@ -9933,7 +9933,7 @@
       ],
       "ties": [
         "School of Hard Knocks board",
-        "Sponsors the Bail Mary Bombers softball team; keeps Frank Mulrooney on retainer",
+        "Sponsors the Hail Mary Bombers softball team; keeps Frank Mulrooney on retainer",
         "Thugged Out Apparel’s best customer",
         "Tabernacle gala table, never attends the service"
       ],
@@ -9969,7 +9969,7 @@
       "ties": [
         "Wants to redevelop the lots across Bond Street from Harding High School",
         "Tabernacle attendee for the tax receipt",
-        "Bail Mary Bombers softball sponsor"
+        "Hail Mary Bombers softball sponsor"
       ],
       "authorship": "new-2026-11-03",
       "provenance": "new_fiction"
@@ -10142,7 +10142,7 @@
       "ties": [
         "Harding High School",
         "Reports every Willy Whackers incident to the headmaster and the police records window, weekly",
-        "Curtis umpires the Bail Mary Bombers’ softball games and calls every bribe a balk"
+        "Curtis umpires the Hail Mary Bombers’ softball games and calls every bribe a balk"
       ],
       "authorship": "new-2026-11-03",
       "provenance": "new_fiction"
@@ -10208,7 +10208,7 @@
         }
       ],
       "ties": [
-        "Mulrooney & Son Expediting, at the back counter of Bail Mary Bail Bonds",
+        "Mulrooney & Son Expediting, at the back counter of Hail Mary Bail Bonds",
         "Front pew at the Tabernacle",
         "Peg plays cards with Gloria Benitez and Norma Klein"
       ],
@@ -10344,7 +10344,7 @@
     {
       "id": "bmb-prayer-candle",
       "businessId": "bail-mary-bonds",
-      "name": "Bail Mary Prayer Candle",
+      "name": "Hail Mary Prayer Candle",
       "description": "Scented like a courtroom. Price on the bottom.",
       "price": 12,
       "kind": "virtual_collectible",
@@ -10504,7 +10504,7 @@
     "expansionAuthorship": "Every neighborhood (other than the original block), business, resident, family and item added in schema revision 2 is new fiction written on 2026-11-03 from the owner’s brief; none is recovered history. Church attendance and cross-references to original residents are additive and do not change their biographies.",
     "expansionSatire": "Owner-directed adult satire. Wiggers Anonymous targets white men who wear a caricature of Black and hip-hop culture as a costume; the School of Hard Knocks targets a rich school and its students who turn other people’s lives into enrichment programming. The joke is always on the posers, the school, the store that sells the costume and the middlemen who sell influence they do not have, never on Black people or public-school students. No slurs beyond the owner-chosen business name, no n-word, no phonetic racial accent or dialect spelling, no real gang names and no real businesses. Real people appear only in sourced public-record scenes (constraints.publicRecord).",
     "expansionMinors": "Students at the School of Hard Knocks and Harding High School, and listed children in families, are minors and carry minor: true where they are residents. Their comedy is privilege, posturing and their school. No sexual content, no graphic injury, no bribes, purchases or adult transactions involving them. The owner-chosen gang name is used as a name only; no joke elaborates on it.",
-    "expansionPolice": "Owner decision 2026-11-03: the payoff mechanic never attaches to the real police department, any real officer, any government office or any real person. Interactions of type bribe keep their price in City credits and belong only to fictional private middlemen: Mulrooney & Son Expediting at the back counter of Bail Mary Bail Bonds. Their joke is that they reach nobody: each fee buys a fictional receipt and a line of dialogue, never a record change, a real service or legal advice.",
+    "expansionPolice": "Owner decision 2026-11-03: the payoff mechanic never attaches to the real police department, any real officer, any government office or any real person. Interactions of type bribe keep their price in City credits and belong only to fictional private middlemen: Mulrooney & Son Expediting at the back counter of Hail Mary Bail Bonds. Their joke is that they reach nobody: each fee buys a fictional receipt and a line of dialogue, never a record change, a real service or legal advice.",
     "expansionCount": "The owner asked for three suffering Wiggers Anonymous members and then named four jobs; the fellowship has four members, one per job.",
     "realWorldIdentity": "Owner direction, 2026-11-03: preserve real city names, street names, official geographic names and verified government entities, buildings and public functions. Fictionalize non-government premises, businesses and story people. Public-office roles remain real; individual official casting is undecided. Apply this rule before spatially binding expansion lore; invented public-institution proposals do not authorize renaming real institutions.",
     "realInstitutions": "Owner decision 2026-11-03: real streets, towns, cities, municipal entities and government buildings keep their real, sourced names. Fictional private businesses, occupants and people are the overlay. No invented replacement police precinct, public school or government office. A real institution carries a realInstitution block (official name, operator, address-level identity and sources), hosts no payoff interaction, and is staffed in game only by fictional civilians or teachers who hold no real office. idAliases keeps replaced IDs resolvable.",

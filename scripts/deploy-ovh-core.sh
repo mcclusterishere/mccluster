@@ -270,6 +270,9 @@ for model in ${EXTRA_MODELS}; do
 done
 
 # Keep timers enabled; restart only services that already exist on this host.
+# mccluster-core-weather.timer is installed above but deliberately NOT in this
+# list: Connecticut weather ingest stays off until the owner enables the timer
+# and sets WEATHER_INGEST_ENABLED=true (docs/control-plane/CONNECTICUT-WEATHER.md).
 for timer in mccluster-core-actors.timer mccluster-core-prim3-news.timer mccluster-core-world-news-pairing.timer mccluster-core-knowledge.timer mccluster-core-digest.timer mccluster-core-portfolio-plan.timer mccluster-core-reflection.timer mccluster-core-system-health.timer mccluster-vps-reconcile.timer; do
   if systemctl list-unit-files "${timer}" --no-legend 2>/dev/null | grep -q "${timer}"; then
     systemctl enable --now "${timer}"

@@ -395,3 +395,15 @@ test('expansion lore stays off the Bridgeport neighborhood: no shared IDs and no
     .replaceAll('Bridgeport Police Department', '');
   assert.doesNotMatch(overlay, /bridgeport|north of the (original )?block/i);
 });
+
+test('Hail Mary owner rename preserves the existing business, parcel and payment identities', () => {
+  const business = city.expansionBusinesses.find(b => b.id === 'bail-mary-bonds');
+  assert.equal(business.name, 'Hail Mary Bail Bonds');
+  assert.equal(business.parcelId, 'hq-waterfront/shop-01');
+  assert.equal(city.expansionBusinesses.filter(b => b.name === 'Hail Mary Bail Bonds').length, 1);
+  assert.ok(!city.expansionBusinesses.some(b => b.id === 'hail-mary-bonds' || b.id === 'hail-mary-bail-bonds'));
+  assert.ok(business.staffIds.every(id => city.expansionNpcs.some(n => n.id === id && n.businessId === business.id)));
+  assert.ok(city.expansionItems.some(i => i.id === 'bmb-prayer-candle' && i.businessId === business.id));
+  assert.ok(business.interactions.every(i => i.payee === 'private-middleman'));
+  assert.doesNotMatch(JSON.stringify(city), /Bail Mary/);
+});

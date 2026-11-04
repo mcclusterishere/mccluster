@@ -46,7 +46,7 @@ Retain CT source metadata and visible OpenStreetMap attribution for derived road
   Department and `northside-residential/public-school` is Harding High School, each with a sourced
   `realInstitution` block, staffed only by fictional civilians, teachers and students; `idAliases` keeps
   `precinct-zero` and `municipal-high-9` resolvable. Payoff interactions (`type: "bribe"`, `price` in
-  credits) belong only to fictional private middlemen (Bail Mary's expediting desk), never to a real
+  credits) belong only to fictional private middlemen (Hail Mary's expediting desk), never to a real
   institution or person.
 - Corruption storylines reenact only real, proven public-record cases (`publicRecordArcs`): conviction,
   plea, court finding or official record, each scene with `basis` and `sources: [{title, url, date}]`,
