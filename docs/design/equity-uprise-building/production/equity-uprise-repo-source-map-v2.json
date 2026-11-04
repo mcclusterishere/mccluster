@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 613,
+  "candidate_count": 619,
   "capability_source_count": 104,
-  "support_only_count": 509,
+  "support_only_count": 515,
   "entries": [
     {
       "path": ".cursorrules",
@@ -4564,6 +4564,48 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Verifies existing HQ stair links through the tactical resolver without modifying floors, circulation or building capabilities."
+    },
+    {
+      "path": "scripts/test/prim3-lifecycle.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Tests tactical turn recovery and browser save validation, including existing Equity Uprise exercise save shapes; adds no building program capability."
+    },
+    {
+      "path": "docs/prim3/SHARED-SPATIAL-CONTRACT.md",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Proposes consistent derived game geometry, traversal and save frames while preserving canonical HQ authority; changes no building capability or geometry."
+    },
+    {
+      "path": "scripts/e2e/prim3-hq-stairs.e2e.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Exercises existing HQ public entrance and stair links through tactical UI controls; adds no spatial program or capability."
+    },
+    {
+      "path": "scripts/e2e/prim3-spatial-controls.e2e.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Verifies measured visual grid guides and per-level display preferences in Transit and the HQ game projection; changes no building geometry or program."
+    },
+    {
+      "path": "scripts/test/prim3-movement-knowledge.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Verifies player-known tactical movement, physical floor heights and existing HQ stairs; changes no building geometry or capability."
+    },
+    {
+      "path": "scripts/e2e/prim3-direct-landings.e2e.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Exercises existing HQ protected-stair links via explicit legal navigation controls; changes no building geometry or program."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",

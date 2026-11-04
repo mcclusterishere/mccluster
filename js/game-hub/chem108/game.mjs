@@ -35,7 +35,7 @@ function writeSave(s) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(s));
 const esc = (x) => String(x ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const reduced = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
-export function mount(host, { onExit } = {}) {
+export function mount(host, { onExit, onStart } = {}) {
   let catalog = null, save = readSave(), mode = 'name-it', topic = 'all';
   let round = null, q = null, lastId = null, results = [], records = {}, locked = false, timer = 0, lastTick = 0, advance = 0;
   host.innerHTML = '<p class="mr-loading" role="status">Loading the Chem-108 deck…</p>';
@@ -108,6 +108,7 @@ export function mount(host, { onExit } = {}) {
   }
 
   function start() {
+    onStart?.();
     round = newRound({ mode, topic }); results = []; records = { ...save.records }; lastId = null;
     host.innerHTML = `
       <div class="mr-play">
