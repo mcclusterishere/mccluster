@@ -18,7 +18,7 @@
       group.events.sort((a,b) => (Date.parse(time(b)) || 0) - (Date.parse(time(a)) || 0));
       group.level = group.events.some(e => e.level === 'error') ? 'error' : group.events.some(e => e.level === 'warn') ? 'warn' : 'info';
       group.latest = time(group.events[0]);
-      group.success = group.events.find(e => ['ok','success','succeeded','done'].includes(e.outcome)) || null;
+      group.success = group.events.find(e => e.level === 'info' && (e.status_code == null || e.status_code < 400) && ['ok','success','succeeded','done'].includes(e.outcome)) || null;
       return group;
     }).sort((a,b) => (Date.parse(b.latest) || 0) - (Date.parse(a.latest) || 0));
   }

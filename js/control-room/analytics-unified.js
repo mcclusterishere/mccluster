@@ -22,7 +22,20 @@
   function overview(S,h){
     var d=S.data,t=(d.traffic||{}).totals||{},b=d.business&&d.business.snapshot||{},house=S.site==='__first_party__',science=d.audienceScience||{},aud=science.totals||{},cm=b.commerce||{},sales=cm.available?(b.window?cm.live_in_window:cm.live):null;
     var tracks=Array.isArray(d.content)?d.content:[],scope=S.range&&S.range.label||'Selected range';
-    var metrics='<div class="cu-metrics cu-overview-metrics" aria-label="Key metrics. Swipe for more.">'+metric('Unique visitors',num(t.visitors),'Distinct devices · '+scope,'audience')+metric('Page views',num(t.page_views),scope+' · all countries','audience')+(house?metric('New accounts',num(b.users&&b.users.created_in_window),scope+' · all countries','identity')+metric('Music plays',num(b.music&&b.music.plays&&b.music.plays.in_window),scope+' · all countries','content')+metric('Verified sales',cash(sales&&sales.net_cents),'Live · net of refunds','action')+metric('Awaiting review',num(sum(d.missions,'submitted')),'Mission assignments · all time','action'):metric('Sessions',num(t.sessions),scope,'audience')+metric('Events',num(t.events),scope,'content'))+'</div>';
+    function value(key,v){return S.errors&&S.errors[key]||!S.completed||!S.completed[key]?null:v;}
+    function status(keys){
+      if(keys.some(function(k){return S.errors&&S.errors[k];}))return 'Some data unavailable';
+      if(keys.some(function(k){return S.quality&&S.quality[k];}))return 'Some measurements incomplete';
+      return keys.every(function(k){return S.completed&&S.completed[k];})?'Reads ready':'Waiting for data';
+    }
+    function group(label,icon,body,keys,section){
+      return '<section class="cu-summary-group"><header><span class="cu-summary-icon" aria-hidden="true">'+icon+'</span><h2>'+esc(label)+'</h2><button type="button" data-cra-sec="'+section+'" aria-label="Explore '+label+'">Explore →</button></header><p class="cu-summary-status">'+esc(status(keys))+'</p><div class="cu-summary-values">'+body+'</div></section>';
+    }
+    var metrics='<section class="cu-summary" aria-label="Insights summary"><p class="cu-note">'+esc(scope)+' · '+esc(house?'McCluster first-party':S.site)+' · all countries. '+(S.loading?'Updating…':S.updatedAt?'Last updated '+esc(date(S.updatedAt)):'Not updated yet')+'</p><div class="cu-summary-groups" role="region" aria-label="Audience, Content and Business summaries. Scroll horizontally for more." tabindex="0">'+
+      group('Audience','◎',metric('Unique visitors',num(value('totals',t.visitors)),'Distinct devices · '+scope,'audience')+metric('Page views',num(value('totals',t.page_views)),scope,'audience')+(house?metric('New accounts',num(value('business',b.users&&b.users.created_in_window)),scope+' · attribution in Journeys','identity'):''),house?['totals','business']:['totals'],'audience')+
+      group('Content','♫',house?metric('Music plays',num(value('business',b.music&&b.music.plays&&b.music.plays.in_window)),scope,'content')+metric('Track starts',num(value('content',sum(d.content,'starts'))),scope+' · recorded player events','content'):metric('Events',num(value('totals',t.events)),scope+' · property','content')+metric('Sessions',num(value('totals',t.sessions)),scope+' · property','audience'),house?['business','content']:['totals'],'content')+
+      (house?group('Business','↗',metric('Verified sales',cash(value('business',sales&&sales.net_cents)),(b.window?scope:'All time')+' · live, net of refunds','action')+metric('Awaiting review',num(value('missions',sum(d.missions,'submitted'))),'Mission assignments · all time','action'),['business','missions'],'action'):'')+
+      '</div><p class="cu-note">Scroll sideways for each summary group. — means not available, not zero. Open a value for its full detail. Counts with different labels or time windows are not added together.</p></section>';
 
     var f=d.funnel,keys=[['arrived','Arrived'],['heard_something','Listened'],['made_an_account','Signed up'],['paid','Purchase reports']];
     function stageValue(key){

@@ -48,6 +48,17 @@ for(const width of [390,820,1024,1440]){
   await page.screenshot({path:OUT+'/'+scope+'-'+name.toLowerCase().replace(/[^a-z]+/g,'-')+'-end.png'});
   await page.locator('.cad-body').evaluate(el=>el.scrollTop=0);
  }
+ // Compact overview: every group and metric is reachable without losing the existing detail.
+ await page.getByRole('tab',{name:'Overview',exact:true}).click();
+ check(scope+' three summary groups',await page.locator('.cu-summary-group').count()===3);
+ check(scope+' metric scope and missing-value meaning are explicit',(await page.locator('.cu-summary').innerText()).includes('not available, not zero'));
+ const summaryRegion=page.locator('.cu-summary-groups');await summaryRegion.focus();
+ check(scope+' summary carousel is keyboard reachable',await summaryRegion.evaluate(el=>document.activeElement===el));
+ await page.getByRole('button',{name:'Explore Business',exact:true}).click();
+ check(scope+' Business opens existing operations',await page.getByRole('tabpanel',{name:'Action & business',exact:true}).isVisible());
+ await page.getByRole('tab',{name:'Overview',exact:true}).click();
+ await page.locator('.cad-body').evaluate(el=>el.scrollTop=0);
+ await page.screenshot({path:OUT+'/'+scope+'-summary.png'});
  // Overview shortcuts, keyboard navigation, scroll restoration and shared actions.
  await page.getByRole('tab',{name:'Overview',exact:true}).click();
  await page.getByRole('button',{name:/Unique visitors:.*Open details/}).click();check(scope+' visitor metric opens Audience',await page.getByRole('tabpanel',{name:'Audience',exact:true}).isVisible());

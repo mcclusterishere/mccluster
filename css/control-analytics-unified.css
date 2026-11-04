@@ -120,3 +120,18 @@
 }
 
 .cu-detail>summary{padding:14px;border:1px solid var(--k-line);border-radius:10px;margin-bottom:10px;cursor:pointer;font-size:14px;color:#c8c8ce}
+
+/* Three summary groups; container-sized to also fit nested admin panels. */
+.cu-summary{container-type:inline-size}
+.cu-summary-groups{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(260px,85%);gap:10px;overflow-x:auto;scroll-snap-type:x proximity;padding:4px 2px 12px;scrollbar-width:thin}
+.cu-summary-group{scroll-snap-align:start;min-width:0;padding:12px;border:1px solid #39343e;border-radius:14px;background:var(--cr-panel,#111216)}
+.cu-summary-group header{display:flex;align-items:center;gap:8px}
+.cu-summary-group h2{font-size:16px;margin:0;flex:1}
+.cu-summary-group header button{min-width:44px;min-height:44px;background:transparent;color:inherit;border:1px solid #514955;border-radius:8px;padding:8px}
+.cu-summary-icon{font-size:22px;width:28px;text-align:center}
+.cu-summary-status{font-size:12px;margin:4px 0 10px;color:var(--cr-dim,#bcb7c2)}
+.cu-summary-values{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.cu-summary-values .cu-fact{min-width:0;min-height:108px;padding:10px;background:#18181e;color:#f3f1f5;border:1px solid #313039;border-radius:10px}
+.cu-summary-values .cu-fact strong{font-size:clamp(20px,5vw,32px);white-space:nowrap}
+.cu-summary :is(button,a):focus-visible{outline:2px solid currentColor;outline-offset:2px}
+@container(min-width:820px){.cu-summary-groups{grid-auto-flow:row;grid-auto-columns:auto;grid-template-columns:repeat(3,minmax(0,1fr))}.cu-summary-values{grid-template-columns:minmax(0,1fr)}}
