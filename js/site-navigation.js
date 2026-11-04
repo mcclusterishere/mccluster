@@ -9,7 +9,7 @@
   const get = id => document.getElementById(id);
   let coreReady, panel, profile, installed = false, group = 'All', opening = 0, lastControlTap = null;
   // The six Control sections come from NAV (js/control-room/nav.js); Products are the product doors.
-  const groups = ['All', 'Home', 'People', 'Sell', 'Create', 'Insights', 'System', 'Products'];
+  const groups = ['All', 'Home', 'Inbox', 'Sell', 'Create', 'Analytics', 'System', 'Products'];
   function element(tag, className, text) {
     const el = document.createElement(tag); el.className = className;
     if (text) el.textContent = text; return el;
@@ -41,7 +41,7 @@
     // Existing product doors; these are links, not newly granted entitlements.
     return native.concat([
       {label:'World', group:'Products', href:world, context:'Equity Uprise'},
-      {label:'Your desk', group:'People', href:new URL('mnet.html?view=feed&desk', root).href, context:'Personal work'},
+      {label:'Your desk', group:'Inbox', href:new URL('mnet.html?view=feed&desk', root).href, context:'Personal work'},
       /* ONE HALO (owner, 2026-10-22: "it takes you to multiple different places. Not everything is consolidated"): every
          Halo door opens the four screens on the globe (World, Missions, People, Intelligence), never the separate app */
       {label:'Hitman’s Halo', group:'Products', href:new URL('action-globe.html?explore=1&halo=1', house).href, context:'World · Missions · People · Intelligence'},
@@ -71,6 +71,7 @@
     const badges = window.CR.navBadges || {};
     host.replaceChildren();
     N.NAV.forEach(section => {
+      if (section.id === 'insights') return; // Analytics has its own bottom destination.
       const link = element('a', 'mcc-section'); link.href = controlHref(section.route);
       link.dataset.controlSection = section.id;
       link.innerHTML = N.icon(section.icon);
@@ -110,10 +111,10 @@
     if (panel) return;
     panel = element('section', 'mcc-destinations'); panel.id = 'mccDestinations';
     panel.setAttribute('popover', 'auto'); panel.setAttribute('role', 'dialog');
-    panel.setAttribute('aria-label', 'Control destinations');
-    panel.innerHTML = '<header><div><small>CONTROL ROOM · TAP TWICE FOR TODAY</small><h2>Where do you want to go?</h2></div><button type="button" id="mccDestinationsClose" aria-label="Close destinations">×</button></header>' +
-      '<label class="mcc-destinations__search">Find a destination<input id="mccDestinationSearch" type="search" placeholder="People, missions, publishing…" autocomplete="off"></label>' +
-      '<nav class="mcc-sections" id="mccSections" aria-label="Control sections"></nav>' +
+    panel.setAttribute('aria-label', 'Home destinations');
+    panel.innerHTML = '<header><div><small>HOME · TAP TWICE FOR TODAY</small><h2>Where do you want to go?</h2></div><button type="button" id="mccDestinationsClose" aria-label="Close destinations">×</button></header>' +
+      '<label class="mcc-destinations__search">Find a destination<input id="mccDestinationSearch" type="search" placeholder="Inbox, missions, publishing…" autocomplete="off"></label>' +
+      '<nav class="mcc-sections" id="mccSections" aria-label="Home sections"></nav>' +
       '<div class="mcc-destinations__groups" role="group" aria-label="Destination groups"></div>' +
       '<nav id="mccDestinationList" aria-label="Admin destinations"></nav><p id="mccDestinationCount" role="status" aria-live="polite"></p>';
     groups.forEach(name => {
@@ -192,8 +193,8 @@
       const button = element('button', old.className); button.type = 'button';
       button.id = 'mccControlToggle'; button.dataset.appnav = 'admin-home';
       button.innerHTML = old.innerHTML;
-      button.querySelector('span').textContent = 'Control';
-      button.setAttribute('aria-label', 'Control: tap for sections, tap twice for Today');
+      button.querySelector('span').textContent = 'Home';
+      button.setAttribute('aria-label', 'Home: tap for sections, tap twice for Today');
       button.setAttribute('aria-expanded', 'false'); button.setAttribute('aria-controls', 'mccDestinations');
       button.setAttribute('aria-haspopup', 'dialog'); button.onclick = controlTap;
       old.replaceWith(button);
@@ -204,12 +205,19 @@
   function markCurrent() {
     if (!installed) return;
     const button = get('mccControlToggle');
-    const on = /\/control\.html$/.test(location.pathname) && window.CR.workspaceCore.resolve(location.hash).section !== 'insights';
+    const on = /\/control\.html$/.test(location.pathname) && window.CR.workspaceCore.resolve(location.hash).section !== 'insights' && window.CR.workspaceCore.resolve(location.hash).section !== 'people';
     button?.classList.toggle('is-here', on);
     if (on) button?.setAttribute('aria-current', 'page'); else button?.removeAttribute('aria-current');
     // Analytics uses the same document, preserving org, draft editors and the globe instance.
     const analytics = dock.querySelector('[data-appnav="analytics"]');
     if (analytics) analytics.href = controlHref('#insights:overview');
+    const inbox = dock.querySelector('[data-appnav="admin-inbox"]');
+    if (inbox) {
+      inbox.href = controlHref('#people:inbox:conversations');
+      const active = /\/control\.html$/.test(location.pathname) && window.CR.workspaceCore.resolve(location.hash).section === 'people';
+      inbox.classList.toggle('is-here', active);
+      if (active) inbox.setAttribute('aria-current', 'page'); else inbox.removeAttribute('aria-current');
+    }
     if (panel?.matches(':popover-open')) render();
   }
   function closeProfile(focus = false) {

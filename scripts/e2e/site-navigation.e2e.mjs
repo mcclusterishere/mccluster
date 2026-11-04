@@ -35,6 +35,7 @@ async function setup(width,persona='owner'){
     }
     if(u.hostname==='api.mccluster.org'){
       if(p==='/v1/status') {const status=auth.status;if(auth.delay)await new Promise(resolve=>auth.release=resolve);return json(r,{ok:status===200},status);}
+      if(p==='/v1/observability/events')return json(r,{events:[{id:1,source:'worker',trace_id:'fixture-trace',event_name:'Fixture operation',level:'error',occurred_at:new Date().toISOString()},{id:2,source:'core',trace_id:'fixture-trace',event_name:'Fixture retry',level:'warn',occurred_at:new Date().toISOString()},{id:3,source:'worker',event_name:'Separate warning',level:'warn',occurred_at:new Date().toISOString()}],has_more:true});
       if(p==='/v1/workspaces/me')return json(r,{ok:true,profile:{id:USER},default_org_id:'o1',workspaces:[{org_id:'o1',slug:'mccluster',name:'McCluster',kind:'studio',role:auth.status===200?'owner':'viewer',enabled:true}]});
       if(p==='/v1/mnet/bootstrap')return json(r,{ok:true,profile:{display_name:'QA member',onboarding_complete:true},identity:{mccluster_id:'qa-member'},needs_onboarding:false,stats:{}});
       if(/^\/v1\/mnet\/people\/[^/]+$/.test(p)){
@@ -68,8 +69,33 @@ try{
     const {ctx,page,auth,errors}=await setup(width);
     await page.goto(BASE+'/control.html?org=o1#home');
     await page.waitForSelector('body[data-admin-navigation][data-site-navigation]');
-    check(width+' owner never sees the guest three-tab bar during entry',await page.evaluate(()=>__navFrames.every(n=>n===5)),await page.evaluate(()=>__navFrames));
+    check(width+' owner never sees the guest three-tab bar during entry',await page.evaluate(()=>__navFrames.every(n=>n===7)),await page.evaluate(()=>__navFrames));
     check(width+' profile is top right',await topRight(page));
+    const keys=await page.locator('.appbar [data-appnav]').evaluateAll(nodes=>nodes.map(n=>n.dataset.appnav));
+    check(width+' Inbox is directly left of Home and Games directly right of World',keys.indexOf('admin-inbox')+1===keys.indexOf('admin-home')&&keys.indexOf('halo')+1===keys.indexOf('games'));
+    check(width+' owner buttons have 44px touch targets',await page.locator('.appbar [data-appnav]').evaluateAll(nodes=>nodes.every(n=>{const r=n.getBoundingClientRect();return r.width>=44&&r.height>=44;})));
+    check(width+' Control is labeled Home',await page.locator('#mccControlToggle span').innerText()==='Home');
+    await page.evaluate(()=>window.__sliceDocument=123);
+    for(let cycle=0;cycle<3;cycle++){
+      await page.locator('[data-appnav="admin-inbox"]').click();
+      await page.waitForFunction(()=>location.hash==='#people:inbox:conversations' && document.querySelectorAll('.cr-inbox-category').length===3);
+      check(width+' Inbox categories and document retained '+cycle,await page.locator('.cr-inbox-category').count()===3&&await page.evaluate(()=>window.__sliceDocument===123));
+      check(width+' Inbox alone active '+cycle,await page.locator('.appbar [aria-current="page"]').evaluateAll(n=>n.length===1&&n[0].dataset.appnav==='admin-inbox'));
+      check(width+' Inbox fits '+cycle,await fits(page));
+      if(cycle===0)await page.screenshot({path:join(OUT,'inbox-'+width+'.png')});
+      await page.evaluate(()=>location.hash='#home:today');
+      await page.waitForFunction(()=>document.querySelector('#crSurface')?.getAttribute('data-cr-route')==='#home:today');
+    }
+    await page.evaluate(()=>location.hash='#system:observability');
+    await page.waitForSelector('.cr-system-event');
+    check(width+' shared trace groups two records without claiming incidents',await page.locator('.cr-system-event').count()===2&&(await page.locator('.cr-system-summary').innerText()).includes('not incident counts'));
+    await page.locator('.cr-system-event summary').first().click();
+    check(width+' original evidence and impact remain reachable',await page.locator('.cr-system-event[open]').innerText().then(t=>t.includes('Impact:')&&t.includes('Original event evidence')));
+    check(width+' System fits',await fits(page));
+    await page.screenshot({path:join(OUT,'system-'+width+'.png')});
+    await page.evaluate(()=>location.hash='#home:today');
+    await page.waitForFunction(()=>document.querySelector('#crSurface')?.getAttribute('data-cr-route')==='#home:today');
+
     /* one bottom bar: the Control sections (NAV) are a row under the topbar on a phone and the sidebar from 1024px, never a second fixed bar */
     check(width+' one global bottom bar',await page.locator('.appbar').count()===1&&await page.locator('#crSections').evaluate(el=>getComputedStyle(el).position!=='fixed'));
     await open(page);
@@ -84,7 +110,7 @@ try{
     await page.locator('[data-destination-group="All"]').click();
     await page.fill('#mccDestinationSearch','zzzzzz');
     check(width+' empty search is explicit',await page.locator('#mccDestinationCount').textContent()==='No destinations match. Try another search.');
-    await page.fill('#mccDestinationSearch','people');
+    await page.fill('#mccDestinationSearch','contacts');
     await page.locator('[data-control-route="#people:contacts"]').click();
     await page.waitForFunction(()=>location.hash==='#people:contacts');
     check(width+' native route opens with context',new URL(page.url()).searchParams.get('org')==='o1');
@@ -100,10 +126,10 @@ try{
 
     for(const path of ['/license.html','/brief.html','/music-admin.html','/control.html?org=o1#analytics','/control.html?org=o1#home']){
       await page.goto(BASE+path);await page.waitForSelector('body[data-admin-navigation][data-site-navigation]');
-      check(width+' consistent owner bar on '+path,await page.evaluate(()=>document.querySelectorAll('.appbar [data-appnav]').length===5&&__navFrames.every(n=>n===5)));
+      check(width+' consistent owner bar on '+path,await page.evaluate(()=>document.querySelectorAll('.appbar [data-appnav]').length===7&&__navFrames.every(n=>n===7)));
     }
     const routes=await page.evaluate(()=>CR.workspaceCore.routes.map(r=>r.hash));
-    for(const hash of routes){await page.evaluate(h=>{location.hash=h;},hash);await page.waitForFunction(h=>location.hash===h&&document.getElementById('crSurface')?.childElementCount>0,hash);check(width+' owner navigation stable at '+hash,await page.evaluate(()=>document.querySelectorAll('.appbar [data-appnav]').length===5&&!document.querySelector('#crInspector')?.classList.contains('is-open')));}
+    for(const hash of routes){await page.evaluate(h=>{location.hash=h;},hash);await page.waitForFunction(h=>location.hash===h&&document.getElementById('crSurface')?.childElementCount>0,hash);check(width+' owner navigation stable at '+hash,await page.evaluate(()=>document.querySelectorAll('.appbar [data-appnav]').length===7&&!document.querySelector('#crInspector')?.classList.contains('is-open')));}
     // Permission withdrawal is checked when opening, not trusted from an old UI.
     auth.status=403;await page.click('#mccControlToggle');
     await page.waitForFunction(()=>!window.MCC_BAR.admin());

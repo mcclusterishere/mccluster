@@ -117,7 +117,8 @@ try{
       more:!!document.getElementById('crMore')}));
     check(scope,'sidebar / bar sections come from NAV',JSON.stringify(nav.sections)===JSON.stringify(nav.expected),nav);
     check(scope,'sidebar items come from NAV',JSON.stringify(nav.subs)===JSON.stringify(nav.expectedSubs));
-    if(vp.width<1024)check(scope,'phone bar: Home People Sell Create + More',JSON.stringify(nav.phone)===JSON.stringify(['home','people','sell','create'])&&nav.more,nav.phone);
+    if(await page.locator('body[data-admin-navigation]').count())check(scope,'shared navigator replaces duplicated section rail',!await page.locator('#crSections').isVisible());
+    else if(vp.width<1024)check(scope,'phone bar: Home People Sell Create + More',JSON.stringify(nav.phone)===JSON.stringify(['home','people','sell','create'])&&nav.more,nav.phone);
     else check(scope,'desktop sidebar is visible with all six sections',await page.evaluate(()=>{const n=document.getElementById('crSections');const r=n.getBoundingClientRect();return r.left===0&&r.width>200&&[...n.querySelectorAll('[data-section]')].every(a=>a.getBoundingClientRect().width>0);}));
 
     /* every section renders, without overflow, and is screenshotted */
@@ -190,12 +191,12 @@ try{
 
     /* owner, 2026-11-02: always a way back to Control's home from the top bar */
     const crumb=page.locator('#crTopTitle a.cr-crumb__home');
-    check(scope,'the top bar reads Control › People away from home',(await page.locator('#crTopTitle').innerText()).replace(/\s+/g,' ').trim()==='Control › People',await page.locator('#crTopTitle').innerText());
+    check(scope,'the top bar reads Control › People away from home',(await page.locator('#crTopTitle').innerText()).replace(/\s+/g,' ').trim()==='Home › Inbox',await page.locator('#crTopTitle').innerText());
     const cb=await crumb.boundingBox();
     check(scope,'the Control crumb is visible and at least 44px tall',!!cb&&cb.height>=44&&cb.width>0,cb);
     await crumb.click();await page.waitForTimeout(400);
     check(scope,'the Control crumb goes to Home → Today',await page.evaluate(()=>location.hash)==='#home:today');
-    check(scope,'at home the crumb is plain Control, not a link',await page.evaluate(()=>{const t=document.getElementById('crTopTitle');return !t.querySelector('a')&&t.textContent.trim()==='Control';}));
+    check(scope,'at home the crumb is plain Control, not a link',await page.evaluate(()=>{const t=document.getElementById('crTopTitle');return !t.querySelector('a')&&t.textContent.trim()==='Home';}));
     check(scope,'no horizontal overflow with the crumb',await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth));
 
     /* palette entries come from NAV and find old names */
@@ -226,7 +227,7 @@ try{
         await page.locator('#mccControlToggle').click();
         await page.locator('#mccDestinations:popover-open').waitFor();
         await page.waitForTimeout(400); /* past the double-tap gap */
-        const panel=await page.evaluate(()=>({ids:[...document.querySelectorAll('#mccSections [data-control-section]')].map(a=>a.dataset.controlSection),nav:CR.nav.NAV.map(s=>s.id),
+        const panel=await page.evaluate(()=>({ids:[...document.querySelectorAll('#mccSections [data-control-section]')].map(a=>a.dataset.controlSection),nav:CR.nav.NAV.filter(s=>s.id!=='insights').map(s=>s.id),
           small:[...document.querySelectorAll('#mccSections [data-control-section]')].filter(a=>{const r=a.getBoundingClientRect();return r.height<44||r.width<44;}).length,vib:window.__vib.slice(),
           badge:document.querySelector('#mccSections [data-control-section="people"] .mcc-section__badge')?.textContent||null}));
         check(scope+' '+where,'one tap: a haptic tick and the six NAV sections above the bar',JSON.stringify(panel.ids)===JSON.stringify(panel.nav)&&JSON.stringify(panel.vib)==='[10]',panel);

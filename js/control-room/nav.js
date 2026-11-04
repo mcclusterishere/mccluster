@@ -62,8 +62,8 @@
       v("today", "Today", "home.today", ["#home", "Home", "Control Room", "Needs you", "Recent activity", "Public record", "attention", "dashboard"]),
       v("ask", "Ask McCluster", "home.ask", ["#ai", "AI", "McCluster AI", "chat", "voice", "qwen", "resident model"])
     ] },
-    { id: "people", label: "People", icon: "people", phone: true, blurb: "One inbox and one CRM list.", items: [
-      v("inbox", "Inbox", null, [], { views: [
+    { id: "people", label: "Inbox", icon: "chat", phone: true, blurb: "Conversations, people and follow-through in one place.", items: [
+      v("inbox", "Messages", null, [], { views: [
         v("conversations", "Conversations", "work.inbox", ["#work:inbox", "Work · Inbox", "messages", "conversations", "reply", "inbox.html"]),
         v("ai-reply", "AI reply", "work.desk-bot", ["#work:desk-bot", "Desk bot", "knowledge base", "kb", "refusals", "bot spend", "channels", "tools", "approvals", "desk.html"])
       ] }),
@@ -116,7 +116,7 @@
       v("clipping", "Clipping", "create.clipping", ["#create:clipping", "Create · Clipping", "clips"]),
       v("song-test", "Song test", "create.song-test", ["#create:song-test", "Create · Song test", "song testing", "listening test"])
     ] },
-    { id: "insights", label: "Insights", icon: "insights", phone: false, blurb: "The analytics deck and the Halo globe.", items: [
+    { id: "insights", label: "Analytics", icon: "insights", phone: false, blurb: "The analytics deck and the Halo globe.", items: [
       v("overview", "Overview", "analytics.overview", ["#analytics", "Analytics", "insights.html", "analytics.html", "traffic", "visitors", "sessions", "page views"]),
       v("audience", "Audience", "analytics.audience", ["reach", "return visits", "referrers"]),
       v("journeys", "Journeys", "analytics.identity", ["identity", "funnel", "attribution"]),
@@ -133,7 +133,7 @@
       v("overview", "Overview", "system.overview", ["#system:overview", "System · Overview", "health", "topology", "ovh", "cloudflare", "supabase", "infrastructure", "deployments"]),
       v("command", "Command", "system.command", ["#system:command", "System · Command", "capability bus", "objective", "approvals"]),
       v("workload", "Workload", "system.workload", ["#system:workload", "System · Workload", "jobs", "agents", "runs", "queues", "failures", "core"]),
-      v("observability", "Observability", "system.observability", ["#system:observability", "System · Observability", "logs", "traces", "incidents"]),
+      v("observability", "Activity & errors", "system.observability", ["#system:observability", "System · Observability", "logs", "traces", "incidents"]),
       v("resources", "Resources", "system.resources", ["#system:resources", "System · Resources", "providers", "usage", "spend", "api", "integrations", "ai costs"]),
       v("apps", "Apps", "apps", ["#apps", "Apps", "whip", "prim3", "manufacture", "specialized workspaces"]),
       v("build", "Build", "create.build", ["#create:build", "Create · Build", "build code", "code", "draft pull request"]),
@@ -195,6 +195,7 @@
   function resolve(hash) {
     var raw = String(hash || "").replace(/^#/, "").toLowerCase().trim();
     if (!raw) return { entry: LEAVES[0], legacy: false };
+    if (raw === "inbox" || raw.indexOf("inbox:") === 0) raw = raw.replace(/^inbox/, "people");
     var parts = raw.split(":");
     var exact = byRoute("#" + raw);
     if (exact) return { entry: exact, legacy: false };
