@@ -24,6 +24,8 @@ navigation and Chemistry/island/music UI files are untouched.
   RPC. Lifecycle/invoice events are present. Refund/dispute/fraud entitlement policy
   and webhook completeness require review before any new paid rollout.
 - `workspaces.js` `requireMembership`: verified user's membership in enabled org.
+  The shared resolver now requires explicit boolean enablement evidence: missing,
+  null, string or numeric values return 503 rather than granting access.
   `lib/capabilities.js` `requireCapability`: existing control_role_capabilities grant
   matrix. Resource ownership remains the owning route's check, never UI hiding.
 - Creator publication/cohort grants are specific publishing entitlements, not a
@@ -124,3 +126,15 @@ network requests are asserted to be GETs to the synthetic database origin. They
 cover foreign/disabled tenants, roles/resources, absent/configured/broken billing,
 expiry/status/price checks, owner presentation, and internal System isolation.
 They are not production Stripe, SQL/RLS or end-to-end UI acceptance.
+
+## Exact-head CI and independent-review repair
+
+The initial head's three red workflows shared one failure: `redirect: 'error'`
+is unsupported by workerd. Billing fetch now uses `manual`, rejects 3xx without
+following the Location or forwarding credentials, and retains the existing source
+contract unchanged. A behavioral redirect test covers the fail-closed result.
+Independent review found inherited `enabled !== false` normalization granted access
+when org enablement evidence was absent or malformed. The canonical workspace
+resolver now validates a real boolean before normalization. Both workspace and
+included-widget tests reject missing/null/string/numeric evidence with unavailable
+rather than claiming the tenant is enabled or merely subscription-locked.

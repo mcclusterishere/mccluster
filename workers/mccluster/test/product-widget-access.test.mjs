@@ -13,6 +13,8 @@ function harness(t,options={}){
   if(u.pathname.endsWith('/org_members'))return Response.json(options.members??[{role:'staff',orgs:{id:org,enabled:true}}]);
   if(u.pathname.endsWith('/control_role_capabilities'))return Response.json([{role:'staff',capability:'fixture.read',allowed:options.capability!==false}]);
   assert.equal(u.pathname,'/rest/v1/creator_billing_subscriptions');assert.equal(u.searchParams.get('org_id'),'eq.'+org);
+  assert.equal(init.redirect,'manual');
+  if(options.redirect)return new Response('',{status:302,headers:{location:'https://untrusted.fixture.invalid/'}});
   if(options.failure)return new Response('',{status:503});
   return Response.json(options.rows??[{org_id:org,status:'active',stripe_price_id:'price_fixture',current_period_end:'2099-01-01T00:00:00Z'}]);
  };
@@ -37,3 +39,6 @@ test('unregistered widget never invents an entitlement',async t=>{const {gate,re
 test('expired matching price does not grant access',async t=>{const {gate,request}=harness(t,{rows:[{org_id:org,status:'active',stripe_price_id:'price_fixture',current_period_end:'2000-01-01'}]});assert.equal((await gate.inspect(request,env,input)).state,'locked');});
 test('unexpired subscription to an unmapped price does not grant access',async t=>{const {gate,request}=harness(t,{rows:[{org_id:org,status:'active',stripe_price_id:'price_other',current_period_end:'2099-01-01'}]});assert.equal((await gate.inspect(request,env,input)).state,'locked');});
 test('workspace role does not imply house-internal authority',async t=>{const {gate,request}=harness(t,{policy:{...policy,kind:'internal'}});assert.equal((await gate.inspect(request,env,{...input,productId:'system'})).state,'forbidden');});
+
+test('billing redirects are refused without forwarding credentials or granting access',async t=>{const {gate,request,calls}=harness(t,{redirect:true});assert.equal((await gate.inspect(request,env,input)).state,'unavailable');assert.equal(calls.length,3);});
+for(const enabled of [undefined,null,'true','false',1,0])test('included widgets refuse malformed tenant enablement '+String(enabled),async t=>{const {gate,request,calls}=harness(t,{policy:{...policy,kind:'included'},members:[{role:'staff',orgs:{id:org,...(enabled===undefined?{}:{enabled})}}]});const d=await gate.inspect(request,env,input);assert.equal(d.state,'unavailable');assert.equal(d.allowed,false);assert.equal(calls.length,1);await assert.rejects(gate.requireAccess(request,env,input),e=>e.status===503);});

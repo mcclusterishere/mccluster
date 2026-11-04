@@ -55,7 +55,8 @@ export function createProductWidgetAccess({catalog,authenticate,authorizeResourc
       url.searchParams.set('org_id','eq.'+membership.org_id);
       url.searchParams.set('select','org_id,status,stripe_price_id,current_period_end');
       url.searchParams.set('limit','2'); // canonical schema has unique org_id; duplicates are unavailable
-      const response=await fetch(url,{redirect:'error',headers:{apikey:env.SUPABASE_SERVICE_ROLE_KEY,authorization:'Bearer '+env.SUPABASE_SERVICE_ROLE_KEY}});
+      const response=await fetch(url,{redirect:'manual',headers:{apikey:env.SUPABASE_SERVICE_ROLE_KEY,authorization:'Bearer '+env.SUPABASE_SERVICE_ROLE_KEY}});
+      if(response.status>=300&&response.status<400)throw Error('Billing redirect refused');
       if(!response.ok)throw Error('Billing read failed');
       const rows=await response.json();
       if(!Array.isArray(rows)||rows.length>1||rows.some(r=>!r||r.org_id!==membership.org_id||typeof r.status!=='string'||typeof r.stripe_price_id!=='string'))throw Error('Invalid billing result');
