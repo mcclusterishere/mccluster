@@ -4,7 +4,9 @@
 const BASE = 'https://api.mccluster.org/v1/prim3/learning/adaptive';
 const UUID = /^[0-9a-f-]{36}$/;
 export function createPracticeClient({ fetchImpl = globalThis.fetch, token, storage = globalThis.sessionStorage }) {
-  let scope = null, key = null, data = { sessionId: null, pending: null }, current = null, busy = false;
+  let scope = null, key = null, data = { sessionId: null, pending: null }, current = null, busy = false, maxEvents = 0;
+  const mustFinish = () => Boolean(current && current.flow.nextSeq >= maxEvents);
+  const mustAnswer = () => Boolean(current && current.flow.nextSeq === maxEvents - 1 && !current.flow.debrief.attempts);
   const persist = () => { if (key) storage.setItem(key, JSON.stringify(data)); };
   function clear() { if (key) storage.removeItem(key); data = { sessionId: null, pending: null }; current = null; }
   async function request(method, path, body) {
@@ -34,6 +36,8 @@ export function createPracticeClient({ fetchImpl = globalThis.fetch, token, stor
     async connect() {
       const config = await request('GET', '');
       if (!UUID.test(config.owner_id || '')) throw new Error('Server owner scope missing.');
+      if (!Number.isSafeInteger(config.max_events) || config.max_events < 4) throw new Error('Practice event limit unavailable.');
+      maxEvents = config.max_events;
       scope = config.owner_id; key = `prim3.adaptive.pending.v1:${scope}`;
       try { const saved = JSON.parse(storage.getItem(key) || 'null');
         // Treat storage as untrusted: requests are restricted to this API's session routes.
@@ -50,12 +54,16 @@ export function createPracticeClient({ fetchImpl = globalThis.fetch, token, stor
     },
     submit(type, fields = {}) {
       if (!current) throw new Error('Start the reviewed mission first.');
+      if (type !== 'finish' && mustFinish()) throw new Error('Practice limit reached. Save your debrief.');
+      if (type === 'hint' && mustAnswer()) throw new Error('Answer this checkpoint before saving your debrief.');
       if (type === 'answer' && !(typeof fields.answer === 'string' && /^-?\d{1,8}$/.test(fields.answer.trim()))) throw new Error('Enter a whole-number distance.');
-      return queue(`/sessions/${current.session_id}/events`, { id: crypto.randomUUID(), seq: current.flow.nextSeq,
-        type, questionId: current.flow.question?.id ?? null, ...fields });
+      return queue(`/sessions/${current.session_id}/events`, { ...fields, id: crypto.randomUUID(), seq: current.flow.nextSeq,
+        type, questionId: current.flow.question?.id ?? null });
     },
     retry, clear,
     get current() { return current; },
     get pending() { return data.pending !== null; },
+    get mustFinish() { return mustFinish(); },
+    get mustAnswer() { return mustAnswer(); },
   };
 }

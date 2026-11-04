@@ -20,6 +20,11 @@ function render() {
   $('pmBriefText').textContent = flow.brief;
   $('pmLevel').textContent = `Practice level ${flow.level} of 3 · expires ${new Date(flow.mission.expiresAt).toLocaleString()}`;
   $('pmQuestion').textContent = flow.question?.prompt || '';
+  for (const b of $('pmForm').querySelectorAll('button')) b.disabled ||= client.mustFinish;
+  $('pmHint').disabled ||= client.mustAnswer;
+  $('pmAnswer').disabled = working || client.pending || client.mustFinish;
+  if (client.mustFinish) $('pmLevel').textContent += ' · Practice limit reached. Save your debrief.';
+  else if (client.mustAnswer) $('pmLevel').textContent += ' · Answer this checkpoint, then save your debrief.';
   $('pmFinish').disabled ||= flow.debrief.attempts === 0;
   $('pmSummary').textContent = `${flow.debrief.correct} of ${flow.debrief.attempts} answers correct; ${flow.debrief.independent} without hints. Tactical outcome: ${flow.debrief.gameOutcome || 'not reported'} (learner-reported). ${flow.debrief.label} Evidence session: ${s.session_id}.`;
   $('pmNext').textContent = flow.debrief.nextStep;

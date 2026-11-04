@@ -41,9 +41,19 @@ try {
     assert.equal(db.tables.learning_evidence_events.length,4,'reload/retry did not duplicate evidence');
     await page.click('#pmReturn');await page.click('#pmHint');await page.waitForFunction(()=>document.getElementById('pmFeedback').textContent.includes('subtract'));
     await answer();await page.waitForFunction(()=>document.getElementById('pmFeedback').textContent.includes('scaffolding'));
+    // Reach the bounded session limit through the real handler, then reload at the final slot.
+    for(let i=0;i<26;i++){await answer();await page.waitForFunction(()=>!document.getElementById('pmFinish').disabled);}
+    assert.equal(db.tables.learning_evidence_events.length,32,'31 accepted events plus release; final slot remains free');
+    assert.equal(await page.locator('#pmForm button').first().isDisabled(),true);
+    assert.equal(await page.locator('#pmHint').isDisabled(),true);
+    assert.equal(await page.locator('#pmFinish').isEnabled(),true);
+    await page.reload();await page.click('#pmReturn');
+    assert.equal(await page.locator('#pmForm button').first().isDisabled(),true);
+    assert.equal(await page.locator('#pmHint').isDisabled(),true);
+    assert.equal(await page.locator('#pmRetry').isVisible(),false,'no rejected action is queued');
     await page.click('#pmFinish');await page.locator('#pmDebrief').waitFor({state:'visible'});
-    assert.match(await page.locator('#pmSummary').textContent(),/2 of 2 answers correct; 1 without hints/);
-    assert.equal(db.tables.learning_evidence_events.length,7);assert.equal(db.tables.learning_lab_sessions[0].outcome,'abandoned');
+    assert.match(await page.locator('#pmSummary').textContent(),/28 of 28 answers correct; 27 without hints/);
+    assert.equal(db.tables.learning_evidence_events.length,33);assert.equal(db.tables.learning_lab_sessions[0].outcome,'abandoned');
     assert.deepEqual(errors,[]);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth),true);
     console.log(`PASS ${width}px review → brief → Transit handoff → lost-ACK/reload/retry → validated answers → durable debrief (DB double), no errors/overflow`);
     await context.close();
