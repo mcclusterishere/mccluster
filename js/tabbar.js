@@ -588,10 +588,10 @@
     try { window.dispatchEvent(new CustomEvent("mcc:auth-state", { detail: AUTH_STATE })); } catch (e) {}
     if (!wingOn) HOME_BAR = dock.innerHTML;
   }
-  /* ---------- THE OWNER'S FIVE TABS (owner, 2026-10-15: "admin first; push features down to other users later") ----------
-     For the house owner only, the bar widens to five: Play (the player), Home (the Control Room: the admin back end lives
+  /* ---------- THE OWNER'S SEVEN TABS (owner, 2026-10-15: "admin first; push features down to other users later") ----------
+     For the house owner only, the bar widens to seven: Play (the player), Inbox, Home (the Control Room: the admin back end lives
      under Home now), the M (as supplied, assets/img/m-mark.png: scaled, never redrawn, no plate added), Analytics (its
-     own tab, control.html#analytics) and the Globe. Everyone else keeps the three columns above.
+     own tab, control.html#analytics), the Globe and Games. Everyone else keeps the three columns above.
      Who is the owner is the server's answer, never this browser's: GET /v1/status, the same owner check the Control Room
      and js/owner-control-redirect.js use (requireHouseOwner in the Worker). The answer is remembered for this tab's
      session only for negative answers (sessionStorage, one minute, tied to the user).
@@ -612,21 +612,29 @@
   var PLAY_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 4.8v14.4L19 12z" fill="currentColor"/></svg>';
   var HOME_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3.5 10.6 12 3.8l8.5 6.8"/><path d="M6 9v11h4.4v-5.6h3.2V20H18V9"/></svg>';
   var CHART_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><rect x="4.5" y="11" width="3" height="9" rx="1"/><rect x="10.5" y="4" width="3" height="16" rx="1"/><rect x="16.5" y="8" width="3" height="12" rx="1"/></svg>';
+  // Shared owner-only active-state registry. These links do not grant access;
+  // every destination retains its existing server gate.
+  var ADMIN_GAME_PAGES = ['city-arcade.html','fictional-city.html','game-hub.html','prim3.html','prim3-world.html','prim3-transit.html','prim3-range.html','prim3-courtyard.html','prim3-tactics-preview.html','equity-uprise-server-lab-3d.html'];
   function adminHere() {
+    if (ADMIN_GAME_PAGES.indexOf(PAGE_KEY) !== -1) return "games";
     /* the owner's globe is Hitman's Halo: lit while Halo is on screen */
+    if (/action-globe\.html$/.test(location.pathname) && new URLSearchParams(location.search).has("games")) return "games";
     if (/action-globe\.html$/.test(location.pathname) && new URLSearchParams(location.search).has("halo")) return "halo";
     if (!/control\.html$/.test(location.pathname)) return null;
+    if (/^#(?:people|inbox)(?::|$)|^#work(?::(?:inbox|people|companies|pipeline|tasks|clients|relationships|projects|deliverables|outreach|desk-bot))?$/i.test(location.hash)) return "admin-inbox";
     return /^#(analytics|insights)/i.test(location.hash) ? "analytics" : "admin-home";
   }
   function adminBar() {
     return '<a class="appbar__tab appbar__tab--icon" id="appbarNP" href="' + HOUSE + 'listen.html" data-appnav="music" aria-label="Play: the player">' + PLAY_SVG + '<span class="appbar__sr">Play</span></a>' +
-      '<a class="appbar__tab" href="' + HOUSE + 'control.html#home" data-appnav="admin-home" aria-label="Home: the Control Room">' + HOME_SVG + '<span>Home</span></a>' +
+      '<a class="appbar__tab" href="' + HOUSE + 'control.html#people:inbox:conversations" data-appnav="admin-inbox" aria-label="Inbox"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 5h16v11H9l-5 4z"/></svg><span>Inbox</span></a>' +
+      '<a class="appbar__tab" href="' + HOUSE + 'control.html#home" data-appnav="admin-home" aria-label="Home: admin workspace">' + HOME_SVG + '<span>Home</span></a>' +
       '<a class="appbar__tab appbar__tab--mid" href="' + HOUSE + 'index.html" data-appnav="home"><img class="appbar__m" src="' + ROOT + 'assets/img/m-mark.png" alt=""><span class="appbar__sr">' + textOf(HOUSE_LABEL) + '</span></a>' +
       '<a class="appbar__tab" href="' + HOUSE + 'control.html#analytics" data-appnav="analytics" aria-label="Analytics">' + CHART_SVG + '<span>Analytics</span></a>' +
       /* THE OWNER'S GLOBE IS HITMAN'S HALO (owner, 2026-10-22: "click the globe as matthew@mccluster.org ... It'll take you
          to the user globe and not the Hitman Halo globe"). Everyone else's globe is the World; the owner reaches the World
          feed from Halo's own header. Its key is "halo", not "world", so nothing that repaints the World door rewrites it. */
-      '<a class="appbar__tab appbar__tab--icon appbar__world" href="' + HOUSE + 'action-globe.html?explore=1&amp;halo=1" data-appnav="halo" aria-label="Open Hitman’s Halo">' + WORLD_SVG + '<span class="appbar__sr">Hitman’s Halo</span></a>';
+      '<a class="appbar__tab appbar__tab--icon appbar__world" href="' + HOUSE + 'action-globe.html?explore=1&amp;halo=1" data-appnav="halo" aria-label="Open Hitman’s Halo">' + WORLD_SVG + '<span class="appbar__sr">World: Hitman’s Halo</span></a>' +
+      '<a class="appbar__tab" href="' + HOUSE + 'action-globe.html?explore=1&amp;games=1" data-appnav="games" aria-label="Games: owner preview"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="6" width="18" height="13" rx="4"/><path d="M6 12h6M9 9v6M16 11h1M18 14h1"/></svg><span>Games</span></a>';
   }
   function markAdminHere() {
     if (!ADMIN_ON) return;

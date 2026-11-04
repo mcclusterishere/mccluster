@@ -29,7 +29,6 @@ const read = (p) => readFile(join(ROOT, p), 'utf8');
    A page is not exempt because somebody forgot — it is exempt because it
    is not a place you navigate around from. */
 const EXEMPT = {
-  'equity-uprise.html': 'public logged-out globe gateway with deliberately minimal navigation',
   'embed.html': 'an embeddable widget that runs inside somebody else\'s page',
   'archive.html': 'redirect stub', 'brand.html': 'redirect stub',
   'cut.html': 'redirect stub', 'door.html': 'redirect stub',
@@ -89,7 +88,7 @@ test('every tab destination has the bar it was reached from', async () => {
   const admin = all.slice(all.indexOf('function adminBar()'), all.indexOf('function markAdminHere()'));
   const adminHrefs = [...admin.matchAll(/href="'\s*\+\s*HOUSE\s*\+\s*'([a-z0-9-]+\.html)/g)].map((m) => m[1]);
   /* the owner's globe is Hitman's Halo (2026-10-22), on the house like the other four */
-  assert.deepEqual(adminHrefs, ['listen.html', 'control.html', 'index.html', 'control.html', 'action-globe.html']);
+  assert.deepEqual(adminHrefs, ['listen.html', 'control.html', 'control.html', 'index.html', 'control.html', 'action-globe.html', 'action-globe.html']);
   for (const href of new Set(adminHrefs)) {
     const html = await read(href);
     assert.match(html, /js\/tabbar\.js/, `${href} is an owner tab destination but has no app bar`);
@@ -160,3 +159,12 @@ test('the retired Create column is removed from legacy bars', async () => {
   const create = await read('create.html');
   assert.match(create, /js\/tabbar\.js/);
 });
+
+ test('shared bars reserve role loading before first paint and immersive lab has an exit',async()=>{
+  for(const file of (await readdir(ROOT)).filter(f=>f.endsWith('.html'))){
+    const html=await read(file);
+    if(!html.includes('js/tabbar.js')||html.includes('data-no-appbar'))continue;
+    assert.match(html,/js\/shell-boot\.js/,file+' must reserve owner navigation');
+  }
+  assert.match(await read('equity-uprise-server-lab-3d.html'),/href="game-hub.html">Back to Games/);
+ });

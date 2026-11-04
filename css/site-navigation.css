@@ -69,10 +69,12 @@ html body.cr[data-site-navigation][data-admin-navigation]:not([data-control-work
    phone they are a row under the topbar, because the shared bar keeps the
    bottom (css/control-room-v2.css, body.cr.has-appbar); from 1024px they
    are the sidebar. The shared bar's Control panel lists the same NAV. */
-@media(min-width:1024px){
-  html body.cr[data-site-navigation][data-admin-navigation]:not([data-control-workspace]) .cr-shell{grid-template-columns:var(--cr-side,248px) minmax(0,1fr)!important;grid-template-areas:"nav top" "nav main"!important}
-  html body.cr[data-site-navigation][data-admin-navigation][data-cr-surface="analytics"]:not([data-control-workspace]) .cr-shell{grid-template-areas:"nav main"!important}
-}
+/* Once the shared Home navigator is ready, keep one mini-app canvas.
+   The original section navigation remains the module-failure fallback. */
+html body.cr[data-site-navigation][data-admin-navigation] #crSections{display:none!important}
+html body.cr[data-site-navigation][data-admin-navigation]:not([data-cr-surface="analytics"]) .cr-main{padding-top:16px}
+html body.cr[data-site-navigation][data-admin-navigation][data-cr-surface="analytics"]:not([data-control-workspace]) .cr-shell{grid-template-areas:"main"!important}
+
 html body.cr[data-site-navigation][data-admin-navigation] .cr-topbar{padding-right:118px;min-height:68px;box-sizing:border-box}
 html body.cr[data-site-navigation][data-admin-navigation] .cr-topbar .cr-command{min-width:0;min-height:44px}
 html body.cr[data-site-navigation][data-admin-navigation] .cr-topbar .cr-command span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -94,3 +96,51 @@ html body.cr[data-site-navigation] #crAccountMenu :is(a,button){min-height:44px}
   body[data-site-navigation] #mccAuthChip,body[data-site-navigation] #mnMe,
   .mcc-destinations,.mcc-profile-menu{display:none!important}
 }
+
+/* Owner Inbox/Home slice: seven reachable targets, including the existing Games overlay. */
+.appbar--admin{width:calc(100vw - 8px);max-width:44rem;padding-inline:2px;gap:0}
+.appbar--admin .appbar__tab{min-width:44px;min-height:44px}
+.appbar--admin .appbar__tab > span:not(.appbar__sr){font-size:.625rem}
+.appbar--admin .appbar__m{width:2rem;height:2rem}
+.cr-inbox-categories{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:0 0 12px}
+.cr-inbox-category{min-width:0;padding:0}
+.cr-inbox-category h2{font-size:12px;margin:4px 2px 8px;overflow-wrap:anywhere}
+.cr-inbox-category .cr-tab{display:flex;align-items:center;min-height:44px;white-space:normal;overflow-wrap:anywhere;padding:6px;font-size:12px}
+.cr-inbox-category .cr-tab:focus-visible{outline:2px solid currentColor;outline-offset:-2px}
+@media(min-width:600px){
+  .appbar--admin .appbar__tab > span:not(.appbar__sr){font-size:.75rem}
+  .cr-inbox-category{padding:0}
+  .cr-inbox-category h2,.cr-inbox-category .cr-tab{font-size:14px}
+}
+
+.cr-system-summary{margin:12px 0;padding:12px;border:1px solid var(--cr-line,#38343d);border-radius:12px;overflow-wrap:anywhere}
+.cr-system-summary h2{font-size:18px;margin:0 0 8px}
+.cr-system-summary p,.cr-system-evidence p{font-size:14px;line-height:1.5}
+.cr-system-flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.cr-system-node{display:flex;flex-direction:column;gap:8px;min-height:44px;padding:10px 6px;min-width:0;background:transparent;color:inherit;border:1px solid var(--cr-line,#38343d);border-radius:10px;overflow-wrap:anywhere;cursor:pointer}
+.cr-system-node span{font-size:12px}
+.cr-system-event{padding:10px 0;border-top:1px solid var(--cr-line,#38343d)}
+.cr-system-event summary,.cr-system-evidence summary{min-height:44px;cursor:pointer;padding:8px;box-sizing:border-box}
+.cr-system-event summary strong,.cr-system-event summary>span{margin:0 8px 4px 0}
+.cr-system-level{font-size:13px;font-weight:700}
+.cr-system-level--error{color:#ff8791}.cr-system-level--warn{color:#f2c56b}
+.cr-system-event pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}
+.cr-system-event ol{padding-left:20px}
+.cr-system-summary :is(button,summary):focus-visible,.cr-system-evidence summary:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+
+/* Shared profile owns global account/command shortcuts after it is ready. */
+body[data-site-navigation] .cmdk-owner-nav,body[data-site-navigation] .hx-operator{display:none!important}
+.mcc-profile-menu [hidden],#mnMenu [data-owner-profile-action][hidden],#crAccountMenu [data-owner-profile-action][hidden]{display:none!important}
+
+/* Owner dock: roughly five legible destinations on phones; more fit as space grows. */
+body[data-admin-navigation] .appbar--admin{width:calc(100vw - 96px - env(safe-area-inset-left) - env(safe-area-inset-right));max-width:60rem;display:flex;justify-content:flex-start;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;scrollbar-width:none;scroll-snap-type:x proximity;scroll-padding-inline:4px;padding-inline:4px;touch-action:pan-x pan-y pinch-zoom}
+body[data-admin-navigation] .appbar--admin::-webkit-scrollbar{display:none}
+body[data-admin-navigation] .appbar--admin .appbar__tab{flex:0 0 clamp(64px,calc((100vw - 104px)/5),80px);scroll-snap-align:start;min-height:52px}
+body[data-admin-navigation] .appbar--admin .appbar__tab > span:not(.appbar__sr){font-size:11px;line-height:1.2;white-space:nowrap}
+.mcc-dock-hints{position:fixed;bottom:calc(22px + env(safe-area-inset-bottom));left:max(4px,env(safe-area-inset-left));right:max(4px,env(safe-area-inset-right));margin-inline:auto;width:auto;max-width:calc(60rem + 88px);display:flex;justify-content:space-between;pointer-events:none;z-index:1000}
+.mcc-dock-hints button{pointer-events:auto;width:44px;min-height:44px;flex:none;border:1px solid #51434b;border-radius:50%;background:#1b171ee8;color:#fff;font:24px/1 system-ui;cursor:pointer;animation:mcc-dock-cue .4s ease-out 2 alternate}
+.mcc-dock-hints button:last-child{margin-left:auto}
+.mcc-dock-hints[hidden],.mcc-dock-hints button[hidden]{display:none!important}
+.mcc-dock-hints button:focus-visible{outline:2px solid #fff;outline-offset:2px}
+@keyframes mcc-dock-cue{from{opacity:.6}to{opacity:1}}
+@media(prefers-reduced-motion:reduce){.mcc-dock-hints button{animation:none}}
