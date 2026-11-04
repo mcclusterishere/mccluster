@@ -92,8 +92,20 @@ for(const vp of [{width:390,height:844},{width:1280,height:900}]){
   /* move: path-checked reach, preview, back, confirm */
   await cell(page,1,2).click();await page.locator('[data-act="move"]').click();
   const lit=await page.evaluate(()=>[...document.querySelectorAll('.tb-cell.is-reach')].map(c=>c.dataset.x+','+c.dataset.y));
-  const engine=await page.evaluate(async()=>{const H=await import('./js/prim3-tactics/tactical-hints.mjs');const p=H.playerProjection(window.__tac.state);return H.legalCandidates(p,'E1').filter(c=>c.action==='MOVE').map(c=>c.x+','+c.y);});
-  check(scope,'lit tiles are exactly the engine\'s path-checked moves',JSON.stringify([...lit].sort())===JSON.stringify([...engine].sort()),{lit:lit.length,engine:engine.length});
+  const engine=await page.evaluate(async()=>{
+    const R=await import('./js/prim3-tactics/tactical-resolver.mjs'),s=window.__tac.state,u=s.units.find(u=>u.id==='E1'),cells=[];
+    // Exhaustively ask the resolver for this known Courtyard fixture; do not import UI guidance.
+    for(let y=0;y<s.height;y++)for(let x=0;x<s.width;x++){
+      if(x===u.x&&y===u.y)continue;
+      for(const [mode,cost] of [['MOVE',1],['DASH',2]]){
+        if(cost>u.ap)continue;
+        try{const next=R.moveUnit(s,u.id,{x,y,z:0},mode).units.find(v=>v.id===u.id);
+          if(next.x===x&&next.y===y&&next.ap===u.ap-cost){cells.push(x+','+y);break;}
+        }catch{}
+      }
+    }return cells;
+  });
+  check(scope,'lit tiles are exactly the engine\'s affordable moves and dashes',JSON.stringify([...lit].sort())===JSON.stringify([...engine].sort()),{lit:lit.length,engine:engine.length});
   check(scope,'no lit tile is a wall',!lit.some(t=>['5,4','5,5'].includes(t)));
   const before=await unit(page,'E1');
   await cell(page,3,3).click();

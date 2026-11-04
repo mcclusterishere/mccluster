@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 614,
+  "candidate_count": 615,
   "capability_source_count": 104,
-  "support_only_count": 510,
+  "support_only_count": 511,
   "entries": [
     {
       "path": ".cursorrules",
@@ -4571,6 +4571,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Verifies player-known tactical movement, physical floor heights and existing HQ stairs; changes no building geometry or capability."
+    },
+    {
+      "path": "scripts/e2e/prim3-direct-landings.e2e.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Exercises existing HQ protected-stair links via explicit legal navigation controls; changes no building geometry or program."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",

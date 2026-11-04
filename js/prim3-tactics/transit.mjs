@@ -269,7 +269,15 @@ function boardModel() {
   const p = view(), sel = unitOf(ui.sel);
   const units = p.units.filter((u) => !extracted(u));
   const m = { units, selected: ui.sel, labels: [], extraction: SCENE.showExtraction === false ? null : undefined, gateOpen: gateOpen(), cut: cutStorey(sel), coverAt: (u) => { const c = state.cover.find((k) => k.x === u.x && k.y === u.y && (k.z || 0) === (u.z || 0)); return c ? c.type : null; } };
-  if ((ui.mode === 'move' || ui.mode === 'dash') && ui.reach) { m.reach = ui.reach.tiles; }
+  if ((ui.mode === 'move' || ui.mode === 'dash') && ui.reach) {
+    m.reach = ui.reach.tiles;
+    // Show only connections from this floor in the scene; farther floors remain in the full list.
+    // Stacking every affordable upper-floor endpoint hides the nearest landing on a phone.
+    m.landings = verticalLandings(sel).filter(t => (state.links || []).some(link =>
+      [[link.from, link.to], [link.to, link.from]].some(([from, to]) =>
+        (from.z || 0) === (sel.z || 0) && to.x === t.x && to.y === t.y && (to.z || 0) === (t.z || 0))))
+      .map(t => ({ ...t, apCost: ui.reach.at(t.x, t.y, t.z || 0).apCost, label: floorName(t.z || 0) || 'Ground' }));
+  }
   if (ui.preview && ui.preview.kind === 'move') { m.path = ui.preview.path.slice(0, -1); m.dest = ui.preview.dest; m.pathLine = [{ x: sel.x, y: sel.y, z: sel.z }, ...ui.preview.path]; }
   if (ui.preview && ui.preview.kind === 'fire') m.target = ui.preview.target;
   for (const u of units) if (!u.dead) m.labels.push({ id: u.id, x: u.x, y: u.y, z: u.z, h: operatorHeight(LEVEL.WORLD_M || LEVEL.TILE_M) + 0.3, kind: u.faction === 'PLAYER' ? 'ally' : 'hostile', text: u.faction === 'PLAYER' ? u.role : esc(u.id) });
@@ -484,7 +492,12 @@ function onTap(t) {
   if (ally) { select(ally.id); return; }
   const hostile = t.unitId && knownHostiles().find(h => h.id === t.unitId);
   if (hostile && sel) { const tg = targetsFor(sel).find(x => x.e.id === hostile.id); if (tg && sel.ap >= 1) { ui.mode='fire'; aim(hostile.id); return; } toast(`${hostile.id}: no shot from ${sel.role}'s position.`); return; }
-  if ((ui.mode === 'move' || ui.mode === 'dash') && sel) previewMove(t);
+  if ((ui.mode === 'move' || ui.mode === 'dash') && sel) {
+    const previewed = previewMove(t);
+    // Explicit floor-link controls use the same destination framing as the movement-sheet list.
+    // Ordinary ground previews keep the camera still under the pointer.
+    if (previewed && t.navigationLink && r3) r3.focus(t.x, t.y, t.z || 0, Math.min(22, Math.max(W, H) * 1.2));
+  }
 }
 function tryPreview(st, a, b) { try { const p = shotPreview(st, a, b); return p.legal ? p : null; } catch (e) { return null; } }
 function select(id) { ui.sel = id; ui.mode = null; ui.preview = null; toastMsg = ''; const u = unitOf(id); if (r3 && u) r3.focus(u.x, u.y, u.z, Math.min(22, Math.max(W, H) * 1.2)); render(); }

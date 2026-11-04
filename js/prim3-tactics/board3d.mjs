@@ -572,7 +572,7 @@ export function createBoard3D(host, { width, height, onTap, onHover = null, onDo
       topCamera.up.set(0, 0, -1);
       // Keep the overhead camera inside the atmospheric fog start; height must not wash out the board.
       topCamera.position.set(view.target.x, 30, view.target.z);
-      topCamera.lookAt(view.target.x, 0, view.target.z); return;
+      topCamera.lookAt(view.target.x, 0, view.target.z); topCamera.updateMatrixWorld(true); return;
     }
     camera.aspect = w / h;
     camera.fov = h > w * 1.05 ? 44 : 32;
@@ -581,7 +581,7 @@ export function createBoard3D(host, { width, height, onTap, onHover = null, onDo
     camPos.set(view.target.x + Math.sin(view.yaw) * hd, view.target.y + Math.sin(view.pitch) * view.dist, view.target.z + Math.cos(view.yaw) * hd);
     lookAt.copy(view.target);
     if (shotCam) { const k = shotCam.k * shotCam.k * (3 - 2 * shotCam.k); camPos.lerp(shotCam.from, k); lookAt.lerp(shotCam.look, k); }
-    camera.position.copy(camPos); camera.lookAt(lookAt);
+    camera.position.copy(camPos); camera.lookAt(lookAt); camera.updateMatrixWorld(true);
   }
 
   /* ---------- post-processing, loaded after first paint so the board never waits on it ---------- */

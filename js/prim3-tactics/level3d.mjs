@@ -76,6 +76,10 @@ export function createLevel3D(host, { level, onTap, onHover = null, onDoubleTap 
   renderer.domElement.setAttribute('aria-hidden', 'true');
   host.appendChild(renderer.domElement);
   const labels = document.createElement('div'); labels.className = 'b3-labels'; host.appendChild(labels);
+  // Explicit legal floor-link affordances, distinct from picking any hidden upper floor.
+  const landingLayer = document.createElement('div'); landingLayer.className = 'b3-landings';
+  landingLayer.style.cssText = 'position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:3'; host.appendChild(landingLayer);
+  const landingButtons = new Map();
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 400);
@@ -838,6 +842,39 @@ export function createLevel3D(host, { level, onTap, onHover = null, onDoubleTap 
       html += `<span class="b3-label b3-label--${l.kind}" style="transform:translate(${p.x.toFixed(1)}px,${p.y.toFixed(1)}px)">${l.text}</span>`;
     }
     labels.innerHTML = html + edgeRulers();
+    const bounds = renderer.domElement.getBoundingClientRect();
+    for (const { button, tile } of landingButtons.values()) {
+      const p = project(tile.x, tile.y, surfaceHeight(tile.x, tile.y, tile.z || 0) + 0.18);
+      button.hidden = p.behind || p.x < 0 || p.y < 0 || p.x > bounds.width || p.y > bounds.height;
+      button.style.left = `${p.x}px`; button.style.top = `${p.y}px`;
+    }
+  }
+  function updateLandings(m) {
+    const selected = m.units.find((u) => u.id === m.selected && !u.dead), keep = new Set();
+    for (const tile of showcase || !selected ? [] : (m.landings || [])) {
+      // The page supplies only known links. Recheck the current legal reach before exposing a target.
+      const legal = (m.reach || []).find((t) => t.x === tile.x && t.y === tile.y && (t.z || 0) === (tile.z || 0));
+      if (!legal || (selected.z || 0) === (tile.z || 0)) continue;
+      const key = `${tile.x}:${tile.y}:${tile.z || 0}`; keep.add(key);
+      let entry = landingButtons.get(key);
+      if (!entry) {
+        const button = document.createElement('button'); button.type = 'button'; button.dataset.landing = key;
+        button.style.cssText = 'position:absolute;translate:-50% -50%;pointer-events:auto;min-height:44px;max-width:150px;padding:5px 8px;border:2px solid #187bdb;border-radius:8px;background:#101923;color:#fff;font:600 16px/1.25 system-ui;box-shadow:0 2px 6px #0006;cursor:pointer';
+        for (const event of ['pointerdown', 'pointerup', 'dblclick']) button.addEventListener(event, (e) => e.stopPropagation());
+        entry = { button, tile }; landingButtons.set(key, entry); landingLayer.appendChild(button);
+        button.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const current = landingButtons.get(key);
+          if (current && !fireAnim && !fireQueue.length && onTap) onTap({ x: current.tile.x, y: current.tile.y, z: current.tile.z || 0, navigationLink: true });
+        });
+      }
+      entry.tile = tile;
+      const arrow = surfaceHeight(tile.x, tile.y, tile.z || 0) > surfaceHeight(selected.x, selected.y, selected.z || 0) ? '↑' : '↓';
+      entry.button.textContent = `${arrow} ${tile.label || `Floor ${tile.z || 0}`} · ${legal.apCost} AP`;
+      entry.button.setAttribute('aria-label', `Preview landing: ${tile.label || `Floor ${tile.z || 0}`} at ${tile.x}, ${tile.y}; ${legal.apCost} AP. Confirm to move.`);
+      entry.button.style.borderColor = legal.apCost >= 2 ? '#f59a23' : '#187bdb';
+    }
+    for (const [key, entry] of landingButtons) if (!keep.has(key)) { entry.button.remove(); landingButtons.delete(key); }
   }
   const rayR = new THREE.Raycaster(), ndcR = new THREE.Vector2(), hitR = new THREE.Vector3(), plane0 = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
   function groundAt(px, py, r) { ndcR.set(px / r.width * 2 - 1, -(py / r.height) * 2 + 1); rayR.setFromCamera(ndcR, camera); return rayR.ray.intersectPlane(plane0, hitR) ? hitR.clone() : null; }
@@ -880,7 +917,7 @@ export function createLevel3D(host, { level, onTap, onHover = null, onDoubleTap 
     else if (scene.fog && scene.fog.isFogExp2) scene.fog.density = 0.0055 * 44 / Math.max(44, view.dist);
     lookAt.copy(view.target);
     if (shotCam) { const k = shotCam.k * shotCam.k * (3 - 2 * shotCam.k); camPos.lerp(shotCam.from, k); lookAt.lerp(shotCam.look, k); }
-    camera.position.copy(camPos); camera.lookAt(lookAt);
+    camera.position.copy(camPos); camera.lookAt(lookAt); camera.updateMatrixWorld(true);
   }
   const clampGoal = () => { view.goal.x = Math.min(W + 2, Math.max(-3, view.goal.x)); view.goal.z = Math.min(H + 2, Math.max(-3, view.goal.z)); };
   // look a little south of the tile (clear of the cards), less so close up
@@ -1034,6 +1071,7 @@ export function createLevel3D(host, { level, onTap, onHover = null, onDoubleTap 
     const sel = m.units.find((u) => u.id === m.selected && !u.dead);
     for (const [id, a] of actors) { if (!a.rig || !a.rig.halo) continue; const on = !!sel && id === sel.id;
       a.rig.halo.material.opacity = on ? 1 : 0.5; if (a.rig.accent) a.rig.accent.emissiveIntensity = on ? 3.2 : 1.2; }
+    updateLandings(m);
     labelSpecs = (m.labels || []).map((l) => (l.kind === 'ally' || l.kind === 'hostile') && l.id ? { ...l, unit: l.id } : l);
     needs = true;
   }

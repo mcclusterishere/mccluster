@@ -36,7 +36,7 @@ The PRIM3 tactical workflow runs these checks alongside the existing browser reg
 
 Courtyard's owner Board display settings choose perspective or a true orthographic top view, with an origin at map centre or the relay objective. Signed display X points east and Y north; Three.js ground X/Z maps to display X/Y, so north is negative Three.js Z. The labels use metres and leave saved engine columns/rows unchanged. These versioned preferences are browser-local.
 
-Transit and HQ Settings offer Tactical cells or 2×2 guides. Transit cells measure 3.54 m, with 1.77 m guides; HQ cells measure 3.6576 m (12 ft), with 1.8288 m guides. Guides do not add movement cells or change AP costs. Preferences are separate for each level. In Move/Dash, reachable landing buttons expose legal stairs even when the upper floor is hidden by the camera cut. Preview the landing and confirm; the selected operative's floor then changes the cut.
+Transit and HQ Settings offer Tactical cells or 2×2 guides. Transit cells measure 3.54 m, with 1.77 m guides; HQ cells measure 3.6576 m (12 ft), with 1.8288 m guides. Guides do not add movement cells or change AP costs. Preferences are separate for each level. In Move/Dash, reachable landing buttons expose legal stairs even when the upper floor is hidden by the camera cut. Reachable floor links also have labelled scene controls at their projected endpoints. These are explicit navigation controls, not arbitrary hidden-floor mesh hits. Preview a landing and confirm; the operative changes floors only after a legal commit.
 
 ```sh
 node scripts/e2e/prim3-courtyard-display.e2e.mjs /tmp/prim3-display-proof
@@ -59,3 +59,11 @@ node scripts/e2e/prim3-transit-guidance.e2e.mjs /tmp/prim3-transit-guidance
 ```
 
 These controls currently use the square resolver. They consume its routes and floor links; they do not claim a playable hex topology or add generated mission/LMS content contracts.
+
+The [multi-floor interaction review](MULTIFLOOR-INTERACTION-RESEARCH.md) ties primary documentation, reproduced failures and browser acceptance to the shared spatial proposal.
+
+The direct landing suite starts at the actual HQ public entrance and exercises both staircases. In its seed1 Stair B scenario, an unseen hostile interrupts the initial route; the test reveals and defeats that hostile through normal Fire controls before continuing. This is expected game behavior, distinct from an unselectable legal stair. Scene handles expose only adjacent connected floors, with the full reachable list retained in the movement sheet.
+
+```sh
+node scripts/e2e/prim3-direct-landings.e2e.mjs /tmp/prim3-direct-landings
+```

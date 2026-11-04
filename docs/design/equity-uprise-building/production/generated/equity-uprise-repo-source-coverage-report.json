@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 614,
+  "candidate_count": 615,
   "capability_source_count": 104,
-  "support_only_count": 510,
-  "checks_total": 2354,
-  "checks_passed": 2354,
+  "support_only_count": 511,
+  "checks_total": 2358,
+  "checks_passed": 2358,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -362,6 +362,7 @@
     "scripts/e2e/eu-screens.e2e.mjs",
     "scripts/e2e/fictional-city.e2e.mjs",
     "scripts/e2e/fixtures/axe-baseline.json",
+    "scripts/e2e/prim3-direct-landings.e2e.mjs",
     "scripts/e2e/prim3-hq-stairs.e2e.mjs",
     "scripts/e2e/prim3-spatial-controls.e2e.mjs",
     "scripts/e2e/server-lab.e2e.mjs",
@@ -628,7 +629,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "614 entries"
+      "detail": "615 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -12392,6 +12393,26 @@
     },
     {
       "name": "scripts/test/prim3-movement-knowledge.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/prim3-direct-landings.e2e.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/prim3-direct-landings.e2e.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/e2e/prim3-direct-landings.e2e.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/e2e/prim3-direct-landings.e2e.mjs support rationale present",
       "passed": true,
       "detail": ""
     }
