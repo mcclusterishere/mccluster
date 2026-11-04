@@ -1236,8 +1236,8 @@
             "placeId": "bridgeport-ashline-works",
             "place": "Ashline Works",
             "position": [
-              -63.709,
-              -275.893
+              20.874,
+              -292.886
             ]
           },
           "offsetMs": 0
@@ -1308,8 +1308,8 @@
             "placeId": "bridgeport-common-yard",
             "place": "Common Yard",
             "position": [
-              -140,
-              -290
+              1,
+              -337
             ]
           },
           "offsetMs": 1200000
@@ -1398,8 +1398,8 @@
             "placeId": "bridgeport-railside-yard",
             "place": "Railside Yard",
             "position": [
-              142,
-              -271
+              17,
+              -250.3
             ]
           },
           "offsetMs": 2700000

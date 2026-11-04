@@ -195,7 +195,112 @@
             "workflow_status": "simulation_complete"
           }
         }
-      ]
+      ],
+      "hseep": {
+        "exercise_type": "drill",
+        "exercise_category": "operations-based",
+        "objectives": [
+          {
+            "objective_id": "OBJ-EU-PSC-VITA-INTAKE-V1-01",
+            "text": "vita detect exposure"
+          },
+          {
+            "objective_id": "OBJ-EU-PSC-VITA-INTAKE-V1-02",
+            "text": "vita contain exposure"
+          },
+          {
+            "objective_id": "OBJ-EU-PSC-VITA-INTAKE-V1-03",
+            "text": "vita route private"
+          },
+          {
+            "objective_id": "OBJ-EU-PSC-VITA-INTAKE-V1-04",
+            "text": "vita check packet"
+          },
+          {
+            "objective_id": "OBJ-EU-PSC-VITA-INTAKE-V1-05",
+            "text": "vita scope decision"
+          },
+          {
+            "objective_id": "OBJ-EU-PSC-VITA-INTAKE-V1-06",
+            "text": "vita quality handoff"
+          },
+          {
+            "objective_id": "OBJ-EU-PSC-VITA-INTAKE-V1-07",
+            "text": "vita validate"
+          }
+        ],
+        "eeg": [
+          {
+            "criterion_id": "EU-PSC-VITA-INTAKE-V1-EEG-1",
+            "objective_id": "OBJ-EU-PSC-VITA-INTAKE-V1-01",
+            "task": "vita detect exposure",
+            "action_ids": [
+              "vita-detect-exposure"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-PSC-VITA-INTAKE-V1-EEG-2",
+            "objective_id": "OBJ-EU-PSC-VITA-INTAKE-V1-02",
+            "task": "vita contain exposure",
+            "action_ids": [
+              "vita-contain-exposure"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-PSC-VITA-INTAKE-V1-EEG-3",
+            "objective_id": "OBJ-EU-PSC-VITA-INTAKE-V1-03",
+            "task": "vita route private",
+            "action_ids": [
+              "vita-route-private"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-PSC-VITA-INTAKE-V1-EEG-4",
+            "objective_id": "OBJ-EU-PSC-VITA-INTAKE-V1-04",
+            "task": "vita check packet",
+            "action_ids": [
+              "vita-check-packet"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-PSC-VITA-INTAKE-V1-EEG-5",
+            "objective_id": "OBJ-EU-PSC-VITA-INTAKE-V1-05",
+            "task": "vita scope decision",
+            "action_ids": [
+              "vita-scope-decision"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-PSC-VITA-INTAKE-V1-EEG-6",
+            "objective_id": "OBJ-EU-PSC-VITA-INTAKE-V1-06",
+            "task": "vita quality handoff",
+            "action_ids": [
+              "vita-quality-handoff"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-PSC-VITA-INTAKE-V1-EEG-7",
+            "objective_id": "OBJ-EU-PSC-VITA-INTAKE-V1-07",
+            "task": "vita validate",
+            "action_ids": [
+              "vita-validate"
+            ],
+            "critical": true
+          }
+        ],
+        "hotwash_prompts": [
+          "What went well, and why? (strengths)",
+          "What should be done differently next time? (areas for improvement)",
+          "Was any step unclear, missing or unsafe?",
+          "Who should own each fix, and by when?"
+        ]
+      }
     },
     {
       "scenario_id": "EU-PSC-OHRP-CONSENT-V1",
@@ -328,7 +433,99 @@
             "workflow_status": "simulation_complete"
           }
         }
-      ]
+      ],
+      "hseep": {
+        "exercise_type": "drill",
+        "exercise_category": "operations-based",
+        "objectives": [
+          {
+            "objective_id": "OBJ-EU-PSC-OHRP-CONSENT-V1-01",
+            "text": "ohrp detect exposure"
+          },
+          {
+            "objective_id": "OBJ-EU-PSC-OHRP-CONSENT-V1-02",
+            "text": "ohrp contain exposure"
+          },
+          {
+            "objective_id": "OBJ-EU-PSC-OHRP-CONSENT-V1-03",
+            "text": "ohrp inspect consent"
+          },
+          {
+            "objective_id": "OBJ-EU-PSC-OHRP-CONSENT-V1-04",
+            "text": "ohrp participant centered response"
+          },
+          {
+            "objective_id": "OBJ-EU-PSC-OHRP-CONSENT-V1-05",
+            "text": "ohrp protocol escalation"
+          },
+          {
+            "objective_id": "OBJ-EU-PSC-OHRP-CONSENT-V1-06",
+            "text": "ohrp validate"
+          }
+        ],
+        "eeg": [
+          {
+            "criterion_id": "EU-PSC-OHRP-CONSENT-V1-EEG-1",
+            "objective_id": "OBJ-EU-PSC-OHRP-CONSENT-V1-01",
+            "task": "ohrp detect exposure",
+            "action_ids": [
+              "ohrp-detect-exposure"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-PSC-OHRP-CONSENT-V1-EEG-2",
+            "objective_id": "OBJ-EU-PSC-OHRP-CONSENT-V1-02",
+            "task": "ohrp contain exposure",
+            "action_ids": [
+              "ohrp-contain-exposure"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-PSC-OHRP-CONSENT-V1-EEG-3",
+            "objective_id": "OBJ-EU-PSC-OHRP-CONSENT-V1-03",
+            "task": "ohrp inspect consent",
+            "action_ids": [
+              "ohrp-inspect-consent"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-PSC-OHRP-CONSENT-V1-EEG-4",
+            "objective_id": "OBJ-EU-PSC-OHRP-CONSENT-V1-04",
+            "task": "ohrp participant centered response",
+            "action_ids": [
+              "ohrp-participant-centered-response"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-PSC-OHRP-CONSENT-V1-EEG-5",
+            "objective_id": "OBJ-EU-PSC-OHRP-CONSENT-V1-05",
+            "task": "ohrp protocol escalation",
+            "action_ids": [
+              "ohrp-protocol-escalation"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-PSC-OHRP-CONSENT-V1-EEG-6",
+            "objective_id": "OBJ-EU-PSC-OHRP-CONSENT-V1-06",
+            "task": "ohrp validate",
+            "action_ids": [
+              "ohrp-validate"
+            ],
+            "critical": true
+          }
+        ],
+        "hotwash_prompts": [
+          "What went well, and why? (strengths)",
+          "What should be done differently next time? (areas for improvement)",
+          "Was any step unclear, missing or unsafe?",
+          "Who should own each fix, and by when?"
+        ]
+      }
     },
     {
       "scenario_id": "EU-PSC-PRIVACY-RECOVERY-V1",
@@ -473,7 +670,117 @@
             "workflow_status": "simulation_complete"
           }
         }
-      ]
+      ],
+      "hseep": {
+        "exercise_type": "drill",
+        "exercise_category": "operations-based",
+        "objectives": [
+          {
+            "objective_id": "OBJ-EU-PSC-PRIVACY-RECOVERY-V1-01",
+            "text": "privacy detect"
+          },
+          {
+            "objective_id": "OBJ-EU-PSC-PRIVACY-RECOVERY-V1-02",
+            "text": "privacy stop public view"
+          },
+          {
+            "objective_id": "OBJ-EU-PSC-PRIVACY-RECOVERY-V1-03",
+            "text": "privacy secure materials"
+          },
+          {
+            "objective_id": "OBJ-EU-PSC-PRIVACY-RECOVERY-V1-04",
+            "text": "privacy minimum checkin"
+          },
+          {
+            "objective_id": "OBJ-EU-PSC-PRIVACY-RECOVERY-V1-05",
+            "text": "privacy route private"
+          },
+          {
+            "objective_id": "OBJ-EU-PSC-PRIVACY-RECOVERY-V1-06",
+            "text": "privacy document incident"
+          },
+          {
+            "objective_id": "OBJ-EU-PSC-PRIVACY-RECOVERY-V1-07",
+            "text": "privacy validate"
+          }
+        ],
+        "eeg": [
+          {
+            "criterion_id": "EU-PSC-PRIVACY-RECOVERY-V1-EEG-1",
+            "objective_id": "OBJ-EU-PSC-PRIVACY-RECOVERY-V1-01",
+            "task": "privacy detect",
+            "action_ids": [
+              "privacy-detect"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-PSC-PRIVACY-RECOVERY-V1-EEG-2",
+            "objective_id": "OBJ-EU-PSC-PRIVACY-RECOVERY-V1-02",
+            "task": "privacy stop public view",
+            "action_ids": [
+              "privacy-stop-public-view"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-PSC-PRIVACY-RECOVERY-V1-EEG-3",
+            "objective_id": "OBJ-EU-PSC-PRIVACY-RECOVERY-V1-03",
+            "task": "privacy secure materials",
+            "action_ids": [
+              "privacy-secure-materials"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-PSC-PRIVACY-RECOVERY-V1-EEG-4",
+            "objective_id": "OBJ-EU-PSC-PRIVACY-RECOVERY-V1-04",
+            "task": "privacy minimum checkin",
+            "action_ids": [
+              "privacy-minimum-checkin"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-PSC-PRIVACY-RECOVERY-V1-EEG-5",
+            "objective_id": "OBJ-EU-PSC-PRIVACY-RECOVERY-V1-05",
+            "task": "privacy route private",
+            "action_ids": [
+              "privacy-route-private"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-PSC-PRIVACY-RECOVERY-V1-EEG-6",
+            "objective_id": "OBJ-EU-PSC-PRIVACY-RECOVERY-V1-06",
+            "task": "privacy document incident",
+            "action_ids": [
+              "privacy-document-incident"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-PSC-PRIVACY-RECOVERY-V1-EEG-7",
+            "objective_id": "OBJ-EU-PSC-PRIVACY-RECOVERY-V1-07",
+            "task": "privacy validate",
+            "action_ids": [
+              "privacy-validate"
+            ],
+            "critical": true
+          }
+        ],
+        "hotwash_prompts": [
+          "What went well, and why? (strengths)",
+          "What should be done differently next time? (areas for improvement)",
+          "Was any step unclear, missing or unsafe?",
+          "Who should own each fix, and by when?"
+        ]
+      }
     }
-  ]
+  ],
+  "hseep": {
+    "doctrine_ref": "hseep-building-safety-scenario-pack-v1.json#/doctrine",
+    "aar_ip_fields_ref": "hseep-building-safety-scenario-pack-v1.json#/doctrine/aar_ip_fields",
+    "automation_boundary": "The runtime drafts EEG ratings and an AAR/IP; a human evaluator finalises them and assigns improvement owners."
+  }
 }

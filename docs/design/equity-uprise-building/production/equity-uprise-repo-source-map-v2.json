@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 590,
+  "candidate_count": 612,
   "capability_source_count": 104,
-  "support_only_count": 486,
+  "support_only_count": 508,
   "entries": [
     {
       "path": ".cursorrules",
@@ -1853,7 +1853,7 @@
       "classification": "shared_site_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Role-tailored cut of the résumé (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
+      "rationale": "Role-tailored cut of the r\u00e9sum\u00e9 (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
     },
     {
       "path": "scripts/e2e/world-screen.e2e.mjs",
@@ -4170,6 +4170,20 @@
       "rationale": "Fictional district lore distinguishes the Equity Uprise island landmark from the existing headquarters and preserves its authority boundary; narrative support only, with no building program or capability ownership."
     },
     {
+      "path": "docs/fictional-city/JIMMYS-STOREFRONT-CONTINUATION-2026-11-03.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "City build brief for a downtown storefront; references the existing HQ only as a neighbouring landmark and adds no building program, geometry or capability authority."
+    },
+    {
+      "path": "docs/fictional-city/POST-MERGE-722-CORE-HANDOFF-2026-11-03.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Post-merge city performance and Core review handoff; restates existing HQ boundaries and ordinary B1 access, defines no building program or capability ownership."
+    },
+    {
       "path": "docs/fictional-city/README.md",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -4230,7 +4244,7 @@
       "classification": "building_projection_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "McCluster City geography/placement authority places the existing HQ on its island with a documented 180° placement of the 72 ft plate and the existing doorway anchor; city parcels and streets only, no building geometry, floor program, access policy or capability."
+      "rationale": "McCluster City geography/placement authority places the existing HQ on its island with a documented 180\u00b0 placement of the 72 ft plate and the existing doorway anchor; city parcels and streets only, no building geometry, floor program, access policy or capability."
     },
     {
       "path": "js/fictional-city/tactical.mjs",
@@ -4466,6 +4480,62 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Server Lab page contract test (owner gate, published runtime files, mobile rules, unbranded hardware)."
+    },
+    {
+      "path": "docs/design/equity-uprise-development/INDUSTRY-CERTIFICATION-MAP.json",
+      "classification": "development_training_authority",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Learner pathway / industry-certification evidence authority over existing Equity Uprise competencies, scenarios and labs. Prepares learners for issuer credentials; issues none; no new program capability or live-system control."
+    },
+    {
+      "path": "docs/design/equity-uprise-development/LEARNING-PATHWAYS.json",
+      "classification": "development_training_authority",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Learner pathway / industry-certification evidence authority over existing Equity Uprise competencies, scenarios and labs. Prepares learners for issuer credentials; issues none; no new program capability or live-system control."
+    },
+    {
+      "path": "docs/design/equity-uprise-development/verify_learning_pathways.py",
+      "classification": "development_training_authority",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Learner pathway / industry-certification evidence authority over existing Equity Uprise competencies, scenarios and labs. Prepares learners for issuer credentials; issues none; no new program capability or live-system control."
+    },
+    {
+      "path": "docs/prim3/PRIM-BACKEND-TRACKING.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "PRIM3 tracking contract; names the Equity Uprise learning-evidence routes only to route readers. No spatial or program capability is added."
+    },
+    {
+      "path": "supabase/migrations/20261103182544_learning_evidence_v1.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Learning-evidence backend on the existing McCluster plane (Worker mccluster + Supabase): records sandbox lab evidence, uploaded external certificates and HSEEP exercise records. No new building capability, no live control."
+    },
+    {
+      "path": "supabase/tests/learning_evidence.behaviour.sql",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Behaviour gate for the learning-evidence migration; invented fixtures only. No spatial or program capability is added."
+    },
+    {
+      "path": "workers/mccluster/src/prim3/learning.js",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Learning-evidence backend on the existing McCluster plane (Worker mccluster + Supabase): records sandbox lab evidence, uploaded external certificates and HSEEP exercise records. No new building capability, no live control."
+    },
+    {
+      "path": "workers/mccluster/test/prim3-learning.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Worker tests for the learning-evidence routes. No spatial or program capability is added."
     },
     {
       "path": "data/games/world.v1.json",

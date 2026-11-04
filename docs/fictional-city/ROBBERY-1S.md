@@ -8,7 +8,7 @@ The adaptation uses **Designer Kicks.docx**, last modified February 3, 2026. Its
 
 “Designer Kicks” is the source filename and series label used by this adaptation. It does not establish a boutique as the original pair’s point of origin. “Murder Ones” was not found in the recovered latest script.
 
-The source gives no exact Bridgeport street, parcel, business, school, or church. Bridgeport placement is the owner’s new instruction. New place names are fictional and do not identify real establishments or allege events involving real people. Private document URLs, private conversation transcripts, and the full source script do not belong in this repository.
+The source gives no exact Bridgeport street, parcel, business, school, or church. Bridgeport placement is the owner’s new instruction. Non-government story-premise names are fictional and do not identify real establishments or allege events involving real people. Real streets, city names and verified government institutions keep their identities; courthouse landmarks are separate from story premises. Private document URLs, private conversation transcripts, and the full source script do not belong in this repository.
 
 ## Preserved story
 
@@ -37,3 +37,11 @@ The fictional place names, block arrangement, exterior interaction positions, an
 The existing **Robbery 1s Exchange** remains an independent storefront with replica goods and adult staff. Nothing purchased there becomes the original cursed pair. The new story preserves neighborhood comedy, Mama’s economic pressure, Kiara’s alternative, the crowd’s shifting reactions, and the final consequences.
 
 Geometry provenance must distinguish verified Bridgeport footprints from provisional game massing. Do not present a prototype rectangle or invented road as surveyed Bridgeport geography. The story itself supplies no basis for relocating the original Uprise building or changing its canonical program.
+
+## Current owner naming direction
+
+Owner decision, 2026-11-03 (final): the crew around Mr. GREAT and Harold keeps no gang name, as the recovered script leaves it. The single Willy Whackers gang is the School of Hard Knocks kids’ **Bond Street Willy Whackers** in the wider-city lore, led by Bryce; it is not part of this story. A brief “Elm Street Willy Whackers” label for this crew was withdrawn. Cast identity, ages, shoe custody, collection amounts and the ending are unchanged.
+
+The two courthouses retain their real government identities. Ashline Works and the two open yards use checked private parcels; see [the geography correction](BRIDGEPORT-GEOGRAPHY.md). Private ownership alone is not proof that no government tenant operates there, so future placements require a use check too.
+
+For complete spoken episodes, use the approved full Designer Kicks source to create line-by-line dialogue. The 35 paragraphs already present in `storyArcs[].beats[].paragraphs` are a concise game adaptation, not a complete audio script. See [the production plan](EPISODE-PRODUCTION.md) and [Claude handoff](CLAUDE-HANDOFF.md).

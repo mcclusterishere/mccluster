@@ -14,6 +14,9 @@ const SECTIONS = ['manifest', 'brands', 'businesses', 'npcs', 'items', 'portals'
 const PARCEL = /^[a-z0-9][a-z0-9-]{0,39}\/[a-z0-9][a-z0-9-]{0,39}$/;
 const ROUTE_ANCHORS = ['garage', 'hq-bridge', 'hq-doorway'];
 const ARGUMENTS = new Set(['universe_id', 'section', 'id', 'business_id', 'offset', 'limit']);
+// Owner decisions 2026-11-03: real institutions keep their real identity and never host a
+// payoff; public-record scenes depict real people only with a proven basis and sources.
+const RECORD_BASES = new Set(['conviction', 'plea', 'court-finding', 'official-record']);
 
 export const GAME_LORE_INPUT_SCHEMA = Object.freeze({
   type: 'object',
@@ -73,6 +76,12 @@ function normalizeQuery(args) {
 
 function invalidManifest() {
   return error('The installed game lore manifest is invalid', 503, 'GAME_LORE_UNAVAILABLE');
+}
+
+function sourced(rows) {
+  return Array.isArray(rows) && rows.length > 0 && rows.length <= 16 && rows.every((row) => object(row) &&
+    typeof row.title === 'string' && row.title.trim() && typeof row.url === 'string' && /^https:\/\/\S+$/.test(row.url) &&
+    typeof row.date === 'string' && /^\d{4}(-\d{2}(-\d{2})?)?$/.test(row.date));
 }
 
 function collection(rows, max) {
@@ -146,10 +155,49 @@ export function parseGameLore(bytes) {
     }
     if (!ids(business.memberIds) || !ids(business.affiliatedStaffIds) || !ids(business.studentIds) ||
         !ids(business.attendees?.map((row) => row?.npcId))) throw invalidManifest();
+    if (business.realInstitution !== undefined) {
+      const real = business.realInstitution;
+      if (!object(real) || real.officialName !== business.name || typeof real.address !== 'string' || !sourced(real.sources) ||
+          (business.interactions || []).length || business.staffIds.some((id) => npcById.get(id).acceptsBribes || npcById.get(id).realPerson)) {
+        throw invalidManifest();
+      }
+    }
     for (const interaction of business.interactions || []) {
       if (!object(interaction) || interaction.type !== 'bribe' || typeof interaction.id !== 'string' || !ID.test(interaction.id) ||
           !Number.isSafeInteger(interaction.price) || interaction.price <= 0 || !ids(interaction.npcIds) ||
-          interaction.npcIds.some((id) => npcById.get(id).minor)) throw invalidManifest();
+          interaction.npcIds.some((id) => npcById.get(id).minor || npcById.get(id).realPerson || npcById.get(id).businessId !== business.id)) {
+        throw invalidManifest();
+      }
+    }
+  }
+  const publicRecordArcs = optional('publicRecordArcs');
+  if (!Array.isArray(publicRecordArcs) || publicRecordArcs.length > 24) throw invalidManifest();
+  for (const arc of publicRecordArcs) {
+    if (!object(arc) || typeof arc.id !== 'string' || !ID.test(arc.id) || !Array.isArray(arc.cast) || !Array.isArray(arc.beats) ||
+        !arc.beats.length || arc.beats.length > 80) throw invalidManifest();
+    const cast = new Set();
+    for (const person of arc.cast) {
+      if (!object(person) || typeof person.id !== 'string' || !ID.test(person.id) || person.realPerson !== true ||
+          !RECORD_BASES.has(person.basis) || npcs.some((npc) => npc.name === person.name)) throw invalidManifest();
+      cast.add(person.id);
+    }
+    for (const beat of arc.beats) {
+      if (!object(beat) || typeof beat.id !== 'string' || !ID.test(beat.id) || !RECORD_BASES.has(beat.basis) ||
+          !Array.isArray(beat.realPeople) || beat.realPeople.some((id) => !cast.has(id)) || !sourced(beat.sources)) {
+        throw invalidManifest();
+      }
+    }
+  }
+  // Replaced IDs stay resolvable: an alias names a removed ID and points at a live one.
+  const aliases = new Map();
+  if (data.idAliases !== undefined) {
+    if (!object(data.idAliases)) throw invalidManifest();
+    const live = new Set([...businessIds, ...npcById.keys(), ...itemById.keys(),
+      ...businesses.flatMap((row) => (row.interactions || []).map((interaction) => interaction.id))]);
+    for (const [from, to] of Object.entries(data.idAliases)) {
+      if (from === 'note') continue;
+      if (!ID.test(from) || typeof to !== 'string' || live.has(from) || !live.has(to)) throw invalidManifest();
+      aliases.set(from, to);
     }
   }
   for (const business of expansionBusinesses) if (!parcelIds.has(business.parcelId)) throw invalidManifest();
@@ -185,6 +233,7 @@ export function parseGameLore(bytes) {
     district: data.district,
     constraints: data.constraints,
     collections: { brands, businesses, npcs, items, portals, neighborhoods, families, parcels },
+    aliases,
     counts: {
       brands: brands.length,
       businesses: businesses.length,
@@ -209,7 +258,9 @@ function bytes(value) {
 }
 
 function select(snapshot, query) {
-  const { section, id, business_id: businessId, offset, limit } = query;
+  const { section, offset, limit } = query;
+  const resolve = (value) => (value !== undefined && snapshot.aliases?.has(value) ? snapshot.aliases.get(value) : value);
+  const id = resolve(query.id), businessId = resolve(query.business_id);
   const base = { manifest: snapshot.manifest, read_only: true, section };
   if (section === 'manifest') {
     const result = { ...base, counts: snapshot.counts, district: snapshot.district, constraints: snapshot.constraints };
