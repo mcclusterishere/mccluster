@@ -50,7 +50,7 @@ async function measure(page, label) {
 function check(name, value, detail = {}) { results.push({ name, pass: !!value, ...detail }); console.log((value ? 'PASS ' : 'FAIL ') + name); assert.ok(value, name); }
 async function contextFor(width, role = 'owner') {
   const context = await browser.newContext({ viewport: { width, height: 1000 }, deviceScaleFactor: 1, hasTouch: width < 700, serviceWorkers: 'block', reducedMotion: 'reduce' });
-  const requests = [], errors = [];
+  const requests = [], errors = [], served = [];
   await context.addInitScript(({ role }) => {
     localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-10-19', accepted_at: new Date().toISOString() }));
     if (role !== 'guest') {
@@ -80,20 +80,39 @@ async function contextFor(width, role = 'owner') {
     }
     if (url.hostname === 'cdn.jsdelivr.net' && url.pathname.includes('/three@0.180.0/build/')) {
       const name = url.pathname.split('/').at(-1);
-      if (['three.module.js', 'three.core.js'].includes(name)) return route.fulfill({ contentType: 'text/javascript', body: await readFile(join(threeDir, name)) });
+      if (['three.module.js', 'three.core.js'].includes(name)) { const body = await readFile(join(threeDir, name)); served.push({ asset: name, bytes: body.length }); return route.fulfill({ contentType: 'text/javascript', body }); }
     }
     if (url.origin === site) {
       const path = resolve(root, '.' + decodeURIComponent(url.pathname));
       if (!path.startsWith(resolve(root) + sep)) return route.fulfill({ status: 403 });
-      try { return route.fulfill({ contentType: types[extname(path)] || 'application/octet-stream', body: await readFile(path) }); }
+      try { const body = await readFile(path); served.push({ asset: url.pathname, bytes: body.length }); return route.fulfill({ contentType: types[extname(path)] || 'application/octet-stream', body }); }
       catch { return route.fulfill({ status: 404, body: 'Not found' }); }
     }
     return route.fulfill({ status: 200, contentType: 'text/plain', body: '' });
   });
   const page = await context.newPage(); page.setDefaultTimeout(120000); page.on('pageerror', e => errors.push(e.message)); // software WebGL runs the full city at about 2 fps
-  return { context, page, requests, errors };
+  return { context, page, requests, errors, served };
 }
 try {
+  if (process.env.CITY_LOAD_ONLY) {
+    for (const width of [390, 1280]) {
+      const { context, page, served } = await contextFor(width);
+      const cdp = await context.newCDPSession(page); await cdp.send('Performance.enable');
+      for (const run of ['cold', 'repeat']) {
+        const first = served.length, start = Date.now();
+        if (run === 'cold') await page.goto(site + '/fictional-city.html'); else await page.reload();
+        await ready(page); const readyMs = Date.now() - start; await settled(page);
+        const timings = Object.fromEntries((await cdp.send('Performance.getMetrics')).metrics.map(m => [m.name, m.value]));
+        metrics.push({ kind: 'load', width, run, readyMs, settledMs: Date.now() - start,
+          appAssetBytes: served.slice(first).reduce((sum, r) => sum + r.bytes, 0), assetResponses: served.length - first,
+          scriptSeconds: timings.ScriptDuration, taskSeconds: timings.TaskDuration, heapBytes: timings.JSHeapUsedSize,
+          stats: await page.evaluate(() => MCC_CITY.stats()), assets: served.slice(first),
+          limitation: 'Local files via Playwright routing; uncompressed response bytes. Routing disables HTTP cache. Repeat is not a production warm-cache/network benchmark; ScriptDuration is execution, not isolated parse time.' });
+        check(width + ': ' + run + ' scene loads and settles', true);
+      }
+      await context.close();
+    }
+  } else {
   for (const role of ['guest', 'member']) {
     const { context, page, requests } = await contextFor(390, role);
     await page.goto(site + '/fictional-city.html'); await page.waitForFunction(() => document.documentElement.dataset.ownerAccess === 'closed');
@@ -101,7 +120,7 @@ try {
     check(role + ': neither game runtime nor fictional data loads before owner approval', !requests.some(url => /\/js\/fictional-city\/|\/data\/fictional-city\//.test(url)));
     await context.close();
   }
-  for (const width of [390, 1280]) {
+  for (const width of (process.env.CITY_NAV_ONLY ? [390, 768, 1440] : [390, 1280])) {
     const { context, page, requests, errors } = await contextFor(width);
     await page.goto(site + '/fictional-city.html');
     await page.waitForFunction(() => document.documentElement.dataset.cityReady === 'true' && window.MCC_CITY && document.querySelector('#city-canvas')?.dataset.ready === 'true');
@@ -114,7 +133,58 @@ try {
     check(width + ': all ' + PEOPLE + ' people, the original and Bridgeport places and ' + places.parcels.length + ' parcels are instantiated', stats.npcCount === PEOPLE && stats.buildings === expectedPlaces && stats.parcels === places.parcels.length, stats);
     check(width + ': all 13 Robbery 1s scene stops are instantiated', stats.storyStops === 13, stats);
     check(width + ': measured scene stays inside the preview geometry budget', stats.triangles < 150000 && stats.drawCalls < 300, stats);
+    // Streaming's original opening-view baseline was measured with the overview lens.
+    await page.locator('[data-city-view="overview"]').click();
+    await settled(page); await page.waitForTimeout(500);
+    const overviewStats = await page.evaluate(() => MCC_CITY.stats());
+    check(width + ': overview retains streamed opening-view budget', overviewStats.triangles < 70000, overviewStats.breakdown);
+    await page.locator('[data-city-view="first"]').click();
+    await page.waitForFunction(() => MCC_CITY.stats().camera.mode === 'first' && document.querySelector('[data-city-view=first]').getAttribute('aria-pressed') === 'true');
+    check(width + ': explicit first person is available', await page.locator('[data-city-view="first"]').getAttribute('aria-pressed') === 'true');
+    await page.locator('[data-city-view="close"]').click();
+    await page.locator('#city-destination').selectOption('equity-uprise-hq');
+    await page.waitForFunction(() => document.querySelector('#city-direction').textContent.includes('Equity Uprise HQ'));
+    check(width + ': HQ guidance shows live distance', /\d+ m/.test(await page.locator('#city-direction').textContent()));
+    await page.locator('#city-labels-toggle').uncheck();
+    check(width + ': building names can be turned off', await page.locator('#city-building-labels').isHidden());
+    await page.locator('#city-labels-toggle').check();
     await page.screenshot({ path: join(out, 'city-' + width + '.png'), fullPage: false });
+    if (process.env.CITY_NAV_ONLY) {
+      await page.locator('[data-city-travel="bike"]').click();
+      await page.waitForFunction(() => MCC_CITY.stats().travel === 'bike');
+      const bikeStart = await page.evaluate(() => MCC_CITY.snapshot().position);
+      await page.locator('#city-canvas').focus(); await page.keyboard.down('w');
+      try { await page.waitForFunction(p => Math.hypot(MCC_CITY.snapshot().position.x - p.x, MCC_CITY.snapshot().position.z - p.z) > .3, bikeStart); }
+      finally { await page.keyboard.up('w'); }
+      check(width + ': bicycle mounts and pedals through the rendered controls', true);
+      await page.locator('#city-toast').waitFor({ state: 'hidden' });
+      const bikeCanvas = await page.locator('#city-canvas').boundingBox();
+      await page.mouse.move(bikeCanvas.x + bikeCanvas.width * .4, bikeCanvas.y + bikeCanvas.height * .4);
+      await page.mouse.down();
+      await page.mouse.move(bikeCanvas.x + bikeCanvas.width * .4 + 120, bikeCanvas.y + bikeCanvas.height * .4, { steps: 8 });
+      await page.mouse.up(); await page.waitForTimeout(250);
+      await page.locator('.city-stage').screenshot({ path: join(out, 'bike-stage-' + width + '.png') });
+      await page.locator('[data-city-travel="walk"]').click();
+      await page.waitForFunction(() => MCC_CITY.stats().travel === 'walk');
+      await page.locator('#city-follow-toggle').check();
+      const before = await page.evaluate(() => MCC_CITY.stats().camera.yaw);
+      await page.locator('#city-canvas').focus(); await page.keyboard.down('d');
+      try { await page.waitForFunction(yaw => Math.abs(MCC_CITY.stats().camera.yaw - yaw) > .15, before); }
+      finally { await page.keyboard.up('d'); }
+      check(width + ': lock-behind control steers the camera', true);
+      await page.locator('#city-follow-toggle').uncheck();
+      const position = await page.evaluate(() => MCC_CITY.snapshot().position);
+      await page.locator('#city-route').click();
+      await page.waitForTimeout(250);
+      check(width + ': route preview does not move before confirmation', JSON.stringify(await page.evaluate(() => MCC_CITY.snapshot().position)) === JSON.stringify(position));
+      await page.locator('#city-route-confirm').click();
+      await page.waitForFunction(p => Math.hypot(MCC_CITY.snapshot().position.x - p.x, MCC_CITY.snapshot().position.z - p.z) > .2, position);
+      check(width + ': Walk there starts actual movement', true);
+      await page.locator('.city-stage').screenshot({ path: join(out, 'navigation-stage-' + width + '.png') });
+      check(width + ': navigation has no browser errors', errors.length === 0, { errors });
+      await context.close(); continue;
+    }
+
     await page.locator('.city-garage-card').scrollIntoViewIfNeeded();
     await page.screenshot({ path: join(out, 'neighbors-' + width + '.png') });
     await page.evaluate(() => window.scrollTo(0, 0));
@@ -145,7 +215,7 @@ try {
     await page.waitForFunction(() => !MCC_CITY.snapshot().position.interior);
 
     await page.getByRole('button', { name: 'District map' }).click();
-    const tea = page.locator('.city-place-card').filter({ has: page.getByRole('heading', { name: 'GAURANFUCKING TEA', exact: true }) });
+    const tea = page.locator('.city-place-card').filter({ has: page.getByRole('heading', { name: /GAURANFUCKING TEA$/ }) });
     await tea.getByRole('button', { name: 'About this spot' }).click();
     await page.getByRole('button', { name: 'Walk inside', exact: true }).click();
     await page.waitForFunction(() => MCC_CITY.snapshot().position.interior === 'gauranfucking-tea');
@@ -162,7 +232,7 @@ try {
     await page.getByRole('button', { name: 'Close panel' }).click();
 
     await page.getByRole('button', { name: 'District map' }).click();
-    await page.locator('.city-place-card').filter({ has: page.getByRole('heading', { name: 'GAURANFUCKING TEA', exact: true }) }).getByRole('button', { name: 'About this spot' }).click();
+    await page.locator('.city-place-card').filter({ has: page.getByRole('heading', { name: /GAURANFUCKING TEA$/ }) }).getByRole('button', { name: 'About this spot' }).click();
     await page.getByRole('button', { name: 'Browse the counter' }).click();
     const item = city.items.find(i => i.businessId === 'gauranfucking-tea');
     const balance = await page.evaluate(() => MCC_CITY.snapshot().credits);
@@ -188,6 +258,7 @@ try {
     check(width + ': no uncaught browser errors', errors.length === 0, { errors });
     await context.close();
   }
+  if (!process.env.CITY_NAV_ONLY) {
   {
     const { context, page } = await contextFor(390);
     let finishStory;
@@ -436,6 +507,8 @@ try {
     const dialogOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     check(width + ': the whole-city map fits without overflow', dialogOverflow === 0);
     await context.close();
+  }
+  }
   }
 } finally {
   await writeFile(join(out, 'metrics.json'), JSON.stringify({ environment: 'Headless Chromium, SwiftShader software WebGL, device pixel ratio 1; not a physical device', metrics }, null, 2));

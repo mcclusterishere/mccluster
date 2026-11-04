@@ -4,11 +4,13 @@
 import * as THREE from 'three';
 import { createGeometryKit } from './geometry.mjs';
 import { buildingBounds, createSpatialWorld, interiorWorld, isWalkable, moveWithCollisions, findWalkingPath } from './spatial.mjs';
-import { buildNeighborhoodGround, buildNeighborhoodPlace, buildStoryInteriorFixtures, buildStoryProp } from './bridgeport-geometry.mjs';
+import { buildNeighborhoodChunk, buildNeighborhoodGround, buildStoryInteriorFixtures, buildStoryProp } from './bridgeport-geometry.mjs';
 import { chunkWanted } from './chunks.mjs';
+import { createCameraControls, safeCameraDistance } from './camera-controls.mjs';
+import { createTravelControls } from './travel-controls.mjs';
+import { neighborhoodChunks, isNeighborhoodChunkId } from './neighborhood-chunks.mjs';
 
 const FLOOR_Y = 0.16;
-const WALK_SPEED = 6.8;
 const COLORS = { water: '#488e91', quay: '#d9c3a0', brick: '#b9866b', road: '#565d60', stone: '#e8d8b9', trim: '#f6ead3', window: '#405960', iron: '#374a4c', roof: '#a9664c', foliage: '#68876b' };
 const DEFAULT_HQ = { footprintMeters: [21.9456, 21.9456], roofHeightMeters: 24.6888, floorHeightMeters: 4.1148, occupiedFloors: 6, entry: [0, 74], portalId: 'equity-uprise-hq' };
 // Streaming radii (metres from the player to a chunk's rectangle). Load before a chunk can enter the
@@ -20,7 +22,7 @@ const GENERIC_FACADES = ['#c9a27e', '#b5866d', '#9fb0a4', '#d4c29a', '#8fa3a8', 
 const editable = (target) => !!target?.closest?.('input, textarea, select, [contenteditable="true"], [role="dialog"], dialog[open]');
 const angleTo = (a, b, k) => a + Math.atan2(Math.sin(b - a), Math.cos(b - a)) * k;
 
-export function createCityScene({ canvas, manifest, places = null, vacant = [], loadChunk = null, chunkIndex = null, onInteract = () => {}, onPrompt = () => {}, onMove = () => {}, onReady = () => {}, onError = () => {}, onDiscover = () => {}, onApproachHq = () => {} }) {
+export function createCityScene({ canvas, manifest, places = null, vacant = [], loadChunk = null, chunkIndex = null, onInteract = () => {}, onPrompt = () => {}, onMove = () => {}, onReady = () => {}, onError = () => {}, onDiscover = () => {}, onApproachHq = () => {}, onView = () => {} }) {
   if (!canvas || !manifest) throw new TypeError('City scene needs its host canvas and district manifest.');
   const source = manifest.district || manifest;
   const shops = manifest.businesses || source.businesses || [];
@@ -28,6 +30,10 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
   const neighborhoods = manifest.neighborhoods || source.neighborhoods || [];
   const neighborhoodPlaces = neighborhoods.flatMap(n => n.places || []);
   const neighborhoodIds = new Set(neighborhoodPlaces.map(b => b.id));
+  const neighborhoodById = new Map(neighborhoodPlaces.map(b => [b.id, b]));
+  // Surveyed neighbourhoods stream through the same tile contract as the authored city (nothing is drawn at start-up
+  // but their land); the index is derived from the neighbourhood data here, so N footprints need no published files.
+  const neighborhoodTiles = neighborhoodChunks(neighborhoods);
   const storyBeats = (manifest.storyArcs || source.storyArcs || []).flatMap(arc => arc.beats || [])
     .filter(beat => Array.isArray(beat.position) && beat.position.length === 2);
   const allLore = [...shops, ...(garage ? [garage] : []), ...neighborhoodPlaces]
@@ -54,13 +60,15 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
 
   const scene = new THREE.Scene(); scene.background = new THREE.Color('#e0e9e7');
   scene.fog = new THREE.Fog('#e0e9e7', 115, 255);
-  const camera = new THREE.OrthographicCamera(-24, 24, 24, -24, 0.1, 400);
+  const overviewCamera = new THREE.OrthographicCamera(-24, 24, 24, -24, 0.1, 400);
+  const closeCamera = new THREE.PerspectiveCamera(58, 1, .08, 110);
+  let camera = closeCamera;
   const hemi = new THREE.HemisphereLight('#fff6de', '#697d78', 1.6); scene.add(hemi);
   const sun = new THREE.DirectionalLight('#ffe6bc', 1.6); sun.position.set(-55, 85, 20); scene.add(sun);
   const worldGroup = new THREE.Group(), interiorGroup = new THREE.Group(), actorsGroup = new THREE.Group();
   scene.add(worldGroup, interiorGroup, actorsGroup); interiorGroup.visible = false;
   const pickables = [], worldTargets = [], interiorTargets = [];
-  let interiorSpatial = null, currentInterior = null;
+  let interiorSpatial = null, currentInterior = null, interiorCameraBounds = [];
   const B = kit.batch(worldGroup);
 
   function box(color, x, y, z, w, h, d, rotation, target) { B.add('box', color, x, y, z, w, h, d, rotation, target); }
@@ -148,7 +156,7 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
     for (const dx of [-1.2, 1.2]) box(COLORS.iron, x + dx, .45, 39.5, .1, .85, .6);
     tree(x + 6, 40, x);
   }
-  buildNeighborhoodGround({ neighborhoods, batch: B, parent: worldGroup, kit, tree, lamp });
+  buildNeighborhoodGround({ neighborhoods, batch: B });
 
   const buildingTargets = new Map();
   function storefront(b, index) {
@@ -160,10 +168,7 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
     B.setTarget(target);
     buildingTargets.set(b.id, target);
     worldTargets.push({ target, x: b.entrance[0], z: b.entrance[1], radius: 3.3, label: `${b.style === 'yard' || b.enterable === false ? 'Visit' : 'Enter'} ${b.name}` });
-    if (neighborhoodIds.has(b.id)) {
-      buildNeighborhoodPlace(b, { batch: B, parent: worldGroup, kit, target, pickables });
-      return;
-    }
+    if (neighborhoodIds.has(b.id)) { B.setTarget(null); return; } // drawn by its chunk (buildNeighborhoodChunk)
     const color = b.color || ['#d3b48c', '#b87f73', '#c4b6a0', '#57656a'][index % 4];
     box(color, x, height / 2 + FLOOR_Y, z, w, height, d, null, target);
     box('#b9aa90', x, .48, z, w + .25, .6, d + .25);
@@ -275,6 +280,7 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
   HF.add('box', '#9fb2b0', 0, roofH / 2 + FLOOR_Y, 88, hqW, roofH, hqD, null, hqTarget);
   HF.add('box', '#ece8d6', 0, roofH + FLOOR_Y - .09, 88, hqW + .2, .18, hqD + .2);
   const hqMeshes = [...HN.finish(), ...HF.finish()];
+  for (const m of hqMeshes) m.userData.region = 'hq-proxy';
   let hqLod = 'near';
   box('#dac9a8', 0, .15, 73, 7, .1, 10);
   const hqSign = kit.sign(worldGroup, 'Equity Uprise HQ', 'ISLAND ENTRANCE', { x: 0, y: 2.1, z: 73.5, width: 9, height: 1.65, yaw: Math.PI });
@@ -283,7 +289,8 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
   for (const x of [-15.5, 15.5]) { tree(x, 73, x); lamp(x, 99); }
   // Public wayfinding is plain text; no substitute brand mark is fabricated.
   kit.sign(worldGroup, 'THE COMMERCIAL DISTRICT', 'SHOP FRONTS · ROAD STORIES · HARBOUR WALK', { x: -39, y: 4.8, z: 43.5, width: 23, height: 2.7, yaw: Math.PI });
-  const staticMeshes = [...B.finish(), ...hqMeshes];
+  const hubMeshes = B.finish(); for (const m of hubMeshes) m.userData.region = 'original-district';
+  const staticMeshes = [...hubMeshes, ...hqMeshes];
   for (const m of staticMeshes) if (m.userData.instanceTargets.some(Boolean)) pickables.push(m);
   // Parcel doors and landmark lookouts are global data, so they work before (or without) their chunk's detail.
   for (const b of parcelBuildings) {
@@ -299,9 +306,10 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
 
   /* ---------- streamed chunks ---------- */
   const chunkGroup = new THREE.Group(); worldGroup.add(chunkGroup);
-  const chunkMeta = new Map((chunkIndex?.chunks || []).map(c => [c.id, c]));
+  const chunkMeta = new Map([...(chunkIndex?.chunks || []), ...neighborhoodTiles.index.chunks].map(c => [c.id, c]));
+  const fetchChunk = (id, signal) => neighborhoodTiles.has(id) ? neighborhoodTiles.loadChunk(id) : loadChunk ? loadChunk(id, { signal }) : Promise.reject(new Error('no chunk source'));
   const chunks = new Map(); // id → { state: 'loading'|'ready'|'fallback'|'failed', group, meshes, pickables, occluders, retryAt, attempts }
-  const chunkCounters = { loads: 0, unloads: 0, failures: 0, fallbacks: 0 };
+  const chunkCounters = { loads: 0, unloads: 0, failures: 0, fallbacks: 0, cancellations: 0 };
   function parcelBuilding(batch, group, b, index, extra) {
     const [x, z] = b.position, [w, d, h0] = b.size, height = h0 || 7;
     const front = b.front || (b.entrance[1] > z ? 'south' : 'north');
@@ -365,9 +373,21 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
       batch.add('cylinder', '#d8ccb0', p.x, 1.6, p.z, 1, 2.4, 1); batch.add('sphere', '#d8ccb0', p.x, 2.9, p.z, 1.6, .7, 1.6);
     }
   }
+  const tagRegion = (mesh, region) => { mesh.userData.region = region; };
   function buildChunk(id, data, detail) {
     const group = new THREE.Group(), batch = kit.batch(group), extra = { pickables: [], occluders: [], detail };
     const meta = chunkMeta.get(id) || data;
+    if (data.neighborhood) {
+      // a surveyed neighbourhood chunk: exact footprint bodies always; streets, furniture, windows and signs with detail
+      const chunk = detail ? data.neighborhood : { places: data.neighborhood.places };
+      const nb = kit.batch(group), nbTree = (x, z, v) => { nb.add('cylinder', '#856348', x, 1.6, z, .45, 3, .45); nb.add('sphere', v % 2 ? '#82976a' : COLORS.foliage, x, 4.0, z, 4.1, 4.3, 3.7); nb.add('sphere', '#78966e', x + .8, 3.7, z - .4, 2.8, 3.2, 2.8); nb.add('cylinder', '#dbccae', x, .3, z, 2.2, .5, 2.2); nb.add('cylinder', '#70674c', x, .56, z, 1.9, .05, 1.9); };
+      const nbLamp = (x, z) => { nb.add('cylinder', COLORS.iron, x, 2.7, z, .16, 5.3, .16); nb.add('cylinder', COLORS.iron, x, .25, z, .45, .4, .45); nb.add('cone', COLORS.iron, x, 5.3, z, 1.2, .4, 1.2); nb.add('sphere', '#ffe7ad', x, 5.05, z, .55, .38, .55, null, null, { basic: true }); };
+      buildNeighborhoodChunk(chunk, { batch: nb, placeBatch: () => kit.batch(group), parent: group, kit, tree: nbTree, lamp: nbLamp, placeById: neighborhoodById, targetFor: pid => buildingTargets.get(pid), pickables: extra.pickables, tag: tagRegion });
+      const streets = nb.finish(); for (const m of streets) tagRegion(m, 'neighborhood:streets');
+      const meshes = [...streets, ...group.children.filter(o => o.isInstancedMesh && !streets.includes(o))];
+      chunkGroup.add(group);
+      return { group, meshes, pickables: extra.pickables, occluders: [] };
+    }
     if (detail) {
       for (const r of data.roads) {
         const color = r.kind === 'road' ? COLORS.road : r.kind === 'lane' ? '#6d7271' : r.kind === 'plaza' ? COLORS.stone : COLORS.brick;
@@ -384,7 +404,7 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
     const parcelIds = data.parcels || [];
     parcelIds.forEach((pid, i) => { const b = parcelByParcelId.get(pid); if (b) parcelBuilding(batch, group, b, i, extra); });
     const meshes = batch.finish();
-    for (const m of meshes) if (m.userData.instanceTargets.some(Boolean)) extra.pickables.push(m);
+    for (const m of meshes) { tagRegion(m, 'chunks:authored-city'); if (m.userData.instanceTargets.some(Boolean)) extra.pickables.push(m); }
     chunkGroup.add(group);
     return { group, meshes, pickables: extra.pickables, occluders: extra.occluders };
   }
@@ -408,25 +428,35 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
       kit.clearGroup(rec.group); chunkGroup.remove(rec.group);
       rec.group = null; rec.meshes = []; rec.pickables = []; rec.occluders = [];
     }
-    if (forget) { chunks.delete(id); chunkCounters.unloads++; }
+    if (forget) {
+      if (rec.loading) { rec.controller?.abort(); chunkCounters.cancellations++; }
+      chunks.delete(id); chunkCounters.unloads++;
+    }
   }
   // massing only (from always-resident places data) while a chunk's detail is missing
   function fallbackChunk(id) {
     const meta = chunkMeta.get(id); if (!meta) return;
+    if (isNeighborhoodChunkId(id)) { // a neighbourhood tile never downloads, but its massing path is the exact footprints
+      const tile = neighborhoodTiles.chunks.get(id); if (!tile) return;
+      attachChunk(id, buildChunk(id, { id, roads: [], props: [], parcels: [], neighborhood: { id: tile.neighborhood, places: tile.places } }, false), 'fallback');
+      chunkCounters.fallbacks++; return;
+    }
     const parcels = (places?.parcels || []).filter(p => { const [x, z] = p.footprint.center; return x >= meta.bounds.minX && x < meta.bounds.maxX && z >= meta.bounds.minZ && z < meta.bounds.maxZ; }).map(p => p.id);
     attachChunk(id, buildChunk(id, { roads: [], props: [], parcels, bounds: meta.bounds }, false), 'fallback');
     chunkCounters.fallbacks++;
   }
   function requestChunk(id) {
     const rec = chunks.get(id) || { attempts: 0 };
+    const controller = new AbortController(), requestToken = Symbol(id);
+    rec.controller = controller; rec.requestToken = requestToken;
     rec.state = rec.group ? rec.state : 'loading'; rec.loading = true; rec.attempts = (rec.attempts || 0) + 1; chunks.set(id, rec);
-    Promise.resolve().then(() => loadChunk(id)).then(data => {
-      if (disposed || !chunks.has(id)) return;
+    Promise.resolve().then(() => fetchChunk(id, controller.signal)).then(data => {
+      if (disposed || controller.signal.aborted || chunks.get(id)?.requestToken !== requestToken) return;
       if (!data || data.id !== id || !Array.isArray(data.parcels)) throw new Error('chunk ' + id + ' is malformed');
       chunks.get(id).loading = false;
       attachChunk(id, buildChunk(id, data, true), 'ready'); chunkCounters.loads++;
     }).catch(() => {
-      if (disposed || !chunks.has(id)) return;
+      if (disposed || controller.signal.aborted || chunks.get(id)?.requestToken !== requestToken) return;
       const r = chunks.get(id); r.loading = false; chunkCounters.failures++;
       r.retryAt = elapsed + Math.min(30, 2 ** Math.min(r.attempts, 5));
       if (!r.group) fallbackChunk(id); else r.state = r.state === 'ready' ? 'ready' : 'fallback';
@@ -434,7 +464,7 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
   }
   let chunkClock = 0;
   function updateChunks(dt, force = false) {
-    if (!chunkMeta.size || !loadChunk) return;
+    if (!chunkMeta.size) return;
     chunkClock += dt; if (!force && chunkClock < .25) return; chunkClock = 0;
     const px = player.x, pz = player.z, outside = !currentInterior;
     for (const meta of chunkMeta.values()) {
@@ -442,7 +472,7 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
       if (outside && chunkWanted(meta.bounds, px, pz, CHUNK_LOAD_RADIUS)) {
         if (!rec) requestChunk(meta.id);
         else if (!rec.loading && rec.state !== 'ready' && elapsed >= (rec.retryAt || 0)) requestChunk(meta.id);
-      } else if (rec && !rec.loading && !chunkWanted(meta.bounds, px, pz, CHUNK_UNLOAD_RADIUS)) detachChunk(meta.id);
+      } else if (rec && !chunkWanted(meta.bounds, px, pz, CHUNK_UNLOAD_RADIUS)) detachChunk(meta.id);
     }
   }
   const discovered = new Set();
@@ -478,6 +508,7 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
   });
   const npcById = new Map(actors.map(a => [a.id, a]));
   const player = { x: 0, z: 2.5, interior: null, yaw: Math.PI, phase: 0, width: 1, height: 1, moving: false, visible: true, id: '__player', index: actors.length, appearance: { shirt: '#668f9e', skin: '#a88767', hair: '#36484b' } };
+  const travel = createTravelControls();
   const allActors = [...actors, player], dynamicBins = new Map();
   function actorPart(a, shape, color, x, y, z, sx, sy, sz, joint = null, angle = 0) {
     // Per-instance colour keeps every person's authored palette without a draw per shirt/skin tone.
@@ -513,7 +544,7 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
     mesh.instanceColor.needsUpdate = true;
     mesh.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 220);
     mesh.userData.instanceTargets = bin.parts.map(p => p.actor.target || null);
-    actorsGroup.add(mesh); bin.mesh = mesh; dynamicMeshes.push(mesh); pickables.push(mesh);
+    mesh.userData.region = 'actors'; actorsGroup.add(mesh); bin.mesh = mesh; dynamicMeshes.push(mesh); pickables.push(mesh);
   }
   const ringMaterial = new THREE.MeshBasicMaterial({ color: '#f9d795', transparent: true, opacity: .9, depthWrite: false });
   const ringGeometry = new THREE.RingGeometry(.64, .82, 32);
@@ -522,6 +553,27 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
   destinationRing.rotation.x = -Math.PI / 2; destinationRing.visible = false; scene.add(destinationRing);
   const contactMaterial = new THREE.MeshBasicMaterial({ color: '#203b3d', transparent: true, opacity: .22, depthWrite: false });
   const contact = new THREE.Mesh(kit.geometries.circle, contactMaterial); contact.rotation.x = -Math.PI / 2; contact.scale.set(1.35, .85, 1); scene.add(contact);
+
+  // Original procedural bicycle. All measurements are metres; no grid scaling.
+  const bicycle = new THREE.Group(); actorsGroup.add(bicycle); bicycle.visible = false;
+  const bikePart = (shape, color, position, scale) => {
+    const mesh = new THREE.Mesh(kit.geometries[shape], kit.material(color));
+    mesh.position.set(...position); mesh.scale.set(...scale); mesh.userData.region = 'bicycle'; bicycle.add(mesh); return mesh;
+  };
+  const wheels = [-.65, .65].map(z => {
+    const wheel = bikePart('torus', '#283b3c', [0, .365, z], [.55, .55, .55]); wheel.rotation.y = Math.PI / 2;
+    bikePart('cylinder', '#c4d0cf', [0, .365, z], [.075, .18, .075]).rotation.z = Math.PI / 2;
+    return wheel;
+  });
+  const tube = (a, b) => {
+    const start = new THREE.Vector3(...a), end = new THREE.Vector3(...b), delta = end.clone().sub(start);
+    const part = bikePart('cylinder', '#cc7e4f', start.clone().add(end).multiplyScalar(.5).toArray(), [.065, delta.length(), .065]);
+    part.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), delta.normalize());
+  };
+  const rear = [0, .365, -.65], front = [0, .365, .65], crank = [0, .4, 0], seat = [0, .88, -.15], stem = [0, .92, .5];
+  for (const [a, b] of [[rear, seat], [rear, crank], [crank, seat], [seat, stem], [crank, stem], [stem, front]]) tube(a, b);
+  bikePart('box', '#283b3c', [0, .94, -.15], [.3, .09, .3]);
+  bikePart('box', '#c4d0cf', [0, 1.05, .52], [.65, .065, .065]);
 
   function buildInterior(b) {
     kit.clearGroup(interiorGroup); interiorTargets.length = 0;
@@ -577,6 +629,17 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
     title.userData.target = { kind: 'counter', id: b.id };
     kit.sign(interiorGroup, 'BACK TO THE STREET', '', { x: 0, y: .28, z: d / 2 - .75, width: 4.5, height: .7 });
     const roomMeshes = ib.finish();
+    // Walking bounds omit decorative shelves and equipment. Camera-only bounds come from
+    // the actual interior instances, so close views cannot end up inside those objects.
+    interiorCameraBounds = [];
+    const instance = new THREE.Matrix4();
+    for (const mesh of roomMeshes) {
+      mesh.geometry.computeBoundingBox();
+      for (let i = 0; i < mesh.count; i++) {
+        mesh.getMatrixAt(i, instance);
+        interiorCameraBounds.push(mesh.geometry.boundingBox.clone().applyMatrix4(instance).expandByScalar(.15));
+      }
+    }
     // Interior picking is range-checked just like the outside, with a dedicated counter/exit target.
     const storyPoint = interiorSpatial.storyPoint;
     interiorTargets.push({ target: { kind: 'counter', id: b.id }, x: isGarage ? 6 : storyPoint.x, z: isGarage ? -2.2 : storyPoint.z,
@@ -587,7 +650,9 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
 
   let paused = false, disposed = false, failed = false, raf = 0, lastTime = 0, firstFrame = true;
   let currentPrompt = null, lastPromptKey = '', path = [], pathIndex = 0, approachTarget = null;
-  let cameraYaw = .68, desiredYaw = .68, zoom = 1, desiredZoom = 1, drag = null;
+  let navigation = null, routeStalled = 0;
+  const view = createCameraControls();
+  let cameraYaw = view.yaw, cameraPitch = view.pitch, zoom = view.zoom, nextViewReport = 0;
   const cameraFocus = new THREE.Vector3(player.x, .4, player.z), cameraGoal = new THREE.Vector3();
   const externalInput = { x: 0, z: 0 }, keys = new Set(), movedPoint = { x: 0, z: 0 };
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), ground = new THREE.Plane(new THREE.Vector3(0, 1, 0), -FLOOR_Y), hit = new THREE.Vector3();
@@ -599,7 +664,11 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
 
   function activeWorld() { return currentInterior ? interiorSpatial : spatial; }
   function getPlayer() { return { x: player.x, z: player.z, interior: currentInterior }; }
-  function clearInput() { keys.clear(); externalInput.x = externalInput.z = 0; path.length = 0; pathIndex = 0; approachTarget = null; destinationRing.visible = false; }
+  function clearInput() {
+    // Clearing an interrupted route is not consuming its final waypoint.
+    if (navigation?.status === 'active') navigation.status = 'paused';
+    keys.clear(); externalInput.x = externalInput.z = 0; path.length = 0; pathIndex = 0; approachTarget = null; destinationRing.visible = false;
+  }
   function changed(force = false) {
     if (force || (elapsed - lastMovedAt > .18 && (Math.abs(lastSavedX - player.x) > .08 || Math.abs(lastSavedZ - player.z) > .08 || Number.isNaN(lastSavedX)))) {
       lastMovedAt = elapsed; lastSavedX = player.x; lastSavedZ = player.z; onMove(getPlayer());
@@ -646,6 +715,9 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
         a.drawX = a.x; a.drawZ = a.z; a.drawYaw = a.yaw;
       }
     }
+    bicycle.visible = travel.mode === 'bike' && !currentInterior && player.visible;
+    bicycle.position.set(player.x, FLOOR_Y, player.z); bicycle.rotation.y = player.yaw;
+    for (const wheel of wheels) wheel.rotation.z = -player.phase / 2;
     player.drawX = player.x; player.drawZ = player.z; player.drawYaw = player.yaw;
     for (const bin of dynamicBins.values()) {
       let anyVisible = false;
@@ -662,7 +734,15 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
           if (/^foot/.test(part.joint)) { offsetZ = swing * .55; swing *= .4; }
           if (/^hand/.test(part.joint)) offsetZ = swing * .3;
         }
-        p3.set(part.x, part.y, part.z + offsetZ); rotation.set(swing, part.angle, 0); localQ.setFromEuler(rotation);
+        const cycling = a === player && travel.mode === 'bike';
+        let bodyY = part.y, bodyZ = part.z + offsetZ;
+        if (cycling && part.joint) {
+          const pedal = Math.sin(a.phase) * (/R$/.test(part.joint) ? 1 : -1);
+          if (/^leg/.test(part.joint)) { bodyY = .66; bodyZ = .18; swing = -.7 + pedal * .2; }
+          if (/^foot/.test(part.joint)) { bodyY = .3 + pedal * .12; bodyZ = .15; swing = 0; }
+          if (/^(arm|hand)/.test(part.joint)) { bodyZ = .3; bodyY += .09; swing = -1; }
+        }
+        p3.set(part.x, bodyY, bodyZ); rotation.set(swing, part.angle, 0); localQ.setFromEuler(rotation);
         sc3.set(part.sx, part.sy, part.sz); localMatrix.compose(p3, localQ, sc3); composed.multiplyMatrices(actorMatrix, localMatrix); bin.mesh.setMatrixAt(i, composed);
       }
       bin.mesh.visible = anyVisible; bin.mesh.instanceMatrix.needsUpdate = true;
@@ -701,8 +781,46 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
     clearInput(); onInteract(target); return true;
   }
   function interactNearest() { choosePrompt(); return currentPrompt ? interact(currentPrompt.target) : false; }
+  function planNavigation(destination) {
+    if (!destination || !Number.isFinite(destination.x) || !Number.isFinite(destination.z)) return null;
+    const phase = currentInterior ? 'exit' : 'outdoor';
+    const target = currentInterior ? { x: 0, z: interiorSpatial.depth / 2 - .65 } : destination;
+    if (!isWalkable(target.x, target.z, activeWorld())) return null;
+    const points = findWalkingPath(player, target, activeWorld());
+    if (!points.length) return null;
+    // Verify the outdoor leg too before offering a confirmation from inside a room.
+    if (currentInterior) {
+      const building = byId.get(currentInterior);
+      if (!findWalkingPath({ x: building.entrance[0], z: building.entrance[1] }, destination, spatial).length) return null;
+    }
+    return { destination: { x: destination.x, z: destination.z, id: destination.id, name: destination.name }, phase, points };
+  }
+  function previewNavigation(destination) {
+    if (paused) return false;
+    const plan = planNavigation(destination); clearInput();
+    navigation = plan ? { ...plan, status: 'preview' } : { destination, status: 'blocked', points: [] };
+    nextViewReport = 0; updateCamera(0); return !!plan;
+  }
+  function confirmNavigation() {
+    if (paused || !navigation?.destination) return false;
+    const plan = planNavigation(navigation.destination); clearInput();
+    if (!plan) { navigation.status = 'blocked'; return false; }
+    travel.setMode('walk'); navigation = { ...plan, status: 'active' };
+    path = plan.points.map(p => ({ ...p })); routeStalled = 0;
+    destinationRing.visible = true; nextViewReport = 0; updateCamera(0); return true;
+  }
+  function navigationView() {
+    if (!navigation) return null;
+    const remaining = navigation.status === 'active' ? path.slice(pathIndex) : navigation.points;
+    return { frame: currentInterior ? { kind: 'authored-interior', id: currentInterior, units: 'metres', axes: '+X east, +Z south', projectionAvailable: false }
+        : { kind: 'city', id: 'mccluster-city.bridgeport-equirect.v1', units: 'metres', axes: '+X east, +Z south', projectionAvailable: true },
+      status: navigation.status, phase: navigation.phase, destination: navigation.destination,
+      points: [{ x: player.x, z: player.z }, ...(remaining || [])], next: remaining?.[0] || null,
+      waypoint: navigation.status === 'active' ? pathIndex + 1 : 1, total: navigation.points?.length || 0 };
+  }
   function walkTo(point, target = null) {
     if (paused) return false;
+    navigation = null; travel.setMode('walk'); // Tap-to-walk and destination routes explicitly dismount.
     path = findWalkingPath(player, point, activeWorld()); pathIndex = 0; approachTarget = target;
     if (path.length) {
       const end = path[path.length - 1]; destinationRing.position.set(end.x, FLOOR_Y + .04, end.z); destinationRing.visible = true;
@@ -713,30 +831,31 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
   function enterBuilding(id) {
     const b = byId.get(id); if (!b) return false;
     if (b.style === 'yard' || b.enterable === false) { teleport({ x: b.entrance[0], z: b.entrance[1], interior: null }); return false; }
-    clearInput(); currentInterior = id; player.interior = id;
+    navigation = null; travel.setMode('walk'); clearInput(); currentInterior = id; player.interior = id;
     buildInterior(b); worldGroup.visible = false; interiorGroup.visible = true;
     player.x = 0; player.z = interiorSpatial.depth / 2 - 2.2; player.yaw = Math.PI;
-    cameraFocus.set(player.x, .4, player.z); desiredYaw = .68; zoom = desiredZoom = 1;
+    cameraFocus.set(player.x, 1.65, player.z); resetView(); cameraYaw = view.yaw; cameraPitch = view.pitch; zoom = view.zoom;
     prompt(null); updateActors(0); changed(true); return true;
   }
   function exitBuilding() {
     const b = byId.get(currentInterior); if (!b) return false;
+    if (navigation) navigation = { ...navigation, status: 'paused', phase: 'outdoor', points: [] };
     clearInput(); currentInterior = null; player.interior = null;
     worldGroup.visible = true; interiorGroup.visible = false;
     const ex = b.entrance[0] - b.position[0], ez = b.entrance[1] - b.position[1], len = Math.hypot(ex, ez) || 1;
     player.x = b.entrance[0] + ex / len * .8; player.z = b.entrance[1] + ez / len * .8; player.yaw = Math.atan2(ex, ez);
     if (!isWalkable(player.x, player.z, spatial)) { player.x = b.entrance[0]; player.z = b.entrance[1]; }
-    cameraFocus.set(player.x, .4, player.z); prompt(null); updateActors(0); changed(true); return true;
+    cameraFocus.set(player.x, 1.65, player.z); resetView(); cameraYaw = view.yaw; cameraPitch = view.pitch; prompt(null); updateActors(0); changed(true); return true;
   }
   function teleport(position = {}) {
-    clearInput();
+    navigation = null; travel.setMode('walk'); clearInput();
     if (position.interior && byId.has(position.interior) && byId.get(position.interior).style !== 'yard' && byId.get(position.interior).enterable !== false) enterBuilding(position.interior);
     else {
       currentInterior = null; player.interior = null; worldGroup.visible = true; interiorGroup.visible = false;
       player.x = 0; player.z = 2.5;
     }
     if (isWalkable(position.x, position.z, activeWorld())) { player.x = position.x; player.z = position.z; }
-    cameraFocus.set(player.x, .4, player.z); prompt(null); updateActors(0); changed(true); return getPlayer();
+    cameraFocus.set(player.x, 1.65, player.z); resetView(); cameraYaw = view.yaw; cameraPitch = view.pitch; prompt(null); updateActors(0); changed(true); return getPlayer();
   }
 
   function updateMovement(dt) {
@@ -745,28 +864,53 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
     let iz = externalInput.z + (keys.has('KeyS') || keys.has('ArrowDown') ? 1 : 0) - (keys.has('KeyW') || keys.has('ArrowUp') ? 1 : 0);
     let dx = 0, dz = 0;
     const strength = Math.hypot(ix, iz);
+    const riding = travel.mode === 'bike', steering = (view.follow || riding) && view.mode !== 'overview';
+    const speed = travel.speedFor(strength || (pathIndex < path.length ? 1 : 0), dt);
     if (strength > .01) {
+      if (navigation?.status === 'active') navigation.status = 'paused';
       path.length = 0; approachTarget = null; destinationRing.visible = false;
       ix /= Math.max(1, strength); iz /= Math.max(1, strength);
       // D-pad and keys are screen-relative, so Up always walks away from the camera.
+      if (steering || riding) {
+        view.yaw -= ix * dt * 1.8;
+        cameraYaw = view.yaw;
+        ix = 0;
+      }
       const c = Math.cos(cameraYaw), s = Math.sin(cameraYaw);
-      dx = (ix * c + iz * s) * WALK_SPEED * dt; dz = (-ix * s + iz * c) * WALK_SPEED * dt;
+      dx = (ix * c + iz * s) * speed * dt; dz = (-ix * s + iz * c) * speed * dt;
     } else if (pathIndex < path.length) {
       const next = path[pathIndex], vx = next.x - player.x, vz = next.z - player.z, distance = Math.hypot(vx, vz);
       if (distance < .16) pathIndex++;
-      else { const step = Math.min(distance, WALK_SPEED * dt); dx = vx / distance * step; dz = vz / distance * step; }
+      else { const step = Math.min(distance, speed * dt); dx = vx / distance * step; dz = vz / distance * step; }
     }
     if (dx || dz) {
-      moveWithCollisions(player, dx, dz, activeWorld(), movedPoint);
+      moveWithCollisions(player, dx, dz, activeWorld(), movedPoint, travel.radius);
       const distance = Math.hypot(movedPoint.x - player.x, movedPoint.z - player.z);
       player.x = movedPoint.x; player.z = movedPoint.z;
-      if (distance > .001) { player.yaw = angleTo(player.yaw, Math.atan2(dx, dz), Math.min(1, dt * 14)); player.phase += distance * 5.6; player.moving = true; }
+      if (navigation?.status === 'active') {
+        routeStalled = distance < .001 ? routeStalled + dt : 0;
+        if (routeStalled > .6) { confirmNavigation(); routeStalled = 0; }
+      }
+      if (distance > .001) {
+        const facing = (steering || riding) && strength > .01 ? view.yaw + Math.PI : Math.atan2(dx, dz);
+        player.yaw = angleTo(player.yaw, facing, Math.min(1, dt * 14));
+        if (steering && strength <= .01) view.yaw = player.yaw + Math.PI; player.phase += distance * 5.6; player.moving = true; }
     }
     if (approachTarget) {
       const p = targetPosition(approachTarget);
       if (p && Math.hypot(p.x - player.x, p.z - player.z) < (currentInterior ? 4.2 : 2.6)) { const target = approachTarget; interact(target); }
     }
-    if (pathIndex >= path.length) { destinationRing.visible = false; path.length = 0; pathIndex = 0; approachTarget = null; }
+    if (pathIndex >= path.length) {
+      destinationRing.visible = false; path.length = 0; pathIndex = 0; approachTarget = null;
+      if (navigation?.status === 'active') {
+        if (navigation.phase === 'exit') {
+          const destination = navigation.destination; exitBuilding();
+          navigation = { destination, status: 'paused' }; confirmNavigation();
+        } else navigation = { ...navigation, status: 'arrived', points: [] };
+      }
+    } else if (navigation?.status === 'active') {
+      const next = path[pathIndex]; destinationRing.position.set(next.x, FLOOR_Y + .04, next.z); destinationRing.visible = true;
+    }
     changed();
   }
 
@@ -775,25 +919,66 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
     const w = Math.max(1, canvas.clientWidth || canvas.width), h = Math.max(1, canvas.clientHeight || canvas.height);
     currentWidth = w; currentHeight = h; renderer.setSize(w, h, false);
     const span = currentInterior ? 10.7 : 16;
-    camera.left = -span * w / h; camera.right = span * w / h; camera.top = span; camera.bottom = -span; camera.updateProjectionMatrix();
+    overviewCamera.left = -span * w / h; overviewCamera.right = span * w / h;
+    overviewCamera.top = span; overviewCamera.bottom = -span; overviewCamera.updateProjectionMatrix();
+    closeCamera.aspect = w / h; closeCamera.updateProjectionMatrix();
   }
   const ro = new ResizeObserver(resize); ro.observe(canvas); resize();
   let previousInterior = null, islandView = false;
   function resetView() {
-    const island = !currentInterior && onIsland(player.x, player.z);
-    desiredYaw = island ? Math.PI + .35 : .68;
-    desiredZoom = island ? .7 : 1;
+    view.reset({ playerYaw: player.yaw, island: !currentInterior && onIsland(player.x, player.z) });
+  }
+  function setViewMode(mode) {
+    if (paused || disposed || !view.setMode(mode, { playerYaw: player.yaw, island: !currentInterior && onIsland(player.x, player.z) })) return;
+    clearInput(); clearPointers(); zoom = view.zoom; cameraPitch = view.pitch;
+    cameraYaw = view.yaw; cameraFocus.set(player.x, view.mode !== 'overview' ? 1.65 : .4, player.z);
+    nextViewReport = 0; updateCamera(1);
   }
   function updateCamera(dt) {
     if (previousInterior !== currentInterior) { previousInterior = currentInterior; resize(); }
-    const island = !currentInterior && onIsland(player.x, player.z);
-    if (island !== islandView) { islandView = island; resetView(); }
-    cameraGoal.set(player.x, currentInterior ? .8 : island ? 4 : .4, player.z + (island ? 5 : 0));
-    cameraFocus.lerp(cameraGoal, reducedMotion ? 1 : Math.min(1, dt * 9));
-    cameraYaw = angleTo(cameraYaw, desiredYaw, reducedMotion ? 1 : Math.min(1, dt * 10));
-    zoom += (desiredZoom - zoom) * (reducedMotion ? 1 : Math.min(1, dt * 10));
-    camera.position.set(cameraFocus.x + Math.sin(cameraYaw) * 39, cameraFocus.y + 31, cameraFocus.z + Math.cos(cameraYaw) * 39);
-    camera.lookAt(cameraFocus); camera.zoom = zoom; camera.updateProjectionMatrix(); camera.updateMatrixWorld();
+    const island = !currentInterior && onIsland(player.x, player.z), close = view.mode !== 'overview';
+    if (island !== islandView) { islandView = island; if (!close) resetView(); }
+    camera = close ? closeCamera : overviewCamera;
+    cameraGoal.set(player.x, close ? 1.65 : currentInterior ? .8 : island ? 4 : .4, player.z + (!close && island ? 5 : 0));
+    // Close view stays attached to the player: lag would let the camera cross a wall on a turn.
+    cameraFocus.lerp(cameraGoal, close || reducedMotion ? 1 : Math.min(1, dt * 9));
+    cameraYaw = angleTo(cameraYaw, view.yaw, reducedMotion ? 1 : Math.min(1, dt * 10));
+    cameraPitch += (view.pitch - cameraPitch) * (reducedMotion ? 1 : Math.min(1, dt * 10));
+    zoom += (view.zoom - zoom) * (reducedMotion ? 1 : Math.min(1, dt * 10));
+    const requested = close ? 5 / zoom : 39;
+    const distance = view.mode === 'first' ? 0 : close ? safeCameraDistance(player, cameraYaw, requested, (x, z) => {
+      if (!isWalkable(x, z, activeWorld(), .18)) return false;
+      if (!currentInterior) return true;
+      p3.set(x, 1.65 + Math.tan(cameraPitch) * Math.hypot(x - player.x, z - player.z), z);
+      return !interiorCameraBounds.some(bounds => bounds.containsPoint(p3));
+    }) : requested;
+    camera.position.set(cameraFocus.x + Math.sin(cameraYaw) * distance,
+      cameraFocus.y + Math.tan(cameraPitch) * distance, cameraFocus.z + Math.cos(cameraYaw) * distance);
+    if (close) cameraGoal.set(player.x - Math.sin(cameraYaw) * 1.4, view.mode === 'first' ? 1.65 - Math.tan(cameraPitch) * 1.4 : travel.mode === 'bike' ? 1.05 : 1.65, player.z - Math.cos(cameraYaw) * 1.4);
+    else cameraGoal.copy(cameraFocus);
+    camera.lookAt(cameraGoal); camera.zoom = close ? 1 : zoom; camera.updateProjectionMatrix(); camera.updateMatrixWorld();
+    player.visible = !close || distance > 1.8;
+    scene.fog.near = close ? 55 : 115; scene.fog.far = close ? 105 : 255;
+    if (elapsed >= nextViewReport) {
+      nextViewReport = elapsed + .12;
+      onView({ navigation: navigationView(), travel: travel.mode, labels: projectedLabels(), mode: view.mode, yaw: cameraYaw, zoom, x: player.x, z: player.z, interior: currentInterior,
+        room: currentInterior ? { width: interiorSpatial.width, depth: interiorSpatial.depth } : null });
+    }
+  }
+
+  // Screen-space labels are derived from the same immutable building records as collision.
+  // No coordinates, civic identities, or saved positions are changed for readability.
+  function projectedLabels() {
+    if (currentInterior) return [];
+    return [...byId.values(), { id: 'equity-uprise-hq', name: 'Equity Uprise HQ', position: [0, 88], height: hq.roofHeightMeters }]
+      .map(b => ({ b, distance: Math.hypot(b.position[0] - player.x, b.position[1] - player.z) }))
+      .filter(({ distance }) => distance < 100)
+      .sort((a, b) => a.distance - b.distance)
+      .flatMap(({ b, distance }) => {
+        const point = new THREE.Vector3(b.position[0], (b.height || 6) + 1.5, b.position[1]).project(camera);
+        if (point.z < -1 || point.z > 1 || Math.abs(point.x) > .93 || Math.abs(point.y) > .9) return [];
+        return [{ id: b.id, name: b.name, distance: Math.round(distance), x: (point.x + 1) * 50, y: (1 - point.y) * 50 }];
+      }).slice(0, 6);
   }
 
   function updateOcclusion(dt) {
@@ -833,25 +1018,35 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
     else if (e.code === 'KeyE' && !e.repeat) { e.preventDefault(); interactNearest(); }
   };
   const keyup = e => keys.delete(e.code);
-  const blur = () => clearInput();
   const activePointers = new Set();
+  let drag = null;
+  function clearPointers() {
+    drag = null;
+    for (const id of activePointers) if (canvas.hasPointerCapture?.(id)) canvas.releasePointerCapture(id);
+    activePointers.clear();
+  }
+  const blur = () => { clearInput(); clearPointers(); };
   const pointerDown = e => {
     if (paused || (e.button != null && e.button !== 0)) return;
     activePointers.add(e.pointerId);
+    // Two fingers belong to browser accessibility zoom. Neither finger can become a walk tap.
     if (activePointers.size > 1) { drag = null; return; }
-    drag = { id: e.pointerId, startX: e.clientX, startY: e.clientY, x: e.clientX, moved: false };
+    drag = { id: e.pointerId, startX: e.clientX, startY: e.clientY, x: e.clientX, y: e.clientY, moved: false };
     canvas.setPointerCapture?.(e.pointerId);
   };
   const pointerMove = e => {
     if (!drag || drag.id !== e.pointerId || paused) return;
-    if (Math.hypot(e.clientX - drag.startX, e.clientY - drag.startY) > 8) drag.moved = true;
-    if (drag.moved) desiredYaw -= (e.clientX - drag.x) * .006;
-    drag.x = e.clientX;
+    if (Math.hypot(e.clientX - drag.startX, e.clientY - drag.startY) > 8) {
+      if (!drag.moved) clearInput();
+      drag.moved = true;
+    }
+    if (drag.moved) view.look(e.clientX - drag.x, e.clientY - drag.y);
+    drag.x = e.clientX; drag.y = e.clientY;
   };
   const pointerUp = e => {
     activePointers.delete(e.pointerId);
-    if (!drag || drag.id !== e.pointerId) return;
-    const tap = !drag.moved && e.type === 'pointerup'; drag = null;
+    const tap = drag?.id === e.pointerId && !drag.moved && e.type === 'pointerup';
+    if (drag?.id === e.pointerId) drag = null;
     if (canvas.hasPointerCapture?.(e.pointerId)) canvas.releasePointerCapture(e.pointerId);
     if (!tap || paused) return;
     const rect = canvas.getBoundingClientRect();
@@ -867,24 +1062,43 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
     }
     if (ray.ray.intersectPlane(ground, hit)) walkTo({ x: hit.x, z: hit.z });
   };
-  const wheel = e => { e.preventDefault(); desiredZoom = Math.max(.7, Math.min(2, desiredZoom * (e.deltaY > 0 ? .9 : 1.1))); };
+  const wheel = e => { if (paused || e.ctrlKey || e.metaKey) return; e.preventDefault(); view.zoomBy(e.deltaY > 0 ? .9 : 1.1); };
   const contextLost = e => { e.preventDefault(); failed = true; clearInput(); onError(new Error('The 3D graphics context was lost. Reload the city to reconnect.')); };
   const listeners = [
     [globalThis, 'keydown', keydown], [globalThis, 'keyup', keyup], [globalThis, 'blur', blur],
     [canvas, 'pointerdown', pointerDown], [canvas, 'pointermove', pointerMove], [canvas, 'pointerup', pointerUp],
-    [canvas, 'pointercancel', pointerUp], [canvas, 'wheel', wheel, { passive: false }], [canvas, 'webglcontextlost', contextLost]
+    [canvas, 'lostpointercapture', pointerUp], [canvas, 'pointercancel', pointerUp], [canvas, 'wheel', wheel, { passive: false }], [canvas, 'webglcontextlost', contextLost]
   ];
   for (const [target, event, handler, options] of listeners) target.addEventListener(event, handler, options);
   const oldTouchAction = canvas.style.touchAction; canvas.style.touchAction = 'pinch-zoom';
 
+  /* Development-only: triangles and draws per region for the current camera (what the renderer would draw this
+     frame after frustum culling), computed on demand by whoever calls getStats(), never per frame. */
+  const statFrustum = new THREE.Frustum(), statMatrix = new THREE.Matrix4();
+  function breakdown() {
+    statMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse); statFrustum.setFromProjectionMatrix(statMatrix);
+    const out = {};
+    scene.traverse(o => {
+      if (!o.isMesh || !o.visible || !o.geometry) return;
+      let p = o.parent, shown = true; while (p) { if (!p.visible) { shown = false; break; } p = p.parent; }
+      if (!shown) return;
+      const g = o.geometry, perInstance = (g.index ? g.index.count : g.attributes.position?.count || 0) / 3;
+      const count = o.isInstancedMesh ? o.count : 1;
+      if (!count || (o.frustumCulled && !statFrustum.intersectsObject(o))) return;
+      const region = o.userData.region || (o.parent === interiorGroup || o.parent?.parent === interiorGroup ? 'interior' : o.userData.ownedTexture ? 'signs' : 'other');
+      out[region] ??= { draws: 0, triangles: 0 };
+      out[region].draws++; out[region].triangles += Math.round(perInstance * count);
+    });
+    return out;
+  }
   function getStats() {
-    return { engine: 'Three.js 0.180.0', drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles,
+    return { engine: 'Three.js 0.180.0', drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles, breakdown: breakdown(),
       geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures,
       npcCount: actors.length, visibleNpcs, buildings: buildings.length, interior: currentInterior, storyStops: storyMarkers.length,
       fps: Math.round(fps * 10) / 10, dpr, viewport: [currentWidth, currentHeight],
       staticBatches: staticMeshes.length, animatedBatches: dynamicMeshes.length,
       staticInstances: staticMeshes.reduce((n, m) => n + m.count, 0), status: failed ? 'graphics-lost' : disposed ? 'disposed' : 'running',
-      parcels: parcelBuildings.length, hqLod,
+      parcels: parcelBuildings.length, hqLod, travel: travel.mode, camera: { mode: view.mode, yaw: cameraYaw, pitch: cameraPitch, zoom },
       chunks: { total: chunkMeta.size, active: [...chunks.values()].filter(c => c.group).length,
         ready: [...chunks.entries()].filter(([, c]) => c.state === 'ready' && c.group).map(([id]) => id).sort(),
         fallback: [...chunks.entries()].filter(([, c]) => c.state === 'fallback').map(([id]) => id).sort(),
@@ -911,7 +1125,7 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
     const frameSeconds = lastTime ? (now - lastTime) / 1000 : 1 / 60;
     const dt = Math.min(.05, frameSeconds); lastTime = now; elapsed += dt;
     try {
-      updateMovement(dt); updateActors(dt); updateChunks(dt); updateHqLod(); updateDiscovery(); updateCamera(dt); updateOcclusion(dt);
+      updateMovement(dt); updateCamera(dt); updateActors(dt); updateChunks(dt); updateHqLod(); updateDiscovery(); updateOcclusion(dt);
       playerRing.position.set(player.x, .267, player.z); contact.position.set(player.x, .261, player.z);
       choosePrompt(); renderer.render(scene, camera);
       frameCount++; fpsTime += frameSeconds; if (fpsTime >= 1) { fps = frameCount / fpsTime; frameCount = 0; fpsTime = 0; }
@@ -921,12 +1135,22 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
   setStoryProgress([]); updateActors(0); updateCamera(1); updateChunks(0, true); raf = requestAnimationFrame(frame);
   return {
     setInput(input = {}) { if (paused || disposed) return; externalInput.x = Number.isFinite(input.x) ? Math.max(-1, Math.min(1, input.x)) : 0; externalInput.z = Number.isFinite(input.z) ? Math.max(-1, Math.min(1, input.z)) : 0; },
+    previewNavigation, confirmNavigation, getNavigation: navigationView,
+    cancelNavigation() { clearInput(); navigation = null; nextViewReport = 0; updateCamera(0); },
+    setTravelMode(mode) {
+      if (paused || disposed) return false;
+      const ok = travel.setMode(mode, { interior: !!currentInterior, clear: radius => isWalkable(player.x, player.z, activeWorld(), radius) });
+      if (ok) { if (navigation?.status === 'active') navigation.status = 'paused'; clearInput(); if (mode === 'bike') resetView(); nextViewReport = 0; updateCamera(0); }
+      return ok;
+    },
+    setFollow(value) { view.follow = !!value; if (view.follow) resetView(); },
     interactNearest, enterBuilding, exitBuilding, teleport, walkTo, getPlayer, getStats, setStoryProgress,
-    zoomBy(factor) { if (Number.isFinite(factor) && factor > 0) desiredZoom = Math.max(.7, Math.min(2, desiredZoom * factor)); },
-    resetView,
-    setPaused(value) { paused = !!value; if (paused) { clearInput(); prompt(null); } },
+    zoomBy(factor) { if (!paused && !disposed) view.zoomBy(factor); },
+    resetView() { if (!paused && !disposed) { clearInput(); clearPointers(); resetView(); } }, setViewMode,
+    getView() { return { mode: view.mode, yaw: cameraYaw, pitch: cameraPitch, zoom, position: camera.position.toArray() }; },
+    setPaused(value) { paused = !!value; if (paused) { if (navigation?.status === 'active') navigation.status = 'paused'; clearInput(); clearPointers(); prompt(null); } },
     dispose() {
-      if (disposed) return; disposed = true; cancelAnimationFrame(raf); clearInput(); ro.disconnect();
+      if (disposed) return; disposed = true; cancelAnimationFrame(raf); clearInput(); clearPointers(); ro.disconnect();
       for (const [target, event, handler, options] of listeners) target.removeEventListener(event, handler, options);
       canvas.style.touchAction = oldTouchAction;
       for (const id of [...chunks.keys()]) detachChunk(id);
