@@ -104,3 +104,11 @@ culling does not reduce this transfer, and no production bandwidth/FPS improveme
 Reproduce v2 browser checks with `SLICE=v2 node scripts/e2e/bridgeport-shared-globe.e2e.mjs` using
 the pinned Cesium/Playwright setup documented in the v1 contract. This update normally incorporates
 refreshed #736 at 9e78fd3f7171afc74d9b24300abb43adffbb4a00; it does not merge either PR into main.
+
+Lifecycle cancellation repair: the globe loader now invalidates pending module imports on leave,
+owner revocation and page exit. A later entry supersedes the earlier request; stale completion
+cannot mount the walk or reset the newer request's loading state. Leave before mount emits a
+`returned` envelope with null position and the requested region/entrance, so Arcade can resume
+without waiting for its timeout. Mounted instances retain their normal save/return lifecycle.
+Regression coverage controls import resolution order and delays module evaluation in the real
+Cesium iframe before sending leave, then verifies no late mount and successful explicit re-entry.

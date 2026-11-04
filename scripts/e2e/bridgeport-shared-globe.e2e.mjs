@@ -59,8 +59,18 @@ try{for(const width of (process.env.WIDTHS||'390,1280').split(',').map(Number)){
   assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('here.universe.bridgeport-golden-hill.v1'))),oldValue);assert.deepEqual(await page.evaluate(()=>BridgeportSlice.snapshot().position),oldValue.position);await page.locator('[data-return]').click();
  }
 
- if(width===390){owner=true;const host=await context.newPage();await host.goto(base+'/__bridgeport-host.html');const f=host.frames().find(f=>f.url().includes('action-globe'));await f.locator('#bridgeportEnter').waitFor({state:'visible'});
+ if(width===390){owner=true;const host=await context.newPage();
+ await host.route('**/js/spatial/bridgeport-globe.mjs',async r=>r.fulfill({contentType:'text/javascript',body:
+  'window.bridgeportImportStarted=true;await new Promise(r=>window.releaseBridgeportImport=r);\n'+await readFile('js/spatial/bridgeport-globe.mjs','utf8')+'\nwindow.bridgeportImportFinished=true;'}));
+ await host.goto(base+'/__bridgeport-host.html');const f=host.frames().find(f=>f.url().includes('action-globe'));await f.locator('#bridgeportEnter').waitFor({state:'visible'});
  const send=async m=>host.evaluate(m=>document.getElementById('globe').contentWindow.postMessage({schema:'mccluster.spatial-lifecycle/v1',...m},location.origin),m);
+ await send({type:'bridgeport:enter',entranceId:'bridgeport-main-golden-hill',regionId});
+ await f.waitForFunction(()=>window.bridgeportImportStarted);await send({type:'bridgeport:leave'});
+ await host.waitForFunction(()=>events.some(e=>e.event==='returned'&&e.position===null&&e.loaded===false&&e.entranceId==='bridgeport-main-golden-hill'));
+ await f.evaluate(()=>window.releaseBridgeportImport());await f.waitForFunction(()=>window.bridgeportImportFinished);
+ await f.evaluate(()=>new Promise(r=>setTimeout(r,100)));assert.equal(await f.evaluate(()=>!!window.BridgeportSlice),false);
+ assert.equal(await host.evaluate(()=>events.some(e=>e.event==='ready')),false);
+ await host.evaluate(()=>events.length=0);
  await send({type:'bridgeport:enter',entranceId:'bridgeport-main-golden-hill',regionId});await f.waitForFunction(()=>window.BridgeportSlice?.snapshot().attached);
  await host.waitForFunction(()=>events.some(e=>e.type==='bridgeport:state'&&e.event==='ready'&&e.entranceId==='bridgeport-main-golden-hill'));
  await send({type:'bridgeport:preview',destinationId:'court-exterior-approach'});await f.waitForFunction(()=>document.querySelector('[data-status]').textContent.startsWith('Preview:'));

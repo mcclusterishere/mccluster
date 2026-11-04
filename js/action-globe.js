@@ -973,22 +973,47 @@ let haloPhotoreal=false,haloLoad=null,haloMapFailed=false;
 function isOwner(){const t=sessionToken();return !!(t&&access&&access.release?.version==='globe-admin-preview/v1'&&access.release.admin_preview===true&&accessToken===t)}
 function haloScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+(HU_V?'?v='+encodeURIComponent(HU_V):'');s.onload=res;s.onerror=()=>rej(Error(src));document.head.appendChild(s)})}
 function haloStyle(href){return new Promise(res=>{if(document.querySelector('link[data-halo="'+href+'"]'))return res();const l=document.createElement('link');l.rel='stylesheet';l.href=href+(HU_V?'?v='+encodeURIComponent(HU_V):'');l.dataset.halo=href;l.onload=l.onerror=()=>res();document.head.appendChild(l)})}
-let bridgeportLoading=false,bridgeportDeepLink=false,bridgeportEntrance=null,bridgeportRegion=new URLSearchParams(location.search).get('bridgeport')==='2'?'bridgeport-downtown.v2':'bridgeport-golden-hill.v1';
+let bridgeportGeneration=0,bridgeportLoading=false,bridgeportDeepLink=false,bridgeportEntrance=null,bridgeportRegion=new URLSearchParams(location.search).get('bridgeport')==='2'?'bridgeport-downtown.v2':'bridgeport-golden-hill.v1';
+// Imports cannot be aborted; invalidate their request before leaving or losing access.
+function bridgeportCancel(acknowledge=false){
+ ++bridgeportGeneration;bridgeportLoading=false;
+ const door=document.getElementById('bridgeportEnter');if(door)door.disabled=false;
+ if(window.BridgeportSlice){window.BridgeportSlice.leave();return;}
+ if(acknowledge&&window.parent!==window)window.parent.postMessage({
+  schema:'mccluster.spatial-lifecycle/v1',type:'bridgeport:state',event:'returned',
+  regionId:bridgeportRegion,revision:bridgeportRegion.endsWith('.v2')?2:1,
+  frameId:'bridgeport-golden-hill.enu.v1',floorId:'street',entranceId:bridgeportEntrance,
+  entered:false,loaded:false,position:null,topology:'hex',closedRoadIds:[],navigationRevision:0,
+  capabilities:['exterior-navigation','square','hex','preview-confirm','local-resume',
+   ...(bridgeportRegion.endsWith('.v2')?['road-closures','explicit-v1-pose-import']:[])]
+ },location.origin);
+}
 window.addEventListener('message',event=>{
  if(event.origin!==location.origin||event.source!==window.parent||window.parent===window||!isOwner())return;
  const m=event.data;if(m?.schema!=='mccluster.spatial-lifecycle/v1')return;
- if(m.type==='bridgeport:enter'&&['bridgeport-main-elm','bridgeport-main-fairfield','bridgeport-middle-golden-hill','bridgeport-main-south','bridgeport-main-golden-hill','golden-hill-west'].includes(m.entranceId)){if(m.regionId&&!['bridgeport-golden-hill.v1','bridgeport-downtown.v2'].includes(m.regionId))return;bridgeportRegion=m.regionId||'bridgeport-golden-hill.v1';bridgeportEntrance=m.entranceId;document.getElementById('bridgeportEnter')?.click();}
- if(m.type==='bridgeport:leave')window.BridgeportSlice?.leave();
+ if(m.type==='bridgeport:enter'&&['bridgeport-main-elm','bridgeport-main-fairfield','bridgeport-middle-golden-hill','bridgeport-main-south','bridgeport-main-golden-hill','golden-hill-west'].includes(m.entranceId)){if(m.regionId&&!['bridgeport-golden-hill.v1','bridgeport-downtown.v2'].includes(m.regionId))return;if(bridgeportLoading)bridgeportCancel();bridgeportRegion=m.regionId||'bridgeport-golden-hill.v1';bridgeportEntrance=m.entranceId;document.getElementById('bridgeportEnter')?.click();}
+ if(m.type==='bridgeport:leave')bridgeportCancel(true);
  if(m.type==='bridgeport:preview')window.BridgeportSlice?.previewDestination(m.destinationId);
  if(m.type==='bridgeport:closures')window.BridgeportSlice?.setClosures(m.closedRoadIds);
  if(m.type==='bridgeport:confirm')window.BridgeportSlice?.confirm();
 });
-window.addEventListener('pagehide',()=>{window.BridgeportSlice?.destroy();window.BridgeportSlice=null;});
+window.addEventListener('pagehide',()=>{bridgeportCancel();window.BridgeportSlice?.destroy();window.BridgeportSlice=null;});
 function bridgeportSync(){
  if(!viewer)return;let door=document.getElementById('bridgeportEnter');
  if(!door){door=document.createElement('button');door.id='bridgeportEnter';door.type='button';door.textContent='Bridgeport walk';door.style.cssText='position:fixed;top:80px;left:12px;z-index:120;font:16px system-ui;min-height:44px';document.body.append(door);
- door.onclick=async()=>{if(!isOwner()||bridgeportLoading)return;if(window.BridgeportSlice){window.BridgeportSlice.enter({entranceId:bridgeportEntrance,regionId:bridgeportRegion});return;}bridgeportLoading=true;door.disabled=true;try{const m=await import('./spatial/bridgeport-globe.mjs');if(!isOwner())return;window.BridgeportSlice=m.mountBridgeport({globe:window.HuGlobe,C:Cesium});window.BridgeportSlice.enter({entranceId:bridgeportEntrance,regionId:bridgeportRegion});}catch(e){door.textContent='Retry Bridgeport walk';}finally{bridgeportLoading=false;door.disabled=false;}};}
- door.hidden=!isOwner();if(!isOwner())window.BridgeportSlice?.leave(false);
+ door.onclick=async()=>{
+  if(!isOwner()||bridgeportLoading)return;
+  const options={entranceId:bridgeportEntrance,regionId:bridgeportRegion};
+  if(window.BridgeportSlice){window.BridgeportSlice.enter(options);return;}
+  const generation=++bridgeportGeneration;bridgeportLoading=true;door.disabled=true;
+  try{const m=await import('./spatial/bridgeport-globe.mjs');
+   if(generation!==bridgeportGeneration||!isOwner())return;
+   window.BridgeportSlice=m.mountBridgeport({globe:window.HuGlobe,C:Cesium});
+   window.BridgeportSlice.enter(options);
+  }catch(e){if(generation===bridgeportGeneration)door.textContent='Retry Bridgeport walk';}
+  finally{if(generation===bridgeportGeneration){bridgeportLoading=false;door.disabled=false;}}
+ };}
+ door.hidden=!isOwner();if(!isOwner())bridgeportCancel();
  if(isOwner()&&!bridgeportDeepLink&&['1','2'].includes(new URLSearchParams(location.search).get('bridgeport'))){bridgeportDeepLink=true;door.click();}
 }
 function haloSync(){bridgeportSync();const owner=isOwner()&&!ANALYTICS&&EDITORIAL,door=$('ctlHalo');if(door)door.hidden=!owner;
