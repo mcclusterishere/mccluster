@@ -1,6 +1,6 @@
 # Inbox, Home and System review slice
 
-Source baseline: main `4fc32c84970d1a5cbc69c2df218e700bcea14032`, plus open Games PR #726 at `2f46f6116e24ab07b4e5d2b9f7c255b5837c8d9b`. This branch is stacked on #726, not a replacement for it. No publication, deployment, production write or account change is part of this slice.
+Source baseline: main `4fc32c84970d1a5cbc69c2df218e700bcea14032`, plus open Games PR #726 at `2f46f6116e24ab07b4e5d2b9f7c255b5837c8d9b`. This branch is stacked on #726, not a replacement for it. Published as draft PR #745 for review; no deployment, production write or account change is part of this slice.
 
 ## Implemented
 
@@ -32,20 +32,29 @@ PLAYWRIGHT_DIR=/tmp/admin-ui-tools/node_modules CHROMIUM_EXECUTABLE=/usr/bin/chr
 
 Review routes are `control.html?org=o1#people:inbox:conversations`, `#people:inbox:ai-reply`, `#home:today`, `#system:overview` and `#system:observability` within the fixture browser. Screenshots include `inbox-390.png`, `system-390.png` and their tablet/desktop counterparts. These are local review artifacts, not published production URLs. The ordinary app remains authenticated; no demo bypass was added.
 
-Validation on this slice: 104/104 focused source tests; 291/291 shared navigation/browser checks; 214/214 Control navigation checks; 78/78 AI-settings browser checks. Browser widths were 390, 820 and 1280 pixels. The shared suite exercises repeated same-document Inbox navigation, category visibility, current-tab state, touch target sizes, grouped System evidence, source fallback, keyboard focus, browser Back, all route inventory entries, owner revocation, sign-out races, guest/member navigation and embedded opt-outs. No full-platform or production acceptance is claimed.
+Validation on the initial slice: 104/104 focused source tests; 291/291 shared navigation/browser checks; 214/214 Control navigation checks; 78/78 AI-settings browser checks. Browser widths were 390, 820 and 1280 pixels. The shared suite exercises repeated same-document Inbox navigation, category visibility, current-tab state, touch target sizes, grouped System evidence, source fallback, keyboard focus, browser Back, all route inventory entries, owner revocation, sign-out races, guest/member navigation and embedded opt-outs. No full-platform or production acceptance is claimed.
 
 ## Integration boundaries and remaining work
 
-Owner self-service editor work is separate and not in this checkout. Its private-draft/publish/history/restore validation does not establish production readiness. This slice does not touch its backend, migrations, revision contracts or front-page editor. Shared integration points to reconcile deliberately are `control.html`, `js/control-room-v2.js`, the NAV registry and shared bar styles/scripts. Rebase/cherry-pick only after inspecting that task's exact source version; do not overwrite those files wholesale. #681 remains an independent open editor/onboarding PR. The release coordinator is collecting the exact newly published owner-controls revision; its integration remains a declared dependency. This independent UI slice is ready for draft review.
+Owner self-service is a separate dependency, draft [#741](https://github.com/mcclusterishere/mccluster/pull/741). Its exact runtime revision `1b26c37189a8e8b067da001d3144fe48970f9d04` was composed with this slice at `07431821fce402c8bb41cbb152f6a5da77575432` in an isolated worktree. The patch applied cleanly without overlapping runtime files. `js/control-room/front-page.js` and `js/site-editor.js` match that owner revision byte for byte. Its later head `6a9ea1bee00f511c529f1e0778af802fa96247c8` changes only AGENTS.md guidance. No owner implementation, SQL or test files were copied into #745; review and land dependencies deliberately.
 
 The larger mini-app redesign is not complete: other Sell/Create/System editors retain their current local layouts. Trigger/model controls need an owner-scoped backend contract before implementation. Historical last-success and user-impact data are not supplied by the current service snapshot; unknown is displayed. Trace grouping is not root-cause analysis. Physical-device and authenticated production acceptance remain outstanding. The separate incident investigation owns diagnosis and repairs; this UI performs none.
 
 
 ## Follow-up reconciliation and evidence
 
-Inspected remote editor source `17ed110d52a425c1570e67fbbdc6308d7b064559` (productization recovery; merge base `e80cb0a137683393f19ba251f9beb9e66577ce64`) and `a40a68c41ec4b8e616d6a27168485764d684300a` (September backend-control integration). Neither is the exact newer private-draft implementation reported by the owner-controls task. The September branch predates the current module. The November recovery branch has versioned editor support, but its shell predates NAV, and its front-page restore explicitly writes to the live site. Importing its shared files wholesale would remove current navigation and substitute the wrong restore contract.
+The exact owner-controls integration passed **104/104 full-shell browser checks**, including history preview, explicit restore publication, stale-version conflict preservation, deliberate reload/reconciliation, missing-migration refusal and account-change clearing. The isolated SQL-backed browser flow also passed private draft save/reload/resume, publish, history preview, restore, discard, two-tab conflict, denied identities, phone overflow and JavaScript-error checks. These tests used synthetic identities and local in-memory PGlite, never production.
 
-The requested current source revision/bundle has not been supplied in this executor. Therefore no owner-editor implementation was overwritten or guessed. Versioned private-draft restore/reload/conflict testing remains blocked on that source. The **existing** current-main front-page preview/save/reset flow passed 90/90 synthetic browser checks after the shell changes; this does not validate the newer history/restore flow or authorize publishing.
+The owner database suite passed **10/10 tests**, covering owner/member/anonymous authorization, private draft isolation, stale revisions, history, restart and rollback/reapply. The combined focused source suite passed **117/117 tests**. Full Postgres concurrency, canonical migration replay, managed-auth and physical-device/production acceptance remain release gates owned jointly with #741; local tests do not establish those results.
+
+Reproduce composition from this branch at `07431821` in a disposable worktree: apply the binary diff from main `4fc32c84` to owner revision `1b26c371`, then run the commands below. The database harness uses `@electric-sql/pglite@0.3.14` installed outside the repository. It applies proposed SQL only inside the isolated local database.
+
+```sh
+PGLITE_DIR=/tmp/admin-ui-tools/node_modules node --test scripts/test/owner-front-publication-db.mjs
+PGLITE_DIR=/tmp/admin-ui-tools/node_modules PLAYWRIGHT_DIR=/tmp/admin-ui-tools/node_modules CHROMIUM_EXECUTABLE=/usr/bin/chromium node scripts/e2e/owner-front-sql.e2e.mjs
+PLAYWRIGHT_DIR=/tmp/admin-ui-tools/node_modules CHROMIUM_EXECUTABLE=/usr/bin/chromium node scripts/e2e/control-front-page.e2e.mjs /tmp/admin-owner-combined-proof
+node --test scripts/test/control-*.test.mjs scripts/test/appbar-consistency.test.mjs scripts/test/globe-games-gate.test.mjs scripts/test/owner-front-publication.test.mjs
+```
 
 System fixtures now mirror `core/src/runner.mjs`, `core/src/observability.mjs` and the Worker's event contract: separate terminal jobs with attempt/status fields, shared trace IDs, a request with HTTP 502, and provider warnings. They are generated examples, not copied private records. Warnings and error rows stay separate; an `ok` outcome on a warning or an HTTP failure cannot count as a successful event. No automated fix is attempted.
 
