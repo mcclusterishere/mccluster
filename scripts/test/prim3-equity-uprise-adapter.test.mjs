@@ -173,8 +173,16 @@ test('both sides can win through play: heuristic squad vs the canonical threat A
 
 test('replayed games (one each way, each role) reproduce exactly', async () => {
   const pkg = await pkgP, fx = JSON.parse(await readFile(new URL('fixtures/blind-the-floor-replays.json', import.meta.url), 'utf8'));
+  const source = JSON.parse(await readFile(new URL('../../js/prim3-tactics/SOURCE.json', import.meta.url), 'utf8'));
+  assert.equal(fx.engineCommit, source.commit, 'replays name the engine whose evacuation rules they exercise');
   assert.deepEqual(fx.games.map((g) => `${g.side}:${g.outcome === 'win' ? 'squad' : 'ai'}`).sort(), ['attack:ai', 'attack:squad', 'defend:ai', 'defend:squad']);
   for (const g of fx.games) { const r = playGame(pkg, g.side, g.seed); assert.equal(r.outcome, g.outcome); assert.equal(r.round, g.round); assert.deepEqual(r.trace, g.trace); assert.deepEqual(r.state.battlefield.eu.events, g.sandbox); }
+});
+
+test('evacuated escorts no longer trap Technical until the B1 mission clock expires', async () => {
+  const run = playGame(await pkgP, 'attack', 5);
+  assert.equal(run.outcome, 'win');
+  assert.ok(run.state.mission.extractedUnitIds.includes('T1'));
 });
 
 test('mode separation: the mission is TRAINING in the SANDBOX; its ledger lives only in the mission state', async () => {
