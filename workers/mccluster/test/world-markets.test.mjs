@@ -6,7 +6,7 @@ import { IntelError } from '../src/intel/store.js';
 import { createIndicatorClient } from '../src/intel/world-indicators.js';
 import {
   EXCHANGES, MarketsError, createMarketsClient, companyQuery, listingsQuery, marketNewsParams, marketsProvider,
-  normalizeImf, normalizeMarketNews, providerInfo, sessionState, validateExchanges, exchangesIn, PROVIDERS
+  normalizeImf, normalizeMarketNews, providerInfo, sessionState, validateExchanges, exchangesIn, PROVIDERS, quoteFreshness
 } from '../src/intel/world-markets.js';
 
 const env = { SUPABASE_URL: 'https://db.test', SUPABASE_SERVICE_ROLE_KEY: 'fixture-service' };
@@ -122,7 +122,7 @@ test('query validation rejects anything outside the bounds', () => {
 
 test('owner gate first: a refused session reaches no provider, store or catalog', async () => {
   const net = network();
-  for (const path of ['/v1/intel/markets/exchanges', '/v1/intel/markets/country/US', '/v1/intel/markets/country/US/listings', '/v1/intel/markets/company/AAPL?mic=XNAS']) {
+  for (const path of ['/v1/intel/markets/exchanges', '/v1/intel/markets/country/US', '/v1/intel/markets/country/US/listings', '/v1/intel/markets/company/AAPL?mic=XNAS', '/v1/intel/markets/quote/AAPL?mic=XNAS']) {
     const r = await get(path, keyed, { requireHouseOwner: async () => { throw new IntelError('Forbidden', 403); }, marketsClient: client(net) });
     assert.equal(r.status, 403, path);
   }
@@ -264,4 +264,83 @@ test('under the paid EODHD feed both placed US exchanges keep their listings (ve
   assert.deepEqual(nas.listings.map(x => x.symbol), ['AAPL.US']);
   assert.equal(seen.filter(u => u.pathname.startsWith('/api/exchange-symbol-list/')).length, 1);
   assert.doesNotMatch(JSON.stringify([d, nas]), new RegExp(PAID));
+});
+
+const appleQuery = () => companyQuery('AAPL', new URLSearchParams('mic=XNAS'));
+test('selected quote verifies the exchange and coalesces reads without profile/news fanout', async () => {
+  const net = network({ '/quote': () => json({ c: 190.5, t: NOW.getTime() / 1000 }) }), c = client(net);
+  const values = await Promise.all(Array.from({ length: 10 }, () => c.selectedQuote(appleQuery(), keyed)));
+  assert.equal(values[0].state, 'ok');
+  assert.equal(values[0].currency, 'USD');
+  assert.equal(values[0].freshness.status, 'unverified');
+  assert.equal(values[0].freshness.is_live, false);
+  assert.equal(net.seen.length, 2, 'one symbol list and one quote');
+  const wrong = await c.selectedQuote(companyQuery('AAPL', new URLSearchParams('mic=XNYS')), keyed);
+  assert.equal(wrong.state, 'security_not_on_exchange');
+  assert.equal(wrong.quote, null);
+  assert.equal(net.seen.length, 2);
+  const r = await get('/v1/intel/markets/quote/AAPL?mic=XNAS', keyed, { ...owner, marketsClient: c });
+  assert.equal(r.headers.get('cache-control'), 'private, no-store');
+  assert.equal((await r.json()).quote.price, 190.5);
+});
+test('no key, uncovered venues and non-US free quotes make no quote requests', async () => {
+  const net = network(), c = client(net);
+  assert.equal((await c.selectedQuote(appleQuery(), {})).state, 'needs_key');
+  const gb = await c.selectedQuote(companyQuery('VOD.L', new URLSearchParams('mic=XLON')), keyed);
+  assert.equal(gb.state, 'needs_paid_feed');
+  assert.equal(gb.freshness.status, 'unavailable');
+  assert.equal(net.seen.length, 0);
+});
+test('quote freshness distinguishes confirmed real-time, unverified, delayed and stale', () => {
+  const v = { quote: { as_of: NOW.toISOString() } };
+  const free = marketsProvider(keyed), paid = marketsProvider({ MARKETS_PROVIDER: 'eodhd' });
+  assert.equal(quoteFreshness(free, v, {}, +NOW).status, 'unverified');
+  assert.equal(quoteFreshness(free, v, { MARKETS_REALTIME_CONFIRMED: 'true' }, +NOW).status, 'real_time');
+  assert.equal(quoteFreshness(paid, v, {}, +NOW).status, 'delayed');
+  assert.equal(quoteFreshness(free, v, {}, +NOW + 120001).status, 'stale');
+  assert.equal(quoteFreshness(paid, v, {}, +NOW + 1200001).status, 'stale');
+});
+test('provider outage falls back briefly without changing the trade or retrieval timestamp', async () => {
+  let time = +NOW, broken = false;
+  const net = network({ '/quote': () => broken ? json({}, 429) : json({ c: 190.5, t: time / 1000 }) });
+  const c = client(net, { clock: () => time, now: () => new Date(time) });
+  const first = await c.selectedQuote(appleQuery(), keyed);
+  broken = true; time += 61000;
+  const fallback = await c.selectedQuote(appleQuery(), keyed);
+  assert.equal(fallback.freshness.status, 'stale');
+  assert.equal(fallback.freshness.reason, 'upstream_http_429');
+  assert.equal(fallback.freshness.fallback, 'last_verified_quote');
+  assert.deepEqual(fallback.quote, first.quote);
+  await c.selectedQuote(appleQuery(), keyed);
+  assert.equal(net.seen.filter(s => s.url.pathname.endsWith('/quote')).length, 2, 'failure cooldown');
+  time += 15 * 60000;
+  const expired = await c.selectedQuote(appleQuery(), keyed);
+  assert.equal(expired.quote, null);
+  assert.equal(expired.freshness.status, 'unavailable');
+});
+test('revoked entitlement drops fallback data, and later server errors cannot resurrect it', async () => {
+  let time = +NOW, status = 200;
+  const net = network({ '/quote': () => json({ c: 190.5, t: time / 1000 }, status) });
+  const c = client(net, { clock: () => time, now: () => new Date(time) });
+  await c.selectedQuote(appleQuery(), keyed);
+  time += 61000; status = 403;
+  assert.equal((await c.selectedQuote(appleQuery(), keyed)).state, 'needs_paid_feed');
+  time += 61000; status = 500;
+  assert.equal((await c.selectedQuote(appleQuery(), keyed)).quote, null);
+});
+test('invalid and future provider prices never reach the chart', async () => {
+  for (const q of [{ c: -1, t: +NOW / 1000 }, { c: 0, t: +NOW / 1000 }, { c: 10, t: +NOW / 1000 + 600 }]) {
+    const net = network({ '/quote': () => json(q) });
+    const d = await client(net).selectedQuote(appleQuery(), keyed);
+    assert.equal(d.quote, null);
+    assert.equal(d.freshness.status, 'unavailable');
+  }
+});
+test('selected quote shares the bounded provider budget', async () => {
+  const rows = Array.from({ length: 60 }, (_, i) => ({ symbol: 'S' + i, mic: 'XNAS', currency: 'USD' }));
+  const net = network({ '/stock/symbol': () => json(rows) }), c = client(net);
+  const values = [];
+  for (const row of rows) values.push(await c.selectedQuote(companyQuery(row.symbol, new URLSearchParams('mic=XNAS')), keyed));
+  assert.equal(net.seen.length, 50);
+  assert.equal(values.at(-1).state, 'rate_limited');
 });
