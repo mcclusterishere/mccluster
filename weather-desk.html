@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Weather Desk · Connecticut</title>
+  <meta name="description" content="The house owner's Connecticut weather desk.">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#0a0e12">
+  <meta name="color-scheme" content="dark">
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/weather-desk.css?v=__STAMP__">
+</head>
+<body class="wd-body">
+  <!-- Nothing but this panel exists until the server says this is the house owner (js/owner-only.mjs). The desk reads
+       McCluster Core's once-per-region snapshot through GET /v1/world/weather/connecticut-pilot, which is owner only
+       too (docs/control-plane/CONNECTICUT-WEATHER.md). -->
+  <section class="owner-gate wd-gate" aria-live="polite" data-owner-gate data-owner-template="wdTpl" data-owner-load="js/weather/desk.mjs?v=__STAMP__">
+    <h1>Owner only</h1>
+    <p data-owner-msg>Checking access with the server…</p>
+  </section>
+  <template id="wdTpl">
+  <main class="wd" id="wdMain" tabindex="-1">
+    <header class="wd-top">
+      <small>McCluster Planet · Connecticut pilot</small>
+      <h1>Weather Desk</h1>
+      <p>Public radar, station and tide data for Connecticut, read once per region by McCluster Core. Observed, forecast, official and simulated values are labelled apart, and every reading shows its age.</p>
+      <p class="wd-status"><span id="wdStatus" role="status">Loading the latest snapshot…</span> <button type="button" id="wdRefresh">Refresh</button></p>
+    </header>
+    <div class="wd-grid">
+      <section class="wd-card" id="wdRain" aria-label="Rain now"><h2>Rain now</h2></section>
+      <section class="wd-card" id="wdRadar" aria-label="Radar"><h2>Radar</h2></section>
+      <section class="wd-card" id="wdForecast" aria-label="Forecast and alerts"><h2>Forecast &amp; alerts</h2></section>
+      <section class="wd-card" id="wdTide" aria-label="Tide"><h2>Tide</h2></section>
+      <section class="wd-card" id="wdGame" aria-label="Game weather"><h2>Game weather</h2></section>
+    </div>
+    <p class="wd-credit">Data: NOAA/National Weather Service, NOAA/NOS/CO-OPS, NOAA/NSSL MRMS, NEXRAD Level III via Unidata. Not an official forecast; for warnings use weather.gov.</p>
+  </main>
+  </template>
+
+  <script type="module" src="js/owner-only.mjs?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+</body>
+</html>

@@ -8,9 +8,11 @@ namespace McCluster.AR
     // Follows the capture-manifest table in the AR addendum (§4): session, timing, stored pixels, pose,
     // position prior, depth, quality, integrity/lineage.
     //
-    // TODO(capture-contract): the canonical CaptureManifestV1 JSON schema is being defined on branch
-    // claude/ct-weather-capture-contract-20261103. That branch had not been pushed when this was written
-    // (2026-11-03). When it lands, conform these field names to it exactly and change `schema` to its id.
+    // TODO(capture-contract): implement the canonical contract in docs/spatial/CAPTURE-MANIFEST.md.
+    // This device-local pilot record is NOT mccluster.spatial.capture-manifest.v1 and must remain rejected
+    // by packages/spatial-capture/validate.mjs. Do not change the schema id without implementing and
+    // validating consent, mission linkage, retention, timing uncertainty, poses and depth conventions.
+    // Unknown device measurements must be measured, not filled with invented canonical defaults.
     //
     // Rules this shape encodes:
     //  - depth.source is one of "sensor-lidar", "estimated", "none". Never conflated: Android Depth API
@@ -24,7 +26,7 @@ namespace McCluster.AR
     public sealed class CaptureManifestV1
     {
         public string schema = "mccluster.capture-manifest.v1-draft";
-        public string contractStatus = "draft: follows the AR addendum section 4 table; reconcile with the canonical CaptureManifestV1 (branch claude/ct-weather-capture-contract-20261103) when published";
+        public string contractStatus = "local-only pilot draft; NOT compatible with mccluster.spatial.capture-manifest.v1; see docs/spatial/CAPTURE-MANIFEST.md; never upload or use for reconstruction";
         public CaptureSessionRecord session = new CaptureSessionRecord();
         public CaptureTimingRecord timing = new CaptureTimingRecord();
         public List<CaptureFrameRecord> frames = new List<CaptureFrameRecord>();

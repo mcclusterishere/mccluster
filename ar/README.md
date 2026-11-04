@@ -119,10 +119,20 @@ Output stays on the phone in `Application.persistentDataPath/captures/<id>/`.
 This build uploads nothing: no capture-upload route exists yet, and the
 addendum's `spatial.capture.submit` is a design placeholder, not an endpoint.
 
-**CaptureManifestV1 is a draft.** The canonical schema is being defined on
-`claude/ct-weather-capture-contract-20261103`, which had not been pushed when
-this was written. `CaptureManifestV1.cs` carries a `TODO(capture-contract)` to
-conform to it exactly once it lands.
+**CaptureManifestV1 is a local-only pilot draft, not the canonical contract.**
+`CaptureManifestV1.cs` emits `mccluster.capture-manifest.v1-draft`. The canonical
+`mccluster.spatial.capture-manifest.v1` now lives in
+[`docs/spatial/CAPTURE-MANIFEST.md`](../docs/spatial/CAPTURE-MANIFEST.md), and its
+validator deliberately rejects this pilot record. Do not upload these manifests,
+use them for reconstruction, or relabel the schema id to make them appear valid.
+
+The pilot has no live-mission assignment, canonical consent/allowed-use and
+retention records, four-role output structure, measured clock uncertainty, or
+verified canonical pose/depth convention. The unknown depth representation and
+registration require device evidence, not default values. `TODO(capture-contract)`
+remains an implementation and device-validation gate. Local capture can still be
+used for the explicitly consented owner alignment pilot; it grants no reconstruction
+or model-training permission.
 
 **Routes later phases use.** These all exist today and are listed in
 `McClusterApi.Routes`; none is called in Phase A:
