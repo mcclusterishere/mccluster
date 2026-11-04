@@ -158,6 +158,27 @@ try {
     assert.equal(scene.getNavigation().status, 'paused');
     assert.equal(scene.confirmNavigation(), true); scene.cancelNavigation(); assert.equal(scene.getNavigation(), null);
   });
+  check('camera and focus interruptions pause routes without arrival or an early interior exit', () => {
+    const target = { id: 'equity-uprise-hq', name: 'Equity Uprise HQ', x: 0, z: 74 };
+    const interruptions = [
+      () => scene.setViewMode('overview'),
+      () => scene.resetView(),
+      () => { down(1, 450, 250); move(1, 480, 260); up(1, 480, 260); },
+      () => emit(globalEvents, 'blur'),
+    ];
+    for (const indoor of [false, true]) for (const interrupt of interruptions) {
+      scene.teleport({ x: 0, z: 2.5 }); scene.setViewMode('close');
+      if (indoor) scene.enterBuilding(manifest.garage.id);
+      assert.equal(scene.previewNavigation(target), true);
+      assert.equal(scene.confirmNavigation(), true);
+      const before = snapshot(); interrupt(); tick(30);
+      assert.equal(scene.getNavigation().status, 'paused');
+      assert.equal(snapshot(), before, 'interruption must neither move nor exit the player');
+      assert.equal(scene.getPlayer().interior, indoor ? manifest.garage.id : null);
+      assert.equal(scene.confirmNavigation(), true, 'the paused route can be replanned explicitly');
+      scene.cancelNavigation();
+    }
+  });
   check('portrait resizing updates the active lens without changing the player', () => {
     const start = snapshot(); canvas.clientWidth = 390; canvas.clientHeight = 480;
     scene.setViewMode('overview'); scene.enterBuilding(manifest.businesses[1].id); tick();

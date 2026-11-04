@@ -664,7 +664,11 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
 
   function activeWorld() { return currentInterior ? interiorSpatial : spatial; }
   function getPlayer() { return { x: player.x, z: player.z, interior: currentInterior }; }
-  function clearInput() { keys.clear(); externalInput.x = externalInput.z = 0; path.length = 0; pathIndex = 0; approachTarget = null; destinationRing.visible = false; }
+  function clearInput() {
+    // Clearing an interrupted route is not consuming its final waypoint.
+    if (navigation?.status === 'active') navigation.status = 'paused';
+    keys.clear(); externalInput.x = externalInput.z = 0; path.length = 0; pathIndex = 0; approachTarget = null; destinationRing.visible = false;
+  }
   function changed(force = false) {
     if (force || (elapsed - lastMovedAt > .18 && (Math.abs(lastSavedX - player.x) > .08 || Math.abs(lastSavedZ - player.z) > .08 || Number.isNaN(lastSavedX)))) {
       lastMovedAt = elapsed; lastSavedX = player.x; lastSavedZ = player.z; onMove(getPlayer());
