@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 607,
+  "candidate_count": 609,
   "capability_source_count": 104,
-  "support_only_count": 503,
-  "checks_total": 2326,
-  "checks_passed": 2326,
+  "support_only_count": 505,
+  "checks_total": 2334,
+  "checks_passed": 2334,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -197,7 +197,9 @@
     "docs/design/redesign-before-after.html",
     "docs/equity-uprise-platform.md",
     "docs/fictional-city/EXPANSION.md",
+    "docs/fictional-city/JIMMYS-STOREFRONT-CONTINUATION-2026-11-03.md",
     "docs/fictional-city/LORE.md",
+    "docs/fictional-city/POST-MERGE-722-CORE-HANDOFF-2026-11-03.md",
     "docs/fictional-city/README.md",
     "docs/fictional-city/VERIFICATION.md",
     "docs/gated-audio.md",
@@ -621,7 +623,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "607 entries"
+      "detail": "609 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -11255,6 +11257,46 @@
     },
     {
       "name": "docs/fictional-city/LORE.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/fictional-city/JIMMYS-STOREFRONT-CONTINUATION-2026-11-03.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/fictional-city/JIMMYS-STOREFRONT-CONTINUATION-2026-11-03.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/fictional-city/JIMMYS-STOREFRONT-CONTINUATION-2026-11-03.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/fictional-city/JIMMYS-STOREFRONT-CONTINUATION-2026-11-03.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/fictional-city/POST-MERGE-722-CORE-HANDOFF-2026-11-03.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/fictional-city/POST-MERGE-722-CORE-HANDOFF-2026-11-03.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/fictional-city/POST-MERGE-722-CORE-HANDOFF-2026-11-03.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/fictional-city/POST-MERGE-722-CORE-HANDOFF-2026-11-03.md support rationale present",
       "passed": true,
       "detail": ""
     },

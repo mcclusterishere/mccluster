@@ -25,7 +25,7 @@
       "GEMINI.md"
     ]
   },
-  "tracked_count": 370,
+  "tracked_count": 360,
   "categories": {
     "active_references": [
       "docs/design/equity-uprise-building/references/basement-b1/README.md",
@@ -127,8 +127,6 @@
       "docs/design/equity-uprise-building/HALO-GLOBE-SPATIAL-INTELLIGENCE-SPEC.md",
       "docs/design/equity-uprise-building/INTERIOR-ENVELOPE-AND-GEOMETRY-UPGRADE-SPEC.md",
       "docs/design/equity-uprise-building/LAB-RUNTIME-SPEC.md",
-      "docs/design/equity-uprise-building/LAB-RUNTIME-SPEC.md",
-      "docs/design/equity-uprise-building/LAB-RUNTIME-SPEC.md",
       "docs/design/equity-uprise-building/PLAYABLE-BUILDING-SYSTEMS-AUDIT-2026-09-24.md",
       "docs/design/equity-uprise-building/REFERENCE-AUTHORITY.md",
       "docs/design/equity-uprise-building/SCREENS-AND-SCREEN-APPS-SPEC.md",
@@ -142,12 +140,8 @@
       "docs/design/equity-uprise-building/AGENTS.md",
       "docs/design/equity-uprise-building/BUILD-PIPELINE.md",
       "docs/design/equity-uprise-building/BUILDING-FILE-INDEX.json",
-      "docs/design/equity-uprise-building/BUILDING-FILE-INDEX.json",
-      "docs/design/equity-uprise-building/BUILDING-FILE-INDEX.json",
       "docs/design/equity-uprise-building/HISTORICAL-REFERENCE-BUILDS.md",
       "docs/design/equity-uprise-building/MASTER-INDEX.md",
-      "docs/design/equity-uprise-building/PROJECT-STATE.md",
-      "docs/design/equity-uprise-building/PROJECT-STATE.md",
       "docs/design/equity-uprise-building/PROJECT-STATE.md",
       "docs/design/equity-uprise-building/README.md"
     ],
@@ -161,8 +155,6 @@
     ],
     "generated_artifacts": [
       "docs/design/equity-uprise-building/production/generated/.gitignore",
-      "docs/design/equity-uprise-building/production/generated/equity-uprise-authority-hygiene-report.json",
-      "docs/design/equity-uprise-building/production/generated/equity-uprise-authority-hygiene-report.json",
       "docs/design/equity-uprise-building/production/generated/equity-uprise-authority-hygiene-report.json",
       "docs/design/equity-uprise-building/production/generated/equity-uprise-basement-b1-core-v2-report.json",
       "docs/design/equity-uprise-building/production/generated/equity-uprise-basement-b1-core-v2.glb",
@@ -411,8 +403,6 @@
     ],
     "workflows": [
       ".github/workflows/deploy-pages.yml",
-      ".github/workflows/equity-uprise-core-v2-ci.yml",
-      ".github/workflows/equity-uprise-core-v2-ci.yml",
       ".github/workflows/equity-uprise-core-v2-ci.yml"
     ]
   },
