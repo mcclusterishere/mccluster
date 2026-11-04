@@ -586,8 +586,13 @@ async function bls(input, env) {
   for (const series of data.Results.series) {
     if (!seriesIds.includes(series?.seriesID) || !Array.isArray(series.data)) throw new GeoAdapterError('BLS response series mismatch', 502, 'provider_response_error');
     for (const obs of series.data) {
-      if (!/^\d{4}$/.test(String(obs?.year)) || !/^[AMQS]\d{2}$/.test(String(obs?.period))) throw new GeoAdapterError('BLS response period invalid', 502, 'provider_response_error');
+      if (!/^\d{4}$/.test(String(obs?.year)) || !/^(?:M(?:0[1-9]|1[0-3])|Q0[1-5]|S0[1-3]|A01)$/.test(String(obs?.period))) throw new GeoAdapterError('BLS response period invalid', 502, 'provider_response_error');
       const monthly = /^M(0[1-9]|1[0-2])$/.test(obs.period);
+      // The archive requires a timestamp. Use the reporting period's start,
+      // never the fetch/release date; annual averages retain their own code.
+      const quarter = /^Q0[1-4]$/.test(obs.period), half = /^S0[12]$/.test(obs.period);
+      const month = monthly ? Number(obs.period.slice(1)) : quarter ? (Number(obs.period.slice(1)) - 1) * 3 + 1 : half ? (Number(obs.period.slice(1)) - 1) * 6 + 1 : 1;
+      const periodKind = monthly ? 'month' : quarter ? 'quarter' : half ? 'half_year' : obs.period === 'A01' ? 'year' : 'annual_average';
       const value = typeof obs.value === 'string' && /^-?\d+(?:\.\d+)?$/.test(obs.value) ? Number(obs.value) : null;
       records.push(record('observation', {
         external_id: `bls:${series.seriesID}:${obs.year}:${obs.period}`,
@@ -595,8 +600,8 @@ async function bls(input, env) {
         value_number: Number.isFinite(value) ? value : null,
         value_text: value === null ? null : obs.value,
         unit: null, point: null,
-        observed_at: monthly ? `${obs.year}-${obs.period.slice(1)}-01T00:00:00.000Z` : null,
-        properties: { year: String(obs.year), period: obs.period, time_basis: monthly ? 'period_start_not_release_time' : 'period_only',
+        observed_at: `${obs.year}-${String(month).padStart(2, '0')}-01T00:00:00.000Z`,
+        properties: { year: String(obs.year), period: obs.period, time_basis: 'period_start_not_release_time', period_kind: periodKind,
           footnote_codes: Array.isArray(obs.footnotes) ? obs.footnotes.slice(0, 20).map(f => f?.code).filter(c => typeof c === 'string' && /^[A-Z0-9]{1,8}$/.test(c)) : [] }
       }));
     }

@@ -1,3 +1,5 @@
+import spatial from '../src/seek-first/index.js';
+import { persistAdapterResult, listSourceRecords } from '../src/seek-first/store.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { executeProvider } from '../src/seek-first/gateway.js';
@@ -32,7 +34,8 @@ test('canonical gateway requests v1 without a key, preserves periods, and labels
     assert.equal(r.daily_query_limit, 25);
     assert.equal(r.records[0].observed_at, '2024-07-01T00:00:00.000Z');
     assert.equal(r.records[0].properties.time_basis, 'period_start_not_release_time');
-    assert.equal(r.records[1].observed_at, null);
+    assert.equal(r.records[1].observed_at, '2024-01-01T00:00:00.000Z');
+    assert.equal(r.records[1].properties.period_kind, 'annual_average');
     assert.equal(r.records[1].value_number, null);
     assert.equal(r.raw, null);
   });
@@ -93,5 +96,67 @@ test('rate limits, redirects, oversized bodies and network errors fail without r
         return [429, 502].includes(e.status);
       });
     });
+  }
+});
+
+
+test('default gateway persistence and archive preserve BLS period dates and missing values', async () => {
+  const periods = ['M07', 'M13', 'A01', 'Q01', 'Q02', 'Q03', 'Q04', 'Q05', 'S01', 'S02', 'S03'];
+  const months = ['07', '01', '01', '01', '04', '07', '10', '01', '01', '07', '01'];
+  let saved = [], authorized = 0;
+  const env = { SUPABASE_URL: 'https://db.invalid', SUPABASE_SERVICE_ROLE_KEY: 'fixture-only' };
+  await withFetch(async (url, init = {}) => {
+    if (String(url).startsWith('https://api.bls.gov/')) {
+      const f = fixture();
+      f.Results.series[0].data = periods.map((period, i) => ({ year: '2024', period, value: i === 1 ? '-' : '0' }));
+      return Response.json(f);
+    }
+    const u = new URL(url), table = u.pathname.split('/').at(-1);
+    if (table === 'orgs') return Response.json([{ id: 'org-fixture', slug: 'mccluster' }]);
+    if (table === 'seek_first_source_entitlements') return Response.json([]);
+    if (table === 'seek_first_sources') return Response.json([{ source_key: 'bls' }]);
+    if (table === 'seek_first_ingestion_runs') return Response.json(init.method === 'POST' ? [{ id: 'run-fixture' }] : null);
+    if (table === 'seek_first_observations' && init.method === 'POST') {
+      saved = JSON.parse(init.body);
+      // Mirror the existing NOT NULL timestamp contract at the DB boundary.
+      assert.ok(saved.every(row => row.observed_at && Number.isFinite(Date.parse(row.observed_at))));
+      return Response.json(saved);
+    }
+    if (table === 'seek_first_observations') return Response.json(saved);
+    if (['seek_first_entities', 'seek_first_events'].includes(table)) return Response.json([]);
+    assert.fail(`unexpected request: ${url}`);
+  }, async () => {
+    const response = await spatial.fetch(new Request('https://api.invalid/v1/seek-first/fetch/bls', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(input)
+    }), env, { requireHouseOwner: async () => { authorized++; return { id: 'owner-fixture' }; } });
+    const body = await response.json();
+    assert.equal(response.status, 200, JSON.stringify(body));
+    assert.equal(authorized, 1);
+    assert.equal(body.result.persistence.persisted, true);
+    assert.equal(saved.length, periods.length);
+    saved.forEach((row, i) => {
+      assert.equal(row.observed_at, `2024-${months[i]}-01T00:00:00.000Z`);
+      assert.equal(row.observed_at, body.result.records[i].observed_at);
+      assert.notEqual(row.observed_at, row.provenance.fetched_at);
+      assert.equal(row.payload.time_basis, 'period_start_not_release_time');
+      assert.equal(row.payload.period, periods[i]);
+    });
+    assert.equal(saved[1].value_number, null);
+    assert.equal(saved[1].value_text, null);
+    assert.equal(saved[0].value_number, 0);
+    const archive = await listSourceRecords(env, 'org-fixture', { source: 'bls' });
+    assert.equal(archive[0].payload.period, 'Q04');
+    assert.ok(archive.every(row => row.observed_at.startsWith('2024-')));
+    await assert.rejects(persistAdapterResult(env, 'org-fixture', {
+      source: 'bls', fetched_at: new Date().toISOString(), records: [{ kind: 'observation', observed_at: null }]
+    }), error => error.code === 'invalid_observation_timestamp');
+  });
+});
+
+test('unknown BLS periods fail before persistence rather than acquiring fetch timestamps', async () => {
+  for (const period of ['M00', 'M14', 'Q00', 'Q06', 'S00', 'S04', 'A02']) {
+    await withFetch(async () => {
+      const f = fixture(); f.Results.series[0].data[0].period = period; return Response.json(f);
+    }, async () => assert.rejects(executeProvider('bls', input, {}), error => error.code === 'provider_response_error'));
   }
 });

@@ -58,8 +58,16 @@ instead of silently slicing inputs. Default span is three inclusive years.
 Redirects are refused, reads are bounded to 2 MB and a 12-second abort covers the
 fetch/body. HTTP-200 provider failures and incomplete series do not become false
 successes. Output drops raw provider bodies, preserves period and footnote codes,
-and marks month-start timestamps as period starts rather than release times.
-Other periodicities retain period labels and null timestamps.
+and labels timestamps as reporting-period starts rather than release times.
+Monthly, quarterly and half-year periods use their first calendar day; A01 and
+annual averages (M13/Q05/S03) use January 1 of the reported year. Original period
+codes and period kind survive persistence. Unsupported period codes fail closed.
+This meets the existing archive's NOT NULL timestamp contract without SQL; storage
+rejects missing BLS timestamps instead of falling back to today's fetch date.
+Missing numeric observations remain null instead of becoming zero. The regression
+exercises the real owner-gated HTTP handler, default persistence and archive read
+against provider/PostgREST fixtures, not a live database. Existing previously
+stored rows are not rewritten by this change.
 
 The source catalog now describes `BLS_API_KEY` as optional. Existing Control →
 Analytics setup source inventory can show that keyless availability; no new
@@ -80,7 +88,7 @@ limits](https://www.bls.gov/developers/api_faqs.htm) and [v1 contract](https://w
 
 - New readiness fixtures: six tests covering disconnected state, optional and
   partial credentials, secret-value exclusion, invalid selectors and zero fetches.
-- BLS, all canonical Seek First suites and readiness: 115 passing.
+- BLS, all canonical Seek First suites and readiness: 117 passing.
 - Existing markets, Travel and world-layer suites: 55 passing.
 - Existing Core weather suite: 20 passing.
 - These are local Node/fixture proofs, not provider, live database or browser
