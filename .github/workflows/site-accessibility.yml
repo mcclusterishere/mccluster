@@ -64,7 +64,7 @@ jobs:
           AXE_DIR: /tmp/a11y-qa/node_modules
           CESIUM_DIR: /tmp/a11y-qa/node_modules/cesium/Build/Cesium
         run: node scripts/e2e/sitemap-a11y.e2e.mjs /tmp/a11y-proof
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
         with:
           name: site-accessibility-${{ github.run_id }}
