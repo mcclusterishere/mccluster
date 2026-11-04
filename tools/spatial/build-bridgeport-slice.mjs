@@ -2,11 +2,12 @@ import fs from 'node:fs';
 import crypto from 'node:crypto';
 import {metricFrame,cellCenter,cellId} from '../../js/spatial/metric-frame.mjs';
 import {walkable,clearEdge,closestNode,route} from '../../js/spatial/region-graph.mjs';
-const source='core/data/spatial/bridgeport-golden-hill.v1.json',contract=JSON.parse(fs.readFileSync(source)),frame=metricFrame(contract.frame.anchor);
+const regionName=process.argv.includes('--v2')?'bridgeport-downtown.v2':'bridgeport-golden-hill.v1';
+const source=`core/data/spatial/${regionName}.json`,contract=JSON.parse(fs.readFileSync(source)),frame=metricFrame(contract.frame.anchor);
 const hash=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
 const roadsSource=JSON.parse(fs.readFileSync(contract.sources.roads.path)),buildingsSource=JSON.parse(fs.readFileSync(contract.sources.buildings.path));
 const local=p=>frame.toLocal({lon:p[0],lat:p[1],h:0});
-const region={contract,provenance:{contractSha256:hash(source),roadsSha256:hash(contract.sources.roads.path),buildingsSha256:hash(contract.sources.buildings.path)},roads:roadsSource.features.filter(f=>contract.sources.roads.ids.includes(String(f.id))).map(f=>({id:String(f.id),name:f.properties.name,points:f.geometry.coordinates.map(local),coordinates:f.geometry.coordinates})),buildings:buildingsSource.features.map(f=>({id:String(f.id),rings:f.geometry.coordinates.map(r=>r.map(local)),coordinates:f.geometry.coordinates,name:f.id===279819?contract.sources.buildings.name:'CT source footprint '+f.id})),graphs:{}};
+const region={contract,provenance:{contractSha256:hash(source),roadsSha256:hash(contract.sources.roads.path),buildingsSha256:hash(contract.sources.buildings.path)},roads:roadsSource.features.filter(f=>contract.sources.roads.ids.includes(String(f.id))).map(f=>({id:String(f.id),name:f.properties.name,points:f.geometry.coordinates.map(local),coordinates:f.geometry.coordinates})),buildings:buildingsSource.features.map(f=>({id:String(f.id),rings:f.geometry.coordinates.map(r=>r.map(local)),coordinates:f.geometry.coordinates,name:contract.sources.buildings.institutions?.[f.id]?.name||(f.id===279819?contract.sources.buildings.name:'CT source footprint '+f.id)})),graphs:{}};
 for(const topology of ['hex','square']){
   const nodes=[];
   for(let q=-100;q<=100;q++)for(let r=-100;r<=100;r++){const position=cellCenter(contract,topology,q,r);if(walkable(region,position,contract.occupancy.edgeSampleMaxM/2))nodes.push({id:cellId(contract.floor.id,topology,q,r),q,r,position,edges:[]});}
@@ -17,9 +18,10 @@ for(const topology of ['hex','square']){
   const entry=closestNode(region,topology,frame.toLocal(contract.entry)),destination=closestNode(region,topology,frame.toLocal(contract.destination));
   if(!entry||!destination)throw Error('Missing approach');
   Object.assign(region.graphs[topology],{entryId:entry.id,destinationId:destination.id});
+  if(contract.entrances)region.graphs[topology].entrances=contract.entrances.map(e=>{const pose={...frame.toLocal(e),y:0},node=closestNode(region,topology,pose);if(!node||!route(region,topology,entry.position,node.id))throw Error('Disconnected entrance '+e.id);return {id:e.id,nodeId:node.id,position:pose,connectorM:Math.hypot(pose.x-node.position.x,pose.z-node.position.z)};});
   if(!route(region,topology,entry.position,destination.id))throw Error('Disconnected route');
 }
 const output=JSON.stringify(region);if(Buffer.byteLength(output)>contract.gating.maxAssetBytes)throw Error('Asset budget');
-const dest='data/spatial/bridgeport-golden-hill.v1.json';
+const dest=`data/spatial/${regionName}.json`;
 if(process.argv.includes('--check')){if(fs.readFileSync(dest,'utf8')!==output+'\n')throw Error('Generated spatial data stale');}else fs.writeFileSync(dest,output+'\n');
 console.log(JSON.stringify({bytes:Buffer.byteLength(output),graphs:Object.fromEntries(Object.entries(region.graphs).map(([k,g])=>[k,{nodes:g.nodes.length,edges:g.nodes.reduce((n,x)=>n+x.edges.length,0),pathM:route(region,k,g.nodes.find(n=>n.id===g.entryId).position,g.destinationId).costM}]))},null,2));

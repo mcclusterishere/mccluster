@@ -24,6 +24,10 @@ Core V2 is the active geometry authority:
 - Stair A X60–72 / Y54–72;
 - MEP/riser approximately X50–60 / Y66–72.
 
+## Bridgeport v2 source boundary — 2026-11-04
+
+Added the downtown navigation contract record as support-only. Its door/stair audit preserves the HQ as unanchored and records missing geographic landing/opening evidence; no building geometry, floor program or capability changed. Regenerated source coverage now classifies 614 sources (104 capability, 510 support-only).
+
 ## City review source coverage — 2026-11-04
 
 Classified four City navigation/stair audit and test files as support-only after the Core V2 CI source-coverage failure. The clean source checkout now covers 613 sources (104 capability, 509 support-only), with 2,350/2,350 checks passing. This updates traceability only; no building geometry, floor program or runtime changed. The upstairs reproduction records the earlier runtime; the separate proposed repair is tracked in PR #739.
