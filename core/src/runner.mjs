@@ -23,6 +23,7 @@ import { meetingDelegateCollect } from './executors/meeting-delegate-collect.mjs
 import { residentAiTurn } from './executors/resident-ai-turn.mjs';
 import { actorLiveComment } from './executors/actor-live-comment.mjs';
 import { actorNewsComment } from './executors/actor-news-comment.mjs';
+import { actorCommentPreview } from './executors/actor-comment-preview.mjs';
 import { prim3AgentNews } from './executors/prim3-agent-news.mjs';
 import { worldNewsPairing } from './executors/world-news-pairing.mjs';
 import { weatherRegionSnapshot } from './executors/weather-region-snapshot.mjs';
@@ -56,6 +57,7 @@ const executors = new Map([
   ['resident_ai_turn', residentAiTurn],
   ['ai_diagnostics', aiDiagnostics],
   ['actor_news_comment', actorNewsComment],
+  ['actor_comment_preview', actorCommentPreview],
   ['prim3_agent_news', prim3AgentNews],
   ['world_news_pairing', worldNewsPairing],
   ['weather_region_snapshot', weatherRegionSnapshot],

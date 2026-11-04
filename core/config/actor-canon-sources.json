@@ -1,0 +1,58 @@
+{
+  "schema": "actor-canon-source-index/v1",
+  "repository": "mcclusterishere/Prim3",
+  "commit": "160020bdeac4afa0cd3f25638169e657af55bc29",
+  "adaptation_cast_status": "pending_owner_review",
+  "selected_cast": [],
+  "note": "Source index only. Does not provision, select, approve, or activate actors. Current owner changes must be reconciled by the canon workflow before persona configuration.",
+  "sources": [
+    {
+      "path": "CANON.md",
+      "version": "1.0.0",
+      "status": "CANON",
+      "blob_sha": "4766c9f9d1bd17dc5c8db28a91848decf1ef2c8d",
+      "url": "https://github.com/mcclusterishere/Prim3/blob/160020bdeac4afa0cd3f25638169e657af55bc29/CANON.md",
+      "scope": "Root authority"
+    },
+    {
+      "path": "story/IMMEDIATE-CAST-CANON.md",
+      "version": "3.2.0",
+      "status": "CANON",
+      "blob_sha": "2e97eb72a6a75154f0cca147802c8aebd545384e",
+      "url": "https://github.com/mcclusterishere/Prim3/blob/160020bdeac4afa0cd3f25638169e657af55bc29/story/IMMEDIATE-CAST-CANON.md",
+      "scope": "Immediate-story roster; not automatic adaptation selection"
+    },
+    {
+      "path": "story/HITMAN-CHARACTER-DOSSIERS.md",
+      "version": "2.0.0",
+      "status": "CANON",
+      "blob_sha": "15c4d996712943deca0fb47adda02ca2d805efcb",
+      "url": "https://github.com/mcclusterishere/Prim3/blob/160020bdeac4afa0cd3f25638169e657af55bc29/story/HITMAN-CHARACTER-DOSSIERS.md",
+      "scope": "Contemporary Hitman voice and psychology"
+    },
+    {
+      "path": "story/CHARACTER-PSYCHOLOGY-DECISION-AUTHORITY.md",
+      "version": "1.1.0",
+      "status": "CANON-AUTHORING-AUTHORITY",
+      "blob_sha": "08f5873abe5ad65193e639429417f49a56e22b07",
+      "url": "https://github.com/mcclusterishere/Prim3/blob/160020bdeac4afa0cd3f25638169e657af55bc29/story/CHARACTER-PSYCHOLOGY-DECISION-AUTHORITY.md",
+      "scope": "Behavioral priors and knowledge/disclosure boundaries"
+    },
+    {
+      "path": "story/AYA-SHINODA-PSYCHOLOGICAL-BACKGROUND.md",
+      "version": "1.0.0",
+      "status": "CANON",
+      "blob_sha": "5808ce7adfbdc8023a958386149be03e87f552e1",
+      "url": "https://github.com/mcclusterishere/Prim3/blob/160020bdeac4afa0cd3f25638169e657af55bc29/story/AYA-SHINODA-PSYCHOLOGICAL-BACKGROUND.md",
+      "scope": "Specialist character authority; not adaptation/account approval"
+    },
+    {
+      "path": "story/PRIM3-CHARACTER-DOSSIERS.md",
+      "version": "1.0.0",
+      "status": "PROPOSED",
+      "blob_sha": "bf76d665684368eee5799564b5cca0d6d294d032",
+      "url": "https://github.com/mcclusterishere/Prim3/blob/160020bdeac4afa0cd3f25638169e657af55bc29/story/PRIM3-CHARACTER-DOSSIERS.md",
+      "scope": "Development proposal; cannot approve an actor"
+    }
+  ]
+}

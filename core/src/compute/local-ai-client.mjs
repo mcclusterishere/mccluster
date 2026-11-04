@@ -82,6 +82,8 @@ export async function localAiChat({
   const content = String(data?.content || '');
   return {
     model: data?.model || MODEL,
+    model_reported: typeof data?.model === 'string' && data.model.length > 0,
+    model_digest: data?.model_digest || null,
     implementation: data?.implementation || null,
     message: { role: 'assistant', content, ...(Array.isArray(data?.tool_calls) && data.tool_calls.length ? { tool_calls: data.tool_calls } : {}) },
     usage: data?.usage || {},

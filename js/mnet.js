@@ -1439,6 +1439,12 @@
       row.setAttribute('role','listitem');
       var by = document.createElement('strong');
       by.textContent = String(comment.actor?.display_name || comment.actor?.mccluster_id || 'Member').slice(0,100);
+      if (comment.actor?.is_ai === true) {
+        var aiBadge = document.createElement('small');
+        aiBadge.textContent = ' · AI character';
+        aiBadge.title = 'Fictional character operated by McCluster AI';
+        by.appendChild(aiBadge);
+      }
       var time = document.createElement('time');
       time.textContent = timeAgo(comment.created_at || '');
       var body = document.createElement('p');
