@@ -11,9 +11,11 @@ on:
       - 'scripts/test/prim3-*.test.mjs'
       - 'scripts/e2e/prim3-tactics-hints.e2e.mjs'
       - 'scripts/e2e/prim3-transit-lifecycle.e2e.mjs'
+      - 'scripts/e2e/prim3-transit-guidance.e2e.mjs'
       - 'scripts/e2e/prim3-transit-completion.e2e.mjs'
       - 'scripts/e2e/prim3-world-controls.e2e.mjs'
       - 'scripts/e2e/prim3-courtyard-display.e2e.mjs'
+      - 'scripts/e2e/prim3-courtyard-movement.e2e.mjs'
       - 'scripts/e2e/prim3-spatial-controls.e2e.mjs'
       - 'scripts/e2e/prim3-hq-stairs.e2e.mjs'
       - 'scripts/prim3/*-sim.mjs'
@@ -65,7 +67,9 @@ jobs:
           THREE_DIR: /tmp/prim3-qa/node_modules/three
         run: |
           node scripts/e2e/prim3-courtyard-display.e2e.mjs /tmp/prim3-proof/courtyard
+          node scripts/e2e/prim3-courtyard-movement.e2e.mjs /tmp/prim3-proof/courtyard-movement
           node scripts/e2e/prim3-spatial-controls.e2e.mjs /tmp/prim3-proof/spatial
+          node scripts/e2e/prim3-transit-guidance.e2e.mjs /tmp/prim3-proof/transit-guidance
           node scripts/e2e/prim3-hq-stairs.e2e.mjs /tmp/prim3-proof/stairs
       - name: Preserve browser evidence
         if: always()

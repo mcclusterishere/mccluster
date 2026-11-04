@@ -6,15 +6,16 @@
    Play: tap a squad member ON THE BOARD → a small menu offers only what is legal right now. Move/Dash
    show the reachable tiles (path-checked over known walls); tap a tile to PREVIEW (path, steps, AP, who
    could shoot you there), then Confirm or Back. Fire shows the engine's hit chance first; Confirm rolls.
-   Nothing is spent until Confirm. "Get hint" is optional and never acts; a challenge about the previewed
+   Nothing is spent until Confirm or a deliberate mouse double-click on an orange dash destination. "Get hint" is optional and never acts; a challenge about the previewed
    tile draws its own math on the board (origin, target, the x run and the y run).
    Coordinates are the engine's: x grows left→right (columns), y grows top→bottom (rows; the engine's
    south is +y). Progress is saved in this browser for this preview player; hint sessions are never
    saved (a restored board makes any old hint stale by design). */
 import { createState, beginPlayerPhase, beginThreatPhase, resolveClockStatePhase, moveUnit, fireWeapon,
   enterOverwatch, hunkerDown, reload, shotPreview } from './tactical-resolver.mjs';
+import { movementGuidance } from './movement-guidance.mjs';
 import { COURTYARD_VIEW_KEY, displayPreferences, displayFrame, signed } from './display-frame.mjs';
-import { openHint, answerHint, revealAnswer, playerProjection, knownPaths } from './tactical-hints.mjs';
+import { openHint, answerHint, revealAnswer, playerProjection } from './tactical-hints.mjs';
 
 const BIND = { tenantId: 'preview', playerId: 'you', missionId: 'TR02-PREVIEW' };
 const SAVE_KEY = 'prim3.tactics.preview.v1:' + BIND.tenantId + ':' + BIND.playerId + ':' + BIND.missionId;
@@ -47,7 +48,7 @@ function webglAvailable() {
 function ensure3d() {
   if (board3d || loading3d) return;
   loading3d = import('./board3d.mjs').then((mod) => {
-    board3d = mod.createBoard3D($('tac3d'), { width: W, height: H, reducedMotion: REDUCED, fx: fxChoice(), onTap: (x, y) => onBoardTap(x, y), onView: () => placeMenu() });
+    board3d = mod.createBoard3D($('tac3d'), { width: W, height: H, reducedMotion: REDUCED, fx: fxChoice(), onTap: (x, y) => onBoardTap(x, y), onHover: onBoardHover, onDoubleTap: onBoardDoubleTap, onView: () => placeMenu() });
     board3d.setProjection(display.projection);
     loading3d = null; render(); syncZoom3d();
   }).catch(() => { loading3d = null; mode3d = false; ui.toast = 'The 3D view could not load here, so the board is shown as a 2D grid.'; render(); });
@@ -96,7 +97,7 @@ const unitOf = (id) => state.units.find((u) => u.id === id);
 
 /* ---------- legality (only what the engine would accept right now) ---------- */
 function legalActions(u) {
-  if (!u || u.faction !== 'PLAYER' || state.phase !== 'PLAYER' || u.dead || u.downed) return [];
+  if (!u || u.faction !== 'PLAYER' || state.phase !== 'PLAYER' || u.dead || u.downed || u.statuses?.includes('EXTRACTED')) return [];
   const out = [];
   if (u.ap >= 1) out.push({ id: 'move', label: 'Move', sub: '1 AP' });
   if (u.ap >= 2) out.push({ id: 'dash', label: 'Dash', sub: '2 AP · double range' });
@@ -112,18 +113,17 @@ function legalActions(u) {
   return out;
 }
 
-function reach(u, dash) {
-  const p = view();
-  const pu = p.units.find((x) => x.id === u.id);
-  pu.moveRange = u.moveRange * (dash ? 2 : 1);
-  return knownPaths(p, u.id);
+let guideCache = null;
+function guidance() {
+  if (!guideCache || guideCache.state !== state || guideCache.id !== ui.selected) guideCache = { state, id: ui.selected, value: movementGuidance(state, ui.selected) };
+  return guideCache.value;
 }
 
 /* ---------- rendering ---------- */
 function render() {
   const p = view(), sel = unitOf(ui.selected), frame = currentFrame(p);
   const board = $('tacBoard');
-  const reachInfo = ui.mode === 'move' || ui.mode === 'dash' ? reach(sel, ui.mode === 'dash') : null;
+  const reachInfo = !ui.hint && !ui.result && (!ui.preview || ui.preview.kind === 'move') ? guidance() : null;
   const geo = ui.hint && ui.hint.geometry;
   const runs = geo ? traceRuns(geo, ui.hint.stage) : new Map();
   const path = ui.preview && ui.preview.kind === 'move' ? new Set(ui.preview.path.map((c) => c.x + ':' + c.y)) : new Set();
@@ -142,8 +142,9 @@ function render() {
       if (wall) { cls.push('is-wall'); words.push('wall'); }
       if (cover) { cls.push('has-cover'); words.push(`${cover.type.toLowerCase()} cover on the ${cover.sides.map(sideWord).join(' and ')} side`); }
       if (obj) { cls.push('is-obj'); words.push('objective'); }
-      const steps = reachInfo && reachInfo.dist.get(reachInfo.key(x, y));
-      if (steps !== undefined && steps > 0 && !unit && !wall) { cls.push('is-reach'); words.push(`reachable in ${steps} step${steps === 1 ? '' : 's'}`); }
+      const route = reachInfo && reachInfo.at(x, y, 0);
+      if (route && !unit && !wall) { cls.push('is-reach', route.apCost >= 2 ? 'is-dash' : 'is-walk'); words.push(`reachable in ${route.steps} steps, ${route.apCost} AP`); }
+      else if (reachInfo && !unit && !wall) { cls.push('is-unreachable'); words.push('outside affordable movement'); }
       if (path.has(k)) cls.push('is-path');
       if (ui.preview && ui.preview.kind === 'move' && ui.preview.x === x && ui.preview.y === y) { cls.push('is-dest'); words.push('previewed destination'); }
       if (ui.suggestion && ui.suggestion.x === x && ui.suggestion.y === y) { cls.push('is-hint'); words.push('hint suggestion'); }
@@ -172,7 +173,7 @@ function render() {
   if (mode3d && board3d) {
     board3d.setCoordinateFrame(frame.origin);
     const m = { units: p.units, blockers: p.blockers, cover: p.cover, objectiveTiles: p.objectiveTiles, selected: ui.selected, labels: [] };
-    if (reachInfo) { m.reach = []; for (let y = 0; y < H; y += 1) for (let x = 0; x < W; x += 1) { const st = reachInfo.dist.get(reachInfo.key(x, y)); if (st !== undefined && st > 0) m.reach.push({ x, y }); } }
+    if (reachInfo) m.reach = reachInfo.tiles;
     if (ui.preview && ui.preview.kind === 'move') { m.path = ui.preview.path.slice(0, -1); m.dest = { x: ui.preview.x, y: ui.preview.y }; m.pathLine = [{ x: sel.x, y: sel.y }, ...ui.preview.path]; }
     if (ui.suggestion) m.hint = { x: ui.suggestion.x, y: ui.suggestion.y };
     if (geo) {
@@ -202,6 +203,7 @@ function render() {
   $('hudObj').textContent = obj ? `${MISSION} · ${displayPoint(frame, obj.x, obj.y)}` : MISSION;
   $('hudUnit').innerHTML = sel ? `<span class="dock-token tb-role-${sel.role}">${sel.role}</span><span class="dock-name">${sel.role} · ${ROLE_NAME[sel.role] || ''}</span>` : 'Tap a squad member';
   $('hudAp').textContent = sel ? `${sel.ap} AP` : '';
+  $('tacCapabilities').textContent = sel ? `${sel.id} · ${ROLE_NAME[sel.role] || sel.role} · ${sel.ap} AP · move ${sel.moveRange} m. Available: ${legalActions(sel).map(a => a.label).join(', ') || 'none'}. Blue: 1 AP · orange: 2 AP · muted: unavailable. Hover or tap for path; double-click orange to dash, or Confirm.` : 'Select an operative for capabilities and movement.';
   $('tacView').textContent = mode3d ? '2D grid' : '3D view';
   $('tacRotate').hidden = !(mode3d && board3d) || display.projection === 'top';
   document.querySelectorAll('[data-projection]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.projection === display.projection)));
@@ -262,10 +264,11 @@ function renderSheet() {
   const sel = unitOf(ui.selected);
   let html = '';
   if (ui.preview && ui.preview.kind === 'move') {
-    const pv = ui.preview;
+    const pv = ui.preview, frame = currentFrame(view()), next = pv.path[0];
     const cv = view().cover.find((c) => c.x === pv.x && c.y === pv.y);
     html = `<p class="ts-eye">${pv.dash ? 'Dash' : 'Move'} preview</p>
       <p class="ts-main">(${sel.x}, ${sel.y}) → <b>(${pv.x}, ${pv.y})</b> · ${pv.steps} step${pv.steps === 1 ? '' : 's'} · ${pv.dash ? 2 : 1} AP${cv ? ' · ' + (cv.type === 'HIGH' ? 'High' : 'Low') + ' cover' : ''} · ${Math.max(0, sel.ap - (pv.dash ? 2 : 1))} AP left</p>
+      <p class="ts-sub">Current: ${displayPoint(frame, sel.x, sel.y)}. Next: ${next ? displayPoint(frame, next.x, next.y) : '—'}. Destination: ${displayPoint(frame, pv.x, pv.y)} · route ${pv.steps} m.</p>
       <p class="ts-sub">${pv.exposure.length ? 'Known hostiles with a shot there: ' + pv.exposure.map((e) => `${e.id} ${e.hit}%${e.cover !== 'NONE' ? ' (your ' + e.cover.toLowerCase() + ' cover)' : ''}`).join(', ') : 'No known hostile has a shot there.'}</p>
       <div class="ts-row"><button type="button" class="ts-btn ts-btn--go" data-sheet="confirm-move">Confirm ${pv.dash ? 'dash' : 'move'}</button><button type="button" class="ts-btn" data-sheet="back">Back</button></div>
       <button type="button" class="ts-link" data-sheet="practice">Optional: how far is that? (practice)</button>`;
@@ -294,20 +297,36 @@ function renderSheet() {
 }
 
 /* ---------- interaction ---------- */
+function previewMove(x, y, hover = false) {
+  const sel = unitOf(ui.selected), route = guidance().at(x, y, 0);
+  if (!route) return false;
+  const known = guidance().knownState;
+  const after = { ...known, units: known.units.map((u) => (u.id === sel.id ? { ...u, x, y } : u)) };
+  const exposure = view().units.filter((u) => u.faction !== 'PLAYER' && !u.dead).map((e) => {
+    const pv = shotPreview(after, e.id, sel.id); return pv.legal ? { id: e.id, hit: pv.hitChance, cover: pv.cover } : null; }).filter(Boolean);
+  ui.preview = { kind: 'move', dash: route.apCost >= 2, x, y, steps: route.steps, path: route.path, exposure, hover, unitId: sel.id, sourceState: state };
+  ui.toast = ''; ui.result = ''; if (!hover) ui.menu = false; render(); return true;
+}
+function onBoardHover(x, y, meta = {}) {
+  if (meta.pointerType && meta.pointerType !== 'mouse' || menuOpen || ui.hint || ui.result || ui.preview && !ui.preview.hover) return;
+  if (ui.preview?.hover && ui.preview.x === x && ui.preview.y === y) return;
+  if (x == null || !guidance().at(x, y, 0)) { if (ui.preview?.hover) { ui.preview = null; render(); } return; }
+  previewMove(x, y, true);
+}
+function onBoardDoubleTap(x, y, meta = {}) {
+  if (meta.pointerType !== 'mouse') return;
+  const pv = ui.preview, route = guidance().at(x, y, 0);
+  if (!pv || pv.kind !== 'move' || pv.hover || pv.x !== x || pv.y !== y || pv.unitId !== ui.selected || pv.sourceState !== state || !route || route.apCost < 2) return;
+  onSheet('confirm-move');
+}
 function onBoardTap(x, y) {
+  // Keep the destination DOM stable across a native mouse double-click. Locking a hover
+  // preview changes intent only; the rendered route, AP and coordinates are already identical.
+  if (ui.preview?.kind === 'move' && ui.preview.x === x && ui.preview.y === y && ui.preview.sourceState === state && ui.preview.unitId === ui.selected) { ui.preview.hover = false; ui.menu = false; renderMenu(); return; }
   const ally = state.units.find((u) => u.faction === 'PLAYER' && !u.dead && u.x === x && u.y === y);
-  if (ui.mode === 'move' || ui.mode === 'dash') {
-    if (ally && ally.id === ui.selected) { ui.mode = null; ui.preview = null; ui.menu = true; render(); return; }
-    const sel = unitOf(ui.selected), r = reach(sel, ui.mode === 'dash'), steps = r.dist.get(r.key(x, y));
-    if (steps === undefined || steps === 0) { ui.toast = 'That tile is not reachable this action.'; ui.preview = null; render(); return; }
-    const after = { ...state, units: state.units.map((u) => (u.id === sel.id ? { ...u, x, y } : u)) };
-    const exposure = view().units.filter((u) => u.faction !== 'PLAYER' && !u.dead).map((e) => {
-      const pv = shotPreview(after, e.id, sel.id); return pv.legal ? { id: e.id, hit: pv.hitChance, cover: pv.cover } : null; }).filter(Boolean);
-    ui.preview = { kind: 'move', dash: ui.mode === 'dash', x, y, steps, path: r.pathTo(x, y), exposure };
-    ui.toast = ''; render(); return;
-  }
   if (ally) { ui.selected = ally.id; ui.menu = true; ui.preview = null; ui.mode = null; ui.result = ''; render(); return; }
-  ui.menu = false; render();
+  if (!ui.hint && (!ui.preview || ui.preview.kind === 'move') && previewMove(x, y)) return;
+  ui.menu = false; ui.preview = null; ui.toast = 'That tile is not reachable with this operative’s current AP.'; render();
 }
 
 function onMenu(act) {
@@ -315,7 +334,7 @@ function onMenu(act) {
   ui.menu = false; ui.more = false; ui.result = ''; ui.toast = '';
   if (act === 'close') { ui.more = false; render(); return; }
   if (act === 'more') { ui.more = true; ui.menu = true; render(); return; }
-  if (act === 'move' || act === 'dash') { ui.mode = act; ui.preview = null; ui.toast = `Tap a lit tile to preview the ${act}. Tap ${sel.id} again to cancel.`; render(); return; }
+  if (act === 'move' || act === 'dash') { ui.mode = act; ui.preview = null; ui.toast = 'Tap blue for 1 AP or orange for 2 AP. Preview first, then Confirm; mouse double-click on orange also confirms a dash.'; render(); return; }
   if (act.startsWith('fire:')) {
     const id = act.slice(5), pv = shotPreview(state, sel.id, id);
     if (pv.legal) ui.preview = { kind: 'fire', target: id, hit: pv.hitChance, damage: pv.damage, flanked: pv.flanked };
@@ -339,6 +358,8 @@ function onSheet(act) {
   if (act === 'back') { ui.preview = null; render(); return; }
   if (act === 'confirm-move') {
     const pv = ui.preview;
+    if (!pv || pv.kind !== 'move' || pv.unitId !== ui.selected || pv.sourceState !== state || !guidance().at(pv.x, pv.y, 0)) { ui.preview = null; ui.toast = 'Movement changed. Choose a legal destination again.'; render(); return; }
+    ui.preview = null; // consume once before resolver or repeated browser events
     try {
       // the route the player saw is the route the resolver checks and walks (preview = execution)
       state = moveUnit(state, sel.id, { x: pv.x, y: pv.y, z: 0 }, pv.dash ? 'DASH' : 'MOVE', { path: pv.path });
@@ -402,7 +423,7 @@ function onAnswer(e) {
 
 function afterChange() {
   // any change to the board ends a pending hint (it would be stale anyway) and the suggestion
-  ui.hint = null; ui.session = null; ui.suggestion = null; ui.result = '';
+  ui.hint = null; ui.session = null; ui.suggestion = null; ui.result = ''; ui.preview = null;
   save(); render();
 }
 
@@ -445,10 +466,27 @@ function bindGestures() {
   });
   const end = (e) => { pointers.delete(e.pointerId); if (pointers.size < 2) pinch0 = null; if (!pointers.size) pan0 = null; };
   vp.addEventListener('pointerup', end); vp.addEventListener('pointercancel', end);
+  let lastPointerType = 'mouse', mouseTaps = [];
+  const clearTaps = () => { mouseTaps = []; };
+  vp.addEventListener('pointercancel', clearTaps); addEventListener('blur', clearTaps);
+  vp.addEventListener('pointerdown', (e) => { lastPointerType = e.pointerType; if (e.pointerType !== 'mouse' || e.button !== 0) clearTaps(); });
+  vp.addEventListener('pointermove', (e) => {
+    if (mode3d && board3d || e.buttons || e.pointerType !== 'mouse') return;
+    const c = e.target.closest('.tb-cell'); if (c) onBoardHover(+c.dataset.x, +c.dataset.y, { pointerType: e.pointerType });
+  });
+  vp.addEventListener('pointerleave', () => { clearTaps(); if (!(mode3d && board3d)) onBoardHover(null, null); });
+  vp.addEventListener('dblclick', (e) => {
+    if (mode3d && board3d || moved || lastPointerType !== 'mouse') return;
+    const c = e.target.closest('.tb-cell') || document.elementFromPoint(e.clientX, e.clientY)?.closest('.tb-cell');
+    const key = c && `${c.dataset.x}:${c.dataset.y}`;
+    const valid = e.button === 0 && mouseTaps.length === 2 && mouseTaps.every(t => t === key); clearTaps();
+    if (valid) onBoardDoubleTap(+c.dataset.x, +c.dataset.y, { pointerType: 'mouse' });
+  });
   vp.addEventListener('click', (e) => {
     if (mode3d && board3d) return; // the 3D canvas reports its own taps
-    if (moved) { moved = false; return; } // a pan or pinch is never a tap
-    const c = e.target.closest('.tb-cell'); if (!c || !$('tacBoard').contains(c)) return;
+    if (moved) { moved = false; clearTaps(); return; } // a pan or pinch is never a tap
+    const c = e.target.closest('.tb-cell') || document.elementFromPoint(e.clientX, e.clientY)?.closest('.tb-cell'); if (!c || !$('tacBoard').contains(c)) return;
+    if (lastPointerType === 'mouse' && e.button === 0) mouseTaps = [...mouseTaps.slice(-1), `${c.dataset.x}:${c.dataset.y}`]; else clearTaps();
     onBoardTap(Number(c.dataset.x), Number(c.dataset.y));
   });
 }

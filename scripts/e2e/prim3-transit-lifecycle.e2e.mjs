@@ -94,4 +94,20 @@ try {
   await page.goto(BASE+'/prim3-transit.html');await page.waitForFunction(()=>!!window.__tx);
   assert.equal(JSON.stringify((await readSave()).state),before);assert.match(await page.title(),/Owner edited launch/);
   await ctx.close();console.log('PASS draft launch, immediate/midrun reload, stable snapshot, mismatch recovery and plain URL resume');}
+ {const {ctx,page}=await open();
+  const checks=await page.evaluate(async()=>{
+   const results=[];
+   await __tx.onSheet('confirm-move');
+   const actor=__tx.state.units.find(u=>u.id===__tx.ui.sel),entry=__tx.reach().tiles.find(t=>t.apCost===2);
+   for(const kind of ['phase','dead','downed','extracted','ap']) {
+    actor.dead=false;actor.downed=false;actor.statuses=actor.statuses.filter(s=>s!=='EXTRACTED');actor.ap=2;__tx.state.phase='PLAYER';
+    __tx.onTap(entry);
+    if(kind==='phase')__tx.state.phase='THREAT';else if(kind==='extracted')actor.statuses.push('EXTRACTED');else if(kind==='ap')actor.ap=1;else actor[kind]=true;
+    const before=JSON.stringify(__tx.state);await __tx.onDoubleTap(entry,{pointerType:'mouse'});await __tx.onSheet('confirm-move');
+    results.push({kind,unchanged:JSON.stringify(__tx.state)===before});
+   }
+   return results;
+  });
+  assert.ok(checks.every(c=>c.unchanged),JSON.stringify(checks));
+  await ctx.close();console.log('PASS stale preview cannot move locked, dead, downed, extracted or unaffordable actor; empty confirm is safe');}
 }finally{await browser.close();}

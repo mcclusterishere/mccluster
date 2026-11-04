@@ -11,6 +11,8 @@
   <!-- the shared bottom bar's styles (every page carrying js/tabbar.js links it); the level's own styles follow and win -->
   <link rel="stylesheet" href="css/style.css?v=__STAMP__">
   <style>
+    /* Route previews must not scroll the battlefield beneath a stationary pointer. */
+    html{overflow-anchor:none}
     :root{
       --bg:#080b0e;--panel:rgba(14,19,24,.88);--panel2:rgba(20,27,33,.92);--line:rgba(190,205,215,.16);--line2:rgba(190,205,215,.28);
       --ink:#e6edf1;--dim:rgba(230,237,241,.66);--squad:#2fe0f0;--squad-soft:rgba(47,224,240,.16);--threat:#ff3b3b;--amber:#ffb547;--amber-ink:#1b1206;--ok:#7be38a;

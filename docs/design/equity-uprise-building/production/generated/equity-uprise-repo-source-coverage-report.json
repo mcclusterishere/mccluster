@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 613,
+  "candidate_count": 614,
   "capability_source_count": 104,
-  "support_only_count": 509,
-  "checks_total": 2350,
-  "checks_passed": 2350,
+  "support_only_count": 510,
+  "checks_total": 2354,
+  "checks_passed": 2354,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -406,6 +406,7 @@
     "scripts/test/prim3-equity-uprise-level.test.mjs",
     "scripts/test/prim3-equity-uprise-model.test.mjs",
     "scripts/test/prim3-lifecycle.test.mjs",
+    "scripts/test/prim3-movement-knowledge.test.mjs",
     "scripts/test/prim3-transit-level.test.mjs",
     "scripts/test/product-context.test.mjs",
     "scripts/test/rpc-names-exist.test.mjs",
@@ -627,7 +628,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "613 entries"
+      "detail": "614 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -12371,6 +12372,26 @@
     },
     {
       "name": "scripts/e2e/prim3-spatial-controls.e2e.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/prim3-movement-knowledge.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/prim3-movement-knowledge.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/prim3-movement-knowledge.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/prim3-movement-knowledge.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     }

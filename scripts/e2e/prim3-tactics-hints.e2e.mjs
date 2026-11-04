@@ -214,7 +214,7 @@ else for(const vp of [{width:390,height:844},{width:1280,height:900}]){
   await tapUnit('E1');await page.locator('[data-act="hint"]').click();
   const labels=await page.evaluate(()=>[...document.querySelectorAll('.b3-label')].map(l=>l.textContent));
   check(scope,'the challenge labels Origin and Target in the scene',labels.some(t=>/^Origin \(3, 3\)$/.test(t))&&labels.some(t=>/^Target \(/.test(t)),labels.filter(t=>/Origin|Target/.test(t)));
-  check(scope,'axis labels 0–9 are drawn in the scene',['0','9'].every(n=>labels.includes(n)));
+  check(scope,'signed centre-frame metre axes are drawn in the scene',['-4.5','+4.5','+X east','+Y north'].every(n=>labels.includes(n)));
   check(scope,'the unseen hostile is not labelled in 3D',!labels.includes('H2'));
   const z0=await page.evaluate(()=>window.__tac.zoomLevel());await page.locator('#zoomIn').click();
   check(scope,'zoom in moves the 3D camera closer',await page.evaluate(()=>window.__tac.zoomLevel())<z0);

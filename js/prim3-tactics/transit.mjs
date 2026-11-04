@@ -11,8 +11,9 @@
 import { createState, beginPlayerPhase, moveUnit, fireWeapon,
   enterOverwatch, hunkerDown, reload, shotPreview, stabilize, technicalAction, extractUnit, drawRolls, hasLineOfSight, gridDistance,
   techActionPreview, jamMachine, syncPulse, markMachine } from './tactical-resolver.mjs';
-import { playerProjection, knownPaths } from './tactical-hints.mjs';
+import { playerProjection } from './tactical-hints.mjs';
 import { resolveHostileTurn, genericOutcome, parseResume, missionBriefing } from './lifecycle.mjs';
+import { movementGuidance, waypointDistance } from './movement-guidance.mjs';
 import { missionAftermath } from './aftermath.mjs';
 import { loadLevel } from './levels/index.mjs';
 import { operatorHeight } from './scale.mjs';
@@ -157,19 +158,14 @@ const gateOpen = () => nodeState(SIDE_NODE) === 'VERIFIED';
 function say(msg) { log.push(`T${String(state.round).padStart(2, '0')} · ${msg}`); if (log.length > 120) log = log.slice(-120); }
 
 /* ---------- reach: the hint module's player-knowledge pathing (link- and floor-aware) ---------- */
-function parseKey(k) { const p = String(k).split(':').map(Number); return { x: p[0], y: p[1], z: p[2] || 0 }; }
-function reach(u, dash) {
-  const p = view(), pu = p.units.find((x) => x.id === u.id);
-  pu.moveRange = u.moveRange * (dash ? 2 : 1);
-  const r = knownPaths(p, u.id);
-  const tiles = [];
-  for (const [k, steps] of r.dist) { const t = parseKey(k); if (steps > 0) tiles.push({ ...t, steps }); }
-  // always pass the floor: the engine's key/pathTo take z as an optional argument (so .length is 2);
-  // dropping it asked about the ground under a roof, which made every roof tap 'unreachable'
-  const pathTo = (x, y, z = 0) => r.pathTo(x, y, z);
-  const stepsTo = (x, y, z = 0) => r.dist.get(r.key(x, y, z));
-  return { tiles, pathTo, stepsTo };
+let guidanceState = null, guidanceId = null, guidanceCache = null;
+function reach(u) {
+  if (guidanceState !== state || guidanceId !== u.id) {
+    guidanceCache = movementGuidance(state, u.id); guidanceState = state; guidanceId = u.id;
+  }
+  return guidanceCache;
 }
+function canMove(u) { return u && u.faction === 'PLAYER' && !u.dead && !u.downed && !extracted(u) && u.ap >= 1 && state.phase === 'PLAYER' && !ui.busy && !ui.ended; }
 
 /* ---------- fog of war: what the squad can see now, by the engine's own sight rule ----------
    A tile is lit if a living, deployed operative is within its detection radius and has line of sight
@@ -248,7 +244,7 @@ function webgl() { try { const c = document.createElement('canvas'); return !!(c
 function ensure3d() {
   if (r3 || r3loading || !webgl()) return;
   r3loading = import('./level3d.mjs').then((mod) => {
-    r3 = mod.createLevel3D($('tx3d'), { level: LEVEL, look, fx: PARAMS.get('fx') || (gfx === 'auto' ? null : gfx), reducedMotion: REDUCED, onTap, onView: null });
+    r3 = mod.createLevel3D($('tx3d'), { level: LEVEL, look, fx: PARAMS.get('fx') || (gfx === 'auto' ? null : gfx), reducedMotion: REDUCED, onTap, onHover, onDoubleTap, onView: null });
     r3loading = null; fogKey = ''; // a new board needs its fog
     r3.setGrid(gridOn);
     r3.setGridDetail(gridDetail);
@@ -273,7 +269,7 @@ function boardModel() {
   const p = view(), sel = unitOf(ui.sel);
   const units = p.units.filter((u) => !extracted(u));
   const m = { units, selected: ui.sel, labels: [], extraction: SCENE.showExtraction === false ? null : undefined, gateOpen: gateOpen(), cut: cutStorey(sel), coverAt: (u) => { const c = state.cover.find((k) => k.x === u.x && k.y === u.y && (k.z || 0) === (u.z || 0)); return c ? c.type : null; } };
-  if (ui.mode === 'move' || ui.mode === 'dash') { m.reach = ui.reach.tiles; }
+  if ((ui.mode === 'move' || ui.mode === 'dash') && ui.reach) { m.reach = ui.reach.tiles; }
   if (ui.preview && ui.preview.kind === 'move') { m.path = ui.preview.path.slice(0, -1); m.dest = ui.preview.dest; m.pathLine = [{ x: sel.x, y: sel.y, z: sel.z }, ...ui.preview.path]; }
   if (ui.preview && ui.preview.kind === 'fire') m.target = ui.preview.target;
   for (const u of units) if (!u.dead) m.labels.push({ id: u.id, x: u.x, y: u.y, z: u.z, h: operatorHeight(LEVEL.WORLD_M || LEVEL.TILE_M) + 0.3, kind: u.faction === 'PLAYER' ? 'ally' : 'hostile', text: u.faction === 'PLAYER' ? u.role : esc(u.id) });
@@ -309,6 +305,8 @@ function objectiveModel() {
 function render() {
   paintSaveNotice();
   const sel = unitOf(ui.sel);
+  if (canMove(sel) && (!ui.mode || ui.mode === 'move' || ui.mode === 'dash')) { ui.mode ||= 'move'; ui.reach = reach(sel); }
+  else if (!canMove(sel)) { ui.reach = null; if (ui.preview?.kind === 'move') ui.preview = null; }
   if (!r3 && !r3loading) ensure3d();
   if (r3 && !ui.holdBoard) r3.update(boardModel()); // frozen while engine events play out
   if (r3 && !ui.holdBoard) { const k = state.units.filter((u) => u.faction === 'PLAYER').map((u) => `${u.x},${u.y},${u.z},${u.dead},${u.downed},${extracted(u)}`).join('|') + state.round + (state.machines || []).map((q) => q.state).join() + ui.sel; if (k !== fogKey) { fogKey = k; lastVis = visibleTiles(); r3.setFog(fogCells(lastVis)); } }
@@ -334,7 +332,7 @@ function render() {
     const R = ROLE[sel.role];
     const st = [sel.downed ? 'downed' : '', sel.overwatch ? 'overwatch' : '', sel.hunkered ? 'hunkered' : '', extracted(sel) ? 'extracted' : '', sel.z ? (LEVEL.floorName ? 'on ' + floorName(sel.z) : 'on the roof') : ''].filter(Boolean).join(' · ');
     $('txSel').innerHTML = `<img src="${R.img}" alt="${sel.role}: ${R.name} operator, faceless mannequin in field loadout" width="72" height="72">
-      <div><h2>${sel.role} / ${R.name}</h2><p>${esc(R.line)}</p><p>${D(sel.x, sel.y)} · ammo ${sel.ammo}/${sel.magazineSize} (+${sel.reserveAmmo})${st ? ' · ' + st : ''}</p></div>
+      <div><h2>${sel.role} / ${R.name}</h2><p>${esc(R.line)}</p><p class="tx-capabilities">Available now: ${actionsFor(sel).filter(a => a.enabled).map(a => esc(a.label) + ' (' + esc(a.sub) + ')').join(' · ') || 'No legal actions'}</p><p>Current waypoint ${D(sel.x, sel.y)} · ammo ${sel.ammo}/${sel.magazineSize} (+${sel.reserveAmmo})${st ? ' · ' + st : ''}</p></div>
       <div class="tx-stats"><span class="chip">${sel.ap} AP</span><span class="chip chip--hp">${sel.hp} / ${sel.maxHp} HP</span></div>`;
   }
   // squad
@@ -376,8 +374,8 @@ function renderSheet() {
   if (pv && pv.kind === 'move') {
     const cv = state.cover.find((c) => c.x === pv.dest.x && c.y === pv.dest.y && (c.z || 0) === (pv.dest.z || 0));
     html = `<p class="sh-eye">${pv.dash ? 'Dash' : 'Move'} preview · ${sel.role}</p>
-      <p class="sh-main">${D(sel.x, sel.y)} → <b>${D(pv.dest.x, pv.dest.y)}</b>${pv.dest.z ? ' ' + floorName(pv.dest.z) : ''} · ${pv.steps} steps · ${pv.dash ? 2 : 1} AP${cv ? ' · ' + (cv.type === 'HIGH' ? 'high' : 'low') + ' cover' : ' · no cover'}</p>
-      <p class="sh-sub">${pv.exposure.length ? 'Known hostiles with a shot there: ' + pv.exposure.map((e) => `${e.id} ${e.hit}%`).join(', ') : 'No known hostile has a shot there.'}${pv.watchers ? ' Watch out: a hostile on overwatch may react.' : ''}</p>
+      <p class="sh-main">${D(sel.x, sel.y)} → <b>${D(pv.dest.x, pv.dest.y)}</b>${pv.dest.z ? ' ' + floorName(pv.dest.z) : ''} · ${pv.steps} movement steps · ${pv.apCost} AP${pv.distanceM === null ? '' : ' · ' + pv.distanceM.toFixed(1) + ' m waypoint route'}${cv ? ' · ' + (cv.type === 'HIGH' ? 'high' : 'low') + ' cover' : ' · no cover'}</p>
+      <p class="sh-sub">Next waypoint: ${D(pv.path[0].x, pv.path[0].y)}${pv.path[0].z ? ' · ' + esc(floorName(pv.path[0].z)) : ''}. Unknown contacts may interrupt the route.</p><p class="sh-sub">${pv.exposure.length ? 'Known hostiles with a shot there: ' + pv.exposure.map((e) => `${e.id} ${e.hit}%`).join(', ') : 'No known hostile has a shot there.'}${pv.watchers ? ' Watch out: a hostile on overwatch may react.' : ''}</p>
       <div class="sh-row"><button type="button" class="sh-btn sh-btn--go" data-sheet="confirm-move">Confirm ${pv.dash ? 'dash' : 'move'}</button><button type="button" class="sh-btn" data-sheet="back">Back</button></div>`;
   } else if (ui.mode === 'fire' && sel) {
     const ts = targetsFor(sel);
@@ -385,8 +383,8 @@ function renderSheet() {
       ${pv && pv.kind === 'fire' ? `<p class="sh-main">${sel.role} → <b>${esc(pv.target)}</b> · ${pv.hit}% to hit · ${pv.damage} dmg${pv.flanked ? ' · flanking' : ''}${pv.cover !== 'NONE' ? ' · target in ' + pv.cover.toLowerCase() + ' cover' : ''} · ${pv.distance} tiles</p>
       <p class="sh-sub">Chance from the engine: aim, cover, range, elevation. The roll is random.</p>
       <div class="sh-row"><button type="button" class="sh-btn sh-btn--go" data-sheet="confirm-fire">Confirm fire</button><button type="button" class="sh-btn" data-sheet="back">Back</button></div>` : '<div class="sh-row"><button type="button" class="sh-btn" data-sheet="back">Back</button></div>'}`;
-  } else if (ui.mode === 'move' || ui.mode === 'dash') {
-    html = `<p class="sh-eye">${ui.mode === 'dash' ? 'Dash' : 'Move'} · ${sel.role}</p><p class="sh-sub">Tap a lit tile to preview the route. Choose a reachable landing below to change floors. Tap ${sel.role} again or Back to cancel.</p><div class="sh-row">${verticalLandings(sel).map((t) => `<button type="button" class="sh-btn" data-sheet="landing:${t.x}:${t.y}:${t.z || 0}">${esc(floorName(t.z || 0) || 'Ground')} · ${D(t.x, t.y)} · ${ui.reach.stepsTo(t.x, t.y, t.z || 0)} steps</button>`).join('')}<button type="button" class="sh-btn" data-sheet="back">Back</button></div>`;
+  } else if ((ui.mode === 'move' || ui.mode === 'dash') && canMove(sel)) {
+    html = `<p class="sh-eye">${ui.mode === 'dash' ? 'Dash' : 'Move'} · ${sel.role}</p><p class="sh-sub">Blue: 1 AP. Orange: 2 AP. Unlit cells are outside this move. Hover or tap to preview; double-click an orange destination to dash, or use Confirm. Choose a landing to change floors.${toastMsg ? ' ' + toastMsg : ''}</p><div class="sh-row">${verticalLandings(sel).map((t) => `<button type="button" class="sh-btn" data-sheet="landing:${t.x}:${t.y}:${t.z || 0}">${esc(floorName(t.z || 0) || 'Ground')} · ${D(t.x, t.y)} · ${ui.reach.stepsTo(t.x, t.y, t.z || 0)} steps · ${ui.reach.at(t.x, t.y, t.z || 0).apCost} AP</button>`).join('')}<button type="button" class="sh-btn" data-sheet="back">Back</button></div>`;
   } else if (toastMsg) html = `<p class="sh-sub">${toastMsg}</p>`;
   s.innerHTML = html; s.hidden = !html;
 }
@@ -420,7 +418,7 @@ function drawMap() {
   const rx = (OBJ.x + 0.5) * S, ry = (OBJ.y + 0.5) * S, rk = MK * 1.4; // marks keep their size on a small map
   g.strokeStyle = col.amber; g.lineWidth = 3; g.beginPath(); g.moveTo(rx, ry - rk); g.lineTo(rx + rk, ry); g.lineTo(rx, ry + rk); g.lineTo(rx - rk, ry); g.closePath(); g.stroke();
   // reach and path
-  if (ui.reach && (ui.mode === 'move' || ui.mode === 'dash')) { g.fillStyle = studio ? 'rgba(20,25,28,.12)' : 'rgba(47,224,240,.16)'; for (const t of ui.reach.tiles) g.fillRect(t.x * S, t.y * S, S, S); }
+  if (ui.reach && (ui.mode === 'move' || ui.mode === 'dash')) { for (const t of ui.reach.tiles) { g.fillStyle = t.apCost >= 2 ? 'rgba(255,153,40,.20)' : 'rgba(35,145,255,.18)'; g.fillRect(t.x * S, t.y * S, S, S); } }
   if (ui.preview && ui.preview.kind === 'move') { const sel = unitOf(ui.sel); g.strokeStyle = col.amber; g.setLineDash([S, S * 0.6]); g.lineWidth = 2; g.beginPath(); g.moveTo((sel.x + 0.5) * S, (sel.y + 0.5) * S); for (const p of ui.preview.path) g.lineTo((p.x + 0.5) * S, (p.y + 0.5) * S); g.stroke(); g.setLineDash([]); }
   if (lastVis) { for (let y = 0; y < H; y += 1) for (let x = 0; x < W; x += 1) { const i = y * W + x; if (lastVis[i]) continue; g.fillStyle = explored[i] ? (studio || day ? 'rgba(30,40,48,.18)' : 'rgba(0,0,0,.35)') : (studio || day ? 'rgba(30,40,48,.34)' : 'rgba(0,0,0,.6)'); g.fillRect(x * S, y * S, S, S); } }
   // units: squad and only the hostiles the player knows about
@@ -455,26 +453,38 @@ mini.addEventListener('click', (e) => {
 });
 
 /* ---------- input ---------- */
-function onTap(t) {
-  if (ui.busy || ui.ended) return;
+function previewMove(t, source = 'tap') {
   const sel = unitOf(ui.sel);
-  if ((ui.mode === 'move' || ui.mode === 'dash') && sel) {
-    if (t.unitId === sel.id) { cancel(); return; }
-    const z = t.z || 0;
-    let steps = ui.reach.stepsTo(t.x, t.y, z);
-    if ((steps === undefined || steps <= 0) && z === 1) { steps = ui.reach.stepsTo(t.x, t.y, 0); if (steps > 0) t = { ...t, z: 0 }; }
-    if (steps === undefined || steps <= 0) { toast('That tile cannot be reached with this action.'); ui.preview = null; render(); return; }
-    const path = ui.reach.pathTo(t.x, t.y, t.z || 0);
-    const after = { ...state, units: state.units.map((u) => (u.id === sel.id ? { ...u, x: t.x, y: t.y, z: t.z || 0 } : u)) };
-    const exposure = knownHostiles().map((e) => { const p = tryPreview(after, e.id, sel.id); return p ? { id: e.id, hit: p.hitChance } : null; }).filter(Boolean);
-    ui.preview = { kind: 'move', dash: ui.mode === 'dash', dest: { x: t.x, y: t.y, z: t.z || 0 }, steps, path, exposure, watchers: knownHostiles().some((e) => e.overwatch) };
-    toastMsg = ''; render(); return;
-  }
-  if (ui.mode === 'fire' && t.unitId) { const e = knownHostiles().find((h) => h.id === t.unitId); if (e) { aim(e.id); return; } }
-  const ally = t.unitId && state.units.find((u) => u.id === t.unitId && u.faction === 'PLAYER');
+  if (!canMove(sel)) return false;
+  const entry = reach(sel).at(t.x, t.y, t.z || 0);
+  if (!entry) { if (source === 'tap') toast('That destination is not reachable with the available AP.'); ui.preview = null; render(); return false; }
+  const {path, steps, apCost, mode} = entry;
+  const known = reach(sel).knownState;
+  const after = { ...known, units: known.units.map(u => u.id === sel.id ? {...u,x:t.x,y:t.y,z:t.z || 0} : u) };
+  const exposure = knownHostiles().map(e => { const p = tryPreview(after,e.id,sel.id); return p ? {id:e.id,hit:p.hitChance} : null; }).filter(Boolean);
+  ui.preview = {kind:'move', source, actorId:sel.id, stateRef:state, dash:mode === 'DASH', apCost, dest:{x:t.x,y:t.y,z:t.z || 0}, steps,path,
+    distanceM:waypointDistance(state,sel,path,LEVEL.WORLD_M || LEVEL.TILE_M), exposure,watchers:knownHostiles().some(e=>e.overwatch)};
+  toastMsg = ''; render(); return true;
+}
+function onHover(t) {
+  if (ui.busy || ui.ended || !['move','dash'].includes(ui.mode) || ui.preview?.source === 'tap') return;
+  if (!t || t.unitId) { if (ui.preview?.source === 'hover') { ui.preview = null; render(); } return; }
+  previewMove(t,'hover');
+}
+function onDoubleTap(t, meta = {}) {
+  const pv = ui.preview;
+  if (meta.pointerType !== 'mouse' || !canMove(unitOf(ui.sel)) || pv?.kind !== 'move' || pv.apCost !== 2 || pv.source !== 'tap' || pv.actorId !== ui.sel || pv.stateRef !== state) return;
+  if (pv.dest.x !== t.x || pv.dest.y !== t.y || pv.dest.z !== (t.z || 0)) return;
+  return onSheet('confirm-move');
+}
+function onTap(t) {
+  if (ui.busy || ui.ended || state.phase !== 'PLAYER') return;
+  const sel = unitOf(ui.sel);
+  const ally = t.unitId && state.units.find(u => u.id === t.unitId && u.faction === 'PLAYER');
   if (ally) { select(ally.id); return; }
-  const hostile = t.unitId && knownHostiles().find((h) => h.id === t.unitId);
-  if (hostile && sel) { const tg = targetsFor(sel).find((x) => x.e.id === hostile.id); if (tg && sel.ap >= 1) { ui.mode = 'fire'; aim(hostile.id); return; } toast(`${hostile.id}: no shot from ${sel.role}'s position.`); }
+  const hostile = t.unitId && knownHostiles().find(h => h.id === t.unitId);
+  if (hostile && sel) { const tg = targetsFor(sel).find(x => x.e.id === hostile.id); if (tg && sel.ap >= 1) { ui.mode='fire'; aim(hostile.id); return; } toast(`${hostile.id}: no shot from ${sel.role}'s position.`); return; }
+  if ((ui.mode === 'move' || ui.mode === 'dash') && sel) previewMove(t);
 }
 function tryPreview(st, a, b) { try { const p = shotPreview(st, a, b); return p.legal ? p : null; } catch (e) { return null; } }
 function select(id) { ui.sel = id; ui.mode = null; ui.preview = null; toastMsg = ''; const u = unitOf(id); if (r3 && u) r3.focus(u.x, u.y, u.z, Math.min(22, Math.max(W, H) * 1.2)); render(); }
@@ -487,9 +497,9 @@ function aim(id) {
 }
 
 async function onAct(id) {
-  const sel = unitOf(ui.sel); if (!sel || ui.busy || ui.ended || state.phase !== 'PLAYER') return;
+  const sel = unitOf(ui.sel); if (!sel || ui.busy || ui.ended || state.phase !== 'PLAYER' || !actionsFor(sel).some(a => a.id === id && a.enabled)) return;
   toastMsg = '';
-  if (id === 'move' || id === 'dash') { if (ui.mode === id) { cancel(); return; } ui.mode = id; ui.preview = null; ui.reach = reach(sel, id === 'dash'); render(); return; }
+  if (id === 'move' || id === 'dash') { if (ui.mode === id) { cancel(); return; } ui.mode = id; ui.preview = null; ui.reach = reach(sel); render(); return; }
   if (id === 'fire') { if (ui.mode === 'fire') { cancel(); return; } ui.mode = 'fire'; ui.preview = null; const ts = targetsFor(sel); if (ts.length === 1) aim(ts[0].e.id); else render(); return; }
   const before = state;
   try {
@@ -521,6 +531,8 @@ async function onSheet(a) {
   if (a.startsWith('aim:')) { aim(a.slice(4)); return; }
   if (a === 'confirm-move') {
     const pv = ui.preview, before = state;
+    if (!canMove(sel) || pv?.kind !== 'move' || pv.actorId !== sel.id || pv.stateRef !== state || !reach(sel).at(pv.dest.x,pv.dest.y,pv.dest.z)) return;
+    ui.preview = null;
     try { state = moveUnit(state, sel.id, pv.dest, pv.dash ? 'DASH' : 'MOVE', { path: pv.path }); }
     catch (e) { state = before; toast('The move was refused: ' + esc(e.message)); ui.preview = null; render(); return; }
     ui.mode = null; ui.preview = null; ui.reach = null;
@@ -707,4 +719,4 @@ showBrief();
 if (ui.ended == null) { const end = checkEnd(); if (end) afterChange(); }
 window.addEventListener('pagehide', save);
 $('txObj').addEventListener('click', (e) => { if (e.target.closest('#txObjBtn')) { ui.objOpen = !ui.objOpen; render(); } });
-window.__tx = { get state() { return state; }, get ui() { return ui; }, get r3() { return r3; }, get busy() { return ui.busy || !!(r3 && r3.isAnimating()); }, select, onAct, onSheet, onTap, endTurn, restart, reach: () => ui.reach, SAVE_KEY: SAVE };
+window.__tx = { get state() { return state; }, get ui() { return ui; }, get r3() { return r3; }, get busy() { return ui.busy || !!(r3 && r3.isAnimating()); }, select, onAct, onSheet, onTap, onHover, onDoubleTap, endTurn, restart, reach: () => ui.reach, SAVE_KEY: SAVE };
