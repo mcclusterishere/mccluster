@@ -21,7 +21,7 @@ export function mountSoleStreet(root,onFinish,{locationId,point,neighborhood,onR
  function clear(){keys.clear();held.clear();}
  function persist(){try{if(['playing','paused','ready'].includes(state.status))localStorage.setItem(key,JSON.stringify({...state,locationId,cloudRun}));else localStorage.removeItem(key);}catch{}}
  let spatialDisabled=null;
- const disposeSpatial=mountSoleSpatial(root,{locationId,canEnter:()=>!busy&&!state.config.blockedRoads.length,onActive:active=>{
+ const disposeSpatial=mountSoleSpatial(root,{locationId,canEnter:()=>!busy,getMission:()=>({route:state.config.route,index:state.index,blockedRoads:state.config.blockedRoads}),onActive:active=>{
   if(active){pause();spatialDisabled=new Map([...root.querySelectorAll('button,input,textarea')].filter(el=>!el.closest('[data-sole-spatial]')).map(el=>[el,el.disabled]));for(const el of spatialDisabled.keys())el.disabled=true;canvas.inert=true;}
   else{for(const [el,disabled]of spatialDisabled||[])el.disabled=disabled;spatialDisabled=null;canvas.inert=false;}
  }});
