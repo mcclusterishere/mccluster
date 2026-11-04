@@ -177,7 +177,7 @@ export function buildNeighborhoodPlace(b, { batch, parent, kit, target, pickable
   frontBox(PALETTE.trim, 0, 1.7, .08, 2.05, 3.15, .15);
   frontBox('#3d4e4a', 0, 1.65, .17, 1.77, 2.95, .09);
   frontBox('#bdad7b', .53, 1.55, .24, .065, .4, .05);
-  if (!/church|chapel|home|residential|apartment|walkup/.test(style)) {
+  if (!/church|chapel|home|residential|apartment|walkup|civic/.test(style)) {
     for (const side of [-1, 1]) {
       frontBox(PALETTE.trim, side * Math.min(4, usableWidth * .29), 1.8, .08, Math.min(4.4, usableWidth * .28), 2.7, .12);
       frontBox(PALETTE.glass, side * Math.min(4, usableWidth * .29), 1.8, .16, Math.min(4.1, usableWidth * .26), 2.45, .07);

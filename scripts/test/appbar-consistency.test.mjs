@@ -128,6 +128,10 @@ test('exactly three columns for everyone: Music | M | Globe', async () => {
   const wing = bar.slice(bar.indexOf('  var WINGS = {'));
   const world = wing.slice(wing.indexOf('world: {'), wing.indexOf('\n  };'));
   assert.equal((world.match(/\["[a-z0-9-]+\.html[^"]*",/g) || []).length, 2, 'the Globe wing carries two rooms');
+  /* Missions is the admin's for now (owner, 2026-11-03): the room stays in the wing, gated on the server's owner answer,
+     and everyone else gets its column empty so the wing still holds two cells (scripts/test/globe-games-gate.test.mjs) */
+  assert.match(world, /"Missions", \{[\s\S]*?\}, \{ admin: true \}\]/, 'the Missions room is admin-only');
+  assert.match(world, /"account\.html\?stay=1", "key", "Account", \{[\s\S]*?\}\]/, 'Account stays open to everyone');
   assert.match(bar, /var FIXED = \{\};/);
 });
 

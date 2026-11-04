@@ -140,6 +140,9 @@ try{
     await page.goto(BASE+'/member-front.html?handle=other-member');
     await page.waitForFunction(()=>document.getElementById('mfName').textContent==='Other member');
     check('other member front has no profile editor controls',await page.isHidden('#mfCustomize'));
+    /* The bar restores the session asynchronously after navigation; signing out
+       before it has verified races the restore and can leave a signed-in bar. */
+    await page.waitForFunction(()=>typeof window.MCC?.signOut==='function'&&window.MCC_BAR?.auth().verified);
     await page.evaluate(async()=>{await window.MCC.signOut();});
     await page.waitForFunction(()=>MCC_BAR.auth().signed_in===false);
     check('signing out clears selected identity and restores house',

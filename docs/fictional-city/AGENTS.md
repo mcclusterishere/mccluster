@@ -41,8 +41,20 @@ Retain CT source metadata and visible OpenStreetMap attribution for derived road
   `parcels`, `expansionBusinesses`, `expansionNpcs`, `families`, `expansionItems`. These records carry
   parcel IDs and route anchors, never coordinates; the spatial layer binds them. Expansion students
   are minors (`minor: true`): no sexual content, injury, purchases or bribes involving them. The
-  satire targets posers, the rich school and corrupt institutions, never Black people or public-school
-  kids, and uses no phonetic dialect.
+  satire targets posers, the rich school and middlemen who sell influence they do not have, never Black
+  people or public-school kids, and uses no phonetic dialect.
+- Real places (owner, 2026-11-03): real streets, the city and its government buildings keep their real,
+  sourced names; fictional private businesses, occupants and people are the overlay. No invented police
+  precinct, public school or government office. `civic-center/police-station` is the Bridgeport Police
+  Department and `northside-residential/public-school` is Harding High School, each with a sourced
+  `realInstitution` block, staffed only by fictional civilians, teachers and students; `idAliases` keeps
+  `precinct-zero` and `municipal-high-9` resolvable. Payoff interactions (`type: "bribe"`, `price` in
+  credits) belong only to fictional private middlemen (Hail Mary's expediting desk), never to a real
+  institution or person.
+- Corruption storylines reenact only real, proven public-record cases (`publicRecordArcs`): conviction,
+  plea, court finding or official record, each scene with `basis` and `sources: [{title, url, date}]`,
+  real people shown only doing what the record establishes, pending charges reported as pending. Read
+  `PUBLIC-RECORD-STORYLINES.md` before changing them.
 - All 24 v1 residents are adults. Humor is in the businesses, interactions, wordplay
   and unreliable pitches. Do not substitute a fake racial accent for character writing.
 - Preserve the existing shared navigation and private audience. Static authored fiction is public-safe
@@ -81,3 +93,15 @@ Validate old-save migration, ordered scene progression, all story-stop walking r
 parity with public source evidence, and exterior-only donation-bin custody. Later scene titles
 and cast outcomes must remain hidden until reached. Do not turn narrative completion into a
 shoe power, money payout, new canonical wearer, or explanation of the pastor's unresolved reveal.
+
+## Real geography and government identity — owner correction, 2026-11-03
+
+- Preserve real city names, street names, official geographic names and sourced street layout.
+- Preserve verified government institutions, buildings, addresses and public functions. Do not assign a fictional commercial tenant to a government site.
+- Author non-government businesses, premises and story people. Check both parcel ownership and institutional use before placement; unknown ownership is not private ownership, and private ownership does not rule out a government tenant.
+- Preserve public offices and roles. Whether a named incumbent or a fictional officeholder performs a role remains an undecided casting choice; do not fill it by assumption.
+- Gang naming, owner decision 2026-11-03 (final, supersedes the earlier Elm Street label): there is one Willy Whackers gang, the School of Hard Knocks kids’ **Bond Street Willy Whackers**, named for the real street of the real public school they harass (Harding High School, 379 Bond Street) and led by Bryce, the school’s adult hired extortionist. The kids are minors; every minor protection applies. Mr. GREAT and Harold’s Night Shift Club crew stays unnamed.
+- `geography/bridgeport-government-classification.json` records the checked parcels and limits. The two courts are protected public landmarks; Ashline and the two yards occupy the corrected private parcels. Keep all 16 original CT footprint rings.
+- Expansion lore remains separate from playable geography. The invented government proposals are resolved (owner, 2026-11-03): `precinct-zero` is now the real Bridgeport Police Department and `municipal-high-9` the real Harding High School, both with verified identity and authored footprint/coordinates in `realInstitution.fieldProvenance`, and `geography/real-institutions.v1.json` hands their sourced address and lon/lat to the map-alignment work. Also resolve authored neighborhood labels against actual geographic names.
+- Read `CLAUDE-HANDOFF.md` before integration and `EPISODE-PRODUCTION.md` before cinematic work. The existing city has already been merged through #721; #720's lore uses `expansionNeighborhoods`. Do not build another city from the README.
+- The owner authorized branch publication for review and explicitly withheld main integration in this session. Keep this follow-up on its review branch; a previous merge by another session does not extend that authorization.

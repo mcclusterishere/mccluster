@@ -6,6 +6,7 @@ import {handleAtNight} from './at-night.js';
 import prim3 from './prim3/index.js';
 import { handlePrim3Levels, PRIM3_LEVELS_PREFIX } from './prim3/levels.js';
 import { handleNewsDesk, NEWS_DESK_PATH } from './prim3/news-desk.js';
+import { handleLearning, LEARNING_PATH } from './prim3/learning.js';
 import seekFirst from './seek-first/index.js';
 import { buildEquityUpriseHaloProjection } from './seek-first/equity-uprise-halo.js';
 import { handleWorldLayers } from './world-layers.js';
@@ -20,6 +21,7 @@ import { handleWorldIon, WORLD_ION_PATH } from './world-ion.js';
 import { AccessError, verifyAccess } from './seek-first/access.js';
 import { handleWorldNews, handleWorldNewsHeat, NEWS_PATH, NEWS_HEAT_PATH } from './world-news.js';
 import { handleWorldNewsPairs, NEWS_PAIRS_PATH } from './world-news-pairs.js';
+import { handleWorldWeather, WEATHER_PREFIX } from './world-weather.js';
 import SEEK_FIRST_CONSOLE_HTML from './seek-first/console.html';
 import { CATALOG } from './ai/envelope.js';
 
@@ -160,6 +162,11 @@ export default {
         return handleNewsDesk(request, env, { requireHouseOwner });
       }
 
+      /* PRIM3 learning evidence: lab sessions, certificates, pathways, HSEEP exercises; house owner only for now (./prim3/learning.js) */
+      if (path === LEARNING_PATH || path.startsWith(`${LEARNING_PATH}/`)) {
+        return handleLearning(request, env, { requireHouseOwner, authUser });
+      }
+
       if (path === '/v1/prim3' || path.startsWith('/v1/prim3/')) {
         return prim3.fetch(request, env);
       }
@@ -178,6 +185,11 @@ export default {
       if (path === NEWS_PAIRS_PATH) {
         const pairs = await handleWorldNewsPairs(request, env);
         if (pairs) return pairs;
+      }
+      /* Connecticut weather, read from McCluster Core's once-per-region snapshot, house owner only (./world-weather.js) */
+      if (path === WEATHER_PREFIX || path.startsWith(`${WEATHER_PREFIX}/`)) {
+        const weather = await handleWorldWeather(request, env);
+        if (weather) return weather;
       }
       /* accounts by the IP place of their latest signed-in visit: exact for the house owner, countries of five or more for
          everyone else (./world-members.js) */

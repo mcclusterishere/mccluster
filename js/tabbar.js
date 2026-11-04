@@ -233,8 +233,12 @@
     world: {
       home: "mnet.html?view=feed",
       slots: [
+        /* MISSIONS ARE THE ADMIN'S FOR NOW (owner, 2026-11-03: the Missions tab and the mission surfaces are hidden behind
+           admin until they are brought back). Kept, not deleted: the fifth field gates the room on the server's owner
+           answer (ADMIN_ON, GET /v1/status). For everyone else morph() keeps its column empty, so the wing still holds
+           two cells and the held tab never moves. */
         ["mnet.html?view=missions", "folk", "Missions", { title: "Equity Uprise missions",
-          sub: "Pick a mission, do the work, send proof. Verified action builds your record on Equity Uprise." }],
+          sub: "Pick a mission, do the work, send proof. Verified action builds your record on Equity Uprise." }, { admin: true }],
         ["account.html?stay=1", "key", "Account", { title: "Your M Account",
           sub: "Sign in, manage credentials and keep the same identity across every McCluster-powered product." }],
       ],
@@ -1111,6 +1115,7 @@
     Object.keys(WINGS).forEach(function (k) {
       WINGS[k].slots.forEach(function (s) { if (s[0] === slotHref) def = s; });
     });
+    if (def && !roomAllowed(def)) return; // an admin-only room never opens for anyone else
     if (!def || !def[3]) { sail(slotHref, 0); return; }
     var p = def[3];
     var sub = (p.dyn && p.dyn()) || p.sub;
@@ -1134,6 +1139,8 @@
     emit("mcc:bar-peek", { href: slotHref });
   }
 
+  /* a room carrying { admin: true } opens only on the server's owner answer */
+  function roomAllowed(s) { return !(s && s[4] && s[4].admin) || ADMIN_ON === true; }
   function morph(key) {
     var w = WINGS[key];
     /* the owner's five-tab bar does not open wings: five columns cannot keep the anchor law with two-room wings */
@@ -1148,6 +1155,8 @@
     var anchor = tmp.querySelector('[data-appnav="' + key + '"]');
     if (anchor) anchor.classList.add("appbar__tab--wing", "is-active");
     var slotHtml = w.slots.map(function (s) {
+      /* an admin-only room: an empty, inert cell for everyone the server has not said is the owner */
+      if (!roomAllowed(s)) return '<span class="appbar__tab appbar__tab--slot appbar__tab--gated" aria-hidden="true"></span>';
       return '<a class="appbar__tab appbar__tab--slot" href="' + s[0] + '" data-dock="' + s[0] + '">' +
         ic(s[1]) + "<span>" + s[2] + "</span></a>";
     });

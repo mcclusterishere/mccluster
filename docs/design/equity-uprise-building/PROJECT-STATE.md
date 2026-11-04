@@ -1221,6 +1221,19 @@ Implemented (authority `SERVER-LAB-SPEC.md`):
 
 Open: the B1 detailed builder places the telecom enclosure at X32–52 / Y22–34 while the electronics manifest anchors the MDF rack at (45, 62.8); recorded in the spec, not reconciled here. The lab page shows the MDF room, not the stacked building; entering it from the building viewer is next. Rack network devices remain schematic until promoted through Step 4C. Game Hub entry recommended in the spec (the hub is not on main yet).
 
+## Lab Runtime — STEP 11 HSEEP EXERCISES + LEARNING EVIDENCE BACKEND (2026-11-03)
+
+- Seven new HSEEP-structured exercises (`hseep-building-safety-scenario-pack-v1.json`): fire/smoke evacuation, shelter-in-place/severe weather, active-threat awareness tabletop (non-graphic, IS-907.A guidance only), hazmat release, full B1→roof evacuation with tunnel headcount (functional), disability-inclusive evacuation, building plan vs community EOP tabletop.
+- Team play: ICS positions and building roles per action, role-gated, with an ICS-214 activity log; EEG P/S/M/U drafts, hotwash, draft AAR/IP (human finalises and assigns owners).
+- Every existing pack scenario now carries an `hseep` block (type, objectives, EEG, hotwash).
+- Federal bindings cleaned up (IS-238 off the queue surge; CISA OT courses off the IT check-in outage; IS-235.C rebound to planning; IS-139.A recorded as retired; IS-700.B, 800.D, 317.A, 907.A, the FEMA PDS series and CISA 100W/210W added; NFPA 1660 supersedes 1600; IRS records flagged for refresh by 2026-11-30). See `../equity-uprise-development/FEDERAL-TRAINING-CATALOG-SPEC.md`.
+- `INDUSTRY-CERTIFICATION-MAP.json` maps all 51 IT labs (the Step 4A ladder and the Server Lab IT-LAB-041..051) to CompTIA A+/Network+/Security+/Server+ and BICSI INST1; `LEARNING-PATHWAYS.json` holds the seven pathways.
+- Durable evidence: Supabase `learning_*` tables (migration `20261103182544_learning_evidence_v1.sql`, applied to production 2026-11-03 and recorded in `supabase/production-ledger.json`) through Worker routes `/v1/prim3/learning/*`, house owner only for now.
+
+Verification: `verify_hseep_scenarios_v1.mjs` PASS; all Step 1–9 verifiers PASS; `verify_federal_training_catalog.py` and `verify_learning_pathways.py` PASS.
+
+**NEXT:** integrate the Step 10 pack into the 3D viewer (Lab mode + roster/role picker); multiplayer presence for team drills; refresh the IRS records for the new tax year; remap Security+ when V8 objectives publish.
+
 ## B1 Workplace Derived-Artifact Refresh — 2026-09-24
 
 The B1 workplace canon now lives in source authority and deterministic generators. This reconciliation regenerates and commits the derived B1/Floor 1 production packages, plan references and verification reports so main-source and generated artifacts remain byte-current under the Core V2 freshness gate.

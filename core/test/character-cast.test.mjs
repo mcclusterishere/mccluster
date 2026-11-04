@@ -37,7 +37,7 @@ test('the cast passes its own review gate', () => {
 test('every adult source character has a profile; counts by source', () => {
   const by = {};
   for (const c of cast.characters) by[c.source.kind] = (by[c.source.kind] || 0) + 1;
-  assert.deepEqual(by, { 'prim3.agent': 24, 'fictional-city.npc': 24, 'fictional-city.garageCrew': 3, 'fictional-city.expansionNpc': 44, 'fictional-city.storyArcCast': 8, 'mnet-cast.regular': 6 });
+  assert.deepEqual(by, { 'prim3.agent': 24, 'fictional-city.npc': 24, 'fictional-city.garageCrew': 3, 'fictional-city.expansionNpc': 45, 'fictional-city.storyArcCast': 8, 'mnet-cast.regular': 6 });
   assert.equal(PRIM3_AGENTS.length, 24);
   for (const s of sourceCharacters(manifest)) if (!s.minor) assert.ok(characterById(s.id), `missing ${s.id}`);
   assert.equal(characterBySource('prim3.agent', 'aya-shinoda').id, 'prim3-aya-shinoda');
@@ -105,9 +105,9 @@ test('every profile is a full psychology, with relationships that resolve', () =
   assert.equal(JSON.stringify(card).includes('backstory'), false, 'prompts carry psychology, not the whole source bio');
 });
 
-test('held characters: the Whip garage crew and the two story bosses', () => {
+test('held characters: the Whip garage crew, story bosses and new civilian profile', () => {
   const held = cast.characters.filter(c => c.mnet.posting === 'held').map(c => c.id).sort();
-  assert.deepEqual(held, ['gunny', 'majid', 'mccluster', 'robbery-harold', 'robbery-ocho-gr8']);
+  assert.deepEqual(held, ['gunny', 'majid', 'mccluster', 'odalys-fairweather', 'robbery-harold', 'robbery-ocho-gr8']);
   assert.equal(postingRoster(cast).length, 104);
   assert.ok(postingRoster(cast).every(c => c.mnet.posting === 'eligible'));
 });
@@ -115,4 +115,22 @@ test('held characters: the Whip garage crew and the two story bosses', () => {
 test('minor names are on the post block-list', () => {
   const names = minorNames(manifest);
   for (const n of ['Imani', 'Mateo', 'Tucker', 'Malik', 'Kiara']) assert.ok(names.includes(n), n);
+});
+
+// City identity and occupation changes must not leave old authority in prompt cards.
+test('expanded city profiles retain current source facts and private-business boundaries', () => {
+  for (const source of manifest.expansionNpcs.filter(n => !n.minor)) {
+    const profile = characterById(source.id);
+    assert.equal(profile.name, source.name);
+    for (const field of ['role', 'personality', 'origin', 'businessId', 'familyId']) {
+      assert.equal(profile.canon[field], source[field], `${source.id}.${field}`);
+    }
+  }
+  const serialized = JSON.stringify(cast.characters);
+  assert.doesNotMatch(serialized, /Precinct Zero|Municipal High|Bail Mary|Officer Dale|Officer Brenda/);
+  for (const id of ['frank-mulrooney', 'dale-pruitt', 'brenda-szabo']) {
+    assert.equal(characterById(id).canon.businessId, 'bail-mary-bonds');
+  }
+  assert.equal(characterById('odalys-fairweather').mnet.posting, 'held');
+  assert.match(characterById('odalys-fairweather').mnet.heldReason, /review/);
 });

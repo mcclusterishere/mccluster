@@ -1,0 +1,26 @@
+{
+ "recorded_at": "2026-11-03T15:31:35.467Z",
+ "replay_now": "2026-11-03T15:32:00.000Z",
+ "note": "Recorded from the live public feeds by core/scripts/weather-record-fixtures.mjs. MRMS is a crop of the CONUS message to the region grid, re-encoded; every other file is the response as received (the forecast trimmed to 24 periods).",
+ "json": {
+  "observation": "nws-observation-kbdr.json",
+  "forecast_hourly": "nws-forecast-hourly-okx-58-67.json",
+  "alerts": "nws-alerts-ctz009.json",
+  "water_level": "coops-water-level-8467150.json",
+  "tide_predictions": "coops-predictions-hilo-8467150.json"
+ },
+ "objects": {
+  "noaa-mrms-pds": {
+   "CONUS/PrecipRate_00.00/20261103/MRMS_PrecipRate_00.00_20261103-152800.grib2.gz": "mrms-preciprate-ct-crop.grib2.gz"
+  },
+  "unidata-nexrad-level3": {
+   "OKX_N0B_2026_11_03_15_27_00": "OKX_N0B_2026_11_03_15_27_00.nids",
+   "OKX_N0G_2026_11_03_15_27_00": "OKX_N0G_2026_11_03_15_27_00.nids"
+  }
+ },
+ "last_modified": {
+  "CONUS/PrecipRate_00.00/20261103/MRMS_PrecipRate_00.00_20261103-152800.grib2.gz": "2026-11-03T15:30:55.000Z",
+  "OKX_N0B_2026_11_03_15_27_00": "2026-11-03T15:28:19.000Z",
+  "OKX_N0G_2026_11_03_15_27_00": "2026-11-03T15:28:37.000Z"
+ }
+}

@@ -31,10 +31,10 @@ social profile. The same profile drives in-game conversation later, read by stab
 | PRIM3 regional agents (`prim3-<key>`) | 24 | 24 eligible |
 | District staff (`npcs`) | 24 | 24 eligible |
 | Whip Equipped garage (`garageCrew`: McCluster, Majid, Gunny) | 3 | held |
-| New districts (`expansionNpcs`, adults only) | 44 | 44 eligible |
+| New districts (`expansionNpcs`, adults only) | 45 | 44 eligible, new civilian held |
 | The Robbery 1s (`storyArcs.robbery-1s.cast`, adults only) | 8 | 6 eligible, Harold and Ocho Gr8 held |
 | Everyday regulars (new, anchored to existing businesses) | 6 | 6 eligible |
-| **Total** | **109** | **104 eligible, 5 held** |
+| **Total** | **110** | **104 eligible, 6 held** |
 
 Excluded as minors, no profile: the five `minor: true` students and Malik and Kiara (ages 16–18).
 
@@ -44,6 +44,14 @@ Excluded as minors, no profile: the five `minor: true` students and Malik and Ki
   and a public voice for them is the owner's call. McCluster the character is never McCluster the AI.
 - Harold and Ocho Gr8: their canon role is criminal leadership and recruitment in an unresolved
   story; a public voice risks glorifying it.
+
+- Odalys Fairweather: the newly added fictional civilian records clerk remains held pending profile review. Her source explicitly says she holds no real office; the profile must never speak for a real police department.
+
+## City source reconciliation
+
+The cast follows the current city manifest: Hail Mary Bail Bonds, the private Mulrooney & Son expediting desk, Harding High School and the civilian records window. Stable character and actor IDs are unchanged. Frank, Dale and Brenda are not police officers and have no influence over a real institution. New source adult coverage is included without enabling a profile.
+
+PRIM3 chronology remains an activation review item: the source intelligence canon places Hana’s death before PRIM3 opening, while these existing Hana/Aya psychology cards describe an ongoing mentoring relationship. Select the intended narrative time before any live use; this integration does not decide that chronology or enable posting.
 
 ## Profiles
 

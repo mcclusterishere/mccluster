@@ -16,6 +16,12 @@ storefronts. Seven story buildings have authored cutaway interiors; Common Yard 
 are open spaces. Main, Middle, Fairfield, Golden Hill, Broad and Elm retain their sourced street
 centerlines. Heights, façades, interiors, doorways and connecting paths are game adaptations.
 
+The current naming rule keeps real streets, cities and verified government institutions intact.
+The two Superior Court buildings retain their identities. Ashline Works and both authored yards
+use checked private parcels. Mr. GREAT and Harold's crew stays unnamed; the city's one Willy Whackers gang
+is the School of Hard Knocks kids' Bond Street Willy Whackers (owner, 2026-11-03). See [the integration handoff](CLAUDE-HANDOFF.md) for branch/history facts
+and [episode production](EPISODE-PRODUCTION.md) for the planned 3D, Blender and Higgsfield workflow.
+
 Follow 13 location-based scenes across the screenplay's seven acts. Amber markers show the next
 scene; completed scenes can be reread and later scenes remain concealed. The journal offers both
 a bounded walking route and the same convenience travel used by the existing map. Continuing a

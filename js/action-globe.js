@@ -723,7 +723,7 @@ async function toggleLayer(k){const spec=DATA_LAYERS[k],b=$(spec.id),L=layerStat
  b.setAttribute('aria-busy','true');try{const data=await layerFetch(k);if(lockOf(k))return;if(k==='flights')drawFlights(data);else if(k==='satellites')await drawSatellites(data);else drawLaunches(data);if(lockOf(k)){clearLayer(k);return}L.credit=typeof data.credit==='string'?data.credit.slice(0,60):'';L.on=true;b.setAttribute('aria-pressed','true');paintLayerCredits();
   tell({type:'hu:layer',layer:k,on:true,count:L.count,creditHeight:creditHeight(),unavailable:!!data.unavailable,stale:!!data.stale,attribution:String(data.attribution||''),next:k==='launches'?(data.launches||[]).slice(0,3).map(l=>({name:String(l.name||''),net:l.net||null,where:String(l.pad&&(l.pad.location||l.pad.name)||'')})):undefined})}
  catch(e){if(String(e&&e.message)==='members'){paintDataLocks();tell({type:'hu:ask-sign-in',reason:'layers'})}else{try{console.warn('[world layer] '+k+': '+(e&&e.message||e))}catch(_){}tell({type:'hu:layer',layer:k,on:false,failed:true})}}finally{b.removeAttribute('aria-busy')}}
-function wireDataLayers(){Object.keys(DATA_LAYERS).forEach(k=>{const b=$(DATA_LAYERS[k].id);if(b)b.onclick=()=>toggleLayer(k)});paintDataLocks();window.addEventListener('storage',paintDataLocks);const cb=$('ctlCctv');if(cb)cb.onclick=()=>toggleCctv();const mb=$('ctlMusic');if(mb)mb.onclick=showMusic;const ib=$('ctlIntel');if(ib)ib.onclick=()=>toggleIntel();const tb=$('ctlTransport');if(tb)tb.onclick=()=>openWhip();window.addEventListener('storage',e=>{if(e.key==='mccdb_session')loadAccess()});const cx=$('cctvClose');if(cx)cx.onclick=()=>closeSheet();window.addEventListener('storage',e=>{if(e.key==='mccdb_session')cctvEligibility()});
+function wireDataLayers(){Object.keys(DATA_LAYERS).forEach(k=>{const b=$(DATA_LAYERS[k].id);if(b)b.onclick=()=>toggleLayer(k)});paintDataLocks();window.addEventListener('storage',paintDataLocks);const cb=$('ctlCctv');if(cb)cb.onclick=()=>toggleCctv();const mb=$('ctlMusic');if(mb)mb.onclick=showMusic;const ib=$('ctlIntel');if(ib)ib.onclick=()=>toggleIntel();const tb=$('ctlTransport');if(tb)tb.onclick=()=>openWhip();const gb=$('ctlGames');if(gb)gb.onclick=()=>toggleGames();window.addEventListener('storage',e=>{if(e.key==='mccdb_session')loadAccess()});const cx=$('cctvClose');if(cx)cx.onclick=()=>closeSheet();window.addEventListener('storage',e=>{if(e.key==='mccdb_session')cctvEligibility()});
  if(BARE){const ex=$('bareExit');if(ex)ex.hidden=false;document.addEventListener('keydown',e=>{if(e.key==='Escape'&&($('cctvSheet')||{}).hidden!==false)location.href='action-globe.html?explore=1'})}liftAboveCredit();window.addEventListener('resize',liftAboveCredit);
  /* the full pane: the bar arrives after this script (js/tabbar.js), and the sheet grows when a mission is chosen */
  if(EXPLORE){new MutationObserver(liftAboveCredit).observe(document.body,{childList:true});if(window.ResizeObserver)new ResizeObserver(liftAboveCredit).observe($('deck'));window.addEventListener('load',liftAboveCredit);const hint=document.querySelector('#worldFilters p');if(hint)hint.textContent='Tap a pin to open its mission. Drag to turn the Earth, pinch to zoom.'}}
@@ -736,7 +736,7 @@ function lockOf(id){
  if(!sessionToken()||!access||access.release?.version!=='globe-admin-preview/v1'||access.release.admin_preview!==true||accessToken!==sessionToken())return{id,reason:'admin_preview'};
  if(!access.unlocked_layers.includes(id))return(access.locked_layers||[]).find(x=>x.id===id)||{id,reason:'feature_withdrawn'};
  return null}
-function paintAccess(){loadMembers();Object.keys(ACCESS_IDS).forEach(k=>{const b=$(ACCESS_IDS[k]);if(!b)return;const l=lockOf(k);b.hidden=ANALYTICS||!!l;b.setAttribute('aria-disabled',l?'true':'false')});
+function paintAccess(){loadMembers();Object.keys(ACCESS_IDS).forEach(k=>{const b=$(ACCESS_IDS[k]);if(!b)return;const l=lockOf(k);b.hidden=ANALYTICS||!!l;b.setAttribute('aria-disabled',l?'true':'false')});paintGames();
  const a=$('ctlAudience');if(a&&lockOf('audience'))a.hidden=true;
  if(!viewer){haloSync();return;}
  Object.keys(DATA_LAYERS).forEach(k=>{if(lockOf(k)&&layerState[k].on){layerState[k].on=false;clearLayer(k);const b=$(DATA_LAYERS[k].id);if(b)b.setAttribute('aria-pressed','false');tell({type:'hu:layer',layer:k,on:false})}});
@@ -748,6 +748,27 @@ async function loadAccess(){const seq=++accessSeq,t=sessionToken(),controller=ne
 window.addEventListener('storage',e=>{if(!e.key||e.key==='mccdb_session'){access=null;accessSeq++;accessToken='';paintAccess();loadAccess()}});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)loadAccess()});
 setInterval(()=>{if(!document.hidden)loadAccess()},60000);
+/* ---------- GAMES (owner, 2026-11-03: "a new tab on the globe called Games", its own overlay like the data layers; experimental,
+   admin/owner only for now) ----------
+   The house owner only, on the server's word: the same release answer as Halo (isOwner: /v1/world/access admin_preview, which
+   the Worker gives the house owner alone). Until it says yes the tab is hidden (html.globe-owner, css/globe-games.css), and
+   nothing of Games is fetched. The overlay itself is js/globe-games.js; its data is data/games/world.v1.json.
+   The globe's own Missions mode, layer and story feed ride the same answer (owner, 2026-11-03: missions hidden behind admin
+   until they are brought back; the code stays). ?games=1 opens it on arrival; ?games=<country>/<state>/<town> opens a town. */
+const GAMES_OPEN=new URLSearchParams(location.search).get('games');
+let games=null,gamesArrived=false;
+function paintGames(){const own=isOwner()&&!ANALYTICS;document.documentElement.classList.toggle('globe-owner',own);
+ const b=$('ctlGames');if(b){b.hidden=!own;b.setAttribute('aria-disabled',own?'false':'true')}const door=$('ctlGamesDoor');if(door)door.hidden=!own;
+ if(!own){if(games&&games.isOpen())games.close();return}
+ if(GAMES_OPEN&&EXPLORE&&!BARE&&!gamesArrived){gamesArrived=true;openGames(GAMES_OPEN==='1'?'':GAMES_OPEN)}}
+function openGames(start){if(!isOwner()||!window.HuGames)return;
+ if(!games)games=HuGames.mount({dataUrl:'data/games/world.v1.json'+(HU_V?'?v='+encodeURIComponent(HU_V):''),target:window.top!==window?'_top':'',
+  onFly:(lat,lon)=>{if(viewer&&Number.isFinite(lat)&&Number.isFinite(lon))viewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(lon,lat,90000),duration:1.4})},
+  onClose:()=>{const b=$('ctlGames');if(b)b.setAttribute('aria-pressed','false')}});
+ closeSheet();document.querySelectorAll('details.globe-editorial-tools[open]').forEach(d=>{d.open=false});
+ const b=$('ctlGames');if(b)b.setAttribute('aria-pressed','true');return games.open(start)}
+function toggleGames(){if(games&&games.isOpen()){games.close();return}openGames()}
+window.__huGames=()=>games;
 /* a locked layer explains itself: a guest is asked to sign in; a member is told what unlocks it */
 function explainLock(id){const l=lockOf(id);if(!l)return false;
  if(l.reason==='admin_preview'||l.reason==='feature_withdrawn'){return true}
@@ -874,6 +895,9 @@ function wireEditorialTools(){
   /* the owner's door to Halo, above World: hidden until the server says owner (haloSync); it opens the full-screen globe with the console */
   const halo=document.createElement('a');halo.id='ctlHalo';halo.className='globe-ctl';halo.hidden=true;halo.href='action-globe.html?explore=1&halo=1';halo.target='_top';halo.setAttribute('aria-label',"Open Hitman's Halo");
   halo.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>';corner.insertBefore(halo,corner.firstChild);
+  /* the owner's door to Games, above Halo: hidden until the server says owner (paintGames); it opens the full-screen globe with Games open */
+  const games=document.createElement('a');games.id='ctlGamesDoor';games.className='globe-ctl';games.hidden=true;games.href='action-globe.html?explore=1&games=1';games.target='_top';games.setAttribute('aria-label','Open Games');
+  games.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="7" width="19" height="11" rx="5.5"/><path d="M7.5 10.5v4M5.5 12.5h4"/><circle cx="15.5" cy="11.5" r=".9"/><circle cx="17.5" cy="13.8" r=".9"/></svg>';corner.insertBefore(games,corner.firstChild);paintGames();
   const shelf=document.createElement('div');shelf.className='globe-editorial-shelf';shelf.hidden=true;if(nav)shelf.appendChild(nav);if(row)shelf.appendChild(row);document.body.appendChild(shelf);
   const rail=document.createElement('nav');rail.className='globe-travel-controls';rail.setAttribute('aria-label','Travel globe controls');document.body.appendChild(rail);setTravelMode(travelMode);
   return;
