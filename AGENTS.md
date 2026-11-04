@@ -314,3 +314,18 @@ What is law everywhere, each already stated by the targets above:
 - **B1 is restricted live infrastructure** (`BUILDING-CORE-V2-SPEC.md`, `EQUITY-UPRISE-BUILDING-INVENTORY.md`): learner/instructor work uses a sandboxed clone, and ordinary Equity Uprise admin does not inherit underground access.
 - **All architecture remains schematic and NOT FOR CONSTRUCTION** pending licensed professional review.
 - Do not confuse the Equity Uprise building with the separate `docs/uprise-world/` Living Sketch / Uprise World project; each keeps its own authority unless the owner explicitly requests a crossover.
+
+## Build forward: productization and controls first (owner direction, 2026-11-04)
+
+For every new feature, begin with the user's complete task and work backward to the tools needed
+for them to configure, operate, verify and recover it. Before implementation, identify the canonical
+data model, architecture, persistence, security boundary and permissions. Reuse the control plane.
+Build the owner controls alongside that backbone, then build and test the feature through those
+controls. Give lower roles only explicit, scoped capabilities where appropriate; never infer access
+from an admin label or a client-side toggle. Do not retrofit controls after calling a feature done.
+
+Completion evidence must distinguish local code, tested flows, a review preview and production.
+Prove the user journey, persistence/reload where applicable, denied-role behavior and recovery.
+Name the actual review location and remaining release blockers. Device-local viewing preferences
+are not shared administrative policy; authoritative edits still require the canonical authenticated
+backend. Preserve stable IDs and migrate existing state deliberately when models change.

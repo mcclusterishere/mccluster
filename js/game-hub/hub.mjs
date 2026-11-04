@@ -1,11 +1,7 @@
-/* The Game Hub (owner, 2026-11-03: "The learning hub is now the game hub"): one icon per learning module in the bar at
-   the bottom of the screen, that module's games in the main panel, and its paired album in the music bar above the
-   icons. Embedded games run inside this page, so the music keeps playing while you play.
-
-   The hub is the house owner's (owner, 2026-11-03: "keep it on my private account"): game-hub.html loads this module
-   only after js/owner-only.mjs has heard yes from the server, so every card, the owner-only ones included, is shown. */
+/* Owner-only Game Hub. A movable capsule shares the site music transport. */
 import { validateModules, albumFor, parseHash, hashFor } from './modules.mjs';
-import { createPlayer } from './player.mjs';
+import { createSharedMusic } from './shared-music.mjs';
+import { mountCapsule } from './floating-capsule.mjs';
 
 const $ = (s) => document.querySelector(s);
 const esc = (x) => String(x ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -34,13 +30,24 @@ async function boot() {
   const errors = validateModules(doc, { albums: cat.albums });
   if (errors.length) console.warn('Game Hub modules:', errors);
   const modules = doc.modules;
-  const player = createPlayer({ root: $('#ghMusic') });
+  const capsule = mountCapsule({ root: $('#ghCapsule'), workspace: $('#ghMain') });
+  let musicSelection;
+  const player = { setModule(...selection) { musicSelection = selection; } };
+  // Optional music must not hold up the study interface on a slow/failed request.
+  createSharedMusic({ root: $('#ghMusic') }).then(transport => {
+    player.setModule = (...selection) => transport.setModule(...selection);
+    if (musicSelection) player.setModule(...musicSelection);
+  }).catch(() => {
+    $('#ghCapsule').querySelectorAll('[data-hub-music-play], [data-music-next], [data-course-soundtrack]').forEach(b => { b.disabled = true; });
+    $('[data-music-title]').textContent = 'Music unavailable';
+    $('[data-music-status]').textContent = 'Music did not load. Games are still available.';
+  });
   let current = null, view = null;
   const owner = true; // this module runs only behind the owner gate
 
   const nav = $('#ghModules');
   nav.innerHTML = modules.map((m) => `<button type="button" class="gh-mod" data-module="${esc(m.id)}" style="--accent:${esc(m.accent)}" aria-pressed="false" aria-label="${esc(m.label)}">${iconHtml(m)}<span>${esc(m.short)}</span></button>`).join('');
-  nav.addEventListener('click', (e) => { const b = e.target.closest('[data-module]'); if (b) select(b.dataset.module, null, true); });
+  nav.addEventListener('click', (e) => { const b = e.target.closest('[data-module]'); if (b) { capsule.collapse(true); select(b.dataset.module, null, true); } });
   nav.addEventListener('keydown', (e) => {
     if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
     const btns = [...nav.querySelectorAll('[data-module]')], i = btns.indexOf(document.activeElement);
@@ -69,11 +76,12 @@ async function boot() {
   async function openGame(m, gameId) {
     const g = m.games.find((x) => x.id === gameId && x.kind === 'embedded');
     if (!g) return false;
+    capsule.collapse();
     closeView();
     $('#ghPanel').hidden = true;
     const host = $('#ghPlay'); host.hidden = false; $('#ghMain').classList.add('is-playing'); scrollTo(0, 0);
     const mod = await VIEWS[g.view]();
-    view = mod.mount(host, { onExit: () => select(m.id, null, true) });
+    view = mod.mount(host, { onStart: () => capsule.collapse(), onExit: () => select(m.id, null, true) });
     return true;
   }
   async function select(id, play, user) {
