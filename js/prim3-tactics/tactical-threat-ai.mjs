@@ -32,13 +32,13 @@
 // seeded PRNG (state.rng). Same state + same rng → same events.
 
 import { shotPreview, moveUnit, fireWeapon, enterOverwatch, hunkerDown, reload, computeReach,
-  coverForAttack, gridDistance, hasLineOfSight, drawRolls, retakeMachine, techActionPreview } from './tactical-resolver.mjs';
+  coverForAttack, gridDistance, hasLineOfSight, drawRolls, retakeMachine, techActionPreview, isExtracted } from './tactical-resolver.mjs';
 
 export const THREAT_AI_VERSION = 'tactical-threat-ai/0.1.0';
 export const FIRE_THRESHOLD = 50;
 export const KEEP_DISTANCE = 3;
 
-const alive = (u) => !u.dead && !u.downed;
+const alive = (u) => !u.dead && !u.downed && !isExtracted(u);
 const silenced = (u) => u.statuses.includes('NETWORK_SILENCED');
 const RETAKE_PREFERENCE = { TURRET: 0, CAMERA: 1, DOOR: 2 };
 
@@ -71,7 +71,7 @@ export function threatKnowledge(state, unitId = null) {
   const known = new Set();
   const sees = (w, p) => gridDistance(w, p, state) <= w.detectionRadius && hasLineOfSight(state, w, p);
   for (const p of state.units) {
-    if (p.faction !== 'PLAYER' || p.dead) continue;
+    if (p.faction !== 'PLAYER' || p.dead || isExtracted(p)) continue;
     if (threats.some((t) => sees(t, p)) || cameras.some((c) => sees(c, p))) known.add(p.id);
   }
   // shots taken at threats this round
@@ -85,7 +85,7 @@ export function threatKnowledge(state, unitId = null) {
     const shooter = e.type === 'FIRE' ? e.attackerId : e.type === 'OVERWATCH_SHOT' ? e.watcherId : null;
     if (!shooter) continue;
     const s = ids.get(shooter), t = ids.get(e.targetId);
-    if (!s || !t || s.faction !== 'PLAYER' || t.faction === 'PLAYER' || s.dead) continue;
+    if (!s || !t || s.faction !== 'PLAYER' || t.faction === 'PLAYER' || s.dead || isExtracted(s) || isExtracted(t)) continue;
     if (isolated ? t.id === self.id : !silenced(t)) known.add(s.id);
   }
   return known;
@@ -132,7 +132,7 @@ function chooseTile(state, unit, targets, known) {
   // on the route interrupts the move in the resolver, exactly as for the player side
   const occupants = state.units.filter((u) => u.faction !== 'PLAYER' || known.has(u.id));
   const reach = computeReach(state, unit.id, unit.moveRange, { occupants });
-  const players = state.units.filter((u) => known.has(u.id) && !u.dead);
+  const players = state.units.filter((u) => known.has(u.id) && !u.dead && !isExtracted(u));
   let best = { x: unit.x, y: unit.y, z: unit.z, cost: 0, score: scoreTile(state, unit, unit, targets, players) };
   for (const c of reach.cells) {
     const score = scoreTile(state, unit, c, targets, players);

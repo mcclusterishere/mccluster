@@ -182,6 +182,8 @@ test('full strength (the roof shooters exactly as defined) is hard but winnable:
   const r = hqRates(40, 'naive');
   assert.ok(r.wins >= 1 && r.wins <= 30, `wins ${r.wins}/40`);
   const fx = JSON.parse(await readFile(new URL('fixtures/hq-drill-full-strength-win.json', import.meta.url), 'utf8'));
+  const source = JSON.parse(await readFile(new URL('../../js/prim3-tactics/SOURCE.json', import.meta.url), 'utf8'));
+  assert.equal(fx.engineCommit, source.commit);
   const g = playHq(fx.seed, fx.policy);
   assert.equal(g.outcome, 'win'); assert.deepEqual(g.trace, fx.trace, 'the recorded winning run replays exactly');
 });

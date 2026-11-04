@@ -20,7 +20,7 @@ const tryDo = (fn) => { try { return fn(); } catch (e) { return null; } };
 function goalCost(s, id, goals) {
   const best = new Map();
   for (const g of goals) {
-    if (s.units.some((o) => o.id !== (typeof unitId !== 'undefined' ? unitId : id) && !o.dead && o.x === g.x && o.y === g.y && o.z === g.z)) continue; // a goal someone else stands on is taken
+    if (s.units.some((o) => o.id !== (typeof unitId !== 'undefined' ? unitId : id) && !o.dead && !R.isExtracted(o) && o.x === g.x && o.y === g.y && o.z === g.z)) continue; // a goal someone else stands on is taken
     const probe = { ...s, units: s.units.filter((u) => u.id === id || (u.downed && !u.dead)).map((u) => (u.id === id ? { ...u, x: g.x, y: g.y, z: g.z } : u)) }; // a downed body blocks its cell
     const reach = tryDo(() => R.computeReach(probe, id, Infinity)); if (!reach) continue;
     for (let z = 0; z < s.floors; z += 1) for (let y = 0; y < s.height; y += 1) for (let x = 0; x < s.width; x += 1) { const c = reach.costAt(x, y, z); if (Number.isFinite(c)) { const k = `${x}:${y}:${z}`; if (!best.has(k) || best.get(k) > c) best.set(k, c); } }

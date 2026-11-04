@@ -1,20 +1,20 @@
 {
   "note": "Exact copies of the PRIM3 tactical engine files, vendored for the tactics pages (courtyard preview, Transit / Relay and the Equity Uprise levels). Do not edit here; change them in mcclusterishere/Prim3 and re-copy. scripts/test/prim3-tactics-vendor.test.mjs checks these hashes.",
   "repository": "mcclusterishere/Prim3",
-  "ref": "claude/los-floor-adjacent-20261103",
-  "commit": "5896e2f0b83042ecbe8079a71d7d5bad174bbe2a",
+  "ref": "codex/tactical-invariants-20261104",
+  "commit": "0e49209dd7e59c97ee45cf350fd35bbe09f2dcc1",
   "files": {
     "tactical-resolver.mjs": {
       "from": "game/runtime/tactical-resolver.mjs",
-      "sha256": "caa0b3c130d8e26016326fedeabb77575d61b0f8efbe06393f36c8ee1591ce4e"
+      "sha256": "94c6c5a4d2544f16b9de2631a32dcee40bb6158a1b356387ef6d7cfc55c8e9c2"
     },
     "tactical-hints.mjs": {
       "from": "game/runtime/tactical-hints.mjs",
-      "sha256": "e458400dfd1b9e5868a91ff1c0606a316b13eebea8599e3aef2c4ee8697d0958"
+      "sha256": "785b2b1fd42b50fd97b3e18023421972645424ef63057cc5bd192db753606d5d"
     },
     "tactical-threat-ai.mjs": {
       "from": "game/runtime/tactical-threat-ai.mjs",
-      "sha256": "287ca62e951b4a1a9c60962a64085476283340d5cb19fbab3d3e47c0009b8c19"
+      "sha256": "4a3676b8a1644b93b59b50e024544f1a16433506c885b3f25298c56dfa91c2c7"
     }
   }
 }
