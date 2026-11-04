@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 609,
+  "candidate_count": 610,
   "capability_source_count": 104,
-  "support_only_count": 505,
-  "checks_total": 2334,
-  "checks_passed": 2334,
+  "support_only_count": 506,
+  "checks_total": 2338,
+  "checks_passed": 2338,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -402,6 +402,7 @@
     "scripts/test/prim3-equity-uprise-adapter.test.mjs",
     "scripts/test/prim3-equity-uprise-level.test.mjs",
     "scripts/test/prim3-equity-uprise-model.test.mjs",
+    "scripts/test/prim3-lifecycle.test.mjs",
     "scripts/test/prim3-transit-level.test.mjs",
     "scripts/test/product-context.test.mjs",
     "scripts/test/rpc-names-exist.test.mjs",
@@ -623,7 +624,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "609 entries"
+      "detail": "610 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -5692,6 +5693,26 @@
     },
     {
       "name": "scripts/test/prim3-equity-uprise-model.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/prim3-lifecycle.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/prim3-lifecycle.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/prim3-lifecycle.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/prim3-lifecycle.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     },
