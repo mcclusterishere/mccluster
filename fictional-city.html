@@ -42,13 +42,17 @@
             <button type="button" data-city-view="close" aria-pressed="true">Third person</button>
             <button type="button" data-city-view="first" aria-pressed="false">First person</button>
             <button type="button" data-city-view="overview" aria-pressed="false">Overview</button>
+            <button type="button" data-city-travel="walk" aria-pressed="true">Walk</button>
+            <button type="button" data-city-travel="bike" aria-pressed="false">Ride bike</button>
             <label><input type="checkbox" id="city-follow-toggle"> Lock behind</label>
-            <p>Drag to look · Tap to walk · With lock: left/right steer</p>
+            <p>Drag to look · Tap to walk · Bike or lock: left/right steer · Tap-to-walk dismounts</p>
           </div>
           <div class="city-navigation-controls">
             <label for="city-destination">Destination</label>
             <select id="city-destination"><option value="">Choose a place</option></select>
-            <button type="button" id="city-route">Walk there</button>
+            <button type="button" id="city-route">Preview route</button>
+            <button type="button" id="city-route-confirm" hidden>Confirm walk</button>
+            <button type="button" id="city-route-cancel" hidden>Cancel route</button>
             <label><input type="checkbox" id="city-labels-toggle" checked> Building names</label>
             <output id="city-direction" aria-live="polite"></output>
           </div>

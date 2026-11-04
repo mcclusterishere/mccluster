@@ -68,3 +68,7 @@ Building names have an on-screen overlay and off switch. The destination selecto
 **Walk there** follows a collision-checked route, and its live bearing/distance and minimap marker
 remain visible. These are session viewing/navigation controls, not shared administrative settings.
 See `NAVIGATION-REVIEW-2026-11-04.md` for source reconciliation, geographic limitations and verification.
+
+The continuation now adds **Ride bike** (outdoor, clear-space mounting), explicit route preview and
+confirmation, next-waypoint guidance and indoor exit routing. See `CONTINUATION-2026-11-04.md` for
+controls, limits, the actual upstairs UI reproduction and measured loading evidence.

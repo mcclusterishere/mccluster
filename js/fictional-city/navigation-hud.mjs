@@ -5,7 +5,7 @@ const NS = 'http://www.w3.org/2000/svg';
 const lastDraw = new WeakMap();
 export function updateNavigationHud(node, view, buildings, places = null, neighborhoods = []) {
   if (!node) return;
-  const key = [view.destination?.id, view.interior, Math.round(view.x * 10), Math.round(view.z * 10), Math.round(view.yaw * 180 / Math.PI)].join(':');
+  const key = [view.navigation?.status, view.navigation?.waypoint, view.destination?.id, view.interior, Math.round(view.x * 10), Math.round(view.z * 10), Math.round(view.yaw * 180 / Math.PI)].join(':');
   if (lastDraw.get(node) === key) return;
   lastDraw.set(node, key);
   const place = buildings.find(b => b.id === view.interior);
@@ -43,6 +43,10 @@ export function updateNavigationHud(node, view, buildings, places = null, neighb
     }
     rect({ minX: -10.9728, maxX: 10.9728, minZ: 77.0272, maxZ: 98.9728 }, '#47676a');
     shape('text', { x: 6, y: 12, fill: '#203a3b', 'font-size': 10, 'font-weight': 'bold' }, 'N ↑');
+  }
+  if (view.navigation?.points?.length) {
+    shape('polyline', { points: view.navigation.points.map(p => `${mx(p.x)},${mz(p.z)}`).join(' '), fill: 'none', stroke: '#dc6d23', 'stroke-width': 2, 'stroke-dasharray': view.navigation.status === 'preview' ? '3 2' : 'none' });
+    if (view.navigation.next) shape('circle', { cx: mx(view.navigation.next.x), cy: mz(view.navigation.next.z), r: 2.5, fill: '#fff', stroke: '#dc6d23', 'stroke-width': 1.5 });
   }
   if (!place && view.destination) {
     const dx = (view.destination.x - view.x) * scale, dz = (view.destination.z - view.z) * scale;

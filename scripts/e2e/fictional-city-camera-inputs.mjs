@@ -131,6 +131,33 @@ try {
     assert.notEqual(snapshot(), before);
     scene.setFollow(false);
   });
+  check('bike mounts outdoors, moves, dismounts for walking routes and refuses interiors', () => {
+    scene.teleport({ x: 0, z: 2.5 }); scene.setViewMode('close');
+    assert.equal(scene.setTravelMode('bike'), true); tick();
+    assert.equal(scene.getStats().travel, 'bike');
+    const before = scene.getPlayer(); scene.setInput({ z: -1 }); tick(30); scene.setInput({});
+    assert.ok(Math.hypot(scene.getPlayer().x - before.x, scene.getPlayer().z - before.z) > .2);
+    scene.walkTo({ x: 0, z: 2.5 }); assert.equal(scene.getStats().travel, 'walk');
+    scene.enterBuilding(manifest.businesses[0].id);
+    assert.equal(scene.setTravelMode('bike'), false); assert.equal(scene.getStats().travel, 'walk');
+  });
+  check('route preview stays still, confirmation walks the route and indoor routing exits through the door', () => {
+    scene.teleport({ x: 0, z: 2.5 });
+    const target = { id: 'equity-uprise-hq', name: 'Equity Uprise HQ', x: 0, z: 74 };
+    assert.equal(scene.previewNavigation(target), true);
+    const before = snapshot(); tick(30); assert.equal(snapshot(), before);
+    assert.equal(scene.getNavigation().status, 'preview');
+    assert.equal(scene.confirmNavigation(), true); tick(1000);
+    assert.equal(scene.getNavigation().status, 'arrived');
+    scene.enterBuilding(manifest.garage.id);
+    assert.equal(scene.previewNavigation(target), true); assert.equal(scene.getNavigation().phase, 'exit');
+    assert.equal(scene.confirmNavigation(), true); tick(2300);
+    assert.equal(scene.getPlayer().interior, null); assert.equal(scene.getNavigation().status, 'arrived');
+    assert.ok(Math.hypot(scene.getPlayer().x, scene.getPlayer().z - 74) < .3);
+    scene.previewNavigation({ ...target, z: 40 }); scene.confirmNavigation(); scene.setInput({ x: 1 }); tick(); scene.setInput({});
+    assert.equal(scene.getNavigation().status, 'paused');
+    assert.equal(scene.confirmNavigation(), true); scene.cancelNavigation(); assert.equal(scene.getNavigation(), null);
+  });
   check('portrait resizing updates the active lens without changing the player', () => {
     const start = snapshot(); canvas.clientWidth = 390; canvas.clientHeight = 480;
     scene.setViewMode('overview'); scene.enterBuilding(manifest.businesses[1].id); tick();
@@ -139,4 +166,22 @@ try {
   });
 } finally { scene.dispose(); }
 assert.equal(canvas.captures.size, 0);
+// Deferred source intentionally ignores abort to prove both cancellation and stale-result rejection.
+const pending = [], streamCanvas = new Canvas();
+const streamed = createCityScene({ canvas: streamCanvas, manifest: { ...manifest, neighborhoods: [] },
+  chunkIndex: { chunks: [{ id: 'c0_0', bounds: { minX: 60, maxX: 61, minZ: 0, maxZ: 1 } }] },
+  loadChunk: (id, { signal }) => new Promise(resolve => pending.push({ id, signal, resolve })) });
+const flush = () => new Promise(resolve => setImmediate(resolve));
+try {
+  await flush(); assert.equal(pending.length, 1);
+  streamed.teleport({ x: -60, z: 2.5 }); tick(20); await flush();
+  assert.equal(pending[0].signal.aborted, true);
+  assert.equal(streamed.getStats().chunks.cancellations, 1);
+  streamed.teleport({ x: 0, z: 2.5 }); tick(20); await flush(); assert.equal(pending.length, 2);
+  const payload = { id: 'c0_0', roads: [], props: [], parcels: [] };
+  pending[0].resolve(payload); await flush(); assert.equal(streamed.getStats().chunks.loads, 0);
+  assert.equal(streamed.getStats().chunks.loading, 1);
+  pending[1].resolve(payload); await flush(); assert.equal(streamed.getStats().chunks.loads, 1);
+  console.log('PASS chunk exit aborts downloads and stale replies cannot replace a new region request');
+} finally { streamed.dispose(); }
 console.log('All deterministic scene/input checks passed. Pixel rendering and real-device QA are separate.');

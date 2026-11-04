@@ -619,9 +619,11 @@ async function openStory(chapterId) {
   }
 }
 /* Chunk detail: published per-chunk JSON, checked against the index's SHA-256 when the browser can hash. */
-async function loadChunk(id) {
+async function loadChunk(id, { signal } = {}) {
   const meta = chunkIndex?.chunks.find(c => c.id === id); if (!meta) throw new Error('unknown chunk');
   const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 15000);
+  const abort = () => controller.abort();
+  if (signal?.aborted) abort(); else signal?.addEventListener('abort', abort, { once: true });
   try {
     const response = await fetch('data/fictional-city/' + meta.file + '?v=__STAMP__', { cache: 'no-cache', signal: controller.signal });
     if (!response.ok) throw new Error('chunk ' + id + ' answered ' + response.status);
@@ -631,7 +633,7 @@ async function loadChunk(id) {
       if (digest !== meta.sha256) throw new Error('chunk ' + id + ' failed its integrity check');
     }
     return JSON.parse(new TextDecoder().decode(buffer));
-  } finally { clearTimeout(timer); }
+  } finally { clearTimeout(timer); signal?.removeEventListener('abort', abort); }
 }
 /* On approach to the island, warm the browser cache with the canonical HQ geometry the doorway opens first. */
 let hqPrefetched = false;
@@ -689,13 +691,20 @@ function bindControls() {
   $('city-route').addEventListener('click', () => {
     const destination = destinations.get($('city-destination').value);
     if (!destination || !scene) return;
-    if (scene.getPlayer().interior) scene.exitBuilding();
-    notify(scene.walkTo(destination) ? 'Following a walkable route to ' + destination.name + '.' : 'No walking route found. Choose another destination or use the district map.');
+    notify(scene.previewNavigation(destination) ? 'Route preview ready. Confirm to start walking.' : 'No walking route found. Choose another destination or use the district map.');
   });
+  $('city-route-confirm').addEventListener('click', () => {
+    if (scene?.confirmNavigation()) notify('Following the confirmed walking route.');
+  });
+  $('city-route-cancel').addEventListener('click', () => scene?.cancelNavigation());
   $('city-labels-toggle').addEventListener('change', () => {
     $('city-building-labels').hidden = !$('city-labels-toggle').checked;
   });
-  $('city-destination').addEventListener('change', () => { currentView.destination = destinations.get($('city-destination').value) || null; });
+  $('city-destination').addEventListener('change', () => { scene?.cancelNavigation(); currentView.destination = destinations.get($('city-destination').value) || null; });
+  for (const node of document.querySelectorAll('[data-city-travel]')) node.addEventListener('click', () => {
+    const mode = node.dataset.cityTravel;
+    notify(scene?.setTravelMode(mode) ? (mode === 'bike' ? 'Riding. Forward/back pedals; left/right steers. Tap-to-walk dismounts.' : 'Back on foot.') : 'Move to a clear outdoor space to ride.');
+  });
   $('city-follow-toggle').addEventListener('change', () => scene?.setFollow($('city-follow-toggle').checked));
   $('city-reset-view').addEventListener('click', () => scene?.resetView());
   for (const node of document.querySelectorAll('[data-city-view]')) node.addEventListener('click', () => scene?.setViewMode(node.dataset.cityView));
@@ -777,6 +786,10 @@ async function start() {
             const node = el('span', label.name + ' · ' + label.distance + ' m');
             node.style.left = label.x + '%'; node.style.top = label.y + '%'; labelRoot.append(node);
           }
+          for (const node of document.querySelectorAll('[data-city-travel]')) {
+            node.setAttribute('aria-pressed', String(node.dataset.cityTravel === view.travel));
+            node.disabled = node.dataset.cityTravel === 'bike' && !!view.interior;
+          }
           const destination = view.destination;
           if (destination) {
             const dx = destination.x - view.x, dz = destination.z - view.z;
@@ -784,6 +797,21 @@ async function start() {
             const text = view.interior ? 'Exit the building to continue to ' + destination.name : destination.name + ' · ' + Math.round(Math.hypot(dx, dz)) + ' m ' + heading + ' (straight-line distance)';
             if ($('city-direction').textContent !== text) $('city-direction').textContent = text;
           } else $('city-direction').textContent = '';
+          const route = view.navigation;
+          $('city-route-confirm').hidden = !route || !['preview', 'paused'].includes(route.status);
+          $('city-route-cancel').hidden = !route;
+          $('city-route').textContent = route ? 'Reroute' : 'Preview route';
+          if (route) {
+            const next = route.next;
+            const direction = next ? viewHeading(Math.atan2(view.x - next.x, view.z - next.z)).label : '';
+            const detail = route.status === 'arrived' ? 'Arrived at ' + route.destination.name
+              : route.status === 'blocked' ? 'No legal route found. Try another destination.'
+              : (route.status === 'preview' ? 'Preview — confirm to walk. ' : route.status === 'paused' ? 'Paused — confirm to reroute. ' : '')
+                + (route.phase === 'exit' ? 'First: leave this building. ' : '')
+                + (next ? 'Next: ' + direction + ' ' + Math.round(Math.hypot(next.x - view.x, next.z - view.z)) + ' m · waypoint ' + Math.min(route.waypoint, route.total) + '/' + route.total : '')
+                + ' → ' + route.destination.name;
+            if ($('city-direction').textContent !== detail) $('city-direction').textContent = detail;
+          }
 
           for (const node of document.querySelectorAll('[data-city-view]')) node.setAttribute('aria-pressed', String(node.dataset.cityView === view.mode));
           updateNavigationHud($('city-map-mini'), view, [...buildings(), ...vacant], places, neighborhoods(manifest));
