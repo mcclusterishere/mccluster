@@ -21,7 +21,7 @@ Root inventory: 124 HTML files, including redirects. Existing `appbar-consistenc
 | Game destinations | Central owner active-state list in `tabbar.js` now marks Games for City, Arcade, hub and PRIM3 routes |
 | Legacy command header and Halo operator | Hidden only after shared navigation is ready; existing command search and account actions remain in Profile/native account menus |
 
-The one owner bar is Play, Inbox, Home, M, Analytics, World/Halo, Games. Owner status still comes from the existing server check; member/guest bars retain three destinations. Owner-only page gates and globe source entitlements remain independent. No copied page-specific owner bar, backend grant, migration or production setting was added.
+The owner bar keeps Play, Inbox, Home, M, Analytics, World/Halo, Games, then adds Sell, Create and System from the existing Control NAV registry. Owner status still comes from the existing server check; member/guest bars retain three destinations. Owner-only page gates and globe source entitlements remain independent. No copied page-specific owner bar, backend grant, migration or production setting was added.
 
 ## Functional root causes found in cross-page tests
 
@@ -43,3 +43,15 @@ PLAYWRIGHT_DIR=/tmp/admin-ui-tools/node_modules CHROMIUM_EXECUTABLE=/usr/bin/chr
 ```
 
 The primary suite covers owner restoration, unavailable authority, revocation, sign-out races, cross-host World navigation, all retained Control routes, profile and game direct entry, no duplicate bars, minimum target sizes, actual globe → Games → Inbox links and embedded opt-outs. The role matrix covers owner/member/guest at phone/desktop across globe, profile, Control, editor, game and Analytics routes. Graphics/physics gameplay and physical-device safe-area rendering remain outside this navigation acceptance.
+
+## Scrollable owner dock
+
+The bottom dock shows roughly five legible items on phones and scrolls horizontally to the rest. All six top-level Control sections are reachable: Home, Inbox, Sell, Create, Analytics and System. The three appended sections come from NAV, not a duplicate page list. The six-tab limit inside Analytics remains separate and unchanged.
+
+Native touch scrolling, left/right buttons and Arrow/Home/End keyboard navigation are supported. Hints reflect actual scroll extent: right at the start, both in the middle, left at the end, none when all fit. They update on scroll, resize, content and role changes. A brief two-cycle cue stops automatically; reduced motion disables animation and smooth scrolling. Focused/current items are brought into view without resetting manual browsing on routine renders. Safe-area offsets and minimum 44px targets remain.
+
+Navigation does not imply a sellable module. System remains internal infrastructure; no pricing, sales entitlement or module publication behavior changed.
+
+Validation before the scroll extension: 396/396 full navigation checks, 50/50 role-matrix checks, 117/117 real audio-playback continuity checks, and 122/122 focused source checks. The scroll extension adds browser checks for start/middle/end, fit, resize, role transitions, keyboard, actual touch events and reduced motion. Final combined results are reported with the pushed revision. Physical-device validation and live asset/session inspection remain outstanding.
+
+Final combined navigation/scroll run: **417/417 checks passed**. Focused source checks: **122/122**. Dedicated scroll run: **21/21**. The editor path was additionally corrected to the canonical `#create:front-page` route and checked with its actual form mounted (not just a route fallback). Audio continuity: **117/117**. Review screenshots: `review/owner-profile-390.png` and `review/owner-scroll-dock-390.png`, synthetic data only.

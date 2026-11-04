@@ -131,3 +131,16 @@ html body.cr[data-site-navigation] #crAccountMenu :is(a,button){min-height:44px}
 /* Shared profile owns global account/command shortcuts after it is ready. */
 body[data-site-navigation] .cmdk-owner-nav,body[data-site-navigation] .hx-operator{display:none!important}
 .mcc-profile-menu [hidden],#mnMenu [data-owner-profile-action][hidden],#crAccountMenu [data-owner-profile-action][hidden]{display:none!important}
+
+/* Owner dock: roughly five legible destinations on phones; more fit as space grows. */
+body[data-admin-navigation] .appbar--admin{width:calc(100vw - 96px - env(safe-area-inset-left) - env(safe-area-inset-right));max-width:60rem;display:flex;justify-content:flex-start;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;scrollbar-width:none;scroll-snap-type:x proximity;scroll-padding-inline:4px;padding-inline:4px;touch-action:pan-x pan-y pinch-zoom}
+body[data-admin-navigation] .appbar--admin::-webkit-scrollbar{display:none}
+body[data-admin-navigation] .appbar--admin .appbar__tab{flex:0 0 clamp(64px,calc((100vw - 104px)/5),80px);scroll-snap-align:start;min-height:52px}
+body[data-admin-navigation] .appbar--admin .appbar__tab > span:not(.appbar__sr){font-size:11px;line-height:1.2;white-space:nowrap}
+.mcc-dock-hints{position:fixed;bottom:calc(22px + env(safe-area-inset-bottom));left:max(4px,env(safe-area-inset-left));right:max(4px,env(safe-area-inset-right));margin-inline:auto;width:auto;max-width:calc(60rem + 88px);display:flex;justify-content:space-between;pointer-events:none;z-index:1000}
+.mcc-dock-hints button{pointer-events:auto;width:44px;min-height:44px;flex:none;border:1px solid #51434b;border-radius:50%;background:#1b171ee8;color:#fff;font:24px/1 system-ui;cursor:pointer;animation:mcc-dock-cue .4s ease-out 2 alternate}
+.mcc-dock-hints button:last-child{margin-left:auto}
+.mcc-dock-hints[hidden],.mcc-dock-hints button[hidden]{display:none!important}
+.mcc-dock-hints button:focus-visible{outline:2px solid #fff;outline-offset:2px}
+@keyframes mcc-dock-cue{from{opacity:.6}to{opacity:1}}
+@media(prefers-reduced-motion:reduce){.mcc-dock-hints button{animation:none}}

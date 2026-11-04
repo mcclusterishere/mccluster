@@ -180,10 +180,72 @@
   }
   function ready() { if (document.body.dataset.siteNavigation === 'ready') window.dispatchEvent(new Event('mcc:navigation-ready')); }
   window.addEventListener('mcc:navigation-style-ready', () => { if (!bar.admin() || installed) ready(); });
+  let dockHints, dockLeft, dockRight, dockObservers = false;
+  function revealDockItem(item) {
+    if (!item || !bar.admin()) return;
+    const r = item.getBoundingClientRect(), d = dock.getBoundingClientRect();
+    if (r.left < d.left + 4) dock.scrollLeft -= d.left + 4 - r.left;
+    else if (r.right > d.right - 4) dock.scrollLeft += r.right - d.right + 4;
+    updateDockHints();
+  }
+  function updateDockHints() {
+    if (!dockHints) return;
+    const overflow = bar.admin() && dock.scrollWidth > dock.clientWidth + 2;
+    dockLeft.hidden = !overflow || dock.scrollLeft <= 2;
+    dockRight.hidden = !overflow || dock.scrollLeft >= dock.scrollWidth - dock.clientWidth - 2;
+    dockHints.hidden = !overflow;
+    const focus = document.activeElement;
+    if ((focus === dockLeft || focus === dockRight) && focus.hidden) {
+      const next = !dockLeft.hidden ? dockLeft : !dockRight.hidden ? dockRight : dock.querySelector('[aria-current="page"],[data-appnav]');
+      next?.focus({preventScroll:true});
+    }
+  }
+  function syncDockSections() {
+    const N = window.CR?.nav;
+    if (!bar.admin() || !N) {updateDockHints();return;}
+    N.NAV.filter(section => !['home','people','insights'].includes(section.id)).forEach(section => {
+      let link = dock.querySelector('[data-dock-section="'+section.id+'"]');
+      if (!link) {
+        link = element('a', 'appbar__tab'); link.dataset.appnav = 'admin-'+section.id; link.dataset.dockSection = section.id;
+        link.innerHTML = N.icon(section.icon); link.append(element('span', '', section.label)); dock.append(link);
+      }
+      link.href = controlHref(section.route);
+    });
+    if (!dockHints) {
+      dock.id = dock.id || 'mccAppbar';
+      dockHints = element('div', 'mcc-dock-hints'); dockHints.id = 'mccDockHints';
+      dockLeft = element('button', '', '‹'); dockRight = element('button', '', '›');
+      [dockLeft,dockRight].forEach((button,i) => {
+        button.type = 'button'; button.setAttribute('aria-label',i?'Scroll navigation right':'Scroll navigation left'); button.setAttribute('aria-controls',dock.id);
+        button.onclick = () => dock.scrollBy({left:(i?1:-1)*dock.clientWidth*.7,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
+        dockHints.append(button);
+      });
+      document.body.append(dockHints);
+    }
+    if (!dockObservers) {
+      dockObservers = true;
+      dock.addEventListener('scroll',updateDockHints,{passive:true});
+      dock.addEventListener('focusin',event=>revealDockItem(event.target.closest('[data-appnav]')));
+      dock.addEventListener('keydown',event=>{
+        if (!bar.admin() || !['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return;
+        const items=[...dock.querySelectorAll('[data-appnav]')],index=items.indexOf(document.activeElement);
+        if(index<0)return;
+        event.preventDefault();
+        const next=event.key==='Home'?0:event.key==='End'?items.length-1:Math.max(0,Math.min(items.length-1,index+(event.key==='ArrowRight'?1:-1)));
+        items[next].focus({preventScroll:true});revealDockItem(items[next]);
+      });
+      const resized=()=>{revealDockItem(dock.querySelector(':focus') || dock.querySelector('[aria-current="page"]'));updateDockHints();};
+      new ResizeObserver(resized).observe(dock);
+      new MutationObserver(updateDockHints).observe(dock,{childList:true,subtree:true});
+      window.addEventListener('resize',resized);
+    }
+    requestAnimationFrame(()=>{revealDockItem(dock.querySelector(':focus') || dock.querySelector('[aria-current="page"]'));updateDockHints();});
+  }
+
   async function syncAdmin() {
     if (!bar.admin()) {
       closePanel(); panel?.remove(); panel = null; installed = false;
-      delete document.body.dataset.adminNavigation; ready(); return;
+      delete document.body.dataset.adminNavigation; updateDockHints(); ready(); return;
     }
     try { await core(); } catch (_) { ready(); return; } // Original Home link and rails remain usable on load failure.
     if (!bar.admin()) return;
@@ -199,13 +261,15 @@
       button.setAttribute('aria-haspopup', 'dialog'); button.onclick = controlTap;
       old.replaceWith(button);
     }
+    syncDockSections();
     installed = true; document.body.dataset.adminNavigation = 'ready';
     markCurrent(); ready();
   }
+  let lastDockDestination = null;
   function markCurrent() {
     if (!installed) return;
     const button = get('mccControlToggle');
-    const on = /\/control\.html$/.test(location.pathname) && window.CR.workspaceCore.resolve(location.hash).section !== 'insights' && window.CR.workspaceCore.resolve(location.hash).section !== 'people';
+    const on = /\/control\.html$/.test(location.pathname) && window.CR.workspaceCore.resolve(location.hash).section === 'home';
     button?.classList.toggle('is-here', on);
     if (on) button?.setAttribute('aria-current', 'page'); else button?.removeAttribute('aria-current');
     // Analytics uses the same document, preserving org, draft editors and the globe instance.
@@ -218,6 +282,12 @@
       inbox.classList.toggle('is-here', active);
       if (active) inbox.setAttribute('aria-current', 'page'); else inbox.removeAttribute('aria-current');
     }
+    dock.querySelectorAll('[data-dock-section]').forEach(link=>{
+      const active = /\/control\.html$/.test(location.pathname) && window.CR.workspaceCore.resolve(location.hash).section === link.dataset.dockSection;
+      link.classList.toggle('is-here',active);if(active)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');
+    });
+    const destination = dock.querySelector('[aria-current="page"]')?.dataset.appnav || null;
+    if(destination !== lastDockDestination){lastDockDestination = destination;requestAnimationFrame(()=>revealDockItem(dock.querySelector(':focus') || dock.querySelector('[aria-current="page"]')));}
     if (panel?.matches(':popover-open')) render();
   }
   function closeProfile(focus = false) {

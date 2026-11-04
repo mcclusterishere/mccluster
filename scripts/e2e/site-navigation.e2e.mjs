@@ -66,12 +66,12 @@ async function topRight(page,selector='#mccAuthChip'){
   return page.locator(selector).evaluate(el=>{const r=el.getBoundingClientRect();return r.top>=0&&r.top<=24&&r.right<=innerWidth&&r.right>=innerWidth-24&&r.width>=44&&r.height>=44;});
 }
 try{
- if(!process.env.NAV_ROLE_MATRIX){
+ if(!process.env.NAV_ROLE_MATRIX&&!process.env.NAV_DOCK_ONLY){
   for(const width of [390,820,1280]){
     const {ctx,page,auth,errors}=await setup(width);
     await page.goto(BASE+'/control.html?org=o1#home');
     await page.waitForSelector('body[data-admin-navigation][data-site-navigation]');
-    check(width+' owner never sees the guest three-tab bar during entry',await page.evaluate(()=>__navFrames.every(n=>n===7)),await page.evaluate(()=>__navFrames));
+    check(width+' owner never sees the guest three-tab bar during entry',await page.evaluate(()=>__navFrames.every(n=>n===10)),await page.evaluate(()=>__navFrames));
     check(width+' profile is top right',await topRight(page));
     const keys=await page.locator('.appbar [data-appnav]').evaluateAll(nodes=>nodes.map(n=>n.dataset.appnav));
     check(width+' Inbox is directly left of Home and Games directly right of World',keys.indexOf('admin-inbox')+1===keys.indexOf('admin-home')&&keys.indexOf('halo')+1===keys.indexOf('games'));
@@ -128,14 +128,14 @@ try{
 
     for(const path of ['/license.html','/brief.html','/music-admin.html','/member-front.html?handle=qa-member','/city-arcade.html','/game-hub.html','/prim3-tactics-preview.html','/equity-uprise.html','/control.html?org=o1#analytics','/control.html?org=o1#home']){
       await page.goto(BASE+path);await page.waitForSelector('body[data-admin-navigation][data-site-navigation]');
-      check(width+' consistent owner bar on '+path,await page.evaluate(()=>document.querySelectorAll('.appbar [data-appnav]').length===7&&__navFrames.every(n=>n===7)));
+      check(width+' consistent owner bar on '+path,await page.evaluate(()=>document.querySelectorAll('.appbar [data-appnav]').length===10&&__navFrames.every(n=>n===10)));
       check(width+' one ordered accessible dock on '+path,await page.evaluate(()=>{
         const bars=document.querySelectorAll('.appbar'),tabs=[...bars[0].querySelectorAll('[data-appnav]')];
-        return bars.length===1&&tabs.map(x=>x.dataset.appnav).join(',')==='music,admin-inbox,admin-home,home,analytics,halo,games'&&tabs.every(x=>{const r=x.getBoundingClientRect();return r.width>=44&&r.height>=44&&r.right<=innerWidth&&r.bottom<=innerHeight;});
+        return bars.length===1&&tabs.map(x=>x.dataset.appnav).join(',')==='music,admin-inbox,admin-home,home,analytics,halo,games,admin-sell,admin-create,admin-system'&&tabs.every(x=>{const r=x.getBoundingClientRect();return r.width>=44&&r.height>=44&&r.bottom<=innerHeight;});
       }));
     }
     const routes=await page.evaluate(()=>CR.workspaceCore.routes.map(r=>r.hash));
-    for(const hash of routes){await page.evaluate(h=>{location.hash=h;},hash);await page.waitForFunction(h=>location.hash===h&&document.getElementById('crSurface')?.childElementCount>0,hash);check(width+' owner navigation stable at '+hash,await page.evaluate(()=>document.querySelectorAll('.appbar [data-appnav]').length===7&&!document.querySelector('#crInspector')?.classList.contains('is-open')));}
+    for(const hash of routes){await page.evaluate(h=>{location.hash=h;},hash);await page.waitForFunction(h=>location.hash===h&&document.getElementById('crSurface')?.childElementCount>0,hash);check(width+' owner navigation stable at '+hash,await page.evaluate(()=>document.querySelectorAll('.appbar [data-appnav]').length===10&&!document.querySelector('#crInspector')?.classList.contains('is-open')));}
     // Permission withdrawal is checked when opening, not trusted from an old UI.
     auth.status=403;await page.click('#mccControlToggle');
     await page.waitForFunction(()=>!window.MCC_BAR.admin());
@@ -291,7 +291,7 @@ try{
     await page.screenshot({path:join(OUT,'globe-owner-'+width+'.png')});
     await page.locator('.appbar [data-appnav="admin-inbox"]').click();await page.waitForURL('**/control.html#people:inbox:conversations');
     await page.waitForSelector('body[data-admin-navigation]');
-    check(width+' globe to Inbox retains seven tabs',await page.locator('.appbar [data-appnav]').count()===7);
+    check(width+' globe to Inbox retains ten destinations',await page.locator('.appbar [data-appnav]').count()===10);
     await ctx.close();
   }
   {
@@ -300,13 +300,14 @@ try{
     await ctx.close();
   }
  }
- for(const width of [390,1280])for(const persona of ['owner','member','guest']){
+ if(!process.env.NAV_DOCK_ONLY)for(const width of [390,1280])for(const persona of ['owner','member','guest']){
    const {ctx,page,auth}=await setup(width,persona);
-   for(const path of ['/action-globe.html?explore=1','/member-front.html?handle=qa-member','/control.html#home','/control.html#home:front-page','/city-arcade.html','/control.html#insights:overview']){
+   for(const path of ['/action-globe.html?explore=1','/member-front.html?handle=qa-member','/control.html#home','/control.html#create:front-page','/city-arcade.html','/control.html#insights:overview'].filter(path=>!process.env.NAV_EDITOR_ONLY||path.includes('#create:front-page'))){
      await page.goto(BASE+path);await page.waitForFunction(()=>window.MCC_BAR?.auth().verified);
      await page.waitForFunction(()=>document.body.dataset.siteNavigation==='ready');
      if(persona==='owner')await page.waitForSelector('body[data-admin-navigation]');
-     check(width+' '+persona+' direct entry '+path,await page.locator('.appbar').count()===1&&await page.locator('.appbar [data-appnav]').count()===(persona==='owner'?7:3));
+     check(width+' '+persona+' direct entry '+path,await page.locator('.appbar').count()===1&&await page.locator('.appbar [data-appnav]').count()===(persona==='owner'?10:3));
+     if(path.includes('#create:front-page')&&persona==='owner'){await page.locator('[data-cfp-root]').waitFor();check(width+' actual editor remains mounted',await page.locator('[data-cfp-form]').isVisible());}
      if(path.startsWith('/action-globe')&&persona!=='guest'){
        // Mount the actual legacy shortcuts to exercise the duplication seen
        // with owner sessions; synthetic auth only, with all network intercepted.
@@ -331,5 +332,45 @@ try{
      }
    }
    await ctx.close();
+ }
+
+ for(const width of [390,1280]){
+  const {ctx,page,auth,errors}=await setup(width);
+  await page.goto(BASE+'/control.html#home');await page.waitForSelector('body[data-admin-navigation]');
+  await page.evaluate(()=>document.fonts.ready);await page.waitForTimeout(250);
+  const dock=page.locator('.appbar'),left=page.getByRole('button',{name:'Scroll navigation left',exact:true}),right=page.getByRole('button',{name:'Scroll navigation right',exact:true});
+  const scroll=async n=>{await dock.evaluate((el,n)=>{el.style.scrollSnapType='none';el.scrollLeft=n;},n);await page.waitForFunction(()=>{const d=document.querySelector('.appbar'),b=document.querySelectorAll('#mccDockHints button');return b[0].hidden===(d.scrollLeft<=2)&&b[1].hidden===(d.scrollLeft>=d.scrollWidth-d.clientWidth-2);});};
+  const visible=async()=>dock.evaluate(el=>{const a=el.querySelector(':focus')||el.querySelector('[aria-current="page"]'),r=a?.getBoundingClientRect(),d=el.getBoundingClientRect();return !!r&&r.left>=d.left-1&&r.right<=d.right+1;});
+  check(width+' dock has no script errors',errors.length===0,errors);
+  check(width+' registry adds Sell Create System once',await dock.locator('[data-dock-section]').count()===3);
+  await scroll(0);
+  if(width===390){
+    check('phone initial hint only right',await left.isHidden()&&await right.isVisible(),await dock.evaluate(el=>({left:el.scrollLeft,width:el.clientWidth,scroll:el.scrollWidth,hints:document.getElementById('mccDockHints').outerHTML})));
+    check('reduced motion disables hint animation',await right.evaluate(el=>getComputedStyle(el).animationName==='none'));
+    await right.click();await page.waitForFunction(()=>{const b=document.querySelectorAll('#mccDockHints button');return !b[0].hidden&&!b[1].hidden;});
+    check('phone middle hints both directions',await left.isVisible()&&await right.isVisible());
+    await scroll(10000);check('phone end hint only left',await left.isVisible()&&await right.isHidden());
+    await page.locator('#mccControlToggle').focus();await page.keyboard.press('End');
+    check('keyboard End reaches System visibly',await page.locator('[data-dock-section="system"]').evaluate(el=>el===document.activeElement)&&await visible());
+    await page.keyboard.press('Home');check('keyboard Home reaches Play visibly',await page.locator('[data-appnav="music"]').evaluate(el=>el===document.activeElement)&&await visible());
+    await page.keyboard.press('ArrowRight');check('keyboard Right reaches Inbox',await page.locator('[data-appnav="admin-inbox"]').evaluate(el=>el===document.activeElement));
+    await scroll(0);
+    const box=await dock.boundingBox(),cdp=await ctx.newCDPSession(page);
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:box.x+box.width*.8,y:box.y+box.height*.5}]});
+    for(let step=1;step<=8;step++){await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:box.x+box.width*.8-step*18,y:box.y+box.height*.5}]});await page.waitForTimeout(20);}
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await page.waitForTimeout(150);
+    check('touch swipe moves owner dock',await dock.evaluate(el=>el.scrollLeft>20));await cdp.detach();
+    await page.screenshot({path:join(OUT,'scroll-dock-390.png')});
+    await page.setViewportSize({width:1280,height:844});await page.waitForFunction(()=>document.getElementById('mccDockHints').hidden);
+    check('resize to desktop hides both hints',await left.isHidden()&&await right.isHidden());
+    await page.setViewportSize({width:390,height:844});await scroll(0);
+    check('resize back restores correct overflow hint',await left.isHidden()&&await right.isVisible());
+  }else check('desktop fit has no hints',await left.isHidden()&&await right.isHidden());
+  check(width+' screen reader controls identify navigation',await page.locator('#mccDockHints button').evaluateAll(els=>els.every(el=>el.getAttribute('aria-controls')===document.querySelector('.appbar').id&&el.getAttribute('aria-label').startsWith('Scroll navigation'))));
+  auth.status=403;await page.evaluate(()=>MCC_BAR.verifyAdmin());
+  check(width+' member role removes extra destinations and hints',await dock.locator('[data-appnav]').count()===3&&await page.locator('#mccDockHints').isHidden());
+  auth.status=200;await page.evaluate(()=>MCC_BAR.verifyAdmin());await page.waitForSelector('body[data-admin-navigation]');
+  check(width+' owner role restores registry without duplicates',await dock.locator('[data-appnav]').count()===10&&await page.locator('#mccDockHints').count()===1);
+  await ctx.close();
  }
 }finally{await writeFile(join(OUT,'results.json'),JSON.stringify(results,null,2));await browser.close();}
