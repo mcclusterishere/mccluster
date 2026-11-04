@@ -120,19 +120,35 @@
     });
   }
 
+  // Bound account requests, including response-body reads. Late replies cannot commit a session.
+  function accountRequest(url, init) {
+    var controller = typeof AbortController === 'function' ? new AbortController() : null;
+    var timer;
+    var deadline = new Promise(function (_, reject) {
+      timer = setTimeout(function () {
+        reject(Object.assign(new Error('The account service did not respond. Check your connection and try again.'), { code: 'auth_request_timeout' }));
+        if (controller) controller.abort();
+      }, 12000);
+    });
+    init = Object.assign({}, init);
+    if (controller) init.signal = controller.signal;
+    return Promise.race([Promise.resolve().then(function () { return fetch(url, init); }).then(parseResponse), deadline])
+      .finally(function () { clearTimeout(timer); });
+  }
+
   function authApi(path, init) {
     init = init || {};
     var headers = { apikey: KEY, 'content-type': 'application/json' };
     if (init.token) headers.authorization = 'Bearer ' + init.token;
-    return fetch(URL_ + '/auth/v1/' + path, {
+    return accountRequest(URL_ + '/auth/v1/' + path, {
       method: init.method || 'GET',
       headers: headers,
       body: init.body ? JSON.stringify(init.body) : undefined
-    }).then(parseResponse);
+    });
   }
 
   function rpc(name, body, token) {
-    return fetch(URL_ + '/rest/v1/rpc/' + name, {
+    return accountRequest(URL_ + '/rest/v1/rpc/' + name, {
       method: 'POST',
       headers: {
         apikey: KEY,
@@ -140,7 +156,7 @@
         'content-type': 'application/json'
       },
       body: JSON.stringify(body || {})
-    }).then(parseResponse);
+    });
   }
 
   function random(bytes) {
@@ -215,6 +231,7 @@
     });
   }
 
+  var refreshFlight = null;
   var MCC = {
     user: function () {
       var s = readSession();
@@ -233,9 +250,27 @@
     refresh: function () {
       var s = readSession();
       if (!s || !s.refresh_token) return Promise.resolve(null);
-      return authApi('token?grant_type=refresh_token', { method: 'POST', body: { refresh_token: s.refresh_token } })
-        .then(writeSession)
-        .catch(function () { writeSession(null); return null; });
+      if (refreshFlight && refreshFlight.token === s.refresh_token && refreshFlight.access === s.access_token) return refreshFlight.promise;
+      var flight = { token: s.refresh_token, access: s.access_token };
+      function stillCurrent() {
+        var now = readSession();
+        return now && now.refresh_token === s.refresh_token && now.access_token === s.access_token;
+      }
+      flight.promise = authApi('token?grant_type=refresh_token', { method: 'POST', body: { refresh_token: s.refresh_token } })
+        .then(function (next) {
+          if (!stillCurrent()) return null; // sign-out, another tab's refresh, or another account won
+          if (!next || !next.access_token || !next.refresh_token) throw new Error('The account service returned an incomplete session. Try again.');
+          return writeSession(next);
+        }).catch(function (error) {
+          if (!stillCurrent()) return null;
+          // Clear only an explicit server rejection of this session, never a timeout/429/5xx/offline response.
+          if (['refresh_token_not_found', 'refresh_token_already_used', 'session_expired', 'session_not_found', 'user_banned', 'user_not_found'].indexOf(error && error.code) !== -1 && error.status >= 400 && error.status < 500) {
+            writeSession(null); return null;
+          }
+          throw error; // stored credentials survive; callers still fail closed until a server check succeeds
+        }).finally(function () { if (refreshFlight === flight) refreshFlight = null; });
+      refreshFlight = flight;
+      return flight.promise;
     },
 
     refreshIfNeeded: function () {
