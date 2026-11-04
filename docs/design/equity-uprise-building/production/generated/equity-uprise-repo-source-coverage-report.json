@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 615,
+  "candidate_count": 619,
   "capability_source_count": 104,
-  "support_only_count": 511,
-  "checks_total": 2358,
-  "checks_passed": 2358,
+  "support_only_count": 515,
+  "checks_total": 2374,
+  "checks_passed": 2374,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -199,6 +199,7 @@
     "docs/fictional-city/EXPANSION.md",
     "docs/fictional-city/JIMMYS-STOREFRONT-CONTINUATION-2026-11-03.md",
     "docs/fictional-city/LORE.md",
+    "docs/fictional-city/NAVIGATION-REVIEW-2026-11-04.md",
     "docs/fictional-city/POST-MERGE-722-CORE-HANDOFF-2026-11-03.md",
     "docs/fictional-city/README.md",
     "docs/fictional-city/VERIFICATION.md",
@@ -360,6 +361,8 @@
     "screens/vms.html",
     "screens/wall.html",
     "scripts/e2e/eu-screens.e2e.mjs",
+    "scripts/e2e/fictional-city-camera-inputs.mjs",
+    "scripts/e2e/fictional-city-upstairs-audit.e2e.mjs",
     "scripts/e2e/fictional-city.e2e.mjs",
     "scripts/e2e/fixtures/axe-baseline.json",
     "scripts/e2e/prim3-direct-landings.e2e.mjs",
@@ -392,6 +395,7 @@
     "scripts/test/eu-screens.test.mjs",
     "scripts/test/fictional-city-hq-b1.test.mjs",
     "scripts/test/fictional-city-places.test.mjs",
+    "scripts/test/fictional-city-vertical-handoff.test.mjs",
     "scripts/test/fixtures/hq-drill-full-strength-win.json",
     "scripts/test/homelessness-action.test.mjs",
     "scripts/test/human-uprise-door.test.mjs",
@@ -629,7 +633,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "615 entries"
+      "detail": "619 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -5698,26 +5702,6 @@
     },
     {
       "name": "scripts/test/prim3-equity-uprise-model.test.mjs support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "scripts/test/prim3-lifecycle.test.mjs capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "scripts/test/prim3-lifecycle.test.mjs classified",
-      "passed": true,
-      "detail": "classification='test_support'"
-    },
-    {
-      "name": "scripts/test/prim3-lifecycle.test.mjs support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "scripts/test/prim3-lifecycle.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -12313,6 +12297,106 @@
     },
     {
       "name": "workers/mccluster/test/prim3-learning.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/fictional-city/NAVIGATION-REVIEW-2026-11-04.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/fictional-city/NAVIGATION-REVIEW-2026-11-04.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/fictional-city/NAVIGATION-REVIEW-2026-11-04.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/fictional-city/NAVIGATION-REVIEW-2026-11-04.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/fictional-city-camera-inputs.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/fictional-city-camera-inputs.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/e2e/fictional-city-camera-inputs.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/e2e/fictional-city-camera-inputs.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/fictional-city-upstairs-audit.e2e.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/fictional-city-upstairs-audit.e2e.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/e2e/fictional-city-upstairs-audit.e2e.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/e2e/fictional-city-upstairs-audit.e2e.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/fictional-city-vertical-handoff.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/fictional-city-vertical-handoff.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/fictional-city-vertical-handoff.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/fictional-city-vertical-handoff.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/prim3-lifecycle.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/prim3-lifecycle.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/prim3-lifecycle.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/prim3-lifecycle.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     },
