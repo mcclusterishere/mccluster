@@ -1,7 +1,7 @@
 # City contract tactical consumer checkpoint
 
-Dependency: City #748 runnable head `8cadf264613a091ecbdf058dbec50f8883b5cf42`,
-stacked on #736; its contract remains `a55e7ceed929f6dbe81c341d1097536a92744a24`.
+Dependency: City #748 v2 head `da0b411b9dd6db4ed88450ab6ffd41c6d51add07`,
+stacked on #736; its v1 contract remains `a55e7ceed929f6dbe81c341d1097536a92744a24`.
 This separate consumer branch includes that checkpoint. It does not import the
 entire City stack into PRIM3 #739 or change the existing upstream engine pin.
 
@@ -20,7 +20,7 @@ interfaces below can be implemented upstream with meaningful combat regressions.
 
 ## Semantic gaps for City/coordinator
 
-- No vertical links, doors/door state, furniture, dynamic closures or height-aware LOS query.
+- No vertical links, doors/door state, furniture or height-aware LOS query.
   Street-only scope cannot satisfy the multi-floor/door tactical acceptance criteria yet.
 - City routes use floating metre costs. Existing Prim3 resolver uses integer costs and
   bidirectional links. Do not round hex edge costs or convert them to AP implicitly.
@@ -48,3 +48,24 @@ Geo/local roundtrip maximum 2.9816871793412e-9m. Tests cover budget boundaries,
 pose preservation, topology switching without teleportation, incompatible saves/floors,
 missing budgets, unknown destination and unsupported vertical extension rejection.
 No browser playability, AP parity, live ion entitlement or production readiness claim.
+
+## V2 bounded extension
+
+The adapter accepts the exact downtown v2 identity/revision as well as v1, without converting
+old saves. Canonical closure IDs pass to City's route and clearance queries. Saved closure IDs
+are retained by default; callers can explicitly supply current session closures. Returned
+navigationRevision identifies the request snapshot, but no confirmation/execution consumes it
+yet. Exact source entrances use City's routeToEntrance, including the final metric connector.
+
+quoteSharedMovement is a pure advisory calculation for a new metric scenario. The caller must
+provide moveRangeM, AP, MOVE/DASH, mover identity, body radius and player-known occupants. MOVE
+quotes one AP and one range; DASH quotes two AP and twice the range. There is no implicit legacy
+tile conversion, no AP debit and no execution authorization. Swept horizontal disc checks flag
+known living/downed occupants between endpoints, excluding the mover, dead/extracted actors and
+other floor identities. A blocked reference path is reported as blocked, not claimed to be the
+only path; this helper does not reroute. The caller owns the information boundary: never supply
+hidden actors to a player preview. Authoritative contact interruption/reactions remain unimplemented.
+
+V2 validation: 21 contract/gate/consumer tests passed with zero failures/skips, including exact
+entrance positions, closures, version rejection, AP thresholds and swept known-actor occupancy.
+No scenario UI, mission execution, upstream resolver update or browser save change was introduced.
