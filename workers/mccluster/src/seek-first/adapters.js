@@ -1,3 +1,4 @@
+import { boundedJson } from '../../../../js/travel/route-core.mjs';
 import { normalizeAustinCameras } from './camera-catalog.js';
 import { PERSISTENCE, sourceByKey, sourceConfigured } from './source-registry.js';
 import { fetchNoCrossHostRedirect, UpstreamError } from '../lib/safe-fetch.js';
@@ -547,30 +548,65 @@ async function fred(input, env) {
 }
 
 async function bls(input, env) {
-  requireCredentials('bls', env);
-  const seriesIds = Array.isArray(input?.series_ids) ? input.series_ids.slice(0, 50).map((id) => stringValue(id, 'series_id', { max: 80 })) : [stringValue(input?.series_id, 'series_id', { max: 80 })];
-  const startyear = String(integer(input?.start_year ?? new Date().getUTCFullYear() - 3, 'start_year', { min: 1940, max: new Date().getUTCFullYear() }));
-  const endyear = String(integer(input?.end_year ?? new Date().getUTCFullYear(), 'end_year', { min: Number(startyear), max: new Date().getUTCFullYear() }));
-  const url = new URL('https://api.bls.gov/publicAPI/v2/timeseries/data/');
-  const body = { seriesid: seriesIds, startyear, endyear, registrationkey: env.BLS_API_KEY };
-  const { data } = await jsonFetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  // BLS permits unregistered v1 requests. A missing key limits capacity,
+  // not implementation. Never downgrade an invalid registered key silently.
+  const key = typeof env.BLS_API_KEY === 'string' ? env.BLS_API_KEY.trim() : '';
+  const maxSeries = key ? 50 : 25, maxYears = key ? 20 : 10;
+  const ids = Array.isArray(input?.series_ids) ? input.series_ids : [input?.series_id];
+  if (!ids.length || ids.length > maxSeries) throw new GeoAdapterError(`BLS accepts 1–${maxSeries} series for this access mode`, 400, 'invalid_parameter');
+  const seriesIds = ids.map(id => stringValue(id, 'series_id', { max: 80, pattern: /^[A-Z0-9_#-]+$/ }));
+  const year = new Date().getUTCFullYear();
+  const start = input?.start_year ?? year - 2, end = input?.end_year ?? year;
+  if (!/^\d{4}$/.test(String(start)) || !/^\d{4}$/.test(String(end)) || Number(start) < 1940 || Number(end) > year || Number(end) < Number(start) || Number(end) - Number(start) + 1 > maxYears) {
+    throw new GeoAdapterError(`BLS accepts at most ${maxYears} inclusive years for this access mode`, 400, 'invalid_parameter');
+  }
+  const url = `https://api.bls.gov/publicAPI/${key ? 'v2' : 'v1'}/timeseries/data/`;
+  const body = { seriesid: seriesIds, startyear: String(start), endyear: String(end), ...(key ? { registrationkey: key } : {}) };
+  const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 12000);
+  let data;
+  try {
+    const response = await fetch(url, { method: 'POST', redirect: 'manual', signal: controller.signal,
+      headers: { 'content-type': 'application/json', accept: 'application/json', 'user-agent': 'McCluster-Spatial/1.0 (https://mccluster.org)' }, body: JSON.stringify(body) });
+    if (!response.ok) {
+      await response.body?.cancel();
+      throw new GeoAdapterError('BLS request unavailable', response.status === 429 ? 429 : 502, 'provider_error');
+    }
+    data = await boundedJson(response);
+    if (Array.isArray(data?.Results) && data.Results.length === 1) data.Results = data.Results[0];
+    if (data?.status !== 'REQUEST_SUCCEEDED' || !Array.isArray(data?.Results?.series) || (Array.isArray(data.message) && data.message.length)) {
+      // BLS may return HTTP 200 for rate limits, invalid series or unavailable
+      // data. Do not turn those into a successful empty series or echo messages.
+      throw new GeoAdapterError('BLS did not return a complete successful response', 502, 'provider_response_error');
+    }
+  } catch (error) {
+    if (error instanceof GeoAdapterError) throw error;
+    throw new GeoAdapterError('BLS response unavailable or incomplete', controller.signal.aborted ? 504 : 502, 'provider_unavailable');
+  } finally { clearTimeout(timer); }
   const records = [];
-  for (const series of data?.Results?.series || []) {
-    for (const obs of series?.data || []) {
+  for (const series of data.Results.series) {
+    if (!seriesIds.includes(series?.seriesID) || !Array.isArray(series.data)) throw new GeoAdapterError('BLS response series mismatch', 502, 'provider_response_error');
+    for (const obs of series.data) {
+      if (!/^\d{4}$/.test(String(obs?.year)) || !/^[AMQS]\d{2}$/.test(String(obs?.period))) throw new GeoAdapterError('BLS response period invalid', 502, 'provider_response_error');
+      const monthly = /^M(0[1-9]|1[0-2])$/.test(obs.period);
+      const value = typeof obs.value === 'string' && /^-?\d+(?:\.\d+)?$/.test(obs.value) ? Number(obs.value) : null;
       records.push(record('observation', {
         external_id: `bls:${series.seriesID}:${obs.year}:${obs.period}`,
-        observation_type: 'labor_series',
-        metric: series.seriesID,
-        value_number: Number.isFinite(Number(obs.value)) ? Number(obs.value) : null,
-        value_text: obs.value,
-        unit: null,
-        point: null,
-        observed_at: `${obs.year}-01-01T00:00:00.000Z`,
-        properties: obs || {}
+        observation_type: 'labor_series', metric: series.seriesID,
+        value_number: Number.isFinite(value) ? value : null,
+        value_text: value === null ? null : obs.value,
+        unit: null, point: null,
+        observed_at: monthly ? `${obs.year}-${obs.period.slice(1)}-01T00:00:00.000Z` : null,
+        properties: { year: String(obs.year), period: obs.period, time_basis: monthly ? 'period_start_not_release_time' : 'period_only',
+          footnote_codes: Array.isArray(obs.footnotes) ? obs.footnotes.slice(0, 20).map(f => f?.code).filter(c => typeof c === 'string' && /^[A-Z0-9]{1,8}$/.test(c)) : [] }
       }));
     }
   }
-  return result('bls', 'timeseries', url, records, data);
+  if (new Set(data.Results.series.map(s => s.seriesID)).size !== new Set(seriesIds).size) throw new GeoAdapterError('BLS omitted a requested series', 502, 'provider_response_error');
+  return result('bls', 'timeseries', url, records, null, {
+    access_mode: key ? 'registered' : 'unregistered', daily_query_limit: key ? 500 : 25,
+    quota_enforcement: 'provider; no shared local daily quota', truncated: records.length > MAX_PROVIDER_ROWS,
+    source_record_count: records.length
+  });
 }
 
 async function eia(input, env) {
