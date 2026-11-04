@@ -30,6 +30,10 @@ Added the downtown navigation contract record as support-only. Its door/stair au
 
 ## City review source coverage — 2026-11-04
 
+The shared Bridgeport navigation integration adds its existing support-only contract to the reconciled City/PRIM3 ledger: 620 sources (104 capability, 516 support-only), with 2,378/2,378 checks passing. It preserves the missing geographic door/stair survey boundary and makes no building geometry or capability changes.
+
+Release integration reconciles the City and PRIM3 review source classifications without dropping either entry set. The combined checkout covers 619 sources (104 capability, 515 support-only), with 2,374/2,374 checks passing. This is source traceability only; building geometry, floor program and capability ownership are unchanged.
+
 Classified four City navigation/stair audit and test files as support-only after the Core V2 CI source-coverage failure. The clean source checkout now covers 613 sources (104 capability, 509 support-only), with 2,350/2,350 checks passing. This updates traceability only; no building geometry, floor program or runtime changed. The upstairs reproduction records the earlier runtime; the separate proposed repair is tracked in PR #739.
 
 ## McCluster City expansion around the HQ — 2026-11-03
