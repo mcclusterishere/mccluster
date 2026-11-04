@@ -49,3 +49,13 @@ Base main 4fc32c84970d1a5cbc69c2df218e700bcea14032 checked against origin before
 - `node scripts/finance-preview.mjs` uses already-installed postgres:17.6 with network=none, applies both drafts only inside that temporary container, verifies permissions and quota exhaustion/reset, and emits a loopback URL. Every price/security response is an explicit test stub; credentials are fictional constants.
 - `CESIUM_DIR=<local Cesium Build/Cesium> FINANCE_PREVIEW_URL=<loopback URL> node scripts/e2e/finance-globe.e2e.mjs` loads actual globe/Finance code with all hosted traffic intercepted. Checks 390/1280, same document/viewer through trade, history labels, saved watchlist/order/reload and access-revocation clearing.
 - Root `npm test`, Worker `npm test`, repo secret-scan workflow script and `git diff --check` are the broader checks. Actual results are recorded in the draft PR, not inferred from these commands.
+
+## Main reconciliation and release-gate verification — 2026-11-04
+
+Merged main `5b23c317abb41ab1cfa24f4f7ffc71b41efb7efe` normally into this branch; generated Chemistry sources are unchanged from main. No new Finance features or provider calls. Targeted checks pass 50/50; root tests pass 1,674 with three pre-existing skips plus seven Python tests; Worker tests pass 1,366/1,366.
+
+New failure-path tests prove disabled/mistyped flags make no storage or provider calls, and absent quota SQL blocks provider fetch even with enabled flags and credentials. Finance flags remain unset in checked-in configuration. Both SQL files remain unapplied review drafts under docs, outside automatic migrations. Owner authorization, exact-string development/provider/persistence activation, credentials and quota schema are separate gates.
+
+The composer CI partition retains all eight assertions and normal Playwright click behavior; its job passed on `11bbcb0b`. Full local editorial reproduction passed 533/533. That head's remaining editorial CI job was still active with no downloadable live log at publication preparation, so its completion and the refreshed merge-head checks must not be inferred. No assertion was skipped or weakened.
+
+The code can be reviewed with Finance disabled; operating the feature still needs separately authorized SQL/configuration and deployment. Main has a static deployment workflow, so a future PR merge is not represented as operationally inert. This work does not authorize or perform that merge, deployment, production SQL, credentials or provider collection.

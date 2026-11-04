@@ -75,3 +75,31 @@ test('routes require owner, flags, bounded valid input, and never expose key val
  }
  const bad=await handleIntelRequest(new Request('https://fixture.invalid/v1/intel/finance/market?feed=sip'),env,opts);assert.equal(bad.status,400);
 });
+
+test('release defaults fail closed even when provider credentials exist',async()=>{
+ let invoked=0;
+ const never=async()=>{invoked++;throw Error('Disabled release reached dependency');};
+ const options={requireHouseOwner:async()=>({id:owner}),financeMarket:{search:never,quote:never,history:never},financeRpc:never};
+ for(const flag of [undefined,false,true,'false','1']){
+  const gated={...env,FINANCE_DEV_ENABLED:flag};
+  for(const path of ['market?q=AAPL','account','control']){
+   const response=await handleIntelRequest(new Request('https://fixture.invalid/v1/intel/finance/'+path),gated,options);
+   assert.equal(response.status,404);
+  }
+ }
+ for(const flag of [undefined,false,true,'false']){
+  const response=await handleIntelRequest(new Request('https://fixture.invalid/v1/intel/finance/account'),{...env,FINANCE_PERSISTENCE_ENABLED:flag},options);
+  assert.equal(response.status,503);
+ }
+ assert.equal(invoked,0);
+ const client=createAlpacaClient({fetchImpl:never,reserve:never});
+ await assert.rejects(client.search({...env,FINANCE_ALPACA_ENABLED:undefined}),e=>e.code==='provider_disabled');
+ assert.equal(invoked,0);
+});
+
+test('unapplied quota schema prevents enabled data collection before any provider request',async()=>{
+ let calls=0;
+ const client=createAlpacaClient({fetchImpl:async()=>{calls++;throw Error('Provider must not be reached');},reserve:async()=>{throw new IntelError('Schema missing',503,'intel_schema_not_ready');}});
+ await assert.rejects(client.search(env,'AAPL'),e=>e.code==='intel_schema_not_ready');
+ assert.equal(calls,0);
+});
