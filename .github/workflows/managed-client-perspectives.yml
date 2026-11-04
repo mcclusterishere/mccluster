@@ -1,0 +1,59 @@
+name: Managed client front doors
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'partners/faith-and-results.html'
+      - 'partners/shiloh-church-gpt.html'
+      - 'css/managed-client.css'
+      - 'js/managed-client-perspective.js'
+      - 'js/site-navigation.js'
+      - 'scripts/test/managed-client-perspective.test.mjs'
+      - 'scripts/e2e/site-navigation.e2e.mjs'
+      - '.github/workflows/managed-client-perspectives.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: managed-clients-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  browser-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Install pinned local-only browser proof dependencies
+        run: |
+          npm install --prefix /tmp/managed-client-qa --ignore-scripts --no-audit --no-fund --no-save playwright@1.57.0 cesium@1.131.0
+          /tmp/managed-client-qa/node_modules/.bin/playwright install --with-deps chromium
+      - name: Exercise managed client and existing shared navigation in Chromium
+        env:
+          PLAYWRIGHT_DIR: /tmp/managed-client-qa/node_modules
+          CESIUM_DIR: /tmp/managed-client-qa/node_modules/cesium/Build/Cesium
+        run: node scripts/e2e/site-navigation.e2e.mjs /tmp/managed-client-proof
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: managed-client-browser-proof
+          path: /tmp/managed-client-proof
+          retention-days: 7
+  source-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Validate client front doors and server-trust boundaries
+        run: |
+          node --check js/managed-client-perspective.js
+          node --test scripts/test/managed-client-perspective.test.mjs
