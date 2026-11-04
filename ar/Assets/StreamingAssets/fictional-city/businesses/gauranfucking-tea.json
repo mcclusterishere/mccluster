@@ -1,0 +1,93 @@
+{
+  "schema": "mccluster.ar-business/v1",
+  "source": {
+    "path": "core/data/fictional-city/district.v1.json",
+    "publishedUrl": "https://matthew.mccluster.org/data/fictional-city/district.v1.json",
+    "manifestSchema": "mccluster.fictional-city/v1",
+    "revision": "2026-11-03",
+    "sha256": "9afebe5932d0d37bf4485da11d832e54460c1ba48a251039270cd15aacf4c6e6"
+  },
+  "business": {
+    "id": "gauranfucking-tea",
+    "brandId": "gauranfucking-tea",
+    "name": "GAURANFUCKING TEA",
+    "category": "Tea shop and VHS ad counter",
+    "tagline": "We guarantee you'll like it, or else fuck you.",
+    "description": "A cheerful tea counter with the least reassuring guarantee on the block. Lin performs the slogan outside while Mara and Eli keep the actual service warmer than the advertising.",
+    "color": "#e2b84b",
+    "ads": [
+      "We guarantee you'll like it, or else fuck you.",
+      "NOW WITH A PAUSE LONG ENOUGH TO RECONSIDER THE SLOGAN.",
+      "PressureTV special: one cup, three takes, zero indoor voices."
+    ],
+    "interior": {
+      "style": "Warm counter, tea tins, and a deliberately overplayed VHS monitor",
+      "description": "A compact tasting counter faces a shelf of fictional tins. A small television loops ad cards. Plain text signs carry the joke; no recovered logo is imitated."
+    },
+    "staffIds": [
+      "mara-costa",
+      "lin-qiao",
+      "eli-mensah"
+    ],
+    "itemIds": [
+      "tea-guarantee-cup",
+      "tea-vhs-sticker",
+      "tea-guarantee-shirt"
+    ]
+  },
+  "brand": {
+    "id": "gauranfucking-tea",
+    "name": "GAURANFUCKING TEA",
+    "tagline": "We guarantee you'll like it, or else fuck you.",
+    "summary": "A tea brand whose excessive satisfaction guarantee powers chaotic 1990s VHS-style commercials."
+  },
+  "staff": [
+    {
+      "id": "mara-costa",
+      "name": "Mara Costa",
+      "role": "Owner and reluctant face of the guarantee",
+      "placement": "interior",
+      "greeting": "Welcome. The tea is hot. The guarantee is unnecessarily personal.",
+      "farewell": "Come back. Tell me what you actually liked this time."
+    },
+    {
+      "id": "lin-qiao",
+      "name": "Lin Qiao",
+      "role": "Street promoter and ad performer",
+      "placement": "door",
+      "greeting": "You heard the slogan from across the street. That means I’m doing my job.",
+      "farewell": "Try the tea. If you quote me, at least get the timing right."
+    },
+    {
+      "id": "eli-mensah",
+      "name": "Eli Mensah",
+      "role": "Tea and stock manager",
+      "placement": "interior",
+      "greeting": "If you want the ad, Lin is outside. If you want a recommendation, tell me what you like.",
+      "farewell": "Enjoy it. An honest opinion is more useful than a five-star reflex."
+    }
+  ],
+  "items": [
+    {
+      "id": "tea-guarantee-cup",
+      "name": "Guaranteed Tea Cup",
+      "description": "A virtual tea collectible with the whole guarantee printed much too small. Inventory keepsake; no timed buff.",
+      "kind": "virtual_collectible",
+      "price": 12
+    },
+    {
+      "id": "tea-vhs-sticker",
+      "name": "Tracking Error Sticker",
+      "description": "A fictional VHS-style tea sticker for the inventory collection.",
+      "kind": "virtual_collectible",
+      "price": 7
+    },
+    {
+      "id": "tea-guarantee-shirt",
+      "name": "Or Else Shirt",
+      "description": "A virtual shirt collectible quoting the shop’s aggressive guarantee; wardrobe application is not implied.",
+      "kind": "virtual_cosmetic",
+      "price": 28
+    }
+  ]
+}

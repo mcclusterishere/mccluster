@@ -25,7 +25,7 @@
       "GEMINI.md"
     ]
   },
-  "tracked_count": 353,
+  "tracked_count": 360,
   "categories": {
     "active_references": [
       "docs/design/equity-uprise-building/references/basement-b1/README.md",
@@ -171,6 +171,8 @@
       "docs/design/equity-uprise-building/production/generated/equity-uprise-interior-consistency-report.json",
       "docs/design/equity-uprise-building/production/generated/equity-uprise-program-coverage-report.json",
       "docs/design/equity-uprise-building/production/generated/equity-uprise-repo-source-coverage-report.json",
+      "docs/design/equity-uprise-building/production/generated/equity-uprise-repo-source-coverage-report.json",
+      "docs/design/equity-uprise-building/production/generated/equity-uprise-repo-source-coverage-report.json",
       "docs/design/equity-uprise-building/production/generated/equity-uprise-vertical-circulation-walkability-report.json"
     ],
     "historical_references": [
@@ -252,6 +254,8 @@
       "docs/design/equity-uprise-building/production/electronics/verify_device_archetype_coverage_v1.py",
       "docs/design/equity-uprise-building/production/electronics/verify_equity_uprise_electronics_v1.py",
       "docs/design/equity-uprise-building/production/equity-uprise-capability-map-v2.json",
+      "docs/design/equity-uprise-building/production/equity-uprise-repo-source-map-v2.json",
+      "docs/design/equity-uprise-building/production/equity-uprise-repo-source-map-v2.json",
       "docs/design/equity-uprise-building/production/equity-uprise-repo-source-map-v2.json",
       "docs/design/equity-uprise-building/production/facade-system-core-v2.json",
       "docs/design/equity-uprise-building/production/facade/build_equity_uprise_facade_v2.py",
@@ -360,11 +364,13 @@
       "docs/design/equity-uprise-building/production/lab-runtime/equity-uprise-difficulty-runtime.mjs",
       "docs/design/equity-uprise-building/production/lab-runtime/equity-uprise-electronics-sandbox.mjs",
       "docs/design/equity-uprise-building/production/lab-runtime/equity-uprise-guided-scenarios.mjs",
+      "docs/design/equity-uprise-building/production/lab-runtime/equity-uprise-hseep-runtime.mjs",
       "docs/design/equity-uprise-building/production/lab-runtime/equity-uprise-lab-runtime.mjs",
       "docs/design/equity-uprise-building/production/lab-runtime/equity-uprise-public-service-runtime.mjs",
       "docs/design/equity-uprise-building/production/lab-runtime/equity-uprise-server-lab-runtime.mjs",
       "docs/design/equity-uprise-building/production/lab-runtime/equity-uprise-viewer-lab-integration.mjs",
       "docs/design/equity-uprise-building/production/lab-runtime/fema-building-ops-scenario-pack-v1.json",
+      "docs/design/equity-uprise-building/production/lab-runtime/hseep-building-safety-scenario-pack-v1.json",
       "docs/design/equity-uprise-building/production/lab-runtime/lab-runtime-schema-v1.json",
       "docs/design/equity-uprise-building/production/lab-runtime/learner-experience-v1.json",
       "docs/design/equity-uprise-building/production/lab-runtime/public-service-scenario-pack-v1.json",
@@ -374,6 +380,7 @@
       "docs/design/equity-uprise-building/production/lab-runtime/verify_difficulty_progression_v1.mjs",
       "docs/design/equity-uprise-building/production/lab-runtime/verify_electronics_sandbox_v1.mjs",
       "docs/design/equity-uprise-building/production/lab-runtime/verify_fema_building_ops_scenarios_v1.mjs",
+      "docs/design/equity-uprise-building/production/lab-runtime/verify_hseep_scenarios_v1.mjs",
       "docs/design/equity-uprise-building/production/lab-runtime/verify_lab_runtime_v1.mjs",
       "docs/design/equity-uprise-building/production/lab-runtime/verify_public_service_scenarios_v1.mjs",
       "docs/design/equity-uprise-building/production/lab-runtime/verify_server_lab_v1.mjs",

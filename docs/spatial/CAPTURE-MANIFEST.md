@@ -104,9 +104,23 @@ Tests on those paths:
 6. **Upload:** small manifests promptly; frames resumably. Use idempotent `capture_id` and `frame_id`.
 7. **Validate** with `validateCaptureManifest` before upload. The server re-validates.
 
+## Unity Phase A scaffold compatibility
+
+The Unity scaffold under `ar/` captures device-local alignment-pilot records using
+`mccluster.capture-manifest.v1-draft`. It does **not** emit this canonical schema.
+`packages/spatial-capture/validate.mjs` rejects that draft, and it must never be
+uploaded or used for reconstruction by relabelling its schema id.
+
+Its opt-in is for the local owner pilot, not canonical reconstruction or model training.
+Mission linkage, explicit allowed uses and retention, the four output roles, measured
+clock uncertainty, canonical pose conversion and verified depth representation/registration
+remain to be implemented and validated on devices. Unknown measurements cannot be
+replaced with invented defaults. See `ar/README.md` and `TODO(capture-contract)` in
+`ar/Assets/McCluster/Runtime/CaptureManifestV1.cs`. The scaffold has no upload route.
+
 ## What remains
 
-- The native ARKit/ARCore client and its consent UI.
+- Canonical contract integration and consent UI for the native ARKit/ARCore scaffold.
 - The intake route (beside `/v1/live`, flagged) and private storage.
 - Retention jobs.
 - Field tests on named devices: a LiDAR iPhone, a non-LiDAR iPhone and a representative Android. These cover

@@ -91,3 +91,21 @@ test('a replay with generated additions is a reenactment or fiction, never proof
   assert.ok(codes(mutate(NATIVE, (m) => { m.outputs.replay_recipe.label = 'faithful_replay'; })).includes('generated_label'));
   assert.ok(codes(mutate(NATIVE, (m) => { m.outputs.replay_recipe.proof = true; })).includes('not_proof'));
 });
+
+
+test('the Unity local pilot draft cannot masquerade as a canonical capture manifest', () => {
+  const source = read('ar/Assets/McCluster/Runtime/CaptureManifestV1.cs');
+  const draftSchema = source.match(/public string schema = "([^"]+)";/)?.[1];
+  assert.equal(draftSchema, 'mccluster.capture-manifest.v1-draft');
+  assert.notEqual(draftSchema, SCHEMA_ID);
+  // Even an otherwise valid synthetic canonical record is refused with the pilot identifier.
+  assert.ok(codes(mutate(NATIVE, (m) => { m.schema = draftSchema; })).includes('schema'));
+  // A draft-shaped object is not made valid by changing only its identifier.
+  const draftShape = { schema: SCHEMA_ID, session: {}, timing: {}, frames: [], summary: {} };
+  assert.equal(validateCaptureManifest(draftShape).ok, false);
+  assert.ok(codes(draftShape).includes('mission_link'));
+  assert.match(source, /NOT compatible with mccluster\.spatial\.capture-manifest\.v1/);
+  assert.match(source, /never upload or use for reconstruction/);
+  assert.match(read('ar/README.md'), /validator deliberately rejects this pilot record/);
+  assert.match(read('docs/spatial/CAPTURE-MANIFEST.md'), /Unity Phase A scaffold compatibility/);
+});
