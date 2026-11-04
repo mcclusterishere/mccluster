@@ -13,7 +13,7 @@ export function mountArcadeGlobe() {
   }
   window.addEventListener('message',e=>{
     if(e.origin!==location.origin||e.source!==frame.contentWindow)return;
-    if(e.data?.type==='hu:globe-ready'){if(!ready){ready=true;show();}status.textContent='Bridgeport · select a street entrance below or pick it on the globe.';}
+    if(e.data?.type==='hu:globe-ready'){if(!ready){ready=true;show(!!selected);}status.textContent='Bridgeport · select a street entrance below or pick it on the globe.';}
     if(e.data?.type==='hu:globe-unavailable'){ready=false;status.textContent='Globe unavailable. Select an entrance on the street map below.';}
     if(e.data?.type==='arcade:view')document.dispatchEvent(new CustomEvent('arcade:view',{detail:e.data}));
     if(e.data?.type==='hu:travel-location-selected'){document.dispatchEvent(new CustomEvent('arcade:map-picked',{detail:e.data.coordinates}));}

@@ -8,7 +8,7 @@ export function mountLoading(){
  }});
  for(const k of Object.keys(config)){const label=document.createElement('label');label.textContent=k;const input=document.createElement('input');input.type='number';input.step=k==='maxBytes'||k==='maxHeight'?'1':'0.0001';input.value=config[k];input.dataset.loadSetting=k;label.append(input);root.append(label);}
  const b=document.createElement('button');b.className='action';b.textContent='Apply loading settings';b.onclick=()=>{try{const next={};root.querySelectorAll('input').forEach(i=>next[i.dataset.loadSetting]=Number(i.value));config=validateLoading(next);loader.setConfig(config);localStorage.setItem(key,JSON.stringify(config));status.textContent='Loading settings saved on this device.';}catch(e){status.textContent=e.message;}};root.append(b);
- let active=false;
- document.addEventListener('arcade:view',e=>{if(active){if(!withinRegion(e.detail,config))document.dispatchEvent(new CustomEvent('arcade:leave-region'));return;}loader.observe(e.detail).then(n=>{if(n)document.dispatchEvent(new CustomEvent('arcade:geometry',{detail:n}));}).catch(()=>{});});
+ let active=false,seenInside=false;
+ document.addEventListener('arcade:view',e=>{const inside=withinRegion(e.detail,config);if(active){if(inside)seenInside=true;else if(seenInside)document.dispatchEvent(new CustomEvent('arcade:leave-region'));return;}seenInside=inside;loader.observe(e.detail).then(n=>{if(n)document.dispatchEvent(new CustomEvent('arcade:geometry',{detail:n}));}).catch(()=>{});});
  return {async enter(){active=true;const n=await loader.load('entry');document.dispatchEvent(new CustomEvent('arcade:geometry',{detail:n}));return n;},leave(){active=false;loader.unload();document.dispatchEvent(new CustomEvent('arcade:unloaded'));},get loaded(){return loader.loaded;}};
 }

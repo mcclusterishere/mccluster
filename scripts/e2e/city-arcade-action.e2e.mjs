@@ -104,6 +104,11 @@ try {
     await page.waitForFunction(()=>document.querySelector('#arcade-load-status').textContent.includes('unloaded'));checks++;
     await page.locator('[data-location-id="bridgeport-main-elm"]').click();await page.locator('[data-game="gauranfucking-tea-tea-rush"]').click();await page.locator('.tea-scene').waitFor();await page.locator('[data-start]').click();
     await frame.evaluate(()=>parent.postMessage({type:'arcade:view',lon:0,lat:0,height:1e7},location.origin));
+    // Explicit entry can precede the globe's initial flight. An initial distant report
+    // must not cancel it; disposal starts after the viewer has reached the region.
+    await page.waitForTimeout(100);assert.equal(await page.locator('.tea-scene').count(),1);checks++;
+    await frame.evaluate(()=>parent.postMessage({type:'arcade:view',lon:-73.19,lat:41.18,height:900},location.origin));
+    await frame.evaluate(()=>parent.postMessage({type:'arcade:view',lon:0,lat:0,height:1e7},location.origin));
     await page.waitForFunction(()=>!document.querySelector('.tea-scene'));assert.ok(await page.evaluate(()=>localStorage.getItem('here.city-arcade.tea-action.session.v1:bridgeport-main-elm')));checks++;
     const measurements=await page.evaluate(()=>performance.getEntriesByType('resource').filter(x=>/locations.v1.json|district.v1.json/.test(x.name)).map(x=>({file:x.name.split('/').at(-1),encodedBodySize:x.encodedBodySize,transferSize:x.transferSize})));console.log('Measured local resources',measurements);
     await context.close();

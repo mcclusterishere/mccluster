@@ -1,3 +1,4 @@
+import {mountSoleSpatial} from './sole-spatial.mjs';
 import {arcadeRequest} from './cloud.mjs';
 import {missionKey,validateMission} from './mission-contract.mjs';
 import {SOLE_MISSION,STREET_STOPS,validateSoleMission,newStreetRun,roadGraph,streetPath,targetPoint,stepStreet,encounterAction} from './sole-street-engine.mjs';
@@ -19,6 +20,11 @@ export function mountSoleStreet(root,onFinish,{locationId,point,neighborhood,onR
  const $=s=>root.querySelector(s),canvas=$('.tea-scene'),ctx=canvas.getContext('2d'),mini=$('.sole-minimap'),mc=mini.getContext('2d');$('[data-sole-config]').value=JSON.stringify(state.config,null,2);
  function clear(){keys.clear();held.clear();}
  function persist(){try{if(['playing','paused','ready'].includes(state.status))localStorage.setItem(key,JSON.stringify({...state,locationId,cloudRun}));else localStorage.removeItem(key);}catch{}}
+ let spatialDisabled=null;
+ const disposeSpatial=mountSoleSpatial(root,{locationId,canEnter:()=>!busy&&!state.config.blockedRoads.length,onActive:active=>{
+  if(active){pause();spatialDisabled=new Map([...root.querySelectorAll('button,input,textarea')].filter(el=>!el.closest('[data-sole-spatial]')).map(el=>[el,el.disabled]));for(const el of spatialDisabled.keys())el.disabled=true;canvas.inert=true;}
+  else{for(const [el,disabled]of spatialDisabled||[])el.disabled=disabled;spatialDisabled=null;canvas.inert=false;}
+ }});
  function setState(next){state=next;graph=roadGraph(neighborhood,next.config.blockedRoads);recorded=false;error='';clear();cloudRun=null;pending=null;$('[data-sole-config]').value=JSON.stringify(next.config,null,2);}
  function cloudStatus(text){if(!disposed)$('[data-sole-cloud-status]').textContent=text;}
  async function cloudTask(fn){if(busy)return;busy=true;root.querySelectorAll('[data-sole-load],[data-sole-save],[data-sole-cloud-play],[data-sole-apply]').forEach(b=>b.disabled=true);try{await fn();}catch(e){cloudStatus(e.message);}finally{busy=false;if(!disposed){root.querySelectorAll('[data-sole-load],[data-sole-save],[data-sole-apply]').forEach(b=>b.disabled=false);$('[data-sole-cloud-play]').disabled=revision===null;}}}
@@ -64,5 +70,5 @@ export function mountSoleStreet(root,onFinish,{locationId,point,neighborhood,onR
   frame=requestAnimationFrame(tick);
  }
  frame=requestAnimationFrame(tick);
- return ()=>{disposed=true;persist();cancelAnimationFrame(frame);abort.abort();clear();graph=null;neighborhood=null;};
+ return ()=>{disposed=true;disposeSpatial();persist();cancelAnimationFrame(frame);abort.abort();clear();graph=null;neighborhood=null;};
 }
