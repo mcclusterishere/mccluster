@@ -138,3 +138,7 @@ This is stacked on #736; stacked-base CI does not run the complete main-target w
 Full integration checks are still required after the base is incorporated. Do not merge #738's
 already incorporated streaming changes twice. PRIM3 and Arcade adapter implementation stays with
 its owning tasks; this checkpoint changes no resolver, legacy mission or save reader.
+
+The additive [downtown v2 contract](BRIDGEPORT-DOWNTOWN-V2.md) connects the five source-backed
+Arcade street stops in the same frame. V1 data, default lifecycle behavior and save slot remain
+available unchanged. V2 requires explicit region selection and does not import old poses silently.

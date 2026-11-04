@@ -973,22 +973,23 @@ let haloPhotoreal=false,haloLoad=null,haloMapFailed=false;
 function isOwner(){const t=sessionToken();return !!(t&&access&&access.release?.version==='globe-admin-preview/v1'&&access.release.admin_preview===true&&accessToken===t)}
 function haloScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+(HU_V?'?v='+encodeURIComponent(HU_V):'');s.onload=res;s.onerror=()=>rej(Error(src));document.head.appendChild(s)})}
 function haloStyle(href){return new Promise(res=>{if(document.querySelector('link[data-halo="'+href+'"]'))return res();const l=document.createElement('link');l.rel='stylesheet';l.href=href+(HU_V?'?v='+encodeURIComponent(HU_V):'');l.dataset.halo=href;l.onload=l.onerror=()=>res();document.head.appendChild(l)})}
-let bridgeportLoading=false,bridgeportDeepLink=false,bridgeportEntrance=null;
+let bridgeportLoading=false,bridgeportDeepLink=false,bridgeportEntrance=null,bridgeportRegion=new URLSearchParams(location.search).get('bridgeport')==='2'?'bridgeport-downtown.v2':'bridgeport-golden-hill.v1';
 window.addEventListener('message',event=>{
  if(event.origin!==location.origin||event.source!==window.parent||window.parent===window||!isOwner())return;
  const m=event.data;if(m?.schema!=='mccluster.spatial-lifecycle/v1')return;
- if(m.type==='bridgeport:enter'&&['bridgeport-main-golden-hill','golden-hill-west'].includes(m.entranceId)){bridgeportEntrance=m.entranceId;document.getElementById('bridgeportEnter')?.click();}
+ if(m.type==='bridgeport:enter'&&['bridgeport-main-elm','bridgeport-main-fairfield','bridgeport-middle-golden-hill','bridgeport-main-south','bridgeport-main-golden-hill','golden-hill-west'].includes(m.entranceId)){if(m.regionId&&!['bridgeport-golden-hill.v1','bridgeport-downtown.v2'].includes(m.regionId))return;bridgeportRegion=m.regionId||'bridgeport-golden-hill.v1';bridgeportEntrance=m.entranceId;document.getElementById('bridgeportEnter')?.click();}
  if(m.type==='bridgeport:leave')window.BridgeportSlice?.leave();
  if(m.type==='bridgeport:preview')window.BridgeportSlice?.previewDestination(m.destinationId);
+ if(m.type==='bridgeport:closures')window.BridgeportSlice?.setClosures(m.closedRoadIds);
  if(m.type==='bridgeport:confirm')window.BridgeportSlice?.confirm();
 });
 window.addEventListener('pagehide',()=>{window.BridgeportSlice?.destroy();window.BridgeportSlice=null;});
 function bridgeportSync(){
  if(!viewer)return;let door=document.getElementById('bridgeportEnter');
  if(!door){door=document.createElement('button');door.id='bridgeportEnter';door.type='button';door.textContent='Bridgeport walk';door.style.cssText='position:fixed;top:80px;left:12px;z-index:120;font:16px system-ui;min-height:44px';document.body.append(door);
- door.onclick=async()=>{if(!isOwner()||bridgeportLoading)return;if(window.BridgeportSlice){window.BridgeportSlice.enter({entranceId:bridgeportEntrance});return;}bridgeportLoading=true;door.disabled=true;try{const m=await import('./spatial/bridgeport-globe.mjs');if(!isOwner())return;window.BridgeportSlice=m.mountBridgeport({globe:window.HuGlobe,C:Cesium});window.BridgeportSlice.enter({entranceId:bridgeportEntrance});}catch(e){door.textContent='Retry Bridgeport walk';}finally{bridgeportLoading=false;door.disabled=false;}};}
+ door.onclick=async()=>{if(!isOwner()||bridgeportLoading)return;if(window.BridgeportSlice){window.BridgeportSlice.enter({entranceId:bridgeportEntrance,regionId:bridgeportRegion});return;}bridgeportLoading=true;door.disabled=true;try{const m=await import('./spatial/bridgeport-globe.mjs');if(!isOwner())return;window.BridgeportSlice=m.mountBridgeport({globe:window.HuGlobe,C:Cesium});window.BridgeportSlice.enter({entranceId:bridgeportEntrance,regionId:bridgeportRegion});}catch(e){door.textContent='Retry Bridgeport walk';}finally{bridgeportLoading=false;door.disabled=false;}};}
  door.hidden=!isOwner();if(!isOwner())window.BridgeportSlice?.leave(false);
- if(isOwner()&&!bridgeportDeepLink&&new URLSearchParams(location.search).get('bridgeport')==='1'){bridgeportDeepLink=true;door.click();}
+ if(isOwner()&&!bridgeportDeepLink&&['1','2'].includes(new URLSearchParams(location.search).get('bridgeport'))){bridgeportDeepLink=true;door.click();}
 }
 function haloSync(){bridgeportSync();const owner=isOwner()&&!ANALYTICS&&EDITORIAL,door=$('ctlHalo');if(door)door.hidden=!owner;
  if(!EXPLORE||BARE||(!viewer&&!haloMapFailed))return;

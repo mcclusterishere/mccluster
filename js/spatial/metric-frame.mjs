@@ -32,4 +32,7 @@ export function localCell(spec,topology,{x,z}) {
   return {q:Q,r:R};
 }
 export const cellId=(floor,topology,q,r)=>`${floor}:${topology}:${q}:${r}`;
+// Explicit adapter to the recorded legacy projection; never a legacy-save rewrite.
+export function legacyToLocal(contract,{x,y=0,z}){const l=contract.legacyFrame;if(!l||![x,y,z].every(Number.isFinite))throw Error('Unsupported legacy frame');return metricFrame(contract.frame.anchor).toLocal({lon:l.lon0+(x-l.xOffset)/(l.metresPerDegree*Math.cos(l.lat0*RAD)),lat:l.lat0-(z-l.zOffset)/l.metresPerDegree,h:y});}
+export function localToLegacy(contract,p){const l=contract.legacyFrame;if(!l)throw Error('Unsupported legacy frame');const g=metricFrame(contract.frame.anchor).toGeo(p);return {x:(g.lon-l.lon0)*l.metresPerDegree*Math.cos(l.lat0*RAD)+l.xOffset,y:g.h,z:-(g.lat-l.lat0)*l.metresPerDegree+l.zOffset};}
 export function polygon(spec,topology,q,r){const c=cellCenter(spec,topology,q,r),t=spec.topologies[topology];return topology==='hex'?Array.from({length:6},(_,i)=>({x:c.x+t.radiusM*Math.cos((60*i-30)*RAD),z:c.z+t.radiusM*Math.sin((60*i-30)*RAD)})):[[-.5,-.5],[.5,-.5],[.5,.5],[-.5,.5]].map(([x,z])=>({x:c.x+x*t.sideM,z:c.z+z*t.sideM}));}

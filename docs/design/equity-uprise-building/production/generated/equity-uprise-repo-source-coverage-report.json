@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 613,
+  "candidate_count": 614,
   "capability_source_count": 104,
-  "support_only_count": 509,
-  "checks_total": 2350,
-  "checks_passed": 2350,
+  "support_only_count": 510,
+  "checks_total": 2354,
+  "checks_passed": 2354,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -224,6 +224,7 @@
     "docs/seo/query-set.json",
     "docs/shake-delivery.md",
     "docs/social-desk-setup.md",
+    "docs/spatial/BRIDGEPORT-DOWNTOWN-V2.md",
     "docs/stocksy-shot-list.md",
     "docs/the-mission-fund.md",
     "docs/travel/TRAVEL-FIRST-WORLD-STANDARD-20261017.md",
@@ -627,7 +628,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "613 entries"
+      "detail": "614 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -12371,6 +12372,26 @@
     },
     {
       "name": "scripts/test/fictional-city-vertical-handoff.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/spatial/BRIDGEPORT-DOWNTOWN-V2.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/spatial/BRIDGEPORT-DOWNTOWN-V2.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/spatial/BRIDGEPORT-DOWNTOWN-V2.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/spatial/BRIDGEPORT-DOWNTOWN-V2.md support rationale present",
       "passed": true,
       "detail": ""
     }
