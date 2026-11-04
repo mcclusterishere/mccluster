@@ -1,0 +1,43 @@
+{
+  "schema": "mccluster.arcade-locations/v1",
+  "neighborhoodId": "bridgeport-robbery-1s",
+  "sourceSha256": "04573862816648191d1b09dae6e2719db0df429d48c1da5b10c4c6e89bced09a",
+  "geography": {
+    "geographicOrigin": [
+      -73.1903,
+      41.1798
+    ],
+    "worldOffsetXZ": [
+      0,
+      -220
+    ]
+  },
+  "locations": [
+    {
+      "id": "bridgeport-main-elm",
+      "name": "Main Street & Elm Street",
+      "roadId": "bridgeport-osm-186839735-0",
+      "point": [
+        51.1422,
+        -253.0175
+      ],
+      "coordinates": [
+        -73.18968959958067,
+        41.1800965998922
+      ]
+    },
+    {
+      "id": "bridgeport-main-golden-hill",
+      "name": "Main Street & Golden Hill Street",
+      "roadId": "bridgeport-osm-186839735-0",
+      "point": [
+        42.7721,
+        -296.0761
+      ],
+      "coordinates": [
+        -73.18978949971304,
+        41.180483400107796
+      ]
+    }
+  ]
+}
