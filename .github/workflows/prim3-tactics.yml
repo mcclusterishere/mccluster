@@ -1,0 +1,52 @@
+name: PRIM3 tactical regressions
+
+on:
+  pull_request:
+    paths:
+      - 'js/prim3-tactics/**'
+      - 'prim3-tactics-preview.html'
+      - 'prim3-transit.html'
+      - 'scripts/test/prim3-*.test.mjs'
+      - 'scripts/e2e/prim3-tactics-hints.e2e.mjs'
+      - 'scripts/e2e/prim3-transit-lifecycle.e2e.mjs'
+      - 'scripts/prim3/*-sim.mjs'
+      - 'scripts/test/fixtures/blind-the-floor-replays.json'
+      - 'scripts/test/fixtures/hq-drill-full-strength-win.json'
+      - '.github/workflows/prim3-tactics.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  tactics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Check tactical contracts and vendored engine hashes
+        run: node --test scripts/test/prim3-*.test.mjs
+      - name: Install pinned local browser and renderer fixtures
+        run: |
+          npm install --prefix /tmp/prim3-qa --ignore-scripts --no-audit --no-fund --no-save playwright@1.57.0 three@0.180.0
+          /tmp/prim3-qa/node_modules/.bin/playwright install --with-deps chromium
+      - name: Exercise phone and desktop tactics in 2D and 3D
+        env:
+          PLAYWRIGHT_DIR: /tmp/prim3-qa/node_modules
+          THREE_DIR: /tmp/prim3-qa/node_modules/three
+        run: node scripts/e2e/prim3-tactics-hints.e2e.mjs /tmp/prim3-proof
+      - name: Verify mission recovery and saved-state failures
+        env:
+          PLAYWRIGHT_DIR: /tmp/prim3-qa/node_modules
+        run: node scripts/e2e/prim3-transit-lifecycle.e2e.mjs
+      - name: Preserve browser evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: prim3-tactical-browser-evidence
+          path: /tmp/prim3-proof
+          if-no-files-found: ignore

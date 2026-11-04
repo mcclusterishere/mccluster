@@ -23,7 +23,7 @@ function goalCost(s, unitId, goals) {
   const base = { ...s, units: s.units.filter((u) => u.id === unitId) };
   const best = new Map();
   for (const g of goals) {
-    if (s.units.some((o) => o.id !== (typeof unitId !== 'undefined' ? unitId : id) && !o.dead && o.x === g.x && o.y === g.y && o.z === g.z)) continue; // a goal someone else stands on is taken
+    if (s.units.some((o) => o.id !== (typeof unitId !== 'undefined' ? unitId : id) && !o.dead && !R.isExtracted(o) && o.x === g.x && o.y === g.y && o.z === g.z)) continue; // a goal someone else stands on is taken
     const probe = { ...base, units: base.units.map((u) => ({ ...u, x: g.x, y: g.y, z: g.z, ap: 2 })) };
     let reach; try { reach = R.computeReach(probe, unitId, Infinity); } catch (e) { continue; }
     for (let z = 0; z < s.floors; z += 1) for (let y = 0; y < s.height; y += 1) for (let x = 0; x < s.width; x += 1) {

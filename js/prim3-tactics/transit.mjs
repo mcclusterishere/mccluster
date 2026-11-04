@@ -8,11 +8,11 @@
 
    What the player sees is the engine's player projection (fog of war): unseen hostiles are never
    drawn, listed, animated or used for previews. */
-import { createState, beginPlayerPhase, beginThreatPhase, resolveClockStatePhase, moveUnit, fireWeapon,
-  enterOverwatch, hunkerDown, reload, shotPreview, stabilize, technicalAction, extractUnit, missionComplete, drawRolls, hasLineOfSight, gridDistance,
+import { createState, beginPlayerPhase, moveUnit, fireWeapon,
+  enterOverwatch, hunkerDown, reload, shotPreview, stabilize, technicalAction, extractUnit, drawRolls, hasLineOfSight, gridDistance,
   techActionPreview, jamMachine, syncPulse, markMachine } from './tactical-resolver.mjs';
 import { playerProjection, knownPaths } from './tactical-hints.mjs';
-import { runThreatPhase } from './tactical-threat-ai.mjs';
+import { resolveHostileTurn, genericOutcome, parseResume } from './lifecycle.mjs';
 import { loadLevel } from './levels/index.mjs';
 import { operatorHeight } from './scale.mjs';
 import { DATA_URL as WORLD_MISSIONS, DRAFT_KEY as WORLD_DRAFTS, findMission } from '../prim3-world/missions.mjs';
@@ -34,7 +34,7 @@ const TXT = {
   objLine: LM.objectiveLine || 'T must connect twice.', doneLine: LM.doneLine || 'Relay linked.',
   logLink: LM.logLink || ((n) => `T links the relay (${n}/2).`), logDone: LM.logDone || 'Relay linked. Extract at the south-west pad.',
   logBreach: LM.logBreach || 'E breaches the service gate.', held: LM.held || 'The gate held', refused: LM.refused || 'The relay refused the link',
-  doneTitle: LM.doneTitle || 'Relay secured', failT: LM.failT || 'Technical was lost. The relay cannot be linked.'
+  doneTitle: LM.doneTitle || 'Relay secured', failT: LM.failT || 'Technical cannot continue. The relay cannot be linked.'
 };
 const floorName = (z) => (LEVEL.floorName ? LEVEL.floorName(z) : z ? 'roof' : '');
 if (LEVEL.LEVEL_ID !== 'transit-relay') { // the page's own headings follow the level
@@ -69,10 +69,26 @@ const D = (x, y) => { const d = toDisplay(x, y); return `(${d.X}, ${d.Y})`; };
 
 /* ---------- state, save ---------- */
 function fresh() { const seed = Number(PARAMS.get('seed')) || (Date.now() % 1e9); return HOOKS ? HOOKS.createState(seed) : beginPlayerPhase(createState(LEVEL.engineConfig({ seed }))); }
+let saveBlocked = false, saveMessage = '';
+const initialState = fresh();
 function load() {
-  try { const s = JSON.parse(localStorage.getItem(SAVE) || 'null'); return s && s.v === 1 && s.state && Array.isArray(s.state.units) ? s.state : null; } catch (e) { return null; }
+  if (PARAMS.get('new') === '1') return null;
+  try { return parseResume(localStorage.getItem(SAVE), initialState, W, H); }
+  catch (e) { saveBlocked = true; saveMessage = 'The saved mission could not be resumed. It has been kept unchanged. Use Settings → Restart mission to start a new save.'; return null; }
 }
-function save() { try { localStorage.setItem(SAVE, JSON.stringify({ v: 1, at: Date.now(), state, log: log.slice(-60) })); } catch (e) {} syncScreens(); }
+const resumed = load();
+function paintSaveNotice() {
+  let notice = $('txSaveNotice');
+  if (!notice) { notice = document.createElement('p'); notice.id = 'txSaveNotice'; notice.className = 'sh-sub'; notice.setAttribute('role', 'status'); $('txObj').after(notice); }
+  notice.textContent = saveMessage; notice.hidden = !saveMessage;
+}
+function save() {
+  if (!saveBlocked) {
+    try { localStorage.setItem(SAVE, JSON.stringify({ v: 1, at: Date.now(), state, log: log.slice(-60), explored: Array.from(explored) })); saveMessage = ''; }
+    catch (e) { saveMessage = 'Progress could not be saved in this browser. Keep this page open; the next action will retry.'; }
+  }
+  paintSaveNotice(); syncScreens();
+}
 // A level whose mission drives the building's sandbox (B1) mirrors its live outages into the screens' MISSION
 // session, so a camera the game cut shows no signal on the NOC/camera screens; WORKPLACE/TRAINING never see it.
 let screensState = null, lastScreenFaults = '';
@@ -82,8 +98,8 @@ function syncScreens() {
   if (key === lastScreenFaults) return; lastScreenFaults = key;
   (screensState ||= import('../eu-screens/state.mjs')).then((m) => m.setMissionFaults(faults, { presetId: LEVEL.LEVEL_ID })).catch(() => {});
 }
-let state = (PARAMS.get('new') === '1' ? null : load()) || fresh();
-let log = (() => { try { const s = JSON.parse(localStorage.getItem(SAVE) || 'null'); return (s && s.log) || []; } catch (e) { return []; } })();
+let state = resumed ? resumed.state : initialState;
+let log = resumed ? resumed.log : [];
 let ui = { sel: 'T1', mode: null, preview: null, busy: false, mapOpen: false, setOpen: false, ended: null, objOpen: false, briefed: false };
 /* A World mission (prim3-world.html → ?mission=<id>&new=1) only dresses this level: its title, character and briefing go in
    the objective card and the first log line. Rules, map and saves are the level's own. An unknown id is ignored. */
@@ -128,7 +144,7 @@ function reach(u, dash) {
    A tile is lit if a living, deployed operative is within its detection radius and has line of sight
    to it (the same test the engine uses to spot units). Tiles seen before stay half-lit (explored).
    Only the shade is drawn from this; hostiles are still shown only through the player projection. */
-let explored = new Uint8Array(W * H);
+let explored = resumed && resumed.explored ? Uint8Array.from(resumed.explored) : new Uint8Array(W * H);
 function visibleTiles() {
   const vis = new Uint8Array(W * H), sel = unitOf(ui.sel), selZ = sel ? sel.z : 0;
   // the squad's own working cameras see for it (the engine's rule); a blinded camera sees nothing
@@ -208,7 +224,7 @@ function ensure3d() {
     if (LEVEL.OPENING && state.round <= 1 && r3.frame) r3.frame(LEVEL.OPENING); // a level's own opening shot (the tower, large)
     else if (s) r3.focus((s.x + OBJ.x) / 2, (s.y + OBJ.y) / 2 + Math.min(4, H / 16), 0, LEVEL.OPENING_DIST || Math.min(30, Math.max(W, H) * 1.2)); // a level may open wider (a tower)
     render();
-  }).catch((e) => { r3loading = null; toast('The 3D view could not load here. ' + esc(e.message || '')); });
+  }).catch((e) => { r3loading = null; if (!toastMsg) toast('The 3D view could not load here. ' + esc(e.message || '')); });
 }
 
 // a building level's cutaway: the storey of the selected operative; Floor 1 as soon as anyone is inside or a
@@ -258,10 +274,11 @@ function objectiveModel() {
 
 /* ---------- rendering ---------- */
 function render() {
+  paintSaveNotice();
   const sel = unitOf(ui.sel);
   if (!r3 && !r3loading) ensure3d();
   if (r3 && !ui.holdBoard) r3.update(boardModel()); // frozen while engine events play out
-  if (r3 && !ui.holdBoard) { const k = state.units.filter((u) => u.faction === 'PLAYER').map((u) => `${u.x},${u.y},${u.z},${u.dead},${u.downed}`).join('|') + state.round + (state.machines || []).map((q) => q.state).join() + ui.sel; if (k !== fogKey) { fogKey = k; lastVis = visibleTiles(); r3.setFog(fogCells(lastVis)); } }
+  if (r3 && !ui.holdBoard) { const k = state.units.filter((u) => u.faction === 'PLAYER').map((u) => `${u.x},${u.y},${u.z},${u.dead},${u.downed},${extracted(u)}`).join('|') + state.round + (state.machines || []).map((q) => q.state).join() + ui.sel; if (k !== fogKey) { fogKey = k; lastVis = visibleTiles(); r3.setFog(fogCells(lastVis)); } }
   // top bar
   $('txTurn').textContent = String(state.round).padStart(2, '0');
   const ph = $('txPhase'); ph.textContent = ui.ended ? (ui.ended === 'win' ? 'Complete' : 'Failed') : state.phase === 'PLAYER' && !ui.busy ? 'Your move' : 'Threat move';
@@ -524,16 +541,21 @@ async function endTurn() {
   if (ui.busy || ui.ended || state.phase !== 'PLAYER') return;
   ui.mode = null; ui.preview = null; ui.reach = null; toastMsg = '';
   const before = state;
-  let next = beginThreatPhase(state);
-  try { next = runThreatPhase(next).state; } catch (e) { say('Threat phase error: ' + e.message); }
-  if (HOOKS) { const a = HOOKS.afterThreat(next); next = a.state; for (const l of a.log) say(l); }
-  const events = next.events.slice(before.events.length);
-  // the whole hostile turn is resolved and saved before any of it is shown: a reload mid-turn lands
-  // on the outcome, never back before End turn
-  state = beginPlayerPhase(resolveClockStatePhase(next));
-  if (HOOKS) state = HOOKS.sync(state);
+  let turn;
+  try { turn = resolveHostileTurn(before, HOOKS); }
+  catch (e) {
+    toast('The threat turn could not finish. No turn or clock was spent. End turn retries the same state.');
+    console.error('PRIM3 threat turn failed', e);
+    render(); return;
+  }
+  // Commit only the complete hostile turn before animation; a reload resumes its outcome.
+  state = turn.state;
+  for (const line of turn.log) say(line);
+  const events = turn.events;
   save();
-  await play(events, before);
+  try { await play(events, before); }
+  catch (e) { toastMsg = 'The turn resolved, but its animation could not finish.'; console.error('PRIM3 turn animation failed', e); }
+  finally { ui.busy = false; ui.holdBoard = false; }
   say(`New round. Escalation ${state.mission.escalation}.`);
   const s = unitOf(ui.sel); if (!s || s.dead || s.downed || extracted(s)) { const n = state.units.find((u) => u.faction === 'PLAYER' && !u.dead && !u.downed && !extracted(u)); if (n) ui.sel = n.id; }
   afterChange();
@@ -542,12 +564,7 @@ async function endTurn() {
 const LOSE = { 'lose-t': () => TXT.failT, 'lose-all': () => 'No one is left standing.', 'lose-clock': () => 'The exercise window closed.', 'lose-verified': () => 'A defender verified a live picture: the red team is on camera.', 'lose-downed': () => 'A downed operative cannot be brought out: the exercise cannot be completed.' };
 function checkEnd() {
   if (HOOKS) return HOOKS.outcome(state);
-  const t = unitOf('T1');
-  const squad = state.units.filter((u) => u.faction === 'PLAYER');
-  if (missionComplete(state)) return 'win';
-  if (t && t.dead) return 'lose-t';
-  if (squad.every((u) => u.dead || (u.downed && !extracted(u)))) return 'lose-all';
-  return null;
+  return genericOutcome(state, OBJ_NODE);
 }
 function afterChange() {
   const end = checkEnd();
@@ -571,6 +588,7 @@ function showBrief() {
   $('txEnd').hidden = false;
 }
 function restart() {
+  saveBlocked = false; saveMessage = '';
   try { localStorage.removeItem(SAVE); } catch (e) {}
   explored = new Uint8Array(W * H); fogKey = '';
   state = fresh(); log = []; ui = { ...ui, sel: 'T1', mode: null, preview: null, reach: null, busy: false, ended: null };
@@ -611,7 +629,8 @@ if (HOOKS && HOOKS.sideSwitch) { // a side switch in the settings: each side is 
 }
 render();
 showBrief();
-if (HOOKS && ui.ended == null) { const end = checkEnd(); if (end) afterChange(); }
+if (ui.ended == null) { const end = checkEnd(); if (end) afterChange(); }
+window.addEventListener('pagehide', save);
 if (MISSION_ID) {
   const fromDraft = () => { try { return findMission(JSON.parse(localStorage.getItem(WORLD_DRAFTS) || 'null'), MISSION_ID); } catch (e) { return null; } };
   fetch(WORLD_MISSIONS).then((r) => (r.ok ? r.json() : null)).catch(() => null)

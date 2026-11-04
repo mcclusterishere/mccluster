@@ -878,6 +878,15 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
     get diving() { return !!diveAnim; },
     isAnimating() { return busy || !!fireAnim || [...actors.values()].some((a) => a.walk || a.dying); },
     unitPosition(id) { const a = actors.get(id); return a ? { x: a.g.position.x, y: a.g.position.z } : null; },
+    // Project the rendered torso, including its current pose/scale, rather than guessing a world-space height.
+    unitScreenPoint(id) {
+      const a = actors.get(id); if (!a) return null;
+      a.g.updateWorldMatrix(true, true); placeCamera();
+      const body = a.rig?.chest?.children.find((o) => o.isMesh) || a.g;
+      const point = new THREE.Box3().setFromObject(body).getCenter(new THREE.Vector3());
+      const p = project(point.x, point.z, point.y), r = el.getBoundingClientRect();
+      return { x: r.left + p.x, y: r.top + p.y };
+    },
     // test/accessibility hook: where a tile's centre is on screen right now (client coordinates)
     screenOf(x, y, h = 0) { placeCamera(); const p = project(x, y, h); const r = el.getBoundingClientRect(); return { x: r.left + p.x, y: r.top + p.y }; },
     tileAt,

@@ -171,7 +171,7 @@ const THREE_DIR=process.env.THREE_DIR||(()=>{try{return createRequire(join(proce
 if(!THREE_DIR){console.log('SKIP [3d] three@0.180.0 not installed locally (set THREE_DIR); the 3D checks did not run');}
 else for(const vp of [{width:390,height:844},{width:1280,height:900}]){
   const scope='3d-'+vp.width;
-  const browser3=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE||undefined,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+  const browser3=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE||process.env.CHROMIUM_PATH||undefined,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
   const ctx=await browser3.newContext({viewport:vp,serviceWorkers:'block',hasTouch:vp.width<1000});
   await ctx.addInitScript(()=>{try{localStorage.clear();localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));localStorage.setItem('mccdb_session',JSON.stringify({access_token:'e2e-owner',expires_at:Math.floor(Date.now()/1000)+3600}));}catch(e){}});
   await ctx.route('**/*',async route=>{const u=new URL(route.request().url());if(u.href.startsWith('https://api.mccluster.org/v1/status'))return route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:'{"ok":true}'});
@@ -183,11 +183,12 @@ else for(const vp of [{width:390,height:844},{width:1280,height:900}]){
   await page.waitForFunction(()=>window.__tac&&window.__tac.mode3d,null,{timeout:20000});await page.waitForTimeout(400);
   const settle=async()=>{for(let i=0;i<60&&await page.evaluate(()=>window.__tac.busy3d());i++)await page.waitForTimeout(100);};
   const tap=async(x,y,h=0)=>{await settle();const p=await page.evaluate(([x,y,h])=>window.__tac.screenOf(x,y,h),[x,y,h]);await page.mouse.click(p.x,p.y);await page.waitForTimeout(150);};
+  const tapUnit=async(id)=>{await settle();const p=await page.evaluate(id=>window.__tac.unitScreenPoint(id),id);if(!p)throw Error('Missing rendered operative '+id);await page.mouse.click(p.x,p.y);await page.waitForTimeout(150);};
   check(scope,'3D is the default view and draws into a WebGL canvas',await page.locator('#tac3d canvas').count()===1&&await page.evaluate(()=>getComputedStyle(document.getElementById('tacBoard')).display==='none'));
   // textures and the HDR stream in after first paint; sample a few times so a mid-load frame is not a false failure
   let painted=0;for(let i=0;i<10&&painted<=30;i++){painted=await page.evaluate(()=>{const c=document.querySelector('#tac3d canvas');const g=c.getContext('webgl2')||c.getContext('webgl');const px=new Uint8Array(4);g.readPixels(Math.floor(c.width/2),Math.floor(c.height/2),1,1,g.RGBA,g.UNSIGNED_BYTE,px);return px[0]+px[1]+px[2];});if(painted<=30)await page.waitForTimeout(300);}
   check(scope,'the canvas actually renders the courtyard (centre pixel is not empty)',painted>30,painted);
-  await tap(1,2,0.8);
+  await tapUnit('E1');
   check(scope,'tapping E1 in 3D (body raycast) opens its menu beside it',await page.evaluate(()=>window.__tac.ui.menu&&window.__tac.ui.selected==='E1')&&await page.locator('#tacMenu.is-float').count()===1);
   const acts=await page.evaluate(()=>[...document.querySelectorAll('#tacMenu [data-act]')].map(b=>b.dataset.act));
   check(scope,'the 3D menu leads with Move, Inspect and Get hint; the rest sit under More',['move','inspect','hint','more'].every(a=>acts.includes(a))&&!acts.includes('dash'),acts);
@@ -206,11 +207,11 @@ else for(const vp of [{width:390,height:844},{width:1280,height:900}]){
   const sBefore=await page.evaluate(()=>window.__tac.screenOf(3,3,0));await page.locator('#tacRotate').click();await settle();
   const sAfter=await page.evaluate(()=>window.__tac.screenOf(3,3,0));
   check(scope,'rotate turns the camera a quarter turn',Math.hypot(sAfter.x-sBefore.x,sAfter.y-sBefore.y)>5,[sBefore,sAfter]);
-  await page.evaluate(()=>{window.__tac.ui.menu=false;});await tap(3,3,0.8);
+  await page.evaluate(()=>{window.__tac.ui.menu=false;});await tapUnit('E1');
   check(scope,'after rotating, a tap on E1 still selects E1 (raycast follows the camera)',await page.evaluate(()=>window.__tac.ui.menu&&window.__tac.ui.selected==='E1'));
   await page.locator('#tacMenu [data-act="close"]').click();
   await page.locator('#tacRotate').click();await page.locator('#tacRotate').click();await page.locator('#tacRotate').click();await settle();
-  await tap(3,3,0.8);await page.locator('[data-act="hint"]').click();
+  await tapUnit('E1');await page.locator('[data-act="hint"]').click();
   const labels=await page.evaluate(()=>[...document.querySelectorAll('.b3-label')].map(l=>l.textContent));
   check(scope,'the challenge labels Origin and Target in the scene',labels.some(t=>/^Origin \(3, 3\)$/.test(t))&&labels.some(t=>/^Target \(/.test(t)),labels.filter(t=>/Origin|Target/.test(t)));
   check(scope,'axis labels 0–9 are drawn in the scene',['0','9'].every(n=>labels.includes(n)));
@@ -229,7 +230,7 @@ else for(const vp of [{width:390,height:844},{width:1280,height:900}]){
    and the high presentation tier (image light, GTAO, bloom, SMAA) loads and renders without errors */
 if(THREE_DIR){
   const scope='3d-fire';
-  const browser3=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE||undefined,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+  const browser3=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE||process.env.CHROMIUM_PATH||undefined,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
   const ctx=await browser3.newContext({viewport:{width:390,height:844},serviceWorkers:'block',hasTouch:true});
   await ctx.addInitScript(()=>{try{localStorage.clear();localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));localStorage.setItem('mccdb_session',JSON.stringify({access_token:'e2e-owner',expires_at:Math.floor(Date.now()/1000)+3600}));}catch(e){}});
   await ctx.route('**/*',async route=>{const u=new URL(route.request().url());if(u.href.startsWith('https://api.mccluster.org/v1/status'))return route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:'{"ok":true}'});
@@ -246,7 +247,7 @@ if(THREE_DIR){
   let shooter=null;
   for(const id of ['E1','R1','T1']){
     const u=await unit(page,id);if(!u)continue;await settle();
-    const p=await page.evaluate(([x,y])=>window.__tac.screenOf(x,y,0.8),[u.x,u.y]);await page.mouse.click(p.x,p.y);await page.waitForTimeout(200);
+    const p=await page.evaluate(id=>window.__tac.unitScreenPoint(id),id);await page.mouse.click(p.x,p.y);await page.waitForTimeout(200);
     const acts=await page.evaluate(()=>[...document.querySelectorAll('#tacMenu [data-act]')].map(b=>b.dataset.act));
     const f=acts.find(a=>a.startsWith('fire:'));if(f){shooter={id,act:f};break;}
   }
@@ -269,7 +270,7 @@ if(THREE_DIR){
 /* main menu: real buttons over the battlefield in showcase; Deploy / Continue / New / Training / Graphics */
 if(THREE_DIR) for(const vp of [{width:390,height:844},{width:1280,height:900}]){
   const scope='menu-'+vp.width;
-  const browser3=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE||undefined,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+  const browser3=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE||process.env.CHROMIUM_PATH||undefined,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
   const ctx=await browser3.newContext({viewport:vp,serviceWorkers:'block',hasTouch:vp.width<1000});
   await ctx.addInitScript(()=>{try{if(!sessionStorage.getItem('seeded')){localStorage.clear();sessionStorage.setItem('seeded','1');}localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));localStorage.setItem('mccdb_session',JSON.stringify({access_token:'e2e-owner',expires_at:Math.floor(Date.now()/1000)+3600}));}catch(e){}});
   await ctx.route('**/*',async route=>{const u=new URL(route.request().url());if(u.href.startsWith('https://api.mccluster.org/v1/status'))return route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:'{"ok":true}'});
@@ -281,7 +282,7 @@ if(THREE_DIR) for(const vp of [{width:390,height:844},{width:1280,height:900}]){
   await page.waitForFunction(()=>window.__tac&&window.__tac.menuKey,null,{timeout:20000});await page.waitForTimeout(500);
   const opts=()=>page.evaluate(()=>[...document.querySelectorAll('#pmList [data-pm]')].map(b=>b.dataset.pm));
   check(scope,'a first visit opens the main menu; the battlefield waits behind it',await page.evaluate(()=>window.__tac.menuOpen&&!document.getElementById('p3Menu').hidden&&getComputedStyle(document.querySelector('.tac-stage')).display==='none'&&!window.__tac.mode3d));
-  check(scope,'with no save the choices are Deploy, Training and Graphics',JSON.stringify(await opts())===JSON.stringify(['new','training','graphics']),await opts());
+  check(scope,'with no save the menu includes the courtyard, Transit, HQ, B1, Training and Graphics',JSON.stringify(await opts())===JSON.stringify(['new','transit','hq','b1','training','graphics']),await opts());
   await page.waitForTimeout(800);const painted=await page.evaluate(()=>{const c=document.querySelector('#menu3d canvas');const g=c.getContext('webgl2')||c.getContext('webgl');const px=new Uint8Array(4);g.readPixels(Math.floor(c.width/2),Math.floor(c.height/2),1,1,g.RGBA,g.UNSIGNED_BYTE,px);return px[0]+px[1]+px[2];});
   check(scope,'the menu backdrop renders the battlefield courtyard',painted>20&&await page.evaluate(()=>window.__tac.menuKey)==='new',painted);
   check(scope,'menu buttons are at least 44px tall',await page.evaluate(()=>[...document.querySelectorAll('#p3Menu button')].every(b=>b.getBoundingClientRect().height>=44)));

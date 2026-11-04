@@ -294,6 +294,18 @@ function unitById(state, unitId) {
   return unit;
 }
 
+// Extracted units remain in the mission roster for debriefs, never on the battlefield.
+function isExtracted(unit) { return Boolean(unit?.statuses?.includes('EXTRACTED')); }
+function actionError(state, unit) {
+  if (unit.dead || unit.downed || isExtracted(unit)) return 'INVALID_UNIT_STATE';
+  if (state.phase !== (unit.faction === 'PLAYER' ? 'PLAYER' : 'THREAT')) return 'INVALID_PHASE';
+  return null;
+}
+function assertCanAct(state, unit) {
+  const reason = actionError(state, unit);
+  if (reason) throw new Error(reason);
+}
+
 function nodeById(state, nodeId) {
   const node = state.nodes.find((item) => item.id === nodeId);
   if (!node) throw new Error(`Unknown LAB_NODE ${nodeId}`);
@@ -305,7 +317,7 @@ function beginPlayerPhase(state) {
   next.round += 1;
   next.phase = 'PLAYER';
   for (const unit of next.units) {
-    if (unit.faction !== 'PLAYER' || unit.dead || unit.downed) continue;
+    if (unit.faction !== 'PLAYER' || unit.dead || unit.downed || isExtracted(unit)) continue;
     unit.ap = unit.maxAp;
     unit.overwatch = false;
     unit.hunkered = false;
@@ -319,7 +331,7 @@ function beginThreatPhase(state) {
   const next = copyState(state);
   next.phase = 'THREAT';
   for (const unit of next.units) {
-    if (unit.faction === 'PLAYER' || unit.dead || unit.downed) continue;
+    if (unit.faction === 'PLAYER' || unit.dead || unit.downed || isExtracted(unit)) continue;
     unit.ap = unit.maxAp;
     unit.overwatch = false;
     unit.hunkered = false;
@@ -376,7 +388,7 @@ function gridDistance(a, b, state = null) {
 }
 
 function occupied(state, x, y, z, exceptId = null) {
-  return state.units.some((unit) => !unit.dead && unit.id !== exceptId && unit.x === x && unit.y === y && unit.z === z);
+  return state.units.some((unit) => !unit.dead && !isExtracted(unit) && unit.id !== exceptId && unit.x === x && unit.y === y && unit.z === z);
 }
 
 function inBounds(state, x, y, z) {
@@ -558,7 +570,7 @@ function shotPreview(state, attackerId, targetId, options = {}) {
 
 // attacker: a unit or a turret view (position, faction); stats: where aim/crit/damage/ammo/range live.
 function previewShot(state, attacker, stats, target, options = {}) {
-  if (attacker.dead || attacker.downed || target.dead) return { legal: false, reason: 'INVALID_UNIT_STATE' };
+  if (attacker.dead || attacker.downed || isExtracted(attacker) || target.dead || isExtracted(target)) return { legal: false, reason: 'INVALID_UNIT_STATE' };
   if (attacker.faction === target.faction) return { legal: false, reason: 'FRIENDLY_TARGET' };
   if (!hasLineOfSight(state, attacker, target)) return { legal: false, reason: 'NO_LINE_OF_SIGHT' };
   if (stats.ammo <= 0) return { legal: false, reason: 'EMPTY_MAGAZINE' };
@@ -597,7 +609,7 @@ function detects(state, watcher, target) {
 // Opposing units, and opposing working cameras (ACTIVE or CONTROLLED, not JAMMED), detect the mover.
 function detectAtPosition(state, mover) {
   const byUnit = state.units.some((enemy) => {
-    if (enemy.faction === mover.faction || enemy.dead || enemy.downed) return false;
+    if (enemy.faction === mover.faction || enemy.dead || enemy.downed || isExtracted(enemy)) return false;
     return detects(state, enemy, mover);
   });
   if (byUnit || !Array.isArray(state.machines)) return byUnit;
@@ -654,7 +666,7 @@ function reachFrom(state, start, maxCost, { order = ORDER_RESOLVER, occupants = 
   const geo = geometry(state);
   const { W, H, cellKey, linksAt } = geo;
   const taken = new Set();
-  for (const u of occupants) if (!u.dead && u.id !== exceptId && inBounds(state, u.x, u.y, u.z)) taken.add(cellKey(u.x, u.y, u.z));
+  for (const u of occupants) if (!u.dead && !isExtracted(u) && u.id !== exceptId && inBounds(state, u.x, u.y, u.z)) taken.add(cellKey(u.x, u.y, u.z));
   const startKey = cellKey(start.x, start.y, start.z);
   const cost = new Map([[startKey, 0]]);
   const prev = new Map();
@@ -771,7 +783,7 @@ function applyHit(target, preview, roll, critRoll) {
 // Then every opposing working turret fires the same way (always on overwatch: it re-arms, firing at most
 // once per mover per move; no ammo; TURRET_SHOT). firedTurrets: the turret ids that already fired this move.
 function resolveReactions(state, mover, roll, firedTurrets = new Set()) {
-  const watchers = state.units.filter((w) => w.overwatch && !w.dead && !w.downed && w.faction !== mover.faction);
+  const watchers = state.units.filter((w) => w.overwatch && !w.dead && !w.downed && !isExtracted(w) && w.faction !== mover.faction);
   for (const watcher of watchers) {
     if (!watcher.overwatch) continue;
     if (mover.concealed) {
@@ -826,8 +838,7 @@ function turretView(t) {
 function moveUnit(state, unitId, destination, mode = 'MOVE', options = {}) {
   const next = copyState(state);
   const unit = unitById(next, unitId);
-  if (next.phase !== (unit.faction === 'PLAYER' ? 'PLAYER' : 'THREAT')) throw new Error('Unit cannot act outside its phase');
-  if (unit.dead || unit.downed) throw new Error('Unit cannot move');
+  assertCanAct(next, unit);
   const dest = { x: Number(destination.x), y: Number(destination.y), z: Number(destination.z || 0) };
   if (![dest.x, dest.y, dest.z].every(Number.isInteger)) throw new Error('Destination must be a whole tile');
   if (!inBounds(next, dest.x, dest.y, dest.z)) throw new Error('Destination out of bounds');
@@ -890,7 +901,7 @@ function moveUnit(state, unitId, destination, mode = 'MOVE', options = {}) {
   const firedTurrets = new Set();
   for (const step of path) {
     if (isHidden(step)) { interruptedBy = { x: step.x, y: step.y, z: step.z }; break; }
-    const blocker = next.units.find((other) => !other.dead && other.id !== unit.id && other.x === step.x && other.y === step.y && other.z === step.z);
+    const blocker = next.units.find((other) => !other.dead && !isExtracted(other) && other.id !== unit.id && other.x === step.x && other.y === step.y && other.z === step.z);
     if (blocker) { interruptedBy = { x: step.x, y: step.y, z: step.z }; break; }
     walked.push(step);
     unit.x = step.x; unit.y = step.y; unit.z = step.z;
@@ -912,6 +923,7 @@ function moveUnit(state, unitId, destination, mode = 'MOVE', options = {}) {
 function enterOverwatch(state, unitId) {
   const next = copyState(state);
   const unit = unitById(next, unitId);
+  assertCanAct(next, unit);
   spendAp(unit, 1);
   unit.overwatch = true;
   next.events.push({ type: 'OVERWATCH_SET', unitId });
@@ -921,6 +933,7 @@ function enterOverwatch(state, unitId) {
 function hunkerDown(state, unitId) {
   const next = copyState(state);
   const unit = unitById(next, unitId);
+  assertCanAct(next, unit);
   spendAp(unit, 1);
   unit.hunkered = true;
   next.events.push({ type: 'HUNKER', unitId });
@@ -930,6 +943,7 @@ function hunkerDown(state, unitId) {
 function reload(state, unitId) {
   const next = copyState(state);
   const unit = unitById(next, unitId);
+  assertCanAct(next, unit);
   spendAp(unit, 1);
   const stats = readyStats(unit); // with weapons: the ready weapon's magazine (reserve ammo is shared)
   const needed = Math.max(0, stats.magazineSize - stats.ammo);
@@ -942,6 +956,7 @@ function reload(state, unitId) {
 }
 
 function fireWeapon(state, attackerId, targetId, roll, critRoll = 100) {
+  assertCanAct(state, unitById(state, attackerId));
   const preview = shotPreview(state, attackerId, targetId);
   if (!preview.legal) throw new Error(preview.reason);
   const next = copyState(state);
@@ -956,8 +971,9 @@ function fireWeapon(state, attackerId, targetId, roll, critRoll = 100) {
 function stabilize(state, actorId, targetId) {
   const next = copyState(state);
   const actor = unitById(next, actorId);
+  assertCanAct(next, actor);
   const target = unitById(next, targetId);
-  if (!target.downed || target.dead) throw new Error('Target is not stabilizable');
+  if (!target.downed || target.dead || isExtracted(target) || target.faction !== actor.faction) throw new Error('Target is not stabilizable');
   if (gridDistance(actor, target) > 1) throw new Error('Target is not adjacent');
   spendAp(actor, 1);
   target.statuses = [...new Set([...target.statuses, 'STABILIZED'])];
@@ -977,8 +993,8 @@ function setObjectiveState(state, objectiveId, objectiveState) {
 function technicalAction(state, actorId, nodeId, actionId) {
   const next = copyState(state);
   const actor = unitById(next, actorId);
+  assertCanAct(next, actor);
   const node = nodeById(next, nodeId);
-  if (actor.dead || actor.downed) throw new Error('Actor cannot perform technical work');
   if (node.at) {
     // positioned interaction: on the node's floor, within range (Manhattan), and an allowed role
     const within = actor.z === node.at.z && Math.abs(actor.x - node.at.x) + Math.abs(actor.y - node.at.y) <= node.at.range;
@@ -1016,7 +1032,7 @@ function technicalAction(state, actorId, nodeId, actionId) {
 
 // The player side's eyes: living, standing player units, and working player cameras (owned or controlled).
 function playerObservers(state) {
-  const units = state.units.filter((u) => u.faction === 'PLAYER' && !u.dead && !u.downed);
+  const units = state.units.filter((u) => u.faction === 'PLAYER' && !u.dead && !u.downed && !isExtracted(u));
   const cameras = (state.machines || []).filter((m) => m.kind === 'CAMERA' && m.faction === 'PLAYER' && machineWorking(m));
   return [...units, ...cameras];
 }
@@ -1121,7 +1137,7 @@ function techActionPreview(state, action, actorId, subject, extra = {}) {
   const fail = (reason) => ({ legal: false, reason });
   const actor = state.units.find((u) => u.id === String(actorId));
   if (!actor) return fail('UNKNOWN_UNIT');
-  if (actor.dead || actor.downed) return fail('INVALID_UNIT_STATE');
+  if (actor.dead || actor.downed || isExtracted(actor)) return fail('INVALID_UNIT_STATE');
   if (action === 'RETAKE') {
     if (actor.faction === 'PLAYER') return fail('NOT_HOSTILE');
   } else if (action === 'MARK') {
@@ -1130,6 +1146,8 @@ function techActionPreview(state, action, actorId, subject, extra = {}) {
     if (actor.role !== 'T') return fail('NOT_TECHNICIAN');
     if (!techControlAllowed(actor)) return fail('MAIN_ARM_READY');
   } else return fail('UNKNOWN_ACTION');
+  const invalid = actionError(state, actor);
+  if (invalid) return fail(invalid);
   let apCost, range, point, machine = null;
   if (action === 'SYNC_PULSE') {
     point = { x: Number(subject && subject.x), y: Number(subject && subject.y), z: Number((subject && subject.z) || 0) };
@@ -1244,7 +1262,7 @@ function syncPulse(state, actorId, target) {
   const silencedUntil = next.round + (next.phase === 'PLAYER' || next.phase === 'BRIEF' ? 1 : 2);
   const units = [];
   for (const u of next.units) {
-    if (u.dead || u.faction === actor.faction || !inside(u)) continue;
+    if (u.dead || isExtracted(u) || u.faction === actor.faction || !inside(u)) continue;
     u.statuses = [...new Set([...u.statuses, 'NETWORK_SILENCED'])];
     u.networkSilencedUntilRound = Math.max(Number(u.networkSilencedUntilRound ?? 0), silencedUntil);
     units.push(u.id);
@@ -1278,7 +1296,7 @@ function markMachine(state, actorId, machineId) {
 function switchWeapon(state, unitId) {
   const next = copyState(state);
   const unit = unitById(next, unitId);
-  if (unit.dead || unit.downed) throw new Error('INVALID_UNIT_STATE');
+  assertCanAct(next, unit);
   const other = unit.readyWeapon === 'main' ? 'sidearm' : 'main';
   if (!unit.weapons || !unit.weapons[other]) throw new Error('NO_OTHER_WEAPON');
   const apCost = rulesOf(next).switchWeaponAp;
@@ -1293,15 +1311,20 @@ function switchWeapon(state, unitId) {
 function extractUnit(state, unitId) {
   const next = copyState(state);
   const unit = unitById(next, unitId);
+  if (unit.dead || unit.downed || isExtracted(unit)) throw new Error('Unit cannot extract: INVALID_UNIT_STATE');
+  assertCanAct(next, unit);
+  if (unit.faction !== 'PLAYER') throw new Error('Only player units can extract');
   const zone = next.battlefield && next.battlefield.extractionZone;
   if (zone) {
-    if (unit.dead || unit.downed) throw new Error('Unit cannot extract');
     const z = Number(zone.z || 0);
     const inside = unit.z === z && Math.abs(unit.x - Number(zone.x)) + Math.abs(unit.y - Number(zone.y)) <= Number(zone.r ?? 0);
     if (!inside) throw new Error('Unit is not in the extraction zone');
   }
   next.mission.extractedUnitIds = [...new Set([...next.mission.extractedUnitIds, unitId])];
   unit.statuses = [...new Set([...unit.statuses, 'EXTRACTED'])];
+  unit.ap = 0;
+  unit.overwatch = false;
+  unit.hunkered = false;
   next.events.push({ type: 'EXTRACT', unitId });
   return next;
 }
@@ -1310,8 +1333,10 @@ function missionComplete(state) {
   const objectivesDone = state.objectives.filter((item) => item.required).every((item) => ['COMPLETE', 'VERIFIED', 'SECURED'].includes(item.state));
   const nodesDone = state.nodes.filter((node) => node.required).every((node) => ['VERIFIED', 'SEALED_STABILIZED'].includes(node.state));
   if (!objectivesDone || !nodesDone) return false;
-  if (!state.mission.extractionRequired) return true;
   const survivingPlayers = state.units.filter((unit) => unit.faction === 'PLAYER' && !unit.dead);
+  // An empty survivor list must not satisfy extraction through Array.every's vacuous truth.
+  if (!survivingPlayers.length) return false;
+  if (!state.mission.extractionRequired) return true;
   return survivingPlayers.every((unit) => state.mission.extractedUnitIds.includes(unit.id));
 }
 
@@ -1350,6 +1375,7 @@ function threatView(state) {
 }
 
 export {
+  isExtracted,
   createState,
   beginPlayerPhase,
   beginThreatPhase,
