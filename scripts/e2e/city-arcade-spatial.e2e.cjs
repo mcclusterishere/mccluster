@@ -2,7 +2,7 @@
 // identity, ion availability and imagery are fixtures. No production requests allowed.
 const {chromium}=require('playwright'),fs=require('node:fs/promises'),assert=require('node:assert/strict');
 const base=process.env.ARCADE_BASE||'http://127.0.0.1:8768',build=process.env.CESIUM_BUILD||'/tmp/arcade-cesium/node_modules/cesium/Build/Cesium';
-(async()=>{const browser=await chromium.launch({executablePath:'/usr/bin/chromium',args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});try{for(const width of [390,1280]){
+(async()=>{const browser=await chromium.launch({executablePath:'/usr/bin/chromium',args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});try{for(const width of (process.env.ARCADE_WIDTHS||'390,1280').split(',').map(Number)){
  const entrance=width===390?'bridgeport-main-golden-hill':'bridgeport-main-elm',destination=width===390?'bridgeport-main-elm':'bridgeport-main-golden-hill';
  const context=await browser.newContext({viewport:{width,height:1000}});let owner=true,loads=0;const errors=[];
  await context.addInitScript(()=>localStorage.setItem('mccdb_session',JSON.stringify({access_token:'local-fixture-owner'})));
@@ -13,16 +13,22 @@ const base=process.env.ARCADE_BASE||'http://127.0.0.1:8768',build=process.env.CE
   if(['gibs.earthdata.nasa.gov','tile.openstreetmap.org'].includes(u.hostname))return r.fulfill({contentType:'image/png',body:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==','base64')});return r.abort();
  });
  const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));await page.goto(base+'/city-arcade.html?game=designer-kicks-sole-run&location='+entrance);await page.locator('[data-spatial-enter]').waitFor();
+ await page.locator('#arcade-globe').scrollIntoViewIfNeeded();await page.waitForFunction(()=>document.querySelector('#arcade-globe')?.contentWindow?.location.href.includes('action-globe'));
  const frame=page.frames().find(f=>f.url().includes('action-globe'));await frame.waitForFunction(()=>!!window.HuGlobe?.viewer()&&window.HuGlobe.owner());await frame.evaluate(()=>{window.__originalViewer=HuGlobe.viewer();});assert.equal(loads,0);
  await page.locator('[data-sole-start]').click();await page.locator('[data-hold="up"]').click();await page.locator('[data-spatial-enter]').click();
  const saved=await page.evaluate(id=>JSON.parse(localStorage.getItem('here.city-arcade.sole-street.session.v1:'+id)),entrance);assert.equal(saved.status,'paused');assert.ok(await page.locator('[data-sole-start]').isDisabled());
  await page.waitForFunction(()=>document.querySelector('[data-spatial-status]')?.textContent.startsWith('Shared downtown ready'),{},{timeout:30000});assert.equal(loads,1);assert.equal(await frame.evaluate(()=>HuGlobe.viewer()===window.__originalViewer),true);
- await page.locator('[data-spatial-target]').selectOption(destination);await page.locator('[data-spatial-preview]').click();await frame.locator('[data-confirm]').click();await page.waitForFunction(()=>document.querySelector('[data-spatial-status]')?.textContent.startsWith('Reached a shared'),{},{timeout:60000});
+ if(process.env.ARCADE_DROP_RETURN!=='1'){await page.locator('[data-spatial-target]').selectOption(destination);await page.locator('[data-spatial-preview]').click();await frame.locator('[data-confirm]').click();await page.waitForFunction(()=>document.querySelector('[data-spatial-status]')?.textContent.startsWith('Reached a shared'),{},{timeout:60000});}
  const arrived=await frame.evaluate(()=>BridgeportSlice.snapshot());assert.equal(arrived.topology,'hex');assert.equal(arrived.regionId,'bridgeport-downtown.v2');
  await frame.locator('[aria-label="Navigation topology"]').selectOption('square');assert.deepEqual(await frame.evaluate(()=>BridgeportSlice.snapshot().position),arrived.position);
+ if(process.env.ARCADE_DROP_RETURN==='1'){
+  await page.evaluate(()=>{window.__droppedReturns=0;window.__originalPostMessage=window.postMessage;window.postMessage=function(m,...args){if(m?.type==='bridgeport:state'&&m.event==='returned'){window.__droppedReturns++;return;}return window.__originalPostMessage.apply(window,[m,...args]);};});
+  await page.locator('[data-spatial-return]').click();await page.waitForFunction(()=>document.querySelector('[data-spatial-return]')?.textContent==='Retry return',{},{timeout:15000});
+  assert.equal(await page.locator('[data-sole-start]').isDisabled(),true);assert.equal(await page.locator('[data-spatial-preview]').isDisabled(),true);assert.ok(await page.evaluate(()=>window.__droppedReturns>0));await page.evaluate(()=>{window.postMessage=window.__originalPostMessage;});
+ }
  await page.locator('[data-spatial-return]').click();await page.waitForFunction(()=>document.querySelector('[data-spatial-status]')?.textContent.startsWith('Returned to Sole Run'));assert.equal(await page.locator('[data-sole-start]').isDisabled(),false);
  assert.deepEqual(await page.evaluate(id=>JSON.parse(localStorage.getItem('here.city-arcade.sole-street.session.v1:'+id)),entrance),saved);assert.equal(await frame.evaluate(()=>HuGlobe.viewer()===window.__originalViewer),true);
  await page.locator('[data-spatial-enter]').click();await page.waitForFunction(()=>document.querySelector('[data-spatial-status]')?.textContent.startsWith('Shared downtown ready'));assert.deepEqual(await frame.evaluate(()=>BridgeportSlice.snapshot().position),arrived.position);
  owner=false;await frame.evaluate(()=>dispatchEvent(new StorageEvent('storage',{key:'mccdb_session'})));await page.waitForFunction(()=>document.querySelector('[data-spatial-status]')?.textContent.startsWith('Returned to Sole Run'));assert.equal(await frame.evaluate(()=>BridgeportSlice.snapshot().entered),false);
- assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>document.documentElement.clientWidth),false);assert.deepEqual(errors,[]);console.log(JSON.stringify({width,entrance,destination,actualCesium:true,sameViewer:true,actualSolePlay:true,hexArrival:true,squarePreservesPosition:true,legacySaveUnchanged:true,sharedResume:true,revocationReturns:true,loads}));await context.close();
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>document.documentElement.clientWidth),false);assert.deepEqual(errors,[]);console.log(JSON.stringify({width,entrance,destination,actualCesium:true,sameViewer:true,actualSolePlay:true,hexArrival:process.env.ARCADE_DROP_RETURN!=='1',squarePreservesPosition:true,legacySaveUnchanged:true,sharedResume:true,revocationReturns:true,droppedReturnRetry:process.env.ARCADE_DROP_RETURN==='1',loads}));await context.close();
  }}finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1});

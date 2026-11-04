@@ -20,7 +20,7 @@ function fixture(){
  const root={append(){},scrollIntoView(){}},frame={contentWindow:{postMessage:m=>sent.push(m)},scrollIntoView(){},addEventListener(){},removeEventListener(){}};
  const win={location:{origin},addEventListener:(k,fn)=>listeners.set(k,fn),removeEventListener:k=>listeners.delete(k)};
  const old=globalThis.document;globalThis.document={createElement:tag=>tag==='option'?{}:panel};
- const dispose=mountSoleSpatial(root,{locationId:SHARED_ENTRANCE,onActive:x=>states.push(x),win,frame,timeoutMs:10});
+ const dispose=mountSoleSpatial(root,{locationId:SHARED_ENTRANCE,onActive:x=>states.push(x),win,frame,timeoutMs:10,returnTimeoutMs:10});
  const originalDispose=dispose;const cleanup=()=>{originalDispose();globalThis.document=old;};
  const emit=(name,patch={})=>{const e=event();e.source=frame.contentWindow;e.data.event=name;Object.assign(e.data,patch);listeners.get('message')?.(e);};
  return {controls,listeners,sent,states,dispose:cleanup,emit};
@@ -42,3 +42,16 @@ test('routes remain disabled until City acknowledges the mission closures',()=>{
 
 test('stale closure acknowledgements cannot re-enable an unloaded route',()=>{const f=fixture();f.controls.get('[data-spatial-enter]').onclick();f.emit('ready',{navigationRevision:5});f.emit('closures-changed',{navigationRevision:6});assert.equal(f.controls.get('[data-spatial-preview]').disabled,false);f.emit('unloaded',{navigationRevision:7});f.emit('closures-changed',{navigationRevision:6});assert.equal(f.controls.get('[data-spatial-preview]').disabled,true);f.dispose();});
 test('closure messages before ready do not cancel the missing-host deadline',async()=>{const f=fixture();f.controls.get('[data-spatial-enter]').onclick();f.emit('closures-changed');await new Promise(r=>setTimeout(r,25));assert.deepEqual(f.states,[true,false]);f.dispose();});
+
+test('lost returned acknowledgement enables retry while game and routes remain paused',async()=>{
+ const f=fixture();try{f.controls.get('[data-spatial-enter]').onclick();f.emit('ready');f.emit('closures-changed');const back=f.controls.get('[data-spatial-return]');back.onclick();await new Promise(r=>setTimeout(r,25));
+ assert.equal(back.disabled,false);assert.match(back.textContent,/Retry/);assert.deepEqual(f.states,[true]);assert.equal(f.controls.get('[data-spatial-preview]').disabled,true);
+ f.emit('ready');f.emit('closures-changed');assert.equal(f.controls.get('[data-spatial-preview]').disabled,true);back.onclick();assert.equal(f.sent.filter(m=>m.type==='bridgeport:leave').length,2);f.emit('returned');f.emit('returned');assert.deepEqual(f.states,[true,false]);await new Promise(r=>setTimeout(r,25));assert.equal(back.disabled,true);
+ }finally{f.dispose();}
+});
+test('return during entry waits for acknowledgement rather than the old entry timeout',async()=>{
+ const f=fixture();try{f.controls.get('[data-spatial-enter]').onclick();f.controls.get('[data-spatial-return]').onclick();await new Promise(r=>setTimeout(r,25));assert.deepEqual(f.states,[true]);assert.equal(f.controls.get('[data-spatial-return]').disabled,false);f.emit('returned');assert.deepEqual(f.states,[true,false]);}finally{f.dispose();}
+});
+test('disposing while awaiting return cancels retry timer and removes listener',async()=>{
+ const f=fixture();f.controls.get('[data-spatial-enter]').onclick();f.emit('ready');f.emit('closures-changed');const back=f.controls.get('[data-spatial-return]');back.onclick();f.dispose();await new Promise(r=>setTimeout(r,25));assert.equal(back.disabled,true);assert.equal(f.listeners.size,0);assert.deepEqual(f.states,[true,false]);
+});

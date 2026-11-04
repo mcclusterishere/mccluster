@@ -20,15 +20,15 @@ export function acceptsSpatialState(event,source,origin,entranceId=SHARED_ENTRAN
   Array.isArray(d.capabilities)&&['exterior-navigation','road-closures'].every(c=>d.capabilities.includes(c))&&
   (d.position===null?['unloaded','returned'].includes(d.event):d.position?.y===0&&[d.position.x,d.position.z].every(Number.isFinite));
 }
-export function mountSoleSpatial(root,{locationId,onActive,canEnter=()=>true,getMission=()=>({route:['main-elm','main-fairfield','middle-golden-hill','main-golden-hill'],index:0,blockedRoads:[]}),win=window,frame=document.querySelector('#arcade-globe'),timeoutMs=20000}){
+export function mountSoleSpatial(root,{locationId,onActive,canEnter=()=>true,getMission=()=>({route:['main-elm','main-fairfield','middle-golden-hill','main-golden-hill'],index:0,blockedRoads:[]}),win=window,frame=document.querySelector('#arcade-globe'),timeoutMs=20000,returnTimeoutMs=10000}){
  const panel=document.createElement('section');panel.dataset.soleSpatial='';root.append(panel);
  if(!['bridgeport-main-elm',SHARED_ENTRANCE].includes(locationId)){panel.textContent='This entrance is not supported by the shared downtown graph.';return ()=>panel.remove();}
  panel.innerHTML='<h3>Sole routes on the downtown globe</h3><p>Pause Sole Run to navigate its configured street stops in square or hex mode on the globe. This shared navigation save is separate: walking does not collect shoes or advance the arcade mission. Mission segment closures close their entire source road here. Existing shared position resumes; no legacy save is moved. Doors/stairs are unsupported; ion availability is shown on the globe.</p><button class="action" data-spatial-enter>Walk Sole routes on globe</button><label>Street objective<select data-spatial-target disabled></select></label><button class="action" data-spatial-preview disabled>Preview selected route on globe</button><button class="action" data-spatial-return disabled>Return to Sole Run</button><p role="status" data-spatial-status></p>';
  const enter=panel.querySelector('[data-spatial-enter]'),back=panel.querySelector('[data-spatial-return]'),status=panel.querySelector('[data-spatial-status]'),target=panel.querySelector('[data-spatial-target]'),preview=panel.querySelector('[data-spatial-preview]');
- let active=false,leaving=false,disposed=false,timer,ready=false,desired=[],waitingClosures=false,navigationRevision=-1,targets=[];
+ let active=false,leaving=false,disposed=false,timer,returnTimer,ready=false,desired=[],waitingClosures=false,navigationRevision=-1,targets=[];
  const send=(type,payload={})=>frame?.contentWindow?.postMessage({type,schema:SPATIAL_SCHEMA,...payload},win.location.origin);
  const routeControls=on=>{target.disabled=!on;preview.disabled=!on;};
- const finish=message=>{clearTimeout(timer);active=false;leaving=false;ready=false;waitingClosures=false;enter.disabled=false;back.disabled=true;routeControls(false);onActive(false);status.textContent=message;};
+ const finish=message=>{clearTimeout(timer);clearTimeout(returnTimer);active=false;leaving=false;ready=false;waitingClosures=false;enter.disabled=false;back.disabled=true;back.textContent='Return to Sole Run';routeControls(false);onActive(false);status.textContent=message;};
  enter.onclick=()=>{
   if(active||disposed)return;if(!frame?.contentWindow||!canEnter()){status.textContent='Shared walk unavailable while a mission operation is pending or the globe is unavailable.';return;}
   try{const m=getMission();desired=sharedClosures(m.blockedRoads);targets=m.route.map((id,i)=>({id:sharedStopId(id),label:(i+1)+'. '+['Robbery 1s','Velocity 1s','Ghost Soles','Gravity Highs'][i]+' · '+id}));targets.push({id:sharedStopId('main-south'),label:'Other street stop · main-south'},{id:locationId,label:'Return to entrance'});target.replaceChildren();for(const t of targets){const option=document.createElement('option');option.value=t.id;option.textContent=t.label;target.append(option);}target.selectedIndex=Math.min(m.index,4)===4?targets.length-1:Math.max(0,m.index);}catch(e){status.textContent=e.message;return;}
@@ -36,7 +36,11 @@ export function mountSoleSpatial(root,{locationId,onActive,canEnter=()=>true,get
   timer=setTimeout(()=>{if(!active||disposed)return;send('bridgeport:leave');finish('Shared City v2 navigation did not become ready. Sole Run remains paused; this build requires City #748 v2.');},timeoutMs);
  };
  preview.onclick=()=>{if(!active||!ready||waitingClosures||leaving||!targets.some(t=>t.id===target.value))return;send('bridgeport:preview',{destinationId:target.value});status.textContent='Route requested for '+target.selectedOptions[0].textContent+'. Review the route or blocked message on the globe, then Confirm there.';frame.scrollIntoView({behavior:'smooth'});};
- back.onclick=()=>{if(!active||leaving)return;leaving=true;back.disabled=true;routeControls(false);status.textContent='Returning from the globe…';send('bridgeport:leave');};
+ back.onclick=()=>{
+  if(!active||back.disabled)return;
+  clearTimeout(timer);clearTimeout(returnTimer);leaving=true;back.disabled=true;routeControls(false);status.textContent='Returning from the globe…';send('bridgeport:leave');
+  returnTimer=setTimeout(()=>{if(!active||!leaving||disposed)return;back.disabled=false;back.textContent='Retry return';status.textContent='Return was not acknowledged. Sole Run remains paused. Retry return to the same globe.';},returnTimeoutMs);
+ };
  const message=e=>{
   if(!active||disposed||!acceptsSpatialState(e,frame?.contentWindow,win.location.origin,locationId))return;
   const d=e.data;if(d.navigationRevision<navigationRevision)return;navigationRevision=d.navigationRevision;
@@ -53,5 +57,5 @@ export function mountSoleSpatial(root,{locationId,onActive,canEnter=()=>true,get
  };
  const reloaded=()=>{if(active)finish('Globe reloaded. Sole Run remains paused.');};
  win.addEventListener('message',message);frame?.addEventListener('load',reloaded);
- return ()=>{disposed=true;clearTimeout(timer);if(active)send('bridgeport:leave');win.removeEventListener('message',message);frame?.removeEventListener('load',reloaded);if(active)onActive(false);panel.remove();};
+ return ()=>{disposed=true;clearTimeout(timer);clearTimeout(returnTimer);if(active)send('bridgeport:leave');win.removeEventListener('message',message);frame?.removeEventListener('load',reloaded);if(active)onActive(false);panel.remove();};
 }
