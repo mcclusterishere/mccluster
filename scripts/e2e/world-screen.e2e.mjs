@@ -1180,6 +1180,7 @@ if (runs('editorial-video-composer') && (!process.env.EDITORIAL_DEVICE || proces
     try { await page.click('#mnPost'); }
     catch(error) {
       const diagnostic=await page.evaluate(()=>{const b=document.getElementById('mnPost'),c=document.getElementById('mnComposer');return {button:{disabled:b.disabled,rect:b.getBoundingClientRect().toJSON(),visibility:getComputedStyle(b).visibility,display:getComputedStyle(b).display,transform:getComputedStyle(b).transform},composer:{class:c.className,rect:c.getBoundingClientRect().toJSON()},active:document.activeElement?.id,scroll:scrollY,status:document.getElementById('mnPostStatus').textContent};});
+      console.error('Composer Post actionability failure:', JSON.stringify(diagnostic));
       await writeFile(join(OUT,scope+'-post-failure.json'),JSON.stringify(diagnostic,null,2));
       await page.screenshot({path:join(OUT,scope+'-post-failure.png')});
       throw error;
