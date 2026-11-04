@@ -155,6 +155,13 @@
         "workers/mccluster/src/action-connect.js"
       ]
     },
+    "arcade_command": {
+      "kind": "function",
+      "pending": "city_arcade_v1.sql",
+      "callers": [
+        "workers/mccluster/src/arcade/index.js"
+      ]
+    },
     "at_night_verifications": {
       "kind": "table",
       "pending": "20261009220000_at_night_adult_verification.sql",
