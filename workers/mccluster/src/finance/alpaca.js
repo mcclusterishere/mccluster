@@ -12,17 +12,17 @@ export function securitySymbol(value) {
 const MIC = { NYSE: 'XNYS', NASDAQ: 'XNAS', ARCA: 'ARCX', AMEX: 'XASE', BATS: 'BATS' };
 export function createAlpacaClient({ fetchImpl = fetch, now = Date.now, reserve = rpc } = {}) {
   const cache = new Map(), pending = new Map();
-  let identity = '', blockedUntil = 0, denied = false, failures = 0;
+  let identity = '', epoch = 0, blockedUntil = 0, denied = false, failures = 0;
   const config = env => {
     if (!env.APCA_API_KEY_ID || !env.APCA_API_SECRET_KEY) throw new FinanceDataError('needs_key');
     if (env.FINANCE_ALPACA_ENABLED !== 'true') throw new FinanceDataError('provider_disabled');
     // Isolate caches/breakers across key rotation. Never return or log the identity.
     const next = env.APCA_API_KEY_ID + '\0' + env.APCA_API_SECRET_KEY;
-    if (identity !== next) { identity = next; cache.clear(); pending.clear(); denied = false; blockedUntil = 0; failures = 0; }
+    if (identity !== next) { identity = next; epoch++; cache.clear(); pending.clear(); denied = false; blockedUntil = 0; failures = 0; }
   };
   async function request(env, origin, path, params = {}, ttl = 0, fresh = false) {
     config(env);
-    const generation = identity;
+    const generation = epoch;
     const key = origin + path + '?' + new URLSearchParams(params), t = now();
     if (denied) throw new FinanceDataError('key_rejected');
     const saved = cache.get(key);
@@ -34,12 +34,20 @@ export function createAlpacaClient({ fetchImpl = fetch, now = Date.now, reserve 
       const account = Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, '0')).join('');
       // SQL enforces 180 requests/minute shared across all isolates, not 180 each.
       const budget = await reserve(env, 'finance_quote_budget', { p_account: account });
+      if (generation !== epoch) throw new FinanceDataError('connection_changed');
       if (budget !== true) throw new FinanceDataError('quota_exhausted', 429);
       let response;
       try {
         response = await fetchImpl(key, { method: 'GET', redirect: 'manual', signal: AbortSignal.timeout(10000),
           headers: { 'APCA-API-KEY-ID': env.APCA_API_KEY_ID, 'APCA-API-SECRET-KEY': env.APCA_API_SECRET_KEY, accept: 'application/json' } });
-      } catch { failures++; if (failures >= 5) blockedUntil = now() + 60000; throw new FinanceDataError('provider_unavailable'); }
+      } catch {
+        if (generation !== epoch) throw new FinanceDataError('connection_changed');
+        failures++; if (failures >= 5) blockedUntil = now() + 60000; throw new FinanceDataError('provider_unavailable');
+      }
+      if (generation !== epoch) {
+        try { await response.body?.cancel(); } catch { /* stale response disposal must not affect the new connection */ }
+        throw new FinanceDataError('connection_changed');
+      }
       if ([401,403].includes(response.status)) { denied = true; cache.clear(); throw new FinanceDataError('key_rejected'); }
       if (response.status === 429) {
         const retry = response.headers.get('retry-after');
@@ -56,9 +64,9 @@ export function createAlpacaClient({ fetchImpl = fetch, now = Date.now, reserve 
       const bytes = new Uint8Array(size); let offset = 0;
       for (const c of chunks) { bytes.set(c,offset); offset += c.length; }
       let value; try { value = JSON.parse(new TextDecoder().decode(bytes)); } catch { throw new FinanceDataError('provider_invalid'); }
+      if (generation !== epoch) throw new FinanceDataError('connection_changed');
       failures = 0;
       if (cache.size >= 100) cache.delete(cache.keys().next().value);
-      if (generation !== identity) throw new FinanceDataError('connection_changed');
       if (ttl) cache.set(key,{at:now(),value});
       return value;
     })();

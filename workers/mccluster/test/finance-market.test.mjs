@@ -103,3 +103,45 @@ test('unapplied quota schema prevents enabled data collection before any provide
  await assert.rejects(client.search(env,'AAPL'),e=>e.code==='intel_schema_not_ready');
  assert.equal(calls,0);
 });
+
+test('late responses from a retired connection cannot reject or throttle its replacement',async()=>{
+ for(const outcome of [200,401,403,429,500,'network']){
+  let releaseOld,started;const startedOld=new Promise(r=>started=r),calls=[];
+  const rotated={...env,APCA_API_KEY_ID:'rotated-fixture-key',APCA_API_SECRET_KEY:'rotated-fixture-secret'};
+  const client=createAlpacaClient({now:()=>NOW,reserve:async()=>true,fetchImpl:async(_url,options)=>{
+   calls.push(options.headers['APCA-API-KEY-ID']);
+   if(options.headers['APCA-API-KEY-ID']===env.APCA_API_KEY_ID){started();return new Promise((resolve,reject)=>{releaseOld=()=>outcome==='network'?reject(Error('retired connection')):resolve(new Response(outcome===200?JSON.stringify([asset]):'{}',{status:outcome,headers:{'retry-after':'120'}}));});}
+   return Response.json([asset]);
+  }});
+  const retired=client.search(env).catch(e=>e.code);await startedOld;
+  assert.equal((await client.search(rotated)).items.length,1);releaseOld();
+  assert.equal(await retired,'connection_changed');
+  assert.equal((await client.search(rotated)).items.length,1,'new connection remains usable after '+outcome);
+  assert.equal(calls.length,2,'retired response does not evict the new asset cache');
+ }
+});
+test('rotation during quota reservation prevents a stale provider request',async()=>{
+ let releaseOld,started;const startedOld=new Promise(r=>started=r);let reads=0;
+ const rotated={...env,APCA_API_KEY_ID:'rotated-fixture-key',APCA_API_SECRET_KEY:'rotated-fixture-secret'};
+ const client=createAlpacaClient({reserve:async active=>{
+  if(active.APCA_API_KEY_ID===env.APCA_API_KEY_ID){started();return new Promise(r=>releaseOld=r);}return true;
+ },fetchImpl:async()=>{reads++;return Response.json([asset]);}});
+ const retired=client.search(env).catch(e=>e.code);await startedOld;
+ assert.equal((await client.search(rotated)).items.length,1);releaseOld(true);
+ assert.equal(await retired,'connection_changed');assert.equal(reads,1);
+});
+
+// A -> B -> A is still a new generation, even when the credential bytes match.
+test('restoring earlier credentials does not revive their retired in-flight response',async()=>{
+ let releaseOld,started;const startedOld=new Promise(r=>started=r);let calls=0;
+ const client=createAlpacaClient({reserve:async()=>true,fetchImpl:async()=>{
+  calls++;if(calls===1){started();return new Promise(r=>releaseOld=r);}return Response.json([asset]);
+ }});
+ const retired=client.search(env).catch(e=>e.code);await startedOld;
+ await client.search({...env,APCA_API_SECRET_KEY:'other-fixture-secret'});
+ await client.search(env);
+ releaseOld(new Response('{}',{status:401}));
+ assert.equal(await retired,'connection_changed');
+ assert.equal((await client.search(env)).items.length,1);
+ assert.equal(calls,3);
+});
