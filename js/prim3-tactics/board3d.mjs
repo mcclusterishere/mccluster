@@ -95,7 +95,7 @@ function pickTier(renderer, fx) {
   return matchMedia('(pointer: coarse)').matches ? 'mid' : 'high';
 }
 
-export function createBoard3D(host, { width, height, onTap, onView = null, reducedMotion = false, fx = null, showcase = false, tileM = 1 }) {
+export function createBoard3D(host, { width, height, onTap, onHover = null, onDoubleTap = null, onView = null, reducedMotion = false, fx = null, showcase = false, tileM = 1 }) {
   // the preview courtyard is modelled in metres with one tile per world unit (tileM = 1 m); an operative
   // stands at the one real height every PRIM3 renderer uses (scale.mjs), never a per-renderer guess
   const FIGURE_H = operatorHeight(tileM);
@@ -115,7 +115,24 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
   scene.background = skyTex();
   scene.fog = new THREE.Fog(0x161c22, 20, 44);
   const cx = (width - 1) / 2, cz = (height - 1) / 2;
-  const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 120);
+  const perspectiveCamera = new THREE.PerspectiveCamera(34, 1, 0.1, 120);
+  const topCamera = new THREE.OrthographicCamera(-6, 6, 6, -6, 0.1, 120);
+  let camera = perspectiveCamera, projection = 'perspective';
+  const coordinateAxes = new THREE.Group(); scene.add(coordinateAxes);
+  let axesOriginKey = null;
+  function setCoordinateFrame(origin) {
+    const key = `${origin.x}:${origin.z}`; if (axesOriginKey === key) return; axesOriginKey = key;
+    for (const child of [...coordinateAxes.children]) { child.geometry.dispose(); child.material.dispose(); coordinateAxes.remove(child); }
+    for (const [points, color] of [
+      [[-0.5, 0.055, origin.z, width - 0.5, 0.055, origin.z], 0xd75a35],
+      [[origin.x, 0.055, -0.5, origin.x, 0.055, height - 0.5], 0x168fbe]
+    ]) {
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
+      const line = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color, depthWrite: false, toneMapped: false }));
+      line.renderOrder = 2; coordinateAxes.add(line);
+    }
+    needs = true;
+  }
   const HOME = { dist: 20.5, x: cx, z: cz + 1.2 };
   const view = { dist: HOME.dist, minDist: 8, maxDist: 26, target: new THREE.Vector3(HOME.x, 0, HOME.z), goal: new THREE.Vector3(HOME.x, 0, HOME.z), pitch: 0.98, yaw: 0, yawGoal: 0 };
 
@@ -261,7 +278,9 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
   /* ---------- per-tile overlays (reach / path / dest / hint / runs), shown or hidden by update() ---------- */
   const overlayGeo = new THREE.PlaneGeometry(0.9, 0.9); overlayGeo.rotateX(-Math.PI / 2);
   const ovMat = (color, opacity) => new THREE.MeshBasicMaterial({ color, transparent: true, opacity, depthWrite: false, toneMapped: false });
-  const mats = { reach: ovMat(G.reach, 0.2), path: ovMat(G.path, 0.32), runx: ovMat(G.runx, 0.45), runy: ovMat(G.runy, 0.45) };
+  const reachTex = canvasTex(64, 64, (g) => { g.clearRect(0, 0, 64, 64); g.fillStyle = 'rgba(255,255,255,.16)'; g.fillRect(3, 3, 58, 58); g.strokeStyle = 'rgba(255,255,255,.95)'; g.lineWidth = 2.5; g.strokeRect(3, 3, 58, 58); });
+  const mats = { reach: ovMat(0x187bdb, 0.85), dash: ovMat(0xf59a23, 0.85), path: ovMat(G.path, 0.32), runx: ovMat(G.runx, 0.45), runy: ovMat(G.runy, 0.45) };
+  mats.reach.map = mats.dash.map = reachTex;
   const overlays = [];
   for (let y = 0; y < height; y += 1) for (let x = 0; x < width; x += 1) {
     const m = new THREE.Mesh(overlayGeo, mats.reach); m.position.set(x, 0.04, y); m.visible = false; m.renderOrder = 2; scene.add(m); overlays.push(m);
@@ -274,6 +293,9 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
   const ringMat = (color) => new THREE.MeshBasicMaterial({ color, toneMapped: false });
   const selRing = new THREE.Mesh(ringGeo, ringMat(TEAM.PLAYER)); selRing.visible = false; scene.add(selRing);
   const originRing = new THREE.Mesh(ringGeo, ringMat(G.origin)); originRing.visible = false; scene.add(originRing);
+  // Semantic path markers remain coloured even in the white-material look.
+  const routeMarker = (color) => { const marker = new THREE.Mesh(new THREE.RingGeometry(0.13, 0.19, 24).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.95, depthWrite: false, toneMapped: false })); marker.visible = false; marker.renderOrder = 5; scene.add(marker); return marker; };
+  const routeCurrent = routeMarker(0x187bdb), routeNext = routeMarker(0xf59a23);
   const targetRing = new THREE.Mesh(ringGeo, ringMat(G.target)); targetRing.visible = false; scene.add(targetRing);
   const pathLine = new THREE.Line(new THREE.BufferGeometry(), lineMat(G.line)); pathLine.visible = false; scene.add(pathLine);
   const destGhost = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.02, 32), new THREE.MeshBasicMaterial({ color: G.path, transparent: true, opacity: 0.35, depthWrite: false, toneMapped: false })); destGhost.visible = false; scene.add(destGhost);
@@ -543,6 +565,15 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
     const r = host.getBoundingClientRect();
     const w = Math.max(1, r.width), h = Math.max(1, r.height);
     if (renderer.domElement.width !== Math.round(w * renderer.getPixelRatio()) || renderer.domElement.height !== Math.round(h * renderer.getPixelRatio())) { renderer.setSize(w, h, false); if (composer) composer.setSize(w, h); }
+    if (projection === 'top') {
+      const halfH = Math.max(height + 2.5, (width + 2.5) / (w / h)) / 2 * view.dist / HOME.dist;
+      topCamera.left = -halfH * w / h; topCamera.right = halfH * w / h;
+      topCamera.top = halfH; topCamera.bottom = -halfH; topCamera.updateProjectionMatrix();
+      topCamera.up.set(0, 0, -1);
+      // Keep the overhead camera inside the atmospheric fog start; height must not wash out the board.
+      topCamera.position.set(view.target.x, 30, view.target.z);
+      topCamera.lookAt(view.target.x, 0, view.target.z); topCamera.updateMatrixWorld(true); return;
+    }
     camera.aspect = w / h;
     camera.fov = h > w * 1.05 ? 44 : 32;
     camera.updateProjectionMatrix();
@@ -550,7 +581,7 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
     camPos.set(view.target.x + Math.sin(view.yaw) * hd, view.target.y + Math.sin(view.pitch) * view.dist, view.target.z + Math.cos(view.yaw) * hd);
     lookAt.copy(view.target);
     if (shotCam) { const k = shotCam.k * shotCam.k * (3 - 2 * shotCam.k); camPos.lerp(shotCam.from, k); lookAt.lerp(shotCam.look, k); }
-    camera.position.copy(camPos); camera.lookAt(lookAt);
+    camera.position.copy(camPos); camera.lookAt(lookAt); camera.updateMatrixWorld(true);
   }
 
   /* ---------- post-processing, loaded after first paint so the board never waits on it ---------- */
@@ -569,8 +600,8 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
       if (!hdrLoaded) { scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture; scene.environmentIntensity = 0.32; } pmrem.dispose();
       const r = host.getBoundingClientRect(), w = Math.max(1, r.width), h = Math.max(1, r.height);
       const c = new EffectComposer(renderer); c.setPixelRatio(renderer.getPixelRatio()); c.setSize(w, h);
-      c.addPass(new RenderPass(scene, camera));
-      if (gtao) { const ao = new gtao.GTAOPass(scene, camera, w, h); ao.updateGtaoMaterial({ radius: 0.45, distanceExponent: 1.5, thickness: 1, scale: 1.2 }); ao.blendIntensity = 0.9; c.addPass(ao); }
+      c.addPass(new RenderPass(scene, perspectiveCamera));
+      if (gtao) { const ao = new gtao.GTAOPass(scene, perspectiveCamera, w, h); ao.updateGtaoMaterial({ radius: 0.45, distanceExponent: 1.5, thickness: 1, scale: 1.2 }); ao.blendIntensity = 0.9; c.addPass(ao); }
       if (!WHITE) c.addPass(new UnrealBloomPass(new THREE.Vector2(w, h), 0.55, 0.5, 0.82)); // bloom would haze a white world
       c.addPass(new OutputPass());
       c.addPass(new SMAAPass(w * renderer.getPixelRatio(), h * renderer.getPixelRatio()));
@@ -686,7 +717,7 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
     }
     if (needs || moving || flashes.length) {
       placeCamera();
-      if (composer) composer.render(); else renderer.render(scene, camera);
+      if (composer && projection !== 'top') composer.render(); else renderer.render(scene, camera);
       placeLabels(); needs = false;
       if (onView && (moving || camMoved())) onView();
     }
@@ -776,7 +807,7 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
     // overlays
     for (const o of overlays) o.visible = false;
     const at = (x, y) => overlays[y * width + x];
-    for (const t of m.reach || []) { const o = at(t.x, t.y); o.material = mats.reach; o.visible = true; }
+    for (const t of m.reach || []) { const o = at(t.x, t.y); o.material = t.apCost >= 2 ? mats.dash : mats.reach; o.visible = true; }
     for (const t of m.path || []) { const o = at(t.x, t.y); o.material = mats.path; o.visible = true; }
     for (const t of m.runs || []) { const o = at(t.x, t.y); o.material = t.axis === 'x' ? mats.runx : mats.runy; o.visible = true; }
     destFrame.visible = destGhost.visible = !!m.dest; if (m.dest) { destFrame.position.set(m.dest.x, 0.06, m.dest.y); destGhost.position.set(m.dest.x, 0.05, m.dest.y); }
@@ -789,6 +820,8 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
     lastSel = sel ? sel.id : null;
     originRing.visible = !!m.origin; if (m.origin) originRing.position.set(m.origin.x, 0.07, m.origin.y);
     targetRing.visible = !!m.target; if (m.target) targetRing.position.set(m.target.x, 0.07, m.target.y);
+    routeCurrent.visible = routeNext.visible = !!(m.pathLine && m.pathLine.length > 1);
+    if (routeCurrent.visible) for (const [i, marker] of [routeCurrent, routeNext].entries()) { const p = m.pathLine[i]; marker.position.set(p.x, 0.10, p.y); }
     if (m.pathLine && m.pathLine.length > 1) {
       pathLine.geometry.dispose();
       pathLine.geometry = new THREE.BufferGeometry().setFromPoints(m.pathLine.map((p) => new THREE.Vector3(p.x, 0.09, p.y)));
@@ -799,7 +832,7 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
     needs = true;
   }
   let lastSel = null;
-  function focus(x, y) { // ease the camera toward a unit, but keep the board in frame
+  function focus(x, y) { if (projection === 'top') return; // ease the camera toward a unit, but keep the board in frame
     view.goal.set(Math.min(width - 1.5, Math.max(0.5, (x + HOME.x) / 2)), 0, Math.min(height + 0.5, Math.max(0.5, (y + HOME.z) / 2)));
   }
 
@@ -817,21 +850,34 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
     return x >= 0 && y >= 0 && x < width && y < height ? { x, y } : null;
   }
   const pointers = new Map(); let pinch = null, pan = null, moved = false;
+  // Native double-click is accepted only after two primary mouse taps on the same tile.
+  // Touch, drag and pinch never authorize execution; the page remains the action authority.
+  let mouseTaps = [], hoverKey = null;
+  const tileKey = (t) => t ? `${t.x},${t.y},${t.z || 0}` : null;
+  const hoverAt = (t) => { const key = tileKey(t); if (key === hoverKey) return; hoverKey = key; if (onHover) onHover(t ? t.x : null, t ? t.y : null, { pointerType: 'mouse' }); };
+  const recordTap = (e, t) => {
+    if (e.pointerType === 'mouse' && e.button === 0 && t) mouseTaps = [...mouseTaps.slice(-1), { key: tileKey(t), at: e.timeStamp }];
+    else mouseTaps = [];
+  };
+
+  const resetPointerGuidance = () => { mouseTaps = []; hoverAt(null); };
+  if (!showcase) window.addEventListener('blur', resetPointerGuidance);
   const el = renderer.domElement;
   if (!showcase) el.style.touchAction = 'none';
   if (!showcase) el.addEventListener('pointerdown', (e) => {
+    if (e.pointerType !== 'mouse' || e.button !== 0) mouseTaps = [];
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY }); moved = false;
     if (pointers.size === 2) { const [a, b] = [...pointers.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), dist: view.dist }; pan = null; }
     else pan = { x: e.clientX, y: e.clientY, tx: view.goal.x, tz: view.goal.z };
   });
   if (!showcase) el.addEventListener('pointermove', (e) => {
-    if (!pointers.has(e.pointerId)) return;
+    if (!pointers.has(e.pointerId)) { if (e.pointerType === 'mouse' && !e.buttons && !fireAnim) hoverAt(tileAt(e.clientX, e.clientY)); return; }
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    if (pointers.size === 2 && pinch) { const [a, b] = [...pointers.values()]; setDist(pinch.dist * pinch.d / Math.max(20, Math.hypot(a.x - b.x, a.y - b.y))); moved = true; return; }
+    if (pointers.size === 2 && pinch) { const [a, b] = [...pointers.values()]; setDist(pinch.dist * pinch.d / Math.max(20, Math.hypot(a.x - b.x, a.y - b.y))); moved = true; mouseTaps = []; return; }
     if (pan) {
       const dx = e.clientX - pan.x, dy = e.clientY - pan.y;
       if (Math.abs(dx) + Math.abs(dy) > 8) {
-        moved = true;
+        moved = true; mouseTaps = [];
         const k = view.dist / 600, cy = Math.cos(view.yaw), sy = Math.sin(view.yaw);
         // screen right = (cos yaw, 0, -sin yaw); screen up (into the board) = (-sin yaw, 0, -cos yaw)
         const nx = pan.tx - dx * k * cy - dy * k * 1.3 * sy, nz = pan.tz + dx * k * sy - dy * k * 1.3 * cy;
@@ -842,23 +888,42 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
   });
   const end = (e) => {
     const wasTap = pointers.size === 1 && !moved;
+    if (e.type === 'pointercancel') mouseTaps = [];
     pointers.delete(e.pointerId); if (pointers.size < 2) pinch = null; if (!pointers.size) pan = null;
-    if (wasTap && e.type === 'pointerup' && !fireAnim) { const t = tileAt(e.clientX, e.clientY); if (t) onTap(t.x, t.y); }
+    if (wasTap && e.type === 'pointerup' && !fireAnim) { const t = tileAt(e.clientX, e.clientY); recordTap(e, t); if (t && e.button === 0) onTap(t.x, t.y); }
   };
   if (!showcase) { el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end); }
+  if (!showcase) {
+    el.addEventListener('pointerleave', resetPointerGuidance);
+    el.addEventListener('dblclick', (e) => {
+      const t = tileAt(e.clientX, e.clientY), key = tileKey(t);
+      const valid = e.button === 0 && !moved && !fireAnim && mouseTaps.length === 2 && mouseTaps.every((tap) => tap.key === key) && mouseTaps[1].at - mouseTaps[0].at <= 1000 && e.timeStamp - mouseTaps[1].at <= 1000;
+      mouseTaps = []; // consume before callback, even if the page rejects the action
+      if (valid && t && onDoubleTap) { e.preventDefault(); onDoubleTap(t.x, t.y, { pointerType: 'mouse' }); }
+    });
+  }
   if (!showcase) el.addEventListener('wheel', (e) => { e.preventDefault(); setDist(view.dist * (e.deltaY > 0 ? 1.1 : 0.9)); }, { passive: false });
   function setDist(d) { view.dist = Math.min(view.maxDist, Math.max(view.minDist, d)); needs = true; }
 
   return {
     update,
     tier,
+    setCoordinateFrame,
+    get projection() { return projection; },
+    get cameraType() { return camera.type; },
+    setProjection(mode) {
+      const next = mode === 'top' ? 'top' : 'perspective'; if (next === projection) return;
+      projection = next; camera = next === 'top' ? topCamera : perspectiveCamera;
+      shotCam = null; view.dist = HOME.dist; view.goal.set(cx, 0, next === 'top' ? cz : HOME.z); view.target.copy(view.goal);
+      view.yaw = view.yawGoal = 0; needs = true;
+    },
     setActive(on) { active = !!on; needs = true; }, // paused while the main menu is open
     zoom(step) { setDist(view.dist * (step > 0 ? 0.82 : 1.22)); },
     zoomLevel() { return view.dist; },
     canZoom() { return { in: view.dist > view.minDist + 0.01, out: view.dist < view.maxDist - 0.01 }; },
     // rotate the camera a quarter turn around the board (the grid and its labels stay the engine's)
-    rotate(step) { view.yawGoal += (step > 0 ? 1 : -1) * Math.PI / 2; needs = true; busy = true; },
-    resetView() { view.dist = HOME.dist; view.goal.set(HOME.x, 0, HOME.z); view.target.copy(view.goal); view.yaw = view.yawGoal = 0; needs = true; },
+    rotate(step) { if (projection === 'top') return; view.yawGoal += (step > 0 ? 1 : -1) * Math.PI / 2; needs = true; busy = true; },
+    resetView() { view.dist = HOME.dist; view.goal.set(HOME.x, 0, projection === 'top' ? cz : HOME.z); view.target.copy(view.goal); view.yaw = view.yawGoal = 0; needs = true; },
     // play a shot the engine already resolved; the board state does not wait on it
     fire(attackerId, targetId, result, done) {
       const a = actors.get(attackerId), b = actors.get(targetId);
@@ -878,9 +943,18 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
     get diving() { return !!diveAnim; },
     isAnimating() { return busy || !!fireAnim || [...actors.values()].some((a) => a.walk || a.dying); },
     unitPosition(id) { const a = actors.get(id); return a ? { x: a.g.position.x, y: a.g.position.z } : null; },
+    // Project the rendered torso, including its current pose/scale, rather than guessing a world-space height.
+    unitScreenPoint(id) {
+      const a = actors.get(id); if (!a) return null;
+      a.g.updateWorldMatrix(true, true); placeCamera();
+      const body = a.rig?.chest?.children.find((o) => o.isMesh) || a.g;
+      const point = new THREE.Box3().setFromObject(body).getCenter(new THREE.Vector3());
+      const p = project(point.x, point.z, point.y), r = el.getBoundingClientRect();
+      return { x: r.left + p.x, y: r.top + p.y };
+    },
     // test/accessibility hook: where a tile's centre is on screen right now (client coordinates)
     screenOf(x, y, h = 0) { placeCamera(); const p = project(x, y, h); const r = el.getBoundingClientRect(); return { x: r.left + p.x, y: r.top + p.y }; },
     tileAt,
-    destroy() { destroyed = true; cancelAnimationFrame(raf); ro.disconnect(); if (composer) composer.dispose(); renderer.dispose(); host.innerHTML = ''; }
+    destroy() { window.removeEventListener('blur', resetPointerGuidance); destroyed = true; cancelAnimationFrame(raf); ro.disconnect(); if (composer) composer.dispose(); renderer.dispose(); host.innerHTML = ''; }
   };
 }

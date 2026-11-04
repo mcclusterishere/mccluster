@@ -13,15 +13,14 @@ canonical, structured data) is the owner's call.
 
 - **Main panel**: the selected course's game cards. A `link` game opens its own page. An `embedded` game runs inside
   the hub page, so the music keeps playing while you play.
-- **Music bar**: play/pause, next and the track title for the selected course's paired album. Above the course icons.
-- **Course icons**: one per learning module, at the bottom of the screen, just above the shared app bar (`js/tabbar.js`,
-  which every page keeps). Picking an icon switches the panel and the music.
+- **Floating capsule**: current song, play/pause and next, with Games opening the course selector and position controls. It starts collapsed and collapses on game start. Move its dedicated handle by touch/mouse or arrow keys; Home or Reset restores the initial position.
+- **Course icons**: selecting a course changes the main panel. The current song continues; Play course soundtrack explicitly selects the course album. The shared app bar remains unchanged.
 
 The address is `game-hub.html#m=<module>[&play=<game>]`, so a course or a game can be linked directly. The last
 course you picked is remembered in this browser.
 
 Files: `game-hub.html`, `css/game-hub.css`, `js/game-hub/hub.mjs` (page), `js/game-hub/modules.mjs` (schema and
-checks), `js/game-hub/player.mjs` (music), `js/game-hub/chem108/` (Molecule Rush), `data/game-hub/modules.json`
+checks), `js/game-hub/shared-music.mjs` (existing music transport adapter), `js/game-hub/floating-capsule.mjs` (layout), `js/game-hub/chem108/` (Molecule Rush), `data/game-hub/modules.json`
 (the module list). The Control destinations panel (`js/site-navigation.js`) lists the hub under Products.
 
 ## Module schema (`data/game-hub/modules.json`)
@@ -81,10 +80,25 @@ release). I AM HERE is Matthew's own flagship record: six tracks is enough rotat
 public (no gated masters), and its "have no fear" register suits exam prep. When a chemistry song exists, add it as an
 album and switch Chem 108 to `role: "rhythm"`.
 
-The player is a single `<audio>` element (`js/game-hub/player.mjs`). Nothing plays until the visitor presses play.
-After that, switching courses keeps the music going. Each course's track and second are remembered in this browser
-(`localStorage` key `mcc.gamehub.music.v1`, every access in try/catch). The site's album engine (`js/music-engine.js`)
-is one global queue with gated masters and its own transport, so the hub does not reuse it.
+The capsule uses `window.MCC_MUSIC`, the existing `js/music-engine.js` transport, with its listen ledger and gated-audio rules. It never constructs a second audio element. The engine's original floating mini-player is hidden only on this page; the capsule is its visible transport. Nothing autoplays. Next follows the site's global queue. A course selection preserves current playback; the explicit soundtrack action selects that course's first song.
+
+The old `player.mjs` and `mcc.gamehub.music.v1` preferences remain intact for compatibility but are no longer active here. Their per-course seek positions are not imported into the shared engine (especially not into gated tracks). In-document course/game navigation preserves playback. Full document navigation still stops audio under the existing architecture; uninterrupted cross-page playback and shared-shell state restoration require a separate change.
+
+## Reusable capsule seam and review
+
+`mountCapsule({root, workspace, storageKey})` owns movement/disclosure and reserves a separate scrolling workspace below the capsule. The caller supplies controls and permissions; it owns no music, assessment state, entitlement or billing logic. Dragging only starts on the dedicated handle after six pixels. Arrow keys and visible direction buttons are alternatives, with Escape returning focus to Games. Position is local UI preference only, clamped on resize and visual viewport changes. A short landscape viewport may require scrolling the expanded control panel, while the game retains a clear region below it. The owner gate remains the authority; hiding/showing a control never grants access.
+
+This bounded implementation changes Game Hub only. It does not touch admin navigation #745, shared `tabbar.js`, the site music runtime, or proposed product-widget entitlement #750. Future subsystem adapters can supply their own selector/actions to this seam; a platform-wide island and continuous cross-page audio are not implemented here.
+
+Validation commands:
+
+```sh
+node --test scripts/test/game-hub*.test.mjs scripts/test/chem108-worked-example.test.mjs
+node scripts/e2e/game-hub-capsule.e2e.mjs
+node scripts/e2e/chem108-worked-example.e2e.mjs
+```
+
+Browser tests use the real shared navigation and audio runtime with synthetic owner API responses and a valid silent WAV. They are not authenticated production or physical-device evidence. Baseline main source at 390×568 reproduced two answer centers obscured by the old dock. The focused test verifies every answer center after scrolling in collapsed and expanded modes at 320×568, 390×568, 390×844, 844×390 and 1024×768, plus 200% text. Live site fetch was blocked by this execution environment (proxy 403); no deployed reproduction claim. Screenshots are saved under `/tmp/game-hub-selector-evidence/` by the focused browser test. This PR is source review, not a hosted preview or deployment.
 
 ## Molecule Rush (Chem 108)
 
@@ -215,3 +229,10 @@ account access, owner write controls, learner storage or network dependency. A p
 `/molecule-rush-49-structure-review.html`; it can be downloaded for inspection. It is not a hosted Game Hub release.
 Repository review publication is authorized separately from release. No merge or deployment occurred, and no production database was changed. PRIM3 mission/LMS
 files and the shared owner gate were left untouched. Hosted device access still needs a separately authorized release.
+
+### Capsule review evidence (local fixtures)
+
+- [Old dock, 390×568](review/before-390x568.png): two answer centers are covered.
+- [Capsule, 390×568](review/capsule-390x568.png), [390×844](review/capsule-390x844.png), [landscape 844×390](review/capsule-844x390.png): answers scroll through their own clear area.
+- Root suite: 1,677 Node passes, three existing skips, seven Python passes. Focused capsule/chemistry source suite: 69 passes. Existing chemistry browser suite: all 49 previews/243 atom anchors and 98 correct/wrong scoring flows passed. Capsule browser suite also passes real touch/mouse/keyboard movement, reset/reload, music controls, course-switch continuity, music-load failure and axe checks of the capsule.
+- The screenshots show a synthetic owner response with the real shared bar's signed-out profile presentation; they do not establish production owner-session behavior. No merge, deployment, production database write or billing change.

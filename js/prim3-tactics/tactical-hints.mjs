@@ -19,7 +19,7 @@
 // - The suggestion is "strong given what you know", never "perfect" or "guaranteed".
 // - Bounded game rules only; nothing here is real-world weapon or trajectory guidance.
 
-import { createState, gridDistance, hasLineOfSight, shotPreview, stableHash, computeReach, knownMachines } from './tactical-resolver.mjs';
+import { createState, gridDistance, hasLineOfSight, shotPreview, stableHash, computeReach, knownMachines, isExtracted } from './tactical-resolver.mjs';
 
 export const HINT_VERSION = 'tactical-hints/0.1.0';
 
@@ -42,11 +42,11 @@ const OPEN_OBJECTIVE_STATES = new Set(['OPEN', 'ACTIVE', 'IN_PROGRESS']);
 // DETECTED/INFERRED/... states).
 export function knownEnemyIds(state, knownEnemyIdsFromHost = null) {
   if (Array.isArray(knownEnemyIdsFromHost)) return new Set(knownEnemyIdsFromHost.map(String));
-  const players = [...state.units.filter((u) => u.faction === 'PLAYER' && !u.dead && !u.downed),
+  const players = [...state.units.filter((u) => u.faction === 'PLAYER' && !u.dead && !u.downed && !isExtracted(u)),
     ...(state.machines || []).filter((m) => m.kind === 'CAMERA' && m.faction === 'PLAYER' && (m.state === 'ACTIVE' || m.state === 'CONTROLLED'))];
   const known = new Set();
   for (const enemy of state.units) {
-    if (enemy.faction === 'PLAYER' || enemy.dead) continue;
+    if (enemy.faction === 'PLAYER' || enemy.dead || isExtracted(enemy)) continue;
     if (players.some((p) => gridDistance(p, enemy, state) <= p.detectionRadius && hasLineOfSight(state, p, enemy))) known.add(enemy.id);
   }
   return known;
@@ -59,7 +59,7 @@ export function knownEnemyIds(state, knownEnemyIdsFromHost = null) {
 export function playerProjection(state, { knownEnemyIds: hostKnown = null } = {}) {
   const known = knownEnemyIds(state, hostKnown);
   const units = state.units
-    .filter((u) => u.faction === 'PLAYER' || known.has(u.id))
+    .filter((u) => u.faction === 'PLAYER' || (known.has(u.id) && !isExtracted(u)))
     .map((u) => ({ ...u, statuses: [...u.statuses],
       ...(u.weapons ? { weapons: Object.fromEntries(Object.entries(u.weapons).map(([k, w]) => [k, { ...w }])) } : {}) }));
   const machines = Array.isArray(state.machines) ? knownMachines(state) : null;
@@ -313,7 +313,7 @@ export function knownPaths(projection, unitId) {
 export function legalCandidates(projection, unitId) {
   const unit = projection.units.find((u) => u.id === unitId);
   const out = [{ action: 'HOLD', x: unit.x, y: unit.y, z: unit.z, apCost: 0, steps: 0 }];
-  if (unit.ap < 1 || unit.dead || unit.downed) return out;
+  if (unit.ap < 1 || unit.dead || unit.downed || isExtracted(unit)) return out;
   const { dist, key } = knownPaths(projection, unitId);
   const floors = multiFloor(projection) ? [...Array(projection.floors).keys()] : [unit.z];
   for (const z of floors) {

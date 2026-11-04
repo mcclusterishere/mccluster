@@ -11,6 +11,8 @@
   <!-- the shared bottom bar's styles (every page carrying js/tabbar.js links it); the level's own styles follow and win -->
   <link rel="stylesheet" href="css/style.css?v=__STAMP__">
   <style>
+    /* Route previews must not scroll the battlefield beneath a stationary pointer. */
+    html{overflow-anchor:none}
     :root{
       --bg:#080b0e;--panel:rgba(14,19,24,.88);--panel2:rgba(20,27,33,.92);--line:rgba(190,205,215,.16);--line2:rgba(190,205,215,.28);
       --ink:#e6edf1;--dim:rgba(230,237,241,.66);--squad:#2fe0f0;--squad-soft:rgba(47,224,240,.16);--threat:#ff3b3b;--amber:#ffb547;--amber-ink:#1b1206;--ok:#7be38a;
@@ -24,7 +26,7 @@
     html,body{margin:0;background:var(--bg);color:var(--ink)}
     body{font:var(--font);min-height:100svh;letter-spacing:.02em}
     button{font:inherit;color:inherit}
-    .tx{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;padding:calc(8px + env(safe-area-inset-top)) 12px calc(112px + env(safe-area-inset-bottom));max-width:1500px;margin:0 auto}
+    .tx{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;padding:calc(64px + env(safe-area-inset-top)) 12px calc(112px + env(safe-area-inset-bottom));max-width:1500px;margin:0 auto}
     h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
     .owner-gate h1{position:static;width:auto;height:auto;overflow:visible;clip:auto}
     /* top bar */
@@ -151,6 +153,19 @@
     .tx-end-screen h2{margin:0 0 6px;font-size:28px;letter-spacing:.14em;text-transform:uppercase;color:#fff}
     .tx-end-screen p{margin:0 0 12px;color:rgba(255,255,255,.8)}
     .tx-end-screen .sh-list{color:rgba(255,255,255,.88)}
+    .tx-end-screen.is-result{align-items:start;overflow-y:auto;overscroll-behavior:contain}
+    .tx-result{width:min(100%,42rem);min-width:0;text-align:left;padding:4px 0 12px;color:#fff;overflow-wrap:anywhere}
+    .tx-result h3{font-size:16px;margin:16px 0 6px;color:#fff}
+    .tx-result-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:14px 0}
+    .tx-result-facts dt{font-size:13px;color:rgba(255,255,255,.72)}
+    .tx-result-facts dd{margin:4px 0 0;font-size:16px;font-weight:700}
+    .tx-result .tx-result-extraction{margin-top:10px}
+    .tx-result .tx-result-scope{font-size:13px;line-height:1.5}
+    .tx-result-actions{display:flex;flex-wrap:wrap;gap:8px;padding-bottom:8px}
+    .tx-result-actions .sh-btn{min-height:44px;display:flex;align-items:center;justify-content:center;text-align:center;text-decoration:none;white-space:normal}
+    #txSaveNotice{margin:8px 12px;overflow-wrap:anywhere}
+    #txSaveNotice a{display:inline-flex;align-items:center;min-height:44px;text-decoration:underline}
+
     .reduce-motion *{transition:none!important;animation:none!important}
     /* tablet: squad cards gain portraits; actions in one row */
     @media (min-width:700px){
@@ -200,6 +215,7 @@
     </header>
     <section class="tx-set" id="txSet" aria-label="Settings" hidden>
       <div class="set-row"><span class="sh-eye">Look</span><div class="seg" id="setLook"><button type="button" data-look="day">Day</button><button type="button" data-look="field">Night (rain)</button><button type="button" data-look="studio">Studio (grayscale)</button></div></div>
+      <div class="set-row"><span class="sh-eye">Grid detail</span><div class="seg" id="setGridDetail"><button type="button" data-grid-detail="1">Tactical cells</button><button type="button" data-grid-detail="2">2 × 2 guides</button></div><p class="sh-sub" id="gridDetailNote"></p></div>
       <div class="set-row"><span class="sh-eye">Graphics</span><div class="seg" id="setGfx"><button type="button" data-gfx="auto">Auto</button><button type="button" data-gfx="high">High</button><button type="button" data-gfx="mid">Balanced</button><button type="button" data-gfx="low">Battery</button></div></div>
       <div class="set-row"><span class="sh-eye">Mission</span><div class="seg"><button type="button" id="setRestart">Restart mission</button><a class="seg-a" href="prim3-tactics-preview.html">Main menu</a></div></div>
       <div class="set-row"><span class="sh-eye">Mission log</span><ol class="tx-log" id="txLog"></ol></div>
