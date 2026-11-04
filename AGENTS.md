@@ -139,6 +139,32 @@ anywhere: it is the drawn one. Delete it, do not reference it.
 
 ## Files every agent must honor
 
+### Build controls before features
+
+Owner direction, 2026-11-04: build forward from architecture, database support,
+security and owner productization; do not repeatedly retrofit controls after a
+feature is built. For every new feature or substantial extension:
+
+1. Identify the existing canonical services, data ownership and stable IDs to
+   reuse. Review schema, migration/replay/rollback impact, RLS, grants and
+   server-enforced tenant/resource authorization before implementation.
+2. Build the owner/admin controls required to configure and operate the feature
+   first, in existing Control routes. Use validated settings, private preview,
+   version/conflict checks, explicit publication, audit and safe recovery where
+   state changes; distinguish reversible configuration from irreversible actions.
+3. Build/configure and test the feature through those same controls. Prove the
+   owner journey, failure/retry/recovery and permission denials without requiring
+   an AI or shell for routine operation. Record actual evidence and missing gates.
+4. Reuse those capabilities for narrower delegated admin, creator and member
+   controls where appropriate. Enforce roles, ownership, tenant boundaries and
+   entitlements on the server; hiding UI is never authorization.
+
+For existing features, inventory working controls and gaps, preserve behavior,
+identities and saves, and migrate incrementally to this workflow. Reconcile parked
+implementations before adding another framework. A local test or preview does not
+authorize production migrations, merges, deployments, purchases or release flags;
+existing approval and product-specific gates still apply.
+
 ### Shared website navigation
 
 Owner direction, 2026-10-16: all admin destinations are reachable from the shared

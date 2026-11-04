@@ -396,6 +396,30 @@
         "workers/mccluster/src/news-briefs.js"
       ]
     },
+    "owner_front_draft_save_v1": {
+      "kind": "function",
+      "pending": "owner_front_publication_v1.sql",
+      "callers": ["js/control-room/front-page.js"]
+    },
+    "owner_front_draft_discard_v1": {
+      "kind": "function",
+      "pending": "owner_front_publication_v1.sql",
+      "callers": ["js/control-room/front-page.js"]
+    },
+    "owner_front_publish_v1": {
+      "kind": "function",
+      "pending": "owner_front_publication_v1.sql",
+      "callers": [
+        "js/control-room/front-page.js"
+      ]
+    },
+    "owner_front_snapshot_v1": {
+      "kind": "function",
+      "pending": "owner_front_publication_v1.sql",
+      "callers": [
+        "js/control-room/front-page.js"
+      ]
+    },
     "policy_ladder_status": {
       "kind": "function",
       "pending": "policy_fellowship_ladder_v1.sql",

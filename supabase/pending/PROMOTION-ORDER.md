@@ -138,6 +138,19 @@ Contract tests that read them: `scripts/test/action-economy-*.test.mjs`,
 
 ## 5. Staged only, do not apply as-is
 
+- `owner_front_publication_v1.sql`: local owner-settings proposal, not deployed.
+  Requires existing `site_content`, `site_content_history`, their audit trigger,
+  `mnet_is_admin()` and `site_content_set()` from the canonical baseline.
+  Adds one private per-user draft table with no browser table grants, and a
+  monotonic draft revision sequence; reuses existing auth identities. Test with
+  `PGLITE_DIR=<node_modules> node --test scripts/test/owner-front-publication-db.mjs`,
+  then full isolated canonical PostgreSQL replay and simultaneous legacy/new-writer
+  sessions before promotion. The frontend intentionally disables publishing when
+  these RPCs are unavailable; release SQL before this frontend under separate
+  approval. History restore is preview then explicit publication, not history deletion.
+  The companion `owner_front_publication_v1.rollback.sql` removes only the new
+  functions after frontend rollback, preserving all data. Both files are staged only.
+  See `docs/productization/OWNER-FRONT-PUBLICATION-20261104.md` for scope and rollback.
 - `20261013180000_qt6kv_creator_isrc_ledger.sql` and
   `20261013180100_music_cohort_isrc_grants.sql`: imported from PR #424 for
   consolidation; reconcile with the live ISRC allocations, rights
