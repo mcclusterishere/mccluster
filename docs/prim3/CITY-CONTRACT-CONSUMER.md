@@ -1,7 +1,8 @@
 # City contract tactical consumer checkpoint
 
-Dependency: City #748, `a55e7ceed929f6dbe81c341d1097536a92744a24`, stacked on #736.
-This local consumer branch is based directly on that checkpoint. It does not import the
+Dependency: City #748 runnable head `8cadf264613a091ecbdf058dbec50f8883b5cf42`,
+stacked on #736; its contract remains `a55e7ceed929f6dbe81c341d1097536a92744a24`.
+This separate consumer branch includes that checkpoint. It does not import the
 entire City stack into PRIM3 #739 or change the existing upstream engine pin.
 
 `js/prim3-tactics/shared-spatial-preview.mjs` consumes City's region payload and reference
@@ -9,6 +10,13 @@ route/clearance exports. It returns read-only street navigation previews for squ
 with explicit metre budgets, checked edge costs and continuous starting positions. It cannot
 execute tactical actions and does not read/write browser storage or migrate legacy saves.
 There is no renderer or owner-control integration in this checkpoint.
+
+The runnable City update adds the owner-gated Cesium lifecycle seam, but explicitly retains
+the same street-only geometry and no combat interface. Its `mccluster.spatial-lifecycle/v1`
+preview/confirm messages authorize only that exterior navigation flow. They cannot authorize
+a PRIM3 move or spend AP. This adapter does not send those messages or represent their arrival
+event as mission completion. A playable new tactical scenario is deferred until the essential
+interfaces below can be implemented upstream with meaningful combat regressions.
 
 ## Semantic gaps for City/coordinator
 
