@@ -101,7 +101,7 @@ try {
     check(role + ': neither game runtime nor fictional data loads before owner approval', !requests.some(url => /\/js\/fictional-city\/|\/data\/fictional-city\//.test(url)));
     await context.close();
   }
-  for (const width of [390, 1280]) {
+  for (const width of (process.env.CITY_NAV_ONLY ? [390, 768, 1440] : [390, 1280])) {
     const { context, page, requests, errors } = await contextFor(width);
     await page.goto(site + '/fictional-city.html');
     await page.waitForFunction(() => document.documentElement.dataset.cityReady === 'true' && window.MCC_CITY && document.querySelector('#city-canvas')?.dataset.ready === 'true');
@@ -114,7 +114,39 @@ try {
     check(width + ': all ' + PEOPLE + ' people, the original and Bridgeport places and ' + places.parcels.length + ' parcels are instantiated', stats.npcCount === PEOPLE && stats.buildings === expectedPlaces && stats.parcels === places.parcels.length, stats);
     check(width + ': all 13 Robbery 1s scene stops are instantiated', stats.storyStops === 13, stats);
     check(width + ': measured scene stays inside the preview geometry budget', stats.triangles < 150000 && stats.drawCalls < 300, stats);
+    // Streaming's original opening-view baseline was measured with the overview lens.
+    await page.locator('[data-city-view="overview"]').click();
+    await settled(page); await page.waitForTimeout(500);
+    const overviewStats = await page.evaluate(() => MCC_CITY.stats());
+    check(width + ': overview retains streamed opening-view budget', overviewStats.triangles < 70000, overviewStats.breakdown);
+    await page.locator('[data-city-view="first"]').click();
+    await page.waitForFunction(() => MCC_CITY.stats().camera.mode === 'first' && document.querySelector('[data-city-view=first]').getAttribute('aria-pressed') === 'true');
+    check(width + ': explicit first person is available', await page.locator('[data-city-view="first"]').getAttribute('aria-pressed') === 'true');
+    await page.locator('[data-city-view="close"]').click();
+    await page.locator('#city-destination').selectOption('equity-uprise-hq');
+    await page.waitForFunction(() => document.querySelector('#city-direction').textContent.includes('Equity Uprise HQ'));
+    check(width + ': HQ guidance shows live distance', /\d+ m/.test(await page.locator('#city-direction').textContent()));
+    await page.locator('#city-labels-toggle').uncheck();
+    check(width + ': building names can be turned off', await page.locator('#city-building-labels').isHidden());
+    await page.locator('#city-labels-toggle').check();
     await page.screenshot({ path: join(out, 'city-' + width + '.png'), fullPage: false });
+    if (process.env.CITY_NAV_ONLY) {
+      await page.locator('#city-follow-toggle').check();
+      const before = await page.evaluate(() => MCC_CITY.stats().camera.yaw);
+      await page.locator('#city-canvas').focus(); await page.keyboard.down('d');
+      try { await page.waitForFunction(yaw => Math.abs(MCC_CITY.stats().camera.yaw - yaw) > .15, before); }
+      finally { await page.keyboard.up('d'); }
+      check(width + ': lock-behind control steers the camera', true);
+      await page.locator('#city-follow-toggle').uncheck();
+      const position = await page.evaluate(() => MCC_CITY.snapshot().position);
+      await page.locator('#city-route').click();
+      await page.waitForFunction(p => Math.hypot(MCC_CITY.snapshot().position.x - p.x, MCC_CITY.snapshot().position.z - p.z) > .2, position);
+      check(width + ': Walk there starts actual movement', true);
+      await page.locator('.city-stage').screenshot({ path: join(out, 'navigation-stage-' + width + '.png') });
+      check(width + ': navigation has no browser errors', errors.length === 0, { errors });
+      await context.close(); continue;
+    }
+
     await page.locator('.city-garage-card').scrollIntoViewIfNeeded();
     await page.screenshot({ path: join(out, 'neighbors-' + width + '.png') });
     await page.evaluate(() => window.scrollTo(0, 0));
@@ -145,7 +177,7 @@ try {
     await page.waitForFunction(() => !MCC_CITY.snapshot().position.interior);
 
     await page.getByRole('button', { name: 'District map' }).click();
-    const tea = page.locator('.city-place-card').filter({ has: page.getByRole('heading', { name: 'GAURANFUCKING TEA', exact: true }) });
+    const tea = page.locator('.city-place-card').filter({ has: page.getByRole('heading', { name: /GAURANFUCKING TEA$/ }) });
     await tea.getByRole('button', { name: 'About this spot' }).click();
     await page.getByRole('button', { name: 'Walk inside', exact: true }).click();
     await page.waitForFunction(() => MCC_CITY.snapshot().position.interior === 'gauranfucking-tea');
@@ -162,7 +194,7 @@ try {
     await page.getByRole('button', { name: 'Close panel' }).click();
 
     await page.getByRole('button', { name: 'District map' }).click();
-    await page.locator('.city-place-card').filter({ has: page.getByRole('heading', { name: 'GAURANFUCKING TEA', exact: true }) }).getByRole('button', { name: 'About this spot' }).click();
+    await page.locator('.city-place-card').filter({ has: page.getByRole('heading', { name: /GAURANFUCKING TEA$/ }) }).getByRole('button', { name: 'About this spot' }).click();
     await page.getByRole('button', { name: 'Browse the counter' }).click();
     const item = city.items.find(i => i.businessId === 'gauranfucking-tea');
     const balance = await page.evaluate(() => MCC_CITY.snapshot().credits);
@@ -188,6 +220,7 @@ try {
     check(width + ': no uncaught browser errors', errors.length === 0, { errors });
     await context.close();
   }
+  if (!process.env.CITY_NAV_ONLY) {
   {
     const { context, page } = await contextFor(390);
     let finishStory;
@@ -436,6 +469,7 @@ try {
     const dialogOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     check(width + ': the whole-city map fits without overflow', dialogOverflow === 0);
     await context.close();
+  }
   }
 } finally {
   await writeFile(join(out, 'metrics.json'), JSON.stringify({ environment: 'Headless Chromium, SwiftShader software WebGL, device pixel ratio 1; not a physical device', metrics }, null, 2));

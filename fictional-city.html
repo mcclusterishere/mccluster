@@ -38,21 +38,39 @@
             <div><span class="city-eyebrow" id="city-area-label">COMMERCIAL DISTRICT</span><strong id="city-location">Harbor Boulevard</strong></div>
             <span class="city-wallet"><span aria-hidden="true">◈</span> <b id="city-balance">250</b> <span>credits</span></span>
           </div>
+          <div class="city-view-controls" aria-label="Camera view">
+            <button type="button" data-city-view="close" aria-pressed="true">Third person</button>
+            <button type="button" data-city-view="first" aria-pressed="false">First person</button>
+            <button type="button" data-city-view="overview" aria-pressed="false">Overview</button>
+            <label><input type="checkbox" id="city-follow-toggle"> Lock behind</label>
+            <p>Drag to look · Tap to walk · With lock: left/right steer</p>
+          </div>
+          <div class="city-navigation-controls">
+            <label for="city-destination">Destination</label>
+            <select id="city-destination"><option value="">Choose a place</option></select>
+            <button type="button" id="city-route">Walk there</button>
+            <label><input type="checkbox" id="city-labels-toggle" checked> Building names</label>
+            <output id="city-direction" aria-live="polite"></output>
+          </div>
           <div class="city-stage">
-            <canvas id="city-canvas" tabindex="0" aria-label="3D city. Use WASD or arrow keys to walk; E to interact. Tap the street to walk. The district map offers the same destinations."></canvas>
+            <div id="city-building-labels" aria-hidden="true"></div>
+            <canvas id="city-canvas" tabindex="0" aria-label="3D city. Use WASD or arrow keys to walk; E to interact. Drag left or right to turn, up or down to tilt. Tap the street to walk. The district map offers the same destinations."></canvas>
             <div class="city-scene-status" id="city-scene-status" role="status">Opening the district…</div>
-            <div class="city-stage-tag"><span aria-hidden="true">N ↖</span> <b id="city-stage-area">HARBOR / 01</b></div>
+            <div class="city-stage-tag"><b id="city-stage-area">HARBOR / 01</b></div>
+            <button type="button" id="city-map-mini" class="city-map-mini" aria-label="Open city map">
+              <span data-map-heading>Map ↗</span><svg viewBox="0 0 100 100" aria-hidden="true"></svg>
+            </button>
             <div class="city-camera-controls" aria-label="Camera controls">
               <button type="button" id="city-zoom-in" aria-label="Zoom in">+</button>
               <button type="button" id="city-zoom-out" aria-label="Zoom out">−</button>
-              <button type="button" id="city-reset-view" aria-label="Reset camera">↺</button>
+              <button type="button" id="city-reset-view" aria-label="Recenter camera behind you" title="Recenter behind you">↺</button>
             </div>
             <div class="city-controls">
               <div class="city-dpad" aria-label="Movement controls">
-                <button type="button" data-move="north" aria-label="Walk north">↑</button>
-                <button type="button" data-move="west" aria-label="Walk west">←</button>
-                <button type="button" data-move="south" aria-label="Walk south">↓</button>
-                <button type="button" data-move="east" aria-label="Walk east">→</button>
+                <button type="button" data-move="north" aria-label="Walk forward relative to the view">↑</button>
+                <button type="button" data-move="west" aria-label="Walk left relative to the view">←</button>
+                <button type="button" data-move="south" aria-label="Walk back relative to the view">↓</button>
+                <button type="button" data-move="east" aria-label="Walk right relative to the view">→</button>
               </div>
               <div class="city-interaction">
                 <p id="city-prompt">Walk up to a door or a neighbor.</p>
