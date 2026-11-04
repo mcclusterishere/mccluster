@@ -1,0 +1,33 @@
+name: Email sign-in review
+on:
+  pull_request:
+    paths:
+      - 'auth/email.html'
+      - 'js/email-signin*.mjs'
+      - 'scripts/test/email-signin.test.mjs'
+      - 'scripts/e2e/email-signin.e2e.mjs'
+      - '.github/workflows/email-signin.yml'
+permissions:
+  contents: read
+jobs:
+  passwordless:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - run: node --test scripts/test/email-signin.test.mjs
+      - name: Prepare pinned browser
+        run: |
+          npm install --prefix /tmp/email-qa --ignore-scripts --no-audit --no-fund --no-save playwright@1.57.0
+          /tmp/email-qa/node_modules/.bin/playwright install --with-deps chromium
+      - name: Exercise synthetic email handoff on phone and desktop
+        env:
+          CODEX_PRIMARY_RUNTIME_NODE_MODULES: /tmp/email-qa/node_modules
+        run: |
+          export CHROMIUM_PATH="$(node -e "console.log(require('/tmp/email-qa/node_modules/playwright').chromium.executablePath())")"
+          node scripts/e2e/email-signin.e2e.mjs
