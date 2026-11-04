@@ -34,8 +34,14 @@ const object = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
 const finite = (v) => typeof v === 'number' && Number.isFinite(v);
 const point = (v) => object(v) && [v.x, v.y, v.z].every(finite);
 const strings = (v) => Array.isArray(v) && v.every((x) => typeof x === 'string');
+// Keep the briefing that was actually deployed, rather than silently relabelling a resumed run.
+export function missionBriefing(value, expectedId) {
+  if (!object(value) || typeof value.id !== 'string' || value.id !== expectedId || typeof value.title !== 'string' || !object(value.character) || typeof value.character.name !== 'string' || typeof value.briefing !== 'string') return null;
+  return { id: value.id, title: value.title, character: { name: value.character.name }, briefing: value.briefing,
+    ...(value.deployment === 'wildcard-call' ? { deployment: value.deployment } : {}) };
+}
 // Resume validation is corruption protection, not anti-cheat. Legacy v1 saves keep their keys.
-export function parseResume(raw, template, width, height) {
+export function parseResume(raw, template, width, height, context = {}) {
   if (raw == null) return null;
   const save = JSON.parse(raw), s = save && save.state;
   const reject = () => { throw new Error('This browser save is damaged or belongs to a different level.'); };
@@ -78,5 +84,15 @@ export function parseResume(raw, template, width, height) {
   if (s.mission.extractedUnitIds.some((id) => !s.units.some((u) => u.id === id))) reject();
   const log = Array.isArray(save.log) ? save.log.filter((v) => typeof v === 'string').slice(-120) : [];
   const explored = Array.isArray(save.explored) && save.explored.length === width * height && save.explored.every((v) => v === 0 || v === 1) ? save.explored : null;
-  return { state: s, log, explored };
+  if (save.levelId !== undefined && (typeof save.levelId !== 'string' || (context.levelId && save.levelId !== context.levelId))) reject();
+  const hasIdentity = Object.hasOwn(save, 'missionId');
+  const missionId = hasIdentity ? save.missionId : null;
+  if (missionId !== null && (typeof missionId !== 'string' || !missionId)) reject();
+  const mission = missionId === null ? null : missionBriefing(save.mission, missionId);
+  if (missionId !== null && !mission) reject();
+  if (context.missionId && (!hasIdentity || context.missionId !== missionId)) {
+    const error = new Error(hasIdentity ? 'This browser already holds a different mission. Resume it below, or use Settings → Restart mission to replace it.' : 'This older save has no mission label. Resume the saved level below, or use Settings → Restart mission to replace it.');
+    error.canResumeSaved = true; error.savedMissionId = missionId; throw error;
+  }
+  return { state: s, log, explored, missionId, mission };
 }

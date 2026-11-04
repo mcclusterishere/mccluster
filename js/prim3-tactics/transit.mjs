@@ -12,7 +12,8 @@ import { createState, beginPlayerPhase, moveUnit, fireWeapon,
   enterOverwatch, hunkerDown, reload, shotPreview, stabilize, technicalAction, extractUnit, drawRolls, hasLineOfSight, gridDistance,
   techActionPreview, jamMachine, syncPulse, markMachine } from './tactical-resolver.mjs';
 import { playerProjection, knownPaths } from './tactical-hints.mjs';
-import { resolveHostileTurn, genericOutcome, parseResume } from './lifecycle.mjs';
+import { resolveHostileTurn, genericOutcome, parseResume, missionBriefing } from './lifecycle.mjs';
+import { missionAftermath } from './aftermath.mjs';
 import { loadLevel } from './levels/index.mjs';
 import { operatorHeight } from './scale.mjs';
 import { DATA_URL as WORLD_MISSIONS, DRAFT_KEY as WORLD_DRAFTS, findMission } from '../prim3-world/missions.mjs';
@@ -54,6 +55,8 @@ if (LEVEL.RETURN) { // a Level Forge play test: one tap back to the editor, with
 const LOOK_KEY = 'prim3.tactics.look';
 const GFX_KEY = 'prim3.tactics.preview.gfx';
 const PARAMS = new URLSearchParams(location.search);
+const REQUESTED_MISSION_ID = PARAMS.get('mission');
+let freshLaunchPending = PARAMS.get('new') === '1';
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const ROLE = {
   E: { name: 'Entry', line: 'Protect the approach. Breach the service gate.', img: 'assets/img/prim3-operators/E-portrait.jpg' },
@@ -69,22 +72,38 @@ const D = (x, y) => { const d = toDisplay(x, y); return `(${d.X}, ${d.Y})`; };
 
 /* ---------- state, save ---------- */
 function fresh() { const seed = Number(PARAMS.get('seed')) || (Date.now() % 1e9); return HOOKS ? HOOKS.createState(seed) : beginPlayerPhase(createState(LEVEL.engineConfig({ seed }))); }
-let saveBlocked = false, saveMessage = '';
+let saveBlocked = false, saveMessage = '', saveReturnLink = '';
 const initialState = fresh();
 function load() {
-  if (PARAMS.get('new') === '1') return null;
-  try { return parseResume(localStorage.getItem(SAVE), initialState, W, H); }
-  catch (e) { saveBlocked = true; saveMessage = 'The saved mission could not be resumed. It has been kept unchanged. Use Settings → Restart mission to start a new save.'; return null; }
+  if (freshLaunchPending) return null;
+  try { return parseResume(localStorage.getItem(SAVE), initialState, W, H, { levelId: LEVEL.LEVEL_ID, missionId: REQUESTED_MISSION_ID }); }
+  catch (e) {
+    saveBlocked = true;
+    saveMessage = e.canResumeSaved ? e.message : 'The saved mission could not be resumed. It has been kept unchanged. Use Settings → Restart mission to start a new save.';
+    if (e.canResumeSaved) { const url = new URL(location.href); url.searchParams.delete('new'); if (e.savedMissionId) url.searchParams.set('mission', e.savedMissionId); else url.searchParams.delete('mission'); saveReturnLink = url.pathname + url.search + url.hash; }
+    return null;
+  }
 }
 const resumed = load();
 function paintSaveNotice() {
   let notice = $('txSaveNotice');
   if (!notice) { notice = document.createElement('p'); notice.id = 'txSaveNotice'; notice.className = 'sh-sub'; notice.setAttribute('role', 'status'); $('txObj').after(notice); }
-  notice.textContent = saveMessage; notice.hidden = !saveMessage;
+  for (const target of [notice, $('txResultSaveNotice')].filter(Boolean)) {
+    target.textContent = saveMessage; target.hidden = !saveMessage;
+    if (saveReturnLink) { const a = document.createElement('a'); a.href = saveReturnLink; a.textContent = 'Resume saved mission'; a.dataset.resumeSaved = ''; target.append(document.createTextNode(' '), a); }
+  }
+  const persistence = $('txResultPersistence');
+  if (persistence) persistence.textContent = saveMessage ? 'Replay replaces this run.' : 'Saved in this browser. Replay replaces this run.';
 }
 function save() {
   if (!saveBlocked) {
-    try { localStorage.setItem(SAVE, JSON.stringify({ v: 1, at: Date.now(), state, log: log.slice(-60), explored: Array.from(explored) })); saveMessage = ''; }
+    try {
+      localStorage.setItem(SAVE, JSON.stringify({ v: 1, at: Date.now(), levelId: LEVEL.LEVEL_ID, missionId: MISSION_ID, mission: MISSION, state, log: log.slice(-60), explored: Array.from(explored) })); saveMessage = '';
+      if (freshLaunchPending) {
+        try { const url = new URL(location.href); url.searchParams.delete('new'); history.replaceState(history.state, '', url); freshLaunchPending = false; }
+        catch (e) { saveMessage = 'This run was saved, but its launch address could not be updated. Keep this page open to continue.'; }
+      }
+    }
     catch (e) { saveMessage = 'Progress could not be saved in this browser. Keep this page open; the next action will retry.'; }
   }
   paintSaveNotice(); syncScreens();
@@ -102,10 +121,20 @@ let state = resumed ? resumed.state : initialState;
 let log = resumed ? resumed.log : [];
 let ui = { sel: 'T1', mode: null, preview: null, busy: false, mapOpen: false, setOpen: false, ended: null, objOpen: false, briefed: false };
 /* A World mission (prim3-world.html → ?mission=<id>&new=1) only dresses this level: its title, character and briefing go in
-   the objective card and the first log line. Rules, map and saves are the level's own. An unknown id is ignored. */
-const MISSION_ID = PARAMS.get('mission');
-let MISSION = null;
-if (MISSION_ID && PARAMS.get('new') === '1') log = []; // a fresh deploy starts a fresh log, as it starts a fresh state
+   the objective card and the first log line. Rules, map and the save slot are the level's own. A saved run retains its deployed briefing snapshot. */
+const MISSION_ID = resumed ? resumed.missionId : REQUESTED_MISSION_ID;
+let MISSION = resumed ? resumed.mission : null;
+if (MISSION_ID && !MISSION) {
+  // A deliberate launch uses the owner's saved draft first. A resumed run already has its own snapshot.
+  try { MISSION = missionBriefing(findMission(JSON.parse(localStorage.getItem(WORLD_DRAFTS) || 'null'), MISSION_ID), MISSION_ID); } catch (e) {}
+  if (!MISSION) {
+    const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 5000);
+    try { const r = await fetch(WORLD_MISSIONS, { signal: controller.signal }); if (r.ok) MISSION = missionBriefing(findMission(await r.json(), MISSION_ID), MISSION_ID); } catch (e) {}
+    finally { clearTimeout(timer); }
+  }
+  if (!MISSION) { saveBlocked = true; saveMessage = 'The selected mission briefing could not load. No saved run was replaced. Reload to retry.'; }
+}
+if (MISSION) document.title = `${MISSION.title} · PRIM3 ${TXT.title}`;
 const missionLine = (m) => `T01 · Mission: ${m.title} · ${m.character.name}. ${m.briefing}`;
 // Day is the default (owner, 2026-11-02); Night ('field') and Studio stay selectable
 const LOOKS = ['day', 'field', 'studio'];
@@ -438,7 +467,7 @@ function aim(id) {
 }
 
 async function onAct(id) {
-  const sel = unitOf(ui.sel); if (!sel || ui.busy) return;
+  const sel = unitOf(ui.sel); if (!sel || ui.busy || ui.ended || state.phase !== 'PLAYER') return;
   toastMsg = '';
   if (id === 'move' || id === 'dash') { if (ui.mode === id) { cancel(); return; } ui.mode = id; ui.preview = null; ui.reach = reach(sel, id === 'dash'); render(); return; }
   if (id === 'fire') { if (ui.mode === 'fire') { cancel(); return; } ui.mode = 'fire'; ui.preview = null; const ts = targetsFor(sel); if (ts.length === 1) aim(ts[0].e.id); else render(); return; }
@@ -460,6 +489,7 @@ async function onAct(id) {
 }
 
 async function onSheet(a) {
+  if (ui.busy || ui.ended || state.phase !== 'PLAYER') return;
   const sel = unitOf(ui.sel);
   if (a === 'back') { if (ui.preview) { ui.preview = null; render(); } else cancel(); return; }
   if (a.startsWith('aim:')) { aim(a.slice(4)); return; }
@@ -566,21 +596,35 @@ function checkEnd() {
   if (HOOKS) return HOOKS.outcome(state);
   return genericOutcome(state, OBJ_NODE);
 }
+function resultHtml(end) {
+  const report = missionAftermath(state, end, { objectiveNode: OBJ_NODE, objectiveLabel: TXT.noun });
+  const returnTo = LEVEL.RETURN || (MISSION_ID ? { href: 'prim3-world.html', label: 'PRIM3 World' } : { href: 'prim3-tactics-preview.html', label: 'Main menu' });
+  const heading = end === 'win' ? TXT.doneTitle : 'Mission failed';
+  const reason = end === 'win' ? `${report.goals.filter((g) => g.complete).length} of ${report.goals.length} required objectives completed.` : (LOSE[end] || LOSE['lose-all'])();
+  return `<div class="tx-result" id="txAftermath"><h2 id="txResultHeading" tabindex="-1">${esc(heading)}</h2>
+    ${MISSION ? `<p>${esc(MISSION.title)}</p>` : ''}<p>${esc(reason)}</p>
+    <dl class="tx-result-facts"><div><dt>Turn reached</dt><dd>${report.round}</dd></div><div><dt>Clock remaining</dt><dd>${report.clock}</dd></div><div><dt>Pressure</dt><dd>${esc(report.escalation)}</dd></div></dl>
+    <h3>Objectives</h3><ul class="sh-list" id="txAftermathGoals">${report.goals.map((g) => `<li data-goal="${esc(g.id)}"><b>${esc(g.label)}</b>: ${g.complete ? 'Complete' : 'Incomplete'} · ${esc(g.state.replaceAll('_', ' ').toLowerCase())}</li>`).join('')}</ul>
+    <h3>Squad outcome</h3><ul class="sh-list" id="txAftermathSquad">${report.squad.map((u) => `<li data-result-unit="${esc(u.id)}"><b>${esc(u.label)}</b>: ${esc(u.condition)} · ${esc(u.location)} · ${u.hp}/${u.maxHp} HP</li>`).join('')}</ul>
+    ${report.extractionRequired ? `<p class="tx-result-extraction">${report.counts.extracted} of ${report.squad.length} operatives extracted.</p>` : ''}
+    ${HOOKS ? `<h3>Exercise debrief</h3><ul class="sh-list">${HOOKS.debrief(state).map((line) => `<li>${esc(line)}</li>`).join('')}</ul>` : ''}
+    <h3>Next attempt</h3><p>${esc(report.next)}</p><p class="tx-result-scope" id="txResultPersistence">Saved in this browser. Replay replaces this run.</p><p id="txResultSaveNotice" role="status" hidden></p>
+    <div class="tx-result-actions"><button type="button" class="sh-btn sh-btn--go" data-sheet="restart">${end === 'win' ? 'Replay mission' : 'Try again'}</button><a id="txReturn" class="sh-btn" href="${esc(returnTo.href)}">Return to ${esc(returnTo.label)}</a></div></div>`;
+}
 function afterChange() {
   const end = checkEnd();
   if (end && !ui.ended) {
     ui.ended = end === 'win' ? 'win' : 'lose';
-    const squad = state.units.filter((u) => u.faction === 'PLAYER');
-    const out = squad.filter(extracted).length;
-    $('txEnd').innerHTML = end === 'win'
-      ? `<div><h2>${TXT.doneTitle}</h2><p>Turn ${state.round}.${state.mission.extractionRequired ? ` ${out} of ${squad.length} extracted.` : ''}</p>${debriefHtml()}<button type="button" class="sh-btn sh-btn--go" data-sheet="restart">Play again</button></div>`
-      : `<div><h2>Mission failed</h2><p>${(LOSE[end] || LOSE['lose-all'])()}</p>${debriefHtml()}<button type="button" class="sh-btn sh-btn--go" data-sheet="restart">Try again</button></div>`;
+    ui.mode = null; ui.preview = null; ui.reach = null;
+    $('txEnd').innerHTML = resultHtml(end); $('txEnd').classList.add('is-result');
+    $('txEnd').setAttribute('role', 'region'); $('txEnd').setAttribute('aria-labelledby', 'txResultHeading');
     $('txEnd').hidden = false;
-    say(end === 'win' ? 'Mission complete.' : 'Mission failed.');
+    const message = `T${String(state.round).padStart(2, '0')} · ${end === 'win' ? 'Mission complete.' : 'Mission failed.'}`;
+    if (!log.includes(message)) log.push(message);
+    $('txResultHeading').focus({ preventScroll: true });
   }
   save(); render();
 }
-function debriefHtml() { return HOOKS ? `<ul class="sh-list" style="text-align:left;max-width:34rem;margin:0 auto 12px">${HOOKS.debrief(state).map((l) => `<li>${esc(l)}</li>`).join('')}</ul>` : ''; }
 // the briefing: a mission level opens on its brief, over the board (Start dismisses it)
 function showBrief() {
   if (!HOOKS || ui.briefed || state.round > 1 || ui.ended) return;
@@ -588,10 +632,12 @@ function showBrief() {
   $('txEnd').hidden = false;
 }
 function restart() {
-  saveBlocked = false; saveMessage = '';
+  if (MISSION_ID && !MISSION) { paintSaveNotice(); return; }
+  saveBlocked = !(!MISSION_ID || MISSION); saveMessage = saveBlocked ? 'The selected mission briefing could not load. Reload to retry.' : ''; saveReturnLink = '';
   try { localStorage.removeItem(SAVE); } catch (e) {}
   explored = new Uint8Array(W * H); fogKey = '';
   state = fresh(); log = []; ui = { ...ui, sel: 'T1', mode: null, preview: null, reach: null, busy: false, ended: null };
+  $('txEnd').classList.remove('is-result'); $('txEnd').removeAttribute('role'); $('txEnd').removeAttribute('aria-labelledby');
   $('txEnd').hidden = true; say(`Deployed. ${TXT.objective}.`); ui.briefed = false;
   if (MISSION) log.unshift(missionLine(MISSION));
   if (r3) { r3.destroy(); r3 = null; }
@@ -621,27 +667,17 @@ document.addEventListener('keydown', (e) => {
   else if (e.key === 'Enter' && ui.preview) onSheet(ui.preview.kind === 'move' ? 'confirm-move' : 'confirm-fire');
 });
 if (!log.length) say(`Deployed. ${TXT.objective}.`);
+if (MISSION && !log.some((line) => line.startsWith(`T01 · Mission: ${MISSION.title} ·`))) log.unshift(missionLine(MISSION));
 if (HOOKS && HOOKS.sideSwitch) { // a side switch in the settings: each side is its own exercise and save
   const row = document.createElement('div'); row.className = 'set-row';
   const p = new URLSearchParams(location.search); p.set('side', HOOKS.sideSwitch); p.set('new', '1');
   row.innerHTML = `<span class="sh-eye">Side</span><div class="seg"><a class="seg-a" href="?${esc(p.toString())}">Play the ${HOOKS.sideSwitch === 'attack' ? 'red team: Blind the Floor' : 'defenders: Restore the Picture'}</a></div>`;
   $('txSet').insertBefore(row, $('txSet').children[2]);
 }
+if (!resumed && !saveBlocked) save();
 render();
 showBrief();
 if (ui.ended == null) { const end = checkEnd(); if (end) afterChange(); }
 window.addEventListener('pagehide', save);
-if (MISSION_ID) {
-  const fromDraft = () => { try { return findMission(JSON.parse(localStorage.getItem(WORLD_DRAFTS) || 'null'), MISSION_ID); } catch (e) { return null; } };
-  fetch(WORLD_MISSIONS).then((r) => (r.ok ? r.json() : null)).catch(() => null)
-    .then((d) => findMission(d, MISSION_ID) || fromDraft())
-    .then((m) => {
-      if (!m || typeof m.title !== 'string' || !m.character || typeof m.briefing !== 'string') return;
-      MISSION = m;
-      document.title = `${m.title} · PRIM3 ${TXT.title}`;
-      if (!log.some((l) => l.startsWith(`T01 · Mission: ${m.title} ·`))) { log.unshift(missionLine(m)); save(); }
-      render();
-    });
-}
 $('txObj').addEventListener('click', (e) => { if (e.target.closest('#txObjBtn')) { ui.objOpen = !ui.objOpen; render(); } });
 window.__tx = { get state() { return state; }, get ui() { return ui; }, get r3() { return r3; }, get busy() { return ui.busy || !!(r3 && r3.isAnimating()); }, select, onAct, onSheet, onTap, endTurn, restart, reach: () => ui.reach, SAVE_KEY: SAVE };

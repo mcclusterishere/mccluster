@@ -151,6 +151,19 @@
     .tx-end-screen h2{margin:0 0 6px;font-size:28px;letter-spacing:.14em;text-transform:uppercase;color:#fff}
     .tx-end-screen p{margin:0 0 12px;color:rgba(255,255,255,.8)}
     .tx-end-screen .sh-list{color:rgba(255,255,255,.88)}
+    .tx-end-screen.is-result{align-items:start;overflow-y:auto;overscroll-behavior:contain}
+    .tx-result{width:min(100%,42rem);min-width:0;text-align:left;padding:4px 0 12px;color:#fff;overflow-wrap:anywhere}
+    .tx-result h3{font-size:16px;margin:16px 0 6px;color:#fff}
+    .tx-result-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:14px 0}
+    .tx-result-facts dt{font-size:13px;color:rgba(255,255,255,.72)}
+    .tx-result-facts dd{margin:4px 0 0;font-size:16px;font-weight:700}
+    .tx-result .tx-result-extraction{margin-top:10px}
+    .tx-result .tx-result-scope{font-size:13px;line-height:1.5}
+    .tx-result-actions{display:flex;flex-wrap:wrap;gap:8px;padding-bottom:8px}
+    .tx-result-actions .sh-btn{min-height:44px;display:flex;align-items:center;justify-content:center;text-align:center;text-decoration:none;white-space:normal}
+    #txSaveNotice{margin:8px 12px;overflow-wrap:anywhere}
+    #txSaveNotice a{display:inline-flex;align-items:center;min-height:44px;text-decoration:underline}
+
     .reduce-motion *{transition:none!important;animation:none!important}
     /* tablet: squad cards gain portraits; actions in one row */
     @media (min-width:700px){
