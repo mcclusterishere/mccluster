@@ -72,3 +72,7 @@ The analytics browser fixture uses the app-pinned Cesium **1.131**, installed ou
 Latest bounded Insights browser result: 36/36 checks at 390, 820 and 1280 pixels, including all three drilldowns, carousel keyboard access, missing-read behavior and recovery. Existing front-page preview/save/reset: 90/90 checks.
 
 Full Analytics chapter suite: 372/372 checks at 390, 820, 1024 and 1440 pixels, including nested 340px panels, chart labels, keyboard chapter navigation, metric drilldowns, scroll restoration, source failures, camera verification and existing data explorers. All fixtures intercept production endpoints.
+
+## Six-tab Analytics follow-up
+
+Analytics now has six primary tabs including Overview. All eleven detail renderers and existing queries remain reachable through compact local groups. See [route/metric mapping and configuration gaps](ANALYTICS-SIX-TABS.md). Updated verification: 111/111 focused source checks and 376/376 full Analytics browser checks. Persisted server-authorized layout preferences remain pending; this patch ships the six-group default.
