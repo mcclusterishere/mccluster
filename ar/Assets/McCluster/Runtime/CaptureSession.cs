@@ -56,6 +56,7 @@ namespace McCluster.AR
         Quaternion m_LastRot;
         int m_OriginResets;
         bool m_WasTracking;
+        Coroutine m_LocationStartup;
 
         void OnEnable() { ARSession.stateChanged += OnSessionState; }
         void OnDisable()
@@ -92,11 +93,11 @@ namespace McCluster.AR
             m_Manifest.timing.startUtc = Iso(now);
             m_Manifest.timing.startRealtimeSeconds = Time.realtimeSinceStartupAsDouble;
 
-            StartCoroutine(StartLocation());
             m_HasLastSelected = false;
             m_NextEvaluate = 0f;
             cameraManager.frameReceived += OnFrame;
             IsCapturing = true;
+            m_LocationStartup = StartCoroutine(StartLocation());
             LastMessage = "Capturing clean frames to this phone.";
             WriteManifest();
         }
@@ -106,10 +107,16 @@ namespace McCluster.AR
             if (!IsCapturing) return;
             cameraManager.frameReceived -= OnFrame;
             IsCapturing = false;
+            if (m_LocationStartup != null)
+            {
+                StopCoroutine(m_LocationStartup);
+                m_LocationStartup = null;
+            }
             m_Manifest.summary.stopUtc = Iso(DateTime.UtcNow);
             m_Manifest.summary.closedCleanly = true;
             WriteManifest();
-            if (Input.location.status == LocationServiceStatus.Running) Input.location.Stop();
+            // Stop initialization too: location may not have reached Running yet.
+            if (Input.location.status != LocationServiceStatus.Stopped) Input.location.Stop();
             LastMessage = "Saved " + m_Manifest.summary.framesSelected + " frames to " + CaptureFolder;
             Debug.Log("[CaptureSession] " + LastMessage);
         }
@@ -123,7 +130,8 @@ namespace McCluster.AR
                 yield return new WaitForSeconds(0.5f);
             }
 #endif
-            if (!Input.location.isEnabledByUser) yield break;
+            // A permission prompt can outlive this capture. Never start location after stop/disable.
+            if (!IsCapturing || !Input.location.isEnabledByUser) yield break;
             Input.location.Start(5f, 0f);
         }
 

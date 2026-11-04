@@ -146,3 +146,18 @@ test('captures are clean camera frames with honest depth provenance', () => {
   const hud = read('ar/Assets/McCluster/Runtime/ArHud.cs');
   assert.match(hud, /Reality view/, 'the reality-view toggle is always drawn');
 });
+
+// Source-level lifecycle guard only; Unity/device permission behaviour still needs its pilot test.
+test('location startup cannot outlive capture consent', () => {
+  const cap = read('ar/Assets/McCluster/Runtime/CaptureSession.cs');
+  const start = cap.slice(cap.indexOf('public void StartCapture('), cap.indexOf('public void StopCapture('));
+  assert.ok(start.indexOf('IsCapturing = true') < start.indexOf('StartCoroutine(StartLocation())'));
+  const stop = cap.slice(cap.indexOf('public void StopCapture('), cap.indexOf('IEnumerator StartLocation('));
+  assert.match(stop, /StopCoroutine\(m_LocationStartup\)/);
+  assert.match(stop, /m_LocationStartup = null/);
+  assert.match(stop, /Input\.location\.status != LocationServiceStatus\.Stopped/);
+  const location = cap.slice(cap.indexOf('IEnumerator StartLocation('), cap.indexOf('void OnFrame('));
+  assert.match(location, /if \(!IsCapturing \|\| !Input\.location\.isEnabledByUser\) yield break;/);
+  assert.ok(location.indexOf('if (!IsCapturing') > location.indexOf('yield return'));
+  assert.ok(location.indexOf('if (!IsCapturing') < location.indexOf('Input.location.Start('));
+});
