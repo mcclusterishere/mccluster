@@ -13,11 +13,15 @@
    saved (a restored board makes any old hint stale by design). */
 import { createState, beginPlayerPhase, beginThreatPhase, resolveClockStatePhase, moveUnit, fireWeapon,
   enterOverwatch, hunkerDown, reload, shotPreview } from './tactical-resolver.mjs';
+import { COURTYARD_VIEW_KEY, displayPreferences, displayFrame, signed } from './display-frame.mjs';
 import { openHint, answerHint, revealAnswer, playerProjection, knownPaths } from './tactical-hints.mjs';
 
 const BIND = { tenantId: 'preview', playerId: 'you', missionId: 'TR02-PREVIEW' };
 const SAVE_KEY = 'prim3.tactics.preview.v1:' + BIND.tenantId + ':' + BIND.playerId + ':' + BIND.missionId;
 const W = 10, H = 10;
+let display = (() => { try { return displayPreferences(localStorage.getItem(COURTYARD_VIEW_KEY)); } catch { return displayPreferences(null); } })();
+const currentFrame = (p) => displayFrame(W, H, p.objectiveTiles[0], display.origin, 1);
+const displayPoint = (frame, x, y) => { const p = frame.toDisplay(x, y); return `X ${signed(p.x)}, Y ${signed(p.y)} m`; };
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const ROLE_NAME = { E: 'Entry', R: 'Recon', T: 'Technical' };
 const MISSION = 'Secure the relay';
@@ -44,6 +48,7 @@ function ensure3d() {
   if (board3d || loading3d) return;
   loading3d = import('./board3d.mjs').then((mod) => {
     board3d = mod.createBoard3D($('tac3d'), { width: W, height: H, reducedMotion: REDUCED, fx: fxChoice(), onTap: (x, y) => onBoardTap(x, y), onView: () => placeMenu() });
+    board3d.setProjection(display.projection);
     loading3d = null; render(); syncZoom3d();
   }).catch(() => { loading3d = null; mode3d = false; ui.toast = 'The 3D view could not load here, so the board is shown as a 2D grid.'; render(); });
 }
@@ -116,7 +121,7 @@ function reach(u, dash) {
 
 /* ---------- rendering ---------- */
 function render() {
-  const p = view(), sel = unitOf(ui.selected);
+  const p = view(), sel = unitOf(ui.selected), frame = currentFrame(p);
   const board = $('tacBoard');
   const reachInfo = ui.mode === 'move' || ui.mode === 'dash' ? reach(sel, ui.mode === 'dash') : null;
   const geo = ui.hint && ui.hint.geometry;
@@ -165,6 +170,7 @@ function render() {
   if (mode3d && !webglAvailable()) mode3d = false;
   if (mode3d && !board3d && !menuOpen) ensure3d();
   if (mode3d && board3d) {
+    board3d.setCoordinateFrame(frame.origin);
     const m = { units: p.units, blockers: p.blockers, cover: p.cover, objectiveTiles: p.objectiveTiles, selected: ui.selected, labels: [] };
     if (reachInfo) { m.reach = []; for (let y = 0; y < H; y += 1) for (let x = 0; x < W; x += 1) { const st = reachInfo.dist.get(reachInfo.key(x, y)); if (st !== undefined && st > 0) m.reach.push({ x, y }); } }
     if (ui.preview && ui.preview.kind === 'move') { m.path = ui.preview.path.slice(0, -1); m.dest = { x: ui.preview.x, y: ui.preview.y }; m.pathLine = [{ x: sel.x, y: sel.y }, ...ui.preview.path]; }
@@ -177,17 +183,15 @@ function render() {
       for (const [k, v] of runs) { const parts = k.split(':'); if (parts.length === 3) m.labels.push({ x: +parts[0], y: +parts[1], h: 0.1, kind: 'step', text: v }); }
     }
     for (const u of p.units) if (!u.dead) m.labels.push({ x: u.x, y: u.y, h: 2.2, kind: u.faction === 'PLAYER' ? 'ally' : 'hostile', text: u.faction === 'PLAYER' ? u.role : esc(u.id) });
-    for (const t of p.objectiveTiles) m.labels.push({ x: t.x, y: t.y, h: 1.75, kind: 'obj', text: `Relay (${t.x}, ${t.y})` });
+    for (const t of p.objectiveTiles) m.labels.push({ x: t.x, y: t.y, h: 1.75, kind: 'obj', text: `Relay · ${displayPoint(frame, t.x, t.y)}` });
     if (ui.preview && ui.preview.kind === 'move') {
       const cv = p.cover.find((c) => c.x === ui.preview.x && c.y === ui.preview.y);
       if (cv) m.labels.push({ x: ui.preview.x + 0.9, y: ui.preview.y, h: 0.3, kind: 'cover', text: `${cv.type === 'HIGH' ? 'High' : 'Low'} cover` });
     }
-    for (let x = 0; x < W; x += 1) m.labels.push({ x, y: -0.95, h: 0, kind: 'axis', text: String(x) });
-    for (let y = 0; y < H; y += 1) m.labels.push({ x: -0.95, y, h: 0, kind: 'axis', text: String(y) });
-    // the same coordinates on the far edges, so they read from any camera rotation
-    for (let x = 0; x < W; x += 1) m.labels.push({ x, y: H - 0.05, h: 0, kind: 'axis', text: String(x) });
-    for (let y = 0; y < H; y += 1) m.labels.push({ x: W - 0.05, y, h: 0, kind: 'axis', text: String(y) });
-    m.labels.push({ x: -0.95, y: -0.95, h: 0, kind: 'axis', text: 'y\\x' });
+    for (let x = 0; x < W; x += 1) m.labels.push({ x, y: frame.origin.z, h: 0.07, kind: 'axis', text: signed(frame.toDisplay(x, frame.origin.z).x) });
+    for (let y = 0; y < H; y += 1) m.labels.push({ x: frame.origin.x, y, h: 0.07, kind: 'axis', text: signed(frame.toDisplay(frame.origin.x, y).y) });
+    m.labels.push({ x: W - 0.25, y: frame.origin.z, h: 0.1, kind: 'axis', text: '+X east' });
+    m.labels.push({ x: frame.origin.x, y: -0.25, h: 0.1, kind: 'axis', text: '+Y north' });
     if (ui.lastMove) { m.moves = { [ui.lastMove.id]: ui.lastMove.path }; ui.lastMove = null; }
     board3d.update(m);
   }
@@ -195,11 +199,14 @@ function render() {
   const obj = p.objectiveTiles[0];
   $('hudRound').textContent = `Turn ${String(state.round).padStart(2, '0')}`;
   $('hudPhase').textContent = state.phase === 'PLAYER' ? 'Your move' : state.phase;
-  $('hudObj').textContent = obj ? `${MISSION} · (${obj.x}, ${obj.y})` : MISSION;
+  $('hudObj').textContent = obj ? `${MISSION} · ${displayPoint(frame, obj.x, obj.y)}` : MISSION;
   $('hudUnit').innerHTML = sel ? `<span class="dock-token tb-role-${sel.role}">${sel.role}</span><span class="dock-name">${sel.role} · ${ROLE_NAME[sel.role] || ''}</span>` : 'Tap a squad member';
   $('hudAp').textContent = sel ? `${sel.ap} AP` : '';
   $('tacView').textContent = mode3d ? '2D grid' : '3D view';
-  $('tacRotate').hidden = !(mode3d && board3d);
+  $('tacRotate').hidden = !(mode3d && board3d) || display.projection === 'top';
+  document.querySelectorAll('[data-projection]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.projection === display.projection)));
+  document.querySelectorAll('[data-origin]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.origin === display.origin)));
+  $('tacCoordinates').textContent = `${sel ? `${sel.role}: ${displayPoint(frame, sel.x, sel.y)}. ` : ''}${obj ? `Relay: ${displayPoint(frame, obj.x, obj.y)}.` : ''}`;
   $('tacView').setAttribute('aria-pressed', String(!mode3d));
   renderMenu(); renderSheet();
 }
@@ -531,10 +538,17 @@ $('zoomIn').addEventListener('click', () => { if (mode3d && board3d) { board3d.z
 $('zoomOut').addEventListener('click', () => { if (mode3d && board3d) { board3d.zoom(-1); syncZoom3d(); } else setZoom(zoom.s - 0.5); });
 function syncZoom3d() { if (!board3d) return; const z = board3d.canZoom(); $('zoomIn').disabled = !z.in; $('zoomOut').disabled = !z.out; renderMenu(); }
 $('tacRotate').addEventListener('click', () => { if (board3d) board3d.rotate(1); });
+$('tacDisplay').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-projection], [data-origin]'); if (!b) return;
+  if (b.dataset.projection) { display.projection = b.dataset.projection === 'top' ? 'top' : 'perspective'; mode3d = true; if (board3d) board3d.setProjection(display.projection); }
+  if (b.dataset.origin) display.origin = b.dataset.origin === 'objective' ? 'objective' : 'centre';
+  try { localStorage.setItem(COURTYARD_VIEW_KEY, JSON.stringify(display)); } catch {}
+  ui.menu = false; render();
+});
 $('tacView').addEventListener('click', () => { mode3d = !mode3d; ui.menu = false; render(); if (mode3d) syncZoom3d(); else applyZoom(); });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { if (ui.preview) ui.preview = null; else if (ui.mode) ui.mode = null; else ui.menu = false; render(); } });
 if (REDUCED) document.documentElement.classList.add('reduce-motion');
 bindGestures();
 if (menuOpen) openMainMenu();
 render();
-window.__tac = { get state() { return state; }, get session() { return ui.session; }, get ui() { return ui; }, SAVE_KEY, get mode3d() { return mode3d && !!board3d; }, get loading3d() { return !!loading3d; }, screenOf: (x, y, h) => board3d && board3d.screenOf(x, y, h), zoomLevel: () => board3d && board3d.zoomLevel(), busy3d: () => !!(board3d && board3d.isAnimating()), get tier() { return board3d && board3d.tier; }, get menuOpen() { return menuOpen; }, get menuKey() { return menuScene ? menuSel : null; }, get menuLaunching() { return !!(menuScene && menuScene.diving); }, get gfx() { return gfx; }, unitScreenPoint: (id) => board3d && board3d.unitScreenPoint(id), unitPosition: (id) => board3d && board3d.unitPosition(id) };
+window.__tac = { get display() { return { ...display }; }, get cameraType() { return board3d && board3d.cameraType; }, get state() { return state; }, get session() { return ui.session; }, get ui() { return ui; }, SAVE_KEY, get mode3d() { return mode3d && !!board3d; }, get loading3d() { return !!loading3d; }, screenOf: (x, y, h) => board3d && board3d.screenOf(x, y, h), zoomLevel: () => board3d && board3d.zoomLevel(), busy3d: () => !!(board3d && board3d.isAnimating()), get tier() { return board3d && board3d.tier; }, get menuOpen() { return menuOpen; }, get menuKey() { return menuScene ? menuSel : null; }, get menuLaunching() { return !!(menuScene && menuScene.diving); }, get gfx() { return gfx; }, unitScreenPoint: (id) => board3d && board3d.unitScreenPoint(id), unitPosition: (id) => board3d && board3d.unitPosition(id) };

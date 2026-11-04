@@ -140,6 +140,8 @@ const missionLine = (m) => `T01 · Mission: ${m.title} · ${m.character.name}. $
 const LOOKS = ['day', 'field', 'studio'];
 let look = (() => { try { const v = localStorage.getItem(LOOK_KEY); return LOOKS.includes(v) ? v : 'day'; } catch (e) { return 'day'; } })();
 if (LOOKS.includes(PARAMS.get('look'))) look = PARAMS.get('look');
+const GRID_DETAIL_KEY = `prim3.tactics.${LEVEL.SAVE_ID || LEVEL.LEVEL_ID}.grid-detail.v1`;
+let gridDetail = (() => { try { return localStorage.getItem(GRID_DETAIL_KEY) === '2' ? 2 : 1; } catch { return 1; } })();
 const GRID_KEY = 'prim3.tactics.grid';
 let gridOn = (() => { try { return localStorage.getItem(GRID_KEY) !== 'off'; } catch (e) { return true; } })();
 let gfx = (() => { try { return localStorage.getItem(GFX_KEY) || 'auto'; } catch (e) { return 'auto'; } })();
@@ -249,6 +251,7 @@ function ensure3d() {
     r3 = mod.createLevel3D($('tx3d'), { level: LEVEL, look, fx: PARAMS.get('fx') || (gfx === 'auto' ? null : gfx), reducedMotion: REDUCED, onTap, onView: null });
     r3loading = null; fogKey = ''; // a new board needs its fog
     r3.setGrid(gridOn);
+    r3.setGridDetail(gridDetail);
     const s = unitOf(ui.sel);
     if (LEVEL.OPENING && state.round <= 1 && r3.frame) r3.frame(LEVEL.OPENING); // a level's own opening shot (the tower, large)
     else if (s) r3.focus((s.x + OBJ.x) / 2, (s.y + OBJ.y) / 2 + Math.min(4, H / 16), 0, LEVEL.OPENING_DIST || Math.min(30, Math.max(W, H) * 1.2)); // a level may open wider (a tower)
@@ -260,6 +263,7 @@ function ensure3d() {
 // move can reach inside; the whole building while the squad is still on the street
 function cutStorey(sel) {
   if (!LEVEL.storeyOf) return undefined;
+  if (ui.preview?.kind === 'move') return LEVEL.storeyOf(ui.preview.dest.z || 0);
   if (sel && !sel.dead && sel.z >= 1) return LEVEL.storeyOf(sel.z);
   if ((ui.mode === 'move' || ui.mode === 'dash') && ui.reach && ui.reach.tiles.some((t) => t.z >= 1)) return LEVEL.storeyOf(1);
   if (state.units.some((u) => u.faction === 'PLAYER' && !u.dead && !extracted(u) && u.z >= 1)) return LEVEL.storeyOf(1);
@@ -314,6 +318,9 @@ function render() {
   ph.classList.toggle('is-threat', !!ui.busy || state.phase !== 'PLAYER');
   $('txBusy').hidden = !ui.busy;
   $('txCoord').textContent = sel ? (() => { const d = toDisplay(sel.x, sel.y); return `${sel.role} (${d.X}, ${d.Y}${sel.z ? ', ' + floorName(sel.z) : ''})`; })() : '';
+  document.querySelectorAll('[data-grid-detail]').forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.gridDetail) === gridDetail)));
+  const cellM = LEVEL.WORLD_M || LEVEL.TILE_M;
+  $('gridDetailNote').textContent = `${cellM.toFixed(4).replace(/0+$/, '').replace(/\.$/, '')} m tactical cells${gridDetail === 2 ? ` · ${(cellM / 2).toFixed(4).replace(/0+$/, '').replace(/\.$/, '')} m guides` : ''}. Guides leave movement distances and saved positions unchanged.`;
   $('txGrid').setAttribute('aria-pressed', String(gridOn)); $('txGrid').lastChild.textContent = gridOn ? 'Grid on' : 'Grid off';
   // objective
   const links = relayLinks();
@@ -349,6 +356,19 @@ function render() {
 
 let toastMsg = '';
 function toast(msg) { toastMsg = msg; renderSheet(); }
+// Use the engine's reachable graph, including locked links, occupancy and step costs.
+// A landing button makes vertical routes selectable even when a higher slab is cut away.
+function verticalLandings(sel) {
+  if (!sel || !ui.reach || !['move', 'dash'].includes(ui.mode)) return [];
+  const seen = new Set();
+  return (state.links || []).flatMap((link) => [link.from, link.to]).filter((t) => {
+    if ((t.z || 0) === (sel.z || 0)) return false;
+    const key = `${t.x}:${t.y}:${t.z || 0}`;
+    const steps = ui.reach.stepsTo(t.x, t.y, t.z || 0);
+    if (seen.has(key) || !(steps > 0)) return false;
+    seen.add(key); return true;
+  });
+}
 function renderSheet() {
   const s = $('txSheet'), sel = unitOf(ui.sel);
   let html = '';
@@ -366,7 +386,7 @@ function renderSheet() {
       <p class="sh-sub">Chance from the engine: aim, cover, range, elevation. The roll is random.</p>
       <div class="sh-row"><button type="button" class="sh-btn sh-btn--go" data-sheet="confirm-fire">Confirm fire</button><button type="button" class="sh-btn" data-sheet="back">Back</button></div>` : '<div class="sh-row"><button type="button" class="sh-btn" data-sheet="back">Back</button></div>'}`;
   } else if (ui.mode === 'move' || ui.mode === 'dash') {
-    html = `<p class="sh-eye">${ui.mode === 'dash' ? 'Dash' : 'Move'} · ${sel.role}</p><p class="sh-sub">Tap a lit tile to preview the route. Stairs are lit on the roof too. Tap ${sel.role} again or Back to cancel.</p><div class="sh-row"><button type="button" class="sh-btn" data-sheet="back">Back</button></div>`;
+    html = `<p class="sh-eye">${ui.mode === 'dash' ? 'Dash' : 'Move'} · ${sel.role}</p><p class="sh-sub">Tap a lit tile to preview the route. Choose a reachable landing below to change floors. Tap ${sel.role} again or Back to cancel.</p><div class="sh-row">${verticalLandings(sel).map((t) => `<button type="button" class="sh-btn" data-sheet="landing:${t.x}:${t.y}:${t.z || 0}">${esc(floorName(t.z || 0) || 'Ground')} · ${D(t.x, t.y)} · ${ui.reach.stepsTo(t.x, t.y, t.z || 0)} steps</button>`).join('')}<button type="button" class="sh-btn" data-sheet="back">Back</button></div>`;
   } else if (toastMsg) html = `<p class="sh-sub">${toastMsg}</p>`;
   s.innerHTML = html; s.hidden = !html;
 }
@@ -492,6 +512,12 @@ async function onSheet(a) {
   if (ui.busy || ui.ended || state.phase !== 'PLAYER') return;
   const sel = unitOf(ui.sel);
   if (a === 'back') { if (ui.preview) { ui.preview = null; render(); } else cancel(); return; }
+  if (a.startsWith('landing:')) {
+    const [, x, y, z] = a.split(':').map(Number);
+    const t = verticalLandings(sel).find((p) => p.x === x && p.y === y && (p.z || 0) === z);
+    if (t) { onTap(t); if (r3 && ui.preview) r3.focus(t.x, t.y, t.z || 0, Math.min(22, Math.max(W, H) * 1.2)); }
+    return;
+  }
   if (a.startsWith('aim:')) { aim(a.slice(4)); return; }
   if (a === 'confirm-move') {
     const pv = ui.preview, before = state;
@@ -653,6 +679,7 @@ $('txEndTurn').addEventListener('click', endTurn);
 $('camIn').addEventListener('click', () => { if (r3) { r3.zoom(1); render(); } });
 $('camOut').addEventListener('click', () => { if (r3) { r3.zoom(-1); render(); } });
 $('camRot').addEventListener('click', () => { if (r3) r3.rotate(1); });
+$('setGridDetail').addEventListener('click', (e) => { const b = e.target.closest('[data-grid-detail]'); if (!b) return; gridDetail = Number(b.dataset.gridDetail) === 2 ? 2 : 1; try { localStorage.setItem(GRID_DETAIL_KEY, String(gridDetail)); } catch {} if (r3) r3.setGridDetail(gridDetail); render(); });
 $('txGrid').addEventListener('click', () => { gridOn = !gridOn; try { localStorage.setItem(GRID_KEY, gridOn ? 'on' : 'off'); } catch (e) {} if (r3) r3.setGrid(gridOn); render(); });
 $('camAll').addEventListener('click', () => { if (r3) r3.overview(); });
 $('txMapTog').addEventListener('click', () => { const m = $('txMap'); m.hidden = !m.hidden; $('txMapTog').setAttribute('aria-expanded', String(!m.hidden)); drawMap(); if (!m.hidden) m.scrollIntoView({ block: 'nearest' }); });

@@ -469,23 +469,35 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
 
   /* ---------- the plotting grid: every tile edge on the ground and on each walkable roof ---------- */
   const gridGroup = new THREE.Group(); scene.add(gridGroup);
+  let gridDetail = 1; // display subdivision only; tactical cells and picking remain unchanged
+  const gridFine = new THREE.LineBasicMaterial({ color: 0x5fe6f2, transparent: true, opacity: 0.14, depthWrite: false, toneMapped: false });
   const gridMat = new THREE.LineBasicMaterial({ color: 0x5fe6f2, transparent: true, opacity: 0.42, depthWrite: false, toneMapped: false });
   const gridMajor = new THREE.LineBasicMaterial({ color: 0x9ff3fb, transparent: true, opacity: 0.7, depthWrite: false, toneMapped: false });
-  { const minor = [], major = [], put = (arr, ...v) => arr.push(...v);
+  { const minor = [], major = [], fine = [], put = (arr, ...v) => arr.push(...v);
     const isMajorX = (x) => (x - level.FRAME.x0) % 8 === 0, isMajorY = (y) => (level.FRAME.y0 - y + 1) % 8 === 0;
     const cut = (x, y) => !!canal && y >= canal.y && y < canal.y + canal.d && !SCENE.bridges.some((b) => x >= b.x && x < b.x + b.w && y >= b.y && y < b.y + b.d);
     for (let x = 0; x <= W; x += 1) for (let y = 0; y < H; y += 1) { if (cut(x, y) && cut(x - 1, y)) continue; put(isMajorX(x) ? major : minor, x - 0.5, 0.03, y - 0.5, x - 0.5, 0.03, y + 0.5); }
     for (let y = 0; y <= H; y += 1) for (let x = 0; x < W; x += 1) { if (cut(x, y) && cut(x, y - 1)) continue; put(isMajorY(y) ? major : minor, x - 0.5, 0.03, y - 0.5, x + 0.5, 0.03, y - 0.5); }
+    // Half-cell guides split each tactical square visually into four. Never bridge canal water.
+    for (let x = 0; x < W; x += 1) for (let y = 0; y < H; y += 1) {
+      if (cut(x, y)) continue;
+      put(fine, x - 0.5, 0.03, y, x + 0.5, 0.03, y, x, 0.03, y - 0.5, x, 0.03, y + 0.5);
+    }
     // a grid on every raised walkable surface the level names (default: all of them)
     const roofsDef = (SCENE.gridSurfaces || SURF).filter((q) => Math.abs(q.height) > 0.05).map((q) => ({ ...q, h: q.height }));
     // each floor's grid is its own line set, so a building cutaway can hide the floors above the cut
-    const raised = new Map();
+    const raised = new Map(), raisedFine = new Map();
     for (const r of roofsDef) { const hh = M(r.h) + 0.02, arr = raised.get(r.z || 1) || []; raised.set(r.z || 1, arr);
       for (let x = r.x; x <= r.x + r.w; x += 1) put(arr, x - 0.5, hh, r.y - 0.5, x - 0.5, hh, r.y + r.d - 0.5);
-      for (let y = r.y; y <= r.y + r.d; y += 1) put(arr, r.x - 0.5, hh, y - 0.5, r.x + r.w - 0.5, hh, y - 0.5); }
-    const seg = (arr, m, z = 0) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(arr, 3)); const l = new THREE.LineSegments(g, m); l.renderOrder = 1; l.frustumCulled = false; l.userData.gridZ = z; gridGroup.add(l); };
+      for (let y = r.y; y <= r.y + r.d; y += 1) put(arr, r.x - 0.5, hh, y - 0.5, r.x + r.w - 0.5, hh, y - 0.5);
+      const detail = raisedFine.get(r.z || 1) || []; raisedFine.set(r.z || 1, detail);
+      for (let x = r.x; x < r.x + r.w; x += 1) put(detail, x, hh, r.y - 0.5, x, hh, r.y + r.d - 0.5);
+      for (let y = r.y; y < r.y + r.d; y += 1) put(detail, r.x - 0.5, hh, y, r.x + r.w - 0.5, hh, y); }
+    const seg = (arr, m, z = 0, detail = false) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(arr, 3)); const l = new THREE.LineSegments(g, m); l.renderOrder = 1; l.frustumCulled = false; l.userData.gridZ = z; l.userData.gridDetail = detail; l.visible = !detail; gridGroup.add(l); };
     seg(minor, gridMat); seg(major, gridMajor);
-    for (const [z, arr] of raised) seg(arr, gridMat, z); }
+    for (const [z, arr] of raised) seg(arr, gridMat, z);
+    seg(fine, gridFine, 0, true);
+    for (const [z, arr] of raisedFine) seg(arr, gridFine, z, true); }
 
   /* ---------- fog of war: a per-tile shade over the ground, fed by the page from the engine's sight ---------- */
   const fogData = new Uint8Array(W * H * 4).fill(255);
@@ -563,6 +575,7 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
     fogMat.color.set(studio ? 0x8c9399 : day ? 0x31414c : 0x05080b); fogMat.opacity = studio ? 0.45 : day ? 0.5 : 0.66;
     scene.userData.fogNear = scene.fog && scene.fog.isFog ? scene.fog.near : 0; scene.userData.fogFar = scene.fog && scene.fog.isFog ? scene.fog.far : 0;
     gridMat.color.set(studio ? 0x2a3136 : day ? 0x1fb6c6 : 0x5fe6f2); gridMat.opacity = studio ? 0.28 : day ? 0.5 : 0.42; gridMajor.color.set(studio ? 0x0e1113 : day ? 0x0b8fa0 : 0x9ff3fb); gridMajor.opacity = studio ? 0.5 : day ? 0.8 : 0.7;
+    gridFine.color.copy(gridMat.color); gridFine.opacity = studio ? 0.10 : day ? 0.17 : 0.14;
     if (bloomPass) bloomPass.enabled = !studio && !day;
     if (day) for (const m of [M_CONC, M_CORR, M_ROOF, M_GRATE]) m.color.set(m === M_ROOF ? 0xf3f3ef : 0xeeeeea); // white industrial by day
     const ov = OVER[curLook];
@@ -774,12 +787,16 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
     }
     applyCut();
   }
+  function applyGridCut(st = MODEL ? cutStorey() : null) {
+    const storey = (z) => (level.storeyOf ? level.storeyOf(z) : z);
+    for (const l of gridGroup.children) l.visible = (!l.userData.gridDetail || gridDetail === 2)
+      && (st == null ? true : l.userData.gridZ ? storey(l.userData.gridZ) <= st : st >= 1);
+  }
   function applyCut() {
+    applyGridCut();
     if (!MODEL) return;
     const st = cutStorey();
     cutPlane.constant = st == null ? 1e6 : M(((st - 1) * MODEL.storeyFt + MODEL.cutFt) * 0.3048);
-    const storey = (z) => (level.storeyOf ? level.storeyOf(z) : z);
-    for (const l of gridGroup.children) l.visible = st == null ? true : l.userData.gridZ ? storey(l.userData.gridZ) <= st : st >= 1;
     // below grade, everything above the cut goes (the ground, the site, the city): the basement is seen from above
     const below = st != null && st < 1;
     renderer.clippingPlanes = below ? [cutPlane] : [];
@@ -1070,6 +1087,8 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
     setLook(lk) { applyLook(lk); },
     setGrid(on) { gridGroup.visible = !!on; rulersOn = !!on; needs = true; },
     get gridOn() { return gridGroup.visible; },
+    setGridDetail(detail) { gridDetail = Number(detail) === 2 ? 2 : 1; applyGridCut(); needs = true; },
+    get gridDetail() { return gridDetail; },
     setActive(on) { active = !!on; needs = true; },
     zoom(step) { setDist(view.distGoal * (step > 0 ? 0.8 : 1.25)); },
     zoomLevel() { return view.dist; },

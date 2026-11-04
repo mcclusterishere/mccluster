@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 610,
+  "candidate_count": 613,
   "capability_source_count": 104,
-  "support_only_count": 506,
-  "checks_total": 2338,
-  "checks_passed": 2338,
+  "support_only_count": 509,
+  "checks_total": 2350,
+  "checks_passed": 2350,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -213,6 +213,7 @@
     "docs/prim3/EQUITY-UPRISE-HQ-REVIEW.md",
     "docs/prim3/EQUITY-UPRISE-X-PRIM3-INTEGRATION-MATRIX.md",
     "docs/prim3/PRIM-BACKEND-TRACKING.md",
+    "docs/prim3/SHARED-SPATIAL-CONTRACT.md",
     "docs/products/DISTRIBUTABLE-PRODUCT.md",
     "docs/releases/mission-content-cleanup-2026-10-31.md",
     "docs/sales-redesign/BRANCH-HARVEST-REPORT.md",
@@ -361,6 +362,8 @@
     "scripts/e2e/eu-screens.e2e.mjs",
     "scripts/e2e/fictional-city.e2e.mjs",
     "scripts/e2e/fixtures/axe-baseline.json",
+    "scripts/e2e/prim3-hq-stairs.e2e.mjs",
+    "scripts/e2e/prim3-spatial-controls.e2e.mjs",
     "scripts/e2e/server-lab.e2e.mjs",
     "scripts/e2e/world-screen.e2e.mjs",
     "scripts/funding/validate-register-db.mjs",
@@ -624,7 +627,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "610 entries"
+      "detail": "613 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -12308,6 +12311,66 @@
     },
     {
       "name": "workers/mccluster/test/prim3-learning.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/prim3/SHARED-SPATIAL-CONTRACT.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/prim3/SHARED-SPATIAL-CONTRACT.md classified",
+      "passed": true,
+      "detail": "classification='building_projection_support'"
+    },
+    {
+      "name": "docs/prim3/SHARED-SPATIAL-CONTRACT.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/prim3/SHARED-SPATIAL-CONTRACT.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/prim3-hq-stairs.e2e.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/prim3-hq-stairs.e2e.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/e2e/prim3-hq-stairs.e2e.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/e2e/prim3-hq-stairs.e2e.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/prim3-spatial-controls.e2e.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/prim3-spatial-controls.e2e.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/e2e/prim3-spatial-controls.e2e.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/e2e/prim3-spatial-controls.e2e.mjs support rationale present",
       "passed": true,
       "detail": ""
     }

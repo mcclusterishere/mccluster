@@ -37,6 +37,14 @@
     .tac-board{display:grid;grid-template-columns:18px repeat(10,minmax(0,1fr));grid-template-rows:18px repeat(10,minmax(0,1fr));gap:2px;width:100%;height:100%;padding:4px;transform-origin:0 0}
     html:not(.reduce-motion) .tac-board{transition:transform .12s ease-out}
     .tb-corner{font:700 9px/18px ui-monospace,monospace;color:var(--p3-dim);text-align:center}
+    .tac-display{border:1px solid var(--p3-line);border-radius:10px;padding:8px 12px;margin:8px 0;min-width:0}
+    .tac-display summary{min-height:44px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:4px;cursor:pointer;font-weight:700}
+    .tac-display summary small{font-size:13px;font-weight:500;line-height:1.4}
+    .tac-display fieldset{border:0;margin:8px 0;padding:0;display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+    .tac-display legend{font-weight:700;font-size:14px;margin-bottom:6px}
+    .tac-display button{min-height:44px;white-space:normal}
+    .tac-display button[aria-pressed="true"]{outline:2px solid var(--p3-cyan);outline-offset:-2px}
+    .tac-display p{font-size:14px;line-height:1.4;margin:8px 0;overflow-wrap:anywhere}
     .tb-axis{display:grid;place-items:center;font:700 10px/1 ui-monospace,monospace;color:var(--p3-dim)}
     .tb-axis.is-key{color:var(--p3-amber)}
     .tb-cell{position:relative;min-width:0;padding:0;border:0;border-radius:5px;cursor:pointer;color:inherit;
@@ -187,6 +195,11 @@
       <span class="p3-turn"><b id="hudRound"></b><span id="hudPhase"></span></span>
     </header>
     <p class="p3-obj"><i aria-hidden="true">◇</i><span id="hudObj"></span></p>
+    <details class="tac-display" id="tacDisplay"><summary><span>Board display</span><small id="tacCoordinates" aria-live="polite"></small></summary>
+      <fieldset><legend>Projection</legend><button type="button" class="tbtn" data-projection="perspective">3D perspective</button><button type="button" class="tbtn" data-projection="top">Top-down board</button></fieldset>
+      <fieldset><legend>Coordinate origin</legend><button type="button" class="tbtn" data-origin="centre">Map centre</button><button type="button" class="tbtn" data-origin="objective">Relay objective</button></fieldset>
+      <p class="tac-frame-legend">Metres · 1 m per cell. +X east/right, +Y north/up; zero at the chosen origin. Training cards use numbered columns and rows.</p>
+    </details>
     <section class="tac-stage" aria-label="Battlefield">
       <div class="tac-viewport" id="tacViewport">
         <div class="tac-3d" id="tac3d"></div>

@@ -24,7 +24,7 @@
     html,body{margin:0;background:var(--bg);color:var(--ink)}
     body{font:var(--font);min-height:100svh;letter-spacing:.02em}
     button{font:inherit;color:inherit}
-    .tx{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;padding:calc(8px + env(safe-area-inset-top)) 12px calc(112px + env(safe-area-inset-bottom));max-width:1500px;margin:0 auto}
+    .tx{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;padding:calc(64px + env(safe-area-inset-top)) 12px calc(112px + env(safe-area-inset-bottom));max-width:1500px;margin:0 auto}
     h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
     .owner-gate h1{position:static;width:auto;height:auto;overflow:visible;clip:auto}
     /* top bar */
@@ -213,6 +213,7 @@
     </header>
     <section class="tx-set" id="txSet" aria-label="Settings" hidden>
       <div class="set-row"><span class="sh-eye">Look</span><div class="seg" id="setLook"><button type="button" data-look="day">Day</button><button type="button" data-look="field">Night (rain)</button><button type="button" data-look="studio">Studio (grayscale)</button></div></div>
+      <div class="set-row"><span class="sh-eye">Grid detail</span><div class="seg" id="setGridDetail"><button type="button" data-grid-detail="1">Tactical cells</button><button type="button" data-grid-detail="2">2 × 2 guides</button></div><p class="sh-sub" id="gridDetailNote"></p></div>
       <div class="set-row"><span class="sh-eye">Graphics</span><div class="seg" id="setGfx"><button type="button" data-gfx="auto">Auto</button><button type="button" data-gfx="high">High</button><button type="button" data-gfx="mid">Balanced</button><button type="button" data-gfx="low">Battery</button></div></div>
       <div class="set-row"><span class="sh-eye">Mission</span><div class="seg"><button type="button" id="setRestart">Restart mission</button><a class="seg-a" href="prim3-tactics-preview.html">Main menu</a></div></div>
       <div class="set-row"><span class="sh-eye">Mission log</span><ol class="tx-log" id="txLog"></ol></div>

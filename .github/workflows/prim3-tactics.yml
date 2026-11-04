@@ -13,6 +13,9 @@ on:
       - 'scripts/e2e/prim3-transit-lifecycle.e2e.mjs'
       - 'scripts/e2e/prim3-transit-completion.e2e.mjs'
       - 'scripts/e2e/prim3-world-controls.e2e.mjs'
+      - 'scripts/e2e/prim3-courtyard-display.e2e.mjs'
+      - 'scripts/e2e/prim3-spatial-controls.e2e.mjs'
+      - 'scripts/e2e/prim3-hq-stairs.e2e.mjs'
       - 'scripts/prim3/*-sim.mjs'
       - 'scripts/test/fixtures/blind-the-floor-replays.json'
       - 'scripts/test/fixtures/hq-drill-full-strength-win.json'
@@ -56,6 +59,14 @@ jobs:
           PLAYWRIGHT_DIR: /tmp/prim3-qa/node_modules
           THREE_DIR: /tmp/prim3-qa/node_modules/three
         run: node scripts/e2e/prim3-transit-completion.e2e.mjs /tmp/prim3-proof/completion
+      - name: Verify display frames, measured guides and reachable upstairs
+        env:
+          PLAYWRIGHT_DIR: /tmp/prim3-qa/node_modules
+          THREE_DIR: /tmp/prim3-qa/node_modules/three
+        run: |
+          node scripts/e2e/prim3-courtyard-display.e2e.mjs /tmp/prim3-proof/courtyard
+          node scripts/e2e/prim3-spatial-controls.e2e.mjs /tmp/prim3-proof/spatial
+          node scripts/e2e/prim3-hq-stairs.e2e.mjs /tmp/prim3-proof/stairs
       - name: Preserve browser evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

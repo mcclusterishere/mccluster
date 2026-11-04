@@ -115,7 +115,24 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
   scene.background = skyTex();
   scene.fog = new THREE.Fog(0x161c22, 20, 44);
   const cx = (width - 1) / 2, cz = (height - 1) / 2;
-  const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 120);
+  const perspectiveCamera = new THREE.PerspectiveCamera(34, 1, 0.1, 120);
+  const topCamera = new THREE.OrthographicCamera(-6, 6, 6, -6, 0.1, 120);
+  let camera = perspectiveCamera, projection = 'perspective';
+  const coordinateAxes = new THREE.Group(); scene.add(coordinateAxes);
+  let axesOriginKey = null;
+  function setCoordinateFrame(origin) {
+    const key = `${origin.x}:${origin.z}`; if (axesOriginKey === key) return; axesOriginKey = key;
+    for (const child of [...coordinateAxes.children]) { child.geometry.dispose(); child.material.dispose(); coordinateAxes.remove(child); }
+    for (const [points, color] of [
+      [[-0.5, 0.055, origin.z, width - 0.5, 0.055, origin.z], 0xd75a35],
+      [[origin.x, 0.055, -0.5, origin.x, 0.055, height - 0.5], 0x168fbe]
+    ]) {
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
+      const line = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color, depthWrite: false, toneMapped: false }));
+      line.renderOrder = 2; coordinateAxes.add(line);
+    }
+    needs = true;
+  }
   const HOME = { dist: 20.5, x: cx, z: cz + 1.2 };
   const view = { dist: HOME.dist, minDist: 8, maxDist: 26, target: new THREE.Vector3(HOME.x, 0, HOME.z), goal: new THREE.Vector3(HOME.x, 0, HOME.z), pitch: 0.98, yaw: 0, yawGoal: 0 };
 
@@ -543,6 +560,15 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
     const r = host.getBoundingClientRect();
     const w = Math.max(1, r.width), h = Math.max(1, r.height);
     if (renderer.domElement.width !== Math.round(w * renderer.getPixelRatio()) || renderer.domElement.height !== Math.round(h * renderer.getPixelRatio())) { renderer.setSize(w, h, false); if (composer) composer.setSize(w, h); }
+    if (projection === 'top') {
+      const halfH = Math.max(height + 2.5, (width + 2.5) / (w / h)) / 2 * view.dist / HOME.dist;
+      topCamera.left = -halfH * w / h; topCamera.right = halfH * w / h;
+      topCamera.top = halfH; topCamera.bottom = -halfH; topCamera.updateProjectionMatrix();
+      topCamera.up.set(0, 0, -1);
+      // Keep the overhead camera inside the atmospheric fog start; height must not wash out the board.
+      topCamera.position.set(view.target.x, 30, view.target.z);
+      topCamera.lookAt(view.target.x, 0, view.target.z); return;
+    }
     camera.aspect = w / h;
     camera.fov = h > w * 1.05 ? 44 : 32;
     camera.updateProjectionMatrix();
@@ -569,8 +595,8 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
       if (!hdrLoaded) { scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture; scene.environmentIntensity = 0.32; } pmrem.dispose();
       const r = host.getBoundingClientRect(), w = Math.max(1, r.width), h = Math.max(1, r.height);
       const c = new EffectComposer(renderer); c.setPixelRatio(renderer.getPixelRatio()); c.setSize(w, h);
-      c.addPass(new RenderPass(scene, camera));
-      if (gtao) { const ao = new gtao.GTAOPass(scene, camera, w, h); ao.updateGtaoMaterial({ radius: 0.45, distanceExponent: 1.5, thickness: 1, scale: 1.2 }); ao.blendIntensity = 0.9; c.addPass(ao); }
+      c.addPass(new RenderPass(scene, perspectiveCamera));
+      if (gtao) { const ao = new gtao.GTAOPass(scene, perspectiveCamera, w, h); ao.updateGtaoMaterial({ radius: 0.45, distanceExponent: 1.5, thickness: 1, scale: 1.2 }); ao.blendIntensity = 0.9; c.addPass(ao); }
       if (!WHITE) c.addPass(new UnrealBloomPass(new THREE.Vector2(w, h), 0.55, 0.5, 0.82)); // bloom would haze a white world
       c.addPass(new OutputPass());
       c.addPass(new SMAAPass(w * renderer.getPixelRatio(), h * renderer.getPixelRatio()));
@@ -686,7 +712,7 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
     }
     if (needs || moving || flashes.length) {
       placeCamera();
-      if (composer) composer.render(); else renderer.render(scene, camera);
+      if (composer && projection !== 'top') composer.render(); else renderer.render(scene, camera);
       placeLabels(); needs = false;
       if (onView && (moving || camMoved())) onView();
     }
@@ -799,7 +825,7 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
     needs = true;
   }
   let lastSel = null;
-  function focus(x, y) { // ease the camera toward a unit, but keep the board in frame
+  function focus(x, y) { if (projection === 'top') return; // ease the camera toward a unit, but keep the board in frame
     view.goal.set(Math.min(width - 1.5, Math.max(0.5, (x + HOME.x) / 2)), 0, Math.min(height + 0.5, Math.max(0.5, (y + HOME.z) / 2)));
   }
 
@@ -852,13 +878,22 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
   return {
     update,
     tier,
+    setCoordinateFrame,
+    get projection() { return projection; },
+    get cameraType() { return camera.type; },
+    setProjection(mode) {
+      const next = mode === 'top' ? 'top' : 'perspective'; if (next === projection) return;
+      projection = next; camera = next === 'top' ? topCamera : perspectiveCamera;
+      shotCam = null; view.dist = HOME.dist; view.goal.set(cx, 0, next === 'top' ? cz : HOME.z); view.target.copy(view.goal);
+      view.yaw = view.yawGoal = 0; needs = true;
+    },
     setActive(on) { active = !!on; needs = true; }, // paused while the main menu is open
     zoom(step) { setDist(view.dist * (step > 0 ? 0.82 : 1.22)); },
     zoomLevel() { return view.dist; },
     canZoom() { return { in: view.dist > view.minDist + 0.01, out: view.dist < view.maxDist - 0.01 }; },
     // rotate the camera a quarter turn around the board (the grid and its labels stay the engine's)
-    rotate(step) { view.yawGoal += (step > 0 ? 1 : -1) * Math.PI / 2; needs = true; busy = true; },
-    resetView() { view.dist = HOME.dist; view.goal.set(HOME.x, 0, HOME.z); view.target.copy(view.goal); view.yaw = view.yawGoal = 0; needs = true; },
+    rotate(step) { if (projection === 'top') return; view.yawGoal += (step > 0 ? 1 : -1) * Math.PI / 2; needs = true; busy = true; },
+    resetView() { view.dist = HOME.dist; view.goal.set(HOME.x, 0, projection === 'top' ? cz : HOME.z); view.target.copy(view.goal); view.yaw = view.yawGoal = 0; needs = true; },
     // play a shot the engine already resolved; the board state does not wait on it
     fire(attackerId, targetId, result, done) {
       const a = actors.get(attackerId), b = actors.get(targetId);
