@@ -180,7 +180,7 @@ test('the page: shared bar, noindex, module script, mobile-first CSS, no purple'
   assert.match(PAGE, /<meta name="robots" content="noindex, nofollow">/);
   assert.match(PAGE, /<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">/);
   assert.match(PAGE, /js\/game-hub\/hub\.mjs/);
-  assert.match(PAGE, /id="ghModules"/); assert.match(PAGE, /data-music-play/);
+  assert.match(PAGE, /id="ghModules"/); assert.match(PAGE, /data-hub-music-play/);
   assert.doesNotMatch(CSS, /@media[^{]*max-width/); assert.doesNotMatch(CSS, /(?<!minmax\(0,)\b1fr/);
   assert.match(CSS, /font-size:max\(16px/);
   for (const hex of CSS.match(/#[0-9a-f]{6}\b/gi)) assert.ok(!isPurple(hex), `${hex} is purple`);

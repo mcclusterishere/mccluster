@@ -48,7 +48,7 @@ body.gh-body{font:var(--gh-font);letter-spacing:.01em;min-height:100svh;padding-
 .gh-music__btn{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;border:1px solid var(--gh-line2);background:var(--gh-panel2);cursor:pointer;padding:0}
 .gh-music__btn svg{width:20px;height:20px;fill:currentColor}
 .gh-music__btn:disabled{opacity:.4;cursor:default}
-.gh-music [data-music-play]{background:var(--accent);color:#06100c;border-color:transparent}
+.gh-music [data-hub-music-play]{background:var(--accent);color:#06100c;border-color:transparent}
 .gh-music [data-state="paused"] .gh-i-pause,.gh-music [data-state="playing"] .gh-i-play{display:none}
 .gh-music__meta{min-width:0;display:grid;line-height:1.15}
 .gh-music__meta b{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -202,3 +202,21 @@ body.gh-body{font:var(--gh-font);letter-spacing:.01em;min-height:100svh;padding-
 .mr-atoms [role=group]{margin-top:10px}
 .mr-atoms [aria-pressed=true]{outline:3px solid #9fe4ce;outline-offset:2px}
 .mr-answer-diagram svg{height:auto;aspect-ratio:500 / 290}
+
+/* The capsule reserves a scrolling workspace: answers never pass behind it. */
+body.gh-body{overflow:hidden;padding-bottom:0}
+.gh{position:fixed;left:0;right:0;top:132px;bottom:var(--gh-bar-gap);overflow:auto;overscroll-behavior:contain;align-content:start;padding:12px 16px 24px;scroll-padding:12px}
+.gh-dock{--capsule-top:64;left:12px;right:auto;top:64px;bottom:auto;width:min(340px,calc(100% - 16px));margin:0;padding:4px;gap:4px;overflow:auto;overscroll-behavior:contain;border-radius:18px}
+.gh-capsule-row{display:grid;grid-template-columns:44px minmax(0,1fr) 62px;gap:2px;align-items:center}
+.gh-capsule-button,.gh-capsule-position button{min-width:44px;min-height:44px;border:1px solid var(--gh-line2);border-radius:12px;background:var(--gh-panel2);font-size:max(16px,1rem);cursor:pointer;padding:4px}
+.gh-capsule-drag{touch-action:none;user-select:none;cursor:move}
+.gh-dock .gh-music{gap:3px;padding:0 0 4px}
+.gh-dock .gh-music__meta small{display:none}
+.gh-dock .gh-music__meta b{font-size:13px}
+.gh-capsule-position{display:flex;flex-wrap:wrap;gap:4px;padding:8px 2px 2px}
+.gh-dock .gh-modules{padding:4px 2px;overflow-x:auto;grid-auto-columns:minmax(0,1fr);scroll-snap-type:x proximity}
+.gh-dock .gh-mod{scroll-snap-align:start}
+/* The existing engine owns playback; this page presents its transport in the capsule. */
+.gh-body #musicMini{display:none!important}
+
+.gh-capsule-status{font-size:14px;color:var(--gh-dim);margin:6px;overflow-wrap:anywhere}

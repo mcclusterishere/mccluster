@@ -25,16 +25,18 @@
     <header class="gh-top">
       <small>Matthew McCluster · Courses</small>
       <h1>Game Hub</h1>
-      <p>One mini game for every course. Pick a course at the bottom; its music comes with it.</p>
+      <p>One mini game for every course. Open Games in the floating controls to pick a course.</p>
       <nav class="gh-worlds" aria-label="Story worlds"><a class="gh-city-link" href="fictional-city.html">Explore McCluster City ↗</a><a class="gh-city-link" href="city-arcade.html">City Arcade ↗</a></nav>
     </header>
     <section class="gh-panel" id="ghPanel" aria-live="polite"><p class="gh-loading" role="status">Loading courses…</p></section>
     <section class="gh-play" id="ghPlay" hidden aria-label="Game"></section>
   </main>
 
-  <div class="gh-dock">
+  <div class="gh-dock" id="ghCapsule" role="region" aria-label="Game and music controls">
+    <div class="gh-capsule-row">
+    <button type="button" class="gh-capsule-button gh-capsule-drag" data-capsule-drag aria-label="Move controls. Use arrow keys; Home resets position." title="Drag to move; arrow keys also move">⠿</button>
     <div class="gh-music" id="ghMusic" aria-label="Course music" role="region">
-      <button type="button" class="gh-music__btn" data-music-play aria-pressed="false" aria-label="Play music" data-state="paused">
+      <button type="button" class="gh-music__btn" data-hub-music-play disabled aria-pressed="false" aria-label="Play music" data-state="paused">
         <svg class="gh-i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
         <svg class="gh-i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>
       </button>
@@ -42,12 +44,25 @@
         <b data-music-title>—</b>
         <small data-music-role></small>
       </div>
-      <button type="button" class="gh-music__btn" data-music-next aria-label="Next track">
+      <button type="button" class="gh-music__btn" data-music-next disabled aria-label="Next track">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5v14l9-7zM16 5h3v14h-3z"/></svg>
       </button>
       <span class="gh-music__progress" aria-hidden="true"><i data-music-progress></i></span>
     </div>
-    <nav class="gh-modules" id="ghModules" aria-label="Courses"></nav>
+    <button type="button" class="gh-capsule-button" data-capsule-toggle aria-expanded="false" aria-controls="ghCapsulePanel">Games</button>
+    </div>
+    <div id="ghCapsulePanel" data-capsule-panel hidden>
+      <nav class="gh-modules" id="ghModules" aria-label="Courses"></nav>
+      <button type="button" class="gh-capsule-button" data-course-soundtrack disabled>Play course soundtrack</button>
+      <p class="gh-capsule-status" data-music-status role="status"></p>
+      <div class="gh-capsule-position" role="group" aria-label="Move controls">
+        <button type="button" data-capsule-move="-24,0" aria-label="Move left">←</button>
+        <button type="button" data-capsule-move="0,-24" aria-label="Move up">↑</button>
+        <button type="button" data-capsule-move="0,24" aria-label="Move down">↓</button>
+        <button type="button" data-capsule-move="24,0" aria-label="Move right">→</button>
+        <button type="button" data-capsule-move="reset">Reset</button>
+      </div>
+    </div>
   </div>
   </template>
 
