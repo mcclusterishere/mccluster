@@ -225,7 +225,19 @@
     get('mccAuthChip')?.setAttribute('aria-expanded', 'false');
     if (focus) get('mccAuthChip')?.focus();
   }
+  function syncProfileOwner() {
+    [get('mnMenu'), get('crAccountMenu')].filter(Boolean).forEach(menu => {
+      if (!menu.querySelector('[data-owner-profile-action="home"]')) {
+        const home = element('a', '', 'Home · Command Room'); home.dataset.ownerProfileAction = 'home'; home.href = controlHref('#home:today');
+        menu.appendChild(home);
+      }
+    });
+    [profile, get('mnMenu'), get('crAccountMenu')].filter(Boolean).forEach(menu => {
+      menu.querySelectorAll('[data-owner-profile-action]').forEach(el => {el.hidden = !bar.admin();});
+    });
+  }
   function syncProfile() {
+    syncProfileOwner();
     const chip = get('mccAuthChip'); if (!chip) return;
     const signed = bar.auth().signed_in;
     document.body.toggleAttribute('data-native-profile', !!get('mnMe') && !get('mnMe').hidden && signed);
@@ -251,9 +263,13 @@
       const view = element('a', '', 'View profile'); view.href = new URL(world).origin === location.origin ? new URL(world).href.replace('view=feed','view=profile') : new URL('mnet.html?view=profile', root).href;
       const account = element('a', '', 'Settings & account'); account.href = root + 'account.html?stay=1';
       const close = element('button', '', 'Close'); close.type = 'button'; close.onclick = () => closeProfile(true);
-      profile.append(view, account, close); document.body.appendChild(profile);
+      const home = element('a', '', 'Home · Command Room'); home.href = controlHref('#home:today'); home.dataset.ownerProfileAction = 'home';
+      const search = element('button', '', 'Search commands'); search.type = 'button'; search.dataset.ownerProfileAction = 'search';
+      search.onclick = async () => {if (!await bar.verifyAdmin()) {syncProfileOwner();return;}closeProfile();if (window.MCC_PALETTE) window.MCC_PALETTE.open();else openPanel();};
+      profile.append(view, account, home, search, close); document.body.appendChild(profile);
       profile.addEventListener('toggle', event => get('mccAuthChip')?.setAttribute('aria-expanded', String(event.newState === 'open')));
     }
+    syncProfileOwner();
     if (profile.matches(':popover-open')) closeProfile(true);
     else {profile.showPopover(); profile.querySelector('a').focus();}
   }, true);
@@ -273,7 +289,7 @@
     get('mccAuthChip')?.setAttribute('aria-expanded', String(get('crAccountMenu').classList.contains('is-open')));
   }).observe(get('crAccountMenu'), {attributes:true,attributeFilter:['class']});
   window.addEventListener('hashchange', markCurrent);
-  window.addEventListener('mcc:appbar-admin', syncAdmin);
+  window.addEventListener('mcc:appbar-admin', () => {syncAdmin();syncProfileOwner();});
   window.addEventListener('mcc:auth-state', () => {syncProfile(); if (!bar.auth().signed_in) {closePanel();closeProfile();get('crAccountMenu')?.classList.remove('is-open');}});
   window.addEventListener('pagehide', () => {closePanel();closeProfile();});
   if (get('mnMe')) new MutationObserver(syncProfile).observe(get('mnMe'), {attributes:true,attributeFilter:['hidden']});

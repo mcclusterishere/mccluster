@@ -107,7 +107,8 @@ test('a sign-in carried in is taken in place: the World waits for it and the bar
     'read before tabbar.js scrubs the fragment, on the same test tabbar.js uses');
   assert.match(js, /if \(handoff\.ok && handoff\.pending && e\.cancelable\) e\.preventDefault\(\);/);
   assert.ok(js.indexOf('window.addEventListener("mcc:handoff"') < js.indexOf('function boot()'), 'listening from the moment mnet.js runs, before tabbar.js');
-  assert.match(palette, /if \(e && e\.detail && e\.detail\.carried\) return;/, 'the owner\'s palette does not reload a World that took the session in place');
+  assert.doesNotMatch(palette, /location\.reload\(/, 'palette role restoration never reloads the page');
+  assert.match(palette, /MCC_BAR\?\.admin\(\)/, 'palette uses the server-verified shared role');
 });
 
 test('the bar leaves at once, in the colour of where it goes, and a hop inside one host cross-fades', () => {

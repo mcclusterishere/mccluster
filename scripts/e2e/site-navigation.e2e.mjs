@@ -34,6 +34,7 @@ async function setup(width,persona='owner'){
       return json(r,p==='/auth/v1/user'?{id:USER,email:'qa@fixture.invalid'}:[]);
     }
     if(u.hostname==='api.mccluster.org'){
+      if(p==='/v1/world/access')return json(r,{release:{version:'globe-admin-preview/v1',admin_preview:auth.status===200},locked_layers:[],unlocked_layers:[]});
       if(p==='/v1/status') {const status=auth.status;if(auth.delay)await new Promise(resolve=>auth.release=resolve);return json(r,{ok:status===200},status);}
       if(p==='/v1/observability/events')return json(r,{events:[{id:1,source:'worker',trace_id:'fixture-trace',event_name:'Fixture operation',level:'error',occurred_at:new Date().toISOString()},{id:2,source:'core',trace_id:'fixture-trace',event_name:'Fixture retry',level:'warn',occurred_at:new Date().toISOString()},{id:3,source:'worker',event_name:'Separate warning',level:'warn',occurred_at:new Date().toISOString()}],has_more:true});
       if(p==='/v1/workspaces/me')return json(r,{ok:true,profile:{id:USER},default_org_id:'o1',workspaces:[{org_id:'o1',slug:'mccluster',name:'McCluster',kind:'studio',role:auth.status===200?'owner':'viewer',enabled:true}]});
@@ -65,6 +66,7 @@ async function topRight(page,selector='#mccAuthChip'){
   return page.locator(selector).evaluate(el=>{const r=el.getBoundingClientRect();return r.top>=0&&r.top<=24&&r.right<=innerWidth&&r.right>=innerWidth-24&&r.width>=44&&r.height>=44;});
 }
 try{
+ if(!process.env.NAV_ROLE_MATRIX){
   for(const width of [390,820,1280]){
     const {ctx,page,auth,errors}=await setup(width);
     await page.goto(BASE+'/control.html?org=o1#home');
@@ -124,9 +126,13 @@ try{
     await open(page);await page.screenshot({path:join(OUT,'destinations-'+width+'.png')});
     await page.keyboard.press('Escape');
 
-    for(const path of ['/license.html','/brief.html','/music-admin.html','/control.html?org=o1#analytics','/control.html?org=o1#home']){
+    for(const path of ['/license.html','/brief.html','/music-admin.html','/member-front.html?handle=qa-member','/city-arcade.html','/game-hub.html','/prim3-tactics-preview.html','/equity-uprise.html','/control.html?org=o1#analytics','/control.html?org=o1#home']){
       await page.goto(BASE+path);await page.waitForSelector('body[data-admin-navigation][data-site-navigation]');
       check(width+' consistent owner bar on '+path,await page.evaluate(()=>document.querySelectorAll('.appbar [data-appnav]').length===7&&__navFrames.every(n=>n===7)));
+      check(width+' one ordered accessible dock on '+path,await page.evaluate(()=>{
+        const bars=document.querySelectorAll('.appbar'),tabs=[...bars[0].querySelectorAll('[data-appnav]')];
+        return bars.length===1&&tabs.map(x=>x.dataset.appnav).join(',')==='music,admin-inbox,admin-home,home,analytics,halo,games'&&tabs.every(x=>{const r=x.getBoundingClientRect();return r.width>=44&&r.height>=44&&r.right<=innerWidth&&r.bottom<=innerHeight;});
+      }));
     }
     const routes=await page.evaluate(()=>CR.workspaceCore.routes.map(r=>r.hash));
     for(const hash of routes){await page.evaluate(h=>{location.hash=h;},hash);await page.waitForFunction(h=>location.hash===h&&document.getElementById('crSurface')?.childElementCount>0,hash);check(width+' owner navigation stable at '+hash,await page.evaluate(()=>document.querySelectorAll('.appbar [data-appnav]').length===7&&!document.querySelector('#crInspector')?.classList.contains('is-open')));}
@@ -268,9 +274,62 @@ try{
     check('veil checks have no page errors',errors.length===0,errors);
     await ctx.close();
   }
+  for(const width of [390,1280]){
+    const {ctx,page}=await setup(width);
+    await page.goto(BASE+'/city-arcade.html');await page.waitForSelector('body[data-admin-navigation]');
+    check(width+' game page marks Games active',await page.locator('[data-appnav="games"][aria-current="page"]').count()===1);
+    await page.locator('.appbar [data-appnav="halo"]').click();await page.waitForURL('**/action-globe.html?explore=1&halo=1');
+    await page.waitForSelector('body[data-admin-navigation]');
+    await page.locator('.appbar [data-appnav="games"]').click();await page.waitForURL('**/action-globe.html?explore=1&games=1');
+    await page.waitForSelector('body[data-admin-navigation]');
+    await page.waitForFunction(()=>window.__huGames?.()?.isOpen());
+    check(width+' Games link opens actual owner overlay',await page.locator('[data-appnav="games"][aria-current="page"]').count()===1);
+    await page.locator('.games-close').click();
+    await page.click('#mccAuthChip');await page.locator('#mccProfileMenu:popover-open').waitFor();
+    check(width+' profile contains account and owner Home',await page.locator('#mccProfileMenu a').count()===3&&await page.locator('#mccProfileMenu [data-owner-profile-action="home"]').isVisible());
+    await page.keyboard.press('Escape');check(width+' profile escape restores focus',await page.locator('#mccAuthChip').evaluate(el=>document.activeElement===el));
+    await page.screenshot({path:join(OUT,'globe-owner-'+width+'.png')});
+    await page.locator('.appbar [data-appnav="admin-inbox"]').click();await page.waitForURL('**/control.html#people:inbox:conversations');
+    await page.waitForSelector('body[data-admin-navigation]');
+    check(width+' globe to Inbox retains seven tabs',await page.locator('.appbar [data-appnav]').count()===7);
+    await ctx.close();
+  }
   {
     const {ctx,page}=await setup(390);await page.goto(BASE+'/action-globe.html?embedded=1&surface=network');
     check('embedded globe has no duplicate navigation or profile',await page.locator('.appbar,#mccAuthChip,#mccControlToggle').count()===0);
     await ctx.close();
   }
+ }
+ for(const width of [390,1280])for(const persona of ['owner','member','guest']){
+   const {ctx,page,auth}=await setup(width,persona);
+   for(const path of ['/action-globe.html?explore=1','/member-front.html?handle=qa-member','/control.html#home','/control.html#home:front-page','/city-arcade.html','/control.html#insights:overview']){
+     await page.goto(BASE+path);await page.waitForFunction(()=>window.MCC_BAR?.auth().verified);
+     await page.waitForFunction(()=>document.body.dataset.siteNavigation==='ready');
+     if(persona==='owner')await page.waitForSelector('body[data-admin-navigation]');
+     check(width+' '+persona+' direct entry '+path,await page.locator('.appbar').count()===1&&await page.locator('.appbar [data-appnav]').count()===(persona==='owner'?7:3));
+     if(path.startsWith('/action-globe')&&persona!=='guest'){
+       // Mount the actual legacy shortcuts to exercise the duplication seen
+       // with owner sessions; synthetic auth only, with all network intercepted.
+       if(persona==='owner'){
+         await page.evaluate(()=>{const s=JSON.parse(localStorage.getItem('mccdb_session'));s.user.email='matthew@mccluster.org';localStorage.setItem('mccdb_session',JSON.stringify(s));});
+         await page.addScriptTag({url:BASE+'/js/control-registry.js'});await page.addScriptTag({url:BASE+'/js/control-palette.js'});
+         check(width+' legacy shortcuts hidden after shared profile ready',await page.locator('.cmdk-owner-nav').isHidden());
+       }
+       await page.click('#mccAuthChip');await page.locator('#mccProfileMenu:popover-open').waitFor();
+       check(width+' '+persona+' profile owner actions respect role',await page.locator('#mccProfileMenu [data-owner-profile-action="home"]').isVisible()===(persona==='owner'));
+       check(width+' '+persona+' profile has account link',await page.locator('#mccProfileMenu a[href$="account.html?stay=1"]').isVisible());
+       await page.screenshot({path:join(OUT,'profile-'+persona+'-'+width+'.png')});
+       await page.keyboard.press('Escape');
+       if(persona==='owner'){
+         await page.click('#mccAuthChip');await page.locator('#mccProfileMenu [data-owner-profile-action="search"]').click();
+         await page.waitForSelector('#cmdkRoot.is-open');
+         check(width+' retained command search opens',await page.locator('#cmdkRoot').evaluate(el=>el.classList.contains('is-open')));await page.keyboard.press('Escape');
+         auth.status=403;await page.evaluate(()=>MCC_BAR.verifyAdmin());
+         await page.click('#mccAuthChip');check(width+' revocation removes Profile admin actions',await page.locator('#mccProfileMenu [data-owner-profile-action="home"]').isHidden());await page.keyboard.press('Escape');
+         auth.status=200;await page.evaluate(()=>MCC_BAR.verifyAdmin());
+       }
+     }
+   }
+   await ctx.close();
+ }
 }finally{await writeFile(join(OUT,'results.json'),JSON.stringify(results,null,2));await browser.close();}

@@ -588,10 +588,10 @@
     try { window.dispatchEvent(new CustomEvent("mcc:auth-state", { detail: AUTH_STATE })); } catch (e) {}
     if (!wingOn) HOME_BAR = dock.innerHTML;
   }
-  /* ---------- THE OWNER'S FIVE TABS (owner, 2026-10-15: "admin first; push features down to other users later") ----------
-     For the house owner only, the bar widens to five: Play (the player), Home (the Control Room: the admin back end lives
+  /* ---------- THE OWNER'S SEVEN TABS (owner, 2026-10-15: "admin first; push features down to other users later") ----------
+     For the house owner only, the bar widens to seven: Play (the player), Inbox, Home (the Control Room: the admin back end lives
      under Home now), the M (as supplied, assets/img/m-mark.png: scaled, never redrawn, no plate added), Analytics (its
-     own tab, control.html#analytics) and the Globe. Everyone else keeps the three columns above.
+     own tab, control.html#analytics), the Globe and Games. Everyone else keeps the three columns above.
      Who is the owner is the server's answer, never this browser's: GET /v1/status, the same owner check the Control Room
      and js/owner-control-redirect.js use (requireHouseOwner in the Worker). The answer is remembered for this tab's
      session only for negative answers (sessionStorage, one minute, tied to the user).
@@ -612,7 +612,11 @@
   var PLAY_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 4.8v14.4L19 12z" fill="currentColor"/></svg>';
   var HOME_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3.5 10.6 12 3.8l8.5 6.8"/><path d="M6 9v11h4.4v-5.6h3.2V20H18V9"/></svg>';
   var CHART_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><rect x="4.5" y="11" width="3" height="9" rx="1"/><rect x="10.5" y="4" width="3" height="16" rx="1"/><rect x="16.5" y="8" width="3" height="12" rx="1"/></svg>';
+  // Shared owner-only active-state registry. These links do not grant access;
+  // every destination retains its existing server gate.
+  var ADMIN_GAME_PAGES = ['city-arcade.html','fictional-city.html','game-hub.html','prim3.html','prim3-world.html','prim3-transit.html','prim3-range.html','prim3-courtyard.html','prim3-tactics-preview.html','equity-uprise-server-lab-3d.html'];
   function adminHere() {
+    if (ADMIN_GAME_PAGES.indexOf(PAGE_KEY) !== -1) return "games";
     /* the owner's globe is Hitman's Halo: lit while Halo is on screen */
     if (/action-globe\.html$/.test(location.pathname) && new URLSearchParams(location.search).has("games")) return "games";
     if (/action-globe\.html$/.test(location.pathname) && new URLSearchParams(location.search).has("halo")) return "halo";

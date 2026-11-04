@@ -127,3 +127,7 @@ html body.cr[data-site-navigation] #crAccountMenu :is(a,button){min-height:44px}
 .cr-system-event pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}
 .cr-system-event ol{padding-left:20px}
 .cr-system-summary :is(button,summary):focus-visible,.cr-system-evidence summary:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+
+/* Shared profile owns global account/command shortcuts after it is ready. */
+body[data-site-navigation] .cmdk-owner-nav,body[data-site-navigation] .hx-operator{display:none!important}
+.mcc-profile-menu [hidden],#mnMenu [data-owner-profile-action][hidden],#crAccountMenu [data-owner-profile-action][hidden]{display:none!important}

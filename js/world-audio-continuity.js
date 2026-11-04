@@ -61,6 +61,8 @@
       // Both World routers canonicalize www before serving the document.
       u.hostname = u.hostname.replace(/^www\./, ""); return u;
     }
+    if (u.origin === HOUSE && /\/action-globe\.html$/.test(u.pathname) &&
+        ['explore','halo','games','embedded'].some(function(key){return u.searchParams.has(key);})) return null;
     if (u.origin === HOUSE && /\/(?:mnet|action-globe)\.html$/.test(u.pathname)) {
       var w = new URL("https://mccluster.org/"); w.search = u.search; w.hash = u.hash;
       w.searchParams.delete("embedded"); w.searchParams.delete("explore");
@@ -72,7 +74,10 @@
     var u = urlOf(href);
     return u && u.origin === HOUSE && u.pathname === "/listen.html" && !u.search && !u.hash;
   }
-  function musicSurface() { return !!root.MCC_MUSIC || !!doc.getElementById("deck"); }
+  function musicSurface() {
+    var deck = doc.getElementById("deck");
+    return !!root.MCC_MUSIC || !!(deck && /^(AUDIO|VIDEO)$/.test(deck.tagName));
+  }
   function selected() {
     var engine = root.MCC_MUSIC;
     if (engine && engine.current && engine.current()) {
@@ -681,7 +686,7 @@
   doc.addEventListener("click", function (e) {
     if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     var a = e.target.closest && e.target.closest("a[href]");
-    if (!a || a.target === "_blank" || a.hasAttribute("download") || a.closest(".world-audio-status")) return;
+    if (!a || a.target === "_blank" || a.hasAttribute("download") || a.closest(".world-audio-status,#mccAuthChip,#mccProfileMenu,#mccDestinations")) return;
     if (navigate(a.href)) { e.preventDefault(); e.stopPropagation(); }
   }, true);
   /* A TAP THAT LEAVES THE WORLD DOES NOT START ITS SONG (owner, 2026-10-20: no flashes). A bar tab (Music, the M) or the
