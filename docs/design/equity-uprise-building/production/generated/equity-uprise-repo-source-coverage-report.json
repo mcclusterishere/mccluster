@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 609,
+  "candidate_count": 610,
   "capability_source_count": 104,
-  "support_only_count": 505,
-  "checks_total": 2334,
-  "checks_passed": 2334,
+  "support_only_count": 506,
+  "checks_total": 2338,
+  "checks_passed": 2338,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -138,6 +138,7 @@
     "docs/action-network/SEVEN-DAY-GLOBE-RECONCILIATION.md",
     "docs/agent-web.md",
     "docs/analytics/application-schema-inventory.json",
+    "docs/control-plane/API-RECOVERY-20261104.json",
     "docs/control-plane/BRANCH-RECONCILIATION-2026-09-26.md",
     "docs/control-plane/CANONICAL-ARCHITECTURE.md",
     "docs/control-plane/CLOUDFLARE-PAGES-DIRECT-UPLOAD.md",
@@ -623,7 +624,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "609 entries"
+      "detail": "610 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -12287,6 +12288,26 @@
     },
     {
       "name": "workers/mccluster/test/prim3-learning.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/API-RECOVERY-20261104.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/API-RECOVERY-20261104.json classified",
+      "passed": true,
+      "detail": "classification='audit_support'"
+    },
+    {
+      "name": "docs/control-plane/API-RECOVERY-20261104.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/API-RECOVERY-20261104.json support rationale present",
       "passed": true,
       "detail": ""
     }

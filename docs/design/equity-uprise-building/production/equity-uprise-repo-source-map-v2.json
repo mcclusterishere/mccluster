@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 609,
+  "candidate_count": 610,
   "capability_source_count": 104,
-  "support_only_count": 505,
+  "support_only_count": 506,
   "entries": [
     {
       "path": ".cursorrules",
@@ -1853,7 +1853,7 @@
       "classification": "shared_site_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Role-tailored cut of the résumé (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
+      "rationale": "Role-tailored cut of the r\u00e9sum\u00e9 (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
     },
     {
       "path": "scripts/e2e/world-screen.e2e.mjs",
@@ -4244,7 +4244,7 @@
       "classification": "building_projection_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "McCluster City geography/placement authority places the existing HQ on its island with a documented 180° placement of the 72 ft plate and the existing doorway anchor; city parcels and streets only, no building geometry, floor program, access policy or capability."
+      "rationale": "McCluster City geography/placement authority places the existing HQ on its island with a documented 180\u00b0 placement of the 72 ft plate and the existing doorway anchor; city parcels and streets only, no building geometry, floor program, access policy or capability."
     },
     {
       "path": "js/fictional-city/tactical.mjs",
@@ -4536,6 +4536,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Worker tests for the learning-evidence routes. No spatial or program capability is added."
+    },
+    {
+      "path": "docs/control-plane/API-RECOVERY-20261104.json",
+      "classification": "audit_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "API recovery branch inventory references Equity Uprise work for audit evidence only; it defines no building geometry, floor program or independent capability."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",
