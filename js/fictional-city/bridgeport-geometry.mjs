@@ -1,58 +1,61 @@
 /* Additive Bridgeport block: sourced footprints where supplied, illustrative facades/heights.
-   The established harbor and HQ geometry stay in scene.mjs. No third-party storefront marks. */
+   The established harbor and HQ geometry stay in scene.mjs. No third-party storefront marks.
+   Only the land surfaces are resident; everything else here is built per streamed chunk (neighborhood-chunks.mjs). */
 import * as THREE from 'three';
 import { yardFixtures } from './spatial.mjs';
 
 const PALETTE = { paving: '#c9bdab', curb: '#e8dfce', road: '#565d60', brick: '#a56e55', trim: '#e7d9bd',
   glass: '#456064', iron: '#3c4b4a', roof: '#62645b', amber: '#d2a65f' };
 
-export function buildNeighborhoodGround({ neighborhoods, batch, parent, kit, tree, lamp }) {
+/* Resident ground: one slab per land surface, so streaming can never open a hole under a body. Streets, signs, lamps,
+   trees and buildings stream per chunk (neighborhood-chunks.mjs → buildNeighborhoodChunk). */
+export function buildNeighborhoodGround({ neighborhoods, batch }) {
+  for (const neighborhood of neighborhoods) for (const s of neighborhood.surfaces || []) {
+    batch.add('box', PALETTE.paving, (s.minX + s.maxX) / 2, -.32, (s.minZ + s.maxZ) / 2, s.maxX - s.minX, .8, s.maxZ - s.minZ);
+  }
+}
+
+/* One streamed chunk of a surveyed neighbourhood: its street pieces, painted dashes, road-name posts, lamps, trees
+   and buildings. `batch` is the chunk's shared instanced batch (streets and furniture); every building gets its own
+   batch via `placeBatch()` so its windows live in bins bounded by that building alone and the renderer's frustum test
+   drops them whenever the building is off screen. `targetFor(id)` returns the stable interaction target the scene
+   registered at start-up, so picking, prompts and occlusion fades survive any number of unload/reload cycles. */
+export function buildNeighborhoodChunk(chunk, { batch, placeBatch, parent, kit, tree, lamp, placeById, targetFor, pickables, tag = () => {} }) {
   const box = (color, x, y, z, w, h, d, rotation) => batch.add('box', color, x, y, z, w, h, d, rotation);
-  for (const neighborhood of neighborhoods) {
-    const namedRoads = new Set();
-    for (const s of neighborhood.surfaces || []) {
-      box(PALETTE.paving, (s.minX + s.maxX) / 2, -.32, (s.minZ + s.maxZ) / 2, s.maxX - s.minX, .8, s.maxZ - s.minZ);
-    }
-    for (const road of neighborhood.roads || []) {
-      if (Array.isArray(road.points) && road.points.length > 1) {
-        const roadWidth = road.width || 10;
-        for (let i = 1; i < road.points.length; i++) {
-          const a = road.points[i - 1], b = road.points[i], dx = b[0] - a[0], dz = b[1] - a[1];
-          const length = Math.hypot(dx, dz); if (length < .05) continue;
-          const angle = -Math.atan2(dz, dx), cx = (a[0] + b[0]) / 2, cz = (a[1] + b[1]) / 2;
-          box(PALETTE.curb, cx, .11, cz, length + 2.4, .12, roadWidth + (roadWidth <= 3 ? 0 : 4.4), [0, angle, 0]);
-          box(PALETTE.road, cx, .18, cz, length + .15, .055, roadWidth, [0, angle, 0]);
-          if (roadWidth >= 5) for (let at = 2.5; at < length - 1.5; at += 8) box('#ded3ae', a[0] + dx * at / length, .215,
-            a[1] + dz * at / length, Math.min(3.5, length - at), .018, .16, [0, angle, 0]);
-        }
-        if (road.name && !namedRoads.has(road.name)) {
-          namedRoads.add(road.name);
-          const a = road.points[0], b = road.points[1], length = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
-          const sx = a[0] + (b[1] - a[1]) / length * (roadWidth / 2 + 1.1);
-          const sz = a[1] - (b[0] - a[0]) / length * (roadWidth / 2 + 1.1);
-          batch.add('cylinder', PALETTE.iron, sx, 2.0, sz, .12, 3.8, .12);
-          kit.sign(parent, road.name, '', { x: sx, y: 3.7, z: sz, width: 8.5, height: .95, background: '#34574f', accent: '#d8c69c' });
-        }
-        continue;
-      }
-      const { x, z, width: w, depth: d } = road;
+  for (const r of chunk.roads || []) {
+    if (r.rect) {
+      const { x, z, width: w, depth: d } = r;
       box(PALETTE.curb, x, .11, z, w + 5.2, .12, d + 5.2);
       box(PALETTE.road, x, .18, z, w, .055, d);
       const horizontal = w >= d, length = horizontal ? w : d;
-      for (let at = -length / 2 + 3; at < length / 2 - 2; at += 8) {
-        box('#ded3ae', x + (horizontal ? at : 0), .215, z + (horizontal ? 0 : at), horizontal ? 3.5 : .16, .018, horizontal ? .16 : 3.5);
-      }
-      // Road names are ordinary wayfinding, distinct from any supplied company artwork.
-      if (road.name && horizontal && !namedRoads.has(road.name)) {
-        namedRoads.add(road.name);
-        const sx = x - w / 2 + 5, sz = z + d / 2 + 2.1;
-        batch.add('cylinder', PALETTE.iron, sx, 2.0, sz, .12, 3.8, .12);
-        kit.sign(parent, road.name, '', { x: sx, y: 3.7, z: sz, width: 8.5, height: .95, background: '#34574f', accent: '#d8c69c' });
-      }
+      for (let at = -length / 2 + 3; at < length / 2 - 2; at += 8) box('#ded3ae', x + (horizontal ? at : 0), .215, z + (horizontal ? 0 : at), horizontal ? 3.5 : .16, .018, horizontal ? .16 : 3.5);
+      continue;
     }
-    // Decorated positions are optional authored sidewalk points, never guessed across source buildings.
-    for (const p of neighborhood.lamps || []) lamp(p[0], p[1]);
-    for (const [i, p] of (neighborhood.trees || []).entries()) tree(p[0], p[1], i);
+    const dx = r.bx - r.ax, dz = r.bz - r.az, length = Math.hypot(dx, dz); if (length < .05) continue;
+    const angle = -Math.atan2(dz, dx), ux = dx / length, uz = dz / length;
+    // the kerb and road surface overhang only a segment's real ends; pieces of one segment abut exactly
+    const kerbStart = r.startCap ? 1.2 : 0, kerbEnd = r.endCap ? 1.2 : 0, roadStart = r.startCap ? .075 : 0, roadEnd = r.endCap ? .075 : 0;
+    const kerbLength = length + kerbStart + kerbEnd, roadLength = length + roadStart + roadEnd;
+    const kcx = (r.ax + r.bx) / 2 + ux * (kerbEnd - kerbStart) / 2, kcz = (r.az + r.bz) / 2 + uz * (kerbEnd - kerbStart) / 2;
+    const rcx = (r.ax + r.bx) / 2 + ux * (roadEnd - roadStart) / 2, rcz = (r.az + r.bz) / 2 + uz * (roadEnd - roadStart) / 2;
+    box(PALETTE.curb, kcx, .11, kcz, kerbLength, .12, r.width + (r.width <= 3 ? 0 : 4.4), [0, angle, 0]);
+    box(PALETTE.road, rcx, .18, rcz, roadLength, .055, r.width, [0, angle, 0]);
+  }
+  for (const d of chunk.dashes || []) box('#ded3ae', d.x, .215, d.z, d.length, .018, .16, [0, d.angle, 0]);
+  for (const s of chunk.signs || []) {
+    batch.add('cylinder', PALETTE.iron, s.x, 2.0, s.z, .12, 3.8, .12);
+    // Road names are ordinary wayfinding, distinct from any supplied company artwork.
+    const sign = kit.sign(parent, s.name, '', { x: s.x, y: 3.7, z: s.z, width: 8.5, height: .95, background: '#34574f', accent: '#d8c69c' });
+    tag(sign, 'neighborhood:signs');
+  }
+  for (const p of chunk.lamps || []) lamp(p[0], p[1]);
+  for (const p of chunk.trees || []) tree(p[0], p[1], p[2] || 0);
+  for (const id of chunk.places || []) {
+    const b = placeById.get(id), target = targetFor(id);
+    if (!b || !target) continue;
+    const own = placeBatch();
+    buildNeighborhoodPlace(b, { batch: own, parent, kit, target, pickables, tag });
+    for (const m of own.finish()) { tag(m, b.footprint ? 'neighborhood:windows+facades' : 'neighborhood:massing'); if (m.userData.instanceTargets.some(Boolean)) pickables.push(m); }
   }
 }
 
@@ -107,7 +110,7 @@ function polygonWindows(b, batch, target, height) {
   }
 }
 
-export function buildNeighborhoodPlace(b, { batch, parent, kit, target, pickables }) {
+export function buildNeighborhoodPlace(b, { batch, parent, kit, target, pickables, tag = () => {} }) {
   const [x, z] = b.position, [w, d, rawH] = b.size, h = rawH || 10;
   const style = b.style || 'brick-row', front = b.entrance[1] > z ? 1 : -1;
   const box = (color, bx, by, bz, bw, bh, bd, rotation) => batch.add('box', color, bx, by, bz, bw, bh, bd, rotation, target);
@@ -139,12 +142,12 @@ export function buildNeighborhoodPlace(b, { batch, parent, kit, target, pickable
       }
     }
     const sign = kit.sign(parent, b.name, b.tagline || b.category || (b.yardType === 'vehicle' || /railside/.test(b.id) ? 'VEHICLE YARD' : 'THE BLOCK OLYMPICS'), { x, y: 2.2, z: z - front * (d / 2 - .1), width: Math.min(w - 2, 12), height: 1.35, yaw: front === 1 ? 0 : Math.PI, background: '#3a5049' });
-    sign.userData.target = target; pickables.push(sign); batch.setTarget(null); return;
+    sign.userData.target = target; tag(sign, 'neighborhood:signs'); pickables.push(sign); batch.setTarget(null); return;
   }
 
   let face = { x, z: z + front * d / 2, nx: 0, nz: front, yaw: front === 1 ? 0 : Math.PI, width: w };
   if (Array.isArray(b.footprint) && b.footprint.length >= 3) {
-    pickables.push(polygonBody(b, parent, kit, target, h));
+    const body = polygonBody(b, parent, kit, target, h); tag(body, 'neighborhood:bodies'); pickables.push(body);
     polygonWindows(b, batch, target, h);
     face = polygonFace(b) || face;
   } else {
@@ -208,7 +211,7 @@ export function buildNeighborhoodPlace(b, { batch, parent, kit, target, pickable
   }
   const sign = kit.sign(parent, b.name, b.tagline || '', { x: face.x + nx * .27, y: Math.min(h - .55, 4.45), z: face.z + nz * .27,
     width: Math.min(usableWidth, 14), height: 1.35, yaw, background: '#344c45', accent: '#d5bd8b' });
-  sign.userData.target = target; pickables.push(sign); batch.setTarget(null);
+  sign.userData.target = target; tag(sign, 'neighborhood:signs'); pickables.push(sign); batch.setTarget(null);
 }
 
 export function buildStoryProp(beat, { batch, parent, kit, target, pickables }) {

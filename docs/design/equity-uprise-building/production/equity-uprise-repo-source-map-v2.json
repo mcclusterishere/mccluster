@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 615,
+  "candidate_count": 619,
   "capability_source_count": 104,
-  "support_only_count": 511,
+  "support_only_count": 515,
   "entries": [
     {
       "path": ".cursorrules",
@@ -1853,7 +1853,7 @@
       "classification": "shared_site_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Role-tailored cut of the résumé (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
+      "rationale": "Role-tailored cut of the r\u00e9sum\u00e9 (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
     },
     {
       "path": "scripts/e2e/world-screen.e2e.mjs",
@@ -2059,13 +2059,6 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Checks that the PRIM3 HQ drill reads the building's own generated models within the Core V2 plan rectangles and that its manifest matches the publish workflow; adds no program capability."
-    },
-    {
-      "path": "scripts/test/prim3-lifecycle.test.mjs",
-      "classification": "test_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Tests tactical turn recovery and browser save validation, including existing Equity Uprise exercise save shapes; adds no building program capability."
     },
     {
       "path": "scripts/test/prim3-transit-level.test.mjs",
@@ -4251,7 +4244,7 @@
       "classification": "building_projection_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "McCluster City geography/placement authority places the existing HQ on its island with a documented 180° placement of the 72 ft plate and the existing doorway anchor; city parcels and streets only, no building geometry, floor program, access policy or capability."
+      "rationale": "McCluster City geography/placement authority places the existing HQ on its island with a documented 180\u00b0 placement of the 72 ft plate and the existing doorway anchor; city parcels and streets only, no building geometry, floor program, access policy or capability."
     },
     {
       "path": "js/fictional-city/tactical.mjs",
@@ -4543,6 +4536,41 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Worker tests for the learning-evidence routes. No spatial or program capability is added."
+    },
+    {
+      "path": "docs/fictional-city/NAVIGATION-REVIEW-2026-11-04.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "City navigation review records the existing HQ portal, coordinate boundaries and integration findings; no building geometry, program or capability ownership."
+    },
+    {
+      "path": "scripts/e2e/fictional-city-camera-inputs.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "City camera, travel and navigation integration checks walk to the existing HQ doorway; test support only, without changing building geometry or capabilities."
+    },
+    {
+      "path": "scripts/e2e/fictional-city-upstairs-audit.e2e.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Browser reproduction of existing HQ stair picking uses the real resolver and renderer; diagnostic support only, not a building geometry or capability implementation."
+    },
+    {
+      "path": "scripts/test/fictional-city-vertical-handoff.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Verifies existing HQ stair links through the tactical resolver without modifying floors, circulation or building capabilities."
+    },
+    {
+      "path": "scripts/test/prim3-lifecycle.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Tests tactical turn recovery and browser save validation, including existing Equity Uprise exercise save shapes; adds no building program capability."
     },
     {
       "path": "docs/prim3/SHARED-SPATIAL-CONTRACT.md",

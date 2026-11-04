@@ -46,6 +46,10 @@ Road widths are estimates: secondary 12 m, tertiary 8 m, residential/service 6 m
 
 The donation bin is a separate collision prop with its own `propPosition`, distinct from the story marker and ordinary market entrance. Story progression follows the unchanged seven-act narrative; Positions returns to Night Shift Club.
 
+## Rendering
+
+The neighbourhood is drawn through the city's streaming contract (`js/fictional-city/neighborhood-chunks.mjs`, see `EXPANSION.md` § 5): the land surface is resident; footprint bodies (exact extruded rings, never a rectangle), streets, windows and signs are built per 64 m chunk when the player approaches and released when they leave. Adding footprints or streets to `neighborhoods[]` places them in their chunks automatically; no file is published for it.
+
 ## Placement verification
 
 All 18 place entrances, 13 story stop markers and the neighborhood spawn were checked with the runtime `createSpatialWorld` and `isWalkable` at a 0.7 m clearance radius, including the donation-bin and yard-fixture blockers. All 32 checks passed. Source footprint completeness, chronological path reachability and rendering checks remain part of the feature test suite.
