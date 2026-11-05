@@ -12,6 +12,7 @@ import { fileURLToPath } from 'node:url';
 import { validateModules, musicErrors, isPurple, albumFor, parseHash, hashFor } from '../../js/game-hub/modules.mjs';
 import { placeFor, nextIndex, loadPositions, STORE_KEY } from '../../js/game-hub/player.mjs';
 import * as E from '../../js/game-hub/chem108/engine.mjs';
+import { TRIAL_MS, TRIAL_KEY, trialStatus, readTrial, startTrial, recordTrialVisit } from '../../js/game-hub/chem108/trial.mjs';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const read = (p) => readFileSync(join(ROOT, p), 'utf8');
@@ -211,4 +212,46 @@ test('optional music catalogue does not block game boot or the direct play route
   assert.doesNotMatch(startup, /await albumsPromise|Promise\.all\(/);
   assert.match(hub, /void albumsPromise\.then\(/);
   assert.deepEqual(parseHash('#m=chem108&play=molecule-rush'), { module: 'chem108', play: 'molecule-rush' });
+});
+
+
+test('public Chem 108 preview is linked to guests but private Game Hub authority stays intact',()=>{
+  const html = read('chem108.html');
+  const src = read('js/game-hub/chem108/trial.mjs');
+  assert.match(html, /data-chem108-trial/);
+  assert.match(html, /js\/game-hub\/chem108\/trial\.mjs/);
+  assert.doesNotMatch(html, /js\/owner-only\.mjs|data-owner-gate/);
+  assert.match(html, /Start seven-day free trial/);
+  assert.match(PAGE, /data-owner-gate/);
+  assert.match(PAGE, /href="chem108\.html"/);
+  assert.match(read('index.html'), /href="chem108\.html" data-cta="footer-chem-trial"/);
+  assert.match(read('js/site-navigation.js'), /label:'Chem 108 · Guest trial'/);
+  assert.doesNotMatch(src, /\/v1\/status|requireHouseOwner/, 'public trial may not borrow owner authority');
+  assert.match(src, /import\('\.\/game\.mjs'\)/, 'existing game engine only loads after access is decided');
+  assert.match(read('js/game-hub/chem108/game.mjs'), /dataset\.ownerAccess === 'open'/,
+    'private lesson authoring remains unavailable without a server owner grant');
+});
+
+test('guest gets exactly seven days from first explicit start, then account entry',()=>{
+  const memory = new Map();
+  const storage = {getItem:key=>memory.get(key)||null,setItem:(key,value)=>memory.set(key,value)};
+  const now = Date.UTC(2026,10,5,15);
+  assert.deepEqual(readTrial(storage,now),{state:'new',remainingMs:TRIAL_MS});
+  assert.equal(memory.has(TRIAL_KEY),false,'landing alone does not consume time');
+  assert.equal(startTrial(storage,now).state,'active');
+  const persisted=JSON.parse(memory.get(TRIAL_KEY));
+  assert.equal(persisted.startedAt,now);
+  assert.equal(readTrial(storage,now+TRIAL_MS-1000).state,'active');
+  assert.equal(readTrial(storage,now+TRIAL_MS).state,'expired');
+  assert.equal(startTrial(storage,now+TRIAL_MS+1000).state,'expired','repeating Start cannot renew trial');
+  assert.equal(JSON.parse(memory.get(TRIAL_KEY)).startedAt,now,'original start persists');
+  assert.equal(recordTrialVisit(storage,now+10000).state,'active');
+  assert.equal(JSON.parse(memory.get(TRIAL_KEY)).lastSeen,now+10000);
+  assert.equal(trialStatus({version:1,startedAt:now,lastSeen:now+10000},now-3600000).state,'invalid',
+    'large backward clock jumps cannot extend trial');
+  memory.set(TRIAL_KEY,'malformed');
+  assert.equal(readTrial(storage,now).state,'invalid','corrupt record is not a new trial');
+  assert.equal(startTrial(storage,now).state,'invalid','corrupt record cannot reset trial');
+  const blocked={getItem:()=>null,setItem:()=>{throw Error('storage denied')}};
+  assert.equal(startTrial(blocked,now).state,'unavailable','storage denial does not invent a tracked trial');
 });
