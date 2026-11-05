@@ -147,9 +147,13 @@ for(const size of [{width:390,height:844},{width:820,height:1180},{width:1280,he
  const w=await widths(page);check(size.width,'no horizontal overflow',w.scrollW===w.clientW,w);
  const targets=await page.locator('.cu-card button,.cu-card a').evaluateAll(nodes=>nodes.filter(n=>n.getClientRects().length).map(n=>({text:n.textContent,height:n.getBoundingClientRect().height})));
  check(size.width,'card controls retain 40px touch targets',targets.length>0&&targets.every(n=>n.height>=40),targets.filter(n=>n.height<40));
- const dimensions=await page.locator('.cu-geography').boundingBox();check(size.width,'globe stays inside viewport',dimensions.height>150&&dimensions.y+dimensions.height<=size.height,dimensions);
+ // The geographic drilldown is now behind an explicit disclosure, not forced into the summary.
+ await page.locator('.cu-detail > summary').click();
+ const dimensions=await page.locator('.cu-geography').boundingBox();
+ check(size.width,'geographic drilldown opens inside the analytics panel',!!dimensions&&dimensions.height>150&&dimensions.width<=size.width+2,dimensions);
  check(size.width,'document has no dashboard scroll',await page.evaluate(()=>document.documentElement.scrollHeight<=innerHeight+2),await page.evaluate(()=>({height:document.documentElement.scrollHeight,window:innerHeight,body:getComputedStyle(document.body).paddingBottom})));
- const originalGlobe=await page.locator('[data-cra-globe]').evaluate(el=>{el.dataset.testIdentity='same-earth';return el.querySelectorAll('canvas').length;});
+ const originalGlobe=await page.locator('[data-cra-globe]').evaluate(el=>{window.__testAnalyticsEarth=window.__craGlobe();return el.querySelectorAll('canvas').length;});
+ check(size.width,'geographic drilldown retains its canvas',originalGlobe>0);
  const tabs=await page.locator('.appbar [data-appnav]').evaluateAll(nodes=>nodes.map(n=>n.dataset.appnav));check(size.width,'current seven-tab owner bar',JSON.stringify(tabs)===JSON.stringify(['music','admin-inbox','admin-home','home','analytics','halo','games']),tabs);
  check(size.width,'overview exposes seven scoped metrics across three summary groups',await page.locator('.cu-summary-groups .cu-summary-group').count()===3&&await page.locator('.cu-summary-groups .cu-metric-link').count()===7);
  check(size.width,'trend exposes exact keyboard values',await page.locator('.cra-ac__point[tabindex="0"]').count()===24);
@@ -176,7 +180,7 @@ for(const size of [{width:390,height:844},{width:820,height:1180},{width:1280,he
  check(size.width,'snapshot displayed',await page.locator('.cu-records').innerText().then(x=>x.includes('Fixture camera')));
  await page.locator('[data-cu-source="usgs"]').click();await page.locator('#cuSnapshot button[type=submit]').click();await page.waitForFunction(()=>!window.CR.analyticsUnified.state.reading);
  check(size.width,'failed source read remains visible',await page.locator('[data-cu-details] [role=alert]').innerText().then(x=>x.includes('unavailable')));
- check(size.width,'globe survives chapter navigation',await page.locator('[data-cra-globe]').getAttribute('data-test-identity')==='same-earth');
+ check(size.width,'globe instance survives chapter navigation',await page.evaluate(()=>window.__craGlobe()===window.__testAnalyticsEarth));
  await page.locator('[data-cra-sec="cameras"]').first().click();
  check(size.width,'camera count starts unmeasured',!(await page.locator('[data-cu-details]').innerText()).includes('10,000'));
  await page.locator('[data-camera-load]').click();await page.waitForSelector('[data-camera-check]:not([disabled])');
