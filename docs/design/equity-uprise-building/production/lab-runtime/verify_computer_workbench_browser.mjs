@@ -66,7 +66,13 @@ try{
   check(width+' exact server DIMM IDs',await page.locator('[data-part="CPU1-DIMM-A1"]').count()===1);
   await click(page,'[data-view="inspect"]');await shot(page,width+'-server-inside');
   const feeds=page.locator('.eq-port').filter({hasText:'power'}).locator('button');check(width+' server dual power feeds',await feeds.count()===2);
-  await feeds.nth(0).click();check(width+' single feed retained operation',await page.locator('[data-desktop]').isEnabled());await feeds.nth(1).click();check(width+' both feeds stop host',await page.locator('[data-desktop]').isDisabled());
+  // A rack server is headless: its OS can remain available with one healthy PSU,
+  // but the physical workbench cannot open a local display application.
+  check(width+' headless server has no local display app',await page.locator('[data-desktop]').isDisabled());
+  await feeds.nth(0).click();
+  check(width+' single feed retains AC and running server',await page.locator('[data-facts]').innerText().then(t=>t.includes('AC present')&&t.includes('DESKTOP')&&t.includes('Linked')));
+  await feeds.nth(1).click();
+  check(width+' both feeds stop host',await page.locator('[data-facts]').innerText().then(t=>t.includes('Isolated / no feed')&&t.includes('OFF')&&!t.includes('AC present')));
   await overflow(page,width+' server');
   const sizes=await page.locator('.eq button:visible').evaluateAll(bs=>bs.map(b=>b.getBoundingClientRect().height));check(width+' touch targets at least 44 px',sizes.every(h=>h>=44));
   check(width+' no application page errors',errors.length===0);
