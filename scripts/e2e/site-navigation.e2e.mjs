@@ -280,10 +280,14 @@ try{
     check(width+' game page marks Games active',await page.locator('[data-appnav="games"][aria-current="page"]').count()===1);
     await page.locator('.appbar [data-appnav="halo"]').click();await page.waitForURL('**/action-globe.html?explore=1&halo=1');
     await page.waitForSelector('body[data-admin-navigation]');
-    await page.locator('.appbar [data-appnav="games"]').click();await page.waitForURL('**/action-globe.html?explore=1&games=1');
+    await page.locator('.appbar [data-appnav="games"]').click();await page.waitForURL('**/game-hub.html');
+    await page.waitForSelector('body[data-admin-navigation]');
+    await page.waitForSelector('#ghMain');
+    check(width+' bottom Games tab opens owner Game Hub with course and world access',await page.locator('[data-appnav="games"][aria-current="page"]').count()===1&&await page.locator('#ghModules').count()===1&&await page.locator('.gh-worlds a[href="action-globe.html?explore=1&games=1"]').count()===1);
+    await page.locator('.gh-worlds a[href="action-globe.html?explore=1&games=1"]').click();await page.waitForURL('**/action-globe.html?explore=1&games=1');
     await page.waitForSelector('body[data-admin-navigation]');
     await page.waitForFunction(()=>window.__huGames?.()?.isOpen());
-    check(width+' Games link opens actual owner overlay',await page.locator('[data-appnav="games"][aria-current="page"]').count()===1);
+    check(width+' hub opens the existing owner-only globe Games overlay',await page.locator('[data-appnav="games"][aria-current="page"]').count()===1);
     await page.locator('.games-close').click();
     await page.click('#mccAuthChip');await page.locator('#mccProfileMenu:popover-open').waitFor();
     check(width+' profile contains account and owner Home',await page.locator('#mccProfileMenu a').count()===3&&await page.locator('#mccProfileMenu [data-owner-profile-action="home"]').isVisible());
