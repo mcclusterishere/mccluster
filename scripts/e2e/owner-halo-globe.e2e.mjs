@@ -72,6 +72,11 @@ try{
     const brand=await page.evaluate(()=>{const s=document.querySelector('.hx-brand span');return {full:s.scrollWidth<=s.clientWidth+1,label:getComputedStyle(document.querySelector('.hx-feed__long')).display!=='none'?'World feed':'Feed'};});
     check(scope,'the Halo name stays whole beside it ('+brand.label+')',brand.full&&(vp.width>=420?brand.label==='World feed':brand.label==='Feed'),brand);
     check(scope,'no horizontal overflow',(await overflow(page))===0,await overflow(page));
+    await page.click('#mccAuthChip');
+    await page.locator('#mccProfileMenu:popover-open').waitFor();
+    check(scope,'the shared Profile opens account settings and owner controls',await page.locator('#mccProfileMenu a[href$="account.html?stay=1"]').isVisible()&&await page.locator('#mccProfileMenu [data-owner-profile-action="home"]').isVisible());
+    await page.keyboard.press('Escape');
+
     await page.screenshot({path:join(OUT,`owner-halo-${vp.width}.png`)});
     /* the site opens the World the way it always does from a page with the player: in its own layer over the page (the
        music carries on, the address gains world=1), or as the page itself; either way it is the World feed */
