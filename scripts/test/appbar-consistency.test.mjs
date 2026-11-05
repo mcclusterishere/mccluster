@@ -168,3 +168,16 @@ test('the retired Create column is removed from legacy bars', async () => {
   }
   assert.match(await read('equity-uprise-server-lab-3d.html'),/href="game-hub.html">Back to Games/);
  });
+
+test('owner navigation rechecks server permission on iPad page restoration and foreground focus', async () => {
+  const bar = await read('js/tabbar.js');
+  assert.match(bar, /window\.addEventListener\("pageshow", function \(\) \{[^\n]*readAuthSession\(\)\?\.access_token\) refreshAuthState\(\)/,
+    'back-forward cache restoration must revalidate the signed-in owner navigation');
+  assert.match(bar, /window\.addEventListener\("focus", function \(\) \{[\s\S]*?!ADMIN_ON && !adminFlight\) refreshAuthState\(\)/,
+    'returning to a public dock with an existing session must recheck owner permission');
+  assert.match(bar, /fetch\(API_ORIGIN \+ "\/v1\/status", \{ headers: \{ authorization: "Bearer " \+ token \}/,
+    'the seven-tab dock must remain gated by the server owner status endpoint');
+  const owner = bar.slice(bar.indexOf('function adminBar()'),bar.indexOf('function markAdminHere()'));
+  assert.equal([...owner.matchAll(/data-appnav="/g)].length, 7,
+    'revalidated owners must see exactly seven primary destinations');
+});
