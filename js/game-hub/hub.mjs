@@ -23,11 +23,15 @@ export function iconHtml(m) {
 const VIEWS = { 'chem108/molecule-rush': () => import('./chem108/game.mjs') };
 
 async function boot() {
-  const [doc, cat] = await Promise.all([
-    fetch(new URL('data/game-hub/modules.json', ROOT)).then((r) => r.json()),
-    fetch(new URL('data/albums.json', ROOT)).then((r) => r.json())
-  ]);
-  const errors = validateModules(doc, { albums: cat.albums });
+  // Course loading must not depend on the optional music catalogue.
+  const response = await fetch(new URL('data/game-hub/modules.json', ROOT));
+  if (!response.ok) throw new Error('Game Hub course list did not load');
+  const doc = await response.json();
+  const albumsPromise = fetch(new URL('data/albums.json', ROOT))
+    .then((r) => { if (!r.ok) throw new Error('Music catalogue unavailable'); return r.json(); })
+    .then((cat) => Array.isArray(cat.albums) ? cat.albums : [])
+    .catch(() => null);
+  const errors = validateModules(doc);
   if (errors.length) console.warn('Game Hub modules:', errors);
   const modules = doc.modules;
   const capsule = mountCapsule({ root: $('#ghCapsule'), workspace: $('#ghMain') });
@@ -91,8 +95,11 @@ async function boot() {
       document.documentElement.style.setProperty('--accent', m.accent);
       document.documentElement.dataset.module = m.id;
       nav.querySelectorAll('[data-module]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.module === m.id)));
-      const album = albumFor(cat.albums, m.music.album);
-      player.setModule(m, album || { slug: m.music.album, tracks: [] });
+      void albumsPromise.then((albums) => {
+        if (current !== m) return;
+        const album = albums ? albumFor(albums, m.music.album) : null;
+        player.setModule(m, album || { slug: m.music.album, tracks: [] });
+      });
       try { localStorage.setItem(LAST_KEY, m.id); } catch (e) { /* nothing kept */ }
     }
     history.replaceState(null, '', hashFor(m.id, play));
