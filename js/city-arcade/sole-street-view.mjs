@@ -3,35 +3,53 @@ import {arcadeRequest} from './cloud.mjs';
 import {missionKey,validateMission} from './mission-contract.mjs';
 import {SOLE_MISSION,STREET_STOPS,validateSoleMission,newStreetRun,roadGraph,streetPath,targetPoint,stepStreet,encounterAction} from './sole-street-engine.mjs';
 const names=['Robbery 1s','Velocity 1s','Ghost Soles','Gravity Highs','Return entrance'];
+// A finished cloud run must remain recoverable until the server accepts its result.
+export function soleResultForRetry(saved,cloudRun,encounters,index,status){
+ const body=saved?.pending?.body;
+ if(!['won','failed'].includes(status)||!cloudRun||saved?.pending?.id!==cloudRun||
+    body?.status!==status||!Number.isInteger(body?.served)||body.served!==index||
+    !Array.isArray(body.encounters)||body.encounters.some(id=>typeof id!=='string'||encounters[id]!=='done'))return null;
+ return {id:cloudRun,body:{status,served:index,encounters:[...body.encounters]}};
+}
+export function solePersistedSession(state,locationId,cloudRun,pending){
+ const active=['playing','paused','ready'].includes(state.status);
+ const retryable=['won','failed'].includes(state.status)&&cloudRun&&pending?.id===cloudRun&&pending?.body?.status===state.status;
+ return active||retryable?{...state,locationId,cloudRun,pending:retryable?pending:null}:null;
+}
 export function mountSoleStreet(root,onFinish,{locationId,point,neighborhood,onReturn}){
  const key='here.city-arcade.sole-street.session.v1:'+locationId,draftKey='here.city-arcade.sole-street.mission.v1:'+locationId;
  let revision=null,cloudRun=null,busy=false,disposed=false,pending=null;
  const cloudId=missionKey('designer-kicks-sole-run',locationId);
  let config=structuredClone(SOLE_MISSION);try{config=validateSoleMission(JSON.parse(localStorage.getItem(draftKey)));}catch{}
  let state=newStreetRun(config,neighborhood,point),graph=roadGraph(neighborhood,config.blockedRoads),frame,last=0,recorded=false,error='';
- try{const saved=JSON.parse(localStorage.getItem(key));if(saved&&saved.locationId===locationId&&Number.isFinite(saved.remaining)&&saved.remaining>0&&saved.remaining<=300&&Number.isInteger(saved.index)&&saved.index>=0&&saved.index<=4&&Number.isFinite(saved.score)&&saved.score>=0&&saved.score<=4000&&Array.isArray(saved.player)&&saved.player.length===2&&saved.player.every(Number.isFinite)&&['playing','paused','ready'].includes(saved.status)){
+ try{const saved=JSON.parse(localStorage.getItem(key));if(saved&&saved.locationId===locationId&&Number.isFinite(saved.remaining)&&saved.remaining>=0&&saved.remaining<=300&&(saved.remaining>0||['won','failed'].includes(saved.status))&&Number.isInteger(saved.index)&&saved.index>=0&&saved.index<=4&&Number.isFinite(saved.score)&&saved.score>=0&&saved.score<=4000&&Array.isArray(saved.player)&&saved.player.length===2&&saved.player.every(Number.isFinite)&&['playing','paused','ready','won','failed'].includes(saved.status)){
   const base=newStreetRun(saved.config,neighborhood,point);
   if(saved.player[0]<neighborhood.bounds.minX||saved.player[0]>neighborhood.bounds.maxX||saved.player[1]<neighborhood.bounds.minZ||saved.player[1]>neighborhood.bounds.maxZ)throw Error('Invalid saved position');
   const encounters={};for(const e of base.config.encounters){const phase=saved.encounters?.[e.id];if(['inspected','identified','confiscated','done','dismissed'].includes(phase))encounters[e.id]=phase;}
-  cloudRun=typeof saved.cloudRun==='string'?saved.cloudRun:null;state={...base,player:[...saved.player],remaining:saved.remaining,index:saved.index,score:saved.score,encounters,status:saved.status==='ready'?'ready':'paused'};graph=roadGraph(neighborhood,state.config.blockedRoads);
+  cloudRun=typeof saved.cloudRun==='string'?saved.cloudRun:null;
+  const terminal=['won','failed'].includes(saved.status);
+  if(terminal){pending=soleResultForRetry(saved,cloudRun,encounters,saved.index,saved.status);if(!pending)throw Error('Missing pending result');}
+  state={...base,player:[...saved.player],remaining:saved.remaining,index:saved.index,score:saved.score,encounters,status:terminal?saved.status:saved.status==='ready'?'ready':'paused'};
+  recorded=terminal;graph=roadGraph(neighborhood,state.config.blockedRoads);
  }}catch{}
  const abort=new AbortController(),keys=new Set(),held=new Map(),listen=(el,event,fn)=>el.addEventListener(event,fn,{signal:abort.signal});
  root.innerHTML=`<div class="mini-badge">Designer Kicks / Bridgeport street run</div><h2 id="play-title">Sole Run</h2><p class="gps-objective" role="status"></p><div class="run-hud"><div class="stat"><small>Time</small><b data-time></b></div><div class="stat"><small>Pairs</small><b data-pairs></b></div><div class="stat"><small>Points</small><b data-score></b></div></div><canvas class="tea-scene" width="600" height="400" tabindex="0" aria-label="Bridgeport street run. Move with arrows or WASD; stay on the streets."></canvas><canvas class="sole-minimap" width="300" height="260" aria-label="Minimap with player, route and next checkpoint"></canvas><p data-sole-status role="status"></p><div class="tea-buttons"><button data-hold="up" aria-label="Move up">↑</button><button data-hold="left" aria-label="Move left">←</button><button data-hold="down" aria-label="Move down">↓</button><button data-hold="right" aria-label="Move right">→</button></div><div class="actions"><button class="action primary" data-sole-start>Start / resume</button><button class="action" data-sole-pause>Pause</button><button class="action" data-sole-return>Return to map</button></div><section data-encounter><h3>Designer Kicks Fashion Police</h3><p>Optional costume badge · look for the orange decoy. Inspect the shoes, identify the mismatch, confiscate stage props and perform the on-camera skit. Your device camera is not used.</p><div data-encounter-actions></div></section><details class="tea-tuning"><summary>Mission controls</summary><div class="actions"><button class="action" data-sole-load>Load private mission</button><button class="action" data-sole-save>Save private mission</button><button class="action" data-sole-cloud-play disabled>Play saved mission</button><button class="action" data-sole-retry hidden>Retry result save</button></div><p data-sole-cloud-status role="status">Settings start on this device. Load the current cloud revision before saving.</p><p>Edit timing, points, checkpoint order, closed road IDs and optional encounters. Encounter names and roasts describe invented costume decoys. Apply restarts the run.</p><label>Mission document<textarea data-sole-config rows="12" spellcheck="false"></textarea></label><button class="action" data-sole-apply>Validate, save and restart</button></details><p><a href="https://www.openstreetmap.org/copyright">© OpenStreetMap contributors · ODbL</a> · CT GIS 2023 footprints. Widths and game props are authored.</p>`;
  const $=s=>root.querySelector(s),canvas=$('.tea-scene'),ctx=canvas.getContext('2d'),mini=$('.sole-minimap'),mc=mini.getContext('2d');$('[data-sole-config]').value=JSON.stringify(state.config,null,2);
  function clear(){keys.clear();held.clear();}
- function persist(){try{if(['playing','paused','ready'].includes(state.status))localStorage.setItem(key,JSON.stringify({...state,locationId,cloudRun}));else localStorage.removeItem(key);}catch{}}
+ function persist(){try{const snapshot=solePersistedSession(state,locationId,cloudRun,pending);if(snapshot)localStorage.setItem(key,JSON.stringify(snapshot));else localStorage.removeItem(key);}catch{}}
  let spatialDisabled=null;
  const disposeSpatial=mountSoleSpatial(root,{locationId,canEnter:()=>!busy,getMission:()=>({route:state.config.route,index:state.index,blockedRoads:state.config.blockedRoads}),onActive:active=>{
   if(active){pause();spatialDisabled=new Map([...root.querySelectorAll('button,input,textarea')].filter(el=>!el.closest('[data-sole-spatial]')).map(el=>[el,el.disabled]));for(const el of spatialDisabled.keys())el.disabled=true;canvas.inert=true;}
   else{for(const [el,disabled]of spatialDisabled||[])el.disabled=disabled;spatialDisabled=null;canvas.inert=false;}
  }});
- function setState(next){state=next;graph=roadGraph(neighborhood,next.config.blockedRoads);recorded=false;error='';clear();cloudRun=null;pending=null;$('[data-sole-config]').value=JSON.stringify(next.config,null,2);}
+ function setState(next){state=next;graph=roadGraph(neighborhood,next.config.blockedRoads);recorded=false;error='';clear();cloudRun=null;pending=null;$('[data-sole-config]').value=JSON.stringify(next.config,null,2);$('[data-sole-retry]').hidden=true;persist();}
  function cloudStatus(text){if(!disposed)$('[data-sole-cloud-status]').textContent=text;}
+ if(pending){$('[data-sole-retry]').hidden=false;cloudStatus('Completed run restored. Retry saving its practice result to your account.');}
  async function cloudTask(fn){if(busy)return;busy=true;root.querySelectorAll('[data-sole-load],[data-sole-save],[data-sole-cloud-play],[data-sole-apply]').forEach(b=>b.disabled=true);try{await fn();}catch(e){cloudStatus(e.message);}finally{busy=false;if(!disposed){root.querySelectorAll('[data-sole-load],[data-sole-save],[data-sole-apply]').forEach(b=>b.disabled=false);$('[data-sole-cloud-play]').disabled=revision===null;}}}
  listen($('[data-sole-load]'),'click',()=>cloudTask(async()=>{const m=await arcadeRequest('/missions/'+cloudId);if(disposed)return;if(!m){revision=0;cloudStatus('No saved mission. Save your configuration as revision 1.');return;}const d=validateMission(m.document);if(d.locationId!==locationId||!d.sole)throw Error('Mission mismatch');setState(newStreetRun(d.sole,neighborhood,point));revision=m.revision;cloudStatus('Loaded private revision '+revision+'.');}));
  listen($('[data-sole-save]'),'click',()=>cloudTask(async()=>{if(revision===null){cloudStatus('Load the current cloud revision first.');return;}const c=validateSoleMission(JSON.parse($('[data-sole-config]').value));newStreetRun(c,neighborhood,point);const document={version:1,gameId:'designer-kicks-sole-run',locationId,sole:c};const m=await arcadeRequest('/missions/'+cloudId,'PUT',{document,expectedRevision:revision});if(disposed)return;revision=m.revision;cloudStatus('Private mission revision '+revision+' saved.');}));
- listen($('[data-sole-cloud-play]'),'click',()=>cloudTask(async()=>{const r=await arcadeRequest('/start/'+cloudId,'POST',{expectedRevision:revision});if(disposed)return;const d=validateMission(r.document);if(d.locationId!==locationId||!d.sole)throw Error('Mission mismatch');setState(newStreetRun(d.sole,neighborhood,point));cloudRun=r.id;state.status='playing';canvas.focus();cloudStatus('Playing private revision '+r.revision+'.');}));
- async function finishCloud(){if(!pending)return;const attempt=pending;await cloudTask(async()=>{const r=await arcadeRequest('/finish/'+attempt.id,'POST',attempt.body);if(disposed||pending!==attempt)return;pending=null;cloudStatus('Practice result saved to your account.');onFinish({...state,score:Number(r.score),cloud:'saved'});});if(!disposed)$('[data-sole-retry]').hidden=!pending;}
+ listen($('[data-sole-cloud-play]'),'click',()=>cloudTask(async()=>{const r=await arcadeRequest('/start/'+cloudId,'POST',{expectedRevision:revision});if(disposed)return;const d=validateMission(r.document);if(d.locationId!==locationId||!d.sole)throw Error('Mission mismatch');setState(newStreetRun(d.sole,neighborhood,point));cloudRun=r.id;state.status='playing';persist();canvas.focus();cloudStatus('Playing private revision '+r.revision+'.');}));
+ async function finishCloud(){if(!pending)return;const attempt=pending;await cloudTask(async()=>{const r=await arcadeRequest('/finish/'+attempt.id,'POST',attempt.body);if(disposed||pending!==attempt)return;pending=null;persist();cloudStatus('Practice result saved to your account.');onFinish({...state,score:Number(r.score),cloud:'saved'});});if(!disposed)$('[data-sole-retry]').hidden=!pending;persist();}
  listen($('[data-sole-retry]'),'click',finishCloud);
  function pause(){if(state.status==='playing')state.status='paused';clear();persist();}
  listen($('[data-sole-pause]'),'click',pause);listen($('[data-sole-start]'),'click',()=>{if(['ready','paused'].includes(state.status)){state.status='playing';canvas.focus();}});
@@ -66,7 +84,7 @@ export function mountSoleStreet(root,onFinish,{locationId,point,neighborhood,onR
   $('.gps-objective').textContent='Next: '+names[state.index]+' · follow the green route';$('[data-time]').textContent=Math.ceil(state.remaining)+'s';$('[data-pairs]').textContent=state.index+'/4';$('[data-score]').textContent=state.score;
   const message=error||state.message;if($('[data-sole-status]').textContent!==message)$('[data-sole-status]').textContent=message;
   encounter();drawMap(ctx,600,400,false);drawMap(mc,300,260,true);
-  if(['won','failed'].includes(state.status)&&!recorded){recorded=true;persist();onFinish({...state,cloud:cloudRun?'pending':'local'});if(cloudRun){pending={id:cloudRun,body:{status:state.status,served:state.index,encounters:Object.keys(state.encounters).filter(id=>state.encounters[id]==='done')}};finishCloud();}}
+  if(['won','failed'].includes(state.status)&&!recorded){recorded=true;if(cloudRun)pending={id:cloudRun,body:{status:state.status,served:state.index,encounters:Object.keys(state.encounters).filter(id=>state.encounters[id]==='done')}};persist();onFinish({...state,cloud:cloudRun?'pending':'local'});if(pending&&!disposed)finishCloud();}
   frame=requestAnimationFrame(tick);
  }
  frame=requestAnimationFrame(tick);
