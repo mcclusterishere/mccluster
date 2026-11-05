@@ -85,7 +85,10 @@ test('the album says what happened: failed plays, gated previews, no dead tip do
   assert.match(album, /window\.MCC_TRACK\("play_failed"/);
   assert.match(album, /function primeDeck\(\)/);
   assert.match(album, /if \(wasPreview\) \{ previewNotice\(rows\[cur\], true\); return; \}/, 'a preview ending waits instead of jumping to another song');
-  assert.match(album, /artistLink\.href = "matthew-mccluster\.html"/, 'the house artist name opens his page');
+  assert.match(album, /ARTIST === HOUSE \? "matthew-mccluster\.html"/, 'the house artist name opens his page');
+  /* an act with its own artist page (data/albums.json artist_page) opens it: PRIM3 (owner, 2026-11-02) */
+  assert.match(album, /artistPage: alb\.artist_page \|\| ""/, 'the album reads the act\'s artist page');
+  assert.match(album, /artistLink\.href = artistHref;/, 'the billed name links where it should');
   assert.match(album, /window\.MCC_TRACK\("gated_preview_end"/);
   assert.doesNotMatch(album, /Tip the artist/);
   assert.match(album, /replace\(\/\[-_\]\+\/g, " "\)/, 'play counts match the normalized track key');

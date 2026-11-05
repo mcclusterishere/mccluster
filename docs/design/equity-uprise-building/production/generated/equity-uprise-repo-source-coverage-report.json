@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 619,
+  "candidate_count": 635,
   "capability_source_count": 104,
-  "support_only_count": 515,
-  "checks_total": 2374,
-  "checks_passed": 2374,
+  "support_only_count": 531,
+  "checks_total": 2438,
+  "checks_passed": 2438,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -76,6 +76,7 @@
     "catalogue.html",
     "cohort-profile.html",
     "control.html",
+    "core/data/characters/cast.v1.json",
     "core/data/fictional-city/district.v1.json",
     "core/data/fictional-city/places.v1.json",
     "create.html",
@@ -105,6 +106,7 @@
     "data/fellows.json",
     "data/gallery.json",
     "data/game-hub/modules.json",
+    "data/games/world.v1.json",
     "data/lyrics/money-or-the-power.json",
     "data/merch.json",
     "data/offers.json",
@@ -136,8 +138,10 @@
     "docs/action-network/MISSION-CURATION-RESOURCE-PARTNERS-20261014.md",
     "docs/action-network/MISSION-PINS-ARCS-BLACK-BUSINESS.md",
     "docs/action-network/SEVEN-DAY-GLOBE-RECONCILIATION.md",
+    "docs/admin/OWNER-NAV-CONSISTENCY.md",
     "docs/agent-web.md",
     "docs/analytics/application-schema-inventory.json",
+    "docs/control-plane/API-RECOVERY-20261104.json",
     "docs/control-plane/BRANCH-RECONCILIATION-2026-09-26.md",
     "docs/control-plane/CANONICAL-ARCHITECTURE.md",
     "docs/control-plane/CLOUDFLARE-PAGES-DIRECT-UPLOAD.md",
@@ -219,12 +223,14 @@
     "docs/releases/mission-content-cleanup-2026-10-31.md",
     "docs/sales-redesign/BRANCH-HARVEST-REPORT.md",
     "docs/sales-redesign/CRM-MIGRATION.md",
+    "docs/sales-redesign/EVENT-PHOTOGRAPHY-MINIMUM-20261103.md",
     "docs/sales-redesign/MOBBIN-REFERENCES.md",
     "docs/seo-matthew-mccluster.md",
     "docs/seo/evidence-review.json",
     "docs/seo/query-set.json",
     "docs/shake-delivery.md",
     "docs/social-desk-setup.md",
+    "docs/spatial/BRIDGEPORT-DOWNTOWN-V2.md",
     "docs/stocksy-shot-list.md",
     "docs/the-mission-fund.md",
     "docs/travel/TRAVEL-FIRST-WORLD-STANDARD-20261017.md",
@@ -249,7 +255,6 @@
     "js/analytics-suite.js",
     "js/chatfirst.js",
     "js/cohort-profile.js",
-    "js/control-palette.js",
     "js/control-room-v2.js",
     "js/control-room/action-network.js",
     "js/control-room/analytics-unified.js",
@@ -257,6 +262,7 @@
     "js/control-room/clipping.js",
     "js/control-room/identity-review.js",
     "js/control-room/instagram.js",
+    "js/control-room/music-label.js",
     "js/control-room/nav.js",
     "js/control-room/profile-edit-review.js",
     "js/control-room/social-compose.js",
@@ -365,10 +371,13 @@
     "scripts/e2e/fictional-city-upstairs-audit.e2e.mjs",
     "scripts/e2e/fictional-city.e2e.mjs",
     "scripts/e2e/fixtures/axe-baseline.json",
+    "scripts/e2e/globe-games.e2e.mjs",
+    "scripts/e2e/prim3-artist.e2e.mjs",
     "scripts/e2e/prim3-direct-landings.e2e.mjs",
     "scripts/e2e/prim3-hq-stairs.e2e.mjs",
     "scripts/e2e/prim3-spatial-controls.e2e.mjs",
     "scripts/e2e/server-lab.e2e.mjs",
+    "scripts/e2e/site-navigation.e2e.mjs",
     "scripts/e2e/world-screen.e2e.mjs",
     "scripts/funding/validate-register-db.mjs",
     "scripts/kb-build.mjs",
@@ -379,6 +388,7 @@
     "scripts/sites-buy-smoke.mjs",
     "scripts/smoke.mjs",
     "scripts/stage-cloudflare-pages.mjs",
+    "scripts/test-music-label-db.sh",
     "scripts/test-schema-hygiene-db.sh",
     "scripts/test/action-gamification.test.mjs",
     "scripts/test/action-mission-curation.test.mjs",
@@ -392,11 +402,14 @@
     "scripts/test/creator-action-distribution.test.mjs",
     "scripts/test/domain-architecture.test.mjs",
     "scripts/test/equity-uprise-mission-screens.test.mjs",
+    "scripts/test/eu-object-inspector.test.mjs",
+    "scripts/test/eu-screen-hardware-binding.test.mjs",
     "scripts/test/eu-screens.test.mjs",
     "scripts/test/fictional-city-hq-b1.test.mjs",
     "scripts/test/fictional-city-places.test.mjs",
     "scripts/test/fictional-city-vertical-handoff.test.mjs",
     "scripts/test/fixtures/hq-drill-full-strength-win.json",
+    "scripts/test/games-world.test.mjs",
     "scripts/test/homelessness-action.test.mjs",
     "scripts/test/human-uprise-door.test.mjs",
     "scripts/test/identity-verification-levels.test.mjs",
@@ -405,6 +418,7 @@
     "scripts/test/mnet-real-network.test.mjs",
     "scripts/test/mobile-rule.test.mjs",
     "scripts/test/music-direct-sales.test.mjs",
+    "scripts/test/music-label.test.mjs",
     "scripts/test/native-action-network.test.mjs",
     "scripts/test/policy-fellowship-ladder.test.mjs",
     "scripts/test/prim3-equity-uprise-adapter.test.mjs",
@@ -526,6 +540,7 @@
     "supabase/pending/live-callers.json",
     "supabase/pending/live_missions_v1.sql",
     "supabase/pending/mission_admin_approval_v1.sql",
+    "supabase/pending/music_label_artists_v1.sql",
     "supabase/pending/policy_fellowship_ladder_v1.sql",
     "supabase/production-ledger.json",
     "supabase/replay_migrations/0007_offerings.sql",
@@ -580,6 +595,7 @@
     "supabase/tests/identity_verification_levels.behaviour.sql",
     "supabase/tests/learning_evidence.behaviour.sql",
     "supabase/tests/mission_admin_approval.behaviour.sql",
+    "supabase/tests/music_label_artists.behaviour.sql",
     "supabase/tests/policy_fellowship_ladder.behaviour.sql",
     "supabase/tests/privilege_hygiene_v1.behaviour.sql",
     "supabase/tests/privilege_hygiene_v1.stub.sql",
@@ -633,7 +649,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "619 entries"
+      "detail": "635 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -3627,6 +3643,26 @@
     },
     {
       "name": "docs/sales-redesign/MOBBIN-REFERENCES.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/sales-redesign/EVENT-PHOTOGRAPHY-MINIMUM-20261103.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/sales-redesign/EVENT-PHOTOGRAPHY-MINIMUM-20261103.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/sales-redesign/EVENT-PHOTOGRAPHY-MINIMUM-20261103.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/sales-redesign/EVENT-PHOTOGRAPHY-MINIMUM-20261103.md support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -10431,26 +10467,6 @@
       "detail": ""
     },
     {
-      "name": "js/control-palette.js capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "js/control-palette.js classified",
-      "passed": true,
-      "detail": "classification='shared_frontend_support'"
-    },
-    {
-      "name": "js/control-palette.js support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "js/control-palette.js support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
       "name": "js/control-room-v2.js capability ids known",
       "passed": true,
       "detail": ""
@@ -12497,6 +12513,326 @@
     },
     {
       "name": "scripts/e2e/prim3-direct-landings.e2e.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/control-room/music-label.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/control-room/music-label.js classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "js/control-room/music-label.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/control-room/music-label.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/music_label_artists_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/music_label_artists_v1.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/pending/music_label_artists_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/music_label_artists_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/music_label_artists.behaviour.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/music_label_artists.behaviour.sql classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "supabase/tests/music_label_artists.behaviour.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/tests/music_label_artists.behaviour.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test-music-label-db.sh capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test-music-label-db.sh classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test-music-label-db.sh support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test-music-label-db.sh support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/music-label.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/music-label.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/music-label.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/music-label.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/prim3-artist.e2e.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/prim3-artist.e2e.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/e2e/prim3-artist.e2e.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/e2e/prim3-artist.e2e.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "data/games/world.v1.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "data/games/world.v1.json classified",
+      "passed": true,
+      "detail": "classification='navigation_support'"
+    },
+    {
+      "name": "data/games/world.v1.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "data/games/world.v1.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/globe-games.e2e.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/globe-games.e2e.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/e2e/globe-games.e2e.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/e2e/globe-games.e2e.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/games-world.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/games-world.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/games-world.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/games-world.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "core/data/characters/cast.v1.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "core/data/characters/cast.v1.json classified",
+      "passed": true,
+      "detail": "classification='incidental_text_match'"
+    },
+    {
+      "name": "core/data/characters/cast.v1.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "core/data/characters/cast.v1.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/API-RECOVERY-20261104.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/API-RECOVERY-20261104.json classified",
+      "passed": true,
+      "detail": "classification='audit_support'"
+    },
+    {
+      "name": "docs/control-plane/API-RECOVERY-20261104.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/API-RECOVERY-20261104.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/spatial/BRIDGEPORT-DOWNTOWN-V2.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/spatial/BRIDGEPORT-DOWNTOWN-V2.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/spatial/BRIDGEPORT-DOWNTOWN-V2.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/spatial/BRIDGEPORT-DOWNTOWN-V2.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/admin/OWNER-NAV-CONSISTENCY.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/admin/OWNER-NAV-CONSISTENCY.md classified",
+      "passed": true,
+      "detail": "classification='governance_support'"
+    },
+    {
+      "name": "docs/admin/OWNER-NAV-CONSISTENCY.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/admin/OWNER-NAV-CONSISTENCY.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/site-navigation.e2e.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/site-navigation.e2e.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/e2e/site-navigation.e2e.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/e2e/site-navigation.e2e.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/eu-object-inspector.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/eu-object-inspector.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/eu-object-inspector.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/eu-object-inspector.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/eu-screen-hardware-binding.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/eu-screen-hardware-binding.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/eu-screen-hardware-binding.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/eu-screen-hardware-binding.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     }

@@ -78,7 +78,7 @@ test('registered in NAV as People → Inbox → AI reply, in the workspace route
   await import('../../js/control-room/nav.js');
   await import('../../js/control-room/workspace-core.js');
   assert.equal(globalThis.CR.workspaceCore.resolve('#work:desk-bot').hash,'#people:inbox:ai-reply');
-  assert.equal(globalThis.CR.workspaceCore.resolve('#people:inbox:ai-reply').label,'Inbox · AI reply');
+  assert.equal(globalThis.CR.workspaceCore.resolve('#people:inbox:ai-reply').label,'Messages · AI reply');
   assert.equal(globalThis.CR.nav.search('desk bot')[0].route,'#people:inbox:ai-reply');
   assert.ok(html.indexOf('js/control-room/desk-bot.js')>0&&html.indexOf('js/control-room/desk-bot.js')<html.indexOf('js/control-room-v2.js'));
 });

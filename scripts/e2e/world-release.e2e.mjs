@@ -77,6 +77,7 @@ async function haloChecks(scope,page,host,width,ctx,loseOwner,calls){
  check(scope,'the owner gets the Halo view on World, with its four tabs, from the link',!!st&&st.mounted&&st.view==='world'&&(await page.locator('.hx-tabs [role=tab]').count())===4&&await page.locator('.hx-top').isVisible(),st&&st.view);
  check(scope,'the supplied HM mark, scaled, never drawn',await page.evaluate(()=>{const i=document.querySelector('.hx-brand img');return !!i&&/assets\/img\/hm-mark-96\.png$/.test(i.getAttribute('src'))&&!document.querySelector('.hx-brand svg')}));
  check(scope,'the page chrome steps aside (the way-back header, the deck, the corner controls)',await page.evaluate(()=>['header','#deck','.globe-controls'].every(q=>{const e=document.querySelector(q);return !e||getComputedStyle(e).display==='none'})));
+ check(scope,'Bridgeport walk entry cannot cover Halo tabs',await page.locator('#bridgeportEnter').isHidden()&&await page.locator('#bridgeportWalk').isHidden());
  await page.waitForFunction(()=>/2/.test(document.querySelector('.hx-stats').textContent),null,{timeout:8000}).catch(()=>{});
  check(scope,'the counts strip reads the owner\'s missions',/2\s*Active missions/.test(await page.textContent('.hx-stats'))&&/1\s*Awaiting review/.test(await page.textContent('.hx-stats')),await page.textContent('.hx-stats'));
  const crowd=await page.evaluate(()=>{const q=['.hx-brand','.hx-operator','.hx-tabs','.hx-stats','.hx-clock','.hx-search','.hx-layers-btn','.hx-ctl','.hx-left','.hx-time'],els=q.map(s=>[s,document.querySelector(s)]).filter(([,e])=>e&&e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden'),hits=[];for(let i=0;i<els.length;i++)for(let j=i+1;j<els.length;j++){if(els[i][1].contains(els[j][1])||els[j][1].contains(els[i][1]))continue;const a=els[i][1].getBoundingClientRect(),b=els[j][1].getBoundingClientRect();if(a.left<b.right-1&&b.left<a.right-1&&a.top<b.bottom-1&&b.top<a.bottom-1)hits.push(els[i][0]+' × '+els[j][0])}return hits});
@@ -109,7 +110,9 @@ async function haloChecks(scope,page,host,width,ctx,loseOwner,calls){
     Math.abs(restored.height-initial.height)<4&&restored.clear>=220,restored);
  }
  await page.waitForFunction(()=>MCC_BAR.admin());
- check(scope,'Halo retains the same five owner destinations',await page.locator('.appbar [data-appnav]').count()===5);
+ await page.waitForSelector('body[data-admin-navigation][data-site-navigation]');
+ const destinations=await page.locator('.appbar [data-appnav]').evaluateAll(nodes=>nodes.map(n=>n.dataset.appnav));
+ check(scope,'Halo retains the shared owner destinations in their reviewed order',JSON.stringify(destinations)===JSON.stringify(['music','admin-inbox','admin-home','home','analytics','halo','games','admin-sell','admin-create','admin-system']),destinations);
  await shot('start');
  let small=await smallTargets();
  check(scope,'every visible Halo control is a full 44px tap target',small.length===0,small);
@@ -358,6 +361,7 @@ for(const width of (process.env.WORLD_QA_WIDTH?[Number(process.env.WORLD_QA_WIDT
   check(scope,'mapless owner revocation removes private data',!(await page.locator('#haloShell').count()));
 
  }else{
+  check(scope,'extra owner dock arrows do not intercept Globe controls',await page.locator('#mccDockHints').isHidden());
   await page.locator('.globe-editorial-tools > summary').click();
   check(scope,'the owner sees the Halo door beside ← World, a full tap target',await page.evaluate(()=>{const d=document.getElementById('haloEnter'),b=d&&d.getBoundingClientRect();return !!d&&!d.hidden&&d.getAttribute('href')==='action-globe.html?explore=1&halo=1'&&b.height>=44&&b.width>=44}));
   check(scope,'verified owner has preview control',await page.locator('#ctlFlights').isVisible());

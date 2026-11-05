@@ -25,11 +25,12 @@
     let card = null, ui = null, listing = null, company = null, listQ = '', listMic = null, searchTimer = 0;
     /* three independent generations: the pin refresh never invalidates a card, a card load or close invalidates its own
        listings and company reads, and only the newest listings request for the current search and exchange filter paints */
-    let pinSeq = 0, cardSeq = 0, listSeq = 0;
+    let pinSeq = 0, cardSeq = 0, listSeq = 0, companySeq = 0;
+    let chart = null, finance = null;
 
     async function ask(path) {
       const t = G.token();
-      const r = await fetch(G.api + path, { headers: t ? { accept: 'application/json', authorization: 'Bearer ' + t } : { accept: 'application/json' }, cache: 'no-store' });
+      const r = await fetch(G.api + path, { headers: t ? { accept: 'application/json', authorization: 'Bearer ' + t } : { accept: 'application/json' }, cache: 'no-store', signal: AbortSignal.timeout(15000) });
       const body = await r.json().catch(() => null);
       if (!r.ok) { const e = new Error((body && body.detail && body.detail.code) || 'answered ' + r.status); e.status = r.status; throw e; }
       return body;
@@ -81,7 +82,7 @@
       want = !!want;
       if (want === on) return;
       on = want;
-      if (on) { state = 'loading'; changed(); window.addEventListener('hu:country', onCountry); await load(); timer = setInterval(() => { if (!document.hidden) load(); }, 60e3); }
+      if (on) { state = 'loading'; changed(); window.addEventListener('hu:country', onCountry); await load(); timer = setInterval(() => { if (!document.hidden) { load(); refreshQuote(); } }, 60e3); }
       else { clearInterval(timer); timer = 0; window.removeEventListener('hu:country', onCountry); clearPins(); close(); state = 'off'; reason = ''; changed(); }
     }
     function status() {
@@ -114,17 +115,18 @@
       root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'false'); root.setAttribute('aria-labelledby', 'hmTitle');
       root.innerHTML = '<div class="hm__head"><div class="hm__titles"><p class="hm__kicker">Markets</p><h2 id="hmTitle">…</h2><p class="hm__sub" data-sub></p></div>' +
         '<button type="button" class="hm__close" data-close aria-label="Close markets">' + '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>' +
-        '<div class="hm__body" data-body>' +
+        '<div class="hm__body" data-body><section class="hm__sec hm__finance" data-finance></section>' +
         '<section class="hm__sec" aria-labelledby="hmGdp"><h3 id="hmGdp">Economy</h3><div data-gdp></div></section>' +
         '<section class="hm__sec" aria-labelledby="hmEx"><h3 id="hmEx">Exchanges</h3><div data-ex></div></section>' +
-        '<section class="hm__sec" aria-labelledby="hmList"><h3 id="hmList">Listed companies</h3><div data-company></div>' +
+        '<section class="hm__sec" aria-labelledby="hmList"><h3 id="hmList">Listed companies</h3><div data-company></div><div data-chart></div>' +
         '<label class="hm__find"><span class="hm__sr">Search listed companies</span><input type="search" data-q autocomplete="off" maxlength="40" placeholder="Search ticker or company"></label>' +
         '<p class="hm__note" data-list-note></p><ul class="hm__rows" data-rows></ul><button type="button" class="hm__more" data-more hidden>Show more</button></section>' +
         '<section class="hm__sec" aria-labelledby="hmNews"><h3 id="hmNews">Market news</h3><div data-news></div></section>' +
         '</div>';
       document.body.appendChild(root);
+      if(window.HaloFinance) finance=window.HaloFinance.mount(root.querySelector('[data-finance]'),G);
       const $ = (s) => root.querySelector(s);
-      ui = { root, title: $('#hmTitle'), sub: $('[data-sub]'), body: $('[data-body]'), gdp: $('[data-gdp]'), ex: $('[data-ex]'), company: $('[data-company]'), q: $('[data-q]'), note: $('[data-list-note]'), rows: $('[data-rows]'), more: $('[data-more]'), news: $('[data-news]') };
+      ui = { root, title: $('#hmTitle'), sub: $('[data-sub]'), body: $('[data-body]'), gdp: $('[data-gdp]'), ex: $('[data-ex]'), company: $('[data-company]'), chart: $('[data-chart]'), q: $('[data-q]'), note: $('[data-list-note]'), rows: $('[data-rows]'), more: $('[data-more]'), news: $('[data-news]') };
       $('[data-close]').onclick = close;
       ui.q.oninput = () => { clearTimeout(searchTimer); searchTimer = setTimeout(() => { listQ = ui.q.value.trim(); loadListings(false); }, 300); };
       ui.more.onclick = () => loadListings(true);
@@ -139,17 +141,17 @@
     }
     function close() {
       if (!ui) return;
-      ui.root.hidden = true; card = null; listing = null; company = null; cardSeq++; listSeq++;
+      ui.root.hidden = true; card = null; listing = null; company = null; chart = null; companySeq++; cardSeq++; listSeq++;
       document.documentElement.removeAttribute('data-halo-markets');
       changed();
     }
     async function openCountry(code, name, mic) {
       build();
       const my = ++cardSeq; listSeq++;
-      card = { country: { iso2: code, name: name || code } }; listing = null; company = null; listQ = ''; listMic = mic || null; ui.q.value = '';
+      card = { country: { iso2: code, name: name || code } }; listing = null; company = null; chart = null; companySeq++; listQ = ''; listMic = mic || null; ui.q.value = '';
       ui.root.hidden = false; document.documentElement.setAttribute('data-halo-markets', 'open');
       ui.title.textContent = name || code; ui.sub.textContent = 'Loading…';
-      ui.gdp.innerHTML = ui.ex.innerHTML = ui.company.innerHTML = ui.news.innerHTML = ui.rows.innerHTML = ''; ui.note.textContent = ''; ui.more.hidden = true;
+      ui.gdp.innerHTML = ui.ex.innerHTML = ui.company.innerHTML = ui.chart.innerHTML = ui.news.innerHTML = ui.rows.innerHTML = ''; ui.note.textContent = ''; ui.more.hidden = true;
       ui.body.scrollTop = 0; changed();
       try {
         const d = await ask('/v1/intel/markets/country/' + encodeURIComponent(code));
@@ -227,20 +229,21 @@
       ui.note.textContent = d.total.toLocaleString('en-US') + (d.total === 1 ? ' common stock' : ' common stocks') + (listMic ? ' on ' + listMic : '') + (listQ ? ' matching "' + listQ + '"' : '') + ' · list from ' + (d.provider.label || d.provider.id) + ', ' + ago(d.listings_retrieved_at);
       ui.rows.innerHTML = d.listings.length ? d.listings.map((r) => {
         const has = fin(r.price), tone = has && fin(r.change) ? (r.change < 0 ? 'red' : 'green') : '';
-        const right = has ? '<b>' + esc(price(r.price)) + (r.currency ? ' <span>' + esc(r.currency) + '</span>' : '') + '</b><small data-tone="' + tone + '">' + esc(pct(r.change_pct)) + ' · ' + esc(ago(r.as_of)) + '</small>'
+        const right = has ? '<b>' + esc(price(r.price)) + (r.currency ? ' <span>' + esc(r.currency) + '</span>' : '') + '</b><small data-tone="' + tone + '">' + esc(freshnessLabel(r.freshness)) + ' · ' + esc(pct(r.change_pct)) + ' · ' + esc(ago(r.as_of)) + '</small>'
           : '<small class="hm__price-note">' + esc(PRICE_NOTE[r.price_status] || 'No price') + '</small>';
         return '<li><button type="button" data-symbol="' + esc(r.symbol) + '" data-row-mic="' + esc(r.mic) + '" aria-current="' + (company && company.symbol === r.symbol ? 'true' : 'false') + '"><span class="hm__tick">' + esc(r.display_symbol || r.symbol) + '</span><span class="hm__name">' + esc(r.name || '') + '<small>' + esc(r.exchange) + '</small></span><span class="hm__px">' + right + '</span></button></li>';
       }).join('') : '<li class="hm__note">No listing matches.</li>';
       ui.more.hidden = !d.has_more;
     }
     async function openCompany(symbol, mic) {
-      const my = cardSeq;
+      const my = cardSeq, companyGen = ++companySeq;
+      chart = { symbol, mic, points: [], loading: true }; refreshQuote();
       company = { symbol, mic, loading: true }; paintCompany(); if (listing) paintListings();
       try {
         const d = await ask('/v1/intel/markets/company/' + encodeURIComponent(symbol) + '?mic=' + encodeURIComponent(mic));
-        if (my !== cardSeq || !company || company.symbol !== symbol) return;
+        if (my !== cardSeq || companyGen !== companySeq || !alive || !company || company.symbol !== symbol) return;
         company = Object.assign({ symbol, mic }, d); paintCompany(); paintNews();
-      } catch (e) { if (my === cardSeq && company && company.symbol === symbol) { company = { symbol, mic, error: e.message }; paintCompany(); } }
+      } catch (e) { if (my === cardSeq && companyGen === companySeq && alive && company && company.symbol === symbol) { company = { symbol, mic, error: e.message }; paintCompany(); } }
     }
     function paintCompany() {
       if (!company) { ui.company.innerHTML = ''; return; }
@@ -249,15 +252,64 @@
       if (c.loading) quote = '<p class="hm__note">Loading ' + esc(c.symbol) + '…</p>';
       else if (c.error) quote = '<p class="hm__note">Could not load ' + esc(c.symbol) + ' (' + esc(c.error) + ').</p>';
       else quote = q.status === 'quote'
-        ? stat('Last price', price(q.price) + (p.currency ? ' ' + p.currency : ''), pct(q.change_pct) + ' · trade ' + ago(q.as_of) + ' · ' + (q.source || ''), fin(q.change) && q.change < 0 ? 'red' : 'green')
+        ? stat('Last price', price(q.price) + (p.currency ? ' ' + p.currency : ''), freshnessLabel(q.freshness) + ' · ' + pct(q.change_pct) + ' · trade ' + ago(q.as_of) + ' · ' + (q.source || ''), fin(q.change) && q.change < 0 ? 'red' : 'green')
         : stat('Last price', '—', PRICE_NOTE[q.status] || 'Price unavailable');
       const facts = c.loading || c.error ? '' : [p.industry, p.market_cap && fin(p.market_cap.value) ? 'Market cap ' + money(p.market_cap.value, p.market_cap.unit) : '', p.ipo ? 'Listed ' + p.ipo : ''].filter(Boolean).map(esc).join(' · ');
       ui.company.innerHTML = '<div class="hm__company"><div class="hm__company-head"><b>' + esc(p.name || c.symbol) + '</b><span>' + esc(c.symbol) + ' · ' + esc(c.mic) + '</span>' +
         '<button type="button" class="hm__close hm__close--small" data-clear-company aria-label="Clear the selected company"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>' +
         '<div class="hm__stats">' + quote + '</div>' + (facts ? '<p class="hm__note">' + facts + (p.website ? '<a class="hm__link" href="' + esc(p.website) + '" target="_blank" rel="noopener noreferrer">Company website</a>' : '') + '</p>' : '') + '</div>';
       const clr = ui.company.querySelector('[data-clear-company]');
-      if (clr) clr.onclick = () => { company = null; paintCompany(); paintNews(); if (listing) paintListings(); };
+      if (clr) clr.onclick = () => { company = null; chart = null; companySeq++; paintChart(); paintCompany(); paintNews(); if (listing) paintListings(); };
     }
+    function freshnessLabel(f) {
+      return ({ real_time: 'Real-time feed · sampled', delayed: 'Delayed', stale: 'Stale',
+        unverified: 'Timing unverified', unavailable: 'Unavailable' })[(f || {}).status] || 'Timing unverified';
+    }
+    async function refreshQuote() {
+      const current = chart;
+      if (!current || !alive || document.hidden || current.busy) return;
+      current.busy = true; paintChart();
+      try {
+        const d = await ask('/v1/intel/markets/quote/' + encodeURIComponent(current.symbol) + '?mic=' + encodeURIComponent(current.mic));
+        if (chart !== current || !alive) return;
+        // Never connect observations across a provider/currency change.
+        const identity = (d.provider || {}).id + ':' + (d.currency || '');
+        if (current.identity && current.identity !== identity) current.points = [];
+        current.identity = identity; current.data = d; current.error = false;
+        const q = d.quote, t = Date.parse(q && q.as_of), last = current.points[current.points.length - 1];
+        if (q && fin(q.price) && q.price > 0 && Number.isFinite(t) && (!last || t > last.time)) {
+          current.points.push({ time: t, price: q.price });
+          current.points = current.points.slice(-120);
+        }
+      } catch (_) { if (chart === current) current.error = true; }
+      finally { current.loading = false; current.busy = false; if (chart === current && alive) paintChart(); }
+    }
+    function paintChart() {
+      if (!ui) return;
+      if (!chart) { ui.chart.innerHTML = ''; return; }
+      const c = chart, d = c.data || {}, points = c.points, q = d.quote;
+      const status = c.error ? (points.length ? 'Stale · connection unavailable' : 'Unavailable · connection failed') : freshnessLabel(d.freshness);
+      const note = c.loading ? 'Waiting for the first provider observation…' :
+        (d.freshness && d.freshness.note) || PRICE_NOTE[d.state] || (d.state === 'security_not_on_exchange' ? 'Security not found on this exchange.' : 'Price unavailable.');
+      let plot = '';
+      if (points.length) {
+        const times = points.map(p => p.time), values = points.map(p => p.price);
+        const lo = Math.min(...values), hi = Math.max(...values), start = times[0], end = times[times.length - 1];
+        // Dots only: missing trades and provider outages are not interpolated.
+        const dots = points.map(p => '<circle cx="' + (12 + 276 * (p.time - start) / (end - start || 1)).toFixed(2) +
+          '" cy="' + (hi === lo ? 60 : 108 - 96 * (p.price - lo) / (hi - lo)).toFixed(2) + '" r="3"/>').join('');
+        const stamp = t => new Date(t).toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
+        plot = '<p class="hm__note">Observed range: ' + esc(price(lo)) + ' – ' + esc(price(hi)) + ' ' + esc(d.currency || 'currency unknown') + '</p>' +
+          '<svg class="hm__chart" viewBox="0 0 300 120" role="img" aria-label="Observed prices for ' + esc(c.symbol) + '">' + dots + '</svg>' +
+          '<p class="hm__note">' + esc(stamp(start)) + ' to ' + esc(stamp(end)) + '</p>' +
+          '<details><summary>Observed prices (' + points.length + ')</summary><ol class="hm__observations">' + points.map(p => '<li>' + esc(stamp(p.time)) + ': ' + esc(price(p.price)) + '</li>').join('') + '</ol></details>';
+      }
+      ui.chart.innerHTML = '<section class="hm__company" aria-label="Selected security price observations"><b>' + esc(c.symbol) + ' · ' + esc(c.mic) + '</b>' +
+        '<p class="hm__note">' + esc(status) + (q ? ' · ' + esc(q.source) + ' · ' + esc(price(q.price)) + ' ' + esc(d.currency || '') + ' · observation ' + esc(ago(q.as_of)) : '') + '</p>' +
+        '<p class="hm__note">' + esc(note) + (d.freshness && d.freshness.fallback ? ' Showing the last verified quote; refresh failed.' : '') + '</p>' + plot +
+        '<p class="hm__note">Observations collected while this stock is selected, up to 120 points. Refreshes once per minute while visible. No historical backfill or missing-trade interpolation.</p></section>';
+    }
+
     function newsList(items, at) {
       return '<ul class="hm__news">' + items.map((n) => '<li><a href="' + esc(n.url) + '" target="_blank" rel="noopener noreferrer"><b>' + esc(n.title) + '</b><small>' + esc(n.publisher || n.source || '') + ' · ' + esc(ago(n[at] || n.seen_at || n.published_at)) + '</small></a></li>').join('') + '</ul>';
     }
@@ -277,10 +329,11 @@
     }
 
     function destroy() {
-      alive = false; clearInterval(timer); clearTimeout(searchTimer); window.removeEventListener('hu:country', onCountry); clearPins();
+      alive = false; chart = null; companySeq++; clearInterval(timer); clearTimeout(searchTimer); window.removeEventListener('hu:country', onCountry); clearPins();
+      if(finance)finance.destroy(); finance=null;
       if (ui) ui.root.remove(); ui = null; document.documentElement.removeAttribute('data-halo-markets');
     }
-    return { set, on: () => on, refresh: () => (on ? load() : Promise.resolve()), status, pick, openCountry, close, destroy };
+    return { set, on: () => on, refresh: () => (on ? load() : Promise.resolve()), status, pick, openCountry, openFinance: async () => { await set(true); await openCountry('US','United States'); }, close, destroy };
   }
 
   window.HaloMarkets = Object.freeze({ create });

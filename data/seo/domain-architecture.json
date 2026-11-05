@@ -1,6 +1,6 @@
 {
   "schema_version": "mccluster-domain-architecture/v1",
-  "updated_at": "2026-10-28",
+  "updated_at": "2026-11-02",
   "authority": "Owner instruction, 2026-10-03. Human-readable companion: docs/control-plane/DOMAINS-AND-ENTITIES.md. Tests: scripts/test/domain-architecture.test.mjs.",
   "public_brand": "Owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise. Every public-facing name (titles, descriptions, Open Graph and Twitter tags, JSON-LD names, headings, product copy, llms.txt) says Equity Uprise; the mccluster.org root shares as Equity Uprise · McCluster with site name McCluster Corp. Human Uprise survives only as a legacy technical identifier where compatibility needs it: the humanuprise.com host and its routing, this file's human_uprise key, file names, function and variable names, CSS classes, storage keys, event names, URL paths and @ids. docs/control-plane/DOMAINS-AND-ENTITIES.md -> The public brand is Equity Uprise.",
   "rule": "Two related but distinct canonical web properties. mccluster.org is McCluster Corp's house; matthew.mccluster.org is Matthew McCluster's house. Do not collapse them, do not make the two entities interchangeable, and do not move a working URL merely for tidiness.",
@@ -111,6 +111,15 @@
       "access": "Owner only (owner, 2026-11-03: the whole learning management system and every game are on the house owner's private account). /prim3.html, /prim3-range.html, /game-hub.html and the PRIM3 game pages are noindex, out of the sitemap and out of public navigation; the Project node keeps its stable @id on /prim3.html and its public url is the company page.",
       "current_url": "https://mccluster.org/company"
     },
+    "prim3_artist": {
+      "type": "MusicGroup",
+      "id": "https://matthew.mccluster.org/prim3-artist.html#prim3-artist",
+      "act_of": "prim3",
+      "relation": "PRIM3 the artist: the music act of PRIM3, McCluster Corp's learning product, and an entity of its own, separate from Matthew McCluster (owner, 2026-11-02: \"PRIM3 needs their own artist page as that is its own artist. Separate entity from Matthew McCluster\"). Artist (byArtist) of the album Cyber Security Specialist (album slug prim3, catalog keys prim3:*). Never Matthew's alias, never credited to him as artist; he appears only where a track's credits name him.",
+      "managed_by": "matthew_mccluster",
+      "management": "Account control, not authorship or identity: until PRIM3 has a login of its own, Matthew McCluster's M Account manages it as label_admin (supabase/pending/music_label_artists_v1.sql: PRIM3 is its own m_people identity with no auth link, its own music_creator_profiles row, and a music_creator_managers row naming Matthew). Its own login later is an m_auth_user_links row for PRIM3's identity, and optionally revoking the manager row; no content moves.",
+      "current_url": "https://matthew.mccluster.org/prim3-artist.html"
+    },
     "mccluster_platform": {
       "type": "SoftwareSourceCode",
       "id": "https://matthew.mccluster.org/engineering/mccluster-platform.html#mccluster-platform",
@@ -173,6 +182,7 @@
       "/heal-the-3rd-world.html",
       "/prim3.html",
       "/prim3-range.html",
+      "/prim3-artist.html",
       "/site0/",
       "/sites.html",
       "/sites-details.html",

@@ -68,6 +68,7 @@ Rollback files sit beside the ones that have them.
 | `20261009220000_at_night_adult_verification.sql` | `at_night_verifications` | `workers/mccluster/src/at-night.js` | moved from `supabase/migrations/pending/` 2026-10-27; written against the 2026-10-09 schema, re-run its statements on a scratch reset before apply |
 | `20261010008000_action_connect_recipients.sql` | `an_connect_recipients` | `workers/mccluster/src/action-connect.js` | same as above |
 | `20261010009000_creator_site_cohort_grants.sql` | `creator_site_cohort_grants` | `workers/mccluster/src/creator-site-publish.js`, `creator-site-v*.js` | same as above; `20261010009100_creator_publish_cohort_entitlement.sql` goes right after it |
+| `music_label_artists_v1.sql` (+ rollback) | the label model (owner, 2026-11-02): `music_creator_managers`, `music_can_act_for()`, `music_my_artists()`, `music_label_create_artist()`, `music_label_grant()`, `music_label_revoke()`, `music_label_hand_over_login()` (service role); replaces `music_creator_guard()`, `music_track_guard()`, `music_license_guard()` and alters the creator tables' authenticated policies; seeds PRIM3 and Equity Uprise's music act as login-less artists with the house owner as `label_admin`. Its caller degrades, it does not fail: Control shows the static catalog with a "backend is pending" note | `js/control-room/music-label.js` | `scripts/test-music-label-db.sh` (also `.github/workflows/music-label-db.yml`; its rollback is checked against production's guard and policy hashes) and `scripts/test/music-label.test.mjs`. Before apply, read-only: the handles `prim3` and `equity-uprise` are free in `music_creator_profiles` (the seed refuses a handle a person holds), and the house owner resolves (`orgs` slug `mccluster` → `org_members` owner → `m_auth_user_links`) |
 
 ## 2. The owner-approval chain (apply in this order)
 
@@ -148,6 +149,16 @@ Contract tests that read them: `scripts/test/action-economy-*.test.mjs`,
   since later curation (2026-10-15) already changed the same rows.
 - `20261015210000_intel_mission_canon_v1.rollback.sql`: the rollback of a
   promoted file (`20261017030617_intel_mission_canon_v1`), kept on purpose.
+
+## 6. MNET character cast (written 2026-11-03)
+
+| File (+ rollback) | Creates | Callers | Proof before apply |
+|---|---|---|---|
+| `mnet_character_cast_v1.sql` (+ `mnet_character_cast_v1.rollback.sql`) | `ops_character_publications`, `ops_character_provision()`, `ops_character_publish_post()`; additive, nothing existing is altered | McCluster Core only: `core/src/executors/character-post.mjs`, `core/src/seed-character-posts.mjs`, `core/scripts/provision-characters.mjs`, all behind `MCCLUSTER_CHARACTER_POSTS=live` (off by default). No browser or Worker caller. | `scripts/test-mnet-character-cast-db.sh` (apply twice, behaviour, rollback, re-apply, behaviour). Design: `docs/fictional-city/MNET-CHARACTER-CAST.md` |
+
+No prerequisite beyond what production has (`ops_platform_actors`, `network_posts`, `network_post_comments`,
+`media_news_articles`, `ops_agent_jobs`). After apply: provision (profiles are created disabled), then enable, then
+switch the flag and the timer on; each is a separate owner step.
 
 ## Names with no SQL anywhere
 

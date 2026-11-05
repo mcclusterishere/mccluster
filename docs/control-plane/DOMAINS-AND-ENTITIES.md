@@ -52,11 +52,13 @@ Matthew McCluster  (Person, matthew.mccluster.org)
 ├── founder of ─► McCluster Corp  (Organization, url https://mccluster.org/)
 │                 ├── Equity Uprise            the public brand (owner, 2026-10-28): the public-interest project and its movement-creation social platform, the Equity Uprise World (formerly "Human Uprise", before that the Uprise Action Network)
 │                 ├── PRIM3                    learning project / product
+│                 │   └── PRIM3 (the artist)   its music act, its own entity (MusicGroup); artist of Cyber Security Specialist
 │                 ├── McCluster Platform       the technical platform operated for McCluster Corp
 │                 ├── McCluster Sites          web services
 │                 └── media, creative and music/catalogue services
 ├── founder and owner of ─► Whip Equipped LLC   a SEPARATE company. Never a McCluster Corp sub-brand.
-└── artist of ─► I AM HERE                       his album; published through the ecosystem (publisher McCluster Corp, ISRC registrant QT6KV)
+├── artist of ─► I AM HERE                       his album; published through the ecosystem (publisher McCluster Corp, ISRC registrant QT6KV)
+└── account manager of ─► PRIM3 (the artist)     manages it from his M Account until it has its own login; NOT its artist, NOT its identity
 ```
 
 Rules that follow from it:
@@ -74,6 +76,25 @@ Rules that follow from it:
   name the personal WebSite after the company, and never call the company
   "Matthew McCluster / McCluster Corp".
 - PRIM3 is McCluster Corp's learning product, not Matthew's recording alias.
+- **PRIM3 the artist is its own entity** (owner, 2026-11-02: "The album is
+  actually called Cyber Security Specialist ... the artist is PRIM3. PRIM3
+  needs their own artist page as that is its own artist. Separate entity
+  from Matthew McCluster. But controlled by Matthew McCluster's account until
+  it gets its own login."). It is the MusicGroup
+  `https://matthew.mccluster.org/prim3-artist.html#prim3-artist`, the music
+  act of PRIM3, defined in full on its page `prim3-artist.html` and in
+  `data/seo/entity-graph.json` → `music_acts.prim3`; every Cyber Security
+  Specialist recording is `byArtist` that node, never Matthew's `@id` (he
+  appears only where a track's credits name him; none do yet). The album keeps
+  its slug `prim3` and catalog keys `prim3:*`, so no URL moves.
+  "Managed by Matthew McCluster" is account control, not authorship: PRIM3 is
+  its own M identity with no login, and Matthew's account acts for it as its
+  label admin (`supabase/pending/music_label_artists_v1.sql`, the label
+  model). PRIM3 getting its own login is one `m_auth_user_links` row for its
+  identity (and, if wanted, revoking the manager row); its profile, tracks and
+  assets do not move. Matthew's pages keep their Matthew-first metadata; his
+  profile graph does not list the act. Equity Uprise's music act
+  (`catalogue.html#artist-equity-uprise`) is the same kind of entity.
 - Whip Equipped LLC appears under Matthew, never under McCluster Corp.
 
 ## What lives where (and why most URLs do not move)

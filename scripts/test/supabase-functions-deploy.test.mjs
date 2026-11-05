@@ -247,5 +247,5 @@ test('the workflow deploys on function or config changes alone, least-privilege,
   assert.ok(scripts >= 5);
   const contract = JSON.parse(await read('core/drift-contract.json'));
   assert.match(yml, new RegExp(`SUPABASE_PROJECT_REF: ${contract.supabase.project_ref}\\n`), 'deploys to the canonical project');
-  assert.match(yml, /checkout@[0-9a-f]{40} # v4\n\s+with:\n\s+ref: main\n\s+fetch-depth: 0\n\s+persist-credentials: false/, 'a late run deploys main as it is now, never older code');
+  assert.match(yml, /checkout@[0-9a-f]{40} # v\d+(?:\.\d+)*\n\s+with:\n\s+ref: main\n\s+fetch-depth: 0\n\s+persist-credentials: false/, 'a late run deploys main as it is now, never older code');
 });

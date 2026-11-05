@@ -430,7 +430,7 @@
         "m": {
           "approved": true,
           "cadence": "project",
-          "from": 201,
+          "from": 285,
           "note": "Priced per project, per day or per event.",
           "rate_lines": [
             {
@@ -441,13 +441,16 @@
             },
             {
               "id": "photo-event",
-              "label": "Event coverage",
+              "label": "Event photography",
               "amount": 201,
-              "unit": "per hour · two-hour minimum",
+              "unit": "per hour · 3-hour minimum",
               "priced_by": "golden-33",
               "was": 310,
               "market_median": 300,
-              "market_checked": "2026-08-29"
+              "market_checked": "2026-08-29",
+              "minimum_hours": 3,
+              "travel_note": "Travel is quoted as a separate line item and agreed before booking.",
+              "service_area_note": "Event photography across Connecticut, within approximately 75 minutes of New Haven."
             },
             {
               "id": "vid-half",
@@ -522,15 +525,15 @@
       "rights_note": "Usage rights are defined by the agreement.",
       "standalone": true,
       "next_step": {
-        "label": "Book a shoot",
+        "label": "Request a shoot quote",
         "href": "onboard.html?offer=who-did-the-shoot"
       },
       "one_line": "Photography and video, shot and graded in house.",
       "checkout": {
         "m": {
-          "offering": "booking-deposit",
-          "label": "Book a date",
-          "after": "A deposit books the date and comes off the total."
+          "onboard": true,
+          "label": "Request a shoot quote",
+          "after": "The shoot and any travel are itemized and agreed before booking."
         },
         "equity": {
           "onboard": true,

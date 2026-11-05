@@ -57,7 +57,7 @@ export function validateModules(doc, { albums } = {}) {
       gids.add(g.id);
       if (!GAME_KINDS.includes(g.kind)) errors.push(`${m.id}/${g.id}: kind must be link or embedded`);
       for (const k of ['title', 'tag', 'blurb']) if (typeof g[k] !== 'string' || !g[k].trim()) errors.push(`${m.id}/${g.id}: ${k} is required`);
-      if (g.kind === 'link' && !/^[a-z0-9-]+\.html(\?[^#]*)?$/.test(g.href || '')) errors.push(`${m.id}/${g.id}: a link game names a page on this site`);
+      if (g.kind === 'link' && !/^(?:[a-z0-9-]+\/)*[a-z0-9-]+\.html(\?[^#\r\n]*)?$/.test(g.href || '')) errors.push(`${m.id}/${g.id}: a link game names a page on this site`);
       if (g.kind === 'embedded' && !EMBEDDED_VIEWS.includes(g.view)) errors.push(`${m.id}/${g.id}: unknown embedded view ${g.view}`);
       if (g.gate !== undefined && g.gate !== 'owner') errors.push(`${m.id}/${g.id}: the only gate is "owner"`);
     }
