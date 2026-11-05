@@ -350,9 +350,13 @@ try{
   await scroll(0);
   if(width===390){
     check('phone initial hint only right',await left.isHidden()&&await right.isVisible(),await dock.evaluate(el=>({left:el.scrollLeft,width:el.clientWidth,scroll:el.scrollWidth,hints:document.getElementById('mccDockHints').outerHTML})));
+    check('all seven primary owner destinations, including Games next to Halo, are visible without scrolling',
+      await dock.evaluate(el=>[...el.querySelectorAll('[data-appnav]')].slice(0,7).every(tab=>{const a=tab.getBoundingClientRect(),b=el.getBoundingClientRect();return a.left>=b.left-1&&a.right<=b.right+1&&a.width>=44;})));
+    check('Games is directly tappable, not covered by scroll arrows',
+      await dock.locator('[data-appnav="games"]').evaluate(el=>{const r=el.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return !!hit&&(hit===el||el.contains(hit));}));
     check('reduced motion disables hint animation',await right.evaluate(el=>getComputedStyle(el).animationName==='none'));
-    await right.click();await page.waitForFunction(()=>{const b=document.querySelectorAll('#mccDockHints button');return !b[0].hidden&&!b[1].hidden;});
-    check('phone middle hints both directions',await left.isVisible()&&await right.isVisible());
+    await right.click();await page.waitForFunction(()=>document.querySelector('.appbar').scrollLeft>2);
+    check('phone arrow scrolls to additional Sell/Create/System destinations',await left.isVisible()&&await dock.evaluate(el=>el.scrollLeft>2));
     await scroll(10000);check('phone end hint only left',await left.isVisible()&&await right.isHidden());
     await page.locator('#mccControlToggle').focus();await page.keyboard.press('End');
     check('keyboard End reaches System visibly',await page.locator('[data-dock-section="system"]').evaluate(el=>el===document.activeElement)&&await visible());
