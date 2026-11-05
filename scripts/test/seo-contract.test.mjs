@@ -268,20 +268,20 @@ test("the newsroom publishes only verified, evidenced entries and never backdate
   assert.doesNotMatch(JSON.stringify(ledger), /owner_action|Kevin/, "internal notes in the public ledger");
 });
 
-test("public document pages show the privacy notice as a banner, and recording still waits for it", () => {
+test("public documents now use the same Agree or Go back privacy gate", () => {
   const live = read("js/live-content.js");
-  assert.match(live, /meta\[name="mcc-privacy-notice"\]/);
-  assert.match(live, /@media print\{#mccPrivacyNotice\{display:none!important\}\}/, "the banner must never print onto a résumé");
-  /* owner, 2026-10-20: the notice is shown once; "Not now" is an answer that keeps it from coming back, never an agreement */
-  assert.match(live, /getElementById\("mccPrivacyNoticeLater"\)\.addEventListener\("click", function \(\) \{\s*writeSeen\(\);/, "Not now records that the notice was seen");
-  assert.match(read("js/analytics.js"), /if \(mccPrivacyAcknowledged\(\) && !mccControlPreview\(\)\) \{/, "analytics still waits for acknowledgement");
+  assert.match(live, /if \(shown \|\| readAck\(\)\) return;/, "only real agreement bypasses the gate");
+  assert.match(live, /shown = true;\s*wall\(\);/, "document pages receive the same modal");
+  assert.doesNotMatch(live, /mccPrivacyNoticeLater|function banner\(\)/, "no dismissible banner remains");
+  assert.match(read("js/analytics.js"), /if \(mccPrivacyAcknowledged\(\) && !mccControlPreview\(\)\) \{/, "analytics still requires acknowledgement");
+  /* Legacy document-banner metadata remains inert while deployed pages still ship it. */
   const must = ["matthew-mccluster.html", "resume-it-support.html", "press.html", "services.html", "newsroom.html",
     "docket-516.html", "hire.html", "catalogue.html", ...ENGINEERING];
   for (const f of must) {
     const html = read(f);
     const m = html.indexOf('<meta name="mcc-privacy-notice" content="banner">');
     const s = html.search(/<script src="[^"]*js\/live-content\.js/);
-    assert.ok(m > 0 && s > m, `${f}: the banner meta must come before live-content.js`);
+    assert.ok(m > 0 && s > m, `${f}: legacy banner metadata remains before live-content.js`);
     assert.doesNotMatch(html, /user-scalable=no/, `${f}: blocks pinch zoom`);
   }
 });
