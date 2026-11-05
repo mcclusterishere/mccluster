@@ -387,8 +387,7 @@ try{
     check('failed World can return to the same playing Music document',await page.evaluate(()=>!MCC_MUSIC.audio.paused&&__unloads===0));
     await context.close();
   }
-  /* THE PRIVACY NOTICE IS SHOWN ONCE (owner, 2026-10-20): nothing seeded here. The first page shows it; once it is
-     answered no other page, neither McCluster host, nor the World that Music opens in a frame shows it again. */
+  /* The privacy wall is shown until consent, and agreed consent is shared across McCluster hosts. */
   const notice=f=>f.evaluate(()=>({wall:!!document.getElementById('mccPrivacyGate'),pending:document.documentElement.getAttribute('data-privacy-gate'),banner:!!document.getElementById('mccPrivacyNotice')}));
   const none=n=>!n.wall&&!n.pending&&!n.banner;
   const privacyErrors=errors=>errors.filter(e=>/privacy|cookie/i.test(e));
@@ -416,62 +415,26 @@ try{
   {
     const {context,page,errors}=await setup(390,false,{privacy:false,start:'/press.html'});
     const first=await notice(page);
-    check('privacy: a first visit to a document page sees the banner, not the wall',first.banner&&!first.wall&&!first.pending,first);
-    await page.locator('#mccPrivacyNoticeLater').click();
-    check('privacy: Not now closes the banner',none(await notice(page)));
-    const jar=await context.cookies(HOUSE),seen=jar.find(c=>c.name==='mcc_privacy_seen');
-    check('privacy: Not now is kept for every mccluster.org host, as seen and never as agreed',seen?.domain==='.mccluster.org'&&seen.value==='2026-10-19'&&!jar.some(c=>c.name==='mcc_privacy_ack'),jar);
-    for(const url of [HOUSE+'/newsroom.html',HOUSE+'/account.html',WORLD+'/mnet.html?view=feed']){
-      await page.goto(url,{waitUntil:'load'});
-      const u=new URL(url);
-      check(`privacy: after Not now, ${u.host}${u.pathname} shows neither banner nor wall, and nothing counts as agreed`,none(await notice(page))&&await page.evaluate(()=>!MCC_PRIVACY.accepted()&&MCC_PRIVACY.seen()));
-    }
-    check('privacy: after Not now, analytics on the World still records nothing',await page.evaluate(()=>window.MCC_TRACK('privacy_fixture')===false));
-    await page.goto(HOUSE+'/listen.html',{waitUntil:'load'});await musicReady(page);
-    check('privacy: after Not now, Music shows no wall',none(await notice(page)));
-    await play(page);const frame=await world(page);
-    check('privacy: after Not now, the World that Music opens does not show it either',none(await notice(page))&&none(await notice(frame))&&await frame.evaluate(()=>!MCC_PRIVACY.accepted()&&MCC_PRIVACY.seen()));
-    check('privacy: no notice errors after Not now',privacyErrors(errors).length===0,errors);
-    await context.close();
-  }
-  {
-    /* owner finding, 2026-10-28: "The policy promises 'Not now', but the live entry dialog doesn't offer it."
-       The wall offers it now, with the behaviour privacy.html#entry-notice describes: in without a reload, seen and
-       never agreed, analytics off, not asked again on either host or in the World that Music opens. */
-    const {context,page,errors}=await setup(390,false,{privacy:false});
-    const first=await notice(page);
-    check('privacy: the entry dialog offers Not now',first.wall&&first.pending==='pending'&&await page.locator('#mccPrivacyLater').isVisible()&&(await page.locator('#mccPrivacyLater').boundingBox()).height>=44,first);
-    let reloaded=false;page.on('framenavigated',f=>{if(f===page.mainFrame())reloaded=true;});
-    await page.locator('#mccPrivacyLater').click();
-    check('privacy: Not now on the entry dialog lets the visitor in without a reload',none(await notice(page))&&!reloaded&&await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth));
-    const jar=await context.cookies(HOUSE),seen=jar.find(c=>c.name==='mcc_privacy_seen');
-    check('privacy: Not now on the entry dialog is kept as seen, never as agreed',seen?.domain==='.mccluster.org'&&seen.value==='2026-10-19'&&!jar.some(c=>c.name==='mcc_privacy_ack')&&await page.evaluate(()=>!MCC_PRIVACY.accepted()&&MCC_PRIVACY.seen()),jar);
-    for(const url of [HOUSE+'/account.html',WORLD+'/mnet.html?view=feed']){
-      await page.goto(url,{waitUntil:'load'});
-      const u=new URL(url);
-      check(`privacy: after Not now on the entry dialog, ${u.host}${u.pathname} does not ask again`,none(await notice(page))&&await page.evaluate(()=>!MCC_PRIVACY.accepted()));
-    }
-    check('privacy: after Not now on the entry dialog, analytics records nothing',await page.evaluate(()=>window.MCC_TRACK('privacy_fixture')===false));
-    check('privacy: no notice errors after Not now on the entry dialog',privacyErrors(errors).length===0,errors);
-    await context.close();
-  }
-  {
-    /* owner, 2026-10-20: "they see the privacy policy, and then they never see it again". The banner is seen once shown. */
-    const {context,page,errors}=await setup(390,false,{privacy:false,start:'/press.html'});
-    const first=await notice(page);
-    check('privacy: an ignored banner is shown on the first document page',first.banner&&!first.wall&&!first.pending,first);
-    const jar=await context.cookies(HOUSE),seen=jar.find(c=>c.name==='mcc_privacy_seen');
-    check('privacy: the banner counts as seen with no tap, for every mccluster.org host, and never as agreed',seen?.domain==='.mccluster.org'&&seen.value==='2026-10-19'&&!jar.some(c=>c.name==='mcc_privacy_ack')&&await page.evaluate(()=>MCC_PRIVACY.seen()&&!MCC_PRIVACY.accepted()),jar);
-    for(const url of [HOUSE+'/newsroom.html',HOUSE+'/account.html',WORLD+'/',WORLD+'/mnet.html?view=feed']){
-      await page.goto(url,{waitUntil:'load'});
-      const u=new URL(url);
-      check(`privacy: after an ignored banner, ${u.host}${u.pathname} shows neither banner nor wall, and nothing counts as agreed`,none(await notice(page))&&await page.evaluate(()=>!MCC_PRIVACY.accepted()&&MCC_PRIVACY.seen()));
-    }
-    await page.goto(HOUSE+'/listen.html',{waitUntil:'load'});await musicReady(page);
-    check('privacy: after an ignored banner, Music shows no wall',none(await notice(page)));
-    await play(page);const frame=await world(page);
-    check('privacy: after an ignored banner, the World that Music opens shows no notice',none(await notice(page))&&none(await notice(frame))&&await frame.evaluate(()=>!MCC_PRIVACY.accepted()));
-    check('privacy: no notice errors after an ignored banner',privacyErrors(errors).length===0,errors);
+    check('privacy: first document visit is a blocking wall, never a dismissible banner',
+      first.wall&&first.pending==='pending'&&!first.banner,first);
+    check('privacy: entry offers only agree and go back',
+      await page.locator('#mccPrivacyGate button').allTextContents().then(x=>x.map(s=>s.trim()).join('|')==='I agree & continue|Go back'));
+    await page.goto(HOUSE+'/privacy.html',{waitUntil:'load'});
+    check('privacy: policy remains readable without consent',none(await notice(page))&&await page.locator('#mccPrivacyAnswerBack').isVisible());
+    await page.goto(HOUSE+'/press.html',{waitUntil:'load'});
+    const returned=page.waitForURL('**/privacy.html',{timeout:10000});
+    await page.locator('#mccPrivacyBack').click();
+    await returned;
+    const jar=await context.cookies(HOUSE);
+    check('privacy: Go back really returns to preceding page and stores no consent',
+      !jar.some(c=>c.name==='mcc_privacy_ack')&&await page.evaluate(()=>!MCC_PRIVACY.accepted()&&!localStorage.getItem('mcc_privacy_seen')));
+    await page.goto(HOUSE+'/account.html',{waitUntil:'load'});
+    check('privacy: returning without consent asks again', (await notice(page)).wall);
+    await page.goto(HOUSE+'/privacy.html',{waitUntil:'load'});
+    await page.locator('#mccPrivacyAnswerAgree').click();
+    await page.goto(HOUSE+'/press.html',{waitUntil:'load'});
+    check('privacy: agreement from the readable policy grants entry',none(await notice(page))&&await page.evaluate(()=>MCC_PRIVACY.accepted()));
+    check('privacy: no privacy console errors',privacyErrors(errors).length===0,errors);
     await context.close();
   }
 }finally{
