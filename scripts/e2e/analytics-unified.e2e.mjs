@@ -188,8 +188,8 @@ for(const size of [{width:390,height:844},{width:820,height:1180},{width:1280,he
  await page.locator('[data-camera-check]').click();await page.waitForFunction(()=>Object.keys(window.CR.analyticsCameras.state.checks).length===3&&!window.CR.analyticsCameras.state.running);
  const measured=await page.evaluate(()=>window.CR.analyticsCameras.totals(window.CR.analyticsCameras.state.catalog.cameras));
  check(size.width,'only decoded images count as verified',measured.verified===1&&measured.failed===2&&measured.unchecked===0,measured);
- await page.locator('[role=tab][data-cra-sec="intelligence"]').press('ArrowRight');
- check(size.width,'keyboard and tab state agree',await page.locator('[role=tab][aria-selected=true]').innerText()==='Data & setup');
+ await page.locator('[role=tab][data-cra-sec="intelligence"]').press('ArrowLeft');
+ check(size.width,'keyboard and tab state agree without preloading on-demand datasets',await page.locator('[role=tab][aria-selected=true]').innerText()==='Action & business');
  if(size.width<600){
   await page.locator('[role=tab][data-cra-sec="overview"]').click();
   const metricBox=await page.locator('.cu-summary-groups').first().boundingBox(),railSession=await ctx.newCDPSession(page);
