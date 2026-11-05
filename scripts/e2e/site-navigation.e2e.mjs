@@ -356,6 +356,9 @@ try{
       await dock.locator('[data-appnav="games"]').evaluate(el=>{const r=el.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return !!hit&&(hit===el||el.contains(hit));}));
     check('reduced motion disables hint animation',await right.evaluate(el=>getComputedStyle(el).animationName==='none'));
     await right.click();await page.waitForFunction(()=>document.querySelector('.appbar').scrollLeft>2);
+    // The scroll event refreshes the hints on the next animation frame; wait for
+    // that accessible state instead of reading the old hidden flag immediately.
+    await left.waitFor({state:'visible'});
     check('phone arrow scrolls to additional Sell/Create/System destinations',await left.isVisible()&&await dock.evaluate(el=>el.scrollLeft>2));
     await scroll(10000);check('phone end hint only left',await left.isVisible()&&await right.isHidden());
     await page.locator('#mccControlToggle').focus();await page.keyboard.press('End');
