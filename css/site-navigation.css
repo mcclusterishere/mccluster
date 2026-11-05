@@ -148,6 +148,8 @@ body[data-admin-navigation] .appbar--admin .appbar__tab > span:not(.appbar__sr){
    Keep native dock swipe and keyboard navigation, but show the click-arrows only
    inside Control where the destination bar owns that interaction area. */
 body[data-admin-navigation]:not(.cr) .mcc-dock-hints{display:none!important}
+/* Globe control tray and Halo sheets must receive taps; the seven primary owner tabs remain visible without arrows here. */
+html.globe-editorial .mcc-dock-hints{display:none!important}
 .mcc-dock-hints button:focus-visible{outline:2px solid #fff;outline-offset:2px}
 @keyframes mcc-dock-cue{from{opacity:.6}to{opacity:1}}
 @media(prefers-reduced-motion:reduce){.mcc-dock-hints button{animation:none}}
