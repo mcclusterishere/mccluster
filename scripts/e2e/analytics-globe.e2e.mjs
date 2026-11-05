@@ -11,7 +11,7 @@
    dropdown selects a state -> the globe loads that country's states and flies to the state;
    a tap on a state on the globe -> the dropdown shows it; a tap on a country -> the cards
    follow; Clear -> the world. Region counts pending -> "not collected yet", shapes still
-   selectable. The five-tab bar, reduced motion, scrollWidth === clientWidth, no console errors.
+   selectable. The owner navigation bar, reduced motion, scrollWidth === clientWidth, no console errors.
    A member who is not the owner keeps three tabs.
 
    Run:  node scripts/e2e/analytics-globe.e2e.mjs [outDir]
@@ -171,7 +171,7 @@ for (const size of SIZES) {
   const geo0 = await geoText(page);
   check(S, 'On the globe: 30 visitors in countries with 5+, none folded, 40 in all, the three countries ranked', /On the globe\s*30\s*in countries with 5\+/.test(geo0) && /Under 5\s*0/.test(geo0) && /Total\s*40/.test(geo0) && /United States of America\s*18\s*United Kingdom\s*7\s*Brazil\s*5/.test(geo0), geo0.slice(0, 400));
   check(S, 'the deck\'s sections are there: Reach & stage activity, On the globe, Audience & accounts, Geography', ['Reach & stage activity', 'On the globe', 'Audience & accounts', 'Geography'].every((h) => ui.headings.includes(h)), ui.headings);
-  check(S, 'the owner bar: Play, Home, M, Analytics, Globe; Analytics is the current tab; the M is the supplied PNG', ui.bar && JSON.stringify(ui.tabs) === JSON.stringify(['music', 'admin-home', 'home', 'analytics', 'halo']) && ui.here === 'analytics' && /assets\/img\/m-mark\.png$/.test(ui.mImg || ''), ui);
+  check(S, 'the owner bar: ten current destinations, active Analytics tab and supplied M PNG', ui.bar && JSON.stringify(ui.tabs) === JSON.stringify(['music','admin-inbox','admin-home','home','analytics','halo','games','admin-sell','admin-create','admin-system']) && ui.here === 'analytics' && /assets\/img\/m-mark\.png$/.test(ui.mImg || ''), ui);
   check(S, 'no "Illustrative data" footnote on real screens', !ui.illustrative);
   let w = await widths(page);
   check(S, 'no sideways overflow (scrollWidth === clientWidth)', w.scrollW === w.clientW, w);
