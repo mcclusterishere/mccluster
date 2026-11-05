@@ -28,7 +28,7 @@ html.halo-on body{background:var(--hx-bg)}
 /* the page's own chrome steps aside (Halo has its own controls for each) */
 html.halo-on.globe-explore header,html.halo-on .globe-controls,html.halo-on .globe-data,html.halo-on #deck,html.halo-on .explore-line,
 html.halo-on .bare-exit,html.halo-on .world-mode,html.halo-on .world-tools,html.halo-on .globe-editorial-tools,html.halo-on .globe-editorial-world,
-html.halo-on .globe-editorial-shelf,html.halo-on .halo-enter{display:none!important}
+html.halo-on .globe-editorial-shelf,html.halo-on .halo-enter,html.halo-on #bridgeportEnter,html.halo-on #bridgeportWalk{display:none!important}
 /* The globe is the interaction surface: search floats over it instead of claiming a separate row. */
 html.halo-on.globe-explore #globe{inset:var(--hx-head) 0 calc(var(--hx-bottom) + var(--hx-peek)) 0}
 html.halo-on.globe-explore .osm-credit{z-index:7;left:8px;right:auto;bottom:calc(var(--hx-bottom) + var(--hx-peek) + 4px);max-width:calc(100% - 16px);background:rgba(3,9,18,.72)}
