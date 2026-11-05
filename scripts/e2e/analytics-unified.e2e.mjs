@@ -194,10 +194,12 @@ for(const size of [{width:390,height:844},{width:820,height:1180},{width:1280,he
   await page.locator('[role=tab][data-cra-sec="overview"]').click();
   await page.locator('.cu-summary-groups').first().scrollIntoViewIfNeeded();
   const metricBox=await page.locator('.cu-summary-groups').first().boundingBox(),railSession=await ctx.newCDPSession(page);
-  const ry=metricBox.y+Math.min(metricBox.height/2,40),rx=metricBox.x+metricBox.width-20;
-  await railSession.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:rx,y:ry}]});
-  for(const delta of [40,100,180,260]){await railSession.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:rx-delta,y:ry}]});await page.waitForTimeout(20);}
-  await railSession.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await page.waitForTimeout(300);
+  const ry=metricBox.y+Math.min(metricBox.height*.6,80),rx=metricBox.x+metricBox.width*.8;
+  // Chrome's compositor must own the entire gesture (including scroll snapping).
+  // Hand-dispatched touchStart/move/end reported 2px rather than exercising native
+  // pan physics and caused a false regression on otherwise functional horizontal rails.
+  await railSession.send('Input.synthesizeScrollGesture',{x:rx,y:ry,xDistance:-220,yDistance:0,speed:360,gestureSourceType:'touch'});
+  await page.waitForTimeout(450);
   const swipe=await page.locator('.cu-summary-groups').first().evaluate(el=>({offset:el.scrollLeft,scrollWidth:el.scrollWidth,clientWidth:el.clientWidth}));
   check(size.width,'summary groups swipe without changing chapter',swipe.scrollWidth>swipe.clientWidth+30&&swipe.offset>30&&await page.locator('[role=tab][aria-selected=true]').innerText()==='Overview',swipe);
   const box=await page.locator('.cad-chapter').boundingBox();
