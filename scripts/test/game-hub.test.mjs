@@ -197,6 +197,7 @@ test('Chem 108 has a direct owner-only launch in the Game Hub, destination picke
   assert.match(PAGE, /href="#m=chem108&amp;play=molecule-rush"/);
   assert.ok(destinations.includes(deepLink), 'owner destination picker links directly to the Chemistry game');
   assert.ok(apps.includes(deepLink) && apps.includes('bridge.chem108'), 'Admin Apps lists the Chemistry game');
+  assert.ok(apps.includes('Play Chem 108</a>'), 'Admin Home provides a visible one-tap chemistry launch');
   assert.match(PAGE, /data-owner-gate/, 'the new links must not bypass owner authorization');
 });
 
