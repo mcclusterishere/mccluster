@@ -102,6 +102,14 @@ try {
  assert.equal(await fallback.locator('[data-hub-music-play]').isDisabled(),true);
  assert.equal(await fallback.locator('.mr-opt').count(),4,'music failure does not block study');
  await fallback.close();
+ // A missing optional music catalogue must not prevent Chemistry from becoming playable.
+ const missingAlbum=await context.newPage();
+ await missingAlbum.route('**/data/albums.json',route=>route.abort());
+ await missingAlbum.goto(url);
+ await missingAlbum.locator('[data-start]').waitFor({timeout:10000});
+ await missingAlbum.locator('[data-start]').click();
+ assert.equal(await missingAlbum.locator('.mr-opt').count(),4,'album catalogue failure does not block Molecule Rush');
+ await missingAlbum.close();
  assert.deepEqual(errors,[]);
  assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('mcc.gamehub.music.v1')).modules.chem108.time),12,'legacy music preferences preserved');
  console.log('PASS: one real shared transport, playback/course switch/next/pause, mouse/touch/keyboard movement, reset/persistence, collapse/focus, answer hit-testing compact+expanded at 320/390/844/1024, 200% text, screenshots. Auth and audio fixtures; actual shared navigation loaded.');
