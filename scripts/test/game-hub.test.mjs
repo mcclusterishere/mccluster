@@ -181,6 +181,8 @@ test('the page: shared bar, noindex, module script, mobile-first CSS, no purple'
   assert.match(PAGE, /<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">/);
   assert.match(PAGE, /js\/game-hub\/hub\.mjs/);
   assert.match(PAGE, /id="ghModules"/); assert.match(PAGE, /data-hub-music-play/);
+  assert.match(PAGE, /href="action-globe\.html\?explore=1&amp;games=1"/, 'the hub opens owner-only globe games');
+  assert.match(PAGE, /href="city-arcade\.html"/, 'the hub opens City Arcade');
   assert.doesNotMatch(CSS, /@media[^{]*max-width/); assert.doesNotMatch(CSS, /(?<!minmax\(0,)\b1fr/);
   assert.match(CSS, /font-size:max\(16px/);
   for (const hex of CSS.match(/#[0-9a-f]{6}\b/gi)) assert.ok(!isPurple(hex), `${hex} is purple`);
