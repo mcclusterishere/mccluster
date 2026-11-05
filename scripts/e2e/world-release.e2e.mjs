@@ -109,7 +109,9 @@ async function haloChecks(scope,page,host,width,ctx,loseOwner,calls){
     Math.abs(restored.height-initial.height)<4&&restored.clear>=220,restored);
  }
  await page.waitForFunction(()=>MCC_BAR.admin());
- check(scope,'Halo retains the same five owner destinations',await page.locator('.appbar [data-appnav]').count()===5);
+ await page.waitForSelector('body[data-admin-navigation][data-site-navigation]');
+ const destinations=await page.locator('.appbar [data-appnav]').evaluateAll(nodes=>nodes.map(n=>n.dataset.appnav));
+ check(scope,'Halo retains the shared owner destinations in their reviewed order',JSON.stringify(destinations)===JSON.stringify(['music','admin-inbox','admin-home','home','analytics','halo','games','admin-sell','admin-create','admin-system']),destinations);
  await shot('start');
  let small=await smallTargets();
  check(scope,'every visible Halo control is a full 44px tap target',small.length===0,small);
