@@ -89,6 +89,28 @@ try {
     ["select name,device_id,session_id,dwell_s from public.events_lean where site_id is null and not is_bot and at>=now()-interval '1 hour'",'events_lean_summary_window_v4_idx'],
     ["select id from public.media_news_articles where ingestion_provider='gdelt_gkg_v2' and published_at>=now()-interval '30 days' and location_country_fips is not null order by published_at,id limit 100",'media_news_geo_window_v4_idx']
   ];
-  for(const [q,index] of access)assert.ok(JSON.stringify((await db.query('explain (format json) '+q)).rows).includes(index),index);
+  for(const [q,index] of access){
+    const plan=(await db.query('explain (analyze, buffers, format json) '+q)).rows[0]['QUERY PLAN'][0].Plan;
+    if(index!=='events_lean_summary_window_v4_idx'){
+      assert.ok(JSON.stringify(plan).includes(index),index);continue;
+    }
+    // PGlite 0.5.10 can use the existing inventory index for this small time
+    // window. Test actual bounded indexed work, not one planner cost choice.
+    const nodes=[];function visit(node){nodes.push(node);(node.Plans||[]).forEach(visit);}visit(plan);
+    assert.ok(!nodes.some(n=>n['Node Type']==='Seq Scan'),'summary must not scan the entire event table');
+    assert.ok(nodes.some(n=>['events_lean_summary_window_v4_idx','events_lean_first_party_inventory_v1_idx'].includes(n['Index Name'])&&/at >=/.test(n['Index Cond']||'')),JSON.stringify(plan));
+    assert.ok(plan['Actual Rows']>=59&&plan['Actual Rows']<=61,'one-hour fixture remains selective');
+    assert.ok((plan['Shared Hit Blocks']||0)+(plan['Shared Read Blocks']||0)<200,'summary must touch fewer than 200 buffers for 30,000 events');
+    assert.ok(nodes.reduce((sum,n)=>sum+(n['Rows Removed by Filter']||0)*(n['Actual Loops']||1),0)<200,'summary must not filter the whole history');
+    const indexes=(await db.query("select indisvalid,indisready from pg_index where indexrelid='public.events_lean_summary_window_v4_idx'::regclass")).rows;
+    assert.equal(indexes[0]?.indisvalid,true);assert.equal(indexes[0]?.indisready,true);
+    // Independently prove the intended migration index still provides the
+    // time-window access path. Restore the competitor even on assertion failure.
+    await db.exec('begin');
+    try{
+      await db.exec('drop index public.events_lean_first_party_inventory_v1_idx');
+      assert.ok(JSON.stringify((await db.query('explain (format json) '+q)).rows).includes(index),'summary index remains usable without the competing inventory index');
+    }finally{await db.exec('rollback');}
+  }
   console.log(`PASS ${queries.length} summary parity cases, DST, empty/tenant/bot boundaries, grants, identity page parity, four access paths, and long-URL ingestion`);
 }finally{await db.close();}

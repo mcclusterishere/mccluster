@@ -375,3 +375,16 @@ MDF rack 01 in B1 (42U EIA-310, mirrors `B1-TELECOM-RACKS-01-I001`) and a generi
 - published apps: `screens/*.html`, `js/eu-screens/`; demo `screens/building.html`
 
 Every display surface (148 screens, B1–L7) is bound to its canonical asset id and opens a full phone-first app (terminal, kiosk, NOC, cameras, studio, evidence, departures, wall) over the Lab Runtime sandbox, with an enter/return contract that brings you back to the same floor, pose and mode.
+
+## Physical computer workbench — review-only extension (2026-11-03)
+
+- `COMPUTER-HARDWARE-WORKBENCH.md` — 42 registered computers, physical reference profiles, shared sandbox state, tests and explicit remaining spatial bindings. Not a deployment or full-building completion claim.
+- `HIGGSFIELD-EQUIPMENT-EXPLAINERS.md` — source-bound frame/storyboard handoff; no generated video or provider spend claimed.
+- `production/lab-runtime/computer-hardware-profile-v1.json`
+- `production/lab-runtime/equity-uprise-computer-hardware.mjs`
+- `production/lab-runtime/equity-uprise-computer-view.mjs`
+- `production/lab-runtime/equity-uprise-computer-workbench.mjs`
+- `production/lab-runtime/verify_computer_hardware_v1.mjs`
+- `production/lab-runtime/verify_computer_workbench_browser.mjs`
+
+This extension does not change the reconciled floor programs, equipment placement authority, original server-lab scoring or #707 learning-backend status.

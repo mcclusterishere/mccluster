@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en" data-theme-lock="dark">
+<head><script src="js/shell-boot.js?v=__STAMP__"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>PRIM3, the artist: Cyber Security Specialist · Music</title>
+  <meta name="description" content="PRIM3 is a music act of its own: the music act of PRIM3, McCluster Corp's cybersecurity learning product. Its album, Cyber Security Specialist, is 13 study tapes, music to build to. Managed by Matthew McCluster.">
+  <meta property="og:type" content="profile">
+  <meta property="og:title" content="PRIM3 · Cyber Security Specialist">
+  <meta property="og:description" content="The music act of PRIM3, McCluster Corp's cybersecurity learning product. 13 study tapes: music to build to.">
+  <meta property="og:url" content="https://matthew.mccluster.org/prim3-artist.html">
+  <meta property="og:image" content="https://matthew.mccluster.org/assets/img/prim3-logo.png">
+  <meta property="og:image:width" content="256">
+  <meta property="og:image:height" content="256">
+  <meta property="og:image:alt" content="The PRIM3 mark">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="PRIM3 · Cyber Security Specialist">
+  <meta name="twitter:description" content="The music act of PRIM3, McCluster Corp's cybersecurity learning product. 13 study tapes: music to build to.">
+  <meta name="twitter:image" content="https://matthew.mccluster.org/assets/img/prim3-logo.png">
+  <link rel="canonical" href="https://matthew.mccluster.org/prim3-artist.html">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/img/prim3-mark-32.png">
+  <link rel="apple-touch-icon" href="assets/img/prim3-mark-180.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0a0807">
+  <link rel="preload" href="assets/fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+  <style>
+    /* PRIM3, THE ARTIST. Phone first: one column, the mark, the name, who
+       the act is, then the album. Wider screens only add room: the header
+       sits beside its mark from 40rem, and from 64rem the artist and the
+       album become two columns. Nothing the phone shows is taken away. */
+    html, body { background: var(--ink); }
+    .p3a { max-width: 40rem; margin: 0 auto; padding: clamp(4.2rem, 8vh, 5.5rem) 16px 10rem; }
+    .p3a__k { font-size: 0.7rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--ruby-text); font-weight: 800; }
+    .p3a__id { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; margin-top: 0.8rem; }
+    /* the supplied mark, whole, scaled proportionally: never cropped, never on a plate */
+    .p3a__mark { display: block; width: 7.5rem; height: auto; aspect-ratio: 1; }
+    .p3a h1 { font-family: var(--sig); text-transform: uppercase; line-height: 0.9; font-size: clamp(3rem, 16vw, 5rem); margin: 0; }
+    .p3a__role { color: var(--cream-dim); font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; margin-top: 0.45rem; }
+    .p3a__bio { color: var(--cream-dim); line-height: 1.7; font-size: 0.98rem; margin-top: 1.2rem; }
+    .p3a__bio b { color: var(--cream); font-weight: 700; }
+    .p3a__managed { margin-top: 1.1rem; padding: 0.85rem 1rem; border-radius: 12px; border: 1px solid rgba(244,239,230,0.14);
+      background: rgba(244,239,230,0.04); color: var(--cream); font-size: 0.9rem; line-height: 1.6; }
+    .p3a__managed small { display: block; color: var(--cream-dim); font-size: 0.8rem; margin-top: 0.2rem; }
+    .p3a__links { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 1.2rem; }
+    .p3a__btn { display: inline-flex; align-items: center; min-height: 44px; padding: 0 1.1rem; border-radius: 999px;
+      text-decoration: none; font-weight: 700; font-size: 0.9rem; color: var(--cream); border: 1px solid rgba(244,239,230,0.24); }
+    .p3a__btn--play { background: var(--ruby, #e5383b); border-color: transparent; color: #fff; }
+    .p3a__album { margin-top: 2.2rem; }
+    .p3a__albhead { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr); gap: 1rem; align-items: center; }
+    .p3a__cov { width: 100%; height: auto; aspect-ratio: 1; border-radius: 14px; background: var(--ink-2);
+      box-shadow: 0 14px 40px -16px rgba(0,0,0,0.9), 0 0 0 1px rgba(229,56,59,0.25); }
+    .p3a__albhead h2 { font-family: var(--display); font-weight: 400; font-size: clamp(1.35rem, 6vw, 1.8rem); line-height: 1.1; margin: 0.15rem 0 0; }
+    .p3a__albhead p { color: var(--cream-dim); font-size: 0.8rem; margin: 0.3rem 0 0; }
+    .p3a__tracks { list-style: none; padding: 0; margin: 1.2rem 0 0; border-top: 1px solid rgba(229,56,59,0.3); counter-reset: trk; }
+    .p3a__tracks li { counter-increment: trk; display: grid; grid-template-columns: 1.8rem minmax(0, 1fr) auto; align-items: baseline;
+      column-gap: 0.6rem; border-bottom: 1px solid rgba(244,239,230,0.09); }
+    .p3a__tracks li::before { content: counter(trk); color: var(--ruby-text); font-size: 0.75rem; font-weight: 800; font-variant-numeric: tabular-nums; padding: 0.95rem 0; }
+    .p3a__tracks a { display: block; padding: 0.85rem 0; color: var(--cream); text-decoration: none; font-family: var(--display); font-size: 1.02rem; min-width: 0; overflow-wrap: anywhere; }
+    .p3a__tracks a:hover, .p3a__tracks a:focus-visible { text-decoration: underline; text-decoration-color: rgba(229,56,59,0.6); text-underline-offset: 4px; }
+    .p3a__tracks span { color: var(--cream-dim); font-size: 0.78rem; font-variant-numeric: tabular-nums; }
+    .p3a__note { margin-top: 1.4rem; color: var(--cream-dim); font-size: 0.82rem; line-height: 1.7; }
+    .p3a__note a { color: var(--ruby-text); text-decoration: none; }
+    @media (min-width: 40rem) {
+      .p3a { padding-left: 2rem; padding-right: 2rem; }
+      .p3a__id { grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 1.4rem; }
+      .p3a__mark { width: 9rem; }
+      .p3a__albhead { grid-template-columns: 7rem minmax(0, 1fr); }
+    }
+    @media (min-width: 64rem) {
+      .p3a { max-width: 70rem; display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); column-gap: 3.5rem; align-items: start; }
+      .p3a__artist { position: sticky; top: 5rem; }
+      .p3a__mark { width: 11rem; }
+      .p3a__album { margin-top: 0.4rem; }
+    }
+  </style>
+  <link rel="stylesheet" href="css/music-director.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/music-system-v2.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/control-system.css?v=__STAMP__">
+  <!-- public document page: the privacy notice shows as a banner, not a wall (see js/live-content.js) -->
+  <meta name="mcc-privacy-notice" content="banner">
+  <script src="js/live-content.js?v=__STAMP__"></script>
+  <!-- prim3-artist-graph:start (generated by tools/build-prim3-artist.mjs; do not edit by hand) -->
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","@id":"https://matthew.mccluster.org/prim3-artist.html#page","url":"https://matthew.mccluster.org/prim3-artist.html","name":"PRIM3, the artist","isPartOf":{"@id":"https://matthew.mccluster.org/#website"},"mainEntity":{"@id":"https://matthew.mccluster.org/prim3-artist.html#prim3-artist"},"about":{"@id":"https://matthew.mccluster.org/prim3-artist.html#prim3-artist"}},{"@type":"MusicGroup","@id":"https://matthew.mccluster.org/prim3-artist.html#prim3-artist","name":"PRIM3","url":"https://matthew.mccluster.org/prim3-artist.html","image":"https://matthew.mccluster.org/assets/img/prim3-logo.png","description":"The music act of PRIM3, McCluster Corp's cybersecurity learning product. An artist in its own right, separate from Matthew McCluster. Its album is Cyber Security Specialist."},{"@type":"MusicAlbum","@id":"https://matthew.mccluster.org/catalogue.html#album-prim3","name":"Cyber Security Specialist","url":"https://matthew.mccluster.org/album.html?album=prim3","image":"https://matthew.mccluster.org/assets/img/prim3-logo.png","byArtist":{"@id":"https://matthew.mccluster.org/prim3-artist.html#prim3-artist"},"numTracks":13,"track":{"@type":"ItemList","numberOfItems":13,"itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"https://matthew.mccluster.org/catalogue.html#got-wifi"}},{"@type":"ListItem","position":2,"item":{"@id":"https://matthew.mccluster.org/catalogue.html#high-alert"}},{"@type":"ListItem","position":3,"item":{"@id":"https://matthew.mccluster.org/catalogue.html#osint"}},{"@type":"ListItem","position":4,"item":{"@id":"https://matthew.mccluster.org/catalogue.html#anti-social-engineering"}},{"@type":"ListItem","position":5,"item":{"@id":"https://matthew.mccluster.org/catalogue.html#red-blue-purple-white-team"}},{"@type":"ListItem","position":6,"item":{"@id":"https://matthew.mccluster.org/catalogue.html#data-breach"}},{"@type":"ListItem","position":7,"item":{"@id":"https://matthew.mccluster.org/catalogue.html#app-attacks"}},{"@type":"ListItem","position":8,"item":{"@id":"https://matthew.mccluster.org/catalogue.html#dive-in"}},{"@type":"ListItem","position":9,"item":{"@id":"https://matthew.mccluster.org/catalogue.html#iot"}},{"@type":"ListItem","position":10,"item":{"@id":"https://matthew.mccluster.org/catalogue.html#per-diem"}},{"@type":"ListItem","position":11,"item":{"@id":"https://matthew.mccluster.org/catalogue.html#raid-hot-site"}},{"@type":"ListItem","position":12,"item":{"@id":"https://matthew.mccluster.org/catalogue.html#evil-twin-middle-man"}},{"@type":"ListItem","position":13,"item":{"@id":"https://matthew.mccluster.org/catalogue.html#ghost-in-the-wires"}}]}},{"@type":"MusicRecording","@id":"https://matthew.mccluster.org/catalogue.html#got-wifi","name":"Got WiFi?","url":"https://matthew.mccluster.org/album.html?album=prim3&t=Got%20WiFi%3F","duration":"PT1M32S","byArtist":{"@id":"https://matthew.mccluster.org/prim3-artist.html#prim3-artist"},"inAlbum":{"@id":"https://matthew.mccluster.org/catalogue.html#album-prim3"}},{"@type":"MusicRecording","@id":"https://matthew.mccluster.org/catalogue.html#high-alert","name":"High Alert","url":"https://matthew.mccluster.org/album.html?album=prim3&t=High%20Alert","duration":"PT2M48S","byArtist":{"@id":"https://matthew.mccluster.org/prim3-artist.html#prim3-artist"},"inAlbum":{"@id":"https://matthew.mccluster.org/catalogue.html#album-prim3"}},{"@type":"MusicRecording","@id":"https://matthew.mccluster.org/catalogue.html#osint","name":"OSINT","url":"https://matthew.mccluster.org/album.html?album=prim3&t=OSINT","duration":"PT1M37S","byArtist":{"@id":"https://matthew.mccluster.org/prim3-artist.html#prim3-artist"},"inAlbum":{"@id":"https://matthew.mccluster.org/catalogue.html#album-prim3"}},{"@type":"MusicRecording","@id":"https://matthew.mccluster.org/catalogue.html#anti-social-engineering","name":"Anti-Social Engineering (Draft)","url":"https://matthew.mccluster.org/album.html?album=prim3&t=Anti-Social%20Engineering%20(Draft)","duration":"PT1M50S","byArtist":{"@id":"https://matthew.mccluster.org/prim3-artist.html#prim3-artist"},"inAlbum":{"@id":"https://matthew.mccluster.org/catalogue.html#album-prim3"}},{"@type":"MusicRecording","@id":"https://matthew.mccluster.org/catalogue.html#red-blue-purple-white-team","name":"Red, Blue, Purple, White Team","url":"https://matthew.mccluster.org/album.html?album=prim3&t=Red%2C%20Blue%2C%20Purple%2C%20White%20Team","duration":"PT1M28S","byArtist":{"@id":"https://matthew.mccluster.org/prim3-artist.html#prim3-artist"},"inAlbum":{"@id":"https://matthew.mccluster.org/catalogue.html#album-prim3"}},{"@type":"MusicRecording","@id":"https://matthew.mccluster.org/catalogue.html#data-breach","name":"Data Breach","url":"https://matthew.mccluster.org/album.html?album=prim3&t=Data%20Breach","duration":"PT4M16S","byArtist":{"@id":"https://matthew.mccluster.org/prim3-artist.html#prim3-artist"},"inAlbum":{"@id":"https://matthew.mccluster.org/catalogue.html#album-prim3"}},{"@type":"MusicRecording","@id":"https://matthew.mccluster.org/catalogue.html#app-attacks","name":"App Attacks","url":"https://matthew.mccluster.org/album.html?album=prim3&t=App%20Attacks","duration":"PT1M26S","byArtist":{"@id":"https://matthew.mccluster.org/prim3-artist.html#prim3-artist"},"inAlbum":{"@id":"https://matthew.mccluster.org/catalogue.html#album-prim3"}},{"@type":"MusicRecording","@id":"https://matthew.mccluster.org/catalogue.html#dive-in","name":"Dive In","url":"https://matthew.mccluster.org/album.html?album=prim3&t=Dive%20In","duration":"PT2M44S","byArtist":{"@id":"https://matthew.mccluster.org/prim3-artist.html#prim3-artist"},"inAlbum":{"@id":"https://matthew.mccluster.org/catalogue.html#album-prim3"}},{"@type":"MusicRecording","@id":"https://matthew.mccluster.org/catalogue.html#iot","name":"IOT (Draft)","url":"https://matthew.mccluster.org/album.html?album=prim3&t=IOT%20(Draft)","duration":"PT1M12S","byArtist":{"@id":"https://matthew.mccluster.org/prim3-artist.html#prim3-artist"},"inAlbum":{"@id":"https://matthew.mccluster.org/catalogue.html#album-prim3"}},{"@type":"MusicRecording","@id":"https://matthew.mccluster.org/catalogue.html#per-diem","name":"Per Diem (Draft)","url":"https://matthew.mccluster.org/album.html?album=prim3&t=Per%20Diem%20(Draft)","duration":"PT1M25S","byArtist":{"@id":"https://matthew.mccluster.org/prim3-artist.html#prim3-artist"},"inAlbum":{"@id":"https://matthew.mccluster.org/catalogue.html#album-prim3"}},{"@type":"MusicRecording","@id":"https://matthew.mccluster.org/catalogue.html#raid-hot-site","name":"RAID (Hot Site)","url":"https://matthew.mccluster.org/album.html?album=prim3&t=RAID%20(Hot%20Site)","duration":"PT3M40S","byArtist":{"@id":"https://matthew.mccluster.org/prim3-artist.html#prim3-artist"},"inAlbum":{"@id":"https://matthew.mccluster.org/catalogue.html#album-prim3"}},{"@type":"MusicRecording","@id":"https://matthew.mccluster.org/catalogue.html#evil-twin-middle-man","name":"Evil Twin (Middle Man)","url":"https://matthew.mccluster.org/album.html?album=prim3&t=Evil%20Twin%20(Middle%20Man)","duration":"PT3M40S","byArtist":{"@id":"https://matthew.mccluster.org/prim3-artist.html#prim3-artist"},"inAlbum":{"@id":"https://matthew.mccluster.org/catalogue.html#album-prim3"}},{"@type":"MusicRecording","@id":"https://matthew.mccluster.org/catalogue.html#ghost-in-the-wires","name":"Ghost in the Wires","url":"https://matthew.mccluster.org/album.html?album=prim3&t=Ghost%20in%20the%20Wires","duration":"PT4M10S","byArtist":{"@id":"https://matthew.mccluster.org/prim3-artist.html#prim3-artist"},"inAlbum":{"@id":"https://matthew.mccluster.org/catalogue.html#album-prim3"}}]}</script>
+  <!-- prim3-artist-graph:end -->
+</head>
+<body class="songpage music-room music-v2">
+  <header class="music-contextbar">
+    <a class="music-contextbar__brand" href="listen.html"><img src="assets/img/m-mark.png" alt=""><span>Music</span></a>
+    <nav class="music-contextbar__nav" aria-label="Music"><a href="listen.html">Listen</a><a href="catalogue.html">Library</a><a href="creator.html">Creator Studio</a></nav>
+  </header>
+  <main class="p3a">
+    <section class="p3a__artist" aria-labelledby="p3aName">
+      <p class="p3a__k">The artist</p>
+      <div class="p3a__id">
+        <img class="p3a__mark" src="assets/img/prim3-logo.png" alt="" width="256" height="256">
+        <div>
+          <h1 id="p3aName">PRIM3</h1>
+          <p class="p3a__role">Music act · Cyber Security Specialist</p>
+        </div>
+      </div>
+      <p class="p3a__bio"><b>PRIM3 is an artist of its own</b>, separate from Matthew McCluster:
+        the music act of <a href="prim3.html" style="color:var(--ruby-text);text-decoration:none">PRIM3</a>,
+        McCluster Corp's free cybersecurity learning product. Its songs are study tapes, music to build to.
+        After the opener, Got WiFi?, the album follows the PRIM3 course in order.</p>
+      <p class="p3a__managed" id="p3aManaged"><b>Managed by Matthew McCluster.</b>
+        <small>PRIM3 does not have a login of its own yet. Until it does, Matthew McCluster's account runs it, the way a label runs an artist.</small></p>
+      <div class="p3a__links">
+        <a class="p3a__btn p3a__btn--play" href="album.html?album=prim3" data-cta="prim3-artist-play">Play the album</a>
+        <a class="p3a__btn" href="prim3.html" data-cta="prim3-artist-course">Learn with PRIM3</a>
+      </div>
+    </section>
+
+    <section class="p3a__album" aria-labelledby="p3aAlbum">
+      <div class="p3a__albhead">
+        <img class="p3a__cov" src="assets/img/prim3-logo.png" alt="" width="256" height="256" loading="lazy">
+        <div>
+          <p class="p3a__k">The album</p>
+          <h2 id="p3aAlbum">Cyber Security Specialist</h2>
+          <p>PRIM3 · <span id="p3aCount">13 tracks</span> · Music to build to.</p>
+        </div>
+      </div>
+      <ol class="p3a__tracks" id="p3aTracks">
+        <!-- prim3-artist-tracks:start (generated) -->
+        <li id="t-got-wifi"><a href="album.html?album=prim3&amp;t=Got%20WiFi%3F" data-cta="prim3-artist-track">Got WiFi?</a><span>1:32</span></li>
+        <li id="t-high-alert"><a href="album.html?album=prim3&amp;t=High%20Alert" data-cta="prim3-artist-track">High Alert</a><span>2:48</span></li>
+        <li id="t-osint"><a href="album.html?album=prim3&amp;t=OSINT" data-cta="prim3-artist-track">OSINT</a><span>1:37</span></li>
+        <li id="t-anti-social-engineering"><a href="album.html?album=prim3&amp;t=Anti-Social%20Engineering%20(Draft)" data-cta="prim3-artist-track">Anti-Social Engineering (Draft)</a><span>1:50</span></li>
+        <li id="t-red-blue-purple-white-team"><a href="album.html?album=prim3&amp;t=Red%2C%20Blue%2C%20Purple%2C%20White%20Team" data-cta="prim3-artist-track">Red, Blue, Purple, White Team</a><span>1:28</span></li>
+        <li id="t-data-breach"><a href="album.html?album=prim3&amp;t=Data%20Breach" data-cta="prim3-artist-track">Data Breach</a><span>4:16</span></li>
+        <li id="t-app-attacks"><a href="album.html?album=prim3&amp;t=App%20Attacks" data-cta="prim3-artist-track">App Attacks</a><span>1:26</span></li>
+        <li id="t-dive-in"><a href="album.html?album=prim3&amp;t=Dive%20In" data-cta="prim3-artist-track">Dive In</a><span>2:44</span></li>
+        <li id="t-iot"><a href="album.html?album=prim3&amp;t=IOT%20(Draft)" data-cta="prim3-artist-track">IOT (Draft)</a><span>1:12</span></li>
+        <li id="t-per-diem"><a href="album.html?album=prim3&amp;t=Per%20Diem%20(Draft)" data-cta="prim3-artist-track">Per Diem (Draft)</a><span>1:25</span></li>
+        <li id="t-raid-hot-site"><a href="album.html?album=prim3&amp;t=RAID%20(Hot%20Site)" data-cta="prim3-artist-track">RAID (Hot Site)</a><span>3:40</span></li>
+        <li id="t-evil-twin-middle-man"><a href="album.html?album=prim3&amp;t=Evil%20Twin%20(Middle%20Man)" data-cta="prim3-artist-track">Evil Twin (Middle Man)</a><span>3:40</span></li>
+        <li id="t-ghost-in-the-wires"><a href="album.html?album=prim3&amp;t=Ghost%20in%20the%20Wires" data-cta="prim3-artist-track">Ghost in the Wires</a><span>4:10</span></li>
+        <!-- prim3-artist-tracks:end -->
+      </ol>
+      <p class="p3a__note">Every song is billed to PRIM3. No other credits are listed yet.
+        Registered numbers are in <a href="catalogue.html#got-wifi">the catalogue</a>.</p>
+    </section>
+  </main>
+
+  <!-- THE BAR: Music · HERE · Profile. One tap goes where it says; hold a tab to open its wing. -->
+  <nav class="appbar" aria-label="Sections">
+    <a class="appbar__tab" id="appbarNP" href="listen.html" data-appnav="music">
+      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path class="np-arrow" d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path class="np-arrow" d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect class="np-bar" x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect class="np-bar" x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect class="np-bar" x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect class="np-bar" x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
+      <span>Music</span>
+    </a>
+    <a class="appbar__tab" href="index.html" data-appnav="home">
+      <img class="appbar__m" src="assets/img/m-mark.png" alt="">
+      <span>HERE</span>
+    </a>
+    <a class="appbar__tab" href="account.html" data-appnav="profile">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
+      <span>Profile</span>
+    </a>
+  </nav>
+
+  <script src="js/masthead.js?v=__STAMP__"></script>
+  <script src="js/analytics.js?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script defer src="js/pip.js?v=__STAMP__"></script>
+  <script src="js/control-room/nav.js?v=__STAMP__"></script>
+  <script src="js/control-registry.js?v=__STAMP__"></script>
+  <script src="js/control-palette.js?v=__STAMP__" defer></script>
+  <script src="js/site-editor.js?v=__STAMP__" defer></script>
+</body>
+</html>

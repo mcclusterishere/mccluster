@@ -226,7 +226,9 @@
   },
   {
    "slug": "prim3",
-   "name": "PRIM3",
+   "name": "Cyber Security Specialist",
+   "artist": "PRIM3",
+   "artist_page": "prim3-artist.html",
    "tag": "The study tapes",
    "art": "assets/img/prim3-logo.png",
    "by": "Music to build to.",

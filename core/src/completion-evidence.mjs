@@ -105,6 +105,17 @@ function policyEvidence(job, output) {
       records.push({ kind: 'prim3_news_desk', agent_key: output.agent_key, country_iso: output.country_iso || null, commented: output.commented, briefed: output.briefed, backlog: Number(output.backlog || 0) });
       break;
     }
+    case 'character_post': {
+      requireValue(job, Array.isArray(output.receipts) && Number.isInteger(output.published) && output.published === output.receipts.length, 'character posts must report one receipt per published post');
+      if (output.published > 0) {
+        requireValue(job, output.receipts.every((r) => text(r.publication_id) && (text(r.post_id) || text(r.comment_id))), 'each character post needs a durable publication and post or comment receipt');
+        records.push({ kind: 'character_posts', published: output.published, characters: output.receipts.map((r) => r.character_id), withheld: (output.withheld || []).length });
+      } else {
+        requireValue(job, output.reason === 'flag_off' || (Array.isArray(output.withheld) && output.withheld.length > 0), 'a character batch with no post needs a bounded reason');
+        records.push({ kind: 'bounded_noop', reason: output.reason || 'all_withheld', withheld: (output.withheld || []).length });
+      }
+      break;
+    }
     case 'world_news_pairing': {
       const counts = ['articles_read', 'strong', 'weak', 'pairs_sent', 'pairs_new'];
       requireValue(job, counts.every((key) => Number.isInteger(output[key]) && output[key] >= 0), 'world news pairing must report article, candidate and pair counts');

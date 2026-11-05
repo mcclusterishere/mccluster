@@ -104,13 +104,18 @@ function eventRow(orgId, result, item) {
 }
 
 function observationRow(orgId, result, item) {
+  // BLS timestamps are period anchors, not collection times. Fail closed if
+  // a future adapter regression omits one rather than silently dating it now.
+  if (result.source === 'bls' && (!item.observed_at || !Number.isFinite(Date.parse(item.observed_at)))) {
+    throw new GeoAdapterError('BLS observation period timestamp missing', 502, 'invalid_observation_timestamp');
+  }
   return {
     org_id: orgId,
     source_key: result.source,
     external_id: item.external_id ? String(item.external_id) : null,
     observation_type: item.observation_type || 'measurement',
     metric: item.metric || null,
-    value_number: Number.isFinite(Number(item.value_number)) ? Number(item.value_number) : null,
+    value_number: item.value_number !== null && item.value_number !== undefined && item.value_number !== '' && Number.isFinite(Number(item.value_number)) ? Number(item.value_number) : null,
     value_text: item.value_text === undefined || item.value_text === null ? null : String(item.value_text),
     unit: item.unit || null,
     location: wktPoint(item.point),

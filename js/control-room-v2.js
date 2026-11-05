@@ -963,7 +963,7 @@
        Observability). Absent for a non-owner, whose read is refused. */
     if (state.recentErrors && state.recentErrors.count) {
       var latestError = state.recentErrors.latest || {};
-      items.push({ title: state.recentErrors.count + (state.recentErrors.more ? "+" : "") + " error" + (state.recentErrors.count === 1 ? "" : "s") + " in the last 24 hours", sub: "Latest: " + text(latestError.event_name || latestError.route, "event") + " · " + ago(latestError.occurred_at || latestError.created_at), kind: "bad", action: "observe-errors" });
+      items.push({ title: state.recentErrors.count + (state.recentErrors.more ? "+" : "") + " error log " + (state.recentErrors.count === 1 ? "entry" : "entries") + " in the last 24 hours", sub: "Not an incident count. Latest: " + text(latestError.event_name || latestError.route, "event") + " · " + ago(latestError.occurred_at || latestError.created_at), kind: "bad", action: "observe-errors" });
     }
     var newLeads = state.leads.filter(function (l) { return (l.status || "new") === "new"; });
     if (newLeads.length) items.push({ title: newLeads.length + " lead" + (newLeads.length === 1 ? "" : "s") + " never answered", sub: "Still in the new stage in the canonical leads table.", kind: "warn", action: "work-pipeline" });
@@ -1822,9 +1822,11 @@
   }
   function renderSystemOverview() {
     var services = serviceRows();
+    var summary = window.CR.systemSummary;
+    var flow = summary ? summary.dependencies({api: state.health && state.health.ok, database: state.status && state.status.database && state.status.database.reachable, core: state.coreBridge && state.coreBridge.ok, at: state.refreshedAt}) : renderTopology();
     return sourceStates([["Workspace", state.sources.workspace], ["Edge health", state.sources.health], ["Core bridge", state.sources.coreBridge], ["Durable resume", state.sources.coreResume], ["Operator status", state.sources.status], ["Core", state.sources.ai], ["Host health", state.sources.aiHealth], ["Audit ledger", state.sources.audit]]) +
       '<div class="cr-kpis">' + kpi("API", state.health && state.health.ok ? "UP" : "—", "edge") + kpi("Database", state.status && state.status.database && state.status.database.reachable ? "UP" : "—", "truth") + kpi("Jobs", String(state.jobs.filter(function (x) { return ["queued", "running"].indexOf(x.status) >= 0; }).length), "active") + kpi("Failures", String(state.jobs.filter(function (x) { return x.status === "failed"; }).length), "workload") + '</div>' +
-      '<div class="cr-grid">' + panel("Live topology", "click a resource", '<div class="cr-panel__body">' + renderTopology() + '</div>', "cr-span-7") +
+      '<div class="cr-grid">' + panel("Service dependencies", "select a service to inspect", '<div class="cr-panel__body">' + flow + '</div>', "cr-span-7") +
       panel("Services", "canonical status", '<div class="cr-list">' + services.map(function (s) { return row(s.title, s.sub, s.value, s.kind, "inspect-service", { key: s.key, badge: s.kind === "ai" ? "AI" : s.kind }); }).join("") + '</div>', "cr-span-5") + '</div>';
   }
   var JOB_FILTERS = ["all", "running", "queued", "failed", "done"];
@@ -2056,10 +2058,11 @@
         ], fallback, "No canonical context events")
       : '<p class="cr-panel__body cr-muted">No failed canonical jobs and no recent privileged audit entries in the loaded snapshot.</p>';
 
-    return renderTracePanel() + head + controls +
+    var summary = window.CR.systemSummary ? window.CR.systemSummary.render(retained, {loaded: Boolean(state.observability && state.observability.ok), pending: state.pending.observability, hasMore: data.has_more}) : "";
+    return renderTracePanel() + head + controls + summary +
       '<p class="cr-derived">Retained events are org-scoped and owner-only. Worker requests are kept after the operator is verified as a member of this workspace; request bodies, prompts and credentials are never stored. Info events are kept 14 days, warnings and errors 90. Open any failure, job, media job, publish job or ledger entry to see its trace.</p>' +
       retainedBody +
-      '<h3 class="cr-subhead">Canonical failure &amp; audit ledger</h3>' + fallbackBody;
+      '<details class="cr-system-evidence"><summary>Job failures, recorded changes &amp; unreadable sources</summary><p>Supporting records from the current snapshot. A recorded change is not necessarily a failure. A source warning means this screen could not read that data; it does not prove the service is down. These records can overlap the events above and are not added to the error count.</p>' + fallbackBody + '</details>';
   }
   /* SOCIAL ACCOUNTS + PUBLISHING.
 
@@ -2371,7 +2374,7 @@
       var overflowOn = NAVI.moreSections().some(function (s) { return s.id === sec; });
       var healthy = Boolean(state.health && state.health.ok);
       host.innerHTML =
-        '<a class="cr-sections__brand" href="#home:today" data-nav-route="#home:today" aria-label="Control Room home"><img src="assets/img/hm-mark-wide.webp" alt=""><b>Control Room</b></a>' +
+        '<a class="cr-sections__brand" href="#home:today" data-nav-route="#home:today" aria-label="Control Room home"><img src="assets/img/hm-mark-wide.webp" alt=""><b>Home</b></a>' +
         '<ul class="cr-sections__list">' + items +
         '<li class="is-more"><button class="cr-sections__item' + (overflowOn ? " is-active" : "") + '" type="button" id="crMore" aria-haspopup="dialog" aria-expanded="false" aria-controls="crMoreSheet">' + navIcon("more") + '<span class="cr-sections__label">More</span></button></li></ul>' +
         '<div class="cr-sections__foot"><span class="cr-health-dot' + (healthy ? " is-up" : (state.error ? " is-down" : "")) + '"></span>' + esc(healthy ? "All systems healthy" : (state.error ? "Check system health" : "Checking health")) + ' · PROD</div>';
@@ -2389,8 +2392,8 @@
     if (title) {
       var atHome = sec === "home" && (!current.item || current.item.id === "today");
       title.innerHTML = atHome
-        ? '<span class="cr-crumb__home" aria-current="page">Control</span>'
-        : '<a class="cr-crumb__home" href="#home:today" data-nav-route="#home:today">Control</a><span class="cr-crumb__sep" aria-hidden="true">›</span><span class="cr-crumb__here">' + esc(current.section ? current.section.label : "Home") + '</span>';
+        ? '<span class="cr-crumb__home" aria-current="page">Home</span>'
+        : '<a class="cr-crumb__home" href="#home:today" data-nav-route="#home:today">Home</a><span class="cr-crumb__sep" aria-hidden="true">›</span><span class="cr-crumb__here">' + esc(current.section ? current.section.label : "Home") + '</span>';
       var back = title.querySelector("a[data-nav-route]");
       if (back) back.addEventListener("click", function (e) {
         if (e.metaKey || e.ctrlKey || e.shiftKey || e.button) return;
@@ -2425,6 +2428,18 @@
       var on = x.id === it.id;
       return '<a class="cr-tab' + (on ? " is-on" : "") + '" href="' + esc(x.route) + '" data-nav-route="' + esc(x.route) + '"' + (on ? ' aria-current="page"' : "") + '>' + esc(x.label) + (counts[x.id] ? '<b>' + counts[x.id] + '</b>' : "") + '</a>';
     }).join("") + '</nav>';
+    if (s.id === "people") {
+      var groups = [["Messages", ["inbox"]], ["People", ["contacts", "companies", "clients"]], ["Follow-through", ["deals", "outreach"]]];
+      var activeGroup = groups.filter(function (g) { return g[1].indexOf(it.id) >= 0; })[0];
+      tabs = '<nav class="cr-inbox-categories" aria-label="Inbox categories">' + groups.map(function (g) {
+        var target = s.items.filter(function (x) { return x.id === g[1][0]; })[0];
+        var on = g === activeGroup;
+        return '<div class="cr-inbox-category"><a class="cr-tab' + (on ? ' is-on' : '') + '" href="' + esc(target.route) + '" data-nav-route="' + esc(target.route) + '"' + (on ? ' aria-current="true"' : '') + '>' + esc(g[0]) + '</a></div>';
+      }).join('') + '</nav>';
+      if (activeGroup && activeGroup[1].length > 1) tabs += '<nav class="cr-tabs" aria-label="' + esc(activeGroup[0]) + ' views">' + s.items.filter(function (x) { return activeGroup[1].indexOf(x.id) >= 0; }).map(function (x) {
+        return '<a class="cr-tab' + (x.id === it.id ? ' is-on' : '') + '" href="' + esc(x.route) + '" data-nav-route="' + esc(x.route) + '"' + (x.id === it.id ? ' aria-current="page"' : '') + '>' + esc(x.label) + '</a>';
+      }).join('') + '</nav>';
+    }
     var views = it.views && it.views.length > 1 ? '<nav class="cr-seg cr-seg--views" aria-label="' + esc(it.label) + '">' + it.views.map(function (vw) {
       var on = entry.view && vw.id === entry.view.id;
       return '<a href="' + esc(vw.route) + '" data-nav-route="' + esc(vw.route) + '"' + (on ? ' class="is-on" aria-current="page"' : "") + '>' + esc(vw.label) + '</a>';

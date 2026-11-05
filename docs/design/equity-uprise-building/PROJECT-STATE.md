@@ -2,6 +2,18 @@
 
 > Update this file whenever completion, maturity, visual direction, or next work changes.
 
+## Local screen and object reconstruction — 2026-11-03
+
+Unpublished repair based on physical-computer-lab source `18a518f2457eb7985c702e8e4a839ed0dc255a74`. Earlier unpushed patch artifacts were unavailable in this workspace; this is a fresh reconstruction, not proof of a previously saved change.
+
+- Screen hooks no longer fabricate glowing panels for unresolved placements or headless equipment. Exact authored meshes and the labelled directory remain the interaction paths. Ambiguous family identities fail closed; hidden ancestors are not selectable.
+- The screen demo now loads the existing componentized electronics fabric using its native absolute-feet transform, exposing only the selected floor’s monitor and host assemblies. All 62 monitor face/bezel pairs bind to exact IDs; modeled stands and ports remain in place. No discovery-hint placement is synthesized. Unmodeled targets are labeled directory-only. Full-GLB tests cover exact identities, mounts, coordinate alignment, hidden ancestors and excluded power receptacles. Visual mounting/collision quality is still unverified.
+- Native monitor face color/emission now derives from that exact monitor’s sandbox signal and host boot/login stage; bezel, mount and host materials are untouched. Labels explicitly identify sandbox state. Unknown/load-failed state stays dark and unavailable; rendering never advances boot or signs in. Full-canonical tests cover all 62 monitors through shutdown, POST, firmware, bootloader, login and desktop, plus sibling signal isolation. This is a state indicator, not a rendered desktop UI or verified visual QA.
+- Every canonical monitor uses its exact host/video connection, including studio and evidence monitors. Disconnecting one sibling monitor cannot borrow another monitor's signal. Headless computers do not invent a monitor, keyboard or mouse.
+- The terminal Object tab inspects exact canonical IDs, connections, peer ports and relationships. Supported computer-side cable operations remain sandbox-only; rack transit, arbitrary rewiring and unmodeled service controls are explicitly unavailable.
+- Complete asset registry, roof destinations, building HTML and all tracked GLBs recovered. Detailed floors 01–06 generated locally with official builders; authored inventories were not replaced by generated outputs.
+- Full-registry Node validation: 37 screen/mission/binding/object tests and 67 physical-computer checks pass; local recovery evidence records these runs. Browser/mobile visual validation remains blocked before page load by Chromium's `socket() failed: Operation not permitted`; no visual approval or production verification is claimed. Visual confirmation of physical monitor placement and complete device-level simulation remain unfinished.
+
 ## End goal
 
 A real, fully furnished, program-aware, navigable 3D headquarters from B1 through Level 7, with finished floor environments that assemble into one coherent building.
@@ -24,7 +36,13 @@ Core V2 is the active geometry authority:
 - Stair A X60–72 / Y54–72;
 - MEP/riser approximately X50–60 / Y66–72.
 
+## Bridgeport v2 source boundary — 2026-11-04
+
+Added the downtown navigation contract record as support-only. Its door/stair audit preserves the HQ as unanchored and records missing geographic landing/opening evidence; no building geometry, floor program or capability changed. Regenerated source coverage now classifies 614 sources (104 capability, 510 support-only).
+
 ## City review source coverage — 2026-11-04
+
+The shared Bridgeport navigation integration adds its existing support-only contract to the reconciled City/PRIM3 ledger: 620 sources (104 capability, 516 support-only), with 2,378/2,378 checks passing. It preserves the missing geographic door/stair survey boundary and makes no building geometry or capability changes.
 
 Release integration reconciles the City and PRIM3 review source classifications without dropping either entry set. The combined checkout covers 619 sources (104 capability, 515 support-only), with 2,374/2,374 checks passing. This is source traceability only; building geometry, floor program and capability ownership are unchanged.
 

@@ -82,7 +82,7 @@ test('every renderer a leaf names exists in the Control shell',async()=>{
 
 test('the in-flight PRs only have to register a renderer',()=>{
   const slots=Object.fromEntries(N.leaves().filter(l=>l.leaf.module).map(l=>[l.leaf.route,l.leaf.module]));
-  assert.deepEqual(slots,{'#sell:store:marketplace':'marketplace','#sell:store:direct':'musicDirect','#sell:music:lyrics':'lyrics','#create:level-forge':'prim3Levels'});
+  assert.deepEqual(slots,{'#sell:store:marketplace':'marketplace','#sell:store:direct':'musicDirect','#sell:music:lyrics':'lyrics','#create:level-forge':'prim3Levels','#sell:music:artists':'musicLabel'});
 });
 
 test('the palette finds a view by its old name',()=>{
@@ -114,4 +114,11 @@ test('the shared bar\'s Control button: one tap opens the NAV sections, two taps
   assert.match(site,/N\.NAV\.forEach\(section =>/,'the panel\'s sections come from NAV');
   assert.match(css,/\.mcc-section\{[^}]*min-height:62px/);
   assert.match(css,/\.mcc-sections\{display:grid;grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
+});
+
+
+test('Inbox display consolidates People without breaking either deep-link vocabulary',()=>{
+  assert.equal(N.section('people').label,'Inbox');
+  assert.equal(N.section('insights').label,'Analytics');
+  for(const [route,canonical] of [['#inbox','#people:inbox:conversations'],['#inbox:contacts','#people:contacts'],['#inbox:inbox:ai-reply','#people:inbox:ai-reply']]) assert.equal(N.resolve(route).entry.leaf.route,canonical);
 });

@@ -97,7 +97,7 @@ const unixIso = t => (Number.isFinite(t) && t > 0 && t < 1e11 ? new Date(t * 100
 
 const FINNHUB = Object.freeze({
   id: 'finnhub', label: 'Finnhub', secret: 'FINNHUB_API_KEY', tier: 'free', site: 'https://finnhub.io/', terms: 'https://finnhub.io/terms-of-service',
-  coverage_note: 'Free tier: every listed security per exchange; quotes for US listings only. Non-US prices need a paid feed.',
+  coverage_note: 'Finnhub adapter: US quotes and entitled listings only. Actual endpoint access depends on the configured account; coverage is not guaranteed.',
   request(path, params, key) {
     const url = new URL('https://finnhub.io/api/v1' + path); url.search = new URLSearchParams(params).toString();
     return { url: url.href, headers: { accept: 'application/json', 'x-finnhub-token': key } };
@@ -117,7 +117,7 @@ const FINNHUB = Object.freeze({
     if (!q || typeof q !== 'object' || Array.isArray(q)) throw new ContextReadError('invalid_provider_response');
     const price = num(q.c), at = unixIso(q.t);
     // Finnhub answers an unknown or unentitled symbol with zeros, not an error.
-    if (!price || !at) return null;
+    if (price === null || price <= 0 || !at) return null;
     return { price, change: num(q.d), change_pct: num(q.dp), previous_close: num(q.pc), open: num(q.o), high: num(q.h), low: num(q.l), as_of: at };
   },
   profile(symbol, key) { return this.request('/stock/profile2', { symbol }, key); },
@@ -146,7 +146,7 @@ const FINNHUB = Object.freeze({
 export const EODHD_VENUE_MIC = Object.freeze({ NYSE: 'XNYS', NASDAQ: 'XNAS', 'NYSE ARCA': 'ARCX', 'NYSE MKT': 'XASE', AMEX: 'XASE', BATS: 'BATS', CBOE: 'BATS' });
 const EODHD = Object.freeze({
   id: 'eodhd', label: 'EODHD', secret: 'EODHD_API_KEY', tier: 'paid', site: 'https://eodhd.com/', terms: 'https://eodhd.com/financial-apis/terms-conditions',
-  coverage_note: 'Paid global feed: listings and delayed quotes for every covered exchange. Exchange codes must be confirmed before switching.',
+  coverage_note: 'EODHD adapter: entitled listings and delayed quotes. Free credits do not establish access to every endpoint; verify the account and exchange codes.',
   request(path, params, key) {
     const url = new URL('https://eodhd.com/api' + path); url.search = new URLSearchParams({ ...params, api_token: key, fmt: 'json' }).toString();
     return { url: url.href, headers: { accept: 'application/json' } };
@@ -167,7 +167,7 @@ const EODHD = Object.freeze({
   normalizeQuote(q) {
     if (!q || typeof q !== 'object' || Array.isArray(q)) throw new ContextReadError('invalid_provider_response');
     const price = num(q.close), at = unixIso(q.timestamp);
-    if (!price || !at) return null;
+    if (price === null || price <= 0 || !at) return null;
     return { price, change: num(q.change), change_pct: num(q.change_p), previous_close: num(q.previousClose), open: num(q.open), high: num(q.high), low: num(q.low), as_of: at };
   },
   profile(symbol, key) { return this.request('/fundamentals/' + encodeURIComponent(symbol), { filter: 'General' }, key); },
@@ -203,6 +203,21 @@ export function providerInfo(p) {
   return { id: p.id, label: p.label, state: p.state, tier: s ? s.tier : null, secret_name: s ? s.secret : null,
     site: s ? s.site : null, terms_url: s ? s.terms : null, coverage: s ? s.coverage_note : 'MARKETS_PROVIDER names no adapter.',
     switch: 'Set MARKETS_PROVIDER and that provider\'s secret on Worker mccluster; no code change.' };
+}
+
+/* Freshness is separate from request success. A recent timestamp alone does not prove
+ * a real-time exchange entitlement. The operator must explicitly attest that entitlement. */
+export function quoteFreshness(provider, value, env, time) {
+  const age = time - Date.parse(value.quote?.as_of);
+  const delayed = provider.id === 'eodhd';
+  const stale = !!value.fallback_reason || age > (delayed ? 20 * MINUTE : 2 * MINUTE);
+  const confirmed = provider.id === 'finnhub' && env.MARKETS_REALTIME_CONFIRMED === 'true';
+  return { status: stale ? 'stale' : delayed ? 'delayed' : confirmed ? 'real_time' : 'unverified',
+    is_live: !stale && !delayed && confirmed, age_seconds: Math.max(0, Math.floor(age / 1000)),
+    fallback: value.fallback_reason ? 'last_verified_quote' : null, reason: value.fallback_reason || null,
+    note: delayed ? 'Delayed feed; delay varies by exchange. Polling is not streaming.'
+      : confirmed ? 'Operator-confirmed US real-time entitlement; sampled once per minute.'
+      : 'Real-time entitlement not confirmed; timestamp is the provider observation time.' };
 }
 
 /* ---------- validation ---------- */
@@ -243,6 +258,7 @@ export function companyQuery(symbol, params) {
 /* ---------- the client: caches, a call budget, provider reads ---------- */
 const providerError = e => (e instanceof ContextReadError ? e.code : 'provider_unavailable');
 function priceStatusFor(code) {
+  if (code === 'no_quote') return 'no_quote';
   if (code === 'upstream_http_403') return 'needs_paid_feed';
   if (code === 'upstream_http_401') return 'key_rejected';
   if (code === 'upstream_http_429' || code === 'rate_limited') return 'rate_limited';
@@ -302,7 +318,7 @@ export function createMarketsClient(options = {}) {
   const fetchImpl = options.fetchImpl || ((...a) => fetch(...a));
   const clock = options.clock || Date.now, now = options.now || (() => new Date(clock()));
   const cacheStore = () => (options.cacheImpl !== undefined ? options.cacheImpl : (globalThis.caches && globalThis.caches.default) || null);
-  const memo = new Map(), pending = new Map(), calls = [];
+  const memo = new Map(), pending = new Map(), calls = [], lastQuotes = new Map();
   const read = (url, headers, maxBytes = SMALL) => contextJson(url, headers, { fetchImpl, timeoutMs: options.timeoutMs || 8000, maxBytes });
 
   function budget() {
@@ -354,11 +370,52 @@ export function createMarketsClient(options = {}) {
   }
 
   async function quote(provider, symbol) {
-    return cached('q:' + provider.id + ':' + symbol, MINUTE, async () => {
-      budget();
-      const req = provider.spec.quote(symbol, provider.key);
-      return { quote: provider.spec.normalizeQuote(await read(req.url, req.headers)), retrieved_at: now().toISOString() };
-    }, 30_000);
+    const key = 'q:' + provider.id + ':' + symbol;
+    try {
+      return await cached(key, MINUTE, async () => {
+        budget();
+        const req = provider.spec.quote(symbol, provider.key);
+        const q = provider.spec.normalizeQuote(await read(req.url, req.headers));
+        if (!q) throw new ContextReadError('no_quote');
+        if (Date.parse(q.as_of) > clock() + MINUTE) throw new ContextReadError('invalid_provider_timestamp');
+        const previous = lastQuotes.get(key);
+        if (previous && Date.parse(q.as_of) < Date.parse(previous.quote.as_of)) throw new ContextReadError('out_of_order_quote');
+        const value = { quote: q, retrieved_at: now().toISOString() };
+        lastQuotes.delete(key); lastQuotes.set(key, value);
+        while (lastQuotes.size > 100) lastQuotes.delete(lastQuotes.keys().next().value);
+        return value;
+      }, MINUTE);
+    } catch (e) {
+      const code = providerError(e), prior = lastQuotes.get(key);
+      if (['upstream_http_401', 'upstream_http_403'].includes(code)) lastQuotes.delete(key);
+      // Never mask revoked credentials/entitlements with cached licensed data.
+      if (prior && !['upstream_http_401', 'upstream_http_403'].includes(code) &&
+          clock() - Date.parse(prior.retrieved_at) < 15 * MINUTE) return { ...prior, fallback_reason: code };
+      throw e;
+    }
+  }
+
+  /* Only the selected security is refreshed; no profile/news fan-out. Verify membership
+   * in the chosen exchange before assigning currency or putting prices on a chart. */
+  async function selectedQuote(query, env) {
+    const provider = marketsProvider(env), x = query.exchange;
+    const base = { ok: true, schema: MARKETS_SCHEMA, symbol: query.symbol, mic: x.mic,
+      generated_at: now().toISOString(), provider: providerInfo(provider), refresh_after_seconds: 60 };
+    const unavailable = reason => ({ ...base, state: reason, quote: null, freshness: { status: 'unavailable', is_live: false, reason } });
+    if (provider.state !== 'ready') return unavailable(provider.state);
+    if (!x.provider_codes[provider.id]) return unavailable('not_covered');
+    const coverage = provider.quoteCoverage(x);
+    if (coverage !== 'available') return unavailable(coverage);
+    try {
+      const list = await symbols(provider, x.provider_codes[provider.id]);
+      const row = list.rows.find(r => r[0] === query.symbol &&
+        (x.provider_mic_filter ? r[4] === x.provider_mic_filter : !r[4] || r[4] === x.mic));
+      if (!row) return unavailable('security_not_on_exchange');
+      const value = await quote(provider, query.symbol);
+      return { ...base, state: 'ok', currency: row[5] || null,
+        quote: { ...value.quote, retrieved_at: value.retrieved_at, source: provider.label },
+        freshness: quoteFreshness(provider, value, env, clock()) };
+    } catch (e) { return unavailable(priceStatusFor(providerError(e))); }
   }
 
   async function country(iso2, env) {
@@ -454,7 +511,8 @@ export function createMarketsClient(options = {}) {
       for (let i = 0; i < want.length; i += 4) {
         await Promise.all(want.slice(i, i + 4).map(async r => {
           try {
-            const q = (await quote(provider, r.symbol)).quote;
+            const value = await quote(provider, r.symbol), q = value.quote;
+            r.freshness = quoteFreshness(provider, value, env, clock());
             if (!q) { r.price_status = 'no_quote'; return; }
             Object.assign(r, { price: q.price, change: q.change, change_pct: q.change_pct, previous_close: q.previous_close, as_of: q.as_of, price_status: 'quote', price_source: provider.label });
           } catch (e) { r.price_status = priceStatusFor(providerError(e)); }
@@ -482,7 +540,7 @@ export function createMarketsClient(options = {}) {
     const quoteOut = coverage !== 'available' ? { status: coverage }
       : q.status === 'rejected' ? { status: priceStatusFor(providerError(q.reason)) }
       : !q.value.quote ? { status: 'no_quote' }
-      : { status: 'quote', ...q.value.quote, retrieved_at: q.value.retrieved_at, source: provider.label };
+      : { status: 'quote', ...q.value.quote, retrieved_at: q.value.retrieved_at, source: provider.label, freshness: quoteFreshness(provider, q.value, env, clock()) };
     return { ...base, state: 'ok',
       profile: p.status === 'fulfilled' ? p.value : null, profile_status: p.status === 'fulfilled' ? (p.value ? 'available' : 'empty') : priceStatusFor(providerError(p.reason)),
       quote: quoteOut,
@@ -496,5 +554,5 @@ export function createMarketsClient(options = {}) {
       exchanges: EXCHANGES.map(x => exchangeView(x, provider, t)) };
   }
 
-  return { country, listings, company, exchanges };
+  return { country, listings, company, exchanges, selectedQuote };
 }

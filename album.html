@@ -973,7 +973,7 @@
         (data.albums || []).forEach(function (a) { if (a.slug === ALBUM) alb = a; });
         if (!alb) alb = data.albums[0];
         ALBUM = alb.slug;
-        head = { name: alb.name, tag: alb.tag || ("The album · " + alb.tracks.length + " tracks"), by: alb.by || "", art: alb.art, artist: alb.artist || "" };
+        head = { name: alb.name, tag: alb.tag || ("The album · " + alb.tracks.length + " tracks"), by: alb.by || "", art: alb.art, artist: alb.artist || "", artistPage: alb.artist_page || "" };
         queue = alb.tracks.map(function (t) {
           return Object.assign({}, t, {
             albSlug: alb.slug, albName: "", art: alb.art,
@@ -989,12 +989,16 @@
       /* an album may be billed to someone other than the house */
       ARTIST = head.artist || HOUSE;
       /* the artist's name was plain bold text and got tapped like a link;
-         the house artist now opens his own page, other billings stay text */
+         the house artist opens his own page, an act with its own artist
+         page (data/albums.json artist_page, a same-site .html file) opens
+         that, other billings stay text */
       document.getElementById("albArtist").textContent = ARTIST;
-      if (ARTIST === HOUSE) {
+      var artistHref = ARTIST === HOUSE ? "matthew-mccluster.html"
+        : (/^[a-z0-9-]+\.html$/.test(head.artistPage || "") ? head.artistPage : "");
+      if (artistHref) {
         var artistEl = document.getElementById("albArtist");
         var artistLink = document.createElement("a");
-        artistLink.href = "matthew-mccluster.html";
+        artistLink.href = artistHref;
         artistLink.className = "alb__artist";
         artistLink.setAttribute("data-cta", "album-artist");
         artistLink.textContent = ARTIST;

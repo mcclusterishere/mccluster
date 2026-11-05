@@ -40,31 +40,34 @@
     for (var i = 0; i < TIERS.length; i++) if (picked.length >= TIERS[i][0]) return TIERS[i][1];
     return 0;
   }
-  function money(n) { return "$" + Math.round(n).toLocaleString("en-US"); }
+  function money(n) { return "$" + Number(n).toLocaleString("en-US", { minimumFractionDigits: Number.isInteger(n) ? 0 : 2, maximumFractionDigits: 2 }); }
+  function cents(n) { return Math.round(n * 100) / 100; }
 
   var FLAT = { teardown: true }; /* credits back in full, so it never discounts */
   function totals() {
-    var once = 0, mo = 0, flat = 0, from = false, off = pct();
+    var once = 0, mo = 0, flat = 0, from = false, off = pct(), minimumAdjustment = 0;
     picked.forEach(function (id) {
       var it = items[id];
       if (FLAT[it.id]) { flat += it.p; return; }
       if (it.m === "mo") mo += it.p; else once += it.p;
       if (it.m === "from") from = true;
+      if (it.m !== "mo") minimumAdjustment += Math.max(0, (it.minimum || 0) - it.p * (1 - off / 100));
     });
     var k = 1 - off / 100;
     return { off: off, from: from, once: once, mo: mo, flat: flat,
-      onceOff: once * k + flat, moOff: mo * k,
-      savesOnce: once - once * k, savesMo: mo - mo * k };
+      onceOff: cents(once * k + flat + minimumAdjustment), moOff: cents(mo * k),
+      savesOnce: cents(once - once * k - minimumAdjustment), savesMo: cents(mo - mo * k) };
   }
 
   /* the words the gate sends to the desk */
   function summary() {
     if (!picked.length) return "";
     var t = totals();
-    var lines = ["PACKAGE (" + picked.length + " services · " + t.off + "% off):"];
+    var lines = ["PACKAGE (" + picked.length + " services · " + t.off + "% off eligible services; minimums apply):"];
     picked.forEach(function (id) {
       var it = items[id];
       lines.push("  - " + it.n + " — " + (it.m === "from" ? "from " : "") + money(it.p) + (it.m === "mo" ? "/mo" : ""));
+      if (it.note) lines.push("    " + it.note);
     });
     if (t.once || t.flat) lines.push("  One-time: " + (t.from ? "from " : "") + money(t.onceOff)
       + (t.off ? " (was " + money(t.once + t.flat) + ")" : "")
@@ -161,6 +164,8 @@
       + (t.off ? '<p class="shop__save"><span>The package saves you</span><b>' + money(t.savesOnce)
           + (t.savesMo >= 1 ? " now + " + money(t.savesMo) + "/mo" : "") + "</b></p>" : "")
       + "</div>"
+      + '<p class="shop__terms">Estimates only. Discounts apply to eligible services; minimums apply. ' +
+        picked.map(function (id) { return items[id].note || ""; }).filter(Boolean).join(" ") + "</p>"
       + '<a class="btn btn--ruby shop__cta" data-book href="#book" data-cta="shop-book">Book a call with me</a>'
       + "</div>";
     tray.classList.toggle("is-open", open);
@@ -187,6 +192,8 @@
         n: card.getAttribute("data-shop-n"),
         p: +card.getAttribute("data-shop-p"),
         m: card.getAttribute("data-shop-m") || "once",
+        minimum: +card.getAttribute("data-shop-min") || 0,
+        note: card.getAttribute("data-shop-note") || "",
       };
       items[it.id] = it;
       var b = document.createElement("button");

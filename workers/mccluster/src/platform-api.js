@@ -54,14 +54,15 @@ async function networkActors(env,muids=[]){
   const platform=authIds.length?await service(env,`platform_profiles?user_id=in.(${authIds.join(',')})&select=user_id,mccluster_id`):[];
   const handleByUser=new Map((platform||[]).map(x=>[x.user_id,x.mccluster_id||'']));
   const handleByMuid=new Map((links||[]).map(x=>[x.m_uid,handleByUser.get(x.auth_user_id)||'']));
-  const actorIds=new Set();
+  const actorIds=new Set(),characterIds=new Set();
   const unlinked=ids.filter(id=>!handleByMuid.get(id));
   if(unlinked.length){
-    const actors=await service(env,`ops_platform_actors?m_uid=in.(${unlinked.join(',')})&select=m_uid,handle`).catch(()=>[]);
-    for(const actor of actors||[]) {handleByMuid.set(actor.m_uid,actor.handle);actorIds.add(actor.m_uid);}
+    /* A platform actor whose persona says actor_kind 'character' is a story character (MNET cast): the UI shows a small Character badge. */
+    const actors=await service(env,`ops_platform_actors?m_uid=in.(${unlinked.join(',')})&select=m_uid,handle,actor_kind:persona->>actor_kind`).catch(()=>[]);
+    for(const actor of actors||[]) {handleByMuid.set(actor.m_uid,actor.handle);actorIds.add(actor.m_uid);if(actor.actor_kind==='character')characterIds.add(actor.m_uid);}
   }
   const out={};
-  for(const id of ids) out[id]={m_uid:id,display_name:'',headline:'',bio:'',avatar_url:'',banner_url:'',website_url:'',verification_state:'unverified',mccluster_id:handleByMuid.get(id)||'',is_ai:actorIds.has(id)};
+  for(const id of ids) out[id]={m_uid:id,display_name:'',headline:'',bio:'',avatar_url:'',banner_url:'',website_url:'',verification_state:'unverified',mccluster_id:handleByMuid.get(id)||'',is_ai:actorIds.has(id),...(characterIds.has(id)?{actor_kind:'character'}:{})};
   for(const p of profiles||[]) out[p.m_uid]={...out[p.m_uid],...p,mccluster_id:handleByMuid.get(p.m_uid)||''};
   return out;
 }
@@ -104,11 +105,11 @@ async function networkBlocked(env,a,b){
 }
 async function resolvePlatformActor(env,id){
   const filter=uuidLike(id)?'m_uid=eq.'+id:'handle=eq.'+encodeURIComponent(id);
-  const actors=await service(env,'ops_platform_actors?'+filter+'&select=m_uid,handle&limit=1');
+  const actors=await service(env,'ops_platform_actors?'+filter+'&select=m_uid,handle,actor_kind:persona->>actor_kind&limit=1');
   const actor=actors?.[0]; if(!actor)return null;
   const profiles=await service(env,'network_profiles?m_uid=eq.'+actor.m_uid+'&select=*&limit=1');
   const profile=profiles?.[0]; if(!profile)return null;
-  return {m_uid:actor.m_uid,profile,identity:{user_id:null,mccluster_id:actor.handle,display_name:profile.display_name,avatar_url:profile.avatar_url,actor_kind:'fictional_ai'}};
+  return {m_uid:actor.m_uid,profile,identity:{user_id:null,mccluster_id:actor.handle,display_name:profile.display_name,avatar_url:profile.avatar_url,actor_kind:actor.actor_kind==='character'?'character':'fictional_ai'}};
 }
 async function resolveMnetPerson(env,id){
   /* A person is named by their handle, or by their m_uid (live sessions
@@ -577,7 +578,7 @@ function publicFeedItem(item){
   const p=item.post,a=item.actor||{},meta=p.metadata&&typeof p.metadata==='object'?p.metadata:{};
   const media=(Array.isArray(p.media)?p.media:[]).slice(0,4).map(m=>({type:String(m&&(m.type||m.media_type)||'file').slice(0,16)}));
   return {item_type:'post',post_id:p.id,occurred_at:item.occurred_at||p.created_at,
-    actor:{display_name:a.display_name||'',avatar_url:a.avatar_url||'',mccluster_id:a.mccluster_id||'',verification_state:a.verification_state||'unverified'},
+    actor:{display_name:a.display_name||'',avatar_url:a.avatar_url||'',mccluster_id:a.mccluster_id||'',verification_state:a.verification_state||'unverified',...(a.actor_kind==='character'?{actor_kind:'character'}:{})},
     post:{id:p.id,body:p.body||'',post_type:p.post_type||'post',visibility:'public',created_at:p.created_at,
       like_count:p.like_count||0,liked_by_me:false,bookmarked_by_me:false,media_locked:media.length,
       metadata:{...(postTrack(meta.track)?{track:postTrack(meta.track)}:{}),...(meta.action?{action:true}:{})}}};
@@ -1262,6 +1263,8 @@ async function handleMnet(req,env,path,url){
       if(act==='actors'&&req.method==='POST'){
         const b=await json(req);
         if(!Array.isArray(b.actor_keys)||b.actor_keys.length>3||b.actor_keys.some(k=>typeof k!=='string'||!/^[a-z0-9][a-z0-9._-]{2,39}$/.test(k)))return fail(req,env,'Choose up to three platform characters',400);
+        /* MNET story characters (chr.*) post and reply among themselves; they do not join member live rooms yet. */
+        if(b.actor_keys.some(k=>k.startsWith('chr.')))return fail(req,env,'Story characters cannot join live rooms yet',400);
         if(b.actor_keys.length){
           const cutoff=encodeURIComponent(new Date(Date.now()-120000).toISOString());
           const nodes=await service(env,`ops_compute_nodes?display_name=eq.ovh-primary&state=eq.online&last_seen_at=gte.${cutoff}&select=id&limit=1`);

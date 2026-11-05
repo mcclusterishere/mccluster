@@ -291,7 +291,7 @@
     { id: "w_location", rail: "Brief", kind: "text", key: "location", required: true,
       when: offerIs("who-did-the-shoot"),
       q: "Where is it?",
-      sub: "City and state is enough for now. Travel outside the home bases is quoted openly, never hidden in the total.",
+      sub: "City and state is enough for now. Travel is quoted as a separate line item and agreed before booking.",
       placeholder: "Bridgeport, CT" },
 
     { id: "w_date", rail: "Brief", kind: "dates", required: true,
@@ -328,6 +328,11 @@
         { v: "video-final", b: "Finished video" }, { v: "social-cuts", b: "Social cuts" },
         { v: "vertical", b: "Vertical versions" }, { v: "captions", b: "Captions" }
       ], chips: true },
+
+    { id: "w_event_hours", rail: "Brief", kind: "number", key: "eventHours", required: true,
+      when: function () { return !isEquity() && window.MCC_OFFERS.eventPhotographySelected(S); },
+      q: "How many hours of event photography?",
+      sub: function (L) { return window.MCC_OFFERS.eventPhotographyIntro(L) + " " + window.MCC_OFFERS.eventPhotographyTerms(L); } },
 
     { id: "w_usage", rail: "Brief", kind: "multi", key: "usage", required: true,
       when: offerIs("who-did-the-shoot"),
@@ -618,6 +623,12 @@
   /* the answers, as the desk will read them */
   function answerLines() {
     var w = brief(), out = [];
+    if (!isEquity() && window.MCC_OFFERS.eventPhotographySelected(S)) {
+      var quote = window.MCC_OFFERS.eventPhotographyQuote(L, S.eventHours);
+      out.push("Event photography: " + window.MCC_OFFERS.eventPhotographyTerms(L));
+      if (quote.valid) out.push("Requested coverage: " + quote.hours + " hours · $" +
+        window.MCC_OFFERS.money(quote.base) + " service base. Travel: separate quote pending agreement. Not a confirmed booking.");
+    }
     w.forEach(function (s) {
       if (s.kind === "review" || s.kind === "summary" || s.kind === "account") return;
       if (s.kind === "offer" || s.kind === "mode") return;
@@ -654,7 +665,12 @@
     var pr = window.MCC_OFFERS.priceOf(L, S.offer, S.offer === "runway" ? "m" : S.mode);
 
     rows.push(["Service", (o ? o.name : "—") + " · " + modeName, "offer"]);
-    rows.push(["What it costs", pr && pr.approved
+    if (!isEquity() && window.MCC_OFFERS.eventPhotographySelected(S)) {
+      var quote = window.MCC_OFFERS.eventPhotographyQuote(L, S.eventHours);
+      rows.push(["Event photography base", quote.valid ? "$" + window.MCC_OFFERS.money(quote.base) +
+        " for " + quote.hours + " hours. " + L.estimate_disclaimer : quote.error, "w_event_hours"]);
+      rows.push(["Travel", window.MCC_OFFERS.eventPhotographyLine(L).travel_note + " Quote pending; not included in the base.", "w_location"]);
+    } else rows.push(["What it costs", pr && pr.approved
       ? (pr.kind === "start" ? pr.display + " to start, then $" + window.MCC_OFFERS.money(o.pricing.recurring.amount) + "/month"
         : pr.display + " " + pr.per)
       : (pr ? pr.note : "—"), "offer"]);
@@ -736,6 +752,10 @@
         }
         break;
       }
+      case "number":
+        body = '<input type="number" id="obIn" min="' + window.MCC_OFFERS.eventPhotographyLine(L).minimum_hours +
+          '" step="any" inputmode="decimal" value="' + esc(fieldValue(s.key) || "") + '" aria-labelledby="obQ">';
+        break;
       case "text":
         body = '<input type="text" id="obIn" placeholder="' + esc(s.placeholder || "") +
           '" value="' + esc(fieldValue(s.key) || "") + '"' +
@@ -801,6 +821,12 @@
 
     stage.addEventListener("click", function (e) {
       var s = current();
+      /* Change links must work before the choice-button guard. */
+      var g = e.target.closest && e.target.closest("[data-goto]");
+      if (g) {
+        var w = walk();
+        for (var j = 0; j < w.length; j++) if (w[j].id === g.dataset.goto) { at = j; render(); return; }
+      }
       var b = e.target.closest && e.target.closest(".pick > button");
       if (!b) return;
       var wrap = b.parentElement, role = wrap.dataset.role, v = b.dataset.v;
@@ -835,12 +861,6 @@
       }
       var err = el("obErr"); if (err) err.hidden = true;
 
-      /* the review screen's Change links jump straight to a question */
-      var g = e.target.closest && e.target.closest("[data-goto]");
-      if (g) {
-        var id = g.dataset.goto, w = walk();
-        for (var i = 0; i < w.length; i++) if (w[i].id === id) { at = i; render(); return; }
-      }
     });
 
     stage.addEventListener("input", function (e) {
@@ -879,6 +899,10 @@
         if (!/^\S+@\S+\.\S+$/.test((S.email || "").trim())) return "Type the whole email address.";
         if (!(S.phone || "").trim()) return "A phone number, just for the build call.";
         return true;
+      case "number": {
+        var quote = window.MCC_OFFERS.eventPhotographyQuote(L, S[s.key]);
+        return quote.valid ? true : quote.error;
+      }
       case "dates": return (S.date || "").trim() ? true : "Give the desk a date to hold.";
       case "ack": return S.equityAck ? true : "Tick the box to confirm you've read the terms.";
       case "multi":
@@ -951,7 +975,7 @@
          ["Site built and shipped", "Basic build, hosted, SSL on."]]
       : isProject
       ? [["Discovery call", "The brief gets turned into a quote and a schedule."],
-         ["Quote and agreement", "Every line itemised, third-party budgets shown separately."],
+         ["Quote and agreement", "Every line itemised, with travel quoted separately and agreed before booking."],
          [S.offer === "who-did-the-shoot" ? "Shoot booked" : "Campaign built", "Dates locked and the work begins."]]
       : [["Discovery call", "Access, accounts and the posting plan."],
          ["Agreement signed", "Scope, platforms, reporting and terms in writing."],
@@ -1008,6 +1032,15 @@
 
   /* ---------- send ---------- */
   function send() {
+    /* Recheck saved/edited duration at submission, including a resumed review. */
+    if (!isEquity() && window.MCC_OFFERS.eventPhotographySelected(S)) {
+      var quote = window.MCC_OFFERS.eventPhotographyQuote(L, S.eventHours);
+      if (!quote.valid) {
+        at = walk().findIndex(function (s) { return s.id === "w_event_hours"; });
+        render(); el("obErr").textContent = quote.error; el("obErr").hidden = false;
+        return;
+      }
+    }
     var btn = el("obNext");
     btn.disabled = true; btn.textContent = "Sending…";
     var payload = window.MCC_OFFER_CRM.build(L, {

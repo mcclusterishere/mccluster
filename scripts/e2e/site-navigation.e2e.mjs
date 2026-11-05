@@ -34,7 +34,9 @@ async function setup(width,persona='owner'){
       return json(r,p==='/auth/v1/user'?{id:USER,email:'qa@fixture.invalid'}:[]);
     }
     if(u.hostname==='api.mccluster.org'){
+      if(p==='/v1/world/access')return json(r,{release:{version:'globe-admin-preview/v1',admin_preview:auth.status===200},locked_layers:[],unlocked_layers:[]});
       if(p==='/v1/status') {const status=auth.status;if(auth.delay)await new Promise(resolve=>auth.release=resolve);return json(r,{ok:status===200},status);}
+      if(p==='/v1/observability/events')return json(r,{events:[{id:1,source:'worker',trace_id:'fixture-trace',event_name:'Fixture operation',level:'error',occurred_at:new Date().toISOString()},{id:2,source:'core',trace_id:'fixture-trace',event_name:'Fixture retry',level:'warn',occurred_at:new Date().toISOString()},{id:3,source:'worker',event_name:'Separate warning',level:'warn',occurred_at:new Date().toISOString()}],has_more:true});
       if(p==='/v1/workspaces/me')return json(r,{ok:true,profile:{id:USER},default_org_id:'o1',workspaces:[{org_id:'o1',slug:'mccluster',name:'McCluster',kind:'studio',role:auth.status===200?'owner':'viewer',enabled:true}]});
       if(p==='/v1/mnet/bootstrap')return json(r,{ok:true,profile:{display_name:'QA member',onboarding_complete:true},identity:{mccluster_id:'qa-member'},needs_onboarding:false,stats:{}});
       if(/^\/v1\/mnet\/people\/[^/]+$/.test(p)){
@@ -64,12 +66,38 @@ async function topRight(page,selector='#mccAuthChip'){
   return page.locator(selector).evaluate(el=>{const r=el.getBoundingClientRect();return r.top>=0&&r.top<=24&&r.right<=innerWidth&&r.right>=innerWidth-24&&r.width>=44&&r.height>=44;});
 }
 try{
+ if(!process.env.NAV_ROLE_MATRIX&&!process.env.NAV_DOCK_ONLY){
   for(const width of [390,820,1280]){
     const {ctx,page,auth,errors}=await setup(width);
     await page.goto(BASE+'/control.html?org=o1#home');
     await page.waitForSelector('body[data-admin-navigation][data-site-navigation]');
-    check(width+' owner never sees the guest three-tab bar during entry',await page.evaluate(()=>__navFrames.every(n=>n===5)),await page.evaluate(()=>__navFrames));
+    check(width+' owner never sees the guest three-tab bar during entry',await page.evaluate(()=>__navFrames.every(n=>n===10)),await page.evaluate(()=>__navFrames));
     check(width+' profile is top right',await topRight(page));
+    const keys=await page.locator('.appbar [data-appnav]').evaluateAll(nodes=>nodes.map(n=>n.dataset.appnav));
+    check(width+' Inbox is directly left of Home and Games directly right of World',keys.indexOf('admin-inbox')+1===keys.indexOf('admin-home')&&keys.indexOf('halo')+1===keys.indexOf('games'));
+    check(width+' owner buttons have 44px touch targets',await page.locator('.appbar [data-appnav]').evaluateAll(nodes=>nodes.every(n=>{const r=n.getBoundingClientRect();return r.width>=44&&r.height>=44;})));
+    check(width+' Control is labeled Home',await page.locator('#mccControlToggle span').innerText()==='Home');
+    await page.evaluate(()=>window.__sliceDocument=123);
+    for(let cycle=0;cycle<3;cycle++){
+      await page.locator('[data-appnav="admin-inbox"]').click();
+      await page.waitForFunction(()=>location.hash==='#people:inbox:conversations' && document.querySelectorAll('.cr-inbox-category').length===3);
+      check(width+' Inbox categories and document retained '+cycle,await page.locator('.cr-inbox-category').count()===3&&await page.evaluate(()=>window.__sliceDocument===123));
+      check(width+' Inbox alone active '+cycle,await page.locator('.appbar [aria-current="page"]').evaluateAll(n=>n.length===1&&n[0].dataset.appnav==='admin-inbox'));
+      check(width+' Inbox fits '+cycle,await fits(page));
+      if(cycle===0)await page.screenshot({path:join(OUT,'inbox-'+width+'.png')});
+      await page.evaluate(()=>location.hash='#home:today');
+      await page.waitForFunction(()=>document.querySelector('#crSurface')?.getAttribute('data-cr-route')==='#home:today');
+    }
+    await page.evaluate(()=>location.hash='#system:observability');
+    await page.waitForSelector('.cr-system-event');
+    check(width+' shared trace groups two records without claiming incidents',await page.locator('.cr-system-event').count()===2&&(await page.locator('.cr-system-summary').innerText()).includes('not incident counts'));
+    await page.locator('.cr-system-event summary').first().click();
+    check(width+' original evidence and impact remain reachable',await page.locator('.cr-system-event[open]').innerText().then(t=>t.includes('Impact:')&&t.includes('Original event evidence')));
+    check(width+' System fits',await fits(page));
+    await page.screenshot({path:join(OUT,'system-'+width+'.png')});
+    await page.evaluate(()=>location.hash='#home:today');
+    await page.waitForFunction(()=>document.querySelector('#crSurface')?.getAttribute('data-cr-route')==='#home:today');
+
     /* one bottom bar: the Control sections (NAV) are a row under the topbar on a phone and the sidebar from 1024px, never a second fixed bar */
     check(width+' one global bottom bar',await page.locator('.appbar').count()===1&&await page.locator('#crSections').evaluate(el=>getComputedStyle(el).position!=='fixed'));
     await open(page);
@@ -84,7 +112,7 @@ try{
     await page.locator('[data-destination-group="All"]').click();
     await page.fill('#mccDestinationSearch','zzzzzz');
     check(width+' empty search is explicit',await page.locator('#mccDestinationCount').textContent()==='No destinations match. Try another search.');
-    await page.fill('#mccDestinationSearch','people');
+    await page.fill('#mccDestinationSearch','contacts');
     await page.locator('[data-control-route="#people:contacts"]').click();
     await page.waitForFunction(()=>location.hash==='#people:contacts');
     check(width+' native route opens with context',new URL(page.url()).searchParams.get('org')==='o1');
@@ -98,12 +126,16 @@ try{
     await open(page);await page.screenshot({path:join(OUT,'destinations-'+width+'.png')});
     await page.keyboard.press('Escape');
 
-    for(const path of ['/license.html','/brief.html','/music-admin.html','/control.html?org=o1#analytics','/control.html?org=o1#home']){
+    for(const path of ['/license.html','/brief.html','/music-admin.html','/member-front.html?handle=qa-member','/city-arcade.html','/game-hub.html','/prim3-tactics-preview.html','/equity-uprise.html','/control.html?org=o1#analytics','/control.html?org=o1#home']){
       await page.goto(BASE+path);await page.waitForSelector('body[data-admin-navigation][data-site-navigation]');
-      check(width+' consistent owner bar on '+path,await page.evaluate(()=>document.querySelectorAll('.appbar [data-appnav]').length===5&&__navFrames.every(n=>n===5)));
+      check(width+' consistent owner bar on '+path,await page.evaluate(()=>document.querySelectorAll('.appbar [data-appnav]').length===10&&__navFrames.every(n=>n===10)));
+      check(width+' one ordered accessible dock on '+path,await page.evaluate(()=>{
+        const bars=document.querySelectorAll('.appbar'),tabs=[...bars[0].querySelectorAll('[data-appnav]')];
+        return bars.length===1&&tabs.map(x=>x.dataset.appnav).join(',')==='music,admin-inbox,admin-home,home,analytics,halo,games,admin-sell,admin-create,admin-system'&&tabs.every(x=>{const r=x.getBoundingClientRect();return r.width>=44&&r.height>=44&&r.bottom<=innerHeight;});
+      }));
     }
     const routes=await page.evaluate(()=>CR.workspaceCore.routes.map(r=>r.hash));
-    for(const hash of routes){await page.evaluate(h=>{location.hash=h;},hash);await page.waitForFunction(h=>location.hash===h&&document.getElementById('crSurface')?.childElementCount>0,hash);check(width+' owner navigation stable at '+hash,await page.evaluate(()=>document.querySelectorAll('.appbar [data-appnav]').length===5&&!document.querySelector('#crInspector')?.classList.contains('is-open')));}
+    for(const hash of routes){await page.evaluate(h=>{location.hash=h;},hash);await page.waitForFunction(h=>location.hash===h&&document.getElementById('crSurface')?.childElementCount>0,hash);check(width+' owner navigation stable at '+hash,await page.evaluate(()=>document.querySelectorAll('.appbar [data-appnav]').length===10&&!document.querySelector('#crInspector')?.classList.contains('is-open')));}
     // Permission withdrawal is checked when opening, not trusted from an old UI.
     auth.status=403;await page.click('#mccControlToggle');
     await page.waitForFunction(()=>!window.MCC_BAR.admin());
@@ -242,9 +274,103 @@ try{
     check('veil checks have no page errors',errors.length===0,errors);
     await ctx.close();
   }
+  for(const width of [390,1280]){
+    const {ctx,page}=await setup(width);
+    await page.goto(BASE+'/city-arcade.html');await page.waitForSelector('body[data-admin-navigation]');
+    check(width+' game page marks Games active',await page.locator('[data-appnav="games"][aria-current="page"]').count()===1);
+    await page.locator('.appbar [data-appnav="halo"]').click();await page.waitForURL('**/action-globe.html?explore=1&halo=1');
+    await page.waitForSelector('body[data-admin-navigation]');
+    await page.locator('.appbar [data-appnav="games"]').click();await page.waitForURL('**/action-globe.html?explore=1&games=1');
+    await page.waitForSelector('body[data-admin-navigation]');
+    await page.waitForFunction(()=>window.__huGames?.()?.isOpen());
+    check(width+' Games link opens actual owner overlay',await page.locator('[data-appnav="games"][aria-current="page"]').count()===1);
+    await page.locator('.games-close').click();
+    await page.click('#mccAuthChip');await page.locator('#mccProfileMenu:popover-open').waitFor();
+    check(width+' profile contains account and owner Home',await page.locator('#mccProfileMenu a').count()===3&&await page.locator('#mccProfileMenu [data-owner-profile-action="home"]').isVisible());
+    await page.keyboard.press('Escape');check(width+' profile escape restores focus',await page.locator('#mccAuthChip').evaluate(el=>document.activeElement===el));
+    await page.screenshot({path:join(OUT,'globe-owner-'+width+'.png')});
+    await page.locator('.appbar [data-appnav="admin-inbox"]').click();await page.waitForURL('**/control.html#people:inbox:conversations');
+    await page.waitForSelector('body[data-admin-navigation]');
+    check(width+' globe to Inbox retains ten destinations',await page.locator('.appbar [data-appnav]').count()===10);
+    await ctx.close();
+  }
   {
     const {ctx,page}=await setup(390);await page.goto(BASE+'/action-globe.html?embedded=1&surface=network');
     check('embedded globe has no duplicate navigation or profile',await page.locator('.appbar,#mccAuthChip,#mccControlToggle').count()===0);
     await ctx.close();
   }
+ }
+ if(!process.env.NAV_DOCK_ONLY)for(const width of [390,1280])for(const persona of ['owner','member','guest']){
+   const {ctx,page,auth}=await setup(width,persona);
+   for(const path of ['/action-globe.html?explore=1','/member-front.html?handle=qa-member','/control.html#home','/control.html#create:front-page','/city-arcade.html','/control.html#insights:overview'].filter(path=>!process.env.NAV_EDITOR_ONLY||path.includes('#create:front-page'))){
+     await page.goto(BASE+path);await page.waitForFunction(()=>window.MCC_BAR?.auth().verified);
+     await page.waitForFunction(()=>document.body.dataset.siteNavigation==='ready');
+     if(persona==='owner')await page.waitForSelector('body[data-admin-navigation]');
+     check(width+' '+persona+' direct entry '+path,await page.locator('.appbar').count()===1&&await page.locator('.appbar [data-appnav]').count()===(persona==='owner'?10:3));
+     if(path.includes('#create:front-page')&&persona==='owner'){await page.locator('[data-cfp-root]').waitFor();check(width+' actual editor remains mounted',await page.locator('[data-cfp-form]').isVisible());}
+     if(path.startsWith('/action-globe')&&persona!=='guest'){
+       // Mount the actual legacy shortcuts to exercise the duplication seen
+       // with owner sessions; synthetic auth only, with all network intercepted.
+       if(persona==='owner'){
+         await page.evaluate(()=>{const s=JSON.parse(localStorage.getItem('mccdb_session'));s.user.email='matthew@mccluster.org';localStorage.setItem('mccdb_session',JSON.stringify(s));});
+         await page.addScriptTag({url:BASE+'/js/control-registry.js'});await page.addScriptTag({url:BASE+'/js/control-palette.js'});
+         check(width+' legacy shortcuts hidden after shared profile ready',await page.locator('.cmdk-owner-nav').isHidden());
+       }
+       await page.click('#mccAuthChip');await page.locator('#mccProfileMenu:popover-open').waitFor();
+       check(width+' '+persona+' profile owner actions respect role',await page.locator('#mccProfileMenu [data-owner-profile-action="home"]').isVisible()===(persona==='owner'));
+       check(width+' '+persona+' profile has account link',await page.locator('#mccProfileMenu a[href$="account.html?stay=1"]').isVisible());
+       await page.screenshot({path:join(OUT,'profile-'+persona+'-'+width+'.png')});
+       await page.keyboard.press('Escape');
+       if(persona==='owner'){
+         await page.click('#mccAuthChip');await page.locator('#mccProfileMenu [data-owner-profile-action="search"]').click();
+         await page.waitForSelector('#cmdkRoot.is-open');
+         check(width+' retained command search opens',await page.locator('#cmdkRoot').evaluate(el=>el.classList.contains('is-open')));await page.keyboard.press('Escape');
+         auth.status=403;await page.evaluate(()=>MCC_BAR.verifyAdmin());
+         await page.click('#mccAuthChip');check(width+' revocation removes Profile admin actions',await page.locator('#mccProfileMenu [data-owner-profile-action="home"]').isHidden());await page.keyboard.press('Escape');
+         auth.status=200;await page.evaluate(()=>MCC_BAR.verifyAdmin());
+       }
+     }
+   }
+   await ctx.close();
+ }
+
+ for(const width of [390,1280]){
+  const {ctx,page,auth,errors}=await setup(width);
+  await page.goto(BASE+'/control.html#home');await page.waitForSelector('body[data-admin-navigation]');
+  await page.evaluate(()=>document.fonts.ready);await page.waitForTimeout(250);
+  const dock=page.locator('.appbar'),left=page.getByRole('button',{name:'Scroll navigation left',exact:true}),right=page.getByRole('button',{name:'Scroll navigation right',exact:true});
+  const scroll=async n=>{await dock.evaluate((el,n)=>{el.style.scrollSnapType='none';el.scrollLeft=n;},n);await page.waitForFunction(()=>{const d=document.querySelector('.appbar'),b=document.querySelectorAll('#mccDockHints button');return b[0].hidden===(d.scrollLeft<=2)&&b[1].hidden===(d.scrollLeft>=d.scrollWidth-d.clientWidth-2);});};
+  const visible=async()=>dock.evaluate(el=>{const a=el.querySelector(':focus')||el.querySelector('[aria-current="page"]'),r=a?.getBoundingClientRect(),d=el.getBoundingClientRect();return !!r&&r.left>=d.left-1&&r.right<=d.right+1;});
+  check(width+' dock has no script errors',errors.length===0,errors);
+  check(width+' registry adds Sell Create System once',await dock.locator('[data-dock-section]').count()===3);
+  await scroll(0);
+  if(width===390){
+    check('phone initial hint only right',await left.isHidden()&&await right.isVisible(),await dock.evaluate(el=>({left:el.scrollLeft,width:el.clientWidth,scroll:el.scrollWidth,hints:document.getElementById('mccDockHints').outerHTML})));
+    check('reduced motion disables hint animation',await right.evaluate(el=>getComputedStyle(el).animationName==='none'));
+    await right.click();await page.waitForFunction(()=>{const b=document.querySelectorAll('#mccDockHints button');return !b[0].hidden&&!b[1].hidden;});
+    check('phone middle hints both directions',await left.isVisible()&&await right.isVisible());
+    await scroll(10000);check('phone end hint only left',await left.isVisible()&&await right.isHidden());
+    await page.locator('#mccControlToggle').focus();await page.keyboard.press('End');
+    check('keyboard End reaches System visibly',await page.locator('[data-dock-section="system"]').evaluate(el=>el===document.activeElement)&&await visible());
+    await page.keyboard.press('Home');check('keyboard Home reaches Play visibly',await page.locator('[data-appnav="music"]').evaluate(el=>el===document.activeElement)&&await visible());
+    await page.keyboard.press('ArrowRight');check('keyboard Right reaches Inbox',await page.locator('[data-appnav="admin-inbox"]').evaluate(el=>el===document.activeElement));
+    await scroll(0);
+    const box=await dock.boundingBox(),cdp=await ctx.newCDPSession(page);
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:box.x+box.width*.8,y:box.y+box.height*.5}]});
+    for(let step=1;step<=8;step++){await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:box.x+box.width*.8-step*18,y:box.y+box.height*.5}]});await page.waitForTimeout(20);}
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await page.waitForTimeout(150);
+    check('touch swipe moves owner dock',await dock.evaluate(el=>el.scrollLeft>20));await cdp.detach();
+    await page.screenshot({path:join(OUT,'scroll-dock-390.png')});
+    await page.setViewportSize({width:1280,height:844});await page.waitForFunction(()=>document.getElementById('mccDockHints').hidden);
+    check('resize to desktop hides both hints',await left.isHidden()&&await right.isHidden());
+    await page.setViewportSize({width:390,height:844});await scroll(0);
+    check('resize back restores correct overflow hint',await left.isHidden()&&await right.isVisible());
+  }else check('desktop fit has no hints',await left.isHidden()&&await right.isHidden());
+  check(width+' screen reader controls identify navigation',await page.locator('#mccDockHints button').evaluateAll(els=>els.every(el=>el.getAttribute('aria-controls')===document.querySelector('.appbar').id&&el.getAttribute('aria-label').startsWith('Scroll navigation'))));
+  auth.status=403;await page.evaluate(()=>MCC_BAR.verifyAdmin());
+  check(width+' member role removes extra destinations and hints',await dock.locator('[data-appnav]').count()===3&&await page.locator('#mccDockHints').isHidden());
+  auth.status=200;await page.evaluate(()=>MCC_BAR.verifyAdmin());await page.waitForSelector('body[data-admin-navigation]');
+  check(width+' owner role restores registry without duplicates',await dock.locator('[data-appnav]').count()===10&&await page.locator('#mccDockHints').count()===1);
+  await ctx.close();
+ }
 }finally{await writeFile(join(OUT,'results.json'),JSON.stringify(results,null,2));await browser.close();}

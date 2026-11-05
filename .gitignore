@@ -42,3 +42,7 @@ e2e-out/
 
 # Derived from Core fiction and existing Whip screenplay by the Pages publisher.
 /data/fictional-city/
+
+# Server-only local provider credentials; never publish.
+/workers/mccluster/.dev.vars
+/workers/mccluster/.dev.vars.*

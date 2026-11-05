@@ -1,7 +1,7 @@
 /* Building demo: the canonical generated GLBs (Core V2 chassis + the selected floor's detailed model, as the
-   canonical viewer loads them) with every screen in the registry wired through enter.mjs. Tap a screen to frame
+   canonical viewer loads them), native electronics assemblies, and an explicit directory for unresolved targets. Tap a screen to frame
    it, then open it; its app's "Back to the building" returns here to the same floor, pose and mode.
-   A viewer page, not geometry authority: nothing here moves or adds building geometry. */
+   A viewer page, not geometry authority: existing authored assets retain their native transforms; no substitute geometry is generated. */
 
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
@@ -10,6 +10,8 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { whenOwner } from "../gate.mjs";
 import { createScreenHooks, loadRegistry, consumeReturn, approachPose } from "../enter.mjs";
 import { MODE_LABELS, normalizeMode, FLOORS } from "../contract.mjs";
+import { openScreenSession } from "../sandbox-session.mjs";
+import { monitorVisualState } from "../monitor-visual-state.mjs";
 import { getPref, setPref, setMissionFaults, loadSession, resetSession } from "../state.mjs";
 
 const FT = 0.3048;
@@ -74,7 +76,12 @@ let floor = getPref("floor", "F1");
 let selected = null;
 const loader = new GLTFLoader();
 const loaded = new Map();
+const loadingFloors = new Map();
 let core = null;
+let corePromise = null;
+let electronics = null;
+let electronicsPromise = null;
+let electronicsError = false;
 const proxyRoot = new THREE.Group(); scene.add(proxyRoot);
 const hooks = createScreenHooks({ THREE, camera, controls, registry, getMode: () => mode, getFloor: () => floor, src: "demo" });
 const glowMat = new THREE.MeshBasicMaterial({ color: 0x5fe3c0, transparent: true, opacity: 0.9, side: THREE.DoubleSide, depthWrite: false });
@@ -82,21 +89,27 @@ const glowMat = new THREE.MeshBasicMaterial({ color: 0x5fe3c0, transparent: true
 function loadGlb(url) { return new Promise((res, rej) => loader.load(url, res, undefined, rej)); }
 async function ensureCore() {
   if (core) return core;
+  if (corePromise) return corePromise;
+  corePromise = (async () => {
   try { const g = await loadGlb(q("equity-uprise-building-core-v2.glb")); core = g.scene; core.rotation.x = -Math.PI / 2; scene.add(core); } catch (e) { core = new THREE.Group(); }
   return core;
+  })();
+  try { return await corePromise; } finally { corePromise = null; }
 }
 async function ensureFloor(lv) {
   if (loaded.has(lv)) return loaded.get(lv);
+  if (loadingFloors.has(lv)) return loadingFloors.get(lv);
+  const pending = (async () => {
   $("[data-boot-log]").textContent = (lv === "B1" ? "B1" : "Floor " + lv.slice(1)) + " detailed model";
   let r = null;
   try {
     const g = await loadGlb(q(GLB[lv]));
-    r = g.scene; r.rotation.x = -Math.PI / 2; r.position.y = ELEV[lv] * FT; r.updateMatrixWorld(true); scene.add(r);
+    r = g.scene; r.rotation.x = -Math.PI / 2; r.position.y = ELEV[lv] * FT; r.visible = false; r.updateMatrixWorld(true); scene.add(r);
     r.traverse((o) => { if (o.isMesh) { o.castShadow = false; o.receiveShadow = false; } });
     hooks.bindFloor(lv, r);
     /* the bound screen meshes glow so you can see what is tappable */
     for (const [id, meshes] of hooks.bound) for (const m of meshes) {
-      if (m.userData.euGlow) continue;
+      if (m.userData.euGlow || m.userData.euPhysicalAssembly) continue;
       const mat = (Array.isArray(m.material) ? m.material[0] : m.material).clone();
       const nm = (m.userData && m.userData.name) || m.name;
       if (/::(screen|surface)$/.test(nm) || !/::/.test(nm)) { mat.emissive = new THREE.Color(0x3fd6ae); mat.emissiveIntensity = 0.55; }
@@ -105,11 +118,80 @@ async function ensureFloor(lv) {
   } catch (e) { r = null; }
   loaded.set(lv, r);
   return r;
+  })();
+  loadingFloors.set(lv, pending);
+  try { return await pending; } finally { loadingFloors.delete(lv); }
 }
 
-function proxiesFor(lv) {
-  hooks.addProxies(lv, proxyRoot, { material: glowMat });
-  for (const [id, m] of hooks.proxies) { const s = registry.screens.find((x) => x.screen_id === id); m.visible = s.floor === lv; }
+/* Canonical electronics geometry is authored in absolute building feet (unlike
+   the metre/local-floor detail GLBs). Preserve its modeled mounts and positions.
+   Never use registry discovery hints to synthesize or relocate a monitor. */
+async function ensureMonitorAssemblies() {
+  if (electronics) return electronics;
+  if (electronicsPromise) return electronicsPromise;
+  electronicsPromise = (async () => {
+  try {
+    const g = await loadGlb(q("equity-uprise-electronics-fabric-v1.glb"));
+    const r = g.scene;
+    r.scale.setScalar(FT); r.rotation.x = -Math.PI / 2;
+    const monitors = registry.screens.filter(s => s.asset_type === "monitor");
+    const assets = new Map();
+    for (const s of monitors) { assets.set(s.asset_id, s.floor); assets.set(s.network_asset_id, s.floor); }
+    r.traverse(o => {
+      if (!o.isMesh) return;
+      const name = o.userData?.name || o.name || "";
+      /* Preserve the modeled device, its stand, ports and power termination.
+         Do not reveal unrelated infrastructure or generate substitute screens. */
+      const id = name.split("::")[0];
+      o.userData.euAssemblyFloor = assets.get(id) || null;
+      o.userData.euPhysicalAssembly = true;
+      o.visible = false;
+    });
+    scene.add(r); r.updateMatrixWorld(true);
+    for (const lv of FLOORS) hooks.bindFloor(lv, r);
+    electronics = r; electronicsError = false;
+  } catch (e) { electronicsError = true; }
+  return electronics;
+  })();
+  try { return await electronicsPromise; } finally { electronicsPromise = null; }
+}
+
+function showMonitorAssemblies(lv) {
+  electronics?.traverse(o => { if (o.isMesh) o.visible = o.userData.euAssemblyFloor === lv; });
+}
+
+/* The face is the exact native base mesh, not the bezel, mount or host case.
+   Color/emission conveys simulated stage; text remains in the device label. */
+let visualRequest = 0;
+const monitorStates = new Map();
+function paintMonitorStates(fleet = null) {
+  for (const screen of registry.screens.filter(s => s.asset_type === "monitor")) {
+    const state = monitorVisualState(fleet, screen); monitorStates.set(screen.screen_id, state);
+    for (const mesh of hooks.bound.get(screen.screen_id) || []) {
+      if (!mesh.userData.euPhysicalAssembly || (mesh.userData.name || mesh.name) !== screen.asset_id) continue;
+      if (!mesh.userData.euMonitorMaterial) {
+        mesh.material = Array.isArray(mesh.material) ? mesh.material.map(m => m.clone()) : mesh.material.clone();
+        mesh.userData.euMonitorMaterial = true;
+      }
+      for (const mat of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) {
+        mat.color?.setHex(state.color); mat.emissive?.setHex(state.color);
+        if ('emissiveIntensity' in mat) mat.emissiveIntensity = state.emission;
+      }
+      mesh.userData.euMonitorState = state.state;
+    }
+  }
+  const statusLabel = root.querySelector("[data-monitor-state]");
+  if (selected && statusLabel) statusLabel.textContent = "Sandbox: " + (monitorStates.get(selected.screen_id)?.label || "State unavailable");
+  dirty = true;
+}
+async function refreshMonitorStates() {
+  const request = ++visualRequest, requestedMode = mode;
+  paintMonitorStates();
+  try {
+    const ss = await openScreenSession(requestedMode);
+    if (request !== visualRequest || requestedMode !== mode) return;
+    paintMonitorStates(ss.hardware);
+  } catch { /* Retain explicitly unknown/dark faces, never a fabricated healthy desktop. */ }
 }
 
 /* frame the whole 72 ft plate from the south-east at about 50 degrees, wide enough for a portrait phone */
@@ -130,21 +212,28 @@ function flyTo(pose, ms = 700) {
   tween = (now) => { const k = Math.min(1, (now - t0) / ms), e = k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2; camera.position.lerpVectors(from.p, to.p, e); controls.target.lerpVectors(from.t, to.t, e); if (k >= 1) tween = null; };
 }
 
+let floorRequest = 0;
 async function setFloor(lv, { pose = null, instant = false } = {}) {
+  const request = ++floorRequest;
   floor = FLOORS.includes(lv) ? lv : "F1";
   setPref("floor", floor);
   const boot = $("[data-boot]"); boot.hidden = false;
   await ensureCore();
+  if (request !== floorRequest) return;
   const idx = FLOORS.indexOf(floor);
   const det = await ensureFloor(floor);
+  if (request !== floorRequest) return;
   for (const [l, r] of loaded) if (r) r.visible = l === floor;
   /* cutaway: clip everything above this floor's ceiling; hide the chassis' own copy of the floor when its detailed model is in */
   cut.constant = (ELEV[floor] + (floor === "L7" ? 30 : 9.5)) * FT;
   core.traverse((o) => { if (!o.isMesh) return; const m = /^L(\d)_/.exec(o.name || ""); o.visible = !(m && Number(m[1]) === idx && det); });
-  proxiesFor(floor);
+  await ensureMonitorAssemblies();
+  if (request !== floorRequest) return;
+  showMonitorAssemblies(floor);
+  refreshMonitorStates();
   const fl = registry.floors[floor];
   $("[data-floor-title]").textContent = `${floor} · ${fl.title}`;
-  $("[data-count]").textContent = `${fl.screen_count} screens · tap one to open it`;
+  $("[data-count]").textContent = `${hooks.targets().map(o => o.userData.euScreenId).filter((id, i, ids) => ids.indexOf(id) === i).length} modeled targets · ${fl.screen_count} directory entries${electronicsError ? " · monitor model unavailable" : ""}`;
   for (const b of root.querySelectorAll("[data-fl]")) b.setAttribute("aria-pressed", String(b.dataset.fl === floor));
   boot.hidden = true;
   dirty = true;
@@ -163,27 +252,31 @@ function setMode(m) {
   const blinded = loadSession("MISSION").faults.length > 0;
   mb.textContent = blinded ? "Clear mission" : "Blind this floor";
   $("[data-overview]").hidden = mode === "MISSION";
+  refreshMonitorStates();
 }
 
 /* ---- sheet */
 function closeSheet() { $("[data-sheet]").dataset.open = "false"; selected = null; }
 function openSheet(html) { $("[data-sheet-body]").innerHTML = html; $("[data-sheet]").dataset.open = "true"; }
+function isModeled(screen) {
+  return (hooks.bound.get(screen.screen_id) || []).some(o => hooks.screenForObject(o));
+}
 function select(screen) {
   selected = screen;
   dirty = true;
-  flyTo(approachPose(screen), 650);
+  if (isModeled(screen)) flyTo(approachPose(screen), 650);
   const app = registry.apps[screen.app.id];
   const ok = app.modes.includes(mode);
   openSheet(`<div style="display:grid;gap:10px">
     <div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><span class="pill">${esc(app.title)}</span><span class="mono muted" style="font-size:11px">${esc(screen.floor)} · ${esc(screen.room.label)}</span></div>
     <b style="font-size:18px">${esc(screen.title || screen.label)}</b>
-    <span class="muted" style="font-size:13px">${esc(screen.host ? screen.host + " · " : "")}${esc(screen.kind.replace(/_/g, " "))}${ok ? "" : ` · opens in Workplace (not part of ${esc(MODE_LABELS[mode])})`}</span>
-    <button class="btn primary block" type="button" data-open="${esc(screen.screen_id)}" style="min-height:54px">Open screen</button></div>`);
+    <span class="muted" style="font-size:13px">${esc(screen.host ? screen.host + " · " : "")}${esc(screen.kind.replace(/_/g, " "))} · ${isModeled(screen) ? "modeled device" : "directory only; physical model unavailable"}${screen.asset_type === "monitor" ? " · <span data-monitor-state>Sandbox: " + esc(monitorStates.get(screen.screen_id)?.label || "State unavailable") + "</span>" : ""}${ok ? "" : ` · opens in Workplace (not part of ${esc(MODE_LABELS[mode])})`}</span>
+    <button class="btn primary block" type="button" data-open="${esc(screen.screen_id)}" style="min-height:54px">Open device interface</button></div>`);
 }
 function listSheet() {
   const rooms = new Map();
   for (const s of registry.screens.filter((x) => x.floor === floor)) { if (!rooms.has(s.room.label)) rooms.set(s.room.label, []); rooms.get(s.room.label).push(s); }
-  openSheet(`<h2 class="h">${esc(floor)} · screens</h2>${[...rooms].map(([r, list]) => `<h3 class="h" style="margin-top:12px;font-size:11px">${esc(r)}</h3><div class="list">${list.map((s) => `<button class="row" type="button" data-pick="${esc(s.screen_id)}"><span class="dot"></span><div class="t"><b>${esc(s.title || s.label)}</b><span>${esc(registry.apps[s.app.id].title)}${s.host ? " · " + esc(s.host) : ""}</span></div><span class="muted">›</span></button>`).join("")}</div>`).join("")}`);
+  openSheet(`<h2 class="h">${esc(floor)} · screens</h2>${[...rooms].map(([r, list]) => `<h3 class="h" style="margin-top:12px;font-size:11px">${esc(r)}</h3><div class="list">${list.map((s) => `<button class="row" type="button" data-pick="${esc(s.screen_id)}"><span class="dot"></span><div class="t"><b>${esc(s.title || s.label)}</b><span>${esc(registry.apps[s.app.id].title)}${s.host ? " · " + esc(s.host) : ""} · ${isModeled(s) ? "modeled" : "directory only"}</span></div><span class="muted">›</span></button>`).join("")}</div>`).join("")}`);
 }
 
 root.addEventListener("click", (e) => {
@@ -219,7 +312,7 @@ const tip = $("[data-tip]");
 cv.addEventListener("pointermove", (e) => {
   if (e.pointerType !== "mouse") return;
   const s = hooks.pickAt(e, cv);
-  tip.hidden = !s; if (s) { tip.textContent = s.title || s.label; tip.style.left = e.clientX + "px"; tip.style.top = e.clientY + "px"; }
+  tip.hidden = !s; if (s) { tip.textContent = (s.title || s.label) + (s.asset_type === "monitor" ? " · " + (monitorStates.get(s.screen_id)?.label || "State unavailable") : ""); tip.style.left = e.clientX + "px"; tip.style.top = e.clientY + "px"; }
   cv.style.cursor = s ? "pointer" : "grab";
 });
 
@@ -237,7 +330,7 @@ function loop(t) {
     lastPulse = t;
     const k = 0.6 + 0.3 * Math.sin(t / 420);
     glowMat.opacity = 0.55 + 0.35 * (0.5 + 0.5 * Math.sin(t / 380));
-    for (const meshes of hooks.bound.values()) for (const m of meshes) if (m.material && m.material.emissive) m.material.emissiveIntensity = (selected && m.userData.euScreenId === selected.screen_id) ? 1.4 : k;
+    for (const meshes of hooks.bound.values()) for (const m of meshes) if (!m.userData.euPhysicalAssembly && m.material && m.material.emissive) m.material.emissiveIntensity = (selected && m.userData.euScreenId === selected.screen_id) ? 1.4 : k;
     dirty = true;
   }
   if (dirty) { renderer.render(scene, camera); dirty = false; }
@@ -258,3 +351,6 @@ addEventListener("pageshow", (e) => {
   if (rp) { if (rp.mode) setMode(rp.mode); setFloor(rp.floor || floor, { pose: rp.pose, instant: true }); }
   else setMode(getPref("mode", mode));
 });
+
+// Same-tab navigation restores sessionStorage; focus also refreshes a cached building.
+addEventListener("focus", () => refreshMonitorStates());

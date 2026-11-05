@@ -24,6 +24,7 @@ import { residentAiTurn } from './executors/resident-ai-turn.mjs';
 import { actorLiveComment } from './executors/actor-live-comment.mjs';
 import { actorNewsComment } from './executors/actor-news-comment.mjs';
 import { prim3AgentNews } from './executors/prim3-agent-news.mjs';
+import { characterPost } from './executors/character-post.mjs';
 import { worldNewsPairing } from './executors/world-news-pairing.mjs';
 import { weatherRegionSnapshot } from './executors/weather-region-snapshot.mjs';
 import { aiDiagnostics } from './executors/ai-diagnostics.mjs';
@@ -57,6 +58,7 @@ const executors = new Map([
   ['ai_diagnostics', aiDiagnostics],
   ['actor_news_comment', actorNewsComment],
   ['prim3_agent_news', prim3AgentNews],
+  ['character_post', characterPost],
   ['world_news_pairing', worldNewsPairing],
   ['weather_region_snapshot', weatherRegionSnapshot],
   ['actor_live_comment', actorLiveComment],

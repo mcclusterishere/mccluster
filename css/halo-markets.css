@@ -74,3 +74,19 @@
 @media (min-width:1100px){
   .hm{right:var(--hx-gap,16px);width:var(--hx-right-w,320px)}
 }
+
+/* Observed prices use HTML labels so text stays legible at phone width. */
+.hm__chart{display:block;width:100%;height:120px;fill:var(--hm-green,#4fdf98)}
+.hm__observations{padding-left:1.5rem;max-height:180px;overflow:auto;font-size:14px;overflow-wrap:anywhere}
+.hm__company details{min-width:0;font-size:14px}
+.hm__company summary{min-height:44px;cursor:pointer}
+
+/* Finance remains inside the existing responsive globe bottom/side panel. */
+.hm__finance { overflow-wrap:anywhere; }
+.hm__finance input,.hm__finance select { display:block; box-sizing:border-box; width:100%; min-height:44px; font:inherit; font-size:16px; background:#142333; color:#fff; border:1px solid #526577; border-radius:6px; padding:8px; }
+.hm__finance button { min-height:44px; max-width:100%; margin:4px 4px 4px 0; padding:8px 12px; border:1px solid #526577; border-radius:6px; background:#172f42; color:#e8f3ff; font:inherit; overflow-wrap:anywhere; }
+.hm__finance button:disabled { opacity:.5; }
+.hm__finance label { display:block; margin-block:8px; }
+.hm__finance ul { padding-left:18px; }
+.hm__finance p { color:#b9cbd9; font-size:13px; line-height:1.5; }
+.hm__finance h4 { margin-block:16px 8px; }
