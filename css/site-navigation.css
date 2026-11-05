@@ -143,6 +143,11 @@ body[data-admin-navigation] .appbar--admin .appbar__tab > span:not(.appbar__sr){
 .mcc-dock-hints button{pointer-events:auto;width:44px;min-height:44px;flex:none;border:1px solid #51434b;border-radius:50%;background:#1b171ee8;color:#fff;font:24px/1 system-ui;cursor:pointer;animation:mcc-dock-cue .4s ease-out 2 alternate}
 .mcc-dock-hints button:last-child{margin-left:auto}
 .mcc-dock-hints[hidden],.mcc-dock-hints button[hidden]{display:none!important}
+/* Seven primary tabs already fit on phones. On cinematic/world/game pages,
+   these extra overflow arrows compete with independent bottom-corner controls.
+   Keep native dock swipe and keyboard navigation, but show the click-arrows only
+   inside Control where the destination bar owns that interaction area. */
+body[data-admin-navigation]:not(.cr) .mcc-dock-hints{display:none!important}
 .mcc-dock-hints button:focus-visible{outline:2px solid #fff;outline-offset:2px}
 @keyframes mcc-dock-cue{from{opacity:.6}to{opacity:1}}
 @media(prefers-reduced-motion:reduce){.mcc-dock-hints button{animation:none}}
