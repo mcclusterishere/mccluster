@@ -189,3 +189,25 @@ test('the page: shared bar, noindex, module script, mobile-first CSS, no purple'
   for (const m of DOC.modules) assert.ok(!isPurple(m.accent));
   assert.match(read('js/site-navigation.js'), /label:'Game Hub'[^}]*game-hub\.html/);
 });
+
+test('Chem 108 has a direct owner-only launch in the Game Hub, destination picker and Admin Apps', () => {
+  const apps = read('js/control-room-v2.js');
+  const destinations = read('js/site-navigation.js');
+  const deepLink = 'game-hub.html#m=chem108&play=molecule-rush';
+  assert.match(PAGE, /href="#m=chem108&amp;play=molecule-rush"/);
+  assert.ok(destinations.includes(deepLink), 'owner destination picker links directly to the Chemistry game');
+  assert.ok(apps.includes(deepLink) && apps.includes('bridge.chem108'), 'Admin Apps lists the Chemistry game');
+  assert.match(PAGE, /data-owner-gate/, 'the new links must not bypass owner authorization');
+});
+
+test('optional music catalogue does not block game boot or the direct play route', () => {
+  const hub = read('js/game-hub/hub.mjs');
+  const bootStart = hub.indexOf('async function boot()');
+  const navStart = hub.indexOf("const nav = $('#ghModules')", bootStart);
+  assert.ok(bootStart >= 0 && navStart > bootStart);
+  const startup = hub.slice(bootStart, navStart);
+  assert.match(startup, /const albumsPromise = fetch\(/);
+  assert.doesNotMatch(startup, /await albumsPromise|Promise\.all\(/);
+  assert.match(hub, /void albumsPromise\.then\(/);
+  assert.deepEqual(parseHash('#m=chem108&play=molecule-rush'), { module: 'chem108', play: 'molecule-rush' });
+});
