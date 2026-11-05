@@ -101,6 +101,7 @@
        Control; former back-office room names are only routing aliases. */
     whip: { title: "Whip", href: "whip.html", subtitle: "Mobility product" },
     prim3: { title: "PRIM3", href: "prim3.html", subtitle: "Learning product" },
+    chem108: { title: "Chem 108 · Molecule Rush", href: "game-hub.html#m=chem108&play=molecule-rush", subtitle: "Owner-only chemistry arcade" },
     /* HITMAN'S HALO ON THE GLOBE (owner, 2026-10-21: "fix the fact that the control room points to seek first"): the
        owner's full-screen globe with the Halo console open. Seek First (the retired console behind
        auth/seek-first-handoff.html) is no longer a door from here. */
@@ -2338,7 +2339,7 @@
 
   function renderApps() {
     var registered = state.apps.map(function (a) { return appCard(a.name || a.app_key, [a.product_family, a.kind].filter(Boolean).join(" · ") || "Registered application", a.public_url || "#", a.app_key || "registered", true); }).join("") || '<div class="cr-panel__body cr-muted">No registered applications were returned.</div>';
-    var specialty = [bridge.whip, bridge.prim3, bridge.halo, bridge.manufacture].map(function (a) { return appCard(a.title, a.subtitle, a.href, "Specialized workspace", a.external); }).join("");
+    var specialty = [bridge.whip, bridge.prim3, bridge.chem108, bridge.halo, bridge.manufacture].map(function (a) { return appCard(a.title, a.subtitle, a.href, "Specialized workspace", a.external); }).join("");
     return '<section class="cr-app-section"><div class="cr-panel__head"><h2>Registered applications</h2><span class="cr-panel__meta">' + state.apps.length + '</span></div><div class="cr-app-grid">' + registered + '</div></section><section class="cr-app-section"><div class="cr-panel__head"><h2>Specialized workspaces</h2></div><div class="cr-app-grid">' + specialty + '</div></section>';
   }
 
