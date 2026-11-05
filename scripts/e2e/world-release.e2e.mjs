@@ -361,6 +361,7 @@ for(const width of (process.env.WORLD_QA_WIDTH?[Number(process.env.WORLD_QA_WIDT
   check(scope,'mapless owner revocation removes private data',!(await page.locator('#haloShell').count()));
 
  }else{
+  check(scope,'extra owner dock arrows do not intercept Globe controls',await page.locator('#mccDockHints').isHidden());
   await page.locator('.globe-editorial-tools > summary').click();
   check(scope,'the owner sees the Halo door beside ← World, a full tap target',await page.evaluate(()=>{const d=document.getElementById('haloEnter'),b=d&&d.getBoundingClientRect();return !!d&&!d.hidden&&d.getAttribute('href')==='action-globe.html?explore=1&halo=1'&&b.height>=44&&b.width>=44}));
   check(scope,'verified owner has preview control',await page.locator('#ctlFlights').isVisible());
