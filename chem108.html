@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <script src="js/shell-boot.js?v=__STAMP__"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#080b0e">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="Play Molecule Rush: seven days of free CHE 108 chemistry practice before signing up for an M Account.">
+  <title>Chem 108 · Molecule Rush · Free seven-day trial</title>
+  <link rel="canonical" href="https://matthew.mccluster.org/chem108.html">
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/game-hub.css?v=__STAMP__">
+</head>
+<body class="gh-body gh-body--trial">
+  <a class="gh-skip" href="#chem108Main">Skip to Chemistry</a>
+  <main class="gh gh--trial" id="chem108Main" tabindex="-1">
+    <header class="gh-top">
+      <small>Courses · CHE 108 · Free trial</small>
+      <h1>Chem 108</h1>
+      <p>Learn organic chemistry by playing Molecule Rush: name structures, spot functional groups, and drill elements. No account required for your first seven days.</p>
+      <nav class="gh-worlds" aria-label="Chemistry navigation">
+        <a class="gh-city-link" href="account.html?stay=1">Sign in / Create an M Account</a>
+        <a class="gh-city-link" href="index.html">Site home</a>
+      </nav>
+    </header>
+    <section class="gh-trial-panel" data-chem108-trial aria-labelledby="chemTrialHeading">
+      <h2 id="chemTrialHeading">Chemistry game preview</h2>
+      <p id="chemTrialMessage" role="status" aria-live="polite">Preparing your preview…</p>
+      <div class="gh-trial-actions">
+        <button class="gh-city-link gh-trial-button" id="chemTrialStart" type="button" hidden>Start seven-day free trial</button>
+        <a class="gh-city-link" id="chemTrialAccount" href="account.html?stay=1" hidden>Sign in or create an account</a>
+      </div>
+      <small id="chemTrialNote">No charge or payment details. Guest access is remembered in this browser only.</small>
+    </section>
+    <section class="gh-play gh-trial-play" id="chemTrialGame" hidden aria-label="Molecule Rush game"></section>
+  </main>
+  <script src="js/mcc-auth.js?v=__STAMP__"></script>
+  <script type="module" src="js/game-hub/chem108/trial.mjs?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+</body>
+</html>
