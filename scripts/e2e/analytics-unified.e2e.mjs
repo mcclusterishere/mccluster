@@ -152,9 +152,9 @@ for(const size of [{width:390,height:844},{width:820,height:1180},{width:1280,he
  const dimensions=await page.locator('.cu-geography').boundingBox();
  check(size.width,'geographic drilldown opens inside the analytics panel',!!dimensions&&dimensions.height>150&&dimensions.width<=size.width+2,dimensions);
  check(size.width,'document has no dashboard scroll',await page.evaluate(()=>document.documentElement.scrollHeight<=innerHeight+2),await page.evaluate(()=>({height:document.documentElement.scrollHeight,window:innerHeight,body:getComputedStyle(document.body).paddingBottom})));
- const originalGlobe=await page.locator('[data-cra-globe]').evaluate(el=>{window.__testAnalyticsEarth=window.__craGlobe();return el.querySelectorAll('canvas').length;});
+ const originalGlobe=await page.locator('[data-cra-globe]').evaluate(el=>{window.__testAnalyticsEarthCanvas=el.querySelector('canvas');return el.querySelectorAll('canvas').length;});
  check(size.width,'geographic drilldown retains its canvas',originalGlobe>0);
- const tabs=await page.locator('.appbar [data-appnav]').evaluateAll(nodes=>nodes.map(n=>n.dataset.appnav));check(size.width,'current seven-tab owner bar',JSON.stringify(tabs)===JSON.stringify(['music','admin-inbox','admin-home','home','analytics','halo','games']),tabs);
+ const tabs=await page.locator('.appbar [data-appnav]').evaluateAll(nodes=>nodes.map(n=>n.dataset.appnav));check(size.width,'owner bar retains reviewed destinations and three work shortcuts',JSON.stringify(tabs)===JSON.stringify(['music','admin-inbox','admin-home','home','analytics','halo','games','admin-sell','admin-create','admin-system']),tabs);
  check(size.width,'overview exposes seven scoped metrics across three summary groups',await page.locator('.cu-summary-groups .cu-summary-group').count()===3&&await page.locator('.cu-summary-groups .cu-metric-link').count()===7);
  check(size.width,'trend exposes exact keyboard values',await page.locator('.cra-ac__point[tabindex="0"]').count()===24);
  await page.screenshot({path:OUT+'/unified-'+size.width+(size.workspace?'-workspace':'')+'.png',fullPage:false});
@@ -180,7 +180,7 @@ for(const size of [{width:390,height:844},{width:820,height:1180},{width:1280,he
  check(size.width,'snapshot displayed',await page.locator('.cu-records').innerText().then(x=>x.includes('Fixture camera')));
  await page.locator('[data-cu-source="usgs"]').click();await page.locator('#cuSnapshot button[type=submit]').click();await page.waitForFunction(()=>!window.CR.analyticsUnified.state.reading);
  check(size.width,'failed source read remains visible',await page.locator('[data-cu-details] [role=alert]').innerText().then(x=>x.includes('unavailable')));
- check(size.width,'globe instance survives chapter navigation',await page.evaluate(()=>window.__craGlobe()===window.__testAnalyticsEarth));
+ check(size.width,'the actual globe canvas survives chapter navigation',await page.evaluate(()=>!!window.__testAnalyticsEarthCanvas&&window.__testAnalyticsEarthCanvas.isConnected&&document.querySelector('[data-cra-globe] canvas')===window.__testAnalyticsEarthCanvas&&window.__craGlobe().ready));
  await page.locator('[data-cra-sec="cameras"]').first().click();
  check(size.width,'camera count starts unmeasured',!(await page.locator('[data-cu-details]').innerText()).includes('10,000'));
  await page.locator('[data-camera-load]').click();await page.waitForSelector('[data-camera-check]:not([disabled])');
@@ -192,12 +192,14 @@ for(const size of [{width:390,height:844},{width:820,height:1180},{width:1280,he
  check(size.width,'keyboard and tab state agree without preloading on-demand datasets',await page.locator('[role=tab][aria-selected=true]').innerText()==='Action & business');
  if(size.width<600){
   await page.locator('[role=tab][data-cra-sec="overview"]').click();
+  await page.locator('.cu-summary-groups').first().scrollIntoViewIfNeeded();
   const metricBox=await page.locator('.cu-summary-groups').first().boundingBox(),railSession=await ctx.newCDPSession(page);
   const ry=metricBox.y+Math.min(metricBox.height/2,40),rx=metricBox.x+metricBox.width-20;
   await railSession.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:rx,y:ry}]});
   for(const delta of [40,100,180,260]){await railSession.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:rx-delta,y:ry}]});await page.waitForTimeout(20);}
   await railSession.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await page.waitForTimeout(300);
-  check(size.width,'summary groups swipe without changing chapter',await page.locator('.cu-summary-groups').first().evaluate(el=>el.scrollLeft>30)&&await page.locator('[role=tab][aria-selected=true]').innerText()==='Overview');
+  const swipe=await page.locator('.cu-summary-groups').first().evaluate(el=>({offset:el.scrollLeft,scrollWidth:el.scrollWidth,clientWidth:el.clientWidth}));
+  check(size.width,'summary groups swipe without changing chapter',swipe.scrollWidth>swipe.clientWidth+30&&swipe.offset>30&&await page.locator('[role=tab][aria-selected=true]').innerText()==='Overview',swipe);
   const box=await page.locator('.cad-chapter').boundingBox();
   const bodyBox=await page.locator('.cad-chapter>div:first-child').boundingBox();
   const session=await ctx.newCDPSession(page), y=bodyBox.y+bodyBox.height-8;
