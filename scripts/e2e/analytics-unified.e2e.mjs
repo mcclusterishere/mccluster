@@ -143,20 +143,20 @@ for(const size of [{width:390,height:844},{width:820,height:1180},{width:1280,he
  await page.goto(BASE+'/control.html'+(size.workspace?'?workspace=1':'')+'#analytics',{waitUntil:'domcontentloaded'});
  if(size.workspace)await page.waitForSelector('body[data-control-workspace=owner]');
  const ready=await settle(page);check(size.width,'geographic globe renders',ready);
- await page.waitForSelector('.cu-metrics');await page.waitForFunction(()=>window.CR.analytics.state.loaded);
+ await page.waitForSelector('.cu-summary-groups .cu-summary-group');await page.waitForFunction(()=>window.CR.analytics.state.loaded);
  const w=await widths(page);check(size.width,'no horizontal overflow',w.scrollW===w.clientW,w);
  const targets=await page.locator('.cu-card button,.cu-card a').evaluateAll(nodes=>nodes.filter(n=>n.getClientRects().length).map(n=>({text:n.textContent,height:n.getBoundingClientRect().height})));
  check(size.width,'card controls retain 40px touch targets',targets.length>0&&targets.every(n=>n.height>=40),targets.filter(n=>n.height<40));
  const dimensions=await page.locator('.cu-geography').boundingBox();check(size.width,'globe stays inside viewport',dimensions.height>150&&dimensions.y+dimensions.height<=size.height,dimensions);
  check(size.width,'document has no dashboard scroll',await page.evaluate(()=>document.documentElement.scrollHeight<=innerHeight+2),await page.evaluate(()=>({height:document.documentElement.scrollHeight,window:innerHeight,body:getComputedStyle(document.body).paddingBottom})));
  const originalGlobe=await page.locator('[data-cra-globe]').evaluate(el=>{el.dataset.testIdentity='same-earth';return el.querySelectorAll('canvas').length;});
- const tabs=await page.locator('.appbar [data-appnav]').evaluateAll(nodes=>nodes.map(n=>n.dataset.appnav));check(size.width,'original five tab bar',JSON.stringify(tabs)===JSON.stringify(['music','admin-home','home','analytics','halo']),tabs);
- check(size.width,'overview exposes six connected metrics',await page.locator('.cu-overview-metrics .cu-metric-link').count()===6);
+ const tabs=await page.locator('.appbar [data-appnav]').evaluateAll(nodes=>nodes.map(n=>n.dataset.appnav));check(size.width,'current seven-tab owner bar',JSON.stringify(tabs)===JSON.stringify(['music','admin-inbox','admin-home','home','analytics','halo','games']),tabs);
+ check(size.width,'overview exposes seven scoped metrics across three summary groups',await page.locator('.cu-summary-groups .cu-summary-group').count()===3&&await page.locator('.cu-summary-groups .cu-metric-link').count()===7);
  check(size.width,'trend exposes exact keyboard values',await page.locator('.cra-ac__point[tabindex="0"]').count()===24);
  await page.screenshot({path:OUT+'/unified-'+size.width+(size.workspace?'-workspace':'')+'.png',fullPage:false});
  const heat=await page.evaluate(()=>{const g=window.__craGlobe();return{us:g.fill('US'),gb:g.fill('GB'),none:g.fill('AU'),metric:window.CR.analytics.state.geo.layer};});
  check(size.width,'visitor heat map starts populated with distinct intensities',heat.metric==='visitors'&&JSON.stringify(heat.us)!==JSON.stringify(heat.gb)&&JSON.stringify(heat.gb)!==JSON.stringify(heat.none),heat);
- check(size.width,'unique visitors lead the overview',await page.locator('.cu-overview-metrics button').first().innerText().then(t=>t.startsWith('Unique visitors')));
+ check(size.width,'unique visitors lead the overview',await page.locator('.cu-summary-groups .cu-metric-link').first().innerText().then(t=>t.startsWith('Unique visitors')));
  await page.locator('[role=tab][data-cra-sec="audience"]').click();
  await page.locator('#craCountry').selectOption('US');
  await page.waitForFunction(()=>window.CR.analytics.state.geoAudience?.data?.totals.visitors===18);
@@ -184,16 +184,16 @@ for(const size of [{width:390,height:844},{width:820,height:1180},{width:1280,he
  await page.locator('[data-camera-check]').click();await page.waitForFunction(()=>Object.keys(window.CR.analyticsCameras.state.checks).length===3&&!window.CR.analyticsCameras.state.running);
  const measured=await page.evaluate(()=>window.CR.analyticsCameras.totals(window.CR.analyticsCameras.state.catalog.cameras));
  check(size.width,'only decoded images count as verified',measured.verified===1&&measured.failed===2&&measured.unchecked===0,measured);
- await page.locator('[role=tab][data-cra-sec="cameras"]').press('ArrowRight');
- check(size.width,'keyboard and tab state agree',await page.locator('[role=tab][aria-selected=true]').innerText()==='Adaptive');
+ await page.locator('[role=tab][data-cra-sec="intelligence"]').press('ArrowRight');
+ check(size.width,'keyboard and tab state agree',await page.locator('[role=tab][aria-selected=true]').innerText()==='Data & setup');
  if(size.width<600){
   await page.locator('[role=tab][data-cra-sec="overview"]').click();
-  const metricBox=await page.locator('.cu-metrics').first().boundingBox(),railSession=await ctx.newCDPSession(page);
+  const metricBox=await page.locator('.cu-summary-groups').first().boundingBox(),railSession=await ctx.newCDPSession(page);
   const ry=metricBox.y+Math.min(metricBox.height/2,40),rx=metricBox.x+metricBox.width-20;
   await railSession.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:rx,y:ry}]});
   for(const delta of [40,100,180,260]){await railSession.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:rx-delta,y:ry}]});await page.waitForTimeout(20);}
   await railSession.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await page.waitForTimeout(300);
-  check(size.width,'KPI rail swipes without changing chapter',await page.locator('.cu-metrics').first().evaluate(el=>el.scrollLeft>30)&&await page.locator('[role=tab][aria-selected=true]').innerText()==='Overview');
+  check(size.width,'summary groups swipe without changing chapter',await page.locator('.cu-summary-groups').first().evaluate(el=>el.scrollLeft>30)&&await page.locator('[role=tab][aria-selected=true]').innerText()==='Overview');
   const box=await page.locator('.cad-chapter').boundingBox();
   const bodyBox=await page.locator('.cad-chapter>div:first-child').boundingBox();
   const session=await ctx.newCDPSession(page), y=bodyBox.y+bodyBox.height-8;
