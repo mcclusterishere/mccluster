@@ -17,7 +17,8 @@ try {
   });
   await ctx.route('https://api.mccluster.org/v1/analytics/sessions?**',r=>json(r,{ok:true,total:1,counts:{all:1},sessions:[session]}));
   await page.goto(BASE+'/control.html#analytics',{waitUntil:'domcontentloaded'});await settle(page);
-  await page.getByRole('tab',{name:'Site health',exact:true}).click();
+  await page.getByRole('tab',{name:'Data & setup',exact:true}).click();
+  await page.locator('.cad-local-views [data-cra-sec="forensics"]').click();
   await page.waitForSelector('[data-crf-session]');
   await page.locator('[data-crf-session]').first().click();
   await page.waitForSelector('.crf-kpis');
