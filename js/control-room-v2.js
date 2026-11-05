@@ -2650,6 +2650,7 @@
       '<div class="cr-ask__row"><input id="crHeroInput" autocomplete="off" placeholder="Ask McCluster, or tell it what to do…" aria-label="Ask McCluster, search, or give it an objective">' +
       '<button class="cr-btn cr-btn--primary" type="button" data-action="hero-command">' + navIcon("spark", ' width="16" height="16"') + 'Go</button></div>' +
       '<div class="cr-ask__chips">' +
+        '<a class="cr-chip" href="game-hub.html#m=chem108&amp;play=molecule-rush">Play Chem 108</a>' +
         (waiting.length ? '<button class="cr-chip" type="button" data-action="goto-waiting">Open the ' + waiting.length + ' unanswered</button>' : "") +
         '<button class="cr-chip" type="button" data-nav-route="#sell:orders:all">Orders to fill</button>' +
         '<button class="cr-chip" type="button" data-action="goto-failed">Show failed work</button>' +
