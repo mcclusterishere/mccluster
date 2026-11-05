@@ -1,6 +1,6 @@
 /* Privacy gate enforcement: no McCluster analytics, device/session IDs,
    service-worker registration or location reads begin until the current site-entry
-   notice has been AGREED to. Having only seen it ("Not now") is not enough.
+   notice has been AGREED to. Legacy "seen" records are not agreement.
    The policy page itself can still be read.
    js/live-content.js owns the notice, its version and every record of the
    answer (browser storage, the cookie McCluster's own hosts share, a member's
