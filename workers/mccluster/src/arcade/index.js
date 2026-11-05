@@ -19,6 +19,9 @@ export async function handleArcade(request,env,{requireHouseOwner,fetchImpl=fetc
   try {
     if(typeof requireHouseOwner!=='function')throw fail(503,'Authorization unavailable');
     const user=await requireHouseOwner(request,env);if(!user?.id)throw fail(401,'Authentication required');
+    const cloudEnabled=env.ARCADE_CLOUD_ENABLED==='true'&&!!env.SUPABASE_URL&&!!env.SUPABASE_SERVICE_ROLE_KEY;
+    if(path===ARCADE_PREFIX+'/capabilities'&&request.method==='GET')return respond({ok:true,value:{cloudEnabled}});
+    if(!cloudEnabled)throw fail(503,'Arcade cloud is disabled');
     if(!env.SUPABASE_URL||!env.SUPABASE_SERVICE_ROLE_KEY)throw fail(503,'Arcade storage unavailable');
     const parts=path.slice(ARCADE_PREFIX.length+1).split('/'),id=parts[1];
     let action,doc=null,revision=null;

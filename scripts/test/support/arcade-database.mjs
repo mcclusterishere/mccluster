@@ -13,7 +13,7 @@ export async function createArcadeDatabase() {
     const work=chain.then(async()=>{await db.exec('set role service_role');try{return (await db.query('select public.arcade_command($1,$2,$3,$4,$5) as result',[params.p_action,params.p_actor,params.p_id,params.p_document,params.p_revision])).rows[0].result;}finally{await db.exec('reset role');}});
     chain=work.catch(()=>{});return work;
   };
-  const handle=request=>handleArcade(request,{SUPABASE_URL:'https://local.invalid',SUPABASE_SERVICE_ROLE_KEY:'local-fixture-only'}, {
+  const handle=request=>handleArcade(request,{ARCADE_CLOUD_ENABLED:'true',SUPABASE_URL:'https://local.invalid',SUPABASE_SERVICE_ROLE_KEY:'local-fixture-only'}, {
     requireHouseOwner:async r=>{
       const token=r.headers.get('authorization');if(!token)throw Object.assign(Error('Sign in'),{status:401});
       if(token!=='Bearer local-owner')throw Object.assign(Error('Owner required'),{status:403});return {id:OWNER};
