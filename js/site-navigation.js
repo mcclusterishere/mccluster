@@ -48,7 +48,8 @@
       {label:'PRIM3', group:'Products', href:new URL('prim3.html', house).href, context:'Learning'},
       /* the learning hub is now the game hub (owner, 2026-11-03): a mini game per course, each with its paired music */
       {label:'Game Hub', group:'Products', href:new URL('game-hub.html', house).href, context:'Course mini games'},
-      {label:'Chem 108 · Molecule Rush', group:'Products', href:new URL('game-hub.html#m=chem108&play=molecule-rush', house).href, context:'Owner-only chemistry arcade'},
+      {label:'Chem 108 · Molecule Rush', group:'Products', href:new URL('game-hub.html#m=chem108&play=molecule-rush', house).href, context:'Private Game Hub / owner arcade'},
+      {label:'Chem 108 · Guest trial', group:'Products', href:new URL('chem108.html', house).href, context:'Public seven-day chemistry preview'},
       /* the owner's mission globe and World builder (owner, 2026-11-02: "its own tab … only admin can see as its own app");
          this panel is the owner's only, and the page checks the owner again itself */
       {label:'PRIM3 World', group:'Products', href:new URL('prim3-world.html', house).href, context:'Missions · World builder'},
