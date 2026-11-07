@@ -19,7 +19,7 @@ begin
  if p_action is null or p_action not in ('save','publish','unpublish') then raise exception 'invalid action' using errcode='22023'; end if;
  -- Defense in depth: same house-owner membership as the Worker, never an admin label.
  if not exists(select 1 from public.org_members m join public.orgs o on o.id=m.org_id
-   where o.slug='mccluster' and m.profile_id=p_actor and m.role='owner') then raise exception 'owner required'; end if;
+   where o.slug='mccluster' and o.enabled is true and m.profile_id=p_actor and m.role='owner') then raise exception 'owner required'; end if;
  insert into public.learning_portfolio(key,draft,updated_by) values('matthew',p_draft,p_actor) on conflict do nothing;
  select * into r from public.learning_portfolio where key='matthew' for update;
  if r.revision<>p_revision then return null; end if;

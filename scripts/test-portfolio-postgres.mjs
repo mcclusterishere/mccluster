@@ -79,6 +79,15 @@ export async function run(env=process.env) {
     await assert.rejects(service(a,tx=>call(tx,0,'save',{},null,member)),/owner required/);
     for(const [revision,action] of [[null,'save'],[-1,'save'],[0,null]])await assert.rejects(service(a,tx=>call(tx,revision,action)),e=>e.code==='22023');
     assert.deepEqual(await row(),[]);
+    const disabledHouse=async revision=>{
+      const before=await row();
+      await admin.unsafe("update public.orgs set enabled=false where slug='mccluster'");
+      try {
+        for(const action of ['save','publish','unpublish'])await assert.rejects(service(a,tx=>call(tx,revision,action,{marker:'denied'},{marker:'denied'})),/owner required/);
+        assert.deepEqual(await row(),before);
+      } finally {await admin.unsafe("update public.orgs set enabled=true where slug='mccluster'");}
+    };
+    await disabledHouse(0);
     console.log('PASS canonical managed auth, service credential dependency, RLS/client denial, invalid inputs insert nothing');
 
     // First-ever save: the second session must really wait on the unique insert.
@@ -117,6 +126,8 @@ export async function run(env=process.env) {
     assert.deepEqual(afterRace.published,published?{marker:'public-selection'}:null);
     console.log('PASS concurrent save/publication: two observed waits, one winner, draft/snapshot reflect only winner');
 
+    await disabledHouse(2);
+    console.log('PASS disabled-house save/publish/unpublish denied before initial insert and on existing row');
     const before=await row();
     for(const [revision,action] of [[null,'save'],[-1,'save'],[2,null]])await assert.rejects(service(a,tx=>call(tx,revision,action)),e=>e.code==='22023');
     assert.deepEqual(await row(),before);

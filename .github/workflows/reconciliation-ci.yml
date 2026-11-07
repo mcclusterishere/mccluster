@@ -19,6 +19,23 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  arcade-native:
+    name: Arcade PostgreSQL concurrency (fixture auth)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+      - name: Install pinned isolated native test dependencies
+        run: npm install --prefix "$RUNNER_TEMP/arcade-native-tools" --ignore-scripts --no-audit --no-fund --package-lock=false @embedded-postgres/linux-x64@17.6.0-beta.15 postgres@3.4.7
+      - name: Prove native concurrent saves and idempotent finish
+        # A real isolated PostgreSQL cluster with minimal auth/tenancy fixtures.
+        # Canonical managed-auth/schema proof remains in the separate reset job.
+        env:
+          ARCADE_NATIVE_MODULES: ${{ runner.temp }}/arcade-native-tools/node_modules
+        run: node scripts/test/city-arcade-native.integration.mjs
   worker:
     name: Worker contracts
     runs-on: ubuntu-latest
