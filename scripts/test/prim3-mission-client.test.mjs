@@ -54,3 +54,29 @@ test('lost reviewed lattice start retains the exact versioned context',async()=>
  const saved=JSON.parse(t.saved.get(`prim3.adaptive.pending.v1:${uid}`));assert.deepEqual(saved.pending.body.learning_context,context);
  await assert.rejects(c.retry(),/offline/);assert.equal(t.requests.at(-1).init.body,t.requests.at(-2).init.body);
 });
+test('unavailable release detachment preserves rejected queue until server confirmation, including reload',async()=>{
+ const t=setup(),base=t.fetchImpl,rid='20000000-0000-4000-8000-000000000001';let available=true,deny=false;
+ t.fetchImpl=async(url,init)=>{
+  if(url.endsWith(`/releases/${rid}`)){if(deny)throw Error('offline');return Response.json({release:{id:rid,available}});}
+  if(init.method==='POST'&&url.endsWith('/events'))return Response.json({error:'Release expired'},{status:409});
+  const r=await base(url,init),v=await r.json();if(v.flow){v.flow.phase='play';v.released_mission={id:rid};}return Response.json(v);
+ };
+ let c=createPracticeClient(t);await c.connect();await c.start({fictionChecked:true,geographyChecked:true},{releaseId:rid});
+ await assert.rejects(c.submit('finish',{outcome:'abandoned'}),/expired/);
+ const saved=t.saved.get(`prim3.adaptive.pending.v1:${uid}`);
+ c=createPracticeClient(t);await c.connect();assert.equal(c.pending,true);
+ await assert.rejects(c.leaveUnavailableRelease(),/still available/);assert.equal(t.saved.get(`prim3.adaptive.pending.v1:${uid}`),saved);
+ available=false;deny=true;await assert.rejects(c.leaveUnavailableRelease(),/offline/);assert.equal(c.pending,true);
+ deny=false;await c.leaveUnavailableRelease();assert.equal(c.current,null);assert.equal(c.pending,false);assert.equal(t.saved.size,0);
+ await c.start({fictionChecked:true,geographyChecked:true},{releaseId:rid});assert.equal(c.current.session_id,sid);
+});
+test('expired rejected start can detach without a current session and never posts a synthetic finish',async()=>{
+ const t=setup(),base=t.fetchImpl,rid='20000000-0000-4000-8000-000000000002',writes=[];
+ t.fetchImpl=async(url,init)=>{
+  if(init.method==='POST'){writes.push(JSON.parse(init.body));return Response.json({error:'Release expired'},{status:409});}
+  if(url.endsWith(`/releases/${rid}`))return Response.json({release:{id:rid,available:false}});
+  return base(url,init);
+ };
+ const c=createPracticeClient(t);await c.connect();await assert.rejects(c.start({fictionChecked:true,geographyChecked:true},{releaseId:rid}),/expired/);
+ assert.equal(c.current,null);assert.equal(c.releaseId,rid);await c.leaveUnavailableRelease();assert.equal(c.pending,false);assert.equal(writes.length,1);assert.equal(writes[0].type,undefined);
+});

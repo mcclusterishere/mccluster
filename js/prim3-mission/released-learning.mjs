@@ -27,7 +27,7 @@ export function createReleasedLearning({practice,release,getTacticalState,contex
   get ready(){const v=bound(),s=getTacticalState(),cp=v.released_mission.next_checkpoint_id;if(!context||context.variant==='generated')return checkpointReady(s,release.recipe_id,cp);const step=Number(cp?.split('STEP_')[1]);return Number.isInteger(step)&&step>0&&s?.variant===context.variant&&s?.topology===context.topology&&(s.turn>step||(step===1&&s.hasActed===true));},
   async answer(answer){const v=bound();if(!this.ready)throw new Error('Reach and complete this checkpoint step in the game first.');return practice.submit('answer',{answer,checkpointId:v.released_mission.next_checkpoint_id});},
   async hint(){const v=bound();if(!this.ready)throw new Error('Reach this checkpoint first.');return practice.submit('hint',{checkpointId:v.released_mission.next_checkpoint_id});},
-  finish(outcome){bound();return practice.submit('finish',{outcome});},
+  finish(outcome){const v=bound();if(outcome==='completed'&&v.released_mission.next_checkpoint_id)throw new Error('Complete all checkpoint math before reporting completion.');return practice.submit('finish',{outcome});},
   retry:()=>practice.retry(),
   get current(){return bound();}
  };

@@ -13,6 +13,12 @@ export async function runReviewedReleaseBrowser({handleLearning,env,options}){
  const browser=await chromium.launch({headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{}),args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
  try{for(const [width,mathMode] of [[390,'legacy'],[1280,'legacy'],[390,'square']]){
   const ctx=await browser.newContext({viewport:{width,height:900}}),page=await ctx.newPage(),errors=[];
+  // Hold the final operator model until the first real move is animating.
+  // Late model arrival used to discard walk.done and leave the UI busy forever.
+  let releaseModels,modelsRequested,modelsReleased=false;
+  const modelGate=new Promise(resolve=>{releaseModels=resolve;});
+  const modelRequest=new Promise(resolve=>{modelsRequested=resolve;});
+  let lastCommand=null;
   page.on('pageerror',e=>errors.push(e.message));
   await ctx.addInitScript(()=>localStorage.setItem('mccdb_session',JSON.stringify({access_token:'synthetic-owner'})));
   await ctx.route('**/*',async route=>{
@@ -26,6 +32,7 @@ export async function runReviewedReleaseBrowser({handleLearning,env,options}){
     const f=resolve(THREE,u.pathname.slice('/npm/three@0.180.0/'.length));assert.ok(f.startsWith(resolve(THREE)+sep));return route.fulfill({contentType:'text/javascript',headers:{'access-control-allow-origin':'*'},body:await readFile(f)});
    }
    if(u.origin!==BASE)return route.abort();
+   if(u.pathname==='/assets/3d/prim3-operators/T.glb'){modelsRequested();await modelGate;}
    if(['/js/tabbar.js','/js/shell-boot.js'].includes(u.pathname))return route.fulfill({contentType:'text/javascript',body:''});
    const f=resolve(ROOT,u.pathname.slice(1));if(!f.startsWith(ROOT+sep))return route.abort();
    try{return route.fulfill({contentType:mime[extname(f)]||'application/octet-stream',body:await readFile(f)});}catch{return route.fulfill({status:404,body:''});}
@@ -37,12 +44,23 @@ export async function runReviewedReleaseBrowser({handleLearning,env,options}){
   await page.locator('#releaseBrief').waitFor({state:'visible'});await page.selectOption('#learningTopology',mathMode);await page.click('#releaseStart');
   const frame=await (await page.locator('#releaseGame').elementHandle()).contentFrame();
   await frame.waitForFunction(()=>window.__tx?.r3&&!__tx.busy,null,{timeout:60000});
+  // A bounded setup failure is more useful than silently missing the race.
+  let modelTimer;
+  try{await Promise.race([modelRequest,new Promise((_,reject)=>{modelTimer=setTimeout(()=>reject(Error('Final operator model was not requested')),30000);})]);}
+  finally{clearTimeout(modelTimer);}
+  async function idle(){
+   try{await frame.waitForFunction(()=>!__tx.busy);}
+   catch(error){
+    console.error('PRIM3 animation did not settle',JSON.stringify({width,lastCommand,modelsReleased,errors,state:await frame.evaluate(()=>({uiBusy:__tx.ui.busy,rendererBusy:__tx.r3.isAnimating(),phase:__tx.state.phase,round:__tx.state.round,events:__tx.state.events.slice(-5)}))}));
+    throw error;
+   }
+  }
   console.log(`Browser release journey ${width}px: renderer ready`);
   await frame.locator('[data-sheet=brief-go]').click();
   assert.equal(await page.locator('#releaseSubmit').isDisabled(),true,'math waits for local checkpoint presentation');
   for(let step=0;step<180;step++){
    if(step%20===0)console.log(`Browser release journey ${width}px: action ${step}`);
-   await frame.waitForFunction(()=>!__tx.busy);
+   await idle();
    if(await frame.evaluate(()=>__tx.ui.ended)){assert.equal(await frame.evaluate(()=>__tx.ui.ended),'win');break;}
    // Same canonical planning primitives as #762's ordinary-threat acceptance.
    const cmd=await frame.evaluate(async()=>{
@@ -60,12 +78,19 @@ export async function runReviewedReleaseBrowser({handleLearning,env,options}){
      const dest=path&&[...path].reverse().find(p=>reach.costAt(p.x,p.y,p.z)!==undefined&&!s.units.some(o=>o.id!==u.id&&!o.dead&&!o.statuses.includes('EXTRACTED')&&o.x===p.x&&o.y===p.y&&o.z===p.z));if(dest)return{id:u.id,act:'move',dest};
     }return{act:'end'};
    });
+   lastCommand={step,...cmd};
    if(cmd.act==='end')await frame.locator('#txEndTurn').click();else{
     await frame.locator(`[data-unit="${cmd.id}"]`).click();await frame.locator(`[data-act="${cmd.act}"]`).click();
-    if(cmd.act==='move'){await frame.evaluate(p=>__tx.onTap(p),cmd.dest);await frame.locator('[data-sheet=confirm-move]').click();}
+    if(cmd.act==='move'){
+     await frame.evaluate(p=>__tx.onTap(p),cmd.dest);await frame.locator('[data-sheet=confirm-move]').click();
+     if(!modelsReleased){
+      assert.equal(await frame.evaluate(()=>__tx.ui.busy),true,'the model must arrive during an ordinary animated move');
+      modelsReleased=true;releaseModels();
+     }
+    }
     if(cmd.act==='fire'){const aim=frame.locator(`[data-sheet="aim:${cmd.target}"]`);if(await aim.count())await aim.click();await frame.locator('[data-sheet=confirm-fire]').click();}
    }
-   await frame.waitForFunction(()=>!__tx.busy);
+   await idle();
    for(let i=0;i<3;i++){
     const ready=await page.evaluate(async()=>{const {checkpointReady}=await import('/js/prim3-mission/released-learning.mjs'),s=document.getElementById('releaseGame').contentWindow.__tx.state,cp=document.getElementById('releaseCheckpoint').textContent.split(' · ')[0];return checkpointReady(s,s.battlefield.generated.recipeId,cp);});
     if(!ready)break;
@@ -77,6 +102,7 @@ export async function runReviewedReleaseBrowser({handleLearning,env,options}){
    }
   }
   assert.equal(await frame.evaluate(()=>__tx.ui.ended),'win');
+  assert.equal(modelsReleased,true,'late operator model regression was exercised');
   await page.selectOption('#releaseOutcome','completed');await page.click('#releaseFinish');
   await page.waitForFunction(()=>document.getElementById('releaseSummary').textContent.includes('3/3 answers correct'));
   await page.reload();await page.waitForFunction(()=>document.getElementById('releaseSummary')?.textContent.includes('3/3 answers correct'));

@@ -27,3 +27,11 @@ test('authored turn presentation requires the signed variant and topology',()=>{
  state={variant:'city',topology:'hex',turn:1,hasActed:true};assert.equal(adapter.ready,false);practice.current.released_mission.next_checkpoint_id='FIELD:STEP_1';assert.equal(adapter.ready,true);
  practice.current.flow.learning_context={...context,topology:'square'};assert.throws(()=>adapter.current,/mode differs/);
 });
+test('premature completed debrief is rejected before it can poison the durable queue',()=>{
+ const release={id:'r',recipe_hash:'h'},calls=[];
+ const practice={current:{flow:{},released_mission:{id:'r',recipe_hash:'h',next_checkpoint_id:'CHECKPOINT-1:STEP_2'}},submit:(...args)=>calls.push(args)};
+ const client=createReleasedLearning({practice,release,getTacticalState:()=>null});
+ assert.throws(()=>client.finish('completed'),/all checkpoint math/);assert.equal(calls.length,0);
+ client.finish('abandoned');assert.deepEqual(calls.pop(),['finish',{outcome:'abandoned'}]);
+ practice.current.released_mission.next_checkpoint_id=null;client.finish('completed');assert.deepEqual(calls.pop(),['finish',{outcome:'completed'}]);
+});
