@@ -50,8 +50,8 @@ using software Chromium and fixture owner/API/imagery. These are environment mea
 not a hardware performance guarantee. `city-arcade-spatial.e2e.cjs` checks the actual same-viewer
 Sole entry, confirmed arrival, return, resume and revocation contract.
 
-#783 is independently release-owned: preserve its descriptor policy imports, loader and cell
-budget selection when reconciling the small shared-viewer changes. The avatar adds graphics to
+This continuation is based on main after #783 and preserves its descriptor policy imports, loader
+and cell budget selection. The avatar adds graphics to
 one existing actor entity, not extra entities outside that budget. This branch does not modify
 #783, #767, the tactical resolver, database, credentials, permissions or production settings.
 

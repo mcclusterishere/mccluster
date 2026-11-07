@@ -42,16 +42,16 @@ test('camera handoff cancels entry flights before capturing input state and leav
  const previous={document:globalThis.document,window:globalThis.window};
  const select=()=>({disabled:false,value:'',blur(){}}),camera=select(),travel=select();
  const controls={dataset:{},querySelector:s=>s.includes('camera')?camera:travel,querySelectorAll:s=>s==='[data-drive]'?[]:[camera,travel],remove(){}};
- const style={remove(){}};let created=0,cancels=0;const controller={enableInputs:false};
- const viewer={scene:{screenSpaceCameraController:controller},camera:{flight:true,cancelFlight(){cancels++;if(this.flight)controller.enableInputs=true;this.flight=false;},lookAtTransform(){}}};
+ const style={remove(){}};let created=0,cancels=0,onCancel=()=>{};const controller={enableInputs:false};
+ const viewer={scene:{screenSpaceCameraController:controller},camera:{flight:true,cancelFlight(){cancels++;if(this.flight)controller.enableInputs=true;this.flight=false;onCancel();},lookAtTransform(){}}};
  globalThis.document={hidden:false,createElement:()=>created++===0?controls:style,head:{append(){}},addEventListener(){},removeEventListener(){}};
  globalThis.window={addEventListener(){},removeEventListener(){}};
  try{
   const panel={dataset:{},querySelector:s=>s==='strong'?{after(){}}:{click(){}}};
-  const control=mountExterior({panel,viewer,C:{Matrix4:{IDENTITY:{}}},state:()=>({owner:true,region:{},position:{x:0,y:0,z:0},actor:null}),move(){},interrupt(){},save(){},status(){}});
-  control.attach();camera.onchange({target:{value:'close',blur(){}}});assert.equal(controller.enableInputs,false);assert.equal(cancels,1);
+  const control=mountExterior({panel,viewer,C:{Matrix4:{IDENTITY:{}}},state:()=>({owner:true,frame:{toGeo:()=>({lon:-73.19,lat:41.18})},region:{},position:{x:0,y:0,z:0},actor:null}),move(){},interrupt(){},save(){},status(){}});
+  control.attach();onCancel=()=>assert.deepEqual(control.view(),{lon:-73.19,lat:41.18,height:0},'synchronous flight callbacks retain the attached region during camera handoff');camera.onchange({target:{value:'close',blur(){}}});assert.equal(controller.enableInputs,false);assert.equal(cancels,1);
   camera.onchange({target:{value:'overview',blur(){}}});assert.equal(controller.enableInputs,true);
-  const before=cancels;viewer.camera.flight=true;control.detach();assert.equal(cancels,before,'unloading in Map must not cancel a globe flight');
+  onCancel=()=>{};const before=cancels;viewer.camera.flight=true;control.detach();assert.equal(cancels,before,'unloading in Map must not cancel a globe flight');
   control.attach();camera.onchange({target:{value:'first',blur(){}}});assert.equal(controller.enableInputs,false);control.detach();assert.equal(controller.enableInputs,true);control.destroy();
  }finally{globalThis.document=previous.document;globalThis.window=previous.window;}
 });

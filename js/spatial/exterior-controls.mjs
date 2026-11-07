@@ -16,7 +16,7 @@ export function advanceExterior(region,position,heading,mode,distance,closedRoad
 }
 export function mountExterior({panel,viewer,C,state,move,interrupt,save,status}){
  const travel=createTravelControls(),keys=new Set(),models={walk:avatarModel(),bike:avatarModel(true)};
- let camera='overview',heading=0,active=false,wasMoving=false,originalInputs=null;
+ let camera='overview',heading=0,active=false,wasMoving=false,originalInputs=null,switchingCamera=false;
  const controls=document.createElement('div');controls.dataset.exteriorControls='';
  controls.innerHTML='<label>Camera <select aria-label="Street camera"><option value="overview">Map</option><option value="close">Follow behind</option><option value="first">First person</option></select></label><label>Travel <select aria-label="Street travel"><option value="walk">Walk</option><option value="bike">Bicycle</option></select></label><div aria-label="Street movement"><button data-drive="left" aria-label="Turn left">↶</button><button data-drive="forward" aria-label="Move forward">Forward</button><button data-drive="back" aria-label="Move backward">Back</button><button data-drive="right" aria-label="Turn right">↷</button></div><small>W/S move · A/D turn. Hold a movement button on touch screens. Session camera and bicycle; shared street position saves.</small>';
  panel.querySelector('strong').after(controls);for(const el of controls.querySelectorAll('button,select'))el.disabled=true;
@@ -24,8 +24,10 @@ export function mountExterior({panel,viewer,C,state,move,interrupt,save,status})
  const enabled=()=>{const s=state();return active&&s.owner&&s.region&&s.position&&!document.hidden;};
  function stop(){keys.clear();travel.stop();if(wasMoving){save();wasMoving=false;}}
  function releaseCamera(){if(originalInputs===null)return;viewer.camera.cancelFlight();viewer.scene.screenSpaceCameraController.enableInputs=originalInputs;originalInputs=null;viewer.camera.lookAtTransform(C.Matrix4.IDENTITY);}
- function setCamera(mode){if(!['overview','close','first'].includes(mode)||!enabled())return;stop();camera=mode;controls.querySelector('[aria-label="Street camera"]').value=mode;panel.dataset.streetCamera=mode;
-  releaseCamera();if(mode!=='overview'){viewer.camera.cancelFlight();originalInputs=viewer.scene.screenSpaceCameraController.enableInputs;viewer.scene.screenSpaceCameraController.enableInputs=false;}else panel.querySelector('[data-locate]').click();sync();}
+ // Cesium can dispatch moveEnd synchronously while cancelling a flight. Keep the attached
+ // actor's location eligible until the new camera pose is installed in this same call.
+ function setCamera(mode){if(!['overview','close','first'].includes(mode)||!enabled())return;switchingCamera=true;try{stop();camera=mode;controls.querySelector('[aria-label="Street camera"]').value=mode;panel.dataset.streetCamera=mode;
+  releaseCamera();if(mode!=='overview'){viewer.camera.cancelFlight();originalInputs=viewer.scene.screenSpaceCameraController.enableInputs;viewer.scene.screenSpaceCameraController.enableInputs=false;}else panel.querySelector('[data-locate]').click();sync();}finally{switchingCamera=false;}}
  function sync(){const s=state();if(!enabled()||!s.actor)return;
   const geo=s.frame.toGeo(s.position),g=C.Cartographic.fromDegrees(geo.lon,geo.lat),sample=viewer.scene.globe.getHeight(g),ground=Number.isFinite(sample)?sample:0;
   s.actor.position=C.Cartesian3.fromDegrees(geo.lon,geo.lat,ground);s.actor.orientation=C.Transforms.headingPitchRollQuaternion(s.actor.position.getValue(C.JulianDate.now()),new C.HeadingPitchRoll(heading+Math.PI/2,0,0));
@@ -56,7 +58,7 @@ export function mountExterior({panel,viewer,C,state,move,interrupt,save,status})
   edgeClear(a,b){const s=state();return travelClear(s.region,a,b,travel.mode,s.closedRoadIds);},
   routeSpeed(dt){return travel.mode==='bike'?travel.speedFor(1,Math.min(.05,dt)):2;},
   follow(a,b){if(Math.hypot(b.x-a.x,b.z-a.z)>.00001)heading=Math.atan2(b.x-a.x,a.z-b.z);sync();},
-  view(){if(camera==='overview')return null;const p=viewer.camera.positionCartographic;return {lon:C.Math.toDegrees(p.longitude),lat:C.Math.toDegrees(p.latitude),height:p.height};},
+  view(){if(switchingCamera){const s=state(),g=s.frame.toGeo(s.position);return {lon:g.lon,lat:g.lat,height:0};}if(camera==='overview')return null;const p=viewer.camera.positionCartographic;return {lon:C.Math.toDegrees(p.longitude),lat:C.Math.toDegrees(p.latitude),height:p.height};},
   overview(){if(enabled())setCamera('overview');},
   resetTravel(){stop();travel.setMode('walk');controls.querySelector('[aria-label="Street travel"]').value='walk';sync();},stop,
   snapshot(){return {camera,mode:travel.mode,heading,moving:wasMoving,active};},
