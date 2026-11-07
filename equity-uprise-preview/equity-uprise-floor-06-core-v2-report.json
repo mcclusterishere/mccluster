@@ -1,0 +1,1822 @@
+{
+  "scene_id": "equity-uprise-floor-06",
+  "interior_layout": "floor-06-interior-layout-v3.json",
+  "furniture": {
+    "furniture_items": 41,
+    "furniture_types": 19,
+    "furniture_type_list": [
+      "armchair_club",
+      "armchair_lounge",
+      "bench_gallery",
+      "bookcase",
+      "coffee_table",
+      "credenza",
+      "desk_dual",
+      "desk_exec_l",
+      "lateral_file",
+      "planter_floor",
+      "planter_tall",
+      "rug",
+      "side_chair",
+      "side_table",
+      "sofa_3",
+      "table_rect",
+      "table_round",
+      "task_chair",
+      "task_chair_exec"
+    ],
+    "furniture_unique_meshes": 22,
+    "furniture_triangles_instanced": 8564,
+    "furniture_triangles_unique": 3276
+  },
+  "furniture_placements": [
+    {
+      "id": "F6-COMMAND-TABLE-01",
+      "type": "table_rect",
+      "category": "table",
+      "x": 36,
+      "y": 41,
+      "rot_deg": 0.0,
+      "w_ft": 16.0,
+      "d_ft": 5.0,
+      "h_ft": 2.4167,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F6-COMMAND-TABLE-01",
+      "zone": "command",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "all": 36
+      },
+      "footprint": [
+        [
+          28.0,
+          38.5
+        ],
+        [
+          44.0,
+          38.5
+        ],
+        [
+          44.0,
+          43.5
+        ],
+        [
+          28.0,
+          43.5
+        ]
+      ]
+    },
+    {
+      "id": "F6-COMMAND-CHAIR-01",
+      "type": "task_chair_exec",
+      "category": "seating",
+      "x": 30,
+      "y": 37.0,
+      "rot_deg": 0.0,
+      "w_ft": 2.3333,
+      "d_ft": 2.3333,
+      "h_ft": 3.8333,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F6-COMMAND-CHAIR-01",
+      "zone": "command",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          28.8333,
+          35.8333
+        ],
+        [
+          31.1667,
+          35.8333
+        ],
+        [
+          31.1667,
+          38.1667
+        ],
+        [
+          28.8333,
+          38.1667
+        ]
+      ]
+    },
+    {
+      "id": "F6-COMMAND-CHAIR-02",
+      "type": "task_chair_exec",
+      "category": "seating",
+      "x": 36,
+      "y": 37.0,
+      "rot_deg": 0.0,
+      "w_ft": 2.3333,
+      "d_ft": 2.3333,
+      "h_ft": 3.8333,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F6-COMMAND-CHAIR-02",
+      "zone": "command",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          34.8333,
+          35.8333
+        ],
+        [
+          37.1667,
+          35.8333
+        ],
+        [
+          37.1667,
+          38.1667
+        ],
+        [
+          34.8333,
+          38.1667
+        ]
+      ]
+    },
+    {
+      "id": "F6-COMMAND-CHAIR-03",
+      "type": "task_chair_exec",
+      "category": "seating",
+      "x": 42,
+      "y": 37.0,
+      "rot_deg": 0.0,
+      "w_ft": 2.3333,
+      "d_ft": 2.3333,
+      "h_ft": 3.8333,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F6-COMMAND-CHAIR-03",
+      "zone": "command",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          40.8333,
+          35.8333
+        ],
+        [
+          43.1667,
+          35.8333
+        ],
+        [
+          43.1667,
+          38.1667
+        ],
+        [
+          40.8333,
+          38.1667
+        ]
+      ]
+    },
+    {
+      "id": "F6-COMMAND-CHAIR-04",
+      "type": "task_chair_exec",
+      "category": "seating",
+      "x": 30,
+      "y": 45.0,
+      "rot_deg": 180.0,
+      "w_ft": 2.3333,
+      "d_ft": 2.3333,
+      "h_ft": 3.8333,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F6-COMMAND-CHAIR-04",
+      "zone": "command",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          31.1667,
+          46.1667
+        ],
+        [
+          28.8333,
+          46.1667
+        ],
+        [
+          28.8333,
+          43.8333
+        ],
+        [
+          31.1667,
+          43.8333
+        ]
+      ]
+    },
+    {
+      "id": "F6-COMMAND-CHAIR-05",
+      "type": "task_chair_exec",
+      "category": "seating",
+      "x": 36,
+      "y": 45.0,
+      "rot_deg": 180.0,
+      "w_ft": 2.3333,
+      "d_ft": 2.3333,
+      "h_ft": 3.8333,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F6-COMMAND-CHAIR-05",
+      "zone": "command",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          37.1667,
+          46.1667
+        ],
+        [
+          34.8333,
+          46.1667
+        ],
+        [
+          34.8333,
+          43.8333
+        ],
+        [
+          37.1667,
+          43.8333
+        ]
+      ]
+    },
+    {
+      "id": "F6-COMMAND-CHAIR-06",
+      "type": "task_chair_exec",
+      "category": "seating",
+      "x": 42,
+      "y": 45.0,
+      "rot_deg": 180.0,
+      "w_ft": 2.3333,
+      "d_ft": 2.3333,
+      "h_ft": 3.8333,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F6-COMMAND-CHAIR-06",
+      "zone": "command",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          43.1667,
+          46.1667
+        ],
+        [
+          40.8333,
+          46.1667
+        ],
+        [
+          40.8333,
+          43.8333
+        ],
+        [
+          43.1667,
+          43.8333
+        ]
+      ]
+    },
+    {
+      "id": "F6-SALON-SOFA-01",
+      "type": "sofa_3",
+      "category": "seating",
+      "x": 13.8,
+      "y": 28.0,
+      "rot_deg": 90.0,
+      "w_ft": 7.0,
+      "d_ft": 3.0,
+      "h_ft": 2.5,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F6-SALON-SOFA-01",
+      "zone": "salon",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 18
+      },
+      "footprint": [
+        [
+          15.3,
+          24.5
+        ],
+        [
+          15.3,
+          31.5
+        ],
+        [
+          12.3,
+          31.5
+        ],
+        [
+          12.3,
+          24.5
+        ]
+      ]
+    },
+    {
+      "id": "F6-SALON-CHAIR-01",
+      "type": "armchair_club",
+      "category": "seating",
+      "x": 5.6,
+      "y": 22.8,
+      "rot_deg": -33.18,
+      "w_ft": 2.75,
+      "d_ft": 2.8333,
+      "h_ft": 2.5,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F6-SALON-CHAIR-01",
+      "zone": "salon",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 18
+      },
+      "footprint": [
+        [
+          3.6739,
+          22.3668
+        ],
+        [
+          5.9755,
+          20.8618
+        ],
+        [
+          7.5261,
+          23.2332
+        ],
+        [
+          5.2245,
+          24.7382
+        ]
+      ]
+    },
+    {
+      "id": "F6-SALON-CHAIR-02",
+      "type": "armchair_club",
+      "category": "seating",
+      "x": 5.6,
+      "y": 33.2,
+      "rot_deg": -146.82,
+      "w_ft": 2.75,
+      "d_ft": 2.8333,
+      "h_ft": 2.5,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F6-SALON-CHAIR-02",
+      "zone": "salon",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 18
+      },
+      "footprint": [
+        [
+          5.9755,
+          35.1382
+        ],
+        [
+          3.6739,
+          33.6332
+        ],
+        [
+          5.2245,
+          31.2618
+        ],
+        [
+          7.5261,
+          32.7668
+        ]
+      ]
+    },
+    {
+      "id": "F6-SALON-TABLE-01",
+      "type": "coffee_table",
+      "category": "table",
+      "x": 9.2,
+      "y": 28.0,
+      "rot_deg": 90.0,
+      "w_ft": 4.5,
+      "d_ft": 2.3333,
+      "h_ft": 1.3333,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F6-SALON-TABLE-01",
+      "zone": "salon",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "all": 18
+      },
+      "footprint": [
+        [
+          10.3667,
+          25.75
+        ],
+        [
+          10.3667,
+          30.25
+        ],
+        [
+          8.0333,
+          30.25
+        ],
+        [
+          8.0333,
+          25.75
+        ]
+      ]
+    },
+    {
+      "id": "F6-SALON-RUG-01",
+      "type": "rug",
+      "category": "decor",
+      "x": 9.6,
+      "y": 28.0,
+      "rot_deg": 0.0,
+      "w_ft": 14.0,
+      "d_ft": 15.0,
+      "h_ft": 0.0417,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F6-SALON-RUG-01",
+      "zone": "salon",
+      "blocks": false,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": false,
+      "clearance_in": {},
+      "footprint": [
+        [
+          2.6,
+          20.5
+        ],
+        [
+          16.6,
+          20.5
+        ],
+        [
+          16.6,
+          35.5
+        ],
+        [
+          2.6,
+          35.5
+        ]
+      ]
+    },
+    {
+      "id": "F6-SALON-PLANT-01",
+      "type": "planter_tall",
+      "category": "decor",
+      "x": 3.0,
+      "y": 36.0,
+      "rot_deg": 0.0,
+      "w_ft": 1.6667,
+      "d_ft": 1.6667,
+      "h_ft": 7.0,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F6-SALON-PLANT-01",
+      "zone": "salon",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": false,
+      "clearance_in": {},
+      "footprint": [
+        [
+          2.1667,
+          35.1667
+        ],
+        [
+          3.8333,
+          35.1667
+        ],
+        [
+          3.8333,
+          36.8333
+        ],
+        [
+          2.1667,
+          36.8333
+        ]
+      ]
+    },
+    {
+      "id": "F6-SALON-PLANT-02",
+      "type": "planter_floor",
+      "category": "decor",
+      "x": 16.4,
+      "y": 19.6,
+      "rot_deg": 0.0,
+      "w_ft": 2.0,
+      "d_ft": 2.0,
+      "h_ft": 5.0,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F6-SALON-PLANT-02",
+      "zone": "salon",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": false,
+      "clearance_in": {},
+      "footprint": [
+        [
+          15.4,
+          18.6
+        ],
+        [
+          17.4,
+          18.6
+        ],
+        [
+          17.4,
+          20.6
+        ],
+        [
+          15.4,
+          20.6
+        ]
+      ]
+    },
+    {
+      "id": "F6-SALON-SIDE-TABLE-01",
+      "type": "side_table",
+      "category": "table",
+      "x": 16.4,
+      "y": 33.8,
+      "rot_deg": 0.0,
+      "w_ft": 1.5,
+      "d_ft": 1.5,
+      "h_ft": 1.6667,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "salon",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {},
+      "footprint": [
+        [
+          15.65,
+          33.05
+        ],
+        [
+          17.15,
+          33.05
+        ],
+        [
+          17.15,
+          34.55
+        ],
+        [
+          15.65,
+          34.55
+        ]
+      ]
+    },
+    {
+      "id": "F6-STRATEGY-TABLE-01",
+      "type": "table_round",
+      "category": "table",
+      "x": 9.4,
+      "y": 10.0,
+      "rot_deg": 0.0,
+      "w_ft": 4.5,
+      "d_ft": 4.5,
+      "h_ft": 2.4167,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F6-STRATEGY-TABLE-01",
+      "zone": "strategy-review",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "all": 36
+      },
+      "footprint": [
+        [
+          7.15,
+          7.75
+        ],
+        [
+          11.65,
+          7.75
+        ],
+        [
+          11.65,
+          12.25
+        ],
+        [
+          7.15,
+          12.25
+        ]
+      ]
+    },
+    {
+      "id": "F6-STRATEGY-CHAIR-01",
+      "type": "side_chair",
+      "category": "seating",
+      "x": 6.1,
+      "y": 10.0,
+      "rot_deg": -90.0,
+      "w_ft": 1.5833,
+      "d_ft": 1.75,
+      "h_ft": 2.75,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F6-STRATEGY-CHAIR-01",
+      "zone": "strategy-review",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          5.225,
+          10.7917
+        ],
+        [
+          5.225,
+          9.2083
+        ],
+        [
+          6.975,
+          9.2083
+        ],
+        [
+          6.975,
+          10.7917
+        ]
+      ]
+    },
+    {
+      "id": "F6-STRATEGY-CHAIR-02",
+      "type": "side_chair",
+      "category": "seating",
+      "x": 12.7,
+      "y": 10.0,
+      "rot_deg": 90.0,
+      "w_ft": 1.5833,
+      "d_ft": 1.75,
+      "h_ft": 2.75,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F6-STRATEGY-CHAIR-02",
+      "zone": "strategy-review",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          13.575,
+          9.2083
+        ],
+        [
+          13.575,
+          10.7917
+        ],
+        [
+          11.825,
+          10.7917
+        ],
+        [
+          11.825,
+          9.2083
+        ]
+      ]
+    },
+    {
+      "id": "F6-STRATEGY-CHAIR-03",
+      "type": "side_chair",
+      "category": "seating",
+      "x": 9.4,
+      "y": 6.7,
+      "rot_deg": 0.0,
+      "w_ft": 1.5833,
+      "d_ft": 1.75,
+      "h_ft": 2.75,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F6-STRATEGY-CHAIR-03",
+      "zone": "strategy-review",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          8.6083,
+          5.825
+        ],
+        [
+          10.1917,
+          5.825
+        ],
+        [
+          10.1917,
+          7.575
+        ],
+        [
+          8.6083,
+          7.575
+        ]
+      ]
+    },
+    {
+      "id": "F6-STRATEGY-CHAIR-04",
+      "type": "side_chair",
+      "category": "seating",
+      "x": 9.4,
+      "y": 13.3,
+      "rot_deg": -180.0,
+      "w_ft": 1.5833,
+      "d_ft": 1.75,
+      "h_ft": 2.75,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F6-STRATEGY-CHAIR-04",
+      "zone": "strategy-review",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          10.1917,
+          14.175
+        ],
+        [
+          8.6083,
+          14.175
+        ],
+        [
+          8.6083,
+          12.425
+        ],
+        [
+          10.1917,
+          12.425
+        ]
+      ]
+    },
+    {
+      "id": "F6-BRIEFING-TABLE-01",
+      "type": "table_rect",
+      "category": "table",
+      "x": 25.0,
+      "y": 10.4,
+      "rot_deg": 0.0,
+      "w_ft": 9.0,
+      "d_ft": 3.6667,
+      "h_ft": 2.4167,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F6-BRIEFING-TABLE-01",
+      "zone": "partner-briefing",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "all": 36
+      },
+      "footprint": [
+        [
+          20.5,
+          8.5667
+        ],
+        [
+          29.5,
+          8.5667
+        ],
+        [
+          29.5,
+          12.2333
+        ],
+        [
+          20.5,
+          12.2333
+        ]
+      ]
+    },
+    {
+      "id": "F6-BRIEFING-CHAIR-01",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 21.8,
+      "y": 7.8,
+      "rot_deg": 0.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F6-BRIEFING-CHAIR-01",
+      "zone": "partner-briefing",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          20.7167,
+          6.7167
+        ],
+        [
+          22.8833,
+          6.7167
+        ],
+        [
+          22.8833,
+          8.8833
+        ],
+        [
+          20.7167,
+          8.8833
+        ]
+      ]
+    },
+    {
+      "id": "F6-BRIEFING-CHAIR-02",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 25.0,
+      "y": 7.8,
+      "rot_deg": 0.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F6-BRIEFING-CHAIR-02",
+      "zone": "partner-briefing",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          23.9167,
+          6.7167
+        ],
+        [
+          26.0833,
+          6.7167
+        ],
+        [
+          26.0833,
+          8.8833
+        ],
+        [
+          23.9167,
+          8.8833
+        ]
+      ]
+    },
+    {
+      "id": "F6-BRIEFING-CHAIR-03",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 28.2,
+      "y": 7.8,
+      "rot_deg": 0.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F6-BRIEFING-CHAIR-03",
+      "zone": "partner-briefing",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          27.1167,
+          6.7167
+        ],
+        [
+          29.2833,
+          6.7167
+        ],
+        [
+          29.2833,
+          8.8833
+        ],
+        [
+          27.1167,
+          8.8833
+        ]
+      ]
+    },
+    {
+      "id": "F6-BRIEFING-CHAIR-04",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 21.8,
+      "y": 13.0,
+      "rot_deg": -180.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F6-BRIEFING-CHAIR-04",
+      "zone": "partner-briefing",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          22.8833,
+          14.0833
+        ],
+        [
+          20.7167,
+          14.0833
+        ],
+        [
+          20.7167,
+          11.9167
+        ],
+        [
+          22.8833,
+          11.9167
+        ]
+      ]
+    },
+    {
+      "id": "F6-BRIEFING-CHAIR-05",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 25.0,
+      "y": 13.0,
+      "rot_deg": -180.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F6-BRIEFING-CHAIR-05",
+      "zone": "partner-briefing",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          26.0833,
+          14.0833
+        ],
+        [
+          23.9167,
+          14.0833
+        ],
+        [
+          23.9167,
+          11.9167
+        ],
+        [
+          26.0833,
+          11.9167
+        ]
+      ]
+    },
+    {
+      "id": "F6-BRIEFING-CHAIR-06",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 28.2,
+      "y": 13.0,
+      "rot_deg": -180.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F6-BRIEFING-CHAIR-06",
+      "zone": "partner-briefing",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          29.2833,
+          14.0833
+        ],
+        [
+          27.1167,
+          14.0833
+        ],
+        [
+          27.1167,
+          11.9167
+        ],
+        [
+          29.2833,
+          11.9167
+        ]
+      ]
+    },
+    {
+      "id": "F6-BRIEFING-CREDENZA-01",
+      "type": "credenza",
+      "category": "storage",
+      "x": 20.0,
+      "y": 5.0,
+      "rot_deg": 0.0,
+      "w_ft": 4.0,
+      "d_ft": 1.5,
+      "h_ft": 2.4167,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F6-BRIEFING-CREDENZA-01",
+      "zone": "partner-briefing",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": false,
+      "clearance_in": {
+        "front": 30
+      },
+      "footprint": [
+        [
+          18.0,
+          4.25
+        ],
+        [
+          22.0,
+          4.25
+        ],
+        [
+          22.0,
+          5.75
+        ],
+        [
+          18.0,
+          5.75
+        ]
+      ]
+    },
+    {
+      "id": "F6-OFFICE-HELEN-CLARKE-DESK",
+      "type": "desk_exec_l",
+      "category": "work",
+      "x": 65.4,
+      "y": 8.6,
+      "rot_deg": 180.0,
+      "w_ft": 6.0,
+      "d_ft": 5.5,
+      "h_ft": 2.5,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "director-office",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "front": 42
+      },
+      "footprint": [
+        [
+          68.4,
+          11.35
+        ],
+        [
+          62.4,
+          11.35
+        ],
+        [
+          62.4,
+          5.85
+        ],
+        [
+          68.4,
+          5.85
+        ]
+      ]
+    },
+    {
+      "id": "F6-OFFICE-HELEN-CLARKE-CHAIR",
+      "type": "task_chair_exec",
+      "category": "seating",
+      "x": 65.4,
+      "y": 4.4,
+      "rot_deg": 0.0,
+      "w_ft": 2.3333,
+      "d_ft": 2.3333,
+      "h_ft": 3.8333,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "director-office",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          64.2333,
+          3.2333
+        ],
+        [
+          66.5667,
+          3.2333
+        ],
+        [
+          66.5667,
+          5.5667
+        ],
+        [
+          64.2333,
+          5.5667
+        ]
+      ]
+    },
+    {
+      "id": "F6-OFFICE-GUEST-CHAIR-01",
+      "type": "armchair_lounge",
+      "category": "seating",
+      "x": 63.6,
+      "y": 14.4,
+      "rot_deg": -167.91,
+      "w_ft": 2.5,
+      "d_ft": 2.5833,
+      "h_ft": 2.3333,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "director-office",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 18
+      },
+      "footprint": [
+        [
+          64.5517,
+          15.9248
+        ],
+        [
+          62.1072,
+          15.4012
+        ],
+        [
+          62.6483,
+          12.8752
+        ],
+        [
+          65.0928,
+          13.3988
+        ]
+      ]
+    },
+    {
+      "id": "F6-OFFICE-GUEST-CHAIR-02",
+      "type": "armchair_lounge",
+      "category": "seating",
+      "x": 67.6,
+      "y": 14.4,
+      "rot_deg": 165.32,
+      "w_ft": 2.5,
+      "d_ft": 2.5833,
+      "h_ft": 2.3333,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "director-office",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 18
+      },
+      "footprint": [
+        [
+          69.1365,
+          15.3327
+        ],
+        [
+          66.7181,
+          15.9663
+        ],
+        [
+          66.0635,
+          13.4673
+        ],
+        [
+          68.4819,
+          12.8337
+        ]
+      ]
+    },
+    {
+      "id": "F6-OFFICE-CREDENZA-01",
+      "type": "credenza",
+      "category": "storage",
+      "x": 70.3,
+      "y": 10.0,
+      "rot_deg": 90.0,
+      "w_ft": 6.0,
+      "d_ft": 1.6667,
+      "h_ft": 2.4167,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "director-office",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": false,
+      "clearance_in": {
+        "front": 30
+      },
+      "footprint": [
+        [
+          71.1333,
+          7.0
+        ],
+        [
+          71.1333,
+          13.0
+        ],
+        [
+          69.4667,
+          13.0
+        ],
+        [
+          69.4667,
+          7.0
+        ]
+      ]
+    },
+    {
+      "id": "F6-OFFICE-BOOKCASE-01",
+      "type": "bookcase",
+      "category": "storage",
+      "x": 59.8,
+      "y": 2.0,
+      "rot_deg": 0.0,
+      "w_ft": 3.0,
+      "d_ft": 1.1667,
+      "h_ft": 7.0,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "director-office",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": false,
+      "clearance_in": {
+        "front": 30
+      },
+      "footprint": [
+        [
+          58.3,
+          1.4167
+        ],
+        [
+          61.3,
+          1.4167
+        ],
+        [
+          61.3,
+          2.5833
+        ],
+        [
+          58.3,
+          2.5833
+        ]
+      ]
+    },
+    {
+      "id": "F6-OFFICE-RUG-01",
+      "type": "rug",
+      "category": "decor",
+      "x": 65.4,
+      "y": 10.0,
+      "rot_deg": 0.0,
+      "w_ft": 10.0,
+      "d_ft": 11.0,
+      "h_ft": 0.0417,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "director-office",
+      "blocks": false,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": false,
+      "clearance_in": {},
+      "footprint": [
+        [
+          60.4,
+          4.5
+        ],
+        [
+          70.4,
+          4.5
+        ],
+        [
+          70.4,
+          15.5
+        ],
+        [
+          60.4,
+          15.5
+        ]
+      ]
+    },
+    {
+      "id": "F6-DESK-LI-WEI",
+      "type": "desk_dual",
+      "category": "work",
+      "x": 68.6,
+      "y": 22.0,
+      "rot_deg": 90.0,
+      "w_ft": 5.5,
+      "d_ft": 2.5,
+      "h_ft": 2.4167,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "governance-desks",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "front": 42
+      },
+      "footprint": [
+        [
+          69.85,
+          19.25
+        ],
+        [
+          69.85,
+          24.75
+        ],
+        [
+          67.35,
+          24.75
+        ],
+        [
+          67.35,
+          19.25
+        ]
+      ]
+    },
+    {
+      "id": "F6-DESK-LI-WEI-CHAIR",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 65.6,
+      "y": 22.0,
+      "rot_deg": -90.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "governance-desks",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          64.5167,
+          23.0833
+        ],
+        [
+          64.5167,
+          20.9167
+        ],
+        [
+          66.6833,
+          20.9167
+        ],
+        [
+          66.6833,
+          23.0833
+        ]
+      ]
+    },
+    {
+      "id": "F6-DESK-MARC-DUBOIS",
+      "type": "desk_dual",
+      "category": "work",
+      "x": 68.6,
+      "y": 28.0,
+      "rot_deg": 90.0,
+      "w_ft": 5.5,
+      "d_ft": 2.5,
+      "h_ft": 2.4167,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "governance-desks",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "front": 42
+      },
+      "footprint": [
+        [
+          69.85,
+          25.25
+        ],
+        [
+          69.85,
+          30.75
+        ],
+        [
+          67.35,
+          30.75
+        ],
+        [
+          67.35,
+          25.25
+        ]
+      ]
+    },
+    {
+      "id": "F6-DESK-MARC-DUBOIS-CHAIR",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 65.6,
+      "y": 28.0,
+      "rot_deg": -90.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "governance-desks",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          64.5167,
+          29.0833
+        ],
+        [
+          64.5167,
+          26.9167
+        ],
+        [
+          66.6833,
+          26.9167
+        ],
+        [
+          66.6833,
+          29.0833
+        ]
+      ]
+    },
+    {
+      "id": "F6-GOVERNANCE-FILE-01",
+      "type": "lateral_file",
+      "category": "storage",
+      "x": 62.2,
+      "y": 19.0,
+      "rot_deg": 0.0,
+      "w_ft": 3.0,
+      "d_ft": 1.6667,
+      "h_ft": 3.3333,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "governance-desks",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": false,
+      "clearance_in": {
+        "front": 36
+      },
+      "footprint": [
+        [
+          60.7,
+          18.1667
+        ],
+        [
+          63.7,
+          18.1667
+        ],
+        [
+          63.7,
+          19.8333
+        ],
+        [
+          60.7,
+          19.8333
+        ]
+      ]
+    },
+    {
+      "id": "F6-HALO-VIEW-BENCH-01",
+      "type": "bench_gallery",
+      "category": "seating",
+      "x": 55.0,
+      "y": 4.2,
+      "rot_deg": 0.0,
+      "w_ft": 5.0,
+      "d_ft": 1.6667,
+      "h_ft": 1.5,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "halo-view",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 18,
+        "rear": 18
+      },
+      "footprint": [
+        [
+          52.5,
+          3.3667
+        ],
+        [
+          57.5,
+          3.3667
+        ],
+        [
+          57.5,
+          5.0333
+        ],
+        [
+          52.5,
+          5.0333
+        ]
+      ]
+    }
+  ],
+  "brand_slots": [
+    "brand-slot::f6-feature-wall-identity"
+  ],
+  "triangles": 15024,
+  "version": "penthouse-command-hybrid-v1",
+  "mesh_count": 317,
+  "glb_bytes": 301556,
+  "sha256": "fe46cff7ef44e3d9e2896b213473ed9b3efba064694a2c63df98ba22e04c5e96",
+  "extents_ft": [
+    72.0,
+    72.0,
+    13.999999999999998
+  ],
+  "inventory_records": 74,
+  "inventory_records_modeled": 74,
+  "inventory_records_missing": [],
+  "visual_completion_gate": "penthouse-command-halo-roof-transition-detail-v1",
+  "checks_total": 26,
+  "checks_passed": 26,
+  "checks_failed": 0,
+  "passed": true,
+  "checks": [
+    {
+      "name": "72ft width",
+      "passed": true,
+      "actual": 72.0,
+      "expected": 72
+    },
+    {
+      "name": "72ft depth",
+      "passed": true,
+      "actual": 72.0,
+      "expected": 72
+    },
+    {
+      "name": "inventory summary matches records",
+      "passed": true,
+      "actual": 74,
+      "expected": 74
+    },
+    {
+      "name": "all inventory records modeled",
+      "passed": true,
+      "actual": 74,
+      "expected": 74
+    },
+    {
+      "name": "feature-wall identity is a brand slot",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "v3 layout realizes every inventory furniture record",
+      "passed": true,
+      "actual": [],
+      "expected": null
+    },
+    {
+      "name": "six command chairs",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "command wall modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "Halo globe modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "Halo within canonical vertical envelope",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "salon complete",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "strategy room complete",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "briefing room complete",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "roof transition terminal modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "passenger and freight interfaces",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "both stair doors",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "command wall architectural surround",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "Halo visually instrumented",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "strategy acoustic enclosure",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "briefing acoustic enclosure",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "support rooms have doors",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "restrooms have mirrors and sinks",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "audit storage visibly equipped",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "desk systems visibly equipped",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "support ceilings modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "roof direction physically visible",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    }
+  ]
+}
