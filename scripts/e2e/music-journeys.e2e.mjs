@@ -42,7 +42,7 @@ try {
       try {return r.fulfill({body:await readFile(f),contentType:'text/javascript'});}catch{return r.abort();}
     }
     if(u.origin===BASE){
-      if(failRoom&&u.pathname==='/prim3.html')return r.abort();
+      if(failRoom&&u.pathname==='/prim3.html')return typeof failRoom==='number'?r.fulfill({status:failRoom,contentType:'text/html',body:'<!doctype html><title>Unavailable</title><p>Fixture page unavailable</p>'}):r.abort();
       const f=resolve(ROOT,'.'+decodeURIComponent(u.pathname));
       if(f.startsWith(ROOT+'/')){try{return r.fulfill({body:await readFile(f),contentType:MIME[extname(f)]||'application/octet-stream'});}catch{}}
       return r.fulfill({status:404,body:'Missing fixture file'});
@@ -79,6 +79,14 @@ try {
   await page.locator('#mccJourneyCapsule [data-play]').click();await retained();
   await go('/control.html#home:today');f=await room('/control.html');await f.locator('#crSurface').waitFor();await retained();
   await page.locator('#mccControlToggle[aria-current=page]').waitFor();
+  // One host history step per same-room fragment change; the iframe replaces its
+  // fragment entry and never adds a second joint-session-history stop.
+  await go('/control.html#home:ask');await room('/control.html');
+  await page.waitForFunction(()=>document.querySelector('#mccMusicRoom iframe').contentWindow.location.hash==='#home:ask');
+  await page.evaluate(()=>history.back());
+  await page.waitForFunction(()=>document.querySelector('#mccMusicRoom iframe').contentWindow.location.hash==='#home:today');await retained();
+  await page.evaluate(()=>history.forward());
+  await page.waitForFunction(()=>document.querySelector('#mccMusicRoom iframe').contentWindow.location.hash==='#home:ask');await retained();
   assert.ok(await page.locator('#mccJourneyCapsule').evaluate(el=>el.getBoundingClientRect().bottom<=document.querySelector('#mccMusicRoom').getBoundingClientRect().top));
   await go('/prim3.html');f=await room('/prim3.html');await f.locator('#courseGate, #course').first().waitFor({state:'attached'});await retained();
   await page.evaluate(()=>history.back());await room('/control.html');await retained();
@@ -93,11 +101,25 @@ try {
   assert.ok(await page.evaluate(t=>MCC_MUSIC.audio.currentTime>t,start));
   assert.equal(await page.evaluate(()=>localStorage.getItem('mcc.gamehub.chem108.v1')),null);
   // Failed room keeps media and offers retry/direct/return, rather than silently unloading.
-  failRoom=true;await go('/prim3.html');await page.waitForFunction(()=>document.querySelector('[data-room-status] [role=status]')?.textContent.includes('not finished'),null,{timeout:20000});await retained();
-  failRoom=false;await page.locator('[data-room-status] [data-retry]').click();await room('/prim3.html');await retained();
+  for(const failure of [true,503,404]) {
+    failRoom=failure;await go('/prim3.html');await page.waitForFunction(()=>document.querySelector('[data-room-status] [role=status]')?.textContent.includes('not finished'),null,{timeout:20000});await retained();
+    assert.ok(await page.locator('[data-room-status]').isVisible(),'failed document keeps recovery visible');
+    failRoom=false;await page.locator('[data-room-status] [data-retry]').click();await room('/prim3.html');await retained();
+    // Leave this room before testing a fresh failed navigation into it.
+    await go('/listen.html');await room('/listen.html');
+  }
   // A new owner room must refuse a denied role despite the host's old positive check.
   owner=false;await go('/game-hub.html?denied=1');f=await room('/game-hub.html');await f.locator('html[data-owner-access="closed"]').waitFor();
   assert.equal(await f.locator('[data-start]').count(),0);assert.ok(await page.evaluate(()=>__originalAudio===MCC_MUSIC.audio));
+  // Legacy rooms without a shared bar still acknowledge their authored owner gate.
+  for(const path of ['/screens/terminal.html','/equity-uprise-server-lab-3d.html']) {
+    await go(path);f=await room(path);await f.locator('html[data-owner-access="closed"]').waitFor();
+    assert.equal(await page.locator('[data-room-status]').isVisible(),false);await retained();
+  }
+  // Returning to a retained owner source rechecks access before showing private UI.
+  await page.evaluate(url=>MCC_BAR.navigation.go(url),BASE+'/game-hub.html#m=chem108&play=molecule-rush');
+  await page.locator('html[data-owner-access="closed"]').waitFor();
+  assert.equal(await page.locator('[data-start]').count(),0);
   // Listen starts a separate real document, then retains its engine into Games.
   owner=true;const reverse=await context.newPage();await reverse.goto(BASE+'/listen.html');
   await reverse.locator('[data-music-play]').first().click();
@@ -133,6 +155,18 @@ try {
   await reverse.evaluate(url=>MCC_BAR.navigation.go(url),BASE+'/game-hub.html#m=chem108');
   await reverse.frameLocator('#mccMusicRoom iframe').locator('#ghCapsule').waitFor();
   await reverse.waitForFunction(()=>MCC_MUSIC.audio.paused&&MCC_MUSIC.audio.currentTime>=3.8,null,{timeout:8000});
+  assert.equal(await reverse.evaluate(()=>MCC_MUSIC.access()),'preview');
+  // Changing the canonical account revokes the retained private room, without
+  // turning the new account's gated preview into a grant or restarting audio.
+  owner=false;
+  await reverse.evaluate(()=>{
+    const exp=Math.floor(Date.now()/1000)+3600,id='22222222-2222-4222-8222-222222222222';
+    localStorage.setItem('mccdb_session',JSON.stringify({access_token:'x.'+btoa(JSON.stringify({sub:id,exp}))+'.y',expires_at:exp,user:{id}}));
+    dispatchEvent(new CustomEvent('mcc:auth-changed'));
+  });
+  await reverse.frameLocator('#mccMusicRoom iframe').locator('html[data-owner-access="closed"]').waitFor();
+  assert.equal(await reverse.frameLocator('#mccMusicRoom iframe').locator('#ghCapsule').count(),0);
+  assert.ok(await reverse.evaluate(()=>MCC_MUSIC.audio===__originalAudio&&MCC_MUSIC.audio.paused));
   assert.equal(await reverse.evaluate(()=>MCC_MUSIC.access()),'preview');
   assert.ok(!calls.some(u=>/\/v1\/music\/gates\/[^/]+\/play$/.test(new URL(u).pathname)),'navigation never claims earned audio');
   await context.close();console.log('PASS '+width+' actual Game Hub → Listen → Control → PRIM3 course, back/forward, single original audio, play buttons, recovery and denied owner');

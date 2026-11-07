@@ -679,7 +679,6 @@
       '<a class="appbar__tab appbar__tab--icon appbar__world" href="' + HOUSE + 'action-globe.html?explore=1&amp;halo=1" data-appnav="halo" aria-label="Open Hitman’s Halo">' + WORLD_SVG + '<span class="appbar__sr">World: Hitman’s Halo</span></a>' +
       '<a class="appbar__tab" href="' + HOUSE + 'game-hub.html" data-appnav="games" aria-label="Games: courses, arcade and worlds"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="6" width="18" height="13" rx="4"/><path d="M6 12h6M9 9v6M16 11h1M18 14h1"/></svg><span>Games</span></a>';
   }
-  window.addEventListener("mcc:journey-route", () => markAdminHere());
   function markAdminHere() {
     if (!ADMIN_ON) return;
     var here = adminHere();
@@ -745,6 +744,7 @@
     return flight.promise;
   }
   window.addEventListener("hashchange", markAdminHere);
+  window.addEventListener("mcc:journey-route", markAdminHere);
   function loadCanonicalAuth() {
     if (window.MCC && typeof window.MCC.user === "function") return Promise.resolve(window.MCC);
     return new Promise(function (resolve, reject) {
