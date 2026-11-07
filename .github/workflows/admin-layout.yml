@@ -1,0 +1,46 @@
+name: Admin layout modules
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'js/control-room/analytics-layout.js'
+      - 'js/control-room/analytics-deck.js'
+      - 'js/control-room/section-groups.js'
+      - 'css/control-admin-layout.css'
+      - 'scripts/e2e/admin-layout.e2e.mjs'
+      - 'scripts/e2e/control-room-nav.e2e.mjs'
+      - 'scripts/e2e/support/admin-layout-hooks.mjs'
+      - 'scripts/test/control-admin-layout.test.mjs'
+      - '.github/workflows/admin-layout.yml'
+permissions:
+  contents: read
+jobs:
+  modules:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: '22'
+      - run: node --test scripts/test/control-admin-layout.test.mjs scripts/test/control-analytics-six-tabs.test.mjs
+      - run: |
+          npm install --prefix /tmp/admin-qa --ignore-scripts --no-audit --no-fund --no-save playwright@1.57.0
+          /tmp/admin-qa/node_modules/.bin/playwright install --with-deps chromium
+      - run: node scripts/e2e/admin-layout.e2e.mjs /tmp/admin-layout-proof
+        env:
+          PLAYWRIGHT_DIR: /tmp/admin-qa/node_modules
+      - run: node scripts/e2e/control-room-nav.e2e.mjs /tmp/admin-shell-proof
+        env:
+          PLAYWRIGHT_DIR: /tmp/admin-qa/node_modules
+          ADMIN_LAYOUT_HOOKS: '1'
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: admin-layout-proof
+          path: |
+            /tmp/admin-layout-proof
+            /tmp/admin-shell-proof
+          retention-days: 7
