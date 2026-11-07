@@ -9,7 +9,7 @@ const v2=process.env.SLICE==='v2',regionId=v2?'bridgeport-downtown.v2':'bridgepo
 const root=process.cwd(),out=process.argv[2]||'/tmp/bridgeport-globe-evidence',build=process.env.CESIUM_BUILD||'/tmp/bridgeport-cesium/package/Build/Cesium';await mkdir(out,{recursive:true});
 await access(join(build,'Cesium.js')); // Fail clearly when the pinned local browser dependency is absent.
 const {chromium}=createRequire(join(process.env.CODEX_PRIMARY_RUNTIME_NODE_MODULES,'package.json'))('playwright');
-const browser=await chromium.launch({executablePath:'/usr/bin/chromium',args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 const base='https://matthew.mccluster.org',results=[];
 const data=JSON.parse(await readFile('data/spatial/'+regionId+'.json','utf8')),frame=metricFrame(data.contract.frame.anchor);
 try{for(const width of (process.env.WIDTHS||'390,1280').split(',').map(Number)){
@@ -29,6 +29,32 @@ try{for(const width of (process.env.WIDTHS||'390,1280').split(',').map(Number)){
  await page.waitForFunction(()=>Math.abs(HuGlobe.viewer().camera.positionCartographic.height-360)<1);await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
  assert.equal(regionLoads,1);assert.match(await page.locator('[data-ion]').textContent(),/unavailable/);
  const first=await page.evaluate(()=>window.BridgeportSlice.snapshot());assert.ok(first.entities>(v2?20:200));assert.ok(first.entities<=data.contract.gating.maxEntities);assert.equal(first.topology,'hex');
+ if(process.env.EXTERIOR==='1'){
+  assert.equal(await page.evaluate(()=>!!HuGlobe.viewer().dataSources.getByName('bridgeport-shared-navigation')[0].entities.getById('bridgeport-walker').model),false,'Map must not load the close-view model');
+  const starting=await page.evaluate(()=>BridgeportSlice.snapshot().position);
+  await page.locator('[aria-label="Street camera"]').selectOption('close');
+  assert.equal(await page.evaluate(()=>HuGlobe.viewer().scene.screenSpaceCameraController.enableInputs),false);
+  await page.keyboard.down('KeyW');await page.waitForFunction(p=>{const q=BridgeportSlice.snapshot().position;return Math.hypot(q.x-p.x,q.z-p.z)>.01;},starting,{timeout:15000});await page.evaluate(()=>window.dispatchEvent(new Event('blur')));const paused=await page.evaluate(()=>BridgeportSlice.snapshot().position);await page.waitForTimeout(200);assert.deepEqual(await page.evaluate(()=>BridgeportSlice.snapshot().position),paused);await page.keyboard.up('KeyW');
+  const walked=await page.evaluate(()=>BridgeportSlice.snapshot().position);assert.ok(Math.hypot(walked.x-starting.x,walked.z-starting.z)>.01);
+  await page.screenshot({path:join(out,`exterior-close-${width}.png`)});
+  await page.locator('[aria-label="Street camera"]').selectOption('first');
+  assert.equal(await page.evaluate(()=>BridgeportSlice.snapshot().exterior.camera),'first');
+  assert.equal(await page.evaluate(()=>HuGlobe.viewer().dataSources.getByName('bridgeport-shared-navigation')[0].entities.getById('bridgeport-walker').model.show.getValue()),false);
+  await page.locator('[aria-label="Street travel"]').selectOption('bike');assert.equal(await page.evaluate(()=>BridgeportSlice.snapshot().exterior.mode),'bike');
+  await page.locator('[aria-label="Street camera"]').selectOption('close');
+  const button=await page.locator('[data-drive="forward"]').boundingBox();await page.mouse.move(button.x+button.width/2,button.y+button.height/2);await page.mouse.down();
+  const perf=await page.evaluate(()=>new Promise(resolve=>{const times=[];let last=performance.now();function sample(now){times.push(now-last);last=now;if(times.length<30)requestAnimationFrame(sample);else{times.sort((a,b)=>a-b);resolve({samples:times.length,p50Ms:times[15],p95Ms:times[28],heapBytes:performance.memory?.usedJSHeapSize??null});}}requestAnimationFrame(sample);}));
+  await page.mouse.up();console.log('software Chromium exterior movement',width,perf);await writeFile(join(out,`performance-${width}.json`),JSON.stringify({environment:'software Chromium; fixture owner/API/imagery; not a physical device',width,...perf},null,2));
+  await page.screenshot({path:join(out,`exterior-bike-${width}.png`)});
+  const bikePose=await page.evaluate(()=>BridgeportSlice.snapshot().position);assert.ok(Math.hypot(bikePose.x-walked.x,bikePose.z-walked.z)>.01);
+  await page.evaluate(ids=>BridgeportSlice.setClosures(ids),data.roads.map(r=>r.id));
+  await page.keyboard.down('KeyW');await page.waitForTimeout(250);await page.keyboard.up('KeyW');
+  assert.deepEqual(await page.evaluate(()=>BridgeportSlice.snapshot().position),bikePose);
+  await page.evaluate(()=>BridgeportSlice.setClosures([]));await page.locator('[aria-label="Street travel"]').selectOption('walk');
+  await page.locator('[aria-label="Street camera"]').selectOption('overview');await page.waitForFunction(()=>HuGlobe.viewer().scene.screenSpaceCameraController.enableInputs,{},{timeout:15000});
+  assert.equal(await page.evaluate(()=>HuGlobe.viewer().dataSources.getByName('bridgeport-shared-navigation')[0].entities.getById('bridgeport-walker').model.show.getValue()),false,'Map hides the close-view model');
+  first.position=await page.evaluate(()=>BridgeportSlice.snapshot().position);
+ }
  const path=route(data,'hex',first.position,data.graphs.hex.destinationId),target=data.graphs.hex.nodes.find(n=>n.id===path.ids[2]),geo=frame.toGeo(target.position);
  const point=await page.evaluate(g=>{const v=HuGlobe.viewer(),p=Cesium.SceneTransforms.worldToWindowCoordinates(v.scene,Cesium.Cartesian3.fromDegrees(g.lon,g.lat,0));return {x:p.x,y:p.y};},geo);
  console.log('picking',width,point,target.id);await page.mouse.click(point.x,point.y);await page.waitForFunction(()=>document.querySelector('[data-status]').textContent.startsWith('Preview:'));
@@ -54,16 +80,27 @@ try{for(const width of (process.env.WIDTHS||'390,1280').split(',').map(Number)){
 
  await page.waitForTimeout(700);await page.screenshot({path:join(out,`bridgeport-${width}.png`)});
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
- await page.locator('[data-return]').click();assert.equal((await page.evaluate(()=>window.BridgeportSlice.snapshot())).entities,0);
+ if(process.env.EXTERIOR==='1')await page.locator('[aria-label="Street camera"]').selectOption('close');
+ await page.locator('[data-return]').click();assert.equal((await page.evaluate(()=>window.BridgeportSlice.snapshot())).entities,0);assert.equal(await page.evaluate(()=>BridgeportSlice.snapshot().exterior.active),false);
  await page.locator('#bridgeportEnter').click();await page.waitForFunction(()=>window.BridgeportSlice.snapshot().attached);assert.deepEqual((await page.evaluate(()=>window.BridgeportSlice.snapshot())).position,stopped);
  await page.reload();if(!v2)await page.locator('#bridgeportEnter').click();await page.waitForFunction(()=>window.BridgeportSlice?.snapshot().attached);assert.deepEqual((await page.evaluate(()=>window.BridgeportSlice.snapshot())).position,stopped);
+ if(process.env.EXTERIOR==='1'){
+  await page.locator('[aria-label="Street camera"]').selectOption('close');owner=false;
+  await page.evaluate(()=>window.dispatchEvent(new StorageEvent('storage',{key:'mccdb_session'})));
+  await page.waitForFunction(()=>!BridgeportSlice.snapshot().entered);
+  assert.equal(await page.evaluate(()=>BridgeportSlice.snapshot().entities),0);assert.equal(await page.evaluate(()=>BridgeportSlice.snapshot().exterior.active),false);
+  assert.equal(await page.evaluate(()=>HuGlobe.viewer().scene.screenSpaceCameraController.enableInputs),true);
+  owner=true;await page.evaluate(()=>window.dispatchEvent(new StorageEvent('storage',{key:'mccdb_session'})));
+  await page.locator('#bridgeportEnter').waitFor({state:'visible'});await page.locator('#bridgeportEnter').click();await page.waitForFunction(()=>BridgeportSlice.snapshot().attached);
+  assert.deepEqual(await page.evaluate(()=>BridgeportSlice.snapshot().position),stopped);
+ }
  await page.evaluate(()=>HuGlobe.viewer().camera.setView({destination:Cesium.Cartesian3.fromDegrees(-73.19,41.18,1e6)}));await page.waitForFunction(()=>!window.BridgeportSlice.snapshot().attached);
  assert.equal((await page.evaluate(()=>window.BridgeportSlice.snapshot())).entities,0);
  await page.locator('[data-return]').click();owner=false;await page.evaluate(()=>window.dispatchEvent(new StorageEvent('storage',{key:'mccdb_session'})));await page.waitForFunction(()=>document.getElementById('bridgeportEnter').hidden);
  const before=regionLoads;await page.evaluate(()=>window.BridgeportSlice.enter());await page.waitForTimeout(400);assert.equal(regionLoads,before);
  if(v2){owner=true;const previous=JSON.parse(await readFile('data/spatial/bridgeport-golden-hill.v1.json','utf8')),c=previous.contract,oldValue={schema:c.state.schema,regionId:c.id,revision:1,frameId:c.frame.id,floorId:'street',position:previous.graphs.hex.nodes.find(n=>n.id===previous.graphs.hex.entryId).position,topology:'hex'};
-  await page.evaluate(v=>{localStorage.setItem('here.universe.bridgeport-golden-hill.v1',JSON.stringify(v));window.dispatchEvent(new StorageEvent('storage',{key:'mccdb_session'}));},oldValue);await page.locator('#bridgeportEnter').waitFor({state:'visible'});await page.locator('#bridgeportEnter').click();await page.waitForFunction(()=>BridgeportSlice.snapshot().attached);await page.locator('[data-import]').click();await page.waitForFunction(()=>document.querySelector('[data-status]').textContent.startsWith('Previous position copied'));
-  assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('here.universe.bridgeport-golden-hill.v1'))),oldValue);assert.deepEqual(await page.evaluate(()=>BridgeportSlice.snapshot().position),oldValue.position);await page.locator('[data-return]').click();
+  await page.evaluate(v=>{localStorage.setItem('here.universe.bridgeport-golden-hill.v1',JSON.stringify(v));window.dispatchEvent(new StorageEvent('storage',{key:'mccdb_session'}));},oldValue);await page.locator('#bridgeportEnter').waitFor({state:'visible'});await page.locator('#bridgeportEnter').click();await page.waitForFunction(()=>BridgeportSlice.snapshot().attached);if(process.env.EXTERIOR==='1')await page.locator('[aria-label="Street travel"]').selectOption('bike');await page.locator('[data-import]').click();await page.waitForFunction(()=>document.querySelector('[data-status]').textContent.startsWith('Previous position copied'));
+  assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('here.universe.bridgeport-golden-hill.v1'))),oldValue);assert.deepEqual(await page.evaluate(()=>BridgeportSlice.snapshot().position),oldValue.position);assert.equal(await page.evaluate(()=>BridgeportSlice.snapshot().exterior.mode),'walk');await page.locator('[data-return]').click();
  }
 
  if(width===390){owner=true;const host=await context.newPage();
@@ -80,6 +117,14 @@ try{for(const width of (process.env.WIDTHS||'390,1280').split(',').map(Number)){
  await host.evaluate(()=>events.length=0);
  await send({type:'bridgeport:enter',entranceId:'bridgeport-main-golden-hill',regionId});await f.waitForFunction(()=>window.BridgeportSlice?.snapshot().attached);
  await host.waitForFunction(()=>events.some(e=>e.type==='bridgeport:state'&&e.event==='ready'&&e.entranceId==='bridgeport-main-golden-hill'));
+ if(process.env.EXTERIOR==='1'){
+  await send({type:'bridgeport:preview',destinationId:'bridgeport-main-elm',requestId:'manual-interruption-check'});
+  await f.waitForFunction(()=>!document.querySelector('[data-confirm]').disabled);
+  await f.locator('[aria-label="Street camera"]').selectOption('close');try{await f.locator('[data-drive="left"]').click();}catch(error){console.log('iframe camera failure',await f.evaluate(()=>({state:BridgeportSlice.snapshot(),camera:{height:HuGlobe.viewer().camera.positionCartographic.height,lon:Cesium.Math.toDegrees(HuGlobe.viewer().camera.positionCartographic.longitude),lat:Cesium.Math.toDegrees(HuGlobe.viewer().camera.positionCartographic.latitude)},status:document.querySelector('[data-status]').textContent})));throw error;}
+  assert.equal(await f.locator('[data-confirm]').isDisabled(),true);
+  assert.equal(await host.evaluate(()=>events.some(e=>e.event==='arrived'&&e.requestId==='manual-interruption-check')),false);
+  await f.locator('[aria-label="Street camera"]').selectOption('overview');await f.waitForFunction(()=>HuGlobe.viewer().scene.screenSpaceCameraController.enableInputs);
+ }
  await send({type:'bridgeport:preview',destinationId:'court-exterior-approach'});await f.waitForFunction(()=>document.querySelector('[data-status]').textContent.startsWith('Preview:'));
  await send({type:'bridgeport:confirm'});await f.waitForFunction(()=>window.BridgeportSlice.snapshot().walking);
  await send({type:'bridgeport:leave'});await f.waitForFunction(()=>!window.BridgeportSlice.snapshot().entered);await host.waitForFunction(()=>events.some(e=>e.event==='returned'));await host.close();}
