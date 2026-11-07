@@ -1,0 +1,40 @@
+name: Admin editor presentation
+on:
+  pull_request:
+    branches: [main, codex/analytics-layout-persistence-20261107]
+    paths:
+      - 'js/control-room/editor-presentation.js'
+      - 'css/control-editor-presentation.css'
+      - 'scripts/e2e/control-room-nav.e2e.mjs'
+      - 'scripts/e2e/support/editor-presentation-*.mjs'
+      - '.github/workflows/admin-editor-presentation.yml'
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: '22'
+      - run: node --test scripts/test/control-*.test.mjs scripts/test/appbar-consistency.test.mjs scripts/test/rpc-names-exist.test.mjs
+      - run: |
+          npm install --prefix /tmp/editor-qa --ignore-scripts --no-audit --no-fund --no-save playwright@1.57.0
+          /tmp/editor-qa/node_modules/.bin/playwright install --with-deps chromium
+      - run: |
+          mkdir -p /tmp/admin-editor-proof
+          node scripts/e2e/control-room-nav.e2e.mjs /tmp/admin-editor-proof | tee /tmp/admin-editor-proof/checks.log
+        env:
+          PLAYWRIGHT_DIR: /tmp/editor-qa/node_modules
+          ADMIN_LAYOUT_HOOKS: '1'
+          EDITOR_PRESENTATION_PROOF: '1'
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: admin-editor-proof
+          path: /tmp/admin-editor-proof
+          retention-days: 7

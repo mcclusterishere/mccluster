@@ -9,6 +9,8 @@
    PLAYWRIGHT_DIR=<node_modules> [CHROMIUM_EXECUTABLE=…] node scripts/e2e/control-room-nav.e2e.mjs [outDir] */
 import {createRequire} from 'node:module';
 import {composeAdminLayout} from './support/admin-layout-hooks.mjs';
+import {composeEditorPresentation} from './support/editor-presentation-hooks.mjs';
+import {editorPresentationProof} from './support/editor-presentation-proof.mjs';
 import {readFile,mkdir} from 'node:fs/promises';
 import {join,extname,resolve,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -83,7 +85,7 @@ async function setup(viewport){
     if(u.origin===BASE){
       const rel=p==='/'?'index.html':decodeURIComponent(p.replace(/^\//,''));const file=resolve(ROOT,rel);
       if(!file.startsWith(resolve(ROOT)+sep))return route.abort();
-      try{return route.fulfill({body:process.env.ADMIN_LAYOUT_HOOKS==='1'&&['.html','.js'].includes(extname(file))?composeAdminLayout(file,await readFile(file,'utf8')):await readFile(file),contentType:TYPES[extname(file)]||'application/octet-stream'});}catch{return route.fulfill({status:404,body:''});}
+      try{return route.fulfill({body:process.env.ADMIN_LAYOUT_HOOKS==='1'&&['.html','.js'].includes(extname(file))?composeEditorPresentation(file,composeAdminLayout(file,await readFile(file,'utf8'))):await readFile(file),contentType:TYPES[extname(file)]||'application/octet-stream'});}catch{return route.fulfill({status:404,body:''});}
     }
     return route.abort();
   });
@@ -252,6 +254,7 @@ try{
         if(where==='control')check(scope,'two taps: a tick then a double tick',JSON.stringify(await page.evaluate(()=>window.__vib))==='[10,[12,40,12]]',await page.evaluate(()=>window.__vib));
       }
     }
+    if(process.env.EDITOR_PRESENTATION_PROOF==='1'&&[390,1280].includes(vp.width))await editorPresentationProof({page,goto,out:OUT,width:vp.width,check:(name,ok)=>check(scope,name,ok)});
     check(scope,'no console errors',errors.length===0,errors);
     await ctx.close();
   }

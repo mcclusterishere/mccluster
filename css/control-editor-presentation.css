@@ -1,0 +1,8 @@
+.cr-editor-fold,.cr-editor-ledger{min-width:0;max-width:100%;padding:10px}
+.cr-editor-fold>summary,.cr-editor-ledger>summary{min-height:44px;padding:10px;cursor:pointer;overflow-wrap:anywhere;font-weight:600}
+.cr-editor-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-block:10px}
+.cr-editor-summary button{min-height:48px;white-space:normal;overflow-wrap:anywhere;font:inherit;padding:8px;border:1px solid currentColor;border-radius:8px;background:transparent;color:inherit}
+.cr-editor-summary button[aria-pressed=true]{background:#d7e8d4;color:#171717}
+.cr-editor-summary :focus-visible,.cr-editor-fold :focus-visible,.cr-editor-ledger :focus-visible{outline:3px solid currentColor;outline-offset:2px}
+.cr-editor-ledger tr[hidden]{display:none}
+.cr-editor-fold input,.cr-editor-fold select,.cr-editor-fold textarea{font-size:max(16px,1em)}
