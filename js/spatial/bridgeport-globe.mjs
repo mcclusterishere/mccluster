@@ -3,6 +3,7 @@ import {route,routeToEntrance,clearEdge,restorePosition,importCompatiblePose} fr
 import {regionGate} from './region-gate.mjs';
 import {regionPolicies} from './region-policies.mjs';
 import {readRegion,visibleCells} from './region-policy.mjs';
+import {mountExterior} from './exterior-controls.mjs';
 
 // Configuration alone does not prove that a terrain provider loaded successfully.
 export function terrainDescription(state){
@@ -27,12 +28,13 @@ export function mountBridgeport({globe,C=window.Cesium}){
   cellOrigin={...position};for(const n of visibleCells(region,topology,position))source.entities.add({id:n.id,properties:{spatialCell:n.id},polygon:{hierarchy:line(polygon(region.contract,topology,n.q,n.r)),material:C.Color.CYAN.withAlpha(.16),heightReference:C.HeightReference.CLAMP_TO_GROUND,outline:false}});
   viewer.scene.requestRender();
  }
- function plan(id,entrance=null,requestId=null){if(!region||!globe.owner())return;clearRoute();preview=entrance?routeToEntrance(region,topology,position,entrance,{closedRoadIds}):route(region,topology,position,id,{closedRoadIds});if(!preview){status('No legal path from this position.');return;}
+ const exterior=mountExterior({panel,viewer,C,state:()=>({owner:entered&&globe.owner(),region,frame,position,actor,closedRoadIds}),interrupt:clearRoute,save,status,move:p=>{position=p;if(cellOrigin&&Math.hypot(position.x-cellOrigin.x,position.z-cellOrigin.z)>12)drawCells();}});
+ function plan(id,entrance=null,requestId=null){if(!region||!globe.owner())return;exterior.stop();clearRoute();preview=entrance?routeToEntrance(region,topology,position,entrance,{closedRoadIds}):route(region,topology,position,id,{closedRoadIds});if(!preview||!exterior.routeClear(preview.points)){preview=null;status('No legal path from this position.'+(exterior.snapshot().mode==='bike'?' Try walking for narrower clearance.':''));return;}
   arrivalRequest=entrance&&typeof requestId==='string'&&/^[a-zA-Z0-9-]{1,80}$/.test(requestId)?{requestId,destinationId:entrance}:null;
   routeEntity=source.entities.add({id:'bridgeport-preview',polyline:{positions:line(preview.points),width:5,clampToGround:true,zIndex:10,material:C.Color.YELLOW}});
   panel.querySelector('[data-confirm]').disabled=false;status(`Preview: ${preview.costM.toFixed(1)} m, ${preview.ids.length} ${topology} cells. Confirm to walk.`);viewer.scene.requestRender();
  }
- function detach(){importController?.abort();importController=null;save();clearRoute();if(source){viewer.dataSources.remove(source,true);source=null;}region=null;actor=null;notify('unloaded');status('Region unloaded. Return near Golden Hill Street to resume.');}
+ function detach(){exterior.detach();importController?.abort();importController=null;save();clearRoute();if(source){viewer.dataSources.remove(source,true);source=null;}region=null;actor=null;notify('unloaded');status('Region unloaded. Return near Golden Hill Street to resume.');}
  function attach(data){
   if(!entered||!globe.owner())return;region=data;frame=metricFrame(data.contract.frame.anchor);let stored=null;try{stored=restorePosition(data,JSON.parse(localStorage.getItem(data.contract.state.key)));}catch{}
   topology=stored?.topology||topology;closedRoadIds=(Array.isArray(stored?.closedRoadIds)?stored.closedRoadIds:[]).filter(id=>data.roads.some(r=>r.id===id));navigationRevision++;position=stored?.position||(data.graphs[topology].entrances?.find(e=>e.id===entranceId)?.position)||(entranceId==='bridgeport-main-golden-hill'?{x:0,y:0,z:0}:null)||{...data.graphs[topology].nodes.find(n=>n.id===data.graphs[topology].entryId).position};
@@ -45,28 +47,29 @@ export function mountBridgeport({globe,C=window.Cesium}){
   for(const b of data.buildings)source.entities.add({id:'ct:'+b.id,name:b.name,polygon:{hierarchy:new C.PolygonHierarchy(b.coordinates[0].map(p=>C.Cartesian3.fromDegrees(p[0],p[1])),b.coordinates.slice(1).map(r=>new C.PolygonHierarchy(r.map(p=>C.Cartesian3.fromDegrees(p[0],p[1]))))),height:0,heightReference:C.HeightReference.CLAMP_TO_GROUND,extrudedHeight:12,extrudedHeightReference:C.HeightReference.RELATIVE_TO_GROUND,material:C.Color.SLATEGRAY.withAlpha(.8)}});
   for(const road of data.roads)source.entities.add({id:'osm:'+road.id,name:road.name,polyline:{positions:line(road.points),width:4,clampToGround:true,material:C.Color.WHITE.withAlpha(.8)}});
   drawCells();actor=source.entities.add({id:'bridgeport-walker',position:cart(position),point:{pixelSize:16,color:C.Color.LIME,outlineColor:C.Color.BLACK,outlineWidth:2,heightReference:C.HeightReference.CLAMP_TO_GROUND,disableDepthTestDistance:Number.POSITIVE_INFINITY},label:{text:'You · street',font:'15px sans-serif',pixelOffset:new C.Cartesian2(0,-28),heightReference:C.HeightReference.CLAMP_TO_GROUND,disableDepthTestDistance:Number.POSITIVE_INFINITY}});
-  status('Choose the court approach or tap a highlighted cell, then confirm.');save();notify('ready');
+  exterior.attach();status('Choose the court approach or tap a highlighted cell, then confirm.');save();notify('ready');
  }
  const gate=regionGate({policy:()=>regionPolicies[requestedRegion],load:async signal=>{const policy=regionPolicies[requestedRegion];return readRegion(await fetch('data/spatial/'+policy.id+'.json',{signal,credentials:'same-origin'}),policy);},attach,detach,onError:e=>status(e.message)});
- function view(){const canvas=viewer.scene.canvas,p=viewer.camera.pickEllipsoid(new C.Cartesian2(canvas.clientWidth/2,canvas.clientHeight/2),viewer.scene.globe.ellipsoid);if(!p)return null;const g=C.Cartographic.fromCartesian(p);return {lon:C.Math.toDegrees(g.longitude),lat:C.Math.toDegrees(g.latitude),height:viewer.camera.positionCartographic.height};}
+ function view(){const following=exterior.view();if(following)return following;const canvas=viewer.scene.canvas,p=viewer.camera.pickEllipsoid(new C.Cartesian2(canvas.clientWidth/2,canvas.clientHeight/2),viewer.scene.globe.ellipsoid);if(!p)return null;const g=C.Cartographic.fromCartesian(p);return {lon:C.Math.toDegrees(g.longitude),lat:C.Math.toDegrees(g.latitude),height:viewer.camera.positionCartographic.height};}
  function tick(){
   if(!globe.owner()&&entered){leave(false);return;}
   gate.update({owner:globe.owner(),entered,view:view()});panel.querySelector('[data-ion]').textContent=terrainDescription(globe.ionState?.());
  }
- function animate(now){raf=requestAnimationFrame(animate);const dt=Math.min(1,(now-last)/1000||0);last=now;if(!walking||!source||!globe.owner()||document.hidden)return;let budget=dt*2;
-  while(budget>0&&walking.length){const next=walking[0],d=Math.hypot(next.x-position.x,next.z-position.z),t=d?Math.min(1,budget/d):1;const p={x:position.x+(next.x-position.x)*t,y:0,z:position.z+(next.z-position.z)*t};if(!clearEdge(region,position,p,{closedRoadIds})){clearRoute();status('Movement blocked; preview again.');break;}position=p;budget-=d;if(t===1)walking.shift();else break;}
-  actor.position=cart(position);if(cellOrigin&&Math.hypot(position.x-cellOrigin.x,position.z-cellOrigin.z)>12)drawCells();viewer.scene.requestRender();if(walking&&!walking.length){walking=null;save();status('Arrived at the selected exterior street cell.');notify('arrived',arrivalRequest||{});arrivalRequest=null;}else if(walking){status(`Walking · ${walking.length} waypoints remaining`);}
+ function animate(now){raf=requestAnimationFrame(animate);const dt=Math.min(1,(now-last)/1000||0);last=now;exterior.update(dt);if(!walking||!source||!globe.owner()||document.hidden)return;const before={...position};let budget=dt*exterior.routeSpeed(dt);
+  while(budget>0&&walking.length){const next=walking[0],d=Math.hypot(next.x-position.x,next.z-position.z),t=d?Math.min(1,budget/d):1;const p={x:position.x+(next.x-position.x)*t,y:0,z:position.z+(next.z-position.z)*t};if(!exterior.edgeClear(position,p)){clearRoute();status('Movement blocked; preview again.');break;}position=p;budget-=d;if(t===1)walking.shift();else break;}
+  exterior.follow(before,position);if(cellOrigin&&Math.hypot(position.x-cellOrigin.x,position.z-cellOrigin.z)>12)drawCells();viewer.scene.requestRender();if(walking&&!walking.length){walking=null;save();status('Arrived at the selected exterior street cell.');notify('arrived',arrivalRequest||{});arrivalRequest=null;}else if(walking){status(`Walking · ${walking.length} waypoints remaining`);}
  }
- function leave(restore=true){save();entered=false;gate.dispose();panel.hidden=true;if(restore&&original)viewer.camera.setView(original);original=null;notify('returned');}
+ function leave(restore=true){exterior.detach();save();entered=false;gate.dispose();panel.hidden=true;if(restore&&original)viewer.camera.setView(original);original=null;notify('returned');}
  function previewDestination(id,requestId=null){if(!region)return;const target=id==='court-exterior-approach'?region.graphs[topology].destinationId:region.graphs[topology].entrances?.find(e=>e.id===id)?.nodeId;if(target)plan(target,id==='court-exterior-approach'?null:id,requestId);}
- function setClosures(ids){if(!region?.contract.capabilities?.includes('road-closures')||!globe.owner()||!Array.isArray(ids)||ids.some(id=>!region.roads.some(r=>r.id===id)))return false;closedRoadIds=[...new Set(ids)];navigationRevision++;clearRoute();save();notify('closures-changed');status('Simulation roads changed; preview again. Your position is unchanged.');return true;}
+ function setClosures(ids){if(!region?.contract.capabilities?.includes('road-closures')||!globe.owner()||!Array.isArray(ids)||ids.some(id=>!region.roads.some(r=>r.id===id)))return false;closedRoadIds=[...new Set(ids)];navigationRevision++;exterior.stop();clearRoute();save();notify('closures-changed');status('Simulation roads changed; preview again. Your position is unchanged.');return true;}
  panel.querySelector('[aria-label="Simulation road closure"]').onchange=e=>setClosures(e.target.value?[e.target.value]:[]);
  panel.querySelector('[aria-label="Street destination"]').onchange=()=>clearRoute();
- panel.querySelector('[data-import]').onclick=async()=>{if(!region?.contract.state.importFrom||!globe.owner())return;const target=region;importController?.abort();const control=new AbortController();importController=control;try{const previous=await fetch('data/spatial/bridgeport-golden-hill.v1.json',{signal:control.signal}).then(r=>{if(!r.ok)throw Error('Previous region unavailable');return r.json();});const raw=JSON.parse(localStorage.getItem(target.contract.state.importFrom.key)),next=importCompatiblePose(target,previous,raw);if(control.signal.aborted||region!==target||!globe.owner())return;if(!next)throw Error('No compatible previous position to import');localStorage.setItem(target.contract.state.key,JSON.stringify(next));clearRoute();position={...next.position};topology=next.topology;closedRoadIds=[];panel.querySelector('[aria-label="Navigation topology"]').value=topology;panel.querySelector('[aria-label="Simulation road closure"]').value='';drawCells();actor.position=cart(position);notify('imported');status('Previous position copied. Original save preserved.');}catch(e){if(!control.signal.aborted)status(e.message);}finally{if(importController===control)importController=null;}};
+ panel.querySelector('[data-import]').onclick=async()=>{if(!region?.contract.state.importFrom||!globe.owner())return;exterior.stop();clearRoute();const target=region;importController?.abort();const control=new AbortController();importController=control;try{const previous=await fetch('data/spatial/bridgeport-golden-hill.v1.json',{signal:control.signal}).then(r=>{if(!r.ok)throw Error('Previous region unavailable');return r.json();});const raw=JSON.parse(localStorage.getItem(target.contract.state.importFrom.key)),next=importCompatiblePose(target,previous,raw);if(control.signal.aborted||region!==target||!globe.owner())return;if(!next)throw Error('No compatible previous position to import');localStorage.setItem(target.contract.state.key,JSON.stringify(next));clearRoute();position={...next.position};topology=next.topology;closedRoadIds=[];panel.querySelector('[aria-label="Navigation topology"]').value=topology;panel.querySelector('[aria-label="Simulation road closure"]').value='';drawCells();actor.position=cart(position);exterior.resetTravel();notify('imported');status('Previous position copied. Original save preserved.');}catch(e){if(!control.signal.aborted)status(e.message);}finally{if(importController===control)importController=null;}};
  panel.querySelector('[data-preview]').onclick=()=>previewDestination(panel.querySelector('[aria-label="Street destination"]').value);
- panel.querySelector('[data-confirm]').onclick=()=>{if(!preview||!globe.owner())return;const fresh=preview.entranceId?routeToEntrance(region,topology,position,preview.entranceId,{closedRoadIds}):route(region,topology,position,preview.ids.at(-1),{closedRoadIds});if(!fresh){clearRoute();return;}walking=fresh.points.slice(1);preview=null;panel.querySelector('[data-confirm]').disabled=true;};
- panel.querySelector('[data-stop]').onclick=()=>{clearRoute();save();status('Stopped. Preview a route to continue.');};
+ panel.querySelector('[data-confirm]').onclick=()=>{if(!preview||!globe.owner())return;const fresh=preview.entranceId?routeToEntrance(region,topology,position,preview.entranceId,{closedRoadIds}):route(region,topology,position,preview.ids.at(-1),{closedRoadIds});if(!fresh||!exterior.routeClear(fresh.points)){clearRoute();status('Route rejected for the current travel mode.');return;}walking=fresh.points.slice(1);preview=null;panel.querySelector('[data-confirm]').disabled=true;};
+ panel.querySelector('[data-stop]').onclick=()=>{exterior.stop();clearRoute();save();status('Stopped. Preview a route to continue.');};
  panel.querySelector('[data-locate]').onclick=()=>{
+  if(exterior.snapshot().camera!=='overview'){exterior.overview();return;}
   if(!entered||!region||!position||!globe.owner())return;
   // Offset the centre south so the actor stays above the phone's control panel.
   // This only moves the camera; it does not move the actor or change saved geography.
@@ -82,13 +85,13 @@ export function mountBridgeport({globe,C=window.Cesium}){
   setClosures,
   confirm(){panel.querySelector('[data-confirm]').click();},
   pick(picked,screen){
-   if(!entered||!region)return false;let id;
+   if(!entered||!region||exterior.snapshot().camera!=='overview')return false;let id;
    if(screen){const ray=viewer.camera.getPickRay(screen),hit=viewer.scene.globe.pick(ray,viewer.scene)||viewer.camera.pickEllipsoid(screen,viewer.scene.globe.ellipsoid);if(hit){const g=C.Cartographic.fromCartesian(hit),p=frame.toLocal({lon:C.Math.toDegrees(g.longitude),lat:C.Math.toDegrees(g.latitude),h:0}),cell=localCell(region.contract,topology,p);id=cellId('street',topology,cell.q,cell.r);}}
    if(!screen)id=picked?.id?.properties?.spatialCell?.getValue();
    if(!region.graphs[topology].nodes.some(n=>n.id===id))return false;plan(id);return true;
   },
   leave,
-  snapshot(){return {entered,topology,position,regionId:region?.contract.id,closedRoadIds:[...closedRoadIds],navigationRevision,entities:source?.entities.values.length||0,walking:!!walking,...gate.status()};},
-  destroy(){leave(false);clearInterval(interval);cancelAnimationFrame(raf);viewer.camera.moveEnd.removeEventListener(tick);panel.remove();style.remove();}
+  snapshot(){return {entered,topology,position,exterior:exterior.snapshot(),regionId:region?.contract.id,closedRoadIds:[...closedRoadIds],navigationRevision,entities:source?.entities.values.length||0,walking:!!walking,...gate.status()};},
+  destroy(){leave(false);exterior.destroy();clearInterval(interval);cancelAnimationFrame(raf);viewer.camera.moveEnd.removeEventListener(tick);panel.remove();style.remove();}
  };
 }

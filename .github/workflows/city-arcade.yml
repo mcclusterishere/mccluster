@@ -6,6 +6,10 @@ on:
       - 'city-arcade.html'
       - 'js/city-arcade/**'
       - 'js/spatial/**'
+      - 'js/fictional-city/camera-controls.mjs'
+      - 'js/fictional-city/travel-controls.mjs'
+      - 'scripts/test/bridgeport-exterior.test.mjs'
+      - 'scripts/e2e/bridgeport-shared-globe.e2e.mjs'
       - 'js/action-globe.js'
       - 'data/spatial/**'
       - 'workers/mccluster/src/arcade/**'
@@ -22,6 +26,10 @@ on:
       - 'city-arcade.html'
       - 'js/city-arcade/**'
       - 'js/spatial/**'
+      - 'js/fictional-city/camera-controls.mjs'
+      - 'js/fictional-city/travel-controls.mjs'
+      - 'scripts/test/bridgeport-exterior.test.mjs'
+      - 'scripts/e2e/bridgeport-shared-globe.e2e.mjs'
       - 'js/action-globe.js'
       - 'data/spatial/**'
       - 'workers/mccluster/src/arcade/**'
@@ -67,6 +75,7 @@ jobs:
           node --test scripts/test/city-arcade*.test.mjs scripts/test/sole-street-session.test.mjs scripts/test/sole-shared-progression.test.mjs
           node scripts/test/city-arcade-database.integration.mjs
           node scripts/test/city-arcade-spatial-contract.integration.mjs
+          node --test scripts/test/bridgeport-exterior.test.mjs
           python3 -m http.server 8768 --bind 127.0.0.1 > /tmp/arcade-server.log 2>&1 &
           arcade_server_pid=$!
           trap 'kill "$arcade_server_pid" 2>/dev/null || true' EXIT
@@ -77,3 +86,12 @@ jobs:
           node scripts/e2e/city-arcade-progression.e2e.cjs
           node scripts/e2e/city-arcade-spatial.e2e.cjs
           ARCADE_WIDTHS=390 ARCADE_DROP_RETURN=1 node scripts/e2e/city-arcade-spatial.e2e.cjs
+          EXTERIOR=1 SLICE=v2 WIDTHS=390,1280 node scripts/e2e/bridgeport-shared-globe.e2e.mjs /tmp/exterior-proof
+      - name: Preserve exterior camera and performance proof
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: bridgeport-exterior-proof
+          path: /tmp/exterior-proof
+          if-no-files-found: warn
+          retention-days: 14
