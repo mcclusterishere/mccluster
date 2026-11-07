@@ -29,8 +29,10 @@ export async function run(env=process.env) {
   let installed=false,seeded=false;
   const call=async(conn,revision,action,draft={courses:[]},snapshot=null,actor=owner)=>(await conn.unsafe(
     'select public.learning_portfolio_write($1,$2,$3,$4::jsonb,$5::jsonb) as result',
-    [revision,actor,action,JSON.stringify(draft),snapshot===null?null:JSON.stringify(snapshot)]))[0].result;
-  const row=async()=>(await admin.unsafe('select * from public.learning_portfolio order by key'));
+    [revision,actor,action,conn.json(draft),snapshot===null?null:conn.json(snapshot)]))[0].result;
+  // postgres.js Result extends Array and carries query metadata. Compare data rows only;
+  // preserve every field (including timestamps) for the unchanged-row assertions below.
+  const row=async()=>[...await admin.unsafe('select * from public.learning_portfolio order by key')];
   const service=(conn,fn)=>conn.begin(async tx=>{await tx.unsafe('set local role service_role');return fn(tx);});
   const blocked=async count=>{
     const deadline=Date.now()+5000;
