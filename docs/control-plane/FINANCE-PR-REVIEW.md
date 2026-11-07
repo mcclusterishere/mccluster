@@ -1,5 +1,7 @@
 # Halo Finance review build — 2026-11-04
 
+> Historical checkpoint. For current implementation and coordinated activation, see [FINANCE-ROLLOUT.md](FINANCE-ROLLOUT.md). Earlier unimplemented/draft-only statements describe the original checkpoint, not current main.
+
 This is the current implementation record. Earlier FOUNDATION/RELEASE/ACCEPTANCE documents preserve research and pre-integration history; this file and the PR describe the new build, not a production release.
 
 ## What the owner can use after an authorized release

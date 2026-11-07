@@ -112,10 +112,18 @@ Rules:
 cd core
 npm run weather:fixture                       # replay the recorded fixtures (no network, no database)
 node src/weather-snapshot-cli.mjs --fixture --fail rain_now,alerts   # rehearse outages
-npm run weather:live                          # fetch every feed once now; prints status, times and ages
+npm run weather:live -- --check               # fetch each feed once; nonzero exit for missing/stale feeds
 node scripts/weather-record-fixtures.mjs      # re-record core/fixtures/weather/connecticut-pilot/
 npm run test:weather
 ```
+
+`--check` is an explicit readiness assertion: any missing, stale or carried-forward
+feed exits nonzero. Without it the CLI remains a diagnostic summary and can exit
+successfully with missing feeds. A successful fixture check is only fixture proof;
+only a successful `--live --check` on the intended runtime demonstrates provider
+freshness there. Neither mode proves the scheduled timer or owner browser path.
+`--help` prints usage without fetching. Unknown options, invalid clocks and mixing
+live mode with fixture controls are rejected before network work.
 
 Turning on scheduled ingest is an owner decision. Neither step has been done:
 

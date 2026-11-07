@@ -2068,6 +2068,9 @@
   }
   /* where the preview's scene buttons go: the top, a scene's start, or the middle of the cabin's band */
   function frontGoto(to) {
+    /* Visibility/scene edits can change the page height before Lenis's debounced ResizeObserver runs.
+       Refresh its scroll limit now: otherwise an immediate jump is clamped to the old holding-screen height. */
+    if (typeof lenis.resize === "function") lenis.resize();
     var y = 0, el = null;
     if (to === "cabin" && cabinSec) { el = cabinSec; if (el.hasAttribute("data-front-off")) return; y = el.getBoundingClientRect().top + window.scrollY; }
     /* LOCK IN: near the end of the night descent, where the room is fully up (the pin's own start and end) */

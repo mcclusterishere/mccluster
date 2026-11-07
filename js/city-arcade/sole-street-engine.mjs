@@ -41,11 +41,26 @@ export function stepStreet(s,input,dt,graph){
  if(allowed)n.player=allowed;
  else if(dx||dy)n.message='Street edge. Follow the glowing legal route around the block.';
  if(Math.hypot(...targetPoint(n).map((v,i)=>v-n.player[i]))<3.5){
-  if(n.index<4){n.index++;n.score+=n.config.reward;n.message=n.index===4?'All four pairs collected. Follow the glow back to your entrance.':'Pair collected. Next checkpoint is glowing.';}
-  else{n.status='won';n.message='Collection complete. Your entrance is right here.';}
+  return collectStreetObjective(n);
  }
  return n;
 }
+
+function collectStreetObjective(s){
+ const n={...s};
+ if(n.index<4){n.index++;n.score+=n.config.reward;n.message=n.index===4?'All four pairs collected. Follow the glow back to your entrance.':'Pair collected. Next checkpoint is glowing.';}
+ else{n.status='won';n.message='Collection complete. Your entrance is right here.';}
+ return n;
+}
+// Only the validated City consumer calls this; existing mission state owns ordering/rewards.
+// Named street stops map to existing legacy points, never to a guessed ENU conversion.
+export function arriveStreetObjective(s,{index,destinationId,locationId}){
+ if(s.status!=='paused'||s.remaining<=0||index!==s.index)return s;
+ const expected=s.index<4?'bridgeport-'+s.config.route[s.index]:locationId;
+ if(destinationId!==expected)return s;
+ return collectStreetObjective({...s,player:[...targetPoint(s)]});
+}
+
 export function encounterAction(s,id,action,clue){
  if(s.status!=='playing')return s;const e=s.config.encounters.find(e=>e.id===id);if(!e)return s;
  const point=STREET_STOPS.find(p=>p.id===e.stopId).point;if(Math.hypot(...point.map((v,i)=>v-s.player[i]))>12)return {...s,message:'Move closer to the optional fashion decoy.'};

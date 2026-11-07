@@ -1,4 +1,6 @@
 import test from 'node:test';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -313,4 +315,32 @@ test('scheduling is off by default: the seed needs WEATHER_INGEST_ENABLED and de
   assert.match(service, /seed-weather-snapshot\.mjs/);
   const runner = await readFile(new URL('../src/runner.mjs', import.meta.url), 'utf8');
   assert.match(runner, /\['weather_region_snapshot', weatherRegionSnapshot\]/);
+});
+
+
+test('weather CLI readiness is explicit and missing or stale fixtures cannot pass it', () => {
+  const cli = fileURLToPath(new URL('../src/weather-snapshot-cli.mjs', import.meta.url));
+  const run = args => spawnSync(process.execPath, [cli, ...args], { encoding: 'utf8', timeout: 15000 });
+  const ready = run(['--fixture', '--check']);
+  assert.equal(ready.status, 0, ready.stderr);
+  assert.match(ready.stdout, /"readiness":"ready","mode":"fixture"/);
+  const missing = run(['--fixture', '--check', '--fail', 'rain_now,alerts']);
+  assert.equal(missing.status, 1);
+  assert.match(missing.stdout, /"readiness":"not_ready"/);
+  assert.match(missing.stdout, /"unavailable":\["alerts","rain_now"\]/);
+  const stale = run(['--fixture', '--check', '--now', '2026-11-07T12:00:00Z']);
+  assert.equal(stale.status, 1);
+  assert.match(stale.stdout, /"readiness":"not_ready"/);
+});
+
+test('weather CLI help and invalid modes never run a misleading fixture snapshot', () => {
+  const cli = fileURLToPath(new URL('../src/weather-snapshot-cli.mjs', import.meta.url));
+  const run = args => spawnSync(process.execPath, [cli, ...args], { encoding: 'utf8', timeout: 5000 });
+  const help = run(['--help']);
+  assert.equal(help.status, 0); assert.match(help.stdout, /Usage:/); assert.doesNotMatch(help.stdout, /generated_at/);
+  for (const args of [['--liv'], ['--live', '--fixture'], ['--live', '--now', '2026-11-07'], ['--live', '--fail', 'alerts'], ['--out'], ['--now', 'bad']]) {
+    const result = run(args);
+    assert.equal(result.status, 1, args.join(' '));
+    assert.doesNotMatch(result.stdout, /generated_at/);
+  }
 });
