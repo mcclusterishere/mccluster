@@ -89,3 +89,13 @@ node scripts/db/verify-production-schema.mjs --snapshot /tmp/owner-promotion-res
 ```
 
 Review the manifest diff before committing. Do not copy a snapshot from the old branch without all three migrations. Push the generated manifest through the root coordinator, then require a fresh successful canonical reset plus both canonical native suites and the Arcade fixture-auth job on the new exact head; downstream native steps are skipped during the initial manifest mismatch. Keep production ledger/Core unchanged until actual apply receipts as above. A hosted reset failure before snapshot generation must be fixed, not bypassed with the old artifact.
+
+## Generated manifest receipt
+
+The manifest now derives from the canonical reset at head `3152ad9ecd782787ae6d96dd641b9d9a556e6bb0`, [run 42378384718 / job 128420619063](https://github.com/mcclusterishere/mccluster/actions/runs/42378384718/job/128420619063). Startup and full migration rebuild passed. The prior strict manifest comparison correctly failed on the 13 additions; downstream native owner/portfolio proofs were skipped, not passed.
+
+Artifact `reset-schema` ID `13576498043` belongs to that exact head; ZIP SHA256 `9b84f8962257a5a56908d72c92fccbebbf2d4050c2a416168374856aa5dcd9e2`. Because artifact downloads returned HTTP403 in this workspace, the identical generated snapshot was recovered through the supported job-log connector using the reviewed bounded transport. Its uncompressed 280,350 bytes verified SHA256 `7a08719255b7aeee0bd39bb688c531685c8ed3c12e83d8169122b9b5a1d94b60` before parsing. The normal canonical verifier then generated this manifest and passed snapshot integrity and zero-drift comparison.
+
+Independent row comparison found exactly five new relations (owner_front_drafts, learning_portfolio, arcade_missions, arcade_mission_versions, arcade_runs) and eight expected functions; no prior relation/function was removed or changed. Schemas, policies, triggers, buckets and query hashes are unchanged. All five tables enable RLS and have no PUBLIC/anon/authenticated table grants; owner drafts also FORCE RLS. Four owner-front RPCs retain the expected authenticated execution grant and fixed search path, while their bodies enforce canonical owner access. Portfolio/Arcade RPCs are invoker functions with empty search path and no client execution grants. These metadata comparisons do not replace native behavior tests.
+
+Arcade's separate real PostgreSQL fixture-auth job `128420619067` passed on the same head. Require a fresh exact-head successful canonical reset and both owner/portfolio native proofs after the generated-manifest commit; the strict gate remains unchanged. Production ledger and Core contract remain at 359, with no production application implied.

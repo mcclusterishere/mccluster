@@ -8,7 +8,7 @@
    ["private","postgres","anon=U;authenticated=U"],
    ["public","pg_database_owner","PUBLIC=U;anon=U;authenticated=U"]
   ]},
-  "relations": {"md5": "80e74d49c081bd654e485c213c7064ac", "rows": [
+  "relations": {"md5": "b36a6ac72e2025318beacca33b3d4264", "rows": [
    ["ai_context","artifact_links","r",true,false,"",13,"b774fceb642e","b3b16d106caf","ff696abe0b16","",""],
    ["ai_context","context_snapshots","r",true,false,"",11,"5a3dd3b31e14","763fdc6a8354","bbf14d876094","",""],
    ["ai_context","conversations","r",true,false,"",13,"73aa22ced17b","882731ea3d27","e574df182ad5","",""],
@@ -102,6 +102,9 @@
    ["public","api_subscriptions","r",true,false,"",11,"78e22cf15f13","4939dda51651","494a51381613","",""],
    ["public","api_usage_events","r",true,false,"",13,"0878338bc8de","07f71e2572f1","149bbd67b9b9","",""],
    ["public","api_usage_reservations","r",true,false,"",13,"6a7e6f0270d1","4c71ec61899f","1ab040c2813c","",""],
+   ["public","arcade_mission_versions","r",true,false,"",5,"d14ffd76f393","f9ccada057f4","83f2cd33d0bd","",""],
+   ["public","arcade_missions","r",true,false,"",5,"4d2f685040c3","98d7cfeda07b","a4953c3bd6a2","",""],
+   ["public","arcade_runs","r",true,false,"",10,"fd829595479a","6bf90b9d65a1","15172133a10a","",""],
    ["public","authenticity_check_reviews","r",true,false,"",7,"a3d34f131e08","e123fb59e696","878aaa84a9f0","","authenticated=arw"],
    ["public","authenticity_checks","r",true,false,"",16,"4417a29e2c78","4367a7c784f9","ec0efd446089","","authenticated=ar"],
    ["public","campaigns","r",true,false,"",13,"8e0b481940df","3833745418b8","8111381f21cf","","anon=damrw;authenticated=damrw"],
@@ -296,6 +299,7 @@
    ["public","learning_lab_sessions","r",true,false,"",18,"dc954f571b89","411564f907d3","c3feb72ccfb9","","authenticated=ar"],
    ["public","learning_pathway_enrollments","r",true,false,"",8,"ea6ace5d8190","be13972cceb2","b2c5599c2e55","","authenticated=ar"],
    ["public","learning_pathway_step_progress","r",true,false,"",8,"4aca4b9d5a3c","6485cf806e4d","635fefe59daf","","authenticated=r"],
+   ["public","learning_portfolio","r",true,false,"",7,"c09c165627dd","3a3451cde0aa","70bf3e5dddcb","",""],
    ["public","learning_reviewers","r",true,false,"",5,"1f3baae8d4a0","6f311d7d5dd3","fb3630fd4274","","authenticated=r"],
    ["public","licence_scopes","r",true,false,"",5,"cb9f0c3b32c4","4af2a6caeaa8","e5f4144425ae","","anon=damrw;authenticated=damrw"],
    ["public","listener_state","r",true,true,"",3,"546a51b38113","23630e71ec80","436a3b6595c4","","authenticated=arw"],
@@ -443,6 +447,7 @@
    ["public","out_recipients","r",true,false,"",12,"34f450115d00","24730a1533a0","9b5fbf6b67cb","","anon=damrw;authenticated=damrw"],
    ["public","out_sender_identities","r",true,false,"",10,"864c9d17274e","3ba7eeea27d9","9bf39b80819e","","anon=damrw;authenticated=damrw"],
    ["public","out_suppressions","r",true,false,"",5,"d5405a6e01bb","0dd7a72aead9","75f42f86f070","","anon=damrw;authenticated=damrw"],
+   ["public","owner_front_drafts","r",true,true,"",5,"47d0a12affd6","b19710073a8e","1515ea1730ed","",""],
    ["public","partner_catalog","r",true,false,"",12,"ff669c7c8b4e","015a25038ac4","7eadb0e73824","","anon=damrw;authenticated=damrw"],
    ["public","partner_referrals","r",true,false,"",13,"52038cff6f93","df613cb0ce27","aa3ba30abb4d","","anon=damrw;authenticated=damrw"],
    ["public","payments","r",true,false,"",15,"de32e8ca1294","5f1af40f552d","fedccc8f3def","","anon=damrw;authenticated=damrw"],
@@ -547,7 +552,7 @@
    ["public","world_news_pairs","r",true,false,"",14,"5de761fbdc0f","76b13db8ea63","55500d48ba73","",""],
    ["public","world_region_sharing","r",true,true,"",5,"4b843b55af0a","24a36f9e1660","42bce73daf3b","",""]
   ]},
-  "functions": {"md5": "fd0a4afe7c63211c8adad0ecac8cd1a6", "rows": [
+  "functions": {"md5": "bc361cf3be241ae79be278fe044a503d", "rows": [
    ["private","clip_audit","p_org uuid, p_event text, p_type text, p_id text, p_detail jsonb","void",true,"v","search_path=\"\"","60b42e062739",""],
    ["private","clip_canonical_url","p_platform text, p_media text","text",false,"i","search_path=\"\"","485e72ed39b5",""],
    ["private","clip_code","","text",false,"v","search_path=\"\"","f5d91b3988d5",""],
@@ -680,6 +685,8 @@
    ["public","api_settle_usage","p_request_id text, p_status_code integer, p_actual_units bigint, p_latency_ms integer, p_source_app_id uuid, p_metadata jsonb, p_release boolean","TABLE(charged_units bigint, released_units bigint, balance_after_settlement bigint)",true,"v","search_path=public","fed528b0f8e9",""],
    ["public","api_usage_reservation_billing_guard","","trigger",true,"v","search_path=public","822ed188c028",""],
    ["public","apply_for_fellowship","p_why text, p_project text, p_hours_per_week integer","jsonb",true,"v","search_path=\"\"","5028977ee313","authenticated=X"],
+   ["public","arcade_command","p_action text, p_actor uuid, p_id text, p_document jsonb, p_revision integer","jsonb",false,"v","search_path=\"\"","75f1a12e6bc7",""],
+   ["public","arcade_document_valid","d jsonb","boolean",false,"i","search_path=\"\"","0cca916ee232",""],
    ["public","cancel_account_deletion","","jsonb",true,"v","search_path=\"\"","64713165eaad","authenticated=X"],
    ["public","claim_action_bounty","p_bounty_id uuid","jsonb",true,"v","search_path=\"\"","6f48b5131d8a","authenticated=X"],
    ["public","claim_instagram_discovery_accounts","p_limit integer","SETOF social_accounts",false,"v","search_path=\"\"","9e40d40e89cc",""],
@@ -841,6 +848,7 @@
    ["public","learning_evidence_chain","","trigger",true,"v","search_path=\"\"","aab955ef64a3",""],
    ["public","learning_in_exercise","p_exercise uuid","boolean",true,"s","search_path=\"\"","60e7856d1934","authenticated=X"],
    ["public","learning_is_reviewer","","boolean",true,"s","search_path=\"\"","607e817f9f23","authenticated=X"],
+   ["public","learning_portfolio_write","p_revision integer, p_actor uuid, p_action text, p_draft jsonb, p_snapshot jsonb","jsonb",false,"v","search_path=\"\"","2f4e651cacff",""],
    ["public","learning_rating_reviewer_guard","","trigger",true,"v","search_path=\"\"","47d69718ca31",""],
    ["public","learning_touch_updated_at","","trigger",false,"v","search_path=\"\"","602fd0db8728","PUBLIC=X"],
    ["public","learning_user_is_reviewer","p_user uuid","boolean",true,"s","search_path=\"\"","73236685211e",""],
@@ -1001,6 +1009,11 @@
    ["public","ops_queue_company_rescore","","trigger",false,"v","search_path=public, pg_temp","f8bf6a83acac",""],
    ["public","ops_recompute_lead_scores","p_org_id uuid","integer",false,"v","search_path=public, pg_temp","1db0b0310f9b",""],
    ["public","out_lower_address","","trigger",false,"v","search_path=public, pg_temp","ebc602d6c7e1",""],
+   ["public","owner_front_draft_discard_v1","p_expected_revision text","void",true,"v","search_path=pg_catalog, public, pg_temp","ab3c37321fb0","authenticated=X"],
+   ["public","owner_front_draft_save_v1","p_expected_revision text, p_base_revision text, p_value jsonb","jsonb",true,"v","search_path=pg_catalog, public, pg_temp","e3768f771020","authenticated=X"],
+   ["public","owner_front_publish_v1","p_expected_revision text, p_value jsonb","jsonb",true,"v","search_path=pg_catalog, public, pg_temp","b615df08d7b8","authenticated=X"],
+   ["public","owner_front_snapshot_v1","","jsonb",true,"v","search_path=pg_catalog, public, pg_temp","64f4cc2b8444","authenticated=X"],
+   ["public","owner_front_validate_v1","v jsonb","void",false,"v","search_path=pg_catalog, public, pg_temp","5984f49d3538",""],
    ["public","platform_assign_mccluster_id","","trigger",true,"v","search_path=public","176d512d64a2",""],
    ["public","platform_sync_profile_from_auth","","trigger",true,"v","search_path=pg_catalog, public, auth","c12f1b087537",""],
    ["public","platform_touch_device","p_device_id uuid, p_app_key text, p_client_meta jsonb","platform_user_devices",false,"v","search_path=pg_catalog, public, auth","e222c185fad5","authenticated=X"],
