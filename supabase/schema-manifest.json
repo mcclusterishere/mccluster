@@ -8,7 +8,7 @@
    ["private","postgres","anon=U;authenticated=U"],
    ["public","pg_database_owner","PUBLIC=U;anon=U;authenticated=U"]
   ]},
-  "relations": {"md5": "b36a6ac72e2025318beacca33b3d4264", "rows": [
+  "relations": {"md5": "0601505b32f50e9debfaddb3dc5d1ac3", "rows": [
    ["ai_context","artifact_links","r",true,false,"",13,"b774fceb642e","b3b16d106caf","ff696abe0b16","",""],
    ["ai_context","context_snapshots","r",true,false,"",11,"5a3dd3b31e14","763fdc6a8354","bbf14d876094","",""],
    ["ai_context","conversations","r",true,false,"",13,"73aa22ced17b","882731ea3d27","e574df182ad5","",""],
@@ -448,6 +448,8 @@
    ["public","out_sender_identities","r",true,false,"",10,"864c9d17274e","3ba7eeea27d9","9bf39b80819e","","anon=damrw;authenticated=damrw"],
    ["public","out_suppressions","r",true,false,"",5,"d5405a6e01bb","0dd7a72aead9","75f42f86f070","","anon=damrw;authenticated=damrw"],
    ["public","owner_front_drafts","r",true,true,"",5,"47d0a12affd6","b19710073a8e","1515ea1730ed","",""],
+   ["public","owner_widget_drafts","r",true,true,"",6,"55ffdb2b9259","75a8150ba98c","467ce91e72f3","",""],
+   ["public","owner_widget_history","r",true,true,"",6,"d254bf723adc","46de83a4a8d9","5d12e177a506","",""],
    ["public","partner_catalog","r",true,false,"",12,"ff669c7c8b4e","015a25038ac4","7eadb0e73824","","anon=damrw;authenticated=damrw"],
    ["public","partner_referrals","r",true,false,"",13,"52038cff6f93","df613cb0ce27","aa3ba30abb4d","","anon=damrw;authenticated=damrw"],
    ["public","payments","r",true,false,"",15,"de32e8ca1294","5f1af40f552d","fedccc8f3def","","anon=damrw;authenticated=damrw"],
@@ -552,7 +554,7 @@
    ["public","world_news_pairs","r",true,false,"",14,"5de761fbdc0f","76b13db8ea63","55500d48ba73","",""],
    ["public","world_region_sharing","r",true,true,"",5,"4b843b55af0a","24a36f9e1660","42bce73daf3b","",""]
   ]},
-  "functions": {"md5": "bc361cf3be241ae79be278fe044a503d", "rows": [
+  "functions": {"md5": "0e37426dc5bc54a3eeda0e4a7fe8a2f4", "rows": [
    ["private","clip_audit","p_org uuid, p_event text, p_type text, p_id text, p_detail jsonb","void",true,"v","search_path=\"\"","60b42e062739",""],
    ["private","clip_canonical_url","p_platform text, p_media text","text",false,"i","search_path=\"\"","485e72ed39b5",""],
    ["private","clip_code","","text",false,"v","search_path=\"\"","f5d91b3988d5",""],
@@ -1014,6 +1016,11 @@
    ["public","owner_front_publish_v1","p_expected_revision text, p_value jsonb","jsonb",true,"v","search_path=pg_catalog, public, pg_temp","b615df08d7b8","authenticated=X"],
    ["public","owner_front_snapshot_v1","","jsonb",true,"v","search_path=pg_catalog, public, pg_temp","64f4cc2b8444","authenticated=X"],
    ["public","owner_front_validate_v1","v jsonb","void",false,"v","search_path=pg_catalog, public, pg_temp","5984f49d3538",""],
+   ["public","owner_widget_assert_owner_v1","","void",true,"v","search_path=pg_catalog, public, pg_temp","066c9dda78bd",""],
+   ["public","owner_widget_edit_v1","p_app_key text, p_action text, p_expected_revision text, p_expected_draft text, p_value jsonb, p_history_id text","jsonb",true,"v","search_path=pg_catalog, public, pg_temp","5bda305bbe86","authenticated=X"],
+   ["public","owner_widget_history_v1","","trigger",true,"v","search_path=pg_catalog, public, pg_temp","c7bc6a86d4e2",""],
+   ["public","owner_widget_snapshot_v1","p_app_key text","jsonb",true,"v","search_path=pg_catalog, public, pg_temp","1090554c300b","authenticated=X"],
+   ["public","owner_widget_validate_v1","v jsonb, app_key text","void",false,"v","search_path=pg_catalog, public, pg_temp","3a028dcf23d5",""],
    ["public","platform_assign_mccluster_id","","trigger",true,"v","search_path=public","176d512d64a2",""],
    ["public","platform_sync_profile_from_auth","","trigger",true,"v","search_path=pg_catalog, public, auth","c12f1b087537",""],
    ["public","platform_touch_device","p_device_id uuid, p_app_key text, p_client_meta jsonb","platform_user_devices",false,"v","search_path=pg_catalog, public, auth","e222c185fad5","authenticated=X"],
@@ -1551,7 +1558,7 @@
    ["storage","objects","mnet media owner update","PERMISSIVE","UPDATE","authenticated","97da7ab7aa90","97da7ab7aa90"],
    ["storage","objects","mnet media owner upload","PERMISSIVE","INSERT","authenticated","","97da7ab7aa90"]
   ]},
-  "triggers": {"md5": "e4700b5d9b158f097c60e88eb1bc8849", "rows": [
+  "triggers": {"md5": "8fb1e1f07a24f6283bcc05ef28486780", "rows": [
    ["ai_context","decisions","intel_decision_approval_v2","O","6bd9376e62fb"],
    ["public","action_clip_earnings","action_clip_earnings_guard","O","afb9ecb05b26"],
    ["public","action_mission_assignments","action_bounty_sync_claim_trg","O","d14981d81826"],
@@ -1685,6 +1692,7 @@
    ["public","out_suppressions","out_suppressions_lower","O","35c5d421c465"],
    ["public","out_suppressions","zz_fan_list_unsubscribe","O","734407726029"],
    ["public","platform_apps","ops_ontology_sync_app_t","O","89d262dbc772"],
+   ["public","platform_apps","owner_widget_history_v1","O","b3ebb2541d12"],
    ["public","platform_apps","platform_apps_mnet_surface_trg","O","325cb2092489"],
    ["public","platform_profiles","trg_platform_assign_mccluster_id","O","0dfa9ea99584"],
    ["public","seek_first_entities","seek_first_entities_revision_trg","O","58dbd5b1532d"],

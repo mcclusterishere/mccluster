@@ -8,11 +8,15 @@ tmp="$(mktemp -d)"
 cleanup(){ docker rm -f "$container" >/dev/null 2>&1 || true; rm -rf "$tmp"; }
 trap cleanup EXIT
 docker run --detach --name "$container" --network none -e POSTGRES_HOST_AUTH_METHOD=trust postgres:16@sha256:f9a7b9ebf6f56201f949db745e47bc423c0f0f8294bafe991cc10bf74b029657 >/dev/null
+# The image boots a temporary socket-only server, stops it, then starts the final
+# server. Probe container-local TCP so temporary initialization cannot pass readiness.
+ready=false
 for i in {1..60}; do
- if docker exec "$container" pg_isready -U postgres >/dev/null 2>&1; then break; fi
+ if docker exec "$container" pg_isready -h 127.0.0.1 -U postgres >/dev/null 2>&1; then ready=true; break; fi
  sleep 0.25
 done
-psql(){ docker exec -i "$container" psql -X -U postgres -v ON_ERROR_STOP=1 "$@"; }
+if [[ "$ready" != true ]]; then docker logs "$container"; echo "Disposable PostgreSQL did not become ready" >&2; exit 1; fi
+psql(){ docker exec -i "$container" psql -X -h 127.0.0.1 -U postgres -v ON_ERROR_STOP=1 "$@"; }
 psql < supabase/tests/owner_widget_definitions.stub.sql > "$tmp/setup.log"
 psql < supabase/pending/owner_widget_definitions_v1.sql >> "$tmp/setup.log"
 psql < supabase/tests/owner_widget_definitions.behaviour.sql
