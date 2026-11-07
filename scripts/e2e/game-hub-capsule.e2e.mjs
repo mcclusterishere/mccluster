@@ -102,6 +102,49 @@ try {
  assert.equal(await fallback.locator('[data-hub-music-play]').isDisabled(),true);
  assert.equal(await fallback.locator('.mr-opt').count(),4,'music failure does not block study');
  await fallback.close();
+ // A missing optional music catalogue must not prevent Chemistry from becoming playable.
+ const missingAlbum=await context.newPage();
+ await missingAlbum.route('**/data/albums.json',route=>route.abort());
+ await missingAlbum.goto(url);
+ await missingAlbum.locator('[data-start]').waitFor({timeout:10000});
+ await missingAlbum.locator('[data-start]').click();
+ assert.equal(await missingAlbum.locator('.mr-opt').count(),4,'album catalogue failure does not block Molecule Rush');
+ await missingAlbum.close();
+ // Chemistry is the public exception to the private Game Hub.
+ // Use a brand-new guest browser with no synthetic owner token or account.
+ const guestContext=await browser.newContext({viewport:{width:390,height:568},hasTouch:true,reducedMotion:'reduce'});
+ await guestContext.route('**/*',route=>{
+  if(new URL(route.request().url()).origin===base)return route.continue();
+  return route.abort();
+ });
+ const guest=await guestContext.newPage();
+ const guestErrors=[];guest.on('pageerror',e=>guestErrors.push(e.message));
+ await guest.goto(base+'/game-hub.html#m=chem108&play=molecule-rush');
+ await guest.locator('[data-owner-msg]').getByText(/Sign in with the house owner/).waitFor();
+ assert.equal(await guest.locator('#ghModules').count(),0,'private hub remains gated');
+ await guest.locator('a[href="chem108.html"]').click();
+ await guest.waitForURL('**/chem108.html');
+ await guest.locator('#chemTrialStart').waitFor();
+ assert.equal(await guest.locator('[data-start]').count(),0,'trial begins only on explicit choice');
+ await guest.locator('#chemTrialStart').click();
+ await guest.locator('[data-start]').waitFor();
+ assert.ok(await guest.evaluate(()=>JSON.parse(localStorage.getItem('mcc.chem108.guest-trial.v1')).startedAt>0),'guest trial remembered');
+ await guest.locator('[data-start]').click();
+ assert.equal(await guest.locator('.mr-opt').count(),4,'real chemistry round is playable when logged out');
+ for(const option of await guest.locator('.mr-opt').all()){
+  await option.scrollIntoViewIfNeeded();
+  assert.ok(await option.evaluate(el=>{const r=el.getBoundingClientRect();return el.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));}),'guest answer is hittable on phone');
+ }
+ await guest.evaluate(()=>{
+  const at=Date.now()-7*24*60*60*1000-1000;
+  localStorage.setItem('mcc.chem108.guest-trial.v1',JSON.stringify({version:1,startedAt:at,lastSeen:at}));
+ });
+ await guest.reload();
+ await guest.locator('#chemTrialAccount').waitFor({state:'visible'});
+ assert.equal(await guest.locator('#chemTrialGame').isVisible(),false,'expired trial cannot keep playing');
+ assert.match(await guest.locator('#chemTrialMessage').innerText(),/seven-day guest preview has ended/i);
+ assert.deepEqual(guestErrors,[]);
+ await guestContext.close();
  assert.deepEqual(errors,[]);
  assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('mcc.gamehub.music.v1')).modules.chem108.time),12,'legacy music preferences preserved');
  console.log('PASS: one real shared transport, playback/course switch/next/pause, mouse/touch/keyboard movement, reset/persistence, collapse/focus, answer hit-testing compact+expanded at 320/390/844/1024, 200% text, screenshots. Auth and audio fixtures; actual shared navigation loaded.');

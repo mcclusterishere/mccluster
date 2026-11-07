@@ -16,8 +16,9 @@
   <!-- Nothing but this panel exists until the server says this is the house owner (js/owner-only.mjs); the hub, its
        course list and every game load only after that yes (owner, 2026-11-03: "keep it on my private account"). -->
   <section class="owner-gate gh-gate" aria-live="polite" data-owner-gate data-owner-template="ghTpl" data-owner-load="js/game-hub/hub.mjs?v=__STAMP__">
-    <h1>Owner only</h1>
+    <h1>Private Game Hub</h1>
     <p data-owner-msg>Checking access with the server…</p>
+    <p>Here for Chemistry? <a href="chem108.html">Play Molecule Rush free for seven days without an account.</a> Other owner games remain private.</p>
   </section>
   <template id="ghTpl">
   <a class="gh-skip" href="#ghMain">Skip to the games</a>
@@ -26,7 +27,7 @@
       <small>Matthew McCluster · Courses</small>
       <h1>Game Hub</h1>
       <p>All your training games, arcade levels and playable worlds in one place. Open Games in the floating controls to choose a course.</p>
-      <nav class="gh-worlds" aria-label="Games and story worlds"><a class="gh-city-link" href="action-globe.html?explore=1&amp;games=1">World Games ↗</a><a class="gh-city-link" href="city-arcade.html">City Arcade ↗</a><a class="gh-city-link" href="fictional-city.html">Explore McCluster City ↗</a></nav>
+      <nav class="gh-worlds" aria-label="Games and story worlds"><a class="gh-city-link" href="#m=chem108&amp;play=molecule-rush">Chem 108 · Play Molecule Rush</a><a class="gh-city-link" href="action-globe.html?explore=1&amp;games=1">World Games ↗</a><a class="gh-city-link" href="city-arcade.html">City Arcade ↗</a><a class="gh-city-link" href="fictional-city.html">Explore McCluster City ↗</a></nav>
     </header>
     <section class="gh-panel" id="ghPanel" aria-live="polite"><p class="gh-loading" role="status">Loading courses…</p></section>
     <section class="gh-play" id="ghPlay" hidden aria-label="Game"></section>
