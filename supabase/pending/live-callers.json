@@ -545,6 +545,20 @@
       "callers": [
         "workers/mccluster/src/world-members.js"
       ]
+    },
+    "owner_widget_snapshot_v1": {
+      "kind": "function",
+      "pending": "owner_widget_definitions_v1.sql",
+      "callers": [
+        "js/control-room/widget-definitions.js"
+      ]
+    },
+    "owner_widget_edit_v1": {
+      "kind": "function",
+      "pending": "owner_widget_definitions_v1.sql",
+      "callers": [
+        "js/control-room/widget-definitions.js"
+      ]
     }
   },
   "missing_everywhere": {
