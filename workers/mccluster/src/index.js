@@ -9,6 +9,7 @@ import { handlePrim3Levels, PRIM3_LEVELS_PREFIX } from './prim3/levels.js';
 import { handleNewsDesk, NEWS_DESK_PATH } from './prim3/news-desk.js';
 import { handleLearning, LEARNING_PATH } from './prim3/learning.js';
 import seekFirst from './seek-first/index.js';
+import research from './research/index.js';
 import { buildEquityUpriseHaloProjection } from './seek-first/equity-uprise-halo.js';
 import { handleWorldLayers } from './world-layers.js';
 import { handleHaloLayers, handleWorldGeocode, WORLD_GEOCODE_PATH } from './world-halo-layers.js';
@@ -327,6 +328,10 @@ export default {
       }
 
       if (!configured(env)) return fail(request, env, 'McCluster is not configured', 503);
+
+      if (path === '/v1/research' || path.startsWith('/v1/research/')) {
+        return research.fetch(request, env, { requireHouseOwner, sb });
+      }
 
       if (path === '/internal/here-tenant-agent' && request.method === 'GET') {
         await requireHouseOwner(request, env);
