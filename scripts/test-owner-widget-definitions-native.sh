@@ -2,6 +2,7 @@
 # Creates only an isolated disposable container, no ports, mounts or production connection.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+cmp supabase/pending/owner_widget_definitions_v1.sql supabase/migrations/20261107135756_owner_widget_definitions_v1.sql
 container="mccluster-widget-test-$$"
 tmp="$(mktemp -d)"
 cleanup(){ docker rm -f "$container" >/dev/null 2>&1 || true; rm -rf "$tmp"; }

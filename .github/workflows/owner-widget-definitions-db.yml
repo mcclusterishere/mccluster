@@ -5,12 +5,14 @@ on:
   pull_request:
     paths:
       - 'supabase/pending/owner_widget_definitions_v1*'
+      - 'supabase/migrations/*_owner_widget_definitions_v1.sql'
       - 'supabase/tests/owner_widget_definitions*'
       - 'scripts/test-owner-widget-definitions-native.sh'
       - '.github/workflows/owner-widget-definitions-db.yml'
   workflow_dispatch:
 jobs:
   database:
+    name: Widget definition native PostgreSQL (fixture auth)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
