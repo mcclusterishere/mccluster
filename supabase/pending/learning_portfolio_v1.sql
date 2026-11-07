@@ -15,7 +15,8 @@ create or replace function public.learning_portfolio_write(p_revision integer,p_
 returns jsonb language plpgsql security invoker set search_path='' as $$
 declare r public.learning_portfolio;
 begin
- if p_action not in ('save','publish','unpublish') then raise exception 'invalid action'; end if;
+ if p_revision is null or p_revision < 0 then raise exception 'valid revision required' using errcode='22023'; end if;
+ if p_action is null or p_action not in ('save','publish','unpublish') then raise exception 'invalid action' using errcode='22023'; end if;
  -- Defense in depth: same house-owner membership as the Worker, never an admin label.
  if not exists(select 1 from public.org_members m join public.orgs o on o.id=m.org_id
    where o.slug='mccluster' and m.profile_id=p_actor and m.role='owner') then raise exception 'owner required'; end if;
