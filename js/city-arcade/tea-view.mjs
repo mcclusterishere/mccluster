@@ -1,4 +1,4 @@
-import { arcadeRequest } from './cloud.mjs';
+import { arcadeRequest, arcadeCloudAvailable } from './cloud.mjs';
 import { GAME_ID, validateMission } from './mission-contract.mjs';
 import { TEA_MISSION, BREWERS, newTeaAction, stepTea } from './tea-action.mjs';
 const colors = ['#f4dc78', '#7ae3b0', '#dba6ec', '#efa477'];
@@ -44,13 +44,17 @@ export function mountTea(root, onFinish, {locationId,onReturn} = {}) {
     $('[data-cloud-retry]').hidden=true;
   }
   function reset(){try{useConfig(configFromForm());}catch(e){configError=e.message;}}
+  let cloudReady=false;
+  function syncCloud(){if(disposed)return;root.querySelectorAll('[data-cloud-load],[data-cloud-save],[data-cloud-play],[data-cloud-retry]').forEach(b=>b.disabled=!cloudReady||busy);$('[data-cloud-play]').disabled=!cloudReady||busy||revision===null;}
+  syncCloud();cloudStatus('Checking cloud availability. Local play and device saves remain available.');
+  arcadeCloudAvailable().then(available=>{if(disposed)return;cloudReady=available;syncCloud();cloudStatus(available?'Cloud missions available. Load the current revision before saving.':'Cloud missions unavailable. Local play and device saves remain available.');});
   function cloudStatus(text){if(!disposed)$('[data-cloud-status]').textContent=text;}
   async function cloudTask(fn){
-    if(busy)return;busy=true;
+    if(busy||!cloudReady)return;busy=true;
     root.querySelectorAll('[data-cloud-load],[data-cloud-save],[data-cloud-play],[data-again],[data-start]').forEach(b=>b.disabled=true);
-    try{await fn();}catch(e){cloudStatus(e.message);}finally{busy=false;if(!disposed){
+    try{await fn();}catch(e){if(e.cloudUnavailable)cloudReady=false;cloudStatus(e.message+' Local play and device saves remain available.');}finally{busy=false;if(!disposed){
       root.querySelectorAll('[data-cloud-load],[data-cloud-save],[data-again]').forEach(b=>b.disabled=false);
-      $('[data-cloud-play]').disabled=revision===null;$('[data-start]').disabled=state.status!=='ready';
+      syncCloud();$('[data-start]').disabled=state.status!=='ready';
     }}
   }
   listen($('[data-cloud-load]'),'click',()=>cloudTask(async()=>{

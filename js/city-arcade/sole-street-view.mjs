@@ -1,5 +1,5 @@
 import {mountSoleSpatial} from './sole-spatial.mjs';
-import {arcadeRequest} from './cloud.mjs';
+import {arcadeRequest,arcadeCloudAvailable} from './cloud.mjs';
 import {missionKey,validateMission} from './mission-contract.mjs';
 import {SOLE_MISSION,STREET_STOPS,validateSoleMission,newStreetRun,roadGraph,streetPath,targetPoint,stepStreet,encounterAction} from './sole-street-engine.mjs';
 const names=['Robbery 1s','Velocity 1s','Ghost Soles','Gravity Highs','Return entrance'];
@@ -18,7 +18,7 @@ export function solePersistedSession(state,locationId,cloudRun,pending){
 }
 export function mountSoleStreet(root,onFinish,{locationId,point,neighborhood,onReturn}){
  const key='here.city-arcade.sole-street.session.v1:'+locationId,draftKey='here.city-arcade.sole-street.mission.v1:'+locationId;
- let revision=null,cloudRun=null,busy=false,disposed=false,pending=null;
+ let revision=null,cloudRun=null,busy=false,disposed=false,pending=null,cloudReady=false;
  const cloudId=missionKey('designer-kicks-sole-run',locationId);
  let config=structuredClone(SOLE_MISSION);try{config=validateSoleMission(JSON.parse(localStorage.getItem(draftKey)));}catch{}
  let state=newStreetRun(config,neighborhood,point),graph=roadGraph(neighborhood,config.blockedRoads),frame,last=0,recorded=false,error='';
@@ -40,12 +40,15 @@ export function mountSoleStreet(root,onFinish,{locationId,point,neighborhood,onR
  let spatialDisabled=null;
  const disposeSpatial=mountSoleSpatial(root,{locationId,canEnter:()=>!busy,getMission:()=>({route:state.config.route,index:state.index,blockedRoads:state.config.blockedRoads}),onActive:active=>{
   if(active){pause();spatialDisabled=new Map([...root.querySelectorAll('button,input,textarea')].filter(el=>!el.closest('[data-sole-spatial]')).map(el=>[el,el.disabled]));for(const el of spatialDisabled.keys())el.disabled=true;canvas.inert=true;}
-  else{for(const [el,disabled]of spatialDisabled||[])el.disabled=disabled;spatialDisabled=null;canvas.inert=false;}
+  else{for(const [el,disabled]of spatialDisabled||[])el.disabled=disabled;spatialDisabled=null;canvas.inert=false;syncCloud();}
  }});
  function setState(next){state=next;graph=roadGraph(neighborhood,next.config.blockedRoads);recorded=false;error='';clear();cloudRun=null;pending=null;$('[data-sole-config]').value=JSON.stringify(next.config,null,2);$('[data-sole-retry]').hidden=true;persist();}
+  function syncCloud(){if(disposed)return;root.querySelectorAll('[data-sole-load],[data-sole-save],[data-sole-cloud-play],[data-sole-retry]').forEach(b=>b.disabled=!cloudReady||busy||!!spatialDisabled);$('[data-sole-cloud-play]').disabled=!cloudReady||busy||!!spatialDisabled||revision===null;}
+  if(pending)$('[data-sole-retry]').hidden=false;
+  syncCloud();cloudStatus('Checking cloud availability. Local play and device saves remain available.');
+  arcadeCloudAvailable().then(available=>{if(disposed)return;cloudReady=available;syncCloud();cloudStatus(available?(pending?'Completed run restored. Retry saving its practice result to your account.':'Cloud missions available. Load the current revision before saving.'):'Cloud missions unavailable. Local play and device saves remain available.');});
  function cloudStatus(text){if(!disposed)$('[data-sole-cloud-status]').textContent=text;}
- if(pending){$('[data-sole-retry]').hidden=false;cloudStatus('Completed run restored. Retry saving its practice result to your account.');}
- async function cloudTask(fn){if(busy)return;busy=true;root.querySelectorAll('[data-sole-load],[data-sole-save],[data-sole-cloud-play],[data-sole-apply]').forEach(b=>b.disabled=true);try{await fn();}catch(e){cloudStatus(e.message);}finally{busy=false;if(!disposed){root.querySelectorAll('[data-sole-load],[data-sole-save],[data-sole-apply]').forEach(b=>b.disabled=false);$('[data-sole-cloud-play]').disabled=revision===null;}}}
+ async function cloudTask(fn){if(busy||!cloudReady)return;busy=true;root.querySelectorAll('[data-sole-load],[data-sole-save],[data-sole-cloud-play],[data-sole-apply]').forEach(b=>b.disabled=true);try{await fn();}catch(e){if(e.cloudUnavailable)cloudReady=false;cloudStatus(e.message+' Local play and device saves remain available.');}finally{busy=false;if(!disposed){root.querySelectorAll('[data-sole-load],[data-sole-save],[data-sole-apply]').forEach(b=>b.disabled=false);syncCloud();}}}
  listen($('[data-sole-load]'),'click',()=>cloudTask(async()=>{const m=await arcadeRequest('/missions/'+cloudId);if(disposed)return;if(!m){revision=0;cloudStatus('No saved mission. Save your configuration as revision 1.');return;}const d=validateMission(m.document);if(d.locationId!==locationId||!d.sole)throw Error('Mission mismatch');setState(newStreetRun(d.sole,neighborhood,point));revision=m.revision;cloudStatus('Loaded private revision '+revision+'.');}));
  listen($('[data-sole-save]'),'click',()=>cloudTask(async()=>{if(revision===null){cloudStatus('Load the current cloud revision first.');return;}const c=validateSoleMission(JSON.parse($('[data-sole-config]').value));newStreetRun(c,neighborhood,point);const document={version:1,gameId:'designer-kicks-sole-run',locationId,sole:c};const m=await arcadeRequest('/missions/'+cloudId,'PUT',{document,expectedRevision:revision});if(disposed)return;revision=m.revision;cloudStatus('Private mission revision '+revision+' saved.');}));
  listen($('[data-sole-cloud-play]'),'click',()=>cloudTask(async()=>{const r=await arcadeRequest('/start/'+cloudId,'POST',{expectedRevision:revision});if(disposed)return;const d=validateMission(r.document);if(d.locationId!==locationId||!d.sole)throw Error('Mission mismatch');setState(newStreetRun(d.sole,neighborhood,point));cloudRun=r.id;state.status='playing';persist();canvas.focus();cloudStatus('Playing private revision '+r.revision+'.');}));
