@@ -12,6 +12,7 @@ on:
       - 'supabase/pending/city_arcade_v1.sql'
       - 'scripts/test/city-arcade*'
       - 'scripts/test/sole-street-session.test.mjs'
+      - 'scripts/test/sole-shared-progression.test.mjs'
       - 'scripts/test/support/arcade-database.mjs'
       - 'scripts/e2e/city-arcade*'
       - '.github/workflows/city-arcade.yml'
@@ -27,6 +28,7 @@ on:
       - 'supabase/pending/city_arcade_v1.sql'
       - 'scripts/test/city-arcade*'
       - 'scripts/test/sole-street-session.test.mjs'
+      - 'scripts/test/sole-shared-progression.test.mjs'
       - 'scripts/test/support/arcade-database.mjs'
       - 'scripts/e2e/city-arcade*'
       - '.github/workflows/city-arcade.yml'
@@ -62,7 +64,7 @@ jobs:
           set -euo pipefail
           export CHROMIUM_PATH="$(node -e "console.log(require('/tmp/arcade-qa/node_modules/playwright').chromium.executablePath())")"
           node tools/publish-fictional-city.mjs
-          node --test scripts/test/city-arcade*.test.mjs scripts/test/sole-street-session.test.mjs
+          node --test scripts/test/city-arcade*.test.mjs scripts/test/sole-street-session.test.mjs scripts/test/sole-shared-progression.test.mjs
           node scripts/test/city-arcade-database.integration.mjs
           node scripts/test/city-arcade-spatial-contract.integration.mjs
           python3 -m http.server 8768 --bind 127.0.0.1 > /tmp/arcade-server.log 2>&1 &
@@ -72,5 +74,6 @@ jobs:
           node scripts/e2e/city-arcade-cloud-gate.e2e.mjs
           node scripts/e2e/city-arcade-action.e2e.mjs
           node scripts/e2e/city-arcade-recovery.e2e.mjs
+          node scripts/e2e/city-arcade-progression.e2e.cjs
           node scripts/e2e/city-arcade-spatial.e2e.cjs
           ARCADE_WIDTHS=390 ARCADE_DROP_RETURN=1 node scripts/e2e/city-arcade-spatial.e2e.cjs
