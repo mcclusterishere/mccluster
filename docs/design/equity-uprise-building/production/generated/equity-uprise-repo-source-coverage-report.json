@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 635,
+  "candidate_count": 640,
   "capability_source_count": 104,
-  "support_only_count": 531,
-  "checks_total": 2438,
-  "checks_passed": 2438,
+  "support_only_count": 536,
+  "checks_total": 2458,
+  "checks_passed": 2458,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -20,6 +20,7 @@
     "CODEX.md",
     "GEMINI.md",
     "LICENSE",
+    "PRIM3/game/halo/adaptive/topology-learning.mjs",
     "README.md",
     "_unfinished/README.md",
     "_unfinished/creator-selection-desk.html",
@@ -219,6 +220,7 @@
     "docs/prim3/EQUITY-UPRISE-X-PRIM3-INTEGRATION-MATRIX.md",
     "docs/prim3/PRIM-BACKEND-TRACKING.md",
     "docs/prim3/SHARED-SPATIAL-CONTRACT.md",
+    "docs/prim3/TOPOLOGY-LEARNING.md",
     "docs/products/DISTRIBUTABLE-PRODUCT.md",
     "docs/releases/mission-content-cleanup-2026-10-31.md",
     "docs/sales-redesign/BRANCH-HARVEST-REPORT.md",
@@ -350,6 +352,7 @@
     "policy.html",
     "portfolio.html",
     "press.html",
+    "prim3-released-mission.html",
     "privacy.html",
     "production.html",
     "receipt.html",
@@ -376,6 +379,7 @@
     "scripts/e2e/prim3-direct-landings.e2e.mjs",
     "scripts/e2e/prim3-hq-stairs.e2e.mjs",
     "scripts/e2e/prim3-spatial-controls.e2e.mjs",
+    "scripts/e2e/prim3-topology-learning.e2e.mjs",
     "scripts/e2e/server-lab.e2e.mjs",
     "scripts/e2e/site-navigation.e2e.mjs",
     "scripts/e2e/world-screen.e2e.mjs",
@@ -426,6 +430,7 @@
     "scripts/test/prim3-equity-uprise-model.test.mjs",
     "scripts/test/prim3-lifecycle.test.mjs",
     "scripts/test/prim3-movement-knowledge.test.mjs",
+    "scripts/test/prim3-topology-learning.test.mjs",
     "scripts/test/prim3-transit-level.test.mjs",
     "scripts/test/product-context.test.mjs",
     "scripts/test/rpc-names-exist.test.mjs",
@@ -649,7 +654,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "635 entries"
+      "detail": "640 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -12833,6 +12838,106 @@
     },
     {
       "name": "scripts/test/eu-screen-hardware-binding.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "PRIM3/game/halo/adaptive/topology-learning.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "PRIM3/game/halo/adaptive/topology-learning.mjs classified",
+      "passed": true,
+      "detail": "classification='building_projection_support'"
+    },
+    {
+      "name": "PRIM3/game/halo/adaptive/topology-learning.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "PRIM3/game/halo/adaptive/topology-learning.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/prim3/TOPOLOGY-LEARNING.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/prim3/TOPOLOGY-LEARNING.md classified",
+      "passed": true,
+      "detail": "classification='building_projection_support'"
+    },
+    {
+      "name": "docs/prim3/TOPOLOGY-LEARNING.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/prim3/TOPOLOGY-LEARNING.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "prim3-released-mission.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "prim3-released-mission.html classified",
+      "passed": true,
+      "detail": "classification='building_projection_support'"
+    },
+    {
+      "name": "prim3-released-mission.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "prim3-released-mission.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/prim3-topology-learning.e2e.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/prim3-topology-learning.e2e.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/e2e/prim3-topology-learning.e2e.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/e2e/prim3-topology-learning.e2e.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/prim3-topology-learning.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/prim3-topology-learning.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/prim3-topology-learning.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/prim3-topology-learning.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     }
