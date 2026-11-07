@@ -309,6 +309,16 @@ jobs:
           # were promoted; the reset above applies them from supabase/migrations/.
           node scripts/compute-lease-sql-check.mjs
           node scripts/test-intel-integrity-db.mjs
+      - name: Prove owner front publication on the full canonical replay
+        # Runs after the manifest comparison and existing suites. The pending SQL
+        # remains pending: only this disposable local stack receives it.
+        env:
+          OWNER_FRONT_DISPOSABLE_RESET: '1'
+          NATIVE_TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: |
+          export POSTGRES_MODULE_PATH="$RUNNER_TEMP/native-admin-tools/node_modules/postgres/src/index.js"
+          node --test scripts/test/owner-front-postgres-harness.test.mjs
+          node scripts/test-owner-front-postgres.mjs --canonical-reset
       - name: Stop isolated stack
         if: always()
         run: supabase stop --no-backup || true

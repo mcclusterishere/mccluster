@@ -158,3 +158,52 @@ These controls cover house front-page settings only. Cross-product owner control
 admin-layout editing and delegated permissions remain broader roadmap work.
 The standing engineering order is now recorded centrally in AGENTS.md under
 “Build controls before features”; the existing seven vendor adapters point there.
+
+## Native PostgreSQL completion follow-up, 2026-11-07
+
+The original implementation and PGlite tests are retained. The remaining real
+multi-session gap now has a reproducible test:
+
+```sh
+POSTGRES_MODULE_PATH=/path/to/postgres/src/index.js \
+NATIVE_TEST_DATABASE_URL=postgresql://postgres@127.0.0.1:54322/postgres \
+node scripts/test-owner-front-postgres.mjs
+```
+
+Local PostgreSQL **17.7** passed all **12** checks. The harness creates and drops
+its own scratch database. It uses canonical M-person linking, primary-link lookup,
+admin helpers, content tables and audit functions from their committed SQL; only
+managed `auth.users`, `auth.uid()` and `auth.role()` are stubbed in this subset.
+The local subset is not a full Supabase replay or managed-auth acceptance.
+
+The races synchronize by observing the actual blocked backend in
+`pg_stat_activity`, rather than assuming a sleep made two sessions overlap:
+
+- Two new publishers: one commits, the stale other receives `40001`.
+- Legacy insert, update and delete before a new publication: each blocks the new
+  operation, whose stale base is rejected after the legacy commit.
+- New publication before a legacy writer: the legacy writer waits, then both
+  changes survive in their correct audit order.
+- A snapshot waits for a legacy writer and returns matching content and history.
+- Competing draft saves and stale discard reject lost updates. Publication that
+  waits for another tab's newer draft preserves that different draft.
+- Owner/member/unlinked/anonymous/service identities, private grants, forced RLS,
+  malformed inputs, and rollback/reapply preservation are checked as well.
+
+`Reconciliation CI` now runs the same suite **after the full canonical reset and
+unchanged schema-manifest gate**, against the real replayed tables, triggers,
+auth schema and helper functions. No local stubs are installed in this mode.
+It requires an explicit disposable-reset acknowledgement and rejects anything
+except the literal loopback Supabase test URL without connection overrides.
+The stack is destroyed even on failure. The pending proposal is applied twice
+only there, and rollback/reapply is exercised there; no production migration,
+production ledger or manifest is changed.
+
+Current main was checked at `cdf80c3dc91a282c4def45606bf3a3473aad688c`.
+Canonical migrations, replay migrations and the schema manifest are unchanged
+from this branch's base. No overlap with the Arcade, Policy or portfolio runtime
+changes is introduced. This follow-up changes only verification and documentation.
+Hosted canonical results must be checked on the pushed commit before calling that
+gate passed. Actual owner-session/physical-device acceptance and separately
+approved SQL-first then frontend rollout remain release gates. This draft must
+not be merged as implicit deployment approval.
