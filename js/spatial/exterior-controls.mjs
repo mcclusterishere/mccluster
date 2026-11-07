@@ -34,7 +34,10 @@ export function mountExterior({panel,viewer,C,state,move,interrupt,save,status})
  function setCamera(mode){if(!['overview','close','first'].includes(mode)||!enabled())return;switchingCamera=true;try{stop();camera=mode;controls.querySelector('[aria-label="Street camera"]').value=mode;panel.dataset.streetCamera=mode;
   releaseCamera();if(mode!=='overview'){viewer.camera.cancelFlight();originalInputs=viewer.scene.screenSpaceCameraController.enableInputs;viewer.scene.screenSpaceCameraController.enableInputs=false;}else panel.querySelector('[data-locate]').click();sync();}finally{switchingCamera=false;}}
  function sync(){const s=state();if(!enabled()||!s.actor)return;
-  const geo=s.frame.toGeo(s.position),g=C.Cartographic.fromDegrees(geo.lon,geo.lat),ground=exteriorGround(viewer,C,g);
+  const geo=s.frame.toGeo(s.position);
+  // The map keeps its lightweight point/label. Load and orient the rider only for close views.
+  if(camera==='overview'){s.actor.position=C.Cartesian3.fromDegrees(geo.lon,geo.lat,0);if(s.actor.model)s.actor.model.show=false;s.actor.point.show=true;s.actor.label.show=true;viewer.scene.requestRender();return;}
+  const g=C.Cartographic.fromDegrees(geo.lon,geo.lat),ground=exteriorGround(viewer,C,g);
   s.actor.position=C.Cartesian3.fromDegrees(geo.lon,geo.lat,ground);s.actor.orientation=C.Transforms.headingPitchRollQuaternion(s.actor.position.getValue(C.JulianDate.now()),new C.HeadingPitchRoll(heading+Math.PI/2,0,0));
   if(!s.actor.model)s.actor.model=new C.ModelGraphics({uri:models[travel.mode],scale:1,heightReference:C.HeightReference.NONE});
   else if(s.actor.model.uri?.getValue()!==models[travel.mode])s.actor.model.uri=models[travel.mode];

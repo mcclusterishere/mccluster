@@ -30,6 +30,7 @@ try{for(const width of (process.env.WIDTHS||'390,1280').split(',').map(Number)){
  assert.equal(regionLoads,1);assert.match(await page.locator('[data-ion]').textContent(),/unavailable/);
  const first=await page.evaluate(()=>window.BridgeportSlice.snapshot());assert.ok(first.entities>(v2?20:200));assert.ok(first.entities<=data.contract.gating.maxEntities);assert.equal(first.topology,'hex');
  if(process.env.EXTERIOR==='1'){
+  assert.equal(await page.evaluate(()=>!!HuGlobe.viewer().dataSources.getByName('bridgeport-shared-navigation')[0].entities.getById('bridgeport-walker').model),false,'Map must not load the close-view model');
   const starting=await page.evaluate(()=>BridgeportSlice.snapshot().position);
   await page.locator('[aria-label="Street camera"]').selectOption('close');
   assert.equal(await page.evaluate(()=>HuGlobe.viewer().scene.screenSpaceCameraController.enableInputs),false);
@@ -51,6 +52,7 @@ try{for(const width of (process.env.WIDTHS||'390,1280').split(',').map(Number)){
   assert.deepEqual(await page.evaluate(()=>BridgeportSlice.snapshot().position),bikePose);
   await page.evaluate(()=>BridgeportSlice.setClosures([]));await page.locator('[aria-label="Street travel"]').selectOption('walk');
   await page.locator('[aria-label="Street camera"]').selectOption('overview');await page.waitForFunction(()=>HuGlobe.viewer().scene.screenSpaceCameraController.enableInputs,{},{timeout:15000});
+  assert.equal(await page.evaluate(()=>HuGlobe.viewer().dataSources.getByName('bridgeport-shared-navigation')[0].entities.getById('bridgeport-walker').model.show.getValue()),false,'Map hides the close-view model');
   first.position=await page.evaluate(()=>BridgeportSlice.snapshot().position);
  }
  const path=route(data,'hex',first.position,data.graphs.hex.destinationId),target=data.graphs.hex.nodes.find(n=>n.id===path.ids[2]),geo=frame.toGeo(target.position);
