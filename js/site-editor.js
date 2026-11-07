@@ -17,6 +17,13 @@
 (function (w, d) {
   "use strict";
 
+  // Control's settings frame is a private preview. The copy pencil writes
+  // immediately, so it remains available on the standalone page only.
+  try {
+    if (w.parent !== w && w.parent.location.origin === location.origin &&
+        /(?:control|front-studio)\.html$/.test(w.parent.location.pathname)) return;
+  } catch (_) { /* Cross-origin frames cannot claim a Control preview. */ }
+
   var SB = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
   var KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
   var OWNER = "matthew@mccluster.org";
