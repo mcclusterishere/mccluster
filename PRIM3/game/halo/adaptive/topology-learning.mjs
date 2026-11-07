@@ -1,12 +1,12 @@
 // Versioned mathematical exercises. Coordinates are declared lattice coordinates,
 // never opaque resolver node indices, navigable routes, AP, or combat evidence.
 export const LEARNING_VARIANTS = Object.freeze({
- 'generated': {title:'Generated side operation',href:null,frame:'generated signed display',topologies:['square']},
+ 'generated': {title:'Generated side operation',href:null,frame:'Signed Forge display: +X east, +Y north; origin is the tile containing Forge (0,0); 3.54 m/tile',topologies:['square']},
  'transit-relay': {title:'Transit / Relay',href:'prim3-transit.html?level=transit-relay',frame:'X=x−32, Y=31−y; +X east, +Y north; 3.54 m/tile',topologies:['square']},
  'equity-uprise-hq': {title:'Equity Uprise HQ',href:'prim3-transit.html?level=equity-uprise-hq',frame:'X=x−3, Y=8−y; +X east, +Y north; 3.54 m/tile',topologies:['square']},
  'equity-uprise-b1': {title:'Equity Uprise B1 · Restore the Picture',href:'prim3-transit.html?level=equity-uprise-b1&side=defend',frame:'X=x−3, Y=8−y; +X east, +Y north; 3.54 m/tile',topologies:['square']},
  'equity-uprise-b1-attack': {title:'Equity Uprise B1 · Blind the Floor',href:'prim3-transit.html?level=equity-uprise-b1&side=attack',frame:'X=x−3, Y=8−y; +X east, +Y north; 3.54 m/tile',topologies:['square']},
- 'courtyard': {title:'Courtyard study',href:'demos/prim3-courtyard/index.html',frame:'X=x−4.5, Y=4.5−y; +X right, +Y up; display cells, no geographic anchor',topologies:['square']},
+ 'courtyard': {title:'Courtyard study',href:'demos/prim3-courtyard/index.html',frame:'Integer cell (q,r): +q right, +r down. Display X=q−4.5, Y=4.5−r; no geographic anchor or metre scale',topologies:['square']},
  'city': {title:'City street simulation',href:'prim3-city-tactics.html',frame:'bridgeport-golden-hill.enu.v1; +x east, +y up, +z south; street floor',topologies:['square','hex']}
 });
 export function learningContext(value) {

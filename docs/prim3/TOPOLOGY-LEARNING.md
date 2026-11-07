@@ -25,7 +25,7 @@ These are explicitly **unobstructed practice lattice exercises**, not shortest p
 Authorities:
 - `js/prim3-tactics/levels/transit-relay.mjs`: display `(x-32,31-y)`, north-positive Y, 3.54 m tiles.
 - HQ and B1 level modules: display `(x-3,8-y)`, north-positive Y, same tile scale.
-- Courtyard `rules.js` and `game.js`: centered 10-cell display `(x-4.5,4.5-y)`; no geographic or surveyed metre claim.
+- Courtyard `rules.js` and `game.js`: integer cell-column/row exercises `(q,r)`, q right/r down; centered 10-cell display `(q-4.5,4.5-r)` is a separate half-cell translation. No geographic or surveyed metre claim.
 - `data/spatial/bridgeport-downtown.v2.json` and `js/spatial/metric-frame.mjs`: street floor, `bridgeport-golden-hill.enu.v1`, x east/y up/z south, square side 2 m, pointy hex radius 1.5 m. Hex +q is east, +r southeast; neighbor spacing is sqrt(3)*1.5 m. The pure tests compare the evaluator to BFS using the actual contract's neighbors and verify cell-center metric spacing.
 
 ## Evidence, recovery and scope
