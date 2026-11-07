@@ -1,0 +1,39 @@
+name: Analytics layout persistence
+on:
+  pull_request:
+    branches: [main, codex/admin-layout-followthrough-20261107]
+    paths:
+      - 'supabase/pending/owner_analytics_layout_v1*'
+      - 'supabase/tests/owner_analytics_layout.stub.sql'
+      - 'js/control-room/analytics-layout*.js'
+      - 'scripts/test-owner-analytics-layout-native.mjs'
+      - 'scripts/test/control-analytics-layout-adapter.test.mjs'
+      - '.github/workflows/analytics-layout-persistence.yml'
+permissions:
+  contents: read
+jobs:
+  native:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: '22'
+      - run: node --test scripts/test/control-admin-layout.test.mjs scripts/test/control-analytics-layout-adapter.test.mjs scripts/test/control-analytics-six-tabs.test.mjs scripts/test/rpc-names-exist.test.mjs
+      - run: |
+          npm install --prefix /tmp/layout-qa --ignore-scripts --no-audit --no-fund --no-save playwright@1.57.0
+          /tmp/layout-qa/node_modules/.bin/playwright install --with-deps chromium
+      - name: Native PostgreSQL, PostgREST and owner editor proof
+        run: node scripts/test-owner-analytics-layout-native.mjs
+        env:
+          PLAYWRIGHT_DIR: /tmp/layout-qa/node_modules
+          ANALYTICS_LAYOUT_PROOF: /tmp/analytics-layout-native-proof
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: analytics-layout-native-proof
+          path: /tmp/analytics-layout-native-proof
+          retention-days: 7
