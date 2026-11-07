@@ -78,8 +78,10 @@ try{for(const width of (process.env.WIDTHS||'390,1280').split(',').map(Number)){
  await send({type:'bridgeport:leave'});await f.waitForFunction(()=>!window.BridgeportSlice.snapshot().entered);await host.waitForFunction(()=>events.some(e=>e.event==='returned'));await host.close();}
 
  // Exercise runtime rejection before rendering on phone and desktop, with existing saves preserved.
+ await page.close(); // Release the completed WebGL scene before isolated failure cases.
  owner=true;
  for(const failure of ['byte','node','entity']){
+  console.log('budget rejection',width,failure);
   const bad=await context.newPage(),payload=structuredClone(data);
   if(failure==='node')payload.graphs.hex.nodes.length=data.contract.gating.maxNodesPerTopology+1;
   if(failure==='entity')payload.roads.length=data.contract.gating.maxEntities;
