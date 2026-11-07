@@ -1,7 +1,7 @@
 import {mountSoleSpatial} from './sole-spatial.mjs';
 import {arcadeRequest,arcadeCloudAvailable} from './cloud.mjs';
 import {missionKey,validateMission} from './mission-contract.mjs';
-import {SOLE_MISSION,STREET_STOPS,validateSoleMission,newStreetRun,roadGraph,streetPath,targetPoint,stepStreet,encounterAction} from './sole-street-engine.mjs';
+import {SOLE_MISSION,STREET_STOPS,validateSoleMission,newStreetRun,roadGraph,streetPath,targetPoint,stepStreet,arriveStreetObjective,encounterAction} from './sole-street-engine.mjs';
 const names=['Robbery 1s','Velocity 1s','Ghost Soles','Gravity Highs','Return entrance'];
 // A finished cloud run must remain recoverable until the server accepts its result.
 export function soleResultForRetry(saved,cloudRun,encounters,index,status){
@@ -38,9 +38,9 @@ export function mountSoleStreet(root,onFinish,{locationId,point,neighborhood,onR
  function clear(){keys.clear();held.clear();}
  function persist(){try{const snapshot=solePersistedSession(state,locationId,cloudRun,pending);if(snapshot)localStorage.setItem(key,JSON.stringify(snapshot));else localStorage.removeItem(key);}catch{}}
  let spatialDisabled=null;
- const disposeSpatial=mountSoleSpatial(root,{locationId,canEnter:()=>!busy,getMission:()=>({route:state.config.route,index:state.index,blockedRoads:state.config.blockedRoads}),onActive:active=>{
+ const disposeSpatial=mountSoleSpatial(root,{locationId,canEnter:()=>!busy&&['playing','paused'].includes(state.status),onArrival:arrival=>{const next=arriveStreetObjective(state,{...arrival,locationId});if(next===state)return false;state=next;recordCompletion();persist();return true;},getMission:()=>({route:state.config.route,index:state.index,status:state.status,blockedRoads:state.config.blockedRoads}),onActive:active=>{
   if(active){pause();spatialDisabled=new Map([...root.querySelectorAll('button,input,textarea')].filter(el=>!el.closest('[data-sole-spatial]')).map(el=>[el,el.disabled]));for(const el of spatialDisabled.keys())el.disabled=true;canvas.inert=true;}
-  else{for(const [el,disabled]of spatialDisabled||[])el.disabled=disabled;spatialDisabled=null;canvas.inert=false;syncCloud();}
+  else{for(const [el,disabled]of spatialDisabled||[])el.disabled=disabled;spatialDisabled=null;canvas.inert=false;syncCloud();if(pending&&!disposed)finishCloud();}
  }});
  function setState(next){state=next;graph=roadGraph(neighborhood,next.config.blockedRoads);recorded=false;error='';clear();cloudRun=null;pending=null;$('[data-sole-config]').value=JSON.stringify(next.config,null,2);$('[data-sole-retry]').hidden=true;persist();}
   function syncCloud(){if(disposed)return;root.querySelectorAll('[data-sole-load],[data-sole-save],[data-sole-cloud-play],[data-sole-retry]').forEach(b=>b.disabled=!cloudReady||busy||!!spatialDisabled);$('[data-sole-cloud-play]').disabled=!cloudReady||busy||!!spatialDisabled||revision===null;}
@@ -83,11 +83,14 @@ export function mountSoleStreet(root,onFinish,{locationId,point,neighborhood,onR
   const [x,y]=xy(state.player);c.fillStyle='#8af2e3';c.fillRect(x-5,y-3,10,14);c.fillStyle='#efd0aa';c.beginPath();c.arc(x,y-8,5,0,Math.PI*2);c.fill();
   if(!overview){c.fillStyle='#fff';c.font='bold 24px system-ui';c.fillText(names[state.index],16,30);if(state.status!=='playing'){c.fillStyle='#122733bb';c.fillRect(0,145,w,90);c.fillStyle='#fff';c.font='bold 28px system-ui';c.fillText({ready:'Ready to run',paused:'Paused',won:'Collection complete',failed:'Time is up'}[state.status],20,198);}}
  }
+ function recordCompletion(){
+  if(['won','failed'].includes(state.status)&&!recorded){recorded=true;if(cloudRun)pending={id:cloudRun,body:{status:state.status,served:state.index,encounters:Object.keys(state.encounters).filter(id=>state.encounters[id]==='done')}};persist();onFinish({...state,cloud:cloudRun?'pending':'local'});if(pending&&!disposed&&!spatialDisabled)finishCloud();}
+ }
  function tick(now){const down=k=>keys.has(k)||[...held.values()].includes(k);state=stepStreet(state,{x:Number(down('right'))-Number(down('left')),y:Number(down('down'))-Number(down('up'))},(now-last)/1000,graph);last=now;
   $('.gps-objective').textContent='Next: '+names[state.index]+' · follow the green route';$('[data-time]').textContent=Math.ceil(state.remaining)+'s';$('[data-pairs]').textContent=state.index+'/4';$('[data-score]').textContent=state.score;
   const message=error||state.message;if($('[data-sole-status]').textContent!==message)$('[data-sole-status]').textContent=message;
   encounter();drawMap(ctx,600,400,false);drawMap(mc,300,260,true);
-  if(['won','failed'].includes(state.status)&&!recorded){recorded=true;if(cloudRun)pending={id:cloudRun,body:{status:state.status,served:state.index,encounters:Object.keys(state.encounters).filter(id=>state.encounters[id]==='done')}};persist();onFinish({...state,cloud:cloudRun?'pending':'local'});if(pending&&!disposed)finishCloud();}
+  recordCompletion();
   frame=requestAnimationFrame(tick);
  }
  frame=requestAnimationFrame(tick);

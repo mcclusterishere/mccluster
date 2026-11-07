@@ -6,31 +6,88 @@ import { once } from 'node:events';
 import { setTimeout as delay } from 'node:timers/promises';
 import { inferenceFetch } from '../src/compute/inference-http.mjs';
 
+function adapterReady(child, diagnostic) {
+  return new Promise((resolve, reject) => {
+    let output = '';
+    const finish = (error, ready) => {
+      clearTimeout(timer);
+      child.stdout.off('data', data); child.off('error', failed); child.off('exit', exited);
+      if (error) reject(error); else resolve(ready);
+    };
+    const failed = error => finish(new Error(`adapter startup failed: ${error.message}; ${diagnostic()}`));
+    const exited = (code, signal) => failed(new Error(`exit=${code} signal=${signal}`));
+    const data = chunk => {
+      output += chunk;
+      if (output.length > 4096) return failed(new Error('readiness output exceeds fixture bound'));
+      const lines = output.split('\n'); output = lines.pop();
+      for (const line of lines) {
+        let message; try { message = JSON.parse(line); } catch { continue; }
+        if (message.event !== 'ollama_adapter_ready') continue;
+        if (message.host !== '127.0.0.1' || !Number.isInteger(message.port) || message.port < 1 || message.port > 65535) {
+          return failed(new Error('invalid bound address in readiness event'));
+        }
+        return finish(null, message);
+      }
+    };
+    const timer = setTimeout(() => failed(new Error('no readiness event within 3000ms')), 3000);
+    child.stdout.on('data', data); child.once('error', failed); child.once('exit', exited);
+    if (child.exitCode !== null || child.signalCode !== null) exited(child.exitCode, child.signalCode);
+  });
+}
+
+async function stopAdapter(child) {
+  if (!child || child.exitCode !== null || child.signalCode !== null) return;
+  // Attach before signaling: a fast exit must not be missed by teardown.
+  const exited = once(child, 'exit', { signal: AbortSignal.timeout(1000) });
+  child.kill();
+  try { await exited; } catch (error) {
+    if (child.exitCode !== null || child.signalCode !== null) return;
+    const killed = once(child, 'exit', { signal: AbortSignal.timeout(1000) });
+    child.kill('SIGKILL'); await killed;
+    throw new Error('adapter fixture required forced shutdown', { cause: error });
+  }
+}
+
 async function withAdapter(t, handler, env = {}) {
+  let child, stderr = '', phase = 'upstream startup';
   const upstream = http.createServer(async (req, res) => {
     let raw = ''; for await (const chunk of req) raw += chunk;
     if (req.url !== '/api/chat') { res.end('{}'); return; }
     await handler(JSON.parse(raw), res);
   });
   upstream.listen(0, '127.0.0.1'); await once(upstream, 'listening');
-  t.after(async () => { upstream.closeAllConnections(); await new Promise(r => upstream.close(r)); });
-  const reservation = http.createServer(); reservation.listen(0, '127.0.0.1'); await once(reservation, 'listening');
-  const port = reservation.address().port; await new Promise(r => reservation.close(r));
-  const child = spawn(process.execPath, [new URL('../src/compute/ollama-adapter.mjs', import.meta.url).pathname], {
-    env: { ...process.env, MCCLUSTER_OLLAMA_ADAPTER_PORT: String(port), MCCLUSTER_OLLAMA_URL: `http://127.0.0.1:${upstream.address().port}`, MCCLUSTER_OLLAMA_ADAPTER_TIMEOUT_MS: '3000', ...env },
+  t.after(async () => {
+    t.diagnostic(`adapter fixture cleanup: phase=${phase}; exit=${child?.exitCode}; signal=${child?.signalCode}; stderr=${stderr || '<empty>'}`);
+    try { await stopAdapter(child); } finally {
+      // Stop accepting first, then close sockets. No late health connection can
+      // slip between closeAllConnections and close and strand the cleanup hook.
+      const closed = new Promise(resolve => upstream.close(resolve));
+      upstream.closeAllConnections(); await closed;
+    }
+  });
+  phase = 'adapter startup';
+  child = spawn(process.execPath, [new URL('../src/compute/ollama-adapter.mjs', import.meta.url).pathname], {
+    env: { ...process.env, MCCLUSTER_OLLAMA_ADAPTER_PORT: '0', MCCLUSTER_OLLAMA_URL: `http://127.0.0.1:${upstream.address().port}`, MCCLUSTER_OLLAMA_ADAPTER_TIMEOUT_MS: '3000', ...env },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
-  t.after(async () => { if (child.exitCode === null) { child.kill(); await once(child, 'exit'); } });
-  await once(child.stdout, 'data');
-  const url = `http://127.0.0.1:${port}`;
+  child.stderr.on('data', chunk => { stderr = (stderr + chunk).slice(-4096); });
+  const ready = await adapterReady(child, () => stderr);
+  phase = 'ready';
+  const url = `http://127.0.0.1:${ready.port}`;
   const call = async (prompt = 'synthetic', signal = AbortSignal.timeout(5000), extra = {}) => {
+    phase = `execute ${prompt}`;
     const response = await inferenceFetch(`${url}/execute`, {
       method: 'POST', headers: { 'content-type': 'application/json' }, signal,
       body: JSON.stringify({ capability: 'ai.chat', input: { prompt, ...extra } }),
     });
-    return { status: response.status, body: await response.json() };
+    const result = { status: response.status, body: await response.json() };
+    phase = `execute ${prompt} completed`; return result;
   };
-  const health = () => fetch(`${url}/health`, { signal: AbortSignal.timeout(2000) }).then(r => r.json());
+  const health = async () => {
+    phase = 'health';
+    const result = await fetch(`${url}/health`, { signal: AbortSignal.timeout(2000) }).then(r => r.json());
+    phase = 'health completed'; return result;
+  };
   return { call, health, url };
 }
 
@@ -138,4 +195,20 @@ test('real local client can cancel both hops without leaving the adapter occupie
   controller.abort(); await rejection;
   await eventually(async () => closed, Boolean);
   await eventually(health, result => !result.busy && result.queue_depth === 0);
+});
+
+test('adapter fixture reports an occupied-port startup failure instead of waiting forever', { timeout: 10000 }, async t => {
+  const occupied = http.createServer(); occupied.listen(0, '127.0.0.1'); await once(occupied, 'listening');
+  t.after(() => new Promise(resolve => occupied.close(resolve)));
+  await assert.rejects(withAdapter(t, (_body, res) => res.end('{}'), {
+    MCCLUSTER_OLLAMA_ADAPTER_PORT: String(occupied.address().port),
+  }), /adapter startup.*EADDRINUSE/s);
+});
+
+
+test('concurrent adapter fixtures report distinct OS-assigned ports and serve real requests', { timeout: 10000 }, async t => {
+  const adapters = await Promise.all([0, 1].map(i => withAdapter(t, (_body, res) => res.end(JSON.stringify({message:{content:String(i)}})))));
+  assert.notEqual(adapters[0].url, adapters[1].url);
+  const responses = await Promise.all(adapters.map(a => a.call()));
+  assert.deepEqual(responses.map(r => [r.status, r.body.content]), [[200, '0'], [200, '1']]);
 });

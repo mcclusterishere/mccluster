@@ -65,3 +65,12 @@ test('readiness does not call fetch', () => {
   try { assert.equal(integrationReadiness({ FINNHUB_API_KEY: 'fixture' }).network_requests, 0); }
   finally { globalThis.fetch = original; }
 });
+
+
+test('routing readiness exposes local monthly cap without claiming provider quota verification', () => {
+  const report = integrationReadiness({ TRAVEL_ROUTING_PROVIDER: 'tomtom', TRAVEL_TOMTOM_API_KEY: 'fixture' });
+  assert.deepEqual(report.travel.application_budget, { requests_per_utc_day: 1000, requests_per_utc_month: 20000, minimum_spacing_ms: 1100 });
+  assert.equal(report.travel.runtime, 'not_checked');
+  assert.match(report.travel.prerequisites.join(' '), /not provider billing totals/);
+  assert.equal(integrationReadiness({ TRAVEL_ROUTING_PROVIDER: 'fossgis-pilot', TRAVEL_ROUTING_PILOT: 'noncommercial' }).travel.application_budget.requests_per_utc_month, null);
+});
