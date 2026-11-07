@@ -210,8 +210,9 @@ test('no pins on the globe; a country card names the stationed agent and holds t
   assert.doesNotMatch(PAGE, /\.pw-pin/);
   assert.match(app, /Agent on assignment here/);
   assert.match(app, /<section class="pw-news" id="pwNews" data-country="\$\{esc\(code\)\}"/);
-  assert.match(app, /data-news-placeholder disabled/);
-  assert.match(app, /emitCountryCard\(code, \$\('pwNews'\), name\)/);
+  assert.match(app, /import '\.\/mission-generator\.mjs'/);
+  assert.match(app, /Automatic news ingestion is not connected/);
+  assert.match(app, /emitCountryCard\(code, \$\('pwNews'\), name, \{ geography:/);
   assert.doesNotMatch(app, /v1\/world\/news/, 'the news build is not implemented here');
   // node's global is not an EventTarget; give it one for this check, as a browser window is
   if (typeof globalThis.dispatchEvent !== 'function') { const t = new EventTarget(); for (const k of ['addEventListener', 'removeEventListener', 'dispatchEvent']) globalThis[k] = t[k].bind(t); }
