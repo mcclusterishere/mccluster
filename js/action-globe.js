@@ -74,10 +74,22 @@ function travelVisibility(){
  locationEntities.forEach(e=>e.show=travelMode);
  if(viewer&&mapLayer&&layerMode==='auto')mapLayer.show=streetAuto(viewer.camera.positionCartographic.height);
 }
-function focusTravelPosition(coordinates,{accuracy=0,follow=false,animate=true}={}){
+function focusTravelPosition(coordinates,{accuracy=0,follow=false,animate=true,heading=0,speed=0,mode='drive'}={}){
  if(!travelMode||!travelSceneReady||!viewer)return;
  const c=Cesium.Cartographic.fromDegrees(...coordinates),ground=viewer.scene.globe.getHeight(c);
- const height=Math.max(follow?750:1500,Math.min(600000,accuracy*4));
+ if(follow){
+  // Keep the traveler in the centre of a street-scale, heading-up view.
+  // GPS updates ease between fixes; a deliberate map gesture still pauses it.
+  const range=Math.min(550,Math.max(mode==='walk'?160:mode==='cycle'?230:320,accuracy*2)+(speed||0)*5);
+  const target=Cesium.Cartesian3.fromDegrees(...coordinates,Number.isFinite(ground)?Math.max(0,ground):0);
+  viewer.camera.cancelFlight();
+  viewer.camera.flyToBoundingSphere(new Cesium.BoundingSphere(target,0),{
+   offset:new Cesium.HeadingPitchRange(Cesium.Math.toRadians(heading||0),Cesium.Math.toRadians(-55),range),
+   duration:travelMotion(animate ? .8 : .35)
+  });
+  return;
+ }
+ const height=Math.max(1500,Math.min(600000,accuracy*4));
  const view={destination:Cesium.Cartesian3.fromDegrees(...coordinates,(Number.isFinite(ground)?Math.max(0,ground):0)+height),orientation:{heading:0,pitch:-Math.PI/2,roll:0}};
  if(animate)viewer.camera.flyTo({...view,duration:travelMotion(.9)});else{viewer.camera.cancelFlight();viewer.camera.setView(view)}
 }
@@ -95,7 +107,7 @@ function scheduleTravelCamera(){
  if(travelCameraQueued||!travelSceneReady||!viewer||!travelMode)return;
  travelCameraQueued=true;requestAnimationFrame(()=>{
   travelCameraQueued=false;if(!travelMode||!viewer)return;
-  if(currentLocation?.follow&&locationFlyPending)focusTravelPosition(currentLocation.coordinates,{accuracy:currentLocation.accuracy||0,follow:true,animate:locationAnimatePending});
+  if(currentLocation?.follow&&locationFlyPending)focusTravelPosition(currentLocation.coordinates,{...currentLocation,animate:locationAnimatePending});
   else if(routeFlyPending&&roadRoute)fitTravelPositions([...roadPositions,Cesium.Cartesian3.fromDegrees(...roadRoute.origin),Cesium.Cartesian3.fromDegrees(...roadRoute.destination)]);
   else if(locationFlyPending&&currentLocation)focusTravelPosition(currentLocation.coordinates,{accuracy:currentLocation.accuracy||0});
   else if(journeyFlyPending&&!roadRoute)drawJourney(journeyPoints,true);
@@ -137,7 +149,10 @@ function setTravelLocation(data){
  const coordinates=travelCoordinates(data.coordinates);if(!coordinates)return;
  const follow=data.follow===true,previousFollow=currentLocation?.follow===true;
  const accuracy=typeof data.accuracy==='number'&&Number.isFinite(data.accuracy)&&data.accuracy>=0&&data.accuracy<=MAX_TRAVEL_ACCURACY?data.accuracy:null;
- currentLocation={coordinates,accuracy,follow};
+ const heading=Number.isFinite(data.heading)&&data.heading>=0&&data.heading<360?data.heading:currentLocation?.heading||0;
+ const speed=Number.isFinite(data.speed)&&data.speed>=0?Math.min(data.speed,70):0;
+ const mode=['drive','walk','cycle'].includes(data.mode)?data.mode:'drive';
+ currentLocation={coordinates,accuracy,follow,heading,speed,mode};
  locationFlyPending=locationFlyPending||data.fly===true||follow;
  locationAnimatePending=locationAnimatePending||data.fly===true||(follow&&!previousFollow);
  drawTravelLocation();
