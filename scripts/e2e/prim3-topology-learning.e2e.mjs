@@ -41,7 +41,8 @@ export async function runTopologyLearningBrowser({handleLearning,env,options}){
   else if(variant==='courtyard')await frame.waitForFunction(()=>window.__PRIM3?.snapshot());
   else {await frame.waitForFunction(()=>window.__tx?.r3&&!__tx.busy,null,{timeout:60000});if(await frame.locator('[data-sheet=brief-go]').count())await frame.locator('[data-sheet=brief-go]').click();}
   assert.equal(await page.locator('#releaseSubmit').isDisabled(),true);
-  for(let i=0;i<3;i++){
+  const count=variant==='equity-uprise-b1-attack'?1:3; // The ordinary defending AI can verify early; preserve that loss.
+  for(let i=0;i<count;i++){
    if(variant==='city')await frame.locator('#end').click();
    else if(variant==='courtyard')await frame.locator('#end-turn').click();
    else {await frame.locator('#txEndTurn').click();await frame.waitForFunction(()=>!__tx.busy);}
@@ -52,8 +53,8 @@ export async function runTopologyLearningBrowser({handleLearning,env,options}){
    await page.fill('#releaseAnswer',String(topology==='hex'?Math.max(Math.abs(dq),Math.abs(dr),Math.abs(dq+dr)):Math.abs(dq)+Math.abs(dr)));await page.click('#releaseSubmit');
    await page.waitForFunction(previous=>document.getElementById('releaseCheckpoint').textContent!==previous,old);
   }
-  await page.selectOption('#releaseOutcome','abandoned');await page.click('#releaseFinish');await page.waitForFunction(()=>document.getElementById('releaseSummary').textContent.includes('3/4 answers correct'));
-  await page.reload();await page.waitForFunction(()=>document.getElementById('releaseSummary')?.textContent.includes('3/4 answers correct'));
+  await page.selectOption('#releaseOutcome','abandoned');await page.click('#releaseFinish');await page.waitForFunction(n=>document.getElementById('releaseSummary').textContent.includes(`${n}/${n+1} answers correct`),count);
+  await page.reload();await page.waitForFunction(n=>document.getElementById('releaseSummary')?.textContent.includes(`${n}/${n+1} answers correct`),count);
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth),true);assert.deepEqual(errors,[]);
   console.log(`PASS ${variant}/${topology} ${width}px brief → real turns → wrong/hinted/correct math → abandoned debrief/reload (no combat completion claim)`);await ctx.close();
  }}finally{await browser.close();}

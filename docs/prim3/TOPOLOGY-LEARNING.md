@@ -39,3 +39,5 @@ Browser acceptance drives actual UI turns with ordinary runtime behavior, then w
 The release coordinator owns serial integration of #762/#768/#774/#786/#781, pending SQL review/promotion, authorized configuration and authenticated live acceptance. There are no production mutations in this continuation.
 
 Integration overlap: release-owned #786 fixes address premature Completed submissions and expired/revoked-session restart. This continuation also touches `js/prim3-mission/client.mjs`, `released-app.mjs` and `released-learning.mjs`; preserve both changes during serial integration. Those two repairs are not duplicated here.
+
+B1 attack acceptance preserves the ordinary defending AI's early verification outcome: it validates one turn's wrong/hinted/correct answer sequence and saves an abandoned debrief. Other authored journeys cover all three math checkpoints. No opponent, AP, state or outcome is altered to extend the run.
