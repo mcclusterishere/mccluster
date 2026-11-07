@@ -59,8 +59,9 @@ The City Arcade workflow runs this alongside graphical play, disabled/missing-sc
 behavior and actual Cesium lifecycle browser checks.
 
 Shared City uses sourced road topology and continuous ENU positions. Arcade legacy
-saves retain their separate coordinates. Shared arrivals currently navigate objectives;
-they do not collect Sole shoes or advance its independent 2D mission. Doors/stairs,
+saves retain their separate coordinates. Confirmed, request-correlated shared City arrivals now collect Sole checkpoints in configured
+order; four pairs plus an explicit entrance return complete the mission. Progress survives
+return/reload, and cloud completion uses the existing pending-result retry path. Doors/stairs,
 live ion entitlement/imagery and physical-phone performance remain unverified.
 
 Live read-only probes from this executor on 2026-11-07 to the public Arcade page and
