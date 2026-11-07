@@ -40,7 +40,7 @@ $('destination').onchange=()=>{if(run&&$('destination').value)choose(Number($('d
 $('confirm').onclick=()=>transact('move');for(const id of ['fire','reload','overwatch','extract','end'])$(id).onclick=()=>transact(id);
 
 // Read-only presentation adapter. This snapshot is not authoritative learning evidence.
-export function learningSnapshot(){return run?{variant:'city',topology:run.topology,turn:run.state.round}:null;}
+export function learningSnapshot(){return run?{variant:'city',topology:run.topology,turn:run.state.round,hasActed:run.state.units.some(u=>u.faction==='PLAYER'&&u.ap<2)}:null;}
 const requestedTopology=new URLSearchParams(location.search).get('topology');
 if(['square','hex'].includes(requestedTopology))$('topology').value=requestedTopology;
 Object.defineProperty(window,'__prim3CityLearningSnapshot',{value:learningSnapshot,configurable:false,writable:false});

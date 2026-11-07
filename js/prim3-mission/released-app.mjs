@@ -53,9 +53,9 @@ await run(async()=>{const {config}=await practice.connect();if(!config.enabled||
 function gameSnapshot(){
  const w=$('releaseGame').contentWindow;if(!context||context.variant==='generated')return w?.__tx?.state;
  if(context.variant==='city')return citySnapshot?.();
- if(context.variant==='courtyard'){const s=w?.__PRIM3?.snapshot();return s?{variant:'courtyard',topology:'square',turn:s.turn}:null;}
- const s=w?.__tx?.state;return s?{variant:context.variant,topology:'square',turn:s.round}:null;
+ if(context.variant==='courtyard'){const s=w?.__PRIM3?.snapshot();return s?{variant:'courtyard',topology:'square',turn:s.turn,hasActed:s.units.some(u=>u.ap<2)}:null;}
+ const s=w?.__tx?.state;return s?{variant:context.variant,topology:'square',turn:s.round,hasActed:s.units.some(u=>u.faction==='PLAYER'&&u.ap<2)}:null;
 }
 $('releaseGame').addEventListener('load',async()=>{if(context?.variant==='city'){try{const w=$('releaseGame').contentWindow;citySnapshot=()=>w.__prim3CityLearningSnapshot?.();}catch{status('City learning snapshot unavailable. Resume the same mission.');}}});
-function describeMode(){const v=$('learningVariant').value,t=$('learningTopology').value;$('learningFrame').textContent=LEARNING_VARIANTS[v].title+'. '+LEARNING_VARIANTS[v].frame+'. '+(v==='generated'?'Math follows the generated objective steps.':'After each of the first three turns, answer one practice question. Combat progress is browser-reported.');$('learningTopology').querySelector('[value=hex]').disabled=v!=='city';$('learningTopology').querySelector('[value=legacy]').disabled=v!=='generated';if((t==='hex'&&v!=='city')||(t==='legacy'&&v!=='generated'))$('learningTopology').value='square';}
+function describeMode(){const v=$('learningVariant').value,t=$('learningTopology').value;$('learningFrame').textContent=LEARNING_VARIANTS[v].title+'. '+LEARNING_VARIANTS[v].frame+'. '+(v==='generated'?'Math follows the generated objective steps.':'Answer after a first action or turn, then after turns two and three. Combat progress is browser-reported.');$('learningTopology').querySelector('[value=hex]').disabled=v!=='city';$('learningTopology').querySelector('[value=legacy]').disabled=v!=='generated';if((t==='hex'&&v!=='city')||(t==='legacy'&&v!=='generated'))$('learningTopology').value='square';}
 $('learningVariant').onchange=describeMode;describeMode();

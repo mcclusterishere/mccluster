@@ -24,5 +24,6 @@ test('authored turn presentation requires the signed variant and topology',()=>{
  const practice={current:{flow:{learning_context:context},released_mission:{id:'r',recipe_hash:'h',next_checkpoint_id:'FIELD:STEP_2'}}};
  let state={variant:'city',topology:'hex',turn:2};const adapter=createReleasedLearning({practice,release,context,getTacticalState:()=>state});
  assert.equal(adapter.ready,false);state.turn=3;assert.equal(adapter.ready,true);state.topology='square';assert.equal(adapter.ready,false);
+ state={variant:'city',topology:'hex',turn:1,hasActed:true};assert.equal(adapter.ready,false);practice.current.released_mission.next_checkpoint_id='FIELD:STEP_1';assert.equal(adapter.ready,true);
  practice.current.flow.learning_context={...context,topology:'square'};assert.throws(()=>adapter.current,/mode differs/);
 });

@@ -7,12 +7,12 @@ Continuation of #786, with #781 and upstream mcclusterishere/Prim3#22 at `197bc2
 | Variant | Existing runtime | Learning |
 | --- | --- | --- |
 | Generated side operation | #762 generated level | Existing row distance or square cardinal steps at generated objective steps |
-| Transit / Relay | `transit-relay` | Square cardinal steps after each of three turns |
-| Equity Uprise HQ | `equity-uprise-hq` | Square cardinal steps after each of three turns |
-| B1 · Restore the Picture | `equity-uprise-b1&side=defend` | Square cardinal steps after each of three turns |
-| B1 · Blind the Floor | `equity-uprise-b1&side=attack` | Square cardinal steps after each of three turns |
-| Courtyard study | Existing PlayCanvas courtyard | Square cardinal steps after each of three turns |
-| City street simulation | #781, same canonical resolver | Square or hex lattice steps after each of three turns; actual City topology matches selected learning mode |
+| Transit / Relay | `transit-relay` | Square cardinal steps after a first action/turn, then turns two and three |
+| Equity Uprise HQ | `equity-uprise-hq` | Square cardinal steps after a first action/turn, then turns two and three |
+| B1 · Restore the Picture | `equity-uprise-b1&side=defend` | Square cardinal steps after a first action/turn, then turns two and three |
+| B1 · Blind the Floor | `equity-uprise-b1&side=attack` | Square cardinal steps after a first action/turn, then turns two and three |
+| Courtyard study | Existing PlayCanvas courtyard | Square cardinal steps after a first action/turn, then turns two and three |
+| City street simulation | #781, same canonical resolver | Square or hex lattice steps after a first action/turn, then turns two and three; actual City topology matches selected learning mode |
 
 Turn readiness is browser-reported presentation context. It is not proof of mission victory. An abandoned debrief is a legitimate saved learning attempt. Authored square-only levels reject hex mode; this work does not imply their geometry supports hex navigation. Forge and Range are editing/shooting tools, not newly claimed mission variants. Existing generator, combat, AP, enemies and saves remain authoritative in their own modules.
 
@@ -40,4 +40,4 @@ The release coordinator owns serial integration of #762/#768/#774/#786/#781, pen
 
 Integration overlap: release-owned #786 fixes address premature Completed submissions and expired/revoked-session restart. This continuation also touches `js/prim3-mission/client.mjs`, `released-app.mjs` and `released-learning.mjs`; preserve both changes during serial integration. Those two repairs are not duplicated here.
 
-B1 attack acceptance preserves the ordinary defending AI's early verification outcome: it validates one turn's wrong/hinted/correct answer sequence and saves an abandoned debrief. Other authored journeys cover all three math checkpoints. No opponent, AP, state or outcome is altered to extend the run.
+B1 attack acceptance does not delay or weaken the ordinary defending AI to force a three-turn run: it validates one ordinary overwatch action followed by wrong/hinted/correct answers and saves an abandoned debrief. Other authored journeys cover all three math checkpoints. No opponent, AP, state or outcome is altered to extend the run. The first checkpoint also becomes available after a normal AP-spending action, so an early abandoned attempt can retain mathematical evidence.

@@ -12,6 +12,7 @@ export async function runTopologyLearningBrowser({handleLearning,env,options}){
  assert.equal(JSON.parse(await readFile(join(THREE,'package.json'),'utf8')).version,'0.180.0');
  const browser=await chromium.launch({headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{}),args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
  try{for(const [variant,topology,width] of [['transit-relay','square',390],['equity-uprise-hq','square',390],['equity-uprise-b1','square',390],['equity-uprise-b1-attack','square',390],['courtyard','square',390],['city','square',390],['city','hex',390],['city','hex',1280]]){
+  if(process.env.PRIM3_TOPOLOGY_VARIANT&&variant!==process.env.PRIM3_TOPOLOGY_VARIANT)continue;
   const ctx=await browser.newContext({viewport:{width,height:900}}),page=await ctx.newPage(),errors=[];
   page.on('pageerror',e=>errors.push(e.message));
   await ctx.addInitScript(()=>localStorage.setItem('mccdb_session',JSON.stringify({access_token:'synthetic-owner'})));
@@ -41,9 +42,10 @@ export async function runTopologyLearningBrowser({handleLearning,env,options}){
   else if(variant==='courtyard')await frame.waitForFunction(()=>window.__PRIM3?.snapshot());
   else {await frame.waitForFunction(()=>window.__tx?.r3&&!__tx.busy,null,{timeout:60000});if(await frame.locator('[data-sheet=brief-go]').count())await frame.locator('[data-sheet=brief-go]').click();}
   assert.equal(await page.locator('#releaseSubmit').isDisabled(),true);
-  const count=variant==='equity-uprise-b1-attack'?1:3; // The ordinary defending AI can verify early; preserve that loss.
+  const count=variant==='equity-uprise-b1-attack'?1:3; // Exercise a safe early debrief without changing the ordinary opponent's behavior.
   for(let i=0;i<count;i++){
-   if(variant==='city')await frame.locator('#end').click();
+   if(variant==='equity-uprise-b1-attack'){await frame.locator('[data-unit=E1]').click();await frame.locator('[data-act=watch]').click();}
+   else if(variant==='city')await frame.locator('#end').click();
    else if(variant==='courtyard')await frame.locator('#end-turn').click();
    else {await frame.locator('#txEndTurn').click();await frame.waitForFunction(()=>!__tx.busy);}
    await page.waitForFunction(()=>!document.getElementById('releaseSubmit').disabled);
