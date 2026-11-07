@@ -1,3 +1,4 @@
+import { normalizeMetricNavigation, metricPoint, metricDistance, metricSight, metricEdge, metricOccupant, metricReach } from './tactical-metric-navigation.mjs';
 const CARDINALS = ['N', 'E', 'S', 'W'];
 
 // Rule constants. Canon (TACTICAL-CORE-MECHANICS.yaml, XCOM2-MECHANIC-ADAPTATION-AUTHORITY.md) names
@@ -285,6 +286,11 @@ function createState(config = {}) {
       ...(config.syncPulsePerMission != null ? { syncPulsePerMission: Number(config.syncPulsePerMission) } : {})
     };
   }
+  if (config.metricNavigation) {
+    if (state.floors !== 1 || state.height !== 1 || state.cover.length || state.blockers.length || state.links.length || state.surfaces || state.nodes.length || state.machines?.length || (state.battlefield.extractionZone?.r ?? 0) !== 0) throw new Error('Metric scenario supports one street surface, no cover/machines/technical nodes');
+    state.metricNavigation = normalizeMetricNavigation(config.metricNavigation);
+    if (state.width !== state.metricNavigation.nodes.length || state.units.some(u => !metricPoint(state,u))) throw new Error('Metric unit outside graph');
+  }
   return state;
 }
 
@@ -383,6 +389,7 @@ function surfacesConfigured(state) {
 // Manhattan on one floor. Across floors: Manhattan x/y distance when walkable surfaces are configured
 // (so roof-to-yard shots have a range), otherwise Infinity (the original rule).
 function gridDistance(a, b, state = null) {
+  if (state?.metricNavigation) return metricDistance(state,a,b);
   if (Number(a.z || 0) !== Number(b.z || 0) && !surfacesConfigured(state)) return Infinity;
   return Math.abs(Number(a.x) - Number(b.x)) + Math.abs(Number(a.y) - Number(b.y));
 }
@@ -508,6 +515,7 @@ function geometry(state) {
 }
 
 function hasLineOfSight(state, a, b) {
+  if (state.metricNavigation) return metricSight(state,a,b);
   const az = Number(a.z || 0), bz = Number(b.z || 0);
   const geo = geometry(state);
   if (!geo.configured) {
@@ -664,6 +672,7 @@ const ORDER_NESW = [[0, -1], [1, 0], [0, 1], [-1, 0]];
 // Walls, unwalkable cells and every living unit in `occupants` (except the mover) block a cell.
 function reachFrom(state, start, maxCost, { order = ORDER_RESOLVER, occupants = state.units, exceptId = null, stopAt = null } = {}) {
   const geo = geometry(state);
+  if (state.metricNavigation) return metricReach(state,start,maxCost,{occupants,exceptId,stopAt},geo);
   const { W, H, cellKey, linksAt } = geo;
   const taken = new Set();
   for (const u of occupants) if (!u.dead && !isExtracted(u) && u.id !== exceptId && inBounds(state, u.x, u.y, u.z)) taken.add(cellKey(u.x, u.y, u.z));
@@ -864,14 +873,18 @@ function moveUnit(state, unitId, destination, mode = 'MOVE', options = {}) {
   if (options.path) {
     path = options.path.map((c) => ({ x: Number(c.x), y: Number(c.y), z: Number(c.z ?? unit.z) }));
     if (path.length && path[0].x === unit.x && path[0].y === unit.y && path[0].z === unit.z) path = path.slice(1);
-    if (!path.length || path.length > maxDistance) throw new Error('Route outside movement range');
+    if (!path.length || (!next.metricNavigation && path.length > maxDistance)) throw new Error('Route outside movement range');
     const end = path[path.length - 1];
     if (end.x !== dest.x || end.y !== dest.y || end.z !== dest.z) throw new Error('Route does not end at the destination');
     let at = unit;
     let total = 0;
     for (const step of path) {
       if (![step.x, step.y, step.z].every(Number.isInteger)) throw new Error('Route leaves the floor or the grid');
-      if (step.z === at.z && Math.abs(step.x - at.x) + Math.abs(step.y - at.y) === 1) total += 1;
+      if (next.metricNavigation) {
+        const edge = metricEdge(next, at, step);
+        if (!edge) throw new Error('Route is not a directed metric edge');
+        total += edge.cost;
+      } else if (step.z === at.z && Math.abs(step.x - at.x) + Math.abs(step.y - at.y) === 1) total += 1;
       else {
         const link = linkBetween(next, at, step);
         if (link) total += link.cost;
@@ -901,7 +914,7 @@ function moveUnit(state, unitId, destination, mode = 'MOVE', options = {}) {
   const firedTurrets = new Set();
   for (const step of path) {
     if (isHidden(step)) { interruptedBy = { x: step.x, y: step.y, z: step.z }; break; }
-    const blocker = next.units.find((other) => !other.dead && !isExtracted(other) && other.id !== unit.id && other.x === step.x && other.y === step.y && other.z === step.z);
+    const blocker = next.metricNavigation ? metricOccupant(next, unit, step, next.units, unit.id) : next.units.find((other) => !other.dead && !isExtracted(other) && other.id !== unit.id && other.x === step.x && other.y === step.y && other.z === step.z);
     if (blocker) { interruptedBy = { x: step.x, y: step.y, z: step.z }; break; }
     walked.push(step);
     unit.x = step.x; unit.y = step.y; unit.z = step.z;
@@ -974,7 +987,7 @@ function stabilize(state, actorId, targetId) {
   assertCanAct(next, actor);
   const target = unitById(next, targetId);
   if (!target.downed || target.dead || isExtracted(target) || target.faction !== actor.faction) throw new Error('Target is not stabilizable');
-  if (gridDistance(actor, target) > 1) throw new Error('Target is not adjacent');
+  if (gridDistance(actor, target, next.metricNavigation ? next : null) > 1) throw new Error('Target is not adjacent');
   spendAp(actor, 1);
   target.statuses = [...new Set([...target.statuses, 'STABILIZED'])];
   next.events.push({ type: 'STABILIZE', actorId, targetId });

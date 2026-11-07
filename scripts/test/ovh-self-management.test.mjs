@@ -24,6 +24,10 @@ test('automatic OVH production pushes verify self-reconciliation without SSH', a
   assert.match(verify, /github\.event_name == 'push'/);
   assert.match(verify, /https:\/\/core\.mccluster\.org\/health/);
   assert.match(verify, /deployment_sha/);
+  assert.match(verify, /timeout-minutes: 35/);
+  assert.match(verify, /deadline=\$\(\(SECONDS \+ 1800\)\)/);
+  assert.match(verify, /while \(\( SECONDS < deadline \)\)/);
+  assert.match(verify, /--max-time 15/);
   assert.doesNotMatch(verify, /OVH_SSH_KEY|ssh |rsync /);
 
   const fallback = workflow.slice(deployStart);

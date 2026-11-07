@@ -20,3 +20,8 @@ ProtectHome=true
 ProtectSystem=full
 ReadWritePaths=/opt/mccluster /var/lib/mccluster /etc/systemd/system /etc/polkit-1/rules.d /etc/mccluster-node /run /tmp
 TimeoutStartSec=20min
+# A startup timeout signals the whole cgroup (wrapper, deployer and helper).
+# Allow the deployer's bounded second drain and rollback/health checks to finish
+# before systemd escalates to SIGKILL. Keep control-group kill semantics.
+TimeoutStopSec=20min
+KillMode=control-group

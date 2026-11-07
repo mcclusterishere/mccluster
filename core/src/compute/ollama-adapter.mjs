@@ -1,4 +1,5 @@
 import http from 'node:http';
+import { inferenceFetch, inferenceJson, inferenceError } from './inference-http.mjs';
 import { inferenceSettings, inferenceUsage } from './inference-settings.mjs';
 
 const HOST = '127.0.0.1';
@@ -78,46 +79,49 @@ async function execute(body, queuedAt, callerSignal) {
   }
 
   const requestedModel = pickModel(input.model);
-  const callOllama = (model) => fetch(`${OLLAMA}/api/chat`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({
-      model,
-      stream: false,
-      messages,
-      // Only the default model is a thinking model; instruct-only models reject the flag.
-      ...(model === MODEL ? { think: settings.think } : {}),
-      keep_alive: keepAliveFor(model, settings),
-      tools: Array.isArray(input.tools) ? input.tools.slice(0, 16) : undefined,
-      // A JSON Schema object constrains decoding to that shape (Ollama structured
-      // outputs); plain json:true keeps the old free-form JSON mode.
-      format: input.schema && typeof input.schema === 'object' ? input.schema : (input.json === true ? 'json' : undefined),
-      options: {
-        temperature: settings.temperature,
-        num_ctx: settings.num_ctx,
-        num_predict: settings.num_predict,
-        ...(settings.num_thread ? { num_thread: settings.num_thread } : {}),
-      },
-    }),
-    signal: callerSignal
-      ? AbortSignal.any([
-          callerSignal,
-          AbortSignal.timeout(Number(process.env.MCCLUSTER_OLLAMA_ADAPTER_TIMEOUT_MS || 600000)),
-        ])
-      : AbortSignal.timeout(Number(process.env.MCCLUSTER_OLLAMA_ADAPTER_TIMEOUT_MS || 600000)),
-  });
+  // One existing deadline covers the full execution, including a model fallback.
+  const timeout = AbortSignal.timeout(Number(process.env.MCCLUSTER_OLLAMA_ADAPTER_TIMEOUT_MS || 600000));
+  const signal = callerSignal ? AbortSignal.any([callerSignal, timeout]) : timeout;
+  const callOllama = async (model) => {
+    try {
+      const response = await inferenceFetch(`${OLLAMA}/api/chat`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          model,
+          stream: false,
+          messages,
+          // Only the default model is a thinking model; instruct-only models reject the flag.
+          ...(model === MODEL ? { think: settings.think } : {}),
+          keep_alive: keepAliveFor(model, settings),
+          tools: Array.isArray(input.tools) ? input.tools.slice(0, 16) : undefined,
+          // A JSON Schema object constrains decoding to that shape (Ollama structured
+          // outputs); plain json:true keeps the old free-form JSON mode.
+          format: input.schema && typeof input.schema === 'object' ? input.schema : (input.json === true ? 'json' : undefined),
+          options: {
+            temperature: settings.temperature,
+            num_ctx: settings.num_ctx,
+            num_predict: settings.num_predict,
+            ...(settings.num_thread ? { num_thread: settings.num_thread } : {}),
+          },
+        }),
+        signal,
+      });
+      return { response, data: await inferenceJson(response) };
+    } catch (error) {
+      throw inferenceError(error, { signal, peer: 'ollama' });
+    }
+  };
 
   let usedModel = requestedModel;
   let fallbackFrom = null;
-  let response = await callOllama(usedModel);
-  let data = await response.json().catch(() => null);
+  let { response, data } = await callOllama(usedModel);
   if (!response.ok && usedModel !== MODEL && (response.status === 404 || /not found|pull/i.test(String(data?.error || '')))) {
     fallbackFrom = usedModel; usedModel = MODEL;
-    response = await callOllama(usedModel);
-    data = await response.json().catch(() => null);
+    ({ response, data } = await callOllama(usedModel));
   }
   if (!response.ok) {
-    throw Object.assign(new Error(data?.error || `Ollama returned HTTP ${response.status}`), {
+    throw Object.assign(new Error(`Ollama returned HTTP ${response.status}`), {
       status: response.status,
       code: 'OLLAMA_UPSTREAM_ERROR'
     });
@@ -313,5 +317,5 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(JSON.stringify({ event: 'ollama_adapter_ready', host: HOST, port: PORT, model: MODEL, max_queue: MAX_QUEUE }));
+  console.log(JSON.stringify({ event: 'ollama_adapter_ready', host: HOST, port: server.address().port, model: MODEL, max_queue: MAX_QUEUE }));
 });
