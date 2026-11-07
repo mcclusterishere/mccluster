@@ -1065,6 +1065,7 @@ window.HuGlobe=Object.freeze({
  hideInspection:()=>closeSheet(true),
  openAircraft:contact=>openAircraft(contact),openSatellite:sat=>openSatellite(sat),satPosition:sat=>satPos(sat,new Date()),
  ion:()=>ion,
+ ionState:()=>({configured:!!ion,terrain:!!ionGround,imagery:!!(ionImagery&&ionImagery.ready),buildings:!!ionBuildings}),
  /* the base map, the zoom and near-me buttons, and the World's own mission pins and member regions, for Halo's own controls */
  basemap:Object.freeze({get:()=>layerMode,set:m=>{if(viewer)setLayer(m==='map'?'map':'auto')}}),
  zoom:inward=>{if(!viewer)return;const h=viewer.camera.positionCartographic.height;inward?viewer.camera.zoomIn(h*.45):viewer.camera.zoomOut(h*.8)},
