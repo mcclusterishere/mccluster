@@ -1,0 +1,40 @@
+name: PRIM3 adaptive PostgreSQL acceptance
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'workers/mccluster/src/prim3/**'
+      - 'PRIM3/game/halo/adaptive/**'
+      - 'supabase/migrations/**'
+      - 'supabase/tests/*learning*'
+      - 'supabase/tests/supabase*.stub.sql'
+      - 'scripts/test-prim3-adaptive-postgres.mjs'
+      - '.github/workflows/prim3-adaptive-postgres.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'workers/mccluster/src/prim3/**'
+      - 'PRIM3/game/halo/adaptive/**'
+      - 'supabase/migrations/**'
+      - 'scripts/test-prim3-adaptive-postgres.mjs'
+      - '.github/workflows/prim3-adaptive-postgres.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: prim3-adaptive-postgres-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  acceptance:
+    name: PRIM3 adaptive real PostgreSQL
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Exercise isolated PostgreSQL and PostgREST
+        run: node scripts/test-prim3-adaptive-postgres.mjs
