@@ -30,6 +30,7 @@ try{
     const r=await handle(new Request('https://local.invalid/v1/arcade/missions/'+id,{method:'PUT',headers:{authorization:'Bearer local-owner','content-type':'application/json'},body:JSON.stringify(payload)}));assert.equal(r.status,status);count++;
   }
   const response=await handle(new Request('https://local.invalid/v1/arcade/results',{headers:{authorization:'Bearer local-owner'}}));assert.equal(response.status,200);assert.equal((await response.json()).value.length,1);count++;
+  await db.exec('update orgs set enabled=false');await rejects(()=>call('history'),'42501');await rejects(()=>call('read'),'42501');await db.exec('update orgs set enabled=true');
   const soleDoc={version:1,gameId:'designer-kicks-sole-run',locationId:id,sole:structuredClone(SOLE_MISSION)},sid='sole-'+id;
   const sm=await call('save',0,soleDoc,OWNER,sid);assert.equal(sm.document.sole.encounters[0].roast,SOLE_MISSION.encounters[0].roast);count++;
   const sr=await call('start',1,null,OWNER,sid);

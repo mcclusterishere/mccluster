@@ -80,7 +80,7 @@ returns jsonb language plpgsql security invoker set search_path='' as $$
 declare m public.arcade_missions%rowtype; r public.arcade_runs%rowtype; d jsonb; n integer; points numeric; total integer; extras jsonb;
 begin
  if p_actor is null or not exists(select 1 from public.org_members mm join public.orgs o on o.id=mm.org_id
- where o.slug='mccluster' and mm.profile_id=p_actor and mm.role='owner') then raise exception 'House owner required' using errcode='42501'; end if;
+ where o.slug='mccluster' and o.enabled is true and mm.profile_id=p_actor and mm.role='owner') then raise exception 'House owner required' using errcode='42501'; end if;
  if p_action='history' then
   return coalesce((select jsonb_agg(row_to_json(q)) from (select id,mission_id,status,served,score,revision,finished_at from public.arcade_runs where actor=p_actor and status<>'running' order by finished_at desc limit 20) q),'[]'::jsonb);
  end if;
