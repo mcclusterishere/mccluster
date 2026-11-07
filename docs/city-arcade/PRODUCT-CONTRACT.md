@@ -43,8 +43,8 @@ sessions and production session authorization have not been verified by the loca
 Mission cloud controls use the existing API origin. They report unavailable until the reviewed
 schema and Worker are intentionally promoted. They never silently label a local save as cloud.
 Mission configuration also supports local play. Failed cloud finish can be retried with the same
-run ID; Tea preserves the pending finish with its local session. Sole's retry is available while
-its result screen remains mounted; reload recovery of that pending submission is not implemented.
+run ID; Tea preserves the pending finish with its local session. Sole also preserves terminal runs and their pending submission across reloads. A lost success
+response can be retried with the same run ID; denied sessions retain the local pending result.
 Local sessions and scores are untrusted device state and use new versioned keys; old scores,
 city saves, government identities and PRIM3 saves are unchanged.
 

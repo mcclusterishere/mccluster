@@ -614,6 +614,18 @@
         return "open";
       }).catch(function () { return "failed"; });
     },
-    studio: function () { if (live.started) openStudio(); }
+    studio: function (canOpen) {
+      if (!live.started) w.MCC_LIVE.start();
+      if (!M || !live.started || !w.RTCPeerConnection)
+        return Promise.resolve({opened:false,message:"Live tools are unavailable in this browser."});
+      return loadEligibility().then(function (grant) {
+        if (typeof canOpen === "function" && !canOpen())
+          return {opened:false,message:"Access changed. Open the studio again after signing in."};
+        if (!grant || !grant.can_host || !grant.enabled)
+          return {opened:false,message:!grant ? "Live access could not be checked. Try again." : !grant.enabled ? "Live broadcasting is not enabled." : "This account does not have live host access."};
+        openStudio();
+        return {opened:!!$("mnStudio").open};
+      });
+    }
   };
 })(window, document);

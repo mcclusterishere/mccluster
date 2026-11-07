@@ -1,3 +1,4 @@
+import { handleProductWidgetReadiness, PRODUCT_WIDGET_READINESS } from './product-widget-readiness.js';
 import { handleArcade, ARCADE_PREFIX } from './arcade/index.js';
 import { guardWorldRelease } from './world-release.js';
 import { handleFundingIntelligence, FUNDING_PREFIX } from './funding-intelligence.js';
@@ -396,6 +397,10 @@ export default {
           channels: Array.isArray(channels) ? channels : [],
           harness
         });
+      }
+
+      if (path === PRODUCT_WIDGET_READINESS) {
+        return handleProductWidgetReadiness(request, env, { requireHouseOwner, read: p => sb(env, p) });
       }
 
       if (path === '/v1/apps' && request.method === 'GET') {
