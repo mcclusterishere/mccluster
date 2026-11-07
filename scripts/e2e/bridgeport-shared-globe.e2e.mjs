@@ -1,12 +1,13 @@
 // Actual action-globe and pinned Cesium 1.131; owner/API/imagery fixtures, no live ion claim.
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
-import {readFile,mkdir,writeFile} from 'node:fs/promises';
+import {readFile,mkdir,writeFile,access} from 'node:fs/promises';
 import {join,extname,resolve} from 'node:path';
 import {metricFrame} from '../../js/spatial/metric-frame.mjs';
 import {route} from '../../js/spatial/region-graph.mjs';
 const v2=process.env.SLICE==='v2',regionId=v2?'bridgeport-downtown.v2':'bridgeport-golden-hill.v1';
 const root=process.cwd(),out=process.argv[2]||'/tmp/bridgeport-globe-evidence',build=process.env.CESIUM_BUILD||'/tmp/bridgeport-cesium/package/Build/Cesium';await mkdir(out,{recursive:true});
+await access(join(build,'Cesium.js')); // Fail clearly when the pinned local browser dependency is absent.
 const {chromium}=createRequire(join(process.env.CODEX_PRIMARY_RUNTIME_NODE_MODULES,'package.json'))('playwright');
 const browser=await chromium.launch({executablePath:'/usr/bin/chromium',args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 const base='https://matthew.mccluster.org',results=[];
@@ -39,6 +40,12 @@ try{for(const width of (process.env.WIDTHS||'390,1280').split(',').map(Number)){
  await page.locator('[data-stop]').click();const stopped=await page.evaluate(()=>window.BridgeportSlice.snapshot().position);
  await page.locator('select[aria-label="Navigation topology"]').selectOption('square');assert.deepEqual((await page.evaluate(()=>window.BridgeportSlice.snapshot())).position,stopped);
  await page.locator('[data-preview]').click();assert.match(await page.locator('[data-status]').textContent(),/square cells/);
+ const beforeLocate=await page.evaluate(()=>BridgeportSlice.snapshot().position);
+ await page.locator('[data-locate]').click();await page.waitForTimeout(1200);
+ assert.deepEqual(await page.evaluate(()=>BridgeportSlice.snapshot().position),beforeLocate);
+ const located=await page.evaluate(()=>{const v=HuGlobe.viewer(),actor=v.dataSources.getByName('bridgeport-shared-navigation')[0].entities.getById('bridgeport-walker');const p=Cesium.SceneTransforms.worldToWindowCoordinates(v.scene,actor.position.getValue(Cesium.JulianDate.now()));return {x:p.x,y:p.y,top:document.getElementById('bridgeportWalk').getBoundingClientRect().top};});
+ assert.ok(located.x>0&&located.x<width&&located.y>0&&located.y<located.top,'Find me keeps actor visible above controls');
+
  if(v2){
   await page.locator('[aria-label="Street destination"]').selectOption('bridgeport-main-elm');await page.locator('[data-preview]').click();assert.match(await page.locator('[data-status]').textContent(),/Preview:/);
   const pose=await page.evaluate(()=>BridgeportSlice.snapshot().position);await page.locator('[aria-label="Simulation road closure"]').selectOption('186839735');assert.equal(await page.locator('[data-confirm]').isDisabled(),true);assert.deepEqual(await page.evaluate(()=>BridgeportSlice.snapshot().position),pose);

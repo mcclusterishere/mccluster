@@ -11,6 +11,10 @@ export const DEFAULT_LEVEL = 'transit-relay';
    into this same shape by forge.mjs. It is a hook, not a listed level; without a valid hand-over it is the default. */
 export const FORGE_LEVEL = 'forge';
 export async function loadLevel(id) {
+  if (id === 'generated') {
+    const params = new URLSearchParams(globalThis.location?.search || '');
+    return (await import('./generated.mjs')).loadGeneratedRecipe(params.get('recipe'), globalThis.localStorage, Date.now(), {resume:params.get('new')!=='1'});
+  }
   if (id === FORGE_LEVEL) {
     const level = (await import('./forge.mjs')).loadPlaytest();
     if (level) return level;

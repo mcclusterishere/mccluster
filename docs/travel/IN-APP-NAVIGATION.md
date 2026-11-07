@@ -101,7 +101,19 @@ requests**, and a **1,000-request UTC-day application budget**. That daily budge
 is our protective rollout cap, not a published FOSSGIS allowance. The object
 persists only quota timing, count and reservation identity, never route
 coordinates or a traveler's identity. Restarting an instance does not reset the
-budget. Upstream throttling adds a cooldown. Unauthenticated scripted callers
+budget. TomTom additionally stops at 20,000 attempts per UTC calendar month in
+this same ledger. Both successful and failed upstream attempts count; provider
+or credential switches do not reset it. Keyless pilot attempts are counted too,
+so switching to TomTom cannot erase usage. The keyless pilot still uses its daily
+policy, not TomTom's monthly refusal. Upstream throttling adds a cooldown.
+
+On upgrade, the ledger carries today's known count; it cannot reconstruct earlier
+legacy calls. This is an application budget, not a provider billing meter or a
+promise of zero charges: other apps/account usage and the provider's billing
+period may differ. Before enabling TomTom, confirm the selected account's current
+allowance and usage, preferably use a new dedicated application with no prior
+usage, and retain provider-side spending controls. Do not reset the ledger as a
+way to extend a quota. See [connection steps](TRAVEL-PROVIDER-CONNECTION.md). Unauthenticated scripted callers
 can consume this shared budget; the pilot prioritizes bounded upstream usage,
 and does not claim an availability SLA.
 
