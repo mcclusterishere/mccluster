@@ -24,6 +24,7 @@ jobs:
     name: Verify OVH self-reconciliation
     if: ${{ github.event_name == 'push' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -47,7 +48,12 @@ jobs:
           TARGET_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
-          for attempt in $(seq 1 24); do
+          # A timeout-only bootstrap pass and a graceful producer drain can
+          # exceed four minutes. Observe convergence without interrupting work.
+          deadline=$((SECONDS + 1800))
+          attempt=0
+          while (( SECONDS < deadline )); do
+            attempt=$((attempt + 1))
             body="$(curl --fail --silent --show-error --max-time 15 https://core.mccluster.org/health || true)"
             deployed="$(printf '%s' "$body" | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{console.log(JSON.parse(d).deployment_sha||'')}catch{console.log('')}})")"
             if [[ "$deployed" = "$TARGET_SHA" ]]; then
@@ -58,7 +64,7 @@ jobs:
             echo "Attempt $attempt: expected $TARGET_SHA, got ${deployed:-<none>}"
             sleep 10
           done
-          echo "OVH self-reconciliation did not converge to $TARGET_SHA" >&2
+          echo "OVH self-reconciliation did not converge to $TARGET_SHA within the 30-minute observation window" >&2
           exit 1
 
   deploy:

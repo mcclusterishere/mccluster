@@ -47,10 +47,12 @@ cmd="$1"; shift
 case "$cmd" in
   list-unit-files)
     [[ -e "$S/installed/$1" ]] && echo "$1 enabled enabled"; exit 0 ;;
+  show) echo inactive; exit 0 ;;
   is-active)
     [[ "$1" == --quiet ]] && shift
     [[ -e "$S/active/$1" ]]; exit $? ;;
-  restart)
+  restart|start)
+    [[ "$1" == --no-block ]] && shift
     if [[ -e "$S/fail-start/$1" ]]; then rm -f "$S/active/$1"; exit 1; fi
     if [[ -e "$S/crash-after-start/$1" ]]; then rm -f "$S/active/$1"; exit 0; fi
     touch "$S/active/$1"; exit 0 ;;
@@ -143,17 +145,18 @@ test('rollback restores files, restarts the stopped units, and verifies health',
   // on a unit the failed release left stopped), after the daemon reload.
   const reload = out.calls.indexOf('systemctl daemon-reload');
   assert.ok(reload >= 0);
+  const startCommand = (unit) => unit === 'mccluster-core-runner.service' ? 'start' : unit === 'mccluster-compute-node.service' ? 'start' : 'restart';
   for (const unit of SERVICES) {
-    const restart = out.calls.indexOf(`systemctl restart ${unit}`);
+    const restart = out.calls.indexOf(`systemctl ${startCommand(unit)} ${unit}`);
     assert.ok(restart > reload, `${unit} not restarted after daemon-reload`);
     assert.ok(out.calls.indexOf(`systemctl reset-failed ${unit}`) > reload, `${unit} failed state not cleared`);
   }
   assert.doesNotMatch(out.calls, /try-restart/);
 
   // Same health probe as the deploy gate, after the restarts.
-  const lastRestart = Math.max(...SERVICES.map((unit) => out.calls.indexOf(`systemctl restart ${unit}`)));
+  const lastRestart = Math.max(...SERVICES.map((unit) => out.calls.indexOf(`systemctl ${startCommand(unit)} ${unit}`)));
   for (const url of [PREVIEW, ADAPTER]) {
-    const probe = out.calls.indexOf(url);
+    const probe = out.calls.lastIndexOf(url);
     assert.ok(probe > lastRestart, `${url} not probed after restart`);
   }
   assert.match(out.calls, /curl --fail --silent --show-error --retry 0 --retry-connrefused --retry-delay 1 --max-time 5 http:\/\/127\.0\.0\.1:4790\/health/);
@@ -180,7 +183,7 @@ test('rollback fails loudly when a restored unit will not start', (t) => {
   t.after(() => rmSync(box.root, { recursive: true, force: true }));
   const out = runRollback(box);
   assert.equal(out.status, 3);
-  assert.match(out.stderr, /FAILED to restart mccluster-core-runner\.service/);
+  assert.match(out.stderr, /FAILED to start mccluster-core-runner\.service/);
   assert.match(out.stderr, /mccluster-core-runner\.service is not active/);
   assert.match(out.calls, /systemctl --no-pager --lines=20 status mccluster-core-runner\.service/);
 });
