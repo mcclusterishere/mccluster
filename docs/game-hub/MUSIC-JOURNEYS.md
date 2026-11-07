@@ -23,3 +23,9 @@ Integration overlaps: the release/customer stacks also touch shared `tabbar.js` 
 Local phone review image (synthetic owner and audio; not a live session):
 
 ![Molecule Rush using the retained music player with Profile and answer controls unobstructed](review/music-journey-phone.png)
+
+## Retained-page integration review
+
+Retained Control initializes its own normal `MCC_BAR` authorization API. Only its duplicate navigation presentation is hidden and made inert; Connected operations and News context still use the existing server-backed `admin()` / `verifyAdmin()` flow. Browser regressions exercise both private sections and withdraw them after a denied owner check. Short retained Control frames let the analytics deck flow vertically so the landscape viewport does not collapse its private read controls behind the globe.
+
+The retained-room and World shells explicitly transfer visibility ownership. Before World opens, the room stops concealing siblings and hides its own frame/capsule. Returning directly to a room closes the World shell without adding an incidental history jump. Back/Forward recognizes World history before room history. The combined browser regression covers Music → Games/Control → World and both return paths, proving visible/non-inert surfaces and the unchanged playing Audio instance.

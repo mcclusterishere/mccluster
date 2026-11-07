@@ -143,8 +143,19 @@ export function installMusicJourneys({ root }) {
     child.__mccMusicRoomAttached = true;
     const css = child.document.createElement('style');
     css.textContent = '@view-transition{navigation:none}.appbar,#mccAuthChip,#musicMini{display:none!important}html{--appbar-h:0px}body.gh-body #ghMain{bottom:8px}body.gh-body #ghCapsule{--capsule-top:64px}';
+    // A retained landscape frame can be shorter than Control's fixed analytics
+    // deck header. Let the deck flow so its private read controls remain reachable.
+    css.textContent += '@media(max-height:480px){body.cr .cra-app.cad-app{display:block!important;height:auto!important}body.cr .cad-app .cra-side,body.cr .cad-app .cra-side__body,body.cr .cad-app .cad-deck{height:auto!important}body.cr .cad-app .cad-body{min-height:160px;max-height:60vh}}';
     child.document.head.append(css);
-    child.document.querySelector('.appbar')?.remove();
+    // Keep each page's real bar/authorization API, but let the host own the
+    // visible navigation. Inline priority survives page-specific dock styles.
+    const hideNavigation = () => child.document.querySelectorAll('.appbar,.mcc-auth-nav,#mccAuthChip,#musicMini').forEach(node => {
+      node.style.setProperty('display', 'none', 'important'); node.inert = true;
+    });
+    hideNavigation();
+    const navigationObserver = new child.MutationObserver(hideNavigation);
+    navigationObserver.observe(child.document.body, {childList:true, subtree:true});
+    child.addEventListener('pagehide', () => navigationObserver.disconnect(), {once:true});
     child.MCC_SHELL?.clear();
     child.document.addEventListener('click', e => {
       const a = e.target.closest?.('a[href]');

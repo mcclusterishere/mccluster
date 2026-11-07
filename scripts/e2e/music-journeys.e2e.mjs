@@ -91,6 +91,9 @@ try {
   await f.locator('body').evaluate(()=>{location.hash='#insights:intelligence';});
   await f.locator('#cgTitle').waitFor();await f.locator('#ncTitle').waitFor();
   assert.ok(await f.locator('body').evaluate(()=>MCC_BAR.admin()),'retained Control owns its normal verified bar API');
+  await page.waitForFunction(()=>!document.querySelector('#mccMusicRoom iframe').contentWindow.CR.analytics.state.loading);
+  await f.locator('#cgBrowse button[type=submit]').scrollIntoViewIfNeeded();
+  await page.screenshot({path:`/tmp/music-journeys-proof/control-reads-${width}.png`});
   await f.locator('#cgBrowse button[type=submit]').click();
   await page.waitForFunction(()=>!!document.querySelector('#mccMusicRoom iframe').contentWindow.CR.connections.state.error);
   assert.ok(calls.some(u=>u.includes('/v1/intel/connections?')),'normal verified connection read is reachable');
