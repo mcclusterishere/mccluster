@@ -65,7 +65,7 @@ async function rebuild(db, env, user, sid, k) {
   const release = events[0].payload;
   if (release.type !== 'release' || release.template_id !== TEMPLATE || !Number.isFinite(release.issued_at)) fail('Invalid release evidence', 409);
   let clock = release.issued_at;
-  const lab = new MissionLab({ clock: () => clock, seed: release.seed });
+  const lab = new MissionLab({ clock: () => clock, seed: release.seed, initialLevel: release.initial_level ?? 1 });
   const principal = { tenant: 'mccluster-house', user: user.id, role: 'owner' };
   const mission = lab.draft(principal, { country: 'US', region: 'Connecticut', templateId: TEMPLATE });
   lab.review(principal, mission.id, { fictionChecked: true, geographyChecked: true }); lab.release(principal, mission.id);
@@ -78,6 +78,27 @@ async function rebuild(db, env, user, sid, k) {
     if (canonical(result) !== canonical(e.payload.result)) fail('Assessment result mismatch', 409);
   }
   return { session, events, lab, principal, localId: local.id, setClock: t => { clock = t; } };
+}
+// Bounded recent practice, not a mastery model or credential ledger. Only fully
+// replayed, signed math evidence can seed another session; game outcome adds no points.
+async function progression(db, env, user, k) {
+  const rows = await db(env, `learning_lab_sessions?user_id=eq.${q(user.id)}&pack_id=eq.${ADAPTIVE_PACK}&pack_version=eq.${VERSION}&outcome=in.(completed,abandoned)&order=ended_at.desc,id.desc&limit=11`);
+  const recent = [];
+  for (const row of (rows || []).slice(0, 10)) {
+    const state = await rebuild(db, env, user, row.id, k);
+    const flow = state.lab.view(state.principal, state.localId);
+    if (flow.phase !== 'debrief' || state.session.outcome !== flow.debrief.gameOutcome ||
+      Date.parse(state.session.ended_at) !== state.events.at(-1).payload.received_at)
+      fail('Practice history could not be verified', 409);
+    const initial = state.events[0].payload.initial_level ?? 1;
+    const next = flow.debrief.independent >= 2 ? flow.level : Math.min(initial, flow.level);
+    recent.push({ session_id: row.id, ended_at: state.session.ended_at, next_level: next,
+      attempts: flow.debrief.attempts, correct: flow.debrief.correct, independent: flow.debrief.independent });
+  }
+  return { skill: 'coordinate-distance', next_level: recent[0]?.next_level ?? 1,
+    basis_session_id: recent[0]?.session_id ?? null, recent, window_limit: 10,
+    has_older_sessions: (rows || []).length > 10, competency_credit: false,
+    label: 'Verified recent practice; not a mastery rating or certification.' };
 }
 function response(state, result = null) {
   const flow = state.lab.view(state.principal, state.localId);
@@ -115,6 +136,8 @@ export async function routeAdaptive(request, env, user, parts, db) {
     owner_id: user.id, pack_id: ADAPTIVE_PACK, template_id: TEMPLATE, template: templates[TEMPLATE], mode: 'offline-practice',
     country: 'US', region: 'Connecticut', availability_hours: 24, max_events: MAX_STEPS, requires_owner_review: true };
   const k = await key(env);
+  if (parts.length === 1 && parts[0] === 'progress' && request.method === 'GET')
+    return { ok: true, progress: await progression(db, env, user, k) };
   if (parts[0] !== 'sessions') fail('Practice route not found', 404);
   if (parts.length === 1 && request.method === 'POST') {
     const body = await bodyOf(request), sid = String(body.session_id || '').toLowerCase();
@@ -136,8 +159,9 @@ export async function routeAdaptive(request, env, user, parts, db) {
       const issued = Date.parse(rows[0].started_at);
       if (!Number.isSafeInteger(Number(rows[0].seed)) || Number(rows[0].seed) < 0 || Number(rows[0].seed) >= 2 ** 31) fail('Invalid session seed', 409);
       if (!Number.isFinite(issued) || issued > Date.now() || Date.now() - issued >= DAY) fail('Session release is unavailable', 409);
+      const progress = await progression(db, env, user, k);
       const payload = await seal(k, { version: VERSION, type: 'release', session_id: sid, user_id: user.id,
-        template_id: TEMPLATE, issued_at: issued, seed: Number(rows[0].seed), review: { fictionChecked: true, geographyChecked: true }, scope: 'mccluster-house' });
+        template_id: TEMPLATE, issued_at: issued, seed: Number(rows[0].seed), initial_level: progress.next_level, basis_session_id: progress.basis_session_id, review: { fictionChecked: true, geographyChecked: true }, scope: 'mccluster-house' });
       try { await insertEvent(db, env, user, sid, 0, payload); }
       catch (error) { if (!(await eventRows(db, env, user, sid)).length) throw error; }
     }

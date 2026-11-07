@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { createHmac } from 'node:crypto';
 import assert from 'node:assert/strict';
 import { handleLearning } from '../src/prim3/learning.js';
 import { evidenceDb } from './support/adaptive-evidence-db.mjs';
@@ -81,4 +82,67 @@ test('assessment cannot bypass the explicit tactical handoff',async()=>withDb(as
   const s=await (await call('POST','/sessions',start)).json(),v=(await send(s,'begin')).view;
   assert.equal((await send(v,'answer',{answer:answer(v)})).res.status,409);
   assert.equal(db.tables.learning_evidence_events.length,2);
+}));
+test('verified math carries across sessions; tactical outcome and requested level do not grant credit',async()=>withDb(async db=>{
+  let v=await begin();
+  v=(await send(v,'answer',{answer:answer(v)})).view;
+  v=(await send(v,'answer',{answer:answer(v)})).view;
+  v=(await send(v,'finish',{outcome:'abandoned'})).view;
+  const progress=await (await call('GET','/progress')).json();
+  assert.equal(progress.progress.next_level,2);assert.equal(progress.progress.competency_credit,false);
+  assert.equal(progress.progress.recent[0].independent,2);
+  const nextId='10000000-0000-4000-8000-000000000002';
+  const next=await (await call('POST','/sessions',{...start,session_id:nextId,initial_level:3,correct:true})).json();
+  assert.equal(next.flow.level,2);assert.equal(next.flow.phase,'brief');
+  const release=db.tables.learning_evidence_events.find(e=>e.session_id===nextId).payload;
+  assert.equal(release.initial_level,2);assert.equal(release.basis_session_id,SID);
+  assert.equal((await (await call('GET',`/sessions/${nextId}`)).json()).flow.level,2);
+  assert.equal(db.calls.some(c=>c.table==='learning_competency_ratings'),false);
+}));
+test('hinted success, active sessions and other users cannot advance cross-session practice',async()=>withDb(async db=>{
+  let v=await begin();
+  v=(await send(v,'hint')).view;v=(await send(v,'answer',{answer:answer(v)})).view;
+  assert.equal((await (await call('GET','/progress')).json()).progress.recent.length,0);
+  v=(await send(v,'finish',{outcome:'completed'})).view;
+  assert.equal((await (await call('GET','/progress')).json()).progress.next_level,1);
+  const other=await (await call('GET','/progress',undefined,env,{requireHouseOwner:async()=>({id:OTHER})})).json();
+  assert.equal(other.progress.next_level,1);assert.deepEqual(other.progress.recent,[]);
+  assert.equal(other.progress.basis_session_id,null);
+}));
+test('tampered or incomplete closed history fails closed instead of seeding another level',async()=>withDb(async db=>{
+  let v=await begin();v=(await send(v,'answer',{answer:answer(v)})).view;
+  v=(await send(v,'finish',{outcome:'completed'})).view;
+  db.tables.learning_evidence_events[3].payload.result.correct=false;
+  assert.equal((await call('GET','/progress')).status,409);
+  assert.equal((await call('POST','/sessions',{...start,session_id:'10000000-0000-4000-8000-000000000002'})).status,409);
+  assert.equal(db.tables.learning_evidence_events.filter(e=>e.payload.type==='release').length,1);
+}));
+test('progress route stays disabled before database access',async()=>withDb(async db=>{
+  assert.equal((await call('GET','/progress',undefined,{...env,PRIM3_ADAPTIVE_ENABLED:undefined})).status,503);
+  assert.equal(db.calls.length,0);
+}));
+
+test('legacy signed releases without initial level replay and seed new practice',async()=>withDb(async db=>{
+  let v=await begin();
+  const release=db.tables.learning_evidence_events[0].payload;
+  delete release.initial_level;delete release.basis_session_id;delete release.signature;
+  const canonical=JSON.stringify(release,(_,x)=>x&&typeof x==='object'&&!Array.isArray(x)?Object.fromEntries(Object.keys(x).sort().map(k=>[k,x[k]])):x);
+  release.signature=createHmac('sha256',env.PRIM3_ADAPTIVE_SIGNING_KEY).update(canonical).digest('hex');
+  v=(await send(v,'answer',{answer:answer(v)})).view;
+  v=(await send(v,'answer',{answer:answer(v)})).view;
+  await send(v,'finish',{outcome:'completed'});
+  assert.equal((await (await call('GET','/progress')).json()).progress.next_level,2);
+}));
+test('recent history is bounded and explicitly reports older sessions',async()=>withDb(async db=>{
+  for(let i=1;i<=11;i++){
+    const sid=`20000000-0000-4000-8000-${String(i).padStart(12,'0')}`;
+    let v=await (await call('POST','/sessions',{...start,session_id:sid})).json();
+    for(const type of ['begin','handoff','answer','finish']){
+      const e={id:`event-${v.flow.nextSeq}`,seq:v.flow.nextSeq,type,questionId:v.flow.question?.id??null};
+      if(type==='answer')e.answer=answer(v);if(type==='finish')e.outcome='abandoned';
+      const r=await call('POST',`/sessions/${sid}/events`,e);assert.equal(r.status,200);v=await r.json();
+    }
+  }
+  const p=(await (await call('GET','/progress')).json()).progress;
+  assert.equal(p.recent.length,10);assert.equal(p.has_older_sessions,true);assert.equal(p.window_limit,10);
 }));

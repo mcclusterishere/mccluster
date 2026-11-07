@@ -14,10 +14,11 @@ const templates = Object.freeze({
 export { templates };
 
 export class MissionLab {
-  #missions = new Map(); #sessions = new Map(); #dedupe = new Map(); #clock; #seed;
-  constructor({ clock = () => Date.now(), seed = 0 } = {}) {
+  #missions = new Map(); #sessions = new Map(); #dedupe = new Map(); #clock; #seed; #initialLevel;
+  constructor({ clock = () => Date.now(), seed = 0, initialLevel = 1 } = {}) {
     require(Number.isSafeInteger(seed) && seed >= 0 && seed < 2 ** 31, 'Bounded integer seed required');
-    this.#clock = clock; this.#seed = seed;
+    require(Number.isInteger(initialLevel) && initialLevel >= 1 && initialLevel <= 3, 'Practice level must be 1–3');
+    this.#clock = clock; this.#seed = seed; this.#initialLevel = initialLevel;
   }
   #principal(p, owner = false) {
     require(p && id(p.tenant) && id(p.user), 'Authenticated tenant and user required');
@@ -85,7 +86,7 @@ export class MissionLab {
   start(p, missionId) {
     const m = this.#mission(p, missionId); require(this.#available(m), 'Mission unavailable or expired');
     const s = { id: `session-${this.#sessions.size + 1}`, tenant: p.tenant, user: p.user, missionId,
-      phase: 'brief', level: 1, streak: 0, ordinal: 0, current: null, events: [], receipts: new Map(), gameOutcome: null, tacticalHandoff: false };
+      phase: 'brief', level: this.#initialLevel, streak: 0, ordinal: 0, current: null, events: [], receipts: new Map(), gameOutcome: null, tacticalHandoff: false };
     this.#sessions.set(s.id, s); return this.view(p, s.id);
   }
   #question(s) {

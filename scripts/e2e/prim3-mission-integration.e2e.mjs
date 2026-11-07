@@ -54,6 +54,13 @@ try {
     await page.click('#pmFinish');await page.locator('#pmDebrief').waitFor({state:'visible'});
     assert.match(await page.locator('#pmSummary').textContent(),/28 of 28 answers correct; 27 without hints/);
     assert.equal(db.tables.learning_evidence_events.length,33);assert.equal(db.tables.learning_lab_sessions[0].outcome,'abandoned');
+    await page.click('#pmNew');await page.locator('#pmOwner').waitFor({state:'visible'});
+    assert.equal(await page.isChecked('#pmFiction'),false);
+    await page.waitForFunction(()=>document.getElementById('pmProgress').textContent.includes('1 verified recent'));
+    await page.check('#pmFiction');await page.check('#pmGeography');await page.click('#pmRelease');
+    await page.locator('#pmBrief').waitFor({state:'visible'});
+    assert.equal(db.tables.learning_lab_sessions.length,2,'new reviewed session preserves prior evidence');
+
     assert.deepEqual(errors,[]);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth),true);
     console.log(`PASS ${width}px review → brief → Transit handoff → lost-ACK/reload/retry → validated answers → durable debrief (DB double), no errors/overflow`);
     await context.close();
