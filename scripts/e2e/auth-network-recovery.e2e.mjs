@@ -36,7 +36,7 @@ try {
  const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
  await page.goto(base+'/game-hub.html#m=chem108&play=molecule-rush');
  await page.locator('[data-owner-msg] a').tap();await page.waitForURL('**/account.html');
- await page.locator('#mccPrivacyLater').tap();
+ await Promise.all([page.waitForNavigation({waitUntil:'load'}),page.locator('#mccPrivacyAgree').tap()]);
  await page.locator('#acInEmail').waitFor();
  // Stay on the account to verify success without navigating to other application flows.
  await page.goto(base+'/account.html?stay=1');

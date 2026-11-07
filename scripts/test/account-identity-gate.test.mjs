@@ -119,7 +119,7 @@ function jwt(payload) {
   return 'h.' + Buffer.from(JSON.stringify(payload)).toString('base64url') + '.s';
 }
 let gateSource;
-async function visit({ url, cookies, local, session, framed = false, cookieThrows = false, fetchImpl, MCC, pageNodes = [] } = {}) {
+async function visit({ url, cookies, local, session, framed = false, cookieThrows = false, fetchImpl, MCC, pageNodes = [], referrer = '', historyLength = 1 } = {}) {
   if (!gateSource) {
     const src = await readFile(join(ROOT, 'js/live-content.js'), 'utf8');
     const end = src.indexOf('/* ============================================================\n   LIVE CONTENT');
@@ -130,7 +130,7 @@ async function visit({ url, cookies, local, session, framed = false, cookieThrow
   const html = u.pathname.split('/').pop() || 'index.html';
   const banner = /^(resume-it-support|press|newsroom|hire)\.html$/.test(html);
   const nodes = new Map(), timers = [], listeners = {}, fetches = [], appended = [];
-  let reloads = 0, timerId = 0, focused = null;
+  let reloads = 0, backs = 0, replaced = [], timerId = 0, focused = null;
   const register = (node) => {
     if (node.id) nodes.set(node.id, node);
     for (const m of String(node.innerHTML || '').matchAll(/id="([^"]+)"/g)) nodes.set(m[1], element('button', m[1], node));
@@ -152,7 +152,7 @@ async function visit({ url, cookies, local, session, framed = false, cookieThrow
   const meta = banner ? Object.assign(element('meta'), { attrs: { name: 'mcc-privacy-notice', content: 'banner' } }) : null;
   const cookieApi = (cookies || jar()).forHost(u.hostname);
   const document = {
-    readyState: 'complete', documentElement: docEl,
+    readyState: 'complete', referrer, documentElement: docEl,
     head: { appendChild(n) { appended.push(n); return n; } },
     body: { appendChild(n) { appended.push(n); register(n); return n; } },
     createElement: (tag) => element(tag),
@@ -167,19 +167,20 @@ async function visit({ url, cookies, local, session, framed = false, cookieThrow
   const window = {
     localStorage: local || storage(), sessionStorage: session || storage(),
     addEventListener(t, f) { (listeners[t] ||= []).push(f); },
+    history: { length: historyLength, back() { backs++; } },
     MCC
   };
   window.top = framed ? {} : window;
-  const location = { pathname: u.pathname, hostname: u.hostname, hash: u.hash, reload() { reloads++; } };
+  const location = { pathname: u.pathname, hostname: u.hostname, href: u.href, hash: u.hash, reload() { reloads++; }, replace(to) { replaced.push(to); } };
   const fetch = (href, init) => { fetches.push({ href, init }); return fetchImpl ? fetchImpl(href, init) : Promise.resolve({ ok: true }); };
   vm.runInNewContext(gateSource, {
-    window, document, location, fetch, atob, JSON, Date, Promise, String, Number, Object, isNaN, Error,
+    window, document, location, fetch, atob, URL, JSON, Date, Promise, String, Number, Object, isNaN, Error,
     setTimeout: (fn, ms) => { timers.push({ id: ++timerId, fn, ms }); return timerId; },
     clearTimeout: (id) => { const i = timers.findIndex((t) => t.id === id); if (i >= 0) timers.splice(i, 1); }
   });
   return {
     window, document, location, fetches,
-    get reloads() { return reloads; },
+    get reloads() { return reloads; }, get backs() { return backs; }, get replaced() { return replaced; },
     wall: () => docEl.getAttribute('data-privacy-gate') === 'pending' && !!nodes.get('mccPrivacyGate'),
     banner: () => !!nodes.get('mccPrivacyNotice') && !nodes.get('mccPrivacyNotice').removed,
     shown() { return this.wall() || this.banner(); },
@@ -225,147 +226,96 @@ test('the notice: a first visit sees it once, and "I agree" keeps one record eve
   }
 });
 
-test('the notice: "Not now" on a banner is an answer, so no banner or wall comes back, and nothing counts as agreed', async () => {
+test('unagreed document pages show the same blocking wall, not a dismissible banner', async()=>{
   const cookies = jar();
-  const resume = await visit({ url: 'https://matthew.mccluster.org/resume-it-support.html', cookies });
-  assert.equal(resume.banner(), true);
-  assert.equal(resume.wall(), false, 'a document page shows the banner, not the wall');
-  resume.click('mccPrivacyNoticeLater');
-  assert.equal(resume.banner(), false, 'dismissed');
-  assert.equal(resume.window.MCC_PRIVACY.accepted(), false, 'seen is not agreed');
-  assert.equal(resume.window.MCC_PRIVACY.seen(), true);
-  assert.equal(resume.window.localStorage.getItem('mcc_privacy_ack'), null, 'no agreement is stored');
-  assert.equal(JSON.parse(resume.window.localStorage.getItem('mcc_privacy_seen')).version, PRIVACY_VERSION);
-  assert.equal(cookies.all.get('mcc_privacy_ack|.mccluster.org'), undefined);
-  assert.equal(cookies.all.get('mcc_privacy_seen|.mccluster.org').value, PRIVACY_VERSION, 'seen is shared across McCluster hosts');
-  for (const url of ['https://matthew.mccluster.org/press.html', 'https://matthew.mccluster.org/index.html', 'https://mccluster.org/mnet.html']) {
-    const next = await visit({ url, cookies });
-    assert.equal(next.shown(), false, url + ': not shown again');
-    assert.equal(next.window.MCC_PRIVACY.accepted(), false, url + ': still not agreed');
-  }
-  /* agreeing later, at a feature's own point of use, is the stronger record and is never taken back by "Not now" */
-  const later = await visit({ url: 'https://mccluster.org/mnet.html', cookies });
-  await later.window.MCC_PRIVACY.acknowledge();
-  later.window.MCC_PRIVACY.dismiss();
-  assert.equal(later.window.MCC_PRIVACY.accepted(), true);
-  assert.equal((await visit({ url: 'https://matthew.mccluster.org/listen.html', cookies })).window.MCC_PRIVACY.accepted(), true);
+  const resume = await visit({url:'https://matthew.mccluster.org/resume-it-support.html',cookies});
+  assert.equal(resume.wall(),true);
+  assert.equal(resume.banner(),false);
+  assert.match(resume.text('mccPrivacyGate'),/>Go back<\/button>/);
+  assert.equal(resume.window.MCC_PRIVACY.accepted(),false);
+  assert.equal(resume.window.MCC_PRIVACY.seen(),false);
+  assert.equal(cookies.all.size,0,'merely showing the dialog does not record agreement or seen');
+  const next=await visit({url:'https://mccluster.org/mnet.html',cookies});
+  assert.equal(next.wall(),true,'unanswered notice is shown again on the next host');
 });
 
-test('the notice: the entry dialog offers "Not now", which lets the visitor in as seen, never as agreed', async () => {
-  const cookies = jar();
-  const world = await visit({ url: 'https://mccluster.org/mnet.html', cookies });
-  assert.equal(world.wall(), true);
-  const gate = world.node('mccPrivacyGate');
-  assert.equal(gate.getAttribute('role'), 'dialog');
-  assert.equal(gate.getAttribute('aria-modal'), 'true');
-  assert.equal(gate.getAttribute('aria-labelledby'), 'mccPrivacyGateTitle');
-  assert.equal(gate.getAttribute('aria-describedby'), 'mccPrivacyGateBody');
-  assert.match(world.text('mccPrivacyGate'), /<button type="button" class="mccpg__later" id="mccPrivacyLater">Not now<\/button>/);
-  assert.equal(world.focused?.id, 'mccPrivacyAgree', 'focus starts inside the dialog');
-
-  world.click('mccPrivacyLater');
-  assert.equal(world.wall(), false, 'the dialog closes');
-  assert.equal(world.document.documentElement.getAttribute('data-privacy-gate'), null, 'the page is uncovered');
-  assert.equal(world.styleRemoved(), true, 'and the gate style that hid it is gone');
-  assert.equal(world.reloads, 0, 'no reload: nothing that waits for agreement started');
-  assert.equal(world.window.MCC_PRIVACY.accepted(), false, 'seen is not agreed');
-  assert.equal(world.window.MCC_PRIVACY.seen(), true);
-  assert.equal(world.window.localStorage.getItem('mcc_privacy_ack'), null);
-  assert.equal(JSON.parse(world.window.localStorage.getItem('mcc_privacy_seen')).version, PRIVACY_VERSION);
-  assert.equal(cookies.all.get('mcc_privacy_ack|.mccluster.org'), undefined, 'no agreement cookie');
-  assert.equal(cookies.all.get('mcc_privacy_seen|.mccluster.org').value, PRIVACY_VERSION, 'seen is shared across McCluster hosts');
-  assert.equal(world.fetches.length, 0, 'nothing is written anywhere else');
-  for (const url of ['https://matthew.mccluster.org/mnet.html', 'https://mccluster.org/account.html', 'https://matthew.mccluster.org/press.html']) {
-    const next = await visit({ url, cookies });
-    assert.equal(next.shown(), false, url + ': an answered notice is not asked again for this version');
-    assert.equal(next.window.MCC_PRIVACY.accepted(), false, url + ': still not agreed');
-  }
+test('Go back uses browser history without unlocking the page or recording an answer',async()=>{
+  const cookies=jar();
+  const v=await visit({url:'https://mccluster.org/mnet.html',cookies,historyLength:3});
+  assert.equal(v.wall(),true);
+  v.click('mccPrivacyBack');
+  assert.equal(v.backs,1);
+  assert.equal(v.replaced.length,0);
+  assert.equal(v.wall(),true,'gate stays in place until the browser actually navigates');
+  assert.equal(v.reloads,0);
+  assert.equal(v.window.MCC_PRIVACY.accepted(),false);
+  assert.equal(v.window.localStorage.getItem('mcc_privacy_ack'),null);
+  assert.equal(v.window.localStorage.getItem('mcc_privacy_seen'),null);
+  assert.equal(cookies.all.size,0);
+  assert.equal((await visit({url:'https://matthew.mccluster.org/press.html',cookies})).wall(),true);
 });
 
-test('the notice: Escape in the entry dialog is "Not now", and a pending agreement cannot be undone by it', async () => {
-  const esc = await visit({ url: 'https://matthew.mccluster.org/mnet.html' });
-  assert.equal(esc.key('mccPrivacyGate', 'Enter'), false, 'other keys pass through');
-  assert.equal(esc.wall(), true);
-  assert.equal(esc.key('mccPrivacyGate', 'Escape'), true, 'Escape is handled');
-  assert.equal(esc.wall(), false);
-  assert.equal(esc.window.MCC_PRIVACY.seen(), true);
-  assert.equal(esc.window.MCC_PRIVACY.accepted(), false);
+test('Go back with no history returns to a valid referrer, or leaves to a blank page',async()=>{
+  const previous='https://example.org/original-article';
+  const referred=await visit({url:'https://mccluster.org/mnet.html',referrer:previous,historyLength:1});
+  referred.click('mccPrivacyBack');
+  assert.deepEqual(referred.replaced,[previous]);
+  assert.equal(referred.window.MCC_PRIVACY.accepted(),false);
+  const direct=await visit({url:'https://mccluster.org/mnet.html',historyLength:1});
+  direct.click('mccPrivacyBack');
+  assert.deepEqual(direct.replaced,['about:blank']);
+  assert.equal(direct.window.MCC_PRIVACY.accepted(),false);
+});
 
-  const agreeing = await visit({ url: 'https://matthew.mccluster.org/mnet.html' });
+test('Escape acts as Go back instead of hiding the dialog, and cannot cancel pending agreement',async()=>{
+  const esc=await visit({url:'https://mccluster.org/mnet.html',historyLength:2});
+  assert.equal(esc.key('mccPrivacyGate','Enter'),false);
+  assert.equal(esc.key('mccPrivacyGate','Escape'),true);
+  assert.equal(esc.backs,1);
+  assert.equal(esc.wall(),true);
+  assert.equal(esc.window.MCC_PRIVACY.accepted(),false);
+  const agreeing=await visit({url:'https://mccluster.org/mnet.html',historyLength:2});
   agreeing.click('mccPrivacyAgree');
-  agreeing.click('mccPrivacyLater');
-  agreeing.key('mccPrivacyGate', 'Escape');
-  assert.equal(agreeing.node('mccPrivacyLater').disabled, true, 'both answers lock once one is chosen');
-  assert.equal(agreeing.window.MCC_PRIVACY.accepted(), true);
-  assert.equal(agreeing.window.localStorage.getItem('mcc_privacy_seen'), null, 'agreement is never downgraded to seen');
+  agreeing.click('mccPrivacyBack');
+  agreeing.key('mccPrivacyGate','Escape');
+  assert.equal(agreeing.node('mccPrivacyBack').disabled,true);
+  assert.equal(agreeing.backs,0);
+  assert.equal(agreeing.window.MCC_PRIVACY.accepted(),true);
   await flush();
-  assert.equal(agreeing.reloads, 1);
+  assert.equal(agreeing.reloads,1);
 });
 
-test('the notice: Escape inside the document-page bar is "Not now" too', async () => {
-  const press = await visit({ url: 'https://matthew.mccluster.org/press.html' });
-  press.key('mccPrivacyNotice', 'Escape');
-  assert.equal(press.banner(), false);
-  assert.equal(press.window.MCC_PRIVACY.accepted(), false);
+test('the readable policy offers Agree and Go back, with no Not now entry path',async()=>{
+  const ids=['mccPrivacyAnswer','mccPrivacyAnswerStatus','mccPrivacyAnswerAgree','mccPrivacyAnswerBack'];
+  const cookies=jar();
+  const policy=await visit({url:'https://matthew.mccluster.org/privacy.html',cookies,pageNodes:ids,historyLength:2});
+  assert.equal(policy.shown(),false,'policy remains readable');
+  assert.equal(policy.node('mccPrivacyAnswer').hidden,false);
+  assert.match(policy.node('mccPrivacyAnswerStatus').textContent,/not agreed/);
+  policy.click('mccPrivacyAnswerBack');
+  assert.equal(policy.backs,1);
+  assert.equal(policy.window.MCC_PRIVACY.accepted(),false);
+  const other=await visit({url:'https://mccluster.org/privacy.html',cookies,pageNodes:ids});
+  other.click('mccPrivacyAnswerAgree');
+  assert.equal(other.window.MCC_PRIVACY.accepted(),true);
+  assert.equal(other.node('mccPrivacyAnswerAgree').hidden,true);
+  assert.match(other.node('mccPrivacyAnswerStatus').textContent,/You agreed/);
+  assert.equal(other.focused?.id,'mccPrivacyAnswerStatus');
+  assert.equal((await visit({url:'https://matthew.mccluster.org/mnet.html',cookies})).shown(),false);
 });
 
-test('the policy page is where "Not now" can still agree, as the policy promises', async () => {
-  const ids = ['mccPrivacyAnswer', 'mccPrivacyAnswerStatus', 'mccPrivacyAnswerAgree'];
-  const cookies = jar();
-  const fresh = await visit({ url: 'https://matthew.mccluster.org/privacy.html', cookies, pageNodes: ids });
-  assert.equal(fresh.shown(), false, 'never a notice over the policy');
-  assert.equal(fresh.node('mccPrivacyAnswer').hidden, false, 'the control is shown');
-  assert.match(fresh.node('mccPrivacyAnswerStatus').textContent, /not answered/);
-
-  (await visit({ url: 'https://mccluster.org/mnet.html', cookies })).click('mccPrivacyLater');
-  const policy = await visit({ url: 'https://matthew.mccluster.org/privacy.html', cookies, pageNodes: ids });
-  assert.match(policy.node('mccPrivacyAnswerStatus').textContent, /Not now.*analytics are off/);
-  assert.equal(policy.node('mccPrivacyAnswerAgree').hidden, false);
-  policy.click('mccPrivacyAnswerAgree');
-  assert.equal(policy.window.MCC_PRIVACY.accepted(), true);
-  assert.equal(policy.node('mccPrivacyAnswerAgree').hidden, true);
-  assert.match(policy.node('mccPrivacyAnswerStatus').textContent, /You agreed .*next page/);
-  assert.equal(policy.focused?.id, 'mccPrivacyAnswerStatus', 'focus follows the hidden button to its result');
-  assert.equal(cookies.all.get('mcc_privacy_ack|.mccluster.org').value, PRIVACY_VERSION);
-  assert.equal((await visit({ url: 'https://mccluster.org/mnet.html', cookies })).window.MCC_PRIVACY.accepted(), true);
-});
-
-test('the notice: a banner counts as seen once it is shown, so ignoring it is enough; the wall still needs an answer', async () => {
-  const cookies = jar();
-  const press = await visit({ url: 'https://matthew.mccluster.org/press.html', cookies });
-  assert.equal(press.banner(), true, 'the first document page shows the banner');
-  assert.equal(press.window.MCC_PRIVACY.seen(), true, 'shown is seen, with no tap');
-  assert.equal(press.window.MCC_PRIVACY.accepted(), false, 'and seen is not agreed');
-  assert.equal(press.banner(), true, 'the bar stays on this page until it is answered');
-  assert.equal(JSON.parse(press.window.localStorage.getItem('mcc_privacy_seen')).version, PRIVACY_VERSION);
-  assert.equal(cookies.all.get('mcc_privacy_seen|.mccluster.org').value, PRIVACY_VERSION, 'shared with every McCluster host');
-  assert.equal(cookies.all.get('mcc_privacy_ack|.mccluster.org'), undefined, 'no agreement is stored');
-  for (const url of ['https://matthew.mccluster.org/newsroom.html', 'https://matthew.mccluster.org/listen.html', 'https://mccluster.org/', 'https://mccluster.org/mnet.html']) {
-    const next = await visit({ url, cookies });
-    assert.equal(next.shown(), false, url + ': an ignored banner does not come back, and no wall either');
-    assert.equal(next.window.MCC_PRIVACY.accepted(), false, url + ': still not agreed');
-  }
-  /* the bar can still be agreed to on the page that shows it */
-  press.click('mccPrivacyNoticeAgree');
-  assert.equal(press.window.MCC_PRIVACY.accepted(), true);
-  assert.equal(cookies.all.get('mcc_privacy_ack|.mccluster.org').value, PRIVACY_VERSION);
-
-  const wallJar = jar();
-  const unanswered = await visit({ url: 'https://mccluster.org/mnet.html', cookies: wallJar });
-  assert.equal(unanswered.wall(), true);
-  assert.equal(unanswered.window.MCC_PRIVACY.seen(), false, 'the wall covers the page, so showing it is not seen');
-  assert.equal(wallJar.all.size, 0, 'and nothing is stored for it');
-  assert.equal((await visit({ url: 'https://mccluster.org/account.html', cookies: wallJar })).wall(), true, 'an unanswered wall still asks on the next wall page');
-});
-
-test('the notice: "I agree" on a banner records agreement without reloading', async () => {
-  const cookies = jar();
-  const press = await visit({ url: 'https://matthew.mccluster.org/press.html', cookies });
-  press.click('mccPrivacyNoticeAgree');
-  assert.equal(press.banner(), false);
-  assert.equal(press.reloads, 0);
-  assert.equal(press.window.MCC_PRIVACY.accepted(), true);
-  assert.equal(cookies.all.get('mcc_privacy_ack|.mccluster.org').value, PRIVACY_VERSION);
+test('legacy seen or Not now data is not an agreement and never bypasses entry',async()=>{
+  const cookies=jar();
+  cookies.forHost('mccluster.org').set('mcc_privacy_seen='+PRIVACY_VERSION+'; Domain=mccluster.org; Path=/');
+  const old=await visit({url:'https://mccluster.org/mnet.html',cookies,local:storage({
+    mcc_privacy_seen:JSON.stringify({version:PRIVACY_VERSION,seen_at:'2026-10-28T00:00:00Z'})
+  })});
+  assert.equal(old.wall(),true);
+  assert.equal(old.window.MCC_PRIVACY.accepted(),false);
+  assert.equal(old.window.MCC_PRIVACY.seen(),false);
+  assert.equal(old.window.localStorage.getItem('mcc_privacy_ack'),null);
+  old.click('mccPrivacyAgree');await flush();
+  assert.equal(old.window.MCC_PRIVACY.accepted(),true);
 });
 
 test('the notice: the shared cookie is only for mccluster.org hosts; everywhere else it is host-only', async () => {

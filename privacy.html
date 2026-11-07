@@ -81,11 +81,12 @@
         mailboxes and sites we host. It is written to be read. Where a practice would sound
         better in vaguer words, the plainer words are used instead.</p>
 
-      <p class="pv__lede"><b>Last updated 28 October 2026.</b> This update describes the
-        site-entry notice exactly as it now behaves: its entry dialog offers "Not now"
-        as well as "I agree &amp; continue", and you can agree later on this page. It
-        does not change what is collected, so the notice version stays 2026-10-19 and
-        an answer you already gave still stands.</p>
+      <p class="pv__lede"><b>Notice experience updated 5 November 2026.</b>
+        Site entry now offers exactly two choices: "I agree &amp; continue"
+        or "Go back". Declining takes you back without entering and without recording
+        agreement. An earlier dismissed notice no longer bypasses
+        the choice. The data collection policy has not changed, so the consent
+        version remains 2026-10-19. Existing valid agreements still stand.</p>
 
       <p class="pv__lede"><b>19 October 2026.</b> That update corrected
         the earlier camera/microphone statement to accurately disclose optional live,
@@ -123,20 +124,19 @@
           and physical fulfillment. Phone and birth year remain optional. The birth year
           exists because sharing a minor's details is a different legal question from
           sharing an adult's, and the answer has to be recorded before the ask.</li>
-        <li id="entry-notice"><b>Your privacy acknowledgement.</b> We record the version of this notice that
-          was presented when you create an account. If you agree to the site-entry notice
-          while signed in, that version and the time are recorded on your account too. The
-          site-entry notice offers two answers, "I agree &amp; continue" and "Not now",
-          and is shown once for each version of this policy: once you have answered it
-          either way (or, on a document page, once its bar has been shown), it does not
-          appear again for that version. Leaving without answering is not an answer, so
-          the next page asks again. That you have seen it and whether you agreed are kept
-          as the notice version in a first-party cookie that McCluster's own sites under
-          mccluster.org share, and, with the time, in this browser's own storage, so the
-          notice does not reappear on another page or another of those sites. Seeing the
-          notice, or answering "Not now", records only that you saw it: "Not now" lets you
-          in, and McCluster's own analytics stay off until you agree. You can agree later
-          on this page.</li>
+        <li id="entry-notice"><b>Your privacy acknowledgement.</b> When you first
+          enter a top-level McCluster site without an existing agreement, the notice
+          offers exactly two choices, "I agree &amp; continue" and "Go back".
+          You must agree to enter that page; Go back navigates to the previous page
+          without recording acceptance or marking the notice as dismissed.
+          If there is no previous page, the browser leaves for a blank page.
+          The full Privacy Policy stays readable so you can make an informed choice.
+          Previously seen or dismissed notices no longer grant entry.
+          If you agree while signed in, that notice version and the time are recorded
+          on your account too. The agreed notice version is shared between McCluster's
+          own sites under mccluster.org by a first-party cookie and, with the time,
+          in this browser's own storage. Only agreement is remembered as authorization
+          to enter; a future policy change can require a new answer.</li>
         <li><b>What you post.</b> On Equity Uprise: posts, replies, follows, blocks, mutes, your
           profile photo and anything you attach.</li>
         <li><b>Purchases.</b> What you bought and the email it is tied to. <b>Card numbers
@@ -266,17 +266,18 @@
 
       <div class="pv__note">
         <p><b>The entry acknowledgement is notice, not a blank check.</b> The public site
-          asks you to acknowledge this Privacy Policy when you first enter; you can answer
-          "Not now" and enter without agreeing. That acknowledgement
-          does not override browser or operating-system permissions, Global Privacy Control,
-          Do Not Track, or a separate consent choice. Precise location still uses the
-          browser's own permission prompt. Marketing and onward-sharing boxes remain
-          optional and can be withdrawn.</p>
+          asks you to agree to this Privacy Policy before entering. Choose "I agree
+          &amp; continue" or "Go back"; there is no silent dismissal.
+          An agreement does not override browser or operating-system permissions,
+          Global Privacy Control, Do Not Track, or any separate feature consent.
+          Precise location still requires the browser's own permission prompt.
+          Marketing and onward-sharing boxes remain optional and withdrawable.</p>
       </div>
       <div class="pv__note pv__answer" id="mccPrivacyAnswer" hidden>
         <p><b>Your answer on this browser.</b>
           <span id="mccPrivacyAnswerStatus" role="status">You have not agreed to the site-entry notice.</span></p>
         <button type="button" class="pv__agree" id="mccPrivacyAnswerAgree">I agree &amp; continue</button>
+        <button type="button" class="pv__agree" id="mccPrivacyAnswerBack">Go back</button>
       </div>
       <div class="pv__note">
         <p><b>Monthly swag is free.</b> Account completion can make a user eligible for
