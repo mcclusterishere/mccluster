@@ -35,7 +35,8 @@ try {
    home.on('pageerror',e=>herr.push(e.message));
    await home.goto(BASE+'/index.html');
    await home.waitForFunction(()=>window.__MCC_VR&&window.__MCC_VR.viewer&&window.__MCC_FRONT_GOTO,null,{timeout:20000});
-   await home.waitForTimeout(1200);
+   // Viewer creation precedes the cabin fade and opening layout; wait for both.
+   await home.waitForFunction(()=>getComputedStyle(document.getElementById('workVR')).opacity==='1'&&Math.round(document.getElementById('cabin').getBoundingClientRect().top)===0,null,{timeout:10000});
    assert.equal(await home.locator('#hero,#orbitCanvas,#hudDeg,#heroFallback').count(),0,'no orbit hero');
    assert.equal(await home.locator('#vrGateAllow,#vrGateDeny,#workVRCompass,#vrGate,.vrbrief--gate').count(),0,'no gate');
    assert.equal(await home.getByText(/Allow to see|Blurred until/i).count(),0,'no Allow / Cancel words anywhere on the page');
