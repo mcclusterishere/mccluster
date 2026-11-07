@@ -1,0 +1,29 @@
+{
+  "version":"2026-10-17-research-v1",
+  "activation":"research_only",
+  "credits_per_usd":1000,
+  "money_unit":"USD_micros",
+  "rates":[
+    {"key":"cloudflare.stream.viewer_minute","unit_microusd":"1000","source":"https://developers.cloudflare.com/stream/webrtc-beta/"},
+    {"key":"cloudflare.sfu.egress_GB","unit_microusd":"50000","shared_free_GB":1000,"source":"https://developers.cloudflare.com/realtime/sfu/platform/pricing/"},
+    {"key":"bunny.vod.storage_GB_month","unit_microusd":"10000","qualifier":"starting rate; replication and encoded variants count","source":"https://bunny.net/pricing/stream/"},
+    {"key":"bunny.vod.delivery_GB","unit_microusd":"5000","qualifier":"starting volume-network rate; region/network selection matters","source":"https://bunny.net/pricing/stream/"},
+    {"key":"mux.live.plus720.input_minute","unit_microusd":"25000","source":"https://www.mux.com/docs/pricing/overview"},
+    {"key":"mux.plus720.viewer_minute","unit_microusd":"800","shared_free_minutes":100000,"source":"https://www.mux.com/docs/pricing/overview"},
+    {"key":"x.post.create","unit_microusd":"15000","source":"https://docs.x.com/x-api/getting-started/pricing"},
+    {"key":"x.post.create_with_url","unit_microusd":"200000","source":"https://docs.x.com/x-api/getting-started/pricing"}
+  ],
+  "proposed_pilot_limits":{"weekly_host_seconds":7200,"weekly_starts":6,"session_seconds":1200,"weekly_viewer_seconds":14400,"concurrent_viewers":10,"concurrent_host_sessions":1,"recording":"off"},
+  "limits_status":"proposal_not_live",
+  "agent_rules":[
+    "Describe estimated active mission time separately from the live broadcasting allowance.",
+    "Allow offline participation and private proof; running out of broadcast time does not fail a mission.",
+    "After 100 verified comparable runs and at least 20 contributors, propose robust timing estimates; do not auto-tighten requirements.",
+    "Never infer total work time from a partial broadcast, a quota-truncated run, or arbitrary browser heartbeats.",
+    "Record policy version, evidence source, sample count and uncertainty. Preserve right-censored observations separately.",
+    "Viewer-minutes or delivered bytes, account-wide spend, and host time need independent controls.",
+    "Do not require someone to film beneficiaries, disclose private locations, or operate a phone while driving.",
+    "Free provider allowances are shared subsidies, not a perpetual zero wholesale price.",
+    "Credits are not mission points, transferable cash, or creator earnings. Never rescale existing balances."
+  ]
+}

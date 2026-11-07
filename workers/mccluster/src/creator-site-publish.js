@@ -1,3 +1,4 @@
+import {handleWebsiteStudio} from './website-studio/service.mjs';
 import {reply,fail} from './lib/http.js';
 import {stripeRequest} from './whip/stripe.js';
 
@@ -19,6 +20,8 @@ async function getSubscriptions(env,userId,orgId){
  return res.json();
 }
 export async function handleCreatorPublish(request,env){
+ const studio=await handleWebsiteStudio(request,env);
+ if(studio)return studio;
  const path=new URL(request.url).pathname;
  if(path!=='/v1/creator-sites/publish')return null;
  if(request.method!=='POST')return fail(request,env,'Method not allowed',405);
