@@ -1,0 +1,14 @@
+/* Scoped to the existing Control source inspector; phone layout first. */
+.cu-bls-fields{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;margin:16px 0}
+#cuBlsSnapshot button{margin:0 8px 8px 0;min-height:44px}
+.cu-bls-results{min-width:0;overflow-wrap:anywhere}
+.cu-bls-chart{margin:18px 0;padding:12px;border:1px solid #45454d;border-radius:10px;color:#f5969c}
+.cu-bls-chart figcaption{font-size:16px;color:#eeeef0}
+.cu-bls-chart svg{display:block;width:100%;max-height:240px;fill:currentColor}
+.cu-bls-axis{display:flex;justify-content:space-between;gap:12px;font-size:12px;color:#d7d7dc}
+.cu-bls-results table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:13px}
+.cu-bls-results caption{text-align:left;line-height:1.5;margin-bottom:12px;color:#bdbdc4}
+.cu-bls-results th,.cu-bls-results td{padding:10px 5px;border-bottom:1px solid #3a3a40;vertical-align:top;text-align:left;overflow-wrap:anywhere}
+.cu-bls-results th{font-weight:500}
+.cu-bls-results small{color:#bdbdc4}
+@media(min-width:40rem){.cu-bls-fields{grid-template-columns:minmax(0,2fr) repeat(2,minmax(0,1fr))}}

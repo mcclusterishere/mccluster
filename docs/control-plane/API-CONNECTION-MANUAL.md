@@ -169,3 +169,63 @@ key it uses v1; add `BLS_API_KEY` as a Worker secret to use registered v2.
 Missing periods and provider failures remain unavailable. Monthly timestamps
 represent period starts, not publication timestamps. This fixture example is
 not an assertion that a live request was made.
+
+## BLS owner explorer follow-through (2026-11-07 review branch)
+
+After this review change is released, open **Control → Analytics → World
+intelligence → Bureau of Labor Statistics**. Enter a series ID from the
+[official BLS data directory](https://www.bls.gov/data/), choose 1–10 inclusive
+years, and press **Read BLS snapshot**. The explorer intentionally requests one
+series per click, within the unregistered API's bounds even when a key exists.
+It reuses the existing owner/entitlement-gated `POST /v1/seek-first/fetch/bls`
+route with `persist:false`, `include_raw:false` and the internal lane.
+
+The chart and complete returned-observation table show reporting periods, not
+release times. Missing values are not zero, missing periods break trend lines,
+and annual averages are shown separately from the trend. Check the source's
+series definition for geography, units and seasonal adjustment; absent metadata
+is labeled rather than inferred. Footnote codes are preserved. Retrieval time is
+separate from reporting periods, and truncated responses are explicitly marked.
+
+No key is required for the existing BLS v1 path. `BLS_API_KEY`, if supplied in the
+canonical Worker's secret settings during an approved configuration change,
+selects registered v2 access. Never enter a credential into the series field.
+The server remains authoritative for access and validation. This UI neither
+changes permissions nor provisions credentials, storage or provider entitlement.
+
+**Clear snapshot** discards the displayed or pending result without another
+request. A pending provider request may still finish and count against its
+quota. A failed read can be retried deliberately. Source changes, permission
+refresh and sign-out invalidate late results. Page reload discards the snapshot
+and form state; it does not read the provider automatically. There is no local
+storage of observations, automatic polling or new archive write path. Existing
+stored-record reads remain separate and require the existing archive schema.
+
+### Review and validation boundary
+
+This completes the missing owner-facing BLS inspection slice of merged #746,
+not the entire October 5–November 4 recovery inventory. It does not add a Halo
+Finance/geographic overlay, scheduled collection, account-wide quota service,
+provider cache or production activation. No live BLS account, deployed gateway,
+authenticated production browser or production database was exercised.
+
+Run the executable local tests:
+
+```sh
+node --test scripts/test/bls-explorer.test.mjs scripts/test/analytics-unified.test.mjs workers/mccluster/test/bls-recovery.test.mjs
+```
+
+The sealed browser regression uses the actual source-inspector modules with
+synthetic data at 390, 820 and 1440 px. It covers layout, explicit read, clear,
+interrupted request, unavailable provider, retry, source switch, denied source,
+sign-out and reload. It is added to the existing site-smoke gate:
+
+```sh
+PW_MODULE=/path/to/playwright node scripts/e2e/bls-explorer.e2e.mjs
+```
+
+Local browser launch was blocked before page load by the execution environment's
+`socket() failed: Operation not permitted` restriction, including an escalated
+attempt. Browser assertions and screenshots therefore require hosted CI before
+this draft can be considered visually verified. The module fixture is not a
+full-shell or real-owner production acceptance test.
