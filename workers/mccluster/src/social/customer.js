@@ -33,14 +33,41 @@ async function db(env, path, body) {
 }
 async function provider(env, path, token, values, method = 'GET') {
   const url = new URL(`https://graph.facebook.com/${env.META_GRAPH_API_VERSION || 'v26.0'}/${path}`);
-  const init = { method, headers: {}, signal: AbortSignal.timeout(15000) };
+  const init = { method, headers: {}, redirect: 'manual', signal: AbortSignal.timeout(15000) };
   if (token) init.headers.authorization = `Bearer ${token}`;
   if (method === 'GET') for (const [k,v] of Object.entries(values || {})) url.searchParams.set(k, v);
   else { init.headers['content-type'] = 'application/x-www-form-urlencoded'; init.body = new URLSearchParams(values); }
   let response;
   try { response = await fetch(url, init); } catch { throw error('Instagram did not respond. Reconnect and try again.', 502); }
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok || data.error) throw error('Instagram authorization failed. Check your permissions and reconnect.', 409);
+  // Credential-bearing exchanges must never follow provider redirects. Read a
+  // bounded stream: Content-Length is optional and cannot enforce this limit.
+  if (!response.ok) {
+    await response.body?.cancel().catch(() => {});
+    throw error('Instagram authorization failed. Check your permissions and reconnect.', 409);
+  }
+  const reader = response.body?.getReader();
+  const chunks = [];
+  let bytes = 0;
+  let data;
+  try {
+    if (!reader) throw Error();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      bytes += value.byteLength;
+      if (bytes > 1024 * 1024) throw Error();
+      chunks.push(value);
+    }
+    const payload = new Uint8Array(bytes);
+    let offset = 0;
+    for (const chunk of chunks) { payload.set(chunk, offset); offset += chunk.byteLength; }
+    data = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(payload));
+    if (!data || typeof data !== 'object' || Array.isArray(data)) throw Error();
+  } catch {
+    await reader?.cancel().catch(() => {});
+    throw error('Instagram returned an invalid response. Reconnect and try again.', 502);
+  } finally { reader?.releaseLock(); }
+  if (data.error) throw error('Instagram authorization failed. Check your permissions and reconnect.', 409);
   return data;
 }
 async function pages(env, token) {
@@ -48,7 +75,8 @@ async function pages(env, token) {
   let after;
   for (let n = 0; n < 10; n++) {
     const data = await provider(env, 'me/accounts', token, { fields: 'id,name,access_token,instagram_business_account{id,username}', limit: '100', ...(after ? { after } : {}) });
-    found.push(...(data.data || []).filter(p => p.instagram_business_account?.id && p.access_token));
+    if (!Array.isArray(data.data)) throw error('Instagram returned an invalid account list. Reconnect and try again.', 502);
+    found.push(...data.data.filter(p => p && p.instagram_business_account?.id && typeof p.access_token === 'string' && p.access_token));
     if (!data.paging?.next) return found;
     after = data.paging?.cursors?.after;
     if (!after) break;
@@ -121,8 +149,9 @@ export async function handleCustomerSocialRequest(request, env, user) {
     const state_hash = await digest(body.state);
     await socialAction('claim', { state_hash }); // Atomically one-use, user + org + expiry bound, before exchange.
     const short = await provider(env, 'oauth/access_token', null, { client_id: env.META_APP_ID, client_secret: env.META_APP_SECRET, redirect_uri: env.CUSTOMER_SOCIAL_REDIRECT_URI, code: body.code }, 'POST');
+    if (typeof short.access_token !== 'string' || !short.access_token) throw error('Instagram did not grant an access token.', 409);
     const long = await provider(env, 'oauth/access_token', null, { grant_type: 'fb_exchange_token', client_id: env.META_APP_ID, client_secret: env.META_APP_SECRET, fb_exchange_token: short.access_token }, 'POST');
-    if (!long.access_token) throw error('Instagram did not grant an access token.', 409);
+    if (typeof long.access_token !== 'string' || !long.access_token) throw error('Instagram did not grant an access token.', 409);
     const debug = await provider(env, 'debug_token', `${env.META_APP_ID}|${env.META_APP_SECRET}`, { input_token: long.access_token });
     const info = debug.data;
     if (!info?.is_valid || String(info.app_id) !== String(env.META_APP_ID) || !SCOPES.every(s => info.scopes?.includes(s)) || (info.expires_at && info.expires_at * 1000 <= Date.now())) throw error('Required Instagram publishing permissions were not granted. Reconnect.', 409);
