@@ -1,9 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { localAiHttpFixture } from './helpers/local-ai-http-fixture.mjs';
 
 process.env.SUPABASE_URL ||= 'https://db.test';
 process.env.SUPABASE_SECRET_KEY ||= 'test-secret';
-process.env.MCCLUSTER_OLLAMA_ADAPTER_URL ||= 'http://127.0.0.1:4790';
+process.env.MCCLUSTER_OLLAMA_ADAPTER_URL = await localAiHttpFixture();
 
 const { residentAiTurn, needsCurrentResearch } = await import('../src/executors/resident-ai-turn.mjs');
 
