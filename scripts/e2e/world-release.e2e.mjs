@@ -112,7 +112,7 @@ async function haloChecks(scope,page,host,width,ctx,loseOwner,calls){
  await page.waitForFunction(()=>MCC_BAR.admin());
  await page.waitForSelector('body[data-admin-navigation][data-site-navigation]');
  const destinations=await page.locator('.appbar [data-appnav]').evaluateAll(nodes=>nodes.map(n=>n.dataset.appnav));
- check(scope,'Halo retains the shared owner destinations in their reviewed order',JSON.stringify(destinations)===JSON.stringify(['music','admin-inbox','admin-home','home','analytics','halo','games','admin-sell','admin-create','admin-system']),destinations);
+ check(scope,'Halo retains the shared owner destinations in their reviewed order',JSON.stringify(destinations)===JSON.stringify(['music','admin-inbox','admin-home','home','analytics','world','games','admin-sell','admin-create','admin-system']),destinations);
  await shot('start');
  let small=await smallTargets();
  check(scope,'every visible Halo control is a full 44px tap target',small.length===0,small);
