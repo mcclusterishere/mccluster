@@ -65,6 +65,33 @@ Only allowlisted models (`MCCLUSTER_OLLAMA_EXTRA_MODELS`) can be named; anything
 
 A larger model can be tested later, but do not make a ~19–20 GB model the always-loaded default on a 24 GB VPS: it leaves too little recovery and OS headroom.
 
+### Inference transport and cancellation
+
+The local chat client and Ollama chat hop use `src/compute/inference-http.mjs`,
+not native `fetch`: a non-streaming CPU inference can withhold HTTP headers past
+Undici's independent five-minute header timeout even with a ten-minute
+`AbortSignal`. The existing caller and adapter deadlines remain unchanged and
+cover headers plus the complete body. Model fallback shares the adapter's one
+deadline. Responses are capped at 8 MiB, redirects are not followed, and invalid
+or interrupted JSON fails explicitly. Transport errors expose controlled codes,
+not upstream bodies, prompts, URLs or raw causes.
+
+`localAiChat({ ..., signal })` accepts caller cancellation. Disconnecting a
+queued caller removes it from the queue; disconnecting an active caller aborts
+the upstream request and releases the single inference slot. Accepted resident
+turns still belong to Core, so browser closure must not be forwarded as their
+cancellation signal. Queue bounds, model policy and inference settings are
+unchanged.
+
+Run `npm test` in `core/` for the bounded transport and cancellation regressions.
+For an optional real-time reproduction, run
+`node scripts/probe-inference-transport.mjs --full` from `core/`. It takes about
+310 seconds and compares native fetch with the inference transport against a
+synthetic loopback server. It uses no models, credentials or external services.
+Without `--full`, it is a quick smoke test, not proof of the five-minute cutoff.
+The other adapter routes and compute-node HTTP executor are outside this chat
+transport change.
+
 ## Host layout
 
 ```text
