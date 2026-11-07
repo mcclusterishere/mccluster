@@ -19,3 +19,11 @@ test('shared adapter binds server release and forwards answer, never client corr
  state.nodes[0].state='STEP_1';await client.answer('8');assert.deepEqual(calls.at(-1),{type:'answer',fields:{answer:'8',checkpointId:'CHECKPOINT-1:STEP_1'}});
  practice.current.released_mission.recipe_hash='wrong';assert.throws(()=>client.current,/different release/);
 });
+test('premature completed debrief is rejected before it can poison the durable queue',()=>{
+ const release={id:'r',recipe_hash:'h'},calls=[];
+ const practice={current:{released_mission:{id:'r',recipe_hash:'h',next_checkpoint_id:'CHECKPOINT-1:STEP_2'}},submit:(...args)=>calls.push(args)};
+ const client=createReleasedLearning({practice,release,getTacticalState:()=>null});
+ assert.throws(()=>client.finish('completed'),/all checkpoint math/);assert.equal(calls.length,0);
+ client.finish('abandoned');assert.deepEqual(calls.pop(),['finish',{outcome:'abandoned'}]);
+ practice.current.released_mission.next_checkpoint_id=null;client.finish('completed');assert.deepEqual(calls.pop(),['finish',{outcome:'completed'}]);
+});

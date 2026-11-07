@@ -10,12 +10,17 @@ async function api(path='',method='GET',body){const token=storedToken();if(!toke
 async function run(fn){if(busy)return;busy=true;try{await fn();}catch(e){status(e.message);}finally{busy=false;render();}}
 function render(){
  $('releaseRetry').hidden=!practice.pending;
+ $('releaseLeave').hidden=!practice.releaseId;
+ $('releaseLeave').disabled=busy;
  if(!learning)return;
  const v=learning.current,play=v.flow.phase==='play';
  $('releaseQuestion').textContent=v.flow.question?.prompt||'';
  $('releaseCheckpoint').textContent=v.released_mission.next_checkpoint_id?`${v.released_mission.next_checkpoint_id} · ${learning.ready?'Ready for math':'Complete this step in the game to answer'}`:'All checkpoint math completed.';
  $('releaseSubmit').disabled=busy||practice.pending||!play||!learning.ready||practice.mustFinish;
  $('releaseHint').disabled=$('releaseSubmit').disabled||practice.mustAnswer;
+ const completed=$('releaseOutcome').querySelector('[value=completed]');
+ completed.disabled=!!v.released_mission.next_checkpoint_id;
+ if(completed.disabled&&$('releaseOutcome').value==='completed')$('releaseOutcome').value='abandoned';
  $('releaseFinish').disabled=busy||practice.pending||!play||v.flow.debrief.attempts===0;
  $('releaseSummary').textContent=v.flow.phase==='debrief'?`${v.flow.debrief.correct}/${v.flow.debrief.attempts} answers correct; ${v.flow.debrief.independent} independent. Tactical outcome: ${v.flow.debrief.gameOutcome} (your report). No competency credit.`:'';
 }
@@ -40,6 +45,7 @@ $('releaseSubmit').onclick=()=>run(async()=>{const v=await learning.answer($('re
 $('releaseHint').onclick=()=>run(async()=>{const v=await learning.hint();status(v.result.hint);});
 $('releaseFinish').onclick=()=>run(async()=>{await learning.finish($('releaseOutcome').value);status('Debrief saved. Tactical outcome remains your report.');});
 $('releaseRetry').onclick=()=>run(async()=>{await practice.retry();status('Original learning receipt recovered. Re-enter the same release to continue.');});
+$('releaseLeave').onclick=()=>run(async()=>{await practice.leaveUnavailableRelease();if(timer){clearInterval(timer);timer=null;}learning=null;$('releaseGame').src='about:blank';$('releasePlay').hidden=true;status('Unavailable mission left locally. Saved evidence remains; choose a fresh release.');});
 $('releaseRevoke').onclick=()=>run(async()=>{await api('/'+selected.id+'/revoke','POST',{});await choose(selected.id);await list();status('Release revoked. Existing evidence is retained.');});
 function conceal(){if(timer)clearInterval(timer);practice.clear();$('releaseGame').src='about:blank';document.querySelector('.pm').hidden=true;}
 window.addEventListener('mcc:auth-changed',conceal);window.addEventListener('storage',e=>{if(e.key===SESSION_KEY||e.key===null)conceal();});window.addEventListener('pagehide',()=>{if(timer)clearInterval(timer);});
