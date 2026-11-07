@@ -39,7 +39,7 @@ async function as(db, id = owner, role = 'authenticated') {
   assert.ok(['authenticated','anon','service_role'].includes(role));
   await db.exec('reset role');
   await db.query("select set_config('request.jwt.claim.sub',$1,false), set_config('request.jwt.claim.role',$2,false), set_config('request.jwt.claims',$3,false)",
-    [id || '', role, JSON.stringify({ sub: id || '', role })]);
+    [id || '', role, JSON.stringify(id ? { sub: id, role } : { role })]);
   await db.exec('set role ' + role);
   return db;
 }
@@ -60,7 +60,7 @@ async function localSubset(db) {
     do $$ begin create role authenticated nologin; exception when duplicate_object then null; end $$;
     do $$ begin create role service_role nologin bypassrls; exception when duplicate_object then null; end $$;
     create schema auth; create table auth.users(id uuid primary key, email text);
-    create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
+    create function auth.uid() returns uuid language sql stable as $$select coalesce(nullif(current_setting('request.jwt.claim.sub',true),''), nullif(current_setting('request.jwt.claims',true),'')::jsonb->>'sub')::uuid$$;
     create function auth.role() returns text language sql stable as $$select nullif(current_setting('request.jwt.claim.role',true),'')$$;
     grant usage on schema auth, public to anon,authenticated,service_role;`);
   const people = await read('supabase/replay_migrations/0049_m_account_people.sql');
@@ -98,6 +98,9 @@ function conflict(result) { assert.equal(result.error?.code, '40001', result.err
 
 export async function run({ canonical = false } = {}) {
   let checks = 0;
+  // Apply the same target/credential/query restrictions to the local subset.
+  // nativeTestDb then creates its own disposable database on that server.
+  if (!canonical) validateCanonicalTarget(process.env.NATIVE_TEST_DATABASE_URL, '1');
   const db = canonical ? await canonicalDb() : await nativeTestDb('owner_front');
   const clients = [];
   const check = async (name, fn) => { await fn(); checks++; console.log('ok ' + checks + ' - ' + name); };
