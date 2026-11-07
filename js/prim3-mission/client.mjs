@@ -60,6 +60,12 @@ export function createPracticeClient({ fetchImpl = globalThis.fetch, token, stor
       return queue(`/sessions/${current.session_id}/events`, { ...fields, id: crypto.randomUUID(), seq: current.flow.nextSeq,
         type, questionId: current.flow.question?.id ?? null });
     },
+    newPractice() {
+      if (busy || data.pending || current?.flow?.phase !== 'debrief' || current?.evidence?.closed !== true)
+        throw new Error('Save and acknowledge your debrief before starting another practice.');
+      clear();
+    },
+    progress: () => request('GET', '/progress'),
     retry, clear,
     get current() { return current; },
     get pending() { return data.pending !== null; },

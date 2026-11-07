@@ -39,3 +39,11 @@ const t=setup({nextSeq:31}),c=createPracticeClient(t);await c.connect();await c.
 assert.equal(c.mustAnswer,true);assert.throws(()=>c.submit('hint'),/answer/i);assert.equal(c.pending,false);
 await c.submit('answer',{answer:'7'});assert.equal(JSON.parse(t.requests.at(-1).init.body).seq,31);
 });
+test('new practice requires acknowledged closed debrief and clears only local session state',async()=>{
+  const t=setup(),base=t.fetchImpl;let closed=false;
+  t.fetchImpl=async(...args)=>{const r=await base(...args),v=await r.json();if(v.flow){v.flow.phase=closed?'debrief':'play';v.evidence={closed};}return Response.json(v);};
+  const c=createPracticeClient(t);await c.connect();await c.start({fictionChecked:true,geographyChecked:true});
+  assert.throws(()=>c.newPractice(),/debrief/);closed=true;await c.submit('finish',{outcome:'abandoned'});
+  const calls=t.requests.length;c.newPractice();assert.equal(c.current,null);assert.equal(c.pending,false);assert.equal(t.requests.length,calls);
+  await c.start({fictionChecked:true,geographyChecked:true});assert.equal(t.requests.length,calls+1);
+});

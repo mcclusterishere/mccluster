@@ -82,6 +82,16 @@ try {
  const ownRows=await originalFetch(`${origin}/learning_evidence_events?select=id`,{headers:{authorization:`Bearer ${jwt('authenticated',owner)}`}});assert.equal((await ownRows.json()).length,9);
  const patch=await originalFetch(`${origin}/learning_evidence_events?id=eq.${sql(`select id from learning_evidence_events where session_id='${sid}' order by seq limit 1;`)}`,{method:'PATCH',headers:{authorization:`Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,'content-type':'application/json'},body:JSON.stringify({payload:{forged:true}})});assert.equal(patch.ok,false);
  console.log('PASS actual database RLS, cross-user handler isolation, append-only guard and generic-route bypass rejection');
+ const progress=await ok(call('GET','/progress'));
+ assert.equal(progress.progress.next_level,v.flow.level);
+ assert.equal(progress.progress.basis_session_id,sid);
+ assert.equal(progress.progress.competency_credit,false);
+ const followId=randomUUID();const follow=await ok(call('POST','/sessions',{...start,session_id:followId,initial_level:3}));
+ assert.equal(follow.flow.level,progress.progress.next_level);
+ assert.equal((await ok(call('GET',`/sessions/${followId}`))).flow.level,follow.flow.level);
+ const foreign=await ok(call('GET','/progress',undefined,env,{requireHouseOwner:async()=>({id:other})}));
+ assert.deepEqual(foreign.progress.recent,[]);
+ console.log('PASS cross-session progression uses signed closed math evidence, ignores requested level and isolates users');
  // Authenticated learners can append self-reported evidence through existing RLS.
  // Even a plausible event ID/shape cannot manufacture server-validated math.
  const forgedSid=randomUUID();await ok(call('POST','/sessions',{...start,session_id:forgedSid}));
