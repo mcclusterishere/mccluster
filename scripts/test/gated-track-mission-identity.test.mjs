@@ -102,7 +102,7 @@ test('preview plays and full plays are distinct events; a full play only after t
   assert.match(suite, /key:"Full plays"/);
   assert.match(suite, /key:"Preview plays",value:music\.preview_plays/, 'owner analytics shows both counts');
   const engine = read('js/music-engine.js');
-  assert.match(engine, /out\.state === "full" \? "music_full_play" : "music_preview_play"/, 'the mini player already splits them');
+  assert.match(engine, /audio\.addEventListener\("playing",[\s\S]*?currentAccess === "full" \? "music_full_play" : "music_preview_play"/, 'the mini player splits granted full and preview only when the browser reports playback');
 });
 
 test('the gated rule is a data row, read server-side, and the identity helper is the one contract', () => {
