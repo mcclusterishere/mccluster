@@ -867,6 +867,11 @@
     if (!e || e.key === "mccdb_session" || e.key === "mcc_sess_keep") refreshAuthState();
   });
   window.addEventListener("mcc:auth-changed", refreshAuthState);
+  // iPad Safari may restore a page from the back-forward cache without a
+  // storage event. The permission still comes from the server, never the UI.
+  window.addEventListener("focus", function () {
+    if (readAuthSession()?.access_token && !ADMIN_ON && !adminFlight) refreshAuthState();
+  });
 
   var ICONS = {
     film: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18M7 5v4M12 5v4M17 5v4"/>',
@@ -1282,7 +1287,7 @@
     if (peekEl) unpeek();
     if (wingOn) revert();
   }, true);
-  window.addEventListener("pageshow", function () { clearTimeout(lpTimer); veilOff(); unpeek(); revert(); });
+  window.addEventListener("pageshow", function () { clearTimeout(lpTimer); veilOff(); unpeek(); revert(); if (readAuthSession()?.access_token) refreshAuthState(); });
 
   window.MCC_BAR = {
     morph: morph,
