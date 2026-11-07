@@ -1,5 +1,7 @@
 # Finance: review package and device-accessible preview path
 
+> Historical checkpoint. For current implementation and coordinated activation, see [FINANCE-ROLLOUT.md](FINANCE-ROLLOUT.md). Earlier unimplemented/draft-only statements describe the original checkpoint, not current main.
+
 Status: local work only. This document does not authorize publication or migration.
 Correction, 2026-11-04: the navigation test below leaves the globe for a separate
 Finance page. It proves component wiring and persistence, NOT the requested
