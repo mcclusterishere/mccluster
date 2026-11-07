@@ -118,7 +118,7 @@ try{for(const width of (process.env.WIDTHS||'390,1280').split(',').map(Number)){
  if(process.env.EXTERIOR==='1'){
   await send({type:'bridgeport:preview',destinationId:'bridgeport-main-elm',requestId:'manual-interruption-check'});
   await f.waitForFunction(()=>!document.querySelector('[data-confirm]').disabled);
-  await f.locator('[aria-label="Street camera"]').selectOption('close');await f.locator('[data-drive="left"]').click();
+  await f.locator('[aria-label="Street camera"]').selectOption('close');try{await f.locator('[data-drive="left"]').click();}catch(error){console.log('iframe camera failure',await f.evaluate(()=>({state:BridgeportSlice.snapshot(),camera:{height:HuGlobe.viewer().camera.positionCartographic.height,lon:Cesium.Math.toDegrees(HuGlobe.viewer().camera.positionCartographic.longitude),lat:Cesium.Math.toDegrees(HuGlobe.viewer().camera.positionCartographic.latitude)},status:document.querySelector('[data-status]').textContent})));throw error;}
   assert.equal(await f.locator('[data-confirm]').isDisabled(),true);
   assert.equal(await host.evaluate(()=>events.some(e=>e.event==='arrived'&&e.requestId==='manual-interruption-check')),false);
   await f.locator('[aria-label="Street camera"]').selectOption('overview');await f.waitForFunction(()=>HuGlobe.viewer().scene.screenSpaceCameraController.enableInputs);

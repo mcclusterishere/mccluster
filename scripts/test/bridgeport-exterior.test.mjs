@@ -55,3 +55,11 @@ test('camera handoff cancels entry flights before capturing input state and leav
   control.attach();camera.onchange({target:{value:'first',blur(){}}});assert.equal(controller.enableInputs,false);control.detach();assert.equal(controller.enableInputs,true);control.destroy();
  }finally{globalThis.document=previous.document;globalThis.window=previous.window;}
 });
+
+test('ellipsoid fallback uses analytic zero, never coarse mesh interpolation as terrain',async()=>{
+ const {exteriorGround}=await import('../../js/spatial/exterior-controls.mjs');class EllipsoidTerrainProvider{}
+ const viewer={terrainProvider:new EllipsoidTerrainProvider(),scene:{globe:{getHeight:()=>-120}}};
+ assert.equal(exteriorGround(viewer,{EllipsoidTerrainProvider},{}),0);
+ viewer.terrainProvider={};assert.equal(exteriorGround(viewer,{EllipsoidTerrainProvider},{}),-120);
+ viewer.scene.globe.getHeight=()=>undefined;assert.equal(exteriorGround(viewer,{EllipsoidTerrainProvider},{}),0);
+});
