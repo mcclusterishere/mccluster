@@ -201,7 +201,7 @@ test('World is an owner-only door: the Control panel lists it, the tactics menu 
   const adminMarkup = bar.slice(bar.indexOf('function adminBar'), bar.indexOf('function paintAdmin'));
   assert.doesNotMatch(adminMarkup, /href=[^\n]*prim3-world/, 'World uses the shared Games entry rather than a dedicated tab');
   assert.match(bar, /data-appnav="games"/, 'the owner Games entry remains available');
-  assert.match(bar, /data-appnav="halo" aria-label="Open Hitman’s Halo"/, 'the owner globe still opens Hitman\'s Halo');
+  assert.match(bar, /data-appnav="world" aria-label="Open the World globe"/, 'the owner can reach the consumer World alongside Games');
 });
 
 test('no pins on the globe; a country card names the stationed agent and holds the News \u2192 mission hook', async () => {

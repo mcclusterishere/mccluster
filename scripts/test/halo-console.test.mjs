@@ -108,11 +108,13 @@ test('the Control Room and the site menu no longer point at Seek First; every Ha
     assert.doesNotMatch(read(f), /prime\.mccluster\.org/, f + ' links no other Halo');
 });
 
-test('the owner\'s globe in the bar is Hitman\'s Halo; Halo carries the way to the World feed (owner, 2026-10-22)', () => {
+test('the owner globe opens the consumer World and Halo retains its separate door', () => {
   const bar = read('js/tabbar.js');
   const admin = bar.slice(bar.indexOf('function adminBar()'), bar.indexOf('function markAdminHere()'));
-  assert.match(admin, /href="' \+ HOUSE \+ 'action-globe\.html\?explore=1&amp;halo=1" data-appnav="halo" aria-label="Open Hitman’s Halo"/);
-  assert.doesNotMatch(admin, /worldAt\(|data-appnav="world"/, 'the owner bar has no second, user globe');
+  assert.ok(admin.includes('worldAt("?view=feed")'));
+  assert.match(admin, /data-appnav="world" aria-label="Open the World globe"/);
+  assert.doesNotMatch(admin, /data-appnav="halo"/, 'the existing seven-tab layout is retained');
+  assert.match(read('js/site-navigation.js'), /label:'Hitman’s Halo', group:'Products'/);
   /* lit while Halo is on screen */
   assert.match(bar, /action-globe\\\.html\$\/\.test\(location\.pathname\) && new URLSearchParams\(location\.search\)\.has\("halo"\)\) return "halo";/);
   /* everyone else's globe is still the World */

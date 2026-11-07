@@ -278,7 +278,10 @@ try{
     const {ctx,page}=await setup(width);
     await page.goto(BASE+'/city-arcade.html');await page.waitForSelector('body[data-admin-navigation]');
     check(width+' game page marks Games active',await page.locator('[data-appnav="games"][aria-current="page"]').count()===1);
-    await page.locator('.appbar [data-appnav="halo"]').click();await page.waitForURL('**/action-globe.html?explore=1&halo=1');
+    await page.locator('#mccControlToggle').click();
+    await page.locator('#mccDestinations:popover-open').waitFor();
+    await page.locator('#mccDestinationList a').filter({hasText:'Hitman’s Halo'}).click();
+    await page.waitForURL('**/action-globe.html?explore=1&halo=1');
     await page.waitForSelector('body[data-admin-navigation]');
     await page.locator('.appbar [data-appnav="games"]').click();await page.waitForURL('**/game-hub.html');
     await page.waitForSelector('body[data-admin-navigation]');
