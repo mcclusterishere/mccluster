@@ -189,7 +189,7 @@ try{
   const {ctx,page,auth}=await setup(390,'member');await page.goto(BASE+'/create.html',{waitUntil:'domcontentloaded'});await page.waitForSelector('#crWrite:visible');auth.holdToken=true;auth.tokenFail=tokenFail;
   const requested=new Promise(resolve=>auth.tokenStarted=resolve);await page.evaluate(()=>{window.__refresh=MCC.refresh();});await requested;
   await page.evaluate(()=>{const id='22222222-2222-4222-8222-222222222222',exp=Math.floor(Date.now()/1000)+3600;localStorage.setItem('mccdb_session',JSON.stringify({access_token:'x.'+btoa(JSON.stringify({sub:id,exp}))+'.y',expires_at:exp,refresh_token:'new-account-fixture',user:{id}}));});auth.tokenRelease();
-  check('late old-account refresh '+(tokenFail?'failure':'success')+' preserves the new signed-in session',await page.evaluate(async()=>{const s=await __refresh;return s.user.id==='22222222-2222-4222-8222-222222222222'&&MCC.session().user.id===s.user.id;}));await ctx.close();
+  check('late old-account refresh '+(tokenFail?'failure':'success')+' returns no credentials and preserves the new signed-in session',await page.evaluate(async()=>{const stale=await __refresh,current=MCC.session();return stale===null&&current?.user?.id==='22222222-2222-4222-8222-222222222222'&&current.refresh_token==='new-account-fixture';}));await ctx.close();
  }
  {
   const {ctx,page,calls}=await setup(390,'member');await page.goto(BASE+'/mnet.html',{waitUntil:'domcontentloaded'});await page.waitForFunction(()=>window.MCC_BAR?.auth().verified&&!document.getElementById('mnPost').disabled);await page.click('#mnComposeOpen');
