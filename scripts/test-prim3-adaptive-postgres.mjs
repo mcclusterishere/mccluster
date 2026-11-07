@@ -45,6 +45,8 @@ try {
  await until(()=>docker('exec',pg,'pg_isready','-h','127.0.0.1','-U','postgres').includes('accepting'),'PostgreSQL ready');
  for(const file of ['supabase_api_roles.stub.sql','supabase_storage.stub.sql','learning_evidence.stub.sql'])sql(readFileSync(`supabase/tests/${file}`,'utf8'));
  sql(readFileSync('supabase/migrations/20261103182544_learning_evidence_v1.sql','utf8'));
+ sql('create table public.media_news_articles(id uuid primary key,canonical_url text unique,published_at timestamptz,location_country_fips text,title text); alter table public.media_news_articles enable row level security; revoke all on public.media_news_articles from anon,authenticated;');
+ sql(readFileSync('supabase/pending/prim3_reviewed_releases_v1.sql','utf8'));
  sql(`insert into auth.users(id) values('${owner}'),('${other}'); create role authenticator login noinherit; grant anon,authenticated,service_role to authenticator;`);
  writeFileSync(join(dir,'rest.env'),`PGRST_DB_URI=postgres://authenticator@${pg}:5432/postgres\nPGRST_DB_SCHEMAS=public\nPGRST_DB_ANON_ROLE=anon\nPGRST_JWT_SECRET=${secret}\n`,{mode:0o600});
  docker('run','-d','--name',rest,'--network',name,'-p','127.0.0.1::3000','--env-file',join(dir,'rest.env'),REST);
@@ -92,6 +94,50 @@ try {
  const foreign=await ok(call('GET','/progress',undefined,env,{requireHouseOwner:async()=>({id:other})}));
  assert.deepEqual(foreign.progress.recent,[]);
  console.log('PASS cross-session progression uses signed closed math evidence, ignores requested level and isolates users');
+ // Durable reviewed releases reuse existing article records and the #762 compiler.
+ const beforeReleaseCalls=requests;assert.equal((await call('GET','/releases')).status,503);assert.equal(requests,beforeReleaseCalls);
+ env.PRIM3_RELEASES_ENABLED='true';
+ const releaseId=randomUUID(),articleId=randomUUID(),published=new Date(Date.now()-1000).toISOString();
+ sql(`insert into media_news_articles values('${articleId}','https://example.org/source-one','${published}','US','Fixture headline');`);
+ const releaseInput={id:releaseId,article_id:articleId,theme:'comms',review:{fiction:true,geography:true,source:true},input:{schema:'prim3.generated-input/v1',seed:42,objective:'restore',geography:{country:'US',place:'Connecticut training region',lat:41.18,lon:-73.19,terrain:'urban',sourceUrl:'https://example.org/geography'}}};
+ const releaseDoc=await ok(call('POST','/releases',releaseInput));
+ assert.equal(releaseDoc.release.expires_at&&Date.parse(releaseDoc.release.expires_at),Date.parse(published)+86400000);
+ const repeat=await ok(call('POST','/releases',releaseInput));assert.equal(repeat.release.reviewed_at,releaseDoc.release.reviewed_at);
+ assert.equal((await call('POST','/releases',{...releaseInput,id:randomUUID()})).status,409);
+ assert.equal((await call('GET',`/releases/${releaseId}`,undefined,env,{requireHouseOwner:async()=>({id:other})})).status,404);
+ const runId=randomUUID(),boundStart={...start,session_id:runId,release_id:releaseId};
+ const starts=await Promise.all([ok(call('POST','/sessions',boundStart)),ok(call('POST','/sessions',boundStart))]);
+ assert.equal(starts[0].released_mission.id,releaseId);assert.equal(starts[1].session_id,runId);
+ assert.equal(sql(`select count(*) from prim3_release_sessions where session_id='${runId}';`),'1');
+ let run=starts[0];const runSend=async(type,fields={})=>{const e=event(run,type,fields),r=await call('POST',`/sessions/${runId}/events`,e);if(r.status===200)run=await r.json();return {status:r.status,e};};
+ assert.equal((await runSend('begin')).status,200);assert.equal((await runSend('handoff')).status,200);
+ assert.equal((await runSend('answer',{answer:answer(run),checkpointId:'invented'})).status,409);
+ for(let i=0;i<3;i++)assert.equal((await runSend('answer',{answer:answer(run),checkpointId:run.released_mission.next_checkpoint_id})).status,200);
+ assert.equal(run.released_mission.next_checkpoint_id,null);
+ const finished=await runSend('finish',{outcome:'completed'});assert.equal(finished.status,200);assert.equal(run.evidence.closed,true);
+ await ok(call('POST',`/releases/${releaseId}/revoke`,{}));
+ assert.equal((await call('POST','/sessions',{...boundStart,session_id:randomUUID()})).status,409);
+ assert.equal((await call('POST',`/sessions/${runId}/events`,finished.e)).status,200,'accepted retry survives revocation');
+ assert.equal((await call('GET',`/sessions/${runId}`)).status,200);
+ assert.equal(sql('select count(*) from learning_competency_ratings;'),'0');
+ const direct=await originalFetch(`${origin}/rpc/prim3_release_claim`,{method:'POST',headers:{authorization:`Bearer ${jwt('authenticated',owner)}`,'content-type':'application/json'},body:JSON.stringify({p_owner:owner,p_release:releaseId,p_session:randomUUID(),p_seed:1})});assert.equal(direct.ok,false);
+ // Real clock expiry; no browser clock or mutable release field is used.
+ const expArticle=randomUUID(),expId=randomUUID(),at=new Date(Date.now()-86400000+2000).toISOString();
+ sql(`insert into media_news_articles values('${expArticle}','https://example.org/source-expiring','${at}','US','Expiry fixture');`);
+ await ok(call('POST','/releases',{...releaseInput,id:expId,article_id:expArticle}));
+ const expRun=randomUUID();let exp=await ok(call('POST','/sessions',{...start,session_id:expRun,release_id:expId}));
+ await pause(2100);
+ assert.equal((await call('POST','/sessions',{...start,session_id:randomUUID(),release_id:expId})).status,409);
+ assert.equal((await call('POST','/releases',{...releaseInput,id:expId,article_id:expArticle})).status,200,'exact publication retry preserves expired receipt');
+ assert.equal((await call('POST',`/sessions/${expRun}/events`,event(exp,'begin'))).status,409);
+ const staleEvent=await originalFetch(`${origin}/learning_evidence_events`,{method:'POST',headers:{authorization:`Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,'content-type':'application/json'},body:JSON.stringify({id:randomUUID(),session_id:expRun,user_id:owner,seq:1,event_hash:'0'.repeat(64),event_type:'note',payload:{}})});assert.equal(staleEvent.ok,false);
+ assert.equal((await call('GET',`/sessions/${expRun}`)).status,200);
+ const privateRows=await originalFetch(`${origin}/prim3_reviewed_releases?select=id`,{headers:{authorization:`Bearer ${jwt('authenticated',owner)}`}});assert.equal(privateRows.ok,false);
+ for(const objective of ['survey','recover']){
+  const id=randomUUID(),r=await ok(call('POST','/releases',{...releaseInput,id,article_id:null,input:{...releaseInput.input,objective}}));
+  assert.equal(r.release.checkpoint_ids.length,objective==='survey'?4:2);
+ }
+ console.log('PASS durable release retry/deduplication, source provenance, concurrent claim, bound math checkpoints, revocation and real server expiry');
  // Authenticated learners can append self-reported evidence through existing RLS.
  // Even a plausible event ID/shape cannot manufacture server-validated math.
  const forgedSid=randomUUID();await ok(call('POST','/sessions',{...start,session_id:forgedSid}));
@@ -100,6 +146,8 @@ try {
  assert.equal((await call('GET',`/sessions/${sid}`,undefined,{...env,PRIM3_ADAPTIVE_SIGNING_KEY:'different-local-key-000000000000000000'})).status,409);
  assert.equal(sql('select count(*) from learning_competency_ratings;'),'0');
  console.log('PASS self-reported forged evidence and wrong signing key cannot become validated learning credit');
+ if(process.env.PRIM3_RELEASE_BROWSER==='1'){const {runReviewedReleaseBrowser}=await import('./e2e/prim3-reviewed-release.e2e.mjs');await runReviewedReleaseBrowser({handleLearning,env,options});}
+ sql(`begin; set local learning.allow_purge='on'; delete from auth.users where id='${owner}'; rollback;`);
  console.log('PASS isolated PostgreSQL 17.6 + PostgREST 13.0.7 acceptance; no production interaction');
 } finally {
  globalThis.fetch=originalFetch;
