@@ -278,6 +278,20 @@ try{
     await fr.waitForFunction(()=>Math.abs(document.getElementById('guestWorld').getBoundingClientRect().top)<=4,null,{timeout:10000}).catch(()=>{});
     const world=await fr.evaluate(()=>{const g=document.getElementById('guestWorld');return {hidden:g.hidden,h:g.offsetHeight,top:Math.round(g.getBoundingClientRect().top)};});
     check(scope,'the preview shows the guests\' World, and the World button goes to it',!world.hidden&&world.h>0&&Math.abs(world.top)<=4,world);
+    /* Lenis autoResize is debounced. Reproduce the shorter cached layout left by the holding screen,
+       then jump in the same task before ResizeObserver can repair it. Keep the normal button check above. */
+    const pendingResize=await fr.evaluate(()=>{
+      const scrollTo=Lenis.prototype.scrollTo;let engine;
+      try {
+        Lenis.prototype.scrollTo=function(...args){engine=this;return scrollTo.apply(this,args);};
+        window.__MCC_FRONT_GOTO('top');
+      } finally {Lenis.prototype.scrollTo=scrollTo;}
+      engine.dimensions.scrollHeight=engine.dimensions.height; // stale short-page cache, not the real document
+      window.__MCC_FRONT_GOTO('world');
+      return {top:document.getElementById('guestWorld').getBoundingClientRect().top,
+        limit:engine.limit,actualLimit:document.documentElement.scrollHeight-innerHeight};
+    });
+    check(scope,'World navigation refreshes a pending short-page scroll measurement',Math.abs(pendingResize.top)<=4&&pendingResize.limit===pendingResize.actualLimit,pendingResize);
     check(scope,'no horizontal overflow',(await overflow(page))===0,await overflow(page));
     await page.screenshot({path:join(OUT,`front-page-${vp.width}.png`),fullPage:vp.width<1000});
     /* save: what the page applied goes to site_content, with the owner's session */
