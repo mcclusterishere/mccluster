@@ -35,6 +35,20 @@ jobs:
           PW_MODULE: /tmp/smoke-qa/node_modules/playwright
         run: node scripts/smoke.mjs
 
+      - name: Verify BLS owner inspector (sealed fixtures)
+        env:
+          PW_MODULE: /tmp/smoke-qa/node_modules/playwright
+          BLS_PROOF_DIR: /tmp/bls-explorer-proof
+        run: node scripts/e2e/bls-explorer.e2e.mjs
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: bls-explorer-proof
+          path: /tmp/bls-explorer-proof
+          retention-days: 7
+          if-no-files-found: warn
+
       - name: Verify physical computer workbench (sealed fixtures)
         env:
           PW_MODULE: /tmp/smoke-qa/node_modules/playwright
