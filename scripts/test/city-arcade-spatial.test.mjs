@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {acceptsSpatialState,SPATIAL_SCHEMA,SHARED_ENTRANCE,sharedStopId,sharedClosures} from '../../js/city-arcade/sole-spatial.mjs';
 const source={},origin='https://preview.invalid';
-const event=()=>({source,origin,data:{type:'bridgeport:state',schema:SPATIAL_SCHEMA,event:'ready',regionId:'bridgeport-downtown.v2',revision:2,navigationRevision:1,closedRoadIds:[],frameId:'bridgeport-golden-hill.enu.v1',floorId:'street',entranceId:SHARED_ENTRANCE,topology:'hex',position:{x:0,y:0,z:0},capabilities:['exterior-navigation','road-closures']}});
+const event=()=>({source,origin,data:{type:'bridgeport:state',schema:SPATIAL_SCHEMA,event:'ready',entered:true,loaded:true,regionId:'bridgeport-downtown.v2',revision:2,navigationRevision:1,closedRoadIds:[],frameId:'bridgeport-golden-hill.enu.v1',floorId:'street',entranceId:SHARED_ENTRANCE,topology:'hex',position:{x:0,y:0,z:0},capabilities:['exterior-navigation','road-closures']}});
 test('City lifecycle consumer accepts pinned square/hex positions without converting legacy saves',()=>{
  for(const topology of ['hex','square']){const e=event();e.data.topology=topology;assert.equal(acceptsSpatialState(e,source,origin),true);}
 });
@@ -63,6 +63,8 @@ test('only correlated current requests award once; late, wrong and invalidated r
  const a=request(f,'bridgeport-main-elm');
  f.emit('arrived',{requestId:'old',destinationId:a.destinationId});assert.equal(awards.length,0);
  f.emit('arrived',{requestId:a.requestId,destinationId:'bridgeport-main-south'});assert.equal(awards.length,0);
+ f.emit('arrived',{requestId:a.requestId,destinationId:a.destinationId,entered:false});assert.equal(awards.length,0);
+ f.emit('arrived',{requestId:a.requestId,destinationId:a.destinationId,loaded:false});assert.equal(awards.length,0);
  f.emit('arrived',{requestId:a.requestId,destinationId:a.destinationId});f.emit('arrived',{requestId:a.requestId,destinationId:a.destinationId});assert.equal(awards.length,1);
  const b=request(f,'bridgeport-main-fairfield');f.emit('closures-changed',{navigationRevision:2});f.emit('arrived',{requestId:b.requestId,destinationId:b.destinationId,navigationRevision:2});assert.equal(awards.length,1);
  const c=request(f,'bridgeport-main-fairfield');f.controls.get('[data-spatial-return]').onclick();f.emit('arrived',{requestId:c.requestId,destinationId:c.destinationId,navigationRevision:2});assert.equal(awards.length,1);

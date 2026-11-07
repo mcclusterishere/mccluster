@@ -53,7 +53,7 @@ export function mountSoleSpatial(root,{locationId,onActive,onArrival=()=>false,c
   }
   if(d.event==='arrived'){
    const attempt=pendingArrival;
-   if(!ready||waitingClosures||!attempt||d.requestId!==attempt.requestId||d.destinationId!==attempt.destinationId||d.navigationRevision!==attempt.navigationRevision||!sameIds(d.closedRoadIds,desired))return;
+   if(!ready||waitingClosures||d.entered!==true||d.loaded!==true||!attempt||d.requestId!==attempt.requestId||d.destinationId!==attempt.destinationId||d.navigationRevision!==attempt.navigationRevision||!sameIds(d.closedRoadIds,desired))return;
    pendingArrival=null;
    const awarded=onArrival(attempt);
    const m=getMission();target.selectedIndex=m.index>=4?targets.length-1:m.index;
