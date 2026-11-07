@@ -92,10 +92,15 @@ export function installMusicJourneys({ root }) {
     capsule.querySelector('[data-next]').onclick = () => run(() => engine.next());
     movement = mountCapsule({root:capsule, workspace:shell, storageKey:'mcc.music.capsule.v1'});
     new MutationObserver(() => { if (destination) conceal(); }).observe(document.body, {childList:true});
-    // Child load alone is not proof of a usable room: attach() is the handshake.
+    // Normal rooms acknowledge through their shared bar. A load event also fires
+    // for same-origin HTTP error documents, so it cannot acknowledge those rooms.
+    // These two legacy rooms have no bar; their authored owner gate is the fallback.
     frame.addEventListener('load', () => {
-      try { if (accepts(frame.contentWindow)) attach(frame.contentWindow); }
-      catch { /* visible timeout recovery remains available */ }
+      try {
+        const child = frame.contentWindow;
+        if (accepts(child) && /^\/(?:equity-uprise-server-lab-3d\.html|screens\/terminal\.html)$/.test(child.location.pathname) &&
+            (child.document.querySelector('[data-owner-gate]') || child.document.documentElement.dataset.ownerAccess)) attach(child);
+      } catch { /* visible timeout recovery remains available */ }
     });
   }
   function ready(child) {
@@ -169,8 +174,9 @@ export function installMusicJourneys({ root }) {
     shell.querySelector('[data-direct]').href = destination;
     shell.querySelector('[data-direct]').onclick = e => { e.preventDefault(); location.assign(destination); };
     clearTimeout(timer);
-    if (!retry && previous && sameRoom(u, new URL(previous)) && accepts(frame.contentWindow)) {
-      frame.contentWindow.location.replace(u.href); ready(frame.contentWindow); return true;
+    if (!retry && previous && sameRoom(u, new URL(previous)) && accepts(frame.contentWindow) &&
+        frame.contentWindow.__mccMusicRoomAttached && sameRoom(u, new URL(frame.contentWindow.location.href))) {
+      frame.contentWindow.location.hash = u.hash; ready(frame.contentWindow); return true;
     }
     status('Opening page…'); frame.contentWindow.location.replace(destination);
     timer = setTimeout(() => status('This page has not finished opening. Retry or return; your music is still here.'), 15000);
