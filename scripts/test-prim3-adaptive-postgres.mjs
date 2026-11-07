@@ -122,11 +122,13 @@ try {
  assert.equal(sql('select count(*) from learning_competency_ratings;'),'0');
  const direct=await originalFetch(`${origin}/rpc/prim3_release_claim`,{method:'POST',headers:{authorization:`Bearer ${jwt('authenticated',owner)}`,'content-type':'application/json'},body:JSON.stringify({p_owner:owner,p_release:releaseId,p_session:randomUUID(),p_seed:1})});assert.equal(direct.ok,false);
  // Real clock expiry; no browser clock or mutable release field is used.
- const expArticle=randomUUID(),expId=randomUUID(),at=new Date(Date.now()-86400000+2000).toISOString();
+ const expArticle=randomUUID(),expId=randomUUID(),at=new Date(Date.now()-86400000+5000).toISOString();
  sql(`insert into media_news_articles values('${expArticle}','https://example.org/source-expiring','${at}','US','Expiry fixture');`);
  await ok(call('POST','/releases',{...releaseInput,id:expId,article_id:expArticle}));
  const expRun=randomUUID();let exp=await ok(call('POST','/sessions',{...start,session_id:expRun,release_id:expId}));
- await pause(2100);
+ const expTopology=[];for(const topology of ['square','hex']){const id=randomUUID();expTopology.push([id,await ok(call('POST','/sessions',{...start,session_id:id,release_id:expId,learning_context:{version:'prim3.lattice-learning/v1',variant:'city',topology}}))]);}
+ await pause(5100);
+ for(const [id,v] of expTopology)assert.equal((await call('POST',`/sessions/${id}/events`,event(v,'begin'))).status,409);
  assert.equal((await call('POST','/sessions',{...start,session_id:randomUUID(),release_id:expId})).status,409);
  assert.equal((await call('POST','/releases',{...releaseInput,id:expId,article_id:expArticle})).status,200,'exact publication retry preserves expired receipt');
  assert.equal((await call('POST',`/sessions/${expRun}/events`,event(exp,'begin'))).status,409);
@@ -138,6 +140,30 @@ try {
   assert.equal(r.release.checkpoint_ids.length,objective==='survey'?4:2);
  }
  console.log('PASS durable release retry/deduplication, source provenance, concurrent claim, bound math checkpoints, revocation and real server expiry');
+ for(const topology of ['square','hex']){
+  const rid=randomUUID(),released=await ok(call('POST','/releases',{...releaseInput,id:rid,article_id:null,input:{...releaseInput.input,seed:topology==='hex'?901:902}}));
+  const context={version:'prim3.lattice-learning/v1',variant:'city',topology},id=randomUUID();
+  const racedId=randomUUID(),raced=await Promise.all(['square','hex'].map(t=>call('POST','/sessions',{...start,session_id:racedId,release_id:rid,learning_context:{...context,topology:t}})));assert.deepEqual(raced.map(r=>r.status).sort(),[200,409]);
+  assert.equal((await call('POST','/sessions',{...start,session_id:randomUUID(),release_id:rid,learning_context:{...context,expected:1}})).status,400);
+  let v=await ok(call('POST','/sessions',{...start,session_id:id,release_id:rid,learning_context:context}));
+  const post=async(type,fields={})=>{const e=event(v,type,fields);v=await ok(call('POST',`/sessions/${id}/events`,e));return e;};
+  await post('begin');await post('handoff');
+  assert.equal((await call('POST','/sessions',{...start,session_id:id,release_id:rid,learning_context:{...context,topology:topology==='hex'?'square':'hex'}})).status,409);
+  await post('answer',{answer:-1,correct:true,expected:-1,checkpointId:v.released_mission.next_checkpoint_id});assert.equal(v.result.correct,false);
+  await post('hint',{checkpointId:v.released_mission.next_checkpoint_id});
+  for(let i=0;i<3;i++){
+   const m=v.flow.question.prompt.match(/from \((-?\d+), (-?\d+)\) to \((-?\d+), (-?\d+)\)/),[,x,y,X,Y]=m.map(Number),dq=X-x,dr=Y-y;
+   const e=await post('answer',{answer:topology==='hex'?Math.max(Math.abs(dq),Math.abs(dr),Math.abs(dq+dr)):Math.abs(dq)+Math.abs(dr),checkpointId:v.released_mission.next_checkpoint_id});
+   assert.equal(v.result.correct,true);if(i===0)assert.equal(v.result.independent,false);
+   const recovered=await ok(call('POST',`/sessions/${id}/events`,e));assert.equal(recovered.evidence.event_count,v.evidence.event_count);
+   v=await ok(call('GET',`/sessions/${id}`));
+  }
+  await post('finish',{outcome:'abandoned'});assert.equal(v.evidence.closed,true);assert.equal(v.flow.debrief.correct,3);
+  const activeId=randomUUID();let active=await ok(call('POST','/sessions',{...start,session_id:activeId,release_id:rid,learning_context:context}));
+  await ok(call('POST',`/releases/${rid}/revoke`,{}));assert.equal((await call('POST',`/sessions/${activeId}/events`,event(active,'begin'))).status,409);
+ }
+ console.log('PASS square/hex signed replay: wrong/correct/hinted answers, forged context, immutable mode, lost ACK, reload, debrief and revocation');
+
  // Authenticated learners can append self-reported evidence through existing RLS.
  // Even a plausible event ID/shape cannot manufacture server-validated math.
  const forgedSid=randomUUID();await ok(call('POST','/sessions',{...start,session_id:forgedSid}));
@@ -146,6 +172,7 @@ try {
  assert.equal((await call('GET',`/sessions/${sid}`,undefined,{...env,PRIM3_ADAPTIVE_SIGNING_KEY:'different-local-key-000000000000000000'})).status,409);
  assert.equal(sql('select count(*) from learning_competency_ratings;'),'0');
  console.log('PASS self-reported forged evidence and wrong signing key cannot become validated learning credit');
+ if(process.env.PRIM3_TOPOLOGY_BROWSER==='1'){const {runTopologyLearningBrowser}=await import('./e2e/prim3-topology-learning.e2e.mjs');await runTopologyLearningBrowser({handleLearning,env,options});}
  if(process.env.PRIM3_RELEASE_BROWSER==='1'){const {runReviewedReleaseBrowser}=await import('./e2e/prim3-reviewed-release.e2e.mjs');await runReviewedReleaseBrowser({handleLearning,env,options});}
  sql(`begin; set local learning.allow_purge='on'; delete from auth.users where id='${owner}'; rollback;`);
  console.log('PASS isolated PostgreSQL 17.6 + PostgREST 13.0.7 acceptance; no production interaction');

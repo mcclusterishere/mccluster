@@ -11,7 +11,7 @@ const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript'
 export async function runReviewedReleaseBrowser({handleLearning,env,options}){
  assert.equal(JSON.parse(await readFile(join(THREE,'package.json'),'utf8')).version,'0.180.0');
  const browser=await chromium.launch({headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{}),args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
- try{for(const width of [390,1280]){
+ try{for(const [width,mathMode] of [[390,'legacy'],[1280,'legacy'],[390,'square']]){
   const ctx=await browser.newContext({viewport:{width,height:900}}),page=await ctx.newPage(),errors=[];
   // Hold the final operator model until the first real move is animating.
   // Late model arrival used to discard walk.done and leave the UI busy forever.
@@ -40,8 +40,8 @@ export async function runReviewedReleaseBrowser({handleLearning,env,options}){
   console.log(`Browser release journey ${width}px: review`);
   await page.goto(BASE+'/prim3-released-mission.html');
   await page.waitForFunction(()=>document.getElementById('releasePublish')?.disabled===false);
-  await page.fill('#releaseSeed',String(width));await page.check('#releaseFiction');await page.check('#releaseGeography');await page.click('#releasePublish');
-  await page.locator('#releaseBrief').waitFor({state:'visible'});await page.click('#releaseStart');
+  await page.fill('#releaseSeed',String(width+(mathMode==='square'?2000:0)));await page.check('#releaseFiction');await page.check('#releaseGeography');await page.click('#releasePublish');
+  await page.locator('#releaseBrief').waitFor({state:'visible'});await page.selectOption('#learningTopology',mathMode);await page.click('#releaseStart');
   const frame=await (await page.locator('#releaseGame').elementHandle()).contentFrame();
   await frame.waitForFunction(()=>window.__tx?.r3&&!__tx.busy,null,{timeout:60000});
   // A bounded setup failure is more useful than silently missing the race.
@@ -95,8 +95,9 @@ export async function runReviewedReleaseBrowser({handleLearning,env,options}){
     const ready=await page.evaluate(async()=>{const {checkpointReady}=await import('/js/prim3-mission/released-learning.mjs'),s=document.getElementById('releaseGame').contentWindow.__tx.state,cp=document.getElementById('releaseCheckpoint').textContent.split(' · ')[0];return checkpointReady(s,s.battlefield.generated.recipeId,cp);});
     if(!ready)break;
     await page.waitForFunction(()=>!document.getElementById('releaseSubmit').disabled);
-    const previous=await page.locator('#releaseCheckpoint').textContent(),n=(await page.locator('#releaseQuestion').textContent()).match(/-?\d+/g).map(Number);
-    await page.fill('#releaseAnswer',String(Math.abs(n[2]-n[0])));await page.click('#releaseSubmit');
+    const previous=await page.locator('#releaseCheckpoint').textContent(),prompt=await page.locator('#releaseQuestion').textContent(),n=prompt.match(/-?\d+/g).map(Number),pair=prompt.match(/from \((-?\d+), (-?\d+)\) to \((-?\d+), (-?\d+)\)/);
+    const expected=mathMode==='legacy'?Math.abs(n[2]-n[0]):Math.abs(Number(pair[3])-Number(pair[1]))+Math.abs(Number(pair[4])-Number(pair[2]));
+    await page.fill('#releaseAnswer',String(expected));await page.click('#releaseSubmit');
     await page.waitForFunction(old=>document.getElementById('releaseCheckpoint').textContent!==old,previous);
    }
   }
@@ -106,7 +107,7 @@ export async function runReviewedReleaseBrowser({handleLearning,env,options}){
   await page.waitForFunction(()=>document.getElementById('releaseSummary').textContent.includes('3/3 answers correct'));
   await page.reload();await page.waitForFunction(()=>document.getElementById('releaseSummary')?.textContent.includes('3/3 answers correct'));
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth),true);assert.deepEqual(errors,[]);
-  console.log(`PASS ${width}px real SQL review → existing tactical gameplay → inline validated checkpoints → debrief/reload; ordinary opponents, no state injection`);
+  console.log(`PASS ${width}px ${mathMode} real SQL review → existing tactical gameplay → inline validated checkpoints → debrief/reload; ordinary opponents, no state injection`);
   await ctx.close();
  }}finally{await browser.close();}
 }

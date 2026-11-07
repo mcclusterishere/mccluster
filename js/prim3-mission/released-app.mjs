@@ -1,10 +1,11 @@
+import { LEARNING_VARIANTS, learningContext } from '../../PRIM3/game/halo/adaptive/topology-learning.mjs';
 import {storedToken,SESSION_KEY} from '../owner-only.mjs';
 import {createPracticeClient} from './client.mjs';
 import {createReleasedLearning} from './released-learning.mjs';
 import {saveGeneratedRecipe} from '../prim3-tactics/levels/generated.mjs';
 const $=id=>document.getElementById(id),practice=createPracticeClient({token:()=>storedToken()});
 const base='https://api.mccluster.org/v1/prim3/learning/adaptive/releases';
-let selected=null,learning=null,busy=false,publishId=crypto.randomUUID(),timer=null,sources=[];
+let selected=null,learning=null,busy=false,publishId=crypto.randomUUID(),timer=null,sources=[],context=null,citySnapshot=null;
 const status=text=>{$('releaseStatus').textContent=text;};
 async function api(path='',method='GET',body){const token=storedToken();if(!token)throw Error('Sign in again.');const r=await fetch(base+path,{method,headers:{authorization:`Bearer ${token}`,'content-type':'application/json'},body:body?JSON.stringify(body):undefined,cache:'no-store',redirect:'error',signal:AbortSignal.timeout(12000)});if(storedToken()!==token)throw Error('Account changed. Reload.');const out=await r.json();if(!r.ok)throw Error(out.error||'Release unavailable');return out;}
 async function run(fn){if(busy)return;busy=true;try{await fn();}catch(e){status(e.message);}finally{busy=false;render();}}
@@ -34,10 +35,14 @@ $('releaseStart').onclick=()=>run(async()=>{
  if(timer){clearInterval(timer);timer=null;}learning=null;
  if(practice.current?.flow.phase==='debrief')practice.newPractice();
  if(practice.current&&practice.current.released_mission?.id!==selected.id)throw Error('Finish the existing practice before changing releases.');
- const candidate=createReleasedLearning({practice,release:selected,getTacticalState:()=>$('releaseGame').contentWindow?.__tx?.state});
+ context=practice.current?.flow.learning_context??($('learningTopology').value==='legacy'?null:learningContext({version:'prim3.lattice-learning/v1',variant:$('learningVariant').value,topology:$('learningTopology').value}));
+ if(context){$('learningVariant').value=context.variant;$('learningTopology').value=context.topology;describeMode();}
+ if(!context&&$('learningVariant').value!=='generated')throw Error('Select a supported lattice learning mode for this variant.');
+ const candidate=createReleasedLearning({practice,release:selected,getTacticalState:gameSnapshot,context});
  await candidate.open();learning=candidate;
  // Save only the immutable reviewed input; the existing generated level owns gameplay.
- const saved=saveGeneratedRecipe(selected.recipe_input);
+ const saved=!context||context.variant==='generated'?saveGeneratedRecipe(selected.recipe_input):{href:LEARNING_VARIANTS[context.variant].href+(context.variant==='city'?'?topology='+context.topology:'')};
+ citySnapshot=null;
  $('releaseGame').hidden=false;$('releaseGame').src=saved.href;$('releasePlay').hidden=false;
  if(timer)clearInterval(timer);timer=setInterval(render,500);status('Complete the mission steps and answer their math here.');
 });
@@ -49,4 +54,14 @@ $('releaseLeave').onclick=()=>run(async()=>{await practice.leaveUnavailableRelea
 $('releaseRevoke').onclick=()=>run(async()=>{await api('/'+selected.id+'/revoke','POST',{});await choose(selected.id);await list();status('Release revoked. Existing evidence is retained.');});
 function conceal(){if(timer)clearInterval(timer);practice.clear();$('releaseGame').src='about:blank';document.querySelector('.pm').hidden=true;}
 window.addEventListener('mcc:auth-changed',conceal);window.addEventListener('storage',e=>{if(e.key===SESSION_KEY||e.key===null)conceal();});window.addEventListener('pagehide',()=>{if(timer)clearInterval(timer);});
-await run(async()=>{const {config}=await practice.connect();if(!config.enabled||!config.releases_enabled)throw Error('Reviewed missions are not enabled. No release has been written.');$('releasePublish').disabled=false;await list();try{sources=(await api('/sources')).sources;for(const s of sources){let u;try{u=new URL(s.canonical_url);}catch{continue;}if(u.protocol!=='https:')continue;const o=document.createElement('option');o.value=s.id;o.textContent=`${s.title} · ${s.published_at}`;$('releaseSource').append(o);}}catch{status('News discovery unavailable; reviewed offline practice remains available.');}if(practice.current?.released_mission){await choose(practice.current.released_mission.id);if(practice.current.flow.phase==='debrief'){learning=createReleasedLearning({practice,release:selected,getTacticalState:()=>null});$('releasePlay').hidden=false;$('releaseGame').hidden=true;}}});
+await run(async()=>{const {config}=await practice.connect();if(!config.enabled||!config.releases_enabled)throw Error('Reviewed missions are not enabled. No release has been written.');$('releasePublish').disabled=false;await list();try{sources=(await api('/sources')).sources;for(const s of sources){let u;try{u=new URL(s.canonical_url);}catch{continue;}if(u.protocol!=='https:')continue;const o=document.createElement('option');o.value=s.id;o.textContent=`${s.title} · ${s.published_at}`;$('releaseSource').append(o);}}catch{status('News discovery unavailable; reviewed offline practice remains available.');}if(practice.current?.released_mission){await choose(practice.current.released_mission.id);if(practice.current.flow.phase==='debrief'){context=practice.current.flow.learning_context??null;learning=createReleasedLearning({practice,release:selected,getTacticalState:()=>null,context});$('releasePlay').hidden=false;$('releaseGame').hidden=true;}}});
+
+function gameSnapshot(){
+ const w=$('releaseGame').contentWindow;if(!context||context.variant==='generated')return w?.__tx?.state;
+ if(context.variant==='city')return citySnapshot?.();
+ if(context.variant==='courtyard'){const s=w?.__PRIM3?.snapshot();return s?{variant:'courtyard',topology:'square',turn:s.turn,hasActed:s.units.some(u=>u.ap<2)}:null;}
+ const s=w?.__tx?.state;return s?{variant:context.variant,topology:'square',turn:s.round,hasActed:s.units.some(u=>u.faction==='PLAYER'&&u.ap<2)}:null;
+}
+$('releaseGame').addEventListener('load',async()=>{if(context?.variant==='city'){try{const w=$('releaseGame').contentWindow;citySnapshot=()=>w.__prim3CityLearningSnapshot?.();}catch{status('City learning snapshot unavailable. Resume the same mission.');}}});
+function describeMode(){const v=$('learningVariant').value,t=$('learningTopology').value;$('learningFrame').textContent=LEARNING_VARIANTS[v].title+'. '+LEARNING_VARIANTS[v].frame+'. '+(v==='generated'?'Math follows the generated objective steps.':'Answer after a first action or turn, then after turns two and three. Combat progress is browser-reported.');$('learningTopology').querySelector('[value=hex]').disabled=v!=='city';$('learningTopology').querySelector('[value=legacy]').disabled=v!=='generated';if((t==='hex'&&v!=='city')||(t==='legacy'&&v!=='generated'))$('learningTopology').value='square';}
+$('learningVariant').onchange=describeMode;describeMode();

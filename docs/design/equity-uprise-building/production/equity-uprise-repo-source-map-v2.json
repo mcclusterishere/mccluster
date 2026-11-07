@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 635,
+  "candidate_count": 640,
   "capability_source_count": 104,
-  "support_only_count": 531,
+  "support_only_count": 536,
   "entries": [
     {
       "path": ".cursorrules",
@@ -4718,6 +4718,41 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Tests binding existing building screens to inventoried hardware."
+    },
+    {
+      "path": "PRIM3/game/halo/adaptive/topology-learning.mjs",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Versioned mathematical practice and its reviewed mission UI/tests reuse the existing HQ/B1 tactical projection. They add no building geometry, floor program, capability ownership or competency credit."
+    },
+    {
+      "path": "docs/prim3/TOPOLOGY-LEARNING.md",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Versioned mathematical practice and its reviewed mission UI/tests reuse the existing HQ/B1 tactical projection. They add no building geometry, floor program, capability ownership or competency credit."
+    },
+    {
+      "path": "prim3-released-mission.html",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Versioned mathematical practice and its reviewed mission UI/tests reuse the existing HQ/B1 tactical projection. They add no building geometry, floor program, capability ownership or competency credit."
+    },
+    {
+      "path": "scripts/e2e/prim3-topology-learning.e2e.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Versioned mathematical practice and its reviewed mission UI/tests reuse the existing HQ/B1 tactical projection. They add no building geometry, floor program, capability ownership or competency credit."
+    },
+    {
+      "path": "scripts/test/prim3-topology-learning.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Versioned mathematical practice and its reviewed mission UI/tests reuse the existing HQ/B1 tactical projection. They add no building geometry, floor program, capability ownership or competency credit."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",

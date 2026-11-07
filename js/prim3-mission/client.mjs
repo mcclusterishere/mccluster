@@ -48,11 +48,11 @@ export function createPracticeClient({ fetchImpl = globalThis.fetch, token, stor
       if (data.sessionId) current = await request('GET', `/sessions/${data.sessionId}`);
       return { config, current };
     },
-    start(review, { releaseId } = {}) {
+    start(review, { releaseId, learningContext } = {}) {
       if (data.sessionId) throw new Error('Continue the current session.');
       if (review?.fictionChecked !== true || review?.geographyChecked !== true) throw new Error('Complete both owner review checks first.');
       if (releaseId !== undefined && !UUID.test(releaseId)) throw new Error('Release UUID required.');
-      return queue('/sessions', { ...(releaseId ? {release_id:releaseId}:{}), session_id: crypto.randomUUID(), template_id: 'relay-distance-v1', review });
+      return queue('/sessions', { ...(releaseId ? {release_id:releaseId}:{}), ...(learningContext ? {learning_context:learningContext}:{}), session_id: crypto.randomUUID(), template_id: 'relay-distance-v1', review });
     },
     submit(type, fields = {}) {
       if (!current) throw new Error('Start the reviewed mission first.');
