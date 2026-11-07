@@ -124,6 +124,21 @@ the lore file (Core's 512 KB limit) and lore never goes into the places file.
 - The original block, footbridge and island are the resident hub, drawn exactly as before.
 - The scene reads chunks through one interface, so the reserved neighbourhood (or any later region) can be a
   second tile source rather than more entries in this file.
+- **Surveyed neighbourhoods are that second source** (2026-11-03, after #721/#722). `js/fictional-city/neighborhood-chunks.mjs`
+  cuts `district.v1.json → neighborhoods[]` (Bridgeport today; any footprint set) into the same 64 m chunks at runtime: a
+  place by the centre of its footprint bounds, a street piece (segments cut at 24 m, abutting exactly) by its midpoint,
+  dashes, road-name posts, lamps and trees by their own point; a chunk's load bounds are widened to cover its own
+  buildings, so a 100 m footprint is built before any part of it can enter the view. Nothing is published for it. The
+  scene draws per chunk: exact extruded footprint bodies, windows and signs in bins bounded by one building each (so
+  the renderer's frustum test drops an off-screen building's windows), streets and furniture in the chunk's own bins.
+  The fallback for such a tile is the same exact footprint bodies without windows, never a rectangle. Always resident:
+  the neighbourhood's land slabs, collision, story markers/props, interaction targets and occluders.
+  `getStats().breakdown` (on demand, never per frame) reports draws/triangles per region for the current camera.
+  Same spot, same camera, SwiftShader (Chromium 153, DPR 1; not a device): opening view 1440 × 900 **116,886 → 40,466**
+  triangles (110 → 104 draws), 390 × 844 **114,942 → 38,666** (85 → 79); Bridgeport spawn 113,414 → 53,814; the
+  donation bin 99,764 → 48,244; Common Yard 99,080 → 23,860; Night Shift Club 105,172 → 65,256 (draws there 30 → 68:
+  per-building bins trade a few draws for half the triangles). Of what remains everywhere, 21,856 triangles are the
+  actor batches (`frustumCulled = false`, hidden people scaled to zero but still counted); that is the next candidate.
 
 ## 6. PRIM3 and the shared places
 
@@ -182,10 +197,14 @@ real-geography ingestion, region/planet travel, per-business interiors, cloud sa
   The new neighbourhoods are not promoted into #721's `neighborhoods` array: that array is for playable areas with
   their own surfaces/roads/places and its validator; the new areas' geography lives here and lore stays in the
   expansion arrays, so there is one data contract per concern.
-- **Civic institutions.** The lore's police precinct, public school and church occupy the authored parcels
-  `civic-center/police-station`, `northside-residential/public-school` and `civic-center/church`. Those parcels are
-  in the authored harbor plan, not on surveyed Bridgeport ground, and never replace a real government site.
-  Their naming is with the owner; geography does not depend on it.
+- **Civic institutions.** The owner named them on 2026-11-03: `civic-center/police-station` is the real
+  Bridgeport Police Department (300 Congress Street) and `northside-residential/public-school` is the real Harding
+  High School (379 Bond Street); `civic-center/church` stays the fictional Tabernacle. The two real
+  institutions carry `realInstitution: true` on their parcels. Their parcels are in the authored harbor plan, not
+  at their surveyed locations: their identity and address are `verified` and their footprint and coordinates are
+  `authored` in each record's `realInstitution.fieldProvenance`. Placing them at their real addresses is a later,
+  sourced geography change (CT footprint plus OSM ODbL attribution). The lore's paid
+  interactions now sit on `hq-waterfront/shop-01` (Hail Mary Bail Bonds), never on a real institution.
 - **Stable IDs for future portals.** Parcel IDs (`<neighbourhood>/<parcel>`) and the original business IDs are the
   stable place IDs a later `placeId` game portal can target; nothing here builds arcade or Designer Kicks mechanics.
 - **A region as a second tile source (#723).** The scene's chunk loader takes `{ chunks: [{ id, bounds, file }] }`

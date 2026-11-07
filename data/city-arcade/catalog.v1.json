@@ -6,13 +6,13 @@
   "games": [
     {
       "id": "designer-kicks-sole-run",
-      "title": "Designer Kicks · Sole Run",
+      "title": "Designer Kicks \u00b7 Sole Run",
       "scope": "city",
       "placeId": null,
       "status": "playable",
-      "genre": "Shoe-collecting strategy",
-      "length": "2–4 minutes",
-      "blurb": "Collect four supernatural pairs, equip abilities and manage police heat. A distinct sandbox, not the scripted Robbery 1s episode.",
+      "genre": "Street-running shoe collector",
+      "length": "2\u20133 minutes",
+      "blurb": "Follow glowing checkpoints through Bridgeport, starting with Robbery 1s. Take optional Fashion Police costume missions.",
       "rating": "Teen candidate"
     },
     {
@@ -21,9 +21,9 @@
       "scope": "store",
       "placeId": "gauranfucking-tea",
       "status": "playable",
-      "genre": "Quick order matching",
-      "length": "1 minute",
-      "blurb": "Five customers, five blends, one streak. Serve the counter before everybody leaves.",
+      "genre": "Brew-and-deliver action",
+      "length": "75 seconds",
+      "blurb": "Run the counter. Brew the right blend, carry it to your customer and beat the clock.",
       "rating": "Everyone candidate"
     },
     {
@@ -33,7 +33,7 @@
       "placeId": "hordash",
       "status": "planned",
       "genre": "Scheduling puzzle",
-      "length": "1–2 minutes",
+      "length": "1\u20132 minutes",
       "blurb": "Untangle a day of double-booked appointment mix-ups.",
       "rating": "Pending content review"
     },
@@ -44,7 +44,7 @@
       "placeId": "mike-hawk",
       "status": "planned",
       "genre": "Satirical sorting puzzle",
-      "length": "1–2 minutes",
+      "length": "1\u20132 minutes",
       "blurb": "Arrange campaign posters and debate cards before the doors open.",
       "rating": "Teen candidate"
     },
@@ -66,7 +66,7 @@
       "placeId": "hitman-gear",
       "status": "planned",
       "genre": "Wardrobe assembly",
-      "length": "1–2 minutes",
+      "length": "1\u20132 minutes",
       "blurb": "Dress a film extra with the right costume props.",
       "rating": "Everyone candidate"
     },
@@ -88,7 +88,7 @@
       "placeId": "pressure-tv",
       "status": "planned",
       "genre": "Video sequence puzzle",
-      "length": "1–2 minutes",
+      "length": "1\u20132 minutes",
       "blurb": "Put out-of-order TV clips back into a coherent scene.",
       "rating": "Everyone candidate"
     },
@@ -99,7 +99,7 @@
       "placeId": "baddies-on-wheels",
       "status": "planned",
       "genre": "Vehicle parking puzzle",
-      "length": "1–2 minutes",
+      "length": "1\u20132 minutes",
       "blurb": "Navigate an abstract parking-lot grid against a clock.",
       "rating": "Everyone candidate"
     }

@@ -38,6 +38,7 @@
    PUT  /v1/prim3/learning/exercises/:id/hotwash | aar
    PATCH /v1/prim3/learning/improvements/:id */
 import { fail, reply } from '../lib/http.js';
+import { routeAdaptive, ADAPTIVE_PACK } from './adaptive-learning.js';
 import PATHWAYS from '../../../../docs/design/equity-uprise-development/LEARNING-PATHWAYS.json' with { type: 'json' };
 import FEDERAL from '../../../../docs/design/equity-uprise-development/FEDERAL-TRAINING-CATALOG.json' with { type: 'json' };
 import INDUSTRY from '../../../../docs/design/equity-uprise-development/INDUSTRY-CERTIFICATION-MAP.json' with { type: 'json' };
@@ -297,6 +298,7 @@ export function validateEvent(raw, scenario) {
 
 async function appendEvents(request, env, user, id) {
   const session = await ownSession(env, user, id);
+  if (session.pack_id === ADAPTIVE_PACK) throw bad('Use the validated adaptive practice endpoint', 409);
   if (session.outcome !== 'in_progress') throw bad('This session is closed; its evidence is final', 409);
   const body = await readJson(request);
   const list = Array.isArray(body.events) ? body.events : [body];
@@ -317,6 +319,7 @@ async function appendEvents(request, env, user, id) {
 
 async function completeSession(request, env, user, id) {
   const session = await ownSession(env, user, id);
+  if (session.pack_id === ADAPTIVE_PACK) throw bad('Use the validated adaptive practice endpoint', 409);
   if (session.outcome !== 'in_progress') throw bad('This session is already closed', 409);
   const body = await readJson(request);
   const outcome = String(body.outcome || '');
@@ -758,6 +761,12 @@ async function route(request, env, options, path) {
 
   if (!parts.length) { if (m !== 'GET') notAllowed(); await learner(request, env, options); return done(registryBody()); }
   const [head, id, sub] = parts;
+
+  // Deliberately stays owner-only even if the general learning audience opens later.
+  if (head === 'adaptive') {
+    const user = await options.requireHouseOwner(request, env);
+    return done(await routeAdaptive(request, env, user, parts.slice(1), db));
+  }
 
   if (head === 'catalog' && parts.length === 1) { if (m !== 'GET') notAllowed(); await learner(request, env, options); return done(catalogBody()); }
 

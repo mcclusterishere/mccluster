@@ -13,15 +13,14 @@ canonical, structured data) is the owner's call.
 
 - **Main panel**: the selected course's game cards. A `link` game opens its own page. An `embedded` game runs inside
   the hub page, so the music keeps playing while you play.
-- **Music bar**: play/pause, next and the track title for the selected course's paired album. Above the course icons.
-- **Course icons**: one per learning module, at the bottom of the screen, just above the shared app bar (`js/tabbar.js`,
-  which every page keeps). Picking an icon switches the panel and the music.
+- **Floating capsule**: current song, play/pause and next, with Games opening the course selector and position controls. It starts collapsed and collapses on game start. Move its dedicated handle by touch/mouse or arrow keys; Home or Reset restores the initial position.
+- **Course icons**: selecting a course changes the main panel. The current song continues; Play course soundtrack explicitly selects the course album. The shared app bar remains unchanged.
 
 The address is `game-hub.html#m=<module>[&play=<game>]`, so a course or a game can be linked directly. The last
 course you picked is remembered in this browser.
 
 Files: `game-hub.html`, `css/game-hub.css`, `js/game-hub/hub.mjs` (page), `js/game-hub/modules.mjs` (schema and
-checks), `js/game-hub/player.mjs` (music), `js/game-hub/chem108/` (Molecule Rush), `data/game-hub/modules.json`
+checks), `js/game-hub/shared-music.mjs` (existing music transport adapter), `js/game-hub/floating-capsule.mjs` (layout), `js/game-hub/chem108/` (Molecule Rush), `data/game-hub/modules.json`
 (the module list). The Control destinations panel (`js/site-navigation.js`) lists the hub under Products.
 
 ## Module schema (`data/game-hub/modules.json`)
@@ -81,10 +80,25 @@ release). I AM HERE is Matthew's own flagship record: six tracks is enough rotat
 public (no gated masters), and its "have no fear" register suits exam prep. When a chemistry song exists, add it as an
 album and switch Chem 108 to `role: "rhythm"`.
 
-The player is a single `<audio>` element (`js/game-hub/player.mjs`). Nothing plays until the visitor presses play.
-After that, switching courses keeps the music going. Each course's track and second are remembered in this browser
-(`localStorage` key `mcc.gamehub.music.v1`, every access in try/catch). The site's album engine (`js/music-engine.js`)
-is one global queue with gated masters and its own transport, so the hub does not reuse it.
+The capsule uses `window.MCC_MUSIC`, the existing `js/music-engine.js` transport, with its listen ledger and gated-audio rules. It never constructs a second audio element. The engine's original floating mini-player is hidden only on this page; the capsule is its visible transport. Nothing autoplays. Next follows the site's global queue. A course selection preserves current playback; the explicit soundtrack action selects that course's first song.
+
+The old `player.mjs` and `mcc.gamehub.music.v1` preferences remain intact for compatibility but are no longer active here. Their per-course seek positions are not imported into the shared engine (especially not into gated tracks). In-document course/game navigation preserves playback. Full document navigation still stops audio under the existing architecture; uninterrupted cross-page playback and shared-shell state restoration require a separate change.
+
+## Reusable capsule seam and review
+
+`mountCapsule({root, workspace, storageKey})` owns movement/disclosure and reserves a separate scrolling workspace below the capsule. The caller supplies controls and permissions; it owns no music, assessment state, entitlement or billing logic. Dragging only starts on the dedicated handle after six pixels. Arrow keys and visible direction buttons are alternatives, with Escape returning focus to Games. Position is local UI preference only, clamped on resize and visual viewport changes. A short landscape viewport may require scrolling the expanded control panel, while the game retains a clear region below it. The owner gate remains the authority; hiding/showing a control never grants access.
+
+This bounded implementation changes Game Hub only. It does not touch admin navigation #745, shared `tabbar.js`, the site music runtime, or proposed product-widget entitlement #750. Future subsystem adapters can supply their own selector/actions to this seam; a platform-wide island and continuous cross-page audio are not implemented here.
+
+Validation commands:
+
+```sh
+node --test scripts/test/game-hub*.test.mjs scripts/test/chem108-worked-example.test.mjs
+node scripts/e2e/game-hub-capsule.e2e.mjs
+node scripts/e2e/chem108-worked-example.e2e.mjs
+```
+
+Browser tests use the real shared navigation and audio runtime with synthetic owner API responses and a valid silent WAV. They are not authenticated production or physical-device evidence. Baseline main source at 390×568 reproduced two answer centers obscured by the old dock. The focused test verifies every answer center after scrolling in collapsed and expanded modes at 320×568, 390×568, 390×844, 844×390 and 1024×768, plus 200% text. Live site fetch was blocked by this execution environment (proxy 403); no deployed reproduction claim. Screenshots are saved under `/tmp/game-hub-selector-evidence/` by the focused browser test. This PR is source review, not a hosted preview or deployment.
 
 ## Molecule Rush (Chem 108)
 
@@ -120,3 +134,105 @@ cards, the 49 RDKit structure drawings, the aliases and explanations) on the pub
 The repository has no license file. The owner wrote and owns the deck, and publishing it here is his decision. RDKit
 (BSD) generated the drawings, and Chem-108's README credits it and the IUPAC brief guides. If the deck should stay
 private, remove the vendored data and serve it from behind the account instead.
+
+## Layered structure explanations (local implementation, 2026-11-04)
+
+All **49 existing structure cards** now have paired question/answer presentations after both correct and incorrect
+responses. The answer reuses the exact original RDKit paths. Reading pauses the round until Continue; it does not
+create a new question or another scoring event. IDs, aliases, pinned vendor bytes, save keys and learner records are
+preserved. Non-structure questions retain their existing timing behavior.
+
+`lesson-authoring.mjs` defines the family, original atom indices in parent-numbering order, the naming feature,
+molecule-specific naming steps and a specific mistake for each card. `compileLesson` produces both the base local
+lessons and the schema used in owner draft previews. It never infers a new name from a string. Family templates add
+foundations and deeper bonding explanations to the authored molecule-specific material.
+
+Every lesson has:
+
+- A parent/group highlight tied to the original SVG bond classes, plus an atom selector tied to original atom classes.
+  One labeled arrow at a time avoids overlapping labels on phones. Labels and explanatory text supplement color and
+  thicker bond paths. C labels number the parent; X labels identify carbon atoms outside it; O/N/halogen labels
+  identify the remaining atoms. A reserved strip above the drawing holds the selected atom label. Original SVG path
+  coordinates remain unchanged; the viewBox expands to include the callout strip.
+- Depth controls for test essentials, naming reasoning, atom/H/valence detail and advanced context. Depth does not
+  change assessment difficulty. Native disclosure, buttons and live feedback remain keyboard/screen-reader friendly.
+- Atom-specific H counts and Lewis bond-order sums, a molecular formula check, functional-group reasoning,
+  numbering/name assembly, and quick-check feedback that creates no learner records or score.
+- Relevant source links. General naming context explains retained versus systematic names. **Molecule-specific
+  discovery history and instructor review remain pending**; no invented discoverers or dates appear.
+
+`validated-graphs.mjs` is generated from the pinned SMILES, not from a new drawing. RDKit 2025.09.6 validates all 49
+formulas and all 243 heavy atoms' H/valence counts. Aromatic graphs use a Kekulized copy only for integer Lewis
+bookkeeping; the original SMILES/SVG remain intact. Functional-group SMARTS independently check the authored family
+labels. `formalCharge` stays null because the course metadata is silent; the uncharged SMILES model charge is stored
+separately. This is not a claim about every ionic form or solution condition.
+
+Examples: m27 explicitly distinguishes OH on C2 from m26's end OH; m34 separates the ethyl and ethanoate sides of the
+ester; m37 explains why N attached to a carbonyl gives an amide; m45 separates the six ring carbons from the external
+carboxyl carbon; m47–m49 anchor the methyl groups at 1,2 / 1,3 / 1,4 respectively. The quick checks use those distinctions
+or the actual parent/H counts. The original course deck remains authority for accepted answers, including aliases.
+
+### Owner authoring and permissions
+
+Name It setup → **Study worked examples · all 49 structures** → choose the molecule → **Owner · draft and review this
+explanation**. The existing server-backed owner gate (`js/owner-only.mjs`) controls entry; no new role or auth stack
+was introduced. Draft text is escaped and length bounded. Previews show the selected molecule's exact geometry and
+anchors. In-memory versions and review notes are per selected card. `needs-review` is not approval: drafts cannot
+replace learner lessons. Download JSON to keep a version; leaving or switching cards loses unsaved drafts.
+
+Atom/bond anchors are displayed/exported and require source review to change. The editor cannot change assessment
+IDs, aliases, scoring or graph facts. No persistent API/table/migration is needed for this local workflow. Any future
+persistent authoring must use the canonical backend's `requireHouseOwner`, immutable revisions, validated anchor
+references and explicit review/promotion; browser flags are not authorization for a write API.
+
+### Sources and validation
+
+The lessons use original wording, grounded in the pinned deck and these primary teaching/nomenclature sources:
+
+- IUPAC Brief Guide: https://iupac.qmul.ac.uk/BriefGuide/organic.html
+- IUPAC Blue Book, general/retained naming: https://iupac.qmul.ac.uk/BlueBook/P1.html
+- OpenStax, Organic Chemistry: sections 1.4 (Lewis/valence), 1.6/1.8/1.9 (bonding models), 1.12 (skeletal drawings),
+  14.1 (conjugation), 15.2 (benzene), 17.1 (alcohol naming), 21.7 (amides), 24.3 (amines). Each applicable lesson links
+  its exact source pages. RDKit API: https://www.rdkit.org/docs/source/rdkit.Chem.rdchem.html
+
+Run:
+
+```sh
+node --test scripts/test/game-hub.test.mjs scripts/test/chem108-worked-example.test.mjs scripts/test/owner-only.test.mjs
+python3 scripts/chem108/validate-graphs.py
+AXE_PATH=/path/to/axe-core/axe.min.js node scripts/e2e/chem108-worked-example.e2e.mjs
+node scripts/chem108/export-review.mjs
+node scripts/chem108/test-review-file.mjs
+```
+
+The Python check requires RDKit 2025.09.6 (`--write` is explicit regeneration, after review). Browser tests use installed
+Playwright from `CODEX_PRIMARY_RUNTIME_NODE_MODULES` and Chromium (`CHROMIUM_PATH`, default `/usr/bin/chromium`).
+The e2e suite starts an ephemeral local server, fixtures owner access, and excludes the shared tabbar's independently
+tested auth/service flows. It does not use a production session. Without AXE_PATH, axe scans are skipped.
+
+Evidence: 97 unit tests; all 49 browser author previews and all 243 atom anchors; all 98 correct/wrong game flows;
+all 49 diagrams' original path equality; all 49 depth/quick-check controls; owner draft/version/review; guest gating;
+zero horizontal overflow at 320/390/1024px; no detected WCAG A/AA violations in the game panel for each structure.
+The self-contained review file also tests all 49 cards, both comparison states and every quick-check response with
+network disabled and zero outgoing requests. Managed Chromium blocks file-protocol navigation, so the standalone
+HTML bytes are exercised directly in a browser document; opening downloaded HTML depends on the user's browser.
+
+### Review delivery and remaining limits
+
+`data/game-hub/chem108-explanation-coverage.json` inventories all 49 IDs, source hashes, parent atoms, 243 annotation
+anchors, local validation status, charge provenance and explicit history gaps. These are local reviewed-by-agent
+lessons with automated chemistry checks, **not instructor approval**.
+
+`export-review.mjs` creates `/tmp/chem108-evidence/molecule-rush-49-structure-review.html`: a self-contained, read-only
+review copy using the actual lesson/annotation renderers, original diagrams and a sample-response selector. It has no
+account access, owner write controls, learner storage or network dependency. A private Library copy is delivered as
+`/molecule-rush-49-structure-review.html`; it can be downloaded for inspection. It is not a hosted Game Hub release.
+Repository review publication is authorized separately from release. No merge or deployment occurred, and no production database was changed. PRIM3 mission/LMS
+files and the shared owner gate were left untouched. Hosted device access still needs a separately authorized release.
+
+### Capsule review evidence (local fixtures)
+
+- [Old dock, 390×568](review/before-390x568.png): two answer centers are covered.
+- [Capsule, 390×568](review/capsule-390x568.png), [390×844](review/capsule-390x844.png), [landscape 844×390](review/capsule-844x390.png): answers scroll through their own clear area.
+- Root suite: 1,677 Node passes, three existing skips, seven Python passes. Focused capsule/chemistry source suite: 69 passes. Existing chemistry browser suite: all 49 previews/243 atom anchors and 98 correct/wrong scoring flows passed. Capsule browser suite also passes real touch/mouse/keyboard movement, reset/reload, music controls, course-switch continuity, music-load failure and axe checks of the capsule.
+- The screenshots show a synthetic owner response with the real shared bar's signed-out profile presentation; they do not establish production owner-session behavior. No merge, deployment, production database write or billing change.

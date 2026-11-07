@@ -6,6 +6,11 @@ import {context,settle,widths,browser,server,BASE,OUT,json} from './analytics-un
 const checks=[];
 function check(name,ok,detail){checks.push({name,pass:!!ok});console.log(`${ok?'PASS':'FAIL'} ${name}`);assert.ok(ok,name+' '+JSON.stringify(detail||''));}
 const tabs=['Overview','Audience','Journeys','Content','Action & business','World intelligence','Cameras','Adaptive','Site health','Data explorer','Setup'];
+const parentView={'Journeys':'Audience','Adaptive':'Content','Cameras':'World intelligence','Site health':'Data & setup','Data explorer':'Data & setup','Setup':'Data & setup'};
+async function openView(page,name){
+ await page.getByRole('tab',{name:parentView[name]||name,exact:true}).click();
+ if(parentView[name])await page.locator('.cad-local-views').getByRole('button',{name,exact:true}).click();
+}
 const songs=Array.from({length:26},(_,i)=>({track:'Fixture track '+(i+1),album:'Audit album',listeners:35-i,starts:70-i*2,repeat_listeners:12,plays_per_listener:2,last_touch_accounts:2,assisted_accounts:3}));
 const journeys=Array.from({length:65},(_,i)=>({first_name:'Fixture',last_name:'Account '+(i+1),created_at:new Date(Date.now()-i*60000).toISOString(),source:i%2?'direct':'fixture',last_track:songs[i%26].track,country:'US',assisted_tracks:[],email:'fixture'+i+'@example.test'}));
 try{
@@ -28,9 +33,10 @@ for(const width of [390,820,1024,1440]){
  await ctx.route('https://zmnhbrjyhxzhkxmhkexs.supabase.co/rest/v1/events_lean?**',route=>json(route,[{at:new Date().toISOString(),name:'page_view',path:'/audit',is_bot:false}]));
  await page.goto(BASE+'/control.html#analytics',{waitUntil:'domcontentloaded'});
  await settle(page);await page.waitForFunction(()=>window.CR.analytics.state.loaded);
+ check(scope+' exactly six primary tabs',(await page.locator('.cad-tabs [role="tab"]').count())===6);
  for(const name of tabs){
-  await page.getByRole('tab',{name,exact:true}).click();
-  await page.getByRole('tabpanel',{name,exact:true}).waitFor();
+  await openView(page,name);
+  await page.getByRole('tabpanel',{name:parentView[name]||name,exact:true}).waitFor();
   await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
   const w=await widths(page);check(scope+' '+name+' viewport fits',w.scrollW===w.clientW,w);
   const body=await page.locator('.cad-body').evaluate(el=>({client:el.clientWidth,scroll:el.scrollWidth,height:el.clientHeight,text:el.innerText.length}));
@@ -41,25 +47,36 @@ for(const width of [390,820,1024,1440]){
    check(scope+' '+name+(nested?' nested':'')+' metric values stay readable',metrics.every(x=>x.fit&&x.lines===1),metrics);
   }
   await page.locator('.cad-body').evaluate(el=>el.style.maxWidth='');
-  const selected=await page.getByRole('tab',{name,exact:true}).evaluate(el=>{const r=el.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return hit===el||el.contains(hit);});
+  const selected=await page.getByRole('tab',{name:parentView[name]||name,exact:true}).evaluate(el=>{const r=el.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return hit===el||el.contains(hit);});
   check(scope+' '+name+' tab is not covered',selected);
   await page.screenshot({path:OUT+'/'+scope+'-'+name.toLowerCase().replace(/[^a-z]+/g,'-')+'.png'});
   await page.locator('.cad-body').evaluate(el=>el.scrollTop=el.scrollHeight);
   await page.screenshot({path:OUT+'/'+scope+'-'+name.toLowerCase().replace(/[^a-z]+/g,'-')+'-end.png'});
   await page.locator('.cad-body').evaluate(el=>el.scrollTop=0);
  }
+ // Compact overview: every group and metric is reachable without losing the existing detail.
+ await openView(page,'Overview');
+ check(scope+' three summary groups',await page.locator('.cu-summary-group').count()===3);
+ check(scope+' metric scope and missing-value meaning are explicit',(await page.locator('.cu-summary').innerText()).includes('not available, not zero'));
+ const summaryRegion=page.locator('.cu-summary-groups');await summaryRegion.focus();
+ check(scope+' summary carousel is keyboard reachable',await summaryRegion.evaluate(el=>document.activeElement===el));
+ await page.getByRole('button',{name:'Explore Business',exact:true}).click();
+ check(scope+' Business opens existing operations',await page.getByRole('tabpanel',{name:'Action & business',exact:true}).isVisible());
+ await openView(page,'Overview');
+ await page.locator('.cad-body').evaluate(el=>el.scrollTop=0);
+ await page.screenshot({path:OUT+'/'+scope+'-summary.png'});
  // Overview shortcuts, keyboard navigation, scroll restoration and shared actions.
- await page.getByRole('tab',{name:'Overview',exact:true}).click();
+ await openView(page,'Overview');
  await page.getByRole('button',{name:/Unique visitors:.*Open details/}).click();check(scope+' visitor metric opens Audience',await page.getByRole('tabpanel',{name:'Audience',exact:true}).isVisible());
  const ticks=await page.locator('.cra-chart--hourly .cra-axis--x').evaluateAll(nodes=>nodes.map(el=>{const r=el.getBoundingClientRect();return {x:r.x,right:r.right,text:el.textContent};}));
  check(scope+' hourly labels do not overlap',ticks.length===24&&ticks.every((t,i)=>!i||t.x>=ticks[i-1].right-1),ticks);
  const values=await page.locator('.cra-chart--hourly .cra-axis:not(.cra-axis--x)').allTextContents();check(scope+' small-count axis has unique ticks',values.length>=2&&new Set(values).size===values.length,values);
  await page.getByRole('tab',{name:'Audience',exact:true}).press('End');
- check(scope+' End reaches Setup',await page.getByRole('tabpanel',{name:'Setup',exact:true}).isVisible());
- await page.getByRole('tab',{name:'Setup',exact:true}).press('Home');check(scope+' Home reaches Overview',await page.getByRole('tabpanel',{name:'Overview',exact:true}).isVisible());
+ check(scope+' End reaches Data & setup',await page.getByRole('tabpanel',{name:'Data & setup',exact:true}).isVisible());
+ await page.getByRole('tab',{name:'Data & setup',exact:true}).press('Home');check(scope+' Home reaches Overview',await page.getByRole('tabpanel',{name:'Overview',exact:true}).isVisible());
  await page.getByRole('button',{name:'Inspect data connections',exact:true}).click();check(scope+' data status opens Connections',await page.getByRole('heading',{name:'Data connections',exact:true}).isVisible());
  // Journey controls must expose rows beyond the former hard cap of sixty.
- await page.getByRole('tab',{name:'Journeys',exact:true}).click();
+ await openView(page,'Journeys');
  check(scope+' all journey songs remain available',await page.locator('.cra-table tbody tr').count()===26);
  check(scope+' journey first page',await page.locator('.cra-acct').count()===30);
  await page.getByRole('button',{name:'Show more accounts',exact:true}).click();await page.getByRole('button',{name:'Show more accounts',exact:true}).click();
@@ -67,11 +84,11 @@ for(const width of [390,820,1024,1440]){
  await page.locator('[data-cra-path]').first().click();check(scope+' path filters accounts',await page.locator('.cra-acct').count()<65);
  await page.getByRole('button',{name:'Show everyone',exact:true}).click();check(scope+' path filter clears',await page.locator('.cra-acct').count()===30);
  // Content selection and readable keyboard-scrollable wide tables.
- await page.getByRole('tab',{name:'Content',exact:true}).click();await page.locator('.cra-reach__row[data-cra-pick]').nth(1).click();
+ await openView(page,'Content');await page.locator('.cra-reach__row[data-cra-pick]').nth(1).click();
  check(scope+' track selection updates readout',(await page.locator('.cra-reach__name').innerText()).includes('Fixture track 2'));
  check(scope+' wide table is keyboard reachable',await page.locator('.cra-scroll').evaluateAll(els=>els.every(el=>el.scrollWidth<=el.clientWidth+2||el.tabIndex===0)));
  // Stored events and observations must not disappear behind entity-only reads.
- await page.getByRole('tab',{name:'World intelligence',exact:true}).click();
+ await openView(page,'World intelligence');
  await page.locator('#cuSourceSearch').fill('Geological');check(scope+' source search updates immediately',await page.locator('[data-cu-source]').count()===1);
  await page.locator('[data-cu-source]').click();await page.getByRole('button',{name:'Read stored records',exact:true}).click();await page.waitForFunction(()=>!CR.analyticsUnified.state.reading);
  check(scope+' archive includes all stored record kinds',await page.locator('.cu-records details').count()===3);
@@ -80,7 +97,7 @@ for(const width of [390,820,1024,1440]){
  archiveFail=true;await page.getByRole('button',{name:'Read stored records',exact:true}).click();await page.waitForFunction(()=>!CR.analyticsUnified.state.reading);
  check(scope+' failed archive clears stale records',await page.locator('.cu-records details').count()===0&&(await page.locator('.cad-body').innerText()).includes('Stored event read unavailable'));
  // Event dictionary: all rows, inline details, instant search with retained focus.
- await page.getByRole('tab',{name:'Data explorer',exact:true}).click();await page.getByRole('button',{name:'Events',exact:true}).click();await page.locator('#cuEventQuery').waitFor();
+ await openView(page,'Data explorer');await page.getByRole('button',{name:'Events',exact:true}).click();await page.locator('#cuEventQuery').waitFor();
  check(scope+' dictionary starts with fifty',await page.locator('details.cu-dataset-row').count()===50);
  for(let i=0;i<3;i++)await page.getByRole('button',{name:'Show more event names',exact:true}).click();
  check(scope+' every event name is reachable',await page.locator('details.cu-dataset-row').count()===173);
@@ -93,18 +110,18 @@ for(const width of [390,820,1024,1440]){
  await page.getByRole('button',{name:'Datasets',exact:true}).click();await page.locator('#cuDatasetSearch').fill('Evidence');check(scope+' dataset search updates immediately',await page.locator('[data-cu-dataset]').count()===1);
  await page.getByRole('button',{name:'Field directory',exact:true}).click();await page.locator('#cuFieldSearch').fill('analytics_site_daily');check(scope+' field search updates immediately',(await page.locator('.cu-records').innerText()).includes('analytics_site_daily'));
  // Setup is checked without creating production properties; browser validity and a read-only pulse.
- await page.getByRole('tab',{name:'Setup',exact:true}).click();await page.getByRole('button',{name:'Test installation',exact:true}).click();await page.waitForFunction(()=>!window.CR.analytics.state.pulseLoading);
+ await openView(page,'Setup');await page.getByRole('button',{name:'Test installation',exact:true}).click();await page.waitForFunction(()=>!window.CR.analytics.state.pulseLoading);
  check(scope+' installation test reports receipt',(await page.locator('.cad-body').innerText()).includes('Receiving data'));
  check(scope+' installation list uses a full row',await page.locator('.cra-card .cra-live').evaluate(el=>getComputedStyle(el).display==='grid'));
  await page.locator('[name=site_name]').fill('');await page.getByRole('button',{name:'Add website',exact:true}).click();check(scope+' empty property submission blocked',await page.locator('[name=site_name]').evaluate(el=>!el.validity.valid));
  // On-demand camera failure and recovery, image decoding, provider selection.
- await page.getByRole('tab',{name:'Cameras',exact:true}).click();await page.getByRole('button',{name:'Load camera catalog',exact:true}).click();await page.getByRole('alert').filter({hasText:'Halo connection'}).waitFor();
+ await openView(page,'Cameras');await page.getByRole('button',{name:'Load camera catalog',exact:true}).click();await page.getByRole('alert').filter({hasText:'Halo connection'}).waitFor();
  check(scope+' camera connection error visible',await page.getByRole('button',{name:'Load camera catalog',exact:true}).isEnabled());cameraFail=false;
  await page.getByRole('button',{name:'Load camera catalog',exact:true}).click();await page.getByRole('button',{name:'Test provider',exact:true}).click();await page.getByRole('button',{name:'Verify this provider',exact:true}).click();await page.waitForFunction(()=>!window.CR.analyticsCameras.state.running);
  check(scope+' camera verification rejects invalid images',await page.evaluate(()=>Object.values(window.CR.analyticsCameras.state.checks).filter(c=>c.status==='verified').length===1));
  await page.screenshot({path:OUT+'/'+scope+'-camera-result.png'});
  // The four health views and search all mount independently.
- await page.getByRole('tab',{name:'Site health',exact:true}).click();
+ await openView(page,'Site health');
  for(const name of ['Sessions','Visitors','Flows','Errors']){await page.locator('.crf-seg').getByRole('tab',{name,exact:true}).click();await page.waitForFunction(()=>!document.querySelector('.crf-item--ghost'));check(scope+' health '+name+' renders',(await page.locator('.crf-list').innerText()).length>20);}
  check(scope+' no JavaScript errors',errors.length===0,errors);
  await ctx.close();

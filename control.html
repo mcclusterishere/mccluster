@@ -3,8 +3,8 @@
 <head><script src="js/shell-boot.js?v=__STAMP__"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Control Room · McCluster</title>
-  <meta name="description" content="The McCluster operator surface: Home, People, Sell, Create, Insights and System.">
+  <title>Admin Home · McCluster</title>
+  <meta name="description" content="The McCluster operator surface: Home, Inbox, Sell, Create, Analytics and System.">
   <meta name="robots" content="noindex,nofollow">
   <meta name="theme-color" content="#0c0d0f">
   <link rel="icon" type="image/png" href="assets/img/hm-mark-96.png">
@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="css/control-admin.css?v=__STAMP__">
   <link rel="stylesheet" href="css/control-analytics.css?v=__STAMP__">
   <link rel="stylesheet" href="css/control-analytics-unified.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/control-bls-explorer.css?v=__STAMP__">
   <link rel="stylesheet" href="css/control-news-context.css?v=__STAMP__">
   <link rel="stylesheet" href="css/control-connections.css?v=__STAMP__">
   <link rel="stylesheet" href="css/control-forensics.css?v=__STAMP__">
@@ -28,22 +29,22 @@
   <section class="cr-gate" id="cpGate">
     <div class="cr-gate__brand">
       <img src="assets/img/hm-mark-wide.webp" alt="">
-      <h1>Control Room</h1>
+      <h1>Admin Home</h1>
     </div>
     <p>Operator access to the canonical McCluster control plane. Sign in with the same account already used by the platform.</p>
     <label><span class="sr-only">Owner email</span><input class="cr-input" id="cpEmail" type="email" placeholder="Owner email" autocomplete="email"></label>
     <label><span class="sr-only">Password</span><input class="cr-input" id="cpPass" type="password" placeholder="Password" autocomplete="current-password"></label>
-    <div class="cr-gate__actions"><button class="cr-btn cr-btn--primary" id="cpIn" type="button">Open Control Room</button></div>
+    <div class="cr-gate__actions"><button class="cr-btn cr-btn--primary" id="cpIn" type="button">Open Admin Home</button></div>
     <p class="cr-note" id="cpNote" role="status" aria-live="polite"></p>
   </section>
 
   <div class="cr-shell" id="crApp" hidden>
     <!-- ONE navigation element, drawn from js/control-room/nav.js: the
          floating bottom bar on a phone, the sidebar from 1024px. -->
-    <nav class="cr-sections" id="crSections" aria-label="Control Room sections"></nav>
+    <nav class="cr-sections" id="crSections" aria-label="Admin Home sections"></nav>
 
     <header class="cr-topbar">
-      <a class="cr-topbar__brand" href="#home:today" aria-label="Control Room home"><img src="assets/img/hm-mark-wide.webp" alt=""></a>
+      <a class="cr-topbar__brand" href="#home:today" aria-label="Admin Home home"><img src="assets/img/hm-mark-wide.webp" alt=""></a>
       <div class="cr-topbar__title" id="crTopTitle">Home</div>
       <button class="cr-command" id="crCommandOpen" type="button" aria-label="Search or ask McCluster"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><span>Search or ask McCluster…</span><kbd>⌘K</kbd></button>
       <div class="cr-topbar__meta"><label class="cr-org" id="crOrgWrap" hidden><span class="cr-org__label">Workspace</span><select class="cr-org__select" id="crOrgSelect" aria-label="Workspace"></select></label><span class="cr-env">PROD</span><span class="cr-health-dot" id="crHealthDot" title="Checking system health"></span><button class="cr-avatar" id="crAccount" type="button" aria-label="Account menu">M</button></div>
@@ -52,7 +53,7 @@
     <main class="cr-main" id="crMain"><div class="cr-surface" id="crSurface"></div></main>
 
     <aside class="cr-inspector" id="crInspector" aria-hidden="true" aria-label="Selected item details">
-      <header class="cr-inspector__head"><div><h2 class="cr-inspector__title" id="crInspectorTitle">Details</h2><p class="cr-inspector__sub" id="crInspectorSub">McCluster Control Room</p></div><button class="cr-icon-btn" id="crInspectorClose" type="button" aria-label="Close details">×</button></header>
+      <header class="cr-inspector__head"><div><h2 class="cr-inspector__title" id="crInspectorTitle">Details</h2><p class="cr-inspector__sub" id="crInspectorSub">McCluster Admin Home</p></div><button class="cr-icon-btn" id="crInspectorClose" type="button" aria-label="Close details">×</button></header>
       <nav class="cr-inspector__tabs" id="crInspectorTabs" aria-label="Detail sections"></nav>
       <div class="cr-inspector__body" id="crInspectorBody"></div>
     </aside>
@@ -61,12 +62,12 @@
 
   <div class="cr-more" id="crMoreSheet" role="dialog" aria-modal="true" aria-label="More sections" hidden></div>
 
-  <div class="cr-palette" id="crPalette" aria-hidden="true"><div class="cr-palette__dialog" role="dialog" aria-modal="true" aria-label="Search or command McCluster"><input class="cr-palette__input" id="crPaletteInput" type="search" autocomplete="off" placeholder="Go to, search, or ask McCluster…" aria-label="Search Control Room"><div class="cr-palette__results" id="crPaletteResults"></div></div></div>
+  <div class="cr-palette" id="crPalette" aria-hidden="true"><div class="cr-palette__dialog" role="dialog" aria-modal="true" aria-label="Search or command McCluster"><input class="cr-palette__input" id="crPaletteInput" type="search" autocomplete="off" placeholder="Go to, search, or ask McCluster…" aria-label="Search Admin Home"><div class="cr-palette__results" id="crPaletteResults"></div></div></div>
 
-  <aside class="cr-account-menu" id="crAccountMenu" role="dialog" aria-label="Profile and account"><div class="cr-account-menu__email" id="crAccountEmail">signed in</div><a class="cr-btn cr-btn--ghost" href="mnet.html?view=profile">View profile</a><a class="cr-btn cr-btn--ghost" href="account.html?stay=1">Settings &amp; account</a><button class="cr-btn cr-btn--ghost" id="crRefresh" type="button">Refresh Control Room</button><a class="cr-btn cr-btn--ghost" href="account.html?stay=1#password">Change password</a><a class="cr-btn cr-btn--ghost" href="mnet.html">Open Equity Uprise</a><a class="cr-btn cr-btn--ghost" href="mnet.html?view=feed&amp;desk" data-cr-desk>Your desk</a><button class="cr-btn cr-btn--danger" id="crOut" type="button">Sign out</button></aside>
+  <aside class="cr-account-menu" id="crAccountMenu" role="dialog" aria-label="Profile and account"><div class="cr-account-menu__email" id="crAccountEmail">signed in</div><a class="cr-btn cr-btn--ghost" href="mnet.html?view=profile">View profile</a><a class="cr-btn cr-btn--ghost" href="account.html?stay=1">Settings &amp; account</a><button class="cr-btn cr-btn--ghost" id="crRefresh" type="button">Refresh Admin Home</button><a class="cr-btn cr-btn--ghost" href="account.html?stay=1#password">Change password</a><a class="cr-btn cr-btn--ghost" href="mnet.html">Open Equity Uprise</a><a class="cr-btn cr-btn--ghost" href="mnet.html?view=feed&amp;desk" data-cr-desk>Your desk</a><button class="cr-btn cr-btn--danger" id="crOut" type="button">Sign out</button></aside>
 
   <script src="js/backend.js?v=__STAMP__"></script>
-  <!-- Internal Control Room modules. Same application, loaded before it. -->
+  <!-- Internal Admin Home modules. Same application, loaded before it. -->
   <script src="js/control-room/nav.js?v=__STAMP__"></script>
   <script src="js/control-room/format.js?v=__STAMP__"></script>
   <script src="js/control-room/sources.js?v=__STAMP__"></script>
@@ -80,6 +81,7 @@
   <script src="js/control-room/lyrics-review.js?v=__STAMP__"></script>
   <script src="js/control-room/stems-panel.js?v=__STAMP__"></script>
   <script src="js/control-room/music-direct-sales.js?v=__STAMP__"></script>
+  <script src="js/control-room/music-label.js?v=__STAMP__"></script>
   <script src="js/control-room/music-ops.js?v=__STAMP__"></script>
   <script src="js/policy-fellowship-ladder.js?v=__STAMP__"></script>
   <script src="js/identity-capture-core.js?v=__STAMP__"></script>
@@ -95,6 +97,7 @@
   <script src="js/control-room/forensics.js?v=__STAMP__"></script>
   <script src="js/heat-scale.js?v=__STAMP__"></script>
   <script src="js/control-room/analytics-globe.js?v=__STAMP__"></script>
+  <script src="js/control-room/bls-explorer.js?v=__STAMP__"></script>
   <script src="js/control-room/analytics-unified.js?v=__STAMP__"></script>
   <script src="js/control-room/news-context.js?v=__STAMP__"></script>
   <script src="js/control-room/connections.js?v=__STAMP__"></script>
@@ -104,6 +107,7 @@
   <script src="js/control-room/voice.js?v=__STAMP__"></script>
   <script src="js/control-room/workspace-core.js?v=__STAMP__"></script>
   <script src="js/control-room/workspace.js?v=__STAMP__"></script>
+  <script src="js/control-room/system-summary.js?v=__STAMP__"></script>
   <script src="js/control-room-v2.js?v=__STAMP__"></script>
   <script src="js/control-room-polish.js?v=__STAMP__"></script>
   <script defer src="js/pip.js?v=__STAMP__"></script>

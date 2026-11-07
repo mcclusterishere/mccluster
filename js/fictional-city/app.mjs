@@ -3,6 +3,8 @@ import { createCoreLoreLink, manifestDigest } from './core-link.mjs';
 import { cityPlaces, neighborhoods, storyArcs, storyBeat, neighborhoodAt, validateCityExtensions } from './content.mjs';
 import { bindCity, resolveResidentRoutes, ORIGINAL_BUSINESS_IDS } from './places.mjs';
 import { createSpatialWorld, DISTRICT_SURFACES } from './spatial.mjs';
+import { updateNavigationHud } from './navigation-hud.mjs';
+import { viewHeading } from './camera-controls.mjs';
 
 const $ = id => document.getElementById(id);
 const el = (tag, text, className) => {
@@ -19,6 +21,7 @@ let manifest, state, scene, storage, toastTimer, saveTimer, adTimer, previousFoc
 let places = null, bound = null, vacant = [], chunkIndex = null;
 let storyCache;
 let coreLink;
+let currentView = { mode: 'close', yaw: 0 };
 let pageClosed = false;
 let panelGeneration = 0;
 const coreResidents = new Map();
@@ -280,9 +283,19 @@ function openPocket() {
     receipts.append(list); root.append(receipts);
   }
 }
-function drawMap(area) {
+function mapPosition() {
+  const place = state.position.interior && findBuilding(state.position.interior);
+  return place ? { x: place.entrance[0], z: place.entrance[1] } : state.position;
+}
+function mapPlayer(shape, mx, mz, size = 8) {
+  const p = mapPosition(), heading = viewHeading(currentView.yaw);
+  if (state.position.interior) { shape('circle', { cx: mx(p.x), cy: mz(p.z), r: size * .7, fill: '#c94e19', stroke: '#fff', 'stroke-width': 1.8 }); return; }
+  shape('path', { d: `M 0 ${-size} L ${size * .65} ${size * .6} L 0 ${size * .25} L ${-size * .65} ${size * .6} Z`,
+    transform: `translate(${mx(p.x)} ${mz(p.z)}) rotate(${heading.degrees})`, fill: '#c94e19', stroke: '#fff', 'stroke-width': 1.8 });
+}
+function drawMap(area, nearPlayer = false) {
   const ns = 'http://www.w3.org/2000/svg', svg = document.createElementNS(ns, 'svg');
-  if (!area && places) return drawCityMap(ns, svg);
+  if (!area && places) return drawCityMap(ns, svg, nearPlayer);
   const allSurfaces = area ? area.surfaces : DISTRICT_SURFACES;
   const bounds = area ? area.bounds : { minX: -76, maxX: 76, minZ: -62, maxZ: 112 };
   const scale = 310 / (bounds.maxX - bounds.minX), height = (bounds.maxZ - bounds.minZ) * scale + 40;
@@ -308,19 +321,18 @@ function drawMap(area) {
   shown.forEach((place, index) => {
     if (place.footprint) shape('polygon', { points: place.footprint.map(([x, z]) => `${mx(x)},${mz(z)}`).join(' '), fill: place.color, stroke: '#64766b', 'stroke-width': .7 });
     else rect({ minX: place.position[0] - place.size[0] / 2, maxX: place.position[0] + place.size[0] / 2, minZ: place.position[1] - place.size[1] / 2, maxZ: place.position[1] + place.size[1] / 2 }, place.color);
-    if (!area || place.storyArcId) {
+    if (!area || place.storyArcId || place.publicIdentity?.kind === 'government') {
       const cx = mx(place.entrance[0]), cy = mz(place.entrance[1]);
       shape('circle', { cx, cy, r: 10, fill: '#fffdf6', stroke: '#294d47', 'stroke-width': 1 });
       shape('text', { x: cx, y: cy + 4, style: 'font-size:12px' }, String(index + 1));
     }
   });
-  if (!state.position.interior && state.position.x >= bounds.minX && state.position.x <= bounds.maxX && state.position.z >= bounds.minZ && state.position.z <= bounds.maxZ) {
-    shape('circle', { cx: mx(state.position.x), cy: mz(state.position.z), r: 5, fill: '#eb763e', stroke: '#fff', 'stroke-width': 2 });
-  }
+  const marker = mapPosition();
+  if (marker.x >= bounds.minX && marker.x <= bounds.maxX && marker.z >= bounds.minZ && marker.z <= bounds.maxZ) mapPlayer(shape, mx, mz);
   return svg;
 }
 /* The whole city at one scale: north up (−Z), land, streets, every parcel and the island HQ. */
-function drawCityMap(ns, svg) {
+function drawCityMap(ns, svg, nearPlayer = false) {
   // the authored frame plus any neighbourhood built from other sources (Bridgeport, north of the original block)
   const story = neighborhoods(manifest);
   const b = [places.frame.bounds, ...story.map(n => n.bounds)].reduce((u, r) => ({ minX: Math.min(u.minX, r.minX), maxX: Math.max(u.maxX, r.maxX), minZ: Math.min(u.minZ, r.minZ), maxZ: Math.max(u.maxZ, r.maxZ) }));
@@ -352,7 +364,18 @@ function drawCityMap(ns, svg) {
     const t = shape('text', { x: mx((c.minX + c.maxX) / 2), y: mz(n.id === 'hq-island' ? 106 : n.id === 'northside-residential' ? -141 : n.id === 'original-block' ? 30 : (c.minZ + c.maxZ) / 2 + (n.id.includes('waterfront') ? 20 : 0)), class: 'city-map-area' }, neighborhoodName(n.id).toUpperCase());
     t.setAttribute('text-anchor', 'middle');
   }
-  if (!state.position.interior) shape('circle', { cx: mx(state.position.x), cy: mz(state.position.z), r: 4, fill: '#eb763e', stroke: '#fff', 'stroke-width': 1.5 });
+  // Door numbers join the map to the readable destination cards below it.
+  [...manifest.businesses, manifest.garage].forEach((place, index) => {
+    const x = mx(place.entrance[0]), y = mz(place.entrance[1]);
+    shape('circle', { cx: x, cy: y, r: 5, fill: '#fffdf6', stroke: '#294d47', 'stroke-width': 1 });
+    shape('text', { x, y: y + 2.5, 'font-size': 7, 'text-anchor': 'middle' }, String(index + 1));
+  });
+  mapPlayer(shape, mx, mz, nearPlayer ? 5 : 10);
+  if (nearPlayer) {
+    const p = mapPosition(), span = 150 * k;
+    svg.setAttribute('viewBox', `${mx(p.x) - span / 2} ${mz(p.z) - span / 2} ${span} ${span}`);
+    svg.setAttribute('aria-label', 'Map centered on you. North is up. Numbered doors match the destination cards below.');
+  }
   return svg;
 }
 function buildingBoundsOf(p) {
@@ -362,21 +385,24 @@ function buildingBoundsOf(p) {
   }
   const [x, z] = p.position, [w, d] = p.size; return { minX: x - w / 2, maxX: x + w / 2, minZ: z - d / 2, maxZ: z + d / 2 };
 }
-function placeCard(place) {
+function placeCard(place, number) {
   const card = el('article', undefined, 'city-place-card');
-  card.append(el('p', place.generic ? neighborhoodName(place.neighborhood) : (place.category || neighborhoodName(place.neighborhood) || 'Story hub'), 'city-eyebrow'), el('h3', place.name));
+  card.append(el('p', (number ? number + ' · ' : '') + (place.generic ? neighborhoodName(place.neighborhood) : (place.category || neighborhoodName(place.neighborhood) || 'Story hub')), 'city-eyebrow'), el('h3', place.name));
   if (place.description) card.append(el('p', place.description));
   const actions = el('div', undefined, 'city-dialog-actions');
   actions.append(button('Go to the door', () => moveToBuilding(place.id)), button('About this spot', () => openBuilding(place.id)));
   card.append(actions); return card;
 }
-function openMap(areaId) {
+function openMap(areaId, wholeCity = false) {
   const area = neighborhoods(manifest).find(n => n.id === areaId);
   const root = panel(area ? area.city : places ? 'Harbor Boulevard & four new neighborhoods' : 'Harbor Boulevard & Equity Uprise Island', area ? area.name : places ? 'The city' : 'The district');
   const tabs = el('div', undefined, 'city-dialog-actions');
   tabs.append(button('Harbor & Uprise', () => openMap()));
+  if (!area && places) tabs.append(button(wholeCity ? 'Around me' : 'Whole city', () => openMap(undefined, !wholeCity)));
   for (const n of neighborhoods(manifest)) tabs.append(button('Bridgeport · Robbery 1s', () => openMap(n.id)));
-  root.append(tabs, drawMap(area));
+  const inside = state.position.interior && findBuilding(state.position.interior);
+  root.append(el('p', inside ? 'You are inside ' + inside.name + '. The orange marker shows its street entrance.' : 'You are at ' + $('city-location').textContent + ', looking ' + viewHeading(currentView.yaw).label + '. Orange arrow = you. North is up.', 'city-map-location'));
+  root.append(tabs, drawMap(area, !wholeCity));
   if (area) {
     const credits = el('p', undefined, 'city-bio-meta');
     credits.append(document.createTextNode('Building footprints: CT State GIS Office, 2023. Streets: '));
@@ -395,8 +421,8 @@ function openMap(areaId) {
   const grid = el('div', undefined, 'city-card-grid');
   const cards = area ? area.places : [...manifest.businesses, manifest.garage];
   cards.forEach((place, index) => {
-    if (area && !place.storyArcId) return;
-    if (!area) { grid.append(placeCard(place)); return; }
+    if (area && !place.storyArcId && place.publicIdentity?.kind !== 'government') return;
+    if (!area) { grid.append(placeCard(place, index + 1)); return; }
     const card = el('article', undefined, 'city-place-card');
     card.append(el('p', `${index + 1} · ${place.category || 'Story location'}`, 'city-eyebrow'), el('h3', place.name), el('p', place.description));
     const actions = el('div', undefined, 'city-dialog-actions');
@@ -593,9 +619,11 @@ async function openStory(chapterId) {
   }
 }
 /* Chunk detail: published per-chunk JSON, checked against the index's SHA-256 when the browser can hash. */
-async function loadChunk(id) {
+async function loadChunk(id, { signal } = {}) {
   const meta = chunkIndex?.chunks.find(c => c.id === id); if (!meta) throw new Error('unknown chunk');
   const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 15000);
+  const abort = () => controller.abort();
+  if (signal?.aborted) abort(); else signal?.addEventListener('abort', abort, { once: true });
   try {
     const response = await fetch('data/fictional-city/' + meta.file + '?v=__STAMP__', { cache: 'no-cache', signal: controller.signal });
     if (!response.ok) throw new Error('chunk ' + id + ' answered ' + response.status);
@@ -605,7 +633,7 @@ async function loadChunk(id) {
       if (digest !== meta.sha256) throw new Error('chunk ' + id + ' failed its integrity check');
     }
     return JSON.parse(new TextDecoder().decode(buffer));
-  } finally { clearTimeout(timer); }
+  } finally { clearTimeout(timer); signal?.removeEventListener('abort', abort); }
 }
 /* On approach to the island, warm the browser cache with the canonical HQ geometry the doorway opens first. */
 let hqPrefetched = false;
@@ -653,9 +681,34 @@ function bindControls() {
     else { const p = findBuilding(state.position.interior); updateLocation({ x: p.entrance[0], z: p.entrance[1], interior: null }); }
   });
   $('city-interact').addEventListener('click', () => scene?.interactNearest());
-  $('city-zoom-in').addEventListener('click', () => scene?.zoomBy(.8));
-  $('city-zoom-out').addEventListener('click', () => scene?.zoomBy(1.25));
+  $('city-zoom-in').addEventListener('click', () => scene?.zoomBy(1.25));
+  $('city-zoom-out').addEventListener('click', () => scene?.zoomBy(.8));
+  const destinations = new Map([...buildings(), ...vacant].map(b => [b.id, { id: b.id, name: b.name, x: b.entrance[0], z: b.entrance[1] }]));
+  destinations.set('equity-uprise-hq', { id: 'equity-uprise-hq', name: 'Equity Uprise HQ', x: 0, z: 74 });
+  for (const destination of destinations.values()) {
+    const option = el('option', destination.name); option.value = destination.id; $('city-destination').append(option);
+  }
+  $('city-route').addEventListener('click', () => {
+    const destination = destinations.get($('city-destination').value);
+    if (!destination || !scene) return;
+    notify(scene.previewNavigation(destination) ? 'Route preview ready. Confirm to start walking.' : 'No walking route found. Choose another destination or use the district map.');
+  });
+  $('city-route-confirm').addEventListener('click', () => {
+    if (scene?.confirmNavigation()) notify('Following the confirmed walking route.');
+  });
+  $('city-route-cancel').addEventListener('click', () => scene?.cancelNavigation());
+  $('city-labels-toggle').addEventListener('change', () => {
+    $('city-building-labels').hidden = !$('city-labels-toggle').checked;
+  });
+  $('city-destination').addEventListener('change', () => { scene?.cancelNavigation(); currentView.destination = destinations.get($('city-destination').value) || null; });
+  for (const node of document.querySelectorAll('[data-city-travel]')) node.addEventListener('click', () => {
+    const mode = node.dataset.cityTravel;
+    notify(scene?.setTravelMode(mode) ? (mode === 'bike' ? 'Riding. Forward/back pedals; left/right steers. Tap-to-walk dismounts.' : 'Back on foot.') : 'Move to a clear outdoor space to ride.');
+  });
+  $('city-follow-toggle').addEventListener('change', () => scene?.setFollow($('city-follow-toggle').checked));
   $('city-reset-view').addEventListener('click', () => scene?.resetView());
+  for (const node of document.querySelectorAll('[data-city-view]')) node.addEventListener('click', () => scene?.setViewMode(node.dataset.cityView));
+  $('city-map-mini').addEventListener('click', () => openMap(neighborhoodAt(manifest, mapPosition())?.id));
   const moves = { north: { x: 0, z: -1 }, south: { x: 0, z: 1 }, west: { x: -1, z: 0 }, east: { x: 1, z: 0 } };
   for (const node of document.querySelectorAll('[data-move]')) {
     node.addEventListener('pointerdown', event => {
@@ -718,6 +771,51 @@ async function start() {
           $('city-interact').disabled = !prompt;
         },
         onMove: updateLocation,
+        onView: view => {
+          view.destination = currentView.destination; currentView = view;
+          const labelRoot = $('city-building-labels'); labelRoot.replaceChildren();
+          const occupied = [];
+          for (const original of view.labels || []) {
+            const width = $('city-canvas').clientWidth, height = $('city-canvas').clientHeight;
+            const margin = Math.min(48, 100 / width * 100);
+            const label = { ...original, x: Math.max(margin, Math.min(100 - margin, original.x)),
+              y: Math.max(210 / height * 100, Math.min((height - 160) / height * 100, original.y)) };
+            // Avoid overlapping names; the full accessible directory remains below.
+            if (occupied.some(p => Math.abs(p.x - label.x) < 210 / width * 100 && Math.abs(p.y - label.y) < 70 / height * 100)) continue;
+            occupied.push(label);
+            const node = el('span', label.name + ' · ' + label.distance + ' m');
+            node.style.left = label.x + '%'; node.style.top = label.y + '%'; labelRoot.append(node);
+          }
+          for (const node of document.querySelectorAll('[data-city-travel]')) {
+            node.setAttribute('aria-pressed', String(node.dataset.cityTravel === view.travel));
+            node.disabled = node.dataset.cityTravel === 'bike' && !!view.interior;
+          }
+          const destination = view.destination;
+          if (destination) {
+            const dx = destination.x - view.x, dz = destination.z - view.z;
+            const heading = viewHeading(Math.atan2(-dx, -dz)).label;
+            const text = view.interior ? 'Exit the building to continue to ' + destination.name : destination.name + ' · ' + Math.round(Math.hypot(dx, dz)) + ' m ' + heading + ' (straight-line distance)';
+            if ($('city-direction').textContent !== text) $('city-direction').textContent = text;
+          } else $('city-direction').textContent = '';
+          const route = view.navigation;
+          $('city-route-confirm').hidden = !route || !['preview', 'paused'].includes(route.status);
+          $('city-route-cancel').hidden = !route;
+          $('city-route').textContent = route ? 'Reroute' : 'Preview route';
+          if (route) {
+            const next = route.next;
+            const direction = next ? viewHeading(Math.atan2(view.x - next.x, view.z - next.z)).label : '';
+            const detail = route.status === 'arrived' ? 'Arrived at ' + route.destination.name
+              : route.status === 'blocked' ? 'No legal route found. Try another destination.'
+              : (route.status === 'preview' ? 'Preview — confirm to walk. ' : route.status === 'paused' ? 'Paused — confirm to reroute. ' : '')
+                + (route.phase === 'exit' ? 'First: leave this building. ' : '')
+                + (next ? 'Next: ' + direction + ' ' + Math.round(Math.hypot(next.x - view.x, next.z - view.z)) + ' m · waypoint ' + Math.min(route.waypoint, route.total) + '/' + route.total : '')
+                + ' → ' + route.destination.name;
+            if ($('city-direction').textContent !== detail) $('city-direction').textContent = detail;
+          }
+
+          for (const node of document.querySelectorAll('[data-city-view]')) node.setAttribute('aria-pressed', String(node.dataset.cityView === view.mode));
+          updateNavigationHud($('city-map-mini'), view, [...buildings(), ...vacant], places, neighborhoods(manifest));
+        },
         onReady: () => { $('city-scene-status').hidden = true; $('city-canvas').dataset.ready = 'true'; },
         onError: error => { $('city-scene-status').hidden = false; $('city-scene-status').textContent = 'The 3D street could not open. The district map, shops, dialogue, and story desk still work.'; console.warn('City renderer:', error.message); }
       });

@@ -39,7 +39,7 @@ export function blankSession(mode) {
 function sanitize(mode, s) {
   const out = { ...blankSession(mode), ...(s && typeof s === "object" ? s : {}) };
   out.mode = normalizeMode(mode);
-  if (out.mode === "WORKPLACE") { out.faults = []; out.seeded = null; }
+  if (out.mode === "WORKPLACE") { out.faults = []; out.seeded = null; delete out.hardware; }
   if (!Array.isArray(out.faults)) out.faults = [];
   out.faults = out.faults.filter((f) => f && typeof f.fault_id === "string" && Array.isArray(f.target_selectors)).slice(0, 64);
   if (!Array.isArray(out.history)) out.history = [];

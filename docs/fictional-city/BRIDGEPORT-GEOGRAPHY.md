@@ -19,33 +19,59 @@ Full retained footprint/road bounds are X −153.6721…150.8124 and Z −333.59
 
 ## Story tenants and authored adaptations
 
-The script does not name these real addresses. Shop signs, tenant uses, heights, façades, entrances, interiors, open yards and connecting walks are authored game adaptations. Actual heights, door positions and interiors are not present in the downloaded footprint layer. The property assignments do not assert that any real owner, resident, business, school or church is part of the story.
+The script does not name these real addresses. Non-government shop signs and tenant uses, heights, façades, game entrances, interiors, open yards and connecting walks are authored game adaptations. Verified government institutions retain their names, addresses and public functions. Actual heights, door positions and interiors are not present in the downloaded footprint layer. The property assignments do not assert that any real owner, resident, business, school or church is part of the story.
 
 | Source footprint | Game tenant | Enterable |
 | --- | --- | --- |
-| 279819 | Ashline Works | Yes |
+| 279819 | Bridgeport Superior Court · G.A. 2 | Exterior only |
 | 250870 | Last Light Market | Yes |
 | 264675 | Northline Walkups | Yes |
 | 264674 | Second Spin Laundry | Yes |
 | 283266 | Night Shift Club | Yes |
 | 250913 | Brickline School | Yes |
 | 279373 | Second Light Chapel | Yes |
-| 250867 | Golden Hour Records | Exterior only |
+| 250867 | Ashline Works | Yes |
 | 279372 | Cinder & Thread | Exterior only |
 | 282456 | Park City Print | Exterior only |
 | 283235 | Broad Street Books | Exterior only |
 | 278987 | Harbor Hardware | Exterior only |
 | 279371 | Corner Signal Electronics | Exterior only |
 | 265207 | Second Hand Sun | Exterior only |
-| 283267 | North Window Café | Exterior only |
+| 283267 | Bridgeport Superior Court · Judicial District | Exterior only |
 | 282451 | Last Stop Repairs | Exterior only |
 
-Common Yard is an open 20 × 14 m space at X −140, Z −300. Railside Yard is an open 14 × 12 m space at X 142, Z −280. Both were checked clear of all 16 source footprints and mapped road widths. The latter contains authored parked-car props.
+Common Yard is an open 14 × 10 m space at X 6, Z −340, with game entrance/story marker X 1, Z −337, on private parcel 908-20C. Railside Yard is an open 14 × 12 m space at X 17, Z −255, with game entrance/story marker X 17, Z −250.3, on private parcel 915-9B. Both rectangles were checked inside their private parcels, clear of retained footprint edges and estimated road widths, and inside the existing land surface. The latter contains authored parked-car props. The smaller Common Yard fits the available private ground.
 
 Road widths are estimates: secondary 12 m, tertiary 8 m, residential/service 6 m, pedestrian paths/steps 2 m. The dataset supplies centerlines, not measured road pavement edges.
 
 The donation bin is a separate collision prop with its own `propPosition`, distinct from the story marker and ordinary market entrance. Story progression follows the unchanged seven-act narrative; Positions returns to Night Shift Club.
 
+## Rendering
+
+The neighbourhood is drawn through the city's streaming contract (`js/fictional-city/neighborhood-chunks.mjs`, see `EXPANSION.md` § 5): the land surface is resident; footprint bodies (exact extruded rings, never a rectangle), streets, windows and signs are built per 64 m chunk when the player approaches and released when they leave. Adding footprints or streets to `neighborhoods[]` places them in their chunks automatically; no file is published for it.
+
 ## Placement verification
 
 All 18 place entrances, 13 story stop markers and the neighborhood spawn were checked with the runtime `createSpatialWorld` and `isWalkable` at a 0.7 m clearance radius, including the donation-bin and yard-fixture blockers. All 32 checks passed. Source footprint completeness, chronological path reachability and rendering checks remain part of the feature test suite.
+
+## Government identity correction — 2026-11-03
+
+The owner's clarified rule preserves city and street names, official geography and government entities. Non-government tenants and story people may be authored. A public building is not a vacant commercial slot.
+
+The [official Connecticut court directory](https://portal.ct.gov/dcj/states-attorneys/bridgeport/office-court-locations) identifies the two courts at **172 Golden Hill Street** and **1061 Main Street**. The [municipal parcel service](https://maps.ctmetro.org/server/rest/services/Bridgeport/Bridgeport_Parcels_NAD83/MapServer/7) identifies their state-owned parcels. Their map coordinates fall inside retained CT footprints 279819 and 283267 respectively.
+
+The original Ashline assignment occupied the Golden Hill courthouse footprint. Ashline's story identity and interior now use footprint **250867** on privately owned parcel **908-20C**, replacing the newly authored Golden Hour Records background tenant. The courthouse footprint stays in its original position. North Window Café's assignment similarly becomes the actual Main Street courthouse. Both courts are exterior landmarks with their real public identity, without fictional commercial interiors or story encounters. Heights and facade detail remain illustrative; no surveyed courthouse interior or full architectural reconstruction is claimed.
+
+The original Common Yard point fell on Bridgeport Parking Authority parcel **908-8**. The original Railside Yard point fell on federally owned parcel **913-1**, the Main Post Office grounds. The authored yards have moved to the private parcels above. All 16 selected building polygons remain unchanged.
+
+The minimized [classification evidence](geography/bridgeport-government-classification.json) records all 16 footprint-center parcel matches, the two independent court identifications, yard corrections, source endpoints and limitations. It excludes private personal owner names and mailing addresses. **A center-to-parcel ownership match is not a complete government-use audit:** a footprint may span parcels, and privately owned premises can contain government tenants. Check institutional use as well as ownership before future assignments.
+
+## Willy Whackers naming (superseded label)
+
+An earlier pass on this branch labeled Mr. GREAT and Harold's crew the “Elm Street Willy Whackers”. **Owner decision, 2026-11-03 (final): there is one Willy Whackers gang,** the School of Hard Knocks kids’ gang, the **Bond Street Willy Whackers**, named for Bond Street, where the real Harding High School (379 Bond Street) stands, and led by Bryce Lundqvist, the school’s hired extortionist. Mr. GREAT and Harold’s adult crew at the authored Night Shift Club keeps no gang name, as the recovered script leaves it. The Elm Street label is withdrawn from the Robbery 1s story; Elm Street itself stays a sourced street name.
+
+## Verification of this correction
+
+The focused story and spatial suites passed **20/20** locally after the place moves. Following loss of the terminal workspace, the latest corrected source was rebased onto inspected main `fe035461` (with the tested city files unchanged from `49b9f3bf`) and the same **20 test cases passed in an in-memory JavaScript runner**, using the repository runtime and test bodies with filesystem/assertion adapters. This covers all 18 entrances, the 13 stops in order, return to the island, old-save behavior, government-name protection and exact footprint parity.
+
+The full Node/publication/Core suites and a real WebGL device pass still need to run on the review branch. The in-memory check does not establish browser rendering, module loading, publish output or device performance.

@@ -642,7 +642,7 @@
     ui.leftBody.innerHTML = '';
     listSig = '';
     if (view === 'world') {
-      ui.leftBody.innerHTML = '<button type="button" class="hx-btn" data-camera-list>Browse camera snapshots</button><p class="hx-note">Listed cameras are not guaranteed live streams.</p><ul class="hx-groups">' + GROUPS.map((g) => '<li class="hx-group" data-group="' + g.id + '"><div class="hx-group__row"><span class="hx-group__icon">' + ICON[g.icon] + '</span><span><span class="hx-group__name">' + esc(g.name) + '</span><span class="hx-group__sub">' + esc(g.items.slice(0, 3).map((i) => i.short || i.label).join(' · ') + (g.items.length > 3 ? ' +' + (g.items.length - 3) : '')) + '</span></span><label class="hx-switch"><input type="checkbox" aria-label="' + esc(g.name) + ': all available layers"><i></i></label><button type="button" class="hx-disclose" aria-expanded="false" aria-controls="hxg-' + g.id + '" aria-label="Show ' + esc(g.name) + ' layers">' + ICON.down + '</button></div>' +
+      ui.leftBody.innerHTML = '<button type="button" class="hx-btn" data-finance-open>Finance · paper trading</button><button type="button" class="hx-btn" data-camera-list>Browse camera snapshots</button><p class="hx-note">Listed cameras are not guaranteed live streams.</p><ul class="hx-groups">' + GROUPS.map((g) => '<li class="hx-group" data-group="' + g.id + '"><div class="hx-group__row"><span class="hx-group__icon">' + ICON[g.icon] + '</span><span><span class="hx-group__name">' + esc(g.name) + '</span><span class="hx-group__sub">' + esc(g.items.slice(0, 3).map((i) => i.short || i.label).join(' · ') + (g.items.length > 3 ? ' +' + (g.items.length - 3) : '')) + '</span></span><label class="hx-switch"><input type="checkbox" aria-label="' + esc(g.name) + ': all available layers"><i></i></label><button type="button" class="hx-disclose" aria-expanded="false" aria-controls="hxg-' + g.id + '" aria-label="Show ' + esc(g.name) + ' layers">' + ICON.down + '</button></div>' +
         '<ul class="hx-layers" id="hxg-' + g.id + '" hidden>' + g.items.map((it) => '<li class="hx-layer" data-item="' + it.id + '" data-state="off"><span class="hx-layer__name">' + esc(it.label) + '</span><span class="hx-layer__state" aria-live="polite"></span><label class="hx-switch"><input type="checkbox" aria-label="' + esc(it.label) + '"' + (it.planned ? ' disabled' : '') + '><i></i></label></li>').join('') + '</ul></li>').join('') + '</ul>' +
         '<div class="hx-section"><p class="hx-label">Source health</p><ul class="hx-health"></ul><button type="button" class="hx-more" data-go="sources">View all sources ' + ICON.arrow + '</button></div>';
       const cam = $('[data-camera-list]', ui.leftBody); if (cam) cam.onclick = () => { select(null); G.cameras(); };
@@ -1156,6 +1156,7 @@
   }
   function onDocClick(e) {
     if (!ui.root) return;
+    if(e.target.closest('[data-finance-open]') && markets) { markets.openFinance(); return; }
     if (!ui.pop.hidden && !ui.pop.contains(e.target) && !ui.layersBtn.contains(e.target)) setPop(false);
     if (!ui.results.hidden && !ui.results.contains(e.target) && !$('.hx-search', ui.root).contains(e.target)) ui.results.hidden = true;
   }

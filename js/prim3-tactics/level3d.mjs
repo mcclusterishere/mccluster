@@ -27,9 +27,9 @@ const TEAMS = {
   studio: { PLAYER: 0xff2a3a, THREAT: 0x3d8bff }
 };
 const OVER = {
-  day: { reach: 0x0fb2c4, path: 0xf29d17, line: 0xe8890a, dest: 0xe8890a },
-  field: { reach: 0x22d3e6, path: 0xffb547, line: 0xffb547, dest: 0xffb547 },
-  studio: { reach: 0x30373c, path: 0x0e1113, line: 0x0e1113, dest: 0x0e1113 }
+  day: { reach: 0x187bdb, path: 0xf29d17, line: 0xe8890a, dest: 0xe8890a },
+  field: { reach: 0x389cff, path: 0xffb547, line: 0xffb547, dest: 0xffb547 },
+  studio: { reach: 0x187bdb, path: 0x0e1113, line: 0x0e1113, dest: 0x0e1113 }
 };
 const NATURE = { leaf: 0x3f5f2c, leaf2: 0x52733a, bark: 0x4a3426 };
 
@@ -57,7 +57,7 @@ function boxUV(w, h, d, unit = 2) {
   return g;
 }
 
-export function createLevel3D(host, { level, onTap, onView = null, reducedMotion = false, fx = null, look = 'field', showcase = false }) {
+export function createLevel3D(host, { level, onTap, onHover = null, onDoubleTap = null, onView = null, reducedMotion = false, fx = null, look = 'field', showcase = false }) {
   const { SCENE, W, H, TILE_M, toDisplay } = level;
   // metres a world unit stands for: the shared tile, unless the level draws at its own plan scale
   // (Equity Uprise HQ: 12 ft a tile, so its building model and its people share one true scale)
@@ -76,6 +76,10 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
   renderer.domElement.setAttribute('aria-hidden', 'true');
   host.appendChild(renderer.domElement);
   const labels = document.createElement('div'); labels.className = 'b3-labels'; host.appendChild(labels);
+  // Explicit legal floor-link affordances, distinct from picking any hidden upper floor.
+  const landingLayer = document.createElement('div'); landingLayer.className = 'b3-landings';
+  landingLayer.style.cssText = 'position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:3'; host.appendChild(landingLayer);
+  const landingButtons = new Map();
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 400);
@@ -453,12 +457,17 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
   const tileTex = canvasTex(64, 64, (g) => { g.clearRect(0, 0, 64, 64); g.fillStyle = 'rgba(255,255,255,.16)'; g.fillRect(3, 3, 58, 58); g.strokeStyle = 'rgba(255,255,255,.95)'; g.lineWidth = 2.5; g.strokeRect(3, 3, 58, 58); }, false);
   const reachMat = ovMat(0x22d3e6, 0.85); reachMat.map = tileTex;
   const reachMesh = new THREE.InstancedMesh(tileGeo, reachMat, W * H * 2); reachMesh.count = 0; reachMesh.renderOrder = 2; reachMesh.frustumCulled = false; scene.add(reachMesh);
+  const dashMat = ovMat(0xf59a23, 0.85); dashMat.map = tileTex;
+  const dashMesh = new THREE.InstancedMesh(tileGeo, dashMat, W * H * 2); dashMesh.count = 0; dashMesh.renderOrder = 2; dashMesh.frustumCulled = false; scene.add(dashMesh);
   const edgeGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(0.96, 0.001, 0.96));
   const reachEdge = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.98, 0.98).rotateX(-Math.PI / 2), ovMat(0x22d3e6, 0.05), W * H * 2); reachEdge.count = 0; reachEdge.renderOrder = 1; reachEdge.frustumCulled = false; scene.add(reachEdge);
   const pathMesh = new THREE.InstancedMesh(tileGeo, ovMat(0xffb547, 0.32), 256); pathMesh.count = 0; pathMesh.renderOrder = 3; pathMesh.frustumCulled = false; scene.add(pathMesh);
   const hintMesh = new THREE.InstancedMesh(tileGeo, ovMat(0xffffff, 0.35), 256); hintMesh.count = 0; hintMesh.renderOrder = 3; hintMesh.frustumCulled = false; scene.add(hintMesh);
   const destFrame = new THREE.LineSegments(edgeGeo, new THREE.LineBasicMaterial({ color: 0xffb547, toneMapped: false })); destFrame.visible = false; scene.add(destFrame);
   const pathLine = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineDashedMaterial({ color: 0xffb547, dashSize: 0.35, gapSize: 0.22, toneMapped: false, linewidth: 2 })); pathLine.visible = false; pathLine.renderOrder = 4; scene.add(pathLine);
+  // Semantic path markers remain coloured even in the white-material look.
+  const routeMarker = (color) => { const marker = new THREE.Mesh(new THREE.RingGeometry(0.13, 0.19, 24).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.95, depthWrite: false, toneMapped: false })); marker.visible = false; marker.renderOrder = 5; scene.add(marker); return marker; };
+  const routeCurrent = routeMarker(0x187bdb), routeNext = routeMarker(0xf59a23);
   const targetRing = new THREE.Mesh(new THREE.RingGeometry(0.42, 0.5, 40).rotateX(-Math.PI / 2), ovMat(0xff3b3b, 0.95)); targetRing.visible = false; scene.add(targetRing);
   const mm = new THREE.Matrix4();
   function fillTiles(mesh, tiles, lift = 0.035) {
@@ -469,23 +478,35 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
 
   /* ---------- the plotting grid: every tile edge on the ground and on each walkable roof ---------- */
   const gridGroup = new THREE.Group(); scene.add(gridGroup);
+  let gridDetail = 1; // display subdivision only; tactical cells and picking remain unchanged
+  const gridFine = new THREE.LineBasicMaterial({ color: 0x5fe6f2, transparent: true, opacity: 0.14, depthWrite: false, toneMapped: false });
   const gridMat = new THREE.LineBasicMaterial({ color: 0x5fe6f2, transparent: true, opacity: 0.42, depthWrite: false, toneMapped: false });
   const gridMajor = new THREE.LineBasicMaterial({ color: 0x9ff3fb, transparent: true, opacity: 0.7, depthWrite: false, toneMapped: false });
-  { const minor = [], major = [], put = (arr, ...v) => arr.push(...v);
+  { const minor = [], major = [], fine = [], put = (arr, ...v) => arr.push(...v);
     const isMajorX = (x) => (x - level.FRAME.x0) % 8 === 0, isMajorY = (y) => (level.FRAME.y0 - y + 1) % 8 === 0;
     const cut = (x, y) => !!canal && y >= canal.y && y < canal.y + canal.d && !SCENE.bridges.some((b) => x >= b.x && x < b.x + b.w && y >= b.y && y < b.y + b.d);
     for (let x = 0; x <= W; x += 1) for (let y = 0; y < H; y += 1) { if (cut(x, y) && cut(x - 1, y)) continue; put(isMajorX(x) ? major : minor, x - 0.5, 0.03, y - 0.5, x - 0.5, 0.03, y + 0.5); }
     for (let y = 0; y <= H; y += 1) for (let x = 0; x < W; x += 1) { if (cut(x, y) && cut(x, y - 1)) continue; put(isMajorY(y) ? major : minor, x - 0.5, 0.03, y - 0.5, x + 0.5, 0.03, y - 0.5); }
+    // Half-cell guides split each tactical square visually into four. Never bridge canal water.
+    for (let x = 0; x < W; x += 1) for (let y = 0; y < H; y += 1) {
+      if (cut(x, y)) continue;
+      put(fine, x - 0.5, 0.03, y, x + 0.5, 0.03, y, x, 0.03, y - 0.5, x, 0.03, y + 0.5);
+    }
     // a grid on every raised walkable surface the level names (default: all of them)
     const roofsDef = (SCENE.gridSurfaces || SURF).filter((q) => Math.abs(q.height) > 0.05).map((q) => ({ ...q, h: q.height }));
     // each floor's grid is its own line set, so a building cutaway can hide the floors above the cut
-    const raised = new Map();
+    const raised = new Map(), raisedFine = new Map();
     for (const r of roofsDef) { const hh = M(r.h) + 0.02, arr = raised.get(r.z || 1) || []; raised.set(r.z || 1, arr);
       for (let x = r.x; x <= r.x + r.w; x += 1) put(arr, x - 0.5, hh, r.y - 0.5, x - 0.5, hh, r.y + r.d - 0.5);
-      for (let y = r.y; y <= r.y + r.d; y += 1) put(arr, r.x - 0.5, hh, y - 0.5, r.x + r.w - 0.5, hh, y - 0.5); }
-    const seg = (arr, m, z = 0) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(arr, 3)); const l = new THREE.LineSegments(g, m); l.renderOrder = 1; l.frustumCulled = false; l.userData.gridZ = z; gridGroup.add(l); };
+      for (let y = r.y; y <= r.y + r.d; y += 1) put(arr, r.x - 0.5, hh, y - 0.5, r.x + r.w - 0.5, hh, y - 0.5);
+      const detail = raisedFine.get(r.z || 1) || []; raisedFine.set(r.z || 1, detail);
+      for (let x = r.x; x < r.x + r.w; x += 1) put(detail, x, hh, r.y - 0.5, x, hh, r.y + r.d - 0.5);
+      for (let y = r.y; y < r.y + r.d; y += 1) put(detail, r.x - 0.5, hh, y, r.x + r.w - 0.5, hh, y); }
+    const seg = (arr, m, z = 0, detail = false) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(arr, 3)); const l = new THREE.LineSegments(g, m); l.renderOrder = 1; l.frustumCulled = false; l.userData.gridZ = z; l.userData.gridDetail = detail; l.visible = !detail; gridGroup.add(l); };
     seg(minor, gridMat); seg(major, gridMajor);
-    for (const [z, arr] of raised) seg(arr, gridMat, z); }
+    for (const [z, arr] of raised) seg(arr, gridMat, z);
+    seg(fine, gridFine, 0, true);
+    for (const [z, arr] of raisedFine) seg(arr, gridFine, z, true); }
 
   /* ---------- fog of war: a per-tile shade over the ground, fed by the page from the engine's sight ---------- */
   const fogData = new Uint8Array(W * H * 4).fill(255);
@@ -563,6 +584,7 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
     fogMat.color.set(studio ? 0x8c9399 : day ? 0x31414c : 0x05080b); fogMat.opacity = studio ? 0.45 : day ? 0.5 : 0.66;
     scene.userData.fogNear = scene.fog && scene.fog.isFog ? scene.fog.near : 0; scene.userData.fogFar = scene.fog && scene.fog.isFog ? scene.fog.far : 0;
     gridMat.color.set(studio ? 0x2a3136 : day ? 0x1fb6c6 : 0x5fe6f2); gridMat.opacity = studio ? 0.28 : day ? 0.5 : 0.42; gridMajor.color.set(studio ? 0x0e1113 : day ? 0x0b8fa0 : 0x9ff3fb); gridMajor.opacity = studio ? 0.5 : day ? 0.8 : 0.7;
+    gridFine.color.copy(gridMat.color); gridFine.opacity = studio ? 0.10 : day ? 0.17 : 0.14;
     if (bloomPass) bloomPass.enabled = !studio && !day;
     if (day) for (const m of [M_CONC, M_CORR, M_ROOF, M_GRATE]) m.color.set(m === M_ROOF ? 0xf3f3ef : 0xeeeeea); // white industrial by day
     const ov = OVER[curLook];
@@ -774,12 +796,16 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
     }
     applyCut();
   }
+  function applyGridCut(st = MODEL ? cutStorey() : null) {
+    const storey = (z) => (level.storeyOf ? level.storeyOf(z) : z);
+    for (const l of gridGroup.children) l.visible = (!l.userData.gridDetail || gridDetail === 2)
+      && (st == null ? true : l.userData.gridZ ? storey(l.userData.gridZ) <= st : st >= 1);
+  }
   function applyCut() {
+    applyGridCut();
     if (!MODEL) return;
     const st = cutStorey();
     cutPlane.constant = st == null ? 1e6 : M(((st - 1) * MODEL.storeyFt + MODEL.cutFt) * 0.3048);
-    const storey = (z) => (level.storeyOf ? level.storeyOf(z) : z);
-    for (const l of gridGroup.children) l.visible = st == null ? true : l.userData.gridZ ? storey(l.userData.gridZ) <= st : st >= 1;
     // below grade, everything above the cut goes (the ground, the site, the city): the basement is seen from above
     const below = st != null && st < 1;
     renderer.clippingPlanes = below ? [cutPlane] : [];
@@ -816,6 +842,39 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
       html += `<span class="b3-label b3-label--${l.kind}" style="transform:translate(${p.x.toFixed(1)}px,${p.y.toFixed(1)}px)">${l.text}</span>`;
     }
     labels.innerHTML = html + edgeRulers();
+    const bounds = renderer.domElement.getBoundingClientRect();
+    for (const { button, tile } of landingButtons.values()) {
+      const p = project(tile.x, tile.y, surfaceHeight(tile.x, tile.y, tile.z || 0) + 0.18);
+      button.hidden = p.behind || p.x < 0 || p.y < 0 || p.x > bounds.width || p.y > bounds.height;
+      button.style.left = `${p.x}px`; button.style.top = `${p.y}px`;
+    }
+  }
+  function updateLandings(m) {
+    const selected = m.units.find((u) => u.id === m.selected && !u.dead), keep = new Set();
+    for (const tile of showcase || !selected ? [] : (m.landings || [])) {
+      // The page supplies only known links. Recheck the current legal reach before exposing a target.
+      const legal = (m.reach || []).find((t) => t.x === tile.x && t.y === tile.y && (t.z || 0) === (tile.z || 0));
+      if (!legal || (selected.z || 0) === (tile.z || 0)) continue;
+      const key = `${tile.x}:${tile.y}:${tile.z || 0}`; keep.add(key);
+      let entry = landingButtons.get(key);
+      if (!entry) {
+        const button = document.createElement('button'); button.type = 'button'; button.dataset.landing = key;
+        button.style.cssText = 'position:absolute;translate:-50% -50%;pointer-events:auto;min-height:44px;max-width:150px;padding:5px 8px;border:2px solid #187bdb;border-radius:8px;background:#101923;color:#fff;font:600 16px/1.25 system-ui;box-shadow:0 2px 6px #0006;cursor:pointer';
+        for (const event of ['pointerdown', 'pointerup', 'dblclick']) button.addEventListener(event, (e) => e.stopPropagation());
+        entry = { button, tile }; landingButtons.set(key, entry); landingLayer.appendChild(button);
+        button.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const current = landingButtons.get(key);
+          if (current && !fireAnim && !fireQueue.length && onTap) onTap({ x: current.tile.x, y: current.tile.y, z: current.tile.z || 0, navigationLink: true });
+        });
+      }
+      entry.tile = tile;
+      const arrow = surfaceHeight(tile.x, tile.y, tile.z || 0) > surfaceHeight(selected.x, selected.y, selected.z || 0) ? '↑' : '↓';
+      entry.button.textContent = `${arrow} ${tile.label || `Floor ${tile.z || 0}`} · ${legal.apCost} AP`;
+      entry.button.setAttribute('aria-label', `Preview landing: ${tile.label || `Floor ${tile.z || 0}`} at ${tile.x}, ${tile.y}; ${legal.apCost} AP. Confirm to move.`);
+      entry.button.style.borderColor = legal.apCost >= 2 ? '#f59a23' : '#187bdb';
+    }
+    for (const [key, entry] of landingButtons) if (!keep.has(key)) { entry.button.remove(); landingButtons.delete(key); }
   }
   const rayR = new THREE.Raycaster(), ndcR = new THREE.Vector2(), hitR = new THREE.Vector3(), plane0 = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
   function groundAt(px, py, r) { ndcR.set(px / r.width * 2 - 1, -(py / r.height) * 2 + 1); rayR.setFromCamera(ndcR, camera); return rayR.ray.intersectPlane(plane0, hitR) ? hitR.clone() : null; }
@@ -858,7 +917,7 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
     else if (scene.fog && scene.fog.isFogExp2) scene.fog.density = 0.0055 * 44 / Math.max(44, view.dist);
     lookAt.copy(view.target);
     if (shotCam) { const k = shotCam.k * shotCam.k * (3 - 2 * shotCam.k); camPos.lerp(shotCam.from, k); lookAt.lerp(shotCam.look, k); }
-    camera.position.copy(camPos); camera.lookAt(lookAt);
+    camera.position.copy(camPos); camera.lookAt(lookAt); camera.updateMatrixWorld(true);
   }
   const clampGoal = () => { view.goal.x = Math.min(W + 2, Math.max(-3, view.goal.x)); view.goal.z = Math.min(H + 2, Math.max(-3, view.goal.z)); };
   // look a little south of the tile (clear of the cards), less so close up
@@ -998,9 +1057,12 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
       if (!a.walk && !(fireAnim && fireAnim.attackerId === u.id)) a.faceGoal = a.restFace;
     }
     for (const [id, a] of actors) if (!seen.has(id) && !a.dying && !(fireAnim && fireAnim.targetId === id) && !fireQueue.some((s) => s.targetId === id)) { unitsGroup.remove(a.g); actors.delete(id); }
-    fillTiles(reachMesh, m.reach); fillTiles(reachEdge, m.reach, 0.025); fillTiles(pathMesh, m.path, 0.04); fillTiles(hintMesh, m.hint ? [m.hint] : [], 0.045);
+    const walk = (m.reach || []).filter((t) => !(t.apCost >= 2)), dash = (m.reach || []).filter((t) => t.apCost >= 2);
+    fillTiles(reachMesh, walk); fillTiles(reachEdge, walk, 0.025); fillTiles(dashMesh, dash); fillTiles(pathMesh, m.path, 0.04); fillTiles(hintMesh, m.hint ? [m.hint] : [], 0.045);
     destFrame.visible = !!m.dest; if (m.dest) destFrame.position.set(m.dest.x, surfaceHeight(m.dest.x, m.dest.y, m.dest.z || 0) + 0.06, m.dest.y);
     targetRing.visible = !!m.target; if (m.target) { const t = m.units.find((u) => u.id === m.target); if (t) targetRing.position.set(t.x, surfaceHeight(t.x, t.y, t.z) + 0.05, t.y); else targetRing.visible = false; }
+    routeCurrent.visible = routeNext.visible = !!(m.pathLine && m.pathLine.length > 1);
+    if (routeCurrent.visible) for (const [i, marker] of [routeCurrent, routeNext].entries()) { const p = m.pathLine[i]; marker.position.set(p.x, surfaceHeight(p.x, p.y, p.z || 0) + 0.10, p.y); }
     if (m.pathLine && m.pathLine.length > 1) {
       pathLine.geometry.dispose();
       pathLine.geometry = new THREE.BufferGeometry().setFromPoints(m.pathLine.map((p) => new THREE.Vector3(p.x, surfaceHeight(p.x, p.y, p.z || 0) + 0.09, p.y)));
@@ -1009,6 +1071,7 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
     const sel = m.units.find((u) => u.id === m.selected && !u.dead);
     for (const [id, a] of actors) { if (!a.rig || !a.rig.halo) continue; const on = !!sel && id === sel.id;
       a.rig.halo.material.opacity = on ? 1 : 0.5; if (a.rig.accent) a.rig.accent.emissiveIntensity = on ? 3.2 : 1.2; }
+    updateLandings(m);
     labelSpecs = (m.labels || []).map((l) => (l.kind === 'ally' || l.kind === 'hostile') && l.id ? { ...l, unit: l.id } : l);
     needs = true;
   }
@@ -1032,22 +1095,35 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
     return lit || cands[0];
   }
   const pointers = new Map(); let pinch = null, pan = null, moved = false;
+  // Native double-click is accepted only after two primary mouse taps on the same tile.
+  // Touch, drag and pinch never authorize execution; the page remains the action authority.
+  let mouseTaps = [], hoverKey = null;
+  const tileKey = (t) => t ? `${t.x},${t.y},${t.z || 0}` : null;
+  const hoverAt = (t) => { const key = tileKey(t); if (key === hoverKey) return; hoverKey = key; if (onHover) onHover(t, { pointerType: 'mouse' }); };
+  const recordTap = (e, t) => {
+    if (e.pointerType === 'mouse' && e.button === 0 && t) mouseTaps = [...mouseTaps.slice(-1), { key: tileKey(t), at: e.timeStamp }];
+    else mouseTaps = [];
+  };
+
+  const resetPointerGuidance = () => { mouseTaps = []; hoverAt(null); };
+  if (!showcase) window.addEventListener('blur', resetPointerGuidance);
   const el = renderer.domElement;
   if (!showcase) {
     el.style.touchAction = 'none';
     el.addEventListener('pointerdown', (e) => {
+      if (e.pointerType !== 'mouse' || e.button !== 0) mouseTaps = [];
       pointers.set(e.pointerId, { x: e.clientX, y: e.clientY }); moved = false;
       if (pointers.size === 2) { const [a, b] = [...pointers.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), dist: view.distGoal }; pan = null; }
       else pan = { x: e.clientX, y: e.clientY, tx: view.goal.x, tz: view.goal.z };
     });
     el.addEventListener('pointermove', (e) => {
-      if (!pointers.has(e.pointerId)) return;
+      if (!pointers.has(e.pointerId)) { if (e.pointerType === 'mouse' && !e.buttons && !fireAnim) hoverAt(tileAt(e.clientX, e.clientY)); return; }
       pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      if (pointers.size === 2 && pinch) { const [a, b] = [...pointers.values()]; setDist(pinch.dist * pinch.d / Math.max(20, Math.hypot(a.x - b.x, a.y - b.y))); moved = true; return; }
+      if (pointers.size === 2 && pinch) { const [a, b] = [...pointers.values()]; setDist(pinch.dist * pinch.d / Math.max(20, Math.hypot(a.x - b.x, a.y - b.y))); moved = true; mouseTaps = []; return; }
       if (pan) {
         const dx = e.clientX - pan.x, dy = e.clientY - pan.y;
         if (Math.abs(dx) + Math.abs(dy) > 8) {
-          moved = true;
+          moved = true; mouseTaps = [];
           const k = view.dist / 520, cyw = Math.cos(view.yaw), syw = Math.sin(view.yaw);
           view.goal.set(pan.tx - dx * k * cyw - dy * k * 1.3 * syw, view.goal.y, pan.tz + dx * k * syw - dy * k * 1.3 * cyw); clampGoal();
           view.target.copy(view.goal); needs = true;
@@ -1056,10 +1132,18 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
     });
     const end = (e) => {
       const wasTap = pointers.size === 1 && !moved;
+      if (e.type === 'pointercancel') mouseTaps = [];
       pointers.delete(e.pointerId); if (pointers.size < 2) pinch = null; if (!pointers.size) pan = null;
-      if (wasTap && e.type === 'pointerup' && !fireAnim && !fireQueue.length) { const t = tileAt(e.clientX, e.clientY); if (t) onTap(t); }
+      if (wasTap && e.type === 'pointerup' && !fireAnim && !fireQueue.length) { const t = tileAt(e.clientX, e.clientY); recordTap(e, t); if (t && e.button === 0) onTap(t); }
     };
     el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
+    el.addEventListener('pointerleave', resetPointerGuidance);
+    el.addEventListener('dblclick', (e) => {
+      const t = tileAt(e.clientX, e.clientY), key = tileKey(t);
+      const valid = e.button === 0 && !moved && !fireAnim && !fireQueue.length && mouseTaps.length === 2 && mouseTaps.every((tap) => tap.key === key) && mouseTaps[1].at - mouseTaps[0].at <= 1000 && e.timeStamp - mouseTaps[1].at <= 1000;
+      mouseTaps = []; // consume before callback, even if the page rejects the action
+      if (valid && t && onDoubleTap) { e.preventDefault(); onDoubleTap(t, { pointerType: 'mouse' }); }
+    });
     el.addEventListener('wheel', (e) => { e.preventDefault(); setDist(view.distGoal * (e.deltaY > 0 ? 1.1 : 0.9)); }, { passive: false });
   }
   function setDist(d) { view.distGoal = Math.min(view.maxDist, Math.max(view.minDist, d)); needs = true; }
@@ -1070,6 +1154,8 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
     setLook(lk) { applyLook(lk); },
     setGrid(on) { gridGroup.visible = !!on; rulersOn = !!on; needs = true; },
     get gridOn() { return gridGroup.visible; },
+    setGridDetail(detail) { gridDetail = Number(detail) === 2 ? 2 : 1; applyGridCut(); needs = true; },
+    get gridDetail() { return gridDetail; },
     setActive(on) { active = !!on; needs = true; },
     zoom(step) { setDist(view.distGoal * (step > 0 ? 0.8 : 1.25)); },
     zoomLevel() { return view.dist; },
@@ -1097,6 +1183,6 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
     screenOf(x, y, h = 0, z = 0) { placeCamera(); const p = project(x, y, h + surfaceHeight(x, y, z)); const r = el.getBoundingClientRect(); return { x: r.left + p.x, y: r.top + p.y }; },
     tileAt,
     surfaceHeight,
-    destroy() { destroyed = true; cancelAnimationFrame(raf); ro.disconnect(); if (composer) composer.dispose(); renderer.dispose(); host.innerHTML = ''; }
+    destroy() { window.removeEventListener('blur', resetPointerGuidance); destroyed = true; cancelAnimationFrame(raf); ro.disconnect(); if (composer) composer.dispose(); renderer.dispose(); host.innerHTML = ''; }
   };
 }

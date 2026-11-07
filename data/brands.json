@@ -244,7 +244,7 @@
         },
         {
           "label": "Music",
-          "value": "The study tapes"
+          "value": "Cyber Security Specialist, by PRIM3, its own artist"
         }
       ],
       "highlights": [
@@ -262,6 +262,11 @@
           "label": "Hear the study tapes",
           "href": "album.html?album=prim3",
           "cta": "eco-prim3-album"
+        },
+        {
+          "label": "PRIM3, the artist",
+          "href": "prim3-artist.html",
+          "cta": "eco-prim3-artist"
         }
       ],
       "song": {

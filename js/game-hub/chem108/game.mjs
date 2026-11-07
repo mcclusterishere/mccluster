@@ -2,6 +2,9 @@
    Rules live in engine.mjs; the study content is Chem-108's own (data/, pinned in data/SOURCE.json). */
 import { buildCatalog, MODES, modeTopics, pool, makeQuestion, newRound, answer, tick, nextItem, update, emptySave, recordRound, accuracy, multiplier, LIVES, ROUND_SECONDS } from './engine.mjs';
 
+import { structureAnswer, bindStructureAnswer } from './structure-answer.mjs';
+import { EXAMPLE, lessonFor, renderExample, bindExample } from './worked-example.mjs';
+
 export const SAVE_KEY = 'mcc.gamehub.chem108.v1';
 const HERE = new URL('./', import.meta.url);
 let catalogPromise = null;
@@ -32,7 +35,7 @@ function writeSave(s) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(s));
 const esc = (x) => String(x ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const reduced = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
-export function mount(host, { onExit } = {}) {
+export function mount(host, { onExit, onStart } = {}) {
   let catalog = null, save = readSave(), mode = 'name-it', topic = 'all';
   let round = null, q = null, lastId = null, results = [], records = {}, locked = false, timer = 0, lastTick = 0, advance = 0;
   host.innerHTML = '<p class="mr-loading" role="status">Loading the Chem-108 deck…</p>';
@@ -64,14 +67,39 @@ export function mount(host, { onExit } = {}) {
           </select>
         </label>
         <button type="button" class="mr-btn mr-start" data-start>Start · ${ROUND_SECONDS} seconds · ${LIVES} lives</button>
-        <p class="mr-rules">Every right answer in a row builds the streak: ×2 from three, up to ×5. A miss costs a life and resets it. Your misses come back at the end with the answer.</p>
+        <button type="button" class="mr-btn mr-btn--quiet" data-example>Study worked examples · all 49 structures</button>
+        <p class="mr-rules">Every right answer in a row builds the streak: ×2 from three, up to ×5. A miss costs a life and resets it. Every structure gets an explanation after your answer. The clock pauses while you read. Your misses also come back at the end.</p>
         ${best ? `<p class="mr-best">Best in ${esc(MODES[mode].title)}: <b>${best}</b></p>` : ''}
         ${accuracyList(topics)}
       </div>`;
     host.querySelectorAll('[data-mode]').forEach((b) => { b.onclick = () => { mode = b.dataset.mode; setup(); host.querySelector(`[data-mode="${mode}"]`)?.focus(); }; });
     host.querySelector('[data-topic]').onchange = (e) => { topic = e.target.value; };
     host.querySelector('[data-start]').onclick = start;
+    host.querySelector('[data-example]').onclick = () => showExample();
     host.querySelector('[data-exit]').onclick = () => { stopClock(); onExit && onExit(); };
+  }
+  function showExample(id = EXAMPLE.questionId) {
+    stopClock(); round = null;
+    const molecule = catalog.molecules.find(m => m.id === id);
+    const lesson = lessonFor(id);
+    host.innerHTML = `<div class="mr-end"><button type="button" class="mr-btn" data-return>Back to setup</button>
+      <label class="mr-topic">Structure to study<select data-study-structure>${catalog.molecules.map(m=>`<option value="${m.id}" ${m.id===id?'selected':''}>${esc(m.name)}</option>`).join('')}</select></label>
+      <h2 tabindex="-1" data-example-title>Sample answer view · ${esc(molecule.name)}</h2>
+      <p>Unscored preview: this illustrates an accepted answer. It is not a result from your round.</p>
+      ${structureAnswer({ ...molecule, answer: molecule.name }, molecule.name, true, catalog)}
+      <div data-lesson-author></div></div>`;
+    bindStructureAnswer(host);
+    host.querySelector('[data-study-structure]').onchange = event => showExample(event.target.value);
+    host.querySelector('[data-continue]').onclick = setup;
+    host.querySelector('[data-return]').onclick = setup;
+    host.querySelector('[data-example-title]').focus();
+    // Reuse the page's server-backed owner gate. Authoring has no backend write path.
+    if (document.documentElement.dataset.ownerAccess === 'open') {
+      const target = host.querySelector('[data-lesson-author]');
+      import('./worked-example-author.mjs').then(({ mountAuthor }) => {
+        if (host.contains(target)) mountAuthor(target, catalog, lesson);
+      }).catch(() => { if (host.contains(target)) target.textContent = 'The local draft editor could not load.'; });
+    }
   }
   function accuracyList(topics) {
     const rows = topics.map((t) => ({ t, a: accuracy(save.topics[t.id]), n: save.topics[t.id]?.seen || 0 })).filter((r) => r.n);
@@ -80,6 +108,7 @@ export function mount(host, { onExit } = {}) {
   }
 
   function start() {
+    onStart?.();
     round = newRound({ mode, topic }); results = []; records = { ...save.records }; lastId = null;
     host.innerHTML = `
       <div class="mr-play">
@@ -120,6 +149,7 @@ export function mount(host, { onExit } = {}) {
     if (flash && !reduced()) { const el = $(flash); el.classList.remove('is-pop'); void el.offsetWidth; el.classList.add('is-pop'); }
   }
   function ask() {
+    host.querySelector('.mr-answer')?.remove();
     const items = pool(catalog, mode, topic);
     const item = nextItem(items, records, lastId);
     lastId = item.id;
@@ -151,6 +181,17 @@ export function mount(host, { onExit } = {}) {
     if (r.ok && !reduced()) {
       const p = document.createElement('span'); p.className = 'mr-points'; p.textContent = '+' + r.points; btns[i].appendChild(p);
     }
+    if (q.svg) {
+      host.querySelector('.mr-play').insertAdjacentHTML('beforeend', structureAnswer(q, o.label, r.ok, catalog));
+      bindStructureAnswer(host.querySelector('.mr-answer'));
+      host.querySelector('[data-answer-title]').focus();
+      host.querySelector('[data-continue]').onclick = () => {
+        if (round.over) finish('lives');
+        else { ask(); host.querySelector('[data-i]')?.focus(); lastTick = performance.now(); timer = requestAnimationFrame(loop); }
+      };
+      cancelAnimationFrame(timer); timer = 0;
+      return;
+    }
     if (round.over) { advance = setTimeout(() => finish('lives'), 700); return; }
     advance = setTimeout(ask, r.ok ? 350 : 1100);
   }
@@ -170,6 +211,7 @@ export function mount(host, { onExit } = {}) {
         <div class="mr-actions"><button type="button" class="mr-btn" data-again>Play again</button><button type="button" class="mr-btn mr-btn--quiet" data-setup>Change mode</button></div>
         ${done.missed.length ? `<section class="mr-missed" aria-label="What you missed"><h3>What you missed</h3><ol>${done.missed.map(missCard).join('')}</ol></section>` : (done.answered ? '<p class="mr-clean">No misses this round.</p>' : '')}
       </div>`;
+    bindExample(host);
     host.querySelector('[data-again]').onclick = start;
     host.querySelector('[data-setup]').onclick = setup;
     host.querySelector('[data-again]').focus();
@@ -181,7 +223,7 @@ export function mount(host, { onExit } = {}) {
       <p class="mr-miss__a">${esc(m.answer)}${m.formula ? ` <small>${esc(m.formula)}</small>` : ''}</p>
       ${m.aliases && m.aliases.length ? `<p class="mr-miss__alias">Also accepted: ${m.aliases.map(esc).join(', ')}</p>` : ''}
       <p class="mr-miss__you">You picked: ${esc(m.picked)}</p>
-      ${m.explain ? `<p class="mr-miss__why">${esc(m.explain)}</p>` : ''}</div></li>`;
+      ${m.explain ? `<p class="mr-miss__why">${esc(m.explain)}</p>` : ''}</div>${renderExample(m, catalog)}</li>`;
   }
   function onKey(e) {
     if (!round || locked || e.altKey || e.ctrlKey || e.metaKey) return;

@@ -1,3 +1,4 @@
+import { handleArcade, ARCADE_PREFIX } from './arcade/index.js';
 import { guardWorldRelease } from './world-release.js';
 import { handleFundingIntelligence, FUNDING_PREFIX } from './funding-intelligence.js';
 import { allowedOrigins, applyCors, corsHeaders, fail, logEvent, reply } from './lib/http.js';
@@ -21,6 +22,7 @@ import { handleWorldIon, WORLD_ION_PATH } from './world-ion.js';
 import { AccessError, verifyAccess } from './seek-first/access.js';
 import { handleWorldNews, handleWorldNewsHeat, NEWS_PATH, NEWS_HEAT_PATH } from './world-news.js';
 import { handleWorldNewsPairs, NEWS_PAIRS_PATH } from './world-news-pairs.js';
+import { handleWorldWeather, WEATHER_PREFIX } from './world-weather.js';
 import SEEK_FIRST_CONSOLE_HTML from './seek-first/console.html';
 import { CATALOG } from './ai/envelope.js';
 
@@ -152,6 +154,10 @@ export default {
         return reply(request, env, CATALOG);
       }
 
+      if (path === ARCADE_PREFIX || path.startsWith(ARCADE_PREFIX + '/')) {
+        return handleArcade(request, env, { requireHouseOwner });
+      }
+
       if (path === PRIM3_LEVELS_PREFIX || path.startsWith(`${PRIM3_LEVELS_PREFIX}/`)) {
         return handlePrim3Levels(request, env, { requireHouseOwner });
       }
@@ -184,6 +190,11 @@ export default {
       if (path === NEWS_PAIRS_PATH) {
         const pairs = await handleWorldNewsPairs(request, env);
         if (pairs) return pairs;
+      }
+      /* Connecticut weather, read from McCluster Core's once-per-region snapshot, house owner only (./world-weather.js) */
+      if (path === WEATHER_PREFIX || path.startsWith(`${WEATHER_PREFIX}/`)) {
+        const weather = await handleWorldWeather(request, env);
+        if (weather) return weather;
       }
       /* accounts by the IP place of their latest signed-in visit: exact for the house owner, countries of five or more for
          everyone else (./world-members.js) */

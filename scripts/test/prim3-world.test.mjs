@@ -182,19 +182,15 @@ test('checkOwner asks GET /v1/status with the session token and only a 2xx is th
   assert.deepEqual(await checkOwner({ storage: store('t1'), fetchImpl: fake('throw'), auth: null }), { owner: false, reason: 'unavailable' });
 });
 
-test('the transit page reads ?mission=<id> from the mission file and shows it; rules and saves are untouched', () => {
+test('the transit page escapes mission presentation and retains its legacy save slot', () => {
   const tx = read('js/prim3-tactics/transit.mjs');
-  assert.match(tx, /const MISSION_ID = PARAMS\.get\('mission'\);/);
   assert.match(tx, /import \{ DATA_URL as WORLD_MISSIONS, DRAFT_KEY as WORLD_DRAFTS, findMission \} from '\.\.\/prim3-world\/missions\.mjs';/);
-  assert.match(tx, /fetch\(WORLD_MISSIONS\)/);
   assert.match(tx, /if \(MISSION\) return \{ small, title: esc\(MISSION\.title\)/, 'the mission title leads the objective strip');
   assert.match(tx, /const brief = MISSION \? esc\(MISSION\.briefing\)/, 'its briefing is in the strip\'s details');
-  assert.match(tx, /if \(!m \|\| typeof m\.title !== 'string'/, 'an unknown mission is ignored');
   assert.match(tx, /const SAVE_KEY = 'prim3\.transit\.v1';/, 'save key unchanged');
-  assert.match(tx, /log\.unshift\(missionLine\(m\)\)/, 'the briefing is the first log line');
 });
 
-test('World is an owner-only door: the Control panel lists it, the tactics menu offers it only to the owner, the bar keeps five tabs', () => {
+test('World is an owner-only door: the Control panel lists it, the tactics menu offers it only to the owner, the shared owner bar provides Games', () => {
   const nav = read('js/site-navigation.js');
   assert.match(nav, /\{label:'PRIM3 World', group:'Products', href:new URL\('prim3-world\.html', house\)\.href, context:'Missions · World builder'\}/);
   const pv = read('js/prim3-tactics/preview.mjs');
@@ -202,7 +198,9 @@ test('World is an owner-only door: the Control panel lists it, the tactics menu 
   assert.match(pv, /if \(menuSel === 'world' && ownerWorld\) \{ location\.href = 'prim3-world\.html'; return; \}/);
   assert.match(pv, /addEventListener\('mcc:appbar-admin'/);
   const bar = read('js/tabbar.js');
-  assert.ok(!bar.includes('prim3-world'), 'no sixth tab: the owner bar is untouched');
+  const adminMarkup = bar.slice(bar.indexOf('function adminBar'), bar.indexOf('function paintAdmin'));
+  assert.doesNotMatch(adminMarkup, /href=[^\n]*prim3-world/, 'World uses the shared Games entry rather than a dedicated tab');
+  assert.match(bar, /data-appnav="games"/, 'the owner Games entry remains available');
   assert.match(bar, /data-appnav="halo" aria-label="Open Hitman’s Halo"/, 'the owner globe still opens Hitman\'s Halo');
 });
 

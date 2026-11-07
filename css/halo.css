@@ -17,7 +17,7 @@ html.halo-on{
   --hx-bg:#030912;--hx-bar:#050c17;--hx-panel:rgba(7,14,26,.95);--hx-panel-2:#0b1526;--hx-raise:#0e1b2f;
   --hx-line:#15243a;--hx-line-2:#22364f;--hx-ink:#eef3f9;--hx-ink-2:#c6d1df;--hx-mute:#8e9fb5;
   --hx-cyan:#45b8f4;--hx-cyan-2:#91e1f6;--hx-amber:#f2b448;--hx-green:#4fdf98;--hx-red:#ff7a7a;
-  --hx-top:52px;--hx-tabs:44px;--hx-strip:40px;--hx-time:44px;--hx-peek:68px;
+  --hx-top:64px;--hx-tabs:44px;--hx-strip:40px;--hx-time:44px;--hx-peek:68px;
   --hx-safe-top:env(safe-area-inset-top,0px);
   --hx-head:calc(var(--hx-top) + var(--hx-tabs) + var(--hx-strip) + var(--hx-safe-top));
   --hx-bottom:calc(var(--hu-bar-h,0px) + var(--hx-time));
@@ -28,8 +28,7 @@ html.halo-on body{background:var(--hx-bg)}
 /* the page's own chrome steps aside (Halo has its own controls for each) */
 html.halo-on.globe-explore header,html.halo-on .globe-controls,html.halo-on .globe-data,html.halo-on #deck,html.halo-on .explore-line,
 html.halo-on .bare-exit,html.halo-on .world-mode,html.halo-on .world-tools,html.halo-on .globe-editorial-tools,html.halo-on .globe-editorial-world,
-html.halo-on .globe-editorial-shelf,html.halo-on .halo-enter{display:none!important}
-html.halo-on body[data-site-navigation] #mccAuthChip{display:none!important}
+html.halo-on .globe-editorial-shelf,html.halo-on .halo-enter,html.halo-on #bridgeportEnter,html.halo-on #bridgeportWalk{display:none!important}
 /* The globe is the interaction surface: search floats over it instead of claiming a separate row. */
 html.halo-on.globe-explore #globe{inset:var(--hx-head) 0 calc(var(--hx-bottom) + var(--hx-peek)) 0}
 html.halo-on.globe-explore .osm-credit{z-index:7;left:8px;right:auto;bottom:calc(var(--hx-bottom) + var(--hx-peek) + 4px);max-width:calc(100% - 16px);background:rgba(3,9,18,.72)}
@@ -384,7 +383,7 @@ html.halo-on .cctv-act{border-radius:4px;background:linear-gradient(180deg,#f6cb
   html.halo-on[data-halo-map="focus"]{--hx-peek:0px;--hx-time:92px}
   html.halo-on[data-halo-map="focus"] .hx-left{display:flex}
   html.halo-on[data-halo-map="focus"] .hx-time{display:grid}
-  html.halo-on{--hx-tabs:0px;--hx-top:56px;--hx-strip:46px;--hx-time:92px;--hx-peek:0px;--hx-left-w:320px;--hx-right-w:320px;--hx-gap:16px}
+  html.halo-on{--hx-tabs:0px;--hx-top:64px;--hx-strip:46px;--hx-time:92px;--hx-peek:0px;--hx-left-w:320px;--hx-right-w:320px;--hx-gap:16px}
   html.halo-on[data-halo-view]:not([data-halo-view="world"]){--hx-strip:96px}
   html.halo-on.globe-explore #globe{inset:var(--hx-head) 0 var(--hx-bottom) 0}
   html.halo-on.globe-explore .osm-credit{left:calc(var(--hx-gap) + var(--hx-left-w) + 12px);bottom:calc(var(--hx-bottom) + 6px)}
@@ -491,3 +490,8 @@ html.halo-no-map .hx-panel__head .hx-btn{display:inline-flex}
 .hx-density label:has(input[type=checkbox]){display:flex;align-items:center;gap:10px}
 .hx-density input[type=range]{cursor:pointer}
 .hx-detail__actions{gap:8px}
+
+/* The shared Profile replaces Halo's operator; keep its header space at every width. */
+html.halo-on body[data-site-navigation] .hx-top__row{padding-right:calc(max(12px,env(safe-area-inset-right)) + 114px)}
+html.halo-on body[data-site-navigation] .hx-brand span{font-size:14px;letter-spacing:.10em}
+@media(min-width:600px){html.halo-on body[data-site-navigation] .hx-brand span{font-size:19px;letter-spacing:.24em}}
