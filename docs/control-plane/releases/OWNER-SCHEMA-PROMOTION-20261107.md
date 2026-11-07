@@ -1,6 +1,6 @@
 # Owner editor and learning portfolio: canonical schema promotion
 
-Status: local preparation only, not production-applied. Base main `55befc618eb24d21a37e6c4afd66c1bb47767237`. The release coordinator owns application and relays the contract change to the separate OVH promotion worker. No Arcade or Finance tables belong to this package.
+Status: local preparation only, not production-applied. Intended PR base `main`, starting at `55befc618eb24d21a37e6c4afd66c1bb47767237`. Local branch `codex/owner-schema-promotion-20261107` includes normal merges of the exact reviewed #741 and #765 heads; both native CI steps are retained. The release coordinator owns application and relays the contract change to the separate OVH promotion worker. No Arcade or Finance tables belong to this package.
 
 ## Exact additive artifacts
 
@@ -33,7 +33,7 @@ Immediately before applying, refresh metadata-only object collision, dependencie
 ## Required integration and manifest sequence
 
 1. Integrate the two migrations with the reviewed #741/#765 application changes. Keep their pending source/rollback files while native tests reference them; do not deploy a partially integrated branch.
-2. Update portfolio native proof for the promoted case. The old harness deliberately refuses an existing table. Local patch handoff `/workspace/portfolio-promotion-native.patch` requires the exact new migration receipt, complete table/RPC, zero preexisting rows, and byte-equal pending/promoted SQL. Cleanup removes only the synthetic owner row and retains the promoted schema. Pending-mode rejection and all CAS/role assertions remain. This patch requires native hosted execution; syntax alone is not proof. Owner-front harness already reapplies its SQL idempotently.
+2. The branch updates portfolio native proof for the promoted case. The old harness deliberately refuses an existing table. The committed harness requires the exact new migration receipt, complete table/RPC, zero preexisting rows, and byte-equal pending/promoted SQL. Cleanup removes only the synthetic owner row and retains the promoted schema. Pending-mode rejection and all CAS/role assertions remain. This change requires native hosted execution; syntax alone is not proof. Owner-front harness already reapplies its SQL idempotently.
 3. Run the full canonical replay reset and capture `reset-schema/reset-schema-snapshot.json` and `schema-manifest.json` from Reconciliation CI. Local attempt could not start because Docker pulls from `public.ecr.aws` returned Forbidden; no local database/reset success is claimed. No substitute auth schema or manually fabricated manifest is acceptable.
 4. Regenerate `supabase/schema-manifest.json` with `scripts/db/verify-production-schema.mjs --mode reset --write-manifest` from that exact reset snapshot; rerun its integrity/diff checks. Expected changes are only these tables/sequence/RPCs and their grants/constraints/policies. The manifest is generated reset state, not evidence production already has it. Retain the failing manifest comparison gate until the correct manifest is committed; do not weaken it.
 5. Run both native proof suites after manifest capture, full root checks, exact-head hosted gates and independent review. This local artifact is not merge-ready until the generated manifest and promoted native proof pass.
@@ -68,5 +68,16 @@ Prefer application rollback to the recorded prior release, leaving additive sche
 - Audited pending/promoted bytes and SHA256 match exactly.
 - `node scripts/control-plane-drift-contract-check.mjs`: passed, identifies both as pending/unapplied.
 - `node --test scripts/test/production-schema-verifier.test.mjs`: 10/10 passed.
-- Promoted portfolio harness patch: syntax passed; native execution pending the accessible hosted reset.
+- Promoted portfolio harness: syntax plus 13 focused guard/schema-verifier tests passed; native execution pending the accessible hosted reset.
 - No production SQL/settings, remote push, merge, activation or content publication performed.
+
+## Exact hosted artifact handoff
+
+Root publishes this branch as a draft PR. The first Reconciliation CI run is expected to fail the strict manifest comparison, while its `Upload the rebuilt schema snapshot` step runs with `if: always()`. Confirm the reset itself succeeded and the artifact comes from the exact branch head before using it. Download the `reset-schema` artifact for that run into an isolated directory, then run from this branch:
+
+```sh
+node scripts/db/verify-production-schema.mjs --snapshot /tmp/owner-promotion-reset/reset-schema-snapshot.json --mode reset --write-manifest --manifest supabase/schema-manifest.json --report-json /tmp/owner-promotion-reset/generated-report.json --no-fail
+node scripts/db/verify-production-schema.mjs --snapshot /tmp/owner-promotion-reset/reset-schema-snapshot.json --mode reset --report-json /tmp/owner-promotion-reset/verified-report.json
+```
+
+Review the manifest diff before committing. Do not copy a snapshot from the old branch without both migrations. Push the generated manifest through the root coordinator, then require a fresh successful canonical reset plus both native suites on the new exact head; downstream native steps are skipped during the initial manifest mismatch. Keep production ledger/Core unchanged until actual apply receipts as above. A hosted reset failure before snapshot generation must be fixed, not bypassed with the old artifact.

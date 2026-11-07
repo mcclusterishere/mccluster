@@ -26,7 +26,7 @@ export async function run(env=process.env) {
   const owner=randomUUID(),member=randomUUID();
   const sql=await readFile(new URL('../supabase/pending/learning_portfolio_v1.sql',import.meta.url),'utf8');
   const signature='public.learning_portfolio_write(integer,uuid,text,jsonb,jsonb)';
-  let installed=false,seeded=false;
+  let installed=false,seeded=false,promoted=false;
   const call=async(conn,revision,action,draft={courses:[]},snapshot=null,actor=owner)=>(await conn.unsafe(
     'select public.learning_portfolio_write($1,$2,$3,$4::jsonb,$5::jsonb) as result',
     [revision,actor,action,conn.json(draft),snapshot===null?null:conn.json(snapshot)]))[0].result;
@@ -46,8 +46,14 @@ export async function run(env=process.env) {
   try {
     const state=(await admin.unsafe("select to_regclass('supabase_migrations.schema_migrations') is not null as migrations,to_regprocedure('auth.uid()') is not null as auth,to_regclass('public.learning_external_credentials') is not null as credentials,to_regclass('public.learning_portfolio') as portfolio,to_regprocedure($1) as rpc",[signature]))[0];
     assert.ok(state.migrations&&state.auth&&state.credentials,'full canonical reset and managed auth required; no stub fallback');
-    assert.equal(state.portfolio,null,'refuse to modify an existing portfolio table');
-    assert.equal(state.rpc,null,'refuse to replace an existing portfolio RPC');
+    if(state.portfolio!==null || state.rpc!==null) {
+      const receipt=await admin.unsafe("select version from supabase_migrations.schema_migrations where version='20261107133124' and name='learning_portfolio_v1'");
+      assert.equal(receipt.length,1,'existing schema must have the exact canonical promotion receipt');
+      assert.ok(state.portfolio!==null && state.rpc!==null,'promoted schema must be complete');
+      assert.equal((await admin.unsafe('select count(*)::integer as n from public.learning_portfolio'))[0].n,0,'refuse any existing portfolio data');
+      assert.equal(await readFile(new URL('../supabase/migrations/20261107133124_learning_portfolio_v1.sql',import.meta.url),'utf8'),sql,'native proof must use the exact promoted SQL');
+      promoted=true;
+    }
     assert.ok((await admin.unsafe('select count(*)::integer as n from supabase_migrations.schema_migrations'))[0].n>0);
     assert.equal((await admin.unsafe("select count(*)::integer as n from public.orgs where slug='mccluster'"))[0].n,1);
     await admin.begin(async tx=>{
@@ -131,7 +137,10 @@ export async function run(env=process.env) {
   }finally{
     await Promise.all([a.end(),b.end()]);
     try {
-      if(installed)await admin.begin(async tx=>{await tx.unsafe(`drop function ${signature}`);await tx.unsafe('drop table public.learning_portfolio');});
+      if(installed)await admin.begin(async tx=>{
+        if(promoted)await tx.unsafe('delete from public.learning_portfolio where updated_by=$1',[owner]);
+        else {await tx.unsafe(`drop function ${signature}`);await tx.unsafe('drop table public.learning_portfolio');}
+      });
       if(seeded)await admin.begin(async tx=>{await tx.unsafe('delete from public.org_members where profile_id in ($1,$2)',[owner,member]);await tx.unsafe('delete from auth.users where id in ($1,$2)',[owner,member]);});
     }finally{await admin.end();}
   }
