@@ -67,3 +67,23 @@ PORTFOLIO_TOOLS=/tmp/portfolio-tools/node_modules node scripts/test/portfolio-pr
 ```
 
 Implementation checked against [Supabase RLS documentation](https://supabase.com/docs/guides/database/postgres/row-level-security) and [Workers request documentation](https://developers.cloudflare.com/workers/runtime-apis/request/), plus the repository's installed contracts. The Supabase changelog Markdown endpoint could not be retrieved (unsupported type/403); no new SDK or platform-specific feature was introduced.
+
+## Canonical SQL release proof
+
+`scripts/test-portfolio-postgres.mjs` runs only after the existing disposable
+Supabase migration reset and unchanged schema-manifest comparison. It requires
+`PORTFOLIO_CANONICAL_ACK=disposable-supabase-reset`, the loopback reset database on
+port54322, and the existing pinned postgres@3.4.5 test driver. It refuses existing
+portfolio objects and does not install auth, tenancy or role stubs. Synthetic
+managed-auth users exercise the actual canonical trigger/dependency chain.
+
+The harness checks client-role denial, service access to the existing credential
+schema, invalid inputs, an observed unique-insert lock wait, two observed row-lock
+waits for competing save/publication calls, transaction rollback, unpublish,
+data-preserving permission rollback and reapplication. Test-owned objects and
+users are removed afterward. A green PGlite suite alone does not establish this
+native proof; the exact-head hosted Supabase migration-reset job must pass.
+
+The pending RPC rejects null/negative revisions and null actions before its first
+INSERT. The Worker integer guard remains unchanged. This closes a service-only
+SQL NULL-comparison loophole; it does not grant clients direct RPC access.

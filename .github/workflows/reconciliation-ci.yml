@@ -309,6 +309,13 @@ jobs:
           # were promoted; the reset above applies them from supabase/migrations/.
           node scripts/compute-lease-sql-check.mjs
           node scripts/test-intel-integrity-db.mjs
+      - name: Verify portfolio SQL against canonical managed auth and concurrent writers
+        env:
+          PORTFOLIO_CANONICAL_ACK: disposable-supabase-reset
+          NATIVE_TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: |
+          export POSTGRES_MODULE_PATH="$RUNNER_TEMP/native-admin-tools/node_modules/postgres/src/index.js"
+          node scripts/test-portfolio-postgres.mjs
       - name: Stop isolated stack
         if: always()
         run: supabase stop --no-backup || true
