@@ -71,5 +71,6 @@ jobs:
           curl --retry 10 --retry-connrefused --retry-delay 1 -fsS "$ARCADE_BASE/city-arcade.html" > /dev/null
           node scripts/e2e/city-arcade-cloud-gate.e2e.mjs
           node scripts/e2e/city-arcade-action.e2e.mjs
+          node scripts/e2e/city-arcade-recovery.e2e.mjs
           node scripts/e2e/city-arcade-spatial.e2e.cjs
           ARCADE_WIDTHS=390 ARCADE_DROP_RETURN=1 node scripts/e2e/city-arcade-spatial.e2e.cjs
