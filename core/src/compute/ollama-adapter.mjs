@@ -317,5 +317,5 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(JSON.stringify({ event: 'ollama_adapter_ready', host: HOST, port: PORT, model: MODEL, max_queue: MAX_QUEUE }));
+  console.log(JSON.stringify({ event: 'ollama_adapter_ready', host: HOST, port: server.address().port, model: MODEL, max_queue: MAX_QUEUE }));
 });

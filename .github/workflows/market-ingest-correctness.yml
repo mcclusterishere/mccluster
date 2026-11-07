@@ -1,0 +1,32 @@
+name: Market ingestion correctness
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'core/src/market/**'
+      - 'core/test/market-*.test.mjs'
+      - 'supabase/pending/20261022015000_market_layer1_preserve_source_policy.sql'
+      - 'supabase/tests/market_layer1_policy.behaviour.sql'
+      - 'scripts/test/market-ingest-policy-db.mjs'
+      - '.github/workflows/market-ingest-correctness.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  policy-and-replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: '22'
+      - name: Point-in-time data correctness
+        run: node --test core/test/market-as-of.test.mjs core/test/ingestion-contract.test.mjs
+      - name: Isolated PostgreSQL policy regression
+        run: |
+          docker pull postgres@sha256:00bc86618629af00d2937fdc5a5d63db3ff8450acf52f0636ec813c7f4902929
+          docker tag postgres@sha256:00bc86618629af00d2937fdc5a5d63db3ff8450acf52f0636ec813c7f4902929 postgres:17.6
+          node scripts/test/market-ingest-policy-db.mjs

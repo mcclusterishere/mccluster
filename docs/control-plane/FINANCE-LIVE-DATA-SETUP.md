@@ -1,5 +1,7 @@
 # Live stock data: verified blocker and setup path
 
+> Historical checkpoint. For current implementation and coordinated activation, see [FINANCE-ROLLOUT.md](FINANCE-ROLLOUT.md). Earlier unimplemented/draft-only statements describe the original checkpoint, not current main.
+
 Checked 2026-11-04. Read-only inspection; no signup, credentials created, paid
 request, provider collection or production change.
 
