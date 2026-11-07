@@ -130,7 +130,7 @@ export function mount(host, { onExit, onStart } = {}) {
   function loop(now) {
     if (!round || round.over) return;
     const dt = Math.min(0.25, (now - lastTick) / 1000); lastTick = now;
-    if (!document.hidden) round = tick(round, dt);
+    if (!document.hidden && document.documentElement.dataset.musicJourneyHidden !== 'true') round = tick(round, dt);
     const bar = host.querySelector('[data-time]'), secs = host.querySelector('[data-secs]');
     if (bar) bar.style.transform = `scaleX(${round.timeLeft / ROUND_SECONDS})`;
     if (secs) secs.textContent = Math.ceil(round.timeLeft);

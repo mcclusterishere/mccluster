@@ -485,6 +485,7 @@
   function openWorld(href, options) {
     options = options || {};
     var url = worldURL(href); if (!url) return false;
+    root.MCC_MUSIC_JOURNEYS?.suspendForWorld();
     var clean = cleanHref(url.href);
     if (options.gesture !== false) playTheme();
     if (root.MCC_MUSIC) root.MCC_MUSIC.closeNow();
@@ -607,7 +608,7 @@
     }, {capture:true, passive:true});
     return;
   }
-  root.MCC_WORLD_AUDIO = {navigate:navigate, leaveFrame:leaveFrame, touch:touch, active:function () {return open;},
+  root.MCC_WORLD_AUDIO = {leaveForJourney:function () { closeWorld(false); }, navigate:navigate, leaveFrame:leaveFrame, touch:touch, active:function () {return open;},
     song:function () { return song ? {slug:song.slug, title:song.title, ord:songOrd, pick:song.pick, pool:rotation ? rotation.length : 0} : null; }};
   if (musicSurface()) {
     // the frame's own styles are in place before the World is ever opened, so the frame never draws unstyled first

@@ -2,6 +2,10 @@
 
 > Update this file whenever completion, maturity, visual direction, or next work changes.
 
+## Shared music navigation source coverage — 2026-11-07
+
+Classified the retained-music navigation module and its route-boundary and browser tests as support-only because they reference the existing server training destination. Coverage is 638 sources (104 capability, 534 support-only), with 2,450 checks passing. No building program, geometry or capability ownership changed.
+
 ## Local screen and object reconstruction — 2026-11-03
 
 Unpublished repair based on physical-computer-lab source `18a518f2457eb7985c702e8e4a839ed0dc255a74`. Earlier unpushed patch artifacts were unavailable in this workspace; this is a fresh reconstruction, not proof of a previously saved change.

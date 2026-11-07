@@ -27,7 +27,7 @@ function wav(seconds=24){
 const AUDIO=wav();
 const IMAGE=Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7','base64');
 function token(origin){return 'x.'+Buffer.from(JSON.stringify({sub:USER,exp:Math.floor(Date.now()/1000)+3600,email:'audio-fixture@invalid.test',origin})).toString('base64url')+'.y';}
-async function setup(width=390,member=false,{parentScript,privacy=true,start='/listen.html'}={}){
+async function setup(width=390,member=false,{parentScript,privacy=true,start='/listen.html',owner=false}={}){
   const context=await browser.newContext({viewport:{width,height:844},hasTouch:true,reducedMotion:'reduce',serviceWorkers:'block'});
   const requests=[],messages=[],errors=[];
   await context.addInitScript(({HOUSE,member,token,privacy})=>{
@@ -46,7 +46,7 @@ async function setup(width=390,member=false,{parentScript,privacy=true,start='/l
     if(req.method()==='OPTIONS')return r.fulfill({status:204,headers:{'access-control-allow-origin':'*','access-control-allow-headers':'*','access-control-allow-methods':'*'}});
     if(u.hostname==='api.mccluster.org'){
       if(p==='/v1/auth/handoff')return json(r,{token_hash:'fixture-one-use-hash'});
-      if(p==='/v1/status')return json(r,{ok:false},403);
+      if(p==='/v1/status')return json(r,{ok:owner},owner?200:403);
       if(p==='/v1/mnet/bootstrap')return json(r,{ok:true,profile:{display_name:'Fixture member',onboarding_complete:true},identity:{mccluster_id:'fixture-member'},needs_onboarding:false,stats:{}});
       return json(r,{ok:true,threads:[],posts:[],events:[],missions:[],layers:[],features:[],sources:[],locations:[],rights:{}});
     }
@@ -92,6 +92,29 @@ async function world(page){
 }
 async function audioState(page){return page.evaluate(()=>({time:MCC_MUSIC.audio.currentTime,src:MCC_MUSIC.audio.currentSrc,paused:MCC_MUSIC.audio.paused,muted:MCC_MUSIC.audio.muted,playing:__audioObjects.filter(a=>!a.paused).length,unloads:__unloads}));}
 try{
+  // Two shell owners must hand off visibility/inertness before either conceals.
+  for (const roomPath of ['/game-hub.html#m=chem108', '/control.html#home:today']) {
+    const {context,page}=await setup(390,true,{owner:true});await play(page);
+    await page.evaluate(()=>window.__originalAudio=MCC_MUSIC.audio);
+    await page.evaluate(href=>MCC_BAR.navigation.go(href),HOUSE+roomPath);
+    await page.waitForFunction(()=>window.MCC_MUSIC_JOURNEYS?.active());
+    await page.locator('#mccMusicRoom').waitFor();
+    await page.evaluate(href=>MCC_BAR.navigation.go(href),WORLD+'/?view=feed');
+    await page.waitForFunction(()=>MCC_WORLD_AUDIO.active()&&!MCC_MUSIC_JOURNEYS.active());
+    await page.locator('.world-audio-status').waitFor({state:'hidden'});
+    check(roomPath+' World shell is visible, interactive and exclusive',await page.locator('#mccWorldAudioShell').evaluate(el=>!el.inert&&!el.hasAttribute('data-mcc-retained-hidden')&&getComputedStyle(el).visibility==='visible')&&await page.locator('#mccMusicRoom').isHidden());
+    check(roomPath+' World retains the same live audio',await page.evaluate(()=>MCC_MUSIC.audio===__originalAudio&&!MCC_MUSIC.audio.paused));
+    await page.evaluate(()=>history.back());
+    await page.waitForFunction(()=>!MCC_WORLD_AUDIO.active()&&MCC_MUSIC_JOURNEYS.active());
+    check(roomPath+' Back restores only the retained room',await page.locator('#mccMusicRoom').isVisible()&&await page.locator('#mccWorldAudioShell').isHidden());
+    await page.evaluate(()=>history.forward());
+    await page.waitForFunction(()=>MCC_WORLD_AUDIO.active()&&!MCC_MUSIC_JOURNEYS.active());
+    check(roomPath+' Forward restores only World',await page.locator('#mccWorldAudioShell').evaluate(el=>!el.inert&&!el.hasAttribute('data-mcc-retained-hidden')));
+    await page.evaluate(href=>MCC_BAR.navigation.go(href),HOUSE+roomPath);
+    await page.waitForFunction(()=>!MCC_WORLD_AUDIO.active()&&MCC_MUSIC_JOURNEYS.active());
+    check(roomPath+' direct return preserves audio and room interaction',await page.locator('#mccMusicRoom').evaluate(el=>!el.inert)&&await page.evaluate(()=>MCC_MUSIC.audio===__originalAudio&&!MCC_MUSIC.audio.paused));
+    await context.close();
+  }
   {
     let release;
     const held=new Promise(resolve=>release=resolve);

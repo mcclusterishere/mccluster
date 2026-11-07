@@ -1,5 +1,6 @@
 // Controls for the existing site transport. Never construct another Audio element.
 export async function createSharedMusic({ root }) {
+  try { if (parent !== window) parent.MCC_MUSIC_JOURNEYS?.attachEngine(window); } catch (_) {}
   if (!window.MCC_MUSIC) {
     for (const file of ['listen-ledger.js', 'gated-audio.js', 'music-engine.js']) {
       await import(new URL('../' + file, import.meta.url));

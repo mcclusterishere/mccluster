@@ -170,6 +170,11 @@ export function guardPage(gate, { doc = globalThis.document, win = globalThis, c
   doc.addEventListener('visibilitychange', () => { if (doc.visibilityState === 'visible') void verify(); });
   win.addEventListener('storage', (e) => { if (e.key === SESSION_KEY || e.key === null) authChanged(); });
   win.addEventListener('mcc:auth-changed', authChanged);
+  // A retained listening document is hidden without a pagehide event. Recheck
+  // before revealing a private app when navigation returns to that document.
+  win.addEventListener('mcc:journey-visibility', (e) => {
+    if (e.detail?.visible === true) { conceal(); void verify(); }
+  });
   win.addEventListener('pagehide', () => {
     suspended = true; generation++; checking = null;
     if (open) { conceal(); reloadOnRestore = !ready; }

@@ -82,13 +82,13 @@ album and switch Chem 108 to `role: "rhythm"`.
 
 The capsule uses `window.MCC_MUSIC`, the existing `js/music-engine.js` transport, with its listen ledger and gated-audio rules. It never constructs a second audio element. The engine's original floating mini-player is hidden only on this page; the capsule is its visible transport. Nothing autoplays. Next follows the site's global queue. A course selection preserves current playback; the explicit soundtrack action selects that course's first song.
 
-The old `player.mjs` and `mcc.gamehub.music.v1` preferences remain intact for compatibility but are no longer active here. Their per-course seek positions are not imported into the shared engine (especially not into gated tracks). In-document course/game navigation preserves playback. Full document navigation still stops audio under the existing architecture; uninterrupted cross-page playback and shared-shell state restoration require a separate change.
+The old `player.mjs` and `mcc.gamehub.music.v1` preferences remain intact for compatibility but are no longer active here. Their per-course seek positions are not imported into the shared engine (especially not into gated tracks). In-document course/game navigation preserves playback. The retained-document extension in `js/music-journeys.mjs` also preserves the actual transport across explicitly supported Listen, Games, Control and standalone course/game pages; see `MUSIC-JOURNEYS.md` for scope, authorization and recovery. Unsupported full-document navigation still stops audio.
 
 ## Reusable capsule seam and review
 
 `mountCapsule({root, workspace, storageKey})` owns movement/disclosure and reserves a separate scrolling workspace below the capsule. The caller supplies controls and permissions; it owns no music, assessment state, entitlement or billing logic. Dragging only starts on the dedicated handle after six pixels. Arrow keys and visible direction buttons are alternatives, with Escape returning focus to Games. Position is local UI preference only, clamped on resize and visual viewport changes. A short landscape viewport may require scrolling the expanded control panel, while the game retains a clear region below it. The owner gate remains the authority; hiding/showing a control never grants access.
 
-This bounded implementation changes Game Hub only. It does not touch admin navigation #745, shared `tabbar.js`, the site music runtime, or proposed product-widget entitlement #750. Future subsystem adapters can supply their own selector/actions to this seam; a platform-wide island and continuous cross-page audio are not implemented here.
+The initial capsule implementation changed Game Hub only. The retained-document extension adds shared navigation and music-surface hooks; it does not change product-widget entitlement #750 or any authorization policy. The retained-document extension reuses this movement/disclosure seam for page-specific controls. It is an explicit supported-room integration, not an unrestricted iframe router.
 
 Validation commands:
 

@@ -13,6 +13,7 @@ export function mountCapsule({ root, workspace, storageKey = 'mcc.gamehub.capsul
   try { point = JSON.parse(localStorage.getItem(storageKey)); } catch { /* use default */ }
   function save() { try { localStorage.setItem(storageKey, JSON.stringify(point)); } catch { /* private mode */ } }
   function layout() {
+    if (root.hidden) return;
     const viewport = window.visualViewport;
     const width = viewport?.width || innerWidth, height = viewport?.height || innerHeight;
     const left = viewport?.offsetLeft || 0, offsetTop = viewport?.offsetTop || 0;

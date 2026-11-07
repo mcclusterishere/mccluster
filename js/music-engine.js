@@ -10,6 +10,10 @@
 (function (root) {
   "use strict";
 
+  if (root.MCC_MUSIC) return;
+  try {
+    if (root.parent !== root && root.parent.MCC_MUSIC_JOURNEYS?.attachEngine(root)) return;
+  } catch (_) { /* no transport access through unrelated/cross-origin embeds */ }
   var doc = root.document;
   var library = null;
   var loading = null;
@@ -324,14 +328,7 @@
       }
     }
 
-    doc.querySelectorAll("[data-music-play]").forEach(function (b) {
-      var creatorId = b.getAttribute("data-creator-track");
-      var same = creatorId
-        ? current && String(current.creatorTrackId || "") === String(creatorId)
-        : current && key(b.getAttribute("data-album"), b.getAttribute("data-track")) === key(current.albumSlug, current.title);
-      b.classList.toggle("is-playing", same && !audio.paused);
-      b.setAttribute("aria-pressed", same && !audio.paused ? "true" : "false");
-    });
+    paintSurface(doc);
     root.dispatchEvent(new CustomEvent("mcc:music-state", {detail:{title:current.title, access:currentAccess, playing:!audio.paused}}));
   }
 
@@ -671,22 +668,42 @@
     paint();
   });
 
-  doc.addEventListener("click", function (e) {
-    var b = e.target && e.target.closest ? e.target.closest("[data-music-play]") : null;
-    if (!b) return;
-    e.preventDefault();
-    e.stopPropagation();
-    var creatorId = b.getAttribute("data-creator-track");
-    if (creatorId) openCreatorTrack(creatorId).catch(function () {});
-    else openTrack(b.getAttribute("data-album"), b.getAttribute("data-track")).catch(function () {});
-  }, true);
-  doc.addEventListener("keydown", function (e) {
-    if (e.key !== "Enter" && e.key !== " ") return;
-    var b = e.target && e.target.closest ? e.target.closest('[data-music-play][role="button"]') : null;
-    if (!b) return;
-    e.preventDefault();
-    b.click();
-  });
+  function bindSurface(surface) {
+    function click(e) {
+      var b = e.target && e.target.closest ? e.target.closest("[data-music-play]") : null;
+      if (!b) return;
+      e.preventDefault(); e.stopPropagation();
+      var creatorId = b.getAttribute("data-creator-track");
+      if (creatorId) openCreatorTrack(creatorId).catch(function () {});
+      else openTrack(b.getAttribute("data-album"), b.getAttribute("data-track")).catch(function () {});
+    }
+    function keyboard(e) {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      var b = e.target.closest?.('[data-music-play][role="button"]');
+      if (b) { e.preventDefault(); b.click(); }
+    }
+    var repaint = function () { paintSurface(surface); };
+    surface.addEventListener("click", click, true);
+    surface.addEventListener("keydown", keyboard);
+    root.addEventListener("mcc:music-state", repaint);
+    repaint();
+    return function () {
+      surface.removeEventListener("click", click, true); surface.removeEventListener("keydown", keyboard);
+      root.removeEventListener("mcc:music-state", repaint);
+    };
+  }
+  bindSurface(doc);
+
+  function paintSurface(surface) {
+    surface.querySelectorAll("[data-music-play]").forEach(function (b) {
+      var creatorId = b.getAttribute("data-creator-track");
+      var same = creatorId
+        ? current && String(current.creatorTrackId || "") === String(creatorId)
+        : current && key(b.getAttribute("data-album"), b.getAttribute("data-track")) === key(current.albumSlug, current.title);
+      b.classList.toggle("is-playing", same && !audio.paused);
+      b.setAttribute("aria-pressed", same && !audio.paused ? "true" : "false");
+    });
+  }
 
   function hookGate() {
     if (!root.MCC_GATED) return false;
@@ -696,6 +713,7 @@
   if (!hookGate()) root.addEventListener("mcc:gated-ready", hookGate, { once: true });
 
   root.MCC_MUSIC = {
+    bindSurface: bindSurface,
     play: openTrack,
     playCreator: openCreatorTrack,
     registerCreatorTrack: registerCreatorTrack,

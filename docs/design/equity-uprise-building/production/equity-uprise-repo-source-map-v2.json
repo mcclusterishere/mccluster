@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 635,
+  "candidate_count": 638,
   "capability_source_count": 104,
-  "support_only_count": 531,
+  "support_only_count": 534,
   "entries": [
     {
       "path": ".cursorrules",
@@ -4718,6 +4718,27 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Tests binding existing building screens to inventoried hardware."
+    },
+    {
+      "path": "js/music-journeys.mjs",
+      "classification": "platform_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Retained shared music navigation includes the existing server training page; no building geometry, program or capability ownership changes."
+    },
+    {
+      "path": "scripts/test/music-journeys.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Retained shared music navigation includes the existing server training page; no building geometry, program or capability ownership changes."
+    },
+    {
+      "path": "scripts/e2e/music-journeys.e2e.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Fixture browser coverage of retained music and denied access to the existing server training room; no building geometry or capability ownership changes."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",

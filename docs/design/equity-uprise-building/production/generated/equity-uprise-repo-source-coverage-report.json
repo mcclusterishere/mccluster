@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 635,
+  "candidate_count": 638,
   "capability_source_count": 104,
-  "support_only_count": 531,
-  "checks_total": 2438,
-  "checks_passed": 2438,
+  "support_only_count": 534,
+  "checks_total": 2450,
+  "checks_passed": 2450,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -299,6 +299,7 @@
     "js/mnet-tour.js",
     "js/mnet.js",
     "js/music-creator-profile.js",
+    "js/music-journeys.mjs",
     "js/offers.js",
     "js/onboard.js",
     "js/payments.js",
@@ -372,6 +373,7 @@
     "scripts/e2e/fictional-city.e2e.mjs",
     "scripts/e2e/fixtures/axe-baseline.json",
     "scripts/e2e/globe-games.e2e.mjs",
+    "scripts/e2e/music-journeys.e2e.mjs",
     "scripts/e2e/prim3-artist.e2e.mjs",
     "scripts/e2e/prim3-direct-landings.e2e.mjs",
     "scripts/e2e/prim3-hq-stairs.e2e.mjs",
@@ -418,6 +420,7 @@
     "scripts/test/mnet-real-network.test.mjs",
     "scripts/test/mobile-rule.test.mjs",
     "scripts/test/music-direct-sales.test.mjs",
+    "scripts/test/music-journeys.test.mjs",
     "scripts/test/music-label.test.mjs",
     "scripts/test/native-action-network.test.mjs",
     "scripts/test/policy-fellowship-ladder.test.mjs",
@@ -649,7 +652,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "635 entries"
+      "detail": "638 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -12833,6 +12836,66 @@
     },
     {
       "name": "scripts/test/eu-screen-hardware-binding.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/music-journeys.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/music-journeys.mjs classified",
+      "passed": true,
+      "detail": "classification='platform_support'"
+    },
+    {
+      "name": "js/music-journeys.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/music-journeys.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/music-journeys.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/music-journeys.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/music-journeys.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/music-journeys.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/music-journeys.e2e.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/music-journeys.e2e.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/e2e/music-journeys.e2e.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/e2e/music-journeys.e2e.mjs support rationale present",
       "passed": true,
       "detail": ""
     }
