@@ -1,5 +1,34 @@
 # Shared navigation contract
 
+## Profile context and platform fallback (proposed consolidation)
+
+For guests and members, the center control uses the active document's verified profile home and logo:
+Vaunt on Vaunt, Matthew's supplied mark on his personal homepage, and the viewed
+member/artist on profile pages. Other destinations use the supplied E=Up mark and
+`platform-home.html`. A stored account perspective remains available in the held
+home wing; it must not replace another profile's document branding.
+
+The server-verified house owner keeps the personal M linked to `index.html`,
+the seven base owner destinations, and the existing canonical Control navigation
+extensions. The owner globe opens the consumer World; Halo remains a separate
+Products/Control destination. Customer module settings cannot hide or redirect
+that owner World tab. Customer page branding and stored member/artist perspectives cannot
+rewrite those owner controls. On sign-out the ordinary audience navigation is
+restored. The combined browser fixture verifies both behaviors at 390 and 1280
+pixels on the personal, company and fixture custom hosts.
+
+`MCC_BAR.pageProfile()` is document-local presentation from #630. Home must be
+same-origin HTTP(S). Logos may be same-origin or in the canonical script base's
+supplied assets directory (needed by custom-host HTML); arbitrary external logo
+hosts are rejected. A missing/rejected logo uses the accessible name's
+initial, never invented artwork. Unavailable member pages and account changes
+clear their stale profile presentation. This hook grants no permissions, changes
+no identity, and does not persist a tenant brand to the next document. Same-profile
+home returns to the opening scene and releases cinematic cabin scroll capture.
+
+This consolidates the later owner direction with the earlier account-perspective
+behavior below. It is draft engineering, not release or domain-routing authority.
+
 Owner direction, 2026-10-16: every admin destination belongs in the same bottom
 control bar used across the site. Profile and account belong at the top right.
 This implements navigation; it does not claim a completed redesign of each editor,

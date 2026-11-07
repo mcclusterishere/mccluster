@@ -279,3 +279,9 @@ test('commerceCall books a direct sale only with its binding', () => {
   assert.equal(commerceCall(ev, BOUND).payload.amount_cents, 199);
   assert.equal(commerceCall({ ...ev, account: 'acct_connected' }, BOUND), null);
 });
+
+test('storefront metadata is routed only through its immutable-order adapter', () => {
+  const metadata={offering:'print-11x14',creator_store_order_id:'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',mccluster_org_id:'seller'};
+  assert.equal(checkoutRecord({...SESSION,metadata},{...EVENT,account:'acct_seller'}),null);
+  assert.equal(refundRecord({payment_intent:'pi_store00001',amount:4000,amount_refunded:4000,metadata},{...EVENT,account:'acct_seller'}),null);
+});

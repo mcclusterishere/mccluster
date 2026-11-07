@@ -57,11 +57,37 @@ export function mediaPrefix(supabaseUrl, authUserId) {
 
 /* Returns { ok, config, dropped } : the settings as they will be stored (everything that passed), and the names of what
    did not, so the editor can say so. A setting that is missing is simply absent: the page keeps its shipped value. */
-export function validateFront(raw, { mediaPrefix: prefix = '' } = {}) {
+export function validateFront(raw, { mediaPrefix: prefix = '', blockedMediaPrefixes = [] } = {}) {
   const dropped = [];
+  const allowedMedia = value => typeof value === "string" && blockedMediaPrefixes.some(p => value.trim().startsWith(p)) ? undefined : mediaUrl(value, prefix);
   const r = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
   const note = (name, kept) => { if (kept === undefined) dropped.push(name); return kept; };
   const out = { schema: FRONT_SCHEMA };
+  if ('layout' in r) out.layout = note('layout', ['cinematic','offers'].includes(r.layout) ? r.layout : undefined);
+  if ('offer_page' in r) {
+    const p=r.offer_page||{};
+    const button=(value,key)=>{
+      if(!value)return undefined;
+      const label=text(value.label,60),href=frontHref(value.href);
+      return label&&href?{label,href}:note(key,undefined);
+    };
+    out.offer_page=clean({
+      logo:p.logo?note('offer_page.logo',allowedMedia(p.logo)):undefined,
+      title:note('offer_page.title',text(p.title,100)),
+      intro:note('offer_page.intro',text(p.intro,600)),
+      primary:button(p.primary,'offer_page.primary'),
+      secondary:button(p.secondary,'offer_page.secondary'),
+      cards:(Array.isArray(p.cards)?p.cards.slice(0,6):[]).map((card,i)=>clean({
+        title:note('offer_page.cards.'+i+'.title',text(card?.title,80)),
+        body:note('offer_page.cards.'+i+'.body',text(card?.body,600)),
+        status:card?.status?note('offer_page.cards.'+i+'.status',text(card.status,120)):undefined,
+        action:button(card?.action,'offer_page.cards.'+i+'.action'),
+        experiences:Array.isArray(card?.experiences)?card.experiences.slice(0,3).map((item,j)=>clean({title:note('offer_page.cards.'+i+'.experiences.'+j+'.title',text(item?.title,60)),body:note('offer_page.cards.'+i+'.experiences.'+j+'.body',text(item?.body,300))})):undefined,
+        image:card?.image?note('offer_page.cards.'+i+'.image',allowedMedia(card.image)):undefined
+      }))
+    });
+  }
+  if(r.layout==='offers'&&!r.offer_page)note('offer_page',undefined);
 
   const sc = r.scenes && typeof r.scenes === 'object' ? r.scenes : null;
   if (sc) out.scenes = clean(Object.fromEntries(SCENES.map((k) => [k, k in sc ? note('scenes.' + k, bool(sc[k])) : undefined])));
@@ -134,20 +160,20 @@ export function validateFront(raw, { mediaPrefix: prefix = '' } = {}) {
     const media = {};
     for (const f of FILMS) {
       if (!(f in m) || m[f] === null) continue;
-      const x = m[f] || {}, base = mediaUrl(x.base, prefix);
+      const x = m[f] || {}, base = allowedMedia(x.base);
       const ok = base && base.endsWith('/') && Number.isInteger(x.count) && x.count >= 8 && x.count <= 240 && (x.ext === 'webp' || x.ext === 'jpg');
       media[f] = ok ? clean({ base, count: x.count, ext: x.ext, sm: x.sm === true || undefined }) : note('media.' + f, undefined);
     }
     if ('cabin' in m && m.cabin !== null) {
-      const c = m.cabin || {}, src = mediaUrl(c.src, prefix), poster = c.poster ? mediaUrl(c.poster, prefix) : undefined;
+      const c = m.cabin || {}, src = allowedMedia(c.src), poster = c.poster ? allowedMedia(c.poster) : undefined;
       media.cabin = src && (c.kind === 'video' || c.kind === 'image') && (!c.poster || poster) ? clean({ src, kind: c.kind, poster }) : note('media.cabin', undefined);
     }
     if ('sound' in m && m.sound !== null) {
-      const src = mediaUrl(m.sound && m.sound.src, prefix);
+      const src = allowedMedia(m.sound && m.sound.src);
       media.sound = src ? { src } : note('media.sound', undefined);
     }
     if ('still' in m && m.still !== null) {
-      const src = mediaUrl(m.still && m.still.src, prefix);
+      const src = allowedMedia(m.still && m.still.src);
       media.still = src ? { src } : note('media.still', undefined);
     }
     out.media = clean(media);

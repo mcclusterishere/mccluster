@@ -45,6 +45,9 @@ export type BoundDirectSale = {
 /** checkout.session.completed / async_payment_succeeded for an offering, a music licence or a direct music sale. */
 export function checkoutRecord(session: Obj, event: Obj, direct?: BoundDirectSale | null): Obj | null {
   const metadata = session.metadata || {};
+  // Storefront uses its identity-bound transactional adapter, never editable
+  // metadata alone to authorize canonical records. Its Worker retries itself.
+  if (metadata.creator_store_order_id) return null;
   const offering = str(metadata.offering);
   const kind = str(metadata.kind);
   if (kind === "music_direct_sale") return directSaleRecord(session, event, direct);
@@ -118,6 +121,7 @@ function directSaleRecord(session: Obj, event: Obj, direct?: BoundDirectSale | n
 
 /** charge.refunded: the payment the refund belongs to, and how much of it. */
 export function refundRecord(charge: Obj, event: Obj): Obj | null {
+  if (charge.metadata?.creator_store_order_id) return null;
   const paymentIntent = idOf(charge.payment_intent);
   if (!paymentIntent) return null;
   const owner = orgFor(event, charge.metadata);

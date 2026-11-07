@@ -132,7 +132,7 @@ test('owner bar: seven tabs for the owner from the server\'s answer, three for e
   assert.deepEqual(order, ['music', 'admin-inbox', 'admin-home', 'home', 'analytics', 'world', 'games']);
   assert.match(block, /control\.html#home/);
   assert.match(block, /control\.html#analytics/);
-  assert.match(block, /<img class="appbar__m" src="' \+ ROOT \+ 'assets\/img\/m-mark\.png" alt="">/, 'the supplied mark, no plate, nothing drawn');
+  assert.match(block, /assets\/img\/m-mark\.png/, 'owner center retains the supplied personal M');
   assert.doesNotMatch(block, /appbar__m[^"]*--plate|border-radius:50%[^"]*appbar__m/);
   assert.match(block, /dock\.classList\.toggle\("appbar--admin", on\)/, 'the integration point other bar add-ons check');
   assert.match(js, /paintAuthState\(false, null, true\);\n\s*paintAdmin\(false\);/, 'signed out: back to three');

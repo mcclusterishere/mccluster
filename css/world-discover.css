@@ -1,0 +1,8 @@
+.directory-form { display:grid; grid-template-columns:minmax(0,1fr); gap:16px; margin-top:20px; }
+.directory-form label { display:flex; flex-direction:column; gap:8px; min-width:0; }
+.directory-form input,.directory-form select,.directory-form textarea { width:100%; min-width:0; min-height:44px; font:inherit; font-size:16px; padding:10px; color:inherit; background:#171512; border:1px solid #ffffff60; border-radius:6px; }
+.directory-form textarea { min-height:100px; }
+.directory-form .directory-check { flex-direction:row; align-items:center; }
+.directory-check input { width:22px; min-height:22px; flex-shrink:0; }
+.directory-form input:disabled { opacity:.45; }
+@media(min-width:720px){.directory-form {grid-template-columns:repeat(2,minmax(0,1fr));}}

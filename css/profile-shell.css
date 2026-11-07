@@ -24,3 +24,18 @@ html[data-front-project] .hero__sticky{min-height:680px}
 /* The night film used to overlap the departing jet by one viewport. A project
    card is ordinary document content and must never sit under that stage. */
 .project-feature ~ .services{margin-top:0}
+/* The opening title rides the runway itself; no preceding static viewport. */
+html[data-front-entry="scene"] .hero[hidden]{display:none!important}
+.scene-entry-anchor{position:absolute;top:0;left:0}
+#work .scene-intro{z-index:3;justify-content:flex-end;gap:8px;padding:80px 20px 110px;background:linear-gradient(transparent 25%,#000b);overflow:auto;box-sizing:border-box}
+#work .scene-intro[hidden]{display:none!important}
+#work .scene-intro .hero__title{font-size:clamp(48px,12vw,96px);line-height:1;margin:0}
+#work .scene-intro .hero__eyebrow{font-size:12px;letter-spacing:.14em;margin:0}
+#work .scene-intro .hero__sub{font-size:14px;letter-spacing:.12em;margin:0}
+#work .scene-intro .hero__doors{margin:8px 0;gap:8px}
+#work .scene-intro .hero__door{min-height:44px;font-size:12px;padding:12px 18px}
+#work .scene-intro .reveal-line > span{opacity:1;transform:none}
+#work .scene-intro .front-project-note{margin:0;font-size:13px;line-height:1.4}
+.appbar__m--brand{object-fit:contain!important;border-radius:0!important;box-shadow:none!important}
+html[data-theme="light"] .appbar__tab[data-appnav="home"] .appbar__m--brand{content:normal}
+@media(min-width:760px){#work .scene-intro{padding-bottom:110px}#work .scene-intro .hero__title{font-size:clamp(64px,10vw,120px)}}

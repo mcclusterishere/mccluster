@@ -1,0 +1,13 @@
+.mn-composer-dialog{box-sizing:border-box;width:100%;max-width:100%;max-height:92dvh;margin:auto 0 0;padding:20px 16px max(24px,env(safe-area-inset-bottom));border:1px solid #424843;border-radius:20px 20px 0 0;background:#111815;color:#f3f2eb;overflow-y:auto}
+.mn-composer-dialog::backdrop{background:rgba(0,0,0,.65)}
+.mn-composer-open{overflow:hidden}
+.mn-composer-dialog__head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px}
+.mn-composer-dialog__head h2{font:700 22px/1.2 var(--ui,system-ui)}
+.mn-composer-dialog .mn__composer{margin:0;width:100%;max-width:100%;min-width:0}
+.mn-composer-dialog .mn__create{display:none}
+.mn-composer-dialog textarea,.mn-composer-dialog select,.mn-composer-dialog input{font-size:max(16px,1rem)}
+.mn-composer-dialog textarea{min-height:120px}
+.mn-composer-dialog button:focus-visible,.mn-composer-dialog a:focus-visible{outline:3px solid #d7ee80;outline-offset:3px}
+@media(min-width:760px){.mn-composer-dialog{width:min(680px,100% - 48px);margin:auto;border-radius:20px;padding:28px}}
+
+.mn-composer-dialog__close{min-height:44px;padding:8px 16px;border:1px solid #667369;border-radius:22px;background:transparent;color:inherit;font:600 16px/1.2 var(--ui,system-ui);cursor:pointer}
