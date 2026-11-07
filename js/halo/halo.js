@@ -763,7 +763,8 @@
     // Freshness changes independently of the rows. Keep focused/pressed cards
     // attached when only this status changes, so a polling repaint cannot eat a click.
     const status = $('.hx-coverage', ui.leftBody);
-    const statusHTML = coverage(view === 'intel' ? (tabs.intel === 'briefs' ? 'briefs' : 'evidence') : view);
+    const statusHTML = view === 'missions' ? coverage('missions') : view === 'people' ? coverage('people')
+      : tabs.intel === 'briefs' ? coverage('briefs') : coverage('evidence');
     if (status && status.innerHTML !== statusHTML) status.innerHTML = statusHTML;
     if (html === listSig) return;
     listSig = html;
