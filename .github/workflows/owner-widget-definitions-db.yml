@@ -1,0 +1,18 @@
+name: Owner widget definition database contract
+permissions:
+  contents: read
+on:
+  pull_request:
+    paths:
+      - 'supabase/pending/owner_widget_definitions_v1*'
+      - 'supabase/tests/owner_widget_definitions*'
+      - 'scripts/test-owner-widget-definitions-native.sh'
+      - '.github/workflows/owner-widget-definitions-db.yml'
+  workflow_dispatch:
+jobs:
+  database:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - run: bash scripts/test-owner-widget-definitions-native.sh
