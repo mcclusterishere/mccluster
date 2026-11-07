@@ -1,0 +1,12 @@
+/* Local categories and explicit owner layout controls, within the house system. */
+.cr-local-categories,.cr-local-items{display:flex;gap:8px;overflow-x:auto;padding:4px 0;scroll-snap-type:x proximity}
+.cr-local-categories a{flex:1 0 100px;scroll-snap-align:start}
+.cr-local-groups a{display:flex;flex-direction:column;justify-content:center;min-height:44px;padding:8px;border:1px solid currentColor;border-radius:8px;color:inherit;text-decoration:none;overflow-wrap:anywhere}
+.cr-local-groups a[aria-current]{background:var(--cr-accent,#d7e8d4);color:#171717}
+.cr-local-groups small{font-size:12px}.cr-local-items a{flex:1 0 90px}
+.cr-layout-editor{max-width:100%;min-width:0}.cr-layout-editor ol{list-style:none;padding:0;display:grid;gap:10px}
+.cr-layout-editor li{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;padding:10px;border:1px solid currentColor;border-radius:8px}
+.cr-layout-editor label{display:grid;gap:4px}.cr-layout-editor select{max-width:100%;min-width:0;width:100%;font-size:16px;min-height:44px}
+.cr-layout-editor button{font:inherit;min-height:44px;white-space:normal}.cr-layout-actions{display:flex;flex-wrap:wrap;gap:8px}
+.cr-layout-editor :focus-visible,.cr-local-groups :focus-visible{outline:3px solid currentColor;outline-offset:2px}
+@media(min-width:700px){.cr-layout-editor li{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center}}
