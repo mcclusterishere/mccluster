@@ -1017,7 +1017,7 @@ window.addEventListener('message',event=>{
  const m=event.data;if(m?.schema!=='mccluster.spatial-lifecycle/v1')return;
  if(m.type==='bridgeport:enter'&&['bridgeport-main-elm','bridgeport-main-fairfield','bridgeport-middle-golden-hill','bridgeport-main-south','bridgeport-main-golden-hill','golden-hill-west'].includes(m.entranceId)){if(m.regionId&&!['bridgeport-golden-hill.v1','bridgeport-downtown.v2'].includes(m.regionId))return;if(bridgeportLoading)bridgeportCancel();bridgeportRegion=m.regionId||'bridgeport-golden-hill.v1';bridgeportEntrance=m.entranceId;document.getElementById('bridgeportEnter')?.click();}
  if(m.type==='bridgeport:leave')bridgeportCancel(true);
- if(m.type==='bridgeport:preview')window.BridgeportSlice?.previewDestination(m.destinationId);
+ if(m.type==='bridgeport:preview')window.BridgeportSlice?.previewDestination(m.destinationId,m.requestId);
  if(m.type==='bridgeport:closures')window.BridgeportSlice?.setClosures(m.closedRoadIds);
  if(m.type==='bridgeport:confirm')window.BridgeportSlice?.confirm();
 });
@@ -1065,6 +1065,7 @@ window.HuGlobe=Object.freeze({
  hideInspection:()=>closeSheet(true),
  openAircraft:contact=>openAircraft(contact),openSatellite:sat=>openSatellite(sat),satPosition:sat=>satPos(sat,new Date()),
  ion:()=>ion,
+ ionState:()=>({configured:!!ion,terrain:!!ionGround,imagery:!!(ionImagery&&ionImagery.ready),buildings:!!ionBuildings}),
  /* the base map, the zoom and near-me buttons, and the World's own mission pins and member regions, for Halo's own controls */
  basemap:Object.freeze({get:()=>layerMode,set:m=>{if(viewer)setLayer(m==='map'?'map':'auto')}}),
  zoom:inward=>{if(!viewer)return;const h=viewer.camera.positionCartographic.height;inward?viewer.camera.zoomIn(h*.45):viewer.camera.zoomOut(h*.8)},

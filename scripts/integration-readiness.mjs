@@ -4,6 +4,7 @@ import { pathToFileURL } from 'node:url';
 import { SOURCES, sourceConfigured } from '../workers/mccluster/src/seek-first/source-registry.js';
 import { adapterCapabilities } from '../workers/mccluster/src/seek-first/adapters.js';
 import { marketsProvider } from '../workers/mccluster/src/intel/world-markets.js';
+import { TOMTOM_MONTHLY_ROUTE_BUDGET } from '../workers/mccluster/src/travel-routing-quota.js';
 import { routingProvider } from '../workers/mccluster/src/travel-routing-provider.js';
 import { globeRelease } from '../packages/release-policy/globe.mjs';
 
@@ -45,7 +46,8 @@ export function integrationReadiness(input = {}) {
       provider: routing,
       configuration: routing ? 'configured_unverified' : 'not_connected',
       missing_bindings: env.TRAVEL_ROUTING_PROVIDER === 'tomtom' && !present(env.TRAVEL_TOMTOM_API_KEY) ? ['TRAVEL_TOMTOM_API_KEY'] : [],
-      runtime: 'not_checked', prerequisites: ['Existing routing quota binding', 'Provider terms and capacity review'],
+      runtime: 'not_checked', application_budget: { requests_per_utc_day: 1000, requests_per_utc_month: routing === 'tomtom' ? TOMTOM_MONTHLY_ROUTE_BUDGET : null, minimum_spacing_ms: 1100 },
+      prerequisites: ['Existing routing quota binding', 'Provider terms and capacity review', 'Confirm prior and other application usage before enabling TomTom; local counters are not provider billing totals'],
     },
     weather: {
       required_keys: [], ingest_requested: env.WEATHER_INGEST_ENABLED === 'true',

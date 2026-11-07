@@ -73,6 +73,7 @@ export function playerProjection(state, { knownEnemyIds: hostKnown = null } = {}
     round: state.round,
     phase: state.phase,
     units,
+    ...(state.metricNavigation ? { metricNavigation: state.metricNavigation } : {}),
     cover: state.cover.map((c) => ({ ...c, sides: [...c.sides] })),
     blockers,
     objectives: state.objectives.map((o) => ({ ...o })),
@@ -116,6 +117,7 @@ function multiFloor(projection) {
 function projectedState(projection) {
   const s = createState({ width: projection.width, height: projection.height, floors: projection.floors,
     units: projection.units, cover: projection.cover, blockers: projection.blockers, objectives: projection.objectives,
+    ...(projection.metricNavigation ? { metricNavigation: projection.metricNavigation } : {}),
     ...(projection.surfaces ? { surfaces: projection.surfaces } : {}), ...(projection.links ? { links: projection.links } : {}) });
   s.round = projection.round; s.phase = projection.phase;
   // createState normalises units; keep the projected flags exactly
@@ -247,6 +249,7 @@ function challengeContext(projection, unit, target) {
 
 // mastery: 0..3. Higher mastery unlocks the harder generator of the field (and richer guidance).
 export function createChallenge(binding, projection, unitId, { mastery = 0, field = null, target = null } = {}) {
+  if (projection.metricNavigation) throw new Error('Metric scenario learning challenges are not configured');
   const unit = projection.units.find((u) => u.id === unitId && u.faction === 'PLAYER');
   if (!unit) throw new Error('UNKNOWN_OR_FOREIGN_UNIT');
   if (target && (target.x < 0 || target.y < 0 || target.x >= projection.width || target.y >= projection.height)) throw new Error('TARGET_OUT_OF_BOUNDS');

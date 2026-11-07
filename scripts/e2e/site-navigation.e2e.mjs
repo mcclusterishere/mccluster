@@ -74,7 +74,7 @@ try{
     check(width+' owner never sees the guest three-tab bar during entry',await page.evaluate(()=>__navFrames.every(n=>n===10)),await page.evaluate(()=>__navFrames));
     check(width+' profile is top right',await topRight(page));
     const keys=await page.locator('.appbar [data-appnav]').evaluateAll(nodes=>nodes.map(n=>n.dataset.appnav));
-    check(width+' Inbox is directly left of Home and Games directly right of World',keys.indexOf('admin-inbox')+1===keys.indexOf('admin-home')&&keys.indexOf('halo')+1===keys.indexOf('games'));
+    check(width+' Inbox is directly left of Home and Games directly right of World',keys.indexOf('admin-inbox')+1===keys.indexOf('admin-home')&&keys.indexOf('world')+1===keys.indexOf('games'));
     check(width+' owner buttons have 44px touch targets',await page.locator('.appbar [data-appnav]').evaluateAll(nodes=>nodes.every(n=>{const r=n.getBoundingClientRect();return r.width>=44&&r.height>=44;})));
     check(width+' Control is labeled Home',await page.locator('#mccControlToggle span').innerText()==='Home');
     await page.evaluate(()=>window.__sliceDocument=123);
@@ -131,7 +131,7 @@ try{
       check(width+' consistent owner bar on '+path,await page.evaluate(()=>document.querySelectorAll('.appbar [data-appnav]').length===10&&__navFrames.every(n=>n===10)));
       check(width+' one ordered accessible dock on '+path,await page.evaluate(()=>{
         const bars=document.querySelectorAll('.appbar'),tabs=[...bars[0].querySelectorAll('[data-appnav]')];
-        return bars.length===1&&tabs.map(x=>x.dataset.appnav).join(',')==='music,admin-inbox,admin-home,home,analytics,halo,games,admin-sell,admin-create,admin-system'&&tabs.every(x=>{const r=x.getBoundingClientRect();return r.width>=44&&r.height>=44&&r.bottom<=innerHeight;});
+        return bars.length===1&&tabs.map(x=>x.dataset.appnav).join(',')==='music,admin-inbox,admin-home,home,analytics,world,games,admin-sell,admin-create,admin-system'&&tabs.every(x=>{const r=x.getBoundingClientRect();return r.width>=44&&r.height>=44&&r.bottom<=innerHeight;});
       }));
     }
     const routes=await page.evaluate(()=>CR.workspaceCore.routes.map(r=>r.hash));
@@ -278,7 +278,10 @@ try{
     const {ctx,page}=await setup(width);
     await page.goto(BASE+'/city-arcade.html');await page.waitForSelector('body[data-admin-navigation]');
     check(width+' game page marks Games active',await page.locator('[data-appnav="games"][aria-current="page"]').count()===1);
-    await page.locator('.appbar [data-appnav="halo"]').click();await page.waitForURL('**/action-globe.html?explore=1&halo=1');
+    await page.locator('#mccControlToggle').click();
+    await page.locator('#mccDestinations:popover-open').waitFor();
+    await page.locator('#mccDestinationList a').filter({hasText:'Hitman’s Halo'}).click();
+    await page.waitForURL('**/action-globe.html?explore=1&halo=1');
     await page.waitForSelector('body[data-admin-navigation]');
     await page.locator('.appbar [data-appnav="games"]').click();await page.waitForURL('**/game-hub.html');
     await page.waitForSelector('body[data-admin-navigation]');
@@ -350,7 +353,7 @@ try{
   await scroll(0);
   if(width===390){
     check('phone initial hint only right',await left.isHidden()&&await right.isVisible(),await dock.evaluate(el=>({left:el.scrollLeft,width:el.clientWidth,scroll:el.scrollWidth,hints:document.getElementById('mccDockHints').outerHTML})));
-    check('all seven primary owner destinations, including Games next to Halo, are visible without scrolling',
+    check('all seven primary owner destinations, including Games next to World, are visible without scrolling',
       await dock.evaluate(el=>[...el.querySelectorAll('[data-appnav]')].slice(0,7).every(tab=>{const a=tab.getBoundingClientRect(),b=el.getBoundingClientRect();return a.left>=b.left-1&&a.right<=b.right+1&&a.width>=44;})));
     check('Games is directly tappable, not covered by scroll arrows',
       await dock.locator('[data-appnav="games"]').evaluate(el=>{const r=el.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return !!hit&&(hit===el||el.contains(hit));}));

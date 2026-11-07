@@ -19,7 +19,15 @@ import { loadLevel } from './levels/index.mjs';
 import { operatorHeight } from './scale.mjs';
 import { DATA_URL as WORLD_MISSIONS, DRAFT_KEY as WORLD_DRAFTS, findMission } from '../prim3-world/missions.mjs';
 
-const LEVEL = await loadLevel(new URLSearchParams(location.search).get('level'));
+const LEVEL = await loadLevel(new URLSearchParams(location.search).get('level')).catch(error => {
+  const main = document.querySelector('main');
+  if (main) {
+    const message = document.createElement('p'); message.setAttribute('role', 'alert'); message.textContent = `Mission unavailable: ${error.message} No tactical save was replaced.`;
+    const back = document.createElement('a'); back.href = 'prim3-world.html'; back.textContent = 'Return to PRIM3 World';
+    main.replaceChildren(message, back);
+  }
+  throw error;
+});
 const { SCENE, W, H, toDisplay } = LEVEL;
 // each level keeps its own save; Transit keeps the key it always had
 const SAVE_KEY = 'prim3.transit.v1';
@@ -220,7 +228,7 @@ function actionsFor(u) {
   if (u && ok) for (const d of state.units.filter((x) => x.faction === 'PLAYER' && x.downed && !x.dead && x.id !== u.id)) {
     if (tryRun(() => stabilize(state, u.id, d.id))) add('stab:' + d.id, 'Stabilize ' + d.role, '1 AP', true, true);
   }
-  if (u && ok && nodeState(OBJ_NODE) === 'VERIFIED' && tryRun(() => extractUnit(state, u.id))) add('extract', TXT.extract, 'free', true, true);
+  if (u && ok && (HOOKS?.canExtract ? HOOKS.canExtract(state) : nodeState(OBJ_NODE) === 'VERIFIED') && tryRun(() => extractUnit(state, u.id))) add('extract', TXT.extract, 'free', true, true);
   return A;
 }
 
@@ -281,7 +289,9 @@ function boardModel() {
   if (ui.preview && ui.preview.kind === 'move') { m.path = ui.preview.path.slice(0, -1); m.dest = ui.preview.dest; m.pathLine = [{ x: sel.x, y: sel.y, z: sel.z }, ...ui.preview.path]; }
   if (ui.preview && ui.preview.kind === 'fire') m.target = ui.preview.target;
   for (const u of units) if (!u.dead) m.labels.push({ id: u.id, x: u.x, y: u.y, z: u.z, h: operatorHeight(LEVEL.WORLD_M || LEVEL.TILE_M) + 0.3, kind: u.faction === 'PLAYER' ? 'ally' : 'hostile', text: u.faction === 'PLAYER' ? u.role : esc(u.id) });
-  if (HOOKS) {
+  if (HOOKS?.markers) {
+    m.labels.push(...HOOKS.markers(state).map(marker => ({ ...marker, text: esc(marker.text) })));
+  } else if (HOOKS) {
     m.labels.push({ x: OBJ.x, y: OBJ.y, z: OBJ.z || 0, h: 0.5, kind: 'obj', text: 'Console' });
     if (SCENE.rack) m.labels.push({ x: SCENE.rack.x, y: SCENE.rack.y, z: SCENE.rack.z, h: 0.5, kind: 'obj', text: 'Rack' });
   } else m.labels.push({ x: OBJ.x, y: OBJ.y, z: OBJ.z || 0, h: LEVEL.OBJ_LABEL_H || 2.6, kind: 'obj', text: `${TXT.noun} ${relayLinks()}/2` });
@@ -519,7 +529,7 @@ async function onAct(id) {
     if (id === 'watch') { state = enterOverwatch(state, sel.id); say(`${sel.role} on overwatch.`); }
     else if (id === 'hunker') { state = hunkerDown(state, sel.id); say(`${sel.role} hunkers down.`); }
     else if (id === 'reload') { state = reload(state, sel.id); say(`${sel.role} reloads.`); }
-    else if (id.startsWith('eu:')) { const out = HOOKS.perform(state, id, sel.id); state = out.state; if (out.log) say(out.log); }
+    else if (id.startsWith('eu:') || id.startsWith('generated:')) { const out = HOOKS.perform(state, id, sel.id); state = out.state; if (out.log) say(out.log); }
     else if (id.startsWith('jam:')) { state = HOOKS ? HOOKS.sync(jamMachine(state, sel.id, id.slice(4))) : jamMachine(state, sel.id, id.slice(4)); say(`T jams ${shortId(id.slice(4))} until T's next turn.`); }
     else if (id.startsWith('pulse:')) { const m = state.machines.find((x) => x.id === id.slice(6)); state = syncPulse(state, sel.id, { x: m.x, y: m.y, z: m.z }); if (HOOKS) state = HOOKS.sync(state); say('T fires the Sync Pulse: every machine within 3 is jammed for a round, nearby hostiles lose their network.'); }
     else if (id.startsWith('mark:')) { state = markMachine(state, sel.id, id.slice(5)); say(`R marks ${shortId(id.slice(5))}.`); }
@@ -642,7 +652,7 @@ async function endTurn() {
   afterChange();
 }
 
-const LOSE = { 'lose-t': () => TXT.failT, 'lose-all': () => 'No one is left standing.', 'lose-clock': () => 'The exercise window closed.', 'lose-verified': () => 'A defender verified a live picture: the red team is on camera.', 'lose-downed': () => 'A downed operative cannot be brought out: the exercise cannot be completed.' };
+const LOSE = { 'lose-role': () => 'The operative needed for an unfinished checkpoint can no longer continue.', 'lose-t': () => TXT.failT, 'lose-all': () => 'No one is left standing.', 'lose-clock': () => 'The exercise window closed.', 'lose-verified': () => 'A defender verified a live picture: the red team is on camera.', 'lose-downed': () => 'A downed operative cannot be brought out: the exercise cannot be completed.' };
 function checkEnd() {
   if (HOOKS) return HOOKS.outcome(state);
   return genericOutcome(state, OBJ_NODE);
@@ -683,6 +693,10 @@ function showBrief() {
   $('txEnd').hidden = false;
 }
 function restart() {
+  if (LEVEL.RECIPE?.expiresAt && Date.now() >= LEVEL.RECIPE.expiresAt) {
+    saveMessage = 'This news source has expired for new runs. Your existing run is unchanged. Return to PRIM3 World to review a fresh source.';
+    paintSaveNotice(); return;
+  }
   if (MISSION_ID && !MISSION) { paintSaveNotice(); return; }
   saveBlocked = !(!MISSION_ID || MISSION); saveMessage = saveBlocked ? 'The selected mission briefing could not load. Reload to retry.' : ''; saveReturnLink = '';
   try { localStorage.removeItem(SAVE); } catch (e) {}
