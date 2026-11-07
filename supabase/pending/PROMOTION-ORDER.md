@@ -168,3 +168,14 @@ switch the flag and the timer on; each is a separate owner step.
 (`js/network.js`), and `plays`, `likes`, `entitlements` (`js/backend.js`).
 Production has none of them (checked read-only 2026-10-27). Those pages fail
 today; the fix is SQL written here or the calls removed, then the entry.
+
+## PRIM3 reviewed release learning (pending, 2026-11-07)
+
+`prim3_reviewed_releases_v1.sql` follows the existing media news article schema and
+`20261103182544_learning_evidence_v1.sql`. It adds private owner-reviewed releases,
+transactional session claims and an expiry/revocation guard on bound learning events.
+Test: `node scripts/test-prim3-adaptive-postgres.mjs` in disposable Docker containers;
+optional browser acceptance: `PRIM3_RELEASE_BROWSER=1` with the documented pinned tools.
+See `docs/prim3/REVIEWED-RELEASE-LEARNING.md`. No production apply has occurred.
+Keep `PRIM3_RELEASES_ENABLED` absent/false until serial promotion and acceptance.
+Dedicated signing-key provisioning requires its separate action-time approval.

@@ -447,6 +447,27 @@
         "workers/mccluster/src/prim3/levels.js"
       ]
     },
+    "prim3_release_claim": {
+      "kind": "function",
+      "pending": "prim3_reviewed_releases_v1.sql",
+      "callers": [
+        "workers/mccluster/src/prim3/adaptive-learning.js"
+      ]
+    },
+    "prim3_release_publish": {
+      "kind": "function",
+      "pending": "prim3_reviewed_releases_v1.sql",
+      "callers": [
+        "workers/mccluster/src/prim3/reviewed-releases.js"
+      ]
+    },
+    "prim3_reviewed_releases": {
+      "kind": "table",
+      "pending": "prim3_reviewed_releases_v1.sql",
+      "callers": [
+        "workers/mccluster/src/prim3/reviewed-releases.js"
+      ]
+    },
     "profile_edit_review_decide": {
       "kind": "function",
       "pending": "20261016010000_profile_edit_gate_v1.sql",
