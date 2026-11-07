@@ -19,3 +19,10 @@ test('shared adapter binds server release and forwards answer, never client corr
  state.nodes[0].state='STEP_1';await client.answer('8');assert.deepEqual(calls.at(-1),{type:'answer',fields:{answer:'8',checkpointId:'CHECKPOINT-1:STEP_1'}});
  practice.current.released_mission.recipe_hash='wrong';assert.throws(()=>client.current,/different release/);
 });
+test('authored turn presentation requires the signed variant and topology',()=>{
+ const context={version:'prim3.lattice-learning/v1',variant:'city',topology:'hex'},release={id:'r',recipe_hash:'h'};
+ const practice={current:{flow:{learning_context:context},released_mission:{id:'r',recipe_hash:'h',next_checkpoint_id:'FIELD:STEP_2'}}};
+ let state={variant:'city',topology:'hex',turn:2};const adapter=createReleasedLearning({practice,release,context,getTacticalState:()=>state});
+ assert.equal(adapter.ready,false);state.turn=3;assert.equal(adapter.ready,true);state.topology='square';assert.equal(adapter.ready,false);
+ practice.current.flow.learning_context={...context,topology:'square'};assert.throws(()=>adapter.current,/mode differs/);
+});

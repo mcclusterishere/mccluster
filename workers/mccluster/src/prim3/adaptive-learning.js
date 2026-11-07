@@ -1,3 +1,4 @@
+import { learningContext } from '../../../../PRIM3/game/halo/adaptive/topology-learning.mjs';
 /* Bounded owner-only practice adapter on the existing learning evidence tables.
  * Disabled unless explicitly configured. No news/ops feeds, credentials or mastery writes.
  * HMAC authenticates evaluator payloads because the existing evidence RLS also permits
@@ -66,7 +67,7 @@ async function rebuild(db, env, user, sid, k) {
   const release = events[0].payload;
   if (release.type !== 'release' || release.template_id !== TEMPLATE || !Number.isFinite(release.issued_at)) fail('Invalid release evidence', 409);
   let clock = release.issued_at;
-  const lab = new MissionLab({ clock: () => clock, seed: release.seed, initialLevel: release.initial_level ?? 1 });
+  const lab = new MissionLab({ clock: () => clock, seed: release.seed, initialLevel: release.initial_level ?? 1, context: release.learning_context ?? null });
   const principal = { tenant: 'mccluster-house', user: user.id, role: 'owner' };
   const mission = lab.draft(principal, { country: 'US', region: 'Connecticut', templateId: TEMPLATE });
   lab.review(principal, mission.id, { fictionChecked: true, geographyChecked: true }); lab.release(principal, mission.id);
@@ -91,6 +92,7 @@ async function progression(db, env, user, k) {
     if (flow.phase !== 'debrief' || state.session.outcome !== flow.debrief.gameOutcome ||
       Date.parse(state.session.ended_at) !== state.events.at(-1).payload.received_at)
       fail('Practice history could not be verified', 409);
+    if(state.events[0].payload.learning_context) continue; // New domains never seed legacy distance levels.
     const initial = state.events[0].payload.initial_level ?? 1;
     const next = flow.debrief.independent >= 2 ? flow.level : Math.min(initial, flow.level);
     recent.push({ session_id: row.id, ended_at: state.session.ended_at, next_level: next,
@@ -149,6 +151,8 @@ export async function routeAdaptive(request, env, user, parts, db) {
     const body = await bodyOf(request), sid = String(body.session_id || '').toLowerCase();
     if (!UUID.test(sid) || body.template_id !== TEMPLATE || body.review?.fictionChecked !== true || body.review?.geographyChecked !== true)
       fail('Session ID, approved template and owner review required');
+    let context=null;
+    if(body.learning_context){try{context=learningContext(body.learning_context);}catch(e){fail(e.message);}if(!body.release_id)fail('Reviewed release required for lattice learning');}
     let reviewedRelease=null;
     let rows;
     if(body.release_id!=null){
@@ -167,17 +171,20 @@ export async function routeAdaptive(request, env, user, parts, db) {
     }
     packSession(rows?.[0]);
     const existing = await eventRows(db, env, user, sid);
+    if(existing.length && canonical(existing[0].payload.learning_context??null)!==canonical(context))fail('Session learning context cannot change',409);
     if (!existing.length) {
       const issued = Date.parse(rows[0].started_at);
       if (!Number.isSafeInteger(Number(rows[0].seed)) || Number(rows[0].seed) < 0 || Number(rows[0].seed) >= 2 ** 31) fail('Invalid session seed', 409);
       if (!Number.isFinite(issued) || issued > Date.now() || Date.now() - issued >= DAY) fail('Session release is unavailable', 409);
-      const progress = await progression(db, env, user, k);
+      const progress = context ? {next_level:1,basis_session_id:null} : await progression(db, env, user, k);
       const payload = await seal(k, { version: VERSION, type: 'release', session_id: sid, user_id: user.id,
-        template_id: TEMPLATE, issued_at: issued, seed: Number(rows[0].seed), initial_level: progress.next_level, basis_session_id: progress.basis_session_id, review: { fictionChecked: true, geographyChecked: true }, scope: 'mccluster-house', ...(reviewedRelease?{reviewed_release:releaseBinding(reviewedRelease)}:{}) });
+        template_id: TEMPLATE, issued_at: issued, seed: Number(rows[0].seed), initial_level: progress.next_level, basis_session_id: progress.basis_session_id, review: { fictionChecked: true, geographyChecked: true }, scope: 'mccluster-house', ...(context?{learning_context:context}:{}), ...(reviewedRelease?{reviewed_release:{...releaseBinding(reviewedRelease),...(context&&context.variant!=='generated'?{checkpoint_ids:['FIELD:STEP_1','FIELD:STEP_2','FIELD:STEP_3']}: {})}}:{}) });
       try { await insertEvent(db, env, user, sid, 0, payload); }
       catch (error) { if (!(await eventRows(db, env, user, sid)).length) throw error; }
     }
-    return response(await rebuild(db, env, user, sid, k));
+    const started=await rebuild(db,env,user,sid,k);
+    if(canonical(started.events[0].payload.learning_context??null)!==canonical(context))fail('Conflicting session learning context',409);
+    return response(started);
   }
   const sid = String(parts[1] || '').toLowerCase();
   if (!UUID.test(sid)) fail('Session UUID required');

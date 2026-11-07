@@ -38,3 +38,9 @@ $('start').onclick=async()=>{try{await load();const next=createCitySimulation(re
 $('resume').onclick=async()=>{try{await load();const text=localStorage.getItem(SAVE_KEY);if(!text)throw new Error('No saved simulation in this browser');run=restoreSimulation(region,text);$('notice').textContent='Saved simulation restored.';render();}catch(e){message(e);}};
 $('destination').onchange=()=>{if(run&&$('destination').value)choose(Number($('destination').value));};
 $('confirm').onclick=()=>transact('move');for(const id of ['fire','reload','overwatch','extract','end'])$(id).onclick=()=>transact(id);
+
+// Read-only presentation adapter. This snapshot is not authoritative learning evidence.
+export function learningSnapshot(){return run?{variant:'city',topology:run.topology,turn:run.state.round}:null;}
+const requestedTopology=new URLSearchParams(location.search).get('topology');
+if(['square','hex'].includes(requestedTopology))$('topology').value=requestedTopology;
+Object.defineProperty(window,'__prim3CityLearningSnapshot',{value:learningSnapshot,configurable:false,writable:false});

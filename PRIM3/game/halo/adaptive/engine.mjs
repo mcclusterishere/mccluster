@@ -1,3 +1,4 @@
+import { learningContext, latticeQuestion } from './topology-learning.mjs';
 /** Local reference service. Principals must come from a trusted server adapter in production.
  * No network, persistence, operational feeds, curriculum credit or client-auth claims.
  */
@@ -14,11 +15,11 @@ const templates = Object.freeze({
 export { templates };
 
 export class MissionLab {
-  #missions = new Map(); #sessions = new Map(); #dedupe = new Map(); #clock; #seed; #initialLevel;
-  constructor({ clock = () => Date.now(), seed = 0, initialLevel = 1 } = {}) {
+  #missions = new Map(); #sessions = new Map(); #dedupe = new Map(); #clock; #seed; #initialLevel; #context;
+  constructor({ clock = () => Date.now(), seed = 0, initialLevel = 1, context = null } = {}) {
     require(Number.isSafeInteger(seed) && seed >= 0 && seed < 2 ** 31, 'Bounded integer seed required');
     require(Number.isInteger(initialLevel) && initialLevel >= 1 && initialLevel <= 3, 'Practice level must be 1–3');
-    this.#clock = clock; this.#seed = seed; this.#initialLevel = initialLevel;
+    this.#clock = clock; this.#seed = seed; this.#initialLevel = initialLevel; this.#context = context ? learningContext(context) : null;
   }
   #principal(p, owner = false) {
     require(p && id(p.tenant) && id(p.user), 'Authenticated tenant and user required');
@@ -121,14 +122,15 @@ export class MissionLab {
     } else {
       require(s.phase === 'play' && event.questionId === s.current?.id, 'Current question required');
       if (event.type === 'hint') {
-        s.current.hinted = true; result.hint = templates[this.#mission(p, s.missionId).templateId].hint;
+        s.current.hinted = true; result.hint = this.#context ? latticeQuestion(this.#context,this.#seed,s.ordinal,s.current.level).hint : templates[this.#mission(p, s.missionId).templateId].hint;
       } else {
         require((typeof event.answer === 'string' && /^-?\d{1,8}$/.test(event.answer.trim())) ||
           (typeof event.answer === 'number' && Number.isSafeInteger(event.answer) && Math.abs(event.answer) < 1e8), 'Integer answer required');
-        const expected = Math.abs(s.current.to - s.current.x);
+        const exercise = this.#context ? latticeQuestion(this.#context,this.#seed,s.ordinal,s.current.level) : null;
+        const expected = exercise ? exercise.expected : Math.abs(s.current.to - s.current.x);
         const correct = Number(event.answer) === expected, independent = correct && !s.current.hinted;
         result = { ...result, correct, independent, level: s.current.level, expected,
-          feedback: `|${s.current.to} − (${s.current.x})| = ${expected} grid units.`, assessment: 'local-practice-only' };
+          feedback: exercise ? exercise.feedback : `|${s.current.to} − (${s.current.x})| = ${expected} grid units.`, assessment: 'local-practice-only' };
         s.streak = independent ? s.streak + 1 : 0;
         if (!correct) s.level = Math.max(1, s.level - 1);
         else if (s.streak >= 2) { s.level = Math.min(3, s.level + 1); s.streak = 0; }
@@ -141,9 +143,9 @@ export class MissionLab {
   view(p, sessionId) {
     const s = this.#session(p, sessionId), m = this.#mission(p, s.missionId), t = templates[m.templateId];
     const answers = s.events.filter(e => e.type === 'answer');
-    return { id: s.id, mission: copy(m), title: t.title, brief: t.brief, standard: t.standard,
+    return { id: s.id, mission: copy(m), title: t.title, brief: t.brief, standard: this.#context ? null : t.standard, ...(this.#context ? {learning_context:copy(this.#context),skill:latticeQuestion(this.#context,this.#seed,1,1).skill} : {}),
       phase: s.phase, tacticalHandoff: s.tacticalHandoff, nextSeq: s.events.length + 1, level: s.level,
-      question: s.current ? { id: s.current.id, prompt: `Find the distance from (${s.current.x}, ${s.current.y}) to (${s.current.to}, ${s.current.y}).`, hinted: s.current.hinted } : null,
+      question: s.current ? { id: s.current.id, prompt: this.#context ? latticeQuestion(this.#context,this.#seed,s.ordinal,s.current.level).prompt : `Find the distance from (${s.current.x}, ${s.current.y}) to (${s.current.to}, ${s.current.y}).`, hinted: s.current.hinted } : null,
       debrief: { gameOutcome: s.gameOutcome, attempts: answers.length, correct: answers.filter(e => e.result.correct).length,
         independent: answers.filter(e => e.result.independent).length, principlesCredit: false,
         nextStep: answers.some(e => !e.result.independent) ? 'Review absolute value with a worked example, then try a new problem.' : 'Try a delayed practice check with new coordinates.',

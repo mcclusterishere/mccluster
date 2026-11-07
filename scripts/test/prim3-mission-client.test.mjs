@@ -47,3 +47,10 @@ test('new practice requires acknowledged closed debrief and clears only local se
   const calls=t.requests.length;c.newPractice();assert.equal(c.current,null);assert.equal(c.pending,false);assert.equal(t.requests.length,calls);
   await c.start({fictionChecked:true,geographyChecked:true});assert.equal(t.requests.length,calls+1);
 });
+test('lost reviewed lattice start retains the exact versioned context',async()=>{
+ const t=setup(),c=createPracticeClient(t);await c.connect();t.offline();
+ const context={version:'prim3.lattice-learning/v1',variant:'city',topology:'hex'};
+ await assert.rejects(c.start({fictionChecked:true,geographyChecked:true},{releaseId:sid,learningContext:context}),/offline/);
+ const saved=JSON.parse(t.saved.get(`prim3.adaptive.pending.v1:${uid}`));assert.deepEqual(saved.pending.body.learning_context,context);
+ await assert.rejects(c.retry(),/offline/);assert.equal(t.requests.at(-1).init.body,t.requests.at(-2).init.body);
+});

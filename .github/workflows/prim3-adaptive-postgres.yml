@@ -10,6 +10,7 @@ on:
       - 'js/prim3-mission/**'
       - 'prim3-released-mission.html'
       - 'scripts/e2e/prim3-reviewed-release.e2e.mjs'
+      - 'scripts/e2e/prim3-topology-learning.e2e.mjs'
       - 'supabase/tests/*learning*'
       - 'supabase/tests/supabase*.stub.sql'
       - 'scripts/test-prim3-adaptive-postgres.mjs'
@@ -24,6 +25,7 @@ on:
       - 'js/prim3-mission/**'
       - 'prim3-released-mission.html'
       - 'scripts/e2e/prim3-reviewed-release.e2e.mjs'
+      - 'scripts/e2e/prim3-topology-learning.e2e.mjs'
       - 'scripts/test-prim3-adaptive-postgres.mjs'
       - '.github/workflows/prim3-adaptive-postgres.yml'
   workflow_dispatch:
@@ -51,4 +53,5 @@ jobs:
       - name: Exercise isolated PostgreSQL, PostgREST and in-mission learning
         env:
           PRIM3_RELEASE_BROWSER: '1'
+          PRIM3_TOPOLOGY_BROWSER: '1'
         run: node scripts/test-prim3-adaptive-postgres.mjs
