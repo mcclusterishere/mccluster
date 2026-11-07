@@ -90,3 +90,16 @@ live ion imagery, account entitlements and live road-routing services are NOT ve
 
 Not implemented: 3D GTA camera work, city-wide vehicle gameplay/racing, mobile native packaging,
 server-validated competitive rewards, full canonical story integration or production promotion.
+
+## Default-off cloud release gate
+
+Arcade cloud operations require the exact server binding `ARCADE_CLOUD_ENABLED=true`
+plus existing Supabase configuration. No deployment binding is enabled by this change.
+Owner authentication remains first; disabled requests stop before the Arcade RPC.
+The owner-only `GET /v1/arcade/capabilities` reports configuration readiness without
+querying mission tables. It does not certify that the schema is installed.
+Both games disable cloud controls until this bounded capability check succeeds, and
+disable them again on cloud unavailability. Local play and device saves remain available;
+pending cloud results are retained under the existing game persistence rules. Re-enter
+the game to recheck availability. An explicit flag is used only by local database fixtures.
+Activation still requires separately approved schema, grants, and release verification.
