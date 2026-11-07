@@ -16,7 +16,7 @@ export function installMusicJourneys({ root }) {
   const engine = window.MCC_MUSIC;
   if (!engine) throw new Error('Music transport is unavailable');
   const original = location.href, originalTitle = document.title;
-  let frame, shell, capsule, movement, timer, destination = '', returnFocus;
+  let frame, shell, capsule, movement, timer, destination = '', returnFocus, suspended = false;
   const hidden = new Map();
   const style = document.createElement('link'); style.rel = 'stylesheet';
   style.href = new URL('css/music-journeys.css', root).href; document.head.append(style);
@@ -44,6 +44,7 @@ export function installMusicJourneys({ root }) {
     b.setAttribute('aria-pressed', String(!engine.audio.paused));
   }
   function conceal() {
+    if (suspended) return;
     for (const node of document.body.children) {
       if (/^(SCRIPT|LINK|STYLE|TEMPLATE)$/.test(node.tagName) || node === shell || node === capsule ||
           node.matches('.appbar, .mcc-auth-nav, #mccAuthChip, #mccDestinations, #mccProfileMenu')) continue;
@@ -51,8 +52,17 @@ export function installMusicJourneys({ root }) {
       node.setAttribute('data-mcc-retained-hidden', ''); node.inert = true;
     }
   }
+  function suspendForWorld() {
+    if (!destination || suspended) return;
+    suspended = true; clearTimeout(timer);
+    if (shell) shell.hidden = true;
+    if (capsule) capsule.hidden = true;
+    for (const [node, inert] of hidden) { node.removeAttribute('data-mcc-retained-hidden'); node.inert = inert; }
+    hidden.clear();
+    document.documentElement.classList.remove('mcc-music-room-open');
+  }
   function showOriginal() {
-    clearTimeout(timer); destination = '';
+    clearTimeout(timer); destination = ''; suspended = false;
     if (shell) { shell.hidden = true; frame.contentWindow.location.replace('about:blank'); }
     if (capsule) capsule.hidden = true;
     for (const [node, inert] of hidden) { node.removeAttribute('data-mcc-retained-hidden'); node.inert = inert; }
@@ -102,6 +112,7 @@ export function installMusicJourneys({ root }) {
     if (!accepts(child)) return;
     destination = child.location.href;
     clearTimeout(timer); shell.querySelector('[data-room-status]').hidden = true;
+    if (suspended) return;
     frame.title = child.document.title || 'Current page'; document.title = frame.title;
     const games = /\/game-hub.html$/.test(child.location.pathname);
     capsule.hidden = games; shell.classList.toggle('mjc-game-room', games);
@@ -139,7 +150,7 @@ export function installMusicJourneys({ root }) {
       // Preserve local anchors and native Control routing inside the active room.
       if (sameRoom(u, new URL(child.location.href))) return;
       e.preventDefault(); e.stopImmediatePropagation();
-      if (!navigate(u.href)) window.location.assign(u.href);
+      if (!navigate(u.href)) window.MCC_BAR.navigation.go(u.href);
     }, true);
     child.addEventListener('mcc:auth-changed', () => {
       // The child uses the same canonical origin storage, never a transported token.
@@ -152,6 +163,8 @@ export function installMusicJourneys({ root }) {
   }
   function open(href, push = true, retry = false) {
     const u = journeyURL(href, original); if (!u) return false;
+    window.MCC_WORLD_AUDIO?.leaveForJourney?.();
+    suspended = false;
     const source = new URL(original);
     if (sameRoom(u, source)) {
       if (push) history.pushState({mccMusicJourney:original}, '', original);
@@ -183,6 +196,7 @@ export function installMusicJourneys({ root }) {
     if (location.hash.startsWith('#mcc_music_room=')) e.stopImmediatePropagation();
   }, true);
   window.addEventListener('popstate', e => {
+    if (e.state?.mccWorldAudio) { suspendForWorld(); return; }
     const href = e.state?.mccMusicJourney;
     if (href && journeyURL(href, original)) open(href, false);
     else showOriginal();
@@ -190,6 +204,6 @@ export function installMusicJourneys({ root }) {
   for (const type of ['mcc:music-state', 'mcc:music-selected']) window.addEventListener(type, e => {
     paint(); if (frame && accepts(frame.contentWindow)) frame.contentWindow.dispatchEvent(new frame.contentWindow.CustomEvent(type, {detail:e.detail}));
   });
-  window.MCC_MUSIC_JOURNEYS = {navigate, attach, attachEngine, active:() => !!destination, location:() => new URL(destination || original)};
+  window.MCC_MUSIC_JOURNEYS = {navigate, attach, attachEngine, suspendForWorld, active:() => !!destination && !suspended, location:() => suspended ? window.location : new URL(destination || original)};
   return window.MCC_MUSIC_JOURNEYS;
 }

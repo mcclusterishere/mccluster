@@ -18,8 +18,9 @@
   })();
 
   // Only our exact retained same-origin frame inherits the existing transport.
+  let retainedMusicRoom = false;
   try {
-    if (parent !== window && parent.MCC_MUSIC_JOURNEYS?.attach(window)) return;
+    retainedMusicRoom = parent !== window && !!parent.MCC_MUSIC_JOURNEYS?.attach(window);
   } catch (_) { /* unrelated/cross-origin embeds retain their own contract */ }
   const journeyPaths = /^\/(?:listen|game-hub|control|prim3-transit|prim3|prim3-world|city-arcade|fictional-city|equity-uprise-server-lab-3d)\.html$|^\/screens\/terminal\.html$/;
   // Reloading/bookmarking a retained room opens its canonical page normally.
@@ -33,6 +34,7 @@
   }
   let journeyModule;
   function musicJourney(href) {
+    if (retainedMusicRoom) return false;
     let u; try { u = new URL(href, location.href); } catch (_) { return false; }
     if (u.origin !== location.origin || !journeyPaths.test(u.pathname) ||
         !(window.MCC_MUSIC?.current() || window.MCC_MUSIC_JOURNEYS?.active())) return false;
@@ -78,7 +80,7 @@
     });
     return worldAudioReady;
   }
-  loadWorldAudio();
+  if (!retainedMusicRoom) loadWorldAudio();
 
   /* ---------- THREE HOSTS, ONE BAR ----------
      The World is served on a host of its own as well: the company's,
@@ -1123,6 +1125,7 @@
   }
 
   function sail(dest, wait) {
+    if (retainedMusicRoom) { parent.MCC_BAR.navigation.go(dest); return; }
     if (musicJourney(dest)) { veilOff(); revert(); return; }
     cancelWorldAudio();
     if (dest === MAP) { if (openMap()) return; dest = HOUSE + "index.html"; }
