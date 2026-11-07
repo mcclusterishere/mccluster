@@ -79,6 +79,14 @@ try {
   await page.locator('#mccJourneyCapsule [data-play]').click();await retained();
   await go('/control.html#home:today');f=await room('/control.html');await f.locator('#crSurface').waitFor();await retained();
   await page.locator('#mccControlToggle[aria-current=page]').waitFor();
+  // One host history step per same-room fragment change; the iframe replaces its
+  // fragment entry and never adds a second joint-session-history stop.
+  await go('/control.html#home:activity');await room('/control.html');
+  await page.waitForFunction(()=>document.querySelector('#mccMusicRoom iframe').contentWindow.location.hash==='#home:activity');
+  await page.evaluate(()=>history.back());
+  await page.waitForFunction(()=>document.querySelector('#mccMusicRoom iframe').contentWindow.location.hash==='#home:today');await retained();
+  await page.evaluate(()=>history.forward());
+  await page.waitForFunction(()=>document.querySelector('#mccMusicRoom iframe').contentWindow.location.hash==='#home:activity');await retained();
   assert.ok(await page.locator('#mccJourneyCapsule').evaluate(el=>el.getBoundingClientRect().bottom<=document.querySelector('#mccMusicRoom').getBoundingClientRect().top));
   await go('/prim3.html');f=await room('/prim3.html');await f.locator('#courseGate, #course').first().waitFor({state:'attached'});await retained();
   await page.evaluate(()=>history.back());await room('/control.html');await retained();

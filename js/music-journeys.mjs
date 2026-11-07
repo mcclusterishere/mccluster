@@ -176,7 +176,8 @@ export function installMusicJourneys({ root }) {
     clearTimeout(timer);
     if (!retry && previous && sameRoom(u, new URL(previous)) && accepts(frame.contentWindow) &&
         frame.contentWindow.__mccMusicRoomAttached && sameRoom(u, new URL(frame.contentWindow.location.href))) {
-      frame.contentWindow.location.hash = u.hash; ready(frame.contentWindow); return true;
+      if (frame.contentWindow.location.href !== u.href) frame.contentWindow.location.replace(u.href);
+      ready(frame.contentWindow); return true;
     }
     status('Opening page…'); frame.contentWindow.location.replace(destination);
     timer = setTimeout(() => status('This page has not finished opening. Retry or return; your music is still here.'), 15000);
