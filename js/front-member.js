@@ -18,6 +18,13 @@
   var HANDLE = /^[a-z0-9][a-z0-9._-]{2,39}$/;
   var inStudio = false;
   try { inStudio = w.parent !== w && w.parent.location.origin === location.origin && /front-studio\.html$/.test(w.parent.location.pathname); } catch (e) {}
+  // The editor replaces this frame whenever words/media change. Cross-document
+  // page transitions can still be running when that replacement happens.
+  if (inStudio) {
+    var previewStyle = d.createElement('style');
+    previewStyle.textContent = '@view-transition { navigation: none; }';
+    d.head.appendChild(previewStyle);
+  }
   d.documentElement.setAttribute("data-front-state", "loading");
 
   function text(el, v) { if (el) el.textContent = v == null ? "" : String(v); }
