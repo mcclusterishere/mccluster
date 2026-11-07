@@ -41,11 +41,13 @@ jobs:
       - name: Which shelf tracks have no lyrics yet
         id: todo
         run: |
-          node -e '
-            const fs=require("fs");const a=JSON.parse(fs.readFileSync("data/albums.json","utf8"));const todo=[];
-            for(const al of a.albums)for(const t of al.tracks){if(!t.src||t.gated||t.lyrics)continue;
-              const slug=t.src.split("/").pop().replace(/\.[^.]+$/,"");if(!fs.existsSync(`data/lyrics/${slug}.json`))todo.push(slug);}
-            console.log(todo.join(" ")||"(none)");fs.appendFileSync(process.env.GITHUB_OUTPUT,`count=${todo.length}\n`);'
+          node --input-type=module -e '
+            import fs from "node:fs";
+            import { selectMissing } from "./tools/lyrics/transcribe.mjs";
+            const albums=JSON.parse(fs.readFileSync("data/albums.json","utf8"));
+            const todo=await selectMissing(albums);
+            console.log(todo.map(t=>t.slug).join(" ")||"(none)");
+            fs.appendFileSync(process.env.GITHUB_OUTPUT,`count=${todo.length}\n`);'
       - name: Install the open models' runtime (CPU)
         if: steps.todo.outputs.count != '0'
         run: |

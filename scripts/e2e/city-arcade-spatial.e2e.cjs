@@ -1,8 +1,8 @@
-// Run against an isolated #743 + City #748 da0b411b checkout. Real Cesium/gameplay;
+// Run against the integrated City contract in this checkout. Real Cesium/gameplay;
 // identity, ion availability and imagery are fixtures. No production requests allowed.
 const {chromium}=require('playwright'),fs=require('node:fs/promises'),assert=require('node:assert/strict');
 const base=process.env.ARCADE_BASE||'http://127.0.0.1:8768',build=process.env.CESIUM_BUILD||'/tmp/arcade-cesium/node_modules/cesium/Build/Cesium';
-(async()=>{const browser=await chromium.launch({executablePath:'/usr/bin/chromium',args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});try{for(const width of (process.env.ARCADE_WIDTHS||'390,1280').split(',').map(Number)){
+(async()=>{const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});try{for(const width of (process.env.ARCADE_WIDTHS||'390,1280').split(',').map(Number)){
  const entrance=width===390?'bridgeport-main-golden-hill':'bridgeport-main-elm',destination=width===390?'bridgeport-main-elm':'bridgeport-main-golden-hill';
  const context=await browser.newContext({viewport:{width,height:1000}});let owner=true,loads=0;const errors=[];
  await context.addInitScript(()=>localStorage.setItem('mccdb_session',JSON.stringify({access_token:'local-fixture-owner'})));
