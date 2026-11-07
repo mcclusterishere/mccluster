@@ -14,7 +14,7 @@ export function onCountryCard(fn) {
   handlers.add(fn);
   return () => handlers.delete(fn);
 }
-export function emitCountryCard(country, el, name) {
-  for (const fn of handlers) { try { fn(country, el, { name }); } catch (e) { console.warn('[prim3 world] country card hook', e); } }
-  try { globalThis.dispatchEvent(new CustomEvent(COUNTRY_CARD_EVENT, { detail: { country, name, el } })); } catch (e) {}
+export function emitCountryCard(country, el, name, extra = {}) {
+  for (const fn of handlers) { try { fn(country, el, { ...extra, name }); } catch (e) { console.warn('[prim3 world] country card hook', e); } }
+  try { globalThis.dispatchEvent(new CustomEvent(COUNTRY_CARD_EVENT, { detail: { ...extra, country, name, el } })); } catch (e) {}
 }
