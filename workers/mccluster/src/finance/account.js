@@ -37,7 +37,7 @@ export function replayAccount(events=[]) {
     positions[a.symbol]=p;session=e.session;fills.push({id:a.id,...a,price_cents:e.price_cents,at:e.at,quote:e.quote});
   }
   return {mode:'paper-iex-v1',currency:'USD',cash_cents:cash,realized_cents:realized,positions:Object.values(positions).filter(p=>p.quantity),watchlist:[...watch],fills,session,
-    limitations:['Halo simulation at observed bid/ask; no brokerage orders','Whole shares, long only; no liquidity, fees or tax model','Positions from earlier sessions require reset; dividends/splits are not automated','No aggregate live valuation; cost basis is not current market value']};
+    limitations:['Halo simulation at observed bid/ask; no brokerage orders','Whole shares, long only; no liquidity, fees or tax model','Positions from earlier sessions require reset; dividends/splits are not automated','Cost basis is not current market value; request a separately timestamped indicative valuation']};
 }
 const easternDay = date => new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'}).format(date);
 export async function accountRequest(env,owner,action,market,{call=rpc,now=Date.now}={}){

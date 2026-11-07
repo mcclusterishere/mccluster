@@ -66,8 +66,16 @@ try {
     });
     assert.equal(await page.locator('[data-appnav="home"]').getAttribute('href'),'https://matthew.mccluster.org/index.html');
     assert.match(await page.locator('[data-appnav="home"] img').getAttribute('src'),/m-mark\.png$/);
-    assert.deepEqual(await page.locator('.appbar.appbar--admin').first().locator('[data-appnav]').evaluateAll(nodes=>nodes.map(n=>n.dataset.appnav).sort()),['music','admin-inbox','admin-home','home','analytics','halo','games','admin-sell','admin-create','admin-system'].sort());
-    await page.evaluate(()=>window.MCC_BAR.pageProfile(null));
+    assert.deepEqual(await page.locator('.appbar.appbar--admin').first().locator('[data-appnav]').evaluateAll(nodes=>nodes.map(n=>n.dataset.appnav).sort()),['music','admin-inbox','admin-home','home','analytics','world','games','admin-sell','admin-create','admin-system'].sort());
+    const worldBefore = await page.locator('.appbar.appbar--admin [data-appnav="world"]').getAttribute('href');
+    assert.equal(worldBefore,'https://mccluster.org/?view=feed');
+    for (const policy of [{world:false},{world:true,world_href:'https://matthew.mccluster.org/customer-world.html'}]) {
+      await page.evaluate(policy=>window.MCC_BAR.sitePolicy(policy),policy);
+      const world = page.locator('.appbar.appbar--admin [data-appnav="world"]');
+      assert.equal(await world.getAttribute('href'),worldBefore);
+      assert.equal(await world.isVisible(),true);
+    }
+    await page.evaluate(()=>{window.MCC_BAR.sitePolicy(null);window.MCC_BAR.pageProfile(null);});
    }
    // Cross-host sign-in keeps the existing fragment handoff; no provider call.
    if(host==='mccluster.org'){

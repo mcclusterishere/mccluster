@@ -11,7 +11,7 @@ if(!CESIUM||!PREVIEW||!/^http:\/\/127\.0\.0\.1:\d+$/.test(PREVIEW))throw Error('
 const OUT=process.argv[2]||'/tmp/finance-globe-proof';await mkdir(OUT,{recursive:true});
 const BASE='https://matthew.mccluster.org',OWNER='11111111-1111-4111-8111-111111111111';
 const MIME={'.js':'text/javascript','.mjs':'text/javascript','.html':'text/html','.css':'text/css','.json':'application/json','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml','.webp':'image/webp','.woff2':'font/woff2','.wasm':'application/wasm'};
-const browser=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE||'/usr/bin/chromium',args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader','--disable-dev-shm-usage']});
+const browser=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE||undefined,args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader','--disable-dev-shm-usage']});
 const results=[];
 try{
  for(const width of [390,1280]){
@@ -72,6 +72,10 @@ try{
   const saved=await page.locator('[data-f-account]').textContent();
   if(!saved.includes('AAPL')||!saved.includes('100.02'))throw Error('Paper fill missing');
   if(!await page.evaluate(()=>window.HuGlobe.viewer()===window.__financeViewer&&document===window.__financeDocument))throw Error('Finance left/replaced the globe');
+  await page.locator('[data-f-value]').click();
+  await page.waitForFunction(()=>document.querySelector('[data-f-valuation]')?.textContent.includes('Paper equity'));
+  const valuation=await page.locator('[data-f-valuation]').textContent();
+  if(!valuation.includes('IEX bid')||!valuation.includes('unrealized'))throw Error('Missing sourced portfolio valuation');
   await page.screenshot({path:join(OUT,`finance-${width}.png`),fullPage:true});
   await page.reload();await page.waitForSelector('#haloShell .hx-top',{timeout:60000});
   if(width<768)await page.locator('#haloShell .hx-collapse').click();
@@ -83,9 +87,10 @@ try{
   isOwner=false;
   await page.locator('[data-f-reload]').click();
   await page.waitForFunction(()=>document.querySelector('[data-f-status]')?.textContent==='Owner authentication required.');
+  if(await page.locator('[data-f-valuation]').textContent())throw Error('Private valuation retained after denial');
   if(await page.locator('[data-f-account]').textContent())throw Error('Private data retained after denial');
   if(errors.length)throw Error(errors.join('\n'));
-  results.push({width,actual_globe:renderer,same_viewer:true,historical_chart:true,watchlist:true,saved_reload:true,member_denied:true,overflow:false});
+  results.push({width,actual_globe:renderer,same_viewer:true,historical_chart:true,watchlist:true,saved_reload:true,sourced_valuation:true,member_denied:true,overflow:false});
   await ctx.close();
  }
  console.log(JSON.stringify(results,null,2));

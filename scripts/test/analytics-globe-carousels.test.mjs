@@ -129,7 +129,7 @@ test('owner bar: seven tabs for the owner from the server\'s answer, three for e
   assert.match(block, /sessionStorage\.setItem\(ADMIN_KEY, JSON\.stringify\(\{ sub: sub, at: Date\.now\(\), admin: r\.ok \}\)\)/);
   assert.match(block, /if \(r\.ok \|\| r\.status === 401 \|\| r\.status === 403\)/, 'only a definite answer changes the bar');
   const order = [...block.matchAll(/data-appnav="([a-z-]+)"/g)].map((m) => m[1]);
-  assert.deepEqual(order, ['music', 'admin-inbox', 'admin-home', 'home', 'analytics', 'halo', 'games']);
+  assert.deepEqual(order, ['music', 'admin-inbox', 'admin-home', 'home', 'analytics', 'world', 'games']);
   assert.match(block, /control\.html#home/);
   assert.match(block, /control\.html#analytics/);
   assert.match(block, /assets\/img\/m-mark\.png/, 'owner center retains the supplied personal M');

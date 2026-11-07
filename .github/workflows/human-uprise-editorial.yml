@@ -17,6 +17,11 @@ on:
       - 'supabase/tests/travel_journeys.behaviour.sql'
       - 'scripts/test/travel-journeys-db.mjs'
       - 'js/mnet.js'
+      - 'js/mnet-live.js'
+      - 'js/policy-mode*.js'
+      - 'css/policy-mode.css'
+      - 'js/site-navigation.js'
+      - 'scripts/e2e/policy-mode.e2e.mjs'
       - 'js/member-desk.js'
       - 'js/member-desk-core.js'
       - 'js/world-audio-continuity.js'
@@ -72,7 +77,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        suite: [database, editorial, editorial-video-composer, travel-iphone-portrait, travel-iphone-landscape, travel-ipad-portrait, travel-ipad-landscape, travel-desktop, guest-travel, member-desk, music-world, news-guest, navigation, creator-onboarding, mission-pins, world-countries, world-globe-feed, world-transport, anti-social, human-uprise-door, owner-halo-globe]
+        suite: [database, editorial-iphone-portrait, editorial-iphone-landscape, editorial-ipad-portrait, editorial-ipad-landscape, editorial-desktop, editorial-video-composer, travel-iphone-portrait, travel-iphone-landscape, travel-ipad-portrait, travel-ipad-landscape, travel-desktop, guest-travel, member-desk, music-world, news-guest, navigation, creator-onboarding, mission-pins, world-countries, world-globe-feed, world-transport, anti-social, human-uprise-door, owner-halo-globe, policy-mode]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -95,7 +100,10 @@ jobs:
           mkdir -p /tmp/hu-proof
           case "${{ matrix.suite }}" in
             database) node scripts/test/travel-journeys-db.mjs ;;
-            editorial) E2E_EXCLUDE=editorial-video-composer E2E_ONLY=editorial node scripts/e2e/world-screen.e2e.mjs /tmp/hu-proof/world ;;
+            editorial-iphone-portrait|editorial-iphone-landscape|editorial-ipad-portrait|editorial-ipad-landscape|editorial-desktop)
+              device="${{ matrix.suite }}"
+              EDITORIAL_DEVICE="${device#editorial-}" E2E_EXCLUDE=editorial-video-composer E2E_ONLY=editorial node scripts/e2e/world-screen.e2e.mjs "/tmp/hu-proof/${{ matrix.suite }}"
+              ;;
             editorial-video-composer) E2E_ONLY=editorial-video-composer node scripts/e2e/world-screen.e2e.mjs /tmp/hu-proof/editorial-video-composer ;;
             travel-iphone-portrait) E2E_ONLY=travel-iphone-portrait node scripts/e2e/world-screen.e2e.mjs /tmp/hu-proof/travel-iphone-portrait ;;
             travel-iphone-landscape) E2E_ONLY=travel-iphone-landscape node scripts/e2e/world-screen.e2e.mjs /tmp/hu-proof/travel-iphone-landscape ;;
@@ -114,6 +122,7 @@ jobs:
             world-transport) node scripts/e2e/world-transport.e2e.mjs /tmp/hu-proof/world-transport ;;
             anti-social) node scripts/e2e/anti-social.e2e.mjs /tmp/hu-proof/anti-social ;;
             human-uprise-door) node scripts/e2e/human-uprise-door.e2e.mjs /tmp/hu-proof/human-uprise-door ;;
+            policy-mode) node scripts/e2e/policy-mode.e2e.mjs /tmp/hu-proof/policy-mode ;;
             owner-halo-globe) node scripts/e2e/owner-halo-globe.e2e.mjs /tmp/hu-proof/owner-halo-globe ;;
             *) echo 'Unknown suite' >&2; exit 2 ;;
           esac

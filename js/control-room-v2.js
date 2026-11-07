@@ -2339,7 +2339,7 @@
   function renderApps() {
     var registered = state.apps.map(function (a) { return appCard(a.name || a.app_key, [a.product_family, a.kind].filter(Boolean).join(" · ") || "Registered application", a.public_url || "#", a.app_key || "registered", true); }).join("") || '<div class="cr-panel__body cr-muted">No registered applications were returned.</div>';
     var specialty = [bridge.whip, bridge.prim3, bridge.halo, bridge.manufacture].map(function (a) { return appCard(a.title, a.subtitle, a.href, "Specialized workspace", a.external); }).join("");
-    return '<section class="cr-app-section"><div class="cr-panel__head"><h2>Registered applications</h2><span class="cr-panel__meta">' + state.apps.length + '</span></div><div class="cr-app-grid">' + registered + '</div></section><section class="cr-app-section"><div class="cr-panel__head"><h2>Specialized workspaces</h2></div><div class="cr-app-grid">' + specialty + '</div></section>';
+    return (window.CR.productReadiness ? window.CR.productReadiness.render() : '') + '<section class="cr-app-section"><div class="cr-panel__head"><h2>Registered applications</h2><span class="cr-panel__meta">' + state.apps.length + '</span></div><div class="cr-app-grid">' + registered + '</div></section><section class="cr-app-section"><div class="cr-panel__head"><h2>Specialized workspaces</h2></div><div class="cr-app-grid">' + specialty + '</div></section>';
   }
 
   /* ---------------------------------------------------------------------
@@ -3764,6 +3764,7 @@
     });
   }
   function bindSurfaceControls() {
+    if (window.CR.productReadiness) window.CR.productReadiness.bind($("crSurface"), { request: request, orgId: state.org && state.org.id });
     bindActions($("crSurface"));
     window.CR.media.bind($("crSurface"));
     if (window.CR.workTools) window.CR.workTools.bind($("crSurface"));

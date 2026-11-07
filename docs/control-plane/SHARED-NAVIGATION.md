@@ -10,7 +10,9 @@ home wing; it must not replace another profile's document branding.
 
 The server-verified house owner keeps the personal M linked to `index.html`,
 the seven base owner destinations, and the existing canonical Control navigation
-extensions. Customer page branding and stored member/artist perspectives cannot
+extensions. The owner globe opens the consumer World; Halo remains a separate
+Products/Control destination. Customer module settings cannot hide or redirect
+that owner World tab. Customer page branding and stored member/artist perspectives cannot
 rewrite those owner controls. On sign-out the ordinary audience navigation is
 restored. The combined browser fixture verifies both behaviors at 390 and 1280
 pixels on the personal, company and fixture custom hosts.

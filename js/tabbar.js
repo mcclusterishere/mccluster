@@ -434,6 +434,7 @@
   var PAGE_PROFILE = cleanPageProfile(window.MCC_PAGE_PROFILE);
   var SITE_POLICY = window.MCC_SITE_POLICY || null;
   function paintSitePolicy() {
+    if (ADMIN_ON) return; // Tenant module switches do not hide or redirect the owner World.
     var tab=dock.querySelector('[data-appnav="world"]');if(!tab)return;
     var disabled=SITE_POLICY&&SITE_POLICY.world!==true;
     tab.hidden=!!disabled;tab.style.display=disabled?'none':'';
@@ -678,10 +679,8 @@
       '<a class="appbar__tab" href="' + HOUSE + 'control.html#home" data-appnav="admin-home" aria-label="Home: admin workspace">' + HOME_SVG + '<span>Home</span></a>' +
       '<a class="appbar__tab appbar__tab--mid" href="' + HOUSE + 'index.html" data-appnav="home"><img class="appbar__m" src="' + ROOT + 'assets/img/m-mark.png" alt=""><span class="appbar__sr">' + textOf(HOUSE_LABEL) + '</span></a>' +
       '<a class="appbar__tab" href="' + HOUSE + 'control.html#analytics" data-appnav="analytics" aria-label="Analytics">' + CHART_SVG + '<span>Analytics</span></a>' +
-      /* THE OWNER'S GLOBE IS HITMAN'S HALO (owner, 2026-10-22: "click the globe as matthew@mccluster.org ... It'll take you
-         to the user globe and not the Hitman Halo globe"). Everyone else's globe is the World; the owner reaches the World
-         feed from Halo's own header. Its key is "halo", not "world", so nothing that repaints the World door rewrites it. */
-      '<a class="appbar__tab appbar__tab--icon appbar__world" href="' + HOUSE + 'action-globe.html?explore=1&amp;halo=1" data-appnav="halo" aria-label="Open Hitman’s Halo">' + WORLD_SVG + '<span class="appbar__sr">World: Hitman’s Halo</span></a>' +
+      /* The owner also needs the consumer World. Halo keeps its separate Products and Control doors. */
+      '<a class="appbar__tab appbar__tab--icon appbar__world" href="' + worldAt("?view=feed") + '" data-appnav="world" aria-label="Open the World globe">' + WORLD_SVG + '<span class="appbar__sr">World globe</span></a>' +
       '<a class="appbar__tab" href="' + HOUSE + 'game-hub.html" data-appnav="games" aria-label="Games: courses, arcade and worlds"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="6" width="18" height="13" rx="4"/><path d="M6 12h6M9 9v6M16 11h1M18 14h1"/></svg><span>Games</span></a>';
   }
   function markAdminHere() {
