@@ -193,7 +193,7 @@ async function routeBackends(ctx) {
 
 /* ---------- the harness ---------- */
 await mkdir(OUT, { recursive: true });
-const browser = await chromium.launch();
+const browser = await chromium.launch(process.env.PW_CHROME ? { executablePath: process.env.PW_CHROME } : {});
 const results = [];
 function check(scope, name, ok, detail) {
   results.push({ scope, name, ok: !!ok, detail });
@@ -202,6 +202,13 @@ function check(scope, name, ok, detail) {
 async function open(device, { memberOn = '' } = {}) {
   const ctx = await browser.newContext({ viewport: device.viewport, deviceScaleFactor: 2, isMobile: device.mobile, hasTouch: device.mobile, serviceWorkers: 'block' });
   await ctx.addInitScript(({ memberOn, token }) => {
+    // This fixture also runs in the cross-site World audio frame. Its storage
+    // can be denied by Chromium; do not manufacture an application page error
+    // while seeding that frame. Top-level storage failures must still fail.
+    if (window !== window.top) {
+      try { void window.localStorage; void window.sessionStorage; }
+      catch (error) { if (error.name === 'SecurityError') return; throw error; }
+    }
     localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-10-19', accepted_at: new Date().toISOString() }));
     localStorage.setItem('mnet_tour_seen', '1');
     /* signed in on one house only: the other must earn its own session */
@@ -645,14 +652,10 @@ const settleWorld = async (page) => {
   check(S, 'the Globe tab goes to the World at the company\'s root', globeHref === `${CO}/?view=feed`, globeHref);
   /* on Music the World opens in its own layer over the page, so the music carries on (js/world-audio-continuity.js: the address
      gains world=1 and the World's frame is the company's root); the sign-in crossing is a page that is not a music surface */
-  const errorsBefore = errors.length;
   await page.click('.appbar [data-appnav="world"]');
   await page.waitForFunction(() => { const f = document.getElementById('mccWorldAudioFrame'); return !!f && !document.getElementById('mccWorldAudioShell').hidden; }, null, { timeout: 30000 }).catch(() => {});
   const layered = await page.evaluate(() => { const f = document.getElementById('mccWorldAudioFrame'); return { url: location.href, frame: f && f.getAttribute('src') }; });
   check(S, 'from Music the Globe opens the World in a layer over the page (world=1), its frame the company\'s root', /\/listen\.html\?world=1$/.test(layered.url) && !!layered.frame && layered.frame.startsWith(`${CO}/`), layered);
-  /* this run's house is http://127.0.0.1, so the World's frame (https://mccluster.org) is cross-site here and Chrome denies it
-     storage; on the real hosts the two are the same site. Only that one message, from this layer, is set aside */
-  errors.splice(errorsBefore, errors.length - errorsBefore, ...errors.slice(errorsBefore).filter((m) => !/Failed to read the 'localStorage' property from 'Window': Access is denied for this document/.test(m)));
   await page.goto(`${BASE}/index.html`, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => document.body.classList.contains('mcc-auth-in') && !!document.querySelector('.appbar [data-appnav="world"]'), null, { timeout: 30000 }).catch(() => {});
   await page.click('.appbar [data-appnav="world"]');

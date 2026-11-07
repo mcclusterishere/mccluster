@@ -1,5 +1,7 @@
 # Finance inside Hitman's Halo — corrected acceptance contract
 
+> Historical checkpoint. For current implementation and coordinated activation, see [FINANCE-ROLLOUT.md](FINANCE-ROLLOUT.md). Earlier unimplemented/draft-only statements describe the original checkpoint, not current main.
+
 2026-11-04. Planning and code audit only in this correction; no runtime build or release performed. This supersedes any interpretation that a link from the globe to finance-dev.html completes integration.
 
 ## Product and primary journey

@@ -663,7 +663,7 @@
       if (view === 'people') filters = '<div class="hx-filters"><label class="hx-filter">' + ICON.sort + '<span class="hx-sr">Sort</span><select data-sort="people"><option value="activity">Last activity</option><option value="name">Name</option></select></label></div>';
       if (view === 'intel') filters = '<div class="hx-filters"><label class="hx-filter">' + ICON.filter + '<span class="hx-sr">Area</span><select data-area><option value="earth">Whole Earth</option><option value="view">In view</option></select></label><label class="hx-filter">' + ICON.clock + '<span class="hx-sr">Time</span><select data-hours><option value="1">Last hour</option><option value="6">Last 6 hours</option><option value="24">Last 24 hours</option></select></label></div>';
       ui.leftBody.innerHTML = '<label class="hx-find">' + ICON.search + '<span class="hx-sr">' + esc(placeholder) + '</span><input type="search" autocomplete="off" maxlength="80" placeholder="' + esc(placeholder) + '"></label>' +
-        '<div class="hx-seg" role="tablist" aria-label="' + esc(head[0]) + '">' + segs.map(([k, l]) => '<button type="button" role="tab" data-seg="' + k + '" aria-selected="false">' + esc(l) + ' <span class="hx-count">0</span></button>').join('') + '</div>' + filters + '<div class="hx-list"></div>';
+        '<div class="hx-seg" role="tablist" aria-label="' + esc(head[0]) + '">' + segs.map(([k, l]) => '<button type="button" role="tab" data-seg="' + k + '" aria-selected="false">' + esc(l) + ' <span class="hx-count">0</span></button>').join('') + '</div>' + filters + '<div class="hx-coverage"></div><div class="hx-list"></div>';
       const input = $('.hx-find input', ui.leftBody);
       input.value = query[view];
       input.oninput = () => { query[view] = input.value; rememberRoute(true); schedulePaint(); };
@@ -743,24 +743,29 @@
       html = rows.length ? '<ul class="hx-cards">' + rows.map((m) => missionCard(m, cur && cur.kind === 'mission' && cur.id === m.id)).join('') + '</ul>' : loadingOr('missions', 'No missions here', tabs.missions === 'review' ? 'Nothing is waiting for review.' : 'Missions are written in the Control Room.');
       const closed = all.filter((m) => m.status === 'blocked' || m.status === 'completed').length;
       html += tabs.missions === 'closed' ? '<button type="button" class="hx-more" data-closed="0">' + ICON.arrow.replace('<svg', '<svg style="transform:scaleX(-1)"') + ' Back to active missions</button>' : '<button type="button" class="hx-more" data-closed="1">View paused and closed (' + n(closed) + ') ' + ICON.arrow + '</button>';
-      html = coverage('missions') + html; ui.leftSub.textContent = n(all.length) + ' missions';
+      ui.leftSub.textContent = n(all.length) + ' missions';
     } else if (view === 'people') {
       const all = peopleList();
       counts.all = all.length; counts.mission = all.filter((p) => p.state === 'on_mission' || p.state === 'awaiting_review').length; counts.available = all.filter((p) => p.state === 'available').length;
       const rows = peopleSorted();
       html = rows.length ? '<ul class="hx-people">' + rows.map((p) => personRow(p, cur && cur.kind === 'person' && cur.id === p.m_uid)).join('') + '</ul>' : loadingOr('people', 'No one here yet', 'People appear when they join a mission or the house team.');
       html += '<p class="hx-note">' + ICON.lock.replace('<svg', '<svg width="12" height="12" style="vertical-align:-2px;fill:none;stroke:currentColor;stroke-width:1.8"') + ' No one has shared a location with Halo. The Earth shows mission places, never a person.</p>';
-      html = coverage('people') + html; ui.leftSub.textContent = 'Showing ' + n(rows.length) + ' of ' + n(all.length);
+      ui.leftSub.textContent = 'Showing ' + n(rows.length) + ' of ' + n(all.length);
     } else {
       const f = feedFiltered(), briefs = (data.peekBriefs().body || {}).briefs || [], src = sources();
       counts.feed = f.length; counts.briefs = briefs.length; counts.sources = src.length;
       if (tabs.intel === 'feed') html = f.length ? '<ul class="hx-cards">' + f.map((x) => feedCard(x, cur && sameSel(cur, x.sel))).join('') + '</ul>' : empty('Nothing in this window', 'Turn on Earthquakes, Thermal or Cyclones in World, widen the time, or wait for evidence to arrive.');
       else if (tabs.intel === 'briefs') html = briefs.length ? '<ul class="hx-cards">' + briefs.map((b) => '<li><button type="button" class="hx-card" data-brief="' + esc(b.country) + '" aria-current="' + (cur && cur.kind === 'brief' && cur.id === b.country ? 'true' : 'false') + '"><span class="hx-thumb">' + ICON.doc + '</span><span><span class="hx-card__title">' + esc(b.country_name || b.country) + '</span><span class="hx-card__place">' + esc(String(b.overview || '').slice(0, 90)) + '</span><span class="hx-card__meta"><span class="hx-status" data-tone="' + (b.status === 'ready' || b.status === 'published' ? 'green' : 'amber') + '">' + esc(b.editorial_status || b.status || '') + '</span><span>' + esc(b.day || '') + '</span></span></span>' + ICON.chev.replace('<svg', '<svg class="hx-card__chev"') + '</button></li>').join('') + '</ul>' : (data.peekBriefs().loading ? empty('Loading…', '') : empty('No briefs yet', 'Daily country briefs are written through the day.'));
       else html = '<ul class="hx-health">' + src.map((r) => '<li><span class="hx-group__icon">' + ICON[r.id === 'satellites' ? 'sat' : r.id === 'tides' ? 'wave' : r.id === 'missions-data' ? 'flag' : 'db'] + '</span><button type="button" class="hx-more" style="display:block;text-align:left;width:100%" data-source="' + esc(r.id) + '"><b>' + esc(r.name) + '</b><small><span class="hx-dot" data-tone="' + r.h.tone + '"></span>' + esc(r.h.text) + '</small></button></li>').join('') + '</ul><a class="hx-more" href="' + BRIEFS + '">Open the daily briefs ' + ICON.arrow + '</a>';
-      html = (tabs.intel === 'briefs' ? coverage('briefs') : coverage('evidence')) + html;
       ui.leftSub.textContent = tabs.intel === 'feed' ? n(f.length) + ' signals' : tabs.intel === 'briefs' ? n(briefs.length) + ' briefs' : n(src.length) + ' sources';
     }
     $$('[data-seg]', ui.leftBody).forEach((b) => { b.setAttribute('aria-selected', b.dataset.seg === tabs[view] ? 'true' : 'false'); $('.hx-count', b).textContent = n(counts[b.dataset.seg] || 0); });
+    // Freshness changes independently of the rows. Keep focused/pressed cards
+    // attached when only this status changes, so a polling repaint cannot eat a click.
+    const status = $('.hx-coverage', ui.leftBody);
+    const statusHTML = view === 'missions' ? coverage('missions') : view === 'people' ? coverage('people')
+      : tabs.intel === 'briefs' ? coverage('briefs') : coverage('evidence');
+    if (status && status.innerHTML !== statusHTML) status.innerHTML = statusHTML;
     if (html === listSig) return;
     listSig = html;
     list.innerHTML = html;

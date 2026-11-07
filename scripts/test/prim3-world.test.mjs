@@ -152,7 +152,7 @@ test('no purple anywhere in the new page, scripts or styles (owner rule)', () =>
 
 test('the owner gate: nothing but "Owner only" ships in the page, and the app and mission file load only after a yes', () => {
   assert.match(PAGE, /<h1>Owner only<\/h1>/);
-  assert.match(PAGE, /<template id="pwTpl"><div id="pwApp" hidden><\/div><\/template>/);
+  assert.match(PAGE, /<template id="pwTpl"><p><a href="prim3-city-tactics\.html">[^<]+<\/a><\/p><div id="pwApp" hidden><\/div><\/template>/);
   assert.match(PAGE, /data-owner-gate data-owner-template="pwTpl" data-owner-load="js\/prim3-world\/news-desk\.mjs js\/prim3-world\/app\.mjs"/);
   assert.doesNotMatch(PAGE, /<script[^>]+src="js\/prim3-world\//, 'no app module is a page script: js/owner-only.mjs imports them after a yes');
   assert.match(PAGE, /<script type="module" src="js\/owner-only\.mjs\?v=__STAMP__"><\/script>/);
@@ -201,7 +201,7 @@ test('World is an owner-only door: the Control panel lists it, the tactics menu 
   const adminMarkup = bar.slice(bar.indexOf('function adminBar'), bar.indexOf('function paintAdmin'));
   assert.doesNotMatch(adminMarkup, /href=[^\n]*prim3-world/, 'World uses the shared Games entry rather than a dedicated tab');
   assert.match(bar, /data-appnav="games"/, 'the owner Games entry remains available');
-  assert.match(bar, /data-appnav="halo" aria-label="Open Hitman’s Halo"/, 'the owner globe still opens Hitman\'s Halo');
+  assert.match(bar, /data-appnav="world" aria-label="Open the World globe"/, 'the owner can reach the consumer World alongside Games');
 });
 
 test('no pins on the globe; a country card names the stationed agent and holds the News \u2192 mission hook', async () => {

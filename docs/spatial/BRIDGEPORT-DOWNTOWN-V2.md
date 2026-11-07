@@ -112,3 +112,38 @@ cannot mount the walk or reset the newer request's loading state. Leave before m
 without waiting for its timeout. Mounted instances retain their normal save/return lifecycle.
 Regression coverage controls import resolution order and delays module evaluation in the real
 Cesium iframe before sending leave, then verifies no late mount and successful explicit re-entry.
+
+## Descriptor-driven loading policy
+
+`tools/spatial/build-bridgeport-slice.mjs` also generates a small pre-load policy index from both
+canonical descriptors. Its anchor, entry/exit heights, radii, byte, node and entity limits drive
+runtime loading. The geometry payload must match the selected descriptor hash, revision, anchor
+and gating fields; mismatched cached revisions fail closed until a consistent build is loaded.
+Response bytes are counted while streaming and excess bodies are cancelled before JSON parsing.
+Both topologies enforce their descriptor node limits. Rendering reserves entity slots for every
+road, footprint, the walker and a route preview, then draws the nearest eligible cells within the
+remaining budget. Hidden cells remain in the authoritative navigation graph.
+
+Existing explicit owner entry, hysteresis, stale-load cancellation and disposal remain mandatory.
+This is immutable published configuration, not new owner-policy storage or delegated authority.
+No source geometry, saved pose, tactical resolver or Arcade lifecycle contract changes.
+
+## November 7 follow-through
+
+The original #736 and #748 are merged. The follow-through camera control, **Find me**, centres
+on the actual metric actor position with a southward camera offset that leaves the actor above
+phone controls. It neither relocates the actor nor edits any geometry/save/Arcade/tactical contract.
+It uses the loaded terrain height when available, otherwise the existing ellipsoid fallback; that
+camera adjustment does not establish a surveyed navigation elevation. Reduced motion is respected.
+
+The terrain label now reads provider state, not merely the presence of ion configuration. It
+separates unavailable, configured/loading-or-fallback, and active terrain-provider states. An active
+provider is not a claim that every tile loaded or that street/door/stair geometry was surveyed.
+
+Live acceptance remains a release-coordinator check: the November 7 environment's initial request
+to the public site was rejected by its network proxy (HTTP 403 tunnel), before reaching the site.
+No production owner session or physical phone/GPU was supplied to this checkout. Software Chromium
+with fixture access/imagery cannot establish real ion entitlement or physical-device performance.
+The original additional-geography, verified openings/landings, and live performance requirements
+remain open; the footprint/road source constraints above still apply. No new geographic points,
+heights, openings or building identities are inferred by this patch.

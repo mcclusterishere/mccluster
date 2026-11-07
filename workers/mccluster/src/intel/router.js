@@ -27,6 +27,7 @@ import { PaperError, readDemoCommands, replayDemo } from '../finance/paper.js';
 import { portfolioRequest } from '../finance/portfolio.js';
 import { createAlpacaClient } from '../finance/alpaca.js';
 import { accountRequest } from '../finance/account.js';
+import { valueAccount } from '../finance/valuation.js';
 const alpacaClient = createAlpacaClient();
 import EXCHANGE_REFERENCE from '../../../../data/markets/exchanges.json' with { type: 'json' };
 const indicatorClient = createIndicatorClient();
@@ -178,6 +179,12 @@ export async function handleIntelRequest(request, env, options = {}) {
           return respond({ok:true,symbol,quote:quote.status==='fulfilled'?quote.value:null,history:history.status==='fulfilled'?history.value:null,
             quote_error:quote.status==='rejected'?(quote.reason.code||'unavailable'):null,history_error:history.status==='rejected'?(history.reason.code||'unavailable'):null});
         } catch(error) { return respond({ok:false,code:error.code||'provider_unavailable'},error.status||503); }
+      }
+      if (path === '/v1/intel/finance/valuation' && request.method === 'GET') {
+        if(url.search)return respond({ok:false,code:'unsupported_parameter'},400);
+        if(env.FINANCE_PERSISTENCE_ENABLED!=='true')return respond({ok:false,code:'finance_persistence_disabled'},503);
+        try {return respond({ok:true,valuation:await valueAccount(env,user.id,market,{call:options.financeRpc})});}
+        catch(error){return respond({ok:false,code:error.code||'valuation_unavailable'},error.status||503);}
       }
       if (path === '/v1/intel/finance/account' && ['GET','POST'].includes(request.method)) {
         if(url.search)return respond({ok:false,code:'unsupported_parameter'},400);
