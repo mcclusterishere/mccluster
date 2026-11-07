@@ -18,6 +18,13 @@
   var HANDLE = /^[a-z0-9][a-z0-9._-]{2,39}$/;
   var inStudio = false;
   try { inStudio = w.parent !== w && w.parent.location.origin === location.origin && /front-studio\.html$/.test(w.parent.location.pathname); } catch (e) {}
+  // Draft edits replace this frame repeatedly; they are not page-to-page navigation.
+  // Do not start a cross-document transition that the next preview can abort.
+  if (inStudio) {
+    var previewNavigation = d.createElement("style");
+    previewNavigation.textContent = "@view-transition{navigation:none}";
+    d.head.appendChild(previewNavigation);
+  }
   d.documentElement.setAttribute("data-front-state", "loading");
 
   function text(el, v) { if (el) el.textContent = v == null ? "" : String(v); }

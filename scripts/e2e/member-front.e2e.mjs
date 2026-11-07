@@ -225,6 +225,8 @@ try{
     await page.fill('[name="links.0.href"]','javascript:alert(1)');
     const stopped=await page.evaluate(()=>({pub:document.querySelector('#fsTop [data-act="publish"]').disabled,save:document.querySelector('#fsTop [data-act="save"]').disabled,msg:document.getElementById('fsStatus').textContent}));
     check(scope,'a script link stops Save and Publish and names the link to fix',stopped.pub&&stopped.save&&/Fix link 1/.test(stopped.msg),stopped);
+    // Wait for the reload caused by this final edit, not an earlier media upload.
+    seq=await frameSeq(page);
     await page.fill('[name="links.0.href"]','https://instagram.com/hitmanbenji');
     check(scope,'fixed, Save and Publish come back',await page.evaluate(()=>!document.querySelector('#fsTop [data-act="publish"]').disabled));
 
@@ -235,7 +237,7 @@ try{
     check(scope,'"Use the preview\'s view" with the room closed says to open it first',s.bad&&/Open the 360 room in the preview first/.test(s.msg),s.msg);
     await page.click('[data-go="cabin"]');
     fr=previewFrame(page);
-    await fr.waitForFunction(()=>window.__MCC_VR&&window.__MCC_VR.viewer,null,{timeout:20000}).catch(()=>{});
+    await fr.waitForFunction(()=>window.__MCC_VR&&window.__MCC_VR.viewer&&window.__MCC_VR.live,null,{timeout:20000});
     const room=await fr.evaluate(()=>({viewer:!!(window.__MCC_VR&&window.__MCC_VR.viewer),src:(document.querySelector('#workVR [data-vr-src]')||{}).getAttribute?.('data-vr-src')||'',held:!!(window.__MCC_VR&&window.__MCC_VR.held)}));
     check(scope,'the preview\'s "360 room" button takes the page into his 360 room',room.viewer,room);
     const houseTags=await fr.evaluate(()=>({spots:window.MCC_FRONT.config.vr.spots.length,shown:[...document.querySelectorAll('#workVR .vr360-spot')].map(a=>a.textContent.trim())}));
