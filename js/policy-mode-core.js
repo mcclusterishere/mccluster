@@ -9,7 +9,7 @@
       const run=++epoch;let allowed=false;try{allowed=await verifyOwner();}catch(_){}
       if(run!==epoch)return false;
       if(!allowed){revoke();return false;}
-      state={...state,active:true,message:'Owner preview. Globe and community feed use existing public content. Audit publication is not connected.'};
+      state={...state,active:true,busy:false,message:'Owner preview. Globe and community feed use existing public content. Audit publication is not connected.'};
       show(state.view);render();return true;
     }
     function select(view){

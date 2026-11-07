@@ -70,3 +70,26 @@ test('actual live adapter checks capability and enablement before opening',async
 test('actual live adapter respects revoked caller while eligibility was loading',async()=>{
   const a=liveMethod({can_host:true,enabled:true},()=>false);assert.equal((await a.run()).opened,false);assert.equal(a.opens(),0);
 });
+
+for (const phase of ['owner check', 'studio']) test(`visibility reactivation cancels pending ${phase} and restores usable controls`, async () => {
+  let checks=0,finish,staleGuard;
+  const {c,paints}=setup({
+    verifyOwner:()=>phase==='owner check'&&++checks===2?new Promise(r=>finish=r):Promise.resolve(true),
+    studio:guard=>{staleGuard=guard;return new Promise(r=>finish=r);}
+  });
+  await c.activate();
+  const pending=c.live();await Promise.resolve();
+  assert.equal(paints.at(-1).busy,true);
+  await c.activate();
+  assert.equal(paints.at(-1).busy,false);
+  if(staleGuard)assert.equal(staleGuard(),false);
+  finish(phase==='owner check'?true:{opened:false});
+  assert.equal(await pending,false);
+  assert.equal(paints.at(-1).active,true);
+  assert.equal(paints.at(-1).busy,false);
+  assert.equal(c.select('feed'),true);
+  const retry=c.live();await Promise.resolve();
+  assert.equal(paints.at(-1).busy,true);
+  finish({opened:false});assert.equal(await retry,false);
+  assert.equal(paints.at(-1).busy,false);
+});
