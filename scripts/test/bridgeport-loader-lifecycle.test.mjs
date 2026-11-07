@@ -43,3 +43,11 @@ for(const reason of ['revocation','pagehide'])test(reason+' invalidates import e
 test('untrusted lifecycle messages cannot cancel entry',async()=>{
  const f=fixture();f.enter();f.send({schema:'wrong',type:'bridgeport:leave'});await f.resolve(0);assert.equal(f.enters.length,1);
 });
+
+test('terrain status distinguishes provider success from configuration or fallback',async()=>{
+ const {terrainDescription}=await import('../../js/spatial/bridgeport-globe.mjs');
+ assert.match(terrainDescription({configured:true,terrain:false}),/loading or unavailable/);
+ assert.match(terrainDescription({configured:true,terrain:true}),/provider active/);
+ assert.match(terrainDescription({configured:false,terrain:false}),/Ion unavailable/);
+ assert.match(terrainDescription(undefined),/Ion unavailable/);
+});
