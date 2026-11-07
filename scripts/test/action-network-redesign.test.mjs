@@ -58,7 +58,9 @@ test('every room that left the menu has a contextual home',()=>{
  assert.match(page,/id="mnComposerLive"/);
  /* Create: the composer, folded or open */
  const composer=page.match(/<article class="mn__composer" id="mnComposer">[\s\S]*?<\/article>/)?.[0]||'';
- assert.equal([...composer.matchAll(/href="create\.html"/g)].length,2);
+ assert.equal([...composer.matchAll(/href="create\.html"/g)].length,1);
+ assert.match(composer,/<button[^>]*id="mnComposeOpen"[^>]*type="button"[^>]*aria-haspopup="dialog"/);
+ assert.match(composer,/href="create\.html"[^>]*>Advanced capture \/ trim<\/a>/);
  /* A creator's analytics: their profile, shown only with a music creator profile */
  assert.match(page,/id="mnProfileAnalytics" hidden[\s\S]{0,400}href="creator\.html#artistAnalyticsHeading"/);
  assert.match(client,/music_creator_profiles\?m_uid=eq\./);

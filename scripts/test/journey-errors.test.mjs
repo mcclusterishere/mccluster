@@ -89,6 +89,10 @@ test('the album says what happened: failed plays, gated previews, no dead tip do
   /* an act with its own artist page (data/albums.json artist_page) opens it: PRIM3 (owner, 2026-11-02) */
   assert.match(album, /artistPage: alb\.artist_page \|\| ""/, 'the album reads the act\'s artist page');
   assert.match(album, /artistLink\.href = artistHref;/, 'the billed name links where it should');
+  assert.match(album, /\? artistProfile\.home : ARTIST === HOUSE/, 'the artist link uses its explicit stable-ID profile');
+  const catalog=JSON.parse(await read('data/albums.json'));
+  const house=catalog.albums.find(a=>a.slug==='here');
+  assert.equal(catalog.artist_profiles[house.artist_profile_id].home,'matthew-mccluster.html', 'the house artist retains his personal page');
   assert.match(album, /window\.MCC_TRACK\("gated_preview_end"/);
   assert.doesNotMatch(album, /Tip the artist/);
   assert.match(album, /replace\(\/\[-_\]\+\/g, " "\)/, 'play counts match the normalized track key');
