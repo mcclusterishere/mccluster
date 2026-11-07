@@ -4,6 +4,11 @@ on:
     paths:
       - 'game-hub.html'
       - 'css/game-hub.css'
+      - 'css/music-journeys.css'
+      - 'js/music-journeys.mjs'
+      - 'js/tabbar.js'
+      - 'js/owner-only.mjs'
+      - 'scripts/e2e/music-journeys.e2e.mjs'
       - 'js/game-hub/**'
       - 'js/music-engine.js'
       - 'js/gated-audio.js'
@@ -25,18 +30,22 @@ jobs:
           node-version: '22'
       - name: Prepare pinned browser dependencies
         run: |
-          npm install --prefix /tmp/capsule-qa --ignore-scripts --no-audit --no-fund --no-save playwright@1.57.0 axe-core@4.10.3
+          npm install --prefix /tmp/capsule-qa --ignore-scripts --no-audit --no-fund --no-save playwright@1.57.0 axe-core@4.10.3 three@0.180.0
           /tmp/capsule-qa/node_modules/.bin/playwright install --with-deps chromium
       - name: Verify controls and answer hit targets
         env:
           CODEX_PRIMARY_RUNTIME_NODE_MODULES: /tmp/capsule-qa/node_modules
+          THREE_DIR: /tmp/capsule-qa/node_modules/three
           AXE_PATH: /tmp/capsule-qa/node_modules/axe-core/axe.min.js
         run: |
           export CHROMIUM_PATH="$(node -e "console.log(require('/tmp/capsule-qa/node_modules/playwright').chromium.executablePath())")"
           node scripts/e2e/game-hub-capsule.e2e.mjs
+          node scripts/e2e/music-journeys.e2e.mjs
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
           name: game-hub-capsule-proof-${{ github.run_id }}
-          path: /tmp/game-hub-selector-evidence/*.png
+          path: |
+            /tmp/game-hub-selector-evidence/*.png
+            /tmp/music-journeys-proof/*.png
           retention-days: 7

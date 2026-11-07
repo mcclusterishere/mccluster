@@ -17,6 +17,48 @@
     return s ? s.replace(/js\/tabbar\.js.*$/, "") : "";
   })();
 
+  // Only our exact retained same-origin frame inherits the existing transport.
+  try {
+    if (parent !== window && parent.MCC_MUSIC_JOURNEYS?.attach(window)) return;
+  } catch (_) { /* unrelated/cross-origin embeds retain their own contract */ }
+  const journeyPaths = /^\/(?:listen|game-hub|control|prim3-transit|prim3|prim3-world|city-arcade|fictional-city|equity-uprise-server-lab-3d)\.html$|^\/screens\/terminal\.html$/;
+  // Reloading/bookmarking a retained room opens its canonical page normally.
+  if (location.hash.startsWith('#mcc_music_room=')) {
+    try {
+      const destination = new URL(decodeURIComponent(location.hash.slice(16)), location.href);
+      if (destination.origin === location.origin && journeyPaths.test(destination.pathname) && !destination.hash.includes('mcc_handoff=')) {
+        location.replace(destination.href); return;
+      }
+    } catch (_) { /* malformed fragment is not navigation */ }
+  }
+  let journeyModule;
+  function musicJourney(href) {
+    let u; try { u = new URL(href, location.href); } catch (_) { return false; }
+    if (u.origin !== location.origin || !journeyPaths.test(u.pathname) ||
+        !(window.MCC_MUSIC?.current() || window.MCC_MUSIC_JOURNEYS?.active())) return false;
+    if (window.MCC_MUSIC_JOURNEYS) return window.MCC_MUSIC_JOURNEYS.navigate(u.href);
+    journeyModule ||= import(ROOT + 'js/music-journeys.mjs?v=__STAMP__');
+    journeyModule.then(m => m.installMusicJourneys({ root: ROOT }).navigate(u.href)).catch(() => {
+      // Never silently unload a playing document after a failed helper load.
+      journeyModule = null;
+      let notice = document.getElementById('mccMusicJourneyRetry');
+      if (!notice) {
+        notice = document.createElement('button'); notice.id = 'mccMusicJourneyRetry';
+        notice.type = 'button'; notice.textContent = 'Page could not open. Retry';
+        notice.style.cssText = 'position:fixed;top:64px;left:12px;z-index:10000;min-height:44px;font:16px system-ui';
+        document.body.appendChild(notice);
+      }
+      notice.onclick = () => { notice.remove(); musicJourney(u.href); };
+    });
+    return true;
+  }
+  document.addEventListener('click', e => {
+    const a = e.target.closest?.('a[href]');
+    if (!a || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey ||
+        a.hasAttribute('download') || a.target && a.target !== '_self' || a.closest('.appbar, #mccDestinations')) return;
+    if (musicJourney(a.href)) { e.preventDefault(); e.stopImmediatePropagation(); }
+  }, true);
+
   // Loaded on the globe's embedded document too: its first trusted touch can
   // reach the same-origin World soundtrack without an asynchronous message.
   var worldAudioReady = null, worldAudioPending = null, worldAudioNotice = null;
@@ -616,7 +658,8 @@
   // every destination retains its existing server gate.
   var ADMIN_GAME_PAGES = ['city-arcade.html','fictional-city.html','game-hub.html','prim3.html','prim3-world.html','prim3-transit.html','prim3-range.html','prim3-courtyard.html','prim3-tactics-preview.html','equity-uprise-server-lab-3d.html'];
   function adminHere() {
-    if (ADMIN_GAME_PAGES.indexOf(PAGE_KEY) !== -1) return "games";
+    const location = window.MCC_MUSIC_JOURNEYS?.location() || window.location;
+    if (ADMIN_GAME_PAGES.indexOf(location.pathname.split("/").pop()) !== -1) return "games";
     /* the owner's globe is Hitman's Halo: lit while Halo is on screen */
     if (/action-globe\.html$/.test(location.pathname) && new URLSearchParams(location.search).has("games")) return "games";
     if (/action-globe\.html$/.test(location.pathname) && new URLSearchParams(location.search).has("halo")) return "halo";
@@ -636,11 +679,12 @@
       '<a class="appbar__tab appbar__tab--icon appbar__world" href="' + HOUSE + 'action-globe.html?explore=1&amp;halo=1" data-appnav="halo" aria-label="Open Hitman’s Halo">' + WORLD_SVG + '<span class="appbar__sr">World: Hitman’s Halo</span></a>' +
       '<a class="appbar__tab" href="' + HOUSE + 'game-hub.html" data-appnav="games" aria-label="Games: courses, arcade and worlds"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="6" width="18" height="13" rx="4"/><path d="M6 12h6M9 9v6M16 11h1M18 14h1"/></svg><span>Games</span></a>';
   }
+  window.addEventListener("mcc:journey-route", () => markAdminHere());
   function markAdminHere() {
     if (!ADMIN_ON) return;
     var here = adminHere();
     Array.prototype.forEach.call(dock.querySelectorAll("[data-appnav]"), function (t) {
-      var k = t.getAttribute("data-appnav"), on = here ? k === here : (k === (PAGE_WING[PAGE_KEY] || ""));
+      var k = t.getAttribute("data-appnav"), on = here ? k === here : (k === (PAGE_WING[(window.MCC_MUSIC_JOURNEYS?.location() || location).pathname.split("/").pop()] || ""));
       t.classList.toggle("is-here", on);
       if (on) t.setAttribute("aria-current", "page"); else t.removeAttribute("aria-current");
     });
@@ -1079,6 +1123,7 @@
   }
 
   function sail(dest, wait) {
+    if (musicJourney(dest)) { veilOff(); revert(); return; }
     cancelWorldAudio();
     if (dest === MAP) { if (openMap()) return; dest = HOUSE + "index.html"; }
     unpeek();

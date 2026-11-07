@@ -237,3 +237,17 @@ test('pagehide invalidates a pending check; restoration starts a new decision', 
   emit(p.win, 'pageshow', { persisted: true }); await turn();
   assert.equal(checks, 2); assert.equal(p.stats.mounted, 1);
 });
+
+test('returning to a retained owner page conceals it until a fresh owner decision', async () => {
+  const p = page(), restored = deferred(); let checks = 0;
+  await guardPage(p.gate, { ...p, check: () => ++checks === 1 ? Promise.resolve({owner:true}) : restored.promise });
+  await turn();
+  emit(p.win, 'mcc:journey-visibility', {detail:{visible:false}});
+  assert.equal(p.doc.documentElement.style.display, '', 'retained host must keep navigation/audio usable');
+  emit(p.win, 'mcc:journey-visibility', {detail:{visible:true}});
+  assert.equal(p.doc.documentElement.style.display, 'none');
+  await turn(); assert.equal(checks, 2);
+  restored.resolve({owner:false,reason:'not-owner'}); await turn();
+  assert.equal(p.stats.reloads, 1);
+  assert.equal(p.doc.documentElement.style.display, 'none');
+});

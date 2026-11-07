@@ -27,7 +27,9 @@
     }).catch(error => {coreReady = null; throw error;});
     return coreReady;
   }
+  const currentLocation = () => window.MCC_MUSIC_JOURNEYS?.location() || location;
   function controlHref(hash) {
+    const location = currentLocation();
     // Same-page changes keep the active organization and workspace presentation.
     const url = /\/control\.html$/.test(location.pathname) ? new URL(location.href) : new URL('control.html', house);
     url.hash = hash; return url.href;
@@ -267,6 +269,7 @@
   }
   let lastDockDestination = null;
   function markCurrent() {
+    const location = currentLocation();
     if (!installed) return;
     const button = get('mccControlToggle');
     const on = /\/control\.html$/.test(location.pathname) && window.CR.workspaceCore.resolve(location.hash).section === 'home';
@@ -359,6 +362,7 @@
     get('mccAuthChip')?.setAttribute('aria-expanded', String(get('crAccountMenu').classList.contains('is-open')));
   }).observe(get('crAccountMenu'), {attributes:true,attributeFilter:['class']});
   window.addEventListener('hashchange', markCurrent);
+  window.addEventListener('mcc:journey-route', markCurrent);
   window.addEventListener('mcc:appbar-admin', () => {syncAdmin();syncProfileOwner();});
   window.addEventListener('mcc:auth-state', () => {syncProfile(); if (!bar.auth().signed_in) {closePanel();closeProfile();get('crAccountMenu')?.classList.remove('is-open');}});
   window.addEventListener('pagehide', () => {closePanel();closeProfile();});

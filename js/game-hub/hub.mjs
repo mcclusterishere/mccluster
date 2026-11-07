@@ -104,7 +104,7 @@ async function boot() {
   const want = parseHash(location.hash);
   let last = null; try { last = localStorage.getItem(LAST_KEY); } catch (e) { /* none */ }
   await select(want.module || last || doc.default, want.play, false);
-  addEventListener('hashchange', () => { const h = parseHash(location.hash); select(h.module || current.id, h.play, false); });
+  addEventListener('hashchange', () => { if (location.hash.startsWith('#mcc_music_room=') || window.MCC_MUSIC_JOURNEYS?.active()) return; const h = parseHash(location.hash); select(h.module || current.id, h.play, false); });
 }
 
 boot().catch((e) => {
