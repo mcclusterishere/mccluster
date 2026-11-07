@@ -1,6 +1,8 @@
 import {metricFrame,polygon,localCell,cellId} from './metric-frame.mjs';
 import {route,routeToEntrance,clearEdge,restorePosition,importCompatiblePose} from './region-graph.mjs';
 import {regionGate} from './region-gate.mjs';
+import {regionPolicies} from './region-policies.mjs';
+import {readRegion,visibleCells} from './region-policy.mjs';
 
 // Draws the bounded region inside the existing Cesium viewer/ion pipeline. Never creates a second globe.
 export function mountBridgeport({globe,C=window.Cesium}){
@@ -16,7 +18,7 @@ export function mountBridgeport({globe,C=window.Cesium}){
  function clearRoute(){preview=null;walking=null;panel.querySelector('[data-confirm]').disabled=true;if(routeEntity&&source)source.entities.remove(routeEntity);routeEntity=null;}
  function drawCells(){
   if(!source)return;for(const e of [...source.entities.values])if(e.properties?.spatialCell)source.entities.remove(e);
-  cellOrigin={...position};for(const n of region.graphs[topology].nodes.filter(n=>region.contract.revision===1||Math.hypot(n.position.x-position.x,n.position.z-position.z)<45))source.entities.add({id:n.id,properties:{spatialCell:n.id},polygon:{hierarchy:line(polygon(region.contract,topology,n.q,n.r)),material:C.Color.CYAN.withAlpha(.16),heightReference:C.HeightReference.CLAMP_TO_GROUND,outline:false}});
+  cellOrigin={...position};for(const n of visibleCells(region,topology,position))source.entities.add({id:n.id,properties:{spatialCell:n.id},polygon:{hierarchy:line(polygon(region.contract,topology,n.q,n.r)),material:C.Color.CYAN.withAlpha(.16),heightReference:C.HeightReference.CLAMP_TO_GROUND,outline:false}});
   viewer.scene.requestRender();
  }
  function plan(id,entrance=null){if(!region||!globe.owner())return;clearRoute();preview=entrance?routeToEntrance(region,topology,position,entrance,{closedRoadIds}):route(region,topology,position,id,{closedRoadIds});if(!preview){status('No legal path from this position.');return;}
@@ -38,7 +40,7 @@ export function mountBridgeport({globe,C=window.Cesium}){
   drawCells();actor=source.entities.add({id:'bridgeport-walker',position:cart(position),point:{pixelSize:16,color:C.Color.LIME,outlineColor:C.Color.BLACK,outlineWidth:2,heightReference:C.HeightReference.CLAMP_TO_GROUND,disableDepthTestDistance:Number.POSITIVE_INFINITY},label:{text:'You · street',font:'15px sans-serif',pixelOffset:new C.Cartesian2(0,-28),heightReference:C.HeightReference.CLAMP_TO_GROUND,disableDepthTestDistance:Number.POSITIVE_INFINITY}});
   status('Choose the court approach or tap a highlighted cell, then confirm.');save();notify('ready');
  }
- const gate=regionGate({load:async signal=>{const res=await fetch('data/spatial/'+requestedRegion+'.json',{signal,credentials:'same-origin'});if(!res.ok)throw Error('Region unavailable');const text=await res.text();if(new TextEncoder().encode(text).length>(requestedRegion.endsWith('.v2')?1600000:500000))throw Error('Region byte budget exceeded');const data=JSON.parse(text);if(data.contract?.id!==requestedRegion||data.contract.revision!==(requestedRegion.endsWith('.v2')?2:1)||Object.values(data.graphs).some(g=>g.nodes.length>4000))throw Error('Region revision or node budget mismatch');return data;},attach,detach,onError:e=>status(e.message)});
+ const gate=regionGate({policy:()=>regionPolicies[requestedRegion],load:async signal=>{const policy=regionPolicies[requestedRegion];return readRegion(await fetch('data/spatial/'+policy.id+'.json',{signal,credentials:'same-origin'}),policy);},attach,detach,onError:e=>status(e.message)});
  function view(){const canvas=viewer.scene.canvas,p=viewer.camera.pickEllipsoid(new C.Cartesian2(canvas.clientWidth/2,canvas.clientHeight/2),viewer.scene.globe.ellipsoid);if(!p)return null;const g=C.Cartographic.fromCartesian(p);return {lon:C.Math.toDegrees(g.longitude),lat:C.Math.toDegrees(g.latitude),height:viewer.camera.positionCartographic.height};}
  function tick(){
   if(!globe.owner()&&entered){leave(false);return;}

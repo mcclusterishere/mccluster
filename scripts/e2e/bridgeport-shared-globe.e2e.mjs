@@ -27,7 +27,7 @@ try{for(const width of (process.env.WIDTHS||'390,1280').split(',').map(Number)){
  if(!v2)await page.locator('#bridgeportEnter').click();await page.waitForFunction(()=>window.BridgeportSlice?.snapshot().attached,{},{timeout:30000});
  await page.waitForFunction(()=>Math.abs(HuGlobe.viewer().camera.positionCartographic.height-360)<1);await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
  assert.equal(regionLoads,1);assert.match(await page.locator('[data-ion]').textContent(),/unavailable/);
- const first=await page.evaluate(()=>window.BridgeportSlice.snapshot());assert.ok(first.entities>(v2?20:200));assert.equal(first.topology,'hex');
+ const first=await page.evaluate(()=>window.BridgeportSlice.snapshot());assert.ok(first.entities>(v2?20:200));assert.ok(first.entities<=data.contract.gating.maxEntities);assert.equal(first.topology,'hex');
  const path=route(data,'hex',first.position,data.graphs.hex.destinationId),target=data.graphs.hex.nodes.find(n=>n.id===path.ids[2]),geo=frame.toGeo(target.position);
  const point=await page.evaluate(g=>{const v=HuGlobe.viewer(),p=Cesium.SceneTransforms.worldToWindowCoordinates(v.scene,Cesium.Cartesian3.fromDegrees(g.lon,g.lat,0));return {x:p.x,y:p.y};},geo);
  console.log('picking',width,point,target.id);await page.mouse.click(point.x,point.y);await page.waitForFunction(()=>document.querySelector('[data-status]').textContent.startsWith('Preview:'));
@@ -77,5 +77,21 @@ try{for(const width of (process.env.WIDTHS||'390,1280').split(',').map(Number)){
  await send({type:'bridgeport:confirm'});await f.waitForFunction(()=>window.BridgeportSlice.snapshot().walking);
  await send({type:'bridgeport:leave'});await f.waitForFunction(()=>!window.BridgeportSlice.snapshot().entered);await host.waitForFunction(()=>events.some(e=>e.event==='returned'));await host.close();}
 
+ // Exercise runtime rejection before rendering on phone and desktop, with existing saves preserved.
+ owner=true;
+ for(const failure of ['byte','node','entity']){
+  const bad=await context.newPage(),payload=structuredClone(data);
+  if(failure==='node')payload.graphs.hex.nodes.length=data.contract.gating.maxNodesPerTopology+1;
+  if(failure==='entity')payload.roads.length=data.contract.gating.maxEntities;
+  await bad.route('**/data/spatial/'+regionId+'.json',r=>r.fulfill({contentType:'application/json',body:failure==='byte'?' '.repeat(data.contract.gating.maxAssetBytes+1):JSON.stringify(payload)}));
+  await bad.goto(base+'/action-globe.html?explore=1'+(v2?'&bridgeport=2':''));
+  const originalSave=await bad.evaluate(key=>localStorage.getItem(key),data.contract.state.key);
+  await bad.locator('#bridgeportEnter').waitFor({state:'visible'});
+  if(!v2)await bad.locator('#bridgeportEnter').click();
+  await bad.waitForFunction(message=>document.querySelector('[data-status]')?.textContent===message,'Region '+failure+' budget exceeded');
+  assert.equal(await bad.evaluate(()=>BridgeportSlice.snapshot().entities),0);
+  assert.equal(await bad.evaluate(key=>localStorage.getItem(key),data.contract.state.key),originalSave);
+  await bad.close();
+ }
  assert.deepEqual(errors,[]);results.push({width,passed:true,regionLoads,initialEntities:first.entities,position:stopped,errors});await context.close();
 }await writeFile(join(out,'results.json'),JSON.stringify(results,null,2));console.log(JSON.stringify(results,null,2));}finally{await browser.close();}

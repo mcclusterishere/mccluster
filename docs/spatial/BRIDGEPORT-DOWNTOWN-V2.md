@@ -112,3 +112,18 @@ cannot mount the walk or reset the newer request's loading state. Leave before m
 without waiting for its timeout. Mounted instances retain their normal save/return lifecycle.
 Regression coverage controls import resolution order and delays module evaluation in the real
 Cesium iframe before sending leave, then verifies no late mount and successful explicit re-entry.
+
+## Descriptor-driven loading policy
+
+`tools/spatial/build-bridgeport-slice.mjs` also generates a small pre-load policy index from both
+canonical descriptors. Its anchor, entry/exit heights, radii, byte, node and entity limits drive
+runtime loading. The geometry payload must match the selected descriptor hash, revision, anchor
+and gating fields; mismatched cached revisions fail closed until a consistent build is loaded.
+Response bytes are counted while streaming and excess bodies are cancelled before JSON parsing.
+Both topologies enforce their descriptor node limits. Rendering reserves entity slots for every
+road, footprint, the walker and a route preview, then draws the nearest eligible cells within the
+remaining budget. Hidden cells remain in the authoritative navigation graph.
+
+Existing explicit owner entry, hysteresis, stale-load cancellation and disposal remain mandatory.
+This is immutable published configuration, not new owner-policy storage or delegated authority.
+No source geometry, saved pose, tactical resolver or Arcade lifecycle contract changes.
