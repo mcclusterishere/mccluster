@@ -1,0 +1,35 @@
+# Sole Run shared City consumer — downtown v2
+
+Review dependency: refreshed City #736 at 9e78fd3f7171afc74d9b24300abb43adffbb4a00, then City #748 v2 head da0b411b9dd6db4ed88450ab6ffd41c6d51add07, then this #743 consumer. This is dependency/review order, not merge authorization. No City engine, data, coordinate contract or topology implementation is copied into this PR. The previous consumer checkpoint 5834e106 and City v1 save remain in history; this consumer now explicitly requests v2 and rejects v1 replies instead of silently falling back.
+
+## Actual entry and routes
+
+Open city-arcade.html?game=designer-kicks-sole-run&location=bridgeport-main-golden-hill or use location=bridgeport-main-elm . Play the actual street game, then choose **Walk Sole routes on globe**. The consumer pauses and persists the existing Sole session, disables gameplay/configuration controls and sends bridgeport:enter with regionId bridgeport-downtown.v2 to the existing same-origin arcade iframe. The actual Cesium viewer is retained.
+
+The Street objective selector follows the owner's configured four-checkpoint order, defaults to the current objective (or return entrance after four pairs), and also offers main-south and return to the original entrance. Existing aliases map exactly to City's published IDs: main-elm, main-fairfield, middle-golden-hill, main-golden-hill and main-south each receive the bridgeport- prefix. **Preview selected route on globe** sends the chosen destination ID to City; City supplies the expanded graph route and exact final entrance connector. The UI does not claim success merely because it sent a request. Review the route or blocked message, then use City's Confirm/Stop and square/hex controls. Return to Sole Run sends bridgeport:leave and waits for the pinned returned event; resume is explicit.
+
+This is shared navigation for Sole's street objectives, not a conversion of the four-shoe game into a hex mission engine. Arrival awards no shoes, points or mission completion. Sole's original timer, pose, inventory and save format remain unchanged. City owns motion and its separate v2 saved pose; an existing valid v2 save resumes instead of forcing a teleport to the selected entrance. City's explicit v1 import remains available and never rewrites the old v1 slot. The consumer does not import, transform or write either City's or the legacy Sole save itself.
+
+## Closure policy and lifecycle
+
+Sole blockedRoads contain clipped IDs such as bridgeport-osm-186839735-0; City accepts whole OSM way IDs. The explicit conservative policy is to close the ENTIRE corresponding source way in the shared simulation, not just its clipped segment. Duplicate segment closures collapse to one way. Only the six source ways declared by City v2 are accepted; unrecognized IDs block entry rather than bypassing a restriction. The visible UI discloses this broader closure. On ready the consumer applies the current mission's closure list (including reopening all ways when empty) and keeps route controls disabled until City acknowledges it. City cancels stale previews/motion and remains the authority for reachability. Subsequent changes from City's own closure controls invalidate its navigation and are reported to the consumer. These are simulation restrictions, not real road reports.
+
+Messages must match source iframe, same origin, lifecycle schema, region bridgeport-downtown.v2, revision2, frame bridgeport-golden-hill.enu.v1, street floor and selected entrance. Metric position is validated but never reinterpreted as a legacy pose. Navigation revision cannot go backwards; road-closure capability and recognized closure IDs are required. Missing/older hosts time out and leave Sole paused. Revocation is enforced by existing page and City owner gates. Disposal leaves City and removes listeners. Initial deep-link flight cannot cancel explicit entry before an in-region camera observation; subsequent departure still saves/unloads.
+
+City owns its 845,560-byte v2 payload and budgets; Arcade's own legacy district load is separate. This is not a claim that their combined transfer fits one shared budget. No surveyed road width/elevation, door, stair, furniture, combat/AP or live ion capability is added. All 16 source footprints remain City blockers. Live ion remains unverified.
+
+## Verification
+
+- node --test scripts/test/city-arcade-spatial.test.mjs : lifecycle/version gates, unsupported aliases, conservative closures, timeout/late replies and closure-acknowledged route enabling.
+- node --test scripts/test/*.test.mjs : standalone #743 root regression.
+- In an isolated combination with exact City da0b411b: node scripts/test/city-arcade-spatial-contract.integration.mjs . Uses the actual published graph and reference math; verifies all five source aliases and rounded legacy points, <1mm round trips, both complete five-stop sequences and exact swept-clear connectors, Main-way closure denial and reopening. No fixture graph substitutes.
+- In that same checkout: node tools/publish-fictional-city.mjs; serve loopback port8768; ARCADE_BASE=http://127.0.0.1:8768 node scripts/e2e/city-arcade-spatial.e2e.cjs . Requires Playwright, /usr/bin/chromium and pinned Cesium1.131 Build/Cesium via CESIUM_BUILD (default /tmp/arcade-cesium/node_modules/cesium/Build/Cesium).
+- Browser fixture router denies hosted traffic. At390 it enters Golden Hill and previews/walks to Elm; at1280 it enters Elm and walks to Golden Hill. It verifies actual Sole play/pause, actual City arrival, square switching with metric position retained, exact unchanged legacy save, same viewer, shared resume and revoked-owner return. API identity, imagery and ion-unavailable replies are fixtures, not production verification.
+
+## Return acknowledgement recovery
+
+Explicit Return cancels the entry deadline and waits for City. If no valid returned reply arrives within10seconds, **Retry return** resends the leave request to the same frame. Sole gameplay and route controls remain paused; timeout alone does not claim a completed return. A late valid acknowledgement still completes the return. Finish, iframe reload and disposal cancel the retry timer.
+
+Regression: ARCADE_WIDTHS=390 ARCADE_DROP_RETURN=1 ARCADE_BASE=http://127.0.0.1:8768 node scripts/e2e/city-arcade-spatial.e2e.cjs deliberately drops all actual City returned acknowledgements for the first request, verifies controls stay paused, retries and completes the return. The fixture harness waits for the lazy iframe to navigate before accessing its renderer.
+
+Reviewed against the auditor's portable repair in PR743 comment6644003305. The adapter retains its leaving state while retry is offered, so late ready/closure messages cannot re-enable navigation before return acknowledgement. This strengthens the proposed deadline/retry approach; regression coverage also includes duplicate acknowledgements and disposal cleanup. City owns the separately identified pending-import cancellation/acknowledgement companion repair.

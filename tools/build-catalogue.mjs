@@ -25,6 +25,14 @@
        Environmental Injustice McCluster ft. Angel Kastro & Ocho
      The act is its own node (#artist-equity-uprise), never the Equity
      Uprise program (#equity-uprise) or McCluster Corp.
+   - The Cyber Security Specialist album (slug prim3, catalog keys prim3:*)
+     is billed to PRIM3, per the owner (2026-11-02: "the album is actually
+     called Cyber Security Specialist ... the artist is PRIM3 ... its own
+     artist. Separate entity from Matthew McCluster"). PRIM3 the act is its
+     own node (prim3-artist.html#prim3-artist), the music act of PRIM3,
+     McCluster Corp's learning product; never the PRIM3 Project
+     (prim3.html#prim3), McCluster Corp or Matthew. No credits beyond the
+     artist are known, so none are claimed: no producer, no contributor.
    - "Dealer Plates" is "Prod. Zakir & McCluster": a producer credit, not an
      artist credit.
    - "Upset" names three other artists and no role for him: no artist claim.
@@ -56,6 +64,9 @@ export function isoDuration(len) {
 
 /* who made it, as far as the site actually says */
 const EQUITY_UPRISE_ACT = { "@id": `${SITE}/catalogue.html#artist-equity-uprise` };
+/* defined in full on its own page (prim3-artist.html) and in
+   data/seo/entity-graph.json -> creative_works.prim3_artist */
+export const PRIM3_ACT = { "@id": `${SITE}/prim3-artist.html#prim3-artist` };
 const act = (name) => ({ "@type": "MusicGroup", name });
 const CREDIT = {
   "money-or-the-power": { byArtist: EQUITY_UPRISE_ACT, contributor: [act("Ocho"), PERSON, act("Old Jay")], producer: { "@type": "Person", name: "PAX" } },
@@ -69,6 +80,7 @@ const NO_GRAPH_ALBUMS = new Set(["cia-mind-control"]);
 
 function creditFor(t) {
   if (CREDIT[t.slug]) return CREDIT[t.slug];
+  if (t.albumSlug === "prim3") return { byArtist: PRIM3_ACT };
   return { byArtist: PERSON };
 }
 
@@ -119,6 +131,10 @@ export function buildGraph(cat, albums) {
       node.byArtist = [PERSON, { "@type": "MusicGroup", name: "VVS Madè" }];
       node.albumReleaseType = "https://schema.org/EPRelease";
     }
+    if (a.slug === "prim3") {
+      node.byArtist = PRIM3_ACT;
+      node.subjectOf = { "@type": "WebPage", url: `${SITE}/prim3-artist.html` };
+    }
     if (a.slug === "equity-uprise") {
       node.byArtist = EQUITY_UPRISE_ACT;
       node.subjectOf = { "@type": "WebPage", url: `${SITE}/docket-516.html` };
@@ -150,6 +166,12 @@ export function buildGraph(cat, albums) {
         name: "Equity Uprise",
         url: `${SITE}/album.html?album=equity-uprise`,
         description: "The music act of Equity Uprise, McCluster Corp's civic program. Its album is Docket 516R."
+      },
+      {
+        "@type": "MusicGroup",
+        "@id": PRIM3_ACT["@id"],
+        name: "PRIM3",
+        url: `${SITE}/prim3-artist.html`
       },
       ...albumNodes,
       ...recs

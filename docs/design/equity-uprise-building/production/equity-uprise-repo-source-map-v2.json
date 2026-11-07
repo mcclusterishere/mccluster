@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 609,
+  "candidate_count": 635,
   "capability_source_count": 104,
-  "support_only_count": 505,
+  "support_only_count": 531,
   "entries": [
     {
       "path": ".cursorrules",
@@ -1238,6 +1238,13 @@
       "rationale": "Shared or adjacent documentation mentions Equity Uprise context but does not define a distinct program capability beyond canonical mapped sources."
     },
     {
+      "path": "docs/sales-redesign/EVENT-PHOTOGRAPHY-MINIMUM-20261103.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared or adjacent documentation mentions Equity Uprise context but does not define a distinct program capability beyond canonical mapped sources."
+    },
+    {
       "path": "docs/seo-matthew-mccluster.md",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -1853,7 +1860,7 @@
       "classification": "shared_site_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Role-tailored cut of the résumé (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
+      "rationale": "Role-tailored cut of the r\u00e9sum\u00e9 (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
     },
     {
       "path": "scripts/e2e/world-screen.e2e.mjs",
@@ -3876,13 +3883,6 @@
       "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared frontend/app code; adds no distinct program capability."
     },
     {
-      "path": "js/control-palette.js",
-      "classification": "shared_frontend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared frontend/app code; adds no distinct program capability."
-    },
-    {
       "path": "js/control-room-v2.js",
       "classification": "shared_frontend_support",
       "capability_ids": [],
@@ -4244,7 +4244,7 @@
       "classification": "building_projection_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "McCluster City geography/placement authority places the existing HQ on its island with a documented 180° placement of the 72 ft plate and the existing doorway anchor; city parcels and streets only, no building geometry, floor program, access policy or capability."
+      "rationale": "McCluster City geography/placement authority places the existing HQ on its island with a documented 180\u00b0 placement of the 72 ft plate and the existing doorway anchor; city parcels and streets only, no building geometry, floor program, access policy or capability."
     },
     {
       "path": "js/fictional-city/tactical.mjs",
@@ -4536,6 +4536,188 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Worker tests for the learning-evidence routes. No spatial or program capability is added."
+    },
+    {
+      "path": "docs/fictional-city/NAVIGATION-REVIEW-2026-11-04.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "City navigation review records the existing HQ portal, coordinate boundaries and integration findings; no building geometry, program or capability ownership."
+    },
+    {
+      "path": "scripts/e2e/fictional-city-camera-inputs.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "City camera, travel and navigation integration checks walk to the existing HQ doorway; test support only, without changing building geometry or capabilities."
+    },
+    {
+      "path": "scripts/e2e/fictional-city-upstairs-audit.e2e.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Browser reproduction of existing HQ stair picking uses the real resolver and renderer; diagnostic support only, not a building geometry or capability implementation."
+    },
+    {
+      "path": "scripts/test/fictional-city-vertical-handoff.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Verifies existing HQ stair links through the tactical resolver without modifying floors, circulation or building capabilities."
+    },
+    {
+      "path": "scripts/test/prim3-lifecycle.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Tests tactical turn recovery and browser save validation, including existing Equity Uprise exercise save shapes; adds no building program capability."
+    },
+    {
+      "path": "docs/prim3/SHARED-SPATIAL-CONTRACT.md",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Proposes consistent derived game geometry, traversal and save frames while preserving canonical HQ authority; changes no building capability or geometry."
+    },
+    {
+      "path": "scripts/e2e/prim3-hq-stairs.e2e.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Exercises existing HQ public entrance and stair links through tactical UI controls; adds no spatial program or capability."
+    },
+    {
+      "path": "scripts/e2e/prim3-spatial-controls.e2e.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Verifies measured visual grid guides and per-level display preferences in Transit and the HQ game projection; changes no building geometry or program."
+    },
+    {
+      "path": "scripts/test/prim3-movement-knowledge.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Verifies player-known tactical movement, physical floor heights and existing HQ stairs; changes no building geometry or capability."
+    },
+    {
+      "path": "scripts/e2e/prim3-direct-landings.e2e.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Exercises existing HQ protected-stair links via explicit legal navigation controls; changes no building geometry or program."
+    },
+    {
+      "path": "js/control-room/music-label.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Control \u00b7 Sell \u00b7 Music \u00b7 Artists, the label's 'Acting as' switcher. The label model (owner, 2026-11-02: one account, several music artists). It names Equity Uprise only as the house owner's second managed music act (its MusicGroup, catalogue.html#artist-equity-uprise), beside PRIM3. No building, spatial or program capability is added."
+    },
+    {
+      "path": "supabase/pending/music_label_artists_v1.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pending SQL (not applied): music_creator_managers, music_can_act_for() and the creator guards and policies widened to managed artists; seeds PRIM3 and Equity Uprise's music act as login-less artists. The label model (owner, 2026-11-02: one account, several music artists). It names Equity Uprise only as the house owner's second managed music act (its MusicGroup, catalogue.html#artist-equity-uprise), beside PRIM3. No building, spatial or program capability is added."
+    },
+    {
+      "path": "supabase/tests/music_label_artists.behaviour.sql",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Behaviour test for the pending label SQL. The label model (owner, 2026-11-02: one account, several music artists). It names Equity Uprise only as the house owner's second managed music act (its MusicGroup, catalogue.html#artist-equity-uprise), beside PRIM3. No building, spatial or program capability is added."
+    },
+    {
+      "path": "scripts/test-music-label-db.sh",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Scratch-Postgres runner for the pending label SQL and its rollback. The label model (owner, 2026-11-02: one account, several music artists). It names Equity Uprise only as the house owner's second managed music act (its MusicGroup, catalogue.html#artist-equity-uprise), beside PRIM3. No building, spatial or program capability is added."
+    },
+    {
+      "path": "scripts/test/music-label.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Contract test for PRIM3 as its own artist and the label model. The label model (owner, 2026-11-02: one account, several music artists). It names Equity Uprise only as the house owner's second managed music act (its MusicGroup, catalogue.html#artist-equity-uprise), beside PRIM3. No building, spatial or program capability is added."
+    },
+    {
+      "path": "scripts/e2e/prim3-artist.e2e.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Browser proof of the PRIM3 artist page and the Acting-as switcher. The label model (owner, 2026-11-02: one account, several music artists). It names Equity Uprise only as the house owner's second managed music act (its MusicGroup, catalogue.html#artist-equity-uprise), beside PRIM3. No building, spatial or program capability is added."
+    },
+    {
+      "path": "data/games/world.v1.json",
+      "classification": "navigation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Generated owner-only Games overlay data (tools/publish-games-world.mjs) lists the existing Equity Uprise HQ exercise and B1 mission routes and quotes their briefs; data-only navigation to existing destinations, no building capability, geometry or access policy."
+    },
+    {
+      "path": "scripts/e2e/globe-games.e2e.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Browser checks for the owner-only globe Games overlay verify that its Bridgeport links reach the existing Equity Uprise HQ and B1 routes; verification support only, with no building program or geometry implementation."
+    },
+    {
+      "path": "scripts/test/games-world.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Unit checks that the Games overlay's Equity Uprise HQ and B1 entries resolve to existing routes and that B1 anchors match the mission spec; verification support only."
+    },
+    {
+      "path": "core/data/characters/cast.v1.json",
+      "classification": "incidental_text_match",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "MNET character cast registry: psychological profiles for story characters. One character's role text, copied verbatim from district.v1.json, mentions a courier run to the Equity Uprise HQ front desk; no building geometry, program, access or capability."
+    },
+    {
+      "path": "docs/control-plane/API-RECOVERY-20261104.json",
+      "classification": "audit_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "API recovery branch inventory references Equity Uprise work for audit evidence only; it defines no building geometry, floor program or independent capability."
+    },
+    {
+      "path": "docs/spatial/BRIDGEPORT-DOWNTOWN-V2.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Bridgeport spatial integration record explicitly preserves the unanchored HQ geometry and documents missing geographic door/stair survey evidence; no building program or capability ownership."
+    },
+    {
+      "path": "docs/admin/OWNER-NAV-CONSISTENCY.md",
+      "classification": "governance_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Owner navigation consistency contract for shared building and product destinations."
+    },
+    {
+      "path": "scripts/e2e/site-navigation.e2e.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Browser checks for shared navigation and building destinations."
+    },
+    {
+      "path": "scripts/test/eu-object-inspector.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Tests building equipment selection without adding a program capability."
+    },
+    {
+      "path": "scripts/test/eu-screen-hardware-binding.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Tests binding existing building screens to inventoried hardware."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",

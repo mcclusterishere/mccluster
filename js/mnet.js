@@ -928,6 +928,11 @@
     }).finally(function () { button.disabled = false; });
   }
 
+  /* MNET STORY CHARACTERS (owner, 2026-11-03: a small "Character" badge, no other disclaimers).
+     The Worker marks a platform actor whose persona is a story character with actor_kind "character". */
+  function isCharacter(a) { return !!(a && a.actor_kind === "character"); }
+  function characterBadge(a) { return isCharacter(a) ? ' <span class="mn__character-badge">Character</span>' : ""; }
+
   function authorHtml(actor) {
     actor = actor || {};
     var name = actor.display_name || actor.mccluster_id || "Member";
@@ -938,7 +943,8 @@
       : esc(initials(name));
     var inner = '<div class="mn__author-avatar" style="--hue:' + hueOf(actor.mccluster_id || name) + '">' + av + '</div>' +
       '<div class="mn__author-meta"><span class="mn__author-name">' + esc(name) + '</span>' +
-      '<div class="mn__author-sub">' + esc(handle) + '</div></div>';
+      /* badge before the handle: a long handle ellipsizes, the badge never does */
+      '<div class="mn__author-sub">' + (isCharacter(actor) ? '<span class="mn__character-badge">Character</span> ' : '') + esc(handle) + '</div></div>';
     return actor.mccluster_id
       ? '<button class="mn__author-link" type="button" data-person="' + esc(actor.mccluster_id) + '">' + inner + '</button>'
       : inner;
@@ -1443,6 +1449,7 @@
       time.textContent = timeAgo(comment.created_at || '');
       var body = document.createElement('p');
       body.textContent = String(comment.body || '').slice(0,1000);
+      if (isCharacter(comment.actor)) { var badge = document.createElement('span'); badge.className = 'mn__character-badge'; badge.textContent = 'Character'; by.append(' ', badge); }
       row.append(by,time,body);
       list.appendChild(row);
     });
@@ -2716,7 +2723,7 @@
       var front=safeHttpUrl(presentation.front_page_url||p.website_url), frontHtml=front?'<div class="mn__frontpage mn__frontpage--person"><div class="mn__frontpage-head"><div><span>Front page</span><strong>'+esc(name)+' · public home</strong></div><a href="'+esc(front)+'" target="_blank" rel="noopener">Open site ↗</a></div><div class="mn__frontpage-stage"><iframe title="'+esc(name)+' front page" loading="lazy" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" src="'+esc(front)+'"></iframe></div></div>':'';
       var perspectiveLink='<p class="mn__perspective-link"><a href="'+esc('https://matthew.mccluster.org/member-front.html?handle='+encodeURIComponent(String(id.mccluster_id||handle).toLowerCase()))+'">Open '+esc(name)+'\u2019s full front page in the center →</a></p>';
       $("mnPersonBody").innerHTML='<div class="mn__person-sheet">'+perspectiveLink+frontHtml+'<div class="mn__person-hero"'+(banner?' style="background-image:url(\''+esc(banner.replace(/'/g,'%27'))+'\')"':'')+'></div>' +
-        '<div class="mn__person-main"><div class="mn__profile-avatar" '+avatarHtml+'>'+(avatar?"":esc(initials(name)))+'</div><h2>'+esc(name)+'</h2><p class="mn__handle">@'+esc(id.mccluster_id||"")+'</p>' +
+        '<div class="mn__person-main"><div class="mn__profile-avatar" '+avatarHtml+'>'+(avatar?"":esc(initials(name)))+'</div><h2>'+esc(name)+'</h2><p class="mn__handle">@'+esc(id.mccluster_id||"")+characterBadge(id)+'</p>' +
         (p.headline?'<p class="mn__profile-headline">'+esc(p.headline)+'</p>':'')+(p.bio?'<p class="mn__profile-bio">'+esc(p.bio)+'</p>':'')+
         '<div class="mn__profile-counts"><span><strong>'+Number(data.counts&&data.counts.followers||0)+'</strong> followers</span><span><strong>'+Number(data.counts&&data.counts.following||0)+'</strong> following</span><span><strong>'+Number(data.counts&&data.counts.posts||0)+'</strong> posts</span></div>'+
         '<div class="mn__person-actions"><button class="is-primary" type="button" id="mnPersonFollow">'+(data.following?"Following":"Follow")+'</button>'+connectButtonHtml(data.connection)+'<button type="button" id="mnPersonMessage">Message</button><button type="button" id="mnPersonMute">'+(data.muted?"Unmute":"Mute")+'</button><button type="button" class="mn__danger" id="mnPersonBlock">Block</button><button type="button" id="mnPersonReport">Report</button></div>'+

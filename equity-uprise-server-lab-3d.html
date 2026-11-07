@@ -17,12 +17,14 @@
   <section class="owner-gate" aria-live="polite" data-owner-gate data-owner-template="labTpl" data-owner-load="js/server-lab/app.mjs?v=__STAMP__">
     <h1>Owner only</h1>
     <p data-owner-msg>Checking access with the server…</p>
+    <a href="game-hub.html">Back to Games</a>
   </section>
   <template id="labTpl">
     <div class="sl-app" id="slApp">
       <div class="sl-stage" id="slStage" aria-label="3D view of MDF rack 01 in B1" role="img"></div>
       <header class="sl-top">
         <a class="sl-back" href="prim3.html" aria-label="Back to PRIM3">‹</a>
+        <a class="sl-btn" href="screens/terminal.html?tab=hardware&amp;mode=TRAINING&amp;computer=B1-SRV-HYP-01-I001" style="padding:12px;font-size:16px">Computers</a>
         <div class="sl-title"><strong>Server Lab</strong><span id="slWhere">B1 · MDF rack 01 · sandbox</span></div>
         <span class="sl-timer" id="slTimer" hidden>0:00</span>
       </header>

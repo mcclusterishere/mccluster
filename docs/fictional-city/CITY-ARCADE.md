@@ -18,7 +18,7 @@ Every commercial storefront has one small, replayable, standalone-compatible min
 - Core Autonomous Game Studio: `docs/control-plane/AUTONOMOUS-GAME-STUDIO.md`, `core/src/game-studio/*`. Its v0.1 production planner is not an automatic game publishing machine. Connect Arcade-specific generation and bounded playtesting to that existing governance layer later.
 - City geography: preserve real Bridgeport cities, street names and verified public facilities; only fictionalize private businesses/people. Existing fictional studio and campaign storefronts are fictional overlays, not real city government.
 
-## Current demo — precisely what's implemented
+## Original demo (2026-11-03) — historical baseline
 
 `city-arcade.html` loads `data/city-arcade/catalog.v1.json`. Two playable local-browser games currently exist:
 
@@ -62,3 +62,7 @@ Apple's current [App Review Guidelines](https://developer.apple.com/app-store/re
 - No auto-merge, no production deploy and no App Store submission from this draft.
 
 The long-term Designer Kicks game expands from this 2D **system-validation slice** to 3D collection, equipment slots, multiplayer-compatible economy, missions, city-based NPC interactions, witness/case systems, arrest/legal consequences and creator-crafted custom shoes. The cinematic show remains a parallel content product, not the logic governing sandbox player progress.
+
+## Local continuation (2026-11-04)
+
+The graphical Tea Rush, sourced-street Sole Run, optional Fashion Police encounters, geographic entry/loading and owner mission/result controls are described in [the local review handoff](../city-arcade/LOCAL-REVIEW.md) and [product contract](../city-arcade/PRODUCT-CONTRACT.md). These replace the text/board UI in the local draft; the original deterministic board rules and save keys remain intact. Nothing in that handoff claims deployment or production permission verification.

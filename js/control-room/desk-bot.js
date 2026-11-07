@@ -20,7 +20,7 @@
   "use strict";
   root.CR = root.CR || {};
 
-  var TABS = [["knowledge", "Knowledge"], ["spend", "Spend"], ["refusals", "Refusals"], ["channels", "Channels"], ["tools", "Tools"]];
+  var TABS = [["knowledge", "Knowledge"], ["spend", "Models & spend"], ["refusals", "Delivery log"], ["channels", "Channels"], ["tools", "Tools & approvals"]];
   var REFUSAL_FILTERS = [["all", "All"], ["refused", "Refused"], ["queued", "Waiting"], ["sent", "Sent"]];
 
   /* ---------- pure helpers (scripts/test/control-desk-bot.test.mjs) ---------- */
@@ -335,14 +335,15 @@
     var picker = D.orgs.length > 1 ? '<div class="cro-chips" aria-label="Desk organisation">' + D.orgs.map(function (o) {
       return '<button class="cro-chip' + (o.slug === D.org ? " is-on" : "") + '" type="button" data-crd-org="' + e(o.slug) + '" aria-pressed="' + (o.slug === D.org) + '">' + e(o.name || o.slug) + (o.role ? " · " + e(o.role) : "") + "</button>";
     }).join("") + "</div>" : "";
-    var tabs = '<div class="cro-tabs" role="tablist" aria-label="Desk bot">' + TABS.map(function (t) {
-      return '<button class="cro-tab' + (D.tab === t[0] ? " is-on" : "") + '" type="button" role="tab" aria-selected="' + (D.tab === t[0]) + '" data-crd-tab="' + t[0] + '">' + e(t[1]) + "</button>";
-    }).join("") + '<button class="cro-tab" type="button" data-crd-reload>Reload</button></div>';
+    var tabs = '<nav class="cro-tabs" aria-label="AI reply settings">' + TABS.map(function (t) {
+      return '<button class="cro-tab' + (D.tab === t[0] ? " is-on" : "") + '" type="button" aria-pressed="' + (D.tab === t[0]) + '" data-crd-tab="' + t[0] + '">' + e(t[1]) + "</button>";
+    }).join("") + '<button class="cro-tab" type="button" data-crd-reload>Reload</button></nav>';
     var err = D.errors[D.tab];
     var head = D.loading[D.tab] && !D.data[D.tab] ? note("Reading the desk…")
       : err ? note((err.status === 403 ? "The desk refused: " : "The desk did not answer: ") + (err.message || err) + (/staff/i.test(err.message || "") ? " (this account is not on the desk's staff list for any org)." : ""), true) : "";
     var body = err && !D.data[D.tab] ? "" : D.tab === "knowledge" ? knowledge() : D.tab === "spend" ? spend() : D.tab === "refusals" ? refusals() : D.tab === "channels" ? channels() : tools();
-    return '<div class="cro crd" data-crd>' + picker + tabs + (D.note ? note(D.note.text, D.note.bad) : "") + head + body +
+    var guide = '<details class="cro-card"><summary>How AI replies work</summary><p>The switch in a conversation hands that thread to McCluster or back to you. Turning it on allows automatic replies under the existing server policy.</p><ul><li><b>Context:</b> Knowledge lets you edit approved information and test what a question finds.</li><li><b>Channels:</b> Review connected channels and turn each on or off.</li><li><b>Tools &amp; approvals:</b> Review requested actions and control which tools may run.</li><li><b>Models &amp; spend:</b> Inspect models used, recent calls and the budget. Model selection and trigger-rule editing are not available in this editor.</li><li><b>Delivery log:</b> See queued, sent and refused messages with their reasons.</li></ul><p>Opening these settings does not enable AI replies or send a message.</p></details>';
+    return '<div class="cro crd" data-crd>' + guide + picker + tabs + (D.note ? note(D.note.text, D.note.bad) : "") + head + body +
       '<p class="cro-meta">Every action here goes to the <code>inbox</code> edge function with your session. Reading is staff; changing what the bot may say, a channel or a tool is the org owner\'s, and the function says so when it refuses.</p></div>';
   }
 

@@ -117,7 +117,7 @@ test('the arcade is owner only: noindex, the shared server gate, and no game cod
   const outside = html.replace(/<template[\s\S]*?<\/template>/g, '');
   assert.doesNotMatch(outside, /<script[^>]+src="[^"]*(city-arcade\/|engine\.mjs)/);
   assert.deepEqual([...outside.matchAll(/<script[^>]*src="([^"?]+)/g)].map(m => m[1]),
-    ['js/owner-only.mjs', 'js/mcc-auth.js', 'js/tabbar.js']);
+    ['js/shell-boot.js', 'js/owner-only.mjs', 'js/mcc-auth.js', 'js/tabbar.js']);
   /* the arcade does not reach into the city's save or the screenplay */
   assert.doesNotMatch(app, /fictional-city\/state\.mjs|mcc-auth/);
   const sitemap = JSON.parse(await readFile(new URL('../../data/seo/sitemap-pages.json', import.meta.url), 'utf8'));

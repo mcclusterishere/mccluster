@@ -489,7 +489,10 @@ const req = (world, m, re) => world.requests.filter((r) => r.m === m && re.test(
 
 /* E2E_ONLY=layers (or any scope prefix) reruns one family of scenarios alone; the full run is the evidence */
 const ONLY = process.env.E2E_ONLY || '';
-const runs = (scope) => !ONLY || scope.startsWith(ONLY);
+// CI runs the expensive composer scenario in its own fresh browser job.
+// An ordinary E2E_ONLY=editorial run still includes every scenario.
+const EXCLUDE = process.env.E2E_EXCLUDE || '';
+const runs = (scope) => (!ONLY || scope.startsWith(ONLY)) && (!EXCLUDE || scope !== EXCLUDE);
 
 /* Travel acceptance: the shipping UI and real Cesium, with recorded public road routes.
    Provider fixtures never claim to be a live service, a fare or a dispatched ride. */
@@ -1152,7 +1155,7 @@ if (runs('editorial-video')) for (const device of DEVICES.filter((d) => ['iphone
 }
 
 /* the composer: the picture is taken while the clip uploads, shown on the chip, and posted beside the video */
-if (runs('editorial-video') && (!process.env.EDITORIAL_DEVICE || process.env.EDITORIAL_DEVICE === 'iphone-portrait')) {
+if (runs('editorial-video-composer') && (!process.env.EDITORIAL_DEVICE || process.env.EDITORIAL_DEVICE === 'iphone-portrait')) {
   const scope = 'editorial-video-composer';
   const { ctx, page, world, errors } = await open(DEVICES[0], { member: true });
   try {
@@ -1174,7 +1177,14 @@ if (runs('editorial-video') && (!process.env.EDITORIAL_DEVICE || process.env.EDI
     check(scope, 'no horizontal overflow with the chip', await noSideways(page));
     await page.locator('#mnComposer').screenshot({ path: join(OUT, scope + '-chip.png') });
     await page.fill('#mnPostBody', 'Fresh clip from the river.');
-    await page.click('#mnPost');
+    try { await page.click('#mnPost'); }
+    catch(error) {
+      const diagnostic=await page.evaluate(()=>{const b=document.getElementById('mnPost'),c=document.getElementById('mnComposer');return {button:{disabled:b.disabled,rect:b.getBoundingClientRect().toJSON(),visibility:getComputedStyle(b).visibility,display:getComputedStyle(b).display,transform:getComputedStyle(b).transform},composer:{class:c.className,rect:c.getBoundingClientRect().toJSON()},active:document.activeElement?.id,scroll:scrollY,status:document.getElementById('mnPostStatus').textContent};});
+      console.error('Composer Post actionability failure:', JSON.stringify(diagnostic));
+      await writeFile(join(OUT,scope+'-post-failure.json'),JSON.stringify(diagnostic,null,2));
+      await page.screenshot({path:join(OUT,scope+'-post-failure.png')});
+      throw error;
+    }
     await page.waitForFunction(() => /Posted/.test(document.getElementById('mnPostStatus').textContent), null, { timeout: 8000 }).catch(() => {});
     const sent = req(world, 'POST', /^\/v1\/mnet\/posts$/).at(-1);
     check(scope, 'Post sends the clip with its picture beside it', !!sent && JSON.stringify(sent.body.media_asset_ids) === JSON.stringify([vId]) && JSON.stringify(sent.body.poster_asset_ids) === JSON.stringify([pId]), sent && sent.body);
@@ -2186,4 +2196,4 @@ server.close();
 const failed = results.filter((r) => !r.ok);
 await writeFile(join(OUT, 'world-screen-e2e.json'), JSON.stringify({ ran_at: new Date().toISOString(), passed: results.length - failed.length, failed: failed.length, results }, null, 2));
 console.log(`\n${results.length - failed.length}/${results.length} checks passed. Screenshots and report in ${OUT}`);
-process.exit(failed.length ? 1 : 0);
+process.exit(failed.length || results.length === 0 ? 1 : 0);

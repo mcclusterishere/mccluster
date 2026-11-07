@@ -24,6 +24,9 @@ Retain CT source metadata and visible OpenStreetMap attribution for derived road
   direction, and newly authored storefronts/people/dialogue. Countries are NPC biographies, not
   retroactively established origins of the tea brand. Private source URLs and raw chats stay out of Git.
 - `data/brands.json` remains the real company map. Fictional shops are not incorporated subsidiaries.
+- Psychological profiles and MNET settings for every adult character live in `core/data/characters/cast.v1.json`
+  (`MNET-CHARACTER-CAST.md`). It points at this manifest by id and never overrides it; a new adult character here
+  needs a cast entry (`node core/scripts/character-cast.mjs --draft`), and a minor never gets one.
 
 ## Runtime
 

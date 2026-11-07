@@ -29,7 +29,7 @@ jobs:
       PGPASSWORD: audit_fixture_only
       PGDATABASE: mcp_scope
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - run: psql -v ON_ERROR_STOP=1 -f supabase/tests/mcp_approval_scope.stub.sql
       - run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261017214808_mcp_approval_scope_v1.sql
       - run: psql -v ON_ERROR_STOP=1 -f supabase/tests/mcp_approval_scope.behaviour.sql

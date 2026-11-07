@@ -226,3 +226,8 @@ body.cr[data-cr-surface="create"] #mccEditBar{display:none!important}
  overflow-wrap:normal;word-break:normal;white-space:nowrap;max-width:100%;overflow-x:auto
 }
 .cad-body .cu-fact>span,.cad-body .cu-fact>small,.cad-body .cra-kpi small{white-space:normal;overflow-wrap:anywhere}
+
+/* Local detail views remain outside the scrolling data panel. */
+.cad-deck:has(.cad-local-views){grid-template-rows:auto auto auto minmax(0,1fr) auto}
+.cad-local-views{display:flex;gap:6px;padding:0 14px 8px;min-width:0;overflow-x:auto}
+.cad-local-views button{min-height:44px;flex:1 0 auto}

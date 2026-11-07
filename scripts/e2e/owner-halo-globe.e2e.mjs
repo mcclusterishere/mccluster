@@ -61,11 +61,22 @@ try{
     const landed=new URL(there.url,'http://x');
     check(scope,'tapping it lands in Halo (the four screens) on its World screen, with the globe lit',landed.pathname==='/action-globe.html'&&landed.searchParams.get('explore')==='1'&&landed.searchParams.get('halo')==='world'&&landed.searchParams.get('hours')==='24'&&there.halo&&there.lit===true,there);
     check(scope,'Halo carries the way to the World feed',!!there.feed&&/(mnet\.html\?view=feed|\?view=feed)$/.test(there.feed),there);
-    const box=await page.evaluate(()=>{const f=document.querySelector('.hx-feed').getBoundingClientRect(),o=document.querySelector('.hx-operator').getBoundingClientRect(),b=document.querySelector('.hx-brand').getBoundingClientRect();return {feed:[Math.round(f.left),Math.round(f.right),Math.round(f.height)],op:[Math.round(o.left)],brand:[Math.round(b.right)],w:innerWidth};});
-    check(scope,'the World feed door sits whole in the header, 44px tall, clear of the brand and the account button',box.feed[2]>=44&&box.feed[0]>=box.brand[0]-1&&box.feed[1]<=box.op[0]+1&&box.feed[1]<=box.w,box);
+    const box=await page.evaluate(()=>{
+      const f=document.querySelector('.hx-feed').getBoundingClientRect(),o=document.querySelector('.hx-operator').getBoundingClientRect(),b=document.querySelector('.hx-brand').getBoundingClientRect();
+      // Shared navigation replaces Halo's legacy operator only after it is ready.
+      const shared=document.body.hasAttribute('data-site-navigation'),account=o.width?o:document.querySelector('#mccAuthChip')?.getBoundingClientRect();
+      const clear=account&&account.width>0&&account.height>=44&&!(f.left<account.right&&f.right>account.left&&f.top<account.bottom&&f.bottom>account.top);
+      return {feed:[Math.round(f.left),Math.round(f.right),Math.round(f.height)],brand:[Math.round(b.right)],w:innerWidth,accountReady:!!(o.width||shared&&account?.width),clear:!!clear};
+    });
+    check(scope,'the World feed door sits whole in the header, 44px tall, clear of the brand and the active account control',box.feed[2]>=44&&box.feed[0]>=box.brand[0]-1&&box.feed[1]<=box.w&&box.accountReady&&box.clear,box);
     const brand=await page.evaluate(()=>{const s=document.querySelector('.hx-brand span');return {full:s.scrollWidth<=s.clientWidth+1,label:getComputedStyle(document.querySelector('.hx-feed__long')).display!=='none'?'World feed':'Feed'};});
     check(scope,'the Halo name stays whole beside it ('+brand.label+')',brand.full&&(vp.width>=420?brand.label==='World feed':brand.label==='Feed'),brand);
     check(scope,'no horizontal overflow',(await overflow(page))===0,await overflow(page));
+    await page.click('#mccAuthChip');
+    await page.locator('#mccProfileMenu:popover-open').waitFor();
+    check(scope,'the shared Profile opens account settings and owner controls',await page.locator('#mccProfileMenu a[href$="account.html?stay=1"]').isVisible()&&await page.locator('#mccProfileMenu [data-owner-profile-action="home"]').isVisible());
+    await page.keyboard.press('Escape');
+
     await page.screenshot({path:join(OUT,`owner-halo-${vp.width}.png`)});
     /* the site opens the World the way it always does from a page with the player: in its own layer over the page (the
        music carries on, the address gains world=1), or as the page itself; either way it is the World feed */

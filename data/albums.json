@@ -226,7 +226,9 @@
   },
   {
    "slug": "prim3",
-   "name": "PRIM3",
+   "name": "Cyber Security Specialist",
+   "artist": "PRIM3",
+   "artist_page": "prim3-artist.html",
    "tag": "The study tapes",
    "art": "assets/img/prim3-logo.png",
    "by": "Music to build to.",
@@ -286,6 +288,7 @@
     {
      "title": "Dive In",
      "src": "assets/audio/dive-in.mp3",
+     "lyrics_generation": "awaiting-vocal-take",
      "poster": "assets/frames/prim3_0001.jpg",
      "seconds": 163.9
     },

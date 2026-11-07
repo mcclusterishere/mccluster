@@ -52,7 +52,6 @@ test("every runtime file the page loads is published by deploy-pages.yml", () =>
     const ok = deploy.split("\n").some((line) => line.includes("cp ") && line.includes(name) && (line.includes(dest) || line.trim().endsWith(dest)));
     assert.ok(ok, "deploy-pages.yml does not publish " + rel);
   }
-  // the runtime's own imports are published too
   for (const dep of ["equity-uprise-lab-runtime.mjs", "equity-uprise-electronics-sandbox.mjs", "equity-uprise-guided-scenarios.mjs", "equity-uprise-assessment-runtime.mjs"]) {
     assert.ok(deploy.includes("lab-runtime/" + dep + " equity-uprise-preview/lab-runtime/"), dep);
   }
@@ -70,4 +69,19 @@ test("unbranded hardware: no vendor names or marks in the lab's code or data, no
   const brands = /\b(dell|poweredge|proliant|lenovo|supermicro|cisco|juniper|intel|xeon|epyc|broadcom|mellanox|nvidia|samsung|seagate|idrac|xclarity)\b/i;
   for (const src of [app, scene, html, read("docs/design/equity-uprise-building/production/electronics/server-lab-hardware-v1.json")]) assert.doesNotMatch(src, brands);
   assert.doesNotMatch(css + scene, /purple|violet|#(8a2be2|800080|9b59b6|a855f7|7c3aed)/i);
+});
+
+await import('../../docs/design/equity-uprise-building/production/lab-runtime/verify_computer_hardware_v1.mjs');
+if (process.env.EQUIPMENT_BROWSER_QA === "1") await import("../../docs/design/equity-uprise-building/production/lab-runtime/verify_computer_workbench_browser.mjs");
+
+test("physical inspection ignores hidden meshes and hidden ancestor groups", async () => {
+  const { visibleComponent } = await import('../../docs/design/equity-uprise-building/production/lab-runtime/equity-uprise-computer-view.mjs');
+  const root = { visible: true, userData: {} };
+  const part = { visible: true, userData: { component: 'RAM-A2' }, parent: root };
+  const chip = { visible: true, userData: {}, parent: part };
+  assert.equal(visibleComponent(chip), 'RAM-A2');
+  part.visible = false; assert.equal(visibleComponent(chip), null);
+  part.visible = true; root.visible = false; assert.equal(visibleComponent(chip), null);
+  root.visible = true; chip.visible = false; assert.equal(visibleComponent(chip), null);
+  assert.equal(visibleComponent({visible:true,userData:{},parent:root}), null);
 });

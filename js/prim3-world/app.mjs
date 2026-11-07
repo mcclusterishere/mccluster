@@ -244,14 +244,15 @@ function renderEditor() {
       ${field('place', 'Place', `<input id="pwF-place" value="${esc(m.place || '')}">`)}
       <div class="pw-two">${field('lat', 'Latitude', `<input id="pwF-lat" type="number" step="0.0001" min="-90" max="90" inputmode="decimal" value="${esc(m.lat)}">`)}${field('lon', 'Longitude', `<input id="pwF-lon" type="number" step="0.0001" min="-180" max="180" inputmode="decimal" value="${esc(m.lon)}">`)}</div>
       ${field('level', 'Level', `<select id="pwF-level">${levelsOf(doc).map((l) => opt(l.id, l.title, l.id === m.level)).join('')}</select>`)}
-      ${field('difficulty', 'Difficulty', `<select id="pwF-difficulty">${DIFFICULTIES.map((d) => opt(d, d, d === m.difficulty)).join('')}</select>`)}
+      ${field('difficulty', 'Briefing difficulty (label only)', `<select id="pwF-difficulty">${DIFFICULTIES.map((d) => opt(d, d, d === m.difficulty)).join('')}</select>`)}
       <label class="pw-check pw-span2"><input type="checkbox" id="pwF-featured"${m.featured ? ' checked' : ''}> Featured story mission (amber country edge)</label>
       ${field('briefing', 'Briefing (2–4 sentences)', `<textarea id="pwF-briefing" rows="5">${esc(m.briefing)}</textarea>`, true)}
       ${field('objective', 'Objective', `<textarea id="pwF-objective" rows="2">${esc(m.objective)}</textarea>`, true)}
       ${field('note', 'Canon note', `<textarea id="pwF-note" rows="3">${esc(m.note || '')}</textarea>`, true)}
       ${field('sources', 'Sources: one per line, file # section', `<textarea id="pwF-sources" rows="4" spellcheck="false">${esc(m.sources.map((s) => s.file + ' # ' + s.section).join('\n'))}</textarea>`, true)}
     </form>
-    <div class="pw-row"><button type="button" class="pw-btn${ui.placing ? ' pw-btn--go' : ''}" data-act="place" aria-pressed="${ui.placing}">${ui.placing ? 'Tap the globe…' : 'Set position on the globe'}</button><a class="pw-btn pw-btn--go" href="${esc(deployHref(m))}">Deploy this mission</a><button type="button" class="pw-btn pw-btn--warn" data-act="delete">Delete mission</button></div>
+    <div class="pw-row"><button type="button" class="pw-btn${ui.placing ? ' pw-btn--go' : ''}" data-act="place" aria-pressed="${ui.placing}">${ui.placing ? 'Tap the globe…' : 'Set position on the globe'}</button><button type="button" class="pw-btn pw-btn--go" data-act="playtest">Save &amp; play test</button><button type="button" class="pw-btn pw-btn--warn" data-act="delete">Delete mission</button></div>
+    <p class="pw-store">Play testing starts a fresh local run and replaces the current save for this level. Title and briefing follow your draft; the level supplies combat rules. Difficulty is a briefing label, not a combat modifier.</p>
     <div id="pwChecks"></div>
   </section>`;
   $('pwImport').addEventListener('change', onImport);
@@ -320,6 +321,14 @@ function onSide(e) {
     if (globe) globe.focus(m.lat, m.lon);
   } else if (act === 'save') {
     if (writeDraft(doc)) { usingDraft = true; dirty = false; render(); setStatus('Draft saved in this browser.'); } else setStatus('This browser would not store the draft.');
+  } else if (act === 'playtest') {
+    const m = findMission(doc, ui.sel);
+    const problems = missionErrors(m, doc);
+    if (m && doc.missions.filter((x) => x.id === m.id).length !== 1) problems.push('Mission Id must be unique.');
+    if (problems.length) { setStatus('Fix this mission before play testing: ' + problems.join(' ')); return; }
+    if (!writeDraft(doc)) { setStatus('This browser would not store the draft. Play test has not started.'); return; }
+    usingDraft = true; dirty = false;
+    location.assign(deployHref(m));
   } else if (act === 'delete') {
     const m = findMission(doc, ui.sel); if (!m || !confirm('Delete "' + (m.title || m.id) + '" from the draft?')) return;
     doc.missions = doc.missions.filter((x) => x !== m); ui.sel = (doc.missions[0] || {}).id || null; dirty = true; render(); setStatus('Mission deleted from the draft. Save to keep it that way.');

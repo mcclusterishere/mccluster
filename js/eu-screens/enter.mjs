@@ -8,7 +8,7 @@
      const registry = await loadRegistry();
      const hooks = createScreenHooks({ THREE, camera, controls, registry, getMode: () => mode, src: "viewer" });
      hooks.bindFloor("F2", floorRoot);          // after a floor GLB loads: tags its "<ID>::screen" meshes
-     hooks.addProxies("F2", scene);             // tappable panels for screens with no mesh of their own
+     hooks.addProxies("F2", scene);             // compatibility no-op: never invent physical screens
      canvas.addEventListener("pointerup", (e) => { const s = hooks.pickAt(e, canvas); if (s) hooks.open(s); });
      const back = consumeReturn(); if (back) hooks.restore(back);   // on load and on pageshow
 
@@ -33,7 +33,10 @@ export function screenById(registry, id) { return (registry.screens || []).find(
 export function screenForName(registry, name) {
   if (!name) return null;
   const base = String(name).split("::")[0];
-  return (registry.screens || []).find((s) => s.mesh_node_prefix === base || s.asset_id === base) || null;
+  const exact = (registry.screens || []).filter(s => s.asset_id === base);
+  if (exact.length === 1) return exact[0];
+  const matches = (registry.screens || []).filter(s => s.mesh_node_prefix === base);
+  return matches.length === 1 ? matches[0] : null;
 }
 
 /* the URL root the site is served from (works on matthew.mccluster.org and under a sub-path preview) */
@@ -90,58 +93,45 @@ export function createScreenHooks({ THREE, camera, controls = null, registry, ge
 
   function bindFloor(level, root) {
     const screens = (registry.screens || []).filter((s) => s.floor === level);
-    const byPrefix = new Map(screens.map((s) => [s.mesh_node_prefix, s]));
-    const prefixes = [...byPrefix.keys()].sort((a, b) => b.length - a.length);
+    const byPrefix = new Map(screens.map(s => [s.mesh_node_prefix, screenForName({ screens }, s.mesh_node_prefix)]).filter(([,s]) => s));
+    const prefixes = [...new Set([...byPrefix.keys(), ...screens.map(s => s.asset_id)])].sort((a, b) => b.length - a.length);
     root.traverse((o) => {
       if (!o.isMesh) return;
       /* GLTFLoader keeps the authored name in userData.name and strips ":" from o.name; accept both */
       const raw = (o.userData && o.userData.name) || o.name || "";
       let base, part;
-      if (raw.includes("::")) [base, part] = raw.split("::");
+      if (raw.includes("::")) {
+        const tokens = raw.split("::"); base = tokens[0];
+        /* Canonical componentized devices use ID::PART::BEZEL. Nested
+           power outlets are independent equipment, never display hit targets. */
+        part = tokens[1] === "PART" && tokens.length === 3 ? tokens[2].toLowerCase() : tokens.slice(1).join("::");
+      }
       else { base = prefixes.find((p) => raw === p || raw.startsWith(p)); part = base && raw.length > base.length ? raw.slice(base.length) : undefined; }
-      const s = base && byPrefix.get(base);
+      const s = base && screenForName({ screens }, base);
       if (!s) return;
       if (part && !/^(screen|surface|bezel|body|case|cap|face-a|face-b|top|frame)$/.test(part)) return;
       tag(o, s);
       if (!bound.has(s.screen_id)) bound.set(s.screen_id, []);
-      bound.get(s.screen_id).push(o);
+      if (!bound.get(s.screen_id).includes(o)) bound.get(s.screen_id).push(o);
     });
     return [...bound.keys()].filter((id) => screens.some((s) => s.screen_id === id));
   }
 
-  /* glowing panels for screens without their own mesh (monitors, rack consoles, B1 MDF units) */
-  function addProxies(level, parent, { all = false, material = null } = {}) {
-    const made = [];
-    for (const s of (registry.screens || []).filter((x) => x.floor === level)) {
-      if (!all && bound.has(s.screen_id)) continue;
-      if (proxies.has(s.screen_id)) { made.push(proxies.get(s.screen_id)); continue; }
-      const w = Math.min(Math.max(s.position.width_ft || (s.kind === "workstation_monitor" ? 1.9 : s.kind.includes("wall") || s.kind === "command_display" || s.kind === "noc_wall" ? 6 : 1.6), 0.8), 9) * 0.3048;
-      const h = (s.kind === "workstation_monitor" ? 1.1 : s.kind === "kiosk" || s.kind === "checkin_terminal" || s.kind === "portal_terminal" ? 1.5 : s.kind === "rack_console" || s.kind === "bmc_console" ? 0.55 : 2.6) * 0.3048;
-      const geo = new THREE.PlaneGeometry(w, h);
-      const mat = material ? material.clone() : new THREE.MeshBasicMaterial({ color: 0x5fe3c0, transparent: true, opacity: 0.85, side: THREE.DoubleSide, depthWrite: false });
-      const m = new THREE.Mesh(geo, mat);
-      const [x, y, z] = ftToWorld([s.position.x, s.position.y, s.position.z_abs]);
-      m.position.set(x, y, z);
-      const n = { north: [0, 1], south: [0, -1], east: [1, 0], west: [-1, 0] }[s.position.facing] || [0, -1];
-      m.lookAt(x + n[0], y, z - n[1]);
-      /* nudge off the wall so the panel never z-fights the surface it marks */
-      m.position.x += n[0] * 0.03; m.position.z -= n[1] * 0.03;
-      m.name = "EU-SCREEN-PROXY::" + s.screen_id;
-      m.renderOrder = 5;
-      tag(m, s);
-      parent.add(m);
-      proxies.set(s.screen_id, m);
-      made.push(m);
-    }
-    return made;
-  }
+  /* Registry positions are discovery hints, not physical mount authority. Never invent
+     glowing panels for headless equipment or unresolved monitor placements. Equipment
+     remains accessible through the labelled directory and its existing inspector. */
+  function addProxies() { return []; }
 
   function screenForObject(obj) {
-    for (let o = obj; o; o = o.parent) if (o.userData && o.userData.euScreenId) return screenById(registry, o.userData.euScreenId);
-    return null;
+    let selected = null;
+    for (let o = obj; o; o = o.parent) {
+      if (o.visible === false) return null;
+      if (!selected && o.userData?.euScreenId) selected = screenById(registry, o.userData.euScreenId);
+    }
+    return selected;
   }
 
-  function targets() { return [...[...bound.values()].flat(), ...proxies.values()].filter((o) => o.visible !== false); }
+  function targets() { return [...[...bound.values()].flat(), ...proxies.values()].filter(o => screenForObject(o)); }
 
   function pickNdc(x, y) {
     ndc.set(x, y);

@@ -1,3 +1,4 @@
+import { handleArcade, ARCADE_PREFIX } from './arcade/index.js';
 import { guardWorldRelease } from './world-release.js';
 import { handleFundingIntelligence, FUNDING_PREFIX } from './funding-intelligence.js';
 import { allowedOrigins, applyCors, corsHeaders, fail, logEvent, reply } from './lib/http.js';
@@ -151,6 +152,10 @@ export default {
 
       if (path === '/v1' && request.method === 'GET') {
         return reply(request, env, CATALOG);
+      }
+
+      if (path === ARCADE_PREFIX || path.startsWith(ARCADE_PREFIX + '/')) {
+        return handleArcade(request, env, { requireHouseOwner });
       }
 
       if (path === PRIM3_LEVELS_PREFIX || path.startsWith(`${PRIM3_LEVELS_PREFIX}/`)) {

@@ -103,24 +103,35 @@ async function one(o) {
   return doc;
 }
 
-async function missing(o) {
-  const { wire, force } = o;
-  const albumsPath = join(ROOT, 'data/albums.json');
-  const albums = JSON.parse(await readFile(albumsPath, 'utf8'));
-  const made = [];
+// Shared by CI preflight and execution so an instrumental cannot reach the models
+// or acquire a lyrics reference. Remove the marker only when a vocal take replaces it;
+// --force refreshes eligible lyrics and never overrides this recording restriction.
+export async function selectMissing(albums, { force = false, root = ROOT } = {}) {
+  const selected = [];
   for (const a of albums.albums) for (const t of a.tracks) {
-    if (!t.src || t.gated || (t.lyrics && !force)) continue;
+    if (!t.src || t.gated || t.lyrics_generation === 'awaiting-vocal-take' || (t.lyrics && !force)) continue;
     const slug = slugOf(t.src);
     const out = `data/lyrics/${slug}.json`;
-    if (await exists(join(ROOT, out)) && !force) continue;
+    if (await exists(join(root, out)) && !force) continue;
+    selected.push({ track: t, slug, out });
+  }
+  return selected;
+}
+
+export async function missing(o, { root = ROOT, processTrack = one } = {}) {
+  const { wire } = o;
+  const albumsPath = join(root, 'data/albums.json');
+  const albums = JSON.parse(await readFile(albumsPath, 'utf8'));
+  const made = [];
+  for (const { track: t, slug, out } of await selectMissing(albums, { force: o.force, root })) {
     let sheet = null;
-    for (const ext of ['.txt', '.docx']) if (await exists(join(ROOT, `data/lyrics/src/${slug}${ext}`))) { sheet = join(ROOT, `data/lyrics/src/${slug}${ext}`); break; }
-    await one({ ...o, audio: join(ROOT, t.src), out: join(ROOT, out), sheet, title: t.title });
+    for (const ext of ['.txt', '.docx']) if (await exists(join(root, `data/lyrics/src/${slug}${ext}`))) { sheet = join(root, `data/lyrics/src/${slug}${ext}`); break; }
+    await processTrack({ ...o, audio: join(root, t.src), out: join(root, out), sheet, title: t.title });
     if (wire) t.lyrics = out;
     made.push(out);
   }
   if (wire && made.length) await writeFile(albumsPath, JSON.stringify(albums, null, 2) + '\n');
-  console.log(made.length ? `made ${made.length}: ${made.join(', ')}` : 'every shelf track with audio already has lyrics');
+  console.log(made.length ? `made ${made.length}: ${made.join(', ')}` : 'no eligible shelf tracks need lyrics');
   return made;
 }
 

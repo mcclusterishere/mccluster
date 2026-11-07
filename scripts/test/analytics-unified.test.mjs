@@ -26,11 +26,11 @@ test('successful empty music and funnel reads render actual zero; failed ones re
     assert.doesNotMatch(out,/No recorded music activity/);
   }
 });
-test('only verified live commerce is counted; test payments are never combined',()=>{const C=context(),s=C.analytics.state;s.data.business={snapshot:{window:{},commerce:{available:true,live_in_window:{net_cents:1234,payments:1,bookings:{}},test:{net_cents:999999}}}};const out=C.analyticsUnified.overview(s,{scopeLabel:()=>'',chart:'',bars:()=>''});assert.match(out,/\$12\.34/);assert.doesNotMatch(out,/9,999/);});
+test('only verified live commerce is counted; test payments are never combined',()=>{const C=context(),s=C.analytics.state;s.completed={...s.completed,business:true};s.data.business={snapshot:{window:{},commerce:{available:true,live_in_window:{net_cents:1234,payments:1,bookings:{}},test:{net_cents:999999}}}};const out=C.analyticsUnified.overview(s,{scopeLabel:()=>'',chart:'',bars:()=>''});assert.match(out,/\$12\.34/);assert.doesNotMatch(out,/9,999/);});
 test('source catalog reports missing archive independently and escapes provider strings',async()=>{const C=context(),U=C.analyticsUnified;await U.load(async path=>path.includes('/sources')?{sources:[{key:'x',name:'<img src=x onerror=alert(1)>',capabilities:[],configured:true,persistence:'transient',entitlement:{allowed:false}}]}:{database_schema_ready:false},()=>{});const out=U.intelligence();assert.match(out,/not provisioned/);assert.match(out,/Access restricted/);assert.doesNotMatch(out,/<img src=x/);assert.match(out,/&lt;img/);});
 test('geography keeps suppression and unknown visible; no identifying coordinates emitted',()=>{const C=context();const out=C.analyticsUnified.geography({located:20,suppressed:3,unknown:2,points:[{code:'US',name:'USA',value:20}]},{geo:{layer:'pageviews'}},{countryName:x=>x});assert.match(out,/20 located · 3 folded · 2 unknown/);assert.doesNotMatch(out,/latitude|longitude/);});
 
-test('overview preserves the production business envelope and audience totals in measured details',()=>{const C=context(),s=C.analytics.state;s.data.business={ok:true,snapshot:{window:{},users:{created_in_window:17}}};s.data.audienceScience={version:'fixture',totals:{music_listeners:43,returning_listeners:12}};const out=C.analytics.render();assert.match(out,/New accounts<\/span><strong>17/);assert.match(out,/Music listeners<\/small><strong>43/);assert.match(out,/Returning listeners<\/small><strong>12/);});
+test('overview preserves the production business envelope and audience totals in measured details',()=>{const C=context(),s=C.analytics.state;s.completed={...s.completed,business:true};s.data.business={ok:true,snapshot:{window:{},users:{created_in_window:17}}};s.data.audienceScience={version:'fixture',totals:{music_listeners:43,returning_listeners:12}};const out=C.analytics.render();assert.match(out,/New accounts<\/span><strong>17/);assert.match(out,/Music listeners<\/small><strong>43/);assert.match(out,/Returning listeners<\/small><strong>12/);});
 test('selected geography never falls back to global cards or a global trend',()=>{
  const C=context(),s=C.analytics.state;s.geo.places={US:[-97,39,'United States']};s.geo.region='US';s.data.traffic={totals:{visitors:999}};
  for(const section of ['overview','audience']){s.section=section;const out=C.analytics.render();assert.match(out,/Reading this location/);assert.doesNotMatch(out,/999|all countries|Worldwide/);}
@@ -88,7 +88,7 @@ test('external properties never present first-party attention or signup metrics 
 
 test('business and community cards read the production snapshot envelope',()=>{
   const C=context(),s=C.analytics.state;
-  s.data.business={ok:true,snapshot:{window:{},users:{created_in_window:7},music:{plays:{in_window:42}},mnet:{posts:{created_in_window:13},reactions:{created_in_window:19},follows:{created_in_window:5},profiles:{created_in_window:2}}}};
+  s.completed={...s.completed,business:true};s.data.business={ok:true,snapshot:{window:{},users:{created_in_window:7},music:{plays:{in_window:42}},mnet:{posts:{created_in_window:13},reactions:{created_in_window:19},follows:{created_in_window:5},profiles:{created_in_window:2}}}};
   const out=C.analyticsUnified.overview(s,{scopeLabel:()=>'',chart:''});
   assert.match(out,/Music plays<\/span><strong>42/);
   assert.match(C.analyticsUnified.operations(s),/Posts<\/dt><dd>13/);
