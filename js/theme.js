@@ -79,7 +79,7 @@ if ("serviceWorker" in navigator) {
   var s = document.currentScript && document.currentScript.src;
   var root = s ? s.replace(/js\/theme\.js.*$/, "") : "";
   var nav = document.createElement("script");
-  nav.src = root + "js/prim3-nav.js?v=__STAMP__";
+  nav.src = root + "js/prim3-nav.js?v=578e683088fd";
   nav.async = true;
   document.head.appendChild(nav);
 })();

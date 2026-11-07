@@ -19,7 +19,7 @@ test('the preview page is noindex, owner only, loads the engine as a module behi
   assert.match(html,/<meta name="robots" content="noindex, nofollow">/);
   /* owner, 2026-11-03: the games are on the owner's private account; js/owner-only.mjs imports the engine after a yes */
   assert.match(html,/data-owner-gate data-owner-template="tacTpl" data-owner-load="js\/prim3-tactics\/preview\.mjs"/);
-  assert.match(html,/<script type="module" src="js\/owner-only\.mjs\?v=__STAMP__"><\/script>/);
+  assert.match(html,/<script type="module" src="js\/owner-only\.mjs\?v=578e683088fd"><\/script>/);
   assert.doesNotMatch(html,/<script[^>]+src="js\/prim3-tactics\/preview\.mjs"/,'the engine is never a page script');
   const js=await readFile(new URL('preview.mjs',dir),'utf8');
   assert.doesNotMatch(js,/moveUnit\([^)]*suggestion/,'the hint result is never fed into moveUnit');

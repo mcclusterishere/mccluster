@@ -17,7 +17,7 @@ import { getPref, setPref, setMissionFaults, loadSession, resetSession } from ".
 const FT = 0.3048;
 const ELEV = { B1: -13.5, F1: 0, F2: 13.5, F3: 27, F4: 40.5, F5: 54, F6: 67.5, L7: 81 };
 const GLB = { B1: "equity-uprise-basement-b1-core-v2.glb", F1: "equity-uprise-floor-01-core-v2.glb", F2: "equity-uprise-floor-02-core-v2.glb", F3: "equity-uprise-floor-03-core-v2.glb", F4: "equity-uprise-floor-04-core-v2.glb", F5: "equity-uprise-floor-05-core-v2.glb", F6: "equity-uprise-floor-06-core-v2.glb", L7: "equity-uprise-floor-07-core-v2.glb" };
-const STAMP = "__STAMP__";
+const STAMP = "578e683088fd";
 const DATA = "/equity-uprise-preview/";
 const q = (p) => DATA + p + (STAMP.startsWith("__") ? "" : "?v=" + STAMP);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));

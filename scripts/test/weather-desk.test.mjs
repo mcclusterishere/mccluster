@@ -19,8 +19,8 @@ test('the desk is owner only: gated, noindex, out of the sitemap, its script loa
   const html = read('weather-desk.html');
   assert.match(html, /<meta name="robots" content="noindex, nofollow">/);
   assert.match(html, /<section class="[^"]*owner-gate[^"]*"[^>]*data-owner-gate/);
-  assert.match(html, /data-owner-load="js\/weather\/desk\.mjs\?v=__STAMP__"/);
-  assert.match(html, /<script type="module" src="js\/owner-only\.mjs\?v=__STAMP__"><\/script>/);
+  assert.match(html, /data-owner-load="js\/weather\/desk\.mjs\?v=578e683088fd"/);
+  assert.match(html, /<script type="module" src="js\/owner-only\.mjs\?v=578e683088fd"><\/script>/);
   const outside = html.replace(/<template[\s\S]*?<\/template>/g, '');
   assert.doesNotMatch(outside, /<script[^>]+src="[^"]*js\/weather\//, 'no weather script outside the gate');
   assert.doesNotMatch(html, /user-scalable=no|maximum-scale=1/);

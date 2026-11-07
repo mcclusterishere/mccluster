@@ -15,7 +15,7 @@ import { loadSession, saveSession, blankSession } from "./state.mjs";
 import { normalizeMode } from "./contract.mjs";
 
 export const DATA_BASE = "/equity-uprise-preview";
-const STAMP = "__STAMP__";
+const STAMP = "578e683088fd";
 const v = (url) => url + (STAMP.startsWith("__") ? "" : "?v=" + STAMP);
 
 // Keep runtime asset URLs and cache stamps in one loader; apps do not own publication paths.

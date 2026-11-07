@@ -20,7 +20,7 @@
 import { buildEnterUrl, buildReturnUrl, parseReturnHash, validateReturnPoint, normalizeMode, approachPose, encodeReturn, ftToWorld, RETURN_HASH_KEY } from "./contract.mjs";
 import { markEntry, takePendingReturn, getPref } from "./state.mjs";
 
-const STAMP = "__STAMP__";
+const STAMP = "578e683088fd";
 export async function loadRegistry(url = new URL("../../screens/data/screen-registry-v1.json", import.meta.url).href) {
   const r = await fetch(url + (STAMP.startsWith("__") ? "" : "?v=" + STAMP), { cache: "no-cache" });
   if (!r.ok) throw new Error("screen registry " + r.status);

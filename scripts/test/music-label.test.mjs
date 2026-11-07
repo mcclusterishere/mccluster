@@ -185,7 +185,7 @@ test("the guards it replaces are the migrations' bodies with only the label line
 test("Control · Sell · Music · Artists: the Acting-as switcher, honest while the backend is pending", () => {
   const nav = read("js/control-room/nav.js");
   assert.match(nav, /v\("artists", "Artists", "slot", \[[^\]]*"Acting as"[^\]]*\], \{ module: "musicLabel" \}\)/);
-  assert.match(read("control.html"), /<script src="js\/control-room\/music-label\.js\?v=__STAMP__"><\/script>/);
+  assert.match(read("control.html"), /<script src="js\/control-room\/music-label\.js\?v=578e683088fd"><\/script>/);
   const src = read("js/control-room/music-label.js");
   assert.match(src, /The managed-artist backend is pending\./);
   assert.match(src, /rpc\/" \+ name/);

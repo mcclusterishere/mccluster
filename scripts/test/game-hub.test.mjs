@@ -176,7 +176,7 @@ test('the save keeps best score per mode and accuracy per topic', () => {
 });
 
 test('the page: shared bar, noindex, module script, mobile-first CSS, no purple', () => {
-  assert.match(PAGE, /<script src="js\/tabbar\.js\?v=__STAMP__"><\/script>/);
+  assert.match(PAGE, /<script src="js\/tabbar\.js\?v=578e683088fd"><\/script>/);
   assert.match(PAGE, /<meta name="robots" content="noindex, nofollow">/);
   assert.match(PAGE, /<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">/);
   assert.match(PAGE, /js\/game-hub\/hub\.mjs/);
