@@ -15,12 +15,12 @@ test('unloaded/returned events can have no position; unsolicited event names are
  const e=event();e.data.event='grant-reward';assert.equal(acceptsSpatialState(e,source,origin),false);
 });
 import {mountSoleSpatial} from '../../js/city-arcade/sole-spatial.mjs';
-function fixture(){
+function fixture(options={}){
  const controls=new Map(),panel={dataset:{},remove(){},querySelector(k){if(!controls.has(k))controls.set(k,{disabled:false,textContent:'',replaceChildren(){},append(){},selectedIndex:0});return controls.get(k);}},listeners=new Map(),sent=[],states=[];
  const root={append(){},scrollIntoView(){}},frame={contentWindow:{postMessage:m=>sent.push(m)},scrollIntoView(){},addEventListener(){},removeEventListener(){}};
  const win={location:{origin},addEventListener:(k,fn)=>listeners.set(k,fn),removeEventListener:k=>listeners.delete(k)};
  const old=globalThis.document;globalThis.document={createElement:tag=>tag==='option'?{}:panel};
- const dispose=mountSoleSpatial(root,{locationId:SHARED_ENTRANCE,onActive:x=>states.push(x),win,frame,timeoutMs:10,returnTimeoutMs:10});
+ const dispose=mountSoleSpatial(root,{locationId:SHARED_ENTRANCE,onActive:x=>states.push(x),win,frame,timeoutMs:10,returnTimeoutMs:10,...options});
  const originalDispose=dispose;const cleanup=()=>{originalDispose();globalThis.document=old;};
  const emit=(name,patch={})=>{const e=event();e.source=frame.contentWindow;e.data.event=name;Object.assign(e.data,patch);listeners.get('message')?.(e);};
  return {controls,listeners,sent,states,dispose:cleanup,emit};
@@ -54,4 +54,20 @@ test('return during entry waits for acknowledgement rather than the old entry ti
 });
 test('disposing while awaiting return cancels retry timer and removes listener',async()=>{
  const f=fixture();f.controls.get('[data-spatial-enter]').onclick();f.emit('ready');f.emit('closures-changed');const back=f.controls.get('[data-spatial-return]');back.onclick();f.dispose();await new Promise(r=>setTimeout(r,25));assert.equal(back.disabled,true);assert.equal(f.listeners.size,0);assert.deepEqual(f.states,[true,false]);
+});
+
+function request(f,id){const target=f.controls.get('[data-spatial-target]');target.value=id;target.selectedOptions=[{textContent:id}];f.controls.get('[data-spatial-preview]').onclick();return f.sent.at(-1);}
+test('only correlated current requests award once; late, wrong and invalidated replies do not',()=>{
+ const awards=[];const f=fixture({onArrival:a=>{awards.push(a);return true;}});
+ try{f.controls.get('[data-spatial-enter]').onclick();f.emit('ready',{capabilities:['exterior-navigation','road-closures','correlated-arrival']});f.emit('closures-changed');
+ const a=request(f,'bridgeport-main-elm');
+ f.emit('arrived',{requestId:'old',destinationId:a.destinationId});assert.equal(awards.length,0);
+ f.emit('arrived',{requestId:a.requestId,destinationId:'bridgeport-main-south'});assert.equal(awards.length,0);
+ f.emit('arrived',{requestId:a.requestId,destinationId:a.destinationId});f.emit('arrived',{requestId:a.requestId,destinationId:a.destinationId});assert.equal(awards.length,1);
+ const b=request(f,'bridgeport-main-fairfield');f.emit('closures-changed',{navigationRevision:2});f.emit('arrived',{requestId:b.requestId,destinationId:b.destinationId,navigationRevision:2});assert.equal(awards.length,1);
+ const c=request(f,'bridgeport-main-fairfield');f.controls.get('[data-spatial-return]').onclick();f.emit('arrived',{requestId:c.requestId,destinationId:c.destinationId,navigationRevision:2});assert.equal(awards.length,1);
+ }finally{f.dispose();}
+});
+test('older hosts remain navigation-only and unrequested arrivals never award',()=>{
+ const awards=[];const f=fixture({onArrival:a=>awards.push(a)});try{f.controls.get('[data-spatial-enter]').onclick();f.emit('ready');f.emit('closures-changed');const a=request(f,'bridgeport-main-elm');f.emit('arrived',{requestId:a.requestId,destinationId:a.destinationId});assert.equal(awards.length,0);}finally{f.dispose();}
 });
