@@ -545,6 +545,20 @@
       "callers": [
         "workers/mccluster/src/world-members.js"
       ]
+    },
+    "learning_portfolio": {
+      "kind": "table",
+      "pending": "learning_portfolio_v1.sql",
+      "callers": [
+        "workers/mccluster/src/prim3/portfolio.js"
+      ]
+    },
+    "learning_portfolio_write": {
+      "kind": "function",
+      "pending": "learning_portfolio_v1.sql",
+      "callers": [
+        "workers/mccluster/src/prim3/portfolio.js"
+      ]
     }
   },
   "missing_everywhere": {
