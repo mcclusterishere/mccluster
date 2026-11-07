@@ -13,6 +13,7 @@
    The World builder (Edit) keeps drafts in this browser (localStorage) and exports or imports the JSON file. There is no
    database table and no Worker route for it: cloud storage will reuse the Level Forge backend later. */
 import { onCountryCard, emitCountryCard } from './hooks.mjs';
+import './mission-generator.mjs';
 import { DATA_URL, DRAFT_KEY, REGIONS, castOf, missionsIn, findMission, deployHref, validate, missionErrors, blankMission, levelsOf, DIFFICULTIES, parseImport, exportText, uniqueId } from './missions.mjs';
 
 const $ = (id) => document.getElementById(id);
@@ -196,11 +197,10 @@ function renderSide() {
     ${here.map((m) => missionBlock(m)).join('')}
     <section class="pw-news" id="pwNews" data-country="${esc(code)}" aria-label="News to mission">
       <p class="pw-sub">News → mission</p>
-      <p class="pw-empty">Coming next: headlines from ${esc(name)} turned into a mission draft by McCluster AI.</p>
-      <button type="button" class="pw-btn" data-news-placeholder disabled>Draft a mission from the news</button>
+      <p class="pw-empty">Review public news and regional geography to build a playable training scenario. Automatic news ingestion is not connected.</p>
     </section>
   </article>`;
-  emitCountryCard(code, $('pwNews'), name);
+  emitCountryCard(code, $('pwNews'), name, { geography: here[0] ? { place: here[0].place, lat: here[0].lat, lon: here[0].lon } : null });
 }
 function missionBlock(m) {
   const lvl = levelsOf(doc).find((l) => l.id === m.level);
