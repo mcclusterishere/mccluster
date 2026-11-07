@@ -152,7 +152,7 @@ test('no purple anywhere in the new page, scripts or styles (owner rule)', () =>
 
 test('the owner gate: nothing but "Owner only" ships in the page, and the app and mission file load only after a yes', () => {
   assert.match(PAGE, /<h1>Owner only<\/h1>/);
-  assert.match(PAGE, /<template id="pwTpl"><div id="pwApp" hidden><\/div><\/template>/);
+  assert.match(PAGE, /<template id="pwTpl"><p><a href="prim3-city-tactics\.html">[^<]+<\/a><\/p><div id="pwApp" hidden><\/div><\/template>/);
   assert.match(PAGE, /data-owner-gate data-owner-template="pwTpl" data-owner-load="js\/prim3-world\/news-desk\.mjs js\/prim3-world\/app\.mjs"/);
   assert.doesNotMatch(PAGE, /<script[^>]+src="js\/prim3-world\//, 'no app module is a page script: js/owner-only.mjs imports them after a yes');
   assert.match(PAGE, /<script type="module" src="js\/owner-only\.mjs\?v=__STAMP__"><\/script>/);
