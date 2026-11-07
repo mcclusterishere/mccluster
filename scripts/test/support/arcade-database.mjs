@@ -5,8 +5,8 @@ export const OWNER='11111111-1111-4111-8111-111111111111';
 export const PEER='22222222-2222-4222-8222-222222222222';
 export async function createArcadeDatabase() {
   const {PGlite}=await import(process.env.PGLITE_MODULE||'@electric-sql/pglite');const db=new PGlite();
-  await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;create schema auth;create table auth.users(id uuid primary key);create table public.orgs(id uuid primary key,slug text);create table public.org_members(org_id uuid,profile_id uuid,role text);grant select on public.orgs,public.org_members to service_role;grant usage on schema auth to service_role;
-    insert into auth.users values('${OWNER}'),('${PEER}');insert into orgs values('${OWNER}','mccluster');insert into org_members values('${OWNER}','${OWNER}','owner'),('${OWNER}','${PEER}','member');`);
+  await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;create schema auth;create table auth.users(id uuid primary key);create table public.orgs(id uuid primary key,slug text,enabled boolean not null default true);create table public.org_members(org_id uuid,profile_id uuid,role text);grant select on public.orgs,public.org_members to service_role;grant usage on schema auth to service_role;
+    insert into auth.users values('${OWNER}'),('${PEER}');insert into orgs(id,slug) values('${OWNER}','mccluster');insert into org_members values('${OWNER}','${OWNER}','owner'),('${OWNER}','${PEER}','member');`);
   await db.exec(await readFile(new URL('../../../supabase/pending/city_arcade_v1.sql',import.meta.url),'utf8'));
   let chain=Promise.resolve();
   const rpc=async(params)=>{
