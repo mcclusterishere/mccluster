@@ -36,7 +36,7 @@
     }
   });
   buttons.globe.onclick=()=>control.select('globe');buttons.feed.onclick=()=>control.select('feed');buttons.live.onclick=()=>control.live();
-  w.addEventListener('mcc:appbar-admin',()=>{if(!w.MCC_BAR?.admin())control.revoke();});
+  w.addEventListener('mcc:appbar-admin',()=>{if(w.MCC_BAR?.admin())control.activate();else control.revoke();});
   w.addEventListener('mcc:world-mode',enforceFeed);
   d.addEventListener('visibilitychange',()=>{if(!d.hidden)control.activate();});
   control.activate();

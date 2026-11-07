@@ -93,3 +93,17 @@ for (const phase of ['owner check', 'studio']) test(`visibility reactivation can
   finish({opened:false});assert.equal(await retry,false);
   assert.equal(paints.at(-1).busy,false);
 });
+
+test('Policy integration retries when canonical owner verification finishes after page boot', () => {
+  const listeners={};let allowed=false,activations=0,revocations=0;
+  const element=()=>({dataset:{},append(){},setAttribute(){},prepend(){}});
+  const doc={documentElement:{},getElementById:()=>element(),createElement:element,addEventListener(){}};
+  const window={location:{search:'?policy=1',href:'https://example.invalid/?policy=1'},
+    MCC_BAR:{admin:()=>allowed},
+    MCC_POLICY_CORE:{create:()=>({activate(){activations++;},revoke(){revocations++;}})},
+    addEventListener:(name,fn)=>{listeners[name]=fn;}};
+  vm.runInNewContext(read('js/policy-mode.js'),{window,document:doc,URL,URLSearchParams});
+  assert.equal(activations,1);
+  allowed=true;listeners['mcc:appbar-admin']();assert.equal(activations,2);
+  allowed=false;listeners['mcc:appbar-admin']();assert.equal(revocations,1);
+});
