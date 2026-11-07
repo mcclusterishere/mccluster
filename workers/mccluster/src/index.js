@@ -1,3 +1,4 @@
+import { handlePortfolio, PORTFOLIO_PATH } from './prim3/portfolio.js';
 import { handleProductWidgetReadiness, PRODUCT_WIDGET_READINESS } from './product-widget-readiness.js';
 import { handleArcade, ARCADE_PREFIX } from './arcade/index.js';
 import { guardWorldRelease } from './world-release.js';
@@ -166,6 +167,10 @@ export default {
       /* PRIM3 news desk: the 24 agents' briefs and reactions, owner only (./prim3/news-desk.js) */
       if (path === NEWS_DESK_PATH) {
         return handleNewsDesk(request, env, { requireHouseOwner });
+      }
+
+      if (path === PORTFOLIO_PATH || path.startsWith(`${PORTFOLIO_PATH}/`)) {
+        return handlePortfolio(request, env, { requireHouseOwner });
       }
 
       /* PRIM3 learning evidence: lab sessions, certificates, pathways, HSEEP exercises; house owner only for now (./prim3/learning.js) */

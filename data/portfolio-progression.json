@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "name": "Matthew McCluster",
+  "goals": [
+    "Housatonic associate degree via accepted Southern/CLEP credits (conditional goal)",
+    "Computer Science BS \u2192 accelerated Cybersecurity MS (goal)",
+    "Business Administration minor (goal)"
+  ],
+  "courses": [
+    {
+      "id": "chemistry",
+      "title": "Chemistry",
+      "stat": "Scientific reasoning",
+      "project": "Water chemistry notebook",
+      "brief": "Build a reproducible notebook comparing water-quality measurements, units, uncertainty and sources.",
+      "related": "research.html"
+    },
+    {
+      "id": "financial-accounting",
+      "title": "Financial Accounting",
+      "stat": "Business reasoning",
+      "project": "Small-business accounting workbook",
+      "brief": "Build a synthetic transaction ledger, reconcile balances and produce linked financial statements with clear assumptions.",
+      "related": "portfolio.html"
+    },
+    {
+      "id": "macroeconomics",
+      "title": "Macroeconomics",
+      "stat": "Economic analysis",
+      "project": "Economic indicators notebook",
+      "brief": "Build a reproducible notebook comparing inflation, output and employment using public data, with source dates and uncertainty.",
+      "related": "research.html"
+    },
+    {
+      "id": "us-history-1",
+      "title": "U.S. History I",
+      "stat": "Historical analysis",
+      "project": "Primary-source history exhibit",
+      "brief": "Create a sourced timeline and short exhibit comparing primary accounts of an early U.S. event, with citations and competing interpretations.",
+      "related": "research.html"
+    },
+    {
+      "id": "prep-5",
+      "title": "Prep course 5 \u00b7 subject to choose",
+      "stat": "Exploration",
+      "project": "Project brief 5 \u00b7 to scope",
+      "brief": "Choose the subject, then define one demonstrable artifact and acceptance criteria.",
+      "related": "portfolio.html"
+    },
+    {
+      "id": "prep-6",
+      "title": "Prep course 6 \u00b7 subject to choose",
+      "stat": "Exploration",
+      "project": "Project brief 6 \u00b7 to scope",
+      "brief": "Choose the subject, then define one demonstrable artifact and acceptance criteria.",
+      "related": "portfolio.html"
+    },
+    {
+      "id": "prep-7",
+      "title": "Prep course 7 \u00b7 subject to choose",
+      "stat": "Exploration",
+      "project": "Project brief 7 \u00b7 to scope",
+      "brief": "Choose the subject, then define one demonstrable artifact and acceptance criteria.",
+      "related": "portfolio.html"
+    },
+    {
+      "id": "prep-8",
+      "title": "Prep course 8 \u00b7 subject to choose",
+      "stat": "Exploration",
+      "project": "Project brief 8 \u00b7 to scope",
+      "brief": "Choose the subject, then define one demonstrable artifact and acceptance criteria.",
+      "related": "portfolio.html"
+    }
+  ]
+}
