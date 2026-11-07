@@ -38,3 +38,28 @@ Target: canonical Supabase `zmnhbrjyhxzhkxmhkexs`, Worker `mccluster`, existing 
 - **Music:** workspace/creator schema → release handoff → repaired research queue → bridge. Verify actual PGMQ signature, private artifact policies and rights/stage review. Enqueue/execution flags remain independently off until authorized; model binaries/licenses/resources are separate from deploying review UI.
 
 These are distinct approval scopes. A migration or UI deployment approval is not approval to accept legal terms, add credentials, create customers, publish their work or move money. The upload/processing, music consent/review and encrypted sandbox registrar wiring are now implemented and fixture-tested. Terminal CI at the final integrated SHA and the stated real-service verification gates remain required before activation.
+
+### Recovery checkpoint — 2026-11-07
+
+Customer consolidation remains #681, head `5e020833534b68b31e191b137e9a30da8b58314f`.
+Do not merge its ancestor Instagram/domain PRs independently. A read-only merge
+trial against main `55befc618eb24d21a37e6c4afd66c1bb47767237` found 14 conflicting
+files, including shared auth/navigation, music, Worker entrypoint, source-map
+outputs and contract tests. Reconciliation needs the owner-control publisher's
+coordination before changing its shared hooks. This checkpoint does not certify
+current-main integration or a customer launch.
+
+The isolated Instagram callback repair stacked on this consolidation rejects
+redirects, malformed provider JSON and token responses, and responses over 1 MiB
+(counted while streaming, regardless of Content-Length). An invalid response
+cannot advance to token staging or account installation. Provider errors remain
+redacted; authorization state remains single-use, so the owner must reconnect
+after an exchange fails. The existing successful callback still returns account
+choices without credentials. No provider permissions, feature flags, database
+schema or publishing behavior are enabled by this repair.
+
+Release order: review the callback repair into the consolidated customer branch;
+reconcile that consolidated branch with then-current main alongside owner-control
+work; run customer database/browser and provider sandbox acceptance; only then
+consider authorized activation. Production schema and Meta sandbox acceptance
+remain unverified here. The prior denied production SQL read was not retried.

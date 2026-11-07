@@ -120,3 +120,46 @@ test('eligible owner can discover setup while unready connection stays nonpublis
  mock(()=>response(null));const result=await handler(request('status'),env,user);
  assert.equal(result.capability.eligible,true);assert.equal(result.capability.can_publish,false);assert.equal(result.capability.reason,'owned_connection_required');
 });
+
+for (const [name, makeResponse, status] of [
+ ['redirect', () => new Response(null,{status:307,headers:{location:'https://unexpected.invalid/'}}),409],
+ ['malformed JSON', () => new Response('private-token is not JSON'),502],
+ ['null JSON', () => response(null),502],
+ ['array JSON', () => response([]),502],
+ ['missing token', () => response({}),409],
+ ['nonstring token', () => response({access_token:{private:'token'}}),409],
+ ['oversized stream', () => new Response(new ReadableStream({start(controller){controller.enqueue(new Uint8Array(1024*1024));controller.enqueue(new Uint8Array(1));controller.close();}})),502],
+ ['failed stream', () => new Response(new ReadableStream({start(controller){controller.error(Error('private-token'));}})),502]
+]) test(`OAuth rejects ${name} before further exchange or credential storage`,async()=>{
+ const actions=[];let exchanges=0;
+ mock((url,init)=>{
+  if(url.hostname==='graph.facebook.com'){
+   exchanges++;assert.equal(init.redirect,'manual');
+   return makeResponse();
+  }
+  actions.push(JSON.parse(init.body).p_action);return response({});
+ });
+ await assert.rejects(handler(request('complete',{state:'a'.repeat(72),code:'fixture'}),env,user),e=>e.status===status&&!/private-token|unexpected.invalid/.test(e.message));
+ assert.equal(exchanges,1);assert.deepEqual(actions,['claim']);
+});
+test('selection rejects malformed provider account list without installing credentials',async()=>{
+ const actions=[];
+ mock((url,init)=>{
+  if(url.hostname==='graph.facebook.com'){
+   assert.equal(init.redirect,'manual');assert.equal(init.headers.authorization,'Bearer staged-fixture');
+   return response({data:{unexpected:'private-token'}});
+  }
+  actions.push(JSON.parse(init.body).p_action);return response({token:'staged-fixture'});
+ });
+ await assert.rejects(handler(request('select',{selection:user.id,page_id:'123'}),env,user),{status:502});
+ assert.deepEqual(actions,['selection']);
+});
+test('oversized provider stream is cancelled before storing tokens',async()=>{
+ let cancelled=false;
+ mock((url)=>url.hostname==='graph.facebook.com'?new Response(new ReadableStream({
+  pull(controller){controller.enqueue(new Uint8Array(1024*1024+1));},
+  cancel(){cancelled=true;}
+ })):response({}));
+ await assert.rejects(handler(request('complete',{state:'a'.repeat(72),code:'fixture'}),env,user),{status:502});
+ assert.equal(cancelled,true);
+});
