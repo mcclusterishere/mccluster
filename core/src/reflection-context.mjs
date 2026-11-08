@@ -21,6 +21,7 @@ export function compactReflectionContext({ objective, maxJobs, objectives = [], 
       summary: text(row?.summary, 200),
     })),
     health: health && typeof health === 'object' ? {
+      source_job_id: text(health.source_job_id, 80),
       checked_at: text(health.checked_at, 40), overall: text(health.overall, 30),
       deployed_sha: /^[a-f0-9]{40}$/i.test(health.deployed_sha || '') ? health.deployed_sha : null,
       migration_parity: health.parity === true || health.parity === 'true',
@@ -78,5 +79,5 @@ export async function loadReflectionHealth(rest, orgId) {
   const { body } = await rest(`ops_agent_jobs?${query}`);
   if (!Array.isArray(body)) throw new Error('Reflection health evidence unavailable');
   // Deletion between reads means unavailable evidence, never another tenant's row.
-  return body[0] || null;
+  return body[0] ? {...body[0], source_job_id: id} : null;
 }

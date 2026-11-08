@@ -40,7 +40,7 @@ test('health JSON is read only by the previously selected primary key', async ()
   const summary={overall:'degraded',parity:true};
   const rest=async path=>{const q=new URL(path,'http://test').searchParams;seen.push(q);
     return {body:seen.length===1?[{id}]:[summary]};};
-  assert.deepEqual(await loadReflectionHealth(rest,'house'),summary);
+  assert.deepEqual(await loadReflectionHealth(rest,'house'),{...summary,source_job_id:id});
   assert.equal(seen.length,2);
   assert.equal(seen[0].get('select'),'id');
   assert.equal(seen[0].get('order'),'updated_at.desc,id.desc');

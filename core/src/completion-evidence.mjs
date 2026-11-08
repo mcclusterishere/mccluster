@@ -1,3 +1,4 @@
+import { reflectionAnalysisMustAbstain } from './reflection-policy.mjs';
 import { createHash } from 'node:crypto';
 
 export const COMPLETION_EVIDENCE_SCHEMA = 'mccluster-completion-evidence/v1';
@@ -152,6 +153,22 @@ function policyEvidence(job, output) {
     }
 
     case 'local_analysis': {
+      if (output.status === 'abstained') {
+        requireValue(job, reflectionAnalysisMustAbstain(job), 'analysis abstention requires an empty-evidence reflection child');
+        requireValue(job, output.executor === 'local_analysis:v2' && output.reason === 'reflection_evidence_missing'
+          && output.evidence_scope === 'job_input_only', 'analysis abstention requires the bounded reflection receipt');
+        requireValue(job, output.model === null && output.usage?.model_invoked === false
+          && Object.keys(output.usage).length === 1, 'analysis abstention must not claim model inference');
+        requireValue(job, output.reflection_parent_job_id === (job.input?.reflection_parent_job_id || null), 'analysis abstention parent must match the job');
+        const analysis = output.analysis;
+        requireValue(job, analysis && !Array.isArray(analysis) && typeof analysis === 'object'
+          && typeof analysis.summary === 'string' && analysis.summary.trim().length > 0 && analysis.summary.length <= 240
+          && Object.keys(analysis).length === 4
+          && ['findings', 'assumptions', 'next_actions'].every(key => Array.isArray(analysis[key]) && analysis[key].length === 0),
+        'analysis abstention requires a bounded summary and empty structured findings, assumptions and next actions');
+        records.push({kind: 'bounded_noop', reason: output.reason, reflection_parent_job_id: output.reflection_parent_job_id, model_invoked: false});
+        break;
+      }
       requireValue(job, Boolean(text(output.model)), 'local analysis must identify the model used');
       requireValue(job, output.analysis && typeof output.analysis === 'object', 'local analysis must return structured analysis');
       records.push({ kind: 'model_result', model: text(output.model), evidence_scope: text(output.evidence_scope || 'job_input_only') });

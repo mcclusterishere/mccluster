@@ -1,36 +1,14 @@
-import { addSignal, houseOrgId, recentJobs } from './supabase.mjs';
+import { addSignal, resolveHouseOrgId } from './supabase.mjs';
+import { readDigestJobs, summarizeDigest } from './digest-report.mjs';
 import { sendSms } from './notifier.mjs';
 
 const ORG_ID = process.env.MCCLUSTER_ORG_ID || '';
-const HOURS = Number(process.env.MCCLUSTER_DIGEST_HOURS || 12);
+const HOURS = Number(process.env.MCCLUSTER_DIGEST_HOURS || 24);
 
-function short(value, max = 220) {
-  const text = String(value ?? '').replace(/\s+/g, ' ').trim();
-  return text.length > max ? `${text.slice(0, max - 1)}…` : text;
-}
-
-function describe(job) {
-  const target = [job.target_type, job.target_id].filter(Boolean).join(':');
-  if (job.status === 'done') {
-    const summary = job.output?.summary || job.output?.analysis?.summary || job.output?.repo || 'completed';
-    return `✓ ${job.job_type}${target ? ` (${target})` : ''}: ${short(summary, 180)}`;
-  }
-  if (job.status === 'failed') return `✗ ${job.job_type}${target ? ` (${target})` : ''}: ${short(job.last_error, 180)}`;
-  if (job.status === 'running') return `→ ${job.job_type}${target ? ` (${target})` : ''} is still running`;
-  return `· ${job.job_type}${target ? ` (${target})` : ''} ${job.status}`;
-}
-
-export async function buildDigest() {
-  const jobs = await recentJobs({ orgId: ORG_ID || undefined, sinceHours: HOURS, limit: 40 });
-  const counts = jobs.reduce((acc, job) => {
-    acc[job.status] = (acc[job.status] || 0) + 1;
-    return acc;
-  }, {});
-
-  const headline = `McCluster Core ${HOURS}h: ${counts.done || 0} done, ${counts.failed || 0} failed, ${counts.running || 0} running, ${counts.queued || 0} queued.`;
-  const interesting = jobs.filter((job) => ['done', 'failed', 'running'].includes(job.status)).slice(0, 6);
-  const body = [headline, ...interesting.map(describe)].join('\n').slice(0, 1450);
-  return { body, counts, jobs: jobs.length };
+export async function buildDigest({ orgId = ORG_ID, hours = HOURS, now = new Date(), read, resolveOrg = resolveHouseOrgId } = {}) {
+  const resolvedOrgId = orgId || await resolveOrg();
+  const { jobs, coverage } = await readDigestJobs({ orgId: resolvedOrgId, hours, now, read });
+  return { ...summarizeDigest(jobs, coverage), org_id: resolvedOrgId };
 }
 
 async function main() {
@@ -42,7 +20,7 @@ async function main() {
      will until somebody sets it up. The REPORT is not allowed to be missing.
      Writing it before the send means a morning with no text still leaves a
      morning with a report, which is the whole point of thinking overnight. */
-  const orgId = ORG_ID || (await houseOrgId());
+  const orgId = digest.org_id;
   let recorded = false;
   if (orgId) {
     try {
@@ -50,8 +28,8 @@ async function main() {
         orgId,
         kind: 'core_morning_digest',
         body: digest.body,
-        severity: digest.counts.failed ? 'warn' : 'info',
-        metadata: { counts: digest.counts, jobs: digest.jobs, window_hours: HOURS },
+        severity: digest.counts.failed || digest.facts.repo_health.tests_failed || digest.facts.health.failing_observations || !digest.coverage.complete ? 'warn' : 'info',
+        metadata: { counts: digest.counts, jobs: digest.jobs, window_hours: HOURS, outcomes: digest.outcomes, facts: digest.facts, coverage: digest.coverage, details: digest.details },
       });
       recorded = true;
     } catch (error) {
@@ -59,7 +37,7 @@ async function main() {
     }
   }
 
-  const sms = await sendSms(digest.body);
+  const sms = await sendSms(digest.body.slice(0, 1450));
   console.log(JSON.stringify({ event: 'core_digest', ...digest, recorded, org_id: orgId || null, sms }));
 }
 
