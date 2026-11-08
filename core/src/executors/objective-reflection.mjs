@@ -86,13 +86,17 @@ export async function objectiveReflection(job, {
   if (!text) throw new Error('Local AI returned an empty reflection');
   const parsed = extractJsonObject(text);
   if (!parsed) throw new Error('Local AI returned invalid reflection JSON');
-  const plan = normalizeReflectionPlan(parsed, {maxJobs});
+  const {canonical_objectives, recent_jobs, health: healthEvidence} = compact.context;
+  const plan = normalizeReflectionPlan(parsed, {maxJobs, canonicalEvidence: {
+    canonical_objectives, recent_jobs, health: healthEvidence,
+  }});
   const queued = [];
   for (const next of plan.next_jobs) {
     const created = await enqueue({
       orgId: job.org_id, jobType: next.job_type, targetType: next.target_type,
       targetId: next.target_id, priority: next.priority,
-      input: {...next.input, reflection_parent_job_id: job.id, reflection_objective: objective},
+      input: {...next.input, reflection_parent_job_id: job.id, reflection_objective: objective,
+        ...(next.job_type === 'local_analysis' ? {reflection_evidence_limits: compact.context.evidence_limits} : {})},
     });
     queued.push({id: created.id, job_type: created.job_type, target_type: created.target_type, target_id: created.target_id, priority: created.priority});
   }

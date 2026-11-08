@@ -9,7 +9,7 @@ The runner polls `ops_agent_jobs`, atomically claims only job types it actually 
 Allowlisted executors:
 
 - `repo_health` — fetches repository state and can run already-installed local tests; it never installs packages during a health check.
-- `local_analysis` — sends a bounded analysis task to the local Ollama model. Its evidence scope is explicitly `job_input_only`.
+- `local_analysis` — sends a bounded analysis task to the local Ollama model. Its evidence scope is explicitly `job_input_only`. Reflection children inherit the same bounded canonical objective/job/health snapshot seen by the planner, including source IDs and the parent job ID, rather than model-generated evidence. Empty-evidence reflection children return `status: abstained` and `reason: reflection_evidence_missing` without inference; ordinary prompt-only analysis remains supported.
 - `code_patch` — creates a disposable Git worktree, asks a separate low-privilege OpenCode service to edit it with the local model, rejects sensitive-path diffs, commits the accepted diff, optionally pushes a branch, and attempts to open a **draft PR**. It never auto-merges or deploys.
 
 - `lyrics_align` — the lyric machine for an uploaded release (`core/src/executors/lyrics-align.mjs`, engine in `core/src/lyrics/`): downloads the master with the service key into a private temp dir, separates the vocal with Demucs, recognises it with faster-whisper, maps the creator's lyric sheet (or DistroKid TTML / LRC) onto what is sung, refines word times with wav2vec2 CTC forced alignment, and writes `creator_tracks.lyrics` unreviewed. It never replaces lyrics the owner reviewed. Queued by the trigger in `supabase/pending/20261031180000_lyrics_machine_v1.sql`, by Control's "Re-run machine", or by the `lyrics.align` capability. See "Lyric machine runtime" below.
@@ -301,3 +301,35 @@ The preview executor publishes static output from an allowlisted repository and
 exact commit, without Vercel. Enable only after verifying the loopback gateway,
 public tunnel, and (for npm builds) the restricted systemd build template and
 Polkit rule on the host. The serving gateway uses `preview.env`, never `core.env`.
+
+### Daily work report coverage
+
+The existing digest defaults to a 24-hour window (the existing
+`MCCLUSTER_DIGEST_HOURS` override remains supported for 1–168 hours). It records
+`core_morning_digest` in the existing organization-scoped `ops_signals` stream.
+It resolves the organization before reading `ops_agent_jobs`, scans with a fixed
+upper time bound and `(updated_at, id)` keyset pagination, and labels coverage
+complete or truncated at 10,000 rows or 100 reads. Private evidence/context is
+inspected with depth/node bounds, retained only as a presence flag, and then
+discarded. Inputs exceeding inspection bounds are unknown rather than empty. These are **read-time states of current job
+rows updated in the window**, not executions or a transactional snapshot. A
+retried job's previous failure may no longer be represented; older pending rows
+outside the window are not a backlog total. Concurrent updates can change the
+cohort while it is read. “Complete” means the bounded query was exhausted, not
+that historical execution coverage was reconstructed.
+
+Reported outcomes, no-change runs, observations, planning, abstentions and
+empty-evidence analyses are separate. PRIM3 comments/briefs and news pairing
+counts are aggregated; tests actually run, their results, and repeated repository
+result digests are explicit. Missing output is unknown, not a successful no-op.
+Queued reflection children are not completed work. No-change work can be
+legitimate. Supplied evidence and stored receipts are not independent verification.
+Details prioritize failed jobs, failed tests and unhealthy observations before
+maintenance chatter. Evidence input, prompts, raw outputs and test logs are not
+copied into the signal; only bounded summaries and factual counters are recorded.
+
+This changes reporting only: no new schema, timer, scheduler, model invocation or
+permission. Existing optional SMS delivery stays a single existing call capped
+at 1,450 characters; this feature does not enable SMS. Test offline with
+`node --test core/test/digest-report.test.mjs`; do not run `npm run digest` as a test,
+as the CLI records a live signal and attempts its existing delivery path.

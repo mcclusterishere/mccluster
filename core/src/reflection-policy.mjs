@@ -35,7 +35,7 @@ export function extractJsonObject(text) {
   return null;
 }
 
-export function normalizeReflectionPlan(value, { maxJobs = 2 } = {}) {
+export function normalizeReflectionPlan(value, { maxJobs = 2, canonicalEvidence = null } = {}) {
   const limit = clampInteger(maxJobs, 0, 3, 2);
   const plan = value && typeof value === 'object' ? value : {};
   const requested = Array.isArray(plan.next_jobs) ? plan.next_jobs : [];
@@ -96,9 +96,10 @@ export function normalizeReflectionPlan(value, { maxJobs = 2 } = {}) {
       priority,
       input: {
         task,
-        evidence: candidate.evidence && typeof candidate.evidence === 'object'
-          ? candidate.evidence
-          : {},
+        // Analysis facts come from the executor's compact canonical snapshot,
+        // never from the planner's generated assertions.
+        evidence: jobType === 'local_analysis' ? (canonicalEvidence ?? {})
+          : candidate.evidence && typeof candidate.evidence === 'object' ? candidate.evidence : {},
         reflection_origin: true,
         ...(jobType === 'code_patch' ? {
           title: boundedString(candidate.title || `Autonomous maintenance: ${task}`, 160),
@@ -118,4 +119,21 @@ export function normalizeReflectionPlan(value, { maxJobs = 2 } = {}) {
 
 export function allowedReflectionJobTypes() {
   return [...SAFE_JOB_TYPES];
+}
+
+// Only reflection children require supplied evidence. Ordinary prompt-only
+// analysis remains supported, including existing callers without provenance.
+function hasEvidence(value, depth = 0) {
+  if (depth > 16 || value == null) return false;
+  if (typeof value === 'string') return value.trim().length > 0;
+  if (typeof value === 'number') return Number.isFinite(value);
+  if (typeof value === 'boolean') return true;
+  return typeof value === 'object' && Object.values(value).some(item => hasEvidence(item, depth + 1));
+}
+
+export function reflectionAnalysisMustAbstain(job) {
+  const parent = job.input?.reflection_parent_job_id;
+  const reflection = job.input?.reflection_origin === true
+    || (typeof parent === 'string' && parent.trim().length > 0);
+  return reflection && !hasEvidence(job.input?.evidence ?? job.input?.context ?? null);
 }
