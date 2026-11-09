@@ -1,0 +1,1 @@
+{"name":"fyre-climate-local-prototype","private":true,"version":"0.1.0","scripts":{"test":"node --test test.cjs"}}
