@@ -23,7 +23,7 @@ const realFetch = globalThis.fetch;
 afterEach(() => { globalThis.fetch = realFetch; });
 const ok = (d, s = 200) => new Response(JSON.stringify(d), { status: s });
 
-function fake({ signedIn = true, admin = false, assets = [{ id: IMG, media_type: 'image' }], reserved = null, caseRow = { id: CASE, kind: 'sighting', reporter_m_uid: OTHER }, photoRows = [PHOTO_ROW], links = LINKS, photoIds = [IMG] } = {}) {
+function fake({ signedIn = true, admin = false, assets = [{ id: IMG, media_type: 'image' }], reserved = null, caseRow = { id: CASE, kind: 'sighting', reporter_m_uid: OTHER }, photoRows = [PHOTO_ROW], links = LINKS, photoIds = [IMG], signAnswer = null } = {}) {
   const calls = [];
   globalThis.fetch = async (url, init = {}) => {
     const u = String(url), m = init.method || 'GET';
@@ -41,7 +41,8 @@ function fake({ signedIn = true, admin = false, assets = [{ id: IMG, media_type:
     if (u.includes('/storage/v1/object/sign/')) {
       // Storage signs whatever a service-role caller names, in any bucket: the Worker is the only gate.
       const bucket = u.split('/storage/v1/object/sign/')[1];
-      return ok((JSON.parse(init.body).paths || []).map((path) => ({ path, signedURL: `/object/sign/${bucket}/${path}?token=t` })));
+      const honest = (JSON.parse(init.body).paths || []).map((path) => ({ path, signedURL: `/object/sign/${bucket}/${path}?token=t` }));
+      return ok(signAnswer ? signAnswer(honest) : honest);
     }
     if (u.includes('/fbi_cases?id=') && m === 'GET') return ok(caseRow ? [caseRow] : []);
     if (u.includes('/fbi_cases') && m === 'POST') return ok([{ id: CASE }], 201);
@@ -229,4 +230,17 @@ test('a photo whose upload prefix is not linked to its owner is not signed', asy
   calls = fake({ photoRows: [{ id: IMG, bucket_id: 'mnet-media', object_path: PHOTO }] });
   assert.deepEqual((await (await call('/v1/fbi/mine')).json()).cases[0].photos, []);
   assert.deepEqual(signCalls(calls), []);
+});
+
+test('a storage answer padded with entries nobody asked for, or with holes, hands out only the proven photo', async () => {
+  const evil = { path: 'albums/i-am-here/01-master.wav', signedURL: '/object/sign/mcc-gated-audio/albums/i-am-here/01-master.wav?token=EVIL' };
+  fake({ signAnswer: (honest) => [null, evil, ...honest, undefined, 7, 'x', {}] });
+  let res = await call('/v1/fbi/mine');
+  assert.equal(res.status, 200);
+  assert.deepEqual((await res.json()).cases[0].photos, [`https://db.test/storage/v1/object/sign/mnet-media/${PHOTO}?token=t`]);
+  // an answer of nothing but holes is no photo, not a failed page
+  fake({ signAnswer: () => [null] });
+  res = await call('/v1/fbi/mine');
+  assert.equal(res.status, 200);
+  assert.deepEqual((await res.json()).cases[0].photos, []);
 });

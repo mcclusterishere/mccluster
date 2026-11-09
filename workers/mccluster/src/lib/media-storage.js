@@ -70,7 +70,14 @@ export async function isOwnMediaUpload(asset, read) {
   return (await ownMediaUploads([asset], read)).length === 1;
 }
 
-/* The object path as URL path segments, for a single-object sign request. */
-export function mediaObjectUrlPath(asset) {
-  return String(asset.object_path).split('/').map(encodeURIComponent).join('/');
+/* The storage sign path for one row, `mnet-media/<object path>`, or null unless
+   the row is provably its owner's own upload. The proof and the path come from
+   one call on purpose: `..` survives encodeURIComponent and an HTTP client
+   resolves it, so a path helper that could be called on an unchecked row would
+   let a later route sign `mnet-media/../<any bucket>/<any object>`. A canonical
+   path is two segments of [0-9a-f-] and [A-Za-z0-9._-], which encoding leaves
+   as they are; the encoding stays so this is still right if the rule widens. */
+export async function ownMediaSignPath(asset, read) {
+  if (!(await isOwnMediaUpload(asset, read))) return null;
+  return `${MEDIA_BUCKET}/${asset.object_path.split('/').map(encodeURIComponent).join('/')}`;
 }
