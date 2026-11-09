@@ -30,7 +30,7 @@ Dependencies: Node.js 18+ for built-in `node:test`; zero runtime/npm dependencie
 - `model.js`: original learning cards and normalized local-only draft storage.
 - `app.js`: filter, create/edit/remove, cancellation and storage-failure feedback. Uses textContent for notes, no network calls.
 - `integration-contract.mjs`: proposed read-only host-context seam; not wired to the standalone preview. Tests cover denied role, interrupted authority/selection, and teardown. This is not server authorization.
-- `test.cjs`: 16 unit/contract/static tests.
+- `test.cjs`: 20 unit/contract/static tests.
 - `browser-acceptance.cjs`: unrun browser acceptance harness.
 - `README.md`: this integration and verification handoff.
 
@@ -40,7 +40,7 @@ Dependencies: Node.js 18+ for built-in `node:test`; zero runtime/npm dependencie
 2. Keep the existing shared Control route inventory and bottom navigation. Add FYRE as a local section under Products → E=Up, using current server-verified house-owner authority. Do not expose a consumer destination, add global navigation, change the News feed default or enable private Halo layers.
 3. Reuse the same `mnWorldFrame` and Cesium viewer. This prototype's CSS sphere is only a conceptual placeholder, not a new map, geography dataset or actual globe integration. Remove that placeholder at integration; never instantiate a second viewer.
 4. Adapt the existing environmental panel (`vendor/equity-uprise/src/environment/panel.mjs`), host binding (`js/world-environment-mccluster.mjs`) and transport (`vendor/equity-uprise/src/environment/transport.mjs`), after checking current revisions. Keep `hu:environment-pins` and `hu:environment-focus` limited to observation behavior. Do not convert a global mitigation estimate into local event pins. Do not call nonexistent `/solutions` or `/fyre` APIs.
-5. Bind `createFyreContext` to existing authority and geography-selection subscriptions. `readAuthority()` must obtain the current server-authorized principal and return `{principalId, capability:'house-owner'}` only when actually granted; all other roles return null. This client contract is a race guard, never a substitute for server checks. `readSelection()` returns a coarse, authorized `{contextId}`. Change listeners return unsubscribe functions. `clearPrivateState()` empties owner-only views and drafts immediately. Deny capability on unavailable/malformed authority; clear at sign-out, account switch, selection change and teardown.
+5. Bind `createFyreContext` to existing authority and geography-selection subscriptions. `readAuthority()` must obtain the current server-authorized principal and return `{principalId, capability:'house-owner', sessionRevision}` only when actually granted; all other roles return null. This client contract is a race guard, never a substitute for server checks. `readSelection()` returns a coarse, authorized `{contextId}`. Supply `host` as the same stable object across all adapter instances for that host. A host lease prevents an older context from clearing a newer mount. Session revisions must change on authentication/session replacement even when the principal is unchanged. Change listeners return instance-scoped unsubscribe functions; an old unsubscribe must not detach another subscriber. `clearPrivateState(lease)` empties owner-only views and drafts immediately. Deny capability on unavailable/malformed authority; clear at sign-out, account switch, selection change and teardown.
 6. Replace device-local planning notes with the **existing** authenticated canonical draft/mission workflow only after verifying its current contract, role checks, immutable source revision, idempotency, tenant isolation and uncertain-write receipts. Do not silently upload old local notes. New server fields or migrations require separate review; this slice supplies no SQL and requires no migration.
 7. Treat these three cards as learning/planning prompts, not approved missions. Existing application, capacity, safety, proof-review and optional publication controls still govern participation. No completion, CO2 savings, money or points are awarded here. Do not displace the existing first song/source-explanation mission work.
 
@@ -54,7 +54,7 @@ The methodology v5 record https://doi.org/10.5281/zenodo.20865531 is separately 
 
 ## Verification record and release gates
 
-Passed locally: 16 unit/contract/static tests and JavaScript syntax checks. This demonstrates normalization, duplicate-save handling, storage failure/roundtrip, role rejection, stale read rejection, teardown and static UI guardrails only.
+Passed locally: 20 unit/contract/static tests and JavaScript syntax checks. This demonstrates normalization, duplicate-save handling, storage failure/roundtrip, role rejection, stale read rejection, teardown and static UI guardrails only.
 
 **Not run:** real browser rendering, keyboard/dialog behavior, 390px/1440px overflow measurement, visual screenshots, actual Cesium retention, server integration, full repository/Worker suites and production verification. A prior browser socket denial recorded in the environmental source was not retried. The unrun browser harness is provided for an approved environment; static checks are not a visual pass.
 
