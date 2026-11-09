@@ -45,7 +45,7 @@
   function freshnessLabel(row) {
     var s = row && typeof row.status === 'string' ? row.status.toLowerCase() : '';
     if (['fresh', 'current', 'ok', 'available'].indexOf(s) >= 0) return 'current';
-    if (['stale', 'partial', 'unavailable', 'corrected', 'held', 'paused', 'error', 'pending', 'unknown'].indexOf(s) >= 0) return s;
+    if (['stale', 'partial', 'unavailable', 'corrected', 'held', 'paused', 'error', 'pending', 'unknown', 'empty'].indexOf(s) >= 0) return s;
     return 'unknown';
   }
   function provenanceLine(p) {
@@ -155,7 +155,7 @@
       '<article class="cr-eup__card"><h3>Geography</h3><p>' + esc(geo ? [geo.country, geo.state, geo.municipality].filter(Boolean).join(' › ') : 'None selected server-side.') + '</p><p class="cr-muted">Globe selection: ' + esc(model.geo.country ? model.geo.country + (model.geo.state ? ' › ' + model.geo.state : '') : 'none') + '</p></article>' +
       '<article class="cr-eup__card"><h3>Campaigns</h3><p>Drafts: ' + count(d.campaigns && d.campaigns.drafts) + ' · Released: ' + count(d.campaigns && d.campaigns.released) + '</p></article>' +
       '<article class="cr-eup__card"><h3>Queues</h3><p>Applications: ' + count(d.queues && d.queues.applications) + ' · Proofs: ' + count(d.queues && d.queues.proofs) + ' · Reviews: ' + count(d.queues && d.queues.reviews) + '</p></article>' +
-      '<article class="cr-eup__card"><h3>Freshness</h3>' + (Array.isArray(d.freshness) && d.freshness.length ? '<ul class="cr-eup__list">' + d.freshness.map(function (f) { return '<li>' + esc(f.source) + ' ' + freshnessChip(f) + '<br><small>fetched ' + esc(when(f.fetched_at)) + ' · upstream updated ' + esc(when(f.upstream_updated_at)) + '</small></li>'; }).join('') + '</ul>' : note('empty', 'No freshness records returned.')) + '</article>' +
+      '<article class="cr-eup__card"><h3>Freshness</h3>' + (Array.isArray(d.freshness) && d.freshness.length ? '<ul class="cr-eup__list">' + d.freshness.map(function (f) { /* the Worker names a row {id,label,state,updated_at}; a connector row {source,status,fetched_at,upstream_updated_at} */ var row = { status: f.status || f.state }; return '<li>' + esc(f.source || f.label || f.id) + ' ' + freshnessChip(row) + '<br><small>fetched ' + esc(when(f.fetched_at || f.updated_at)) + ' · upstream updated ' + esc(when(f.upstream_updated_at)) + '</small></li>'; }).join('') + '</ul>' : note('empty', 'No freshness records returned.')) + '</article>' +
       '<article class="cr-eup__card"><h3>Blockers</h3>' + (Array.isArray(d.blockers) && d.blockers.length ? '<ul class="cr-eup__list">' + d.blockers.map(function (b) { return '<li><strong>' + esc(b.id) + '</strong> ' + esc(b.text) + (b.gate ? ' <small>(gate: ' + esc(b.gate) + ')</small>' : '') + '</li>'; }).join('') + '</ul>' : note('empty', 'No blockers returned.')) + '</article>' +
       '</div>';
   }

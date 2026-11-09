@@ -393,10 +393,13 @@ begin
     if not found or not st.configured or st.access <> 'approved' then raise exception 'not_configured' using errcode = 'P0001'; end if;
     if st.paused then raise exception 'source_paused' using errcode = 'P0001'; end if;
     insert into public.eup_import_runs (source_id, idempotency_key, requested_by) values (sid, key, p_actor)
-      on conflict (source_id, idempotency_key) do nothing;
+      on conflict (source_id, idempotency_key) do nothing returning * into run;
+    if run.id is not null then
+      update public.eup_source_registry_state set last_attempt_at = now(), updated_at = now(), revision = revision + 1 where source_id = sid;
+      return jsonb_build_object('run_id', run.id, 'status', run.status, 'created', true);
+    end if;
     select * into run from public.eup_import_runs where source_id = sid and idempotency_key = key;
-    update public.eup_source_registry_state set last_attempt_at = now(), updated_at = now(), revision = revision + 1 where source_id = sid and run.created_at >= now() - interval '1 second';
-    return jsonb_build_object('run_id', run.id, 'status', run.status, 'created', run.created_at >= now() - interval '1 second');
+    return jsonb_build_object('run_id', run.id, 'status', run.status, 'created', false);
   elsif p_action = 'pause' or p_action = 'resume' then
     if coalesce(sid,'') = '' then raise exception 'source_required' using errcode = '22023'; end if;
     insert into public.eup_source_registry_state (source_id, paused) values (sid, p_action = 'pause')
@@ -653,20 +656,39 @@ begin
         values (cid, candid, rec->>'stage', (rec->>'votes')::integer, (rec->>'certified_at')::date, prov)
         on conflict (contest_id, candidacy_id, stage) do update set votes = excluded.votes, certified_at = excluded.certified_at, provenance = excluded.provenance;
     elsif p_kind = 'company' then
-      insert into public.eup_company_entities (source_id, external_id, legal_name, status, provenance)
-        values (p_source_id, ext, rec->>'legal_name', coalesce(rec->>'status','unknown'), prov)
-        on conflict (source_id, external_id) do update set legal_name = excluded.legal_name, status = excluded.status, provenance = excluded.provenance, revision = public.eup_company_entities.revision + 1
-        returning id into eid;
-      -- identifiers: a scheme/value already owned by a different entity is an identity conflict for review, not an overwrite
+      -- Identity is explicit: an identifier (CIK, LEI, ticker) is a hard key. A record that carries
+      -- an identifier already owned by an entity joins that entity only when its legal name agrees;
+      -- identifiers pointing at two different entities, or a different legal name claiming an
+      -- owned identifier, become an identity review item and are not merged.
+      eid := null; other := null;
       for snap in select * from jsonb_array_elements(coalesce(rec->'identifiers','[]'::jsonb)) loop
         select entity_id into other from public.eup_company_identifiers where scheme = snap->>'scheme' and value = snap->>'value';
-        if other is not null and other <> eid then
-          insert into public.eup_review_items (kind, subject_table, subject_key, detail) values ('identity', 'eup_company_identifiers', (snap->>'scheme') || ':' || (snap->>'value'), jsonb_build_object('reason', 'identifier_claimed_by_other_entity', 'claimant', eid, 'owner', other))
-            on conflict (kind, subject_table, subject_key) do update set revision = public.eup_review_items.revision + 1, status = 'open', detail = excluded.detail;
-          reviewed := reviewed + 1;
-        elsif other is null then
-          insert into public.eup_company_identifiers (entity_id, scheme, value, provenance) values (eid, snap->>'scheme', snap->>'value', prov);
+        if other is not null then
+          if eid is null then eid := other;
+          elsif eid <> other then
+            insert into public.eup_review_items (kind, subject_table, subject_key, detail) values ('identity', 'eup_company_entities', p_source_id || ':' || ext, jsonb_build_object('reason', 'identifiers_span_two_entities', 'entities', jsonb_build_array(eid, other)))
+              on conflict (kind, subject_table, subject_key) do update set revision = public.eup_review_items.revision + 1, status = 'open', detail = excluded.detail;
+            reviewed := reviewed + 1; eid := null; exit;
+          end if;
         end if;
+      end loop;
+      if eid is null and exists (select 1 from public.eup_review_items where kind = 'identity' and subject_table = 'eup_company_entities' and subject_key = p_source_id || ':' || ext and status = 'open') then continue; end if;
+      if eid is not null and not exists (select 1 from public.eup_company_entities e where e.id = eid and e.source_id = p_source_id and e.external_id = ext)
+         and (select lower(regexp_replace(legal_name, '[^a-z0-9]', '', 'gi')) from public.eup_company_entities where id = eid) <> lower(regexp_replace(coalesce(rec->>'legal_name',''), '[^a-z0-9]', '', 'gi')) then
+        insert into public.eup_review_items (kind, subject_table, subject_key, detail) values ('identity', 'eup_company_entities', p_source_id || ':' || ext, jsonb_build_object('reason', 'legal_name_disagrees_with_identifier_owner', 'owner', eid, 'claimed_name', rec->>'legal_name'))
+          on conflict (kind, subject_table, subject_key) do update set revision = public.eup_review_items.revision + 1, status = 'open', detail = excluded.detail;
+        reviewed := reviewed + 1; continue;
+      end if;
+      if eid is null then
+        insert into public.eup_company_entities (source_id, external_id, legal_name, status, provenance)
+          values (p_source_id, ext, rec->>'legal_name', coalesce(rec->>'status','unknown'), prov)
+          on conflict (source_id, external_id) do update set legal_name = excluded.legal_name, status = excluded.status, provenance = excluded.provenance, revision = public.eup_company_entities.revision + 1
+          returning id into eid;
+      else
+        update public.eup_company_entities set revision = revision + 1 where id = eid;
+      end if;
+      for snap in select * from jsonb_array_elements(coalesce(rec->'identifiers','[]'::jsonb)) loop
+        insert into public.eup_company_identifiers (entity_id, scheme, value, provenance) values (eid, snap->>'scheme', snap->>'value', prov) on conflict (scheme, value) do nothing;
       end loop;
     elsif p_kind = 'company_location' then
       select e.id into eid from public.eup_company_entities e join public.eup_company_identifiers i on i.entity_id = e.id where i.scheme = rec->>'identifier_scheme' and i.value = rec->>'identifier_value';

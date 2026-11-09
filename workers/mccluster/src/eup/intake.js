@@ -70,6 +70,10 @@ export function withholdRestricted(rows, states, { now = Date.now() } = {}) {
    It never touches the network itself. */
 export function assertFetchAllowed(source_id, state, env, { now = Date.now() } = {}) {
   const feedEntry = feedById(source_id);
+  if (!feedEntry) throw fail(404, 'Unknown source', 'unknown_source');
+  if (feedEntry.access === 'held') throw fail(403, `${feedEntry.label} is held pending rights review`, 'rights_held');
+  /* unreviewed access is a configuration gap (503), expired access is a rights refusal (403) */
+  if (state?.access !== 'approved') throw fail(503, `${feedEntry.label} access has not been reviewed and approved`, 'not_configured');
   assertRights(feedEntry, state, { now, fail });
   if (state?.configured !== true) throw fail(503, `${feedEntry.label} is not configured`, 'not_configured');
   for (const name of feedEntry.credentialEnv) if (!(typeof env?.[name] === 'string' && env[name])) throw fail(503, `${feedEntry.label} credential binding ${name} is absent`, 'not_configured');
