@@ -8,7 +8,7 @@
    ["private","postgres","anon=U;authenticated=U"],
    ["public","pg_database_owner","PUBLIC=U;anon=U;authenticated=U"]
   ]},
-  "relations": {"md5": "9fb07a1f993e9bf27f7393957e305480", "rows": [
+  "relations": {"md5": "56ba7f476a82dbb86633ac305559cbe6", "rows": [
    ["ai_context","artifact_links","r",true,false,"",13,"b774fceb642e","b3b16d106caf","ff696abe0b16","",""],
    ["ai_context","context_snapshots","r",true,false,"",11,"5a3dd3b31e14","763fdc6a8354","bbf14d876094","",""],
    ["ai_context","conversations","r",true,false,"",13,"73aa22ced17b","882731ea3d27","e574df182ad5","",""],
@@ -335,6 +335,7 @@
    ["public","media_news_articles","r",true,false,"",20,"e22a550d0fbc","14d492dd9515","5059e486db28","",""],
    ["public","media_news_comments","r",true,false,"",7,"4ad46effea01","a87699c4da7d","d8753bcf11d7","",""],
    ["public","media_news_sources","r",true,false,"",4,"945e283756a8","d45aa781be2a","fd49244dc07f","",""],
+   ["public","media_operation_claims","r",true,false,"",11,"c81bcd7996d7","a1f14233e9c2","08e5657d96ec","",""],
    ["public","media_outlets","r",true,false,"",8,"e4e666a99675","6aba265fb44e","32e41b6e8ea3","","anon=r;authenticated=r"],
    ["public","media_presets","r",true,false,"",8,"70cec624ff9c","f0895237225f","396e83effe33","","anon=damrw;authenticated=damrw"],
    ["public","media_public_world_feed","v",false,false,"true",11,"21c34a8a384c","d41d8cd98f00","d41d8cd98f00","3b57532aa045","anon=r;authenticated=r"],
@@ -554,7 +555,7 @@
    ["public","world_news_pairs","r",true,false,"",14,"5de761fbdc0f","76b13db8ea63","55500d48ba73","",""],
    ["public","world_region_sharing","r",true,true,"",5,"4b843b55af0a","24a36f9e1660","42bce73daf3b","",""]
   ]},
-  "functions": {"md5": "51ed87d29c7d079fb214c9af93f066e6", "rows": [
+  "functions": {"md5": "a23a7eb1afc36561c4650e4c82091e62", "rows": [
    ["private","clip_audit","p_org uuid, p_event text, p_type text, p_id text, p_detail jsonb","void",true,"v","search_path=\"\"","60b42e062739",""],
    ["private","clip_canonical_url","p_platform text, p_media text","text",false,"i","search_path=\"\"","485e72ed39b5",""],
    ["private","clip_code","","text",false,"v","search_path=\"\"","f5d91b3988d5",""],
@@ -870,9 +871,12 @@
    ["public","mcp_decide","p_id uuid, p_approve boolean, p_by uuid","mcp_approvals",true,"v","search_path=public, pg_temp","93965567ab36",""],
    ["public","mcp_decide_scoped","p_id uuid, p_org_id uuid, p_approve boolean, p_by uuid","mcp_approvals",true,"v","search_path=\"\"","699d24199f1f",""],
    ["public","media_apply_geo_rule","","trigger",true,"v","search_path=public","440444ffad59",""],
+   ["public","media_bind_operation_v1","p_org_id uuid, p_operation_id text, p_job_id uuid","jsonb",true,"v","search_path=public, pg_temp","929c4c5269e8",""],
+   ["public","media_claim_operation_v1","p_org_id uuid, p_operation_id text, p_fingerprint text, p_actor_id uuid, p_operation_type text","jsonb",true,"v","search_path=public, pg_temp","c90b9b7d1404",""],
    ["public","media_cost_events_normalize","","trigger",false,"v","search_path=public, pg_temp","9fc2ec28647a",""],
    ["public","media_create_budgeted_job","p_org_id uuid, p_created_by uuid, p_provider text, p_provider_model_id text, p_capability text, p_prompt text, p_input jsonb, p_routing jsonb, p_estimated_cost_cents integer, p_budget_cents integer, p_pricing_snapshot jsonb","media_jobs",true,"v","search_path=public, pg_temp","90db45b85078",""],
    ["public","media_create_budgeted_job_v2","p_org_id uuid, p_created_by uuid, p_provider text, p_provider_model_id text, p_capability text, p_prompt text, p_input jsonb, p_routing jsonb, p_estimated_cost_usd_micros bigint, p_budget_cents integer, p_pricing_snapshot jsonb, p_estimate jsonb","media_jobs",true,"v","search_path=public, pg_temp","3989547b8a59",""],
+   ["public","media_fail_operation_v1","p_org_id uuid, p_operation_id text, p_failure jsonb","jsonb",true,"v","search_path=public, pg_temp","c83964bda8d9",""],
    ["public","media_gdelt_claim","p_topic text","boolean",true,"v","search_path=public","801fc84f794f",""],
    ["public","media_gdelt_file_claim","p_file text","boolean",true,"v","search_path=public","b9b5e981950e",""],
    ["public","media_gdelt_file_release","p_file text, p_error text","void",true,"v","search_path=public","85e15e477650",""],

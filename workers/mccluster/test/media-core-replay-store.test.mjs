@@ -144,7 +144,7 @@ function plane({ existingJob = null } = {}) {
     if (href.includes('/rest/v1/org_members?')) return json([{ org_id: ORG, role: 'owner' }]);
     if (href.includes('/rest/v1/control_role_capabilities?')) return json([{ role: 'owner', capability: 'media.generate', allowed: true }]);
     if (href.includes('/rest/v1/media_models?')) return json([MODEL]);
-    /* The atomic claim (pending media_operation_claims_v1.sql): an existing
+    /* The atomic claim (supabase/migrations/20261109194957_media_operation_claims_v1.sql): an existing
        job means the claim is already bound to it; otherwise this caller wins. */
     if (href.includes('/rest/v1/rpc/media_claim_operation_v1')) {
       return json(existingJob

@@ -354,27 +354,6 @@
         "workers/mccluster/src/live/store.js"
       ]
     },
-    "media_bind_operation_v1": {
-      "kind": "function",
-      "pending": "media_operation_claims_v1.sql",
-      "callers": [
-        "workers/mccluster/src/media/router.js"
-      ]
-    },
-    "media_claim_operation_v1": {
-      "kind": "function",
-      "pending": "media_operation_claims_v1.sql",
-      "callers": [
-        "workers/mccluster/src/media/router.js"
-      ]
-    },
-    "media_fail_operation_v1": {
-      "kind": "function",
-      "pending": "media_operation_claims_v1.sql",
-      "callers": [
-        "workers/mccluster/src/media/router.js"
-      ]
-    },
     "member_fronts": {
       "kind": "table",
       "pending": "member_fronts_v1.sql",
@@ -702,48 +681,7 @@
       ]
     }
   },
-  "applied_awaiting_evidence": {
-    "arcade_command": {
-      "kind": "function",
-      "migration": "20261109181623_city_arcade_v1.sql",
-      "receipt": "docs/control-plane/evidence/releases-2026-11-09/MIGRATION-RELEASE-RECEIPT.md",
-      "callers": [
-        "workers/mccluster/src/arcade/index.js"
-      ]
-    },
-    "core_signed_nonces": {
-      "kind": "table",
-      "migration": "20261109180829_core_signed_nonces_v1.sql",
-      "receipt": "docs/control-plane/evidence/releases-2026-11-09/C5-PRODUCTION-RECEIPT.md",
-      "callers": [
-        "workers/mccluster/src/media/core-signature.js"
-      ]
-    },
-    "music_direct_asset_review": {
-      "kind": "table",
-      "migration": "20261109175747_music_direct_asset_versions_v1.sql",
-      "receipt": "docs/control-plane/evidence/releases-2026-11-09/COMMERCE-RELEASE-RECEIPT.md",
-      "callers": [
-        "supabase/functions/music-direct-access/index.ts"
-      ]
-    },
-    "music_direct_reserve_download": {
-      "kind": "function",
-      "migration": "20261109175747_music_direct_asset_versions_v1.sql",
-      "receipt": "docs/control-plane/evidence/releases-2026-11-09/COMMERCE-RELEASE-RECEIPT.md",
-      "callers": [
-        "supabase/functions/music-direct-access/index.ts"
-      ]
-    },
-    "music_direct_settle_download": {
-      "kind": "function",
-      "migration": "20261109175747_music_direct_asset_versions_v1.sql",
-      "receipt": "docs/control-plane/evidence/releases-2026-11-09/COMMERCE-RELEASE-RECEIPT.md",
-      "callers": [
-        "supabase/functions/music-direct-access/index.ts"
-      ]
-    }
-  },
+  "applied_awaiting_evidence": {},
   "missing_everywhere": {
     "crm_contacts": {
       "kind": "table",
