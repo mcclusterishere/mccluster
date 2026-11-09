@@ -566,6 +566,20 @@
       "callers": [
         "workers/mccluster/src/world-members.js"
       ]
+    },
+    "company_operations_read_v1": {
+      "kind": "function",
+      "pending": "company_operations_v1.sql",
+      "callers": [
+        "workers/mccluster/src/company-operations/adapter.js"
+      ]
+    },
+    "company_operations_append_v1": {
+      "kind": "function",
+      "pending": "company_operations_v1.sql",
+      "callers": [
+        "workers/mccluster/src/company-operations/adapter.js"
+      ]
     }
   },
   "missing_everywhere": {

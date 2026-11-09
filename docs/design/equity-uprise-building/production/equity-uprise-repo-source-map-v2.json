@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 635,
+  "candidate_count": 637,
   "capability_source_count": 104,
-  "support_only_count": 531,
+  "support_only_count": 533,
   "entries": [
     {
       "path": ".cursorrules",
@@ -4718,6 +4718,20 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Tests binding existing building screens to inventoried hardware."
+    },
+    {
+      "path": "docs/control-plane/company-operations/INTEGRATION.md",
+      "classification": "governance_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared company-governance integration guidance; records and review only, no spatial program or execution authority added."
+    },
+    {
+      "path": "docs/control-plane/company-operations/VERIFICATION.md",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Verification evidence for shared company-operation records; no spatial capability or production activation."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",

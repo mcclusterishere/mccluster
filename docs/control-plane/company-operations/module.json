@@ -1,0 +1,21 @@
+{
+  "id": "company-operations",
+  "version": "0.1.0-review",
+  "displayName": "Company Operations",
+  "category": "governance-records",
+  "status": "backend-review-candidate",
+  "runtimeDependencies": ["canonical-identity", "organizations", "private-immutable-artifact-registry", "canonical-supabase-rpc"],
+  "optionalIntegrationTargets": ["owner-control", "ops-objectives", "canonical-financial-journal"],
+  "capabilities": ["company.record", "ownership.snapshot.record", "distribution.prepare", "distribution.review.record", "declaration.record", "distribution.handoff.prepare"],
+  "disabledCapabilities": ["ownership.transfer", "payment.execute", "tax.file", "legal.agreement.accept", "public.publish"],
+  "shippingRouteRegistered": false,
+  "productionSchemaApplied": false,
+  "paymentExecutionEnabled": false,
+  "legalEntitlementEstablished": false,
+  "fixturesSyntheticOnly": true,
+  "entrypoints": {
+    "domain": "workers/mccluster/src/company-operations/domain.js",
+    "service": "workers/mccluster/src/company-operations/service.js",
+    "adapter": "workers/mccluster/src/company-operations/adapter.js"
+  }
+}
