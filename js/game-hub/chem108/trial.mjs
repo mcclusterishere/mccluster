@@ -6,6 +6,7 @@
 export const TRIAL_KEY = 'mcc.chem108.guest-trial.v1';
 export const TRIAL_MS = 7 * 24 * 60 * 60 * 1000;
 const CLOCK_GRACE_MS = 5 * 60 * 1000;
+const SESSION_KEY = 'mccdb_session';
 
 export function trialStatus(record, now = Date.now()) {
   if (!record) return { state: 'new', remainingMs: TRIAL_MS };
@@ -61,6 +62,17 @@ function formatRemaining(ms) {
   return hours > 24 ? Math.ceil(hours / 24) + ' days' : hours + (hours === 1 ? ' hour' : ' hours');
 }
 
+/* Whose session a token is: the subject its payload names, so a refreshed token is still the same account. A token
+   that names nobody is only ever equal to itself. Nothing is trusted from it: only a server answer verifies an
+   account, and this says which stored session that answer belongs to. */
+function accountOf(token) {
+  try {
+    const subject = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).sub;
+    if (typeof subject === 'string' && subject) return 'account:' + subject;
+  } catch (_) { /* not a readable JWT */ }
+  return 'token:' + token;
+}
+
 function mountTrialPage() {
   const panel = document.querySelector('[data-chem108-trial]');
   if (!panel) return;
@@ -69,10 +81,26 @@ function mountTrialPage() {
   const account = document.getElementById('chemTrialAccount');
   const game = document.getElementById('chemTrialGame');
   const heading = document.getElementById('chemTrialHeading');
-  let view = null, ticket = 0, verified = false, playing = false;
+  let view = null, ticket = 0, playing = false;
+  /* An account answer belongs to the session that asked for it. `confirmed` is the account the server answered
+     for, and it counts only while that account's session is the one stored. `generation` moves on every sign-in,
+     sign-out, change of account and cleared store the page sees, and when the page is frozen, so an answer still
+     in flight then arrives late and is dropped. */
+  let generation = 0, confirmed = null, asking = null;
 
   function read() {
     return readTrial(localStorage);
+  }
+  // The account the stored session belongs to, or null when nobody is signed in.
+  function sessionAccount() {
+    try {
+      const token = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null')?.access_token;
+      return typeof token === 'string' && token ? accountOf(token) : null;
+    } catch (_) { return null; }
+  }
+  // Read at every decision, never remembered.
+  function verified() {
+    return confirmed !== null && confirmed === sessionAccount();
   }
   function closeGame() {
     ++ticket;
@@ -90,14 +118,17 @@ function mountTrialPage() {
     start.onclick = button ? callback : null;
     account.hidden = !showAccount;
   }
+  function showRound(status) {
+    display(verified() ? 'Signed-in account verified.' :
+      'Guest trial: ' + formatRemaining(status.remainingMs) + ' remaining.', 'Molecule Rush', '', null, false);
+  }
   async function openGame() {
     if (playing) return;
     const status = read();
-    if (!verified && status.state !== 'active') { show(); return; }
+    if (!verified() && status.state !== 'active') { show(); return; }
     playing = true;
     const id = ++ticket;
-    display(verified ? 'Signed-in account verified.' :
-      'Guest trial: ' + formatRemaining(status.remainingMs) + ' remaining.', 'Molecule Rush', '', null, false);
+    showRound(status);
     start.hidden = true;
     game.hidden = false;
     game.textContent = 'Loading Molecule Rush…';
@@ -105,7 +136,7 @@ function mountTrialPage() {
     try {
       const module = await import('./game.mjs');
       if (id !== ticket) return;
-      if (!verified && read().state !== 'active') { closeGame(); show(); return; }
+      if (!verified() && read().state !== 'active') { closeGame(); show(); return; }
       view = module.mount(game, { onExit: () => { closeGame(); show(); } });
     } catch (_) {
       if (id !== ticket) return;
@@ -116,7 +147,7 @@ function mountTrialPage() {
   }
   function show() {
     if (playing) return;
-    if (verified) {
+    if (verified()) {
       display('Your M Account is verified. Continue learning with Molecule Rush.',
         'Welcome back', 'Play Chemistry', () => void openGame(), false);
       return;
@@ -140,30 +171,79 @@ function mountTrialPage() {
     }
   }
 
-  function hasLocalSession() {
-    try { return !!JSON.parse(localStorage.getItem('mccdb_session') || 'null')?.access_token; }
-    catch (_) { return false; }
+  // After a session change or an account answer: a round neither the account nor the trial covers closes, and
+  // the page says what is true now.
+  function apply() {
+    const status = read();
+    if (playing && (verified() || status.state === 'active')) { showRound(status); return; }
+    if (playing) closeGame();
+    show();
   }
 
-  show();
-  if (hasLocalSession() && window.MCC && typeof window.MCC.user === 'function') {
-    Promise.resolve().then(() => window.MCC.user()).then(user => {
+  // Ask the server whose session is stored. An account it has already answered for is not asked about again,
+  // and one request is in flight per account.
+  function askAccount(followUp) {
+    const asked = sessionAccount();
+    if (!asked || asked === confirmed || !window.MCC || typeof window.MCC.user !== 'function') return;
+    if (asking && asking.account === asked && asking.generation === generation) return;
+    const ask = asking = { account: asked, generation };
+    new Promise(resolve => resolve(window.MCC.user())).catch(() => null).then(user => {
+      if (asking === ask) asking = null;
+      if (ask.generation !== generation) return;
+      // Storage no longer holds this account's session and no event said so: the answer is not about what is
+      // stored now. A session that is there gets one question of its own; storage that keeps changing waits for
+      // the next return to the tab.
+      if (sessionAccount() !== ask.account) { if (!followUp) askAccount(true); return; }
+      // No user: a failed network/account check is not a confirmed sign-out or a reason to discard the guest
+      // preview; no access is granted from a local JWT.
       if (!user) return;
-      verified = true;
-      if (!playing) show();
-    }).catch(() => {
-      // A failed network/account check is not a confirmed sign-out or a reason
-      // to discard the guest preview; no access is granted from a local JWT.
+      confirmed = ask.account;
+      apply();
     });
   }
 
-  // A tab left open past day seven must not retain an unbounded playable round.
-  window.setInterval(() => {
-    if (verified) return;
+  // Signed in, signed out or another account: nothing answered before applies to what is stored now, and
+  // nothing still in flight will.
+  function sessionChanged() {
+    ++generation;
+    confirmed = null;
+    apply();
+    askAccount();
+  }
+
+  // A sign-in or sign-out, announced in this tab or seen from another. The same account's refreshed token is
+  // neither.
+  function sessionSignal() {
+    if (!verified()) sessionChanged();
+  }
+
+  // A tab left open past day seven must not retain an unbounded playable round, and a session cleared or
+  // replaced without an event (another script, the browser's own storage controls) must not keep an account
+  // answer.
+  function recheck() {
+    if (verified()) return;
+    if (confirmed !== null) { sessionChanged(); return; }
     const state = read();
     if (playing && state.state !== 'active') { closeGame(); show(); }
     else if (!playing && state.state === 'active') show();
-  }, 30000);
+  }
+
+  // Back in front of the visitor, from a hidden tab or from the back/forward cache.
+  function comeBack() {
+    recheck();
+    askAccount();
+  }
+
+  show();
+  askAccount();
+
+  // Events make the change immediate where the host delivers them; the timer covers the same ground without.
+  window.addEventListener?.('mcc:auth-changed', sessionSignal);
+  window.addEventListener?.('storage', event => { if (event.key === SESSION_KEY || event.key === null) sessionSignal(); });
+  window.addEventListener?.('pagehide', () => { ++generation; });
+  window.addEventListener?.('pageshow', event => { if (event.persisted) comeBack(); });
+  document.addEventListener?.('visibilitychange', () => { if (document.visibilityState === 'visible') comeBack(); });
+  window.setInterval(recheck, 30000);
 }
 
 if (typeof document !== 'undefined') mountTrialPage();
