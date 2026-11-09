@@ -141,7 +141,14 @@
       v("uprise", "Equity Uprise ops", null, [], { views: [
         v("missions", "Missions & fellows", "create.action-network", ["#create:action-network", "Create · Action network", "missions", "fellows", "identity review", "memos", "uprise", "mobilize"]),
         v("funding", "Funding", "create.funding", ["#create:funding", "Create · Funding", "grants", "opportunity intelligence", "bounties"])
-      ] })
+      ] }),
+      /* Owner, 2026-11-09: the deeper E=Up experience ships first as an
+         admin-only product workspace ("Products → E=Up"). It is a NAV leaf
+         under System (the destination panel lists it with the other owner
+         doors) and a mount point: js/control-room/eup.js registers
+         window.CR.eup; its five sections are local tabs, never six NAV tabs.
+         The old-style "#products:eup" hash lands here too. */
+      v("eup", "E=Up", "slot", ["#products:eup", "Products · E=Up", "E=Up", "e up", "equity uprise admin", "environmental justice league", "civic league", "companies & finance", "sources & review", "offices", "legislation", "elections"], { module: "eup" })
     ] }
   ];
 
@@ -200,6 +207,9 @@
     var parts = raw.split(":");
     var exact = byRoute("#" + raw);
     if (exact) return { entry: exact, legacy: false };
+    /* an old route that names a surface NAV never had (#products:eup) */
+    var oldExact = byOldRoute("#" + raw);
+    if (oldExact) return { entry: oldExact, legacy: true };
     var section = NAV.filter(function (s) { return s.id === parts[0]; })[0];
     /* "create" and "system" are both a new section and an old surface. A
        second segment that names one of the section's items or views is new;

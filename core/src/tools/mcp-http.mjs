@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { signCoreRequest } from '../broker-edge-auth.mjs';
 
 const DEFAULT_PROTOCOL_VERSION = '2026-07-28';
@@ -91,7 +92,29 @@ async function parseRpcResponse(res) {
   return payload.result ?? {};
 }
 
-export async function mcpRpc(server, method, params = {}, { timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
+/* Transport failures where the request may or may not have reached the
+   server. A retry is safe only because the same operation id travels with
+   it (below); the server dedupes paid work on that id, not on the nonce. */
+function isTransportFailure(error) {
+  if (!error) return false;
+  if (error.name === 'TimeoutError' || error.name === 'AbortError') return true;
+  if (error instanceof TypeError) return true; /* undici: fetch failed */
+  return error.code === 'ECONNRESET' || error.code === 'ECONNREFUSED' || error.code === 'UND_ERR_SOCKET';
+}
+
+export async function mcpRpc(server, method, params = {}, { timeoutMs = DEFAULT_TIMEOUT_MS, retries = 0 } = {}) {
+  let attempt = 0;
+  for (;;) {
+    try {
+      return await mcpRpcOnce(server, method, params, { timeoutMs });
+    } catch (error) {
+      if (attempt >= retries || !isTransportFailure(error)) throw error;
+      attempt += 1;
+    }
+  }
+}
+
+async function mcpRpcOnce(server, method, params = {}, { timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
   if (!server?.url) throw new Error('MCP server URL is required');
   const url = safeRemoteUrl(server.url);
   const protocolVersion = server.protocolVersion || DEFAULT_PROTOCOL_VERSION;
@@ -139,8 +162,27 @@ export async function listMcpTools(server, options) {
   return Array.isArray(result.tools) ? result.tools : [];
 }
 
-export async function callMcpTool(server, name, args = {}, options) {
-  return mcpRpc(server, 'tools/call', { name, arguments: args }, options);
+/* Audit C5: every logical tool call to a Core-signed McCluster server carries
+   ONE stable operation_id, minted here before the first attempt, so a retry
+   with a fresh signature (and nonce) still maps to the one paid job on the
+   Worker. Precedence: an explicit args.operation_id, then options.operationId
+   (a caller-scoped identity such as a Core job id plus ordinal), else a fresh
+   id for this call. The id is only injected for servers that sign requests
+   (ours); third-party MCP servers get their arguments untouched. */
+const OPERATION_ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
+export function operationIdForCall(server, args = {}, options = {}) {
+  const explicit = typeof args?.operation_id === 'string' ? args.operation_id : null;
+  const scoped = typeof options?.operationId === 'string' ? options.operationId : null;
+  const chosen = explicit || scoped || `core:${randomUUID()}`;
+  if (!OPERATION_ID.test(chosen)) throw new Error('operation_id must be 1-128 characters of letters, digits, ".", "_", ":" or "-"');
+  return chosen;
+}
+
+export async function callMcpTool(server, name, args = {}, options = {}) {
+  const carriesOperationId = Boolean(server?.signEnv) || options.operationIds === true;
+  const callArgs = carriesOperationId ? { ...args, operation_id: operationIdForCall(server, args, options) } : args;
+  const retries = Number.isInteger(options.retries) ? options.retries : (carriesOperationId ? 1 : 0);
+  return mcpRpc(server, 'tools/call', { name, arguments: callArgs }, { ...options, retries });
 }
 
 export { DEFAULT_PROTOCOL_VERSION };

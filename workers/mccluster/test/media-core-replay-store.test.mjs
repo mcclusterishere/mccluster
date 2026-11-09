@@ -144,6 +144,14 @@ function plane({ existingJob = null } = {}) {
     if (href.includes('/rest/v1/org_members?')) return json([{ org_id: ORG, role: 'owner' }]);
     if (href.includes('/rest/v1/control_role_capabilities?')) return json([{ role: 'owner', capability: 'media.generate', allowed: true }]);
     if (href.includes('/rest/v1/media_models?')) return json([MODEL]);
+    /* The atomic claim (pending media_operation_claims_v1.sql): an existing
+       job means the claim is already bound to it; otherwise this caller wins. */
+    if (href.includes('/rest/v1/rpc/media_claim_operation_v1')) {
+      return json(existingJob
+        ? { outcome: 'existing', claim: { org_id: ORG, operation_id: body.p_operation_id, fingerprint: body.p_fingerprint, state: 'bound', job_id: existingJob.id } }
+        : { outcome: 'won', claim: { org_id: ORG, operation_id: body.p_operation_id, state: 'claimed' } });
+    }
+    if (href.includes('/rest/v1/rpc/media_bind_operation_v1') || href.includes('/rest/v1/rpc/media_fail_operation_v1')) return json({ state: 'bound' });
     if (href.includes('/rest/v1/media_jobs?') && method === 'GET') return json(existingJob ? [existingJob] : []);
     if (href.includes('/rest/v1/rpc/media_create_budgeted_job_v2')) return json([{ id: JOB, org_id: ORG }]);
     if (href.includes('/rest/v1/rpc/media_release_cost_reservation')) return json(null);
@@ -168,9 +176,9 @@ test('a repeated operation id returns the existing job and reserves nothing', as
   try {
     const job = await createGeneration(generateRequest({ org_id: ORG, model_id: 't2i', prompt: 'a lighthouse', operation_id: 'op-1' }), env, USER);
     assert.equal(job.id, JOB);
-    const lookup = be.calls.find((c) => c.href.includes('/rest/v1/media_jobs?') && c.method === 'GET');
-    assert.ok(lookup, 'the router looked the operation up first');
-    assert.match(lookup.href, /routing-%3E%3Eoperation_id=eq\.op-1|routing->>operation_id=eq\.op-1/);
+    const claim = be.calls.find((c) => c.href.includes('/rest/v1/rpc/media_claim_operation_v1'));
+    assert.ok(claim, 'the router claimed the operation first');
+    assert.equal(claim.body.p_operation_id, 'op-1');
     assert.equal(be.calls.some((c) => c.href.includes('media_create_budgeted_job_v2')), false, 'no second reservation');
   } finally {
     be.restore();

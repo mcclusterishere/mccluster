@@ -2,11 +2,22 @@
 // canonical REST handlers so org authorization, budgets, provider costs and
 // asset lineage have one implementation.
 
-import { createGeneration, getGeneration, listModels } from './router.js';
+import { createGeneration, getGeneration, jobForOperation, listModels } from './router.js';
 import { createBakeoff } from './orchestrator.js';
 import { recommendModels } from './recommend.js';
 
 export const MCP_VERSION = '2026-07-28';
+
+/* Audit C5: a stable caller operation id, independent of the per-request
+   HMAC nonce, so a retried call (new signature, new isolate) resolves to the
+   one paid job the first call made. Core sends one per logical tool call
+   (core/src/tools/mcp-http.mjs); a signed call without one falls back to its
+   nonce, which only protects the exact same envelope. */
+const OPERATION_ID_SCHEMA = {
+  type: 'string',
+  pattern: '^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$',
+  description: 'Stable id for this logical operation. Repeating a call with the same id and the same arguments returns the one job it created instead of reserving and submitting again; a different payload under the same id is refused. Omit for a deliberate one-off.'
+};
 
 function semanticTool(name, title, description, extra = {}) {
   return {
@@ -22,6 +33,7 @@ function semanticTool(name, title, description, extra = {}) {
         references: { type: 'array' },
         budget_cents: { type: 'number', minimum: 0 },
         preference: { type: 'string', enum: ['quality', 'balanced', 'speed', 'price'] },
+        operation_id: OPERATION_ID_SCHEMA,
         ...extra,
       },
     },
@@ -71,7 +83,8 @@ const TOOLS = [
         prompt: { type: 'string' },
         input: { type: 'object' },
         budget_cents: { type: 'number' },
-        strategy: { type: 'string' }
+        strategy: { type: 'string' },
+        operation_id: OPERATION_ID_SCHEMA
       }
     }
   },
@@ -98,7 +111,8 @@ const TOOLS = [
         model_ids: { type: 'array', items: { type: 'string' }, minItems: 2, maxItems: 5 },
         prompt: { type: 'string' },
         input: { type: 'object' },
-        budget_cents: { type: 'number' }
+        budget_cents: { type: 'number' },
+        operation_id: OPERATION_ID_SCHEMA
       }
     }
   },
@@ -108,8 +122,8 @@ const TOOLS = [
     description: 'Fetch one job including status, costs, provider result and asset lineage.',
     inputSchema: {
       type: 'object',
-      required: ['org_id', 'job_id'],
-      properties: { org_id: { type: 'string' }, job_id: { type: 'string' } }
+      required: ['org_id'],
+      properties: { org_id: { type: 'string' }, job_id: { type: 'string' }, operation_id: OPERATION_ID_SCHEMA }
     }
   }
 ];
@@ -231,13 +245,24 @@ async function callTool(name, args, request, env, user) {
     case 'model3d.generate':
       return semanticGenerate(name, args, request, env, user);
     case 'media.compare':
-      return textResult(await createBakeoff(synthetic(request, { method: 'POST', body: args }), env, user));
-    case 'media.job.get':
-      if (!args.job_id) throw Object.assign(new Error('job_id is required'), { status: 400 });
+      /* The bakeoff derives one stable child id per requested model from this
+         operation id (orchestrator.js), so a retried compare cannot fan out twice. */
+      return textResult(await createBakeoff(synthetic(request, { method: 'POST', body: { ...args, operation_id: operationIdForCall(request, args) } }), env, user));
+    case 'media.job.get': {
+      let jobId = args.job_id;
+      if (!jobId && args.operation_id) {
+        /* A loser (or a retry after an uncertain outcome) reads the durable
+           outcome back by the operation id it already holds. */
+        const job = await jobForOperation(synthetic(request, { method: 'POST', body: { org_id: args.org_id, operation_id: args.operation_id } }), env, user);
+        if (!job) throw Object.assign(new Error('No job is bound to that operation_id yet'), { status: 404 });
+        jobId = job.id;
+      }
+      if (!jobId) throw Object.assign(new Error('job_id or operation_id is required'), { status: 400 });
       return textResult(await getGeneration(
-        synthetic(request, { path: `/v1/media/jobs/${args.job_id}`, query: { org_id: args.org_id } }),
-        env, user, args.job_id, true
+        synthetic(request, { path: `/v1/media/jobs/${jobId}`, query: { org_id: args.org_id } }),
+        env, user, jobId, true
       ));
+    }
     default:
       throw Object.assign(new Error(`Unknown tool: ${name}`), { status: 404 });
   }

@@ -1,5 +1,5 @@
 import { currentTrace, recordEvent } from '../lib/observability.js';
-import { billingEventsFal, collectAssetCandidates, normalizeFalStatus, resultFal, statusFal, submitFal, verifyFalWebhook } from './fal.js';
+import { billingEventsFal, classifySubmitError, collectAssetCandidates, normalizeFalStatus, resultFal, statusFal, submitFal, verifyFalWebhook } from './fal.js';
 import { estimateModelCost } from './pricing.js';
 import { requireOrgId } from '../social/security.js';
 import { requireCapability } from '../lib/capabilities.js';
@@ -50,10 +50,17 @@ async function jobById(env, id, orgId) {
   return rows?.[0] || null;
 }
 
-/* Idempotent paid work (audit C5): a stable operation id, carried in the job's
-   routing, makes a repeated request resolve to the one job it already made
-   instead of a second reservation and provider submission. Core-signed MCP
-   calls derive it from their signed nonce; API callers may send their own. */
+/* Idempotent paid work (audit C5): a stable operation id makes a repeated
+   request resolve to the one job it already made instead of a second
+   reservation and provider submission. The decision is an ATOMIC CLAIM in
+   public.media_operation_claims (pending media_operation_claims_v1.sql): the
+   first caller to insert (org_id, operation_id) wins the right to reserve
+   budget and submit; it binds the job id to the claim; every other caller,
+   whatever isolate or retry it came from, gets that job back. A reused id
+   with a different request body is refused (fingerprint mismatch). The old
+   check-then-create lookup is kept only as the loser's readback. Core MCP
+   calls carry a stable id from Core (core/src/tools/mcp-http.mjs); API callers
+   may send their own. Without an id the request is a deliberate one-off. */
 const OPERATION_ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
 export function operationIdFrom(body) {
   const raw = body?.operation_id;
@@ -64,9 +71,92 @@ export function operationIdFrom(body) {
   return raw;
 }
 
+function canonicalJson(value) {
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
+  if (value && typeof value === 'object') {
+    return `{${Object.keys(value).sort().map((k) => `${JSON.stringify(k)}:${canonicalJson(value[k])}`).join(',')}}`;
+  }
+  return JSON.stringify(value === undefined ? null : value);
+}
+
+/* What the operation id is bound to: the org, the resolved model, the exact
+   provider input, the budget and the strategy. Key order never matters. */
+export async function operationFingerprint(body, model) {
+  const input = { ...(body?.input || {}) };
+  if (body?.prompt && !input.prompt) input.prompt = body.prompt;
+  const text = canonicalJson({
+    org_id: body?.org_id || null,
+    model_id: model?.id || body?.model_id || null,
+    provider_model_id: model?.provider_model_id || null,
+    input,
+    budget_cents: body?.budget_cents ?? null,
+    strategy: body?.strategy || 'explicit-model'
+  });
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
 async function jobByOperationId(env, orgId, operationId) {
   const rows = await db(env, `media_jobs?org_id=eq.${encodeURIComponent(orgId)}&routing->>operation_id=eq.${encodeURIComponent(operationId)}&select=*&order=created_at.asc&limit=1`);
   return rows?.[0] || null;
+}
+
+/* Org-checked readback of the job bound to an operation id (the loser's and
+   the reconciler's handle). Membership is required; null when nothing is bound. */
+export async function jobForOperation(request, env, user) {
+  let body;
+  try { body = await request.json(); } catch { throw Object.assign(new Error('Invalid JSON'), { status: 400 }); }
+  const org = await getOrg(env, user.id, body.org_id);
+  const operationId = operationIdFrom(body);
+  if (!operationId) throw Object.assign(new Error('operation_id is required'), { status: 400 });
+  return jobByOperationId(env, org.org_id, operationId);
+}
+
+function claimError(status, message, reason, detail) {
+  return Object.assign(new Error(message), { status, reason, detail });
+}
+
+/* Winner/loser protocol. Returns { won: true } for the winner, otherwise the
+   durable outcome: the bound job, the recorded definite failure, or a
+   'pending' refusal when the winner has not bound a job yet (read back with
+   the same operation id; the id never changes hands). Fails closed when the
+   claim RPC cannot be consulted. */
+async function claimOperation(env, { orgId, operationId, fingerprint, actorId, operationType }) {
+  let claim;
+  try {
+    claim = await rpc(env, 'media_claim_operation_v1', {
+      p_org_id: orgId, p_operation_id: operationId, p_fingerprint: fingerprint, p_actor_id: actorId, p_operation_type: operationType
+    });
+  } catch (error) {
+    if (/operation_payload_mismatch/.test(String(error?.detail?.message || error?.message))) {
+      throw claimError(409, 'operation_id was already used with a different request', 'operation_payload_mismatch', { operation_id: operationId });
+    }
+    throw claimError(503, 'Paid operation claims are unavailable; nothing was reserved', 'operation_claims_unavailable', { operation_id: operationId });
+  }
+  const outcome = Array.isArray(claim) ? claim[0] : claim;
+  if (outcome?.outcome === 'won') return { won: true };
+  const row = outcome?.claim;
+  if (!row) throw claimError(503, 'Paid operation claim returned no decision; nothing was reserved', 'operation_claims_unavailable', { operation_id: operationId });
+  if (row.state === 'failed') {
+    const message = row.failure?.message || 'The operation already failed';
+    throw claimError(409, message, 'operation_failed', { operation_id: operationId, failure: row.failure || null });
+  }
+  if (row.job_id) {
+    const job = await jobById(env, row.job_id, orgId) || await jobByOperationId(env, orgId, operationId);
+    if (job) return { won: false, job };
+  }
+  /* claimed but not bound yet: the winner is mid-flight */
+  const job = await jobByOperationId(env, orgId, operationId);
+  if (job) return { won: false, job };
+  throw claimError(409, 'This operation is already in progress; read it back by operation_id', 'operation_pending', { operation_id: operationId, claimed_at: row.claimed_at || null });
+}
+
+async function bindOperation(env, orgId, operationId, jobId) {
+  return rpc(env, 'media_bind_operation_v1', { p_org_id: orgId, p_operation_id: operationId, p_job_id: jobId });
+}
+
+async function failOperation(env, orgId, operationId, failure) {
+  return rpc(env, 'media_fail_operation_v1', { p_org_id: orgId, p_operation_id: operationId, p_failure: failure }).catch(() => null);
 }
 
 async function jobByProviderRequestId(env, requestId) {
@@ -355,7 +445,8 @@ export async function listModels(request, env) {
   return db(env, path);
 }
 
-export async function createGeneration(request, env, user) {
+export async function createGeneration(request, env, user, deps = {}) {
+  const submit = typeof deps.submit === 'function' ? deps.submit : submitFal;
   let body;
   try { body = await request.json(); } catch { throw Object.assign(new Error('Invalid JSON'), { status: 400 }); }
   const org = await getOrg(env, user.id, body.org_id);
@@ -374,24 +465,36 @@ export async function createGeneration(request, env, user) {
   if (!Object.keys(input).length) throw Object.assign(new Error('input or prompt is required'), { status: 400 });
   validateModelInput(model, input);
 
+  let claimed = false;
   if (operationId) {
     /* Both callers of a duplicated operation get the same durable outcome,
-       whatever state it reached (queued, failed, completed). */
-    const existing = await jobByOperationId(env, org.org_id, operationId);
-    if (existing) return existing;
+       whatever state it reached (queued, reconciling, failed, completed).
+       Exactly one of them reserves and submits. */
+    const fingerprint = await operationFingerprint(body, model);
+    const decision = await claimOperation(env, {
+      orgId: org.org_id, operationId, fingerprint, actorId: user.id, operationType: body.strategy ? `media.generate:${body.strategy}` : 'media.generate'
+    });
+    if (!decision.won) return decision.job;
+    claimed = true;
   }
+  /* Definite failures before a reservation exists are recorded on the claim
+     so a loser reads the same refusal instead of reserving. */
+  const definiteBeforeReserve = async (error) => {
+    if (claimed) await failOperation(env, org.org_id, operationId, { message: error?.message || String(error), status: error?.status || null, stage: 'preflight' });
+    throw error;
+  };
 
   const budget = budgetCents(body.budget_cents);
   const budgetUsdMicros = budget === null ? null : budget * 10_000;
   const estimate = estimateModelCost(model, input);
   if (budget !== null && !estimate.available) {
-    throw Object.assign(new Error('This model cannot be safely preflighted against a budget yet'), {
+    await definiteBeforeReserve(Object.assign(new Error('This model cannot be safely preflighted against a budget yet'), {
       status: 422,
       detail: { model_id: model.id, provider_model_id: model.provider_model_id, reason: estimate.reason }
-    });
+    }));
   }
   if (budgetUsdMicros !== null && estimate.estimated_cost_usd_micros > budgetUsdMicros) {
-    throw Object.assign(new Error('Estimated media cost exceeds budget'), {
+    await definiteBeforeReserve(Object.assign(new Error('Estimated media cost exceeds budget'), {
       status: 422,
       detail: {
         model_id: model.id,
@@ -400,11 +503,13 @@ export async function createGeneration(request, env, user) {
         budget_cents: budget,
         budget_usd_micros: budgetUsdMicros
       }
-    });
+    }));
   }
 
   const estimateData = estimatePayload(estimate);
-  const created = await rpc(env, 'media_create_budgeted_job_v2', {
+  let created;
+  try {
+    created = await rpc(env, 'media_create_budgeted_job_v2', {
     p_org_id: org.org_id,
     p_created_by: user.id,
     p_provider: model.provider,
@@ -427,9 +532,29 @@ export async function createGeneration(request, env, user) {
     p_budget_cents: budget,
     p_pricing_snapshot: estimate.pricing_snapshot || model.cost_hint || {},
     p_estimate: estimateData
-  });
+    });
+  } catch (error) {
+    /* The reservation RPC refused (budget, allowance, validation): nothing was
+       reserved, so this is a definite failure of the operation. */
+    const refusal = Object.assign(new Error(error?.detail?.message || error?.message || 'Media job reservation failed'), {
+      status: error?.status === 400 ? 422 : (error?.status || 502), detail: error?.detail || null
+    });
+    await definiteBeforeReserve(refusal);
+  }
   const job = Array.isArray(created) ? created[0] : created;
   if (!job?.id) throw Object.assign(new Error('Media job creation did not return a job'), { status: 500 });
+  if (claimed) {
+    /* Bind before submitting so a loser arriving now reads this job rather
+       than 'pending'. If the bind cannot be recorded the reservation exists
+       but no provider request has been sent: release and fail definitively. */
+    try {
+      await bindOperation(env, org.org_id, operationId, job.id);
+    } catch (error) {
+      await patchJob(env, job.id, { status: 'failed', error: { message: 'operation bind failed before submission', detail: error?.detail || null } }).catch(() => null);
+      await releaseReservation(env, job.id, 'operation bind failed before submission').catch(() => null);
+      throw claimError(503, 'Paid operation could not be bound; the reservation was released and nothing was submitted', 'operation_claims_unavailable', { operation_id: operationId, job_id: job.id });
+    }
+  }
   const spend = {
     model_id: model.id,
     provider_model_id: model.provider_model_id,
@@ -445,23 +570,34 @@ export async function createGeneration(request, env, user) {
   });
 
   const submitStarted = Date.now();
+  const attemptedAt = new Date().toISOString();
+  let submitted;
   try {
     const webhookUrl = `${new URL(request.url).origin}/v1/media/webhooks/fal`;
-    const submitted = await submitFal(env, model.provider_model_id, input, { webhookUrl });
-    recordEvent({
-      orgId: org.org_id, name: 'media.generation.submitted', kind: 'dependency', actorUserId: user.id,
-      resourceType: 'media_job', resourceId: job.id, durationMs: Date.now() - submitStarted,
-      message: `Submitted to fal (${model.provider_model_id})`,
-      detail: { ...spend, provider_request_id: submitted.request_id || null }
-    });
-    return patchJob(env, job.id, {
-      provider_request_id: submitted.request_id,
-      submitted_at: new Date().toISOString(),
-      provider_status: { ...submitted, delivery: 'webhook' },
-      status: 'queued'
-    });
+    submitted = await submit(env, model.provider_model_id, input, { webhookUrl });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+    const classification = classifySubmitError(error);
+    if (classification === 'uncertain') {
+      /* The bytes may have reached the provider (timeout, abort, network loss,
+         5xx after send). The job may be running and will be billed. Keep the
+         reservation, record the attempt as evidence and leave the job for
+         reconciliation. Never resubmit automatically: a retry with the same
+         operation id reads this job back; a deliberate new attempt needs a
+         new operation id. */
+      recordEvent({
+        orgId: org.org_id, name: 'media.generation.submit_uncertain', kind: 'dependency', level: 'warn', outcome: 'error',
+        actorUserId: user.id, resourceType: 'media_job', resourceId: job.id, durationMs: Date.now() - submitStarted,
+        message: `fal submission outcome unknown; reservation kept for reconciliation: ${message.slice(0, 300)}`,
+        detail: spend
+      });
+      await patchJob(env, job.id, {
+        status: 'reconciling',
+        error: { message, uncertain: true, stage: 'submit' },
+        provider_status: { outcome: 'uncertain', attempted_at: attemptedAt, error: message.slice(0, 500), delivery: 'webhook' }
+      }).catch(() => null);
+      throw claimError(502, `Provider outcome is unknown; the reservation is kept for reconciliation: ${message}`, 'provider_outcome_uncertain', { job_id: job.id, operation_id: operationId });
+    }
     recordEvent({
       orgId: org.org_id, name: 'media.generation.submit_failed', kind: 'dependency', level: 'error', outcome: 'error',
       actorUserId: user.id, resourceType: 'media_job', resourceId: job.id, durationMs: Date.now() - submitStarted,
@@ -470,10 +606,41 @@ export async function createGeneration(request, env, user) {
     });
     await patchJob(env, job.id, {
       status: 'failed',
-      error: { message }
+      error: { message, stage: 'submit' }
     }).catch(() => null);
     await releaseReservation(env, job.id, `provider submission failed: ${message}`).catch(() => null);
     throw error;
+  }
+  recordEvent({
+    orgId: org.org_id, name: 'media.generation.submitted', kind: 'dependency', actorUserId: user.id,
+    resourceType: 'media_job', resourceId: job.id, durationMs: Date.now() - submitStarted,
+    message: `Submitted to fal (${model.provider_model_id})`,
+    detail: { ...spend, provider_request_id: submitted.request_id || null }
+  });
+  try {
+    return await patchJob(env, job.id, {
+      provider_request_id: submitted.request_id,
+      submitted_at: new Date().toISOString(),
+      provider_status: { ...submitted, delivery: 'webhook' },
+      status: 'queued'
+    });
+  } catch (error) {
+    /* The provider accepted; only our record failed. The reservation stays and
+       the request id is the reconciliation handle. */
+    const message = error instanceof Error ? error.message : String(error);
+    recordEvent({
+      orgId: org.org_id, name: 'media.generation.persist_failed', kind: 'dependency', level: 'error', outcome: 'error',
+      actorUserId: user.id, resourceType: 'media_job', resourceId: job.id,
+      message: `provider accepted ${submitted.request_id || '?'} but the job record could not be updated: ${message.slice(0, 300)}`,
+      detail: { ...spend, provider_request_id: submitted.request_id || null }
+    });
+    await patchJob(env, job.id, {
+      status: 'reconciling',
+      provider_request_id: submitted.request_id,
+      error: { message, uncertain: true, stage: 'persist' },
+      provider_status: { ...submitted, outcome: 'accepted_unrecorded', delivery: 'webhook' }
+    }).catch(() => null);
+    throw claimError(502, 'Provider accepted the job but its record could not be saved; reservation kept', 'provider_accepted_persistence_failed', { job_id: job.id, provider_request_id: submitted.request_id || null, operation_id: operationId });
   }
 }
 

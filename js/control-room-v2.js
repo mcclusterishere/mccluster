@@ -3782,7 +3782,7 @@
     if (window.CR.frontPage) window.CR.frontPage.bind($("crSurface"));
     /* a NAV mount point whose module has registered binds its own view */
     var slotMod = state.leaf && state.leaf.leaf.renderer === "slot" && window.CR[state.leaf.leaf.module];
-    if (slotMod && typeof slotMod.bind === "function") slotMod.bind($("crSurface"));
+    if (slotMod && typeof slotMod.bind === "function") slotMod.bind($("crSurface"), { request: request, orgId: state.org && state.org.id });
     var search = $("crWorkSearch");
     if (search) {
       search.value = state.search || "";

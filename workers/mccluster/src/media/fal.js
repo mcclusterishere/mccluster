@@ -19,14 +19,14 @@ async function loadFal() {
     try {
       ({ fal: falClient } = await import('@fal-ai/client'));
     } catch {
-      throw Object.assign(new Error('fal gateway client is not installed'), { status: 503 });
+      throw Object.assign(new Error('fal gateway client is not installed'), { status: 503, preflight: true });
     }
   }
   return falClient;
 }
 
 async function setup(env) {
-  if (!configured(env)) throw Object.assign(new Error('fal gateway is not configured'), { status: 503 });
+  if (!configured(env)) throw Object.assign(new Error('fal gateway is not configured'), { status: 503, preflight: true });
   const fal = await loadFal();
   fal.config({ credentials: env.FAL_KEY });
   return fal;
@@ -60,6 +60,25 @@ async function falJwks() {
   if (!keys.length) throw Object.assign(new Error('fal webhook verification keys are unavailable'), { status: 503 });
   jwksCache = { keys, expiresAt: now + FAL_JWKS_CACHE_MS };
   return keys;
+}
+
+/* Audit C5: a thrown submit error is NOT proof the provider did not accept
+   the request. Only an error raised before anything was sent (our own
+   preflight) or a provider answer that refused the request (4xx) is definite;
+   a timeout, abort, network failure or 5xx after the bytes left is uncertain
+   and the caller must keep the budget reservation for reconciliation rather
+   than release it and risk paying twice on a retry. */
+export function classifySubmitError(error) {
+  if (!error || typeof error !== 'object') return 'uncertain';
+  if (error.preflight === true || error.definite === true) return 'definite';
+  if (error.uncertain === true || error.timeoutType) return 'uncertain';
+  const status = Number(error.status ?? error.statusCode);
+  /* The provider answered with its own status: the queue endpoint returns
+     2xx + request_id when it accepts, so any 4xx/5xx answer from it means
+     "not queued". 502/504 come from an intermediary and may hide an accepted
+     request, so they stay uncertain. No status at all = nothing came back. */
+  if (Number.isInteger(status) && status >= 400 && status !== 502 && status !== 504) return 'definite';
+  return 'uncertain';
 }
 
 export async function submitFal(env, modelId, input, options = {}) {

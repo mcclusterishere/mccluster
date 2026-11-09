@@ -1,0 +1,52 @@
+/* Control · System · E=Up (js/control-room/eup.js). Mobile first: one column at
+   phone width, room added at 720px and 1024px with min-width queries only;
+   every grid track is minmax(0,1fr) so one long record never widens the page;
+   form controls are at least 16px so iOS does not zoom. Tokens come from the
+   flat house system in css/style.css; nothing here draws a mark. */
+.cr-eup { min-width: 0; display: grid; gap: 1rem; padding-block-end: 2rem; }
+.cr-eup__head h2 { margin: 0; font-size: 1.5rem; }
+.cr-eup__kicker { margin: 0 0 .25rem; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; opacity: .75; }
+.cr-eup__status { padding: .6rem .8rem; border: 1px solid color-mix(in srgb, currentColor 18%, transparent); border-radius: .6rem; font-size: .92rem; overflow-wrap: anywhere; }
+.cr-eup__tabs { display: flex; gap: .4rem; overflow-x: auto; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; padding-block: .2rem; scrollbar-width: thin; }
+.cr-eup__tabs [role="tab"] { flex: 0 0 auto; min-height: 44px; padding: .5rem .9rem; border-radius: 999px; border: 1px solid color-mix(in srgb, currentColor 25%, transparent); background: transparent; color: inherit; font: inherit; font-size: max(16px, .95rem); white-space: nowrap; cursor: pointer; }
+.cr-eup__tabs [role="tab"][aria-selected="true"] { background: color-mix(in srgb, currentColor 14%, transparent); border-color: currentColor; }
+.cr-eup__tabs [role="tab"]:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.cr-eup__stage { display: grid; gap: .5rem; min-width: 0; }
+.cr-eup__globe { position: relative; min-height: 220px; height: min(46vw, 320px); border-radius: .8rem; overflow: hidden; background: color-mix(in srgb, currentColor 6%, transparent); }
+.cr-eup__globe .crg-canvas, .cr-eup__globe canvas { width: 100%; height: 100%; display: block; }
+.cr-eup__geo { margin: 0; font-size: .9rem; overflow-wrap: anywhere; }
+.cr-eup__pane { min-width: 0; }
+.cr-eup__grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: .8rem; }
+.cr-eup__card { min-width: 0; padding: .9rem; border: 1px solid color-mix(in srgb, currentColor 16%, transparent); border-radius: .8rem; }
+.cr-eup__card h3 { margin: 0 0 .5rem; font-size: 1.05rem; }
+.cr-eup__card h4 { margin: .9rem 0 .35rem; font-size: .95rem; }
+.cr-eup__card p, .cr-eup__card li, .cr-eup__card small { overflow-wrap: anywhere; }
+.cr-eup__list { list-style: none; margin: 0; padding: 0; display: grid; gap: .6rem; }
+.cr-eup__list ul { margin: .3rem 0 0 1rem; padding: 0; }
+.cr-eup__prov { margin: .25rem 0 0; font-size: .78rem; opacity: .8; }
+.cr-eup__chip { display: inline-block; padding: .1rem .5rem; border-radius: 999px; font-size: .75rem; border: 1px solid color-mix(in srgb, currentColor 30%, transparent); vertical-align: middle; }
+.cr-eup__chip--current, .cr-eup__chip--active, .cr-eup__chip--done { border-color: #3fa66b; }
+.cr-eup__chip--stale, .cr-eup__chip--partial, .cr-eup__chip--held, .cr-eup__chip--paused, .cr-eup__chip--draft, .cr-eup__chip--dormant { border-color: #d9a441; }
+.cr-eup__chip--unavailable, .cr-eup__chip--error, .cr-eup__chip--denied, .cr-eup__chip--not_configured { border-color: #d05a5a; }
+.cr-eup__note { margin: .5rem 0; padding: .6rem .75rem; border-radius: .6rem; border: 1px dashed color-mix(in srgb, currentColor 30%, transparent); font-size: .9rem; overflow-wrap: anywhere; }
+.cr-eup__note--denied, .cr-eup__note--error, .cr-eup__note--signed_out { border-style: solid; border-color: #d05a5a; }
+.cr-eup__note--unknown, .cr-eup__note--timeout, .cr-eup__note--not_configured, .cr-eup__note--not_implemented { border-color: #d9a441; }
+.cr-eup__note--done { border-color: #3fa66b; }
+.cr-eup__crumb { display: flex; flex-wrap: wrap; gap: .35rem .5rem; align-items: baseline; margin: 0 0 .8rem; font-size: .9rem; }
+.cr-eup__crumb small { opacity: .7; }
+.cr-eup__link { background: none; border: 0; padding: 0; color: inherit; font: inherit; font-size: max(16px, 1rem); text-decoration: underline; cursor: pointer; min-height: 44px; text-align: left; }
+.cr-eup__search { display: grid; gap: .5rem; margin: 0 0 .9rem; }
+.cr-eup__search input { width: 100%; min-width: 0; max-width: 100%; font-size: max(16px, 1rem); min-height: 44px; padding: .4rem .6rem; border-radius: .5rem; border: 1px solid color-mix(in srgb, currentColor 25%, transparent); background: transparent; color: inherit; }
+.cr-eup__actions { display: flex; flex-wrap: wrap; gap: .4rem; margin-block-start: .5rem; }
+.cr-eup__actions .cr-btn { min-height: 44px; font-size: max(16px, .95rem); }
+@media (min-width: 720px) {
+  .cr-eup__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cr-eup__card--wide { grid-column: 1 / -1; }
+  .cr-eup__search { grid-template-columns: minmax(0, 1fr) auto; align-items: end; }
+}
+@media (min-width: 1024px) {
+  .cr-eup__stage { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); align-items: start; }
+  .cr-eup__globe { height: 380px; }
+  .cr-eup__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (prefers-reduced-motion: reduce) { .cr-eup__tabs { scroll-behavior: auto; } }

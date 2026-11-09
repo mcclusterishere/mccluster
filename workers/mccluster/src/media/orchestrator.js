@@ -23,11 +23,19 @@ export async function createBakeoff(request, env, user) {
   if (body.prompt && !input.prompt) input.prompt = body.prompt;
   validateBakeoff(models, input);
 
+  /* Audit C5: one stable child operation id per requested model, derived
+     from the caller's operation id, so a retried compare resolves each lane
+     to the job it already made instead of fanning out a second paid run. */
+  const parentOperationId = typeof body.operation_id === 'string' && body.operation_id ? body.operation_id : null;
+  const childOperationId = (modelId) => parentOperationId
+    ? `${parentOperationId}:${modelId.replace(/[^A-Za-z0-9._-]/g, '_')}`.slice(0, 128)
+    : undefined;
   const settled = await Promise.allSettled(modelIds.map((modelId) => {
     const synthetic = new Request(request.url, {
       method: 'POST',
       headers: request.headers,
       body: JSON.stringify({
+        operation_id: childOperationId(modelId),
         org_id: body.org_id || null,
         model_id: modelId,
         prompt: body.prompt || null,
