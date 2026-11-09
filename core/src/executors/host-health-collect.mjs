@@ -1,9 +1,9 @@
 import { execFile } from 'node:child_process';
-import { readFile } from 'node:fs/promises';
+import { readFile, stat } from 'node:fs/promises';
 import { promisify } from 'node:util';
 import { rest, recentJobs } from '../supabase.mjs';
 import { listNodes } from '../compute/store.mjs';
-import { verifiedReconcilerGitSource } from '../reconciler-source-receipt.mjs';
+import { summarizeReconcileCycles, verifiedReconcilerGitSource } from '../reconciler-source-receipt.mjs';
 import {
   SYSTEM_CONTRACT_MIGRATION,
   SYSTEM_HEALTH_SCHEMA,
@@ -32,6 +32,16 @@ async function textFile(path) {
   catch { return null; }
 }
 
+// Reconcile cycle receipts are small by contract (one JSON line each, a log of
+// at most 40 lines). Anything else at those paths is not read into memory.
+export async function boundedTextFile(path, maxBytes) {
+  try {
+    const info = await stat(path);
+    if (!info.isFile() || info.size > maxBytes) return null;
+    return (await readFile(path, 'utf8')).trim();
+  } catch { return null; }
+}
+
 function parseJson(text) {
   if (!text) return null;
   try { return JSON.parse(text); }
@@ -55,8 +65,8 @@ export function haloSnapshotFreshness(snapshot, nowMs = Date.now(), maxAgeMs = 1
   return { ...snapshot, stale: snapshotAgeMs > maxAgeMs, age_ms: snapshotAgeMs };
 }
 
-async function githubCommit(ref, headers) {
-  const response = await fetch(`https://api.github.com/repos/${REPOSITORY}/commits/${encodeURIComponent(ref)}`, {
+async function githubCommit(ref, headers, fetchImpl) {
+  const response = await fetchImpl(`https://api.github.com/repos/${REPOSITORY}/commits/${encodeURIComponent(ref)}`, {
     headers,
     signal: AbortSignal.timeout(Number(process.env.MCCLUSTER_HEALTH_GITHUB_TIMEOUT_MS || 5000)),
   });
@@ -65,7 +75,9 @@ async function githubCommit(ref, headers) {
   return body?.sha || null;
 }
 
-async function githubSource() {
+// fetchImpl and readText exist so a test can drive both outcomes without a
+// network or a host file; production calls githubSource() with neither.
+export async function githubSource({ fetchImpl = globalThis.fetch, readText = textFile } = {}) {
   const headers = {
     accept: 'application/vnd.github+json',
     'user-agent': 'mccluster-core-system-health',
@@ -74,8 +86,8 @@ async function githubSource() {
   if (process.env.GITHUB_TOKEN) headers.authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
   const promotedRef = process.env.MCCLUSTER_OVH_DEPLOY_REF || 'deploy/ovh-production';
   const [main, promoted] = await Promise.allSettled([
-    githubCommit('main', headers),
-    githubCommit(promotedRef, headers),
+    githubCommit('main', headers, fetchImpl),
+    githubCommit(promotedRef, headers, fetchImpl),
   ]);
   const errors = [];
   if (main.status === 'rejected') errors.push(`main: ${errorText(main.reason)}`);
@@ -85,9 +97,11 @@ async function githubSource() {
   // from its successful, ancestry-checked ref fetch is valid source evidence.
   // A missing/stale/invalid receipt never overrides a GitHub fetch error.
   if (errors.length) {
-    const receipt = parseJson(await textFile('/var/lib/mccluster/reconcile/last-source-fetch.json'));
+    const receipt = parseJson(await readText('/var/lib/mccluster/reconcile/last-source-fetch.json'));
     const verified = verifiedReconcilerGitSource(receipt, { repository: REPOSITORY, promotedRef });
-    if (verified) return verified;
+    // Keep why the REST read failed: a rate limit, a timeout and a private
+    // repository's "Not Found" are different facts behind the same fallback.
+    if (verified) return { ...verified, rest_error: errors.join('; ') };
   }
   return {
     repository: REPOSITORY,
@@ -106,6 +120,22 @@ async function countRows(table, filters = {}) {
   const { headers } = await rest(`${table}?${params.toString()}`, { headers: { Prefer: 'count=exact', Range: '0-0' } });
   const match = String(headers.get('content-range') || '').match(/\/(\d+)$/);
   return match ? Number(match[1]) : null;
+}
+
+// deployment.reconcile and deployment.source_fallback, from the receipt texts
+// the reconciler leaves under /var/lib/mccluster/reconcile.
+export function reconcileEvidence({ lastCycleText = null, lastVerifiedCycleText = null, cycleLogText = null, source = null } = {}, options = {}) {
+  return {
+    reconcile: summarizeReconcileCycles(
+      { latest: parseJson(lastCycleText), verified: parseJson(lastVerifiedCycleText), history: cycleLogText || '' },
+      { repository: REPOSITORY, promotedRef: source?.promoted_ref || 'deploy/ovh-production', ...options },
+    ),
+    // Present only when the REST read failed and the reconciler's receipt was
+    // used instead. It says why, which the receipt itself cannot.
+    source_fallback: source?.verification_method === 'ovh_reconciler_git_fetch_receipt'
+      ? { github_rest_error: source.rest_error || null }
+      : null,
+  };
 }
 
 function supabaseProjectRef() {
@@ -315,10 +345,13 @@ export async function hostHealth(job = {}) {
     run('bash', ['-lc', '${MCCLUSTER_BLENDER_BIN:-blender} --version 2>/dev/null | head -n 1 || true']),
   ]);
 
-  const [deployedShaText, lastSuccessText, haloHealthText] = await Promise.all([
+  const [deployedShaText, lastSuccessText, haloHealthText, lastCycleText, lastVerifiedCycleText, cycleLogText] = await Promise.all([
     textFile('/var/lib/mccluster/reconcile/deployed_sha'),
     textFile('/var/lib/mccluster/reconcile/last-success.json'),
     textFile('/var/lib/hitmans-halo/health/status.json'),
+    boundedTextFile('/var/lib/mccluster/reconcile/last-cycle.json', 4096),
+    boundedTextFile('/var/lib/mccluster/reconcile/last-verified-cycle.json', 4096),
+    boundedTextFile('/var/lib/mccluster/reconcile/cycles.jsonl', 128 * 1024),
   ]);
   const haloHealth = haloSnapshotFreshness(parseJson(haloHealthText));
 
@@ -357,7 +390,16 @@ export async function hostHealth(job = {}) {
     host: { hostname: hostname.stdout || null, uptime: uptime.stdout || null, disk_root: disk.stdout || null, memory: memory.stdout || null },
     services,
     runtime,
-    deployment: { deployed_sha: deployedShaText, last_success: parseJson(lastSuccessText), halo_sha: haloHealth?.deployment?.sha || null },
+    deployment: {
+      deployed_sha: deployedShaText,
+      // last_success is the last DEPLOY: it is written only when files changed.
+      // The last successful reconcile CYCLE, deploy or verified no-change, with
+      // its transport and trigger, is reconcile. A host whose reconciler
+      // predates cycle receipts reports reconcile.status "unverified".
+      last_success: parseJson(lastSuccessText),
+      halo_sha: haloHealth?.deployment?.sha || null,
+      ...reconcileEvidence({ lastCycleText, lastVerifiedCycleText, cycleLogText, source }),
+    },
     supabase,
     jobs: { ...jobs, recent: undefined },
     compute,

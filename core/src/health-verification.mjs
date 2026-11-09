@@ -15,6 +15,27 @@ export function finalizeRuntimeHealth(snapshot) {
       problems.push({component:'deployment',code:`${name}_sha_mismatch`,severity:'warning',message:`${name} serving SHA differs from the host deployment record.`,detail:{serving_sha:probe.deployment_sha,host_record_sha:snapshot.deployment?.deployed_sha || null}});
     }
   }
+  // The reconcile timer being "active" says nothing about its cycles: in incident
+  // #510 it stayed active for a day while every fetch failed. Cycle receipts
+  // (deployment.reconcile) do. A failed or stale cycle is a warning, as an
+  // inactive timer already is. "unverified" means the host's reconciler predates
+  // the receipts: that is neither a failure nor a success and adds nothing.
+  const reconcile = snapshot.deployment?.reconcile || null;
+  const lastCycle = reconcile?.last_cycle || null;
+  if (reconcile?.status === 'failed') {
+    problems.push({component:'deployment',code:'reconcile_cycle_failed',severity:'warning',
+      message:lastCycle?.interrupted
+        ? `The last OVH reconcile cycle was terminated at stage ${lastCycle?.stage || 'unknown'} before it finished.`
+        : `The last OVH reconcile cycle failed at stage ${lastCycle?.stage || 'unknown'}.`,
+      detail:{stage:lastCycle?.stage || null,exit_code:lastCycle?.exit_code ?? null,interrupted:lastCycle?.interrupted === true,
+        transport:lastCycle?.transport || null,trigger:lastCycle?.trigger || null,finished_at:lastCycle?.finished_at || null,
+        consecutive_failed_cycles:reconcile.consecutive_failed_cycles ?? null,last_verified_at:reconcile.last_verified_at || null}});
+  } else if (reconcile?.status === 'stale') {
+    problems.push({component:'deployment',code:'reconcile_cycle_stale',severity:'warning',
+      message:'No OVH reconcile cycle has succeeded within the freshness window.',
+      detail:{last_verified_at:reconcile.last_verified_at || null,age_ms:reconcile.age_ms ?? null,stale_after_ms:reconcile.stale_after_ms ?? null,
+        last_cycle_outcome:lastCycle?.outcome || null,last_cycle_stage:lastCycle?.stage || null,last_cycle_finished_at:lastCycle?.finished_at || null}});
+  }
   const degradation = [...(snapshot.degradation || []), ...problems];
   const overall = degradation.some(item=>item.severity === 'critical') ? 'fail' : degradation.length ? 'degraded' : snapshot.overall;
   const previous = snapshot.health_sections?.infrastructure || {status:'unverified',issues:[]};
