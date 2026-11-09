@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { signCoreRequest } from '../broker-edge-auth.mjs';
 
 const DEFAULT_PROTOCOL_VERSION = '2026-07-28';
@@ -176,6 +176,31 @@ export function operationIdForCall(server, args = {}, options = {}) {
   const chosen = explicit || scoped || `core:${randomUUID()}`;
   if (!OPERATION_ID.test(chosen)) throw new Error('operation_id must be 1-128 characters of letters, digits, ".", "_", ":" or "-"');
   return chosen;
+}
+
+/* The job-scoped form of that id for Core's own executors:
+   `core:<scope>:<step>`, scope being the Core job id and step the ordinal of
+   the paid call inside that job. A re-attempt of the same job (crash, lost
+   lease, requeue) composes the same id, so the Worker hands back the job it
+   already holds instead of paying again; each step inside the job gets its
+   own. The step never carries ":" so the last ":" always separates the two.
+   When the direct form would not fit the Worker's 128-char rule, the scope is
+   shortened deterministically and a sha256 prefix of the full scope keeps
+   distinct scopes distinct; the step is never cut. */
+const OPERATION_ID_MAX = 128;
+const OPERATION_STEP = /^[A-Za-z0-9][A-Za-z0-9._-]{0,31}$/;
+export function scopedOperationId(scope, step) {
+  const scopeText = String(scope ?? '').trim();
+  const stepText = String(step ?? '').trim();
+  if (!scopeText) throw new Error('operation id scope is required: the Core job id');
+  if (!OPERATION_STEP.test(stepText)) throw new Error('operation id step must be 1-32 characters of letters, digits, ".", "_" or "-"');
+  const direct = `core:${scopeText}:${stepText}`;
+  if (OPERATION_ID.test(direct)) return direct;
+  const digest = createHash('sha256').update(scopeText, 'utf8').digest('hex').slice(0, 16);
+  const tail = `-${digest}:${stepText}`;
+  const room = OPERATION_ID_MAX - 'core:'.length - tail.length;
+  const head = scopeText.replace(/[^A-Za-z0-9._-]+/g, '-').slice(0, room);
+  return `core:${head}${tail}`;
 }
 
 export async function callMcpTool(server, name, args = {}, options = {}) {

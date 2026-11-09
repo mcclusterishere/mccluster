@@ -69,6 +69,19 @@ function publicMcpName(server, remoteName) {
   return combined;
 }
 
+/* Only the options the MCP transport understands cross into callMcpTool
+   (./mcp-http.mjs): a caller-scoped operation id, the opt-in that mints one
+   for an unsigned server, and the retry/timeout budget. Broker context
+   (actor, source, requirements) stays on this side of the hop. */
+const MCP_TRANSPORT_OPTIONS = Object.freeze(['operationId', 'operationIds', 'retries', 'timeoutMs']);
+export function mcpTransportOptions(options) {
+  const picked = {};
+  for (const key of MCP_TRANSPORT_OPTIONS) {
+    if (options?.[key] !== undefined) picked[key] = options[key];
+  }
+  return picked;
+}
+
 function addRecord(records, record) {
   if (!record?.name || !NAME.test(record.name)) throw new Error(`Tool name is invalid: ${record?.name || ''}`);
   if (records.has(record.name)) throw new Error(`Duplicate tool name: ${record.name}`);
@@ -186,7 +199,7 @@ export class ToolRegistry {
     } else if (record.transport === 'http') {
       result = await callHttpTool(record.target, args);
     } else if (record.transport === 'mcp-http') {
-      result = await callMcpTool(record.target.server, record.remoteName, args);
+      result = await callMcpTool(record.target.server, record.remoteName, args, mcpTransportOptions(options));
     } else if (record.transport === 'compute') {
       result = await callComputeTool(record.target, args, options);
     } else {
