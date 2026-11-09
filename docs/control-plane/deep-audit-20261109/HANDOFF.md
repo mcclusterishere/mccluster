@@ -21,7 +21,7 @@ Branch `claude/new-session-83ken5`; starting head `15523e187d1800dcbe7cd2c19f4dd
 
 | Command | Result |
 | --- | --- |
-| `node --test --test-timeout=60000 scripts/test/*.test.mjs` | first run 2137 tests: 2133 pass, 1 fail, 3 skipped (pre-existing publish-time skips); the one failure was `production-schema-verifier` requiring the committed ledger to equal the stale 2026-11-03 snapshot; fixed by the `ledger-receipts.json` mechanism below, verifier 10/10; full rerun: ROOT_RERUN |
+| `node --test --test-timeout=60000 scripts/test/*.test.mjs` | first run 2137 tests: 2133 pass, 1 fail, 3 skipped (pre-existing publish-time skips); the one failure was `production-schema-verifier` requiring the committed ledger to equal the stale 2026-11-03 snapshot; fixed by the `ledger-receipts.json` mechanism below, verifier 10/10; full rerun 2137 tests: 2134 pass, 0 fail, 3 skipped |
 | `python3 -m unittest discover -s scripts/test -p 'test_*.py'` | 7 pass |
 | `cd core && node --test test/*.test.mjs` / `npm run check` | 585 pass, 0 fail; check pass |
 | `cd workers/mccluster && node --import ./test/support/offline-network.mjs --test test/*.test.mjs` | 1590 pass, 0 fail |
@@ -65,7 +65,7 @@ All SQL added this session is pending with rollback files; applied releases keep
 - `4989365` reconciliation of the three applied releases, RPC-index state, E=Up router scaffold
 - `836e4f3` League backend
 - `e6687cf`, `83f593c` work-in-progress checkpoints (superseded by the final commit)
-- FINAL_COMMIT final integration: C5 completion, E=Up shell and Products door, civic/companies/sources intake, allowlist, docs
+- `74ab73e` final integration: C5 completion, E=Up shell and Products door, civic/companies/sources intake, allowlist, docs
 
 ---
 
