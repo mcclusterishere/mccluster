@@ -30,7 +30,8 @@ try {
  return route.abort();
  });
  await context.addInitScript(()=>{
- localStorage.setItem('mccdb_session',JSON.stringify({access_token:'local-test-fixture'}));
+ // A signed-in session's shape (future expiry, refresh token): when the canonical auth helper loads before the owner gate, an expiry-less session with nothing to refresh it reads as signed out.
+ localStorage.setItem('mccdb_session',JSON.stringify({access_token:'local-test-fixture',refresh_token:'fixture',expires_at:Math.floor(Date.now()/1000)+3600}));
  localStorage.setItem('mcc.gamehub.music.v1',JSON.stringify({modules:{chem108:{track:1,time:12}}}));
  const NativeAudio=window.Audio;window.audioCount=0;window.Audio=function(...args){window.audioCount++;return new NativeAudio(...args);};
  });

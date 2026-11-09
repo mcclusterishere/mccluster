@@ -10,7 +10,8 @@ const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'
 let checks=0;
 async function setup(width, owner=true) {
   const context=await browser.newContext({viewport:{width,height:900},hasTouch:width===390,reducedMotion:'reduce',serviceWorkers:'block'});
-  await context.addInitScript(()=>localStorage.setItem('mccdb_session',JSON.stringify({access_token:'local-test-owner'})));
+  // A signed-in session's shape (future expiry, refresh token): when the canonical auth helper loads before the owner gate, an expiry-less session with nothing to refresh it reads as signed out.
+  await context.addInitScript(()=>localStorage.setItem('mccdb_session',JSON.stringify({access_token:'local-test-owner',refresh_token:'fixture',expires_at:Math.floor(Date.now()/1000)+3600})));
   await context.route('**/*',async route=>{
     const u=new URL(route.request().url());
     if(database&&u.pathname.startsWith('/v1/arcade/')){

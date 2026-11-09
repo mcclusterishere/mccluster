@@ -11,7 +11,8 @@ const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||u
 const results=[];const types={'.mjs':'text/javascript','.js':'text/javascript','.html':'text/html','.json':'application/json','.css':'text/css'};
 try{for(const width of [390,1280])for(const topology of ['hex','square']){
  const ctx=await browser.newContext({viewport:{width,height:1000},hasTouch:width===390,serviceWorkers:'block'});
- await ctx.addInitScript(()=>localStorage.setItem('mccdb_session',JSON.stringify({access_token:'fixture-owner'})));
+ // The fixture session has the shape every signed-in session has (a future expiry and a refresh token): the canonical auth helper, when it loads before the owner gate, treats an expiry-less session with nothing to refresh it as signed out.
+ await ctx.addInitScript(()=>localStorage.setItem('mccdb_session',JSON.stringify({access_token:'fixture-owner',refresh_token:'fixture',expires_at:Math.floor(Date.now()/1000)+3600})));
  await ctx.route('**/*',async route=>{const u=new URL(route.request().url());if(u.hostname==='api.mccluster.org')return route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*','access-control-allow-headers':'*'},body:'{}'});if(u.origin!==base)return route.abort();try{const f=resolve(root,'.'+u.pathname);return route.fulfill({body:await readFile(f),contentType:types[extname(f)]||'text/plain'});}catch{return route.fulfill({status:404,body:''});}});
  const page=await ctx.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));page.setDefaultTimeout(30000);
  const saved=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('here.prim3.city-tactics.v1')));
