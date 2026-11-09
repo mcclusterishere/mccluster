@@ -60,6 +60,14 @@ Member-facing apply/accept/proof routes (consumer release); live broadcasting, p
 
 All SQL added this session is pending with rollback files; applied releases keep their rollback artifacts (`music_direct_asset_versions_v1.rollback.sql`; nonce and Arcade schemas are additive and should stay in place). Edge v41 source is retained in the owner's packet for Edge rollback. No destructive SQL rollback after purchases without inspection.
 
+### CI on PR #793 (first run on `4bc2256`) and the fixes
+
+Eleven red jobs, four causes, all fixed on the branch (no test weakened):
+- `Supabase migration reset`, `Credits, billing, idempotency, rate-limit, and COGS regression`, `Communications database regression`: the applied commerce migration opens with `LOCK TABLE`, which the CLI reset runs outside a transaction (`25P01`). `scripts/supabase-local-reset-with-replay.sh` now stages `20261109175747` inside `begin;`/`commit;` in the disposable copy, as it already did for `20261031180839`; the canonical bytes stay exact. `supabase-replay-transaction.test.mjs` passes.
+- `Validate authority, program, plans, and building`: 31 new files (docs, environment consumer, vendored product, tests, League fixture) classified support-only in `equity-uprise-repo-source-map-v2.json`; validator 2562/2562, report regenerated.
+- `browser (travel-*)`: the consumer stylesheet had widened the World mode bar to 320px; it is back to 240×44 with an icon-width E=UP button (measured at four widths, no clipped labels). `travel-desktop` 35/35 locally.
+- `browser (editorial-*)`: three checks still described the one-mode public World; updated to the owner's 7 November contract (public modes are News feed and E=UP only; a swipe moves between those two and never to Travel or Missions; the owner's bar has four modes). `editorial-iphone-landscape` 113/113 locally.
+
 ### Session 2 commits
 
 - `4989365` reconciliation of the three applied releases, RPC-index state, E=Up router scaffold
