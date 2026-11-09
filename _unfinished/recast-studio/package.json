@@ -1,0 +1,7 @@
+{
+  "name": "mccluster-recast-studio-prototype",
+  "private": true,
+  "type": "module",
+  "scripts": {"start": "node server.mjs", "test": "node --test test/*.test.mjs", "check": "node --check public/app.mjs && node --check server.mjs"},
+  "engines": {"node": ">=22"}
+}

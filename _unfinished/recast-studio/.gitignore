@@ -1,0 +1,5 @@
+node_modules/
+qa/*.png
+qa/*.mp4
+qa/*.log
+.env*
