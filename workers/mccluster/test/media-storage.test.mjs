@@ -5,7 +5,8 @@
    supabase/functions/mnet-media/storage-path.mjs, which issues the uploads. */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { MEDIA_BUCKET, canonicalMediaUploader, isOwnMediaUpload, mediaObjectUrlPath, ownMediaUploads } from '../src/lib/media-storage.js';
+import { readFile } from 'node:fs/promises';
+import { MEDIA_BUCKET, canonicalMediaUploader, isOwnMediaUpload, ownMediaSignPath, ownMediaUploads } from '../src/lib/media-storage.js';
 import { canonicalMediaUploader as edgeUploader } from '../../../supabase/functions/mnet-media/storage-path.mjs';
 import { linkRows } from './support/auth-links.mjs';
 
@@ -25,6 +26,8 @@ const PATHS = [
   `${A}/${FILE}?x=1`, `${A}/${FILE}#x`, `${A}%2F${FILE}`, `${A}/88888888-8888-4888-8888-888888888888-clip one.mp4`,
   `${A}/88888888-8888-4888-8888-888888888888-clip/one.mp4`, `${A}\\${FILE}`, 'm/clip.mp4', 'clip.mp4', '', ' ',
   `${A}/${FILE}\u0000`, `${A}/88888888-8888-4888-8888-888888888888-ｃlip.mp4`, `g6666666-6666-4666-8666-666666666666/${FILE}`,
+  // U+017F and U+212A fold to s and k: a `u` flag added to either twin would start accepting them
+  `${A}/88888888-8888-4888-8888-888888888888-\u017fong.mp4`, `${A}/88888888-8888-4888-8888-888888888888-\u212alip.mp4`,
 ];
 const BUCKETS = ['mnet-media', 'MNET-MEDIA', 'mnet-media ', ' mnet-media', 'mnet-media/', 'mnet-media/..', 'mcc-gated-audio', 'creator-masters', '', null, undefined, 7];
 
@@ -40,6 +43,15 @@ test('the path rule is the media function\'s rule, case for case', () => {
   assert.equal(canonicalMediaUploader(row()), A);
   assert.equal(canonicalMediaUploader(row({ object_path: `${A.toUpperCase()}/${FILE}` })), A, 'the uploader is compared lowercased');
   assert.equal(MEDIA_BUCKET, 'mnet-media');
+});
+
+test('the two rules are the same two lines of source, not only the same answers on a list', async () => {
+  const lines = async (url) => (await readFile(url, 'utf8')).split('\n').filter((l) => /^const (UUID|PATH) = /.test(l));
+  const worker = await lines(new URL('../src/lib/media-storage.js', import.meta.url));
+  const edge = await lines(new URL('../../../supabase/functions/mnet-media/storage-path.mjs', import.meta.url));
+  assert.equal(worker.length, 2);
+  assert.deepEqual(worker, edge);
+  assert.match(worker[1], /, 'i'\);$/, 'case-insensitive only: no u, m, g or y flag');
 });
 
 test('a canonical row is the owner\'s own upload only when its prefix is linked to that owner', async () => {
@@ -95,7 +107,20 @@ test('a large board is looked up in bounded batches', async () => {
   assert.deepEqual(out.map((r) => r.id), many.filter((_, i) => i % 5).map((r) => r.id));
 });
 
-test('the sign path is the row\'s path, segment-encoded', () => {
-  assert.equal(mediaObjectUrlPath(row()), `${A}/${FILE}`);
-  assert.equal(mediaObjectUrlPath({ object_path: 'a b/c?d' }), 'a%20b/c%3Fd');
+test('the sign path exists only for a proven row, so no route can sign an unchecked pointer', async () => {
+  const links = [{ auth_user_id: A, m_uid: OWNER_A }];
+  const seen = [];
+  assert.equal(await ownMediaSignPath(row(), reader(links, seen)), `mnet-media/${A}/${FILE}`);
+  assert.equal(seen.length, 1);
+  assert.equal(await ownMediaSignPath(row(), reader([])), null, 'canonical but not linked to the owner');
+  assert.equal(await ownMediaSignPath(row({ owner_m_uid: OWNER_B }), reader(links)), null);
+  // `..` survives encodeURIComponent and a client resolves it into another bucket: such a row never gets a path at all
+  for (const object_path of ['../mcc-gated-audio/albums/i-am-here/01-master.wav', `${A}/../${B}/${FILE}`, `${A}/%2e%2e/${FILE}`, 'a b/c?d', `${A}/${FILE}?download=1`]) {
+    const asked = [];
+    assert.equal(await ownMediaSignPath(row({ object_path }), reader(links, asked)), null, object_path);
+    assert.deepEqual(asked, [], 'and costs no lookup');
+  }
+  assert.equal(await ownMediaSignPath(row({ bucket_id: 'mcc-gated-audio' }), reader(links)), null);
+  assert.equal(await ownMediaSignPath(null, reader(links)), null);
+  await assert.rejects(ownMediaSignPath(row(), async () => { throw new Error('link table unreachable'); }), /unreachable/);
 });

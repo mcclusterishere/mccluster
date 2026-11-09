@@ -83,7 +83,7 @@ async function campaignAssets(env, user, missionId) {
       method: 'POST', body: JSON.stringify({ expiresIn: 900, paths: rows.map((r) => r.object_path) })
     });
     for (const r of rows) {
-      const hit = (Array.isArray(out) ? out : []).find((x) => x.path === r.object_path && x.signedURL);
+      const hit = (Array.isArray(out) ? out : []).find((x) => x && x.path === r.object_path && x.signedURL);
       if (hit) signed[r.id] = { url: `${env.SUPABASE_URL}/storage/v1${hit.signedURL}`, media_type: r.media_type, mime_type: r.mime_type };
     }
   }

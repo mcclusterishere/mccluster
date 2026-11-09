@@ -153,7 +153,7 @@ const CREATOR = '99999999-9999-4999-8999-999999999999';
 const CREATOR_AUTH = '66666666-6666-4666-8666-666666666666';
 const STRANGER_AUTH = '77777777-7777-4777-8777-777777777777';
 const HOOK = `${CREATOR_AUTH}/88888888-8888-4888-8888-888888888888-hook.mp3`;
-function sourceFiles({ file = {}, links = [{ auth_user_id: CREATOR_AUTH, m_uid: CREATOR }], claimed = () => true } = {}) {
+function sourceFiles({ file = {}, links = [{ auth_user_id: CREATOR_AUTH, m_uid: CREATOR }], claimed = () => true, signAnswer = null } = {}) {
   return (u, init) => {
     if (u.includes('/m_auth_user_links?') && u.includes('select=auth_user_id')) return json(linkRows(u, links));
     if (u.includes('/m_auth_user_links?')) return json([{ m_uid: M_UID }]);
@@ -165,7 +165,8 @@ function sourceFiles({ file = {}, links = [{ auth_user_id: CREATOR_AUTH, m_uid: 
     if (u.includes('/storage/v1/object/sign/')) {
       // Storage signs whatever a service-role caller names, in any bucket: the Worker is the only gate.
       const bucket = u.split('/storage/v1/object/sign/')[1];
-      return json((JSON.parse(init.body).paths || []).map((path) => ({ path, signedURL: `/object/sign/${bucket}/${path}?token=t` })));
+      const honest = (JSON.parse(init.body).paths || []).map((path) => ({ path, signedURL: `/object/sign/${bucket}/${path}?token=t` }));
+      return json(signAnswer ? signAnswer(honest) : honest);
     }
     return json({}, 404);
   };
@@ -213,5 +214,20 @@ test('a source file row repointed at another bucket, prefix or path is unavailab
     const out = await handleClippingRequest(request, env, USER, url);
     assert.equal(out.assets[0].unavailable, true);
     assert.deepEqual(calls.filter((c) => c.url.includes('/storage/v1/object/sign/')), []);
+  });
+});
+
+test('a storage answer padded with entries nobody asked for, or with holes, hands a clipper only the proven file', async () => {
+  const request = new Request(`https://api.example/v1/clips/campaigns/${MISSION}/assets`);
+  const url = new URL(request.url);
+  const evil = { path: 'albums/i-am-here/01-master.wav', signedURL: '/object/sign/mcc-gated-audio/albums/i-am-here/01-master.wav?token=EVIL' };
+  await withFetch(sourceFiles({ signAnswer: (honest) => [null, evil, ...honest, undefined, 7, 'x', {}] }), async () => {
+    const out = await handleClippingRequest(request, env, USER, url);
+    assert.equal(out.assets[0].url, `https://db.example/storage/v1/object/sign/mnet-media/${HOOK}?token=t`);
+    assert.equal(JSON.stringify(out).includes('EVIL'), false);
+  });
+  await withFetch(sourceFiles({ signAnswer: () => [null] }), async () => {
+    const out = await handleClippingRequest(request, env, USER, url);
+    assert.equal(out.assets[0].unavailable, true, 'holes are an unavailable file, not a failed request');
   });
 });
