@@ -4,6 +4,7 @@
    function checks the caller. */
 import { instagramAccountCheck, memberToken, platformStatus } from './platforms.js';
 import { serviceRpc } from './runner.js';
+import { MEDIA_BUCKET, ownMediaUploads } from '../lib/media-storage.js';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -69,17 +70,20 @@ async function campaignAssets(env, user, missionId) {
   const assets = await service(env, `rest/v1/action_clip_assets?mission_id=eq.${missionId}&select=id,kind,label,network_media_asset_id,start_ms,end_ms,sort&order=sort.asc`);
   const ids = (assets || []).map((a) => a.network_media_asset_id).filter(Boolean);
   const files = ids.length
-    ? await service(env, `rest/v1/network_media_assets?id=in.(${ids.join(',')})&status=eq.ready&select=id,bucket_id,object_path,media_type,mime_type`)
+    ? await service(env, `rest/v1/network_media_assets?id=in.(${ids.join(',')})&status=eq.ready&select=id,bucket_id,object_path,owner_m_uid,media_type,mime_type`)
     : [];
+  /* A source file row stays its creator's to edit after launch, bucket and
+     path included. A clipper is only handed the creator's own upload, in the
+     upload bucket (../lib/media-storage.js); a row pointed anywhere else is
+     reported unavailable below and never signed. */
+  const rows = await ownMediaUploads(files, (p) => service(env, `rest/v1/${p}`));
   const signed = {};
-  const byBucket = {};
-  for (const f of files || []) (byBucket[f.bucket_id] ||= []).push(f);
-  for (const [bucket, rows] of Object.entries(byBucket)) {
-    const out = await service(env, `storage/v1/object/sign/${encodeURIComponent(bucket)}`, {
+  if (rows.length) {
+    const out = await service(env, `storage/v1/object/sign/${MEDIA_BUCKET}`, {
       method: 'POST', body: JSON.stringify({ expiresIn: 900, paths: rows.map((r) => r.object_path) })
     });
     for (const r of rows) {
-      const hit = (out || []).find((x) => x.path === r.object_path && x.signedURL);
+      const hit = (Array.isArray(out) ? out : []).find((x) => x.path === r.object_path && x.signedURL);
       if (hit) signed[r.id] = { url: `${env.SUPABASE_URL}/storage/v1${hit.signedURL}`, media_type: r.media_type, mime_type: r.mime_type };
     }
   }

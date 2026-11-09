@@ -1,4 +1,5 @@
 import { fail, reply } from './lib/http.js';
+import { MEDIA_BUCKET, isOwnMediaUpload, mediaObjectUrlPath, ownMediaUploads } from './lib/media-storage.js';
 import { approveNewsroomRevision, hasNewsroomApproval, newsroomPostId } from './newsroom-review.js';
 import { isCountry } from './intel/news-country-codes.js';
 import { pushEnabled, validSubscription, runPushCycle } from './web-push.js';
@@ -1323,7 +1324,10 @@ async function handleMnet(req,env,path,url){
     ]);
     const asset=assets?.[0];
     if(!asset||!assignments?.[0]||asset.owner_m_uid!==assignments[0].m_uid)return fail(req,env,'Proof has no upload',404);
-    const res=await fetch(`${env.SUPABASE_URL}/storage/v1/object/sign/${encodeURIComponent(asset.bucket_id)}/${String(asset.object_path).split('/').map(encodeURIComponent).join('/')}`,{method:'POST',headers:serviceHeaders(env),body:JSON.stringify({expiresIn:900})});
+    /* The row's bucket and path are the member's to edit (./lib/media-storage.js): the desk is shown the file only
+       when it is that member's own upload, never whatever object the row was pointed at. */
+    if(!(await isOwnMediaUpload(asset,(p)=>service(env,p))))return fail(req,env,'Proof has no upload',404);
+    const res=await fetch(`${env.SUPABASE_URL}/storage/v1/object/sign/${MEDIA_BUCKET}/${mediaObjectUrlPath(asset)}`,{method:'POST',headers:serviceHeaders(env),body:JSON.stringify({expiresIn:900})});
     const signed=await res.json().catch(()=>null);
     if(!res.ok||!signed?.signedURL)return fail(req,env,'Could not sign the upload',502);
     return reply(req,env,{url:`${env.SUPABASE_URL}/storage/v1${signed.signedURL}`,media_type:asset.media_type,mime_type:asset.mime_type,expires_in:900});
@@ -1345,7 +1349,10 @@ async function handleMnet(req,env,path,url){
     ]);
     const asset=assets?.[0];
     if(!asset||!assignments?.[0]||asset.owner_m_uid!==assignments[0].m_uid)return fail(req,env,'Proof has no upload',404);
-    const res=await fetch(`${env.SUPABASE_URL}/storage/v1/object/sign/${encodeURIComponent(asset.bucket_id)}/${String(asset.object_path).split('/').map(encodeURIComponent).join('/')}`,{method:'POST',headers:serviceHeaders(env),body:JSON.stringify({expiresIn:900})});
+    /* The row's bucket and path are the member's to edit (./lib/media-storage.js): the desk is shown the file only
+       when it is that member's own upload, never whatever object the row was pointed at. */
+    if(!(await isOwnMediaUpload(asset,(p)=>service(env,p))))return fail(req,env,'Proof has no upload',404);
+    const res=await fetch(`${env.SUPABASE_URL}/storage/v1/object/sign/${MEDIA_BUCKET}/${mediaObjectUrlPath(asset)}`,{method:'POST',headers:serviceHeaders(env),body:JSON.stringify({expiresIn:900})});
     const signed=await res.json().catch(()=>null);
     if(!res.ok||!signed?.signedURL)return fail(req,env,'Could not sign the upload',502);
     return reply(req,env,{url:`${env.SUPABASE_URL}/storage/v1${signed.signedURL}`,media_type:asset.media_type,mime_type:asset.mime_type,expires_in:900});
@@ -1388,15 +1395,17 @@ export function fbiVerdict(row){
 }
 async function fbiPhotos(env,ids){
   const list=uniq(ids).filter(uuidLike);if(!list.length)return {};
-  const assets=await service(env,`network_media_assets?id=in.(${list.join(',')})&select=id,bucket_id,object_path`);
-  const out={};const byBucket={};
-  for(const a of assets||[])(byBucket[a.bucket_id]=byBucket[a.bucket_id]||[]).push(a);
-  for(const [bucket,rows] of Object.entries(byBucket)){
-    const res=await fetch(`${env.SUPABASE_URL}/storage/v1/object/sign/${encodeURIComponent(bucket)}`,{method:'POST',headers:serviceHeaders(env),body:JSON.stringify({expiresIn:3600,paths:rows.map(r=>r.object_path)})});
-    const signed=await res.json().catch(()=>[]);
-    if(!res.ok||!Array.isArray(signed))continue;
-    for(const r of rows){const hit=signed.find(x=>x.path===r.object_path&&x.signedURL);if(hit)out[r.id]=`${env.SUPABASE_URL}/storage/v1${hit.signedURL}`;}
-  }
+  const assets=await service(env,`network_media_assets?id=in.(${list.join(',')})&select=id,bucket_id,object_path,owner_m_uid`);
+  /* A photo row is its reporter's to edit, bucket and path included, and these links go to the public board and
+     back to the reporter ("my cases"). Only the reporter's own uploads are signed, and only in the upload bucket
+     (./lib/media-storage.js); a row pointed anywhere else simply has no photo. */
+  const rows=await ownMediaUploads(assets,(p)=>service(env,p));
+  const out={};
+  if(!rows.length)return out;
+  const res=await fetch(`${env.SUPABASE_URL}/storage/v1/object/sign/${MEDIA_BUCKET}`,{method:'POST',headers:serviceHeaders(env),body:JSON.stringify({expiresIn:3600,paths:rows.map(r=>r.object_path)})});
+  const signed=await res.json().catch(()=>[]);
+  if(!res.ok||!Array.isArray(signed))return out;
+  for(const r of rows){const hit=signed.find(x=>x.path===r.object_path&&x.signedURL);if(hit)out[r.id]=`${env.SUPABASE_URL}/storage/v1${hit.signedURL}`;}
   return out;
 }
 async function fbiCards(env,rows,muid,{withStatus=false}={}){
