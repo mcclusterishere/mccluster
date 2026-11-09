@@ -7,6 +7,8 @@ import {tmpdir} from 'node:os';
 import {join, resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {createCompanyOperations} from '../../src/company-operations/service.js';
+import {createSharedLedgerOperations} from '../../src/company-operations/shared-ledger.js';
+import {ledgerFixture} from './ledger-fixtures.mjs';
 import {createSupabaseCompanyStore} from '../../src/company-operations/adapter.js';
 import {digest} from '../../src/company-operations/domain.js';
 import {fixture, ORG, OTHER_ORG, OWNER, REVIEWER, COMPANY, AT, SHA, register} from './fixtures.mjs';
@@ -96,6 +98,39 @@ try{
  check(await digest(restored)===backupDigest,'restored event history byte-equivalent in canonical form');
  const restoredService=createCompanyOperations({store:restoreStore,authorize,now:()=>AT});
  check((await restoredService.handoff({},COMPANY,'declaration')).packetSha256===packet.packetSha256,'restored handoff fingerprint');
+ // Shared contributions and organization architecture reuse the SAME canonical
+ // event table. No new money ledger, permission model or scheduler is installed.
+ const ledgerCompany='00000000-0000-4000-8000-000000000024';
+ const ledgerSource=ledgerFixture();await ledgerSource.prepare();
+ const organizationCommands=[
+  {id:'mandate',type:'org_record_mandate',data:{evidenceIds:['rules'],timeZone:'America/New_York'}},
+  {id:'role',type:'org_define_role',data:{id:'engineering',expectedVersion:0,title:'Engineering seat',jobType:'engineering',responsibilities:'Draft and test synthetic artifacts',capabilityIds:['code.build']}},
+  {id:'seat',type:'org_assign_seat',data:{id:'seat-a',roleId:'engineering',roleVersion:1,principalRef:'synthetic-agent',principalType:'ai_agent',replaces:null,reason:'Synthetic architecture assignment only'}},
+  {id:'campaign',type:'org_set_campaign',data:{id:'campaign-a',expectedVersion:0,title:'Synthetic campaign',purpose:'Record the backend architecture',startDate:'2026-11-01',endDate:'2026-11-15'}},
+  {id:'milestone',type:'org_set_milestone',data:{id:'milestone-a',expectedVersion:0,campaignId:'campaign-a',campaignVersion:1,roleId:'engineering',roleVersion:1,title:'Reviewable design',acceptanceCriteria:'Evidence references and explicit unverified execution',dueDate:'2026-11-15'}},
+  {id:'task',type:'org_link_task',data:{id:'task-a',milestoneId:'milestone-a',milestoneVersion:1,assignmentId:'seat-a',objectiveId:'synthetic-objective',jobId:'synthetic-job'}},
+  {id:'entry',type:'org_submit_daily_entry',data:{id:'entry-a',assignmentId:'seat-a',milestoneId:'milestone-a',milestoneVersion:1,taskLinkId:'task-a',workDate:'2026-11-09',timeZone:'America/New_York',summary:'Synthetic reported work; no executor was run',status:'submitted',evidenceIds:['work'],supersedes:null,correctionReason:null}},
+  {id:'entry-review',type:'org_review_daily_entry',data:{id:'entry-review-a',entryId:'entry-a',decision:'approve_report',evidenceIds:['work'],reason:'Review the recorded report only'}},
+  {id:'week',type:'org_record_weekly_report',data:{id:'weekly-a',weekStart:'2026-11-09',timeZone:'America/New_York',asOf:AT}}
+ ];
+ for(const command of organizationCommands)await ledgerSource.command(command);
+
+ const ledgerService=createSharedLedgerOperations({store,authorize,now:()=>AT,verifyArtifact:async(p,r)=>({orgId:p.orgId,artifactRef:r,sha256:SHA,immutable:true})});
+ const ledgerEvents=await ledgerSource.store.read({orgId:ORG},COMPANY);
+ for(const event of ledgerEvents)await ledgerService.command({actorId:event.actorId},ledgerCompany,{expectedRevision:event.revision-1,command:event.command});
+ const ledgerSummary=await ledgerService.summary({},ledgerCompany);
+ check(ledgerSummary.participants[0].reportedMoney.incomingMinor==='10000'&&ledgerSummary.participants[0].workMinutes===120,'separate contribution quantities persisted');
+ check(ledgerSummary.bankBalance===null&&!ledgerSummary.ownershipGranted,'no invented bank balance or legal rights');
+ const ledgerPacket=await ledgerService.contributionHandoff({},ledgerCompany,'proposal');
+ check(!ledgerPacket.executionEnabled,'shared distribution remains disabled');
+ const report=await ledgerService.weeklyReport({},ledgerCompany,{weekStart:'2026-11-09',timeZone:'America/New_York',asOf:AT});
+ check(report.totals.entries===1&&report.totals.approvedReports===1&&report.totals.verifiedCompletions===0,'weekly report persisted without invented execution');
+ const ledgerBackup=await store.read({orgId:ORG,actorId:OWNER},ledgerCompany);
+ for(const event of ledgerBackup)await restoreStore.append({orgId:ORG,actorId:event.actorId},ledgerCompany,event.revision-1,event);
+ const restoredLedger=createSharedLedgerOperations({store:restoreStore,authorize,now:()=>AT});
+ check((await restoredLedger.contributionHandoff({},ledgerCompany,'proposal')).packetSha256===ledgerPacket.packetSha256,'restored shared ledger handoff fingerprint');
+ check(await digest(await restoredLedger.weeklyReport({},ledgerCompany,{weekStart:'2026-11-09',timeZone:'America/New_York',asOf:AT}))===await digest(report),'restored weekly report fingerprint');
+ check((await restoredLedger.summary({orgId:OTHER_ORG},ledgerCompany).catch(e=>e.code))==='ledger_not_configured','shared ledger tenant scope fails closed');
  console.log(`${assertions} native database assertions passed. Eight-session concurrency, interrupted install, and logical restore verified. No production contact.`);
 }finally{
  for(const c of clients)await c.end().catch(()=>{});

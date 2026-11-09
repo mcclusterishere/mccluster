@@ -1,13 +1,43 @@
 {
   "id": "company-operations",
-  "version": "0.1.0-review",
+  "version": "0.2.0-review",
   "displayName": "Company Operations",
   "category": "governance-records",
   "status": "backend-review-candidate",
-  "runtimeDependencies": ["canonical-identity", "organizations", "private-immutable-artifact-registry", "canonical-supabase-rpc"],
-  "optionalIntegrationTargets": ["owner-control", "ops-objectives", "canonical-financial-journal"],
-  "capabilities": ["company.record", "ownership.snapshot.record", "distribution.prepare", "distribution.review.record", "declaration.record", "distribution.handoff.prepare"],
-  "disabledCapabilities": ["ownership.transfer", "payment.execute", "tax.file", "legal.agreement.accept", "public.publish"],
+  "runtimeDependencies": [
+    "canonical-identity",
+    "organizations",
+    "private-immutable-artifact-registry",
+    "canonical-supabase-rpc"
+  ],
+  "optionalIntegrationTargets": [
+    "owner-control",
+    "ops-objectives",
+    "canonical-financial-journal"
+  ],
+  "capabilities": [
+    "company.record",
+    "ownership.snapshot.record",
+    "distribution.prepare",
+    "distribution.review.record",
+    "declaration.record",
+    "distribution.handoff.prepare",
+    "contribution.record",
+    "contribution.review",
+    "reconciliation.record",
+    "organization.roles.record",
+    "organization.daily_report.record",
+    "organization.weekly_report.compile"
+  ],
+  "disabledCapabilities": [
+    "ownership.transfer",
+    "payment.execute",
+    "tax.file",
+    "legal.agreement.accept",
+    "public.publish",
+    "job.execute",
+    "blockchain.anchor"
+  ],
   "shippingRouteRegistered": false,
   "productionSchemaApplied": false,
   "paymentExecutionEnabled": false,
@@ -16,6 +46,12 @@
   "entrypoints": {
     "domain": "workers/mccluster/src/company-operations/domain.js",
     "service": "workers/mccluster/src/company-operations/service.js",
-    "adapter": "workers/mccluster/src/company-operations/adapter.js"
-  }
+    "adapter": "workers/mccluster/src/company-operations/adapter.js",
+    "sharedLedger": "workers/mccluster/src/company-operations/shared-ledger.js",
+    "organization": "workers/mccluster/src/company-operations/organization.js"
+  },
+  "memberAndAgentIngressEnabled": false,
+  "aiExecutionEnabled": false,
+  "blockchainAnchoringEnabled": false,
+  "trustOrBankAccountCreated": false
 }

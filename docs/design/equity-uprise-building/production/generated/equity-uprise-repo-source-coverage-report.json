@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 637,
+  "candidate_count": 638,
   "capability_source_count": 104,
-  "support_only_count": 533,
-  "checks_total": 2446,
-  "checks_passed": 2446,
+  "support_only_count": 534,
+  "checks_total": 2450,
+  "checks_passed": 2450,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -173,6 +173,7 @@
     "docs/control-plane/branch-reconciliation-2026-09-26.json",
     "docs/control-plane/canonical-architecture.json",
     "docs/control-plane/company-operations/INTEGRATION.md",
+    "docs/control-plane/company-operations/SHARED-VERIFICATION.md",
     "docs/control-plane/company-operations/VERIFICATION.md",
     "docs/control-plane/deploy-gate.json",
     "docs/control-plane/evidence/production-advisors-2026-10-28.json",
@@ -651,7 +652,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "637 entries"
+      "detail": "638 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -12875,6 +12876,26 @@
     },
     {
       "name": "docs/control-plane/company-operations/VERIFICATION.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/company-operations/SHARED-VERIFICATION.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/company-operations/SHARED-VERIFICATION.md classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "docs/control-plane/company-operations/SHARED-VERIFICATION.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/company-operations/SHARED-VERIFICATION.md support rationale present",
       "passed": true,
       "detail": ""
     }
