@@ -19,13 +19,15 @@ export function createFyreContext(adapter) {
       if (destroyed || !ownsHost()) return null;
       const snapshot = epoch;
       const before = await adapter.readAuthority();
-      if (destroyed || !ownsHost() || snapshot !== epoch || before?.capability !== 'house-owner' || !before.principalId || typeof before.sessionRevision !== 'string' || !before.sessionRevision) return null;
+      if (destroyed || !ownsHost() || snapshot !== epoch || before?.capability !== 'house-owner' || typeof before.principalId !== 'string' || !before.principalId || typeof before.sessionRevision !== 'string' || !before.sessionRevision) return null;
+      const principalId = before.principalId, sessionRevision = before.sessionRevision;
       const selection = await adapter.readSelection();
+      const contextId = typeof selection?.contextId === 'string' ? selection.contextId.slice(0,120) : null;
       const after = await adapter.readAuthority();
-      if (destroyed || !ownsHost() || snapshot !== epoch || after?.capability !== 'house-owner' || after.principalId !== before.principalId || after.sessionRevision !== before.sessionRevision) return null;
+      if (destroyed || !ownsHost() || snapshot !== epoch || after?.capability !== 'house-owner' || after.principalId !== principalId || after.sessionRevision !== sessionRevision) return null;
       // No private assignment details, location history, event coordinates,
       // points, solution scores or impact values cross this proposed seam.
-      return Object.freeze({ contextId: typeof selection?.contextId === 'string' ? selection.contextId.slice(0,120) : null, mode:'admin-preview', localOutcome:null });
+      return Object.freeze({ contextId, mode:'admin-preview', localOutcome:null });
     },
     destroy() {
       if (destroyed) return;
