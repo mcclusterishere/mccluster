@@ -43,6 +43,10 @@ export function mountEnvironment(w, d, adapter) {
   const byId = id => panel.querySelector('#'+id);
   const mode = () => adapter.mode?.() || d.documentElement.dataset.worldMode;
   const active = () => mode() === 'environment';
+  // Host composition, not a visitor layer switch. Public evidence can remain on
+  // the same globe while the participant navigates the feed or mission details.
+  // This never changes the separate private-operation or owner checks.
+  const publicEvidenceActive = () => adapter.ambientEvidence === true || active();
   const send = data => adapter.sendGlobe ? adapter.sendGlobe(data) : frame.contentWindow?.postMessage(data, w.location.origin);
   const listeners = [];
   const listen = (type, fn) => { w.addEventListener(type,fn);listeners.push([type,fn]); };
@@ -52,7 +56,7 @@ export function mountEnvironment(w, d, adapter) {
   // and hands both to the transport, which rechecks them after its own asynchronous
   // credential step and immediately before fetch (audit EQ1).
   const scope = (identity, epoch, current = () => true) => ({ expectedToken: identity, isCurrent: () => !destroyed && epoch === privateEpoch && owners.get(panel) === instance && current() });
-  let feed = null, selected = '', search = '', requested = false, feedBusy = false, privateBusy = false, privateEpoch = 0, feedEpoch = 0;
+  let feed = null, selected = '', pendingReveal = '', search = '', requested = false, feedBusy = false, privateBusy = false, privateEpoch = 0, feedEpoch = 0;
   let proofEpoch=0,proofBusy=false,planningEpoch=0;
   let team = null, oversight = null, proofReviews=null, privateToken = null, abort = null, timer = null, joining = false, saving = false;
   const token = async () => {try{return await adapter.token()||null;}catch{return null;}};
@@ -62,12 +66,12 @@ export function mountEnvironment(w, d, adapter) {
   const signIn = () => adapter.signIn();
   const request = (path, options = {}) => adapter.request(path, options);
   function syncPins() {
-    send({ type:'hu:environment-pins', on:active(), selected, items:active() && feed ? feed.events.filter(matches).filter(row => row.lat !== null && row.lon !== null).map(row => ({ id:row.id, title:row.title, lat:row.lat, lon:row.lon, stale:row.stale })) : [] });
+    send({ type:'hu:environment-pins', on:publicEvidenceActive(), selected, items:publicEvidenceActive() && feed ? feed.events.filter(row => !active() || matches(row)).filter(row => row.lat !== null && row.lon !== null).map(row => ({ id:row.id, title:[row.source.label,row.title].filter(Boolean).join(' · '), lat:row.lat, lon:row.lon, stale:row.stale })) : [] });
   }
   const matches = row => !search || [row.title, row.category, row.source.label].join(' ').toLocaleLowerCase().includes(search);
   function select(id, fly) {
     if (!feed?.events.some(row => row.id === id)) return;
-    adapter.revealPanel?.();
+    pendingReveal = adapter.revealPanel?.() === false ? id : '';
     selected = id; renderDetail(); renderList(); syncPins();
     if (fly && feed.events.find(row => row.id === id)?.lat !== null) send({ type:'hu:environment-focus', id });
     byId('weDetail').scrollIntoView?.({ block:'nearest', behavior:'auto' });
@@ -392,14 +396,18 @@ export function mountEnvironment(w, d, adapter) {
   function onMode() {
     if (destroyed) return;
     panel.hidden=!active();syncPins();clearInterval(timer);timer=null;
-    if (active()) {if(!requested)void loadFeed();if(!privateBusy)void loadPrivate();timer=setInterval(()=>{if(active()&&!d.hidden)void loadFeed();},300000);}
+    if (publicEvidenceActive()) {if(!requested)void loadFeed();timer=setInterval(()=>{if(publicEvidenceActive()&&!d.hidden)void loadFeed();},300000);}
+    if (active()&&!privateBusy)void loadPrivate();
+    // A host may report that its asynchronous navigation controller is not ready.
+    // Replay the latest explicit selection on its next mode event, not via polling.
+    if (pendingReveal) {const id=pendingReveal;pendingReveal='';select(id,false);}
   }
   byId('weRefresh').onclick=()=>{void loadFeed();void loadPrivate();};
   byId('weSearch').oninput=event=>{search=event.target.value.trim().toLocaleLowerCase();renderList();syncPins();};
   listen(adapter.modeEvent || 'environment:mode',onMode);
   listen(adapter.authEvent || 'environment:auth',()=>{closeProof();closePlanning();privateEpoch++;privateBusy=false;team=null;oversight=null;proofReviews=null;privateToken=null;renderTeam();renderOwner();renderDetail();if(active())void loadPrivate();});
   listen('storage',event=>{if(adapter.sessionStorageKey && event.key===adapter.sessionStorageKey){closeProof();closePlanning();privateEpoch++;privateBusy=false;team=null;oversight=null;proofReviews=null;privateToken=null;renderTeam();renderOwner();renderDetail();if(active())void loadPrivate();}});
-  listen('message',event=>{if(event.origin!==w.location.origin||event.source!==frame.contentWindow)return;const data=event.data||{};if(data.type==='hu:globe-ready')syncPins();if(data.type==='hu:environment-selected'&&active())select(data.id,false);if(data.type==='hu:globe-unavailable'&&active())status('The interactive globe is unavailable. All available observations and actions are still accessible in this list.');});
+  listen('message',event=>{if(event.origin!==w.location.origin||event.source!==frame.contentWindow)return;const data=event.data||{};if(data.type==='hu:globe-ready')syncPins();if(data.type==='hu:environment-selected'&&publicEvidenceActive())select(data.id,false);if(data.type==='hu:globe-unavailable'&&active())status('The interactive globe is unavailable. All available observations and actions are still accessible in this list.');});
   listen('pagehide',()=>{clearInterval(timer);abort?.abort();privateEpoch++;});
   listen('pageshow',event=>{if(event.persisted)onMode();});
   renderTeam();onMode();

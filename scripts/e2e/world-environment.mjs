@@ -36,11 +36,11 @@ try{
  for(const width of [390,1440]){
   const context=await browser.newContext({viewport:{width,height:900}}),page=await context.newPage();
   let joined=false,assigned=false,failJoin=true,approved=false,unavailable=false,holdOwner=false,releaseOwner,proof=null,proofShare=false,malformedTeam=true;
-  const posts=[],errors=[];
+  const posts=[],errors=[],reads=[];
   page.on('pageerror',error=>errors.push(error.message));if(process.env.WORLD_ENVIRONMENT_DEBUG)page.on('console',m=>console.error('console:',m.type(),m.text().slice(0,160)));
   await context.route('**/*',async route=>{
    const request=route.request(),url=new URL(request.url());
-   if(url.origin===origin && url.pathname==='/action-globe.html')return route.fulfill({contentType:'text/html',body:'<!doctype html><html><body>Globe rendering isolated in fixture harness</body></html>'});
+   if(url.origin===origin && url.pathname==='/action-globe.html')return route.fulfill({contentType:'text/html',body:`<!doctype html><html><body>Globe rendering isolated in fixture harness<script>window.__environmentMessages=[];window.addEventListener('message',event=>{if(event.origin===location.origin && event.source===parent && event.data?.type==='hu:environment-pins')window.__environmentMessages.push(event.data);});parent.postMessage({type:'hu:globe-ready'},location.origin);</script></body></html>`});
    if(url.origin===origin)return route.continue();
    if(url.origin!=='https://api.mccluster.org'||!url.pathname.startsWith('/v1/world/environment'))return route.fulfill({contentType:'application/json',body:'{}'});
    const endpoint=url.pathname.slice('/v1/world/environment'.length),method=request.method(),who=request.headers().authorization;
@@ -49,6 +49,7 @@ try{
    const ok=(body,status=200)=>reply(status<400?{ok:true,...body}:body,status);
    if(method==='OPTIONS')return reply({});
    if(method==='POST')posts.push({endpoint,body:request.postDataJSON(),who});
+   if(method==='GET')reads.push({endpoint,who});
    if(endpoint==='')return unavailable?reply({error:'Unavailable'},503):reply({...fixture,missions:approved?[{id,event_id:event.id,action_id:'verify',status:'open'}]:[]});
    if(!who)return reply({error:'Sign in'},401);
    if(endpoint==='/proofs')return who==='Bearer owner'?ok({proofs:proof?[{proof_id:proof.id,assignment_id:assignment,title:'Saved environmental mission',statement:proof.statement,status:proof.status,proof_revision:proof.revision}]:[]}):reply({error:'Owner required'},403);
@@ -78,7 +79,14 @@ try{
   assert.equal(await page.locator('.wt-world-modes [data-world-mode="travel"]').isVisible(),false);
   assert.equal(await page.locator('.wt-world-modes [data-world-mode="missions"]').isVisible(),false);
   const originalFrame=await page.locator('#mnWorldFrame').getAttribute('src');
-  await page.locator('.wt-world-modes [data-world-mode="environment"]').click();
+  const globe=page.frames().find(frame=>frame.url().includes('/action-globe.html'));
+  await globe.waitForFunction(()=>window.__environmentMessages?.at(-1)?.items?.length===1);
+  const pins=()=>globe.evaluate(()=>window.__environmentMessages.at(-1));
+  assert.equal(await page.locator('#wePanel').isVisible(),false);
+  assert.equal((await pins()).on,true);assert.match((await pins()).items[0].title,/^USGS ·/);
+  assert.deepEqual(reads.map(row=>row.endpoint),[''],'initial News view fetches public observations only');
+  // An attributed public pin, already present without a toggle, opens its existing details.
+  await globe.evaluate(id=>parent.postMessage({type:'hu:environment-selected',id},location.origin),event.id);
   await waitText('#weEvents','Fixture government observation');assert.equal(posts.length,0);
   assert.match(await page.locator('#weStatus').textContent(),/Some sources are unavailable/);
   await page.locator('#weEvents button').click();
@@ -88,7 +96,7 @@ try{
   assert.equal(await page.locator('a[href*="live-mission.html"]:visible').count(),0);
   const dimensions=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,client:document.documentElement.clientWidth,panel:document.getElementById('wePanel').scrollWidth,panelClient:document.getElementById('wePanel').clientWidth}));
   assert.equal(dimensions.scroll,dimensions.client,JSON.stringify(dimensions));assert.ok(dimensions.panel<=dimensions.panelClient,JSON.stringify(dimensions));
-  for(let i=0;i<3;i++){await page.locator('.wt-world-modes [data-world-mode="posts"]').click();assert.equal(await page.locator('#wePanel').isVisible(),false);await page.locator('.wt-world-modes [data-world-mode="environment"]').click();}
+  for(let i=0;i<3;i++){await page.locator('.wt-world-modes [data-world-mode="posts"]').click();assert.equal(await page.locator('#wePanel').isVisible(),false);assert.equal((await pins()).on,true);assert.equal((await pins()).items.length,1);await page.locator('.wt-world-modes [data-world-mode="environment"]').click();}
   assert.equal(await page.locator('#mnWorldFrame').getAttribute('src'),originalFrame);assert.equal(await page.locator('#mnWorldFrame').count(),1);
   await auth('member');await waitText('#weTeam','Team membership is not available yet');assert.equal(posts.length,0);
   await page.getByRole('button',{name:'Check membership'}).click();await waitText('#weTeam','Join the team');
@@ -120,10 +128,10 @@ try{
   await page.locator('.wt-world-modes [data-world-mode="environment"]').click();
   assert.equal(await page.locator('#weOwner').isVisible(),false);assert.equal(await page.getByText('Private member name').count(),0);assert.equal(await page.getByRole('link',{name:'Check recording availability'}).count(),0);
   await auth('member');await waitText('#weTeam','You are on');
-  unavailable=true;await page.getByRole('button',{name:'Refresh sources'}).click();await waitText('#weStatus','No current observations');assert.equal(await page.locator('#weEvents button').count(),0);await waitText('#weAssignments','Saved environmental mission');assert.match(await page.locator('#weAssignments').textContent(),/not in the current feed/);
+  unavailable=true;await page.getByRole('button',{name:'Refresh sources'}).click();await waitText('#weStatus','No current observations');assert.equal(await page.locator('#weEvents button').count(),0);await globe.waitForFunction(()=>window.__environmentMessages.at(-1).items.length===0);await waitText('#weAssignments','Saved environmental mission');assert.match(await page.locator('#weAssignments').textContent(),/not in the current feed/);
   assert.deepEqual(errors,[],'No runtime errors in the tested modules');
   const out=process.env.WORLD_ENVIRONMENT_ARTIFACT_DIR;if(out){await mkdir(out,{recursive:true});await page.screenshot({path:path.join(out,'world-environment-'+width+'.png'),fullPage:true});}
-  console.log(`PASS ${width}px: actual World DOM, no overflow, one iframe, hidden owner modes, repeated switching, source dates/unavailability, malformed-envelope refusal, explicit team/proposal/review/join, confirmed assignment link, auth race privacy. Fixtures only.`);
+  console.log(`PASS ${width}px: actual World DOM, no overflow, one iframe, public ambient pins without a switch, pin-to-detail navigation, hidden owner modes, repeated switching, source dates/unavailability, malformed-envelope refusal, explicit team/proposal/review/join, confirmed assignment link, auth race privacy. Fixtures only.`);
   await context.close();
  }
 }finally{await browser?.close();await new Promise(resolve=>server.close(resolve));}

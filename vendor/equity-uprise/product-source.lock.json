@@ -15,7 +15,7 @@
     },
     {
       "path": "src/environment/panel.mjs",
-      "sha256": "ced6036f55d45c315dde3454ec095cecb4234b1b040edf779d17bcb9f76e3555"
+      "sha256": "6de8271c984cbe8a670724049973f50b4ba9e692676685dca46b0b9bb0cb9428"
     },
     {
       "path": "src/environment/server.mjs",
@@ -58,6 +58,24 @@
         "scripts/test/world-environment-lifecycle.test.mjs"
       ],
       "note": "Upstream Equity-Uprise still carries the unpatched files at base_commit; port these patches upstream before re-pinning."
+    },
+    {
+      "base_commit": "645d68a740c835271ca185c52e0b31220aab16ad",
+      "applied_in": "mccluster consumer local branch based on 4bc22564af4c3a2f86719ef4b9cef4ea0d6fd3e8; not published upstream",
+      "date": "2026-11-09",
+      "files": [
+        "src/environment/panel.mjs"
+      ],
+      "defects": [
+        {
+          "id": "EJL-AMBIENT",
+          "summary": "Host-composed public evidence remains visible across workspace navigation without a visitor layer switch. Private state remains scoped to the existing mission/detail flow."
+        }
+      ],
+      "regression_tests": [
+        "scripts/test/world-environment-ambient.test.mjs"
+      ],
+      "note": "Port upstream deliberately before re-pinning. No API authorization or source coverage is expanded."
     }
   ]
 }

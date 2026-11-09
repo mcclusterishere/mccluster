@@ -38,11 +38,19 @@ export function mcclusterEnvironmentAdapter(w) {
   });
   return {
     token,
+    // Public government observations are part of this globe's composition, not
+    // an on/off layer. Environment mode opens details and participation only.
+    ambientEvidence:true,
     mode:()=>w.MCC_WORLD_MODE?.get?.() || w.document?.documentElement.dataset.worldMode,
     modeEvent:'mcc:world-mode', authEvent:'mcc:auth-changed', sessionStorageKey:'mccdb_session',
     revealPanel() {
+      // The mode controller loads asynchronously. The panel retains a pending
+      // pin selection until that controller emits its initial mode event.
+      if (typeof w.MCC_WORLD_MODE?.set !== 'function') return false;
+      if ((w.MCC_WORLD_MODE?.get?.() || w.document?.documentElement.dataset.worldMode) !== 'environment') w.MCC_WORLD_MODE?.set?.('environment');
       w.document?.documentElement.classList.remove('wt-expanded');
       w.document?.querySelector('.mn__world-expand')?.setAttribute('aria-label','Expand the map');
+      return true;
     },
     signIn() {
       const url = new URL(w.location.href); url.searchParams.set('mode','environment');url.searchParams.set('signin','1');
