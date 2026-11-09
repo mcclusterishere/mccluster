@@ -199,6 +199,13 @@
         "workers/mccluster/src/creator-site-view.js"
       ]
     },
+    "eup_league_command": {
+      "kind": "function",
+      "pending": "eup_league_v1.sql",
+      "callers": [
+        "workers/mccluster/src/eup/league.js"
+      ]
+    },
     "front-media": {
       "kind": "bucket",
       "pending": "member_fronts_v1.sql",
