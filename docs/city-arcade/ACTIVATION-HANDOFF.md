@@ -11,18 +11,14 @@ Release coordination owns serial merges, schema promotion and Worker rollout.
    The existing Worker authenticates the house owner even for `/v1/arcade/capabilities`.
    Local game play and device saves work with cloud disabled. Capability true only
    verifies the flag and binding presence; it does **not** prove schema readiness.
-2. Reconcile existing schema and migration history before promoting
-   `supabase/pending/city_arcade_v1.sql`. It uses plain CREATE statements and must not
-   be blindly reapplied. Reviewed SHA-256:
-   `787e1dc2d564a3c1855b071388874a3715bbb2250572ae7d5a70cfac53c0ccdb`.
-   **2026-11-09, not yet re-reviewed:** the pending file changed for audit findings W2/W3
-   (`start_key` + `unique(actor, start_key)`, exact-retry replay, conflicting reuse raises
-   `40001`, bounded `current` action). Its SHA-256 is now
-   `b03081d4be03ed85673b1f5f401ba8de5cef8c88dc59e241436734e8f323aba0`; the hash above is
-   the last owner-reviewed one. Re-review before any promotion (see
-   `docs/control-plane/deep-audit-20261109/DEFECT-LEDGER.md`).
-   If any Arcade objects already exist, compare definitions/grants and reconcile through
-   the canonical migration process. Do not overwrite data or manufacture a second backend.
+2. **Applied 2026-11-09** as `supabase/migrations/20261109181623_city_arcade_v1.sql`, version
+   `20261109181623`, SHA-256 `b03081d4be03ed85673b1f5f401ba8de5cef8c88dc59e241436734e8f323aba0`
+   (stored statements compared with the file; receipt
+   `docs/control-plane/evidence/releases-2026-11-09/MIGRATION-RELEASE-RECEIPT.md`). The older
+   reviewed hash `787e1dc2…` described the pre-W2/W3 file and is superseded. Do not re-apply
+   the file; it uses plain CREATE statements. All three tables held zero rows at receipt time.
+   The LIVE Worker still runs the pre-`startKey` handler and cannot start runs against this
+   schema: deploy the reviewed handler (this branch) before `ARCADE_CLOUD_ENABLED` is ever set.
 3. Prerequisites are existing `auth.users`, `public.orgs` (slug `mccluster`),
    `public.org_members` (`profile_id`, `org_id`, `role`), and the existing server role.
    Verify its SELECT permission on membership tables and actual schema compatibility.

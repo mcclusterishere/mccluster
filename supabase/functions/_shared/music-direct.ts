@@ -230,3 +230,4 @@ export const REFUSAL_HTTP: Record<string, { status: number; message: string }> =
   /** signing failed; the slot was given back; try again */
   sign_retry: { status: 503, message: "The download could not be prepared just now. Nothing was used; please try again." },
 };
+

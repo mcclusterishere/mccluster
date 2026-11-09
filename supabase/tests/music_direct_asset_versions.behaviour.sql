@@ -1,4 +1,4 @@
--- Behaviour tests for supabase/pending/20261109120000_music_direct_asset_versions_v1.sql
+-- Behaviour tests for supabase/migrations/20261109175747_music_direct_asset_versions_v1.sql (applied 2026-11-09)
 -- (COM-1 pinned purchases, COM-2 reserve/settle downloads). Runs on the scratch
 -- database after music_direct_sales.behaviour.sql, as the service role. Every check
 -- raises on failure. Against the v1 schema alone these fail: that is the regression.
@@ -190,3 +190,4 @@ delete from public.music_direct_orders;
 delete from public.music_direct_offers;
 select pg_temp.check((select count(*) from public.music_direct_asset_versions) = 0, 'versions cascade with their offers');
 select 'music direct asset versions behaviour: ok';
+

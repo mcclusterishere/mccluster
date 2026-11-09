@@ -1,4 +1,4 @@
--- Rollback for supabase/migrations/20261109120000_music_direct_asset_versions_v1.sql.
+-- Rollback for supabase/migrations/20261109175747_music_direct_asset_versions_v1.sql (applied 2026-11-09).
 -- Removes the attempt and version tables, the pins on orders/entitlements, the review
 -- view and the reserve/settle functions, and restores the v1 order/entitlement guards
 -- and the v1 one-step claim (which reads the LIVE offer and counts before signing: the
@@ -120,3 +120,4 @@ begin
 end $$;
 revoke execute on function public.music_direct_claim_download(uuid) from public, anon, authenticated;
 grant execute on function public.music_direct_claim_download(uuid) to service_role;
+

@@ -36,6 +36,14 @@
 set local lock_timeout = '5s';
 lock table public.music_direct_offers, public.music_direct_orders,
   public.music_direct_entitlements in access exclusive mode;
+-- This rollout was authorized for a verified empty order ledger. Abort if a sale
+-- arrived after preflight; normal idempotent reapplication remains supported.
+do $$ begin
+  if to_regclass('public.music_direct_asset_versions') is null
+     and exists (select 1 from public.music_direct_orders) then
+    raise exception 'commerce_rollout_orders_changed';
+  end if;
+end $$;
 
 -- ------------------------------------------------------------------ versions
 create table if not exists public.music_direct_asset_versions (
@@ -348,7 +356,9 @@ begin
   if p_attempt_key is not null then
     select * into a from public.music_direct_download_attempts where entitlement_id = e.id and attempt_key = p_attempt_key;
     if found then
-      if a.state = 'issued' or (a.state = 'reserved' and a.reservation_expires_at > now()) then
+      -- Lost-response retries are bounded by the signed URL lifetime, not the whole entitlement.
+      if (a.state = 'issued' and a.issued_at > now() - interval '300 seconds')
+         or (a.state = 'reserved' and a.reservation_expires_at > now()) then
         return jsonb_build_object('ok', true, 'attempt_id', a.id, 'state', a.state, 'replay', true,
           'title', v.title, 'bucket', v.asset_bucket, 'path', v.asset_path, 'download_name', v.download_name,
           'downloads_left', e.max_downloads - e.download_count - case when a.state = 'reserved' then 1 else 0 end, 'expires_at', e.expires_at);
@@ -381,11 +391,34 @@ grant execute on function public.music_direct_reserve_download(uuid, text, integ
 create or replace function public.music_direct_settle_download(p_attempt uuid, p_outcome text)
 returns jsonb language plpgsql security definer set search_path = pg_catalog, public as $$
 declare a public.music_direct_download_attempts%rowtype; e public.music_direct_entitlements%rowtype;
+        v_entitlement uuid; v_refusal text;
 begin
-  if p_outcome not in ('issued', 'released') then return jsonb_build_object('ok', false, 'reason', 'bad_outcome'); end if;
+  if p_outcome is null or p_outcome not in ('issued', 'released') then return jsonb_build_object('ok', false, 'reason', 'bad_outcome'); end if;
+  -- Reserve and settle always lock entitlement BEFORE attempt, including cleanup.
+  -- Read the immutable parent id without a lock, then re-read the attempt under both locks.
+  select entitlement_id into v_entitlement from public.music_direct_download_attempts where id = p_attempt;
+  if not found then return jsonb_build_object('ok', false, 'reason', 'attempt_not_found'); end if;
+  select * into e from public.music_direct_entitlements where id = v_entitlement for update;
+  if not found then return jsonb_build_object('ok', false, 'reason', 'attempt_not_found'); end if;
   select * into a from public.music_direct_download_attempts where id = p_attempt for update;
   if not found then return jsonb_build_object('ok', false, 'reason', 'attempt_not_found'); end if;
-  select * into e from public.music_direct_entitlements where id = a.entitlement_id for update;
+  -- Signing happens outside the transaction. Recheck eligibility at the delivery commit.
+  if p_outcome = 'issued' then
+    v_refusal := public.music_direct_delivery_refusal(e);
+    if v_refusal is not null then
+      if a.state = 'reserved' then
+        update public.music_direct_download_attempts set state = 'released' where id = a.id;
+      end if;
+      return jsonb_build_object('ok', false, 'reason', v_refusal);
+    end if;
+    if a.state = 'issued' and a.issued_at <= now() - interval '300 seconds' then
+      return jsonb_build_object('ok', false, 'reason', 'attempt_spent', 'state', a.state);
+    end if;
+    if a.state = 'reserved' and a.reservation_expires_at <= now() then
+      update public.music_direct_download_attempts set state = 'released' where id = a.id;
+      return jsonb_build_object('ok', false, 'reason', 'attempt_spent', 'state', 'released');
+    end if;
+  end if;
   if a.state = p_outcome then
     return jsonb_build_object('ok', true, 'state', a.state, 'replay', true, 'downloads_left', e.max_downloads - e.download_count);
   end if;
@@ -415,3 +448,4 @@ begin
 end $$;
 revoke execute on function public.music_direct_claim_download(uuid) from public, anon, authenticated;
 grant execute on function public.music_direct_claim_download(uuid) to service_role;
+

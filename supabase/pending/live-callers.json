@@ -3,7 +3,8 @@
     "Names shipped code calls that are not deployed: a name counts as deployed only when supabase/schema-manifest.json (the CI reset) AND the latest production evidence (docs/control-plane/evidence/production-schema-snapshot-<date>.json) both have it. A name only replay SQL defines is not deployed.",
     "Checked by scripts/test/rpc-names-exist.test.mjs over js/, root pages, workers/mccluster/src, workers/mccluster-mcp/src and supabase/functions; the test fails for any such name missing here and for any entry that is stale, so both lists can only shrink.",
     "pending_only: pending, not applied. Defined by the named file under supabase/pending/ and not yet applied in production; promote it (supabase/pending/PROMOTION-ORDER.md), commit the new production snapshot, and remove the entry.",
-    "missing_everywhere: not deployed and no pending SQL defines it; production did not have it (verified read-only on 2026-10-27); the calling page or route fails today. Write and promote the SQL, or remove the call, then remove the entry."
+    "missing_everywhere: not deployed and no pending SQL defines it; production did not have it (verified read-only on 2026-10-27); the calling page or route fails today. Write and promote the SQL, or remove the call, then remove the entry.",
+    "applied_awaiting_evidence: applied in production by a dated receipt (version present in supabase/production-ledger.json and its exact SQL under supabase/migrations/), but supabase/schema-manifest.json and the latest production snapshot were not regenerated at import time. Each entry names the migration file and the receipt. The test fails once evidence shows the name, so this list only shrinks; regenerate the manifest with the supported clean reset and capture a snapshot to retire the entries."
   ],
   "pending_only": {
     "action_environment_missions": {
@@ -162,13 +163,6 @@
         "workers/mccluster/src/action-connect.js"
       ]
     },
-    "arcade_command": {
-      "kind": "function",
-      "pending": "city_arcade_v1.sql",
-      "callers": [
-        "workers/mccluster/src/arcade/index.js"
-      ]
-    },
     "at_night_verifications": {
       "kind": "table",
       "pending": "20261009220000_at_night_adult_verification.sql",
@@ -188,13 +182,6 @@
       "pending": "equity_uprise_clipping_sources.sql",
       "callers": [
         "js/control-room/clipping.js"
-      ]
-    },
-    "core_signed_nonces": {
-      "kind": "table",
-      "pending": "core_signed_nonces_v1.sql",
-      "callers": [
-        "workers/mccluster/src/media/core-signature.js"
       ]
     },
     "create_policy_memo": {
@@ -323,27 +310,6 @@
       "pending": "member_fronts_v1.sql",
       "callers": [
         "workers/mccluster/src/member-fronts.js"
-      ]
-    },
-    "music_direct_asset_review": {
-      "kind": "table",
-      "pending": "20261109120000_music_direct_asset_versions_v1.sql",
-      "callers": [
-        "supabase/functions/music-direct-access/index.ts"
-      ]
-    },
-    "music_direct_reserve_download": {
-      "kind": "function",
-      "pending": "20261109120000_music_direct_asset_versions_v1.sql",
-      "callers": [
-        "supabase/functions/music-direct-access/index.ts"
-      ]
-    },
-    "music_direct_settle_download": {
-      "kind": "function",
-      "pending": "20261109120000_music_direct_asset_versions_v1.sql",
-      "callers": [
-        "supabase/functions/music-direct-access/index.ts"
       ]
     },
     "music_gate_claim_rule": {
@@ -663,6 +629,48 @@
       "pending": "world_member_regions_v1.sql",
       "callers": [
         "workers/mccluster/src/world-members.js"
+      ]
+    }
+  },
+  "applied_awaiting_evidence": {
+    "arcade_command": {
+      "kind": "function",
+      "migration": "20261109181623_city_arcade_v1.sql",
+      "receipt": "docs/control-plane/evidence/releases-2026-11-09/MIGRATION-RELEASE-RECEIPT.md",
+      "callers": [
+        "workers/mccluster/src/arcade/index.js"
+      ]
+    },
+    "core_signed_nonces": {
+      "kind": "table",
+      "migration": "20261109180829_core_signed_nonces_v1.sql",
+      "receipt": "docs/control-plane/evidence/releases-2026-11-09/C5-PRODUCTION-RECEIPT.md",
+      "callers": [
+        "workers/mccluster/src/media/core-signature.js"
+      ]
+    },
+    "music_direct_asset_review": {
+      "kind": "table",
+      "migration": "20261109175747_music_direct_asset_versions_v1.sql",
+      "receipt": "docs/control-plane/evidence/releases-2026-11-09/COMMERCE-RELEASE-RECEIPT.md",
+      "callers": [
+        "supabase/functions/music-direct-access/index.ts"
+      ]
+    },
+    "music_direct_reserve_download": {
+      "kind": "function",
+      "migration": "20261109175747_music_direct_asset_versions_v1.sql",
+      "receipt": "docs/control-plane/evidence/releases-2026-11-09/COMMERCE-RELEASE-RECEIPT.md",
+      "callers": [
+        "supabase/functions/music-direct-access/index.ts"
+      ]
+    },
+    "music_direct_settle_download": {
+      "kind": "function",
+      "migration": "20261109175747_music_direct_asset_versions_v1.sql",
+      "receipt": "docs/control-plane/evidence/releases-2026-11-09/COMMERCE-RELEASE-RECEIPT.md",
+      "callers": [
+        "supabase/functions/music-direct-access/index.ts"
       ]
     }
   },

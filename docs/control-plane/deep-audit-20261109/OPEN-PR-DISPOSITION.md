@@ -2,6 +2,8 @@
 
 Basis: the handoff packet's 93-PR inventory (`03_OPEN_PR_INVENTORY.json`, observed 16:27–16:28 UTC) and `pr-ancestry.json`, cross-checked on this checkout at main `578e6830` (the three in-main heads were reconfirmed with `git merge-base --is-ancestor`). Deep diff review exists only for the 21-PR recent cohort (see `05_DEEP_SYSTEMS_AUDIT.md` and the detailed audits); every older row below is a recommendation from title, ancestry, changed-path count and what main already contains, and says so. Nothing here closes, merges or rebases a PR: those run through the review path with the owner.
 
+**Refreshed 2026-11-09 (later session):** a fresh GitHub read (`list_pull_requests`, state open, two pages) returned the same 93 numbers; the 21 recent-cohort heads were compared one by one and match the packet, and the most recent update on any open PR is #792 at 2026-11-08T22:52Z. The table below therefore still describes today's heads. New since the packet: the Arcade schema (#776 carried it as pending) is now APPLIED in production as `20261109181623_city_arcade_v1`, so #776's Arcade SQL hunk is superseded by the applied file and must not be replayed; the commerce and nonce migrations are likewise applied (see `HANDOFF.md`).
+
 Waves follow `integration-dependency-audit.md`: 1 runtime integrity (this branch), 2 owner/schema + admin, 3 navigation/journeys, 4 customer/commerce, then portable product and historical disposition.
 
 | PR | Title | State | Head | Checks | Ancestry | Disposition | Why / what must happen |

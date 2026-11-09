@@ -11,7 +11,7 @@ Repairs two findings of the 2026-11-09 deep audit (`06_DEFECT_LEDGER.json` COM-1
 
 ## Files
 
-- `supabase/pending/20261109120000_music_direct_asset_versions_v1.sql` (new; under `supabase/pending/` because it is unapplied: promote it into `supabase/migrations/` with its ledger entry only as part of the authorised rollout).
+- `supabase/migrations/20261109175747_music_direct_asset_versions_v1.sql`: **applied in production on 2026-11-09** as version `20261109175747` (SHA-256 `a76d1335…`) with Supabase Edge `music-direct-access` v42; receipt `docs/control-plane/evidence/releases-2026-11-09/COMMERCE-RELEASE-RECEIPT.md`. This is the independently corrected release, not the branch's first draft (`20261109120000_…`, now removed): it locks entitlement before attempt, re-checks refund/revocation/payment/expiry at settlement, releases expired holds, rejects null outcomes and bounds attempt replay to 300 s. Zero orders/entitlements existed at cutover; no real purchase, refund or download was tested.
 - `supabase/pending/music_direct_asset_versions_v1.rollback.sql` (restores the v1 guards and one-step claim; the pin record is lost; run before the v1 rollback).
 - `supabase/functions/music-direct-access/index.ts`: `download` is reserve → sign → settle; a signing failure settles `released` and answers 503 `sign_retry`; `operator-direct-list` returns `asset_review` (purchases needing the owner's resolution); never calls the one-step claim.
 - `supabase/functions/_shared/music-direct.ts`: `ATTEMPT_KEY_RE`, `asset_unresolved` / `attempt_spent` / `sign_retry` refusals, `downloadRefusal()` refuses an unpinned legacy entitlement.

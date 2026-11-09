@@ -319,3 +319,4 @@ test('the buyer is told the real format: the file is delivered unconverted', asy
   const desk = await read('js/control-room/music-direct-sales.js');
   assert.match(desk, /sold as " \+ e\(fmtOf\(file\)\) \+ ", unconverted\)/);
 });
+

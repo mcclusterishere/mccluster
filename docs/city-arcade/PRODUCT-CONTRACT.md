@@ -22,7 +22,7 @@ and canonical shoe wearers remain untouched.
 
 ## Canonical storage and authorization
 
-`supabase/pending/city_arcade_v1.sql` is a reviewed LOCAL schema, not an applied migration.
+`supabase/migrations/20261109181623_city_arcade_v1.sql` is the reviewed schema, **applied in production on 2026-11-09** as version `20261109181623` (three empty service-only tables, two invoker functions; receipt `docs/control-plane/evidence/releases-2026-11-09/MIGRATION-RELEASE-RECEIPT.md`). `ARCADE_CLOUD_ENABLED` is absent, so the feature is dormant: schema presence is not activation.
 It follows the existing Level Forge service-only SECURITY INVOKER/RLS pattern:
 
 - canonical Worker `/v1/arcade` calls the existing `requireHouseOwner` for every request;

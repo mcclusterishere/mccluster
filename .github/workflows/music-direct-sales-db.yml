@@ -6,7 +6,9 @@ on:
     paths:
       - 'supabase/pending/music_direct_sales_v1.rollback.sql'
       - 'supabase/migrations/*_music_direct_sales_v1.sql'
-      - 'supabase/pending/*_music_direct_asset_versions_v1.sql'
+      - 'supabase/migrations/*_music_direct_asset_versions_v1.sql'
+      - 'supabase/tests/music_direct_asset_versions.behaviour.sql'
+      - 'scripts/test/music-direct-release*.integration.mjs'
       - 'supabase/pending/music_direct_asset_versions_v1.rollback.sql'
       - 'supabase/replay_migrations/20261028230000_schema_reconcile_production_only_v1.sql'
       - 'supabase/tests/music_direct_sales.*.sql'

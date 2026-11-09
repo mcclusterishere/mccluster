@@ -300,10 +300,11 @@ Deno.serve(async (req) => {
       if (settleError) throw settleError;
       const st = settled as any;
       if (!st?.ok) {
-        /* the hold lapsed and its slot is gone: do not hand out a URL the ledger will not count */
+        /* Eligibility changed, the hold lapsed, or a prior attempt was final: never deliver an uncounted or revoked URL. */
         console.error("music direct settle refused", { attempt: r.attempt_id, reason: st?.reason, state: st?.state });
-        const h = REFUSAL_HTTP.sign_retry;
-        return json({ error: h.message, reason: "sign_retry", attempt_key: null }, h.status);
+        const reason = typeof st?.reason === "string" && REFUSAL_HTTP[st.reason] ? st.reason : "sign_retry";
+        const h = REFUSAL_HTTP[reason];
+        return json({ error: h.message, reason, attempt_key: null }, h.status);
       }
       return json({ ok: true, title: r.title, format: audioFormatOf(r.path), url: signed.signedUrl, expires_in: DIRECT_DEFAULTS.signedUrlSeconds,
         downloads_left: st.downloads_left, download_expires_at: r.expires_at, attempt_key: attemptKey, replay: r.replay === true });
@@ -323,3 +324,4 @@ Deno.serve(async (req) => {
     return json({ error: "download service unavailable" }, 500);
   }
 });
+

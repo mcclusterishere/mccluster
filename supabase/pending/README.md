@@ -17,6 +17,21 @@ list and on any entry that is stale, so the list only shrinks: promoting a file
 and committing the new production snapshot means removing its names. Regenerate
 the view with `RPC_NAMES_REPORT=1 node scripts/test/rpc-names-exist.test.mjs`.
 
+Promoted 2026-11-09 (owner-run releases; receipts under
+`docs/control-plane/evidence/releases-2026-11-09/`). The live ledger went from 359 to 362
+rows. Rollback files stay here under their pending names as recovery-only artifacts:
+
+| Pending file | Applied as | Note |
+|---|---|---|
+| `20261109120000_music_direct_asset_versions_v1.sql` (branch draft, deleted) | `supabase/migrations/20261109175747_music_direct_asset_versions_v1.sql` | the applied SQL is the independently corrected version (lock order, settlement eligibility, 300 s replay bound); never replay the draft |
+| `core_signed_nonces_v1.sql` (moved) | `supabase/migrations/20261109180829_core_signed_nonces_v1.sql` | bytes unchanged; Worker `CORE_REPLAY_STORE` not yet deployed |
+| `city_arcade_v1.sql` (moved) | `supabase/migrations/20261109181623_city_arcade_v1.sql` | bytes unchanged; `ARCADE_CLOUD_ENABLED` absent, feature dormant |
+
+`supabase/schema-manifest.json` and the production schema snapshot were NOT regenerated for
+these three (no CI reset or production read at import time); their shipped-code names sit in
+`live-callers.json` → `applied_awaiting_evidence` until the supported clean reset and a new
+snapshot retire them.
+
 Promoted 2026-10-29 (owner-approved), group 0 of `PROMOTION-ORDER.md` plus
 `public_music_reads_lean_v1.sql`, from
 `docs/control-plane/PRODUCTION-SCHEMA-RECONCILIATION-2026-10-28.md`. Each was applied with

@@ -1,5 +1,6 @@
 import { handleProductWidgetReadiness, PRODUCT_WIDGET_READINESS } from './product-widget-readiness.js';
 import { handleArcade, ARCADE_PREFIX } from './arcade/index.js';
+import { handleEup, EUP_PREFIX } from './eup/router.js';
 import { guardWorldRelease } from './world-release.js';
 import { handleFundingIntelligence, FUNDING_PREFIX } from './funding-intelligence.js';
 import { allowedOrigins, applyCors, corsHeaders, fail, logEvent, reply } from './lib/http.js';
@@ -158,6 +159,11 @@ export default {
 
       if (path === ARCADE_PREFIX || path.startsWith(ARCADE_PREFIX + '/')) {
         return handleArcade(request, env, { requireHouseOwner });
+      }
+
+      /* Admin-only E=Up product workspace (Control → Products → E=Up). */
+      if (path === EUP_PREFIX || path.startsWith(EUP_PREFIX + '/')) {
+        return handleEup(request, env, { requireHouseOwner });
       }
 
       if (path === PRIM3_LEVELS_PREFIX || path.startsWith(`${PRIM3_LEVELS_PREFIX}/`)) {

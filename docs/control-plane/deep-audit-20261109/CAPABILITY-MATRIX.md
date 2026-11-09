@@ -13,13 +13,13 @@ Columns follow the handoff's evidence vocabulary and are deliberately separate. 
 | PRIM3 reviewed releases (owner attestation, digest, expiry) | yes | main (Worker), pending SQL | Worker prim3 suites 105/105 on this branch | yes (code) | flag/SQL state unknown | no |
 | PRIM3 adaptive practice (HMAC replay, server questions) | yes | main | Worker suites | yes | flag/key state unknown | no |
 | HQ / B1 tactical sandbox | yes | main; elevator landings fixed on this branch (EQ3) | this branch: 171 pass / 3 skip across `prim3-*` suites | fix: no | Pages | no |
-| City Arcade (Tea, Sole) local play | yes | main; outbox + start idempotency on this branch (W2/W3) | this branch: see HANDOFF | fix: no | Pages; cloud flag/schema unknown | no |
+| City Arcade (Tea, Sole) local play | yes | main; outbox + start idempotency on this branch (W2/W3) | this branch: 17 + 31 PGlite assertions, Chromium e2e | fix: no | Pages; **schema applied `20261109181623`, flag absent, live Worker pre-startKey** | no |
 | Chemistry Game Hub (owner) / public 7-day trial (#758) | yes / PR | main / #758 | audit: 95 Arcade/Chemistry tests on main | hub yes / trial no | hub yes / trial no | no |
 | Default Control shell account lifecycle (A1) | yes | this branch | this branch: see HANDOFF | no | no | no |
 | Cross-origin handoff commit fence (A2) and auth loader retry (A5) | yes | this branch (`js/tabbar.js`) | this branch | no | no | no |
 | Owner front page / inactive widget editors (#776) | yes | PR #776 | audit: PGlite 10+10, unit 10 | no | no | no |
 | Admin category nav + analytics layout (#784→#789) | yes | PR #789, not mounted by `control.html` | audit: 7 unit, 10 SQL | no | no | no |
-| Music direct sales: purchased-asset pinning (COM-1), download attempt settlement (COM-2) | yes | this branch: Edge handler + new SQL (see HANDOFF for applied/not) | this branch: see HANDOFF | no | no (SQL unapplied) | no |
+| Music direct sales: purchased-asset pinning (COM-1), download attempt settlement (COM-2) | yes | **applied form imported** (`20261109175747`, Edge v42 source) | local PostgreSQL 16 suite + native 17.7 release integration | no | **yes: migration + Edge v42 (receipt)** | no real purchase/download |
 | Customer checkout reservation recovery (COM-3) | yes | PR #782 only | audit reproduction only | no | no | no |
 | Core job lease fencing + lost-lease abort (C3) | yes | this branch (`locked_by` lease, no schema change) | 4 tests | no | no | no |
 | Core reflection child idempotency (C2) | yes | this branch | 2 tests | no | no | no |
@@ -27,7 +27,7 @@ Columns follow the handoff's evidence vocabulary and are deliberately separate. 
 | Core health: unknown evidence not shown as healthy zero (C1) | yes | this branch | 4 tests | no | no | no |
 | Core code-patch complete-inventory path policy (C4) | yes | this branch | 8 tests | no | no | no |
 | Local-model readiness vs liveness + deploy gate (C6) | yes | this branch (`/ready`, `ovh-core-health.sh`, `deploy-ovh-core.sh`) | 5 tests, `bash -n` | no | no | no |
-| Core-signed media mutation replay protection across isolates (C5) | yes | this branch: shared nonce claim via Supabase table (pending SQL), fail-closed default | 10 tests + full Worker suite | no | **no; and deploying without the SQL + `CORE_REPLAY_STORE` var makes Core media mutations 503 by design** | no |
+| Core-signed media mutation replay protection across isolates (C5) | yes | this branch: shared nonce claim; `CORE_REPLAY_STORE="supabase"` in wrangler.toml; operation claim follow-up (see HANDOFF) | Worker suite | no | **nonce table applied `20261109180829`; Worker not deployed** | no |
 | Finance (owner-only IEX paper simulation) | bounded | main | audit fixtures | yes | flags unknown | no |
 | Email-link sign-in (#753) | yes | PR | audit: 13 unit | no | no | no |
 | Reusable Equity Uprise independent installation | vision | control subsystem on local branch `1c76d641…` only | audit: 46/46, native PG lock/drain/CAS, PGlite restore | no | n/a | no |
