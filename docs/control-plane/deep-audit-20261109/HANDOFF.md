@@ -79,4 +79,5 @@ MCC_SERVE_ROOT=<out> THREE_DIR=<three@0.180.0> GENERATED_COMPLETION_ONLY=1 \
 
 ## Commits
 
-Filled in below after the commit.
+- `b3a822730226618cbf4c2ead68d25c2d10dbdbd6` on `claude/new-session-83ken5`: every source, test, SQL and document change described above, on main `578e683088fdd49fb77848733e70dd4f3af039c3`.
+- The commit after it adds only this SHA line.
