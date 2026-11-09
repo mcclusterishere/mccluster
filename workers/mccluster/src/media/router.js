@@ -50,6 +50,25 @@ async function jobById(env, id, orgId) {
   return rows?.[0] || null;
 }
 
+/* Idempotent paid work (audit C5): a stable operation id, carried in the job's
+   routing, makes a repeated request resolve to the one job it already made
+   instead of a second reservation and provider submission. Core-signed MCP
+   calls derive it from their signed nonce; API callers may send their own. */
+const OPERATION_ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
+export function operationIdFrom(body) {
+  const raw = body?.operation_id;
+  if (raw === undefined || raw === null || raw === '') return null;
+  if (typeof raw !== 'string' || !OPERATION_ID.test(raw)) {
+    throw Object.assign(new Error('operation_id must be 1-128 characters of letters, digits, ".", "_", ":" or "-"'), { status: 400 });
+  }
+  return raw;
+}
+
+async function jobByOperationId(env, orgId, operationId) {
+  const rows = await db(env, `media_jobs?org_id=eq.${encodeURIComponent(orgId)}&routing->>operation_id=eq.${encodeURIComponent(operationId)}&select=*&order=created_at.asc&limit=1`);
+  return rows?.[0] || null;
+}
+
 async function jobByProviderRequestId(env, requestId) {
   const rows = await db(env, `media_jobs?provider=eq.fal&provider_request_id=eq.${encodeURIComponent(requestId)}&select=*&limit=1`);
   return rows?.[0] || null;
@@ -349,10 +368,18 @@ export async function createGeneration(request, env, user) {
   if (!model) throw Object.assign(new Error('Unknown or disabled media model'), { status: 404 });
   if (model.provider !== 'fal') throw Object.assign(new Error('Provider adapter not installed'), { status: 501 });
 
+  const operationId = operationIdFrom(body);
   const input = { ...(body.input || {}) };
   if (body.prompt && !input.prompt) input.prompt = body.prompt;
   if (!Object.keys(input).length) throw Object.assign(new Error('input or prompt is required'), { status: 400 });
   validateModelInput(model, input);
+
+  if (operationId) {
+    /* Both callers of a duplicated operation get the same durable outcome,
+       whatever state it reached (queued, failed, completed). */
+    const existing = await jobByOperationId(env, org.org_id, operationId);
+    if (existing) return existing;
+  }
 
   const budget = budgetCents(body.budget_cents);
   const budgetUsdMicros = budget === null ? null : budget * 10_000;
@@ -389,6 +416,7 @@ export async function createGeneration(request, env, user) {
       requested_model_id: model.id,
       requested_by: user.id,
       strategy: body.strategy || 'explicit-model',
+      operation_id: operationId,
       estimate_available: Boolean(estimate.available),
       estimate_reason: estimate.available ? null : estimate.reason,
       /* The provider webhook arrives later on its own request; it rejoins

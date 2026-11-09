@@ -26,6 +26,7 @@ export async function handleArcade(request,env,{requireHouseOwner,fetchImpl=fetc
     const parts=path.slice(ARCADE_PREFIX.length+1).split('/'),id=parts[1];
     let action,doc=null,revision=null;
     if(parts.length===1&&parts[0]==='results'&&request.method==='GET')action='history';
+    else if(parts.length===1&&parts[0]==='current'&&request.method==='GET')action='current';
     else if(parts.length===2&&parts[0]==='missions'&&knownMissionKey(id)){
       if(request.method==='GET')action='read';
       else if(request.method==='PUT'){
@@ -34,7 +35,10 @@ export async function handleArcade(request,env,{requireHouseOwner,fetchImpl=fetc
         if(missionKey(doc.gameId,doc.locationId)!==id)throw fail(422,'Location mismatch');revision=b.expectedRevision;action='save';
       }else throw fail(405,'Method not allowed');
     }else if(parts.length===2&&parts[0]==='start'&&knownMissionKey(id)&&request.method==='POST'){
-      const b=await body(request);if(Object.keys(b).some(k=>k!=='expectedRevision'))throw fail(400,'Unknown field');revision=b.expectedRevision;action='start';
+      const b=await body(request);if(Object.keys(b).some(k=>!['expectedRevision','startKey'].includes(k)))throw fail(400,'Unknown field');
+      // W3: the client-persisted owner-bound idempotency key makes an uncertain start replay-safe.
+      if(typeof b.startKey!=='string'||!/^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(b.startKey))throw fail(400,'Start key required');
+      doc={startKey:b.startKey.toLowerCase()};revision=b.expectedRevision;action='start';
     }else if(parts.length===2&&parts[0]==='finish'&&/^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(id)&&request.method==='POST'){
       doc=await body(request);if(Object.keys(doc).some(k=>!['status','served','encounters'].includes(k))||!['won','failed'].includes(doc.status)||!Number.isInteger(doc.served)||doc.served<0||doc.served>12)throw fail(422,'Invalid practice result');if(doc.encounters!==undefined&&(!Array.isArray(doc.encounters)||doc.encounters.length>3||doc.encounters.some(id=>typeof id!=='string'||!/^[-a-z0-9]{1,40}$/.test(id))))throw fail(422,'Invalid encounters');action='finish';
     }else throw fail(404,'Arcade route not found');

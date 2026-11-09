@@ -1,12 +1,14 @@
 import { arcadeRequest, arcadeCloudAvailable } from './cloud.mjs';
 import { GAME_ID, validateMission } from './mission-contract.mjs';
 import { TEA_MISSION, BREWERS, newTeaAction, stepTea } from './tea-action.mjs';
+import {accountScope,enqueueResult,settleResult,discardResult,pendingFor,claimStartIntent,clearStartIntent} from './result-outbox.mjs';
 const colors = ['#f4dc78', '#7ae3b0', '#dba6ec', '#efa477'];
 export function mountTea(root, onFinish, {locationId,onReturn} = {}) {
   let state = newTeaAction(), frame, last = 0, saved = false, configError = '';
   const sessionKey='here.city-arcade.tea-action.session.v1:'+locationId;
   const keys = new Set(), held = new Map(), abort = new AbortController();
   let revision=null, cloudRun=null, pendingResult=null, busy=false,disposed=false;
+  const scope=accountScope();
   const listen = (el, event, fn) => el.addEventListener(event, fn, { signal: abort.signal });
   root.innerHTML = `<div class="mini-badge">GAURANFUCKING TEA / counter sprint</div>
     <h2 id="play-title">Tea Rush</h2><p>Move to a brewer, hold Act to brew, then carry the right blend to your customer.</p>
@@ -22,7 +24,7 @@ export function mountTea(root, onFinish, {locationId,onReturn} = {}) {
     <label>Points per delivery <input data-setting="reward" type="number" min="0" max="500" value="100"></label>
     <label>Spawn X <input data-setting="spawnX" type="number" min="20" max="580" value="300"></label>
     <label>Spawn Y <input data-setting="spawnY" type="number" min="130" max="300" value="220"></label>
-    <div class="actions"><button class="action" data-cloud-load>Load saved mission</button><button class="action" data-cloud-save>Save private mission</button><button class="action" data-cloud-play disabled>Play saved mission</button><button class="action" data-cloud-retry hidden>Retry result save</button></div><p data-cloud-status role="status">Local settings only. Save a private mission to use cloud practice results.</p><label>Customer order (comma separated) <input data-route value="Lemon,Mint,Berry,Ginger,Lemon"></label></details>`;
+    <div class="actions"><button class="action" data-cloud-load>Load saved mission</button><button class="action" data-cloud-save>Save private mission</button><button class="action" data-cloud-play disabled>Play saved mission</button><button class="action" data-cloud-retry hidden>Retry result save</button><button class="action" data-cloud-reconnect hidden>Reconnect cloud</button><button class="action" data-cloud-discard hidden>Discard unsaved result</button></div><p data-cloud-status role="status">Local settings only. Save a private mission to use cloud practice results.</p><label>Customer order (comma separated) <input data-route value="Lemon,Mint,Berry,Ginger,Lemon"></label></details>`;
   const $ = s => root.querySelector(s), canvas = $('canvas'), ctx = canvas.getContext('2d');
   function clear() { keys.clear(); held.clear(); }
   function persist(){try{if(state.status==='won'||state.status==='failed'){if(!pendingResult){localStorage.removeItem(sessionKey);return;}}localStorage.setItem(sessionKey,JSON.stringify({state,cloudRun,pendingResult}));}catch{}}
@@ -37,22 +39,28 @@ export function mountTea(root, onFinish, {locationId,onReturn} = {}) {
     return newTeaAction(config).config;
   }
   function useConfig(config) {
-    state=newTeaAction(config);saved=false;configError='';clear();cloudRun=null;pendingResult=null;
+    state=newTeaAction(config);saved=false;configError='';clear();cloudRun=null;
     root.querySelectorAll('[data-setting]').forEach(el=>el.value=el.dataset.setting.startsWith('spawn')?config.spawn[el.dataset.setting.slice(-1).toLowerCase()]:config[el.dataset.setting]);
     $('[data-route]').value=config.route.join(',');
     $('[data-start]').disabled=false;$('[data-pause]').disabled=true;$('[data-pause]').textContent='Pause';
-    $('[data-cloud-retry]').hidden=true;
+    syncPending();
   }
+  // W2: the account outbox, not the gameplay save, owns unacknowledged results; restarts never clear it.
+  function syncPending(){if(disposed)return;pendingResult=pendingFor(scope,GAME_ID,locationId)[0]||null;$('[data-cloud-retry]').hidden=!pendingResult;$('[data-cloud-discard]').hidden=!pendingResult;$('[data-cloud-reconnect]').hidden=!(pendingResult&&!cloudReady);}
   function reset(){try{useConfig(configFromForm());}catch(e){configError=e.message;}}
   let cloudReady=false;
-  function syncCloud(){if(disposed)return;root.querySelectorAll('[data-cloud-load],[data-cloud-save],[data-cloud-play],[data-cloud-retry]').forEach(b=>b.disabled=!cloudReady||busy);$('[data-cloud-play]').disabled=!cloudReady||busy||revision===null;}
+  function syncCloud(){if(disposed)return;root.querySelectorAll('[data-cloud-load],[data-cloud-save],[data-cloud-play],[data-cloud-retry]').forEach(b=>b.disabled=!cloudReady||busy);$('[data-cloud-play]').disabled=!cloudReady||busy||revision===null;$('[data-cloud-retry]').disabled=!cloudReady||busy;$('[data-cloud-reconnect]').disabled=busy;$('[data-cloud-discard]').disabled=busy;syncPending();}
   syncCloud();cloudStatus('Checking cloud availability. Local play and device saves remain available.');
-  arcadeCloudAvailable().then(available=>{if(disposed)return;cloudReady=available;syncCloud();cloudStatus(available?'Cloud missions available. Load the current revision before saving.':'Cloud missions unavailable. Local play and device saves remain available.');});
+  function unavailableText(){return pendingResult?'Cloud missions unavailable. Your finished shift is not yet saved to your account; it stays on this device. Reconnect to retry. Local play and device saves remain available.':'Cloud missions unavailable. Local play and device saves remain available.';}
+  function checkCloud(){return arcadeCloudAvailable().then(available=>{if(disposed)return;cloudReady=available;syncCloud();cloudStatus(available?(pendingResult?'Completed shift restored. Retry saving its practice result to your account.':'Cloud missions available. Load the current revision before saving.'):unavailableText());});}
+  checkCloud();
+  listen($('[data-cloud-reconnect]'),'click',()=>{if(busy)return;cloudStatus('Reconnecting to cloud missions.');checkCloud().then(()=>{if(!disposed&&cloudReady&&pendingResult)finishCloud();});});
+  listen($('[data-cloud-discard]'),'click',()=>{if(!pendingResult||busy)return;const entry=pendingResult;if(!window.confirm('This finished shift has not been saved to your account. Discard it from this device? It will not count as a saved practice result.'))return;discardResult(scope,entry.id);syncPending();persist();cloudStatus('Unsaved result discarded on this device. It was never saved to your account.');});
   function cloudStatus(text){if(!disposed)$('[data-cloud-status]').textContent=text;}
   async function cloudTask(fn){
     if(busy||!cloudReady)return;busy=true;
     root.querySelectorAll('[data-cloud-load],[data-cloud-save],[data-cloud-play],[data-again],[data-start]').forEach(b=>b.disabled=true);
-    try{await fn();}catch(e){if(e.cloudUnavailable)cloudReady=false;cloudStatus(e.message+' Local play and device saves remain available.');}finally{busy=false;if(!disposed){
+    try{await fn();}catch(e){if(e.cloudUnavailable)cloudReady=false;cloudStatus(e.message+(pendingResult&&!cloudReady?' Your finished shift is not yet saved to your account; it stays on this device. Reconnect to retry. Local play and device saves remain available.':' Local play and device saves remain available.'));}finally{busy=false;if(!disposed){
       root.querySelectorAll('[data-cloud-load],[data-cloud-save],[data-again]').forEach(b=>b.disabled=false);
       syncCloud();$('[data-start]').disabled=state.status!=='ready';
     }}
@@ -70,7 +78,7 @@ export function mountTea(root, onFinish, {locationId,onReturn} = {}) {
     revision=m.revision;cloudStatus('Private mission revision '+revision+' saved.');
   }));
   listen($('[data-cloud-play]'),'click',()=>cloudTask(async()=>{
-    const r=await arcadeRequest('/start/'+locationId,'POST',{expectedRevision:revision});if(disposed)return;
+    const intent=claimStartIntent(scope,locationId,revision);let r;try{r=await arcadeRequest('/start/'+locationId,'POST',{expectedRevision:revision,startKey:intent.startKey});}catch(e){if(e.status===409)clearStartIntent(scope,locationId);throw e;}if(disposed)return;clearStartIntent(scope,locationId);
     const mission=validateMission(r.document);if(mission.locationId!==locationId)throw Error('Saved location mismatch');
     useConfig(mission.tea);cloudRun=r.id;state.status='playing';$('[data-pause]').disabled=false;canvas.focus();
     cloudStatus('Playing saved revision '+r.revision+'. Results are private practice, not reward claims.');
@@ -79,11 +87,12 @@ export function mountTea(root, onFinish, {locationId,onReturn} = {}) {
     if(!pendingResult||busy)return;
     const pending=pendingResult;
     await cloudTask(async()=>{
-      const r=await arcadeRequest('/finish/'+pending.id,'POST',pending.body);if(disposed||pending!==pendingResult)return;
-      pendingResult=null;persist();$('[data-cloud-retry]').hidden=true;cloudStatus('Practice result saved to your account.');
+      let r;try{r=await arcadeRequest('/finish/'+pending.id,'POST',pending.body);}catch(e){if(e.status===409)cloudStatus('The server already holds a different result for this run. This device copy was not saved; review it before discarding.');throw e;}
+      if(disposed)return;
+      settleResult(scope,pending.id);if(pendingResult===pending)pendingResult=null;persist();cloudStatus('Practice result saved to your account.');
       onFinish({...state,score:Number(r.score),cloud:'saved'});
     });
-    if(pendingResult&&!disposed){$('[data-cloud-retry]').hidden=false;persist();}
+    if(!disposed){syncPending();persist();}
   }
   listen($('[data-cloud-retry]'),'click',finishCloud);
   listen($('[data-return]'),'click',()=>{pause();onReturn?.();});
@@ -113,7 +122,7 @@ export function mountTea(root, onFinish, {locationId,onReturn} = {}) {
     const message = configError || (state.status==='paused' ? 'Paused. Resume when ready.' : state.message);
     if($('[data-tea-status]').textContent!==message && !root.querySelector('input:focus')) $('[data-tea-status]').textContent=message;
     if((state.status==='won'||state.status==='failed')&&!saved){saved=true;onFinish({...state,cloud:cloudRun?'pending':'local'});$('[data-pause]').disabled=true;
-      if(cloudRun){pendingResult={id:cloudRun,body:{status:state.status,served:state.index}};finishCloud();}}
+      if(cloudRun){const body={status:state.status,served:state.index};enqueueResult(scope,{id:cloudRun,game:GAME_ID,locationId,body});pendingResult={id:cloudRun,body};$('[data-cloud-retry]').hidden=false;$('[data-cloud-discard]').hidden=false;persist();finishCloud();}}
     if(ctx){
       ctx.fillStyle='#193c42';ctx.fillRect(0,0,600,400);
       for(let x=0;x<600;x+=40)for(let y=110;y<330;y+=40){ctx.fillStyle=(x+y)%80?'#264c50':'#2c5556';ctx.fillRect(x,y,39,39);}
@@ -137,10 +146,12 @@ export function mountTea(root, onFinish, {locationId,onReturn} = {}) {
         cup:BREWERS.some(b=>b.tea===s.cup)?s.cup:null,message:'Restored your shift on this device.'};
       cloudRun=typeof stored.cloudRun==='string'?stored.cloudRun:null;
       pendingResult=stored.pendingResult&&stored.pendingResult.id===cloudRun&&['won','failed'].includes(stored.pendingResult.body?.status)&&Number.isInteger(stored.pendingResult.body?.served)?stored.pendingResult:null;
-      saved=['won','failed'].includes(state.status);$('[data-cloud-retry]').hidden=!pendingResult;
+      if(pendingResult)enqueueResult(scope,{id:pendingResult.id,game:GAME_ID,locationId,body:pendingResult.body});
+      saved=['won','failed'].includes(state.status);
       $('[data-start]').disabled=state.status!=='ready';$('[data-pause]').disabled=state.status!=='paused';$('[data-pause]').textContent='Resume';
     }
   }catch{}
+  syncPending();
   frame=requestAnimationFrame(draw);
   return () => { persist(); disposed=true; cancelAnimationFrame(frame); abort.abort(); clear(); };
 }

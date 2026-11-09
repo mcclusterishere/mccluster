@@ -1,5 +1,5 @@
 // Reviewed public metadata -> the existing #762 compiler. No news ingestion or model calls.
-import { compileRecipe } from '../../../../PRIM3/game/halo/generated/recipe.mjs';
+import { compileRecipe } from '../../../../js/prim3-tactics/levels/recipe.mjs';
 import { isoFromGdelt } from '../intel/news-country-codes.js';
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const bad=(message,status=400)=>{throw Object.assign(new Error(message),{status});};

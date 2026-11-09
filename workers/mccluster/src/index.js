@@ -14,6 +14,7 @@ import { buildEquityUpriseHaloProjection } from './seek-first/equity-uprise-halo
 import { handleWorldLayers } from './world-layers.js';
 import { handleHaloLayers, handleWorldGeocode, WORLD_GEOCODE_PATH } from './world-halo-layers.js';
 import { handleHaloOps } from './world-halo-ops.js';
+import { handleWorldEnvironment, ENVIRONMENT_PATH } from './world-environment.js';
 import { handleWorldMembers, MEMBERS_PATH } from './world-members.js';
 import { handleWorldCctv } from './world-cctv.js';
 import { handleWorldAccess } from './world-access.js';
@@ -202,6 +203,11 @@ export default {
       if (path === MEMBERS_PATH) {
         const members = await handleWorldMembers(request, env);
         if (members) return members;
+      }
+
+      /* Consumer public-government environmental contract; no Halo gates are changed. */
+      if (path === ENVIRONMENT_PATH || path.startsWith(`${ENVIRONMENT_PATH}/`)) {
+        return handleWorldEnvironment(request, env);
       }
 
       /* Optional World layers: release guard above, then provider adapter. */

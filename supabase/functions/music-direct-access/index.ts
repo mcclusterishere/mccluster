@@ -14,9 +14,16 @@
 //                       DIRECT_DEFAULTS.tokenRevealHours after payment: after that the
 //                       session id opens nothing, the token link is what the buyer keeps.
 //   status {token}      what the purchase page shows, without counting a download.
-//   download {token}    public.music_direct_claim_download counts one download under a row
-//                       lock (revoked, refunded, expired or over the limit refuse) and the
-//                       private object is signed for DIRECT_DEFAULTS.signedUrlSeconds.
+//   download {token, attempt_key?}
+//                       a download is an ATTEMPT (20261109120000_music_direct_asset_versions_v1):
+//                       public.music_direct_reserve_download holds one slot under a row lock
+//                       (revoked, refunded, expired, over the limit or an unresolved legacy
+//                       purchase refuse) and names the file the purchase PINNED, never the
+//                       live offer; the object is signed for DIRECT_DEFAULTS.signedUrlSeconds;
+//                       then public.music_direct_settle_download counts it ('issued') or,
+//                       if signing failed, gives the slot back ('released', 503 to the
+//                       buyer). The same attempt_key returns the same attempt, so a retry
+//                       after a lost response costs nothing extra.
 //
 //   operator-*          the Direct sales tab of Control · Create · Music. Bearer token verified
 //                       here, then the music desk's own authority: `ops.use` on the
@@ -29,7 +36,7 @@ import Stripe from "npm:stripe@14";
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
 import { isHouseOperator } from "../_shared/house-ops.ts";
 import {
-  CATALOG_KEY_RE, DIRECT_AUDIO_TYPES, DIRECT_BUCKET, DIRECT_DEFAULTS, MAX_DOWNLOADS_RANGE, REFUSAL_HTTP, SESSION_ID_RE,
+  ATTEMPT_KEY_RE, CATALOG_KEY_RE, DIRECT_AUDIO_TYPES, DIRECT_BUCKET, DIRECT_DEFAULTS, MAX_DOWNLOADS_RANGE, REFUSAL_HTTP, SESSION_ID_RE,
   TOKEN_RE, WINDOW_DAYS_RANGE, assetPathProblem, audioFormatOf, corsHeaders, directFulfilmentRefusal, directUploadPath, downloadNameFor,
   downloadRefusal, offerKeyFor, priceProblem, tokenRevealAllowed,
 } from "../_shared/music-direct.ts";
@@ -43,7 +50,7 @@ class HttpError extends Error {
   constructor(message: string, status: number) { super(message); this.status = status; }
 }
 const ORDER_COLUMNS = "id,offer_key,stripe_checkout_session_id,amount_cents,currency,status,paid_at";
-const ENT_COLUMNS = "id,order_id,offer_key,token,download_count,max_downloads,expires_at,revoked_at";
+const ENT_COLUMNS = "id,order_id,offer_key,token,download_count,max_downloads,expires_at,revoked_at,asset_version_id";
 
 async function entitlementView(orderId: string) {
   const { data: ent } = await admin.from("music_direct_entitlements").select(ENT_COLUMNS).eq("order_id", orderId).limit(1).maybeSingle();
@@ -177,7 +184,11 @@ async function operator(action: string, body: Record<string, unknown>) {
       if (r.status === "paid") { s.paid++; s.gross_cents += Number(r.amount_cents || 0); }
       if (r.status === "refunded") s.refunded++;
     }
+    /* paid purchases this schema could not pin to a file (pre-2026-11-09 orders whose offer was edited since): owner resolves by hand */
+    const { data: review } = await admin.from("music_direct_asset_review")
+      .select("order_id,offer_key,status,created_at,paid_at,offer_updated_at,offer_current_path,download_count").limit(200);
     return { ok: true, catalogue: catalogue || [], offers: ((offers || []) as any[]).map((o) => ({ ...o, format: audioFormatOf(o.asset_path) })), sales,
+      asset_review: review || [],
       defaults: { max_downloads: DIRECT_DEFAULTS.maxDownloads, download_window_days: DIRECT_DEFAULTS.downloadWindowDays },
       audio_types: Object.keys(DIRECT_AUDIO_TYPES) };
   }
@@ -266,18 +277,36 @@ Deno.serve(async (req) => {
         const offer = await offerTitle(ent.offer_key);
         return json({ ok: true, state: orderStatus === "paid" && !ent.revoked_at ? "paid" : "revoked", ...describe(ent, orderStatus, offer.title, offer.format) });
       }
-      const { data: got, error } = await admin.rpc("music_direct_claim_download", { p_token: token });
+      const attemptKey = body.attempt_key === undefined || body.attempt_key === null ? null : String(body.attempt_key);
+      if (attemptKey !== null && !ATTEMPT_KEY_RE.test(attemptKey)) return json({ error: "invalid attempt key" }, 400);
+      /* 1. hold a slot and learn the pinned file; nothing is counted yet */
+      const { data: got, error } = await admin.rpc("music_direct_reserve_download", { p_token: token, p_attempt_key: attemptKey });
       if (error) throw error;
       const r = got as any;
       if (!r?.ok) {
         const h = REFUSAL_HTTP[r?.reason] || { status: 403, message: "Download unavailable." };
         return json({ error: h.message, reason: r?.reason || "refused" }, h.status);
       }
+      /* 2. sign the pinned object; 3. settle: issued (counted) or released (slot returned) */
       const { data: signed, error: signError } = await admin.storage.from(r.bucket)
         .createSignedUrl(r.path, DIRECT_DEFAULTS.signedUrlSeconds, { download: r.download_name });
-      if (signError || !signed?.signedUrl) throw new Error(signError?.message || "could not sign download");
+      if (signError || !signed?.signedUrl) {
+        const { data: released, error: releaseError } = await admin.rpc("music_direct_settle_download", { p_attempt: r.attempt_id, p_outcome: "released" });
+        console.error("music direct sign failed", { attempt: r.attempt_id, sign: signError?.message || "no url", released: (released as any)?.state, releaseError: releaseError?.message });
+        const h = REFUSAL_HTTP.sign_retry;
+        return json({ error: h.message, reason: "sign_retry", attempt_key: attemptKey }, h.status);
+      }
+      const { data: settled, error: settleError } = await admin.rpc("music_direct_settle_download", { p_attempt: r.attempt_id, p_outcome: "issued" });
+      if (settleError) throw settleError;
+      const st = settled as any;
+      if (!st?.ok) {
+        /* the hold lapsed and its slot is gone: do not hand out a URL the ledger will not count */
+        console.error("music direct settle refused", { attempt: r.attempt_id, reason: st?.reason, state: st?.state });
+        const h = REFUSAL_HTTP.sign_retry;
+        return json({ error: h.message, reason: "sign_retry", attempt_key: null }, h.status);
+      }
       return json({ ok: true, title: r.title, format: audioFormatOf(r.path), url: signed.signedUrl, expires_in: DIRECT_DEFAULTS.signedUrlSeconds,
-        downloads_left: r.downloads_left, download_expires_at: r.expires_at });
+        downloads_left: st.downloads_left, download_expires_at: r.expires_at, attempt_key: attemptKey, replay: r.replay === true });
     }
     if (action === "operator-status") {
       await operatorFrom(req);

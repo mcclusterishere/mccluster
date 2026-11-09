@@ -136,6 +136,7 @@
         method: opts.method || "GET",
         headers: headers,
         cache: "no-store",
+        signal: opts.signal,
         body: opts.body === undefined ? undefined : JSON.stringify(opts.body)
       }).then(function (r) {
         return r.text().then(function (body) {
@@ -244,6 +245,7 @@
         method: opts.method || "GET",
         headers: headers,
         cache: "no-store",
+        signal: opts.signal,
         body: opts.body === undefined ? undefined : JSON.stringify(opts.body)
       }).then(function (r) {
         if (!r.ok) {
@@ -3959,16 +3961,97 @@
     });
   }
 
+  /* CONTROL AUTHORITY GENERATION. One lifecycle for the whole default shell,
+     not only the opt-in ?workspace=1 presentation: every private load snapshots
+     the principal (the stored session's subject) plus the selected workspace
+     before it starts, and nothing that settles afterwards may be committed to
+     state unless both are unchanged. Sign-out, account replacement and a
+     storage change to the session bump the generation and conceal private
+     state synchronously, so a late response cannot repopulate it. A same-
+     account token refresh keeps the subject, so it keeps the generation and
+     any unsaved draft. (Audit A1, 2026-11-09.) */
+  var authority = { gen: 0, principal: undefined, org: undefined, abort: null };
+  function jwtSubject(token) {
+    try {
+      var raw = String(token).split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+      while (raw.length % 4) raw += "=";
+      var payload = JSON.parse(decodeURIComponent(Array.prototype.map.call(atob(raw), function (c) {
+        return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join("")));
+      return payload && payload.sub ? String(payload.sub) : null;
+    } catch (e) { return null; }
+  }
+  function storedPrincipal() {
+    var raw = null;
+    try { raw = window.localStorage.getItem("mccdb_session"); } catch (e) { raw = null; }
+    if (!raw) return null;
+    try { var s = JSON.parse(raw); return s && s.access_token ? (jwtSubject(s.access_token) || "opaque") : null; } catch (e) { return null; }
+  }
+  function authorityOrg() {
+    var org = null;
+    try { org = preferredOrgId(); } catch (e) { org = null; }
+    return org || null;
+  }
+  function authoritySnapshot() { return { gen: authority.gen, principal: storedPrincipal(), org: authorityOrg() }; }
+  function authorityHolds(snap) {
+    return snap.gen === authority.gen && snap.principal === storedPrincipal() && snap.org === authorityOrg();
+  }
+  var PRIVATE_LISTS = ["threads", "leads", "jobs", "aiThreads", "decisions", "audit", "siteRequests", "apps", "coreTools",
+    "mediaAssets", "mediaJobs", "campaigns", "variants", "publishJobs", "posts", "workspaces"];
+  var PRIVATE_VALUES = ["status", "ai", "aiHealth", "coreBridge", "coreResume", "org", "workspace", "leadTotal", "commandResult",
+    "inspector", "selectedAiThreadId", "refreshedAt", "musicOrders"];
+  /* Clears everything the previous principal was allowed to see. Drafts the
+     operator typed (aiChatDraft) are theirs and stay. */
+  function concealPrivateState(reason) {
+    if (authority.abort) { try { authority.abort.abort(); } catch (e) {} authority.abort = null; }
+    PRIVATE_LISTS.forEach(function (k) { state[k] = []; });
+    PRIVATE_VALUES.forEach(function (k) { state[k] = null; });
+    state.aiMessages = {}; state.sources = {}; state.health = state.health || null;
+    state.loading = false; state.error = reason || null;
+    try { var results = $("crPaletteResults"); if (results) results.innerHTML = ""; } catch (e) {}
+    try { var body = $("crInspectorBody"); if (body) body.innerHTML = ""; } catch (e) {}
+    try { var palette = $("crPalette"); if (palette) { palette.classList.remove("is-open"); palette.setAttribute("aria-hidden", "true"); } } catch (e) {}
+  }
+  /* Called on every account-lifecycle signal. Returns true when the principal
+     changed and private state was concealed. */
+  function reconcileAuthority(detail) {
+    var now = storedPrincipal();
+    var signedOutEvent = detail && detail.signed_in === false;
+    if (!signedOutEvent && now === authority.principal) return false;
+    authority.gen += 1; authority.principal = now;
+    concealPrivateState(now ? "Account changed. Reloading Control for the current account." : "Signed out.");
+    try {
+      if (!now) { if ($("crApp")) $("crApp").hidden = true; if ($("cpGate")) $("cpGate").hidden = false; }
+    } catch (e) {}
+    try { render(); } catch (e) {}
+    return true;
+  }
+  function bindAuthorityLifecycle() {
+    authority.principal = storedPrincipal();
+    window.addEventListener("mcc:auth-changed", function (e) { reconcileAuthority(e && e.detail); });
+    window.addEventListener("storage", function (e) { if (!e || e.key === null || e.key === "mccdb_session") reconcileAuthority(null); });
+    window.addEventListener("pageshow", function (e) { if (e && e.persisted) reconcileAuthority(null); });
+  }
   function load(force) {
     if (state.loading && !force) return Promise.resolve();
     state.loading = true; state.error = null; render();
-    var health = src(fetch(API + "/health", { cache: "no-store" }).then(function (r) {
+    var snap = authoritySnapshot();
+    if (authority.principal === undefined) authority.principal = snap.principal;
+    if (authority.abort) { try { authority.abort.abort(); } catch (e) {} }
+    var ac = typeof AbortController === "function" ? new AbortController() : null;
+    authority.abort = ac;
+    var signal = ac ? ac.signal : undefined;
+    var health = src(fetch(API + "/health", { cache: "no-store", signal: signal }).then(function (r) {
       if (!r.ok) throw Object.assign(new Error("Edge health returned HTTP " + r.status), { status: r.status });
       return r.json();
     }));
     var publicRecord = loadPublicRecord();
     var authed = token().then(function (t) {
       if (!t) return { signedOut: true };
+      /* The token that answers must belong to the principal this load was
+         started for. A refreshed token for the same subject passes. */
+      if (snap.principal !== null && jwtSubject(t) !== null && jwtSubject(t) !== snap.principal) return { stale: true };
+      if (snap.principal === null && storedPrincipal() !== null && snap.gen !== authority.gen) return { stale: true };
       return discoverWorkspace().then(function (ws) {
         var org = ws.org;
         /* No workspace is a state to render, not an exception to throw.
@@ -3976,17 +4059,17 @@
            TypeError, which surfaced as a generic console error. */
         if (!org) return { workspace: ws, org: null };
         return Promise.all([
-          src(request("/v1/core")),
+          src(request("/v1/core", { signal: signal })),
           src(coreMcp("tools/list")),
           src(callCoreTool("core.resume", { org_id: org.id, since_hours: 24, limit: 25 })),
-          src(request("/v1/status")), src(request("/v1/apps")), src(request("/v1/ai/status")), src(request("/v1/ai/system-health")),
-          src(request("/v1/ai/decisions?limit=25&org_id=" + encodeURIComponent(org.id))),
-          src(request("/v1/comms/threads?limit=100")), src(supa(leadQueryPath(LEAD_PAGE, 0), { count: true, prefer: "count=exact" })),
-          src(supa("site_requests?select=*&order=created_at.desc&limit=100")),
-          src(supa("ops_agent_jobs?select=*&org_id=eq." + encodeURIComponent(org.id) + "&order=created_at.desc&limit=200")),
-          src(supa("ops_ai_threads?select=*&org_id=eq." + encodeURIComponent(org.id) + "&status=eq.active&order=last_message_at.desc&limit=100")),
+          src(request("/v1/status", { signal: signal })), src(request("/v1/apps", { signal: signal })), src(request("/v1/ai/status", { signal: signal })), src(request("/v1/ai/system-health", { signal: signal })),
+          src(request("/v1/ai/decisions?limit=25&org_id=" + encodeURIComponent(org.id), { signal: signal })),
+          src(request("/v1/comms/threads?limit=100", { signal: signal })), src(supa(leadQueryPath(LEAD_PAGE, 0), { count: true, prefer: "count=exact", signal: signal })),
+          src(supa("site_requests?select=*&order=created_at.desc&limit=100", { signal: signal })),
+          src(supa("ops_agent_jobs?select=*&org_id=eq." + encodeURIComponent(org.id) + "&order=created_at.desc&limit=200", { signal: signal })),
+          src(supa("ops_ai_threads?select=*&org_id=eq." + encodeURIComponent(org.id) + "&status=eq.active&order=last_message_at.desc&limit=100", { signal: signal })),
           loadCreative(org),
-          src(request("/v1/audit/recent?limit=25&org_id=" + encodeURIComponent(org.id)))
+          src(request("/v1/audit/recent?limit=25&org_id=" + encodeURIComponent(org.id), { signal: signal }))
         ]).then(function (r) {
           return {
             org: org, workspace: ws,
@@ -4000,6 +4083,14 @@
     });
     return Promise.all([health, authed, publicRecord]).then(function (r) {
       var a = r[1] || {}; var c = a.creative || {};
+      /* The commit boundary: results from a principal or workspace that is no
+         longer current are discarded, never rendered. */
+      if (a.stale || !authorityHolds(snap)) {
+        concealPrivateState(null);
+        state.error = "Account or workspace changed while loading. Reload Control.";
+        return;
+      }
+      if (a.signedOut && snap.principal !== null) { concealPrivateState("Signed out."); return; }
       var signedOut = badResult("unauthorized", "This session is not signed in.", 401);
       state.sources = {
         health: r[0], coreBridge: a.coreBridge || signedOut, coreTools: a.coreTools || signedOut, coreResume: a.coreResume || signedOut,
@@ -4041,8 +4132,8 @@
       state.publishJobs = rowsOf(state.sources.publishJobs); state.posts = rowsOf(state.sources.posts);
       state.refreshedAt = new Date().toISOString();
       state.error = state.sources.status.ok ? null : state.sources.status.message || "Operator status unavailable";
-    }).catch(function (e) { state.error = e.message || "Control Room state unavailable"; })
-      .then(function () { state.loading = false; render(); });
+    }).catch(function (e) { if (authorityHolds(snap)) state.error = e.message || "Control Room state unavailable"; })
+      .then(function () { if (authority.abort === ac) authority.abort = null; state.loading = false; render(); });
   }
 
   function boot() { $("cpGate").hidden = true; $("crApp").hidden = false; readHash(); setHash(true); render(); load(); }
@@ -4119,6 +4210,6 @@
     }
   });
 
-  function init() { bindAuth(); bindShell(); bindActions(document); tryResume(); setTimeout(tryResume, 700); }
+  function init() { bindAuthorityLifecycle(); bindAuth(); bindShell(); bindActions(document); tryResume(); setTimeout(tryResume, 700); }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
 })();

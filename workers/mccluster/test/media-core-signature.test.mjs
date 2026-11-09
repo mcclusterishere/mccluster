@@ -19,8 +19,15 @@ function signedRequest(payload, { signer = signCoreRequest, secret = SECRET, pat
   return { request: new Request(`https://api.mccluster.org${PATH}`, { method: 'POST', headers, body }), body };
 }
 
+/* Mutating calls need a shared replay store (C5); this fixture is a plain
+   in-memory one so these tests stay about the signature itself. */
+function fakeStore() {
+  const seen = new Set();
+  return { async claim(nonce) { if (seen.has(nonce)) return false; seen.add(nonce); return true; } };
+}
+
 async function verify(request, body, extra = {}) {
-  return verifyCoreSignature({ request, env, path: PATH, bodyBytes: new TextEncoder().encode(body), ...extra });
+  return verifyCoreSignature({ request, env, path: PATH, bodyBytes: new TextEncoder().encode(body), replayStore: fakeStore(), ...extra });
 }
 
 test('a request signed by Core verifies on the Worker', async () => {
@@ -33,8 +40,9 @@ test('a request signed by Core verifies on the Worker', async () => {
 test('a replayed nonce is refused', async () => {
   __resetCoreNonces();
   const { request, body } = signedRequest({ method: 'tools/list' });
-  await verify(request, body);
-  await assert.rejects(verify(request, body), /already used/);
+  const replayStore = fakeStore();
+  await verify(request, body, { replayStore });
+  await assert.rejects(verify(request, body, { replayStore }), /already used/);
 });
 
 test('a body swapped after signing is refused', async () => {
@@ -72,7 +80,7 @@ test('without the key configured the Worker fails closed', async () => {
   __resetCoreNonces();
   const { request, body } = signedRequest({ method: 'tools/list' });
   await assert.rejects(
-    verifyCoreSignature({ request, env: { ...env, CORE_EDGE_SIGNING_KEY: '' }, path: PATH, bodyBytes: new TextEncoder().encode(body) }),
+    verifyCoreSignature({ request, env: { ...env, CORE_EDGE_SIGNING_KEY: '' }, path: PATH, bodyBytes: new TextEncoder().encode(body), replayStore: fakeStore() }),
     (error) => error.status === 503
   );
 });

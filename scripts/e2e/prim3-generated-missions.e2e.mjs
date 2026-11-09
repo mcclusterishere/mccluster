@@ -11,7 +11,10 @@ import {join,resolve,extname,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 const require=createRequire(join(process.env.PLAYWRIGHT_DIR||'/opt/node-tools/node_modules','x'));
 let chromium;try{({chromium}=require('playwright'));}catch{({chromium}=require('playwright-core'));}
-const ROOT=fileURLToPath(new URL('../../',import.meta.url)),BASE='https://matthew.mccluster.org';
+// MCC_SERVE_ROOT points the fixture server at an EMITTED export (the tree after
+// deploy-pages.yml's strip) instead of the source checkout, so the run proves the
+// published module graph, not the repository's (audit W1, 2026-11-09).
+const ROOT=process.env.MCC_SERVE_ROOT?resolve(process.env.MCC_SERVE_ROOT)+sep:fileURLToPath(new URL('../../',import.meta.url)),BASE='https://matthew.mccluster.org';
 const THREE=process.env.THREE_DIR||'/tmp/prim3-qa/node_modules/three';
 assert.equal(JSON.parse(await readFile(join(THREE,'package.json'),'utf8')).version,'0.180.0','pinned renderer required');
 const out=process.argv[2]||'/tmp/prim3-generated-proof';await mkdir(out,{recursive:true});

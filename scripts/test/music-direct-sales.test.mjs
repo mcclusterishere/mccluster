@@ -12,7 +12,7 @@ import assert from 'node:assert/strict';
 import { readFile, access } from 'node:fs/promises';
 import {
   ALLOWED_ORIGINS, DIRECT_BUCKET, audioFormatOf, formatLabel, DIRECT_DEFAULTS, MUSIC_DIRECT_KIND, SITE, assetPathProblem, catalogKeyOf, corsHeaders,
-  directFulfilmentRefusal, directUploadPath, downloadNameFor, downloadRefusal, offerKeyFor, offerSaleRefusal, priceProblem,
+  directFulfilmentRefusal, directUploadPath, downloadNameFor, downloadRefusal, offerKeyFor, offerSaleRefusal, priceProblem, ATTEMPT_KEY_RE, REFUSAL_HTTP,
   tokenRevealAllowed
 } from '../../supabase/functions/_shared/music-direct.ts';
 
@@ -98,6 +98,11 @@ test('a live entitlement downloads; revoked, unpaid, expired and over-limit do n
   assert.equal(downloadRefusal({ ...ENT, expires_at: '2026-10-31T23:59:59Z' }, 'paid', NOW), 'expired');
   assert.equal(downloadRefusal({ ...ENT, expires_at: null }, 'paid', NOW), 'expired');
   assert.equal(downloadRefusal(null, 'paid', NOW), 'not_found');
+  assert.equal(downloadRefusal({ ...ENT, asset_version_id: null }, 'paid', NOW), 'asset_unresolved', 'an unpinned legacy purchase is refused, never given today\'s file');
+  assert.equal(downloadRefusal({ ...ENT, asset_version_id: '10000000-0000-4000-8000-000000000001' }, 'paid', NOW), null);
+  assert.equal(REFUSAL_HTTP.asset_unresolved.status, 409);
+  assert.equal(REFUSAL_HTTP.sign_retry.status, 503);
+  assert.ok(ATTEMPT_KEY_RE.test('retry-key-00000001') && !ATTEMPT_KEY_RE.test('short') && !ATTEMPT_KEY_RE.test('a'.repeat(81)));
 });
 
 test('the checkout session reveals the token for 24 hours after payment, then never', () => {
@@ -203,7 +208,15 @@ test('music-direct-access: orders found by the stored session, fulfilled by the 
   assert.doesNotMatch(src, /metadata\?\.music_direct_order_id/, 'never by metadata');
   assert.match(src, /directFulfilmentRefusal\(session as any, \{ account: null \}, order as any\)/);
   assert.match(src, /admin\.rpc\("music_direct_fulfil"/);
-  assert.match(src, /admin\.rpc\("music_direct_claim_download"/);
+  /* COM-2: a download is reserved, signed, then settled; the one-step claim (count before sign) is never called here */
+  assert.doesNotMatch(src, /music_direct_claim_download/, 'the handler never counts before it signs');
+  assert.match(src, /admin\.rpc\("music_direct_reserve_download", \{ p_token: token, p_attempt_key: attemptKey \}\)/);
+  assert.match(src, /ATTEMPT_KEY_RE\.test\(attemptKey\)/);
+  const download = src.slice(src.indexOf('music_direct_reserve_download'), src.indexOf('if (action === "operator-status")'));
+  assert.ok(download.indexOf('createSignedUrl(') < download.indexOf('p_outcome: "issued"'), 'issued only after a signed url exists');
+  assert.match(download, /if \(signError \|\| !signed\?\.signedUrl\) \{\s*const \{ data: released, error: releaseError \} = await admin\.rpc\("music_direct_settle_download", \{ p_attempt: r\.attempt_id, p_outcome: "released" \}\)/, 'a signing failure releases the slot');
+  assert.match(download, /reason: "sign_retry"/);
+  assert.match(download, /downloads_left: st\.downloads_left/, 'what is left comes from settlement, not the reservation');
   assert.match(src, /tokenRevealAllowed\(/);
   assert.match(src, /createSignedUrl\(r\.path, DIRECT_DEFAULTS\.signedUrlSeconds/);
   /* the old contract signed for 900s straight from a session id; now a session id never signs */

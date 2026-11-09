@@ -1,0 +1,63 @@
+{
+  "schema": "equity-uprise.consumer-lock/v1",
+  "repository": "mcclusterishere/Equity-Uprise",
+  "commit": "645d68a740c835271ca185c52e0b31220aab16ad",
+  "version": "0.1.0-review.2",
+  "status": "Local product follow-on and consumer candidate; neither commit is remotely published; public publication and release remain unauthorized",
+  "files": [
+    {
+      "path": "LICENSE",
+      "sha256": "052edcdd83590be9ea9d37a32b03c5f967b8b1fdfde75f557bd7aa675f39defd"
+    },
+    {
+      "path": "src/environment/evidence.mjs",
+      "sha256": "211ca60b6b2f0c3d8807a9c86bdc5aec7d8dc7282a0589045ae2e34a0cf09db3"
+    },
+    {
+      "path": "src/environment/panel.mjs",
+      "sha256": "ced6036f55d45c315dde3454ec095cecb4234b1b040edf779d17bcb9f76e3555"
+    },
+    {
+      "path": "src/environment/server.mjs",
+      "sha256": "49e300efe2f135dce6d9ebbc66ad9a0dfb94000f5af4028ad5895afac9e45010"
+    },
+    {
+      "path": "src/environment/transport.mjs",
+      "sha256": "e4f0772d3df38a1540b0dfc030f6713eaa31bb7c7e3b9d363f3e7c421fedc81c"
+    },
+    {
+      "path": "src/installation/config.mjs",
+      "sha256": "0a4777b5508d2e63f615e08fea359350ecd1666348d09da1ac2464c3693fa2b5"
+    },
+    {
+      "path": "src/server/module-policy.mjs",
+      "sha256": "5303806ec74d442cff6f1166ca109992f9d77061726c4693c4188897c4c72e54"
+    }
+  ],
+  "upstream_commit": "4ad69a35470427153d46842890b4c6d8f34ac8aa",
+  "local_patches": [
+    {
+      "base_commit": "645d68a740c835271ca185c52e0b31220aab16ad",
+      "applied_in": "mcclusterishere/mccluster (this consumer checkout), not published upstream",
+      "date": "2026-11-09",
+      "files": [
+        "src/environment/panel.mjs",
+        "src/environment/transport.mjs"
+      ],
+      "defects": [
+        {
+          "id": "EQ1",
+          "summary": "Transport requires expectedToken+isCurrent on every private write; panel captures the confirming identity and lifecycle generation for team join/leave, mission join/review/propose, planning, proof submit/share/review and rechecks after the credential step and before fetch."
+        },
+        {
+          "id": "EQ2",
+          "summary": "destroy() is idempotent and only the current owner of the host panel clears its DOM or switches off globe pins."
+        }
+      ],
+      "regression_tests": [
+        "scripts/test/world-environment-lifecycle.test.mjs"
+      ],
+      "note": "Upstream Equity-Uprise still carries the unpatched files at base_commit; port these patches upstream before re-pinning."
+    }
+  ]
+}

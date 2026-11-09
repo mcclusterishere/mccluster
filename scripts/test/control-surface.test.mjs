@@ -422,7 +422,8 @@ test('Control operates one chosen workspace and pins its reads and writes to it'
   assert.match(js,/url\.searchParams\.set\("org", orgId\);\s*location\.assign\(url\.toString\(\)\);/);
   /* reads that used to ignore the workspace now name it */
   assert.match(js,/request\("\/v1\/social\/accounts\?org_id=" \+ encodeURIComponent\(state\.org\.id\)\)/);
-  assert.match(js,/request\("\/v1\/ai\/decisions\?limit=25&org_id=" \+ encodeURIComponent\(org\.id\)\)/);
+  /* the shell load passes its authority AbortSignal (audit A1); the workspace pin is what this guards */
+  assert.match(js,/request\("\/v1\/ai\/decisions\?limit=25&org_id=" \+ encodeURIComponent\(org\.id\)(?:, \{ signal: signal \})?\)/);
   assert.match(js,/"\/v1\/ai\/decisions\/" \+ encodeURIComponent\(decisionId\) \+ "\/status" \+ \(state\.org && state\.org\.id \? "\?org_id="/);
   assert.match(js,/supa\("media_assets\?select=\*&order=created_at\.desc&limit=150" \+ scope\)/);
   assert.match(js,/supa\("media_jobs\?select=\*&order=created_at\.desc&limit=120" \+ scope\)/);

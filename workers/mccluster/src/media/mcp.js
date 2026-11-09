@@ -132,6 +132,16 @@ function synthetic(request, { method = 'GET', path, query, body } = {}) {
   return new Request(url, init);
 }
 
+/* A Core-signed call carries a signed nonce (media/core-signature.js); that
+   nonce is the operation's stable identity, so a replay that reaches a second
+   isolate before the shared claim lands still maps to the one job. Callers
+   may also pass operation_id themselves; an explicit one wins. */
+function operationIdForCall(request, args) {
+  if (args && args.operation_id) return args.operation_id;
+  const nonce = request.headers.get('x-mccluster-nonce');
+  return nonce ? `core:${nonce}` : undefined;
+}
+
 function capabilityForSemanticTool(name, args) {
   if (name === 'image.generate') return Array.isArray(args.references) && args.references.length ? 'image-to-image' : 'text-to-image';
   if (name === 'video.generate') return Array.isArray(args.references) && args.references.length ? 'image-to-video' : 'text-to-video';
@@ -194,6 +204,7 @@ async function semanticGenerate(name, args, request, env, user) {
   const job = await createGeneration(synthetic(request, {
     method: 'POST',
     body: {
+      operation_id: operationIdForCall(request, args),
       org_id: args.org_id,
       model_id: model.id,
       prompt: args.prompt,
@@ -213,7 +224,7 @@ async function callTool(name, args, request, env, user) {
     case 'media.recommend':
       return textResult(await recommendModels(synthetic(request, { method: 'POST', body: args }), env));
     case 'media.generate':
-      return textResult({ job: await createGeneration(synthetic(request, { method: 'POST', body: args }), env, user) });
+      return textResult({ job: await createGeneration(synthetic(request, { method: 'POST', body: { ...args, operation_id: operationIdForCall(request, args) } }), env, user) });
     case 'image.generate':
     case 'video.generate':
     case 'audio.generate':

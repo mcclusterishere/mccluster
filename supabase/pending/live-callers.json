@@ -6,6 +6,13 @@
     "missing_everywhere: not deployed and no pending SQL defines it; production did not have it (verified read-only on 2026-10-27); the calling page or route fails today. Write and promote the SQL, or remove the call, then remove the entry."
   ],
   "pending_only": {
+    "action_environment_missions": {
+      "kind": "table",
+      "pending": "20261107120000_world_environment_v1.sql",
+      "callers": [
+        "workers/mccluster/src/world-environment.js"
+      ]
+    },
     "action_globe_public_business_pins": {
       "kind": "function",
       "pending": "20261015230000_action_mission_pins_arcs_black_business.sql",
@@ -183,6 +190,13 @@
         "js/control-room/clipping.js"
       ]
     },
+    "core_signed_nonces": {
+      "kind": "table",
+      "pending": "core_signed_nonces_v1.sql",
+      "callers": [
+        "workers/mccluster/src/media/core-signature.js"
+      ]
+    },
     "create_policy_memo": {
       "kind": "function",
       "pending": "policy_fellowship_ladder_v1.sql",
@@ -309,6 +323,27 @@
       "pending": "member_fronts_v1.sql",
       "callers": [
         "workers/mccluster/src/member-fronts.js"
+      ]
+    },
+    "music_direct_asset_review": {
+      "kind": "table",
+      "pending": "20261109120000_music_direct_asset_versions_v1.sql",
+      "callers": [
+        "supabase/functions/music-direct-access/index.ts"
+      ]
+    },
+    "music_direct_reserve_download": {
+      "kind": "function",
+      "pending": "20261109120000_music_direct_asset_versions_v1.sql",
+      "callers": [
+        "supabase/functions/music-direct-access/index.ts"
+      ]
+    },
+    "music_direct_settle_download": {
+      "kind": "function",
+      "pending": "20261109120000_music_direct_asset_versions_v1.sql",
+      "callers": [
+        "supabase/functions/music-direct-access/index.ts"
       ]
     },
     "music_gate_claim_rule": {
@@ -558,6 +593,69 @@
       "pending": "policy_fellowship_ladder_v1.sql",
       "callers": [
         "js/policy-fellowship-desk.js"
+      ]
+    },
+    "world_environment_join": {
+      "kind": "function",
+      "pending": "20261107120000_world_environment_v1.sql",
+      "callers": [
+        "workers/mccluster/src/world-environment.js"
+      ]
+    },
+    "world_environment_proof_read": {
+      "kind": "function",
+      "pending": "20261108120000_world_environment_proofs_v1.sql",
+      "callers": [
+        "workers/mccluster/src/environment-proofs.js"
+      ]
+    },
+    "world_environment_proof_review": {
+      "kind": "function",
+      "pending": "20261108120000_world_environment_proofs_v1.sql",
+      "callers": [
+        "workers/mccluster/src/environment-proofs.js"
+      ]
+    },
+    "world_environment_proof_share": {
+      "kind": "function",
+      "pending": "20261108120000_world_environment_proofs_v1.sql",
+      "callers": [
+        "workers/mccluster/src/environment-proofs.js"
+      ]
+    },
+    "world_environment_proof_submit": {
+      "kind": "function",
+      "pending": "20261108120000_world_environment_proofs_v1.sql",
+      "callers": [
+        "workers/mccluster/src/environment-proofs.js"
+      ]
+    },
+    "world_environment_proofs": {
+      "kind": "function",
+      "pending": "20261108120000_world_environment_proofs_v1.sql",
+      "callers": [
+        "workers/mccluster/src/environment-proofs.js"
+      ]
+    },
+    "world_environment_propose": {
+      "kind": "function",
+      "pending": "20261107120000_world_environment_v1.sql",
+      "callers": [
+        "workers/mccluster/src/world-environment.js"
+      ]
+    },
+    "world_environment_review": {
+      "kind": "function",
+      "pending": "20261107120000_world_environment_v1.sql",
+      "callers": [
+        "workers/mccluster/src/world-environment.js"
+      ]
+    },
+    "world_environment_team": {
+      "kind": "function",
+      "pending": "20261107120000_world_environment_v1.sql",
+      "callers": [
+        "workers/mccluster/src/world-environment.js"
       ]
     },
     "world_member_regions": {

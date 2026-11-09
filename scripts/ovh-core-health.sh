@@ -30,6 +30,12 @@ MCC_CORE_REQUIRED_ACTIVE=(
 )
 MCC_PREVIEW_HEALTH_URL="${MCC_PREVIEW_HEALTH_URL:-http://127.0.0.1:4799/health}"
 MCC_ADAPTER_HEALTH_URL="${MCC_ADAPTER_HEALTH_URL:-http://127.0.0.1:4790/health}"
+# /health is liveness (daemon reachable). /ready is readiness: the adapter
+# answers 503 unless the configured default model is installed with a digest
+# (and, with MCCLUSTER_OLLAMA_READY_PROBE=true on the unit, a bounded
+# inference succeeds). A release whose daemon is up but has no usable model
+# used to pass the gate on /health alone; the gate now requires both.
+MCC_ADAPTER_READY_URL="${MCC_ADAPTER_READY_URL:-http://127.0.0.1:4790/ready}"
 MCC_HEALTH_RETRIES="${MCC_HEALTH_RETRIES:-5}"
 MCC_HEALTH_TIMEOUT="${MCC_HEALTH_TIMEOUT:-5}"
 MCC_ROLLBACK_UNHEALTHY_RC=3
@@ -72,6 +78,9 @@ mcc_verify_core_health() {
   if [[ "${mode}" == strict ]] || mcc_unit_installed mccluster-ollama-adapter.service; then
     if ! mcc_probe "${MCC_ADAPTER_HEALTH_URL}"; then
       mcc_log "health: resident AI adapter ${MCC_ADAPTER_HEALTH_URL} did not answer"
+      failed=1
+    elif ! mcc_probe "${MCC_ADAPTER_READY_URL}"; then
+      mcc_log "health: resident AI adapter ${MCC_ADAPTER_READY_URL} is not ready (default model missing or inference probe failed)"
       failed=1
     fi
   fi

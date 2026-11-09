@@ -2,7 +2,7 @@
    The shared server owner gate loads this module, never a new public destination. */
 import { onCountryCard } from './hooks.mjs';
 import { saveGeneratedRecipe, loadGeneratedRecipe } from '../prim3-tactics/levels/generated.mjs';
-import { OBJECTIVES, TERRAINS, SCHEMA } from '../../PRIM3/game/halo/generated/recipe.mjs';
+import { OBJECTIVES, TERRAINS, SCHEMA } from '../prim3-tactics/levels/recipe.mjs';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const KEY='prim3.generated.editor.v1.';
 export function mountGenerator(country,section,{name,geography}={},storage=globalThis.localStorage) {

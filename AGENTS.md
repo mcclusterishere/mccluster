@@ -149,7 +149,11 @@ inherits them. Keep local filters, chapter tabs and editor tools within their
 destination. Embedded frames retain host-owned navigation. See
 `docs/control-plane/SHARED-NAVIGATION.md` for the implementation and release scope.
 
-### Public World: the social feed (travel and missions kept, switched off)
+### Public World: social feed and Environmental Justice (Travel and Missions owner-only)
+
+Owner, 2026-11-07: add the E=UP logo mode **inside the existing consumer World globe** for environmental evidence and Environmental Justice Team work. The public modes are now News feed and Environmental Justice. Keep the same globe; do not expose owner Halo or publicize member assignments/locations. Travel and the general Missions mode remain owner-only. See `docs/control-plane/WORLD-ENVIRONMENT.md` for persistence and release gates.
+
+Earlier scope, retained for Travel and general Missions only:
 
 Owner, 2026-10-20: "Until I refine the other features the transport and the
 missions feature will be taken off and the social feature will be the only

@@ -22,7 +22,7 @@
     if (frame.contentWindow) frame.contentWindow.postMessage(data, location.origin);
   }
   function sync() {
-    const on = mode() !== 'travel';
+    const on = mode() !== 'travel' && mode() !== 'environment';
     send({type:'hu:world-news-pins',on,items:on ? items().filter(geo).map(x => ({id:x.id,lat:x.lat,lon:x.lon})) : []});
   }
 

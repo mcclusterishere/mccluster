@@ -15,6 +15,12 @@ Release coordination owns serial merges, schema promotion and Worker rollout.
    `supabase/pending/city_arcade_v1.sql`. It uses plain CREATE statements and must not
    be blindly reapplied. Reviewed SHA-256:
    `787e1dc2d564a3c1855b071388874a3715bbb2250572ae7d5a70cfac53c0ccdb`.
+   **2026-11-09, not yet re-reviewed:** the pending file changed for audit findings W2/W3
+   (`start_key` + `unique(actor, start_key)`, exact-retry replay, conflicting reuse raises
+   `40001`, bounded `current` action). Its SHA-256 is now
+   `b03081d4be03ed85673b1f5f401ba8de5cef8c88dc59e241436734e8f323aba0`; the hash above is
+   the last owner-reviewed one. Re-review before any promotion (see
+   `docs/control-plane/deep-audit-20261109/DEFECT-LEDGER.md`).
    If any Arcade objects already exist, compare definitions/grants and reconcile through
    the canonical migration process. Do not overwrite data or manufacture a second backend.
 3. Prerequisites are existing `auth.users`, `public.orgs` (slug `mccluster`),

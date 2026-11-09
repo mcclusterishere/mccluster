@@ -1,5 +1,5 @@
 /* Recipe -> existing Forge geometry -> canonical resolver. No new combat engine. */
-import { compileRecipe, SCHEMA } from '../../../PRIM3/game/halo/generated/recipe.mjs';
+import { compileRecipe, SCHEMA } from './recipe.mjs';
 import { exportForgeLevel, deriveCover } from './forge.mjs';
 import * as R from '../tactical-resolver.mjs';
 import { TILE_M } from '../scale.mjs';
