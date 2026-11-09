@@ -4,13 +4,13 @@
 
 An isolated, dependency-free admin-preview prototype. This is a supplemental feature slice, not a replacement for the current release work. No existing application files are changed. No authentication, API, migration, scheduled job, importer, payment, recording, publication or production configuration is added. An admin label is **not** access control: this standalone preview has none and must not hold private data or be deployed as an admin route.
 
-Integration base: `mcclusterishere/mccluster`, `claude/new-session-83ken5` at `15523e187d1800dcbe7cd2c19f4ddfe6f203f556`, refreshed November 9, 2026. Supplemental branch: `codex/drawdown-fyre-community-20261109`. Only `prototypes/drawdown-fyre/` is added. No changes to the Claude branch, no merge, no deployment.
+Integration base: `mcclusterishere/mccluster`, `claude/new-session-83ken5` at `15523e187d1800dcbe7cd2c19f4ddfe6f203f556`, refreshed November 9, 2026. Original supplemental branch: `codex/drawdown-fyre-community-20261109`. Security-fix branch: `codex/secure-drawdown-notes-20261109`, based on the original prototype at `fd180024247d37e00ec0460b224badc4fbcdf42a`. Only `prototypes/drawdown-fyre/` is added. No changes to the Claude branch, no merge, no deployment.
 
 The underlying environmental source reviewed for the portable module was consumer pin `95a133b7c02cafad09d6366b0723c751f9824b31`. Before wiring this slice, reconcile those older module paths and behavior against the current integration head. Preserve current audit fixes and release coordination.
 
 ## Run and inspect
 
-Open `index.html` directly in a modern browser. CSS and classic scripts work offline; external source links require internet. No build, package installation, API key or server is required. Browser policies may prevent localStorage on file URLs; an explicit session-only fallback appears. Notes remain unencrypted on that device and are unsuitable for sensitive material. They are not durable account-backed mission drafts.
+Open `index.html` directly in a modern browser. CSS and classic scripts work offline; external source links require internet. No build, package installation, API key or server is required. Planning notes are disabled until account-protected storage is connected. There is no editor, note list, read/write API or in-memory note fallback. Only read-only learning cards and a transient theme filter remain.
 
 Run from this directory:
 
@@ -25,12 +25,12 @@ Dependencies: Node.js 18+ for built-in `node:test`; zero runtime/npm dependencie
 
 ## Files
 
-- `index.html`: semantic admin-preview shell, conceptual globe grid, research categories, source attribution and local draft dialog.
+- `index.html`: semantic admin-preview shell, conceptual globe grid, research categories, source attribution and explicit legacy-cleanup action.
 - `style.css`: mobile-first responsive original styling; no external fonts or assets.
-- `model.js`: original learning cards and normalized local-only draft storage.
-- `app.js`: filter, create/edit/remove, cancellation and storage-failure feedback. Uses textContent for notes, no network calls.
+- `model.js`: original learning cards and a removal-only legacy cleanup function.
+- `app.js`: read-only cards, filter and confirmed legacy cleanup with honest failure feedback; no network calls.
 - `integration-contract.mjs`: proposed read-only host-context seam; not wired to the standalone preview. Tests cover denied role, interrupted authority/selection, and teardown. This is not server authorization.
-- `test.cjs`: 20 unit/contract/static tests.
+- `test.cjs`: unit/contract/static and simulated DOM security tests.
 - `browser-acceptance.cjs`: unrun browser acceptance harness.
 - `README.md`: this integration and verification handoff.
 
@@ -41,7 +41,7 @@ Dependencies: Node.js 18+ for built-in `node:test`; zero runtime/npm dependencie
 3. Reuse the same `mnWorldFrame` and Cesium viewer. This prototype's CSS sphere is only a conceptual placeholder, not a new map, geography dataset or actual globe integration. Remove that placeholder at integration; never instantiate a second viewer.
 4. Adapt the existing environmental panel (`vendor/equity-uprise/src/environment/panel.mjs`), host binding (`js/world-environment-mccluster.mjs`) and transport (`vendor/equity-uprise/src/environment/transport.mjs`), after checking current revisions. Keep `hu:environment-pins` and `hu:environment-focus` limited to observation behavior. Do not convert a global mitigation estimate into local event pins. Do not call nonexistent `/solutions` or `/fyre` APIs.
 5. Bind `createFyreContext` to existing authority and geography-selection subscriptions. `readAuthority()` must obtain the current server-authorized principal and return `{principalId, capability:'house-owner', sessionRevision}` only when actually granted; all other roles return null. This client contract is a race guard, never a substitute for server checks. `readSelection()` returns a coarse, authorized `{contextId}`. Supply `host` as the same stable object across all adapter instances for that host. A host lease prevents an older context from clearing a newer mount. Session revisions must change on authentication/session replacement even when the principal is unchanged. Change listeners return instance-scoped unsubscribe functions; an old unsubscribe must not detach another subscriber. `clearPrivateState(lease)` empties owner-only views and drafts immediately. Deny capability on unavailable/malformed authority; clear at sign-out, account switch, selection change and teardown.
-6. Replace device-local planning notes with the **existing** authenticated canonical draft/mission workflow only after verifying its current contract, role checks, immutable source revision, idempotency, tenant isolation and uncertain-write receipts. Do not silently upload old local notes. New server fields or migrations require separate review; this slice supplies no SQL and requires no migration.
+6. Keep note entry disabled. Re-enable it only through the **existing** authenticated canonical draft/mission workflow after verifying its current contract, role checks, immutable source revision, idempotency, tenant isolation and uncertain-write receipts. Derive identity from the server session, enforce owner/tenant scope on every read and write, and reject supplied client user IDs as authority. Check `vendor/equity-uprise/src/environment/server.mjs` and `workers/mccluster/src/world-environment.js` against the integration head; these are integration references, not a claim that a draft endpoint already exists. Do not silently upload old local notes. New server fields or migrations require separate review; this slice supplies no SQL and requires no migration.
 7. Treat these three cards as learning/planning prompts, not approved missions. Existing application, capacity, safety, proof-review and optional publication controls still govern participation. No completion, CO2 savings, money or points are awarded here. Do not displace the existing first song/source-explanation mission work.
 
 ## Research and rights
@@ -54,10 +54,20 @@ The methodology v5 record https://doi.org/10.5281/zenodo.20865531 is separately 
 
 ## Verification record and release gates
 
-Passed locally: 20 unit/contract/static tests and JavaScript syntax checks. This demonstrates normalization, duplicate-save handling, storage failure/roundtrip, role rejection, stale read rejection, teardown and static UI guardrails only.
+Passed locally: 27 unit/contract/static and simulated DOM tests plus JavaScript syntax checks. Coverage includes synthetic legacy-key preservation at startup/reload/BFCache restore, no note reads or rendering, confirmation cancellation, exact-key deletion, denied-storage feedback, logout/account switch, stale callbacks, session revisions and host remount leases. The DOM double is not a browser.
 
 **Not run:** real browser rendering, keyboard/dialog behavior, 390px/1440px overflow measurement, visual screenshots, actual Cesium retention, server integration, full repository/Worker suites and production verification. A prior browser socket denial recorded in the environmental source was not retried. The unrun browser harness is provided for an approved environment; static checks are not a visual pass.
 
-Before enabling any live route: verify owner/guest/member/other-tenant direct access at API/RPC/cache/storage boundaries, same viewer identity across transitions, private-state clearing, interrupted/repeated dialog flows, native keyboard focus, storage failure, reload, phone overflow and desktop layouts. Run final-head canonical root/Worker and relevant environmental suites. Independently verify current source versions, permissions and local suitability. Source code publication alone does not authorize merge, migration, production hosting or public activation.
+Before enabling any live route: verify owner/guest/member/other-tenant direct access at API/RPC/cache/storage boundaries, same viewer identity across transitions, private-state clearing, confirmed/cancelled cleanup flows, native keyboard focus, storage failure, reload and Back/Forward restoration, phone overflow and desktop layouts. Run final-head canonical root/Worker and relevant environmental suites. Independently verify current source versions, permissions and local suitability. Source code publication alone does not authorize merge, migration, production hosting or public activation.
 
 Rollback for this isolated slice: remove its unintegrated directory. Once integrated, use the existing capability/release gate to disable the section; do not delete canonical assignments or evidence.
+
+## Security fix and legacy data handling
+
+The earlier isolated prototype saved unencrypted, browser-local planning notes without account protection. This fix removes that capability; it does not implement authenticated persistence and is not evidence of a live application leak. No production deployment or actual user-note inspection was performed.
+
+Existing legacy bytes are deliberately not read, rendered, exported, uploaded or automatically erased. They may remain in this browser profile and origin, including across account changes, until the person explicitly chooses **Clear old preview notes from this browser** and accepts the irreversible-deletion confirmation. Only `fyre-local-planning-v1` is removed; no `clear()` or unrelated-key deletion is used. Storage denial reports failure and leaves notes disabled. A successful removal applies only to the current browser/origin at that moment, not other profiles/devices, old tabs, backups or origins. Opening an older cached prototype can still run its old code; replace the preview files and close old tabs before using the fixed preview. BFCache restores of this fixed version never load notes; already-running old versions cannot be patched by this branch.
+
+For integration, fetch the security-fix branch and inspect only `prototypes/drawdown-fyre/` against the original prototype commit. If the original prototype is already present, apply this security-fix delta; otherwise bring over the complete final prototype directory, not the unsafe intermediate version. Keep the read-only context seam and its host-lease/session-revision safeguards. Do not enable notes based on an admin label, local user ID, client boolean or a second authentication/database stack. Do not silently migrate legacy notes. Validate real authenticated backend behavior, authorization failure, sign-out, same-account session replacement, cross-account/tenant isolation, stale requests and remounts before any future activation. No schema, credential, migration or deployment is included.
+
+The security-fix branch **supersedes the original prototype branch**. Integrate the corrected final directory/revision, never the older note-storage snapshot. If the original is already integrated, cherry-pick only security-fix commits or apply the restricted directory diff.
