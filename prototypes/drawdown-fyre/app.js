@@ -1,11 +1,16 @@
 'use strict';
 (()=>{
-const M=window.FyreModel,$=id=>document.getElementById(id);let storage;try{storage=window.localStorage;}catch{}let {rows,persistent}=M.read(storage);let selected=null,opener=null;
+const M=window.FyreModel,$=id=>document.getElementById(id);
 const make=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
-function open(card,button){selected=card;opener=button;$('plan-title').textContent=card.title;$('plan-description').textContent=card.step;$('note').value=rows.find(r=>r.id===card.id)?.note||'';$('planner').showModal();$('note').focus();}
-function renderCards(){const container=$('cards');container.replaceChildren();M.cards.filter(c=>$('filter').value==='all'||c.theme===$('filter').value).forEach(c=>{const el=make('article');el.className='card';const number=make('span',`0${M.cards.indexOf(c)+1} / LEARNING CARD`);number.className='number';el.append(number,make('h3',c.title),make('p',c.description),make('p','Assessment: not assigned · Local impact: unknown'));const controls=make('div');controls.className='card-controls';const button=make('button',rows.some(r=>r.id===c.id)?'Edit local draft':'Plan a small step');button.type='button';button.dataset.card=c.id;button.className='primary';button.onclick=()=>open(c,button);const link=make('a','Read Project Drawdown ↗');link.href=c.source;link.target='_blank';link.rel='noopener noreferrer';controls.append(button,link);el.append(controls);container.append(el);});}
-function renderDrafts(){const list=$('drafts');list.replaceChildren();if(!rows.length)list.append(make('li','No drafts yet. Pick a learning card to begin.'));for(const row of rows){const card=M.cards.find(c=>c.id===row.id),li=make('li');li.append(make('strong',card.title),make('p',row.note||'No planning note added.'));const edit=make('button','Edit');edit.type='button';edit.onclick=()=>open(card,edit);const remove=make('button','Remove local draft');remove.type='button';remove.onclick=()=>{rows=rows.filter(r=>r.id!==row.id);persist('Draft removed');render();$('filter').focus();};li.append(edit,remove);list.append(li);}}
-function persist(message){persistent=M.write(storage,rows);$('status').textContent=persistent?`${message} on this device only. Nothing sent.`:`${message} for this session only. Browser storage unavailable; changes will be lost on reload.`;}
-function render(){renderCards();renderDrafts();}
-$('filter').addEventListener('change',renderCards);$('cancel').onclick=()=>$('planner').close();$('planner').addEventListener('close',()=>{selected=null;if(opener?.isConnected)opener.focus();else $('filter').focus();});$('plan-form').onsubmit=e=>{e.preventDefault();if(!selected)return;const id=selected.id;rows=M.saveDraft(rows,id,$('note').value);persist('Draft saved');$('planner').close();render();(document.querySelector('[data-card="'+id+'"]')||$('filter')).focus();};render();if(!persistent)$('status').textContent='Browser storage unavailable. Drafts will last only for this session.';
+function renderCards(){const container=$('cards');container.replaceChildren();M.cards.filter(c=>$('filter').value==='all'||c.theme===$('filter').value).forEach(c=>{const el=make('article');el.className='card';const number=make('span',`0${M.cards.indexOf(c)+1} / LEARNING CARD`);number.className='number';el.append(number,make('h3',c.title),make('p',c.description),make('p',c.step),make('p','Assessment: not assigned · Local impact: unknown'));const link=make('a','Read Project Drawdown ↗');link.href=c.source;link.target='_blank';link.rel='noopener noreferrer';el.append(link);container.append(el);});}
+$('filter').addEventListener('change',renderCards);
+$('clear-legacy').onclick=()=>{
+  if(!window.confirm('Permanently delete all old FYRE preview notes saved in this browser on this origin? This cannot be undone. No other browser data will be removed.'))return;
+  let cleared=false;
+  try{cleared=M.clearLegacyNotes(window.localStorage);}catch{}
+  $('status').textContent=cleared?'The old preview storage key was removed from this browser and origin. Other devices and origins are unchanged.':'Could not clear old preview notes. Browser storage is unavailable or blocked; old notes may remain. Notes are still disabled.';
+};
+// Refresh static cards/status on restored pages without accessing any note storage.
+window.addEventListener('pageshow',()=>{renderCards();$('status').textContent='Notes are disabled. Older preview notes may remain until you choose to clear them.';});
+renderCards();
 })();
