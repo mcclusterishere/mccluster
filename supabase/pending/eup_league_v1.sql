@@ -2,7 +2,7 @@
 -- Pending, unapplied, reviewed LOCAL schema (owner direction 2026-11-09: the first
 -- deeper E=Up release is admin-only at every data/API/storage boundary).
 --
--- Same service-only invoker/RLS pattern as pending/city_arcade_v1.sql: every table
+-- Same service-only invoker/RLS pattern as migrations/20261109181623_city_arcade_v1.sql: every table
 -- is private (RLS on, anon/authenticated revoked, service_role grants only) and
 -- the one entry point public.eup_league_command() rechecks house ownership on
 -- every call. Nothing here touches the public projections (action_missions,

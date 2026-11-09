@@ -199,11 +199,53 @@
         "workers/mccluster/src/creator-site-view.js"
       ]
     },
+    "eup_civic_read": {
+      "kind": "function",
+      "pending": "eup_intake_v1.sql",
+      "callers": [
+        "workers/mccluster/src/eup/intake.js"
+      ]
+    },
+    "eup_company_read": {
+      "kind": "function",
+      "pending": "eup_intake_v1.sql",
+      "callers": [
+        "workers/mccluster/src/eup/intake.js"
+      ]
+    },
+    "eup_import_run_finish": {
+      "kind": "function",
+      "pending": "eup_intake_v1.sql",
+      "callers": [
+        "workers/mccluster/src/eup/intake.js"
+      ]
+    },
+    "eup_intake_apply": {
+      "kind": "function",
+      "pending": "eup_intake_v1.sql",
+      "callers": [
+        "workers/mccluster/src/eup/intake.js"
+      ]
+    },
     "eup_league_command": {
       "kind": "function",
       "pending": "eup_league_v1.sql",
       "callers": [
         "workers/mccluster/src/eup/league.js"
+      ]
+    },
+    "eup_sources_command": {
+      "kind": "function",
+      "pending": "eup_intake_v1.sql",
+      "callers": [
+        "workers/mccluster/src/eup/intake.js"
+      ]
+    },
+    "eup_sources_read": {
+      "kind": "function",
+      "pending": "eup_intake_v1.sql",
+      "callers": [
+        "workers/mccluster/src/eup/intake.js"
       ]
     },
     "front-media": {
@@ -310,6 +352,27 @@
       "pending": "live_missions_v1.sql",
       "callers": [
         "workers/mccluster/src/live/store.js"
+      ]
+    },
+    "media_bind_operation_v1": {
+      "kind": "function",
+      "pending": "media_operation_claims_v1.sql",
+      "callers": [
+        "workers/mccluster/src/media/router.js"
+      ]
+    },
+    "media_claim_operation_v1": {
+      "kind": "function",
+      "pending": "media_operation_claims_v1.sql",
+      "callers": [
+        "workers/mccluster/src/media/router.js"
+      ]
+    },
+    "media_fail_operation_v1": {
+      "kind": "function",
+      "pending": "media_operation_claims_v1.sql",
+      "callers": [
+        "workers/mccluster/src/media/router.js"
       ]
     },
     "member_fronts": {

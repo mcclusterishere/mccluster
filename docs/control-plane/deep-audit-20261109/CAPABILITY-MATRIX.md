@@ -28,6 +28,11 @@ Columns follow the handoff's evidence vocabulary and are deliberately separate. 
 | Core code-patch complete-inventory path policy (C4) | yes | this branch | 8 tests | no | no | no |
 | Local-model readiness vs liveness + deploy gate (C6) | yes | this branch (`/ready`, `ovh-core-health.sh`, `deploy-ovh-core.sh`) | 5 tests, `bash -n` | no | no | no |
 | Core-signed media mutation replay protection across isolates (C5) | yes | this branch: shared nonce claim; `CORE_REPLAY_STORE="supabase"` in wrangler.toml; operation claim follow-up (see HANDOFF) | Worker suite | no | **nonce table applied `20261109180829`; Worker not deployed** | no |
+| E=Up admin workspace shell (Control › System › E=Up, Products door) | yes | this branch | 10 unit + control-nav; e2e 53/53 at 390/1440 with fixture routes | no | no | no |
+| `/v1/eup` owner-only API (overview, league, civic, companies, sources) | yes | this branch | router 4 + league 7 + civic/companies/sources/adapters 27 Worker tests | no | no | no |
+| Environmental Justice League admin loop (campaign → mission → application → assignment → private proof → review → consent) | yes | this branch; pending `eup_league_v1.sql` | PGlite 58 assertions | no | no (SQL unapplied) | no |
+| Civic League / Companies & Finance private intake with provenance; Sources & Review registry | yes | this branch; pending `eup_intake_v1.sql`; all connectors disabled | PGlite 118 assertions; adapters on synthetic fixtures | no | no | no |
+| C5 paid-operation atomic claim + uncertain-provider reconciliation | yes | this branch; pending `media_operation_claims_v1.sql` | 15 + 4 tests; SQL on disposable PostgreSQL 16 | no | no | no |
 | Finance (owner-only IEX paper simulation) | bounded | main | audit fixtures | yes | flags unknown | no |
 | Email-link sign-in (#753) | yes | PR | audit: 13 unit | no | no | no |
 | Reusable Equity Uprise independent installation | vision | control subsystem on local branch `1c76d641…` only | audit: 46/46, native PG lock/drain/CAS, PGlite restore | no | n/a | no |

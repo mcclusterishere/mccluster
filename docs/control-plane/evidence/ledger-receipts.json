@@ -1,0 +1,10 @@
+{
+  "_comment": [
+    "Migrations applied in production AFTER the latest production-schema-snapshot-<date>.json was captured, each with its dated receipt. scripts/test/production-schema-verifier.test.mjs lets supabase/production-ledger.json run ahead of the snapshot's ledger only for versions listed here, and fails for any listed version the latest snapshot already contains, so this list only shrinks: capturing a new snapshot retires its entries."
+  ],
+  "applied_after_snapshot": {
+    "20261109175747": { "name": "music_direct_asset_versions_v1", "applied_at": "2026-11-09", "receipt": "docs/control-plane/evidence/releases-2026-11-09/COMMERCE-RELEASE-RECEIPT.md" },
+    "20261109180829": { "name": "core_signed_nonces_v1", "applied_at": "2026-11-09", "receipt": "docs/control-plane/evidence/releases-2026-11-09/C5-PRODUCTION-RECEIPT.md" },
+    "20261109181623": { "name": "city_arcade_v1", "applied_at": "2026-11-09", "receipt": "docs/control-plane/evidence/releases-2026-11-09/MIGRATION-RELEASE-RECEIPT.md" }
+  }
+}

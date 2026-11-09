@@ -84,7 +84,7 @@ const NONCE_TABLE = 'core_signed_nonces';
 // Supabase is the one shared durable plane this Worker already has (no KV or
 // D1 binding exists, and HereTenantAgent is tenant state). A unique-key insert
 // is the atomic claim; the row carries its expiry so a scheduled sweep can
-// drop old nonces. Needs supabase/pending/core_signed_nonces_v1.sql applied.
+// drop old nonces. Table applied in production as supabase/migrations/20261109180829_core_signed_nonces_v1.sql (2026-11-09).
 export function createSupabaseReplayStore(env, { fetchImpl = fetch } = {}) {
   return {
     async claim(nonce, expiresAt) {
