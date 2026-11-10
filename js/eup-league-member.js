@@ -404,7 +404,7 @@
           '<div class="eul-actions">' + (app ? '<p class="eul-status">Your application: <strong>' + esc(APP_STATUS[app.status] || app.status) + '</strong>.</p>' +
             (['draft', 'submitted', 'changes_requested', 'withdrawn'].indexOf(app.status) >= 0 ? button('apply-open', app.status === 'withdrawn' ? 'Apply again' : app.status === 'submitted' ? 'Change application' : 'Continue application', { data: ' data-mission="' + esc(m.id) + '"', focus: 'apply:' + m.id }, blocked, 'apply-' + m.id) : '')
             : button('apply-open', 'Apply', { primary: true, data: ' data-mission="' + esc(m.id) + '"', focus: 'apply:' + m.id }, blocked, 'apply-' + m.id)) + '</div>' +
-          outcomeBlock(model, slot) + '</article>';
+          (app ? '' : outcomeBlock(model, slot)) + '</article>'; // once an application exists, its outcome is shown on it
       });
       html += '</div>';
     });
@@ -465,7 +465,7 @@
   function viewCapture(model, a, w, capture) {
     var me = model.me, kinds = kindsFor(me, a.mission), cs = capture && capture.aid === a.id ? capture.session.state : null;
     var up = model.upload && model.upload.aid === a.id ? model.upload : null;
-    var canRecord = function (kind) { return kinds.indexOf(kind) >= 0 && capture && capture.session.supported(kind); };
+    var canRecord = function (kind) { return kinds.indexOf(kind) >= 0 && typeof model.canRecord === 'function' && model.canRecord(kind); };
     var media = me.policy && me.policy.media && me.policy.media.enabled === true;
     var html = '<fieldset class="eul-choices"><legend>How will you send your song?</legend>' +
       '<p class="eul-fine">Each way is reviewed the same way and earns the same completion credit.</p><div class="eul-choice-row">';
@@ -621,8 +621,11 @@
     if (consent) {
       html += '<p>' + esc(consent.state === 'expired' ? 'Your consent ended on ' + day(consent.expires_at) + '.' : 'You allowed publication until ' + day(consent.expires_at) + ' (notice version ' + consent.notice_revision + ').') +
         (p.publication_state === 'published_released_audience' ? '' : ' The League decides separately whether to publish it.') + '</p>' +
-        '<div class="eul-actions">' + button('consent-revoke', 'Revoke publication consent', { data: ' data-consent="' + esc(consent.id) + '"', focus: 'consent-revoke:' + consent.id }, null, 'cr-' + consent.id) + '</div>' + outcomeBlock(model, 'revoke:' + consent.id);
-    } else {
+        '<div class="eul-actions">' + button('consent-revoke', 'Revoke publication consent', { data: ' data-consent="' + esc(consent.id) + '" data-proof="' + esc(p.id) + '"', focus: 'consent-revoke:' + consent.id }, null, 'cr-' + consent.id) + '</div>';
+    }
+    /* the outcome of a revocation outlives the consent it ended, so it is shown whichever form follows */
+    list(p.consents).forEach(function (c) { if (c.purpose === 'publish_proof') html += outcomeBlock(model, 'revoke:' + c.id); });
+    if (!consent) {
       var win = consentWindow(model.now()), did = 'eulCD-' + p.id;
       var blocked = readiness(me) || (!n ? 'The League has no publication notice set yet.' : null) || (!consentExpiry(model.consentDates[p.id], model.now()) ? 'Choose the last day it may be shown first.' : null);
       html += (n ? '<div class="eul-notice"><p class="eul-pre">' + esc(n.text) + '</p><p class="eul-fine">Publication notice version ' + esc(n.revision) + '.</p></div>' : '') +
@@ -646,8 +649,10 @@
       html += a.credit ? '<p class="eul-credit-line" data-eul-credit>' + note('done', 'Completion credit recorded on ' + when(a.credit.created_at) + ' for version ' + a.credit.proof_revision + '. It does not depend on publication.') + '</p>' : '';
       if (p && p.state === 'accepted') html += viewPublication(model, a);
     }
+    var open = a.status === 'accepted' && w && (!p || p.state === 'needs_changes' || w.open);
+    /* the submit outcome sits under the Submit button while the workspace is open, and here once it has closed */
+    if (!open) html += outcomeBlock(model, 'proof:' + a.id);
     if (a.status === 'accepted' && w) {
-      var open = !p || p.state === 'needs_changes' || w.open;
       if (p && p.state === 'submitted' && !w.open) html += '<div class="eul-actions">' + button('work-open', 'Change my submission', { data: ' data-assignment="' + esc(a.id) + '"', focus: 'work-open:' + a.id }, null, 'wo-' + a.id) + '</div><p class="eul-fine">You can send a new version while it waits; the reviewers then see the new one.</p>';
       if (open) html += viewWorkspace(model, a, w, capture);
     }
@@ -720,8 +725,9 @@
     var cancelLater = opts.clearTimeout || root.clearTimeout.bind(root);
     var now = opts.now || function () { return Date.now(); };
     var epoch = 0, readSeq = 0, deadline = opts.deadlineMs > 0 ? opts.deadlineMs : DEADLINE_MS, destroyed = false;
-    var model = freshModel();
-    model.now = now;
+    /* a model with nothing private in it; canRecord asks the browser for nothing, it only looks for the APIs */
+    function blank() { var m = freshModel(); m.now = now; m.canRecord = function (kind) { return capApi.recordingSupported(kind, opts.captureEnv); }; return m; }
+    var model = blank();
     var currentIdentity = opts.currentIdentity || storedIdentity;
     var send = makeTransport({
       api: opts.api || API, fetch: opts.fetch || function (u, i) { return root.fetch(u, i); }, token: opts.token || defaultToken,
@@ -821,7 +827,7 @@
       var dlg = sheetHost && sheetHost.querySelector && sheetHost.querySelector('[data-eul-sheet]');
       if (dlg && dlg.open && typeof dlg.close === 'function') { try { dlg.close(); } catch (e) { /* closed */ } }
       if (sheetHost) sheetHost.innerHTML = '';
-      model = freshModel(); model.now = now;
+      model = blank();
       render();
       say(reason || 'The account changed. Nothing from the previous account is shown or sent.');
       var mine = epoch;
@@ -831,7 +837,7 @@
       epoch += 1;
       stopEverything();
       if (sheetHost) sheetHost.innerHTML = '';
-      model = freshModel(); model.now = now;
+      model = blank();
       model.phase = 'unavailable'; model.unavailable = { kind: kind };
       render();
     }
@@ -1051,7 +1057,9 @@
         }
         if (f.reason === 'revision_conflict') { w.status = 'conflict'; w.note = 'Your text here is kept and was not saved. Choose which version to keep.'; render(); return; }
         if (f.module) model.moduleNote = f.text;
-        w.status = 'refused'; w.note = f.text;
+        /* waiting for the current requirements to be accepted, or for the mission to open again: saved then (reconcile) */
+        w.status = f.reason === 'requirements_changed' || f.reason === 'not_available' ? 'blocked' : 'refused';
+        w.note = f.text + (w.status === 'blocked' ? ' Your text is kept on this page and is saved when work can continue.' : '');
         render();
         if (f.reread) read();
       });
@@ -1223,7 +1231,11 @@
     /* ---------- actions (the delegated handlers call these; tests call act() directly) ---------- */
     function needWork(aid) { return model.work[aid] || null; }
     var ACTIONS = {
-      reload: function () { read(); },
+      /* an explicit refresh starts from a clean slate of notes: what finished is not repeated, what is open stays */
+      reload: function () {
+        Object.keys(model.outcomes).forEach(function (slot) { var o = model.outcomes[slot]; if (o && (o.kind === 'done' || o.kind === 'info')) delete model.outcomes[slot]; });
+        read();
+      },
       resend: function (d) { resend(d.slot); },
       check: function (d) { recheck(d.slot); },
       'apply-open': function (d, el) {
@@ -1304,7 +1316,12 @@
         command('consent:' + a.proof.id, 'consents.grant', 'POST', PREFIX + '/proofs/' + a.proof.id + '/consent', { expected_revision: a.proof.revision,
           consent: { purpose: 'publish_proof', audience: 'released_audience', asset_revision: a.proof.asset_revision, notice_revision: n.revision, expires_at: at } });
       },
-      'consent-revoke': function (d) { command('revoke:' + d.consent, 'consents.revoke', 'POST', PREFIX + '/consents/' + d.consent + '/revoke', {}); },
+      'consent-revoke': function (d) {
+        command('revoke:' + d.consent, 'consents.revoke', 'POST', PREFIX + '/consents/' + d.consent + '/revoke', {}, function () {
+          /* a revoked consent leaves nothing behind in the form: a new one starts with no date chosen */
+          if (d.proof) { delete model.consentDates[d.proof]; delete model.outcomes['consent:' + d.proof]; }
+        });
+      },
       'appeal-open': function (d) {
         var text = model.appealText[d.subjectId] || '', problem = textProblem('The appeal', text, MAX.statement, 1, true);
         if (problem) { setOutcome('appeal:' + d.subjectId, { kind: 'refused', text: problem + ' Nothing was sent.' }); render(); return; }

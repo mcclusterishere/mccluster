@@ -85,6 +85,14 @@
     return null;
   }
   function megabytes(bytes) { return (Math.round((bytes / 1048576) * 10) / 10) + ' MB'; }
+  /* Whether this browser can record a kind at all. Asks for nothing: it only looks for the APIs and a type. */
+  function recordingSupported(kind, env) {
+    env = env || {};
+    var nav = env.navigator || root.navigator;
+    var Recorder = Object.prototype.hasOwnProperty.call(env, 'MediaRecorder') ? env.MediaRecorder : root.MediaRecorder;
+    return Boolean(nav && nav.mediaDevices && typeof nav.mediaDevices.getUserMedia === 'function' && typeof Recorder === 'function' &&
+      pickMime(kind, Recorder.isTypeSupported ? Recorder.isTypeSupported.bind(Recorder) : null));
+  }
 
   /* inspectFile(file, rules): { ok, mime, kind, bytes, reason }. rules = { kinds: [...], caps: { audio, video } }.
      Reads at most the first 12 bytes. Never throws: a file that cannot be read is refused with a reason. */
@@ -129,10 +137,7 @@
     var urls = [];
     var recorder = null, stopTimer = null, ticker = null, generation = 0, startedAt = 0, stoppedAt = 0;
 
-    function supported(kind) {
-      return Boolean(nav && nav.mediaDevices && typeof nav.mediaDevices.getUserMedia === 'function' && typeof Recorder === 'function' &&
-        pickMime(kind, Recorder.isTypeSupported ? Recorder.isTypeSupported.bind(Recorder) : null));
-    }
+    function supported(kind) { return recordingSupported(kind, { navigator: nav, MediaRecorder: Recorder }); }
     function stopTracks() {
       var stream = s.stream;
       s.stream = null;
@@ -280,6 +285,7 @@
     mediaType: mediaType,
     sniffFamily: sniffFamily,
     pickMime: pickMime,
+    recordingSupported: recordingSupported,
     inspectFile: inspectFile,
     createSession: createSession,
     put: put,
