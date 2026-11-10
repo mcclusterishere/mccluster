@@ -485,6 +485,7 @@
       if (cs.state === 'denied') html += note('refused', 'Camera or microphone permission was not given, so nothing was recorded. You can upload a file instead, or write a statement.');
       else if (cs.state === 'nodevice') html += note('refused', 'No camera or microphone was found. You can upload a file instead, or write a statement.');
       else if (cs.state === 'unsupported') html += note('refused', 'Recording is not available in this browser. You can upload a file instead, or write a statement.');
+      else if (cs.state === 'error' && cs.error && cs.error.name === 'EmptyTake') html += note('refused', 'The take was too short to hold any sound, so nothing was kept. Record again, upload a file, or write a statement.');
       else if (cs.state === 'error') html += note('refused', 'The recording stopped with an error, so nothing was kept. Try again, upload a file, or write a statement.');
       else if (cs.state === 'requesting') html += note('pending', 'Asking for the ' + (cs.kind === 'video' ? 'camera and microphone' : 'microphone') + '…');
       else if (cs.state === 'recording' || cs.state === 'stopping') {
@@ -744,10 +745,20 @@
     function alive(e) { return !destroyed && (e === undefined || e === epoch); }
     function say(text) { if (announcer) announcer.textContent = text || ''; }
     function setTitle() { if (doc && opts.manageTitle !== false) doc.title = model.phase === 'ready' ? 'Environmental Justice League · Equity Uprise' : 'Equity Uprise'; }
+    /* Where keyboard focus goes after a capture step removes the control that had it: Stop while recording, Send on
+       the preview, and the file upload when no device could be used. */
+    var pendingFocus = null;
+    var CAPTURE_FOCUS = { recording: 'stop:', preview: 'use-take:', denied: 'file:', nodevice: 'file:', unsupported: 'file:', error: 'file:' };
     function getCapture(aid) {
       if (capture && capture.aid === aid) return capture;
       if (capture) capture.session.release();
-      capture = { aid: aid, session: capApi.createSession(Object.assign({}, opts.captureEnv || {}, { onChange: function (s, why) { if (why === 'tick') patchTimer(s); else render(); } })) };
+      var last = null;
+      capture = { aid: aid, session: capApi.createSession(Object.assign({}, opts.captureEnv || {}, { onChange: function (s, why) {
+        if (why === 'tick') { patchTimer(s); return; }
+        if (s.state !== last && Object.prototype.hasOwnProperty.call(CAPTURE_FOCUS, s.state)) pendingFocus = CAPTURE_FOCUS[s.state] + aid;
+        last = s.state;
+        render();
+      } })) };
       return capture;
     }
     function patchTimer(s) { var el = main && main.querySelector('[data-eul-rec-time]'); if (el) el.textContent = s.seconds + ' s'; }
@@ -761,6 +772,14 @@
       main.innerHTML = model.phase === 'ready' && model.me ? viewLeague(model, capture) : viewNeutral(model, here);
       setTitle();
       afterRender();
+      /* never taken from someone typing: a text field keeps focus whatever the capture did */
+      var typing = focused && focused.tagName && (focused.tagName === 'TEXTAREA' || (focused.tagName === 'INPUT' && (focused.type === 'text' || focused.type === 'date')));
+      if (pendingFocus && main.querySelector && !typing) {
+        var next = main.querySelector('[data-eul-focus="' + pendingFocus.replace(/"/g, '') + '"]');
+        pendingFocus = null;
+        if (next && next.focus) { next.focus(); return; }
+      }
+      pendingFocus = null;
       if (key && main.querySelector) {
         var again = main.querySelector('[data-eul-focus="' + key.replace(/"/g, '') + '"]');
         if (again && again.focus) { again.focus(); if (caret && again.setSelectionRange) { try { again.setSelectionRange(caret[0], caret[1]); } catch (e) { /* not a text field */ } } }
