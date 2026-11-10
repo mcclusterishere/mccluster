@@ -22,6 +22,8 @@ export const MODULE_POLICY_SCHEMA = 'equity-uprise.module-policy/v1';
 export const MODULE_POLICY_INSTALLATION = 'mccluster';
 // First key of the two-integer advisory lock; the second is hashtext(<house org id> || ':' || <module id>).
 export const MODULE_POLICY_LOCK_KEY = 1163219023;
+// Transaction-local setting written by eup_module_guard_reduce. In the trigger backstop it selects a MODE (the
+// trigger then runs the reduce guard itself, taking both locks and the EUM00 / EUM01 check); it is never a bypass.
 export const MODULE_REDUCE_MARKER = 'eup.module_reduce';
 // The functions service_role may execute, by identity signature. Nothing else in the file is executable.
 export const MODULE_POLICY_ENTRY_POINTS = Object.freeze([

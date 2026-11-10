@@ -4,7 +4,10 @@
 // privilege and service_role executes exactly the six entry points; a missing row fails closed for the read,
 // the guard, the reduce guard and the trigger; install / enable / drain / disable from every state; every EUM
 // code; exact replay and changed replay; the append-only command log; the one-revision-step rule; and the
-// reduce-only marker driven through fixture tables that carry the statement trigger.
+// reduce-only marker driven through fixture tables that carry the statement trigger. The marker is a MODE of the
+// guard, never a bypass: a marker set by hand (set_config, no reduce guard) makes the trigger run the reduce guard
+// itself, so the write is refused EUM01 when the module has no row and otherwise holds both locks in every state.
+// Also pinned: disabled -> draining stays admitted and opens no write that a disabled module refused.
 // Real concurrency (the fair queue, a state command waiting for an in-flight writer) needs real sessions and is
 // NOT proven here; that is the native proof's job.
 import assert from 'node:assert/strict';
@@ -39,6 +42,19 @@ const admin = async (sql, params) => (await db.query(sql, params)).rows;
 const adminCode = (sql, params) => admin(sql, params).then(() => 'ok', (e) => e.code);
 const n = async (table) => (await admin(`select count(*)::int as n from public.${table}`))[0].n;
 const marker = `current_setting('${MODULE_REDUCE_MARKER}', true)`;
+// Lock evidence inside the CURRENT transaction: the module advisory lock(s) this backend holds, and whether the
+// policy row carries this transaction's row lock (xmax is the locker's xid; valid only without a savepoint).
+const ADVISORY = `select mode, granted from pg_locks where locktype = 'advisory' and classid = ${MODULE_POLICY_LOCK_KEY}`;
+const rowLocked = (module) => [`select public.eup_fixture_policy_row_locked($1) as r`, [module]];
+// A transaction that sets the reduce marker BY HAND (no reduce guard call) and then runs one statement.
+const handSet = (end, statement, module = 'league', probe = module) => inTx(end, async (q, code) => {
+  await q(`select set_config('${MODULE_REDUCE_MARKER}', $1, true)`, [module]);
+  const before = [(await q(ADVISORY)).length, (await q(...rowLocked(probe)))[0].r];
+  const wrote = await code(statement);
+  if (wrote !== 'ok') return { before, wrote };
+  return { before, wrote, locks: (await q(ADVISORY)).map((l) => [l.mode, l.granted]), row: (await q(...rowLocked(probe)))[0].r, marker: (await q(`select ${marker} as r`))[0].r };
+});
+const HELD = { before: [0, false], wrote: 'ok', locks: [['ShareLock', true]], row: true, marker: 'league' };
 const install = (module, k, reason = 'Test fixture: install.', actor = OWNER) =>
   modulePolicyRpc(db, 'eup_module_policy_install', { p_actor: actor, p_module: module, p_key: k, p_reason: reason });
 const command = (module, state, revision, k, reason = 'Test fixture: state change.', actor = OWNER) =>
@@ -145,7 +161,13 @@ try {
       begin perform public.eup_module_guard('league'); exception when others then null; end;
       insert into public.eup_fixture_league_rows(note) values ('swallowed');
       return 'written';
-    end $$;`);
+    end $$;
+    -- test probe: does the policy row carry the CALLING transaction's row lock?
+    create function public.eup_fixture_policy_row_locked(p_module text) returns boolean
+    language sql security definer set search_path = '' as $$
+      select coalesce((select p.xmax::text = (pg_current_xact_id()::text::numeric % 4294967296)::text
+        from public.eup_module_policies p where p.module_id = p_module), false)
+    $$;`);
   await attachModuleGuard(db, 'eup_fixture_league_rows', 'league');
   await attachModuleGuard(db, 'eup_fixture_intake_rows', 'intake');
   const leagueInsert = (note = 'direct') => svc('insert into public.eup_fixture_league_rows(note) values ($1)', [note]);
@@ -167,7 +189,17 @@ try {
   await rejects(() => svc("insert into public.eup_fixture_empty_argument values ('x')"), 'EUM01', 'a trigger attached with an empty module argument refuses every write');
   eq(await inTx('rollback', async (q, code) => { await q(`select set_config('${MODULE_REDUCE_MARKER}', '', true)`); return code("insert into public.eup_fixture_empty_argument values ('x')"); }), 'EUM01',
     'an empty marker never matches an empty trigger argument');
+  // the marker is a mode, not a bypass: set by hand, without the reduce guard, it still meets the EUM01 check
+  eq(await handSet('rollback', "insert into public.eup_fixture_league_rows(note) values ('hand-set marker')"), { before: [0, false], wrote: 'EUM01' },
+    'a marker set by hand (no reduce guard) on a module with no row is refused EUM01 through the trigger');
+  for (const [what, statement] of [['update', "update public.eup_fixture_league_rows set note = 'x' where false"], ['delete', 'delete from public.eup_fixture_league_rows'],
+    ['truncate', 'truncate public.eup_fixture_league_rows'], ['row-level insert', "insert into public.eup_fixture_row_level(note) values ('hand-set marker')"]]) {
+    eq((await handSet('rollback', statement)).wrote, 'EUM01', `and so is a hand-marked ${what} while no policy row exists`);
+  }
+  eq((await handSet('rollback', "insert into public.eup_fixture_no_argument values ('x')")).wrote, 'EUM00', 'a hand-set marker does not open a trigger attached without a module argument');
+  eq((await handSet('rollback', "insert into public.eup_fixture_empty_argument values ('x')")).wrote, 'EUM01', 'nor one attached with an empty module argument');
   eq([await n('eup_fixture_league_rows'), await n('eup_fixture_no_argument'), await n('eup_fixture_empty_argument')], [0, 0, 0], 'no refused write left a row');
+  eq(await n('eup_fixture_row_level'), 0, 'nor did a refused hand-marked write');
   const empty = await readModuleControl(db, OWNER);
   eq(empty.modules.map((m) => [m.moduleId, m.installed, m.state, m.revision, m.last_command]), MODULE_IDS.map((id) => [id, false, null, null, null]),
     'owner view lists every registry module as not installed');
@@ -177,6 +209,7 @@ try {
   await rejects(() => guard('league'), 'EUM00', 'guard: policy authority unavailable when the house row is absent');
   await rejects(() => reduce('league'), 'EUM00', 'reduce guard: policy authority unavailable when the house row is absent');
   await rejects(() => leagueInsert(), 'EUM00', 'trigger: policy authority unavailable when the house row is absent');
+  eq((await handSet('rollback', "insert into public.eup_fixture_league_rows(note) values ('hand-set marker')")).wrote, 'EUM00', 'trigger with a hand-set marker: policy authority unavailable when the house row is absent');
   await rejects(() => readModulePolicy(db, 'league'), 'EUM01', 'read without a house row is still an error');
   await rejects(() => install('league', key('no-house')), '42501', 'nobody owns a house that is absent');
   await admin("update public.orgs set slug = 'mccluster' where slug = 'elsewhere'");
@@ -239,9 +272,31 @@ try {
   const ENABLED = { read: 'enabled', guard: 'ok', reduce: 'ok', direct: 'ok', rpc: 'ok', reduceRpc: 'ok' };
   const step = async (to, revision, k) => { const r = await command('league', to, revision, key(k)); return [r.policy.state, r.policy.revision, r.changed, r.prior.state, r.prior.revision]; };
   eq(await admits(), DISABLED, 'installed and disabled: reads answer, every guarded write is EUM03, reduce-only work is admitted');
+  // Every way a write can be attempted against the league tables, as 'ok' or its SQLSTATE. `bound` is a job that
+  // holds policy revision 0 (the revision the row has while disabled here).
+  const attempt = (p) => p.then(() => 'ok', (e) => e.code);
+  const attempts = async () => ({
+    guard: await attempt(guard('league')), bound: await attempt(guard('league', 0)),
+    insert: await attempt(leagueInsert('attempt')), update: await attempt(svc("update public.eup_fixture_league_rows set note = 'x' where false")),
+    delete: await attempt(svc('delete from public.eup_fixture_league_rows where false')), truncate: await attempt(svc('truncate public.eup_fixture_league_rows')),
+    rowLevel: await attempt(svc("insert into public.eup_fixture_row_level(note) values ('attempt')")),
+    rpc: await attempt(val("select public.eup_fixture_league_command('create') as r")), swallowed: await attempt(val('select public.eup_fixture_league_swallow() as r')),
+    reduce: await attempt(reduce('league')), reduceRpc: await attempt(val("select public.eup_fixture_league_command('withdraw') as r")),
+    handSet: (await handSet('rollback', "insert into public.eup_fixture_league_rows(note) values ('attempt')")).wrote
+  });
+  const REDUCE_ONLY = ['handSet', 'reduce', 'reduceRpc'];
+  const whileDisabled = await attempts();
+  eq(Object.keys(whileDisabled).filter((k) => whileDisabled[k] === 'ok').sort(), REDUCE_ONLY, 'disabled admits the reduce-only doors and nothing else');
+  ok(Object.keys(whileDisabled).filter((k) => !REDUCE_ONLY.includes(k)).every((k) => whileDisabled[k] === 'EUM03'), 'disabled refuses every other attempt with EUM03');
   eq(await step('disabled', 0, 'm-dis-dis'), ['disabled', 0, false, 'disabled', 0], 'disabled -> disabled is a logged no-op that keeps the revision');
   eq(await step('draining', 0, 'm-dis-drn'), ['draining', 1, true, 'disabled', 0], 'disabled -> draining');
   eq(await admits(), DRAINING, 'draining: every guarded write is EUM02, reduce-only work is admitted');
+  // DECISION PINNED: disabled -> draining stays admitted (as upstream). It lets no write through.
+  const whileDraining = await attempts();
+  eq(Object.keys(whileDraining).filter((k) => whileDisabled[k] !== 'ok' && whileDraining[k] === 'ok'), [], 'disabled -> draining opens no write that the disabled module refused');
+  eq(Object.keys(whileDraining).filter((k) => whileDraining[k] === 'ok').sort(), REDUCE_ONLY, 'after disabled -> draining exactly the same reduce-only doors are open');
+  ok(Object.keys(whileDraining).filter((k) => !REDUCE_ONLY.includes(k)).every((k) => whileDraining[k] === 'EUM02'), 'the only change is the refusal code: EUM03 becomes EUM02');
+  eq([await attempt(guard('league', 0)), await attempt(guard('league', 1))], ['EUM02', 'EUM02'], 'a job bound to the old or the new revision is refused alike after disabled -> draining');
   eq(await step('draining', 1, 'm-drn-drn'), ['draining', 1, false, 'draining', 1], 'draining -> draining is a logged no-op');
   eq(await step('disabled', 1, 'm-drn-dis'), ['disabled', 2, true, 'draining', 1], 'draining -> disabled');
   eq(await step('enabled', 2, 'm-dis-en'), ['enabled', 3, true, 'disabled', 2], 'disabled -> enabled');
@@ -336,6 +391,33 @@ try {
   // guarded and reduce-only RPCs as single requests
   await rejects(() => val("select public.eup_fixture_league_command('create') as r"), 'EUM02', 'draining: the guarded RPC is refused');
   eq(await val("select public.eup_fixture_league_command('revoke') as r"), 8, 'draining: the reduce-only RPC is admitted and returns the policy revision');
+  // the marker is a MODE: set by hand (no reduce guard call) the trigger runs the reduce guard itself, so the write is
+  // admitted while draining AND the transaction holds the shared advisory lock and the policy row lock from then on
+  eq(await handSet('commit', "insert into public.eup_fixture_league_rows(note) values ('hand-set draining')"), HELD,
+    'draining: a hand-set marker with a policy row is admitted, and the trigger took both locks (none were held before the write)');
+  eq([(await admin("select count(*)::int as n from public.eup_fixture_league_rows where note = 'hand-set draining'"))[0].n, await val(`select ${marker} as r`),
+    (await svc(ADVISORY)).length], [1, '', 0], 'the hand-marked write committed; the marker and the lock ended with its transaction');
+  await rejects(() => leagueInsert('after hand-set commit'), 'EUM02', 'and the next transaction is refused again');
+  eq(await handSet('rollback', "update public.eup_fixture_league_rows set note = 'hand-set update' where note = 'hand-set draining'"), HELD, 'draining: a hand-marked update takes both locks');
+  eq(await handSet('rollback', "delete from public.eup_fixture_league_rows where note = 'hand-set draining'"), HELD, 'draining: a hand-marked delete takes both locks');
+  eq(await handSet('rollback', "insert into public.eup_fixture_row_level(note) values ('hand-set row level')"), HELD, 'draining: a hand-marked write through a row-level attachment takes both locks');
+  eq((await handSet('rollback', "select public.eup_module_guard('league')")).wrote, 'EUM02', 'a hand-set marker never weakens an explicit guard');
+  // an explicit reduce guard followed by writes: the trigger re-enters the reduce guard; still one shared lock, no error
+  eq(await inTx('rollback', async (q, code) => {
+    await q("select public.eup_module_guard_reduce('league')");
+    const held = [(await q(ADVISORY)).map((l) => [l.mode, l.granted]), (await q(...rowLocked('league')))[0].r];
+    const wrote = [await code("insert into public.eup_fixture_league_rows(note) values ('re-entrant')"), await code("delete from public.eup_fixture_league_rows where note = 're-entrant'")];
+    return [held, wrote, (await q(ADVISORY)).map((l) => [l.mode, l.granted]), (await q(...rowLocked('league')))[0].r, (await q(`select ${marker} as r`))[0].r];
+  }), [[[['ShareLock', true]], true], ['ok', 'ok'], [['ShareLock', true]], true, 'league'], 'the reduce guard is re-entrant under the trigger: same single shared lock, same row lock, same marker');
+  // a savepoint rollback releases the locks the trigger took but leaves a hand-set marker: the NEXT write takes them again
+  eq(await inTx('rollback', async (q, code) => {
+    await q(`select set_config('${MODULE_REDUCE_MARKER}', 'league', true)`); await q('savepoint s');
+    const first = [await code("insert into public.eup_fixture_league_rows(note) values ('under savepoint')"), (await q(ADVISORY)).length];
+    await q('rollback to savepoint s');
+    const between = [(await q(ADVISORY)).length, (await q(`select ${marker} as r`))[0].r, (await q("select count(*)::int as n from public.eup_fixture_league_rows where note = 'under savepoint'"))[0].n];
+    return [first, between, await code("insert into public.eup_fixture_league_rows(note) values ('after savepoint')"), (await q(ADVISORY)).map((l) => [l.mode, l.granted])];
+  }), [['ok', 1], [0, 'league', 0], 'ok', [['ShareLock', true]]],
+    'a savepoint rollback undoes the hand-marked write and releases its lock; the marker stays and the next write takes the lock again');
 
   // marker for module A never admits a write guarded for module B
   eq(await inTx('rollback', async (q, code) => { await q("select public.eup_module_guard_reduce('league')"); return code("insert into public.eup_fixture_intake_rows(note) values ('cross')"); }), 'EUM01',
@@ -365,6 +447,15 @@ try {
   eq(await admits(), DISABLED, 'disabled after a drain: the same refusals and the same reduce-only door');
   const t5 = await inTx('commit', async (q, code) => { await q("select public.eup_module_guard_reduce('league')"); return [await code("insert into public.eup_fixture_league_rows(note) values ('purge marker row')"), await code('truncate public.eup_fixture_league_rows')]; });
   eq([t5, await n('eup_fixture_league_rows')], [['ok', 'ok'], 0], 'disabled: a reduce-only transaction may even truncate (a purge) when the table carries the truncate trigger');
+  eq(await handSet('commit', "insert into public.eup_fixture_league_rows(note) values ('hand-set disabled')"), HELD,
+    'disabled: a hand-set marker with a policy row is admitted, and the trigger took both locks');
+  eq(await handSet('commit', 'truncate public.eup_fixture_league_rows'), HELD, 'disabled: a hand-marked truncate takes both locks');
+  eq([await n('eup_fixture_league_rows'), await val(`select ${marker} as r`), (await svc(ADVISORY)).length], [0, '', 0], 'both hand-marked transactions committed and left neither marker nor lock');
+  eq(await handSet('rollback', "insert into public.eup_fixture_row_level(note) values ('hand-set row level')"), HELD, 'disabled: a hand-marked write through a row-level attachment takes both locks');
+  eq((await handSet('rollback', "select public.eup_module_guard('league')")).wrote, 'EUM03', 'disabled: a hand-set marker never weakens an explicit guard');
+  // a hand-set marker names ONE module: the league table is opened in reduce mode, the intake lock is never touched
+  eq(await handSet('rollback', "insert into public.eup_fixture_intake_rows(note) values ('cross, hand-set')", 'league', 'intake'), { before: [0, false], wrote: 'ok', locks: [['ShareLock', true]], row: true, marker: 'league' },
+    'a hand-set league marker on an ENABLED intake table runs the full intake guard (admitted because intake is enabled, intake locks held)');
   await rejects(() => svc('truncate public.eup_fixture_league_rows'), 'EUM03', 'a direct truncate is refused while disabled');
   await rejects(() => val('select public.eup_fixture_league_swallow() as r'), 'EUM03', 'disabled: the swallowed guard is still caught by the backstop');
   // the guard and the state command use the same lock key, in different modes
@@ -378,6 +469,14 @@ try {
   eq([share.map((l) => l.mode), shareReduce.map((l) => l.mode), exclusive.map((l) => l.mode)], [['ShareLock'], ['ShareLock'], ['ExclusiveLock']],
     'guard and reduce guard take the lock shared; the state command takes it exclusive');
   ok(share[0].objid === shareReduce[0].objid && share[0].objid === exclusive[0].objid, 'all three use the same per-module key, so a state command waits for either kind of writer');
+  eq(await inTx('rollback', async (q) => {
+    const before = (await q(...rowLocked('intake')))[0].r; await q("select public.eup_module_guard('intake')"); const guarded = (await q(...rowLocked('intake')))[0].r;
+    return [before, guarded];
+  }), [false, true], 'the guard also holds the policy row lock inside its transaction');
+  eq(await inTx('rollback', async (q) => { await q("insert into public.eup_fixture_intake_rows(note) values ('direct, enabled')"); return [(await q(ADVISORY)).map((l) => [l.mode, l.granted]), (await q(...rowLocked('intake')))[0].r]; }),
+    [[['ShareLock', true]], true], 'enabled: a direct table write holds both locks through the trigger');
+  eq(await handSet('rollback', "insert into public.eup_fixture_intake_rows(note) values ('hand-set, enabled')", 'intake'), { ...HELD, marker: 'intake' },
+    'enabled: a hand-marked write holds both locks too; no write to a guarded table is ever unlocked');
   eq([(await readModulePolicy(db, 'intake')).revision, (await admin("select count(*)::int as n from public.eup_module_policy_commands where idempotency_key = 'k-lock-probe-00000000'"))[0].n], [intakeRevision, 0],
     'a state command whose transaction rolls back changes nothing and logs nothing');
 

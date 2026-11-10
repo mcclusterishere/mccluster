@@ -34,7 +34,9 @@
 --      removes exposure (a member revoking consent, a withdrawal, a discard, an owner pause, a purge of retained
 --      media) while the module is draining or disabled. Upstream has no such door, so a drained or disabled
 --      module would trap a member's consent or keep retained media past its date. It takes the same two locks as
---      the guard, so a state command still waits for it.
+--      the guard, so a state command still waits for it. Reduce-only is a MODE of the guard, never a way round
+--      it: the trigger backstop runs the reduce guard itself whenever a transaction carries the reduce marker, so
+--      every write to a guarded table holds both locks and has had the EUM00 / EUM01 check, whoever set the marker.
 --   3. Stable SQLSTATEs EUM00..EUM07, an owner-authorised install instead of provision(), a mandatory reason,
 --      an optional expected revision on guarded writes, and the E=Up text idempotency key.
 --
@@ -184,6 +186,11 @@ end $$;
 -- that arrive later wait behind it and then see the new state. If the wait exceeds lock_timeout (5 s, kept under
 -- the 8 s statement timeout Supabase gives the API login role) nothing is changed (55P03) and the same key can
 -- be sent again.
+-- Transitions: every pair is admitted except enabled -> disabled (EUM05, drain first), as upstream. That includes
+-- disabled -> draining. It is kept on purpose: in this file it admits no write (the guard refuses both states,
+-- EUM03 becomes EUM02; the reduce guard answers in both) and it moves the revision, so a job bound to an older
+-- revision stays refused. The only difference between the two states is outside this file: the pinned product
+-- answers reads while draining and nothing while disabled (vendor/equity-uprise/src/server/module-policy.mjs).
 create or replace function public.eup_module_policy_command(p_actor uuid, p_module text, p_state text, p_expected_revision bigint, p_key text, p_reason text) returns jsonb
 language plpgsql security definer set search_path = '' set lock_timeout = '5s' as $$
 declare house uuid; prior public.eup_module_policy_commands%rowtype; pol public.eup_module_policies%rowtype; digest text; receipt jsonb;
@@ -256,10 +263,11 @@ end $$;
 --   EUM00 no house organisation   EUM01 no policy row   (never EUM02 / EUM03 / EUM04)
 -- It then marks the transaction: set_config('eup.module_reduce', <module>, true). The marker is transaction-local
 -- (it is gone at commit, at rollback, and when the savepoint it was set under is rolled back) and names ONE
--- module; the trigger below honours it for that module only. It grants nothing else: authorisation, readiness
--- and audience checks stay with the caller. Same placement rules as the guard (not under an EXCEPTION handler,
--- one module per transaction: a second reduce guard for another module moves the marker and the first module's
--- tables fall back to the full guard).
+-- module; the trigger below honours it for that module only, by running THIS function again in the writer's
+-- transaction (re-entrant: the locks are already held, the marker is set to the same value). It grants nothing
+-- else: authorisation, readiness and audience checks stay with the caller. Same placement rules as the guard
+-- (not under an EXCEPTION handler, one module per transaction: a second reduce guard for another module moves
+-- the marker and the first module's tables fall back to the full guard).
 create or replace function public.eup_module_guard_reduce(p_module text) returns bigint
 language plpgsql security definer set search_path = '' set lock_timeout = '5s' as $$
 declare house uuid; pol public.eup_module_policies%rowtype;
@@ -277,18 +285,28 @@ end $$;
 -- table directly): a statement trigger on a module's tables takes the same guard in the writer's transaction.
 --   create trigger <t>_module_policy before insert or update or delete on public.<t>
 --     for each statement execute function public.eup_module_guard_trigger('league');
--- When the transaction carries the reduce marker for THIS trigger's module (tg_argv[0]) the trigger returns
--- without checking: eup_module_guard_reduce already holds both locks and proved the row exists. A marker for any
--- other module, an empty one, or none means the full guard runs. A PostgREST table write is its own transaction
--- and cannot carry the marker, so direct table writes are still refused whenever the module is not enabled.
--- This is a correctness backstop, not a security boundary against the service role: a session that can run
--- arbitrary SQL can set the marker itself (and would then hold no lock).
--- Attached FOR EACH ROW by mistake it still guards and lets the row through instead of silently dropping it.
+-- The reduce marker selects a MODE, it is never a bypass. When the transaction carries the marker for THIS
+-- trigger's module (non-empty and equal to tg_argv[0]) the trigger performs eup_module_guard_reduce for that
+-- module; a marker for any other module, an empty one, or none performs the full guard. No path returns without
+-- one of the two. A transaction that writes a guarded table therefore ALWAYS holds the module's shared advisory
+-- lock and the policy row FOR SHARE to its end, and has had the EUM00 / EUM01 check, whoever set the marker: a
+-- state command always waits for it, and a marker set by hand (set_config without the reduce guard) on a module
+-- with no row is refused EUM01 like any other write. (Rolling back to a savepoint releases the locks a write
+-- under it took and undoes that write with them; the next write takes them again.) What the marker changes is
+-- one thing only: the write is not refused for 'draining' or 'disabled'.
+-- A PostgREST table write is its own transaction and cannot carry the marker, so direct table writes are still
+-- refused whenever the module is not enabled. This is a correctness backstop, not a security boundary against
+-- the service role: a session that can run arbitrary SQL can set the marker itself and so choose reduce mode
+-- for a write that is not reduce-only. It still cannot write unlocked or to a module that is not installed.
+-- Attached without a module argument it refuses every write (EUM00); with an empty one, EUM01. Attached FOR EACH
+-- ROW by mistake it still guards and lets the row through instead of silently dropping it.
 create or replace function public.eup_module_guard_trigger() returns trigger
 language plpgsql security definer set search_path = '' as $$
 declare marker text := current_setting('eup.module_reduce', true);
 begin
-  if marker is null or marker = '' or marker is distinct from tg_argv[0] then
+  if marker is not null and marker <> '' and marker = tg_argv[0] then
+    perform public.eup_module_guard_reduce(tg_argv[0]);
+  else
     perform public.eup_module_guard(tg_argv[0]);
   end if;
   if tg_level = 'ROW' then
