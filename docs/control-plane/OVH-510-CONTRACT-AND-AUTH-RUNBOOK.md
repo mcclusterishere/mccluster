@@ -232,6 +232,12 @@ sudo grep -cF 'prepare|activate|status' /var/lib/mccluster/reconcile/source/scri
 
 It must print 1. If it prints 0, the host still has the old script, whose `activate` switches the transport after reading two refs and proves neither whose key it is nor that it cannot write. Stop and promote first.
 
+**The GitHub host key the script pins.** The script accepts only GitHub's Ed25519 host key, fingerprint `SHA256:+DiY3wvvV6TuJJhbpZisF/zLDA0zPMSvHdkr4UvCOqU`. Before `activate`, compare that fingerprint with the one GitHub publishes on its "GitHub's SSH key fingerprints" documentation page. If they differ, stop: do not edit the script on the host, and do not switch.
+
+**If GitHub rotates that key** after the switch, every cycle fails host-key verification and the host stops updating. While the repository is still public, go back to HTTPS with `sudo rm /etc/systemd/system/mccluster-vps-reconcile.service.d/50-github-readonly-ssh.conf && sudo systemctl daemon-reload`; the next cycle fetches over HTTPS, and a promoted script with the new key can then be activated again. Once the repository is private, that HTTPS path no longer works, so a rotation needs a break-glass update of the script on the host. This is one more reason step 8 waits until the SSH path is proven.
+
+**Exit status of the script**, in every mode: 0 done (for `status`, every proof holds); 1 `status` found a proof that does not hold; 2 a precondition (not root, unknown mode, a missing command, a key or known-hosts file that is a symlink or has the wrong owner); 3 `activate` refused a proof, and nothing on the host changed; 4 `activate` could not complete the switch. On 4 the script puts the previous transport back itself when systemd did not reload or the first cycle failed, and says so; when only the timer is inactive, the switch has completed over SSH and the timer needs starting.
+
 1. On the host:
 
 ```bash
@@ -263,7 +269,7 @@ sudo bash /var/lib/mccluster/reconcile/source/scripts/ovh-private-repo-ssh.sh ac
 | `GitHub's greeting was not recognised` followed by `GitHub answered: ...` | GitHub answered in words the script does not know | Read the answer line. See "First real run" below |
 | `Could not prove the deploy key is read-only` followed by `The dry-run push answered: ...` | GitHub refused in words the script does not know | Read the answer line. See "First real run" below |
 | `Git configuration on this host rewrites ...` | A `url.*.insteadOf` rule would send the fetch elsewhere | Remove the rule from the reconciler's Git configuration |
-| `did not complete its first cycle after the switch` | The drop-in is installed and the first cycle failed | Read the journal line it prints. To go back, use the command it prints |
+| `did not complete its first cycle after the switch` | The first cycle over SSH failed. The script has already put the previous transport back and says so | Read the journal line it prints, fix the cause, and run `activate` again |
 
 **To go back at any time:**
 
@@ -296,7 +302,7 @@ sudo bash /var/lib/mccluster/reconcile/source/scripts/ovh-private-repo-ssh.sh st
 echo "exit status: $?"
 ```
 
-`status` changes nothing. It exits 0 only when every proof holds, and `proofs_unproven=` names whatever does not. Exit 0 means acceptance B and the host side of acceptance C. The lines to read:
+`status` changes no key, unit, drop-in or transport. It does create and remove a throwaway probe repository in the key directory and opens three SSH sessions to GitHub, one of them a push dry run that sends nothing. It exits 0 only when every proof holds, and `proofs_unproven=` names whatever does not. Exit 0 means acceptance B and the host side of acceptance C. The lines to read:
 
 | Line | Must be |
 | --- | --- |

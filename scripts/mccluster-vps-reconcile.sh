@@ -124,12 +124,10 @@ mcc_cycle_receipt_write() {
       if [[ -f "${known}" && ! -L "${known}" ]]; then
         # Pinned means: the whole file is that one line. A second key or a
         # certificate-authority line would widen what ssh accepts as GitHub.
-        { IFS= read -r -d '' -n 400 text; IFS= read -r -d '' -n 1 rest; } < "${known}" 2>/dev/null
-        if [[ -z "${rest}" && ( "${text}" == "${CYCLE_GITHUB_HOST_KEY}" || "${text}" == "${CYCLE_GITHUB_HOST_KEY}"$'\n' ) ]]; then
+        # Compared byte for byte: a NUL byte would end a shell read early and hide what follows it.
+        if cmp -s -- "${known}" <(printf '%s\n' "${CYCLE_GITHUB_HOST_KEY}") || cmp -s -- "${known}" <(printf '%s' "${CYCLE_GITHUB_HOST_KEY}"); then
           pinned="true"
         fi
-        text=""
-        rest=""
       fi
       if [[ -f "${key}.pub" && ! -L "${key}.pub" ]]; then
         text="$(mcc_cycle_bounded ssh-keygen -lf "${key}.pub" -E sha256)"

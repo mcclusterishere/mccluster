@@ -4,8 +4,22 @@
 #
 #   prepare   create the host-only key pair if absent and print its PUBLIC half
 #   activate  prove the key, then switch the reconciler to SSH
-#   status    read-only evidence: print key=value lines, exit 0 only if every
-#             proof holds. It changes no key, unit, drop-in or transport.
+#   status    evidence: print key=value lines, exit 0 only if every proof
+#             holds. It changes no key, unit, drop-in or transport. It does
+#             create and remove a throwaway probe repository in the key
+#             directory, and opens three SSH sessions to GitHub, one of them a
+#             push dry run that sends nothing.
+#
+# Exit status (every mode):
+#   0  done; for status, every proof holds
+#   1  status: at least one proof does not hold (proofs_unproven= names it)
+#   2  a precondition: not root, unknown mode, a required command missing,
+#      a key or known-hosts file that is a symlink or has the wrong owner
+#   3  activate: a proof refused (identity, write access, ref access, a Git
+#      rewrite); nothing on the host changed
+#   4  activate: the switch did not complete (systemd did not reload, the
+#      first cycle failed, or the timer is inactive). For the first two the
+#      previous transport is put back before the script exits.
 set -Eeuo pipefail
 
 MODE="${1:-prepare}"
@@ -60,7 +74,7 @@ if [[ "${MODE}" != "prepare" && "${MODE}" != "activate" && "${MODE}" != "status"
   echo "usage: sudo bash scripts/ovh-private-repo-ssh.sh prepare|activate|status" >&2
   exit 2
 fi
-for cmd in ssh-keygen git systemctl stat mktemp date env; do
+for cmd in ssh ssh-keygen git systemctl stat mktemp date env cmp; do
   command -v "${cmd}" >/dev/null || { echo "required command unavailable: ${cmd}" >&2; exit 2; }
 done
 
@@ -79,20 +93,29 @@ trap mcc_cleanup EXIT
 mcc_ssh() {
   local -a argv
   read -r -a argv <<< "${SSH_COMMAND}"
-  "${argv[@]}" -o ConnectTimeout="${PROBE_CONNECT_TIMEOUT}" "$@" </dev/null
+  env -u SSH_AUTH_SOCK "${argv[@]}" -o ConnectTimeout="${PROBE_CONNECT_TIMEOUT}" "$@" </dev/null
 }
 
 # Git for the proofs: no system, user or environment configuration, so nothing
 # (a url.*.insteadOf rule, a credential helper, a hook) can stand in for the key.
 mcc_probe_git() {
-  GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_COUNT=0 GIT_TERMINAL_PROMPT=0 LC_ALL=C \
-    GIT_SSH_COMMAND="${SSH_COMMAND} -o ConnectTimeout=${PROBE_CONNECT_TIMEOUT}" git "$@" </dev/null
+  env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE -u GIT_COMMON_DIR -u GIT_OBJECT_DIRECTORY -u GIT_NAMESPACE \
+      -u GIT_CONFIG_PARAMETERS -u GIT_TEMPLATE_DIR -u SSH_AUTH_SOCK \
+    GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_COUNT=0 GIT_TERMINAL_PROMPT=0 LC_ALL=C \
+    GIT_SSH_COMMAND="${SSH_COMMAND} -o ConnectTimeout=${PROBE_CONNECT_TIMEOUT}" git -C "${KEY_DIR}" "$@" </dev/null
 }
 
 # Git as the reconciler unit runs it (its HOME, the system configuration, a
 # clean environment): what it resolves is what a reconcile cycle will use.
 mcc_reconciler_git() {
-  env -i PATH="${PATH}" HOME="${RECONCILE_STATE}" LC_ALL=C GIT_TERMINAL_PROMPT=0 git "$@" </dev/null
+  env -i PATH="${PATH}" HOME="${RECONCILE_STATE}" LC_ALL=C GIT_TERMINAL_PROMPT=0 git -C / "$@" </dev/null
+}
+mcc_reconciler_rewrites_url() {
+  [[ "$(mcc_reconciler_git ls-remote --get-url "${REPO}" 2>/dev/null || true)" == "${REPO}" ]] || return 0
+  if [[ -d "${RECONCILE_CHECKOUT}/.git" ]]; then
+    [[ "$(mcc_reconciler_git -C "${RECONCILE_CHECKOUT}" ls-remote --get-url "${REPO}" 2>/dev/null || true)" == "${REPO}" ]] || return 0
+  fi
+  return 1
 }
 
 # What a remote said, made safe to show: one line of printable ASCII, at most
@@ -130,10 +153,8 @@ mcc_key_pair_state() {
 # and nothing else: a second key or a certificate-authority line would widen
 # what ssh accepts as github.com.
 mcc_host_key_is_pinned() {
-  local content="" extra=""
   [[ -f "${KNOWN}" && ! -L "${KNOWN}" ]] || return 1
-  { IFS= read -r -d '' -n 400 content || true; IFS= read -r -d '' -n 1 extra || true; } < "${KNOWN}"
-  [[ -z "${extra}" && ( "${content}" == "${GITHUB_HOST_KEY}" || "${content}" == "${GITHUB_HOST_KEY}"$'\n' ) ]] || return 1
+  cmp -s -- "${KNOWN}" <(printf '%s\n' "${GITHUB_HOST_KEY}") || cmp -s -- "${KNOWN}" <(printf '%s' "${GITHUB_HOST_KEY}") || return 1
   ssh-keygen -lf "${KNOWN}" -E sha256 2>/dev/null | grep -Fq "${GITHUB_FINGERPRINT}"
 }
 
@@ -169,6 +190,8 @@ GITHUB_PUSH_ANSWER=""
 mcc_deploy_key_write_access() {
   local probe output rc=0
   GITHUB_PUSH_ANSWER=""
+  # A run killed with SIGKILL cannot clean up after itself; sweep what such a run left.
+  find "${KEY_DIR}" -maxdepth 1 -type d -name '.write-probe.*' -mmin +60 -exec rm -rf -- {} + 2>/dev/null || true
   probe="$(mktemp -d "${KEY_DIR}/.write-probe.XXXXXX")" || return 4
   MCC_TEMP_PATHS+=("${probe}")
   mcc_probe_git -C "${probe}" init -q . >/dev/null 2>&1 || return 4
@@ -246,6 +269,7 @@ mcc_status() {
   local repo_pattern='.*(^|[[:space:]"])MCCLUSTER_REPO_URL=([^[:space:]"]*)'
   local before="" after="" escaped=""
   local timer_cycles=0 seen=" "
+  local -a timer_lines=()
   say() { printf '%s=%s\n' "$1" "$2"; }
 
   say mode status
@@ -288,8 +312,7 @@ mcc_status() {
 
   # What the reconciler's own Git resolves: a url.*.insteadOf rule in its
   # configuration would send an "SSH" fetch somewhere else.
-  value="$(mcc_reconciler_git ls-remote --get-url "${REPO}" 2>/dev/null || true)"
-  if [[ "${value}" == "${REPO}" ]]; then say git_url_rewrite none; else say git_url_rewrite rewritten; unproven+=(git_url_rewrite); fi
+  if mcc_reconciler_rewrites_url; then say git_url_rewrite rewritten; unproven+=(git_url_rewrite); else say git_url_rewrite none; fi
   value="$(mcc_reconciler_git -C "${RECONCILE_CHECKOUT}" remote get-url origin 2>/dev/null || true)"
   if [[ "${value}" == "${REPO}" ]]; then say checkout_origin "${REPO}"; else say checkout_origin not_ssh; unproven+=(checkout_origin); fi
   value=""
@@ -371,15 +394,18 @@ mcc_status() {
       trigger="$(mcc_receipt_field "${line}" trigger)"
       outcome="$(mcc_receipt_field "${line}" outcome)"
       [[ "${cycle_id}" =~ ^[0-9a-f]{32}$ && "${seen}" != *" ${cycle_id} "* ]] || continue
-      [[ "${trigger}" == timer || "${trigger}" == timer_inferred ]] || continue
       [[ "${outcome}" == verified_no_change || "${outcome}" == deployed ]] || continue
-      [[ "$(mcc_receipt_field "${line}" transport)" == ssh && "${line}" == *'"ssh_host_key_pinned":true'* ]] || continue
-      [[ -n "${fingerprint}" && "$(mcc_receipt_field "${line}" ssh_key_fingerprint)" == "${fingerprint}" ]] || continue
+      if [[ "$(mcc_receipt_field "${line}" transport)" != ssh || "${line}" != *'"ssh_host_key_pinned":true'* \
+            || -z "${fingerprint}" || "$(mcc_receipt_field "${line}" ssh_key_fingerprint)" != "${fingerprint}" ]]; then
+        timer_cycles=0; timer_lines=(); continue
+      fi
+      [[ "${trigger}" == timer || "${trigger}" == timer_inferred ]] || continue
       seen+="${cycle_id} "
       timer_cycles=$((timer_cycles + 1))
-      say timer_cycle "${cycle_id} ${trigger} ${outcome} $(mcc_receipt_field "${line}" finished_at)"
+      timer_lines+=("${cycle_id} ${trigger} ${outcome} $(mcc_receipt_field "${line}" finished_at)")
     done < <(tail -c 65536 -- "${RECONCILE_STATE}/cycles.jsonl" 2>/dev/null | tail -n 40)
   fi
+  for line in "${timer_lines[@]:-}"; do [[ -z "${line}" ]] || say timer_cycle "${line}"; done
   say timer_cycles_over_ssh_with_this_key "${timer_cycles}"
   say timer_cycles_required "${TIMER_CYCLES_REQUIRED}"
   (( timer_cycles >= TIMER_CYCLES_REQUIRED )) || unproven+=(timer_cycles)
@@ -454,7 +480,8 @@ fi
 # leaves the reconciler exactly as it was.
 
 # Prove the key can read BOTH protected refs before installing the override.
-refs="$(mcc_probe_git ls-remote "${REPO}" refs/heads/main refs/heads/deploy/ovh-production)"
+refs="$(mcc_probe_git ls-remote "${REPO}" refs/heads/main refs/heads/deploy/ovh-production)" \
+  || { echo "Cannot read the repository over SSH (is the deploy key added, and is TCP 22 to github.com open?)." >&2; exit 3; }
 grep -Fq $'\trefs/heads/main' <<< "${refs}" || { echo "Cannot read main over SSH." >&2; exit 3; }
 grep -Fq $'\trefs/heads/deploy/ovh-production' <<< "${refs}" || { echo "Cannot read production ref over SSH." >&2; exit 3; }
 
@@ -484,24 +511,51 @@ elif [[ ${write_rc} -ne 0 ]]; then
 fi
 
 # Prove the reconciler's own Git will really use SSH for this URL.
-if [[ "$(mcc_reconciler_git ls-remote --get-url "${REPO}" 2>/dev/null || true)" != "${REPO}" ]]; then
+if mcc_reconciler_rewrites_url; then
   echo "Git configuration on this host rewrites ${REPO}; the reconciler would not fetch over SSH. Refusing to switch the transport." >&2
   exit 3
 fi
 
 install -d -o root -g root -m 0755 "${DROPIN_DIR}"
+# Keep what was there. Until the first cycle has completed over the new
+# transport, ANY way this script ends puts the previous transport back.
+previous=""
+if [[ -f "${DROPIN}" && ! -L "${DROPIN}" ]]; then
+  previous="$(mktemp "${DROPIN}.previous.XXXXXX")"
+  MCC_TEMP_PATHS+=("${previous}")
+  cat "${DROPIN}" > "${previous}"
+  chmod 0644 "${previous}"
+fi
+SWITCH_PENDING=0
+mcc_undo_switch() {
+  [[ "${SWITCH_PENDING}" == 1 ]] || return 0
+  SWITCH_PENDING=0
+  if [[ -n "${previous}" ]]; then mv -f -- "${previous}" "${DROPIN}"; else rm -f -- "${DROPIN}"; fi
+  if systemctl daemon-reload; then
+    echo "The reconciler's transport was put back as it was before this run." >&2
+  else
+    echo "The drop-in was put back as it was, but systemd did not reload it. Run: systemctl daemon-reload" >&2
+  fi
+  return 0
+}
+trap 'mcc_undo_switch; mcc_cleanup' EXIT
 tmp="$(mktemp "${DROPIN}.XXXXXX")"
 MCC_TEMP_PATHS+=("${tmp}")
 mcc_dropin_content > "${tmp}"
 chmod 0644 "${tmp}"
+SWITCH_PENDING=1
 mv -f "${tmp}" "${DROPIN}"
-systemctl daemon-reload
-if ! systemctl start "${RECONCILE_UNIT}"; then
-  echo "The reconciler did not complete its first cycle after the switch. The SSH drop-in is installed." >&2
-  echo "Read: journalctl -u ${RECONCILE_UNIT} -n 50 --no-pager" >&2
-  echo "To go back to the previous transport: rm ${DROPIN} && systemctl daemon-reload" >&2
+if ! systemctl daemon-reload; then
+  echo "systemd did not reload after the drop-in was written." >&2
   exit 4
 fi
+echo "Starting one reconcile cycle over SSH. A cycle that deploys can take up to 20 minutes: do not interrupt it."
+if ! systemctl start "${RECONCILE_UNIT}"; then
+  echo "The reconciler did not complete its first cycle after the switch." >&2
+  echo "Read: journalctl -u ${RECONCILE_UNIT} -n 50 --no-pager" >&2
+  exit 4
+fi
+SWITCH_PENDING=0
 systemctl is-active --quiet "${RECONCILE_TIMER}" || { echo "The SSH drop-in is installed, but ${RECONCILE_TIMER} is not active: no cycle will run on its own." >&2; exit 4; }
 echo "OVH reconciler switched to authenticated read-only GitHub SSH after verified ref access."
 echo "This key is a Deploy key of ${GITHUB_DEPLOY_KEY_IDENTITY} and GitHub refuses it for writing."

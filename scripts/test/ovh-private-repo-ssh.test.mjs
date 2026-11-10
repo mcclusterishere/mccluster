@@ -312,11 +312,11 @@ test('activate refuses a personal key, a writable key and every unproven state b
   ['a permission refusal',{FAKE_WRITE:'denied'},/Could not prove the deploy key is read-only/],
   ['a refusal in words the script does not know',{FAKE_WRITE:'unrecognised'},/Could not prove the deploy key is read-only; refusing to switch the transport\.\nThe dry-run push answered: ERROR: Write access is not granted to this key\. /],
   ['a silent refusal',{FAKE_WRITE:'silent'},/Could not prove the deploy key is read-only/],
-  ['refs that cannot be read',{FAKE_READ:'denied'},/Repository not found/],
+  ['refs that cannot be read',{FAKE_READ:'denied'},/Cannot read the repository over SSH/],
  ];
  for(const [name,env,message] of refusals){
   const result=box.run('activate',env);
-  assert.equal(result.status,name==='refs that cannot be read'?128:3,`${name}: ${result.stderr}`);
+  assert.equal(result.status,3,`${name}: ${result.stderr}`);
   assert.match(result.stderr,message,name);
   assert.equal(existsSync(box.dropinDir),false,`${name}: no drop-in directory`);
   assert.doesNotMatch(result.calls,/systemctl (daemon-reload|start|restart|enable)/,`${name}: the unit is not touched`);
@@ -352,8 +352,9 @@ test('activate reports a first cycle that fails, and how to go back',(t)=>{
  box.run('prepare');
  const result=box.run('activate',{FAKE_START_RC:'1'});
  assert.equal(result.status,4);
- assert.match(result.stderr,/did not complete its first cycle after the switch\. The SSH drop-in is installed\./);
- assert.match(result.stderr,new RegExp(`To go back to the previous transport: rm ${box.dropin.replace(/[.]/g,'\\.')} && systemctl daemon-reload`));
+ assert.match(result.stderr,/did not complete its first cycle after the switch\./);
+ assert.match(result.stderr,/put back as it was before this run/,'a failed first cycle undoes the switch itself');
+ assert.equal(existsSync(box.dropin),false,'no drop-in is left behind: the reconciler keeps its previous transport');
  assert.doesNotMatch(result.stdout,/switched to authenticated/);
  const stopped=box.run('activate',{FAKE_TIMER:'inactive'});
  assert.equal(stopped.status,4);
@@ -433,21 +434,29 @@ test('status exits non-zero and names the proof whenever one does not hold',(t)=
  assert.equal(widened.github_host_key,'not_pinned');
  assert.deepEqual(widened.missing,['github_host_key','github_identity','write_access','ssh_refs']);
  assert.equal(widened.github_identity,'not_checked','without a pinned host key nothing is sent');
+ // A NUL byte ends a shell read early; the bytes after it are still lines ssh honours.
+ for(const hidden of [`${HOST_KEY}\n\0\0\n@cert-authority * ssh-ed25519 AAAAFIXTURECA\n`,`${HOST_KEY}\n\0\ngithub.com ssh-ed25519 AAAAFIXTUREOTHERKEY\n`]){
+  writeFileSync(join(box.state,'ssh/github_known_hosts'),hidden);
+  assert.equal(unproven().github_host_key,'not_pinned','a key hidden behind a NUL byte is still a second key');
+ }
  writeFileSync(join(box.state,'ssh/github_known_hosts'),`${HOST_KEY}\n`);
 
  // Receipts: stale, anonymous, started by hand, too few, or absent.
  box.cycles([box.receipt({cycle_id:'2'.repeat(32),minutesAgo:40}),box.receipt({cycle_id:'3'.repeat(32),minutesAgo:26})]);
  assert.deepEqual(unproven().missing,['last_verified_cycle'],'two timer cycles are on record but the reconciler has since gone quiet');
  box.cycles([...fresh(),box.receipt({cycle_id:'4'.repeat(32),transport:'https',ssh_host_key_pinned:false,ssh_key_fingerprint:'',minutesAgo:1})]);
- assert.deepEqual(unproven().missing,['last_verified_cycle']);
+ assert.deepEqual(unproven().missing,['last_verified_cycle','timer_cycles'],'a cycle over another transport restarts the count: only cycles since the current activation prove it');
  assert.equal(unproven().last_verified_cycle_transport,'https');
  box.cycles([box.receipt({cycle_id:'2'.repeat(32),minutesAgo:4}),box.receipt({cycle_id:'2'.repeat(32),minutesAgo:4}),box.receipt({cycle_id:'5'.repeat(32),trigger:'other',timer_trigger_monotonic_usec:'',minutesAgo:1})]);
  const one=unproven();
  assert.deepEqual(one.missing,['timer_cycles'],'one cycle listed twice is one cycle, and a start by hand is not a timer cycle');
  assert.equal(one.timer_cycles_over_ssh_with_this_key,'1');
- box.cycles([box.receipt({cycle_id:'2'.repeat(32),minutesAgo:4}),box.receipt({cycle_id:'6'.repeat(32),outcome:'failed',stage:'fetch',exit_code:128,minutesAgo:3}),
-  box.receipt({cycle_id:'7'.repeat(32),ssh_host_key_pinned:false,minutesAgo:2}),box.receipt({cycle_id:'8'.repeat(32),trigger:'timer_inferred',minutesAgo:1})]);
- assert.equal(box.run('status').status,0,'an inferred timer cycle counts; a failed or unpinned one does not');
+ box.cycles([box.receipt({cycle_id:'7'.repeat(32),ssh_host_key_pinned:false,minutesAgo:4}),box.receipt({cycle_id:'2'.repeat(32),minutesAgo:3}),
+  box.receipt({cycle_id:'6'.repeat(32),outcome:'failed',stage:'fetch',exit_code:128,minutesAgo:2}),box.receipt({cycle_id:'8'.repeat(32),trigger:'timer_inferred',minutesAgo:1})]);
+ assert.equal(box.run('status').status,0,'an inferred timer cycle counts; a failed one is skipped; an unpinned one before them does not count');
+ box.cycles([box.receipt({cycle_id:'2'.repeat(32),minutesAgo:4}),box.receipt({cycle_id:'7'.repeat(32),ssh_host_key_pinned:false,minutesAgo:3}),
+  box.receipt({cycle_id:'8'.repeat(32),trigger:'timer_inferred',minutesAgo:1})]);
+ assert.deepEqual(unproven().missing,['timer_cycles'],'an unpinned cycle breaks the chain: only cycles after it count');
  for(const name of ['last-verified-cycle.json','cycles.jsonl'])rmSync(join(box.state,name));
  const none=unproven();
  assert.deepEqual(none.missing,['last_verified_cycle','timer_cycles']);
@@ -524,8 +533,8 @@ test('the write probe is always a dry run, and the script never trusts a host ke
  const firstChange=source.indexOf('install -d -o root -g root -m 0755 "${DROPIN_DIR}"');
  assert.ok(firstChange>0&&firstChange<override);
  const activate=source.slice(source.indexOf('# activate. Every proof below comes BEFORE the transport changes'),firstChange);
- for(const proof of ['mcc_probe_git ls-remote "${REPO}"','mcc_github_identity || identity_rc=$?','mcc_deploy_key_write_access || write_rc=$?','mcc_reconciler_git ls-remote --get-url "${REPO}"'])assert.ok(activate.includes(proof),proof);
- assert.equal((activate.match(/exit 3/g)||[]).length,7,'each proof refuses with exit 3');
+ for(const proof of ['mcc_probe_git ls-remote "${REPO}"','mcc_github_identity || identity_rc=$?','mcc_deploy_key_write_access || write_rc=$?','mcc_reconciler_rewrites_url'])assert.ok(activate.includes(proof),proof);
+ assert.equal((activate.match(/exit 3/g)||[]).length,8,'each proof refuses with exit 3');
  assert.doesNotMatch(activate,/systemctl|install -d/);
 });
 
