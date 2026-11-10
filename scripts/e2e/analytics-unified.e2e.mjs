@@ -202,6 +202,15 @@ for(const size of [{width:390,height:844},{width:820,height:1180},{width:1280,he
   await page.waitForTimeout(550);
   const swipe=await rail.evaluate(el=>({offset:el.scrollLeft,scrollWidth:el.scrollWidth,clientWidth:el.clientWidth,focused:document.activeElement===el}));
   check(size.width,'focusable summary rail scrolls horizontally without changing chapter',swipe.focused&&swipe.scrollWidth>swipe.clientWidth+30&&swipe.offset>30&&await page.locator('[role=tab][aria-selected=true]').innerText()==='Overview',swipe);
+  await rail.press('ArrowLeft');
+  await page.waitForFunction(previous=>document.querySelector('.cu-summary-groups').scrollLeft<previous-30,swipe.offset);
+  check(size.width,'summary rail reverses with the keyboard',await rail.evaluate(el=>document.activeElement===el&&el.scrollLeft>0));
+  await rail.press('Home');
+  await page.waitForFunction(()=>document.querySelector('.cu-summary-groups').scrollLeft<3);
+  await rail.press('End');
+  await page.waitForFunction(()=>{const el=document.querySelector('.cu-summary-groups');return el.scrollLeft>=el.scrollWidth-el.clientWidth-3;});
+  check(size.width,'summary rail reaches both edges without changing chapter',await rail.evaluate(el=>document.activeElement===el)&&await page.locator('[role=tab][aria-selected=true]').innerText()==='Overview');
+  await page.screenshot({path:OUT+'/summary-keyboard-'+size.width+(size.workspace?'-workspace':'')+'.png'});
   const box=await page.locator('.cad-chapter').boundingBox();
   const bodyBox=await page.locator('.cad-chapter>div:first-child').boundingBox();
   const session=await ctx.newCDPSession(page), y=bodyBox.y+bodyBox.height-8;

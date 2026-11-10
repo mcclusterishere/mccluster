@@ -41,6 +41,20 @@
     if(tabs){var selected=tabs.querySelector('[aria-selected="true"]');if(selected)tabs.scrollLeft=Math.max(0,selected.offsetLeft-tabs.offsetLeft-(tabs.clientWidth-selected.clientWidth)/2);
       tabs.onkeydown=function(ev){var i=chapters.indexOf(chapter(S.section));if(['ArrowLeft','ArrowRight','Home','End'].includes(ev.key)){ev.preventDefault();go(ev.key==='Home'?0:ev.key==='End'?chapters.length-1:i+(ev.key==='ArrowRight'?1:-1),true);}};
     }
+    /* Native short arrow scrolls can snap back to the first summary. Move to
+       the next card explicitly when the rail itself has focus. Touch panning
+       and keys on its links/buttons keep their native behavior. */
+    root.querySelectorAll('.cu-summary-groups').forEach(function(rail){
+      rail.onkeydown=function(ev){
+        if(ev.target!==rail||ev.altKey||ev.ctrlKey||ev.metaKey||ev.shiftKey||!['ArrowLeft','ArrowRight','Home','End'].includes(ev.key))return;
+        var max=Math.max(0,rail.scrollWidth-rail.clientWidth);if(max<=2)return;
+        var left=rail.scrollLeft,edge=rail.getBoundingClientRect().left;
+        var stops=[].map.call(rail.children,function(card){return Math.max(0,Math.min(max,left+card.getBoundingClientRect().left-edge));});
+        var next=ev.key==='Home'?0:ev.key==='End'?max:ev.key==='ArrowRight'?stops.find(function(x){return x>left+2;}):stops.reverse().find(function(x){return x<left-2;});
+        if(next==null)next=ev.key==='ArrowRight'?max:0;
+        ev.preventDefault();ev.stopPropagation();rail.scrollTo({left:next,behavior:'instant'});
+      };
+    });
     root.querySelectorAll('[data-cad-step]').forEach(function(b){b.onclick=function(){go(chapters.indexOf(chapter(S.section))+Number(b.dataset.cadStep),true);};});
     var start=null;
     [body,root.querySelector('.cad-chapter')].filter(Boolean).forEach(function(surface){
