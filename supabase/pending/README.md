@@ -59,6 +59,28 @@ Promoted 2026-10-21: `listener_state_v1.sql` is applied in production as `202610
 
 Pending (2026-10-21): `member_fronts_v1.sql` gives every account its own front page (owner: "all the accounts need to be able to recreate with their own media this exact same experience"). It adds `public.member_fronts`, which only the Worker's service role reaches (forced RLS, revoked from anon and authenticated), and the public `front-media` bucket, where each account lists, writes, replaces and removes only its own folder (its auth uid), up to 2,500 files and 1 GiB (`public.front_media_has_room()`). Until it is applied, `/v1/fronts` answers 503. Test: `scripts/test-member-fronts-db.sh`. Docs: `docs/control-plane/MEMBER-FRONT-PAGES.md`. Rollback: in the file's header. Promote it using the steps below.
 
+Pending (2026-11-10): `l3_products_asset_path_check_v1.sql` (rollback
+`l3_products_asset_path_check_v1.rollback.sql`) is an unapplied candidate that waits for the
+owner's decision. It adds one CHECK to `public.l3_products`,
+`l3_products_asset_path_plain_check`: `asset_path` is NULL or a plain relative object path
+(names of `[A-Za-z0-9._-]` separated by `/`, each starting with a letter or digit; no empty, `.`
+or `..` segment, no `..` anywhere, no leading or trailing slash, ASCII, at most 1024 bytes).
+`supabase/functions/l3-download` refuses a path that is not a plain relative object path before
+it signs (`supabase/functions/_shared/storage-object-path.ts`), with or without this file; the
+CHECK makes the table refuse one at write time too, and is deliberately narrower than the
+function, so the table never admits a path the function refuses. It is added `NOT VALID`:
+nothing is scanned, and every
+later INSERT and UPDATE is checked, so a row that already breaks the rule cannot be edited at all
+until its path is corrected in the same statement. Before applying: run the read-only count in
+the file's header (it must be 0) and decide the character set, which is this plane's own upload
+alphabet and has not been compared with what the Level 3 storefront writes or with production
+rows. Then apply this one file, run the count again, and `VALIDATE` as a separate statement (the
+header gives it). It defines no function, table or bucket, so it adds nothing to
+`live-callers.json`. Test: `bash scripts/test-l3-asset-path-check-db.sh` on a scratch Postgres 16
+(rows seeded before the constraint, apply twice, behaviour, rollback, re-apply) and
+`node --test scripts/test/l3-asset-path-check.test.mjs`. Promote it using the steps below; never
+run the whole folder.
+
 Promoted 2026-10-30: `music_release_payment_integrity_v1.sql` is applied in production and is
 `supabase/migrations/20261030001000_music_release_payment_integrity_v1.sql` (bytes unchanged,
 md5 `5212054a89f62d77b2a11e8826bc73cf`; its header keeps the original pending wording). The
