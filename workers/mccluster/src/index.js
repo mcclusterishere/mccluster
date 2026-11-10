@@ -161,9 +161,10 @@ export default {
         return handleArcade(request, env, { requireHouseOwner });
       }
 
-      /* Admin-only E=Up product workspace (Control → Products → E=Up). */
+      /* Admin-only E=Up product workspace (Control → Products → E=Up). The one exception, the League member
+         branch /v1/eup/member/league, verifies the session with authUser instead (./eup/router.js). */
       if (path === EUP_PREFIX || path.startsWith(EUP_PREFIX + '/')) {
-        return handleEup(request, env, { requireHouseOwner });
+        return handleEup(request, env, { requireHouseOwner, authUser });
       }
 
       if (path === PRIM3_LEVELS_PREFIX || path.startsWith(`${PRIM3_LEVELS_PREFIX}/`)) {

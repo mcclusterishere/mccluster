@@ -15,7 +15,18 @@
      { queued, running, running_expired, lease_expires_at }
    running_expired counts running runs whose lease has run out (no live holder), so a drain of intake has
    settled when running - running_expired is 0. Every count is null when the read failed or answered anything
-   else: a missing count is never shown as zero. import_run_counts says whether the read worked. */
+   else: a missing count is never shown as zero. import_run_counts says whether the read worked.
+
+   The League's own facts come from one owner read (eup_league_command 'overview', shape SHAPES.overview of
+   ./league-contract.js) on this request, never cached:
+     campaigns  { drafts, released, paused, withdrawn }                       (top level, as before)
+     queues     { applications, proofs, reviews, appeals, media_due }        (top level, as before)
+     league     { status, reason, missions { drafts, released },
+                  policy { present, valid, media_enabled, revision },        the League CONFIGURATION (not module state)
+                  audience { invited_campaigns, open_grants }, latest_change }
+   A count the read did not return (or returned as anything but a count) is null, never zero; the SQL itself
+   answers null for a queue it does not compute yet. Blockers name what stops a member run: no League policy,
+   an invalid one, media not enabled, no campaign open to invited testers, no open tester grant. */
 import { leagueCommand } from './league.js';
 import { moduleControl } from './modules.js';
 import { readRunCounts } from './intake.js';
@@ -59,21 +70,57 @@ async function importRunCounts(env, ctx) {
   }
 }
 
+/* The League read. Counts are taken only when they are counts; flags only when they are booleans. */
+const LEAGUE_COUNTS = Object.freeze({
+  campaigns: ['drafts', 'released', 'paused', 'withdrawn'],
+  missions: ['drafts', 'released'],
+  queues: ['applications', 'proofs', 'reviews', 'appeals', 'media_due'],
+  audience: ['invited_campaigns', 'open_grants']
+});
+const countsOf = (value, keys) => Object.fromEntries(keys.map((k) => [k, value && typeof value === 'object' && count(value[k]) ? value[k] : null]));
+const flagOf = (value) => (typeof value === 'boolean' ? value : null);
+function leagueFacts(o) {
+  const p = o && typeof o.policy === 'object' ? o.policy : null;
+  return {
+    campaigns: countsOf(o?.campaigns, LEAGUE_COUNTS.campaigns), missions: countsOf(o?.missions, LEAGUE_COUNTS.missions),
+    queues: countsOf(o?.queues, LEAGUE_COUNTS.queues), audience: countsOf(o?.audience, LEAGUE_COUNTS.audience),
+    policy: { present: flagOf(p?.present), valid: flagOf(p?.valid), media_enabled: flagOf(p?.media_enabled), revision: count(p?.revision) ? p.revision : null },
+    latest_change: typeof o?.latest_change === 'string' ? o.latest_change : null
+  };
+}
+async function leagueOverview(env, ctx) {
+  try {
+    const o = await leagueCommand(env, ctx.fetchImpl, ctx.fail, { action: 'overview', actor: ctx.user.id, timeoutMs: ctx.rpcTimeoutMs });
+    return { status: 'available', reason: null, ...leagueFacts(o) };
+  } catch (error) {
+    const reason = error?.reason || 'unavailable';
+    return { status: reason === 'schema_not_applied' ? 'schema_not_applied' : 'unavailable', reason, ...leagueFacts(null) };
+  }
+}
+/* What stops a member run, from a League read that worked. Readiness first (one blocker: the first that applies),
+   then the released audience. Fixed text: no value from the store is put in a sentence. */
+function leagueBlockers(l) {
+  const out = [];
+  if (l.policy.present === false) out.push({ id: 'league_policy_missing', text: 'No League policy is set. Until the owner sets one (entitlement, media, retention and notices), every member mutation answers policy_unavailable; reads still answer.', gate: 'owner_decision' });
+  else if (l.policy.valid === false) out.push({ id: 'league_policy_invalid', text: 'The stored League policy is not valid, so every member mutation answers policy_unavailable until the owner sets a valid one.', gate: 'owner_decision' });
+  else if (l.policy.media_enabled === false) out.push({ id: 'league_media_disabled', text: 'Media is not enabled in the League policy: audio and video uploads answer policy_unavailable. The written accommodation path does not need media.', gate: 'owner_decision' });
+  if (l.audience.invited_campaigns === 0) out.push({ id: 'league_audience_admin_preview', text: 'No campaign is open to invited testers: every campaign is admin_preview, so only house owners see released missions. A member run needs a campaign set to invited and a tester grant.', gate: 'owner_decision' });
+  else if (l.audience.open_grants === 0) out.push({ id: 'league_audience_no_grants', text: 'A campaign is set to invited, but no account holds an open grant on it, so no tester can take part yet.', gate: 'owner_decision' });
+  return out;
+}
+
 export async function handleOverview(_request, env, ctx) {
-  const { fail, fetchImpl, now } = ctx;
+  const { now } = ctx;
   const blockers = [];
   const freshness = [];
-  let campaigns = { drafts: 0, released: 0, paused: 0, withdrawn: 0 };
-  let queues = { applications: 0, proofs: 0, reviews: 0 };
   let league = MODULES[0];
-  try {
-    const o = await leagueCommand(env, fetchImpl, fail, { action: 'overview', actor: ctx.user.id });
-    campaigns = { ...campaigns, ...(o?.campaigns || {}) };
-    queues = { ...queues, ...(o?.queues || {}) };
-    freshness.push({ id: 'league', label: 'League intake', updated_at: o?.latest_change || null, state: o?.latest_change ? 'current' : 'empty' });
-  } catch (error) {
-    league = { ...league, state: error?.reason === 'schema_not_applied' ? 'draft' : 'unknown', detail: `${league.detail} (${error?.reason || 'unavailable'})` };
-    blockers.push({ id: 'league_schema', text: error?.reason === 'schema_not_applied' ? 'Apply supabase/pending/eup_league_v1.sql (owner-reviewed) before League intake works.' : `League intake unreadable: ${error?.reason || 'unavailable'}`, gate: 'schema' });
+  const l = await leagueOverview(env, ctx);
+  if (l.status === 'available') {
+    freshness.push({ id: 'league', label: 'League intake', updated_at: l.latest_change, state: l.latest_change ? 'current' : 'empty' });
+    blockers.push(...leagueBlockers(l));
+  } else {
+    league = { ...league, state: l.status === 'schema_not_applied' ? 'draft' : 'unknown', detail: `${league.detail} (${l.reason})` };
+    blockers.push({ id: 'league_schema', text: l.status === 'schema_not_applied' ? 'Apply supabase/pending/eup_league_v1.sql (owner-reviewed) before League intake works.' : `League intake unreadable: ${l.reason}`, gate: 'schema' });
     freshness.push({ id: 'league', label: 'League intake', updated_at: null, state: 'unknown' });
   }
   let sources = null;
@@ -106,8 +153,9 @@ export async function handleOverview(_request, env, ctx) {
     module_policy: { status: policies.status, reason: policies.reason },
     import_run_counts: { status: runs.status, reason: runs.reason },
     geography: { selected: null, note: 'No pilot geography chosen; Connecticut/Bridgeport is a proposal, not a decision.' },
-    campaigns,
-    queues,
+    campaigns: l.campaigns,
+    queues: l.queues,
+    league: { status: l.status, reason: l.reason, missions: l.missions, policy: l.policy, audience: l.audience, latest_change: l.latest_change },
     freshness,
     sources: sources || { state: 'not_implemented' },
     blockers
