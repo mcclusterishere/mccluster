@@ -22,7 +22,7 @@ Release coordination owns serial merges, schema promotion and Worker rollout.
 3. Prerequisites are existing `auth.users`, `public.orgs` (slug `mccluster`),
    `public.org_members` (`profile_id`, `org_id`, `role`), and the existing server role.
    Verify its SELECT permission on membership tables and actual schema compatibility.
-   The pending SQL creates three Arcade tables and two functions, enables RLS and
+   The migration creates three Arcade tables and two functions, enables RLS and
    denies direct anon/authenticated access. Version rows allow service SELECT/INSERT
    only. The RPC rechecks current owner membership on each command.
 4. Before enabling production, run real multi-connection PostgreSQL checks for concurrent
@@ -53,12 +53,32 @@ lost-return acknowledgement retry. Do not publish any test authentication harnes
 ## Automated evidence and boundaries
 
 `city-arcade-recovery.e2e.mjs` exercises actual Sole modules and an isolated database:
-start a saved mission, fast-forward its local timer, let the database accept completion,
-drop its response, reload, deny a session, restore authorization and retry. It verifies
-one result and cleared pending state at 390px and 1280px. Timer fast-forward and identity
-fixtures are test-only; this does not prove production sessions or a human playthrough.
+start a saved mission, fast-forward its local timer, let the database accept completion
+and drop its response, restart locally, reload with a denied session (Reconnect and Discard
+must be on screen), restore authorization and press Reconnect, without a reload. It verifies one
+result and cleared pending state at 390px and 1280px, Sole only, with a session that has
+no user id (the outbox's `device` scope). Timer fast-forward and identity fixtures are
+test-only; this does not prove production sessions or a human playthrough.
 The City Arcade workflow runs this alongside graphical play, disabled/missing-schema
 behavior and actual Cesium lifecycle browser checks.
+
+Unit and integration checks the same workflow runs:
+
+- `city-arcade-outbox.test.mjs` (both games, DOM stub that keeps the markup's initial
+  `hidden`): restart, apply, load and a new start keep an unsaved receipt; Reconnect is
+  hidden while the cloud is ready, offered when it is not, and saves the receipt when
+  pressed; a 409 on finish keeps "The server already holds a different result for this
+  run …" and the receipt; a stored receipt cannot be rewritten; the outbox never evicts.
+- `city-arcade-start-intent.test.mjs` (both games): the start key is stored before the
+  request, reused after a lost response, and cleared after success or a 409; with
+  `PGLITE_MODULE` set it also drives the real handler and applied SQL and counts one run.
+- `city-arcade-start-recovery.integration.mjs`: keyed starts, exact retry including the
+  run's frozen revision document after a re-save, conflicting reuse, `current`.
+
+Not in CI, local and opt-in: `city-arcade-start-key.native.integration.mjs` races one start
+key on native PostgreSQL 16/17. Reused at once on two missions, the second start loses on
+`unique(actor,start_key)` (23505); reused in sequence it is refused with 40001. The Worker
+answers 409 to both, and no second run is created.
 
 Shared City uses sourced road topology and continuous ENU positions. Arcade legacy
 saves retain their separate coordinates. Confirmed, request-correlated shared City arrivals now collect Sole checkpoints in configured

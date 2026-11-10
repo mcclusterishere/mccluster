@@ -49,7 +49,9 @@ export async function handleArcade(request,env,{requireHouseOwner,fetchImpl=fetc
     });
     if(response.status>=300&&response.status<400)throw fail(503,'Storage redirect refused');
     const result=await response.json();
-    if(!response.ok){const status={42501:403,40001:409,P0002:404,23514:422,22023:422}[result?.code]||503;throw fail(status,status===409?'Mission or result changed. Reload before retrying.':status===503?'Arcade storage unavailable.':'Arcade request rejected.');}
+    // 23505: a start key reused at the same moment on another mission loses on unique(actor,start_key);
+    // that is the same conflict as the sequential reuse (40001), not an outage (W3).
+    if(!response.ok){const status={42501:403,40001:409,23505:409,P0002:404,23514:422,22023:422}[result?.code]||503;throw fail(status,status===409?'Mission or result changed. Reload before retrying.':status===503?'Arcade storage unavailable.':'Arcade request rejected.');}
     return respond({ok:true,value:result},action==='start'?201:200);
   }catch(e){const status=[400,401,403,404,405,409,413,415,422,503].includes(e.status)?e.status:503;return respond({ok:false,error:status===503?'Arcade service unavailable.':e.message},status);}
 }

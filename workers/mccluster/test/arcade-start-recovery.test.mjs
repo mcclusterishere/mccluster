@@ -17,6 +17,14 @@ test('start forwards the normalized key as the RPC document and keeps the revisi
  const conflict=await handleArcade(post('start/bridgeport-main-elm',{expectedRevision:2,startKey:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'}),env,{...owner,fetchImpl:async()=>Response.json({code:'40001'},{status:400})});
  assert.equal(conflict.status,409);
 });
+test('a start that loses the key race on another mission (23505, PostgREST 409) is a 409 conflict, not a 503 outage',async()=>{
+ const raced=await handleArcade(post('start/bridgeport-main-golden-hill',{expectedRevision:1,startKey:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'}),env,{...owner,fetchImpl:async()=>Response.json({code:'23505',message:'duplicate key value violates unique constraint "arcade_runs_actor_start_key_key"'},{status:409})});
+ assert.equal(raced.status,409);assert.match((await raced.json()).error,/changed/);
+ const sequential=await handleArcade(post('start/bridgeport-main-golden-hill',{expectedRevision:1,startKey:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'}),env,{...owner,fetchImpl:async()=>Response.json({code:'40001'},{status:500})});
+ assert.equal(sequential.status,409);
+ const outage=await handleArcade(post('start/bridgeport-main-golden-hill',{expectedRevision:1,startKey:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'}),env,{...owner,fetchImpl:async()=>Response.json({code:'08006'},{status:503})});
+ assert.equal(outage.status,503,'an unknown storage failure is still an outage');
+});
 test('current-run read is owner gated, default-off and forwards the current action',async()=>{
  let sent;const r=await handleArcade(new Request('https://fixture.invalid/v1/arcade/current'),env,{...owner,fetchImpl:async(url,o)=>{sent=JSON.parse(o.body);return Response.json([]);}});
  assert.equal(r.status,200);assert.equal(sent.p_action,'current');

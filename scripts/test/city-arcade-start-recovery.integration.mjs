@@ -1,5 +1,6 @@
-// Regression for audit finding W3 against the actual pending schema and Worker handler in isolated PGlite.
-// A start must be replay-safe (owner-bound idempotency key) and running runs must be recoverable.
+// Regression for audit finding W3 against the applied migration (supabase/migrations/20261109181623_city_arcade_v1.sql)
+// and the Worker handler in isolated PGlite. A start must be replay-safe (owner-bound idempotency key), an exact
+// retry must return the run's frozen mission version, and running runs must be recoverable.
 import assert from 'node:assert/strict';
 import {createArcadeDatabase,OWNER,PEER} from './support/arcade-database.mjs';
 import {TEA_MISSION} from '../../js/city-arcade/tea-action.mjs';
@@ -32,5 +33,17 @@ try{
  r=await h('start/'+id,{method:'POST',body:JSON.stringify({expectedRevision:0,startKey:'cccccccc-cccc-4ccc-8ccc-cccccccccccc'})});ok(r.status===409,'conflicting reuse is refused');
  r=await h('current');const list=(await r.json()).value;ok(r.status===200&&list.some(x=>x.id===first.id),'current-run read exposes the uncertain start');
  r=await handle(new Request('https://local.invalid/v1/arcade/current',{headers:{authorization:'Bearer member'}}));ok(r.status===403);
+ // Frozen document: the mission is re-saved after the start, then the start is retried with the same key and
+ // revision. The retry must carry the run's own revision-1 document, never the live revision-2 one.
+ const g='bridgeport-main-golden-hill',teaAt=reward=>({version:1,gameId:'gauranfucking-tea-tea-rush',locationId:g,tea:{...structuredClone(TEA_MISSION),reward}});
+ const frozenKey='dddddddd-dddd-4ddd-8ddd-dddddddddddd',frozen={p_action:'start',p_actor:OWNER,p_id:g,p_revision:1,p_document:{startKey:frozenKey}};
+ await rpc({p_action:'save',p_actor:OWNER,p_id:g,p_revision:0,p_document:teaAt(100)});
+ const f1=await rpc(frozen);
+ await rpc({p_action:'save',p_actor:OWNER,p_id:g,p_revision:1,p_document:teaAt(250)});
+ const f2=await rpc(frozen);
+ ok(f2.id===f1.id&&f2.revision===1&&f2.document.tea.reward===100,'exact retry after a re-save returns the run with its frozen revision-1 document');
+ r=await h('start/'+g,{method:'POST',body:JSON.stringify({expectedRevision:1,startKey:frozenKey})});const replay=(await r.json()).value;
+ ok(r.status===201&&replay.id===f1.id&&replay.revision===1&&replay.document.tea.reward===100,'Worker replay after a re-save returns the frozen document');
+ ok((await db.query('select count(*)::int as n from arcade_runs where mission_id=$1',[g])).rows[0].n===1,'the replays created no second run');
  console.log(`${count} start-recovery assertions passed.`);
 }finally{await close();}
