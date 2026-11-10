@@ -678,7 +678,10 @@
     var memo = !force && readAdminMemo(sub);
     if (memo) { paintAdmin(memo.admin); return Promise.resolve(memo.admin); }
     var controller = new AbortController(), timeout = setTimeout(function () { controller.abort(); }, 5000);
-    function current() { return attempt === adminEpoch && AUTH_STATE.signed_in && (readAuthSession() || {}).access_token === token; }
+    /* The answer is about the account, not the token that asked: a token refreshed for the same account while the
+       check was in the air (another request on the page, another tab) does not discard it. Discarded, nothing was
+       painted and the navigation stayed hidden until the shell's own fallback. */
+    function current() { return attempt === adminEpoch && AUTH_STATE.signed_in && currentSubject() === String(sub); }
     var flight = { token: token, epoch: attempt, promise: null };
     adminFlight = flight;
     flight.promise = fetch(API_ORIGIN + "/v1/status", { headers: { authorization: "Bearer " + token }, cache: "no-store", signal: controller.signal })
@@ -725,15 +728,15 @@
      with (the JWT sub), the answer stands. Anything else that moved (another account, a
      sign-out, no answer) is never painted from the old answer: the session now stored is
      looked up again, AUTH_LOOKUPS lookups at most for one auth event (the page opening, a
-     sign-in or sign-out, a session written by another tab), and then the bar settles
-     signed out until the next one. Three, because a tab restored beside another can lose
-     the refresh to it twice (that tab's lookup, then a request of its page) and has no
-     answer either time.
+     sign-in or sign-out here, another account or none in storage), and then the bar
+     settles signed out until the next one. Three, because a tab restored beside another
+     can lose the refresh to it twice (that tab's lookup, then a request of its page) and
+     has no answer either time.
      The lookup used to repeat for as long as the token kept changing, and a session that
      is stale on every call (a device clock ahead of the server's, a short token lifetime)
      changes it every time: one refresh and one lookup a turn, the bar never painted,
      until the auth service answered 429 for everyone behind that address. */
-  var AUTH_LOOKUPS = 3, AGAIN = {}, authLookups = 0;
+  var AUTH_LOOKUPS = 3, AGAIN = {}, authLookups = 0, authFlight = null;
   function refreshAuthState(again) {
     var attempt = ++authEpoch;
     ++adminEpoch;
@@ -758,7 +761,7 @@
     }
     var exp = Number(payload.exp || 0) * 1000;
     paintAuthState(exp > Date.now(), null, false);
-    return loadCanonicalAuth().then(function (mcc) {
+    var flight = loadCanonicalAuth().then(function (mcc) {
       if (!mcc || typeof mcc.user !== "function") throw new Error("Auth unavailable");
       return mcc.user();
     }).then(function (user) {
@@ -783,6 +786,23 @@
       paintAdmin(false);
       return AUTH_STATE;
     });
+    function landed() { if (authFlight === flight) authFlight = null; }
+    authFlight = flight;
+    flight.then(landed, landed);
+    return flight;
+  }
+  /* THE BAR'S ANSWER FOR WHOEVER IS STORED NOW, for a page that asks (MCC_BAR.refreshAuth) and for another tab's
+     write. The account already on the bar keeps its answer: a lookup in the air is shared and a verified sign-in
+     stands, because a token refreshed for the same account is the same sign-in, not a change. Asking again would
+     refresh the token again wherever a session is stale on every call, and two tabs answered each other for ever.
+     Another account or a sign-out is an auth event and is looked up; so is that account's session while the bar
+     shows signed out (its lookup had no answer), for as long as the same budget lasts. */
+  function currentAuthState() {
+    var stored = currentSubject();
+    if (!stored || stored !== lastVerifiedSubject) return refreshAuthState();
+    if (authFlight) return authFlight;
+    if (AUTH_STATE.verified && !AUTH_STATE.signed_in && authLookups < AUTH_LOOKUPS) return refreshAuthState(AGAIN);
+    return Promise.resolve(AUTH_STATE);
   }
 
   /* ---------- ONE M ACCOUNT, EVERY HOST ----------
@@ -885,7 +905,7 @@
 
   arriveWithHandoff().then(function (carried) { if (!carried) refreshAuthState(); });
   window.addEventListener("storage", function (e) {
-    if (!e || e.key === "mccdb_session" || e.key === "mcc_sess_keep") refreshAuthState();
+    if (!e || e.key === "mccdb_session" || e.key === "mcc_sess_keep") currentAuthState();
   });
   window.addEventListener("mcc:auth-changed", refreshAuthState);
 
@@ -1310,7 +1330,7 @@
     revert: revert,
     peek: peek,
     wing: function () { return wingOn; },
-    refreshAuth: refreshAuthState,
+    refreshAuth: currentAuthState,
     auth: function () { return AUTH_STATE; },
     perspective: function (p) { return arguments.length ? setPerspective(p) : PERSPECTIVE; },
     clearPerspective: clearPerspective,

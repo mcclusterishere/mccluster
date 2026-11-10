@@ -19,7 +19,7 @@ const BAR_ACCOUNT_STATE = '"use strict";\n' + [
   cut('function currentSubject()', 'function readPerspective()'),
   cut('function resolveOwnPerspective(', 'function authDisplay('),            // and readAuthSession, jwtPayload
   cut('function readAdminMemo(', 'window.addEventListener("hashchange", markAdminHere);'), // and checkAdmin
-  cut('function loadCanonicalAuth()', '/* ---------- ONE M ACCOUNT, EVERY HOST'),          // and refreshAuthState
+  cut('function loadCanonicalAuth()', '/* ---------- ONE M ACCOUNT, EVERY HOST'),          // and refreshAuthState, currentAuthState
   cut('arriveWithHandoff().then(', 'var ICONS = {')                           // the boot lookup and both listeners
 ].join('\n');
 
@@ -156,6 +156,7 @@ function profile({ clockAhead = 0, owners = [], refreshLimit = 40 } = {}) {
     vm.runInContext(AUTH, context, { filename: 'js/mcc-auth.js' });
     tab.window = window; tab.MCC = window.MCC;
     tab.state = () => ({ signed_in: context.AUTH_STATE.signed_in, verified: context.AUTH_STATE.verified, user: context.AUTH_STATE.user ? context.AUTH_STATE.user.id : null });
+    tab.ask = () => context.currentAuthState();          // what MCC_BAR.refreshAuth is
     tabs.push(tab);
     vm.runInContext(BAR_ACCOUNT_STATE, context, { filename: 'js/tabbar.js' });   // boots: the first lookup is now in the air
     return tab;
@@ -272,4 +273,153 @@ test('after an account switch during the lookup the bar still has lookups left f
   await device.quiet();
   assert.deepEqual(bar.state(), signedIn('member-2'));
   assert.equal(paintedAs(bar, 'member-1'), false);
+});
+
+/* ---------- the same rule where the bar meets a token it did not refresh itself ---------- */
+
+for (const [who, owners, expected] of [['the owner', ['member-1'], true], ['a member', [], false]]) {
+  test(`the owner check keeps its answer for ${who} when the token was refreshed for the same account meanwhile`, async () => {
+    const device = profile({ clockAhead: HOUR, owners });
+    device.seed('member-1');
+    device.hold('status');
+    const bar = device.open();
+    await device.quiet();
+    assert.deepEqual(bar.state(), signedIn('member-1'));
+    assert.deepEqual(bar.adminPaints, [], 'the owner check is still in the air');
+    await bar.MCC.refresh();                    // another request on the page refreshes the token, as each one does here
+    device.release('status');
+    await device.quiet();
+    assert.deepEqual(bar.adminPaints, [expected], 'the answer is painted, so the navigation is released');
+  });
+}
+
+for (const [what, next] of [['another account', (device) => device.issue('member-2')], ['no session', () => null]]) {
+  test(`the owner check drops its answer when ${what} is stored by the time it lands`, async () => {
+    const device = profile({ owners: ['owner-1'] });
+    device.seed('owner-1');
+    device.hold('status');
+    const bar = device.open();
+    await device.quiet();
+    device.store(next(device));                 // no event: only the stored session says so
+    device.release('status');
+    await device.quiet();
+    assert.equal(bar.adminPaints.includes(true), false, 'the owner bar is never painted for whoever is stored now');
+  });
+}
+
+test('two tabs on a session that is stale on every call do not keep answering each other', async () => {
+  const device = profile({ clockAhead: HOUR });
+  device.seed('member-1');
+  const first = device.open(), second = device.open();
+  await device.quiet();
+  assert.ok(device.counts.refresh <= 6, `three lookups a tab at most, ${device.counts.refresh} refresh requests`);
+  assert.equal(device.counts.user, 2, 'one answer each');
+  assert.deepEqual(first.state(), signedIn('member-1'));
+  assert.deepEqual(second.state(), signedIn('member-1'));
+});
+
+test('a tab that loses the refresh to its neighbour twice still settles signed in', async () => {
+  const device = profile({ clockAhead: HOUR });
+  device.seed('member-1');
+  device.hold('refresh');
+  const first = device.open(), second = device.open();
+  await device.quiet();                         // both lookups have a refresh in the air
+  device.pass('refresh');                       // the first tab's lands and is stored; it signs in
+  await device.quiet();
+  assert.deepEqual(first.state(), signedIn('member-1'));
+  const page = first.MCC.refresh();             // a request of that tab's page refreshes again, as each one does here
+  device.pass('refresh');                       // the second tab's lands on a session it no longer matches: no answer, it asks again
+  await device.quiet();
+  device.pass('refresh');                       // the page's refresh lands and is stored
+  await page;
+  await device.quiet();
+  device.pass('refresh');                       // so the second tab's refresh has lost again: no answer a second time
+  await device.quiet();
+  assert.deepEqual(second.paints.map((paint) => paint.verified), [false, false, false], 'three lookups begun, nothing painted as an answer yet');
+  device.release('refresh');
+  await device.quiet();
+  assert.deepEqual(second.state(), signedIn('member-1'));
+  assert.equal(device.counts.user, 2, 'one answer each');
+});
+
+test('a token another tab refreshed for the account already on the bar asks nothing here', async () => {
+  const device = profile();
+  device.seed('member-1');
+  const first = device.open(), second = device.open();
+  await device.quiet();
+  const before = { ...device.counts }, paints = second.paints.length;
+  await first.MCC.refresh();
+  await device.quiet();
+  assert.equal(device.counts.refresh, before.refresh + 1, 'the one refresh that tab asked for');
+  assert.deepEqual({ ...device.counts, refresh: before.refresh }, before, 'no lookup, no owner check, no profile fetch in the other tab');
+  assert.equal(second.paints.length, paints, 'and nothing repainted there');
+  assert.deepEqual(second.state(), signedIn('member-1'));
+});
+
+test('another tab signing out, or in as someone else, still reaches this bar', async () => {
+  const device = profile();
+  device.seed('member-1');
+  const first = device.open(), second = device.open();
+  await device.quiet();
+  await first.MCC.signInWithPassword('member-2@example.test', 'fixture-password');   // straight over member-1
+  await device.quiet();
+  assert.deepEqual(second.state(), signedIn('member-2'));
+  await first.MCC.signOut();
+  await device.quiet();
+  assert.deepEqual(second.state(), SIGNED_OUT);
+  await first.MCC.signInWithPassword('member-2@example.test', 'fixture-password');
+  await device.quiet();
+  assert.deepEqual(second.state(), signedIn('member-2'));
+  assert.deepEqual(first.state(), signedIn('member-2'));
+});
+
+test('a bar that settled signed out asks again when another tab stores a session for that account', async () => {
+  const device = profile();
+  device.seed('member-1');
+  device.fail('user');
+  const second = device.open();
+  await device.quiet();
+  assert.deepEqual(second.state(), SIGNED_OUT, 'the lookup had no answer');
+  device.fail('user', false);
+  const first = device.open();
+  await device.quiet();
+  assert.deepEqual(first.state(), signedIn('member-1'));
+  await first.MCC.refresh();
+  await device.quiet();
+  assert.deepEqual(second.state(), signedIn('member-1'));
+});
+
+test('a page asking the bar shares the lookup in the air and is not answered by a second one', async () => {
+  const device = profile({ clockAhead: HOUR });
+  device.seed('member-1');
+  device.hold('user');
+  const bar = device.open();
+  await device.quiet();
+  const asked = [bar.ask(), bar.ask()];
+  device.release('user');
+  for (const state of await Promise.all(asked)) assert.deepEqual({ signed_in: state.signed_in, verified: state.verified }, { signed_in: true, verified: true });
+  await device.quiet();
+  assert.deepEqual({ refresh: device.counts.refresh, user: device.counts.user }, { refresh: 1, user: 1 });
+  await bar.ask();
+  await device.quiet();
+  assert.deepEqual({ refresh: device.counts.refresh, user: device.counts.user }, { refresh: 1, user: 1 }, 'a verified sign-in stands');
+});
+
+test('a page asking a bar that shows signed out is looked up again', async () => {
+  const device = profile();
+  device.seed('member-1');
+  device.fail('user');
+  const bar = device.open();
+  await device.quiet();
+  assert.deepEqual(bar.state(), SIGNED_OUT);
+  device.fail('user', false);
+  const state = await bar.ask();
+  assert.deepEqual({ signed_in: state.signed_in, verified: state.verified }, { signed_in: true, verified: true });
+  assert.deepEqual(bar.state(), signedIn('member-1'));
+});
+
+test('pages and other tabs go through the shared rule; a sign-in or sign-out in this tab always asks', () => {
+  assert.match(BAR, /\n    refreshAuth: currentAuthState,\n/);
+  assert.match(BAR, /window\.addEventListener\("storage", function \(e\) \{\n\s*if \(!e \|\| e\.key === "mccdb_session" \|\| e\.key === "mcc_sess_keep"\) currentAuthState\(\);/);
+  assert.match(BAR, /window\.addEventListener\("mcc:auth-changed", refreshAuthState\);/);
 });

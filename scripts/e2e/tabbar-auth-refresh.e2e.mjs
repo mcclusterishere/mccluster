@@ -1,7 +1,7 @@
 // Real browser, local HTTP only. Every auth and API answer is a fixture: no account, no production request or write.
 // The session here is stale on every call, as on a device whose clock runs ahead of the server's: each refreshed
-// token already looks expired, so every MCC.user() and MCC.api() refreshes again. The bar must still ask once
-// and settle.
+// token already looks expired, so every MCC.user() and MCC.api() refreshes again. The bar must still ask once,
+// settle, keep its owner answer when the token moves under it, and not be set off again by another tab.
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { createServer } from 'node:http';
@@ -20,12 +20,14 @@ await new Promise((r) => server.listen(0, '127.0.0.1', r));
 const base = `http://127.0.0.1:${server.address().port}`;
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || '/usr/bin/chromium', args: ['--no-sandbox'] });
 const PAGE = '/privacy.html';   // a public page whose only account lookup is the bar's
+const HOME = '/index.html';     // the front door: its globe embed (js/guest-world.js) asks the bar again on every session write
 const SUB = 'fixture-member';
 const seconds = () => Math.floor(Date.now() / 1000);
 const pause = (ms) => new Promise((r) => setTimeout(r, ms));
 
-/* One browser profile with the stale-on-every-call session already stored, and one page open on it. */
-async function visit() {
+/* One browser profile with the stale-on-every-call session already stored, and `tabs` pages open on it.
+   owner: what GET /v1/status answers. statusDelay holds that answer back so a token refresh can land first. */
+async function visit({ page: path = PAGE, tabs = 1, owner = false, statusDelay = 0 } = {}) {
   let serial = 0;
   const token = () => 'fixture.' + Buffer.from(JSON.stringify({ sub: SUB, email: 'fixture@example.test', exp: seconds() - 5, n: ++serial })).toString('base64url') + '.fixture';
   const counts = { refresh: 0, user: 0, status: 0 }, errors = [];
@@ -36,7 +38,7 @@ async function visit() {
     sessionStorage.setItem('fixture-seeded', '1');
     if (!localStorage.getItem('mccdb_session')) { localStorage.setItem('mccdb_session', session); localStorage.setItem('mcc_sess_keep', session); }
   }, saved);
-  await context.route('**/*', (route) => {
+  await context.route('**/*', async (route) => {
     const u = new URL(route.request().url());
     if (u.origin === base) return route.continue();
     const cors = { 'access-control-allow-origin': '*' };
@@ -45,13 +47,21 @@ async function visit() {
       return route.fulfill({ json: { access_token: token(), refresh_token: 'fixture-refresh-' + counts.refresh, token_type: 'bearer', expires_in: 3600, expires_at: seconds() - 5, user: { id: SUB } }, headers: cors });
     }
     if (u.pathname === '/auth/v1/user') { counts.user++; return route.fulfill({ json: { id: SUB, email: 'fixture@example.test', user_metadata: { name: 'Fixture Member' } }, headers: cors }); }
-    if (u.href === 'https://api.mccluster.org/v1/status') { counts.status++; return route.fulfill({ status: 403, json: { error: 'forbidden' }, headers: cors }); }
+    if (u.href === 'https://api.mccluster.org/v1/status') {
+      counts.status++;
+      if (statusDelay) await pause(statusDelay);
+      return route.fulfill(owner ? { json: { ok: true }, headers: cors } : { status: 403, json: { error: 'forbidden' }, headers: cors }).catch(() => {});
+    }
     return route.abort();
   });
-  const page = await context.newPage();
-  page.on('pageerror', (e) => errors.push(e.message));
-  await page.goto(base + PAGE, { waitUntil: 'domcontentloaded' });
-  return { context, page, counts, errors };
+  const pages = [];
+  for (let i = 0; i < tabs; i++) {
+    const page = await context.newPage();
+    page.on('pageerror', (e) => errors.push(e.message));
+    pages.push(page);
+  }
+  await Promise.all(pages.map((page) => page.goto(base + path, { waitUntil: 'domcontentloaded' })));   // tabs restored together
+  return { context, pages, counts, errors };
 }
 /* The bar has an answer when its state is verified. Unfixed, it never does: it is still asking. */
 async function settled(page, counts) {
@@ -73,17 +83,50 @@ const painted = (page) => page.evaluate(() => ({
 }));
 const SIGNED_IN = { auth: 'in', chip: 'Profile', state: { signed_in: true, verified: true, user: SUB } };
 /* js/shell-boot.js hides the bar until the owner check has an answer, for at most 12 seconds */
-const released = (page) => page.waitForFunction(() => !document.documentElement.classList.contains('mcc-shell-pending'), null, { timeout: 4000 })
-  .catch(() => assert.fail('the bar was still hidden 4 seconds after it settled'));
+const released = (page, ownerBar) => page.waitForFunction((want) => !document.documentElement.classList.contains('mcc-shell-pending') &&
+  document.body.hasAttribute('data-appbar-admin') === want, ownerBar, { timeout: 4000 })
+  .catch(() => assert.fail(`the bar was still hidden, or painted for the wrong role, 4 seconds after the owner check answered (owner bar expected: ${ownerBar})`));
+const lines = [];
 
 try {
+  // One tab: the lookup that used to repeat for ever.
   const one = await visit();
-  await settled(one.page, one.counts);
-  await released(one.page);
-  const after = await quiet(one.counts, 'nothing more is asked once the bar has its answer');
-  assert.deepEqual(after, { refresh: 1, user: 1, status: 1 }, 'one refresh, one account lookup, one owner check');
-  assert.deepEqual(await painted(one.page), SIGNED_IN);
+  await settled(one.pages[0], one.counts);
+  await released(one.pages[0], false);
+  const single = await quiet(one.counts, 'nothing more is asked once the bar has its answer');
+  assert.deepEqual(single, { refresh: 1, user: 1, status: 1 }, 'one refresh, one account lookup, one owner check');
+  assert.deepEqual(await painted(one.pages[0]), SIGNED_IN);
   assert.deepEqual(one.errors, []);
   await one.context.close();
-  console.log(`PASS: with a session that is stale on every call the bar settled signed in and visible after ${after.refresh} refresh and ${after.user} user request, then asked nothing for 1.5 seconds. All auth/API responses synthetic, no production credentials or writes.`);
+  lines.push(`one tab settled signed in and visible after ${single.refresh} refresh and ${single.user} user request, then asked nothing for 1.5 seconds`);
+
+  // The owner check is still in the air when another request on the page refreshes the token: its answer still counts.
+  for (const owner of [true, false]) {
+    const late = await visit({ owner, statusDelay: 700 });
+    await settled(late.pages[0], late.counts);
+    await late.pages[0].evaluate(() => window.MCC.refresh());
+    assert.equal(late.counts.refresh, 2, 'the token moved again under the owner check');
+    await released(late.pages[0], owner);
+    assert.deepEqual(await painted(late.pages[0]), SIGNED_IN);
+    assert.equal(late.counts.status, 1, 'one owner check');
+    assert.deepEqual(late.errors, []);
+    await late.context.close();
+  }
+  lines.push('an owner answer that landed after the token moved again released the bar for the owner (seven tabs) and for a member (three)');
+
+  // Two tabs: each tab's refresh used to make the other look the account up again, through the bar's own storage
+  // listener and, on the home page, through the globe embed asking the bar.
+  for (const [name, path] of [['a plain page', PAGE], ['the home page', HOME]]) {
+    const two = await visit({ page: path, tabs: 2 });
+    for (const page of two.pages) await settled(page, two.counts);
+    const pair = await quiet(two.counts, `two tabs on ${name} do not keep answering each other`);
+    assert.ok(pair.refresh <= 6, `three lookups a tab at most: ${pair.refresh} refresh requests on ${name}`);
+    assert.equal(pair.user, 2, `one answer each on ${name}`);
+    for (const page of two.pages) assert.deepEqual(await painted(page), SIGNED_IN);
+    assert.deepEqual(two.errors, []);
+    await two.context.close();
+    lines.push(`two tabs on ${name} settled signed in after ${pair.refresh} refresh and ${pair.user} user request(s) between them, then asked nothing for 1.5 seconds`);
+  }
+
+  console.log('PASS: with a session that is stale on every call, ' + lines.join('; ') + '. All auth/API responses synthetic, no production credentials or writes.');
 } finally { await browser.close(); server.closeAllConnections(); await new Promise((r) => server.close(r)); }
