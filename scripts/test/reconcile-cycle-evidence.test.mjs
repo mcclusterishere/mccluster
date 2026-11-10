@@ -23,6 +23,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { summarizeReconcileCycles, verifiedReconcileCycle } from '../../core/src/reconciler-source-receipt.mjs';
+import { finalizeRuntimeHealth } from '../../core/src/health-verification.mjs';
 
 const source = readFileSync(new URL('../mccluster-vps-reconcile.sh', import.meta.url), 'utf8');
 const ROOT_CHECK = 'if [[ "${EUID}" -ne 0 ]]; then';
@@ -50,7 +51,12 @@ exit 0
 `,
   rsync: `#!/usr/bin/env bash
 echo "rsync $*" >> "$FIXTURE_STATE/calls.log"
-[[ -e "$FIXTURE_STATE/rsync-drift" ]] && echo ">f.st...... app.mjs"
+# How a real rsync fails: an I/O error, a broken library after an upgrade, an OOM kill. Nothing on stdout.
+if [[ -e "$FIXTURE_STATE/rsync-fails" ]]; then echo 'rsync: [sender] read errors mapping "app.mjs": Input/output error (5)' >&2; exit 23; fi
+if [[ -e "$FIXTURE_STATE/rsync-drift" ]]; then
+  echo ">f.st...... app.mjs"
+  for ((i = 0; i < \${FIXTURE_DRIFT_EXTRA:-0}; i++)); do echo ">f+++++++++ extra-$i.mjs"; done
+fi
 exit 0
 `,
   'ssh-keygen': `#!/usr/bin/env bash
@@ -235,6 +241,44 @@ test('failures keep their exit status and output, name their stage, and never re
   assert.equal(box.json('last-cycle.json').outcome, 'deployed');
   assert.equal(box.file('deployed_sha'), `${stray}\n`);
   assert.notEqual(box.file('last-success.json'), deployMarker);
+});
+
+test('a drift comparison that cannot run fails the cycle at drift_compare and is never recorded as verified', (t) => {
+  const box = host(t);
+  assert.equal(box.run(box.timer('1')).status, 0);
+  const sha = box.git('rev-parse', 'HEAD');
+  const verified = box.file('last-verified-cycle.json');
+  // The live install drifts from the promoted commit, and the one comparison that would see it fails.
+  const edited = 'export const version = 666; // edited on the host\n';
+  writeFileSync(box.p('live-core', 'app.mjs'), edited);
+  writeFileSync(box.p('state', 'rsync-fails'), '');
+  const blind = box.run(box.timer('2'));
+  assert.equal(blind.status, 4, blind.stderr);
+  assert.doesNotMatch(blind.stdout, /already deployed and attested/);
+  assert.deepEqual(blind.stderr.trim().split('\n').slice(-2), [
+    'rsync: [sender] read errors mapping "app.mjs": Input/output error (5)',
+    `drift comparison failed (rsync exit 23); refusing to attest ${sha}`,
+  ]);
+  const last = box.json('last-cycle.json');
+  assert.deepEqual([last.outcome, last.stage, last.exit_code, last.interrupted, last.cycle_id], ['failed', 'drift_compare', 4, false, '2'.repeat(32)]);
+  assert.equal(box.file('last-verified-cycle.json'), verified, 'a comparison that did not run is never a verified cycle');
+  assert.equal(readFileSync(box.p('live-core', 'app.mjs'), 'utf8'), edited, 'and nothing was deployed on it');
+  const summary = summarizeReconcileCycles({ latest: last, verified: JSON.parse(verified), history: box.file('cycles.jsonl') });
+  assert.equal(summary.status, 'failed');
+  const health = finalizeRuntimeHealth({ overall: 'ok', summary: 'system=ok infrastructure=ok', deployment: { deployed_sha: sha, reconcile: summary },
+    degradation: [], health_sections: { infrastructure: { status: 'ok', issues: [] } }, runtime_checks: {} });
+  assert.equal(health.overall, 'degraded');
+  assert.deepEqual(health.degradation.map((item) => [item.code, item.detail.stage, item.detail.exit_code]), [['reconcile_cycle_failed', 'drift_compare', 4]]);
+
+  // Once the comparison runs again it sees the drift and heals it, however long the list of differences is.
+  rmSync(box.p('state', 'rsync-fails'));
+  writeFileSync(box.p('state', 'rsync-drift'), '');
+  const healed = box.run({ ...box.timer('3'), FIXTURE_DRIFT_EXTRA: '20000' });
+  assert.equal(healed.status, 0, healed.stderr);
+  assert.ok(healed.stderr.includes(`runtime drift detected at approved SHA ${sha}: core=>f.st...... app.mjs unit=ok provenance=ok\n`), healed.stderr);
+  assert.match(healed.stdout, new RegExp(`reconciled OVH to ${sha} from deploy/ovh-production\\n$`));
+  assert.equal(readFileSync(box.p('live-core', 'app.mjs'), 'utf8'), 'export const version = 1;\n');
+  assert.deepEqual([box.json('last-cycle.json').outcome, box.json('last-cycle.json').stage], ['deployed', 'complete']);
 });
 
 test('a run that cannot take the lock exits 0 as before and records nothing', (t) => {
