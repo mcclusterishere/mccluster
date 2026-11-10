@@ -1379,6 +1379,368 @@ begin
   return v_result;
 end $$;
 
+-- ---------------------------------------------------------------- member command
+-- Any signed-in account the Worker verified. What the account may do is decided here, per call, by the gates.
+-- Reduce-only actions (withdraw, discard, revoke) check only that the row is the actor's, so a participant can
+-- always leave, whatever happened to the campaign, the grant, the League policy or the module state.
+create function public.eup_league_member_command(p_action text, p_actor uuid, p_id text, p_document jsonb default null, p_revision integer default null, p_key text default null)
+returns jsonb language plpgsql security invoker set search_path = '' set lock_timeout = '5s' as $$
+declare
+  v_deferred constant text[] := array['appeals.open','appeals.withdraw'];
+  v_house uuid; v_act jsonb; v_doc jsonb; v_id uuid; v_id_text text; v_digest text; v_result jsonb; v_policy jsonb;
+  v_rows integer; v_owner boolean; v_mission uuid; v_campaign uuid; v_link uuid; v_holder uuid; v_types jsonb; v_kind text; v_cap integer; v_status text;
+  v_statement text; v_accommodation jsonb; v_entry jsonb; v_media jsonb := '[]'::jsonb; v_manifest jsonb; v_asset text;
+  v_expires timestamptz; v_catalogue jsonb; v_applications jsonb; v_assignments jsonb; v_sign boolean;
+  receipt public.eup_command_receipts%rowtype;
+  c public.eup_campaigns%rowtype; m public.eup_missions%rowtype; a public.eup_applications%rowtype; s public.eup_assignments%rowtype;
+  d public.eup_proof_drafts%rowtype; u public.eup_media_uploads%rowtype; p public.eup_proofs%rowtype; k public.eup_consents%rowtype;
+begin
+  -- 1. The actor: a known account. Nothing in a document can name another one.
+  select oo.id into v_house from public.orgs oo where oo.slug = 'mccluster' limit 1;
+  if p_actor is null or v_house is null or not public.eup_league_actor_known(p_actor) then
+    raise exception 'A signed-in account is required' using errcode = '42501'; end if;
+
+  v_act := public.eup_league_contract(array['actions', 'member', coalesce(p_action, '')]);
+  if v_act is null then raise exception 'Unknown action' using errcode = '22023'; end if;
+  if p_action = any (v_deferred) then raise exception 'not implemented in this pass: %', p_action using errcode = '0A000'; end if;
+  v_doc := coalesce(p_document, '{}'::jsonb);
+  if octet_length(v_doc::text) > (public.eup_league_contract('{limits,document_max_bytes}') #>> '{}')::integer then
+    raise exception 'Document too large' using errcode = '22023'; end if;
+  v_id_text := nullif(p_id, '');
+  if v_id_text is not null then
+    if not coalesce(v_id_text ~* (public.eup_league_contract('{patterns,uuid}') #>> '{}'), false) then raise exception 'Invalid id' using errcode = '22023'; end if;
+    v_id := v_id_text::uuid;
+  elsif v_act ? 'id' then
+    raise exception 'An id is required' using errcode = '22023';
+  end if;
+  v_rows := (public.eup_league_contract('{limits,list,rows}') #>> '{}')::integer;
+
+  -- Reads: never guarded. A participant reads their own records in every campaign, grant and module state.
+  if (v_act ->> 'kind') = 'read' then
+    case p_action
+      when 'me.get' then
+        v_owner := public.eup_league_is_owner(v_house, p_actor);
+        -- The catalogue: released campaigns the actor is in the audience of, with their released missions.
+        select coalesce(jsonb_agg(q.j order by q.created_at, q.id), '[]'::jsonb) into v_catalogue from (
+          select cc.created_at, cc.id, jsonb_build_object('id', cc.id, 'slug', cc.slug, 'title', cc.title, 'purpose', cc.document ->> 'purpose',
+              'state', cc.state, 'audience', cc.audience, 'missions', coalesce((
+                select jsonb_agg(public.eup_league_mission_card(mm, cc.state) order by mm.created_at, mm.id) from public.eup_missions mm
+                 where mm.campaign_id = cc.id and mm.tenant = v_house and mm.state = 'released'), '[]'::jsonb)) as j
+            from public.eup_campaigns cc
+           where cc.tenant = v_house and cc.state = 'released' and (v_owner or (cc.audience = 'invited' and exists (
+                 select 1 from public.eup_campaign_audience_grants gg where gg.campaign_id = cc.id and gg.account = p_actor and gg.state = 'open')))
+           order by cc.created_at, cc.id limit (public.eup_league_contract('{limits,list,campaigns}') #>> '{}')::integer) q;
+        select coalesce(jsonb_agg(q.j order by q.created_at, q.id), '[]'::jsonb) into v_applications from (
+          select aa.created_at, aa.id, public.eup_league_member_application_json(aa) || jsonb_build_object(
+              'mission', public.eup_league_mission_card(mm, cc.state), 'document', aa.document, 'accommodation', aa.accommodation,
+              'decisions', public.eup_league_decisions_json(aa.id, true), 'appeals', '[]'::jsonb) as j
+            from public.eup_applications aa join public.eup_missions mm on mm.id = aa.mission_id join public.eup_campaigns cc on cc.id = mm.campaign_id
+           where aa.tenant = v_house and aa.applicant = p_actor order by aa.created_at, aa.id limit v_rows) q;
+        select coalesce(jsonb_agg(q.j order by q.created_at, q.id), '[]'::jsonb) into v_assignments from (
+          select ss.created_at, ss.id, public.eup_league_assignment_json(ss) || jsonb_build_object(
+              'mission', public.eup_league_mission_card(mm, cc.state),
+              'draft', (select jsonb_build_object('assignment_id', dd.assignment_id, 'revision', dd.revision, 'updated_at', dd.updated_at, 'document', dd.document)
+                  from public.eup_proof_drafts dd where dd.assignment_id = ss.id),
+              'uploads', coalesce((select jsonb_agg(public.eup_league_member_upload_json(uu) order by uu.created_at, uu.id)
+                  from public.eup_media_uploads uu where uu.assignment_id = ss.id and uu.tenant = v_house), '[]'::jsonb),
+              'proof', (select public.eup_league_own_proof_json(pp) from public.eup_proofs pp where pp.assignment_id = ss.id),
+              'credit', (select public.eup_league_credit_json(xx) from public.eup_mission_credits xx where xx.assignment_id = ss.id)) as j
+            from public.eup_assignments ss join public.eup_missions mm on mm.id = ss.mission_id join public.eup_campaigns cc on cc.id = mm.campaign_id
+           where ss.tenant = v_house and ss.participant = p_actor order by ss.created_at, ss.id limit v_rows) q;
+        -- Not available only when the actor is in no released audience AND has no record of their own.
+        if v_catalogue = '[]'::jsonb and v_applications = '[]'::jsonb and v_assignments = '[]'::jsonb then
+          raise exception 'Not released to this account' using errcode = 'EU011'; end if;
+        return jsonb_build_object('actor', p_actor,
+          'policy', (select jsonb_build_object('revision', pp.revision, 'entitlement', pp.document -> 'entitlement', 'media', pp.document -> 'media',
+                'retention', pp.document -> 'retention', 'notices', pp.document -> 'notices')
+              from public.eup_league_policy pp where pp.tenant = v_house and public.eup_league_policy_valid(pp.document)),
+          'catalogue', v_catalogue, 'applications', v_applications, 'assignments', v_assignments,
+          -- Effective publications of the released audience: none exist before the second pass.
+          'published', '[]'::jsonb);
+      when 'uploads.get' then
+        select * into u from public.eup_media_uploads uu where uu.id = v_id and uu.tenant = v_house;
+        if not found then raise exception 'Upload not found' using errcode = 'P0002'; end if;
+        -- The row's participant always reads it. (Second pass: also the released audience of an effective publication.)
+        if u.participant <> p_actor then raise exception 'Not the record of this account' using errcode = '42501'; end if;
+        perform public.eup_league_require_document(v_act ->> 'document', v_doc);
+        v_sign := coalesce((v_doc -> 'sign') = 'true'::jsonb, false);
+        if v_sign then
+          if u.state <> 'sealed' then raise exception 'Upload is not sealed' using errcode = 'EU014'; end if;
+          if exists (select 1 from public.eup_proofs pp where pp.assignment_id = u.assignment_id and pp.moderation_state = 'held') then
+            raise exception 'Proof is held' using errcode = 'EU016'; end if;
+        end if;
+        return public.eup_league_upload_json(u, v_sign);
+      when 'receipts.get' then
+        perform public.eup_league_require_document(v_act ->> 'document', v_doc);
+        v_result := public.eup_league_receipt_json(v_house, p_actor, 'member', v_doc);
+        if v_result is null then raise exception 'Receipt not found' using errcode = 'P0002'; end if;
+        return v_result;
+      else
+        raise exception 'Unknown action' using errcode = '22023';
+    end case;
+  end if;
+
+  -- 2. Idempotency: lock the key, then look. A concurrent duplicate waits here and replays.
+  if p_key is null or not coalesce(p_key ~ (public.eup_league_contract('{patterns,idempotency_key}') #>> '{}'), false) then
+    raise exception 'Idempotency key required' using errcode = '22023'; end if;
+  v_digest := encode(sha256(convert_to(coalesce(lower(v_id_text), '') || '|' || coalesce(p_revision::text, '') || '|' || v_doc::text, 'UTF8')), 'hex');
+  perform pg_advisory_xact_lock(hashtextextended('eup.league.receipt|' || v_house::text || '|' || p_actor::text || '|' || p_action || '|' || p_key, 0));
+  select * into receipt from public.eup_command_receipts rr
+   where rr.tenant = v_house and rr.actor = p_actor and rr.operation = p_action and rr.idempotency_key = p_key;
+  if found then
+    if receipt.payload_digest <> v_digest then raise exception 'Idempotency key reused with a different payload' using errcode = 'EU003'; end if;
+    return receipt.result;
+  end if;
+
+  -- 3. Module state.
+  if (v_act ->> 'guard') = 'reduce' then perform public.eup_module_guard_reduce('league'); else perform public.eup_module_guard('league'); end if;
+
+  -- 4. Rows, in the single lock order (campaign, mission, application, assignment, proof, upload), then
+  -- 5. the gates. The id of the parent rows is read first without a lock: those columns never change.
+  if (v_act ->> 'guard') <> 'reduce' then
+    if (v_act ->> 'id') = 'mission' then
+      v_mission := v_id;
+    elsif (v_act ->> 'id') = 'assignment' then
+      select ss.mission_id into v_mission from public.eup_assignments ss where ss.id = v_id and ss.tenant = v_house;
+    elsif (v_act ->> 'id') = 'proof' then
+      select ss.mission_id, ss.id into v_mission, v_link from public.eup_proofs pp join public.eup_assignments ss on ss.id = pp.assignment_id
+       where pp.id = v_id and pp.tenant = v_house;
+    end if;
+    select mm.campaign_id into v_campaign from public.eup_missions mm where mm.id = v_mission and mm.tenant = v_house;
+    if v_campaign is null then raise exception 'Not found' using errcode = 'P0002'; end if;
+    select * into c from public.eup_campaigns cc where cc.id = v_campaign and cc.tenant = v_house for share;
+    select * into m from public.eup_missions mm where mm.id = v_mission and mm.tenant = v_house for share;
+    if (v_act ->> 'id') = 'assignment' then
+      select * into s from public.eup_assignments ss where ss.id = v_id and ss.tenant = v_house for update;
+    elsif (v_act ->> 'id') = 'proof' then
+      select * into s from public.eup_assignments ss where ss.id = v_link and ss.tenant = v_house for share;
+      select * into p from public.eup_proofs pp where pp.id = v_id and pp.tenant = v_house for update;
+    end if;
+    v_policy := public.eup_league_gate(v_house, p_actor, m.id,
+      case v_act ->> 'id' when 'assignment' then s.participant when 'proof' then p.participant end,
+      (v_act -> 'gates') ? 'media');
+    -- uploads.begin answers the two refusals a client can act on with a hint (415, 413), before the generic check.
+    if p_action = 'uploads.begin' and jsonb_typeof(v_doc) = 'object' then
+      v_types := public.eup_league_contract('{media,types}');
+      if jsonb_typeof(v_doc -> 'mime') = 'string' and (not (v_types ? (v_doc ->> 'mime'))
+          or (jsonb_typeof(v_doc -> 'kind') = 'string' and (v_types -> (v_doc ->> 'mime') ->> 'kind') <> (v_doc ->> 'kind'))) then
+        raise exception 'Media type not allowed' using errcode = '22023', hint = 'media_type_not_allowed'; end if;
+      if jsonb_typeof(v_doc -> 'bytes') = 'number' and (v_doc ->> 'bytes')::numeric > (public.eup_league_contract('{media,hard_max_bytes}') #>> '{}')::numeric then
+        raise exception 'Media too large' using errcode = '22023', hint = 'media_too_large'; end if;
+    end if;
+  end if;
+
+  -- 6. The document and the expected revision, for the gated actions here and for the reduce-only ones after
+  --    their own ownership check (so "not yours" never depends on what was sent).
+  if (v_act ->> 'guard') <> 'reduce' then
+    perform public.eup_league_require_document(v_act ->> 'document', v_doc);
+    if v_act ? 'revision' and (p_revision is null or p_revision < coalesce((v_act ->> 'revision_min')::integer, 1)
+        or p_revision > (public.eup_league_contract('{limits,revision_max}') #>> '{}')::integer) then
+      raise exception 'Expected revision required' using errcode = '22023'; end if;
+    -- Work on an assignment needs it accepted against the CURRENT requirements.
+    if p_action in ('drafts.save', 'uploads.begin', 'proofs.submit') then
+      if s.status in ('completed', 'withdrawn') then raise exception 'Assignment is closed' using errcode = '40001'; end if;
+      if s.status <> 'accepted' or s.accepted_requirements_revision is distinct from m.requirements_revision then
+        raise exception 'Accept the current requirements first' using errcode = 'EU013'; end if;
+    end if;
+  end if;
+
+  case p_action
+    when 'applications.save' then
+      -- p_id is the MISSION. One document for save-as-draft and submit; p_revision 0 means "I have no application yet".
+      select * into a from public.eup_applications aa where aa.mission_id = m.id and aa.applicant = p_actor and aa.tenant = v_house for update;
+      if found then
+        if p_revision <> a.revision then raise exception 'Revision conflict' using errcode = '40001'; end if;
+        if a.status not in ('draft', 'changes_requested', 'submitted', 'withdrawn') or (a.status = 'submitted' and (v_doc -> 'submit') <> 'true'::jsonb) then
+          raise exception 'Application cannot be changed now' using errcode = '40001'; end if;
+      elsif p_revision <> 0 then
+        raise exception 'Revision conflict' using errcode = '40001';
+      end if;
+      -- The applicant names the requirements they were shown; anything but the current revision means "look again".
+      if (v_doc ->> 'requirements_revision')::numeric <> m.requirements_revision then raise exception 'Requirements changed' using errcode = 'EU013'; end if;
+      v_status := case when (v_doc -> 'submit') = 'true'::jsonb then 'submitted' when a.status = 'changes_requested' then 'changes_requested' else 'draft' end;
+      v_statement := case when v_doc ? 'statement' then v_doc ->> 'statement' else coalesce(a.document ->> 'statement', '') end;
+      v_accommodation := case when v_doc ? 'accommodation' then nullif(v_doc -> 'accommodation', 'null'::jsonb) else a.accommodation end;
+      if a.id is not null then
+        -- The row's decision fields describe the decision behind its current status; the history keeps every one.
+        update public.eup_applications aa set status = v_status, requirements_revision = m.requirements_revision,
+            document = jsonb_build_object('statement', v_statement), accommodation = v_accommodation,
+            decided_by = case when v_status = 'changes_requested' then aa.decided_by end,
+            decision_reason = case when v_status = 'changes_requested' then aa.decision_reason end,
+            decided_at = case when v_status = 'changes_requested' then aa.decided_at end,
+            revision = aa.revision + 1, updated_at = now()
+         where aa.id = a.id returning * into a;
+      else
+        insert into public.eup_applications(tenant, mission_id, requirements_revision, applicant, status, document, accommodation)
+          values (v_house, m.id, m.requirements_revision, p_actor, v_status, jsonb_build_object('statement', v_statement), v_accommodation)
+          on conflict (mission_id, applicant) do nothing returning * into a;
+        if not found then raise exception 'Revision conflict' using errcode = '40001'; end if;
+      end if;
+      v_result := public.eup_league_member_application_json(a);
+
+    when 'applications.withdraw' then
+      select * into a from public.eup_applications aa where aa.id = v_id and aa.tenant = v_house for update;
+      if not found then raise exception 'Not found' using errcode = 'P0002'; end if;
+      if a.applicant <> p_actor then raise exception 'Not the record of this account' using errcode = '42501'; end if;
+      perform public.eup_league_require_document(v_act ->> 'document', v_doc);
+      if a.status not in ('draft', 'submitted', 'changes_requested') then raise exception 'Application cannot be withdrawn now' using errcode = '40001'; end if;
+      update public.eup_applications aa set status = 'withdrawn', revision = aa.revision + 1, updated_at = now() where aa.id = a.id returning * into a;
+      v_result := public.eup_league_member_application_json(a);
+
+    when 'assignments.accept' then
+      if p_revision <> s.revision then raise exception 'Revision conflict' using errcode = '40001'; end if;
+      if s.status <> 'offered' then raise exception 'Assignment is not offered' using errcode = '40001'; end if;
+      -- What is accepted is exact: the current requirements revision and the current participation notice revision.
+      if (v_doc ->> 'requirements_revision')::numeric <> m.requirements_revision
+         or (v_doc ->> 'notice_revision') <> (v_policy #>> '{document,notices,participation,revision}') then
+        raise exception 'Requirements or participation notice changed' using errcode = 'EU013'; end if;
+      update public.eup_assignments ss set status = 'accepted', accepted_requirements_revision = m.requirements_revision,
+          accepted_notice_revision = v_doc ->> 'notice_revision', accepted_at = now(), revision = ss.revision + 1, updated_at = now()
+       where ss.id = s.id returning * into s;
+      insert into public.eup_assignment_acceptances(tenant, assignment_id, requirements_revision, notice_revision, actor)
+        values (v_house, s.id, s.accepted_requirements_revision, s.accepted_notice_revision, p_actor);
+      v_result := public.eup_league_assignment_json(s);
+
+    when 'assignments.withdraw' then
+      select * into s from public.eup_assignments ss where ss.id = v_id and ss.tenant = v_house for update;
+      if not found then raise exception 'Not found' using errcode = 'P0002'; end if;
+      if s.participant <> p_actor then raise exception 'Not the record of this account' using errcode = '42501'; end if;
+      perform public.eup_league_require_document(v_act ->> 'document', v_doc);
+      if s.status not in ('offered', 'accepted') then raise exception 'Assignment cannot be withdrawn now' using errcode = '40001'; end if;
+      perform 1 from public.eup_proofs pp where pp.assignment_id = s.id and pp.tenant = v_house for update;
+      -- The seat is freed. The uploads stay until the retention date for withdrawn work.
+      update public.eup_assignments ss set status = 'withdrawn', withdrawn_at = now(), revision = ss.revision + 1, updated_at = now()
+       where ss.id = s.id returning * into s;
+      perform public.eup_league_release_assignments(v_house, array[s.id], p_actor, 'assignment_withdrawn');
+      v_result := public.eup_league_assignment_json(s);
+
+    when 'drafts.save' then
+      -- p_id is the ASSIGNMENT. Full replace of the working copy; p_revision 0 means "no draft yet".
+      select * into d from public.eup_proof_drafts dd where dd.assignment_id = s.id and dd.tenant = v_house for update;
+      if found then
+        if p_revision <> d.revision then raise exception 'Revision conflict' using errcode = '40001'; end if;
+        update public.eup_proof_drafts dd set document = v_doc, revision = dd.revision + 1, updated_at = now() where dd.assignment_id = s.id returning * into d;
+      else
+        if p_revision <> 0 then raise exception 'Revision conflict' using errcode = '40001'; end if;
+        insert into public.eup_proof_drafts(assignment_id, tenant, participant, document) values (s.id, v_house, p_actor, v_doc) returning * into d;
+      end if;
+      v_result := jsonb_build_object('assignment_id', d.assignment_id, 'revision', d.revision, 'updated_at', d.updated_at);
+
+    when 'uploads.begin' then
+      -- Creates the staged row only. The result carries no URL and no path: the Worker signs one upload for the
+      -- path it derives from the row ids.
+      v_kind := v_doc ->> 'kind';
+      if not coalesce((v_policy #> '{document,media,kinds}') ? v_kind, false) or not (v_kind = any (m.proof_modes)) then
+        raise exception 'Media type not allowed' using errcode = '22023', hint = 'media_type_not_allowed'; end if;
+      v_cap := (v_policy #>> array['document', 'media', v_kind || '_max_bytes'])::numeric::integer;
+      if v_cap is null or (v_doc ->> 'bytes')::numeric > v_cap then
+        raise exception 'Media too large' using errcode = '22023', hint = 'media_too_large'; end if;
+      insert into public.eup_media_uploads(tenant, assignment_id, participant, kind, mime, ext, declared_bytes, max_bytes, duration_seconds, expires_at)
+        values (v_house, s.id, p_actor, v_kind, v_doc ->> 'mime', public.eup_league_contract(array['media', 'types', v_doc ->> 'mime', 'ext']) #>> '{}',
+          (v_doc ->> 'bytes')::numeric::integer, v_cap, (v_doc ->> 'duration_seconds')::numeric::integer,
+          now() + make_interval(secs => (public.eup_league_contract('{media,staged_ttl_seconds}') #>> '{}')::integer))
+        returning * into u;
+      v_result := public.eup_league_upload_json(u, false);
+
+    when 'uploads.discard' then
+      select * into u from public.eup_media_uploads uu where uu.id = v_id and uu.tenant = v_house for update;
+      if not found then raise exception 'Not found' using errcode = 'P0002'; end if;
+      if u.participant <> p_actor then raise exception 'Not the record of this account' using errcode = '42501'; end if;
+      perform public.eup_league_require_document(v_act ->> 'document', v_doc);
+      if u.state not in ('staged', 'sealed', 'rejected') then raise exception 'Upload cannot be discarded now' using errcode = '40001'; end if;
+      -- A file the current proof revision lists is evidence under review: withdraw the assignment instead.
+      if exists (select 1 from public.eup_proofs pp join public.eup_proof_media pm on pm.proof_id = pp.id and pm.proof_revision = pp.revision
+                  where pp.assignment_id = u.assignment_id and pm.upload_id = u.id) then
+        raise exception 'Upload is listed by the current proof' using errcode = 'EU014'; end if;
+      update public.eup_media_uploads uu set state = 'discarded', discarded_at = now(), updated_at = now() where uu.id = u.id returning * into u;
+      v_result := public.eup_league_upload_json(u, false);
+
+    when 'proofs.submit' then
+      -- p_id is the ASSIGNMENT; p_revision is the proof revision being replaced, 0 for the first submission.
+      -- The document is the whole proof: the receipt digest then covers exactly what was submitted.
+      select * into p from public.eup_proofs pp where pp.assignment_id = s.id and pp.tenant = v_house for update;
+      if found then
+        if p_revision <> p.revision or p.state not in ('submitted', 'needs_changes') then raise exception 'Revision conflict' using errcode = '40001'; end if;
+      elsif p_revision <> 0 then
+        raise exception 'Revision conflict' using errcode = '40001';
+      end if;
+      if public.eup_league_contract(array['template_rules', m.template]) is null then
+        raise exception 'This mission template has no proof rule' using errcode = '22023'; end if;
+      -- Media: only files this participant uploaded for this assignment, sealed, and with the digest they were shown.
+      for v_entry in select t.e from jsonb_array_elements(coalesce(v_doc -> 'media', '[]'::jsonb)) with ordinality t(e, ord) order by t.ord loop
+        select * into u from public.eup_media_uploads uu where uu.id = (v_entry ->> 'upload_id')::uuid and uu.tenant = v_house for update;
+        if not found or u.assignment_id <> s.id or u.participant <> p_actor or u.state <> 'sealed' or u.sha256 is distinct from (v_entry ->> 'sha256') then
+          raise exception 'An upload is missing, unsealed, foreign, purged or changed' using errcode = 'EU014'; end if;
+        if not (u.kind = any (m.proof_modes)) then raise exception 'This mission does not take that kind of media' using errcode = '22023'; end if;
+        v_media := v_media || jsonb_build_object('upload_id', u.id, 'kind', u.kind, 'mime', u.mime, 'bytes', u.bytes, 'sha256', u.sha256);
+      end loop;
+      if (v_doc ->> 'review_notice_revision') <> (v_policy #>> '{document,notices,private_review,revision}') then
+        raise exception 'The private review notice changed' using errcode = 'EU015'; end if;
+      -- The manifest is built here from validated values and sealed rows, never taken from the caller.
+      v_manifest := jsonb_build_object('schema', public.eup_league_contract('{manifest_schema}'), 'tenant', v_house::text, 'mission_id', m.id::text,
+        'assignment_id', s.id::text, 'requirements_revision', s.accepted_requirements_revision, 'title', v_doc -> 'title', 'lyrics', v_doc -> 'lyrics',
+        'credits', v_doc -> 'credits', 'rights', v_doc -> 'rights', 'media', v_media, 'accommodation', coalesce(v_doc -> 'accommodation', 'null'::jsonb));
+      v_asset := public.eup_league_asset_revision(v_manifest);
+      if p.id is not null then
+        update public.eup_proofs pp set revision = pp.revision + 1, state = 'submitted', asset_revision = v_asset, updated_at = now() where pp.id = p.id returning * into p;
+      else
+        insert into public.eup_proofs(tenant, assignment_id, participant, asset_revision) values (v_house, s.id, p_actor, v_asset) returning * into p;
+      end if;
+      insert into public.eup_proof_revisions(proof_id, revision, tenant, requirements_revision, asset_revision, document, actor)
+        values (p.id, p.revision, v_house, s.accepted_requirements_revision, v_asset, v_doc, p_actor);
+      insert into public.eup_proof_media(proof_id, proof_revision, ordinal, tenant, upload_id, kind, mime, bytes, sha256)
+        select p.id, p.revision, t.ord::integer, v_house, (t.e ->> 'upload_id')::uuid, t.e ->> 'kind', t.e ->> 'mime', (t.e ->> 'bytes')::integer, t.e ->> 'sha256'
+          from jsonb_array_elements(v_media) with ordinality t(e, ord);
+      -- A new revision supersedes the open consents of earlier ones, and submitting IS the private-review consent.
+      update public.eup_consents kk set superseded_at = now()
+       where kk.proof_id = p.id and kk.proof_revision < p.revision and kk.revoked_at is null and kk.superseded_at is null;
+      insert into public.eup_consents(tenant, mission_id, assignment_id, proof_id, proof_revision, asset_revision, actor, purpose, audience, notice_revision)
+        values (v_house, m.id, s.id, p.id, p.revision, v_asset, p_actor, 'private_review', 'reviewers', v_doc ->> 'review_notice_revision') returning * into k;
+      v_result := jsonb_build_object('id', p.id, 'assignment_id', p.assignment_id, 'revision', p.revision, 'state', p.state, 'asset_revision', p.asset_revision,
+        'moderation_state', p.moderation_state, 'publication_state', p.publication_state, 'media', public.eup_league_proof_media_json(p.id, p.revision),
+        'consent', public.eup_league_member_consent_json(k), 'created_at', p.created_at, 'updated_at', p.updated_at);
+
+    when 'consents.grant' then
+      -- p_id is the PROOF; p_revision is the proof revision the consent is for. A consent publishes nothing:
+      -- publication is a separate owner command.
+      if p_revision <> p.revision then raise exception 'Revision conflict' using errcode = '40001'; end if;
+      if p.moderation_state = 'held' then raise exception 'Proof is held' using errcode = 'EU016'; end if;
+      v_expires := (v_doc ->> 'expires_at')::timestamptz;
+      if p.state <> 'accepted' or (v_doc ->> 'asset_revision') <> p.asset_revision
+         or (v_doc ->> 'notice_revision') <> (v_policy #>> '{document,notices,publication,revision}')
+         or v_expires <= now() or v_expires > now() + make_interval(days => (public.eup_league_contract('{limits,consent_max_days}') #>> '{}')::integer) then
+        raise exception 'The consent does not match its exact scope' using errcode = 'EU015'; end if;
+      if exists (select 1 from public.eup_consents kk where kk.proof_id = p.id and kk.purpose = 'publish_proof' and kk.revoked_at is null and kk.superseded_at is null) then
+        raise exception 'A publication consent is already open for this proof' using errcode = '23505'; end if;
+      insert into public.eup_consents(tenant, mission_id, assignment_id, proof_id, proof_revision, asset_revision, actor, purpose, audience, notice_revision, expires_at)
+        values (v_house, m.id, s.id, p.id, p.revision, p.asset_revision, p_actor, 'publish_proof', 'released_audience', v_doc ->> 'notice_revision', v_expires)
+        returning * into k;
+      v_result := public.eup_league_member_consent_json(k);
+
+    when 'consents.revoke' then
+      -- By consent id, at any proof revision, in every campaign, mission, grant and module state.
+      select kk.proof_id, kk.actor into v_link, v_holder from public.eup_consents kk where kk.id = v_id and kk.tenant = v_house;
+      if not found then raise exception 'Not found' using errcode = 'P0002'; end if;
+      if v_holder <> p_actor then raise exception 'Not the record of this account' using errcode = '42501'; end if;
+      perform 1 from public.eup_proofs pp where pp.id = v_link and pp.tenant = v_house for update;
+      select * into k from public.eup_consents kk where kk.id = v_id and kk.tenant = v_house for update;
+      perform public.eup_league_require_document(v_act ->> 'document', v_doc);
+      -- The private-review consent ends with the assignment or a newer revision, never by this command.
+      if k.purpose <> 'publish_proof' then raise exception 'Only a publication consent is revoked by command' using errcode = '22023'; end if;
+      if k.revoked_at is not null or k.superseded_at is not null then raise exception 'Consent is already closed' using errcode = '40001'; end if;
+      update public.eup_consents kk set revoked_at = now(), revoked_by = p_actor where kk.id = k.id returning * into k;
+      -- (Second pass: the publication bound to this consent is withdrawn here, in this transaction.)
+      v_result := public.eup_league_member_consent_json(k) || jsonb_build_object('publication', null);
+
+    else
+      raise exception 'Unknown action' using errcode = '22023';
+  end case;
+
+  insert into public.eup_command_receipts(tenant, actor, surface, operation, idempotency_key, payload_digest, result)
+    values (v_house, p_actor, 'member', p_action, p_key, v_digest, v_result);
+  return v_result;
+end $$;
+
 -- Functions: nothing for public, anon or authenticated; service_role executes them. The three entry points are
 -- eup_league_command, eup_league_member_command and eup_league_media_seal; the rest are the helpers those
 -- SECURITY INVOKER functions call (an invoker function can only call what its caller may execute).
