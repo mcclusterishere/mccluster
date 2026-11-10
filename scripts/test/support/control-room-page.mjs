@@ -305,11 +305,18 @@ export async function openControl({ hash = '#home:today', storage = new Map(), s
     init() {}, renderPanel: () => '', state: { catalog: {} }, loadCatalog: () => Promise.resolve(),
     trackedJobs: () => [], generatedAssets: () => [], handleAction: () => false, bind() {}
   };
+  /* A stand-in for a real Control module: work-tools.js is handed exactly
+     this surface ({ request, supa, render, refresh, getState }) at init. */
+  const moduleApi = {};
+  win.CR.workTools = { init(api) { Object.assign(moduleApi, api); }, render: () => '', bind() {} };
   run('js/control-room-v2.js');
 
   const page = {
     win, storage, sessionStore, fetchLog, errors, holds,
     el: byId,
+    /* What a module holds: Control's request/supa, and its state (getState). */
+    module: moduleApi,
+    state() { return moduleApi.getState ? moduleApi.getState() : {}; },
     get reloads() { return reloads; },
     setTokenMode(mode) { tokenMode = mode; },
     /* Everything this page holds in its DOM: every element's markup and

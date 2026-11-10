@@ -2777,16 +2777,17 @@
   /* The shell's own line: why the page was concealed, or is reloading. */
   function noticeHtml() {
     var n = state.notice; if (!n || !n.text) return "";
-    return '<div class="cr-gap" role="status" data-cr-notice><b>' + esc(n.text) + '</b>' +
-      (authority.reloading ? "" : '<span><button class="cr-btn cr-btn--ghost cr-btn--sm" type="button" data-action="dismiss-notice">Dismiss</button>' +
-        (n.reload ? ' <button class="cr-btn cr-btn--primary cr-btn--sm" type="button" data-action="reload-control">Reload Admin Home</button>' : "") + '</span>') + '</div>';
+    var buttons = (authority.reloading ? "" : '<button class="cr-btn cr-btn--ghost cr-btn--sm" type="button" data-action="dismiss-notice">Dismiss</button> ') +
+      (n.reload || authority.reloading ? '<button class="cr-btn cr-btn--primary cr-btn--sm" type="button" data-action="reload-control">Reload Admin Home</button>' : "");
+    return '<div class="cr-gap" role="status" data-cr-notice><b>' + esc(n.text) + '</b>' + (buttons ? '<span>' + buttons + '</span>' : "") + '</div>';
   }
   function render() {
     renderNav(); renderTopStatus();
     var root = $("crSurface"); if (!root) return;
     var section = state.leaf ? state.leaf.section.id : "home";
-    /* A page reloading for another account shows only why. */
-    if (authority.reloading) { root.innerHTML = '<div class="cr-canvas">' + noticeHtml() + '</div>'; root.setAttribute("data-cr-mount", "notice"); return; }
+    /* A page being replaced shows only why (and a way to reload by hand if
+       the browser held the reload back). */
+    if (authority.reloading) { root.innerHTML = '<div class="cr-canvas">' + noticeHtml() + '</div>'; root.setAttribute("data-cr-mount", "notice"); bindActions(root); return; }
     if (state.loading && !state.status && !state.health && state.surface !== "analytics") root.innerHTML = noticeHtml() + renderLoading();
     /* Analytics keeps its mount between Control Room repaints: it owns its own
        paint, and its globe frame (the 60/40 layout) would reload the Earth on
@@ -4005,12 +4006,14 @@
        outcome (data or failure) is never delivered once the generation has
        moved, so nothing can commit it, and the generation's reads are
        aborted when it ends.
-     - A page that has held one account's data is never reused for another:
-       a sign-out shows the gate, and any sign-in after that, or another
-       account while the page is open, reloads Control. That is the only
-       conceal that also reaches the module caches outside this file
-       (analytics, work records, media and the rest), as switchWorkspace
-       already does for a workspace.
+     - A page that has held one account's data is never reused for another.
+       A sign-out shows the gate. One that no module heard (another tab, a
+       restored page, a session that ended in this tab) also replaces the
+       page, and so does any sign-in after a sign-out, or another account
+       while the page is open. Reloading is the only conceal that also
+       reaches the module caches outside this file (analytics, work records,
+       media and the rest), as switchWorkspace already does for a workspace;
+       the account menu's own sign-out reloads after its in-tab event.
      - A same-account token refresh keeps the subject, so it keeps the
        generation, the reads in flight and the unsent drafts.
      - load() commits only if it is still the newest load of the current
@@ -4102,39 +4105,49 @@
     note(text);
   }
   var NOTICE_KEY = "mcc.control.notice";
-  /* Reloads Control instead of reusing a page that held another account's
-     data. `after` rides across the reload so the next page can say why. */
-  function reloadControl(text, after) {
+  /* Replaces a page that held one account's data instead of reusing it.
+     `after` rides across the reload so the next page can say why; `gate`
+     marks a line that belongs on the sign-in gate only. */
+  function reloadControl(text, after, gate) {
     announce(text);
     if (authority.reloading) return;
     authority.reloading = true;
-    try { if (after) window.sessionStorage.setItem(NOTICE_KEY, JSON.stringify({ text: after, at: Date.now() })); } catch (e) {}
+    try { if (after) window.sessionStorage.setItem(NOTICE_KEY, JSON.stringify({ text: after, gate: Boolean(gate), at: Date.now() })); } catch (e) {}
     try { location.reload(); } catch (e) {}
   }
   function takeCarriedNotice() {
     var raw = null;
     try { raw = window.sessionStorage.getItem(NOTICE_KEY); if (raw) window.sessionStorage.removeItem(NOTICE_KEY); } catch (e) { raw = null; }
     if (!raw) return;
-    try { var carried = JSON.parse(raw); if (carried && carried.text && Date.now() - Number(carried.at || 0) < 120000) announce(String(carried.text)); } catch (e) {}
-    state.error = null;
+    try {
+      var carried = JSON.parse(raw);
+      if (!carried || !carried.text || Date.now() - Number(carried.at || 0) > 120000) return;
+      if (carried.gate) note(String(carried.text));
+      else { announce(String(carried.text)); state.error = null; }
+    } catch (e) {}
   }
   /* Called on every account-lifecycle signal. Returns true when the
      principal changed (or a sign-out was signalled) and the page was
      concealed. */
   function reconcileAuthority(detail) {
-    var now = storedPrincipal();
-    var signedOut = Boolean(detail && detail.signed_in === false);
-    if (!signedOut && now === authority.principal) return false;
+    var now = storedPrincipal(), before = authority.principal;
+    /* An in-tab sign-out event: every module on the page heard it too. */
+    var signalled = Boolean(detail && detail.signed_in === false);
+    if (!signalled && now === before) return false;
     authority.gen += 1; authority.principal = now;
     if (authority.held) authority.spent = true;
     concealPrivateState();
-    if (signedOut || now === null) {
+    if (signalled || now === null) {
       var app = $("crApp"), gate = $("cpGate");
       if (app) app.hidden = true;
       if (gate) gate.hidden = false;
       announce("Signed out. Sign in to open Admin Home.");
+      /* A sign-out no module heard (another tab, a restored page, a session
+         that ended inside this tab) leaves their caches full: replace the page. */
+      if (!signalled && authority.spent) reloadControl("Signed out. Sign in to open Admin Home.", "Signed out. Sign in to open Admin Home.", true);
     } else if (authority.spent) {
-      reloadControl("Account changed. Reloading Admin Home for the account now signed in.", "Account changed. Admin Home was reloaded for the account now signed in.");
+      if (before) reloadControl("Account changed. Reloading Admin Home for the account now signed in.", "Account changed. Admin Home was reloaded for the account now signed in.");
+      else reloadControl("Reloading Admin Home for the account now signed in.");
     }
     try { render(); } catch (e) {}
     return true;
