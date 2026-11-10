@@ -30,6 +30,14 @@ import { collectorEnabled, runScheduledIntelCollectors } from './intel/usgs-coll
 import { recentAudit } from './lib/audit.js';
 import { listObservabilityEvents, observeControlRequest, observeScheduled, pruneObservabilityEvents } from './lib/observability.js';
 
+/* The recovery sweep polls stale open paid jobs and settles them on the
+   provider's definite answer. It is a new scheduled behaviour, so a deploy
+   alone does not start it: it runs only when MEDIA_RECOVERY_SWEEP_ENABLED is
+   "true" (supabase/pending/PROMOTION-ORDER.md says when to set it). */
+export function mediaRecoverySweepEnabled(env) {
+  return String((env && env.MEDIA_RECOVERY_SWEEP_ENABLED) || '').trim().toLowerCase() === 'true';
+}
+
 async function authUser(req, env) {
   const authorization = req.headers.get('authorization') || '';
   if (!authorization.toLowerCase().startsWith('bearer ')) return null;
@@ -531,7 +539,10 @@ async function dispatchRequest(request, env, ctx) {
              never a query string: a signed call carries none. */
           if (url.search) return fail(request, env, 'A Core-signed request carries no query string.', 400);
           const bodyBytes = new Uint8Array(await request.arrayBuffer());
-          await verifyCoreSignature({ request, env, path, bodyBytes });
+          /* Both operator routes claim their nonce in the shared store, the
+             read included: the candidates list crosses organizations, so one
+             captured envelope must not answer again from another isolate. */
+          await verifyCoreSignature({ request, env, path, bodyBytes, mutating: true });
           user = await houseOwnerActor(env);
           if (request.method !== 'GET') operatorRequest = new Request(request, { body: bodyBytes });
         } else {
@@ -611,7 +622,7 @@ export default {
       }),
       /* Open jobs the webhook has not finished, submit markers nobody completed,
          and the recovery candidates as evidence (media/recovery.js). */
-      observeScheduled(env, ctx, 'media.recovery_sweep', () => sweepMediaRecovery(env, { limit: 25 })).then((report) => {
+      (mediaRecoverySweepEnabled(env) ? observeScheduled(env, ctx, 'media.recovery_sweep', () => sweepMediaRecovery(env, { limit: 25 })) : Promise.resolve(null)).then((report) => {
         if (report?.errors?.length) console.error(JSON.stringify({ event: 'media_recovery_sweep_errors', errors: report.errors }));
       }).catch((error) => {
         console.error(JSON.stringify({ event: 'media_recovery_sweep_failed', message: error instanceof Error ? error.message : String(error) }));

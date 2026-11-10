@@ -195,6 +195,25 @@ id) refuses a signed webhook from any other fal account. After apply and deploy:
 `GET /v1/media/recovery` and `POST /v1/media/jobs/:id/reconcile`, and the MCP tools `media.recovery.list` and
 `media.job.reconcile`, each for the house owner's session or McCluster Core's signature.
 
+Read-only on production, 2026-11-10 01:21 UTC: the three checks above returned no duplicate
+(organization, operation id), no duplicate (provider, provider request id) and `NO`. `media_jobs` held 18 rows,
+none with an operation id, all with a provider request id.
+
+Three things to know before the Worker ships:
+
+- **The recovery sweep does not start on deploy.** The five-minute cron runs it only when the Worker variable
+  `MEDIA_RECOVERY_SWEEP_ENABLED` is `"true"`. Leave it unset until the file is applied and the operator surface
+  has been read once; without the sweep, stale open jobs wait for the webhook or an operator decision.
+- **Set both webhook secrets or neither.** fal signs every customer's webhooks with the same keys and the
+  signature does not cover the URL, so with the hint secret alone the per-job token is the only thing that
+  binds a signed webhook to a job. `FAL_WEBHOOK_USER_ID` is the second lock. The token is never written to
+  events: the recorded route stops at `/v1/media/webhooks/fal`.
+- **An operator's reason and evidence are readable by the job's organization.** They are kept on the job row
+  (`routing.operator_resolution` and its history) and in the audit row, both of which the organization's
+  members can read. Write them accordingly and put no secret in them. McCluster Core's signing key carries
+  the same two operator actions for every organization; both signed routes, the read included, claim their
+  nonce in the shared replay store.
+
 ## Names with no SQL anywhere
 
 `live-callers.json` → `missing_everywhere`: the `crm_*` tables

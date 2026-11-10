@@ -58,6 +58,9 @@ function authError(message, status = 401) {
 // need an atomic claim in a SHARED replay store (below), and fail closed when
 // none is configured. Read-only Core GETs keep this cache alone: they spend
 // nothing and the World layers they read are idempotent (documented policy).
+// One read is the exception: the media recovery candidates list crosses
+// organizations, so its caller passes mutating: true and it claims a nonce
+// in the shared store like a write (entry.js).
 const seenNonces = new Map();
 function acceptNonce(nonce, expiresAt, now) {
   for (const [key, expiry] of seenNonces) {

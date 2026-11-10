@@ -1610,9 +1610,16 @@ test('a Core-signed read of the candidates acts as the house owner; a signed cal
   const candidates = { generated_at: 'now', older_than: '00:15:00', counts: {}, by_org: [], candidates: [] };
   const st = plane({ candidates });
   try {
-    const answer = await send(coreSigned('/v1/media/recovery'));
+    const read = coreSigned('/v1/media/recovery');
+    const readAgain = read.clone();
+    const answer = await send(read);
     assert.equal(answer.status, 200);
     assert.deepEqual(answer.body, candidates);
+    /* the list crosses organizations: its envelope is claimed in the shared store and answers once */
+    assert.equal(st.nonces.size, 1, 'the signed read claimed its nonce');
+    __resetCoreNonces(); // another isolate: only the shared store remembers
+    assert.equal((await send(readAgain)).status, 409, 'a captured signed read does not answer again');
+    __resetCoreNonces();
     assert.deepEqual(st.rpcCalls('media_operation_recovery_candidates_v1')[0].body, { p_org_id: null, p_older_than: '15 minutes', p_limit: 50 });
     assert.equal(st.calls.some((call) => call.url.includes('/auth/v1/user')), false);
     /* the signature does not cover a query string, so none is accepted */
@@ -1692,3 +1699,27 @@ test('with no single house owner a Core-signed operator call is 503', async () =
     assert.equal(st.rpcs.length, 0);
   } finally { st.restore(); }
 });
+
+test('a deploy alone does not start the recovery sweep: the cron runs it only when the flag is "true"', async () => {
+  const { mediaRecoverySweepEnabled } = await import('../src/entry.js');
+  for (const value of [undefined, null, '', 'false', '0', 'yes', 'TRUE ']) {
+    assert.equal(mediaRecoverySweepEnabled({ MEDIA_RECOVERY_SWEEP_ENABLED: value }), value === 'TRUE ', JSON.stringify(value));
+  }
+  assert.equal(mediaRecoverySweepEnabled({ MEDIA_RECOVERY_SWEEP_ENABLED: 'true' }), true);
+  assert.equal(mediaRecoverySweepEnabled(undefined), false);
+  /* the scheduled handler: with the flag absent no recovery read or RPC is made */
+  const st = plane();
+  try {
+    seedJob(st);
+    const pending = [];
+    await entry.scheduled({ scheduledTime: Date.UTC(2026, 10, 10, 0, 7) }, coreEnv, { waitUntil(promise) { pending.push(promise); } });
+    await Promise.all(pending);
+    assert.equal(st.rpcCalls('media_operation_recovery_candidates_v1').length, 0, 'no candidates read without the flag');
+    /* and with it, the same tick runs the sweep (so the assertion above is not vacuous) */
+    const running = [];
+    await entry.scheduled({ scheduledTime: Date.UTC(2026, 10, 10, 0, 7) }, { ...coreEnv, MEDIA_RECOVERY_SWEEP_ENABLED: 'true' }, { waitUntil(promise) { running.push(promise); } });
+    await Promise.all(running);
+    assert.ok(st.rpcCalls('media_operation_recovery_candidates_v1').length >= 1, 'the flag starts the sweep');
+  } finally { st.restore(); }
+});
+
