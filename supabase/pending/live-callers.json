@@ -245,7 +245,7 @@
       "kind": "function",
       "pending": "eup_league_v1.sql",
       "callers": [
-        "workers/mccluster/src/eup/league.js"
+        "workers/mccluster/src/eup/league-contract.js"
       ]
     },
     "eup_league_media_seal": {
