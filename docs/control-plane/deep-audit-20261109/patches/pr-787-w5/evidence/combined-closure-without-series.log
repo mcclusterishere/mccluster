@@ -1,0 +1,85 @@
+# combined check WITHOUT the series (PR head cf8c3cc7 unpatched): scratch worktree at cf8c3cc7f642bf7e48a4b5e042df1e24203d2ecf + git merge --no-ff --no-commit claude/new-session-83ken5 (9bda58962d8163fbf34c63c5b03da6246eab13c6); 2026-11-10T11:56:15Z, node v22.23.4
+## merge
+Auto-merging docs/design/equity-uprise-building/production/equity-uprise-repo-source-map-v2.json
+CONFLICT (content): Merge conflict in docs/design/equity-uprise-building/production/equity-uprise-repo-source-map-v2.json
+Auto-merging docs/design/equity-uprise-building/production/generated/equity-uprise-repo-source-coverage-report.json
+CONFLICT (content): Merge conflict in docs/design/equity-uprise-building/production/generated/equity-uprise-repo-source-coverage-report.json
+Automatic merge failed; fix conflicts and then commit the result.
+## unresolved after merge:
+docs/design/equity-uprise-building/production/equity-uprise-repo-source-map-v2.json
+docs/design/equity-uprise-building/production/generated/equity-uprise-repo-source-coverage-report.json
+## resolution 1: source map = union of entries by path (union_source_map.py, index stages 2 and 3)
+{
+ "ours_entries": 640,
+ "theirs_entries": 691,
+ "merged_entries": 696,
+ "added_from_theirs": 56,
+ "same_path_different_entry": [],
+ "header_keys_differing": [
+  "candidate_count",
+  "support_only_count"
+ ]
+}
+## resolution 2: regenerate the coverage report with the verifier on the merged tree
+{
+  "candidate_count": 696,
+  "capability_source_count": 104,
+  "support_only_count": 592,
+  "checks_total": 2682,
+  "checks_passed": 2682,
+  "checks_failed": 0,
+  "passed": true
+}
+verifier exit=0
+## unresolved after resolution:
+## node --test scripts/test/published-import-closure.test.mjs
+TAP version 13
+# Subtest: every literal local dependency of a published module survives the strip
+not ok 1 - every literal local dependency of a published module survives the strip
+  ---
+  duration_ms: 158.232423
+  type: 'test'
+  location: '/tmp/claude-0/-home-user/837dc966-2a9c-597b-ab55-b955b1d35f73/scratchpad/pr-fixes2/wt-w5-merge-base/scripts/test/published-import-closure.test.mjs:103:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    published modules depend on files the publish removes or that do not exist:
+    js/prim3-mission/released-app.mjs -> ../../PRIM3/game/halo/adaptive/topology-learning.mjs (publish strips PRIM3/game/halo/adaptive/topology-learning.mjs)
+    js/prim3-mission/released-learning.mjs -> ../../PRIM3/game/halo/adaptive/topology-learning.mjs (publish strips PRIM3/game/halo/adaptive/topology-learning.mjs)
+    + actual - expected
+    
+    + [
+    +   'js/prim3-mission/released-app.mjs -> ../../PRIM3/game/halo/adaptive/topology-learning.mjs (publish strips PRIM3/game/halo/adaptive/topology-learning.mjs)',
+    +   'js/prim3-mission/released-learning.mjs -> ../../PRIM3/game/halo/adaptive/topology-learning.mjs (publish strips PRIM3/game/halo/adaptive/topology-learning.mjs)'
+    + ]
+    - []
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0: 'js/prim3-mission/released-app.mjs -> ../../PRIM3/game/halo/adaptive/topology-learning.mjs (publish strips PRIM3/game/halo/adaptive/topology-learning.mjs)'
+    1: 'js/prim3-mission/released-learning.mjs -> ../../PRIM3/game/halo/adaptive/topology-learning.mjs (publish strips PRIM3/game/halo/adaptive/topology-learning.mjs)'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///tmp/claude-0/-home-user/837dc966-2a9c-597b-ab55-b955b1d35f73/scratchpad/pr-fixes2/wt-w5-merge-base/scripts/test/published-import-closure.test.mjs:116:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: the generated-recipe compiler ships with its importers (audit W1)
+ok 2 - the generated-recipe compiler ships with its importers (audit W1)
+  ---
+  duration_ms: 0.709916
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 1
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 234.560308
+exit=1

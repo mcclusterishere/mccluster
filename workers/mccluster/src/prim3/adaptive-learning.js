@@ -3,6 +3,7 @@
  * HMAC authenticates evaluator payloads because the existing evidence RLS also permits
  * learners to append self-reported evidence. A hash chain alone does not prove grading.
  */
+import { readReviewedRelease, releaseBinding, routeReviewedReleases, releaseEnabled } from './reviewed-releases.js';
 import { MissionLab, DAY, templates } from '../../../../PRIM3/game/halo/adaptive/engine.mjs';
 export const ADAPTIVE_PACK = 'prim3-coordinate-practice';
 export const ADAPTIVE_SCENARIO = 'PRIM3-RELAY-DISTANCE-V1';
@@ -32,7 +33,7 @@ export async function adaptiveEventId(sessionId, step) {
 }
 function normalEvent(e) {
   if (!e || typeof e !== 'object' || Array.isArray(e)) fail('Event required');
-  return { id: e.id, seq: e.seq, type: e.type, questionId: e.questionId ?? null, answer: e.answer ?? null, outcome: e.outcome ?? null };
+  return { id: e.id, seq: e.seq, type: e.type, questionId: e.questionId ?? null, answer: e.answer ?? null, outcome: e.outcome ?? null, ...(e.checkpointId !== undefined ? {checkpointId:e.checkpointId} : {}) };
 }
 async function bodyOf(req) {
   const reader = req.body?.getReader(); if (!reader) fail('JSON body required');
@@ -65,7 +66,7 @@ async function rebuild(db, env, user, sid, k) {
   const release = events[0].payload;
   if (release.type !== 'release' || release.template_id !== TEMPLATE || !Number.isFinite(release.issued_at)) fail('Invalid release evidence', 409);
   let clock = release.issued_at;
-  const lab = new MissionLab({ clock: () => clock, seed: release.seed });
+  const lab = new MissionLab({ clock: () => clock, seed: release.seed, initialLevel: release.initial_level ?? 1 });
   const principal = { tenant: 'mccluster-house', user: user.id, role: 'owner' };
   const mission = lab.draft(principal, { country: 'US', region: 'Connecticut', templateId: TEMPLATE });
   lab.review(principal, mission.id, { fictionChecked: true, geographyChecked: true }); lab.release(principal, mission.id);
@@ -79,11 +80,36 @@ async function rebuild(db, env, user, sid, k) {
   }
   return { session, events, lab, principal, localId: local.id, setClock: t => { clock = t; } };
 }
+// Bounded recent practice, not a mastery model or credential ledger. Only fully
+// replayed, signed math evidence can seed another session; game outcome adds no points.
+async function progression(db, env, user, k) {
+  const rows = await db(env, `learning_lab_sessions?user_id=eq.${q(user.id)}&pack_id=eq.${ADAPTIVE_PACK}&pack_version=eq.${VERSION}&outcome=in.(completed,abandoned)&order=ended_at.desc,id.desc&limit=11`);
+  const recent = [];
+  for (const row of (rows || []).slice(0, 10)) {
+    const state = await rebuild(db, env, user, row.id, k);
+    const flow = state.lab.view(state.principal, state.localId);
+    if (flow.phase !== 'debrief' || state.session.outcome !== flow.debrief.gameOutcome ||
+      Date.parse(state.session.ended_at) !== state.events.at(-1).payload.received_at)
+      fail('Practice history could not be verified', 409);
+    const initial = state.events[0].payload.initial_level ?? 1;
+    const next = flow.debrief.independent >= 2 ? flow.level : Math.min(initial, flow.level);
+    recent.push({ session_id: row.id, ended_at: state.session.ended_at, next_level: next,
+      attempts: flow.debrief.attempts, correct: flow.debrief.correct, independent: flow.debrief.independent });
+  }
+  return { skill: 'coordinate-distance', next_level: recent[0]?.next_level ?? 1,
+    basis_session_id: recent[0]?.session_id ?? null, recent, window_limit: 10,
+    has_older_sessions: (rows || []).length > 10, competency_credit: false,
+    label: 'Verified recent practice; not a mastery rating or certification.' };
+}
 function response(state, result = null) {
   const flow = state.lab.view(state.principal, state.localId);
   flow.mission.id = state.session.id;
+  const binding=state.events[0].payload.reviewed_release;
+  if(binding) flow.mission.expiresAt=Date.parse(binding.expires_at);
+  const solved=binding ? state.events.filter(e=>e.payload.action?.type==='answer'&&e.payload.result?.correct).length : 0;
   flow.debrief.label = 'Server-validated practice evidence. No Principles credit or certification.';
   return { ok: true, session_id: state.session.id, pack_id: ADAPTIVE_PACK, flow, result,
+    ...(binding?{released_mission:{...binding,next_checkpoint_id:binding.checkpoint_ids[solved]??null,math_checkpoints_completed:solved,tactical_evidence:'browser-reported; not verified completion'}}:{}),
     evidence: { verified: true, event_count: state.events.length, closed: state.session.outcome !== 'in_progress' },
     tactical: { href: 'prim3-transit.html', title: 'Transit / Relay', outcome_source: 'learner-reported' } };
 }
@@ -113,14 +139,23 @@ export async function routeAdaptive(request, env, user, parts, db) {
   const enabled = env.PRIM3_ADAPTIVE_ENABLED === 'true' && typeof env.PRIM3_ADAPTIVE_SIGNING_KEY === 'string' && env.PRIM3_ADAPTIVE_SIGNING_KEY.length >= 32;
   if (parts.length === 0 && request.method === 'GET') return { ok: true, enabled, audience: 'house-owner',
     owner_id: user.id, pack_id: ADAPTIVE_PACK, template_id: TEMPLATE, template: templates[TEMPLATE], mode: 'offline-practice',
-    country: 'US', region: 'Connecticut', availability_hours: 24, max_events: MAX_STEPS, requires_owner_review: true };
+    country: 'US', region: 'Connecticut', availability_hours: 24, max_events: MAX_STEPS, requires_owner_review: true, releases_enabled:releaseEnabled(env) };
   const k = await key(env);
+  if(parts[0]==='releases') return routeReviewedReleases(request,env,user,parts,db,bodyOf);
+  if (parts.length === 1 && parts[0] === 'progress' && request.method === 'GET')
+    return { ok: true, progress: await progression(db, env, user, k) };
   if (parts[0] !== 'sessions') fail('Practice route not found', 404);
   if (parts.length === 1 && request.method === 'POST') {
     const body = await bodyOf(request), sid = String(body.session_id || '').toLowerCase();
     if (!UUID.test(sid) || body.template_id !== TEMPLATE || body.review?.fictionChecked !== true || body.review?.geographyChecked !== true)
       fail('Session ID, approved template and owner review required');
-    let rows = await db(env, `learning_lab_sessions?id=eq.${q(sid)}&user_id=eq.${q(user.id)}&select=*&limit=1`);
+    let reviewedRelease=null;
+    let rows;
+    if(body.release_id!=null){
+      reviewedRelease=await readReviewedRelease(db,env,user,body.release_id);
+      const claimed=await db(env,'rpc/prim3_release_claim',{method:'POST',body:{p_owner:user.id,p_release:reviewedRelease.id,p_session:sid,p_seed:crypto.getRandomValues(new Uint32Array(1))[0]%2**31}});
+      rows=[claimed];
+    } else rows = await db(env, `learning_lab_sessions?id=eq.${q(sid)}&user_id=eq.${q(user.id)}&select=*&limit=1`);
     if (!rows?.length) {
       try { rows = await db(env, 'learning_lab_sessions', { method: 'POST', prefer: 'return=representation', body: {
         id: sid, user_id: user.id, pack_id: ADAPTIVE_PACK, pack_version: VERSION, scenario_id: ADAPTIVE_SCENARIO,
@@ -136,8 +171,9 @@ export async function routeAdaptive(request, env, user, parts, db) {
       const issued = Date.parse(rows[0].started_at);
       if (!Number.isSafeInteger(Number(rows[0].seed)) || Number(rows[0].seed) < 0 || Number(rows[0].seed) >= 2 ** 31) fail('Invalid session seed', 409);
       if (!Number.isFinite(issued) || issued > Date.now() || Date.now() - issued >= DAY) fail('Session release is unavailable', 409);
+      const progress = await progression(db, env, user, k);
       const payload = await seal(k, { version: VERSION, type: 'release', session_id: sid, user_id: user.id,
-        template_id: TEMPLATE, issued_at: issued, seed: Number(rows[0].seed), review: { fictionChecked: true, geographyChecked: true }, scope: 'mccluster-house' });
+        template_id: TEMPLATE, issued_at: issued, seed: Number(rows[0].seed), initial_level: progress.next_level, basis_session_id: progress.basis_session_id, review: { fictionChecked: true, geographyChecked: true }, scope: 'mccluster-house', ...(reviewedRelease?{reviewed_release:releaseBinding(reviewedRelease)}:{}) });
       try { await insertEvent(db, env, user, sid, 0, payload); }
       catch (error) { if (!(await eventRows(db, env, user, sid)).length) throw error; }
     }
@@ -155,6 +191,14 @@ export async function routeAdaptive(request, env, user, parts, db) {
     await closeIfFinished(state, db, env); return response(state, prior.payload.result);
   }
   if (state.session.outcome !== 'in_progress') fail('Session is closed', 409);
+  const binding=state.events[0].payload.reviewed_release;
+  if(binding){
+    const release=await readReviewedRelease(db,env,user,binding.id,{available:true});
+    if(release.recipe_hash!==binding.recipe_hash)fail('Release identity mismatch',409);
+    const solved=state.events.filter(e=>e.payload.action?.type==='answer'&&e.payload.result?.correct).length;
+    if(['answer','hint'].includes(action.type)&&(!binding.checkpoint_ids[solved]||action.checkpointId!==binding.checkpoint_ids[solved]))fail('Current released checkpoint required',409);
+    if(action.type==='finish'&&action.outcome==='completed'&&solved!==binding.checkpoint_ids.length)fail('Complete the math checkpoints or save an abandoned debrief',409);
+  }
   if (!Number.isSafeInteger(action.seq) || action.seq < 1 || action.seq > MAX_STEPS || (action.seq === MAX_STEPS && action.type !== 'finish')) fail('Finish this bounded practice session', 409);
   if (['answer', 'hint', 'finish'].includes(action.type) && !state.lab.view(state.principal, state.localId).tacticalHandoff) fail('Record the tactical handoff before assessment', 409);
   const received = Date.now();

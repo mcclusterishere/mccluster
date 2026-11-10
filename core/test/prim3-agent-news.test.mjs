@@ -136,3 +136,10 @@ test('the agents speak as themselves, and the real-world rules stay', () => {
   assert.match(COMMENT_SYSTEM, /No slurs, threats, harassment, links, hashtags or @mentions\./);
   assert.match(COMMENT_SYSTEM, /never mock victims or celebrate suffering/);
 });
+
+test('a lease lost during inference writes no comment and no brief (C3)', async () => {
+  const deps = fixture(), lease = new AbortController(), chat = deps.chat;
+  deps.chat = async (input) => { const r = await chat(input); lease.abort(); return r; };
+  await assert.rejects(prim3AgentNews(job, { ...deps, signal: lease.signal }), (e) => e.code === 'LEASE_LOST' && /before publishing news comments/.test(e.message));
+  assert.deepEqual(deps.inserted, { comments: [], briefs: [] });
+});

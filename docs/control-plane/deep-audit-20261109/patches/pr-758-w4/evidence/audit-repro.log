@@ -1,0 +1,20 @@
+# lane w4, head 027efd52bde35d4a90c26915140fed3ef98cd582, base 90ce7c4ce2
+# the packet's audit-details/repro-chem-auth.mjs, unmodified (sha256 0bc077dac3b855c18b5a265cbc8f1d4fdfea75dd1052f9342048a92e38791a99)
+# trial.mjs sha256: c940d76d1f1c8948e3d823bcd59772225d3e65895f71642ff7eb4638fe85f33e
+## against the PR head's module (git show 90ce7c4ce2:js/game-hub/chem108/trial.mjs): the script asserts the defect, so exit 0 means the defect is present
+{"localSessionPresent":false,"expiredTrial":true,"heading":"Welcome back","start":"Play Chemistry","sourceRef":"90ce7c4ce2debf02586bc52672e3813faff2eac5"}
+exit=0
+## against the committed head's module: the script's defect assertion now fails
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
++ 'Continue with an M Account'
+- 'Welcome back'
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 'Continue with an M Account',
+  expected: 'Welcome back',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+Node.js v22.23.4
+exit=1

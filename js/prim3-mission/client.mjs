@@ -7,6 +7,7 @@ export function createPracticeClient({ fetchImpl = globalThis.fetch, token, stor
   let scope = null, key = null, data = { sessionId: null, pending: null }, current = null, busy = false, maxEvents = 0;
   const mustFinish = () => Boolean(current && current.flow.nextSeq >= maxEvents);
   const mustAnswer = () => Boolean(current && current.flow.nextSeq === maxEvents - 1 && !current.flow.debrief.attempts);
+  const releaseId = () => current?.released_mission?.id || data.pending?.body?.release_id || null;
   const persist = () => { if (key) storage.setItem(key, JSON.stringify(data)); };
   function clear() { if (key) storage.removeItem(key); data = { sessionId: null, pending: null }; current = null; }
   async function request(method, path, body) {
@@ -47,10 +48,11 @@ export function createPracticeClient({ fetchImpl = globalThis.fetch, token, stor
       if (data.sessionId) current = await request('GET', `/sessions/${data.sessionId}`);
       return { config, current };
     },
-    start(review) {
+    start(review, { releaseId } = {}) {
       if (data.sessionId) throw new Error('Continue the current session.');
       if (review?.fictionChecked !== true || review?.geographyChecked !== true) throw new Error('Complete both owner review checks first.');
-      return queue('/sessions', { session_id: crypto.randomUUID(), template_id: 'relay-distance-v1', review });
+      if (releaseId !== undefined && !UUID.test(releaseId)) throw new Error('Release UUID required.');
+      return queue('/sessions', { ...(releaseId ? {release_id:releaseId}:{}), session_id: crypto.randomUUID(), template_id: 'relay-distance-v1', review });
     },
     submit(type, fields = {}) {
       if (!current) throw new Error('Start the reviewed mission first.');
@@ -60,6 +62,27 @@ export function createPracticeClient({ fetchImpl = globalThis.fetch, token, stor
       return queue(`/sessions/${current.session_id}/events`, { ...fields, id: crypto.randomUUID(), seq: current.flow.nextSeq,
         type, questionId: current.flow.question?.id ?? null });
     },
+    newPractice() {
+      if (busy || data.pending || current?.flow?.phase !== 'debrief' || current?.evidence?.closed !== true)
+        throw new Error('Save and acknowledge your debrief before starting another practice.');
+      clear();
+    },
+    async leaveUnavailableRelease() {
+      if (busy) throw new Error('Wait for the pending request to finish.');
+      const id = releaseId();
+      if (!id || !UUID.test(id)) throw new Error('No reviewed mission to leave.');
+      busy = true;
+      try {
+        // Only an authenticated server response can authorize local detachment.
+        // No event is deleted or completed; historical receipts remain on the server.
+        const out = await request('GET', `/releases/${id}`);
+        if (out.release?.id !== id || out.release.available !== false)
+          throw new Error('This mission is still available. Continue it or save its debrief.');
+        clear();
+      } finally { busy = false; }
+    },
+    get releaseId() { return releaseId(); },
+    progress: () => request('GET', '/progress'),
     retry, clear,
     get current() { return current; },
     get pending() { return data.pending !== null; },

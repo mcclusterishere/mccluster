@@ -49,3 +49,9 @@ test('profile and directory pages cannot become news reactions',()=>{
   {...article,canonical_url:'not a URL'},
  ]) assert.equal(isNewsCandidate(candidate),false);
 });
+test('a lease lost during inference stops before the publisher (C3)',async()=>{
+ const deps=fixture(),lease=new AbortController(),chat=deps.chat;
+ deps.chat=async(input)=>{const r=await chat(input);lease.abort();return r;};
+ await assert.rejects(actorNewsComment(job,{...deps,signal:lease.signal}),(e)=>e.code==='LEASE_LOST'&&/before publishing a comment/.test(e.message));
+ assert.equal(deps.calls.some(c=>c.url==='rpc/ops_actor_publish_comment'),false);
+});

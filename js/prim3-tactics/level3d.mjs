@@ -655,8 +655,18 @@ export function createLevel3D(host, { level, onTap, onHover = null, onDoubleTap 
       const loader = new GLTFLoader();
       for (const [role, file] of list) { try { glbs[role] = await loader.loadAsync(new URL(file, MODEL_ROOT).href); } catch (e) { /* stand-in stays */ } }
       if (destroyed) return;
-      for (const [id, a] of actors) { unitsGroup.remove(a.g); actors.delete(id); }
-      if (model) update(model);
+      // Models can arrive during a walk or shot. Replace only the visual, not
+      // the actor/group that owns its pose and pending animation callback.
+      // Replaying update(model) here would also reset a walk to the old board
+      // snapshot while transit.play() waits for that walk to finish.
+      for (const a of actors.values()) {
+        const role = a.unit.faction === 'PLAYER' ? a.unit.role : 'H';
+        if (!glbs[role]) continue; // failed/missing models keep their stand-ins
+        const replacement = makeActor(a.unit);
+        a.g.clear(); a.g.add(...replacement.g.children);
+        a.rig = replacement.rig;
+      }
+      needs = true;
     } catch (e) { /* stand-ins */ }
   }
 

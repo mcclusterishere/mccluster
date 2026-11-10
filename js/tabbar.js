@@ -750,22 +750,44 @@
   window.addEventListener("hashchange", markAdminHere);
   function loadCanonicalAuth() {
     if (window.MCC && typeof window.MCC.user === "function") return Promise.resolve(window.MCC);
-    return new Promise(function (resolve, reject) {
-      var existing = document.querySelector('script[data-mcc-auth-loader]');
-      if (existing) {
-        existing.addEventListener("load", function () { resolve(window.MCC); }, { once: true });
-        existing.addEventListener("error", reject, { once: true });
-        return;
-      }
+    if (authLoader) return authLoader;
+    if (authLoaderAttempts >= AUTH_LOADER_MAX_ATTEMPTS) return Promise.reject(new Error("auth loader gave up after " + authLoaderAttempts + " attempts"));
+    authLoaderAttempts += 1;
+    /* One shared attempt with a terminal state. A failed attempt removes its
+       script node and clears the shared promise, so the next focus/restore
+       recheck appends a fresh script instead of listening on a node whose
+       load/error event has already fired and will never repeat (audit A5). */
+    authLoader = new Promise(function (resolve, reject) {
+      var stale = document.querySelector('script[data-mcc-auth-loader]');
+      if (stale) { try { if (stale.parentNode) stale.parentNode.removeChild(stale); } catch (e) {} }
       var script = document.createElement("script");
+      var done = false, timer = null;
+      function finish(err) {
+        if (done) return;
+        done = true;
+        if (timer) clearTimeout(timer);
+        script.onload = null; script.onerror = null;
+        if (!err && !(window.MCC && typeof window.MCC.user === "function")) err = new Error("auth loader exported no MCC");
+        if (err) {
+          try { if (script.parentNode) script.parentNode.removeChild(script); } catch (e) {}
+          authLoader = null;
+          reject(err);
+          return;
+        }
+        resolve(window.MCC);
+      }
       script.src = ROOT + "js/mcc-auth.js?v=__STAMP__";
       script.async = true;
       script.setAttribute("data-mcc-auth-loader", "1");
-      script.onload = function () { resolve(window.MCC); };
-      script.onerror = reject;
+      script.onload = function () { finish(null); };
+      script.onerror = function (e) { finish(e instanceof Error ? e : new Error("auth loader failed")); };
+      timer = setTimeout(function () { finish(new Error("auth loader timed out")); }, AUTH_LOADER_DEADLINE_MS);
       document.head.appendChild(script);
     });
+    return authLoader;
   }
+  var authLoader = null, authLoaderAttempts = 0;
+  var AUTH_LOADER_MAX_ATTEMPTS = 5, AUTH_LOADER_DEADLINE_MS = 20000;
   function refreshAuthState() {
     var attempt = ++authEpoch;
     ++adminEpoch;
@@ -856,26 +878,38 @@
     var hash = location.hash || "";
     var m = /(?:^#|&)mcc_handoff=([^&]*)/.exec(hash);
     if (!m) return Promise.resolve(false);
-    var token = decodeURIComponent(m[1] || "");
+    var token = null;
+    try { token = decodeURIComponent(m[1] || ""); } catch (e) { token = null; }
     var rest = hash.replace(/(?:^#|&)mcc_handoff=[^&]*/, "");
     if (rest === "#") rest = "";
     try { history.replaceState(null, "", location.pathname + location.search + rest); } catch (e) {}
-    if (!token || readAuthSession()) return Promise.resolve(false);
-    return fetch(API_ORIGIN + "/v1/auth/handoff", { method: "POST", headers: { authorization: "Bearer " + token, "content-type": "application/json" }, body: "{}" })
-      .then(function (r) { return r.ok ? r.json() : Promise.reject(new Error("handoff refused")); })
+    /* A malformed fragment is a finished handoff with a clear outcome, never
+       an exception out of the bar's initialisation. */
+    if (!token) { emit("mcc:handoff", { ok: false, reason: "malformed" }); return Promise.resolve(false); }
+    /* A usable account already on this host wins over an arriving one. Only a
+       stored session that can no longer be used (expired with nothing to
+       refresh it) may be replaced, and even then only if nothing changes it
+       while the handoff is verified. */
+    var existing = readAuthSession();
+    if (existing && storedSessionUsable(existing)) return Promise.resolve(false);
+    var before = sessionSlots();
+    return boundedFetchJson(API_ORIGIN + "/v1/auth/handoff", { method: "POST", headers: { authorization: "Bearer " + token, "content-type": "application/json" }, body: "{}" }, "handoff refused")
       .then(function (j) {
         if (!j || !j.token_hash) throw new Error("no token");
-        return fetch(SB_URL + "/auth/v1/verify", { method: "POST", headers: { apikey: SB_KEY, "content-type": "application/json" }, body: JSON.stringify({ type: "magiclink", token_hash: j.token_hash }) });
+        return boundedFetchJson(SB_URL + "/auth/v1/verify", { method: "POST", headers: { apikey: SB_KEY, "content-type": "application/json" }, body: JSON.stringify({ type: "magiclink", token_hash: j.token_hash }) }, "verify refused");
       })
-      .then(function (r) { return r.ok ? r.json() : Promise.reject(new Error("verify refused")); })
       .then(function (s) {
         if (!s || !s.access_token) throw new Error("no session");
+        /* The commit boundary (audit A2): if either canonical slot changed
+           while the two requests were in flight, a newer sign-in or sign-out
+           on this host has won and the late handoff is dropped. */
+        var now = sessionSlots();
+        if (now.main !== before.main || now.keep !== before.keep) throw Object.assign(new Error("account changed during handoff"), { reason: "account_changed" });
         var session = JSON.stringify({
           access_token: s.access_token, refresh_token: s.refresh_token || "",
           expires_at: Number(s.expires_at) || Math.floor(Date.now() / 1000) + (Number(s.expires_in) || 3600)
         });
-        localStorage.setItem("mccdb_session", session);
-        try { localStorage.setItem("mcc_sess_keep", session); } catch (e) {}
+        if (!writeSessionSlots(session, before)) throw Object.assign(new Error("session storage unavailable"), { reason: "storage" });
         /* NO SECOND PAINT (owner, 2026-10-20: no screen flashes). A page that can take the session where it stands says so
            by cancelling mcc:handoff (js/mnet.js, the World, which waited for it); it then hears the ordinary sign-in event
            and nothing reloads. Every other page reloads signed in, as before. */
@@ -883,7 +917,43 @@
         location.reload();
         return true;
       })
-      .catch(function () { emit("mcc:handoff", { ok: false }); return false; });
+      .catch(function (e) { emit("mcc:handoff", { ok: false, reason: (e && e.reason) || "failed" }); return false; });
+  }
+  function rawSlot(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
+  function sessionSlots() { return { main: rawSlot("mccdb_session"), keep: rawSlot("mcc_sess_keep") }; }
+  /* Expired with no refresh token is the only stored session a handoff may
+     replace. Anything that still has an access token and either no expiry,
+     a future expiry or a refresh token stays: mcc-auth.js owns renewing it. */
+  function storedSessionUsable(s) {
+    if (!s || !s.access_token) return false;
+    var exp = Number(s.expires_at);
+    if (!exp) return true;
+    if (exp > Math.floor(Date.now() / 1000)) return true;
+    return !!s.refresh_token;
+  }
+  /* Paired write with rollback: both canonical slots change together or not
+     at all, restoring exactly what was there before. */
+  function writeSessionSlots(session, before) {
+    try { localStorage.setItem("mccdb_session", session); } catch (e) { return false; }
+    try { localStorage.setItem("mcc_sess_keep", session); }
+    catch (e) {
+      try { if (before.main === null) localStorage.removeItem("mccdb_session"); else localStorage.setItem("mccdb_session", before.main); } catch (e2) {}
+      return false;
+    }
+    return true;
+  }
+  var HANDOFF_DEADLINE_MS = 15000;
+  /* Headers and body are both covered by one deadline, so a stalled body
+     read cannot leave the handoff pending forever. */
+  function boundedFetchJson(url, init, refusal) {
+    return new Promise(function (resolve, reject) {
+      var done = false;
+      var timer = setTimeout(function () { if (!done) { done = true; reject(Object.assign(new Error("handoff timed out"), { reason: "timeout" })); } }, HANDOFF_DEADLINE_MS);
+      Promise.resolve().then(function () { return fetch(url, init); })
+        .then(function (r) { return r.ok ? r.json() : Promise.reject(new Error(refusal)); })
+        .then(function (v) { if (!done) { done = true; clearTimeout(timer); resolve(v); } },
+              function (e) { if (!done) { done = true; clearTimeout(timer); reject(e); } });
+    });
   }
   /* ON THE WORLD'S HOST, A LINK TO ONE OF MATTHEW'S ROOMS LOOKS SAME-ORIGIN
      (album.html, creator.html, a receipt), and the Worker would 301 it to his

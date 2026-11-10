@@ -286,3 +286,16 @@ test('news desk card: asks the owner-only route with the session and never witho
   assert.deepEqual(await loadDesk('JP', { storage: { getItem: () => null }, fetchImpl: async () => { called = true; } }), { error: 'signed-out' });
   assert.equal(called, false);
 });
+
+test('a late globe-ready never rebuilds the editor under the owner\'s caret (only the country list refreshes)', () => {
+  /* PR #793 tactics job, 1280px: the globe finished loading while Playwright was filling the
+     briefing; renderSide() replaced the textarea and the typed briefing never reached the draft. */
+  const app = read('js/prim3-world/app.mjs');
+  const ready = app.slice(app.indexOf('globe.ready.then('), app.indexOf('.catch((e) => { document.body.dataset.pwGlobe'));
+  assert.match(ready, /if \(ui\.mode === 'edit'\) refreshCountryOptions\(\);/, 'edit mode refreshes the country options in place');
+  assert.doesNotMatch(ready, /renderSide\(\)|renderEditor\(\)|render\(\)/, 'and never re-renders the side panel from the globe event');
+  const refresh = app.slice(app.indexOf('function refreshCountryOptions()'), app.indexOf('function renderEditor()'));
+  assert.match(refresh, /\$\('pwF-country'\)/, 'it targets the country select');
+  assert.match(refresh, /sel\.innerHTML = countryOptionsHtml\(list, m\.country\.code\)/, 'and only replaces its options, keeping the current country selected');
+  assert.doesNotMatch(refresh, /innerHTML = `<|pwSide|pwF-briefing|pwF-title/, 'without touching any other field');
+});

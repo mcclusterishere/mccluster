@@ -75,7 +75,7 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import path from 'node:path';
 
 const root = new URL('../../', import.meta.url).pathname;
@@ -213,39 +213,62 @@ export function deployedDefinitions() {
   return defs;
 }
 
+// Applied by receipt, awaiting evidence: a migration file whose version is in
+// supabase/production-ledger.json (the live ledger as last read) but whose names
+// are not yet in BOTH the reset manifest and a production snapshot, because
+// neither could be regenerated at import time (2026-11-09: three releases were
+// applied outside the CI reset; see docs/control-plane/evidence/releases-2026-11-09/).
+// Such names are listed under "applied_awaiting_evidence" with the migration and
+// the receipt; the entry fails once evidence has them, so this list only shrinks.
+export const LEDGER_FILE = 'supabase/production-ledger.json';
+export function ledgerVersions() {
+  const ledger = JSON.parse(readFileSync(path.join(root, LEDGER_FILE), 'utf8'));
+  return new Set((ledger.migrations || []).map((m) => String(m.version)));
+}
+export function ledgerAppliedDefinitions() {
+  const versions = ledgerVersions();
+  return definitionsIn(sqlFilesIn('supabase/migrations', (f) => versions.has(f.slice(0, 14))));
+}
+
 export function classify() {
   const applied = deployedDefinitions();
+  const ledgerApplied = ledgerAppliedDefinitions();
   const pending = definitionsIn(sqlFilesIn('supabase/pending', (f) => !f.endsWith('.rollback.sql')));
   const pendingOnly = [];
   for (const kind of ['function', 'table', 'bucket']) {
     for (const name of pending[kind].keys()) if (!applied[kind].has(name) && name.length >= 5) pendingOnly.push({ kind, name });
+    /* applied-by-receipt names get the same literal second pass until evidence catches up */
+    for (const name of ledgerApplied[kind].keys()) if (!applied[kind].has(name) && name.length >= 5) pendingOnly.push({ kind, name });
   }
   const calls = extractCalls(shippedFiles(), pendingOnly);
-  const report = { applied: [], pending_only: {}, missing_everywhere: {} };
+  const report = { applied: [], applied_awaiting_evidence: {}, pending_only: {}, missing_everywhere: {} };
   for (const { kind, name, callers } of calls.values()) {
     if (applied[kind].has(name)) { report.applied.push(`${kind}:${name}`); continue; }
     const entry = { kind, callers: [...callers].sort() };
-    if (pending[kind].has(name)) {
+    if (ledgerApplied[kind].has(name)) {
+      entry.migration = [...ledgerApplied[kind].get(name)].map((f) => f.replace(/^supabase\/migrations\//, '')).sort();
+      report.applied_awaiting_evidence[name] = entry;
+    } else if (pending[kind].has(name)) {
       entry.pending = [...pending[kind].get(name)].map((f) => f.replace(/^supabase\/pending\//, '')).sort();
       report.pending_only[name] = entry;
     } else {
       report.missing_everywhere[name] = entry;
     }
   }
-  return { applied, pending, calls, report };
+  return { applied, ledgerApplied, pending, calls, report };
 }
 
 const ALLOWLIST = path.join(root, 'supabase', 'pending', 'live-callers.json');
 
 function loadAllowlist() {
   const parsed = JSON.parse(readFileSync(ALLOWLIST, 'utf8'));
-  for (const section of ['pending_only', 'missing_everywhere']) {
+  for (const section of ['pending_only', 'missing_everywhere', 'applied_awaiting_evidence']) {
     assert.equal(typeof parsed?.[section], 'object', `live-callers.json must have a "${section}" object`);
   }
   return parsed;
 }
 
-const { applied, pending, calls, report } = classify();
+const { applied, ledgerApplied, pending, calls, report } = classify();
 if (process.env.RPC_NAMES_REPORT) console.log(JSON.stringify(report, null, 2));
 
 test('the extraction sees the shipped call sites', () => {
@@ -266,6 +289,13 @@ test('every name shipped code calls is in the applied migration history, or allo
       failures.push(`${name}: live-callers.json says kind ${listed.kind}, the code calls it as a ${entry.kind}`);
     }
   }
+  for (const [name, entry] of Object.entries(report.applied_awaiting_evidence)) {
+    const listed = allow.applied_awaiting_evidence[name];
+    if (!listed) failures.push(`${entry.kind} ${name} is defined by applied migration supabase/migrations/${entry.migration.join(' | ')} (version in ${LEDGER_FILE}) but the reset manifest and production snapshot do not show it yet, and it is called by ${entry.callers.join(', ')}: regenerate supabase/schema-manifest.json and capture a production snapshot, or record it under applied_awaiting_evidence in supabase/pending/live-callers.json with its receipt`);
+    else if (!entry.migration.includes(listed.migration)) failures.push(`${entry.kind} ${name}: live-callers.json names migration ${listed.migration} but it is defined in ${entry.migration.join(' | ')}`);
+    else if (listed.kind !== entry.kind) failures.push(`${name}: live-callers.json says kind ${listed.kind}, the code calls it as a ${entry.kind}`);
+    else if (typeof listed.receipt !== 'string' || !existsSync(path.join(root, listed.receipt))) failures.push(`${name}: applied_awaiting_evidence needs a receipt path that exists (got ${listed.receipt})`);
+  }
   for (const [name, entry] of Object.entries(report.missing_everywhere)) {
     const listed = allow.missing_everywhere[name];
     if (!listed) failures.push(`${entry.kind} ${name} is called by ${entry.callers.join(', ')} but no migration, replay or pending SQL defines it: write the SQL, or record it under missing_everywhere in supabase/pending/live-callers.json`);
@@ -284,6 +314,14 @@ test('live-callers.json only shrinks: every entry is still unapplied, still call
     const pendingFiles = pending[kind].get(name);
     if (!pendingFiles || !pendingFiles.has(`supabase/pending/${listed.pending}`)) failures.push(`${name}: supabase/pending/${listed.pending} does not define a ${kind} of that name`);
     if (!calls.has(`${kind}:${name}`)) failures.push(`${name} is no longer called by shipped code: remove it from pending_only`);
+  }
+  for (const [name, listed] of Object.entries(allow.applied_awaiting_evidence)) {
+    const kind = listed?.kind;
+    if (!['function', 'table', 'bucket'].includes(kind)) { failures.push(`${name}: kind must be function, table or bucket`); continue; }
+    if (applied[kind].has(name)) failures.push(`${name} is now deployed with evidence (${[...applied[kind].get(name)].join(', ')}): remove it from applied_awaiting_evidence`);
+    const files = ledgerApplied[kind].get(name);
+    if (!files || !files.has(`supabase/migrations/${listed.migration}`)) failures.push(`${name}: supabase/migrations/${listed.migration} does not define a ${kind} of that name, or its version is not in ${LEDGER_FILE}`);
+    if (!calls.has(`${kind}:${name}`)) failures.push(`${name} is no longer called by shipped code: remove it from applied_awaiting_evidence`);
   }
   for (const [name, listed] of Object.entries(allow.missing_everywhere)) {
     const kind = listed?.kind;
