@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <!-- Environmental Justice League member page (owner default D1, 2026-11-09: a new page, linked from no navigation).
+       Not indexed and not in any sitemap. It shows only a neutral "not available" state until
+       GET https://api.mccluster.org/v1/eup/member/league answers ok for the signed-in account; the Worker and the
+       database decide that on every request, and nothing on this page grants anything. The module that draws it,
+       js/eup-league-member.js, mounts on the one [data-eup-league-member] element below. -->
+  <title>Equity Uprise</title>
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#0b0a09">
+  <link rel="icon" type="image/png" href="/assets/img/m-mark.png">
+  <link rel="stylesheet" href="/css/eup-league-member.css?v=__STAMP__">
+  <script src="/js/live-content.js?v=__STAMP__"></script>
+</head>
+<body class="eul-page">
+  <nav class="eul-top" aria-label="Account">
+    <a class="eul-top__link" href="/account.html">Your account</a>
+  </nav>
+  <main class="eul" id="eulMount" data-eup-league-member>
+    <section class="eul-neutral" aria-labelledby="eulTitle">
+      <h1 id="eulTitle">Not available</h1>
+      <p>Nothing on this page is available here.</p>
+      <noscript><p>This page needs JavaScript.</p></noscript>
+    </section>
+  </main>
+  <script src="/js/backend.js?v=__STAMP__"></script>
+  <script src="/js/eup-league-capture.js?v=__STAMP__"></script>
+  <script src="/js/eup-league-member.js?v=__STAMP__"></script>
+</body>
+</html>
