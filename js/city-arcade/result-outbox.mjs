@@ -2,11 +2,11 @@
 // accepted. It is deliberately separate from the per-location gameplay session keys so that a
 // local restart, apply, load or new cloud start can never erase an outstanding receipt (W2).
 // Entries are immutable once written; they leave only through an accepted server receipt
-// (settleResult) or an explicit, confirmed user discard (discardResult).
+// (settleResult) or an explicit, confirmed user discard (discardResult). There is no size cap:
+// an unacknowledged receipt is never evicted to make room for a newer one.
 export const RESULT_OUTBOX_PREFIX='here.city-arcade.result-outbox.v1:';
 export const START_INTENT_PREFIX='here.city-arcade.start-intent.v1:';
 const UUID=/^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
-const MAX_ENTRIES=10;
 export function accountScope(){
   try{const s=JSON.parse(localStorage.getItem('mccdb_session')||'null');const id=s?.user?.id||s?.user_id||s?.id;return typeof id==='string'&&id?id:'device';}catch{return 'device';}
 }
@@ -19,15 +19,15 @@ function validEntry(e){
 export function readOutbox(scope=accountScope()){
   try{const list=JSON.parse(localStorage.getItem(outboxKey(scope))||'[]');return Array.isArray(list)?list.filter(validEntry):[];}catch{return [];}
 }
-function write(scope,list){try{if(list.length)localStorage.setItem(outboxKey(scope),JSON.stringify(list.slice(-MAX_ENTRIES)));else localStorage.removeItem(outboxKey(scope));}catch{}}
+function write(scope,list){try{if(list.length)localStorage.setItem(outboxKey(scope),JSON.stringify(list));else localStorage.removeItem(outboxKey(scope));return true;}catch{return false;}}
 // Idempotent: the same run id is stored once; a different body for the same id is refused so a
-// receipt can never be rewritten after the fact.
+// receipt can never be rewritten after the fact. True only when the receipt is actually stored.
 export function enqueueResult(scope,entry){
   if(!validEntry(entry))return false;
   const list=readOutbox(scope),existing=list.find(e=>e.id===entry.id);
   if(existing)return JSON.stringify(existing.body)===JSON.stringify(entry.body);
   list.push({id:entry.id,game:entry.game,locationId:entry.locationId,body:JSON.parse(JSON.stringify(entry.body)),createdAt:new Date().toISOString()});
-  write(scope,list);return true;
+  return write(scope,list);
 }
 export function settleResult(scope,id){write(scope,readOutbox(scope).filter(e=>e.id!==id));}
 export function discardResult(scope,id){settleResult(scope,id);}

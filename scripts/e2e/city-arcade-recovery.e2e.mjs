@@ -59,16 +59,21 @@ try {
   revoked=true;await page.reload();await mount();
   await page.waitForFunction(()=>document.querySelector('[data-sole-cloud-status]').textContent.startsWith('Cloud missions unavailable'));
   assert.equal(await page.locator('[data-sole-retry]').isDisabled(),true);
+  // While the cloud refuses, the waiting result offers a usable Reconnect and a Discard on screen.
+  await page.locator('summary').click();
+  assert.equal(await page.locator('[data-sole-reconnect]').isVisible(),true,'reconnect is offered while the cloud refuses');
+  assert.equal(await page.locator('[data-sole-reconnect]').isEnabled(),true,'reconnect is usable while the cloud refuses');
+  assert.equal(await page.locator('[data-sole-discard]').isVisible(),true,'discard is offered while a result waits');
   // After the local restart above the gameplay save is a fresh ready run; the receipt is owned by the outbox.
   assert.deepEqual((await outbox())[0]?.body,pending.pending.body);assert.equal((await outbox())[0]?.id,pending.cloudRun);
-  revoked=false;await page.reload();await mount();await page.locator('summary').click();
-  await page.waitForFunction(()=>document.querySelector('[data-sole-cloud-status]').textContent.startsWith('Completed run restored'));
-  await page.locator('[data-sole-retry]').click();
+  // Access returns: Reconnect alone, without a reload, re-checks the cloud and saves the waiting result.
+  revoked=false;await page.locator('[data-sole-reconnect]').click();
   await page.waitForFunction(()=>document.querySelector('[data-sole-cloud-status]').textContent.includes('Practice result saved'));
+  for(const control of ['[data-sole-reconnect]','[data-sole-retry]','[data-sole-discard]'])assert.equal(await page.locator(control).isHidden(),true,control+' hidden once saved');
   // The accepted receipt leaves the outbox; the fresh local ready run from the restart above is unaffected.
   assert.deepEqual(await outbox(),[]);assert.equal(JSON.parse(await page.evaluate(key=>localStorage.getItem(key),key))?.pending??null,null);
   const rows=await database.db.query('select id from arcade_runs where id=$1 and actor=$2',[pending.cloudRun,OWNER]);
   assert.equal(rows.rows.length,1);assert.equal(finishes,2);assert.deepEqual(errors,[]);
-  await context.close();console.log('PASS',width,'accepted-response loss, reload, revoked denial and idempotent retry');
+  await context.close();console.log('PASS',width,'accepted-response loss, reload, revoked denial, reconnect and idempotent retry');
  }
 }finally{await browser.close();await database.close();}
