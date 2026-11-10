@@ -143,7 +143,7 @@
     capacity_exhausted: 'No seat is free.'
   };
   var MALFORMED_REQUEST = ['json_required', 'body_required', 'invalid_json', 'body_too_large', 'idempotency_key_required', 'expected_revision_required'];
-  var UNKNOWN_503 = ['storage_unavailable', 'authorization_unavailable', 'unavailable'];
+  var UNKNOWN_503 = ['storage_unavailable', 'authorization_unavailable']; // the contract's 503 reasons that may hide a write
   var SEND_AGAIN = ['module_busy', 'module_policy_changed', 'retry_conflict'];
   var READ_AGAIN = ['revision_conflict', 'requirements_changed', 'not_available', 'media_binding', 'consent_scope', 'moderation_hold', 'exists'];
   var MODULE_NOTES = ['module_draining', 'module_disabled', 'module_not_installed', 'module_policy_unavailable'];
@@ -253,7 +253,8 @@
     var saved = a && a.draft && a.draft.document && typeof a.draft.document === 'object' ? a.draft.document : null;
     var proofDoc = a && a.proof && a.proof.document && typeof a.proof.document === 'object' ? a.proof.document : null;
     var d = saved || proofDoc || {};
-    var media = list(d.media).map(function (m) { return typeof m === 'string' ? m : (m && m.upload_id) || null; }).filter(function (x) { return typeof x === 'string'; });
+    var media = list(d.media).map(function (m) { return typeof m === 'string' ? m : (m && m.upload_id) || null; }).filter(function (x) { return typeof x === 'string'; })
+      .map(function (x) { return x.toLowerCase(); }); // an id is compared in lower case, whatever another client stored
     var credits = list(d.credits).map(function (c) { return { name: c && typeof c.name === 'string' ? c.name : '', role: c && typeof c.role === 'string' ? c.role : '' }; });
     var acc = d.accommodation && typeof d.accommodation === 'object' ? d.accommodation : null;
     return {
@@ -349,8 +350,8 @@
   function outcomeBlock(model, slot) {
     var o = model.outcomes[slot];
     if (!o) return '';
-    var html = note(o.kind, o.text, ' data-eul-outcome="' + esc(slot) + '"');
-    if (o.resend && o.command) html += '<div class="eul-actions"><button type="button" class="eul-btn" data-eul-act="resend" data-slot="' + esc(slot) + '" data-eul-focus="resend:' + esc(slot) + '">Send the same request again</button></div><p class="eul-fine">It carries the same key, so the League records it at most once. Only this account can send it.</p>';
+    var html = note(o.kind, o.text, ' data-eul-outcome="' + esc(slot) + '" tabindex="-1" data-eul-focus="outcome:' + esc(slot) + '"');
+    if (o.resend && o.command) html += '<div class="eul-actions"><button type="button" class="eul-btn" data-eul-act="resend" data-slot="' + esc(slot) + '" data-eul-focus="resend:' + esc(slot) + '">Send the same request again</button></div><p class="eul-fine">It carries the same key and the content of the first attempt, so the League records it at most once. Only this account can send it.</p>';
     else if (o.check && o.command) html += '<div class="eul-actions"><button type="button" class="eul-btn" data-eul-act="check" data-slot="' + esc(slot) + '" data-eul-focus="check:' + esc(slot) + '">Check again</button></div>';
     return html;
   }
@@ -400,7 +401,7 @@
       list(c.missions).forEach(function (m) {
         var app = applicationFor(me, m.id);
         var slot = 'app:' + m.id;
-        html += '<article class="eul-card" data-eul-mission="' + esc(m.id) + '"><h3>' + esc(m.title) + '</h3><p class="eul-fine">' + esc(seatsText(m)) + '</p>' + missionBody(m) +
+        html += '<article class="eul-card" data-eul-mission="' + esc(m.id) + '"><h3 tabindex="-1" data-eul-card-head>' + esc(m.title) + '</h3><p class="eul-fine">' + esc(seatsText(m)) + '</p>' + missionBody(m) +
           '<div class="eul-actions">' + (app ? '<p class="eul-status">Your application: <strong>' + esc(APP_STATUS[app.status] || app.status) + '</strong>.</p>' +
             (['draft', 'submitted', 'changes_requested', 'withdrawn'].indexOf(app.status) >= 0 ? button('apply-open', app.status === 'withdrawn' ? 'Apply again' : app.status === 'submitted' ? 'Change application' : 'Continue application', { data: ' data-mission="' + esc(m.id) + '"', focus: 'apply:' + m.id }, blocked, 'apply-' + m.id) : '')
             : button('apply-open', 'Apply', { primary: true, data: ' data-mission="' + esc(m.id) + '"', focus: 'apply:' + m.id }, blocked, 'apply-' + m.id)) + '</div>' +
@@ -439,7 +440,7 @@
       var m = app.mission || {};
       var withdrawable = ['draft', 'submitted', 'changes_requested'].indexOf(app.status) >= 0;
       var editable = ['draft', 'submitted', 'changes_requested', 'withdrawn'].indexOf(app.status) >= 0 && m.open === true;
-      return '<article class="eul-card" data-eul-application="' + esc(app.id) + '"><h3>' + esc(m.title || 'Mission') + '</h3>' +
+      return '<article class="eul-card" data-eul-application="' + esc(app.id) + '"><h3 tabindex="-1" data-eul-card-head>' + esc(m.title || 'Mission') + '</h3>' +
         '<p class="eul-status">Status: <strong>' + esc(APP_STATUS[app.status] || app.status) + '</strong> · last changed ' + esc(when(app.updated_at)) + (app.recorded ? ' · recorded for you by the League' : '') + '</p>' +
         (m.open === false ? '<p class="eul-muted">This mission is ' + esc(m.state === 'paused' ? 'paused' : m.state === 'withdrawn' ? 'withdrawn' : 'not open') + ': new work is stopped. Your record stays here.</p>' : '') +
         (app.accommodation_requested ? '<p class="eul-fine">You asked for an accommodation. Only the house owner deciding can read it, and each reading is recorded.</p>' : '') +
@@ -470,12 +471,16 @@
     var html = '<fieldset class="eul-choices"><legend>How will you send your song?</legend>' +
       '<p class="eul-fine">Each way is reviewed the same way and earns the same completion credit.</p><div class="eul-choice-row">';
     var busy = (cs && ['requesting', 'recording', 'stopping'].indexOf(cs.state) >= 0) || (up && up.phase !== 'done');
+    /* choosing a file while the device request waits ends that request (useFile releases it), so the upload stays open
+       then; while a take records or an upload runs it waits, and says why */
+    var fileWait = (cs && (cs.state === 'recording' || cs.state === 'stopping')) || (up && up.phase !== 'done') ? 'Finish or cancel the current take first.' : null;
     ['audio', 'video'].forEach(function (kind) {
       if (kinds.indexOf(kind) < 0) return;
       if (canRecord(kind)) html += button('record', kind === 'audio' ? 'Record audio' : 'Record video', { data: ' data-assignment="' + esc(a.id) + '" data-kind="' + kind + '"', focus: 'record:' + kind + ':' + a.id }, busy ? 'Finish or cancel the current take first.' : null, 'rec-' + kind + '-' + a.id);
     });
     if (media && kinds.length) {
-      html += '<label class="eul-btn eul-file" data-eul-focus-wrap><input type="file" class="eul-file__input" accept="' + esc(kinds.map(function (k) { return k + '/*'; }).join(',')) + '" data-eul-bind="file" data-assignment="' + esc(a.id) + '" data-eul-focus="file:' + esc(a.id) + '"' + (busy ? ' disabled' : '') + '><span>Upload a file</span></label>';
+      html += '<label class="eul-btn eul-file" data-eul-focus-wrap' + (fileWait ? ' aria-disabled="true"' : '') + '><input type="file" class="eul-file__input" accept="' + esc(kinds.map(function (k) { return k + '/*'; }).join(',')) + '" data-eul-bind="file" data-assignment="' + esc(a.id) + '" data-eul-focus="file:' + esc(a.id) + '"' + (fileWait ? ' disabled aria-describedby="eulWhy-file-' + esc(a.id) + '"' : '') + '><span>Upload a file</span></label>' +
+        (fileWait ? '<span class="eul-why" id="eulWhy-file-' + esc(a.id) + '">' + esc(fileWait) + '</span>' : '');
     }
     html += button('path', 'Write a statement instead', { data: ' data-assignment="' + esc(a.id) + '" data-path="statement"', focus: 'path:statement:' + a.id }, null, 'pst-' + a.id) + '</div>';
     if (!media) html += '<p class="eul-muted">Recording and file uploads are not switched on in the League right now. The written statement is open.</p>';
@@ -487,7 +492,8 @@
       else if (cs.state === 'unsupported') html += note('refused', 'Recording is not available in this browser. You can upload a file instead, or write a statement.');
       else if (cs.state === 'error' && cs.error && cs.error.name === 'EmptyTake') html += note('refused', 'The take was too short to hold any sound, so nothing was kept. Record again, upload a file, or write a statement.');
       else if (cs.state === 'error') html += note('refused', 'The recording stopped with an error, so nothing was kept. Try again, upload a file, or write a statement.');
-      else if (cs.state === 'requesting') html += note('pending', 'Asking for the ' + (cs.kind === 'video' ? 'camera and microphone' : 'microphone') + '…');
+      else if (cs.state === 'requesting') html += note('info', 'Asking for the ' + (cs.kind === 'video' ? 'camera and microphone' : 'microphone') + '… Answer your browser, or cancel.') +
+        '<div class="eul-actions">' + button('cancel-take', 'Cancel', { data: ' data-assignment="' + esc(a.id) + '"', focus: 'cancel-take:' + a.id }, null, 'ctq-' + a.id) + '</div>';
       else if (cs.state === 'recording' || cs.state === 'stopping') {
         html += '<div class="eul-take" data-eul-recording>' + (cs.kind === 'video' ? '<video class="eul-camera" muted playsinline autoplay data-eul-live aria-label="Camera preview"></video>' : '') +
           '<p class="eul-rec"><span class="eul-rec__dot" aria-hidden="true"></span><strong>Recording</strong> <span data-eul-rec-time>' + esc(cs.seconds) + ' s</span>' + (cs.maxSeconds ? ' of at most ' + esc(cs.maxSeconds) + ' s' : '') + '</p>' +
@@ -496,9 +502,9 @@
       } else if (cs.state === 'preview') {
         var uploading = up && (up.phase === 'begin' || up.phase === 'put' || up.phase === 'seal');
         html += '<div class="eul-take" data-eul-preview><h4>' + (cs.source === 'file' ? 'Your file' : 'Your take') + '</h4>' +
-          (cs.kind === 'video' ? '<video class="eul-player" controls playsinline preload="metadata" data-eul-preview-player></video>' : '<audio class="eul-player" controls preload="metadata" data-eul-preview-player></audio>') +
+          (cs.kind === 'video' ? '<video class="eul-player" controls playsinline preload="metadata" data-eul-preview-player aria-label="' + (cs.source === 'file' ? 'Your file' : 'Your new take') + ', video"></video>' : '<audio class="eul-player" controls preload="metadata" data-eul-preview-player aria-label="' + (cs.source === 'file' ? 'Your file' : 'Your new take') + ', audio"></audio>') +
           '<p class="eul-fine">' + esc((cs.source === 'file' && cs.name ? cs.name + ' · ' : '') + cs.kind + ' · ' + root.MCC_LEAGUE_CAPTURE.megabytes(cs.bytes) + (cs.seconds ? ' · ' + cs.seconds + ' s' : '')) + '. It stays on this device until you send it.</p>' +
-          (uploading ? '<div class="eul-progress" data-eul-progress><label><span data-eul-progress-text>' + esc(up.phase === 'begin' ? 'Preparing the upload…' : up.phase === 'seal' ? 'Checking the stored file…' : 'Uploading: ' + up.pct + '%') + '</span>' +
+          (uploading ? '<div class="eul-progress" data-eul-progress tabindex="-1" data-eul-focus="progress:' + esc(a.id) + '"><label><span data-eul-progress-text>' + esc(up.phase === 'begin' ? 'Preparing the upload…' : up.phase === 'seal' ? 'Checking the stored file…' : 'Uploading: ' + up.pct + '%') + '</span>' +
             '<progress max="100" value="' + esc(up.pct) + '" data-eul-progress-bar></progress></label>' + (up.phase === 'put' ? '<div class="eul-actions">' + button('upload-cancel', 'Cancel the upload', { data: ' data-assignment="' + esc(a.id) + '"', focus: 'upload-cancel:' + a.id }, null, 'uc-' + a.id) + '</div>' : '') + '</div>'
             : '<div class="eul-actions">' + button('use-take', cs.source === 'file' ? 'Send this file' : 'Send this take', { primary: true, data: ' data-assignment="' + esc(a.id) + '"', focus: 'use-take:' + a.id }, w.doc.media.length >= MAX.media ? 'At most three takes can be in one submission; remove one below first.' : null, 'ut-' + a.id) +
               (cs.source === 'recording' ? button('retake', 'Retake', { data: ' data-assignment="' + esc(a.id) + '"', focus: 'retake:' + a.id }, null, 'rt-' + a.id) : '') +
@@ -515,21 +521,23 @@
     if (!shown.length && !gone) return '';
     var html = '<div class="eul-uploads"><h4>Your takes</h4>';
     if (shown.length) {
-      html += '<ul class="eul-list">' + shown.map(function (u) {
+      html += '<ul class="eul-list">' + shown.map(function (u, i) {
         var chosen = w.doc.media.indexOf(u.id) >= 0, player = model.players[u.id];
-        var line = '<li data-eul-upload="' + esc(u.id) + '" data-eul-upload-state="' + esc(u.state) + '"><strong>' + esc(u.kind === 'video' ? 'Video' : 'Audio') + '</strong> · ' + esc(u.mime) + ' · ' + esc(root.MCC_LEAGUE_CAPTURE.megabytes(u.bytes || u.declared_bytes || 0)) + ' · ';
+        /* each take's controls are described by its own line, and its player named, so a screen reader can tell takes apart */
+        var lineId = 'eulTake-' + u.id, about = ' aria-describedby="' + esc(lineId) + '"', name = 'Take ' + (i + 1) + ', ' + (u.kind === 'video' ? 'video' : 'audio');
+        var line = '<li data-eul-upload="' + esc(u.id) + '" data-eul-upload-state="' + esc(u.state) + '"><span id="' + esc(lineId) + '" data-eul-take-line><strong>' + esc(name) + '</strong> · ' + esc(u.mime) + ' · ' + esc(root.MCC_LEAGUE_CAPTURE.megabytes(u.bytes || u.declared_bytes || 0)) + ' · ';
         if (u.state === 'sealed') {
-          line += 'Sealed ' + esc(when(u.sealed_at)) + '<br><span class="eul-fp">Fingerprint (SHA-256): <code data-eul-fingerprint>' + esc(u.sha256) + '</code></span>' +
+          line += 'Sealed ' + esc(when(u.sealed_at)) + '</span><br><span class="eul-fp">Fingerprint (SHA-256): <code data-eul-fingerprint>' + esc(u.sha256) + '</code></span>' +
             '<span class="eul-fine">The League checked the file’s type and size and fixed this fingerprint. That is not a malware scan.</span>';
-          line += (u.kind === 'video' ? '<video class="eul-player" controls playsinline preload="none" data-eul-player="' + esc(u.id) + '"' + (player ? '' : ' hidden') + '></video>' : '<audio class="eul-player" controls preload="none" data-eul-player="' + esc(u.id) + '"' + (player ? '' : ' hidden') + '></audio>');
-          line += '<div class="eul-actions">' + button('play', player ? 'Load again' : 'Play', { data: ' data-upload="' + esc(u.id) + '"', focus: 'play:' + u.id }, null, 'pl-' + u.id) +
-            (w.path === 'media' ? '<label class="eul-check"><input type="checkbox" data-eul-bind="choose" data-assignment="' + esc(a.id) + '" data-upload="' + esc(u.id) + '" data-eul-focus="choose:' + esc(u.id) + '"' + (chosen ? ' checked' : '') + '><span>In my submission</span></label>' : '') +
-            button('discard', 'Remove', { data: ' data-upload="' + esc(u.id) + '" data-assignment="' + esc(a.id) + '"', focus: 'discard:' + u.id }, null, 'dc-' + u.id) + '</div>';
+          line += (u.kind === 'video' ? '<video class="eul-player" controls playsinline preload="none" data-eul-player="' + esc(u.id) + '" aria-label="' + esc(name) + '"' + (player ? '' : ' hidden') + '></video>' : '<audio class="eul-player" controls preload="none" data-eul-player="' + esc(u.id) + '" aria-label="' + esc(name) + '"' + (player ? '' : ' hidden') + '></audio>');
+          line += '<div class="eul-actions">' + button('play', player ? 'Load again' : 'Play', { data: ' data-upload="' + esc(u.id) + '"' + about, focus: 'play:' + u.id }, null, 'pl-' + u.id) +
+            (w.path === 'media' ? '<label class="eul-check"><input type="checkbox" data-eul-bind="choose" data-assignment="' + esc(a.id) + '" data-upload="' + esc(u.id) + '" data-eul-focus="choose:' + esc(u.id) + '"' + about + (chosen ? ' checked' : '') + '><span>In my submission</span></label>' : '') +
+            button('discard', 'Remove', { data: ' data-upload="' + esc(u.id) + '" data-assignment="' + esc(a.id) + '"' + about, focus: 'discard:' + u.id }, null, 'dc-' + u.id) + '</div>';
         } else if (u.state === 'staged') {
-          line += 'Waiting for the file to arrive<div class="eul-actions">' + button('complete', 'Check whether it arrived', { data: ' data-upload="' + esc(u.id) + '" data-assignment="' + esc(a.id) + '"', focus: 'complete:' + u.id }, null, 'cp-' + u.id) +
-            button('discard', 'Remove', { data: ' data-upload="' + esc(u.id) + '" data-assignment="' + esc(a.id) + '"', focus: 'discard:' + u.id }, null, 'dc-' + u.id) + '</div>';
+          line += 'Waiting for the file to arrive</span><div class="eul-actions">' + button('complete', 'Check whether it arrived', { data: ' data-upload="' + esc(u.id) + '" data-assignment="' + esc(a.id) + '"' + about, focus: 'complete:' + u.id }, null, 'cp-' + u.id) +
+            button('discard', 'Remove', { data: ' data-upload="' + esc(u.id) + '" data-assignment="' + esc(a.id) + '"' + about, focus: 'discard:' + u.id }, null, 'dc-' + u.id) + '</div>';
         } else {
-          line += 'Not accepted: ' + esc(REJECT_WORDS[u.rejected_reason] || 'the stored file did not pass the check') + '<div class="eul-actions">' + button('discard', 'Remove', { data: ' data-upload="' + esc(u.id) + '" data-assignment="' + esc(a.id) + '"', focus: 'discard:' + u.id }, null, 'dc-' + u.id) + '</div>';
+          line += 'Not accepted: ' + esc(REJECT_WORDS[u.rejected_reason] || 'the stored file did not pass the check') + '</span><div class="eul-actions">' + button('discard', 'Remove', { data: ' data-upload="' + esc(u.id) + '" data-assignment="' + esc(a.id) + '"' + about, focus: 'discard:' + u.id }, null, 'dc-' + u.id) + '</div>';
         }
         return line + outcomeBlock(model, 'discard:' + u.id) + outcomeBlock(model, 'play:' + u.id) + outcomeBlock(model, 'complete:' + u.id) + '</li>';
       }).join('') + '</ul>';
@@ -565,6 +573,8 @@
     var t = 'eulT-' + a.id, l = 'eulL-' + a.id;
     var html = '<div class="eul-work" data-eul-workspace="' + esc(a.id) + '">' +
       (locked ? note('stopped', 'This mission is ' + (m.state === 'paused' ? 'paused' : 'not open') + ': new work is stopped. Your draft and takes stay here, and you can still withdraw.') : '') +
+      (locked && capture && capture.aid === a.id && capture.session.state.state === 'preview' ? '<div class="eul-take" data-eul-kept-take><p class="eul-fine">Your unsent take stays on this device until the mission opens again.</p><div class="eul-actions">' +
+        button('cancel-take', 'Remove the unsent take', { data: ' data-assignment="' + esc(a.id) + '"', focus: 'cancel-take:' + a.id }, null, 'ctk-' + a.id) + '</div></div>' : '') +
       '<p class="eul-save" role="status" data-eul-save="' + esc(a.id) + '">' + esc(saveLine(w)) + '</p>';
     if (w.status === 'conflict') html += '<div class="eul-actions">' + button('draft-load', 'Load the saved version', { data: ' data-assignment="' + esc(a.id) + '"', focus: 'draft-load:' + a.id }, null, 'dl-' + a.id) + button('draft-overwrite', 'Keep my version and save it', { data: ' data-assignment="' + esc(a.id) + '"', focus: 'draft-overwrite:' + a.id }, null, 'do-' + a.id) + '</div>';
     if (w.status === 'unknown' && w.command) html += '<div class="eul-actions">' + button('draft-check', 'Check whether it saved', { data: ' data-assignment="' + esc(a.id) + '"', focus: 'draft-check:' + a.id }, null, 'dk-' + a.id) + (w.resend ? button('draft-resend', 'Save again (same request)', { data: ' data-assignment="' + esc(a.id) + '"', focus: 'draft-resend:' + a.id }, null, 'dr-' + a.id) : '') + '</div>';
@@ -597,7 +607,8 @@
   function viewSubmit(model, a, w) {
     var me = model.me, locked = !a.mission || a.mission.open !== true;
     var problems = proofProblems(me, a, w);
-    var blocked = locked ? 'This mission is not open right now.' : readiness(me) || (problems.length ? 'Not ready to submit yet: see the list above this button.' : null) || (w.status === 'conflict' ? 'Resolve the draft conflict first.' : null);
+    var blocked = locked ? 'This mission is not open right now.' : readiness(me) || (problems.length ? 'Not ready to submit yet: see the list above this button.' : null) || (w.status === 'conflict' ? 'Resolve the draft conflict first.' : null) ||
+      (typeof model.takeOpen === 'function' && model.takeOpen(a.id) ? 'Finish or cancel the current take first: submitting closes this workspace.' : null);
     return (problems.length && !locked ? '<ul class="eul-todo" data-eul-todo>' + problems.map(function (p) { return '<li>' + esc(p) + '</li>'; }).join('') + '</ul>' : '') +
       '<div class="eul-actions">' + button('submit-proof', a.proof ? 'Submit the new version privately' : 'Submit privately for review', { primary: true, data: ' data-assignment="' + esc(a.id) + '"', focus: 'submit-proof:' + a.id }, blocked, 'sp-' + a.id) + '</div>' +
       outcomeBlock(model, 'proof:' + a.id);
@@ -638,7 +649,7 @@
 
   function viewAssignment(model, a, capture) {
     var m = a.mission || {}, w = model.work[a.id], p = a.proof;
-    var html = '<article class="eul-card eul-card--assignment" data-eul-assignment="' + esc(a.id) + '" data-eul-assignment-status="' + esc(a.status) + '"><h3>' + esc(m.title || 'Mission') + '</h3>' +
+    var html = '<article class="eul-card eul-card--assignment" data-eul-assignment="' + esc(a.id) + '" data-eul-assignment-status="' + esc(a.status) + '"><h3 tabindex="-1" data-eul-card-head>' + esc(m.title || 'Mission') + '</h3>' +
       '<p class="eul-status">' + esc(ASSIGN_STATUS[a.status] || a.status) + (a.status === 'accepted' && a.accepted_at ? ' · accepted ' + when(a.accepted_at) : '') + '</p>';
     if (a.status === 'offered') html += viewOffer(model, a);
     if (p) {
@@ -671,9 +682,10 @@
     if (!pubs.length) return '';
     return '<section class="eul-sec" aria-labelledby="eulPubH"><h2 id="eulPubH">Shared with this campaign</h2><p class="eul-fine">Work its makers chose to publish to this campaign’s released audience. It is not public.</p>' + pubs.map(function (p) {
       return '<article class="eul-card" data-eul-published="' + esc(p.publication_id) + '"><h3>' + esc(p.title) + '</h3><p class="eul-fine">Credits: ' + esc(list(p.credits).map(function (c) { return c.name + ' (' + c.role + ')'; }).join(', ')) + ' · shared ' + esc(when(p.published_at)) + '</p>' +
-        '<p class="eul-pre eul-lyrics">' + esc(p.lyrics) + '</p>' + list(p.media).map(function (m) {
+        '<p class="eul-pre eul-lyrics">' + esc(p.lyrics) + '</p>' + list(p.media).map(function (m, mi) {
           var player = model.players[m.upload_id];
-          return '<div class="eul-media">' + (m.kind === 'video' ? '<video class="eul-player" controls playsinline preload="none" data-eul-player="' + esc(m.upload_id) + '"' + (player ? '' : ' hidden') + '></video>' : '<audio class="eul-player" controls preload="none" data-eul-player="' + esc(m.upload_id) + '"' + (player ? '' : ' hidden') + '></audio>') +
+          var label = esc(p.title + ', ' + (m.kind === 'video' ? 'video' : 'audio') + ' ' + (mi + 1));
+          return '<div class="eul-media">' + (m.kind === 'video' ? '<video class="eul-player" controls playsinline preload="none" data-eul-player="' + esc(m.upload_id) + '" aria-label="' + label + '"' + (player ? '' : ' hidden') + '></video>' : '<audio class="eul-player" controls preload="none" data-eul-player="' + esc(m.upload_id) + '" aria-label="' + label + '"' + (player ? '' : ' hidden') + '></audio>') +
             '<div class="eul-actions">' + button('play', player ? 'Load again' : 'Play ' + (m.kind === 'video' ? 'video' : 'audio'), { data: ' data-upload="' + esc(m.upload_id) + '"', focus: 'play:' + m.upload_id + ':pub' }, null, 'pp-' + m.upload_id) + '</div>' + outcomeBlock(model, 'play:' + m.upload_id) + '</div>';
         }).join('') + '</article>';
     }).join('') + '</section>';
@@ -727,7 +739,12 @@
     var now = opts.now || function () { return Date.now(); };
     var epoch = 0, readSeq = 0, deadline = opts.deadlineMs > 0 ? opts.deadlineMs : DEADLINE_MS, destroyed = false;
     /* a model with nothing private in it; canRecord asks the browser for nothing, it only looks for the APIs */
-    function blank() { var m = freshModel(); m.now = now; m.canRecord = function (kind) { return capApi.recordingSupported(kind, opts.captureEnv); }; return m; }
+    function blank() {
+      var m = freshModel(); m.now = now; m.canRecord = function (kind) { return capApi.recordingSupported(kind, opts.captureEnv); };
+      /* a take of this assignment that is asking, recording, stopping or waiting in preview: Submit waits for it */
+      m.takeOpen = function (aid) { return !!capture && capture.aid === aid && ['requesting', 'recording', 'stopping', 'preview'].indexOf(capture.session.state.state) >= 0; };
+      return m;
+    }
     var model = blank();
     var currentIdentity = opts.currentIdentity || storedIdentity;
     var send = makeTransport({
@@ -748,7 +765,28 @@
     /* Where keyboard focus goes after a capture step removes the control that had it: Stop while recording, Send on
        the preview, and the file upload when no device could be used. */
     var pendingFocus = null;
-    var CAPTURE_FOCUS = { recording: 'stop:', preview: 'use-take:', denied: 'file:', nodevice: 'file:', unsupported: 'file:', error: 'file:' };
+    var CAPTURE_FOCUS = { requesting: 'cancel-take:', recording: 'stop:', preview: 'use-take:', denied: 'file:', nodevice: 'file:', unsupported: 'file:', error: 'file:' };
+    /* An upload outcome that can send again carries its take (command.blob). When that take is cancelled, retaken or
+       replaced the offer goes with it: a request sent again may only ever carry the take on screen (review 2026-11-10). */
+    function forgetTake(aid) {
+      var o = model.outcomes['upload:' + aid];
+      if (o && o.command && o.command.blob) delete model.outcomes['upload:' + aid];
+    }
+    function dropCapture() { if (capture) { forgetTake(capture.aid); capture.session.release(); capture = null; } }
+    /* The capture lives only while its controls are drawn (review 2026-11-10). A take that is asking for a device,
+       recording or stopping is released the moment its workspace is not shown (a withdrawal, a pause read back, a
+       closed workspace), so no camera or microphone runs with no Stop on the page. A take in preview is kept while the
+       mission is only paused, with a way to drop it; otherwise it is released too. An upload in flight owns its take. */
+    function pruneCapture() {
+      if (!capture || (model.upload && model.upload.aid === capture.aid)) return;
+      var state = capture.session.state.state;
+      if (['requesting', 'recording', 'stopping', 'preview'].indexOf(state) < 0) return;
+      var a = model.phase === 'ready' && model.me ? assignmentById(model.me, capture.aid) : null, w = a ? model.work[a.id] : null, p = a && a.proof;
+      var shown = !!a && a.status === 'accepted' && !!w && (!p || p.state === 'needs_changes' || w.open);
+      if (shown && a.mission && a.mission.open === true) return;
+      if (shown && state === 'preview') return;
+      dropCapture();
+    }
     function getCapture(aid) {
       if (capture && capture.aid === aid) return capture;
       if (capture) capture.session.release();
@@ -766,8 +804,13 @@
     /* ---------- rendering ---------- */
     function render() {
       if (destroyed || !main) return;
+      pruneCapture();
       var focused = doc && doc.activeElement, key = focused && focused.getAttribute ? focused.getAttribute('data-eul-focus') : null, caret = null;
       try { if (key && typeof focused.selectionStart === 'number') caret = [focused.selectionStart, focused.selectionEnd]; } catch (e) { caret = null; }
+      /* where focus was, so it can land on what changed when the control that had it is gone (review 2026-11-10) */
+      var inside = !!(focused && focused !== main && main.contains && main.contains(focused));
+      var card = inside && focused.closest ? focused.closest('[data-eul-assignment],[data-eul-application],[data-eul-mission],[data-eul-published]') : null, place = null;
+      if (card) ['data-eul-assignment', 'data-eul-application', 'data-eul-mission', 'data-eul-published'].forEach(function (k) { if (!place && card.hasAttribute && card.hasAttribute(k)) place = '[' + k + '="' + String(card.getAttribute(k)).replace(/"/g, '') + '"]'; });
       if (main.setAttribute) main.setAttribute('aria-busy', model.phase === 'checking' ? 'true' : 'false');
       main.innerHTML = model.phase === 'ready' && model.me ? viewLeague(model, capture) : viewNeutral(model, here);
       setTitle();
@@ -782,8 +825,16 @@
       pendingFocus = null;
       if (key && main.querySelector) {
         var again = main.querySelector('[data-eul-focus="' + key.replace(/"/g, '') + '"]');
-        if (again && again.focus) { again.focus(); if (caret && again.setSelectionRange) { try { again.setSelectionRange(caret[0], caret[1]); } catch (e) { /* not a text field */ } } }
+        if (again && again.focus) { again.focus(); if (caret && again.setSelectionRange) { try { again.setSelectionRange(caret[0], caret[1]); } catch (e) { /* not a text field */ } } return; }
       }
+      /* The control that had focus is gone (Accept became the workspace, a removed take, a withdrawal): focus the outcome
+         of the last command when it is drawn, else the upload in progress or the heading of the same card, else the
+         page heading. Never the page body, so the next Tab continues from here. */
+      if (!inside || !main.querySelector) return;
+      var host = place ? main.querySelector(place) : null;
+      var target = (model.lastSlot && main.querySelector('[data-eul-focus="outcome:' + model.lastSlot.replace(/"/g, '') + '"]')) ||
+        (host && host.querySelector && (host.querySelector('[data-eul-progress]') || host.querySelector('[data-eul-card-head]'))) || main.querySelector('#eulTitle');
+      if (target && target.focus) target.focus();
     }
     /* Media sources are set as properties after drawing: a signed link or an object URL is never part of the markup. */
     function afterRender() {
@@ -796,7 +847,7 @@
         if (p && p.until > now()) { el.hidden = false; el.src = p.url; }
       });
     }
-    function setOutcome(slot, o) { if (o) model.outcomes[slot] = o; else delete model.outcomes[slot]; if (o && o.text) say(o.text); }
+    function setOutcome(slot, o) { if (o) { model.outcomes[slot] = o; model.lastSlot = slot; } else delete model.outcomes[slot]; if (o && o.text) say(o.text); }
 
     /* ---------- the sheet (a native modal dialog; focus returns to the button that opened it) ---------- */
     function drawSheet() {
@@ -991,8 +1042,12 @@
       if (!o || !o.resend || !o.command) return;
       var cmd = o.command;
       if (cmd.epoch !== epoch || cmd.identity !== model.identity || currentIdentity() !== cmd.identity) { invalidate(); return; }
-      /* a begin is the first step of an upload: sending it again continues the upload (a fresh grant, then the bytes) */
-      if (cmd.operation === 'uploads.begin' && cmd.aid) { beginUpload(cmd.aid, cmd); return; }
+      /* a begin is the first step of an upload: sending it again continues the upload (a fresh grant, then the bytes),
+         and only while the take it carries is the take on screen */
+      if (cmd.operation === 'uploads.begin' && cmd.aid) {
+        if (!capture || capture.aid !== cmd.aid || capture.session.state.blob !== cmd.blob) { delete model.outcomes[slot]; render(); return; }
+        beginUpload(cmd.aid, cmd); return;
+      }
       run(cmd, true);
     }
     function recheck(slot) {
@@ -1052,7 +1107,9 @@
     }
     function sendDraft(aid, cmd) {
       var w = model.work[aid];
-      w.saving = true; w.again = false; w.dirty = false; w.status = 'saving'; w.note = null; w.command = cmd; w.resend = false;
+      /* A request sent again carries the text of its first attempt: whatever was typed since is still unsaved, and is
+         saved with a new key once this one is settled (review 2026-11-10). */
+      w.saving = true; w.again = false; w.dirty = JSON.stringify(cmd.body.draft) !== JSON.stringify(draftDocument(w)); w.status = 'saving'; w.note = null; w.command = cmd; w.resend = false;
       patchSave(aid);
       var p;
       try { p = send({ method: 'POST', path: cmd.path, body: cmd.body, identity: cmd.identity, epoch: cmd.epoch }); } catch (e) { w.saving = false; w.status = 'refused'; w.note = e.message; patchSave(aid); return; }
@@ -1095,6 +1152,13 @@
         var r = d && d.receipt, rev = r && r.result && r.result.revision;
         if (typeof rev !== 'number' || r.idempotency_key !== cmd.key) throw Object.assign(new Error('malformed'), { malformed: true });
         w.revision = rev; w.command = null; w.resend = false;
+        /* the text on screen is the text that was recorded: it is saved, and nothing is sent again (review 2026-11-10) */
+        if (JSON.stringify(cmd.body.draft) === JSON.stringify(draftDocument(w))) {
+          if (w.timer) { cancelLater(w.timer); w.timer = null; }
+          w.dirty = false; w.status = 'saved'; w.note = 'Its answer was lost, but it was recorded (its key was found); it was not sent again.';
+          render();
+          return;
+        }
         w.status = 'dirty'; w.note = 'The last save was recorded (its key was found); it was not resent.';
         render();
         schedule(aid);
@@ -1182,7 +1246,8 @@
         if (row.state === 'sealed') {
           var w = model.work[aid];
           if (w && w.doc.media.indexOf(row.id) < 0 && w.doc.media.length < MAX.media) { w.doc.media.push(row.id); w.path = 'media'; edited(aid); }
-          if (capture && capture.aid === aid) capture.session.cancel();
+          /* the sent take leaves the device; another take on screen (a retake, another file) stays */
+          if (cmd && cmd.blob && capture && capture.aid === aid && capture.session.state.blob === cmd.blob) capture.session.cancel();
           setOutcome(slot, { kind: 'done', text: 'Sealed. Fingerprint (SHA-256): ' + row.sha256 + '. It is listed under your takes.' });
         } else if (row.state === 'rejected') setOutcome(slot, { kind: 'refused', text: 'The stored file was not accepted: ' + (REJECT_WORDS[row.rejected_reason] || 'it did not pass the check') + '. It is not part of your work.' });
         else setOutcome(slot, { kind: 'refused', text: 'This upload expired before it finished. Send the take again.' });
@@ -1276,7 +1341,8 @@
         if (!a || !n) return;
         command('accept:' + a.id, 'assignments.accept', 'POST', PREFIX + '/assignments/' + a.id + '/accept', { expected_revision: a.revision, requirements_revision: a.mission.requirements_revision, notice_revision: n.revision });
       },
-      'assign-withdraw': function (d) { command('assign-withdraw:' + d.assignment, 'assignments.withdraw', 'POST', PREFIX + '/assignments/' + d.assignment + '/withdraw', {}); },
+      /* leaving the mission stops a take of it first: no camera or microphone runs for work that is being left */
+      'assign-withdraw': function (d) { if (capture && capture.aid === d.assignment) dropCapture(); command('assign-withdraw:' + d.assignment, 'assignments.withdraw', 'POST', PREFIX + '/assignments/' + d.assignment + '/withdraw', {}); },
       'work-open': function (d) { var w = needWork(d.assignment); if (w) { w.open = true; render(); } },
       path: function (d) { var w = needWork(d.assignment); if (!w) return; w.path = d.path === 'statement' ? 'statement' : 'media'; edited(d.assignment); render(); var f = main.querySelector('[data-eul-focus="' + (w.path === 'statement' ? 'statement:' : 'path:statement:') + d.assignment + '"]'); if (f && f.focus) f.focus(); },
       /* THE Record handler: the only caller of a device request */
@@ -1286,12 +1352,13 @@
         if (model.upload && model.upload.aid === a.id) return;
         model.fileNote = null;
         var w = needWork(a.id); if (w && w.path !== 'media') { w.path = 'media'; edited(a.id); }
+        forgetTake(a.id);
         var c = getCapture(a.id);
         c.session.start(d.kind, maxSecondsFor(model.me));
       },
       stop: function (d) { if (capture && capture.aid === d.assignment) capture.session.stop(); },
-      retake: function (d) { if (capture && capture.aid === d.assignment) capture.session.retake(maxSecondsFor(model.me)); },
-      'cancel-take': function (d) { if (capture && capture.aid === d.assignment) { capture.session.cancel(); var f = main.querySelector('[data-eul-focus^="record:"]'); if (f && f.focus) f.focus(); } },
+      retake: function (d) { if (capture && capture.aid === d.assignment) { forgetTake(d.assignment); capture.session.retake(maxSecondsFor(model.me)); } },
+      'cancel-take': function (d) { if (capture && capture.aid === d.assignment) { forgetTake(d.assignment); capture.session.cancel(); var f = main.querySelector('[data-eul-focus^="record:"]'); if (f && f.focus) f.focus(); } },
       'use-take': function (d) { useTake(d.assignment); },
       'upload-cancel': function (d) { cancelUpload(d.assignment); },
       complete: function (d) { completeUpload(d.assignment, d.upload, null); },
@@ -1327,7 +1394,7 @@
       },
       'submit-proof': function (d) {
         var a = assignmentById(model.me, d.assignment), w = needWork(d.assignment);
-        if (!a || !w || !editable(a) || proofProblems(model.me, a, w).length || w.status === 'conflict') return;
+        if (!a || !w || !editable(a) || proofProblems(model.me, a, w).length || w.status === 'conflict' || model.takeOpen(a.id)) return;
         if (w.timer) { cancelLater(w.timer); w.timer = null; }
         command('proof:' + a.id, 'proofs.submit', 'POST', PREFIX + '/assignments/' + a.id + '/proof', { expected_revision: a.proof ? a.proof.revision : 0, proof: proofDocument(model.me, a, w) }, function () { w.open = false; });
         if (w.dirty) saveDraft(a.id, false);
@@ -1359,12 +1426,21 @@
       var problem = textProblem('Your reason for taking part', s.statement, MAX.statement, submit ? 1 : 0, true) || (s.accOn ? textProblem('The accommodation request', s.accText, MAX.statement, 1, true) : null);
       if (problem) { s.problem = problem + ' Nothing was sent.'; drawSheet(); return; }
       s.problem = null;
+      var application = { submit: submit, requirements_revision: card.requirements_revision, statement: s.statement, accommodation: s.accOn ? { statement: s.accText } : null };
       var cmd = command('app:' + s.missionId, 'applications.save', 'POST', PREFIX + '/missions/' + s.missionId + '/application',
-        { expected_revision: s.revision, application: { submit: submit, requirements_revision: card.requirements_revision, statement: s.statement, accommodation: s.accOn ? { statement: s.accText } : null } },
+        { expected_revision: s.revision, application: application },
         function (d, fromReceipt) {
           var row = fromReceipt ? d.receipt && d.receipt.result : d && d.application;
+          var sheet = model.sheet && model.sheet.missionId === s.missionId ? model.sheet : null;
           if (model.sheet && row && typeof row.revision === 'number') { model.sheet.revision = row.revision; model.sheet.status = row.status; }
-          if (submit && model.sheet && model.sheet.missionId === s.missionId) closeSheet();
+          /* a request sent again carries the text of its first attempt: when the sheet was corrected since, it stays open
+             with the corrected text, which was not sent (review 2026-11-10) */
+          if (sheet && (sheet.statement !== application.statement || JSON.stringify(sheet.accOn ? { statement: sheet.accText } : null) !== JSON.stringify(application.accommodation))) {
+            sheet.problem = 'The request sent again carried the earlier text, so the corrected text was not sent. Send the changes to send it.';
+            drawSheet();
+            return;
+          }
+          if (submit && sheet) closeSheet();
           else if (model.sheet) drawSheet();
         });
       if (cmd) { cmd.onRefused = function () { if (model.sheet) drawSheet(); }; cmd.onUnknown = function () { if (model.sheet) drawSheet(); }; drawSheet(); }
@@ -1404,6 +1480,7 @@
         if (input) { try { input.value = ''; } catch (e) { /* read-only */ } }
         if (!r.ok) { model.fileNote = { aid: aid, text: r.reason + ' Nothing was sent.' }; say(model.fileNote.text); render(); return; }
         var w = needWork(aid); if (w && w.path !== 'media') { w.path = 'media'; edited(aid); }
+        forgetTake(aid);
         getCapture(aid).session.useFile(file, r);
       });
     }
@@ -1456,14 +1533,18 @@
     function unsaved() {
       if (model.upload) return true;
       if (capture && ['recording', 'stopping', 'preview', 'requesting'].indexOf(capture.session.state.state) >= 0) return true;
-      return Object.keys(model.work).some(function (id) { var w = model.work[id]; return w.dirty || w.saving || w.status === 'unknown' || w.status === 'conflict'; });
+      return Object.keys(model.work).some(function (id) { var w = model.work[id]; return w.dirty || w.saving || !!w.timer || w.status === 'unknown' || w.status === 'conflict'; });
     }
+    /* Leaving the page releases the camera and microphone at once, as the site's other capture modules do on pagehide
+       (a page restored from the back-forward cache is read again by pageshow). */
+    function onPageHide() { dropCapture(); }
     function onBeforeUnload(e) { if (unsaved()) { e.preventDefault(); e.returnValue = ''; return ''; } }
     var win = opts.window || root;
     if (win && win.addEventListener) {
       win.addEventListener('mcc:auth-changed', onAuth);
       win.addEventListener('storage', onStorage);
       win.addEventListener('pageshow', onPageShow);
+      win.addEventListener('pagehide', onPageHide);
       win.addEventListener('beforeunload', onBeforeUnload);
     }
     if (doc && doc.addEventListener) doc.addEventListener('visibilitychange', onVisible);
@@ -1472,7 +1553,7 @@
       if (destroyed) return;
       stopEverything();
       destroyed = true; epoch += 1;
-      if (win && win.removeEventListener) { win.removeEventListener('mcc:auth-changed', onAuth); win.removeEventListener('storage', onStorage); win.removeEventListener('pageshow', onPageShow); win.removeEventListener('beforeunload', onBeforeUnload); }
+      if (win && win.removeEventListener) { win.removeEventListener('mcc:auth-changed', onAuth); win.removeEventListener('storage', onStorage); win.removeEventListener('pageshow', onPageShow); win.removeEventListener('pagehide', onPageHide); win.removeEventListener('beforeunload', onBeforeUnload); }
       if (doc && doc.removeEventListener) doc.removeEventListener('visibilitychange', onVisible);
       if (container.removeEventListener) { container.removeEventListener('click', onClick); container.removeEventListener('input', onInput); container.removeEventListener('change', onChange); container.removeEventListener('submit', onSubmit); }
       container.innerHTML = '';
@@ -1494,6 +1575,7 @@
     mount: mount,
     helpers: Object.freeze({
       API: API, PREFIX: PREFIX, DEADLINE_MS: DEADLINE_MS, AUTOSAVE_MS: AUTOSAVE_MS, MAX: MAX, REASONS: REASONS, RIGHTS: RIGHTS,
+      UNKNOWN_503: UNKNOWN_503, MALFORMED_REQUEST: MALFORMED_REQUEST,
       esc: esc, subOf: subOf, newKey: newKey, textProblem: textProblem, classify: classify, makeTransport: makeTransport, freshModel: freshModel,
       workFrom: workFrom, draftDocument: draftDocument, draftProblems: draftProblems, proofProblems: proofProblems, proofDocument: proofDocument,
       consentWindow: consentWindow, consentExpiry: consentExpiry, publishConsent: publishConsent, viewNeutral: viewNeutral, KEY_PATTERN: KEY_PATTERN
