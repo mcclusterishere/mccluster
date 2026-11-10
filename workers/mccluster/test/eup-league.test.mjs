@@ -136,6 +136,7 @@ test('a timeout, a redirect, an unreachable store and a malformed answer are 503
   assert.deepEqual(Object.keys(r.body).sort(), ['error', 'ok', 'reason']);
   const answers = [
     ['a redirect', () => new Response(null, { status: 302, headers: { location: 'https://elsewhere.invalid/' } })],
+    ['a redirect carrying an error body', () => Response.json({ code: '40001', message: 'x' }, { status: 303, headers: { location: 'https://elsewhere.invalid/' } })],
     ['not JSON', () => new Response('<html>gateway</html>', { status: 200, headers: { 'content-type': 'text/html' } })],
     ['an empty body', () => new Response('', { status: 200 })],
     ['an object where a list is promised', () => ({ campaigns: [] })],

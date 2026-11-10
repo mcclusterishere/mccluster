@@ -81,9 +81,10 @@ const TEXT = Object.freeze({
   module_busy: 'The League is busy; the same request can be sent again with the same key'
 });
 
-/* The Error for a reason. `status` defaults to the contract's HTTP_REASONS row. */
+/* The Error for a reason. `status` defaults to the contract's HTTP_REASONS row; `fail` is the router's. */
+const plain = (status, message, reason) => Object.assign(new Error(message), { status, reason });
 export function leagueFailure(fail, reason, status = HTTP_REASONS[reason], text = TEXT[reason]) {
-  return fail(Number.isInteger(status) ? status : 503, text || TEXT.storage_unavailable, reason);
+  return (typeof fail === 'function' ? fail : plain)(Number.isInteger(status) ? status : 503, text || TEXT.storage_unavailable, reason);
 }
 const unavailable = (fail) => leagueFailure(fail, 'storage_unavailable', 503);
 
