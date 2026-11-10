@@ -132,10 +132,14 @@
   }
   function show(d) {
     $("ppCard").hidden = false;
-    var fmt = { mp3: "MP3", m4a: "M4A", wav: "WAV", flac: "FLAC" }[String(d.format || "").toLowerCase()];
+    /* title_source "offer": a purchase with no pinned file yet (the owner resolves it). Its name
+       is the track as listed today, so no format is promised for it. */
+    var listed = d.title_source === "offer";
+    var fmt = listed ? null : { mp3: "MP3", m4a: "M4A", wav: "WAV", flac: "FLAC" }[String(d.format || "").toLowerCase()];
     $("ppTitle").textContent = (d.title || "Your track") + (fmt ? " \u00b7 " + fmt : "");
     $("ppDownload").textContent = fmt ? "Download " + fmt : "Download";
     var parts = [];
+    if (listed) parts.push("shown as listed today");
     if (d.max_downloads != null) parts.push(d.downloads_left + " of " + d.max_downloads + " downloads left");
     if (d.expires_at) parts.push("available until " + when(d.expires_at));
     $("ppMeta").textContent = parts.join(" · ");

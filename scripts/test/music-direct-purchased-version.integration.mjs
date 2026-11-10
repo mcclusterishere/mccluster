@@ -160,6 +160,12 @@ try {
     assert.equal(d.status, 409);
     assert.equal(d.data.reason, 'asset_unresolved');
     assert.equal(database.signer.calls.length, signedBefore, 'nothing is signed for an unpinned purchase');
+    /* the page does not promise a format for it */
+    const page = await loadPurchasePage({ search: '?token=' + c.token, fetch: fetchThrough(database).fetch });
+    assert.equal(page.el.ppTitle.textContent, live.title);
+    assert.equal(page.el.ppDownload.textContent, 'Download');
+    assert.equal(page.el.ppDownload.disabled, true);
+    assert.match(page.el.ppMeta.textContent, /^shown as listed today/);
     pass('an unpinned purchase falls back to the live offer and says title_source "offer"; it downloads nothing');
   }
 

@@ -17,6 +17,7 @@ import {
 } from '../../supabase/functions/_shared/music-direct.ts';
 
 import { loadAccessHandler, paidSession } from './support/music-direct-access-handler.mjs';
+import { loadPurchasePage, answer } from './support/music-purchase-page.mjs';
 
 const read = (p) => readFile(p, 'utf8');
 
@@ -334,6 +335,26 @@ test('only a purchase with no pinned version is named after the live offer, and 
   tables.music_direct_offers.length = 0;
   const bare = await call({ action: 'status', token });
   assert.deepEqual([bare.data.title, bare.data.format, bare.data.title_source], ['Your track', null, 'offer']);
+});
+
+test('the purchase page promises a format only for a pinned purchase', async () => {
+  const view = { ok: true, state: 'paid', title: 'Antisocial', format: 'wav', downloads_used: 0, downloads_left: 5, max_downloads: 5, expires_at: '2026-12-09T00:00:00Z', can_download: true, refusal: null };
+  const page = (v) => loadPurchasePage({ search: '?token=6f1c2a34-5b6d-4e7f-8a9b-0c1d2e3f4a5b', fetch: async () => answer(200, v) });
+  for (const pinned of [{ ...view, title_source: 'purchase' }, view /* v42 sends no title_source */]) {
+    const p = await page(pinned);
+    assert.equal(p.el.ppTitle.textContent, 'Antisocial \u00b7 WAV');
+    assert.equal(p.el.ppDownload.textContent, 'Download WAV');
+    assert.match(p.el.ppMeta.textContent, /^5 of 5 downloads left/);
+    assert.equal(p.el.ppDownload.disabled, false);
+  }
+  /* no pinned file: the title is today's listing, said as such, with no format on the title or the button */
+  const unresolved = await page({ ...view, title: 'Antisocial (2027 Remaster)', format: 'flac', title_source: 'offer', can_download: false,
+    refusal: { reason: 'asset_unresolved', message: REFUSAL_HTTP.asset_unresolved.message } });
+  assert.equal(unresolved.el.ppTitle.textContent, 'Antisocial (2027 Remaster)');
+  assert.equal(unresolved.el.ppDownload.textContent, 'Download');
+  assert.match(unresolved.el.ppMeta.textContent, /^shown as listed today \u00b7 5 of 5 downloads left/);
+  assert.equal(unresolved.el.ppDownload.disabled, true);
+  assert.equal(unresolved.el.ppStatus.textContent, REFUSAL_HTTP.asset_unresolved.message);
 });
 
 test('the download file name is the type of the bytes delivered', async () => {
