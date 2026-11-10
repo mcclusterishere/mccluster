@@ -106,8 +106,8 @@ local Chromium attempt still failed before page load with socket EPERM, so fresh
 hosted browser checks are required; prior #796 results do not certify this tree.
 
 This source reconciliation did not apply SQL or activate customer features.
-Production catalog inspection confirmed the three checkout tables absent.
-Existing billing authority is not a substitute for the new reservation contract.
+The checkout contract requires all three receipt/reservation tables and their
+matching RPCs. Existing billing authority is not a substitute for that contract.
 A functional COM-3-only extraction needs this exact reviewed SQL and matching
 callers; the whole customer branch also introduces separately gated site,
 commerce, domain, music and publishing dependencies. Keep the production merge
