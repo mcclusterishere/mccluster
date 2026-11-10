@@ -75,7 +75,10 @@ until its path is corrected in the same statement. Before applying: run the read
 the file's header (it must be 0) and decide the character set, which is this plane's own upload
 alphabet and has not been compared with what the Level 3 storefront writes or with production
 rows. Then apply this one file, run the count again, and `VALIDATE` as a separate statement (the
-header gives it). It defines no function, table or bucket, so it adds nothing to
+header gives it). The header also gives a second read-only count that is about the function, not
+the CHECK: the products whose path `l3-download` itself refuses, by its own wider rule. Run that
+one before the function change is deployed; a product it counts answers `asset_missing` from then
+on until its path is corrected. It defines no function, table or bucket, so it adds nothing to
 `live-callers.json`. Test: `bash scripts/test-l3-asset-path-check-db.sh` on a scratch Postgres 16
 (rows seeded before the constraint, apply twice, behaviour, rollback, re-apply) and
 `node --test scripts/test/l3-asset-path-check.test.mjs`. Promote it using the steps below; never

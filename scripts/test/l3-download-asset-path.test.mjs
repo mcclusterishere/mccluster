@@ -114,13 +114,18 @@ for (const [what, path] of REFUSED) {
 }
 
 test('a refused path is answered exactly like a product with no file', async () => {
-  const none = await download(null);
-  assert.deepEqual({ status: none.status, body: none.body, writes: none.writes, requests: none.sign.requests }, { status: 409, body: { error: 'asset_missing' }, writes: [], requests: [] });
-  const empty = await download('');
-  assert.deepEqual({ status: empty.status, body: empty.body, writes: empty.writes, requests: empty.sign.requests }, { status: 409, body: { error: 'asset_missing' }, writes: [], requests: [] });
+  const outcome = (got) => ({ status: got.status, body: got.body, writes: got.writes, requests: got.sign.requests, signed: got.sign.signed });
+  const none = outcome(await download(null));
+  assert.deepEqual(none, { status: 409, body: { error: 'asset_missing' }, writes: [], requests: [], signed: [] });
+  assert.deepEqual(outcome(await download('')), none, 'an empty path');
+  for (const path of ['../other-bucket/x', './x', GOOD + '\n', GOOD + '?download=1']) assert.deepEqual(outcome(await download(path)), none, JSON.stringify(path));
 });
 
-test('no asset_path makes the function sign outside its own bucket', async () => {
+/* This one is about how the request is made, not about the check above: with the
+   path in the request body and the bucket named by the function, no value of
+   asset_path can move the request. It fails if signing goes back to a URL built
+   from the row; the refusals above are what fail if the check is removed. */
+test('whatever asset_path says, nothing is signed outside the function\'s own bucket', async () => {
   const outside = [];
   for (const path of [GOOD, ...REFUSED.map((c) => c[1])]) {
     const got = await download(path);
@@ -171,6 +176,11 @@ test('only the answer for the path that was asked is used', async () => {
     ['a single-object answer', () => ({ signedURL: '/object/sign/other-bucket/x?token=test-token' })],
     ['an empty list', () => []],
     ['null', () => null],
+    ['a link that is not text', ({ paths }) => [{ error: null, path: paths[0], signedURL: 5 }]],
+    ['an empty link', ({ paths }) => [{ error: null, path: paths[0], signedURL: '' }]],
+    ['a list with holes in it', ({ paths }) => [null, 7, 'x', { error: null, path: paths[0] }]],
+    ['a refusal that still carries a well-formed list', ({ paths }) => new Response(JSON.stringify([{ error: null, path: paths[0], signedURL: `/object/sign/${BUCKET}/${paths[0]}?token=test-token` }]), { status: 403, headers: { 'content-type': 'application/json' } })],
+    ['an answer that is not JSON', () => new Response('<html>bad gateway</html>', { status: 502 })],
   ];
   for (const [what, answerBatch] of answers) {
     const got = await download(GOOD, { answerBatch });

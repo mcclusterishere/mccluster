@@ -1,6 +1,6 @@
 import { createGeneration } from '../media/router.js';
 import { credentialRefForConfiguredChannel, requireOrgId, requireOrgRole } from './security.js';
-import { graphGet, tokenFor, OUTBOX_BUCKET } from './meta.js';
+import { graphGet, tokenFor, OUTBOX_BUCKET, outboxPathFor } from './meta.js';
 import { recordAudit } from '../lib/audit.js';
 
 function headers(env) {
@@ -297,7 +297,9 @@ async function queuePublish(request, env, user) {
   }
 
   const storagePath = body.storage_path ? String(body.storage_path) : null;
-  if (storagePath && (!storagePath.startsWith(`${org.org_id}/`) || storagePath.includes('..'))) {
+  /* A job is queued only with a path the publisher will sign later: the test it
+     applies to the row (./meta.js, outboxPathFor), and still nothing with "..". */
+  if (storagePath && (storagePath.includes('..') || !outboxPathFor({ org_id: org.org_id, payload: { storage_path: storagePath } }))) {
     throw Object.assign(new Error('storage_path is not in this organization\'s outbox'), { status: 400 });
   }
   if (!body.video_url && !body.video_asset_id && !storagePath) {

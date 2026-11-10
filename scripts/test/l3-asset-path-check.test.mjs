@@ -5,10 +5,11 @@
    This holds the candidate to what it says without a database: it is pending
    and unapplied, it adds exactly one constraint and nothing else, the
    read-only count in its header is the constraint's own rule, its rollback
-   undoes it, it is registered where pending SQL is registered, and whatever
-   the table would accept the download function accepts too. What Postgres
-   itself answers is scripts/test-l3-asset-path-check-db.sh, on a scratch
-   Postgres 16. */
+   undoes it, it is registered where pending SQL is registered, whatever the
+   table would accept the download function accepts too, and the header's
+   second count (the products the function itself refuses) is the function's
+   rule and nothing else. What Postgres itself answers is
+   scripts/test-l3-asset-path-check-db.sh, on a scratch Postgres 16. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
@@ -104,6 +105,41 @@ test('the table\'s rule: plain names of the plane\'s own upload alphabet, and no
     '%2e%2e/x', 'a%2fb', 'a?b', 'a#b', 'a\\b', 'a\n', 'packs/sound-pack-v1.zip\n', '\na', 'a\tb', 'a\u0000b', 'aé', 'a'.repeat(1025)]) {
     assert.equal(tableAccepts(bad), false, JSON.stringify(bad).slice(0, 60));
   }
+});
+
+/* The header's other count is for the function's deploy, not for the CHECK: how many
+   products l3-download refuses. It is written as two patterns that Postgres and
+   JavaScript read alike; here they are held to the function's rule itself, so the
+   count cannot drift from what the function does. (Text in Postgres holds neither
+   a NUL nor half of a surrogate pair, so those two are left out of the comparison.) */
+test('the header\'s function count counts exactly the paths the download function refuses', () => {
+  const block = /^-- >>> function count \(read-only\)\n([\s\S]+?)^-- <<< function count$/m.exec(sql)?.[1] || '';
+  const text = squash(block.replace(/^--/gm, ''));
+  assert.match(text, /^select count\(\*\) from public\.l3_products where asset_path is not null and asset_path <> '' and \(asset_path ~ '[^']+' or asset_path ~ '[^']+'\);$/);
+  assert.doesNotMatch(text, /\b(insert|update|delete|alter|drop|create|truncate|grant)\b/i, 'read-only');
+  const patterns = [...text.matchAll(/asset_path ~ '([^']+)'/g)].map((m) => new RegExp(m[1]));
+  assert.equal(patterns.length, 2);
+  assert.ok(!/[^\x00-\x7f]/.test(block), 'every special character in the count is written as an escape');
+  const counted = (path) => path !== '' && patterns.some((re) => re.test(path));
+  for (const [path, refused] of [['packs/sound-pack-v1.zip', false], ['packs/My Pack (v2) + extras.zip', false], ['packs/final..mix.zip', false], ['a'.repeat(2000), false],
+    ['../other-bucket/x', true], ['%2e%2e/other-bucket/x', true], ['packs/pack.zip ', true], ['packs/what?.zip', true], ['a//b', true], ['/a', true], ['a\\b', true], ['a\n', true]]) {
+    assert.equal(counted(path), refused, JSON.stringify(path).slice(0, 50));
+    assert.equal(safeObjectPath(path), !refused, JSON.stringify(path).slice(0, 50));
+  }
+  const cp = (n) => String.fromCodePoint(n);
+  const pieces = ['.', '..', '...', '/', '//', '\\', '%2e', '%', ' ', '  ', '\t', '\n', '\r', cp(1), cp(0x1f), cp(0x7f), cp(0x80), cp(0x85), cp(0x9f), cp(0xa0), cp(0xe9), cp(0x2028), cp(0x2029), cp(0x202f), cp(0xff0e), cp(0x1f600),
+    '?', '#', ';', ':', '@', '&', '=', '+', ',', '~', '!', '*', "'", '"', '(', ')', '$', '^', '|', '[', ']', '{', '}', 'a', 'Z', '0', '-', '_', 'packs', 'file.zip'];
+  let seed = 0x0c0ffee5;
+  const random = () => { seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  let refusedCount = 0;
+  const check = (path) => { if (counted(path)) refusedCount += 1; assert.equal(counted(path), !safeObjectPath(path), JSON.stringify(path)); };
+  for (let c = 1; c < 0x300; c += 1) for (const path of [cp(c), 'a' + cp(c), cp(c) + 'a', 'a/' + cp(c) + 'b', 'a' + cp(c) + '/b']) check(path);
+  for (let i = 0; i < 60000; i += 1) {
+    let path = '';
+    for (let n = 1 + Math.floor(random() * 7); n > 0; n -= 1) path += pieces[Math.floor(random() * pieces.length)];
+    check(path);
+  }
+  assert.ok(refusedCount > 20000, `only ${refusedCount} generated paths were refused`);
 });
 
 test('whatever the table would accept, the download function accepts', () => {

@@ -23,9 +23,28 @@
 -- THE CHARACTER SET IS A PROPOSAL. It is the alphabet this plane's own upload routes
 -- produce ([A-Za-z0-9._-]). It has not been compared with what the Level 3 storefront
 -- writes, nor with production rows. If the storefront keeps original file names
--- (spaces, brackets), widen the two bracket expressions in the CHECK, and the same two
--- in the count below, BEFORE applying; stay inside what storage-object-path.ts
--- accepts, so the table never admits a path the function then refuses.
+-- (spaces, brackets), widen the alphabet BEFORE applying: in the CHECK and in count 1
+-- below alike (the pattern is written once in each), and in the copy
+-- scripts/test/l3-asset-path-check.test.mjs pins. Stay inside what the function
+-- accepts, so the table never admits a path the function then refuses: a name may
+-- contain a space but may not start or end with one, so a space cannot simply be
+-- added to the class. The last case of that test fails if the table would admit such
+-- a path.
+--
+-- BEFORE THE FUNCTION CHANGE IS DEPLOYED (this is about l3-download, not about this
+-- file; it matters whether or not the CHECK is ever applied). Once deployed, the
+-- function answers asset_missing for a product whose path is not a plain object path.
+-- This read-only count says how many products that is today, by the function's own
+-- rule, which is wider than the CHECK's alphabet (it accepts spaces inside a name,
+-- brackets, accents). It should be 0. A product it counts stops downloading until its
+-- path is corrected; read those rows with the same WHERE clause and decide first.
+--
+-- >>> function count (read-only)
+--   select count(*) from public.l3_products
+--    where asset_path is not null and asset_path <> ''
+--      and (asset_path ~ '[\u0001-\u001f\u007f-\u009f\u2028\u2029\\%?#]'
+--        or asset_path ~ '(^|/)( |\.{0,2}(/|$))| (/|$)');
+-- <<< function count
 --
 -- NOT VALID, on purpose. Adding it takes a brief lock and does not scan the table. It
 -- is enforced from then on for every INSERT and for every UPDATE of a row, including
@@ -33,8 +52,8 @@
 -- therefore left as it is, but cannot be edited at all (not its price, not its
 -- status) until its asset_path is corrected in the same statement. So:
 --
--- 1. Before applying, run this read-only count. It must be 0; otherwise correct those
---    rows, or widen the rule, first.
+-- 1. Before applying, run this read-only count (count 1: the rows the CHECK would
+--    refuse). It must be 0; otherwise correct those rows, or widen the rule, first.
 --
 -- >>> count (read-only)
 --   select count(*) from public.l3_products

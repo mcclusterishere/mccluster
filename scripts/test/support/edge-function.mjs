@@ -2,8 +2,8 @@
    does for an import-free function, for functions that import.
 
    The source is read from disk and run unmodified apart from its top-level
-   `import` statements, which a vm Script cannot contain. Each is satisfied the
-   way the runtime would satisfy it:
+   `import` statements, which cannot be compiled outside a module. Each is
+   satisfied the way the runtime would satisfy it:
 
      ./x.ts, ../_shared/x.ts   the real module, imported from where the
                                function would import it
@@ -11,11 +11,17 @@
                                specifier (a missing one throws, so a new
                                dependency cannot arrive unnoticed)
 
-   Deno.env, Deno.serve and fetch are the test's. Nothing here reaches a
-   network: an unexpected fetch should throw in the test's own fetch. */
+   Deno.env, Deno.serve, fetch and console are the test's. Nothing here reaches
+   a network: an unexpected fetch should throw in the test's own fetch.
+
+   The function body is compiled as strict code in THIS realm, with its
+   imports, Deno, fetch and console as parameters, not in a separate vm
+   context. The runtime has one realm, so `error instanceof Error` in the
+   function must hold for an Error thrown by a module it imports; in a
+   separate context it would not, and a test could pin an answer the deployed
+   function never gives. */
 import { readFile } from 'node:fs/promises';
 import { stripTypeScriptTypes } from 'node:module';
-import { webcrypto } from 'node:crypto';
 import vm from 'node:vm';
 
 const ROOT = new URL('../../../', import.meta.url);
@@ -82,7 +88,7 @@ export async function loadEdgeFunction(file, { env = {}, stubs = {}, fetch } = {
   let handler = null;
   const logs = [];
   const record = (level) => (...args) => { logs.push([level, ...args]); };
-  const context = {
+  const scope = {
     ...bindings,
     Deno: {
       env: { get: (name) => (Object.hasOwn(env, name) ? env[name] : undefined) },
@@ -93,11 +99,11 @@ export async function loadEdgeFunction(file, { env = {}, stubs = {}, fetch } = {
       return fetch(input, init);
     },
     console: { log: record('log'), info: record('info'), warn: record('warn'), error: record('error'), debug: record('debug') },
-    crypto: webcrypto,
-    Response, Request, Headers, URL, URLSearchParams, TextEncoder, TextDecoder, AbortController, AbortSignal,
-    ReadableStream, Blob, FormData, setTimeout, clearTimeout, queueMicrotask, structuredClone, atob, btoa,
   };
-  vm.runInNewContext(stripTypeScriptTypes(body, { mode: 'strip' }), context, { filename: file });
+  const names = Object.keys(scope);
+  /* module code is strict and may await at its top level; the wrapper adds no line, so stack traces keep the file's line numbers */
+  const code = `"use strict"; return (async () => {${stripTypeScriptTypes(body, { mode: 'strip' })}\n})();`;
+  await vm.compileFunction(code, names, { filename: file })(...names.map((name) => scope[name]));
   if (typeof handler !== 'function') throw new Error(`${file} did not register a handler with Deno.serve`);
   return { handler, logs, imports };
 }
@@ -113,7 +119,9 @@ export async function loadEdgeFunction(file, { env = {}, stubs = {}, fetch } = {
      POST /storage/v1/object/sign/<bucket>             many, body { expiresIn, paths }
 
    Every signing request is kept in `requests`, every signature issued in
-   `signed`. Returns null for a URL that is not a signing request. */
+   `signed`. Returns null for a URL that is not a signing request. A test may
+   answer the many-object form itself with `answerBatch` (a value to send as
+   JSON, or a whole Response). */
 export function storageSigner(objects, { base = 'https://db.test', answerBatch = null } = {}) {
   const requests = [];
   const signed = [];
@@ -136,7 +144,10 @@ export function storageSigner(objects, { base = 'https://db.test', answerBatch =
     }
     requests.push({ form: 'body', method, sent: String(input), pathname: url.pathname, search: url.search, bucket, body });
     if (method !== 'POST' || !Array.isArray(body.paths)) return json({ statusCode: '400', error: 'invalid_request', message: 'paths required' }, 400);
-    if (answerBatch) return json(answerBatch({ bucket, paths: body.paths }));
+    if (answerBatch) {
+      const answer = answerBatch({ bucket, paths: body.paths });
+      return answer instanceof Response ? answer : json(answer);
+    }
     return json(body.paths.map((path) => {
       if (typeof path !== 'string' || !has(bucket, path)) return { error: 'Either the object does not exist or you do not have access to it', path, signedURL: null };
       signed.push({ bucket, name: path });

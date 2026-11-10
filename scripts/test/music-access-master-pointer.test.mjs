@@ -48,14 +48,15 @@ const ELSEWHERE_POINTERS = [
 const NOT_PLAIN = [...ELSEWHERE_POINTERS, ['a current-directory segment', `./${MASTER}`], ['a leading slash', `/${MASTER}`],
   ['an empty segment', MASTER.replace('/', '//')], ['a query', `${MASTER}?download=x`], ['a fragment', `${MASTER}#t=1`], ['a trailing newline', `${MASTER}\n`]];
 
+/* an rpc that answers with a database error instead of data */
+class DbFailure { constructor(error) { this.error = error; } }
+
 async function musicAccess(body, { as = 'operator', track = null, rpc = {} } = {}) {
   const sign = storageSigner(OBJECTS, { base: SB });
   const reads = [];
   const writes = [];
   const rpcCalls = [];
   const users = { operator: { id: OPERATOR, email: 'operator@example.test' }, listener: { id: LISTENER, email: 'listener@example.test' } };
-  /* values built inside the function belong to its own realm: keep plain copies */
-  const plain = (value) => JSON.parse(JSON.stringify(value ?? null));
   const tables = {
     m_auth_user_links: () => [{ m_uid: '84000000-0000-4000-8000-0000000000a1' }],
     orgs: () => [{ id: '85000000-0000-4000-8000-0000000000a1' }],
@@ -65,7 +66,7 @@ async function musicAccess(body, { as = 'operator', track = null, rpc = {} } = {
     const rows = () => { if (!tables[table]) throw new Error('unexpected table: ' + table); return tables[table](); };
     const chain = {
       select: () => chain, eq: () => chain, is: () => chain, in: () => chain, order: () => chain, limit: () => chain,
-      update: (values) => { writes.push({ table, values: plain(values) }); return { eq: async () => ({ data: null, error: null }) }; },
+      update: (values) => { writes.push({ table, values }); return { eq: async () => ({ data: null, error: null }) }; },
       maybeSingle: async () => ({ data: rows()[0] ?? null, error: null }),
       then: (resolve, reject) => Promise.resolve({ data: rows(), error: null }).then(resolve, reject),
     };
@@ -82,9 +83,10 @@ async function musicAccess(body, { as = 'operator', track = null, rpc = {} } = {
     auth: { getUser: async (token) => (users[token] ? { data: { user: users[token] }, error: null } : { data: { user: null }, error: { message: 'invalid token' } }) },
     from,
     rpc: async (fn, args) => {
-      rpcCalls.push([fn, plain(args)]);
+      rpcCalls.push([fn, args]);
       if (fn === 'control_authorize_service') return { data: [{ allowed: args.p_actor === OPERATOR }], error: null };
       if (!Object.hasOwn(rpc, fn)) throw new Error('unexpected rpc: ' + fn);
+      if (rpc[fn] instanceof DbFailure) return { data: null, error: rpc[fn].error };
       return { data: typeof rpc[fn] === 'function' ? rpc[fn](args) : rpc[fn], error: null };
     },
     storage: { from: (bucket) => ({ createSignedUrl: (path, expiresIn, options) => createSignedUrl(bucket, path, expiresIn, options) }) },
@@ -187,6 +189,21 @@ for (const [what, path] of NOT_PLAIN) {
     assert.deepEqual({ status: got.status, body: got.body }, { status: 500, body: { error: 'could_not_sign_asset' } });
   });
 }
+
+test('the function runs as it does when deployed: an error raised in a module it imports is answered as that error', async () => {
+  /* delivery.ts throws a plain Error here; the handler answers `error instanceof Error ? error.message : String(error)`.
+     In a harness that ran index.ts in another realm this would read "Error: could_not_resolve_release". */
+  const got = await musicAccess({ action: 'stream', track_id: TRACK }, {
+    as: 'listener', track: published, rpc: { music_track_delivery: new DbFailure({ code: 'XX000', message: 'boom' }) },
+  });
+  assert.deepEqual({ status: got.status, body: got.body }, { status: 500, body: { error: 'could_not_resolve_release' } });
+  assert.deepEqual(got.sign.requests, []);
+  /* and a missing dependency is still recognised by its class across the import */
+  const missing = await musicAccess({ action: 'stream', track_id: TRACK }, {
+    as: 'listener', track: published, rpc: { music_track_delivery: new DbFailure({ code: 'PGRST202', message: 'Could not find the function' }) },
+  });
+  assert.deepEqual({ status: missing.status, body: missing.body }, { status: 503, body: { error: 'music delivery is temporarily unavailable', dependency: 'music_track_delivery' } });
+});
 
 test('download: a purchase whose pinned name is not a plain path is not signed and not counted', async () => {
   const purchase = (objectName) => [{ entitlement_id: 'e1', download_count: 2, revoked: false, order_status: 'paid', asset_version_id: 'v1', bucket_id: MASTERS, object_name: objectName, intact: true, track_status: 'published' }];

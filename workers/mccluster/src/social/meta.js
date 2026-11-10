@@ -112,11 +112,12 @@ async function signOutboxUrl(env, storagePath) {
 }
 
 /* A job's storage_path is a value on a row. An upload is issued only as
-   <the organization's id>/<uuid>.<ext> (./router.js, createUpload) and a job is
-   accepted only with a path under its own organization's folder; the publisher
-   holds the row to the same two things before it signs: a plain object path
-   (../lib/storage-object-path.js), inside the job's own organization's folder.
-   Returns the path, or null when the row does not name such an upload. */
+   <the organization's id>/<uuid>.<ext> (./router.js, createUpload). This is the
+   one test of whether a job names such an upload: a plain object path
+   (../lib/storage-object-path.js) inside the job's own organization's folder.
+   A job is queued only if it passes (./router.js, queuePublish), and the
+   publisher, which reads the path back from the row later with the service
+   role, applies it again before it signs. Returns the path, or null. */
 export function outboxPathFor(job) {
   const path = job?.payload?.storage_path;
   const org = job?.org_id;
@@ -127,7 +128,7 @@ async function resolveVideoUrl(env, job) {
   if (job.payload?.video_url) return job.payload.video_url;
   if (job.payload?.storage_path) {
     const path = outboxPathFor(job);
-    if (!path) throw new Error('Publish job storage_path is not in its organization\'s outbox');
+    if (!path) throw new Error('Publish job storage_path is not a plain path in its organization\'s outbox');
     return signOutboxUrl(env, path);
   }
   if (!job.payload?.video_asset_id) return null;

@@ -1,8 +1,8 @@
 -- Behaviour of supabase/pending/l3_products_asset_path_check_v1.sql on a scratch
 -- database. Run by scripts/test-l3-asset-path-check-db.sh after it has created
--- public.l3_products as the replay migration does, seeded seven rows (two plain paths,
--- five that break the rule, slugs legacy-*) and applied the file. Test-only: never
--- run against a real project.
+-- public.l3_products as the replay migration does, seeded ten rows (two plain paths,
+-- seven that break the rule and a draft with no file, slugs legacy-*) and applied the
+-- file. Test-only: never run against a real project.
 do $t$
 declare
   v_org uuid := '90000000-0000-4000-8000-0000000000a1';
@@ -36,7 +36,7 @@ begin
 
   -- adding it scanned nothing: the rows that already break the rule are still there
   select count(*) into v_n from public.l3_products where slug like 'legacy-%';
-  if v_n <> 7 then raise exception 'expected the 7 seeded rows, found %', v_n; end if;
+  if v_n <> 10 then raise exception 'expected the 10 seeded rows, found %', v_n; end if;
 
   -- new rows: plain paths and NULL are accepted
   foreach v_path in array v_plain loop
@@ -75,7 +75,7 @@ begin
   update public.l3_products set price_cents = 200, asset_path = 'packs/corrected.zip' where slug = 'legacy-dots';
 
   -- VALIDATE fails while any row breaks the rule, down to the last one
-  foreach v_path in array array['legacy-space', 'legacy-encoded', 'legacy-inner-dots', 'legacy-long'] loop
+  foreach v_path in array array['legacy-space', 'legacy-encoded', 'legacy-inner-dots', 'legacy-long', 'legacy-trailing-space', 'legacy-question'] loop
     begin
       alter table public.l3_products validate constraint l3_products_asset_path_plain_check;
       raise exception 'VALIDATE passed while % still breaks the rule', v_path;
