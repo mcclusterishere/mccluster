@@ -59,7 +59,7 @@
   var LIMITS = {
     text: { title: 180, purpose: 2000, requirements: 4000, acceptance: 4000, rubric_label: 200, reason: 2000, note: 500, policy_reason: 500, notice_text: 8000 },
     count: { rubric_criteria: 12, capacity: 100000 },
-    list: { purge_batch: 50 },
+    list: { rows: 500, purge_batch: 50 },
     policy: { bytes: [1, 104857600], duration_seconds: [1, 3600], retention_days: [1, 3650] }
   };
   var ENUMS = {
@@ -107,7 +107,6 @@
     assignments: { path: 'assignments', response: 'assignments', list: true, what: 'assignments' },
     proofs: { path: 'proofs', response: 'proofs', list: true, filter: 'state', what: 'proofs' },
     credits: { path: 'credits', response: 'credits', list: true, what: 'credits' },
-    consents: { path: 'consents', response: 'consents', list: true, what: 'consents' },
     publications: { path: 'publications', response: 'publications', list: true, what: 'publications' },
     appeals: { path: 'appeals', response: 'appeals', list: true, filter: 'state', what: 'appeals' },
     due: { path: 'media/due', response: 'due', list: false, query: 'limit=' + LIMITS.list.purge_batch, what: 'due media' }
@@ -117,6 +116,9 @@
     preview: { path: 'missions/:id/preview', response: 'mission', list: false, what: 'the member preview' },
     accommodation: { path: 'applications/:id/accommodation', response: 'accommodation', list: false, what: 'the accommodation request' },
     review: { path: 'proofs/:id/media', response: 'proof', list: false, what: 'the proof under review' },
+    /* one proof's consents (GET consents?proof=<id>): the store bounds them per proof, so this list is whole, while the
+       tenant-wide list stops at LIMITS.list.rows, oldest first, and would hide later participants' consents */
+    consents: { path: 'consents', response: 'consents', list: true, what: 'consents', by: 'proof' },
     receipt: { path: 'receipts/:operation/:key', response: 'receipt', list: false, what: 'the receipt' }
   };
   /* The member card fields (SHAPES.mission_card), in the order a member reads them. */
@@ -134,7 +136,7 @@
     setup: ['policy', 'fixture', 'campaigns'],
     applications: ['campaigns', 'applications'],
     proofs: ['campaigns', 'assignments', 'proofs', 'credits'],
-    publication: ['campaigns', 'assignments', 'proofs', 'consents', 'publications'],
+    publication: ['campaigns', 'assignments', 'proofs', 'publications'],
     appeals: ['campaigns', 'appeals'],
     retention: ['policy', 'due']
   };
@@ -489,11 +491,23 @@
       redraw();
       var done = function () { if (dead(g) || mine !== L.loadSeq) return; L.loadingView = false; redraw(); };
       return Promise.all(VIEW_READS[view].map(read)).then(function () {
-        if (dead(g) || L.view !== view || view !== 'setup' || !Array.isArray(L.data.campaigns)) return;
+        if (dead(g) || L.view !== view) return;
+        /* a review opened before the participant withdrew is closed: the store no longer signs its media */
+        if (view === 'proofs' && L.review && withdrawn(proofById(L.review.proofId), index())) closeReview();
+        if (view === 'publication' && Array.isArray(L.data.proofs)) {
+          return Promise.all(L.data.proofs.filter(function (p) { return publishable(p) && validId(p.id); }).map(function (p) { return recordRead('consents', p.id, RECORD_READS.consents.by + '=' + encodeURIComponent(p.id)); }));
+        }
+        if (view !== 'setup' || !Array.isArray(L.data.campaigns)) return;
         return Promise.all(L.data.campaigns.filter(function (c) { return isObject(c) && validId(c.id) && c.state !== 'withdrawn'; }).map(function (c) { return recordRead('grants', c.id); }));
       }).then(done, done);
     }
     var validId = function (id) { return typeof id === 'string' && PATTERNS.uuid.test(id); };
+    function proofById(id) { return (Array.isArray(L.data.proofs) ? L.data.proofs : []).filter(function (x) { return isObject(x) && x.id === id; })[0] || null; }
+    /* the proofs the Consent and publication view lists */
+    function publishable(p) { return isObject(p) && (p.state === 'accepted' || p.publication_state !== 'private'); }
+    /* true when the assignment the proof belongs to is known and withdrawn: withdrawing revoked the participant's
+       private_review consent, so the store answers a review or a media read of it with a refusal */
+    function withdrawn(p, ix) { var a = p ? ix.assignments[p.assignment_id] : null; return !!a && a.status === 'withdrawn'; }
 
     /* ---------- commands ---------- */
     function pending(slot) { var o = L.outcomes[slot]; return !!o && o.kind === 'pending'; }
@@ -548,7 +562,17 @@
       }).then(function () {
         if (stop || dead(g)) return;
         say(L.outcomes[slot].text);
-        return load().then(function () { if (!dead(g)) refocus('league:outcome:' + slot); });
+        return readBack(slot, g);
+      });
+    }
+    /* Everything shown is read again, then focus goes to the outcome when the control that had it is gone. A record a
+       filter no longer lists keeps its outcome at the top of its view (awayBlock), and the status line says so. */
+    function readBack(slot, g) {
+      return load().then(function () {
+        if (dead(g)) return;
+        var away = awayOf(slot);
+        if (away && L.outcomes[slot]) say(outcomeText(L.outcomes[slot], away));
+        refocus('league:outcome:' + slot);
       });
     }
     /* When the control that had focus is gone after a redraw (Release became Pause, a confirm closed), focus lands on
@@ -598,7 +622,7 @@
       var sent = o.command;
       L.outcomes[slot] = { kind: 'pending', text: sent.label + ': reading its receipt again (key ' + sent.key.slice(0, 8) + '…).', command: sent };
       redraw();
-      receipt(sent, g).then(function (gone) { if (gone || dead(g)) return; say(L.outcomes[slot].text); return load().then(function () { if (!dead(g)) refocus('league:outcome:' + slot); }); });
+      receipt(sent, g).then(function (gone) { if (gone || dead(g)) return; say(L.outcomes[slot].text); return readBack(slot, g); });
     }
 
     /* ---------- forms ---------- */
@@ -648,7 +672,9 @@
     /* ---------- small renderers ---------- */
     var note = function (kind, text) { return host.note(kind, text); };
     var chip = function (kind, text, attr) { return '<span class="cr-eup__chip cr-eup__chip--' + esc(kind) + '"' + (attr || '') + '>' + esc(text) + '</span>'; };
-    var code = function (v) { return '<code class="cr-eup-league__id">' + esc(v == null ? 'none' : v) + '</code>'; };
+    var code = function (v, id) { return '<code class="cr-eup-league__id"' + (id ? ' id="' + esc(id) + '"' : '') + '>' + esc(v == null ? 'none' : v) + '</code>'; };
+    /* an element id made of a record id (the heading that names a campaign or mission, a grant's account) */
+    var rid = function (kind, id) { return 'eupL-' + kind + '-' + String(id == null ? '' : id).replace(/[^A-Za-z0-9_-]/g, '-'); };
     var line = function (text, attr) { return '<p class="cr-eup__unit-line"' + (attr || '') + '>' + esc(text) + '</p>'; };
     function cmdButton(action, id, arg, label, slot, extra) {
       return '<button type="button" class="cr-btn" data-eup-league-command="' + esc(action) + '" data-eup-league-id="' + esc(id || '') + '" data-eup-league-arg="' + esc(arg || '') +
@@ -658,10 +684,12 @@
       return '<button type="button" class="cr-btn" data-eup-league-do="' + esc(what) + '" data-eup-league-id="' + esc(id || '') + '" data-eup-focus="league:do:' + esc(what + ':' + (id || '')) + '"' + (extra || '') + '>' + esc(label) + '</button>';
     }
     var actions = function (html) { return html ? '<div class="cr-eup__actions">' + html + '</div>' : ''; };
-    function outcome(slot) {
+    /* An outcome's words; away (a sentence) replaces "Read back below" when the record is not listed below. */
+    function outcomeText(o, away) { return away ? String(o.text).replace(/ Read back below\.$/, '') + ' ' + away : o.text; }
+    function outcome(slot, away) {
       var o = L.outcomes[slot];
       if (!o) return '';
-      return '<p class="cr-eup__note cr-eup__note--' + esc(o.kind) + '" tabindex="-1" data-eup-note="' + esc(o.kind) + '" data-eup-league-outcome="' + esc(slot + ':' + o.kind) + '" data-eup-focus="league:outcome:' + esc(slot) + '">' + esc(o.text) + '</p>' +
+      return '<p class="cr-eup__note cr-eup__note--' + esc(o.kind) + '" tabindex="-1" data-eup-note="' + esc(o.kind) + '" data-eup-league-outcome="' + esc(slot + ':' + o.kind) + '" data-eup-focus="league:outcome:' + esc(slot) + '">' + esc(outcomeText(o, away)) + '</p>' +
         (o.resend && o.command ? actions(doButton('resend', slot, 'Send the same command again')) + line('It carries the same key, so the store records it at most once.') : '') +
         (o.receiptAgain && o.command ? actions(doButton('receipt', slot, 'Read the receipt again')) : '');
     }
@@ -694,6 +722,26 @@
       });
       (Array.isArray(L.data.assignments) ? L.data.assignments : []).forEach(function (a) { if (isObject(a)) assignments[a.id] = a; });
       return { missions: missions, campaigns: campaigns, assignments: assignments, campaignsRead: Array.isArray(L.data.campaigns) };
+    }
+    /* The views a filter narrows: the record kind each lists (its outcome slots are '<kind>:<id>') and its filter. */
+    var FILTERED = { applications: { kind: 'application', label: 'status', title: 'Application' }, proofs: { kind: 'proof', label: 'state', title: 'Proof' }, appeals: { kind: 'appeal', label: 'state', title: 'Appeal' } };
+    function awayNote(view) {
+      var f = L.filters[view];
+      return f ? 'It no longer matches the filter (' + FILTERED[view].label + ' ' + words(f) + '), so it is not listed below: choose all and Show to see it.' : 'It is not among the rows the Worker returned, so it is not listed below.';
+    }
+    /* The sentence for an outcome whose record the current view's list does not hold, or null. */
+    function awayOf(slot) {
+      var spec = FILTERED[L.view];
+      if (!spec || String(slot).indexOf(spec.kind + ':') !== 0 || !Array.isArray(L.data[L.view])) return null;
+      var id = String(slot).slice(spec.kind.length + 1);
+      return L.data[L.view].some(function (r) { return isObject(r) && r.id === id; }) ? null : awayNote(L.view);
+    }
+    /* Each such outcome at the top of the view, with its resend or receipt buttons, where focus can land on it. */
+    function awayBlock(view) {
+      var spec = FILTERED[view];
+      return Object.keys(L.outcomes).filter(function (slot) { return awayOf(slot) !== null; }).map(function (slot) {
+        return '<article class="cr-eup__card cr-eup__card--wide" data-eup-league-away="' + esc(slot) + '"><h3>' + esc(spec.title) + ' ' + code(slot.slice(spec.kind.length + 1)) + '</h3>' + outcome(slot, awayOf(slot)) + '</article>';
+      }).join('');
     }
     function missionName(ix, id) {
       var hit = ix.missions[id];
@@ -786,8 +834,8 @@
     }
     function campaignCard(c, fixture) {
       var ok = validId(c.id), slot = 'campaign:' + c.id, missions = Array.isArray(c.missions) ? c.missions.filter(isObject) : [];
-      var html = '<article class="cr-eup__card cr-eup__card--wide" data-eup-league-campaign="' + esc(c.id) + '" data-eup-league-status="' + esc(c.state) + '">' +
-        '<h3>' + esc(c.title || c.slug || c.id) + '</h3><p>' + chip(c.state || 'unknown', words(c.state)) + ' ' + chip(c.audience === 'invited' ? 'current' : 'draft', c.audience === 'invited' ? 'invited' : 'admin preview') +
+      var html = '<article class="cr-eup__card cr-eup__card--wide" data-eup-league-campaign="' + esc(c.id) + '" data-eup-league-status="' + esc(c.state) + '" aria-labelledby="' + rid('campaign', c.id) + '">' +
+        '<h3 id="' + rid('campaign', c.id) + '">' + esc(c.title || c.slug || c.id) + '</h3><p>' + chip(c.state || 'unknown', words(c.state)) + ' ' + chip(c.audience === 'invited' ? 'current' : 'draft', c.audience === 'invited' ? 'invited' : 'admin preview') +
         ' <small>' + esc(c.slug || '') + (isInt(c.revision) ? ' · rev ' + c.revision : '') + (c.created_at ? ' · created ' + esc(when(c.created_at)) : '') + '</small></p>';
       if (c.document && typeof c.document.purpose === 'string') html += '<p class="cr-eup-league__text">' + esc(c.document.purpose) + '</p>';
       if (!ok) return html + line('This record has no valid id; no command is offered for it.') + missions.map(function (m) { return '<p><strong>' + esc(m.title || m.id) + '</strong> · ' + esc(words(m.state)) + '</p>'; }).join('') + '</article>';
@@ -806,9 +854,9 @@
       var rec = L.records['grants:' + c.id], s = recordState('grants', c.id), F = 'grant:' + c.id, slot = 'grants:' + c.id, list = rec && Array.isArray(rec.data) ? rec.data.filter(isObject) : null;
       return '<h4>Tester access</h4>' + line('A grant has effect only while the audience is invited and the campaign and mission are released. Revoking keeps the account\'s own records readable, and it can still withdraw, discard and revoke.') +
         (s || (list === null ? note('loading', 'Reading tester access…') : list.length ? '<ul class="cr-eup__list">' + list.map(function (g) {
-          return '<li data-eup-league-grant="' + esc(g.id) + '" data-eup-league-status="' + esc(g.state) + '">' + code(g.account) + ' ' + chip(g.state === 'open' ? 'current' : 'draft', words(g.state)) +
+          return '<li data-eup-league-grant="' + esc(g.id) + '" data-eup-league-status="' + esc(g.state) + '">' + code(g.account, rid('grant', g.id)) + ' ' + chip(g.state === 'open' ? 'current' : 'draft', words(g.state)) +
             '<br><small>' + (g.note ? esc(g.note) + ' · ' : '') + 'granted ' + esc(when(g.granted_at)) + (g.revoked_at ? ' · revoked ' + esc(when(g.revoked_at)) : '') + '</small>' +
-            (g.state === 'open' && validId(g.id) ? actions(cmdButton('audience.grants.revoke', g.id, c.id, 'Revoke access', slot)) : '') + '</li>';
+            (g.state === 'open' && validId(g.id) ? actions(cmdButton('audience.grants.revoke', g.id, c.id, 'Revoke access', slot, ' aria-describedby="' + rid('grant', g.id) + '"')) : '') + '</li>';
         }).join('') + '</ul>' : line('No tester holds access to this campaign.'))) +
         '<div class="cr-eup-league__form">' + textField(F, 'account', 'Account id of the tester', '', { max: 36, spell: false }) + textField(F, 'note', 'Note (optional)', '', { max: LIMITS.text.note }) + '</div>' +
         actions(cmdButton('audience.grants.grant', c.id, '', 'Grant access', slot)) + outcome(slot);
@@ -822,7 +870,7 @@
     }
     function missionBlock(m, c) {
       var ok = validId(m.id), slot = 'mission:' + m.id;
-      var html = '<section class="cr-eup-league__mission" data-eup-league-mission="' + esc(m.id) + '" data-eup-league-status="' + esc(m.state) + '"><h5>' + esc(m.title || m.slug || m.id) + '</h5>' +
+      var html = '<section class="cr-eup-league__mission" data-eup-league-mission="' + esc(m.id) + '" data-eup-league-status="' + esc(m.state) + '" aria-labelledby="' + rid('mission', m.id) + '"><h5 id="' + rid('mission', m.id) + '">' + esc(m.title || m.slug || m.id) + '</h5>' +
         '<p>' + chip(m.state || 'unknown', words(m.state)) + ' <small>template ' + esc(m.template || 'unknown') + (isInt(m.revision) ? ' · rev ' + m.revision : '') +
         (isInt(m.requirements_revision) ? ' · requirements revision ' + m.requirements_revision : '') + ' · seats ' + esc(isInt(m.assigned) ? m.assigned : 'unknown') + ' of ' + esc(isInt(m.capacity) ? m.capacity : 'no limit') +
         ' · proof ' + esc(Array.isArray(m.proof_modes) ? m.proof_modes.join(', ') : 'unknown') + '</small></p>';
@@ -939,7 +987,7 @@
       var head = filterField('applications', 'Status') + (L.errors.campaigns ? readNote(L.errors.campaigns, 'missions') : '');
       if (s) return head + '<div class="cr-eup__grid"><article class="cr-eup__card cr-eup__card--wide"><h3>Applications</h3>' + s + '</article></div>';
       var rows = L.data.applications.filter(isObject);
-      return head + '<div class="cr-eup__grid">' + (rows.length ? rows.map(function (a) { return applicationCard(a, ix); }).join('') :
+      return head + '<div class="cr-eup__grid">' + awayBlock('applications') + (rows.length ? rows.map(function (a) { return applicationCard(a, ix); }).join('') :
         '<article class="cr-eup__card cr-eup__card--wide"><h3>Applications</h3>' + note('empty', 'The Worker returned 0 applications' + (L.filters.applications ? ' with status ' + words(L.filters.applications) : '') + '.') + '</article>') + '</div>';
     }
 
@@ -972,7 +1020,8 @@
         '<p><strong>' + esc(doc.title || 'Untitled') + '</strong></p>' + mediaList(p.media) + line('Not scanned: when each file was sealed its type and size were checked, never its safety. No malware scan exists.') + reviewsList(p.reviews);
       if (credit) html += '<p class="cr-eup__unit-line" data-eup-league-credit="' + esc(p.id) + '">Completion credit recorded ' + esc(when(credit.created_at)) + ' for revision ' + esc(credit.proof_revision) + ' (' + esc(credit.kind) + '). A private proof and an accommodation proof earn the identical credit; consent and publication never change it.</p>';
       if (!validId(p.id)) return html + line('This record has no valid id; no command is offered for it.') + '</article>';
-      if (open) html += reviewPanel(p, ix);
+      if (withdrawn(p, ix)) html += line('The participant withdrew from this mission. That revoked their private-review consent, so this proof is not reviewed and its media is not read.', ' data-eup-league-withdrawn="' + esc(p.id) + '"');
+      else if (open) html += reviewPanel(p, ix);
       else if (p.state === 'submitted' && p.moderation_state !== 'held') html += actions(doButton('review', p.id, 'Open revision ' + p.revision + ' for review'));
       else if (p.state === 'submitted') html += line('Held: no review and no media read until the hold is released.');
       html += '<h4>Moderation</h4>' + line(p.moderation_state === 'held' ? 'Held: review, consent, publication and every signed media read are stopped.' : 'A hold stops exposure first: it withdraws a live publication and stops review and every signed media read until it is released.') +
@@ -1017,7 +1066,7 @@
       var head = filterField('proofs', 'State') + (L.errors.assignments ? readNote(L.errors.assignments, 'assignments') : '') + (L.errors.credits ? readNote(L.errors.credits, 'credits') : '');
       if (s) return head + '<div class="cr-eup__grid"><article class="cr-eup__card cr-eup__card--wide"><h3>Proofs</h3>' + s + '</article></div>';
       var rows = L.data.proofs.filter(isObject);
-      return head + '<div class="cr-eup__grid">' + (rows.length ? rows.map(function (p) { return proofCard(p, ix); }).join('') :
+      return head + '<div class="cr-eup__grid">' + awayBlock('proofs') + (rows.length ? rows.map(function (p) { return proofCard(p, ix); }).join('') :
         '<article class="cr-eup__card cr-eup__card--wide"><h3>Proofs</h3>' + note('empty', 'The Worker returned 0 proofs' + (L.filters.proofs ? ' in state ' + words(L.filters.proofs) : '') + '.') + '</article>') + '</div>';
     }
 
@@ -1033,18 +1082,21 @@
     }
     function publicationCard(p, ix) {
       var slot = 'publication:' + p.id, F = 'publication:' + p.id;
-      var consents = (Array.isArray(L.data.consents) ? L.data.consents : []).filter(function (k) { return isObject(k) && k.proof_id === p.id; });
+      var rec = L.records['consents:' + p.id], unread = recordState('consents', p.id), list = rec && !rec.error && Array.isArray(rec.data) ? rec.data : null;
+      var consents = (list || []).filter(function (k) { return isObject(k) && k.proof_id === p.id; }), capped = !!list && list.length >= LIMITS.list.rows;
       var pubs = (Array.isArray(L.data.publications) ? L.data.publications : []).filter(function (b) { return isObject(b) && b.proof_id === p.id; });
       var usable = consents.filter(function (k) { return k.purpose === 'publish_proof' && k.state === 'open' && k.proof_revision === p.revision && k.asset_revision === p.asset_revision; })[0];
       var html = '<article class="cr-eup__card cr-eup__card--wide" data-eup-league-publication-card="' + esc(p.id) + '" data-eup-league-status="' + esc(p.publication_state) + '">' + proofHead(p, ix) +
-        '<h4>Consents</h4>' + (L.data.consents ? (consents.length ? '<ul class="cr-eup__list">' + consents.map(consentLine).join('') + '</ul>' : line('No consent recorded for this proof.')) : readState('consents')) +
+        '<h4>Consents</h4>' + (list ? (consents.length ? '<ul class="cr-eup__list">' + consents.map(consentLine).join('') + '</ul>' : line('No consent recorded for this proof.')) +
+          (capped ? line('This list came back at its cap of ' + LIMITS.list.rows + ' rows, oldest first: later consents may not be shown.') : '') : unread || note('loading', 'Reading consents…')) +
         '<h4>Publications</h4>' + (L.data.publications ? (pubs.length ? '<ul class="cr-eup__list">' + pubs.map(publicationLine).join('') + '</ul>' : line('Never published.')) : readState('publications'));
       if (!validId(p.id)) return html + line('This record has no valid id; no command is offered for it.') + '</article>';
       if (p.publication_state === 'published_released_audience') {
         html += '<div class="cr-eup-league__form">' + textField(F, 'reason', 'Reason to withdraw the publication (required)', '', { max: LIMITS.text.note }) + '</div>' + actions(cmdButton('publications.decide', p.id, 'withdrawn', 'Withdraw the publication', slot));
       } else {
         var why = p.state !== 'accepted' ? 'Only an accepted proof is published.' : p.moderation_state === 'held' ? 'Held: release the hold first.' :
-          !L.data.consents ? 'Consents were not read, so publication is not offered.' :
+          !list ? 'Consents were not read, so publication is not offered.' :
+          !usable && capped ? 'The consent list of this proof came back at its cap, so an open consent may not be shown; publication is not offered from it.' :
           !usable ? 'No open publication consent from the participant for this exact revision and fingerprint. A consent is theirs to give; it publishes nothing by itself.' : null;
         html += why ? line(why, ' data-eup-league-blocked="' + esc(p.id) + '"') : line('The participant consented to this exact revision and fingerprint until ' + when(usable.expires_at) + '. Publishing is still your separate decision.') +
           actions(cmdButton('publications.decide', p.id, 'published:' + usable.id, 'Publish to the campaign\'s released audience', slot));
@@ -1054,9 +1106,9 @@
     function viewPublication() {
       var s = readState('proofs'), ix = index();
       var head = line('Publication means visible to the campaign\'s released audience only. Nothing here is public. A consent publishes nothing; publishing is your separate decision, and revoking a consent withdraws its publication at once.') +
-        (L.errors.consents ? readNote(L.errors.consents, 'consents') : '') + (L.errors.publications ? readNote(L.errors.publications, 'publications') : '');
+        (L.errors.publications ? readNote(L.errors.publications, 'publications') : '');
       if (s) return head + '<div class="cr-eup__grid"><article class="cr-eup__card cr-eup__card--wide"><h3>Accepted proofs</h3>' + s + '</article></div>';
-      var rows = L.data.proofs.filter(function (p) { return isObject(p) && (p.state === 'accepted' || p.publication_state !== 'private'); });
+      var rows = L.data.proofs.filter(publishable);
       return head + '<div class="cr-eup__grid">' + (rows.length ? rows.map(function (p) { return publicationCard(p, ix); }).join('') :
         '<article class="cr-eup__card cr-eup__card--wide"><h3>Accepted proofs</h3>' + note('empty', 'No accepted proof yet: only accepted work can be published.') + '</article>') + '</div>';
     }
@@ -1080,7 +1132,7 @@
       var head = filterField('appeals', 'State') + line('Overturned: a declined application returns to submitted, or a rejected proof returns to submitted at the same revision, for a new decision. Upheld changes nothing else. Nobody resolves their own appeal.');
       if (s) return head + '<div class="cr-eup__grid"><article class="cr-eup__card cr-eup__card--wide"><h3>Appeals</h3>' + s + '</article></div>';
       var rows = L.data.appeals.filter(isObject);
-      return head + '<div class="cr-eup__grid">' + (rows.length ? rows.map(appealCard).join('') : '<article class="cr-eup__card cr-eup__card--wide"><h3>Appeals</h3>' + note('empty', 'The Worker returned 0 appeals' + (L.filters.appeals ? ' in state ' + words(L.filters.appeals) : '') + '.') + '</article>') + '</div>';
+      return head + '<div class="cr-eup__grid">' + awayBlock('appeals') + (rows.length ? rows.map(appealCard).join('') : '<article class="cr-eup__card cr-eup__card--wide"><h3>Appeals</h3>' + note('empty', 'The Worker returned 0 appeals' + (L.filters.appeals ? ' in state ' + words(L.filters.appeals) : '') + '.') + '</article>') + '</div>';
     }
 
     /* ================================================================== Retention */
@@ -1263,9 +1315,9 @@
         var proofRead = answerOf(d, 'proof', false), media = d.media;
         if (proofRead.id !== proofId || proofRead.revision !== revision || !Array.isArray(media)) throw Object.assign(new Error('the review answer is not this revision'), { malformed: true });
         var seconds = null, got = [];
-        media.forEach(function (m) {
+        media.forEach(function (m, i) {
           if (!isObject(m) || typeof m.url !== 'string' || !/^https:\/\//.test(m.url) || !(typeof m.expires_in === 'number' && m.expires_in > 0)) return;
-          got.push({ upload_id: m.upload_id, kind: m.kind === 'video' ? 'video' : 'audio', url: m.url });
+          got.push({ upload_id: m.upload_id, kind: m.kind === 'video' ? 'video' : 'audio', url: m.url, label: (m.kind === 'video' ? 'Video ' : 'Audio ') + (i + 1) + ' of ' + media.length + ', revision ' + revision + ' under review' });
           seconds = seconds === null ? m.expires_in : Math.min(seconds, m.expires_in);
         });
         if (got.length !== media.length) throw Object.assign(new Error('a media link was not readable'), { malformed: true });
@@ -1306,7 +1358,7 @@
           el.setAttribute('preload', 'metadata');
           el.setAttribute('data-eup-league-media', id);
           el.setAttribute('data-eup-focus', 'league:media:' + id);
-          el.setAttribute('aria-label', (link.kind === 'video' ? 'Video' : 'Audio') + ' of the proof under review');
+          el.setAttribute('aria-label', link.label);
           el.setAttribute('src', link.url);
           players[id] = el;
         }

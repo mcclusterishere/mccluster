@@ -232,7 +232,9 @@ function leagueWorker({ module = { installed: true, state: 'enabled', revision: 
         if (!pub) throw http(409, 'revision_conflict');
         Object.assign(pub, { state: 'withdrawn', effective: false, withdrawn_by: OWNER, withdrawn_at: T0, withdrawn_reason: 'owner' }); p.publication_state = 'withdrawn'; return pub;
       }, () => p.revision) }; },
-    'GET consents': () => ({ consents: clone(s.consents) }),
+    /* as the SQL answers consents.list: one proof's rows when ?proof= names it, oldest first, at most LIMITS.list.rows */
+    'GET consents': (b, x, query) => ({ consents: clone(s.consents.filter((k) => !query.get('proof') || k.proof_id === query.get('proof'))
+      .sort((p, q) => (p.granted_at < q.granted_at ? -1 : p.granted_at > q.granted_at ? 1 : p.id < q.id ? -1 : p.id > q.id ? 1 : 0)).slice(0, C.LIMITS.list.rows)) }),
     'GET publications': () => ({ publications: clone(s.publications) }),
     'GET appeals': (b, x, query) => ({ appeals: clone(s.appeals.filter((a) => !query.get('state') || a.state === query.get('state'))) }),
     'POST appeals/:id/resolve': (b, xid) => { const x = s.appeals.find((a) => a.id === xid); if (!x) throw http(404, 'not_found');
@@ -449,7 +451,9 @@ test('failures: only documented refusals are settled; a timeout, a lost connecti
     const status = C.HTTP_REASONS[reason] ?? Object.values(C.ERRORS).find((e) => e.code === reason).owner_status;
     if (status === 401 || (status === 403 && reason === 'owner_required')) continue;
     const r = H.commandFailure(http(status, reason));
-    if (status === 503 && ['storage_unavailable'].includes(reason)) assert.equal(r.settled, false, reason + ' stays unknown');
+    /* authorization_unavailable is documented since review 2026-11-10 (F26); it stays unknown, as line 437 pins and as
+       the member page treats it (UNKNOWN_503). */
+    if (status === 503 && ['storage_unavailable', 'authorization_unavailable'].includes(reason)) assert.equal(r.settled, false, reason + ' stays unknown');
     else assert.equal(r.settled, true, 'every documented refusal of the contract is settled: ' + status + ' ' + reason);
   }
 });
@@ -927,4 +931,172 @@ test('rendered fields are the contract\'s; the old field names are gone; no mark
   assert.doesNotMatch(source, /localStorage|sessionStorage|console\.(log|warn|error|info)/, 'nothing is stored or logged');
   assert.doesNotMatch(source, /<svg|<img|logo/i, 'text only, no mark');
   assert.doesNotMatch(source, /Human Uprise/);
+});
+
+/* ================================================================== review of 2026-11-10 */
+const pressed = async (m, action, id = '', arg = '') => { document.activeElement = null; await m.press(action, id, arg); }; /* the pressed control is replaced by the redraw */
+const focusKeyOf = () => (document.activeElement && document.activeElement.attrs ? document.activeElement.attrs['data-eup-focus'] : null);
+
+test('proofs: work the participant withdrew from is not offered for review, and the card says they withdrew', async () => {
+  const w = leagueWorker(); world(w);
+  const asg = w.s.assignments.find((a) => a.id === U(130)); asg.status = 'withdrawn'; asg.withdrawn_at = T0;
+  const m = mount(w); await settle();
+  await m.league('proofs');
+  const [p, , own] = w.s.proofs;
+  const offered = (id) => m.qa('[data-eup-league-do="review"]').some((b) => b.attrs['data-eup-league-id'] === id);
+  assert.equal(offered(p.id), false, 'no review is offered for withdrawn work (its private_review consent was revoked with the withdrawal)');
+  const said = m.q('[data-eup-league-withdrawn="' + p.id + '"]');
+  assert.ok(said, 'the card says why'); assert.match(said.textContent, /participant withdrew from this mission/);
+  assert.equal(offered(own.id), true, 'work whose assignment is still accepted is offered as before');
+  assert.equal(m.q('[data-eup-league-withdrawn="' + own.id + '"]'), null);
+});
+
+test('publication: consents are read per proof, so a League whose consent list passed its cap still shows and publishes a later participant\'s consent', async () => {
+  const route = C.ROUTES.find((r) => r.surface === 'owner' && r.method === 'GET' && r.path === 'consents');
+  assert.equal(route.query.proof, 'id', 'the contract reads one proof\'s consents by ?proof=<id>');
+  const w = leagueWorker(); world(w);
+  const p = w.s.proofs[1], k = w.s.consents[0];
+  /* an older, revoked consent on each of LIMITS.list.rows other proofs fills the tenant-wide list */
+  for (let i = 0; i < C.LIMITS.list.rows; i += 1) w.s.consents.push({ ...k, id: U(20000 + i), proof_id: U(30000 + i), state: 'revoked', granted_at: '2026-11-01T12:00:00.000Z', revoked_at: T0 });
+  const m = mount(w); await settle();
+  await m.league('publication');
+  assert.equal(m.q('[data-eup-league-consent="' + k.id + '"]')?.attrs['data-eup-league-status'], 'open', 'the participant\'s open consent is listed');
+  assert.ok(m.button('publications.decide', p.id, 'published:' + k.id), 'and publishing it is offered');
+  assert.equal(w.log.filter((l) => l.method === 'GET' && l.path === '/v1/eup/league/consents').length, 0, 'the tenant-wide consent list is not what the page decides from');
+  assert.ok(w.log.some((l) => l.method === 'GET' && l.path === '/v1/eup/league/consents?proof=' + p.id), 'each shown proof\'s consents are read by its id');
+  await m.press('publications.decide', p.id, 'published:' + k.id);
+  assert.equal(m.q('[data-eup-league-publication-card="' + p.id + '"]').attrs['data-eup-league-status'], 'published_released_audience');
+  assert.equal(H.LIMITS.list.rows, C.LIMITS.list.rows, 'the list cap the page names is the contract\'s');
+  /* one proof's own list at the cap (not reachable through the store, which bounds consents per proof) says so */
+  const w2 = leagueWorker(); world(w2);
+  const p2 = w2.s.proofs[1];
+  for (let i = 0; i < C.LIMITS.list.rows; i += 1) w2.s.consents.push({ ...w2.s.consents[0], id: U(40000 + i), state: 'revoked', granted_at: '2026-11-01T12:00:00.000Z', revoked_at: T0 });
+  const n = mount(w2); await settle();
+  await n.league('publication');
+  assert.match(n.q('[data-eup-league-blocked="' + p2.id + '"]').textContent, /came back at its cap/, 'a list at its cap is not read as "no consent"');
+  assert.doesNotMatch(n.q('[data-eup-league-blocked="' + p2.id + '"]').textContent, /No open publication consent/);
+});
+
+test('a decided record that no longer matches the view\'s filter keeps its outcome at the top of the view, says so, and takes focus', async () => {
+  const w = leagueWorker(); world(w);
+  const m = mount(w); await settle();
+  /* Applications filtered to submitted: Decline */
+  await m.league('applications');
+  m.set('filter:applications', 'value', 'submitted'); await m.ui('filter', 'applications');
+  const t = w.s.applications[0];
+  m.set('decide:' + t.id, 'decision', 'declined'); m.set('decide:' + t.id, 'reason', 'Test fixture: declined.');
+  await pressed(m, 'applications.decide', t.id);
+  assert.equal(w.s.applications[0].status, 'declined');
+  assert.equal(m.q('[data-eup-league-application="' + t.id + '"]'), null, 'its card left the filtered list');
+  const a = m.outcome('application:' + t.id);
+  assert.ok(a, 'its outcome is still on the page'); assert.equal(a.kind, 'done');
+  assert.match(a.text, /recorded · status declined/); assert.match(a.text, /no longer matches the filter \(status submitted\)/); assert.doesNotMatch(a.text, /Read back below/);
+  assert.equal(focusKeyOf(), 'league:outcome:application:' + t.id, 'focus lands on the outcome, not the page body');
+  assert.match(m.status(), /no longer matches the filter/);
+  /* Proofs filtered to submitted: three passes accept the proof */
+  await m.league('proofs');
+  m.set('filter:proofs', 'value', 'submitted'); await m.ui('filter', 'proofs');
+  const p = w.s.proofs[0];
+  await m.ui('review', p.id);
+  for (const d of ['mission', 'rights', 'safety']) m.set('review:' + p.id, d, 'pass');
+  m.set('review:' + p.id, 'met:complete', true);
+  await pressed(m, 'proofs.review', p.id);
+  assert.equal(w.s.proofs[0].state, 'accepted');
+  assert.equal(m.q('[data-eup-league-proof="' + p.id + '"]'), null);
+  assert.match(m.outcome('proof:' + p.id)?.text || '', /recorded · state accepted.*no longer matches the filter \(state submitted\)/);
+  assert.equal(focusKeyOf(), 'league:outcome:proof:' + p.id);
+  /* Appeals filtered to open: resolve upheld */
+  await m.league('appeals');
+  m.set('filter:appeals', 'value', 'open'); await m.ui('filter', 'appeals');
+  const x = w.s.appeals[0];
+  m.set('resolve:' + x.id, 'outcome', 'upheld'); m.set('resolve:' + x.id, 'reason', 'Test fixture: the decision stands.');
+  await pressed(m, 'appeals.resolve', x.id);
+  assert.equal(w.s.appeals[0].state, 'upheld');
+  assert.match(m.outcome('appeal:' + x.id)?.text || '', /recorded · state upheld.*no longer matches the filter \(state open\)/);
+  assert.equal(focusKeyOf(), 'league:outcome:appeal:' + x.id);
+  /* with the filter back to all, the record's own card carries the outcome again, and it reads "Read back below" */
+  m.set('filter:appeals', 'value', ''); await m.ui('filter', 'appeals');
+  assert.ok(m.q('[data-eup-league-appeal="' + x.id + '"]'));
+  assert.match(m.outcome('appeal:' + x.id).text, /Read back below\.$/);
+  assert.equal(m.qa('[data-eup-league-away]').length, 0, 'nothing is drawn twice');
+});
+
+test('a refreshed token of the same owner, written by another tab, keeps the League (typed text, a pending command\'s answer); another account or no session conceals', async () => {
+  const store = {};
+  const tokenOf = (sub, n) => 'x.' + Buffer.from(JSON.stringify({ sub, exp: 4102444800, n })).toString('base64url') + '.y';
+  const save = (sub, n) => { if (sub) store.mccdb_session = JSON.stringify({ access_token: tokenOf(sub, n), refresh_token: 'fixture-only', user: { id: sub } }); else delete store.mccdb_session; };
+  const written = (key = 'mccdb_session') => window.dispatchEvent(Object.assign(new Event('storage'), { key }));
+  window.localStorage = { getItem: (k) => (Object.hasOwn(store, k) ? store[k] : null) };
+  window.atob = globalThis.atob;
+  try {
+    save(OWNER, 1);
+    const w = leagueWorker(); world(w);
+    const m = mount(w); await settle();
+    await m.league();
+    m.set('policy', 'reason', 'Typed before the token was refreshed.');
+    let give;
+    w.s.hooks['campaigns.create'] = () => new Promise((r) => { give = r; });
+    await m.press('campaigns.create');
+    assert.equal(m.outcome('campaign:new').kind, 'pending');
+    save(OWNER, 2); written(); await settle();
+    written('mcc_privacy_ack'); await settle();
+    assert.equal(m.qa('[data-eup-note="signed_out"]').length, 0, 'the same owner with a new token is not an account change');
+    assert.doesNotMatch(m.status(), /Account changed/);
+    assert.equal(m.input('policy', 'reason')?.value, 'Typed before the token was refreshed.', 'typed text stays');
+    delete w.s.hooks['campaigns.create'];
+    const sent = w.writes().at(-1);
+    give(await w.request(sent.path, { method: sent.method, body: sent.body })); await settle();
+    assert.equal(m.outcome('campaign:new')?.kind, 'done', 'the pending command\'s answer is shown'); assert.match(m.outcome('campaign:new').text, /Create the campaign: recorded/);
+    assert.equal(m.input('policy', 'reason')?.value, 'Typed before the token was refreshed.');
+    /* another account in the stored session conceals, as before */
+    save(PEER, 3); written(); await settle();
+    assert.equal(m.qa('[data-eup-note="signed_out"]').length, 1, 'another account conceals'); assert.match(m.status(), /Account changed/);
+    /* a session that is gone conceals; so does a cleared storage (key null) */
+    for (const key of ['mccdb_session', null]) {
+      save(OWNER, 4);
+      const v = leagueWorker(); world(v);
+      const n = mount(v); await settle();
+      await n.league();
+      save(null); written(key); await settle();
+      assert.equal(n.qa('[data-eup-note="signed_out"]').length, 1, 'no stored session conceals (key ' + key + ')');
+    }
+  } finally { delete window.localStorage; delete window.atob; }
+});
+
+test('accessible names: each campaign and mission is a named group, each revoke is described by its account, each review player names its take and revision', async () => {
+  const w = leagueWorker(); const { camp, song } = world(w);
+  w.s.grants.push({ ...w.s.grants[0], id: U(111), account: PEER, note: 'Second tester.' });
+  const p = w.s.proofs[0], up2 = { ...p.uploads[0], id: U(199), sha256: SHA(8), storage: { object_id: U(5199), etag: 'etag-199', size: 640 } };
+  p.uploads.push(up2); p.media.push({ upload_id: up2.id, kind: 'audio', mime: 'audio/webm', bytes: 640, sha256: up2.sha256 }); p.document.media.push({ upload_id: up2.id, sha256: up2.sha256 });
+  const m = mount(w); await settle();
+  await m.league();
+  const named = (sel, tag, re) => {
+    const box = m.q(sel); assert.ok(box, sel);
+    const id = box.attrs['aria-labelledby']; assert.ok(id, sel + ' is named by its heading');
+    const head = m.q('[id="' + id + '"]'); assert.ok(head && head.tag === tag, sel + ': ' + id + ' is its ' + tag); assert.match(head.textContent, re);
+  };
+  named('[data-eup-league-campaign="' + camp.id + '"]', 'h3', /Test fixture campaign/);
+  named('[data-eup-league-mission="' + song.id + '"]', 'h5', /Test fixture song mission/);
+  const revokes = m.qa('[data-eup-league-command="audience.grants.revoke"]');
+  assert.equal(revokes.length, 2);
+  const told = revokes.map((b) => { const d = b.attrs['aria-describedby'] && m.q('[id="' + b.attrs['aria-describedby'] + '"]'); return d ? d.textContent : null; });
+  assert.deepEqual(told.map((t) => [TESTER, PEER].find((a) => t && t.includes(a)) || null), [TESTER, PEER], 'each Revoke access is described by the account it revokes');
+  await m.league('proofs');
+  created.length = 0;
+  await m.ui('review', p.id);
+  const labels = created.filter((e) => e.tag === 'audio').map((e) => e.attrs['aria-label']);
+  assert.equal(labels.length, 2);
+  assert.equal(new Set(labels).size, 2, 'the two players do not share one name');
+  labels.forEach((l, i) => assert.match(l, new RegExp('^Audio ' + (i + 1) + ' of 2, revision 1 under review$')));
+  await m.ui('review-close', p.id); /* drops the links and their 300 s expiry timer */
+  assert.equal(E.helpers.league().inspect().links, 0);
+});
+
+test('League headings wrap a one-word title (1 to 180 code points, one line) inside the card', async () => {
+  const css = await readFile(new URL('../../css/control-eup.css', import.meta.url), 'utf8');
+  const rules = [...css.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/([^{}]+)\{([^}]*)\}/g)].map((r) => ({ selectors: r[1].split(',').map((s) => s.trim()), body: r[2] }));
+  for (const sel of ['.cr-eup__card h3', '.cr-eup__card h4', '.cr-eup-league h5']) {
+    assert.ok(rules.some((r) => r.selectors.includes(sel) && /overflow-wrap:\s*anywhere/.test(r.body)) || rules.some((r) => r.selectors.includes('.cr-eup-league') && /overflow-wrap:\s*anywhere/.test(r.body)),
+      sel + ' wraps a long word anywhere');
+  }
 });

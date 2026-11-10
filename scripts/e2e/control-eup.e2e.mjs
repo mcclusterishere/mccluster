@@ -27,6 +27,13 @@
    consent reflected; hold and release; an appeal whose answer never came found
    by its receipt; a retention purge that removes the object. No signed URL in
    DOM text, storage or console; no horizontal overflow; 44px targets.
+   Review of 2026-11-10: campaigns and missions are groups named by their headings
+   and each Revoke access is described by its account; the review player names its
+   take and revision; a record decided under a status filter keeps its outcome at
+   the top of the view, with focus; one-word titles of 175 and 170 code points wrap
+   inside their headings (and body has no hidden sideways range); a token refreshed
+   for the same owner by another tab keeps typed text and a pending command's
+   outcome (another account still conceals: the mcc:auth-changed step above).
    Two writes the page does not make are labelled: the member's own HTTP calls,
    and one clock step (an upload's staged deadline moved into the past), as in
    scripts/test/eup-league-journey.integration.mjs. PGLITE_MODULE is required;
@@ -367,6 +374,10 @@ async function leagueProof(width){
     const shown=await page.evaluate(id=>Object.fromEntries([...document.querySelectorAll('[data-eup-league-preview="'+id+'"] [data-eup-league-card-field]')].map(e=>[e.dataset.eupLeagueCardField,JSON.parse(e.dataset.eupLeagueCardValue)])),missionId);
     const memberCard=(await as('tester','GET',M())).league.catalogue[0].missions[0];
     check(scope,'setup: the preview card equals the member read of the tester, field for field',JSON.stringify(Object.keys(shown).sort())===JSON.stringify(Object.keys(memberCard).sort())&&Object.keys(memberCard).every(k=>isDeepStrictEqual(shown[k],memberCard[k])),{shown,memberCard});
+    const names=await page.evaluate(([c,m])=>{const named=(el,tag)=>{const h=el&&document.getElementById(el.getAttribute('aria-labelledby')||'');return !!h&&h.tagName===tag&&el.contains(h);};
+      const revokes=[...document.querySelectorAll('[data-eup-league-command="audience.grants.revoke"]')].map(b=>document.getElementById(b.getAttribute('aria-describedby')||'')?.textContent||'');
+      return {campaign:named(document.querySelector('[data-eup-league-campaign="'+c+'"]'),'H3'),mission:named(document.querySelector('[data-eup-league-mission="'+m+'"]'),'H5'),revokes};},[campaignId,missionId]);
+    check(scope,'setup: the campaign and its mission are groups named by their headings; each Revoke access is described by the account it revokes',names.campaign&&names.mission&&names.revokes.length===2&&names.revokes.includes(ids.tester)&&names.revokes.includes(ids.peer),names);
     await noOverflow('setup');
     await shot('[data-eup-league-campaign="'+campaignId+'"]','eup-league-setup');
     await page.locator('[data-eup-league-tab="setup"]').focus();await page.keyboard.press('ArrowRight');
@@ -398,8 +409,18 @@ async function leagueProof(width){
     check(scope,'applications: the applicant reads the request for changes and its reason',peerNow.status==='changes_requested'&&peerNow.decisions.at(-1).reason==='E2E test fixture: please say more about the song.');
     await as('peer','POST',M('missions/'+missionId+'/application'),{idempotency_key:key('resubmit'),expected_revision:peerNow.revision,application:{submit:true,requirements_revision:2,statement:'E2E test fixture: more about the song.'}});
     await view('applications');await statusIs('data-eup-league-application',appP.id,'submitted');
+    /* filtered to submitted and decided by keyboard: the declined record leaves the list; its outcome stays at the top
+       of the view, says why, and takes focus */
+    await field('filter:applications','value').selectOption('submitted');await ui('filter','applications').click();
+    await page.waitForFunction(()=>{const a=[...document.querySelectorAll('[data-eup-league-application]')];return a.length>0&&a.every(e=>e.getAttribute('data-eup-league-status')==='submitted');});await settled();
     await field('decide:'+appP.id,'decision').selectOption('declined');await field('decide:'+appP.id,'reason').fill('E2E test fixture: declined.');
-    await cmd('applications.decide',appP.id).click();await statusIs('data-eup-league-application',appP.id,'declined');
+    await cmd('applications.decide',appP.id).focus();await page.keyboard.press('Enter');
+    await page.locator('[data-eup-league-away="application:'+appP.id+'"] [data-eup-league-outcome="application:'+appP.id+':done"]').waitFor();await settled();
+    const away=await page.locator('[data-eup-league-outcome="application:'+appP.id+':done"]').innerText();
+    check(scope,'applications: filtered to submitted, a declined record leaves the list; its outcome stays at the top of the view, says why, and has focus',
+      await page.locator('[data-eup-league-application="'+appP.id+'"]').count()===0&&/recorded · status declined/.test(away)&&/no longer matches the filter \(status submitted\)/.test(away)&&!/Read back below/.test(away)&&await focusIs(page,'[data-eup-league-outcome="application:'+appP.id+':done"]'),away);
+    await field('filter:applications','value').selectOption('');await ui('filter','applications').click();
+    await statusIs('data-eup-league-application',appP.id,'declined');
     await field('decide:'+appO.id,'decision').selectOption('approved');await field('decide:'+appO.id,'met:fit').check();
     await cmd('applications.decide',appO.id).click();await outcome('application:'+appO.id,'error').waitFor();
     check(scope,'applications: self-approval is refused and said; the workspace stays open',/nobody approves, reviews or resolves their own work/.test(await outcome('application:'+appO.id,'error').innerText())&&await page.locator('[data-eup-note="denied"]').count()===0);
@@ -433,7 +454,8 @@ async function leagueProof(width){
     check(scope,'proofs: opening a review moves focus to the review panel',true);
     const ready=()=>page.waitForFunction(()=>{const a=document.querySelector('[data-eup-league-media]');return !!a&&a.readyState>=1&&isFinite(a.duration);});
     await ready();
-    const first=await page.evaluate(()=>{const a=document.querySelector('[data-eup-league-media]');return {src:a.getAttribute('src'),duration:a.duration,tag:a.tagName};});
+    const first=await page.evaluate(()=>{const a=document.querySelector('[data-eup-league-media]');return {src:a.getAttribute('src'),duration:a.duration,tag:a.tagName,label:a.getAttribute('aria-label')};});
+    check(scope,'proofs: the review player names its take and the revision under review',first.label==='Audio 1 of 1, revision 1 under review',first.label);
     const signedReads=plane.log.filter(l=>l.path.startsWith('/storage/v1/object/sign/'+C.MEDIA.bucket+'/')&&(l.status===200||l.status===206));
     check(scope,'proofs: the audio plays in the page from the storage double through the review link',first.tag==='AUDIO'&&Math.abs(first.duration-0.5)<0.05&&new URL(first.src).origin===plane.supabase&&signedReads.length>=1,{first,signedReads:signedReads.length});
     const panel=await page.locator('[data-eup-league-review-panel="'+proofT.id+'"]').innerText();
@@ -541,6 +563,41 @@ async function leagueProof(width){
     const row=(await plane.league.admin('select state from public.eup_media_uploads where id = $1',[extra.id]))[0];
     check(scope,'retention: the due upload is purged: its row says purged and no object is stored (evidence reads)',row.state==='purged'&&plane.storage.object(path)===null,row);
     await noOverflow('retention');
+
+    /* ---------------- one-word titles: 1 to 180 code points on one line wrap inside their headings ---------------- */
+    await view('setup');
+    const word=(n)=>'Riverrunsclear'.repeat(20).slice(0,n);
+    await field('campaign-new','slug').fill('e2e-one-word-title');await field('campaign-new','title').fill(word(175));
+    await cmd('campaigns.create').click();
+    await page.waitForFunction(()=>document.querySelectorAll('[data-eup-league-campaign]').length===2);
+    const longCampaign=(await page.evaluate(()=>[...document.querySelectorAll('[data-eup-league-campaign]')].map(e=>e.getAttribute('data-eup-league-campaign')))).find(id=>id!==campaignId);
+    await cmd('missions.create',longCampaign).click();
+    await page.locator('[data-eup-league-campaign="'+longCampaign+'"] [data-eup-league-mission]').waitFor();
+    const longMission=await page.locator('[data-eup-league-campaign="'+longCampaign+'"] [data-eup-league-mission]').getAttribute('data-eup-league-mission');
+    await ui('edit',longMission).click();await field('mission:'+longMission,'title').fill(word(170));
+    await cmd('missions.update',longMission).click();await outcome('mission:'+longMission,'done').waitFor();await settled();
+    const clipped=await page.evaluate(()=>[...document.querySelectorAll('[data-eup-league-view] h3, [data-eup-league-view] h4, [data-eup-league-view] h5')].filter(h=>h.scrollWidth>h.clientWidth+1).map(h=>({tag:h.tagName,scroll:h.scrollWidth,client:h.clientWidth})));
+    const bodyRange=await page.evaluate(()=>[document.body.scrollWidth,document.documentElement.clientWidth]);
+    check(scope,'one-word titles of 175 and 170 code points wrap inside their headings, and body has no hidden sideways range',clipped.length===0&&bodyRange[0]<=bodyRange[1],{clipped,bodyRange});
+    await noOverflow('one-word titles');
+    await shot('[data-eup-league-campaign="'+longCampaign+'"]','eup-league-one-word-title');
+
+    /* ---------------- a token refreshed for the same owner by another tab ---------------- */
+    await field(pf,'reason').fill('E2E: typed before a token refresh in another tab.');
+    const hungAudience=plane.faults.add({method:'POST',path:new RegExp('/campaigns/'+longCampaign+'/audience$'),mode:'hang'});
+    await cmd('campaigns.audience.set',longCampaign,'invited').click();
+    await outcome('campaign:'+longCampaign,'pending').waitFor();
+    const tab2=await ctx.newPage();
+    await tab2.goto(BASE+'/css/control-eup.css');
+    await tab2.evaluate(v=>localStorage.setItem('mccdb_session',v),JSON.stringify(plane.session({token:plane.signIn(ids.owner,{name:'owner'})})));
+    await tab2.close();
+    await page.waitForTimeout(500);
+    const kept=await page.locator('[data-eup-league-policy]').count()===1&&!/Account changed/.test(await page.locator('[data-eup-status]').innerText());
+    await page.clock.fastForward('00:16');
+    await outcome('campaign:'+longCampaign,'done').waitFor();
+    check(scope,'a token refreshed for the same owner by another tab keeps the League: the typed text stays and the pending command\'s outcome is shown (found by its receipt)',
+      kept&&hungAudience.hits===1&&/was recorded: its receipt was found by its key/.test(await outcome('campaign:'+longCampaign,'done').innerText())&&await field(pf,'reason').inputValue()==='E2E: typed before a token refresh in another tab.',{kept,hits:hungAudience.hits});
+    await field(pf,'reason').fill('');
 
     /* ---------------- the whole page ---------------- */
     const sizes=await page.evaluate(()=>{const els=[...document.querySelectorAll('[data-eup-league] button, [data-eup-league] input, [data-eup-league] select, [data-eup-league] textarea')].filter(e=>e.offsetParent!==null);

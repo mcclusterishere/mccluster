@@ -17,8 +17,12 @@
    with a bounded deadline, results are stamped with the authority epoch at
    start and discarded if the account changed meanwhile, and a timed-out
    write is reported as "outcome unknown" with a read-back, never replayed.
-   mcc:auth-changed, a session storage change, a restored page and an owner
-   loss (403) bump the epoch and clear every private pane synchronously.
+   mcc:auth-changed, a stored session that is gone or names another account,
+   a restored page and an owner loss (403) bump the epoch and clear every
+   private pane synchronously. A token refreshed for the SAME account (js/backend.js
+   writes one before it expires; another tab's write arrives as a storage event)
+   changes nothing: typed League forms and a pending command's answer stay
+   (DEFECT-LEDGER A1: a same-subject refresh keeps the generation).
 
    Module policy (Overview › Modules card): the owner installs, enables, drains
    and disables the three persisted policy units through /v1/eup/modules
@@ -47,6 +51,20 @@
   var DEADLINE_MS = 15000;
   var esc = function (v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   var epoch = 0, bound = null;
+  var SESSION_KEY = 'mccdb_session';
+  /* The account the stored session names (its access token's sub claim, lower case), or null. It reads the payload
+     and verifies nothing: it only tells a refreshed token of the same account from a session of another account. */
+  function storedAccount() {
+    try {
+      var s = JSON.parse(window.localStorage.getItem(SESSION_KEY) || 'null'), t = s && typeof s.access_token === 'string' ? s.access_token : '';
+      var part = t.split('.')[1];
+      if (!part) return null;
+      var b64 = part.replace(/-/g, '+').replace(/_/g, '/');
+      while (b64.length % 4) b64 += '=';
+      var claims = JSON.parse(decodeURIComponent(Array.prototype.map.call(window.atob(b64), function (c) { return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2); }).join('')));
+      return claims && typeof claims.sub === 'string' && /^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(claims.sub) ? claims.sub.toLowerCase() : null;
+    } catch (e) { return null; }
+  }
   /* the League view of the bound workspace (js/control-room/eup-league.js), or null when that script is absent */
   var league = null;
 
@@ -395,7 +413,8 @@
     var request = makeRequester(opts);
     var status = host.querySelector('[data-eup-status]'), pane = host.querySelector('[data-eup-pane]'), tabs = host.querySelector('[data-eup-tabs]'), geoText = host.querySelector('[data-eup-geo]'), globeHost = host.querySelector('[data-eup-globe]');
     var globe = null, denied = false, myEpoch = epoch;
-    var ctl = { host: host, request: request, globe: null, invalidate: invalidate, destroyed: false };
+    /* account: the one the stored session named when this workspace was opened (null when it could not be read) */
+    var ctl = { host: host, request: request, globe: null, invalidate: invalidate, destroyed: false, account: storedAccount() };
     bound = ctl;
     /* one League view per bound workspace; an earlier one drops its links and private text first */
     if (league) league.reset();
@@ -652,7 +671,14 @@
   }
   function invalidate(reason) { if (bound) bound.invalidate(reason); else epoch += 1; }
   window.addEventListener('mcc:auth-changed', function () { invalidate(); });
-  window.addEventListener('storage', function (e) { if (!e || e.key === null || e.key === 'mccdb_session') invalidate(); });
+  /* Another tab wrote the session (or cleared storage, key null). Still the account the workspace was opened for:
+     nothing to do. Gone, unreadable or another account: conceal. Sign-in and sign-out dispatch mcc:auth-changed,
+     which conceals whoever it names. */
+  window.addEventListener('storage', function (e) {
+    if (e && e.key !== null && e.key !== SESSION_KEY) return;
+    if (bound && bound.account && storedAccount() === bound.account) return;
+    invalidate();
+  });
   window.addEventListener('pageshow', function (e) { if (e && e.persisted) invalidate('Page restored. Reopen E=Up to verify access again.'); });
 
   window.CR.eup = { render: render, bind: bind, helpers: { when: when, freshnessLabel: freshnessLabel, provenanceLine: provenanceLine, reasonFor: reasonFor, makeRequester: makeRequester, policyStateOf: policyStateOf, policyActions: policyActions, reasonProblem: reasonProblem, policyFailure: policyFailure, POLICY_UNITS: POLICY_UNITS, SECTIONS: SECTIONS, DEADLINE_MS: DEADLINE_MS, model: function () { return model; }, epoch: function () { return epoch; }, resetModel: resetModel, league: function () { return league; } } };
