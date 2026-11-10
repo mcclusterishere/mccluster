@@ -25,7 +25,14 @@
    (workers/mccluster/src/eup/modules.js). What a chip or a button says comes
    only from the last successful GET /v1/eup/modules; a failed read shows
    "unknown" and offers no command. Every command carries a reason, the
-   revision that was read and a fresh key, and is followed by a read-back. */
+   revision that was read and a fresh key, and is followed by a read-back.
+
+   Environmental Justice League tab: js/control-room/eup-league.js
+   (window.CR.eupLeague) draws and drives it. bind() creates one League view
+   per workspace and hands it this file's requester, epoch, conceal and
+   redraw; resetModel() resets it (links and private text go with every
+   private pane) and leaving the tab tells it to drop its signed media links.
+   Without that script the tab says it did not load and shows nothing. */
 (function () {
   'use strict';
   window.CR = window.CR || {};
@@ -40,6 +47,8 @@
   var DEADLINE_MS = 15000;
   var esc = function (v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   var epoch = 0, bound = null;
+  /* the League view of the bound workspace (js/control-room/eup-league.js), or null when that script is absent */
+  var league = null;
 
   /* ---------- pure helpers (unit-tested through window.CR.eup.helpers) ---------- */
   function when(iso) {
@@ -188,7 +197,7 @@
      unit, and a counter so only the newest read is committed. Reset with everything private. */
   function freshPolicy() { return { control: null, error: null, loading: false, readAt: null, reasons: {}, seq: 0 }; }
   var model = { section: 'overview', geo: { country: null, state: null }, data: {}, errors: {}, loading: {}, query: '', civic: { jurisdiction: null, office: null, bill: null }, company: null, outcomes: {}, policy: freshPolicy() };
-  function resetModel() { model.data = {}; model.errors = {}; model.loading = {}; model.civic = { jurisdiction: null, office: null, bill: null }; model.company = null; model.outcomes = {}; model.policy = freshPolicy(); }
+  function resetModel() { model.data = {}; model.errors = {}; model.loading = {}; model.civic = { jurisdiction: null, office: null, bill: null }; model.company = null; model.outcomes = {}; model.policy = freshPolicy(); if (league) league.reset(); }
 
   /* ---------- rendering (strings only; bind() wires them) ---------- */
   function render() {
@@ -307,21 +316,11 @@
       '<article class="cr-eup__card"><h3>Blockers</h3>' + (Array.isArray(d.blockers) && d.blockers.length ? '<ul class="cr-eup__list">' + d.blockers.map(function (b) { return '<li><strong>' + esc(b.id) + '</strong> ' + esc(b.text) + (b.gate ? ' <small>(gate: ' + esc(b.gate) + ')</small>' : '') + '</li>'; }).join('') + '</ul>' : note('empty', 'No blockers returned.')) + '</article>' +
       '</div>';
   }
+  /* The League tab is js/control-room/eup-league.js: Setup, Applications, Proofs, Consent and publication, Appeals
+     and Retention over the owner routes of the frozen League contract. */
   function paneLeague() {
-    var s = state('league'); if (s) return s;
-    var c = model.data.league || {};
-    var campaigns = c.campaigns && c.campaigns.ok === true && Array.isArray(c.campaigns.campaigns) ? c.campaigns.campaigns : null;
-    var apps = c.applications && c.applications.ok === true && Array.isArray(c.applications.applications) ? c.applications.applications : null;
-    var proofs = c.proofs && c.proofs.ok === true && Array.isArray(c.proofs.proofs) ? c.proofs.proofs : null;
-    function block(title, rows, draw, err) {
-      var r = reasonFor(err);
-      return '<article class="cr-eup__card"><h3>' + esc(title) + '</h3>' + (r ? note(r.kind, r.text) : rows && rows.length ? '<ul class="cr-eup__list">' + rows.map(draw).join('') + '</ul>' : note('empty', 'The Worker returned 0 ' + title.toLowerCase() + '.')) + '</article>';
-    }
-    return '<div class="cr-eup__grid">' +
-      block('Campaigns', campaigns, function (k) { return '<li><strong>' + esc(k.title) + '</strong> <span class="cr-eup__chip cr-eup__chip--' + esc(k.state || 'unknown') + '">' + esc(k.state || 'unknown') + '</span> <small>rev ' + esc(k.revision) + '</small>' + (Array.isArray(k.missions) && k.missions.length ? '<ul>' + k.missions.map(function (m) { return '<li>' + esc(m.title || m.id) + (m.state ? ' · ' + esc(m.state) : '') + '</li>'; }).join('') + '</ul>' : '<br><small>No missions on this campaign.</small>') + '</li>'; }, c.campaignsError) +
-      block('Applications', apps, function (a) { return '<li>' + esc(a.applicant || a.applicant_id || 'applicant') + ' → ' + esc(a.mission_title || a.mission_id) + ' · ' + esc(a.status || 'unknown') + '</li>'; }, c.applicationsError) +
-      block('Private proofs', proofs, function (p) { return '<li>' + esc(p.assignment_id || p.id) + ' · rev ' + esc(p.revision) + ' · ' + esc(p.review_state || 'unreviewed') + ' · publication ' + esc(p.publication_consent ? 'consented (exact revision ' + p.publication_consent.revision + ')' : 'not consented') + '</li>'; }, c.proofsError) +
-      '</div><p class="cr-muted">Decisions, reviews and publication consent are separate commands that carry an expected revision and an idempotency key; they are not available in this shell until the Worker section exists.</p>';
+    if (!league) return note('error', 'The League tab did not load (js/control-room/eup-league.js). Nothing is shown and no League command is offered.');
+    return league.render();
   }
   function civicCrumb() {
     var g = model.geo, j = model.civic.jurisdiction;
@@ -398,6 +397,13 @@
     var globe = null, denied = false, myEpoch = epoch;
     var ctl = { host: host, request: request, globe: null, invalidate: invalidate, destroyed: false };
     bound = ctl;
+    /* one League view per bound workspace; an earlier one drops its links and private text first */
+    if (league) league.reset();
+    league = window.CR.eupLeague && typeof window.CR.eupLeague.create === 'function' ? window.CR.eupLeague.create({
+      request: request, alive: alive, epoch: function () { return epoch; }, redraw: function () { if (model.section === 'league') drawPane(); },
+      concealed: concealed, say: say, note: note, reasonFor: reasonFor, now: typeof opts.now === 'function' ? opts.now : null,
+      moduleUnit: function () { return model.policy.control ? unitRow('league') : null; }
+    }) : null;
     function say(t) { if (status) status.textContent = t || ''; }
     function reduced() { try { return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches); } catch (e) { return false; } }
     function alive() { return !ctl.destroyed && host.isConnected !== false && myEpoch === epoch && !denied; }
@@ -445,14 +451,7 @@
         if (!alive() || (e && reasonFor(e).kind === 'signed_out')) return;
         return loadPolicy();
       }).then(done);
-      if (section === 'league') {
-        model.data.league = model.data.league || {};
-        return Promise.all([
-          settle('league', 'campaigns', request('/v1/eup/league/campaigns'), function (d) { model.data.league.campaigns = d; }),
-          settle('league', 'applications', request('/v1/eup/league/applications'), function (d) { model.data.league.applications = d; }),
-          settle('league', 'proofs', request('/v1/eup/league/proofs'), function (d) { model.data.league.proofs = d; })
-        ]).then(done);
-      }
+      if (section === 'league') { drawPane(); return (league ? league.load() : Promise.resolve()).then(done); }
       if (section === 'civic') return loadCivic().then(done);
       if (section === 'companies') { drawPane(); done(); return Promise.resolve(); }
       if (section === 'sources') {
@@ -480,6 +479,8 @@
     }
     function select(section) {
       if (!SECTIONS.some(function (s) { return s.id === section; })) return;
+      /* leaving the League drops its signed media links and restricted text before anything else is drawn */
+      if (model.section === 'league' && section !== 'league' && league) league.leave();
       model.section = section; drawTabs(); drawPane();
       var tab = tabs && tabs.querySelector('[data-eup-tab="' + section + '"]'); if (tab && tab.focus) tab.focus();
       if (!model.data[section] && !model.errors[section]) load(section); else if (section === 'overview' || section === 'sources' || section === 'league' || section === 'civic') load(section);
@@ -619,6 +620,7 @@
       pane.querySelectorAll('[data-eup-policy-command]').forEach(function (b) { var v = b.getAttribute('data-eup-policy-command').split(':'); b.onclick = function () { policyCommand(v[0], v[1], false); }; });
       pane.querySelectorAll('[data-eup-policy-resend]').forEach(function (b) { b.onclick = function () { policyCommand(b.getAttribute('data-eup-policy-resend'), null, true); }; });
       pane.querySelectorAll('[data-eup-policy-reload]').forEach(function (b) { b.onclick = function () { if (!model.policy.loading) loadPolicy(true); }; });
+      if (league && model.section === 'league' && !denied) league.wire(pane);
     }
     if (tabs) {
       tabs.querySelectorAll('[data-eup-tab]').forEach(function (b) {
@@ -653,5 +655,5 @@
   window.addEventListener('storage', function (e) { if (!e || e.key === null || e.key === 'mccdb_session') invalidate(); });
   window.addEventListener('pageshow', function (e) { if (e && e.persisted) invalidate('Page restored. Reopen E=Up to verify access again.'); });
 
-  window.CR.eup = { render: render, bind: bind, helpers: { when: when, freshnessLabel: freshnessLabel, provenanceLine: provenanceLine, reasonFor: reasonFor, makeRequester: makeRequester, policyStateOf: policyStateOf, policyActions: policyActions, reasonProblem: reasonProblem, policyFailure: policyFailure, POLICY_UNITS: POLICY_UNITS, SECTIONS: SECTIONS, DEADLINE_MS: DEADLINE_MS, model: function () { return model; }, epoch: function () { return epoch; }, resetModel: resetModel } };
+  window.CR.eup = { render: render, bind: bind, helpers: { when: when, freshnessLabel: freshnessLabel, provenanceLine: provenanceLine, reasonFor: reasonFor, makeRequester: makeRequester, policyStateOf: policyStateOf, policyActions: policyActions, reasonProblem: reasonProblem, policyFailure: policyFailure, POLICY_UNITS: POLICY_UNITS, SECTIONS: SECTIONS, DEADLINE_MS: DEADLINE_MS, model: function () { return model; }, epoch: function () { return epoch; }, resetModel: resetModel, league: function () { return league; } } };
 })();

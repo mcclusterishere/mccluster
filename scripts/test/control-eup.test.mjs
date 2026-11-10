@@ -42,6 +42,9 @@ globalThis.document = { activeElement: null };
 const flush = () => new Promise((r) => setTimeout(r, 0));
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const settleAll = async () => { for (let i = 0; i < 8; i += 1) await flush(); };
+/* the League tab is its own script (js/control-room/eup-league.js), loaded before eup.js as control.html loads it;
+   its own cases are scripts/test/control-eup-league.test.mjs */
+await import('../../js/control-room/eup-league.js');
 await import('../../js/control-room/eup.js');
 const E = window.CR.eup, H = E.helpers;
 
