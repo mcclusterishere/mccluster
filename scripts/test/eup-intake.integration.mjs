@@ -17,9 +17,10 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { createEupDatabase, OWNER, INTAKE_DATA_TABLES, INTAKE_UNGUARDED_TABLES, INTAKE_FUNCTIONS } from './support/eup-intake-database.mjs';
 import { readModulePolicy, installModule, enableModule, drainModule, disableModule, MODULE_POLICY_LOCK_KEY, MODULE_REDUCE_MARKER } from './support/eup-module-policy-database.mjs';
+import { intakeApply } from '../../workers/mccluster/src/eup/intake.js';
 import { pilotRecords, CGA_SECOND_TEXT, CGA_AMENDMENT, CERTIFIED_RESULTS, SEC_RESTATED_FACT, BAD_GEOGRAPHY, BAD_COORDINATES, IDENTITY_CONFLICT } from '../../workers/mccluster/test/fixtures/eup/pilot-ct-bridgeport.mjs';
 
-const { db, rpc, service, handle, count, apply, rollback, applyPolicy, rollbackPolicy, close } = await createEupDatabase();
+const { db, rpc, service, handle, env, fetchImpl, count, apply, rollback, applyPolicy, rollbackPolicy, close } = await createEupDatabase();
 let n = 0;
 const ok = (c, m) => { assert.ok(c, m); n += 1; };
 const eq = (a, b, m) => { assert.deepEqual(a, b, m); n += 1; };
@@ -70,6 +71,9 @@ try {
   eq(tablePrivileges.length, 75, '25 intake tables, three API roles');
   ok(tablePrivileges.filter((p) => p.role !== 'service_role').every((p) => p.privileges === ''), 'anon and authenticated hold no privilege on any intake table, with Supabase default privileges on');
   ok(tablePrivileges.filter((p) => p.role === 'service_role').every((p) => p.privileges === 'INSERT,SELECT,UPDATE'), 'service_role holds exactly select, insert, update: no delete, no truncate');
+  const rls = await rows(`select c.relname as t, c.relrowsecurity as on, (select count(*)::int from pg_policy p where p.polrelid = c.oid) as policies
+    from pg_class c where c.relnamespace = 'public'::regnamespace and c.relkind = 'r' and c.relname = any($1)`, [[...INTAKE_DATA_TABLES, ...INTAKE_UNGUARDED_TABLES]]);
+  ok(rls.length === 25 && rls.every((r) => r.on === true && r.policies === 0), 'row level security is on for all 25 intake tables and none has a client policy');
   const functions = await rows(`select p.oid::regprocedure::text as f, has_function_privilege('anon', p.oid, 'EXECUTE') as anon,
       has_function_privilege('authenticated', p.oid, 'EXECUTE') as authenticated, has_function_privilege('service_role', p.oid, 'EXECUTE') as service
     from pg_proc p where p.pronamespace = 'public'::regnamespace and p.proname like 'eup\\_%' and p.proname not like 'eup\\_module\\_%' order by 1`);
@@ -236,12 +240,24 @@ try {
   eq((await claim('fixture-runner')).claimed, false, 'a run of a source whose rights have expired is not claimed');
   await db.exec("update public.eup_source_registry_state set rights_expires_at = null, paused = true where source_id = 'sec_edgar'");
   eq((await claim('fixture-runner')).claimed, false, 'a run of a paused source is not claimed');
-  await db.exec("update public.eup_source_registry_state set paused = false where source_id = 'sec_edgar'");
+  await db.exec("update public.eup_source_registry_state set paused = false, configured = false where source_id = 'sec_edgar'");
+  eq((await claim('fixture-runner')).claimed, false, 'a run of a source that is not configured is not claimed');
+  await db.exec("update public.eup_source_registry_state set configured = true, access = 'held' where source_id = 'sec_edgar'");
+  eq((await claim('fixture-runner')).claimed, false, 'a run of a source whose access is held is not claimed');
+  await db.exec("update public.eup_source_registry_state set access = 'approved' where source_id = 'sec_edgar'");
+  await db.exec("update public.eup_import_runs set backoff_until = now() + interval '1 hour' where status = 'queued'");
+  eq((await claim('fixture-runner')).claimed, false, 'a queued run still inside its backoff is not claimed');
+  await db.exec("update public.eup_import_runs set backoff_until = now() - interval '1 second' where status = 'queued'");
+  eq(await rpc('eup_import_run_claim', { p_worker: 'fixture-runner', p_source_id: 'gleif' }), { claimed: false, policy_revision: 1 }, 'a claim for another source takes none of these runs');
+  eq([await code(db.query("update public.eup_import_runs set status = 'running' where id = $1", [queuedIds[0]])),
+    await code(db.query("update public.eup_import_runs set lease_token = 'fixture' where id = $1", [queuedIds[0]]))], ['23514', '23514'], 'the table itself refuses a running run without a lease and a queued run with one');
+  eq(await read('run_counts').then((c) => [c.queued, c.running]), [3, 0], 'nothing was claimed by the refused attempts');
   const claims = [];
   for (const worker of ['fixture-runner-1', 'fixture-runner-2', 'fixture-runner-3']) claims.push(await claim(worker));
   eq(claims.map((c) => [c.claimed, c.policy_revision, c.reclaimed, c.source_id, c.attempt]), [1, 2, 3].map(() => [true, 1, false, 'sec_edgar', 0]), 'three claims, each bound to policy revision 1');
-  eq(claims.map((c) => c.run_id).sort(), [...queuedIds].sort(), 'each claim took a different queued run');
+  eq(claims.map((c) => c.run_id), queuedIds, 'each claim took a different queued run, oldest first');
   ok(claims.every((c, i) => c.lease.startsWith(`fixture-runner-${i + 1}#`) && Date.parse(c.lease_expires_at) > Date.now()), 'each claim carries its own lease and an expiry in the future');
+  ok(claims.every((c) => { const left = Date.parse(c.lease_expires_at) - Date.now(); return left > 240_000 && left <= 300_000; }), 'a claim that names no lease length holds the run for the default 300 seconds');
   eq(await rpc('eup_import_run_claim', { p_worker: 'fixture-runner-9' }), { claimed: false, policy_revision: 1 }, 'nothing is left to claim, for any source');
   const counts = await read('run_counts');
   eq([counts.queued, counts.running, counts.running_expired, typeof counts.lease_expires_at], [0, 3, 0, 'string'], 'run counts: three running');
@@ -254,6 +270,7 @@ try {
   const DUPLICATE = { applied: 0, duplicates: 1, reviewed: 0 };
   eq(await code(applyCall(0)), 'EUM04', 'apply with a stale policy revision: module_policy_changed');
   eq(await applyCall(1), DUPLICATE, 'apply with the claim revision is admitted');
+  eq(await intakeApply(env, { fetchImpl }, 'sec_edgar', 'company_fact', [SEC_RESTATED_FACT]), DUPLICATE, "the Worker's intakeApply (three named arguments, no revision) resolves to the one four-argument function");
   // settlement is gated by the lease
   const [jobA, jobB, jobC] = claims;
   const unknownRun = '99999999-9999-4999-8999-999999999999';
@@ -313,12 +330,15 @@ try {
   eq(await finish(jobC.run_id, 'completed', jobC.lease, { p_records: 9 }), { run_id: jobC.run_id, status: 'completed', attempt: 1, replayed: false }, 'draining: a holder finishes its run');
   eq(await finish(jobC.run_id, 'completed', jobC.lease, { p_records: 9 }), { run_id: jobC.run_id, status: 'completed', attempt: 1, replayed: true }, 'the same finish again replays the stored outcome');
   eq(await code(finish(jobC.run_id, 'failed', jobC.lease)), 'EUI02', 'a settled run cannot be finished differently');
+  eq([await code(finish(jobC.run_id, 'completed', jobB.lease)), await code(finish(jobC.run_id, 'completed'))], ['EUI02', 'EUI02'], 'only the lease that settled a run can replay its finish');
   eq(await read('run_counts').then((c) => [c.queued, c.running, c.running_expired]), [1, 1, 0], 'draining: the counts show one run still running');
   eq(await stored(), before, 'draining: no record and no row count changed, no run was added');
 
   // 16. disabled: the same refusals with EUM03; pause and settlement still possible
   eq(policy(await disableModule(db, 'intake')), ['disabled', 3], 'the owner disables the drained module');
   eq(await newWork(), Array(9).fill('EUM03'), 'disabled: refresh, resume, correct, apply, snapshot, claim and a direct table write are refused module_disabled');
+  eq([await code(claim('bad worker')), await code(rpc('eup_intake_apply', { p_source_id: 'sec_edgar', p_kind: 'company_fact', p_records: null }))], ['EUM03', 'EUM03'],
+    'disabled: the guard is the first statement of claim and of apply, ahead of their argument checks');
   const resumeDisabled = await json(await post('sources/sec_edgar/resume'));
   eq([resumeDisabled.status, resumeDisabled.body.reason], [409, 'module_disabled'], 'the Worker answers a refused resume 409 module_disabled');
   eq(await probe('pause'), { paused: true, marker: 'intake', locks: [['ShareLock', true]] }, 'disabled: pause is admitted on the reduce-only path');
@@ -342,7 +362,9 @@ try {
   const corrected = await command('correct', correction('correct-0002'));
   eq([corrected.status, corrected.replayed, await count('eup_corrections')], ['resolved', false, 2], 'the correction refused while draining and disabled is accepted now');
   eq([await directWrite(insertReviewItem), await count('eup_review_items')], ['ok', 4], 'the trigger admits a direct table write while the module is enabled');
-  eq((await finish(jobB.run_id, 'completed', jobB2.lease, { p_records: 11 })).status, 'completed', 'the job finishes');
+  await db.query("update public.eup_import_runs set lease_expires_at = now() - interval '1 second' where id = $1", [jobB.run_id]);
+  eq(await read('run_counts').then((c) => [c.queued, c.running, c.running_expired]), [0, 1, 1], 'its lease runs out before it settles and nobody takes the run over');
+  eq(await finish(jobB.run_id, 'completed', jobB2.lease, { p_records: 11 }), { run_id: jobB.run_id, status: 'completed', attempt: 1, replayed: false }, 'an expired lease that was not taken over still settles its run');
   eq(await read('run_counts'), { queued: 0, running: 0, running_expired: 0, lease_expires_at: null }, 'run counts: nothing queued, nothing running');
   for (const t of ['civic_jurisdictions', 'civic_offices', 'civic_office_terms', 'action_policy_bills']) eq(await count(t), 0, `${t} is still empty after the policy cycle`);
 

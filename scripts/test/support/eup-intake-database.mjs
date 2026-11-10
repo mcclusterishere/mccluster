@@ -29,18 +29,27 @@ export const INTAKE_FUNCTIONS = Object.freeze(['eup_check_provenance(jsonb)', 'e
   'eup_intake_apply(text,text,jsonb,bigint)', 'eup_record_snapshot(text,text,text,jsonb,jsonb)', 'eup_snapshot_immutable()',
   'eup_sources_command(text,jsonb,uuid)', 'eup_sources_read(text,jsonb)']);
 
-// PostgREST stand-in: RPC name -> (named arguments) -> [sql, params]; the result column is `r`. An argument a
-// caller leaves out takes the function's default, as it does over PostgREST.
-export const INTAKE_RPC = Object.freeze({
-  eup_sources_read: (a) => ['select public.eup_sources_read($1,$2) as r', [a.p_action, a.p_params]],
-  eup_sources_command: (a) => ['select public.eup_sources_command($1,$2,$3) as r', [a.p_action, a.p_params, a.p_actor]],
-  eup_civic_read: (a) => ['select public.eup_civic_read($1,$2) as r', [a.p_action, a.p_params]],
-  eup_company_read: (a) => ['select public.eup_company_read($1,$2) as r', [a.p_action, a.p_params]],
-  eup_intake_apply: (a) => ['select public.eup_intake_apply($1,$2,$3,$4) as r', [a.p_source_id, a.p_kind, a.p_records, a.p_policy_revision ?? null]],
-  eup_import_run_claim: (a) => ['select public.eup_import_run_claim($1,$2,$3) as r', [a.p_worker, a.p_source_id ?? null, a.p_lease_seconds ?? 300]],
-  eup_import_run_release: (a) => ['select public.eup_import_run_release($1,$2,$3) as r', [a.p_run_id, a.p_lease ?? null, a.p_reason ?? null]],
-  eup_import_run_finish: (a) => ['select public.eup_import_run_finish($1,$2,$3,$4,$5,$6) as r', [a.p_run_id, a.p_status, a.p_records, a.p_error, a.p_cursor, a.p_lease ?? null]]
+// The intake RPCs and their argument names, as PostgREST would find them in its schema cache.
+export const INTAKE_RPC_ARGUMENTS = Object.freeze({
+  eup_sources_read: ['p_action', 'p_params'],
+  eup_sources_command: ['p_action', 'p_params', 'p_actor'],
+  eup_civic_read: ['p_action', 'p_params'],
+  eup_company_read: ['p_action', 'p_params'],
+  eup_intake_apply: ['p_source_id', 'p_kind', 'p_records', 'p_policy_revision'],
+  eup_import_run_claim: ['p_worker', 'p_source_id', 'p_lease_seconds'],
+  eup_import_run_release: ['p_run_id', 'p_lease', 'p_reason'],
+  eup_import_run_finish: ['p_run_id', 'p_status', 'p_records', 'p_error', 'p_cursor', 'p_lease']
 });
+// PostgREST stand-in: RPC name -> (named arguments) -> [sql, params]; the result column is `r`. The call uses
+// named notation with exactly the arguments the caller sent, as PostgREST does: an argument left out takes the
+// function's default, and one the function has no default for is an error (42883 here, PGRST202 over PostgREST),
+// so a default that goes missing from a signature cannot hide behind the harness.
+export const INTAKE_RPC = Object.freeze(Object.fromEntries(Object.entries(INTAKE_RPC_ARGUMENTS).map(([name, known]) => [name, (args = {}) => {
+  const sent = Object.keys(args).filter((k) => args[k] !== undefined);
+  const unknown = sent.filter((k) => !known.includes(k));
+  if (unknown.length) throw Object.assign(new Error(`Could not find the function public.${name}(${sent.join(', ')}) in the schema cache`), { code: 'PGRST202' });
+  return [`select public.${name}(${sent.map((k, i) => `${k} => $${i + 1}`).join(', ')}) as r`, sent.map((k) => args[k])];
+}])));
 
 export async function createEupDatabase({ enable = true } = {}) {
   const { PGlite } = await import(process.env.PGLITE_MODULE || '@electric-sql/pglite');
