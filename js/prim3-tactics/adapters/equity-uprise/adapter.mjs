@@ -87,6 +87,21 @@ export function levelGrid(pkg, level, rules = {}) {
   return { level, z, elevation_ft: L.elevation_ft, cells, zoneCells, cores, zones: L.zones, doors: L.doors || [], equipment: L.equipment || [] };
 }
 
+/* ---------- an elevator's landing: the cell just outside its access opening ----------
+   The package records each core's opening (opening_ft, on the access_side face). The shaft cell is the cell the
+   opening sits in (half a foot inside the face, through the frame); the landing is its neighbour on the access
+   side. The cab is boarded there: the shaft cell itself stays solid. (A hoistway is narrower than a 12 ft cell,
+   so a point just outside the opening still falls in the shaft's own cell; stepping a whole cell is the rule.) */
+export function elevatorLanding(core) {
+  const o = core.opening_ft, side = core.access_side;
+  if (!o || !side) throw new Error(`${core.id}: no access opening in the authority`);
+  const inward = { west: [0.5, 0], east: [-0.5, 0], south: [0, 0.5], north: [0, -0.5] }[side];
+  const mid = o.facade_x != null ? [o.facade_x, (o.y1 + o.y2) / 2] : [(o.x1 + o.x2) / 2, o.facade_y];
+  const shaft = ftToCell(mid[0] + inward[0], mid[1] + inward[1]);
+  const step = { west: [-1, 0], east: [1, 0], south: [0, 1], north: [0, -1] }[side]; // grid +y is south
+  return { x: shaft.x + step[0], y: shaft.y + step[1] };
+}
+
 /* ---------- traversal: surfaces, blockers, links and cover for a set of levels ----------
    spec: { levels: [0, 1, …], rules: { [level]: { open, closed } }, site: true|false,
            openings: { [site opening id]: true } (exterior doors open), elevators: false }           */
@@ -113,9 +128,11 @@ export function traversal(pkg, spec) {
       links.push({ id: `${c.id}-${lo}-${hi}`, from: { x: a.x, y: a.y, z: zOfLevel(lo) }, to: { x: b.x, y: b.y, z: zOfLevel(hi) }, cost: 3, kind: 'stair' });
     }
   }
-  // elevators: only where the mission permits them (a cab is not a free teleporter)
+  // elevators: only where the mission permits them (a cab is not a free teleporter). The shaft stays solid;
+  // a cab is boarded and left on the landing in front of the authority's access opening (EQ3: a link whose
+  // endpoints are shaft cells is a link the resolver can never use)
   if (spec.elevators) for (const c of pkg.cores.filter((k) => /elevator/.test(k.type))) {
-    const cell = rectCells(c.bounds_ft)[0];
+    const cell = elevatorLanding(c);
     const served = levels.filter((l) => c.serves_levels.includes(l));
     for (let i = 0; i < served.length - 1; i += 1) links.push({ id: `${c.id}-${served[i]}-${served[i + 1]}`, from: { ...cell, z: zOfLevel(served[i]) }, to: { ...cell, z: zOfLevel(served[i + 1]) }, cost: 2, kind: 'elevator' });
   }

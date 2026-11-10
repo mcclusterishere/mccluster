@@ -1,0 +1,25 @@
+# head 9604a966354aaecba2f373e6e674b296ac269bb8 (series applied on 8255fb35); working tree clean; 2026-11-10T11:58:46Z; node v22.23.4
+# cwd workers/mccluster ; command: node --import ./test/support/offline-network.mjs --test test/platform-actor.test.mjs
+TAP version 13
+# Subtest: public discussion resolves a disclosed actor handle without an auth account
+ok 1 - public discussion resolves a disclosed actor handle without an auth account
+  ---
+  duration_ms: 39.958476
+  type: 'test'
+  ...
+# Subtest: news discussion fails closed when AI identity cannot be resolved
+ok 2 - news discussion fails closed when AI identity cannot be resolved
+  ---
+  duration_ms: 4.216385
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 135.168715
+exit=0

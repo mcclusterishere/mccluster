@@ -82,7 +82,14 @@ test('every renderer a leaf names exists in the Control shell',async()=>{
 
 test('the in-flight PRs only have to register a renderer',()=>{
   const slots=Object.fromEntries(N.leaves().filter(l=>l.leaf.module).map(l=>[l.leaf.route,l.leaf.module]));
-  assert.deepEqual(slots,{'#sell:store:marketplace':'marketplace','#sell:store:direct':'musicDirect','#sell:music:lyrics':'lyrics','#create:level-forge':'prim3Levels','#sell:music:artists':'musicLabel'});
+  assert.deepEqual(slots,{'#sell:store:marketplace':'marketplace','#sell:store:direct':'musicDirect','#sell:music:lyrics':'lyrics','#create:level-forge':'prim3Levels','#sell:music:artists':'musicLabel','#system:eup':'eup'});
+});
+
+test('E=Up is an owner door under System: #products:eup and its old names land on #system:eup',()=>{
+  const r=N.resolve('#products:eup');assert.equal(r.entry.leaf.route,'#system:eup');assert.equal(r.legacy,true);
+  for(const q of ['e=up','civic league','environmental justice league'])assert.equal(N.search(q)[0].route,'#system:eup',q);
+  for(const q of ['companies & finance','sources & review'])assert.ok(N.search(q).some(x=>x.route==='#system:eup'),q);
+  assert.equal(N.resolve('#system:eup').legacy,false);
 });
 
 test('the palette finds a view by its old name',()=>{

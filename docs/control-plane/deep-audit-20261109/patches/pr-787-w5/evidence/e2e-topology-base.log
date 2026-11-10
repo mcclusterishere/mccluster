@@ -1,0 +1,20 @@
+# PR head cf8c3cc7 (unpatched): the PR's scripts/e2e/prim3-topology-learning.e2e.mjs, unmodified, all 8 journeys from the SOURCE checkout, same driver and Chromium as e2e-topology-head.log; 2026-11-10T12:05:20Z, node v22.23.4
+DRIVER: worker /tmp/claude-0/-home-user/837dc966-2a9c-597b-ab55-b955b1d35f73/scratchpad/pr-fixes2/wt-w5-merge-base; journey module /tmp/claude-0/-home-user/837dc966-2a9c-597b-ab55-b955b1d35f73/scratchpad/pr-fixes2/wt-w5-merge-base/scripts/e2e/prim3-topology-learning.e2e.mjs; served root (the module's own checkout); variant filter (all)
+Learning journey transit-relay/square 390px
+PASS transit-relay/square 390px brief → real turns → wrong/hinted/correct math → abandoned debrief/reload (no combat completion claim)
+Learning journey equity-uprise-hq/square 390px
+PASS equity-uprise-hq/square 390px brief → real turns → wrong/hinted/correct math → abandoned debrief/reload (no combat completion claim)
+Learning journey equity-uprise-b1/square 390px
+PASS equity-uprise-b1/square 390px brief → real turns → wrong/hinted/correct math → abandoned debrief/reload (no combat completion claim)
+Learning journey equity-uprise-b1-attack/square 390px
+PASS equity-uprise-b1-attack/square 390px brief → real turns → wrong/hinted/correct math → abandoned debrief/reload (no combat completion claim)
+Learning journey courtyard/square 390px
+PASS courtyard/square 390px brief → real turns → wrong/hinted/correct math → abandoned debrief/reload (no combat completion claim)
+Learning journey city/square 390px
+PASS city/square 390px brief → real turns → wrong/hinted/correct math → abandoned debrief/reload (no combat completion claim)
+Learning journey city/hex 390px
+PASS city/hex 390px brief → real turns → wrong/hinted/correct math → abandoned debrief/reload (no combat completion claim)
+Learning journey city/hex 1280px
+PASS city/hex 1280px brief → real turns → wrong/hinted/correct math → abandoned debrief/reload (no combat completion claim)
+DRIVER: PASS in 117.2 s; fixture requests 516; releases 8; sessions 8; evidence rows 70
+exit=0

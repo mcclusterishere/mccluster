@@ -1,6 +1,8 @@
-// Core -> Worker machine credential for POST /v1/media/mcp, and (through
-// ../world-core-reads.js) GETs of the read-only World layers the news pairing
-// reads. Nothing else accepts it.
+// Core -> Worker machine credential for POST /v1/media/mcp, the two media
+// recovery operator routes (GET /v1/media/recovery, POST
+// /v1/media/jobs/:id/reconcile) and, through ../world-core-reads.js, GETs of
+// the read-only World layers the news pairing reads. Nothing else accepts it
+// (the allowlist is coreSignedMediaRoute and CORE_READ_PATH there).
 //
 // McCluster Core on OVH calls this Worker's media MCP to run generative work
 // (model3d, image, video, audio). It used to send a stored Supabase user token
@@ -49,9 +51,16 @@ function authError(message, status = 401) {
   return Object.assign(new Error(message), { status });
 }
 
-// Per-isolate replay cache. Workers do not share memory across isolates, so
-// this narrows replay to "another isolate within the 60-second window" over a
-// TLS connection; the body digest still pins any replay to the identical call.
+// Per-isolate replay cache. Workers do not share memory across isolates, so on
+// its own this narrows replay only to "another isolate within the 60-second
+// window" (audit 2026-11-09, C5: two isolates accepted one captured signed
+// mutation). It stays as the cheap first check; MUTATING calls additionally
+// need an atomic claim in a SHARED replay store (below), and fail closed when
+// none is configured. Read-only Core GETs keep this cache alone: they spend
+// nothing and the World layers they read are idempotent (documented policy).
+// One read is the exception: the media recovery candidates list crosses
+// organizations, so its caller passes mutating: true and it claims a nonce
+// in the shared store like a write (entry.js).
 const seenNonces = new Map();
 function acceptNonce(nonce, expiresAt, now) {
   for (const [key, expiry] of seenNonces) {
@@ -72,7 +81,43 @@ export function isCoreSigned(request) {
   return request.headers.get(H.protocol) === CORE_PROTOCOL;
 }
 
-export async function verifyCoreSignature({ request, env, path, bodyBytes, now = Date.now() }) {
+/* Shared replay store contract: claim(nonce, expiresAtMs) -> true when this
+   call is the first to claim the nonce, false when it was already claimed.
+   Any throw means "could not consult the store" and refuses the mutation. */
+const NONCE_TABLE = 'core_signed_nonces';
+
+// Supabase is the one shared durable plane this Worker already has (no KV or
+// D1 binding exists, and HereTenantAgent is tenant state). A unique-key insert
+// is the atomic claim; the row carries its expiry so a scheduled sweep can
+// drop old nonces. Table applied in production as supabase/migrations/20261109180829_core_signed_nonces_v1.sql (2026-11-09).
+export function createSupabaseReplayStore(env, { fetchImpl = fetch } = {}) {
+  return {
+    async claim(nonce, expiresAt) {
+      if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) throw new Error('replay store is not configured');
+      const res = await fetchImpl(`${env.SUPABASE_URL}/rest/v1/${NONCE_TABLE}`, {
+        method: 'POST',
+        headers: { ...serviceHeaders(env), 'content-type': 'application/json', prefer: 'return=minimal' },
+        body: JSON.stringify({ nonce, expires_at: new Date(expiresAt).toISOString() })
+      });
+      if (res.status === 201) return true;
+      if (res.status === 409) return false;
+      throw new Error(`replay store unavailable (${res.status})`);
+    }
+  };
+}
+
+function resolveReplayStore(env) {
+  const mode = String(env.CORE_REPLAY_STORE || '').trim().toLowerCase();
+  if (mode === 'supabase') return createSupabaseReplayStore(env);
+  if (mode === 'isolate') return { async claim() { return true; }, isolateOnly: true };
+  return null;
+}
+
+export async function verifyCoreSignature({
+  request, env, path, bodyBytes, now = Date.now(),
+  mutating = String(request.method).toUpperCase() !== 'GET',
+  replayStore = undefined
+}) {
   const secret = env.CORE_EDGE_SIGNING_KEY;
   if (!secret) throw authError('Core signing key is not configured', 503);
 
@@ -96,7 +141,19 @@ export async function verifyCoreSignature({ request, env, path, bodyBytes, now =
   const expected = b64url(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(canonical)));
   if (!constantTimeEqual(signature, expected)) throw authError('Core signature is not valid');
 
-  if (!acceptNonce(nonce, signedAt + CORE_CLOCK_SKEW_MS, now)) throw authError('Core request nonce was already used', 409);
+  const expiresAt = signedAt + CORE_CLOCK_SKEW_MS;
+  if (!acceptNonce(nonce, expiresAt, now)) throw authError('Core request nonce was already used', 409);
+  if (!mutating) return true;
+
+  const store = replayStore === undefined ? resolveReplayStore(env) : replayStore;
+  if (!store) throw authError('Core replay store is not configured for mutating requests (CORE_REPLAY_STORE)', 503);
+  let claimed;
+  try {
+    claimed = await store.claim(nonce, expiresAt);
+  } catch (error) {
+    throw authError(`Core replay store could not be consulted: ${error?.message || error}`, 503);
+  }
+  if (!claimed) throw authError('Core request nonce was already used', 409);
   return true;
 }
 

@@ -16,6 +16,7 @@
   <link rel="stylesheet" href="css/member-desk.css?v=__STAMP__">
   <link rel="stylesheet" href="css/human-uprise-editorial.css?v=__STAMP__">
   <link rel="stylesheet" href="css/world-travel.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/world-environment.css?v=__STAMP__">
   <link rel="stylesheet" href="css/policy-mode.css?v=__STAMP__">
   <link rel="stylesheet" href="css/mission-swipe-deck.css?v=__STAMP__">
   <link rel="stylesheet" href="css/mnet-audio.css?v=__STAMP__">
@@ -39,7 +40,8 @@
   <!-- THE WORLD IS THE SOCIAL FEED (owner, 2026-10-20: "the transport and the missions feature will be taken off and the
        social feature will be the only feature with no tab selecting between the other two"). Travel and Missions stay in
        the code, switched off, until they are refined: hu-social-only on <html> is the switch, and missions=0 tells the
-       globe (the frame and the expanded globe) to draw no missions. Remove both to bring them back. -->
+       globe (the frame and the expanded globe) to draw no general missions. Environmental Justice (2026-11-07)
+       is a scoped public mode on this same globe; it does not remove either owner switch. -->
   <main class="mn">
     <header class="mn__top">
       <a class="mn__brand" href="mnet.html" aria-label="Equity Uprise home">
@@ -292,7 +294,7 @@
         <section class="mn__world-home" id="mnWorld" aria-label="The world">
           <h1 class="wt-headline">The world is your feed.</h1>
           <div id="wtDestination" class="wt-destination" hidden></div>
-          <nav class="wt-world-modes" aria-label="World mode"><button type="button" data-world-mode="travel" aria-pressed="true">Travel</button><button type="button" data-world-mode="missions" aria-pressed="false">Missions</button><button type="button" data-world-mode="posts" aria-pressed="false">News feed</button></nav>
+          <nav class="wt-world-modes" aria-label="World mode"><button type="button" data-world-mode="travel" aria-pressed="false">Travel</button><button type="button" data-world-mode="missions" aria-pressed="false">Missions</button><button type="button" data-world-mode="posts" aria-pressed="true">News feed</button><button type="button" data-world-mode="environment" aria-pressed="false" aria-label="E=UP: Environmental Justice" title="E=UP: Environmental Justice"><img src="assets/img/equity-uprise-mark-white.png" alt="" width="30" height="30"></button></nav>
           <iframe class="mn__world-frame" id="mnWorldFrame" src="action-globe.html?embedded=1&amp;surface=network&amp;missions=0&amp;v=__STAMP__" title="Equity Uprise globe. Drag to turn the Earth; tap a red pin to open its mission." loading="lazy" allow="geolocation" referrerpolicy="strict-origin-when-cross-origin"></iframe>
           <!-- the place card (owner, 2026-10-21: "only in the middle ... how many users ... news articles ... posts"): drawn by paintPlaceCard in the page script -->
           <div class="mn__place-card" id="mnPlaceCard" role="status" aria-live="polite" hidden></div>
@@ -325,6 +327,7 @@
         </section>
         <div class="mn__world-feed" id="mnWorldFeed" aria-label="World content" tabindex="0">
         <section id="wtPlanner" aria-labelledby="wtTitle"></section>
+        <section id="wePanel" class="we-panel" aria-labelledby="weTitle" hidden></section>
         <div id="wtSocial"><!-- One stream: public news, community posts, and verified activity are interleaved below. -->
         <section class="mn__world-context" id="mnWorldContext" aria-label="On the globe" aria-live="polite">
           <!-- EXPLORE THE WORLD (owner's signed-out reference, 2026-10-14):
@@ -728,6 +731,7 @@
   <!-- async: the Travel module (switched off while the World is the social feed) never holds the World's boot, which runs
        at DOMContentLoaded; it wires itself whenever it arrives -->
   <script type="module" async src="js/travel/world-travel.mjs?v=__STAMP__"></script>
+  <script type="module" src="js/world-environment-mccluster.mjs?v=__STAMP__"></script>
   <script src="js/mnet-tour.js?v=__STAMP__"></script>
   <script src="js/mnet-live.js?v=__STAMP__"></script>
   <script src="js/mnet-audio.js?v=__STAMP__"></script>

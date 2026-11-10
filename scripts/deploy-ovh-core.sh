@@ -335,8 +335,10 @@ systemctl restart "${MCC_PREVIEW_SERVICE}"
 # A release that leaves the adapter unable to reach Ollama must roll back
 # instead of stamping a deployment where Control can queue work but never reply.
 # Same probe rollback uses: preview /health, required units active, adapter /health.
-# Confirm inference is reachable before allowing either consumer to claim work.
+# Confirm inference is reachable AND the default model is installed (/ready
+# answers 503 otherwise) before allowing either consumer to claim work.
 mcc_probe "${MCC_ADAPTER_HEALTH_URL}"
+mcc_probe "${MCC_ADAPTER_READY_URL}"
 mcc_resume_producers
 mcc_verify_core_health strict
 

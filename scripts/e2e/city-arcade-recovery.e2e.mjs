@@ -49,18 +49,50 @@ try {
   await page.waitForFunction(()=>document.querySelector('[data-sole-cloud-status]').textContent.includes('Local play and device saves remain available.')&&!document.querySelector('[data-sole-cloud-status]').textContent.startsWith('Checking'));
   const pending=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),key);
   assert.equal(pending.status,'failed');assert.equal(pending.pending.id,pending.cloudRun);assert.equal(finishes,1);
+  // W2: the unacknowledged receipt also lives in the account-scoped outbox, and a local restart cannot erase it.
+  const outbox=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('here.city-arcade.result-outbox.v1:device')||'[]'));
+  assert.equal((await outbox())[0]?.id,pending.cloudRun);
+  await page.locator('summary').click();await page.locator('[data-sole-apply]').click();
+  assert.equal((await outbox())[0]?.id,pending.cloudRun,'restart keeps the pending receipt');
+  assert.equal(await page.locator('[data-sole-retry]').isHidden(),false);
   // A revoked session cannot consume or clear the preserved result.
   revoked=true;await page.reload();await mount();
   await page.waitForFunction(()=>document.querySelector('[data-sole-cloud-status]').textContent.startsWith('Cloud missions unavailable'));
   assert.equal(await page.locator('[data-sole-retry]').isDisabled(),true);
-  assert.deepEqual(await page.evaluate(key=>JSON.parse(localStorage.getItem(key)).pending,key),pending.pending);
-  revoked=false;await page.reload();await mount();await page.locator('summary').click();
+  // While the cloud refuses, the waiting result offers a usable Reconnect and a Discard on screen.
+  await page.locator('summary').click();
+  assert.equal(await page.locator('[data-sole-reconnect]').isVisible(),true,'reconnect is offered while the cloud refuses');
+  assert.equal(await page.locator('[data-sole-reconnect]').isEnabled(),true,'reconnect is usable while the cloud refuses');
+  assert.equal(await page.locator('[data-sole-discard]').isVisible(),true,'discard is offered while a result waits');
+  // After the local restart above the gameplay save is a fresh ready run; the receipt is owned by the outbox.
+  assert.deepEqual((await outbox())[0]?.body,pending.pending.body);assert.equal((await outbox())[0]?.id,pending.cloudRun);
+  // Access returns: Reconnect alone, without a reload, re-checks the cloud and saves the waiting result.
+  revoked=false;await page.locator('[data-sole-reconnect]').click();
+  await page.waitForFunction(()=>document.querySelector('[data-sole-cloud-status]').textContent.includes('Practice result saved'));
+  for(const control of ['[data-sole-reconnect]','[data-sole-retry]','[data-sole-discard]'])assert.equal(await page.locator(control).isHidden(),true,control+' hidden once saved');
+  // The accepted receipt leaves the outbox; the fresh local ready run from the restart above is unaffected.
+  assert.deepEqual(await outbox(),[]);assert.equal(JSON.parse(await page.evaluate(key=>localStorage.getItem(key),key))?.pending??null,null);
+  const rows=await database.db.query('select id from arcade_runs where id=$1 and actor=$2',[pending.cloudRun,OWNER]);
+  assert.equal(rows.rows.length,1);assert.equal(finishes,2);
+  // Retry: a second run whose accepted finish response is also lost is restored after a reload and saved with Retry.
+  drop=true;
+  await page.locator('[data-sole-load]').click();
+  await page.waitForFunction(()=>document.querySelector('[data-sole-cloud-status]').textContent.startsWith('Loaded private'));
+  await page.locator('[data-sole-cloud-play]').click();
+  await page.waitForFunction(()=>document.querySelector('[data-sole-cloud-status]').textContent.includes('Playing private'));
+  await page.locator('[data-sole-pause]').click();
+  await page.evaluate(key=>{window.dispose();const s=JSON.parse(localStorage.getItem(key));s.remaining=.01;localStorage.setItem(key,JSON.stringify(s));},key);
+  await page.reload();await mount();await page.locator('[data-sole-start]').click();
+  await page.waitForFunction(()=>document.querySelector('[data-sole-cloud-status]').textContent.includes('Local play and device saves remain available.')&&!document.querySelector('[data-sole-cloud-status]').textContent.startsWith('Checking'));
+  const second=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),key);
+  assert.equal(finishes,3);assert.notEqual(second.cloudRun,pending.cloudRun);assert.equal((await outbox())[0]?.id,second.cloudRun);
+  await page.reload();await mount();await page.locator('summary').click();
   await page.waitForFunction(()=>document.querySelector('[data-sole-cloud-status]').textContent.startsWith('Completed run restored'));
   await page.locator('[data-sole-retry]').click();
   await page.waitForFunction(()=>document.querySelector('[data-sole-cloud-status]').textContent.includes('Practice result saved'));
-  assert.equal(await page.evaluate(key=>localStorage.getItem(key),key),null);
-  const rows=await database.db.query('select id from arcade_runs where id=$1 and actor=$2',[pending.cloudRun,OWNER]);
-  assert.equal(rows.rows.length,1);assert.equal(finishes,2);assert.deepEqual(errors,[]);
-  await context.close();console.log('PASS',width,'accepted-response loss, reload, revoked denial and idempotent retry');
+  assert.deepEqual(await outbox(),[]);assert.equal(finishes,4);
+  assert.equal((await database.db.query('select count(*)::int as n from arcade_runs where id=$1 and actor=$2 and status=$3',[second.cloudRun,OWNER,'failed'])).rows[0].n,1);
+  assert.deepEqual(errors,[]);
+  await context.close();console.log('PASS',width,'accepted-response loss, reload, revoked denial, Reconnect, and Retry of a second lost response');
  }
 }finally{await browser.close();await database.close();}

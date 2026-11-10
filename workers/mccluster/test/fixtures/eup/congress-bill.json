@@ -1,0 +1,9 @@
+{
+  "bill": {
+    "congress": 119, "type": "HR", "number": 90001, "originChamber": "House",
+    "title": "Synthetic Grid Resilience Act",
+    "introducedDate": "2026-01-14", "updateDate": "2026-06-02T14:00:00Z",
+    "latestAction": { "actionDate": "2026-05-20", "text": "Reported (Amended) by the Committee on Energy and Commerce. H. Rept. 119-999." },
+    "laws": []
+  }
+}

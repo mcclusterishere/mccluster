@@ -30,6 +30,12 @@ MCC_CORE_REQUIRED_ACTIVE=(
 )
 MCC_PREVIEW_HEALTH_URL="${MCC_PREVIEW_HEALTH_URL:-http://127.0.0.1:4799/health}"
 MCC_ADAPTER_HEALTH_URL="${MCC_ADAPTER_HEALTH_URL:-http://127.0.0.1:4790/health}"
+# /health is liveness (daemon reachable). /ready is readiness: the adapter
+# answers 503 unless the configured default model is installed with a digest
+# (and, with MCCLUSTER_OLLAMA_READY_PROBE=true on the unit, a bounded
+# inference succeeds). A release whose daemon is up but has no usable model
+# used to pass the gate on /health alone; the gate now requires both.
+MCC_ADAPTER_READY_URL="${MCC_ADAPTER_READY_URL:-http://127.0.0.1:4790/ready}"
 MCC_HEALTH_RETRIES="${MCC_HEALTH_RETRIES:-5}"
 MCC_HEALTH_TIMEOUT="${MCC_HEALTH_TIMEOUT:-5}"
 MCC_ROLLBACK_UNHEALTHY_RC=3
@@ -47,10 +53,24 @@ mcc_probe() {
     --max-time "${MCC_HEALTH_TIMEOUT}" "$1" >/dev/null
 }
 
+# True only when the URL answers HTTP 404: the release that is running has no
+# such route. A refused connection, a timeout, 503 or any other status is not
+# "absent". One request, no retries, the same per-request timeout.
+mcc_route_absent() {
+  local code
+  code="$(curl --silent --output /dev/null --write-out '%{http_code}' --max-time "${MCC_HEALTH_TIMEOUT}" "$1" 2>/dev/null || true)"
+  [[ "${code}" == 404 ]]
+}
+
 # mcc_verify_core_health strict|installed
 #   strict    — forward deploy: every required unit must exist and be active.
 #   installed — rollback: the previous release may predate a unit this release
 #               introduced (and rollback removed), so check what is installed.
+#               It may also predate the adapter's /ready route: an adapter that
+#               answers /health and 404 for /ready is that older release, alive.
+#               Requiring /ready of it made every rollback onto such a release
+#               report "ROLLBACK FAILED" (exit 3) although it had recovered, and
+#               the reconciler then retried the whole deploy every two minutes.
 # Returns non-zero and logs every failing check (it does not stop at the first).
 mcc_verify_core_health() {
   local mode="${1:-strict}" failed=0 unit
@@ -73,6 +93,13 @@ mcc_verify_core_health() {
     if ! mcc_probe "${MCC_ADAPTER_HEALTH_URL}"; then
       mcc_log "health: resident AI adapter ${MCC_ADAPTER_HEALTH_URL} did not answer"
       failed=1
+    elif ! mcc_probe "${MCC_ADAPTER_READY_URL}"; then
+      if [[ "${mode}" != strict ]] && mcc_route_absent "${MCC_ADAPTER_READY_URL}"; then
+        mcc_log "health: resident AI adapter has no /ready route (HTTP 404: the restored release predates it); liveness on ${MCC_ADAPTER_HEALTH_URL} accepted"
+      else
+        mcc_log "health: resident AI adapter ${MCC_ADAPTER_READY_URL} is not ready (default model missing or inference probe failed)"
+        failed=1
+      fi
     fi
   fi
   return "${failed}"

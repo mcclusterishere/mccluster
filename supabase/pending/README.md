@@ -17,6 +17,25 @@ list and on any entry that is stale, so the list only shrinks: promoting a file
 and committing the new production snapshot means removing its names. Regenerate
 the view with `RPC_NAMES_REPORT=1 node scripts/test/rpc-names-exist.test.mjs`.
 
+Promoted 2026-11-09 (owner-run releases; receipts under
+`docs/control-plane/evidence/releases-2026-11-09/`). The live ledger went from 359 to 363
+rows. Rollback files stay here under their pending names as recovery-only artifacts:
+
+| Pending file | Applied as | Note |
+|---|---|---|
+| `20261109120000_music_direct_asset_versions_v1.sql` (branch draft, deleted) | `supabase/migrations/20261109175747_music_direct_asset_versions_v1.sql` | the applied SQL is the independently corrected version (lock order, settlement eligibility, 300 s replay bound); never replay the draft |
+| `core_signed_nonces_v1.sql` (moved) | `supabase/migrations/20261109180829_core_signed_nonces_v1.sql` | bytes unchanged; Worker `CORE_REPLAY_STORE` not yet deployed |
+| `city_arcade_v1.sql` (moved) | `supabase/migrations/20261109181623_city_arcade_v1.sql` | bytes unchanged; `ARCADE_CLOUD_ENABLED` absent, feature dormant |
+| `media_operation_claims_v1.sql` (moved) | `supabase/migrations/20261109194957_media_operation_claims_v1.sql` | bytes unchanged (stored statement and file: 5895 bytes, SHA-256 `c1733f48…08c1`); the live Worker predates the claim protocol and does not call it yet |
+
+Evidence for all four: `docs/control-plane/evidence/production-schema-snapshot-2026-11-09.json`
+is a production snapshot read at 22:17 UTC that day (363 ledger rows; each of the four stored
+statements equals its file here byte for byte), and `supabase/schema-manifest.json` carries the
+objects all four create. `live-callers.json` → `applied_awaiting_evidence` and
+`docs/control-plane/evidence/ledger-receipts.json` are therefore empty again. The read-only
+verification of the fourth, whose release receipt is not in this repository, is
+`docs/control-plane/evidence/releases-2026-11-09/CLAIMS-APPLIED-VERIFICATION.md`.
+
 Promoted 2026-10-29 (owner-approved), group 0 of `PROMOTION-ORDER.md` plus
 `public_music_reads_lean_v1.sql`, from
 `docs/control-plane/PRODUCTION-SCHEMA-RECONCILIATION-2026-10-28.md`. Each was applied with
@@ -344,3 +363,11 @@ Promoted 2026-10-17 to repair Analytics missing-function responses:
 - `20261017030554_analytics_region_v1.sql` is applied in production; its exact SQL is in `supabase/migrations/`.
 - `20261017030617_intel_mission_canon_v1.sql` is applied in production; its exact SQL is in `supabase/migrations/`.
 The applied SQL headers retain their original pending wording to preserve byte-for-byte production history. The intel rollback remains in this folder; collectors remain separately controlled.
+
+### Applied 2026-11-10: paid-media recovery
+
+`media_operation_claims_v2.sql` moved byte-for-byte to
+`supabase/migrations/20261110220135_media_operation_claims_v2.sql` after a verified
+transactional production apply. Its rollback remains here and must follow a
+Worker rollback. See the dated claims-v2 release receipt under
+`docs/control-plane/evidence/releases-2026-11-10/`. Other candidates remain pending.

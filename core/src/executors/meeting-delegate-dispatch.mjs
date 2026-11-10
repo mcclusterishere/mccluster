@@ -7,6 +7,7 @@ import {
   addMeetingSessionEvent,
   updateMeetingSession,
 } from '../meeting/store.mjs';
+import { stopIfLeaseLost } from '../lease.mjs';
 
 function clean(value, max = 4000) {
   return String(value ?? '').trim().slice(0, max);
@@ -27,7 +28,7 @@ function disclosure(principalName = 'Matthew McCluster') {
   return `Hi, I am the McCluster AI Delegate for ${first}. ${first} is unavailable to attend personally. I am here as a disclosed AI assistant to capture the discussion and, only within the authority he provided, answer project questions. Anything requiring his approval will be recorded for follow up.`;
 }
 
-export async function meetingDelegateDispatch(job) {
+export async function meetingDelegateDispatch(job, { signal } = {}) {
   const orgId = job.org_id;
   const input = job.input || {};
   const sessionId = clean(input.session_id, 100);
@@ -50,6 +51,7 @@ export async function meetingDelegateDispatch(job) {
   });
 
   try {
+    stopIfLeaseLost(job, signal, 'joining the meeting');
     const joined = await joinMeeting({
       ...target,
       mode: input.mode || 'notes',
@@ -63,6 +65,7 @@ export async function meetingDelegateDispatch(job) {
     let chatDisclosure = null;
     if (input.policy?.allow_chat === true && process.env.MCCLUSTER_MEETING_INTERACTIVE === '1') {
       try {
+        stopIfLeaseLost(job, signal, 'posting in the meeting chat');
         chatDisclosure = await sendMeetingChat({
           ...target,
           text: disclosure(input.principal_name),

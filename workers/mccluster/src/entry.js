@@ -3,6 +3,7 @@ import { applyCors, corsHeaders, fail, logEvent, reply } from './lib/http.js';
 import { handleClientRequest } from './client.js';
 import clientConnect from './connect.js';
 import { getUsage, getMediaBudget, updateMediaBudget, createGeneration, getGeneration, handleFalWebhook, listModels, reconcilePendingFalCosts } from './media/router.js';
+import { listRecoveryCandidates, reconcileJob, sweepMediaRecovery } from './media/recovery.js';
 import { createBakeoff } from './media/orchestrator.js';
 import { recommendModels } from './media/recommend.js';
 import { handleMediaMcp } from './media/mcp.js';
@@ -29,6 +30,14 @@ import { collectorEnabled, runScheduledIntelCollectors } from './intel/usgs-coll
 import { recentAudit } from './lib/audit.js';
 import { listObservabilityEvents, observeControlRequest, observeScheduled, pruneObservabilityEvents } from './lib/observability.js';
 
+/* The recovery sweep polls stale open paid jobs and settles them on the
+   provider's definite answer. It is a new scheduled behaviour, so a deploy
+   alone does not start it: it runs only when MEDIA_RECOVERY_SWEEP_ENABLED is
+   "true" (supabase/pending/PROMOTION-ORDER.md says when to set it). */
+export function mediaRecoverySweepEnabled(env) {
+  return String((env && env.MEDIA_RECOVERY_SWEEP_ENABLED) || '').trim().toLowerCase() === 'true';
+}
+
 async function authUser(req, env) {
   const authorization = req.headers.get('authorization') || '';
   if (!authorization.toLowerCase().startsWith('bearer ')) return null;
@@ -40,6 +49,9 @@ async function authUser(req, env) {
   return res.json();
 }
 
+const FAL_WEBHOOK_PATH = /^\/v1\/media\/webhooks\/fal(?:\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\/([A-Za-z0-9_-]{43}))?$/;
+const MEDIA_RECONCILE_PATH = /^\/v1\/media\/jobs\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\/reconcile$/;
+
 /* Routes below that authenticate before checking the method. */
 const AUTH_FIRST_PREFIXES = ['/v1/analytics', '/v1/experience', '/v1/social', '/v1/comms', '/v1/ai', '/v1/music', '/v1/work', '/v1/observability', '/v1/clips'];
 
@@ -49,10 +61,11 @@ async function dispatchRequest(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/+$/, '') || '/';
 
-    /* A request that announces McCluster Core's signature reaches exactly two
-       places: POST /v1/media/mcp (below) and GETs of the read-only World layers
-       the news pairing reads (./world-core-reads.js). Anything else that
-       announces it is refused here, never treated as anonymous. */
+    /* A request that announces McCluster Core's signature reaches exactly
+       these places: POST /v1/media/mcp and the two media recovery operator
+       routes (below), and GETs of the read-only World layers the news pairing
+       reads (./world-core-reads.js). Anything else that announces it is
+       refused here, never treated as anonymous. */
     const coreRead = await coreSignedGate(request, env);
     if (coreRead) return coreRead;
 
@@ -293,9 +306,14 @@ async function dispatchRequest(request, env, ctx) {
       return fail(request, env, error.message || 'Client Connect request failed', error.status || 500, error.detail);
     }
 
-    if (path === '/v1/media/webhooks/fal' && request.method === 'POST') {
+    /* The provider's webhook, with or without the hint this Worker put in the
+       URL it gave the provider: /<job id>/<token> (media/router.js
+       webhookUrlFor). The token is verified before the job id is used. */
+    const falWebhook = path.match(FAL_WEBHOOK_PATH);
+    if (falWebhook && request.method === 'POST') {
       try {
-        const result = await handleFalWebhook(request, env);
+        const hint = falWebhook[1] ? { jobId: falWebhook[1], token: falWebhook[2] } : null;
+        const result = await handleFalWebhook(request, env, undefined, hint);
         return reply(request, env, result);
       } catch (error) {
         return fail(request, env, error.message || 'fal webhook failed', error.status || 500, error.detail);
@@ -506,6 +524,42 @@ async function dispatchRequest(request, env, ctx) {
       }
     }
 
+    /* Recovery for paid media operations (media/recovery.js): what is stuck,
+       and one recorded decision for a stuck job. The handlers refuse anyone
+       but the house operator. McCluster Core signs its calls here as it does
+       on /v1/media/mcp (media/core-signature.js); a verified signature acts
+       as the house owner. Anyone else signs in. */
+    const reconcileMatch = path.match(MEDIA_RECONCILE_PATH);
+    if ((path === '/v1/media/recovery' && request.method === 'GET') || (reconcileMatch && request.method === 'POST')) {
+      try {
+        let user;
+        let operatorRequest = request;
+        if (isCoreSigned(request)) {
+          /* The signature covers the method, the path and the body digest,
+             never a query string: a signed call carries none. */
+          if (url.search) return fail(request, env, 'A Core-signed request carries no query string.', 400);
+          const bodyBytes = new Uint8Array(await request.arrayBuffer());
+          /* Both operator routes claim their nonce in the shared store, the
+             read included: the candidates list crosses organizations, so one
+             captured envelope must not answer again from another isolate. */
+          await verifyCoreSignature({ request, env, path, bodyBytes, mutating: true });
+          user = await houseOwnerActor(env);
+          if (request.method !== 'GET') operatorRequest = new Request(request, { body: bodyBytes });
+        } else {
+          user = await authUser(request, env);
+          if (!user) return fail(request, env, 'Authentication required', 401);
+        }
+        const data = reconcileMatch
+          ? await reconcileJob(operatorRequest, env, user, reconcileMatch[1])
+          : await listRecoveryCandidates(operatorRequest, env, user);
+        const res = reply(request, env, data);
+        res.headers.set('cache-control', 'private, no-store');
+        return res;
+      } catch (error) {
+        return fail(request, env, error.message || 'Media recovery request failed', error.status || 500, error.detail);
+      }
+    }
+
     const jobMatch = path.match(/^\/v1\/media\/jobs\/([0-9a-f-]{36})$/i);
     if (jobMatch && request.method === 'GET') {
       try {
@@ -565,6 +619,13 @@ export default {
       }),
       observeScheduled(env, ctx, 'media.cost_reconciliation', () => reconcilePendingFalCosts(env, { limit: 50 })).catch((error) => {
         console.error(JSON.stringify({ event: 'media_cost_reconciliation_failed', message: error instanceof Error ? error.message : String(error) }));
+      }),
+      /* Open jobs the webhook has not finished, submit markers nobody completed,
+         and the recovery candidates as evidence (media/recovery.js). */
+      (mediaRecoverySweepEnabled(env) ? observeScheduled(env, ctx, 'media.recovery_sweep', () => sweepMediaRecovery(env, { limit: 25 })) : Promise.resolve(null)).then((report) => {
+        if (report?.errors?.length) console.error(JSON.stringify({ event: 'media_recovery_sweep_errors', errors: report.errors }));
+      }).catch((error) => {
+        console.error(JSON.stringify({ event: 'media_recovery_sweep_failed', message: error instanceof Error ? error.message : String(error) }));
       }),
       attachCompletedVariantAssets(env).catch((error) => {
         console.error(JSON.stringify({ event: 'social_variant_attachment_failed', message: error instanceof Error ? error.message : String(error) }));

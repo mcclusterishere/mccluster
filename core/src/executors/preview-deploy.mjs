@@ -3,6 +3,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { access, mkdir, mkdtemp, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { run } from '../process.mjs';
 import { PREVIEW_ROOT, PUBLIC_BASE, previewConfigured, confinedPath, relativeDirectory, publishAssets, rejectBuildSymlinks } from '../preview-policy.mjs';
+import { stopIfLeaseLost } from '../lease.mjs';
 
 const REPO_ROOT = process.env.MCCLUSTER_REPO_ROOT || '/srv/mccluster/repos';
 const WORKTREE_ROOT = process.env.MCCLUSTER_WORKTREE_ROOT || '/srv/mccluster/worktrees';
@@ -10,7 +11,7 @@ const ALLOWED = new Set(String(process.env.MCCLUSTER_CODE_REPOS || 'mcclusterish
 const git = (cwd, args) => run('git', args, { cwd, timeoutMs: 120000 });
 async function exists(file) { try { await access(file); return true; } catch (e) { if (e.code === 'ENOENT') return false; throw e; } }
 
-export async function previewDeploy(job) {
+export async function previewDeploy(job, { signal } = {}) {
   if (!previewConfigured()) throw new Error('Self-hosted preview is not configured: enable it and set an HTTPS public base');
   const repository = String(job.target_id || job.input?.repository || '');
   if (!/^[\w.-]+\/[\w.-]+$/.test(repository) || !ALLOWED.has(repository)) throw new Error('Preview repository is not allowlisted');
@@ -54,6 +55,7 @@ export async function previewDeploy(job) {
         await writeFile(path.join(worktree, '.mccluster-preview-build.json'), JSON.stringify({ directory }));
         await run('chgrp', ['-R', 'mccluster-work', worktree]);
         await run('chmod', ['-R', 'g+rwX', worktree]);
+        stopIfLeaseLost(job, signal, 'starting the preview build');
         await run('systemctl', ['start', `mccluster-preview-build@${buildId}.service`], { timeoutMs: 21 * 60000 });
       }
     }
@@ -77,6 +79,7 @@ export async function previewDeploy(job) {
       published, safety: { auto_merge: false, source_ref_mutated: false, inherited_core_secrets: false, symlink_output_allowed: false }
     };
     await writeFile(path.join(stage, 'metadata.json'), JSON.stringify(metadata) + '\n', { mode: 0o640 });
+    stopIfLeaseLost(job, signal, 'publishing the preview');
     await rename(stage, final); // Publish complete files and metadata together.
     return metadata;
   } finally {

@@ -1,0 +1,13 @@
+# PR head cf8c3cc7 unmodified, 2026-11-10T11:57:11Z
+# python3 docs/design/equity-uprise-building/production/verify_equity_uprise_repo_sources.py
+{
+  "candidate_count": 640,
+  "capability_source_count": 104,
+  "support_only_count": 536,
+  "checks_total": 2458,
+  "checks_passed": 2458,
+  "checks_failed": 0,
+  "passed": true
+}
+exit=0
+# git status --short after the run (empty = the committed report is current)
