@@ -50,7 +50,24 @@
 // URLs that are not the plane's (static files, /v1/status, auth) fall through to the test's own routes. A page sends
 // its own Authorization header: put plane.session(name) into localStorage 'mccdb_session' (see sessionScript()).
 // The page's API origin is https://api.mccluster.org (js/control-room/eup.js); grants and signed reads point at
-// plane.supabase (https://league-plane.invalid), which the same route answers.
+// plane.supabase (https://league-plane.invalid), which the same route answers (a media element's Range read gets 206).
+//
+//   const plane = await createLeaguePlane();                   // module enabled; { enable: false } to install by HTTP
+//   const { campaign, mission } = await plane.seed({ testers: ['tester'] }); // policy, campaign, song mission, grant
+//   const context = await browser.newContext();
+//   await context.route('**/*', serveStaticFilesOrAbort);     // the test's own route, registered FIRST
+//   await plane.attach(context);                               // registered after it, so it wins for the plane's URLs
+//   await context.addInitScript(plane.sessionScript('tester')); // the page is signed in as the tester
+//   const page = await context.newPage();                      // ... drive the page ...
+//   plane.faults.add({ method: 'POST', path: /\/proof$/, mode: 'hang' }); // the next proof submit commits, never answers
+//   await plane.call('owner', 'POST', '/v1/eup/league/...', body);       // the other side of the journey, as the owner
+//   await plane.close();                                       // releases held routes and closes the database
+//
+// Checked in Chromium 1243 with Playwright 1.63 (scratch run, not a committed test): a member read with the stored
+// session, JSON POSTs with Authorization (Playwright answered the CORS preflights itself: none reached the plane),
+// the grant PUT to the storage origin, complete, the signed read by fetch and by an audio element (206), a dropped
+// answer as a page TypeError with the write committed, and a hung answer the page aborted while the write committed.
+// Account switching: plane.signOut(token) ends a session; a page that keeps sending it gets 401 from then on.
 import { randomBytes } from 'node:crypto';
 import { handleEup, EUP_PREFIX } from '../../../workers/mccluster/src/eup/router.js';
 import { corsHeaders } from '../../../workers/mccluster/src/lib/http.js';

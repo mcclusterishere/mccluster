@@ -171,6 +171,11 @@ try {
 
   /* ================================================================== 2. who sees what */
   await api(null, 'GET', M(), undefined, { status: 401, reason: 'authentication_required' });
+  const second = { token: plane.signIn(ids.tester) }; // a second session of the tester, then signed out
+  eq((await api(second, 'GET', M(), undefined, { label: 'a second session' })).league.actor, ids.tester, 'a second session is the same account');
+  plane.signOut(second.token);
+  await api(second, 'GET', M(), undefined, { status: 401, reason: 'authentication_required', label: 'a signed-out session' });
+  await api(second, 'GET', O('campaigns'), undefined, { status: 401, label: 'a signed-out session on an owner route' });
   eq(await api('outsider', 'GET', M(), undefined, { status: 404 }), NOT_AVAILABLE, 'an account invited nowhere: not available, nothing else');
   let meB = (await api('tester_b', 'GET', M())).league;
   eq(meB.catalogue.map((c) => c.id), [campaignB.id], 'the tester of campaign B sees campaign B only');
