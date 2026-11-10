@@ -2,10 +2,10 @@
   "schema_version": "mccluster-supabase-production-ledger/v1",
   "project_ref": "zmnhbrjyhxzhkxmhkexs",
   "production_sql_cutover_version": "20260919020830",
-  "migration_count": 363,
-  "latest_version": "20261109194957",
-  "latest_name": "media_operation_claims_v1",
-  "ledger_sha256": "90b735eb844eaf336df508cd5ecc15b980518c12108ff3f48b9edbf373f552ef",
+  "migration_count": 364,
+  "latest_version": "20261110220135",
+  "latest_name": "media_operation_claims_v2",
+  "ledger_sha256": "6fcada89fc8d3d3621b4c49242ca84a1aff050758cb1ecd60753cfbbbba35054",
   "migrations": [
     {
       "version": "0001",
@@ -1458,6 +1458,10 @@
     {
       "version": "20261109194957",
       "name": "media_operation_claims_v1"
+    },
+    {
+      "version": "20261110220135",
+      "name": "media_operation_claims_v2"
     }
   ]
 }

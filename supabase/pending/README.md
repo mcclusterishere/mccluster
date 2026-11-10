@@ -363,3 +363,11 @@ Promoted 2026-10-17 to repair Analytics missing-function responses:
 - `20261017030554_analytics_region_v1.sql` is applied in production; its exact SQL is in `supabase/migrations/`.
 - `20261017030617_intel_mission_canon_v1.sql` is applied in production; its exact SQL is in `supabase/migrations/`.
 The applied SQL headers retain their original pending wording to preserve byte-for-byte production history. The intel rollback remains in this folder; collectors remain separately controlled.
+
+### Applied 2026-11-10: paid-media recovery
+
+`media_operation_claims_v2.sql` moved byte-for-byte to
+`supabase/migrations/20261110220135_media_operation_claims_v2.sql` after a verified
+transactional production apply. Its rollback remains here and must follow a
+Worker rollback. See the dated claims-v2 release receipt under
+`docs/control-plane/evidence/releases-2026-11-10/`. Other candidates remain pending.

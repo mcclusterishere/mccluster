@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Proves supabase/pending/media_operation_claims_v2.sql (recovery for paid media
+# Proves supabase/migrations/20261110220135_media_operation_claims_v2.sql (recovery for paid media
 # operations: repair, takeover, guarded release, the operator decision and the
 # recovery candidates) against a throwaway local PostgreSQL (16+), as the real
 # API roles. Nothing here touches a real project.
@@ -38,7 +38,7 @@ q() { psql -qAt -v ON_ERROR_STOP=1 -d "$DB" -c "$1"; }
 fail() { echo "$1" >&2; exit 1; }
 
 V1=supabase/migrations/20261109194957_media_operation_claims_v1.sql
-V2=supabase/pending/media_operation_claims_v2.sql
+V2=supabase/migrations/20261110220135_media_operation_claims_v2.sql
 V1_SHA256=c1733f48360b901084a9af26d727a7e9e934be54cb7f2a545396bada21d008c1
 ORG=123e4567-e89b-42d3-a456-426614174000
 OWNER=423e4567-e89b-42d3-a456-426614174333
