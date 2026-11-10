@@ -133,7 +133,6 @@ export async function measureMediaStream(body, limit, expired = new Promise(() =
 }
 
 async function jsonAnswer(response, expired) {
-  if (!response.ok) throw new Error('storage refused the call');
   const chunks = [];
   const { bytes, over } = await drain(response.body, expired, STORAGE_LIMITS.control_answer_max_bytes, (chunk) => chunks.push(chunk));
   if (over) throw new Error('a control answer that is too long');
@@ -143,8 +142,9 @@ async function jsonAnswer(response, expired) {
   return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(all));
 }
 
-/* One call to the storage service. `consume(response, expired)` reads the answer inside the same deadline. Whatever
-   goes wrong in here, the caller sees one thing: 503 storage_unavailable, with no upstream text. */
+/* One call to the storage service. Only a 2xx answer is read, by `consume(response, expired)` inside the same deadline:
+   a redirect (never followed), a refusal and a failure are not answers, whatever their bodies say. Whatever goes
+   wrong in here, the caller sees one thing: 503 storage_unavailable, with no upstream text. */
 async function storageCall(ctx, { method, route, json, timeoutMs = STORAGE_LIMITS.control_timeout_ms }, consume) {
   const env = ctx?.env;
   if (!env?.SUPABASE_URL || !env?.SUPABASE_SERVICE_ROLE_KEY) throw refusal(ctx, 'storage_unavailable');
@@ -155,16 +155,21 @@ async function storageCall(ctx, { method, route, json, timeoutMs = STORAGE_LIMIT
   /* The deadline is also raced directly, so it holds even where an abort does not reach a stalled body. */
   const expired = new Promise((_, reject) => { controller.signal.addEventListener('abort', () => reject(new Error('storage deadline')), { once: true }); });
   expired.catch(() => {});
+  const release = (answer) => { try { answer?.body?.cancel().catch(() => {}); } catch { /* nothing left to release */ } };
+  let pending = null;
   let response = null;
   try {
     const headers = { apikey: key, authorization: `Bearer ${key}` };
     const init = { method, headers, redirect: 'manual', signal: controller.signal };
     if (json !== undefined) { headers['content-type'] = 'application/json'; init.body = JSON.stringify(json); }
-    response = await Promise.race([fetchImpl(`${baseOf(env)}/storage/v1/${route}`, init), expired]);
-    if (!response || !Number.isInteger(response.status) || response.type === 'opaqueredirect' || (response.status >= 300 && response.status < 400)) throw new Error('storage redirected');
+    pending = Promise.resolve(fetchImpl(`${baseOf(env)}/storage/v1/${route}`, init));
+    response = await Promise.race([pending, expired]);
+    if (!response || !(response.status >= 200 && response.status <= 299)) throw new Error('storage did not answer the call');
     return await consume(response, expired);
   } catch {
-    try { response?.body?.cancel().catch(() => {}); } catch { /* nothing left to release */ }
+    /* An answer that was not used is not left open: neither the one in hand nor one that arrives after the deadline. */
+    if (response) release(response);
+    else if (pending) pending.then(release, () => {});
     throw refusal(ctx, 'storage_unavailable');
   } finally {
     clearTimeout(timer);
@@ -228,7 +233,7 @@ export async function beginUpload(ctx, upload) {
 
 const rejected = (reason) => ({ outcome: 'rejected', reason });
 /* What the stored object is. Reasons are decided in this order, the cheapest evidence first:
-   empty, too_large, size_mismatch (from the listing, nothing is read), then from the one read: empty, too_large,
+   empty, too_large, size_mismatch (from the listing, nothing is read), then from the one read: too_large,
    size_mismatch, unrecognised, family_mismatch. The read stops as soon as more bytes than the listing named have arrived,
    which is never more than max_bytes or the hard ceiling.
    family_mismatch also answers an object storage would serve as a type that does not allow its bytes: the content type
@@ -239,7 +244,6 @@ async function inspect(ctx, upload, type, path, listed) {
   if (listed.size > cap) return rejected('too_large');
   if (listed.size !== upload.declared_bytes) return rejected('size_mismatch');
   const read = await measure(ctx, path, listed.size);
-  if (read.bytes === 0) return rejected('empty');
   if (read.bytes > cap) return rejected('too_large');
   if (read.over || read.bytes !== listed.size) return rejected('size_mismatch');
   const family = sniffMediaFamily(read.head);
@@ -314,7 +318,7 @@ export async function signOwnRead(ctx, upload) {
    Returns [{ upload_id, kind, mime, bytes, sha256, url, expires_in }] in the order of proof.media; [] for a proof
    on the accommodation path. All or nothing: every upload is checked before the first read is signed.
    409 media_changed when an upload is not bound to this proof (another tenant, assignment or participant, not
-   sealed, or a digest, size, kind or type that is not the one the revision lists) or its stored object moved. */
+   sealed, or a digest, size or type that is not the one the revision lists) or its stored object moved. */
 export async function signReviewRead(ctx, proof) {
   if (!isObject(proof) || !isUuid(proof.tenant) || !isUuid(proof.assignment_id) || !isUuid(proof.participant) || !ENUMS.MODERATION_STATES.includes(proof.moderation_state)
     || !Array.isArray(proof.media) || proof.media.length > LIMITS.count.proof_media) throw refusal(ctx, 'storage_unavailable');
@@ -328,8 +332,8 @@ export async function signReviewRead(ctx, proof) {
     seen.add(entry.upload_id.toLowerCase());
     const upload = uploads.find((u) => isObject(u) && sameId(u.id, entry.upload_id));
     if (!upload || !sameId(upload.tenant, proof.tenant) || !sameId(upload.assignment_id, proof.assignment_id) || !sameId(upload.participant, proof.participant)
-      || upload.sha256 !== entry.sha256 || upload.bytes !== entry.bytes || upload.kind !== entry.kind || upload.mime !== entry.mime) throw refusal(ctx, 'media_changed');
-    return { entry, ...sealedTarget(ctx, upload) };
+      || upload.sha256 !== entry.sha256 || upload.bytes !== entry.bytes || upload.mime !== entry.mime) throw refusal(ctx, 'media_changed');
+    return { entry, ...sealedTarget(ctx, upload) }; // the kind follows from the type on both sides
   });
   for (const target of targets) await unchanged(ctx, target);
   const out = [];

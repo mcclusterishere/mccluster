@@ -20,6 +20,7 @@
 import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
+import { pathToFileURL } from 'node:url';
 import * as C from '../../../workers/mccluster/src/eup/league-contract.js';
 import { OWNER, PEER, SECOND_OWNER, ensureHouse, applyModulePolicy, enableModule, asServiceRole } from './eup-module-policy-database.mjs';
 
@@ -32,7 +33,9 @@ export const OTHER_ORG_OWNER = '77777777-7777-4777-8777-777777777777'; // owner 
 export const UNKNOWN = '99999999-9999-4999-8999-999999999999'; // not an account at all
 export const FOREIGN_TENANT = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 
-const SQL = new URL('../../../supabase/pending/eup_league_v1.sql', import.meta.url);
+// EUP_LEAGUE_SQL names another file to apply instead. It exists for one purpose: running these tests against a
+// deliberately broken copy of the SQL, to see that they notice (mutation runs). Nothing else sets it.
+const SQL = process.env.EUP_LEAGUE_SQL ? pathToFileURL(process.env.EUP_LEAGUE_SQL) : new URL('../../../supabase/pending/eup_league_v1.sql', import.meta.url);
 const ROLLBACK = new URL('../../../supabase/pending/eup_league_v1.rollback.sql', import.meta.url);
 const ROLES_STUB = new URL('../../../supabase/tests/supabase_api_roles.stub.sql', import.meta.url);
 
