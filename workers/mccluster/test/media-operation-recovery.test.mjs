@@ -678,6 +678,55 @@ test('a hinted webhook that completes the job before the request id is recorded:
   } finally { st.restore(); }
 });
 
+/* The other interleaving (d6db850c's re-read, router.js handleFalWebhook): the webhook looks the request id up
+   and reads the job before the submitter records the id, and its attach lands after the record. The attach
+   matches nothing; without the re-read by request id the result was acknowledged as unmatched and dropped. */
+test('a hinted webhook that read the job before the request id was recorded and attaches after it: the attach matches nothing, the webhook re-reads by request id and completes the job', async () => {
+  const payload = { request_id: 'accepted-race', status: 'OK', payload: { images: [{ url: 'https://assets.fixture.invalid/c.png', content_type: 'image/png' }] } };
+  let held = false;
+  let attachHeld;
+  const attachReached = new Promise((resolve) => { attachHeld = resolve; });
+  let openAttach;
+  const attachGate = new Promise((resolve) => { openAttach = resolve; });
+  const st = plane({
+    beforePatch: async (entry) => {
+      if (entry.filter !== CAS_HINT_ATTACH) return;
+      held = true;
+      attachHeld();
+      await attachGate; // until the submitter's record has landed
+    }
+  });
+  let delivery = null;
+  const fal = provider({ mode: async (p) => {
+    /* the provider ran the request and its webhook arrives before the submit's own answer */
+    const [jobId, token] = p.calls[0].options.webhookUrl.split('/').slice(-2);
+    delivery = handleFalWebhook(webhookRequest(), hintEnv, verified(payload), { jobId, token });
+    /* a webhook that finishes without reaching its attach fails this test instead of hanging it */
+    const finishedFirst = delivery.then((answer) => { if (!held) throw new Error(`the webhook finished before its attach: ${JSON.stringify(answer)}`); });
+    finishedFirst.catch(() => {});
+    await Promise.race([attachReached, finishedFirst]);
+    return { request_id: payload.request_id };
+  } });
+  try {
+    const job = await createGeneration(generate(), hintEnv, USER, { submit: fal.submit });
+    assert.equal(st.patchLog.find((entry) => entry.filter === CAS_RECORD).matched, 1, 'the submitter recorded the request id while the attach was held');
+    assert.equal(job.status, 'queued');
+    assert.equal(job.provider_request_id, payload.request_id);
+    openAttach();
+    const answer = await delivery;
+    assert.equal(st.patchLog.find((entry) => entry.filter === CAS_HINT_ATTACH).matched, 0, 'the attach matched nothing: the record landed between its read and its write');
+    assert.equal(answer.matched, true, 'the result is not acknowledged as unmatched and dropped');
+    assert.equal(answer.status, 'completed');
+    const row = st.onlyJob();
+    assert.equal(row.status, 'completed');
+    assert.equal(row.provider_request_id, payload.request_id);
+    assert.deepEqual(row.result, payload.payload);
+    assert.equal(st.assets.length, 1);
+    assert.equal(fal.submits, 1);
+    assert.equal(st.releaseCalls, 0);
+  } finally { st.restore(); }
+});
+
 test('a hinted webhook that lands while the submit outcome is still unknown: the uncertain write matches nothing and the completed job is the answer, not a 502', async () => {
   const payload = { request_id: 'late-1', status: 'OK', payload: { images: [{ url: 'https://assets.fixture.invalid/b.png' }] } };
   let delivered = false;
