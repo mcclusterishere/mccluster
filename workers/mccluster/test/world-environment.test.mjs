@@ -16,14 +16,20 @@ function upstream(url) {
  if (u.startsWith('https://www.nhc.noaa.gov')) return json({activeStorms:[{id:'al012026',name:'Test storm',latitudeNumeric:20,longitudeNumeric:-60}]});
  throw new Error(`Unexpected request ${u}`);
 }
-function fake({owner=false,rpcData={},rpcStatus=200,rpcMessage='',reads=[]}={}) {
- const calls=[];
+// The persisted module policy the route reads first on every request (supabase/pending/eup_module_policy_v1.sql).
+const POLICY_RPC='/rest/v1/rpc/eup_module_policy_read';
+const policyOf=(state='enabled',revision=3)=>({schema:'equity-uprise.module-policy/v1',installationId:'mccluster',moduleId:'environment',state,revision});
+const isPolicyRead=c=>c.url.endsWith(POLICY_RPC), isDomainRpc=c=>c.url.includes('/rpc/')&&!isPolicyRead(c);
+// policy: a policy object, a Response factory, or a function of the read's index (0 = the route gate, 1 = the mutation gate).
+function fake({owner=false,rpcData={},rpcStatus=200,rpcMessage='',rpcCode,reads=[],policy=policyOf()}={}) {
+ const calls=[];let policyReads=0;
  const fetchImpl=async(url,opts={})=>{
   calls.push({url:String(url),...opts});
+  if (String(url).endsWith(POLICY_RPC)) { const answer=typeof policy==='function'?policy(policyReads++):policy; if(answer instanceof Error)throw answer; return answer instanceof Response?answer:json(answer); }
   if (String(url).includes('/auth/v1/user')) return json({id:USER});
   if (String(url).includes('/rest/v1/orgs?')) return json([{id:MISSION}]);
   if (String(url).includes('/rest/v1/org_members?')) return json(owner ? [{role:'owner'}] : []);
-  if (String(url).includes('/rest/v1/rpc/')) return json(rpcStatus===200?rpcData:{message:rpcMessage},rpcStatus);
+  if (String(url).includes('/rest/v1/rpc/')) return json(rpcStatus===200?rpcData:{message:rpcMessage,...(rpcCode?{code:rpcCode}:{})},rpcStatus);
   if (String(url).includes('/rest/v1/')) return json(reads);
   return upstream(url);
  };
@@ -58,18 +64,20 @@ test('public response never reads private assignment/people stores and fails hon
  assert.equal(b.missions_unavailable,false);
  assert.ok(f.calls.some(c=>c.url.includes('approved_by=not.is.null')));
  assert.ok(!f.calls.some(c=>/assignments|profiles|presence|members/.test(c.url)));
- const fail=fake(); const fetchImpl=async(u,o)=>String(u).includes('/rest/')?json({},503):fail.fetchImpl(u,o);
+ const fail=fake(); const fetchImpl=async(u,o)=>String(u).includes('/rest/')&&!String(u).endsWith(POLICY_RPC)?json({},503):fail.fetchImpl(u,o);
  const out=await (await handleWorldEnvironment(req(),env,{fetchImpl})).json();assert.equal(out.missions_unavailable,true);
 });
-test('guest team/proposal/join are refused before writes',async()=>{
+test('guest team/proposal/join are refused before writes: the only fetch is the service-key policy read',async()=>{
  for(const suffix of ['/team','/missions/propose',`/missions/${MISSION}/join`]) {
- const f=fake(); const r=await handleWorldEnvironment(req(suffix,'POST',{},false),env,f);assert.equal(r.status,401);assert.equal(f.calls.length,0);
+ const f=fake(); const r=await handleWorldEnvironment(req(suffix,'POST',{},false),env,f);assert.equal(r.status,401);
+ assert.equal(f.calls.length,1);assert.ok(isPolicyRead(f.calls[0]));assert.equal(f.calls[0].method,'POST');
+ assert.equal(f.calls[0].headers.authorization,'Bearer server-secret');assert.deepEqual(JSON.parse(f.calls[0].body),{p_module:'environment'});
  }
 });
 test('owner-only oversight and review cannot be opened by a member',async()=>{
  for(const [suffix,method] of [['/oversight','GET'],[`/missions/${MISSION}/review`,'POST']]) {
  const f=fake();const r=await handleWorldEnvironment(req(suffix,method,method==='POST'?{decision:'open'}:undefined),env,f);
- assert.equal(r.status,403);assert.ok(!f.calls.some(c=>c.url.includes('/rpc/')));
+ assert.equal(r.status,403);assert.ok(!f.calls.some(isDomainRpc));
  }
 });
 test('team persists via self-scoped bearer RPC and reload returns assignments',async()=>{
@@ -77,7 +85,7 @@ test('team persists via self-scoped bearer RPC and reload returns assignments',a
  for (const [method,body] of [['POST',{join:true,user_id:MISSION}],['GET',undefined]]) {
  const r=await handleWorldEnvironment(req('/team',method,body),env,f); const b=await r.json(); assert.equal(b.membership.joined,true);assert.equal(b.assignments[0].capture_path,`live-mission.html?assignment=${ASSIGN}`);
  }
- const writes=f.calls.filter(c=>c.url.includes('/rpc/'));assert.equal(writes[0].headers.authorization,'Bearer member');assert.deepEqual(JSON.parse(writes[0].body),{p_join:true});assert.deepEqual(JSON.parse(writes[1].body),{p_join:null});
+ const writes=f.calls.filter(isDomainRpc);assert.equal(writes[0].headers.authorization,'Bearer member');assert.deepEqual(JSON.parse(writes[0].body),{p_join:true});assert.deepEqual(JSON.parse(writes[1].body),{p_join:null});
 });
 test('team cannot overwrite banned membership; sanitized actionable errors',async()=>{
  const f=fake({rpcStatus:400,rpcMessage:'membership_blocked'});const r=await handleWorldEnvironment(req('/team','POST',{join:true}),env,f);assert.equal(r.status,409);assert.deepEqual(await r.json(),{ok:false,code:'membership_blocked'});
@@ -90,18 +98,100 @@ test('proposal ignores client snapshots and persists only selected source action
  assert.equal(args.p_actor,USER);assert.equal(args.p_event.source.url,'https://earthquake.usgs.gov/');assert.notEqual(args.p_action.title,'unsafe');assert.equal(write.headers.authorization,'Bearer server-secret');
 });
 test('unknown/stale/missing-observation event cannot mint proposal',async()=>{
- for(const event_id of ['military:secret','nhc:al012026']) { const f=fake(); const r=await handleWorldEnvironment(req('/missions/propose','POST',{event_id,action_id:'resource-check'}),env,f);assert.equal(r.status,409);assert.ok(!f.calls.some(c=>c.url.includes('/rpc/')));}
+ for(const event_id of ['military:secret','nhc:al012026']) { const f=fake(); const r=await handleWorldEnvironment(req('/missions/propose','POST',{event_id,action_id:'resource-check'}),env,f);assert.equal(r.status,409);assert.ok(!f.calls.some(isDomainRpc));}
 });
 test('mission join calls canonical guarded RPC and returns assignment-qualified setup only',async()=>{
  const f=fake({rpcData:{assignment_id:ASSIGN,mission_id:MISSION,status:'joined'}});
  const r=await handleWorldEnvironment(req(`/missions/${MISSION}/join`,'POST',{}),env,f);const b=await r.json();assert.equal(b.capture_path,`live-mission.html?assignment=${ASSIGN}`);assert.equal(b.capture_label,'Check recording availability');
- assert.equal(f.calls.find(c=>c.url.includes('/rpc/')).headers.authorization,'Bearer member');
+ assert.equal(f.calls.find(isDomainRpc).headers.authorization,'Bearer member');
 });
 test('owner can pause with owner verification; malformed actions never write',async()=>{
  const f=fake({owner:true,rpcData:{mission_id:MISSION,status:'paused'}});
  assert.equal((await handleWorldEnvironment(req(`/missions/${MISSION}/review`,'POST',{decision:'paused'}),env,f)).status,200);
  const before=f.calls.length; assert.equal((await handleWorldEnvironment(req(`/missions/${MISSION}/review`,'POST',{decision:'verified'}),env,f)).status,400);
- assert.ok(!f.calls.slice(before).some(c=>c.url.includes('/rpc/')));
+ assert.ok(!f.calls.slice(before).some(isDomainRpc));
+});
+test('module policy is read from the store on every request with the service key and is never cached',async()=>{
+ let state='enabled';const f=fake({policy:()=>policyOf(state,state==='enabled'?3:4)});
+ assert.equal((await handleWorldEnvironment(req('', 'GET',undefined,false),env,f)).status,200);
+ state='disabled';
+ const r=await handleWorldEnvironment(req('', 'GET',undefined,false),env,f);assert.equal(r.status,404);assert.deepEqual(await r.json(),{ok:false,code:'module_disabled'});
+ const reads=f.calls.filter(isPolicyRead);assert.equal(reads.length,2);
+ for(const read of reads){assert.equal(read.headers.authorization,'Bearer server-secret');assert.equal(read.headers.apikey,'server-secret');assert.deepEqual(JSON.parse(read.body),{p_module:'environment'});}
+});
+test('a missing, unapplied, unreachable or malformed policy answers 503 module_policy_unavailable and nothing else is fetched',async()=>{
+ const refusals=[
+  ['module not installed (EUM01)',json({code:'EUM01',message:'module_not_installed'},400)],
+  ['policy schema not applied (PGRST202)',json({code:'PGRST202',message:'Could not find the function public.eup_module_policy_read(p_module) in the schema cache'},404)],
+  ['store answers 500',json({message:'boom'},500)],
+  ['store redirects',new Response(null,{status:302,headers:{location:'https://elsewhere.example/'}})],
+  ['store unreachable',new Error('offline')],
+  ['empty answer',{}],
+  ['null answer',null],
+  ['another installation',{...policyOf(),installationId:'elsewhere'}],
+  ['another module',{...policyOf(),moduleId:'league'}],
+  ['unknown schema',{...policyOf(),schema:'equity-uprise.module-policy/v2'}],
+  ['unknown state',{...policyOf(),state:'on'}],
+  ['missing state',{schema:'equity-uprise.module-policy/v1',installationId:'mccluster',moduleId:'environment',revision:1}],
+  ['text revision',{...policyOf(),revision:'3'}],
+  ['negative revision',{...policyOf(),revision:-1}],
+  ['a list',[policyOf()]]
+ ];
+ for(const [label,answer] of refusals) for(const [suffix,method,auth] of [['','GET',false],['/team','GET',true],['/team','POST',true],[`/missions/${MISSION}/join`,'POST',true]]) {
+  const f=fake({policy:()=>answer instanceof Response?answer.clone():answer});
+  const r=await handleWorldEnvironment(req(suffix,method,method==='POST'?{join:true}:undefined,auth),env,f);
+  assert.equal(r.status,503,`${label} ${method} ${suffix}`);assert.deepEqual(await r.json(),{ok:false,code:'module_policy_unavailable'},label);
+  assert.equal(f.calls.length,1,`${label}: only the policy read`);assert.ok(isPolicyRead(f.calls[0]));
+ }
+ const unconfigured=fake();const r=await handleWorldEnvironment(req('', 'GET',undefined,false),{},unconfigured);
+ assert.equal(r.status,503);assert.equal((await r.json()).code,'module_policy_unavailable');assert.equal(unconfigured.calls.length,0);
+});
+test('a disabled module answers 404 module_disabled for reads and writes before identity, evidence or persistence',async()=>{
+ for(const [suffix,method,auth] of [['','GET',false],['/team','GET',true],['/team','POST',true],['/missions/propose','POST',true],[`/missions/${MISSION}/join`,'POST',true],['/oversight','GET',true]]) {
+  const f=fake({owner:true,policy:policyOf('disabled',5)});
+  const r=await handleWorldEnvironment(req(suffix,method,method==='POST'?{join:true}:undefined,auth),env,f);
+  assert.equal(r.status,404,`${method} ${suffix}`);assert.deepEqual(await r.json(),{ok:false,code:'module_disabled'});
+  assert.equal(f.calls.length,1);assert.ok(isPolicyRead(f.calls[0]));
+ }
+});
+test('a draining module still answers reads and refuses every write with 503 module_draining before identity',async()=>{
+ const f=fake({policy:policyOf('draining',4),rpcData:{slug:'environmental-justice-team',name:'Environmental Justice Team',joined:true,assignments:[]}});
+ const feed=await handleWorldEnvironment(req('', 'GET',undefined,false),env,f);assert.equal(feed.status,200);assert.equal((await feed.json()).schema,'world-environment/v1');
+ const team=await handleWorldEnvironment(req('/team'),env,f);assert.equal(team.status,200);assert.equal((await team.json()).membership.joined,true);
+ for(const [suffix,body] of [['/team',{join:true}],['/missions/propose',{event_id:'usgs:quake1',action_id:'resource-check'}],[`/missions/${MISSION}/join`,{}],[`/missions/${MISSION}/review`,{decision:'paused'}]]) {
+  const w=fake({owner:true,policy:policyOf('draining',4)});
+  const r=await handleWorldEnvironment(req(suffix,'POST',body),env,w);
+  assert.equal(r.status,503,suffix);assert.deepEqual(await r.json(),{ok:false,code:'module_draining'});
+  assert.equal(w.calls.length,1,`${suffix}: only the policy read`);assert.ok(isPolicyRead(w.calls[0]));
+ }
+});
+test('a policy that changes between the route gate and the mutation gate stops the write',async()=>{
+ const cases=[
+  ['revision moved (drained and re-enabled)',i=>policyOf('enabled',i===0?3:5),409,'module_policy_changed'],
+  ['drain requested meanwhile',i=>i===0?policyOf('enabled',3):policyOf('draining',4),503,'module_draining'],
+  ['disabled meanwhile',i=>i===0?policyOf('enabled',3):policyOf('disabled',5),404,'module_disabled'],
+  ['policy unreadable at the second read',i=>i===0?policyOf('enabled',3):json({code:'EUM01',message:'module_not_installed'},400),503,'module_policy_unavailable']
+ ];
+ for(const [label,policy,status,code] of cases) for(const [suffix,body,owner] of [['/team',{join:true},false],[`/missions/${MISSION}/join`,{},false],['/missions/propose',{event_id:'usgs:quake1',action_id:'resource-check'},false],[`/missions/${MISSION}/review`,{decision:'paused'},true]]) {
+  const f=fake({owner,policy,rpcData:{assignment_id:ASSIGN,mission_id:MISSION,status:'joined'}});
+  const r=await handleWorldEnvironment(req(suffix,'POST',body),env,f);
+  assert.equal(r.status,status,`${label} ${suffix}`);assert.deepEqual(await r.json(),{ok:false,code});
+  assert.equal(f.calls.filter(isPolicyRead).length,2,`${label} ${suffix}: route gate and mutation gate`);
+  assert.ok(!f.calls.some(isDomainRpc),`${label} ${suffix}: no write reached persistence`);
+ }
+ const steady=fake({rpcData:{assignment_id:ASSIGN,mission_id:MISSION,status:'joined'}});
+ assert.equal((await handleWorldEnvironment(req(`/missions/${MISSION}/join`,'POST',{}),env,steady)).status,200);
+ assert.equal(steady.calls.filter(isPolicyRead).length,2);assert.equal(steady.calls.filter(isDomainRpc).length,1);
+ assert.ok(steady.calls.findIndex(isDomainRpc)>steady.calls.findLastIndex(isPolicyRead),'the write follows the second policy read');
+});
+test('a database guard refusal of a write is answered with the module code and status, never as a generic conflict',async()=>{
+ for(const [rpcCode,rpcMessage,status,code] of [['EUM02','module_draining',503,'module_draining'],['EUM03','module_disabled',404,'module_disabled'],['EUM04','module_policy_changed',409,'module_policy_changed'],['EUM01','module_not_installed',503,'module_not_installed'],[undefined,'module_draining',503,'module_draining'],['EUM02','some other text',503,'module_draining']]) {
+  const f=fake({rpcStatus:400,rpcCode,rpcMessage});
+  const r=await handleWorldEnvironment(req(`/missions/${MISSION}/join`,'POST',{}),env,f);
+  assert.equal(r.status,status,`${rpcCode} ${rpcMessage}`);assert.deepEqual(await r.json(),{ok:false,code});
+ }
+ const other=fake({rpcStatus:400,rpcCode:'EUM00',rpcMessage:'module_policy_unavailable'});
+ const r=await handleWorldEnvironment(req(`/missions/${MISSION}/join`,'POST',{}),env,other);assert.equal(r.status,503);assert.deepEqual(await r.json(),{ok:false,code:'persistence_unavailable'});
 });
 test('old Halo routes stay owner features, distinct consumer namespace is not a gate relaxation',()=>{
  assert.equal(globeFeatureForPath('/v1/world/layers/quakes'),'quakes');assert.equal(globeFeatureForPath('/v1/world/halo/people'),'halo-ops');assert.equal(globeFeatureForPath(P),null);

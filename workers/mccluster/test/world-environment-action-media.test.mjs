@@ -11,6 +11,8 @@ function fixture(){
  const calls=[],reviews=[];let owner=true;
  const fetchImpl=async(url,options={})=>{
   const u=new URL(url);calls.push({url:u.href,options});
+  /* The persisted module policy the route reads first on every request: installed and enabled in this fixture. */
+  if(u.pathname==='/rest/v1/rpc/eup_module_policy_read')return json({schema:'equity-uprise.module-policy/v1',installationId:'mccluster',moduleId:'environment',state:'enabled',revision:1});
   if(u.pathname==='/auth/v1/user'){owner=options.headers?.authorization==='Bearer owner';return json({id:USER});}
   if(u.pathname==='/rest/v1/orgs')return json([{id:ORG}]);
   if(u.pathname==='/rest/v1/org_members')return json(owner?[{role:'owner'}]:[]);

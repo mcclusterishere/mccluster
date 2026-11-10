@@ -9,6 +9,7 @@ import { fetchWeather, fetchNatural } from './world-events.js';
 import { fetchQuakes, fetchCyclones } from './world-halo-layers.js';
 import { service, uuid } from './world-cctv.js';
 import { isHouseOwner } from './world-access.js';
+import { readModulePolicy, MODULE_POLICY_ERRORS } from './eup/modules.js';
 import { environmentFeed as productFeed, clip } from '../../../vendor/equity-uprise/src/environment/evidence.mjs';
 import { createEnvironmentServer } from '../../../vendor/equity-uprise/src/environment/server.mjs';
 export { ENVIRONMENT_PATH, ENVIRONMENT_TEAM, ENVIRONMENT_ACTIONS, environmentFacts } from '../../../vendor/equity-uprise/src/environment/evidence.mjs';
@@ -17,9 +18,14 @@ const installation = Object.freeze({
   schema:'equity-uprise.installation/v1',id:'mccluster',appOrigin:'https://mccluster.org',apiOrigin:'https://api.mccluster.org',
   brand:{name:'McCluster'},modules:{environment:true}
 });
-// Explicit implementation policy preserves the existing environmental feature
-// behavior. This is not a persisted owner module toggle or an applied SQL gate.
-const implementationPolicy = Object.freeze({schema:'equity-uprise.module-policy/v1',installationId:'mccluster',moduleId:'environment',revision:0,state:'enabled'});
+// Module policy is the persisted owner decision, read from the canonical store on every request
+// (eup/modules.js -> eup_module_policy_read, service key, no cache). There is no built-in policy:
+// a missing row, an unapplied schema, an unreachable store or a malformed answer makes loadPolicy
+// throw, and the pinned server answers 503 module_policy_unavailable. Nothing defaults to on.
+// A database refusal of a write (the module guard's SQLSTATEs) is passed to the pinned server with
+// the code and status it answers for the same state itself.
+const MODULE_REFUSALS = MODULE_POLICY_ERRORS.consumer;
+const MODULE_FAILURE_CODES = Object.freeze(Object.values(MODULE_REFUSALS).map(([, code]) => code));
 export async function environmentFeed(env,{fetchImpl=fetch,cacheImpl=null}={}) {
   return productFeed({readSource:spec=>cachedLayer({layer:spec.id,key:`consumer-environment-v1-${spec.id}`,ttl:spec.ttl,rows:spec.rows,fetcher:PROVIDERS[spec.id]},env,fetchImpl,cacheImpl)});
 }
@@ -29,6 +35,8 @@ async function rpc(request, env, name, args, fetchImpl, privileged = false) {
   }, body: JSON.stringify(args) });
   if (!res.ok) {
     const failure = await res.json().catch(() => ({}));
+    const refused = Object.hasOwn(MODULE_REFUSALS, failure?.code) ? MODULE_REFUSALS[failure.code] : Object.values(MODULE_REFUSALS).find(([, name]) => failure?.message === name);
+    if (refused) throw Object.assign(new Error(refused[1]), { code: refused[1], status: refused[0] });
     let code = ['join_team_first','membership_blocked','identity_required','team_unavailable','mission_expired','source_expired','approved_environment_mission_required','proposal_limit','current_news_review_required','owner_only'].find(c => failure.message === c);
     code ||= ({ 'this mission is full': 'mission_full', 'this mission is not open': 'mission_not_open', 'regional mission not eligible for this member': 'mission_not_eligible' })[failure.message];
     throw Object.assign(new Error(code || 'persistence_unavailable'), { code });
@@ -44,9 +52,9 @@ export async function handleWorldEnvironment(request, env, options = {}) {
   const planning=createMcClusterEnvironmentPlanning({request,env,fetchImpl,readEvent:async id=>(await environmentFeed(env,options)).events.find(event=>event.id===id)});
   const controller=createEnvironmentServer({
     proofs:createEnvironmentProofAdapter(request,env,{fetchImpl}),
-    planning,failureCodes:[...ENVIRONMENT_PROOF_ERRORS,...ENVIRONMENT_PLANNING_ERROR_CODES,'current_news_review_required'],
+    planning,failureCodes:[...ENVIRONMENT_PROOF_ERRORS,...ENVIRONMENT_PLANNING_ERROR_CODES,'current_news_review_required',...MODULE_FAILURE_CODES],
     installation,
-    loadPolicy:async()=>implementationPolicy,
+    loadPolicy:()=>readModulePolicy(env,fetchImpl,'environment'),
     authenticate:async()=>{const user=await bearerUser(request,env,fetchImpl);return user?{id:user.id,installationId:installation.id}:null;},
     isOwner:({principal})=>isHouseOwner(env,principal.id,fetchImpl),
     readEvidence:()=>environmentFeed(env,options),
