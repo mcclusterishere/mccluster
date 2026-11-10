@@ -40,7 +40,7 @@
     }
   },
   "ported_semantics": [
-    "states enabled, draining, disabled; enabled -> disabled refused until drained",
+    "states enabled, draining, disabled; enabled -> disabled refused until drained; every other transition is admitted, disabled -> draining included (kept as upstream: in this file it admits no write, because the guard refuses both states and the reduce guard answers in both, and it moves the revision; the pinned product reader answers reads while draining and nothing while disabled)",
     "revision 0..9007199254740991, incremented only on a real state change; no-ops audited",
     "owner command idempotency: exact replay returns the stored receipt, changed replay fails",
     "guard taken in the domain write's own transaction and held to commit",
@@ -56,7 +56,7 @@
     "a non-empty reason (1..500 characters) is required; upstream allowed an empty one",
     "idempotency key is the E=Up text key (8..128 safe characters) instead of a uuid",
     "a reduce-only entry point public.eup_module_guard_reduce(p_module text) exists beside the guard (upstream has one guard and no such door). Reason: actions that only stop work or remove exposure (a member revoking consent and the publication withdrawal it causes, withdrawing an application or assignment, discarding an upload, withdrawing an appeal, an owner pausing or withdrawing a campaign or mission, withdrawing a publication, placing a moderation hold, recording a media purge, revoking an audience grant, pausing an intake source) must stay possible while a module is draining or disabled; refusing them would trap a member's consent or keep retained media past its date. It takes the same shared advisory lock and FOR SHARE row lock as the guard and holds both to commit, so a state command still waits for an in-flight reduce writer; it raises EUM00 and EUM01 only",
-    "the statement-trigger backstop public.eup_module_guard_trigger() skips the full guard when the transaction-local marker eup.module_reduce (set only by the reduce-only entry point) names that trigger's own module; a marker for another module, an empty one or none runs the full guard. Reason: a reduce-only action writes the same guarded tables. The marker is a correctness backstop, not a security boundary against the service role",
+    "the statement-trigger backstop public.eup_module_guard_trigger() treats the transaction-local marker eup.module_reduce as a mode, never a bypass: when the marker is non-empty and names that trigger's own module the trigger performs public.eup_module_guard_reduce for that module, and a marker for another module, an empty one or none performs the full guard; no path returns without one of the two. Reason: a reduce-only action writes the same guarded tables, and a transaction that writes a guarded table must always hold the shared advisory lock and the FOR SHARE row lock and have had the EUM00 / EUM01 check, whoever set the marker, so a state command always waits for it and a marker set by hand (set_config without the reduce guard) on a module with no row is refused EUM01. The marker changes one thing only: the write is not refused for draining or disabled. It is a correctness backstop, not a security boundary against the service role: a session that can run arbitrary SQL can still choose reduce mode for a write that is not reduce-only",
     "service_role therefore executes six functions, not upstream's five: policy_read, control_read, policy_install, policy_command, guard, guard_reduce",
     "the file is idempotent (create ... if not exists, create or replace) so a second run changes nothing; upstream's baseline is a one-shot installer step",
     "the trigger function returns the row when it is attached FOR EACH ROW by mistake, so a mis-attached backstop still guards instead of silently dropping the write"
@@ -65,7 +65,7 @@
   "status": "Pending, unapplied, reviewed local schema. Creates no policy row; applying it changes no behaviour until a domain file calls the guards.",
   "stable_codes": {
     "EUM00": "module_policy_unavailable: the house organisation row is absent or the module id is null",
-    "EUM01": "module_not_installed: no policy row for the module (read, guard, reduce guard, trigger, state command)",
+    "EUM01": "module_not_installed: no policy row for the module (read, guard, reduce guard, trigger with or without the reduce marker, state command)",
     "EUM02": "module_draining: guarded write refused while draining",
     "EUM03": "module_disabled: guarded write refused while disabled",
     "EUM04": "module_policy_changed: the expected policy revision passed to the guard differs",
