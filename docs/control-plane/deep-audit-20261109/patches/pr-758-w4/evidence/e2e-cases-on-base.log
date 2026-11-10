@@ -1,0 +1,9 @@
+# lane w4, head 027efd52bde35d4a90c26915140fed3ef98cd582, base 90ce7c4ce2
+# FAIL BEFORE: every trial account browser case against the PR head's trial.mjs (scratch reporting variant)
+# trial.mjs sha256: cca1aa6027032e5fb2427531e764feb299275e4d66ac3fede9e338fbd61edddd
+trial account case 1: FAIL: an account answer that arrives after sign-out verifies nothing | + actual - expected |  |   { | +   account: false, | +   heading: 'Welcome back', | +   start: 'Play Chemistry' | -   account: true, | -   heading: 'Continue with an M Account',
+trial account case 2: FAIL: the first account's late answer cannot verify the second account's session | + actual - expected |  |   { | +   account: false, | +   heading: 'Welcome back', | +   start: 'Play Chemistry' | -   account: true, | -   heading: 'Continue with an M Account',
+trial account case 3: FAIL: locator.waitFor: Timeout 5000ms exceeded. | Call log: | [2m  - waiting for locator('#chemTrialAccount') to be visible[22m | [2m    14 × locator resolved to hidden <a hidden="" class="gh-city-link" id="chemTrialAccount" href="account.html?stay=1">Sign in or create an account</a>[22m | 
+trial account case 4: PASS
+trial account case 5: FAIL: locator.waitFor: Timeout 5000ms exceeded. | Call log: | [2m  - waiting for locator('#chemTrialAccount') to be visible[22m | [2m    14 × locator resolved to hidden <a hidden="" class="gh-city-link" id="chemTrialAccount" href="account.html?stay=1">Sign in or create an account</a>[22m | 
+exit=1

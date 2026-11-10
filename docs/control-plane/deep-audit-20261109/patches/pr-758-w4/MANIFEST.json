@@ -65,7 +65,7 @@
       "result": "AssertionError at the script's defect assertion: actual 'Continue with an M Account', expected 'Welcome back'; exit 1. Against the PR head's module it exits 0 and prints heading 'Welcome back'"
     },
     {
-      "command": "node evidence/timer-backstop.mjs <worktree>   (scratch, not committed: real Chromium 153, real time, the bar left out so only the trial page's own timer can react)",
+      "command": "node evidence/timer-backstop.mjs <worktree>   (a scratch check, committed with its log under evidence/ at the close-out: real Chromium 153, real time, the bar left out so only the trial page's own timer can react)",
       "result": "head: a verified member mid-round, session removed in the same tab with no storage event and no mcc:auth-changed (0 events heard); the page's 30 s timer closed the round and showed the account prompt after 30.1 s. On the PR head's module the round was still open after 40 s"
     },
     {
@@ -217,7 +217,66 @@
     "The whole root suite on the unmodified PR head tree: not run (the lane head has 0 failures and the new file adds exactly 23 tests)",
     "Node 24 and later: every node run here was on Node 22.23.4, the version the Game Hub workflow and most workflows pin",
     "workers/mccluster and core suites: nothing under them was touched and none of their tests reference game-hub or chem108",
-    "No deployment, no database, no provider access and no credentials; nothing was pushed, and no branch or tag was created or moved"
+    "No deployment, no database, no provider access and no credentials; nothing was pushed, and no branch or tag was created or moved",
+    "The live #758 head: the close-out verification had no network and compared only the local ref refs/remotes/pr/758 (90ce7c4c)"
   ],
-  "notes": "W4 is fixed on PR #758 head 90ce7c4c as two commits on the lane worktree's detached HEAD: f9a42bbb (fix and unit regression tests) and 027efd52 (browser coverage). CAUSE: js/game-hub/chem108/trial.mjs asked MCC.user() once, set a boolean on any answer and never read the session again; its 30 s timer stood down once that boolean was set. FIX: every lookup captures {account, generation} when MCC.user() is called, and its answer is used only if the generation has not moved and the stored session still belongs to that account. The generation moves on mcc:auth-changed and on session storage events (key mccdb_session, or null for a cleared store) unless the page is verified and the stored session is still that account's, on pagehide, and when the timer or a return to the tab finds the confirmed session cleared or replaced. 'verified' is a function that compares the confirmed account with localStorage at every decision, so nothing is remembered. A round only the account allowed closes; a round the trial still covers continues and its status line stops saying 'Signed-in account verified.'. A failed lookup grants nothing, leaves an active guest preview untouched and is asked again on the next return to the tab (visibilitychange or a persisted pageshow); storage that keeps changing is asked about at most twice per trigger. DESIGN DECISION FOR REVIEW: the binding is to the account the stored token names (the JWT 'sub', decoded locally, as the Control fix for A1 does with its 'principal'), not to the raw token string. The strict token-string version was built first and measured. Because canonical MCC.user() refreshes a stale token while it fetches the user, the strict version (1) cost every returning member whose access token had expired a second /auth/v1/user request, (2) closed a verified member's real round in a real browser when another tab refreshed the same member's token (browser case 3 failed with '0 !== 4'), and (3) never verified, and kept re-asking, when canonical auth treats the session as stale on every call (for example a device clock about an hour fast). The delivered version treats a refreshed token for the same account as the same session. A token that names no account is only ever equal to itself, so with opaque tokens the behaviour is the strict one. Nothing is granted from the local token: only a server answer for that account in this page view verifies it. A verified page does not ask the server again on visibility or restore while the stored session still names the confirmed account (the same choice A1 made), so a server-side revocation is noticed only when storage changes. NOT CHANGED: chem108.html, CSS, index.html, any logo, any SQL, any Worker or Core file, the owner gate. The public preview stays public and is still not an entitlement or anti-abuse control, as the module header already says. window.addEventListener and document.addEventListener are called with ?.() so the module also mounts in a DOM shim that has no events (the audit's own harness shape); the timer covers the same ground there. LIMITS: Chromium only; fixture account replies; a real back/forward-cache restore was proven only on desktop headless Chromium 143 and 153 (the e2e prints 'NOT RUN' rather than passing silently if a build reloads instead of restoring). The W4 row in docs/control-plane/deep-audit-20261109/DEFECT-LEDGER.md lives on the control branch, outside this lane, and was not edited. OBSERVATION OUTSIDE THIS FINDING (not fixed; shared file other lanes may hold): js/tabbar.js refreshAuthState() calls itself again whenever the stored token changed during its MCC.user() lookup, with no bound (line 750 on main 578e6830, line 772 on claude/new-session-83ken5, line 752 on this PR head). For a session that canonical auth treats as stale on every call this never terminates. On the lane head tree with fixture auth, chem108.html with the bar loaded made 96, 227 and 341 token refreshes after 1, 2 and 3 seconds, against 1 refresh and 1 lookup with the bar blocked (evidence/observation-bar-refresh-loop.log and .mjs). In production that would repeat refresh requests until the auth service rate-limits, on every page that carries the bar. The trial page stayed 'Welcome back' throughout that run. Evidence logs for this exact head are in evidence/ beside this manifest. A scratch copy of Playwright 1.57.0 with its Chromium and axe-core 4.10.3 was left under scratchpad/w4-scratch/ (pw157, pw157-browsers) in case the CI-toolchain run needs repeating."
+  "notes": "W4 is fixed on PR #758 head 90ce7c4c as two commits on the lane worktree's detached HEAD: f9a42bbb (fix and unit regression tests) and 027efd52 (browser coverage). CAUSE: js/game-hub/chem108/trial.mjs asked MCC.user() once, set a boolean on any answer and never read the session again; its 30 s timer stood down once that boolean was set. FIX: every lookup captures {account, generation} when MCC.user() is called, and its answer is used only if the generation has not moved and the stored session still belongs to that account. The generation moves on mcc:auth-changed and on session storage events (key mccdb_session, or null for a cleared store) unless the page is verified and the stored session is still that account's, on pagehide, and when the timer or a return to the tab finds the confirmed session cleared or replaced. 'verified' is a function that compares the confirmed account with localStorage at every decision, so nothing is remembered. A round only the account allowed closes; a round the trial still covers continues and its status line stops saying 'Signed-in account verified.'. A failed lookup grants nothing, leaves an active guest preview untouched and is asked again on the next return to the tab (visibilitychange or a persisted pageshow); storage that keeps changing is asked about at most twice per trigger. DESIGN DECISION FOR REVIEW: the binding is to the account the stored token names (the JWT 'sub', decoded locally, as the Control fix for A1 does with its 'principal'), not to the raw token string. The strict token-string version was built first and measured. Because canonical MCC.user() refreshes a stale token while it fetches the user, the strict version (1) cost every returning member whose access token had expired a second /auth/v1/user request, (2) closed a verified member's real round in a real browser when another tab refreshed the same member's token (browser case 3 failed with '0 !== 4'), and (3) never verified, and kept re-asking, when canonical auth treats the session as stale on every call (for example a device clock about an hour fast). The delivered version treats a refreshed token for the same account as the same session. A token that names no account is only ever equal to itself, so with opaque tokens the behaviour is the strict one. Nothing is granted from the local token: only a server answer for that account in this page view verifies it. A verified page does not ask the server again on visibility or restore while the stored session still names the confirmed account (the same choice A1 made), so a server-side revocation is noticed only when storage changes. NOT CHANGED: chem108.html, CSS, index.html, any logo, any SQL, any Worker or Core file, the owner gate. The public preview stays public and is still not an entitlement or anti-abuse control, as the module header already says. window.addEventListener and document.addEventListener are called with ?.() so the module also mounts in a DOM shim that has no events (the audit's own harness shape); the timer covers the same ground there. LIMITS: Chromium only; fixture account replies; a real back/forward-cache restore was proven only on desktop headless Chromium 143 and 153 (the e2e prints 'NOT RUN' rather than passing silently if a build reloads instead of restoring). The W4 row in docs/control-plane/deep-audit-20261109/DEFECT-LEDGER.md lives on the control branch, outside this lane, and was not edited. OBSERVATION OUTSIDE THIS FINDING (not fixed; shared file other lanes may hold): js/tabbar.js refreshAuthState() calls itself again whenever the stored token changed during its MCC.user() lookup, with no bound (line 750 on main 578e6830, line 772 on claude/new-session-83ken5, line 752 on this PR head). For a session that canonical auth treats as stale on every call this never terminates. On the lane head tree with fixture auth, chem108.html with the bar loaded made 96, 227 and 341 token refreshes after 1, 2 and 3 seconds, against 1 refresh and 1 lookup with the bar blocked (evidence/observation-bar-refresh-loop.log and .mjs). In production that would repeat refresh requests until the auth service rate-limits, on every page that carries the bar. The trial page stayed 'Welcome back' throughout that run. Evidence logs for this exact head are in evidence/ beside this manifest. A scratch copy of Playwright 1.57.0 with its Chromium and axe-core 4.10.3 was left under scratchpad/w4-scratch/ (pw157, pw157-browsers) in case the CI-toolchain run needs repeating. CLOSE-OUT (2026-11-10): the evidence/ directory beside this manifest is now committed: the files listed under \"evidence\", copied unchanged from the producing session's scratchpad (their sha256 are recorded) after being read in full; they hold fixture tokens, local paths and test output only, no secret and no personal data, and e2e-cases-on-base.log keeps the terminal colour codes the tool printed. The close-out verification applied this series with git am on 90ce7c4c (trees d1b9b154 and a623cd1b, equal to those of f9a42bbb and 027efd52) and re-ran: the unit suite 23/23 six times; the 96-test group; the root suite (1992 tests, 1989 pass, 3 skipped); the Chromium journey six times with Playwright 1.63.0 and five times with the CI toolchain (Playwright 1.57.0, Chrome for Testing 143.0.7499.4); timer-backstop.mjs (on the patch the round closed after 30.0 s with no event heard; on the base module it was still playing after 40.0 s); and the audit reproduction. With the base module 18 of 23 unit tests fail. It confirmed the design decision above (strict token binding fails unit cases 17-19 and browser case 3) and the residual (a server-side revocation is noticed only when storage changes; MCC.user() returns null on a 401 without clearing storage). One case is missing from the series: verified as A, sign out, then sign in again as A with a refreshed token; the lookups should be ['A', 'A refreshed'] and the panel should stay on the account prompt until the new answer, then show 'Welcome back'. That proposed case fails on the base module and when `confirmed = null` is removed from sessionChanged(). Add it when the series is re-cut, with new counts, hashes and tree.",
+  "evidence": [
+    {
+      "file": "evidence/audit-repro.log",
+      "sha256": "2eb3f80cfb15c14a17b11de3e04e716e94dc1255fd9f41a8dd4710045ca144ee"
+    },
+    {
+      "file": "evidence/e2e-cases-on-base.log",
+      "sha256": "e218392c8ddbb0f4cdbc738c905c5ee67739163f8a88f3be396bf1818d8819d5"
+    },
+    {
+      "file": "evidence/e2e-cases-on-fix.log",
+      "sha256": "347be7c81c03714b3de48c01a62b5ff9d3e6d43750c2413cb73dce03afb9367f"
+    },
+    {
+      "file": "evidence/e2e-fail-before.log",
+      "sha256": "d2d9e98cc32d7be36e820547fee6b8ee08ba9ddaf21c3c07d2fe660868053a31"
+    },
+    {
+      "file": "evidence/e2e-pass-after-ci-toolchain.log",
+      "sha256": "4f42976529cb5643dc0a24430650a91d0018b629b8f58d2463ca80ce6ee40663"
+    },
+    {
+      "file": "evidence/e2e-pass-after-local.log",
+      "sha256": "19659b5af1565413cb6e28b3982856733a4283c0b152bc6adf5dc3d388c5337b"
+    },
+    {
+      "file": "evidence/observation-bar-refresh-loop.log",
+      "sha256": "7d94d445fb477e41e2ebfb3ec379938712e4141322e0178ede7a6767da01244e"
+    },
+    {
+      "file": "evidence/observation-bar-refresh-loop.mjs",
+      "sha256": "a4404e5e26bee9236ef5049d2840a26de3a67df7d2efbef7e8b7a3eb34c9b7a5"
+    },
+    {
+      "file": "evidence/python-after.log",
+      "sha256": "2acf0cbe2fc9281d12132fbfc84a660866a42b9504e24290205da4632a59ec39"
+    },
+    {
+      "file": "evidence/root-suite-after.summary.log",
+      "sha256": "c312925d89caa7612379f1a3747cc84996c7cdf1bdda9b67004eecc7e06fde8b"
+    },
+    {
+      "file": "evidence/timer-backstop.log",
+      "sha256": "b87a08287cdb1651620c8dba9b898fe7c7b8641f971fcd8e56e9c9194b9da342"
+    },
+    {
+      "file": "evidence/timer-backstop.mjs",
+      "sha256": "e1b0126e7863873559d766755ac27beff4e077b262dfd922e2f83e70471506be"
+    },
+    {
+      "file": "evidence/unit-fail-before.log",
+      "sha256": "69ec826c77cdfdb93f9178a222313faa94504f0a112a4ea2ec1e17415c687ce6"
+    },
+    {
+      "file": "evidence/unit-pass-after.log",
+      "sha256": "642d80743884a4d8d97c684b6e78735e80d4ae56edcd1b08b595b1c31c88a89c"
+    }
+  ]
 }
