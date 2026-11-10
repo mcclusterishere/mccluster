@@ -61,10 +61,15 @@
   /* THE KEEP: the session mirrors to a second shelf, and the mirror
      restores it if the main copy is ever cleared by accident, so the
      same device stays the same member, same numbers. A real sign-out
-     clears both shelves on purpose. */
+     clears both shelves on purpose, and so does the auth server's
+     explicit no to a refresh (refresh() below): neither is an accident. */
   function saveSession(s) {
     jset("session", s);
     try { localStorage.setItem("mcc_sess_keep", JSON.stringify(s)); } catch (e) {}
+  }
+  function forgetSession() {
+    jdel("session");
+    try { localStorage.removeItem("mcc_sess_keep"); } catch (e) {}
   }
   (function restoreKeep() {
     try {
@@ -132,17 +137,83 @@
     history.replaceState(null, "", location.pathname);
   })();
 
+  /* ONLY A NO ENDS A SESSION, AND ONLY THE SESSION IT ANSWERS.
+
+     Any answer to a refresh that was not a new session used to delete the
+     stored one, so a 429, a 500 or a 503 signed the member out of every
+     call on the page while the kept copy waited for js/mcc-auth.js to
+     restore it. Which answers end a session, which answers count at all,
+     one request at a time and its 12-second bound now follow that canonical
+     client (MCC.refresh()). They are kept here rather than borrowed from it:
+     most pages that load this file do not load that one, and js/tabbar.js
+     brings it in only later and only over a stored session, so whether it
+     is there when a call needs a refresh is a matter of timing.
+     scripts/test/auth-session-clock.test.mjs holds the two clients to the
+     same answers.
+
+     - A 4xx naming one of REJECTED is the server ending this session: both
+       shelves are cleared, as at a sign-out.
+     - Anything else (a 429, a 5xx, an answer without both tokens, no
+       connection, no answer in 12 seconds) keeps both. Where the canonical
+       client fails the call, this one hands it the stored token, as it
+       always did offline: good until its own expiry (the refresh starts a
+       minute early), refused by the database after it.
+     - Calls that need a refresh while one is in the air share it, so a page
+       spends its refresh token once instead of racing itself through the
+       token's rotation, where the loser's refresh_token_already_used would
+       read as a no. The bound means one stalled request cannot hold every
+       call that shares it.
+     - An answer counts only while the session it was asked about is still
+       the one stored. When a sign-out, another account, or another tab's or
+       client's refresh moved it while the request was out, nothing is
+       written or cleared, and the call gets what is stored now if it is the
+       same member (the JWT sub, as js/tabbar.js tells accounts apart), else
+       null. The canonical client gives null either way; a member whose
+       token the bar refreshed a moment earlier is still that member here. */
+  var REJECTED = ["refresh_token_not_found", "refresh_token_already_used", "session_expired", "session_not_found", "user_banned", "user_not_found"];
+  var refreshFlight = null;
+  function claims(tok) { // a JWT's segments are base64url, which atob refuses until its two letters are swapped back
+    try { return JSON.parse(atob(String(tok).split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))) || {}; } catch (e) { return {}; }
+  }
+  function askRefresh(refreshToken) {
+    var controller = typeof AbortController === "function" ? new AbortController() : null, timer;
+    var late = new Promise(function (_, reject) {
+      timer = setTimeout(function () { if (controller) controller.abort(); reject(new Error("The account service did not respond.")); }, 12000);
+    });
+    var asked = fetch(URL_ + "/auth/v1/token?grant_type=refresh_token", {
+      method: "POST",
+      headers: { apikey: KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+      signal: controller ? controller.signal : undefined,
+    }).then(function (r) {
+      return r.json().catch(function () { return null; }).then(function (j) { return { ok: r.ok, status: r.status, body: j || {} }; });
+    });
+    return Promise.race([asked, late]).finally(function () { clearTimeout(timer); });
+  }
   function refresh() {
     var s = session();
     if (!s || !s.refresh_token) return Promise.resolve(null);
-    return fetch(URL_ + "/auth/v1/token?grant_type=refresh_token", {
-      method: "POST",
-      headers: { apikey: KEY, "Content-Type": "application/json" },
-      body: JSON.stringify({ refresh_token: s.refresh_token }),
-    }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
-      if (j && j.access_token) { saveSession(kept(j)); return session(); }
-      jdel("session"); return null;
-    }).catch(function () { return s; }); // offline: keep the session, RLS still guards
+    if (refreshFlight && refreshFlight.token === s.refresh_token && refreshFlight.access === s.access_token) return refreshFlight.promise;
+    var flight = { token: s.refresh_token, access: s.access_token };
+    function stillCurrent() {
+      var now = session();
+      return !!now && now.refresh_token === s.refresh_token && now.access_token === s.access_token;
+    }
+    function moved() {
+      var now = session(), who = claims(s.access_token).sub;
+      return now && who && claims(now.access_token).sub === who ? now : null;
+    }
+    flight.promise = askRefresh(s.refresh_token).then(function (a) {
+      if (!stillCurrent()) return moved();
+      var j = a.body;
+      if (a.ok && j.access_token && j.refresh_token) { saveSession(kept(j)); return session(); }
+      if (a.status >= 400 && a.status < 500 && REJECTED.indexOf(j.error_code || j.code) !== -1) { forgetSession(); return null; }
+      return s;
+    }, function () {
+      return stillCurrent() ? s : moved();
+    }).finally(function () { if (refreshFlight === flight) refreshFlight = null; });
+    refreshFlight = flight;
+    return flight.promise;
   }
 
   function token() {
@@ -234,8 +305,7 @@
       return Promise.reject(new Error("Passwordless email sign-in is disabled. Use your email and password."));
     },
     signOut: function () {
-      jdel("session");
-      try { localStorage.removeItem("mcc_sess_keep"); } catch (e) {}
+      forgetSession();
       try { window.dispatchEvent(new CustomEvent("mcc:auth-changed", { detail: { signed_in: false } })); } catch (e) {}
       return Promise.resolve();
     },
