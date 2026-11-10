@@ -46,6 +46,7 @@ export async function stripeRequest(env, path, params = {}, options = {}) {
     const error = new Error(message);
     error.status = response.status;
     error.stripe = data?.error || null;
+    error.providerRequestId = response.headers.get('request-id') || null;
     throw error;
   }
   return data;

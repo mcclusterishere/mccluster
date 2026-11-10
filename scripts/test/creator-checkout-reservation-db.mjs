@@ -7,7 +7,8 @@ test('SQL reservation serializes owner checkout and keeps tenant reservations in
  await db.exec(`create role anon; create role authenticated; create role service_role bypassrls; create schema auth; create table auth.users(id uuid primary key);create table public.creator_billing_subscriptions(owner_user_id uuid,status text);grant select on public.creator_billing_subscriptions to service_role;insert into auth.users values('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'),('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb');`);
  await db.exec(await readFile(new URL('../../supabase/pending/20261026009200_creator_checkout_reservations.sql',import.meta.url),'utf8'));
  await db.exec('set role service_role');
- const reserve=async(owner,key,price='price_fixture')=>(await db.query('select reserve_creator_checkout($1,$2,$3) result',[owner,key,price])).rows[0].result;
+ const payload=(owner,price,key)=>({mode:'subscription',client_reference_id:owner,line_items:[{price,quantity:1}],metadata:{mccluster_user_id:owner,creator_request_id:key,creator_plan:'starter',creator_period:'monthly',creator_provider_mode:'test'},subscription_data:{metadata:{mccluster_user_id:owner,creator_request_id:key,creator_plan:'starter',creator_period:'monthly',creator_provider_mode:'test'}}});
+ const reserve=async(owner,key,price='price_fixture')=>(await db.query('select reserve_creator_checkout($1,$2,$3,$4) result',[owner,key,price,payload(owner,price,key)])).rows[0].result;
  const alice='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',bob='bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
  const first=await reserve(alice,'fixture-request-0001');assert.equal(first.blocked,false);
  assert.deepEqual(await reserve(alice,'fixture-request-0001'),first);
@@ -17,7 +18,10 @@ test('SQL reservation serializes owner checkout and keeps tenant reservations in
  assert.equal((await db.query('select bind_creator_checkout($1,$2,$3) result',[alice,'fixture-request-0001','cs_fixture'])).rows[0].result,true);
  assert.equal((await db.query('select bind_creator_checkout($1,$2,$3) result',[alice,'fixture-request-0001','cs_other'])).rows[0].result,false);
  assert.equal((await db.query('select release_expired_creator_checkout($1,$2) result',[alice,'cs_fixture'])).rows[0].result,false);
- await db.exec("update creator_checkout_reservations set expires_at=now()-interval '1 hour'");
+ // Test-only clock fixture: identity is immutable to service_role. Move both
+ // receipt and guard back together as the fixture owner, not through a billing RPC.
+ await assert.rejects(db.exec("update creator_checkout_attempts set expires_at=now()-interval '1 hour'"),/immutable/);
+ await db.exec("reset role; set session_replication_role=replica; update creator_checkout_attempts set expires_at=now()-interval '1 hour'; update creator_checkout_reservations set expires_at=now()-interval '1 hour'; set session_replication_role=origin; set role service_role");
  assert.equal((await reserve(alice,'fixture-request-0001')).reason,'checkout_reconciliation_required');
  assert.equal((await db.query('select release_expired_creator_checkout($1,$2) result',[bob,'cs_fixture'])).rows[0].result,false);
  assert.equal((await db.query('select release_expired_creator_checkout($1,$2) result',[alice,'cs_fixture'])).rows[0].result,true);

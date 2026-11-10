@@ -196,6 +196,8 @@ jobs:
           node scripts/test/world-social-composer.browser.mjs
           node scripts/e2e/composer-overlay.e2e.mjs
           node scripts/test/creator-domain-purchases-ui.mjs
+          node scripts/test/customer-commerce-browser.mjs
+          node scripts/test/customer-checkout-recovery-browser.mjs
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:

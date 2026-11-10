@@ -1,0 +1,11 @@
+Command: node --test scripts/test/*.test.mjs
+Exit: 0
+Summary excerpt from the full local followup-root.log:
+ℹ tests 2071
+ℹ suites 0
+ℹ pass 2068
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 3
+ℹ todo 0
+ℹ duration_ms 20243.706842
