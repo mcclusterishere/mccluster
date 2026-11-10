@@ -211,3 +211,25 @@ test('the runbook describes the first-cycle check activate makes, in the script\
   assert.ok(step6.includes(`| \`A reconcile cycle has been running for over ${minutes} minutes\` | A cycle, usually a deploy, was still running. Nothing was changed |`), `the wait row says ${minutes} minutes`);
   assert.match(step6, new RegExp(`did not end within ${minutes} minutes`));
 });
+
+test('the mechanism page runs the promoted script by its host path, after the runbook\'s version check (RB-4)', async () => {
+  const [mechanism, runbook, script, reconciler] = await Promise.all([
+    read('docs/control-plane/OVH-PRIVATE-GITHUB-RECONCILE.md'), read(RUNBOOK), read('scripts/ovh-private-repo-ssh.sh'), read('scripts/mccluster-vps-reconcile.sh'),
+  ]);
+  // On the host the script lives in the reconciler's checkout, which each cycle resets to the promoted commit.
+  assert.match(reconciler, /^STATE_ROOT="\$\{MCCLUSTER_RECONCILE_STATE_ROOT:-\/var\/lib\/mccluster\/reconcile\}"$/m);
+  assert.match(reconciler, /^CHECKOUT="\$\{STATE_ROOT\}\/source"$/m);
+  assert.match(reconciler, /^git reset --hard "\$\{TARGET_SHA\}"$/m);
+  const hostScript = '/var/lib/mccluster/reconcile/source/scripts/ovh-private-repo-ssh.sh';
+  // The hardened script names its three modes on exactly one line, its usage line; the older one has no status mode.
+  assert.equal(script.split('\n').filter((line) => line.includes('prepare|activate|status')).length, 1);
+  const check = `sudo grep -cF 'prepare|activate|status' ${hostScript}`;
+  assert.ok(section(runbook, '## Step 6.').includes(check), 'the runbook checks the version this way');
+  const steps = section(mechanism, '## One-time owner action on OVH');
+  assert.match(steps, /These steps apply only after a promotion has put the hardened script on the host/);
+  assert.ok(steps.includes(check) && steps.indexOf(check) < steps.indexOf('\n1. '), 'the same check, before step 1');
+  assert.match(steps, /It must print 1\. If it prints 0, the checkout still holds the older script/);
+  const runs = [...steps.matchAll(/sudo bash (\S+) (prepare|activate|status)\b/g)];
+  assert.deepEqual(runs.map((match) => match[2]), ['prepare', 'activate', 'status']);
+  for (const [command, path] of runs) assert.equal(path, hostScript, command);
+});
