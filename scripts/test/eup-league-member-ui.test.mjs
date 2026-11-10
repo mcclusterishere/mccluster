@@ -856,3 +856,203 @@ test('the stylesheet is phone first: min-width queries only, minmax(0, 1fr) trac
   assert.deepEqual([CAP.megabytes(0), CAP.megabytes(1), CAP.megabytes(19000), CAP.megabytes(5 * 1048576)], ['0 bytes', '1 byte', '19 KB', '5 MB'], 'no take reads as 0 MB');
   assert.match(css, /@media \(prefers-reduced-motion: no-preference\)[\s\S]*eul-pulse/);
 });
+
+/* ================================================================== review of 2026-11-10 */
+const saveText = (s) => el(s, `[data-eul-save="${IDS.assignment}"]`).textContent;
+const notFound = () => refuse(404, 'not_available');
+
+test('a draft saved again after an unknown outcome carries its first text; the newer text is then saved with a new key, and is never shown as saved before that', async () => {
+  let saves = 0; const stored = [];
+  const s = setup({ handlers: {
+    'GET ': () => ok({ league: me({ assignments: [assignment()] }) }),
+    [`POST assignments/${IDS.assignment}/draft`]: (c) => { saves += 1; if (saves === 1) return 'network'; stored.push(c.body); return ok({ draft: { assignment_id: IDS.assignment, revision: c.body.expected_revision + 1, updated_at: AT } }); },
+    'GET *': notFound
+  } });
+  await settle();
+  s.ctl.bind('lyrics', { assignment: IDS.assignment }, { value: 'Verse one, first line.' });
+  await s.clock.advance(H.AUTOSAVE_MS);
+  assert.equal(s.ctl.model().work[IDS.assignment].status, 'unknown');
+  s.ctl.bind('lyrics', { assignment: IDS.assignment }, { value: 'Verse one, first line.\nA second line typed while autosave waited.' });
+  await s.clock.advance(H.AUTOSAVE_MS * 2);
+  click(s, `draft-resend:${IDS.assignment}`);
+  await settle();
+  assert.equal(stored[0].draft.lyrics, 'Verse one, first line.', 'the request sent again is the first request');
+  assert.doesNotMatch(saveText(s), /^Saved\./, 'the newer text on screen is not shown as saved');
+  assert.equal(s.ctl.unsaved(), true, 'and leaving still asks first');
+  await s.clock.advance(H.AUTOSAVE_MS);
+  assert.equal(stored.length, 2, 'then the text on screen is saved');
+  assert.deepEqual([stored[1].draft.lyrics, stored[1].expected_revision, stored[1].idempotency_key !== stored[0].idempotency_key],
+    ['Verse one, first line.\nA second line typed while autosave waited.', 1, true], 'with a new key, over the revision just saved');
+  assert.match(saveText(s), /^Saved\./);
+  assert.equal(s.ctl.unsaved(), false);
+});
+
+test('an application sent again after an unknown outcome keeps the sheet open when its text was corrected meanwhile', async () => {
+  let posts = 0; const sent = [];
+  const row = { id: IDS.application, mission_id: IDS.mission, requirements_revision: 1, status: 'submitted', revision: 1, accommodation_requested: false, recorded: false, created_at: AT, updated_at: AT };
+  const s = setup({ handlers: {
+    'GET ': () => ok({ league: me() }),
+    [`POST missions/${IDS.mission}/application`]: (c) => { posts += 1; if (posts === 1) return 'network'; sent.push(c.body); return ok({ application: row }); },
+    'GET *': notFound
+  } });
+  await settle();
+  click(s, `apply:${IDS.mission}`);
+  s.ctl.bind('sheet-statement', {}, { value: 'First version of my reason.' });
+  click(s, 'sheet-submit');
+  await settle();
+  assert.ok(el(s, `[data-eul-focus="resend:app:${IDS.mission}"]`), 'the same request is offered again');
+  s.ctl.bind('sheet-statement', {}, { value: 'Second, corrected version of my reason.' });
+  click(s, `resend:app:${IDS.mission}`);
+  await settle();
+  assert.equal(sent[0].application.statement, 'First version of my reason.', 'the request sent again carries its first text');
+  assert.ok(s.ctl.model().sheet, 'the sheet stays open');
+  assert.equal(s.ctl.model().sheet.statement, 'Second, corrected version of my reason.', 'with the corrected text');
+  assert.match(el(s, '[data-eul-sheet]').textContent, /corrected text was not sent/);
+});
+
+test('a take cancelled or retaken after its upload start failed cannot be sent by the old request', async () => {
+  for (const replace of ['cancel-take', 'retake']) {
+    FakeXHR.sent.length = 0;
+    const s = setup({ handlers: { 'GET ': ok({ league: me({ assignments: [assignment()] }) }), [`POST assignments/${IDS.assignment}/uploads`]: 'network', 'GET *': notFound } });
+    await settle();
+    click(s, `record:audio:${IDS.assignment}`); await settle();
+    await s.clock.advance(1500);
+    click(s, `stop:${IDS.assignment}`); await settle();
+    click(s, `use-take:${IDS.assignment}`); await settle();
+    assert.ok(el(s, `[data-eul-focus="resend:upload:${IDS.assignment}"]`), `${replace}: the failed start offers the same request again`);
+    click(s, `${replace}:${IDS.assignment}`); await settle();
+    assert.equal(el(s, `[data-eul-focus="resend:upload:${IDS.assignment}"]`), null, `${replace}: the take it carried is gone, and so is the offer to send it`);
+    assert.equal(s.ctl.model().outcomes[`upload:${IDS.assignment}`]?.command?.blob, undefined, `${replace}: no command holds the old take`);
+    assert.equal(FakeXHR.sent.length, 0, `${replace}: nothing was sent`);
+  }
+});
+
+test('the microphone is released when its controls go away; Submit waits for a live take', async () => {
+  /* a) the participant withdraws while recording */
+  let status = 'accepted';
+  const cap = devices();
+  const s = setup({ capture: cap, handlers: {
+    'GET ': () => ok({ league: me({ assignments: [assignment({ status, withdrawn_at: status === 'withdrawn' ? AT : null })] }) }),
+    [`POST assignments/${IDS.assignment}/withdraw`]: () => { status = 'withdrawn'; return ok({ assignment: assignment({ status, withdrawn_at: AT }) }); }
+  } });
+  await settle();
+  click(s, `record:audio:${IDS.assignment}`); await settle();
+  assert.ok(cap.streams[0].tracks.every((t) => t.readyState === 'live'));
+  click(s, `assign-withdraw:${IDS.assignment}`); await settle();
+  assert.ok(cap.streams[0].tracks.every((t) => t.readyState === 'ended'), 'withdrawing stops the microphone');
+  assert.equal(s.ctl.capture(), null);
+  /* b) the mission is paused and the page reads again while recording; a take in preview is kept with a way to drop it */
+  let open = true;
+  const cap2 = devices();
+  const p = setup({ capture: cap2, handlers: { 'GET ': () => ok({ league: me({ assignments: [assignment({ mission: card({ open, state: open ? 'released' : 'paused' }) })] }) }) } });
+  await settle();
+  click(p, `record:audio:${IDS.assignment}`); await settle();
+  open = false;
+  click(p, 'reload'); await settle();
+  assert.ok(cap2.streams[0].tracks.every((t) => t.readyState === 'ended'), 'a pause read back stops the microphone');
+  assert.equal(p.ctl.capture(), null);
+  open = true;
+  click(p, 'reload'); await settle();
+  click(p, `record:audio:${IDS.assignment}`); await settle();
+  await p.clock.advance(1500);
+  click(p, `stop:${IDS.assignment}`); await settle();
+  open = false;
+  click(p, 'reload'); await settle();
+  assert.equal(p.ctl.capture().session.state.state, 'preview', 'a take in preview is kept while the mission is paused');
+  click(p, `cancel-take:${IDS.assignment}`); await settle();
+  assert.equal(p.ctl.capture()?.session.state.state ?? 'idle', 'idle', 'and the person can drop it');
+  assert.deepEqual(cap2.urls.revoked.sort(), cap2.urls.created.sort(), 'every object URL is revoked');
+  /* c) a submission that is otherwise ready waits while a take is live (it would close the workspace under it) */
+  const ready = { title: 'Test fixture', lyrics: 'Line', credits: [{ name: 'Fixture Writer', role: 'lyrics' }], media: [IDS.upload],
+    rights: { version: 'music-rights-v1', owns_master: true, controls_composition: true, samples_cleared: true, collaborators_cleared: true, parody_or_derivative: false, derivative_permissions: '' } };
+  const r = setup({ capture: devices(), handlers: { 'GET ': ok({ league: me({ assignments: [assignment({ uploads: [sealed()], draft: { assignment_id: IDS.assignment, revision: 1, updated_at: AT, document: ready } })] }) }) } });
+  await settle();
+  const submit = () => el(r, `[data-eul-focus="submit-proof:${IDS.assignment}"]`);
+  assert.equal(submit().getAttribute('aria-disabled'), null, 'ready to submit');
+  click(r, `record:audio:${IDS.assignment}`); await settle();
+  assert.equal(submit().getAttribute('aria-disabled'), 'true', 'Submit waits while a take is live');
+  assert.match(r.doc.getElementById(submit().getAttribute('aria-describedby')).textContent, /current take/);
+});
+
+test('while the device request is unanswered a Cancel is offered and the file upload stays open; a late answer is stopped', async () => {
+  let answer = null;
+  const tracks = [];
+  const cap = devices();
+  cap.env.navigator.mediaDevices.getUserMedia = () => new Promise((resolve) => { answer = () => { const t = { readyState: 'live', stop() { this.readyState = 'ended'; } }; tracks.push(t); resolve({ getTracks: () => [t] }); }; });
+  const s = setup({ capture: cap, handlers: { 'GET ': ok({ league: me({ assignments: [assignment()] }) }) } });
+  await settle();
+  click(s, `record:audio:${IDS.assignment}`); await settle();
+  const cancel = el(s, `[data-eul-focus="cancel-take:${IDS.assignment}"]`);
+  assert.ok(cancel, 'Cancel is offered while asking');
+  assert.equal(s.doc.activeElement, cancel, 'and focus goes to it');
+  assert.equal(el(s, `[data-eul-focus="file:${IDS.assignment}"]`).disabled, false, 'the file upload stays open (choosing a file ends the request)');
+  click(s, `cancel-take:${IDS.assignment}`); await settle();
+  assert.equal(el(s, `[data-eul-focus="record:audio:${IDS.assignment}"]`).getAttribute('aria-disabled'), null, 'Record is open again');
+  answer(); await settle();
+  assert.deepEqual(tracks.map((t) => t.readyState), ['ended'], 'a permission granted after the cancel is stopped at once');
+});
+
+test('a draft save whose answer was lost but which was recorded, with nothing typed since, is saved and not sent again', async () => {
+  const s = setup({ handlers: {
+    'GET ': () => ok({ league: me({ assignments: [assignment()] }) }),
+    [`POST assignments/${IDS.assignment}/draft`]: 'network',
+    'GET *': (c) => ok({ receipt: { surface: 'member', operation: 'drafts.save', idempotency_key: c.path.split('/').pop(), result: { assignment_id: IDS.assignment, revision: 1, updated_at: AT }, created_at: AT } })
+  } });
+  await settle();
+  s.ctl.bind('lyrics', { assignment: IDS.assignment }, { value: 'Probe lyric, typed once.' });
+  await s.clock.advance(H.AUTOSAVE_MS);
+  await s.clock.advance(H.AUTOSAVE_MS * 3);
+  assert.equal(s.srv.posts().length, 1, 'the recorded save is not sent again');
+  assert.match(saveText(s), /^Saved\./);
+  assert.equal(s.ctl.unsaved(), false);
+});
+
+test('after a command removes the control that had focus, focus lands on what changed, never on the page body', async () => {
+  let status = 'offered';
+  const s = setup({ handlers: {
+    'GET ': () => ok({ league: me({ assignments: [assignment(status === 'offered' ? { status, accepted_requirements_revision: null } : {})] }) }),
+    [`POST assignments/${IDS.assignment}/accept`]: () => { status = 'accepted'; return ok({ assignment: assignment() }); }
+  } });
+  await settle();
+  const accept = el(s, `[data-eul-focus="accept:${IDS.assignment}"]`);
+  accept.focus();
+  fire(accept, 'click'); await settle();
+  assert.equal(el(s, `[data-eul-focus="accept:${IDS.assignment}"]`), null, 'the Accept button is gone');
+  const now = s.doc.activeElement;
+  assert.ok(now && now.isConnected && s.main.contains(now), `focus is on something on the page (${now && now.tagName})`);
+});
+
+test('leaving the page (pagehide) releases the camera and microphone', async () => {
+  const cap = devices();
+  const s = setup({ capture: cap, handlers: { 'GET ': ok({ league: me({ assignments: [assignment()] }) }) } });
+  await settle();
+  click(s, `record:audio:${IDS.assignment}`); await settle();
+  window.dispatchEvent({ type: 'pagehide', persisted: false });
+  await settle();
+  assert.ok(cap.streams[0].tracks.every((t) => t.readyState === 'ended'));
+  assert.equal(s.ctl.capture(), null);
+});
+
+test('every take names what its controls and its player belong to', async () => {
+  const UP2 = '0b000000-0000-4000-8000-000000000015';
+  const s = setup({ handlers: { 'GET ': ok({ league: me({ assignments: [assignment({ uploads: [sealed(), sealed({ id: UP2, sha256: 'b'.repeat(64) })] })] }) }) } });
+  await settle();
+  for (const id of [IDS.upload, UP2]) {
+    const item = el(s, `[data-eul-upload="${id}"]`);
+    const line = item.querySelector('[data-eul-take-line]');
+    assert.ok(line && line.id, `${id}: the take has a describing line`);
+    for (const sel of [`[data-eul-focus="play:${id}"]`, `[data-eul-focus="discard:${id}"]`, `[data-eul-focus="choose:${id}"]`]) {
+      assert.equal(item.querySelector(sel).getAttribute('aria-describedby'), line.id, `${sel} is described by its take`);
+    }
+    assert.match(item.querySelector(`[data-eul-player="${id}"]`).getAttribute('aria-label'), /^Take \d+/, 'the player is named');
+  }
+  const labels = [IDS.upload, UP2].map((id) => el(s, `[data-eul-player="${id}"]`).getAttribute('aria-label'));
+  assert.notEqual(labels[0], labels[1], 'two players, two names');
+});
+
+test('the reasons the page reads as "outcome unknown" are reasons the contract lists, and a stored id is compared in lower case', () => {
+  for (const reason of H.UNKNOWN_503) assert.ok(Object.hasOwn(C.HTTP_REASONS, reason) || Object.values(C.ERRORS).some((e) => e.code === reason || e.member_code === reason) || C.ERROR_FALLBACK.code === reason, reason);
+  for (const reason of H.MALFORMED_REQUEST) assert.ok(Object.hasOwn(C.HTTP_REASONS, reason), reason);
+  const MIXED = 'ab000000-0000-4000-8000-0000000000cd';
+  assert.deepEqual(H.workFrom(assignment({ draft: { assignment_id: IDS.assignment, revision: 1, updated_at: AT, document: { media: [MIXED.toUpperCase()] } } })).doc.media, [MIXED]);
+});
