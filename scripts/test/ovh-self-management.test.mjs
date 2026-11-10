@@ -114,3 +114,48 @@ test('OVH self-management shell scripts remain syntactically valid', () => {
     'scripts/bootstrap-vps-self-management.sh',
   ], { stdio: 'pipe' }));
 });
+
+test('a promotion names the head it replaces, moves the ref only from that head and verifies the runtime itself', async () => {
+  const workflow = await read('.github/workflows/promote-ovh-production.yml');
+  const promoteStart = workflow.indexOf('\n  promote:');
+  const verifyStart = workflow.indexOf('\n  verify:');
+  assert.ok(promoteStart > 0 && verifyStart > promoteStart, 'promote and verify jobs exist');
+  const promote = workflow.slice(promoteStart, verifyStart);
+  const verify = workflow.slice(verifyStart);
+
+  // The approval names the previous head, and the ref moves only from exactly that head.
+  assert.match(workflow, /expected_current:\n\s+description: [^\n]*previous head[^\n]*\n\s+required: true/);
+  assert.match(promote, /\[\[ "\$\{TARGET_SHA\}" =~ \^\[0-9a-f\]\{40\}\$ && "\$\{EXPECTED_CURRENT\}" =~ \^\[0-9a-f\]\{40\}\$ \]\]/);
+  const validated = promote.indexOf('[[ "${CURRENT}" == "${EXPECTED_CURRENT}" ]]');
+  const gate = promote.indexOf('require-green-ci.mjs --sha "$TARGET_SHA"');
+  const push = promote.indexOf('git push ');
+  assert.ok(validated > 0 && gate > validated && push > gate, 'previous-head check, then the CI gate, then the push');
+  assert.equal(promote.split('git push ').length - 1, 1, 'one push');
+  assert.match(promote, /git push --force-with-lease="refs\/heads\/deploy\/ovh-production:\$\{EXPECTED_CURRENT\}" \\\n\s+origin "\$\{TARGET_SHA\}:refs\/heads\/deploy\/ovh-production"/);
+  assert.doesNotMatch(promote, /git push (--force |-f )|--force-with-lease origin|--force-with-lease\s*\\?\n/,
+    'never a bare force, and never a lease without an expected value (that trusts whatever was fetched)');
+  // The lease alone would let a matching ref move backward, so direction is decided next to the push.
+  const step = promote.slice(promote.indexOf('- name: Promote deployment ref'), promote.indexOf('- name: Summary'));
+  const direction = step.indexOf('git merge-base --is-ancestor "${EXPECTED_CURRENT}" "${TARGET_SHA}"');
+  assert.ok(direction > 0 && direction < step.indexOf('git push '), 'forward-only is enforced in the push step itself');
+  assert.match(step, /if \[\[ "\$\{ALLOW_ROLLBACK\}" != "true" \]\]; then\n\s+git merge-base --is-ancestor "\$\{EXPECTED_CURRENT\}" "\$\{TARGET_SHA\}" \|\| \{[^}]*exit 3/);
+  // Inputs reach the shell through the environment only.
+  assert.deepEqual([...promote.matchAll(/\$\{\{ ([^}]+) \}\}/g)].map((match) => match[1]).filter((value) => !/^(inputs\.(sha|expected_current|allow_rollback|confirm)( == 'PROMOTE_OVH')?|github\.token)$/.test(value)), []);
+  for (const line of promote.split('\n').filter((value) => /\$\{\{/.test(value))) assert.match(line, /^\s+([A-Z_]+|if): /, `not interpolated into a script: ${line.trim()}`);
+
+  // GitHub starts no workflow from a GITHUB_TOKEN push, so deploy-ovh-core.yml's
+  // push-triggered check never runs for a promotion made here. This job does.
+  assert.match(verify, /needs: promote/);
+  assert.match(verify, /permissions: \{\}/, 'the verification holds no permission');
+  assert.match(verify, /timeout-minutes: 35/);
+  assert.match(verify, /https:\/\/core\.mccluster\.org\/health/);
+  assert.match(verify, /deployment_sha/);
+  assert.match(verify, /deadline=\$\(\(SECONDS \+ 1800\)\)/);
+  assert.match(verify, /while \(\( SECONDS < deadline \)\)/);
+  assert.match(verify, /--max-time 15/);
+  assert.doesNotMatch(verify, /secrets\.|github\.token|OVH_SSH_KEY|ssh |rsync |uses: |git push/);
+  // A rollback must never wait behind the previous promotion's verification.
+  assert.doesNotMatch(workflow.slice(0, workflow.indexOf('\njobs:')), /concurrency:/);
+  assert.match(promote, /\n    concurrency:\n      group: promote-ovh-production\n      cancel-in-progress: false\n/);
+  assert.doesNotMatch(verify, /concurrency:/);
+});
