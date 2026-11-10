@@ -40,7 +40,20 @@ is deployed, or a live paid generation was performed. The new recovery sweep and
 Arcade cloud flag remain disabled. Other pending migrations and owner decisions
 are unchanged. OVH requires its separate deployment path to consume ledger 364.
 
-The reset manifest must be regenerated from the hosted disposable Supabase reset
-artifact before this release merges. Existing production-versus-reset drift is
-tracked separately; a successful ledger reconciliation is not a claim that all
-historical schema differences are repaired.
+The reset manifest was regenerated from the hosted disposable Supabase reset
+for commit `0536995a2ffcc44ecbbb65340029f362b43c50d4`, run
+[42911624272](https://github.com/mcclusterishere/mccluster/actions/runs/42911624272),
+artifact `13807137575` (`reset-schema`). Archive SHA-256:
+`29b25155d0c0c362176dc959553c4342cc2f8534c06378cfe8c9ab55d9c12291`.
+The complete reset succeeded; its expected comparison failure identified only
+the two changed media tables and six added functions. The generated manifest
+was copied unchanged. Production's before/after snapshot has exactly those same
+changes, plus the new ledger row. All other sections are unchanged. The six
+applied names are now present in both production and reset evidence, so their
+temporary allowlist entries have been removed.
+
+Targeted Worker media recovery, claims and provider-submit tests passed 116/116.
+The full native PostgreSQL proof also passed again from the promoted migration
+path. Existing production-versus-reset drift is tracked separately; a successful
+ledger reconciliation is not a claim that all historical schema differences
+are repaired.

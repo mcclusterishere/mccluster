@@ -737,56 +737,7 @@
       ]
     }
   },
-  "applied_awaiting_evidence": {
-    "media_bind_operation_v2": {
-      "kind": "function",
-      "migration": "20261110220135_media_operation_claims_v2.sql",
-      "receipt": "docs/control-plane/evidence/releases-2026-11-10/CLAIMS-V2-APPLIED-VERIFICATION.md",
-      "callers": [
-        "workers/mccluster/src/media/router.js"
-      ]
-    },
-    "media_claim_operation_v2": {
-      "kind": "function",
-      "migration": "20261110220135_media_operation_claims_v2.sql",
-      "receipt": "docs/control-plane/evidence/releases-2026-11-10/CLAIMS-V2-APPLIED-VERIFICATION.md",
-      "callers": [
-        "workers/mccluster/src/media/router.js"
-      ]
-    },
-    "media_fail_operation_v2": {
-      "kind": "function",
-      "migration": "20261110220135_media_operation_claims_v2.sql",
-      "receipt": "docs/control-plane/evidence/releases-2026-11-10/CLAIMS-V2-APPLIED-VERIFICATION.md",
-      "callers": [
-        "workers/mccluster/src/media/router.js"
-      ]
-    },
-    "media_operation_recovery_candidates_v1": {
-      "kind": "function",
-      "migration": "20261110220135_media_operation_claims_v2.sql",
-      "receipt": "docs/control-plane/evidence/releases-2026-11-10/CLAIMS-V2-APPLIED-VERIFICATION.md",
-      "callers": [
-        "workers/mccluster/src/media/recovery.js"
-      ]
-    },
-    "media_release_cost_reservation_v2": {
-      "kind": "function",
-      "migration": "20261110220135_media_operation_claims_v2.sql",
-      "receipt": "docs/control-plane/evidence/releases-2026-11-10/CLAIMS-V2-APPLIED-VERIFICATION.md",
-      "callers": [
-        "workers/mccluster/src/media/router.js"
-      ]
-    },
-    "media_resolve_operation_job_v1": {
-      "kind": "function",
-      "migration": "20261110220135_media_operation_claims_v2.sql",
-      "receipt": "docs/control-plane/evidence/releases-2026-11-10/CLAIMS-V2-APPLIED-VERIFICATION.md",
-      "callers": [
-        "workers/mccluster/src/media/recovery.js"
-      ]
-    }
-  },
+  "applied_awaiting_evidence": {},
   "missing_everywhere": {
     "crm_contacts": {
       "kind": "table",

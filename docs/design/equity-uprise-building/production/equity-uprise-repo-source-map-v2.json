@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 701,
+  "candidate_count": 702,
   "capability_source_count": 104,
-  "support_only_count": 597,
+  "support_only_count": 598,
   "entries": [
     {
       "path": ".cursorrules",
@@ -1465,6 +1465,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Read-only production schema snapshot taken after media_operation_claims_v1 was applied on 2026-11-09 (catalog metadata and hashes) that includes eu_* objects among all others. Evidence only; no building capability, program or geometry."
+    },
+    {
+      "path": "docs/control-plane/evidence/production-schema-snapshot-2026-11-10.json",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Read-only production schema snapshot after media_operation_claims_v2 was applied on 2026-11-10 (catalog metadata and hashes), including eu_* objects. Evidence only; no building capability, program or geometry."
     },
     {
       "path": "docs/control-plane/registry.json",
