@@ -14,7 +14,9 @@ try {
   await page.goto('https://fixture.invalid/music-creator.html?handle=alice');
   await page.evaluate(mode=>{
    window.token='A';window.pending=[];window.MCC={session:()=>token?{access_token:token}:null};
-   window.MCC_BAR={pageProfile:p=>window.brand=p};
+   // Observe the established artist event, not the customer page-logo hook.
+   window.artistPerspectives=[];
+   window.addEventListener('mcc:perspective',event=>artistPerspectives.push(event.detail));
    window.fetch=async(url,init)=>{
     if(url.includes('current_m_uid')){
      const mine=init.headers.authorization==='Bearer A'?'owner-a':'owner-b';
@@ -26,7 +28,8 @@ try {
    };
   },mode);
   await page.addScriptTag({content:helper});await page.addScriptTag({content:source});
-  await page.waitForFunction(()=>window.brand?.name==='Alice');
+  await page.waitForFunction(()=>window.artistPerspectives?.at(-1)?.handle==='alice'&&document.getElementById('creatorArtist')?.textContent==='Alice');
+  assert.deepEqual(await page.evaluate(()=>artistPerspectives),[{kind:'artist',handle:'alice',name:'Alice',avatar:''}]);
   if(mode==='visible-owner'||mode==='late-checkout')await page.waitForSelector('#apOwnerEdit');
   if(mode==='late-checkout'){
    await page.evaluate(()=>{const b=document.createElement('button');b.id='fixtureCheckout';b.dataset.offer='fixture';b.dataset.checkout='1';b.textContent='Buy';document.body.append(b);b.click();});
@@ -36,7 +39,8 @@ try {
   await page.waitForTimeout(50);
   assert.equal(await page.locator('#apOwnerEdit,#apOwnerFront').count(),0,mode);
   assert.equal(new URL(page.url()).hostname,'fixture.invalid',mode);
-  assert.equal(await page.evaluate(()=>brand.name),'Alice','public branding stays with viewed artist');
+  assert.equal(await page.locator('#creatorArtist').textContent(),'Alice','public artist stays visible across account changes');
+  assert.deepEqual(await page.evaluate(()=>artistPerspectives),[{kind:'artist',handle:'alice',name:'Alice',avatar:''}],'account changes must not publish a different artist perspective');
   if(mode==='late-checkout')assert.equal(await page.locator('#fixtureCheckout').isDisabled(),false);
   console.log('PASS '+mode);await page.close();
  }
