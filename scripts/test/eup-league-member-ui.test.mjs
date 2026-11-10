@@ -243,7 +243,16 @@ function devices({ deny = false, recorder = true } = {}) {
 
 /* mount the module on a fresh container, signed in as `as` (null: no session); earlier mounts are destroyed first */
 const mounted = [];
-function setup({ as = TESTER, handlers = {}, capture = devices(), deadlineMs = 15000, token, currentIdentity } = {}) {
+/* the grant PUT: answers 200 after one progress event, and remembers what it was given */
+class FakeXHR {
+  constructor() { this.upload = {}; this.headers = {}; FakeXHR.sent.push(this); }
+  open(method, url) { this.method = method; this.url = url; }
+  setRequestHeader(k, v) { this.headers[k] = v; }
+  send(body) { this.body = body; Promise.resolve().then(() => { this.upload.onprogress?.({ lengthComputable: true, loaded: body.size, total: body.size }); this.status = 200; this.onload?.(); }); }
+  abort() { this.onabort?.(); }
+}
+FakeXHR.sent = [];
+function setup({ as = TESTER, handlers = {}, capture = devices(), deadlineMs = 15000, token, currentIdentity, xhr = FakeXHR } = {}) {
   while (mounted.length) mounted.pop().destroy();
   freshDocument();
   const c = clock();
@@ -255,7 +264,7 @@ function setup({ as = TESTER, handlers = {}, capture = devices(), deadlineMs = 1
     fetch: srv.fetch, api: 'https://api.mccluster.org', deadlineMs,
     token: token || (() => Promise.resolve(session.who ? tokenFor(session.who) : null)),
     currentIdentity: currentIdentity || (() => session.who),
-    setTimeout: c.setTimeout, clearTimeout: c.clearTimeout, now: c.now,
+    setTimeout: c.setTimeout, clearTimeout: c.clearTimeout, now: c.now, XMLHttpRequest: xhr,
     captureEnv: { ...capture.env, setTimeout: c.setTimeout, clearTimeout: c.clearTimeout, setInterval: c.setInterval, clearInterval: c.clearInterval, now: c.now },
     window
   });
@@ -488,6 +497,48 @@ test('a lost connection after the commit: unknown, then the receipt says recorde
   await settle();
   assert.equal(s.srv.posts().length, 1);
   assert.match(s.text(), /it was recorded \(its key was found .*\)\. It was not resent\./);
+});
+
+test('a lost upload begin: the receipt shows it started, and the tap that sends it again continues it to the seal', async () => {
+  FakeXHR.sent.length = 0;
+  let lose = true;
+  const staged = sealed({ state: 'staged', bytes: null, sha256: null, sealed_at: null, declared_bytes: 8 });
+  const s = setup({ handlers: {
+    'GET ': ok({ league: me({ assignments: [assignment()] }) }),
+    [`POST assignments/${IDS.assignment}/uploads`]: () => (lose ? (lose = false, 'network') : ok({ upload: staged, grant: { method: 'PUT', url: 'https://storage.invalid/upload/sign/x?token=unit', headers: { 'content-type': 'audio/webm', 'x-upsert': 'false' }, expires_in: 7200 } })),
+    [`POST uploads/${IDS.upload}/complete`]: ok({ upload: sealed({ declared_bytes: 8, bytes: 8 }) }),
+    'GET *': (c) => ok({ receipt: { surface: 'member', operation: 'uploads.begin', idempotency_key: c.path.split('/').pop(), result: staged, created_at: AT } })
+  } });
+  await settle();
+  click(s, `record:audio:${IDS.assignment}`); await settle();
+  await s.clock.advance(1500);
+  click(s, `stop:${IDS.assignment}`); await settle();
+  click(s, `use-take:${IDS.assignment}`); await settle();
+  assert.match(s.text(), /The upload was started \(its key was found\), but its answer was lost, so the file was not sent\./);
+  assert.equal(FakeXHR.sent.length, 0, 'no bytes were sent without a grant');
+  const first = s.srv.posts().filter((c) => c.path.endsWith('/uploads'));
+  assert.equal(first.length, 1, 'not resent on its own');
+  click(s, `resend:upload:${IDS.assignment}`); await settle();
+  const begins = s.srv.posts().filter((c) => c.path.endsWith('/uploads'));
+  assert.equal(begins.length, 2);
+  assert.deepEqual(begins[1].body, begins[0].body, 'the same key and body');
+  assert.equal(FakeXHR.sent.length, 1, 'the bytes went to the fresh grant');
+  assert.deepEqual([FakeXHR.sent[0].method, FakeXHR.sent[0].headers['content-type'], FakeXHR.sent[0].body.size], ['PUT', 'audio/webm', 8]);
+  assert.ok(s.srv.posts().some((c) => c.path === `uploads/${IDS.upload}/complete`));
+  assert.match(s.text(), /Sealed\. Fingerprint \(SHA-256\): a{64}/);
+});
+
+test('a first read whose session changes while it travels is read again for the new account, not shown', async () => {
+  const state = { who: TESTER };
+  const s = setup({
+    handlers: { 'GET ': (c) => { const mine = c.init.headers.authorization === `Bearer ${tokenFor(TESTER)}`; if (mine) state.who = TESTER_B; return mine ? ok({ league: me() }) : refuse(404, 'not_available'); } },
+    token: () => Promise.resolve(tokenFor(state.who)), currentIdentity: () => state.who
+  });
+  await settle();
+  await s.clock.advance(1);
+  assert.doesNotMatch(s.text(), /Test fixture campaign|Write a song/);
+  assert.equal(el(s, '[data-eul-unavailable]')?.getAttribute('data-eul-unavailable'), 'not_available', 'the new account was read');
+  assert.deepEqual(s.srv.calls.map((c) => c.init.headers.authorization), [`Bearer ${tokenFor(TESTER)}`, `Bearer ${tokenFor(TESTER_B)}`]);
 });
 
 test('refusals are settled and said in words: entitlement never mentions paying; draining keeps reduce-only actions', async () => {
