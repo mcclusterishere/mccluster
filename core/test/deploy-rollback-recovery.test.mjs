@@ -30,6 +30,7 @@ const SERVICES = [
 ];
 const PREVIEW = 'http://127.0.0.1:4799/health';
 const ADAPTER = 'http://127.0.0.1:4790/health';
+const READY = 'http://127.0.0.1:4790/ready';
 
 function rollbackSource() {
   const start = deploy.indexOf('rollback() {');
@@ -59,14 +60,29 @@ case "$cmd" in
   *) exit 0 ;;
 esac
 `;
+// A URL listed in "down" refuses the connection. Any other URL answers the HTTP
+// status listed for it in "http-status" (200 when it is not listed). As curl
+// does: --fail turns a status of 400 or more into exit 22, and --write-out
+// '%{http_code}' prints the status (000 when there was no response).
 const FAKE_CURL = `#!/usr/bin/env bash
 echo "curl $*" >> "$FAKE_STATE/calls.log"
 url="\${!#}"
-if grep -Fxq "$url" "$FAKE_STATE/down" 2>/dev/null; then echo "curl: (7) Failed to connect to $url" >&2; exit 7; fi
+fail=0; status_only=0
+for arg in "$@"; do
+  case "$arg" in --fail) fail=1 ;; --write-out) status_only=1 ;; esac
+done
+if grep -Fxq "$url" "$FAKE_STATE/down" 2>/dev/null; then
+  (( status_only )) && printf '000'
+  echo "curl: (7) Failed to connect to $url" >&2; exit 7
+fi
+code="$(awk -v url="$url" '$1 == url { print $2 }' "$FAKE_STATE/http-status" 2>/dev/null)"
+code="\${code:-200}"
+(( status_only )) && printf '%s' "$code"
+if (( fail && code >= 400 )); then echo "curl: (22) The requested URL returned error: $code" >&2; exit 22; fi
 exit 0
 `;
 
-function sandbox({ installed = SERVICES, down = [], failStart = [], crash = [], previous = true } = {}) {
+function sandbox({ installed = SERVICES, down = [], failStart = [], crash = [], previous = true, httpStatus = {} } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'mcc-rollback-'));
   const state = join(root, 'state');
   const bin = join(root, 'bin');
@@ -82,6 +98,7 @@ function sandbox({ installed = SERVICES, down = [], failStart = [], crash = [], 
   }
   writeFileSync(join(state, 'calls.log'), '');
   writeFileSync(join(state, 'down'), down.join('\n') + (down.length ? '\n' : ''));
+  writeFileSync(join(state, 'http-status'), Object.entries(httpStatus).map(([url, code]) => `${url} ${code}\n`).join(''));
   for (const unit of installed) writeFileSync(join(state, 'installed', unit), '');
   for (const unit of failStart) writeFileSync(join(state, 'fail-start', unit), '');
   for (const unit of crash) writeFileSync(join(state, 'crash-after-start', unit), '');
@@ -178,6 +195,56 @@ test('rollback fails loudly when the restored release does not answer its health
   assert.equal(readFileSync(join(box.core, 'runner.mjs'), 'utf8'), 'previous good release\n');
 });
 
+// The adapter gained /ready after the release OVH runs today. The adapters at
+// 9c5b7503 and on main answer /health and 404 for every other path. Rolling
+// back onto one of them used to end "ROLLBACK FAILED ... NOT healthy" (exit 3)
+// with the previous release restored and serving, and the reconciler then
+// retried the whole deploy, drain included, every two minutes.
+test('rollback onto a release whose adapter predates /ready is a recovered rollback', (t) => {
+  const box = sandbox({ httpStatus: { [READY]: 404 } });
+  t.after(() => rmSync(box.root, { recursive: true, force: true }));
+  const out = runRollback(box, { failRc: 7 });
+  assert.equal(out.status, 7, 'the deploy failure rc, not MCC_ROLLBACK_UNHEALTHY_RC');
+  assert.match(out.stderr, /resident AI adapter has no \/ready route \(HTTP 404: the restored release predates it\); liveness on http:\/\/127\.0\.0\.1:4790\/health accepted/);
+  assert.match(out.stderr, /rollback: restored release restarted and verified healthy/);
+  assert.match(out.stderr, /deploy failed \(rc=7\); previous release restored from .* and healthy/);
+  assert.doesNotMatch(out.stderr, /ROLLBACK FAILED|is not ready|restored release is unhealthy/);
+  assert.equal(readFileSync(join(box.core, 'runner.mjs'), 'utf8'), 'previous good release\n');
+  // Liveness is still required first, readiness is still asked for, and only then is the status read once.
+  const health = out.calls.lastIndexOf(`--max-time 5 ${ADAPTER}`);
+  const ready = out.calls.lastIndexOf(`curl --fail --silent --show-error --retry 0 --retry-connrefused --retry-delay 1 --max-time 5 ${READY}`);
+  const status = out.calls.indexOf(`curl --silent --output /dev/null --write-out %{http_code} --max-time 5 ${READY}`);
+  assert.ok(health >= 0 && ready > health && status > ready, 'health, then ready, then the one status read');
+  assert.equal(out.calls.split('--write-out').length - 1, 1);
+  for (const unit of ['mccluster-core-runner.service', 'mccluster-compute-node.service']) {
+    assert.match(out.calls, new RegExp(`systemctl start ${unit.replace(/\./g, '\\.')}`), `${unit} resumed`);
+  }
+});
+
+test('a restored adapter that has /ready and is not ready, or cannot be asked, still fails the rollback', (t) => {
+  for (const [name, options] of [
+    ['503 not ready', { httpStatus: { [READY]: 503 } }],
+    ['500', { httpStatus: { [READY]: 500 } }],
+    ['403', { httpStatus: { [READY]: 403 } }],
+    ['connection refused', { down: [READY] }],
+  ]) {
+    const box = sandbox(options);
+    t.after(() => rmSync(box.root, { recursive: true, force: true }));
+    const out = runRollback(box, { failRc: 7 });
+    assert.equal(out.status, 3, `${name}: unhealthy restored release must exit MCC_ROLLBACK_UNHEALTHY_RC`);
+    assert.match(out.stderr, /resident AI adapter http:\/\/127\.0\.0\.1:4790\/ready is not ready/, name);
+    assert.match(out.stderr, /ROLLBACK FAILED: the restored release is NOT healthy/, name);
+    assert.match(out.stderr, /restored release is unhealthy/, name);
+    assert.doesNotMatch(out.stderr, /no \/ready route|verified healthy/, name);
+  }
+  // A missing /health is never excused: 404 there means the adapter is not the adapter.
+  const box = sandbox({ httpStatus: { [ADAPTER]: 404, [READY]: 404 } });
+  t.after(() => rmSync(box.root, { recursive: true, force: true }));
+  const out = runRollback(box);
+  assert.equal(out.status, 3);
+  assert.match(out.stderr, /resident AI adapter http:\/\/127\.0\.0\.1:4790\/health did not answer/);
+});
+
 test('rollback fails loudly when a restored unit will not start', (t) => {
   const box = sandbox({ failStart: ['mccluster-core-runner.service'] });
   t.after(() => rmSync(box.root, { recursive: true, force: true }));
@@ -262,4 +329,31 @@ test('the forward deploy gate uses the same shared probe in strict mode', (t) =>
   });
   assert.notEqual(run('strict').status, 0);
   assert.equal(run('installed').status, 0);
+});
+
+test('the forward deploy gate still requires /ready: a 404 there is a release that must not be stamped', (t) => {
+  const box = sandbox({ httpStatus: { [READY]: 404 } });
+  t.after(() => rmSync(box.root, { recursive: true, force: true }));
+  for (const unit of SERVICES) writeFileSync(join(box.state, 'active', unit), '');
+  const run = (mode) => {
+    writeFileSync(join(box.state, 'calls.log'), '');
+    const result = spawnSync('bash', ['-c', `set -Eeuo pipefail; MCC_HEALTH_RETRIES=0; source ${JSON.stringify(healthLib)}; mcc_verify_core_health ${mode}`], {
+      encoding: 'utf8',
+      env: { ...process.env, PATH: `${box.bin}:${process.env.PATH}`, FAKE_STATE: box.state },
+    });
+    return { ...result, calls: readFileSync(join(box.state, 'calls.log'), 'utf8') };
+  };
+  const strict = run('strict');
+  assert.notEqual(strict.status, 0);
+  assert.match(strict.stderr, /resident AI adapter http:\/\/127\.0\.0\.1:4790\/ready is not ready/);
+  assert.doesNotMatch(strict.stderr, /no \/ready route/);
+  assert.doesNotMatch(strict.calls, /--write-out/, 'strict mode does not even ask whether the route exists');
+  const installed = run('installed');
+  assert.equal(installed.status, 0, installed.stderr);
+  assert.match(installed.stderr, /no \/ready route/);
+  // With no argument the gate is strict.
+  assert.notEqual(run('').status, 0);
+  const health = readFileSync(healthLib, 'utf8');
+  assert.match(health, /if \[\[ "\$\{mode\}" != strict \]\] && mcc_route_absent "\$\{MCC_ADAPTER_READY_URL\}"; then/);
+  assert.match(health, /\[\[ "\$\{code\}" == 404 \]\]/);
 });
