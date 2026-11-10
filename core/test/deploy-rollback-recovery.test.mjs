@@ -357,3 +357,70 @@ test('the forward deploy gate still requires /ready: a 404 there is a release th
   assert.match(health, /if \[\[ "\$\{mode\}" != strict \]\] && mcc_route_absent "\$\{MCC_ADAPTER_READY_URL\}"; then/);
   assert.match(health, /\[\[ "\$\{code\}" == 404 \]\]/);
 });
+
+/* Close-out (2026-11-10), audit finding C6: the forward deploy probes /ready BEFORE it resumes the producers,
+   so a release whose adapter has no usable model never hands a job to the runner or the compute node. That
+   order was guarded only by a regex over the script text. These run the REAL lines of deploy-ovh-core.sh,
+   from the adapter /health probe through `mcc_verify_core_health strict`, with the fake systemctl and curl. */
+const PRODUCERS = ['mccluster-core-runner.service', 'mccluster-compute-node.service'];
+
+function forwardGateSource() {
+  const first = '\nmcc_probe "${MCC_ADAPTER_HEALTH_URL}"\n';
+  const last = '\nmcc_verify_core_health strict\n';
+  const start = deploy.indexOf(first);
+  const end = deploy.indexOf(last, start);
+  assert.ok(start >= 0 && end > start, 'forward health gate not found in deploy-ovh-core.sh');
+  const source = deploy.slice(start + 1, end + last.length);
+  assert.match(source, /\nmcc_resume_producers\n/, 'the gate resumes the producers');
+  return source;
+}
+
+function runForwardGate(box) {
+  // Both producers were drained before the live install changed; the rest of Core is up.
+  for (const unit of SERVICES.filter((unit) => !PRODUCERS.includes(unit))) writeFileSync(join(box.state, 'active', unit), '');
+  const script = `
+set -Eeuo pipefail
+MCC_HEALTH_RETRIES=0
+source ${JSON.stringify(healthLib)}
+LIVE_TOUCHED=1
+MCC_RUNNER_WAS_ACTIVE=1
+MCC_NODE_WAS_ACTIVE=1
+${forwardGateSource()}
+echo "forward gate passed"
+`;
+  const result = spawnSync('bash', ['-c', script], {
+    encoding: 'utf8',
+    env: { ...process.env, PATH: `${box.bin}:${process.env.PATH}`, FAKE_STATE: box.state },
+  });
+  return { ...result, calls: readFileSync(join(box.state, 'calls.log'), 'utf8') };
+}
+
+test('C6: the forward deploy resumes neither producer when /ready fails after /health passes', (t) => {
+  for (const [name, options] of [
+    ['503 not ready', { httpStatus: { [READY]: 503 } }],
+    ['404 no route', { httpStatus: { [READY]: 404 } }],
+    ['connection refused', { down: [READY] }],
+  ]) {
+    const box = sandbox(options);
+    t.after(() => rmSync(box.root, { recursive: true, force: true }));
+    const out = runForwardGate(box);
+    assert.notEqual(out.status, 0, `${name}: the deploy must fail (and the ERR trap roll back)`);
+    assert.doesNotMatch(out.stdout, /forward gate passed/, name);
+    const health = out.calls.indexOf(`--max-time 5 ${ADAPTER}`);
+    const ready = out.calls.indexOf(`--max-time 5 ${READY}`);
+    assert.ok(health >= 0 && ready > health, `${name}: liveness, then readiness`);
+    for (const unit of PRODUCERS) {
+      assert.doesNotMatch(out.calls, new RegExp(`systemctl (?:reset-failed|start)\\b[^\\n]* ${unit.replace(/\./g, '\\.')}`), `${name}: ${unit} must not be resumed`);
+    }
+  }
+  // Control: the same lines against a ready adapter resume both producers, after /ready, and pass strict.
+  const box = sandbox();
+  t.after(() => rmSync(box.root, { recursive: true, force: true }));
+  const out = runForwardGate(box);
+  assert.equal(out.status, 0, out.stderr);
+  assert.match(out.stdout, /forward gate passed/);
+  const ready = out.calls.indexOf(`--max-time 5 ${READY}`);
+  for (const unit of PRODUCERS) {
+    assert.ok(out.calls.indexOf(`systemctl start ${unit}`) > ready, `${unit} resumed only after /ready answered`);
+  }
+});

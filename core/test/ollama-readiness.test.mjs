@@ -117,3 +117,39 @@ test('the shared deploy gate probes /ready after /health and the forward deploy 
   assert.match(health, /mcc_probe "\$\{MCC_ADAPTER_HEALTH_URL\}"[\s\S]*elif ! mcc_probe "\$\{MCC_ADAPTER_READY_URL\}"/);
   assert.match(deploy, /mcc_probe "\$\{MCC_ADAPTER_READY_URL\}"\nmcc_resume_producers/);
 });
+
+// Close-out (2026-11-10): "installed with a digest" was claimed but only "installed" was tested.
+test('C6: a default model listed without a digest is live but NOT ready', { timeout: 15000 }, async t => {
+  let chatCalls = 0;
+  const { get } = await withAdapter(t, async (req, res) => {
+    for await (const _ of req) { /* drain */ }
+    if (req.url === '/api/tags') return json(res, { models: [{ name: 'qwen3:8b', size: 1 }] });
+    if (req.url === '/api/chat') { chatCalls += 1; return json(res, { message: { role: 'assistant', content: 'ok' } }); }
+    return json(res, {});
+  }, { MCCLUSTER_OLLAMA_READY_PROBE: 'true' });
+  const ready = await get('/ready');
+  assert.equal(ready.status, 503, 'a model entry with no digest is not an installed, pinned model');
+  assert.deepEqual([ready.body.ok, ready.body.daemon_reachable, ready.body.model_installed, ready.body.digest], [false, true, false, null]);
+  assert.match(ready.body.error, /no digest/);
+  assert.equal(chatCalls, 0, 'no inference probe for a model that is not ready');
+  const health = await get('/health');
+  assert.equal(health.status, 200, 'liveness: the daemon answers');
+  assert.equal(health.body.ready, false);
+  assert.equal(health.body.model_installed, false);
+});
+
+test('C6: the inference probe is bounded by its time limit, so a hanging daemon is not ready', { timeout: 15000 }, async t => {
+  let chatCalls = 0;
+  const { port } = await withAdapter(t, async (req, res) => {
+    for await (const _ of req) { /* drain */ }
+    if (req.url === '/api/tags') return json(res, { models: [{ name: 'qwen3:8b', digest: 'sha256:abc' }] });
+    if (req.url === '/api/chat') { chatCalls += 1; return; /* never answers */ }
+    return json(res, {});
+  }, { MCCLUSTER_OLLAMA_READY_PROBE: 'true', MCCLUSTER_OLLAMA_READY_PROBE_TIMEOUT_MS: '300' });
+  // Far longer than the 300 ms probe limit; without the limit /ready never answers and this aborts.
+  const response = await fetch(`http://127.0.0.1:${port}/ready`, { signal: AbortSignal.timeout(8000) });
+  const body = await response.json();
+  assert.equal(response.status, 503);
+  assert.deepEqual([body.ok, body.model_installed, body.inference_probe], [false, true, 'failed']);
+  assert.equal(chatCalls, 1);
+});
