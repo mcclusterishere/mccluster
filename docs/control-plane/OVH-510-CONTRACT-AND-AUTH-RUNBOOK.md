@@ -29,7 +29,7 @@ Two separate things.
 | `deployment.reconcile` in `host_health`, the kept REST error, warnings for a failed or stale cycle | `core/src/reconciler-source-receipt.mjs`, `core/src/executors/host-health-collect.mjs`, `core/src/health-verification.mjs` | Promotion |
 | `activate` proves identity and read-only before switching; read-only `status` mode | `scripts/ovh-private-repo-ssh.sh` | Promotion (the host runs the script from its promoted checkout) |
 | Rollback accepts liveness from an adapter without `/ready` | `scripts/ovh-core-health.sh` | Not part of this promotion. It belongs to this branch's Core and matters when that Core is first promoted |
-| Promotion names the previous head and verifies the runtime | `.github/workflows/promote-ovh-production.yml` | When it is on `main`. It is not something the host runs |
+| Promotion names the previous head and watches the public serving SHA. A green run is not acceptance: step 5 is | `.github/workflows/promote-ovh-production.yml` | When it is on `main`. It is not something the host runs |
 
 ## Step 1. Freeze the production schema and confirm the live attestation
 
@@ -195,8 +195,9 @@ Actions, **Promote OVH Production Ref**, Run workflow on `main`:
 
 The workflow refuses unless the target is contained in `main`, the current ref is an ancestor of it, Core check and tests pass at the target, and the ten checks are green on that exact SHA.
 
-- If the workflow on `main` has the `verify` job, the run itself waits up to 30 minutes for `https://core.mccluster.org/health` to serve the target and goes red if it does not.
-- If it does not, the push starts no verification at all (GitHub starts no workflow from a `GITHUB_TOKEN` push). Do step 5 by hand.
+- If the workflow on `main` has the `observe` job, the run waits up to 30 minutes for `https://core.mccluster.org/health` to serve the target, then requires it to keep serving the target for 20 minutes. It goes red if the target is never served, or if any other commit is served after it.
+- **A green run is not acceptance.** The deployer writes the target's manifest and restarts the broker before its own health gate, so `/health` serves the target even for a release that then fails the gate. The 20-minute hold is longer than the deployer's bounded waits in one failing attempt (the gate's probes, a producer drain of up to 660 seconds, the Ollama wait), so a release that is rolled back turns the run red. But a rollback whose producer drain times out is deferred and leaves the failed release live, serving the target, and no poll of `/health` can tell that from a success. Step 5 is acceptance: `deployed_sha` equal to the serving SHA, and `runtime_verification` = `verified`.
+- If the workflow on `main` has no `observe` job, the push starts no observation at all (GitHub starts no workflow from a `GITHUB_TOKEN` push). Step 5 is the same either way.
 
 **To go back:** a second run with `sha` = `9c5b75032d1794c47d8b6db05acf16e3965faa74`, `allow_rollback` = true, and `expected_current` = the SHA being replaced. Do not move the ref by hand. Do not use `DEPLOY_OVH` unless the reconciler itself cannot run: that is the documented break-glass path under the `ovh-production` environment.
 
