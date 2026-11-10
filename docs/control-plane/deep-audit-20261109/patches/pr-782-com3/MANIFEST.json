@@ -1,0 +1,180 @@
+{
+  "lane": "com3",
+  "finding_ids": [
+    "COM-3"
+  ],
+  "pr": 782,
+  "base_sha": "53dcd55243e6d847b4ced44817bb22d11bdcce18",
+  "local_head_sha": "42479d958e587043312701dc666c446e5ba6bc30",
+  "source_tree": "0c4e32c8a2b5d2b6214d7fd88a7e4076b91d4d3c",
+  "prepared_branch": "recovery/com3-20261110",
+  "recommended_pr_base": "codex/customer-current-release-20261107",
+  "status": "source prepared and independently verified; hosted browser and combined-stack release acceptance pending",
+  "patches": [
+    {
+      "file": "0001-fix-billing-persist-and-safely-reconcile-checkout-at.patch",
+      "sha256": "aaca3843b24b3b9d61f0c3e66c3856cd7cacbd0f1f5ba1156144982a309a5e51"
+    },
+    {
+      "file": "0002-feat-billing-expose-buyer-recovery-and-audited-owner.patch",
+      "sha256": "e6a0b94573a8934a2ae41cac0439c4f2e95cbf2fa723ce39309e57bdfced2571"
+    }
+  ],
+  "files_changed": [
+    ".github/workflows/customer-selfservice-ci.yml",
+    "customer-commerce.html",
+    "docs/control-plane/CREATOR-CHECKOUT-RECOVERY.md",
+    "js/customer-commerce.js",
+    "scripts/test/creator-checkout-native-db.mjs",
+    "scripts/test/creator-checkout-recovery.test.mjs",
+    "scripts/test/creator-checkout-reservation-db.mjs",
+    "scripts/test/customer-billing.test.mjs",
+    "scripts/test/customer-checkout-recovery-browser.mjs",
+    "scripts/test/support/creator-checkout-fixture.mjs",
+    "supabase/pending/20261026009200_creator_checkout_reservations.rollback.sql",
+    "supabase/pending/20261026009200_creator_checkout_reservations.sql",
+    "supabase/pending/live-callers.json",
+    "workers/mccluster/src/creator-billing.js",
+    "workers/mccluster/src/creator-checkout-recovery.js",
+    "workers/mccluster/src/whip/stripe.js"
+  ],
+  "source_sha256": {
+    ".github/workflows/customer-selfservice-ci.yml": "c77c5c7bd3f2b090f14bc22610383e3d95633d0be102a22f15a9dad9acfeaef3",
+    "customer-commerce.html": "e08428e76c20ebe74e5876be45a5f792bff10299f47ceda90887d5b494be6a98",
+    "docs/control-plane/CREATOR-CHECKOUT-RECOVERY.md": "dacdf660b62221d3daf4f52bc464af2d31f9b5971bac021948e317c5bc9ff029",
+    "js/customer-commerce.js": "d5ecb723add92c71faf5c4bce3ad326480ce513b295463ac4fb8eae5963347a0",
+    "scripts/test/creator-checkout-native-db.mjs": "9a5b07347a15eede26f5aef5bd30d53ed3125798a1b808be88349e66d4b4c4d8",
+    "scripts/test/creator-checkout-recovery.test.mjs": "efa8da4c70aa62312062a3424fcdf29c0ca5218af7e6eebb37e1c98d04115c15",
+    "scripts/test/creator-checkout-reservation-db.mjs": "a571a82b284891fe8bd0b937b09b7466056d74fa1a07d434f11b6f476e4efa13",
+    "scripts/test/customer-billing.test.mjs": "e5cc88096e2b6b7c0e84efdef355aae1f7628b2e57f87bee4c1f611f544b4eee",
+    "scripts/test/customer-checkout-recovery-browser.mjs": "76d74e9a90957586c43cf0f1e5142eec559aa0f872ca778417cb072526522c72",
+    "scripts/test/support/creator-checkout-fixture.mjs": "dcf5340fbdacd256525f5dd63709753ebdc2e681a42fb363ca71aaba6dd6b9bd",
+    "supabase/pending/20261026009200_creator_checkout_reservations.rollback.sql": "48a8d26836015f64354b985bca8167cb23ae2d33798b3e1ea6e6f6ef0442a6db",
+    "supabase/pending/20261026009200_creator_checkout_reservations.sql": "15aad9fb8d6688ee0a54592d43da898533ed7adb976e865c2ce951f893296b7e",
+    "supabase/pending/live-callers.json": "f4faf2e71f059a0720ad02bdf7bf7dc92502b90971543198c34f50db83a7ab4f",
+    "workers/mccluster/src/creator-billing.js": "98499b4af0a439e41d0ee83704bb5e443efd77acedf45be43150bd6166b7d71d",
+    "workers/mccluster/src/creator-checkout-recovery.js": "d3857e43d7fa2c10c16ebf7118dc169f0687d1fc6f2a4c52265fd5b9ab0d4385",
+    "workers/mccluster/src/whip/stripe.js": "3d11804f28d9965e407a65d4556bfca485c3e76cc748bdf678f0e566955dce0a"
+  },
+  "tests": [
+    {
+      "command": "PG_BIN=<PG17> PG_MODULE=<pg> node evidence/base-reproduction.mjs <exact base worktree>",
+      "result": "Original handler plus original pending SQL on native PostgreSQL17.11 reproduced statuses503,409,409,409. One synthetic provider400; no session. UID1000/127.0.0.1. evidence/base-native-reproduction.log"
+    },
+    {
+      "command": "Copy new handler acceptance/fixture onto exact base; COM3_BASELINE=1 node --test scripts/test/creator-checkout-recovery.test.mjs",
+      "result": "20 cases:2 pass,18 fail. COM3_BASELINE explicitly models old3-argument reserve semantics to avoid falsely failing only because the old handler lacks p_payload. The two preserved controls pass: failed rejection persistence remains blocked, and delayed/out-of-order webhook/replay keeps one subscription. evidence/fail-before.log"
+    },
+    {
+      "command": "node --test scripts/test/creator-checkout-recovery.test.mjs scripts/test/customer-billing.test.mjs",
+      "result": "21 passed,0 failed/skipped. Synthetic provider with cached immutable POST replay and separate current GET resource. evidence/handler-after.log"
+    },
+    {
+      "command": "node --test scripts/test/*.test.mjs",
+      "result": "2071 tests:2068 passed,0 failed,3 existing skips. evidence/root-suite-final.log"
+    },
+    {
+      "command": "cd workers/mccluster && npm test",
+      "result": "1547 tests:1543 passed,0 failed,4 existing skips. Offline-network preload prevents unmocked real fetch. evidence/worker-suite-final.log"
+    },
+    {
+      "command": "python3 -m unittest discover -s scripts/test -p 'test_*.py'",
+      "result": "7 passed. evidence/python-suite.log"
+    },
+    {
+      "command": "ALLOW_LOCAL_CREATOR_DB_TESTS=1 PG_BIN=<PG16.15 or PG17.11> PG_MODULE=<pg> node scripts/test/creator-checkout-native-db.mjs",
+      "result": "16 named checks passed on each major. Disposable UID1000/loopback servers. Real advisory-lock races, role denial, upgrade, immutable binding, rejection/uncertainty/expiry/tombstones, audited queue, late subscription, actual worker/native RPC boundary, rollback and reapply. evidence/postgresql-{16,17}.log. Independently repeated on applied final source tree in evidence/independent-apply.log"
+    },
+    {
+      "command": "PGLITE_MODULE=<module> node --test scripts/test/creator-checkout-reservation-db.mjs",
+      "result": "1 passed. Existing semantic checks retained; fixture now supplies canonical payload and preserves immutable expiry binding. evidence/pglite-legacy-regression.log"
+    },
+    {
+      "command": "Independent git am of both numbered patches on exact base then focused tests and native PostgreSQL16/17",
+      "result": "Clean apply; resulting head3854a6c62ac1fc0458dc7c58827ddd584a8df3e3 matches source tree0c4e32c8a2b5d2b6214d7fd88a7e4076b91d4d3c. Focused28/28; native16/16 per major. Clean worktree. evidence/independent-apply.log"
+    },
+    {
+      "command": "Two adversarial reviews with repairs",
+      "result": "Money/authority review repaired stale POST-session state and swallowed bound owner escalation; recovery/state review repaired paid/complete state, canonical competing-attempt reference and browser assertions. Final independent recovery review28/28. Money review snapshot predates response/UI-only final repairs; final independent application reran native and focused checks. See both review reports with hashes."
+    },
+    {
+      "command": "node --check js/customer-commerce.js; node --check scripts/test/customer-checkout-recovery-browser.mjs; git diff --check",
+      "result": "Passed. Syntax/whitespace is not browser evidence."
+    }
+  ],
+  "not_run": [
+    "Full Playwright journeys and exact390px viewport proof: shell Chromium socketEPERM after approved escalation; existing cloud browser could not reach loopback, and fileURL was denied. No bypass. See browser evidence.",
+    "Hosted GitHub Actions on a pushed recovery head were not run at package creation. Customer self-service pull_request has no base restriction and explicitly includes old/new commerce browser suites.",
+    "Live Stripe sessions, charges, provider webhook delivery or real paid activation. All provider responses synthetic.",
+    "Production SQL, migration ledger inspection, Worker/static deployment, authenticated live owner journeys, and combined current-main/#782 integration."
+  ],
+  "notes": [
+    "No timer frees an unknown attempt. Original payload/key is immutable and allowed only before23h retention cutoff. Rejected/expired identities remain tombstoned.",
+    "Unknown legacy attempts cannot reconstruct missing payload; known stored legacy sessions can GET-reconcile with owner/price checks. Emergency rollback suspends writes while retaining guards/audit.",
+    "AUDIT-STATUS-UPDATE.diff contains proposed five audit-document updates against9d296160; it is not one of the source git-am patches and has not mutated#793.",
+    "One-active-subscription guard, canonical house-owner authority and pending SQL gates remain. Applying source is not production rollout authorization.",
+    "Initial broad Worker run lacked dependencies; first npm ci failed because default cache path was unavailable. Re-running npm ci with a writable /tmp cache succeeded; final broad suite passed. No dependency lockfile changed."
+  ],
+  "evidence": [
+    {
+      "file": "evidence/base-native-reproduction.log",
+      "sha256": "d40005219a825efc86b0a78317e5cf5527ec55771b74c37560008a91d91729ec"
+    },
+    {
+      "file": "evidence/base-reproduction.mjs",
+      "sha256": "357c1bdc5637455da28cf0af6f13c87b46d9b65c726cfee129f8c64161c44d8e"
+    },
+    {
+      "file": "evidence/browser-capability-report.json",
+      "sha256": "0e2fa392bc2831755601b5e35992f35c767a7d9c01b3fecc046ba05d5abe42b8"
+    },
+    {
+      "file": "evidence/browser-launch-status.md",
+      "sha256": "360aaf79576315c5f5dd978f0ce747a48a37d069564f99759cb34ee975c38be4"
+    },
+    {
+      "file": "evidence/fail-before.log",
+      "sha256": "c4b7b5393079a3c590fec13a0c28adb6c04961402ce275fda7186ecdf5fb415d"
+    },
+    {
+      "file": "evidence/handler-after.log",
+      "sha256": "eb09857f86aa7cf2afb68adf77d946684d7bb80b454ec79837556af903763176"
+    },
+    {
+      "file": "evidence/independent-apply.log",
+      "sha256": "a1b4d80ffc5a077263729c37a551f3a8d5df2ba64200d7a146a0f313b1609515"
+    },
+    {
+      "file": "evidence/pglite-legacy-regression.log",
+      "sha256": "75edae5ef1c8f597fba723de977e984df8af6b2685ac448dbda4cbb3e849639c"
+    },
+    {
+      "file": "evidence/postgresql-16.log",
+      "sha256": "f726fcd97956904b2e569bd0ed6aa5a5a06e3199c86d29465f3f30f2c7a34864"
+    },
+    {
+      "file": "evidence/postgresql-17.log",
+      "sha256": "f31f8171e8da7689dbab6cb077d5158e11458baf66ccd28a7b251d2e7e17768d"
+    },
+    {
+      "file": "evidence/python-suite.log",
+      "sha256": "fe836cbecd3b6b4f70bec51b58d30c3e45ad72ae7fb3cb63421a0f7337e651ae"
+    },
+    {
+      "file": "evidence/review-money-safety.md",
+      "sha256": "2c4b10dd4e740ea6aaa0a5a5fed196f7c5659790e746713c87fb9efde7698674"
+    },
+    {
+      "file": "evidence/review-state-recovery.md",
+      "sha256": "5047c0446ecf995a80dc50cfa8d472f14458fd027d77507d07c3b77cf6063d01"
+    },
+    {
+      "file": "evidence/root-suite-final.log",
+      "sha256": "336e95e141a6f22f1c0f9c2408db863c9522a54ac2443ffb1ba42ff45c310d3a"
+    },
+    {
+      "file": "evidence/worker-suite-final.log",
+      "sha256": "ee375e5986a8c11b52b7fff502e57c41d299f4425253eb9878e590189a74ac52"
+    }
+  ]
+}

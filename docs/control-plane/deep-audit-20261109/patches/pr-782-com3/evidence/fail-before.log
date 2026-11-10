@@ -1,0 +1,344 @@
+✖ COM-3 definitive pre-session rejection releases only that identity; replay remains retired (9.228431ms)
+✖ COM-3 timeout_before stays fail-closed and replays the immutable original (2.910995ms)
+✖ COM-3 timeout_after stays fail-closed and replays the immutable original (1.387647ms)
+✖ COM-3 5xx stays fail-closed and replays the immutable original (1.289813ms)
+✖ COM-3 unproven400 stays fail-closed and replays the immutable original (1.427596ms)
+✖ COM-3 bind failure retains recovery identity and resume binds the same provider session (1.184607ms)
+✖ COM-3 reload/new device finds server-owned pending request with no browser identifier (1.616757ms)
+✖ COM-3 original retry after expiry uses old payload and releases only provider-confirmed expired session (1.744696ms)
+✖ COM-3 retention deadline requires audited owner reconciliation, never a blind new POST (2.669207ms)
+✖ COM-3 owner cannot attach another owner, price, or request identity (1.314208ms)
+✖ COM-3 plan change cannot replace original binding; account switch cannot read or resume it (1.410381ms)
+✖ COM-3 a later validation error never frees an earlier uncertain attempt (1.61254ms)
+✔ COM-3 failed rejection persistence stays uncertain and blocks a new checkout (1.24762ms)
+✖ COM-3 live-mode guard covers resume and operator reconciliation (0.574973ms)
+✔ COM-3 delayed/out-of-order signed webhook and replay never open a second subscription (16.583564ms)
+✖ COM-3 upgrading a known legacy session preserves GET recovery without inventing a POST (1.156024ms)
+✖ COM-3 changing provider mode cannot replay an uncertain payment against another mode (0.921206ms)
+✖ COM-3 mismatch on a bound current session persists owner-required state and appears in queue (0.786055ms)
+✖ COM-3 completed session remains pending across status/reload instead of falsely ready (1.407316ms)
+✖ COM-3 blocked second-device checkout returns canonical pending identity and plan (1.191467ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 2
+ℹ fail 18
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 140.16092
+
+✖ failing tests:
+
+test at scripts/test/creator-checkout-recovery.test.mjs:10:1
+✖ COM-3 definitive pre-session rejection releases only that identity; replay remains retired (9.228431ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  503 !== 422
+  
+      at file:///workspace/scratch/bbe81e357272/com3-fail-before-20261110/scripts/test/creator-checkout-recovery.test.mjs:11:81
+      at async withFixture (file:///workspace/scratch/bbe81e357272/com3-fail-before-20261110/scripts/test/creator-checkout-recovery.test.mjs:6:154)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 503,
+    expected: 422,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/test/creator-checkout-recovery.test.mjs:16:78
+✖ COM-3 timeout_before stays fail-closed and replays the immutable original (2.910995ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - 'pending'
+  
+      at file:///workspace/scratch/bbe81e357272/com3-fail-before-20261110/scripts/test/creator-checkout-recovery.test.mjs:17:109
+      at async withFixture (file:///workspace/scratch/bbe81e357272/com3-fail-before-20261110/scripts/test/creator-checkout-recovery.test.mjs:6:154)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: 'pending',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/test/creator-checkout-recovery.test.mjs:16:78
+✖ COM-3 timeout_after stays fail-closed and replays the immutable original (1.387647ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - 'pending'
+  
+      at file:///workspace/scratch/bbe81e357272/com3-fail-before-20261110/scripts/test/creator-checkout-recovery.test.mjs:17:109
+      at async withFixture (file:///workspace/scratch/bbe81e357272/com3-fail-before-20261110/scripts/test/creator-checkout-recovery.test.mjs:6:154)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: 'pending',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/test/creator-checkout-recovery.test.mjs:16:78
+✖ COM-3 5xx stays fail-closed and replays the immutable original (1.289813ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - 'pending'
+  
+      at file:///workspace/scratch/bbe81e357272/com3-fail-before-20261110/scripts/test/creator-checkout-recovery.test.mjs:17:109
+      at async withFixture (file:///workspace/scratch/bbe81e357272/com3-fail-before-20261110/scripts/test/creator-checkout-recovery.test.mjs:6:154)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: 'pending',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/test/creator-checkout-recovery.test.mjs:16:78
+✖ COM-3 unproven400 stays fail-closed and replays the immutable original (1.427596ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - 'pending'
+  
+      at file:///workspace/scratch/bbe81e357272/com3-fail-before-20261110/scripts/test/creator-checkout-recovery.test.mjs:17:109
+      at async withFixture (file:///workspace/scratch/bbe81e357272/com3-fail-before-20261110/scripts/test/creator-checkout-recovery.test.mjs:6:154)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: 'pending',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/test/creator-checkout-recovery.test.mjs:22:1
+✖ COM-3 bind failure retains recovery identity and resume binds the same provider session (1.184607ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'reserved'
+  - 'uncertain'
+  
+      at file:///workspace/scratch/bbe81e357272/com3-fail-before-20261110/scripts/test/creator-checkout-recovery.test.mjs:23:89
+      at async withFixture (file:///workspace/scratch/bbe81e357272/com3-fail-before-20261110/scripts/test/creator-checkout-recovery.test.mjs:6:154)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'reserved',
+    expected: 'uncertain',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/test/creator-checkout-recovery.test.mjs:26:1
+✖ COM-3 reload/new device finds server-owned pending request with no browser identifier (1.616757ms)
+  TypeError [Error]: Cannot read properties of undefined (reading 'request_id')
+      at file:///workspace/scratch/bbe81e357272/com3-fail-before-20261110/scripts/test/creator-checkout-recovery.test.mjs:28:31
+      at async withFixture (file:///workspace/scratch/bbe81e357272/com3-fail-before-20261110/scripts/test/creator-checkout-recovery.test.mjs:6:154)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at scripts/test/creator-checkout-recovery.test.mjs:31:1
+✖ COM-3 original retry after expiry uses old payload and releases only provider-confirmed expired session (1.744696ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  409 !== 200
+  
+      at file:///workspace/scratch/bbe81e357272/com3-fail-before-20261110/scripts/test/creator-checkout-recovery.test.mjs:34:82
+      at async withFixture (file:///workspace/scratch/bbe81e357272/com3-fail-before-20261110/scripts/test/creator-checkout-recovery.test.mjs:6:154)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 409,
+    expected: 200,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/test/creator-checkout-recovery.test.mjs:37:1
+✖ COM-3 retention deadline requires audited owner reconciliation, never a blind new POST (2.669207ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - 'requires_owner'
+  
+      at file:///workspace/scratch/bbe81e357272/com3-fail-before-20261110/scripts/test/creator-checkout-recovery.test.mjs:39:9
+      at async withFixture (file:///workspace/scratch/bbe81e357272/com3-fail-before-20261110/scripts/test/creator-checkout-recovery.test.mjs:6:154)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: 'requires_owner',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/test/creator-checkout-recovery.test.mjs:45:1
+✖ COM-3 owner cannot attach another owner, price, or request identity (1.314208ms)
+  TypeError [Error]: Cannot read properties of null (reading 'status')
+      at file:///workspace/scratch/bbe81e357272/com3-fail-before-20261110/scripts/test/creator-checkout-recovery.test.mjs:47:126
+      at async withFixture (file:///workspace/scratch/bbe81e357272/com3-fail-before-20261110/scripts/test/creator-checkout-recovery.test.mjs:6:154)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at scripts/test/creator-checkout-recovery.test.mjs:49:1
+✖ COM-3 plan change cannot replace original binding; account switch cannot read or resume it (1.410381ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - null
+  
+      at file:///workspace/scratch/bbe81e357272/com3-fail-before-20261110/scripts/test/creator-checkout-recovery.test.mjs:52:72
+      at async withFixture (file:///workspace/scratch/bbe81e357272/com3-fail-before-20261110/scripts/test/creator-checkout-recovery.test.mjs:6:154)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: null,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/test/creator-checkout-recovery.test.mjs:56:1
+✖ COM-3 a later validation error never frees an earlier uncertain attempt (1.61254ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  409 !== 503
+  
+      at file:///workspace/scratch/bbe81e357272/com3-fail-before-20261110/scripts/test/creator-checkout-recovery.test.mjs:57:137
+      at async withFixture (file:///workspace/scratch/bbe81e357272/com3-fail-before-20261110/scripts/test/creator-checkout-recovery.test.mjs:6:154)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 409,
+    expected: 503,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/test/creator-checkout-recovery.test.mjs:62:1
+✖ COM-3 live-mode guard covers resume and operator reconciliation (0.574973ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  200 !== 503
+  
+      at file:///workspace/scratch/bbe81e357272/com3-fail-before-20261110/scripts/test/creator-checkout-recovery.test.mjs:63:71
+      at async withFixture (file:///workspace/scratch/bbe81e357272/com3-fail-before-20261110/scripts/test/creator-checkout-recovery.test.mjs:6:154)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 200,
+    expected: 503,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/test/creator-checkout-recovery.test.mjs:74:1
+✖ COM-3 upgrading a known legacy session preserves GET recovery without inventing a POST (1.156024ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  409 !== 200
+  
+      at file:///workspace/scratch/bbe81e357272/com3-fail-before-20261110/scripts/test/creator-checkout-recovery.test.mjs:76:9
+      at async withFixture (file:///workspace/scratch/bbe81e357272/com3-fail-before-20261110/scripts/test/creator-checkout-recovery.test.mjs:6:154)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 409,
+    expected: 200,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/test/creator-checkout-recovery.test.mjs:78:1
+✖ COM-3 changing provider mode cannot replay an uncertain payment against another mode (0.921206ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - 'requires_owner'
+  
+      at file:///workspace/scratch/bbe81e357272/com3-fail-before-20261110/scripts/test/creator-checkout-recovery.test.mjs:81:43
+      at async withFixture (file:///workspace/scratch/bbe81e357272/com3-fail-before-20261110/scripts/test/creator-checkout-recovery.test.mjs:6:154)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: 'requires_owner',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/test/creator-checkout-recovery.test.mjs:83:1
+✖ COM-3 mismatch on a bound current session persists owner-required state and appears in queue (0.786055ms)
+  TypeError [Error]: Cannot read properties of null (reading 'json')
+      at file:///workspace/scratch/bbe81e357272/com3-fail-before-20261110/scripts/test/creator-checkout-recovery.test.mjs:84:99
+      at async withFixture (file:///workspace/scratch/bbe81e357272/com3-fail-before-20261110/scripts/test/creator-checkout-recovery.test.mjs:6:154)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at scripts/test/creator-checkout-recovery.test.mjs:90:1
+✖ COM-3 completed session remains pending across status/reload instead of falsely ready (1.407316ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - 'pending'
+  
+      at file:///workspace/scratch/bbe81e357272/com3-fail-before-20261110/scripts/test/creator-checkout-recovery.test.mjs:92:78
+      at async withFixture (file:///workspace/scratch/bbe81e357272/com3-fail-before-20261110/scripts/test/creator-checkout-recovery.test.mjs:6:154)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: 'pending',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/test/creator-checkout-recovery.test.mjs:97:1
+✖ COM-3 blocked second-device checkout returns canonical pending identity and plan (1.191467ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - 'fixture-request-0001'
+  
+      at file:///workspace/scratch/bbe81e357272/com3-fail-before-20261110/scripts/test/creator-checkout-recovery.test.mjs:100:40
+      at async withFixture (file:///workspace/scratch/bbe81e357272/com3-fail-before-20261110/scripts/test/creator-checkout-recovery.test.mjs:6:154)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: 'fixture-request-0001',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
