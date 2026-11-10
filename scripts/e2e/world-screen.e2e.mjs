@@ -1412,7 +1412,7 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
       const coin = await page.evaluate(()=>{const c=document.querySelector('.appbar [data-appnav="home"] .appbar__m--initial'),r=c&&c.getBoundingClientRect();return {coin:!!c,text:c?c.textContent:'',w:r?Math.round(r.width):0,img:!!document.querySelector('.appbar [data-appnav="home"] img.appbar__m--creator')};});
       check(scope,'a member without a photo gets the initial of their name in the middle tab, drawn at full size, never an image',coin.coin&&coin.text==='F'&&coin.w>=20&&!coin.img,coin);
     }
-    check(scope,'actual Cesium uses natural Earth colors, soft clouds and no starfield', await globe.evaluate(() => { const s=window.__huGlobeStyle?.();return s?.editorial && s.saturation===1.1 && s.cloudAlpha===.65 && s.atmosphereSaturation===.1 && !s.stars; }));
+    check(scope,'actual Cesium keeps its starfield, natural Earth colors and soft clouds', await globe.evaluate(() => { const s=window.__huGlobeStyle?.();return s?.editorial && s.saturation===1.1 && s.cloudAlpha===.65 && s.atmosphereSaturation===.1 && s.stars; }));
     await page.click('.wt-world-modes [data-world-mode=missions]');
     await page.waitForSelector('.mn-swipe__card[data-mission="'+M1+'"]');
     /* THE WORLD'S GLOBE (owner, 2026-10-20: "Replace the filter button with the button that zooms you all the way back out"):

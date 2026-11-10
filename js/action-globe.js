@@ -602,7 +602,8 @@ function styleScene(){const sc=viewer.scene;sc.backgroundColor=Cesium.Color.from
   // Sharpen small Retina globes; cap large canvases at an 800k-pixel budget.
   sizeEditorialResolution();
   sc.backgroundColor=Cesium.Color.fromCssColorString('#090b0d');sc.globe.baseColor=Cesium.Color.fromCssColorString('#082b4b');
-  if(sc.skyBox)sc.skyBox.show=false;if(sc.sun)sc.sun.show=false;if(sc.moon)sc.moon.show=false;
+  // Keep the existing Cesium starfield in the public World, including embedded globes.
+  if(sc.skyBox)sc.skyBox.show=true;if(sc.sun)sc.sun.show=false;if(sc.moon)sc.moon.show=false;
   /* DAY AND NIGHT BY THE REAL SUN (owner, 2026-10-19): the lit side and the dark side follow the actual time, not a studio lamp.
      The night side carries NASA's city lights; the Sun disc itself stays hidden on the editorial globe. */
   sc.globe.enableLighting=true;sc.light=new Cesium.SunLight();sc.globe.dynamicAtmosphereLightingFromSun=true;sc.globe.atmosphereSaturationShift=.1;sc.globe.atmosphereBrightnessShift=-.05;

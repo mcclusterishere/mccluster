@@ -326,14 +326,14 @@ const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||u
 try {
 for(const width of (process.env.WORLD_QA_WIDTH?[Number(process.env.WORLD_QA_WIDTH)]:[390,820,1280]))for(const persona of (process.env.WORLD_QA_PERSONA?[process.env.WORLD_QA_PERSONA]:['guest','member','creator','owner','halo','failed'])){
  const scope=width+' '+persona, ctx=await browser.newContext({viewport:{width,height:844},isMobile:width===390,hasTouch:width===390});
- let owner=persona==='owner'||persona==='halo', calls=0, slow=false, mapReads=0, haloCode=0;const errors=[];
+ let owner=persona==='owner'||persona==='halo', calls=0, slow=false, mapReads=0, haloCode=0;const errors=[],skyFaces=new Set();
  await ctx.addInitScript(p=>{localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));if(p!=='guest'){const exp=Math.floor(Date.now()/1000)+3600;localStorage.setItem('mccdb_session',JSON.stringify({access_token:'x.'+btoa(JSON.stringify({sub:'owner-'+p,exp}))+'.y',expires_at:exp,refresh_token:'fixture-only',user:{id:'owner-'+p,email:'fixture@example.invalid'}}));}},persona);
  await ctx.route('**/*',async route=>{
   const url=new URL(route.request().url()), headers={'access-control-allow-origin':'*','access-control-allow-headers':'*'};
   const json=(body,status=200)=>route.fulfill({status,headers,contentType:'application/json',body:JSON.stringify(body)});
   if(url.origin===BASE){if(/^\/(js\/halo\/|css\/halo)/.test(url.pathname))haloCode++;if(url.pathname==='/__world-release_host')return route.fulfill({contentType:'text/html',body:'<!doctype html><html><body style="margin:0"><iframe style="width:100%;height:100vh;border:0" src="/action-globe.html?embedded=1&surface=network"></iframe></body></html>'});return route.continue();}
   if(url.hostname==='cesium.com'){
-   const path=url.pathname.split('/Build/Cesium/')[1];try{return route.fulfill({body:await readFile(join(process.env.CESIUM_DIR,path)),contentType:TYPES[extname(path)]||'application/octet-stream'});}catch{return route.abort();}
+   const path=url.pathname.split('/Build/Cesium/')[1];try{const body=await readFile(join(process.env.CESIUM_DIR,path));await route.fulfill({body,contentType:TYPES[extname(path)]||'application/octet-stream'});if(/^Assets\/Textures\/SkyBox\/tycho2t3_80_[pm][xyz]\.jpg$/.test(path))skyFaces.add(path);return;}catch{return route.abort();}
   }
   if(url.hostname==='api.mccluster.org'){
    if(route.request().method()==='OPTIONS')return route.fulfill({status:204,headers});
@@ -354,6 +354,11 @@ for(const width of (process.env.WORLD_QA_WIDTH?[Number(process.env.WORLD_QA_WIDT
  await host.goto(BASE+(persona==='creator'?'/__world-release_host':persona==='halo'?'/action-globe.html?explore=1&halo=1':'/action-globe.html?explore=1'));const page=persona==='creator'?host.frames().find(f=>f.url().includes('action-globe.html')):host;await page.waitForFunction(()=>typeof window.__huGlobeSettled==='function');
  await page.waitForTimeout(300);
  check(scope,'base globe remains available',await page.locator('#globe canvas').count()>0);
+ if(persona!=='halo'){
+  check(scope,'the public Cesium globe preserves stars, Earth colors and clouds',await page.evaluate(()=>{const s=window.__huGlobeStyle?.();return s?.editorial&&s.stars&&s.saturation===1.1&&s.cloudAlpha===.65&&s.atmosphereSaturation===.1}));
+  for(let n=0;n<50&&skyFaces.size<6;n++)await page.waitForTimeout(100);
+  check(scope,'all six real Cesium starfield textures load',skyFaces.size===6,[...skyFaces]);
+ }
  check(scope,'no document horizontal overflow',await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth));
  if(!owner){
   await page.waitForTimeout(400);
@@ -419,6 +424,7 @@ for(const width of (process.env.WORLD_QA_WIDTH?[Number(process.env.WORLD_QA_WIDT
  }
  check(scope,'no JavaScript runtime errors',errors.length===0,errors);
  if(persona==='guest')await page.screenshot({path:join(OUT,'curated-world-'+width+'.png')});
+ if(persona==='creator')await host.screenshot({path:join(OUT,'embedded-world-'+width+'.png')});
  await ctx.close();
 }
 }finally{await browser.close();server.close();}
