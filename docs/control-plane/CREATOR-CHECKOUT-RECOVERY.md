@@ -113,3 +113,21 @@ callers; the whole customer branch also introduces separately gated site,
 commerce, domain, music and publishing dependencies. Keep the production merge
 held until the selected schema/caller cutover is reviewed and authorized. Do not
 apply every pending file or infer payment/provider activation from source approval.
+
+### Navigation and authentication reconciliation
+
+The customer source additionally incorporates main `01ef70ae` (#794), preserving
+its auth expiry, bounded refresh, account-switch and Analytics keyboard fixes.
+The integration restores the established global artist/account perspective and
+personal M fallback. Document-local branding from #630 remains an override; the
+proposed global platform replacement is not adopted. Existing Human Uprise door
+and editorial browser expectations are unchanged. New runtime regressions failed
+before the repair (three of four cases) and all six final cases pass, including
+account isolation and strict customer-logo permissions.
+
+The combined local root suite passes 2,499 tests with three existing skips. The
+90 focused authentication/Analytics preservation tests pass. Their clock fixture
+now supplies the DOM APIs used by the existing customer iframe implementation;
+no authentication assertions were removed. Exact-head hosted customer, Control,
+and responsive browser checks are still required after publication. These are
+synthetic checks and grant no production SQL, routing or payment activation.

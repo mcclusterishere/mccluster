@@ -145,22 +145,22 @@ try{
     check(width+' navigation has no script errors',errors.length===0,errors);
     await ctx.close();
   }
-  /* Account perspective stays in the wing; the center follows the document's
-     public profile, otherwise the platform. Neither grants editing authority. */
+  /* Established account perspective survives ordinary navigation/reload;
+     explicit branded documents override it locally. Neither grants editing authority. */
   {
     const {ctx,page,errors}=await setup(390,'member');
     await page.goto(BASE+'/license.html');
     await page.waitForFunction(()=>MCC_BAR.ownPerspective()?.handle==='qa-member');
-    check('non-profile center defaults to platform home',
-      (await page.locator('.appbar [data-appnav="home"]').getAttribute('href'))===BASE+'/platform-home.html');
+    check('non-profile center uses the verified member profile',
+      (await page.locator('.appbar [data-appnav="home"]').getAttribute('href'))===BASE+'/member-front.html?handle=qa-member');
     await page.evaluate(()=>dispatchEvent(new CustomEvent('mcc:perspective',{detail:{kind:'member',handle:'other-member',name:'Other member'}})));
-    check('account perspective does not replace a non-profile platform destination',
-      (await page.locator('.appbar [data-appnav="home"]').getAttribute('href'))===BASE+'/platform-home.html');
+    check('selected account perspective controls the ordinary center',
+      (await page.locator('.appbar [data-appnav="home"]').getAttribute('href'))===BASE+'/member-front.html?handle=other-member');
     await page.reload();
     await page.waitForFunction(()=>MCC_BAR.auth().verified);
-    check('account perspective survives reload without leaking into center branding',
+    check('selected account perspective survives reload in the center',
       await page.evaluate(()=>MCC_BAR.perspective()?.handle==='other-member') &&
-      (await page.locator('.appbar [data-appnav="home"]').getAttribute('href'))===BASE+'/platform-home.html');
+      (await page.locator('.appbar [data-appnav="home"]').getAttribute('href'))===BASE+'/member-front.html?handle=other-member');
     await page.goto(BASE+'/index.html?front=house');
     await page.waitForFunction(()=>MCC_BAR.auth().verified);
     check('visiting founder switches center back to original house',
@@ -183,7 +183,7 @@ try{
     await page.evaluate(async()=>{await window.MCC.signOut();});
     await page.waitForFunction(()=>MCC_BAR.auth().signed_in===false);
     check('signing out clears selected identity and unavailable profile branding',
-      (await page.locator('.appbar [data-appnav="home"]').getAttribute('href'))===BASE+'/platform-home.html');
+      (await page.locator('.appbar [data-appnav="home"]').getAttribute('href'))===BASE+'/index.html');
     check('member front and bar have no page exceptions',errors.length===0,errors);
     await ctx.close();
   }
@@ -191,8 +191,8 @@ try{
     const {ctx,page}=await setup(390,'guest');
     await page.goto(BASE+'/license.html');
     await page.waitForFunction(()=>MCC_BAR.auth().verified);
-    check('guest non-profile page uses platform home',
-      (await page.locator('.appbar [data-appnav="home"]').getAttribute('href'))===BASE+'/platform-home.html');
+    check('guest non-profile page retains the supplied personal M',
+      (await page.locator('.appbar [data-appnav="home"]').getAttribute('href'))===BASE+'/index.html');
     await ctx.close();
   }
   for(const persona of ['guest','member']){
@@ -268,7 +268,7 @@ try{
     await page.waitForFunction(()=>window.MCC_BAR&&window.MCC_BAR.auth().verified);
     await page.evaluate(()=>{navigation.addEventListener('navigate',()=>sessionStorage.setItem('__navDelay',String(Math.round(performance.now()-window.__clickAt))));
       window.__clickAt=performance.now();document.querySelector('.appbar [data-appnav="home"]').click();});
-    await page.waitForURL(/\/platform-home\.html$/,{timeout:15000,waitUntil:'domcontentloaded'});
+    await page.waitForURL(/\/index\.html$/,{timeout:15000,waitUntil:'domcontentloaded'});
     await page.evaluate(()=>window.__navReveal);
     const delay=Number(await page.evaluate(()=>sessionStorage.getItem('__navDelay')));
     check('a bar tab asks for the next page at once, with no hold before it',Number.isFinite(delay)&&delay<200,delay);

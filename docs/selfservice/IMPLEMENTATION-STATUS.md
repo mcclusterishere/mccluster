@@ -32,7 +32,7 @@ performed for this work. Current membership policy has not been changed.
 | World directory | `world-directory.js`, `world-discover.html`; explicit owner listings, strict visibility/discoverability/source checks, category/locality/search | Business/service/project only; no invented coordinates or event/campaign listing support |
 | Music collaboration | `music-workspace.js`, private projects/invites/roles, originals/credits, microphone review, ordered versions/comments/release-ready snapshot | Async collaboration, not DAW. #635 adds private original/credits/rights-preserving release handoff and repairs the existing analysis queue behind default-off gates; capture links reuse #278. Owner-scoped consent/review UI is implemented; real PGMQ compatibility and execution remain pending |
 | External social | `social/customer.js` + existing queue; owner OAuth/account selection, uploads, status/retry/cancel/disconnect | Instagram Professional Reels only; Meta app approval/configuration and live callback/Vault encryption unverified |
-| Platform navigation | `platform-home.html`, `js/tabbar.js`; supplied E=Up mark for platform default, separate personal/artist destination | Profile-specific center branding and platform fallback integrated in #632; Coordinated #630 observer-loader fix is integrated; Chromium145 profile-preview CI passed on the updated combined stack. Final-head CI remains required. New public-domain hosting not configured |
+| Platform navigation | `platform-home.html`, `js/tabbar.js`; supplied E=Up mark on its own platform document; established personal/artist navigation retained | Document-local branding from #630 is retained; the proposed #632 global platform fallback is not adopted; Coordinated #630 observer-loader fix is integrated; Chromium145 profile-preview CI passed on the updated combined stack. Final-head CI remains required. New public-domain hosting not configured |
 | Campaign participation | Existing clipping screen linked; sponsor launch honestly assisted | General mission marketplace/payment automation not completed by this change |
 | Backing / apps / streaming | Explicit roadmap and availability states; no fake purchase/install controls | Backing processor/terms/release gates; tenant module installer and RTMP multi-destination remain future work |
 
@@ -73,13 +73,13 @@ Public RDAP and DNS requests were blocked by the execution environment's proxy
 (403), so ownership and current public routing remain unverified. No registration,
 transfer, DNS, security or hosting change was attempted.
 
-The platform landing is a separate product destination. The latest owner direction
-supersedes the draft's global center-tab replacement: use the active profile's
-verified logo and destination on branded profiles (Vaunt on Vaunt, Matthew's mark
-on Matthew), and E=Up only for platform/default context. Preserve that context
-through navigation and clear stale branding on owner switches. The separate Vaunt
-follow-up owns this correction; reconcile its tabbar/brand contract before merging
-the audience landing changes. Matthew's personal pages and Vaunt remain separate.
+The platform landing is a separate product destination. Its E=Up mark brands that
+document only. The integration preserves established artist/account context on
+ordinary Music and personal browsing, the default personal M, and the explicit
+house reset. Document-local supplied branding (such as Vaunt) takes priority only
+while that branded document is active. Account-switch fences and owner Control /
+World routes remain intact. The earlier proposed global platform replacement is
+not adopted; Matthew's personal pages and Vaunt remain separate.
 Switching the public root/domain requires the verified
 ownership/routing work above; the draft does not silently replace a personal route.
 

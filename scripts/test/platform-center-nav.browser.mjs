@@ -9,6 +9,7 @@ const browser=await chromium.launch({headless:true,...(process.env.CHROMIUM_PATH
 try {
  for(const host of ['matthew.mccluster.org','mccluster.org','brand.fixture.test']) {
   for(const [owner,width] of [[false,390],[true,390],[false,1280],[true,1280]]) {
+   const assetBase=host==='mccluster.org'?'https://mccluster.org':'https://matthew.mccluster.org';
    const page=await browser.newPage({viewport:{width,height:844}});
    const token='e30.'+Buffer.from(JSON.stringify({sub:'fixture-member',exp:4102444800})).toString('base64url')+'.fixture';
    await page.addInitScript(({token})=>{
@@ -27,8 +28,10 @@ try {
    for(const perspective of [{kind:'member',handle:'member.fixture',name:'Member Fixture'},{kind:'artist',handle:'artist.fixture',name:'Artist Fixture'},{kind:'house'}]) {
     await page.evaluate(p=>window.MCC_BAR.perspective(p),perspective);
     const state=await page.evaluate(()=>{const tab=document.querySelector('.appbar [data-appnav="home"]');return {href:tab.href,src:tab.querySelector('img')?.src,profile:document.getElementById('mccAuthChip').href,width:document.documentElement.clientWidth,scroll:document.documentElement.scrollWidth};});
-    assert.equal(state.href,'https://matthew.mccluster.org/'+(owner?'index.html':'platform-home.html'));
-    assert.match(state.src,owner?/m-mark\.png$/:/equity-uprise-mark-white\.png$/);
+    const expected = owner || perspective.kind==='house' ? 'index.html' : (perspective.kind==='artist'?'music-creator.html':'member-front.html')+'?handle='+perspective.handle;
+    assert.equal(state.href,'https://matthew.mccluster.org/'+expected);
+    if(owner || perspective.kind==='house') assert.equal(state.src,assetBase+'/assets/img/m-mark.png');
+    else assert.equal(await page.locator('[data-appnav="home"] .appbar__m--initial').textContent(),perspective.name[0]);
     assert.match(state.profile,/\?view=profile$/);
     assert.equal(state.width,state.scroll);
    }
@@ -37,9 +40,21 @@ try {
     const links=await page.locator('.appbar a').evaluateAll(nodes=>nodes.map(a=>a.href));
     assert.ok(links.some(h=>h.endsWith('index.html?front=house')));
     assert.ok(links.some(h=>h.endsWith('music-creator.html?handle=artist.fixture')));
+    assert.equal(await page.locator('.appbar__tab--slot').last().locator('span').textContent(),'Everything');
     await page.evaluate(()=>window.MCC_BAR.revert());
+    await page.reload();
+    await page.waitForFunction(()=>window.MCC_BAR?.auth().verified);
+    assert.equal(await page.locator('[data-appnav="home"]').getAttribute('href'),'https://matthew.mccluster.org/music-creator.html?handle=artist.fixture');
+    assert.equal(await page.locator('#mccControlToggle').count(),0);
    }
    if(!owner) {
+   // Equity Uprise keeps its supplied mark on its explicitly branded document,
+   // without becoming the fallback for Music or another creator's page.
+   await page.evaluate(()=>window.MCC_BAR.pageProfile({name:'Equity Uprise',home:location.origin+'/platform-home.html',logo:'assets/img/equity-uprise-mark-white.png'}));
+   assert.equal(await page.locator('[data-appnav="home"]').getAttribute('href'),`https://${host}/platform-home.html`);
+   assert.equal(await page.locator('[data-appnav="home"] img').getAttribute('src'),assetBase+'/assets/img/equity-uprise-mark-white.png');
+   await page.evaluate(()=>window.MCC_BAR.pageProfile(null));
+   assert.equal(await page.locator('[data-appnav="home"]').getAttribute('href'),'https://matthew.mccluster.org/music-creator.html?handle=artist.fixture');
    // Public page branding wins over the viewer's account/perspective, but is
    // document-local and never persisted as another tenant's account context.
    await page.evaluate(()=>window.MCC_BAR.pageProfile({name:'Vaunt',home:location.origin+'/front.html?project=vaunt',logo:'assets/img/vaunt-logo.webp'}));
@@ -57,7 +72,7 @@ try {
     assert.equal(await page.locator('[data-appnav="home"] img').count(),0);
    }
    await page.evaluate(()=>window.MCC_BAR.pageProfile({name:'Unsafe',home:'https://other.invalid/',logo:'javascript:alert(1)'}));
-   assert.equal(await page.locator('[data-appnav="home"]').getAttribute('href'),'https://matthew.mccluster.org/platform-home.html');
+   assert.equal(await page.locator('[data-appnav="home"]').getAttribute('href'),'https://matthew.mccluster.org/member-front.html?handle=someone.else');
    assert.equal(await page.evaluate(()=>window.MCC_BAR.pageProfile()),null);
    } else {
     await page.evaluate(()=>{
@@ -82,14 +97,14 @@ try {
     const carried=await page.evaluate(()=>window.MCC_BAR.navigation.handoff('https://matthew.mccluster.org/platform-home.html'));
     assert.match(carried,/#mcc_handoff=/);
    }
-   // Switching owner back to normal restores the platform center, not a cached personal mark.
+   // Sign-out clears account context and restores the established personal M.
    await page.evaluate(()=>{localStorage.removeItem('mccdb_session');window.dispatchEvent(new Event('mcc:auth-changed'));});
    await page.waitForFunction(()=>window.MCC_BAR.auth().verified&&!window.MCC_BAR.auth().signed_in&&!window.MCC_BAR.admin());
-   assert.equal(await page.locator('[data-appnav="home"]').getAttribute('href'),'https://matthew.mccluster.org/platform-home.html');
+   assert.equal(await page.locator('[data-appnav="home"]').getAttribute('href'),'https://matthew.mccluster.org/index.html');
    await page.evaluate(()=>document.documentElement.dataset.theme='light');
-   assert.match(await page.locator('.appbar__platform').evaluate(el=>getComputedStyle(el).content),/equity-uprise-mark\.png/);
+   assert.equal(await page.locator('[data-appnav="home"] img').getAttribute('src'),assetBase+'/assets/img/m-mark.png');
    await page.close();
   }
  }
- console.log('Platform center: guest/member/artist/owner, owner-to-normal restore, both hosts, wing profiles, handoff and 390/1280px layouts passed.');
+ console.log('Established center: guest/member/artist/owner, owner-to-normal restore, profile overrides, both hosts, handoff and 390/1280px layouts passed.');
 }finally{await browser.close();}

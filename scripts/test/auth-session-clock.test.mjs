@@ -48,11 +48,12 @@ function tab(ahead, { modules = ['js/backend.js'], seed, answer = null, fast = f
     throw new TypeError('fixture has no route for ' + url);
   };
   /* the globe embed's panel, as js/guest-world.js finds it on a public landing page */
-  const entry = { textContent: '', href: '' }, frame = { src: '', getAttribute: (name) => (name === 'data-src' ? 'world.html' : null) };
-  const panel = { hidden: false, hasAttribute: () => false, querySelector: (selector) => (selector === '[data-world-entry]' ? entry : selector === 'iframe[data-src]' ? frame : null) };
+  const entry = { textContent: '', href: '' }, frame = { src: '', addEventListener() {}, getAttribute: (name) => (name === 'data-src' ? 'world.html' : null) };
+  // Keep the embed offscreen: these tests exercise session expiry, not iframe navigation.
+  const panel = { hidden: false, hasAttribute: () => false, getBoundingClientRect: () => ({ top: 2000, bottom: 2300 }), querySelector: (selector) => (selector === '[data-world-entry]' ? entry : selector === 'iframe[data-src]' ? frame : null) };
   const listeners = new Map();
   const window = {
-    localStorage, sessionStorage: localStorage, crypto: globalThis.crypto,
+    localStorage, sessionStorage: localStorage, crypto: globalThis.crypto, innerHeight: 900,
     location: { origin: 'https://matthew.mccluster.org', hostname: 'matthew.mccluster.org', pathname: '/index.html', search: '', hash: '' },
     addEventListener(type, listener) { listeners.set(type, (listeners.get(type) || []).concat(listener)); },
     dispatchEvent(event) { for (const listener of listeners.get(event.type) || []) listener(event); return true; }
@@ -60,7 +61,7 @@ function tab(ahead, { modules = ['js/backend.js'], seed, answer = null, fast = f
   const real = Date;
   const context = vm.createContext({
     window, localStorage, location: window.location, history: { replaceState() {} },
-    document: { readyState: 'complete', getElementById: (id) => (id === 'guestWorld' ? panel : null), addEventListener() {} },
+    document: { readyState: 'complete', documentElement: { getAttribute: () => null }, getElementById: (id) => (id === 'guestWorld' ? panel : null), addEventListener() {} },
     fetch, atob, btoa, URL, URLSearchParams, AbortController, clearTimeout, console,
     setTimeout: fast ? (fn, ms) => setTimeout(fn, Math.min(ms, 10)) : setTimeout,
     CustomEvent: class { constructor(type, init) { this.type = type; this.detail = init && init.detail; } },

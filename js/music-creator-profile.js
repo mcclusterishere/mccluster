@@ -304,9 +304,9 @@
        their front page in the middle cell, their own picture or initial.
        Owner, 2026-10-14: "experience the site from their perspective". */
     var perspective = { kind: "artist", handle: p.handle, name: p.artist_name, avatar: avatar || "" };
-    var pageBrand = {name:p.artist_name,home:"music-creator.html?handle="+encodeURIComponent(p.handle),logo:avatar||""};
-    root.MCC_PAGE_PROFILE = pageBrand;
-    if (root.MCC_BAR && root.MCC_BAR.pageProfile) root.MCC_BAR.pageProfile(pageBrand);
+    // Artist presentation uses the established account perspective, whose artwork
+    // has already passed PAGE.safeArtwork. Do not turn it into a customer logo:
+    // pageProfile has deliberately narrower, unrelated logo-source permissions.
     try { root.dispatchEvent(new CustomEvent("mcc:perspective", { detail: perspective })); } catch (_) {}
 
     /* Every published track goes to the player in page order: the featured

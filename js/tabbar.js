@@ -120,13 +120,6 @@
       '<rect' + b + ' x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>';
   }
   var WORLD_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4.3" ry="9"/><path d="M3 12h18M5 7h14M5 17h14"/></svg>';
-  // Existing supplied E=Up variants; preserve full artwork and its proportions.
-  function platformMark() {
-    return '<img class="appbar__platform" src="' + ROOT + 'assets/img/equity-uprise-mark-white.png" alt="" style="width:2.6rem;height:2.6rem;object-fit:contain;display:block">';
-  }
-  var platformMarkStyle = document.createElement("style");
-  platformMarkStyle.textContent = 'html[data-theme="light"] .appbar__platform{content:url("' + ROOT + 'assets/img/equity-uprise-mark.png")}';
-  document.head.appendChild(platformMarkStyle);
   function buildBar() {
     var nav = document.createElement("nav");
     nav.className = "appbar";
@@ -134,8 +127,8 @@
     nav.innerHTML =
       '<a class="appbar__tab" id="appbarNP" href="' + HOUSE + 'listen.html" data-appnav="music">' +
         eqSvg(true) + '<span>Music</span></a>' +
-      '<a class="appbar__tab" href="' + HOUSE + 'platform-home.html" data-appnav="home">' +
-        platformMark() + '<span>Platform</span></a>' +
+      '<a class="appbar__tab" href="' + HOUSE + 'index.html" data-appnav="home">' +
+        '<img class="appbar__m" src="' + ROOT + 'assets/img/m-mark.png" alt=""><span>HERE</span></a>' +
       /* LAST COLUMN: the Globe, Equity Uprise's World screen. It replaced the
          Profile column (owner, 2026-10-14): Music | M | Globe for everyone.
          Account and profile are contextual now (the auth chip, the header
@@ -229,10 +222,10 @@
       ],
     },
     home: {
-      home: "platform-home.html",
+      home: "index.html",
       slots: [
-        ["index.html?front=house", "mmark", "Matthew", { title: "Matthew McCluster",
-          sub: "Matthew’s personal site, portfolio and music." }],
+        ["hire.html", "case", "Hire", { title: "Hire the agency",
+          sub: "Brand films, photography, web builds, campaign strategy. One team, start to finish." }],
         [MAP, "grid", "Everything", { title: "Every room in the house",
           sub: "The full map: the tracks, the gallery, the print shop, the archive, the desks. Everything the three wings do not carry." }],
       ],
@@ -309,9 +302,8 @@
        no coin rather than lighting one that is not on the bar. The pages
        still answer — nothing here deletes a room, it only stops the bar
        pointing at one. */
-    /* Only the platform landing lights its center emblem. Matthew’s front
-       page remains a personal destination, and the record stays under Music. */
-    "platform-home.html": "home",
+    /* Personal home remains the default; the platform landing brands its own document. */
+    "": "home", "index.html": "home", "platform-home.html": "home",
     "hire.html": "home",
     "ecosystem.html": "home",
     "portfolio.html": "home", "shots.html": "home", "production.html": "home", "archive.html": "home", "gallery.html": "home", "prints.html": "home",
@@ -354,14 +346,14 @@
   var wingOn = null;
   var AUTH_STATE = { signed_in: false, verified: false, user: null };
 
-  /* Account perspective stays in the held home wing. The center follows the
-     current public profile only; other pages open the platform home. */
+  /* Preserve the established account perspective across ordinary navigation.
+     An explicitly branded document may override it locally, never persistently. */
   var PERSPECTIVE_KEY = "mcc_perspective";
   var PERSPECTIVE_SUB_KEY = "mcc_perspective_account";
   var SELF_PROFILE = null, selfProfileEpoch = 0, lastVerifiedSubject = "";
   var HANDLE_RE = /^[a-z0-9][a-z0-9._-]{2,39}$/;
   var HOUSE_ROOM = WINGS.home.slots[0];
-  var HOUSE_LABEL = "Platform";
+  var HOUSE_LABEL = "HERE";
   var EVERYTHING_ROOM = WINGS.home.slots[1];
   function textOf(x) { var d = document.createElement("i"); d.textContent = x == null ? "" : String(x); return d.innerHTML; }
   function attrOf(x) { return textOf(x).replace(/"/g, "&quot;"); }
@@ -451,9 +443,6 @@
     paintSitePolicy();HOME_BAR=dock.innerHTML;
     window.dispatchEvent(new CustomEvent('mcc:site-policy-changed'));
   }
-  if (!PAGE_PROFILE && location.hostname === "matthew.mccluster.org" && (/^(index\.html)?$/.test(PAGE_KEY) || PAGE_KEY === "matthew-mccluster.html")) {
-    PAGE_PROFILE = cleanPageProfile({name:"Matthew McCluster", home:HOUSE+"index.html", logo:ROOT+"assets/img/m-mark.png"});
-  }
   function setPageProfile(raw) {
     PAGE_PROFILE = cleanPageProfile(raw);
     if (wingOn) revert();
@@ -472,40 +461,30 @@
     paintSitePolicy();
     var homeTab = dock.querySelector('[data-appnav="home"]');
     if (!homeTab) return;
-    homeTab.href = HOUSE + "platform-home.html";
-    homeTab.setAttribute("aria-label", "Open the Equity Uprise platform home");
-    homeTab.removeAttribute("data-perspective");
-    homeTab.innerHTML = platformMark() + '<span class="appbar__sr">Platform</span>';
-    var atPlatform = /platform-home\.html$/.test(location.pathname);
-    homeTab.classList.toggle("is-here", atPlatform);
-    if (atPlatform) homeTab.setAttribute("aria-current", "page");
-    else homeTab.removeAttribute("aria-current");
-    WINGS.home.home = HOUSE + "platform-home.html";
-    WINGS.home.slots[0] = HOUSE_ROOM;
+    var p = PAGE_PROFILE || PERSPECTIVE || (AUTH_STATE.signed_in ? SELF_PROFILE : null);
+    if (p && p.kind === "house") p = null;
+    var door = p ? (p.kind === "page" ? p.home : HOUSE +
+      (p.kind === "artist" ? "music-creator.html" : "member-front.html") + "?handle=" + encodeURIComponent(p.handle)) : HOUSE + "index.html";
+    homeTab.href = door;
+    homeTab.setAttribute("aria-label", p ? "Open " + p.name + "’s front page" : "Open the McCluster home");
+    if (p) homeTab.setAttribute("data-perspective", p.handle);
+    else homeTab.removeAttribute("data-perspective");
+    homeTab.innerHTML = (p ? (p.avatar
+      ? '<img class="appbar__m appbar__m--creator' + (p.kind === "page" ? ' appbar__m--brand' : '') + '" src="' + attrOf(p.avatar) + '" alt="">'
+      : '<span class="appbar__m appbar__m--initial" aria-hidden="true">' + textOf(initialOf(p.name)) + '</span>')
+      : '<img class="appbar__m" src="' + ROOT + 'assets/img/m-mark.png" alt="">') +
+      '<span class="appbar__sr">' + textOf(p ? shortName(p.name) : HOUSE_LABEL) + '</span>';
+    var destination = new URL(door, location.href);
+    var samePath = function (path) { return path.replace(/\/index\.html$/, "/"); };
+    var current = p ? destination.origin === location.origin && samePath(destination.pathname) === samePath(location.pathname) && destination.search === location.search : PAGE_WING[PAGE_KEY] === "home";
+    homeTab.classList.toggle("is-here", current);
+    if (current) homeTab.setAttribute("aria-current", "page"); else homeTab.removeAttribute("aria-current");
+    WINGS.home.home = door;
+    WINGS.home.slots[0] = p ? [HOUSE + "index.html?front=house", "mmark", "McCluster", { title: "McCluster, the house",
+      sub: "Matthew McCluster’s front door: the M, the records and the World from his side." }] : HOUSE_ROOM;
     WINGS.home.slots[1] = EVERYTHING_ROOM;
-    if (PAGE_PROFILE) {
-      var profile = PAGE_PROFILE;
-      homeTab.href = profile.home;
-      homeTab.setAttribute("aria-label", "Open " + profile.name + "’s front page");
-      homeTab.setAttribute("data-perspective", "page-profile");
-      homeTab.innerHTML = (profile.avatar
-        ? '<img class="appbar__m appbar__m--creator appbar__m--brand" src="' + attrOf(profile.avatar) + '" alt="">'
-        : '<span class="appbar__m appbar__m--initial" aria-hidden="true">' + textOf(initialOf(profile.name)) + '</span>') +
-        '<span class="appbar__sr">' + textOf(profile.name) + '</span>';
-      var destination = new URL(profile.home);
-      var current = destination.origin === location.origin && destination.pathname === location.pathname && destination.search === location.search;
-      homeTab.classList.toggle("is-here", current);
-      if (current) homeTab.setAttribute("aria-current", "page"); else homeTab.removeAttribute("aria-current");
-      WINGS.home.home = profile.home;
-    }
-    var p = PERSPECTIVE || (AUTH_STATE.signed_in ? SELF_PROFILE : null);
-    if (p && p.kind !== "house") {
-      var door = HOUSE + (p.kind==="artist" ? "music-creator.html" : "member-front.html") +
-        "?handle=" + encodeURIComponent(p.handle);
-      WINGS.home.slots[1] = [door, "folk", shortName(p.name), { title: p.name + "’s profile",
-        sub: "Return to this " + (p.kind === "artist" ? "artist" : "member") + "’s front page." }];
-    }
   }
+
   function setPerspective(raw) {
     var p = cleanPerspective(raw);
     if (!p || !AUTH_STATE.signed_in) return false;
@@ -591,7 +570,7 @@
     body.classList.toggle("mcc-auth-out", !signedIn);
     body.setAttribute("data-mcc-auth", signedIn ? "in" : "out");
 
-    /* The center remains the platform door; profile context updates its held wing. */
+    /* Restore account context, unless this document supplies its own branding. */
     paintPerspective();
     /* Exactly three columns, signed in or not. Record and Analytics were
        member-only columns; they are contextual now (Create in the World

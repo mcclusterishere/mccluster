@@ -42,9 +42,9 @@ test('the bar knows the World\'s own host and keeps today\'s behaviour until the
     'the World is the root of its own host, mnet.html elsewhere');
   /* the three cells: Music and the M against the house, the Globe against the World */
   assert.match(bar, /href="' \+ HOUSE \+ 'listen\.html" data-appnav="music"/);
-  assert.match(bar, /href="' \+ HOUSE \+ 'platform-home\.html" data-appnav="home"/);
+  assert.match(bar, /href="' \+ HOUSE \+ 'index\.html" data-appnav="home"/);
   assert.match(bar, /href="' \+ WORLD \+ 'mnet\.html\?view=feed" data-appnav="world"/);
-  assert.match(bar, /src="' \+ ROOT \+ 'assets\/img\/equity-uprise-mark-white\.png"/, 'static files come from the page\'s own host');
+  assert.match(bar, /src="' \+ ROOT \+ 'assets\/img\/m-mark\.png"/, 'static files come from the page\'s own host');
   assert.match(bar, /worldTab\.href = worldAt\("\?view=feed"\);/);
   /* the wings resolve the same way; the account stays on the page's own host */
   assert.match(bar, /function resolveRoom\(wing, path\) \{\n    if \(path === MAP\) return MAP;\n    if \(path\.indexOf\("mnet\.html"\) === 0\) return worldAt\(path\.slice\("mnet\.html"\.length\)\);\n    return \(wing === "world" \? ROOT : HOUSE\) \+ path;\n  \}/);
@@ -54,17 +54,19 @@ test('the bar knows the World\'s own host and keeps today\'s behaviour until the
   assert.match(bar, /var ECOSYSTEM = \[HOUSE_ORIGIN\.replace\(\/\\\/\$\/, ""\), "https:\/\/mccluster\.org", "https:\/\/www\.mccluster\.org", "https:\/\/humanuprise\.com", "https:\/\/www\.humanuprise\.com"\];/, 'the sign-in crosses to the company host too');
 });
 
-test('creator perspective stays available in the home wing while the center opens the platform', async () => {
+test('creator perspective persists globally with a document-local branding override', async () => {
   const bar = await read('js/tabbar.js');
   assert.match(bar, /var PERSPECTIVE_KEY = "mcc_perspective";/);
   assert.match(bar, /window\.addEventListener\("mcc:perspective",function\(e\) \{ if\(AUTH_STATE\.signed_in\)setPerspective\(e\.detail\); \}\);/, "only authenticated users select another perspective");
   assert.match(bar, /var HANDLE_RE = \/\^\[a-z0-9\]\[a-z0-9\._-\]\{2,39\}\$\/;/, 'a handle is validated before it becomes a link');
   assert.match(bar, /if \(u\.protocol === "https:"\) avatar = u\.href;/, 'only an https picture is painted');
-  assert.match(bar, /p\.kind==="artist" \? "music-creator\.html" : "member-front\.html"/, "creators retain artist pages and all members have front pages");
-  assert.match(bar, /homeTab\.href = HOUSE \+ "platform-home\.html"/);
+  assert.match(bar, /p\.kind === "artist" \? "music-creator\.html" : "member-front\.html"/, "creators retain artist pages and all members have front pages");
+  assert.match(bar, /var p = PAGE_PROFILE \|\| PERSPECTIVE \|\| \(AUTH_STATE\.signed_in \? SELF_PROFILE : null\)/);
+  assert.match(bar, /: HOUSE \+ "index\.html"/);
   assert.match(bar, /homeTab\.removeAttribute\("data-perspective"\)/);
   assert.match(bar, /WINGS\.home\.slots\[0\] = HOUSE_ROOM/);
-  assert.match(bar, /WINGS\.home\.slots\[1\] = \[door, "folk"/);
+  assert.match(bar, /WINGS\.home\.slots\[1\] = EVERYTHING_ROOM/);
+  assert.match(bar, /WINGS\.home\.slots\[0\] = p \? \[HOUSE \+ "index\.html\?front=house", "mmark", "McCluster"/);
   /* the house is one hold away: the M as supplied, beside Everything */
   assert.match(bar, /mmark: \["assets\/img\/m-mark\.png", "appbar__m"\],/);
   /* Matthew's front door lets the perspective go */
