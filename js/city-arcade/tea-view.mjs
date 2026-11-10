@@ -87,7 +87,8 @@ export function mountTea(root, onFinish, {locationId,onReturn} = {}) {
     if(!pendingResult||busy)return;
     const pending=pendingResult;
     await cloudTask(async()=>{
-      let r;try{r=await arcadeRequest('/finish/'+pending.id,'POST',pending.body);}catch(e){if(e.status===409)cloudStatus('The server already holds a different result for this run. This device copy was not saved; review it before discarding.');throw e;}
+      // A 409 rejects with cloud.mjs's finish-conflict text; cloudTask shows it and the receipt stays queued (W2).
+      const r=await arcadeRequest('/finish/'+pending.id,'POST',pending.body);
       if(disposed)return;
       settleResult(scope,pending.id);if(pendingResult===pending)pendingResult=null;persist();cloudStatus('Practice result saved to your account.');
       onFinish({...state,score:Number(r.score),cloud:'saved'});
