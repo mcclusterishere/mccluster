@@ -4,11 +4,59 @@ Branch `claude/new-session-83ken5` (draft PR 793). This file is the resume point
 
 ## How the remaining work is run
 
-1. Iterative by the owner's direction (2026-11-10): at most one background workflow runs at a time, and nothing finished stays only on the build machine. Every hourly checkpoint pushes what is committed here and pushes every new green commit of the product repository to its `claude/installation-core-m1` branch (the owner granted push access to `mcclusterishere/equity-uprise` on 2026-11-10; its `main` is never pushed). One item at a time is finished and pushed. A slice goes onto the branch as soon as its own tests and the three suites pass on the combined tree (Worker, Core, root), with the source validator.
+1. Iterative by the owner's direction (2026-11-10): at most one background workflow runs at a time, and nothing finished stays only on the build machine. A checkpoint every 15 minutes pushes what is committed here and pushes every new green commit of the product repository to its `claude/installation-core-m1` branch (the owner granted push access to `mcclusterishere/equity-uprise` on 2026-11-10; its `main` is never pushed). One item at a time is finished and pushed. A slice goes onto the branch as soon as its own tests and the three suites pass on the combined tree (Worker, Core, root), with the source validator.
 2. Work happens in small steps that each end in a commit. A restart of the machine loses at most the step in flight.
 3. Reviews follow as fix commits. Finished work is not held back waiting for them.
 4. At most three small jobs run at once (the machine ran out of memory at higher load).
 5. Never push another branch, never merge, never apply SQL, never deploy, never touch the OVH host.
+
+## Resume from GitHub alone
+
+Everything needed to finish is pushed. If the build machine is gone, another agent can pick up from these:
+
+- **This repository**, branch `claude/new-session-83ken5` (PR #793). Read this file first, then:
+  - `HANDOFF.md` (session 4 first);
+  - `DEFECT-LEDGER.md`;
+  - `TRACEABILITY.md`;
+  - `patches/README.md`;
+  - `supabase/pending/PROMOTION-ORDER.md`.
+
+  CI is green except the City Arcade progression journey at 1280 px. It stalls one waypoint short of checkpoint 2,
+  and the PR comment of 2026-11-10 15:55 UTC explains it.
+- **`mcclusterishere/equity-uprise`** (private product repository):
+
+  | Branch | What it holds |
+  | --- | --- |
+  | `claude/installation-core-m1` | stage 3, in progress (the site task module) |
+  | `claude/installation-core-stage1`, `claude/installation-core-stage2` | the delivered stages |
+  | `claude/composed-candidate-r1` | the repaired candidate |
+  | `claude/installation-core-handoff` | `handoff/README.md` (where stage 3 stands and the steps left) and `handoff/stage3/` (the builders' brief, the frozen design and the lane reports) |
+
+- **COM-3 (#782)**: `patches/pr-782-com3/BRIEF.md` is the brief. Nothing is built yet.
+
+Open items and the next step for each:
+
+1. **Stage 3.** Follow `handoff/README.md` on the product's handoff branch:
+   - finish lane 3 (its final runs and report);
+   - two adversarial reviews;
+   - a repair round to `0.1.0-review.11`;
+   - an independent final verification.
+
+   Push each green step to `claude/installation-core-m1`.
+2. **COM-3.** Follow its brief: build the series against #782's head `53dcd552`, have it reviewed twice, repair it,
+   have it checked independently, then add it here.
+3. **Close-out.**
+   - Refresh the PR #793 description.
+   - Confirm CI on the final head, re-running a failed job at most once.
+   - Report to the owner with the owner decisions listed below.
+
+Rules for whoever continues:
+- `AGENTS.md` applies.
+- Push only `claude/new-session-83ken5` here, and only `claude/*` branches in the product repository (never `main`,
+  never force).
+- No merge, no SQL applied to any real database, no deploy, no step on the OVH host.
+- One background workflow at a time. Commit and push at every green step.
+- No model names in any file.
 
 ## Queue
 

@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 700,
+  "candidate_count": 701,
   "capability_source_count": 104,
-  "support_only_count": 596,
-  "checks_total": 2698,
-  "checks_passed": 2698,
+  "support_only_count": 597,
+  "checks_total": 2702,
+  "checks_passed": 2702,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -184,6 +184,7 @@
     "docs/control-plane/deep-audit-20261109/HANDOFF.md",
     "docs/control-plane/deep-audit-20261109/OPEN-PR-DISPOSITION.md",
     "docs/control-plane/deep-audit-20261109/TRACEABILITY.md",
+    "docs/control-plane/deep-audit-20261109/WORK-QUEUE.md",
     "docs/control-plane/deep-audit-20261109/patches/pr-734-c8/MANIFEST.json",
     "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/MANIFEST.json",
     "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/base-equity-uprise-sources.log",
@@ -714,7 +715,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "700 entries"
+      "detail": "701 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -4038,6 +4039,26 @@
     },
     {
       "name": "docs/control-plane/deep-audit-20261109/TRACEABILITY.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/WORK-QUEUE.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/WORK-QUEUE.md classified",
+      "passed": true,
+      "detail": "classification='audit_support'"
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/WORK-QUEUE.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/WORK-QUEUE.md support rationale present",
       "passed": true,
       "detail": ""
     },

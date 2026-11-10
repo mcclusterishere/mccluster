@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 700,
+  "candidate_count": 701,
   "capability_source_count": 104,
-  "support_only_count": 596,
+  "support_only_count": 597,
   "entries": [
     {
       "path": ".cursorrules",
@@ -1339,6 +1339,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Traces the owner's 2026-11-09 product strategy (near-term proofs, P0 to P9, acceptance scenarios) to evidence at b4855d94; names the Equity Uprise product repository, its branches and paths only as evidence. Audit record; no building capability, program or geometry."
+    },
+    {
+      "path": "docs/control-plane/deep-audit-20261109/WORK-QUEUE.md",
+      "classification": "audit_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Resume point of the deep-audit branch: queue items, their next steps and how to resume from GitHub alone; names the Equity Uprise product repository and its branches only as places the work lives. Audit record; no building capability, program or geometry."
     },
     {
       "path": "docs/control-plane/deep-audit-20261109/patches/pr-734-c8/MANIFEST.json",
