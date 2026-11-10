@@ -40,7 +40,7 @@ test('cast approval and sources are required; unrelated characters and copied vo
   const v = personaForActor({ actor_key: 'test.one' }, config); assert.equal(v.canon.version, 'fixture-v1'); assert.equal(v.disclosure.is_ai, true);
 });
 test('duplicates, completed and retry-exhausted jobs never create another actor job', () => {
-  const p = plan({ items: [...items, ...items], existing: [{ kind: 'news', item_id: 'news0', status: 'completed' }, { kind: 'song', item_id: 'song0', status: 'failed', attempts: 2 }] });
+  const p = plan({ items: [...items, ...items], existing: [{ kind: 'news', item_id: 'news0', status: 'done' }, { kind: 'song', item_id: 'song0', status: 'failed', attempts: 2 }] });
   assert.equal(new Set(p.jobs.map(j => j.jobId)).size, p.jobs.length);
   assert.ok(!p.jobs.some(j => ['news:news0', 'song:song0'].includes(j.input.coverage_key)));
   assert.ok(p.outcomes.some(o => o.reason === 'retry_exhausted'));
@@ -64,8 +64,8 @@ test('pending, daily, actor and backfill limits bound proposals; deferred work i
 });
 test('private, removed and group posts are skipped; owner status reports actual outcomes', () => {
   const p = plan({ items: [{ ...items[6], visibility: 'private' }] }); assert.equal(p.jobs.length, 0); assert.equal(p.outcomes[0].reason, 'not_public_or_removed');
-  const status = coverageStatus([{ id: 'job', target_id: 'test.one', status: 'completed', attempts: 1, input: { kind: 'news', item_id: 'n' }, output: { status: 'withheld', reason: 'review_withheld', published: false } }]);
-  assert.equal(status[0].status, 'withheld'); assert.equal(status[0].published, false);
+  const status = coverageStatus([{ id: 'job', target_id: 'test.one', status: 'done', attempts: 1, input: { kind: 'news', item_id: 'n' }, output: { status: 'withheld', reason: 'review_withheld', published: false } }]);
+  assert.equal(status[0].status, 'done'); assert.equal(status[0].preview_outcome, 'withheld'); assert.equal(status[0].published, false);
 });
 
 test('missing approved cast defers coverage without losing the checkpoint', () => {

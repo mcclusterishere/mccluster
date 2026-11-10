@@ -102,9 +102,12 @@ export function planActorCoverage({ orgId, items = [], personaConfig, policy = D
   return result;
 }
 
+// Rows are ops_agent_jobs as the Core queue writes them. status keeps the queue's
+// own word (queued, running, done or failed; completeJob writes done) and a done
+// preview's outcome (withheld or needs_owner_review) is reported beside it.
 export function coverageStatus(jobs = []) {
   return jobs.map(j => ({ job_id: j.id, actor_key: j.target_id, kind: j.input?.kind, item_id: j.input?.item_id,
-    status: j.status === 'completed' ? (j.output?.status || 'needs_review') : j.status,
+    status: j.status, preview_outcome: j.status === 'done' ? (j.output?.status || 'needs_review') : null,
     attempts: j.attempts || 0, reason: j.output?.reason || null, evidence_sha256: j.output?.provenance?.evidence_sha256 || null,
     review: j.output?.review || null, metrics: j.output?.metrics || null, published: j.output?.published === true }));
 }
