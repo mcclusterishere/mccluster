@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {compileRecipe,normalizeInput,regionalCoordinate,DAY} from '../../PRIM3/game/halo/generated/recipe.mjs';
+import {compileRecipe,normalizeInput,regionalCoordinate,DAY} from '../../js/prim3-tactics/levels/recipe.mjs';
 import {buildGeneratedLevel,saveGeneratedRecipe,loadGeneratedRecipe,RECIPE_KEY} from '../../js/prim3-tactics/levels/generated.mjs';
 import * as R from '../../js/prim3-tactics/tactical-resolver.mjs';
 import {resolveHostileTurn,parseResume} from '../../js/prim3-tactics/lifecycle.mjs';

@@ -16,7 +16,16 @@ import React, {
 } from 'react';
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
-import { isDefinitiveAuthFailure, isFresh, persistableSession, sessionChangedError, singleFlight } from './sessionPolicy';
+import {
+  isAccessTokenRefusal,
+  isDefinitiveAuthFailure,
+  isFresh,
+  persistableSession,
+  restoredSession,
+  sessionChangedError,
+  singleFlight,
+  stampExpiry,
+} from './sessionPolicy';
 
 export const SUPABASE_URL = 'https://zmnhbrjyhxzhkxmhkexs.supabase.co';
 export const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4';
@@ -40,8 +49,12 @@ export type MccUser = {
 export type MccSession = {
   access_token: string;
   refresh_token: string;
+  /** In an answer from the auth server only: spent when the answer is stamped. */
   expires_in?: number;
+  /** On this device's clock, stamped when the answer arrived (sessionPolicy stampExpiry). */
   expires_at?: number;
+  /** The auth server's own expires_at, on its clock: kept, never compared with Date.now(). */
+  server_expires_at?: number;
   token_type?: string;
   user?: MccUser | null;
 };
@@ -75,23 +88,26 @@ type MccContextValue = {
 
 const MccContext = createContext<MccContextValue | null>(null);
 
-function normalizeSession(value: any): MccSession | null {
+/**
+ * A session the auth server has just sent (sign-in, sign-up, refresh). Its
+ * expiry is stamped here, on this device's clock, as the answer arrives
+ * (sessionPolicy stampExpiry). Every answer comes through here once, and
+ * nothing else does: a session read back from the keychain is restoredSession,
+ * as stored.
+ */
+function sessionFromAnswer(value: any): MccSession | null {
   if (!value || typeof value !== 'object' || !value.access_token) return null;
-  const session: MccSession = value;
-  if (!session.expires_at) {
-    session.expires_at = Math.floor(Date.now() / 1000) + Number(session.expires_in || 3600);
-  }
-  return session;
+  return stampExpiry(value as MccSession);
 }
 
 async function storedSession(): Promise<MccSession | null> {
   try {
     if (Platform.OS === 'web') {
       const raw = (globalThis as any).localStorage?.getItem(SESSION_KEY);
-      return normalizeSession(raw ? JSON.parse(raw) : null);
+      return restoredSession<MccSession>(raw ? JSON.parse(raw) : null);
     }
     const raw = await SecureStore.getItemAsync(SESSION_KEY);
-    return normalizeSession(raw ? JSON.parse(raw) : null);
+    return restoredSession<MccSession>(raw ? JSON.parse(raw) : null);
   } catch {
     return null;
   }
@@ -161,12 +177,14 @@ export function MccProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<MccUser | null>(null);
   const sessionRef = useRef<MccSession | null>(null);
 
+  /* Commits an answer already stamped (sessionFromAnswer), or null. Committing
+     never stamps: the keychain gets the expiry the answer was given when it
+     arrived. */
   const commitSession = useCallback(async (next: MccSession | null) => {
-    const normalized = normalizeSession(next);
-    sessionRef.current = normalized;
-    setSession(normalized);
-    await persistSession(normalized);
-    return normalized;
+    sessionRef.current = next;
+    setSession(next);
+    await persistSession(next);
+    return next;
   }, []);
 
   /* One refresh at a time (refresh tokens are single-use). Only a definitive
@@ -182,7 +200,7 @@ export function MccProvider({ children }: { children: ReactNode }) {
           return null;
         }
         try {
-          const next = normalizeSession(
+          const next = sessionFromAnswer(
             await authRequest<MccSession>('token?grant_type=refresh_token', {
               method: 'POST',
               body: { refresh_token: current.refresh_token },
@@ -205,6 +223,18 @@ export function MccProvider({ children }: { children: ReactNode }) {
     [commitSession],
   );
 
+  /* Ends `refused`, the session Auth has just answered for, unless it has been
+     replaced since (signed out, or signed in as someone else): the answer was
+     about that session, not about whatever followed it. */
+  const endSession = useCallback(
+    async (refused: MccSession) => {
+      if (sessionRef.current !== refused) return;
+      await commitSession(null);
+      setUser(null);
+    },
+    [commitSession],
+  );
+
   const freshSession = useCallback(async (): Promise<MccSession> => {
     let current = sessionRef.current;
     if (!current) throw Object.assign(new Error('Sign in first.'), { status: 401 });
@@ -217,9 +247,14 @@ export function MccProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let alive = true;
+    const readAccount = async (current: MccSession) => {
+      const who = await authRequest<MccUser>('user', { token: current.access_token });
+      if (alive) setUser(who);
+    };
     (async () => {
       /* The stored session signs the member in at once, offline included;
-         the server is asked afterwards and only a definitive answer ends it. */
+         the server is asked afterwards and only a definitive answer about the
+         session ends it. */
       let restored = await storedSession();
       sessionRef.current = restored;
       if (restored) {
@@ -235,12 +270,29 @@ export function MccProvider({ children }: { children: ReactNode }) {
       }
       if (restored && isFresh(restored)) {
         try {
-          const who = await authRequest<MccUser>('user', { token: restored.access_token });
-          if (alive) setUser(who);
+          await readAccount(restored);
         } catch (error) {
-          if (alive && isDefinitiveAuthFailure(error)) {
-            await commitSession(null);
-            setUser(null);
+          if (!isAccessTokenRefusal(error)) {
+            if (alive && isDefinitiveAuthFailure(error)) await endSession(restored);
+          } else if (alive) {
+            /* Auth refused the token, not the session. 403 bad_jwt is what it
+               answers for a token that has expired by its clock, as one this
+               phone still reads as fresh has when the phone's clock was set
+               back after the token arrived. The refresh token may well be
+               good, so refresh once and read again. A refused refresh ends the
+               session (refresh() signs out itself), as does an answer that
+               names the session or the member as gone. Offline or a 5xx keeps
+               it, and so does a token refused again straight after the refresh:
+               it is not refreshed twice. */
+            let renewed: MccSession | null = null;
+            try {
+              renewed = await refresh();
+              if (renewed) await readAccount(renewed);
+            } catch (again) {
+              if (alive && renewed && !isAccessTokenRefusal(again) && isDefinitiveAuthFailure(again)) {
+                await endSession(renewed);
+              }
+            }
           }
         }
       }
@@ -249,13 +301,13 @@ export function MccProvider({ children }: { children: ReactNode }) {
     return () => {
       alive = false;
     };
-  }, [commitSession, refresh]);
+  }, [endSession, refresh]);
 
   const signIn = useCallback(
     async (email: string, password: string) => {
       const cleanEmail = String(email || '').trim().toLowerCase();
       if (!cleanEmail || !password) throw new Error('Email and password are required.');
-      const next = normalizeSession(
+      const next = sessionFromAnswer(
         await authRequest<MccSession>('token?grant_type=password', {
           method: 'POST',
           body: { email: cleanEmail, password },
@@ -279,7 +331,7 @@ export function MccProvider({ children }: { children: ReactNode }) {
         method: 'POST',
         body: { email: cleanEmail, password, data },
       });
-      const next = normalizeSession(result);
+      const next = sessionFromAnswer(result);
       if (next) {
         await commitSession(next);
         const who = next.user || null;
@@ -309,41 +361,99 @@ export function MccProvider({ children }: { children: ReactNode }) {
 
   const accessToken = useCallback(async () => (await freshSession()).access_token, [freshSession]);
 
+  /* A server answered 401 to a request sent with `used`'s token. Returns the
+     session to send it once more with, or null if the 401 stands.
+
+     A 401 is not taken at its word. PostgREST answers one when it refuses the
+     token, but the McCluster API answers the same 401 whenever its own check
+     with Auth fails: an expired token, and also Auth down or rate limited, or
+     a session ended elsewhere; and some routes answer 401 for reasons a
+     refresh cannot fix. Auth is the authority on the token, so it is asked
+     (/auth/v1/user), and its answer is taken as at launch:
+     - only the token refused (isAccessTokenRefusal): refresh once, through the
+       same single-flight refresh(), which signs out if it is itself refused;
+     - the token accepted: the 401 was about something else, and stands;
+     - the session or the member gone: that session ends;
+     - offline, a timeout or a 5xx: the 401 stands, and the session is kept.
+     If the session changed while the request was out (another request
+     refreshed it, say), the request goes again on the new one, but only for
+     the same member: never under another account. */
+  const renewRefused = useCallback(
+    async (used: MccSession): Promise<MccSession | null> => {
+      const successor = () => {
+        const current = sessionRef.current;
+        if (!current) return null;
+        if (current.user?.id && current.user.id === used.user?.id) return current;
+        throw sessionChangedError();
+      };
+      if (sessionRef.current !== used) return successor();
+      try {
+        await authRequest<MccUser>('user', { token: used.access_token });
+        return null;
+      } catch (answer) {
+        if (!isAccessTokenRefusal(answer)) {
+          if (isDefinitiveAuthFailure(answer)) await endSession(used);
+          return null;
+        }
+      }
+      if (sessionRef.current !== used) return successor();
+      return refresh();
+    },
+    [endSession, refresh],
+  );
+
+  /* Sends a request with the member's token. A 401 is put to renewRefused,
+     and the request is sent once more if it returns a session: once at most.
+     A write sent twice is safe because a 401 means it was refused before
+     anything was done: PostgREST checks the token before any SQL runs, and the
+     API's gate checks it before any write on the routes this app calls. One
+     route can answer 401 after a write: PATCH /v1/mnet/profile sets the handle
+     (set_mccluster_id) and then makes a second call under the same token,
+     which a token expiring between the two would see refused. Setting the same
+     handle again gives the same result. An API route that writes before its
+     token is checked would need its own answer to this. */
+  const authorized = useCallback(
+    async <T,>(send: (token: string) => Promise<Response>): Promise<T> => {
+      const used = await freshSession();
+      const response = await send(used.access_token);
+      if (response.status !== 401) return responseJson<T>(response);
+      const renewed = await renewRefused(used);
+      return responseJson<T>(renewed ? await send(renewed.access_token) : response);
+    },
+    [freshSession, renewRefused],
+  );
+
   const api = useCallback(
-    async <T,>(path: string, init: JsonInit = {}): Promise<T> => {
-      const current = await freshSession();
-      return responseJson<T>(
-        await fetch(MCC_API_URL + path, {
+    async <T,>(path: string, init: JsonInit = {}): Promise<T> =>
+      authorized<T>((token) =>
+        fetch(MCC_API_URL + path, {
           method: init.method || 'GET',
           headers: {
-            authorization: `Bearer ${current.access_token}`,
+            authorization: `Bearer ${token}`,
             'content-type': 'application/json',
             ...(init.headers || {}),
           },
           body: init.body === undefined ? undefined : JSON.stringify(init.body),
         }),
-      );
-    },
-    [freshSession],
+      ),
+    [authorized],
   );
 
   const rest = useCallback(
-    async <T,>(path: string, init: JsonInit = {}): Promise<T> => {
-      const current = await freshSession();
-      return responseJson<T>(
-        await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    async <T,>(path: string, init: JsonInit = {}): Promise<T> =>
+      authorized<T>((token) =>
+        fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
           method: init.method || 'GET',
           headers: {
             apikey: SUPABASE_PUBLISHABLE_KEY,
-            authorization: `Bearer ${current.access_token}`,
+            authorization: `Bearer ${token}`,
             'content-type': 'application/json',
             ...(init.headers || {}),
           },
           body: init.body === undefined ? undefined : JSON.stringify(init.body),
         }),
-      );
-    },
-    [freshSession],
+      ),
+    [authorized],
   );
 
   const rpc = useCallback(

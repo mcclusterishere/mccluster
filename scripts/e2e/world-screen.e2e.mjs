@@ -1273,10 +1273,13 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>(!process.env.EDIT
     await page.waitForSelector('#mnFeed [data-post-id]',{timeout:15000}).catch(()=>{});
     const shell = await page.evaluate(()=>{const h=document.documentElement,visible=el=>!!el&&el.getClientRects().length>0&&getComputedStyle(el).visibility!=='hidden';
       return {social:h.classList.contains('hu-social-only'),mode:h.dataset.worldMode,tabs:[...document.querySelectorAll('.wt-world-modes,.wt-world-modes button')].some(visible),
+        modes:[...document.querySelectorAll('.wt-world-modes button')].filter(visible).map(b=>b.dataset.worldMode),
         feed:!document.getElementById('mnFeedView').hidden,posts:document.querySelectorAll('#mnFeed [data-post-id]').length,
         planner:visible(document.getElementById('wtPlanner')),frame:document.getElementById('mnWorldFrame').getAttribute('src'),
         expand:document.querySelector('.mn__world-expand').getAttribute('href')};});
-    check(scope,'the World is the social feed: no Travel or Missions tab, the feed is what it shows',shell.social&&shell.mode==='posts'&&!shell.tabs&&shell.feed&&shell.posts>0&&!shell.planner,shell);
+    /* owner, 2026-11-07: the public World's modes are News feed and E=UP (Environmental Justice) on the same globe;
+       Travel and the general Missions mode stay owner-only. So the bar shows exactly those two, never a Travel or Missions tab. */
+    check(scope,'the World is the social feed: News feed and E=UP only, no Travel or Missions tab, the feed is what it shows',shell.social&&shell.mode==='posts'&&JSON.stringify(shell.modes)===JSON.stringify(['posts','environment'])&&shell.feed&&shell.posts>0&&!shell.planner,shell);
     check(scope,'the globe, and the expanded globe, are told to leave missions out',/[?&]missions=0(&|$)/.test(shell.frame)&&/[?&]missions=0(&|$)/.test(shell.expand),shell);
     await globe.waitForFunction(()=>typeof window.__huMissionPins==='function'&&document.documentElement.classList.contains('globe-no-missions'),null,{timeout:25000}).catch(()=>{});
     await page.waitForTimeout(800);
@@ -1289,9 +1292,13 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>(!process.env.EDIT
     check(scope,'no mission card, list or rail in the feed, and no door into Missions',missionBits.length===0,missionBits);
     const promoted = await page.evaluate(()=>{const t=document.body.innerText;return {rail:!!document.getElementById('mnRail'),words:/WAYS TO MOVE|Campaigns & missions|See campaigns/i.test(t)};});
     check(scope,'Ways to move is gone: no campaigns or missions promoted on the feed',!promoted.rail&&!promoted.words,promoted);
-    /* swiping the feed sideways used to change tabs; there is nothing to change to */
-    await page.evaluate(()=>{const f=document.getElementById('mnWorldFeed');const fire=(type,x)=>f.dispatchEvent(new TouchEvent(type,{bubbles:true,touches:type==='touchend'?[]:[new Touch({identifier:1,target:f,clientX:x,clientY:300})],changedTouches:[new Touch({identifier:1,target:f,clientX:x,clientY:300})]}));try{fire('touchstart',300);fire('touchend',60);}catch(_){}});
-    check(scope,'a sideways swipe stays on the feed',await page.evaluate(()=>document.documentElement.dataset.worldMode)==='posts');
+    /* swiping the feed sideways moves between the two public modes only (owner, 2026-11-07): left reaches E=UP,
+       right comes back to the feed; Travel and Missions are never reachable this way */
+    const swipe=(from,to)=>page.evaluate(([from,to])=>{const f=document.getElementById('mnWorldFeed');const fire=(type,x)=>f.dispatchEvent(new TouchEvent(type,{bubbles:true,touches:type==='touchend'?[]:[new Touch({identifier:1,target:f,clientX:x,clientY:300})],changedTouches:[new Touch({identifier:1,target:f,clientX:x,clientY:300})]}));try{fire('touchstart',from);fire('touchend',to);}catch(_){}return document.documentElement.dataset.worldMode;},[from,to]);
+    const swipedLeft=await swipe(300,60);const swipedBack=await swipe(60,300);const swipedBackAgain=await swipe(60,300);
+    check(scope,'a sideways swipe moves between the feed and E=UP only, never to Travel or Missions',swipedLeft==='environment'&&swipedBack==='posts'&&swipedBackAgain==='environment',{swipedLeft,swipedBack,swipedBackAgain});
+    await swipe(300,60);
+    check(scope,'a second swipe brings the feed back',await page.evaluate(()=>document.documentElement.dataset.worldMode)==='posts');
     if (member) {
       /* a search finds people and groups, never missions */
       /* on a phone the field opens from the search button */
@@ -1349,7 +1356,7 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>(!process.env.EDIT
     const shell=await page.evaluate(()=>({modes:[...document.querySelectorAll('.wt-world-modes button')].filter(b=>b.getClientRects().length).map(b=>b.dataset.worldMode),
       mode:document.documentElement.dataset.worldMode,memo:JSON.parse(localStorage.getItem('mcc_world_owner')||'null'),reloaded:performance.getEntriesByType('navigation')[0].type,
       expand:document.querySelector('.mn__world-expand').getAttribute('href')}));
-    check(scope,'the owner\'s World has Travel, Missions and Feed, and opens on the Feed',JSON.stringify(shell.modes)===JSON.stringify(['travel','missions','posts'])&&shell.mode==='posts',shell);
+    check(scope,'the owner\'s World has Travel, Missions, Feed and E=UP, and opens on the Feed',JSON.stringify(shell.modes)===JSON.stringify(['travel','missions','posts','environment'])&&shell.mode==='posts',shell);
     check(scope,'the server\'s yes is remembered for this account; the World opened again once to show it',!!shell.memo&&/^aaaaaaaa/.test(shell.memo.sub)&&shell.reloaded==='reload',shell);
     check(scope,'the expanded globe shows the missions too',!/missions=0/.test(shell.expand),shell.expand);
     const globe=page.frame({url:/action-globe\.html/});

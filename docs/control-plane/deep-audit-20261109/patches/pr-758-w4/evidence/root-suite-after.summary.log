@@ -1,0 +1,14 @@
+# lane w4, head 027efd52bde35d4a90c26915140fed3ef98cd582, base 90ce7c4ce2
+# node --test scripts/test/*.test.mjs  (summary lines; skips listed)
+# trial.mjs sha256: c940d76d1f1c8948e3d823bcd59772225d3e65895f71642ff7eb4638fe85f33e
+exit=0
+ok 1434 - when Floor 1 is built, its reception, vestibule and stair barriers land on the plan # SKIP Floor 1 GLB is built at publish time (deploy-pages.yml); build it locally to run this
+ok 1500 - one mission for each of the 24 CAST-NATIONS mains, from that nation's main character # SKIP Prim3 checkout not found
+ok 1504 - every cited source file exists in Prim3 origin/main, and every section is a heading in it # SKIP Prim3 checkout not found
+# tests 1992
+# suites 0
+# pass 1989
+# fail 0
+# cancelled 0
+# skipped 3
+# todo 0

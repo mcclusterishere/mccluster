@@ -1,0 +1,12 @@
+# head 9604a966354aaecba2f373e6e674b296ac269bb8 (series applied on 8255fb35); working tree clean; 2026-11-10T11:58:46Z; Python 3.13.18
+# cwd repo root ; command: python3 docs/design/equity-uprise-building/production/verify_equity_uprise_repo_sources.py
+{
+  "candidate_count": 599,
+  "capability_source_count": 104,
+  "support_only_count": 495,
+  "checks_total": 2294,
+  "checks_passed": 2294,
+  "checks_failed": 0,
+  "passed": true
+}
+exit=0

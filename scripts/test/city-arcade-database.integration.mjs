@@ -4,7 +4,7 @@ import {SOLE_MISSION} from '../../js/city-arcade/sole-config.mjs';
 import {TEA_MISSION} from '../../js/city-arcade/tea-action.mjs';
 const {db,rpc,handle,close}=await createArcadeDatabase();let count=0;
 const id='bridgeport-main-elm',document={version:1,gameId:'gauranfucking-tea-tea-rush',locationId:id,tea:structuredClone(TEA_MISSION)};
-const call=(action,revision,doc=document,actor=OWNER,target=id)=>rpc({p_action:action,p_actor:actor,p_id:target,p_document:doc,p_revision:revision??null});
+let starts=0;const call=(action,revision,doc=document,actor=OWNER,target=id)=>rpc({p_action:action,p_actor:actor,p_id:target,p_document:action==='start'?{startKey:`dddddddd-dddd-4ddd-8ddd-${String(++starts).padStart(12,'0')}`}:doc,p_revision:revision??null});
 async function rejects(fn,code){await assert.rejects(fn,e=>e.code===code);count++;}
 try{
   for(const role of ['anon','authenticated'])for(const sql of ['select * from public.arcade_missions','select * from public.arcade_runs',`select public.arcade_command('read','${OWNER}','${id}')`]){

@@ -168,6 +168,18 @@ export function aggregateSystemHealth(snapshot, { nowMs = Date.now() } = {}) {
     }
   }
 
+  /* Audit finding C1: null counts were coerced to zero and a read error was
+     ignored, so a database that refused the job query still rolled up as
+     overall=ok with queue=0. Unknown stays unknown and is a degradation. */
+  const countKeys = ['total', 'queued', 'running', 'failed', 'done'];
+  const jobsUnreadable = Boolean(jobs.error) || !jobs.counts || countKeys.some((key) => jobs.counts[key] === null || jobs.counts[key] === undefined || !Number.isFinite(Number(jobs.counts[key])));
+  if (jobsUnreadable) {
+    degradation(degradationList, 'jobs', 'job_evidence_unavailable', 'warning', 'Core job counts and completion evidence could not be read; workload health is unknown, not zero.', { error: jobs.error || 'job counts unavailable' });
+  }
+  if (compute.error || text(compute.status).toLowerCase() === 'unknown') {
+    degradation(degradationList, 'compute', 'compute_inventory_unavailable', 'warning', 'Specialized compute inventory could not be read; node availability is unknown.', compute.error ? { error: compute.error } : null);
+  }
+
   if (finite(jobs.counts?.failed) > 0) {
     degradation(degradationList, 'jobs', 'failed_jobs_present', 'warning', `${finite(jobs.counts.failed)} failed Core job(s) are present.`);
   }
@@ -203,13 +215,16 @@ export function aggregateSystemHealth(snapshot, { nowMs = Date.now() } = {}) {
 
   const criticalCount = degradationList.filter((item) => item.severity === 'critical').length;
   const overall = criticalCount ? 'fail' : degradationList.length ? 'degraded' : 'ok';
-  const queueDepth = finite(jobs.counts?.queued) + finite(jobs.counts?.running);
+  const queueDepth = jobsUnreadable ? 'unknown' : finite(jobs.counts?.queued) + finite(jobs.counts?.running);
+  const failures = jobsUnreadable ? 'unknown' : finite(jobs.counts?.failed);
+  const evidenceText = jobsUnreadable ? 'unknown' : `${finite(jobs.evidence?.verified)}/${finite(jobs.evidence?.eligible_done)}`;
 
   return {
     executor: 'host_health:v3',
     schema_version: SYSTEM_HEALTH_SCHEMA,
     overall,
-    summary: `system=${overall} source_runtime=${shaMatch ? 'matched' : 'drift_or_unknown'} queue=${queueDepth} failures=${finite(jobs.counts?.failed)} evidence=${finite(jobs.evidence?.verified)}/${finite(jobs.evidence?.eligible_done)}`,
+    summary: `system=${overall} source_runtime=${shaMatch ? 'matched' : 'drift_or_unknown'} queue=${queueDepth} failures=${failures} evidence=${evidenceText}`,
+    evidence_state: jobsUnreadable ? 'unknown' : 'observed',
     source: {
       repository: source.repository || 'mcclusterishere/mccluster',
       github_main_sha: githubSha || null,

@@ -95,7 +95,11 @@ function ensureGlobe() {
     globe = createGlobe(host, { reducedMotion: REDUCED, onCountry });
     globeLoading = null;
     paintGlobe();
-    globe.ready.then(() => { paintGlobe(); const m = findMission(doc, ui.sel); if (m) globe.focus(m.lat, m.lon); document.body.dataset.pwGlobe = 'ready'; if (ui.mode === 'edit') renderSide(); })
+    /* A late globe-ready must never rebuild the editor: rebuilding the side panel while the
+       owner is typing replaces the field under the caret and the typed briefing is lost (seen
+       as the PR #793 tactics job at 1280px, where the slow renderer finished during the fill).
+       Only the country list depends on the globe, so refresh those options in place. */
+    globe.ready.then(() => { paintGlobe(); const m = findMission(doc, ui.sel); if (m) globe.focus(m.lat, m.lon); document.body.dataset.pwGlobe = 'ready'; if (ui.mode === 'edit') refreshCountryOptions(); })
       .catch((e) => { document.body.dataset.pwGlobe = 'failed'; $('pwHint').textContent = e.message; });
   }).catch((e) => {
     globeLoading = null; document.body.dataset.pwGlobe = 'failed';
@@ -220,12 +224,23 @@ function missionBlock(m) {
 /* ---------- the World builder ---------- */
 const opt = (v, label, on) => `<option value="${esc(v)}"${on ? ' selected' : ''}>${esc(label)}</option>`;
 function field(id, label, html, span) { return `<label class="pw-field${span ? ' pw-span2' : ''}" id="pwL-${id}"><span>${esc(label)}</span>${html}</label>`; }
+function countryOptions(cast) {
+  const countries = globe ? globe.countries() : [];
+  return (countries.length ? countries : cast.map((c) => c.country)).filter((c, i, a) => a.findIndex((x) => x.code === c.code) === i);
+}
+const countryOptionsHtml = (list, code) => list.map((c) => opt(c.code, c.name + ' (' + c.code + ')', c.code === code)).join('');
+/* Refresh only the country choices once the globe knows them, leaving every other field,
+   its value and the focus exactly where the owner left them. */
+function refreshCountryOptions() {
+  const sel = $('pwF-country'), m = findMission(doc, ui.sel); if (!sel || !m) return;
+  const list = countryOptions(castOf(doc)); if (!list.some((c) => c.code === m.country.code)) list.push({ ...m.country });
+  sel.innerHTML = countryOptionsHtml(list, m.country.code);
+}
 function renderEditor() {
   const side = $('pwSide');
   const m = findMission(doc, ui.sel);
   const cast = castOf(doc);
-  const countries = globe ? globe.countries() : [];
-  const countryOpts = (countries.length ? countries : cast.map((c) => c.country)).filter((c, i, a) => a.findIndex((x) => x.code === c.code) === i);
+  const countryOpts = countryOptions(cast);
   const head = `<p class="pw-store">Drafts are kept in this browser only (localStorage), then exported as <code>data/prim3/world-missions.json</code>. Nothing here writes to a database or the API; cloud saving will reuse the Level Forge backend later.</p>
     <div class="pw-row">
       ${field('pick', 'Mission', `<select id="pwF-pick">${doc.missions.map((x) => opt(x.id, x.title + ' · ' + x.character.name, x.id === ui.sel)).join('')}</select>`)}
@@ -239,7 +254,7 @@ function renderEditor() {
       ${field('title', 'Title', `<input id="pwF-title" value="${esc(m.title)}">`)}
       ${field('character', 'Character', `<select id="pwF-character">${cast.map((c) => opt(c.name, c.name + ' · ' + c.country.name + (c.main ? '' : ' (legacy)'), c.name === m.character.name)).join('')}${cast.some((c) => c.name === m.character.name) ? '' : opt(m.character.name, m.character.name, true)}</select>`)}
       ${field('role', 'Character role', `<input id="pwF-role" value="${esc(m.character.role)}">`)}
-      ${field('country', 'Country', `<select id="pwF-country">${countryOpts.map((c) => opt(c.code, c.name + ' (' + c.code + ')', c.code === m.country.code)).join('')}</select>`)}
+      ${field('country', 'Country', `<select id="pwF-country">${countryOptionsHtml(countryOpts, m.country.code)}</select>`)}
       ${field('region', 'Region', `<select id="pwF-region">${REGIONS.map((r) => opt(r, r, r === m.region)).join('')}</select>`)}
       ${field('place', 'Place', `<input id="pwF-place" value="${esc(m.place || '')}">`)}
       <div class="pw-two">${field('lat', 'Latitude', `<input id="pwF-lat" type="number" step="0.0001" min="-90" max="90" inputmode="decimal" value="${esc(m.lat)}">`)}${field('lon', 'Longitude', `<input id="pwF-lon" type="number" step="0.0001" min="-180" max="180" inputmode="decimal" value="${esc(m.lon)}">`)}</div>

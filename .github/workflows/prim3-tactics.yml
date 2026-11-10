@@ -6,6 +6,8 @@ on:
       - 'js/prim3-tactics/**'
       - 'js/prim3-world/**'
       - 'PRIM3/game/halo/generated/**'
+      - 'js/prim3-tactics/levels/recipe.mjs'
+      - 'scripts/test/published-import-closure.test.mjs'
       - 'scripts/e2e/prim3-generated-missions.e2e.mjs'
       - 'prim3-world.html'
       - 'prim3-tactics-preview.html'

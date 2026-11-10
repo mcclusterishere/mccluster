@@ -29,6 +29,7 @@ import { DESK_MODEL } from './prim3-agent-news.mjs';
 import { loadCast, loadManifest, characterById, personaCard, minorNames } from '../characters/cast.mjs';
 import { chooseStimulus, seeded } from '../characters/posting-plan.mjs';
 import { checkPost, copiesFrom } from '../characters/post-safety.mjs';
+import { stopIfLeaseLost } from '../lease.mjs';
 
 export const BATCH = 4;
 export const JOB_TYPE = 'character_post';
@@ -106,7 +107,7 @@ export async function runCharacterBatch(entries, { chat = localAiChat, cast = lo
   return { results, run: { wall_ms: Date.now() - started, usage: response?.usage || null, model: response?.model || null } };
 }
 
-export async function characterPost(job, { query = rest, chat = localAiChat, resolveOrg = resolveHouseOrgId, now = new Date(), mode = postingMode(), cast = loadCast(), manifest } = {}) {
+export async function characterPost(job, { query = rest, chat = localAiChat, resolveOrg = resolveHouseOrgId, now = new Date(), mode = postingMode(), cast = loadCast(), manifest, signal } = {}) {
   const ids = Array.isArray(job?.input?.characters) ? job.input.characters.map(String) : [];
   const base = { executor: EXECUTOR, mode, characters: ids };
   if (mode !== 'live') return { ...base, published: 0, reason: 'flag_off', receipts: [], withheld: [] };
@@ -140,6 +141,7 @@ export async function characterPost(job, { query = rest, chat = localAiChat, res
   const receipts = [], withheld = [];
   for (const r of results) {
     if (!r.ok) { withheld.push({ character_id: r.character.id, reason: r.reason }); continue; }
+    stopIfLeaseLost(job, signal, 'publishing a post');
     const { body: receipt } = await query('rpc/ops_character_publish_post', {
       method: 'POST',
       body: JSON.stringify({

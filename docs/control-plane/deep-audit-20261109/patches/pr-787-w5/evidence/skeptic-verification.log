@@ -1,0 +1,124 @@
+# Skeptic verification of the W5 series (PR #787), 2026-11-10. Independent worktrees: <S>/verify-w5 (git am of both patches on cf8c3cc7),
+# <S>/verify-w5-base (cf8c3cc7), <S>/verify-w5-merge (scratch merges and rebases). node v22.23.4, git 2.43.0, Playwright 1.63.0, Chrome for Testing 153.0.8010.12.
+# Every result line below is copied by script from the log of the run that produced it. <S> = the session scratchpad.
+
+## A. git am on cf8c3cc7
+Applying: fix(prim3): publish the lattice-learning runtime the reviewed-mission page imports (W5)
+Applying: fix(prim3): teach an HQ or B1 cell as the plan's 12 ft (3.6576 m) and name the 3.54 m rule tile apart (W5)
+tree after both patches: ccfb9a09a7ab88ad3fce34b7528014c078206ad1 ; lane head fix-w5-20261110 tree: ccfb9a09a7ab88ad3fce34b7528014c078206ad1
+tree after 0001: 2bbe9ed5edfa1ba93790e804a67ba62e86745690 ; 63c26995 tree: 2bbe9ed5edfa1ba93790e804a67ba62e86745690
+copy detection on 0001: copy {PRIM3/game/halo/adaptive => js/prim3-mission}/topology-learning.mjs (100%)
+runtime after 0001 byte-identical to the PR head's PRIM3 copy
+
+## B. the manifest's commands, re-run (head = series applied, base = cf8c3cc7)
+three unit files: head # tests 19 # pass 19 # fail 0 # skipped 0 | base # tests 17 # pass 17 # fail 0 # skipped 0
+Worker PRIM3 files (12): head # tests 105 # pass 105 # fail 0 # skipped 0 | base # tests 105 # pass 105 # fail 0 # skipped 0
+node --test scripts/test/prim3-*.test.mjs: head # tests 177 # pass 174 # fail 0 # skipped 3 | base # tests 175 # pass 172 # fail 0 # skipped 3
+root suite scripts/test/*.test.mjs: head # tests 2055 # pass 2052 # fail 0 # skipped 3 | base # tests 2053 # pass 2050 # fail 0 # skipped 3
+PRIM3 halo npm run validate: head # tests 6 # pass 6 # fail 0 # skipped 0 | base # tests 6 # pass 6 # fail 0 # skipped 0
+python unittest: head Ran 7 tests in 0.000s OK | base Ran 7 tests in 0.001s OK
+Equity Uprise verifier head: [('candidate_count', '640'), ('capability_source_count', '104'), ('support_only_count', '536'), ('checks_total', '2458'), ('checks_passed', '2458'), ('checks_failed', '0')] ; EQUITY UPRISE BUILDING CONTEXT AUDIT: PASS / Indexed 366 tracked files across 9 categories.
+Equity Uprise verifier base: [('candidate_count', '640'), ('capability_source_count', '104'), ('support_only_count', '536'), ('checks_total', '2458'), ('checks_passed', '2458'), ('checks_failed', '0')] ; EQUITY UPRISE BUILDING CONTEXT AUDIT: PASS / Indexed 366 tracked files across 9 categories.
+head with only the base source map: FAIL: repo-wide discovered source set exactly classified {"missing_from_map": ["js/prim3-mission/topology-learning.mjs"], "stale_in_map": ["PRIM3/game/halo/adaptive/topology-learning.mjs"]} exit=1
+
+## C. the series test file against the base product code
+V1 base + series test file as-is (with the two other unit files): # tests 15 # pass 14 # fail 1 # skipped 0 ; Cannot find module '<S>/verify-w5-base/js/prim3-mission/topology-learning.mjs' ERR_MODULE_NOT_FOUND
+V2 same, its one runtime import pointed back at the PRIM3 copy: # tests 19 # pass 17 # fail 2 # skipped 0
+   not ok 18 - authored frames follow their level modules: an HQ/B1 cell is the plan's 12 ft WORLD_M, the 3.54 m rule tile is named apart (audit W5)
+   error: 'equity-uprise-hq: names the plan cell and the rule tile separately: X=x−3, Y=8−y; +X east, +Y north; 3.54 m/tile'
+   not ok 19 - the published mission UI imports the published runtime; the private path only re-exports it (audit W5)
+   error: 'js/prim3-mission/released-app.mjs imports the published runtime'
+V3 tree after 0001 only (frames not fixed) + series test: # tests 5 # pass 4 # fail 1 # skipped 0 ; not ok 4 - authored frames follow their level modules: an HQ/B1 cell is the plan's 12 ft WORLD_M, the 3.54 m rule tile is named apart (audit W5) error: 'equity-uprise-hq: names the plan cell and the rule tile separately: X=x−3, Y=8−y; +X east, +Y north; 3.54 m/tile'
+V4 base with only the three HQ/B1 frames fixed, test import -> PRIM3: # tests 5 # pass 4 # fail 1 # skipped 0 ; not ok 5 - the published mission UI imports the published runtime; the private path only re-exports it (audit W5) error: 'js/prim3-mission/released-app.mjs imports the published runtime'
+mutations.py on the series head: 10/10 mutations caught; checkout restored: clean
+
+## D. combined check (merge with 9bda5896; conflicted map resolved by an independent union script; its output is byte-identical to the lane's union_source_map.py output in both states)
+ours cf8c3cc7: my resolution sha256 1ec06e98bf37769b8ff192dc3119f29239bdca9dc4973d2e6f545d149d13b5eb
+ours f515f2d9: my resolution sha256 d4e90115360ea9cbf09f57725b0a55e5752d104bd7750bb95785340d88239fd7
+lane outputs: union-check-without.json 1ec06e98bf37769b8ff192dc3119f29239bdca9dc4973d2e6f545d149d13b5eb ; union-from-commits.json (series state) d4e90115360ea9cbf09f57725b0a55e5752d104bd7750bb95785340d88239fd7
+closure test without the series: # tests 2 # pass 1 # fail 1 # skipped 0
+   js/prim3-mission/released-app.mjs -> ../../PRIM3/game/halo/adaptive/topology-learning.mjs (publish strips PRIM3/game/halo/adaptive/topology-learning.mjs)
+   js/prim3-mission/released-learning.mjs -> ../../PRIM3/game/halo/adaptive/topology-learning.mjs (publish strips PRIM3/game/halo/adaptive/topology-learning.mjs)
+closure test with 0001 only: # tests 2 # pass 2 # fail 0 # skipped 0 | with the series: # tests 2 # pass 2 # fail 0 # skipped 0 | three unit files on the merged tree with the series: # tests 19 # pass 19 # fail 0 # skipped 0
+verifier on the merged tree: without "candidate_count": 696 "checks_total": 2682 "checks_passed": 2682 | with "candidate_count": 696 "checks_total": 2682 "checks_passed": 2682
+
+## E. integration order (scripted; integration-check.sh)
+# integration check, 2026-11-10T13:02:54Z, git 2.43.0, node v22.23.4; PR head cf8c3cc7f642bf7e48a4b5e042df1e24203d2ecf, audit branch 9bda58962d8163fbf34c63c5b03da6246eab13c6
+## #787 commits not on the audit branch: 8 (5 non-merge, 3 merges)
+## 1. literal rebase: git checkout --detach cf8c3cc7f642bf7e48a4b5e042df1e24203d2ecf; git rebase 9bda58962d8163fbf34c63c5b03da6246eab13c6
+CONFLICT (content): Merge conflict in prim3-released-mission.html
+CONFLICT (content): Merge conflict in scripts/test/prim3-mission-client.test.mjs
+CONFLICT (content): Merge conflict in scripts/test/prim3-released-learning.test.mjs
+Could not apply 27f9f5d1... Add versioned square and axial learning to existing mission variants
+unmerged: prim3-released-mission.html scripts/test/prim3-mission-client.test.mjs scripts/test/prim3-released-learning.test.mjs 
+## 2. git rebase --rebase-merges 9bda58962d8163fbf34c63c5b03da6246eab13c6
+CONFLICT (content): Merge conflict in docs/design/equity-uprise-building/production/equity-uprise-repo-source-map-v2.json
+CONFLICT (content): Merge conflict in docs/design/equity-uprise-building/production/generated/equity-uprise-repo-source-coverage-report.json
+CONFLICT (content): Merge conflict in prim3-released-mission.html
+CONFLICT (content): Merge conflict in scripts/test/prim3-mission-client.test.mjs
+CONFLICT (content): Merge conflict in scripts/test/prim3-released-learning.test.mjs
+Could not apply cf8c3cc7... onto # Merge main into topology learning and preserve release recovery
+unmerged: docs/design/equity-uprise-building/production/equity-uprise-repo-source-map-v2.json docs/design/equity-uprise-building/production/generated/equity-uprise-repo-source-coverage-report.json prim3-released-mission.html scripts/test/prim3-mission-client.test.mjs scripts/test/prim3-released-learning.test.mjs 
+## 3. merge (the combined state the manifest tests): git merge --no-ff --no-commit 9bda58962d8163fbf34c63c5b03da6246eab13c6
+CONFLICT (content): Merge conflict in docs/design/equity-uprise-building/production/equity-uprise-repo-source-map-v2.json
+CONFLICT (content): Merge conflict in docs/design/equity-uprise-building/production/generated/equity-uprise-repo-source-coverage-report.json
+unmerged: docs/design/equity-uprise-building/production/equity-uprise-repo-source-map-v2.json docs/design/equity-uprise-building/production/generated/equity-uprise-repo-source-coverage-report.json 
+## 4. merge-then-series: commit that resolved merge, then git am -3 the two patches
+same path, different entry: []
+union entries 696 three-way entries 696
+verifier exit=0
+Applying: fix(prim3): publish the lattice-learning runtime the reviewed-mission page imports (W5)
+Applying: fix(prim3): teach an HQ or B1 cell as the plan's 12 ft (3.6576 m) and name the 3.54 m rule tile apart (W5)
+am exit=0
+"candidate_count":696,"checks_total":2682,"checks_passed":2682,"checks_failed":0,
+files changed by the verifier (0 = committed report current): 0
+# tests 21 # pass 21 # fail 0 
+merge-then-series tree: b8ee29914b8a1ec9a5378109204aacf11127723b
+## 5. series-then-merge (as the manifest's combined check): series head from git am on cf8c3cc7f642bf7e48a4b5e042df1e24203d2ecf, then merge 9bda58962d8163fbf34c63c5b03da6246eab13c6, same resolution
+series applied on cf8c3cc7f642bf7e48a4b5e042df1e24203d2ecf: tree ccfb9a09a7ab88ad3fce34b7528014c078206ad1
+same path, different entry: []
+union entries 696 three-way entries 696
+verifier exit=0
+series-then-merge tree: b8ee29914b8a1ec9a5378109204aacf11127723b
+RESULT: the two orders give the identical tree
+## scratch worktree restored to cf8c3cc7, 0 changes
+
+## F. Chromium (driver evidence/topology-e2e-driver.mjs over evidence/memory-rest.mjs; NOT PostgreSQL)
+topology journey, head source checkout: PASS lines 8; DRIVER: PASS in 112.5 s; fixture requests 516
+topology journey, base source checkout: PASS lines 8; DRIVER: PASS in 151.5 s; fixture requests 516
+reviewed-release journeys, head (W5_JOURNEY=release): PASS lines 3; DRIVER: PASS in 243.9 s; fixture requests 166
+published merged tree WITH the series (MCC_SERVE_ROOT=<export>): PASS lines 8; DRIVER: PASS in 83.5 s; fixture requests 516
+   HTTP 404 https://matthew.mccluster.org/docs/design/equity-uprise-building/production/generated/equity-uprise-building-core-v2.glb
+   HTTP 404 https://matthew.mccluster.org/equity-uprise-preview/equity-uprise-building-core-v2.glb
+published merged tree WITHOUT the series: PASS lines 0; DRIVER: FAIL after 30.5 s; fixture requests 0
+   HTTP 404 https://matthew.mccluster.org/PRIM3/game/halo/adaptive/topology-learning.mjs
+published tree of cf8c3cc7 alone: PASS lines 0; DRIVER: FAIL after 30.5 s; fixture requests 0
+   HTTP 404 https://matthew.mccluster.org/PRIM3/game/halo/adaptive/topology-learning.mjs
+published tree of the series head alone: PASS lines 0; DRIVER: FAIL after 30.5 s; fixture requests 0
+   HTTP 404 https://matthew.mccluster.org/PRIM3/game/halo/generated/recipe.mjs
+HQ/B1 frame and horizontal overflow at 390 px while the frame is on screen (own variant of the PR journey, MCC_SERVE_ROOT=<source checkout>):
+   base equity-uprise-hq: brief "Equity Uprise HQ. X=x−3, Y=8−y; +X east, +Y north; 3.54 m/tile. Answer after a first action or turn, then after turns two and three. Combat progress i" width 390/390 OK; question width 390/390 OK; PASS lines 1
+   base equity-uprise-b1: brief "Equity Uprise B1 · Restore the Picture. X=x−3, Y=8−y; +X east, +Y north; 3.54 m/tile. Answer after a first action or turn, then after turns two and th" width 390/390 OK; question width 390/390 OK; PASS lines 1
+   base equity-uprise-b1-attack: brief "Equity Uprise B1 · Blind the Floor. X=x−3, Y=8−y; +X east, +Y north; 3.54 m/tile. Answer after a first action or turn, then after turns two and three." width 390/390 OK; question width 390/390 OK; PASS lines 1
+   head equity-uprise-hq: brief "Equity Uprise HQ. X=x−3, Y=8−y; +X east, +Y north; one cell is 12 ft (3.6576 m) on the building plan; tactical rules use the separate 3.54 m game tile" width 390/390 OK; question width 390/390 OK; PASS lines 1
+   head equity-uprise-b1: brief "Equity Uprise B1 · Restore the Picture. X=x−3, Y=8−y; +X east, +Y north; one cell is 12 ft (3.6576 m) on the building plan; tactical rules use the sep" width 390/390 OK; question width 390/390 OK; PASS lines 1
+   head equity-uprise-b1-attack: brief "Equity Uprise B1 · Blind the Floor. X=x−3, Y=8−y; +X east, +Y north; one cell is 12 ft (3.6576 m) on the building plan; tactical rules use the separat" width 390/390 OK; question width 390/390 OK; PASS lines 1
+
+## G. the full workers/mccluster suite (not run by the lane; npm test --prefix workers/mccluster, locked install symlinked) and the Worker dry-run compile
+head: # tests 1459 # pass 1459 # fail 0 # skipped 0 | base: # tests 1459 # pass 1459 # fail 0 # skipped 0
+Worker dry-run compile on the series head: Total Upload: 2512.03 KiB / gzip: 550.92 KiB | --dry-run: exiting now.
+
+## H. runtime outputs, base vs series, every variant/topology x seeds 0-39 x ordinals 0-11 x levels 1-3
+questions compared 11520 non-frame/prompt diffs 0
+[
+  [ 'equity-uprise-hq:frame', 1440 ],
+  [ 'equity-uprise-hq:prompt', 1440 ],
+  [ 'equity-uprise-b1:frame', 1440 ],
+  [ 'equity-uprise-b1:prompt', 1440 ],
+  [ 'equity-uprise-b1-attack:frame', 1440 ],
+  [ 'equity-uprise-b1-attack:prompt', 1440 ]
+]
+variant equity-uprise-hq changed keys [ 'frame' ]
+variant equity-uprise-b1 changed keys [ 'frame' ]
+variant equity-uprise-b1-attack changed keys [ 'frame' ]
+sample head HQ prompt: X=x−3, Y=8−y; +X east, +Y north; one cell is 12 ft (3.6576 m) on the building plan; tactical rules use the separate 3.54 m game tile On an unobstructed square practice lattice, find the minimum number of neighbor steps from (1, 2) to (4, 4). This is not a route through walls or an AP cost.

@@ -3,6 +3,7 @@ import { runResidentAgent } from '../resident-agent.mjs';
 import { relevantMemory, packHistory, memoryPrompt, memoryUnavailableAnswer } from '../resident-context.mjs';
 import { callCoreCapability, unwrapCapabilityResult } from '../game-studio/capability-client.mjs';
 import { emitCoreEvent, jobTraceId } from '../observability.mjs';
+import { stopIfLeaseLost } from '../lease.mjs';
 
 function clean(value, max = 12000) {
   return String(value ?? '').trim().slice(0, max);
@@ -180,7 +181,7 @@ async function updateUserState({ orgId, userMessage, status, error = null }) {
   return Array.isArray(body) ? body[0] || null : null;
 }
 
-export async function residentAiTurn(job) {
+export async function residentAiTurn(job, { signal } = {}) {
   const orgId = clean(job.org_id, 100);
   const threadId = clean(job?.input?.thread_id, 100);
   const userMessageId = clean(job?.input?.user_message_id, 100);
@@ -326,6 +327,7 @@ export async function residentAiTurn(job) {
     },
   };
 
+  stopIfLeaseLost(job, signal, 'posting the reply');
   const { body: inserted = [] } = await rest('ops_ai_messages?on_conflict=id&select=*', {
     method: 'POST',
     headers: { Prefer: 'resolution=ignore-duplicates,return=representation' },

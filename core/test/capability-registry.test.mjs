@@ -185,7 +185,7 @@ test('unknown node-advertised capabilities cannot extend the policy catalog impl
 test('capability calls delegate through the normalized tool registry with routing requirements', async () => {
   const tools = fakeTools(['owned.health']);
   const registry = new CapabilityRegistry({ toolRegistry: tools, catalog });
-  const result = await registry.call('system.health', { probe: true }, { requirements: { region: 'us' } });
+  const result = await registry.call('system.health', { probe: true }, { requirements: { region: 'us' }, operationId: 'core:job-1:0' });
   assert.equal(result.capability, 'system.health');
   assert.equal(result.provider, 'owned');
   assert.deepEqual(result.economics, { hosting: 'owned', billing: 'free' });
@@ -193,6 +193,7 @@ test('capability calls delegate through the normalized tool registry with routin
   assert.deepEqual(tools.calls[0].args, { probe: true });
   assert.deepEqual(tools.calls[0].options.requirements, { region: 'us' });
   assert.equal(tools.calls[0].options.source, 'capability:system.health');
+  assert.equal(tools.calls[0].options.operationId, 'core:job-1:0', 'a caller-scoped operation id survives the capability hop');
 });
 
 test('planned capabilities fail closed even if a compute node advertises an implementation', async () => {

@@ -1,0 +1,7 @@
+[
+  { "district": "130", "seat": "1", "name": "Synthetic Councilmember A", "role": "Council President" },
+  { "district": "130", "seat": "2", "name": "Synthetic Councilmember B" },
+  { "district": "131", "seat": "1", "name": "Synthetic Councilmember C" },
+  { "district": "131", "seat": "2", "name": "Synthetic Councilmember D", "phone": "203-555-0100 (must never be copied)" },
+  { "district": "abc", "seat": "1", "name": "Malformed entry" }
+]
