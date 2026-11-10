@@ -319,6 +319,181 @@ try {
   credits = (await api('owner', 'GET', O(`credits?mission=${missionA.id}`))).credits;
   eq(credits, [credit], 'the credit is unchanged');
 
+  /* ================================================================== 9. the accommodation path earns the same credit */
+  const REQUEST = { statement: 'Test fixture: I need to take part in writing.' };
+  const ACCOMMODATION = { statement: 'Test fixture: recording is not possible for me.\nI am sending the words and this statement instead.' };
+  const peerApp = (await saveApplication('peer', missionA.id, 0, { submit: true, requirements_revision: 1, statement: 'Test fixture: I would like to take part.', accommodation: REQUEST })).application;
+  eq([peerApp.status, peerApp.accommodation_requested], ['submitted', true], 'an application that asks for an accommodation');
+  const peerRow = (await api('owner', 'GET', O(`applications?mission=${missionA.id}&status=submitted`))).applications.find((a) => a.id === peerApp.id);
+  eq([peerRow.accommodation_requested, Object.hasOwn(peerRow, 'accommodation'), JSON.stringify(peerRow).includes(REQUEST.statement)], [true, false, false], 'the owner row carries a flag, never the text');
+  const readsBefore = (await plane.league.admin('select count(*)::int as n from public.eup_accommodation_reads where application_id = $1', [peerApp.id]))[0].n;
+  const accommodation = (await api('owner', 'GET', O(`applications/${peerApp.id}/accommodation`))).accommodation;
+  eq([accommodation.application_id, accommodation.applicant, accommodation.accommodation], [peerApp.id, ids.peer, REQUEST], 'the restricted read gives the owner the text');
+  eq((await plane.league.admin('select count(*)::int as n, max(actor::text) as actor from public.eup_accommodation_reads where application_id = $1', [peerApp.id]))[0], { n: readsBefore + 1, actor: ids.owner },
+    'evidence: the read was recorded with who read it, and no content');
+  const peerDecided = (await api('owner', 'POST', O(`applications/${peerApp.id}/decision`), { idempotency_key: key('approve'), expected_revision: peerApp.revision, decision: 'approved' })).application;
+  const peerAssignment = (await accept('peer', peerDecided.assignment.id, peerDecided.assignment.revision, POLICY.notices.participation.revision)).assignment;
+  const peerProof = (await api('peer', 'POST', M(`assignments/${peerAssignment.id}/proof`), { idempotency_key: key('proof'), expected_revision: 0,
+    proof: { title: 'Test fixture: written song', lyrics: LYRICS, credits: [{ name: 'Journey Fixture Peer', role: 'lyrics' }], rights: RIGHTS, accommodation: ACCOMMODATION, review_notice_revision: POLICY.notices.private_review.revision } })).proof;
+  eq([peerProof.state, peerProof.media, peerProof.consent.purpose], ['submitted', [], 'private_review'], 'an accommodation proof: submitted privately, no media');
+  const peerReview = await api('owner', 'GET', O(`proofs/${peerProof.id}/media?revision=1`));
+  eq([peerReview.media, peerReview.proof.document.accommodation], [[], ACCOMMODATION], 'the review read of an accommodation proof: the statement, no link');
+  const peerReviewed = (await decide('owner', peerProof.id, 1, { asset_revision: peerProof.asset_revision, ...PASS })).proof;
+  eq([peerReviewed.state, peerReviewed.credit.participant], ['accepted', ids.peer], 'accepted on the same three dimensions');
+  credits = (await api('owner', 'GET', O(`credits?mission=${missionA.id}`))).credits;
+  eq(credits.map((c) => c.participant), [ids.tester, ids.peer], 'two credits on the mission');
+  eq([sorted(credits[1]), credits[1].kind, credits[1].mission_id, credits[1].campaign_id], [sorted(credit), credit.kind, credit.mission_id, credit.campaign_id],
+    'the accommodation proof earns the identical credit: the same fields, the same kind, nothing saying how the work was made');
+
+  /* ================================================================== 10. needs changes, a retake, revision 2 */
+  const appB = (await saveApplication('tester_b', missionB.id, 0, { submit: true, requirements_revision: 1, statement: 'Test fixture: campaign B.' })).application;
+  const decidedB = (await api('owner', 'POST', O(`applications/${appB.id}/decision`), { idempotency_key: key('approve'), expected_revision: appB.revision, decision: 'approved' })).application;
+  const assignmentB = (await accept('tester_b', decidedB.assignment.id, decidedB.assignment.revision, POLICY.notices.participation.revision)).assignment;
+  async function record(as, assignmentId, bytes) {
+    const started = await begin(as, assignmentId, { kind: 'audio', mime: 'audio/webm', bytes: bytes.byteLength });
+    eq((await plane.fetch(started.grant.url, { method: started.grant.method, headers: started.grant.headers, body: bytes })).status, 200, `${as}: the take is stored`);
+    const done = (await api(as, 'POST', M(`uploads/${started.upload.id}/complete`), {})).upload;
+    eq([done.state, done.sha256], ['sealed', sha256(bytes)], `${as}: the take is sealed`);
+    return done;
+  }
+  const take1 = synthAudio(700, 2);
+  const take2 = synthAudio(720, 3);
+  const u1 = await record('tester_b', assignmentB.id, take1);
+  const songB = (media) => ({ title: 'Test fixture: campaign B song', lyrics: LYRICS, credits: CREDITS, rights: RIGHTS, media, review_notice_revision: POLICY.notices.private_review.revision });
+  const proofB1 = (await api('tester_b', 'POST', M(`assignments/${assignmentB.id}/proof`), { idempotency_key: key('proof'), expected_revision: 0, proof: songB([{ upload_id: u1.id, sha256: u1.sha256 }]) })).proof;
+  const changes = (await decide('owner', proofB1.id, 1, { asset_revision: proofB1.asset_revision, mission_decision: 'changes', rights_decision: 'pass', safety_decision: 'pass', reason: 'Test fixture: please record a second take.' })).proof;
+  eq([changes.state, changes.review.decision, changes.credit], ['needs_changes', 'needs_changes', null], 'needs changes: no credit');
+  meB = (await api('tester_b', 'GET', M())).league;
+  eq(meB.assignments[0].proof.reviews.map((r) => [r.proof_revision, r.decision, r.reason]), [[1, 'needs_changes', 'Test fixture: please record a second take.']], 'the participant reads the decision and the reason');
+  const u2 = await record('tester_b', assignmentB.id, take2);
+  const proofB2 = (await api('tester_b', 'POST', M(`assignments/${assignmentB.id}/proof`), { idempotency_key: key('proof'), expected_revision: 1, proof: songB([{ upload_id: u2.id, sha256: u2.sha256 }]) })).proof;
+  eq([proofB2.id, proofB2.revision, proofB2.state, proofB2.asset_revision !== proofB1.asset_revision], [proofB1.id, 2, 'submitted', true], 'the retake is revision 2 with a new digest');
+  await decide('owner', proofB1.id, 1, { asset_revision: proofB1.asset_revision, ...PASS }, { status: 409, reason: 'revision_conflict', label: 'a review of revision 1 is refused' });
+  await decide('owner', proofB1.id, 2, { asset_revision: proofB1.asset_revision, ...PASS }, { status: 409, reason: 'media_binding', label: 'revision 2 reviewed with the digest of revision 1 is refused' });
+  await api('owner', 'GET', O(`proofs/${proofB1.id}/media?revision=1`), undefined, { status: 409, reason: 'revision_conflict', label: 'revision 1 no longer opens for review' });
+  const reviewB2 = await api('owner', 'GET', O(`proofs/${proofB1.id}/media?revision=2`));
+  eq(reviewB2.media.map((m) => [m.upload_id, m.sha256]), [[u2.id, sha256(take2)]], 'revision 2 plays the retake');
+  eq(sha256(new Uint8Array(await (await plane.fetch(reviewB2.media[0].url)).arrayBuffer())), sha256(take2), 'and the link serves its bytes');
+  const acceptedB = (await decide('owner', proofB1.id, 2, { asset_revision: proofB2.asset_revision, ...PASS })).proof;
+  eq([acceptedB.state, acceptedB.credit.proof_revision, acceptedB.credit.asset_revision], ['accepted', 2, proofB2.asset_revision], 'revision 2 accepted: the credit names revision 2 and its digest');
+  await api('tester_b', 'POST', M(`uploads/${u2.id}/discard`), { idempotency_key: key('discard') }, { status: 409, reason: 'media_binding', label: 'the take the accepted revision lists is not discarded' });
+  const pathU1 = C.mediaObjectPath({ tenant: ids.owner, assignment: assignmentB.id, upload: u1.id, ext: 'webm' });
+  ok(plane.storage.object(pathU1) !== null, 'evidence: the first take is still stored');
+  eq((await api('tester_b', 'POST', M(`uploads/${u1.id}/discard`), { idempotency_key: key('discard') })).upload.state, 'discarded', 'the first take, no longer listed, is discarded');
+  eq(plane.storage.object(pathU1), null, 'evidence: and its object deleted');
+
+  /* ================================================================== 11. self-approval and self-review */
+  const ownApp = (await saveApplication('owner', missionA.id, 0, { submit: true, requirements_revision: 1, statement: 'Test fixture: the owner takes part.' })).application;
+  await api('owner', 'POST', O(`applications/${ownApp.id}/decision`), { idempotency_key: key('self-approve'), expected_revision: ownApp.revision, decision: 'approved' },
+    { status: 403, reason: 'self_review_denied', label: 'the owner does not approve their own application' });
+  const ownDecided = (await api('reviewer', 'POST', O(`applications/${ownApp.id}/decision`), { idempotency_key: key('approve'), expected_revision: ownApp.revision, decision: 'approved' })).application;
+  eq([ownDecided.status, ownDecided.decided_by], ['approved', ids.reviewer], 'a second house owner approves it');
+  const ownAssignment = (await accept('owner', ownDecided.assignment.id, ownDecided.assignment.revision, POLICY.notices.participation.revision)).assignment;
+  const ownProof = (await api('owner', 'POST', M(`assignments/${ownAssignment.id}/proof`), { idempotency_key: key('proof'), expected_revision: 0,
+    proof: { title: 'Test fixture: owner song', lyrics: LYRICS, credits: [{ name: 'Journey Fixture Owner', role: 'lyrics' }], rights: RIGHTS, accommodation: { statement: 'Test fixture: the owner writes it.' }, review_notice_revision: POLICY.notices.private_review.revision } })).proof;
+  await decide('owner', ownProof.id, 1, { asset_revision: ownProof.asset_revision, ...PASS }, { status: 403, reason: 'self_review_denied', label: 'the owner does not review their own proof' });
+  const ownReviewed = (await decide('reviewer', ownProof.id, 1, { asset_revision: ownProof.asset_revision, ...PASS })).proof;
+  eq([ownReviewed.state, ownReviewed.review.reviewer, ownReviewed.credit.participant], ['accepted', ids.reviewer, ids.owner], 'a second house owner reviews it');
+
+  /* ================================================================== 12. the module drained and disabled mid-journey */
+  let missionA2 = (await api('owner', 'POST', O(`campaigns/${campaignA.id}/missions`), { idempotency_key: key('mission-2'), mission: { ...missionDocument(songFixture), slug: 'journey-second-song', title: 'Test fixture: a second song mission' } })).mission;
+  missionA2 = (await api('owner', 'POST', O(`missions/${missionA2.id}/transition`), { idempotency_key: key('release-2'), expected_revision: missionA2.revision, to: 'released' })).mission;
+  const app2 = (await saveApplication('tester', missionA2.id, 0, { submit: true, requirements_revision: 1, statement: 'Test fixture: a second song.' })).application;
+  const decided2 = (await api('owner', 'POST', O(`applications/${app2.id}/decision`), { idempotency_key: key('approve'), expected_revision: app2.revision, decision: 'approved' })).application;
+  const x2 = (await accept('tester', decided2.assignment.id, decided2.assignment.revision, POLICY.notices.participation.revision)).assignment;
+  const staged = await begin('tester', x2.id, { kind: 'audio', mime: 'audio/webm', bytes: 600 });
+  eq((await plane.fetch(staged.grant.url, { method: 'PUT', headers: staged.grant.headers, body: synthAudio(600, 4) })).status, 200, 'a take stored but not completed');
+  const stagedPath = C.mediaObjectPath({ tenant: ids.owner, assignment: x2.id, upload: staged.upload.id, ext: 'webm' });
+  const peerDraft = (await saveApplication('peer', missionA2.id, 0, { submit: false, requirements_revision: 1, statement: 'Test fixture: a draft.' })).application;
+  const consent2 = (await grantConsent('tester', proof.id, 1, { ...CONSENT, expires_at: inDays(10) })).consent;
+  const publication2 = (await publish(proof.id, 1, { decision: 'published', consent_id: consent2.id })).publication;
+  eq([publication2.effective, (await api('peer', 'GET', M())).league.published.length], [true, 1], 'published again, seen by the audience');
+
+  const setModule = async (state) => {
+    const unit = (await api('owner', 'GET', '/v1/eup/modules')).modules.find((m) => m.moduleId === 'league');
+    const answer = await api('owner', 'POST', '/v1/eup/modules/league/state', { idempotency_key: key(state), expected_revision: unit.revision, state, reason: `Journey test: set the League ${state}.` });
+    eq(answer.receipt.policy.state, state, `the League module is ${state}`);
+  };
+  await setModule('draining');
+  const DRAINING = { status: 503, reason: 'module_draining' };
+  await saveDraft('tester', x2.id, 0, { title: 'Test fixture', lyrics: 'Line' }, { ...DRAINING, label: 'draining: no new draft' });
+  await begin('tester', x2.id, { kind: 'audio', mime: 'audio/webm', bytes: 600 }, { ...DRAINING, label: 'draining: no new upload' });
+  await api('tester', 'POST', M(`uploads/${staged.upload.id}/complete`), {}, { ...DRAINING, label: 'draining: the seal is new work' });
+  ok(plane.storage.object(stagedPath) !== null, 'evidence: the refused seal kept the stored take');
+  await saveApplication('peer', missionA2.id, peerDraft.revision, { submit: true, requirements_revision: 1, statement: 'Test fixture.' }, { ...DRAINING, label: 'draining: no application' });
+  await api('owner', 'POST', O('campaigns'), { idempotency_key: key('campaign'), campaign: { slug: 'journey-late', title: 'Test fixture', purpose: 'Test fixture.' } }, { ...DRAINING, label: 'draining: no owner work either' });
+  me = (await api('tester', 'GET', M())).league;
+  eq([me.assignments.length, me.assignments[0].credit, me.assignments[1].uploads[0].state], [2, credit, 'staged'], 'draining: own records are readable');
+  eq((await api('tester', 'POST', M(`assignments/${assignment.id}/proof`), proofBody())).proof, receipt.result, 'draining: an exact replay still answers');
+  eq((await api('owner', 'GET', O(`credits?mission=${missionA.id}`))).credits.length, 3, 'draining: owner reads answer');
+  const revoked2 = (await api('tester', 'POST', M(`consents/${consent2.id}/revoke`), { idempotency_key: key('revoke') })).consent;
+  eq([revoked2.state, revoked2.publication.state, revoked2.publication.withdrawn_reason], ['revoked', 'withdrawn', 'consent_revoked'], 'draining: revocation still withdraws the publication');
+  eq((await api('peer', 'POST', M(`applications/${peerDraft.id}/withdraw`), { idempotency_key: key('withdraw') })).application.status, 'withdrawn', 'draining: an application is still withdrawn');
+  campaignB = (await api('owner', 'POST', O(`campaigns/${campaignB.id}/transition`), { idempotency_key: key('pause-b'), expected_revision: campaignB.revision, to: 'paused' })).campaign;
+  eq(campaignB.state, 'paused', 'draining: the owner still pauses a campaign');
+
+  await setModule('disabled');
+  const DISABLED = { status: 409, reason: 'module_disabled' };
+  await saveDraft('tester', x2.id, 0, { title: 'Test fixture', lyrics: 'Line' }, { ...DISABLED, label: 'disabled: no new draft' });
+  await api('owner', 'POST', O(`campaigns/${campaignB.id}/transition`), { idempotency_key: key('resume-b'), expected_revision: campaignB.revision, to: 'released' }, { ...DISABLED, label: 'disabled: a release is new work' });
+  eq((await api('tester', 'POST', M(`uploads/${staged.upload.id}/discard`), { idempotency_key: key('discard') })).upload.state, 'discarded', 'disabled: an upload is still discarded');
+  eq(plane.storage.object(stagedPath), null, 'evidence: and its object deleted');
+  eq((await api('tester', 'POST', M(`assignments/${x2.id}/withdraw`), { idempotency_key: key('withdraw') })).assignment.status, 'withdrawn', 'disabled: an assignment is still withdrawn');
+  me = (await api('tester', 'GET', M())).league;
+  eq([me.assignments[0].status, me.assignments[1].status], ['completed', 'withdrawn'], 'disabled: own records are readable');
+
+  await setModule('enabled');
+  campaignB = (await api('owner', 'POST', O(`campaigns/${campaignB.id}/transition`), { idempotency_key: key('resume-b'), expected_revision: campaignB.revision, to: 'released' })).campaign;
+  eq(campaignB.state, 'released', 're-enabled: owner work resumes');
+  const peerAgain = (await saveApplication('peer', missionA2.id, peerDraft.revision + 1, { submit: true, requirements_revision: 1, statement: 'Test fixture: back again.' })).application;
+  eq(peerAgain.status, 'submitted', 're-enabled: member work resumes');
+
+  /* ================================================================== 13. the campaign withdrawn at the end */
+  campaignA = (await api('owner', 'GET', O('campaigns'))).campaigns.find((c) => c.id === campaignA.id);
+  const withdrawnA = (await api('owner', 'POST', O(`campaigns/${campaignA.id}/transition`), { idempotency_key: key('withdraw-campaign'), expected_revision: campaignA.revision, to: 'withdrawn' })).campaign;
+  eq(withdrawnA.state, 'withdrawn', 'campaign A withdrawn');
+  await api('owner', 'POST', O(`campaigns/${campaignA.id}/transition`), { idempotency_key: key('revive'), expected_revision: withdrawnA.revision, to: 'released' }, { status: 422, reason: 'invalid', label: 'withdrawn is final' });
+  me = (await api('tester', 'GET', M())).league;
+  eq([me.catalogue.map((c) => c.id), me.assignments.map((a) => a.status), me.assignments[0].credit], [[], ['completed', 'withdrawn'], credit], 'own records and the credit stay; the catalogue is empty');
+  const peerMe = (await api('peer', 'GET', M())).league;
+  eq(peerMe.applications.find((a) => a.id === peerAgain.id).status, 'declined', 'an open application is declined by the withdrawal');
+  eq(peerMe.applications.find((a) => a.id === peerAgain.id).decisions.at(-1).reason, 'campaign_withdrawn', 'with the reason the contract names for a campaign cascade');
+  await saveApplication('peer', missionA2.id, peerAgain.revision + 1, { submit: true, requirements_revision: 1, statement: 'Test fixture.' }, { status: 404, label: 'withdrawn: no new work' });
+  eq((await api('owner', 'GET', O(`credits?mission=${missionA.id}`))).credits.map((c) => c.participant), [ids.tester, ids.peer, ids.owner], 'every credit stays');
+
+  /* ================================================================== 14. evidence: the outbox, nothing public, storage */
+  const events = [];
+  for (let after = 0; ;) {
+    const page = (await api('owner', 'GET', O(`outbox?after=${after}&limit=200`))).events;
+    events.push(...page);
+    if (page.length < 200) break;
+    after = page.at(-1).seq;
+  }
+  const ACTION_NAMES = new Set([...Object.keys(C.OWNER_ACTIONS), ...Object.keys(C.MEMBER_ACTIONS), ...Object.keys(C.MEDIA_SEAL)]);
+  const VALUE = { uuid: (v) => typeof v === 'string' && C.PATTERNS.uuid.test(v), int: Number.isSafeInteger, sha256: (v) => typeof v === 'string' && C.PATTERNS.sha256.test(v) };
+  const valueOk = (v) => VALUE.uuid(v) || VALUE.int(v) || VALUE.sha256(v) || (Array.isArray(v) && v.every(VALUE.uuid));
+  const badEvents = events.filter((e) => !e.type.startsWith(C.OUTBOX.type_prefix) || !ACTION_NAMES.has(e.type.slice(C.OUTBOX.type_prefix.length))
+    || !Object.entries(e.payload).every(([k, v]) => C.OUTBOX.payload_keys.includes(k) && valueOk(v)));
+  eq(badEvents, [], `the outbox: ${events.length} events, each league.<action> with ids and revisions only`);
+  // One event per committed mutation: each distinct (function, actor, action, key) that answered 200 (a replay reuses
+  // its key and writes nothing; outbox.ack writes none), plus each seal that answered 200 (every seal here changed a
+  // staged row). Taken from the plane's record of the RPCs the Worker made.
+  const committed = new Set(plane.rpcLog.filter((c) => (c.name === C.RPC.owner || c.name === C.RPC.member) && c.status === 200 && c.key !== null && c.action !== 'outbox.ack')
+    .map((c) => `${c.name}|${c.actor}|${c.action}|${c.key}`));
+  const seals = plane.rpcLog.filter((c) => c.name === C.RPC.seal && c.status === 200).length;
+  eq(events.length, committed.size + seals, `one event per committed mutation (${committed.size} commands and ${seals} seals)`);
+  eq(events.filter((e) => e.type === 'league.proofs.submit' && e.payload.assignment_id === assignment.id).length, 1, 'the lost answer and its resends wrote one event');
+  const ack = (await api('owner', 'POST', O(`outbox/${events[0].seq}/ack`), { idempotency_key: key('ack'), consumer: 'journey-consumer' })).consumption;
+  eq((await api('owner', 'POST', O(`outbox/${events[0].seq}/ack`), { idempotency_key: key('ack'), consumer: 'journey-consumer' })).consumption, ack, 'acknowledging twice keeps one consumption');
+  eq((await api('owner', 'GET', O('outbox?after=0&limit=2&consumer=journey-consumer'))).events.map((e) => e.consumed), [true, false], 'the consumer sees what it acknowledged');
+  for (const relation of LEAGUE_DECOYS) {
+    eq((await plane.league.admin(`select count(*)::int as n from ${relation}`))[0].n, relation === 'storage.buckets' ? 1 : 0, `evidence: ${relation} untouched`);
+  }
+  const PATH = new RegExp(`^league/v1/t/${ids.owner}/a/[0-9a-f-]{36}/u/[0-9a-f-]{36}\\.webm$`);
+  eq(plane.storage.paths().filter((p) => !PATH.test(p)), [], 'evidence: every stored object sits at the path of its own row ids');
+  const overview = await api('owner', 'GET', '/v1/eup/overview');
+  eq([overview.league.status, overview.campaigns.withdrawn, overview.campaigns.released, overview.league.policy.valid], ['available', 1, 1, true], 'the Overview reads the same store');
+
   console.log(`${count} journey assertions passed.`);
 } finally {
   await plane.close();
