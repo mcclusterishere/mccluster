@@ -57,11 +57,15 @@ const RECENT_SUCCESSFUL = 5;
 // reads both unit files and fails if they stop matching these numbers.
 export const RECONCILE_TIMER_PERIOD_MS = 2 * 60_000; // OnUnitActiveSec=2min
 export const RECONCILE_TIMER_JITTER_MS = 20_000; // RandomizedDelaySec=20s
+// AccuracySec is not set, so systemd's default applies: the timer may elapse
+// up to one minute after it is due, which systemd uses to coalesce wakeups.
+export const RECONCILE_TIMER_ACCURACY_MS = 60_000; // AccuracySec unset: 1min
 export const RECONCILE_START_LIMIT_MS = 20 * 60_000; // TimeoutStartSec=20min
 // A healthy host can go this long between two successful cycles and no longer:
-// one cycle succeeds, the next starts within the period plus its jitter and is
-// a deploy that runs to the unit's start limit (tests, drain, restart, gates).
-// That is 22 min 20 s. The threshold adds a margin; anything older is stale.
+// one cycle succeeds, the next starts within the period plus its jitter plus
+// the timer's accuracy, and is a deploy that runs to the unit's start limit
+// (tests, drain, restart, gates). That is 23 min 20 s. The threshold adds a
+// margin; anything older is stale.
 export const RECONCILE_STALE_AFTER_MS = 25 * 60_000;
 
 // What "authenticated" means on a cycle, stated in the data so a reader of one
