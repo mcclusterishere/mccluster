@@ -1190,6 +1190,196 @@ try {
   eq([peerView.catalogue, peerView.applications.map((x) => [x.status, x.decisions[0].reason]), peerView.assignments], [[], [['declined', 'Test fixture: not this time.']], []], 'an account whose only grant is revoked reads its own declined application and the reason');
   await rejects(() => me(OUTSIDER), 'EU011', 'an account with no audience and no record still has no League');
 
+  /* ================================================================== E. media: staged uploads, the seal, media proofs */
+  const hinted = async (fn, hint, status, m) => {
+    const e = await rejects(fn, '22023', m);
+    eq([e.hint ?? null, C.errorFor(e.code, 'member', e.hint).status], [hint, status], `${m}: the refusal carries the hint ${hint}`);
+  };
+  const setPolicy = async (document) => owner('policy.set', { actor: OWNER, document: { policy: document, reason: 'Test fixture: policy change.' }, revision: (await owner('policy.get', { actor: OWNER })).revision, key: key('policy') });
+  const AUDIO = { kind: 'audio', mime: 'audio/webm', bytes: 4, duration_seconds: 3 };
+  const VIDEO = { kind: 'video', mime: 'video/mp4', bytes: 8 };
+  const begin = (actor, seat, document = AUDIO) => member('uploads.begin', { actor, id: seat.id, document, key: key('upload') });
+  const sealUpload = async (actor, seat, document, family, digest) => seal((await begin(actor, seat, document)).id, actor, sealed(document.bytes, { sha256: SHA(digest), family }));
+  const mediaProof = (uploads, extra = {}) => { const { accommodation: _unused, ...rest } = words(extra); return { ...rest, media: uploads.map((x) => ({ upload_id: x.id, sha256: x.sha256 })) }; };
+  const discard = (actor, upload) => member('uploads.discard', { actor, id: upload.id, document: {}, key: key('discard') });
+  const songSeats = await owner('assignments.list', { actor: OWNER, id: song.id });
+  const offeredOwner = songSeats.find((x) => x.participant === OWNER);
+  await rejects(() => begin(OWNER, offeredOwner), 'EU013', 'no upload before the offer is accepted');
+  const seatT = await acceptOffer(TESTER, songSeats.find((x) => x.participant === TESTER), song);
+  const seatO = await acceptOffer(OWNER, offeredOwner, song);
+
+  // E1. uploads.begin: the gates plus the media gate; kind, MIME and size against the policy and the mission; a
+  // staged row and nothing else (no URL, no path: the Worker signs for the path it derives from the row ids).
+  await rejects(() => begin(OUTSIDER, seatT), 'EU011', 'an account outside the audience cannot begin an upload');
+  await rejects(() => begin(TESTER_B, seatT), '42501', 'nor another tester for this assignment');
+  await rejects(() => begin(TESTER, { id: U(404) }), 'P0002', 'an unknown assignment is not found');
+  await setPolicy({ ...LEAGUE_POLICY, media: { enabled: false } });
+  await rejects(() => begin(TESTER, seatT), 'EU010', 'the media gate, alone: with media.enabled false an upload fails closed');
+  ok((await member('drafts.save', { actor: TESTER, id: seatT.id, document: { lyrics: 'words still work' }, revision: 0, key: key('draft') })).revision === 1, 'while every action that is not an upload still works');
+  await setPolicy({ ...LEAGUE_POLICY, entitlement: 'not_decided', media: { enabled: false } });
+  await rejects(() => begin(TESTER, seatT), 'EU012', 'order: entitlement before the media gate');
+  await setPolicy({ ...LEAGUE_POLICY, media: { enabled: true, kinds: ['audio'], audio_max_bytes: 1000, max_duration_seconds: 30 } });
+  await hinted(() => begin(TESTER, seatT, VIDEO), 'media_type_not_allowed', 415, 'a kind the policy does not list');
+  await setPolicy(LEAGUE_POLICY);
+  await hinted(() => begin(TESTER, seatT, { ...AUDIO, bytes: 1001 }), 'media_too_large', 413, 'more bytes than the policy cap of the kind');
+  await hinted(() => begin(TESTER, seatT, { ...VIDEO, bytes: 2001 }), 'media_too_large', 413, 'each kind has its own cap');
+  await hinted(() => begin(TESTER, seatT, { ...AUDIO, mime: 'audio/flac' }), 'media_type_not_allowed', 415, 'a MIME type outside the table');
+  await hinted(() => begin(TESTER, seatT, { kind: 'audio', mime: 'video/mp4', bytes: 4 }), 'media_type_not_allowed', 415, 'a MIME type of the other kind');
+  await hinted(() => begin(TESTER, seatT, { ...AUDIO, bytes: C.MEDIA.hard_max_bytes + 1 }), 'media_too_large', 413, 'more bytes than the hard ceiling');
+  const unhinted = await rejects(() => begin(TESTER, seatT, { mime: 'audio/webm', bytes: 4 }), '22023', 'an upload document without its kind');
+  eq([unhinted.hint ?? null, C.errorFor(unhinted.code, 'member', unhinted.hint).status], [null, 422], 'is plainly invalid: no hint');
+  await rejects(() => begin(TESTER, seatT, { ...AUDIO, bytes: 0 }), '22023', 'an empty upload is refused');
+  for (const client of ['path', 'url', 'object_ref', 'bucket', 'name']) await rejects(() => begin(TESTER, seatT, { ...AUDIO, [client]: 'league/v1/x' }), '22023', `the client cannot send a ${client}`);
+  eq(await n('eup_media_uploads'), 0, 'refused begins wrote no row');
+  const beginKey = key('upload');
+  const staged = await member('uploads.begin', { actor: TESTER, id: seatT.id, document: { ...AUDIO, bytes: 1000 }, key: beginKey });
+  eq(Object.keys(staged).sort(), Object.keys(C.shapeFields('upload')).sort(), 'the result is exactly the contract upload');
+  eq([staged.state, staged.scan_state, staged.kind, staged.mime, staged.ext, staged.declared_bytes, staged.max_bytes, staged.duration_seconds, staged.bytes, staged.sha256, staged.family, staged.storage, staged.participant, staged.assignment_id, staged.tenant],
+    ['staged', 'not_scanned', 'audio', 'audio/webm', 'webm', 1000, 1000, 3, null, null, null, null, TESTER, seatT.id, OWNER], 'a staged row at exactly the cap, max_bytes the policy cap in force, nothing measured yet, not scanned');
+  ok(Math.abs(new Date(staged.expires_at).getTime() - Date.now() - C.MEDIA.staged_ttl_seconds * 1000) < 120000, 'it expires after the contract staged lifetime');
+  ok(!/league\/v1|https?:|token|equity-uprise-private/.test(JSON.stringify(staged)), 'the result carries no path, URL, token or bucket');
+  eq(C.mediaObjectPath({ tenant: staged.tenant, assignment: staged.assignment_id, upload: staged.id, ext: staged.ext }), `league/v1/t/${OWNER}/a/${seatT.id}/u/${staged.id}.webm`, 'the row ids are all the Worker needs to derive the path');
+  eq(await member('uploads.begin', { actor: TESTER, id: seatT.id, document: { ...AUDIO, bytes: 1000 }, key: beginKey }), staged, 'begin replay returns the same row');
+  eq(Object.keys((await me(TESTER)).assignments.find((x) => x.id === seatT.id).uploads[0]).sort(), Object.keys(C.shapeFields('member_upload')).sort(), 'the participant lists it as a member upload: no tenant, participant, family or storage identity');
+
+  // E2. The seal: what the Worker measured, written once. Only the participant's request seals; idempotent by state.
+  const measured = sealed(1000, { sha256: SHA('b'), family: 'ebml' });
+  await rejects(() => seal(staged.id, null, measured), '42501', 'the seal needs an actor');
+  await rejects(() => seal(staged.id, UNKNOWN, measured), '42501', 'a known one');
+  await rejects(() => seal(staged.id, OUTSIDER, measured), 'EU011', 'in the released audience');
+  await rejects(() => seal(staged.id, TESTER_B, measured), '42501', 'who is the upload participant');
+  await rejects(() => seal(staged.id, REVIEWER, measured), '42501', 'a house owner is not');
+  await rejects(() => seal(U(404), TESTER, measured), 'P0002', 'an unknown upload is not found');
+  for (const [why, result] of [['no measurement', null], ['an unknown outcome', { outcome: 'ok' }], ['no storage identity', { ...measured, storage: undefined }],
+    ['bytes that differ from the listed size', { ...measured, storage: { ...measured.storage, size: 999 } }], ['an upper-case digest', { ...measured, sha256: SHA('B') }],
+    ['an unknown family', { ...measured, family: 'png' }], ['a path', { ...measured, path: 'league/v1/x' }], ['an unknown rejection reason', { outcome: 'rejected', reason: 'virus' }],
+    ['a rejection that also claims a digest', { outcome: 'rejected', reason: 'empty', sha256: SHA('b') }]]) {
+    await rejects(() => seal(staged.id, TESTER, result === null ? null : JSON.parse(JSON.stringify(result))), '22023', `a seal with ${why} is refused`);
+  }
+  await rejects(() => seal(staged.id, TESTER, sealed(999, { sha256: SHA('b') })), 'EU014', 'bytes that differ from the declared bytes are a different file');
+  await rejects(() => seal(staged.id, TESTER, { ...measured, family: 'riff_wave' }), 'EU014', 'a family the declared MIME type does not allow');
+  for (const state of ['draining', 'disabled']) await inState(state, () => rejects(() => seal(staged.id, TESTER, measured), GUARD_CODE[state], `${state}: the seal takes the normal guard (${GUARD_CODE[state]})`));
+  await setPolicy({ ...LEAGUE_POLICY, media: { enabled: false } });
+  await rejects(() => seal(staged.id, TESTER, measured), 'EU010', 'no seal while media is not enabled');
+  await setPolicy(LEAGUE_POLICY);
+  await moveCampaign(a, 'paused');
+  await rejects(() => seal(staged.id, TESTER, measured), 'EU011', 'no seal while the campaign is paused');
+  await moveCampaign(a, 'released');
+  eq((await member('uploads.get', { actor: TESTER, id: staged.id })).state, 'staged', 'every refused seal left the row staged');
+  const receiptsBeforeSeal = await n('eup_command_receipts');
+  const sealedRow = await seal(staged.id, TESTER, measured);
+  eq(Object.keys(sealedRow).sort(), Object.keys(C.shapeFields('upload')).sort(), 'the seal answers the contract upload');
+  eq([sealedRow.state, sealedRow.bytes, sealedRow.sha256, sealedRow.family, sealedRow.storage, sealedRow.sealed_at !== null, sealedRow.scan_state], ['sealed', 1000, SHA('b'), 'ebml', measured.storage, true, 'not_scanned'],
+    'sealed with the measured bytes, digest, family and storage identity; still not scanned');
+  eq(Object.keys(sealedRow.storage).sort(), Object.keys(C.shapeFields('storage_identity')).sort(), 'the storage identity is the contract shape: an object id, an eTag and a size, never a path');
+  eq(await seal(staged.id, TESTER, measured), sealedRow, 'the same measurement again returns the row unchanged');
+  await rejects(() => seal(staged.id, TESTER, { ...measured, sha256: SHA('c') }), 'EU014', 'a different digest on a sealed upload is refused: written once');
+  await rejects(() => seal(staged.id, TESTER, { ...measured, storage: { ...measured.storage, object_id: U(5) } }), 'EU014', 'so is a different object');
+  await rejects(() => seal(staged.id, TESTER, { ...measured, storage: { ...measured.storage, etag: '"other"' } }), 'EU014', 'and a different eTag');
+  await rejects(() => seal(staged.id, TESTER, { outcome: 'rejected', reason: 'empty' }), '40001', 'a sealed upload is not rejected afterwards');
+  eq(await n('eup_command_receipts'), receiptsBeforeSeal, 'the seal has no key and writes no receipt');
+  const bad = await begin(TESTER, seatT);
+  const rejectedRow = await seal(bad.id, TESTER, { outcome: 'rejected', reason: 'unrecognised' });
+  eq([rejectedRow.state, rejectedRow.rejected_reason, rejectedRow.sha256, rejectedRow.bytes, rejectedRow.storage], ['rejected', 'unrecognised', null, null, null], 'a rejection is a committed fact with its reason');
+  eq(await seal(bad.id, TESTER, { outcome: 'rejected', reason: 'unrecognised' }), rejectedRow, 'the same rejection again returns the row unchanged');
+  await rejects(() => seal(bad.id, TESTER, { outcome: 'rejected', reason: 'empty' }), '40001', 'a different reason is not "the same thing"');
+  await rejects(() => seal(bad.id, TESTER, sealed(4)), '40001', 'a rejected upload is not sealed afterwards');
+  const late = await begin(TESTER, seatT);
+  await admin(`update public.eup_media_uploads set expires_at = now() - interval '1 second' where id = $1`, [late.id]);
+  const expiredRow = await seal(late.id, TESTER, sealed(4));
+  eq([expiredRow.state, expiredRow.sha256, expiredRow.storage], ['expired', null, null], 'a seal after the staged lifetime answers the row as expired, without an error');
+  eq((await member('uploads.get', { actor: TESTER, id: late.id })).state, 'expired', 'so that the state is committed');
+  await rejects(() => seal(late.id, TESTER, sealed(4)), '40001', 'an expired upload is not sealed');
+  const spareUpload = await begin(TESTER, seatT);
+  eq(await tx(async (t) => {
+    await t.query(`select public.${C.RPC.seal}($1, $2, $3::jsonb)`, [spareUpload.id, TESTER, JSON.stringify(sealed(4, { sha256: SHA('e') }))]);
+    return (await t.query(`select mode, objsubid::int as sub from pg_locks where locktype = 'advisory'`)).rows;
+  }), [{ mode: 'ShareLock', sub: 2 }], 'the seal holds the module lock and no receipt key lock');
+
+  // E3. uploads.get: the participant's own row in every state; the storage identity only when a read is to be signed.
+  eq((await member('uploads.get', { actor: TESTER, id: staged.id })).storage, null, 'without sign the storage identity is not answered');
+  eq((await member('uploads.get', { actor: TESTER, id: staged.id, document: { sign: true } })).storage, measured.storage, 'with sign it is, for a sealed upload');
+  await rejects(() => member('uploads.get', { actor: TESTER, id: bad.id, document: { sign: true } }), 'EU014', 'an upload that is not sealed cannot be signed');
+  await rejects(() => member('uploads.get', { actor: TESTER_B, id: staged.id }), '42501', 'another account cannot read the row');
+  await rejects(() => member('uploads.get', { actor: REVIEWER, id: staged.id, document: { sign: true } }), '42501', 'a house owner reads media through the review read, not this one');
+  await rejects(() => member('uploads.get', { actor: TESTER, id: U(404) }), 'P0002', 'an unknown upload is not found');
+  await rejects(() => member('uploads.get', { actor: TESTER, id: staged.id, document: { sign: 'yes' } }), '22023', 'sign is a boolean');
+  await rejects(() => member('uploads.get', { actor: TESTER }), '22023', 'the read names its upload');
+
+  // E4. uploads.discard: reduce-only, the actor's own row, never a file the current proof lists.
+  await rejects(() => discard(TESTER_B, bad), '42501', 'another account cannot discard it');
+  await rejects(() => discard(TESTER, { id: U(404) }), 'P0002', 'an unknown upload is not found');
+  const discarded = await discard(TESTER, bad);
+  eq([discarded.state, discarded.discarded_at !== null, discarded.storage, discarded.rejected_reason], ['discarded', true, null, 'unrecognised'], 'a rejected upload is discarded; what was recorded stays');
+  await rejects(() => discard(TESTER, bad), '40001', 'a discarded upload is not discarded again');
+  await rejects(() => discard(TESTER, late), '40001', 'an expired upload is left to the purge');
+  await rejects(() => seal(bad.id, TESTER, { outcome: 'rejected', reason: 'unrecognised' }), '40001', 'a discarded upload is not sealed');
+  eq((await discard(TESTER, spareUpload)).state, 'discarded', 'a sealed upload that no proof lists is discarded');
+
+  // E5. A proof with media: sealed upload rows of THIS assignment and participant, with the digest the participant was shown.
+  const videoUpload = await sealUpload(TESTER, seatT, VIDEO, 'iso_bmff', 'c');
+  const ownerUpload = await sealUpload(OWNER, seatO, AUDIO, 'ebml', 'd');
+  const stillStaged = await begin(TESTER, seatT);
+  const wide = await newMission(a, 'audio-or-video');
+  let seatN = await enroll(TESTER, wide, OWNER);
+  const elsewhere = await sealUpload(TESTER, seatN, VIDEO, 'iso_bmff', 'f');
+  for (const [why, uploads] of [
+    ['a digest that is not the sealed one', [{ id: sealedRow.id, sha256: SHA('f') }]], ['an upload that is still staged', [{ id: stillStaged.id, sha256: SHA('a') }]],
+    ['an expired upload', [sealedRow, { id: late.id, sha256: SHA('a') }]], ['a discarded upload', [{ id: spareUpload.id, sha256: SHA('e') }]],
+    ['another participant\'s sealed upload', [ownerUpload]], ['a sealed upload of another assignment of the same participant', [elsewhere]]
+  ]) await rejects(() => submitProof(TESTER, seatT, mediaProof(uploads)), 'EU014', `a proof naming ${why} is refused`);
+  await rejects(() => submitProof(OWNER, seatO, mediaProof([sealedRow])), 'EU014', 'and the tester\'s upload is no proof for the owner');
+  await admin(`update public.eup_media_uploads set state = 'purged', purged_at = now() where id = $1`, [videoUpload.id]);
+  await rejects(() => submitProof(TESTER, seatT, mediaProof([videoUpload])), 'EU014', 'a purged upload is refused');
+  await admin(`update public.eup_media_uploads set state = 'sealed', purged_at = null where id = $1`, [videoUpload.id]);
+  await rejects(() => submitProof(TESTER, seatT, mediaProof([sealedRow, sealedRow])), '22023', 'an upload listed twice is refused');
+  await rejects(() => submitProof(TESTER, seatT, mediaProof([sealedRow, { id: sealedRow.id.toUpperCase(), sha256: sealedRow.sha256 }])), '22023', 'also when the second mention is in upper case');
+  await rejects(() => submitProof(TESTER, seatT, { ...mediaProof([sealedRow]), accommodation: { statement: 'both' } }), '22023', 'media and the accommodation statement exclude each other');
+  await rejects(() => submitProof(TESTER, seatT, { ...mediaProof([sealedRow]), media: [{ upload_id: sealedRow.id, sha256: sealedRow.sha256, object_ref: 'anything/at/all.mp3' }] }), '22023', 'a media entry cannot carry an object reference');
+  let songProof = await submitProof(TESTER, seatT, mediaProof([videoUpload, sealedRow]));
+  eq(songProof.media, [{ upload_id: videoUpload.id, kind: 'video', mime: 'video/mp4', bytes: 8, sha256: SHA('c') }, { upload_id: sealedRow.id, kind: 'audio', mime: 'audio/webm', bytes: 1000, sha256: SHA('b') }],
+    'the proof lists its media in submitted order, with the values of the sealed rows');
+  eq(Object.keys(songProof.media[0]).sort(), Object.keys(C.shapeFields('proof_media')).sort(), 'as contract proof media');
+  eq(songProof.asset_revision, await C.assetRevision(C.proofManifest({ tenant: OWNER, mission_id: song.id, assignment_id: seatT.id, requirements_revision: 2, proof: mediaProof([videoUpload, sealedRow]), media: [videoUpload, sealedRow] })),
+    'asset_revision is the SHA-256 of the contract manifest, sealed media included');
+  ok(songProof.asset_revision !== await C.assetRevision(C.proofManifest({ tenant: OWNER, mission_id: song.id, assignment_id: seatT.id, requirements_revision: 2, proof: mediaProof([sealedRow, videoUpload]), media: [sealedRow, videoUpload] })), 'the order of the files is part of the digest');
+  await rejects(() => discard(TESTER, sealedRow), 'EU014', 'a file the current proof revision lists is not discarded');
+  const opened = await owner('proofs.get', { actor: REVIEWER, id: songProof.id, document: { revision: 1, media: true } });
+  eq(Object.keys(opened).sort(), Object.keys(C.shapeFields('proof_with_media')).sort(), 'the review read is the contract proof_with_media');
+  eq(opened.uploads.map((x) => [x.id, x.ext, x.storage]), [[videoUpload.id, 'mp4', videoUpload.storage], [sealedRow.id, 'webm', measured.storage]], 'with each listed upload and its storage identity, in order');
+  eq((await owner('proofs.get', { actor: REVIEWER, id: songProof.id, document: { revision: 1 } })).uploads.map((x) => x.storage), [null, null], 'and without the identity when media was not asked for');
+  await admin(`update public.eup_proofs set moderation_state = 'held' where id = $1`, [songProof.id]);
+  await rejects(() => member('uploads.get', { actor: TESTER, id: sealedRow.id, document: { sign: true } }), 'EU016', 'while the proof is held even the participant gets no signed read');
+  await rejects(() => owner('proofs.get', { actor: REVIEWER, id: songProof.id, document: { revision: 1, media: true } }), 'EU016', 'nor the reviewer');
+  eq((await member('uploads.get', { actor: TESTER, id: sealedRow.id })).state, 'sealed', 'the row itself stays readable');
+  await admin(`update public.eup_proofs set moderation_state = 'clear' where id = $1`, [songProof.id]);
+  // A mission that stops taking video: the sealed video is no proof for it any more.
+  const narrowed = await owner('missions.update', { actor: OWNER, id: wide.id, document: { proof_modes: ['audio', 'lyrics'] }, revision: wide.revision, key: key('update') });
+  seatN = await acceptOffer(TESTER, (await owner('assignments.list', { actor: OWNER, id: wide.id }))[0], narrowed);
+  await hinted(() => begin(TESTER, seatN, VIDEO), 'media_type_not_allowed', 415, 'a kind the mission does not take');
+  await rejects(() => submitProof(TESTER, seatN, mediaProof([elsewhere])), '22023', 'a sealed file of a kind the mission no longer takes is refused');
+  // Module state for uploads: reads answer, discard is reduce-only, begin is new work.
+  const extra = await sealUpload(TESTER, seatT, AUDIO, 'ebml', 'e');
+  for (const [state, target] of [['draining', stillStaged], ['disabled', extra]]) {
+    await inState(state, async () => {
+      eq((await member('uploads.get', { actor: TESTER, id: videoUpload.id, document: { sign: true } })).storage, videoUpload.storage, `${state}: the participant reads their upload, signable`);
+      await rejects(() => begin(TESTER, seatT), GUARD_CODE[state], `${state}: a new upload is refused`);
+      eq((await discard(TESTER, target)).state, 'discarded', `${state}: a discard is admitted`);
+    });
+  }
+  // A new revision that lists only the video: the audio is no longer evidence under review and can go.
+  songProof = await submitProof(TESTER, seatT, mediaProof([videoUpload]), 1);
+  eq((await discard(TESTER, sealedRow)).state, 'discarded', 'an upload the current revision no longer lists can be discarded');
+  await rejects(() => submitProof(TESTER, seatT, mediaProof([videoUpload, sealedRow]), 2), 'EU014', 'and then is no proof any more');
+  // Review of the media proof, and credit parity with the accommodation proof of section D.
+  const songReviewed = await review(songProof, {}, REVIEWER);
+  const comparable = async (assignmentId) => { const { id, assignment_id, mission_id, campaign_id, proof_id, proof_revision, asset_revision, review_id, created_at, ...rest } = (await admin('select to_jsonb(c) as j from public.eup_mission_credits c where c.assignment_id = $1', [assignmentId]))[0].j; return rest; };
+  eq(songReviewed.credit.kind, 'mission_completion', 'the media proof is accepted and credited');
+  eq(await comparable(seatT.id), await comparable(assignment.id), 'a private media proof and an accommodation proof earn the identical credit (same participant, same kind, nothing else on the row)');
+  eq((await me(TESTER)).assignments.find((x) => x.id === seatT.id).uploads.map((x) => x.state).sort(), ['discarded', 'discarded', 'discarded', 'discarded', 'discarded', 'expired', 'sealed'], 'the participant keeps reading every upload row after completion');
+  // No storage path is stored anywhere, in any column or receipt.
+  for (const t of [...MUTABLE, ...APPEND_ONLY, 'eup_command_receipts']) eq(await n(t, `${t}::text ~ 'league/v1|equity-uprise-private|https?://|token='`), 0, `${t} holds no path, bucket, URL or token`);
+
   /* ================================================================== F. not installed, and no League policy */
   const bare = await createLeagueDatabase({ enable: false });
   try {
@@ -1200,6 +1390,7 @@ try {
     await rejects(() => bare.owner('campaigns.transition', { actor: OWNER, id: U(1), document: { to: 'paused' }, revision: 1, key: key('transition') }), 'EUM01', 'not installed: even a reduce-only one');
     await rejects(() => bare.member('applications.save', { actor: TESTER, id: U(1), document: draftDocument, revision: 0, key: key('apply') }), 'EUM01', 'not installed: a member mutation is refused EUM01');
     await rejects(() => bare.member('applications.withdraw', { actor: TESTER, id: U(1), document: {}, key: key('withdraw') }), 'EUM01', 'not installed: and a member reduce-only one');
+    await rejects(() => bare.seal(U(1), TESTER, sealed(4)), 'EUM01', 'not installed: the seal is refused EUM01');
     await rejects(() => bare.member('me.get', { actor: TESTER }), 'EU011', 'not installed: the member read answers (nothing is released to anyone)');
     await rejects(() => bare.admin(`insert into public.eup_campaigns(tenant, slug, title, document, created_by) values ($1, 'direct', 't', '{}', $1)`, [OWNER]), 'EUM01', 'not installed: a direct table write is refused by the trigger');
     eq((await bare.admin('select count(*)::int as n from public.eup_command_receipts'))[0].n, 0, 'not installed: nothing was written');

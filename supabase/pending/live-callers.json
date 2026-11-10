@@ -248,6 +248,13 @@
         "workers/mccluster/src/eup/league.js"
       ]
     },
+    "eup_league_media_seal": {
+      "kind": "function",
+      "pending": "eup_league_v1.sql",
+      "callers": [
+        "workers/mccluster/src/eup/league-contract.js"
+      ]
+    },
     "eup_league_member_command": {
       "kind": "function",
       "pending": "eup_league_v1.sql",
