@@ -16,7 +16,8 @@ const aiHarness = await readFile(new URL('../../docs/control-plane/AI-HARNESS.md
 
 test('Operator OS commands the signed Core MCP surface, not the legacy task route', () => {
   assert.match(source, /request\("\/v1\/core\/mcp"/);
-  assert.match(source, /coreMcp\("tools\/list"\)/);
+  /* the shell load passes its AbortSignal (A1 close-out); the Core MCP tool listing is what this guards */
+  assert.match(source, /coreMcp\("tools\/list"(?:, \{\}, \{ signal: signal \})?\)/);
   assert.match(source, /callCoreTool\("objective\.plan"/);
   assert.match(source, /callCoreTool\("core\.ai\.turn\.submit"/);
   assert.match(source, /callCoreTool\("core\.ai\.turn\.get"/);
