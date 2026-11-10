@@ -46,10 +46,21 @@ export function digestWindowId(now = new Date(), hours = HOURS) {
   return `core_morning_digest:${start}/${Math.max(1, Number(hours) || 12)}h`;
 }
 
+const DELIVERY_GRACE_MS = 10 * 60_000;
+
+export function isUniqueViolation(error) {
+  return error?.status === 409 && (error.detail?.code === '23505' || !error.detail?.code);
+}
+
+export function recordedRecently(signal, now = Date.now()) {
+  const at = Date.parse(signal?.created_at || '');
+  return Number.isFinite(at) && now - at < DELIVERY_GRACE_MS && now >= at - 60_000;
+}
+
 async function existingReport(orgId, windowId) {
   const params = new URLSearchParams({
     org_id: `eq.${orgId}`, signal_type: 'eq.core_morning_digest', 'payload->>window_id': `eq.${windowId}`,
-    select: 'id,payload', limit: '1',
+    select: 'id,payload,created_at', limit: '1',
   });
   const { body: rows = [] } = await rest(`ops_signals?${params.toString()}`);
   return Array.isArray(rows) && rows[0] ? rows[0] : null;
@@ -78,13 +89,22 @@ async function main() {
     signal = await existingReport(orgId, windowId);
     if (signal) duplicate = true;
     else {
-      signal = await addSignal({
-        orgId,
-        kind: 'core_morning_digest',
-        body: digest.body,
-        severity: digest.counts.failed ? 'warn' : 'info',
-        metadata: { counts: digest.counts, jobs: digest.jobs, window_hours: HOURS, window_id: windowId, sms_sent: false },
-      });
+      try {
+        signal = await addSignal({
+          orgId,
+          kind: 'core_morning_digest',
+          body: digest.body,
+          severity: digest.counts.failed ? 'warn' : 'info',
+          metadata: { counts: digest.counts, jobs: digest.jobs, window_hours: HOURS, window_id: windowId, sms_sent: false },
+        });
+      } catch (error) {
+        /* another run recorded this window between the lookup and the insert: with the unique index
+           (supabase/pending/ops_signals_digest_window_unique_v1.sql) the insert fails 23505, and that row is the report */
+        if (!isUniqueViolation(error)) throw error;
+        signal = await existingReport(orgId, windowId);
+        if (!signal) throw error;
+        duplicate = true;
+      }
       if (!signal) throw new Error('ops_signals insert returned no row');
     }
   } catch (error) {
@@ -94,6 +114,9 @@ async function main() {
 
   let sms;
   if (duplicate && signal.payload?.sms_sent === true) sms = { sent: false, reason: 'already_delivered' };
+  /* a window recorded moments ago is still being delivered by the run that recorded it; a later run
+     re-sends an undelivered report only after DELIVERY_GRACE_MS, so two runs together send one text */
+  else if (duplicate && recordedRecently(signal)) sms = { sent: false, reason: 'delivery_in_progress' };
   else {
     try { sms = await sendSms(digest.body); }
     catch (error) { sms = { sent: false, reason: 'delivery_error', error: String(error.message || error).slice(0, 300) }; }

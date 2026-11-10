@@ -244,6 +244,17 @@ a bypass, no fair-queue lock, no shared writer lock, no SKIP LOCKED, no key lock
 The import job (`workers/mccluster/src/eup/import-runner.js`) is tested and unscheduled: no route and no
 cron calls it, nothing writes a run's cursor, and every connector is still disabled.
 
+## 9. Core daily report window (written 2026-11-10)
+
+| File (+ rollback) | Creates | Callers | Proof before apply |
+|---|---|---|---|
+| `ops_signals_digest_window_unique_v1.sql` (+ `ops_signals_digest_window_unique_v1.rollback.sql`) | the unique partial index `ops_signals_core_digest_window_key` on `ops_signals (org_id, payload->>'window_id')` for `core_morning_digest` rows that carry a window id | `core/src/digest.mjs` (a 23505 on insert reads the other run's report; a report recorded under 10 minutes ago is left to the run that recorded it, so two runs together send one text) | `core/test/digest-persistence.test.mjs` (6); the file on PostgreSQL 16: applies twice, refuses a second report for a window with 23505, refuses inside a transaction block, and with a duplicate present the build fails and leaves an invalid index |
+
+**Apply on its own, outside a transaction** (`create index concurrently`); it blocks no writes. Run the
+duplicate check in its header first. Read-only on production at 2026-11-10 02:29 UTC: 48 daily-report rows,
+none with a window id yet (the host's Core predates window ids), no duplicate windows, index absent. The Core
+code works with or without the index.
+
 ## Names with no SQL anywhere
 
 `live-callers.json` → `missing_everywhere`: the `crm_*` tables

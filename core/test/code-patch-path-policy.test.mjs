@@ -190,3 +190,31 @@ test('a clean worktree returns changed:false without publication', async (t) => 
   assert.equal(out.changed, false);
   assert.equal(calls.push.length + calls.pr.length, 0);
 });
+
+test('C3: a lost lease stops the job before the coding agent, the push or the pull request', async (t) => {
+  /* already lost when the job starts: the agent never runs */
+  const fx1 = await fixture();
+  t.after(() => rm(fx1.root, { recursive: true, force: true }));
+  let runs = 0;
+  const h1 = harness(fx1, async () => { runs += 1; });
+  await assert.rejects(codePatch(job(['docs']), { ...h1.deps, signal: AbortSignal.abort() }), (e) => e.code === 'LEASE_LOST' && /before running the coding agent/.test(e.message));
+  assert.equal(runs, 0);
+  assert.deepEqual(h1.calls, { push: [], pr: [] });
+  /* lost while the agent runs: its permitted edit is not pushed */
+  const fx2 = await fixture();
+  t.after(() => rm(fx2.root, { recursive: true, force: true }));
+  const lease2 = new AbortController();
+  const h2 = harness(fx2, async (wt) => { await writeFile(path.join(wt, 'docs/note.md'), 'changed\n'); lease2.abort(); });
+  await assert.rejects(codePatch(job(['docs']), { ...h2.deps, signal: lease2.signal }), (e) => e.code === 'LEASE_LOST' && /before pushing the branch/.test(e.message));
+  assert.deepEqual(h2.calls, { push: [], pr: [] });
+  /* lost after the push: the newer attempt, not this one, opens the pull request */
+  const fx3 = await fixture();
+  t.after(() => rm(fx3.root, { recursive: true, force: true }));
+  const lease3 = new AbortController();
+  const h3 = harness(fx3, async (wt) => { await writeFile(path.join(wt, 'docs/note.md'), 'changed again\n'); });
+  const push = h3.deps.push;
+  h3.deps.push = async (x) => { await push(x); lease3.abort(); };
+  await assert.rejects(codePatch(job(['docs']), { ...h3.deps, signal: lease3.signal }), (e) => e.code === 'LEASE_LOST' && /before opening the pull request/.test(e.message));
+  assert.equal(h3.calls.push.length, 1);
+  assert.equal(h3.calls.pr.length, 0);
+});

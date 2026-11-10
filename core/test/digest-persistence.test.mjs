@@ -64,3 +64,49 @@ test('a repeated run for the same window reuses the existing report instead of i
   assert.equal(out.sms.reason, 'already_delivered');
   assert.match(result.stderr, /POSTS=0/);
 });
+
+// Follow-up: one report per window under concurrency. With the unique index on (org, window) a run that loses
+// the insert race gets 23505; it then reads the report the other run recorded and leaves the text to that run.
+const RACE = (row) => `let gets = 0, posts = 0;
+  globalThis.fetch = async (url, init = {}) => {
+    const href = String(url);
+    if (href.includes('/rest/v1/ops_signals') && (init.method || 'GET') === 'GET') {
+      gets += 1;
+      if (gets === 1) return Response.json([]);
+      const row = ${row};
+      return Response.json(row ? [{ ...row, payload: { ...row.payload, window_id: new URL(href).searchParams.get('payload->>window_id') } }] : []);
+    }
+    if (href.includes('/rest/v1/ops_signals') && (init.method || 'GET') === 'POST') { posts += 1; return Response.json({ code: '23505', message: 'duplicate key value violates unique constraint "ops_signals_core_digest_window_key"' }, { status: 409 }); }
+    return Response.json([]);
+  };
+  process.on('exit', () => { process.stderr.write('GETS=' + gets + ' POSTS=' + posts + '\\n'); });\n`;
+
+test('a run that loses the insert race reads the other run\'s report and leaves the text to it', async () => {
+  const result = await run(RACE(`{ id: 'sig-other', payload: { sms_sent: false }, created_at: new Date(Date.now() - 5000).toISOString() }`), { MCCLUSTER_SMS_NOTIFY: '1' });
+  assert.equal(result.status, 0, result.stderr);
+  const out = JSON.parse(result.stdout.trim());
+  assert.equal(out.recorded, true);
+  assert.equal(out.duplicate_window, true);
+  assert.equal(out.signal_id, 'sig-other');
+  assert.deepEqual(out.sms, { sent: false, reason: 'delivery_in_progress' });
+  assert.match(result.stderr, /GETS=2 POSTS=1/);
+});
+
+test('an undelivered report recorded long ago is sent again by a later run', async () => {
+  const result = await run(`globalThis.fetch = async (url, init = {}) => {
+    const href = String(url);
+    if (href.includes('/rest/v1/ops_signals') && (init.method || 'GET') === 'GET') return Response.json([{ id: 'sig-old', payload: { window_id: new URL(href).searchParams.get('payload->>window_id'), sms_sent: false }, created_at: new Date(Date.now() - 3600000).toISOString() }]);
+    return Response.json([]);
+  };\n`);
+  assert.equal(result.status, 0, result.stderr);
+  const out = JSON.parse(result.stdout.trim());
+  assert.equal(out.duplicate_window, true);
+  assert.notEqual(out.sms.reason, 'delivery_in_progress', 'past the grace period the delivery is retried');
+  assert.notEqual(out.sms.reason, 'already_delivered');
+});
+
+test('a conflict with no report behind it is still a failed run', async () => {
+  const result = await run(RACE('null'));
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /core_digest_record_failed/);
+});

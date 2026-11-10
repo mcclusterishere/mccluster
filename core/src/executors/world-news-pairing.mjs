@@ -28,6 +28,7 @@ import {
   PAIR_LAYERS, CONFIRM_BATCH, CONFIRM_SCHEMA, CONFIRM_SYSTEM, STRONG,
   buildIndex, confirmPrompt, matchArticle, normText, normalizeLayer, pairRow, parseConfirmations,
 } from '../world/news-pairing.mjs';
+import { stopIfLeaseLost } from '../lease.mjs';
 
 export const JOB_TYPE = 'world_news_pairing';
 export const EXECUTOR = 'world_news_pairing:v1';
@@ -89,7 +90,7 @@ async function readArticles(query, since) {
 
 export async function worldNewsPairing(job, {
   query = rest, chat = localAiChat, resolveOrg = resolveHouseOrgId, fetchImpl = globalThis.fetch,
-  env = process.env, now = new Date(),
+  env = process.env, now = new Date(), signal,
 } = {}) {
   const orgId = await resolveOrg();
   if (job?.org_id !== orgId) throw new Error('World news pairing job outside Core authority');
@@ -177,6 +178,7 @@ export async function worldNewsPairing(job, {
     ...confirmed.map(({ candidate, why }) => pairRow(candidate, { method: 'model', score: Math.max(candidate.score, STRONG), reason: `${candidate.reason}; local model: ${why || 'same item'}`, model: model.model, jobId: job.id })),
   ];
   let inserted = 0;
+  stopIfLeaseLost(job, signal, 'publishing news pairs');
   for (let i = 0; i < rows.length; i += UPSERT_CHUNK) {
     const { body = [] } = await query('world_news_pairs?on_conflict=article_id,layer,entity_key&select=id', {
       method: 'POST',

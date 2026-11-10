@@ -20,6 +20,7 @@ import { rest, resolveHouseOrgId } from '../supabase.mjs';
 import { localAiChat } from '../compute/local-ai-client.mjs';
 import { isNewsCandidate } from './actor-news-comment.mjs';
 import { PRIM3_AGENT_BY_KEY } from '../prim3/agents.mjs';
+import { stopIfLeaseLost } from '../lease.mjs';
 
 export const BATCH = 8;
 // The desk runs on the box's fast model; the adapter falls back to the default
@@ -79,7 +80,7 @@ export function parseComments(content, batch) {
 
 const normTitle = title => String(title || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
 
-export async function prim3AgentNews(job, { query = rest, chat = localAiChat, resolveOrg = resolveHouseOrgId, now = new Date() } = {}) {
+export async function prim3AgentNews(job, { query = rest, chat = localAiChat, resolveOrg = resolveHouseOrgId, now = new Date(), signal } = {}) {
   const orgId = await resolveOrg();
   const agent = PRIM3_AGENT_BY_KEY[job?.target_id];
   if (job?.org_id !== orgId || !agent) throw new Error('PRIM3 news job outside Core authority');
@@ -118,6 +119,7 @@ export async function prim3AgentNews(job, { query = rest, chat = localAiChat, re
     const rows = parseComments(response?.message?.content, batch);
     if (!rows.length) throw new Error('PRIM3 news desk: model returned no usable comments');
     const model = response.model || 'qwen3:8b';
+    stopIfLeaseLost(job, signal, 'publishing news comments');
     await query('prim3_agent_news_comments?on_conflict=agent_key,article_id', {
       method: 'POST',
       headers: { prefer: 'resolution=ignore-duplicates,return=minimal' },
@@ -148,6 +150,7 @@ export async function prim3AgentNews(job, { query = rest, chat = localAiChat, re
     let brief = null;
     try { brief = cleanText(JSON.parse(String(response?.message?.content || '{}')).brief, { min: 20, max: 900 }); } catch { brief = null; }
     if (brief) {
+      stopIfLeaseLost(job, signal, 'publishing a news brief');
       await query('prim3_agent_news_briefs', {
         method: 'POST', headers: { prefer: 'return=minimal' },
         body: JSON.stringify({ org_id: orgId, agent_key: agent.key, country_iso: agent.iso, brief, headline_count: sample.length, window_start: since, window_end: now.toISOString(), model: response.model || 'qwen3:8b', job_id: job.id }),

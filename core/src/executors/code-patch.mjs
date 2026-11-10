@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { mkdir, rm } from 'node:fs/promises';
 import { run } from '../process.mjs';
+import { stopIfLeaseLost } from '../lease.mjs';
 
 const REPO_ROOT = process.env.MCCLUSTER_REPO_ROOT || '/srv/mccluster/repos';
 const WORKTREE_ROOT = process.env.MCCLUSTER_WORKTREE_ROOT || '/srv/mccluster/worktrees';
@@ -203,6 +204,7 @@ export async function codePatch(job, deps = {}) {
 
   let agent;
   try {
+    stopIfLeaseLost(job, deps.signal, 'running the coding agent');
     agent = await runAgent({ worktree, prompt: promptFor(job) });
   } catch (error) {
     await cleanWorktree(repo, worktree);
@@ -274,6 +276,7 @@ export async function codePatch(job, deps = {}) {
   let pushed = false;
   let prUrl = null;
   if (process.env.MCCLUSTER_PUSH_BRANCHES !== '0') {
+    stopIfLeaseLost(job, deps.signal, 'pushing the branch');
     await push({ worktree, branch });
     pushed = true;
     try {
@@ -294,8 +297,11 @@ export async function codePatch(job, deps = {}) {
         agent.stdout.slice(-5000),
         '```',
       ].join('\n');
+      stopIfLeaseLost(job, deps.signal, 'opening the pull request');
       prUrl = await createPr({ worktree, branch, title, body });
     } catch (error) {
+      /* the newer attempt owns the job: it, not this one, opens the pull request */
+      if (error?.code === 'LEASE_LOST') throw error;
       // A pushed branch is still durable progress. The digest will report that
       // PR creation needs attention rather than throwing away the work.
       prUrl = null;

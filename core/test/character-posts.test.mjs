@@ -182,3 +182,12 @@ test('a post that parrots its voice sample or the headline is withheld (seen on 
   assert.equal(results[1].ok, true);
   assert.match(POST_SYSTEM, /never copy or reuse its phrases/);
 });
+
+test('live: a lease lost during inference publishes nothing (C3)', async () => {
+  const job = { id: 'job-1', org_id: 'house', job_type: 'character_post', target_id: 'mnet-cast', input: { characters: ['eli-mensah', 'nadia-vale', 'prim3-hana-lee', 'gordon-pfeiffer'] } };
+  const deps = liveFixture(), lease = new AbortController(), chat = deps.chat;
+  deps.chat = async (input) => { const r = await chat(input); lease.abort(); return r; };
+  await assert.rejects(characterPost(job, { ...deps, signal: lease.signal }), (e) => e.code === 'LEASE_LOST' && /before publishing a post/.test(e.message));
+  assert.equal(deps.inferences.length, 1);
+  assert.equal(deps.rpc.length, 0, 'no post went through the publisher');
+});
