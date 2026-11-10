@@ -166,6 +166,38 @@ test('a refresh that overtakes an earlier load of the same account is not undone
   assert.doesNotMatch(page.surface(), /could not be read|aborted/i, 'no aborted read is committed over fresh data');
 });
 
+test("a refresh aborts every read of the load it overtakes, and that load's late result never lands", async () => {
+  const page = await openAs('owner-a', '#people:inbox:conversations');
+  /* The first refresh: its private reads are all held, and its public record read is slow. */
+  const first = page.hold(e => e.sub === 'owner-a' && e.path !== '/v1/workspaces/me');
+  let publicOnce = false;
+  const slowPublic = page.hold(e => e.path === '/data/seo/entity-graph.json' && !publicOnce && (publicOnce = true));
+  const mark = page.fetchLog.length;
+  await page.click('refresh'); await page.settle();
+  const overtaken = page.fetchLog.slice(mark).filter(e => e.sub === 'owner-a' && e.held);
+  assert.ok(overtaken.length >= 20, 'fixture sanity: the first refresh is in flight (' + overtaken.length + ' reads)');
+  first.open = false;
+  /* The server's data changes; the second refresh reads it and commits. */
+  page.override(e => e.path === '/v1/comms/threads', body => ({ threads: body.threads.map(t => ({ ...t, comms_contacts: { display_name: A + ' newer contact', address: 'newer@example.invalid' } })) }));
+  await page.click('refresh'); await page.settle(); await sleep(20); await page.settle();
+  const left = overtaken.filter(e => !(e.signal && e.signal.aborted)).map(e => e.path + (e.rpc ? ' ' + (e.rpc.method === 'tools/call' ? e.rpc.params.name : e.rpc.method) : ''));
+  assert.deepEqual(left, [], 'reads of the overtaken load still running');
+  assert.ok(page.surface().includes(A + ' newer contact'), 'the newer refresh committed');
+  first.release(); slowPublic.release(); await page.settle(); await sleep(20); await page.settle();
+  assert.ok(page.surface().includes(A + ' newer contact'), 'the overtaken load, settling last, did not put older data back');
+  /* The first read of a load (which workspace) is aborted too when a refresh overtakes it. */
+  let wsOnce = false;
+  const ws = page.hold(e => e.path === '/v1/workspaces/me' && !wsOnce && (wsOnce = true));
+  const before = page.fetchLog.length;
+  await page.click('refresh'); await page.settle();
+  const discovering = page.fetchLog.slice(before).find(e => e.path === '/v1/workspaces/me' && e.held);
+  assert.ok(discovering, 'fixture sanity: the workspace read is in flight');
+  await page.click('refresh'); await page.settle(); await sleep(20); await page.settle();
+  assert.ok(discovering.signal && discovering.signal.aborted, 'the overtaken workspace read was aborted');
+  ws.release(); await page.settle();
+  assert.ok(page.surface().includes(A + ' newer contact'));
+});
+
 test('every private read carries an abort signal, and an account change aborts the reads in flight', async () => {
   const committed = await openAs('owner-a', '#home:today');
   await useEveryView(committed);
@@ -175,6 +207,16 @@ test('every private read carries an abort signal, and an account change aborts t
   const page = await openControl({ hash: '#home:today', storage: new Map([['mccdb_session', session('owner-a')]]), hold: e => e.sub === 'owner-a' && e.path !== '/v1/workspaces/me' });
   const inFlight = page.fetchLog.filter(e => e.sub === 'owner-a' && e.held);
   assert.ok(inFlight.length >= 20, 'fixture sanity: the default load is in flight (' + inFlight.length + ' reads)');
+  /* and per-view reads of a committed page */
+  const viewPage = await openAs('owner-a', '#home:today');
+  const views = viewPage.hold(e => e.sub === 'owner-a');
+  await viewPage.go('#system:observability'); await viewPage.settle();
+  await viewPage.go('#create:publish:channels'); await viewPage.settle();
+  const viewReads = viewPage.fetchLog.filter(e => e.held);
+  assert.ok(viewReads.length >= 2, 'fixture sanity: per-view reads are in flight');
+  await viewPage.otherTab(s => s.set('mccdb_session', session('member-b')));
+  assert.deepEqual(viewReads.filter(e => !(e.signal && e.signal.aborted)).map(e => e.path), [], 'per-view reads of the old account left running');
+  views.release();
   await page.otherTab(s => s.set('mccdb_session', session('member-b')));
   const still = inFlight.filter(e => !(e.signal && e.signal.aborted)).map(e => e.path + (e.rpc ? ' ' + (e.rpc.method === 'tools/call' ? e.rpc.params.name : e.rpc.method) : ''));
   assert.deepEqual(still, [], 'reads of the old account left running after the change');
@@ -228,15 +270,47 @@ test('a session that ends inside this tab (refresh refused) signs the page out a
   await sweep(page, A, 'after the session ended in this tab');
 });
 
+test('a read made after the session changed inside this tab, with no event, is never sent for the wrong account', async () => {
+  /* The session ended (a refused refresh): the next per-view read signs the page out. */
+  const ended = await openAs('owner-a', '#home:today');
+  ended.setTokenMode('refresh-fails');
+  await ended.go('#system:observability'); await ended.settle();
+  assert.ok(ended.gateShown(), 'the gate replaces the page');
+  assert.equal(ended.reloads, 1, 'and the page is replaced');
+  /* Another account's session was written into this tab without an event:
+     the next read is not sent for it, and the page is replaced instead. */
+  const swapped = await openAs('owner-a', '#home:today');
+  swapped.storage.set('mccdb_session', session('member-b'));
+  await swapped.go('#create:publish:channels'); await swapped.settle();
+  assert.equal(swapped.reads('member-b').length, 0, "no read went out with B's token from A's page");
+  assert.equal(swapped.reloads, 1, 'the page is replaced for the account now stored');
+  noStateTrace(swapped, B, "B's data in A's page");
+});
+
 test('a workspace switched in another tab during a load is not committed, and the page says so', async () => {
   const page = await openAs('owner-a', '#people:inbox:conversations');
+  /* Reads for the old workspace in flight: the observability tail and an open conversation. */
+  const obs = page.hold(e => e.path === '/v1/observability/events');
+  await page.go('#system:observability'); await page.settle();
+  const transcript = page.hold(e => /\/messages$/.test(e.path));
+  await page.go('#people:inbox:conversations'); await page.settle();
+  await page.click('select-thread', 'thread-shared'); await page.settle();
+  assert.equal(page.fetchLog.filter(e => e.held).length, 2, 'fixture sanity: two reads for the old workspace are in flight');
   const status = page.hold(e => e.path === '/v1/status');
   await page.click('refresh'); await page.settle();
   page.storage.set('mcc.control.org', 'org-elsewhere');
   status.release(); await page.settle(); await sleep(20); await page.settle();
   assert.match(page.visible(), /workspace changed/i, 'the page says why it is empty');
   assert.ok(!page.surface().includes(A + ' contact'), 'the result read for the old workspace is not shown');
+  obs.release(); transcript.release(); await page.settle(); await sleep(20); await page.settle();
+  assert.equal(page.state().observability, null, 'a read for the old workspace commits nothing, not even a failure');
+  assert.deepEqual(page.state().transcripts, {}, 'nor does the conversation read for it');
   assert.equal(page.reloads, 0);
+  /* Refresh reads the selected workspace; a conversation opened then loads:
+     no read of the old workspace is left in the way. */
+  await page.click('refresh'); await page.settle(); await sleep(20); await page.settle();
+  await page.click('select-thread', 'thread-shared'); await page.settle(); await sleep(20); await page.settle();
+  assert.ok(page.surface().includes(A + ' message body'), 'the conversation loads after Refresh');
 });
 
 test('a sign-out signal while the session is still stored conceals the page, and the next sign-in reloads it', async () => {

@@ -182,7 +182,7 @@ export async function openControl({ hash = '#home:today', storage = new Map(), s
   const dynamic = new Map();
   const listeners = new Map();
   const fetchLog = [];
-  const holds = [];
+  const holds = [], overrides = [];
   /* A hold installed before the page boots catches the default load itself. */
   if (hold) holds.push({ match: hold, open: true, pending: [], release() { this.open = false; this.pending.splice(0).forEach(fn => fn()); } });
   let reloads = 0, tokenMode = 'normal';
@@ -258,7 +258,9 @@ export async function openControl({ hash = '#home:today', storage = new Map(), s
       if (u.origin === location.origin) return response({ body: {} });
       if (u.pathname === '/health') return response({ body: { ok: true } });
       if (!sub) return response({ status: 401, body: { error: 'unauthorized' } });
-      return response(answer(sub, entry.method, absolute, rpc));
+      const out = answer(sub, entry.method, absolute, rpc);
+      for (const o of overrides) if (o.match(entry)) out.body = o.body(out.body, entry);
+      return response(out);
     };
     const hold = holds.find(h => h.open && h.match(entry));
     return new Promise((resolve, reject) => {
@@ -364,6 +366,8 @@ export async function openControl({ hash = '#home:today', storage = new Map(), s
     },
     /* Types into a rendered field the way the input event reaches the page. */
     type(id, text) { const el = byId(id); if (!el) throw new Error('fixture: no field ' + id); el.value = text; el.dispatch('input'); },
+    /* Rewrites the answer to matching reads sent from now on (the server's data changed). */
+    override(match, body) { overrides.push({ match, body }); },
     /* Holds matching reads until released; they then answer for the account that sent them. */
     hold(match) { const h = { match, open: true, pending: [], release() { h.open = false; h.pending.splice(0).forEach(fn => fn()); } }; holds.push(h); return h; },
     async settle() { await flush(12); await sleep(5); await flush(12); },

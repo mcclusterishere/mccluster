@@ -125,3 +125,13 @@ test('a stale load settling after the account changed touches nothing a newer ge
   assert.equal(h.st.loading, true, 'the newer load is still the one loading'); assert.equal(h.st.error, null);
   assert.equal(h.aborted(), abortsBefore, "the stale load aborted nobody else's reads"); assert.equal(newer.signal.aborted, false);
 });
+/* Close-out 2026-11-10: discoverWorkspace() wrote state.workspaces before the
+   commit boundary, so a discarded load could still leave its account's
+   workspace list behind. It answers; load() commits. */
+test('discovering the workspace writes nothing to state before the commit boundary', () => {
+  const at = control.indexOf('  function discoverWorkspace(');
+  assert.ok(at >= 0, 'discoverWorkspace is defined');
+  const body = control.slice(at, control.indexOf('\n  }\n', at));
+  assert.doesNotMatch(body, /\bstate\.[A-Za-z_$][\w$]*\s*=[^=]/, 'discoverWorkspace assigns to state');
+  assert.match(block, /state\.workspaces = \(a\.workspace && a\.workspace\.workspaces\) \|\| \[\];/, 'load() commits the list at its boundary');
+});
