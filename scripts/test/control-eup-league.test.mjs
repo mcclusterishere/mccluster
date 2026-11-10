@@ -859,6 +859,19 @@ test('403 owner_required on a League read or command conceals the whole workspac
   assert.ok(o.qa('[data-eup-note="signed_out"]').length >= 1);
 });
 
+test('the League panel is aria-busy from the first read of a load until its last dependent read settles', async () => {
+  const w = leagueWorker(); const { camp } = world(w);
+  let give;
+  w.s.hooks['audience.grants.list'] = () => new Promise((r) => { give = r; });
+  const m = mount(w); await settle();
+  await m.league();
+  assert.equal(m.q('[data-eup-league-view]').attrs['aria-busy'], 'true', 'campaigns are read, the grants of each are still on their way');
+  delete w.s.hooks['audience.grants.list'];
+  give(await w.request('/v1/eup/league/campaigns/' + camp.id + '/audience/grants')); await settle();
+  assert.equal(m.q('[data-eup-league-view]').attrs['aria-busy'], 'false');
+  assert.equal(m.q('[data-eup-league-grant="' + w.s.grants[0].id + '"]').attrs['data-eup-league-status'], 'open');
+});
+
 /* ================================================================== the whole run: keys, revisions, words */
 test('every command the tab sends carries a fresh uuid key, and an expected revision exactly where the contract route compares one', async () => {
   const w = leagueWorker(); const { camp, song } = world(w);

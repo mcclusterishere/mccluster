@@ -482,13 +482,16 @@
       }).then(function () { if (!dead(g, p)) redraw(); });
     }
     /* Everything the current view shows, read again (also the read-back after every command). */
+    /* The view is busy (aria-busy) from the first read of a load until its last dependent read has settled. */
     function load() {
-      var g = gen, view = L.view;
+      var g = gen, view = L.view, mine = (L.loadSeq = (L.loadSeq || 0) + 1);
+      L.loadingView = true;
       redraw();
+      var done = function () { if (dead(g) || mine !== L.loadSeq) return; L.loadingView = false; redraw(); };
       return Promise.all(VIEW_READS[view].map(read)).then(function () {
         if (dead(g) || L.view !== view || view !== 'setup' || !Array.isArray(L.data.campaigns)) return;
         return Promise.all(L.data.campaigns.filter(function (c) { return isObject(c) && validId(c.id) && c.state !== 'withdrawn'; }).map(function (c) { return recordRead('grants', c.id); }));
-      });
+      }).then(done, done);
     }
     var validId = function (id) { return typeof id === 'string' && PATTERNS.uuid.test(id); };
 
@@ -1095,12 +1098,17 @@
 
     /* ================================================================== the pane */
     var VIEW_RENDER = { setup: viewSetup, applications: viewApplications, proofs: viewProofs, publication: viewPublication, appeals: viewAppeals, retention: viewRetention };
+    /* true while any read of this view (or a record read) is still on its way: the panel says so with aria-busy */
+    function busy() {
+      return L.loadingView === true || Object.keys(L.loading).some(function (k) { return L.loading[k] === true; }) ||
+        Object.keys(L.records).some(function (k) { return L.records[k] && L.records[k].loading === true; }) || !!(L.review && L.review.loading);
+    }
     function render() {
       return '<div class="cr-eup-league" data-eup-league="' + esc(L.view) + '">' + moduleLine() +
         '<div class="cr-eup-league__tabs" role="tablist" aria-label="League views" data-eup-league-tabs>' + VIEWS.map(function (v) {
           var on = v.id === L.view;
           return '<button type="button" role="tab" id="eupLeagueTab-' + v.id + '" aria-controls="eupLeagueView" aria-selected="' + on + '" tabindex="' + (on ? '0' : '-1') + '" data-eup-league-tab="' + v.id + '" data-eup-focus="league-tab:' + v.id + '">' + esc(v.label) + '</button>';
-        }).join('') + '</div><div class="cr-eup-league__view" id="eupLeagueView" role="tabpanel" aria-labelledby="eupLeagueTab-' + L.view + '" data-eup-league-view="' + L.view + '">' + VIEW_RENDER[L.view]() + '</div></div>';
+        }).join('') + '</div><div class="cr-eup-league__view" id="eupLeagueView" role="tabpanel" aria-labelledby="eupLeagueTab-' + L.view + '" aria-busy="' + busy() + '" data-eup-league-view="' + L.view + '">' + VIEW_RENDER[L.view]() + '</div></div>';
     }
 
     /* ================================================================== commands from the page */
