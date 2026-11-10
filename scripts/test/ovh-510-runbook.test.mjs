@@ -7,10 +7,21 @@ import { readFile } from 'node:fs/promises';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 
 const read = (path) => readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
 const RUNBOOK = 'docs/control-plane/OVH-510-CONTRACT-AND-AUTH-RUNBOOK.md';
+
+// The lines of every ```bash block, as the owner would paste them.
+function fencedBashLines(markdown) {
+  const lines = [];
+  let inside = false;
+  for (const line of markdown.split('\n')) {
+    if (/^```/.test(line)) { inside = !inside && line.trim() === '```bash'; continue; }
+    if (inside) lines.push(line.trim());
+  }
+  return lines;
+}
 
 // One step's run: block from a workflow, dedented as GitHub hands it to bash.
 function runBlock(workflow, stepName) {
@@ -116,4 +127,27 @@ test('the way back is a forward promotion; allow_rollback is named as the forced
   // Acceptance E and the Never list say the same thing.
   assert.match(section(runbook, '## Acceptance'), /\*\*E\. Clean path\.\*\* No break-glass deploy and no forced ref move: every move of `deploy\/ovh-production` was a forward promotion with `allow_rollback` = false\./);
   assert.match(section(runbook, '## Never'), /- Move the deploy ref by hand or by force\. A run with `allow_rollback` = true is a forced move/);
+});
+
+test('every bash -n the runbook gives catches a syntax error in each file it names (RB-2)', async (t) => {
+  const runbook = await read(RUNBOOK);
+  const commands = fencedBashLines(runbook).filter((line) => /^bash -n\s/.test(line));
+  const named = commands.flatMap((command) => command.slice('bash -n'.length).trim().split(/\s+/));
+  assert.deepEqual([...named].sort(), ['scripts/deploy-ovh-core.sh', 'scripts/mccluster-vps-reconcile.sh', 'scripts/ovh-core-health.sh', 'scripts/ovh-private-repo-ssh.sh'],
+    'commit 2 is checked by parsing the reconciler, the deployer, the health library and the setup script');
+  const root = mkdtempSync(join(tmpdir(), 'mcc-runbook-bash-n-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  for (const [index, command] of commands.entries()) {
+    const files = command.slice('bash -n'.length).trim().split(/\s+/);
+    // The command as the owner pastes it, run where only `broken` has a syntax error.
+    for (const broken of files) {
+      const dir = join(root, `${index}-${files.indexOf(broken)}`);
+      for (const file of files) {
+        mkdirSync(dirname(join(dir, file)), { recursive: true });
+        writeFileSync(join(dir, file), `${await read(file)}${file === broken ? '\nif then\n' : ''}`);
+      }
+      const result = spawnSync('bash', ['-c', command], { cwd: dir, encoding: 'utf8' });
+      assert.notEqual(result.status, 0, `"${command}" passes with a syntax error in ${broken}`);
+    }
+  }
 });

@@ -124,7 +124,11 @@ git commit -m "Reconcile cycle receipts, health projection and read-only deploy-
 Check commit 2:
 
 ```bash
-bash -n scripts/mccluster-vps-reconcile.sh scripts/deploy-ovh-core.sh scripts/ovh-core-health.sh scripts/ovh-private-repo-ssh.sh
+# One file per bash -n: it parses only its first file, the rest are that script's arguments.
+bash -n scripts/mccluster-vps-reconcile.sh
+bash -n scripts/deploy-ovh-core.sh
+bash -n scripts/ovh-core-health.sh
+bash -n scripts/ovh-private-repo-ssh.sh
 (cd core && npm run check && npm test)                       # 527 tests
 node --test scripts/test/*.test.mjs
 git diff --stat 9c5b75032d1794c47d8b6db05acf16e3965faa74 HEAD -- core/src core/systemd
@@ -146,7 +150,7 @@ All eight pre-existing files of commit 2 are byte-identical at `9c5b7503`, on `m
 
 - These exact commands produce commit 1 with 14 files and commit 2 with 12 files.
 - On `9c5b7503` plus commit 1: the drift check passes at 363, the three ledger tests pass, Core check passes, Core is 498 of 498.
-- On `9c5b7503` plus both commits: `bash -n` is clean, Core check passes, Core is 527 of 527, and the root suite is 1609 tests with 1606 passing and 3 skipped.
+- On `9c5b7503` plus both commits: each of the four scripts passes `bash -n` on its own (re-measured one file at a time on 2026-11-10: the reconciler and the setup script as commit 2 takes them, the deployer and the health library as `9c5b7503` has them), Core check passes, Core is 527 of 527, and the root suite is 1609 tests with 1606 passing and 3 skipped.
 - `git merge --no-ff` of that branch into `main` at `578e6830` has no conflict. On the merge: the drift check passes, Core is 584 of 584, and the root suite is 2064 tests with 2061 passing and 3 skipped.
 - Not run: the Supabase CLI reset and every database-backed workflow. The regenerated `supabase/schema-manifest.json` is unproven until the pull request's own CI.
 
