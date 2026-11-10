@@ -1253,19 +1253,21 @@
           seconds = seconds === null ? m.expires_in : Math.min(seconds, m.expires_in);
         });
         if (got.length !== media.length) throw Object.assign(new Error('a media link was not readable'), { malformed: true });
-        links = got;
         L.review = { proofId: proofId, revision: revision, proof: proofRead, seconds: seconds === null ? 0 : seconds,
           media: media.map(function (m) { return { upload_id: m.upload_id, kind: m.kind, mime: m.mime, bytes: m.bytes, sha256: m.sha256 }; }) };
-        if (seconds !== null) {
-          /* counted from when the read was sent: the store signed it later, so the page never outlives the link */
-          var left = Math.max(0, sentAt + seconds * 1000 - now());
-          expiryTimer = setTimeout(function () {
-            expiryTimer = null;
-            if (dead(g) || !L.review || L.review.proofId !== proofId) return;
-            dropLinks(); L.review.expired = true;
-            say('The ' + L.review.seconds + '-second media link expired and was dropped. Open the media again to keep listening.'); redraw();
-          }, left);
-        }
+        if (seconds === null) return;
+        /* counted from when the read was SENT: the store signed it later, so the page never holds a link past its
+           life. An answer that arrives after that is never given to a player at all. */
+        var left = sentAt + seconds * 1000 - now();
+        var expired = 'The ' + seconds + '-second media link expired and was dropped. Open the media again to keep listening.';
+        if (left <= 0) { L.review.expired = true; say(expired); return; }
+        links = got;
+        expiryTimer = setTimeout(function () {
+          expiryTimer = null;
+          if (dead(g) || !L.review || L.review.proofId !== proofId) return;
+          dropLinks(); L.review.expired = true;
+          say(expired); redraw();
+        }, left);
       }).catch(function (err) {
         var R = L.review;
         if (dead(g, p) || !R || R.proofId !== proofId || R.revision !== revision) return;
