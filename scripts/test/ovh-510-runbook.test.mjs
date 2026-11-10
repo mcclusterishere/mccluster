@@ -4,9 +4,24 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 const read = (path) => readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
 const RUNBOOK = 'docs/control-plane/OVH-510-CONTRACT-AND-AUTH-RUNBOOK.md';
+
+// One step's run: block from a workflow, dedented as GitHub hands it to bash.
+function runBlock(workflow, stepName) {
+  const lines = workflow.split('\n');
+  const step = lines.findIndex((line) => line.trim() === `- name: ${stepName}`);
+  const run = lines.findIndex((line, index) => index > step && line.trim() === 'run: |');
+  assert.ok(step > 0 && run > step, `step ${stepName}`);
+  const block = [];
+  for (let index = run + 1; index < lines.length && (lines[index].startsWith('          ') || lines[index] === ''); index++) block.push(lines[index].slice(10));
+  return block.join('\n');
+}
 
 // From a heading that starts with `prefix` to the next heading of the same or a higher level.
 function section(markdown, prefix) {
@@ -43,4 +58,62 @@ test('the runbook names the job that watches a promotion, and says a green run i
   const deploy = reconciler.indexOf('bash "${CHECKOUT}/scripts/deploy-ovh-core.sh" "${CHECKOUT}" "${TARGET_SHA}"');
   const stamp = reconciler.indexOf('mv "${STATE_FILE}.tmp" "${STATE_FILE}"');
   assert.ok(deploy > 0 && stamp > deploy, 'the deployment record is written only after the deployer succeeded');
+});
+
+test('the way back is a forward promotion; allow_rollback is named as the forced move it is (RB-1)', async (t) => {
+  const [runbook, workflow, driftCheck] = await Promise.all([
+    read(RUNBOOK), read('.github/workflows/promote-ovh-production.yml'), read('scripts/control-plane-drift-contract-check.mjs'),
+  ]);
+  // What allow_rollback really does: the workflow's own push step, run against a local bare
+  // repository standing in for GitHub, moving the ref from X back to the deployed commit.
+  const root = mkdtempSync(join(tmpdir(), 'mcc-promote-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const env = { PATH: process.env.PATH, HOME: root, LC_ALL: 'C', GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null', GIT_TERMINAL_PROMPT: '0',
+    GIT_AUTHOR_NAME: 'fixture', GIT_AUTHOR_EMAIL: 'fixture@invalid', GIT_COMMITTER_NAME: 'fixture', GIT_COMMITTER_EMAIL: 'fixture@invalid' };
+  const git = (cwd, ...args) => { const r = spawnSync('git', args, { cwd, env, encoding: 'utf8' }); assert.equal(r.status, 0, `git ${args.join(' ')}: ${r.stderr}`); return r.stdout.trim(); };
+  mkdirSync(join(root, 'work'));
+  git(join(root, 'work'), 'init', '-q', '-b', 'main', '.');
+  git(join(root, 'work'), 'commit', '-q', '--allow-empty', '-m', 'deployed');
+  const deployed = git(join(root, 'work'), 'rev-parse', 'HEAD');
+  git(join(root, 'work'), 'commit', '-q', '--allow-empty', '-m', 'promoted');
+  const promoted = git(join(root, 'work'), 'rev-parse', 'HEAD');
+  git(root, 'init', '-q', '--bare', 'origin.git');
+  git(join(root, 'work'), 'push', '-q', join(root, 'origin.git'), `${promoted}:refs/heads/main`, `${promoted}:refs/heads/deploy/ovh-production`);
+  git(root, 'clone', '-q', join(root, 'origin.git'), 'runner');
+  writeFileSync(join(root, 'push.sh'), `${runBlock(workflow, 'Promote deployment ref')}\n`);
+  const back = (allowRollback) => spawnSync('bash', ['--noprofile', '--norc', '-eo', 'pipefail', join(root, 'push.sh')], {
+    cwd: join(root, 'runner'), encoding: 'utf8', env: { ...env, TARGET_SHA: deployed, EXPECTED_CURRENT: promoted, ALLOW_ROLLBACK: allowRollback } });
+  const ref = () => git(join(root, 'origin.git'), 'rev-parse', 'refs/heads/deploy/ovh-production');
+  assert.equal(back('false').status, 3, 'without allow_rollback the step refuses to move the ref backward');
+  assert.equal(ref(), promoted);
+  const forced = back('true');
+  assert.equal(forced.status, 0, forced.stderr);
+  assert.match(forced.stderr, /\(forced update\)/, 'allow_rollback moves the deploy ref by force');
+  assert.equal(ref(), deployed);
+  git(join(root, 'origin.git'), 'update-ref', 'refs/heads/deploy/ovh-production', promoted);
+  git(join(root, 'origin.git'), 'config', 'receive.denyNonFastForwards', 'true');
+  const blocked = back('true');
+  assert.notEqual(blocked.status, 0, 'and it is refused once force pushes are blocked on the ref');
+  assert.match(blocked.stderr, /non-fast-forward/);
+  assert.equal(ref(), promoted);
+
+  // So the runbook's way back is forward, and every allow_rollback = true it mentions is named a forced move.
+  const step4 = section(runbook, '## Step 4.');
+  assert.match(step4, /\*\*To go back, go forward\.\*\* If the promoted release fails because of commit 2, commit on `repair\/ovh-core-contract-363` a revert of commit 2 alone \(`git revert --no-edit <commit 2>`\)/);
+  assert.match(step4, /promote that head with `allow_rollback` = false and `expected_current` = the SHA it replaces/);
+  assert.doesNotMatch(runbook, /`sha` = `9c5b75032d1794c47d8b6db05acf16e3965faa74`, `allow_rollback` = true|until the ref is moved back/);
+  for (const paragraph of runbook.split(/\n\s*\n/).filter((text) => /`allow_rollback` = true/.test(text))) {
+    assert.match(paragraph, /by force|forced move/, paragraph);
+    assert.match(paragraph, /owner's explicit exception, recorded on #510/, paragraph);
+    assert.match(paragraph, /force pushes are blocked on the ref/, paragraph);
+  }
+  // Never a revert of commit 1 (it deletes applied migration files), and a contract-only revert cannot
+  // pass: the drift check holds the contract to the production ledger file.
+  assert.match(step4, /Never revert commit 1\. It adds four migration files that production has applied, and the revert would delete them\./);
+  for (const field of ['migration_count', 'latest_version', 'latest_name', 'ledger_sha256']) assert.match(driftCheck, new RegExp(`\\['${field}',`));
+  assert.match(driftCheck, /does not match drift contract/);
+  assert.match(step4, /A revert of `core\/drift-contract\.json` alone does not pass either\./);
+  // Acceptance E and the Never list say the same thing.
+  assert.match(section(runbook, '## Acceptance'), /\*\*E\. Clean path\.\*\* No break-glass deploy and no forced ref move: every move of `deploy\/ovh-production` was a forward promotion with `allow_rollback` = false\./);
+  assert.match(section(runbook, '## Never'), /- Move the deploy ref by hand or by force\. A run with `allow_rollback` = true is a forced move/);
 });

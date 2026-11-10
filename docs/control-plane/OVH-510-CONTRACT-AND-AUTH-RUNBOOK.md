@@ -180,7 +180,7 @@ Pick a window first. A promotion is not zero-downtime, even when only the contra
 - The host picks the new ref up within about 2 minutes 20 seconds.
 - It runs Core check and tests, then drains the Core runner and the compute node for up to 660 seconds.
 - It restarts the tool broker, the compute gateway, the Ollama adapter, the compute node, the runner and the preview gateway. Queue consumption pauses and in-flight broker HTTP calls can be cut.
-- If the release fails its gate, the previous release is restored and the reconciler tries again every two minutes, with a fresh drain each time and no backoff, until the ref is moved back.
+- If the release fails its gate, the previous release is restored and the reconciler tries again every two minutes, with a fresh drain each time and no backoff, until the ref names a release that passes. The ref only moves forward: see "To go back, go forward" below.
 
 Decide one promotion or two. One: promote `X` (commit 2), one drain. Two: promote commit 1 first, pass step 5, then promote `X`, two drains and a smaller first change.
 
@@ -199,7 +199,13 @@ The workflow refuses unless the target is contained in `main`, the current ref i
 - **A green run is not acceptance.** The deployer writes the target's manifest and restarts the broker before its own health gate, so `/health` serves the target even for a release that then fails the gate. The 20-minute hold is longer than the deployer's bounded waits in one failing attempt (the gate's probes, a producer drain of up to 660 seconds, the Ollama wait), so a release that is rolled back turns the run red. But a rollback whose producer drain times out is deferred and leaves the failed release live, serving the target, and no poll of `/health` can tell that from a success. Step 5 is acceptance: `deployed_sha` equal to the serving SHA, and `runtime_verification` = `verified`.
 - If the workflow on `main` has no `observe` job, the push starts no observation at all (GitHub starts no workflow from a `GITHUB_TOKEN` push). Step 5 is the same either way.
 
-**To go back:** a second run with `sha` = `9c5b75032d1794c47d8b6db05acf16e3965faa74`, `allow_rollback` = true, and `expected_current` = the SHA being replaced. Do not move the ref by hand. Do not use `DEPLOY_OVH` unless the reconciler itself cannot run: that is the documented break-glass path under the `ovh-production` environment.
+**To go back, go forward.** If the promoted release fails because of commit 2, commit on `repair/ovh-core-contract-363` a revert of commit 2 alone (`git revert --no-edit <commit 2>`). Push it, require green on its exact head as in step 3, merge it with a merge commit, and promote that head with `allow_rollback` = false and `expected_current` = the SHA it replaces. It keeps the contract, the ledger and the four migration files.
+
+- Never revert commit 1. It adds four migration files that production has applied, and the revert would delete them.
+- A revert of `core/drift-contract.json` alone does not pass either. The drift check requires the contract to equal `supabase/production-ledger.json`, so CI fails and the promotion's gate refuses the commit. A contract that turns out wrong is recut from the live attestation (step 1.3) and promoted forward the same way.
+- Until that promotion lands, the host keeps retrying the failed release every cycle, as described above.
+
+`allow_rollback` = true is not a way back. It moves `deploy/ovh-production` by force (a non-fast-forward push under a lease), which the never-list forbids. It needs the owner's explicit exception, recorded on #510, and acceptance E then does not hold. GitHub refuses it once force pushes are blocked on the ref (ruleset B in `docs/control-plane/DEPLOYMENT-CONTROLS-PROPOSAL.md`). Do not move the ref by hand. Do not use `DEPLOY_OVH` unless the reconciler itself cannot run: that is the documented break-glass path under the `ovh-production` environment.
 
 **What to expect from the hardening on the first cycles.** The cycle that performs the deploy is still the old reconciler and writes no receipt. The next cycle is the new one. Until it has run, `deployment.reconcile.status` is `unverified`, which adds no warning.
 
@@ -405,7 +411,7 @@ from latest l join public.ops_agent_jobs j on j.id=l.id, jsonb_array_elements(j.
 
 **D. Only if the owner approves a private switch.** B and C repeated while private, with `source_verification_method` = `ovh_reconciler_git_fetch_receipt`, `rest_error` containing `Not Found`, and `infrastructure_status` still `ok`.
 
-**E. Clean path.** No break-glass deploy and no forced ref move. The evidence is recorded on #510.
+**E. Clean path.** No break-glass deploy and no forced ref move: every move of `deploy/ovh-production` was a forward promotion with `allow_rollback` = false. The evidence is recorded on #510.
 
 ## Never
 
@@ -413,7 +419,7 @@ from latest l join public.ops_agent_jobs j on j.id=l.id, jsonb_array_elements(j.
 - Replay applied SQL.
 - Hand-edit a ledger hash to anything the live attestation does not return.
 - Squash or rebase the isolated pull request.
-- Move the deploy ref by hand or by force.
+- Move the deploy ref by hand or by force. A run with `allow_rollback` = true is a forced move: it needs the owner's explicit exception, recorded on #510, and it is refused once force pushes are blocked on the ref.
 - Run `DEPLOY_OVH`, except as the documented break-glass path under the `ovh-production` environment.
 - Add an always-on SSH deploy from GitHub to the host.
 - Use `ssh-keyscan`, `StrictHostKeyChecking=no`, or a token in a Git URL.
