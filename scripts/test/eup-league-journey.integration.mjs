@@ -18,7 +18,9 @@
 // self-approval and self-review refused when the owner is also the participant; and the route table, every row of
 // the contract's ROUTES for {no bearer, an account invited nowhere, a tester of another campaign, the tester, the
 // owner}.
-// The test may READ the database and the storage double as evidence (named "evidence" below); it never writes them.
+// The test may READ the database and the storage double as evidence (named "evidence" below). It writes the database
+// only for two clock steps (named "clock step"): PostgreSQL's now() cannot move, so an upload's staged deadline is moved
+// into the past instead, and the plane's Worker and storage clock moves past it with it.
 // NOT PROVEN HERE: concurrency and lock order (PGlite is one session: scripts/test/eup-league.native.integration.mjs),
 // real storage, real PostgREST, the Worker runtime (Node; the Worker's outbound fetch goes through asWorkerFetch), and
 // a browser (the member and Control lanes mount this plane in Playwright).
@@ -105,7 +107,8 @@ async function outbox(call, after) {
   }
 }
 
-const plane = await createLeaguePlane({ enable: false });
+let clockSkew = 0; // the clock step moves the Worker's and storage's clock; the SQL row moves with it
+const plane = await createLeaguePlane({ enable: false, now: () => Date.now() + clockSkew });
 const api = makeApi(plane);
 const ids = ACCOUNTS;
 try {
@@ -474,6 +477,25 @@ try {
   const peerAgain = (await saveApplication('peer', missionA2.id, peerDraft.revision + 1, { submit: true, requirements_revision: 1, statement: 'Test fixture: back again.' })).application;
   eq(peerAgain.status, 'submitted', 're-enabled: member work resumes');
 
+  /* ================================================================== 12b. retention: nothing lands after a purge */
+  // The take discarded above keeps its upload grant for upload_grant_seconds. Until its staged lifetime ends it is not
+  // due, so it is not purged, and a late PUT with that grant lands on a row that still lists it (the contract's MEDIA
+  // decision; before the journey lane's fix the purge was allowed at once and such a PUT left an object no row listed).
+  eq((await api('owner', 'GET', O('media/due'))).due.uploads.some((u) => u.id === staged.upload.id), false, 'a discarded take within its staged lifetime is not due');
+  await api('owner', 'POST', O('media/purge'), { idempotency_key: key('purge'), uploads: [staged.upload.id] }, { status: 409, reason: 'revision_conflict', label: 'and is not purged while a grant can still land' });
+  eq((await plane.fetch(staged.grant.url, { method: 'PUT', headers: staged.grant.headers, body: synthAudio(600, 5) })).status, 200, 'a late PUT with the grant lands');
+  ok(plane.storage.object(stagedPath) !== null, 'evidence: on the path of a row that is not purged and will be');
+  // Clock step: 25 hours later. Every grant signed for the row expired by then.
+  clockSkew = (C.MEDIA.staged_ttl_seconds + 3600) * 1000;
+  await plane.league.admin(`update public.eup_media_uploads set expires_at = now() - interval '1 second' where id = $1`, [staged.upload.id]);
+  const dueTake = (await api('owner', 'GET', O('media/due'))).due.uploads.find((u) => u.id === staged.upload.id);
+  eq([dueTake?.due, dueTake?.reason], [true, 'discarded'], 'past its staged lifetime the take is due');
+  eq((await api('owner', 'POST', O('media/purge'), { idempotency_key: key('purge'), uploads: [staged.upload.id] })).purge.purged, [staged.upload.id], 'and purged');
+  eq(plane.storage.object(stagedPath), null, 'evidence: the late object went with it');
+  ok((await plane.fetch(staged.grant.url, { method: 'PUT', headers: staged.grant.headers, body: synthAudio(600, 6) })).status >= 400, 'the expired grant stores nothing after the purge');
+  eq(plane.storage.object(stagedPath), null, 'evidence: nothing at the path of the purged row');
+  clockSkew = 0;
+
   /* ================================================================== 13. the campaign withdrawn at the end */
   campaignA = (await api('owner', 'GET', O('campaigns'))).campaigns.find((c) => c.id === campaignA.id);
   const withdrawnA = (await api('owner', 'POST', O(`campaigns/${campaignA.id}/transition`), { idempotency_key: key('withdraw-campaign'), expected_revision: campaignA.revision, to: 'withdrawn' })).campaign;
@@ -563,6 +585,8 @@ try {
   const workDraft = (await mapi('tester', 'POST', M(`assignments/${asgWork.id}/draft`), { idempotency_key: key('dr'), expected_revision: 0, draft: { title: 'Test fixture', lyrics: 'Line one' } })).draft;
   const uSealed = await store(asgWork.id, 11);
   const uDiscard = await store(asgWork.id, 12);
+  // Clock step: this upload's staged lifetime has passed, so once the table discards it the purge row has a due upload.
+  await matrix.league.admin(`update public.eup_media_uploads set expires_at = now() - interval '1 second' where id = $1`, [uDiscard.id]);
   const uStaged = await store(asgWork.id, 13, false);
   const asgConsent = await working('matrix-consent');
   const RECEIPT_KEY = key('receipt');
