@@ -607,6 +607,17 @@ const ONLY = (process.env.EUL_E2E_ONLY || '').split(',').filter(Boolean);
 const WIDTHS = (process.env.EUL_E2E_WIDTHS || '').split(',').filter(Boolean).map(Number);
 const runs = [{ width: 390, height: 844 }, { width: 1440, height: 900 }].filter((v) => !WIDTHS.length || WIDTHS.includes(v.width));
 const SCENARIOS = { visibility, journey, switching, keyboard, worldHost };
+{
+  /* which tree the browser was given: the source checkout, or an export whose stamps were replaced and internals stripped */
+  const page = await readFile(join(SERVE, 'action/league.html'), 'utf8');
+  const exported = SERVE !== resolve(ROOT);
+  console.log(`serving ${exported ? 'the export at ' : 'the source tree at '}${SERVE}`);
+  if (exported) {
+    let stripped = true;
+    for (const internal of ['scripts', 'workers', 'supabase', 'docs']) { try { await stat(join(SERVE, internal)); stripped = false; } catch { /* absent, as published */ } }
+    check('export', 'the page is the emitted one: stamps replaced, internals stripped', !page.includes('__STAMP__') && /\?v=[a-z0-9]+"/.test(page) && stripped);
+  }
+}
 try {
   for (const viewport of runs) {
     for (const [name, fn] of Object.entries(SCENARIOS)) if (!ONLY.length || ONLY.includes(name)) await fn(viewport);

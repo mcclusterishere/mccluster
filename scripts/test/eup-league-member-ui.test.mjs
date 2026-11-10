@@ -613,6 +613,40 @@ test('retake and cancel release every track and revoke every object URL', async 
   assert.equal(el(s, '[data-eul-preview]'), null);
 });
 
+test('leaving the page with an unsent take or unsaved words asks first; with nothing pending it does not', async () => {
+  const cap = devices();
+  const s = setup({ capture: cap, handlers: { 'GET ': ok({ league: me({ assignments: [assignment()] }) }), [`POST assignments/${IDS.assignment}/draft`]: ok({ draft: { assignment_id: IDS.assignment, revision: 1, updated_at: AT } }) } });
+  await settle();
+  const leave = () => { const e = { type: 'beforeunload', returnValue: undefined, defaultPrevented: false, preventDefault() { this.defaultPrevented = true; } }; window.dispatchEvent(e); return e.defaultPrevented; };
+  assert.equal(leave(), false, 'nothing pending: no question');
+  s.ctl.bind('lyrics', { assignment: IDS.assignment }, { value: 'Unsaved unit words' });
+  assert.equal(leave(), true, 'unsaved words: asked');
+  await s.clock.advance(H.AUTOSAVE_MS);
+  assert.equal(leave(), false, 'saved: no question');
+  click(s, `record:audio:${IDS.assignment}`); await settle();
+  await s.clock.advance(1500);
+  click(s, `stop:${IDS.assignment}`); await settle();
+  assert.equal(leave(), true, 'an unsent take: asked');
+  click(s, `cancel-take:${IDS.assignment}`); await settle();
+  assert.equal(leave(), false);
+});
+
+test('a recording stops by itself at the policy\'s longest take, and the duration it declares is never longer', async () => {
+  const cap = devices();
+  const s = setup({ capture: cap, handlers: { 'GET ': ok({ league: me({ assignments: [assignment()] }) }), [`POST assignments/${IDS.assignment}/uploads`]: 'hang' } });
+  await settle();
+  click(s, `record:audio:${IDS.assignment}`); await settle();
+  assert.match(s.text(), /of at most 120 s/);
+  await s.clock.advance(120 * 1000 + 500);
+  assert.ok(el(s, '[data-eul-preview]'), 'stopped at the limit');
+  assert.ok(cap.streams[0].tracks.every((t) => t.readyState === 'ended'));
+  click(s, `use-take:${IDS.assignment}`); await settle();
+  const begin = s.srv.posts().find((c) => c.path.endsWith('/uploads'));
+  assert.ok(begin.body.upload.duration_seconds <= POLICY.media.max_duration_seconds, String(begin.body.upload.duration_seconds));
+  assert.equal(begin.body.upload.mime, 'audio/webm', 'the bare type, never the codecs parameter');
+  assert.equal(begin.body.upload.bytes, 8, 'the size of the take itself');
+});
+
 test('no MediaRecorder: no Record buttons, the file upload and the statement only, and it says why', async () => {
   const cap = devices({ recorder: false });
   const s = setup({ capture: cap, handlers: { 'GET ': ok({ league: me({ assignments: [assignment()] }) }) } });
