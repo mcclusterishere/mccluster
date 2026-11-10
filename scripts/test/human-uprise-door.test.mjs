@@ -175,7 +175,8 @@ test('one M Account, every host: the bar carries the sign-in across and the arri
   assert.match(bar, /if \(now\.main !== before\.main \|\| now\.keep !== before\.keep\) throw/, 'a session that changed while the handoff was verified is never overwritten (audit A2)');
   assert.match(bar, /headers: \{ authorization: "Bearer " \+ token, "content-type": "application\/json" \}, body: "\{\}"/);
   assert.match(bar, /body: JSON\.stringify\(\{ type: "magiclink", token_hash: j\.token_hash \}\)/);
-  assert.match(bar, /expires_at: Number\(s\.expires_at\) \|\| Math\.floor\(Date\.now\(\) \/ 1000\) \+ \(Number\(s\.expires_in\) \|\| 3600\)/, 'the stored session carries its expiry, as the auth client writes it');
+  assert.match(bar, /var life = Number\(s\.expires_in\) > 0 \? Number\(s\.expires_in\) : 0, issued = Number\(s\.expires_at\) > 0 \? Number\(s\.expires_at\) : 0;/);
+  assert.match(bar, /expires_at: life \? Math\.floor\(Date\.now\(\) \/ 1000\) \+ life : issued \|\| Math\.floor\(Date\.now\(\) \/ 1000\) \+ 3600 \};/, 'the stored session carries its expiry on this device\'s clock, as the auth client writes it (scripts/test/tabbar-auth-refresh.test.mjs runs it)');
   assert.match(bar, /localStorage\.setItem\("mccdb_session", session\);/);
   assert.match(bar, /location\.reload\(\);/);
   assert.match(bar, /arriveWithHandoff\(\)\.then\(function \(carried\) \{ if \(!carried\) refreshAuthState\(\); \}\);/);
