@@ -1,8 +1,11 @@
 /* Service-role access to the E=Up private intake store. Everything goes through
    the eup_* RPCs defined in supabase/pending/eup_intake_v1.sql; there is no
    direct table access from the Worker and no path to the civic_ or action_policy_ tables.
-   Callers have already passed the house-owner check in ./router.js. */
+   Callers have already passed the house-owner check in ./router.js.
+   Intake writes are guarded by the persisted policy of module intake in their own transaction; a refused
+   write answers with the shared module-policy reasons from ./modules.js (the one mapping of those codes). */
 import { feedById, assertRights } from './registry.js';
+import { modulePolicyRefusal } from './modules.js';
 
 const fail = (status, message, reason) => Object.assign(new Error(message), { status, reason });
 
@@ -10,7 +13,12 @@ export function storageConfigured(env) {
   return Boolean(env?.SUPABASE_URL && env?.SUPABASE_SERVICE_ROLE_KEY);
 }
 
-export async function rpc(env, name, args, { fetchImpl = fetch } = {}) {
+/* A refused guarded write is mapped first, before the storage_unavailable fallback. The EUM codes always mean
+   the module guard. A lock wait, a statement timeout and an undefined function mean it only where the guard
+   runs: `guarded: false` is for RPCs it never runs in (reads, lease-gated settlement), where those three stay
+   storage failures. */
+const REFUSAL_TEXT = { module_policy_unavailable: 'Module policy unavailable', module_not_installed: 'The intake module is not installed', module_draining: 'The intake module is draining', module_disabled: 'The intake module is disabled', module_policy_changed: 'The intake module policy changed', module_busy: 'The intake module is busy' };
+export async function rpc(env, name, args, { fetchImpl = fetch, guarded = true } = {}) {
   if (!storageConfigured(env)) throw fail(503, 'E=Up intake storage is not configured', 'storage_unavailable');
   let res;
   try {
@@ -28,6 +36,8 @@ export async function rpc(env, name, args, { fetchImpl = fetch } = {}) {
   if (!res.ok) {
     const message = String(data?.message || '');
     const code = String(data?.code || '');
+    const refusal = guarded || /^EUM0[0-4]$/.test(code) ? modulePolicyRefusal(code) : null;
+    if (refusal) throw fail(refusal[0], REFUSAL_TEXT[refusal[1]] || 'Module policy refused the write', refusal[1]);
     if (/not_configured|source_paused/.test(message)) throw fail(503, message, message);
     if (code === '40001' || /revision_conflict|idempotency_payload_mismatch|review_item_closed/.test(message)) throw fail(409, message || 'conflict', message.replace(/[^a-z_]/g, '') || 'conflict');
     if (code === 'P0002' || /not_found|unknown_/.test(message)) throw fail(404, message || 'not found', 'not_found');
@@ -37,14 +47,15 @@ export async function rpc(env, name, args, { fetchImpl = fetch } = {}) {
   return data;
 }
 
-export const readSourceStates = async (env, ctx) => (await rpc(env, 'eup_sources_read', { p_action: 'list', p_params: {} }, ctx)) || [];
-export const readReview = (env, ctx, status = 'open') => rpc(env, 'eup_sources_read', { p_action: 'review', p_params: { status } }, ctx);
-export const readRuns = (env, ctx, source_id) => rpc(env, 'eup_sources_read', { p_action: 'runs', p_params: { source_id } }, ctx);
+const unguarded = (ctx) => ({ fetchImpl: ctx?.fetchImpl, guarded: false });
+export const readSourceStates = async (env, ctx) => (await rpc(env, 'eup_sources_read', { p_action: 'list', p_params: {} }, unguarded(ctx))) || [];
+export const readReview = (env, ctx, status = 'open') => rpc(env, 'eup_sources_read', { p_action: 'review', p_params: { status } }, unguarded(ctx));
+export const readRuns = (env, ctx, source_id) => rpc(env, 'eup_sources_read', { p_action: 'runs', p_params: { source_id } }, unguarded(ctx));
 export const sourcesCommand = (env, ctx, action, params, actor) => rpc(env, 'eup_sources_command', { p_action: action, p_params: params, p_actor: actor }, ctx);
-export const civicRead = (env, ctx, action, params) => rpc(env, 'eup_civic_read', { p_action: action, p_params: params }, ctx);
-export const companyRead = (env, ctx, action, params) => rpc(env, 'eup_company_read', { p_action: action, p_params: params }, ctx);
+export const civicRead = (env, ctx, action, params) => rpc(env, 'eup_civic_read', { p_action: action, p_params: params }, unguarded(ctx));
+export const companyRead = (env, ctx, action, params) => rpc(env, 'eup_company_read', { p_action: action, p_params: params }, unguarded(ctx));
 export const intakeApply = (env, ctx, source_id, kind, records) => rpc(env, 'eup_intake_apply', { p_source_id: source_id, p_kind: kind, p_records: records }, ctx);
-export const importRunFinish = (env, ctx, run_id, status, records, error, cursor) => rpc(env, 'eup_import_run_finish', { p_run_id: run_id, p_status: status, p_records: records, p_error: error, p_cursor: cursor }, ctx);
+export const importRunFinish = (env, ctx, run_id, status, records, error, cursor) => rpc(env, 'eup_import_run_finish', { p_run_id: run_id, p_status: status, p_records: records, p_error: error, p_cursor: cursor }, unguarded(ctx));
 
 /* Rows from a source whose rights are held, unreviewed or expired are withheld
    from any read, even when they are already stored (a cached restricted record

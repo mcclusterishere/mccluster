@@ -87,6 +87,59 @@ test('store conflicts and not-found map to 409 and 404 without leaking the store
   assert.equal((await call('/review/i2/correct', g, post({ idempotency_key: 'correct-0002', expected_revision: 1 }))).status, 404);
 });
 
+// Module policy: refresh, resume and correct are guarded writes of module intake. The store refuses them in
+// its own transaction (supabase/pending/eup_module_policy_v1.sql); the Worker says which refusal it was.
+const refusal = (code, message) => json({ code, message, details: null, hint: null }, 400);
+const READY = { states: [{ source_id: 'sec_edgar', configured: true, access: 'approved', paused: false }] };
+const withAgent = (path, f, init) => handleEup(new Request(`https://api.mccluster.org${EUP_PREFIX}/sources${path}`, init), { ...env, SEC_USER_AGENT: 'McCluster test agent' }, { requireHouseOwner: owner, fetchImpl: f.fetchImpl, now: () => Date.parse('2026-11-09T12:00:00Z') });
+
+test('a guarded intake write refused by module policy answers the shared module reasons, not storage_unavailable', async () => {
+  const table = [
+    ['EUM00', 'module_policy_unavailable', 503, 'module_policy_unavailable'], ['EUM01', 'module_not_installed', 503, 'module_not_installed'],
+    ['42883', 'function public.eup_module_guard(unknown) does not exist', 503, 'module_not_installed'],
+    ['EUM02', 'module_draining', 503, 'module_draining'], ['EUM03', 'module_disabled', 409, 'module_disabled'], ['EUM04', 'module_policy_changed', 409, 'module_policy_changed'],
+    ['55P03', 'canceling statement due to lock timeout', 503, 'module_busy'], ['57014', 'canceling statement due to statement timeout', 503, 'module_busy']
+  ];
+  for (const [code, message, status, reason] of table) {
+    const writes = [
+      ['refresh', (f) => withAgent('/sec_edgar/refresh', f, post({ idempotency_key: 'refresh-0001' }))],
+      ['resume', (f) => call('/gleif/resume', f, { method: 'POST' })],
+      ['correct', (f) => call('/review/i1/correct', f, post({ idempotency_key: 'correct-0001', expected_revision: 1 }))]
+    ];
+    for (const [label, go] of writes) {
+      const f = fake({ ...READY, command: () => refusal(code, message) });
+      const r = await go(f); const b = await r.json();
+      assert.equal(r.status, status, `${code} ${label}`); assert.equal(b.reason, reason, `${code} ${label}`); assert.equal(b.ok, false);
+      assert.doesNotMatch(JSON.stringify(b), /server-secret|does not exist|canceling statement/, `${code} ${label}`);
+      assert.equal(f.calls.filter((c) => c.url.includes('eup_sources_command')).length, 1, `${code} ${label}: one attempt, no retry`);
+    }
+  }
+});
+
+test('refresh while the intake module is draining queues nothing and says module_draining; pause still goes through', async () => {
+  const f = fake({ ...READY, command: (action, params) => action === 'pause' ? { source_id: params.source_id, paused: true, revision: 2 } : refusal('EUM02', 'module_draining') });
+  const refresh = await withAgent('/sec_edgar/refresh', f, post({ idempotency_key: 'refresh-0001' }));
+  assert.equal(refresh.status, 503); assert.deepEqual(await refresh.json(), { ok: false, error: 'The intake module is draining', reason: 'module_draining' });
+  const pause = await call('/sec_edgar/pause', f, { method: 'POST' });
+  assert.equal(pause.status, 200); assert.equal((await pause.json()).paused, true);
+  /* the rights and configuration gate still decides first: an unconfigured source never reaches the store */
+  const g = fake({ command: () => refusal('EUM02', 'module_draining') });
+  const unconfigured = await call('/sec_edgar/refresh', g, post({ idempotency_key: 'refresh-0002' }));
+  assert.equal(unconfigured.status, 503); assert.equal((await unconfigured.json()).reason, 'not_configured');
+  assert.ok(!g.calls.some((c) => c.url.includes('eup_sources_command')));
+});
+
+test('reads are never module refusals: a slow or broken read is storage, and the registry still lists', async () => {
+  for (const [code, message] of [['57014', 'canceling statement due to statement timeout'], ['55P03', 'canceling statement due to lock timeout'], ['42883', 'function does not exist']]) {
+    const f = fake();
+    const fetchImpl = async (url, opts) => String(url).includes('/rpc/eup_sources_read') ? refusal(code, message) : f.fetchImpl(url, opts);
+    const list = await call('', { fetchImpl }); const b = await list.json();
+    assert.equal(list.status, 200, code); assert.equal(b.storage, 'unavailable', code); assert.ok(b.sources.every((s) => s.records === null));
+    const review = await call('/review', { fetchImpl });
+    assert.equal(review.status, 503, code); assert.equal((await review.json()).reason, 'storage_unavailable', code);
+  }
+});
+
 test('sourcesSummary gives the overview one honest status line per source', async () => {
   const f = fake({ states: [{ source_id: 'gleif', configured: true, access: 'approved', last_success_at: '2026-11-08T00:00:00Z', records: 12 }] });
   const rows = await sourcesSummary(env, { fetchImpl: f.fetchImpl, now: () => Date.parse('2026-11-09T12:00:00Z') });

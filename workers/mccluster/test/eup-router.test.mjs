@@ -36,3 +36,17 @@ test('the owner gets the section index and unknown sections 404', async () => {
   const u = await handleEup(req(`${EUP_PREFIX}/halo`), env, { requireHouseOwner: owner });
   assert.equal(u.status, 404);
 });
+
+test('modules is one of the sections: listed in the index, and its commands are owner-only before anything is read', async () => {
+  assert.deepEqual([...EUP_SECTIONS], ['overview', 'league', 'civic', 'companies', 'sources', 'modules']);
+  let fetched = 0;
+  const fetchImpl = async () => { fetched += 1; return Response.json({}); };
+  const command = (path, body) => req(`${EUP_PREFIX}/modules/${path}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  for (const [path, body] of [['league/install', { idempotency_key: 'router-key-0001', reason: 'Test fixture.' }], ['league/state', { idempotency_key: 'router-key-0002', reason: 'Test fixture.', state: 'enabled', expected_revision: 0 }]]) {
+    const a = await handleEup(command(path, body), env, { requireHouseOwner: anon, fetchImpl });
+    assert.equal(a.status, 401); assert.equal((await a.json()).reason, 'authentication_required');
+    const d = await handleEup(command(`${path}?admin=true`, { ...body, actor: '11111111-1111-4111-8111-111111111111' }), env, { requireHouseOwner: denied, fetchImpl });
+    assert.equal(d.status, 403); assert.equal((await d.json()).reason, 'owner_required'); assert.equal(d.headers.get('cache-control'), 'private, no-store');
+  }
+  assert.equal(fetched, 0, 'a refused caller reaches neither the store nor the body parser');
+});

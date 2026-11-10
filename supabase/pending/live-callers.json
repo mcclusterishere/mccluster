@@ -234,6 +234,34 @@
         "workers/mccluster/src/eup/league.js"
       ]
     },
+    "eup_module_control_read": {
+      "kind": "function",
+      "pending": "eup_module_policy_v1.sql",
+      "callers": [
+        "workers/mccluster/src/eup/modules.js"
+      ]
+    },
+    "eup_module_policy_command": {
+      "kind": "function",
+      "pending": "eup_module_policy_v1.sql",
+      "callers": [
+        "workers/mccluster/src/eup/modules.js"
+      ]
+    },
+    "eup_module_policy_install": {
+      "kind": "function",
+      "pending": "eup_module_policy_v1.sql",
+      "callers": [
+        "workers/mccluster/src/eup/modules.js"
+      ]
+    },
+    "eup_module_policy_read": {
+      "kind": "function",
+      "pending": "eup_module_policy_v1.sql",
+      "callers": [
+        "workers/mccluster/src/eup/modules.js"
+      ]
+    },
     "eup_sources_command": {
       "kind": "function",
       "pending": "eup_intake_v1.sql",
