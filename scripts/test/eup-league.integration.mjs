@@ -1779,6 +1779,14 @@ try {
   ok((await admin('select payload from public.eup_outbox')).every((r) => payloadOk(r.payload)), 'every event carries ids and revisions only');
   eq(await n('eup_outbox', `payload::text ~ 'Test fixture|Verse|lyrics|statement|league/v1|https?:'`), 0, 'no event carries text, a path or a URL');
   ok((await one('select count(*) = count(distinct seq) and min(seq) >= 1 as ok from public.eup_outbox')).ok, 'every event has its own sequence number');
+  // The event is written INSIDE the mutation's transaction: visible there, and rolled back with it.
+  const beforeRollback = await lastSeq();
+  const insideTx = await as('service_role', async () => {
+    await db.exec('begin');
+    await db.query(`select public.${C.RPC.owner}('campaigns.create', $1, '', $2::jsonb, null, $3)`, [OWNER, JSON.stringify({ ...CAMPAIGN, slug: 'rolled-back' }), key('rollback')]);
+    return (await db.query(`select type from public.eup_outbox where seq > $1`, [beforeRollback])).rows.map((r) => r.type);
+  });
+  eq([insideTx, await eventsAfter(beforeRollback), await n('eup_campaigns', `slug = 'rolled-back'`)], [['league.campaigns.create'], [], 0], 'the event is written in the mutation transaction: rolled back with it, nothing of either remains');
   // LEAN and MEMBER-SAFE over the whole run, the owner-control results included.
   eq(await n('eup_command_receipts', `result::text ~ 'Test fixture appeal|a second appeal|accommodation request|Verse one|why I apply'`), 0, 'no stored result holds an appeal statement, an accommodation note, lyrics or an application statement');
   const memberResultsNow = (await admin(`select result from public.eup_command_receipts where surface = 'member'`)).map((r) => JSON.stringify(r.result));
