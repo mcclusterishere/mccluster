@@ -1173,11 +1173,12 @@ export async function handleFalWebhook(request, env, deps = {}, hint = null) {
     });
     return { accepted: true, matched: true, job_id: job.id, status: current?.status || job.status, ignored: 'state_changed' };
   }
-  await saveAssets(env, job.org_id, job.id, result);
   if (afterFailure) {
     /* The ledger self-corrects below (record_actual replaces the released
        row); the decision that released it stays on the job row and in the
-       audit ledger, and this row says the provider ran it anyway. */
+       audit ledger, and this row says the provider ran it anyway. Written
+       before the assets are saved: recordAudit never throws, saveAssets can,
+       and a retried delivery finds the job completed and writes nothing. */
     await recordAudit(env, {
       orgId: job.org_id,
       actorKind: 'system',
@@ -1194,6 +1195,7 @@ export async function handleFalWebhook(request, env, deps = {}, hint = null) {
       }
     });
   }
+  await saveAssets(env, job.org_id, job.id, result);
   recordEvent({
     orgId: job.org_id, name: 'media.generation.completed', kind: 'dependency',
     traceId: job.routing?.trace_id, resourceType: 'media_job', resourceId: job.id,

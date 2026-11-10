@@ -1782,3 +1782,79 @@ test('R3 a request the provider failed is not written completed by a poll before
   } finally { st.restore(); }
 });
 
+
+/* ============ mutation survivors from the reservation review (G03, G04, G35, G17, R06) ============
+   Each of these guards had a second line of defence behind it, so a mutant that removed it passed the suite.
+   These tests observe the guard itself: the write or the call it exists to prevent never happens. */
+
+test('a readback never even tries the marker on a job that is not a never-started one (survivors G03, G04, G35)', async () => {
+  const cases = {
+    'a recorded request id (G04)': (job) => { job.provider_request_id = 'req-known'; },
+    'another caller\'s marker (G03)': (job) => { job.provider_status = { outcome: 'submitting', attempt_id: 'another-caller' }; },
+    'a released reservation (G35)': (job) => { job.routing.reservation_state = 'released'; }
+  };
+  for (const [name, change] of Object.entries(cases)) {
+    const st = plane();
+    const fal = provider();
+    try {
+      await seedClaim(st, { state: 'bound' });
+      const seeded = seedJob(st);
+      change(seeded);
+      st.claims.get(KEY).job_id = seeded.id;
+      const job = await createGeneration(generate(), env, USER, { submit: fal.submit });
+      assert.equal(job.id, seeded.id, name);
+      assert.equal(fal.submits, 0, name);
+      assert.deepEqual(st.patchLog, [], `${name}: not even an attempt at the marker`);
+      assert.equal(st.releaseCalls, 0, name);
+    } finally { st.restore(); }
+  }
+});
+
+test('a read never polls the provider for a failed job (survivor G17)', async () => {
+  const st = plane();
+  try {
+    const job = seedJob(st, { status: 'failed', provider_request_id: 'req-g17', provider_status: { outcome: 'submitted' }, error: { message: 'provider reported failure', stage: 'provider' } });
+    let polled = 0;
+    const { job: after } = await getGeneration(jobRequest(job.id), env, USER, job.id, true, {
+      status: async () => { polled += 1; return { status: 'COMPLETED', request_id: 'req-g17' }; }
+    });
+    assert.equal(polled, 0, 'a failed job is settled for the read: the provider is not asked');
+    assert.equal(after.status, 'failed');
+    assert.deepEqual(st.patchLog, []);
+  } finally { st.restore(); }
+});
+
+test('an ERROR whose failed-write matches nothing releases nothing (survivor R06)', async () => {
+  const st = plane({
+    beforePatch: (entry, state) => {
+      if (entry.filter !== CAS_REFRESH || entry.body?.status !== 'failed') return;
+      /* the provider's success landed between the webhook's read and its write */
+      state.job(entry.id).status = 'completed';
+    }
+  });
+  try {
+    const job = seedJob(st, { status: 'running', provider_request_id: 'req-r06', provider_status: { outcome: 'submitted' } });
+    const out = await handleFalWebhook(webhookRequest(), env, verified({ request_id: 'req-r06', status: 'ERROR', error: 'failed' }));
+    assert.deepEqual(out, { accepted: true, matched: true, job_id: job.id, status: 'completed', ignored: 'state_changed' });
+    assert.equal(st.releaseCalls, 0, 'no release was even asked for');
+    assert.equal(st.job(job.id).status, 'completed');
+  } finally { st.restore(); }
+});
+
+test('a late success after an operator release is audited before its assets are saved, so a failed save cannot leave it unrecorded', async () => {
+  const st = plane({
+    billing: billed,
+    intercept: ({ method, url }) => (method === 'POST' && url.includes('/rest/v1/media_assets') ? json({ message: 'synthetic storage outage' }, 500) : undefined)
+  });
+  try {
+    const job = seedJob(st, { status: 'reconciling', provider_status: { outcome: 'uncertain', attempted_at: ago(20 * MINUTE) }, error: { message: 'timeout', uncertain: true, stage: 'submit' } });
+    await reconcileJob(reconcileRequest(job.id, { org_id: ORG, decision: 'release', reason: 'provider console showed nothing', evidence: { console_checked: true } }), billingEnv, USER, job.id);
+    const hint = await hintFor(job.id);
+    await assert.rejects(handleFalWebhook(webhookRequest(), billingEnv, verified({ request_id: 'req-late', status: 'OK', payload: IMAGE }), hint));
+    assert.equal(job.status, 'completed', 'the completion was written');
+    assert.equal(st.assets.length, 0, 'the asset save failed');
+    const audit = st.audit.find((row) => row.event === 'media_operation.completed_after_release');
+    assert.ok(audit, 'the late success is on the audit ledger although the asset save failed');
+    assert.equal(audit.detail.provider_request_id, 'req-late');
+  } finally { st.restore(); }
+});
