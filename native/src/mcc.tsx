@@ -17,6 +17,7 @@ import React, {
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import {
+  isAccessTokenRefusal,
   isDefinitiveAuthFailure,
   isFresh,
   persistableSession,
@@ -222,6 +223,18 @@ export function MccProvider({ children }: { children: ReactNode }) {
     [commitSession],
   );
 
+  /* Ends `refused`, the session Auth has just answered for, unless it has been
+     replaced since (signed out, or signed in as someone else): the answer was
+     about that session, not about whatever followed it. */
+  const endSession = useCallback(
+    async (refused: MccSession) => {
+      if (sessionRef.current !== refused) return;
+      await commitSession(null);
+      setUser(null);
+    },
+    [commitSession],
+  );
+
   const freshSession = useCallback(async (): Promise<MccSession> => {
     let current = sessionRef.current;
     if (!current) throw Object.assign(new Error('Sign in first.'), { status: 401 });
@@ -234,9 +247,14 @@ export function MccProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let alive = true;
+    const readAccount = async (current: MccSession) => {
+      const who = await authRequest<MccUser>('user', { token: current.access_token });
+      if (alive) setUser(who);
+    };
     (async () => {
       /* The stored session signs the member in at once, offline included;
-         the server is asked afterwards and only a definitive answer ends it. */
+         the server is asked afterwards and only a definitive answer about the
+         session ends it. */
       let restored = await storedSession();
       sessionRef.current = restored;
       if (restored) {
@@ -252,12 +270,29 @@ export function MccProvider({ children }: { children: ReactNode }) {
       }
       if (restored && isFresh(restored)) {
         try {
-          const who = await authRequest<MccUser>('user', { token: restored.access_token });
-          if (alive) setUser(who);
+          await readAccount(restored);
         } catch (error) {
-          if (alive && isDefinitiveAuthFailure(error)) {
-            await commitSession(null);
-            setUser(null);
+          if (!isAccessTokenRefusal(error)) {
+            if (alive && isDefinitiveAuthFailure(error)) await endSession(restored);
+          } else if (alive) {
+            /* Auth refused the token, not the session. 403 bad_jwt is what it
+               answers for a token that has expired by its clock, as one this
+               phone still reads as fresh has when the phone's clock was set
+               back after the token arrived. The refresh token may well be
+               good, so refresh once and read again. A refused refresh ends the
+               session (refresh() signs out itself), as does an answer that
+               names the session or the member as gone. Offline or a 5xx keeps
+               it, and so does a token refused again straight after the refresh:
+               it is not refreshed twice. */
+            let renewed: MccSession | null = null;
+            try {
+              renewed = await refresh();
+              if (renewed) await readAccount(renewed);
+            } catch (again) {
+              if (alive && renewed && !isAccessTokenRefusal(again) && isDefinitiveAuthFailure(again)) {
+                await endSession(renewed);
+              }
+            }
           }
         }
       }
@@ -266,7 +301,7 @@ export function MccProvider({ children }: { children: ReactNode }) {
     return () => {
       alive = false;
     };
-  }, [commitSession, refresh]);
+  }, [endSession, refresh]);
 
   const signIn = useCallback(
     async (email: string, password: string) => {

@@ -246,6 +246,29 @@ test('only a definitive auth answer ends the session; offline and server errors 
   assert.equal(isFresh(null, now), false);
 });
 
+test('an answer that refuses only the access token is told apart from one that says the session is gone', async () => {
+  const { isAccessTokenRefusal, isDefinitiveAuthFailure, sessionChangedError } = await import('../../native/src/sessionPolicy.ts');
+  /* Supabase Auth's answer to an expired token, and to a request without one */
+  const expired = { status: 403, data: { code: 403, error_code: 'bad_jwt', msg: 'invalid JWT: unable to parse or verify signature, token has invalid claims: token is expired' } };
+  assert.equal(isAccessTokenRefusal(expired), true);
+  assert.equal(isAccessTokenRefusal({ status: 401, data: { code: 401, error_code: 'no_authorization' } }), true);
+  assert.equal(isAccessTokenRefusal({ status: 400, data: { code: 400, error_code: 'bad_jwt' } }), true, 'bad_jwt whatever the status');
+  for (const status of [401, 403]) assert.equal(isAccessTokenRefusal({ status }), true, `a ${status} that names no session code`);
+  /* answers that name the session, or the member, as gone: a refresh cannot help */
+  for (const code of ['session_not_found', 'refresh_token_not_found', 'refresh_token_already_used', 'session_expired', 'user_not_found', 'user_banned']) {
+    const gone = { status: 403, data: { code: 403, error_code: code } };
+    assert.equal(isAccessTokenRefusal(gone), false, code);
+    assert.equal(isDefinitiveAuthFailure(gone), true, code);
+  }
+  assert.equal(isAccessTokenRefusal({ status: 401, data: { error: 'invalid_grant' } }), false, 'older servers put the code in `error`');
+  /* answers that say nothing about the token */
+  for (const error of [new TypeError('Network request failed'), { status: 500 }, { status: 503 }, { status: 429 }, { status: 400 }, { status: 404 }, { status: 422 }, {}, null, sessionChangedError()]) {
+    assert.equal(isAccessTokenRefusal(error), false, String(error?.status ?? error?.message ?? error));
+  }
+  /* unchanged: a refused token is still a definitive answer, so a refresh refused with one still signs out */
+  assert.equal(isDefinitiveAuthFailure(expired), true);
+});
+
 test('concurrent refreshes share one call, so a single-use refresh token is spent once', async () => {
   const { singleFlight } = await import('../../native/src/sessionPolicy.ts');
   let calls = 0, release;
@@ -276,8 +299,12 @@ test('the M Account provider applies those rules', async () => {
   assert.match(refresh, /if \(sessionRef\.current !== current\) throw sessionChangedError\(\);/);
   const boot = auth.slice(auth.indexOf('let restored = await storedSession();'), auth.indexOf('if (alive) setReady(true);'));
   assert.match(boot, /if \(restored\) \{\s*setSession\(restored\);/, 'a stored session signs the member in immediately, offline included');
-  assert.match(boot, /if \(alive && isDefinitiveAuthFailure\(error\)\) \{\s*await commitSession\(null\);/, 'launch only ends the session on a definitive answer');
+  assert.match(boot, /if \(!isAccessTokenRefusal\(error\)\) \{\s*if \(alive && isDefinitiveAuthFailure\(error\)\) await endSession\(restored\);/,
+    'launch ends the session only on a definitive answer about it, not about its token');
+  assert.match(boot, /renewed = await refresh\(\);\s*if \(renewed\) await readAccount\(renewed\);/, 'a token Auth refuses is refreshed once and the account read again');
   assert.doesNotMatch(boot, /\} catch \{\s*if \(alive\) \{\s*await commitSession\(null\)/, 'no blanket sign-out on launch');
+  assert.match(auth, /const endSession = useCallback\(\s*async \(refused: MccSession\) => \{\s*if \(sessionRef\.current !== refused\) return;/,
+    'only the session Auth answered for is ended, never one that replaced it');
 });
 
 /* ---- The provider itself, on a phone whose clock is not the server's ------
@@ -328,10 +355,15 @@ function nativeSources() {
 /* Supabase Auth and the McCluster API, on the server's clock. A token expires
    `lifetime` seconds after it is issued; once it has, Auth refuses it as
    Supabase does (403 bad_jwt) and the API answers 401. Refresh tokens are
-   single-use. */
+   single-use. endSessions() ends every session as a sign-out everywhere does:
+   its refresh tokens are gone, and a token still within its lifetime is
+   refused as Supabase does (403 session_not_found). Auth checks the token
+   first, so an expired one still reads bad_jwt. A route in `outage` is
+   unreachable ('offline': fetch rejects, as on a phone without signal) or
+   answers that HTTP status. */
 function authServer({ lifetime = 3600 } = {}) {
   const clock = { now: 1_800_000_000 };
-  const expiry = new Map(), unspent = new Set(), requests = [];
+  const expiry = new Map(), unspent = new Set(), ended = new Set(), requests = [], outage = new Map();
   const user = { id: '723e4567-e89b-42d3-a456-426614174777', email: 'jane@example.com' };
   let issued = 0;
   const issue = () => {
@@ -352,6 +384,9 @@ function authServer({ lifetime = 3600 } = {}) {
     const token = String(init.headers?.authorization || '').replace(/^Bearer /, '') || null;
     const expired = !!token && !(expiry.get(token) > clock.now);
     requests.push({ route, token, expired, at: clock.now });
+    const down = outage.get(route);
+    if (down === 'offline') throw new TypeError('Network request failed');
+    if (down) return reply(down, { message: down >= 500 ? 'upstream unavailable' : 'refused' });
     switch (route) {
       case 'token:password':
       case 'signup':
@@ -361,20 +396,25 @@ function authServer({ lifetime = 3600 } = {}) {
           ? reply(200, issue())
           : reply(400, { code: 400, error_code: 'refresh_token_not_found', msg: 'Invalid Refresh Token: Refresh Token Not Found' });
       case 'user':
-        return expired
-          ? reply(403, { code: 403, error_code: 'bad_jwt', msg: 'invalid JWT: unable to parse or verify signature, token has invalid claims: token is expired' })
-          : reply(200, user);
+        if (expired) return reply(403, { code: 403, error_code: 'bad_jwt', msg: 'invalid JWT: unable to parse or verify signature, token has invalid claims: token is expired' });
+        if (ended.has(token)) return reply(403, { code: 403, error_code: 'session_not_found', msg: 'Session from session_id claim in JWT does not exist' });
+        return reply(200, user);
       case 'api':
         return expired ? reply(401, { error: 'invalid_token' }) : reply(200, { ok: true });
       default:
         throw new Error(`unexpected request ${url}`);
     }
   }
-  return { clock, fetch, issue, requests, refreshes: () => requests.filter((r) => r.route === 'token:refresh_token').length };
+  const endSessions = () => {
+    unspent.clear();
+    for (const token of expiry.keys()) ended.add(token);
+  };
+  return { clock, fetch, issue, endSessions, outage, requests, refreshes: () => requests.filter((r) => r.route === 'token:refresh_token').length };
 }
 
 /* Opens the app on a phone `skew` seconds off the server's clock, with
-   `keychain` as what earlier launches left in it, and waits for launch. */
+   `keychain` as what earlier launches left in it, and waits for launch. The
+   phone's clock can be moved while the app runs: set `phone.skew`. */
 async function launchPhone(auth, { skew, keychain = new Map() }) {
   const { policy, provider } = await nativeSources();
   let launched;
@@ -400,9 +440,10 @@ async function launchPhone(auth, { skew, keychain = new Map() }) {
       deleteItemAsync: async (key) => { keychain.delete(key); },
     },
   };
+  const clock = { skew };
   const phone = vm.createContext({
     fetch: auth.fetch,
-    phoneClock: () => (auth.clock.now + skew) * 1000,
+    phoneClock: () => (auth.clock.now + clock.skew) * 1000,
     __import(spec) {
       assert.ok(spec in modules, `mcc.tsx imports ${spec}, which this fixture does not provide`);
       return modules[spec];
@@ -413,7 +454,7 @@ async function launchPhone(auth, { skew, keychain = new Map() }) {
   vm.runInContext(provider, phone).MccProvider({ children: null });
   for (const effect of rendered.effects) effect();
   await ready;
-  return { ...rendered.value, keychain };
+  return { ...rendered.value, keychain, phone: clock };
 }
 
 const CLOCKS = [['an hour ahead', 3600], ['an hour behind', -3600], ['on time', 0]];
@@ -514,4 +555,78 @@ test('a session an earlier build stored on the server’s clock is refreshed bef
     assert.deepEqual(auth.requests.map((r) => [r.route, r.expired]), [['token:refresh_token', false], ['user', false], ['user', false]],
       `${phone}: one refresh, on the first launch only`);
   }
+});
+
+/* Signed in on a phone on time, so the token is stamped to expire when the
+   server expires it. Then the phone's clock is set back two hours (by hand, or
+   by a large NTP correction): read on it, the stamp is now two hours later than
+   the server's expiry. The app is relaunched ten minutes after the server
+   expired the token, and the phone still believes it fresh, so launch sends it
+   to /auth/v1/user and Auth answers 403 bad_jwt. That says the access token has
+   expired, not that the session has: its refresh token is still good.
+   `prepare` changes the server before the relaunch. */
+async function relaunchSetBack(prepare) {
+  const auth = authServer(), keychain = new Map();
+  const before = await launchPhone(auth, { skew: 0, keychain });
+  await before.signIn('jane@example.com', 'correct horse battery staple');
+  before.phone.skew = -7200;
+  auth.clock.now += 3600 + 600;
+  prepare?.(auth);
+  const kept = keychain.get(SESSION_KEY), since = auth.requests.length;
+  const app = await launchPhone(auth, { skew: before.phone.skew, keychain });
+  return { auth, keychain, app, kept, since, launch: auth.requests.slice(since).map((r) => [r.route, r.token, r.expired]) };
+}
+
+test('a phone whose clock was set back after sign-in, relaunched after the server expired the token, refreshes once and stays signed in', { timeout: 10_000 }, async () => {
+  const { auth, keychain, app, since, launch } = await relaunchSetBack();
+  assert.deepEqual(launch, [['user', 'access-1', true], ['token:refresh_token', null, false], ['user', 'access-2', false]],
+    'the refused account read refreshes once, then reads again on the new token');
+  assert.equal(await app.accessToken(), 'access-2', 'the member is still signed in');
+  const stored = JSON.parse(keychain.get(SESSION_KEY));
+  assert.equal(stored.access_token, 'access-2', 'and the keychain holds the refreshed session');
+  assert.equal(stored.expires_at - stored.server_expires_at, -7200, 'stamped on the phone’s clock as it now reads');
+  for (let call = 0; call < 25; call += 1) { /* two more hours, a call every five minutes */
+    assert.equal(await app.api('/v1/mnet/feed').then(() => 200, (error) => error.status), 200, `call ${call}`);
+    auth.clock.now += 300;
+  }
+  const refreshed = since + 1;
+  assert.equal(auth.requests[refreshed].route, 'token:refresh_token');
+  assert.deepEqual(auth.requests.slice(refreshed).filter((r) => r.expired), [], 'no request after the refresh carries a token the server has expired');
+  assert.equal(auth.refreshes(), 3, 'that refresh, then one per hour-long token');
+});
+
+test('after Auth refuses only the token, the refresh decides: offline or a 5xx keeps the member signed in, a refused refresh signs out', { timeout: 10_000 }, async () => {
+  for (const outage of ['offline', 503]) {
+    const { keychain, launch, kept } = await relaunchSetBack((auth) => auth.outage.set('token:refresh_token', outage));
+    assert.deepEqual(launch, [['user', 'access-1', true], ['token:refresh_token', null, false]], `${outage}: one refresh is tried`);
+    assert.equal(keychain.get(SESSION_KEY), kept, `${outage}: the member stays signed in, the keychain untouched`);
+  }
+  /* Auth refuses every token with a 403 that names no code, even one issued a
+     moment ago: refreshed once, not again, and the member is kept. */
+  {
+    const { keychain, launch } = await relaunchSetBack((auth) => auth.outage.set('user', 403));
+    assert.deepEqual(launch, [['user', 'access-1', true], ['token:refresh_token', null, false], ['user', 'access-2', false]],
+      'one refresh, however often the token is refused');
+    assert.equal(JSON.parse(keychain.get(SESSION_KEY)).access_token, 'access-2', 'the member is kept, with the refreshed session');
+  }
+  /* The server has also ended the session (a sign-out everywhere), so the
+     refresh is refused: that answer, not the token's, signs the member out. */
+  const { keychain, app, launch } = await relaunchSetBack((auth) => auth.endSessions());
+  assert.deepEqual(launch, [['user', 'access-1', true], ['token:refresh_token', null, false]]);
+  assert.equal(keychain.has(SESSION_KEY), false, 'a refused refresh signs the member out');
+  await assert.rejects(app.accessToken(), /Sign in first/);
+});
+
+test('an account read that names the session as gone still signs out at once, with no refresh', { timeout: 10_000 }, async () => {
+  /* A token still within its lifetime, on a phone on time, whose session the
+     server has ended: Auth answers 403 session_not_found. */
+  const auth = authServer(), keychain = new Map();
+  await (await launchPhone(auth, { skew: 0, keychain })).signIn('jane@example.com', 'correct horse battery staple');
+  auth.clock.now += 600;
+  auth.endSessions();
+  const since = auth.requests.length;
+  const app = await launchPhone(auth, { skew: 0, keychain });
+  assert.deepEqual(auth.requests.slice(since).map((r) => [r.route, r.token, r.expired]), [['user', 'access-1', false]], 'no refresh is spent on it');
+  assert.equal(keychain.has(SESSION_KEY), false);
+  await assert.rejects(app.accessToken(), /Sign in first/);
 });

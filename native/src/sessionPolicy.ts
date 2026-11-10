@@ -117,10 +117,12 @@ export function restoredSession<T extends { access_token?: unknown; server_expir
 }
 
 /**
- * Auth error codes that mean the session itself is gone. Supabase Auth names
- * the condition in `error_code` (older servers: `error`), and its spec warns
- * that the HTTP status for one condition can vary (400 and 422 are used
- * interchangeably), so the code is checked first.
+ * Auth error codes that mean the session itself is gone, or its member is: no
+ * refresh brings it back. Supabase Auth names the condition in `error_code`
+ * (older servers: `error`), and its spec warns that the HTTP status for one
+ * condition can vary (400 and 422 are used interchangeably), so the code is
+ * checked first. The web clears a session on the same six (js/mcc-auth.js
+ * refresh); invalid_grant is what older servers sent for a dead refresh token.
  */
 const DEAD_SESSION_CODES = new Set([
   'refresh_token_not_found',
@@ -129,26 +131,60 @@ const DEAD_SESSION_CODES = new Set([
   'session_expired',
   'user_not_found',
   'user_banned',
-  'bad_jwt',
-  'no_authorization',
   'invalid_grant',
 ]);
 
 /**
- * Whether a failed refresh or user read means the session is dead: a dead
- * session error code, or failing that an answer of 400, 401, 403, 404 or 422
- * from the auth server. Being offline, a timeout, a 5xx or a 429 says nothing
- * about the session, so the member stays signed in and the next request
- * tries again.
+ * Auth error codes that refuse only the access token presented: unreadable or
+ * expired by the auth server's clock (bad_jwt), or not sent (no_authorization).
+ * They say nothing about the session the token belongs to.
  */
-export function isDefinitiveAuthFailure(error: any): boolean {
+const REFUSED_TOKEN_CODES = new Set(['bad_jwt', 'no_authorization']);
+
+function authErrorCode(error: any): string {
   const data = error && typeof error.data === 'object' ? error.data : null;
-  const code = String(
+  return String(
     (data && (data.error_code || (typeof data.code === 'string' ? data.code : '') || data.error)) || '',
   ).toLowerCase();
-  if (DEAD_SESSION_CODES.has(code)) return true;
+}
+
+/**
+ * Whether a failed refresh or user read is a definitive answer from the auth
+ * server: a dead session or refused token error code, or failing that an
+ * answer of 400, 401, 403, 404 or 422. Being offline, a timeout, a 5xx or a
+ * 429 says nothing about the session, so the member stays signed in and the
+ * next request tries again.
+ *
+ * A refused refresh means the session is dead. A refused user read may mean
+ * only that its access token is: ask isAccessTokenRefusal first.
+ */
+export function isDefinitiveAuthFailure(error: any): boolean {
+  const code = authErrorCode(error);
+  if (DEAD_SESSION_CODES.has(code) || REFUSED_TOKEN_CODES.has(code)) return true;
   const status = Number(error && error.status);
   return status === 400 || status === 401 || status === 403 || status === 404 || status === 422;
+}
+
+/**
+ * Whether the auth server refused only the access token presented, not its
+ * session: bad_jwt or no_authorization, or a 401 or 403 that names no dead
+ * session code.
+ *
+ * Supabase Auth answers a token that has expired by its clock with 403
+ * bad_jwt, and the session can still be good: its refresh token does not
+ * expire with the access token. With both clocks the phone's (stampExpiry) a
+ * live session does not meet that answer, but a phone whose clock was set back
+ * after the token arrived does: the token still reads as fresh here. So such an
+ * answer never ends the session by itself. The session is refreshed once and
+ * the request made again; a refused refresh, or an answer that names the
+ * session or the member as gone, is what ends it.
+ */
+export function isAccessTokenRefusal(error: any): boolean {
+  const code = authErrorCode(error);
+  if (REFUSED_TOKEN_CODES.has(code)) return true;
+  if (DEAD_SESSION_CODES.has(code)) return false;
+  const status = Number(error && error.status);
+  return status === 401 || status === 403;
 }
 
 /**
