@@ -35,6 +35,8 @@ import {
 import { reconcileJob, sweepMediaRecovery, verifyWebhookHint } from '../src/media/recovery.js';
 import { handleMediaMcp } from '../src/media/mcp.js';
 import { verifyFalWebhook } from '../src/media/fal.js';
+import { __resetCoreNonces } from '../src/media/core-signature.js';
+import { signCoreRequest } from '../../../core/src/broker-edge-auth.mjs';
 import {
   ORG, OTHER_ORG, USER, MEMBER, MODEL, WINDOW_MS, V2_FUNCTIONS, env, json, matchesFilter, plane, provider, traced
 } from './helpers/media-plane.mjs';
@@ -1556,5 +1558,137 @@ test('the recovery MCP tools are listed, refused for an ordinary signed-in user 
     const again = await mcp('media.job.reconcile', { ...args, decision: 'bind' }, USER);
     assert.equal(again.body.result.isError, true);
     assert.match(again.body.result.content[0].text, /job_already_resolved/);
+  } finally { st.restore(); }
+});
+
+/* ================= McCluster Core's signature on the operator routes ================= */
+
+const CORE_SECRET = 'shared-core-edge-key';
+const coreEnv = { ...env, CORE_EDGE_SIGNING_KEY: CORE_SECRET, CORE_REPLAY_STORE: 'supabase' };
+
+/* A request signed the way core/src/broker-edge-auth.mjs signs one. */
+function coreSigned(path, { method = 'GET', body = undefined, secret = CORE_SECRET, signedPath = path.split('?')[0], signedBody = body } = {}) {
+  const headers = signCoreRequest({ secret, method, path: signedPath, bodyBytes: signedBody === undefined ? Buffer.alloc(0) : Buffer.from(signedBody) });
+  return new Request(`https://api.mccluster.org${path}`, { method, headers, ...(body === undefined ? {} : { body }) });
+}
+async function send(request, apiEnv = coreEnv) {
+  const pending = [];
+  const response = await entry.fetch(request, apiEnv, { waitUntil(promise) { pending.push(promise); } });
+  await Promise.all(pending);
+  return { status: response.status, body: await response.json() };
+}
+
+test('a Core-signed decision acts as the house owner: verified, its nonce claimed once, audited as core, bound to the request\'s organization', async () => {
+  __resetCoreNonces();
+  const st = plane();
+  try {
+    const job = seedJob(st);
+    const body = JSON.stringify({ org_id: ORG, decision: 'release', reason: 'never submitted' });
+    const request = coreSigned(`/v1/media/jobs/${job.id}/reconcile`, { method: 'POST', body });
+    const replay = request.clone();
+    const answer = await send(request);
+    assert.equal(answer.status, 200);
+    assert.equal(answer.body.outcome, 'released');
+    assert.equal(st.rpcCalls('media_resolve_operation_job_v1')[0].body.p_actor_id, USER.id, 'the house owner\'s id');
+    assert.equal(st.rpcCalls('media_resolve_operation_job_v1')[0].body.p_org_id, ORG);
+    const requested = st.audit.find((row) => row.event === 'media_operation.resolve_requested');
+    assert.equal(requested.actor_kind, 'core');
+    assert.equal(requested.actor_user_id, USER.id);
+    assert.equal(st.nonces.size, 1, 'the mutating call claimed its nonce in the shared store');
+    assert.equal(st.calls.some((call) => call.url.includes('/auth/v1/user')), false, 'no user session is consulted');
+    assert.equal(job.status, 'failed');
+    /* the same envelope again is refused before anything runs */
+    __resetCoreNonces(); // another isolate: only the shared store remembers
+    const second = await send(replay);
+    assert.equal(second.status, 409);
+    assert.equal(st.rpcCalls('media_resolve_operation_job_v1').length, 1);
+  } finally { st.restore(); }
+});
+
+test('a Core-signed read of the candidates acts as the house owner; a signed call carries no query string', async () => {
+  __resetCoreNonces();
+  const candidates = { generated_at: 'now', older_than: '00:15:00', counts: {}, by_org: [], candidates: [] };
+  const st = plane({ candidates });
+  try {
+    const answer = await send(coreSigned('/v1/media/recovery'));
+    assert.equal(answer.status, 200);
+    assert.deepEqual(answer.body, candidates);
+    assert.deepEqual(st.rpcCalls('media_operation_recovery_candidates_v1')[0].body, { p_org_id: null, p_older_than: '15 minutes', p_limit: 50 });
+    assert.equal(st.calls.some((call) => call.url.includes('/auth/v1/user')), false);
+    /* the signature does not cover a query string, so none is accepted */
+    const withQuery = await send(coreSigned(`/v1/media/recovery?org_id=${ORG}`));
+    assert.equal(withQuery.status, 400);
+    const job = seedJob(st);
+    const body = JSON.stringify({ org_id: ORG, decision: 'release', reason: 'never submitted' });
+    const postWithQuery = await send(coreSigned(`/v1/media/jobs/${job.id}/reconcile?org_id=${OTHER_ORG}`, { method: 'POST', body }));
+    assert.equal(postWithQuery.status, 400);
+    assert.equal(st.rpcCalls('media_operation_recovery_candidates_v1').length, 1);
+    assert.equal(st.rpcCalls('media_resolve_operation_job_v1').length, 0);
+    assert.equal(job.status, 'queued');
+  } finally { st.restore(); }
+});
+
+test('a Core signature that does not verify is refused on the operator routes, never downgraded to a session', async () => {
+  const st = plane({ sessions });
+  try {
+    const job = seedJob(st);
+    const path = `/v1/media/jobs/${job.id}/reconcile`;
+    const body = JSON.stringify({ org_id: ORG, decision: 'release', reason: 'never submitted' });
+    const cases = [
+      ['another key', coreSigned(path, { method: 'POST', body, secret: 'another-key' }), 401],
+      ['a signature for another job', coreSigned(path, { method: 'POST', body, signedPath: '/v1/media/jobs/00000000-0000-4000-8000-000000000000/reconcile' }), 401],
+      ['a body changed after signing', coreSigned(path, { method: 'POST', body: JSON.stringify({ org_id: ORG, decision: 'release', reason: 'never submitted', evidence: { forged: true } }), signedBody: body }), 401],
+      ['a signature for the read used on the decision', coreSigned(path, { method: 'POST', body, signedPath: '/v1/media/recovery' }), 401]
+    ];
+    for (const [name, request, status] of cases) {
+      __resetCoreNonces();
+      /* a valid owner session beside a bad signature changes nothing */
+      request.headers.set('authorization', `Bearer ${OWNER_TOKEN}`);
+      assert.equal((await send(request)).status, status, name);
+    }
+    __resetCoreNonces();
+    assert.equal((await send(coreSigned('/v1/media/recovery', { secret: 'another-key' }))).status, 401);
+    /* no signing key configured: fail closed */
+    __resetCoreNonces();
+    assert.equal((await send(coreSigned(path, { method: 'POST', body }), env)).status, 503);
+    /* no shared replay store configured: a mutating call fails closed */
+    __resetCoreNonces();
+    assert.equal((await send(coreSigned(path, { method: 'POST', body }), { ...env, CORE_EDGE_SIGNING_KEY: CORE_SECRET })).status, 503);
+    assert.equal(st.rpcs.length, 0);
+    assert.equal(st.audit.length, 0);
+    assert.equal(job.status, 'queued');
+  } finally { st.restore(); }
+});
+
+test('Core\'s signature reaches the two recovery routes and the media MCP only: every neighbouring media route still refuses it before any lookup', async () => {
+  const st = plane({ sessions });
+  try {
+    const job = seedJob(st);
+    const body = '{}';
+    for (const [method, path] of [
+      ['POST', '/v1/media/generate'], ['POST', '/v1/media/bakeoff'], ['GET', `/v1/media/jobs/${job.id}`], ['GET', '/v1/media/budget'],
+      ['GET', '/v1/media/usage'], ['GET', '/v1/media/models'], ['POST', '/v1/media/webhooks/fal'],
+      ['POST', '/v1/media/recovery'], ['PATCH', '/v1/media/recovery'], ['DELETE', '/v1/media/recovery'],
+      ['GET', `/v1/media/jobs/${job.id}/reconcile`], ['PATCH', `/v1/media/jobs/${job.id}/reconcile`],
+      ['POST', `/v1/media/jobs/${job.id.toUpperCase()}/reconcile`], ['POST', `/v1/media/jobs/${job.id}/reconcile/extra`],
+      ['POST', `/v1/media/jobs/${job.id}/release`], ['GET', '/v1/media/recovery/candidates'], ['GET', '/v1/media/Recovery']
+    ]) {
+      __resetCoreNonces();
+      const before = st.calls.length;
+      const answer = await send(coreSigned(path, { method, ...(method === 'GET' ? {} : { body }) }));
+      assert.equal(answer.status, 403, `${method} ${path}`);
+      assert.equal(answer.body.code, 'core_route_not_allowed', `${method} ${path}`);
+      assert.equal(st.calls.length, before, `${method} ${path}: refused before any lookup`);
+    }
+    assert.equal(job.status, 'queued');
+  } finally { st.restore(); }
+});
+
+test('with no single house owner a Core-signed operator call is 503', async () => {
+  __resetCoreNonces();
+  const st = plane({ houseOwners: [] });
+  try {
+    assert.equal((await send(coreSigned('/v1/media/recovery'))).status, 503);
+    assert.equal(st.rpcs.length, 0);
   } finally { st.restore(); }
 });

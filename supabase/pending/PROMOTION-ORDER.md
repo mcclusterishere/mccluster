@@ -192,8 +192,8 @@ Two optional Worker secrets, by name only (`wrangler secret put`), neither neede
 `MEDIA_WEBHOOK_HINT_SECRET` (32+ random characters) lets the provider webhook find a job whose submit outcome
 was unknown; without it such jobs wait for an operator decision. `FAL_WEBHOOK_USER_ID` (the house's fal account
 id) refuses a signed webhook from any other fal account. After apply and deploy: the operator surface is
-`GET /v1/media/recovery` and `POST /v1/media/jobs/:id/reconcile` (the house owner's session), and the MCP tools
-`media.recovery.list` and `media.job.reconcile` (the house owner, or McCluster Core through its signed MCP call).
+`GET /v1/media/recovery` and `POST /v1/media/jobs/:id/reconcile`, and the MCP tools `media.recovery.list` and
+`media.job.reconcile`, each for the house owner's session or McCluster Core's signature.
 
 ## Names with no SQL anywhere
 
