@@ -1313,6 +1313,7 @@ begin
     case p_action
       when 'overview' then
         select * into pol from public.eup_league_policy pp where pp.tenant = v_house;
+        v_retention := public.eup_league_retention(v_house);
         return jsonb_build_object(
           'campaigns', (select jsonb_build_object('drafts', count(*) filter (where cc.state = 'draft'), 'released', count(*) filter (where cc.state = 'released'),
               'paused', count(*) filter (where cc.state = 'paused'), 'withdrawn', count(*) filter (where cc.state = 'withdrawn'))
@@ -1325,7 +1326,7 @@ begin
             'reviews', (select count(*) from public.eup_proofs pp where pp.tenant = v_house and pp.state = 'needs_changes'),
             'appeals', (select count(*) from public.eup_appeals xx where xx.tenant = v_house and xx.state = 'open'),
             'media_due', (select count(*) from public.eup_media_uploads uu where uu.tenant = v_house and uu.state <> 'purged'
-              and public.eup_league_upload_is_due(uu, public.eup_league_retention(v_house)))),
+              and public.eup_league_upload_is_due(uu, v_retention))),
           'policy', jsonb_build_object('present', pol.tenant is not null, 'valid', coalesce(public.eup_league_policy_valid(pol.document), false),
             'media_enabled', coalesce(public.eup_league_policy_valid(pol.document) and (pol.document #> '{media,enabled}') = 'true'::jsonb, false),
             'revision', coalesce(pol.revision, 0)),

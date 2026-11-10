@@ -1779,6 +1779,10 @@ try {
   ok((await admin('select payload from public.eup_outbox')).every((r) => payloadOk(r.payload)), 'every event carries ids and revisions only');
   eq(await n('eup_outbox', `payload::text ~ 'Test fixture|Verse|lyrics|statement|league/v1|https?:'`), 0, 'no event carries text, a path or a URL');
   ok((await one('select count(*) = count(distinct seq) and min(seq) >= 1 as ok from public.eup_outbox')).ok, 'every event has its own sequence number');
+  // LEAN and MEMBER-SAFE over the whole run, the owner-control results included.
+  eq(await n('eup_command_receipts', `result::text ~ 'Test fixture appeal|a second appeal|accommodation request|Verse one|why I apply'`), 0, 'no stored result holds an appeal statement, an accommodation note, lyrics or an application statement');
+  const memberResultsNow = (await admin(`select result from public.eup_command_receipts where surface = 'member'`)).map((r) => JSON.stringify(r.result));
+  ok(memberResultsNow.length > memberResults.length && memberResultsNow.every((r) => !C.FOREIGN_ID_FIELDS.some((f) => r.includes(`"${f}"`))), 'no member result names another account, publications and appeals included');
 
   /* ================================================================== F. not installed, and no League policy */
   const bare = await createLeagueDatabase({ enable: false });
