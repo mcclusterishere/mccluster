@@ -42,10 +42,10 @@ const quietTimeout = (fn, ms) => { const timer = setTimeout(fn, ms); timer.unref
    clockAhead is how far this device's clock runs ahead of the server's, in seconds. An hour ahead with
    one-hour tokens is the session that is stale on every call: each new token already looks expired. */
 function profile({ clockAhead = 0, owners = [], refreshLimit = 40 } = {}) {
-  const serverNow = () => Math.floor(Date.now() / 1000);
+  let serial = 0, moving = 0, elapsed = 0;       // elapsed: seconds the test has let pass, for the server and the device alike
+  const serverNow = () => Math.floor(Date.now() / 1000) + elapsed;
   const counts = { refresh: 0, user: 0, status: 0, bootstrap: 0 };
-  const shelf = new Map(), tabs = [], refreshTokens = new Map(), parked = new Map(), down = new Set();
-  let serial = 0, moving = 0;
+  const shelf = new Map(), tabs = [], refreshTokens = new Map(), parked = new Map(), down = new Map();
 
   function issue(sub, issuedAt = serverNow()) {
     const n = ++serial, refresh_token = 'fixture-refresh-' + n;
@@ -71,7 +71,7 @@ function profile({ clockAhead = 0, owners = [], refreshLimit = 40 } = {}) {
   function answer(kind, url, init) {
     const bearer = (/^Bearer (.+)$/.exec((init.headers && init.headers.authorization) || '') || [])[1] || '';
     const sub = subjectOf(bearer);
-    if (down.has(kind)) return reply({ code: 'unexpected_failure', msg: 'Unavailable' }, 503);
+    if (down.has(kind)) return reply({ code: down.get(kind).code, msg: 'Fixture failure' }, down.get(kind).status);
     if (kind === 'refresh') {
       if (counts.refresh > refreshLimit) return reply({ code: 'over_request_rate_limit', msg: 'Too many requests' }, 429);
       const owner = refreshTokens.get(JSON.parse(init.body || '{}').refresh_token);
@@ -138,7 +138,7 @@ function profile({ clockAhead = 0, owners = [], refreshLimit = 40 } = {}) {
       window, localStorage: local, sessionStorage: session, fetch: request,
       AbortController, URL, URLSearchParams, setTimeout: quietTimeout, clearTimeout, atob, btoa,
       CustomEvent: class { constructor(type, init) { this.type = type; this.detail = init && init.detail; } },
-      Date: class extends real { static now() { return real.now() + clockAhead * 1000; } },
+      Date: class extends real { static now() { return real.now() + (clockAhead + elapsed) * 1000; } },
       /* everything the cut functions close over in the bar, and the painting they call */
       AUTH_STATE: { signed_in: false, verified: false, user: null },
       SELF_PROFILE: null, PERSPECTIVE: null, selfProfileEpoch: 0, lastVerifiedSubject: '',
@@ -148,6 +148,8 @@ function profile({ clockAhead = 0, owners = [], refreshLimit = 40 } = {}) {
       paintAuthState(signedIn, user, verified) {
         context.AUTH_STATE = { signed_in: !!signedIn, verified: !!verified, user: user || null };
         paints.push({ signed_in: !!signedIn, verified: !!verified, user: user ? user.id : null });
+        /* the bar has read the session and not yet asked: where a test slips a write in between the two */
+        if (!verified && tab.beforeAsking) { const write = tab.beforeAsking; tab.beforeAsking = null; write(); }
       },
       paintAdmin(on) { adminPaints.push(!!on); },
       paintPerspective() {}, storePerspective() {}, readPerspective: () => null, cleanPerspective: (p) => p,
@@ -170,7 +172,10 @@ function profile({ clockAhead = 0, owners = [], refreshLimit = 40 } = {}) {
     hold(kind) { parked.set(kind, []); },
     pass(kind) { const release = (parked.get(kind) || []).shift(); assert.ok(release, 'a ' + kind + ' request is in the air'); release(); },
     release(kind) { const queue = parked.get(kind) || []; parked.delete(kind); queue.forEach((release) => release()); },
-    fail(kind, on = true) { if (on) down.add(kind); else down.delete(kind); },
+    /* a kind of request answers with a failure: unavailable unless told otherwise; fail(kind, false) mends it */
+    fail(kind, how = { status: 503, code: 'unexpected_failure' }) { if (how) down.set(kind, how); else down.delete(kind); },
+    /* time passes, with no request in the air */
+    rest(secondsLater) { elapsed += secondsLater; },
     /* resolves when nothing is moving any more: no request in flight, no storage event undelivered */
     async quiet() { for (let still = 0; still < 6;) { await turn(); still = moving ? 0 : still + 1; } }
   };
@@ -422,4 +427,62 @@ test('pages and other tabs go through the shared rule; a sign-in or sign-out in 
   assert.match(BAR, /\n    refreshAuth: currentAuthState,\n/);
   assert.match(BAR, /window\.addEventListener\("storage", function \(e\) \{\n\s*if \(!e \|\| e\.key === "mccdb_session" \|\| e\.key === "mcc_sess_keep"\) currentAuthState\(\);/);
   assert.match(BAR, /window\.addEventListener\("mcc:auth-changed", refreshAuthState\);/);
+});
+
+/* ---------- a bar that has no answer tries again later, and an answer has to be about the account stored ---------- */
+
+test('a bar that spent its lookups without an answer asks again once it has rested', async () => {
+  const device = profile();
+  device.seed('member-1');
+  device.fail('user');
+  const second = device.open();
+  await device.quiet();
+  const first = device.open();
+  await device.quiet();
+  for (let write = 0; write < 2; write++) { await first.MCC.refresh(); await device.quiet(); }   // each write: one more look, no answer
+  assert.deepEqual(second.state(), SIGNED_OUT);
+  device.fail('user', false);                   // the account service is back
+  const spent = device.counts.user;
+  await first.MCC.refresh();
+  await device.quiet();
+  assert.equal(device.counts.user, spent, 'the budget for this auth event is spent: no fourth lookup straight away');
+  device.rest(31);
+  await first.MCC.refresh();
+  await device.quiet();
+  assert.deepEqual(second.state(), signedIn('member-1'), 'half a minute on, the next write for that account is looked up');
+});
+
+test('a session the server rejects under the last lookup is a sign-out, and signing in again elsewhere still reaches the bar', async () => {
+  const device = profile({ clockAhead: HOUR });
+  device.seed('member-1');
+  device.fail('user');
+  device.hold('refresh');
+  const bar = device.open();
+  for (let lookup = 1; lookup < 3; lookup++) { await device.quiet(); device.pass('refresh'); }   // two lookups: refreshed, no answer
+  await device.quiet();
+  device.fail('refresh', { status: 400, code: 'refresh_token_already_used' });
+  device.pass('refresh');                       // the third: the canonical client clears the rejected session, with no event here
+  await device.quiet();
+  assert.equal(device.stored(), null);
+  assert.deepEqual(bar.state(), SIGNED_OUT);
+  device.release('refresh'); device.fail('refresh', false); device.fail('user', false);
+  const other = device.open();
+  await device.quiet();
+  await other.MCC.signInWithPassword('member-1@example.test', 'fixture-password');
+  await device.quiet();
+  assert.deepEqual(bar.state(), signedIn('member-1'));
+});
+
+test('an answer about another account is not painted, even when the first account is stored again', async () => {
+  const device = profile();
+  device.seed('member-1');
+  device.hold('user');
+  const bar = device.open();
+  bar.beforeAsking = () => device.store(device.issue('member-2'));   // stored between the bar reading the session and the client reading it
+  await device.quiet();                          // the client is asking about member-2
+  device.store(device.issue('member-1'));        // and member-1 is stored again, with a new token
+  device.release('user');
+  await device.quiet();
+  assert.equal(paintedAs(bar, 'member-2'), false, 'member-2 was never painted');
+  assert.deepEqual(bar.state(), signedIn('member-1'));
 });

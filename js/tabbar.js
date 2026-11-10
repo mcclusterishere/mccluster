@@ -725,22 +725,25 @@
   /* A NEW TOKEN IS NOT A NEW SIGN-IN. The canonical client may refresh the token while it
      fetches the user, and the user it returns was fetched with the refreshed one. So when
      the stored token moved under a lookup but still names the account the lookup began
-     with (the JWT sub), the answer stands. Anything else that moved (another account, a
-     sign-out, no answer) is never painted from the old answer: the session now stored is
-     looked up again, AUTH_LOOKUPS lookups at most for one auth event (the page opening, a
-     sign-in or sign-out here, another account or none in storage), and then the bar
-     settles signed out until the next one. Three, because a tab restored beside another
-     can lose the refresh to it twice (that tab's lookup, then a request of its page) and
-     has no answer either time.
+     with (the JWT sub), and the answer is about that same account, the answer stands.
+     Anything else that moved (another account, a sign-out, no answer) is never painted
+     from the old answer: the session now stored is looked up again, AUTH_LOOKUPS lookups
+     at most for one auth event (the page opening, a sign-in or sign-out here, another
+     account or none in storage), and then the bar settles signed out. Three, because a
+     tab restored beside another can lose the refresh to it twice (that tab's lookup, then
+     a request of its page) and has no answer either time. A bar left signed out over a
+     stored session is not left for good: it asks again when that session is next written
+     or a page asks, once AUTH_REST has passed since its last lookup.
      The lookup used to repeat for as long as the token kept changing, and a session that
      is stale on every call (a device clock ahead of the server's, a short token lifetime)
      changes it every time: one refresh and one lookup a turn, the bar never painted,
      until the auth service answered 429 for everyone behind that address. */
-  var AUTH_LOOKUPS = 3, AGAIN = {}, authLookups = 0, authFlight = null;
+  var AUTH_LOOKUPS = 3, AUTH_REST = 30000, AGAIN = {}, authLookups = 0, authLookedAt = 0, authFlight = null;
   function refreshAuthState(again) {
     var attempt = ++authEpoch;
     ++adminEpoch;
     authLookups = again === AGAIN ? authLookups + 1 : 1;
+    authLookedAt = Date.now();
     var session = readAuthSession();
     var oldSubject = adminSession ? jwtPayload(adminSession).sub : null;
     var newSubject = session?.access_token ? jwtPayload(session.access_token).sub : null;
@@ -769,9 +772,11 @@
       // Canonical auth may refresh the token while fetching the user. Verify
       // the new session instead of accepting an old result or leaving it pending,
       // within the budget: the same account's refreshed token keeps the answer it was fetched with.
-      if ((readAuthSession() || {}).access_token !== session.access_token &&
-          !(user && subject && currentSubject() === subject)) {
-        if (authLookups < AUTH_LOOKUPS) return refreshAuthState(AGAIN);
+      var stored = readAuthSession() || {};
+      if (stored.access_token !== session.access_token &&
+          !(user && subject && String(user.id) === subject && currentSubject() === subject)) {
+        // Nothing stored any more is a sign-out. That path asks nobody, so it never waits on the budget.
+        if (authLookups < AUTH_LOOKUPS || !stored.access_token) return refreshAuthState(AGAIN);
         user = null;
       }
       paintAuthState(!!user, user, true);
@@ -796,12 +801,15 @@
      stands, because a token refreshed for the same account is the same sign-in, not a change. Asking again would
      refresh the token again wherever a session is stale on every call, and two tabs answered each other for ever.
      Another account or a sign-out is an auth event and is looked up; so is that account's session while the bar
-     shows signed out (its lookup had no answer), for as long as the same budget lasts. */
+     shows signed out (its lookup had no answer), for as long as the same budget lasts or once it has rested. */
   function currentAuthState() {
     var stored = currentSubject();
     if (!stored || stored !== lastVerifiedSubject) return refreshAuthState();
     if (authFlight) return authFlight;
-    if (AUTH_STATE.verified && !AUTH_STATE.signed_in && authLookups < AUTH_LOOKUPS) return refreshAuthState(AGAIN);
+    if (AUTH_STATE.verified && !AUTH_STATE.signed_in) {
+      if (Date.now() - authLookedAt >= AUTH_REST) authLookups = 0;
+      if (authLookups < AUTH_LOOKUPS) return refreshAuthState(AGAIN);
+    }
     return Promise.resolve(AUTH_STATE);
   }
 
