@@ -20,10 +20,18 @@ const TIMEOUT_MS = 15000;
    unless the gate passes. Returns {text, fetched_at}. */
 export async function boundedUpstreamRead(source_id, state, env, url, { fetchImpl = fetch, now = Date.now, headers = {} } = {}) {
   const feedEntry = assertFetchAllowed(source_id, state, env, { now: now() });
-  const host = new URL(feedEntry.url).host.replace(/^www\./, '');
+  /* The source's registrable domain: its registered fetch host when the registry names one
+     (the documentation URL of some sources lives on another host), otherwise its URL's host.
+     A request may go to that domain or to a subdomain of it, compared by whole labels: a text
+     suffix would let evilsec.gov through for sec.gov. No port, no credentials in the URL. */
+  const registered = String(feedEntry.fetch_host || new URL(feedEntry.url).hostname).toLowerCase().replace(/^www\./, '');
+  const domain = registered.split('.').slice(-2).join('.');
   const target = new URL(url);
-  if (target.protocol !== 'https:') throw Object.assign(new Error('upstream must be https'), { status: 400, reason: 'invalid_upstream' });
-  if (!target.host.replace(/^www\./, '').endsWith(host.split('.').slice(-2).join('.'))) throw Object.assign(new Error('upstream host outside the source'), { status: 400, reason: 'invalid_upstream' });
+  const invalid = (message) => Object.assign(new Error(message), { status: 400, reason: 'invalid_upstream' });
+  if (target.protocol !== 'https:') throw invalid('upstream must be https');
+  const hostname = target.hostname.toLowerCase();
+  if (target.port || target.username || target.password) throw invalid('upstream carries a port or credentials');
+  if (!(hostname === domain || hostname.endsWith(`.${domain}`))) throw invalid('upstream host outside the source');
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {

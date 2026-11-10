@@ -127,7 +127,7 @@ export const IMPORT_PLANS = Object.freeze({
 function plannedRequests(plan, feedEntry, cursor, env) {
   const hosts = Array.isArray(plan?.hosts) ? plan.hosts.filter((h) => typeof h === 'string' && h).map((h) => h.toLowerCase()) : [];
   if (!hosts.length || typeof plan.requests !== 'function' || typeof plan.parse !== 'function') throw stop('no_import_plan');
-  const domain = new URL(feedEntry.url).hostname.toLowerCase().replace(/^www\./, '');
+  const domain = String(feedEntry.fetch_host || new URL(feedEntry.url).hostname).toLowerCase().replace(/^www\./, '');
   if (!hosts.every((h) => h === domain || h.endsWith(`.${domain}`))) throw stop('invalid_upstream');
   const asked = plan.requests({ cursor, env });
   if (!Array.isArray(asked) || asked.length < 1) throw stop('no_import_scope');

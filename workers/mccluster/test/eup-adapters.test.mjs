@@ -129,6 +129,29 @@ test('an allowed read is bounded to the source host and returns text with its fe
   await assert.rejects(boundedUpstreamRead('sec_edgar', states.approved, env, 'https://evil.example/x', { fetchImpl }), { reason: 'invalid_upstream' });
   await assert.rejects(boundedUpstreamRead('sec_edgar', states.approved, env, 'http://data.sec.gov/x', { fetchImpl }), { reason: 'invalid_upstream' });
   assert.equal(seen.length, 1);
+  /* whole labels, not a suffix of the text: a look-alike domain is another domain */
+  for (const url of ['https://evilsec.gov/x', 'https://sec.gov.evil.example/x', 'https://data.sec.gov.evil.example/x', 'https://notsec.gov/x',
+    'https://data.sec.gov:8443/x', 'https://user:pw@data.sec.gov/x', 'https://data.sec.gov@evil.example/x', 'https://xn--sc-bja.gov/x']) {
+    await assert.rejects(boundedUpstreamRead('sec_edgar', states.approved, env, url, { fetchImpl }), { reason: 'invalid_upstream' }, url);
+  }
+  assert.equal(seen.length, 1, 'none of them was fetched');
+  for (const url of ['https://sec.gov/x', 'https://www.sec.gov/x', 'https://DATA.SEC.GOV/x', 'https://efts.sec.gov/x']) {
+    await boundedUpstreamRead('sec_edgar', states.approved, env, url, { fetchImpl, now: () => Date.parse(AT) });
+  }
+  assert.equal(seen.length, 5, 'the domain itself and its subdomains are the source');
+});
+
+test('a source whose documentation lives elsewhere is fetched from its registered host, not from the documentation host', async () => {
+  const seen = [];
+  const fetchImpl = async (url) => { seen.push(String(url)); return new Response('{}', { status: 200 }); };
+  const env = { CONGRESS_API_KEY: 'synthetic-key' };
+  const state = { source_id: 'congress_gov', configured: true, access: 'approved', paused: false, rights_expires_at: null };
+  await boundedUpstreamRead('congress_gov', state, env, 'https://api.congress.gov/v3/bill', { fetchImpl, now: () => Date.parse(AT) });
+  assert.equal(seen.length, 1);
+  for (const url of ['https://github.com/LibraryOfCongress/api.congress.gov', 'https://raw.githubusercontent.com/x', 'https://evilcongress.gov/x']) {
+    await assert.rejects(boundedUpstreamRead('congress_gov', state, env, url, { fetchImpl }), { reason: 'invalid_upstream' }, url);
+  }
+  assert.equal(seen.length, 1);
 });
 
 test('stored rows from a held or expired source are withheld from reads', () => {
