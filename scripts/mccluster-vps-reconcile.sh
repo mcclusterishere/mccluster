@@ -392,8 +392,12 @@ CYCLE_STAGE="stamp"
 
 printf '%s\n' "${TARGET_SHA}" > "${STATE_FILE}.tmp"
 mv "${STATE_FILE}.tmp" "${STATE_FILE}"
+# Replaced by rename like every other file Core reads here: written in place, a
+# health run between the truncate and the write would read an empty file.
 printf '{"deployed_sha":"%s","deploy_ref":"%s","deployed_at":"%s"}\n' \
-  "${TARGET_SHA}" "${DEPLOY_REF}" "$(date -u +%FT%TZ)" > "${STATE_ROOT}/last-success.json"
+  "${TARGET_SHA}" "${DEPLOY_REF}" "$(date -u +%FT%TZ)" > "${STATE_ROOT}/last-success.json.tmp"
+chmod 0644 "${STATE_ROOT}/last-success.json.tmp"
+mv -f "${STATE_ROOT}/last-success.json.tmp" "${STATE_ROOT}/last-success.json"
 
 CYCLE_STAGE="complete"
 mcc_cycle_receipt deployed 0 || true

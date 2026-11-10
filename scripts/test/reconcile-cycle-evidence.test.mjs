@@ -18,7 +18,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
 import { once } from 'node:events';
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, linkSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
@@ -279,6 +279,25 @@ test('a drift comparison that cannot run fails the cycle at drift_compare and is
   assert.match(healed.stdout, new RegExp(`reconciled OVH to ${sha} from deploy/ovh-production\\n$`));
   assert.equal(readFileSync(box.p('live-core', 'app.mjs'), 'utf8'), 'export const version = 1;\n');
   assert.deepEqual([box.json('last-cycle.json').outcome, box.json('last-cycle.json').stage], ['deployed', 'complete']);
+});
+
+test('a deploy replaces last-success.json by rename, so it is never read half-written', (t) => {
+  const box = host(t);
+  assert.equal(box.run(box.timer('1')).status, 0);
+  const marker = box.p('reconcile', 'last-success.json');
+  const before = readFileSync(marker, 'utf8');
+  // A second name for the file the next deploy replaces. Writing in place (open
+  // with O_TRUNC, then write) goes through it, and between the two a health run
+  // reading last-success.json sees an empty file. A rename never touches it.
+  linkSync(marker, box.p('state', 'reader-view'));
+  const next = box.promote('export const version = 2;\n');
+  const deployed = box.run(box.timer('2'));
+  assert.equal(deployed.status, 0, deployed.stderr);
+  assert.equal(readFileSync(box.p('state', 'reader-view'), 'utf8'), before, 'the previous file was never opened for writing');
+  assert.match(box.file('last-success.json'), new RegExp(`^\\{"deployed_sha":"${next}","deploy_ref":"deploy/ovh-production","deployed_at":"[^"]+"\\}\\n$`));
+  assert.equal(statSync(marker).nlink, 1, 'last-success.json is a new file, not the old one rewritten');
+  assert.equal(statSync(marker).mode & 0o777, 0o644);
+  assert.deepEqual(readdirSync(box.p('reconcile')).filter((name) => name.includes('.tmp')), []);
 });
 
 test('a run that cannot take the lock exits 0 as before and records nothing', (t) => {
