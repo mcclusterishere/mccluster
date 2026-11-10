@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile, mkdtemp, writeFile, rm } from 'node:fs/promises';
-import { execFileSync, spawn } from 'node:child_process';
+import { readFile, readdir, mkdtemp, writeFile, rm } from 'node:fs/promises';
+import { execFileSync, spawn, spawnSync } from 'node:child_process';
 import http from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -108,14 +108,44 @@ test('the OVH reconciler itself is a versioned deploy artifact with rollback', a
 });
 
 
+// bash -n parses only its FIRST file: every further file is an argument of that
+// script and is never read. So each script gets its own bash -n.
 test('OVH self-management shell scripts remain syntactically valid', () => {
-  assert.doesNotThrow(() => execFileSync('bash', [
-    '-n',
+  for (const file of [
     'scripts/mccluster-vps-reconcile.sh',
     'scripts/deploy-ovh-core.sh',
     'scripts/ovh-core-health.sh',
     'scripts/bootstrap-vps-self-management.sh',
-  ], { stdio: 'pipe' }));
+  ]) assert.doesNotThrow(() => execFileSync('bash', ['-n', file], { stdio: 'pipe' }), file);
+});
+
+test('every bash -n in the root tests and the workflows names exactly one file (TS-1)', async () => {
+  // Why: with two files bash -n parses the first and passes whatever the second holds.
+  const dir = await mkdtemp(join(tmpdir(), 'mcc-bash-n-'));
+  try {
+    await writeFile(join(dir, 'good.sh'), 'echo ok\n');
+    await writeFile(join(dir, 'broken.sh'), 'if then\n');
+    const both = ['-n', join(dir, 'good.sh'), join(dir, 'broken.sh')];
+    assert.equal(spawnSync('bash', both).status, 0, 'bash -n good.sh broken.sh does not parse broken.sh');
+    assert.equal(spawnSync('bash', both.filter((arg) => !arg.endsWith('good.sh'))).status, 2);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+  const offenders = [];
+  const root = new URL('../../', import.meta.url);
+  for (const folder of ['scripts/test', '.github/workflows']) {
+    for (const name of (await readdir(new URL(folder, root))).filter((file) => /\.(mjs|js|ya?ml)$/.test(file))) {
+      const text = await read(`${folder}/${name}`);
+      for (const [, list] of text.matchAll(/\b(?:execFileSync|execFile|spawnSync|spawn)\(\s*['"](?:\/(?:usr\/)?bin\/)?bash['"]\s*,\s*\[([^\]]*)\]/g)) {
+        const args = list.split(',').map((arg) => arg.trim()).filter(Boolean);
+        if (/^['"]-n['"]$/.test(args[0] || '') && args.length !== 2) offenders.push(`${folder}/${name}: bash ${args.join(' ')}`);
+      }
+      for (const [line, files] of text.matchAll(/^[ \t]*(?:-?[ \t]*run:[ \t]*)?bash -n[ \t]+([^\n]*)$/gm)) {
+        if (files.trim().split(/\s+/).length !== 1) offenders.push(`${folder}/${name}: ${line.trim()}`);
+      }
+    }
+  }
+  assert.deepEqual(offenders, []);
 });
 
 test('a promotion names the head it replaces, moves the ref only from that head and watches the public serving SHA', async () => {
