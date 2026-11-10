@@ -179,3 +179,21 @@ optional browser acceptance: `PRIM3_RELEASE_BROWSER=1` with the documented pinne
 See `docs/prim3/REVIEWED-RELEASE-LEARNING.md`. No production apply has occurred.
 Keep `PRIM3_RELEASES_ENABLED` absent/false until serial promotion and acceptance.
 Dedicated signing-key provisioning requires its separate action-time approval.
+
+## Network media assets pointer guard (pending, 2026-11-10)
+
+`network_media_assets_pointer_guard_v1.sql` (+ rollback) is a security fix with no caller change: it takes the write of
+`public.network_media_assets` from members, pins `id`, `bucket_id` and `object_path` for every role, gives
+`owner_m_uid` one audited path after an identity merge, and takes the member's own token off the `mnet-media`
+bucket's writes. No pending prerequisite and nothing shipped calls what it creates. It does have production
+prerequisites, all read-only and all in `README.md`: `scripts/db/media-asset-legacy-count.sql` must answer
+`not_canonical = 0`, the API logs must show no member-token write to the table or the bucket, the deployed
+`mnet-media` function must be this repository's, and the two SECURITY DEFINER writers must be owned by the applying
+role. It is independent of the Worker's signing fix (commit `3374dfcb`): either may land first, and each keeps working
+without the other. Proof before apply: `bash scripts/test-network-media-pointer-guard-db.sh` (PostgreSQL 16 and 17),
+`node --test scripts/test/network-media-pointer-guard.test.mjs` and, with Docker,
+`bash scripts/test-network-media-storage-flow.sh` (the real Storage API; with
+`SUPABASE_DB_IMAGE=supabase/postgres:17.11.0.018` on the official Supabase Postgres image, every statement as its
+restricted `postgres` role). After apply: the smoke and the
+`validate constraint` step in `README.md`, then a production snapshot. At promotion, fix the one fixture `README.md`
+names (`supabase/tests/action_clipping_regression.sql`).
