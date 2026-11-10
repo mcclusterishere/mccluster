@@ -28,8 +28,10 @@ async function readBody(request, fail) {
    failure to read is reported, not turned into "disabled". */
 async function civicRegistry(env, ctx) {
   if (!storageConfigured(env)) return { status: 'unavailable', rows: [] };
+  /* bare call: the Worker's fetch throws "Illegal invocation" when called as a method of ctx */
+  const fetchImpl = typeof ctx?.fetchImpl === 'function' ? ctx.fetchImpl : fetch;
   try {
-    const res = await ctx.fetchImpl(`${env.SUPABASE_URL}/rest/v1/civic_source_registry?select=source_key,enabled,last_checked_at&limit=100`, {
+    const res = await fetchImpl(`${env.SUPABASE_URL}/rest/v1/civic_source_registry?select=source_key,enabled,last_checked_at&limit=100`, {
       headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`, accept: 'application/json' }
     });
     if (!res.ok) return { status: 'unavailable', rows: [] };

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { handleEup, EUP_PREFIX } from '../src/eup/router.js';
 import { sourcesSummary, listSources } from '../src/eup/sources.js';
 import { FEED_REGISTRY } from '../src/eup/registry.js';
+import { asWorkerFetch } from './support/eup-league-storage-double.mjs';
 
 const OWNER = '11111111-1111-4111-8111-111111111111';
 const env = { SUPABASE_URL: 'https://db.example', SUPABASE_SERVICE_ROLE_KEY: 'server-secret', ALLOWED_ORIGINS: 'https://matthew.mccluster.org' };
@@ -150,4 +151,15 @@ test('sourcesSummary gives the overview one honest status line per source', asyn
   const stale = await listSources(env, { fetchImpl: fake({ states: [{ source_id: 'gleif', configured: true, access: 'approved', last_success_at: '2026-10-01T00:00:00Z', records: 12 }] }).fetchImpl, now: () => Date.parse('2026-11-09T12:00:00Z') });
   assert.equal(stale.sources.find((s) => s.id === 'gleif').availability, 'stale');
   assert.equal(stale.sources.find((s) => s.id === 'gleif').records, 12, 'stale data stays visible, not zeroed');
+});
+
+test('the civic registry is read with the Worker runtime\'s fetch: called bare, never as a method of ctx', async () => {
+  /* The Worker's fetch refuses a foreign `this` ("Illegal invocation"); a plain double accepts it, which hid that
+     sources.js called ctx.fetchImpl(...) as a method, so the Overview always said civic_registry 'unavailable'. */
+  const f = fake({ civic: [{ source_key: 'congress_gov', enabled: true, last_checked_at: null }] });
+  const r = await call('', { fetchImpl: asWorkerFetch(f.fetchImpl) });
+  const b = await r.json();
+  assert.equal(r.status, 200);
+  assert.equal(b.civic_registry, 'available');
+  assert.equal(b.sources.find((s) => s.id === 'congress_gov').civic_registry.enabled, true);
 });
