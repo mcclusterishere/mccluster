@@ -24,6 +24,11 @@ function noTrace(page, marker, where) {
   const dom = page.dom(), at = dom.indexOf(marker);
   assert.equal(at, -1, where + ': ' + marker + ' is still in the page: ...' + dom.slice(Math.max(0, at - 120), at + 60).replace(/\s+/g, ' ') + '...');
 }
+/* The state behind the page (what the modules are handed as getState). */
+function noStateTrace(page, marker, where) {
+  const json = JSON.stringify(page.state()), at = json.indexOf(marker);
+  assert.equal(at, -1, where + ': ' + marker + ' is still in Control state: ...' + json.slice(Math.max(0, at - 120), at + 60) + '...');
+}
 async function sweep(page, marker, label) {
   for (const route of ROUTES) { await page.go(route); await page.settle(); noTrace(page, marker, label + ', then ' + route); }
 }
@@ -57,8 +62,14 @@ test('A signing out in another tab conceals every view and shows the signed-out 
   assert.ok(page.gateShown(), 'the gate replaces the page');
   assert.match(page.note(), /signed out/i, 'the gate says why');
   noTrace(page, A, 'right after the sign-out');
+  noStateTrace(page, A, 'right after the sign-out');
+  assert.equal(page.reloads, 1, 'a sign-out no module heard replaces the page that held A');
   await sweep(page, A, 'after the sign-out');
   assert.equal(page.reads('owner-a').length, readsBefore, 'nothing is read with the old session after it ended');
+  const fresh = await openControl({ hash: '#home:today', storage: page.storage, sessionStore: page.sessionStore });
+  assert.ok(fresh.gateShown(), 'the replaced page opens on the gate');
+  assert.match(fresh.note(), /signed out/i, 'and still says why');
+  noTrace(fresh, A, 'on the replaced page');
 });
 
 test('B signing in where A was signed out gets a fresh page, never the one A used', async () => {
@@ -66,7 +77,7 @@ test('B signing in where A was signed out gets a fresh page, never the one A use
   await useEveryView(page);
   await page.otherTab(s => { s.delete('mccdb_session'); s.delete('mcc_sess_keep'); });
   await page.signInHere(B_EMAIL);
-  assert.equal(page.reloads, 1, 'the page that held A reloads for B');
+  assert.equal(page.reloads, 1, 'the page that held A was replaced, and B does not reopen it');
   assert.equal(page.reads('member-b').length, 0, 'no read for B is made from the page that held A');
   assert.ok(!page.appShown(), 'the old page is not reopened for B');
   noTrace(page, A, 'after B signed in');
@@ -92,6 +103,7 @@ test('another account replacing A in another tab conceals the page at once and r
 });
 
 for (const [name, change] of [
+  ['A signs out in this tab (an in-tab sign-out event, no reload)', null],
   ['A signs out in another tab', s => { s.delete('mccdb_session'); s.delete('mcc_sess_keep'); }],
   ['another account replaces A in another tab', s => s.set('mccdb_session', session('member-b'))]
 ]) {
@@ -108,12 +120,36 @@ for (const [name, change] of [
     for (const path of ['/v1/observability/events', '/v1/social/accounts', '/rest/v1/music_orders', '/rest/v1/ops_ai_messages', '/v1/developer/consumers', '/v1/comms/threads/thread-shared/messages']) {
       assert.ok(held.includes(path), 'fixture sanity: ' + path + ' is in flight for A');
     }
-    await page.otherTab(change);
+    if (change) await page.otherTab(change);
+    else { await page.win.MCC_AUTH.signOut(); await page.settle(); }
     late.release(); await page.settle(); await sleep(20); await page.settle();
     noTrace(page, A, 'after the late reads answered');
+    noStateTrace(page, A, 'after the late reads answered');
     await sweep(page, A, 'after the late reads answered');
   });
 }
+
+test("a module's read made for A is never delivered after A's session ends, not even as a failure", async () => {
+  const page = await openAs('owner-a', '#system:overview');
+  const slow = page.hold(e => e.sub === 'owner-a' && /\/v1\/status$|\/rest\/v1\/leads$/.test(e.path));
+  const outcomes = [];
+  for (const read of [() => page.module.request('/v1/status'), () => page.module.supa('leads?select=*')]) {
+    read().then(v => outcomes.push(['delivered', JSON.stringify(v)]), e => outcomes.push(['failed', e.message]));
+  }
+  await page.settle();
+  assert.equal(page.fetchLog.filter(e => e.held).length, 2, 'fixture sanity: both reads are in flight');
+  await page.otherTab(s => s.set('mccdb_session', session('member-b')));
+  slow.release(); await page.settle(); await sleep(30); await page.settle();
+  assert.deepEqual(outcomes, [], 'nothing reached the module');
+  /* The same account refreshing its token is not a change: its reads arrive. */
+  const same = await openAs('owner-a', '#system:overview');
+  const held = same.hold(e => e.path === '/v1/status');
+  const got = same.module.request('/v1/status');
+  await same.settle();
+  await same.otherTab(s => s.set('mccdb_session', session('owner-a', 'refreshed')));
+  held.release();
+  assert.match(JSON.stringify(await got), new RegExp(A + '-operator'));
+});
 
 test('a refresh that overtakes an earlier load of the same account is not undone by it', async () => {
   const page = await openAs('owner-a', '#people:inbox:conversations');
@@ -160,6 +196,8 @@ test('storage cleared in another tab (a storage event with no key) signs this pa
   await useEveryView(page);
   await page.otherTab(s => s.clear());
   assert.ok(page.gateShown());
+  assert.equal(page.reloads, 1, 'the page that held A is replaced');
+  noStateTrace(page, A, 'after storage was cleared');
   await sweep(page, A, 'after storage was cleared');
 });
 
@@ -185,6 +223,8 @@ test('a session that ends inside this tab (refresh refused) signs the page out a
   await page.click('refresh'); await page.settle(); await sleep(20); await page.settle();
   assert.ok(page.gateShown(), 'the gate replaces the page');
   assert.match(page.note(), /signed out/i);
+  assert.equal(page.reloads, 1, 'no module heard this sign-out, so the page is replaced');
+  noStateTrace(page, A, 'after the session ended in this tab');
   await sweep(page, A, 'after the session ended in this tab');
 });
 
@@ -204,6 +244,8 @@ test('a sign-out signal while the session is still stored conceals the page, and
   await useEveryView(page);
   page.fire('mcc:auth-changed', { signed_in: false }); await page.settle();
   assert.ok(page.gateShown());
+  assert.equal(page.reloads, 0, 'an in-tab sign-out event reached every module itself');
+  noStateTrace(page, A, 'after the sign-out signal');
   await sweep(page, A, 'after the sign-out signal');
   await page.signInHere('a@fixture.invalid');
   assert.equal(page.reloads, 1, 'a page concealed once is not reused');
