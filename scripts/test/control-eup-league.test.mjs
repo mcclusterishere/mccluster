@@ -634,10 +634,14 @@ test('proofs: the review read feeds a media element only; three decisions carry 
   assert.match(m.outcome('proof:' + p.id).text, /A reason is required/, 'changes needed on safety needs a reason');
   assert.equal(w.writes().length, 0, 'nothing was sent for either');
   m.set('review:' + p.id, 'safety', 'pass');
-  w.s.proofs[0].revision = 2; /* the participant resubmitted meanwhile */
+  const shown = p.asset_revision;
+  /* the participant resubmits meanwhile (a new revision and digest), and the list is read again under the open review */
+  w.s.proofs[0].revision = 2; w.s.proofs[0].asset_revision = SHA(7);
+  m.q('[data-eup-league-tab="proofs"]').click(); await settle();
+  assert.ok(m.q('[data-eup-league-review-panel="' + p.id + '"]'), 'the open review stays open while the list is read again');
   await m.press('proofs.review', p.id);
   const sent = lastWrite(w);
-  assert.equal(sent.body.expected_revision, 1, 'the revision that was opened'); assert.equal(sent.body.review.asset_revision, p.asset_revision, 'the digest that was shown');
+  assert.equal(sent.body.expected_revision, 1, 'the revision that was opened'); assert.equal(sent.body.review.asset_revision, shown, 'the digest that was shown, not the one the list now holds');
   assert.deepEqual(Object.keys(sent.body.review).sort(), ['asset_revision', 'mission_decision', 'rights_decision', 'rubric', 'safety_decision']);
   assert.equal(m.outcome('proof:' + p.id).kind, 'conflict'); assert.match(m.outcome('proof:' + p.id).text, /changed since it was read/);
   assert.equal(m.view().review, null, 'a stale review closes'); assert.equal(m.view().links, 0); assert.equal(player.attrs.src, undefined, 'its link is dropped'); assert.equal(player.parentNode, null);
@@ -646,7 +650,7 @@ test('proofs: the review read feeds a media element only; three decisions carry 
   assert.ok(m.q('[data-eup-league-review-panel="' + p.id + '"]')); assert.match(m.q('[data-eup-league-review-panel="' + p.id + '"]').attrs['aria-label'], /revision 2$/);
   m.set('review:' + p.id, 'mission', 'pass'); m.set('review:' + p.id, 'rights', 'pass'); m.set('review:' + p.id, 'safety', 'pass'); m.set('review:' + p.id, 'met:complete', true);
   await m.press('proofs.review', p.id);
-  assert.equal(lastWrite(w).body.expected_revision, 2, 'the newly opened revision');
+  assert.equal(lastWrite(w).body.expected_revision, 2, 'the newly opened revision'); assert.equal(lastWrite(w).body.review.asset_revision, SHA(7), 'and the digest it showed');
   assert.match(m.outcome('proof:' + p.id).text, /recorded · state accepted .* one completion credit/);
   assert.equal(m.q('[data-eup-league-proof="' + p.id + '"]').attrs['data-eup-league-status'], 'accepted:clear:private');
   await m.ui('review', own.id);
@@ -764,6 +768,17 @@ test('unknown outcome: a timed-out command is not resent; its receipt settles it
   await m.ui('resend', 'application:' + own.id);
   assert.equal(w.writes().length, before + 1); assert.deepEqual(lastWrite(w).body, w.writes().at(-2).body, 'the same key and body once more');
   assert.equal(m.outcome('application:' + own.id).kind, 'error'); assert.match(m.outcome('application:' + own.id).text, /nobody approves, reviews or resolves their own work/, 'and the store\'s answer is now known');
+  /* 4. a receipt that names another key is not this command's receipt */
+  const tester = w.s.applications[0];
+  w.s.hooks['applications.decide'] = 'drop';
+  w.s.hooks['receipts.get'] = () => Promise.resolve({ ok: true, receipt: { surface: 'owner', operation: 'applications.decide', idempotency_key: 'another-command-key-0001', result: { status: 'declined', revision: 3 }, created_at: T0 } });
+  m.set('decide:' + tester.id, 'decision', 'declined'); m.set('decide:' + tester.id, 'reason', 'Test fixture.');
+  await m.press('applications.decide', tester.id); await wait(10); await settle();
+  assert.equal(m.outcome('application:' + tester.id).kind, 'unknown'); assert.match(m.outcome('application:' + tester.id).text, /its receipt could not be read \(an unreadable answer\)/);
+  delete w.s.hooks['receipts.get'];
+  await m.ui('receipt', 'application:' + tester.id);
+  assert.equal(m.outcome('application:' + tester.id).kind, 'done', 'its own receipt, read again, says it was recorded');
+  assert.equal(w.writes().filter((l) => l.path === '/v1/eup/league/applications/' + tester.id + '/decision').length, 1, 'and it was sent once');
 });
 
 test('a dropped answer after commit is found by its receipt; the same key under a resend is recorded once', async () => {
