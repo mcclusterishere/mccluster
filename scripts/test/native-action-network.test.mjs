@@ -216,6 +216,10 @@ test('an answer’s expiry is measured on the phone’s clock as it arrives, and
   assert.equal(restoredSession(kept), kept);
   assert.equal(isFresh(restoredSession({ access_token: 'a', refresh_token: 'r' }), server), false);
   for (const nothing of [null, undefined, {}, { refresh_token: 'r' }]) assert.equal(restoredSession(nothing), null);
+  /* one an earlier build stored, with the server's expires_at alone, reads as stale until refreshed */
+  const earlier = { access_token: 'a', refresh_token: 'r', expires_at: server + 3600, token_type: 'bearer' };
+  assert.equal(isFresh(restoredSession(earlier), server), false, 'its expiry is on a clock this phone cannot read');
+  assert.deepEqual(earlier, { access_token: 'a', refresh_token: 'r', expires_at: server + 3600, token_type: 'bearer' }, 'what was read is not changed');
 });
 
 test('only a definitive auth answer ends the session; offline and server errors keep it', async () => {
@@ -478,4 +482,36 @@ test('a phone restarted after the server expired its token refreshes before it r
   assert.deepEqual(ahead.requests.slice(since).map((r) => [r.route, r.token]), [['user', 'access-1']], 'a token the server still honours is used, not refreshed');
   assert.equal(await again.accessToken(), 'access-1');
   assert.equal(ahead.refreshes(), 0);
+});
+
+test('a session an earlier build stored on the server’s clock is refreshed before its token is used, once', { timeout: 10_000 }, async () => {
+  /* What the earlier build kept: the server's expires_at as sent, no server_expires_at. */
+  const earlierBuild = (auth) => {
+    const { access_token, refresh_token, expires_at, token_type, user } = auth.issue();
+    return new Map([[SESSION_KEY, JSON.stringify({ access_token, refresh_token, expires_at, token_type, user: { id: user.id, email: user.email } })]]);
+  };
+
+  /* The case it is for: an hour behind, ten minutes after the server expired
+     the token, whose expires_at, read on this phone's clock, says fifty
+     minutes are left. */
+  const behind = authServer(), keychain = earlierBuild(behind);
+  behind.clock.now += 3600 + 600;
+  const app = await launchPhone(behind, { skew: -3600, keychain });
+  assert.deepEqual(behind.requests.map((r) => [r.route, r.token, r.expired]),
+    [['token:refresh_token', null, false], ['user', 'access-2', false]],
+    'refreshed before the account read: no dead token is sent, and no bad_jwt signs the member out');
+  assert.equal(await app.accessToken(), 'access-2');
+  const stored = JSON.parse(keychain.get(SESSION_KEY));
+  assert.equal(stored.expires_at - stored.server_expires_at, -3600, 'and stored the new way');
+
+  /* What it costs, on any clock, with half the token's life left: one refresh, on the first launch only. */
+  for (const [phone, skew] of CLOCKS) {
+    const auth = authServer(), kept = earlierBuild(auth);
+    auth.clock.now += 1800;
+    await launchPhone(auth, { skew, keychain: kept });
+    auth.clock.now += 600;
+    await launchPhone(auth, { skew, keychain: kept });
+    assert.deepEqual(auth.requests.map((r) => [r.route, r.expired]), [['token:refresh_token', false], ['user', false], ['user', false]],
+      `${phone}: one refresh, on the first launch only`);
+  }
 });

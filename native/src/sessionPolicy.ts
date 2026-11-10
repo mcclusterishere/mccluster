@@ -94,13 +94,26 @@ export function persistableSession(session: any, nowSeconds = Date.now() / 1000)
 }
 
 /**
- * A session read back from the keychain, exactly as it was stored. Its expiry
- * was stamped on this device's clock when its answer arrived, and it is never
+ * A session read back from the keychain, as it was stored. Its expiry was
+ * stamped on this device's clock when its answer arrived, and it is never
  * stamped again: one with no usable expires_at is stale (isFresh), so it is
  * refreshed before its token is used rather than given a new hour.
+ *
+ * One without server_expires_at was stored by an earlier build, which kept the
+ * server's expires_at as sent: a time on a clock this device cannot read. Its
+ * expiry is treated as unknown, so it reads as stale and its first use (at
+ * launch, when online) refreshes it, once: the answer is stamped and stored the
+ * new way. Read as it was, on a device behind the server it would keep sending
+ * a token the server had expired, and launch would take the server's bad_jwt
+ * for a dead session and sign the member out. The cost is one refresh per
+ * signed-in install, on the first launch after the update. What was stored is
+ * not changed until that refresh answers.
  */
-export function restoredSession<T extends { access_token?: unknown }>(stored: T | null | undefined): T | null {
-  return stored && typeof stored === 'object' && stored.access_token ? stored : null;
+export function restoredSession<T extends { access_token?: unknown; server_expires_at?: unknown }>(
+  stored: T | null | undefined,
+): T | null {
+  if (!stored || typeof stored !== 'object' || !stored.access_token) return null;
+  return Number(stored.server_expires_at) > 0 ? stored : { ...stored, expires_at: 0 };
 }
 
 /**
