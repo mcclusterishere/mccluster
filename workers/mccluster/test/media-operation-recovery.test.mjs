@@ -1723,3 +1723,62 @@ test('a deploy alone does not start the recovery sweep: the cron runs it only wh
   } finally { st.restore(); }
 });
 
+/* ============== reservation review, 2026-11-10: settlement after a release or a provider failure ============== */
+/* Reproduced by the independent reservation review on this plane and on real PostgreSQL. Each test fails on
+   the series as first pushed (the job stayed reserved for good, or a released job's late success was dropped). */
+const late = { request_id: 'R-late', status: 'OK', payload: { images: [{ url: 'https://cdn.invalid/late.png' }] } };
+const hintParts = async (jobId) => { const [id, token] = (await webhookUrlFor(hintEnv, ORIGIN, jobId)).split('/').slice(-2); return { jobId: id, token }; };
+const hintedSuccess = async (jobId) => handleFalWebhook(new Request(`${ORIGIN}/v1/media/webhooks/fal`, { method: 'POST', body: '{}' }), hintEnv, { verify: async () => late }, await hintParts(jobId));
+const operatorRelease = (jobId) => reconcileJob(new Request(`${ORIGIN}/v1/media/jobs/${jobId}/reconcile`, {
+  method: 'POST', body: JSON.stringify({ org_id: ORG, decision: 'release', reason: 'console showed nothing', evidence: { checked: true } })
+}), hintEnv, USER, jobId);
+
+test('R1 a released job whose completion write fails once is finished by the provider\'s retry, not ignored', async () => {
+  let failOnce = true;
+  const st = plane({ patchFails: (entry) => { if (entry.body?.status === 'completed' && failOnce) { failOnce = false; return true; } return false; } });
+  try {
+    const fal = provider({ mode: 'uncertain' });
+    await createGeneration(req({ ...PAYLOAD, operation_id: 'op-r1' }), hintEnv, USER, { submit: fal.submit }).catch(() => null);
+    const job = st.onlyJob();
+    await operatorRelease(job.id);
+    await assert.rejects(hintedSuccess(job.id), 'the first delivery fails on the completion write');
+    await hintedSuccess(job.id);
+    assert.equal(job.status, 'completed', 'the retry completes the job from the durable row');
+    assert.equal(job.provider_request_id, 'R-late');
+  } finally { st.restore(); }
+});
+
+test('R2 an operator release that lands between the webhook\'s read and its attach does not drop the late success', async () => {
+  let releaseNow = null;
+  const st = plane({ beforePatch: async (entry) => {
+    if (entry.body?.provider_status?.outcome === 'attached_by_webhook' && releaseNow) { const go = releaseNow; releaseNow = null; await go(); }
+  } });
+  try {
+    const fal = provider({ mode: 'uncertain' });
+    await createGeneration(req({ ...PAYLOAD, operation_id: 'op-r2' }), hintEnv, USER, { submit: fal.submit }).catch(() => null);
+    const job = st.onlyJob();
+    releaseNow = () => operatorRelease(job.id);
+    await hintedSuccess(job.id);
+    assert.equal(job.status, 'completed', 'attachedFrom comes from the row the attach wrote');
+  } finally { st.restore(); }
+});
+
+test('R3 a request the provider failed is not written completed by a poll before its ERROR webhook; the webhook fails and releases it', async () => {
+  const st = plane();
+  try {
+    const fal = provider();
+    const job = await createGeneration(req({ ...PAYLOAD, operation_id: 'op-r3' }), hintEnv, USER, { submit: fal.submit });
+    /* the provider's status vocabulary has no failure value: a failed request reads COMPLETED and its result is the error */
+    await getGeneration(new Request(`${ORIGIN}/v1/media/jobs/${job.id}?org_id=${ORG}`), hintEnv, USER, job.id, true, {
+      status: async () => ({ status: 'COMPLETED' }),
+      result: async () => { throw Object.assign(new Error('the generation failed'), { status: 422 }); }
+    }).catch(() => null);
+    const row = st.onlyJob();
+    assert.notEqual(row.status, 'completed', 'an unreadable result leaves the job open');
+    await handleFalWebhook(new Request(`${ORIGIN}/v1/media/webhooks/fal`, { method: 'POST', body: '{}' }), hintEnv,
+      { verify: async () => ({ request_id: job.provider_request_id, status: 'ERROR', error: 'the generation failed', payload: {} }) }, null);
+    assert.equal(row.status, 'failed');
+    assert.equal(st.releases, 1, 'the reservation is released once');
+  } finally { st.restore(); }
+});
+

@@ -439,7 +439,10 @@ begin
     raise exception using errcode = '22023', message = 'settle requires the provider request id';
   end if;
 
-  select * into v_job from public.media_jobs where id = p_job_id for update;
+  /* FOR NO KEY UPDATE, not FOR UPDATE: resolve changes no key column, and a same-id retry repairing the
+     claim takes the foreign key's KEY SHARE lock on this row while it holds the claim row. FOR UPDATE
+     blocks that lock and the two deadlock (40P01, observed on PostgreSQL 16); NO KEY UPDATE does not. */
+  select * into v_job from public.media_jobs where id = p_job_id for no key update;
   if not found then
     raise exception using errcode = 'P0001', message = 'job_not_found';
   end if;

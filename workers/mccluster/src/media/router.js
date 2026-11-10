@@ -1067,14 +1067,17 @@ export async function handleFalWebhook(request, env, deps = {}, hint = null) {
       return { ...unmatched, ignored: 'conflict', job_id: prior.id };
     }
     const now = new Date().toISOString();
-    job = await patchJobWhere(env, prior.id, CAS_HINT_ATTACH, {
+    const attached = await patchJobWhere(env, prior.id, CAS_HINT_ATTACH, {
       provider_request_id: providerRequestId,
       submitted_at: prior.submitted_at || now,
       provider_status: { ...(prior.provider_status || {}), outcome: 'attached_by_webhook', attached_at: now, request_id: providerRequestId }
     });
+    /* Nothing attached: the submitter (or an operator settle) may have recorded this very request id meanwhile. */
+    job = attached || await jobByProviderRequestId(env, providerRequestId);
     if (!job) return unmatched;
-    attachedFrom = prior.status;
-    recordEvent({
+    /* The status of the row the attach wrote, not of the earlier read: an operator release can land in between. */
+    if (attached) attachedFrom = attached.status;
+    if (attached) recordEvent({
       orgId: job.org_id, name: 'media.generation.webhook_attached', kind: 'dependency', level: 'warn',
       traceId: job.routing?.trace_id, resourceType: 'media_job', resourceId: job.id,
       message: `fal request ${providerRequestId} attached to a job without a request id (was ${prior.status})`,
@@ -1153,7 +1156,10 @@ export async function handleFalWebhook(request, env, deps = {}, hint = null) {
      provider ran a request whose submit was refused on our side, or one an
      operator released before the provider's answer. Every other job must
      still be open. */
-  const afterFailure = attachedFrom === 'failed';
+  /* Decided from the durable row, not from this delivery's memory, so a retried delivery finishes what an
+     earlier one started (a completion write that failed once, or a release that landed mid-delivery). */
+  const afterFailure = job.status === 'failed' && job.provider_request_id === providerRequestId && !isSettled(job)
+    && (attachedFrom === 'failed' || ['attached_by_webhook', 'released_by_operator'].includes(job.provider_status?.outcome));
   const completed = afterFailure
     ? await patchJobWhere(env, job.id, `status=eq.failed&provider_request_id=eq.${encodeURIComponent(providerRequestId)}`, completion)
     : await patchJobWhere(env, job.id, CAS_REFRESH, completion);
@@ -1240,9 +1246,20 @@ async function applyStatus(env, job, raw, deps = {}) {
   const status = normalizeFalStatus(raw);
   const reread = async () => (await jobByIdAnyOrg(env, job.id)) || job;
   if (status === 'completed') {
+    /* The provider's status vocabulary has no failure value; a failed
+       request is COMPLETED and its result is the error. Fetch the result BEFORE the job is
+       written as completed, and write both in one compare-and-set: a request whose result
+       cannot be read stays open, so its ERROR webhook still fails and releases it. */
+    let fetched = null;
+    if (!job.result || Object.keys(job.result).length === 0) {
+      const fetchResult = typeof deps?.result === 'function' ? deps.result : resultFal;
+      fetched = await fetchResult(env, job.provider_model_id, job.provider_request_id);
+    }
     const patched = await patchJobWhere(env, job.id, CAS_REFRESH, {
-      status: 'completed', provider_status: raw, error: {}, completed_at: job.completed_at || new Date().toISOString()
+      status: 'completed', provider_status: fetched ? { ...raw, request_id: fetched.request_id } : raw, error: {}, completed_at: job.completed_at || new Date().toISOString(),
+      ...(fetched ? { result: fetched.data || {} } : {})
     });
+    if (patched && fetched) await saveAssets(env, patched.org_id, patched.id, fetched.data || {});
     const current = patched || await reread();
     return { job: await settleCompletedJob(env, current, deps), action: patched ? 'completed' : 'unchanged' };
   }

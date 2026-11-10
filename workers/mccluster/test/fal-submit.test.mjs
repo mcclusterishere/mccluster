@@ -63,8 +63,8 @@ for (const status of [429, 500, 502, 503, 504]) {
       assert.equal(error.status, status);
       assert.equal(error.message, 'provider busy');
       assert.deepEqual(error.detail, { detail: 'provider busy' });
-      /* 502 and 504 come from an intermediary and may hide an accepted request */
-      assert.equal(classifySubmitError(error), status === 502 || status === 504 ? 'uncertain' : 'definite');
+      /* a 4xx is a refusal; any 5xx may hide an accepted request and stays uncertain */
+      assert.equal(classifySubmitError(error), status < 500 ? 'definite' : 'uncertain');
     });
   });
 }

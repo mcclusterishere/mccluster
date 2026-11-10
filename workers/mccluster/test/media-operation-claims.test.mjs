@@ -158,15 +158,18 @@ test('a request without an operation id keeps the old single-shot path and never
   } finally { st.restore(); }
 });
 
-test('submit error classification: preflight and provider answers (4xx, 500, 503) are definite; timeouts, network failures and 502/504 are uncertain', () => {
+test('submit error classification: preflight and 4xx provider answers are definite; timeouts, network failures and every 5xx are uncertain', () => {
   assert.equal(classifySubmitError(Object.assign(new Error('x'), { preflight: true, status: 503 })), 'definite');
   assert.equal(classifySubmitError(Object.assign(new Error('x'), { status: 422 })), 'definite');
   assert.equal(classifySubmitError(Object.assign(new Error('x'), { status: 429 })), 'definite');
   assert.equal(classifySubmitError(Object.assign(new Error('x'), { name: 'TimeoutError' })), 'uncertain');
   assert.equal(classifySubmitError(Object.assign(new Error('x'), { name: 'AbortError' })), 'uncertain');
   assert.equal(classifySubmitError(new TypeError('fetch failed')), 'uncertain');
-  assert.equal(classifySubmitError(Object.assign(new Error('x'), { status: 503 })), 'definite', 'the provider answered and did not queue');
-  assert.equal(classifySubmitError(Object.assign(new Error('x'), { status: 500 })), 'definite');
+  for (const status of [500, 503, 520, 521, 522, 523, 524, 526]) {
+    assert.equal(classifySubmitError(Object.assign(new Error('x'), { status })), 'uncertain', `${status} can follow an accepted request`);
+  }
+  assert.equal(classifySubmitError(Object.assign(new Error('x'), { status: 400 })), 'definite');
+  assert.equal(classifySubmitError(Object.assign(new Error('x'), { status: 499 })), 'definite');
   assert.equal(classifySubmitError(Object.assign(new Error('x'), { status: 502 })), 'uncertain', 'gateway answers can hide an accepted request');
   assert.equal(classifySubmitError(Object.assign(new Error('x'), { status: 504 })), 'uncertain');
   assert.equal(classifySubmitError(Object.assign(new Error('x'), { timeoutType: 'start' })), 'uncertain');

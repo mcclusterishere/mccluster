@@ -83,11 +83,14 @@ export function classifySubmitError(error) {
   if (error.preflight === true || error.definite === true) return 'definite';
   if (error.uncertain === true || error.timeoutType) return 'uncertain';
   const status = Number(error.status ?? error.statusCode);
-  /* The provider answered with its own status: the queue endpoint returns
-     2xx + request_id when it accepts, so any 4xx/5xx answer from it means
-     "not queued". 502/504 come from an intermediary and may hide an accepted
-     request, so they stay uncertain. No status at all = nothing came back. */
-  if (Number.isInteger(status) && status >= 400 && status !== 502 && status !== 504) return 'definite';
+  /* A 4xx is the provider refusing the request: the queue endpoint returns
+     2xx + request_id when it accepts, so nothing was queued. A 5xx is not
+     proof of that: 502, 504 and the edge's 520 to 526 come from an
+     intermediary, and a 500 or 503 can follow an accepted request just as a
+     timeout can. A reservation is released only on a definite answer, so
+     every 5xx stays uncertain and goes to reconciliation. No status at all =
+     nothing came back. */
+  if (Number.isInteger(status) && status >= 400 && status < 500) return 'definite';
   return 'uncertain';
 }
 
