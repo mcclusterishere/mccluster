@@ -332,6 +332,9 @@ test('policy helpers: only a refusal the Worker documents is "nothing changed"; 
   assert.match(H.policyFailure(new Error('x')).text, /^no readable answer\. The outcome is unknown/);
   assert.deepEqual(f(undefined), ['unknown', false, false]);
   assert.deepEqual(f({ status: 409, detail: { reason: 7 } }), ['error', true, false], 'a reason that is not text is not read');
+  assert.equal(H.policyFailure({ status: 409, detail: { reason: 7 } }).text, 'refused (HTTP 409). Nothing changed.');
+  assert.deepEqual(f(http(409, 'drain_busy')), ['error', true, false], 'drain_busy is read only on a 503');
+  assert.deepEqual(f(http(500, 'drain_busy')), ['unknown', false, false]);
 });
 
 test('policy: nothing installed → each unit offers Install only; posture and policy are two chips; the environment line says what enabling does', async () => {
@@ -388,17 +391,18 @@ test('policy: a command needs a reason; install → enable → drain → disable
   assert.equal(w.posts()[1].body.state, 'enabled'); assert.equal(w.posts()[1].body.expected_revision, 0);
   assert.equal(unitState(m, 'environment'), 'enabled'); assert.deepEqual(commandsOf(m, 'environment'), ['draining'], 'enabled → Drain only');
   assert.ok(m.pane().querySelector('[data-eup-policy-rev="environment:1"]'));
-  assert.equal(m.pane().querySelectorAll('[data-eup-policy-drain]').length, 0);
+  assert.equal(m.pane().querySelectorAll('[data-eup-policy-meaning]').length, 0, 'an enabled unit carries no stopped-state line');
 
   await send(m, 'environment', 'draining', 'stop new writes before maintenance');
   assert.equal(w.posts()[2].body.state, 'draining'); assert.equal(w.posts()[2].body.expected_revision, 1);
   assert.equal(unitState(m, 'environment'), 'draining'); assert.deepEqual(commandsOf(m, 'environment'), ['disabled', 'enabled'], 'draining → Disable and Re-enable');
-  assert.deepEqual(m.pane().querySelectorAll('[data-eup-policy-drain]').map((d) => d.attrs['data-eup-policy-drain']), ['environment']);
+  assert.deepEqual(m.pane().querySelectorAll('[data-eup-policy-meaning]').map((d) => d.attrs['data-eup-policy-meaning'] + ' ' + d.textContent), ['environment:draining Draining: the consumer E=Up tab still answers reads and refuses every write. This page is not told how much work is still in flight; disable when it is done, or re-enable.']);
   assert.match(unit(m, 'environment').textContent, /Last command: draining · reason: stop new writes before maintenance/);
 
   await send(m, 'environment', 'disabled', 'maintenance window');
   assert.equal(w.posts()[3].body.state, 'disabled'); assert.equal(w.posts()[3].body.expected_revision, 2);
   assert.equal(unitState(m, 'environment'), 'disabled'); assert.ok(m.pane().querySelector('[data-eup-policy-rev="environment:3"]'));
+  assert.deepEqual(m.pane().querySelectorAll('[data-eup-policy-meaning]').map((d) => d.attrs['data-eup-policy-meaning'] + ' ' + d.textContent), ['environment:disabled Disabled: that includes a participant&#39;s own saved records.'], 'disabled is explained in words');
   assert.match(outcomeText(m, 'environment'), /^Disable Environment: recorded · state disabled · rev 3/);
   const keys = w.posts().map((p) => p.body.idempotency_key);
   assert.equal(new Set(keys).size, 4, 'a fresh key on every command'); keys.forEach((k) => assert.match(k, UUID));
@@ -410,6 +414,8 @@ test('policy: a command needs a reason; install → enable → drain → disable
 test('policy: draining → Re-enable sends state enabled with the draining revision; a same-state answer is reported as no change', async () => {
   const { w, m } = await opened({ start: { league: { state: 'draining', revision: 6 }, intake: { state: 'enabled', revision: 2 } } });
   assert.deepEqual(commandsOf(m, 'league'), ['disabled', 'enabled']); assert.deepEqual(commandsOf(m, 'intake'), ['draining']); assert.deepEqual(commandsOf(m, 'environment'), ['install']);
+  const open = 'new work is refused. Reads still answer, and so do actions that only stop work or remove exposure (withdraw, revoke, pause).';
+  assert.deepEqual(m.pane().querySelectorAll('[data-eup-policy-meaning]').map((d) => d.attrs['data-eup-policy-meaning'] + ' ' + d.textContent), ['league:draining Draining: ' + open + ' This page is not told how much work is still in flight; disable when it is done, or re-enable.']);
   assert.match(unit(m, 'league').textContent, /Last command: not returned/);
   await send(m, 'league', 'enabled', 'the import finished early');
   assert.deepEqual(w.posts()[0].body, { idempotency_key: w.posts()[0].body.idempotency_key, expected_revision: 6, state: 'enabled', reason: 'the import finished early' });
@@ -418,6 +424,9 @@ test('policy: draining → Re-enable sends state enabled with the draining revis
   await send(m, 'intake', 'draining', 'drain intake');
   assert.match(outcomeText(m, 'intake'), /the state was already draining, the revision did not move/);
   assert.match(unit(m, 'intake').textContent, /Last command: draining · no state change · reason: drain intake/);
+  w.s.hooks.post = undefined;
+  await send(m, 'intake', 'disabled', 'stop intake');
+  assert.ok(m.pane().querySelectorAll('[data-eup-policy-meaning]').some((d) => d.attrs['data-eup-policy-meaning'] === 'intake:disabled' && d.textContent === 'Disabled: ' + open), 'a disabled League or intake unit says what still answers');
 });
 
 test('policy: a timed-out command is an unknown outcome, is not resent, is read back, and the same key is offered again only when the log does not hold it', async () => {
@@ -463,10 +472,16 @@ test('policy: a timed-out command that was in fact recorded is found by its key 
 test('policy: a 503 other than drain_busy is an unknown outcome with the same read-back and same-key resend; another owner\'s resend is a conflict and says so', async () => {
   let fail = true;
   const { w, m } = await opened({ start: { intake: { state: 'enabled', revision: 1 } }, hooks: { post: () => fail ? Promise.reject(http(503, 'storage_unavailable', 'Module policy storage unavailable')) : undefined } });
+  w.apply('league', 'install', { idempotency_key: 'an-earlier-command-of-another-unit', reason: 'earlier' });
+  let giveRead = null; w.s.hooks.read = (read) => new Promise((r) => { giveRead = () => r(read()); });
   const reads = w.reads();
   await send(m, 'intake', 'draining', 'pause imports');
   assert.equal(w.posts().length, 1, 'not resent'); assert.equal(w.reads(), reads + 1);
-  assert.deepEqual(outcomes(m), ['intake:unknown']); assert.ok(resendFor(m, 'intake'));
+  assert.deepEqual(outcomes(m), ['intake:unknown']); assert.match(outcomeText(m, 'intake'), /^Drain Intake: answered HTTP 503 storage_unavailable\. The outcome is unknown and it was not resent\. Reading module policy back…$/);
+  assert.equal(resendFor(m, 'intake'), null, 'nothing is offered until the read-back has looked for the key');
+  w.s.hooks.read = undefined; giveRead(); await settleAll();
+  assert.deepEqual(outcomes(m), ['intake:unknown']); assert.ok(resendFor(m, 'intake'), 'the log holds another command but not this key: the same key is offered');
+  assert.equal(unitState(m, 'league'), 'disabled');
   assert.match(outcomeText(m, 'intake'), /Drain Intake: the outcome is unknown and it was not resent/);
   /* the stored key now arrives from a different owner: the Worker answers 409 idempotency_conflict */
   fail = false; w.s.commands.unshift({ seq: 99, module_id: 'intake', command: 'set_state', requested_state: 'draining', expected_revision: 1, reason: 'pause imports', actor: OTHER_OWNER, idempotency_key: 'someone-elses-key', receipt: null, created_at: '2026-11-09T12:00:00Z', digest: 'x' });
@@ -485,6 +500,9 @@ test('policy: an unknown outcome whose read-back fails offers no resend and no c
   assert.equal(unit(m, 'intake'), null, 'a failed read drops the remembered state: no unit, no command');
   assert.equal(m.pane().querySelectorAll('[data-eup-policy-command]').length, 0); assert.equal(m.pane().querySelectorAll('[data-eup-policy-resend]').length, 0);
   assert.match(m.pane().textContent, /State is unknown and no command is offered/);
+  assert.deepEqual(outcomes(m), ['intake:unknown'], 'what is known about the command is still said');
+  assert.match(outcomeText(m, 'intake'), /^Drain Intake: the outcome is unknown and it was not resent\. The read-back failed; read module policy again before deciding\.$/);
+  assert.equal(H.model().outcomes['policy:intake'].resend, false);
   assert.equal(w.posts().length, 1);
   w.s.readError = null; w.s.hooks.post = undefined;
   m.pane().querySelector('[data-eup-policy-reload]').click(); await settleAll();
@@ -540,6 +558,12 @@ test('policy: documented refusals are settled and are not offered again; an unre
   answer = () => Promise.resolve({ ok: true });
   await send(m, 'league', 'disabled', 'r4');
   assert.deepEqual(outcomes(m), ['league:unknown']);
+  answer = () => Promise.resolve({ receipt: { policy: { state: 'disabled', revision: 3 } } });
+  await send(m, 'league', 'disabled', 'r5');
+  assert.deepEqual(outcomes(m), ['league:unknown'], 'a receipt without ok:true is not a success');
+  answer = () => Promise.resolve({ ok: true, receipt: { policy: { state: 'disabled', revision: '3' } } });
+  await send(m, 'league', 'disabled', 'r6');
+  assert.deepEqual(outcomes(m), ['league:unknown'], 'a receipt whose revision is not a number is not a success');
   assert.equal(w.s.commands.length, 0);
 });
 
@@ -556,6 +580,10 @@ test('policy: a 403 on a command or on the policy read conceals the whole worksp
   assert.deepEqual(H.model().data, {});
   const c = await opened({ hooks: { read: () => Promise.reject(http(401)) } });
   assert.deepEqual(notes(c.m.pane()), ['signed_out']); assert.deepEqual(H.model().data, {});
+  const d = await opened({ overview: http(401) });
+  assert.deepEqual(notes(d.m.pane()), ['signed_out']); assert.equal(d.w.reads(), 0, 'a signed-out overview is not followed by a policy read');
+  const e = await opened({ overview: http(403) });
+  assert.deepEqual(notes(e.m.pane()), ['denied']); assert.equal(e.w.reads(), 0, 'nor is a denied one');
 });
 
 test('policy: an account change discards a late command answer and a late policy read', async () => {
@@ -597,6 +625,9 @@ test('policy: a failed or unreadable policy read shows unknown, offers no comman
   assert.match(b.m.pane().textContent, /Module policy schema is not applied\. No module is installed and none is reported enabled/);
   assert.equal(b.m.pane().querySelectorAll('[data-eup-policy-command]').length, 0);
   assert.ok(notes(b.m.pane()).includes('not_configured'));
+
+  const b2 = await opened({ hooks: { read: () => Promise.resolve({ ok: false, reason: 'schema_not_applied', error: 'Module policy schema is not applied' }) } });
+  assert.match(b2.m.pane().textContent, /Module policy schema is not applied\. No module is installed/, 'an ok:false body is read by its reason');
 
   for (const bad of [(r) => ({ ...r, modules: r.modules.slice(0, 2) }), (r) => ({ ...r, modules: r.modules.concat(r.modules[0]) }), (r) => ({ ...r, ok: undefined }), (r) => ({ ...r, modules: null }), () => null]) {
     const c = await opened({ start: { league: { state: 'enabled', revision: 1 } }, hooks: { read: (read) => Promise.resolve(bad(read())) } });
@@ -664,4 +695,43 @@ test('policy: a reason being typed survives a redraw, per unit; only the newest 
   assert.ok(m.pane().querySelector('[data-eup-policy-rev="league:2"]')); assert.deepEqual(commandsOf(m, 'league'), ['draining']);
   assert.equal(H.model().policy.loading, false);
   assert.equal(m.pane().querySelector('[data-eup-policy-reason="league"]').value, 'half typed', 'still there after both reads');
+});
+
+test('policy: a button from an earlier draw cannot send a command its unit no longer offers, and focus stays in the unit when its button changes', async () => {
+  let fail = false, giveRead = null;
+  const { w, m } = await opened({ start: { league: { state: 'disabled', revision: 0 } }, hooks: { post: () => fail ? Promise.reject(http(503, 'storage_unavailable')) : undefined } });
+  const staleEnable = m.pane().querySelector('[data-eup-policy-command="league:enabled"]');
+  staleEnable.focus();
+  await send(m, 'league', 'enabled', 'open');
+  assert.equal(unitState(m, 'league'), 'enabled');
+  assert.equal(document.activeElement.attrs['data-eup-policy'], 'league', 'Enable became Drain: focus moved to the unit, not to nothing');
+  m.pane().querySelector('[data-eup-policy-reason="league"]').value = 'again';
+  staleEnable.click(); await settleAll();
+  assert.equal(w.posts().length, 1, 'Enable is not a command of an enabled unit, whatever was clicked');
+  /* a resend button kept from an earlier draw sends nothing once its offer is gone */
+  fail = true;
+  await send(m, 'league', 'draining', 'drain');
+  const staleResend = resendFor(m, 'league'); assert.ok(staleResend);
+  w.s.hooks.read = (read) => new Promise((r) => { giveRead = () => r(read()); });
+  staleResend.click(); await settleAll();
+  assert.equal(w.posts().length, 3, 'the offered resend was sent once'); assert.equal(resendFor(m, 'league'), null, 'and is not offered while its read-back is on its way');
+  staleResend.click(); await settleAll();
+  assert.equal(w.posts().length, 3, 'a second press of the old button sends nothing');
+  giveRead(); await settleAll();
+  assert.ok(resendFor(m, 'league'));
+  /* the offer ends with a settled refusal: the stored command stays in memory but cannot be sent again */
+  w.s.hooks.read = undefined; w.s.hooks.post = () => Promise.reject(http(409, 'revision_conflict'));
+  const lastOffer = resendFor(m, 'league'); lastOffer.click(); await settleAll();
+  assert.equal(w.posts().length, 4); assert.deepEqual(outcomes(m), ['league:conflict']); assert.equal(resendFor(m, 'league'), null);
+  assert.equal(H.model().policy.loading, false);
+  lastOffer.click(); await settleAll();
+  assert.equal(w.posts().length, 4, 'a withdrawn offer sends nothing');
+});
+
+test('policy: a policy read that answers after the workspace left the page commits nothing', async () => {
+  let give;
+  const { m } = await opened({ start: { league: { state: 'enabled', revision: 2 } }, hooks: { read: (read) => new Promise((r) => { give = () => r(read()); }) } });
+  m.host.isConnected = false;
+  give(); await settleAll();
+  assert.equal(H.model().policy.control, null); assert.equal(m.pane().querySelectorAll('[data-eup-policy]').length, 0);
 });

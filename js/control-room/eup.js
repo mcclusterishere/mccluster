@@ -97,7 +97,7 @@
     draining: [{ verb: 'disabled', label: 'Disable' }, { verb: 'enabled', label: 'Re-enable' }],
     unknown: []
   };
-  function revisionOk(v) { return typeof v === 'number' && isFinite(v) && v >= 0 && Math.floor(v) === v; }
+  function revisionOk(v) { return Number.isInteger(v) && v >= 0; }
   /* One of not_installed / disabled / enabled / draining, or unknown for anything this code cannot read.
      A row that is not exactly an installed row with a state and a revision is never read as enabled. */
   function policyStateOf(row) {
@@ -125,7 +125,7 @@
   function policyFailure(err) {
     var status = err && err.status, reason = err && err.detail && typeof err.detail.reason === 'string' ? err.detail.reason : '';
     var secs = Math.round(((err && err.deadline) || DEADLINE_MS) / 1000);
-    if (err && (err.name === 'AbortError' || err.timeout)) return { kind: 'unknown', settled: false, again: false, text: 'timed out after ' + secs + 's. The outcome is unknown and it was not resent.' };
+    if (err && err.timeout) return { kind: 'unknown', settled: false, again: false, text: 'timed out after ' + secs + 's. The outcome is unknown and it was not resent.' };
     if (status === 409 && reason === 'revision_conflict') return { kind: 'conflict', settled: true, again: false, text: 'the module policy changed elsewhere since it was read. This command changed nothing. The current state is read again below; decide again.' };
     if (status === 503 && reason === 'drain_busy') return { kind: 'busy', settled: true, again: true, text: 'writes are still in flight; nothing changed. The same command can be sent again.' };
     if (status === 409 && reason === 'drain_required') return { kind: 'error', settled: true, again: false, text: 'an enabled module must be drained before it is disabled. Nothing changed.' };
@@ -240,8 +240,16 @@
     var same = last.receipt && last.receipt.changed === false ? ' · no state change' : '';
     return 'Last command: ' + what + same + ' · reason: ' + (last.reason || 'not returned') + ' · ' + when(last.created_at);
   }
-  /* What the page can truthfully say while a unit drains. It is not told how much work is still in flight. */
-  var DRAIN_TEXT = 'Draining: new writes are refused and reads still answer. This page is not told how much work is still in flight. Disable when that work is done, or re-enable.';
+  /* What a stopped state means for people, in words (never by colour alone). League and intake follow the guard
+     in supabase/pending/eup_module_policy_v1.sql: reads are never guarded and reduce-only actions stay open. The
+     environment unit is enforced by the consumer route, which refuses every write while draining and answers
+     nothing while disabled. The page is not told how much work is still in flight. */
+  var STILL_OPEN = 'new work is refused. Reads still answer, and so do actions that only stop work or remove exposure (withdraw, revoke, pause).';
+  var DRAIN_NEXT = ' This page is not told how much work is still in flight; disable when it is done, or re-enable.';
+  var STATE_MEANING = {
+    draining: { environment: 'Draining: the consumer E=Up tab still answers reads and refuses every write.' + DRAIN_NEXT, league: 'Draining: ' + STILL_OPEN + DRAIN_NEXT, intake: 'Draining: ' + STILL_OPEN + DRAIN_NEXT },
+    disabled: { environment: 'Disabled: that includes a participant\'s own saved records.', league: 'Disabled: ' + STILL_OPEN, intake: 'Disabled: ' + STILL_OPEN }
+  };
   /* What enabling a unit does, where one plain sentence can say it. */
   var UNIT_EFFECT = { environment: 'The consumer E=Up tab answers nothing until this unit is installed and enabled.' };
   function unitCard(u, d) {
@@ -255,7 +263,7 @@
       (governs.length ? '<p class="cr-eup__unit-line">Governs: ' + esc(governs.join(', ')) + '</p>' : '') +
       '<p class="cr-eup__unit-line" data-eup-policy-last="' + u.id + '">' + esc(lastCommandLine(row && row.last_command, st)) + '</p>' +
       (UNIT_EFFECT[u.id] ? '<p class="cr-eup__unit-line" data-eup-policy-effect="' + u.id + '">' + esc(UNIT_EFFECT[u.id]) + '</p>' : '') +
-      (st === 'draining' ? '<p class="cr-eup__drain" data-eup-policy-drain="' + u.id + '">' + esc(DRAIN_TEXT) + '</p>' : '') +
+      (STATE_MEANING[st] ? '<p class="cr-eup__drain" data-eup-policy-meaning="' + u.id + ':' + st + '">' + esc(STATE_MEANING[st][u.id]) + '</p>' : '') +
       (st === 'not_installed' ? '<p class="cr-eup__unit-line">Install creates this unit disabled at revision 0. Nothing it governs can write until it is enabled.</p>' : '') +
       (acts.length ? '<label class="cr-eup__field" for="' + rid + '"><span>Reason (required, recorded with the command)</span><input type="text" id="' + rid + '" maxlength="500" autocomplete="off" autocapitalize="sentences" spellcheck="true" value="' + esc(P.reasons[u.id] || '') + '" data-eup-policy-reason="' + u.id + '" data-eup-focus="policy:' + u.id + ':reason"></label>' +
         '<div class="cr-eup__actions cr-eup__actions--policy">' + acts.map(function (a) { return '<button type="button" class="cr-btn" data-eup-policy-command="' + u.id + ':' + a.verb + '" data-eup-focus="policy:' + u.id + ':' + a.verb + '"' + off + '>' + esc(a.label) + '</button>'; }).join('') + '</div>'
@@ -267,10 +275,11 @@
   function policyBlock(d) {
     var P = model.policy, body;
     if (P.control) body = '<ul class="cr-eup__units">' + POLICY_UNITS.map(function (u) { return unitCard(u, d); }).join('') + '</ul><p class="cr-eup__prov" data-eup-policy-read>Module policy read ' + esc(when(P.readAt)) + (P.loading ? ' · reading again…' : '') + '</p>';
-    else if (P.error) { var f = policyReadFailure(P.error); body = note(f.kind, f.text); }
+    /* no unit can be drawn without a read, but what is known about a command that was sent is still said */
+    else if (P.error) { var f = policyReadFailure(P.error); body = note(f.kind, f.text) + POLICY_UNITS.map(function (u) { var o = model.outcomes['policy:' + u.id]; return o ? outcomeNote(u.id, o) : ''; }).join(''); }
     else body = note('loading', P.loading ? 'Reading module policy…' : 'Module policy has not been read yet.');
     return '<h4 id="eupPolicyTitle">Module policy</h4>' +
-      '<p class="cr-eup__unit-line">Persisted per unit: install, enable, drain, disable. A drain refuses new writes while reads still answer. Every command needs a reason, carries the revision read here and a new key, and is read back.</p>' +
+      '<p class="cr-eup__unit-line">Persisted per unit: install, enable, drain, disable. Draining and disabled stop new work; what still answers is said on each unit. Every command needs a reason, carries the revision read here and a new key, and is read back.</p>' +
       body +
       '<div class="cr-eup__actions cr-eup__actions--policy"><button type="button" class="cr-btn" data-eup-policy-reload data-eup-focus="policy-reload"' + (P.loading ? ' aria-disabled="true"' : '') + '>Read module policy again</button></div>';
   }
@@ -285,7 +294,7 @@
   function paneOverview() {
     if (model.loading.overview) return note('loading', 'Loading overview…');
     var r = reasonFor(model.errors.overview);
-    if (r) return note(r.kind, r.text) + (r.kind === 'signed_out' || r.kind === 'denied' ? '' : policyOnly());
+    if (r) return note(r.kind, r.text) + policyOnly();
     var d = model.data.overview; if (!d || d.ok !== true) return note('error', 'The overview answered without ok:true; nothing is shown.') + policyOnly();
     var mods = Array.isArray(d.modules) ? d.modules : [];
     var geo = d.geography && d.geography.selected;
@@ -572,7 +581,7 @@
         if (stop || !alive() || p.epoch !== epoch || P !== model.policy) { stop = true; return; }
         if (concealed(err)) { stop = true; return; }
         var f = policyFailure(err);
-        model.outcomes[slot] = { kind: f.kind, text: name + ': ' + f.text + (f.settled ? '' : ' Reading module policy back…'), command: f.settled && !f.again ? null : sent, resend: f.again };
+        model.outcomes[slot] = { kind: f.kind, text: name + ': ' + f.text + (f.settled ? '' : ' Reading module policy back…'), command: sent, resend: f.again };
       }).then(function () {
         if (stop || !alive() || P !== model.policy) return;
         say(model.outcomes[slot].text); drawPane();
