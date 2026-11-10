@@ -10,10 +10,10 @@
      class, with the next action for each; POST /v1/media/jobs/:id/reconcile
      records one decision (release, settle, bind). Both are for the house
      operator only, whatever organization the job belongs to: the house
-     owner's own session on these routes, and the house owner or McCluster
-     Core's verified signature (which acts as that owner) on the MCP tools.
-     The decision is bound to the job's organization in SQL and written to
-     the audit ledger BEFORE it runs.
+     owner's own session, or McCluster Core's verified signature (which acts
+     as that owner), on these routes and on the MCP tools alike. The
+     decision is bound to the job's organization in SQL and written to the
+     audit ledger BEFORE it runs.
    - THE CRON SWEEP. Polls open jobs the webhook has not finished, parks a
      submit marker nobody completed, and records the candidate counts as
      evidence. It moves money only where the provider itself answered.

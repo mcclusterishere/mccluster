@@ -8,9 +8,12 @@
    Worker (CORE_EDGE_SIGNING_KEY, the scheme in ./media/core-signature.js).
 
    Narrow on purpose. A request that announces the Core protocol is handled
-   here and nowhere else, except POST /v1/media/mcp (its own block in
-   ./entry.js). Everything else that announces it is refused, never
-   downgraded to an anonymous or bearer request:
+   here and nowhere else, except the media routes coreSignedMediaRoute names
+   (their own blocks in ./entry.js): POST /v1/media/mcp, and the two recovery
+   operator routes of the same media plane, where Core acts as the house
+   owner exactly as it does through the MCP tools. Everything else that
+   announces it is refused, never downgraded to an anonymous or bearer
+   request:
      - GET only, no query string, empty body (the signature covers the
        method, the path and the body digest, not a query string);
      - only the layers in CORE_READ_LAYERS; military, flights, tides, Halo
@@ -39,9 +42,15 @@ function refuse(request, env, message, status, code) {
   return privately(res);
 }
 
-/* POST /v1/media/mcp is the only other route a Core signature may reach. */
+/* The only other routes a Core signature may reach: the media MCP, and the
+   recovery operator routes it could already drive through the MCP tools
+   media.recovery.list and media.job.reconcile (./media/recovery.js). Exact
+   method and path; the job id is a lowercase UUID. The handlers verify the
+   signature themselves (./entry.js). */
+const CORE_MEDIA_RECONCILE = /^\/v1\/media\/jobs\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/reconcile$/;
 export function coreSignedMediaRoute(request, path) {
-  return path === '/v1/media/mcp' && request.method === 'POST';
+  if (request.method === 'POST') return path === '/v1/media/mcp' || CORE_MEDIA_RECONCILE.test(path);
+  return request.method === 'GET' && path === '/v1/media/recovery';
 }
 
 export async function handleCoreSignedRead(request, env, path, { fetchImpl = fetch, cacheImpl = null } = {}) {

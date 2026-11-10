@@ -53,10 +53,11 @@ async function dispatchRequest(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/+$/, '') || '/';
 
-    /* A request that announces McCluster Core's signature reaches exactly two
-       places: POST /v1/media/mcp (below) and GETs of the read-only World layers
-       the news pairing reads (./world-core-reads.js). Anything else that
-       announces it is refused here, never treated as anonymous. */
+    /* A request that announces McCluster Core's signature reaches exactly
+       these places: POST /v1/media/mcp and the two media recovery operator
+       routes (below), and GETs of the read-only World layers the news pairing
+       reads (./world-core-reads.js). Anything else that announces it is
+       refused here, never treated as anonymous. */
     const coreRead = await coreSignedGate(request, env);
     if (coreRead) return coreRead;
 
@@ -517,15 +518,29 @@ async function dispatchRequest(request, env, ctx) {
 
     /* Recovery for paid media operations (media/recovery.js): what is stuck,
        and one recorded decision for a stuck job. The handlers refuse anyone
-       but the house operator. */
+       but the house operator. McCluster Core signs its calls here as it does
+       on /v1/media/mcp (media/core-signature.js); a verified signature acts
+       as the house owner. Anyone else signs in. */
     const reconcileMatch = path.match(MEDIA_RECONCILE_PATH);
     if ((path === '/v1/media/recovery' && request.method === 'GET') || (reconcileMatch && request.method === 'POST')) {
       try {
-        const user = await authUser(request, env);
-        if (!user) return fail(request, env, 'Authentication required', 401);
+        let user;
+        let operatorRequest = request;
+        if (isCoreSigned(request)) {
+          /* The signature covers the method, the path and the body digest,
+             never a query string: a signed call carries none. */
+          if (url.search) return fail(request, env, 'A Core-signed request carries no query string.', 400);
+          const bodyBytes = new Uint8Array(await request.arrayBuffer());
+          await verifyCoreSignature({ request, env, path, bodyBytes });
+          user = await houseOwnerActor(env);
+          if (request.method !== 'GET') operatorRequest = new Request(request, { body: bodyBytes });
+        } else {
+          user = await authUser(request, env);
+          if (!user) return fail(request, env, 'Authentication required', 401);
+        }
         const data = reconcileMatch
-          ? await reconcileJob(request, env, user, reconcileMatch[1])
-          : await listRecoveryCandidates(request, env, user);
+          ? await reconcileJob(operatorRequest, env, user, reconcileMatch[1])
+          : await listRecoveryCandidates(operatorRequest, env, user);
         const res = reply(request, env, data);
         res.headers.set('cache-control', 'private, no-store');
         return res;

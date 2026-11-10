@@ -1,6 +1,8 @@
-// Core -> Worker machine credential for POST /v1/media/mcp, and (through
-// ../world-core-reads.js) GETs of the read-only World layers the news pairing
-// reads. Nothing else accepts it.
+// Core -> Worker machine credential for POST /v1/media/mcp, the two media
+// recovery operator routes (GET /v1/media/recovery, POST
+// /v1/media/jobs/:id/reconcile) and, through ../world-core-reads.js, GETs of
+// the read-only World layers the news pairing reads. Nothing else accepts it
+// (the allowlist is coreSignedMediaRoute and CORE_READ_PATH there).
 //
 // McCluster Core on OVH calls this Worker's media MCP to run generative work
 // (model3d, image, video, audio). It used to send a stored Supabase user token
