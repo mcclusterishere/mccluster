@@ -198,7 +198,7 @@ const noOverflow = (page) => page.evaluate(() => ({ sw: document.documentElement
   const KEY_RE = /^[A-Za-z0-9._-]{8,80}$/;
   const { context, page, calls, errors } = await setup(`/purchase.html?token=${TOKEN}`, { downloads: ['lost'], attachment: true });
   const sent = () => calls.filter((c) => c.body.action === 'download').map((c) => c.body.attempt_key);
-  const kept = () => page.evaluate((t) => ({ session: sessionStorage.getItem('mcc_direct_attempt:' + t), local: Object.keys(localStorage).filter((k) => /attempt/.test(k)) }), TOKEN);
+  const kept = () => page.evaluate((t) => ({ session: sessionStorage.getItem('mcc_direct_attempt:' + t), shared: localStorage.getItem('mcc_direct_attempt:' + t), local: Object.keys(localStorage).filter((k) => /attempt/.test(k)) }), TOKEN);
   const download = async () => (await Promise.all([page.waitForEvent('download', { timeout: 10000 }), page.click('#ppDownload')]))[0];
   await page.waitForSelector('#ppCard:not([hidden])', { timeout: 10000 });
   await page.click('#ppDownload');
@@ -210,13 +210,14 @@ const noOverflow = (page) => page.evaluate(() => ({ sw: document.documentElement
   check('retry: no horizontal scroll at 390px with the message shown', o.sw === o.cw, o);
   await page.screenshot({ path: join(OUT, 'purchase-retry-390.png'), fullPage: true });
   let store = await kept();
-  check('retry: a well-formed key was sent and is kept in sessionStorage only', KEY_RE.test(sent()[0] || '') && JSON.parse(store.session || '{}').key === sent()[0] && store.local.length === 0, { sent: sent(), store });
+  /* this tab's store survives a reload; the shared store lets another tab on the same kept link ask about the same attempt */
+  check('retry: a well-formed key was sent and is kept for this tab and for other tabs, under this purchase only', KEY_RE.test(sent()[0] || '') && JSON.parse(store.session || '{}').key === sent()[0] && JSON.parse(store.shared || '{}').key === sent()[0] && store.local.length === 1 && store.local[0] === 'mcc_direct_attempt:' + TOKEN, { sent: sent(), store });
   await page.reload({ waitUntil: 'load' });
   await page.waitForSelector('#ppCard:not([hidden])', { timeout: 10000 });
   let file = await download();
   check('retry: after a reload the SAME key is sent, and the file arrives', sent().length === 2 && sent()[1] === sent()[0] && file.suggestedFilename() === 'McCluster - Antisocial.wav', { sent: sent(), name: file.suggestedFilename() });
   store = await kept();
-  check('retry: a delivered download leaves nothing kept', store.session === null, store);
+  check('retry: a delivered download leaves nothing kept', store.session === null && store.shared === null && store.local.length === 0, store);
   file = await download();
   check('retry: the next download is a new attempt with a new key', sent().length === 3 && KEY_RE.test(sent()[2] || '') && sent()[2] !== sent()[0], sent());
   check('retry: no page errors', errors.length === 0, errors);

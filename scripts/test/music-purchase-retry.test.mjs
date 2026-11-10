@@ -144,6 +144,17 @@ test('a 5xx that is not a refusal, and any body the page cannot read, keep the k
     '200 without a URL': answer(200, { ok: true, downloads_left: 3 }),
     '200 with a null body': answer(200, null),
     '403 from something that is not the function': answer(403, null, { raw: '<html>Forbidden</html>' }),
+    /* a 4xx is the function's only when it carries one of the function's reasons: anything in between can answer 4xx */
+    '429 from a gateway': answer(429, { message: 'Too many requests' }),
+    '404 from a gateway': answer(404, { message: 'Requested function was not found' }),
+    '401 from a gateway': answer(401, { msg: 'Invalid JWT' }),
+    '408 empty object': answer(408, {}),
+    '403 with an error but no reason': answer(403, { error: 'Forbidden' }),
+    '429 with a reason the function never sends': answer(429, { error: 'slow down', reason: 'rate_limited' }),
+    '409 with a reason that is not a string': answer(409, { error: 'conflict', reason: 7 }),
+    '404 with a null body': answer(404, null),
+    '429 with a string body': answer(429, 'rate limited'),
+    '409 with an array body': answer(409, ['attempt_spent']),
     'json() that rejects': { ok: true, status: 200, json: () => Promise.reject(new Error('stream cut')) },
     'fetch that throws': () => { throw new Error('blocked'); }
   };
@@ -156,6 +167,15 @@ test('a 5xx that is not a refusal, and any body the page cannot read, keep the k
     await page.click();
     assert.equal(server.keys()[1], server.keys()[0], name + ': same key');
     assert.equal(page.assigned.length, 1, name);
+    /* the same answer to a resend keeps the key too */
+    const again = scripted([LOST, first, URL_OK()]);
+    const resending = await open(again);
+    await resending.click();
+    await resending.click();
+    unsure(resending);
+    await resending.click();
+    assert.deepEqual(again.keys(), [again.keys()[0], again.keys()[0], again.keys()[0]], name + ' on a resend: same key');
+    assert.equal(resending.assigned.length, 1, name + ' on a resend');
   }
 });
 
@@ -267,9 +287,15 @@ test('the page\'s window is the server\'s: a 120 s hold nobody overrides and a 3
   assert.match(page, /var ASK_MS = 20000;\n\s*var KEY_LIFE_MS = ASK_MS \+ 120000 \+ 300000;/);
   assert.match(page, new RegExp('var ATTEMPT_KEY_RE = ' + ATTEMPT_KEY_RE.source.replace(/[.*+?^${}()|[\]\\\/]/g, '\\$&').replace(/^/, '\\/') + '\\/;'), 'the same shape the server accepts');
   assert.doesNotMatch(page, /Math\.random/, 'never Math.random');
-  /* the attempt lives in sessionStorage; localStorage holds only the list of kept links, as before */
-  assert.equal((page.match(/localStorage/g) || []).length, 2);
-  assert.match(page, /root\.sessionStorage\.setItem\(ATTEMPT_STORE \+ id,/);
+  /* the attempt is written to this tab's store and the shared one, never anywhere else */
+  assert.match(page, /storeWrite\(ATTEMPT_STORE \+ id, JSON\.stringify\(kept\)\);/);
+  assert.doesNotMatch(page, /document\.cookie|indexedDB/);
+  /* the page ends an attempt only on the function's own refusals: every reason the function can answer, and its fallback */
+  const listed = JSON.parse(page.match(/var FUNCTION_REFUSALS = (\[[^\]]*\]);/)[1]);
+  assert.deepEqual([...listed].sort(), [...Object.keys(REFUSAL_HTTP), 'refused'].sort(), 'the page knows exactly the function\'s reasons');
+  assert.match(handler, /return json\(\{ error: h\.message, reason: r\?\.reason \|\| "refused" \}, h\.status\);/);
+  /* the hold the "still finishing" answer waits out */
+  assert.match(page, /var HOLD_MS = ASK_MS \+ 120000;/);
   /* what the page was told to expect from the SQL */
   assert.match(sql, /if \(a\.state = 'issued' and a\.issued_at > now\(\) - interval '300 seconds'\)\s+or \(a\.state = 'reserved' and a\.reservation_expires_at > now\(\)\) then/);
   assert.match(sql, /return jsonb_build_object\('ok', false, 'reason', 'attempt_spent', 'attempt_id', a\.id, 'state', a\.state\);/);
@@ -408,6 +434,91 @@ test('a lost answer on the last download can still be asked about after a reload
   const late = await open(scripted([], { view: spent }), { sessionStorage: storage2(lost.keys()[0]), clock: { now: clicking.clock.now + 20000 + 120000 + 300000 } });
   assert.equal(late.el.ppDownload.disabled, true);
   function storage2(key) { const m = memoryStorage(); m.map.set(STORE(TOKEN), JSON.stringify({ token: TOKEN, key, at: clicking.clock.now })); return m; }
+});
+
+test('a second tab on the same kept link finds the unresolved key; a delivery in either tab ends the shared copy', async () => {
+  const shared = memoryStorage();
+  const server = scripted([LOST, URL_OK(3), URL_OK(2), URL_OK(1)]);
+  const tabA = await open(server, { localStorage: shared });
+  await tabA.click();
+  const key = server.keys()[0];
+  /* a new tab: its own empty sessionStorage, the browser's shared localStorage */
+  const tabB = await open(server, { localStorage: shared, clock: tabA.clock });
+  await tabB.click();
+  assert.equal(server.keys()[1], key, 'the second tab asks about the same attempt instead of taking a second slot');
+  assert.equal(tabB.assigned.length, 1);
+  assert.equal(shared.map.has(STORE(TOKEN)), false, 'the delivery ended the shared copy');
+  /* a third tab now starts a new download */
+  const tabC = await open(server, { localStorage: shared, clock: tabA.clock });
+  await tabC.click();
+  assert.notEqual(server.keys()[2], key);
+  /* the first tab still has its own copy: resending it is answered by the server (a replay or attempt_spent), never a new slot */
+  await tabA.click();
+  assert.equal(server.keys()[3], key);
+});
+
+test('a store that refused a write cannot hide the other one', async () => {
+  const now = Date.UTC(2026, 10, 9, 12);
+  const life = 20000 + 120000 + 300000;
+  const entry = (key, at) => JSON.stringify({ token: TOKEN, key, at });
+  /* this tab's copy is fresh, the shared store kept an older attempt it could not overwrite */
+  let session = memoryStorage(), local = memoryStorage();
+  session.map.set(STORE(TOKEN), entry('fresh-key-0001', now - 1000));
+  local.map.set(STORE(TOKEN), entry('stale-key-0001', now - life));
+  let server = scripted([URL_OK()]);
+  let page = await open(server, { sessionStorage: session, localStorage: local, clock: { now } });
+  await page.click();
+  assert.equal(server.keys()[0], 'fresh-key-0001');
+  /* this tab's copy is rubbish, the shared one is usable */
+  session = memoryStorage(); local = memoryStorage();
+  session.map.set(STORE(TOKEN), '{');
+  local.map.set(STORE(TOKEN), entry('shared-key-001', now - 1000));
+  server = scripted([URL_OK()]);
+  page = await open(server, { sessionStorage: session, localStorage: local, clock: { now } });
+  await page.click();
+  assert.equal(server.keys()[0], 'shared-key-001');
+  assert.equal(session.map.has(STORE(TOKEN)), false);
+  assert.equal(local.map.has(STORE(TOKEN)), false, 'a delivery clears both');
+  /* a copy stamped in the future (the clock was set back) is not trusted */
+  local = memoryStorage();
+  local.map.set(STORE(TOKEN), entry('future-key-01', now + 61000));
+  server = scripted([URL_OK()]);
+  page = await open(server, { localStorage: local, clock: { now } });
+  await page.click();
+  assert.notEqual(server.keys()[0], 'future-key-01');
+});
+
+test('"used all of its downloads" just after a signing failure is a held slot that frees itself, not the end', async () => {
+  const storage = memoryStorage();
+  const server = scripted([
+    (b) => Promise.resolve(refusal('sign_retry', { attempt_key: b.attempt_key })),
+    refusal('download_limit'),
+    refusal('download_limit'),
+    refusal('download_limit')
+  ]);
+  const page = await open(server, { sessionStorage: storage });
+  await page.click();
+  assert.equal(page.el.ppStatus.textContent, REFUSAL_HTTP.sign_retry.message);
+  /* the release of the failed attempt's hold can fail too: the next new attempt may meet the held last slot */
+  await page.click();
+  assert.match(page.el.ppStatus.textContent, /may still be finishing/);
+  assert.match(page.el.ppStatus.textContent, /will not cost you a download/);
+  assert.equal(page.el.ppDownload.disabled, false, 'the button stays: the hold frees itself');
+  assert.notEqual(server.keys()[1], server.keys()[0], 'that was a new attempt');
+  /* a reload in the hold window remembers the failure */
+  const reloaded = await open(server, { sessionStorage: storage, clock: page.clock });
+  await reloaded.click();
+  assert.match(reloaded.el.ppStatus.textContent, /may still be finishing/);
+  /* once the hold has certainly lapsed, the limit is real */
+  page.clock.now += 20000 + 120000;
+  await reloaded.click();
+  assert.equal(reloaded.el.ppStatus.textContent, REFUSAL_HTTP.download_limit.message);
+  assert.equal(reloaded.el.ppDownload.disabled, true);
+  /* without a signing failure the limit is taken at its word (as in the final-refusal test) */
+  const plain = await open(scripted([refusal('download_limit')]));
+  await plain.click();
+  assert.equal(plain.el.ppStatus.textContent, REFUSAL_HTTP.download_limit.message);
+  assert.equal(plain.el.ppDownload.disabled, true);
 });
 
 test('nothing else about the page changed: claim, tracking and what a delivery shows', async () => {

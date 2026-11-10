@@ -43,16 +43,20 @@ What the applied SQL does with a repeated key, which is what the page is built a
 | `reserved`, hold lapsed | 409 `attempt_spent` |
 | purchase revoked, refunded, expired or unresolved | that refusal, decided before the key is looked at |
 
-The page: a fresh random key for every deliberate download; the same key again while the outcome is unknown (no network, no answer in 20 s, a 5xx, an unreadable body), with the buyer told the download may or may not have been counted and that trying again will not use another; no key once a URL or a refusal came back. The unresolved key is kept in `sessionStorage` per purchase token for 20 s + 120 s + 300 s after its last send.
+The page: a fresh random key for every deliberate download; the same key again while the outcome is unknown (no network, no answer in 20 s, a 5xx, an unreadable body, or a 4xx that does not carry one of the function's own refusal reasons, such as a gateway's 429, 404 or 401), with the buyer told the download may or may not have been counted and that trying again in the next few minutes will not use another; no key once a URL or one of the function's refusals came back. The unresolved key is kept per purchase token in `sessionStorage` (this tab's reloads) and `localStorage` (another tab on the same kept link finds it) for 20 s + 120 s + 300 s after its last send: the longest the server could still answer it. That bound is deliberately generous: a key kept too long costs nothing (the server answers `attempt_spent`, which takes no slot), a key dropped too early could cost a second download. The page's list of the function's refusal reasons is tested against `REFUSAL_HTTP`, so a reason added there without the page fails the suite.
+
+After a first-send `sign_retry` the page remembers the failure for 20 s + 120 s. The handler answers `sign_retry` even when releasing the hold failed, and a live hold counts against the limit, so a 429 `download_limit` in that window may be the failed attempt's slot, which frees itself within its 120 s hold: the page says an earlier attempt may still be finishing and keeps the button. After the window the limit is taken at its word.
 
 Two things in v42 the page works around rather than relies on:
 
 - 503 `sign_retry` echoes `attempt_key`, but the attempt it names was just released, so sending that key again answers 409 `attempt_spent`. The page drops the key on a first-send `sign_retry` and starts a new attempt.
 - The same 503, on the retry of an attempt that was already issued, says "Nothing was used" although that attempt stays issued and counted (an issued attempt is never released). The page keeps the key in that one case and says the outcome is not known.
 
-Limits, stated rather than hidden: a new tab or another device has no kept key; a retry later than the window is a new download and the lost one stays counted; a replay signs a new URL (receipt item 7).
+Limits, stated rather than hidden: another browser or device has no kept key; a retry later than the window is a new download and the lost one stays counted; a replay signs a new URL (receipt item 7).
 
-Proof (synthetic, local): `node --test scripts/test/music-purchase-retry.test.mjs` (15); `PGLITE_MODULE=… node scripts/test/music-direct-buyer-recovery.integration.mjs` (12 scenarios: the real page script, the real handler source and the applied SQL on PGlite, PostgreSQL 17.5); `node scripts/e2e/music-direct-checkout.e2e.mjs` in Chromium at 390px with fixture answers. No production request, purchase or download.
+Coupling: the page needs `music-direct-access` v42 or later. An older function ignores `attempt_key` and counts every request, so a page that says a retry "will not use another download" would be wrong against it. Rolling the function back below v42 means publishing the earlier `js/music-purchase.js` too.
+
+Proof (synthetic, local): `node --test scripts/test/music-purchase-retry.test.mjs` (18); `PGLITE_MODULE=… node scripts/test/music-direct-buyer-recovery.integration.mjs` (12 scenarios: the real page script, the real handler source and the applied SQL on PGlite, PostgreSQL 17.5); `node scripts/e2e/music-direct-checkout.e2e.mjs` in Chromium at 390px with fixture answers. No production request, purchase or download.
 
 Receipt item 6, second half (claim and status still name a purchase after the live offer's title and format) is prepared as an Edge source candidate and is **not in this branch**: the committed `music-direct-access` sources stay byte-identical to deployed v42, and any change under `supabase/functions/` that reaches `main` is deployed by `.github/workflows/supabase-functions-deploy.yml`.
 

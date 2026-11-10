@@ -149,7 +149,9 @@ try {
     const spent = await database.call({ action: 'download', token: p.token, attempt_key: first.body.attempt_key });
     assert.equal(spent.status, 409);
     assert.equal(spent.data.reason, 'attempt_spent');
-    assert.equal(p.storage.map.size, 0, 'so the page did not keep it');
+    assert.equal(p.storage.map.has('mcc_direct_attempt:' + p.token), false, 'so the page did not keep it');
+    /* it remembers the failure for the hold window, so a "used all of its downloads" just after it is not final */
+    assert.deepEqual([...p.storage.map.keys()], ['mcc_direct_doubt:' + p.token]);
     await p.page.click();
     const second = p.net.downloads().at(-1);
     assert.notEqual(second.body.attempt_key, first.body.attempt_key);
