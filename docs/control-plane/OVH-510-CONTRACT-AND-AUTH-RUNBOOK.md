@@ -35,7 +35,7 @@ Two separate things.
 
 **Who:** OWNER. **Where:** PRODUCTION READ.
 
-1. From now until step 5 passes, apply no migration to `zmnhbrjyhxzhkxmhkexs`. Decide first whether `media_operation_claims_v2` or anything else must go in. Each ledger advance needs its own contract and its own promotion, because the attestation exposes only a count, the latest row and a hash.
+1. From now until step 5 passes, apply no migration to `zmnhbrjyhxzhkxmhkexs`. Decide first whether `media_operation_claims_v2` or anything else must go in. Each ledger advance needs its own contract and its own promotion, because the attestation exposes only a count, the latest row and a hash. A merge counts as applying: the Supabase GitHub integration applies `supabase/migrations` on every push to `main` (`docs/control-plane/DEPLOYMENT-CONTROLS-PROPOSAL.md`). So merge into `main` no pull request that adds or changes a file under `supabase/migrations` until step 5 passes. Step 3's pull request is the one exception: production has applied its four files already, and Q3 guards the merge.
 2. Run query Q3 (below). Confirm the live attestation is exactly:
    - `migration_count` 363
    - `latest_version` `20261109194957`
@@ -434,6 +434,7 @@ from latest l join public.ops_agent_jobs j on j.id=l.id, jsonb_array_elements(j.
 - Run the write probe, or any push with this key, without `--dry-run`.
 - Make the repository private before B and C hold.
 - Apply another production migration between cutting the contract and passing step 5.
+- Merge into `main` a pull request that adds or changes a file under `supabase/migrations` before step 5 passes: the Supabase integration applies it on the push. Step 3's pull request is the one exception, guarded by Q3.
 - Lower a severity, or special-case a count, to turn health green.
 - Edit `/opt/mccluster/core/drift-contract.json` or a receipt file on the host.
 
