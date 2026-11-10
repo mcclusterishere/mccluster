@@ -354,6 +354,34 @@
         "workers/mccluster/src/live/store.js"
       ]
     },
+    "media_bind_operation_v2": {
+      "kind": "function",
+      "pending": "media_operation_claims_v2.sql",
+      "callers": [
+        "workers/mccluster/src/media/router.js"
+      ]
+    },
+    "media_claim_operation_v2": {
+      "kind": "function",
+      "pending": "media_operation_claims_v2.sql",
+      "callers": [
+        "workers/mccluster/src/media/router.js"
+      ]
+    },
+    "media_fail_operation_v2": {
+      "kind": "function",
+      "pending": "media_operation_claims_v2.sql",
+      "callers": [
+        "workers/mccluster/src/media/router.js"
+      ]
+    },
+    "media_release_cost_reservation_v2": {
+      "kind": "function",
+      "pending": "media_operation_claims_v2.sql",
+      "callers": [
+        "workers/mccluster/src/media/router.js"
+      ]
+    },
     "member_fronts": {
       "kind": "table",
       "pending": "member_fronts_v1.sql",

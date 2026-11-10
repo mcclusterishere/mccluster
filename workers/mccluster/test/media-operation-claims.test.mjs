@@ -3,108 +3,23 @@
    with one stable operation_id each reserved budget and submitted to the
    provider; and any thrown submit error, including a timeout AFTER the
    provider may have accepted, was treated as "not submitted" and released the
-   reservation. These tests pin the atomic claim (pending
-   supabase/pending/media_operation_claims_v1.sql) and the uncertain-outcome
-   handling. Synthetic plane and provider only; no network. */
+   reservation. These tests pin the atomic claim (table applied in production
+   as supabase/migrations/20261109194957_media_operation_claims_v1.sql; the
+   functions the router calls are supabase/pending/media_operation_claims_v2.sql)
+   and the uncertain-outcome handling, on the compare-and-set submit protocol
+   (cas-v1). Recovery of what these paths leave behind:
+   media-operation-recovery.test.mjs. Synthetic plane and provider only
+   (./helpers/media-plane.mjs); no network. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createGeneration, operationFingerprint } from '../src/media/router.js';
 import { classifySubmitError } from '../src/media/fal.js';
-import { __resetCapabilityCache } from '../src/lib/capabilities.js';
-
-const ORG = '123e4567-e89b-42d3-a456-426614174000';
-const USER = { id: '423e4567-e89b-42d3-a456-426614174333' };
-const MODEL = { id: 't2i', provider: 'fal', provider_model_id: 'fal-ai/flux-2', capability: 'text-to-image', parameter_schema: {}, cost_hint: {}, enabled: true };
-const env = { SUPABASE_URL: 'https://fixture.invalid', SUPABASE_SERVICE_ROLE_KEY: 'synthetic', FAL_KEY: 'synthetic' };
-const json = (value, status = 200) => new Response(JSON.stringify(value), { status, headers: { 'content-type': 'application/json' } });
-
-/* A synthetic data plane with the REAL claim semantics of the pending SQL:
-   one row per (org, operation_id), first insert wins, fingerprint mismatch
-   refused, bind/fail only from 'claimed'. */
-function plane({ claimsAvailable = true, lookupGate = null, patchFails = false, reserveFails = false } = {}) {
-  const state = { claims: new Map(), jobs: new Map(), lookups: 0, reserves: 0, releases: 0, patches: [], claimCalls: 0 };
-  let seq = 0;
-  const original = globalThis.fetch;
-  globalThis.fetch = async (url, options = {}) => {
-    const u = String(url), method = options.method || 'GET';
-    const body = options.body ? JSON.parse(String(options.body)) : null;
-    if (u.includes('/org_members?')) return json([{ org_id: ORG, role: 'owner' }]);
-    if (u.includes('/control_role_capabilities?')) return json([{ role: 'owner', capability: 'media.generate', allowed: true }]);
-    if (u.includes('/media_models?')) return json([MODEL]);
-    if (u.includes('/rpc/media_claim_operation_v1')) {
-      state.claimCalls += 1;
-      if (!claimsAvailable) return new Response('{"code":"PGRST202","message":"Could not find the function"}', { status: 404 });
-      const key = `${body.p_org_id}:${body.p_operation_id}`;
-      const existing = state.claims.get(key);
-      if (!existing) {
-        const row = { org_id: body.p_org_id, operation_id: body.p_operation_id, fingerprint: body.p_fingerprint, state: 'claimed', job_id: null, failure: null };
-        state.claims.set(key, row);
-        return json({ outcome: 'won', claim: row });
-      }
-      if (existing.fingerprint !== body.p_fingerprint) return new Response('{"code":"P0001","message":"operation_payload_mismatch"}', { status: 400 });
-      return json({ outcome: 'existing', claim: existing });
-    }
-    if (u.includes('/rpc/media_bind_operation_v1')) {
-      const row = state.claims.get(`${body.p_org_id}:${body.p_operation_id}`);
-      if (!row || row.state !== 'claimed') return new Response('{"code":"P0001","message":"operation_not_claimed"}', { status: 400 });
-      Object.assign(row, { state: 'bound', job_id: body.p_job_id });
-      return json(row);
-    }
-    if (u.includes('/rpc/media_fail_operation_v1')) {
-      const row = state.claims.get(`${body.p_org_id}:${body.p_operation_id}`);
-      if (!row || row.state !== 'claimed') return new Response('{"code":"P0001","message":"operation_not_claimed"}', { status: 400 });
-      Object.assign(row, { state: 'failed', failure: body.p_failure });
-      return json(row);
-    }
-    if (u.includes('/media_jobs?') && method === 'GET') {
-      state.lookups += 1;
-      if (lookupGate) await lookupGate(state.lookups);
-      const id = decodeURIComponent((u.match(/id=eq\.([^&]+)/) || [])[1] || '');
-      const byOp = decodeURIComponent((u.match(/operation_id=eq\.([^&]+)/) || [])[1] || '');
-      const rows = [...state.jobs.values()].filter((j) => (id ? j.id === id : true) && (byOp ? j.routing?.operation_id === byOp : true));
-      return json(rows);
-    }
-    if (u.includes('/rpc/media_create_budgeted_job_v2')) {
-      state.reserves += 1;
-      if (reserveFails) return new Response('{"code":"22023","message":"Estimated media cost exceeds budget"}', { status: 400 });
-      seq += 1;
-      const job = { id: `523e4567-e89b-42d3-a456-42661417400${seq}`, org_id: ORG, status: 'queued', routing: body.p_routing };
-      state.jobs.set(job.id, job);
-      return json([job]);
-    }
-    if (u.includes('/rpc/media_release_cost_reservation')) { state.releases += 1; return json(null); }
-    if (u.includes('/media_jobs?') && method === 'PATCH') {
-      state.patches.push(body);
-      if (patchFails) return new Response('{"message":"synthetic persistence failure"}', { status: 500 });
-      const id = decodeURIComponent(u.match(/id=eq\.([^&]+)/)[1]);
-      const job = Object.assign(state.jobs.get(id) || { id, org_id: ORG }, body);
-      state.jobs.set(id, job);
-      return json([job]);
-    }
-    if (u.includes('/control_observability_events')) return new Response(null, { status: 201 });
-    throw new Error(`Unexpected offline fixture fetch: ${method} ${u}`);
-  };
-  __resetCapabilityCache();
-  state.restore = () => { globalThis.fetch = original; __resetCapabilityCache(); };
-  return state;
-}
+import { ORG, USER, MODEL, env, json, plane, provider, traced, V2_FUNCTIONS } from './helpers/media-plane.mjs';
 
 const req = (body) => new Request('https://api.fixture.invalid/v1/media/generate', {
   method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body)
 });
 const generate = (extra = {}) => req({ org_id: ORG, model_id: 't2i', prompt: 'synthetic lighthouse', operation_id: 'same-stable-operation', ...extra });
-
-function provider({ mode = 'accept' } = {}) {
-  const p = { submits: 0 };
-  p.submit = async () => {
-    p.submits += 1;
-    if (mode === 'uncertain') throw Object.assign(new Error('Synthetic timeout after provider acceptance'), { name: 'TimeoutError' });
-    if (mode === 'definite') throw Object.assign(new Error('fal gateway is not configured'), { status: 503, preflight: true });
-    if (mode === 'rejected') throw Object.assign(new Error('Unprocessable input'), { status: 422 });
-    return { request_id: `accepted-${p.submits}` };
-  };
-  return p;
-}
 
 test('concurrent calls with one operation id: one claim winner, one reservation, one submission, same job for both', async () => {
   let release; const barrier = new Promise((r) => { release = r; });
@@ -211,7 +126,12 @@ test('a provider 4xx rejection is definite: released and failed', async () => {
 });
 
 test('persistence failure after the provider accepted never releases the reservation', async () => {
-  const st = plane({ patchFails: true });
+  /* The fixture used to fail every PATCH. Under cas-v1 a PATCH (the submit
+     marker) precedes the provider call, and a marker that cannot be written
+     means nothing is sent (media-operation-recovery.test.mjs). The scenario
+     this test names is the write AFTER acceptance failing: the record of the
+     request id and its fallback. The expectations are unchanged. */
+  const st = plane({ patchFails: (entry) => entry.body.provider_request_id !== undefined });
   const fal = provider();
   try {
     await assert.rejects(createGeneration(generate(), env, USER, { submit: fal.submit }), (e) => e.status === 502 && e.reason === 'provider_accepted_persistence_failed' && e.detail?.provider_request_id === 'accepted-1');
@@ -300,9 +220,10 @@ test('media.compare derives one stable child operation id per model, so a retrie
   try {
     const body = { org_id: ORG, model_ids: ['t2i', 'alt/model'], prompt: 'p', operation_id: 'compare-7' };
     const compare = () => createBakeoff(new Request('https://api.fixture.invalid/v1/media/compare', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }), env, USER);
-    /* createBakeoff calls createGeneration without deps; the provider client
-       is not installed offline, so the submit stage fails definitively and
-       the reservation evidence is what we read. */
+    /* createBakeoff calls createGeneration without deps, so the real adapter
+       runs; the plane does not answer the provider host, so each lane's one
+       request fails with no answer (an uncertain outcome: reservation kept,
+       job reconciling). The claim and reservation evidence is what we read. */
     const first = await compare().catch((e) => e);
     const claimed = [...st.claims.keys()].sort();
     assert.deepEqual(claimed, [`${ORG}:compare-7:alt_model`, `${ORG}:compare-7:t2i`]);
@@ -312,4 +233,56 @@ test('media.compare derives one stable child operation id per model, so a retrie
     assert.equal(st.reserves, reservesAfterFirst, 'the retry reserved nothing new');
     void first;
   } finally { globalThis.fetch = original; st.restore(); }
+});
+
+/* ---- rollout order: the Worker deployed before media_operation_claims_v2.sql ---- */
+
+test('with every v2 function missing, a generation that carries an operation id fails closed: 503, nothing reserved, nothing sent', async () => {
+  const st = plane({ missing: V2_FUNCTIONS });
+  const fal = provider();
+  try {
+    await assert.rejects(traced(() => createGeneration(generate(), env, USER, { submit: fal.submit })),
+      (e) => e.status === 503 && e.reason === 'operation_claims_unavailable' && e.detail?.operation_id === 'same-stable-operation');
+    assert.equal(st.reserves, 0, 'no reservation');
+    assert.equal(fal.submits, 0, 'no provider request');
+    assert.equal(st.jobs.size, 0);
+    assert.deepEqual(st.rpcs.map((call) => call.name), ['media_claim_operation_v2'], 'the v1 claim is never the fallback');
+    const event = st.event('media.operation.claims_v2_missing');
+    assert.ok(event, 'the missing migration is an event');
+    assert.equal(event.level, 'error');
+    assert.equal(event.org_id, ORG);
+  } finally { st.restore(); }
+});
+
+test('with every v2 function missing, a one-off whose submit is refused still releases, through the 0054 function, and says so', async () => {
+  const st = plane({ missing: V2_FUNCTIONS });
+  const fal = provider({ mode: 'rejected' });
+  try {
+    await assert.rejects(traced(() => createGeneration(req({ org_id: ORG, model_id: 't2i', prompt: 'one-off' }), env, USER, { submit: fal.submit })), /Unprocessable/);
+    assert.equal(fal.submits, 1);
+    const job = st.onlyJob();
+    assert.equal(job.status, 'failed');
+    assert.equal(job.routing.reservation_state, 'released', 'a failed job does not keep its reservation because of the rollout order');
+    assert.equal(st.releasesV1, 1);
+    assert.deepEqual(st.rpcs.filter((call) => /release/.test(call.name)).map((call) => call.name),
+      ['media_release_cost_reservation_v2', 'media_release_cost_reservation'], 'v2 is asked first');
+    assert.deepEqual(st.rpcCalls('media_release_cost_reservation')[0].body, { p_job_id: job.id, p_reason: 'provider submission failed: Unprocessable input' });
+    const event = st.event('media.operation.release_v1_fallback');
+    assert.ok(event, 'the fallback is an event');
+    assert.equal(event.level, 'warn');
+    assert.equal(event.resource_id, job.id);
+    assert.equal(st.claimCalls, 0, 'a one-off never consults the claim');
+  } finally { st.restore(); }
+});
+
+test('the 0054 fallback is never used for a job this Worker already sees as settled', async () => {
+  const { releaseReservation } = await import('../src/media/router.js');
+  const st = plane({ missing: ['media_release_cost_reservation_v2'] });
+  try {
+    const job = st.createJob({ p_org_id: ORG, p_created_by: USER.id, p_routing: {} });
+    Object.assign(job, { status: 'failed', actual_cost_cents: 1, routing: { ...job.routing, reservation_state: 'settled' } });
+    const answer = await releaseReservation(env, job, 'webhook ERROR replay after settlement');
+    assert.deepEqual({ released: answer.released, reason: answer.reason }, { released: false, reason: 'reservation_already_settled' });
+    assert.equal(st.releasesV1, 0, '0054 has no settlement guard, so it is not called');
+  } finally { st.restore(); }
 });

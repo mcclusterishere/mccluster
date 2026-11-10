@@ -40,6 +40,8 @@ async function authUser(req, env) {
   return res.json();
 }
 
+const FAL_WEBHOOK_PATH = /^\/v1\/media\/webhooks\/fal(?:\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\/([A-Za-z0-9_-]{43}))?$/;
+
 /* Routes below that authenticate before checking the method. */
 const AUTH_FIRST_PREFIXES = ['/v1/analytics', '/v1/experience', '/v1/social', '/v1/comms', '/v1/ai', '/v1/music', '/v1/work', '/v1/observability', '/v1/clips'];
 
@@ -293,9 +295,14 @@ async function dispatchRequest(request, env, ctx) {
       return fail(request, env, error.message || 'Client Connect request failed', error.status || 500, error.detail);
     }
 
-    if (path === '/v1/media/webhooks/fal' && request.method === 'POST') {
+    /* The provider's webhook, with or without the hint this Worker put in the
+       URL it gave the provider: /<job id>/<token> (media/router.js
+       webhookUrlFor). The token is verified before the job id is used. */
+    const falWebhook = path.match(FAL_WEBHOOK_PATH);
+    if (falWebhook && request.method === 'POST') {
       try {
-        const result = await handleFalWebhook(request, env);
+        const hint = falWebhook[1] ? { jobId: falWebhook[1], token: falWebhook[2] } : null;
+        const result = await handleFalWebhook(request, env, undefined, hint);
         return reply(request, env, result);
       } catch (error) {
         return fail(request, env, error.message || 'fal webhook failed', error.status || 500, error.detail);

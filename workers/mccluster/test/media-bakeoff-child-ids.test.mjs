@@ -107,10 +107,11 @@ const MODEL = { id: 't2i', provider: 'fal', provider_model_id: 'fal-ai/flux-2', 
 const env = { SUPABASE_URL: 'https://fixture.invalid', SUPABASE_SERVICE_ROLE_KEY: 'synthetic', FAL_KEY: 'synthetic' };
 const json = (value, status = 200) => new Response(JSON.stringify(value), { status, headers: { 'content-type': 'application/json' } });
 
-/* The same synthetic plane as media-operation-claims.test.mjs with the REAL
-   claim semantics of the applied SQL (first insert wins, fingerprint mismatch
-   refused as P0001 operation_payload_mismatch), plus a catalog that answers
-   any model id so a two-model compare resolves. */
+/* A synthetic plane with the claim semantics this suite needs (first insert
+   wins, fingerprint mismatch refused as P0001 operation_payload_mismatch; the
+   router calls the v2 functions of supabase/pending/media_operation_claims_v2.sql,
+   whose full semantics are in ./helpers/media-plane.mjs), plus a catalog that
+   answers any model id so a two-model compare resolves. */
 function plane() {
   const state = { claims: new Map(), jobs: new Map(), reserves: 0, releases: 0, claimCalls: 0, patches: [] };
   let seq = 0;
@@ -124,7 +125,7 @@ function plane() {
       const id = decodeURIComponent((u.match(/id=eq\.([^&]+)/) || [])[1] || '');
       return json([{ ...MODEL, id, provider_model_id: `fal-ai/${id}` }]);
     }
-    if (u.includes('/rpc/media_claim_operation_v1')) {
+    if (u.includes('/rpc/media_claim_operation_v2')) {
       state.claimCalls += 1;
       const key = `${body.p_org_id}:${body.p_operation_id}`;
       const existing = state.claims.get(key);
@@ -136,13 +137,13 @@ function plane() {
       if (existing.fingerprint !== body.p_fingerprint) return new Response('{"code":"P0001","message":"operation_payload_mismatch"}', { status: 400 });
       return json({ outcome: 'existing', claim: existing });
     }
-    if (u.includes('/rpc/media_bind_operation_v1')) {
+    if (u.includes('/rpc/media_bind_operation_v2')) {
       const row = state.claims.get(`${body.p_org_id}:${body.p_operation_id}`);
       if (!row || row.state !== 'claimed') return new Response('{"code":"P0001","message":"operation_not_claimed"}', { status: 400 });
       Object.assign(row, { state: 'bound', job_id: body.p_job_id });
       return json(row);
     }
-    if (u.includes('/rpc/media_fail_operation_v1')) {
+    if (u.includes('/rpc/media_fail_operation_v2')) {
       const row = state.claims.get(`${body.p_org_id}:${body.p_operation_id}`);
       if (!row || row.state !== 'claimed') return new Response('{"code":"P0001","message":"operation_not_claimed"}', { status: 400 });
       Object.assign(row, { state: 'failed', failure: body.p_failure });
@@ -184,9 +185,9 @@ test('createBakeoff: two models under a 128-character parent claim two rows and 
   const st = plane();
   try {
     const body = { org_id: ORG, model_ids: ['t2i', 'alt/model'], prompt: 'p', operation_id: P128 };
-    /* createBakeoff calls createGeneration without deps; the provider client
-       is not reachable offline, so the submit stage fails and the claim and
-       reservation evidence is what we read. */
+    /* createBakeoff calls createGeneration without deps; this plane does not
+       answer the provider host, so each lane's one request fails with no
+       answer and the claim and reservation evidence is what we read. */
     const first = await compare(body).catch((e) => e);
     const failures = first instanceof Error ? (first.detail || []) : first.failures;
     for (const f of failures) assert.doesNotMatch(String(f.error), /already used with a different request|operation_payload_mismatch|operation_pending/, `model ${f.model_id} collided`);
