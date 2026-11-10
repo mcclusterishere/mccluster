@@ -90,3 +90,26 @@ At preparation time the native PostgreSQL 16.15/17.11 checks passed. Chromium
 could not launch in the executor (socket EPERM, including an approved escalation),
 so browser journeys and 390px rendering remain an explicit release blocker.
 No real provider call, live SQL, charge or deployment was performed.
+
+## Current-main reconciliation, 2026-11-10
+
+PR #796 merged the tested recovery source and first-offer fixture follow-up into
+customer head `8fc3a937`. Customer reconciliation `18f8363b` then preserved that
+ancestry while merging main `7e41f0b3` (including #793); draft #782 now targets
+main because #772 already landed and its old base branch is gone.
+
+The combined tree passed root JavaScript 2,426 tests (three existing skips),
+Worker 1,997 (four existing skips), Core 654 plus syntax checks, Python seven,
+and source classification 2,790 checks. Both disposable PostgreSQL 16.15 and
+17.11 runs passed all 16 recovery checks. Node was the pinned 24.22.1. The final
+local Chromium attempt still failed before page load with socket EPERM, so fresh
+hosted browser checks are required; prior #796 results do not certify this tree.
+
+This source reconciliation did not apply SQL or activate customer features.
+Production catalog inspection confirmed the three checkout tables absent.
+Existing billing authority is not a substitute for the new reservation contract.
+A functional COM-3-only extraction needs this exact reviewed SQL and matching
+callers; the whole customer branch also introduces separately gated site,
+commerce, domain, music and publishing dependencies. Keep the production merge
+held until the selected schema/caller cutover is reviewed and authorized. Do not
+apply every pending file or infer payment/provider activation from source approval.
