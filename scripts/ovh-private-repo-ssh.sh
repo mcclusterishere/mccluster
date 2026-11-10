@@ -95,6 +95,17 @@ mcc_reconciler_git() {
   env -i PATH="${PATH}" HOME="${RECONCILE_STATE}" LC_ALL=C GIT_TERMINAL_PROMPT=0 git "$@" </dev/null
 }
 
+# What a remote said, made safe to show: one line of printable ASCII, at most
+# 300 characters. It is shown only when an answer was NOT recognised, so the
+# owner can compare GitHub's real wording with the patterns above.
+mcc_printable() {
+  local text
+  text="$(tr '\r\n\t' '   ' | tr -cd '\40-\176')"
+  while [[ "${text}" == *'  '* ]]; do text="${text//  / }"; done
+  text="${text% }"
+  printf '%s' "${text:0:300}"
+}
+
 mcc_key_fingerprint() {
   local words fingerprint=""
   words="$(ssh-keygen -lf "${KEY}.pub" -E sha256 2>/dev/null || true)"
@@ -126,13 +137,16 @@ mcc_host_key_is_pinned() {
   ssh-keygen -lf "${KNOWN}" -E sha256 2>/dev/null | grep -Fq "${GITHUB_FINGERPRINT}"
 }
 
-# Sets GITHUB_IDENTITY to what GitHub greeted (owner/repository or a login).
+# Sets GITHUB_IDENTITY to what GitHub greeted (owner/repository or a login) and
+# GITHUB_GREETING_ANSWER to the whole answer, made printable.
 # Returns 0 this repository's deploy key, 3 another identity, 4 no recognisable greeting.
 GITHUB_IDENTITY=""
+GITHUB_GREETING_ANSWER=""
 mcc_github_identity() {
   local output line count=0
   GITHUB_IDENTITY=""
   output="$(mcc_ssh -T git@github.com 2>&1 || true)"
+  GITHUB_GREETING_ANSWER="$(mcc_printable <<< "${output}")"
   while IFS= read -r line; do
     line="${line%$'\r'}"
     if [[ "${line}" =~ ${GITHUB_GREETING_PATTERN} ]]; then
@@ -149,9 +163,12 @@ mcc_github_identity() {
 # and GitHub refuses a read-only deploy key before any ref is offered. A dry run
 # that is ACCEPTED means the key can write. The throwaway repository it needs
 # is created under the root-only key directory and removed.
-# Returns 0 read-only, 3 write-capable, 4 could not tell.
+# Returns 0 read-only, 3 write-capable, 4 could not tell. Sets
+# GITHUB_PUSH_ANSWER to what the dry run printed, made printable.
+GITHUB_PUSH_ANSWER=""
 mcc_deploy_key_write_access() {
   local probe output rc=0
+  GITHUB_PUSH_ANSWER=""
   probe="$(mktemp -d "${KEY_DIR}/.write-probe.XXXXXX")" || return 4
   MCC_TEMP_PATHS+=("${probe}")
   mcc_probe_git -C "${probe}" init -q . >/dev/null 2>&1 || return 4
@@ -160,6 +177,7 @@ mcc_deploy_key_write_access() {
   [[ "$(mcc_probe_git -C "${probe}" ls-remote --get-url "${REPO}" 2>/dev/null || true)" == "${REPO}" ]] || return 4
   output="$(mcc_probe_git -C "${probe}" push --dry-run "${REPO}" HEAD:refs/heads/mccluster-read-only-probe 2>&1)" || rc=$?
   rm -rf -- "${probe}"
+  GITHUB_PUSH_ANSWER="$(mcc_printable <<< "${output}")"
   if [[ ${rc} -eq 0 ]]; then return 3; fi
   if grep -Eiq -- "${GITHUB_READ_ONLY_KEY_REFUSAL_PATTERN}" <<< "${output}"; then return 0; fi
   return 4
@@ -281,13 +299,13 @@ mcc_status() {
     case "${rc}" in
       0) say github_identity "deploy_key_of_${GITHUB_DEPLOY_KEY_IDENTITY}" ;;
       3) say github_identity "other_identity:${GITHUB_IDENTITY}"; unproven+=(github_identity) ;;
-      *) say github_identity unrecognised; unproven+=(github_identity) ;;
+      *) say github_identity unrecognised; say github_identity_answer "${GITHUB_GREETING_ANSWER:-nothing}"; unproven+=(github_identity) ;;
     esac
     rc=0; mcc_deploy_key_write_access || rc=$?
     case "${rc}" in
       0) say write_access denied_read_only ;;
       3) say write_access WRITE_CAPABLE; unproven+=(write_access) ;;
-      *) say write_access unproven; unproven+=(write_access) ;;
+      *) say write_access unproven; say write_access_answer "${GITHUB_PUSH_ANSWER:-nothing}"; unproven+=(write_access) ;;
     esac
     if mcc_read_refs_over_ssh; then
       say ssh_main_sha "${SSH_MAIN_SHA}"
@@ -449,6 +467,7 @@ if [[ ${identity_rc} -eq 3 ]]; then
   exit 3
 elif [[ ${identity_rc} -ne 0 ]]; then
   echo "Could not prove this key is a Deploy key of ${GITHUB_DEPLOY_KEY_IDENTITY}: GitHub's greeting was not recognised. Refusing to switch the transport." >&2
+  echo "GitHub answered: ${GITHUB_GREETING_ANSWER:-nothing}" >&2
   exit 3
 fi
 
@@ -460,6 +479,7 @@ if [[ ${write_rc} -eq 3 ]]; then
   exit 3
 elif [[ ${write_rc} -ne 0 ]]; then
   echo "Could not prove the deploy key is read-only; refusing to switch the transport." >&2
+  echo "The dry-run push answered: ${GITHUB_PUSH_ANSWER:-nothing}" >&2
   exit 3
 fi
 

@@ -303,14 +303,14 @@ test('activate refuses a personal key, a writable key and every unproven state b
  const refusals=[
   ['a personal key',{FAKE_IDENTITY:'user'},/GitHub greets this key as 'fixture-user', not as a Deploy key of mcclusterishere\/mccluster/],
   ["another repository's deploy key",{FAKE_IDENTITY:'other-repository'},/greets this key as 'mcclusterishere\/mccluster-mirror', not as a Deploy key/],
-  ['a greeting in an unknown form',{FAKE_IDENTITY:'lowercase'},/GitHub's greeting was not recognised\. Refusing to switch the transport/],
+  ['a greeting in an unknown form',{FAKE_IDENTITY:'lowercase'},/GitHub's greeting was not recognised\. Refusing to switch the transport\.\nGitHub answered: hi mcclusterishere\/mccluster! you've successfully authenticated\n/],
   ['two greetings',{FAKE_IDENTITY:'two'},/greeting was not recognised/],
-  ['no greeting',{FAKE_IDENTITY:'silent'},/greeting was not recognised/],
-  ['a key GitHub does not know',{FAKE_IDENTITY:'denied'},/greeting was not recognised/],
+  ['no greeting',{FAKE_IDENTITY:'silent'},/greeting was not recognised\. Refusing to switch the transport\.\nGitHub answered: nothing\n/],
+  ['a key GitHub does not know',{FAKE_IDENTITY:'denied'},/GitHub answered: git@github\.com: Permission denied \(publickey\)\./],
   ['a key that can write',{FAKE_WRITE:'writable'},/The deploy key has WRITE access\. Turn 'Allow write access' off/],
   ['a refusal that is about the repository, not the key',{FAKE_WRITE:'archived'},/Could not prove the deploy key is read-only; refusing to switch the transport/],
   ['a permission refusal',{FAKE_WRITE:'denied'},/Could not prove the deploy key is read-only/],
-  ['a refusal in words the script does not know',{FAKE_WRITE:'unrecognised'},/Could not prove the deploy key is read-only/],
+  ['a refusal in words the script does not know',{FAKE_WRITE:'unrecognised'},/Could not prove the deploy key is read-only; refusing to switch the transport\.\nThe dry-run push answered: ERROR: Write access is not granted to this key\. /],
   ['a silent refusal',{FAKE_WRITE:'silent'},/Could not prove the deploy key is read-only/],
   ['refs that cannot be read',{FAKE_READ:'denied'},/Repository not found/],
  ];
@@ -398,6 +398,10 @@ test('status exits non-zero and names the proof whenever one does not hold',(t)=
  assert.deepEqual(unproven({FAKE_IDENTITY:'user'}).missing,['github_identity']);
  assert.equal(unproven({FAKE_IDENTITY:'user'}).github_identity,'other_identity:fixture-user');
  assert.equal(unproven({FAKE_IDENTITY:'silent'}).github_identity,'unrecognised');
+ // What was not recognised is shown, so GitHub's real wording can be compared with the script's patterns.
+ assert.equal(unproven({FAKE_IDENTITY:'lowercase'}).github_identity_answer,"hi mcclusterishere/mccluster! you've successfully authenticated");
+ assert.match(unproven({FAKE_WRITE:'unrecognised'}).write_access_answer,/^ERROR: Write access is not granted to this key\. /);
+ assert.equal('github_identity_answer' in box.run('status').lines,false,'a recognised answer is not echoed');
  assert.deepEqual(unproven({FAKE_WRITE:'writable'}).missing,['write_access']);
  assert.equal(unproven({FAKE_WRITE:'writable'}).write_access,'WRITE_CAPABLE');
  assert.equal(unproven({FAKE_WRITE:'archived'}).write_access,'unproven');
@@ -498,10 +502,16 @@ test('the GitHub answers the script depends on are isolated, matched once and fa
 
 test('the write probe is always a dry run, and the script never trusts a host key it did not pin',()=>{
  const live=source.split('\n').filter(line=>!/^\s*#/.test(line));
- const pushes=live.filter(line=>/\bpush\b/.test(line));
+ const pushes=live.filter(line=>/\b(mcc_probe_git|mcc_reconciler_git|git)\s[^\n]*\bpush\s/.test(line));
  assert.equal(pushes.length,1);
  assert.match(pushes[0],/mcc_probe_git -C "\$\{probe\}" push --dry-run "\$\{REPO\}" HEAD:refs\/heads\/mccluster-read-only-probe/);
  assert.doesNotMatch(live.join('\n'),/ssh-keyscan|StrictHostKeyChecking=(no|accept-new|ask)|UserKnownHostsFile=\/dev\/null/);
+ // A remote answer is only ever shown as one line of printable ASCII, cut short.
+ const printable=source.slice(source.indexOf('mcc_printable() {'),source.indexOf('\n}\n',source.indexOf('mcc_printable() {')));
+ const shown=spawnSync('/bin/bash',['-c',`set -Eeuo pipefail\n${printable}\n}\nprintf 'ok\\033[31m red\\r\\nnext\\tline \\001\\377%s' "$(printf 'x%.0s' {1..400})" | mcc_printable`],{encoding:'utf8'});
+ assert.equal(shown.status,0,shown.stderr);
+ assert.equal(shown.stdout,`ok[31m red next line ${'x'.repeat(279)}`,'no escape, no control character, one line, 300 characters');
+ assert.equal(shown.stdout.length,300);
  assert.match(source,/GITHUB_HOST_KEY="github\.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl"/,'the pinned host key is the existing constant');
  // status returns before the first statement that writes to the host.
  const status=source.indexOf('if [[ "${MODE}" == "status" ]]; then');
