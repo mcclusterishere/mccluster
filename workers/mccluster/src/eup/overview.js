@@ -9,9 +9,16 @@
      state   the documented release posture (draft / planned / held / dormant / partial / unknown)
      policy  the PERSISTED module policy read from the store on this request (./modules.js): installed,
              enabled / draining / disabled, revision. It is null for a module no policy unit governs, and
-             { installed: null, state: 'unknown' } when the read failed. A failed read is never shown as enabled. */
+             { installed: null, state: 'unknown' } when the read failed. A failed read is never shown as enabled.
+
+   A module governed by the intake unit also carries import_runs, the open import runs read on this request:
+     { queued, running, running_expired, lease_expires_at }
+   running_expired counts running runs whose lease has run out (no live holder), so a drain of intake has
+   settled when running - running_expired is 0. Every count is null when the read failed or answered anything
+   else: a missing count is never shown as zero. import_run_counts says whether the read worked. */
 import { leagueCommand } from './league.js';
 import { moduleControl } from './modules.js';
+import { readRunCounts } from './intake.js';
 
 const MODULES = [
   { id: 'league', label: 'Environmental Justice League', state: 'draft', detail: 'Private admin intake (pending eup_league_v1.sql). Campaign/mission/application/proof/review/consent loop; no points, payment, publication or broadcast.' },
@@ -34,6 +41,21 @@ async function modulePolicies(env, ctx) {
   } catch (error) {
     const reason = error?.reason || 'unavailable';
     return { status: reason === 'schema_not_applied' ? 'schema_not_applied' : 'unavailable', reason, units: null };
+  }
+}
+
+const RUNS_UNKNOWN = Object.freeze({ queued: null, running: null, running_expired: null, lease_expires_at: null });
+const count = (value) => Number.isSafeInteger(value) && value >= 0;
+/* The open import runs of the intake unit. One service read, never guarded, no cache. */
+async function importRunCounts(env, ctx) {
+  try {
+    const c = await readRunCounts(env, ctx);
+    if (!c || typeof c !== 'object' || Array.isArray(c) || !count(c.queued) || !count(c.running) || !count(c.running_expired) || c.running_expired > c.running) {
+      return { status: 'unavailable', reason: 'storage_unavailable', counts: RUNS_UNKNOWN };
+    }
+    return { status: 'available', reason: null, counts: { queued: c.queued, running: c.running, running_expired: c.running_expired, lease_expires_at: typeof c.lease_expires_at === 'string' ? c.lease_expires_at : null } };
+  } catch (error) {
+    return { status: 'unavailable', reason: error?.reason || 'unavailable', counts: RUNS_UNKNOWN };
   }
 }
 
@@ -60,13 +82,14 @@ export async function handleOverview(_request, env, ctx) {
     if (typeof mod.sourcesSummary === 'function') sources = await mod.sourcesSummary(env, ctx);
   } catch { sources = null; }
   const policies = await modulePolicies(env, ctx);
+  const runs = await importRunCounts(env, ctx);
   const modules = MODULES.map((m) => {
     if (m.id === 'league') return league;
     if (m.id === 'sources' && sources) return { ...m, state: sources.state || m.state, detail: sources.detail || m.detail };
     return m;
   }).map((m) => {
     const unit = POLICY_UNIT[m.id] ?? null;
-    return { ...m, policy_module: unit, policy: unit ? (policies.units ? policies.units.get(unit) || POLICY_UNKNOWN : POLICY_UNKNOWN) : null };
+    return { ...m, policy_module: unit, policy: unit ? (policies.units ? policies.units.get(unit) || POLICY_UNKNOWN : POLICY_UNKNOWN) : null, import_runs: unit === 'intake' ? runs.counts : null };
   });
   if (policies.status === 'schema_not_applied') blockers.push({ id: 'module_policy_schema', text: 'Apply supabase/pending/eup_module_policy_v1.sql (owner-reviewed) before any module can be installed or enabled; until then no module policy exists and none is reported enabled.', gate: 'schema' });
   else if (policies.status !== 'available') blockers.push({ id: 'module_policy_unreadable', text: `Module policy unreadable: ${policies.reason}. No module is reported enabled.`, gate: 'storage' });
@@ -81,6 +104,7 @@ export async function handleOverview(_request, env, ctx) {
     generated_at: new Date(now()).toISOString(),
     modules,
     module_policy: { status: policies.status, reason: policies.reason },
+    import_run_counts: { status: runs.status, reason: runs.reason },
     geography: { selected: null, note: 'No pilot geography chosen; Connecticut/Bridgeport is a proposal, not a decision.' },
     campaigns,
     queues,
