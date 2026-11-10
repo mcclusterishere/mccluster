@@ -55,8 +55,9 @@ lost-return acknowledgement retry. Do not publish any test authentication harnes
 `city-arcade-recovery.e2e.mjs` exercises actual Sole modules and an isolated database:
 start a saved mission, fast-forward its local timer, let the database accept completion
 and drop its response, restart locally, reload with a denied session (Reconnect and Discard
-must be on screen), restore authorization and press Reconnect, without a reload. It verifies one
-result and cleared pending state at 390px and 1280px, Sole only, with a session that has
+must be on screen), restore authorization and press Reconnect, without a reload. A second run
+then loses its accepted finish response too and is saved with Retry after a reload. It verifies
+one result per run and cleared pending state at 390px and 1280px, Sole only, with a session that has
 no user id (the outbox's `device` scope). Timer fast-forward and identity fixtures are
 test-only; this does not prove production sessions or a human playthrough.
 The City Arcade workflow runs this alongside graphical play, disabled/missing-schema
@@ -67,8 +68,9 @@ Unit and integration checks the same workflow runs:
 - `city-arcade-outbox.test.mjs` (both games, DOM stub that keeps the markup's initial
   `hidden`): restart, apply, load and a new start keep an unsaved receipt; Reconnect is
   hidden while the cloud is ready, offered when it is not, and saves the receipt when
-  pressed; a 409 on finish keeps "The server already holds a different result for this
-  run …" and the receipt; a stored receipt cannot be rewritten; the outbox never evicts.
+  pressed; Retry saves it; a 409 on finish keeps "The server already holds a different
+  result for this run …" and the receipt; a stored receipt cannot be rewritten; the outbox
+  never evicts.
 - `city-arcade-start-intent.test.mjs` (both games): the start key is stored before the
   request, reused after a lost response, and cleared after success or a 409; with
   `PGLITE_MODULE` set it also drives the real handler and applied SQL and counts one run.
