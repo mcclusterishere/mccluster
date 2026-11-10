@@ -146,12 +146,12 @@ All eight pre-existing files of commit 2 are byte-identical at `9c5b7503`, on `m
 - `.github/workflows/promote-ovh-production.yml` and `scripts/test/ovh-self-management.test.mjs`. The workflow file differs between `9c5b7503` and `main`, and the host does not run it. It reaches `main` with PR #793 or with its own pull request cut from `main`.
 - Anything under `workers/`, and anything else.
 
-**What was checked offline on 2026-11-10, in a throwaway clone and in exports, with nothing pushed:**
+**What was checked offline on 2026-11-10, in a throwaway clone and in exports, with nothing pushed.** Last re-run with `<SRC>` at the head of the second review's workflow and runbook fixes, which added four tests to `scripts/test/ovh-private-repo-ssh.test.mjs`. Any later change to the files of commit 2 changes these counts:
 
 - These exact commands produce commit 1 with 14 files and commit 2 with 12 files.
-- On `9c5b7503` plus commit 1: the drift check passes at 363, the three ledger tests pass, Core check passes, Core is 498 of 498.
-- On `9c5b7503` plus both commits: each of the four scripts passes `bash -n` on its own (re-measured one file at a time on 2026-11-10: the reconciler and the setup script as commit 2 takes them, the deployer and the health library as `9c5b7503` has them), Core check passes, Core is 527 of 527, and the root suite is 1609 tests with 1606 passing and 3 skipped.
-- `git merge --no-ff` of that branch into `main` at `578e6830` has no conflict. On the merge: the drift check passes, Core is 584 of 584, and the root suite is 2064 tests with 2061 passing and 3 skipped.
+- On `9c5b7503` plus commit 1: the drift check passes at 363, the three ledger tests pass (14 tests), Core check passes, Core is 498 of 498.
+- On `9c5b7503` plus both commits: each of the four scripts passes `bash -n` on its own (the reconciler and the setup script as commit 2 takes them, the deployer and the health library as `9c5b7503` has them), Core check passes, Core is 527 of 527, and the root suite is 1613 tests with 1610 passing and 3 skipped.
+- `git merge --no-ff` of that branch into `main` at `578e6830` has no conflict. On the merge: the drift check passes, Core is 584 of 584, and the root suite is 2068 tests with 2065 passing and 3 skipped.
 - Not run: the Supabase CLI reset and every database-backed workflow. The regenerated `supabase/schema-manifest.json` is unproven until the pull request's own CI.
 
 ## Step 3. Pull request to main, exact-head CI, merge commit
