@@ -10,7 +10,7 @@ Allowlisted executors:
 
 - `repo_health` — fetches repository state and can run already-installed local tests; it never installs packages during a health check.
 - `local_analysis` — sends a bounded analysis task to the local Ollama model. Its evidence scope is explicitly `job_input_only`.
-- `code_patch` — creates a disposable Git worktree, asks a separate low-privilege OpenCode service to edit it with the local model, rejects sensitive-path diffs, commits the accepted diff, optionally pushes a branch, and attempts to open a **draft PR**. It never auto-merges or deploys.
+- `code_patch` — creates a disposable Git worktree, asks a separate low-privilege OpenCode service to edit it with the local model, rejects sensitive-path diffs, commits the accepted diff, refuses a commit that fails `git diff --check` before any push (completion evidence requires `verification.git_diff_check`), optionally pushes a branch, and attempts to open a **draft PR**. It never auto-merges or deploys.
 
 - `lyrics_align` — the lyric machine for an uploaded release (`core/src/executors/lyrics-align.mjs`, engine in `core/src/lyrics/`): downloads the master with the service key into a private temp dir, separates the vocal with Demucs, recognises it with faster-whisper, maps the creator's lyric sheet (or DistroKid TTML / LRC) onto what is sung, refines word times with wav2vec2 CTC forced alignment, and writes `creator_tracks.lyrics` unreviewed. It never replaces lyrics the owner reviewed. Queued by the trigger in `supabase/pending/20261031180000_lyrics_machine_v1.sql`, by Control's "Re-run machine", or by the `lyrics.align` capability. See "Lyric machine runtime" below.
 
