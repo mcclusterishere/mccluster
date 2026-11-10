@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 690,
+  "candidate_count": 691,
   "capability_source_count": 104,
-  "support_only_count": 586,
-  "checks_total": 2658,
-  "checks_passed": 2658,
+  "support_only_count": 587,
+  "checks_total": 2662,
+  "checks_passed": 2662,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -183,6 +183,7 @@
     "docs/control-plane/deep-audit-20261109/EQUITY-PRODUCT-COMPOSITION.md",
     "docs/control-plane/deep-audit-20261109/HANDOFF.md",
     "docs/control-plane/deep-audit-20261109/OPEN-PR-DISPOSITION.md",
+    "docs/control-plane/deep-audit-20261109/TRACEABILITY.md",
     "docs/control-plane/deploy-gate.json",
     "docs/control-plane/evidence/production-advisors-2026-10-28.json",
     "docs/control-plane/evidence/production-schema-snapshot-2026-10-28.json",
@@ -704,7 +705,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "690 entries"
+      "detail": "691 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -4008,6 +4009,26 @@
     },
     {
       "name": "docs/control-plane/deep-audit-20261109/OPEN-PR-DISPOSITION.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/TRACEABILITY.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/TRACEABILITY.md classified",
+      "passed": true,
+      "detail": "classification='audit_support'"
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/TRACEABILITY.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/TRACEABILITY.md support rationale present",
       "passed": true,
       "detail": ""
     },

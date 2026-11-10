@@ -3,6 +3,7 @@
 > **Session 4 (2026-11-10 UTC) is recorded first, then session 3, session 2 and the original session, each unchanged below the newer one.**
 
 ## Session 4: the League member mission loop, buyer retry edge cases, native proofs, Core lease checkpoint, patch series
+`TRACEABILITY.md` traces the owner's strategy of 9 November 2026 (the two near-term proofs, P0 to P9 and the acceptance scenarios) to its state at `b4855d94`, with each row's evidence and what remains.
 
 Nothing here is merged, applied or deployed. Every SQL file named below is pending.
 
