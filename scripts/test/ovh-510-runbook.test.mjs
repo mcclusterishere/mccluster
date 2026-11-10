@@ -197,3 +197,17 @@ test('the schema freeze covers merges, because a push to main applies supabase/m
   assert.match(section(runbook, '## Step 3.'), /Run Q3 once more immediately before merging\./, 'the guard the exception relies on');
   assert.match(section(runbook, '## Never'), /- Merge into `main` a pull request that adds or changes a file under `supabase\/migrations` before step 5 passes/);
 });
+
+test('the runbook describes the first-cycle check activate makes, in the script\'s own words (SSH-1)', async () => {
+  const [runbook, mechanism, script] = await Promise.all([read(RUNBOOK), read('docs/control-plane/OVH-PRIVATE-GITHUB-RECONCILE.md'), read('scripts/ovh-private-repo-ssh.sh')]);
+  const step6 = section(runbook, '## Step 6.');
+  assert.match(step6, /It prints "switched to authenticated read-only GitHub SSH" only when that cycle's receipt \(`last-cycle\.json`, named by the unit's invocation id\) shows a successful fetch over SSH with the pinned host key and this key's fingerprint/);
+  assert.match(mechanism, /It reports the switch only when that cycle's receipt names the unit's invocation and shows a successful fetch over SSH with the pinned host key and this key; otherwise it puts the previous transport back and exits 4\./);
+  // The two table rows quote what the script prints.
+  const receiptRow = step6.split('\n').find((line) => line.startsWith('| `was not a new cycle over SSH with this key` |'));
+  assert.ok(receiptRow && script.includes('was not a new cycle over SSH with this key'), 'the receipt refusal row');
+  const minutes = Number(script.match(/^RECONCILE_IDLE_WAIT_SECONDS=(\d+)$/m)?.[1]) / 60;
+  assert.ok(Number.isInteger(minutes) && script.includes('echo "A reconcile cycle has been running for over $((RECONCILE_IDLE_WAIT_SECONDS / 60)) minutes. Nothing was changed'));
+  assert.ok(step6.includes(`| \`A reconcile cycle has been running for over ${minutes} minutes\` | A cycle, usually a deploy, was still running. Nothing was changed |`), `the wait row says ${minutes} minutes`);
+  assert.match(step6, new RegExp(`did not end within ${minutes} minutes`));
+});

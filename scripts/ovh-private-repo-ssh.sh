@@ -17,9 +17,11 @@
 #      a key or known-hosts file that is a symlink or has the wrong owner
 #   3  activate: a proof refused (identity, write access, ref access, a Git
 #      rewrite); nothing on the host changed
-#   4  activate: the switch did not complete (systemd did not reload, the
-#      first cycle failed, or the timer is inactive). For the first two the
-#      previous transport is put back before the script exits.
+#   4  activate: the switch did not complete (a reconcile cycle already
+#      running did not end in time, systemd did not reload, the first cycle
+#      failed or was not a new cycle over SSH with this key, or the timer is
+#      inactive). In every case but the last, the previous transport is in
+#      place when the script exits.
 set -Eeuo pipefail
 
 MODE="${1:-prepare}"
@@ -40,6 +42,10 @@ PROBE_CONNECT_TIMEOUT=20
 # The same window Core health uses before it calls the reconciler stale.
 CYCLE_FRESH_SECONDS=1500
 TIMER_CYCLES_REQUIRED=2
+# activate waits this long for a reconcile cycle that is already running to end
+# (a cycle that deploys may run to the unit's 20-minute start limit).
+RECONCILE_IDLE_WAIT_SECONDS=1260
+RECONCILE_IDLE_POLL_SECONDS=2
 
 # ---------------------------------------------------------------------------
 # GITHUB BEHAVIOUR THIS SCRIPT DEPENDS ON
@@ -255,6 +261,54 @@ mcc_receipt_field() {
   local pattern="\"$2\":\"([A-Za-z0-9+/:_.-]*)\""
   [[ "$1" =~ ${pattern} ]] && printf '%s' "${BASH_REMATCH[1]}"
   return 0
+}
+
+# The reconciler is a oneshot unit. A cycle the timer has already started keeps
+# the environment it started with, and systemd merges a start request into that
+# running start job: `systemctl start` would wait for THAT cycle, over the old
+# transport, and report it as the first cycle after the switch. activate calls
+# this before it changes anything. Returns non-zero if a cycle is still
+# running after RECONCILE_IDLE_WAIT_SECONDS.
+mcc_wait_reconciler_idle() {
+  local state said=0 deadline=$((SECONDS + RECONCILE_IDLE_WAIT_SECONDS))
+  while :; do
+    state="$(systemctl show --property=ActiveState --value "${RECONCILE_UNIT}" 2>/dev/null || true)"
+    case "${state}" in
+      activating|deactivating|reloading|refreshing) ;;
+      *) return 0 ;;
+    esac
+    if (( SECONDS >= deadline )); then return 1; fi
+    if [[ ${said} -eq 0 ]]; then
+      echo "A reconcile cycle is running; waiting for it to end before switching (up to $((RECONCILE_IDLE_WAIT_SECONDS / 60)) minutes)."
+      said=1
+    fi
+    sleep "${RECONCILE_IDLE_POLL_SECONDS}"
+  done
+}
+
+# The cycle `systemctl start` waited for must be a new one that fetched over SSH
+# with this key. The reconciler's own receipt says so: last-cycle.json names the
+# unit's invocation, the transport Git really used, whether the host key was
+# pinned, the key's fingerprint and the outcome. A cycle the timer started
+# before the reload, or a reconciler that writes no receipts, proves nothing
+# about the switch. Sets FIRST_CYCLE_ID.
+FIRST_CYCLE_ID=""
+mcc_first_cycle_used_this_key() {
+  local invocation fingerprint line=""
+  FIRST_CYCLE_ID=""
+  invocation="$(systemctl show --property=InvocationID --value "${RECONCILE_UNIT}" 2>/dev/null || true)"
+  fingerprint="$(mcc_key_fingerprint)"
+  [[ "${invocation}" =~ ^[0-9a-f]{32}$ && -n "${fingerprint}" ]] || return 1
+  [[ -f "${RECONCILE_STATE}/last-cycle.json" && ! -L "${RECONCILE_STATE}/last-cycle.json" ]] || return 1
+  IFS= read -r -n 1024 line < "${RECONCILE_STATE}/last-cycle.json" || true
+  [[ "${line}" == '{"schema_version":"mccluster-reconcile-cycle/v1",'*'}' ]] || return 1
+  [[ "$(mcc_receipt_field "${line}" cycle_id)" == "${invocation}" ]] || return 1
+  [[ "$(mcc_receipt_field "${line}" transport)" == ssh && "${line}" == *'"ssh_host_key_pinned":true'* ]] || return 1
+  [[ "$(mcc_receipt_field "${line}" ssh_key_fingerprint)" == "${fingerprint}" ]] || return 1
+  case "$(mcc_receipt_field "${line}" outcome)" in
+    verified_no_change|deployed) FIRST_CYCLE_ID="${invocation}"; return 0 ;;
+  esac
+  return 1
 }
 
 # Read-only evidence for incident #510. Prints no key material: a public-key
@@ -516,6 +570,12 @@ if mcc_reconciler_rewrites_url; then
   exit 3
 fi
 
+# A cycle that is already running would be taken for the first cycle after the switch.
+if ! mcc_wait_reconciler_idle; then
+  echo "A reconcile cycle has been running for over $((RECONCILE_IDLE_WAIT_SECONDS / 60)) minutes. Nothing was changed; run activate again when it has ended." >&2
+  exit 4
+fi
+
 install -d -o root -g root -m 0755 "${DROPIN_DIR}"
 # Keep what was there. Until the first cycle has completed over the new
 # transport, ANY way this script ends puts the previous transport back.
@@ -555,9 +615,15 @@ if ! systemctl start "${RECONCILE_UNIT}"; then
   echo "Read: journalctl -u ${RECONCILE_UNIT} -n 50 --no-pager" >&2
   exit 4
 fi
+if ! mcc_first_cycle_used_this_key; then
+  echo "The cycle that ran after the switch was not a new cycle over SSH with this key: a cycle the timer had already started, or a reconciler that writes no cycle receipts." >&2
+  echo "Read: journalctl -u ${RECONCILE_UNIT} -n 50 --no-pager, and ${RECONCILE_STATE}/last-cycle.json" >&2
+  exit 4
+fi
 SWITCH_PENDING=0
 systemctl is-active --quiet "${RECONCILE_TIMER}" || { echo "The SSH drop-in is installed, but ${RECONCILE_TIMER} is not active: no cycle will run on its own." >&2; exit 4; }
 echo "OVH reconciler switched to authenticated read-only GitHub SSH after verified ref access."
+echo "Its first cycle, ${FIRST_CYCLE_ID}, fetched over SSH with this key."
 echo "This key is a Deploy key of ${GITHUB_DEPLOY_KEY_IDENTITY} and GitHub refuses it for writing."
 echo "The cycle just run was started by hand. Wait for two timer cycles (about five minutes), then:"
 echo "  sudo bash $0 status"

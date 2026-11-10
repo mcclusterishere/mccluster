@@ -247,7 +247,7 @@ It must print 1. If it prints 0, the host still has the old script, whose `activ
 
 **If GitHub rotates that key** after the switch, every cycle fails host-key verification and the host stops updating. While the repository is still public, go back to HTTPS with `sudo rm /etc/systemd/system/mccluster-vps-reconcile.service.d/50-github-readonly-ssh.conf && sudo systemctl daemon-reload`; the next cycle fetches over HTTPS, and a promoted script with the new key can then be activated again. Once the repository is private, that HTTPS path no longer works, so a rotation needs a break-glass update of the script on the host. This is one more reason step 8 waits until the SSH path is proven.
 
-**Exit status of the script**, in every mode: 0 done (for `status`, every proof holds); 1 `status` found a proof that does not hold; 2 a precondition (not root, unknown mode, a missing command, a key or known-hosts file that is a symlink or has the wrong owner); 3 `activate` refused a proof, and nothing on the host changed; 4 `activate` could not complete the switch. On 4 the script puts the previous transport back itself when systemd did not reload or the first cycle failed, and says so; when only the timer is inactive, the switch has completed over SSH and the timer needs starting.
+**Exit status of the script**, in every mode: 0 done (for `status`, every proof holds); 1 `status` found a proof that does not hold; 2 a precondition (not root, unknown mode, a missing command, a key or known-hosts file that is a symlink or has the wrong owner); 3 `activate` refused a proof, and nothing on the host changed; 4 `activate` could not complete the switch. On 4 the previous transport is in place: either nothing was changed (a reconcile cycle that was already running did not end within 21 minutes), or the script put it back itself and says so (systemd did not reload; the first cycle failed, or its receipt does not show a new cycle over SSH with this key). When only the timer is inactive, the switch has completed over SSH and the timer needs starting.
 
 1. On the host:
 
@@ -270,7 +270,7 @@ sudo ssh-keygen -lf /var/lib/mccluster/reconcile/ssh/github_deploy_ed25519.pub -
 sudo bash /var/lib/mccluster/reconcile/source/scripts/ovh-private-repo-ssh.sh activate
 ```
 
-   It proves, before it changes anything: both refs are readable over SSH; GitHub greets the key as `mcclusterishere/mccluster`; GitHub refuses the key for writing (a dry-run push, nothing is sent); and the reconciler's Git does not rewrite the SSH URL. On success it installs the drop-in, reloads systemd, starts one cycle by hand, and prints "switched to authenticated read-only GitHub SSH".
+   It proves, before it changes anything: both refs are readable over SSH; GitHub greets the key as `mcclusterishere/mccluster`; GitHub refuses the key for writing (a dry-run push, nothing is sent); and the reconciler's Git does not rewrite the SSH URL. It then waits until no reconcile cycle is running: a cycle the timer has already started keeps the transport it started with, and a start request would join that cycle instead of running a new one. Then it installs the drop-in, reloads systemd and starts one cycle by hand. It prints "switched to authenticated read-only GitHub SSH" only when that cycle's receipt (`last-cycle.json`, named by the unit's invocation id) shows a successful fetch over SSH with the pinned host key and this key's fingerprint, and it prints that cycle's id.
 
 | If `activate` says | It means | Do |
 | --- | --- | --- |
@@ -281,6 +281,8 @@ sudo bash /var/lib/mccluster/reconcile/source/scripts/ovh-private-repo-ssh.sh ac
 | `Could not prove the deploy key is read-only` followed by `The dry-run push answered: ...` | GitHub refused in words the script does not know | Read the answer line. See "First real run" below |
 | `Git configuration on this host rewrites ...` | A `url.*.insteadOf` rule would send the fetch elsewhere | Remove the rule from the reconciler's Git configuration |
 | `did not complete its first cycle after the switch` | The first cycle over SSH failed. The script has already put the previous transport back and says so | Read the journal line it prints, fix the cause, and run `activate` again |
+| `was not a new cycle over SSH with this key` | The cycle the start waited for was one the timer had started on the old transport, or the reconciler on the host writes no cycle receipts (step 4 has not put the hardened reconciler there). The script has already put the previous transport back | Check that `/var/lib/mccluster/reconcile/last-cycle.json` exists and is recent, then run `activate` again |
+| `A reconcile cycle has been running for over 21 minutes` | A cycle, usually a deploy, was still running. Nothing was changed | Run `activate` again when it has ended |
 
 **To go back while the repository is public:**
 
@@ -454,6 +456,7 @@ Everything below was built and tested against fakes. Each item is confirmed, or 
 | The new Core tests passing as root inside the reconciler unit during the deploy. They run before anything live changes. A failure refuses the deploy and leaves the running release untouched | Step 4 and step 5 |
 | Behaviour when systemd itself terminates a cycle. Tested here with SIGTERM to the process group and a fixture deployer, not with systemd | Not exercised by this runbook |
 | Outbound TCP 22 from the host to github.com. The script has no `ssh.github.com:443` fallback | Step 6 |
+| That `systemctl show --property=InvocationID` still names the cycle that just ended once the oneshot unit is inactive. `activate` compares it with the receipt's `cycle_id`; if they differ it puts the previous transport back and exits 4, so a wrong assumption fails closed | Step 6, `activate` |
 | The regenerated schema manifest, the Supabase reset job and the database-backed workflows on the isolated pull request | Step 3 |
 | The promotion workflow change. It was not dispatched, and `actionlint` was not run | Its first use in step 4 |
 | The text of the REST error when the repository is private | Step 8, Q5 |
