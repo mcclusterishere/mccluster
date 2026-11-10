@@ -948,12 +948,39 @@
     return c.display_name || c.address || t.relay_address || "Conversation";
   }
 
+  /* A fresh host health result in which Core found something wrong: its
+     overall is "degraded" or "fail", and `health.degradation` names each
+     finding (a reconcile cycle that failed at a stage, a ledger drift). The
+     tile and Needs you both read this, so a finding is never left to the
+     tile's text and the raw inspector alone. A stale result has its own
+     notice; a healthy one has none. */
+  function hostHealthProblem() {
+    var h = state.aiHealth;
+    if (!h || h.stale || (h.overall !== "degraded" && h.overall !== "fail")) return null;
+    var found = h.health && Array.isArray(h.health.degradation) ? h.health.degradation : [];
+    var named = found.filter(function (d) { return d && d.code; })
+      .sort(function (a, b) { return (b.severity === "critical") - (a.severity === "critical"); })
+      .map(function (d) {
+        var stage = d.detail && (d.detail.stage || d.detail.last_cycle_stage);
+        return d.code + (stage ? " (stage " + stage + ")" : "");
+      });
+    return {
+      kind: h.overall === "fail" ? "bad" : "warn",
+      title: "OVH host health is " + (h.overall === "fail" ? "failing" : "degraded"),
+      sub: named.length
+        ? named.slice(0, 3).join(" · ") + (named.length > 3 ? " · +" + (named.length - 3) + " more" : "")
+        : "Core reports the host " + h.overall + " without naming a finding."
+    };
+  }
+
   function attentionItems() {
     var items = [];
     if (!state.sources.health || !state.sources.health.ok) items.push({ title: "Edge health unreachable", sub: "api.mccluster.org/health did not respond.", kind: "bad", action: "system-overview" });
     else if (!state.health || !state.health.ok) items.push({ title: "API reports unhealthy", sub: "The edge responded but did not report healthy.", kind: "bad", action: "system-overview" });
     if (state.status && state.status.database && !state.status.database.reachable) items.push({ title: "Database unavailable", sub: "Canonical Supabase reachability failed.", kind: "bad", action: "system-overview" });
     if (state.aiHealth && state.aiHealth.stale) items.push({ title: "Host health is stale", sub: "Core has not recorded a fresh host health result.", kind: "warn", action: "system-workload" });
+    var hostProblem = hostHealthProblem();
+    if (hostProblem) items.push({ title: hostProblem.title, sub: hostProblem.sub, kind: hostProblem.kind, action: "system-overview" });
     var failed = state.jobs.filter(function (j) { return j.status === "failed"; });
     if (failed.length) items.push({ title: failed.length + " failed workload" + (failed.length === 1 ? "" : "s"), sub: "Inspect the execution queue and failure output.", kind: "bad", action: "system-workload" });
     var awaiting = state.threads.filter(function (t) { return threadInQueue(t, "inbound"); });
@@ -1802,6 +1829,7 @@
 
   function serviceRows() {
     var s = state.status || {};
+    var hostProblem = hostHealthProblem();
     return [
       {
         key: "workspace",
@@ -1822,7 +1850,7 @@
         value: state.coreBridge && state.coreBridge.ok ? state.coreTools.length + " tools" : "Inspect",
         kind: state.coreBridge && state.coreBridge.ok ? "ai" : "warn"
       },
-      { key: "host", title: "OVH host", sub: state.aiHealth && state.aiHealth.checked_at ? "Checked " + ago(state.aiHealth.checked_at) + " ago" : "No fresh host health", value: state.aiHealth && !state.aiHealth.stale ? titleCase(state.aiHealth.overall || "Healthy") : "Refresh", kind: state.aiHealth && !state.aiHealth.stale ? "ok" : "warn" },
+      { key: "host", title: "OVH host", sub: state.aiHealth && state.aiHealth.checked_at ? "Checked " + ago(state.aiHealth.checked_at) + " ago" : "No fresh host health", value: state.aiHealth && !state.aiHealth.stale ? titleCase(state.aiHealth.overall || "Healthy") : "Refresh", kind: !state.aiHealth || state.aiHealth.stale ? "warn" : hostProblem ? hostProblem.kind : "ok" },
       { key: "comms", title: "Communications", sub: state.threads.length + " thread" + (state.threads.length === 1 ? "" : "s"), value: "Live", kind: "info" },
       { key: "creative", title: "Creative", sub: state.mediaJobs.length + " media job" + (state.mediaJobs.length === 1 ? "" : "s"), value: state.mediaJobs.some(function (x) { return x.status === "failed"; }) ? "Check" : "Ready", kind: state.mediaJobs.some(function (x) { return x.status === "failed"; }) ? "warn" : "ok" }
     ];
