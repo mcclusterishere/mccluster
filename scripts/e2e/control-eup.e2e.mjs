@@ -9,11 +9,34 @@
    Drain and Disable by keyboard, 44px targets and 16px inputs, an unknown
    outcome with a same-key resend, revision_conflict, drain_busy, and no
    horizontal overflow with the controls and their notes open.
-   PLAYWRIGHT_DIR=<node_modules> CHROMIUM_EXECUTABLE=<chromium> node scripts/e2e/control-eup.e2e.mjs [outDir] */
+   League tab (js/control-room/eup-league.js), at 390 and 1440, against the
+   in-process League plane (scripts/test/support/eup-league-plane.mjs: the REAL
+   Worker router over the REAL pending SQL in PGlite, the media lane's storage
+   double, a token map for the session check; its header says what is emulated).
+   The owner side is driven only through the page; the member side (applying,
+   accepting, recording, submitting, consenting, revoking, appealing) through
+   plane.call over HTTP, as the member page would send it. Proves: policy, campaign
+   and song mission from the fixture, rubric and capacity, release, invited
+   audience and tester grants; the preview card equals the member read field for
+   field; approve with rubric, capacity exhausted, accommodation read (audited),
+   request changes, decline, self-approval refused; a proof's audio plays in the
+   page from the storage double through the 300 s link, which the page drops when
+   it expires (page clock) and signs again on request; three-dimension review, a
+   stale revision refused, self-review refused; publish to the campaign audience,
+   a refused connection settled by its receipt and a same-key resend, a revoked
+   consent reflected; hold and release; an appeal whose answer never came found
+   by its receipt; a retention purge that removes the object. No signed URL in
+   DOM text, storage or console; no horizontal overflow; 44px targets.
+   Two writes the page does not make are labelled: the member's own HTTP calls,
+   and one clock step (an upload's staged deadline moved into the past), as in
+   scripts/test/eup-league-journey.integration.mjs. PGLITE_MODULE is required;
+   without it the League checks FAIL (they are never skipped).
+   PGLITE_MODULE=<pglite dist/index.js> PLAYWRIGHT_DIR=<node_modules> CHROMIUM_EXECUTABLE=<chromium> node scripts/e2e/control-eup.e2e.mjs [outDir] */
 import {createRequire} from 'node:module';
 import {readFile,mkdir} from 'node:fs/promises';
 import {join,extname,resolve,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {isDeepStrictEqual} from 'node:util';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
 const OUT=process.argv[2]||'/tmp/control-eup-proof';
 const {chromium}=createRequire(join(process.env.PLAYWRIGHT_DIR||'/opt/node-tools/node_modules','x'))('playwright');
@@ -209,6 +232,326 @@ async function policyProof(page,db,width){
   check(width,'policy: still no horizontal overflow after scrolling to the units',await overflow(page));
 }
 
+/* ================================================================ League tab over the in-process plane */
+/* A synthetic WAV (a 440 Hz tone, 8 kHz, 8-bit mono): playable bytes that describe no recording. */
+function wav(seconds){
+  const rate=8000,n=Math.round(seconds*rate),b=Buffer.alloc(44+n);
+  b.write('RIFF',0);b.writeUInt32LE(36+n,4);b.write('WAVE',8);b.write('fmt ',12);b.writeUInt32LE(16,16);b.writeUInt16LE(1,20);b.writeUInt16LE(1,22);
+  b.writeUInt32LE(rate,24);b.writeUInt32LE(rate,28);b.writeUInt16LE(1,32);b.writeUInt16LE(8,34);b.write('data',36);b.writeUInt32LE(n,40);
+  for(let i=0;i<n;i+=1)b[44+i]=128+Math.round(60*Math.sin(2*Math.PI*440*i/rate));
+  return new Uint8Array(b);
+}
+async function setupPlane(viewport,plane){
+  const ctx=await browser.newContext({viewport,deviceScaleFactor:1,hasTouch:viewport.width<1000,ignoreHTTPSErrors:true,serviceWorkers:'block'});
+  const errors=[],consoleText=[];
+  await ctx.addInitScript(()=>{localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));});
+  await ctx.addInitScript(plane.sessionScript('owner'));
+  const sub=(h)=>{try{return JSON.parse(Buffer.from(String(h||'').replace(/^Bearer\s+/i,'').split('.')[1],'base64').toString('utf8'));}catch{return null;}};
+  /* the test's own route, registered FIRST: static files and the shell's other calls; the plane's route (attached
+     after it) wins for /v1/eup* on the API origin and for the storage origin */
+  await ctx.route('**/*',async route=>{
+    const req=route.request(),u=new URL(req.url()),p=u.pathname;
+    if(req.method()==='OPTIONS')return route.fulfill({status:204,headers:{'access-control-allow-origin':'*','access-control-allow-headers':'*','access-control-allow-methods':'*'}});
+    if(u.origin==='https://api.mccluster.org'){
+      const who=sub(req.headers().authorization);
+      if(p==='/v1/status')return json(route,{ok:true,operator:{email:who?.email||'owner@plane.invalid'},database:{reachable:true}});
+      if(p==='/v1/workspaces/me')return json(route,{ok:true,profile:{id:who?.sub},default_org_id:ORG,workspaces:[{org_id:ORG,slug:'mccluster',kind:'studio',role:'owner',enabled:true,name:'McCluster'}]});
+      if(p==='/v1/mnet/bootstrap')return json(route,{identity:{mccluster_id:'matthew'},profile:{display_name:'Plane owner',avatar_url:''}});
+      return json(route,{ok:true,threads:[],apps:[],events:[],jobs:[],tools:[],decisions:[],leads:[],total:0});
+    }
+    if(u.hostname.endsWith('supabase.co')){
+      if(p==='/auth/v1/user'){const who=sub(req.headers().authorization);return who?json(route,{id:who.sub,email:who.email}):json(route,{msg:'invalid'},401);}
+      return json(route,[]);
+    }
+    if(u.origin===BASE){
+      const rel=p==='/'?'index.html':decodeURIComponent(p.replace(/^\//,''));const file=resolve(ROOT,rel);
+      if(!file.startsWith(resolve(ROOT)+sep))return route.abort();
+      try{return route.fulfill({body:await readFile(file),contentType:TYPES[extname(file)]||'application/octet-stream'});}catch{return route.fulfill({status:404,body:''});}
+    }
+    return route.abort();
+  });
+  await plane.attach(ctx);
+  const page=await ctx.newPage();
+  page.setDefaultTimeout(20000);
+  page.on('pageerror',e=>errors.push(e.message));
+  page.on('console',m=>consoleText.push(m.text()));
+  /* the page clock flows like real time; it is moved forward twice, to expire a 300 s link and a 15 s deadline */
+  await page.clock.install();
+  return {ctx,page,errors,consoleText};
+}
+async function leagueProof(width){
+  const scope='league '+width;
+  if(!process.env.PGLITE_MODULE){check(scope,'PGLITE_MODULE is set: the League proof runs over the in-process plane and is never skipped',false,'PGLITE_MODULE unset');return;}
+  const {createLeaguePlane,ACCOUNTS,RIGHTS,PLANE_POLICY}=await import('../test/support/eup-league-plane.mjs');
+  const C=await import('../../workers/mccluster/src/eup/league-contract.js');
+  const {randomUUID,createHash}=await import('node:crypto');
+  const plane=await createLeaguePlane();
+  let ctx=null;
+  try{
+    const s=await setupPlane({width,height:900},plane);ctx=s.ctx;const {page,errors,consoleText}=s;
+    const ids=ACCOUNTS,key=(l)=>'e2e-'+l+'-'+randomUUID().slice(0,8),sha=(b)=>createHash('sha256').update(b).digest('hex');
+    const M=(r='')=>C.PREFIX.member+(r?'/'+r:''),O=(r='')=>C.PREFIX.owner+(r?'/'+r:'');
+    const as=async(who,method,path,body,status=200)=>{const r=await plane.call(who,method,path,body);if(r.status!==status)throw new Error(who+' '+method+' '+path+': '+r.status+' '+JSON.stringify(r.body));return r.body;};
+    const field=(form,name)=>page.locator('[data-eup-league-input="'+form+'|'+name+'"]');
+    const cmd=(action,id='',arg='')=>page.locator('[data-eup-league-command="'+action+'"][data-eup-league-id="'+id+'"][data-eup-league-arg="'+arg+'"]');
+    const ui=(what,id='')=>page.locator('[data-eup-league-do="'+what+'"][data-eup-league-id="'+id+'"]');
+    const outcome=(slot,kind)=>page.locator('[data-eup-league-outcome="'+slot+':'+kind+'"]');
+    const statusIs=(attr,id,status)=>page.waitForFunction(([a,i,s])=>document.querySelector('['+a+'="'+i+'"]')?.getAttribute('data-eup-league-status')===s,[attr,id,status]);
+    /* the League panel says aria-busy="true" until the last read of a load (and any record read) has settled */
+    const settled=()=>page.waitForFunction(()=>document.querySelector('[data-eup-league-view]')?.getAttribute('aria-busy')==='false');
+    const view=async(id)=>{await page.locator('[data-eup-league-tab="'+id+'"]').click();await page.waitForFunction(id=>document.querySelector('[data-eup-league]')?.getAttribute('data-eup-league')===id,id);await settled();};
+    const shot=async(sel,name)=>{await settled();await page.locator(sel).screenshot({path:join(OUT,name+'-'+width+'.png')});};
+    const noOverflow=async(what)=>check(scope,'no horizontal overflow ('+what+')',await overflow(page));
+    const linksHidden=async(what)=>{const r=await page.evaluate(()=>{const html=document.documentElement.outerHTML,tokens=(html.match(/token=/g)||[]).length;
+      const inMedia=[...document.querySelectorAll('audio[src],video[src]')].filter(e=>/token=/.test(e.getAttribute('src'))).length;
+      let stored='';try{stored=JSON.stringify(localStorage)+JSON.stringify(sessionStorage);}catch{}
+      return {tokens,inMedia,text:/token=|league-plane\.invalid/.test(document.body.innerText),stored:/token=|league-plane\.invalid/.test(stored)};});
+      check(scope,'no signed link outside the media element ('+what+')',r.tokens===r.inMedia&&!r.text&&!r.stored,r);};
+
+    /* ---------------- Setup ---------------- */
+    await page.goto(BASE+'/control.html#system:eup');
+    await page.locator('[data-eup]').waitFor();
+    await page.waitForFunction(()=>document.querySelector('[data-eup-policy="league"]')?.getAttribute('data-eup-policy-state')==='league:enabled');
+    const globeStamp=await page.evaluate(()=>{const g=document.querySelector('[data-eup-globe]');g.__s=Math.random();return g.__s;});
+    await page.locator('[data-eup-tab="league"]').click();
+    await page.locator('[data-eup-league-policy-revision="0"]').waitFor();
+    check(scope,'the League tab reads the module state from the Overview read: enabled',await page.locator('[data-eup-league-module="enabled"]').count()===1);
+    const empty=await page.evaluate(()=>[...document.querySelectorAll('[data-eup-league-input^="policy|"]')].filter(e=>e.type!=='checkbox').every(e=>e.value==='')&&[...document.querySelectorAll('[data-eup-league-input^="policy|"]')].filter(e=>e.type==='checkbox').every(e=>!e.checked));
+    check(scope,'setup: with no stored policy every policy field starts empty (nothing ships a default)',empty);
+    const P=PLANE_POLICY,pf='policy';
+    await field(pf,'entitlement').selectOption(P.entitlement);
+    await field(pf,'media_enabled').check();await field(pf,'kind_audio').check();await field(pf,'kind_video').check();
+    await field(pf,'audio_max_bytes').fill(String(P.media.audio_max_bytes));await field(pf,'video_max_bytes').fill(String(P.media.video_max_bytes));
+    await field(pf,'max_duration_seconds').fill(String(P.media.max_duration_seconds));
+    await field(pf,'completed_days').fill(String(P.retention.completed_days));await field(pf,'withdrawn_days').fill(String(P.retention.withdrawn_days));
+    for(const n of ['participation','private_review','publication']){await field(pf,n+'_revision').fill(P.notices[n].revision);await field(pf,n+'_text').fill(P.notices[n].text);}
+    await field(pf,'reason').fill('E2E: the synthetic test-fixture League policy.');
+    await cmd('policy.set').click();
+    await page.locator('[data-eup-league-policy-revision="1"]').waitFor();
+    const stored=(await as('owner','GET',O('policy'))).policy;
+    check(scope,'setup: the policy typed into the page is stored exactly, valid, revision 1',stored.revision===1&&stored.valid===true&&isDeepStrictEqual(stored.document,JSON.parse(JSON.stringify(P))),stored);
+    const policyRpc=plane.rpcLog.filter(r=>r.action==='policy.set');
+    check(scope,'setup: the policy command reached the store once, with a uuid key',policyRpc.length===1&&/^[0-9a-f-]{36}$/.test(policyRpc[0].key||'')&&policyRpc[0].status===200,policyRpc);
+    await cmd('campaigns.create').click();
+    const campaignId=await (await page.waitForSelector('[data-eup-league-campaign]')).getAttribute('data-eup-league-campaign');
+    await statusIs('data-eup-league-campaign',campaignId,'draft');
+    await cmd('missions.create',campaignId).click();
+    const missionId=await (await page.waitForSelector('[data-eup-league-mission]')).getAttribute('data-eup-league-mission');
+    check(scope,'setup: the song mission is created from the fixture as a draft',await page.locator('[data-eup-league-mission="'+missionId+'"] h5').innerText()==='Write a song for a healthier world');
+    check(scope,'setup: a mission of a draft campaign is not offered for release, and the page says why',await cmd('missions.transition',missionId,'released').count()===0&&/Release the campaign first/.test(await page.locator('[data-eup-league-blocked="'+missionId+'"]').innerText()));
+    await ui('edit',missionId).click();
+    const mf='mission:'+missionId;
+    await field(mf,'capacity').fill('1');
+    await field(mf,'rubric_application').fill('fit: Says what the song is about');
+    await field(mf,'rubric_proof').fill('complete: Lyrics, credits and one take');
+    await cmd('missions.update',missionId).click();
+    await outcome('mission:'+missionId,'done').waitFor();
+    let missionRow=(await as('owner','GET',O('missions?campaign='+campaignId))).missions[0];
+    check(scope,'setup: capacity and rubric saved; the rubric change starts requirements revision 2',missionRow.capacity===1&&missionRow.requirements_revision===2&&missionRow.document.rubric.proof[0].id==='complete',missionRow);
+    await cmd('campaigns.transition',campaignId,'released').click();await statusIs('data-eup-league-campaign',campaignId,'released');
+    await cmd('missions.transition',missionId,'released').click();await statusIs('data-eup-league-mission',missionId,'released');
+    await cmd('campaigns.audience.set',campaignId,'invited').click();await cmd('campaigns.audience.set',campaignId,'admin_preview').waitFor();
+    for(const [who,n] of [['tester',1],['peer',2]]){
+      await field('grant:'+campaignId,'account').fill(ids[who]);await field('grant:'+campaignId,'note').fill('E2E test fixture '+who+'.');
+      await cmd('audience.grants.grant',campaignId).click();
+      await page.waitForFunction(n=>document.querySelectorAll('[data-eup-league-grant][data-eup-league-status="open"]').length===n,n);
+    }
+    check(scope,'setup: released, invited, two open tester grants',(await as('owner','GET',O('campaigns/'+campaignId+'/audience/grants'))).grants.filter(g=>g.state==='open').length===2);
+    await ui('preview',missionId).click();
+    await page.locator('[data-eup-league-preview="'+missionId+'"] [data-eup-league-card-field="title"]').waitFor();
+    const shown=await page.evaluate(id=>Object.fromEntries([...document.querySelectorAll('[data-eup-league-preview="'+id+'"] [data-eup-league-card-field]')].map(e=>[e.dataset.eupLeagueCardField,JSON.parse(e.dataset.eupLeagueCardValue)])),missionId);
+    const memberCard=(await as('tester','GET',M())).league.catalogue[0].missions[0];
+    check(scope,'setup: the preview card equals the member read of the tester, field for field',JSON.stringify(Object.keys(shown).sort())===JSON.stringify(Object.keys(memberCard).sort())&&Object.keys(memberCard).every(k=>isDeepStrictEqual(shown[k],memberCard[k])),{shown,memberCard});
+    await noOverflow('setup');
+    await shot('[data-eup-league-campaign="'+campaignId+'"]','eup-league-setup');
+    await page.locator('[data-eup-league-tab="setup"]').focus();await page.keyboard.press('ArrowRight');
+    await page.waitForFunction(()=>document.querySelector('[data-eup-league-tab="applications"]')?.getAttribute('aria-selected')==='true');
+    check(scope,'keyboard: ArrowRight moves to the next League view and focuses its tab',await focusIs(page,'[data-eup-league-tab="applications"]'));
+
+    /* ---------------- Applications ---------------- */
+    const apply=(who,extra={})=>as(who,'POST',M('missions/'+missionId+'/application'),{idempotency_key:key('apply'),expected_revision:0,application:{submit:true,requirements_revision:2,statement:'E2E test fixture statement of '+who+'.',...extra}}).then(b=>b.application);
+    const appT=await apply('tester'),appP=await apply('peer',{accommodation:{statement:'E2E test fixture: I need to take part in writing.'}}),appO=await apply('owner');
+    await view('applications');
+    await page.waitForFunction(()=>document.querySelectorAll('[data-eup-league-application]').length===3);
+    await field('decide:'+appT.id,'decision').selectOption('approved');await field('decide:'+appT.id,'met:fit').check();
+    await cmd('applications.decide',appT.id).click();await statusIs('data-eup-league-application',appT.id,'approved');
+    check(scope,'applications: approve with the rubric answered offers one assignment',(await as('tester','GET',M())).league.assignments.length===1);
+    await field('decide:'+appP.id,'decision').selectOption('approved');await field('decide:'+appP.id,'met:fit').check();
+    await cmd('applications.decide',appP.id).click();await outcome('application:'+appP.id,'error').waitFor();
+    check(scope,'applications: capacity exhausted is said, and nothing changed',/no seat is free on this mission/.test(await outcome('application:'+appP.id,'error').innerText())&&await page.locator('[data-eup-league-application="'+appP.id+'"]').getAttribute('data-eup-league-status')==='submitted');
+    const reads=async()=>(await plane.league.admin('select count(*)::int as n from public.eup_accommodation_reads where application_id = $1',[appP.id]))[0].n;
+    check(scope,'applications: the owner row carries a flag, never the accommodation text',!/I need to take part in writing/.test(await page.locator('[data-eup-league-view]').innerText()));
+    const before=await reads();
+    await ui('accommodation',appP.id).click();
+    await page.locator('[data-eup-league-accommodation-text="'+appP.id+'"]').waitFor();
+    check(scope,'applications: the restricted accommodation read shows the text and is recorded (evidence read)',/I need to take part in writing/.test(await page.locator('[data-eup-league-accommodation-text="'+appP.id+'"]').innerText())&&await reads()===before+1);
+    await field('decide:'+appP.id,'decision').selectOption('changes_requested');await field('decide:'+appP.id,'reason').fill('E2E test fixture: please say more about the song.');
+    await cmd('applications.decide',appP.id).click();await statusIs('data-eup-league-application',appP.id,'changes_requested');
+    const peerNow=(await as('peer','GET',M())).league.applications.find(a=>a.id===appP.id);
+    check(scope,'applications: the applicant reads the request for changes and its reason',peerNow.status==='changes_requested'&&peerNow.decisions.at(-1).reason==='E2E test fixture: please say more about the song.');
+    await as('peer','POST',M('missions/'+missionId+'/application'),{idempotency_key:key('resubmit'),expected_revision:peerNow.revision,application:{submit:true,requirements_revision:2,statement:'E2E test fixture: more about the song.'}});
+    await view('applications');await statusIs('data-eup-league-application',appP.id,'submitted');
+    await field('decide:'+appP.id,'decision').selectOption('declined');await field('decide:'+appP.id,'reason').fill('E2E test fixture: declined.');
+    await cmd('applications.decide',appP.id).click();await statusIs('data-eup-league-application',appP.id,'declined');
+    await field('decide:'+appO.id,'decision').selectOption('approved');await field('decide:'+appO.id,'met:fit').check();
+    await cmd('applications.decide',appO.id).click();await outcome('application:'+appO.id,'error').waitFor();
+    check(scope,'applications: self-approval is refused and said; the workspace stays open',/nobody approves, reviews or resolves their own work/.test(await outcome('application:'+appO.id,'error').innerText())&&await page.locator('[data-eup-note="denied"]').count()===0);
+    await noOverflow('applications');
+    await view('proofs');await view('applications');
+    check(scope,'applications: a view switch drops the accommodation text, and nothing reads it again by itself',!/I need to take part in writing/.test(await page.content())&&await reads()===before+1);
+    await view('setup');
+    await ui('edit',missionId).click();await field(mf,'capacity').fill('5');await cmd('missions.update',missionId).click();await outcome('mission:'+missionId,'done').waitFor();
+    const ownDecided=(await as('reviewer','POST',O('applications/'+appO.id+'/decision'),{idempotency_key:key('approve'),expected_revision:appO.revision,decision:'approved',rubric:[{id:'fit',met:true}]})).application;
+
+    /* ---------------- Proofs ---------------- */
+    const notices=P.notices;
+    const accept=async(who,asg)=>(await as(who,'POST',M('assignments/'+asg.id+'/accept'),{idempotency_key:key('accept'),expected_revision:asg.revision,requirements_revision:2,notice_revision:notices.participation.revision})).assignment;
+    const asgT=await accept('tester',(await as('tester','GET',M())).league.assignments[0]);
+    const asgO=await accept('owner',ownDecided.assignment);
+    const record=async(who,asg,bytes)=>{
+      const begun=await as(who,'POST',M('assignments/'+asg.id+'/uploads'),{idempotency_key:key('begin'),upload:{kind:'audio',mime:'audio/wav',bytes:bytes.byteLength,duration_seconds:1}});
+      const put=await plane.fetch(begun.grant.url,{method:begun.grant.method,headers:begun.grant.headers,body:bytes});
+      if(put.status!==200)throw new Error('storage PUT '+put.status);
+      return (await as(who,'POST',M('uploads/'+begun.upload.id+'/complete'),{})).upload;
+    };
+    const take=wav(0.5),sealed=await record('tester',asgT,take);
+    check(scope,'member side: the take is sealed with the digest of exactly its bytes',sealed.state==='sealed'&&sealed.sha256===sha(take));
+    const song=(title)=>({title,lyrics:'E2E test fixture line one\nLine two: the river runs clear',credits:[{name:'E2E Fixture Writer',role:'lyrics'}],rights:RIGHTS,media:[{upload_id:sealed.id,sha256:sealed.sha256}],review_notice_revision:notices.private_review.revision});
+    const proofT=(await as('tester','POST',M('assignments/'+asgT.id+'/proof'),{idempotency_key:key('proof'),expected_revision:0,proof:song('E2E test fixture: river song')})).proof;
+    const proofO=(await as('owner','POST',M('assignments/'+asgO.id+'/proof'),{idempotency_key:key('proof'),expected_revision:0,proof:{title:'E2E test fixture: owner song',lyrics:'E2E test fixture line',credits:[{name:'E2E Fixture Owner',role:'lyrics'}],rights:RIGHTS,accommodation:{statement:'E2E test fixture: the owner writes it.'},review_notice_revision:notices.private_review.revision}})).proof;
+    await view('proofs');
+    await statusIs('data-eup-league-proof',proofT.id,'submitted:clear:private');
+    await ui('review',proofT.id).click();
+    const ready=()=>page.waitForFunction(()=>{const a=document.querySelector('[data-eup-league-media]');return !!a&&a.readyState>=1&&isFinite(a.duration);});
+    await ready();
+    const first=await page.evaluate(()=>{const a=document.querySelector('[data-eup-league-media]');return {src:a.getAttribute('src'),duration:a.duration,tag:a.tagName};});
+    const signedReads=plane.log.filter(l=>l.path.startsWith('/storage/v1/object/sign/'+C.MEDIA.bucket+'/')&&(l.status===200||l.status===206));
+    check(scope,'proofs: the audio plays in the page from the storage double through the review link',first.tag==='AUDIO'&&Math.abs(first.duration-0.5)<0.05&&new URL(first.src).origin===plane.supabase&&signedReads.length>=1,{first,signedReads:signedReads.length});
+    const panel=await page.locator('[data-eup-league-review-panel="'+proofT.id+'"]').innerText();
+    check(scope,'proofs: the fingerprint shown is the sealed digest; "not scanned" is said; lyrics, credits and rights are shown',panel.includes(sealed.sha256)&&/Not scanned/.test(panel)&&/the river runs clear/.test(panel)&&/E2E Fixture Writer/.test(panel)&&/Owns the master recording: yes/.test(panel));
+    await linksHidden('review open');
+    await shot('[data-eup-league-proof="'+proofT.id+'"]','eup-league-review');
+    await noOverflow('review open');
+    await page.clock.fastForward('05:01');
+    await page.locator('[data-eup-league-expired="'+proofT.id+'"]').waitFor();
+    check(scope,'proofs: past 300 s the page drops the link and the player',await page.locator('[data-eup-league-media]').count()===0&&!(await page.content()).includes('token='));
+    await ui('review',proofT.id).click();
+    await ready();
+    const second=await page.evaluate(()=>document.querySelector('[data-eup-league-media]').getAttribute('src'));
+    check(scope,'proofs: opening the media again signs a new link that plays',second!==first.src&&new URL(second).origin===plane.supabase);
+    /* the participant resubmits while revision 1 is open: the review of revision 1 is refused */
+    const proofT2=(await as('tester','POST',M('assignments/'+asgT.id+'/proof'),{idempotency_key:key('proof2'),expected_revision:1,proof:song('E2E test fixture: river song, take two')})).proof;
+    const rf='review:'+proofT.id;
+    for(const d of ['mission','rights','safety'])await field(rf,d).selectOption('pass');
+    await field(rf,'met:complete').check();
+    await cmd('proofs.review',proofT.id).click();
+    await outcome('proof:'+proofT.id,'conflict').waitFor();
+    check(scope,'proofs: a stale revision is refused with a conflict message, and the review and its link close',/changed since it was read/.test(await outcome('proof:'+proofT.id,'conflict').innerText())&&await page.locator('[data-eup-league-review-panel]').count()===0&&await page.locator('[data-eup-league-media]').count()===0);
+    await page.locator('[data-eup-league-do="review"][data-eup-league-id="'+proofT.id+'"]',{hasText:'revision 2'}).click();
+    await ready();
+    for(const d of ['mission','rights','safety'])await field(rf,d).selectOption('pass');
+    await field(rf,'met:complete').check();
+    await cmd('proofs.review',proofT.id).click();
+    await statusIs('data-eup-league-proof',proofT.id,'accepted:clear:private');
+    const credits=(await as('owner','GET',O('credits?mission='+missionId))).credits;
+    check(scope,'proofs: three passes accept revision 2 and write one credit for it',credits.length===1&&credits[0].proof_revision===2&&credits[0].asset_revision===proofT2.asset_revision&&await page.locator('[data-eup-league-credit="'+proofT.id+'"]').count()===1,credits);
+    await ui('review',proofO.id).click();
+    await page.locator('[data-eup-league-proof-accommodation]').waitFor();
+    check(scope,'proofs: the accommodation proof shows its statement and no player',await page.locator('[data-eup-league-media]').count()===0);
+    const of='review:'+proofO.id;
+    for(const d of ['mission','rights','safety'])await field(of,d).selectOption('pass');
+    await field(of,'met:complete').check();
+    await cmd('proofs.review',proofO.id).click();
+    await outcome('proof:'+proofO.id,'error').waitFor();
+    check(scope,'proofs: self-review is refused and said; the workspace stays open',/nobody approves, reviews or resolves their own work/.test(await outcome('proof:'+proofO.id,'error').innerText())&&await page.locator('[data-eup-note="denied"]').count()===0);
+    await noOverflow('proofs');
+
+    /* ---------------- Consent and publication ---------------- */
+    const current=(await as('owner','GET',O('proofs?assignment='+asgT.id))).proofs[0];
+    const consent=(await as('tester','POST',M('proofs/'+proofT.id+'/consent'),{idempotency_key:key('consent'),expected_revision:current.revision,consent:{purpose:'publish_proof',audience:'released_audience',asset_revision:current.asset_revision,notice_revision:notices.publication.revision,expires_at:new Date(Date.now()+30*86400000).toISOString()}})).consent;
+    await view('publication');
+    await statusIs('data-eup-league-consent',consent.id,'open');
+    check(scope,'publication: the page says publication reaches the campaign audience only',/Nothing here is public/.test(await page.locator('[data-eup-league-view]').innerText()));
+    await cmd('publications.decide',proofT.id,'published:'+consent.id).click();
+    await statusIs('data-eup-league-publication-card',proofT.id,'published_released_audience');
+    await shot('[data-eup-league-publication-card="'+proofT.id+'"]','eup-league-publication');
+    check(scope,'publication: the invited audience sees it (member read)',(await as('peer','GET',M())).league.published.length===1);
+    const refused=plane.faults.add({method:'POST',path:new RegExp('/proofs/'+proofT.id+'/publication$'),mode:'refuse'});
+    await field('publication:'+proofT.id,'reason').fill('E2E test fixture: withdrawn by the owner.');
+    await cmd('publications.decide',proofT.id,'withdrawn').click();
+    await outcome('publication:'+proofT.id,'unknown').waitFor();
+    await ui('resend','publication:'+proofT.id).waitFor();
+    check(scope,'publication: a refused connection is an unknown outcome settled by the receipt (not recorded), and nothing was resent',refused.hits===1&&/not recorded when its receipt was read/.test(await outcome('publication:'+proofT.id,'unknown').innerText())&&plane.rpcLog.filter(r=>r.action==='publications.decide').length===1);
+    await ui('resend','publication:'+proofT.id).click();
+    await statusIs('data-eup-league-publication-card',proofT.id,'withdrawn');
+    const decides=plane.rpcLog.filter(r=>r.action==='publications.decide');
+    check(scope,'publication: the same command sent again by hand is recorded once, with the same key',decides.length===2&&decides[1].status===200&&(await as('peer','GET',M())).league.published.length===0,decides);
+    await cmd('publications.decide',proofT.id,'published:'+consent.id).click();
+    await statusIs('data-eup-league-publication-card',proofT.id,'published_released_audience');
+    await as('tester','POST',M('consents/'+consent.id+'/revoke'),{idempotency_key:key('revoke')});
+    await view('publication');
+    await statusIs('data-eup-league-consent',consent.id,'revoked');
+    check(scope,'publication: a revoked consent is reflected and its publication shows withdrawn (consent revoked)',await page.locator('[data-eup-league-publication][data-eup-league-status="withdrawn:consent_revoked"]').count()===1&&await cmd('publications.decide',proofT.id,'published:'+consent.id).count()===0);
+    await noOverflow('publication');
+
+    /* ---------------- Moderation ---------------- */
+    await view('proofs');
+    await field('moderate:'+proofT.id,'reason').fill('E2E test fixture: hold for a check.');
+    await cmd('proofs.moderate',proofT.id,'hold').click();await statusIs('data-eup-league-proof',proofT.id,'accepted:held:withdrawn');
+    await field('moderate:'+proofT.id,'reason').fill('E2E test fixture: the check is done.');
+    await cmd('proofs.moderate',proofT.id,'release').click();await statusIs('data-eup-league-proof',proofT.id,'accepted:clear:withdrawn');
+    check(scope,'moderation: hold and release, each with a reason',true);
+
+    /* ---------------- Appeals: the answer never comes ---------------- */
+    const appeal=(await as('peer','POST',M('applications/'+appP.id+'/appeal'),{idempotency_key:key('appeal'),appeal:{statement:'E2E test fixture: please look again.'}})).appeal;
+    await view('appeals');
+    await statusIs('data-eup-league-appeal',appeal.id,'open');
+    await field('resolve:'+appeal.id,'outcome').selectOption('overturned');await field('resolve:'+appeal.id,'reason').fill('E2E test fixture: overturned.');
+    const hung=plane.faults.add({method:'POST',path:/\/resolve$/,mode:'hang'});
+    await cmd('appeals.resolve',appeal.id).click();
+    await outcome('appeal:'+appeal.id,'pending').waitFor();
+    await page.clock.fastForward('00:16');
+    await outcome('appeal:'+appeal.id,'done').waitFor();
+    await statusIs('data-eup-league-appeal',appeal.id,'overturned');
+    const resolves=plane.rpcLog.filter(r=>r.action==='appeals.resolve');
+    check(scope,'appeals: an answer that never came is found by its receipt, and the command was sent once',hung.hits===1&&resolves.length===1&&/was recorded: its receipt was found by its key/.test(await outcome('appeal:'+appeal.id,'done').innerText()),resolves);
+    check(scope,'appeals: overturned returns the declined application to submitted (member read)',(await as('peer','GET',M())).league.applications.find(a=>a.id===appP.id).status==='submitted');
+    await noOverflow('appeals');
+
+    /* ---------------- Retention ---------------- */
+    const extra=await record('owner',asgO,wav(0.25));
+    await as('owner','POST',M('uploads/'+extra.id+'/discard'),{idempotency_key:key('discard')});
+    /* clock step (as in the journey test): the upload's staged deadline moves into the past, so it is due */
+    await plane.league.admin("update public.eup_media_uploads set expires_at = now() - interval '1 second' where id = $1",[extra.id]);
+    await view('retention');
+    await statusIs('data-eup-league-due',extra.id,'discarded:discarded');
+    await ui('confirm','purge').click();
+    await cmd('media.purged','',extra.id).click();
+    await outcome('purge','done').waitFor();
+    const path=C.mediaObjectPath({tenant:ids.owner,assignment:asgO.id,upload:extra.id,ext:'wav'});
+    const row=(await plane.league.admin('select state from public.eup_media_uploads where id = $1',[extra.id]))[0];
+    check(scope,'retention: the due upload is purged: its row says purged and no object is stored (evidence reads)',row.state==='purged'&&plane.storage.object(path)===null,row);
+    await noOverflow('retention');
+
+    /* ---------------- the whole page ---------------- */
+    const sizes=await page.evaluate(()=>{const els=[...document.querySelectorAll('[data-eup-league] button, [data-eup-league] input, [data-eup-league] select, [data-eup-league] textarea')].filter(e=>e.offsetParent!==null);
+      return els.map(e=>({h:e.getBoundingClientRect().height,f:parseFloat(getComputedStyle(e).fontSize),t:e.tagName+(e.type?':'+e.type:'')}));});
+    check(scope,'every League control is at least 44px tall (checkboxes sit in 44px labels) and every field is at least 16px type',sizes.length>0&&sizes.every(s=>s.t==='INPUT:checkbox'||(s.h>=44&&s.f>=16)),sizes.filter(s=>!(s.t==='INPUT:checkbox'||(s.h>=44&&s.f>=16))));
+    await page.locator('[data-eup-tab="overview"]').click();await page.locator('[data-eup-policy="league"]').waitFor();
+    await page.locator('[data-eup-tab="league"]').click();await page.locator('[data-eup-league]').waitFor();
+    check(scope,'the one globe host is kept across tab switches',await page.evaluate(s=>document.querySelector('[data-eup-globe]').__s===s&&document.querySelector('[data-eup-globe]').dataset.eupGlobeMounts==='1',globeStamp));
+    await linksHidden('end');
+    check(scope,'no signed link or token in the console',!consoleText.some(t=>/token=|league-plane\.invalid|plane\./.test(t)),consoleText.filter(t=>/token=|plane/.test(t)));
+    check(scope,'no page errors',errors.length===0,errors);
+    await page.screenshot({path:join(OUT,'eup-league-'+width+'.png'),fullPage:true});
+  }catch(e){
+    check(scope,'the League proof ran to the end',false,String(e&&e.stack||e).slice(0,1500));
+  }finally{
+    if(ctx)await ctx.close().catch(()=>{});
+    await plane.close();
+  }
+}
+
 try{
  for(const width of [390,1440]){
   const {page,ctx,db,errors}=await setup({width,height:900});
@@ -257,6 +600,8 @@ try{
   check('reduced','reduced motion loads the workspace',await page.locator('[data-eup-tabs]').count()===1);
   await ctx.close();
  }
+ /* the League tab against the real router over the real pending SQL, one fresh plane per width */
+ for(const width of [390,1440])await leagueProof(width);
 }finally{await browser.close();}
 if(results.some(r=>!r.pass))process.exitCode=1;
 console.log(results.filter(r=>r.pass).length+'/'+results.length+' checks passed');
