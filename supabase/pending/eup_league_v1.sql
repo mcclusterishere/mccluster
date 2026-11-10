@@ -23,14 +23,18 @@
 --   3. module guard, or the reduce guard for an action that only stops work or removes exposure
 --   4. row locks in the single order campaign, mission, application, assignment, proof, upload. Rows that hang
 --      off a proof (its consents, then its publications) are locked after the proof and before any upload; an
---      appeal after its subject. A command that locks several rows of one kind locks them in id order.
+--      appeal after its subject. A command that locks several rows of one kind locks them in id order; several
+--      proofs of different missions are locked by mission id, then proof id (the order a campaign withdrawal takes
+--      them in, mission by mission). A command that writes under a mission's assignments or credits locks that
+--      mission's campaign first (FOR SHARE at least), so a foreign-key check never takes the campaign last.
 --   5. member gates, first failure wins: the row exists (P0002), released audience (EU011), the row is the
 --      actor's (42501), a valid League policy (EU010), entitlement (EU012), media enabled (EU010)
 --   6. the document (22023), revision and state (40001), then the action's own rules (EU013..EU017).
 --   7. exactly one outbox event (ids and revisions only), allocated under the per-tenant outbox lock, which is
 --      the LAST lock a mutation takes, so events commit in seq order. Then the receipt.
 -- Reads take no key, write nothing and are never guarded: they answer in every module state, and so does an
--- exact replay. The one read that writes is applications.accommodation.get: it appends who read which request
+-- exact replay. The three entry points run in UTC (set "TimeZone" = 'UTC'), whatever the caller's session says: an
+-- answer prints every timestamp as +00:00 (the contract's RESULT_TIMESTAMP), and a day added to a timestamp is 24 hours. The one read that writes is applications.accommodation.get: it appends who read which request
 -- (no content) to a table that carries no guard trigger. A failed command leaves no receipt and no event. No
 -- guard is ever called under an EXCEPTION handler: this file has none.
 --
@@ -260,6 +264,9 @@ create table public.eup_media_uploads (
   sealed_at timestamptz,
   discarded_at timestamptz,
   purged_at timestamptz,
+  -- When the owner's purge was decided (media.purging), BEFORE the Worker deleted anything: a decided upload stays due,
+  -- whatever policy change follows, until media.purged records it.
+  purge_decided_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   foreign key (tenant, assignment_id) references public.eup_assignments(tenant, id),
@@ -573,7 +580,7 @@ begin
 "manifest_schema":"eup.league.proof-manifest/v1",
 "patterns":{"uuid":"^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$","idempotency_key":"^[A-Za-z0-9._:-]{8,128}$","slug":"^[a-z0-9][a-z0-9-]{1,79}$","sha256":"^[0-9a-f]{64}$","notice_revision":"^[A-Za-z0-9._:-]{1,64}$","rubric_id":"^[a-z0-9][a-z0-9_-]{0,39}$","consumer":"^[a-z0-9][a-z0-9_-]{0,63}$","operation":"^[a-z][a-z0-9_.]{2,63}$","outbox_seq":"^[1-9][0-9]{0,17}$","query_integer":"^(0|[1-9][0-9]{0,9})$","timestamp":"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,6})?Z$"},
 "text_rules":{"text":"[\\u0000-\\u001f\\u007f]","multiline":"[\\u0000-\\u0008\\u000b-\\u001f\\u007f]"},
-"limits":{"body_max_bytes":65536,"document_max_bytes":49152,"revision_max":2147483646,"idempotency_key":"^[A-Za-z0-9._:-]{8,128}$","text":{"title":180,"purpose":2000,"requirements":4000,"acceptance":4000,"rubric_label":200,"statement":4000,"reason":2000,"note":500,"policy_reason":500,"notice_text":8000,"lyrics":10000,"credit_name":120,"credit_role":80,"derivative_permissions":2000,"etag":200},"count":{"proof_modes":5,"rubric_criteria":12,"credits":24,"proof_media":3,"capacity":100000},"list":{"campaigns":200,"rows":500,"outbox":200,"purge_batch":50},"rate":{"applications_open_per_actor":10,"application_saves_per_application":200,"draft_saves_per_assignment":5000,"uploads_staged_per_assignment":3,"uploads_total_per_assignment":30,"proof_revisions_per_assignment":20,"appeals_per_subject":2},"policy":{"bytes":[1,104857600],"duration_seconds":[1,3600],"retention_days":[1,3650]},"consent_max_days":366},
+"limits":{"body_max_bytes":65536,"document_max_bytes":49152,"revision_max":2147483646,"idempotency_key":"^[A-Za-z0-9._:-]{8,128}$","text":{"title":180,"purpose":2000,"requirements":4000,"acceptance":4000,"rubric_label":200,"statement":4000,"reason":2000,"note":500,"policy_reason":500,"notice_text":8000,"lyrics":10000,"credit_name":120,"credit_role":80,"derivative_permissions":2000,"etag":200},"count":{"proof_modes":5,"rubric_criteria":12,"credits":24,"proof_media":3,"capacity":100000},"list":{"campaigns":200,"rows":500,"outbox":200,"purge_batch":50},"rate":{"applications_open_per_actor":10,"application_saves_per_application":200,"draft_saves_per_assignment":5000,"uploads_staged_per_assignment":3,"uploads_total_per_assignment":30,"proof_revisions_per_assignment":20,"appeals_per_subject":2,"publish_consents_per_proof":100},"policy":{"bytes":[1,104857600],"duration_seconds":[1,3600],"retention_days":[1,3650]},"consent_max_days":366},
 "requirements_fields":["title","requirements","acceptance","proof_modes","rubric"],
 "releasable_templates":["write-a-song"],
 "template_rules":{"write-a-song":{"modes_allowed":["audio","video","lyrics"],"modes_required":["lyrics"],"modes_any_of":["audio","video"]}},
@@ -614,6 +621,7 @@ begin
   "proofs.moderate":{"kind":"mutation","guard":"enabled","id":"proof","document":"proof_moderate","revision":"proof","reduce_when":{"field":"hold","values":[true]}},
   "publications.decide":{"kind":"mutation","guard":"enabled","id":"proof","document":"publication_decide","revision":"proof","reduce_when":{"field":"decision","values":["withdrawn"]}},
   "appeals.resolve":{"kind":"mutation","guard":"enabled","id":"appeal","document":"appeal_resolve"},
+  "media.purging":{"kind":"mutation","guard":"reduce","document":"media_purged"},
   "media.purged":{"kind":"mutation","guard":"reduce","document":"media_purged"},
   "outbox.ack":{"kind":"mutation","guard":"enabled","id":"outbox_seq","document":"outbox_ack","outbox":false}
  },
@@ -854,6 +862,43 @@ begin
     else
       return format('%s: unknown spec', p_path);
   end case;
+end $$;
+
+-- The document with every uuid-typed value in lower case, by the embedded spec (the contract's PATTERNS.uuid: any case
+-- on the wire, lower case when stored, hashed or put in a path). It runs before the receipt digest and before anything
+-- is stored, so the case of a uuid never makes two requests differ or a stored document disagree with the rows it
+-- names. A value the spec does not type as a uuid, or that is not of the type its spec names, is left as it is: the
+-- checker refuses it afterwards when it is wrong.
+create function public.eup_league_lower_uuids(p_spec jsonb, p_value jsonb) returns jsonb
+language plpgsql immutable security invoker set search_path = '' as $$
+declare v_out jsonb; v_key text; v_item jsonb; v_variant jsonb;
+begin
+  if p_spec is null or p_value is null then return p_value; end if;
+  case p_spec ->> 'type'
+    when 'uuid' then
+      if jsonb_typeof(p_value) = 'string' then return to_jsonb(lower(p_value #>> '{}')); end if;
+    when 'list' then
+      if jsonb_typeof(p_value) = 'array' then
+        return coalesce((select jsonb_agg(public.eup_league_lower_uuids(p_spec -> 'of', t.e) order by t.ord)
+          from jsonb_array_elements(p_value) with ordinality t(e, ord)), '[]'::jsonb);
+      end if;
+    when 'object' then
+      if jsonb_typeof(p_value) = 'object' and jsonb_typeof(p_spec -> 'fields') = 'object' then
+        v_out := p_value;
+        for v_key, v_item in select f.key, f.value from jsonb_each(p_spec -> 'fields') f loop
+          if p_value ? v_key then v_out := jsonb_set(v_out, array[v_key], public.eup_league_lower_uuids(v_item, p_value -> v_key)); end if;
+        end loop;
+        return v_out;
+      end if;
+    when 'union' then
+      if jsonb_typeof(p_value) = 'object' and jsonb_typeof(p_value -> (p_spec ->> 'on')) = 'string' then
+        v_variant := p_spec -> 'variants' -> (p_value ->> (p_spec ->> 'on'));
+        if v_variant is not null then return public.eup_league_lower_uuids(v_variant, p_value); end if;
+      end if;
+    else
+      null;
+  end case;
+  return p_value;
 end $$;
 
 -- A League policy is VALID when it satisfies the contract's policy document. Missing or invalid fails closed.
@@ -1245,9 +1290,17 @@ $$;
 -- can still be valid after the discard or the rejection, and a purge before every grant has expired would let a late
 -- PUT store an object that no row will ever list as due again (the contract's MEDIA decision on staged_ttl_seconds).
 -- Every retention date is no earlier than expires_at already: completed_days and withdrawn_days are at least one day.
+-- A DECIDED purge (media.purging, review 2026-11-10) keeps the upload due from the moment of the decision, whatever the
+-- policy says next (a longer retention included), until media.purged records it: the Worker deletes after the decision,
+-- so a row that became "not due" in between would otherwise claim an object storage no longer holds.
 create function public.eup_league_upload_due(u public.eup_media_uploads, p_retention jsonb) returns jsonb
 language sql stable security invoker set search_path = '' as $$
-  select case (u).state
+  select case when (u).purge_decided_at is not null and (u).state <> 'purged' then jsonb_build_object(
+      'reason', coalesce(n.d ->> 'reason', (select case ss.status when 'completed' then 'retention_completed' when 'withdrawn' then 'retention_withdrawn' end
+          from public.eup_assignments ss where ss.id = (u).assignment_id and ss.tenant = (u).tenant)),
+      'due_at', least((n.d ->> 'due_at')::timestamptz, (u).purge_decided_at))
+    else n.d end
+  from (select case (u).state
     when 'discarded' then jsonb_build_object('reason', 'discarded', 'due_at', greatest((u).discarded_at, (u).expires_at))
     when 'rejected' then jsonb_build_object('reason', 'rejected', 'due_at', greatest((u).updated_at, (u).expires_at))
     when 'expired' then jsonb_build_object('reason', 'expired', 'due_at', (u).expires_at)
@@ -1259,7 +1312,7 @@ language sql stable security invoker set search_path = '' as $$
         when ss.status = 'withdrawn' then jsonb_build_object('reason', 'retention_withdrawn',
           'due_at', ss.withdrawn_at + make_interval(days => (p_retention ->> 'withdrawn_days')::integer))
       end from public.eup_assignments ss where ss.id = (u).assignment_id and ss.tenant = (u).tenant)
-  end
+  end as d) n
 $$;
 create function public.eup_league_upload_is_due(u public.eup_media_uploads, p_retention jsonb) returns boolean
 language sql stable security invoker set search_path = '' as $$
@@ -1277,7 +1330,7 @@ $$;
 -- House owner only, rechecked on every call. Reads first (never guarded, no key); then mutations in the order
 -- stated at the top of this file. The signature is the one the Worker has always called.
 create function public.eup_league_command(p_action text, p_actor uuid, p_id text, p_document jsonb default null, p_revision integer default null, p_key text default null)
-returns jsonb language plpgsql security invoker set search_path = '' set lock_timeout = '5s' as $$
+returns jsonb language plpgsql security invoker set search_path = '' set lock_timeout = '5s' set "TimeZone" = 'UTC' as $$
 declare
   v_house uuid; v_act jsonb; v_doc jsonb; v_id uuid; v_id_text text; v_seq bigint; v_digest text; v_result jsonb; v_event jsonb; v_guard text;
   v_rows integer; v_to text; v_other uuid; v_link uuid; v_changed boolean; v_capacity integer; v_merged jsonb; v_rubric text; v_outcome text; v_media boolean;
@@ -1298,6 +1351,8 @@ begin
   v_doc := coalesce(p_document, '{}'::jsonb);
   if octet_length(v_doc::text) > (public.eup_league_contract('{limits,document_max_bytes}') #>> '{}')::integer then
     raise exception 'Document too large' using errcode = '22023'; end if;
+  -- uuids in lower case before the digest and before anything is stored (PATTERNS.uuid).
+  if v_act ? 'document' then v_doc := public.eup_league_lower_uuids(public.eup_league_contract(array['documents', v_act ->> 'document']), v_doc); end if;
   v_id_text := nullif(p_id, '');
   if v_id_text is not null and (v_act ->> 'id') = 'outbox_seq' then
     -- outbox.ack names an event by its sequence number, not by a uuid.
@@ -1392,6 +1447,11 @@ begin
         if (v_doc ->> 'revision')::numeric <> p.revision then raise exception 'Proof revision changed' using errcode = '40001'; end if;
         v_media := coalesce((v_doc -> 'media') = 'true'::jsonb, false);
         if v_media and p.moderation_state = 'held' then raise exception 'Proof is held' using errcode = 'EU016'; end if;
+        -- The review read rests on the participant's private_review consent of this revision. It ends when they
+        -- withdraw or a mission or campaign withdrawal releases the work, and the signed read ends with it.
+        if v_media and not exists (select 1 from public.eup_consents kk where kk.proof_id = p.id and kk.tenant = v_house and kk.proof_revision = p.revision
+            and kk.purpose = 'private_review' and kk.revoked_at is null and kk.superseded_at is null) then
+          raise exception 'The private review consent of this revision ended' using errcode = 'EU015'; end if;
         return public.eup_league_proof_json(p) || jsonb_build_object('uploads', coalesce((
           select jsonb_agg(public.eup_league_upload_json(uu, v_media) order by pm.ordinal)
             from public.eup_proof_media pm join public.eup_media_uploads uu on uu.id = pm.upload_id and uu.tenant = pm.tenant
@@ -1691,6 +1751,9 @@ begin
       select ss.mission_id, ss.id into v_other, v_link from public.eup_proofs pp join public.eup_assignments ss on ss.id = pp.assignment_id
        where pp.id = v_id and pp.tenant = v_house;
       if not found then raise exception 'Proof not found' using errcode = 'P0002'; end if;
+      -- The campaign first (review 2026-11-10): an accepting review writes a credit whose foreign key takes the
+      -- campaign FOR KEY SHARE, which would otherwise be the LAST lock here and deadlock a campaign withdrawal.
+      select * into c from public.eup_campaigns cc where cc.tenant = v_house and cc.id = (select mm.campaign_id from public.eup_missions mm where mm.id = v_other) for share;
       select * into m from public.eup_missions mm where mm.id = v_other and mm.tenant = v_house for share;
       select * into s from public.eup_assignments ss where ss.id = v_link and ss.tenant = v_house for update;
       select * into p from public.eup_proofs pp where pp.id = v_id and pp.tenant = v_house for update;
@@ -1768,9 +1831,9 @@ begin
         if not found or k.proof_id <> p.id or k.purpose <> 'publish_proof' or k.actor <> p.participant or k.proof_revision <> p.revision
            or k.asset_revision <> p.asset_revision or public.eup_league_consent_state(k) <> 'open' then
           raise exception 'The consent does not match its exact scope' using errcode = 'EU015'; end if;
-        -- Media whose retention ended is gone: there is nothing left to show.
+        -- Media whose retention ended is gone, or going (its purge is decided): there is nothing left to show.
         if exists (select 1 from public.eup_proof_media pm join public.eup_media_uploads uu on uu.id = pm.upload_id and uu.tenant = pm.tenant
-                    where pm.proof_id = p.id and pm.proof_revision = p.revision and uu.state = 'purged') then
+                    where pm.proof_id = p.id and pm.proof_revision = p.revision and (uu.state = 'purged' or uu.purge_decided_at is not null)) then
           raise exception 'The media of this proof was purged' using errcode = '40001'; end if;
         insert into public.eup_publications(tenant, campaign_id, mission_id, assignment_id, proof_id, proof_revision, asset_revision, consent_id, published_by, published_note)
           values (v_house, c.id, m.id, s.id, p.id, p.revision, p.asset_revision, k.id, p_actor, v_doc ->> 'reason') returning * into b;
@@ -1824,15 +1887,43 @@ begin
       v_event := jsonb_build_object('appeal_id', ap.id, 'application_id', ap.application_id, 'proof_id', ap.proof_id,
         'revision', case when ap.subject = 'application' then a.revision end, 'proof_revision', case when ap.subject = 'proof' then p.revision end);
 
-    when 'media.purged' then
-      -- Reduce-only. The Worker calls it AFTER it deleted the objects. Every named upload must be due or already
-      -- purged, else nothing changes (40001). Lock order: the proofs that list these uploads in any revision (their
-      -- live publications are withdrawn here, reason media_purged), then the uploads, each in id order.
+    when 'media.purging' then
+      -- Reduce-only. The purge DECISION, kept before the Worker deletes anything (review 2026-11-10): every named upload
+      -- must be due now, decided already or purged (40001 otherwise, and nothing changes). A due upload that is not
+      -- decided yet is marked decided (its state does not change): it stays due, whatever policy change follows, until
+      -- media.purged records it. Lock order as media.purged: the proofs that list these uploads, then the uploads.
       v_ids := array(select distinct e.value::uuid from jsonb_array_elements_text(v_doc -> 'uploads') e order by 1);
       if (select count(*) from public.eup_media_uploads uu where uu.id = any (v_ids) and uu.tenant = v_house) <> cardinality(v_ids) then
         raise exception 'Upload not found' using errcode = 'P0002'; end if;
-      perform 1 from public.eup_proofs pp where pp.tenant = v_house
-        and pp.id in (select pm.proof_id from public.eup_proof_media pm where pm.upload_id = any (v_ids) and pm.tenant = v_house) order by pp.id for update;
+      perform 1 from public.eup_proofs pp join public.eup_assignments ss on ss.id = pp.assignment_id and ss.tenant = pp.tenant
+       where pp.tenant = v_house and pp.id in (select pm.proof_id from public.eup_proof_media pm where pm.upload_id = any (v_ids) and pm.tenant = v_house)
+       order by ss.mission_id, pp.id for update of pp;
+      perform 1 from public.eup_media_uploads uu where uu.id = any (v_ids) and uu.tenant = v_house order by uu.id for update;
+      v_retention := public.eup_league_retention(v_house);
+      if exists (select 1 from public.eup_media_uploads uu where uu.id = any (v_ids) and uu.tenant = v_house
+                  and uu.state <> 'purged' and not public.eup_league_upload_is_due(uu, v_retention)) then
+        raise exception 'An upload is neither due, decided nor purged' using errcode = '40001'; end if;
+      with marked as (
+        update public.eup_media_uploads uu set purge_decided_at = now()
+         where uu.id = any (v_ids) and uu.tenant = v_house and uu.state <> 'purged' and uu.purge_decided_at is null returning uu.id)
+      select coalesce(array_agg(mk.id order by mk.id), '{}'::uuid[]) into v_done from marked mk;
+      v_result := jsonb_build_object('retention_evaluated', v_retention is not null, 'uploads', (
+        select jsonb_agg(public.eup_league_due_json(uu, v_retention) order by e.ord)
+          from jsonb_array_elements_text(v_doc -> 'uploads') with ordinality e(value, ord)
+          join public.eup_media_uploads uu on uu.id = e.value::uuid and uu.tenant = v_house));
+      v_event := jsonb_build_object('upload_ids', case when cardinality(v_done) > 0 then v_done end);
+
+    when 'media.purged' then
+      -- Reduce-only. The Worker calls it AFTER it deleted the objects. Every named upload must be due (a decided purge
+      -- is due: media.purging), or already purged, else nothing changes (40001). Lock order: the proofs that list these
+      -- uploads in any revision (their live publications are withdrawn here, reason media_purged), by mission and then
+      -- id, as a campaign withdrawal takes them; then the uploads in id order.
+      v_ids := array(select distinct e.value::uuid from jsonb_array_elements_text(v_doc -> 'uploads') e order by 1);
+      if (select count(*) from public.eup_media_uploads uu where uu.id = any (v_ids) and uu.tenant = v_house) <> cardinality(v_ids) then
+        raise exception 'Upload not found' using errcode = 'P0002'; end if;
+      perform 1 from public.eup_proofs pp join public.eup_assignments ss on ss.id = pp.assignment_id and ss.tenant = pp.tenant
+       where pp.tenant = v_house and pp.id in (select pm.proof_id from public.eup_proof_media pm where pm.upload_id = any (v_ids) and pm.tenant = v_house)
+       order by ss.mission_id, pp.id for update of pp;
       perform 1 from public.eup_media_uploads uu where uu.id = any (v_ids) and uu.tenant = v_house order by uu.id for update;
       v_retention := public.eup_league_retention(v_house);
       if exists (select 1 from public.eup_media_uploads uu where uu.id = any (v_ids) and uu.tenant = v_house
@@ -1877,7 +1968,7 @@ end $$;
 -- Reduce-only actions (withdraw, discard, revoke) check only that the row is the actor's, so a participant can
 -- always leave, whatever happened to the campaign, the grant, the League policy or the module state.
 create function public.eup_league_member_command(p_action text, p_actor uuid, p_id text, p_document jsonb default null, p_revision integer default null, p_key text default null)
-returns jsonb language plpgsql security invoker set search_path = '' set lock_timeout = '5s' as $$
+returns jsonb language plpgsql security invoker set search_path = '' set lock_timeout = '5s' set "TimeZone" = 'UTC' as $$
 declare
   v_house uuid; v_act jsonb; v_doc jsonb; v_id uuid; v_id_text text; v_digest text; v_result jsonb; v_policy jsonb;
   v_rows integer; v_owner boolean; v_mission uuid; v_campaign uuid; v_link uuid; v_holder uuid; v_types jsonb; v_kind text; v_cap integer; v_status text;
@@ -1898,6 +1989,8 @@ begin
   v_doc := coalesce(p_document, '{}'::jsonb);
   if octet_length(v_doc::text) > (public.eup_league_contract('{limits,document_max_bytes}') #>> '{}')::integer then
     raise exception 'Document too large' using errcode = '22023'; end if;
+  -- uuids in lower case before the digest and before anything is stored (PATTERNS.uuid).
+  if v_act ? 'document' then v_doc := public.eup_league_lower_uuids(public.eup_league_contract(array['documents', v_act ->> 'document']), v_doc); end if;
   v_id_text := nullif(p_id, '');
   if v_id_text is not null then
     if not coalesce(v_id_text ~* (public.eup_league_contract('{patterns,uuid}') #>> '{}'), false) then raise exception 'Invalid id' using errcode = '22023'; end if;
@@ -2268,6 +2361,11 @@ begin
         raise exception 'The consent does not match its exact scope' using errcode = 'EU015'; end if;
       if exists (select 1 from public.eup_consents kk where kk.proof_id = p.id and kk.purpose = 'publish_proof' and kk.revoked_at is null and kk.superseded_at is null) then
         raise exception 'A publication consent is already open for this proof' using errcode = '23505'; end if;
+      -- EU017: a bounded number of publication consents per proof, ever (counted under the proof row lock above), so
+      -- grant and revoke churn cannot grow the consent rows, the outbox, the receipts or the member read without limit.
+      if (select count(*) from public.eup_consents kk where kk.proof_id = p.id and kk.tenant = v_house and kk.purpose = 'publish_proof')
+           >= (v_rate ->> 'publish_consents_per_proof')::integer then
+        raise exception 'Too many publication consents for this proof' using errcode = 'EU017'; end if;
       insert into public.eup_consents(tenant, mission_id, assignment_id, proof_id, proof_revision, asset_revision, actor, purpose, audience, notice_revision, expires_at)
         values (v_house, m.id, s.id, p.id, p.revision, p.asset_revision, p_actor, 'publish_proof', 'released_audience', v_doc ->> 'notice_revision', v_expires)
         returning * into k;
@@ -2343,7 +2441,7 @@ end $$;
 -- seal is idempotent by state, and the digest and identity are written once. A seal that changes the row writes its
 -- one outbox event; the same measurement again changes nothing and writes none (it is the seal's replay).
 create function public.eup_league_media_seal(p_upload uuid, p_actor uuid, p_result jsonb)
-returns jsonb language plpgsql security invoker set search_path = '' set lock_timeout = '5s' as $$
+returns jsonb language plpgsql security invoker set search_path = '' set lock_timeout = '5s' set "TimeZone" = 'UTC' as $$
 declare
   v_house uuid; v_mission uuid; v_campaign uuid; v_doc jsonb := coalesce(p_result, '{}'::jsonb); v_bytes numeric;
   u public.eup_media_uploads%rowtype;

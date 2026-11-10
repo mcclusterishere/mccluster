@@ -53,6 +53,11 @@ export const PATTERNS = deepFreeze({
   query_integer: /^(0|[1-9][0-9]{0,9})$/,
   timestamp: /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,6})?Z$/ // RFC 3339, UTC with Z only
 });
+/* DECISION (review 2026-11-10): the form of a timestamp in an ANSWER. The SQL prints a timestamptz as PostgreSQL's jsonb
+   does in a UTC session (its three functions pin TimeZone to UTC): RFC 3339 with the offset +00:00 and 0 to 6 fraction
+   digits; a value the Worker makes itself may write the same instant with Z. PATTERNS.timestamp stays the INPUT form
+   (Z only): a client parses an answered timestamp and never echoes it back as an input. */
+export const RESULT_TIMESTAMP = deepFreeze(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,6})?(Z|\+00:00)$/);
 
 /* Text rules. Length is counted in Unicode code points (SQL length()), never UTF-16 units.
    text      : no U+0000..U+001F and no U+007F.
@@ -82,7 +87,12 @@ export const LIMITS = deepFreeze({
     uploads_staged_per_assignment: 3, // staged at one time
     uploads_total_per_assignment: 30, // upload rows of an assignment, every state
     proof_revisions_per_assignment: 20,
-    appeals_per_subject: 2 // appeals ever opened against one application or proof
+    appeals_per_subject: 2, // appeals ever opened against one application or proof
+    /* DECISION (review 2026-11-10): publication consents ever granted on one proof. Without it one participant's grant
+       and revoke churn grew the consent table, the outbox, the receipts and their own member read without limit. With
+       at most proof_revisions_per_assignment private_review consents beside it, one proof never lists more consent
+       rows than an owner list returns (LIMITS.list.rows). */
+    publish_consents_per_proof: 100
   },
   /* Validity ranges of owner policy fields: ceilings and floors, never defaults. */
   policy: { bytes: [1, 104857600], duration_seconds: [1, 3600], retention_days: [1, 3650] },
@@ -201,6 +211,16 @@ export const RULES = deepFreeze({
 
 const codePoints = (s) => { let n = 0; for (const _ of s) n += 1; return n; };
 const wellFormed = (s) => !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/.test(s);
+/* A real calendar instant, by the same integer rules as the SQL (eup_league_timestamp_ok): year 1 or later, a day the
+   month has (Gregorian leap years), hour 0..23, minute and second 0..59. DECISION (review 2026-11-10): Date.parse is not
+   the test, because it rolls 2027-02-30 into March and T24:00 into the next day, which the SQL refuses. */
+function calendarInstant(s) {
+  const n = (from, to) => Number(s.slice(from, to));
+  const year = n(0, 4), month = n(5, 7), day = n(8, 10);
+  if (year < 1 || month < 1 || month > 12 || day < 1 || n(11, 13) > 23 || n(14, 16) > 59 || n(17, 19) > 59) return false;
+  const leap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+  return day <= [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1];
+}
 
 /* checkDocument(spec, value): null when the value satisfies the spec, else 'path: problem'.
    Objects are CLOSED: a key the spec does not list is refused (22023 in SQL). That is also what keeps
@@ -211,7 +231,7 @@ export function checkDocument(spec, value, path = '$') {
     case 'uuid': return typeof value === 'string' && PATTERNS.uuid.test(value) ? null : `${path}: uuid expected`;
     case 'boolean': return typeof value === 'boolean' ? null : `${path}: boolean expected`;
     case 'sha256': return typeof value === 'string' && PATTERNS.sha256.test(value) ? null : `${path}: lower-case sha256 hex expected`;
-    case 'timestamp': return typeof value === 'string' && PATTERNS.timestamp.test(value) && !Number.isNaN(Date.parse(value)) ? null : `${path}: UTC timestamp expected`;
+    case 'timestamp': return typeof value === 'string' && PATTERNS.timestamp.test(value) && calendarInstant(value) ? null : `${path}: UTC timestamp expected`;
     case 'pattern': return typeof value === 'string' && PATTERNS[spec.pattern].test(value) ? null : `${path}: ${spec.pattern} expected`;
     case 'enum': return spec.values.includes(value) ? null : `${path}: one of ${spec.values.join(', ')} expected`;
     case 'integer': return Number.isSafeInteger(value) && value >= spec.min && value <= spec.max ? null : `${path}: integer ${spec.min}..${spec.max} expected`;
@@ -385,7 +405,7 @@ export const DOCUMENTS = deepFreeze({
 /* ------------------------------------------------------------------ 6. result shapes
    DECISION: results are LEAN and member answers are MEMBER-SAFE (both rules below): a receipt must not become a second
    copy of someone's lyrics or accommodation note, and a tester has no use for a reviewer's account id.
-   Type words: uuid int text bool timestamp sha256 seq json; enum:NAME (ENUMS); shape:NAME (below);
+   Type words: uuid int text bool timestamp (written as RESULT_TIMESTAMP) sha256 seq json; enum:NAME (ENUMS); shape:NAME (below);
    document:NAME (DOCUMENTS); suffix [] for a list, |null when the value may be null.
    Lists are bare JSON arrays ordered by created_at ascending unless a shape says otherwise. */
 
@@ -429,7 +449,7 @@ export const SHAPES = deepFreeze({
   proof_with_media: { extends: 'proof', uploads: 'shape:upload[]' }, // proofs.get: uploads carry storage only when media was asked for
   consent: { id: 'uuid', tenant: 'uuid', mission_id: 'uuid', assignment_id: 'uuid', proof_id: 'uuid', proof_revision: 'int', asset_revision: 'sha256', actor: 'uuid',
     purpose: 'enum:CONSENT_PURPOSES', audience: 'enum:CONSENT_AUDIENCES', notice_revision: 'text', state: 'enum:CONSENT_STATES', granted_at: 'timestamp',
-    expires_at: 'timestamp|null', revoked_at: 'timestamp|null', revoked_by: 'uuid|null', superseded_at: 'timestamp|null' }, // state is derived; expired = open and past expires_at
+    expires_at: 'timestamp|null', revoked_at: 'timestamp|null', revoked_by: 'uuid|null', superseded_at: 'timestamp|null' }, // state is derived; expired = neither revoked nor superseded, and past expires_at
   publication: { id: 'uuid', tenant: 'uuid', campaign_id: 'uuid', mission_id: 'uuid', assignment_id: 'uuid', proof_id: 'uuid', proof_revision: 'int', asset_revision: 'sha256',
     consent_id: 'uuid', audience: 'enum:CONSENT_AUDIENCES', state: 'enum:PUBLICATION_ROW_STATES', effective: 'bool', published_by: 'uuid', published_at: 'timestamp',
     withdrawn_by: 'uuid|null', withdrawn_at: 'timestamp|null', withdrawn_reason: 'enum:WITHDRAWN_REASONS|null' },
@@ -594,8 +614,12 @@ export const OWNER_ACTIONS = deepFreeze({
   'assignments.list': read({ id: 'mission', id_optional: true, result: 'assignment[]' }),
   'proofs.list': read({ id: 'assignment', id_optional: true, document: 'proofs_filter', result: 'proof[]' }),
   /* revision must be the proof's current revision (40001). media true adds each upload's storage identity for signing and
-     is refused while the proof is held (EU016). */
-  'proofs.get': read({ id: 'proof', document: 'proof_get', result: 'proof_with_media', errors: ['P0002', '40001', 'EU016'] }),
+     is refused while the proof is held (EU016).
+     DECISION (review 2026-11-10): media true also needs the open private_review consent of that revision (EU015). That
+     consent ends with assignments.withdraw and with the mission and campaign withdrawal cascades, and the reviewers'
+     signed read ends with it (the consent's audience is the reviewers, as publish_proof's is the released audience).
+     Without media the record is read in every state. */
+  'proofs.get': read({ id: 'proof', document: 'proof_get', result: 'proof_with_media', errors: ['P0002', '40001', 'EU015', 'EU016'] }),
   'consents.list': read({ id: 'proof', id_optional: true, result: 'consent[]' }),
   'publications.list': read({ id: 'campaign', id_optional: true, document: 'publications_filter', result: 'publication[]' }),
   'appeals.list': read({ document: 'appeals_filter', result: 'appeal[]' }),
@@ -656,7 +680,15 @@ export const OWNER_ACTIONS = deepFreeze({
   'appeals.resolve': write({ id: 'appeal', document: 'appeal_resolve', result: 'appeal_row', bumps: ['application'], errors: ['P0002', '40001', 'EU002'],
     effects: ['Only an open appeal (40001). The resolver is never the appellant (EU002).',
       'overturned: a declined application returns to submitted; a rejected proof returns to submitted at the same revision. upheld changes nothing else.'] }),
-  /* Called by the Worker AFTER it deleted the objects. Every named upload must be due or already purged, else 40001 and nothing changes. */
+  /* DECISION (review 2026-11-10): the purge DECISION is kept before anything is deleted. media.purged used to be the
+     first write, after the Worker had deleted the objects, and it re-checked "due" under the policy in force then: a
+     policy change in between (a longer retention) refused it and left sealed rows claiming deleted objects, against
+     MEDIA.order. The purge route now records the decision first, with the request's own key. */
+  'media.purging': reduce({ document: 'media_purged', result: 'due_list', errors: ['P0002', '40001'],
+    effects: ['Every named upload must be due now, decided already or purged (40001 otherwise, and nothing changes).',
+      'Each due upload that is not decided yet is marked decided; its state does not change. A decided upload stays due, whatever policy change follows, until media.purged records it. publications.decide refuses media whose purge is decided (40001).',
+      'Answers the due list of exactly the uploads named, in the order named.'] }),
+  /* Called by the Worker AFTER it deleted the objects. Every named upload must be due (a decided upload is due) or already purged, else 40001 and nothing changes. */
   'media.purged': reduce({ document: 'media_purged', result: 'purge_result', errors: ['P0002', '40001'],
     effects: ['State becomes purged; sha256, bytes and storage identity are kept as the record of what existed.',
       'A publication of a proof bound to a purged upload is withdrawn in the same transaction (reason media_purged).'] }),
@@ -707,11 +739,13 @@ export const MEMBER_ACTIONS = deepFreeze({
       'review_notice_revision equals policy.notices.private_review.revision (EU015).',
       'Writes proof revision N with asset_revision = SHA-256 of the canonical manifest (section 12), supersedes the open consents of earlier revisions, and writes the private_review consent for revision N, all in one transaction.'] }),
   /* p_revision is the proof revision the consent is for; granting never changes it. */
-  /* DECISION: one open publish consent per proof, a second is 23505: an exact scope has exactly one live grant to point at. */
+  /* DECISION: one unrevoked publish consent per proof (open or expired), a second is 23505: an exact scope has exactly one
+     grant to point at, and an expired one is revoked by its actor before another is granted. */
   'consents.grant': write({ id: 'proof', document: 'consent_grant', revision: 'proof', result: 'member_consent', gates: ALL_GATES,
-    errors: ['P0002', '40001', '23505', 'EU015', 'EU016', ...GATED],
+    errors: ['P0002', '40001', '23505', 'EU015', 'EU016', 'EU017', ...GATED],
     effects: ['The proof is accepted, asset_revision equals the proof current digest, notice_revision equals policy.notices.publication.revision, expires_at is in the future and within LIMITS.consent_max_days (EU015 for any failure).',
-      'Not while held (EU016). One open publish_proof consent per proof (23505): revoke before granting again.',
+      'Not while held (EU016). One unrevoked, unsuperseded publish_proof consent per proof, open or expired (23505): revoke it, even after it expired, before granting again.',
+      'At most LIMITS.rate.publish_consents_per_proof publish_proof consents per proof, ever (EU017).',
       'A consent publishes nothing. Publication is the separate owner command publications.decide.'] }),
   /* DECISION: only publish_proof consents are revoked by command (22023 for a private_review id). The private_review
      consent ends with assignments.withdraw or a newer proof revision, so a reviewer can never lose access mid-review
@@ -857,7 +891,7 @@ export const ERRORS = deepFreeze({
   '40P01': E('retry_conflict', 409, 409, 'Deadlock victim. Nothing was written; the same key may be sent again. Must not occur in the native mix test.'),
   'P0002': E('not_found', 404, 404, 'The row named by p_id (or a row it needs) does not exist in this tenant.', HIDDEN),
   '22023': E('invalid', 422, 422, 'Malformed document, unknown action, unknown key, or a transition the table does not contain. A REFUSAL_HINTS hint may refine it.'),
-  '23505': E('exists', 409, 409, 'The thing already exists: slug, application, open grant, open publish consent, open appeal.'),
+  '23505': E('exists', 409, 409, 'The thing already exists: slug, application, open grant, unrevoked publish consent (open or expired), open appeal.'),
   '23514': E('invalid', 422, 422, 'A CHECK refused the row, for example an audience that is impossible by constraint.'),
   'EU001': E('capacity_exhausted', 409, 409, 'No seat is free, or a capacity below the seats taken was asked for.'),
   'EU002': E('self_review_denied', 403, 403, 'Self-approval, self-review or resolving one own appeal.'),
@@ -890,9 +924,11 @@ export function errorFor(sqlstate, surface, hint = null) {
   if (refined) return { status: REFUSAL_HINTS[refined].status, code: refined, detail: true };
   return { status: member ? row.member_status : row.owner_status, code: member ? (row.member_code || row.code) : row.code, detail: member ? row.member_detail : row !== ERROR_FALLBACK };
 }
-/* Answers the Worker produces without SQL. A member route never says not_found. */
+/* Answers the Worker produces without SQL. A member route never says not_found.
+   DECISION (review 2026-11-10): authorization_unavailable is listed: the Worker's session check (member routes) or its
+   house-owner check (owner routes) could not answer, so nothing ran. A client treats it as "try again", not a refusal. */
 export const HTTP_REASONS = deepFreeze({
-  authentication_required: 401, json_required: 415, body_required: 400, invalid_json: 400, body_too_large: 413,
+  authentication_required: 401, authorization_unavailable: 503, json_required: 415, body_required: 400, invalid_json: 400, body_too_large: 413,
   idempotency_key_required: 400, expected_revision_required: 400, field_refused: 422, invalid: 422,
   not_found: 404, not_available: 404, not_implemented: 501, storage_unavailable: 503,
   media_type_not_allowed: 415, media_too_large: 413, upload_missing: 409, upload_expired: 409, media_changed: 409
@@ -978,7 +1014,7 @@ export const ROUTES = deepFreeze([
   cmd('owner', 'POST', 'appeals/:id/resolve', 'appeals.resolve', 'appeal', { ...ID, fields: ['outcome', 'reason'] }),
   route('owner', 'GET', 'credits', 'credits.list', { query: { mission: 'id' }, response: 'credits' }),
   route('owner', 'GET', 'media/due', 'media.due', { query: { limit: 'limit' }, response: 'due' }),
-  cmd('owner', 'POST', 'media/purge', 'media.purged', 'purge', { fields: ['uploads'], before: ['media.due'], media: 'purgeDue' }),
+  cmd('owner', 'POST', 'media/purge', 'media.purged', 'purge', { fields: ['uploads'], before: ['media.purging'], media: 'purgeDue' }),
   route('owner', 'GET', 'outbox', 'outbox.list', { query: { after: 'after', limit: 'limit', consumer: 'consumer' }, response: 'events' }),
   cmd('owner', 'POST', 'outbox/:seq/ack', 'outbox.ack', 'consumption', { id: 'seq', fields: ['consumer'] }),
   route('owner', 'GET', 'receipts/:operation/:key', 'receipts.get', { params: { operation: 'operation', key: 'key' }, response: 'receipt' })
@@ -987,7 +1023,8 @@ export const ROUTES = deepFreeze([
    id        the path parameter that becomes p_id ('id' is a uuid, 'seq' an outbox sequence); null sends ''.
    query     query parameter -> 'id' (becomes p_id, a uuid) or the p_document field it fills (integers match PATTERNS.query_integer).
    params    path parameter -> p_document field.
-   before    reads on the same surface the route makes first (see MEDIA.order).
+   before    calls on the same surface the route makes first (see MEDIA.order): reads, and the one keyed decision the
+             purge route records with the request's own key before it deletes anything (media.purging).
    rpc       which function the action belongs to: owner, member, media (the seal), or null for a static answer.
    answer    the shape of the [response] value when the route narrows the action result with projectShape; otherwise the
              action result itself. A member route never answers a storage identity.
@@ -1016,14 +1053,22 @@ export function matchRoute(surface, method, rest) {
   }
   return null;
 }
-/* refusedMemberField(body): the dotted path of the first key that would name another account, or null. */
-export function refusedMemberField(value, path = '') {
+/* refusedMemberField(body): the dotted path of the first key that would name another account, or null.
+   DECISION (review 2026-11-10): the walk keeps its own stack instead of recursing. A body within LIMITS.body_max_bytes
+   can nest 32 765 arrays deep, which overflowed the call stack and answered 500 instead of a 4xx. The order is the
+   recursive one: depth first, keys in order, a key checked before its value is entered. */
+export function refusedMemberField(value) {
   if (!value || typeof value !== 'object') return null;
-  for (const [key, child] of Array.isArray(value) ? value.entries() : Object.entries(value)) {
-    const here = path ? `${path}.${key}` : String(key);
-    if (!Array.isArray(value) && REFUSED_MEMBER_FIELDS.includes(key)) return here;
-    const deeper = refusedMemberField(child, here);
-    if (deeper) return deeper;
+  const frame = (node, path) => ({ entries: Array.isArray(node) ? [...node.entries()] : Object.entries(node), array: Array.isArray(node), path, at: 0 });
+  const stack = [frame(value, '')];
+  while (stack.length) {
+    const top = stack[stack.length - 1];
+    if (top.at >= top.entries.length) { stack.pop(); continue; }
+    const [key, child] = top.entries[top.at];
+    top.at += 1;
+    const here = top.path ? `${top.path}.${key}` : String(key);
+    if (!top.array && REFUSED_MEMBER_FIELDS.includes(key)) return here;
+    if (child && typeof child === 'object') stack.push(frame(child, here));
   }
   return null;
 }
@@ -1071,8 +1116,9 @@ export const MEDIA = deepFreeze({
     discard: ['member:uploads.discard', 'delete the object (a failure is left to the purge)'],
     own_read: ['member:uploads.get with sign true', 'list the object: id, eTag or size differing from the stored identity answers 409 media_changed', 'sign for signed_read_seconds'],
     review_read: ['owner:proofs.get with media true and the revision asked for', 'the same identity check per upload', 'sign for signed_read_seconds'],
-    purge: ['owner:media.due with the uploads asked for', 'refuse (409) if one is neither due nor purged, before deleting anything', 'delete the due objects',
-      'only if every deletion succeeded: owner:media.purged with exactly the uploads asked for']
+    purge: ['owner:media.purging with the uploads asked for and the request\'s key: the decision, kept before anything is deleted',
+      'refuse (409) if one is neither due, decided nor purged, before deciding or deleting anything', 'delete the due objects',
+      'only if every deletion succeeded: owner:media.purged with exactly the uploads asked for and the same key']
   }
 });
 /* The interface ./league-media.js exports and ./league.js and ./league-member.js import. ctx = { env, fetchImpl, fail, now, seal }.

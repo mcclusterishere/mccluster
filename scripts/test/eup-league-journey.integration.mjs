@@ -71,6 +71,8 @@ function walk(value, visit, path = '$', parent = null) {
 }
 /* Where a signed location may appear in an answer: the grant, the member's own or audience read, the owner's review read. */
 const SIGNED_AT = /^\$\.(grant\.url|url|media\[\d+\]\.url)$/;
+/* Every field a result shape types as a timestamp (review 2026-11-10: answers print them in C.RESULT_TIMESTAMP). */
+const TIMESTAMP_FIELDS = new Set(Object.values(C.SHAPES).flatMap((shape) => Object.entries(shape).filter(([, t]) => /^timestamp(\|null)?$/.test(t)).map(([k]) => k)));
 function makeApi(plane) {
   const serviceKey = plane.serviceKeyHeaders().apikey;
   return async function api(as, method, path, body, { status = 200, reason, raw, headers, label } = {}) {
@@ -81,6 +83,7 @@ function makeApi(plane) {
     if (reason !== undefined) eq(r.body?.reason, reason, `${where}: reason`);
     // Every answer: private and not cached, no service key, signed locations only where the contract puts them.
     const member = path.startsWith(C.PREFIX.member);
+    const league = member || path.startsWith(C.PREFIX.owner);
     const problems = [];
     if (r.headers.get('cache-control') !== 'private, no-store') problems.push(`cache-control ${r.headers.get('cache-control')}`);
     if (member && r.headers.get('vary') !== 'Origin, Authorization') problems.push(`vary ${r.headers.get('vary')}`);
@@ -90,6 +93,7 @@ function makeApi(plane) {
       if (member && parent !== null && !/\]$/.test(p) && FOREIGN.has(name)) problems.push(`foreign id field ${p}`);
       if (member && parent !== null && !/\]$/.test(p) && MEMBER_NEVER.has(name)) problems.push(`storage identity ${p}`);
       if (typeof v === 'string' && (v.includes('token=') || v.includes('league/v1/t/')) && !SIGNED_AT.test(p)) problems.push(`signed location at ${p}`);
+      if (league && parent !== null && TIMESTAMP_FIELDS.has(name) && typeof v === 'string' && !C.RESULT_TIMESTAMP.test(v)) problems.push(`timestamp ${p} = ${v} is not the contract's result form`);
     });
     eq(problems, [], `${where}: answer audit`);
     return r.body;
@@ -531,6 +535,53 @@ try {
   eq(plane.storage.object(stagedPath), null, 'evidence: nothing at the path of the purged row');
   clockSkew = 0;
 
+  /* ================================================================== 12c. findings of the review of 2026-11-10 */
+  // A third song mission of campaign A for two new pieces of work: one the participant leaves, one that completes.
+  let missionA3 = (await api('owner', 'POST', O(`campaigns/${campaignA.id}/missions`), { idempotency_key: key('mission-3'),
+    mission: { ...missionDocument(songFixture), slug: 'journey-third-song', title: 'Test fixture: a third song mission' } })).mission;
+  missionA3 = (await api('owner', 'POST', O(`missions/${missionA3.id}/transition`), { idempotency_key: key('release-3'), expected_revision: missionA3.revision, to: 'released' })).mission;
+  const enroll3 = async (as) => {
+    const app = (await saveApplication(as, missionA3.id, 0, { submit: true, requirements_revision: missionA3.requirements_revision, statement: 'Test fixture: a third song.' })).application;
+    const decided = (await api('owner', 'POST', O(`applications/${app.id}/decision`), { idempotency_key: key('approve'), expected_revision: app.revision, decision: 'approved' })).application;
+    return (await accept(as, decided.assignment.id, decided.assignment.revision, POLICY.notices.participation.revision)).assignment;
+  };
+  const submitTake = async (as, seat, take) => (await api(as, 'POST', M(`assignments/${seat.id}/proof`), { idempotency_key: key('proof'), expected_revision: 0,
+    proof: songB([{ upload_id: take.id, sha256: take.sha256 }]) })).proof;
+  // The review read rests on the participant's private_review consent: it ends when they withdraw, and the owner's
+  // signed media read ends with it; the plain record still lists the proof.
+  // (The second house owner takes part here, so the tester's records that section 13 reads stay as they were.)
+  const leavingSeat = await enroll3('reviewer');
+  const leavingProof = await submitTake('reviewer', leavingSeat, await record('reviewer', leavingSeat.id, synthAudio(660, 7)));
+  eq((await api('owner', 'GET', O(`proofs/${leavingProof.id}/media?revision=1`))).media.length, 1, 'the owner opens the take for review');
+  await api('reviewer', 'POST', M(`assignments/${leavingSeat.id}/withdraw`), { idempotency_key: key('withdraw') });
+  await api('owner', 'GET', O(`proofs/${leavingProof.id}/media?revision=1`), undefined, { status: 409, reason: 'consent_scope', label: 'after the participant withdrew, the review read is refused' });
+  ok((await api('owner', 'GET', O(`proofs?assignment=${leavingSeat.id}`))).proofs.some((p) => p.id === leavingProof.id && p.state === 'submitted'), 'the plain record still lists the proof');
+  // The purge decision is kept before the Worker deletes: a second owner lengthening retention while the DELETE is in
+  // flight cannot leave a sealed row claiming a deleted object (before: 409 "nothing was deleted", the object gone).
+  const keptSeat = await enroll3('peer');
+  const keptTake = await record('peer', keptSeat.id, synthAudio(680, 8));
+  const keptProof = await submitTake('peer', keptSeat, keptTake);
+  eq((await decide('owner', keptProof.id, 1, { asset_revision: keptProof.asset_revision, ...PASS })).proof.state, 'accepted', 'the work completes');
+  // Clock step: the completed work's retention (POLICY.retention.completed_days) has passed.
+  await plane.league.admin(`update public.eup_assignments set completed_at = now() - make_interval(days => $2) where id = $1`, [keptSeat.id, POLICY.retention.completed_days + 1]);
+  eq((await api('owner', 'GET', O('media/due'))).due.uploads.find((u) => u.id === keptTake.id)?.due, true, 'the completed take is due');
+  const keptPath = C.mediaObjectPath({ tenant: ids.owner, assignment: keptSeat.id, upload: keptTake.id, ext: 'webm' });
+  let racedPolicy = null;
+  const unhook = plane.storage.intercept(async (call) => {
+    if (call.method !== 'DELETE' || racedPolicy) return undefined;
+    const current = (await api('reviewer', 'GET', O('policy'))).policy;
+    racedPolicy = (await api('reviewer', 'POST', O('policy'), { idempotency_key: key('policy-longer'), expected_revision: current.revision,
+      policy: { ...POLICY, retention: { ...POLICY.retention, completed_days: 365 } }, reason: 'Journey test: a second owner lengthens retention during the purge.' })).policy;
+    return undefined;
+  });
+  const raced = await api('owner', 'POST', O('media/purge'), { idempotency_key: key('purge'), uploads: [keptTake.id] });
+  unhook();
+  eq([racedPolicy?.document.retention.completed_days, raced.purge.purged], [365, [keptTake.id]], 'a longer retention saved while the objects were deleted does not refuse the purge it raced');
+  eq([plane.storage.object(keptPath), (await plane.league.admin('select state from public.eup_media_uploads where id = $1', [keptTake.id]))[0].state], [null, 'purged'],
+    'evidence: the object is gone and the row says so');
+  const longer = (await api('owner', 'GET', O('policy'))).policy;
+  await api('owner', 'POST', O('policy'), { idempotency_key: key('policy-back'), expected_revision: longer.revision, policy: POLICY, reason: 'Journey test: back to the test policy.' });
+
   /* ================================================================== 13. the campaign withdrawn at the end */
   campaignA = (await api('owner', 'GET', O('campaigns'))).campaigns.find((c) => c.id === campaignA.id);
   const withdrawnA = (await api('owner', 'POST', O(`campaigns/${campaignA.id}/transition`), { idempotency_key: key('withdraw-campaign'), expected_revision: campaignA.revision, to: 'withdrawn' })).campaign;
@@ -715,7 +766,8 @@ try {
       if (status === 404) eq(answer, NOT_AVAILABLE, `${name} as ${who}: not available, nothing else`);
       if (status === 200) {
         eq(answer.ok, true, `${name} as ${who}: ok`);
-        if (spec?.kind === 'mutation' && route.action !== 'outbox.ack') committedHere += 1;
+        // A keyed decision the route makes first (the purge's media.purging, review 2026-11-10) commits its own event.
+        if (spec?.kind === 'mutation' && route.action !== 'outbox.ack') committedHere += 1 + route.before.filter((b) => C.OWNER_ACTIONS[b]?.kind === 'mutation').length;
         if (keep && who === ORDER[route.surface].at(-1)) keep(answer);
       }
       results.push([name, who, status]);

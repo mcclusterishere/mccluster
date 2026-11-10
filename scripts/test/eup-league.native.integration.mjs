@@ -16,7 +16,12 @@
 //    9. accept racing a requirements change never leaves an accepted assignment on a stale requirements revision;
 //   10. proof submission racing review: every review names one existing revision and its digest, none is reviewed twice;
 //   11. consent revocation racing publication: never a live publication on a revoked consent;
-//   12. submissions racing for one upload: one wins; a discard racing a submission that lists the upload: one wins.
+//   12. submissions racing for one upload: one wins; a discard racing a submission that lists the upload: one wins;
+//   13. an accepting review racing a campaign withdrawal: both complete (the credit's foreign key no longer takes the
+//       campaign last);
+//   14. media.purged racing a campaign withdrawal over two missions: both complete (one multi-proof lock order);
+//   15. a decided purge (media.purging) is recorded by media.purged although a longer retention committed meanwhile;
+//   16. answers print UTC (+00:00) whatever the session's time zone.
 // Loopback only (TCP on 127.0.0.1). Synthetic data only. It creates its own database and drops it; a server it
 // starts itself (PG_BIN or EMBEDDED_PG_MODULE) it also stops and removes. Three ways to give it a server:
 //   1. a disposable server already running on loopback:
@@ -481,6 +486,82 @@ try {
   const committed = (await rows('select seq from public.eup_outbox where seq > $1 order by seq', [firstSeq])).map((r) => Number(r.seq));
   ok(committed.length > ROUNDS * 4, `the mix wrote ${committed.length} events`);
   eq(consumed, committed, `a consumer paging the outbox by "after" during the mix read all ${committed.length} events in seq order and skipped none`);
+
+  // 13-16 (review 2026-11-10). Each interleaving is forced with a third session that holds one proof row in an open
+  // transaction (a plain row lock: it takes no outbox lock, so other commands still commit meanwhile), which fixes the
+  // order the other sessions queue in.
+  const blockedBy = (waiter, holder) => until(async () => (await admin.query('select pg_blocking_pids($1) as b', [waiter.pid])).rows[0].b.includes(holder.pid), `session ${waiter.pid} waits for ${holder.pid}`);
+  const blocked = (waiter) => until(async () => (await admin.query('select pg_blocking_pids($1) as b', [waiter.pid])).rows[0].b.length > 0, `session ${waiter.pid} waits`);
+  const holdProof = async (c, proof) => { await c.query('begin'); await c.query('select 1 from public.eup_proofs where id = $1 for update', [proof.id]); };
+  // Completed work with one sealed take whose retention for completed work has passed (the fixture keeps 2 days).
+  const completedTake = async (m, tester) => {
+    const seat = await enroll(tester, m);
+    const take = await sealAs(s0, tester, await member(s0, 'uploads.begin', { actor: tester, id: seat.id, document: { kind: 'audio', mime: 'audio/webm', bytes: 4 }, key: key('upload') }), 'b'.repeat(64));
+    const { accommodation: _none, ...words } = WORDS();
+    const proof = await submit(s0, tester, seat, { ...words, media: [{ upload_id: take.id, sha256: take.sha256 }] });
+    await reviewAs(s0, proof);
+    await admin.query(`update public.eup_assignments set completed_at = now() - interval '3 days' where id = $1`, [seat.id]);
+    return { seat, take, proof: (await rows('select * from public.eup_proofs where id = $1', [proof.id]))[0], mission: m };
+  };
+
+  // 13. An accepting review racing a campaign withdrawal. The credit's foreign key takes the campaign FOR KEY SHARE; the
+  //     review now locks the campaign first, so it can no longer be the last lock and close a cycle with the withdrawal
+  //     (campaign, then missions). Before: the withdrawal or the review died with 40P01.
+  const c13 = await newCampaign('review-vs-withdraw');
+  const m13 = await newMission(c13, 'review-vs-withdraw');
+  const seat13 = await enroll(TESTERS[8], m13);
+  const proof13 = await submit(s0, TESTERS[8], seat13);
+  await holdProof(s1, proof13); // X holds the proof
+  const review13 = outcome('review', reviewAs(s2, proof13));
+  await blockedBy(s2, s1);
+  const withdraw13 = outcome('withdraw', owner(s3, 'campaigns.transition', { actor: OWNER, id: c13.id, document: { to: 'withdrawn' }, revision: c13.revision, key: key('withdraw') }));
+  await blocked(s3);
+  await s1.query('commit');
+  eq([await review13, await withdraw13], ['review:ok', 'withdraw:ok'], 'an accepting review and a campaign withdrawal queued behind one proof: both complete, no 40P01');
+  eq((await rows('select count(*)::int as n from public.eup_mission_credits where assignment_id = $1', [seat13.id]))[0].n, 1, 'with the one credit kept');
+
+  // 14. media.purged racing a campaign withdrawal over two missions. The withdrawal locks each mission's proofs in turn,
+  //     missions in id order; the purge now locks its proofs in the same order (mission, then proof id). Before, it took
+  //     them in proof id order alone, so it could hold the later mission's proof while waiting for the earlier one's.
+  const c14 = await newCampaign('purge-vs-withdraw');
+  const works14 = [];
+  for (let i = 0; i < 8; i += 1) works14.push(await completedTake(await newMission(c14, `purge-${i}`), TESTERS[i % TESTERS.length]));
+  const byMission = [...works14].sort((p, q) => (p.mission.id < q.mission.id ? -1 : 1));
+  let pair14 = null; // an earlier mission whose proof sorts AFTER a later mission's proof
+  for (let i = 0; i < byMission.length && !pair14; i += 1) for (let j = i + 1; j < byMission.length && !pair14; j += 1) if (byMission[i].proof.id > byMission[j].proof.id) pair14 = [byMission[i], byMission[j]];
+  ok(pair14 !== null, 'two missions whose proof ids sort against their mission ids');
+  const [wx, wy] = pair14;
+  await holdProof(s1, wx.proof); // X holds the earlier mission's proof
+  const withdraw14 = outcome('withdraw', owner(s3, 'campaigns.transition', { actor: OWNER, id: c14.id, document: { to: 'withdrawn' }, revision: c14.revision, key: key('withdraw') }));
+  await blockedBy(s3, s1);
+  const purged14 = outcome('purged', owner(s2, 'media.purged', { actor: OWNER, document: { uploads: [wx.take.id, wy.take.id] }, key: key('purge') }));
+  await blocked(s2);
+  await s1.query('commit');
+  eq([await withdraw14, await purged14], ['withdraw:ok', 'purged:ok'], 'the purge and the campaign withdrawal over two missions both complete, no 40P01');
+  eq((await rows('select state from public.eup_media_uploads where id = any($1) order by id', [[wx.take.id, wy.take.id]])).map((r) => r.state), ['purged', 'purged'], 'and both uploads are recorded purged');
+
+  // 15. The purge decision (media.purging) is kept before the Worker deletes; a policy change that lengthens retention
+  //     and commits while media.purged waits for its row locks cannot refuse it any more. Before, media.purged re-read
+  //     the retention after its locks and answered 40001 with the objects already deleted.
+  const c15 = await newCampaign('purge-vs-policy');
+  const work15 = await completedTake(await newMission(c15, 'purge-vs-policy'), TESTERS[9]);
+  const purgeKey15 = key('purge');
+  eq((await owner(s0, 'media.purging', { actor: OWNER, document: { uploads: [work15.take.id] }, key: purgeKey15 })).uploads.map((u) => u.due), [true], 'the purge is decided while the upload is due');
+  await holdProof(s1, work15.proof); // X holds the proof the purge locks first
+  const purged15 = outcome('purged', owner(s2, 'media.purged', { actor: OWNER, document: { uploads: [work15.take.id] }, key: purgeKey15 }));
+  await blockedBy(s2, s1);
+  const policy15 = await owner(s3, 'policy.get', { actor: OWNER });
+  await owner(s3, 'policy.set', { actor: OWNER, document: { policy: { ...POLICY, retention: { ...POLICY.retention, completed_days: 30 } }, reason: 'Test fixture: a longer retention.' }, revision: policy15.revision, key: key('policy') });
+  await s1.query('commit');
+  eq(await purged15, 'purged:ok', 'a longer retention committed meanwhile does not refuse the decided purge');
+  eq((await rows('select state from public.eup_media_uploads where id = $1', [work15.take.id]))[0].state, 'purged', 'and the upload is recorded purged');
+  await owner(s0, 'policy.set', { actor: OWNER, document: { policy: POLICY, reason: 'Test fixture: back to the first policy.' }, revision: policy15.revision + 1, key: key('policy') });
+
+  // 16. Answers print UTC (+00:00) whatever the session's time zone: the three functions pin it.
+  await S[4].query(`set timezone = 'America/New_York'`);
+  const zoned16 = await member(S[4], 'me.get', { actor: TESTERS[8] });
+  await S[4].query('reset timezone');
+  ok(zoned16.assignments.length > 0 && zoned16.assignments.every((a) => C.RESULT_TIMESTAMP.test(a.created_at) && a.created_at.endsWith('+00:00')), 'a session in another time zone still reads +00:00 timestamps');
 
   // 7. Module drain: waits for an in-flight League write; afterwards new work is refused and reduce-only is admitted.
   const m5 = await newMission(campaign, 'drain');

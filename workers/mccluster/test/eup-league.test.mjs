@@ -53,6 +53,25 @@ test('mutations require an idempotency key and never reach storage without one',
   assert.equal(bad.status, 400); assert.equal(bad.body.reason, 'expected_revision_required'); assert.equal(plane.all().length, 0);
 });
 
+/* Review 2026-11-10: when the house-owner check itself fails (no house organisation, an upstream 5xx, a network
+   failure), an owner route answered 503 "unavailable" or 500 "error", reasons the contract does not list. */
+test('an owner check that cannot answer is 503 authorization_unavailable, a reason the contract lists; 401 and 403 pass through', async () => {
+  const plane = leaguePlane();
+  const failing = (error) => ({ ...identities(), requireHouseOwner: async () => { throw error; } });
+  for (const [label, error] of [['no house organisation', Object.assign(new Error('McCluster house organization is not configured'), { status: 503 })],
+    ['an upstream 500', Object.assign(new Error('upstream'), { status: 500 })], ['a network failure', new TypeError('fetch failed')]]) {
+    const r = await send(plane, owner('policy'), { ids: failing(error) });
+    assert.deepEqual([r.status, r.body.reason], [503, 'authorization_unavailable'], label);
+    assert.ok(Object.hasOwn(C.HTTP_REASONS, r.body.reason) && C.HTTP_REASONS[r.body.reason] === r.status, `${label}: the contract lists the answer`);
+    assert.doesNotMatch(JSON.stringify(r.body), /configured|upstream|fetch failed/, `${label}: no upstream text`);
+  }
+  for (const [status, reason] of [[401, 'authentication_required'], [403, 'owner_required']]) {
+    const r = await send(plane, owner('policy'), { ids: failing(Object.assign(new Error('refused'), { status })) });
+    assert.deepEqual([r.status, r.body.reason], [status, reason]);
+  }
+  assert.equal(plane.all().length, 0, 'no RPC and no storage call');
+});
+
 /* ------------------------------------------------------------------ rewritten: request shaping */
 
 test('every owner command goes to the one owner RPC with the acting owner, shaped by the route table', async () => {
@@ -296,12 +315,15 @@ test('review read: proofs.get at the revision asked for, then one signed read pe
   }
 });
 
-test('purge: media.due for exactly the uploads asked, refuse before deleting when one is not due, record media.purged only after every deletion', async () => {
+/* Rewritten deliberately (review 2026-11-10): the purge records its DECISION first (media.purging, with the request's
+   own key) and only then deletes, so a policy change between the deletion and media.purged can no longer strand a row
+   that claims a deleted object. It was media.due (a read) then delete then media.purged. */
+test('purge: media.purging decides exactly the uploads asked with the request key, refuses before deciding or deleting, and records media.purged only after every deletion', async () => {
   const rows = [uploadRow({ id: U(60), state: 'discarded' }), uploadRow({ id: U(61), state: 'purged' })];
   const due = (patch = {}) => ({ retention_evaluated: true, uploads: rows.map((row, i) => ({ id: row.id, tenant: row.tenant, assignment_id: row.assignment_id, ext: row.ext, kind: row.kind, state: row.state, due: i === 0, reason: i === 0 ? 'discarded' : null, due_at: i === 0 ? AT : null, ...patch })) });
   const result = { purged: [U(60)], already_purged: [U(61)], publications_withdrawn: [] };
-  const run = async (dueAnswer, storageHook) => {
-    const plane = leaguePlane({ answer: (call) => (call.body.p_action === 'media.due' ? dueAnswer : result) });
+  const run = async (decision, storageHook) => {
+    const plane = leaguePlane({ answer: (call) => (call.body.p_action === 'media.purging' ? (typeof decision === 'function' ? decision() : decision) : result) });
     plane.storage.store(pathOf(rows[0]), WEBM, { contentType: 'audio/webm' });
     if (storageHook) plane.storage.intercept(storageHook);
     const r = await send(plane, owner('media/purge'), { method: 'POST', body: { idempotency_key: KEY, uploads: [U(60), U(61).toUpperCase()] } });
@@ -309,21 +331,27 @@ test('purge: media.due for exactly the uploads asked, refuse before deleting whe
   };
   const ok = await run(due());
   assert.equal(ok.status, 200); assert.deepEqual(ok.body.purge, result);
-  assert.deepEqual(ok.plane.rpc().map((c) => [c.body.p_action, c.body.p_document, c.body.p_key]), [['media.due', { uploads: [U(60), U(61).toUpperCase()] }, null], ['media.purged', { uploads: [U(60), U(61).toUpperCase()] }, KEY]]);
+  assert.deepEqual(ok.plane.rpc().map((c) => [c.body.p_action, c.body.p_document, c.body.p_key]), [['media.purging', { uploads: [U(60), U(61).toUpperCase()] }, KEY], ['media.purged', { uploads: [U(60), U(61).toUpperCase()] }, KEY]]);
   assert.equal(ok.plane.storage.object(pathOf(rows[0])), null, 'the due object was deleted');
-  assert.ok(ok.plane.all().findIndex((c) => c.kind === 'storage' && c.call.method === 'DELETE') < ok.plane.all().findIndex((c) => c.kind === 'rpc' && c.body.p_action === 'media.purged'), 'deleted before recorded');
+  const order = ok.plane.all();
+  assert.ok(order.findIndex((c) => c.kind === 'rpc' && c.body.p_action === 'media.purging') < order.findIndex((c) => c.kind === 'storage' && c.call.method === 'DELETE'), 'decided before deleted');
+  assert.ok(order.findIndex((c) => c.kind === 'storage' && c.call.method === 'DELETE') < order.findIndex((c) => c.kind === 'rpc' && c.body.p_action === 'media.purged'), 'deleted before recorded');
 
-  const notDue = await run({ retention_evaluated: true, uploads: [{ ...due().uploads[0] }, { ...due().uploads[1], state: 'sealed' }] });
+  const notDue = await run(() => sqlError('40001'));
   assert.deepEqual([notDue.status, notDue.body.reason], [409, 'revision_conflict']);
+  assert.match(notDue.body.error, /nothing was decided or deleted/);
   assert.ok(notDue.plane.storage.object(pathOf(rows[0])), 'nothing was deleted'); assert.equal(notDue.plane.storageCalls().length, 0);
-  assert.deepEqual(notDue.plane.rpc().map((c) => c.body.p_action), ['media.due'], 'media.purged is never called');
+  assert.deepEqual(notDue.plane.rpc().map((c) => c.body.p_action), ['media.purging'], 'media.purged is never called');
+
+  const undecided = await run({ retention_evaluated: true, uploads: [{ ...due().uploads[0] }, { ...due().uploads[1], state: 'sealed' }] });
+  assert.equal(undecided.status, 503, 'a decision that answers a row it never decides is malformed'); assert.equal(undecided.plane.storageCalls().length, 0);
 
   const storageDown = await run(due(), (call) => (call.method === 'DELETE' ? new Response('no', { status: 500 }) : undefined));
   assert.deepEqual([storageDown.status, storageDown.body.reason], [503, 'storage_unavailable']);
-  assert.deepEqual(storageDown.plane.rpc().map((c) => c.body.p_action), ['media.due'], 'storage failed: nothing recorded');
+  assert.deepEqual(storageDown.plane.rpc().map((c) => c.body.p_action), ['media.purging'], 'storage failed: nothing recorded as purged (the decision stays, so the next try completes it)');
 
   const short = await run({ retention_evaluated: true, uploads: [due().uploads[0]] });
-  assert.equal(short.status, 503, 'a due answer that does not name every upload asked for is malformed'); assert.equal(short.plane.storageCalls().length, 0);
+  assert.equal(short.status, 503, 'a decision that does not name every upload asked for is malformed'); assert.equal(short.plane.storageCalls().length, 0);
 });
 
 /* ------------------------------------------------------------------ the route table, walked */
@@ -408,7 +436,7 @@ function walkPlane() {
         case 'uploads.get': return call.body.p_document?.sign ? sealedRow(plane.storage, uploadRow({ id: U(7) }), SHA) : uploadRow({ id: U(7) });
         case 'uploads.discard': return uploadRow({ id: U(7), state: 'discarded', discarded_at: AT });
         case 'proofs.get': return { ...sampleShape('proof_with_media'), id: U(7), tenant: TENANT, assignment_id: U(7), participant: MEMBER, moderation_state: 'clear', media: [], uploads: [] };
-        case 'media.due': return { retention_evaluated: true, uploads: [{ id: U(60), tenant: TENANT, assignment_id: U(7), ext: 'webm', kind: 'audio', state: 'discarded', due: true, reason: 'discarded', due_at: AT }] };
+        case 'media.due': case 'media.purging': return { retention_evaluated: true, uploads: [{ id: U(60), tenant: TENANT, assignment_id: U(7), ext: 'webm', kind: 'audio', state: 'discarded', due: true, reason: 'discarded', due_at: AT }] };
         default: return undefined;
       }
     }

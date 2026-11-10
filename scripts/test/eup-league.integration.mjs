@@ -227,7 +227,10 @@ try {
   };
   const LENGTHS = [0, 1, 2, 39, 40, 41, 63, 64, 65, 79, 80, 81, 120, 121, 128, 129, 180, 181, 200, 201, 500, 501, 2000, 2001, 4000, 4001, 8000, 8001, 10000, 10001];
   const NUMBERS = [-1, 0, 1, 2, 1.5, 3, 5, 12, 13, 24, 25, 30, 50, 51, 200, 201, 366, 3600, 3601, 3650, 3651, 100000, 100001, 104857600, 104857601, 2147483646, 2147483647, 9007199254740991, 9007199254740992, 1e21];
-  const TIMES = ['2027-01-01', '2027-01-01T00:00:00+02:00', '2027-13-01T00:00:00Z', 'never', '2027-01-01T00:00:00.123456Z', '2027-01-01T00:00:00.1234567Z', '2027-06-30T23:59:59Z', '2027-00-10T00:00:00Z', '2027-01-32T00:00:00Z', '2027-01-01T00:60:00Z', ' 2027-01-01T00:00:00Z'];
+  // The calendar-impossible instants a permissive date parser rolls over (review 2026-11-10): the contract's checker
+  // must refuse them as the SQL does, or the Worker's early check and the SQL disagree.
+  const TIMES = ['2027-01-01', '2027-01-01T00:00:00+02:00', '2027-13-01T00:00:00Z', 'never', '2027-01-01T00:00:00.123456Z', '2027-01-01T00:00:00.1234567Z', '2027-06-30T23:59:59Z', '2027-00-10T00:00:00Z', '2027-01-32T00:00:00Z', '2027-01-01T00:60:00Z', ' 2027-01-01T00:00:00Z',
+    '2027-02-30T00:00:00Z', '2027-01-01T24:00:00Z', '0000-01-01T00:00:00Z', '2027-02-29T00:00:00Z', '2100-02-29T00:00:00Z', '2027-04-31T23:59:59Z', '2028-02-29T00:00:00Z', '0001-01-01T00:00:00Z'];
   function* mutations(root) {
     const walk = function* (value, path) {
       const at = path.join('.') || '$';
@@ -673,7 +676,8 @@ try {
   }
   // Every contract action is implemented: with nothing to act on, each answers something else than "unknown action"
   // or "not implemented". (The first pass deferred 11 owner and 2 member actions with 0A000; none is left.)
-  eq([Object.keys(C.OWNER_ACTIONS).length, Object.keys(C.MEMBER_ACTIONS).length], [35, 15], 'the contract has 35 owner and 15 member actions');
+  // 36 owner actions since the review of 2026-11-10 added media.purging (the purge decision, kept before any deletion).
+  eq([Object.keys(C.OWNER_ACTIONS).length, Object.keys(C.MEMBER_ACTIONS).length], [36, 15], 'the contract has 36 owner and 15 member actions');
   for (const [surface, call, actor] of [['owner', owner, OWNER], ['member', member, TESTER]]) for (const action of Object.keys(surface === 'owner' ? C.OWNER_ACTIONS : C.MEMBER_ACTIONS)) {
     const answer = await call(action, { actor, id: U(404), document: { receipt_probe: true }, revision: 1, key: key('probe') }).then(() => ({ code: 'ok', message: '' }), (e) => e);
     ok(answer.code !== '0A000' && !/Unknown action|not implemented/.test(answer.message), `${surface} ${action} is implemented (${answer.code})`);
@@ -1804,6 +1808,104 @@ try {
   eq(await n('eup_command_receipts', `result::text ~ 'Test fixture appeal|a second appeal|accommodation request|Verse one|why I apply'`), 0, 'no stored result holds an appeal statement, an accommodation note, lyrics or an application statement');
   const memberResultsNow = (await admin(`select result from public.eup_command_receipts where surface = 'member'`)).map((r) => JSON.stringify(r.result));
   ok(memberResultsNow.length > memberResults.length && memberResultsNow.every((r) => !C.FOREIGN_ID_FIELDS.some((f) => r.includes(`"${f}"`))), 'no member result names another account, publications and appeals included');
+
+  /* ================================================================== H. findings of the review of 2026-11-10 */
+  { // its own block: the names below are local to it
+    const H = await seedSongMission(league, { slug: 'review-findings', invite: TESTER, policy: null, rubric: RUBRIC });
+    await owner('audience.grants.grant', { actor: OWNER, id: H.campaign.id, document: { account: TESTER_B }, key: key('grant') });
+    const mediaWork = async (actor, mission, digest) => {
+      const seat = await enroll(actor, mission, OWNER);
+      const take = await sealUpload(actor, seat, AUDIO, 'ebml', digest);
+      return { seat, take, proof: await submitProof(actor, seat, mediaProof([take])) };
+    };
+    const reviewRead = (proof, media = true) => owner('proofs.get', { actor: OWNER, id: proof.id, document: { revision: proof.revision, media } });
+    const privateReview = async (proof) => (await owner('consents.list', { actor: OWNER, id: proof.id })).filter((x) => x.purpose === 'private_review').map((x) => x.state);
+
+    // H1. The review read of a proof (media true: the storage identity a signed read is made from) rests on the open
+    // private_review consent of that revision. It ends when the participant withdraws, or a mission or campaign
+    // withdrawal releases the work, and the reviewer's signed read ends with it; the plain read of the record answers.
+    // Completed work keeps its consent, and its reviewers keep reading.
+    const leaving = await mediaWork(TESTER, await newMission(H.campaign, 'h1-leaving'), 'c');
+    ok((await reviewRead(leaving.proof)).uploads[0].storage !== null, 'H1: before the withdrawal the reviewer reads the storage identity a signed read needs');
+    await member('assignments.withdraw', { actor: TESTER, id: leaving.seat.id, document: {}, key: key('withdraw') });
+    eq(await privateReview(leaving.proof), ['revoked'], 'H1: withdrawing revoked the private_review consent');
+    await rejects(() => reviewRead(leaving.proof), 'EU015', 'H1: after the participant withdrew, the review read is refused: the consent it rests on ended');
+    const plainRead = await reviewRead(leaving.proof, false);
+    eq([plainRead.id, plainRead.uploads[0].storage], [leaving.proof.id, null], 'H1: the plain read of the record still answers, without a storage identity');
+    ok(C.OWNER_ACTIONS['proofs.get'].errors.includes('EU015') && C.errorFor('EU015', 'owner').status === 409, 'H1: the contract lists EU015 for proofs.get (409 consent_scope)');
+    const missionGone = await newMission(H.campaign, 'h1-mission-gone');
+    const cutByMission = await mediaWork(TESTER, missionGone, 'd');
+    await move(missionGone, 'withdrawn');
+    await rejects(() => reviewRead(cutByMission.proof), 'EU015', 'H1: a mission withdrawal releases the work, and the review read ends with it');
+    const HC = await seedSongMission(league, { slug: 'review-findings-gone', invite: TESTER, policy: null, rubric: RUBRIC });
+    const cutByCampaign = await mediaWork(TESTER, HC.mission, 'e');
+    await moveCampaign(HC.campaign, 'withdrawn');
+    await rejects(() => reviewRead(cutByCampaign.proof), 'EU015', 'H1: so does a campaign withdrawal');
+    const kept = await mediaWork(TESTER_B, await newMission(H.campaign, 'h1-completed'), 'f');
+    eq((await review(kept.proof, {}, REVIEWER)).state, 'accepted', 'H1: completed work');
+    ok((await reviewRead(kept.proof)).uploads[0].storage !== null && (await privateReview(kept.proof)).join() === 'open', 'H1: keeps its open consent, and its reviewers keep reading it');
+
+    // H2. Publication consents on one proof are bounded (EU017). Without the bound one participant's grant and revoke
+    // churn grew the consent table, the outbox and the receipts without limit, and pushed later consents out of an owner
+    // list capped at LIMITS.list.rows.
+    const churn = C.LIMITS.rate.publish_consents_per_proof;
+    ok(Number.isSafeInteger(churn) && churn >= 2, 'H2: the contract bounds publication consents per proof');
+    for (let i = 0; i < churn; i += 1) {
+      const granted = await consentTo(TESTER_B, kept.proof);
+      await member('consents.revoke', { actor: TESTER_B, id: granted.id, document: {}, key: key('revoke') });
+    }
+    await silent(() => rejects(() => consentTo(TESTER_B, kept.proof), 'EU017', `H2: the ${churn + 1}th publication consent on one proof is refused`), 'H2: a refused consent');
+    eq(await n('eup_consents', `proof_id = '${kept.proof.id}' and purpose = 'publish_proof'`), churn, 'H2: and nothing was written');
+    ok(C.MEMBER_ACTIONS['consents.grant'].errors.includes('EU017') && C.errorFor('EU017', 'member').status === 429, 'H2: the contract lists EU017 for consents.grant (429 on a member route)');
+
+    // H3. A uuid inside a document is lower case once it is stored or hashed (PATTERNS.uuid), whatever case was sent.
+    const caseSeat = await enroll(TESTER, await newMission(H.campaign, 'h3-uuid-case'), OWNER);
+    let caseTake = await sealUpload(TESTER, caseSeat, AUDIO, 'ebml', '1');
+    while (caseTake.id === caseTake.id.toUpperCase()) { await discard(TESTER, caseTake); caseTake = await sealUpload(TESTER, caseSeat, AUDIO, 'ebml', '1'); } // an id with hex letters
+    const UPPER = caseTake.id.toUpperCase();
+    await member('drafts.save', { actor: TESTER, id: caseSeat.id, document: { media: [UPPER] }, revision: 0, key: key('draft') });
+    eq((await me(TESTER)).assignments.find((x) => x.id === caseSeat.id).draft.document.media, [caseTake.id], 'H3: a draft that names an upload in upper case stores it in lower case');
+    const caseKey = key('proof');
+    const upperProof = await member('proofs.submit', { actor: TESTER, id: caseSeat.id, document: mediaProof([{ id: UPPER, sha256: caseTake.sha256 }]), revision: 0, key: caseKey });
+    eq((await one('select document from public.eup_proof_revisions where proof_id = $1', [upperProof.id])).document.media[0].upload_id, caseTake.id, 'H3: the submitted proof stores the upload id in lower case');
+    eq(await member('proofs.submit', { actor: TESTER, id: caseSeat.id, document: mediaProof([caseTake]), revision: 0, key: caseKey }), upperProof, 'H3: the same request with the id in lower case is the same request: it replays, never EU003');
+    const HEX_ACCOUNT = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+    await admin(`insert into auth.users(id) values ('${HEX_ACCOUNT}')`);
+    const grantKey = key('grant');
+    const upperGrant = await owner('audience.grants.grant', { actor: OWNER, id: H.campaign.id, document: { account: HEX_ACCOUNT.toUpperCase() }, key: grantKey });
+    eq(await owner('audience.grants.grant', { actor: OWNER, id: H.campaign.id, document: { account: HEX_ACCOUNT }, key: grantKey }), upperGrant, 'H3: an owner document is normalised the same way: the lower-case resend replays');
+
+    // H4. Result timestamps: UTC in the contract's result form (RESULT_TIMESTAMP), whatever the session's time zone.
+    const stamp = (v) => typeof v === 'string' && C.RESULT_TIMESTAMP.test(v);
+    ok(stamp((await me(TESTER)).assignments[0].created_at), 'H4: a member read prints its timestamps in the contract result form');
+    const zoned = await as('service_role', async () => {
+      await db.exec(`begin; set local timezone = 'America/New_York'`);
+      return (await db.query(`select public.${C.RPC.member}('me.get', $1, '', null, null, null) as r`, [TESTER])).rows[0].r;
+    });
+    ok(zoned.assignments.length > 0 && zoned.assignments.every((x) => stamp(x.created_at) && x.created_at.endsWith('+00:00')), 'H4: with the session in another time zone the functions still print UTC (+00:00)');
+
+    // H5. The purge decision is kept before anything is deleted (media.purging). A policy change after the decision (a
+    // longer retention) cannot make a decided upload "not due" again, so media.purged still records what the Worker
+    // deleted, and nothing is published on media whose purge is decided.
+    const purgeWork = await mediaWork(TESTER_B, await newMission(H.campaign, 'h5-purge'), '2');
+    await review(purgeWork.proof, {}, REVIEWER);
+    await admin(`update public.eup_assignments set completed_at = now() - interval '3 days' where id = $1`, [purgeWork.seat.id]);
+    const [dueBefore] = await dueOf([purgeWork.take]);
+    eq([dueBefore.due, dueBefore.reason], [true, 'retention_completed'], 'H5: completed work past its retention is due');
+    const purgeKey = key('purge');
+    const { result: decided, event: decidedEvent } = await evented('media.purging', () => owner('media.purging', { actor: OWNER, document: { uploads: [purgeWork.take.id] }, key: purgeKey }));
+    eq([decided.uploads.map((x) => [x.id, x.due]), decidedEvent.payload.upload_ids], [[[purgeWork.take.id, true]], [purgeWork.take.id]], 'H5: the decision answers the due list and names the decided upload in its event');
+    await setPolicy({ ...LEAGUE_POLICY, retention: { ...LEAGUE_POLICY.retention, completed_days: 30 } }); // a second owner lengthens retention while the Worker deletes
+    const [stillDue] = await dueOf([purgeWork.take]);
+    eq([stillDue.due, stillDue.reason], [true, 'retention_completed'], 'H5: a decided upload stays due under the longer retention');
+    const purgeConsent = await consentTo(TESTER_B, purgeWork.proof);
+    await rejects(() => decide(purgeWork.proof, { decision: 'published', consent_id: purgeConsent.id }), '40001', 'H5: nothing is published on media whose purge is decided');
+    eq((await owner('media.purged', { actor: OWNER, document: { uploads: [purgeWork.take.id] }, key: purgeKey })).purged, [purgeWork.take.id], 'H5: media.purged records the decided upload whatever the policy says now');
+    const notYet = await mediaWork(TESTER, await newMission(H.campaign, 'h5-not-due'), '3');
+    await silent(() => rejects(() => owner('media.purging', { actor: OWNER, document: { uploads: [notYet.take.id] }, key: key('purge') }), '40001', 'H5: an upload that is not due is not decided'), 'H5: a refused decision');
+    eq((await one('select purge_decided_at from public.eup_media_uploads where id = $1', [notYet.take.id])).purge_decided_at, null, 'H5: and nothing was written');
+    await setPolicy(LEAGUE_POLICY);
+  }
 
   /* ================================================================== F. not installed, and no League policy */
   const bare = await createLeagueDatabase({ enable: false });
