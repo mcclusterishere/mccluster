@@ -16,7 +16,8 @@
 #   3. under the guard: the member's row writes are refused; the upload flow
 #      still works end to end; every member-token write to the object is
 #      refused; the whole behaviour test passes
-#   4. the rollback after use: production's shape and behaviour again
+#   4. the rollback after use: production's shape and behaviour again (the
+#      record of the behaviour test's merge is kept, still append-only)
 #   5. the guard again: step 3's flow again
 #
 # Two ways to run it. Both need Docker; neither is part of `npm test`; nothing
@@ -29,9 +30,10 @@
 #        SUPABASE_DB_IMAGE=supabase/postgres:17.11.0.018 scripts/test-network-media-storage-flow.sh
 #      There every statement, the guard and its rollback included, runs as that
 #      image's `postgres` role: not a superuser, not the owner of storage.objects
-#      (supabase_storage_admin is, and the Storage API connects as it), holding
-#      MAINTAIN like production, and under Supabase's default privileges. The
-#      fixture's grants are then production's to the letter (authenticated=damrw).
+#      (supabase_storage_admin is, and the Storage API connects as it), under
+#      Supabase's own default privileges as production's applied hardening
+#      migrations changed them. The fixture's grants are then production's to
+#      the letter (authenticated=damrw), MAINTAIN included.
 #
 # STORAGE_API_IMAGE (default supabase/storage-api:v1.90.2), STORAGE_API_PORT
 # (default 5055) and SUPABASE_DB_PORT (default 54329) can be overridden.
@@ -123,12 +125,6 @@ echo "the Storage API is up on its own schema ($(nm_q "$DB" 'select count(*) fro
 
 # The table, the bucket and the Storage policies: the applied files' own DDL.
 nm_applied_ddl "$DB"
-if [ -n "${SUPABASE_DB_IMAGE:-}" ]; then
-  # Supabase's default privileges hand a new table to authenticated in full.
-  # Production's table does not hold these three (evidence: authenticated=damrw).
-  nm_q "$DB" "revoke truncate, references, trigger on public.network_media_assets from authenticated" >/dev/null
-  export MEDIA_EVIDENCE_EXACT_GRANTS=1
-fi
 nm_apply "$DB" "$NM_T.refs.stub.sql"
 nm_apply "$DB" "$NM_T.seed.sql"
 flow() { STORAGE_URL="http://127.0.0.1:$PORT" STORAGE_JWT_SECRET="$SECRET" PGDATABASE="$DB" \

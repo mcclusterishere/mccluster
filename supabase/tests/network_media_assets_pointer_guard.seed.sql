@@ -1,8 +1,12 @@
 -- The rows production could hold the day the guard is applied, written BEFORE
 -- it: three people, their logins, uploads recorded the way the media function
--- records them (service role), the things that name those uploads, and five
--- legacy rows a member could have written while the table was theirs to write.
--- Applied by scripts/test-network-media-pointer-guard-db.sh. Scratch database only.
+-- records them (service role), the things that name those uploads, and two
+-- rows that pass the canonical shape but name somebody else's upload, which a
+-- member could write while the table was theirs. (Rows that are not canonical
+-- at all are in network_media_assets_pointer_guard.legacy.sql: the guard
+-- refuses to apply while one exists.)
+-- Applied by scripts/test-network-media-pointer-guard-db.sh and
+-- scripts/test-network-media-storage-flow.sh. Scratch database only.
 --
 -- Logins (auth.users.id) and people (m_people.id):
 --   A  aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa  ->  a0000000-0000-4000-8000-00000000000a
@@ -26,7 +30,6 @@ grant all on public.m_auth_user_links, public.m_people, public.m_devices, public
 
 insert into public.network_posts (id, author_m_uid, body) values
   ('d0000000-0000-4000-8000-0000000000a1', 'a0000000-0000-4000-8000-00000000000a', 'A''s post with a photo'),
-  ('d0000000-0000-4000-8000-0000000000a2', 'a0000000-0000-4000-8000-00000000000a', 'A''s post carrying a legacy row'),
   ('d0000000-0000-4000-8000-0000000000a3', 'a0000000-0000-4000-8000-00000000000a', 'A''s second post');
 
 -- Uploads as upload-url and finalize write them: mnet-media/<login>/<uuid>-<name>.
@@ -53,17 +56,12 @@ insert into public.network_media_assets (id, owner_m_uid, bucket_id, object_path
   ('e0000000-0000-4000-8000-0000000000c1', 'c0000000-0000-4000-8000-00000000000c', 'mnet-media', 'cccccccc-cccc-4ccc-8ccc-cccccccccccc/10000000-0000-4000-8000-0000000000c1-one.png', 'image', 'image/png', 1200, 'ready', null),
   ('e0000000-0000-4000-8000-0000000000c2', 'c0000000-0000-4000-8000-00000000000c', 'mnet-media', 'cccccccc-cccc-4ccc-8ccc-cccccccccccc/10000000-0000-4000-8000-0000000000c2-two.mp4', 'video', 'video/mp4', 1300, 'ready', null);
 
--- LEGACY: rows a member could write while the table was theirs.
+-- LEGACY, canonical in shape: rows a member could write while the table was
+-- theirs, each naming B's upload. Nothing signs them. They pass the CHECK.
 insert into public.network_media_assets (id, owner_m_uid, bucket_id, object_path, media_type, mime_type, status, post_id) values
-  -- not canonical: a hand-made path, named by a clipping source
-  ('e0000000-0000-4000-8000-00000000001a', 'a0000000-0000-4000-8000-00000000000a', 'mnet-media', 'regress/clip-source.mp3', 'audio', 'audio/mpeg', 'ready', null),
-  -- not canonical: another private bucket (the pointer the signing fix refuses), attached to A's post
-  ('e0000000-0000-4000-8000-00000000001b', 'a0000000-0000-4000-8000-00000000000a', 'mcc-gated-audio', 'direct-sales/unreleased-master.wav', 'audio', 'audio/wav', 'attached', 'd0000000-0000-4000-8000-0000000000a2'),
-  -- canonical shape, somebody else's prefix: A's row pointing into B's uploads, named by a proof
+  -- A's row pointing into B's uploads, named by a proof
   ('e0000000-0000-4000-8000-00000000001c', 'a0000000-0000-4000-8000-00000000000a', 'mnet-media', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb/10000000-0000-4000-8000-00000000001c-theirs.png', 'image', 'image/png', 'ready', null),
-  -- C's own legacy rows: neither can follow a merge. One is not canonical; the
-  -- other is canonical but names B's upload, and B's login is nobody's but B's.
-  ('e0000000-0000-4000-8000-00000000001d', 'c0000000-0000-4000-8000-00000000000c', 'mnet-media', 'old/c-upload.png', 'image', 'image/png', 'ready', null),
+  -- C's row pointing into B's uploads: it must never follow a merge
   ('e0000000-0000-4000-8000-00000000001e', 'c0000000-0000-4000-8000-00000000000c', 'mnet-media', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb/10000000-0000-4000-8000-00000000001e-c-points-at-b.png', 'image', 'image/png', 'ready', null);
 
 -- What names them.
@@ -73,8 +71,7 @@ insert into public.action_proofs (id, user_id, metadata, status) values
   ('f0000000-0000-4000-8000-000000000002', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '{"asset_id":"e0000000-0000-4000-8000-0000000000f2","media_type":"video"}', 'verified'),
   ('f0000000-0000-4000-8000-000000000003', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '{"asset_id":"E0000000-0000-4000-8000-00000000001C","media_type":"image"}', 'pending');
 insert into public.action_clip_assets (id, network_media_asset_id) values
-  ('f0000000-0000-4000-8000-000000000004', 'e0000000-0000-4000-8000-0000000000f3'),
-  ('f0000000-0000-4000-8000-000000000005', 'e0000000-0000-4000-8000-00000000001a');
+  ('f0000000-0000-4000-8000-000000000004', 'e0000000-0000-4000-8000-0000000000f3');
 insert into public.action_antisocial_levels (assignment_id, level, media_asset_id, status) values
   ('f0000000-0000-4000-8000-000000000006', 1, 'e0000000-0000-4000-8000-0000000000f4', 'verified');
 

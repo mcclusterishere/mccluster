@@ -39,4 +39,19 @@ nm_same() {
 nm_evidence()  { node scripts/test/support/media-asset-evidence.mjs "$1" "$2" "$NM_EVIDENCE"; }
 nm_attacks()   { nm_notices "$1" -v after="$2" -f "$NM_T.attacks.sql"; }
 nm_behaviour() { nm_notices "$1" -v cases="$(cat "$NM_T.cases.json")" -f "$NM_T.behaviour.sql"; }
-nm_count()     { psql -qAt -F ' ' -v ON_ERROR_STOP=1 -d "$1" -f scripts/db/media-asset-legacy-count.sql; }
+# The guard's precheck (21 numbers) and the media-signing fix's legacy count (7:
+# assets, not_canonical, prefix_not_linked_to_owner, named,
+# named_and_no_longer_signed, named_ids, named_ids_without_a_row).
+nm_count()     { psql -qAt -F ' ' -v ON_ERROR_STOP=1 -d "$1" -f scripts/db/media-asset-pointer-guard-precheck.sql; }
+nm_legacy()    { psql -qAt -F ' ' -v ON_ERROR_STOP=1 -d "$1" -f scripts/db/media-asset-legacy-count.sql; }
+# Both on the same rows, against what is expected, and against each other on the
+# four numbers they share: rows, not canonical, prefix not linked, and unsigned
+# rows that a proof, a level, a case or a clipping source names.
+nm_counts() {  # database, when, expected precheck, expected legacy count
+  local pre legacy
+  pre="$(nm_count "$1")"; legacy="$(nm_legacy "$1")"
+  [ "$pre" = "$3" ] || nm_fail "the precheck $2: $pre"
+  [ "$legacy" = "$4" ] || nm_fail "the legacy count $2: $legacy"
+  [ "$(echo "$pre" | cut -d' ' -f1,3,4,10)" = "$(echo "$legacy" | cut -d' ' -f1,2,3,5)" ] \
+    || nm_fail "the precheck and the legacy count disagree $2: $pre / $legacy"
+}

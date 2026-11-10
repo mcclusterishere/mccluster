@@ -39,7 +39,23 @@ create function auth.role() returns text language sql stable as $$
                   nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role')::text
 $$;
 grant execute on function auth.uid(), auth.role() to anon, authenticated, service_role;
+
+-- Supabase's default privileges for the role that runs migrations: whatever it
+-- creates in public is handed to the three API roles.
+alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
+alter default privileges in schema public grant all on functions to anon, authenticated, service_role;
+alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
 \endif
+
+-- ...as production changed them before the table under test was created
+-- (applied: 20260913034132_harden_security_definer_execution_surface.sql,
+-- 20260919113319_revoke_client_ddl_table_privileges.sql and
+-- 20260919114112_client_table_privilege_hardening.sql). With these, the applied
+-- DDL leaves the table's grants as production's evidence has them, and the
+-- table and the functions the candidate creates start out as open as they
+-- would in production: a revoke the candidate forgot shows here.
+alter default privileges in schema public revoke execute on functions from public, anon, authenticated;
+alter default privileges in schema public revoke truncate, references, trigger on tables from anon, authenticated;
 
 \if :{?real_storage}
 -- scripts/test-network-media-storage-flow.sh: the real Storage API creates and

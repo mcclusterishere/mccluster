@@ -8,7 +8,7 @@
    write while the guard is pending, or after it is applied, and this fails.
 
    Without a database: the pending-only status, the one canonical rule in
-   every place it is written (the CHECK, the helper, the legacy count, the
+   every place it is written (the CHECK, the helper, the precheck, the
    media function's storage-path.mjs and, where present, the Worker's twin),
    the shape of the SQL, a rollback that is the applied migration's own
    statements, and the registration. The SQL's behaviour, on PostgreSQL:
@@ -29,7 +29,8 @@ const NAME = 'network_media_assets_pointer_guard_v1';
 const PENDING = read(`supabase/pending/${NAME}.sql`);
 const ROLLBACK = read(`supabase/pending/${NAME}.rollback.sql`);
 const MIGRATION = read('supabase/migrations/20260920071811_mnet_real_network_v1.sql');
-const COUNT = read('scripts/db/media-asset-legacy-count.sql');
+const COUNT = read('scripts/db/media-asset-pointer-guard-precheck.sql');
+const LEGACY_COUNT = read('scripts/db/media-asset-legacy-count.sql'); // the media-signing fix's own count, kept byte for byte
 const EDGE = read('supabase/functions/mnet-media/index.ts');
 const CASES = JSON.parse(read('supabase/tests/network_media_assets_pointer_guard.cases.json'));
 const sql = code(PENDING);
@@ -49,12 +50,12 @@ test('the guard is pending only: not a migration, not in the ledger, not in the 
   assert.match(PENDING, /^-- NETWORK MEDIA ASSETS POINTER GUARD V1 \(pending; NOT applied in production\)/);
 });
 
-test('one canonical rule: the CHECK, the helper and the legacy count carry the same pattern, and it is the media function\'s rule case for case', async () => {
+test('one canonical rule: the CHECK, the helper and the precheck carry the same pattern, and it is the media function\'s rule case for case', async () => {
   const UUID = '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}';
   const expected = `^${UUID}/${UUID}-[A-Za-z0-9._-]{1,180}$`;
   const patterns = (text) => [...text.matchAll(/(?:object_path|p_path) ~ '([^']+)'/g)].map((m) => m[1]);
   assert.deepEqual(patterns(sql), [expected, expected], 'the helper function and the CHECK, in that order');
-  assert.deepEqual(patterns(code(COUNT)), [expected], 'the legacy count');
+  assert.deepEqual(patterns(code(COUNT)), [expected], 'the precheck');
   for (const text of [sql, code(COUNT)]) {
     assert.doesNotMatch(text, /object_path\s*~\*|p_path\s*~\*|\bilike\b|\[\[:/i, 'case-sensitive, spelled-out classes: no locale-dependent matching');
     assert.equal((text.match(/= 'mnet-media'/g) || []).length >= 1, true);
@@ -79,9 +80,15 @@ test('one canonical rule: the CHECK, the helper and the legacy count carry the s
   assert.match(EDGE, /\.slice\(0,180\)\.replace\(\/\[\^a-zA-Z0-9\._-\]\+\/g,"-"\)/, 'cleanName keeps a name inside [A-Za-z0-9._-]{1,180}');
 });
 
-test('the guard takes the write from members, pins the pointer for every role, and changes nothing else', () => {
-  assert.match(sql, /^\s*begin;\s*set local lock_timeout = '5s';/, 'one transaction, a short lock wait');
+test('the guard takes the write from members, lets no role update the pointer, and changes nothing else', () => {
+  // one transaction, a short lock wait, and the strongest lock first so nothing below upgrades one
+  assert.match(sql, /^\s*begin;\s*set local lock_timeout = '5s';\s*lock table public\.network_media_assets in access exclusive mode;/);
   assert.match(sql, /commit;\s*$/);
+  // it refuses to apply while a non-canonical row exists (NOT VALID would freeze it), before it changes anything else on the table
+  const refusal = sql.indexOf("raise exception 'network_media_assets_pointer_guard_v1 was not applied: % row(s) of network_media_assets are not canonical uploads'");
+  assert.ok(refusal > 0, 'the refusal');
+  assert.match(flat(sql.slice(0, refusal)), /select count\(\*\) into v_rows from public\.network_media_assets a where public\.network_media_canonical_uploader\(a\.bucket_id, a\.object_path\) is null; if v_rows > 0 then$/);
+  for (const later of ['create trigger', 'add constraint', 'drop policy', 'revoke insert']) assert.ok(sql.indexOf(later) > refusal, `${later} comes after the refusal`);
   assert.match(flat(sql), /revoke insert, update, delete, truncate, references, trigger on public\.network_media_assets from public, anon, authenticated;/);
   for (const op of ['insert', 'update', 'delete']) assert.ok(sql.includes(`drop policy if exists network_media_owner_${op} on public.network_media_assets;`), op);
   assert.ok(!sql.includes('network_media_owner_read'), 'members keep reading their own rows');
@@ -96,8 +103,23 @@ test('the guard takes the write from members, pins the pointer for every role, a
   assert.doesNotMatch(guard.slice(0, guard.indexOf('as $$')), /security definer/i, 'SECURITY INVOKER: current_user is the statement\'s role');
   assert.match(guard, /if current_user in \('anon', 'authenticated'\) then\s+raise exception 'network_media_assets_server_write_only'/);
   assert.match(flat(guard), /if new\.id is distinct from old\.id or new\.bucket_id is distinct from old\.bucket_id or new\.object_path is distinct from old\.object_path then raise exception 'network_media_asset_pointer_immutable'/);
-  assert.match(flat(guard), /if new\.owner_m_uid is distinct from old\.owner_m_uid and not public\.network_media_owner_move_recorded\(old\.id, old\.owner_m_uid, new\.owner_m_uid\) then raise exception 'network_media_asset_owner_immutable'/);
+  // the owner moves only with the merge path's record of this move AND only to the person who holds the uploading login
+  assert.match(flat(guard), /if new\.owner_m_uid is distinct from old\.owner_m_uid and not \(public\.network_media_owner_move_recorded\(old\.id, old\.owner_m_uid, new\.owner_m_uid\) and public\.network_media_upload_owned_by\(new\.bucket_id, new\.object_path, new\.owner_m_uid\)\) then raise exception 'network_media_asset_owner_immutable'/);
   assert.match(flat(sql), /create trigger network_media_assets_guard_trg before insert or update or delete on public\.network_media_assets for each row execute function public\.network_media_assets_guard\(\);/);
+  // TRUNCATE fires no row trigger: the same function refuses a member there too, and the record of moves refuses everyone
+  assert.match(flat(sql), /create trigger network_media_assets_guard_truncate_trg before truncate on public\.network_media_assets for each statement execute function public\.network_media_assets_guard\(\);/);
+  assert.ok(guard.indexOf("if tg_op = 'TRUNCATE' then") > guard.indexOf("raise exception 'network_media_assets_server_write_only'"), 'the member refusal comes before the TRUNCATE branch');
+  assert.match(flat(sql), /create trigger network_media_asset_owner_moves_append_only_trg before update or delete on public\.network_media_asset_owner_moves for each row execute function public\.network_media_asset_owner_moves_append_only\(\);/);
+  assert.match(flat(sql), /create trigger network_media_asset_owner_moves_append_only_truncate_trg before truncate on public\.network_media_asset_owner_moves for each statement execute function public\.network_media_asset_owner_moves_append_only\(\);/);
+
+  // the merge path: only a merged person who holds no login any more, and only rows whose login reached the kept person THROUGH a merge
+  const follow = sql.slice(sql.indexOf('create or replace function public.network_media_assets_follow_merge('), sql.indexOf('revoke all on function public.network_media_assets_follow_merge('));
+  assert.match(follow, /security definer/);
+  assert.match(flat(follow), /if exists \(select 1 from public\.m_auth_user_links l where l\.m_uid = p_merge\) then raise exception 'the merged M person still holds a login/);
+  assert.match(flat(follow), /where l\.auth_user_id = v_uploader and l\.m_uid = p_keep and l\.link_method = 'admin_merge'\) then insert into public\.network_media_asset_owner_moves/);
+  assert.ok(flat(follow).indexOf('insert into public.network_media_asset_owner_moves') < flat(follow).indexOf('update public.network_media_assets set owner_m_uid = p_keep'), 'the record is written before the move it authorizes');
+  // every function keeps pg_temp last in its search_path, so nothing in a temporary schema can stand in for a type or a table
+  for (const m of sql.matchAll(/create or replace function public\.(\w+)\([^)]*\)\s+returns [^$]*?set search_path = ([^$]*?) as \$\$/g)) assert.match(m[2], /^pg_catalog(, public)?, pg_temp$/, `${m[1]} search_path`);
 
   // every function closed to the API's member roles; the merge path is the service role's
   const fns = [...sql.matchAll(/create or replace function public\.(\w+)\(([^)]*)\)/g)].map((m) => m[1]);
@@ -206,12 +228,30 @@ test('the rollback is the applied migration\'s own statements, and keeps a recor
   assert.match(rb, /drop trigger if exists network_media_assets_guard_trg on public\.network_media_assets;/);
   assert.match(rb, /alter table public\.network_media_assets drop constraint if exists network_media_assets_canonical_upload_check;/);
   for (const fn of [...sql.matchAll(/create or replace function public\.(\w+)\(/g)].map((m) => m[1])) assert.match(rb, new RegExp(`drop function if exists public\\.${fn}\\(`), fn);
-  assert.match(flat(rb), /if v_rows then .* raise notice .* else execute 'drop table public\.network_media_asset_owner_moves'; end if;/, 'the audit record is dropped only when empty');
+  assert.match(flat(rb), /if v_rows then raise notice '[^']*'; else drop table if exists public\.network_media_asset_owner_moves; drop function if exists public\.network_media_asset_owner_moves_append_only\(\); end if;/,
+    'the audit record is dropped only when empty; kept, it keeps its append-only function and triggers');
+  assert.doesNotMatch(rb, /drop trigger[^;]*network_media_asset_owner_moves/, 'the rollback never drops the record\'s own triggers');
   assert.doesNotMatch(rb, /"mnet media owner read"|network_media_owner_read/, 'the read policies were never removed, so the rollback leaves them alone');
   assert.match(rb, /^\s*begin;\s*set local lock_timeout = '5s';/);
+  // where the guard is not applied it must do nothing: it would otherwise rewrite that database's grants and policies
+  const noop = flat(rb).indexOf("raise notice 'network_media_assets_pointer_guard_v1 is not applied here: nothing was rolled back'; return;");
+  assert.ok(noop > 0, 'the no-op');
+  for (const change of ['drop trigger', 'drop constraint', 'drop policy', 'create policy', 'grant insert', 'drop function', 'drop table']) assert.ok(flat(rb).indexOf(change) > noop, `${change} comes after the no-op`);
 });
 
-test('the legacy count is read-only: one SELECT, counts only', () => {
+test('the precheck and the legacy count are read-only: one SELECT each, counts only', () => {
+  // The legacy count is the media-signing fix's file (commit a248ced on its
+  // branch), carried here unchanged so the two branches merge without a
+  // conflict. The README cites these columns of it; the database test holds
+  // the two files to the same numbers on the same rows.
+  const legacy = code(LEGACY_COUNT).trim();
+  assert.match(legacy, /^with a as \(/);
+  assert.equal(legacy.split(';').filter((s) => s.trim()).length, 1, 'the legacy count: one statement');
+  assert.doesNotMatch(legacy, /\b(insert|update|delete|truncate|alter|create|drop|grant|revoke|copy|call|do|set|begin|commit|lock)\b/i);
+  for (const col of ['assets', 'not_canonical', 'prefix_not_linked_to_owner', 'named', 'named_and_no_longer_signed', 'named_ids', 'named_ids_without_a_row']) {
+    assert.match(legacy, new RegExp(`as ${col}\\b`), `the legacy count: ${col}`);
+  }
+
   const body = code(COUNT).trim();
   assert.match(body, /^with assets as \(/);
   assert.equal(body.split(';').filter((s) => s.trim()).length, 1, 'one statement');
@@ -229,7 +269,8 @@ test('the guard is registered where the pending folder requires it', () => {
   const order = read('supabase/pending/PROMOTION-ORDER.md');
   assert.ok(readme.includes(`Pending (2026-11-10): \`${NAME}.sql\``), 'README.md has no entry for the guard');
   assert.ok(readme.includes(`What must be true in production before \`${NAME}.sql\` may be applied`), 'README.md does not say what must be true in production first');
-  for (const need of ['not_canonical = 0', 'scripts/db/media-asset-legacy-count.sql', 'scripts/test-network-media-pointer-guard-db.sh',
+  for (const need of ['not_canonical = 0', 'scripts/db/media-asset-legacy-count.sql', 'scripts/db/media-asset-pointer-guard-precheck.sql',
+    'scripts/test-network-media-pointer-guard-db.sh',
     `${NAME}.rollback.sql`, 'validate constraint network_media_assets_canonical_upload_check', 'upload.token',
     'network_media_assets_follow_merge', 'supabase/tests/action_clipping_regression.sql', 'NOT applied']) assert.ok(readme.includes(need), `README.md: ${need}`);
   assert.ok(order.includes(`\`${NAME}.sql\``), 'PROMOTION-ORDER.md does not list the guard');
