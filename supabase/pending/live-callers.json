@@ -213,7 +213,21 @@
         "workers/mccluster/src/eup/intake.js"
       ]
     },
+    "eup_import_run_claim": {
+      "kind": "function",
+      "pending": "eup_intake_v1.sql",
+      "callers": [
+        "workers/mccluster/src/eup/intake.js"
+      ]
+    },
     "eup_import_run_finish": {
+      "kind": "function",
+      "pending": "eup_intake_v1.sql",
+      "callers": [
+        "workers/mccluster/src/eup/intake.js"
+      ]
+    },
+    "eup_import_run_release": {
       "kind": "function",
       "pending": "eup_intake_v1.sql",
       "callers": [
