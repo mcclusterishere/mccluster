@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 667,
+  "candidate_count": 668,
   "capability_source_count": 104,
-  "support_only_count": 563,
-  "checks_total": 2566,
-  "checks_passed": 2566,
+  "support_only_count": 564,
+  "checks_total": 2570,
+  "checks_passed": 2570,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -159,6 +159,7 @@
     "docs/control-plane/LIVE-MISSIONS.md",
     "docs/control-plane/MEMBER-DESK-AND-PROFILE-EDIT-GATE.md",
     "docs/control-plane/MISSION-ADMIN-APPROVAL.md",
+    "docs/control-plane/OVH-510-CONTRACT-AND-AUTH-RUNBOOK.md",
     "docs/control-plane/POLICY-FELLOWSHIP-LADDER.md",
     "docs/control-plane/PRODUCTION-SCHEMA-RECONCILIATION-2026-10-28.md",
     "docs/control-plane/PROGRAM-LEDGER.md",
@@ -681,7 +682,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "667 entries"
+      "detail": "668 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -3510,6 +3511,26 @@
     },
     {
       "name": "docs/control-plane/MISSION-ADMIN-APPROVAL.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/OVH-510-CONTRACT-AND-AUTH-RUNBOOK.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/OVH-510-CONTRACT-AND-AUTH-RUNBOOK.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/control-plane/OVH-510-CONTRACT-AND-AUTH-RUNBOOK.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/OVH-510-CONTRACT-AND-AUTH-RUNBOOK.md support rationale present",
       "passed": true,
       "detail": ""
     },
