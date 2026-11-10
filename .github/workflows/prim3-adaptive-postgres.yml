@@ -8,6 +8,9 @@ on:
       - 'supabase/migrations/**'
       - 'supabase/pending/prim3_reviewed_releases_v1.sql'
       - 'js/prim3-mission/**'
+      - 'js/prim3-tactics/**'
+      - 'scripts/test/prim3-animation-clock.test.mjs'
+      - 'scripts/test/prim3-operator-model-lifecycle.test.mjs'
       - 'prim3-released-mission.html'
       - 'scripts/e2e/prim3-reviewed-release.e2e.mjs'
       - 'supabase/tests/*learning*'
@@ -22,6 +25,9 @@ on:
       - 'supabase/migrations/**'
       - 'supabase/pending/prim3_reviewed_releases_v1.sql'
       - 'js/prim3-mission/**'
+      - 'js/prim3-tactics/**'
+      - 'scripts/test/prim3-animation-clock.test.mjs'
+      - 'scripts/test/prim3-operator-model-lifecycle.test.mjs'
       - 'prim3-released-mission.html'
       - 'scripts/e2e/prim3-reviewed-release.e2e.mjs'
       - 'scripts/test-prim3-adaptive-postgres.mjs'
@@ -44,6 +50,8 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
+      - name: Verify finite animation clocks and delayed model ownership
+        run: node --test scripts/test/prim3-animation-clock.test.mjs scripts/test/prim3-operator-model-lifecycle.test.mjs
       - name: Install isolated pinned browser dependencies
         run: |
           npm install --prefix /tmp/prim3-release-browser --ignore-scripts --no-audit --no-fund --package-lock=false playwright@1.57.0 three@0.180.0
