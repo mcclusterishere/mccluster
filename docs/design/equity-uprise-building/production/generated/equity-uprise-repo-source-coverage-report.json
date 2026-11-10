@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 668,
+  "candidate_count": 680,
   "capability_source_count": 104,
-  "support_only_count": 564,
-  "checks_total": 2570,
-  "checks_passed": 2570,
+  "support_only_count": 576,
+  "checks_total": 2618,
+  "checks_passed": 2618,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -381,6 +381,7 @@
     "screens/terminal.html",
     "screens/vms.html",
     "screens/wall.html",
+    "scripts/e2e/control-eup.e2e.mjs",
     "scripts/e2e/eu-screens.e2e.mjs",
     "scripts/e2e/fictional-city-camera-inputs.mjs",
     "scripts/e2e/fictional-city-upstairs-audit.e2e.mjs",
@@ -416,6 +417,7 @@
     "scripts/test/analytics-platform.test.mjs",
     "scripts/test/antisocial-three-levels.test.mjs",
     "scripts/test/appbar-consistency.test.mjs",
+    "scripts/test/control-eup.test.mjs",
     "scripts/test/creator-action-distribution.test.mjs",
     "scripts/test/domain-architecture.test.mjs",
     "scripts/test/equity-product-consumer.test.mjs",
@@ -423,6 +425,8 @@
     "scripts/test/eu-object-inspector.test.mjs",
     "scripts/test/eu-screen-hardware-binding.test.mjs",
     "scripts/test/eu-screens.test.mjs",
+    "scripts/test/eup-intake.integration.mjs",
+    "scripts/test/eup-module-policy.integration.mjs",
     "scripts/test/fictional-city-hq-b1.test.mjs",
     "scripts/test/fictional-city-places.test.mjs",
     "scripts/test/fictional-city-vertical-handoff.test.mjs",
@@ -456,6 +460,7 @@
     "scripts/test/signup-authority.test.mjs",
     "scripts/test/song-test.test.mjs",
     "scripts/test/supabase-functions-deploy.test.mjs",
+    "scripts/test/support/eup-module-policy-database.mjs",
     "scripts/test/world-environment-lifecycle.test.mjs",
     "scripts/test/world-environment.test.mjs",
     "scripts/test/world-first-and-layers.test.mjs",
@@ -559,6 +564,8 @@
     "supabase/pending/README.md",
     "supabase/pending/action_bounty_claim_existing_row_guard_v1.sql",
     "supabase/pending/equity_uprise_clipping_sources.sql",
+    "supabase/pending/eup_module_policy_v1.provenance.json",
+    "supabase/pending/eup_module_policy_v1.sql",
     "supabase/pending/live-callers.json",
     "supabase/pending/live_missions_v1.sql",
     "supabase/pending/mission_admin_approval_v1.sql",
@@ -653,6 +660,7 @@
     "workers/mccluster/src/entry.js",
     "workers/mccluster/src/environment-mission-planning.js",
     "workers/mccluster/src/eup/league-fixture.js",
+    "workers/mccluster/src/eup/modules.js",
     "workers/mccluster/src/human-uprise/router.js",
     "workers/mccluster/src/index.js",
     "workers/mccluster/src/live/index.js",
@@ -665,6 +673,8 @@
     "workers/mccluster/src/world-environment.js",
     "workers/mccluster/src/world-layers.js",
     "workers/mccluster/test/company-site.test.mjs",
+    "workers/mccluster/test/eup-import-runner.test.mjs",
+    "workers/mccluster/test/eup-modules.test.mjs",
     "workers/mccluster/test/fbi.test.mjs",
     "workers/mccluster/test/halo-projection.test.mjs",
     "workers/mccluster/test/human-uprise-site.test.mjs",
@@ -674,6 +684,8 @@
     "workers/mccluster/test/mnet-post-limits.test.mjs",
     "workers/mccluster/test/prim3-learning.test.mjs",
     "workers/mccluster/test/seek-first-catalogs.test.mjs",
+    "workers/mccluster/test/world-environment-action-media.test.mjs",
+    "workers/mccluster/test/world-environment.test.mjs",
     "workers/mccluster/test/world-layers.test.mjs",
     "workers/mccluster/test/world-release.test.mjs",
     "world-news.html"
@@ -682,7 +694,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "668 entries"
+      "detail": "680 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -7830,6 +7842,26 @@
       "detail": ""
     },
     {
+      "name": "scripts/e2e/control-eup.e2e.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/control-eup.e2e.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/e2e/control-eup.e2e.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/e2e/control-eup.e2e.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "scripts/e2e/eu-screens.e2e.mjs capability ids known",
       "passed": true,
       "detail": ""
@@ -8525,6 +8557,26 @@
       "detail": ""
     },
     {
+      "name": "scripts/test/control-eup.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/control-eup.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/control-eup.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/control-eup.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "scripts/test/creator-action-distribution.test.mjs capability ids known",
       "passed": true,
       "detail": ""
@@ -8661,6 +8713,46 @@
     },
     {
       "name": "scripts/test/eu-screens.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/eup-intake.integration.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/eup-intake.integration.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/eup-intake.integration.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/eup-intake.integration.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/eup-module-policy.integration.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/eup-module-policy.integration.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/eup-module-policy.integration.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/eup-module-policy.integration.mjs support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -9321,6 +9413,26 @@
     },
     {
       "name": "scripts/test/supabase-functions-deploy.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/support/eup-module-policy-database.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/support/eup-module-policy-database.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/support/eup-module-policy-database.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/support/eup-module-policy-database.mjs support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -11285,6 +11397,46 @@
       "detail": ""
     },
     {
+      "name": "supabase/pending/eup_module_policy_v1.provenance.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/eup_module_policy_v1.provenance.json classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "supabase/pending/eup_module_policy_v1.provenance.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/eup_module_policy_v1.provenance.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/eup_module_policy_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/eup_module_policy_v1.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/pending/eup_module_policy_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/eup_module_policy_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "supabase/pending/live-callers.json capability ids known",
       "passed": true,
       "detail": ""
@@ -13060,6 +13212,26 @@
       "detail": ""
     },
     {
+      "name": "workers/mccluster/src/eup/modules.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/src/eup/modules.js classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "workers/mccluster/src/eup/modules.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/src/eup/modules.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "workers/mccluster/src/human-uprise/router.js capability ids known",
       "passed": true,
       "detail": ""
@@ -13290,6 +13462,46 @@
       "detail": ""
     },
     {
+      "name": "workers/mccluster/test/eup-import-runner.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/eup-import-runner.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "workers/mccluster/test/eup-import-runner.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/test/eup-import-runner.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/eup-modules.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/eup-modules.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "workers/mccluster/test/eup-modules.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/test/eup-modules.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "workers/mccluster/test/fbi.test.mjs capability ids known",
       "passed": true,
       "detail": ""
@@ -13466,6 +13678,46 @@
     },
     {
       "name": "workers/mccluster/test/seek-first-catalogs.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/world-environment-action-media.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/world-environment-action-media.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "workers/mccluster/test/world-environment-action-media.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/test/world-environment-action-media.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/world-environment.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/world-environment.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "workers/mccluster/test/world-environment.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/test/world-environment.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     },
