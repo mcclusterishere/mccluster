@@ -17,26 +17,31 @@
 //   10. proof submission racing review: every review names one existing revision and its digest, none is reviewed twice;
 //   11. consent revocation racing publication: never a live publication on a revoked consent;
 //   12. submissions racing for one upload: one wins; a discard racing a submission that lists the upload: one wins.
-// Loopback only. Synthetic data only. It creates its own database and drops it; with EMBEDDED_PG_MODULE it also
-// starts its own server and removes it.
-//
-// A disposable local server (PostgreSQL 16 run as the postgres user, data directory directly under /tmp, TCP only):
-//   ALLOW_LOCAL_EUP_DB_TESTS=1 EUP_PG_PORT=<port> PG_MODULE_DIR=<dir holding node_modules/pg> node scripts/test/eup-league.native.integration.mjs
-// Or embedded PostgreSQL 17.x, started here (the repository's EMBEDDED_PG_MODULE convention). Postgres refuses to run
-// as root; as root, launch the whole test in a user namespace mapped to the postgres account:
-//   unshare --user --map-user=$(id -u postgres) --map-group=$(id -g postgres) env ALLOW_LOCAL_EUP_DB_TESTS=1 \
-//     EMBEDDED_PG_MODULE=<embedded-postgres/dist/index.js> PG_MODULE_DIR=<...> node scripts/test/eup-league.native.integration.mjs
+// Loopback only (TCP on 127.0.0.1). Synthetic data only. It creates its own database and drops it; a server it
+// starts itself (PG_BIN or EMBEDDED_PG_MODULE) it also stops and removes. Three ways to give it a server:
+//   1. a disposable server already running on loopback:
+//        ALLOW_LOCAL_EUP_DB_TESTS=1 EUP_PG_PORT=<port> PG_MODULE_DIR=<dir holding node_modules/pg> node scripts/test/eup-league.native.integration.mjs
+//   2. native PostgreSQL started here from PG_BIN (initdb and pg_ctl; as root they run as the postgres account, and the
+//      data directory is made directly under /tmp, which that account can reach):
+//        ALLOW_LOCAL_EUP_DB_TESTS=1 PG_BIN=/usr/lib/postgresql/16/bin PG_MODULE_DIR=<...> node scripts/test/eup-league.native.integration.mjs
+//   3. embedded PostgreSQL 17.x started here (the repository's EMBEDDED_PG_MODULE convention, as in
+//      scripts/test/music-direct-release.integration.mjs). Postgres refuses to run as root; as root, launch the whole
+//      test in a user namespace mapped to the postgres account:
+//        unshare --user --map-user=$(id -u postgres) --map-group=$(id -g postgres) env ALLOW_LOCAL_EUP_DB_TESTS=1 \
+//          EMBEDDED_PG_MODULE=<embedded-postgres/dist/index.js> PG_MODULE_DIR=<...> node scripts/test/eup-league.native.integration.mjs
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { readFile, mkdtemp, rm } from 'node:fs/promises';
 import { createRequire } from 'node:module';
+import net from 'node:net';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import * as C from '../../workers/mccluster/src/eup/league-contract.js';
 
 if (process.env.ALLOW_LOCAL_EUP_DB_TESTS !== '1') {
-  console.error('eup-league.native.integration.mjs creates and drops a local database. Set ALLOW_LOCAL_EUP_DB_TESTS=1 and EUP_PG_PORT (or EMBEDDED_PG_MODULE) to run it.');
+  console.error('eup-league.native.integration.mjs creates and drops a local database. Set ALLOW_LOCAL_EUP_DB_TESTS=1 and EUP_PG_PORT, PG_BIN or EMBEDDED_PG_MODULE to run it.');
   process.exit(1);
 }
 const require = createRequire(process.env.PG_MODULE_DIR ? path.join(process.env.PG_MODULE_DIR, 'x') : import.meta.url);
@@ -58,10 +63,28 @@ const RIGHTS = { version: 'music-rights-v1', owns_master: true, controls_composi
 const WORDS = (lyrics = 'Line one\nLine two') => ({ title: 'Test fixture song', lyrics, credits: [{ name: 'Fixture Person', role: 'writer' }], rights: RIGHTS,
   accommodation: { statement: 'Test fixture: I cannot record.' }, review_notice_revision: POLICY.notices.private_review.revision });
 
-let embedded = null; let embeddedDir = null;
+let embedded = null; let embeddedDir = null; let native = null;
+const freePort = () => new Promise((resolve, reject) => {
+  const probe = net.createServer();
+  probe.on('error', reject);
+  probe.listen(0, '127.0.0.1', () => { const { port: free } = probe.address(); probe.close(() => resolve(free)); });
+});
 let port = Number(process.env.EUP_PG_PORT || 0);
+if (!port && process.env.PG_BIN) {
+  // Native PostgreSQL from PG_BIN: as root, initdb and pg_ctl run as the postgres account, which cannot traverse the
+  // scratch path, so the data directory is made directly under /tmp and every command runs from /tmp.
+  const asPostgres = typeof process.getuid === 'function' && process.getuid() === 0;
+  const dir = await mkdtemp('/tmp/eup-league-native-pg-');
+  if (asPostgres) execFileSync('chown', ['postgres:postgres', dir]);
+  const pg = (bin, args) => execFileSync(asPostgres ? 'runuser' : path.join(process.env.PG_BIN, bin),
+    asPostgres ? ['-u', 'postgres', '--', path.join(process.env.PG_BIN, bin), ...args] : args, { cwd: '/tmp', stdio: ['ignore', 'pipe', 'pipe'] });
+  port = await freePort();
+  pg('initdb', ['-D', `${dir}/data`, '-U', 'postgres', '--auth=trust', '-E', 'UTF8', '--locale=C']);
+  pg('pg_ctl', ['-D', `${dir}/data`, '-l', `${dir}/server.log`, '-o', `-p ${port} -c listen_addresses=127.0.0.1 -c unix_socket_directories=${dir} -c fsync=off -c max_connections=60`, '-w', 'start']);
+  native = { dir, stop: () => pg('pg_ctl', ['-D', `${dir}/data`, '-m', 'fast', '-w', 'stop']) };
+}
 if (!port) {
-  assert.ok(process.env.EMBEDDED_PG_MODULE, 'set EUP_PG_PORT for a running local server, or EMBEDDED_PG_MODULE to start one');
+  assert.ok(process.env.EMBEDDED_PG_MODULE, 'set EUP_PG_PORT for a running local server, PG_BIN or EMBEDDED_PG_MODULE to start one');
   const { default: EmbeddedPostgres } = await import(pathToFileURL(process.env.EMBEDDED_PG_MODULE).href);
   embeddedDir = await mkdtemp(path.join(tmpdir(), 'eup-league-native-'));
   port = 56000 + (process.pid % 900);
@@ -488,4 +511,5 @@ try {
   for (const c of clients) { if (c !== admin0) await c.end().catch(() => {}); }
   if (admin0) { await admin0.query(`drop database if exists ${DB} with (force)`).catch((e) => console.error('could not drop the test database:', e.message)); await admin0.end().catch(() => {}); }
   if (embedded) { await embedded.stop().catch(() => {}); await rm(embeddedDir, { recursive: true, force: true }).catch(() => {}); }
+  if (native) { try { native.stop(); } catch (error) { console.error('could not stop the local server:', error.message); } await rm(native.dir, { recursive: true, force: true }).catch(() => {}); }
 }
