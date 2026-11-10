@@ -140,8 +140,10 @@ function freshDocument() {
 freshDocument();
 const consoleWrites = [];
 for (const k of ['log', 'info', 'warn', 'error', 'debug']) { const orig = console[k]; console[k] = (...args) => { consoleWrites.push(args.map(String).join(' ')); orig.apply(console, args); }; }
-await import('../../js/eup-league-capture.js');
-await import('../../js/eup-league-member.js');
+/* EUL_CAPTURE_JS / EUL_MEMBER_JS point the suite at another copy of a module (a deliberately broken one, to show the
+   tests catch the break); unset, the shipped files are tested. */
+await import(process.env.EUL_CAPTURE_JS ? new URL(`file://${process.env.EUL_CAPTURE_JS}`).href : '../../js/eup-league-capture.js');
+await import(process.env.EUL_MEMBER_JS ? new URL(`file://${process.env.EUL_MEMBER_JS}`).href : '../../js/eup-league-member.js');
 const L = window.MCC_LEAGUE_MEMBER, CAP = window.MCC_LEAGUE_CAPTURE, H = L.helpers;
 
 function clock(start = Date.UTC(2026, 10, 10, 12, 0, 0)) {
@@ -394,7 +396,11 @@ test('a session that changed before confirm: the confirm check sends nothing and
   const s = setup({ handlers: { 'GET ': ok({ league: me({ assignments: [assignment()] }) }) } });
   await settle();
   s.session.who = TESTER_B; // the stored session changed with no event
+  const epoch = s.ctl.epoch();
   click(s, `assign-withdraw:${IDS.assignment}`);
+  /* caught in the same task as the tap: no key minted, nothing shown as sending, the page already cleared */
+  assert.ok(s.ctl.epoch() > epoch, 'invalidated synchronously at confirm');
+  assert.doesNotMatch(s.text(), /sending|Write a song/);
   await settle();
   assert.equal(s.srv.posts().length, 0);
   assert.doesNotMatch(s.text(), /Write a song/);
