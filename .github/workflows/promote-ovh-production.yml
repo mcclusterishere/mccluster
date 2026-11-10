@@ -26,7 +26,7 @@ jobs:
     if: ${{ inputs.confirm == 'PROMOTE_OVH' }}
     runs-on: ubuntu-latest
     # One ref move at a time. The lock is on this job, not on the workflow, so a
-    # rollback is never queued behind the previous run's 30-minute verification.
+    # rollback is never queued behind the previous run's observation (up to 50 minutes).
     concurrency:
       group: promote-ovh-production
       cancel-in-progress: false
@@ -112,39 +112,70 @@ jobs:
           echo "- previous head: \`${EXPECTED_CURRENT}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- deployment ref: \`deploy/ovh-production\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- VPS outbound reconciler will pick this up automatically." >> "$GITHUB_STEP_SUMMARY"
-          echo "- The verify job of this run waits for https://core.mccluster.org/health to serve the target." >> "$GITHUB_STEP_SUMMARY"
+          echo "- The observe job of this run watches https://core.mccluster.org/health serve the target for 20 minutes. A green run is not acceptance: runbook step 5 is." >> "$GITHUB_STEP_SUMMARY"
 
   # A ref moved with this workflow's GITHUB_TOKEN starts no other workflow, so
   # the push-triggered check in deploy-ovh-core.yml never runs for a promotion
-  # made here. Without this job the sanctioned path had no runtime verification.
-  # It holds no permission and no secret: it reads one public URL.
-  verify:
-    name: Verify OVH self-reconciliation after promotion
+  # made here. This job watches what the public broker serves after the move.
+  # It is an observation, not acceptance: a release whose rollback was deferred
+  # (producers did not drain) keeps serving the target, and no poll of /health
+  # can tell that from a success. Acceptance is the runbook's step 5, from
+  # host_health data (deployed_sha equal to the serving SHA, runtime_verification
+  # verified). It holds no permission and no secret: it reads one public URL.
+  observe:
+    name: Observe the public serving SHA after promotion
     needs: promote
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 55
     permissions: {}
     steps:
-      - name: Wait for OVH to self-reconcile to exact commit
+      - name: Wait for public /health to serve the exact commit, then keep serving it
         env:
           TARGET_SHA: ${{ inputs.sha }}
         run: |
           set -euo pipefail
-          # A timeout-only bootstrap pass and a graceful producer drain can
-          # exceed four minutes. Observe convergence without interrupting work.
-          deadline=$((SECONDS + 1800))
+          # deploy-ovh-core.sh writes the target's manifest and restarts the tool
+          # broker BEFORE its health gate runs, so /health serves the target from
+          # that restart even when the release then fails the gate and is rolled
+          # back. One failing attempt can serve it for the gate's probes, a
+          # producer drain of up to 660 s and the restore. So the target must be
+          # served within converge_seconds and then stay served for hold_seconds,
+          # longer than such an attempt. Any other commit served after the target
+          # fails this step at once. An answer that names no commit is not counted.
+          url=https://core.mccluster.org/health
+          converge_seconds=1800
+          hold_seconds=1200
+          poll_seconds=10
+          started=$SECONDS
+          first_seen=""
           attempt=0
-          while (( SECONDS < deadline )); do
+          while :; do
             attempt=$((attempt + 1))
-            body="$(curl --fail --silent --show-error --max-time 15 https://core.mccluster.org/health || true)"
+            body="$(curl --fail --silent --show-error --max-time 15 "$url" || true)"
             deployed="$(printf '%s' "$body" | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{console.log(JSON.parse(d).deployment_sha||'')}catch{console.log('')}})")"
-            if [[ "$deployed" = "$TARGET_SHA" ]]; then
-              printf '%s\n' "$body"
-              echo "Verified OVH self-reconciled to $TARGET_SHA"
-              exit 0
+            if [[ "$deployed" == "$TARGET_SHA" ]]; then
+              if [[ -z "$first_seen" ]]; then
+                first_seen=$SECONDS
+                echo "Attempt $attempt: public /health serves $TARGET_SHA; it must keep serving it for ${hold_seconds}s"
+              elif (( SECONDS - first_seen >= hold_seconds )); then
+                printf '%s\n' "$body"
+                echo "Observed: public /health served $TARGET_SHA for $((SECONDS - first_seen))s and no other commit after it."
+                echo "This is not acceptance. Runbook step 5 is: host_health deployed_sha equal to the serving SHA, and runtime_verification verified."
+                exit 0
+              fi
+            elif [[ -n "$first_seen" && -n "$deployed" ]]; then
+              echo "public /health served $deployed $((SECONDS - first_seen))s after it first served $TARGET_SHA: the release failed its deploy gate and was rolled back, or the ref moved again" >&2
+              exit 1
+            else
+              echo "Attempt $attempt: expected $TARGET_SHA, got ${deployed:-<none>}"
             fi
-            echo "Attempt $attempt: expected $TARGET_SHA, got ${deployed:-<none>}"
-            sleep 10
+            if [[ -z "$first_seen" ]] && (( SECONDS - started >= converge_seconds )); then
+              echo "public /health did not serve $TARGET_SHA within ${converge_seconds}s" >&2
+              exit 1
+            fi
+            if (( SECONDS - started >= converge_seconds + hold_seconds )); then
+              echo "public /health served $TARGET_SHA but did not answer with it again after the ${hold_seconds}s hold" >&2
+              exit 1
+            fi
+            sleep "$poll_seconds"
           done
-          echo "OVH self-reconciliation did not converge to $TARGET_SHA within the 30-minute observation window" >&2
-          exit 1
