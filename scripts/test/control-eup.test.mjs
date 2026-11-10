@@ -306,7 +306,7 @@ test('policy helpers: a state is read strictly, each state offers only its comma
 test('policy helpers: only a refusal the Worker documents is "nothing changed"; a timeout and any other 503 are unknown', () => {
   const f = (e) => { const r = H.policyFailure(e); return [r.kind, r.settled, r.again]; };
   assert.deepEqual(f({ timeout: true, deadline: 15000 }), ['unknown', false, false]);
-  assert.match(H.policyFailure({ timeout: true, deadline: 9000 }).text, /timed out after 9s: its outcome is unknown\. It was not resent\./);
+  assert.match(H.policyFailure({ timeout: true, deadline: 9000 }).text, /^timed out after 9s\. The outcome is unknown and it was not resent\.$/);
   assert.match(H.policyFailure({ timeout: true }).text, /timed out after 15s/);
   assert.deepEqual(f(Object.assign(new Error('aborted'), { name: 'AbortError' })), ['unknown', false, false]);
   assert.deepEqual(f(http(409, 'revision_conflict')), ['conflict', true, false]);
@@ -324,12 +324,12 @@ test('policy helpers: only a refusal the Worker documents is "nothing changed"; 
   for (const reason of ['storage_unavailable', 'schema_not_applied', 'not_implemented', 'not_configured', 'module_busy', '']) {
     const r = H.policyFailure(http(503, reason));
     assert.deepEqual([r.kind, r.settled, r.again], ['unknown', false, false], '503 ' + reason + ' is an unknown outcome');
-    assert.match(r.text, /outcome is unknown\. It was not resent\./); assert.doesNotMatch(r.text, /Nothing changed/i);
+    assert.match(r.text, /The outcome is unknown and it was not resent\.$/); assert.doesNotMatch(r.text, /Nothing changed/i);
   }
-  assert.match(H.policyFailure(http(503, 'storage_unavailable')).text, /^was answered HTTP 503 storage_unavailable:/);
+  assert.match(H.policyFailure(http(503, 'storage_unavailable')).text, /^answered HTTP 503 storage_unavailable\. /);
   for (const status of [408, 429, 499, 500, 502, 504]) assert.deepEqual(f(http(status, 'x')), ['unknown', false, false], 'status ' + status + ' is not a documented refusal');
   assert.deepEqual(f(new Error('unreadable receipt')), ['unknown', false, false]);
-  assert.match(H.policyFailure(new Error('x')).text, /^got no readable answer: its outcome is unknown/);
+  assert.match(H.policyFailure(new Error('x')).text, /^no readable answer\. The outcome is unknown/);
   assert.deepEqual(f(undefined), ['unknown', false, false]);
   assert.deepEqual(f({ status: 409, detail: { reason: 7 } }), ['error', true, false], 'a reason that is not text is not read');
 });
@@ -376,7 +376,7 @@ test('policy: a command needs a reason; install → enable → drain → disable
   assert.equal(w.reads(), before + 1, 'one read-back after the command');
   assert.equal(unitState(m, 'environment'), 'disabled'); assert.deepEqual(commandsOf(m, 'environment'), ['enabled'], 'disabled → Enable only');
   assert.ok(m.pane().querySelector('[data-eup-policy-rev="environment:0"]'), 'rev 0 after install');
-  assert.deepEqual(outcomes(m), ['environment:done']); assert.match(outcomeText(m, 'environment'), /Install Environment recorded · state disabled · rev 0/);
+  assert.deepEqual(outcomes(m), ['environment:done']); assert.match(outcomeText(m, 'environment'), /^Install Environment: recorded · state disabled · rev 0/);
   assert.match(unit(m, 'environment').textContent, /Last command: install \(created disabled\) · reason: first install for the tester phase · /);
   assert.equal(m.pane().querySelector('[data-eup-policy-reason="environment"]').value, '', 'the reason is cleared once the command is recorded');
   assert.match(m.pane().querySelector('[data-eup-module="consumer_environment"]').textContent, /policy: disabled/, 'the module row follows the owner read');
@@ -399,7 +399,7 @@ test('policy: a command needs a reason; install → enable → drain → disable
   await send(m, 'environment', 'disabled', 'maintenance window');
   assert.equal(w.posts()[3].body.state, 'disabled'); assert.equal(w.posts()[3].body.expected_revision, 2);
   assert.equal(unitState(m, 'environment'), 'disabled'); assert.ok(m.pane().querySelector('[data-eup-policy-rev="environment:3"]'));
-  assert.match(outcomeText(m, 'environment'), /Disable Environment recorded · state disabled · rev 3/);
+  assert.match(outcomeText(m, 'environment'), /^Disable Environment: recorded · state disabled · rev 3/);
   const keys = w.posts().map((p) => p.body.idempotency_key);
   assert.equal(new Set(keys).size, 4, 'a fresh key on every command'); keys.forEach((k) => assert.match(k, UUID));
   assert.equal(w.reads(), before + 4, 'exactly one read-back per command');
@@ -413,7 +413,7 @@ test('policy: draining → Re-enable sends state enabled with the draining revis
   assert.match(unit(m, 'league').textContent, /Last command: not returned/);
   await send(m, 'league', 'enabled', 'the import finished early');
   assert.deepEqual(w.posts()[0].body, { idempotency_key: w.posts()[0].body.idempotency_key, expected_revision: 6, state: 'enabled', reason: 'the import finished early' });
-  assert.match(outcomeText(m, 'league'), /^Enable League recorded · state enabled · rev 7/);
+  assert.match(outcomeText(m, 'league'), /^Enable League: recorded · state enabled · rev 7/);
   w.s.hooks.post = (id, verb, body, apply) => { w.s.rows.intake.state = 'draining'; w.s.rows.intake.revision = 2; return undefined; };
   await send(m, 'intake', 'draining', 'drain intake');
   assert.match(outcomeText(m, 'intake'), /the state was already draining, the revision did not move/);
@@ -474,7 +474,7 @@ test('policy: a 503 other than drain_busy is an unknown outcome with the same re
   resendFor(m, 'intake').click(); await settleAll();
   assert.equal(w.posts().length, 2); assert.equal(w.posts()[1].body.idempotency_key, w.posts()[0].body.idempotency_key);
   assert.deepEqual(outcomes(m), ['intake:error']);
-  assert.match(outcomeText(m, 'intake'), /Drain Intake this key was already used for a different command, or by another owner; only the account that first sent a command can send it again\. Nothing was changed by this request\./);
+  assert.match(outcomeText(m, 'intake'), /^Drain Intake: this key was already used for a different command, or by another owner; only the account that first sent a command can send it again\. Nothing was changed by this request\./);
   assert.equal(resendFor(m, 'intake'), null, 'a refused key is not offered again');
 });
 
@@ -503,7 +503,7 @@ test('policy: 409 revision_conflict changes nothing, says it changed elsewhere a
   assert.equal(w.posts()[0].body.expected_revision, 4, 'the revision that was read is what is sent');
   assert.equal(w.reads(), reads + 1, 'reloaded');
   assert.deepEqual(outcomes(m), ['league:conflict']);
-  assert.match(outcomeText(m, 'league'), /Enable League the module policy changed elsewhere since it was read\. This command changed nothing/);
+  assert.match(outcomeText(m, 'league'), /^Enable League: the module policy changed elsewhere since it was read\. This command changed nothing/);
   assert.equal(unitState(m, 'league'), 'draining'); assert.ok(m.pane().querySelector('[data-eup-policy-rev="league:6"]'));
   assert.deepEqual(commandsOf(m, 'league'), ['disabled', 'enabled'], 'the buttons follow the reloaded state');
   assert.equal(resendFor(m, 'league'), null, 'a conflicted command is not offered again'); assert.equal(w.posts().length, 1);
@@ -516,7 +516,7 @@ test('policy: 503 drain_busy means writes are still in flight and nothing change
   const { w, m } = await opened({ start: { league: { state: 'enabled', revision: 2 } }, hooks: { post: () => busy ? Promise.reject(http(503, 'drain_busy')) : undefined } });
   await send(m, 'league', 'draining', 'drain before the release');
   assert.deepEqual(outcomes(m), ['league:busy']);
-  assert.match(outcomeText(m, 'league'), /Drain League writes are still in flight; nothing changed\. The same command can be sent again\./);
+  assert.match(outcomeText(m, 'league'), /^Drain League: writes are still in flight; nothing changed\. The same command can be sent again\.$/);
   assert.doesNotMatch(outcomeText(m, 'league'), /unknown/);
   assert.equal(unitState(m, 'league'), 'enabled'); assert.ok(resendFor(m, 'league')); assert.equal(w.posts().length, 1, 'not resent by itself');
   busy = false; resendFor(m, 'league').click(); await settleAll();
@@ -527,7 +527,7 @@ test('policy: documented refusals are settled and are not offered again; an unre
   let answer = () => Promise.reject(http(409, 'drain_required'));
   const { w, m } = await opened({ start: { league: { state: 'draining', revision: 2 } }, hooks: { post: () => answer() } });
   await send(m, 'league', 'disabled', 'r1');
-  assert.deepEqual(outcomes(m), ['league:error']); assert.match(outcomeText(m, 'league'), /must be drained before it is disabled\. Nothing changed/); assert.equal(resendFor(m, 'league'), null);
+  assert.deepEqual(outcomes(m), ['league:error']); assert.match(outcomeText(m, 'league'), /^Disable League: an enabled module must be drained before it is disabled\. Nothing changed\.$/); assert.equal(resendFor(m, 'league'), null);
   answer = () => Promise.reject(http(404, 'module_not_installed'));
   await send(m, 'league', 'disabled', 'r2');
   assert.deepEqual(outcomes(m), ['league:conflict']); assert.equal(resendFor(m, 'league'), null);

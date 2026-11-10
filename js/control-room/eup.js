@@ -120,11 +120,12 @@
   var POLICY_REFUSALS = [400, 404, 405, 409, 413, 415, 422];
   /* What a failed policy command means. `settled` says the command certainly changed nothing; without it the
      outcome is unknown and the caller reads back and looks for the key. `again` allows the same key to be resent.
-     A timeout, any 503 other than drain_busy and any answer this code cannot place are unknown, never "failed". */
+     A timeout, any 503 other than drain_busy and any answer this code cannot place are unknown, never "failed".
+     Each text follows the command's name and a colon. */
   function policyFailure(err) {
     var status = err && err.status, reason = err && err.detail && typeof err.detail.reason === 'string' ? err.detail.reason : '';
     var secs = Math.round(((err && err.deadline) || DEADLINE_MS) / 1000);
-    if (err && (err.name === 'AbortError' || err.timeout)) return { kind: 'unknown', settled: false, again: false, text: 'timed out after ' + secs + 's: its outcome is unknown. It was not resent.' };
+    if (err && (err.name === 'AbortError' || err.timeout)) return { kind: 'unknown', settled: false, again: false, text: 'timed out after ' + secs + 's. The outcome is unknown and it was not resent.' };
     if (status === 409 && reason === 'revision_conflict') return { kind: 'conflict', settled: true, again: false, text: 'the module policy changed elsewhere since it was read. This command changed nothing. The current state is read again below; decide again.' };
     if (status === 503 && reason === 'drain_busy') return { kind: 'busy', settled: true, again: true, text: 'writes are still in flight; nothing changed. The same command can be sent again.' };
     if (status === 409 && reason === 'drain_required') return { kind: 'error', settled: true, again: false, text: 'an enabled module must be drained before it is disabled. Nothing changed.' };
@@ -133,7 +134,7 @@
     if (status === 404 && reason === 'module_not_installed') return { kind: 'conflict', settled: true, again: false, text: 'the module is not installed. Nothing changed; the current state is read again below.' };
     if (status === 422 && reason === 'reason_required') return { kind: 'error', settled: true, again: false, text: 'the Worker refused the reason (1 to 500 characters, one line). Nothing changed.' };
     if (POLICY_REFUSALS.indexOf(status) >= 0) return { kind: 'error', settled: true, again: false, text: 'refused (HTTP ' + status + (reason ? ' ' + reason : '') + '). Nothing changed.' };
-    return { kind: 'unknown', settled: false, again: false, text: (status ? 'was answered HTTP ' + status + (reason ? ' ' + reason : '') : 'got no readable answer') + ': its outcome is unknown. It was not resent.' };
+    return { kind: 'unknown', settled: false, again: false, text: (status ? 'answered HTTP ' + status + (reason ? ' ' + reason : '') : 'no readable answer') + '. The outcome is unknown and it was not resent.' };
   }
   /* Why the owner read of module policy is not usable. */
   function policyReadFailure(err) {
@@ -269,7 +270,7 @@
     else if (P.error) { var f = policyReadFailure(P.error); body = note(f.kind, f.text); }
     else body = note('loading', P.loading ? 'Reading module policy…' : 'Module policy has not been read yet.');
     return '<h4 id="eupPolicyTitle">Module policy</h4>' +
-      '<p class="cr-eup__unit-line">Persisted per unit: install, enable, drain, disable. A drain lets writes already in flight finish and refuses new ones. Every command needs a reason, carries the revision read here and a new key, and is read back.</p>' +
+      '<p class="cr-eup__unit-line">Persisted per unit: install, enable, drain, disable. A drain refuses new writes while reads still answer. Every command needs a reason, carries the revision read here and a new key, and is read back.</p>' +
       body +
       '<div class="cr-eup__actions cr-eup__actions--policy"><button type="button" class="cr-btn" data-eup-policy-reload data-eup-focus="policy-reload"' + (P.loading ? ' aria-disabled="true"' : '') + '>Read module policy again</button></div>';
   }
@@ -557,7 +558,7 @@
         sent = { unit: unit, verb: verb, key: key, body: verb === 'install' ? { idempotency_key: key, reason: reason } : { idempotency_key: key, expected_revision: row.revision, state: verb, reason: reason } };
       }
       var name = policyName(sent), stop = false;
-      model.outcomes[slot] = { kind: 'pending', text: name + ' requested with key ' + sent.key.slice(0, 8) + '…' + (again ? ' (the same key again)' : '') };
+      model.outcomes[slot] = { kind: 'pending', text: name + ': requested with key ' + sent.key.slice(0, 8) + '…' + (again ? ' (the same key again)' : '') };
       say(model.outcomes[slot].text); drawPane();
       var p = request('/v1/eup/modules/' + encodeURIComponent(unit) + '/' + (sent.verb === 'install' ? 'install' : 'state'), { method: 'POST', body: sent.body });
       p.then(function (d) {
@@ -566,12 +567,12 @@
         var pol = d && d.ok === true && d.receipt && d.receipt.policy;
         if (!pol || typeof pol.state !== 'string' || !revisionOk(pol.revision)) throw new Error('unreadable receipt');
         P.reasons[unit] = '';
-        model.outcomes[slot] = { kind: 'done', text: name + ' recorded · state ' + pol.state + ' · rev ' + pol.revision + (d.receipt.changed === false ? ' · the state was already ' + pol.state + ', the revision did not move' : '') + ' · ' + when(d.receipt.recorded_at || new Date().toISOString()) + '. Read back below.' };
+        model.outcomes[slot] = { kind: 'done', text: name + ': recorded · state ' + pol.state + ' · rev ' + pol.revision + (d.receipt.changed === false ? ' · the state was already ' + pol.state + ', the revision did not move' : '') + ' · ' + when(d.receipt.recorded_at || new Date().toISOString()) + '. Read back below.' };
       }).catch(function (err) {
         if (stop || !alive() || p.epoch !== epoch || P !== model.policy) { stop = true; return; }
         if (concealed(err)) { stop = true; return; }
         var f = policyFailure(err);
-        model.outcomes[slot] = { kind: f.kind, text: name + ' ' + f.text + (f.settled ? '' : ' Reading module policy back…'), command: f.settled && !f.again ? null : sent, resend: f.again };
+        model.outcomes[slot] = { kind: f.kind, text: name + ': ' + f.text + (f.settled ? '' : ' Reading module policy back…'), command: f.settled && !f.again ? null : sent, resend: f.again };
       }).then(function () {
         if (stop || !alive() || P !== model.policy) return;
         say(model.outcomes[slot].text); drawPane();
