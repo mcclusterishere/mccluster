@@ -901,7 +901,7 @@ try {
   const ownerProofRow = await submitProof(OWNER, ownerSeat);
   await rejects(() => review(ownerProofRow, {}, OWNER), 'EU002', 'a participant cannot review their own proof');
   await rejects(() => review(ownerProofRow, { safety_decision: 'fail', reason: 'r' }, OWNER), 'EU002', 'whatever the decision');
-  // A hold stops review (the hold itself is placed by the second pass; the state is planted here).
+  // A hold stops review (planted on the row here; section G places it with proofs.moderate).
   await admin(`update public.eup_proofs set moderation_state = 'held' where id = $1`, [proof.id]);
   await rejects(() => review(proof), 'EU016', 'a held proof is not reviewed');
   await rejects(() => owner('proofs.get', { actor: OWNER, id: proof.id, document: { revision: 4, media: true } }), 'EU016', 'and its media is not opened for signing');
@@ -933,7 +933,7 @@ try {
   await rejects(() => submitProof(TESTER, assignment, words(), 5), '40001', 'nor replaced');
   await rejects(() => member('drafts.save', { actor: TESTER, id: assignment.id, document: {}, revision: 2, key: key('draft') }), '40001', 'a completed assignment takes no more work');
   await rejects(() => member('assignments.withdraw', { actor: TESTER, id: assignment.id, document: {}, key: key('withdraw') }), '40001', 'and is not withdrawn');
-  // Any fail rejects; a rejected proof is final (the appeal path is second pass). This proof was submitted before the
+  // Any fail rejects; a rejected proof is final except through an overturned appeal (section G). This proof was submitted before the
   // requirements changed and is reviewed after its participant accepted the new ones, without a resubmission.
   const rejected = await review(ownerProofRow, { safety_decision: 'fail', reason: 'Test fixture: unsafe.' });
   eq([rejected.state, rejected.credit], ['rejected', null], 'any fail rejects, without a credit');
