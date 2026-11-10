@@ -21,10 +21,11 @@
    account's record or an unreleased campaign exists. A missing or invalid League policy is 503 policy_unavailable;
    module state comes from MODULE_POLICY_ERRORS in ./modules.js (draining, disabled, ...).
 
-   What a member is shown: an upload only through projectShape('member_upload') or 'proof_media' (no tenant, family
-   or storage identity, and never a storage path); every other answer through its contract shape; and nowhere a
-   field that names another account (FOREIGN_ID_FIELDS), at any depth, whatever the store answered. */
-import { FOREIGN_ID_FIELDS, MEMBER_ACTIONS, ROUTES, matchRoute, projectShape } from './league-contract.js';
+   What a member is shown: an upload only as a member_upload or a proof_media (no tenant, family or storage
+   identity, and never a storage path); every answer cut to its contract shape at every depth (projectDeep), so a
+   nested row is cut too; and nowhere a field that names another account (FOREIGN_ID_FIELDS), at any depth,
+   whatever the store answered. */
+import { FOREIGN_ID_FIELDS, MEMBER_ACTIONS, ROUTES, matchRoute, projectShape, shapeFields } from './league-contract.js';
 import { beginUpload, completeUpload, discardUpload, signOwnRead } from './league-media.js';
 import { leagueCall, leagueFailure, leagueFunctionCall, mediaContext, prepareCall, routePath, rpcContext } from './league.js';
 
@@ -38,14 +39,30 @@ export function memberSafe(value) {
   return value;
 }
 
+/* A row cut to a contract shape at every depth: exactly the fields the shape lists (a missing one is null), and
+   inside them every field typed shape:X or shape:X[] cut to X the same way, so a nested upload is a member_upload
+   wherever it appears. Values typed json or document:NAME are kept as stored. Not an object: null. */
+const SHAPE_TYPE = /^shape:([a-z_]+)(\[\])?(\|null)?$/;
+export function projectDeep(name, row) {
+  const fields = shapeFields(name);
+  if (!fields || !isPlainObject(row)) return null;
+  return Object.fromEntries(Object.entries(fields).map(([key, type]) => {
+    const value = row[key] ?? null;
+    const nested = SHAPE_TYPE.exec(type);
+    if (!nested || value === null) return [key, value];
+    if (nested[2]) return [key, Array.isArray(value) ? value.map((item) => projectDeep(nested[1], item)) : null];
+    return [key, projectDeep(nested[1], value)];
+  }));
+}
+
 /* The shape a member route answers with: the route's own narrowing (member_upload, proof_media) when it names one,
-   otherwise the action's result shape. A list result keeps its rows (the SQL builds them member-shaped). */
+   otherwise the action's result shape. */
 function answerShape(route) {
   if (route.answer) return route.answer;
   const result = MEMBER_ACTIONS[route.action]?.result;
   return typeof result === 'string' && !result.endsWith('[]') ? result : null;
 }
-const shaped = (shape, value) => memberSafe(shape ? projectShape(shape, value) : value);
+const shaped = (shape, value) => memberSafe(shape ? projectDeep(shape, value) : value);
 
 /* A stored receipt answers what its route answered: an upload receipt carries a member_upload, not the raw row. */
 const RECEIPT_SHAPES = Object.freeze(Object.fromEntries(ROUTES
@@ -54,7 +71,7 @@ const RECEIPT_SHAPES = Object.freeze(Object.fromEntries(ROUTES
 function receiptAnswer(receipt) {
   const row = projectShape('receipt', receipt);
   const shape = typeof row.operation === 'string' && Object.hasOwn(RECEIPT_SHAPES, row.operation) ? RECEIPT_SHAPES[row.operation] : null;
-  return memberSafe(shape ? { ...row, result: isPlainObject(row.result) ? projectShape(shape, row.result) : null } : row);
+  return memberSafe(shape ? { ...row, result: projectDeep(shape, row.result) } : row);
 }
 
 /* /v1/eup/member/league/* . ctx = { user, rest, url, fetchImpl, now, fail, rpcTimeoutMs }; user.id is the verified

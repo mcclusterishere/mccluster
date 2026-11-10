@@ -20,6 +20,7 @@
 // the SQLSTATE rows that existed, schema_not_applied, the 501 segments, the fixture, the overview postures).
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { handleEup } from '../src/eup/router.js';
 import { CAMPAIGN_FIXTURE } from '../src/eup/league-fixture.js';
 import * as C from '../src/eup/league-contract.js';
@@ -196,6 +197,17 @@ test('publication beyond the audience, broadcast, points and payouts are not imp
   }
   assert.deepEqual([...C.NOT_IMPLEMENTED_SEGMENTS], ['publish', 'broadcast', 'points', 'payouts']);
   assert.equal(plane.all().length, 0);
+});
+
+test('the League Worker names no public projection, no held consumer path, no other bucket and no second RPC', () => {
+  const files = ['league.js', 'league-member.js', 'league-media.js'].map((f) => [f, readFileSync(new URL(`../src/eup/${f}`, import.meta.url), 'utf8')]);
+  for (const [file, text] of files) {
+    assert.doesNotMatch(text, /\b(action_missions|action_proofs|action_cohorts|action_policy_bills|network_posts|network_media_assets|network_groups|world_environment\w*|mnet-media)\b/, file);
+    assert.doesNotMatch(text, /rest\/v1\/(?!rpc\/)/, `${file}: no table read or write`);
+    assert.doesNotMatch(text, /console\.|logEvent/, `${file}: nothing is logged`);
+  }
+  assert.deepEqual(Object.values(C.RPC).sort(), ['eup_league_command', 'eup_league_media_seal', 'eup_league_member_command']);
+  assert.equal(C.MEDIA.bucket, 'equity-uprise-private');
 });
 
 test('the fixture catalogue is unpublished, unpriced and policy-free', async () => {
