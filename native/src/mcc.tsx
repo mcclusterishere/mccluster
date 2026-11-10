@@ -16,7 +16,15 @@ import React, {
 } from 'react';
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
-import { isDefinitiveAuthFailure, isFresh, persistableSession, sessionChangedError, singleFlight } from './sessionPolicy';
+import {
+  isDefinitiveAuthFailure,
+  isFresh,
+  persistableSession,
+  restoredSession,
+  sessionChangedError,
+  singleFlight,
+  stampExpiry,
+} from './sessionPolicy';
 
 export const SUPABASE_URL = 'https://zmnhbrjyhxzhkxmhkexs.supabase.co';
 export const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4';
@@ -40,8 +48,12 @@ export type MccUser = {
 export type MccSession = {
   access_token: string;
   refresh_token: string;
+  /** In an answer from the auth server only: spent when the answer is stamped. */
   expires_in?: number;
+  /** On this device's clock, stamped when the answer arrived (sessionPolicy stampExpiry). */
   expires_at?: number;
+  /** The auth server's own expires_at, on its clock: kept, never compared with Date.now(). */
+  server_expires_at?: number;
   token_type?: string;
   user?: MccUser | null;
 };
@@ -75,23 +87,26 @@ type MccContextValue = {
 
 const MccContext = createContext<MccContextValue | null>(null);
 
-function normalizeSession(value: any): MccSession | null {
+/**
+ * A session the auth server has just sent (sign-in, sign-up, refresh). Its
+ * expiry is stamped here, on this device's clock, as the answer arrives
+ * (sessionPolicy stampExpiry). Every answer comes through here once, and
+ * nothing else does: a session read back from the keychain is restoredSession,
+ * as stored.
+ */
+function sessionFromAnswer(value: any): MccSession | null {
   if (!value || typeof value !== 'object' || !value.access_token) return null;
-  const session: MccSession = value;
-  if (!session.expires_at) {
-    session.expires_at = Math.floor(Date.now() / 1000) + Number(session.expires_in || 3600);
-  }
-  return session;
+  return stampExpiry(value as MccSession);
 }
 
 async function storedSession(): Promise<MccSession | null> {
   try {
     if (Platform.OS === 'web') {
       const raw = (globalThis as any).localStorage?.getItem(SESSION_KEY);
-      return normalizeSession(raw ? JSON.parse(raw) : null);
+      return restoredSession<MccSession>(raw ? JSON.parse(raw) : null);
     }
     const raw = await SecureStore.getItemAsync(SESSION_KEY);
-    return normalizeSession(raw ? JSON.parse(raw) : null);
+    return restoredSession<MccSession>(raw ? JSON.parse(raw) : null);
   } catch {
     return null;
   }
@@ -161,12 +176,14 @@ export function MccProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<MccUser | null>(null);
   const sessionRef = useRef<MccSession | null>(null);
 
+  /* Commits an answer already stamped (sessionFromAnswer), or null. Committing
+     never stamps: the keychain gets the expiry the answer was given when it
+     arrived. */
   const commitSession = useCallback(async (next: MccSession | null) => {
-    const normalized = normalizeSession(next);
-    sessionRef.current = normalized;
-    setSession(normalized);
-    await persistSession(normalized);
-    return normalized;
+    sessionRef.current = next;
+    setSession(next);
+    await persistSession(next);
+    return next;
   }, []);
 
   /* One refresh at a time (refresh tokens are single-use). Only a definitive
@@ -182,7 +199,7 @@ export function MccProvider({ children }: { children: ReactNode }) {
           return null;
         }
         try {
-          const next = normalizeSession(
+          const next = sessionFromAnswer(
             await authRequest<MccSession>('token?grant_type=refresh_token', {
               method: 'POST',
               body: { refresh_token: current.refresh_token },
@@ -255,7 +272,7 @@ export function MccProvider({ children }: { children: ReactNode }) {
     async (email: string, password: string) => {
       const cleanEmail = String(email || '').trim().toLowerCase();
       if (!cleanEmail || !password) throw new Error('Email and password are required.');
-      const next = normalizeSession(
+      const next = sessionFromAnswer(
         await authRequest<MccSession>('token?grant_type=password', {
           method: 'POST',
           body: { email: cleanEmail, password },
@@ -279,7 +296,7 @@ export function MccProvider({ children }: { children: ReactNode }) {
         method: 'POST',
         body: { email: cleanEmail, password, data },
       });
-      const next = normalizeSession(result);
+      const next = sessionFromAnswer(result);
       if (next) {
         await commitSession(next);
         const who = next.user || null;
