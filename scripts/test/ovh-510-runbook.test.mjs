@@ -186,3 +186,14 @@ test('every instruction that removes the SSH drop-in says it works only while th
   assert.match(section(runbook, '## Step 6.'), /Once it is private, switch visibility back to public first \(step 8\.5\), then remove the drop-in\./);
   assert.match(section(runbook, '## Step 8.'), /\n5\. If a cycle fails, switch back to public at once/);
 });
+
+test('the schema freeze covers merges, because a push to main applies supabase/migrations (RB-3)', async () => {
+  const [runbook, controls] = await Promise.all([read(RUNBOOK), read('docs/control-plane/DEPLOYMENT-CONTROLS-PROPOSAL.md')]);
+  assert.match(controls, /\| \*\*Supabase migrations \+ Edge Functions\*\* \| \*\*Supabase GitHub integration\*\* \(dashboard\) on push to `main` \| Applies `supabase\/migrations`/,
+    'the deployment-controls record: merging a migration into main applies it to production');
+  const freeze = section(runbook, '## Step 1.');
+  assert.match(freeze, /So merge into `main` no pull request that adds or changes a file under `supabase\/migrations` until step 5 passes\./);
+  assert.match(freeze, /Step 3's pull request is the one exception: production has applied its four files already, and Q3 guards the merge\./);
+  assert.match(section(runbook, '## Step 3.'), /Run Q3 once more immediately before merging\./, 'the guard the exception relies on');
+  assert.match(section(runbook, '## Never'), /- Merge into `main` a pull request that adds or changes a file under `supabase\/migrations` before step 5 passes/);
+});
