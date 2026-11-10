@@ -9,7 +9,7 @@
 import { test, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { handlePlatformApi } from '../src/platform-api.js';
-import { linkRows } from './support/auth-links.mjs';
+import { linkRows, selectedColumns } from './support/auth-links.mjs';
 
 const ENV = { SUPABASE_URL: 'https://db.test', SUPABASE_SERVICE_ROLE_KEY: 'svc' };
 const PROOF = '11111111-1111-4111-8111-111111111111';
@@ -25,7 +25,7 @@ const LINKS = [{ auth_user_id: MEMBER_AUTH, m_uid: MEMBER }, { auth_user_id: STR
 const realFetch = globalThis.fetch;
 afterEach(() => { globalThis.fetch = realFetch; });
 
-function fake({ admin = true, owner = MEMBER, bucket = 'mnet-media', objectPath = OBJECT, links = LINKS } = {}) {
+function fake({ admin = true, owner = MEMBER, bucket = 'mnet-media', objectPath = OBJECT, links = LINKS, linkStatus = 200 } = {}) {
   const calls = [];
   globalThis.fetch = async (url, init = {}) => {
     const u = String(url); calls.push(u);
@@ -35,8 +35,8 @@ function fake({ admin = true, owner = MEMBER, bucket = 'mnet-media', objectPath 
     if (u.includes('/action_proofs')) return ok([{ id: PROOF, metadata: { asset_id: ASSET, media_type: 'video' }, assignment_id: ASSIGNMENT }]);
     if (u.includes('/action_antisocial_levels')) return ok([{ assignment_id: ASSIGNMENT, media_asset_id: ASSET }]);
     if (u.includes('/action_mission_assignments')) return ok([{ m_uid: MEMBER }]);
-    if (u.includes('/network_media_assets')) return ok([{ id: ASSET, bucket_id: bucket, object_path: objectPath, owner_m_uid: owner, media_type: 'video', mime_type: 'video/mp4' }]);
-    if (u.includes('/m_auth_user_links')) return ok(linkRows(u, links));
+    if (u.includes('/network_media_assets')) return ok(selectedColumns(u, [{ id: ASSET, bucket_id: bucket, object_path: objectPath, owner_m_uid: owner, media_type: 'video', mime_type: 'video/mp4', status: 'ready', post_id: null }]));
+    if (u.includes('/m_auth_user_links')) return linkStatus === 200 ? ok(linkRows(u, links)) : ok({ message: 'link table unreachable' }, linkStatus);
     if (u.includes('/storage/v1/object/sign/')) return ok({ signedURL: `/object/sign/${u.split('/storage/v1/object/sign/')[1]}?token=t` });
     return ok([]);
   };
@@ -132,4 +132,13 @@ test('Anti-Social level clips follow the same rule', async () => {
   await refused(askLevel, fake({ objectPath: 'm/clip one.mp4' }));
   await refused(askLevel, fake({ links: [] }));
   await refused(askLevel, fake({ owner: STRANGER }));
+});
+
+test('when the link table cannot be read nothing is signed and the desk is told it failed, not that the proof is missing', async () => {
+  for (const ask_ of [ask, askLevel]) for (const linkStatus of [500, 503, 401]) {
+    const calls = fake({ linkStatus });
+    const outcome = await ask_().then((res) => ({ status: res.status }), (error) => ({ status: error.status || 500, thrown: true }));
+    assert.ok(outcome.status >= 400 && outcome.status !== 404, `${linkStatus} -> ${JSON.stringify(outcome)}`);
+    assert.deepEqual(signed(calls), [], 'an unreadable link table is never read as linked');
+  }
 });
