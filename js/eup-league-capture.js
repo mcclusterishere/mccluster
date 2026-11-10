@@ -84,7 +84,13 @@
     }
     return null;
   }
-  function megabytes(bytes) { return (Math.round((bytes / 1048576) * 10) / 10) + ' MB'; }
+  /* a size a person can read: bytes, KB (rounded up, so nothing reads as zero) or MB with one decimal */
+  function megabytes(bytes) {
+    var n = Number(bytes) || 0;
+    if (n < 1024) return n + (n === 1 ? ' byte' : ' bytes');
+    if (n < 1048576) return Math.ceil(n / 1024) + ' KB';
+    return (Math.round((n / 1048576) * 10) / 10) + ' MB';
+  }
   /* Whether this browser can record a kind at all. Asks for nothing: it only looks for the APIs and a type. */
   function recordingSupported(kind, env) {
     env = env || {};

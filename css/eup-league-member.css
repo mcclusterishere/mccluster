@@ -48,6 +48,8 @@
   overflow-wrap: anywhere;
 }
 .eul *, .eul *::before, .eul *::after { box-sizing: border-box; }
+/* hidden means hidden, whatever display a class gives (a player stays out of sight until it has a link to play) */
+.eul [hidden] { display: none !important; }
 
 /* the page around the module (action/league.html only) */
 body.eul-page { margin: 0; min-height: 100vh; background: #0b0a09; color: #f4efe6; color-scheme: dark; font-family: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
