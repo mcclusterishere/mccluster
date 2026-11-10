@@ -31,13 +31,16 @@
    and one clock step (an upload's staged deadline moved into the past), as in
    scripts/test/eup-league-journey.integration.mjs. PGLITE_MODULE is required;
    without it the League checks FAIL (they are never skipped).
-   PGLITE_MODULE=<pglite dist/index.js> PLAYWRIGHT_DIR=<node_modules> CHROMIUM_EXECUTABLE=<chromium> node scripts/e2e/control-eup.e2e.mjs [outDir] */
+   PGLITE_MODULE=<pglite dist/index.js> PLAYWRIGHT_DIR=<node_modules> CHROMIUM_EXECUTABLE=<chromium> node scripts/e2e/control-eup.e2e.mjs [outDir]
+   MCC_SERVE_ROOT=<export dir> ... the same, with the page served from scripts/build-public-export.sh output. */
 import {createRequire} from 'node:module';
 import {readFile,mkdir} from 'node:fs/promises';
 import {join,extname,resolve,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {isDeepStrictEqual} from 'node:util';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
+/* the tree the browser is served from: the checkout, or an emitted export (scripts/build-public-export.sh <dir>) */
+const SERVE=resolve(process.env.MCC_SERVE_ROOT||ROOT);
 const OUT=process.argv[2]||'/tmp/control-eup-proof';
 const {chromium}=createRequire(join(process.env.PLAYWRIGHT_DIR||'/opt/node-tools/node_modules','x'))('playwright');
 const BASE='https://matthew.mccluster.org';
@@ -127,8 +130,8 @@ async function setup(viewport,{owner=true,reduced=false}={}){
       return json(route,[]);
     }
     if(u.origin===BASE){
-      const rel=p==='/'?'index.html':decodeURIComponent(p.replace(/^\//,''));const file=resolve(ROOT,rel);
-      if(!file.startsWith(resolve(ROOT)+sep))return route.abort();
+      const rel=p==='/'?'index.html':decodeURIComponent(p.replace(/^\//,''));const file=resolve(SERVE,rel);
+      if(!file.startsWith(SERVE+sep))return route.abort();
       try{return route.fulfill({body:await readFile(file),contentType:TYPES[extname(file)]||'application/octet-stream'});}catch{return route.fulfill({status:404,body:''});}
     }
     return route.abort(); /* Cesium CDN included: the globe reports it did not load; cards still work */
@@ -264,8 +267,8 @@ async function setupPlane(viewport,plane){
       return json(route,[]);
     }
     if(u.origin===BASE){
-      const rel=p==='/'?'index.html':decodeURIComponent(p.replace(/^\//,''));const file=resolve(ROOT,rel);
-      if(!file.startsWith(resolve(ROOT)+sep))return route.abort();
+      const rel=p==='/'?'index.html':decodeURIComponent(p.replace(/^\//,''));const file=resolve(SERVE,rel);
+      if(!file.startsWith(SERVE+sep))return route.abort();
       try{return route.fulfill({body:await readFile(file),contentType:TYPES[extname(file)]||'application/octet-stream'});}catch{return route.fulfill({status:404,body:''});}
     }
     return route.abort();
