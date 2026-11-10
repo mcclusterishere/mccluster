@@ -276,7 +276,7 @@ sudo bash /var/lib/mccluster/reconcile/source/scripts/ovh-private-repo-ssh.sh ac
 | --- | --- | --- |
 | `GitHub greets this key as '<login>'` | The key is registered on a personal account | Remove it there. Add it under the repository's Deploy keys |
 | `The deploy key has WRITE access` | "Allow write access" is on | Turn it off, run `activate` again |
-| `fatal: Could not read from remote repository` and exit status 128 | The public key is not registered with GitHub, or the host cannot reach github.com on TCP 22 | Check the deploy key was added. Check outbound port 22. Nothing was changed |
+| Git's `fatal: Could not read from remote repository`, followed by `Cannot read the repository over SSH (is the deploy key added, and is TCP 22 to github.com open?).`, and exit status 3 | The public key is not registered with GitHub, or the host cannot reach github.com on TCP 22 | Check the deploy key was added. Check outbound port 22. Nothing was changed |
 | `GitHub's greeting was not recognised` followed by `GitHub answered: ...` | GitHub answered in words the script does not know | Read the answer line. See "First real run" below |
 | `Could not prove the deploy key is read-only` followed by `The dry-run push answered: ...` | GitHub refused in words the script does not know | Read the answer line. See "First real run" below |
 | `Git configuration on this host rewrites ...` | A `url.*.insteadOf` rule would send the fetch elsewhere | Remove the rule from the reconciler's Git configuration |

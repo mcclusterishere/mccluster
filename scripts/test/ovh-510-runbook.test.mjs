@@ -151,3 +151,19 @@ test('every bash -n the runbook gives catches a syntax error in each file it nam
     }
   }
 });
+
+test('the activate table states the exit status the setup script really exits with (RB-5)', async () => {
+  const [runbook, script] = await Promise.all([read(RUNBOOK), read('scripts/ovh-private-repo-ssh.sh')]);
+  const rows = section(runbook, '## Step 6.').split('\n').filter((line) => line.startsWith('| ') && !/^\| (If `activate` says|---)/.test(line));
+  assert.ok(rows.length >= 7, 'the table of what activate says');
+  // The exit statuses the script documents in its header, and therefore all a row may name.
+  const documented = [...script.matchAll(/^# {3}(\d) {2}/gm)].map((match) => match[1]);
+  assert.deepEqual(documented, ['0', '1', '2', '3', '4']);
+  for (const row of rows) for (const [, code] of row.matchAll(/exit status (\d+)/g)) assert.ok(documented.includes(code), `the script never exits ${code}: ${row}`);
+  // Refs that cannot be read: the script's own line, and the status it exits with.
+  const unreadable = script.match(/echo "(Cannot read the repository over SSH \([^"]*\)\.)" >&2; exit (\d+); \}/);
+  assert.ok(unreadable, 'the script refuses unreadable refs with its own message');
+  const row = rows.find((line) => line.includes(unreadable[1]));
+  assert.ok(row, 'the table quotes that message');
+  assert.match(row, new RegExp(`exit status ${unreadable[2]} \\|`));
+});
