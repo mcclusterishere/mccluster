@@ -6,6 +6,7 @@ import {readFile, mkdir} from 'node:fs/promises';
 import {resolve, join, extname, sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import assert from 'node:assert/strict';
+import {seedNavigationAuth} from './support/navigation-auth-fixture.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
 const OUT=process.argv[2]||'/tmp/site-navigation-proof';
 const {chromium}=createRequire(join(process.env.PLAYWRIGHT_DIR||'/opt/node-tools/node_modules','x'))('playwright');
@@ -18,16 +19,12 @@ await mkdir(OUT,{recursive:true});
 async function setup(width,persona='owner'){
   const ctx=await browser.newContext({viewport:{width,height:844},hasTouch:true,reducedMotion:'reduce',serviceWorkers:'block'});
   const auth={status:persona==='owner'?200:403,signed:persona!=='guest',delay:false,release:null},calls=[],errors=[];
-  await ctx.addInitScript(({signed,USER})=>{
-    window.__navFrames=[];const sample=()=>{const b=document.querySelector('.appbar');if(b){const c=getComputedStyle(b);if(c.visibility==='visible'&&c.display!=='none')window.__navFrames.push(b.querySelectorAll('[data-appnav]').length);}requestAnimationFrame(sample);};requestAnimationFrame(sample);
-    localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));
-    if(signed){const exp=Math.floor(Date.now()/1000)+3600;localStorage.setItem('mccdb_session',JSON.stringify({access_token:'x.'+btoa(JSON.stringify({sub:USER,exp,email:'qa@fixture.invalid'}))+'.y',expires_at:exp,refresh_token:'fixture-only',user:{id:USER,email:'qa@fixture.invalid'}}));}
-  },{signed:auth.signed,USER});
+  await ctx.addInitScript(seedNavigationAuth,{signed:auth.signed,USER});
   const json=(r,body,status=200)=>r.fulfill({status,contentType:'application/json',headers:{'access-control-allow-origin':'*','access-control-allow-headers':'*'},body:JSON.stringify(body)});
   await ctx.route('**/*',async r=>{
     const req=r.request(),u=new URL(req.url()),p=u.pathname;
     // Exercise opt-in before the incoming page's external stylesheet arrives.
-    if(p==='/css/platform-home.css'&&process.env.DELAY_PLATFORM_CSS)await new Promise(resolve=>setTimeout(resolve,150));
+    if(['/css/platform-home.css','/css/style.css','/css/profile-shell.css'].includes(p)&&process.env.DELAY_PLATFORM_CSS)await new Promise(resolve=>setTimeout(resolve,150));
     calls.push({url:u.href,method:req.method()});
     if(req.method()==='OPTIONS')return r.fulfill({status:204,headers:{'access-control-allow-origin':'*','access-control-allow-headers':'*','access-control-allow-methods':'*'}});
     if(u.hostname.endsWith('supabase.co')){
@@ -69,13 +66,25 @@ try{
      once (it used to hold 460ms under the veil first), and the veil into the World is the World's own colour */
   for(let repeat=0;repeat<3;repeat++){
     const {ctx,page,errors}=await setup(390,'guest');await page.goto(BASE+'/license.html');
-    await page.waitForFunction(()=>window.MCC_BAR&&window.MCC_BAR.auth().verified);
-    await page.evaluate(()=>{navigation.addEventListener('navigate',()=>sessionStorage.setItem('__navDelay',String(Math.round(performance.now()-window.__clickAt))));
-      window.__clickAt=performance.now();document.querySelector('.appbar [data-appnav="home"]').click();});
-    await page.waitForURL(/\/platform-home\.html$/,{timeout:15000,waitUntil:'domcontentloaded'});
-    await page.waitForLoadState('load');
-    const delay=Number(await page.evaluate(()=>sessionStorage.getItem('__navDelay')));
-    check('a bar tab asks for the next page at once, with no hold before it',Number.isFinite(delay)&&delay<200,delay);
+    // The established guest center opens the personal house. Platform home
+    // remains a separate explicit link, retaining its delayed-CSS regression.
+    for(const destination of ['index.html','platform-home.html']){
+      if(destination==='platform-home.html')await page.goto(BASE+'/license.html');
+      await page.waitForFunction(()=>window.MCC_BAR&&window.MCC_BAR.auth().verified);
+      await page.evaluate(destination=>{
+        let link=document.querySelector('.appbar [data-appnav="home"]');
+        if(destination==='platform-home.html'){
+          link=document.createElement('a');link.href='platform-home.html';link.textContent='Platform';document.body.appendChild(link);
+        }
+        sessionStorage.removeItem('__navDelay');
+        navigation.addEventListener('navigate',()=>sessionStorage.setItem('__navDelay',String(Math.round(performance.now()-window.__clickAt))));
+        window.__clickAt=performance.now();link.click();
+      },destination);
+      await page.waitForURL(BASE+'/'+destination,{timeout:15000,waitUntil:'domcontentloaded'});
+      await page.waitForLoadState('load');
+      const delay=Number(await page.evaluate(()=>sessionStorage.getItem('__navDelay')??'NaN'));
+      check(destination+' navigation starts at once, with no hold before it',Number.isFinite(delay)&&delay<200,delay);
+    }
     await page.goto(BASE+'/license.html');
     await page.waitForLoadState('load');
     await page.waitForFunction(()=>window.MCC_BAR&&window.MCC_DAYLIGHT_CORE);
