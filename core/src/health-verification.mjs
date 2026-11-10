@@ -18,8 +18,9 @@ export function finalizeRuntimeHealth(snapshot) {
   // The reconcile timer being "active" says nothing about its cycles: in incident
   // #510 it stayed active for a day while every fetch failed. Cycle receipts
   // (deployment.reconcile) do. A failed or stale cycle is a warning, as an
-  // inactive timer already is. "unverified" means the host's reconciler predates
-  // the receipts: that is neither a failure nor a success and adds nothing.
+  // inactive timer already is. "unverified" means no usable receipt, as on a
+  // host whose reconciler predates them: neither a failure nor a success, so it
+  // adds nothing.
   const reconcile = snapshot.deployment?.reconcile || null;
   const lastCycle = reconcile?.last_cycle || null;
   if (reconcile?.status === 'failed') {

@@ -110,10 +110,15 @@ export function verifiedReconcileCycle(receipt, {
   const startedMs = Date.parse(receipt.started_at);
   const finishedMs = Date.parse(receipt.finished_at);
   if (!Number.isFinite(startedMs) || !Number.isFinite(finishedMs) || !Number.isFinite(nowMs)
-    || startedMs > finishedMs || finishedMs > nowMs + 30_000) return null;
+    || finishedMs > nowMs + 30_000) return null;
 
   // A receipt that contradicts itself is not evidence of anything.
   const success = CYCLE_SUCCESS.has(receipt.outcome);
+  // Both times come from the wall clock, so a clock stepped back during a cycle
+  // puts its start after its end. Cycles are ordered by finished_at; a start
+  // after the end only discredits a claim of success. A cycle that did not
+  // succeed is kept: a clock step must never hide a failure.
+  if (success && startedMs > finishedMs) return null;
   const ssh = receipt.transport === 'ssh';
   if (!ssh && (receipt.ssh_host_key_pinned || receipt.ssh_key_fingerprint !== '')) return null;
   if (receipt.transport !== 'https' && receipt.https_credential_configured) return null;
@@ -173,8 +178,11 @@ const newer = (a, b) => (!b || (a && Date.parse(a.finished_at) > Date.parse(b.fi
 //   verified    the newest cycle did not fail and a cycle succeeded within the window
 //   failed      the newest cycle failed (or was terminated before it finished)
 //   stale       no cycle has succeeded within the window
-//   unverified  the host has no cycle receipts: its reconciler predates them.
-//               Neither a failure nor a success, and never a degradation.
+//   unverified  no usable cycle receipt: the host has none (its reconciler
+//               predates them), or none of its receipts can be used (malformed,
+//               for another repository or ref, or more than 30 s in the future,
+//               as right after the clock is stepped back). Neither a failure
+//               nor a success, and never a degradation.
 export function summarizeReconcileCycles({ latest = null, verified = null, history = '' } = {}, {
   repository = 'mcclusterishere/mccluster',
   promotedRef = 'deploy/ovh-production',
