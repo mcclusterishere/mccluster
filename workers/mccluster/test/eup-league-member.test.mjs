@@ -407,6 +407,31 @@ test('a browser preflight for the member routes is answered before any sign-in g
   /* The preflight opens nothing: the real request without a bearer is still refused. */
   const real = await entry.fetch(new Request(`https://api.mccluster.org${C.PREFIX.member}`, { headers: { origin: ORIGIN } }), { SUPABASE_URL: env.SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY: env.SUPABASE_SERVICE_ROLE_KEY }, {});
   assert.equal(real.status, 401);
+  /* A signed-in request through the real entry: the Worker's own session check (GoTrue /auth/v1/user) names the actor,
+     and the member command is the only other call. No house-owner lookup is made. */
+  const offline = globalThis.fetch;
+  const seen = [];
+  globalThis.fetch = async (input, init = {}) => {
+    const url = String(input instanceof Request ? input.url : input);
+    seen.push(url.replace(env.SUPABASE_URL, ''));
+    if (url === `${env.SUPABASE_URL}/auth/v1/user`) {
+      const bearer = new Headers(init.headers).get('authorization');
+      return bearer === `Bearer ${MEMBER_TOKEN}` ? Response.json({ id: MEMBER }) : Response.json({ message: 'invalid' }, { status: 401 });
+    }
+    if (url === `${env.SUPABASE_URL}/rest/v1/rpc/${NAMES.member}`) return Response.json({ ...sampleShape('me'), actor: JSON.parse(init.body).p_actor });
+    throw new Error(`unexpected fetch ${url}`);
+  };
+  try {
+    const signedIn = await entry.fetch(new Request(`https://api.mccluster.org${C.PREFIX.member}`, { headers: { origin: ORIGIN, authorization: `Bearer ${MEMBER_TOKEN}` } }), { SUPABASE_URL: env.SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY: env.SUPABASE_SERVICE_ROLE_KEY }, {});
+    assert.equal(signedIn.status, 200);
+    assert.equal((await signedIn.json()).league.actor, MEMBER);
+    assert.deepEqual(seen, ['/auth/v1/user', `/rest/v1/rpc/${NAMES.member}`]);
+    const stranger = await entry.fetch(new Request(`https://api.mccluster.org${C.PREFIX.member}`, { headers: { origin: ORIGIN, authorization: 'Bearer not-a-session' } }), { SUPABASE_URL: env.SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY: env.SUPABASE_SERVICE_ROLE_KEY }, {});
+    assert.equal(stranger.status, 401);
+    assert.deepEqual(seen.slice(2), ['/auth/v1/user'], 'an unknown session reaches no RPC');
+  } finally {
+    globalThis.fetch = offline;
+  }
 });
 
 test('nothing in the member routes logged anything', () => {
