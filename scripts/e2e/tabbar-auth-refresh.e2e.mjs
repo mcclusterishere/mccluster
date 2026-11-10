@@ -26,9 +26,10 @@ const seconds = () => Math.floor(Date.now() / 1000);
 const pause = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /* One browser profile with the stale-on-every-call session already stored, and `tabs` pages open on it.
-   owner: what GET /v1/status answers. statusDelay holds that answer back so a token refresh can land first. */
-async function visit({ page: path = PAGE, tabs = 1, owner = false, statusDelay = 0 } = {}) {
-  let serial = 0;
+   owner: what GET /v1/status answers. holdStatus keeps that answer in the air until answerStatus() is called. */
+async function visit({ page: path = PAGE, tabs = 1, owner = false, holdStatus = false } = {}) {
+  let serial = 0, answerStatus = () => {};
+  const held = holdStatus ? new Promise((resolve) => { answerStatus = resolve; }) : null;
   const token = () => 'fixture.' + Buffer.from(JSON.stringify({ sub: SUB, email: 'fixture@example.test', exp: seconds() - 5, n: ++serial })).toString('base64url') + '.fixture';
   const counts = { refresh: 0, user: 0, status: 0 }, errors = [];
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
@@ -49,7 +50,7 @@ async function visit({ page: path = PAGE, tabs = 1, owner = false, statusDelay =
     if (u.pathname === '/auth/v1/user') { counts.user++; return route.fulfill({ json: { id: SUB, email: 'fixture@example.test', user_metadata: { name: 'Fixture Member' } }, headers: cors }); }
     if (u.href === 'https://api.mccluster.org/v1/status') {
       counts.status++;
-      if (statusDelay) await pause(statusDelay);
+      await held;
       return route.fulfill(owner ? { json: { ok: true }, headers: cors } : { status: 403, json: { error: 'forbidden' }, headers: cors }).catch(() => {});
     }
     return route.abort();
@@ -61,7 +62,7 @@ async function visit({ page: path = PAGE, tabs = 1, owner = false, statusDelay =
     pages.push(page);
   }
   await Promise.all(pages.map((page) => page.goto(base + path, { waitUntil: 'domcontentloaded' })));   // tabs restored together
-  return { context, pages, counts, errors };
+  return { context, pages, counts, errors, answerStatus };
 }
 /* The bar has an answer when its state is verified. Unfixed, it never does: it is still asking. */
 async function settled(page, counts) {
@@ -102,10 +103,12 @@ try {
 
   // The owner check is still in the air when another request on the page refreshes the token: its answer still counts.
   for (const owner of [true, false]) {
-    const late = await visit({ owner, statusDelay: 700 });
+    const late = await visit({ owner, holdStatus: true });
     await settled(late.pages[0], late.counts);
-    await late.pages[0].evaluate(() => window.MCC.refresh());
-    assert.equal(late.counts.refresh, 2, 'the token moved again under the owner check');
+    await late.pages[0].evaluate(() => window.MCC.refresh());   // resolves once the refreshed session is stored
+    assert.deepEqual(late.counts, { refresh: 2, user: 1, status: 1 }, 'the token moved again under the owner check');
+    assert.equal(await late.pages[0].evaluate(() => document.documentElement.classList.contains('mcc-shell-pending')), true, 'the bar waits for the owner answer');
+    late.answerStatus();
     await released(late.pages[0], owner);
     assert.deepEqual(await painted(late.pages[0]), SIGNED_IN);
     assert.equal(late.counts.status, 1, 'one owner check');
