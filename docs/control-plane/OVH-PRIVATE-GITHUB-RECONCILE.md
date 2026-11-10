@@ -10,16 +10,24 @@ The checked-in systemd service defaults to unauthenticated HTTPS, which worked w
 
 ## One-time owner action on OVH
 
-1. SSH into the authorized OVH host. From the current trusted mccluster checkout, run `sudo bash scripts/ovh-private-repo-ssh.sh prepare`. This generates a dedicated Ed25519 key on the OVH machine only if one does not already exist at the script's managed path. The output shows only the public key and its fingerprint.
+These steps apply only after a promotion has put the hardened script on the host (the runbook's step 4). The host runs the script from the reconciler's checkout, `/var/lib/mccluster/reconcile/source`, which each cycle resets to the promoted commit. Check it first, on the host:
+
+```bash
+sudo grep -cF 'prepare|activate|status' /var/lib/mccluster/reconcile/source/scripts/ovh-private-repo-ssh.sh
+```
+
+It must print 1. If it prints 0, the checkout still holds the older script: its `activate` switches the transport after reading two refs, proves neither whose key it is nor that it cannot write, and it has no `status` mode. Stop and promote first.
+
+1. SSH into the authorized OVH host and run `sudo bash /var/lib/mccluster/reconcile/source/scripts/ovh-private-repo-ssh.sh prepare`. This generates a dedicated Ed25519 key on the OVH machine only if one does not already exist at the script's managed path. The output shows only the public key and its fingerprint.
 2. In [Repository Settings → Deploy keys](https://github.com/mcclusterishere/mccluster/settings/keys), add that public key with **Allow write access disabled**. Do not paste, upload, commit, or transmit the private key. An earlier key at another path is not automatically assumed to be authorized. Compare the fingerprint GitHub shows with the one `prepare` printed.
-3. Run `sudo bash scripts/ovh-private-repo-ssh.sh activate`. The script pins GitHub's [published Ed25519 host key](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/githubs-ssh-key-fingerprints) and then proves four things before it changes anything. It exits non-zero and leaves the live transport untouched if any of them fails:
+3. Run `sudo bash /var/lib/mccluster/reconcile/source/scripts/ovh-private-repo-ssh.sh activate`. The script pins GitHub's [published Ed25519 host key](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/githubs-ssh-key-fingerprints) and then proves four things before it changes anything. It exits non-zero and leaves the live transport untouched if any of them fails:
    - both `main` and `deploy/ovh-production` are readable over SSH with this key, using a Git that ignores system, user and environment configuration;
    - GitHub greets the key as `mcclusterishere/mccluster`, which is how it greets a deploy key of this repository. A personal key is greeted with a login and is refused;
    - GitHub refuses the key for writing. The probe is a dry-run push from a throwaway repository, so nothing is ever sent. A dry run that is accepted means the key can write, and the key is refused;
    - Git as the reconciler runs it resolves the SSH URL to itself, with no `url.*.insteadOf` rewrite.
 
    Only then does it wait until no reconcile cycle is running (a cycle the timer has already started keeps the transport it started with, and a start request would join it), install the persistent systemd drop-in and start one reconcile cycle by hand. It reports the switch only when that cycle's receipt names the unit's invocation and shows a successful fetch over SSH with the pinned host key and this key; otherwise it puts the previous transport back and exits 4.
-4. Wait about five minutes, then run `sudo bash scripts/ovh-private-repo-ssh.sh status`. It is read-only: it creates no key, writes no unit and no drop-in, and does not start or reload anything. The only thing it creates is the throwaway repository of the write probe, which it removes. It prints `key=value` evidence and exits 0 only when every proof holds. `proofs_unproven=` names whatever does not. The drop-in survives versioned unit reinstall.
+4. Wait about five minutes, then run `sudo bash /var/lib/mccluster/reconcile/source/scripts/ovh-private-repo-ssh.sh status`. It is read-only: it creates no key, writes no unit and no drop-in, and does not start or reload anything. The only thing it creates is the throwaway repository of the write probe, which it removes. It prints `key=value` evidence and exits 0 only when every proof holds. `proofs_unproven=` names whatever does not. The drop-in survives versioned unit reinstall.
 5. Only after `status` exits 0 and both local and public `/health` attest the deployed SHA, and only if the owner decides to, switch repository visibility to private and repeat the status, reconciliation and local/public health checks. Record results on #510. A GitHub branch head or green workflow alone cannot prove the live runtime SHA.
 
 The script never copies or prints a private key, sends no credential to GitHub except standard public-key authentication, and uses strict host-key checking. If key registration fails, keep the repository public and #510 open; do not disable SSH host verification or revert to a token embedded in the Git URL.
