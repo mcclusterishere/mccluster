@@ -331,6 +331,11 @@ test('a sign-out signal while the session is still stored conceals the page, and
   assert.equal(page.reloads, 0, 'an in-tab sign-out event reached every module itself');
   noStateTrace(page, A, 'after the sign-out signal');
   await sweep(page, A, 'after the sign-out signal');
+  /* A module asking for a refresh does not load the concealed page again. */
+  const readsBefore = page.reads('owner-a').length;
+  await page.module.refresh(); await page.settle();
+  assert.equal(page.reads('owner-a').length, readsBefore, 'the concealed page loads nothing');
+  noStateTrace(page, A, 'after a module asked for a refresh');
   await page.signInHere('a@fixture.invalid');
   assert.equal(page.reloads, 1, 'a page concealed once is not reused');
 });
