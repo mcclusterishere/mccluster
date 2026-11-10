@@ -1394,6 +1394,392 @@ try {
   // No storage path is stored anywhere, in any column or receipt.
   for (const t of [...MUTABLE, ...APPEND_ONLY, ...UNGUARDED]) eq(await n(t, `${t}::text ~ 'league/v1|equity-uprise-private|https?://|token='`), 0, `${t} holds no path, bucket, URL or token`);
 
+  /* ================================================================== G. owner control: publication, moderation, appeals, retention, outbox, bounds */
+  const lastSeq = async () => (await one('select coalesce(max(seq), 0)::int as s from public.eup_outbox')).s;
+  const eventsAfter = async (after) => admin('select seq::int as seq, type, payload from public.eup_outbox where seq > $1 order by seq', [after]);
+  const KINDS = { uuid: (v) => typeof v === 'string' && C.PATTERNS.uuid.test(v) && v === v.toLowerCase(), int: (v) => Number.isSafeInteger(v) && v >= 0,
+    sha256: (v) => typeof v === 'string' && C.PATTERNS.sha256.test(v), 'uuid[]': (v) => Array.isArray(v) && v.every((x) => typeof x === 'string' && C.PATTERNS.uuid.test(x)) };
+  const payloadOk = (payload) => Object.entries(payload).every(([k, v]) => C.OUTBOX.payload_keys.includes(k) && C.OUTBOX.value_kinds.some((kind) => KINDS[kind](v)));
+  // One command, exactly one event of its own type in the same transaction, carrying ids and revisions only.
+  const evented = async (type, fn, label = type) => {
+    const before = await lastSeq();
+    const result = await fn();
+    const rows = await eventsAfter(before);
+    eq(rows.map((r) => r.type), [`${C.OUTBOX.type_prefix}${type}`], `${label}: exactly one outbox event, of its own type`);
+    ok(payloadOk(rows[0].payload), `${label}: the event carries ids and revisions only`);
+    return { result, event: rows[0] };
+  };
+  // A refused (or replayed) command writes no event.
+  const silent = async (fn, label) => { const before = await lastSeq(); const result = await fn(); eq(await eventsAfter(before), [], `${label}: no event`); return result; };
+  const consentTo = (actor, proof, extra = {}) => member('consents.grant', { actor, id: proof.id, document: publishConsent(proof, extra), revision: proof.revision, key: key('consent') });
+  const decide = (proof, document, revision = proof.revision, actor = OWNER, k = key('publish')) => owner('publications.decide', { actor, id: proof.id, document, revision, key: k });
+  const moderate = (proof, hold, reason, actor = OWNER) => owner('proofs.moderate', { actor, id: proof.id, document: { hold, reason }, revision: proof.revision, key: key('moderate') });
+  const seenBy = async (actor) => (await me(actor)).published.map((x) => x.publication_id);
+  const publicationsOf = async (campaign) => owner('publications.list', { actor: OWNER, id: campaign.id });
+  const creditRows = async (ids) => (await admin('select to_jsonb(c) as j from public.eup_mission_credits c where c.assignment_id = any($1) order by c.assignment_id', [ids])).map((r) => r.j);
+
+  // G1. Publication: an accepted, clear proof; an open, unexpired publish consent of exactly that revision and digest;
+  // campaign and mission released. It means the campaign's released audience and nothing wider.
+  const G = await seedSongMission(league, { slug: 'owner-control', invite: TESTER, policy: null, rubric: RUBRIC });
+  await owner('audience.grants.grant', { actor: OWNER, id: G.campaign.id, document: { account: TESTER_B }, key: key('grant') });
+  let gm = G.mission;
+  const seatG1 = await enroll(TESTER, gm, OWNER);
+  const proofG1 = await submitProof(TESTER, seatG1);
+  const reviewedG1 = await review(proofG1, {}, REVIEWER);
+  const seatG2 = await enroll(TESTER_B, gm, OWNER);
+  const proofG2 = await submitProof(TESTER_B, seatG2);
+  const reviewedG2 = await review(proofG2, {}, REVIEWER);
+  ok(reviewedG1.state === 'accepted' && reviewedG2.state === 'accepted' && reviewedG1.credit && reviewedG2.credit, 'two accepted proofs, a credit each');
+  const creditsAtAcceptance = await creditRows([seatG1.id, seatG2.id]);
+  await silent(() => rejects(() => decide(proofG1, { decision: 'published', consent_id: U(9) }), 'EU015', 'an unknown consent cannot publish'), 'a refused publication');
+  const kG2 = await consentTo(TESTER_B, proofG2);
+  await rejects(() => decide(proofG1, { decision: 'published', consent_id: kG2.id }), 'EU015', 'the consent of another proof cannot publish this one');
+  const { result: kG1 } = await evented('consents.grant', () => consentTo(TESTER, proofG1));
+  for (const [why, document] of [['no consent id', { decision: 'published' }], ['a withdrawal without a reason', { decision: 'withdrawn' }],
+    ['an audience field', { decision: 'published', consent_id: kG1.id, audience: 'public' }], ['an unknown decision', { decision: 'public', consent_id: kG1.id }]]) {
+    await rejects(() => decide(proofG1, document), '22023', `a publication decision with ${why} is refused`);
+  }
+  await rejects(() => decide(proofG1, { decision: 'published', consent_id: kG1.id }, 9), '40001', 'the decision names the current proof revision');
+  await rejects(() => owner('publications.decide', { actor: PEER, id: proofG1.id, document: { decision: 'published', consent_id: kG1.id }, revision: 1, key: key('publish') }), '42501', 'publication is an owner command');
+  await rejects(() => decide({ id: U(404), revision: 1 }, { decision: 'published', consent_id: kG1.id }), 'P0002', 'an unknown proof is not found');
+  const pendingSeat = await enroll(TESTER, await newMission(G.campaign, 'pending-review'), OWNER);
+  const pendingProof = await submitProof(TESTER, pendingSeat);
+  await rejects(() => decide(pendingProof, { decision: 'published', consent_id: kG1.id }), '40001', 'a proof that is not accepted is not published');
+  await admin(`update public.eup_consents set expires_at = now() - interval '1 minute' where id = $1`, [kG1.id]);
+  await rejects(() => decide(proofG1, { decision: 'published', consent_id: kG1.id }), 'EU015', 'an expired consent cannot publish');
+  await admin('update public.eup_consents set expires_at = $2 where id = $1', [kG1.id, kG1.expires_at]);
+  await moderate(proofG1, true, 'Test fixture: hold.');
+  await rejects(() => decide(proofG1, { decision: 'published', consent_id: kG1.id }), 'EU016', 'a held proof is not published');
+  await moderate(proofG1, false, 'Test fixture: release.');
+  await moveCampaign(G.campaign, 'paused');
+  await rejects(() => decide(proofG1, { decision: 'published', consent_id: kG1.id }), 'EU011', 'nothing is published while the campaign is paused');
+  await moveCampaign(G.campaign, 'released');
+  await move(gm, 'paused');
+  await rejects(() => decide(proofG1, { decision: 'published', consent_id: kG1.id }), 'EU011', 'nor while the mission is paused');
+  gm = await move(gm, 'released');
+  eq(await publicationsOf(G.campaign), [], 'every refused decision wrote nothing');
+  const publishKey = key('publish');
+  const { result: pubG1, event: publishEvent } = await evented('publications.decide', () => decide(proofG1, { decision: 'published', consent_id: kG1.id }, proofG1.revision, OWNER, publishKey));
+  eq(Object.keys(pubG1).sort(), Object.keys(C.shapeFields('publication')).sort(), 'the result is exactly the contract publication');
+  eq([pubG1.state, pubG1.effective, pubG1.audience, pubG1.consent_id, pubG1.proof_id, pubG1.proof_revision, pubG1.asset_revision, pubG1.campaign_id, pubG1.mission_id, pubG1.assignment_id, pubG1.published_by, pubG1.withdrawn_at],
+    ['published', true, 'released_audience', kG1.id, proofG1.id, proofG1.revision, proofG1.asset_revision, G.campaign.id, gm.id, seatG1.id, OWNER, null],
+    'published to the released audience, bound to the consent, the proof revision and the digest');
+  eq(publishEvent.payload, { proof_id: proofG1.id, proof_revision: proofG1.revision, asset_revision: proofG1.asset_revision, publication_id: pubG1.id, consent_id: kG1.id }, 'its event names it by ids and revisions');
+  eq(await silent(() => decide(proofG1, { decision: 'published', consent_id: kG1.id }, proofG1.revision, OWNER, publishKey), 'a replay'), pubG1, 'a replay returns the stored result and writes no second event');
+  await rejects(() => decide(proofG1, { decision: 'published', consent_id: kG1.id }), '40001', 'a published proof is not published twice');
+  eq((await owner('proofs.list', { actor: OWNER, id: seatG1.id }))[0].publication_state, 'published_released_audience', 'the proof says published to its released audience');
+  // Who sees it: the campaign's released audience (both testers and a house owner); nobody else.
+  eq([await seenBy(TESTER), await seenBy(TESTER_B), await seenBy(REVIEWER), await seenBy(PEER)], [[pubG1.id], [pubG1.id], [pubG1.id], []], 'the released audience sees it; an account outside the campaign audience does not');
+  const shown = (await me(TESTER_B)).published.find((x) => x.publication_id === pubG1.id);
+  eq(Object.keys(shown).sort(), Object.keys(C.shapeFields('published_proof')).sort(), 'as the contract published_proof');
+  eq([shown.title, shown.lyrics, shown.credits, shown.media, shown.campaign_id, shown.mission_id], [words().title, LYRICS, words().credits, [], G.campaign.id, gm.id], 'the words, the credits list (the only attribution) and the media');
+  ok(!JSON.stringify(shown).includes(TESTER) && !C.FOREIGN_ID_FIELDS.some((f) => f in shown), 'and no account id');
+  const ownPublication = (await me(TESTER)).assignments.find((x) => x.id === seatG1.id).proof.publication;
+  eq(Object.keys(ownPublication).sort(), Object.keys(C.shapeFields('member_publication')).sort(), 'the participant reads it as the contract member publication');
+  eq([ownPublication.id, ownPublication.state, ownPublication.effective], [pubG1.id, 'published', true], 'live and effective');
+  // Pause and expiry hide it without a write.
+  await moveCampaign(G.campaign, 'paused');
+  eq([await seenBy(TESTER_B), (await publicationsOf(G.campaign))[0].effective, (await publicationsOf(G.campaign))[0].state], [[], false, 'published'], 'a campaign pause hides it without a write');
+  await moveCampaign(G.campaign, 'released');
+  await admin(`update public.eup_consents set expires_at = now() - interval '1 minute' where id = $1`, [kG1.id]);
+  eq([await seenBy(TESTER_B), (await publicationsOf(G.campaign))[0].effective], [[], false], 'so does the expiry of its consent');
+  await admin('update public.eup_consents set expires_at = $2 where id = $1', [kG1.id, kG1.expires_at]);
+  eq(await seenBy(TESTER_B), [pubG1.id], 'and it shows again');
+  eq([(await owner('publications.list', { actor: OWNER, document: { state: 'withdrawn' } })).length, (await owner('publications.list', { actor: OWNER, document: { state: 'published' } })).map((x) => x.id)], [0, [pubG1.id]], 'the owner lists by state');
+  await rejects(() => owner('publications.list', { actor: OWNER, document: { state: 'effective' } }), '22023', 'an unknown state filter is refused');
+  // Revocation withdraws it in the same transaction.
+  const { result: revokedG1, event: revokeEvent } = await evented('consents.revoke', () => member('consents.revoke', { actor: TESTER, id: kG1.id, document: {}, key: key('revoke') }));
+  eq([revokedG1.state, revokedG1.publication.id, revokedG1.publication.state, revokedG1.publication.withdrawn_reason, revokedG1.publication.effective], ['revoked', pubG1.id, 'withdrawn', 'consent_revoked', false],
+    'revoking the consent withdraws its publication in the same transaction');
+  eq(Object.keys(revokedG1.publication).sort(), Object.keys(C.shapeFields('member_publication')).sort(), 'the revocation answers the publication it withdrew');
+  eq(revokeEvent.payload, { proof_id: proofG1.id, consent_id: kG1.id, publication_id: pubG1.id }, 'one event names consent and publication');
+  const afterRevoke = (await publicationsOf(G.campaign)).find((x) => x.id === pubG1.id);
+  eq([afterRevoke.state, afterRevoke.withdrawn_by, afterRevoke.withdrawn_reason, await seenBy(TESTER_B), (await owner('proofs.list', { actor: OWNER, id: seatG1.id }))[0].publication_state],
+    ['withdrawn', TESTER, 'consent_revoked', [], 'withdrawn'], 'nobody sees it; the row and the proof say withdrawn, by whom and why');
+  await rejects(() => decide(proofG1, { decision: 'published', consent_id: kG1.id }), 'EU015', 'a revoked consent cannot publish');
+  // A new consent publishes again (a new row); the owner withdraws; the same open consent publishes once more.
+  const kG1b = await consentTo(TESTER, proofG1);
+  const pubG1b = await decide(proofG1, { decision: 'published', consent_id: kG1b.id, reason: 'Test fixture note.' });
+  ok(pubG1b.id !== pubG1.id && pubG1b.state === 'published', 'a new consent and a new decision publish again, as a new row');
+  const { result: ownerWithdrawn } = await evented('publications.decide', () => decide(proofG1, { decision: 'withdrawn', reason: 'Test fixture: owner withdraws.' }), 'an owner withdrawal');
+  eq([ownerWithdrawn.id, ownerWithdrawn.state, ownerWithdrawn.withdrawn_reason, ownerWithdrawn.withdrawn_by], [pubG1b.id, 'withdrawn', 'owner', OWNER], 'the owner withdraws it: reason owner');
+  await rejects(() => decide(proofG1, { decision: 'withdrawn', reason: 'Test fixture: again.' }), '40001', 'only a published proof is withdrawn');
+  const pubG1c = await decide(proofG1, { decision: 'published', consent_id: kG1b.id });
+  ok(pubG1c.state === 'published' && pubG1c.consent_id === kG1b.id, 'the same open consent publishes again after an owner withdrawal');
+
+  // G2. The moderation hold: reduce-only, withdraws the live publication, blocks consent, publication, review and
+  // signed media reads (EU016); every hold and release is kept with its reason.
+  const { result: held } = await evented('proofs.moderate', () => moderate(proofG1, true, 'Test fixture: hold for a look.'), 'a hold');
+  eq(Object.keys(held).sort(), Object.keys(C.shapeFields('proof_row')).sort(), 'the result is the contract proof row');
+  eq([held.moderation_state, held.publication_state, held.revision], ['held', 'withdrawn', proofG1.revision], 'held: the live publication is withdrawn with it; the revision is unchanged');
+  eq((await publicationsOf(G.campaign)).find((x) => x.id === pubG1c.id).withdrawn_reason, 'moderation_hold', 'reason moderation_hold');
+  eq((await member('consents.revoke', { actor: TESTER, id: kG1b.id, document: {}, key: key('revoke') })).state, 'revoked', 'the participant can still revoke while held');
+  await rejects(() => consentTo(TESTER, proofG1), 'EU016', 'no consent while held');
+  await rejects(() => decide(proofG1, { decision: 'published', consent_id: kG1b.id }), 'EU016', 'no publication while held');
+  await rejects(() => owner('proofs.get', { actor: OWNER, id: proofG1.id, document: { revision: proofG1.revision, media: true } }), 'EU016', 'no signed review read while held');
+  await rejects(() => moderate(proofG1, true, 'again'), '40001', 'a held proof is not held again');
+  await rejects(() => owner('proofs.moderate', { actor: OWNER, id: proofG1.id, document: { hold: false, reason: 'r' }, revision: 9, key: key('moderate') }), '40001', 'moderation names the current proof revision');
+  await rejects(() => owner('proofs.moderate', { actor: OWNER, id: proofG1.id, document: { hold: false }, revision: proofG1.revision, key: key('moderate') }), '22023', 'a reason is required');
+  await rejects(() => owner('proofs.moderate', { actor: OWNER, id: U(404), document: { hold: true, reason: 'r' }, revision: 1, key: key('moderate') }), 'P0002', 'an unknown proof is not found');
+  await moderate(pendingProof, true, 'Test fixture: hold before review.');
+  await rejects(() => review(pendingProof, {}, REVIEWER), 'EU016', 'a held proof is not reviewed');
+  await moderate(pendingProof, false, 'Test fixture: review may go on.');
+  const releasedG1 = await moderate(proofG1, false, 'Test fixture: cleared.', REVIEWER);
+  eq([releasedG1.moderation_state, releasedG1.publication_state], ['clear', 'withdrawn'], 'a release publishes nothing again by itself');
+  await rejects(() => moderate(proofG1, false, 'again'), '40001', 'a clear proof is not released');
+  eq((await admin('select hold, reason, actor from public.eup_proof_moderations where proof_id = $1', [proofG1.id])).map((r) => `${r.hold}|${r.reason}|${r.actor}`).sort(),
+    [`true|Test fixture: hold.|${OWNER}`, `false|Test fixture: release.|${OWNER}`, `true|Test fixture: hold for a look.|${OWNER}`, `false|Test fixture: cleared.|${REVIEWER}`].sort(), 'every hold and release is kept with its reason and actor');
+  // Credit parity: the participant who published and the one who stayed private hold equal credits, untouched by
+  // consent, publication, revocation, withdrawal and hold.
+  const [creditG1, creditG2] = await creditRows([seatG1.id, seatG2.id]).then((rows) => rows.map(({ id, assignment_id, participant, proof_id, review_id, asset_revision, created_at, ...rest }) => rest));
+  eq(creditG1, creditG2, 'a participant who published and one who stayed private earn the identical credit (apart from ids and times)');
+  eq(await creditRows([seatG1.id, seatG2.id]), creditsAtAcceptance, 'and no credit changed since acceptance');
+  // Mission withdrawal withdraws every publication of the mission, completed work included; credits stay.
+  const pubG2 = await decide(proofG2, { decision: 'published', consent_id: kG2.id });
+  ok(pubG2.effective, 'the second participant publishes too');
+  gm = await move(gm, 'withdrawn');
+  eq([(await publicationsOf(G.campaign)).find((x) => x.id === pubG2.id).withdrawn_reason, (await owner('assignments.list', { actor: OWNER, id: gm.id })).filter((x) => x.status === 'completed').length, await creditRows([seatG1.id, seatG2.id])],
+    ['mission_withdrawn', 2, creditsAtAcceptance], 'a mission withdrawal withdraws its publications; completed assignments and credits stay');
+  // A campaign withdrawal withdraws the publications of every mission (reason campaign_withdrawn).
+  const H = await seedSongMission(league, { slug: 'withdrawn-campaign', invite: TESTER_B, policy: null, rubric: RUBRIC });
+  const seatH = await enroll(TESTER_B, H.mission, OWNER);
+  const proofH = await submitProof(TESTER_B, seatH);
+  await review(proofH, {}, REVIEWER);
+  const pubH = await decide(proofH, { decision: 'published', consent_id: (await consentTo(TESTER_B, proofH)).id });
+  await moveCampaign(H.campaign, 'withdrawn');
+  eq((await publicationsOf(H.campaign)).map((x) => [x.id, x.state, x.withdrawn_reason]), [[pubH.id, 'withdrawn', 'campaign_withdrawn']], 'a campaign withdrawal withdraws them, reason campaign_withdrawn');
+  // Nothing outside the released audience: the table cannot hold a wider audience.
+  await rejects(() => admin(`update public.eup_publications set audience = 'public' where id = $1`, [pubH.id]), '23514', 'audience public is impossible by CHECK, even for a direct write');
+  await rejects(() => admin(`insert into public.eup_publications(tenant, campaign_id, mission_id, assignment_id, proof_id, proof_revision, asset_revision, consent_id, published_by)
+    select tenant, $2, mission_id, assignment_id, proof_id, proof_revision, $3, id, $4 from public.eup_consents where id = $1`, [kG2.id, G.campaign.id, SHA('f'), OWNER]), '23503', 'a publication cannot name a digest its consent was not granted for');
+
+  // G3. Appeals: against the actor's declined application or rejected proof; one open per subject; at most two ever;
+  // the resolver is never the appellant; an overturn reopens the subject.
+  const am = await newMission(G.campaign, 'appeals');
+  const declinedB = await owner('applications.decide', { actor: OWNER, id: (await apply(TESTER_B, am)).id, document: { decision: 'declined', reason: 'Test fixture: declined.', rubric: [{ id: 'fit', met: false }] }, revision: 1, key: key('decide') });
+  const openAppeal = (actor, id, subject, statement = 'Test fixture appeal: please look again.') => member('appeals.open', { actor, id, document: { subject, statement }, key: key('appeal') });
+  await rejects(() => openAppeal(TESTER, declinedB.id, 'application'), '42501', 'another account cannot appeal it');
+  await rejects(() => openAppeal(OUTSIDER, declinedB.id, 'application'), 'EU011', 'an account outside the audience gets the audience answer');
+  await rejects(() => openAppeal(TESTER_B, declinedB.id, 'proof'), 'P0002', 'the subject names the kind of row: an application is no proof');
+  await rejects(() => member('appeals.open', { actor: TESTER_B, id: declinedB.id, document: { statement: 's' }, key: key('appeal') }), '22023', 'without a subject no row is named');
+  await rejects(() => member('appeals.open', { actor: TESTER_B, id: declinedB.id, document: { subject: 'application', statement: '' }, key: key('appeal') }), '22023', 'an appeal states something');
+  const notDeclined = await apply(TESTER_B, await newMission(G.campaign, 'not-declined'));
+  await rejects(() => openAppeal(TESTER_B, notDeclined.id, 'application'), '40001', 'only a declined application is appealed');
+  const appealKey = key('appeal');
+  const { result: appealB } = await evented('appeals.open', () => member('appeals.open', { actor: TESTER_B, id: declinedB.id, document: { subject: 'application', statement: 'Test fixture appeal: please look again.' }, key: appealKey }));
+  eq(Object.keys(appealB).sort(), Object.keys(C.shapeFields('member_appeal_row')).sort(), 'the result is exactly the contract member appeal row: no statement, no account id');
+  eq([appealB.state, appealB.subject, appealB.subject_id, appealB.resolved_at], ['open', 'application', declinedB.id, null], 'an open appeal against the application');
+  eq(await member('appeals.open', { actor: TESTER_B, id: declinedB.id, document: { subject: 'application', statement: 'Test fixture appeal: please look again.' }, key: appealKey }), appealB, 'appeal replay');
+  await rejects(() => openAppeal(TESTER_B, declinedB.id, 'application'), '23505', 'one open appeal per subject');
+  const ownAppeal = (await me(TESTER_B)).applications.find((x) => x.id === declinedB.id).appeals;
+  eq([ownAppeal.length, Object.keys(ownAppeal[0]).sort(), ownAppeal[0].statement], [1, Object.keys(C.shapeFields('member_appeal')).sort(), 'Test fixture appeal: please look again.'], 'the appellant reads it back with the statement');
+  const listedAppeal = (await owner('appeals.list', { actor: OWNER, document: { state: 'open' } })).find((x) => x.id === appealB.id);
+  eq([Object.keys(listedAppeal).sort(), listedAppeal.statement, listedAppeal.appellant], [Object.keys(C.shapeFields('appeal')).sort(), 'Test fixture appeal: please look again.', TESTER_B], 'the owner lists it as the contract appeal');
+  await rejects(() => member('appeals.withdraw', { actor: TESTER, id: appealB.id, document: {}, key: key('withdraw') }), '42501', 'only the appellant withdraws it');
+  const { result: withdrawnAppeal } = await evented('appeals.withdraw', () => member('appeals.withdraw', { actor: TESTER_B, id: appealB.id, document: {}, key: key('withdraw') }));
+  eq([withdrawnAppeal.state, withdrawnAppeal.resolved_at !== null, withdrawnAppeal.resolution_reason], ['withdrawn', true, null], 'withdrawn by the appellant');
+  await rejects(() => member('appeals.withdraw', { actor: TESTER_B, id: appealB.id, document: {}, key: key('withdraw') }), '40001', 'a withdrawn appeal is not withdrawn again');
+  await rejects(() => owner('appeals.resolve', { actor: OWNER, id: appealB.id, document: { outcome: 'upheld', reason: 'r' }, key: key('resolve') }), '40001', 'nor resolved');
+  const secondAppeal = await openAppeal(TESTER_B, declinedB.id, 'application', 'Test fixture: a second appeal.');
+  await rejects(() => owner('appeals.resolve', { actor: OWNER, id: secondAppeal.id, document: { outcome: 'overturned' }, key: key('resolve') }), '22023', 'a resolution states its reason');
+  await rejects(() => owner('appeals.resolve', { actor: PEER, id: secondAppeal.id, document: { outcome: 'upheld', reason: 'r' }, key: key('resolve') }), '42501', 'resolution is an owner command');
+  await rejects(() => owner('appeals.resolve', { actor: OWNER, id: U(404), document: { outcome: 'upheld', reason: 'r' }, key: key('resolve') }), 'P0002', 'an unknown appeal is not found');
+  const { result: overturned, event: overturnEvent } = await evented('appeals.resolve', () => owner('appeals.resolve', { actor: REVIEWER, id: secondAppeal.id, document: { outcome: 'overturned', reason: 'Test fixture: overturned.' }, key: key('resolve') }));
+  eq(Object.keys(overturned).sort(), Object.keys(C.shapeFields('appeal_row')).sort(), 'the result is exactly the contract appeal row (no statement)');
+  eq([overturned.state, overturned.resolved_by, overturned.resolution_reason], ['overturned', REVIEWER, 'Test fixture: overturned.'], 'overturned, by whom and why');
+  const reopened = (await owner('applications.list', { actor: OWNER, id: am.id })).find((x) => x.id === declinedB.id);
+  eq([reopened.status, reopened.revision, reopened.decided_by, overturnEvent.payload], ['submitted', declinedB.revision + 1, null, { appeal_id: secondAppeal.id, application_id: declinedB.id, revision: declinedB.revision + 1 }], 'the overturn reopens the application: submitted again, one revision on');
+  ok((await approve(reopened, OWNER)).status === 'approved', 'and it can be decided again');
+  await rejects(() => openAppeal(TESTER_B, declinedB.id, 'application'), '40001', 'an approved application is not appealed');
+  // At most two appeals ever per subject (EU017), and the resolver is never the appellant (EU002).
+  const ownerDeclined = await owner('applications.decide', { actor: REVIEWER, id: (await apply(OWNER, am)).id, document: { decision: 'declined', reason: 'Test fixture.', rubric: [{ id: 'fit', met: false }] }, revision: 1, key: key('decide') });
+  const ownerAppeal = await openAppeal(OWNER, ownerDeclined.id, 'application');
+  await rejects(() => owner('appeals.resolve', { actor: OWNER, id: ownerAppeal.id, document: { outcome: 'overturned', reason: 'mine' }, key: key('resolve') }), 'EU002', 'an appellant cannot resolve their own appeal');
+  eq((await owner('appeals.resolve', { actor: REVIEWER, id: ownerAppeal.id, document: { outcome: 'upheld', reason: 'Test fixture: upheld.' }, key: key('resolve') })).state, 'upheld', 'another owner upholds it');
+  eq((await owner('applications.list', { actor: OWNER, id: am.id })).find((x) => x.id === ownerDeclined.id).status, 'declined', 'upheld changes nothing else');
+  await member('appeals.withdraw', { actor: OWNER, id: (await openAppeal(OWNER, ownerDeclined.id, 'application', 'Test fixture: second.')).id, document: {}, key: key('withdraw') });
+  await rejects(() => openAppeal(OWNER, ownerDeclined.id, 'application', 'Test fixture: third.'), 'EU017', 'a third appeal against the same subject is refused');
+  // A rejected proof: the overturn returns it to submitted at the same revision, and it is reviewed again.
+  const rejectedProof = await review(pendingProof, { safety_decision: 'fail', reason: 'Test fixture: unsafe.' }, REVIEWER);
+  eq(rejectedProof.state, 'rejected', 'a proof is rejected');
+  const proofAppeal = await openAppeal(TESTER, pendingProof.id, 'proof');
+  await owner('appeals.resolve', { actor: OWNER, id: proofAppeal.id, document: { outcome: 'overturned', reason: 'Test fixture: look again.' }, key: key('resolve') });
+  const reopenedProof = (await owner('proofs.list', { actor: OWNER, id: pendingSeat.id }))[0];
+  eq([reopenedProof.state, reopenedProof.revision, reopenedProof.asset_revision], ['submitted', pendingProof.revision, pendingProof.asset_revision], 'the proof is submitted again at the same revision');
+  eq((await review(pendingProof, {}, REVIEWER)).state, 'accepted', 'and is reviewed again');
+  eq((await me(TESTER)).assignments.find((x) => x.id === pendingSeat.id).proof.appeals.map((x) => [x.state, x.statement]), [['overturned', 'Test fixture appeal: please look again.']], 'the participant reads the proof appeal and its outcome');
+
+  // G4. The EU017 bounds of the contract's LIMITS.rate, each at its edge.
+  const R = C.LIMITS.rate;
+  await owner('audience.grants.grant', { actor: OWNER, id: G.campaign.id, document: { account: PEER }, key: key('grant') });
+  const openOf = async (actor) => n('eup_applications', `applicant = '${actor}' and status in ('draft','submitted','changes_requested')`);
+  const many = [];
+  while ((await openOf(PEER)) < R.applications_open_per_actor) {
+    const target = await newMission(G.campaign, `bound-${many.length}`);
+    many.push(await member('applications.save', { actor: PEER, id: target.id, document: { submit: false, requirements_revision: 1 }, revision: 0, key: key('apply') }));
+  }
+  const overflow = await newMission(G.campaign, 'bound-overflow');
+  await silent(() => rejects(() => member('applications.save', { actor: PEER, id: overflow.id, document: { submit: false, requirements_revision: 1 }, revision: 0, key: key('apply') }), 'EU017', `the ${R.applications_open_per_actor + 1}th open application of one account is refused`), 'a refused application');
+  await member('applications.withdraw', { actor: PEER, id: many[0].id, document: {}, key: key('withdraw') });
+  ok((await member('applications.save', { actor: PEER, id: overflow.id, document: { submit: false, requirements_revision: 1 }, revision: 0, key: key('apply') })).status === 'draft', 'after a withdrawal there is room again');
+  await rejects(() => member('applications.save', { actor: PEER, id: many[0].mission_id, document: { submit: false, requirements_revision: 1 }, revision: many[0].revision + 1, key: key('apply') }), 'EU017', 'reopening a withdrawn application counts too');
+  await admin('update public.eup_applications set revision = $2 where id = $1', [many[1].id, R.application_saves_per_application]);
+  await rejects(() => member('applications.save', { actor: PEER, id: many[1].mission_id, document: { submit: false, requirements_revision: 1 }, revision: R.application_saves_per_application, key: key('apply') }), 'EU017', 'an application saved its bounded number of times takes no more saves');
+  const boundSeat = await enroll(TESTER, await newMission(G.campaign, 'bound-uploads'), OWNER);
+  await member('drafts.save', { actor: TESTER, id: boundSeat.id, document: { lyrics: 'x' }, revision: 0, key: key('draft') });
+  await admin('update public.eup_proof_drafts set revision = $2 where assignment_id = $1', [boundSeat.id, R.draft_saves_per_assignment]);
+  await rejects(() => member('drafts.save', { actor: TESTER, id: boundSeat.id, document: { lyrics: 'y' }, revision: R.draft_saves_per_assignment, key: key('draft') }), 'EU017', 'a draft saved its bounded number of times takes no more saves');
+  const staged3 = [];
+  for (let i = 0; i < R.uploads_staged_per_assignment; i += 1) staged3.push(await begin(TESTER, boundSeat));
+  await rejects(() => begin(TESTER, boundSeat), 'EU017', `a ${R.uploads_staged_per_assignment + 1}th staged upload at one time is refused`);
+  await admin(`update public.eup_media_uploads set expires_at = now() - interval '1 second' where id = $1`, [staged3[0].id]);
+  const replacement = await begin(TESTER, boundSeat);
+  ok(replacement.state === 'staged', 'a staged row past its lifetime no longer counts');
+  for (const x of [...staged3.slice(1), replacement]) await discard(TESTER, x);
+  while ((await n('eup_media_uploads', `assignment_id = '${boundSeat.id}'`)) < R.uploads_total_per_assignment) await discard(TESTER, await begin(TESTER, boundSeat));
+  await rejects(() => begin(TESTER, boundSeat), 'EU017', `the ${R.uploads_total_per_assignment + 1}th upload row of one assignment is refused`);
+  const boundProof = await submitProof(TESTER, boundSeat);
+  await admin('update public.eup_proofs set revision = $2 where id = $1', [boundProof.id, R.proof_revisions_per_assignment]);
+  await rejects(() => submitProof(TESTER, boundSeat, words(), R.proof_revisions_per_assignment), 'EU017', 'a proof submitted its bounded number of times takes no more revisions');
+  await admin('update public.eup_proofs set revision = 1 where id = $1', [boundProof.id]);
+  ok(C.errorFor('EU017', 'member').status === 429, 'EU017 answers 429 on a member route');
+
+  // G5. Retention: why and when each upload becomes removable; the purge after the Worker deleted the objects.
+  const dueOf = async (uploads) => (await owner('media.due', { actor: OWNER, document: { uploads: uploads.map((x) => x.id) } })).uploads;
+  // The media proof of section E is published, and its audience can play the media while the publication is effective.
+  const songConsent = await consentTo(TESTER, songProof);
+  const songPublication = await decide(songProof, { decision: 'published', consent_id: songConsent.id });
+  ok(songPublication.effective && (await seenBy(TESTER_B)).includes(songPublication.id), 'the media proof is published to campaign A');
+  const played = await member('uploads.get', { actor: TESTER_B, id: videoUpload.id, document: { sign: true } });
+  eq([played.id, played.storage], [videoUpload.id, videoUpload.storage], 'a member of the released audience reads the published media for signing (the route narrows it to proof_media)');
+  await rejects(() => member('uploads.get', { actor: OUTSIDER, id: videoUpload.id, document: { sign: true } }), '42501', 'an account outside the audience does not');
+  await rejects(() => member('uploads.get', { actor: TESTER_B, id: ownerUpload.id }), '42501', 'nor anyone a file no effective publication lists');
+  const due = await owner('media.due', { actor: OWNER, document: {} });
+  eq(Object.keys(due).sort(), Object.keys(C.shapeFields('due_list')).sort(), 'media.due answers the contract due list');
+  eq(Object.keys(due.uploads[0]).sort(), Object.keys(C.shapeFields('due_upload')).sort(), 'with contract due uploads');
+  ok(due.retention_evaluated && due.uploads.every((x) => x.due) && due.uploads.some((x) => x.reason === 'discarded') && due.uploads.some((x) => x.id === late.id && x.reason === 'expired'), 'discarded and expired uploads are due');
+  eq(due.uploads.map((x) => x.due_at), [...due.uploads.map((x) => x.due_at)].sort((p, q) => new Date(p) - new Date(q)), 'the longest due first');
+  eq((await owner('media.due', { actor: OWNER, document: { limit: 2 } })).uploads.length, 2, 'up to the limit');
+  const [videoDue, ownerDue, stagedDue] = await dueOf([videoUpload, ownerUpload, staged3[0]]);
+  eq([videoDue.due, videoDue.reason, ownerDue.due, ownerDue.reason, ownerDue.due_at, stagedDue.due, stagedDue.reason], [false, 'retention_completed', false, null, null, true, 'staged_expired'],
+    'a sealed file of completed work is due after the retention for completed work; a sealed file of work in progress never; a staged row past its lifetime at once');
+  ok(Math.abs(new Date(videoDue.due_at) - new Date((await owner('assignments.list', { actor: OWNER, id: song.id })).find((x) => x.id === seatT.id).completed_at) - LEAGUE_POLICY.retention.completed_days * 86400000) < 1000, 'due_at is completed_at plus completed_days');
+  await rejects(() => owner('media.due', { actor: OWNER, document: { uploads: [U(404)] } }), 'P0002', 'naming an unknown upload is not found');
+  await silent(() => rejects(() => owner('media.purged', { actor: OWNER, document: { uploads: [videoUpload.id, late.id] }, key: key('purge') }), '40001', 'the purge refuses a batch with an upload that is not due'), 'a refused purge');
+  eq((await member('uploads.get', { actor: TESTER, id: late.id })).state, 'expired', 'and changed nothing');
+  // A withdrawn assignment keeps its uploads until the retention for withdrawn work.
+  const leaving = await enroll(TESTER, await newMission(G.campaign, 'leaving'), OWNER);
+  const leftFile = await sealUpload(TESTER, leaving, AUDIO, 'ebml', '9');
+  await member('assignments.withdraw', { actor: TESTER, id: leaving.id, document: {}, key: key('withdraw') });
+  const [leftDue] = await dueOf([leftFile]);
+  eq([leftDue.due, leftDue.reason], [false, 'retention_withdrawn'], 'a withdrawn assignment keeps its sealed file until the retention for withdrawn work');
+  await admin(`update public.eup_assignments set withdrawn_at = now() - interval '2 days' where id = $1`, [leaving.id]);
+  eq((await dueOf([leftFile]))[0].due, true, 'and then it is due');
+  // Without a valid policy, retention is not evaluated: only the policy-independent reasons count.
+  const stored = (await admin('select document from public.eup_league_policy'))[0].document;
+  await admin(`update public.eup_league_policy set document = '{"entitlement":"none_required"}'::jsonb`);
+  const unevaluated = await owner('media.due', { actor: OWNER, document: { uploads: [leftFile.id, late.id] } });
+  eq([unevaluated.retention_evaluated, unevaluated.uploads.map((x) => [x.due, x.reason])], [false, [[false, null], [true, 'expired']]], 'no valid policy: sealed files are not evaluated, expired and discarded ones still are');
+  await admin('update public.eup_league_policy set document = $1::jsonb', [JSON.stringify(stored)]);
+  // The purge: every named upload due or already purged; the digest stays; bound publications are withdrawn.
+  await admin(`update public.eup_assignments set completed_at = now() - interval '3 days' where id = $1`, [seatT.id]);
+  ok((await dueOf([videoUpload]))[0].due, 'after the retention for completed work the published media is due');
+  const purgeKey = key('purge');
+  const { result: purge, event: purgeEvent } = await evented('media.purged', () => owner('media.purged', { actor: OWNER, document: { uploads: [videoUpload.id, late.id, leftFile.id] }, key: purgeKey }));
+  eq(Object.keys(purge).sort(), Object.keys(C.shapeFields('purge_result')).sort(), 'the result is exactly the contract purge result');
+  eq([purge.purged, purge.already_purged, purge.publications_withdrawn], [[videoUpload.id, late.id, leftFile.id].sort(), [], [songPublication.id]], 'three purged, and the publication bound to the purged media withdrawn in the same transaction');
+  eq(purgeEvent.payload, { upload_ids: [videoUpload.id, late.id, leftFile.id].sort(), publication_ids: [songPublication.id] }, 'its one event names them');
+  const kept = await one('select state, sha256, bytes, storage_object_id, purged_at from public.eup_media_uploads where id = $1', [videoUpload.id]);
+  eq([kept.state, kept.sha256, kept.bytes, kept.storage_object_id, kept.purged_at !== null], ['purged', videoUpload.sha256, videoUpload.bytes, videoUpload.storage.object_id, true], 'the digest, the byte count and the storage identity are kept as the record of what existed');
+  eq([(await publicationsOf(a)).find((x) => x.id === songPublication.id).withdrawn_reason, (await seenBy(TESTER_B)).includes(songPublication.id)], ['media_purged', false], 'reason media_purged; nobody sees it');
+  await rejects(() => member('uploads.get', { actor: TESTER_B, id: videoUpload.id, document: { sign: true } }), '42501', 'the audience reads the file no more');
+  await rejects(() => member('uploads.get', { actor: TESTER, id: videoUpload.id, document: { sign: true } }), 'EU014', 'nor can the participant sign a purged file');
+  await rejects(() => decide(songProof, { decision: 'published', consent_id: songConsent.id }), '40001', 'a proof whose media was purged is not published again');
+  eq(await owner('media.purged', { actor: OWNER, document: { uploads: [videoUpload.id, late.id, leftFile.id] }, key: purgeKey }), purge, 'a purge replay returns the stored result');
+  const again = await owner('media.purged', { actor: OWNER, document: { uploads: [videoUpload.id] }, key: key('purge') });
+  eq([again.purged, again.already_purged, again.publications_withdrawn], [[], [videoUpload.id], []], 'purging a purged upload again reports it as already purged');
+  ok((await dueOf([videoUpload]))[0].due === false && (await dueOf([videoUpload]))[0].state === 'purged', 'a purged upload is never due again');
+  ok(!(await owner('media.due', { actor: OWNER, document: {} })).uploads.some((x) => x.state === 'purged'), 'and never listed as due');
+  eq((await owner('credits.list', { actor: OWNER, id: song.id })).map((x) => x.assignment_id).includes(seatT.id), true, 'the credit of the purged work stays');
+
+  // G6. The audited accommodation read, credits.list and the outbox reads.
+  const withRequest = await owner('applications.create', { actor: OWNER, id: (await newMission(G.campaign, 'accommodation')).id, document: { applicant: TESTER_B, requirements_revision: 1, statement: 'Recorded.', accommodation: { statement: 'Test fixture accommodation request.' } }, key: key('record') });
+  const readsBefore = await n('eup_accommodation_reads');
+  const accommodationRead = await silent(() => owner('applications.accommodation.get', { actor: REVIEWER, id: withRequest.id }), 'the audited read');
+  eq(Object.keys(accommodationRead).sort(), Object.keys(C.shapeFields('accommodation_read')).sort(), 'the read is exactly the contract accommodation_read');
+  eq([accommodationRead.application_id, accommodationRead.applicant, accommodationRead.accommodation], [withRequest.id, TESTER_B, { statement: 'Test fixture accommodation request.' }], 'the owner reads the restricted request');
+  const access = await admin('select * from public.eup_accommodation_reads where application_id = $1', [withRequest.id]);
+  eq([await n('eup_accommodation_reads') - readsBefore, Object.keys(access[0]).sort(), access[0].actor], [1, ['actor', 'application_id', 'id', 'read_at', 'tenant'], REVIEWER], 'and who read which request, and when, is recorded: no content');
+  eq((await owner('applications.accommodation.get', { actor: OWNER, id: declinedB.id })).accommodation, null, 'an application without a request answers null');
+  await rejects(() => owner('applications.accommodation.get', { actor: OWNER, id: U(404) }), 'P0002', 'an unknown application is not found');
+  await rejects(() => owner('applications.accommodation.get', { actor: PEER, id: withRequest.id }), '42501', 'a non-owner reads nothing');
+  const credits = await owner('credits.list', { actor: OWNER });
+  ok(credits.length >= 5 && credits.every((x) => Object.keys(x).sort().join() === Object.keys(C.shapeFields('credit')).sort().join() && x.kind === 'mission_completion'), 'credits.list answers contract credits');
+  eq((await owner('credits.list', { actor: OWNER, id: gm.id })).map((x) => x.assignment_id).sort(), [seatG1.id, seatG2.id].sort(), 'by mission');
+  const firstPage = await owner('outbox.list', { actor: OWNER, document: { limit: 3 } });
+  eq([firstPage.length, firstPage.map((x) => x.seq), firstPage[0].consumed], [3, [...firstPage.map((x) => x.seq)].sort((p, q) => p - q), null], 'the outbox reads in seq order; consumed is null when no consumer is named');
+  eq(Object.keys(firstPage[0]).sort(), Object.keys(C.shapeFields('outbox_event')).sort(), 'as contract outbox events');
+  eq((await owner('outbox.list', { actor: OWNER, document: { after: firstPage[1].seq, limit: 1 } })).map((x) => x.seq), [firstPage[2].seq], 'after N answers what follows N');
+  const ackKey = key('ack');
+  const ack = await silent(() => owner('outbox.ack', { actor: OWNER, id: String(firstPage[0].seq), document: { consumer: 'fixture-consumer' }, key: ackKey }), 'an acknowledgement');
+  eq(Object.keys(ack).sort(), Object.keys(C.shapeFields('consumption')).sort(), 'outbox.ack answers the contract consumption');
+  eq(await owner('outbox.ack', { actor: OWNER, id: String(firstPage[0].seq), document: { consumer: 'fixture-consumer' }, key: ackKey }), ack, 'an ack replay');
+  eq(await owner('outbox.ack', { actor: REVIEWER, id: String(firstPage[0].seq), document: { consumer: 'fixture-consumer' }, key: key('ack') }), ack, 'acknowledging twice (another key, another owner) answers the same consumption');
+  eq(await n('eup_outbox_consumptions', `seq = ${firstPage[0].seq}`), 1, 'one consumption row');
+  eq((await owner('outbox.list', { actor: OWNER, document: { limit: 2, consumer: 'fixture-consumer' } })).map((x) => x.consumed), [true, false], 'consumed answers per named consumer');
+  await rejects(() => owner('outbox.ack', { actor: OWNER, id: '999999999', document: { consumer: 'fixture-consumer' }, key: key('ack') }), 'P0002', 'an unknown event is not found');
+  for (const bad of ['0', 'abc', U(1)]) await rejects(() => owner('outbox.ack', { actor: OWNER, id: bad, document: { consumer: 'fixture-consumer' }, key: key('ack') }), '22023', `an event is named by its sequence number (${bad})`);
+  await rejects(() => owner('outbox.ack', { actor: OWNER, id: String(firstPage[0].seq), document: { consumer: 'Not Valid' }, key: key('ack') }), '22023', 'a consumer name follows the pattern');
+  await rejects(() => owner('outbox.list', { actor: OWNER, document: { limit: C.LIMITS.list.outbox + 1 } }), '22023', 'the outbox page is bounded');
+
+  // G7. Module state for the owner-control set: reads answer (the audited read included), reduce-only actions are
+  // admitted while draining and disabled, every other mutation is refused with the guard's code.
+  const statesProof = await submitProof(TESTER_B, await enroll(TESTER_B, await newMission(G.campaign, 'states'), OWNER));
+  await review(statesProof, {}, REVIEWER);
+  const statesConsent = await consentTo(TESTER_B, statesProof);
+  const statesPublication = await decide(statesProof, { decision: 'published', consent_id: statesConsent.id });
+  const lateDeclined = await owner('applications.decide', { actor: OWNER, id: (await apply(TESTER, await newMission(G.campaign, 'late-appeal'))).id,
+    document: { decision: 'declined', reason: 'Test fixture.', rubric: [{ id: 'fit', met: false }] }, revision: 1, key: key('decide') });
+  const lateAppeal = await openAppeal(TESTER, lateDeclined.id, 'application');
+  const readsAnswer = async () => (await owner('publications.list', { actor: OWNER })).length > 0 && (await owner('appeals.list', { actor: OWNER })).length > 0
+    && (await owner('credits.list', { actor: OWNER })).length > 0 && (await owner('media.due', { actor: OWNER, document: {} })).retention_evaluated
+    && (await owner('outbox.list', { actor: OWNER, document: { limit: 1 } })).length === 1
+    && (await owner('applications.accommodation.get', { actor: OWNER, id: withRequest.id })).accommodation !== null;
+  await inState('draining', async () => {
+    ok(await readsAnswer(), 'draining: the owner-control reads answer, the audited read included');
+    await rejects(() => owner('outbox.ack', { actor: OWNER, id: String(firstPage[1].seq), document: { consumer: 'fixture-consumer' }, key: key('ack') }), 'EUM02', 'draining: an acknowledgement is new work');
+    await rejects(() => openAppeal(OWNER, ownerDeclined.id, 'application'), 'EUM02', 'draining: so is an appeal');
+    const heldNow = await moderate(statesProof, true, 'Test fixture: hold while draining.');
+    eq([heldNow.moderation_state, heldNow.publication_state], ['held', 'withdrawn'], 'draining: a hold is admitted and withdraws the publication (it removes exposure)');
+    await rejects(() => moderate(statesProof, false, 'Test fixture: release while draining.'), 'EUM02', 'draining: a release is new work');
+    eq((await member('appeals.withdraw', { actor: TESTER, id: lateAppeal.id, document: {}, key: key('withdraw') })).state, 'withdrawn', 'draining: an appeal withdrawal is admitted');
+  });
+  await moderate(statesProof, false, 'Test fixture: released after the drain.');
+  await decide(statesProof, { decision: 'published', consent_id: statesConsent.id });
+  await inState('disabled', async () => {
+    ok(await readsAnswer(), 'disabled: the owner-control reads answer');
+    await rejects(() => decide(statesProof, { decision: 'published', consent_id: statesConsent.id }), 'EUM03', 'disabled: a publication is new work');
+    await rejects(() => owner('appeals.resolve', { actor: OWNER, id: lateAppeal.id, document: { outcome: 'upheld', reason: 'r' }, key: key('resolve') }), 'EUM03', 'disabled: so is a resolution');
+    eq((await decide(statesProof, { decision: 'withdrawn', reason: 'Test fixture: withdrawn while disabled.' })).withdrawn_reason, 'owner', 'disabled: an owner withdrawal of a publication is admitted');
+    const dueNow = (await owner('media.due', { actor: OWNER, document: { limit: 1 } })).uploads.map((x) => x.id);
+    eq((await owner('media.purged', { actor: OWNER, document: { uploads: dueNow }, key: key('purge') })).purged, dueNow, 'disabled: a purge of due media is admitted');
+    eq((await member('consents.revoke', { actor: TESTER_B, id: statesConsent.id, document: {}, key: key('revoke') })).state, 'revoked', 'disabled: the participant still revokes');
+    await rejects(() => as('service_role', () => db.query(`update public.eup_publications set state = 'published', withdrawn_at = null, withdrawn_by = null, withdrawn_reason = null where id = $1`, [statesPublication.id])), 'EUM03', 'disabled: a direct table write cannot republish');
+  });
+  eq(await moduleState(), 'enabled', 'the module is enabled again');
+
+  // G8. Exactly one event per mutation, over the whole run: every first execution of every keyed mutation wrote one
+  // receipt and one event of its type (outbox.ack none); every event carries ids and revisions only.
+  const receiptsBy = Object.fromEntries((await admin('select operation, count(*)::int as n from public.eup_command_receipts group by operation')).map((r) => [r.operation, r.n]));
+  const eventsBy = Object.fromEntries((await admin(`select substr(type, ${C.OUTBOX.type_prefix.length + 1}) as operation, count(*)::int as n from public.eup_outbox group by 1`)).map((r) => [r.operation, r.n]));
+  const keyed = [...Object.entries(C.OWNER_ACTIONS), ...Object.entries(C.MEMBER_ACTIONS)].filter(([, x]) => x.kind === 'mutation').map(([name]) => name);
+  for (const name of [...new Set(keyed)]) eq(eventsBy[name] || 0, name === 'outbox.ack' ? 0 : receiptsBy[name] || 0, `${name}: events equal first executions (${receiptsBy[name] || 0})`);
+  ok(Object.keys(eventsBy).every((name) => keyed.includes(name) || name === 'media.seal'), 'no event of any other type');
+  ok(eventsBy['media.seal'] > 0, 'seals that changed a row wrote events');
+  ok((await admin('select payload from public.eup_outbox')).every((r) => payloadOk(r.payload)), 'every event carries ids and revisions only');
+  eq(await n('eup_outbox', `payload::text ~ 'Test fixture|Verse|lyrics|statement|league/v1|https?:'`), 0, 'no event carries text, a path or a URL');
+  ok((await one('select count(*) = count(distinct seq) and min(seq) >= 1 as ok from public.eup_outbox')).ok, 'every event has its own sequence number');
+
   /* ================================================================== F. not installed, and no League policy */
   const bare = await createLeagueDatabase({ enable: false });
   try {
