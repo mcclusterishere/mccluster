@@ -176,5 +176,39 @@
       "file": "evidence/worker-suite-final.log",
       "sha256": "ee375e5986a8c11b52b7fff502e57c41d299f4425253eb9878e590189a74ac52"
     }
+  ],
+  "followups": [
+    {
+      "reason": "Hosted first-offer journey used obsolete unknown-outcome checkout retry contract",
+      "base_sha": "91bb954d7ae08ac7fabcddd47f87f03bbf8aedce",
+      "local_source_sha": "4cf9f037895c91cdce55836878047d0afd624101",
+      "source_tree": "366e312917b3a45a2e6b21fd12935350d7a8522e",
+      "patch": {
+        "file": "followups/0001-test-billing-exercise-persisted-resume-in-first-offe.patch",
+        "sha256": "3440a12ad9096f91d8727e0375d9e2dd8484c87b6418fea3d072766e73365f15"
+      },
+      "files_changed": [
+        "scripts/e2e/first-offer-acceptance.e2e.mjs"
+      ],
+      "tests": "Independent git am tree match; syntax/diff clean; focused 28/28; root 2068 passed and 3 existing skips; hosted browser rerun pending.",
+      "evidence": [
+        {
+          "file": "followups/evidence/followup-handler.log",
+          "sha256": "157903cde4515c493240afcc60ffc5aed5d21fda967babefa78cee2a650b297f"
+        },
+        {
+          "file": "followups/evidence/followup-hosted-failure.log",
+          "sha256": "c4cf8205483a3db634902263f68fc878ca228d5035c88fdb50ea37ffbfd4c1fa"
+        },
+        {
+          "file": "followups/evidence/followup-independent.log",
+          "sha256": "a6ee42beb0b18e612b18fba19e24f2d73f2d644ea7207ab19fda828d2c2f5dc8"
+        },
+        {
+          "file": "followups/evidence/followup-root-summary.log",
+          "sha256": "78a9e0f0a864c376452abdf9cdba29e5881049a030ca2da680fcc5d8490cfbad"
+        }
+      ]
+    }
   ]
 }

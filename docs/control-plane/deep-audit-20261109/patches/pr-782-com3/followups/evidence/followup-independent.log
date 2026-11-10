@@ -1,0 +1,51 @@
+COM-3 test-only followup independent application
+2026-11-10T22:23:06Z
+BASE 91bb954d7ae08ac7fabcddd47f87f03bbf8aedce
+EXPECTED TREE 366e312917b3a45a2e6b21fd12935350d7a8522e
+Preparing worktree (new branch 'verify/com3-followup-independent-20261110')
+Updating files:  43% (2884/6663)Updating files:  44% (2932/6663)Updating files:  45% (2999/6663)Updating files:  46% (3065/6663)Updating files:  47% (3132/6663)Updating files:  48% (3199/6663)Updating files:  49% (3265/6663)Updating files:  50% (3332/6663)Updating files:  51% (3399/6663)Updating files:  52% (3465/6663)Updating files:  53% (3532/6663)Updating files:  54% (3599/6663)Updating files:  55% (3665/6663)Updating files:  56% (3732/6663)Updating files:  57% (3798/6663)Updating files:  58% (3865/6663)Updating files:  59% (3932/6663)Updating files:  60% (3998/6663)Updating files:  61% (4065/6663)Updating files:  62% (4132/6663)Updating files:  63% (4198/6663)Updating files:  64% (4265/6663)Updating files:  65% (4331/6663)Updating files:  66% (4398/6663)Updating files:  67% (4465/6663)Updating files:  68% (4531/6663)Updating files:  69% (4598/6663)Updating files:  70% (4665/6663)Updating files:  71% (4731/6663)Updating files:  72% (4798/6663)Updating files:  73% (4864/6663)Updating files:  74% (4931/6663)Updating files:  75% (4998/6663)Updating files:  76% (5064/6663)Updating files:  77% (5131/6663)Updating files:  78% (5198/6663)Updating files:  79% (5264/6663)Updating files:  80% (5331/6663)Updating files:  81% (5398/6663)Updating files:  82% (5464/6663)Updating files:  83% (5531/6663)Updating files:  84% (5597/6663)Updating files:  85% (5664/6663)Updating files:  86% (5731/6663)Updating files:  87% (5797/6663)Updating files:  88% (5864/6663)Updating files:  89% (5931/6663)Updating files:  90% (5997/6663)Updating files:  91% (6064/6663)Updating files:  92% (6130/6663)Updating files:  93% (6197/6663)Updating files:  94% (6264/6663)Updating files:  95% (6330/6663)Updating files:  96% (6397/6663)Updating files:  97% (6464/6663)Updating files:  98% (6530/6663)Updating files:  99% (6597/6663)Updating files: 100% (6663/6663)Updating files: 100% (6663/6663), done.
+HEAD is now at 91bb954d docs(billing): package COM-3 patches and independent evidence
+3440a12ad9096f91d8727e0375d9e2dd8484c87b6418fea3d072766e73365f15  /workspace/scratch/bbe81e357272/finish-com3-20261110/docs/control-plane/deep-audit-20261109/patches/pr-782-com3/followups/0001-test-billing-exercise-persisted-resume-in-first-offe.patch
+Applying: test(billing): exercise persisted resume in first-offer journey
+4f89c7f186687c39bfed88c311e70b6d735a56cf 366e312917b3a45a2e6b21fd12935350d7a8522e test(billing): exercise persisted resume in first-offer journey
+EXACT TREE MATCH
+ scripts/e2e/first-offer-acceptance.e2e.mjs | 28 +++++++++++++++++++++-------
+ 1 file changed, 21 insertions(+), 7 deletions(-)
+Fixture syntax PASS; only expected test fixture changed
+✔ live checkout requires an explicit opt-in and defaults to Stripe test key (4.288397ms)
+✔ live webhook events fail closed and invoice subscription links include modern nested shape (2.027736ms)
+✔ Stripe webhook verifies signature and retrieves provider subscription (5.386485ms)
+✔ billing event ledger is private and provision requires active subscription (5.289161ms)
+✔ webhook is routed ahead of generic rate limiting (2.617731ms)
+✔ creator Checkout is routed through deployed platform entrypoint (4.17566ms)
+✔ creator Checkout authenticates, selects only server-owned prices and fails closed (2.897305ms)
+✔ COM-3 definitive pre-session rejection releases only that identity; replay remains retired (14.075837ms)
+✔ COM-3 timeout_before stays fail-closed and replays the immutable original (4.314041ms)
+✔ COM-3 timeout_after stays fail-closed and replays the immutable original (4.468164ms)
+✔ COM-3 5xx stays fail-closed and replays the immutable original (2.997343ms)
+✔ COM-3 unproven400 stays fail-closed and replays the immutable original (2.468199ms)
+✔ COM-3 bind failure retains recovery identity and resume binds the same provider session (1.690766ms)
+✔ COM-3 reload/new device finds server-owned pending request with no browser identifier (2.693543ms)
+✔ COM-3 original retry after expiry uses old payload and releases only provider-confirmed expired session (2.127274ms)
+✔ COM-3 retention deadline requires audited owner reconciliation, never a blind new POST (4.552159ms)
+✔ COM-3 owner cannot attach another owner, price, or request identity (2.233631ms)
+✔ COM-3 plan change cannot replace original binding; account switch cannot read or resume it (3.13624ms)
+✔ COM-3 a later validation error never frees an earlier uncertain attempt (1.55197ms)
+✔ COM-3 failed rejection persistence stays uncertain and blocks a new checkout (1.812808ms)
+✔ COM-3 live-mode guard covers resume and operator reconciliation (0.470007ms)
+✔ COM-3 delayed/out-of-order signed webhook and replay never open a second subscription (14.091901ms)
+✔ COM-3 upgrading a known legacy session preserves GET recovery without inventing a POST (1.802152ms)
+✔ COM-3 changing provider mode cannot replay an uncertain payment against another mode (1.714141ms)
+✔ COM-3 mismatch on a bound current session persists owner-required state and appears in queue (2.58368ms)
+✔ COM-3 completed session remains pending across status/reload instead of falsely ready (4.086699ms)
+✔ COM-3 blocked second-device checkout returns canonical pending identity and plan (0.878332ms)
+✔ checkout retries bind idempotency to owner; portal refuses another tenant subscription (15.987806ms)
+ℹ tests 28
+ℹ suites 0
+ℹ pass 28
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 188.033667
+FOLLOWUP INDEPENDENT APPLY PASS; clean worktree; no browser execution or provider calls

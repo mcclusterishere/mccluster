@@ -1,0 +1,36 @@
+Source: PR #796 initial head 91bb954d7ae08ac7fabcddd47f87f03bbf8aedce, Customer self-service browser job 130168494159.
+2026-11-10T22:18:09.0270655Z   PLAYWRIGHT_MODULE_PATH: /tmp/selfservice-tools/node_modules/playwright/index.mjs
+2026-11-10T22:18:09.0271272Z   PGLITE_DIR: /tmp/selfservice-tools/node_modules
+2026-11-10T22:18:09.0271596Z   NODE_PATH: /tmp/selfservice-tools/node_modules
+2026-11-10T22:18:09.0271877Z ##[endgroup]
+2026-11-10T22:18:11.3736161Z PASS: signed-out, draft/live/private/removed/profile-required, outage + retry, unsafe handle, two-account stale response isolation, sign-out clearing, phone/desktop overflow
+2026-11-10T22:18:14.0618431Z PASS: tenant World projection, actual shared bottom-tab removal/restoration, disabled direct read, account-independent global navigation, 390/1440 layout
+2026-11-10T22:18:45.7758724Z node:internal/modules/run_main:123
+2026-11-10T22:18:45.7759340Z     triggerUncaughtException(
+2026-11-10T22:18:45.7759760Z     ^
+2026-11-10T22:18:45.7759886Z 
+2026-11-10T22:18:45.7760071Z locator.waitFor: Timeout 30000ms exceeded.
+2026-11-10T22:18:45.7760361Z Call log:
+2026-11-10T22:18:45.7760765Z   - waiting for getByText('Fixture interrupted checkout; retry safely') to be visible
+2026-11-10T22:18:45.7761400Z 
+2026-11-10T22:18:45.7761768Z     at /home/runner/work/mccluster/mccluster/scripts/e2e/first-offer-acceptance.e2e.mjs:28:166 {
+2026-11-10T22:18:45.7762228Z   log: [
+2026-11-10T22:18:45.7762967Z     "  - waiting for getByText('Fixture interrupted checkout; retry safely') to be visible"
+2026-11-10T22:18:45.7763423Z   ],
+2026-11-10T22:18:45.7763615Z   name: 'TimeoutError'
+2026-11-10T22:18:45.7763829Z }
+2026-11-10T22:18:45.7763929Z 
+2026-11-10T22:18:45.7764010Z Node.js v22.23.4
+2026-11-10T22:18:45.7894648Z ##[error]Process completed with exit code 1.
+2026-11-10T22:18:45.7980070Z ##[group]Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+2026-11-10T22:18:45.7980497Z with:
+2026-11-10T22:18:45.7980740Z   name: customer-selfservice-browser-proof
+2026-11-10T22:18:45.7981786Z   path: /tmp/composer-overlay-proof
+/tmp/equity-offers-proof
+/tmp/managed-project-proof
+/tmp/platform-audiences-proof
+/tmp/project-tiles-proof
+
+2026-11-10T22:18:45.7982451Z   if-no-files-found: warn
+2026-11-10T22:18:45.7982686Z   compression-level: 6
+2026-11-10T22:18:45.7982903Z   overwrite: false
