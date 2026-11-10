@@ -94,6 +94,17 @@ function makeApi(plane) {
   };
 }
 
+/* Every outbox event after `after`, page by page, as the owner reads them. */
+async function outbox(call, after) {
+  const events = [];
+  for (let cursor = after; ;) {
+    const page = (await call('owner', 'GET', O(`outbox?after=${cursor}&limit=${C.LIMITS.list.outbox}`))).events;
+    events.push(...page);
+    if (page.length < C.LIMITS.list.outbox) return events;
+    cursor = page.at(-1).seq;
+  }
+}
+
 const plane = await createLeaguePlane({ enable: false });
 const api = makeApi(plane);
 const ids = ACCOUNTS;
@@ -365,7 +376,22 @@ try {
   eq([changes.state, changes.review.decision, changes.credit], ['needs_changes', 'needs_changes', null], 'needs changes: no credit');
   meB = (await api('tester_b', 'GET', M())).league;
   eq(meB.assignments[0].proof.reviews.map((r) => [r.proof_revision, r.decision, r.reason]), [[1, 'needs_changes', 'Test fixture: please record a second take.']], 'the participant reads the decision and the reason');
-  const u2 = await record('tester_b', assignmentB.id, take2);
+  // The retake's begin answer is lost after the row was written: the receipt shows the row (narrowed like the route's
+  // answer) and the same key returns the same staged row with a grant signed now; the lost grant is never shown again.
+  const BEGIN_KEY = key('begin-lost');
+  const beginBody = { idempotency_key: BEGIN_KEY, upload: { kind: 'audio', mime: 'audio/webm', bytes: take2.byteLength } };
+  const lostBegin = plane.faults.add({ method: 'POST', path: M(`assignments/${assignmentB.id}/uploads`), as: 'tester_b', mode: 'drop' });
+  let beginLost = null;
+  try { await plane.call('tester_b', 'POST', M(`assignments/${assignmentB.id}/uploads`), beginBody); } catch (error) { beginLost = error; }
+  eq([beginLost?.planeFault, lostBegin.hits], ['drop', 1], 'the begin committed and its answer was lost');
+  const beginReceipt = (await api('tester_b', 'GET', M(`receipts/uploads.begin/${BEGIN_KEY}`))).receipt;
+  eq([sorted(beginReceipt.result), beginReceipt.result.state], [keysOf('member_upload'), 'staged'], 'the receipt of a begin is a member_upload: no tenant, account, family or storage identity');
+  const rebegun = await api('tester_b', 'POST', M(`assignments/${assignmentB.id}/uploads`), beginBody);
+  eq(rebegun.upload, beginReceipt.result, 'the same key returns the same staged row');
+  eq(rebegun.grant.expires_in, C.MEDIA.upload_grant_seconds, 'with a grant signed for this answer');
+  eq((await plane.fetch(rebegun.grant.url, { method: 'PUT', headers: rebegun.grant.headers, body: take2 })).status, 200, 'the retake is stored with it');
+  const u2 = (await api('tester_b', 'POST', M(`uploads/${rebegun.upload.id}/complete`), {})).upload;
+  eq([u2.state, u2.sha256], ['sealed', sha256(take2)], 'and sealed');
   const proofB2 = (await api('tester_b', 'POST', M(`assignments/${assignmentB.id}/proof`), { idempotency_key: key('proof'), expected_revision: 1, proof: songB([{ upload_id: u2.id, sha256: u2.sha256 }]) })).proof;
   eq([proofB2.id, proofB2.revision, proofB2.state, proofB2.asset_revision !== proofB1.asset_revision], [proofB1.id, 2, 'submitted', true], 'the retake is revision 2 with a new digest');
   await decide('owner', proofB1.id, 1, { asset_revision: proofB1.asset_revision, ...PASS }, { status: 409, reason: 'revision_conflict', label: 'a review of revision 1 is refused' });
@@ -462,13 +488,7 @@ try {
   eq((await api('owner', 'GET', O(`credits?mission=${missionA.id}`))).credits.map((c) => c.participant), [ids.tester, ids.peer, ids.owner], 'every credit stays');
 
   /* ================================================================== 14. evidence: the outbox, nothing public, storage */
-  const events = [];
-  for (let after = 0; ;) {
-    const page = (await api('owner', 'GET', O(`outbox?after=${after}&limit=200`))).events;
-    events.push(...page);
-    if (page.length < 200) break;
-    after = page.at(-1).seq;
-  }
+  const events = await outbox(api, 0);
   const ACTION_NAMES = new Set([...Object.keys(C.OWNER_ACTIONS), ...Object.keys(C.MEMBER_ACTIONS), ...Object.keys(C.MEDIA_SEAL)]);
   const VALUE = { uuid: (v) => typeof v === 'string' && C.PATTERNS.uuid.test(v), int: Number.isSafeInteger, sha256: (v) => typeof v === 'string' && C.PATTERNS.sha256.test(v) };
   const valueOk = (v) => VALUE.uuid(v) || VALUE.int(v) || VALUE.sha256(v) || (Array.isArray(v) && v.every(VALUE.uuid));
@@ -493,8 +513,161 @@ try {
   eq(plane.storage.paths().filter((p) => !PATH.test(p)), [], 'evidence: every stored object sits at the path of its own row ids');
   const overview = await api('owner', 'GET', '/v1/eup/overview');
   eq([overview.league.status, overview.campaigns.withdrawn, overview.campaigns.released, overview.league.policy.valid], ['available', 1, 1, true], 'the Overview reads the same store');
-
-  console.log(`${count} journey assertions passed.`);
 } finally {
   await plane.close();
 }
+
+/* ================================================================== 15. the route table: every ROUTES row x five identities
+   A fresh plane, so these rows do not depend on the journey above. Identities: none (no bearer), outsider (signed in,
+   invited nowhere), tester_b (a tester of another campaign), tester (invited to campaign A, owns every row below),
+   owner (house owner). The identity that may act goes LAST, so every refusal meets the row unchanged; a refusal never
+   writes (checked below: the outbox grows by exactly the answers that committed). */
+const matrix = await createLeaguePlane({ enable: false });
+const mapi = makeApi(matrix);
+try {
+  const seededA = await matrix.seed({ slug: 'matrix-campaign-a', testers: ['tester'] });
+  await matrix.seed({ slug: 'matrix-campaign-b', testers: ['tester_b'] });
+  const P = (await mapi('owner', 'GET', O('policy'))).policy.document;
+  const campaignA = seededA.campaign;
+  const song = seededA.mission;
+  const mission = async (slug) => {
+    const created = (await mapi('owner', 'POST', O(`campaigns/${campaignA.id}/missions`), { idempotency_key: key('m'),
+      mission: { slug, title: `Test fixture: ${slug}`, template: 'write-a-song', proof_modes: ['audio', 'video', 'lyrics'], requirements: 'Test fixture requirements.' } })).mission;
+    return (await mapi('owner', 'POST', O(`missions/${created.id}/transition`), { idempotency_key: key('r'), expected_revision: created.revision, to: 'released' })).mission;
+  };
+  const apply = async (m, submit = true) => (await mapi('tester', 'POST', M(`missions/${m.id}/application`), { idempotency_key: key('a'), expected_revision: 0,
+    application: { submit, requirements_revision: m.requirements_revision, statement: 'Test fixture statement.' } })).application;
+  const decideApp = async (row, decision = 'approved') => (await mapi('owner', 'POST', O(`applications/${row.id}/decision`), { idempotency_key: key('d'), expected_revision: row.revision, decision,
+    ...(decision === 'approved' ? {} : { reason: 'Test fixture decision.' }) })).application;
+  const acceptAs = async (asg) => (await mapi('tester', 'POST', M(`assignments/${asg.id}/accept`), { idempotency_key: key('acc'), expected_revision: asg.revision,
+    requirements_revision: 1, notice_revision: P.notices.participation.revision })).assignment;
+  const working = async (slug) => acceptAs((await decideApp(await apply(await mission(slug)))).assignment);
+  const store = async (asgId, seed, complete = true) => {
+    const bytes = synthAudio(512, seed);
+    const started = await mapi('tester', 'POST', M(`assignments/${asgId}/uploads`), { idempotency_key: key('b'), upload: { kind: 'audio', mime: 'audio/webm', bytes: bytes.byteLength } });
+    eq((await matrix.fetch(started.grant.url, { method: 'PUT', headers: started.grant.headers, body: bytes })).status, 200, 'matrix setup: stored');
+    return complete ? (await mapi('tester', 'POST', M(`uploads/${started.upload.id}/complete`), {})).upload : started.upload;
+  };
+  const songProof = (media, accommodation) => ({ title: 'Test fixture song', lyrics: LYRICS, credits: CREDITS, rights: RIGHTS, review_notice_revision: P.notices.private_review.revision,
+    ...(accommodation ? { accommodation: { statement: 'Test fixture statement.' } } : { media: media.map((u) => ({ upload_id: u.id, sha256: u.sha256 })) }) });
+  const submit = async (asgId, media, k = key('p'), accommodation = false) => (await mapi('tester', 'POST', M(`assignments/${asgId}/proof`), { idempotency_key: k, expected_revision: 0, proof: songProof(media, accommodation) })).proof;
+  const reviewAs = async (p, decisions = { mission_decision: 'pass', rights_decision: 'pass', safety_decision: 'pass' }) => (await mapi('owner', 'POST', O(`proofs/${p.id}/review`), { idempotency_key: key('rv'),
+    expected_revision: p.revision, review: { asset_revision: p.asset_revision, ...decisions } })).proof;
+  const consentTo = (p) => ({ purpose: 'publish_proof', audience: 'released_audience', asset_revision: p.asset_revision, notice_revision: P.notices.publication.revision, expires_at: inDays(20) });
+
+  // The rows every route acts on, all the tester's, each in the state its route needs.
+  const mApply = await mission('matrix-apply');
+  const appDraft = await apply(await mission('matrix-withdraw-application'), false);
+  const asgOffered = (await decideApp(await apply(await mission('matrix-accept')))).assignment;
+  const asgWork = await working('matrix-work');
+  const workDraft = (await mapi('tester', 'POST', M(`assignments/${asgWork.id}/draft`), { idempotency_key: key('dr'), expected_revision: 0, draft: { title: 'Test fixture', lyrics: 'Line one' } })).draft;
+  const uSealed = await store(asgWork.id, 11);
+  const uDiscard = await store(asgWork.id, 12);
+  const uStaged = await store(asgWork.id, 13, false);
+  const asgConsent = await working('matrix-consent');
+  const RECEIPT_KEY = key('receipt');
+  const proofConsent = await reviewAs(await submit(asgConsent.id, [await store(asgConsent.id, 14)], RECEIPT_KEY));
+  const asgPublish = await working('matrix-publish');
+  const proofPublish = await reviewAs(await submit(asgPublish.id, [await store(asgPublish.id, 15)]));
+  const consentPublish = (await mapi('tester', 'POST', M(`proofs/${proofPublish.id}/consent`), { idempotency_key: key('c'), expected_revision: 1, consent: consentTo(proofPublish) })).consent;
+  const appDeclined = await decideApp(await apply(await mission('matrix-decline')), 'declined');
+  const asgReject = await working('matrix-reject');
+  const proofRejected = await reviewAs(await submit(asgReject.id, [], key('p'), true), { mission_decision: 'pass', rights_decision: 'pass', safety_decision: 'fail', reason: 'Test fixture: rejected.' });
+  eq([appDraft.status, asgOffered.status, proofConsent.state, proofPublish.state, consentPublish.state, appDeclined.status, proofRejected.state],
+    ['draft', 'offered', 'accepted', 'accepted', 'open', 'declined', 'rejected'], 'matrix setup: every row in the state its route needs');
+  const OWNER_KEY = key('owner-receipt');
+  await mapi('owner', 'POST', O('campaigns'), { idempotency_key: OWNER_KEY, campaign: { slug: 'matrix-receipt', title: 'Test fixture', purpose: 'Test fixture.' } });
+  const seqBefore = (await outbox(mapi, 0)).at(-1).seq;
+
+  /* One entry per ROUTES row: the path and body to send (functions: they read rows created by earlier entries), the
+     status per identity, and what to keep from the answer of the identity that acted. */
+  const S = {}; // rows created by the table itself
+  const ok200 = (extra = {}) => ({ none: 401, outsider: 404, tester_b: 404, owner: 404, tester: 200, ...extra });
+  const OWNER_ONLY = { none: 401, outsider: 403, tester_b: 403, tester: 403, owner: 200 };
+  const k = () => ({ idempotency_key: key('t') });
+  const ROWS = [
+    ['member GET ', () => M(), null, ok200({ tester_b: 200, owner: 200 })],
+    ['member POST missions/:id/application', () => M(`missions/${mApply.id}/application`), () => ({ ...k(), expected_revision: 0, application: { submit: false, requirements_revision: 1, statement: 'Test fixture.' } }), ok200({ owner: 200 })],
+    ['member POST applications/:id/withdraw', () => M(`applications/${appDraft.id}/withdraw`), k, ok200()],
+    ['member POST assignments/:id/accept', () => M(`assignments/${asgOffered.id}/accept`), () => ({ ...k(), expected_revision: asgOffered.revision, requirements_revision: 1, notice_revision: P.notices.participation.revision }), ok200()],
+    ['member POST assignments/:id/withdraw', () => M(`assignments/${asgOffered.id}/withdraw`), k, ok200()],
+    ['member POST assignments/:id/draft', () => M(`assignments/${asgWork.id}/draft`), () => ({ ...k(), expected_revision: workDraft.revision, draft: { title: 'Test fixture', lyrics: 'Line two' } }), ok200()],
+    ['member POST assignments/:id/uploads', () => M(`assignments/${asgWork.id}/uploads`), () => ({ ...k(), upload: { kind: 'audio', mime: 'audio/webm', bytes: 512 } }), ok200()],
+    ['member POST uploads/:id/complete', () => M(`uploads/${uStaged.id}/complete`), () => ({}), ok200()],
+    ['member POST uploads/:id/discard', () => M(`uploads/${uDiscard.id}/discard`), k, ok200()],
+    ['member GET uploads/:id/url', () => M(`uploads/${uSealed.id}/url`), null, ok200()],
+    ['member POST assignments/:id/proof', () => M(`assignments/${asgWork.id}/proof`), () => ({ ...k(), expected_revision: 0, proof: songProof([uSealed]) }), ok200(), (b) => { S.workProof = b.proof; }],
+    ['member POST proofs/:id/consent', () => M(`proofs/${proofConsent.id}/consent`), () => ({ ...k(), expected_revision: 1, consent: consentTo(proofConsent) }), ok200(), (b) => { S.consent = b.consent; }],
+    ['member POST consents/:id/revoke', () => M(`consents/${S.consent.id}/revoke`), k, ok200()],
+    ['member POST applications/:id/appeal', () => M(`applications/${appDeclined.id}/appeal`), () => ({ ...k(), appeal: { statement: 'Test fixture appeal.' } }), ok200(), (b) => { S.applicationAppeal = b.appeal; }],
+    ['member POST proofs/:id/appeal', () => M(`proofs/${proofRejected.id}/appeal`), () => ({ ...k(), appeal: { statement: 'Test fixture appeal.' } }), ok200(), (b) => { S.proofAppeal = b.appeal; }],
+    ['member POST appeals/:id/withdraw', () => M(`appeals/${S.proofAppeal.id}/withdraw`), k, ok200()],
+    ['member GET receipts/:operation/:key', () => M(`receipts/proofs.submit/${RECEIPT_KEY}`), null, ok200()],
+
+    ['owner GET fixture', () => O('fixture'), null, OWNER_ONLY],
+    ['owner GET policy', () => O('policy'), null, OWNER_ONLY],
+    ['owner POST policy', () => O('policy'), () => ({ ...k(), expected_revision: 1, policy: { ...P, retention: { ...P.retention, completed_days: P.retention.completed_days + 1 } }, reason: 'Test fixture: a second policy revision.' }), OWNER_ONLY],
+    ['owner GET campaigns', () => O('campaigns'), null, OWNER_ONLY],
+    ['owner POST campaigns', () => O('campaigns'), () => ({ ...k(), campaign: { slug: 'matrix-new', title: 'Test fixture: new', purpose: 'Test fixture.' } }), OWNER_ONLY, (b) => { S.campaign = b.campaign; }],
+    ['owner POST campaigns/:id/transition', () => O(`campaigns/${S.campaign.id}/transition`), () => ({ ...k(), expected_revision: S.campaign.revision, to: 'released' }), OWNER_ONLY, (b) => { S.campaign = b.campaign; }],
+    ['owner POST campaigns/:id/audience', () => O(`campaigns/${S.campaign.id}/audience`), () => ({ ...k(), expected_revision: S.campaign.revision, audience: 'invited' }), OWNER_ONLY, (b) => { S.campaign = b.campaign; }],
+    ['owner GET campaigns/:id/audience/grants', () => O(`campaigns/${campaignA.id}/audience/grants`), null, OWNER_ONLY],
+    ['owner POST campaigns/:id/audience/grants', () => O(`campaigns/${S.campaign.id}/audience/grants`), () => ({ ...k(), grant: { account: ACCOUNTS.peer } }), OWNER_ONLY, (b) => { S.grant = b.grant; }],
+    ['owner POST audience/grants/:id/revoke', () => O(`audience/grants/${S.grant.id}/revoke`), () => ({ ...k(), reason: 'Test fixture.' }), OWNER_ONLY],
+    ['owner POST campaigns/:id/missions', () => O(`campaigns/${S.campaign.id}/missions`), () => ({ ...k(), mission: { slug: 'matrix-new-song', title: 'Test fixture', template: 'write-a-song', proof_modes: ['lyrics', 'audio'], requirements: 'Test fixture.' } }), OWNER_ONLY, (b) => { S.mission = b.mission; }],
+    ['owner GET missions', () => O(`missions?campaign=${campaignA.id}`), null, OWNER_ONLY],
+    ['owner PATCH missions/:id', () => O(`missions/${S.mission.id}`), () => ({ ...k(), expected_revision: S.mission.revision, mission: { capacity: 5 } }), OWNER_ONLY, (b) => { S.mission = b.mission; }],
+    ['owner POST missions/:id/transition', () => O(`missions/${S.mission.id}/transition`), () => ({ ...k(), expected_revision: S.mission.revision, to: 'released' }), OWNER_ONLY],
+    ['owner GET missions/:id/preview', () => O(`missions/${song.id}/preview`), null, OWNER_ONLY],
+    ['owner POST missions/:id/applications', () => O(`missions/${song.id}/applications`), () => ({ ...k(), application: { applicant: ACCOUNTS.reviewer, requirements_revision: 1, statement: 'Test fixture: recorded by the owner.' } }), OWNER_ONLY, (b) => { S.recorded = b.application; }],
+    ['owner GET applications', () => O('applications'), null, OWNER_ONLY],
+    ['owner POST applications/:id/decision', () => O(`applications/${S.recorded.id}/decision`), () => ({ ...k(), expected_revision: S.recorded.revision, decision: 'approved' }), OWNER_ONLY],
+    ['owner GET applications/:id/accommodation', () => O(`applications/${S.recorded.id}/accommodation`), null, OWNER_ONLY],
+    ['owner GET assignments', () => O('assignments'), null, OWNER_ONLY],
+    ['owner GET proofs', () => O('proofs'), null, OWNER_ONLY],
+    ['owner GET proofs/:id/media', () => O(`proofs/${proofPublish.id}/media?revision=1`), null, OWNER_ONLY],
+    ['owner POST proofs/:id/review', () => O(`proofs/${S.workProof.id}/review`), () => ({ ...k(), expected_revision: S.workProof.revision, review: { asset_revision: S.workProof.asset_revision, mission_decision: 'pass', rights_decision: 'pass', safety_decision: 'pass' } }), OWNER_ONLY],
+    ['owner POST proofs/:id/moderation', () => O(`proofs/${proofRejected.id}/moderation`), () => ({ ...k(), expected_revision: proofRejected.revision, hold: true, reason: 'Test fixture hold.' }), OWNER_ONLY],
+    ['owner POST proofs/:id/publication', () => O(`proofs/${proofPublish.id}/publication`), () => ({ ...k(), expected_revision: 1, decision: 'published', consent_id: consentPublish.id }), OWNER_ONLY],
+    ['owner GET publications', () => O('publications'), null, OWNER_ONLY],
+    ['owner GET consents', () => O('consents'), null, OWNER_ONLY],
+    ['owner GET appeals', () => O('appeals'), null, OWNER_ONLY],
+    ['owner POST appeals/:id/resolve', () => O(`appeals/${S.applicationAppeal.id}/resolve`), () => ({ ...k(), outcome: 'upheld', reason: 'Test fixture resolution.' }), OWNER_ONLY],
+    ['owner GET credits', () => O('credits'), null, OWNER_ONLY],
+    ['owner GET media/due', () => O('media/due'), null, OWNER_ONLY],
+    ['owner POST media/purge', () => O('media/purge'), () => ({ ...k(), uploads: [uDiscard.id] }), OWNER_ONLY],
+    ['owner GET outbox', () => O('outbox'), null, OWNER_ONLY],
+    ['owner POST outbox/:seq/ack', () => O('outbox/1/ack'), () => ({ ...k(), consumer: 'matrix-consumer' }), OWNER_ONLY],
+    ['owner GET receipts/:operation/:key', () => O(`receipts/campaigns.create/${OWNER_KEY}`), null, OWNER_ONLY]
+  ];
+  const routeKey = (r) => `${r.surface} ${r.method} ${r.path}`;
+  eq(ROWS.map((r) => r[0]).sort(), C.ROUTES.map(routeKey).sort(), 'the table names every ROUTES row exactly once');
+  const ORDER = { member: ['none', 'outsider', 'tester_b', 'owner', 'tester'], owner: ['none', 'outsider', 'tester_b', 'tester', 'owner'] };
+  const results = [];
+  let committedHere = 0;
+  for (const [name, path, body, expect, keep] of ROWS) {
+    const route = C.ROUTES.find((r) => routeKey(r) === name);
+    const spec = route.rpc === 'owner' ? C.OWNER_ACTIONS[route.action] : route.rpc === 'member' ? C.MEMBER_ACTIONS[route.action] : route.rpc === 'media' ? C.MEDIA_SEAL[route.action] : null;
+    for (const who of ORDER[route.surface]) {
+      const status = expect[who];
+      const answer = await mapi(who === 'none' ? null : who, route.method, path(), body ? body() : undefined, { status, label: `${name} as ${who}` });
+      if (status === 401) eq(answer.reason, 'authentication_required', `${name} as ${who}: signed out`);
+      if (status === 403) eq(answer.reason, 'owner_required', `${name} as ${who}: not a house owner`);
+      if (status === 404) eq(answer, NOT_AVAILABLE, `${name} as ${who}: not available, nothing else`);
+      if (status === 200) {
+        eq(answer.ok, true, `${name} as ${who}: ok`);
+        if (spec?.kind === 'mutation' && route.action !== 'outbox.ack') committedHere += 1;
+        if (keep && who === ORDER[route.surface].at(-1)) keep(answer);
+      }
+      results.push([name, who, status]);
+    }
+  }
+  eq(results.length, C.ROUTES.length * 5, `${C.ROUTES.length} routes x 5 identities`);
+  const newEvents = await outbox(mapi, seqBefore);
+  eq(newEvents.length, committedHere, `the table wrote exactly one event per committed answer (${committedHere}) and none for a refusal`);
+  eq((await mapi('tester', 'GET', M(`uploads/${uSealed.id}/url`))).media.sha256, uSealed.sha256, 'the rows the refused identities hit are unchanged');
+} finally {
+  await matrix.close();
+}
+
+console.log(`${count} journey assertions passed.`);
