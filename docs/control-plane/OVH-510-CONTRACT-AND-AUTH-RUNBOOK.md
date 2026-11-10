@@ -282,12 +282,14 @@ sudo bash /var/lib/mccluster/reconcile/source/scripts/ovh-private-repo-ssh.sh ac
 | `Git configuration on this host rewrites ...` | A `url.*.insteadOf` rule would send the fetch elsewhere | Remove the rule from the reconciler's Git configuration |
 | `did not complete its first cycle after the switch` | The first cycle over SSH failed. The script has already put the previous transport back and says so | Read the journal line it prints, fix the cause, and run `activate` again |
 
-**To go back at any time:**
+**To go back while the repository is public:**
 
 ```bash
 sudo rm /etc/systemd/system/mccluster-vps-reconcile.service.d/50-github-readonly-ssh.conf
 sudo systemctl daemon-reload
 ```
+
+Without the drop-in the unit falls back to its default `MCCLUSTER_REPO_URL`, the anonymous HTTPS URL in `core/systemd/mccluster-vps-reconcile.service`, which can read the repository only while it is public. Once it is private, switch visibility back to public first (step 8.5), then remove the drop-in.
 
 **First real run: confirm the two GitHub answers.** The script depends on two texts that could not be exercised where it was written. Both are matched in one place each, and anything else is refused.
 
