@@ -4164,7 +4164,8 @@
     window.addEventListener("pageshow", function (e) { if (e && e.persisted) reconcileAuthority(null); });
   }
   function load(force) {
-    if (authority.reloading) return Promise.resolve();
+    /* A concealed page (spent) loads nothing again: it is replaced instead. */
+    if (authority.reloading || authority.spent) return Promise.resolve();
     if (state.loading && !force) return Promise.resolve();
     if (force) state.notice = null;
     state.loading = true; state.error = null; render();
