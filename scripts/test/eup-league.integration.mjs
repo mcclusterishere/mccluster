@@ -1485,6 +1485,10 @@ try {
   eq([await seenBy(TESTER_B), (await publicationsOf(G.campaign))[0].effective], [[], false], 'so does the expiry of its consent');
   await admin('update public.eup_consents set expires_at = $2 where id = $1', [kG1.id, kG1.expires_at]);
   eq(await seenBy(TESTER_B), [pubG1.id], 'and it shows again');
+  // A held proof is never effective. (Planted on the row: the hold command itself withdraws the publication, G2.)
+  await admin(`update public.eup_proofs set moderation_state = 'held' where id = $1`, [proofG1.id]);
+  eq([await seenBy(TESTER_B), (await publicationsOf(G.campaign))[0].effective], [[], false], 'a published row on a held proof is not effective');
+  await admin(`update public.eup_proofs set moderation_state = 'clear' where id = $1`, [proofG1.id]);
   eq([(await owner('publications.list', { actor: OWNER, document: { state: 'withdrawn' } })).length, (await owner('publications.list', { actor: OWNER, document: { state: 'published' } })).map((x) => x.id)], [0, [pubG1.id]], 'the owner lists by state');
   await rejects(() => owner('publications.list', { actor: OWNER, document: { state: 'effective' } }), '22023', 'an unknown state filter is refused');
   // Revocation withdraws it in the same transaction.
@@ -1653,6 +1657,9 @@ try {
   const played = await member('uploads.get', { actor: TESTER_B, id: videoUpload.id, document: { sign: true } });
   eq([played.id, played.storage], [videoUpload.id, videoUpload.storage], 'a member of the released audience reads the published media for signing (the route narrows it to proof_media)');
   await rejects(() => member('uploads.get', { actor: OUTSIDER, id: videoUpload.id, document: { sign: true } }), '42501', 'an account outside the audience does not');
+  await admin(`update public.eup_consents set expires_at = now() - interval '1 minute' where id = $1`, [songConsent.id]);
+  await rejects(() => member('uploads.get', { actor: TESTER_B, id: videoUpload.id, document: { sign: true } }), '42501', 'the audience reads it only while the publication is effective: not once its consent expired');
+  await admin('update public.eup_consents set expires_at = $2 where id = $1', [songConsent.id, songConsent.expires_at]);
   await rejects(() => member('uploads.get', { actor: TESTER_B, id: ownerUpload.id }), '42501', 'nor anyone a file no effective publication lists');
   const due = await owner('media.due', { actor: OWNER, document: {} });
   eq(Object.keys(due).sort(), Object.keys(C.shapeFields('due_list')).sort(), 'media.due answers the contract due list');
