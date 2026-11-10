@@ -864,17 +864,18 @@
     /* ---------- the member read ---------- */
     function read() {
       if (destroyed) return Promise.resolve();
-      var mine = ++readSeq, at = epoch, identity = model.identity;
-      if (!identity && currentIdentity() === null) { conceal('signed_out'); return Promise.resolve(); }
+      var mine = ++readSeq, at = epoch, identity = model.identity, sentFor = currentIdentity();
+      if (!identity && sentFor === null) { conceal('signed_out'); return Promise.resolve(); }
       var p = send({ method: 'GET', path: PREFIX, epoch: at, identity: identity || undefined });
       return p.then(function (d) {
         if (!alive(at) || mine !== readSeq) return;
         var me = d.league;
         if (!me || typeof me.actor !== 'string' || !UUID.test(me.actor) || !Array.isArray(me.catalogue) || !Array.isArray(me.applications) || !Array.isArray(me.assignments) || !Array.isArray(me.published)) throw Object.assign(new Error('malformed'), { malformed: true });
         if (identity && me.actor !== identity) { invalidate(); return; }
-        /* the answer names someone other than the session held now: an account change in flight, or (on a first read)
-           an answer that cannot be trusted; never shown either way */
-        if (me.actor !== currentIdentity()) { if (identity) invalidate(); else conceal('unreadable'); return; }
+        /* An answer is shown only for the session it was asked for and still held: one naming someone else cannot be
+           trusted; a session that changed while it travelled is read again, for the new account. */
+        if (me.actor !== sentFor) { conceal('unreadable'); return; }
+        if (currentIdentity() !== sentFor) { invalidate(); return; }
         model.me = me; model.identity = me.actor; model.phase = 'ready'; model.readAt = new Date(now()).toISOString(); model.readNote = null; model.unavailable = null;
         reconcile(me);
         render();
@@ -990,6 +991,8 @@
       if (!o || !o.resend || !o.command) return;
       var cmd = o.command;
       if (cmd.epoch !== epoch || cmd.identity !== model.identity || currentIdentity() !== cmd.identity) { invalidate(); return; }
+      /* a begin is the first step of an upload: sending it again continues the upload (a fresh grant, then the bytes) */
+      if (cmd.operation === 'uploads.begin' && cmd.aid) { beginUpload(cmd.aid, cmd); return; }
       run(cmd, true);
     }
     function recheck(slot) {
@@ -1119,7 +1122,7 @@
       var upload = { kind: c.kind, mime: c.mime, bytes: c.bytes };
       if (c.source === 'recording' && c.seconds >= 1) upload.duration_seconds = Math.min(c.seconds, c.maxSeconds || 3600);
       var cmd = { slot: 'upload:' + aid, operation: 'uploads.begin', method: 'POST', path: PREFIX + '/assignments/' + aid + '/uploads', key: key, identity: identity, epoch: epoch,
-        body: { idempotency_key: key, upload: upload }, blob: c.blob };
+        body: { idempotency_key: key, upload: upload }, blob: c.blob, aid: aid };
       beginUpload(aid, cmd);
     }
     function beginUpload(aid, cmd) {
