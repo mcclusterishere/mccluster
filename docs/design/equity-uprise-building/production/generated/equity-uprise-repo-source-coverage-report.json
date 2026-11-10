@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 680,
+  "candidate_count": 690,
   "capability_source_count": 104,
-  "support_only_count": 576,
-  "checks_total": 2618,
-  "checks_passed": 2618,
+  "support_only_count": 586,
+  "checks_total": 2658,
+  "checks_passed": 2658,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -66,6 +66,7 @@
     "action-network-videographer.html",
     "action-policy.html",
     "action/index.html",
+    "action/league.html",
     "album.html",
     "analytics.html",
     "assets/img/equity-uprise-logo.webp",
@@ -292,6 +293,7 @@
     "js/eu-screens/sandbox-session.mjs",
     "js/eu-screens/shell.mjs",
     "js/eu-screens/state.mjs",
+    "js/eup-league-member.js",
     "js/fan-intake.js",
     "js/fbi.js",
     "js/fictional-city/app.mjs",
@@ -383,6 +385,7 @@
     "screens/wall.html",
     "scripts/e2e/control-eup.e2e.mjs",
     "scripts/e2e/eu-screens.e2e.mjs",
+    "scripts/e2e/eup-league-member.e2e.mjs",
     "scripts/e2e/fictional-city-camera-inputs.mjs",
     "scripts/e2e/fictional-city-upstairs-audit.e2e.mjs",
     "scripts/e2e/fictional-city.e2e.mjs",
@@ -426,6 +429,8 @@
     "scripts/test/eu-screen-hardware-binding.test.mjs",
     "scripts/test/eu-screens.test.mjs",
     "scripts/test/eup-intake.integration.mjs",
+    "scripts/test/eup-league-member-ui.test.mjs",
+    "scripts/test/eup-league.integration.mjs",
     "scripts/test/eup-module-policy.integration.mjs",
     "scripts/test/fictional-city-hq-b1.test.mjs",
     "scripts/test/fictional-city-places.test.mjs",
@@ -659,6 +664,7 @@
     "workers/mccluster/src/entry-platform.js",
     "workers/mccluster/src/entry.js",
     "workers/mccluster/src/environment-mission-planning.js",
+    "workers/mccluster/src/eup/league-contract.js",
     "workers/mccluster/src/eup/league-fixture.js",
     "workers/mccluster/src/eup/modules.js",
     "workers/mccluster/src/human-uprise/router.js",
@@ -674,6 +680,10 @@
     "workers/mccluster/src/world-layers.js",
     "workers/mccluster/test/company-site.test.mjs",
     "workers/mccluster/test/eup-import-runner.test.mjs",
+    "workers/mccluster/test/eup-league-contract.test.mjs",
+    "workers/mccluster/test/eup-league-media.test.mjs",
+    "workers/mccluster/test/eup-league-member.test.mjs",
+    "workers/mccluster/test/eup-league.test.mjs",
     "workers/mccluster/test/eup-modules.test.mjs",
     "workers/mccluster/test/fbi.test.mjs",
     "workers/mccluster/test/halo-projection.test.mjs",
@@ -694,7 +704,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "680 entries"
+      "detail": "690 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -1768,6 +1778,26 @@
     },
     {
       "name": "action/index.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "action/league.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "action/league.html classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "action/league.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "action/league.html support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -6122,6 +6152,26 @@
       "detail": ""
     },
     {
+      "name": "js/eup-league-member.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/eup-league-member.js classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "js/eup-league-member.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/eup-league-member.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "js/fan-intake.js capability ids known",
       "passed": true,
       "detail": ""
@@ -7882,6 +7932,26 @@
       "detail": ""
     },
     {
+      "name": "scripts/e2e/eup-league-member.e2e.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/eup-league-member.e2e.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/e2e/eup-league-member.e2e.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/e2e/eup-league-member.e2e.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "scripts/e2e/fictional-city-camera-inputs.mjs capability ids known",
       "passed": true,
       "detail": ""
@@ -8733,6 +8803,46 @@
     },
     {
       "name": "scripts/test/eup-intake.integration.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/eup-league-member-ui.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/eup-league-member-ui.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/eup-league-member-ui.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/eup-league-member-ui.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/eup-league.integration.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/eup-league.integration.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/eup-league.integration.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/eup-league.integration.mjs support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -13192,6 +13302,26 @@
       "detail": ""
     },
     {
+      "name": "workers/mccluster/src/eup/league-contract.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/src/eup/league-contract.js classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "workers/mccluster/src/eup/league-contract.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/src/eup/league-contract.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "workers/mccluster/src/eup/league-fixture.js capability ids known",
       "passed": true,
       "detail": ""
@@ -13478,6 +13608,86 @@
     },
     {
       "name": "workers/mccluster/test/eup-import-runner.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/eup-league-contract.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/eup-league-contract.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "workers/mccluster/test/eup-league-contract.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/test/eup-league-contract.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/eup-league-media.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/eup-league-media.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "workers/mccluster/test/eup-league-media.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/test/eup-league-media.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/eup-league-member.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/eup-league-member.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "workers/mccluster/test/eup-league-member.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/test/eup-league-member.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/eup-league.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/eup-league.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "workers/mccluster/test/eup-league.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/test/eup-league.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     },
