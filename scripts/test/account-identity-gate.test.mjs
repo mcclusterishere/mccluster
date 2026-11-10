@@ -85,7 +85,12 @@ test('site entry gate is versioned and analytics stays off before acknowledgemen
    that keeps Domain= the way a browser does, per-origin storage, timers that
    run only when the test says so, and just enough document to see what the
    notice mounted. One jar across several "hosts" is one visitor moving
-   between McCluster's sites. */
+   between McCluster's sites.
+   A listener stays until it is removed, the way a browser keeps it, unless it
+   was added { once: true }; dispatch(type, detail, more) hands the listeners
+   one event object (more: persisted, defaultPrevented, key). loading: true is
+   the script running in the head, before the body exists; ready() is
+   DOMContentLoaded. */
 const PRIVACY_VERSION = '2026-10-19';
 function jar() {
   const all = new Map();
@@ -119,7 +124,7 @@ function jwt(payload) {
   return 'h.' + Buffer.from(JSON.stringify(payload)).toString('base64url') + '.s';
 }
 let gateSource;
-async function visit({ url, cookies, local, session, framed = false, cookieThrows = false, fetchImpl, MCC, pageNodes = [], referrer = '', historyLength = 1 } = {}) {
+async function visit({ url, cookies, local, session, framed = false, cookieThrows = false, fetchImpl, MCC, pageNodes = [], referrer = '', historyLength = 1, loading = false } = {}) {
   if (!gateSource) {
     const src = await readFile(join(ROOT, 'js/live-content.js'), 'utf8');
     const end = src.indexOf('/* ============================================================\n   LIVE CONTENT');
@@ -129,8 +134,8 @@ async function visit({ url, cookies, local, session, framed = false, cookieThrow
   const u = new URL(url);
   const html = u.pathname.split('/').pop() || 'index.html';
   const banner = /^(resume-it-support|press|newsroom|hire)\.html$/.test(html);
-  const nodes = new Map(), timers = [], listeners = {}, fetches = [], appended = [];
-  let reloads = 0, backs = 0, replaced = [], timerId = 0, focused = null;
+  const nodes = new Map(), timers = [], listeners = {}, docListeners = {}, fetches = [], appended = [];
+  let reloads = 0, backs = 0, replaced = [], timerId = 0, focused = null, lifted = 0;
   const register = (node) => {
     if (node.id) nodes.set(node.id, node);
     for (const m of String(node.innerHTML || '').matchAll(/id="([^"]+)"/g)) nodes.set(m[1], element('button', m[1], node));
@@ -148,17 +153,20 @@ async function visit({ url, cookies, local, session, framed = false, cookieThrow
     return node;
   }
   const docEl = element('html');
+  const dropAttribute = docEl.removeAttribute;
+  docEl.removeAttribute = function (k) { if (k === 'data-privacy-gate') lifted++; dropAttribute.call(this, k); };
   for (const id of pageNodes) nodes.set(id, element('div', id));
   const meta = banner ? Object.assign(element('meta'), { attrs: { name: 'mcc-privacy-notice', content: 'banner' } }) : null;
   const cookieApi = (cookies || jar()).forHost(u.hostname);
+  const body = { appendChild(n) { appended.push(n); register(n); return n; } };
   const document = {
-    readyState: 'complete', referrer, documentElement: docEl,
+    readyState: loading ? 'loading' : 'complete', referrer, documentElement: docEl, visibilityState: 'visible',
     head: { appendChild(n) { appended.push(n); return n; } },
-    body: { appendChild(n) { appended.push(n); register(n); return n; } },
+    body: loading ? null : body,
     createElement: (tag) => element(tag),
     getElementById: (id) => nodes.get(id) || null,
     querySelector: (sel) => (sel === 'meta[name="mcc-privacy-notice"]' ? meta : null),
-    addEventListener() {}
+    addEventListener(t, f) { (docListeners[t] ||= []).push(f); }
   };
   Object.defineProperty(document, 'cookie', {
     get() { if (cookieThrows) throw new Error('SecurityError: sandboxed'); return cookieApi.get(); },
@@ -166,7 +174,7 @@ async function visit({ url, cookies, local, session, framed = false, cookieThrow
   });
   const window = {
     localStorage: local || storage(), sessionStorage: session || storage(),
-    addEventListener(t, f) { (listeners[t] ||= []).push(f); },
+    addEventListener(t, f, o) { (listeners[t] ||= []).push({ f, once: !!(o && o.once) }); },
     history: { length: historyLength, back() { backs++; } },
     MCC
   };
@@ -181,16 +189,34 @@ async function visit({ url, cookies, local, session, framed = false, cookieThrow
   return {
     window, document, location, fetches,
     get reloads() { return reloads; }, get backs() { return backs; }, get replaced() { return replaced; },
+    /* how many times the wall was taken down where it stood */
+    get lifted() { return lifted; },
     wall: () => docEl.getAttribute('data-privacy-gate') === 'pending' && !!nodes.get('mccPrivacyGate'),
     banner: () => !!nodes.get('mccPrivacyNotice') && !nodes.get('mccPrivacyNotice').removed,
     shown() { return this.wall() || this.banner(); },
+    /* the page under the wall can be neither seen nor touched: the attribute every consumer reads (js/main.js), and the rule that hides the rest of the body */
+    concealed: () => docEl.getAttribute('data-privacy-gate') === 'pending' &&
+      appended.some((n) => n.id === 'mccPrivacyGateStyle' && !n.removed && String(n.textContent).includes('html[data-privacy-gate="pending"] body>*:not(#mccPrivacyGate){visibility:hidden!important;pointer-events:none!important}')),
+    /* the question is on the screen and BOTH answers can be used */
+    asked() {
+      const agree = nodes.get('mccPrivacyAgree'), back = nodes.get('mccPrivacyBack'), actions = nodes.get('mccPrivacyGateActions'), words = nodes.get('mccPrivacyGateBody');
+      return this.wall() && !!agree && !!back && !agree.disabled && !back.disabled && !agree.hidden && !back.hidden && !(actions && actions.hidden) && !(words && words.hidden);
+    },
     click: (id) => nodes.get(id).click(),
     key: (id, key) => { let prevented = false; for (const f of nodes.get(id).listeners.keydown || []) f({ type: 'keydown', key, preventDefault() { prevented = true; } }); return prevented; },
     node: (id) => nodes.get(id) || null,
     get focused() { return focused; },
     styleRemoved: () => appended.some((n) => n.id === 'mccPrivacyGateStyle' && n.removed),
     text: (id) => String(nodes.get(id)?.innerHTML || ''),
-    dispatch: (t, detail) => { for (const f of (listeners[t] || []).splice(0)) f({ type: t, detail }); },
+    dispatch: (t, detail, more = {}) => {
+      const e = { type: t, detail, defaultPrevented: false, ...more }, all = listeners[t] || [];
+      listeners[t] = all.filter((l) => !l.once);
+      for (const l of all) l.f(e);
+      return e;
+    },
+    /* the tab is looked at again, or put away: document.visibilityState and its event */
+    visibility: (state) => { document.visibilityState = state; for (const f of docListeners.visibilitychange || []) f({ type: 'visibilitychange' }); },
+    ready: () => { document.body = body; document.readyState = 'interactive'; for (const f of (docListeners.DOMContentLoaded || []).splice(0)) f({ type: 'DOMContentLoaded' }); },
     runTimers: (ms = Infinity) => { for (const t of timers.splice(0)) { if (t.ms <= ms) t.fn(); else timers.push(t); } }
   };
 }
@@ -283,6 +309,236 @@ test('Escape acts as Go back instead of hiding the dialog, and cannot cancel pen
   assert.equal(agreeing.window.MCC_PRIVACY.accepted(),true);
   await flush();
   assert.equal(agreeing.reloads,1);
+});
+
+/* A3 (deep audit, 2026-11-09): "Privacy Go back leaves preserved document gate inert". Go back switched the wall's
+   answers off for good and trusted the browser to throw the document away. A browser that keeps it (the back/forward
+   cache: Go back, then the browser's Forward), a step back that stays in the same document, or a history with nothing
+   behind this entry left the visitor behind a wall with nothing to press. Leaving is a transition now: it ends in the
+   page being gone, or in the same two answers working again. Nothing here lets anyone in without agreeing. */
+test('A3: a page the browser kept and shows again after Go back asks again, and both answers work', async () => {
+  const cookies = jar();
+  const v = await visit({ url: 'https://mccluster.org/mnet.html', cookies, historyLength: 3 });
+  assert.equal(v.asked(), true);
+  v.click('mccPrivacyBack');
+  assert.equal(v.backs, 1);
+  assert.equal(v.node('mccPrivacyBack').disabled, true, 'one tap is one step back: the answers are set aside while the browser leaves');
+  v.click('mccPrivacyBack');
+  v.click('mccPrivacyAgree');
+  await flush();
+  assert.equal(v.backs, 1, 'a second tap does not walk back two pages');
+  assert.equal(v.reloads, 0, 'and a tap on Agree while the page is leaving is not an agreement');
+  assert.equal(v.window.MCC_PRIVACY.accepted(), false);
+  /* the document goes into the back/forward cache; the visitor comes Forward to it, and its timers run again */
+  v.dispatch('pagehide', undefined, { persisted: true });
+  v.dispatch('pageshow', undefined, { persisted: true });
+  v.runTimers();
+  assert.equal(v.concealed(), true, 'still unanswered, so the page is still behind the wall');
+  assert.equal(v.asked(), true, 'and both answers work again');
+  assert.equal(v.focused?.id, 'mccPrivacyBack', 'focus is on the answer they used, never moved onto Agree');
+  assert.equal(v.window.MCC_PRIVACY.accepted(), false, 'coming back is not an answer');
+  assert.equal(cookies.all.size, 0);
+  assert.equal(v.window.localStorage.getItem('mcc_privacy_ack'), null);
+  /* Go back works again, by history again; so does Escape. A browser that shows the kept document again without
+     saying so is still recognised: the page was hidden for a navigation, and here it is shown */
+  v.click('mccPrivacyBack');
+  assert.equal(v.backs, 2);
+  assert.equal(v.node('mccPrivacyBack').disabled && v.node('mccPrivacyAgree').disabled, true, 'while it leaves, both answers are set aside, and visibly: nothing looks pressable that is not');
+  v.dispatch('pagehide', undefined, { persisted: true });
+  v.dispatch('pageshow', undefined, { persisted: false });
+  assert.equal(v.asked(), true);
+  assert.equal(v.key('mccPrivacyGate', 'Escape'), true);
+  assert.equal(v.backs, 3);
+  assert.deepEqual(v.replaced, [], 'history kept working, so nothing was replaced');
+  /* the event alone is enough too (no pagehide was seen), and agreeing works on the restored page */
+  v.dispatch('pageshow', undefined, { persisted: true });
+  assert.equal(v.asked(), true);
+  v.click('mccPrivacyAgree');
+  await flush();
+  assert.equal(v.reloads, 1);
+  assert.equal(v.window.MCC_PRIVACY.accepted(), true);
+  assert.equal(v.node('mccPrivacyBack').disabled, true, 'agreed: nothing is left to answer while the page reloads');
+});
+
+test('A3: Go back that does not leave the document gives the answers back, and the next Go back leaves another way', async () => {
+  /* entries exist, but none behind this one (the visitor came BACK to the entry page): history.back() goes nowhere */
+  const v = await visit({ url: 'https://mccluster.org/mnet.html', historyLength: 2 });
+  v.click('mccPrivacyBack');
+  assert.equal(v.backs, 1);
+  v.runTimers(1499);
+  assert.equal(v.asked(), false, 'the browser gets a moment to leave');
+  assert.equal(v.wall(), true);
+  v.runTimers(1500);
+  assert.equal(v.asked(), true, 'still here: both answers work again');
+  assert.equal(v.concealed(), true, 'and the page is still behind the wall');
+  assert.equal(v.focused?.id, 'mccPrivacyBack');
+  assert.equal(v.window.MCC_PRIVACY.accepted(), false);
+  v.click('mccPrivacyBack');
+  assert.equal(v.backs, 1, 'history was tried and did not leave, so it is not asked again');
+  assert.deepEqual(v.replaced, ['about:blank'], 'nowhere to return to: out to a blank page, never into the site');
+  assert.equal(v.window.MCC_PRIVACY.accepted(), false);
+  /* the same, for a visitor who came from somewhere */
+  const from = 'https://example.org/original-article';
+  const referred = await visit({ url: 'https://mccluster.org/mnet.html', referrer: from, historyLength: 2 });
+  referred.click('mccPrivacyBack');
+  referred.runTimers(1500);
+  referred.click('mccPrivacyBack');
+  assert.deepEqual(referred.replaced, [from]);
+  /* a step back that stays in this document (the page had pushed an entry of its own) */
+  const same = await visit({ url: 'https://mccluster.org/mnet.html', historyLength: 3 });
+  same.click('mccPrivacyBack');
+  same.dispatch('popstate');
+  assert.equal(same.asked(), true, 'the step stayed here: the answers work at once');
+  same.runTimers();
+  same.click('mccPrivacyBack');
+  assert.equal(same.backs, 2, 'and the next Go back asks history again: the page before may be next');
+  same.dispatch('hashchange');
+  assert.equal(same.asked(), true);
+  assert.deepEqual(same.replaced, []);
+  /* a history step the visitor did not ask for changes nothing */
+  const idle = await visit({ url: 'https://mccluster.org/mnet.html', historyLength: 3 });
+  idle.dispatch('popstate');
+  idle.dispatch('pageshow', undefined, { persisted: false });
+  assert.equal(idle.asked(), true);
+  assert.equal(idle.backs, 0);
+  /* the pageshow every page fires as it finishes loading is not a return: it does not cut the browser's moment short */
+  const loading = await visit({ url: 'https://mccluster.org/mnet.html', historyLength: 3 });
+  loading.click('mccPrivacyBack');
+  loading.dispatch('pageshow', undefined, { persisted: false });
+  assert.equal(loading.asked(), false);
+  assert.equal(loading.wall(), true);
+  /* slow to leave: the answers came back first, then the page did go, and the visitor came Forward to it. History
+     worked after all, so the next Go back uses it */
+  const slow = await visit({ url: 'https://mccluster.org/mnet.html', historyLength: 3 });
+  slow.click('mccPrivacyBack');
+  slow.runTimers(1500);
+  assert.equal(slow.asked(), true);
+  slow.dispatch('pagehide', undefined, { persisted: true });
+  slow.dispatch('pageshow', undefined, { persisted: true });
+  slow.click('mccPrivacyBack');
+  assert.equal(slow.backs, 2, 'the page was left and shown again: history is good');
+  assert.deepEqual(slow.replaced, []);
+  /* agreeing after a Go back that went nowhere is an ordinary agreement */
+  v.runTimers();
+  const again = await visit({ url: 'https://mccluster.org/mnet.html', historyLength: 2 });
+  again.click('mccPrivacyBack');
+  again.runTimers(1500);
+  again.click('mccPrivacyAgree');
+  await flush();
+  assert.equal(again.reloads, 1);
+  assert.equal(again.window.MCC_PRIVACY.accepted(), true);
+});
+
+test('A3: a wall still up after the visitor agreed somewhere else comes down once, in place, and only for agreement', async () => {
+  const ids = ['mccPrivacyAnswer', 'mccPrivacyAnswerStatus', 'mccPrivacyAnswerAgree', 'mccPrivacyAnswerBack'];
+  const open = (v, why) => {
+    assert.equal(v.shown(), false, why + ': the wall is gone');
+    assert.equal(v.document.documentElement.getAttribute('data-privacy-gate'), null, why + ': the page under it can be seen and used');
+    assert.equal(v.styleRemoved(), true, why + ': nothing is left hiding the page');
+    assert.equal(v.window.MCC_PRIVACY.accepted(), true, why);
+    assert.equal(v.reloads, 0, why + ': in place, nothing reloads');
+    assert.equal(v.lifted, 1, why + ': once');
+  };
+  /* reviewed the policy, agreed there, pressed the browser's Back: the entry page is shown again as it was left */
+  let cookies = jar();
+  const entry = await visit({ url: 'https://mccluster.org/mnet.html', cookies, historyLength: 2 });
+  assert.equal(entry.asked(), true);
+  (await visit({ url: 'https://mccluster.org/privacy.html', cookies, pageNodes: ids })).click('mccPrivacyAnswerAgree');
+  entry.dispatch('pagehide', undefined, { persisted: true });
+  entry.dispatch('pageshow', undefined, { persisted: true });
+  open(entry, 'agreed on the policy page, then Back');
+  assert.equal(JSON.parse(entry.window.localStorage.getItem('mcc_privacy_ack')).version, PRIVACY_VERSION, 'this origin keeps its own copy');
+  /* once: nothing later puts it back or takes it down twice */
+  entry.dispatch('pageshow', undefined, { persisted: true });
+  entry.visibility('visible');
+  entry.dispatch('focus');
+  entry.runTimers();
+  open(entry, 'afterwards');
+  assert.equal(entry.fetches.length, 0);
+
+  /* Go back was pressed first, the visitor agreed on the page they went back to, then came Forward */
+  cookies = jar();
+  const left = await visit({ url: 'https://mccluster.org/mnet.html', cookies, historyLength: 3 });
+  left.click('mccPrivacyBack');
+  left.dispatch('pagehide', undefined, { persisted: true });
+  (await visit({ url: 'https://matthew.mccluster.org/privacy.html', cookies, pageNodes: ids })).click('mccPrivacyAnswerAgree');
+  left.dispatch('pageshow', undefined, { persisted: true });
+  open(left, 'agreed on the page they went back to, then Forward');
+  const rested = left.focused;
+  left.runTimers();
+  left.dispatch('popstate');
+  left.dispatch('hashchange');
+  assert.equal(left.focused, rested, 'and nothing reaches for a dialog that is gone');
+  open(left, 'afterwards');
+
+  /* another tab of the same site agrees: this tab hears the browser's own storage event */
+  const local = storage();
+  const tab = await visit({ url: 'https://matthew.mccluster.org/press.html', local });
+  tab.dispatch('storage', undefined, { key: 'mcc_other' });
+  assert.equal(tab.asked(), true, 'an unrelated change is not an answer');
+  (await visit({ url: 'https://matthew.mccluster.org/privacy.html', local, pageNodes: ids })).click('mccPrivacyAnswerAgree');
+  tab.dispatch('storage', undefined, { key: 'mcc_privacy_ack' });
+  open(tab, 'agreed in another tab of this site');
+
+  /* another McCluster host agrees in another tab: the shared cookie is read when this tab is looked at again */
+  cookies = jar();
+  const world = await visit({ url: 'https://mccluster.org/mnet.html', cookies });
+  world.visibility('hidden');
+  (await visit({ url: 'https://matthew.mccluster.org/privacy.html', cookies, pageNodes: ids })).click('mccPrivacyAnswerAgree');
+  world.visibility('hidden');
+  assert.equal(world.wall(), true, 'a tab nobody is looking at is left alone');
+  world.visibility('visible');
+  open(world, 'agreed on another McCluster host, then back to this tab');
+  cookies = jar();
+  const windowed = await visit({ url: 'https://www.mccluster.org/account.html', cookies });
+  (await visit({ url: 'https://mccluster.org/privacy.html', cookies, pageNodes: ids })).click('mccPrivacyAnswerAgree');
+  windowed.dispatch('focus');
+  open(windowed, 'agreed in another window, then this one is focused');
+
+  /* a member signs in in another tab, and their own account record already answers */
+  const shared = storage();
+  const member = await visit({ url: 'https://mccluster.org/mnet.html', local: shared });
+  shared.setItem('mccdb_session', JSON.stringify({ access_token: jwt({ sub: 'u1', exp: Math.floor(Date.now() / 1000) + 3600, user_metadata: { privacy_policy_version: PRIVACY_VERSION, privacy_acknowledged_at: '2026-10-19T12:00:00Z' } }), refresh_token: 'r' }));
+  member.dispatch('storage', undefined, { key: 'mccdb_session' });
+  open(member, "the member's own record, signed in from another tab");
+  assert.equal(member.fetches.length, 0, 'an existing record is not written again');
+
+  /* and coming back WITHOUT having agreed anywhere changes nothing: every way back still meets the question */
+  cookies = jar();
+  const still = await visit({ url: 'https://mccluster.org/mnet.html', cookies, historyLength: 2, local: storage({ mcc_privacy_seen: JSON.stringify({ version: PRIVACY_VERSION, seen_at: '2026-10-28T00:00:00Z' }) }) });
+  cookies.forHost('mccluster.org').set('mcc_privacy_seen=' + PRIVACY_VERSION + '; Domain=mccluster.org; Path=/');
+  still.dispatch('pagehide', undefined, { persisted: true });
+  still.dispatch('pageshow', undefined, { persisted: true });
+  still.visibility('hidden');
+  still.visibility('visible');
+  still.dispatch('focus');
+  still.dispatch('storage', undefined, { key: 'mcc_privacy_ack' });
+  still.dispatch('storage', undefined, { key: null });
+  still.dispatch('popstate');
+  still.runTimers();
+  assert.equal(still.concealed(), true, 'no agreement anywhere: the page stays behind the wall');
+  assert.equal(still.asked(), true, 'with both answers working');
+  assert.equal(still.window.MCC_PRIVACY.accepted(), false);
+  assert.equal(still.window.localStorage.getItem('mcc_privacy_ack'), null, 'and looking again records nothing');
+  assert.equal(still.reloads, 0);
+  assert.equal(still.lifted, 0);
+
+  /* an agreement given HERE is on its way to a reload: looking again does not take the wall down under it first */
+  let written;
+  const held = new Promise((r) => { written = r; });
+  const agreeing = await visit({ url: 'https://matthew.mccluster.org/mnet.html', local: storage({ mccdb_session: JSON.stringify({ access_token: jwt({ sub: 'u1', exp: Math.floor(Date.now() / 1000) + 3600, user_metadata: {} }), refresh_token: 'r' }) }), fetchImpl: () => held.then(() => ({ ok: true })) });
+  agreeing.click('mccPrivacyAgree');
+  await flush();
+  agreeing.dispatch('focus');
+  agreeing.visibility('visible');
+  agreeing.dispatch('pagehide', undefined, { persisted: true });
+  agreeing.dispatch('pageshow', undefined, { persisted: true });
+  assert.equal(agreeing.wall(), true, 'the wall stays until the page reloads with the agreement in place');
+  assert.equal(agreeing.lifted, 0);
+  assert.equal(agreeing.asked(), false, 'and nothing is left to answer meanwhile');
+  written();
+  await flush(); await flush();
+  assert.equal(agreeing.reloads, 1);
 });
 
 test('the readable policy offers Agree and Go back, with no Not now entry path',async()=>{
@@ -403,31 +659,213 @@ test("the notice: a signed-in member's own account record is agreement, and agre
   assert.equal(slow.reloads, 1, 'but never longer than a moment');
 });
 
+/* A4 (deep audit, 2026-11-09): "Strict privacy entry remains exposed while handoff waits". This test used to expect
+   NOTHING on the screen while the handoff ran (pending.shown() === false, three times): the whole page, open to someone
+   who had not agreed, for up to ten seconds, on a fragment anyone can write. What it was protecting is kept and named:
+   the QUESTION is not asked until the handoff is finished, because the arriving member may already have answered. What
+   it allowed is closed: the page is behind the wall from the first instant. */
 test('the notice: a cross-host sign-in handoff is finished before the notice looks', async () => {
   const pending = await visit({ url: 'https://mccluster.org/mnet.html#mcc_handoff=token' });
-  assert.equal(pending.shown(), false, 'nothing while the handoff runs');
+  assert.equal(pending.concealed(), true, 'behind the wall while the handoff runs');
+  assert.equal(pending.asked(), false, 'and the question is not asked yet');
   pending.dispatch('mcc:handoff', { ok: false });
   assert.equal(pending.wall(), true, 'a failed handoff: look again, and show it');
+  assert.equal(pending.asked(), true, 'with both answers working');
 
   const carried = await visit({ url: 'https://mccluster.org/mnet.html#view=feed&mcc_handoff=token' });
   carried.dispatch('mcc:handoff', { ok: true });
-  assert.equal(carried.shown(), false, 'signed in: the reload is coming');
+  assert.equal(carried.concealed(), true, 'signed in: still behind the wall');
+  assert.equal(carried.asked(), false, 'signed in: the reload is coming');
   carried.runTimers();
   assert.equal(carried.wall(), true, 'if the reload never comes, look again');
+  assert.equal(carried.asked(), true);
 
   const silent = await visit({ url: 'https://mccluster.org/mnet.html#mcc_handoff=token' });
   silent.runTimers(9999);
-  assert.equal(silent.shown(), false);
+  assert.equal(silent.concealed(), true, 'behind the wall until the wait is over');
+  assert.equal(silent.asked(), false);
   silent.runTimers();
   assert.equal(silent.wall(), true, 'a page without the bar does not wait forever');
+  assert.equal(silent.asked(), true);
 
   const agreedMeanwhile = await visit({ url: 'https://mccluster.org/mnet.html#mcc_handoff=token' });
   agreedMeanwhile.window.localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: PRIVACY_VERSION }));
   agreedMeanwhile.dispatch('mcc:handoff', { ok: false });
   assert.equal(agreedMeanwhile.shown(), false, 'the look after the handoff reads the records again');
+  assert.equal(agreedMeanwhile.document.documentElement.getAttribute('data-privacy-gate'), null, 'agreed: the page is let through');
 
   const holding = await visit({ url: 'https://mccluster.org/mnet.html#mcc_handoff=token', local: storage({ mccdb_session: JSON.stringify({ access_token: jwt({ user_metadata: {} }) }) }) });
   assert.equal(holding.wall(), true, 'a page that already holds a session is not handed off, so it does not wait');
+  assert.equal(holding.asked(), true);
+});
+
+test('A4: while a carried sign-in is finished, the page is concealed and there is nothing to answer or enter', async () => {
+  const cookies = jar();
+  const v = await visit({ url: 'https://mccluster.org/mnet.html?view=feed#mcc_handoff=token', cookies, historyLength: 3 });
+  assert.equal(v.concealed(), true, 'concealed in the same breath the script runs');
+  assert.equal(v.wall(), true);
+  assert.equal(v.node('mccPrivacyGateWait').hidden, false, 'one line says what is being waited for');
+  assert.match(v.text('mccPrivacyGate'), /id="mccPrivacyGateWait" role="status"[^>]*>Checking your sign-in\. One moment\.</);
+  assert.equal(v.node('mccPrivacyGateBody').hidden, true, 'the question is not on the screen');
+  assert.equal(v.node('mccPrivacyGateActions').hidden, true, 'and neither are its answers: nothing to press that does nothing');
+  assert.equal(v.node('mccPrivacyGate').getAttribute('aria-describedby'), 'mccPrivacyGateWait', 'a screen reader hears the wait, not a question that is not there');
+  assert.equal(v.focused?.id, 'mccPrivacyGateTitle', 'focus is in the dialog, not on a hidden answer');
+  /* an answer that is not offered cannot be given: not by a script, not by the keyboard */
+  v.click('mccPrivacyAgree');
+  v.click('mccPrivacyBack');
+  v.key('mccPrivacyGate', 'Escape');
+  await flush();
+  assert.equal(v.reloads, 0);
+  assert.equal(v.backs, 0);
+  assert.deepEqual(v.replaced, []);
+  assert.equal(v.window.MCC_PRIVACY.accepted(), false, 'waiting is not agreeing: analytics stay off');
+  assert.equal(v.window.localStorage.getItem('mcc_privacy_ack'), null);
+  assert.equal(cookies.all.size, 0);
+  assert.equal(v.fetches.length, 0);
+  /* looking at the tab again, or a restored page, does not cut the wait short or let anyone through */
+  v.visibility('visible');
+  v.dispatch('focus');
+  v.dispatch('pagehide', undefined, { persisted: true });
+  v.dispatch('pageshow', undefined, { persisted: true });
+  v.dispatch('popstate');
+  assert.equal(v.concealed(), true);
+  assert.equal(v.asked(), false);
+  assert.equal(v.focused?.id, 'mccPrivacyGateTitle', 'and focus is not moved onto an answer that is not offered');
+  /* refused: the question, with both answers working */
+  v.dispatch('mcc:handoff', { ok: false });
+  assert.equal(v.concealed(), true, 'a refused handoff never opens the page');
+  assert.equal(v.asked(), true);
+  assert.equal(v.node('mccPrivacyGateWait').hidden, true);
+  assert.equal(v.node('mccPrivacyGate').getAttribute('aria-describedby'), 'mccPrivacyGateBody');
+  assert.equal(v.focused?.id, 'mccPrivacyAgree', 'focus starts on the agree button, the way it always has');
+  v.click('mccPrivacyBack');
+  assert.equal(v.backs, 1, 'Go back leaves');
+
+  /* the script runs in the head, before there is a body to put a dialog in: the page is concealed already */
+  const head = await visit({ url: 'https://mccluster.org/mnet.html#mcc_handoff=token', loading: true });
+  assert.equal(head.concealed(), true, 'concealed before the first element of the body is parsed');
+  assert.equal(head.node('mccPrivacyGate'), null);
+  head.ready();
+  assert.equal(head.wall(), true);
+  assert.equal(head.asked(), false);
+  assert.equal(head.node('mccPrivacyGateActions').hidden, true);
+  /* refused before the body arrived: the dialog is mounted asking */
+  const early = await visit({ url: 'https://mccluster.org/mnet.html#mcc_handoff=token', loading: true });
+  early.dispatch('mcc:handoff', { ok: false });
+  assert.equal(early.concealed(), true);
+  early.ready();
+  assert.equal(early.asked(), true);
+
+  /* a fragment that carries no sign-in does not wait at all */
+  for (const hash of ['', '#view=feed', '#mcc_handoff=', '#x=mcc_handoff=token']) {
+    const plain = await visit({ url: 'https://mccluster.org/mnet.html' + hash });
+    assert.equal(plain.asked(), true, JSON.stringify(hash) + ': asked at once');
+  }
+});
+
+test("A4: the arriving member's own record enters without the question, once; with no record the question is asked", async () => {
+  const exp = Math.floor(Date.now() / 1000) + 3600;
+  const land = (store, meta) => store.setItem('mccdb_session', JSON.stringify({ access_token: jwt({ sub: 'u1', exp, user_metadata: meta }), refresh_token: 'r' }));
+  const agreed = { privacy_policy_version: PRIVACY_VERSION, privacy_acknowledged_at: '2026-10-19T12:00:00Z' };
+
+  /* THE WORLD TAKES THE SESSION WHERE IT STANDS (js/mnet.js cancels mcc:handoff; js/tabbar.js then reloads nothing) */
+  let cookies = jar(), local = storage();
+  const world = await visit({ url: 'https://humanuprise.com/mnet.html#mcc_handoff=token', cookies, local });
+  land(local, agreed);
+  world.dispatch('mcc:handoff', { ok: true }, { defaultPrevented: true });
+  assert.equal(world.concealed(), true, 'not before every listener of the event has run');
+  world.runTimers(0);
+  assert.equal(world.shown(), false, "the member's own record answers: in, and never asked");
+  assert.equal(world.document.documentElement.getAttribute('data-privacy-gate'), null);
+  assert.equal(world.styleRemoved(), true);
+  assert.equal(world.reloads, 0, 'no second paint: nothing reloads');
+  assert.equal(world.window.MCC_PRIVACY.accepted(), true);
+  assert.equal(JSON.parse(local.getItem('mcc_privacy_ack')).accepted_at, '2026-10-19T12:00:00Z', 'the browser copy keeps the record time');
+  assert.ok([...cookies.all.values()].some((c) => c.name === 'mcc_privacy_ack'), 'and the cookie is written for the next page');
+  assert.equal(world.fetches.length, 0, 'an existing record is not written again');
+  world.runTimers();
+  world.dispatch('pageshow', undefined, { persisted: true });
+  assert.equal(world.shown(), false, 'once: the timers that were waiting do nothing more');
+  assert.equal(world.reloads, 0);
+  assert.equal(world.lifted, 1);
+
+  /* the same member with no record of this version: signed in, and asked */
+  local = storage();
+  const unanswered = await visit({ url: 'https://humanuprise.com/mnet.html#mcc_handoff=token', local });
+  land(local, { privacy_policy_version: '2026-01-01', privacy_acknowledged_at: '2026-01-01T00:00:00Z' });
+  unanswered.dispatch('mcc:handoff', { ok: true }, { defaultPrevented: true });
+  unanswered.runTimers(0);
+  assert.equal(unanswered.concealed(), true, 'signed in is not agreed: still behind the wall');
+  assert.equal(unanswered.asked(), true, 'asked as soon as the sign-in landed, not four seconds later');
+  unanswered.click('mccPrivacyAgree');
+  await flush(); await flush();
+  assert.equal(unanswered.fetches.length, 1, "agreeing writes the member's own record");
+  assert.equal(JSON.parse(unanswered.fetches[0].init.body).data.privacy_policy_version, PRIVACY_VERSION);
+  assert.equal(unanswered.reloads, 1);
+
+  /* EVERY OTHER PAGE RELOADS SIGNED IN: it stays behind the wall, unasked, until it does */
+  local = storage();
+  const reloading = await visit({ url: 'https://humanuprise.com/account.html#mcc_handoff=token', local });
+  land(local, agreed);
+  reloading.dispatch('mcc:handoff', { ok: true });
+  reloading.runTimers(0);
+  assert.equal(reloading.concealed(), true, 'the reload is coming: no flash of the page before it');
+  assert.equal(reloading.asked(), false);
+  reloading.runTimers(3999);
+  assert.equal(reloading.concealed(), true);
+  reloading.runTimers();
+  assert.equal(reloading.shown(), false, 'the reload never came: the record is read here, and it answers');
+  assert.equal(reloading.reloads, 0);
+});
+
+test('A4: the wait always ends, in agreement or in answers that work', async () => {
+  const exp = Math.floor(Date.now() / 1000) + 3600;
+  const agreed = { privacy_policy_version: PRIVACY_VERSION, privacy_acknowledged_at: '2026-10-19T12:00:00Z' };
+  /* nobody answers (a page without the bar, an API that never replies): ten seconds, then the question */
+  const silent = await visit({ url: 'https://mccluster.org/merch.html#mcc_handoff=token', historyLength: 2 });
+  silent.runTimers(9999);
+  assert.equal(silent.concealed(), true, 'behind the wall for the whole wait');
+  assert.equal(silent.asked(), false, 'and unasked until it is over');
+  silent.runTimers(10000);
+  assert.equal(silent.concealed(), true, 'a timeout never opens the page');
+  assert.equal(silent.asked(), true, 'it ends in both answers, working');
+  assert.equal(silent.focused?.id, 'mccPrivacyAgree');
+  /* the handoff lands after all, and the member's own record answers: the wall comes down */
+  const local = storage();
+  const late = await visit({ url: 'https://humanuprise.com/mnet.html#mcc_handoff=token', local });
+  late.runTimers(10000);
+  assert.equal(late.asked(), true);
+  local.setItem('mccdb_session', JSON.stringify({ access_token: jwt({ sub: 'u1', exp, user_metadata: agreed }), refresh_token: 'r' }));
+  late.dispatch('mcc:handoff', { ok: true }, { defaultPrevented: true });
+  late.runTimers(0);
+  assert.equal(late.shown(), false, 'a late sign-in whose record answers still enters');
+  assert.equal(late.reloads, 0);
+  /* the handoff lands late and refused: the question simply stays */
+  const refused = await visit({ url: 'https://mccluster.org/mnet.html#mcc_handoff=token' });
+  refused.runTimers(10000);
+  refused.dispatch('mcc:handoff', { ok: false });
+  refused.runTimers();
+  assert.equal(refused.asked(), true);
+  assert.equal(refused.concealed(), true);
+  /* after the timeout the answers are ordinary answers */
+  silent.click('mccPrivacyBack');
+  assert.equal(silent.backs, 1);
+  const agreeing = await visit({ url: 'https://mccluster.org/merch.html#mcc_handoff=token' });
+  agreeing.runTimers(10000);
+  agreeing.click('mccPrivacyAgree');
+  await flush();
+  assert.equal(agreeing.reloads, 1);
+  assert.equal(agreeing.window.MCC_PRIVACY.accepted(), true);
+  /* agreed before the body arrived (the cookie from another host, read on the way): no dialog is ever mounted */
+  const cookies = jar();
+  const head = await visit({ url: 'https://mccluster.org/mnet.html#mcc_handoff=token', cookies, loading: true });
+  assert.equal(head.concealed(), true);
+  cookies.forHost('matthew.mccluster.org').set('mcc_privacy_ack=' + PRIVACY_VERSION + '; Domain=mccluster.org; Path=/; Max-Age=34560000; SameSite=Lax; Secure');
+  head.dispatch('mcc:handoff', { ok: false });
+  head.ready();
+  assert.equal(head.shown(), false);
+  assert.equal(head.node('mccPrivacyGate'), null);
+  assert.equal(head.document.documentElement.getAttribute('data-privacy-gate'), null);
 });
 
 test('analytics asks the notice when it is on the page, and its own fallback reads the shared cookie safely', async () => {

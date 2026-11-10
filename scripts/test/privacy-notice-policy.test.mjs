@@ -49,6 +49,29 @@ test('Go back always navigates out rather than suppressing the gate',()=>{
   assert.doesNotMatch(live,/dismiss: writeSeen/);
 });
 
+/* A3 and A4 (deep audit, 2026-11-09). The wall can now come down without a reload, so what may bring it down is
+   pinned: one function, one caller, and that caller asks for a recorded agreement first. No answer on the wall, no
+   timeout and no failed handoff reaches it. */
+test('the wall comes down in place only for a recorded agreement, and every wait is behind it',()=>{
+  const release=fn('release'), reconcile=fn('reconcile'), settle=fn('settle');
+  assert.match(release,/removeAttribute\("data-privacy-gate"\)/);
+  assert.doesNotMatch(release,/writeAck|store\(|setCookie|location\.|history\./,'entering this way writes nothing and navigates nowhere');
+  assert.equal(live.split('release()').length-1,2,'one definition, one caller');
+  assert.match(reconcile,/if \(!entered && !agreeing && readAck\(\)\) release\(\);/,'and that caller asks for agreement first');
+  assert.doesNotMatch(wall,/release\(|reconcile\(|settle\(/,'no answer on the wall reaches it: Go back and Escape only leave');
+  assert.doesNotMatch(back,/release\(|reconcile\(|settle\(|removeAttribute/);
+  assert.match(settle,/if \(reconcile\(\) \|\| !held\) return;\s*held = false;\s*if \(ui\.show\) ui\.show\(\);/,'a wait that ends without agreement ends in the question');
+  assert.match(live,/held = true;\s*present\(\);\s*wait = setTimeout\(settle, 10000\);/,'a carried sign-in waits behind the wall, and ten seconds without word of it is the limit');
+  assert.doesNotMatch(live,/setTimeout\(present,/,'nothing waits in front of the wall');
+  assert.match(wall,/if \(held \|\| leaving \|\| agreeing\) return;[\s\S]*?function goBack\(\) \{\s*if \(held \|\| leaving \|\| agreeing\) return;/,'an answer that is not on offer cannot be given');
+  assert.match(wall,/recover = setTimeout\(function \(\) \{ stuck = true; again\(\); \}, 1500\);/,'Go back that went nowhere gives the answers back');
+  assert.match(back,/if \(!stuck && w\.history && w\.history\.length > 1/,'and is not asked of history twice');
+  assert.match(live,/w\.addEventListener\("pageshow", function \(e\) \{/,'a page the browser kept looks again when it is shown');
+  assert.doesNotMatch(live.slice(0,live.indexOf('LIVE CONTENT')),/addEventListener\("(?:unload|beforeunload)"/,'and nothing here keeps a page out of the back/forward cache');
+  assert.match(wall,/#mccPrivacyGate \[hidden\]\{display:none!important\}/,'a part of the dialog that is not offered is not displayed');
+  assert.match(wall,/id="mccPrivacyGateWait" role="status" hidden>Checking your sign-in\. One moment\.</);
+});
+
 test('consent version and first-party analytics remain strict',()=>{
   const version=live.match(/var VERSION = "(\d{4}-\d{2}-\d{2})"/)[1];
   assert.equal(analytics.match(/var MCC_PRIVACY_REQUIRED_VERSION = "([^"]+)"/)[1],version);

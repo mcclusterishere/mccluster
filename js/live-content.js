@@ -3,7 +3,10 @@
    The Privacy Policy itself stays readable before any answer; frames defer to
    their parent page. A legacy "seen" record never authorizes entry.
    Guest and member consent remain separate from browser/OS permissions, GPC,
-   Do Not Track, and each feature's own permissions. */
+   Do Not Track, and each feature's own permissions.
+   The wall has no dead end: a page the browser keeps and shows again asks
+   again with both answers working, agreement given somewhere else takes it
+   down, and a sign-in still being carried in waits behind it, not in front. */
 (function (w, d) {
   "use strict";
   var VERSION = "2026-10-19";
@@ -107,10 +110,14 @@
 
   /* "Go back" must never manufacture an agreement, clear the wall, or write
      a dismiss/seen marker. A direct-entry tab has no prior page, so exit to a
-     neutral blank document instead of opening the site content. */
+     neutral blank document instead of opening the site content. The same exit
+     serves a tab whose history was asked and went nowhere (`stuck`, set by the
+     wall below): history.length counts the entries AHEAD of this one too, so
+     a visitor who came back to the entry page has a history and no way back. */
+  var stuck = false;
   function returnToPrevious() {
     try {
-      if (w.history && w.history.length > 1 && typeof w.history.back === "function") {
+      if (!stuck && w.history && w.history.length > 1 && typeof w.history.back === "function") {
         w.history.back();
         return;
       }
@@ -180,6 +187,52 @@
     wall();
   }
 
+  /* THE WALL'S STATES, NONE OF THEM A DEAD END (deep audit 2026-11-09, A3 and A4).
+     held:     a sign-in is still being carried in from another McCluster host.
+               The page is behind the wall from the first instant, but the
+               question is not asked yet: the member's own record may answer it.
+     asking:   the two answers are on the screen and both work.
+     leaving:  "Go back" was pressed and the browser is on its way out. Both
+               answers are set aside for that moment only. If the document is
+               still here, or is shown again (the back/forward cache, a step
+               that stayed in this document, a history with nothing behind
+               this entry), it is asking again.
+     agreeing: "I agree" was pressed; the page reloads with it in place.
+     entered:  agreement was found while the wall was up and it came down. */
+  var held = false, leaving = false, agreeing = false, entered = false;
+  var ui = {}, wait = 0, recover = 0;
+
+  /* AGREEMENT FOUND WHILE THE WALL IS UP: on the Privacy Policy page, in
+     another tab, on another McCluster host, or in the arriving member's own
+     account record. The wall comes down where it stands, once. This is the
+     ONLY way it comes down without a reload, and reconcile() below is its only
+     caller: "Go back", Escape, a timeout and a failed handoff never reach it.
+     Nothing is written here; readAck() already kept the copies. Like agreeing
+     on the Privacy Policy page, analytics start with the next page. */
+  function release() {
+    entered = true;
+    leaving = false;
+    clearTimeout(wait);
+    clearTimeout(recover);
+    if (ui.gate) ui.gate.remove();
+    if (ui.style && ui.style.remove) ui.style.remove();
+    d.documentElement.removeAttribute("data-privacy-gate");
+  }
+  /* Look again. True when the page is entered. An agreement that is already
+     on its way to a reload is left to that reload. */
+  function reconcile() {
+    if (!entered && !agreeing && readAck()) release();
+    return entered;
+  }
+  /* The carried sign-in is finished, one way or the other, or never came:
+     look again, and with no agreement, ask. This is where every wait ends. */
+  function settle() {
+    clearTimeout(wait);
+    if (reconcile() || !held) return;
+    held = false;
+    if (ui.show) ui.show();
+  }
+
   /* Every unagreed top-level entry page gets the same two-option wall.
      Agree enters; Go back navigates out and does not persist any answer.
      Escape has the same effect as Go back. Privacy Policy stays readable. */
@@ -196,6 +249,7 @@
       '#mccPrivacyGate{visibility:visible!important;position:fixed;inset:0;z-index:2147483647;box-sizing:border-box;' +
       'display:flex;overflow-y:auto;padding:16px;background:#0b0908;color:#f5efe6;font:16px/1.5 system-ui,sans-serif}' +
       '#mccPrivacyGate *{box-sizing:border-box}' +
+      '#mccPrivacyGate [hidden]{display:none!important}' +
       '#mccPrivacyGate .mccpg__card{margin:auto;width:min(100%,560px);min-width:0;padding:20px;border:1px solid rgba(255,255,255,.18);' +
       'border-radius:18px;background:#15110f;box-shadow:0 24px 80px rgba(0,0,0,.5);overflow-wrap:anywhere}' +
       '#mccPrivacyGate h1{margin:0 0 12px;font-size:1.45rem;line-height:1.1}' +
@@ -213,9 +267,10 @@
       '#mccPrivacyGate .mccpg__actions{grid-template-columns:repeat(2,minmax(0,1fr))}' +
       '#mccPrivacyGate .mccpg__review{grid-column:1/-1}}';
     (d.head || d.documentElement).appendChild(style);
+    ui.style = style;
 
     function mount() {
-      if (d.getElementById("mccPrivacyGate")) return;
+      if (entered || d.getElementById("mccPrivacyGate")) return;
       var gate = d.createElement("div");
       gate.id = "mccPrivacyGate";
       gate.setAttribute("role", "dialog");
@@ -225,12 +280,13 @@
       gate.innerHTML =
         '<div class="mccpg__card">' +
         '<h1 id="mccPrivacyGateTitle" tabindex="-1">Privacy before entry</h1>' +
+        '<p id="mccPrivacyGateWait" role="status" hidden>Checking your sign-in. One moment.</p>' +
         '<div id="mccPrivacyGateBody">' +
         '<p>McCluster records account, device, network, location and activity data as described in the Privacy Policy. Optional live video, microphone audio and verification media are captured only in features that request them.</p>' +
         '<p><b>Choose one:</b> Agree &amp; continue to enter, or Go back to leave without accepting. No analytics are collected until you agree. Returning without agreeing will ask again.</p>' +
         '<p><b>This acknowledgement is not blanket consent.</b> Precise location and other protected device permissions still use their own browser or operating-system controls, and privacy signals remain honored.</p>' +
         '</div>' +
-        '<div class="mccpg__actions">' +
+        '<div class="mccpg__actions" id="mccPrivacyGateActions">' +
         '<button type="button" class="mccpg__agree" id="mccPrivacyAgree">I agree &amp; continue</button>' +
         '<button type="button" class="mccpg__back" id="mccPrivacyBack">Go back</button>' +
         '<a class="mccpg__review" href="/privacy.html">Review the Privacy Policy</a>' +
@@ -240,9 +296,35 @@
       d.body.appendChild(gate);
       var btn = d.getElementById("mccPrivacyAgree");
       var back = d.getElementById("mccPrivacyBack");
-      var open = true;
+      /* What the dialog offers follows `held`: one line while a carried
+         sign-in is finished, with nothing to press that would do nothing; the
+         question and its two answers after. Focus starts on the agree button,
+         the way it always has; while there is no answer yet the heading takes
+         it. The dialog is labelled and described either way, so a screen
+         reader hears the wait, then the notice. */
+      function show() {
+        d.getElementById("mccPrivacyGateWait").hidden = !held;
+        d.getElementById("mccPrivacyGateBody").hidden = held;
+        d.getElementById("mccPrivacyGateActions").hidden = held;
+        gate.setAttribute("aria-describedby", held ? "mccPrivacyGateWait" : "mccPrivacyGateBody");
+        (held ? d.getElementById("mccPrivacyGateTitle") : btn).focus();
+      }
+      /* STILL HERE, OR HERE AGAIN, AND STILL UNANSWERED: both answers work.
+         Focus returns to "Go back" when that is what was pressed, never onto
+         Agree, so a second Enter repeats the answer already given. */
+      function again() {
+        clearTimeout(recover);
+        if (held || agreeing) return;
+        var at = d.activeElement, was = leaving;
+        var inside = !!(at && !at.disabled && gate.contains && gate.contains(at));
+        leaving = false;
+        btn.disabled = false;
+        back.disabled = false;
+        if (!inside) (was ? back : btn).focus();
+      }
       btn.addEventListener("click", function () {
-        if (!open) return;
+        if (held || leaving || agreeing) return;
+        agreeing = true;
         btn.disabled = true;
         back.disabled = true;
         /* the page reloads to start with the agreement in place; a member's
@@ -252,11 +334,19 @@
         writeAck().then(go, go);
         setTimeout(go, 1500);
       });
+      /* LEAVING IS A TRANSITION. One press is one step back, so both answers
+         are set aside while the browser goes; they are never spent. A document
+         still here a moment later has not been left (history had nothing
+         behind this entry, or the browser is slow to go): the answers come
+         back, and the next "Go back" takes the other way out, the referrer or
+         a blank page, instead of asking history a second time. */
       function goBack() {
-        if (!open || btn.disabled) return;
-        open = false;
+        if (held || leaving || agreeing) return;
+        leaving = true;
+        btn.disabled = true;
         back.disabled = true;
         returnToPrevious();
+        recover = setTimeout(function () { stuck = true; again(); }, 1500);
       }
       back.addEventListener("click", goBack);
       /* Escape is equivalent to Go back; Tab stays trapped until navigation. */
@@ -273,25 +363,65 @@
         if (e.shiftKey && (at === first || !gate.contains(at))) { e.preventDefault(); last.focus(); }
         else if (!e.shiftKey && (at === last || !gate.contains(at))) { e.preventDefault(); first.focus(); }
       });
-      /* Focus starts on the agree button, the way it always has; the dialog
-         is labelled and described, so a screen reader hears the notice. */
-      btn.focus();
+      ui.gate = gate;
+      ui.show = show;
+      ui.again = again;
+      show();
     }
 
     if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", mount, { once: true });
     else mount();
   }
 
+  /* COMING BACK TO A WALL THAT IS STILL UP. The browser may keep this very
+     document and show it again (the back/forward cache: "Go back" and then
+     Forward, or the policy link and then Back), and a tab may be left open
+     while the visitor answers somewhere else. Each way back looks again:
+     agreement takes the wall down; without it the question stands, with
+     answers that work. A pageshow that follows a pagehide, or says so itself,
+     is the kept document shown again: it was left, so history is good. The
+     pageshow every page fires as it finishes loading is neither. None of
+     these listeners keeps a page out of the back/forward cache. */
+  var away = false;
+  w.addEventListener("pagehide", function () { away = true; });
+  w.addEventListener("pageshow", function (e) {
+    var restored = away || !!(e && e.persisted);
+    away = false;
+    if (reconcile() || !restored) return;
+    stuck = false;
+    if (ui.again) ui.again();
+  });
+  /* a step back that stayed in this document: not left, so not spent */
+  function stayed() { if (leaving && ui.again) ui.again(); }
+  w.addEventListener("popstate", stayed);
+  w.addEventListener("hashchange", stayed);
+  w.addEventListener("focus", reconcile);
+  d.addEventListener("visibilitychange", function () { if (d.visibilityState === "visible") reconcile(); });
+  w.addEventListener("storage", function (e) {
+    if (!e || !e.key || e.key === KEY || e.key === "mccdb_session" || e.key === "mcc_sess_keep") reconcile();
+  });
+
   /* A sign-in carried from another McCluster host arrives as #mcc_handoff=
-     and js/tabbar.js reloads the page signed in, where the member's own
-     record may already answer. Wait for it, then look again. A page that
-     already holds a session is not handed off, so it does not wait. */
+     and js/tabbar.js trades it for a session of this host, where the member's
+     own record may already answer. Wait for it, then look again; a page that
+     already holds a session is not handed off, so it does not wait.
+     THE WAIT IS BEHIND THE WALL. Anyone can write that fragment, so until the
+     trade is finished this is a visitor who has not agreed: the page is
+     concealed at once, and only the question is held back. Refused, or never
+     answered: ask. Signed in: js/mnet.js (the World) takes the session where
+     it stands by cancelling the event, nothing reloads, and the record is read
+     as soon as every listener has run; every other page reloads signed in and
+     stays concealed until it does, and if that never comes, look again. Ten
+     seconds without word of the sign-in is the limit, four for the reload. */
   if (/(?:^#|&)mcc_handoff=[^&]/.test(location.hash || "") && !memberSession()) {
-    var wait = setTimeout(present, 10000);
+    held = true;
+    present();
+    wait = setTimeout(settle, 10000);
     w.addEventListener("mcc:handoff", function (e) {
       clearTimeout(wait);
-      if (e && e.detail && e.detail.ok) wait = setTimeout(present, 4000);
-      else present();
+      if (!(e && e.detail && e.detail.ok)) { settle(); return; }
+      wait = setTimeout(settle, 4000);
+      setTimeout(function () { if (e.defaultPrevented) settle(); }, 0);
     }, { once: true });
     return;
   }
