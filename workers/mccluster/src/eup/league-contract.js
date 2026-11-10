@@ -1071,11 +1071,24 @@ export const MEDIA = deepFreeze({
       'only if every deletion succeeded: owner:media.purged with exactly the uploads asked for']
   }
 });
-/* The interface ./league-media.js exports and ./league.js and ./league-member.js import. ctx = { env, fetchImpl, fail, now }.
+/* The interface ./league-media.js exports and ./league.js and ./league-member.js import. ctx = { env, fetchImpl, fail, now, seal }.
    Every storage call uses redirect manual and a timeout; a 3xx, a timeout or a malformed answer is 503 storage_unavailable.
-   No URL, token or key is logged, stored in a receipt or put in an error body. */
+   No URL, token or key is logged, stored in a receipt or put in an error body.
+   DECISION (media lane): the module reaches the third function only through ctx.seal, which the member route supplies.
+   The module then names no RPC and maps no SQLSTATE: the route that owns the error table makes the call, and whatever
+   it throws passes through completeUpload unchanged. Only completeUpload reads ctx.seal.
+   Two refusals repeat a decision the SQL makes first, for a caller that skipped the read MEDIA.order names:
+   completeUpload answers not_available when the actor is not the row's participant, and signReviewRead answers the
+   EU016 pair of ERRORS when the proof arrives held. */
 export const MEDIA_MODULE = deepFreeze({
   file: './league-media.js',
+  context: {
+    env: 'SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY',
+    fetchImpl: 'fetch; the module calls it bare, never as a method of ctx',
+    fail: '(status, message, reason) => the Error to throw',
+    now: '() => epoch milliseconds',
+    seal: 'async ({ p_upload, p_actor, p_result }) => the upload row after the seal; the keys are RPC_ARGUMENTS.seal and p_result satisfies DOCUMENTS.seal_result'
+  },
   functions: {
     beginUpload: { args: ['ctx', 'upload'], returns: '{ method, url, headers, expires_in }', fails: ['upload_expired', 'storage_unavailable'] },
     completeUpload: { args: ['ctx', 'upload', 'actor'], returns: 'upload (the row after the seal; state says sealed, rejected or expired)', fails: ['upload_missing', 'storage_unavailable'] },
