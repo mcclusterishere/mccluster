@@ -607,5 +607,621 @@ try {
 
   await decoysEmpty('after the owner sections');
 
+  /* ================================================================== D. member command */
+  const NOTICES = LEAGUE_POLICY.notices;
+  const STATEMENT = 'Test fixture statement: why I apply.\nSecond line.';
+  const LYRICS = 'Verse one of a test fixture\nChorus\twith a tab\n\nLínea tres \u{1F30D}';
+  const ACCOMMODATION = 'Test fixture: I cannot record.\nHere are my words.';
+  const FIT = { rubric: [{ id: 'fit', met: true }] };
+  const MET = { rubric: [{ id: 'complete', met: true }, { id: 'credited', met: true }] };
+  const newMission = async (campaign, slug, extra = {}) => {
+    const created = await owner('missions.create', { actor: OWNER, id: campaign.id, document: { ...SONG, slug, rubric: RUBRIC, ...extra }, key: key('mission') });
+    return owner('missions.transition', { actor: OWNER, id: created.id, document: { to: 'released' }, revision: created.revision, key: key('release') });
+  };
+  const fresh = async (mission) => (await owner('missions.list', { actor: OWNER, id: mission.campaign_id })).find((x) => x.id === mission.id);
+  const freshCampaign = async (campaign) => (await owner('campaigns.list', { actor: OWNER })).find((x) => x.id === campaign.id);
+  const move = async (mission, to) => owner('missions.transition', { actor: OWNER, id: mission.id, document: { to }, revision: (await fresh(mission)).revision, key: key('move') });
+  const moveCampaign = async (campaign, to) => owner('campaigns.transition', { actor: OWNER, id: campaign.id, document: { to }, revision: (await freshCampaign(campaign)).revision, key: key('move') });
+  const apply = (actor, mission, extra = {}, revision = 0) => member('applications.save', { actor, id: mission.id, document: { submit: true, requirements_revision: mission.requirements_revision, statement: STATEMENT, ...extra }, revision, key: key('apply') });
+  const approve = (application, reviewer = REVIEWER) => owner('applications.decide', { actor: reviewer, id: application.id, document: { decision: 'approved', ...FIT }, revision: application.revision, key: key('approve') });
+  const acceptOffer = (actor, assignment, mission) => member('assignments.accept', { actor, id: assignment.id, document: { requirements_revision: mission.requirements_revision, notice_revision: NOTICES.participation.revision }, revision: assignment.revision, key: key('accept') });
+  const enroll = async (actor, mission, reviewer = REVIEWER) => acceptOffer(actor, (await approve(await apply(actor, mission), reviewer)).assignment, mission);
+  const words = (extra = {}) => ({ title: 'Test fixture song', lyrics: LYRICS, credits: [{ name: 'Fixture Person', role: 'writer' }, { name: 'Fixture Singer', role: 'voice' }], rights: RIGHTS,
+    accommodation: { statement: ACCOMMODATION }, review_notice_revision: NOTICES.private_review.revision, ...extra });
+  const submitProof = (actor, assignment, document = words(), revision = 0) => member('proofs.submit', { actor, id: assignment.id, document, revision, key: key('proof') });
+  const review = (proof, decisions = {}, reviewer = REVIEWER, revision = proof.revision) => owner('proofs.review', { actor: reviewer, id: proof.id,
+    document: { asset_revision: proof.asset_revision, mission_decision: 'pass', rights_decision: 'pass', safety_decision: 'pass', ...MET, ...decisions }, revision, key: key('review') });
+  const me = (actor) => member('me.get', { actor });
+  const expiry = (days) => new Date(Date.now() + days * 86400000).toISOString().replace(/\.\d+Z$/, 'Z');
+  const publishConsent = (proof, extra = {}) => ({ purpose: 'publish_proof', audience: 'released_audience', asset_revision: proof.asset_revision, notice_revision: NOTICES.publication.revision, expires_at: expiry(30), ...extra });
+
+  // Fixtures: campaign L (invited: TESTER), campaign B (invited: TESTER_B), a preview campaign (admin_preview, with a
+  // grant that therefore has no effect), campaign A from above (invited: TESTER, TESTER_B, PEER; OUTSIDER revoked).
+  const L = await seedSongMission(league, { slug: 'member-loop', invite: TESTER, policy: null, rubric: RUBRIC });
+  let ML = L.mission;
+  const missionB = await newMission(campaignB, 'write-a-song');
+  const preview = await seedSongMission(league, { slug: 'preview-only', policy: null });
+  await owner('audience.grants.grant', { actor: OWNER, id: preview.campaign.id, document: { account: TESTER }, key: key('grant') });
+  await admin(`insert into public.eup_campaign_audience_grants(tenant, campaign_id, account, granted_by) values ($1, $2, $3, $4)`, [FOREIGN_TENANT, foreign.id, TESTER, OTHER_ORG_OWNER]);
+  const draftDocument = { submit: false, requirements_revision: 1, statement: 'Half a thought' };
+
+  // D1. The actor is a known account; the two functions do not share actions; deferred actions say so.
+  await rejects(() => me(null), '42501', 'no actor');
+  await rejects(() => me(UNKNOWN), '42501', 'an unknown account is not a signed-in account');
+  await rejects(() => member('applications.save', { actor: UNKNOWN, id: ML.id, document: draftDocument, revision: 0, key: key('unknown') }), '42501', 'an unknown account cannot write');
+  await rejects(() => member('no.such.action', { actor: TESTER }), '22023', 'an unknown member action is refused');
+  await rejects(() => member('campaigns.create', { actor: OWNER, document: CAMPAIGN, key: key('wrong-surface') }), '22023', 'the member function has no owner action, even for a house owner');
+  await rejects(() => owner('applications.save', { actor: OWNER, id: ML.id, document: draftDocument, revision: 0, key: key('wrong-surface') }), '22023', 'and the owner function has no member action');
+  await rejects(() => owner('proofs.submit', { actor: OWNER, id: U(1), document: {}, revision: 0, key: key('wrong-surface') }), '22023', 'the participant actions left the owner function');
+  for (const action of DEFERRED.member) {
+    ok(Object.hasOwn(C.MEMBER_ACTIONS, action), `${action} is a contract action`);
+    await rejects(() => member(action, { actor: TESTER, id: U(1), document: {}, key: key('deferred') }), '0A000', `${action} is left to the second pass`);
+    await rejects(() => member(action, { actor: UNKNOWN, id: U(1), document: {}, key: key('deferred') }), '42501', `${action}: an unknown account is refused first`);
+  }
+  // Every other contract action is implemented in this pass: with nothing to act on, each answers something else
+  // than "unknown action" or "not implemented".
+  const implemented = { owner: Object.keys(C.OWNER_ACTIONS).filter((x) => !DEFERRED.owner.includes(x)), member: Object.keys(C.MEMBER_ACTIONS).filter((x) => !DEFERRED.member.includes(x)) };
+  eq([implemented.owner.length, implemented.member.length], [24, 13], '24 owner and 13 member actions are in this pass');
+  for (const [surface, call, actor] of [['owner', owner, OWNER], ['member', member, TESTER]]) for (const action of implemented[surface]) {
+    const answer = await call(action, { actor, id: U(404), document: { receipt_probe: true }, revision: 1, key: key('probe') }).then(() => ({ code: 'ok', message: '' }), (e) => e);
+    ok(answer.code !== '0A000' && !/Unknown action/.test(answer.message), `${surface} ${action} is implemented (${answer.code})`);
+  }
+  await rejects(() => member('applications.save', { actor: TESTER, id: ML.id, document: draftDocument, revision: 0 }), '22023', 'a member mutation needs an idempotency key');
+  await rejects(() => member('applications.save', { actor: TESTER, document: draftDocument, revision: 0, key: key('no-id') }), '22023', 'and the id of the row it names');
+  await rejects(() => member('applications.save', { actor: TESTER, id: 'nope', document: draftDocument, revision: 0, key: key('bad-id') }), '22023', 'a malformed id is refused, not cast');
+
+  // D2. The audience matrix, on the member read and on a mutation.
+  const catalogue = async (actor) => (await me(actor)).catalogue.map((c) => c.slug).sort();
+  const tryApply = (actor, mission) => member('applications.save', { actor, id: mission.id, document: draftDocument, revision: 0, key: key('matrix') });
+  await rejects(() => me(OUTSIDER), 'EU011', 'a signed-in account that is invited nowhere (its only grant is revoked) has no League');
+  await rejects(() => tryApply(OUTSIDER, ML), 'EU011', 'and cannot apply');
+  await rejects(() => tryApply(OUTSIDER, song), 'EU011', 'a revoked grant gives nothing');
+  await rejects(() => me(OTHER_ORG_OWNER), 'EU011', 'the owner of another organisation is not in any audience');
+  await rejects(() => tryApply(OTHER_ORG_OWNER, ML), 'EU011', 'and cannot apply');
+  eq(await catalogue(TESTER), ['fixture-campaign', 'member-loop'], 'the tester sees the campaigns that invited them: not campaign B, not the admin_preview campaign their grant sits on, not another tenant');
+  await rejects(() => tryApply(TESTER, missionB), 'EU011', 'a tester of campaign A and L is not in the audience of campaign B');
+  await rejects(() => tryApply(TESTER, preview.mission), 'EU011', 'a grant on an admin_preview campaign has no effect');
+  await rejects(() => tryApply(TESTER, { id: foreignMission.id }), 'P0002', 'a mission of another tenant does not exist here, grant or not');
+  eq(await catalogue(TESTER_B), ['campaign-b', 'fixture-campaign'], 'tester B sees campaign B and campaign A');
+  await rejects(() => tryApply(TESTER_B, ML), 'EU011', 'tester B is not in the audience of campaign L');
+  await rejects(() => tryApply(PEER, ML), 'EU011', 'a house member who is not an owner needs a grant like anyone else');
+  eq(await catalogue(REVIEWER), ['campaign-b', 'fixture-campaign', 'member-loop', 'preview-only'], 'a house owner is in the audience of every released campaign (and sees no draft or withdrawn one)');
+  const mine = await me(TESTER);
+  eq(Object.keys(mine).sort(), Object.keys(C.shapeFields('me')).sort(), 'me.get is exactly the contract shape');
+  eq(Object.keys(mine.catalogue[0]).sort(), Object.keys(C.shapeFields('member_campaign')).sort(), 'with contract member campaigns');
+  const listedA = mine.catalogue.find((c) => c.slug === 'fixture-campaign');
+  eq(listedA.missions.map((x) => x.slug), ['write-a-song'], 'only released missions are listed (the draft mission of campaign A is not)');
+  eq(Object.keys(listedA.missions[0]).sort(), Object.keys(C.shapeFields('mission_card')).sort(), 'as mission cards');
+  eq(listedA.missions[0], await owner('missions.preview', { actor: OWNER, id: song.id }), 'the owner preview IS the member view of the mission');
+  eq([mine.actor, mine.policy.revision, mine.policy.entitlement, mine.policy.notices.participation.revision, mine.published], [TESTER, 3, 'none_required', NOTICES.participation.revision, []], 'the member reads the policy they will be held to, and no publication exists before the second pass');
+  eq(Object.keys(mine.policy).sort(), Object.keys(C.shapeFields('member_policy')).sort(), 'the member policy is the contract shape (no account id)');
+
+  // D3. Applying: draft, read back, submit; the document is closed; the application compares its OWN revision.
+  let application = await member('applications.save', { actor: TESTER, id: ML.id, document: draftDocument, revision: 0, key: key('apply') });
+  eq(Object.keys(application).sort(), Object.keys(C.shapeFields('member_application')).sort(), 'the result is exactly the contract member application (no text, no account id)');
+  ok(application.status === 'draft' && application.revision === 1 && application.recorded === false && application.accommodation_requested === false && application.requirements_revision === 1, 'a draft application, revision 1');
+  let own1 = (await me(TESTER)).applications.find((x) => x.id === application.id);
+  eq(Object.keys(own1).sort(), Object.keys(C.shapeFields('own_application')).sort(), 'the applicant reads it back as the contract own_application');
+  eq([own1.document, own1.accommodation, own1.decisions, own1.appeals, own1.mission.id], [{ statement: 'Half a thought' }, null, [], [], ML.id], 'with the saved words');
+  for (const refused of C.REFUSED_MEMBER_FIELDS) await rejects(() => member('applications.save', { actor: TESTER, id: ML.id, document: { ...draftDocument, [refused]: REVIEWER }, revision: 1, key: key('apply') }), '22023', `a document cannot name another account (${refused})`);
+  await rejects(() => member('applications.save', { actor: TESTER, id: ML.id, document: draftDocument, revision: 0, key: key('apply') }), '40001', 'revision 0 means "I have none"; when one exists it is a conflict');
+  await rejects(() => member('applications.save', { actor: TESTER, id: ML.id, document: draftDocument, revision: 7, key: key('apply') }), '40001', 'a stale application revision is a conflict');
+  await rejects(() => member('applications.save', { actor: TESTER, id: ML.id, document: { ...draftDocument, requirements_revision: 2 }, revision: 1, key: key('apply') }), 'EU013', 'a requirements revision that is not the current one is refused');
+  await rejects(() => member('applications.save', { actor: TESTER, id: ML.id, document: { submit: true, requirements_revision: 1 }, revision: 1, key: key('apply') }), '22023', 'submitting needs the statement in the document');
+  await rejects(() => member('applications.save', { actor: TESTER, id: ML.id, document: { ...draftDocument, statement: 'bad\rreturn' }, revision: 1, key: key('apply') }), '22023', 'a carriage return is refused');
+  application = await member('applications.save', { actor: TESTER, id: ML.id, document: { submit: false, requirements_revision: 1, accommodation: { statement: 'Test fixture accommodation request.' } }, revision: 1, key: key('apply') });
+  own1 = (await me(TESTER)).applications.find((x) => x.id === application.id);
+  ok(application.revision === 2 && application.accommodation_requested === true && own1.document.statement === 'Half a thought' && own1.accommodation.statement === 'Test fixture accommodation request.',
+    'an omitted statement keeps the saved one; the applicant reads their own accommodation request');
+  const ownerView = (await owner('applications.list', { actor: OWNER, id: ML.id }))[0];
+  ok(ownerView.accommodation_requested === true && !JSON.stringify(ownerView).includes('accommodation request.'), 'the owner list shows only that a request exists');
+  application = await member('applications.save', { actor: TESTER, id: ML.id, document: { submit: false, requirements_revision: 1, accommodation: null }, revision: 2, key: key('apply') });
+  ok(application.accommodation_requested === false && application.status === 'draft', 'accommodation null clears the saved request');
+  const submitKey = key('apply');
+  const submitDocument = { submit: true, requirements_revision: 1, statement: STATEMENT };
+  application = await member('applications.save', { actor: TESTER, id: ML.id, document: submitDocument, revision: 3, key: submitKey });
+  ok(application.status === 'submitted' && application.revision === 4, 'submitted');
+  const countsAfterSubmit = [await n('eup_applications'), await n('eup_command_receipts')];
+  eq(await member('applications.save', { actor: TESTER, id: ML.id, document: submitDocument, revision: 3, key: submitKey }), application, 'exact replay returns the stored result');
+  eq([await n('eup_applications'), await n('eup_command_receipts')], countsAfterSubmit, 'and changes no row count');
+  await rejects(() => member('applications.save', { actor: TESTER, id: ML.id, document: { ...submitDocument, statement: 'Other words' }, revision: 3, key: submitKey }), 'EU003', 'the same key with another payload is a conflict');
+  await rejects(() => member('applications.save', { actor: TESTER, id: ML.id, document: draftDocument, revision: 4, key: key('apply') }), '40001', 'a submitted application is not turned back into a draft by a save');
+  application = await member('applications.save', { actor: TESTER, id: ML.id, document: { ...submitDocument, statement: `${STATEMENT}\nA third line.` }, revision: 4, key: key('apply') });
+  ok(application.status === 'submitted' && application.revision === 5, 'a submitted application can be resubmitted with new words');
+
+  // Withdrawal is the member's own and reversible.
+  await owner('audience.grants.grant', { actor: OWNER, id: L.campaign.id, document: { account: TESTER_B }, key: key('grant') });
+  await rejects(() => member('applications.withdraw', { actor: TESTER_B, id: application.id, document: {}, key: key('withdraw') }), '42501', 'another account cannot withdraw it');
+  await rejects(() => member('applications.withdraw', { actor: TESTER, id: U(404), document: {}, key: key('withdraw') }), 'P0002', 'an unknown application is not found');
+  await rejects(() => member('applications.withdraw', { actor: TESTER, id: application.id, document: { reason: 'x' }, key: key('withdraw') }), '22023', 'the withdrawal document is empty');
+  application = await member('applications.withdraw', { actor: TESTER, id: application.id, document: {}, key: key('withdraw') });
+  ok(application.status === 'withdrawn' && application.revision === 6, 'withdrawn');
+  await rejects(() => member('applications.withdraw', { actor: TESTER, id: application.id, document: {}, key: key('withdraw') }), '40001', 'a withdrawn application is not withdrawn again');
+  await rejects(() => owner('applications.decide', { actor: REVIEWER, id: application.id, document: { decision: 'approved', ...FIT }, revision: 6, key: key('decide') }), '40001', 'and cannot be decided');
+  application = await member('applications.save', { actor: TESTER, id: ML.id, document: submitDocument, revision: 6, key: key('apply') });
+  ok(application.status === 'submitted' && application.revision === 7, 'the member applies again after withdrawing');
+
+  // The reproduced dead end: after a mission revision change an application could be neither approved nor re-applied.
+  // Now a pause and re-release changes nothing for it, and a real requirements change asks for a resubmission.
+  await move(ML, 'paused');
+  await rejects(() => member('applications.save', { actor: TESTER, id: ML.id, document: submitDocument, revision: 7, key: key('apply') }), 'EU011', 'no application work on a paused mission');
+  ML = await move(ML, 'released');
+  ok(ML.requirements_revision === 1 && ML.revision === 4, 'pause and re-release moved the mission revision, not the requirements revision');
+  ML = await owner('missions.update', { actor: OWNER, id: ML.id, document: { requirements: 'Fixture requirements, changed.\nWrite the words and record a take.' }, revision: ML.revision, key: key('update') });
+  ok(ML.requirements_revision === 2, 'the owner changes the requirements');
+  await rejects(() => owner('applications.decide', { actor: REVIEWER, id: application.id, document: { decision: 'approved', ...FIT }, revision: 7, key: key('decide') }), 'EU013', 'an application bound to older requirements is not approved');
+  await rejects(() => apply(TESTER, { ...ML, requirements_revision: 1 }, {}, 7), 'EU013', 'and the applicant cannot resubmit against the old ones');
+  application = await apply(TESTER, ML, {}, 7);
+  ok(application.requirements_revision === 2 && application.revision === 8, 'the applicant resubmits against the current requirements');
+  let decision = await owner('applications.decide', { actor: REVIEWER, id: application.id, document: { decision: 'changes_requested', reason: 'Test fixture: say a little more.', ...FIT }, revision: 8, key: key('decide') });
+  application = await member('applications.save', { actor: TESTER, id: ML.id, document: { submit: false, requirements_revision: 2, statement: 'More, as asked.' }, revision: 9, key: key('apply') });
+  ok(application.status === 'changes_requested', 'a draft save keeps changes_requested');
+  application = await apply(TESTER, ML, { statement: 'More, as asked.\nAnd a second line.' }, 10);
+  own1 = (await me(TESTER)).applications.find((x) => x.id === application.id);
+  eq([application.status, own1.decisions.map((d) => [d.decision, d.reason])], ['submitted', [['changes_requested', 'Test fixture: say a little more.']]], 'resubmitted; the member reads the decision and its reason');
+  eq(Object.keys(own1.decisions[0]).sort(), Object.keys(C.shapeFields('member_decision')).sort(), 'as a member decision: no decider id');
+  ok((await owner('applications.list', { actor: OWNER, id: ML.id }))[0].decided_by === null, 'the row carries no stale decision while it waits again');
+  decision = await approve(application);
+  ok(decision.status === 'approved' && decision.assignment.status === 'offered' && decision.assignment.offered_requirements_revision === 2, 'and now it is approved: the dead end is gone');
+  await rejects(() => apply(TESTER, ML, {}, decision.revision), '40001', 'an approved application is not changed');
+  await rejects(() => member('applications.withdraw', { actor: TESTER, id: application.id, document: {}, key: key('withdraw') }), '40001', 'nor withdrawn');
+
+  // D4. Accepting: the participant only, the exact requirements revision and participation notice revision.
+  let assignment = decision.assignment;
+  const acceptDocument = { requirements_revision: 2, notice_revision: NOTICES.participation.revision };
+  await rejects(() => member('assignments.accept', { actor: REVIEWER, id: assignment.id, document: acceptDocument, revision: 1, key: key('accept') }), '42501', 'a house owner who is not the participant cannot accept');
+  await rejects(() => member('assignments.accept', { actor: TESTER_B, id: assignment.id, document: acceptDocument, revision: 1, key: key('accept') }), '42501', 'another tester of the same campaign cannot accept');
+  await rejects(() => member('assignments.accept', { actor: OUTSIDER, id: assignment.id, document: acceptDocument, revision: 1, key: key('accept') }), 'EU011', 'an account outside the audience gets the audience answer, not "not yours"');
+  await rejects(() => member('assignments.accept', { actor: TESTER, id: U(404), document: acceptDocument, revision: 1, key: key('accept') }), 'P0002', 'an unknown assignment is not found');
+  await rejects(() => member('assignments.accept', { actor: TESTER, id: assignment.id, document: acceptDocument, revision: 5, key: key('accept') }), '40001', 'a stale assignment revision is a conflict');
+  await rejects(() => member('assignments.accept', { actor: TESTER, id: assignment.id, document: { ...acceptDocument, requirements_revision: 1 }, revision: 1, key: key('accept') }), 'EU013', 'an older requirements revision is not what is on offer');
+  await rejects(() => member('assignments.accept', { actor: TESTER, id: assignment.id, document: { ...acceptDocument, notice_revision: 'fixture-participation-0' }, revision: 1, key: key('accept') }), 'EU013', 'nor an older participation notice');
+  await rejects(() => member('assignments.accept', { actor: TESTER, id: assignment.id, document: { requirements_revision: 2 }, revision: 1, key: key('accept') }), '22023', 'acceptance names the notice revision');
+  await rejects(() => member('drafts.save', { actor: TESTER, id: assignment.id, document: {}, revision: 0, key: key('draft') }), 'EU013', 'no work before the offer is accepted');
+  // The reproduced dead end: an offered assignment was stranded by a pause. Pause, re-release, accept.
+  await move(ML, 'paused');
+  await rejects(() => member('assignments.accept', { actor: TESTER, id: assignment.id, document: acceptDocument, revision: 1, key: key('accept') }), 'EU011', 'no acceptance while the mission is paused');
+  ML = await move(ML, 'released');
+  assignment = await member('assignments.accept', { actor: TESTER, id: assignment.id, document: acceptDocument, revision: 1, key: key('accept') });
+  eq(Object.keys(assignment).sort(), Object.keys(C.shapeFields('assignment')).sort(), 'the result is exactly the contract assignment');
+  ok(assignment.status === 'accepted' && assignment.revision === 2 && assignment.accepted_requirements_revision === 2 && assignment.accepted_notice_revision === NOTICES.participation.revision && assignment.accepted_at !== null,
+    'accepted after a pause and re-release: what was accepted is recorded exactly');
+  await rejects(() => member('assignments.accept', { actor: TESTER, id: assignment.id, document: acceptDocument, revision: 2, key: key('accept') }), '40001', 'an accepted assignment is not accepted again');
+
+  // D5. The working copy: compare-and-swap, full replace, lenient, never evidence.
+  const draftKey = key('draft');
+  const draft1 = await member('drafts.save', { actor: TESTER, id: assignment.id, document: { title: '', lyrics: 'Half a line\nand another', credits: [{ name: '', role: '' }], media: [U(77)] }, revision: 0, key: draftKey });
+  eq(Object.keys(draft1).sort(), Object.keys(C.shapeFields('draft_saved')).sort(), 'the result is exactly the contract draft_saved (no text)');
+  eq(await member('drafts.save', { actor: TESTER, id: assignment.id, document: { title: '', lyrics: 'Half a line\nand another', credits: [{ name: '', role: '' }], media: [U(77)] }, revision: 0, key: draftKey }), draft1, 'draft replay');
+  await rejects(() => member('drafts.save', { actor: TESTER, id: assignment.id, document: {}, revision: 0, key: key('draft') }), '40001', 'revision 0 when a draft exists is a conflict');
+  await rejects(() => member('drafts.save', { actor: TESTER, id: assignment.id, document: {}, revision: 9, key: key('draft') }), '40001', 'a stale draft revision is a conflict');
+  await rejects(() => member('drafts.save', { actor: TESTER, id: assignment.id, document: { lyrics: 'a\rb' }, revision: 1, key: key('draft') }), '22023', 'a carriage return is refused in a draft too');
+  await rejects(() => member('drafts.save', { actor: TESTER, id: assignment.id, document: { location: 'x' }, revision: 1, key: key('draft') }), '22023', 'a draft is a closed document as well');
+  await rejects(() => member('drafts.save', { actor: TESTER_B, id: assignment.id, document: {}, revision: 1, key: key('draft') }), '42501', 'another participant cannot write this draft');
+  const draft2 = await member('drafts.save', { actor: TESTER, id: assignment.id, document: { lyrics: 'Replaced' }, revision: 1, key: key('draft') });
+  const ownAssignment = (await me(TESTER)).assignments.find((x) => x.id === assignment.id);
+  eq(Object.keys(ownAssignment).sort(), Object.keys(C.shapeFields('own_assignment')).sort(), 'the participant reads the assignment as the contract own_assignment');
+  eq([draft2.revision, ownAssignment.draft.document, ownAssignment.draft.revision, ownAssignment.uploads, ownAssignment.proof, ownAssignment.credit], [2, { lyrics: 'Replaced' }, 2, [], null, null], 'a save replaces the whole working copy, and it is read back');
+  eq(Object.keys(ownAssignment.draft).sort(), Object.keys(C.shapeFields('draft')).sort(), 'as the contract draft');
+
+  // D6. A requirements change returns open assignments to offered and blocks work until the participant accepts again.
+  ML = await owner('missions.update', { actor: OWNER, id: ML.id, document: { capacity: 5 }, revision: ML.revision, key: key('update') });
+  eq((await owner('assignments.list', { actor: OWNER, id: ML.id })).map((x) => [x.status, x.revision]), [['accepted', 2]], 'a capacity change asks nobody to accept again');
+  ML = await owner('missions.update', { actor: OWNER, id: ML.id, document: { title: 'Test fixture: write a song, retitled' }, revision: ML.revision, key: key('update') });
+  const reoffered = (await owner('assignments.list', { actor: OWNER, id: ML.id }))[0];
+  eq([ML.requirements_revision, reoffered.status, reoffered.revision, reoffered.offered_requirements_revision, reoffered.accepted_requirements_revision], [3, 'offered', 3, 3, 2], 'a requirements change returns the accepted assignment to offered at the new revision');
+  await rejects(() => member('drafts.save', { actor: TESTER, id: assignment.id, document: {}, revision: 2, key: key('draft') }), 'EU013', 'the draft is blocked until the new requirements are accepted');
+  await rejects(() => submitProof(TESTER, assignment), 'EU013', 'and so is proof submission');
+  await rejects(() => member('assignments.accept', { actor: TESTER, id: assignment.id, document: acceptDocument, revision: 3, key: key('accept') }), 'EU013', 'accepting the old requirements revision is refused');
+  assignment = await acceptOffer(TESTER, reoffered, ML);
+  ok(assignment.status === 'accepted' && assignment.accepted_requirements_revision === 3 && assignment.revision === 4, 'accepted again, against the current requirements');
+  eq((await admin('select requirements_revision, notice_revision, actor from public.eup_assignment_acceptances where assignment_id = $1 order by accepted_at', [assignment.id])).map((r) => [r.requirements_revision, r.notice_revision, r.actor]),
+    [[2, NOTICES.participation.revision, TESTER], [3, NOTICES.participation.revision, TESTER]], 'the acceptance history has both acceptances');
+
+  // D7. Submitting a proof privately. The accommodation path has equal standing; media proofs follow in section E.
+  await rejects(() => submitProof(TESTER, assignment, words(), 1), '40001', 'the first submission replaces revision 0');
+  await rejects(() => submitProof(TESTER_B, assignment), '42501', 'another participant cannot submit for this assignment');
+  await rejects(() => submitProof(TESTER, { id: U(404) }), 'P0002', 'an unknown assignment is not found');
+  for (const [why, document] of [
+    ['a title is one line', words({ title: 'two\nlines' })], ['a carriage return in the lyrics', words({ lyrics: 'a\r\nb' })], ['a bell character in the lyrics', words({ lyrics: 'a\u0007b' })],
+    ['a DEL character in the lyrics', words({ lyrics: 'a\u007fb' })], ['empty lyrics', words({ lyrics: '' })], ['no credits', words({ credits: [] })], ['no rights attestation', words({ rights: undefined })],
+    ['rights without samples_cleared', words({ rights: { ...RIGHTS, samples_cleared: undefined } })], ['a derivative without permissions', words({ rights: { ...RIGHTS, parody_or_derivative: true } })],
+    ['an unknown attestation version', words({ rights: { ...RIGHTS, version: 'music-rights-v2' } })], ['neither media nor accommodation', words({ accommodation: undefined })],
+    ['both media and accommodation', words({ media: [{ upload_id: U(4), sha256: SHA('a') }] })], ['a precise location', words({ location: 'x' })], ['gps', words({ gps: [1, 2] })],
+    ['a caller-supplied object reference', words({ object_ref: 'anything/at/all.mp3' })], ['the old single mode field', words({ mode: 'lyrics' })], ['a url', words({ url: 'https://example.invalid/x' })],
+    ['another account as participant', words({ participant: REVIEWER })], ['no review notice revision', words({ review_notice_revision: undefined })]
+  ]) await rejects(() => submitProof(TESTER, assignment, JSON.parse(JSON.stringify(document))), '22023', `a proof with ${why} is refused`);
+  await rejects(() => submitProof(TESTER, assignment, words({ review_notice_revision: 'fixture-review-0' })), 'EU015', 'the private review notice named must be the current one');
+  // The reproduced defect: an audio proof was accepted with any object reference. Now media is a sealed upload row or nothing.
+  await rejects(() => submitProof(TESTER, assignment, { ...words({ accommodation: undefined }), media: [{ upload_id: U(4), sha256: SHA('a') }] }), 'EU014', 'media that names no upload of this assignment is refused');
+  eq([await n('eup_proofs'), await n('eup_consents'), await n('eup_proof_revisions')], [0, 0, 0], 'refused submissions wrote nothing');
+  const proofKey = key('proof');
+  let proof = await member('proofs.submit', { actor: TESTER, id: assignment.id, document: words(), revision: 0, key: proofKey });
+  eq(Object.keys(proof).sort(), Object.keys(C.shapeFields('proof_submitted')).sort(), 'the result is exactly the contract proof_submitted (no words)');
+  eq(Object.keys(proof.consent).sort(), Object.keys(C.shapeFields('member_consent')).sort(), 'with the member consent shape');
+  eq([proof.state, proof.revision, proof.publication_state, proof.moderation_state, proof.media], ['submitted', 1, 'private', 'clear', []], 'submitted privately, revision 1, multi-line lyrics accepted');
+  eq([proof.consent.purpose, proof.consent.audience, proof.consent.state, proof.consent.notice_revision, proof.consent.proof_revision, proof.consent.asset_revision, proof.consent.expires_at],
+    ['private_review', 'reviewers', 'open', NOTICES.private_review.revision, 1, proof.asset_revision, null], 'the private-review consent for exactly this revision and digest was written with it');
+  eq([await n('eup_proofs'), await n('eup_proof_revisions'), await n('eup_consents'), await n('eup_proof_media')], [1, 1, 1, 0], 'one proof, one revision, one consent, in one transaction');
+  const manifestOf = (document, uploads = [], requirements = 3) => C.proofManifest({ tenant: OWNER, mission_id: ML.id, assignment_id: assignment.id, requirements_revision: requirements, proof: document, media: uploads });
+  eq(proof.asset_revision, await C.assetRevision(manifestOf(words())), 'asset_revision is the SHA-256 of the contract manifest of what was submitted');
+  eq(await member('proofs.submit', { actor: TESTER, id: assignment.id, document: words(), revision: 0, key: proofKey }), proof, 'exact replay returns the stored result');
+  await rejects(() => submitProof(TESTER, assignment), '40001', 'a second "first" submission under another key is a conflict');
+  const ownProof = (await me(TESTER)).assignments.find((x) => x.id === assignment.id).proof;
+  eq(Object.keys(ownProof).sort(), Object.keys(C.shapeFields('own_proof')).sort(), 'the participant reads the proof as the contract own_proof');
+  eq([ownProof.document.lyrics, ownProof.reviews, ownProof.consents.length, ownProof.publication, ownProof.appeals], [LYRICS, [], 1, null, []], 'with the words exactly as sent');
+  // Resubmitting the same work gives the same digest; any change gives another; the older consent is superseded.
+  proof = await submitProof(TESTER, assignment, words(), 1);
+  const superseded = (await owner('consents.list', { actor: OWNER, id: proof.id })).map((k) => [k.proof_revision, k.state, k.superseded_at !== null]);
+  eq([proof.revision, proof.asset_revision === ownProof.asset_revision, superseded], [2, true, [[1, 'superseded', true], [2, 'open', false]]], 'revision 2 of unchanged work has the same asset_revision; the consent of revision 1 is superseded');
+  proof = await submitProof(TESTER, assignment, words({ lyrics: `${LYRICS}\nOne more line.` }), 2);
+  ok(proof.revision === 3 && proof.asset_revision !== ownProof.asset_revision && proof.asset_revision === await C.assetRevision(manifestOf(words({ lyrics: `${LYRICS}\nOne more line.` }))), 'changed words give a new asset_revision');
+  const ownerProof = (await owner('proofs.list', { actor: OWNER, id: assignment.id }))[0];
+  eq(Object.keys(ownerProof).sort(), Object.keys(C.shapeFields('proof')).sort(), 'the owner reads the proof as the contract proof');
+  eq([ownerProof.revision, ownerProof.state, ownerProof.document.lyrics.endsWith('One more line.'), ownerProof.media, ownerProof.reviews], [3, 'submitted', true, [], []], 'with the current revision document');
+  eq((await owner('proofs.list', { actor: OWNER, document: { state: 'accepted' } })), [], 'the state filter works');
+
+  // D8. Review: bound to the exact proof revision AND asset revision; three decisions; no self-review.
+  await rejects(() => review(proof, {}, REVIEWER, 2), '40001', 'a review of an older proof revision is a conflict');
+  await rejects(() => review(proof, { asset_revision: ownProof.asset_revision }), 'EU014', 'a review that names another asset revision is refused');
+  await rejects(() => review(proof, { rubric: [{ id: 'complete', met: true }] }), '22023', 'the rubric answers every proof criterion');
+  await rejects(() => review(proof, { rubric: [{ id: 'complete', met: true }, { id: 'credited', met: false }] }), '22023', 'a mission pass needs every criterion met');
+  await rejects(() => review(proof, { mission_decision: 'changes' }), '22023', 'anything but three passes needs a reason');
+  await rejects(() => review(proof, { decision: 'accepted' }), '22023', 'there is no separate overall decision to send');
+  await rejects(() => review({ ...proof, id: U(404) }), 'P0002', 'an unknown proof is not found');
+  await rejects(() => owner('proofs.review', { actor: PEER, id: proof.id, document: {}, revision: 3, key: key('review') }), '42501', 'review is an owner action');
+  const reviewKey = key('review');
+  const reviewDocument = { asset_revision: proof.asset_revision, mission_decision: 'changes', rights_decision: 'pass', safety_decision: 'pass', reason: 'Test fixture: add the missing credit.', rubric: [{ id: 'complete', met: true }, { id: 'credited', met: false, note: 'missing' }] };
+  let reviewed = await owner('proofs.review', { actor: REVIEWER, id: proof.id, document: reviewDocument, revision: 3, key: reviewKey });
+  eq(Object.keys(reviewed).sort(), Object.keys(C.shapeFields('proof_reviewed')).sort(), 'the result is exactly the contract proof_reviewed');
+  eq(Object.keys(reviewed.review).sort(), Object.keys(C.shapeFields('review')).sort(), 'with the contract review');
+  eq([reviewed.state, reviewed.reviewed_revision, reviewed.review.decision, reviewed.review.proof_revision, reviewed.review.asset_revision, reviewed.review.reviewer, reviewed.credit],
+    ['needs_changes', 3, 'needs_changes', 3, proof.asset_revision, REVIEWER, null], 'needs_changes: bound to revision 3 and its digest, no credit');
+  await rejects(() => review(proof), '40001', 'a reviewed proof is not awaiting review');
+  const memberReview = (await me(TESTER)).assignments.find((x) => x.id === assignment.id).proof.reviews[0];
+  eq(Object.keys(memberReview).sort(), Object.keys(C.shapeFields('member_review')).sort(), 'the participant reads the review without the reviewer id');
+  ok(memberReview.reason === 'Test fixture: add the missing credit.' && memberReview.decision === 'needs_changes', 'and its reason');
+  proof = await submitProof(TESTER, assignment, words({ credits: [{ name: 'Fixture Person', role: 'writer' }, { name: 'Fixture Singer', role: 'voice' }, { name: 'Fixture Producer', role: 'producer' }] }), 3);
+  ok(proof.revision === 4 && proof.state === 'submitted', 'the participant revises: revision 4');
+  await rejects(() => review({ ...proof, asset_revision: reviewDocument.asset_revision }, {}, REVIEWER, 3), '40001', 'the review of revision 3 cannot be repeated on revision 4');
+  // Self-review: the house owner takes part, a second owner approves; the participant can never review their own proof.
+  const ownerSeat = await enroll(OWNER, ML, REVIEWER);
+  const ownerProofRow = await submitProof(OWNER, ownerSeat);
+  await rejects(() => review(ownerProofRow, {}, OWNER), 'EU002', 'a participant cannot review their own proof');
+  await rejects(() => review(ownerProofRow, { safety_decision: 'fail', reason: 'r' }, OWNER), 'EU002', 'whatever the decision');
+  // A hold stops review (the hold itself is placed by the second pass; the state is planted here).
+  await admin(`update public.eup_proofs set moderation_state = 'held' where id = $1`, [proof.id]);
+  await rejects(() => review(proof), 'EU016', 'a held proof is not reviewed');
+  await rejects(() => owner('proofs.get', { actor: OWNER, id: proof.id, document: { revision: 4, media: true } }), 'EU016', 'and its media is not opened for signing');
+  ok((await owner('proofs.get', { actor: OWNER, id: proof.id, document: { revision: 4 } })).moderation_state === 'held', 'the owner still reads the held proof itself');
+  await admin(`update public.eup_proofs set moderation_state = 'clear' where id = $1`, [proof.id]);
+  await rejects(() => owner('proofs.get', { actor: OWNER, id: proof.id, document: { revision: 3 } }), '40001', 'proofs.get names the current revision');
+  await rejects(() => owner('proofs.get', { actor: OWNER, id: proof.id, document: {} }), '22023', 'and must name one');
+  // Requirements changed after submission: nothing is reviewed until the participant has accepted them. After that
+  // the pending proof stands (the owner's, below, is reviewed without a resubmission) or is submitted again.
+  ML = await owner('missions.update', { actor: OWNER, id: ML.id, document: { acceptance: 'Fixture acceptance, changed after submission.' }, revision: ML.revision, key: key('update') });
+  await rejects(() => review(proof), '40001', 'a proof on an assignment returned to offered is not reviewed');
+  await rejects(() => review(ownerProofRow), '40001', 'for every participant of the mission');
+  assignment = await acceptOffer(TESTER, (await owner('assignments.list', { actor: OWNER, id: ML.id })).find((x) => x.id === assignment.id), ML);
+  await acceptOffer(OWNER, (await owner('assignments.list', { actor: OWNER, id: ML.id })).find((x) => x.id === ownerSeat.id), ML);
+  proof = await submitProof(TESTER, assignment, words(), 4);
+  eq(proof.asset_revision, await C.assetRevision(manifestOf(words(), [], 4)), 'the manifest carries the requirements revision: the same words under new requirements are a new digest');
+  const creditsBefore = await n('eup_mission_credits');
+  const acceptKey = key('review');
+  const acceptDocumentReview = { asset_revision: proof.asset_revision, mission_decision: 'pass', rights_decision: 'pass', safety_decision: 'pass', ...MET };
+  reviewed = await owner('proofs.review', { actor: REVIEWER, id: proof.id, document: acceptDocumentReview, revision: 5, key: acceptKey });
+  eq(Object.keys(reviewed.credit).sort(), Object.keys(C.shapeFields('credit')).sort(), 'acceptance returns the contract credit');
+  eq([reviewed.state, reviewed.review.decision, reviewed.credit.kind, reviewed.credit.participant, reviewed.credit.proof_revision, reviewed.credit.asset_revision, reviewed.credit.review_id, reviewed.credit.mission_id],
+    ['accepted', 'accepted', 'mission_completion', TESTER, 5, proof.asset_revision, reviewed.review.id, ML.id], 'accepted only when mission, rights and safety all pass: one completion credit, bound to the reviewed revision and digest');
+  eq(await owner('proofs.review', { actor: REVIEWER, id: proof.id, document: acceptDocumentReview, revision: 5, key: acceptKey }), reviewed, 'review replay returns the stored result');
+  eq([await n('eup_mission_credits') - creditsBefore, await n('eup_mission_credits', `assignment_id = '${assignment.id}'`)], [1, 1], 'exactly one credit row; the replay did not duplicate it');
+  const completed = (await me(TESTER)).assignments.find((x) => x.id === assignment.id);
+  eq([completed.status, completed.completed_at !== null, completed.credit.id, completed.proof.state], ['completed', true, reviewed.credit.id, 'accepted'], 'the assignment is completed and the participant sees the credit');
+  await rejects(() => review(proof), '40001', 'an accepted proof is not reviewed again');
+  await rejects(() => submitProof(TESTER, assignment, words(), 5), '40001', 'nor replaced');
+  await rejects(() => member('drafts.save', { actor: TESTER, id: assignment.id, document: {}, revision: 2, key: key('draft') }), '40001', 'a completed assignment takes no more work');
+  await rejects(() => member('assignments.withdraw', { actor: TESTER, id: assignment.id, document: {}, key: key('withdraw') }), '40001', 'and is not withdrawn');
+  // Any fail rejects; a rejected proof is final (the appeal path is second pass). This proof was submitted before the
+  // requirements changed and is reviewed after its participant accepted the new ones, without a resubmission.
+  const rejected = await review(ownerProofRow, { safety_decision: 'fail', reason: 'Test fixture: unsafe.' });
+  eq([rejected.state, rejected.credit], ['rejected', null], 'any fail rejects, without a credit');
+  await rejects(() => submitProof(OWNER, ownerSeat, words(), 1), '40001', 'a rejected proof is not resubmitted');
+  // The stored outcome cannot contradict the three decisions: the CHECK is the contract's reviewOutcome.
+  let derived = 0;
+  for (const m of C.ENUMS.DIMENSION_DECISIONS) for (const r of C.ENUMS.DIMENSION_DECISIONS) for (const s of C.ENUMS.DIMENSION_DECISIONS) for (const d of ['accepted', 'needs_changes', 'rejected']) {
+    const outcome = await admin(`insert into public.eup_proof_reviews(tenant, proof_id, proof_revision, asset_revision, reviewer, mission_decision, rights_decision, safety_decision, decision)
+      values ($1, $2, 5, $3, $4, $5, $6, $7, $8) returning id`, [OWNER, proof.id, proof.asset_revision, REVIEWER, m, r, s, d]).then((rows) => rows[0].id, (e) => e.code);
+    const expected = C.reviewOutcome({ mission_decision: m, rights_decision: r, safety_decision: s }) === d;
+    assert.equal(outcome === '23514', !expected, `${m}/${r}/${s} stored as ${d}`);
+    if (expected) { await admin('delete from public.eup_proof_reviews where id = $1', [outcome]); derived += 1; }
+  }
+  eq(derived, 27, 'for all 27 combinations the table admits exactly the derived outcome'); count += 80;
+
+  // D9. Publication consent: exact scope, finite expiry, revocable by id; it publishes nothing and the credit never depends on it.
+  const creditRow = async () => (await admin('select to_jsonb(c) as j from public.eup_mission_credits c where c.assignment_id = $1', [assignment.id]))[0].j;
+  const creditAtAcceptance = await creditRow();
+  ok(creditAtAcceptance.id === reviewed.credit.id && (await owner('consents.list', { actor: OWNER, id: proof.id })).every((k) => k.purpose === 'private_review'), 'the credit exists while no publication consent has ever been given');
+  const grant = (actor, document, revision = 5, id = proof.id) => member('consents.grant', { actor, id, document, revision, key: key('consent') });
+  await rejects(() => grant(REVIEWER, publishConsent(proof)), '42501', 'only the participant grants consent (a house owner cannot)');
+  await rejects(() => grant(OUTSIDER, publishConsent(proof)), 'EU011', 'an account outside the audience gets the audience answer');
+  await rejects(() => grant(TESTER, publishConsent(proof), 5, U(404)), 'P0002', 'an unknown proof is not found');
+  await rejects(() => grant(TESTER, publishConsent(proof), 4), '40001', 'the consent names the current proof revision');
+  for (const [why, document, code] of [
+    ['another asset revision', publishConsent(proof, { asset_revision: SHA('b') }), 'EU015'], ['an older publication notice', publishConsent(proof, { notice_revision: 'fixture-publication-0' }), 'EU015'],
+    ['an expiry in the past', publishConsent(proof, { expires_at: expiry(-1) }), 'EU015'], ['an expiry beyond the bound', publishConsent(proof, { expires_at: expiry(C.LIMITS.consent_max_days + 2) }), 'EU015'],
+    ['no expiry', publishConsent(proof, { expires_at: undefined }), '22023'], ['a malformed expiry', publishConsent(proof, { expires_at: '2027-01-01' }), '22023'],
+    ['an expiry with an offset', publishConsent(proof, { expires_at: '2027-01-01T00:00:00+02:00' }), '22023'], ['audience public', publishConsent(proof, { audience: 'public' }), '22023'],
+    ['audience members', publishConsent(proof, { audience: 'members' }), '22023'], ['audience reviewers', publishConsent(proof, { audience: 'reviewers' }), '22023'],
+    ['purpose private_review', publishConsent(proof, { purpose: 'private_review' }), '22023'], ['a granted flag', publishConsent(proof, { granted: true }), '22023']
+  ]) await rejects(() => grant(TESTER, JSON.parse(JSON.stringify(document))), code, `a consent with ${why} is refused`);
+  // The reproduced defect: consent could be granted before any review. Now only an accepted proof can be consented to.
+  const waiting = await submitProof(TESTER_B, await enroll(TESTER_B, ML, OWNER));
+  await rejects(() => member('consents.grant', { actor: TESTER_B, id: waiting.id, document: publishConsent(waiting), revision: 1, key: key('consent') }), 'EU015', 'no publication consent before the proof is accepted');
+  await rejects(() => member('consents.grant', { actor: OWNER, id: ownerProofRow.id, document: publishConsent(ownerProofRow), revision: 1, key: key('consent') }), 'EU015', 'nor for a rejected proof');
+  await admin(`update public.eup_proofs set moderation_state = 'held' where id = $1`, [proof.id]);
+  await rejects(() => grant(TESTER, publishConsent(proof)), 'EU016', 'no consent while the proof is held');
+  await admin(`update public.eup_proofs set moderation_state = 'clear' where id = $1`, [proof.id]);
+  const consentKey = key('consent');
+  const consentDocument = publishConsent(proof);
+  let consent = await member('consents.grant', { actor: TESTER, id: proof.id, document: consentDocument, revision: 5, key: consentKey });
+  eq(Object.keys(consent).sort(), Object.keys(C.shapeFields('member_consent')).sort(), 'the result is exactly the contract member consent');
+  eq([consent.purpose, consent.audience, consent.state, consent.proof_revision, consent.asset_revision, consent.notice_revision, new Date(consent.expires_at).toISOString().replace('.000Z', 'Z')],
+    ['publish_proof', 'released_audience', 'open', 5, proof.asset_revision, NOTICES.publication.revision, consentDocument.expires_at], 'an open publication consent for exactly this proof revision, digest, notice and expiry');
+  eq(await member('consents.grant', { actor: TESTER, id: proof.id, document: consentDocument, revision: 5, key: consentKey }), consent, 'consent replay');
+  const scope = (await owner('consents.list', { actor: OWNER, id: proof.id })).find((k) => k.id === consent.id);
+  eq(Object.keys(scope).sort(), Object.keys(C.shapeFields('consent')).sort(), 'the owner reads the contract consent');
+  eq([scope.tenant, scope.mission_id, scope.assignment_id, scope.proof_id, scope.actor], [OWNER, ML.id, assignment.id, proof.id, TESTER], 'whose scope names tenant, mission, assignment, proof and actor');
+  await rejects(() => grant(TESTER, publishConsent(proof, { expires_at: expiry(31) })), '23505', 'one open publication consent per proof');
+  eq([(await me(TESTER)).assignments.find((x) => x.id === assignment.id).proof.publication_state, (await owner('proofs.list', { actor: OWNER, id: assignment.id }))[0].publication_state], ['private', 'private'], 'a consent publishes nothing');
+  await rejects(() => member('consents.revoke', { actor: REVIEWER, id: consent.id, document: {}, key: key('revoke') }), '42501', 'only the participant revokes');
+  await rejects(() => member('consents.revoke', { actor: TESTER, id: U(404), document: {}, key: key('revoke') }), 'P0002', 'an unknown consent is not found');
+  await rejects(() => member('consents.revoke', { actor: TESTER, id: proof.consent.id, document: {}, key: key('revoke') }), '22023', 'the private-review consent is not revoked by command');
+  await rejects(() => member('consents.revoke', { actor: TESTER, id: consent.id, document: { reason: 'x' }, key: key('revoke') }), '22023', 'the revocation document is empty');
+  const revokeKey = key('revoke');
+  let gone = await member('consents.revoke', { actor: TESTER, id: consent.id, document: {}, key: revokeKey });
+  eq(Object.keys(gone).sort(), Object.keys(C.shapeFields('consent_revoked')).sort(), 'the result is exactly the contract consent_revoked');
+  eq([gone.state, gone.revoked_at !== null, gone.publication], ['revoked', true, null], 'revoked by id; no publication existed to withdraw');
+  eq(await member('consents.revoke', { actor: TESTER, id: consent.id, document: {}, key: revokeKey }), gone, 'revocation replay');
+  await rejects(() => member('consents.revoke', { actor: TESTER, id: consent.id, document: {}, key: key('revoke') }), '40001', 'a revoked consent is not revoked again');
+  consent = await grant(TESTER, publishConsent(proof));
+  ok(consent.state === 'open', 'after revoking, the participant can consent again');
+  // An expired consent stops counting as open without anyone writing it, and can still be revoked.
+  await admin(`update public.eup_consents set expires_at = now() - interval '1 minute' where id = $1`, [consent.id]);
+  eq((await me(TESTER)).assignments.find((x) => x.id === assignment.id).proof.consents.map((k) => [k.purpose, k.proof_revision, k.state]),
+    [['private_review', 1, 'superseded'], ['private_review', 2, 'superseded'], ['private_review', 3, 'superseded'], ['private_review', 4, 'superseded'], ['private_review', 5, 'open'], ['publish_proof', 5, 'revoked'], ['publish_proof', 5, 'expired']],
+    'the participant reads every consent with its state: each new revision superseded the one before, and expiry is computed at read');
+  await rejects(() => grant(TESTER, publishConsent(proof)), '23505', 'an expired consent is revoked before another is granted');
+  // The reproduced defect: a grant could not be revoked once the proof had a newer revision. Revocation is by consent id.
+  eq(await as('service_role', async () => {
+    await db.exec('begin');
+    await db.query('update public.eup_proofs set revision = revision + 1 where id = $1', [proof.id]);
+    return (await db.query(`select public.${C.RPC.member}('consents.revoke', $1, $2, '{}'::jsonb, null, $3) as r`, [TESTER, consent.id, key('revoke')])).rows[0].r.state;
+  }), 'revoked', 'a consent is revoked by its id even when the proof has moved to a newer revision');
+  gone = await member('consents.revoke', { actor: TESTER, id: consent.id, document: {}, key: key('revoke') });
+  ok(gone.state === 'revoked', 'the expired consent is revoked');
+  eq(await creditRow(), creditAtAcceptance, 'granting, expiring and revoking consent never touched the credit');
+
+  // D10. Reduce-only: a participant can always leave. Own records stay readable whatever happens around them.
+  consent = await grant(TESTER, publishConsent(proof));
+  await owner('audience.grants.revoke', { actor: OWNER, id: L.grant.id, document: { reason: 'Test fixture: tester grant revoked.' }, key: key('revoke') });
+  await rejects(() => grant(TESTER, publishConsent(proof)), 'EU011', 'after the grant is revoked the tester starts nothing new');
+  await rejects(() => tryApply(TESTER, missionB), 'EU011', 'anywhere');
+  const afterRevocation = await me(TESTER);
+  ok(afterRevocation.catalogue.every((c) => c.slug !== 'member-loop') && afterRevocation.assignments.some((x) => x.id === assignment.id && x.credit && x.proof.document.lyrics === LYRICS)
+    && afterRevocation.applications.some((x) => x.id === application.id), 'but still reads every record of their own: application, assignment, proof, credit');
+  gone = await member('consents.revoke', { actor: TESTER, id: consent.id, document: {}, key: key('revoke') });
+  ok(gone.state === 'revoked', 'and can still revoke a consent');
+  const regrant = await owner('audience.grants.grant', { actor: OWNER, id: L.campaign.id, document: { account: TESTER }, key: key('grant') });
+  ok(regrant.state === 'open' && regrant.id !== L.grant.id, 'a new grant can follow a revoked one');
+
+  // Withdrawing an assignment frees the seat, revokes its open consents and keeps the records.
+  const tight = await newMission(L.campaign, 'one-seat', { capacity: 1 });
+  const seatA = await enroll(TESTER, tight, OWNER);
+  const queued = await apply(TESTER_B, tight);
+  await rejects(() => approve(queued, OWNER), 'EU001', 'the one seat is taken');
+  const privateProof = await submitProof(TESTER, seatA);
+  await rejects(() => member('assignments.withdraw', { actor: TESTER_B, id: seatA.id, document: {}, key: key('withdraw') }), '42501', 'another account cannot withdraw this assignment');
+  await rejects(() => member('assignments.withdraw', { actor: TESTER, id: U(404), document: {}, key: key('withdraw') }), 'P0002', 'an unknown assignment is not found');
+  const left = await member('assignments.withdraw', { actor: TESTER, id: seatA.id, document: {}, key: key('withdraw') });
+  eq([left.status, left.withdrawn_at !== null, left.revision], ['withdrawn', true, seatA.revision + 1], 'withdrawn');
+  eq((await owner('consents.list', { actor: OWNER, id: privateProof.id })).map((k) => [k.purpose, k.state, k.revoked_by]), [['private_review', 'revoked', TESTER]], 'its open consent is revoked with it');
+  await rejects(() => member('assignments.withdraw', { actor: TESTER, id: seatA.id, document: {}, key: key('withdraw') }), '40001', 'a withdrawn assignment is not withdrawn again');
+  await rejects(() => review(privateProof, {}, OWNER), '40001', 'its proof is no longer reviewed');
+  await rejects(() => submitProof(TESTER, seatA, words(), 1), '40001', 'and takes no more work');
+  ok((await approve(queued, OWNER)).assignment.status === 'offered' && (await owner('missions.preview', { actor: OWNER, id: tight.id })).seats_taken === 1, 'the freed seat goes to the next approval');
+  ok((await me(TESTER)).assignments.some((x) => x.id === seatA.id && x.status === 'withdrawn' && x.proof.id === privateProof.id), 'the participant still reads the withdrawn assignment and its proof');
+
+  // Mission and campaign withdrawal: the cascade declines open applications, withdraws open assignments, revokes
+  // their consents, and keeps completed assignments and credits.
+  const doomed = await newMission(L.campaign, 'to-be-withdrawn');
+  const openSeat = await enroll(TESTER, doomed, OWNER);
+  const openProof = await submitProof(TESTER, openSeat);
+  const waitingApplication = await apply(TESTER_B, doomed);
+  const draftApplication = await member('applications.save', { actor: OWNER, id: doomed.id, document: { submit: false, requirements_revision: 1 }, revision: 0, key: key('apply') });
+  await move(doomed, 'withdrawn');
+  const afterWithdrawal = await owner('applications.list', { actor: OWNER, id: doomed.id });
+  eq(afterWithdrawal.map((x) => [x.applicant, x.status, x.decision_reason, x.decisions.at(-1).decision, x.decisions.at(-1).reason]).sort(),
+    [[OWNER, 'declined', 'mission_withdrawn', 'declined', 'mission_withdrawn'], [TESTER, 'approved', null, 'approved', null], [TESTER_B, 'declined', 'mission_withdrawn', 'declined', 'mission_withdrawn']].sort(),
+    'a mission withdrawal declines draft and submitted applications, each with a decision row, and leaves the approved one');
+  eq((await owner('assignments.list', { actor: OWNER, id: doomed.id })).map((x) => x.status), ['withdrawn'], 'and withdraws the open assignment');
+  eq((await owner('consents.list', { actor: OWNER, id: openProof.id })).map((k) => [k.state, k.revoked_by]), [['revoked', OWNER]], 'whose consent is revoked by the cascade');
+  await rejects(() => tryApply(TESTER, doomed), 'EU011', 'a withdrawn mission takes no application');
+  await rejects(() => move(doomed, 'released'), '22023', 'and nothing leaves withdrawn');
+  ok([waitingApplication, draftApplication].every((x) => x.id) && (await me(TESTER_B)).applications.some((x) => x.id === waitingApplication.id && x.status === 'declined' && x.decisions[0].reason === 'mission_withdrawn'), 'the applicant reads why');
+  // A campaign pause is effective for its missions without rewriting them; a campaign withdrawal cascades.
+  await moveCampaign(L.campaign, 'paused');
+  ok((await fresh(ML)).state === 'released' && (await owner('missions.preview', { actor: OWNER, id: ML.id })).open === false, 'a campaign pause rewrites no mission, and closes every one of them');
+  await rejects(() => tryApply(REVIEWER, ML), 'EU011', 'no application on a paused campaign, even for a house owner');
+  await rejects(() => grant(TESTER, publishConsent(proof)), 'EU011', 'no new consent on a paused campaign');
+  await rejects(() => owner('applications.create', { actor: OWNER, id: ML.id, document: { applicant: REVIEWER, requirements_revision: ML.requirements_revision, statement: 's' }, key: key('record') }), 'EU011', 'no owner-recorded application either');
+  const waitingB = (await owner('applications.list', { actor: OWNER, id: tight.id })).find((x) => x.applicant === TESTER_B);
+  ok(waitingB.status === 'approved' && (await me(TESTER)).assignments.length > 0, 'own records are readable while the campaign is paused');
+  const pausedSeat = (await owner('assignments.list', { actor: OWNER, id: tight.id })).find((x) => x.participant === TESTER_B);
+  await rejects(() => acceptOffer(TESTER_B, pausedSeat, tight), 'EU011', 'an offer is not accepted while the campaign is paused');
+  await moveCampaign(L.campaign, 'released');
+  ok((await acceptOffer(TESTER_B, pausedSeat, tight)).status === 'accepted', 'and is accepted after the re-release: nothing had to be restored');
+  await moveCampaign(L.campaign, 'withdrawn');
+  eq((await owner('missions.list', { actor: OWNER, id: L.campaign.id })).map((x) => x.state), ['withdrawn', 'withdrawn', 'withdrawn'], 'a campaign withdrawal withdraws every mission');
+  const final = await owner('assignments.list', { actor: OWNER, id: ML.id });
+  eq(final.map((x) => [x.participant, x.status]).sort(), [[OWNER, 'accepted'], [TESTER, 'completed'], [TESTER_B, 'accepted']].map(([who, status]) => [who, status === 'accepted' ? 'withdrawn' : status]).sort(), 'open assignments are withdrawn, the completed one stays');
+  eq(await creditRow(), creditAtAcceptance, 'and its credit is untouched by pause, withdrawal and cascade');
+  const afterCampaign = await me(TESTER);
+  ok(afterCampaign.assignments.find((x) => x.id === assignment.id).credit.id === reviewed.credit.id && afterCampaign.catalogue.every((c) => c.slug !== 'member-loop'), 'the participant still reads the completed work of a withdrawn campaign');
+  await rejects(() => owner('missions.create', { actor: OWNER, id: L.campaign.id, document: { ...SONG, slug: 'too-late' }, key: key('mission') }), '40001', 'a withdrawn campaign takes no new mission');
+
+  // D11. Member receipts: per actor and per surface; a result (and so a receipt) never carries member-written text.
+  const memberReceipt = await member('receipts.get', { actor: TESTER, document: { operation: 'proofs.submit', key: proofKey } });
+  eq([memberReceipt.surface, memberReceipt.operation, memberReceipt.result.id, memberReceipt.result.revision], ['member', 'proofs.submit', ownProof.id, 1], 'the participant reads the receipt of their own submission');
+  await rejects(() => member('receipts.get', { actor: TESTER_B, document: { operation: 'proofs.submit', key: proofKey } }), 'P0002', 'the same key under another account returns nothing');
+  await rejects(() => owner('receipts.get', { actor: OWNER, document: { operation: 'proofs.submit', key: proofKey } }), 'P0002', 'the owner route does not read member receipts');
+  await rejects(() => member('receipts.get', { actor: REVIEWER, document: { operation: 'applications.decide', key: decideKey } }), 'P0002', 'and the member route does not read owner receipts, which carry other accounts');
+  await rejects(() => member('receipts.get', { actor: TESTER, document: { operation: 'proofs.submit' } }), '22023', 'a receipt read names operation and key');
+  eq(await n('eup_command_receipts', `result::text ~ 'Verse one|Half a|why I apply|cannot record|accommodation request|say a little more.*statement|Replaced'`), 0, 'no stored result holds lyrics, a statement, a draft or an accommodation note');
+  const memberResults = (await admin(`select result from public.eup_command_receipts where surface = 'member'`)).map((r) => JSON.stringify(r.result));
+  ok(memberResults.length > 30 && memberResults.every((r) => !C.FOREIGN_ID_FIELDS.some((f) => r.includes(`"${f}"`))), 'no member result names another account in any of the contract foreign id fields');
+  const failures = await n('eup_command_receipts');
+  await rejects(() => member('applications.save', { actor: TESTER, id: missionB.id, document: draftDocument, revision: 0, key: key('apply') }), 'EU011', 'a refused member command');
+  eq(await n('eup_command_receipts'), failures, 'leaves no receipt');
+  // The key lock, for the member function.
+  const memberLock = await tx(async (t) => {
+    await t.query(`select public.${C.RPC.member}('applications.save', $1, $2, $3::jsonb, 0, $4)`, [TESTER_B, missionB.id, JSON.stringify(draftDocument), key('lock')]);
+    return (await t.query(`select mode, granted, objsubid::int as sub from pg_locks where locktype = 'advisory' order by objsubid`)).rows;
+  });
+  eq(memberLock, [{ mode: 'ExclusiveLock', granted: true, sub: 1 }, { mode: 'ShareLock', granted: true, sub: 2 }], 'a member mutation holds the receipt key lock and the module lock to the end of its transaction');
+
+  // D12. The five gates of a member mutation, each alone, each with its own code, and their order.
+  // The probe passes every gate and is then refused for its stale revision (40001): a gate that answers shows its own code.
+  await owner('audience.grants.grant', { actor: OWNER, id: campaignB.id, document: { account: TESTER }, key: key('grant') });
+  const draftB = (await me(TESTER_B)).applications.find((x) => x.mission_id === missionB.id);
+  const seatB = (await approve(await apply(TESTER_B, missionB, {}, draftB.revision), OWNER)).assignment;
+  const acceptB = { requirements_revision: 1, notice_revision: NOTICES.participation.revision };
+  const probe = (actor = TESTER_B, id = seatB.id, document = acceptB) => member('assignments.accept', { actor, id, document, revision: 999, key: key('probe') });
+  const open = () => rejects(() => probe(), '40001', 'every gate is open again: the stale revision answers');
+  await rejects(() => probe(), '40001', 'baseline: every gate passes and the stale revision answers');
+  // 1. module state (from the module guard)
+  for (const state of ['draining', 'disabled']) await inState(state, () => rejects(() => probe(), GUARD_CODE[state], `module ${state}, alone: ${GUARD_CODE[state]}`));
+  await open();
+  // 2. readiness: a missing or invalid League policy fails closed (the missing row is proven in section F)
+  const storedPolicy = (await admin('select document from public.eup_league_policy'))[0].document;
+  await admin(`update public.eup_league_policy set document = '{"entitlement":"none_required"}'::jsonb`);
+  const invalid = await owner('policy.get', { actor: OWNER });
+  ok(invalid.valid === false && invalid.revision === 3 && (await me(TESTER_B)).policy === null && (await owner('overview', { actor: OWNER })).policy.valid === false, 'a malformed stored policy is reported invalid to owner and member');
+  await rejects(() => probe(), 'EU010', 'readiness, alone: EU010');
+  await rejects(() => probe(TESTER), '42501', 'order: the row is the actor\'s (42501) before readiness');
+  await admin(`update public.eup_league_policy set document = '{"entitlement":"not_decided"}'::jsonb`);
+  await rejects(() => probe(), 'EU010', 'order: readiness before entitlement (an invalid policy is EU010 whatever it says about entitlement)');
+  await admin('update public.eup_league_policy set document = $1::jsonb', [JSON.stringify(storedPolicy)]);
+  await open();
+  // 3. entitlement: the policy must say none_required explicitly
+  let leaguePolicy = await owner('policy.set', { actor: OWNER, document: { policy: { ...LEAGUE_POLICY, entitlement: 'not_decided' }, reason: 'Test fixture: entitlement undecided.' }, revision: 3, key: key('policy') });
+  await rejects(() => probe(), 'EU012', 'entitlement, alone: EU012 from a VALID policy');
+  eq((await me(TESTER_B)).policy.entitlement, 'not_decided', 'the member reads the rule that stops them');
+  leaguePolicy = await owner('policy.set', { actor: OWNER, document: { policy: LEAGUE_POLICY, reason: 'Test fixture: none_required again.' }, revision: leaguePolicy.revision, key: key('policy') });
+  await open();
+  // 4. released audience: campaign released AND mission released AND (house owner OR open grant on an invited campaign)
+  await moveCampaign(campaignB, 'paused');
+  await rejects(() => probe(), 'EU011', 'audience, alone: the campaign is paused');
+  await moveCampaign(campaignB, 'released');
+  await move(missionB, 'paused');
+  await rejects(() => probe(), 'EU011', 'audience, alone: the mission is paused');
+  await move(missionB, 'released');
+  const grantB = (await owner('audience.grants.list', { actor: OWNER, id: campaignB.id })).find((g) => g.account === TESTER_B && g.state === 'open');
+  await owner('audience.grants.revoke', { actor: OWNER, id: grantB.id, document: {}, key: key('revoke') });
+  await rejects(() => probe(), 'EU011', 'audience, alone: the grant is revoked');
+  await owner('audience.grants.grant', { actor: OWNER, id: campaignB.id, document: { account: TESTER_B }, key: key('grant') });
+  await owner('campaigns.audience.set', { actor: OWNER, id: campaignB.id, document: { audience: 'admin_preview' }, revision: (await freshCampaign(campaignB)).revision, key: key('audience') });
+  await rejects(() => probe(), 'EU011', 'audience, alone: the campaign is narrowed back to admin_preview, so the grant has no effect');
+  await owner('campaigns.audience.set', { actor: OWNER, id: campaignB.id, document: { audience: 'invited' }, revision: (await freshCampaign(campaignB)).revision, key: key('audience') });
+  await open();
+  // 5. authorization: the row is the actor's
+  await rejects(() => probe(TESTER), '42501', 'authorization, alone: another account in the same audience');
+  await rejects(() => probe(REVIEWER), '42501', 'authorization, alone: a house owner is not the participant');
+  // Order: first failure wins.
+  await rejects(() => probe(OUTSIDER, U(404)), 'P0002', 'order: the row is looked up before the audience');
+  await rejects(() => probe(OUTSIDER), 'EU011', 'order: audience before "not yours"');
+  await rejects(() => probe(OUTSIDER, seatB.id, { nonsense: true }), 'EU011', 'order: the audience answers before the document is read');
+  await rejects(() => probe(TESTER, seatB.id, { nonsense: true }), '42501', 'order: and so does "not yours"');
+  await rejects(() => probe(TESTER_B, seatB.id, { nonsense: true }), '22023', 'order: the document before the revision');
+  await rejects(() => probe(TESTER_B, seatB.id, { ...acceptB, requirements_revision: 9 }), '40001', 'order: revision and state before the action\'s own rules');
+  await inState('disabled', () => rejects(() => probe(OUTSIDER, U(404)), 'EUM03', 'order: the module state answers before anything about the row'));
+  await inState('disabled', () => rejects(() => member('assignments.accept', { actor: UNKNOWN, id: seatB.id, document: acceptB, revision: 1, key: key('probe') }), '42501', 'order: the actor before the module state'));
+
+  // D13. Module state for members: own records and exact replays answer in every state; reduce-only actions are
+  // admitted while draining and disabled; every other member mutation is refused with the guard's code.
+  const b2 = await newMission(campaignB, 'second-song');
+  const b3 = await newMission(campaignB, 'third-song');
+  const seatsB = [await acceptOffer(TESTER_B, seatB, missionB), await enroll(TESTER, missionB, OWNER)];
+  const fixtures = {};
+  for (const [i, [state, actor]] of [['draining', TESTER_B], ['disabled', TESTER]].entries()) {
+    const accepted = await submitProof(actor, seatsB[i]);
+    await review(accepted, {}, OWNER);
+    fixtures[state] = { actor, accepted, consent: await member('consents.grant', { actor, id: accepted.id, document: publishConsent(accepted), revision: 1, key: key('consent') }),
+      application: await apply(actor, b3), seat: await enroll(actor, b2, OWNER) };
+  }
+  const firstSubmission = memberReceipt.result;
+  for (const state of ['draining', 'disabled']) {
+    await inState(state, async () => {
+      const refused = GUARD_CODE[state];
+      const f = fixtures[state];
+      const view = await me(f.actor);
+      ok(view.assignments.length >= 2 && view.applications.length >= 2 && view.catalogue.length >= 1 && view.assignments.some((x) => x.credit), `${state}: the participant reads catalogue, applications, assignments, proofs and credits`);
+      ok((await member('receipts.get', { actor: TESTER, document: { operation: 'proofs.submit', key: proofKey } })).result.id === ownProof.id, `${state}: and their receipts`);
+      eq(await member('proofs.submit', { actor: TESTER, id: assignment.id, document: words(), revision: 0, key: proofKey }), firstSubmission, `${state}: an exact replay answers with the stored result`);
+      await rejects(() => member('proofs.submit', { actor: TESTER, id: assignment.id, document: words({ title: 'Other' }), revision: 0, key: proofKey }), 'EU003', `${state}: a changed replay is a conflict, not a guard refusal`);
+      for (const [action, args] of [
+        ['applications.save', { id: b3.id, document: { submit: true, requirements_revision: 1, statement: 's' }, revision: f.application.revision }],
+        ['assignments.accept', { id: f.seat.id, document: acceptB, revision: f.seat.revision }],
+        ['drafts.save', { id: f.seat.id, document: { lyrics: 'x' }, revision: 0 }],
+        ['proofs.submit', { id: f.seat.id, document: words(), revision: 0 }],
+        ['consents.grant', { id: f.accepted.id, document: publishConsent(f.accepted), revision: 1 }]
+      ]) await rejects(() => member(action, { actor: f.actor, key: key('blocked'), ...args }), refused, `${state}: ${action} is refused ${refused}`);
+      eq((await member('applications.withdraw', { actor: f.actor, id: f.application.id, document: {}, key: key('withdraw') })).status, 'withdrawn', `${state}: an application withdrawal is admitted`);
+      eq((await member('assignments.withdraw', { actor: f.actor, id: f.seat.id, document: {}, key: key('withdraw') })).status, 'withdrawn', `${state}: an assignment withdrawal is admitted`);
+      eq((await member('consents.revoke', { actor: f.actor, id: f.consent.id, document: {}, key: key('revoke') })).state, 'revoked', `${state}: a consent revocation is admitted`);
+      await rejects(() => member('consents.revoke', { actor: f.actor === TESTER ? TESTER_B : TESTER, id: f.consent.id, document: {}, key: key('revoke') }), '42501', `${state}: reduce-only still means the actor's own row only`);
+      await rejects(() => as('service_role', () => db.query(`update public.eup_consents set revoked_at = null, revoked_by = null where id = $1`, [f.consent.id])), refused, `${state}: a direct table write cannot undo it`);
+    });
+  }
+  eq(await moduleState(), 'enabled', 'the module is enabled again');
+
+  // An account with records but no audience left still reads them; only "no audience AND no record" is not available.
+  await owner('audience.grants.revoke', { actor: OWNER, id: peerGrant.id, document: {}, key: key('revoke') });
+  const peerView = await me(PEER);
+  eq([peerView.catalogue, peerView.applications.map((x) => [x.status, x.decisions[0].reason]), peerView.assignments], [[], [['declined', 'Test fixture: not this time.']], []], 'an account whose only grant is revoked reads its own declined application and the reason');
+  await rejects(() => me(OUTSIDER), 'EU011', 'an account with no audience and no record still has no League');
+
+  /* ================================================================== F. not installed, and no League policy */
+  const bare = await createLeagueDatabase({ enable: false });
+  try {
+    await rejects(() => readModulePolicy(bare.db, 'league'), 'EUM01', 'a fresh database has no League module row');
+    eq(await bare.owner('campaigns.list', { actor: OWNER }), [], 'not installed: owner reads answer');
+    ok((await bare.owner('policy.get', { actor: OWNER })).revision === 0 && (await bare.owner('overview', { actor: OWNER })).policy.present === false, 'not installed: the policy read says there is none');
+    await rejects(() => bare.owner('campaigns.create', { actor: OWNER, document: CAMPAIGN, key: key('campaign') }), 'EUM01', 'not installed: an owner mutation is refused EUM01');
+    await rejects(() => bare.owner('campaigns.transition', { actor: OWNER, id: U(1), document: { to: 'paused' }, revision: 1, key: key('transition') }), 'EUM01', 'not installed: even a reduce-only one');
+    await rejects(() => bare.member('applications.save', { actor: TESTER, id: U(1), document: draftDocument, revision: 0, key: key('apply') }), 'EUM01', 'not installed: a member mutation is refused EUM01');
+    await rejects(() => bare.member('applications.withdraw', { actor: TESTER, id: U(1), document: {}, key: key('withdraw') }), 'EUM01', 'not installed: and a member reduce-only one');
+    await rejects(() => bare.member('me.get', { actor: TESTER }), 'EU011', 'not installed: the member read answers (nothing is released to anyone)');
+    await rejects(() => bare.admin(`insert into public.eup_campaigns(tenant, slug, title, document, created_by) values ($1, 'direct', 't', '{}', $1)`, [OWNER]), 'EUM01', 'not installed: a direct table write is refused by the trigger');
+    eq((await bare.admin('select count(*)::int as n from public.eup_command_receipts'))[0].n, 0, 'not installed: nothing was written');
+    await enableModule(bare.db, 'league', OWNER);
+    const seeded = await seedSongMission(bare, { invite: TESTER, policy: null });
+    ok(seeded.policy.revision === 0 && seeded.mission.state === 'released', 'enabled, with a released mission and NO League policy row');
+    await rejects(() => bare.member('applications.save', { actor: TESTER, id: seeded.mission.id, document: draftDocument, revision: 0, key: key('apply') }), 'EU010', 'no policy row: a member mutation fails closed EU010');
+    await rejects(() => bare.member('applications.save', { actor: OWNER, id: seeded.mission.id, document: draftDocument, revision: 0, key: key('apply') }), 'EU010', 'for a house owner as well');
+    const noPolicy = await bare.member('me.get', { actor: TESTER });
+    eq([noPolicy.policy, noPolicy.catalogue.length], [null, 1], 'the member read answers with policy null: every gated mutation would answer EU010');
+    // Owner work does not need the League policy: an owner-recorded application and its decision.
+    const recordedBare = await bare.owner('applications.create', { actor: OWNER, id: seeded.mission.id, document: { applicant: TESTER, requirements_revision: 1, statement: 's' }, key: key('record') });
+    const offeredBare = (await bare.owner('applications.decide', { actor: OWNER, id: recordedBare.id, document: { decision: 'approved' }, revision: 1, key: key('decide') })).assignment;
+    await rejects(() => bare.member('assignments.accept', { actor: TESTER, id: offeredBare.id, document: { requirements_revision: 1, notice_revision: 'x' }, revision: 1, key: key('accept') }), 'EU010', 'no policy row: the offer cannot be accepted');
+    eq((await bare.member('applications.withdraw', { actor: TESTER, id: recordedBare.id, document: {}, key: key('withdraw') }).catch((e) => e.code)), '40001', 'no policy row: a reduce-only action is not stopped by readiness (it reaches its own state check)');
+    eq((await bare.member('assignments.withdraw', { actor: TESTER, id: offeredBare.id, document: {}, key: key('withdraw') })).status, 'withdrawn', 'no policy row: the participant can still withdraw');
+    await bare.owner('policy.set', { actor: OWNER, document: { policy: LEAGUE_POLICY, reason: 'Test fixture: first policy.' }, revision: 0, key: key('policy') });
+    ok((await bare.member('applications.save', { actor: OWNER, id: seeded.mission.id, document: draftDocument, revision: 0, key: key('apply') })).status === 'draft', 'with a valid policy the same member mutation succeeds');
+  } finally { await bare.close(); }
+
+  await decoysEmpty('at the end');
+
+
   console.log(`${count} league assertions passed.`);
 } finally { await league.close(); }
