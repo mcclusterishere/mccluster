@@ -371,13 +371,21 @@ function nativeSources() {
    any refusal, and Auth being down, with the same 401 (authUser in
    workers/mccluster/src/platform-api.js). PostgREST checks the token itself,
    statelessly, and refuses an expired one before any SQL runs (401
-   PGRST303). Each request records its method, path and the status it got. */
+   PGRST303). Each request records its method, path and the status it got.
+
+   Tokens belong to the member they were issued to: Jane, or whoever signs in.
+   hold(path) keeps the next request to that path in flight until the
+   function it returns is called; the server sees it then. */
 function authServer({ lifetime = 3600 } = {}) {
   const clock = { now: 1_800_000_000 };
-  const expiry = new Map(), unspent = new Set(), ended = new Set(), requests = [], outage = new Map();
-  const user = { id: '723e4567-e89b-42d3-a456-426614174777', email: 'jane@example.com' };
+  const expiry = new Map(), unspent = new Set(), ended = new Set(), requests = [], outage = new Map(), holds = new Map();
+  const people = new Map([
+    ['jane@example.com', { id: '723e4567-e89b-42d3-a456-426614174777', email: 'jane@example.com' }],
+    ['sam@example.com', { id: '5f0c2b1e-8d3a-4c6e-9b7a-1e2d3c4b5a69', email: 'sam@example.com' }],
+  ]);
+  const holder = new Map(); /* access or refresh token -> the member it was issued to */
   let issued = 0;
-  const issue = () => {
+  const issue = (user = people.get('jane@example.com')) => {
     issued += 1;
     const session = {
       access_token: `access-${issued}`, token_type: 'bearer', expires_in: lifetime,
@@ -385,11 +393,17 @@ function authServer({ lifetime = 3600 } = {}) {
     };
     expiry.set(session.access_token, session.expires_at);
     unspent.add(session.refresh_token);
+    holder.set(session.access_token, user).set(session.refresh_token, user);
     return session;
   };
   const reply = (status, body) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
   async function fetch(url, init = {}) {
     const { host, pathname, searchParams } = new URL(String(url));
+    const held = holds.get(pathname);
+    if (held) {
+      holds.delete(pathname);
+      await held;
+    }
     const grant = searchParams.get('grant_type');
     const route = host === 'api.mccluster.org' ? 'api'
       : pathname.startsWith('/rest/v1/') ? 'rest'
@@ -409,15 +423,19 @@ function authServer({ lifetime = 3600 } = {}) {
     switch (route) {
       case 'token:password':
       case 'signup':
-        return reply(200, issue());
-      case 'token:refresh_token':
-        return unspent.delete(JSON.parse(init.body).refresh_token)
-          ? reply(200, issue())
+        return reply(200, issue(people.get(JSON.parse(init.body).email)));
+      case 'token:refresh_token': {
+        const spent = JSON.parse(init.body).refresh_token;
+        return unspent.delete(spent)
+          ? reply(200, issue(holder.get(spent)))
           : reply(400, { code: 400, error_code: 'refresh_token_not_found', msg: 'Invalid Refresh Token: Refresh Token Not Found' });
+      }
+      case 'logout':
+        return new Response(null, { status: 204 });
       case 'user':
         if (expired) return reply(403, { code: 403, error_code: 'bad_jwt', msg: 'invalid JWT: unable to parse or verify signature, token has invalid claims: token is expired' });
         if (ended.has(token)) return reply(403, { code: 403, error_code: 'session_not_found', msg: 'Session from session_id claim in JWT does not exist' });
-        return reply(200, user);
+        return reply(200, holder.get(token));
       case 'api':
         return expired || ended.has(token) || outage.has('user')
           ? reply(401, { error: 'Authentication required' })
@@ -434,7 +452,12 @@ function authServer({ lifetime = 3600 } = {}) {
     unspent.clear();
     for (const token of expiry.keys()) ended.add(token);
   };
-  return { clock, fetch, issue, endSessions, outage, requests, refreshes: () => requests.filter((r) => r.route === 'token:refresh_token').length };
+  const hold = (path) => {
+    let release;
+    holds.set(path, new Promise((resolve) => { release = resolve; }));
+    return () => release();
+  };
+  return { clock, fetch, issue, endSessions, hold, outage, requests, refreshes: () => requests.filter((r) => r.route === 'token:refresh_token').length };
 }
 
 /* Opens the app on a phone `skew` seconds off the server's clock, with
@@ -746,4 +769,39 @@ test('a 401 its token is not the cause of reaches the caller as it came: nothing
   const before = auth.requests.length;
   await assert.rejects(app.api('/v1/mnet/feed'), /Sign in first/);
   assert.equal(auth.requests.length, before, 'nothing sent');
+});
+
+test('a call refused while its session changed goes again for the same member, and never under another account', { timeout: 10_000 }, async () => {
+  const auth = authServer();
+  const app = await launchPhone(auth, { skew: 0 });
+  await app.signIn('jane@example.com', 'correct horse battery staple');
+  const setBack = () => { app.phone.skew -= 7200; auth.clock.now += 3600 + 600; };
+  const posts = () => auth.requests.filter((r) => r.path === '/v1/mnet/posts').map((r) => [r.token, r.status]);
+
+  /* A slow post goes out on a token the server has expired. Meanwhile another
+     call is refused, put to Auth and refreshed. When the post's 401 arrives,
+     the session has already been renewed for the same member: the post goes
+     again on the new token, with no second Auth read and no second refresh. */
+  setBack();
+  let release = auth.hold('/v1/mnet/posts');
+  const slow = app.api('/v1/mnet/posts', { method: 'POST', body: { body: 'hello' } });
+  assert.equal((await app.api('/v1/mnet/feed')).ok, true);
+  release();
+  assert.equal((await slow).ok, true);
+  assert.deepEqual(posts(), [['access-1', 401], ['access-2', 200]]);
+  assert.deepEqual(auth.requests.filter((r) => r.route === 'user' || r.route === 'token:refresh_token').map((r) => r.route),
+    ['user', 'token:refresh_token'], 'one Auth read and one refresh, both the feed call’s');
+
+  /* Again, but meanwhile Jane signs out and Sam signs in: Jane's post is not
+     sent again under Sam's account. */
+  setBack();
+  release = auth.hold('/v1/mnet/posts');
+  const stranded = app.api('/v1/mnet/posts', { method: 'POST', body: { body: 'hello again' } });
+  await app.signOut();
+  await app.signIn('sam@example.com', 'another horse battery staple');
+  release();
+  await assert.rejects(stranded, (error) => error.code === 'session_changed');
+  assert.deepEqual(posts().slice(2), [['access-2', 401]], 'sent once, on Jane’s token, and not again');
+  assert.equal((await app.api('/v1/mnet/feed')).ok, true, 'and Sam is signed in, on Sam’s own token');
+  assert.equal(auth.requests.at(-1).token, 'access-3');
 });
