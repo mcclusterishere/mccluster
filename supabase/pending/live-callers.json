@@ -169,10 +169,17 @@
       ],
       "pending": "20261009220000_at_night_adult_verification.sql"
     },
-    "bind_creator_checkout": {
+    "audit_creator_checkout_recovery": {
       "kind": "function",
       "callers": [
         "workers/mccluster/src/creator-billing.js"
+      ],
+      "pending": "20261026009200_creator_checkout_reservations.sql"
+    },
+    "bind_creator_checkout": {
+      "kind": "function",
+      "callers": [
+        "workers/mccluster/src/creator-checkout-recovery.js"
       ],
       "pending": "20261026009200_creator_checkout_reservations.sql"
     },
@@ -246,6 +253,13 @@
         "workers/mccluster/src/domains/cloudflare-registration-store.js"
       ],
       "pending": "creator_cf_registration_attempts_v1.sql"
+    },
+    "creator_checkout_attempts": {
+      "kind": "table",
+      "callers": [
+        "workers/mccluster/src/creator-billing.js"
+      ],
+      "pending": "20261026009200_creator_checkout_reservations.sql"
     },
     "creator_checkout_reservations": {
       "kind": "table",
@@ -545,6 +559,13 @@
       ],
       "pending": "managed_projects_v1.sql"
     },
+    "mark_creator_checkout_outcome": {
+      "kind": "function",
+      "callers": [
+        "workers/mccluster/src/creator-checkout-recovery.js"
+      ],
+      "pending": "20261026009200_creator_checkout_reservations.sql"
+    },
     "mcc_music_research_cancel": {
       "kind": "function",
       "callers": [
@@ -600,6 +621,20 @@
       ],
       "pending": "gated_track_mission_identity_v1.sql"
     },
+    "music_my_artists": {
+      "kind": "function",
+      "pending": "music_label_artists_v1.sql",
+      "callers": [
+        "js/control-room/music-label.js"
+      ]
+    },
+    "music_stem_sets": {
+      "kind": "table",
+      "pending": "20261031190000_music_stem_sets_v1.sql",
+      "callers": [
+        "supabase/functions/music-access/index.ts"
+      ]
+    },
     "music_workspace_action": {
       "kind": "function",
       "callers": [
@@ -634,20 +669,6 @@
         "workers/mccluster/src/music-workspace-research.js"
       ],
       "pending": "music_workspace_research_state.sql"
-    },
-    "music_my_artists": {
-      "kind": "function",
-      "pending": "music_label_artists_v1.sql",
-      "callers": [
-        "js/control-room/music-label.js"
-      ]
-    },
-    "music_stem_sets": {
-      "kind": "table",
-      "pending": "20261031190000_music_stem_sets_v1.sql",
-      "callers": [
-        "supabase/functions/music-access/index.ts"
-      ]
     },
     "network_audio_assign_speaker": {
       "kind": "function",
@@ -823,7 +844,7 @@
     "release_expired_creator_checkout": {
       "kind": "function",
       "callers": [
-        "workers/mccluster/src/creator-billing.js"
+        "workers/mccluster/src/creator-checkout-recovery.js"
       ],
       "pending": "20261026009200_creator_checkout_reservations.sql"
     },
