@@ -1,5 +1,6 @@
 import { recordEvent } from '../lib/observability.js';
 import { credentialRefForConfiguredChannel, parseSocialCredentialRef } from './security.js';
+import { safeObjectPath } from '../lib/storage-object-path.js';
 
 function headers(env) {
   return {
@@ -110,9 +111,25 @@ async function signOutboxUrl(env, storagePath) {
   return String(signed).startsWith('http') ? signed : `${env.SUPABASE_URL}/storage/v1${signed}`;
 }
 
+/* A job's storage_path is a value on a row. An upload is issued only as
+   <the organization's id>/<uuid>.<ext> (./router.js, createUpload) and a job is
+   accepted only with a path under its own organization's folder; the publisher
+   holds the row to the same two things before it signs: a plain object path
+   (../lib/storage-object-path.js), inside the job's own organization's folder.
+   Returns the path, or null when the row does not name such an upload. */
+export function outboxPathFor(job) {
+  const path = job?.payload?.storage_path;
+  const org = job?.org_id;
+  return safeObjectPath(path) && typeof org === 'string' && org !== '' && path.startsWith(`${org}/`) ? path : null;
+}
+
 async function resolveVideoUrl(env, job) {
   if (job.payload?.video_url) return job.payload.video_url;
-  if (job.payload?.storage_path) return signOutboxUrl(env, job.payload.storage_path);
+  if (job.payload?.storage_path) {
+    const path = outboxPathFor(job);
+    if (!path) throw new Error('Publish job storage_path is not in its organization\'s outbox');
+    return signOutboxUrl(env, path);
+  }
   if (!job.payload?.video_asset_id) return null;
   const rows = await db(env, `media_assets?id=eq.${encodeURIComponent(job.payload.video_asset_id)}&org_id=eq.${encodeURIComponent(job.org_id)}&select=url&limit=1`);
   return rows?.[0]?.url || null;

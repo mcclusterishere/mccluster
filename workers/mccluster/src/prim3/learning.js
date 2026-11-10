@@ -534,9 +534,22 @@ async function reviewCredential(request, env, user, id) {
   return { ok: true, credential: updated?.[0] || null };
 }
 
+/* Where a certificate lives: <the learner's auth user id>/<file id>.<pdf|png|jpg|webp>,
+   the only path uploadUrl issues. That shape, and the first segment being the
+   row's own user_id, are the table's CHECKs on certificate_path
+   (supabase/migrations/20261103182544_learning_evidence_v1.sql). The reviewer's
+   link places the row's path in a URL, so the same two checks are repeated here
+   and what is signed never rests on the constraints alone. */
+const CERTIFICATE_PATH = /^([0-9a-f-]{36})\/[0-9a-f-]{36}\.(?:pdf|png|jpg|webp)$/;
+export function certificatePathOf(row) {
+  const path = row?.certificate_path;
+  const shape = typeof path === 'string' ? CERTIFICATE_PATH.exec(path) : null;
+  return shape && typeof row.user_id === 'string' && shape[1] === row.user_id ? path : null;
+}
+
 async function credentialFile(env, id) {
-  const rows = await db(env, `learning_external_credentials?id=eq.${q(uuid(id, 'credential id'))}&select=certificate_path&limit=1`);
-  const path = rows?.[0]?.certificate_path;
+  const rows = await db(env, `learning_external_credentials?id=eq.${q(uuid(id, 'credential id'))}&select=user_id,certificate_path&limit=1`);
+  const path = certificatePathOf(rows?.[0]);
   if (!path) throw bad('No file on this credential', 404);
   const res = await fetch(`${env.SUPABASE_URL}/storage/v1/object/sign/${CREDENTIAL_BUCKET}/${path}`, {
     method: 'POST', headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`, 'content-type': 'application/json' },

@@ -348,7 +348,7 @@ test('before the revision column exists, the write is still held to the master t
     rest: async (path, init = {}) => {
       paths.push(path);
       if (!init.method && path.includes('lyrics_input_rev')) throw new Error('column creator_tracks.lyrics_input_rev does not exist');
-      return init.method ? { body: [{ id }] } : { body: [{ id, title: 'Up', master_bucket: 'b', master_path: 'u/1 song.mp3', lyrics: null }] };
+      return init.method ? { body: [{ id }] } : { body: [{ id, title: 'Up', master_bucket: 'creator-masters', master_path: 'u/1 song.mp3', lyrics: null }] };
     },
     download: async () => {},
     transcribe: async () => ({ doc: buildLyrics({ asr: ASR, duration: 14, generatedAt: 'fixed' }) }),

@@ -121,7 +121,7 @@ test('stems_separate: an upload separates its master and keys stems by ct-<id>',
 
 test('lyrics_align keeps the stems its separation made, and a stems failure never sinks the lyrics', async () => {
   const id = '123e4567-e89b-42d3-a456-426614174000';
-  const rest = async (path, init = {}) => (init.method ? { body: [{ id }] } : { body: [{ id, title: 'Up', master_bucket: 'b', master_path: 'p.mp3', lyrics: null, lyrics_sheet: '' }] });
+  const rest = async (path, init = {}) => (init.method ? { body: [{ id }] } : { body: [{ id, title: 'Up', master_bucket: 'creator-masters', master_path: 'p.mp3', lyrics: null, lyrics_sheet: '' }] });
   const doc = { source: 'auto', reviewed: false, timed: { line: [] }, machine: {} };
   let stored = null;
   const ok = await lyricsAlign({ input: { track_id: id } }, { rest, download: async () => {}, transcribe: async () => ({ doc: { ...doc }, stems: MANIFEST, stemsDir: '/tmp/s' }), storeStems: async (a) => { stored = a; return { stems: 7 }; } });

@@ -15,8 +15,13 @@ import { join, extname } from 'node:path';
 import { rest, buildSupabaseHeaders } from '../supabase.mjs';
 import { demucsSeparator } from '../lyrics/pipeline.mjs';
 import { storeStems, stemsKeyValid } from '../lyrics/stems.mjs';
+import { safeObjectPath } from '../storage-object-path.mjs';
 
 const SITE = 'https://matthew.mccluster.org/';
+/* Where a release's master lives. The bucket and path on the row are a pointer,
+   and Core reads with its service key, so it follows the pointer only into this
+   bucket and only as a plain object path (../storage-object-path.mjs). */
+const MASTERS_BUCKET = 'creator-masters';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MAX = Number(process.env.LYRICS_MAX_MASTER_BYTES || 250 * 1024 * 1024);
 
@@ -50,8 +55,9 @@ export async function stemsSeparate(job, deps = {}) {
     const { body: rows = [] } = await _rest(`creator_tracks?id=eq.${id}&select=id,title,master_bucket,master_path&limit=1`);
     const t = rows[0];
     if (!t?.master_bucket || !t?.master_path) throw new Error('release has no master to separate');
+    if (t.master_bucket !== MASTERS_BUCKET || !safeObjectPath(t.master_path)) throw new Error('release master is not a plain object in creator-masters');
     trackKey = `ct-${id.toLowerCase()}`; creatorTrackId = id; title = t.title;
-    audioUrl = `${String(process.env.SUPABASE_URL || '').replace(/\/$/, '')}/storage/v1/object/${encodeURIComponent(t.master_bucket)}/${t.master_path.split('/').map(encodeURIComponent).join('/')}`;
+    audioUrl = `${String(process.env.SUPABASE_URL || '').replace(/\/$/, '')}/storage/v1/object/${MASTERS_BUCKET}/${t.master_path.split('/').map(encodeURIComponent).join('/')}`;
     headers = buildSupabaseHeaders({ secretKey: process.env.SUPABASE_SECRET_KEY, legacyServiceKey: process.env.SUPABASE_SERVICE_ROLE_KEY });
     if (!headers.authorization) headers.authorization = `Bearer ${headers.apikey}`;
     ext = extname(t.master_path).toLowerCase() || '.audio';

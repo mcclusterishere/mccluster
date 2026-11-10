@@ -21,8 +21,13 @@ import { rest, buildSupabaseHeaders } from '../supabase.mjs';
 import { transcribe } from '../lyrics/pipeline.mjs';
 import { parseTimedLyrics } from '../lyrics/import.mjs';
 import { storeStems } from '../lyrics/stems.mjs';
+import { safeObjectPath } from '../storage-object-path.mjs';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/* Where a release's master lives. The bucket and path on the row are a pointer,
+   and Core reads with its service key, so it follows the pointer only into this
+   bucket and only as a plain object path (../storage-object-path.mjs). */
+const MASTERS_BUCKET = 'creator-masters';
 const MAX_MASTER_BYTES = Number(process.env.LYRICS_MAX_MASTER_BYTES || 250 * 1024 * 1024);
 
 /** May the machine write over what is there now? */
@@ -94,10 +99,14 @@ export async function lyricsAlign(job, deps = {}) {
     return { executor: 'lyrics_align:v1', summary: `Lyrics for "${track.title}" are owner-reviewed; left as they are`, track_id: trackId, written: false };
   }
 
+  if (track.master_bucket !== MASTERS_BUCKET || !safeObjectPath(track.master_path)) {
+    throw new Error('release master is not a plain object in creator-masters');
+  }
+
   const dir = await mkdtemp(join(tmpdir(), 'mcc-lyrics-job-'));
   try {
     const audio = join(dir, 'master' + (extname(track.master_path).toLowerCase().replace(/[^.a-z0-9]/g, '') || '.audio'));
-    await _download(track.master_bucket, track.master_path, audio);
+    await _download(MASTERS_BUCKET, track.master_path, audio);
     const { sheetText, imported } = sheetInput(track.lyrics_sheet);
     const { doc, stems, stemsDir } = await _transcribe({ audio, sheetText, imported, title: track.title || '', workDir: join(dir, 'work') });
     /* the separation already made every stem: keep them, privately (never fails the lyrics) */

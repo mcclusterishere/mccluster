@@ -2,6 +2,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
 import { DependencyMissing, purchasedDownload, recordUpload, streamTarget, type MusicDb } from "./delivery.ts";
 import { prepareReviewAudio, reviewDecisionRefusal, shortHash, type ObjectReader } from "./review-audio.ts";
+import { safeObjectPath } from "../_shared/storage-object-path.ts";
 
 const SB = Deno.env.get("SUPABASE_URL")!;
 const SRV = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -47,7 +48,11 @@ async function houseOps(userId: string) {
   const row = Array.isArray(data) ? data[0] : data;
   return row?.allowed === true;
 }
+/* Every path signed here was read from a row, and the storage client places it
+   in the request URL as it is. Only a plain object path is signed
+   (../_shared/storage-object-path.ts); callers pin the bucket. */
 async function signDownload(bucket: string, path: string, download?: string, expiresIn = 3600) {
+  if (!safeObjectPath(path)) throw new Error("could_not_sign_asset");
   const { data, error } = await admin.storage.from(bucket).createSignedUrl(path, expiresIn, download ? { download } : undefined);
   if (error || !data?.signedUrl) throw new Error(error?.message || "could_not_sign_asset");
   return data.signedUrl;
@@ -65,6 +70,8 @@ const db = admin as unknown as MusicDb;
    service key, read chunk by chunk (never storage.download(), which buffers
    the whole file into a Blob). */
 const readObject: ObjectReader = async (bucket, path) => {
+  /* a row's path is read only as a plain object path; anything else is "not there" */
+  if (!safeObjectPath(path)) return { ok: false, status: 404, body: null, length: null };
   const res = await fetch(`${SB}/storage/v1/object/${encodeURIComponent(bucket)}/${path.split("/").map(encodeURIComponent).join("/")}`, {
     headers: { authorization: `Bearer ${SRV}`, apikey: SRV },
   });
@@ -195,7 +202,12 @@ Deno.serve(async (req) => {
         .select("id,title,artist,lyrics,master_bucket,master_path,audio_url").eq("id", trackId).maybeSingle();
       if (error) throw error;
       if (!t) return json({ error: "track not found" }, 404);
-      const listen = t.master_bucket && t.master_path ? await signDownload(t.master_bucket, t.master_path, undefined, 900) : (t.audio_url || null);
+      /* The master is a pointer on the release row. It is signed only in the
+         masters bucket and only as a plain object path, as stream and download
+         already require (./delivery.ts); anything else is no master to hear. */
+      const master = t.master_bucket === "creator-masters" && safeObjectPath(t.master_path) ? t.master_path : null;
+      if (!master && t.master_path) console.error("music-access lyrics listen refused", { track: t.id, reason: "master_pointer" });
+      const listen = master ? await signDownload("creator-masters", master, undefined, 900) : (t.audio_url || null);
       return json({ ok: true, track_id: t.id, title: t.title, artist: t.artist, lyrics: t.lyrics || null, listen_url: listen, expires_in: 900 });
     }
 
