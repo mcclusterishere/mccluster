@@ -299,14 +299,17 @@ try {
   const openItems = (await json(await handle('sources/review'))).body.items;
   eq(openItems.length, 2, 'two review items are still open');
   const correction = (key) => ({ review_item_id: openItems[0].id, expected_revision: openItems[0].revision, idempotency_key: key, correction: { note: 'Test fixture: correction.' } });
-  const snapshotCall = () => service((tx) => tx.query("select public.eup_record_snapshot('sec_edgar', 'fixture:direct', 'h-direct', '{}'::jsonb, $1)", [SEC_RESTATED_FACT.provenance]));
+  const snapshotCall = (hash = 'h-direct') => service(async (tx) => (await tx.query("select public.eup_record_snapshot('sec_edgar', 'fixture:direct', $1, '{}'::jsonb, $2) as r", [hash, SEC_RESTATED_FACT.provenance])).rows[0].r);
+  eq([(await snapshotCall()).created, (await snapshotCall()).created], [true, false], 'enabled: a direct snapshot is stored once; the same raw hash again is a duplicate that writes nothing');
   const insertReviewItem = "insert into public.eup_review_items(kind, subject_table, subject_key) values ('coverage', 'fixture', 'direct-write')";
-  // Every way new intake work can start: four RPC writes, the two apply forms, a claim, and two direct table writes.
+  // Every way new intake work can start: four RPC writes, the two apply forms, a new snapshot, a duplicate snapshot
+  // (it would write nothing, so no trigger fires: only the function's own guard can refuse it), a claim, and two
+  // direct table writes.
   const newWork = async () => [
     await code(command('refresh', { source_id: 'sec_edgar', idempotency_key: 'refresh-job-000D' })),
     await code(command('resume', { source_id: 'sec_edgar' })),
     await code(command('correct', correction('correct-0002'))),
-    await code(applyCall()), await code(applyCall(1)), await code(snapshotCall()),
+    await code(applyCall()), await code(applyCall(1)), await code(snapshotCall('h-new')), await code(snapshotCall()),
     await code(claim('fixture-runner-6')),
     await directWrite(insertReviewItem), await directWrite('update public.eup_corrections set correction = correction where false')
   ];
@@ -315,7 +318,7 @@ try {
   const stored = async () => ({ data: await fingerprint(), runs: await count('eup_import_runs'), sources: await count('eup_source_registry_state') });
   const before = await stored();
   eq(policy(await drainModule(db, 'intake')), ['draining', 2], 'the owner drains module intake');
-  eq(await newWork(), Array(9).fill('EUM02'), 'draining: refresh, resume, correct, apply, snapshot, claim and a direct table write are refused module_draining');
+  eq(await newWork(), Array(10).fill('EUM02'), 'draining: refresh, resume, correct, apply, snapshot, claim and a direct table write are refused module_draining');
   const refreshDraining = await json(await post('sources/sec_edgar/refresh', { idempotency_key: 'refresh-job-000D' }));
   eq([refreshDraining.status, refreshDraining.body.reason], [503, 'module_draining'], 'the Worker answers a refused refresh 503 module_draining');
   const correctDraining = await json(await post(`sources/review/${openItems[0].id}/correct`, { idempotency_key: 'correct-0002', expected_revision: openItems[0].revision, correction: { note: 'Test fixture: correction.' } }));
@@ -336,7 +339,7 @@ try {
 
   // 16. disabled: the same refusals with EUM03; pause and settlement still possible
   eq(policy(await disableModule(db, 'intake')), ['disabled', 3], 'the owner disables the drained module');
-  eq(await newWork(), Array(9).fill('EUM03'), 'disabled: refresh, resume, correct, apply, snapshot, claim and a direct table write are refused module_disabled');
+  eq(await newWork(), Array(10).fill('EUM03'), 'disabled: refresh, resume, correct, apply, snapshot, claim and a direct table write are refused module_disabled');
   eq([await code(claim('bad worker')), await code(rpc('eup_intake_apply', { p_source_id: 'sec_edgar', p_kind: 'company_fact', p_records: null }))], ['EUM03', 'EUM03'],
     'disabled: the guard is the first statement of claim and of apply, ahead of their argument checks');
   const resumeDisabled = await json(await post('sources/sec_edgar/resume'));
@@ -348,6 +351,11 @@ try {
   eq(await finish(jobA.run_id, 'failed', jobA3.lease, { p_error: 'Test fixture: stopped.' }), { run_id: jobA.run_id, status: 'failed', attempt: 2, replayed: false }, 'disabled: the lease holder still settles its run');
   eq(await read('run_counts').then((c) => [c.queued, c.running, c.running_expired]), [1, 0, 0], 'disabled: nothing is running, one run waits queued');
   eq(await stored(), before, 'disabled: no record and no row count changed');
+  // the file is DDL only: running it again over a populated store, with the module disabled, changes no row
+  const runsBefore = await rows('select * from public.eup_import_runs order by id');
+  await apply();
+  eq([await stored(), await rows('select * from public.eup_import_runs order by id')], [before, runsBefore], 'disabled: applying the file again over the populated store changes no record and no run');
+  eq(await newWork(), Array(10).fill('EUM03'), 'and every refusal is still in place afterwards');
 
   // 17. re-enabled: the records are as they were, work bound to the old revision stays refused, new work lands
   eq(policy(await enableModule(db, 'intake')), ['enabled', 4], 'the owner enables the module again');
@@ -386,7 +394,7 @@ try {
   const reapplied = await leftovers();
   eq([reapplied.functions, reapplied.triggers, reapplied.relations > 25], [INTAKE_FUNCTIONS.length, INTAKE_DATA_TABLES.length, true], 're-apply (twice) restores every function and trigger');
   eq(await code(readModulePolicy(db, 'intake')), 'EUM01', 'the fresh policy has no row for intake: the file seeds none');
-  eq(await newWork(), Array(9).fill('EUM01'), 'not installed: refresh, resume, correct, apply, snapshot, claim and a direct table write are refused module_not_installed');
+  eq(await newWork(), Array(10).fill('EUM01'), 'not installed: refresh, resume, correct, apply, snapshot, claim and a direct table write are refused module_not_installed');
   eq(await code(command('pause', { source_id: 'sec_edgar' })), 'EUM01', 'not installed: even the reduce-only pause is refused');
   eq(await code(command('refresh', { source_id: 'sec_edgar' })), '22023', 'an invalid request is refused before any guard is reached');
   const resumeNotInstalled = await json(await post('sources/sec_edgar/resume'));
