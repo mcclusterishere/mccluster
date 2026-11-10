@@ -20,9 +20,54 @@
 --
 -- Source definitions live in code (workers/mccluster/src/eup/registry.js) and
 -- mirror the planning inventory; this schema holds only their mutable state.
+--
+-- Apply after eup_module_policy_v1.sql. This file calls public.eup_module_guard and
+-- public.eup_module_guard_reduce and attaches public.eup_module_guard_trigger, all for
+-- module 'intake'; it refuses to run when they are absent. Once it is applied every
+-- intake write refuses (EUM01) until the house owner installs and then enables 'intake'.
+--
+-- Module policy, composed into each transaction (one module per transaction: 'intake'):
+--   guarded (eup_module_guard: EUM01 not installed, EUM02 draining, EUM03 disabled,
+--   EUM04 policy changed; 55P03 when the lock wait exceeds 5 s):
+--     eup_sources_command refresh, resume, correct   after the actor check and after the
+--                                                    exact-replay return, before the first
+--                                                    domain lock or write
+--     eup_intake_apply                               first statement, with the caller's
+--                                                    p_policy_revision when it has one
+--     eup_record_snapshot                            first statement
+--     eup_import_run_claim                           first statement; its result carries the
+--                                                    revision the job is bound to
+--   reduce-only (eup_module_guard_reduce: EUM01 only; possible while draining and disabled):
+--     eup_sources_command pause                      it only removes work
+--   never guarded: every read; an exact replay (a refresh or a correction that already
+--     happened answers again in every state); job settlement, eup_import_run_finish and
+--     eup_import_run_release, which is gated by the run's lease alone, because settling
+--     the jobs already in flight is how a drain finishes.
+--   backstop: a statement trigger on each of the 23 intake DATA tables takes the same guard
+--     in the writer's transaction (insert, update, delete and truncate), so a write that
+--     does not come through a function above is refused too. eup_import_runs and
+--     eup_source_registry_state carry none: settlement and pause must stay possible.
+--   No guard is called inside a block that has an EXCEPTION handler.
+-- Jobs: a run is claimed (queued -> running) under a lease; the claim records the policy
+-- revision, every later write passes it (a drain, or a drain and re-enable, in between
+-- refuses the write: EUM02 / EUM04), and the lease holder finishes or releases the run.
+--   EUI01 lease_lost       the run is running under another lease, or no lease was given
+--   EUI02 run_not_running  the run is queued again or already settled
+--   P0002 run_not_found    no such run
+-- No table in this file has an identity or serial column, so there is no sequence to
+-- revoke; ids are gen_random_uuid().
 -- Idempotent: safe to run twice. Rollback: eup_intake_v1.rollback.sql.
 
 set local lock_timeout = '5s';
+
+do $$
+begin
+  if to_regprocedure('public.eup_module_guard(text,bigint)') is null
+     or to_regprocedure('public.eup_module_guard_reduce(text)') is null
+     or to_regprocedure('public.eup_module_guard_trigger()') is null then
+    raise exception 'eup_intake_v1.sql: apply eup_module_policy_v1.sql first (the module guard is missing)' using errcode = '55000';
+  end if;
+end $$;
 
 -- ---------------------------------------------------------------- sources
 create table if not exists public.eup_source_registry_state (
@@ -58,8 +103,22 @@ create table if not exists public.eup_import_runs (
   started_at timestamptz,
   finished_at timestamptz,
   created_at timestamptz not null default now(),
+  lease_token text,            -- the holder's secret while running; kept on a finished run so its finish can replay
+  lease_expires_at timestamptz,-- after this another claim may take the run over
+  policy_revision bigint,      -- the 'intake' policy revision the current claim was made under
   unique (source_id, idempotency_key)
 );
+-- A local database that ran the earlier draft of this file has the table without the lease columns.
+alter table public.eup_import_runs add column if not exists lease_token text;
+alter table public.eup_import_runs add column if not exists lease_expires_at timestamptz;
+alter table public.eup_import_runs add column if not exists policy_revision bigint;
+-- A running run always has a lease and the policy revision it was claimed under; a queued run never has one.
+alter table public.eup_import_runs drop constraint if exists eup_import_runs_lease_shape;
+alter table public.eup_import_runs add constraint eup_import_runs_lease_shape check (case status
+  when 'running' then lease_token is not null and lease_expires_at is not null and policy_revision is not null
+  when 'queued' then lease_token is null and lease_expires_at is null
+  else lease_expires_at is null end);
+create index if not exists eup_import_runs_open_idx on public.eup_import_runs (created_at, id) where status in ('queued','running');
 
 -- --------------------------------------------------------------- snapshots
 create table if not exists public.eup_record_snapshots (
@@ -341,7 +400,9 @@ begin
     'eup_civic_candidacies','eup_civic_election_results','eup_company_entities','eup_company_identifiers',
     'eup_company_locations','eup_company_facts','eup_company_awards','eup_review_items','eup_corrections'] loop
     execute format('alter table public.%I enable row level security', t);
-    execute format('revoke all on public.%I from public, anon, authenticated', t);
+    -- Supabase default privileges hand every new table to anon, authenticated and service_role with ALL.
+    -- service_role keeps exactly what the functions need: no DELETE, no TRUNCATE (records are append-only).
+    execute format('revoke all on public.%I from public, anon, authenticated, service_role', t);
     execute format('grant select, insert, update on public.%I to service_role', t);
   end loop;
 end $$;
@@ -362,10 +423,12 @@ begin
 end $$;
 
 -- A snapshot per upstream record revision. Same raw hash = duplicate = no-op.
+-- Guarded first (module 'intake'); inside eup_intake_apply the call is re-entrant, the locks are already held.
 create or replace function public.eup_record_snapshot(p_source_id text, p_record_id text, p_raw_hash text, p_payload jsonb, p_provenance jsonb)
 returns jsonb language plpgsql security invoker as $$
 declare existing public.eup_record_snapshots; latest public.eup_record_snapshots; next_rev integer; created_id uuid;
 begin
+  perform public.eup_module_guard('intake');
   perform public.eup_check_provenance(p_provenance);
   perform pg_advisory_xact_lock(hashtext('eup_snapshot:' || p_source_id || ':' || p_record_id));
   if p_raw_hash is not null then
@@ -381,6 +444,10 @@ begin
 end $$;
 
 -- Refresh requests are idempotent per (source, key); a repeat returns the same run.
+-- Order in every branch: actor, arguments, the exact-replay return, the module guard, then domain locks.
+-- refresh, resume and correct add or restart work: eup_module_guard. pause only removes work: it takes the
+-- reduce-only guard (same two locks, so a state command still waits for it) and stays possible while the
+-- module is draining or disabled. An unknown action reaches no guard and no write.
 create or replace function public.eup_sources_command(p_action text, p_params jsonb, p_actor uuid)
 returns jsonb language plpgsql security invoker as $$
 declare run public.eup_import_runs; st public.eup_source_registry_state; item public.eup_review_items; corr public.eup_corrections; sid text; key text;
@@ -389,6 +456,10 @@ begin
   sid := p_params->>'source_id'; key := p_params->>'idempotency_key';
   if p_action = 'refresh' then
     if coalesce(sid,'') = '' or coalesce(key,'') = '' then raise exception 'source_and_key_required' using errcode = '22023'; end if;
+    -- exact replay: the run this key already queued answers in every module state and changes nothing
+    select * into run from public.eup_import_runs where source_id = sid and idempotency_key = key;
+    if found then return jsonb_build_object('run_id', run.id, 'status', run.status, 'created', false); end if;
+    perform public.eup_module_guard('intake');
     select * into st from public.eup_source_registry_state where source_id = sid for update;
     if not found or not st.configured or st.access <> 'approved' then raise exception 'not_configured' using errcode = 'P0001'; end if;
     if st.paused then raise exception 'source_paused' using errcode = 'P0001'; end if;
@@ -402,18 +473,24 @@ begin
     return jsonb_build_object('run_id', run.id, 'status', run.status, 'created', false);
   elsif p_action = 'pause' or p_action = 'resume' then
     if coalesce(sid,'') = '' then raise exception 'source_required' using errcode = '22023'; end if;
+    if p_action = 'pause' then perform public.eup_module_guard_reduce('intake');
+    else perform public.eup_module_guard('intake'); end if;
     insert into public.eup_source_registry_state (source_id, paused) values (sid, p_action = 'pause')
       on conflict (source_id) do update set paused = excluded.paused, updated_at = now(), revision = public.eup_source_registry_state.revision + 1;
     select * into st from public.eup_source_registry_state where source_id = sid;
     return jsonb_build_object('source_id', st.source_id, 'paused', st.paused, 'revision', st.revision);
   elsif p_action = 'correct' then
     if coalesce(key,'') = '' then raise exception 'key_required' using errcode = '22023'; end if;
+    -- The idempotency key lock: a concurrent identical correction waits here and then replays. Two-integer key
+    -- space, so it can collide neither with the module lock (1163219023, ...) nor with the snapshot locks.
+    perform pg_advisory_xact_lock(1163219024, hashtext(key));
     select * into corr from public.eup_corrections where idempotency_key = key;
     if found then
       if corr.correction is distinct from (p_params->'correction') then raise exception 'idempotency_payload_mismatch' using errcode = '40001'; end if;
       select * into item from public.eup_review_items where id = corr.review_item_id;
       return jsonb_build_object('correction_id', corr.id, 'review_item_id', item.id, 'revision', item.revision, 'status', item.status, 'replayed', true);
     end if;
+    perform public.eup_module_guard('intake');
     select * into item from public.eup_review_items where id = (p_params->>'review_item_id')::uuid for update;
     if not found then raise exception 'review_item_not_found' using errcode = 'P0002'; end if;
     if item.revision <> (p_params->>'expected_revision')::integer then raise exception 'revision_conflict' using errcode = '40001'; end if;
@@ -426,12 +503,21 @@ begin
   raise exception 'unknown_action' using errcode = '22023';
 end $$;
 
--- Read model for Sources & Review: state rows plus open review items.
+-- Read model for Sources & Review: state rows plus open review items. Never guarded: it answers in every
+-- module state. 'runs' never returns a lease token (it is the holder's secret). 'run_counts' is the Overview's
+-- drain progress: running_expired counts running runs whose lease has run out (no live holder; the next claim
+-- takes them over), so a drain has settled when running - running_expired is 0.
 create or replace function public.eup_sources_read(p_action text, p_params jsonb)
 returns jsonb language sql stable security invoker as $$
   select case p_action
     when 'list' then coalesce((select jsonb_agg(to_jsonb(s) order by s.source_id) from public.eup_source_registry_state s), '[]'::jsonb)
-    when 'runs' then coalesce((select jsonb_agg(to_jsonb(r) order by r.created_at desc) from (select * from public.eup_import_runs where source_id = p_params->>'source_id' order by created_at desc limit 50) r), '[]'::jsonb)
+    when 'runs' then coalesce((select jsonb_agg(to_jsonb(r) - 'lease_token' order by r.created_at desc) from (select * from public.eup_import_runs where source_id = p_params->>'source_id' order by created_at desc limit 50) r), '[]'::jsonb)
+    when 'run_counts' then (select jsonb_build_object(
+        'queued', count(*) filter (where r.status = 'queued'),
+        'running', count(*) filter (where r.status = 'running'),
+        'running_expired', count(*) filter (where r.status = 'running' and r.lease_expires_at <= now()),
+        'lease_expires_at', max(r.lease_expires_at) filter (where r.status = 'running'))
+      from public.eup_import_runs r where r.status in ('queued','running'))
     when 'review' then jsonb_build_object(
       'items', coalesce((select jsonb_agg(to_jsonb(i) order by i.created_at) from public.eup_review_items i where i.status = coalesce(p_params->>'status','open')), '[]'::jsonb),
       'corrections', coalesce((select jsonb_agg(to_jsonb(c) order by c.created_at desc) from (select * from public.eup_corrections order by created_at desc limit 100) c), '[]'::jsonb))
@@ -524,11 +610,17 @@ end $$;
 -- snapshotted; a duplicate (same raw hash) changes nothing; a changed record
 -- bumps the entity revision and, for bill text, adds a version row. Geography
 -- that cannot be resolved goes to review instead of being promoted.
-create or replace function public.eup_intake_apply(p_source_id text, p_kind text, p_records jsonb)
+-- The module guard is its first statement. A job passes the policy revision its claim returned: once the
+-- module drains the write is refused EUM02, and after a drain and re-enable EUM04, so work started under an
+-- older policy never lands. Without a revision (null) the write is bound to the current policy only.
+-- The earlier three-argument form is dropped so no ambiguous pair of overloads can exist.
+drop function if exists public.eup_intake_apply(text, text, jsonb);
+create or replace function public.eup_intake_apply(p_source_id text, p_kind text, p_records jsonb, p_policy_revision bigint default null)
 returns jsonb language plpgsql security invoker as $$
 declare rec jsonb; snap jsonb; applied integer := 0; duplicates integer := 0; reviewed integer := 0; prov jsonb;
         jid uuid; pid uuid; oid uuid; bid uuid; cid uuid; eid uuid; candid uuid; existing_rev integer; ext text; other uuid;
 begin
+  perform public.eup_module_guard('intake', p_policy_revision);
   if p_records is null or jsonb_typeof(p_records) <> 'array' then raise exception 'records_array_required' using errcode = '22023'; end if;
   for rec in select * from jsonb_array_elements(p_records) loop
     ext := rec->>'external_id';
@@ -727,30 +819,122 @@ begin
   return jsonb_build_object('applied', applied, 'duplicates', duplicates, 'reviewed', reviewed);
 end $$;
 
--- Import-run outcome bookkeeping: a failure keeps the previous success and
--- record counts (stale, not zero); success updates them.
-create or replace function public.eup_import_run_finish(p_run_id uuid, p_status text, p_records integer, p_error text, p_cursor jsonb)
+-- ------------------------------------------------------------------- jobs
+-- Claim one run. The guard is the first statement and runs in the SAME transaction as queued -> running, so a
+-- module that is not installed, draining or disabled starts no job (EUM01 / EUM02 / EUM03). The policy revision
+-- the guard locked is stored on the run and returned: the job passes it to every eup_intake_apply.
+-- Claimable: a queued run past its backoff, or a running run whose lease has expired (its holder is gone or too
+-- slow; the old lease can no longer finish or release it: EUI01). Only for a source that is configured,
+-- approved, not paused and whose rights have not expired; anything else stays queued. FOR UPDATE SKIP LOCKED:
+-- two claims never take the same run and neither waits for the other.
+--   { claimed: false, policy_revision }
+--   { claimed: true, run_id, source_id, cursor, attempt, lease, lease_expires_at, policy_revision, reclaimed }
+create or replace function public.eup_import_run_claim(p_worker text, p_source_id text default null, p_lease_seconds integer default 300)
+returns jsonb language plpgsql security invoker as $$
+declare run public.eup_import_runs; rev bigint; lease text; taken_over boolean;
+begin
+  rev := public.eup_module_guard('intake');
+  if p_worker is null or p_worker !~ '^[A-Za-z0-9._:-]{1,64}$' or p_lease_seconds is null or p_lease_seconds not between 30 and 3600 then
+    raise exception 'worker_and_lease_required' using errcode = '22023';
+  end if;
+  select r.* into run from public.eup_import_runs r join public.eup_source_registry_state s on s.source_id = r.source_id
+   where ((r.status = 'queued' and (r.backoff_until is null or r.backoff_until <= clock_timestamp()))
+       or (r.status = 'running' and r.lease_expires_at <= clock_timestamp()))
+     and (p_source_id is null or r.source_id = p_source_id)
+     and s.configured and s.access = 'approved' and not s.paused
+     and (s.rights_expires_at is null or s.rights_expires_at > clock_timestamp())
+   order by r.created_at, r.id for update of r skip locked limit 1;
+  if not found then return jsonb_build_object('claimed', false, 'policy_revision', rev); end if;
+  taken_over := run.status = 'running';
+  lease := p_worker || '#' || gen_random_uuid()::text;
+  -- an attempt that died with its lease is still an attempt
+  update public.eup_import_runs set status = 'running', started_at = clock_timestamp(), finished_at = null, error = null, lease_token = lease,
+    lease_expires_at = clock_timestamp() + make_interval(secs => p_lease_seconds), policy_revision = rev,
+    attempt = attempt + case when taken_over then 1 else 0 end
+   where id = run.id returning * into run;
+  return jsonb_build_object('claimed', true, 'run_id', run.id, 'source_id', run.source_id, 'cursor', run.cursor, 'attempt', run.attempt,
+    'lease', lease, 'lease_expires_at', run.lease_expires_at, 'policy_revision', rev, 'reclaimed', taken_over);
+end $$;
+
+-- Give a claimed run back without doing its work (the module started draining, the holder is stopping). The run
+-- returns to queued and is kept; the reason is stored in its error column. Not guarded by module state on
+-- purpose: settling the jobs in flight is how a drain finishes. Gated by the lease alone.
+--   { run_id, status: 'queued', released: true }
+--   P0002 run_not_found; EUI02 run_not_running (a second release, a settled run); EUI01 lease_lost (wrong or no lease)
+create or replace function public.eup_import_run_release(p_run_id uuid, p_lease text, p_reason text)
 returns jsonb language plpgsql security invoker as $$
 declare run public.eup_import_runs;
 begin
-  if p_status not in ('completed','failed','dead_letter','review') then raise exception 'invalid_status' using errcode = '22023'; end if;
-  update public.eup_import_runs set status = p_status, error = p_error, cursor = coalesce(p_cursor, cursor), finished_at = now(), attempt = attempt + 1 where id = p_run_id returning * into run;
+  select * into run from public.eup_import_runs where id = p_run_id for update;
   if not found then raise exception 'run_not_found' using errcode = 'P0002'; end if;
+  if run.status <> 'running' then raise exception 'run_not_running' using errcode = 'EUI02'; end if;
+  if p_lease is null or run.lease_token is distinct from p_lease then raise exception 'lease_lost' using errcode = 'EUI01'; end if;
+  update public.eup_import_runs set status = 'queued', error = left(coalesce(nullif(btrim(p_reason), ''), 'released'), 500),
+    lease_token = null, lease_expires_at = null, policy_revision = null, started_at = null
+   where id = run.id returning * into run;
+  return jsonb_build_object('run_id', run.id, 'status', run.status, 'released', true);
+end $$;
+
+-- Import-run outcome bookkeeping: a failure keeps the previous success and
+-- record counts (stale, not zero); success updates them.
+-- Only the lease holder of a RUNNING run can settle it: a queued run cannot be finished (claim it first), and a
+-- lease that was released or taken over cannot finish (EUI02 / EUI01). Not guarded by module state: the lease
+-- is the gate. A repeat of a finish that already landed (same lease, same status) returns the stored outcome
+-- with replayed true and changes nothing. The earlier five-argument form is dropped so no ambiguous pair of
+-- overloads can exist.
+--   { run_id, status, attempt, replayed }
+--   22023 invalid_status; P0002 run_not_found; EUI02 run_not_running; EUI01 lease_lost
+drop function if exists public.eup_import_run_finish(uuid, text, integer, text, jsonb);
+create or replace function public.eup_import_run_finish(p_run_id uuid, p_status text, p_records integer, p_error text, p_cursor jsonb, p_lease text default null)
+returns jsonb language plpgsql security invoker as $$
+declare run public.eup_import_runs;
+begin
+  if p_status is null or p_status not in ('completed','failed','dead_letter','review') then raise exception 'invalid_status' using errcode = '22023'; end if;
+  select * into run from public.eup_import_runs where id = p_run_id for update;
+  if not found then raise exception 'run_not_found' using errcode = 'P0002'; end if;
+  if run.status = p_status and p_lease is not null and run.lease_token = p_lease then
+    return jsonb_build_object('run_id', run.id, 'status', run.status, 'attempt', run.attempt, 'replayed', true);
+  end if;
+  if run.status <> 'running' then raise exception 'run_not_running' using errcode = 'EUI02'; end if;
+  if p_lease is null or run.lease_token is distinct from p_lease then raise exception 'lease_lost' using errcode = 'EUI01'; end if;
+  update public.eup_import_runs set status = p_status, error = p_error, cursor = coalesce(p_cursor, cursor), finished_at = now(), attempt = attempt + 1,
+    lease_expires_at = null where id = run.id returning * into run;
   insert into public.eup_source_registry_state (source_id) values (run.source_id) on conflict do nothing;
   if p_status = 'completed' then
     update public.eup_source_registry_state set last_attempt_at = now(), last_success_at = now(), last_error = null, records = p_records, updated_at = now(), revision = revision + 1 where source_id = run.source_id;
   else
     update public.eup_source_registry_state set last_attempt_at = now(), last_error = p_error, updated_at = now(), revision = revision + 1 where source_id = run.source_id;
   end if;
-  return jsonb_build_object('run_id', run.id, 'status', run.status, 'attempt', run.attempt);
+  return jsonb_build_object('run_id', run.id, 'status', run.status, 'attempt', run.attempt, 'replayed', false);
+end $$;
+
+-- The backstop: the same guard, in the writer's own transaction, for a write to an intake DATA table that does
+-- not come through a function above (service-role REST, a job writing a table, a maintenance statement). The
+-- trigger runs the reduce guard instead when the transaction carries the reduce marker for 'intake'; no path
+-- writes without one of the two. A correctness backstop, not a security boundary against the service role.
+-- Not on eup_import_runs or eup_source_registry_state: settlement and pause must stay possible in every state.
+-- A maintenance migration on these tables has to enable the module or say why it disables the trigger.
+do $$
+declare t text;
+begin
+  foreach t in array array['eup_record_snapshots',
+    'eup_civic_jurisdictions','eup_civic_jurisdiction_relations','eup_civic_boundary_versions','eup_civic_offices',
+    'eup_civic_persons','eup_civic_terms','eup_civic_committees','eup_civic_bills','eup_civic_bill_versions',
+    'eup_civic_bill_actions','eup_civic_bill_amendments','eup_civic_roll_calls','eup_civic_election_contests',
+    'eup_civic_candidacies','eup_civic_election_results','eup_company_entities','eup_company_identifiers',
+    'eup_company_locations','eup_company_facts','eup_company_awards','eup_review_items','eup_corrections'] loop
+    execute format('create or replace trigger %I before insert or update or delete or truncate on public.%I for each statement execute function public.eup_module_guard_trigger(%L)',
+      t || '_module_policy', t, 'intake');
+  end loop;
 end $$;
 
 do $$
 declare f text;
 begin
   foreach f in array array['eup_check_provenance(jsonb)','eup_record_snapshot(text,text,text,jsonb,jsonb)','eup_sources_command(text,jsonb,uuid)',
-    'eup_sources_read(text,jsonb)','eup_civic_read(text,jsonb)','eup_company_read(text,jsonb)','eup_intake_apply(text,text,jsonb)',
-    'eup_import_run_finish(uuid,text,integer,text,jsonb)','eup_snapshot_immutable()'] loop
+    'eup_sources_read(text,jsonb)','eup_civic_read(text,jsonb)','eup_company_read(text,jsonb)','eup_intake_apply(text,text,jsonb,bigint)',
+    'eup_import_run_claim(text,text,integer)','eup_import_run_release(uuid,text,text)',
+    'eup_import_run_finish(uuid,text,integer,text,jsonb,text)','eup_snapshot_immutable()'] loop
     execute format('revoke all on function public.%s from public, anon, authenticated', f);
     execute format('grant execute on function public.%s to service_role', f);
   end loop;
