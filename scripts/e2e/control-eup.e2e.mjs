@@ -351,7 +351,9 @@ async function leagueProof(width){
     await outcome('mission:'+missionId,'done').waitFor();
     let missionRow=(await as('owner','GET',O('missions?campaign='+campaignId))).missions[0];
     check(scope,'setup: capacity and rubric saved; the rubric change starts requirements revision 2',missionRow.capacity===1&&missionRow.requirements_revision===2&&missionRow.document.rubric.proof[0].id==='complete',missionRow);
-    await cmd('campaigns.transition',campaignId,'released').click();await statusIs('data-eup-league-campaign',campaignId,'released');
+    /* by keyboard: Release disappears once the campaign is released, so focus must land on what changed */
+    await cmd('campaigns.transition',campaignId,'released').focus();await page.keyboard.press('Enter');await statusIs('data-eup-league-campaign',campaignId,'released');await settled();
+    check(scope,'keyboard: after Release (which then disappears) focus lands on its outcome, not the page body',await focusIs(page,'[data-eup-league-outcome="campaign:'+campaignId+':done"]'));
     await cmd('missions.transition',missionId,'released').click();await statusIs('data-eup-league-mission',missionId,'released');
     await cmd('campaigns.audience.set',campaignId,'invited').click();await cmd('campaigns.audience.set',campaignId,'admin_preview').waitFor();
     for(const [who,n] of [['tester',1],['peer',2]]){
@@ -377,8 +379,10 @@ async function leagueProof(width){
     await view('applications');
     await page.waitForFunction(()=>document.querySelectorAll('[data-eup-league-application]').length===3);
     await field('decide:'+appT.id,'decision').selectOption('approved');await field('decide:'+appT.id,'met:fit').check();
+    await field('decide:'+appT.id,'note:fit').fill('Clear about the river.');await field('decide:'+appT.id,'reason').fill('E2E test fixture: a clear plan for the song.');
     await cmd('applications.decide',appT.id).click();await statusIs('data-eup-league-application',appT.id,'approved');
-    check(scope,'applications: approve with the rubric answered offers one assignment',(await as('tester','GET',M())).league.assignments.length===1);
+    const testerMe=(await as('tester','GET',M())).league,approval=testerMe.applications.find(a=>a.id===appT.id).decisions.at(-1);
+    check(scope,'applications: approve with the rubric and a reason offers one assignment; the applicant reads both',testerMe.assignments.length===1&&approval.decision==='approved'&&approval.reason==='E2E test fixture: a clear plan for the song.'&&isDeepStrictEqual(approval.rubric,[{id:'fit',met:true,note:'Clear about the river.'}]),approval);
     await field('decide:'+appP.id,'decision').selectOption('approved');await field('decide:'+appP.id,'met:fit').check();
     await cmd('applications.decide',appP.id).click();await outcome('application:'+appP.id,'error').waitFor();
     check(scope,'applications: capacity exhausted is said, and nothing changed',/no seat is free on this mission/.test(await outcome('application:'+appP.id,'error').innerText())&&await page.locator('[data-eup-league-application="'+appP.id+'"]').getAttribute('data-eup-league-status')==='submitted');
@@ -425,6 +429,8 @@ async function leagueProof(width){
     await view('proofs');
     await statusIs('data-eup-league-proof',proofT.id,'submitted:clear:private');
     await ui('review',proofT.id).click();
+    await page.waitForFunction(id=>document.activeElement?.getAttribute('data-eup-league-review-panel')===id,proofT.id);
+    check(scope,'proofs: opening a review moves focus to the review panel',true);
     const ready=()=>page.waitForFunction(()=>{const a=document.querySelector('[data-eup-league-media]');return !!a&&a.readyState>=1&&isFinite(a.duration);});
     await ready();
     const first=await page.evaluate(()=>{const a=document.querySelector('[data-eup-league-media]');return {src:a.getAttribute('src'),duration:a.duration,tag:a.tagName};});
