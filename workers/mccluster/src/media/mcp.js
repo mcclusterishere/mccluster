@@ -5,6 +5,7 @@
 import { createGeneration, getGeneration, jobForOperation, listModels } from './router.js';
 import { createBakeoff } from './orchestrator.js';
 import { recommendModels } from './recommend.js';
+import { listRecoveryCandidates, reconcileJob } from './recovery.js';
 
 export const MCP_VERSION = '2026-07-28';
 
@@ -124,6 +125,38 @@ const TOOLS = [
       type: 'object',
       required: ['org_id'],
       properties: { org_id: { type: 'string' }, job_id: { type: 'string' }, operation_id: OPERATION_ID_SCHEMA }
+    }
+  },
+  /* Recovery (./recovery.js): house operator only, whatever organization the
+     job belongs to. The handlers refuse everyone else. */
+  {
+    name: 'media.recovery.list',
+    title: 'List media recovery candidates',
+    description: 'House operator only. Paid media claims and jobs the normal path could not finish, by class (expired claims, unbound claims, reservations never submitted, unknown submit outcomes, stale pollable jobs, failed jobs still holding a reservation, failed jobs the provider billed), with counts per organization and the next action for each.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        org_id: { type: 'string' },
+        older_than_minutes: { type: 'integer', minimum: 1, maximum: 1440 },
+        limit: { type: 'integer', minimum: 1, maximum: 200 }
+      }
+    }
+  },
+  {
+    name: 'media.job.reconcile',
+    title: 'Reconcile a stuck media job',
+    description: 'House operator only. Record one decision for a stuck paid media job: release its reservation (evidence required unless the submit provably never started or the job already failed), settle it by attaching the provider request id (the refresh path then settles status and cost), or bind its claim. Written to the audit ledger before it runs; repeating the same decision returns the one on record.',
+    inputSchema: {
+      type: 'object',
+      required: ['org_id', 'job_id', 'decision', 'reason'],
+      properties: {
+        org_id: { type: 'string' },
+        job_id: { type: 'string' },
+        decision: { type: 'string', enum: ['release', 'settle', 'bind'] },
+        reason: { type: 'string', minLength: 3, maxLength: 500 },
+        evidence: { type: 'object' },
+        provider_request_id: { type: 'string' }
+      }
     }
   }
 ];
@@ -263,6 +296,20 @@ async function callTool(name, args, request, env, user) {
         env, user, jobId, true
       ));
     }
+    case 'media.recovery.list':
+      return textResult(await listRecoveryCandidates(
+        synthetic(request, { path: '/v1/media/recovery', query: { org_id: args.org_id, older_than_minutes: args.older_than_minutes, limit: args.limit } }),
+        env, user
+      ));
+    case 'media.job.reconcile':
+      return textResult(await reconcileJob(
+        synthetic(request, {
+          method: 'POST',
+          path: `/v1/media/jobs/${args.job_id}/reconcile`,
+          body: { org_id: args.org_id, decision: args.decision, reason: args.reason, evidence: args.evidence, provider_request_id: args.provider_request_id }
+        }),
+        env, user, args.job_id
+      ));
     default:
       throw Object.assign(new Error(`Unknown tool: ${name}`), { status: 404 });
   }

@@ -11,7 +11,8 @@
    - the compare-and-set submit: one marker, one provider request, and every
      later write conditional on the state it expects;
    - the provider webhook: the authenticated hint, replays, late answers;
-   - the member's refresh.
+   - the member's refresh and the cron sweep;
+   - the operator surface (REST and MCP), its authorization and its audit.
 
    The filter strings are written out here on purpose: a mistyped constant in
    the router fails these tests instead of silently matching every row.
@@ -24,15 +25,34 @@
 import './support/offline-network.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { registerHooks } from 'node:module';
 
 import {
   classifyReservationError, createGeneration, getGeneration, handleFalWebhook, operationFingerprint,
-  applyProviderStatus, pollProviderStatus, reconcileFalJobCost, verifyWebhookHint, webhookUrlFor
+  applyProviderStatus, pollProviderStatus, reconcileFalJobCost, webhookUrlFor
 } from '../src/media/router.js';
+import { reconcileJob, sweepMediaRecovery, verifyWebhookHint } from '../src/media/recovery.js';
+import { handleMediaMcp } from '../src/media/mcp.js';
 import { verifyFalWebhook } from '../src/media/fal.js';
 import {
-  ORG, USER, MEMBER, MODEL, WINDOW_MS, env, json, matchesFilter, plane, provider, traced
+  ORG, OTHER_ORG, USER, MEMBER, MODEL, WINDOW_MS, V2_FUNCTIONS, env, json, matchesFilter, plane, provider, traced
 } from './helpers/media-plane.mjs';
+
+registerHooks({
+  resolve(specifier, context, next) {
+    if (specifier === 'cloudflare:workers') return { url: 'data:text/javascript,export class DurableObject {}', shortCircuit: true };
+    return next(specifier, context);
+  },
+  load(url, context, next) {
+    if (/\.html$/.test(url)) {
+      const text = readFileSync(new URL(url), 'utf8');
+      return { format: 'module', source: `export default ${JSON.stringify(text)};`, shortCircuit: true };
+    }
+    return next(url, context);
+  }
+});
+const { default: entry } = await import('../src/entry.js');
 
 /* The router's compare-and-set filters, as literals. */
 const CAS_SUBMIT = 'status=eq.queued&routing->>reservation_state=eq.reserved&provider_request_id=is.null&provider_status->>outcome=is.null';
@@ -1026,5 +1046,515 @@ test('S4 three consecutive provider 404s park the job as unknown_request; a real
     assert.equal(answered.status, 'queued');
     assert.equal(answered.provider_status.unknown_request_count, undefined);
     assert.equal(answered.provider_status.outcome, undefined);
+  } finally { st.restore(); }
+});
+
+/* ===================== released too early, completed after all ===================== */
+
+const reconcileRequest = (jobId, body) => new Request(`${ORIGIN}/v1/media/jobs/${jobId}/reconcile`, {
+  method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body)
+});
+
+test('a job an operator released that the provider ran after all: the hinted success completes it, saves assets, settles the cost and is audited', async () => {
+  const st = plane({ billing: billed });
+  try {
+    const job = seedJob(st, { status: 'reconciling', provider_status: { outcome: 'uncertain', attempted_at: ago(20 * MINUTE) }, error: { message: 'timeout', uncertain: true, stage: 'submit' } });
+    const released = await reconcileJob(reconcileRequest(job.id, { org_id: ORG, decision: 'release', reason: 'provider console showed nothing', evidence: { console_checked: true } }), billingEnv, USER, job.id);
+    assert.equal(released.outcome, 'released');
+    assert.equal(job.status, 'failed');
+    assert.equal(job.routing.reservation_state, 'released');
+
+    const hint = await hintFor(job.id);
+    const answer = await traced(() => handleFalWebhook(webhookRequest(), billingEnv, verified({ request_id: 'req-late', status: 'OK', payload: IMAGE }), hint), billingEnv);
+    assert.equal(answer.status, 'completed');
+    const filters = patchFilters(st);
+    assert.equal(filters[0], CAS_HINT_ATTACH, 'attached although failed: the reservation is not settled');
+    assert.equal(filters[1], 'status=eq.failed&provider_request_id=eq.req-late', 'completed only from the state the attach left');
+    assert.equal(job.status, 'completed');
+    assert.deepEqual(job.result, IMAGE);
+    assert.deepEqual(job.error, {});
+    assert.equal(st.assets.length, 1);
+    assert.equal(answer.cost_reconciliation.settled, 1, 'record_actual runs for the completed job');
+    assert.equal(job.routing.reservation_state, 'settled');
+    assert.equal(job.routing.operator_resolution.decision, 'release', 'the decision that released it stays on the row');
+    const audit = st.audit.find((row) => row.event === 'media_operation.completed_after_release');
+    assert.ok(audit, 'audited');
+    assert.equal(audit.org_id, ORG);
+    assert.equal(audit.actor_kind, 'system');
+    assert.equal(audit.resource_id, job.id);
+    assert.equal(audit.detail.provider_request_id, 'req-late');
+    assert.equal(audit.detail.operator_resolution.decision, 'release');
+    assert.ok(st.event('media_operation.completed_after_release'), 'and an event under the webhook\'s trace');
+    /* record_actual was called after the job was completed, never for a failed one */
+    assert.ok(st.callIndex((call) => call.method === 'PATCH' && call.body?.status === 'completed') < st.callIndex((call) => call.url.endsWith('/rpc/media_record_actual_cost_v2')));
+  } finally { st.restore(); }
+});
+
+test('a job an operator released that the provider then reports failed: the hinted ERROR releases nothing twice', async () => {
+  const st = plane();
+  try {
+    const job = seedJob(st);
+    await reconcileJob(reconcileRequest(job.id, { org_id: ORG, decision: 'release', reason: 'never submitted' }), env, USER, job.id);
+    assert.equal(st.releases, 1);
+    const answer = await handleFalWebhook(webhookRequest(), hintEnv, verified({ request_id: 'req-late-err', status: 'ERROR', error: 'failed' }), await hintFor(job.id));
+    assert.deepEqual(answer, { accepted: true, matched: true, job_id: job.id, status: 'failed', reservation: 'already_released' });
+    assert.equal(st.releases, 1, 'released once');
+    assert.equal(job.status, 'failed');
+    assert.equal(job.provider_request_id, 'req-late-err', 'the request id is on the row as evidence');
+  } finally { st.restore(); }
+});
+
+/* ================================ the cron sweep ================================ */
+
+test('the sweep polls only open jobs with a request id that have been quiet for five minutes, and settles what the provider finished', async () => {
+  const st = plane({ billing: billed });
+  try {
+    const stale = seedJob(st, { status: 'running', provider_request_id: 'req-stale', updated_at: ago(6 * MINUTE) });
+    const fresh = seedJob(st, { status: 'running', provider_request_id: 'req-fresh', updated_at: ago(MINUTE), routing: { operation_id: 'fresh' } });
+    const noRequest = seedJob(st, { status: 'reconciling', provider_status: { outcome: 'uncertain' }, updated_at: ago(60 * MINUTE), routing: { operation_id: 'no-request' } });
+    const done = seedJob(st, { status: 'completed', provider_request_id: 'req-done', updated_at: ago(60 * MINUTE), routing: { operation_id: 'done' } });
+    const asked = [];
+    const deps = {
+      status: async (_env, _model, requestId) => { asked.push(requestId); return { status: 'COMPLETED', request_id: requestId }; },
+      result: async (_env, _model, requestId) => ({ data: IMAGE, request_id: requestId })
+    };
+    const report = await traced(() => sweepMediaRecovery(billingEnv, { limit: 25 }, deps), billingEnv);
+    assert.deepEqual(asked, ['req-stale'], 'only the quiet open job with a request id');
+    assert.deepEqual({ polled: report.polled, completed: report.completed, settled: report.settled, released: report.released, errors: report.errors },
+      { polled: 1, completed: 1, settled: 1, released: 0, errors: [] });
+    assert.equal(stale.status, 'completed');
+    assert.equal(stale.routing.reservation_state, 'settled');
+    assert.equal(fresh.status, 'running');
+    assert.equal(noRequest.status, 'reconciling', 'a job without a request id is never polled');
+    assert.equal(noRequest.routing.reservation_state, 'reserved', 'and never released');
+    assert.equal(done.routing.reservation_state, 'reserved', 'a completed job is the cost cron\'s, not the sweep\'s');
+    assert.equal(st.releaseCalls, 0);
+    const listing = st.calls.find((call) => call.method === 'GET' && call.url.includes('provider_request_id=not.is.null'));
+    assert.match(listing.url, /media_jobs\?provider=eq\.fal&provider_request_id=not\.is\.null&status=in\.\(queued,running,reconciling\)&updated_at=lt\.[^&]+&order=updated_at\.asc&limit=25&select=\*$/);
+  } finally { st.restore(); }
+});
+
+test('the sweep releases only where the provider itself answered failed; a poll that errors is counted and stops nothing', async () => {
+  const st = plane();
+  try {
+    const failedJob = seedJob(st, { status: 'queued', provider_request_id: 'req-bad', updated_at: ago(10 * MINUTE) });
+    const flaky = seedJob(st, { status: 'queued', provider_request_id: 'req-flaky', updated_at: ago(9 * MINUTE), routing: { operation_id: 'flaky' } });
+    const report = await sweepMediaRecovery(env, {}, {
+      status: async (_env, _model, requestId) => {
+        if (requestId === 'req-flaky') throw Object.assign(new Error('provider unavailable'), { status: 503 });
+        return { status: 'FAILED' };
+      }
+    });
+    assert.equal(report.polled, 2);
+    assert.equal(report.released, 1);
+    assert.equal(failedJob.status, 'failed');
+    assert.equal(failedJob.routing.reservation_state, 'released');
+    assert.equal(flaky.status, 'queued');
+    assert.equal(flaky.routing.reservation_state, 'reserved');
+    assert.deepEqual(report.errors, [{ phase: 'poll', job_id: flaky.id, message: 'provider unavailable' }]);
+  } finally { st.restore(); }
+});
+
+test('the sweep parks a submit marker nobody completed for ten minutes as reconciling/uncertain, with the compare-and-set filter; no money moves', async () => {
+  const st = plane();
+  try {
+    const stuck = seedJob(st, { provider_status: { outcome: 'submitting', attempted_at: ago(11 * MINUTE), attempt_id: 'gone' }, updated_at: ago(11 * MINUTE) });
+    const inFlight = seedJob(st, { provider_status: { outcome: 'submitting', attempted_at: ago(9 * MINUTE), attempt_id: 'alive' }, updated_at: ago(9 * MINUTE), routing: { operation_id: 'in-flight' } });
+    const legacy = seedJob(st, { provider_status: { outcome: 'submitting' }, updated_at: ago(60 * MINUTE), routing: { operation_id: 'legacy', submit_protocol: undefined } });
+    const neverMarked = seedJob(st, { updated_at: ago(60 * MINUTE), routing: { operation_id: 'never-marked' } });
+    let statusCalls = 0;
+    const report = await traced(() => sweepMediaRecovery(env, {}, { status: async () => { statusCalls += 1; return { status: 'IN_QUEUE' }; } }));
+    assert.equal(report.marked_uncertain, 1);
+    assert.equal(statusCalls, 0, 'nothing without a request id is polled');
+    assert.deepEqual(patchFilters(st), [CAS_UNCERTAIN]);
+    assert.equal(stuck.status, 'reconciling');
+    assert.equal(stuck.provider_status.outcome, 'uncertain');
+    assert.equal(stuck.provider_status.attempt_id, 'gone', 'the attempt stays as evidence');
+    assert.ok(stuck.provider_status.marked_uncertain_at);
+    assert.deepEqual(stuck.error, { message: 'submit outcome unknown: the submitting isolate recorded no result', uncertain: true, stage: 'submit' });
+    assert.equal(inFlight.status, 'queued', 'a nine-minute marker may still be in flight');
+    assert.equal(legacy.status, 'queued');
+    assert.equal(neverMarked.status, 'queued', 'a job nobody marked is a release candidate, not an unknown outcome');
+    assert.equal(st.releaseCalls, 0);
+    for (const job of [stuck, inFlight, legacy, neverMarked]) assert.equal(job.routing.reservation_state, 'reserved');
+    assert.equal(st.event('media.generation.submit_outcome_unknown').resource_id, stuck.id);
+    const listing = st.calls.find((call) => call.method === 'GET' && call.url.includes('provider_status->>outcome=eq.submitting'));
+    assert.match(listing.url, /media_jobs\?provider=eq\.fal&status=eq\.queued&provider_request_id=is\.null&provider_status->>outcome=eq\.submitting&routing->>submit_protocol=eq\.cas-v1&updated_at=lt\./);
+  } finally { st.restore(); }
+});
+
+test('the sweep records the candidate counts once per organization, as evidence in the observability ledger', async () => {
+  const candidates = {
+    generated_at: new Date().toISOString(), older_than: '00:15:00',
+    counts: { submit_outcome_unknown: 1, pollable_stale: 2, claim_expired_without_job: 1 },
+    by_org: [
+      { org_id: ORG, counts: { submit_outcome_unknown: 1, claim_expired_without_job: 1 } },
+      { org_id: OTHER_ORG, counts: { pollable_stale: 2 } }
+    ],
+    candidates: []
+  };
+  const st = plane({ candidates });
+  try {
+    const report = await traced(() => sweepMediaRecovery(env, {}, {}));
+    assert.deepEqual(report.candidate_counts, candidates.counts);
+    assert.deepEqual(st.rpcCalls('media_operation_recovery_candidates_v1')[0].body, { p_org_id: null, p_older_than: '15 minutes', p_limit: 50 });
+    const events = st.events.filter((event) => event.event_name === 'media.recovery.candidates');
+    assert.equal(events.length, 2, 'one per organization');
+    const mine = events.find((event) => event.org_id === ORG);
+    assert.deepEqual(mine.detail, { submit_outcome_unknown: 1, claim_expired_without_job: 1 });
+    assert.equal(mine.level, 'warn', 'a class only a person can decide');
+    assert.equal(mine.event_kind, 'scheduled');
+    assert.equal(mine.route, 'cron:test.media');
+    const theirs = events.find((event) => event.org_id === OTHER_ORG);
+    assert.deepEqual(theirs.detail, { pollable_stale: 2 });
+    assert.equal(theirs.level, 'info', 'polling resolves it');
+  } finally { st.restore(); }
+});
+
+test('the sweep before media_operation_claims_v2.sql is applied: it still polls and parks, and says recovery is unavailable instead of failing', async () => {
+  const st = plane({ missing: V2_FUNCTIONS });
+  try {
+    const failedJob = seedJob(st, { status: 'running', provider_request_id: 'req-bad', updated_at: ago(10 * MINUTE) });
+    const report = await sweepMediaRecovery(env, {}, { status: async () => ({ status: 'ERROR' }) });
+    assert.equal(report.recovery_unavailable, true);
+    assert.equal(report.candidate_counts, null);
+    assert.deepEqual(report.errors, []);
+    assert.equal(failedJob.status, 'failed');
+    assert.equal(st.releasesV1, 1, 'the failed job is released through the 0054 function');
+    assert.equal(report.released, 1);
+  } finally { st.restore(); }
+});
+
+test('the sweep without a provider key polls nothing; without a data plane it does nothing', async () => {
+  const st = plane();
+  try {
+    seedJob(st, { status: 'running', provider_request_id: 'req-stale', updated_at: ago(10 * MINUTE) });
+    const report = await sweepMediaRecovery({ SUPABASE_URL: env.SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY: env.SUPABASE_SERVICE_ROLE_KEY }, {}, {});
+    assert.equal(report.poll_skipped, 'fal_not_configured');
+    assert.equal(report.polled, 0);
+    assert.equal((await sweepMediaRecovery({}, {}, {})).skipped, 'supabase_not_configured');
+  } finally { st.restore(); }
+});
+
+/* ============================ the operator surface ============================ */
+
+const OWNER_TOKEN = 'owner-session';
+const MEMBER_TOKEN = 'member-session';
+const sessions = { [OWNER_TOKEN]: { id: USER.id, email: 'owner@fixture.invalid' }, [MEMBER_TOKEN]: { id: MEMBER.id, email: 'member@fixture.invalid' } };
+
+async function api(path, { method = 'GET', token = null, body = undefined, headers = {}, apiEnv = env } = {}) {
+  const pending = [];
+  const response = await entry.fetch(new Request(`https://api.mccluster.org${path}`, {
+    method,
+    headers: { ...(token ? { authorization: `Bearer ${token}` } : {}), ...(body !== undefined ? { 'content-type': 'application/json' } : {}), ...headers },
+    body: body === undefined ? undefined : (typeof body === 'string' ? body : JSON.stringify(body))
+  }), apiEnv, { waitUntil(promise) { pending.push(promise); } });
+  await Promise.all(pending);
+  return { status: response.status, headers: response.headers, body: await response.json() };
+}
+const rpcIndex = (st, name) => st.callIndex((call) => call.url.endsWith(`/rpc/${name}`));
+const auditIndex = (st, event) => st.callIndex((call) => call.url.endsWith('/rest/v1/control_audit') && call.body?.event === event);
+
+test('operator routes: nobody signed in is 401; an organization owner who is not the house owner is 403; neither touches the job, the ledger or the decision', async () => {
+  const st = plane({ sessions });
+  try {
+    const job = seedJob(st);
+    const decision = { org_id: ORG, decision: 'release', reason: 'never submitted' };
+    for (const [method, path, body] of [['POST', `/v1/media/jobs/${job.id}/reconcile`, decision], ['GET', '/v1/media/recovery', undefined]]) {
+      const anonymous = await api(path, { method, body });
+      assert.equal(anonymous.status, 401, path);
+      const stranger = await api(path, { method, body, token: 'not-a-session' });
+      assert.equal(stranger.status, 401, path);
+      const member = await api(path, { method, body, token: MEMBER_TOKEN });
+      assert.equal(member.status, 403, path);
+      assert.equal(member.body.error, 'House owner access is required');
+    }
+    assert.equal(st.rpcs.length, 0, 'no database function was called');
+    assert.equal(st.audit.length, 0);
+    assert.equal(job.status, 'queued');
+    assert.equal(job.routing.reservation_state, 'reserved');
+  } finally { st.restore(); }
+});
+
+test('operator release by the house owner: audited before it runs, bound to the organization in the request, answered with what happened', async () => {
+  const st = plane({ sessions });
+  try {
+    const job = seedJob(st);
+    const answer = await api(`/v1/media/jobs/${job.id}/reconcile`, { method: 'POST', token: OWNER_TOKEN, body: { org_id: ORG, decision: 'release', reason: '  never submitted: no marker  ' } });
+    assert.equal(answer.status, 200);
+    assert.equal(answer.headers.get('cache-control'), 'private, no-store');
+    assert.equal(answer.body.outcome, 'released');
+    assert.equal(answer.body.decision, 'release');
+    assert.equal(answer.body.status, 'failed');
+    assert.equal(answer.body.job_id, job.id);
+    assert.equal(answer.body.release.released, true);
+    assert.equal(answer.body.resolution.actor_id, USER.id);
+    assert.equal(answer.body.audit.requested.recorded, true);
+    assert.equal(answer.body.audit.resolved.recorded, true);
+    assert.deepEqual(st.rpcCalls('media_resolve_operation_job_v1')[0].body, {
+      p_org_id: ORG, p_job_id: job.id, p_decision: 'release', p_actor_id: USER.id, p_reason: 'never submitted: no marker', p_evidence: {}, p_provider_request_id: null
+    });
+    /* the ledger row is written first */
+    assert.ok(auditIndex(st, 'media_operation.resolve_requested') >= 0);
+    assert.ok(auditIndex(st, 'media_operation.resolve_requested') < rpcIndex(st, 'media_resolve_operation_job_v1'));
+    assert.ok(rpcIndex(st, 'media_resolve_operation_job_v1') < auditIndex(st, 'media_operation.resolved'));
+    const requested = st.audit.find((row) => row.event === 'media_operation.resolve_requested');
+    assert.deepEqual({ org: requested.org_id, actor: requested.actor_user_id, kind: requested.actor_kind, capability: requested.capability, type: requested.resource_type, id: requested.resource_id },
+      { org: ORG, actor: USER.id, kind: 'user', capability: 'media.recover', type: 'media_job', id: job.id });
+    assert.equal(requested.detail.operation_id, OPERATION);
+    assert.deepEqual(requested.detail.before, { status: 'queued', outcome: null, reservation_state: 'reserved', provider_request_id: null });
+    const resolved = st.audit.find((row) => row.event === 'media_operation.resolved');
+    assert.deepEqual(resolved.detail.after, { status: 'failed', released_usd_micros: 12000, provider_request_id: null });
+    assert.equal(job.status, 'failed');
+    assert.equal(job.routing.reservation_state, 'released');
+    /* the same decision again is the decision on record */
+    const again = await api(`/v1/media/jobs/${job.id}/reconcile`, { method: 'POST', token: OWNER_TOKEN, body: { org_id: ORG, decision: 'release', reason: 'again' } });
+    assert.equal(again.status, 200);
+    assert.equal(again.body.outcome, 'already_resolved');
+    assert.equal(st.releases, 1);
+  } finally { st.restore(); }
+});
+
+test('operator decision with the audit ledger down: 503, and the decision is not applied', async () => {
+  const st = plane({ sessions, auditFails: true });
+  try {
+    const job = seedJob(st);
+    const answer = await api(`/v1/media/jobs/${job.id}/reconcile`, { method: 'POST', token: OWNER_TOKEN, body: { org_id: ORG, decision: 'release', reason: 'never submitted' } });
+    assert.equal(answer.status, 503);
+    assert.match(answer.body.error, /audit ledger is unavailable/);
+    assert.equal(st.rpcCalls('media_resolve_operation_job_v1').length, 0, 'the decision function was never called');
+    assert.equal(job.status, 'queued');
+    assert.equal(job.routing.reservation_state, 'reserved');
+  } finally { st.restore(); }
+});
+
+test('operator decisions the database refuses: a live provider request is 409, a job outside the organization is 404, an invalid decision is 400, each recorded as refused', async () => {
+  const st = plane({ sessions });
+  try {
+    const live = seedJob(st, { status: 'running', provider_request_id: 'req-live', provider_status: { outcome: 'submitted' } });
+    const conflict = await api(`/v1/media/jobs/${live.id}/reconcile`, { method: 'POST', token: OWNER_TOKEN, body: { org_id: ORG, decision: 'release', reason: 'looks stuck', evidence: { looked: true } } });
+    assert.equal(conflict.status, 409);
+    assert.match(conflict.body.error, /job_has_provider_request/);
+    assert.equal(conflict.body.detail.refusal, 'job_has_provider_request');
+    assert.equal(live.status, 'running');
+    assert.equal(st.audit.at(-1).event, 'media_operation.resolve_refused');
+    assert.equal(st.audit.at(-1).detail.refusal, 'job_has_provider_request');
+
+    /* another organization's id in the request: the job is not found there */
+    const elsewhere = await api(`/v1/media/jobs/${live.id}/reconcile`, { method: 'POST', token: OWNER_TOKEN, body: { org_id: OTHER_ORG, decision: 'release', reason: 'wrong org' } });
+    assert.equal(elsewhere.status, 404);
+    assert.equal(st.rpcCalls('media_resolve_operation_job_v1').length, 1, 'refused before the decision function');
+
+    const oneOff = seedJob(st, { routing: { operation_id: undefined } });
+    const invalid = await api(`/v1/media/jobs/${oneOff.id}/reconcile`, { method: 'POST', token: OWNER_TOKEN, body: { org_id: ORG, decision: 'bind', reason: 'bind a one-off' } });
+    assert.equal(invalid.status, 400);
+    assert.equal(invalid.body.error, 'job carries no operation_id');
+
+    const uncertain = seedJob(st, { status: 'reconciling', provider_status: { outcome: 'uncertain' }, routing: { operation_id: 'uncertain-operation' } });
+    const needsEvidence = await api(`/v1/media/jobs/${uncertain.id}/reconcile`, { method: 'POST', token: OWNER_TOKEN, body: { org_id: ORG, decision: 'release', reason: 'no evidence given' } });
+    assert.equal(needsEvidence.status, 409);
+    assert.match(needsEvidence.body.error, /release_requires_evidence/);
+    assert.equal(uncertain.routing.reservation_state, 'reserved');
+  } finally { st.restore(); }
+});
+
+test('the organization binding is the database\'s, not only the handler\'s pre-read: a job that leaves the organization before the decision is 404', async () => {
+  let moved = false;
+  const st = plane({
+    sessions,
+    intercept: ({ url, body }, state) => {
+      if (!moved && url.endsWith('/rest/v1/control_audit') && body?.event === 'media_operation.resolve_requested') {
+        moved = true;
+        state.onlyJob().org_id = OTHER_ORG;
+      }
+      return undefined;
+    }
+  });
+  try {
+    const job = seedJob(st);
+    const answer = await api(`/v1/media/jobs/${job.id}/reconcile`, { method: 'POST', token: OWNER_TOKEN, body: { org_id: ORG, decision: 'release', reason: 'never submitted' } });
+    assert.equal(answer.status, 404);
+    assert.equal(st.rpcCalls('media_resolve_operation_job_v1').length, 1);
+    assert.equal(job.status, 'queued');
+    assert.equal(st.audit.at(-1).detail.refusal, 'job_not_in_org');
+  } finally { st.restore(); }
+});
+
+test('operator settle and bind: the request id is validated and attached, the refresh path takes over; bind returns the repaired claim', async () => {
+  const st = plane({ sessions });
+  try {
+    const uncertain = seedJob(st, { status: 'reconciling', provider_status: { outcome: 'uncertain' }, error: { message: 'timeout', uncertain: true, stage: 'submit' } });
+    for (const bad of [undefined, '', 'has spaces', 'x'.repeat(201)]) {
+      const refused = await api(`/v1/media/jobs/${uncertain.id}/reconcile`, { method: 'POST', token: OWNER_TOKEN, body: { org_id: ORG, decision: 'settle', reason: 'found in the console', provider_request_id: bad } });
+      assert.equal(refused.status, 400, String(bad));
+    }
+    assert.equal(st.audit.length, 0, 'an invalid request writes nothing');
+    const settled = await api(`/v1/media/jobs/${uncertain.id}/reconcile`, { method: 'POST', token: OWNER_TOKEN, body: { org_id: ORG, decision: 'settle', reason: 'found in the console', provider_request_id: ' req-console-1 ' } });
+    assert.equal(settled.status, 200);
+    assert.equal(settled.body.outcome, 'settled');
+    assert.equal(settled.body.status, 'queued');
+    assert.equal(uncertain.provider_request_id, 'req-console-1');
+    assert.deepEqual(uncertain.error, {});
+    assert.equal(uncertain.routing.reservation_state, 'reserved', 'settle never moves money');
+    assert.equal(st.releaseCalls, 0);
+    assert.equal(st.rpcCalls('media_resolve_operation_job_v1').at(-1).body.p_provider_request_id, 'req-console-1');
+    /* a member's read (or the sweep) now finishes it by that request id */
+    const { job: after } = await getGeneration(jobRequest(uncertain.id), env, USER, uncertain.id, true, {
+      status: async (_env, _model, requestId) => { assert.equal(requestId, 'req-console-1'); return { status: 'COMPLETED' }; },
+      result: async () => ({ data: IMAGE, request_id: 'req-console-1' })
+    });
+    assert.equal(after.status, 'completed');
+    assert.equal(st.assets.length, 1);
+
+    await seedClaim(st, { operation_id: 'claimed-operation' });
+    st.claims.set(`${ORG}:claimed-operation`, st.claims.get(KEY));
+    st.claims.delete(KEY);
+    const unbound = seedJob(st, { routing: { operation_id: 'claimed-operation' } });
+    const bound = await api(`/v1/media/jobs/${unbound.id}/reconcile`, { method: 'POST', token: OWNER_TOKEN, body: { org_id: ORG, decision: 'bind', reason: 'the winner stopped before the bind' } });
+    assert.equal(bound.status, 200);
+    assert.equal(bound.body.outcome, 'repaired');
+    assert.equal(bound.body.claim.state, 'bound');
+    assert.equal(bound.body.claim.job_id, unbound.id);
+    assert.equal(bound.body.claim.resolution.by, 'operator');
+    assert.equal(unbound.status, 'queued', 'a bind moves neither the job nor its money');
+  } finally { st.restore(); }
+});
+
+test('operator request validation: every malformed decision is 400 before anything is read or written', async () => {
+  const st = plane({ sessions });
+  try {
+    const job = seedJob(st);
+    const post = (body) => api(`/v1/media/jobs/${job.id}/reconcile`, { method: 'POST', token: OWNER_TOKEN, body });
+    for (const [name, body] of [
+      ['no organization', { decision: 'release', reason: 'never submitted' }],
+      ['an organization that is not a uuid', { org_id: 'mine', decision: 'release', reason: 'never submitted' }],
+      ['an unknown decision', { org_id: ORG, decision: 'abandon', reason: 'never submitted' }],
+      ['no reason', { org_id: ORG, decision: 'release' }],
+      ['a two-character reason', { org_id: ORG, decision: 'release', reason: 'no' }],
+      ['a 501-character reason', { org_id: ORG, decision: 'release', reason: 'x'.repeat(501) }],
+      ['evidence that is an array', { org_id: ORG, decision: 'release', reason: 'never submitted', evidence: ['looked'] }],
+      ['evidence that is a string', { org_id: ORG, decision: 'release', reason: 'never submitted', evidence: 'looked' }],
+      ['oversized evidence', { org_id: ORG, decision: 'release', reason: 'never submitted', evidence: { note: 'x'.repeat(9000) } }],
+      ['a body that is not JSON', 'not json']
+    ]) {
+      assert.equal((await post(body)).status, 400, name);
+    }
+    assert.equal(st.rpcs.length, 0);
+    assert.equal(st.audit.length, 0);
+    assert.equal(st.lookups, 0, 'the job was never read');
+  } finally { st.restore(); }
+});
+
+test('GET /v1/media/recovery: the house owner reads the candidates, scoped and bounded by the query; the answer is never cached', async () => {
+  const body = { generated_at: 'now', older_than: '00:30:00', counts: { pollable_stale: 1 }, by_org: [{ org_id: ORG, counts: { pollable_stale: 1 } }], candidates: [{ class: 'pollable_stale', org_id: ORG }] };
+  const st = plane({ sessions, candidates: body });
+  try {
+    const all = await api('/v1/media/recovery', { token: OWNER_TOKEN });
+    assert.equal(all.status, 200);
+    assert.deepEqual(all.body, body);
+    assert.equal(all.headers.get('cache-control'), 'private, no-store');
+    assert.deepEqual(st.rpcCalls('media_operation_recovery_candidates_v1')[0].body, { p_org_id: null, p_older_than: '15 minutes', p_limit: 50 });
+    const scoped = await api(`/v1/media/recovery?org_id=${ORG}&older_than_minutes=30&limit=10`, { token: OWNER_TOKEN });
+    assert.equal(scoped.status, 200);
+    assert.deepEqual(st.rpcCalls('media_operation_recovery_candidates_v1')[1].body, { p_org_id: ORG, p_older_than: '30 minutes', p_limit: 10 });
+    for (const query of ['org_id=mine', 'older_than_minutes=0', 'older_than_minutes=1441', 'older_than_minutes=abc', 'limit=0', 'limit=201', 'limit=1.5']) {
+      assert.equal((await api(`/v1/media/recovery?${query}`, { token: OWNER_TOKEN })).status, 400, query);
+    }
+    assert.equal(st.rpcCalls('media_operation_recovery_candidates_v1').length, 2);
+    /* the job read stays what it was: membership, not the operator gate */
+    assert.equal((await api('/v1/media/recovery', { method: 'POST', token: OWNER_TOKEN, body: {} })).status, 404);
+  } finally { st.restore(); }
+});
+
+test('operator routes before media_operation_claims_v2.sql is applied answer 503 recovery_unavailable', async () => {
+  const st = plane({ sessions, missing: V2_FUNCTIONS });
+  try {
+    const job = seedJob(st);
+    const list = await api('/v1/media/recovery', { token: OWNER_TOKEN });
+    assert.equal(list.status, 503);
+    assert.match(list.body.error, /media_operation_claims_v2\.sql is not applied/);
+    const decide = await api(`/v1/media/jobs/${job.id}/reconcile`, { method: 'POST', token: OWNER_TOKEN, body: { org_id: ORG, decision: 'release', reason: 'never submitted' } });
+    assert.equal(decide.status, 503);
+    assert.equal(job.status, 'queued');
+    assert.equal(st.audit.at(-1).event, 'media_operation.resolve_refused');
+  } finally { st.restore(); }
+});
+
+test('there must be exactly one house owner: with none or two the operator routes are 503, never open', async () => {
+  for (const houseOwners of [[], [USER.id, MEMBER.id]]) {
+    const st = plane({ sessions, houseOwners });
+    try {
+      const answer = await api('/v1/media/recovery', { token: OWNER_TOKEN });
+      assert.equal(answer.status, 503);
+      assert.equal(st.rpcs.length, 0);
+    } finally { st.restore(); }
+  }
+});
+
+test('the hinted webhook path reaches the webhook handler; anything else under it does not', async () => {
+  const st = plane();
+  try {
+    const job = seedJob(st);
+    const hint = await hintFor(job.id);
+    for (const path of ['/v1/media/webhooks/fal', `/v1/media/webhooks/fal/${job.id}/${hint.token}`, `/v1/media/webhooks/fal/${job.id}/${hint.token}/`]) {
+      const answer = await api(path, { method: 'POST', body: {} });
+      assert.equal(answer.status, 401, path);
+      assert.equal(answer.body.error, 'Missing fal webhook signature headers');
+    }
+    for (const path of [`/v1/media/webhooks/fal/${job.id}`, `/v1/media/webhooks/fal/${job.id}/${hint.token.slice(0, 42)}`, `/v1/media/webhooks/fal/${job.id.toUpperCase()}/${hint.token}`, `/v1/media/webhooks/fal/not-a-job/${hint.token}`, `/v1/media/webhooks/fal/${job.id}/${hint.token}/extra`]) {
+      assert.equal((await api(path, { method: 'POST', body: {} })).status, 404, path);
+    }
+    assert.equal(st.patchLog.length, 0);
+  } finally { st.restore(); }
+});
+
+/* ================================== MCP tools ================================== */
+
+const mcp = (name, args, user, mcpEnv = env) => handleMediaMcp(new Request('https://api.mccluster.org/v1/media/mcp', {
+  method: 'POST', headers: { 'content-type': 'application/json', 'mcp-method': 'tools/call' },
+  body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name, arguments: args } })
+}), mcpEnv, user);
+
+test('the recovery MCP tools are listed, refused for an ordinary signed-in user and work for the house owner', async () => {
+  const listed = await handleMediaMcp(new Request('https://api.mccluster.org/v1/media/mcp', {
+    method: 'POST', headers: { 'content-type': 'application/json', 'mcp-method': 'tools/list' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' })
+  }), env, null);
+  const tools = new Map(listed.body.result.tools.map((tool) => [tool.name, tool]));
+  assert.deepEqual(tools.get('media.job.reconcile').inputSchema.required, ['org_id', 'job_id', 'decision', 'reason']);
+  assert.deepEqual(tools.get('media.job.reconcile').inputSchema.properties.decision.enum, ['release', 'settle', 'bind']);
+  assert.ok(tools.has('media.recovery.list'));
+
+  const candidates = { generated_at: 'now', older_than: '00:15:00', counts: { failed_still_reserved: 1 }, by_org: [], candidates: [] };
+  const st = plane({ candidates });
+  try {
+    const job = seedJob(st);
+    const args = { org_id: ORG, job_id: job.id, decision: 'release', reason: 'never submitted' };
+    for (const [name, toolArgs] of [['media.recovery.list', {}], ['media.job.reconcile', args]]) {
+      const refused = await mcp(name, toolArgs, { id: MEMBER.id });
+      assert.equal(refused.status, 200);
+      assert.equal(refused.body.result.isError, true, name);
+      assert.equal(refused.body.result.content[0].text, 'House owner access is required');
+      assert.equal((await mcp(name, toolArgs, null)).status, 401, 'no user at all');
+    }
+    assert.equal(st.rpcs.length, 0);
+    assert.equal(st.audit.length, 0);
+    assert.equal(job.status, 'queued');
+
+    const list = await mcp('media.recovery.list', { org_id: ORG, older_than_minutes: 20, limit: 5 }, USER);
+    assert.equal(list.body.result.isError, undefined);
+    assert.deepEqual(JSON.parse(list.body.result.content[0].text), candidates);
+    assert.deepEqual(st.rpcCalls('media_operation_recovery_candidates_v1')[0].body, { p_org_id: ORG, p_older_than: '20 minutes', p_limit: 5 });
+
+    const decided = await mcp('media.job.reconcile', args, USER);
+    assert.equal(decided.body.result.isError, undefined);
+    const outcome = JSON.parse(decided.body.result.content[0].text);
+    assert.equal(outcome.outcome, 'released');
+    assert.equal(outcome.job_id, job.id);
+    assert.equal(job.status, 'failed');
+    assert.equal(st.audit.find((row) => row.event === 'media_operation.resolve_requested').actor_user_id, USER.id);
+    /* a refusal is a tool-result error that names the reason */
+    const again = await mcp('media.job.reconcile', { ...args, decision: 'bind' }, USER);
+    assert.equal(again.body.result.isError, true);
+    assert.match(again.body.result.content[0].text, /job_already_resolved/);
   } finally { st.restore(); }
 });

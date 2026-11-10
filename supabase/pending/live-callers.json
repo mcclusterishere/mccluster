@@ -375,11 +375,25 @@
         "workers/mccluster/src/media/router.js"
       ]
     },
+    "media_operation_recovery_candidates_v1": {
+      "kind": "function",
+      "pending": "media_operation_claims_v2.sql",
+      "callers": [
+        "workers/mccluster/src/media/recovery.js"
+      ]
+    },
     "media_release_cost_reservation_v2": {
       "kind": "function",
       "pending": "media_operation_claims_v2.sql",
       "callers": [
         "workers/mccluster/src/media/router.js"
+      ]
+    },
+    "media_resolve_operation_job_v1": {
+      "kind": "function",
+      "pending": "media_operation_claims_v2.sql",
+      "callers": [
+        "workers/mccluster/src/media/recovery.js"
       ]
     },
     "member_fronts": {
