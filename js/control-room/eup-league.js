@@ -548,8 +548,16 @@
       }).then(function () {
         if (stop || dead(g)) return;
         say(L.outcomes[slot].text);
-        return load();
+        return load().then(function () { if (!dead(g)) refocus('league:outcome:' + slot); });
       });
+    }
+    /* When the control that had focus is gone after a redraw (Release became Pause, a confirm closed), focus lands on
+       what changed instead of the page body. Focus that is anywhere else is left alone. */
+    function refocus(key) {
+      if (typeof document === 'undefined') return;
+      var a = document.activeElement;
+      if (a && a !== document.body && a.isConnected !== false) return;
+      focusKey(key);
     }
     /* The read-back of an unknown outcome: the store's receipt for this action and key. Resolves true when the
        workspace was concealed meanwhile. */
@@ -590,7 +598,7 @@
       var sent = o.command;
       L.outcomes[slot] = { kind: 'pending', text: sent.label + ': reading its receipt again (key ' + sent.key.slice(0, 8) + '…).', command: sent };
       redraw();
-      receipt(sent, g).then(function (gone) { if (gone || dead(g)) return; say(L.outcomes[slot].text); return load(); });
+      receipt(sent, g).then(function (gone) { if (gone || dead(g)) return; say(L.outcomes[slot].text); return load().then(function () { if (!dead(g)) refocus('league:outcome:' + slot); }); });
     }
 
     /* ---------- forms ---------- */
@@ -653,7 +661,7 @@
     function outcome(slot) {
       var o = L.outcomes[slot];
       if (!o) return '';
-      return '<p class="cr-eup__note cr-eup__note--' + esc(o.kind) + '" data-eup-note="' + esc(o.kind) + '" data-eup-league-outcome="' + esc(slot + ':' + o.kind) + '">' + esc(o.text) + '</p>' +
+      return '<p class="cr-eup__note cr-eup__note--' + esc(o.kind) + '" tabindex="-1" data-eup-note="' + esc(o.kind) + '" data-eup-league-outcome="' + esc(slot + ':' + o.kind) + '" data-eup-focus="league:outcome:' + esc(slot) + '">' + esc(o.text) + '</p>' +
         (o.resend && o.command ? actions(doButton('resend', slot, 'Send the same command again')) + line('It carries the same key, so the store records it at most once.') : '') +
         (o.receiptAgain && o.command ? actions(doButton('receipt', slot, 'Read the receipt again')) : '');
     }
@@ -923,7 +931,7 @@
       if (!rec) return html + line('Requested. The text is restricted: each read is recorded with your account and the time, never the content.') + actions(doButton('accommodation', a.id, 'Read the accommodation request'));
       if (s) return html + s + actions(doButton('accommodation-hide', a.id, 'Close'));
       var r = rec.data, text = isObject(r.accommodation) && typeof r.accommodation.statement === 'string' ? r.accommodation.statement : null;
-      return html + (text === null ? line('The applicant has no accommodation request on file now.') : '<p class="cr-eup-league__text" data-eup-league-accommodation-text="' + esc(a.id) + '">' + esc(text) + '</p>') +
+      return html + (text === null ? line('The applicant has no accommodation request on file now.') : '<p class="cr-eup-league__text" tabindex="-1" data-eup-focus="league:accommodation:' + esc(a.id) + '" data-eup-league-accommodation-text="' + esc(a.id) + '">' + esc(text) + '</p>') +
         line('Read ' + when(r.read_at) + '. This read was recorded with your account and the time, not the text. It is dropped from this page when you leave the view.') + actions(doButton('accommodation-hide', a.id, 'Close'));
     }
     function viewApplications() {
@@ -974,7 +982,7 @@
     }
     function reviewPanel(p, ix) {
       var R = L.review, slot = 'proof:' + p.id, F = 'review:' + p.id;
-      var html = '<section class="cr-eup-league__review" data-eup-league-review-panel="' + esc(p.id) + '" aria-label="Review of revision ' + esc(R.revision) + '"><h4>Review of revision ' + esc(R.revision) + '</h4>';
+      var html = '<section class="cr-eup-league__review" tabindex="-1" data-eup-focus="league:review:' + esc(p.id) + '" data-eup-league-review-panel="' + esc(p.id) + '" aria-label="Review of revision ' + esc(R.revision) + '"><h4>Review of revision ' + esc(R.revision) + '</h4>';
       if (R.loading) return html + note('loading', 'Opening revision ' + R.revision + ' and its media…') + '</section>';
       if (R.error) return html + readNote(R.error, 'the proof under review') + actions(doButton('review', p.id, 'Open the current revision') + doButton('review-close', p.id, 'Close')) + '</section>';
       var proof = R.proof, doc = isObject(proof.document) ? proof.document : {}, rights = isObject(doc.rights) ? doc.rights : {}, uploads = Array.isArray(proof.uploads) ? proof.uploads.filter(isObject) : [];
@@ -1282,7 +1290,7 @@
         if (ownerLost(err)) { host.concealed(err); return; }
         dropLinks();
         L.review = { proofId: proofId, revision: revision, error: err };
-      }).then(function () { if (!dead(g, p)) redraw(); });
+      }).then(function () { if (dead(g, p)) return; redraw(); refocus('league:review:' + proofId); });
     }
     /* The media elements: made once per link, moved into their placeholder after every redraw so a redraw never stops
        playback (an element re-inserted in the same task is not paused). */
@@ -1311,14 +1319,14 @@
         case 'receipt': return receiptAgain(id);
         case 'edit': if (L.open['edit:' + id]) { delete L.open['edit:' + id]; clearForm('mission:' + id); } else L.open['edit:' + id] = true; return redraw();
         case 'preview': return recordRead('preview', id);
-        case 'preview-hide': delete L.records['preview:' + id]; return redraw();
-        case 'accommodation': return recordRead('accommodation', id);
-        case 'accommodation-hide': delete L.records['accommodation:' + id]; return redraw();
+        case 'preview-hide': delete L.records['preview:' + id]; redraw(); return refocus('league:do:preview:' + id);
+        case 'accommodation': return recordRead('accommodation', id).then(function () { refocus('league:accommodation:' + id); });
+        case 'accommodation-hide': delete L.records['accommodation:' + id]; redraw(); return refocus('league:do:accommodation:' + id);
         /* a destructive step asks once; focus lands on the choice that keeps things as they are */
         case 'confirm': L.open['confirm:' + id] = true; redraw(); return focusKey('league:do:cancel:' + id);
         case 'cancel': delete L.open['confirm:' + id]; redraw(); return focusKey('league:do:confirm:' + id);
         case 'review': return openReview(id);
-        case 'review-close': closeReview(); return redraw();
+        case 'review-close': closeReview(); redraw(); return refocus('league:do:review:' + id);
         case 'filter': {
           var f = collect(lastPane, 'filter:' + id), v = String(f.value || '');
           if (FILTERS[id] && FILTERS[id].indexOf(v) >= 0) { L.filters[id] = v; if (id === 'proofs') closeReview(); return read(id); }
