@@ -73,7 +73,26 @@ try {
   // The accepted receipt leaves the outbox; the fresh local ready run from the restart above is unaffected.
   assert.deepEqual(await outbox(),[]);assert.equal(JSON.parse(await page.evaluate(key=>localStorage.getItem(key),key))?.pending??null,null);
   const rows=await database.db.query('select id from arcade_runs where id=$1 and actor=$2',[pending.cloudRun,OWNER]);
-  assert.equal(rows.rows.length,1);assert.equal(finishes,2);assert.deepEqual(errors,[]);
-  await context.close();console.log('PASS',width,'accepted-response loss, reload, revoked denial, reconnect and idempotent retry');
+  assert.equal(rows.rows.length,1);assert.equal(finishes,2);
+  // Retry: a second run whose accepted finish response is also lost is restored after a reload and saved with Retry.
+  drop=true;
+  await page.locator('[data-sole-load]').click();
+  await page.waitForFunction(()=>document.querySelector('[data-sole-cloud-status]').textContent.startsWith('Loaded private'));
+  await page.locator('[data-sole-cloud-play]').click();
+  await page.waitForFunction(()=>document.querySelector('[data-sole-cloud-status]').textContent.includes('Playing private'));
+  await page.locator('[data-sole-pause]').click();
+  await page.evaluate(key=>{window.dispose();const s=JSON.parse(localStorage.getItem(key));s.remaining=.01;localStorage.setItem(key,JSON.stringify(s));},key);
+  await page.reload();await mount();await page.locator('[data-sole-start]').click();
+  await page.waitForFunction(()=>document.querySelector('[data-sole-cloud-status]').textContent.includes('Local play and device saves remain available.')&&!document.querySelector('[data-sole-cloud-status]').textContent.startsWith('Checking'));
+  const second=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),key);
+  assert.equal(finishes,3);assert.notEqual(second.cloudRun,pending.cloudRun);assert.equal((await outbox())[0]?.id,second.cloudRun);
+  await page.reload();await mount();await page.locator('summary').click();
+  await page.waitForFunction(()=>document.querySelector('[data-sole-cloud-status]').textContent.startsWith('Completed run restored'));
+  await page.locator('[data-sole-retry]').click();
+  await page.waitForFunction(()=>document.querySelector('[data-sole-cloud-status]').textContent.includes('Practice result saved'));
+  assert.deepEqual(await outbox(),[]);assert.equal(finishes,4);
+  assert.equal((await database.db.query('select count(*)::int as n from arcade_runs where id=$1 and actor=$2 and status=$3',[second.cloudRun,OWNER,'failed'])).rows[0].n,1);
+  assert.deepEqual(errors,[]);
+  await context.close();console.log('PASS',width,'accepted-response loss, reload, revoked denial, Reconnect, and Retry of a second lost response');
  }
 }finally{await browser.close();await database.close();}

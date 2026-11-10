@@ -126,6 +126,17 @@ for(const kind of ['sole','tea']){
   for(const b of [retryButton(kind),discardButton(kind),reconnectButton(kind)])assert.equal(root.querySelector(b).hidden,true,b+' hidden once saved');
   dispose();
  });
+ test(`${kind}: Retry sends the waiting result and settles it once the server accepts it`,async()=>{
+  seed(kind);capability=true;routes['POST /finish/'+run]=()=>Response.json({ok:true,value:{id:run,status:'failed',served:0,score:0}});
+  const finished=[];const root=new Element(),dispose=kind==='sole'?mountSoleStreet(root,r=>finished.push(r),{locationId:id,point,neighborhood,onReturn(){}}):mountTea(root,r=>finished.push(r),{locationId:id,onReturn(){}});
+  await until(()=>/restored/i.test(status(root)),'cloud ready with a waiting result');
+  assert.equal(root.querySelector(retryButton(kind)).disabled,false);root.querySelector(retryButton(kind)).click();
+  await until(()=>/Practice result saved/.test(status(root)),'result saved through retry');
+  assert.deepEqual(requests.filter(r=>r.method==='POST'&&r.path==='/finish/'+run).map(r=>r.body),[pendingBody(kind)]);
+  assert.deepEqual(readOutbox('owner-a'),[]);assert.equal(finished.at(-1)?.cloud,'saved');
+  for(const b of [retryButton(kind),discardButton(kind),reconnectButton(kind)])assert.equal(root.querySelector(b).hidden,true,b+' hidden once saved');
+  dispose();
+ });
  test(`${kind}: a 409 on finish keeps its own message, the receipt and discard`,async()=>{
   seed(kind);capability=true;routes['POST /finish/'+run]=()=>Response.json({ok:false,error:'Mission or result changed. Reload before retrying.'},{status:409});
   const root=new Element(),dispose=mount(kind,root);
