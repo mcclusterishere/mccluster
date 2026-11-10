@@ -167,3 +167,22 @@ test('the activate table states the exit status the setup script really exits wi
   assert.ok(row, 'the table quotes that message');
   assert.match(row, new RegExp(`exit status ${unreadable[2]} \\|`));
 });
+
+test('every instruction that removes the SSH drop-in says it works only while the repository is public (RB-6)', async () => {
+  const [runbook, unit, reconciler] = await Promise.all([
+    read(RUNBOOK), read('core/systemd/mccluster-vps-reconcile.service'), read('scripts/mccluster-vps-reconcile.sh'),
+  ]);
+  // Without the drop-in the reconciler fetches anonymously over HTTPS, which a private repository refuses.
+  assert.match(unit, /^Environment=MCCLUSTER_REPO_URL=https:\/\/github\.com\/mcclusterishere\/mccluster\.git$/m);
+  assert.match(reconciler, /^REPO_URL="\$\{MCCLUSTER_REPO_URL:-https:\/\/github\.com\/mcclusterishere\/mccluster\.git\}"$/m);
+  const blocks = runbook.split(/\n\s*\n/);
+  const removal = /rm \/etc\/systemd\/system\/mccluster-vps-reconcile\.service\.d\/50-github-readonly-ssh\.conf/;
+  const removals = blocks.map((block, index) => ({ block, index })).filter(({ block }) => removal.test(block));
+  assert.ok(removals.length >= 2, 'the key-rotation note and the way back both remove the drop-in');
+  for (const { block, index } of removals) {
+    const context = block.startsWith('```') ? blocks[index - 1] : block;
+    assert.match(context, /while the repository is (still )?public/i, `removing the drop-in is not limited to a public repository: ${context}`);
+  }
+  assert.match(section(runbook, '## Step 6.'), /Once it is private, switch visibility back to public first \(step 8\.5\), then remove the drop-in\./);
+  assert.match(section(runbook, '## Step 8.'), /\n5\. If a cycle fails, switch back to public at once/);
+});
