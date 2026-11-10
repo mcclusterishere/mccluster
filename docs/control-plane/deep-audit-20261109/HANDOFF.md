@@ -1,9 +1,63 @@
 # Deep-audit response handoff, 9 November 2026
 
-> **Session 2 (later on 2026-11-09) is recorded first; the original session follows unchanged below it.**
+> **Session 3 (2026-11-09 evening into 2026-11-10 UTC) is recorded first, then session 2, then the original session, each unchanged below the newer one.**
+
+## Session 3: the fourth applied release, production evidence, C5 identifiers, media signing
+
+Branch `claude/new-session-83ken5`; main still `578e6830`. This section covers commits `f3add4db` to `c550f129`. Nothing was merged, deployed or applied to a database by this session. Production was read with single SELECT statements only.
+
+### What changed on the branch
+
+| Area | What changed | Commit |
+| --- | --- | --- |
+| Fourth applied release | The owner's release workers applied `media_operation_claims_v1` to production as `20261109194957`. The exact SQL moved from `supabase/pending/` to `supabase/migrations/20261109194957_media_operation_claims_v1.sql` (SHA-256 `c1733f48…08c1`, 5895 bytes, equal to the statements production stores for that version). `supabase/production-ledger.json` and `core/drift-contract.json` are at 363 (ledger digest `90b735eb844eaf336df508cd5ecc15b980518c12108ff3f48b9edbf373f552ef`, the value `system_migration_attestation()` returns live). | `145744f1` |
+| Production schema evidence | `docs/control-plane/evidence/production-schema-snapshot-2026-11-09.json`, captured 2026-11-09T22:17:37Z through a SELECT-only connection; every section rebuilt from the 2026-11-03 snapshot plus the rows the four releases touched and accepted only when it hashed to the database's own md5 of the full section. Outside the four releases nothing changed since 3 November (ledger +4; relations +8 and 3 changed; functions +12 and 3 replaced; triggers +4; policies, buckets, extensions, schemas and cron jobs identical). `live-callers.json` `applied_awaiting_evidence` and `ledger-receipts.json` `applied_after_snapshot` are now empty. Method and digests: `docs/control-plane/evidence/releases-2026-11-09/CLAIMS-APPLIED-VERIFICATION.md`. | `145744f1` |
+| Snapshot tooling | `scripts/db/snapshot-delta.mjs`: asks the database for only the rows a release touched, proves the untouched rows by md5 and refuses to write unless the rebuilt section hashes to the database's md5. One SELECT per section; connects to nothing itself. | `5e6d07ab` |
+| C5, job-scoped operation id | `core/src/tools/registry.mjs` now forwards `operationId`, `operationIds`, `retries` and `timeoutMs` to the transport (it forwarded none, so a later logical call minted a new id). `scopedOperationId(job, step)` gives `core:<job>:<step>`; the game-studio cycle sends it. | `f3add4db` |
+| C5, comparison child ids | `childOperationId(parent, model)` in `workers/mccluster/src/media/orchestrator.js`: the plain join when it fits in 128 characters, otherwise a shortened parent plus an FNV-1a digest of the full parent plus the model, so a maximum-length parent can no longer erase the model suffix and collide. | `f3add4db` |
+| Media signing (new finding, not in the 27) | Every Worker route that signs a `network_media_assets` row now proves the row is its owner's own upload first and signs only bucket `mnet-media`. See "Media signing" below. | `3374dfcb`, `a248ced8`, `c550f129` |
+
+### Media signing
+
+`public.network_media_assets` rows are written by their owner and nothing in the database pins `bucket_id` or `object_path`. Four Worker routes signed whatever a row named with the service role: the two reviewer routes for mission proofs and Anti-Social clips, the FBI photo signer (public board, one case, "my cases", the desk) and the clipping source-file route. A member who edited their own row could therefore obtain a signed link to an object that was not theirs. `workers/mccluster/src/lib/media-storage.js` now applies the media function's own rule before anything is signed: bucket `mnet-media`, path `<auth user uuid>/<uuid>-<name>`, and that auth user linked to the row's owner in `m_auth_user_links`; unproven rows are left out and a failed link read is an error, never "linked". The proof and the storage path come from one call (`ownMediaSignPath`).
+
+- Tests: `mission-proof-media` 9, `fbi` 18, `clipping` 11, `media-storage` 7 (45). Ten of the original regression tests fail on the pre-fix source. A 19-edit mutation sweep of the fix fails a test 18 times; the survivor is unobservable (it signs the row's own bucket after the proof has shown it equals the upload bucket).
+- Independent review, three lenses (bypass, completeness, regression): no bypass in 1,000,000 mutated paths and 52,000 fuzzed route requests against an independent oracle; the Worker rule and the media function's rule agree on every input tried and are now also compared as source lines.
+- Production, read-only, 2026-11-09 23:51 UTC (`scripts/db/media-asset-legacy-count.sql`): 4 asset rows, none outside the rule, 1 named by a reviewed surface, none of which would stop being served. The deployed `mnet-media` function (version 619) applies the same rule in discard, finalize and view-url.
+- Still open, by design of this change: a member can replace a reviewed file with another of their own uploads (edit the row, delete and re-insert it, or overwrite the object in their own folder). Closing that needs a migration and storage-policy change; an unapplied candidate is proposed to the owner as a separate task. One unrelated finding from the review was reported to the owner privately and is not described in this public file.
+
+### Production reads this session (SELECT only)
+
+Ledger 363 with digest `90b735eb…` at 22:17 and again at 23:51 UTC. API role settings: `authenticator` statement and lock timeout 8 s, `authenticated` statement timeout 8 s, `anon` 3 s, `service_role` unset. Bucket `equity-uprise-private` exists, private, 104857600-byte object limit, no MIME list, 0 objects. `media_jobs` 18 rows, all `completed`; `media_operation_claims` 0 rows; `core_signed_nonces` 0 rows. Core `host_health` at 23:36, 23:41 and 23:47 UTC: `overall` fail with one issue, `supabase_migration_ledger_drift` (the deployed Core at `9c5b7503` expects 359, production has 363); local and public health 200; reconcile timer active; last deploy 2026-11-07T13:59:29Z.
+
+### Exact tests on this tree (Node v22.23.4)
+
+| Command | Result |
+| --- | --- |
+| `cd workers/mccluster && npm test` | 1625 pass, 0 fail |
+| `cd core && node --test test/*.test.mjs` | 595 pass, 0 fail (at `f3add4db`; Core unchanged since) |
+| `node --test --test-timeout=60000 scripts/test/*.test.mjs` | 2145 tests: 2142 pass, 0 fail, 3 pre-existing skips |
+| `node scripts/control-plane-drift-contract-check.mjs` | pass, 363 active migration files |
+| `node --test scripts/test/rpc-names-exist.test.mjs scripts/test/production-schema-verifier.test.mjs scripts/test/schema-snapshot-delta.test.mjs` | pass |
+| `python3 docs/design/equity-uprise-building/production/verify_equity_uprise_repo_sources.py` on a pristine copy | 2566 of 2566 checks |
+
+CI on `145744f1`: every check that runs passed. `Control workspace visual proof` failed once on a fixed 550 ms wait in `scripts/e2e/analytics-unified.e2e.mjs` (unchanged from main) and passed on its single re-run; the cause and a proposed patch are in one PR comment.
+
+### Gates, updated
+
+1. **Merge is still deploy.** The claims SQL prerequisite is now applied (`20261109194957`), so a paid generation carrying an `operation_id` no longer depends on unapplied SQL. `CORE_REPLAY_STORE="supabase"` ships with the Worker on merge. Keep `ARCADE_CLOUD_ENABLED` absent.
+2. **Evidence is regenerated.** Manifest from the CI reset, snapshot from production; the awaiting-evidence lists are empty.
+3. **Core on OVH reports fail until its contract moves.** The deployed Core compares production with the 359-entry contract at `9c5b7503`. The fix is a narrow change of `core/drift-contract.json` (and the files that justify it) promoted through `deploy/ovh-production`; it is the owner's to approve. Do not delete applied migrations, replay SQL or force the deploy ref.
+4. **Media signing reaches production only when the Worker deploys.** The production count shows no existing row is affected.
+5. Unchanged from session 2: E=Up pending SQL unapplied; consumer `world_environment` SQL held; A7, A2 and C6 decisions; #792/#787; COM-3, A3/A4, A6, W4, W5, C8 on their PRs.
+
+### Not on the branch at this commit
+
+Work in progress in this session and absent from this tree: the third C5 gap (crash and operator recovery between claim, reservation, binding and submission), Core evidence hardening for the OVH reconcile cycle, module policy composed into E=Up writes, the member mission loop, the commerce follow-ups from the release receipt, and the installable edition. Each is recorded here when it lands.
+
+---
 
 ## Session 2: reconciliation of the owner-run releases, C5 completion, admin-only E=Up
-
 Branch `claude/new-session-83ken5`; starting head `15523e187d1800dcbe7cd2c19f4ddfe6f203f556` (verified equal to the packet's snapshot; main still `578e6830`). Commits for this session are listed at the end of this section. Nothing was merged, deployed, applied to a database, or sent anywhere by this session.
 
 ### Completed source
