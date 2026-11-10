@@ -28,7 +28,8 @@
 --
 -- Module policy, composed into each transaction (one module per transaction: 'intake'):
 --   guarded (eup_module_guard: EUM01 not installed, EUM02 draining, EUM03 disabled,
---   EUM04 policy changed; 55P03 when the lock wait exceeds 5 s):
+--   EUM04 policy changed; 55P03 when the wait for the module lock exceeds 5 s, which is under the 8 s
+--   statement and lock timeouts the API login role and service_role run with):
 --     eup_sources_command refresh, resume, correct   after the actor check and after the
 --                                                    exact-replay return, before the first
 --                                                    domain lock or write
@@ -827,6 +828,8 @@ end $$;
 -- slow; the old lease can no longer finish or release it: EUI01). Only for a source that is configured,
 -- approved, not paused and whose rights have not expired; anything else stays queued. FOR UPDATE SKIP LOCKED:
 -- two claims never take the same run and neither waits for the other.
+-- A lease lasts 30 to 3600 seconds (default 300) and cannot be renewed: ask for one longer than the job. A lease
+-- that ran out still settles its run as long as no other claim has taken the run over.
 --   { claimed: false, policy_revision }
 --   { claimed: true, run_id, source_id, cursor, attempt, lease, lease_expires_at, policy_revision, reclaimed }
 create or replace function public.eup_import_run_claim(p_worker text, p_source_id text default null, p_lease_seconds integer default 300)
