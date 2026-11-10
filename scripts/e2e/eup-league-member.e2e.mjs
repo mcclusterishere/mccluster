@@ -35,6 +35,7 @@ const { chromium } = createRequire(join(process.env.PLAYWRIGHT_DIR || '/opt/node
 const PAGES = 'https://matthew.mccluster.org';
 const WORLD = 'https://mccluster.org';
 const UPSTREAM = 'https://pages.invalid'; // where the World host's router fetches the page from (served from SERVE)
+const PRODUCTION_SUPABASE = 'https://zmnhbrjyhxzhkxmhkexs.supabase.co'; // named only to compare headers; never requested
 const PATH = '/action/league.html';
 const TYPES = { '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.html': 'text/html; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.woff2': 'font/woff2' };
 const M = (rest = '') => `${C.PREFIX.member}${rest ? `/${rest}` : ''}`;
@@ -96,13 +97,20 @@ async function open(plane, viewport, as, { reduced = false } = {}) {
   await ctx.route('**/*', async (route) => {
     const req = route.request(), u = new URL(req.url());
     if (u.origin === PAGES) {
+      /* a blank document of the same origin, for "another tab" in the switching scenario */
+      if (u.pathname === '/__e2e_blank__') return route.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><title>Another tab</title><p>Another tab of the same site.</p>' });
       const r = await fileResponse(u.pathname);
       return route.fulfill({ status: r.status, headers: Object.fromEntries(r.headers.entries()), body: Buffer.from(await r.arrayBuffer()) });
     }
     if (u.origin === WORLD) {
       const r = await companySiteResponse(new Request(req.url(), { method: req.method(), headers: await req.allHeaders() }), { PUBLIC_ORIGIN: UPSTREAM }, upstreamFetch);
       if (!r) return route.abort();
-      return route.fulfill({ status: r.status, headers: Object.fromEntries(r.headers.entries()), body: Buffer.from(await r.arrayBuffer()) });
+      const headers = Object.fromEntries(r.headers.entries());
+      /* The plane stands in for the Supabase origin (its storage signs the grants), so the World's report-only policy
+         names the plane where it names that origin. Without this, every upload logs its signed grant URL, token
+         included, as a report-only violation; worldHost() checks the real header still allows the real origin. */
+      if (headers['content-security-policy-report-only']) headers['content-security-policy-report-only'] = headers['content-security-policy-report-only'].split(PRODUCTION_SUPABASE).join(plane.supabase);
+      return route.fulfill({ status: r.status, headers, body: Buffer.from(await r.arrayBuffer()) });
     }
     if (u.hostname.endsWith('supabase.co')) {
       if (u.pathname.startsWith('/rest/v1/site_content')) return route.fulfill(json([]));
@@ -404,12 +412,201 @@ async function journey(viewport) {
   } finally { await plane.close(); }
 }
 
+/* The tester with an accepted assignment, made over HTTP so a scenario can start in the workspace. */
+async function acceptedTester(plane, mission) {
+  const app = (await memberAs(plane, 'tester', 'POST', M(`missions/${mission.id}/application`), { idempotency_key: key('apply'), expected_revision: 0, application: { submit: true, requirements_revision: mission.requirements_revision, statement: 'Test fixture: switching.' } })).application;
+  const decided = (await owner(plane, 'POST', O(`applications/${app.id}/decision`), { idempotency_key: key('approve'), expected_revision: app.revision, decision: 'approved' })).application;
+  const a = decided.assignment;
+  await memberAs(plane, 'tester', 'POST', M(`assignments/${a.id}/accept`), { idempotency_key: key('accept'), expected_revision: a.revision, requirements_revision: mission.requirements_revision, notice_revision: (await owner(plane, 'GET', O('policy'))).policy.document.notices.participation.revision });
+  return a.id;
+}
+const switchTo = (page, session, event = true) => page.evaluate(({ session, event }) => {
+  localStorage.setItem('mccdb_session', session); localStorage.setItem('mcc_sess_keep', session);
+  if (event) window.dispatchEvent(new CustomEvent('mcc:auth-changed', { detail: { signed_in: true } }));
+  const main = document.querySelector('[data-eul-main]');
+  return { text: main ? main.innerText : '', inflight: document.getElementById('eulMount').eulController.inflight(),
+    tracksEnded: window.__eulStreams.every((x) => x.getTracks().every((y) => y.readyState === 'ended')),
+    urlsRevoked: window.__eulUrls.created.every((u) => window.__eulUrls.revoked.includes(u)),
+    media: [...document.querySelectorAll('[data-eul-main] audio[src], [data-eul-main] video[src]')].length };
+}, { session, event });
+
+/* Switching account mid-journey clears private data at once and never sends the old account's work as the new one. */
+async function switching(viewport) {
+  const scope = viewport.width + ' switching';
+  const plane = await createLeaguePlane();
+  try {
+    const { mission } = await plane.seed({ testers: ['tester'] });
+    const aid = await acceptedTester(plane, mission);
+    const s = await open(plane, viewport, 'tester');
+    const { page } = s;
+    const B = JSON.stringify(plane.session('tester_b')), A = JSON.stringify(plane.session('tester'));
+    await page.goto(PAGES + PATH);
+    await page.locator(`[data-eul-workspace="${aid}"]`).waitFor();
+    await page.locator(`[data-eul-focus="lyrics:${aid}"]`).fill('Private test fixture lyric that must vanish on an account switch');
+    await waitSaved(page, aid);
+
+    /* A. mcc:auth-changed while a recording runs and a draft save is in flight */
+    await clickAct(page, `record:audio:${aid}`);
+    await page.locator('[data-eul-recording]').waitFor();
+    check(scope, 'the recording dot pulses only when motion is not reduced', (await page.locator('.eul-rec__dot').evaluate((el) => getComputedStyle(el).animationName)) === 'eul-pulse');
+    const hang = plane.faults.add({ method: 'POST', path: M(`assignments/${aid}/draft`), as: 'tester', mode: 'hang' });
+    await page.locator(`[data-eul-focus="lyrics:${aid}"]`).fill('Private test fixture lyric that must vanish on an account switch, edited');
+    for (let i = 0; i < 60 && hang.hits === 0; i += 1) await page.waitForTimeout(100);
+    const logAt = plane.log.length;
+    const after = await switchTo(page, B);
+    check(scope, 'at the switch: the private DOM is cleared in the same task', !/Private test fixture lyric|Write a song/.test(after.text) && after.media === 0, after.text.slice(0, 200));
+    check(scope, 'at the switch: every request was aborted, every track stopped, every object URL revoked', hang.hits === 1 && after.inflight === 0 && after.tracksEnded && after.urlsRevoked, after);
+    await page.locator('[data-eul-unavailable="not_available"]').waitFor();
+    const afterLog = plane.log.slice(logAt);
+    check(scope, 'after the switch: nothing was sent for the old work, as either account', !afterLog.some((e) => e.method === 'POST') && afterLog.every((e) => e.as !== 'tester'), afterLog);
+    check(scope, 'after the switch: the new account sees only its own state (not available)', !/Private test fixture lyric/.test(await page.evaluate(() => document.body.innerText)));
+    await audit(scope, 'after an event switch', plane, s);
+
+    /* B. the session changed with no event: the identity guard at confirm sends nothing */
+    await switchTo(page, A);
+    await page.locator(`[data-eul-workspace="${aid}"]`).waitFor();
+    check(scope, 'switching back reads the first account again, with its saved draft', /Private test fixture lyric/.test(await page.locator(`[data-eul-focus="lyrics:${aid}"]`).inputValue()));
+    await switchTo(page, B, false);
+    const quietAt = plane.log.length;
+    await clickAct(page, `assign-withdraw:${aid}`);
+    await page.locator('[data-eul-unavailable="not_available"]').waitFor();
+    const quiet = plane.log.slice(quietAt);
+    check(scope, 'a command confirmed after a silent session change is not sent, and the page is cleared', !quiet.some((e) => e.method === 'POST') && !/Private test fixture lyric/.test(await page.evaluate(() => document.body.innerText)), quiet);
+    const me = (await memberAs(plane, 'tester', 'GET', M())).league;
+    check(scope, 'the first account\'s assignment was not withdrawn', me.assignments.find((x) => x.id === aid)?.status === 'accepted');
+
+    /* C. another tab signs in as someone else: the storage event clears this tab */
+    await switchTo(page, A);
+    await page.locator(`[data-eul-workspace="${aid}"]`).waitFor();
+    const other = await s.ctx.newPage();
+    await other.goto(PAGES + '/__e2e_blank__');
+    await other.evaluate((session) => { localStorage.setItem('mccdb_session', session); localStorage.setItem('mcc_sess_keep', session); }, B);
+    await page.locator('[data-eul-unavailable="not_available"]').waitFor();
+    check(scope, 'a session written by another tab for another account clears this tab', !/Private test fixture lyric/.test(await page.evaluate(() => document.body.innerText)));
+    await other.evaluate((session) => { localStorage.setItem('mccdb_session', session); localStorage.setItem('mcc_sess_keep', session); }, A);
+    await page.locator(`[data-eul-workspace="${aid}"]`).waitFor();
+    const refreshed = JSON.stringify({ ...plane.session('tester'), access_token: plane.signIn(ACCOUNTS.tester) });
+    await page.locator(`[data-eul-focus="lyrics:${aid}"]`).fill('Private test fixture lyric kept across a token refresh');
+    await other.evaluate((session) => { localStorage.setItem('mccdb_session', session); }, refreshed);
+    await page.waitForTimeout(400);
+    check(scope, 'a refreshed token for the same account clears nothing (unsaved text stays)', (await page.locator(`[data-eul-focus="lyrics:${aid}"]`).inputValue()) === 'Private test fixture lyric kept across a token refresh');
+    await waitSaved(page, aid);
+    check(scope, 'and the next save goes out with the refreshed token, as the same account', plane.log.filter((e) => e.method === 'POST' && e.path === M(`assignments/${aid}/draft`)).at(-1)?.as === 'signed-in');
+    await other.close();
+    await audit(scope, 'after the tab switches', plane, s);
+    await s.ctx.close();
+  } finally { await plane.close(); }
+}
+
+/* Keyboard only, with reduced motion: apply through the sheet, Escape, accept, type, and reach a refused button's reason. */
+async function keyboard(viewport) {
+  const scope = viewport.width + ' keyboard';
+  const plane = await createLeaguePlane();
+  try {
+    const { mission } = await plane.seed({ testers: ['tester'] });
+    const s = await open(plane, viewport, 'tester', { reduced: true });
+    const { page } = s;
+    await page.goto(PAGES + PATH);
+    await waitText(page, /Missions open to you/);
+    const focusKey = () => page.evaluate(() => document.activeElement?.getAttribute('data-eul-focus') || document.activeElement?.tagName || null);
+    async function tabTo(target, limit = 60, back = false) {
+      for (let i = 0; i < limit; i += 1) { if ((await focusKey()) === target) return true; await page.keyboard.press(back ? 'Shift+Tab' : 'Tab'); }
+      return (await focusKey()) === target;
+    }
+    const applyKey = `apply:${mission.id}`;
+    check(scope, 'Tab reaches Apply', await tabTo(applyKey));
+    await page.keyboard.press('Enter');
+    await page.locator('[data-eul-sheet]').waitFor();
+    check(scope, 'Enter opens the sheet with focus in its first field', (await focusKey()) === 'sheet-statement');
+    await page.keyboard.press('Escape');
+    await page.locator('[data-eul-sheet]').waitFor({ state: 'detached' });
+    check(scope, 'Escape closes the sheet and focus returns to Apply', (await focusKey()) === applyKey);
+    await page.keyboard.press('Enter');
+    await page.locator('[data-eul-sheet]').waitFor();
+    await page.keyboard.type('Test fixture: typed with the keyboard only.');
+    check(scope, 'Tab reaches Submit inside the sheet', await tabTo('sheet-submit', 10));
+    await page.keyboard.press('Enter');
+    await page.locator('[data-eul-sheet]').waitFor({ state: 'detached' });
+    await waitText(page, /Sent; waiting for a decision/);
+    check(scope, 'submitted by keyboard; focus is back on the button that opened the sheet', (await focusKey()) === applyKey);
+    const app = (await owner(plane, 'GET', O(`applications?mission=${mission.id}&status=submitted`))).applications[0];
+    const aid = (await owner(plane, 'POST', O(`applications/${app.id}/decision`), { idempotency_key: key('approve'), expected_revision: app.revision, decision: 'approved' })).application.assignment.id;
+    check(scope, 'Shift+Tab reaches Check for updates', await tabTo('reload', 60, true));
+    await page.keyboard.press('Enter');
+    await waitText(page, /Participation notice/);
+    check(scope, 'Tab reaches Accept', await tabTo(`accept:${aid}`));
+    await page.keyboard.press('Enter');
+    await page.locator(`[data-eul-workspace="${aid}"]`).waitFor();
+    check(scope, 'Tab reaches the song title', await tabTo(`title:${aid}`));
+    await page.keyboard.type('Test fixture: keyboard song');
+    await page.keyboard.press('Tab');
+    check(scope, 'the next Tab is the lyrics', (await focusKey()) === `lyrics:${aid}`);
+    await page.keyboard.type('Typed line one\nTyped line two');
+    await waitSaved(page, aid);
+    check(scope, 'Tab reaches Submit even while it is refused, and Enter there says why and sends nothing', await tabTo(`submit-proof:${aid}`, 120));
+    const before = memberPosts(plane).length;
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(200);
+    const said = await page.locator('[data-eul-announce]').innerText();
+    check(scope, 'the refused Submit announces its reason in words', /Not ready to submit yet/.test(said) && memberPosts(plane).length === before, said);
+    check(scope, 'Tab reaches Record audio', await tabTo(`record:audio:${aid}`, 60, true));
+    await page.keyboard.press('Enter');
+    await page.locator('[data-eul-recording]').waitFor();
+    check(scope, 'reduced motion: the recording dot does not animate', (await page.locator('.eul-rec__dot').evaluate((el) => getComputedStyle(el).animationName)) === 'none');
+    check(scope, 'focus moves to Stop when the recording starts', (await focusKey()) === `stop:${aid}`);
+    await page.waitForTimeout(1500); // a take of a second and a half, as a person would
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('Shift+Tab');
+    check(scope, 'Stop is reachable by keyboard while recording', await tabTo(`stop:${aid}`, 10));
+    await page.keyboard.press('Enter');
+    await page.locator('[data-eul-preview]').waitFor();
+    check(scope, 'focus moves to Send this take when the preview appears', (await focusKey()) === `use-take:${aid}`);
+    check(scope, 'Cancel is reachable by keyboard on the preview', await tabTo(`cancel-take:${aid}`, 10));
+    await page.keyboard.press('Enter');
+    await page.locator('[data-eul-preview]').waitFor({ state: 'detached' });
+    await audit(scope, 'keyboard pass', plane, s);
+    await s.ctx.close();
+  } finally { await plane.close(); }
+}
+
+/* The World host: https://mccluster.org/action/league.html through the real company-site router. */
+async function worldHost(viewport) {
+  const scope = viewport.width + ' world host';
+  const plane = await createLeaguePlane();
+  try {
+    const { mission } = await plane.seed({ testers: ['tester'] });
+    const aid = await acceptedTester(plane, mission);
+    const s = await open(plane, viewport, 'tester');
+    const { page } = s;
+    const real = await companySiteResponse(new Request(WORLD + PATH), { PUBLIC_ORIGIN: UPSTREAM }, upstreamFetch);
+    const connect = (/connect-src ([^;]*)/.exec(real.headers.get('content-security-policy-report-only') || '') || [])[1] || '';
+    check(scope, 'the World host\'s report-only policy lets the page reach the API and the storage origin that signs grants', connect.split(' ').includes('https://api.mccluster.org') && connect.split(' ').includes(PRODUCTION_SUPABASE), connect);
+    const response = await page.goto(WORLD + PATH);
+    const h = response.headers();
+    check(scope, 'the World host serves the page as a room: noindex, camera and microphone for this origin, report-only policy', h['x-robots-tag'] === 'noindex' && /camera=\(self\)/.test(h['permissions-policy'] || '') && /microphone=\(self\)/.test(h['permissions-policy'] || '') && !!h['content-security-policy-report-only'], h);
+    await page.locator(`[data-eul-workspace="${aid}"]`).waitFor();
+    check(scope, 'the member read answers on the World host', /Environmental Justice League/.test(await page.locator('h1').innerText()));
+    await clickAct(page, `record:audio:${aid}`);
+    await page.locator('[data-eul-recording]').waitFor();
+    await page.waitForTimeout(1200);
+    await clickAct(page, `stop:${aid}`);
+    await page.locator('[data-eul-preview]').waitFor();
+    await clickAct(page, `use-take:${aid}`);
+    await waitOutcome(page, `upload:${aid}`, /Sealed\. Fingerprint/);
+    const fp = fingerprintIn(await outcomeText(page, `upload:${aid}`));
+    check(scope, 'record, upload and seal work from the World host', (await gum(page)) === 1 && !!fp && storedBySha(plane).has(fp));
+    await audit(scope, 'world host', plane, s);
+    await page.screenshot({ path: join(OUT, `world-host-${viewport.width}.png`), fullPage: true });
+    await s.ctx.close();
+  } finally { await plane.close(); }
+}
+
 /* Every scenario at 390x844 and 1440x900. EUL_E2E_ONLY=<name,name> and EUL_E2E_WIDTHS=<390,1440> narrow a run while
    working on one step; a full proof sets neither. */
 const ONLY = (process.env.EUL_E2E_ONLY || '').split(',').filter(Boolean);
 const WIDTHS = (process.env.EUL_E2E_WIDTHS || '').split(',').filter(Boolean).map(Number);
 const runs = [{ width: 390, height: 844 }, { width: 1440, height: 900 }].filter((v) => !WIDTHS.length || WIDTHS.includes(v.width));
-const SCENARIOS = { visibility, journey };
+const SCENARIOS = { visibility, journey, switching, keyboard, worldHost };
 try {
   for (const viewport of runs) {
     for (const [name, fn] of Object.entries(SCENARIOS)) if (!ONLY.length || ONLY.includes(name)) await fn(viewport);
