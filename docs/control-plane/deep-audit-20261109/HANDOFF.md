@@ -51,9 +51,27 @@ CI on `145744f1`: every check that runs passed. `Control workspace visual proof`
 4. **Media signing reaches production only when the Worker deploys.** The production count shows no existing row is affected.
 5. Unchanged from session 2: E=Up pending SQL unapplied; consumer `world_environment` SQL held; A7, A2 and C6 decisions; #792/#787; COM-3, A3/A4, A6, W4, W5, C8 on their PRs.
 
+### Landed after `1d391a85` (2026-11-10, same session)
+
+Seventeen commits, implemented in isolated worktrees and combined here. Each series has its own tests; the independent reviews of the first two were still running when this was pushed, and only the authorization review of the recovery series had reported (no blocker, no major finding; its fixes are the last code commit).
+
+| Series | What it adds | Tests |
+| --- | --- | --- |
+| Third C5 gap: crash and operator recovery (5 commits + review fixes) | Pending `supabase/pending/media_operation_claims_v2.sql` (+ rollback, 24-scenario behaviour suite, `scripts/test-media-recovery-db.sh`): repair, takeover of an expired claim, guarded release, operator decision, recovery candidates. Worker: the paid submit is compare-and-set with one submitter per job; the fal submit is one plain POST with no hidden retry; an authenticated per-job webhook hint; operator list and decision on REST and MCP for the house owner or Core's signature; a cron sweep behind `MEDIA_RECOVERY_SWEEP_ENABLED`. Nothing is resubmitted automatically when a submit may have happened. | `media-operation-recovery` 79, `fal-submit` 11, `media-operation-claims` 18; SQL proof on PostgreSQL 16.15 including a three-session takeover race; mutation check 24 of 25 |
+| OVH evidence hardening (7 commits) | One receipt per reconcile cycle (`scripts/mccluster-vps-reconcile.sh`), a health projection of those receipts with warnings for a failed or stale cycle, a `status` mode and identity plus read-only proofs in `scripts/ovh-private-repo-ssh.sh`, rollback accepting liveness from an adapter that predates `/ready`, the promotion workflow naming the head it replaces and verifying the runtime, and the owner runbook `docs/control-plane/OVH-510-CONTRACT-AND-AUTH-RUNBOOK.md`. Nothing was run against the host; every step in the runbook is the owner's. | Core 627 pass; `ovh-private-repo-ssh`, `ovh-self-management`, `reconcile-cycle-*` suites |
+| Buyer download retry (3 commits) | `js/music-purchase.js` sends one retry key per deliberate download and keeps it while the outcome is unknown, so a lost answer does not use a second download. Static page only: the deployed function v42 already accepts the key, and no file whose deployed copy is v42 changed. | `music-purchase-retry` 15; buyer recovery on a real database (PGlite) 12 scenarios; Chromium e2e 40 checks |
+
+Read-only on production, 2026-11-10 01:21 UTC: the three pre-apply checks for `media_operation_claims_v2.sql` pass (no duplicate organization and operation id, no duplicate provider request id, `media_jobs.error` is NOT NULL; 18 jobs).
+
+Suites on this tree: Worker 1719 pass; Core 627 pass; root 2177 tests, 2174 pass, 0 fail, 3 pre-existing skips; source validator 2570 of 2570.
+
+**New merge gate.** With this series a paid generation that carries an operation id calls `media_claim_operation_v2` first and answers 503 until `media_operation_claims_v2.sql` is applied. Apply it before the Worker ships and roll the Worker back before the SQL (`supabase/pending/PROMOTION-ORDER.md` section 7).
+
+Known and not yet fixed in the buyer retry (two independent reviews confirmed the retry and found these): a proxy 4xx without the function's `reason` ends the kept key; the kept key lives longer than the server's replay window; a new tab has no kept key. The page must not be published against a function older than v42.
+
 ### Not on the branch at this commit
 
-Work in progress in this session and absent from this tree: the third C5 gap (crash and operator recovery between claim, reservation, binding and submission), Core evidence hardening for the OVH reconcile cycle, module policy composed into E=Up writes, the member mission loop, the commerce follow-ups from the release receipt, and the installable edition. Each is recorded here when it lands.
+Work in progress in this session and absent from this tree: module policy composed into E=Up writes (built and tested in a side worktree), the member mission loop, the purchased-version title fix for the Edge function (kept as a separate patch because merging it deploys the function), and the installable edition. Each is recorded here when it lands.
 
 ---
 
