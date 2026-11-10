@@ -1,6 +1,6 @@
 # Direct music sales: pinned purchases and settled downloads — 2026-11-09
 
-**Status: source and isolated-database proof only. NOT applied to `zmnhbrjyhxzhkxmhkexs`. No Edge Function deployed. No real purchase, Storage object or refund was touched.**
+**Status (corrected 2026-11-10): applied to `zmnhbrjyhxzhkxmhkexs` on 2026-11-09 as `20261109175747`, with Edge `music-direct-access` v42, by the owner's release workers. The source for that is their receipt (`docs/control-plane/evidence/releases-2026-11-09/COMMERCE-RELEASE-RECEIPT.md`); the committed migration and Edge files equal the receipt's hashes, `supabase/production-ledger.json` lists the version, and the 2026-11-09 production schema snapshot records the migration's md5. Nothing else was checked against production from this branch. Per the receipt, no real purchase, refund or download was made. This note was first written for the branch draft, before that release; the sections below say where it has been corrected.**
 
 Repairs two findings of the 2026-11-09 deep audit (`06_DEFECT_LEDGER.json` COM-1, COM-2) in the direct-sale path introduced by `20261031180839_music_direct_sales_v1`.
 
@@ -11,7 +11,7 @@ Repairs two findings of the 2026-11-09 deep audit (`06_DEFECT_LEDGER.json` COM-1
 
 ## Files
 
-- `supabase/migrations/20261109175747_music_direct_asset_versions_v1.sql`: **applied in production on 2026-11-09** as version `20261109175747` (SHA-256 `a76d1335…`) with Supabase Edge `music-direct-access` v42; receipt `docs/control-plane/evidence/releases-2026-11-09/COMMERCE-RELEASE-RECEIPT.md`. This is the independently corrected release, not the branch's first draft (`20261109120000_…`, now removed): it locks entitlement before attempt, re-checks refund/revocation/payment/expiry at settlement, releases expired holds, rejects null outcomes and bounds attempt replay to 300 s. Zero orders/entitlements existed at cutover; no real purchase, refund or download was tested.
+- `supabase/migrations/20261109175747_music_direct_asset_versions_v1.sql`: **applied in production on 2026-11-09** as version `20261109175747` (SHA-256 `a76d1335…`) with Supabase Edge `music-direct-access` v42; receipt `docs/control-plane/evidence/releases-2026-11-09/COMMERCE-RELEASE-RECEIPT.md`. This is the independently corrected release, not the branch's first draft (`20261109120000_…`, now removed): it locks entitlement before attempt, re-checks refund/revocation/payment/expiry at settlement, releases expired holds, rejects null outcomes and bounds attempt replay to 300 s. Per the receipt, zero orders/entitlements existed at cutover and no real purchase, refund or download was tested.
 - `supabase/pending/music_direct_asset_versions_v1.rollback.sql` (restores the v1 guards and one-step claim; the pin record is lost; run before the v1 rollback).
 - `supabase/functions/music-direct-access/index.ts`: `download` is reserve → sign → settle; a signing failure settles `released` and answers 503 `sign_retry`; `operator-direct-list` returns `asset_review` (purchases needing the owner's resolution); never calls the one-step claim.
 - `supabase/functions/_shared/music-direct.ts`: `ATTEMPT_KEY_RE`, `asset_unresolved` / `attempt_spent` / `sign_retry` refusals, `downloadRefusal()` refuses an unpinned legacy entitlement.
@@ -19,17 +19,23 @@ Repairs two findings of the 2026-11-09 deep audit (`06_DEFECT_LEDGER.json` COM-1
 
 ## Backfill policy (owner decision recorded, not yet exercised in production)
 
-An order placed before this migration is pinned to its offer's current file **only when the offer has not been written since the order was created** (`offers.updated_at <= orders.created_at`), the only evidence this schema holds. Every other paid order stays unpinned: its downloads refuse with `asset_unresolved` (409, nothing counted), it is listed in `public.music_direct_asset_review` and on the owner's Direct sales desk, and the owner resolves it once by writing `music_direct_orders.asset_version_id` to a version of that same offer; the entitlement follows. Nothing is silently assigned today's file. Production preflight at v1 (2026-10-31) recorded zero orders; the live count at apply time decides whether this list is empty.
+An order placed before this migration is pinned to its offer's current file **only when the offer has not been written since the order was created** (`offers.updated_at <= orders.created_at`), the only evidence this schema holds. Every other paid order stays unpinned: its downloads refuse with `asset_unresolved` (409, nothing counted), it is listed in `public.music_direct_asset_review` and on the owner's Direct sales desk, and the owner resolves it once by writing `music_direct_orders.asset_version_id` to a version of that same offer; the entitlement follows. Nothing is silently assigned today's file. The applied file's zero-order guard (migration lines 41-46) refuses a first application while any order exists, so this backfill runs only when the file is applied again over existing orders. Per the receipt there were zero orders at cutover, so the review list started empty.
 
 Re-applying `20261031180839_music_direct_sales_v1.sql` after this file would restore its older guards and claim function; re-apply this file afterwards if that is ever done. A legacy inactive offer outside the private-path contract keeps a version row for its old orders but no current pointer (writing one through the row would trip the NOT VALID check), so no new order can be placed on it.
 
 ## Proof run (isolated PostgreSQL 16.15, synthetic data, 2026-11-09)
 
-`PGHOST=127.0.0.1 PGPORT=5499 PGUSER=postgres bash scripts/test-music-direct-sales-db.sh` → `music direct sales: ok`, covering: v1 applied twice; the new behaviour file **fails** on v1 alone (regression bites); backfill of an unchanged-offer order and refusal of an edited-offer order; this migration applied twice; v1 behaviour (unchanged) and new behaviour pass; both rollbacks; legacy inactive offer preserved; re-apply of both; both behaviours again. `node --test scripts/test/music-direct-sales.test.mjs`: 23/23.
+On the branch draft: `PGHOST=127.0.0.1 PGPORT=5499 PGUSER=postgres bash scripts/test-music-direct-sales-db.sh` → `music direct sales: ok`, covering: v1 applied twice; the new behaviour file **fails** on v1 alone (regression bites); backfill of an unchanged-offer order and refusal of an edited-offer order; this migration applied twice; v1 behaviour (unchanged) and new behaviour pass; both rollbacks; legacy inactive offer preserved; re-apply of both; both behaviours again. `node --test scripts/test/music-direct-sales.test.mjs`: 23/23.
+
+Corrections from the close-out verification (2026-11-10):
+
+- That run's backfill fixture applied the draft over existing orders. The applied file refuses a first application while an order exists, so `4989365a` replaced the fixture with a check that the guard does so, and from then on the script did not exercise the backfill: with both backfill conditions (migration lines 119 and 127) replaced by `true`, every suite still passed.
+- The "fails on v1 alone" step fails at `music_direct_asset_versions.behaviour.sql:36` because the new table does not exist, so it shows only that the new schema is absent. Run directly on v1, a paid entitlement does deliver the replacement path and title after an offer edit.
+- On branch `closeout-tests` (`eb473378`, to be integrated) the script tests the backfill on the path that reaches it: v1 re-applied after this file, two paid purchases, one offer's file replaced, this file applied again. The unchanged-offer order and entitlement are pinned and deliver their file; the edited-offer order and entitlement stay unpinned, are the only review row and answer `asset_unresolved`; the owner's one resolution reaches the entitlement and delivers the file that was sold, and cannot be re-pointed. The script exits 0 on PostgreSQL 16.15 and 17.7, and exits 3 when the pin condition (line 127) is replaced by `true` or the comparison in both conditions is reversed.
 
 ## Follow-up, 2026-11-10: the buyer's retry key (source only; not published)
 
-Receipt item 6, first half. `js/music-purchase.js` now sends `attempt_key`. It is a static file: it takes effect when the site is published, and nothing in Supabase changes (v42 already accepts the key).
+Receipt item 6, first half. `js/music-purchase.js` now sends `attempt_key`. It is a static file: it takes effect when the site is published, and nothing in Supabase changes (v42 already accepts the key, per the receipt and the committed source).
 
 What the applied SQL does with a repeated key, which is what the page is built against:
 
@@ -47,10 +53,10 @@ The page: a fresh random key for every deliberate download; the same key again w
 
 After a first-send `sign_retry` the page remembers the failure for 20 s + 120 s. The handler answers `sign_retry` even when releasing the hold failed, and a live hold counts against the limit, so a 429 `download_limit` in that window may be the failed attempt's slot, which frees itself within its 120 s hold: the page says an earlier attempt may still be finishing and keeps the button. After the window the limit is taken at its word.
 
-Two things in v42 the page works around rather than relies on:
+Two things in v42 the page has to handle (corrected 2026-11-10: this said the page "works around rather than relies on" them, but on a resend it relies on the echo):
 
-- 503 `sign_retry` echoes `attempt_key`, but the attempt it names was just released, so sending that key again answers 409 `attempt_spent`. The page drops the key on a first-send `sign_retry` and starts a new attempt.
-- The same 503, on the retry of an attempt that was already issued, says "Nothing was used" although that attempt stays issued and counted (an issued attempt is never released). The page keeps the key in that one case and says the outcome is not known.
+- 503 `sign_retry` echoes `attempt_key` on every signing failure (`supabase/functions/music-direct-access/index.ts:297`), including when the failure released the attempt, so sending that key again answers 409 `attempt_spent`. On a first send the page drops the key whatever the echo says and starts a new attempt.
+- On a resend the page keeps the key only when the 503 echoes it (`js/music-purchase.js:160`). That is how it recognises the retry of an attempt that was already issued, which the 503 calls "Nothing was used" although that attempt stays issued and counted (an issued attempt is never released): the page keeps the key and says the outcome is not known. Without the echo the buyer's next click would take a second slot. A resent key whose live hold the failure released is echoed and kept the same way; the next click answers `attempt_spent`, the button stays and no slot is used. That case is covered by probes only, not by a repository test, and the page comment at `js/music-purchase.js:156-159` ("the server echoes the key it would still replay") does not hold for it.
 
 Limits, stated rather than hidden: another browser or device has no kept key; a retry later than the window is a new download and the lost one stays counted; a replay signs a new URL (receipt item 7).
 
@@ -58,8 +64,8 @@ Coupling: the page needs `music-direct-access` v42 or later. An older function i
 
 Proof (synthetic, local): `node --test scripts/test/music-purchase-retry.test.mjs` (18); `PGLITE_MODULE=… node scripts/test/music-direct-buyer-recovery.integration.mjs` (12 scenarios: the real page script, the real handler source and the applied SQL on PGlite, PostgreSQL 17.5); `node scripts/e2e/music-direct-checkout.e2e.mjs` in Chromium at 390px with fixture answers. No production request, purchase or download.
 
-Receipt item 6, second half (claim and status still name a purchase after the live offer's title and format) is prepared as an Edge source candidate and is **not in this branch**: the committed `music-direct-access` sources stay byte-identical to deployed v42, and any change under `supabase/functions/` that reaches `main` is deployed by `.github/workflows/supabase-functions-deploy.yml`.
+Receipt item 6, second half (claim and status still name a purchase after the live offer's title and format, `index.ts:59-64`, `:124-125`, `:277-278`) is prepared as an Edge source candidate outside this repository (not verifiable from here) and is **not in this branch**: the committed `music-direct-access` sources stay byte-identical to deployed v42 (their hashes equal the receipt's), and any change under `supabase/functions/` that reaches `main` is deployed by `.github/workflows/supabase-functions-deploy.yml`.
 
 ## Not verified
 
-Real Storage bytes for a signed URL; production apply, receipt and schema snapshot; a live purchase, refund or buyer retry; Edge deployment; the live-ledger count of orders that will land in `music_direct_asset_review`.
+Real Storage bytes for a signed URL; a live purchase, refund or buyer retry. From the receipt only: Edge v42 active, and zero orders, entitlements and review rows at cutover. The apply itself is also supported by `supabase/production-ledger.json` and by the 2026-11-09 production schema snapshot (`docs/control-plane/evidence/production-schema-snapshot-2026-11-09.json`), whose ledger row for `20261109175747` has the committed file's md5 (`7d0ea76d…`).
