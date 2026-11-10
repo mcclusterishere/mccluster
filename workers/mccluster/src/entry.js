@@ -3,6 +3,7 @@ import { applyCors, corsHeaders, fail, logEvent, reply } from './lib/http.js';
 import { handleClientRequest } from './client.js';
 import clientConnect from './connect.js';
 import { getUsage, getMediaBudget, updateMediaBudget, createGeneration, getGeneration, handleFalWebhook, listModels, reconcilePendingFalCosts } from './media/router.js';
+import { listRecoveryCandidates, reconcileJob, sweepMediaRecovery } from './media/recovery.js';
 import { createBakeoff } from './media/orchestrator.js';
 import { recommendModels } from './media/recommend.js';
 import { handleMediaMcp } from './media/mcp.js';
@@ -41,6 +42,7 @@ async function authUser(req, env) {
 }
 
 const FAL_WEBHOOK_PATH = /^\/v1\/media\/webhooks\/fal(?:\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\/([A-Za-z0-9_-]{43}))?$/;
+const MEDIA_RECONCILE_PATH = /^\/v1\/media\/jobs\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\/reconcile$/;
 
 /* Routes below that authenticate before checking the method. */
 const AUTH_FIRST_PREFIXES = ['/v1/analytics', '/v1/experience', '/v1/social', '/v1/comms', '/v1/ai', '/v1/music', '/v1/work', '/v1/observability', '/v1/clips'];
@@ -513,6 +515,25 @@ async function dispatchRequest(request, env, ctx) {
       }
     }
 
+    /* Recovery for paid media operations (media/recovery.js): what is stuck,
+       and one recorded decision for a stuck job. The handlers refuse anyone
+       but the house operator. */
+    const reconcileMatch = path.match(MEDIA_RECONCILE_PATH);
+    if ((path === '/v1/media/recovery' && request.method === 'GET') || (reconcileMatch && request.method === 'POST')) {
+      try {
+        const user = await authUser(request, env);
+        if (!user) return fail(request, env, 'Authentication required', 401);
+        const data = reconcileMatch
+          ? await reconcileJob(request, env, user, reconcileMatch[1])
+          : await listRecoveryCandidates(request, env, user);
+        const res = reply(request, env, data);
+        res.headers.set('cache-control', 'private, no-store');
+        return res;
+      } catch (error) {
+        return fail(request, env, error.message || 'Media recovery request failed', error.status || 500, error.detail);
+      }
+    }
+
     const jobMatch = path.match(/^\/v1\/media\/jobs\/([0-9a-f-]{36})$/i);
     if (jobMatch && request.method === 'GET') {
       try {
@@ -572,6 +593,13 @@ export default {
       }),
       observeScheduled(env, ctx, 'media.cost_reconciliation', () => reconcilePendingFalCosts(env, { limit: 50 })).catch((error) => {
         console.error(JSON.stringify({ event: 'media_cost_reconciliation_failed', message: error instanceof Error ? error.message : String(error) }));
+      }),
+      /* Open jobs the webhook has not finished, submit markers nobody completed,
+         and the recovery candidates as evidence (media/recovery.js). */
+      observeScheduled(env, ctx, 'media.recovery_sweep', () => sweepMediaRecovery(env, { limit: 25 })).then((report) => {
+        if (report?.errors?.length) console.error(JSON.stringify({ event: 'media_recovery_sweep_errors', errors: report.errors }));
+      }).catch((error) => {
+        console.error(JSON.stringify({ event: 'media_recovery_sweep_failed', message: error instanceof Error ? error.message : String(error) }));
       }),
       attachCompletedVariantAssets(env).catch((error) => {
         console.error(JSON.stringify({ event: 'social_variant_attachment_failed', message: error instanceof Error ? error.message : String(error) }));

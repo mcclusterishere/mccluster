@@ -160,6 +160,41 @@ No prerequisite beyond what production has (`ops_platform_actors`, `network_post
 `media_news_articles`, `ops_agent_jobs`). After apply: provision (profiles are created disabled), then enable, then
 switch the flag and the timer on; each is a separate owner step.
 
+## 7. Paid media operation recovery (written 2026-11-10)
+
+| File (+ rollback) | Creates | Callers | Proof before apply |
+|---|---|---|---|
+| `media_operation_claims_v2.sql` (+ `media_operation_claims_v2.rollback.sql`) | additive on the applied `20261109194957_media_operation_claims_v1` (its table, state check and three RPCs are not touched; nor are 0053 and 0054): unique indexes `media_jobs_org_operation_uidx` (one job per organization and operation id) and `media_jobs_provider_request_uidx` (one job per provider request), index `media_jobs_fal_open_updated_idx`, four evidence columns on `media_operation_claims` (`attempt`, `history`, `resolved_at`, `resolution`) with `media_operation_claims_claimed_idx`, and six service-role functions: `media_claim_operation_v2()` (claim, repair, takeover), `media_bind_operation_v2()`, `media_fail_operation_v2()`, `media_release_cost_reservation_v2()`, `media_resolve_operation_job_v1()` (the operator decision), `media_operation_recovery_candidates_v1()` | `workers/mccluster/src/media/router.js`, `workers/mccluster/src/media/recovery.js` (all six names are `pending_only` in `live-callers.json`) | `scripts/test-media-recovery-db.sh` (the applied chain, v1 checked against production's stored statement, the file twice, 24 behaviour scenarios as the owner, `service_role`, `anon` and `authenticated`, a three-session takeover race, the rollback, the file again, both duplicate guards); Worker: `workers/mccluster/test/media-operation-recovery.test.mjs`, `media-operation-claims.test.mjs`, `fal-submit.test.mjs` |
+
+**The order is load-bearing, in both directions.** Apply the file BEFORE the Worker that calls the v2 names
+ships (merge deploys the Worker), as ONE transaction. Roll the Worker back BEFORE running the rollback file.
+A Worker that runs without the file fails closed: every paid generation that carries an operation id answers
+503 `operation_claims_unavailable` with nothing reserved, the operator routes answer 503 `recovery_unavailable`,
+and a failed job is still released, through `media_release_cost_reservation` (0054), with the event
+`media.operation.release_v1_fallback`.
+
+Before apply, read-only on production. The first two must return no rows (the file's own guards stop the
+whole transaction otherwise; resolve such rows through the normal RPCs, never by deleting a job). The third
+must return `NO`: `media_jobs.error` is NOT NULL and the Worker now writes `{}` there, never null.
+
+```sql
+select org_id, routing ->> 'operation_id' as operation_id, count(*)
+  from public.media_jobs where routing ->> 'operation_id' is not null
+  group by 1, 2 having count(*) > 1;
+select provider, provider_request_id, count(*)
+  from public.media_jobs where provider_request_id is not null
+  group by 1, 2 having count(*) > 1;
+select is_nullable from information_schema.columns
+  where table_schema = 'public' and table_name = 'media_jobs' and column_name = 'error';
+```
+
+Two optional Worker secrets, by name only (`wrangler secret put`), neither needed for the file itself:
+`MEDIA_WEBHOOK_HINT_SECRET` (32+ random characters) lets the provider webhook find a job whose submit outcome
+was unknown; without it such jobs wait for an operator decision. `FAL_WEBHOOK_USER_ID` (the house's fal account
+id) refuses a signed webhook from any other fal account. After apply and deploy: the operator surface is
+`GET /v1/media/recovery` and `POST /v1/media/jobs/:id/reconcile` (the house owner's session), and the MCP tools
+`media.recovery.list` and `media.job.reconcile` (the house owner, or McCluster Core through its signed MCP call).
+
 ## Names with no SQL anywhere
 
 `live-callers.json` → `missing_everywhere`: the `crm_*` tables
