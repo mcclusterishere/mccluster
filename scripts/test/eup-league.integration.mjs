@@ -1661,10 +1661,16 @@ try {
   await rejects(() => member('uploads.get', { actor: TESTER_B, id: videoUpload.id, document: { sign: true } }), '42501', 'the audience reads it only while the publication is effective: not once its consent expired');
   await admin('update public.eup_consents set expires_at = $2 where id = $1', [songConsent.id, songConsent.expires_at]);
   await rejects(() => member('uploads.get', { actor: TESTER_B, id: ownerUpload.id }), '42501', 'nor anyone a file no effective publication lists');
+  // A discarded upload is due no earlier than its staged lifetime (the contract's MEDIA decision, journey lane): an upload
+  // grant signed while it was staged can still land until expires_at, and nothing may be stored after the purge.
+  const [spareDue] = await dueOf([spareUpload]);
+  eq([spareDue.due, spareDue.reason, Date.parse(spareDue.due_at)], [false, 'discarded', Date.parse(spareUpload.expires_at)], 'a discarded upload within its staged lifetime is not due yet: its due_at is its expires_at');
+  await silent(() => rejects(() => owner('media.purged', { actor: OWNER, document: { uploads: [spareUpload.id] }, key: key('purge') }), '40001', 'and it is not purged before then'), 'a refused early purge');
+  await admin(`update public.eup_media_uploads set expires_at = now() - interval '1 second' where id = $1`, [spareUpload.id]);
   const due = await owner('media.due', { actor: OWNER, document: {} });
   eq(Object.keys(due).sort(), Object.keys(C.shapeFields('due_list')).sort(), 'media.due answers the contract due list');
   eq(Object.keys(due.uploads[0]).sort(), Object.keys(C.shapeFields('due_upload')).sort(), 'with contract due uploads');
-  ok(due.retention_evaluated && due.uploads.every((x) => x.due) && due.uploads.some((x) => x.reason === 'discarded') && due.uploads.some((x) => x.id === late.id && x.reason === 'expired'), 'discarded and expired uploads are due');
+  ok(due.retention_evaluated && due.uploads.every((x) => x.due) && due.uploads.some((x) => x.reason === 'discarded') && due.uploads.some((x) => x.id === late.id && x.reason === 'expired'), 'discarded uploads past their staged lifetime and expired uploads are due');
   eq(due.uploads.map((x) => x.due_at), [...due.uploads.map((x) => x.due_at)].sort((p, q) => new Date(p) - new Date(q)), 'the longest due first');
   eq((await owner('media.due', { actor: OWNER, document: { limit: 2 } })).uploads.length, 2, 'up to the limit');
   const [videoDue, ownerDue, stagedDue] = await dueOf([videoUpload, ownerUpload, staged3[0]]);

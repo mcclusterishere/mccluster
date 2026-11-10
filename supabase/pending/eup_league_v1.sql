@@ -1241,11 +1241,15 @@ $$;
 --                                                                 upload outlives the row's lifetime)
 --   sealed    -> 'retention_completed' at completed_at + completed_days, or 'retention_withdrawn' at withdrawn_at +
 --                withdrawn_days, by its assignment (completed and withdrawn are terminal: the date never moves)
+-- A discarded or rejected row is due no earlier than its expires_at either: an upload grant signed while it was staged
+-- can still be valid after the discard or the rejection, and a purge before every grant has expired would let a late
+-- PUT store an object that no row will ever list as due again (the contract's MEDIA decision on staged_ttl_seconds).
+-- Every retention date is no earlier than expires_at already: completed_days and withdrawn_days are at least one day.
 create function public.eup_league_upload_due(u public.eup_media_uploads, p_retention jsonb) returns jsonb
 language sql stable security invoker set search_path = '' as $$
   select case (u).state
-    when 'discarded' then jsonb_build_object('reason', 'discarded', 'due_at', (u).discarded_at)
-    when 'rejected' then jsonb_build_object('reason', 'rejected', 'due_at', (u).updated_at)
+    when 'discarded' then jsonb_build_object('reason', 'discarded', 'due_at', greatest((u).discarded_at, (u).expires_at))
+    when 'rejected' then jsonb_build_object('reason', 'rejected', 'due_at', greatest((u).updated_at, (u).expires_at))
     when 'expired' then jsonb_build_object('reason', 'expired', 'due_at', (u).expires_at)
     when 'staged' then jsonb_build_object('reason', 'staged_expired', 'due_at', (u).expires_at)
     when 'sealed' then (select case

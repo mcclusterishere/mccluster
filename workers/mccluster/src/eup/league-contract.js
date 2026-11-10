@@ -1037,7 +1037,11 @@ export const MEDIA = deepFreeze({
   signed_read_seconds: 300,
   /* DECISION: a staged row lives 24 hours, and a grant is signed only while now + upload_grant_seconds <= expires_at, so no
      signed upload can land after its row was purged. upload_grant_seconds is the storage service's signed-upload lifetime
-     as documented, NOT verified against real storage in this build. */
+     as documented, NOT verified against real storage in this build.
+     DECISION (journey lane, 2026-11-10): for that to hold, media.due makes no upload due before its expires_at, whatever
+     its state: a discarded or rejected row's due_at is the later of the discard (or rejection) and expires_at. A grant
+     signed while the row was staged can outlive the discard, and the journey showed a PUT with it storing an object after
+     an earlier purge, which no row would ever list as due again. Every retention date is already no earlier. */
   staged_ttl_seconds: 86400,
   upload_grant_seconds: 7200,
   sniff_bytes: 12, // the matcher reads at most the first 12 bytes
