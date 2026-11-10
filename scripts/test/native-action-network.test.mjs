@@ -305,6 +305,11 @@ test('the M Account provider applies those rules', async () => {
   assert.doesNotMatch(boot, /\} catch \{\s*if \(alive\) \{\s*await commitSession\(null\)/, 'no blanket sign-out on launch');
   assert.match(auth, /const endSession = useCallback\(\s*async \(refused: MccSession\) => \{\s*if \(sessionRef\.current !== refused\) return;/,
     'only the session Auth answered for is ended, never one that replaced it');
+  const authorized = auth.slice(auth.indexOf('const authorized = useCallback('), auth.indexOf('const api = useCallback('));
+  assert.match(authorized, /const used = await freshSession\(\);\s*const response = await send\(used\.access_token\);\s*if \(response\.status !== 401\) return responseJson<T>\(response\);/,
+    'only a server’s 401 is put to Auth, never the one thrown here before anything is sent');
+  assert.equal(authorized.match(/await send\(/g)?.length, 2, 'a request is sent once, and once more at most');
+  assert.equal(code.match(/authorized<T>\(/g)?.length, 2, 'api() and rest() (and so rpc()) both go through it');
 });
 
 /* ---- The provider itself, on a phone whose clock is not the server's ------
@@ -360,7 +365,13 @@ function nativeSources() {
    refused as Supabase does (403 session_not_found). Auth checks the token
    first, so an expired one still reads bad_jwt. A route in `outage` is
    unreachable ('offline': fetch rejects, as on a phone without signal) or
-   answers that HTTP status. */
+   answers that HTTP status.
+
+   The API is the Worker as it is: its gate asks Auth for the user and answers
+   any refusal, and Auth being down, with the same 401 (authUser in
+   workers/mccluster/src/platform-api.js). PostgREST checks the token itself,
+   statelessly, and refuses an expired one before any SQL runs (401
+   PGRST303). Each request records its method, path and the status it got. */
 function authServer({ lifetime = 3600 } = {}) {
   const clock = { now: 1_800_000_000 };
   const expiry = new Map(), unspent = new Set(), ended = new Set(), requests = [], outage = new Map();
@@ -380,10 +391,18 @@ function authServer({ lifetime = 3600 } = {}) {
   async function fetch(url, init = {}) {
     const { host, pathname, searchParams } = new URL(String(url));
     const grant = searchParams.get('grant_type');
-    const route = host === 'api.mccluster.org' ? 'api' : pathname.replace('/auth/v1/', '') + (grant ? `:${grant}` : '');
+    const route = host === 'api.mccluster.org' ? 'api'
+      : pathname.startsWith('/rest/v1/') ? 'rest'
+        : pathname.replace('/auth/v1/', '') + (grant ? `:${grant}` : '');
     const token = String(init.headers?.authorization || '').replace(/^Bearer /, '') || null;
     const expired = !!token && !(expiry.get(token) > clock.now);
-    requests.push({ route, token, expired, at: clock.now });
+    const request = { route, token, expired, at: clock.now, method: init.method || 'GET', path: pathname };
+    requests.push(request);
+    const response = answer(request, init);
+    request.status = response.status;
+    return response;
+  }
+  function answer({ route, token, expired }, init) {
     const down = outage.get(route);
     if (down === 'offline') throw new TypeError('Network request failed');
     if (down) return reply(down, { message: down >= 500 ? 'upstream unavailable' : 'refused' });
@@ -400,9 +419,15 @@ function authServer({ lifetime = 3600 } = {}) {
         if (ended.has(token)) return reply(403, { code: 403, error_code: 'session_not_found', msg: 'Session from session_id claim in JWT does not exist' });
         return reply(200, user);
       case 'api':
-        return expired ? reply(401, { error: 'invalid_token' }) : reply(200, { ok: true });
+        return expired || ended.has(token) || outage.has('user')
+          ? reply(401, { error: 'Authentication required' })
+          : reply(200, { ok: true });
+      case 'rest':
+        return expired
+          ? reply(401, { code: 'PGRST303', details: null, hint: null, message: 'JWT expired' })
+          : reply(200, { ok: true });
       default:
-        throw new Error(`unexpected request ${url}`);
+        throw new Error(`unexpected request ${route}`);
     }
   }
   const endSessions = () => {
@@ -629,4 +654,96 @@ test('an account read that names the session as gone still signs out at once, wi
   assert.deepEqual(auth.requests.slice(since).map((r) => [r.route, r.token, r.expired]), [['user', 'access-1', false]], 'no refresh is spent on it');
   assert.equal(keychain.has(SESSION_KEY), false);
   await assert.rejects(app.accessToken(), /Sign in first/);
+});
+
+test('a phone whose clock is set back while the app runs: a call refused for its token is sent once more, on a refreshed one', { timeout: 10_000 }, async () => {
+  const auth = authServer();
+  const app = await launchPhone(auth, { skew: 0 });
+  await app.signIn('jane@example.com', 'correct horse battery staple');
+  const setBack = () => { /* two hours back; ten minutes after the server expired the token, the phone still reads it as fresh */
+    app.phone.skew -= 7200;
+    auth.clock.now += 3600 + 600;
+    return auth.requests.length;
+  };
+  let since = setBack();
+  assert.equal((await app.api('/v1/mnet/feed')).ok, true, 'the call is answered');
+  assert.deepEqual(auth.requests.slice(since).map((r) => [r.route, r.token, r.status]), [
+    ['api', 'access-1', 401], /* the API's own check with Auth failed */
+    ['user', 'access-1', 403], /* Auth says why: bad_jwt, the token alone */
+    ['token:refresh_token', null, 200],
+    ['api', 'access-2', 200],
+  ], 'refused, put to Auth, refreshed once, and sent once more');
+
+  /* Two writes at once, one to PostgREST and one to the API: one refresh
+     serves both, and each write is sent twice, refused the first time before
+     anything ran. */
+  since = setBack();
+  const answered = await Promise.all([
+    app.rpc('join_action_mission', { p_mission_id: 'mission-1' }),
+    app.api('/v1/mnet/notifications/read', { method: 'POST', body: {} }),
+  ]);
+  assert.deepEqual(answered.map((answer) => answer.ok), [true, true]);
+  const sent = auth.requests.slice(since);
+  assert.equal(sent.filter((r) => r.route === 'token:refresh_token').length, 1, 'one refresh between them');
+  for (const path of ['/rest/v1/rpc/join_action_mission', '/v1/mnet/notifications/read']) {
+    assert.deepEqual(sent.filter((r) => r.path === path).map((r) => [r.method, r.token, r.status]),
+      [['POST', 'access-2', 401], ['POST', 'access-3', 200]], path);
+  }
+  const refreshed = since + sent.findIndex((r) => r.route === 'token:refresh_token');
+  assert.deepEqual(auth.requests.slice(refreshed).filter((r) => r.expired).map((r) => [r.route, r.token]), [],
+    'no request after the refresh carries a token the server has expired');
+  assert.equal(JSON.parse(app.keychain.get(SESSION_KEY)).access_token, 'access-3');
+
+  /* Once at most: refused again on the new token, a call is not sent a third
+     time, and a token Auth accepts is not refreshed. */
+  since = setBack();
+  auth.outage.set('api', 401);
+  for (let call = 0; call < 2; call += 1) assert.equal(await app.api('/v1/mnet/feed').then(() => 200, (error) => error.status), 401);
+  assert.deepEqual(auth.requests.slice(since).map((r) => [r.route, r.token, r.status]), [
+    ['api', 'access-3', 401], ['user', 'access-3', 403], ['token:refresh_token', null, 200], ['api', 'access-4', 401],
+    ['api', 'access-4', 401], ['user', 'access-4', 200],
+  ]);
+});
+
+test('a 401 its token is not the cause of reaches the caller as it came: nothing refreshed, the member kept, unless Auth says the session is gone', { timeout: 10_000 }, async () => {
+  const auth = authServer();
+  const app = await launchPhone(auth, { skew: 0 });
+  await app.signIn('jane@example.com', 'correct horse battery staple');
+  const kept = app.keychain.get(SESSION_KEY);
+  const upload = async (times) => {
+    const since = auth.requests.length, answers = [];
+    for (let call = 0; call < times; call += 1) {
+      answers.push(await app.api('/v1/mnet/media/upload-url', { method: 'POST', body: {} }).then(() => 200, (error) => error.status));
+    }
+    return { answers, sent: auth.requests.slice(since).map((r) => [r.route, r.status]) };
+  };
+  /* A route that refuses a good token (mnet-media answers 401 to a member
+     with no identity link): Auth accepts the token, so nothing is refreshed,
+     however often the call is made, and nothing is sent twice. */
+  auth.outage.set('api', 401);
+  let { answers, sent } = await upload(3);
+  assert.deepEqual(answers, [401, 401, 401]);
+  assert.deepEqual(sent, Array(3).fill([['api', 401], ['user', 200]]).flat());
+  auth.outage.delete('api');
+  /* Auth down: the API's gate answers 401, and Auth cannot be asked either.
+     The 401 stands, and the same token works once Auth is back. */
+  auth.outage.set('user', 503);
+  ({ answers, sent } = await upload(2));
+  assert.deepEqual(answers, [401, 401]);
+  assert.deepEqual(sent, Array(2).fill([['api', 401], ['user', 503]]).flat());
+  auth.outage.delete('user');
+  assert.equal((await app.api('/v1/mnet/feed')).ok, true);
+  assert.equal(auth.refreshes(), 0, 'no refresh spent on any of it');
+  assert.equal(app.keychain.get(SESSION_KEY), kept, 'the member is kept, the keychain untouched');
+  /* A session ended elsewhere (a sign-out everywhere): Auth names it as
+     gone, and it ends here too, as it would at launch. */
+  auth.endSessions();
+  ({ answers, sent } = await upload(1));
+  assert.deepEqual(answers, [401]);
+  assert.deepEqual(sent, [['api', 401], ['user', 403]]);
+  assert.equal(app.keychain.has(SESSION_KEY), false, 'signed out');
+  /* Signed out, a call is refused here before anything is sent: that 401 is never put to Auth. */
+  const before = auth.requests.length;
+  await assert.rejects(app.api('/v1/mnet/feed'), /Sign in first/);
+  assert.equal(auth.requests.length, before, 'nothing sent');
 });

@@ -361,41 +361,99 @@ export function MccProvider({ children }: { children: ReactNode }) {
 
   const accessToken = useCallback(async () => (await freshSession()).access_token, [freshSession]);
 
+  /* A server answered 401 to a request sent with `used`'s token. Returns the
+     session to send it once more with, or null if the 401 stands.
+
+     A 401 is not taken at its word. PostgREST answers one when it refuses the
+     token, but the McCluster API answers the same 401 whenever its own check
+     with Auth fails: an expired token, and also Auth down or rate limited, or
+     a session ended elsewhere; and some routes answer 401 for reasons a
+     refresh cannot fix. Auth is the authority on the token, so it is asked
+     (/auth/v1/user), and its answer is taken as at launch:
+     - only the token refused (isAccessTokenRefusal): refresh once, through the
+       same single-flight refresh(), which signs out if it is itself refused;
+     - the token accepted: the 401 was about something else, and stands;
+     - the session or the member gone: that session ends;
+     - offline, a timeout or a 5xx: the 401 stands, and the session is kept.
+     If the session changed while the request was out (another request
+     refreshed it, say), the request goes again on the new one, but only for
+     the same member: never under another account. */
+  const renewRefused = useCallback(
+    async (used: MccSession): Promise<MccSession | null> => {
+      const successor = () => {
+        const current = sessionRef.current;
+        if (!current) return null;
+        if (current.user?.id && current.user.id === used.user?.id) return current;
+        throw sessionChangedError();
+      };
+      if (sessionRef.current !== used) return successor();
+      try {
+        await authRequest<MccUser>('user', { token: used.access_token });
+        return null;
+      } catch (answer) {
+        if (!isAccessTokenRefusal(answer)) {
+          if (isDefinitiveAuthFailure(answer)) await endSession(used);
+          return null;
+        }
+      }
+      if (sessionRef.current !== used) return successor();
+      return refresh();
+    },
+    [endSession, refresh],
+  );
+
+  /* Sends a request with the member's token. A 401 is put to renewRefused,
+     and the request is sent once more if it returns a session: once at most.
+     A write sent twice is safe because a 401 means it was refused before
+     anything was done: PostgREST checks the token before any SQL runs, and the
+     API's gate checks it before any write on the routes this app calls. One
+     route can answer 401 after a write: PATCH /v1/mnet/profile sets the handle
+     (set_mccluster_id) and then makes a second call under the same token,
+     which a token expiring between the two would see refused. Setting the same
+     handle again gives the same result. An API route that writes before its
+     token is checked would need its own answer to this. */
+  const authorized = useCallback(
+    async <T,>(send: (token: string) => Promise<Response>): Promise<T> => {
+      const used = await freshSession();
+      const response = await send(used.access_token);
+      if (response.status !== 401) return responseJson<T>(response);
+      const renewed = await renewRefused(used);
+      return responseJson<T>(renewed ? await send(renewed.access_token) : response);
+    },
+    [freshSession, renewRefused],
+  );
+
   const api = useCallback(
-    async <T,>(path: string, init: JsonInit = {}): Promise<T> => {
-      const current = await freshSession();
-      return responseJson<T>(
-        await fetch(MCC_API_URL + path, {
+    async <T,>(path: string, init: JsonInit = {}): Promise<T> =>
+      authorized<T>((token) =>
+        fetch(MCC_API_URL + path, {
           method: init.method || 'GET',
           headers: {
-            authorization: `Bearer ${current.access_token}`,
+            authorization: `Bearer ${token}`,
             'content-type': 'application/json',
             ...(init.headers || {}),
           },
           body: init.body === undefined ? undefined : JSON.stringify(init.body),
         }),
-      );
-    },
-    [freshSession],
+      ),
+    [authorized],
   );
 
   const rest = useCallback(
-    async <T,>(path: string, init: JsonInit = {}): Promise<T> => {
-      const current = await freshSession();
-      return responseJson<T>(
-        await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    async <T,>(path: string, init: JsonInit = {}): Promise<T> =>
+      authorized<T>((token) =>
+        fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
           method: init.method || 'GET',
           headers: {
             apikey: SUPABASE_PUBLISHABLE_KEY,
-            authorization: `Bearer ${current.access_token}`,
+            authorization: `Bearer ${token}`,
             'content-type': 'application/json',
             ...(init.headers || {}),
           },
           body: init.body === undefined ? undefined : JSON.stringify(init.body),
         }),
-      );
-    },
-    [freshSession],
+      ),
+    [authorized],
   );
 
   const rpc = useCallback(
