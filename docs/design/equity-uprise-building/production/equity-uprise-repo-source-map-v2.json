@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 691,
+  "candidate_count": 700,
   "capability_source_count": 104,
-  "support_only_count": 587,
+  "support_only_count": 596,
   "entries": [
     {
       "path": ".cursorrules",
@@ -1339,6 +1339,69 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Traces the owner's 2026-11-09 product strategy (near-term proofs, P0 to P9, acceptance scenarios) to evidence at b4855d94; names the Equity Uprise product repository, its branches and paths only as evidence. Audit record; no building capability, program or geometry."
+    },
+    {
+      "path": "docs/control-plane/deep-audit-20261109/patches/pr-734-c8/MANIFEST.json",
+      "classification": "audit_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Manifest of the C8 patch series for PR #734 (Core actor-preview coverage reads the queue's done status, with a queue-to-coverage contract test); names the Equity Uprise source verifier only as a check it ran on the PR's files. Audit record; no building capability, program or geometry."
+    },
+    {
+      "path": "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/MANIFEST.json",
+      "classification": "audit_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Manifest of the W5 patch series for PR #787 (the PRIM3 lattice-learning runtime moved to a published path; the HQ and B1 teaching frame names the plan's 12 ft cell and the 3.54 m rule tile apart); names the Equity Uprise source map, coverage report and HQ/B1 level ids only as files and checks of that series. Audit record; no building capability, program or geometry."
+    },
+    {
+      "path": "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/base-equity-uprise-sources.log",
+      "classification": "audit_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Source-verifier output on PR #787's head, kept as W5 patch evidence. Audit log; no building capability."
+    },
+    {
+      "path": "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/build-export.sh",
+      "classification": "audit_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Scratch script kept as W5 evidence: builds a stripped published copy of a PR #787 tree; names the equity-uprise preview copy step only to say it is not run. Audit evidence; no building capability."
+    },
+    {
+      "path": "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/combined-check.sh",
+      "classification": "audit_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Scratch script kept as W5 evidence: merges the series with the audit branch and resolves the generated Equity Uprise source records by union before running the closure test. Audit evidence; no building capability."
+    },
+    {
+      "path": "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/head-equity-uprise-sources.log",
+      "classification": "audit_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Source-verifier output on the W5 series head, kept as W5 patch evidence. Audit log; no building capability."
+    },
+    {
+      "path": "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/mutations.py",
+      "classification": "audit_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Scratch mutation script kept as W5 evidence: weakens the HQ and B1 teaching frames (by their level ids) to show the new tests catch each change. Audit evidence; no building capability."
+    },
+    {
+      "path": "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/prim3-topology-learning.serve-root.e2e.mjs",
+      "classification": "audit_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Scratch copy of PR #787's topology-learning journey kept as W5 evidence (adds a served-root setting); lists the HQ and B1 lattice variants by id. Audit evidence; no building capability, program or geometry."
+    },
+    {
+      "path": "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/union_source_map.py",
+      "classification": "audit_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Scratch script kept as W5 evidence: resolves a merge conflict in the Equity Uprise source map by the union of entries by path. Audit evidence; it defines no entry and no building capability."
     },
     {
       "path": "docs/control-plane/deploy-gate.json",

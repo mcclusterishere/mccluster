@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 691,
+  "candidate_count": 700,
   "capability_source_count": 104,
-  "support_only_count": 587,
-  "checks_total": 2662,
-  "checks_passed": 2662,
+  "support_only_count": 596,
+  "checks_total": 2698,
+  "checks_passed": 2698,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -184,6 +184,15 @@
     "docs/control-plane/deep-audit-20261109/HANDOFF.md",
     "docs/control-plane/deep-audit-20261109/OPEN-PR-DISPOSITION.md",
     "docs/control-plane/deep-audit-20261109/TRACEABILITY.md",
+    "docs/control-plane/deep-audit-20261109/patches/pr-734-c8/MANIFEST.json",
+    "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/MANIFEST.json",
+    "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/base-equity-uprise-sources.log",
+    "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/build-export.sh",
+    "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/combined-check.sh",
+    "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/head-equity-uprise-sources.log",
+    "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/mutations.py",
+    "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/prim3-topology-learning.serve-root.e2e.mjs",
+    "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/union_source_map.py",
     "docs/control-plane/deploy-gate.json",
     "docs/control-plane/evidence/production-advisors-2026-10-28.json",
     "docs/control-plane/evidence/production-schema-snapshot-2026-10-28.json",
@@ -705,7 +714,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "691 entries"
+      "detail": "700 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -4029,6 +4038,186 @@
     },
     {
       "name": "docs/control-plane/deep-audit-20261109/TRACEABILITY.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/patches/pr-734-c8/MANIFEST.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/patches/pr-734-c8/MANIFEST.json classified",
+      "passed": true,
+      "detail": "classification='audit_support'"
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/patches/pr-734-c8/MANIFEST.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/patches/pr-734-c8/MANIFEST.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/MANIFEST.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/MANIFEST.json classified",
+      "passed": true,
+      "detail": "classification='audit_support'"
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/MANIFEST.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/MANIFEST.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/base-equity-uprise-sources.log capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/base-equity-uprise-sources.log classified",
+      "passed": true,
+      "detail": "classification='audit_support'"
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/base-equity-uprise-sources.log support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/base-equity-uprise-sources.log support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/build-export.sh capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/build-export.sh classified",
+      "passed": true,
+      "detail": "classification='audit_support'"
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/build-export.sh support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/build-export.sh support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/combined-check.sh capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/combined-check.sh classified",
+      "passed": true,
+      "detail": "classification='audit_support'"
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/combined-check.sh support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/combined-check.sh support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/head-equity-uprise-sources.log capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/head-equity-uprise-sources.log classified",
+      "passed": true,
+      "detail": "classification='audit_support'"
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/head-equity-uprise-sources.log support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/head-equity-uprise-sources.log support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/mutations.py capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/mutations.py classified",
+      "passed": true,
+      "detail": "classification='audit_support'"
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/mutations.py support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/mutations.py support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/prim3-topology-learning.serve-root.e2e.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/prim3-topology-learning.serve-root.e2e.mjs classified",
+      "passed": true,
+      "detail": "classification='audit_support'"
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/prim3-topology-learning.serve-root.e2e.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/prim3-topology-learning.serve-root.e2e.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/union_source_map.py capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/union_source_map.py classified",
+      "passed": true,
+      "detail": "classification='audit_support'"
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/union_source_map.py support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/union_source_map.py support rationale present",
       "passed": true,
       "detail": ""
     },

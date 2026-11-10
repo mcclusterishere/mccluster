@@ -1,0 +1,7 @@
+# copy detection for patch 0001 (63c26995): git show --summary --find-copies-harder -C HEAD~1
+63c26995 fix(prim3): publish the lattice-learning runtime the reviewed-mission page imports (W5)
+
+ copy {PRIM3/game/halo/adaptive => js/prim3-mission}/topology-learning.mjs (100%)
+# and the published file at the series head differs from that copy only in the three HQ/B1 frames (patch 0002): git diff --stat HEAD~1 HEAD -- js/prim3-mission/topology-learning.mjs
+ js/prim3-mission/topology-learning.mjs | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
