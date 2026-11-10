@@ -23,8 +23,9 @@
    storage text, URL, token or key ever reaches a caller, and nothing here logs.
 
    Absent on purpose: points, payment, commission, live broadcast and publication wider than a campaign's released
-   audience (NOT_IMPLEMENTED_SEGMENTS stay 501). Nothing here reads or writes a public projection (action_missions,
-   action_proofs, network_posts, network_groups, ...), the held consumer environment SQL or another bucket.
+   audience (NOT_IMPLEMENTED_SEGMENTS stay 501). Nothing here reads or writes a public projection (the legacy action
+   and network tables), a table of any kind, the held consumer environment SQL or another bucket: the only calls are
+   the three League functions and the media module's calls on the one private bucket (eup-league.test.mjs checks it).
    First complete mission target: "Write a song for a healthier world". */
 import { CAMPAIGN_FIXTURE } from './league-fixture.js';
 import { modulePolicyRefusal } from './modules.js';

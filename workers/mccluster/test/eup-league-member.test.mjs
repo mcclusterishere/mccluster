@@ -233,6 +233,25 @@ test('answers are member-shaped: their contract shape only, and no field naming 
   assert.deepEqual(memberSafe([{ reviewer: 1, a: [{ account: 2, b: 3 }] }]), [{ a: [{ b: 3 }] }]);
 });
 
+test('a nested row is cut to its contract shape too: an upload inside me.get carries no tenant, participant, family or storage identity', async () => {
+  const rawUpload = { ...uploadRow({ id: U(8), state: 'sealed', family: 'ebml', sha256: SHA, bytes: 16 }), storage: { object_id: U(70), etag: '"x"', size: 16 }, path: 'league/v1/t/x' };
+  const assignment = { ...sampleShape('own_assignment'), participant: MEMBER, uploads: [rawUpload],
+    proof: { ...sampleShape('own_proof'), media: [{ upload_id: U(8), kind: 'audio', mime: 'audio/webm', bytes: 16, sha256: SHA, storage: { object_id: U(70) } }], internal_note: 'dropped' },
+    draft: { ...sampleShape('draft'), document: { lyrics: 'Test fixture lyrics', credits: [] } } };
+  const application = { ...sampleShape('own_application'), document: { statement: 'Test fixture: kept, it is the member\'s own json document' }, accommodation: null };
+  const r = await member(leaguePlane({ answer: () => ({ ...sampleShape('me'), actor: MEMBER, applications: [application], assignments: [assignment] }) }));
+  assert.equal(r.status, 200);
+  const [a] = r.body.league.assignments;
+  assert.deepEqual(Object.keys(a).sort(), keysOf('own_assignment'));
+  assert.deepEqual(Object.keys(a.uploads[0]).sort(), keysOf('member_upload'));
+  assert.deepEqual(Object.keys(a.proof).sort(), keysOf('own_proof'));
+  assert.deepEqual(a.proof.media, [{ upload_id: U(8), kind: 'audio', mime: 'audio/webm', bytes: 16, sha256: SHA }]);
+  assert.deepEqual(a.draft.document, { lyrics: 'Test fixture lyrics', credits: [] }, 'a document value is kept as stored');
+  assert.equal(r.body.league.applications[0].document.statement, application.document.statement);
+  const text = JSON.stringify(r.body);
+  for (const leak of [U(70), TENANT, '"family"', '"storage"', 'league/v1/', 'internal_note']) assert.ok(!text.includes(leak), leak);
+});
+
 /* ------------------------------------------------------------------ uploads, in MEDIA.order */
 
 test('upload begin: the staged row first, then one grant for the row\'s own path; the answer narrows the row; a replay signs again', async () => {
