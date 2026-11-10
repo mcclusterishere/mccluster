@@ -83,9 +83,10 @@ test('actor binding: p_actor is always the verified session user; headers, query
   const query = await handleEup(new Request(`https://api.mccluster.org${C.PREFIX.member}?actor=${OTHER}&p_actor=${OTHER}&admin=true`, { headers: { authorization: `Bearer ${MEMBER_TOKEN}` } }), env, { ...identities(), fetchImpl: plane.fetchImpl });
   assert.equal(query.status, 200);
   await member(plane, '', { token: OTHER_TOKEN });
-  const upper = identities({ tokens: { 'fixture-upper-session': MEMBER.toUpperCase() } });
+  const MIXED = 'abcdef12-3456-4789-8abc-def012345678';
+  const upper = identities({ tokens: { 'fixture-upper-session': MIXED.toUpperCase() } });
   await member(plane, `assignments/${U(7)}/withdraw`, { method: 'POST', token: 'fixture-upper-session', ids: upper, body: { idempotency_key: KEY } });
-  assert.deepEqual(plane.rpc().map((c) => c.body.p_actor), [MEMBER, MEMBER, OTHER, MEMBER], 'the session user, lower case, and nobody else');
+  assert.deepEqual(plane.rpc().map((c) => c.body.p_actor), [MEMBER, MEMBER, OTHER, MIXED], 'the session user, lower case, and nobody else');
 });
 
 test('a body naming an account is refused at any depth with 422 before any call', async () => {
@@ -207,7 +208,9 @@ test('the audience is never cached: every request asks again, and a revoked gran
 test('a timeout, a redirect, a malformed answer or one of the wrong kind is 503 with no data', async () => {
   const hang = await member(leaguePlane({ answer: () => new Promise(() => {}) }), '', { rpcTimeoutMs: 40 });
   assert.deepEqual([hang.status, hang.body.reason, hang.body.league], [503, 'storage_unavailable', undefined]);
-  for (const [label, answer] of [['redirect', () => new Response(null, { status: 307, headers: { location: 'https://elsewhere.invalid/' } })], ['html', () => new Response('<html>', { status: 200 })],
+  for (const [label, answer] of [['redirect', () => new Response(null, { status: 307, headers: { location: 'https://elsewhere.invalid/' } })],
+    ['a redirect carrying an error body', () => Response.json({ code: 'EU011', message: 'x' }, { status: 302, headers: { location: 'https://elsewhere.invalid/' } })],
+    ['html', () => new Response('<html>', { status: 200 })],
     ['a list for me.get', () => []], ['null', () => Response.json(null)], ['a string', () => Response.json('ok')]]) {
     const r = await member(leaguePlane({ answer }), '');
     assert.deepEqual([r.status, r.body.reason, r.body.league], [503, 'storage_unavailable', undefined], label);
