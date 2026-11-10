@@ -5,6 +5,7 @@ import {readFile, mkdir, writeFile} from 'node:fs/promises';
 import {resolve, join, extname, sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import assert from 'node:assert/strict';
+import {seedNavigationAuth} from './support/navigation-auth-fixture.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
 const OUT=process.argv[2]||'/tmp/site-navigation-proof';
 const {chromium}=createRequire(join(process.env.PLAYWRIGHT_DIR||'/opt/node-tools/node_modules','x'))('playwright');
@@ -22,11 +23,7 @@ async function setup(width,persona='owner'){
     window.__navReveal=event.viewTransition ? Promise.allSettled([event.viewTransition.ready,event.viewTransition.finished]) : Promise.resolve();
   }));
   const auth={status:persona==='owner'?200:403,signed:persona!=='guest',delay:false,release:null},calls=[],errors=[];
-  await ctx.addInitScript(({signed,USER})=>{
-    window.__navFrames=[];const sample=()=>{const b=document.querySelector('.appbar');if(b){const c=getComputedStyle(b);if(c.visibility==='visible'&&c.display!=='none')window.__navFrames.push(b.querySelectorAll('[data-appnav]').length);}requestAnimationFrame(sample);};requestAnimationFrame(sample);
-    localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));
-    if(signed){const exp=Math.floor(Date.now()/1000)+3600;localStorage.setItem('mccdb_session',JSON.stringify({access_token:'x.'+btoa(JSON.stringify({sub:USER,exp,email:'qa@fixture.invalid'}))+'.y',expires_at:exp,refresh_token:'fixture-only',user:{id:USER,email:'qa@fixture.invalid'}}));}
-  },{signed:auth.signed,USER});
+  await ctx.addInitScript(seedNavigationAuth,{signed:auth.signed,USER});
   const json=(r,body,status=200)=>r.fulfill({status,contentType:'application/json',headers:{'access-control-allow-origin':'*','access-control-allow-headers':'*'},body:JSON.stringify(body)});
   await ctx.route('**/*',async r=>{
     const req=r.request(),u=new URL(req.url()),p=u.pathname;calls.push({url:u.href,method:req.method()});
