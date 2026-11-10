@@ -3,9 +3,21 @@
 -- admin intake, snapshot history, review items and corrections is LOST; the
 -- public civic_* and action_policy_* tables were never touched by the forward
 -- file and are untouched here. Recovery artifact, not a forward migration.
+--
+-- Module policy: this file removes only what eup_intake_v1.sql created. The
+-- *_module_policy statement triggers go with their tables; the policy objects
+-- of eup_module_policy_v1.sql (the guard functions, the 'intake' policy row and
+-- the command log) are NOT touched, so the module keeps its state and its
+-- history. Run this BEFORE eup_module_policy_v1.rollback.sql. It is DDL, so the
+-- module state does not gate it. Both the current and the earlier signatures of
+-- eup_intake_apply and eup_import_run_finish are dropped. Safe to run twice.
 set local lock_timeout = '5s';
 
+drop function if exists public.eup_import_run_claim(text, text, integer);
+drop function if exists public.eup_import_run_release(uuid, text, text);
+drop function if exists public.eup_import_run_finish(uuid, text, integer, text, jsonb, text);
 drop function if exists public.eup_import_run_finish(uuid, text, integer, text, jsonb);
+drop function if exists public.eup_intake_apply(text, text, jsonb, bigint);
 drop function if exists public.eup_intake_apply(text, text, jsonb);
 drop function if exists public.eup_company_read(text, jsonb);
 drop function if exists public.eup_civic_read(text, jsonb);
