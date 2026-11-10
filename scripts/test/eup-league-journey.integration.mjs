@@ -425,15 +425,34 @@ try {
   eq([ownReviewed.state, ownReviewed.review.reviewer, ownReviewed.credit.participant], ['accepted', ids.reviewer, ids.owner], 'a second house owner reviews it');
 
   /* ================================================================== 12. the module drained and disabled mid-journey */
-  let missionA2 = (await api('owner', 'POST', O(`campaigns/${campaignA.id}/missions`), { idempotency_key: key('mission-2'), mission: { ...missionDocument(songFixture), slug: 'journey-second-song', title: 'Test fixture: a second song mission' } })).mission;
+  // A second song mission that takes lyrics and audio only.
+  let missionA2 = (await api('owner', 'POST', O(`campaigns/${campaignA.id}/missions`), { idempotency_key: key('mission-2'),
+    mission: { ...missionDocument(songFixture), slug: 'journey-second-song', title: 'Test fixture: a second song mission', proof_modes: ['lyrics', 'audio'] } })).mission;
   missionA2 = (await api('owner', 'POST', O(`missions/${missionA2.id}/transition`), { idempotency_key: key('release-2'), expected_revision: missionA2.revision, to: 'released' })).mission;
   const app2 = (await saveApplication('tester', missionA2.id, 0, { submit: true, requirements_revision: 1, statement: 'Test fixture: a second song.' })).application;
   const decided2 = (await api('owner', 'POST', O(`applications/${app2.id}/decision`), { idempotency_key: key('approve'), expected_revision: app2.revision, decision: 'approved' })).application;
-  const x2 = (await accept('tester', decided2.assignment.id, decided2.assignment.revision, POLICY.notices.participation.revision)).assignment;
+  let x2 = (await accept('tester', decided2.assignment.id, decided2.assignment.revision, POLICY.notices.participation.revision)).assignment;
+  // A requirements change asks the participant to accept again; a capacity change does not.
+  const SECOND = 'Test fixture requirements, second version.\nWrite the words and record one take.';
+  missionA2 = (await api('owner', 'PATCH', O(`missions/${missionA2.id}`), { idempotency_key: key('requirements'), expected_revision: missionA2.revision, mission: { requirements: SECOND } })).mission;
+  eq(missionA2.requirements_revision, 2, 'a requirements change moves the requirements revision');
+  await saveDraft('tester', x2.id, 0, { title: 'Test fixture', lyrics: 'Line' }, { status: 409, reason: 'requirements_changed', label: 'work waits until the new requirements are accepted' });
+  const offeredAgain = (await api('tester', 'GET', M())).league.assignments.find((a) => a.id === x2.id);
+  eq([offeredAgain.status, offeredAgain.offered_requirements_revision, offeredAgain.mission.requirements_revision, offeredAgain.mission.requirements], ['offered', 2, 2, SECOND],
+    'the tester reads the new requirements, offered for acceptance');
+  await api('tester', 'POST', M(`assignments/${x2.id}/accept`), { idempotency_key: key('accept'), expected_revision: offeredAgain.revision, requirements_revision: 1, notice_revision: POLICY.notices.participation.revision },
+    { status: 409, reason: 'requirements_changed', label: 'accepting the old requirements is refused' });
+  x2 = (await api('tester', 'POST', M(`assignments/${x2.id}/accept`), { idempotency_key: key('accept'), expected_revision: offeredAgain.revision, requirements_revision: 2, notice_revision: POLICY.notices.participation.revision })).assignment;
+  eq([x2.status, x2.accepted_requirements_revision], ['accepted', 2], 'the current requirements accepted');
+  missionA2 = (await api('owner', 'PATCH', O(`missions/${missionA2.id}`), { idempotency_key: key('capacity'), expected_revision: missionA2.revision, mission: { capacity: 5 } })).mission;
+  eq([missionA2.requirements_revision, missionA2.capacity], [2, 5], 'a capacity change keeps the requirements revision');
+  eq((await api('tester', 'GET', M())).league.assignments.find((a) => a.id === x2.id).status, 'accepted', 'and asks nobody to accept again');
+  await begin('tester', x2.id, { kind: 'video', mime: 'video/webm', bytes: 600 }, { status: 415, reason: 'media_type_not_allowed', label: 'a kind the mission does not take' });
+  eq([plane.rpcLog.at(-1).action, plane.rpcLog.at(-1).code], ['uploads.begin', '22023'], 'evidence: that 415 is the SQL hint on its 22023, not a Worker table check');
   const staged = await begin('tester', x2.id, { kind: 'audio', mime: 'audio/webm', bytes: 600 });
   eq((await plane.fetch(staged.grant.url, { method: 'PUT', headers: staged.grant.headers, body: synthAudio(600, 4) })).status, 200, 'a take stored but not completed');
   const stagedPath = C.mediaObjectPath({ tenant: ids.owner, assignment: x2.id, upload: staged.upload.id, ext: 'webm' });
-  const peerDraft = (await saveApplication('peer', missionA2.id, 0, { submit: false, requirements_revision: 1, statement: 'Test fixture: a draft.' })).application;
+  const peerDraft = (await saveApplication('peer', missionA2.id, 0, { submit: false, requirements_revision: 2, statement: 'Test fixture: a draft.' })).application;
   const consent2 = (await grantConsent('tester', proof.id, 1, { ...CONSENT, expires_at: inDays(10) })).consent;
   const publication2 = (await publish(proof.id, 1, { decision: 'published', consent_id: consent2.id })).publication;
   eq([publication2.effective, (await api('peer', 'GET', M())).league.published.length], [true, 1], 'published again, seen by the audience');
@@ -449,7 +468,7 @@ try {
   await begin('tester', x2.id, { kind: 'audio', mime: 'audio/webm', bytes: 600 }, { ...DRAINING, label: 'draining: no new upload' });
   await api('tester', 'POST', M(`uploads/${staged.upload.id}/complete`), {}, { ...DRAINING, label: 'draining: the seal is new work' });
   ok(plane.storage.object(stagedPath) !== null, 'evidence: the refused seal kept the stored take');
-  await saveApplication('peer', missionA2.id, peerDraft.revision, { submit: true, requirements_revision: 1, statement: 'Test fixture.' }, { ...DRAINING, label: 'draining: no application' });
+  await saveApplication('peer', missionA2.id, peerDraft.revision, { submit: true, requirements_revision: 2, statement: 'Test fixture.' }, { ...DRAINING, label: 'draining: no application' });
   await api('owner', 'POST', O('campaigns'), { idempotency_key: key('campaign'), campaign: { slug: 'journey-late', title: 'Test fixture', purpose: 'Test fixture.' } }, { ...DRAINING, label: 'draining: no owner work either' });
   me = (await api('tester', 'GET', M())).league;
   eq([me.assignments.length, me.assignments[0].credit, me.assignments[1].uploads[0].state], [2, credit, 'staged'], 'draining: own records are readable');
@@ -460,6 +479,12 @@ try {
   eq((await api('peer', 'POST', M(`applications/${peerDraft.id}/withdraw`), { idempotency_key: key('withdraw') })).application.status, 'withdrawn', 'draining: an application is still withdrawn');
   campaignB = (await api('owner', 'POST', O(`campaigns/${campaignB.id}/transition`), { idempotency_key: key('pause-b'), expected_revision: campaignB.revision, to: 'paused' })).campaign;
   eq(campaignB.state, 'paused', 'draining: the owner still pauses a campaign');
+  // A hold removes exposure, so it is reduce-only; lifting one is not. While held no signed read is made for anyone.
+  const moderate = (hold, opts) => api('owner', 'POST', O(`proofs/${proof.id}/moderation`), { idempotency_key: key('moderate'), expected_revision: 1, hold, reason: `Test fixture: hold ${hold}.` }, opts);
+  eq((await moderate(true)).proof.moderation_state, 'held', 'draining: the owner still places a hold');
+  await api('owner', 'GET', O(`proofs/${proof.id}/media?revision=1`), undefined, { status: 409, reason: 'moderation_hold', label: 'held: no signed review read' });
+  await api('tester', 'GET', M(`uploads/${upload.id}/url`), undefined, { status: 409, reason: 'moderation_hold', label: 'held: no signed own read' });
+  await moderate(false, { ...DRAINING, label: 'draining: lifting a hold is new exposure' });
 
   await setModule('disabled');
   const DISABLED = { status: 409, reason: 'module_disabled' };
@@ -470,11 +495,16 @@ try {
   eq((await api('tester', 'POST', M(`assignments/${x2.id}/withdraw`), { idempotency_key: key('withdraw') })).assignment.status, 'withdrawn', 'disabled: an assignment is still withdrawn');
   me = (await api('tester', 'GET', M())).league;
   eq([me.assignments[0].status, me.assignments[1].status], ['completed', 'withdrawn'], 'disabled: own records are readable');
+  const auditedBefore = (await plane.league.admin('select count(*)::int as n from public.eup_accommodation_reads where application_id = $1', [peerApp.id]))[0].n;
+  eq((await api('owner', 'GET', O(`applications/${peerApp.id}/accommodation`))).accommodation.accommodation, REQUEST, 'disabled: the audited accommodation read answers');
+  eq((await plane.league.admin('select count(*)::int as n from public.eup_accommodation_reads where application_id = $1', [peerApp.id]))[0].n, auditedBefore + 1, 'evidence: and is still recorded (its table carries no module guard)');
 
   await setModule('enabled');
+  eq((await moderate(false)).proof.moderation_state, 'clear', 're-enabled: the hold is lifted');
+  eq((await api('tester', 'GET', M(`uploads/${upload.id}/url`))).media.sha256, DIGEST, 'and the own read signs again');
   campaignB = (await api('owner', 'POST', O(`campaigns/${campaignB.id}/transition`), { idempotency_key: key('resume-b'), expected_revision: campaignB.revision, to: 'released' })).campaign;
   eq(campaignB.state, 'released', 're-enabled: owner work resumes');
-  const peerAgain = (await saveApplication('peer', missionA2.id, peerDraft.revision + 1, { submit: true, requirements_revision: 1, statement: 'Test fixture: back again.' })).application;
+  const peerAgain = (await saveApplication('peer', missionA2.id, peerDraft.revision + 1, { submit: true, requirements_revision: 2, statement: 'Test fixture: back again.' })).application;
   eq(peerAgain.status, 'submitted', 're-enabled: member work resumes');
 
   /* ================================================================== 12b. retention: nothing lands after a purge */
@@ -506,7 +536,7 @@ try {
   const peerMe = (await api('peer', 'GET', M())).league;
   eq(peerMe.applications.find((a) => a.id === peerAgain.id).status, 'declined', 'an open application is declined by the withdrawal');
   eq(peerMe.applications.find((a) => a.id === peerAgain.id).decisions.at(-1).reason, 'campaign_withdrawn', 'with the reason the contract names for a campaign cascade');
-  await saveApplication('peer', missionA2.id, peerAgain.revision + 1, { submit: true, requirements_revision: 1, statement: 'Test fixture.' }, { status: 404, label: 'withdrawn: no new work' });
+  await saveApplication('peer', missionA2.id, peerAgain.revision + 1, { submit: true, requirements_revision: 2, statement: 'Test fixture.' }, { status: 404, label: 'withdrawn: no new work' });
   eq((await api('owner', 'GET', O(`credits?mission=${missionA.id}`))).credits.map((c) => c.participant), [ids.tester, ids.peer, ids.owner], 'every credit stays');
 
   /* ================================================================== 14. evidence: the outbox, nothing public, storage */
