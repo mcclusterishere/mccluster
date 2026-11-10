@@ -253,7 +253,7 @@ test('begin: no grant that could outlive the row, and none for a row that is not
 test('begin: a row that cannot name its own object never reaches storage', async () => {
   const w = world();
   const row = w.league.staged();
-  const cases = [...MALFORMED, ['an expiry that is not a time', (r) => ({ ...r, expires_at: 'soon' })], ['an expiry that is a number', (r) => ({ ...r, expires_at: 1794314096123 })], ['no expiry', ({ expires_at: _expires, ...r }) => r]];
+  const cases = [...MALFORMED, ['an expiry that is not a time', (r) => ({ ...r, expires_at: 'soon' })], ['an expiry that is a number', (r) => ({ ...r, expires_at: 2027 })], ['no expiry', ({ expires_at: _expires, ...r }) => r]];
   for (const [label, change] of cases) await assert.rejects(beginUpload(w.ctx, change(row)), refused(503, 'storage_unavailable'), label);
   await assert.rejects(beginUpload({ ...w.ctx, now: () => NaN }, row), refused(503, 'storage_unavailable'));
   for (const noEnv of [{}, { SUPABASE_URL: env.SUPABASE_URL }, { SUPABASE_SERVICE_ROLE_KEY: SERVICE_KEY }]) await assert.rejects(beginUpload({ ...w.ctx, env: noEnv }, row), refused(503, 'storage_unavailable'));
@@ -271,7 +271,15 @@ test('begin: an answer that is not a signed upload for exactly this path is refu
     ['a location with a line break', () => Response.json({ url: `/object/upload/sign/${BUCKET}/${path}?token=tok\nupstream` })],
     ['text that is not JSON', () => new Response('<html>tok_upstream</html>')],
     ['a refusal', () => Response.json({ statusCode: '409', error: 'Duplicate', message: 'tok_upstream' }, { status: 400 })], ['a failure', () => new Response('upstream tok_upstream', { status: 500 })],
-    ['an answer that never ends', () => new Response(new Uint8Array(STORAGE_LIMITS.control_answer_max_bytes + 1).fill(0x20))]
+    ['an answer that never ends', () => new Response(new Uint8Array(STORAGE_LIMITS.control_answer_max_bytes + 1).fill(0x20))],
+    ['a well-formed answer under a refusal status', () => Response.json({ url: `/object/upload/sign/${BUCKET}/${path}?token=tok_upstream` }, { status: 403 })],
+    ['a well-formed answer under a failure status', () => Response.json({ url: `/object/upload/sign/${BUCKET}/${path}?token=tok_upstream` }, { status: 500 })],
+    ['a well-formed answer under not found', () => Response.json({ url: `/object/upload/sign/${BUCKET}/${path}?token=tok_upstream` }, { status: 404 })],
+    ['a well-formed answer in front of more than an answer may hold', () => new Response(new ReadableStream({ start(controller) {
+      controller.enqueue(ascii(JSON.stringify({ url: `/object/upload/sign/${BUCKET}/${path}?token=tok_upstream` })));
+      controller.enqueue(new Uint8Array(STORAGE_LIMITS.control_answer_max_bytes).fill(0x20));
+      controller.close();
+    } }))]
   ];
   const probe = world();
   for (const [label] of answers(pathOf(probe.league.staged()))) {
@@ -434,7 +442,8 @@ test('complete: a web page, an executable, an empty file and real media under th
     /* The content type sent with the upload is what a signed read is served as: it has to be media of the same family. */
     ['an MP3 header stored as a web page', filled(vector('mp3 with ID3v2 tag'), 64, 0x3c), { mime: 'audio/mpeg', contentType: 'text/html' }, 'family_mismatch'],
     ['a WAV stored with no type of its own', filled(WAV, 44, 0), { mime: 'audio/wav', contentType: 'application/octet-stream' }, 'family_mismatch'],
-    ['a WAV stored as an MP3', filled(WAV, 44, 0), { mime: 'audio/wav', contentType: 'audio/mpeg' }, 'family_mismatch']
+    ['a WAV stored as an MP3', filled(WAV, 44, 0), { mime: 'audio/wav', contentType: 'audio/mpeg' }, 'family_mismatch'],
+    ['a WAV stored as a WAV for a row that says MP3', filled(WAV, 44, 0), { mime: 'audio/mpeg', contentType: 'audio/wav' }, 'family_mismatch']
   ];
   for (const [label, bytes, options, reason] of cases) {
     const w = world();
@@ -494,6 +503,12 @@ test('complete: sizes are checked on the listing before anything is read, and th
     w.storage.object(path).size = 20;
     await expectRejected(w, row, path, 'size_mismatch', 'listed 20, holds 16');
     assert.deepEqual(reads(w)[0].stream, { chunks: 1, bytes: 16, ended: true, cancelled: false });
+  }
+  { /* the read returns nothing where the listing named sixteen bytes */
+    const w = world();
+    const { row, path } = await uploaded(w, WEBM);
+    w.storage.intercept((call) => (call.method === 'GET' ? new Response(null, { status: 200 }) : undefined));
+    await expectRejected(w, row, path, 'size_mismatch', 'listed 16, read 0');
   }
   { /* the hard cap of the read itself: a megabyte behind a listing of 1000 is cut at the first chunk */
     const w = world();
@@ -583,13 +598,19 @@ test('complete: a listing or a read storage did not answer properly is 503; noth
     ['a size that is not a number', listing(row, (r) => ({ ...r, metadata: { ...r.metadata, size: '16 bytes' } }))], ['no size', listing(row, (r) => ({ ...r, metadata: { ...r.metadata, size: null } }))],
     ['no content type', listing(row, (r) => ({ ...r, metadata: { ...r.metadata, mimetype: undefined } }))],
     ['an object, not a list', () => Response.json({ name: `${row.id}.${row.ext}` })], ['text that is not JSON', () => new Response('not json')],
-    ['a refusal', () => Response.json({ statusCode: '403', error: 'Unauthorized', message: 'tok_upstream' }, { status: 403 })], ['a failure', () => new Response('tok_upstream', { status: 500 })]
+    ['a refusal', () => Response.json({ statusCode: '403', error: 'Unauthorized', message: 'tok_upstream' }, { status: 403 })], ['a failure', () => new Response('tok_upstream', { status: 500 })],
+    ['an empty list under a failure status', () => Response.json([], { status: 500 })],
+    ['a complete listing under a refusal status', () => Response.json([{ name: `${row.id}.${row.ext}`, id: U(700), metadata: { eTag: '"abc"', size: 16, mimetype: 'audio/webm' } }], { status: 403 })]
   ];
   const reads = [
     ['gone', () => Response.json({ statusCode: '404', error: 'not_found', message: 'Object not found' }, { status: 404 })], ['a failure', () => new Response('tok_upstream', { status: 500 })],
     ['a partial answer', () => new Response(WEBM.subarray(0, 8), { status: 206, headers: { 'content-range': 'bytes 0-7/16' } })],
     ['a body that breaks half way', () => new Response(new ReadableStream({ start(controller) { controller.enqueue(WEBM.subarray(0, 8)); }, pull(controller) { controller.error(new Error('connection lost at token=tok_upstream')); } }))],
-    ['chunks that are not bytes', () => ({ status: 200, ok: true, type: 'basic', headers: new Headers(), body: { getReader: () => ({ read: async () => ({ done: false, value: 'text' }), cancel: async () => {} }) } })]
+    ['a failure whose body is the file', () => new Response(WEBM, { status: 500 })], ['a refusal whose body is the file', () => new Response(WEBM, { status: 403 })],
+    ['an answer with no content', () => new Response(null, { status: 204 })],
+    ['chunks that are text', () => ({ status: 200, ok: true, type: 'basic', headers: new Headers(), body: { getReader: () => ({ read: async () => ({ done: false, value: 'text' }), cancel: async () => {} }) } })],
+    ['chunks that are another kind of array', () => { let sent = false; return { status: 200, ok: true, type: 'basic', headers: new Headers(),
+      body: { getReader: () => ({ read: async () => { if (sent) return { done: true, value: undefined }; sent = true; return { done: false, value: new Uint16Array(WEBM.slice().buffer) }; }, cancel: async () => {} }) } }; }]
   ];
   const probe = world();
   const probeRow = probe.league.staged();
@@ -643,7 +664,8 @@ test('discard: the object of a discarded row is deleted; no other row is ever to
   assert.deepEqual(w.storage.paths(), [neighbour.path], 'only that object');
   assert.deepEqual(await discardUpload(w.ctx, { ...row, state: 'discarded' }), { deleted: true }, 'an object that is already gone is gone');
   /* A storage failure is reported, never thrown: the purge removes what is left. */
-  const failures = [() => new Response('tok_upstream', { status: 500 }), () => new Response(null, { status: 302, headers: { location: 'https://elsewhere.invalid/' } }), () => Response.json({ deleted: true }), () => new Response('not json'), () => { throw new TypeError('fetch failed'); }];
+  const failures = [() => new Response('tok_upstream', { status: 500 }), () => new Response(null, { status: 302, headers: { location: 'https://elsewhere.invalid/' } }), () => Response.json({ deleted: true }), () => new Response('not json'), () => { throw new TypeError('fetch failed'); },
+    () => Response.json([], { status: 500 }), () => Response.json([], { status: 403 })];
   for (const answer of failures) {
     const off = w.storage.intercept((c) => (c.method === 'DELETE' ? answer() : undefined));
     assert.deepEqual(await discardUpload(w.ctx, { ...neighbour.row, state: 'discarded' }), { deleted: false });
@@ -725,7 +747,8 @@ test('own read: a signed location that is not for this object is refused', async
   const path = pathOf(row);
   const answers = [() => Response.json({}), () => Response.json({ signedURL: `/object/sign/${BUCKET}/league/v1/t/${TENANT}/a/${ASSIGNMENT}/u/${U(999)}.webm?token=tok_upstream` }), () => Response.json({ signedURL: `/object/sign/mnet-media/${path}?token=tok_upstream` }),
     () => Response.json({ signedURL: `/object/upload/sign/${BUCKET}/${path}?token=tok_upstream` }), () => Response.json({ signedURL: `/object/sign/${BUCKET}/${path}` }), () => Response.json({ signedURL: `https://elsewhere.invalid/object/sign/${BUCKET}/${path}?token=tok_upstream` }),
-    () => Response.json({ statusCode: '404', error: 'not_found', message: 'Object not found' }, { status: 400 }), () => new Response('tok_upstream', { status: 500 })];
+    () => Response.json({ statusCode: '404', error: 'not_found', message: 'Object not found' }, { status: 400 }), () => new Response('tok_upstream', { status: 500 }),
+    () => Response.json({ signedURL: `/object/sign/${BUCKET}/${path}?token=tok_upstream` }, { status: 403 }), () => Response.json({ signedURL: `/object/sign/${BUCKET}/${path}?token=tok_upstream` }, { status: 500 })];
   for (const answer of answers) {
     const off = w.storage.intercept((call) => (call.route.startsWith('object/sign/') ? answer() : undefined));
     await assert.rejects(signOwnRead(w.ctx, row), (error) => refused(503, 'storage_unavailable')(error) && !/upstream|elsewhere|token/.test(inspect(error, { depth: 9 })));
@@ -802,6 +825,8 @@ test('review read: refused when the proof is held, and when an upload is not bou
   const w = world();
   const audio = await sealedRow(w, filled(WEBM, 300));
   const video = await sealedRow(w, filled(vector('mov'), 500, 0), { mime: 'video/quicktime' });
+  const third = await sealedRow(w, filled(OGG, 64), { mime: 'audio/ogg' });
+  const fourth = await sealedRow(w, filled(WAV, 44, 0), { mime: 'audio/wav' });
   const calls = w.storage.calls.length;
   const hold = C.errorFor('EU016', 'owner');
   await assert.rejects(signReviewRead(w.ctx, proofOf(w, [audio, video], { moderation_state: 'held' })), refused(hold.status, hold.code));
@@ -826,7 +851,7 @@ test('review read: refused when the proof is held, and when an upload is not bou
   }
   const malformed = [
     ['no moderation state', (p) => { delete p.moderation_state; }], ['a moderation state nobody defined', (p) => { p.moderation_state = 'fine'; }], ['no tenant', (p) => { delete p.tenant; }],
-    ['media that is not a list', (p) => { p.media = { 0: p.media[0] }; }], ['more media than a proof may list', (p) => { p.media = [p.media[0], p.media[1], p.media[0], p.media[1]]; }],
+    ['media that is not a list', (p) => { p.media = { 0: p.media[0] }; }], ['more media than a proof may list', (p) => { const more = proofOf(w, [audio, video, third, fourth]); p.media = more.media; p.uploads = more.uploads; }],
     ['the same upload twice', (p) => { p.media[1] = { ...p.media[0] }; }], ['an entry without a digest', (p) => { delete p.media[0].sha256; }], ['an entry whose kind is not the kind of its type', (p) => { p.media[0].kind = 'video'; }],
     ['an upload without its stored identity', (p) => { p.uploads[0].storage = null; }], ['an upload whose extension is not the extension of its type', (p) => { p.uploads[0].ext = 'mp3'; }]
   ];
@@ -837,10 +862,12 @@ test('review read: refused when the proof is held, and when an upload is not bou
   }
   for (const notProof of [null, 'proof', []]) await assert.rejects(signReviewRead(w.ctx, notProof), refused(503, 'storage_unavailable'));
   assert.equal(w.storage.calls.length, calls, 'none of these reached storage');
+  assert.equal((await signReviewRead(w.ctx, proofOf(w, [audio, video, third]))).length, C.LIMITS.count.proof_media, 'three is the most a proof lists');
+  const signedSoFar = w.storage.calls.filter((c) => c.route.startsWith('object/sign/')).length;
   /* The second upload moved in storage: the first is not signed either. */
   w.storage.object(pathOf(video)).eTag = '"0000"';
   await assert.rejects(signReviewRead(w.ctx, proofOf(w, [audio, video])), refused(409, 'media_changed'));
-  assert.equal(w.storage.calls.filter((c) => c.route.startsWith('object/sign/')).length, 0);
+  assert.equal(w.storage.calls.filter((c) => c.route.startsWith('object/sign/')).length, signedSoFar, 'nothing more was signed');
 });
 
 /* The order of GET proofs/:id/media (MEDIA.order.review_read), with the SQL read modelled: the revision asked for has
@@ -905,7 +932,8 @@ test('purge: one row that is neither due nor purged stops the whole batch, and a
   assert.equal(w.storage.calls.length, calls);
   assert.equal(w.storage.paths().length, 3);
   const dueOnly = [batch[0], batch[2]];
-  const failures = [() => new Response('tok_upstream', { status: 500 }), () => new Response(null, { status: 307, headers: { location: 'https://elsewhere.invalid/' } }), () => Response.json({ ok: true }), () => new Response('not json'), () => { throw new TypeError('fetch failed'); }];
+  const failures = [() => new Response('tok_upstream', { status: 500 }), () => new Response(null, { status: 307, headers: { location: 'https://elsewhere.invalid/' } }), () => Response.json({ ok: true }), () => new Response('not json'), () => { throw new TypeError('fetch failed'); },
+    () => Response.json([], { status: 500 }), () => Response.json([], { status: 403 })];
   for (const answer of failures) {
     const off = w.storage.intercept((c) => (c.method === 'DELETE' ? answer() : undefined));
     assert.deepEqual(await purgeDue(w.ctx, dueOnly), { deleted: [], failed: [a.row.id, b.row.id] });
@@ -1067,6 +1095,20 @@ test('the deadline also ends a body that stalls and a fetch that ignores the sig
     await reached.promise;
     t.mock.timers.tick(STORAGE_LIMITS.control_timeout_ms);
     await assert.rejects(pending, refused(503, 'storage_unavailable'));
+  }
+  { /* an answer that arrives after the deadline is released, not left open */
+    const w = world();
+    const row = w.league.staged();
+    const reached = deferred();
+    const late = deferred();
+    const seen = { cancelled: false };
+    const pending = beginUpload({ ...w.ctx, fetchImpl() { reached.resolve(); return late.promise; } }, row);
+    await reached.promise;
+    t.mock.timers.tick(STORAGE_LIMITS.control_timeout_ms);
+    await assert.rejects(pending, refused(503, 'storage_unavailable'));
+    late.resolve(new Response(new ReadableStream({ cancel() { seen.cancelled = true; } })));
+    await flush();
+    assert.equal(seen.cancelled, true);
   }
   { /* a control answer whose body stalls */
     const w = world();
