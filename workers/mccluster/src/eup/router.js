@@ -10,6 +10,7 @@
      civic      Civic League offices, terms, legislation, elections (private intake)
      companies  company identity, sourced locations, filings, awards
      sources    connector registry, rights/configuration, review queue, refresh/pause
+     modules    persisted module policy: install, enable, drain, disable (owner commands)
    This router does not touch the consumer `/v1/world/environment` contract. */
 import { reply } from '../lib/http.js';
 import { handleOverview } from './overview.js';
@@ -17,10 +18,11 @@ import { handleLeague } from './league.js';
 import { handleCivic } from './civic.js';
 import { handleCompanies } from './companies.js';
 import { handleSources } from './sources.js';
+import { handleModules } from './modules.js';
 
 export const EUP_PREFIX = '/v1/eup';
-export const EUP_SECTIONS = Object.freeze(['overview', 'league', 'civic', 'companies', 'sources']);
-const SECTION_HANDLERS = { overview: handleOverview, league: handleLeague, civic: handleCivic, companies: handleCompanies, sources: handleSources };
+export const EUP_SECTIONS = Object.freeze(['overview', 'league', 'civic', 'companies', 'sources', 'modules']);
+const SECTION_HANDLERS = { overview: handleOverview, league: handleLeague, civic: handleCivic, companies: handleCompanies, sources: handleSources, modules: handleModules };
 const fail = (status, message, reason) => Object.assign(new Error(message), { status, reason });
 
 export async function handleEup(request, env, { requireHouseOwner, fetchImpl = fetch, now = Date.now } = {}) {

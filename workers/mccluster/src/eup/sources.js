@@ -4,7 +4,12 @@
    ./intake.js. No connector is configured in this release: every refresh
    answers 503 not_configured honestly until an owner review records approval
    and the credential bindings exist. Held sources (OpenFEC, market prices,
-   LegiScan secondary, congressional disclosures) are never fetched. */
+   LegiScan secondary, congressional disclosures) are never fetched.
+   Refresh, resume and correct are guarded writes of module intake: while that module is not installed,
+   draining or disabled the store refuses them and ./intake.js answers with the shared module-policy reasons
+   (module_not_installed, module_draining, module_disabled, module_policy_changed, module_busy) instead of
+   storage_unavailable. Pause only removes work, so the store keeps it possible in every state. Reads are
+   never guarded: the registry, the runs and the review queue answer whatever the module state is. */
 import { FEED_REGISTRY, RETIRED_DEPENDENCIES, feedById, sourceRow, bindingsPresent } from './registry.js';
 import { readSourceStates, readReview, readRuns, sourcesCommand, assertFetchAllowed, storageConfigured } from './intake.js';
 
