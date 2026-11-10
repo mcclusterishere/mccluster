@@ -218,7 +218,7 @@ Three things to know before the Worker ships:
 
 | File (+ rollback) | Creates | Callers | Proof before apply |
 |---|---|---|---|
-| `eup_module_policy_v1.sql` (+ `eup_module_policy_v1.rollback.sql`, `eup_module_policy_v1.provenance.json`) | `eup_module_policies`, `eup_module_policy_commands` (append-only), and six service-role functions: `eup_module_policy_read`, `eup_module_control_read`, `eup_module_policy_install`, `eup_module_policy_command`, `eup_module_guard`, `eup_module_guard_reduce`, plus the trigger function `eup_module_guard_trigger` | `workers/mccluster/src/eup/modules.js`, `workers/mccluster/src/world-environment.js`, and the guard calls inside `eup_intake_v1.sql` | `scripts/test/eup-module-policy.integration.mjs` (257 assertions, PGlite); native PostgreSQL 16 proof of the fair drain queue in the handoff |
+| `eup_module_policy_v1.sql` (+ `eup_module_policy_v1.rollback.sql`, `eup_module_policy_v1.provenance.json`) | `eup_module_policies`, `eup_module_policy_commands` (append-only), and six service-role functions: `eup_module_policy_read`, `eup_module_control_read`, `eup_module_policy_install`, `eup_module_policy_command`, `eup_module_guard`, `eup_module_guard_reduce`, plus the trigger function `eup_module_guard_trigger` | `workers/mccluster/src/eup/modules.js`, `workers/mccluster/src/world-environment.js`, and the guard calls inside `eup_intake_v1.sql` | `scripts/test/eup-module-policy.integration.mjs` (257 assertions, PGlite); under real concurrency `scripts/test/eup-module-policy.native.integration.mjs` (96) and `scripts/test/eup-intake.native.integration.mjs` (33), on PostgreSQL 16 and 17 |
 
 **Order.** Apply `eup_module_policy_v1.sql` first, then `eup_league_v1.sql` and `eup_intake_v1.sql`
 (`eup_intake_v1.sql` raises 55000 when the guard functions are absent). Roll back in the reverse order: the
@@ -232,6 +232,14 @@ for writes already in flight and refuses later ones; reads, exact replays and ac
 remove exposure stay open in every state. The API login role runs with 8 second statement and lock timeouts
 (read on production, 2026-11-09); the policy functions wait at most 5 seconds for a lock and then change
 nothing.
+
+**Native proofs.** The two `*.native.integration.mjs` files start a disposable server on 127.0.0.1 and remove it
+afterwards; they refuse to run without consent:
+`ALLOW_LOCAL_EUP_DB_TESTS=1 PG_BIN=/usr/lib/postgresql/16/bin PG_MODULE=<node-postgres> node scripts/test/eup-module-policy.native.integration.mjs`
+(and the same for the intake file). They prove what one PGlite session cannot: a drain waits for writes in
+flight and queues later writers behind itself, reduce-only work survives a disable, the reduce marker is a mode
+and never a bypass, SKIP LOCKED claims, same-key races, bounded lock waits. Mutated copies of the SQL (marker as
+a bypass, no fair-queue lock, no shared writer lock, no SKIP LOCKED, no key lock) each fail them.
 
 The import job (`workers/mccluster/src/eup/import-runner.js`) is tested and unscheduled: no route and no
 cron calls it, nothing writes a run's cursor, and every connector is still disabled.
