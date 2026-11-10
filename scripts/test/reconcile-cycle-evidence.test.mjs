@@ -281,6 +281,32 @@ test('a drift comparison that cannot run fails the cycle at drift_compare and is
   assert.deepEqual([box.json('last-cycle.json').outcome, box.json('last-cycle.json').stage], ['deployed', 'complete']);
 });
 
+test('a clock stepped back during a failing cycle leaves a receipt Core still reads as a failure', (t) => {
+  const box = host(t);
+  // Only `date` is replaced. It answers five minutes fast until the step, which
+  // NTP makes right after the first call of the cycle run with FIXTURE_CLOCK_STEP.
+  const realDate = spawnSync('/bin/bash', ['-c', 'command -v date'], { encoding: 'utf8' }).stdout.trim();
+  assert.ok(realDate.startsWith('/'), 'date is available');
+  mkdirSync(box.p('clock'));
+  writeFileSync(box.p('clock', 'date'), `#!/usr/bin/env bash
+[[ -e "$FIXTURE_STATE/clock-stepped" ]] && exec ${realDate} "$@"
+[[ -n "\${FIXTURE_CLOCK_STEP:-}" ]] && touch "$FIXTURE_STATE/clock-stepped"
+exec ${realDate} -d "@$(( $(${realDate} +%s) + 300 ))" "$@"
+`);
+  chmodSync(box.p('clock', 'date'), 0o755);
+  const clock = { PATH: `${box.p('clock')}:${box.p('bin')}:${process.env.PATH}` };
+  assert.equal(box.run({ ...box.timer('1'), ...clock }).status, 0);
+  const failing = box.run({ ...box.timer('2'), ...clock, FIXTURE_CLOCK_STEP: '1', MCCLUSTER_REPO_URL: box.p('no-such-remote.git') });
+  assert.equal(failing.status, 128);
+  const last = box.json('last-cycle.json');
+  assert.deepEqual([last.outcome, last.stage, last.exit_code, last.cycle_id], ['failed', 'fetch', 128, '2'.repeat(32)]);
+  assert.ok(Date.parse(last.started_at) > Date.parse(last.finished_at), `the step put the start after the end: ${last.started_at} > ${last.finished_at}`);
+  // The deploy before the step is now dated in the future and is not evidence; the failure is.
+  const summary = summarizeReconcileCycles({ latest: last, verified: box.json('last-verified-cycle.json'), history: box.file('cycles.jsonl') });
+  assert.equal(summary.status, 'failed');
+  assert.deepEqual([summary.last_cycle.cycle_id, summary.last_cycle.stage, summary.last_verified_cycle], ['2'.repeat(32), 'fetch', null]);
+});
+
 test('a deploy replaces last-success.json by rename, so it is never read half-written', (t) => {
   const box = host(t);
   assert.equal(box.run(box.timer('1')).status, 0);

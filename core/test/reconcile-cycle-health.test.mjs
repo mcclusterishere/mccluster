@@ -168,6 +168,33 @@ test('repeated failures are counted, and a lost write never hides the newest rec
   assert.equal(summarizeReconcileCycles({ history: `${'x'.repeat(5000)}\n${JSON.stringify(good)}` }, { nowMs: NOW }).status, 'verified', 'an oversized line is skipped');
 });
 
+test('a clock stepped back during a failing cycle never hides the failure', () => {
+  // The clock ran five minutes fast, then NTP stepped it back while a cycle
+  // that fails was running. The receipt written before the step now lies in
+  // the future and is not evidence; the failing cycle started on the fast
+  // clock and finished on the corrected one, so its start reads after its end.
+  const fast = 5 * 60_000;
+  const before = receipt({ cycle_id: '1'.repeat(32), outcome: 'deployed', started_at: iso(NOW - 125_000 + fast), finished_at: iso(NOW - 120_000 + fast) });
+  const failed = failure({ cycle_id: '2'.repeat(32), started_at: iso(NOW - 5000 + fast), finished_at: iso(NOW - 4000) });
+  assert.ok(Date.parse(failed.started_at) > Date.parse(failed.finished_at));
+  assert.equal(verifiedReconcileCycle(before, { nowMs: NOW }), null, 'a receipt from the future is still not evidence');
+  const view = verifiedReconcileCycle(failed, { nowMs: NOW });
+  assert.equal(view?.outcome, 'failed', 'a failure is kept whatever a clock step did to its start time');
+  assert.equal(view.started_at, failed.started_at);
+  const history = [before, failed].map((entry) => JSON.stringify(entry)).join('\n');
+  const summary = summarizeReconcileCycles({ latest: failed, verified: before, history }, { nowMs: NOW });
+  assert.equal(summary.status, 'failed');
+  assert.deepEqual([summary.last_cycle.cycle_id, summary.last_cycle.stage, summary.consecutive_failed_cycles], ['2'.repeat(32), 'fetch', 1]);
+  // An older success inside the window does not mask it either.
+  const older = receipt({ cycle_id: '0'.repeat(32), started_at: iso(NOW - 10 * 60_000 - 5000), finished_at: iso(NOW - 10 * 60_000) });
+  const masked = summarizeReconcileCycles({ latest: failed, verified: older, history: [older, before, failed].map((entry) => JSON.stringify(entry)).join('\n') }, { nowMs: NOW });
+  assert.equal(masked.status, 'failed');
+  assert.equal(masked.last_verified_cycle.cycle_id, '0'.repeat(32));
+  // A deferral is kept the same way; a success still needs a start no later than its end.
+  assert.equal(verifiedReconcileCycle(receipt({ outcome: 'deferred', stage: 'deploy', exit_code: 75, started_at: iso(NOW - 5000 + fast), finished_at: iso(NOW - 4000) }), { nowMs: NOW })?.outcome, 'deferred');
+  assert.equal(verifiedReconcileCycle(receipt({ started_at: iso(NOW - 5000 + fast), finished_at: iso(NOW - 4000) }), { nowMs: NOW }), null);
+});
+
 test('the staleness threshold follows the timer period, its accuracy and the unit start limit', () => {
   const timer = read('core/systemd/mccluster-vps-reconcile.timer');
   const service = read('core/systemd/mccluster-vps-reconcile.service');

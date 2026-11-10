@@ -53,7 +53,7 @@ Every reconcile cycle that takes the lock leaves one receipt under `/var/lib/mcc
 | `ssh_host_key_pinned` | True only when `GIT_SSH_COMMAND` is exactly the command the setup script installs and the known-hosts file is exactly GitHub's pinned line. |
 | `ssh_key_fingerprint` | The SHA-256 fingerprint of the public half of the key that command names. The private key is never opened. |
 | `https_credential_configured` | Whether a credential helper, an extra header, an askpass program, a netrc file or a credential in the URL was present. A boolean, never a value. |
-| `github_main_sha`, `github_promoted_sha`, `deployed_sha`, `started_at`, `finished_at` | What the cycle fetched, what the host is on, and when. |
+| `github_main_sha`, `github_promoted_sha`, `deployed_sha`, `started_at`, `finished_at` | What the cycle fetched, what the host is on, and when, by the wall clock. Cycles are ordered by `finished_at`. A clock stepped back during a cycle can put its start after its end: such a success is not counted, but a cycle that did not succeed is still read, so a clock step never hides a failure. |
 
 Writing a receipt cannot fail, delay or change a cycle. It happens after the outcome is decided, in a subshell, under one ten-second budget, and it never changes the exit status.
 
@@ -67,7 +67,7 @@ Over SSH, GitHub only answers a key that is registered with it. So `authenticate
 
 `host_health` output carries the receipts under `deployment.reconcile`:
 
-- `status`: `verified` (the newest cycle did not fail and a cycle succeeded within the window), `failed` (the newest cycle failed or was terminated), `stale` (no cycle succeeded within the window) or `unverified` (the host has no receipts because its reconciler predates them).
+- `status`: `verified` (the newest cycle did not fail and a cycle succeeded within the window), `failed` (the newest cycle failed or was terminated), `stale` (no cycle succeeded within the window) or `unverified` (no usable receipt: the host has none because its reconciler predates them, or none of its receipts can be used, being malformed, for another repository or ref, or dated more than 30 seconds in the future, as right after the clock is stepped back).
 - `last_cycle`, `last_verified_cycle`, `consecutive_failed_cycles`.
 - `recent_successful`: the newest five distinct successful cycles, with trigger, transport, `authenticated` and key fingerprint.
 - `distinct_successful_cycles`, `distinct_successful_timer_cycles`, `distinct_authenticated_timer_cycles`: counted over `recent_successful`.
