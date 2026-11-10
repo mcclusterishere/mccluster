@@ -479,9 +479,11 @@
     if(AUTH_STATE.signed_in)setPerspective({kind:"house"});
   });
   function resolveOwnPerspective(subject,user) {
-    var seq=++selfProfileEpoch;
-    if(!subject||!user||!window.MCC||typeof window.MCC.api!=="function")return;
-    window.MCC.api("/v1/mnet/bootstrap?app_key=mccluster-web").then(function(response) {
+    var seq=++selfProfileEpoch,token=(readAuthSession()||{}).access_token;
+    if(!subject||!user||!token)return;
+    /* With the token this lookup has just verified. MCC.api would refresh it once more wherever a session is stale
+       on every call: a second refresh for every page, landing under the owner check and under every other tab. */
+    fetch(API_ORIGIN+"/v1/mnet/bootstrap?app_key=mccluster-web",{headers:{authorization:"Bearer "+token,"content-type":"application/json"}}).then(function(response) {
       if(!response.ok)throw Error("Profile unavailable");
       return response.json();
     }).then(function(data) {
@@ -717,9 +719,25 @@
       document.head.appendChild(script);
     });
   }
-  function refreshAuthState() {
+  /* A NEW TOKEN IS NOT A NEW SIGN-IN. The canonical client may refresh the token while it
+     fetches the user, and the user it returns was fetched with the refreshed one. So when
+     the stored token moved under a lookup but still names the account the lookup began
+     with (the JWT sub), the answer stands. Anything else that moved (another account, a
+     sign-out, no answer) is never painted from the old answer: the session now stored is
+     looked up again, AUTH_LOOKUPS lookups at most for one auth event (the page opening, a
+     sign-in or sign-out, a session written by another tab), and then the bar settles
+     signed out until the next one. Three, because a tab restored beside another can lose
+     the refresh to it twice (that tab's lookup, then a request of its page) and has no
+     answer either time.
+     The lookup used to repeat for as long as the token kept changing, and a session that
+     is stale on every call (a device clock ahead of the server's, a short token lifetime)
+     changes it every time: one refresh and one lookup a turn, the bar never painted,
+     until the auth service answered 429 for everyone behind that address. */
+  var AUTH_LOOKUPS = 3, AGAIN = {}, authLookups = 0;
+  function refreshAuthState(again) {
     var attempt = ++authEpoch;
     ++adminEpoch;
+    authLookups = again === AGAIN ? authLookups + 1 : 1;
     var session = readAuthSession();
     var oldSubject = adminSession ? jwtPayload(adminSession).sub : null;
     var newSubject = session?.access_token ? jwtPayload(session.access_token).sub : null;
@@ -746,8 +764,13 @@
     }).then(function (user) {
       if (attempt !== authEpoch) return AUTH_STATE;
       // Canonical auth may refresh the token while fetching the user. Verify
-      // the new session instead of accepting an old result or leaving it pending.
-      if ((readAuthSession() || {}).access_token !== session.access_token) return refreshAuthState();
+      // the new session instead of accepting an old result or leaving it pending,
+      // within the budget: the same account's refreshed token keeps the answer it was fetched with.
+      if ((readAuthSession() || {}).access_token !== session.access_token &&
+          !(user && subject && currentSubject() === subject)) {
+        if (authLookups < AUTH_LOOKUPS) return refreshAuthState(AGAIN);
+        user = null;
+      }
       paintAuthState(!!user, user, true);
       if(user && subject)resolveOwnPerspective(subject,user);
       checkAdmin();
