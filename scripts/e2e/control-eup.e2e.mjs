@@ -171,7 +171,7 @@ async function policyProof(page,db,width){
   check(width,'policy: enabled offers Drain only',JSON.stringify(await commandsOf(page,'environment'))==='["Drain"]');
   check(width,'policy: Drain by keyboard',await byKeyboard(page,'environment','draining','stop new writes'));
   await unitState(page,'environment','draining');
-  check(width,'policy: draining offers Disable and Re-enable and says what draining means',JSON.stringify(await commandsOf(page,'environment'))==='["Disable","Re-enable"]'&&await page.locator('[data-eup-policy-drain="environment"]').count()===1&&db.policyPosts[2].body.expected_revision===1);
+  check(width,'policy: draining offers Disable and Re-enable and says what draining means',JSON.stringify(await commandsOf(page,'environment'))==='["Disable","Re-enable"]'&&await page.locator('[data-eup-policy-meaning="environment:draining"]').count()===1&&db.policyPosts[2].body.expected_revision===1);
   check(width,'policy: no horizontal overflow while draining',await overflow(page));
   /* an unknown outcome: the Worker answers 503 storage_unavailable; nothing is resent until the owner asks */
   db.policyFail={status:503,reason:'storage_unavailable'};
