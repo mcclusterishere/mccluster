@@ -913,7 +913,7 @@ export function createLevel3D(host, { level, onTap, onHover = null, onDoubleTap 
   // (a small map — a single building's site — gets the same framing scaled to its size)
   const HOME = { dist: Math.min(32, SPAN * 1.25 + 2), pitch: 0.86 };
   const view = { dist: HOME.dist, minDist: 4.5, maxDist: Math.min(118, Math.max(30, SPAN * 1.85)), target: new THREE.Vector3(cx, 0, cz), goal: new THREE.Vector3(cx, 0, cz), pitch: HOME.pitch, yaw: 0, yawGoal: 0, distGoal: HOME.dist };
-  let shotCam = null;
+  let shotCam = null, viewAt = performance.now();
   const camPos = new THREE.Vector3(), lookAt = new THREE.Vector3();
   function placeCamera() {
     const r = host.getBoundingClientRect(), w = Math.max(1, r.width), h = Math.max(1, r.height);
@@ -931,42 +931,47 @@ export function createLevel3D(host, { level, onTap, onHover = null, onDoubleTap 
   }
   const clampGoal = () => { view.goal.x = Math.min(W + 2, Math.max(-3, view.goal.x)); view.goal.z = Math.min(H + 2, Math.max(-3, view.goal.z)); };
   // look a little south of the tile (clear of the cards), less so close up
-  function focusTile(x, y, z = 0, dist = null) { view.goal.set(x, surfaceHeight(x, y, z) * 0.5, y + Math.min(1.5, (dist || view.distGoal) * 0.05)); clampGoal(); if (dist) view.distGoal = dist; needs = true; }
+  function focusTile(x, y, z = 0, dist = null) { viewAt = performance.now(); view.goal.set(x, surfaceHeight(x, y, z) * 0.5, y + Math.min(1.5, (dist || view.distGoal) * 0.05)); clampGoal(); if (dist) view.distGoal = dist; needs = true; }
 
   /* ---------- frame loop ---------- */
   let model = null, needs = true, t0 = performance.now(), active = true, busy = false, raf = 0;
-  let rulersOn = true;
+  let rulersOn = true, pausedAt = null;
   const flashes = []; const fxGroup = new THREE.Group(); scene.add(fxGroup);
   let fireQueue = [], fireAnim = null;
   const lerpAngle = (a, b, k) => { const d = ((b - a + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI; return a + d * k; };
   if (showcase) { view.dist = view.distGoal = 46; view.pitch = 0.62; }
   function frame(now) {
     if (!active) { t0 = now; raf = requestAnimationFrame(frame); return; }
-    const dt = Math.min(0.25, (now - t0) / 1000); t0 = now;
+    // Particle steps stay bounded, but resolved presentation must keep wall time.
+    // RAF can pause for seconds on slow GPUs or throttled embedded frames. Never
+    // discard that time, or a completed move keeps the UI waiting indefinitely.
+    const elapsed = Math.max(0, (now - t0) / 1000);
+    const cameraDt = Math.max(0, (now - Math.max(t0, viewAt)) / 1000);
+    const dt = Math.min(0.25, elapsed); t0 = now;
     let moving = false;
     if (showcase && !reducedMotion) { view.yaw = view.yawGoal = 0.4 + Math.sin(now / 1000 * 0.05) * 0.8; moving = true; }
-    if (view.target.distanceToSquared(view.goal) > 1e-5) { view.target.lerp(view.goal, reducedMotion ? 1 : 1 - Math.exp(-dt * 6)); moving = true; }
-    if (Math.abs(view.dist - view.distGoal) > 1e-3) { view.dist += (view.distGoal - view.dist) * (reducedMotion ? 1 : 1 - Math.exp(-dt * 6)); moving = true; }
-    if (view.pitchGoal != null && Math.abs(view.pitch - view.pitchGoal) > 1e-4) { view.pitch += (view.pitchGoal - view.pitch) * (reducedMotion ? 1 : 1 - Math.exp(-dt * 5)); moving = true; }
-    if (Math.abs(view.yaw - view.yawGoal) > 1e-4) { view.yaw = reducedMotion ? view.yawGoal : view.yaw + (view.yawGoal - view.yaw) * (1 - Math.exp(-dt * 7)); moving = true; }
+    if (view.target.distanceToSquared(view.goal) > 1e-5) { view.target.lerp(view.goal, reducedMotion ? 1 : 1 - Math.exp(-cameraDt * 6)); moving = true; }
+    if (Math.abs(view.dist - view.distGoal) > 1e-3) { view.dist += (view.distGoal - view.dist) * (reducedMotion ? 1 : 1 - Math.exp(-cameraDt * 6)); moving = true; }
+    if (view.pitchGoal != null && Math.abs(view.pitch - view.pitchGoal) > 1e-4) { view.pitch += (view.pitchGoal - view.pitch) * (reducedMotion ? 1 : 1 - Math.exp(-cameraDt * 5)); moving = true; }
+    if (Math.abs(view.yaw - view.yawGoal) > 1e-4) { view.yaw = reducedMotion ? view.yawGoal : view.yaw + (view.yawGoal - view.yaw) * (1 - Math.exp(-cameraDt * 7)); moving = true; }
     for (const [id, a] of actors) {
       if (a.walk) {
-        const wk = a.walk; wk.t += dt * M(7.5);
+        const wk = a.walk; wk.t = Math.max(wk.t, (now - wk.at) / 1000 * M(7.5));
         const seg = Math.min(wk.pts.length - 2, Math.floor(wk.t)), p0 = wk.pts[seg], p1 = wk.pts[seg + 1], k = Math.min(1, wk.t - seg);
         a.g.position.set(p0.x + (p1.x - p0.x) * k, p0.h + (p1.h - p0.h) * k + 0.02, p0.y + (p1.y - p0.y) * k);
         if (p1.x !== p0.x || p1.y !== p0.y) a.faceGoal = Math.atan2(p1.x - p0.x, p1.y - p0.y);
         a.phase += dt * 10; a.walkAmt = Math.min(1, a.walkAmt + dt * 6);
-        if (wk.t >= wk.pts.length - 1) { const e = wk.pts[wk.pts.length - 1]; a.g.position.set(e.x, e.h + 0.02, e.y); a.walk = null; a.faceGoal = a.restFace; const d = wk.done; if (d) d(); }
+        if (wk.t >= wk.pts.length - 1) { const e = wk.pts[wk.pts.length - 1]; a.g.position.set(e.x, e.h + 0.02, e.y); a.walk = null; a.walkAmt = Math.max(0, a.walkAmt - Math.max(0, (wk.t - (wk.pts.length - 1)) / M(7.5)) * 5); a.faceGoal = a.restFace; const d = wk.done; if (d) d(); }
         moving = true;
-      } else if (a.walkAmt > 0) { a.walkAmt = Math.max(0, a.walkAmt - dt * 5); moving = true; }
+      } else if (a.walkAmt > 0) { a.walkAmt = Math.max(0, a.walkAmt - elapsed * 5); moving = true; }
       if (!a.walk) a.crouch += (a.crouchGoal - a.crouch) * (reducedMotion ? 1 : 1 - Math.exp(-dt * 6));
       a.face = reducedMotion && !a.walk ? a.faceGoal : lerpAngle(a.face, a.faceGoal, 1 - Math.exp(-dt * 9));
       a.g.rotation.y = a.face;
       a.recoil = Math.max(0, a.recoil - dt * 6); a.flinch = Math.max(0, a.flinch - dt * 3);
-      if (a.dying) { a.dying.t += dt; const k = Math.min(1, a.dying.t / 0.7); a.g.rotation.x = -k * Math.PI / 2 * 0.92; if (a.dying.t > 1.6 && a.dying.remove) { unitsGroup.remove(a.g); actors.delete(id); } if (a.dying.t < 1.6) moving = true; } // a downed operative lies still: not an animation
+      if (a.dying) { if (a.dying.t < 1.6) moving = true; a.dying.t = Math.max(a.dying.t, (now - a.dying.at) / 1000); const k = Math.min(1, a.dying.t / 0.7); a.g.rotation.x = -k * Math.PI / 2 * 0.92; if (a.dying.t >= 1.6 && a.dying.remove) { unitsGroup.remove(a.g); actors.delete(id); } if (a.dying.t < 1.6) moving = true; } // a downed operative lies still: not an animation
       if (a.rig && !a.rig.glb) kit.pose(a, now / 1000);
     }
-    if (fireAnim || fireQueue.length) { stepFire(dt); moving = true; }
+    if (fireAnim || fireQueue.length) { stepFire(dt, now); moving = true; }
     for (let i = flashes.length - 1; i >= 0; i -= 1) { const f = flashes[i]; f.life -= dt; f.obj.visible = f.life > 0; if (f.update) f.update(f, dt); if (f.life <= 0) { fxGroup.remove(f.obj); flashes.splice(i, 1); } }
     if (!reducedMotion) {
       waterNormal.offset.x += dt * 0.02; waterNormal.offset.y += dt * 0.006;
@@ -980,7 +985,15 @@ export function createLevel3D(host, { level, onTap, onHover = null, onDoubleTap 
       placeLabels(); needs = false;
       if (onView) onView();
     }
-    busy = moving || !!fireAnim || fireQueue.length > 0 || flashes.length > 0;
+    // Finishing a pose still draws above, but does not demand another RAF to
+    // release input. Sparse frames otherwise add seconds of stale busy state.
+    busy = (showcase && !reducedMotion)
+      || view.target.distanceToSquared(view.goal) > 1e-5
+      || Math.abs(view.dist - view.distGoal) > 1e-3
+      || (view.pitchGoal != null && Math.abs(view.pitch - view.pitchGoal) > 1e-4)
+      || Math.abs(view.yaw - view.yawGoal) > 1e-4
+      || [...actors.values()].some(a => a.walk || a.walkAmt > 0 || (a.dying && a.dying.t < 1.6))
+      || !!fireAnim || fireQueue.length > 0 || flashes.length > 0;
     if (!destroyed) raf = requestAnimationFrame(frame);
   }
   raf = requestAnimationFrame(frame);
@@ -1004,7 +1017,7 @@ export function createLevel3D(host, { level, onTap, onHover = null, onDoubleTap 
   function startNextShot() {
     const s = fireQueue.shift(); if (!s) return;
     const a = actors.get(s.attackerId), b = actors.get(s.targetId);
-    if (!a || !b || reducedMotion) { if (b && s.result.killed) b.dying = { t: 0, remove: !s.result.downedOnly }; if (s.done) queueMicrotask(s.done); return; }
+    if (!a || !b || reducedMotion) { if (b && s.result.killed) b.dying = { t: 0, at: performance.now(), remove: !s.result.downedOnly }; if (s.done) queueMicrotask(s.done); return; }
     const from = a.g.position.clone(), to = b.g.position.clone();
     const face = Math.atan2(to.x - from.x, to.z - from.z);
     const aimAt = new THREE.Vector3(to.x, to.y + M(1.3) - b.crouch * M(0.5), to.z);
@@ -1012,11 +1025,11 @@ export function createLevel3D(host, { level, onTap, onHover = null, onDoubleTap 
     const shots = [0.5, 0.62, 0.74].map((at, i) => ({ at, done: false, to: s.result.hit ? aimAt.clone().add(new THREE.Vector3((Math.random() - 0.5) * M(0.16), (Math.random() - 0.5) * M(0.16), 0)) : aimAt.clone().addScaledVector(side, (i % 2 ? 1 : -1) * M(0.8 + Math.random() * 0.5)).add(new THREE.Vector3(0, M(0.3), 0)) }));
     // over the shoulder: 5 m behind, 1.6 m to the side, 2.6 m up (real distances, so the shot frames a person)
     if (s.cinematic) { const back = new THREE.Vector3(Math.sin(face), 0, Math.cos(face)); shotCam = { from: from.clone().addScaledVector(back, -M(5.1)).addScaledVector(side, -M(1.6)).add(new THREE.Vector3(0, M(2.6), 0)), look: from.clone().lerp(aimAt, 0.65).add(new THREE.Vector3(0, M(0.3), 0)), k: 0 }; }
-    fireAnim = { ...s, from, face, shots, t: 0, len: s.cinematic ? 1.8 : 1.1 };
+    fireAnim = { ...s, from, face, shots, t: 0, at: performance.now(), len: s.cinematic ? 1.8 : 1.1 };
   }
-  function stepFire(dt) {
+  function stepFire(dt, now) {
     if (!fireAnim) { startNextShot(); if (!fireAnim) return; }
-    const F = fireAnim; F.t += dt;
+    const F = fireAnim; F.t = Math.max(F.t, (now - F.at) / 1000);
     const a = actors.get(F.attackerId), b = actors.get(F.targetId);
     if (a) { a.faceGoal = F.face; a.aim = Math.min(1, a.aim + dt * 5); }
     if (shotCam) shotCam.k = Math.min(1, F.t < F.len - 0.4 ? shotCam.k + dt * 3 : Math.max(0, shotCam.k - dt * 3.2));
@@ -1026,7 +1039,7 @@ export function createLevel3D(host, { level, onTap, onHover = null, onDoubleTap 
       burst(wp.clone(), 0xffc070, M(0.96), 0.08); tracer(wp.clone(), s.to, 0xffe2a8);
       if (F.result.hit) { if (b) b.flinch = 1; burst(s.to.clone(), 0xffd08a, M(0.5), 0.12); } else burst(s.to.clone(), 0xffa060, M(0.32), 0.1);
     }
-    if (F.result.killed && b && !b.dying && F.t > F.shots[2].at + 0.1) b.dying = { t: 0, remove: !F.result.downedOnly };
+    if (F.result.killed && b && !b.dying && F.t > F.shots[2].at + 0.1) b.dying = { t: 0, at: performance.now(), remove: !F.result.downedOnly };
     if (F.t >= F.len) { if (a) { a.aim = 0; a.faceGoal = a.restFace; } shotCam = null; fireAnim = null; needs = true; if (F.done) F.done(); }
   }
 
@@ -1056,12 +1069,12 @@ export function createLevel3D(host, { level, onTap, onHover = null, onDoubleTap 
           const pts = [{ x: a.g.position.x, y: a.g.position.z, z: a.unit.z, h: a.g.position.y - 0.02 }];
           for (const p of path) { const z = p.z ?? u.z; if (p.x === Math.round(pts[0].x) && p.y === Math.round(pts[0].y) && z === pts[0].z) continue; pts.push({ x: p.x, y: p.y, z, h: surfaceHeight(p.x, p.y, z) }); }
           const last = pts[pts.length - 1]; if (last.x !== u.x || last.y !== u.y) pts.push({ x: u.x, y: u.y, z: u.z, h: surfaceHeight(u.x, u.y, u.z) });
-          a.walk = { pts, t: 0 };
+          a.walk = { pts, t: 0, at: performance.now() };
         } else { a.walk = null; a.g.position.set(u.x, surfaceHeight(u.x, u.y, u.z) + 0.02, u.y); }
       }
       a.unit = u;
       a.crouchGoal = u.downed ? 1 : (m.coverAt && m.coverAt(u) ? (m.coverAt(u) === 'LOW' ? 1 : 0.25) : 0);
-      if (u.downed && !a.dying) a.dying = { t: 0, remove: false };
+      if (u.downed && !a.dying) a.dying = { t: 0, at: performance.now(), remove: false };
       if (!u.downed && a.dying && !a.dying.remove) { a.dying = null; a.g.rotation.x = 0; }
       a.restFace = faceFor(u, m);
       if (!a.walk && !(fireAnim && fireAnim.attackerId === u.id)) a.faceGoal = a.restFace;
@@ -1156,7 +1169,7 @@ export function createLevel3D(host, { level, onTap, onHover = null, onDoubleTap 
     });
     el.addEventListener('wheel', (e) => { e.preventDefault(); setDist(view.distGoal * (e.deltaY > 0 ? 1.1 : 0.9)); }, { passive: false });
   }
-  function setDist(d) { view.distGoal = Math.min(view.maxDist, Math.max(view.minDist, d)); needs = true; }
+  function setDist(d) { viewAt = performance.now(); view.distGoal = Math.min(view.maxDist, Math.max(view.minDist, d)); needs = true; }
 
   return {
     update, tier,
@@ -1166,13 +1179,23 @@ export function createLevel3D(host, { level, onTap, onHover = null, onDoubleTap 
     get gridOn() { return gridGroup.visible; },
     setGridDetail(detail) { gridDetail = Number(detail) === 2 ? 2 : 1; applyGridCut(); needs = true; },
     get gridDetail() { return gridDetail; },
-    setActive(on) { active = !!on; needs = true; },
+    setActive(on) {
+      const next = !!on; if (next === active) return;
+      const now = performance.now();
+      if (next) {
+        const resumedAt = at => at + now - Math.max(pausedAt, at);
+        for (const a of actors.values()) { if (a.walk) a.walk.at = resumedAt(a.walk.at); if (a.dying) a.dying.at = resumedAt(a.dying.at); }
+        if (fireAnim) fireAnim.at = resumedAt(fireAnim.at);
+        viewAt = resumedAt(viewAt); t0 = now; pausedAt = null;
+      } else pausedAt = now;
+      active = next; needs = true;
+    },
     zoom(step) { setDist(view.distGoal * (step > 0 ? 0.8 : 1.25)); },
     zoomLevel() { return view.dist; },
     canZoom() { return { in: view.distGoal > view.minDist + 0.01, out: view.distGoal < view.maxDist - 0.01 }; },
-    rotate(step) { view.yawGoal += (step > 0 ? 1 : -1) * Math.PI / 2; needs = true; busy = true; },
-    resetView() { view.distGoal = HOME.dist; view.yawGoal = 0; needs = true; },
-    overview() { view.pitchGoal = HOME.pitch; view.goal.set(cx - 0.5, 0, cz - 0.5); view.distGoal = view.maxDist - 4; showAll = true; applyCut(); needs = true; },
+    rotate(step) { viewAt = performance.now(); view.yawGoal += (step > 0 ? 1 : -1) * Math.PI / 2; needs = true; busy = true; },
+    resetView() { viewAt = performance.now(); view.distGoal = HOME.dist; view.yawGoal = 0; needs = true; },
+    overview() { viewAt = performance.now(); view.pitchGoal = HOME.pitch; view.goal.set(cx - 0.5, 0, cz - 0.5); view.distGoal = view.maxDist - 4; showAll = true; applyCut(); needs = true; },
     // the building cutaway: the storey shown (null = the whole building), and whether the model is drawn
     setCut(st) { wantCut = st; lastCutKey = st; showAll = false; applyCut(); },
     get cut() { return cutStorey(); },
@@ -1181,13 +1204,13 @@ export function createLevel3D(host, { level, onTap, onHover = null, onDoubleTap 
     setFog(cells) { fogOn = !!cells; fogPlane.visible = fogOn; if (cells) { for (let y = 0; y < H; y += 1) for (let x = 0; x < W; x += 1) fogData[((H - 1 - y) * W + x) * 4 + 1] = Math.round(255 * cells[y * W + x]); fogTex.needsUpdate = true; } needs = true; },
     focus(x, y, z = 0, dist = 20) { view.pitchGoal = HOME.pitch; focusTile(x, y, z, dist); },
     // a level's opening shot: a point (tile x, y on floor z, raised by lift units), a distance and a pitch
-    frame({ x, y, z = 0, lift = 0, dist = 20, pitch = HOME.pitch }) { view.goal.set(x, surfaceHeight(Math.round(x), Math.round(y), z) + lift, y); clampGoal(); view.distGoal = dist; view.pitchGoal = pitch; needs = true; },
+    frame({ x, y, z = 0, lift = 0, dist = 20, pitch = HOME.pitch }) { viewAt = performance.now(); view.goal.set(x, surfaceHeight(Math.round(x), Math.round(y), z) + lift, y); clampGoal(); view.distGoal = dist; view.pitchGoal = pitch; needs = true; },
     // play shots the engine already resolved, in order; done() when this one has played
     fire(attackerId, targetId, result, done, { cinematic = true } = {}) { fireQueue.push({ attackerId, targetId, result: result || {}, done, cinematic }); needs = true; },
     // walk a unit along a path the engine already resolved; done() at the end
     walk(id, path, done) { const a = actors.get(id); if (!a || reducedMotion || !path || !path.length) { if (done) queueMicrotask(done); return; }
       const pts = [{ x: a.g.position.x, y: a.g.position.z, z: a.unit.z, h: a.g.position.y - 0.02 }, ...path.map((p) => ({ x: p.x, y: p.y, z: p.z || 0, h: surfaceHeight(p.x, p.y, p.z || 0) }))];
-      a.walk = { pts, t: 0, done }; },
+      a.walk = { pts, t: 0, at: performance.now(), done }; },
     isAnimating() { return busy || !!fireAnim || fireQueue.length > 0 || [...actors.values()].some((a) => a.walk || (a.dying && a.dying.remove)); },
     unitPosition(id) { const a = actors.get(id); return a ? { x: a.g.position.x, y: a.g.position.z, h: a.g.position.y } : null; },
     screenOf(x, y, h = 0, z = 0) { placeCamera(); const p = project(x, y, h + surfaceHeight(x, y, z)); const r = el.getBoundingClientRect(); return { x: r.left + p.x, y: r.top + p.y }; },

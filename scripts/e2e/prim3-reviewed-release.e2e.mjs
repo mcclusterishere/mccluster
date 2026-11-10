@@ -35,7 +35,22 @@ export async function runReviewedReleaseBrowser({handleLearning,env,options}){
    if(u.pathname==='/assets/3d/prim3-operators/T.glb'){modelsRequested();await modelGate;}
    if(['/js/tabbar.js','/js/shell-boot.js'].includes(u.pathname))return route.fulfill({contentType:'text/javascript',body:''});
    const f=resolve(ROOT,u.pathname.slice(1));if(!f.startsWith(ROOT+sep))return route.abort();
-   try{return route.fulfill({contentType:mime[extname(f)]||'application/octet-stream',body:await readFile(f)});}catch{return route.fulfill({status:404,body:''});}
+   try{
+    let body=await readFile(f);
+    // Observe the actual renderer closure, without changing its timing or state.
+    // This makes a stalled walk, stale busy flag and slow frames distinguishable.
+    if(u.pathname==='/js/prim3-tactics/level3d.mjs'){
+     const marker='    isAnimating() {';
+     const source=body.toString();assert.ok(source.includes(marker));
+     body=source.replace(marker,`    animationSnapshot() { return {
+      at: performance.now(), sinceFrame: performance.now()-t0, active, busy, tier,
+      camera: {target: view.target.toArray(), goal: view.goal.toArray(), dist: view.dist, distGoal: view.distGoal, pitch: view.pitch, pitchGoal: view.pitchGoal, yaw: view.yaw, yawGoal: view.yawGoal},
+      actors: [...actors].map(([id,a])=>({id, position:a.g.position.toArray(), walk:a.walk?{t:a.walk.t,points:a.walk.pts.length,callback:!!a.walk.done}:null,walkAmt:a.walkAmt,dying:a.dying})),
+      fire:fireAnim?{t:fireAnim.t,len:fireAnim.len}:null,fireQueue:fireQueue.length,flashes:flashes.length
+     }; },\n`+marker);
+    }
+    return route.fulfill({contentType:mime[extname(f)]||'application/octet-stream',body});}
+catch{return route.fulfill({status:404,body:''});}
   });
   console.log(`Browser release journey ${width}px: review`);
   await page.goto(BASE+'/prim3-released-mission.html');
@@ -49,11 +64,18 @@ export async function runReviewedReleaseBrowser({handleLearning,env,options}){
   try{await Promise.race([modelRequest,new Promise((_,reject)=>{modelTimer=setTimeout(()=>reject(Error('Final operator model was not requested')),30000);})]);}
   finally{clearTimeout(modelTimer);}
   async function idle(){
+   let sampling=false;
+   const snapshots=[];
+   const sample=setInterval(async()=>{
+    if(sampling)return;sampling=true;
+    try{snapshots.push(await frame.evaluate(()=>({uiBusy:__tx.ui.busy,...__tx.r3.animationSnapshot()})));if(snapshots.length>8)snapshots.shift();}
+    catch{}finally{sampling=false;}
+   },3000);
    try{await frame.waitForFunction(()=>!__tx.busy);}
    catch(error){
-    console.error('PRIM3 animation did not settle',JSON.stringify({width,lastCommand,modelsReleased,errors,state:await frame.evaluate(()=>({uiBusy:__tx.ui.busy,rendererBusy:__tx.r3.isAnimating(),phase:__tx.state.phase,round:__tx.state.round,events:__tx.state.events.slice(-5)}))}));
+    console.error('PRIM3 animation did not settle',JSON.stringify({width,lastCommand,modelsReleased,errors,snapshots,state:await frame.evaluate(()=>({uiBusy:__tx.ui.busy,rendererBusy:__tx.r3.isAnimating(),phase:__tx.state.phase,round:__tx.state.round,events:__tx.state.events.slice(-5)}))}));
     throw error;
-   }
+   }finally{clearInterval(sample);}
   }
   console.log(`Browser release journey ${width}px: renderer ready`);
   await frame.locator('[data-sheet=brief-go]').click();
