@@ -6,6 +6,9 @@ on:
       sha:
         description: Exact commit SHA already contained in main
         required: true
+      expected_current:
+        description: Exact SHA deploy/ovh-production holds now (the previous head this promotion replaces)
+        required: true
       confirm:
         description: Type PROMOTE_OVH to authorize promotion
         required: true
@@ -18,14 +21,15 @@ permissions:
   contents: write
   checks: read
 
-concurrency:
-  group: promote-ovh-production
-  cancel-in-progress: false
-
 jobs:
   promote:
     if: ${{ inputs.confirm == 'PROMOTE_OVH' }}
     runs-on: ubuntu-latest
+    # One ref move at a time. The lock is on this job, not on the workflow, so a
+    # rollback is never queued behind the previous run's 30-minute verification.
+    concurrency:
+      group: promote-ovh-production
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -34,9 +38,14 @@ jobs:
       - name: Validate target commit
         env:
           TARGET_SHA: ${{ inputs.sha }}
+          EXPECTED_CURRENT: ${{ inputs.expected_current }}
           ALLOW_ROLLBACK: ${{ inputs.allow_rollback }}
         run: |
           set -euo pipefail
+          [[ "${TARGET_SHA}" =~ ^[0-9a-f]{40}$ && "${EXPECTED_CURRENT}" =~ ^[0-9a-f]{40}$ ]] || {
+            echo "sha and expected_current must be exact 40-character lowercase commit SHAs" >&2
+            exit 2
+          }
           git fetch origin main deploy/ovh-production
           git cat-file -e "${TARGET_SHA}^{commit}"
           git merge-base --is-ancestor "${TARGET_SHA}" origin/main || {
@@ -44,6 +53,11 @@ jobs:
             exit 2
           }
           CURRENT="$(git rev-parse origin/deploy/ovh-production)"
+          # Exact previous-head check: the approval names the release it replaces.
+          [[ "${CURRENT}" == "${EXPECTED_CURRENT}" ]] || {
+            echo "deploy/ovh-production is ${CURRENT}, not the expected previous head ${EXPECTED_CURRENT}" >&2
+            exit 4
+          }
           if [[ "${ALLOW_ROLLBACK}" != "true" ]]; then
             git merge-base --is-ancestor "${CURRENT}" "${TARGET_SHA}" || {
               echo "Ref would move backward; set allow_rollback=true for an intentional rollback" >&2
@@ -70,18 +84,67 @@ jobs:
       - name: Promote deployment ref
         env:
           TARGET_SHA: ${{ inputs.sha }}
+          EXPECTED_CURRENT: ${{ inputs.expected_current }}
           ALLOW_ROLLBACK: ${{ inputs.allow_rollback }}
         run: |
           set -euo pipefail
-          if [[ "${ALLOW_ROLLBACK}" == "true" ]]; then
-            git push --force-with-lease origin "${TARGET_SHA}:refs/heads/deploy/ovh-production"
-          else
-            git push origin "${TARGET_SHA}:refs/heads/deploy/ovh-production"
+          # Forward only unless allow_rollback. Checked again here, next to the
+          # push it protects, because the push below no longer relies on the
+          # server refusing a non-fast-forward.
+          if [[ "${ALLOW_ROLLBACK}" != "true" ]]; then
+            git merge-base --is-ancestor "${EXPECTED_CURRENT}" "${TARGET_SHA}" || {
+              echo "Ref would move backward; set allow_rollback=true for an intentional rollback" >&2
+              exit 3
+            }
           fi
+          # The lease is the exact previous head, in both directions: if the ref
+          # moved after validation, GitHub refuses the update.
+          git push --force-with-lease="refs/heads/deploy/ovh-production:${EXPECTED_CURRENT}" \
+            origin "${TARGET_SHA}:refs/heads/deploy/ovh-production"
 
       - name: Summary
+        env:
+          TARGET_SHA: ${{ inputs.sha }}
+          EXPECTED_CURRENT: ${{ inputs.expected_current }}
         run: |
           echo "### OVH promotion" >> "$GITHUB_STEP_SUMMARY"
-          echo "- target: \`${{ inputs.sha }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- target: \`${TARGET_SHA}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- previous head: \`${EXPECTED_CURRENT}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- deployment ref: \`deploy/ovh-production\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- VPS outbound reconciler will pick this up automatically." >> "$GITHUB_STEP_SUMMARY"
+          echo "- The verify job of this run waits for https://core.mccluster.org/health to serve the target." >> "$GITHUB_STEP_SUMMARY"
+
+  # A ref moved with this workflow's GITHUB_TOKEN starts no other workflow, so
+  # the push-triggered check in deploy-ovh-core.yml never runs for a promotion
+  # made here. Without this job the sanctioned path had no runtime verification.
+  # It holds no permission and no secret: it reads one public URL.
+  verify:
+    name: Verify OVH self-reconciliation after promotion
+    needs: promote
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    permissions: {}
+    steps:
+      - name: Wait for OVH to self-reconcile to exact commit
+        env:
+          TARGET_SHA: ${{ inputs.sha }}
+        run: |
+          set -euo pipefail
+          # A timeout-only bootstrap pass and a graceful producer drain can
+          # exceed four minutes. Observe convergence without interrupting work.
+          deadline=$((SECONDS + 1800))
+          attempt=0
+          while (( SECONDS < deadline )); do
+            attempt=$((attempt + 1))
+            body="$(curl --fail --silent --show-error --max-time 15 https://core.mccluster.org/health || true)"
+            deployed="$(printf '%s' "$body" | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{console.log(JSON.parse(d).deployment_sha||'')}catch{console.log('')}})")"
+            if [[ "$deployed" = "$TARGET_SHA" ]]; then
+              printf '%s\n' "$body"
+              echo "Verified OVH self-reconciled to $TARGET_SHA"
+              exit 0
+            fi
+            echo "Attempt $attempt: expected $TARGET_SHA, got ${deployed:-<none>}"
+            sleep 10
+          done
+          echo "OVH self-reconciliation did not converge to $TARGET_SHA within the 30-minute observation window" >&2
+          exit 1
