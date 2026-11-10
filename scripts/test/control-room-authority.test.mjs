@@ -313,6 +313,16 @@ test('a workspace switched in another tab during a load is not committed, and th
   assert.ok(page.surface().includes(A + ' message body'), 'the conversation loads after Refresh');
 });
 
+/* A page reloaded for another account lands on the view it was on. Channels
+   used to cache "no workspace" before the first load committed and never
+   read the account list (it did so on a direct open too, before A1). */
+test('a page opened on Channels reads that account\'s list once its workspace is known', async () => {
+  const page = await openAs('member-b', '#create:publish:channels');
+  await page.settle(); await sleep(20); await page.settle();
+  assert.ok(page.surface().includes(B + ' handle'), "B's social accounts are read and shown");
+  assert.doesNotMatch(page.surface(), /No workspace is selected/);
+});
+
 test('a sign-out signal while the session is still stored conceals the page, and the next sign-in reloads it', async () => {
   const page = await openAs('owner-a', '#home:today');
   await useEveryView(page);

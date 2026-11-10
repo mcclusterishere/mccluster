@@ -2086,6 +2086,10 @@
   function loadSocialAccounts(force) {
     if (state.socialAccounts && !force) return Promise.resolve();
     state.socialAccounts = null;
+    /* Before the first load has committed the workspace is not known yet, not
+       absent: the render after that commit reads the list. (A page reloaded
+       for another account lands on the view it was on, often this one.) */
+    if ((!state.org || !state.org.id) && !state.refreshedAt) return Promise.resolve();
     if (!state.org || !state.org.id) { state.socialAccounts = badResult("failed", "No workspace is selected, so there are no social accounts to read."); render(); return Promise.resolve(); }
     return src(request("/v1/social/accounts?org_id=" + encodeURIComponent(state.org.id))).then(function (result) {
       state.socialAccounts = result;
