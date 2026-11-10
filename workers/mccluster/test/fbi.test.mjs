@@ -4,7 +4,7 @@
 import { test, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { handlePlatformApi, fbiVerdict } from '../src/platform-api.js';
-import { linkRows } from './support/auth-links.mjs';
+import { linkRows, selectedColumns } from './support/auth-links.mjs';
 
 const ENV = { SUPABASE_URL: 'https://db.test', SUPABASE_SERVICE_ROLE_KEY: 'svc' };
 const MUID = '22222222-2222-4222-8222-222222222222';
@@ -23,19 +23,19 @@ const realFetch = globalThis.fetch;
 afterEach(() => { globalThis.fetch = realFetch; });
 const ok = (d, s = 200) => new Response(JSON.stringify(d), { status: s });
 
-function fake({ signedIn = true, admin = false, assets = [{ id: IMG, media_type: 'image' }], reserved = null, caseRow = { id: CASE, kind: 'sighting', reporter_m_uid: OTHER }, photoRows = [PHOTO_ROW], links = LINKS, photoIds = [IMG], signAnswer = null } = {}) {
+function fake({ signedIn = true, admin = false, assets = [{ id: IMG, media_type: 'image' }], reserved = null, caseRow = { id: CASE, kind: 'sighting', reporter_m_uid: OTHER }, photoRows = [PHOTO_ROW], links = LINKS, photoIds = [IMG], signAnswer = null, linkStatus = 200 } = {}) {
   const calls = [];
   globalThis.fetch = async (url, init = {}) => {
     const u = String(url), m = init.method || 'GET';
     calls.push({ u, m, body: init.body ? JSON.parse(init.body) : null, prefer: init.headers?.prefer });
     if (u.endsWith('/auth/v1/user')) return signedIn ? ok({ id: 'user-1' }) : ok({}, 401);
-    if (u.includes('/m_auth_user_links') && u.includes('select=auth_user_id')) return ok(linkRows(u, links));
+    if (u.includes('/m_auth_user_links') && u.includes('select=auth_user_id')) return linkStatus === 200 ? ok(linkRows(u, links)) : ok({ message: 'link table unreachable' }, linkStatus);
     if (u.includes('/m_auth_user_links')) return ok([{ m_uid: MUID }]);
     if (u.endsWith('/rpc/eu_is_admin')) return ok(admin);
     if (u.includes('/fbi_board?')) return ok([{ id: CASE, kind: 'sighting', title: 'Fake lows', media_asset_ids: photoIds, legit: 1, cap: 6, guilty: 0, acquitted: 0 }]);
     if (u.includes('/fbi_cases?reporter_m_uid=')) return ok([{ id: CASE, kind: 'sighting', title: 'Fake lows', media_asset_ids: photoIds, status: 'pending', reporter_m_uid: MUID, legit: 0, cap: 0, guilty: 0, acquitted: 0 }]);
     if (u.includes('/fbi_cases?status=eq.pending')) return ok([{ id: CASE, kind: 'sighting', title: 'Fake lows', media_asset_ids: photoIds, status: 'pending', reporter_m_uid: MUID, legit: 0, cap: 0, guilty: 0, acquitted: 0 }]);
-    if (u.includes('/network_media_assets?id=in.') && u.includes('select=id,bucket_id')) return ok(photoRows);
+    if (u.includes('/network_media_assets?id=in.') && u.includes('select=id,bucket_id')) return ok(selectedColumns(u, photoRows));
     if (u.includes('/network_media_assets?') && m === 'PATCH') return ok(JSON.parse(init.body).status === 'attached' ? (reserved ?? assets) : []);
     if (u.includes('/network_media_assets?')) return ok(assets);
     if (u.includes('/storage/v1/object/sign/')) {
@@ -243,4 +243,13 @@ test('a storage answer padded with entries nobody asked for, or with holes, hand
   res = await call('/v1/fbi/mine');
   assert.equal(res.status, 200);
   assert.deepEqual((await res.json()).cases[0].photos, []);
+});
+
+test('when the link table cannot be read no photo is signed and the page fails instead of guessing', async () => {
+  for (const path of ['/v1/fbi/mine', '/v1/fbi/board']) {
+    const calls = fake({ linkStatus: 503 });
+    const res = await call(path, 'GET', undefined, path !== '/v1/fbi/board');
+    assert.ok(res.status >= 500, `${path} -> ${res.status}`);
+    assert.deepEqual(signCalls(calls), []);
+  }
 });

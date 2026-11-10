@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import { platformStatus, readClip, isGone } from '../src/clipping/platforms.js';
 import { runClipping } from '../src/clipping/runner.js';
 import { handleClippingRequest } from '../src/clipping/router.js';
-import { linkRows } from './support/auth-links.mjs';
+import { linkRows, selectedColumns } from './support/auth-links.mjs';
 
 const env = { SUPABASE_URL: 'https://db.example', SUPABASE_SERVICE_ROLE_KEY: 'service', SOCIAL_IG_CLIPPER_ACCESS_TOKEN: 'ig-token' };
 const json = (v, status = 200) => new Response(JSON.stringify(v), { status, headers: { 'content-type': 'application/json' } });
@@ -153,15 +153,15 @@ const CREATOR = '99999999-9999-4999-8999-999999999999';
 const CREATOR_AUTH = '66666666-6666-4666-8666-666666666666';
 const STRANGER_AUTH = '77777777-7777-4777-8777-777777777777';
 const HOOK = `${CREATOR_AUTH}/88888888-8888-4888-8888-888888888888-hook.mp3`;
-function sourceFiles({ file = {}, links = [{ auth_user_id: CREATOR_AUTH, m_uid: CREATOR }], claimed = () => true, signAnswer = null } = {}) {
+function sourceFiles({ file = {}, links = [{ auth_user_id: CREATOR_AUTH, m_uid: CREATOR }], claimed = () => true, signAnswer = null, linkStatus = 200 } = {}) {
   return (u, init) => {
-    if (u.includes('/m_auth_user_links?') && u.includes('select=auth_user_id')) return json(linkRows(u, links));
+    if (u.includes('/m_auth_user_links?') && u.includes('select=auth_user_id')) return linkStatus === 200 ? json(linkRows(u, links)) : json({ message: 'link table unreachable' }, linkStatus);
     if (u.includes('/m_auth_user_links?')) return json([{ m_uid: M_UID }]);
     if (u.includes('/action_clip_claims?')) return json(claimed() ? [{ id: 'c1' }] : []);
     if (u.includes('/action_clip_assets?')) return json([
       { id: 'a1', kind: 'audio', label: 'Hook stem', network_media_asset_id: 'f1', sort: 0 },
       { id: 'a2', kind: 'moment', label: 'The hook', start_ms: 42000, end_ms: 58000, sort: 1 }]);
-    if (u.includes('/network_media_assets?')) return json([{ id: 'f1', bucket_id: 'mnet-media', object_path: HOOK, owner_m_uid: CREATOR, media_type: 'audio', mime_type: 'audio/mpeg', ...file }]);
+    if (u.includes('/network_media_assets?')) return json(selectedColumns(u, [{ id: 'f1', bucket_id: 'mnet-media', object_path: HOOK, owner_m_uid: CREATOR, media_type: 'audio', mime_type: 'audio/mpeg', status: 'ready', post_id: null, ...file }]));
     if (u.includes('/storage/v1/object/sign/')) {
       // Storage signs whatever a service-role caller names, in any bucket: the Worker is the only gate.
       const bucket = u.split('/storage/v1/object/sign/')[1];
@@ -229,5 +229,14 @@ test('a storage answer padded with entries nobody asked for, or with holes, hand
   await withFetch(sourceFiles({ signAnswer: () => [null] }), async () => {
     const out = await handleClippingRequest(request, env, USER, url);
     assert.equal(out.assets[0].unavailable, true, 'holes are an unavailable file, not a failed request');
+  });
+});
+
+test('when the link table cannot be read no source file is signed and the request fails', async () => {
+  const request = new Request(`https://api.example/v1/clips/campaigns/${MISSION}/assets`);
+  const url = new URL(request.url);
+  await withFetch(sourceFiles({ linkStatus: 503 }), async (calls) => {
+    await assert.rejects(handleClippingRequest(request, env, USER, url));
+    assert.deepEqual(calls.filter((c) => c.url.includes('/storage/v1/object/sign/')), []);
   });
 });

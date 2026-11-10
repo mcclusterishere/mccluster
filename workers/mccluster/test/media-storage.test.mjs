@@ -10,38 +10,48 @@ import { MEDIA_BUCKET, canonicalMediaUploader, isOwnMediaUpload, ownMediaSignPat
 import { canonicalMediaUploader as edgeUploader } from '../../../supabase/functions/mnet-media/storage-path.mjs';
 import { linkRows } from './support/auth-links.mjs';
 
-const A = '66666666-6666-4666-8666-666666666666';
-const B = '77777777-7777-4777-8777-777777777777';
-const OWNER_A = '33333333-3333-4333-8333-333333333333';
-const OWNER_B = '55555555-5555-4555-8555-555555555555';
-const FILE = '88888888-8888-4888-8888-888888888888-clip.mp4';
+/* Fixture ids carry letters on purpose: with digits-only ids an uppercase spelling is the same
+   string, and every "case does not matter" assertion below would pass whatever the code did. */
+const A = '6666abcd-6666-4666-8666-6666abcdef66';
+const B = '7777bcde-7777-4777-8777-7777bcdefa77';
+const OWNER_A = '3333cdef-3333-4333-8333-3333cdefab33';
+const OWNER_B = '5555defa-5555-4555-8555-5555defabc55';
+const FID = '8888abcd-8888-4888-8888-8888abcdef88';
+const FILE = `${FID}-clip.mp4`;
 const row = (over = {}) => ({ id: 'x', bucket_id: 'mnet-media', object_path: `${A}/${FILE}`, owner_m_uid: OWNER_A, ...over });
 const reader = (links, seen = []) => async (path) => { seen.push(path); return linkRows(`https://db.test/rest/v1/${path}`, links); };
 
-const PATHS = [
-  `${A}/${FILE}`, `${A.toUpperCase()}/${FILE}`, `${A}/88888888-8888-4888-8888-888888888888-a`,
-  `${A}/88888888-8888-4888-8888-888888888888-${'n'.repeat(180)}`, `${A}/88888888-8888-4888-8888-888888888888-${'n'.repeat(181)}`,
-  `${A}/88888888-8888-4888-8888-888888888888-`, `${A}/88888888-8888-4888-8888-888888888888`, `${A}/${FILE}/x`, `${A}/x/${FILE}`,
-  `${A}/../${B}/${FILE}`, `./${A}/${FILE}`, `/${A}/${FILE}`, `${A}//${FILE}`, `${A}/${FILE}\n`, `\n${A}/${FILE}`, `${A}/${FILE} `,
-  `${A}/${FILE}?x=1`, `${A}/${FILE}#x`, `${A}%2F${FILE}`, `${A}/88888888-8888-4888-8888-888888888888-clip one.mp4`,
-  `${A}/88888888-8888-4888-8888-888888888888-clip/one.mp4`, `${A}\\${FILE}`, 'm/clip.mp4', 'clip.mp4', '', ' ',
-  `${A}/${FILE}\u0000`, `${A}/88888888-8888-4888-8888-888888888888-ｃlip.mp4`, `g6666666-6666-4666-8666-666666666666/${FILE}`,
-  // U+017F and U+212A fold to s and k: a `u` flag added to either twin would start accepting them
-  `${A}/88888888-8888-4888-8888-888888888888-\u017fong.mp4`, `${A}/88888888-8888-4888-8888-888888888888-\u212alip.mp4`,
+/* Every shape the media function can issue, and nothing else. */
+const WELL_FORMED = [
+  `${A}/${FILE}`, `${A.toUpperCase()}/${FILE}`, `${A}/${FID.toUpperCase()}-Clip.MP4`, `${A}/${FID}-a`,
+  `${A}/${FID}-${'n'.repeat(180)}`, `${A}/${FID}-my_clip-01.final.mp4`, `${A}/${FID}-..`, `${A}/${FID}----`,
 ];
-const BUCKETS = ['mnet-media', 'MNET-MEDIA', 'mnet-media ', ' mnet-media', 'mnet-media/', 'mnet-media/..', 'mcc-gated-audio', 'creator-masters', '', null, undefined, 7];
+const REFUSED = [
+  `${A}/${FID}-${'n'.repeat(181)}`, `${A}/${FID}-`, `${A}/${FID}`, `${A}/${FILE}/x`, `${A}/x/${FILE}`, `${A}/${FILE}/`,
+  `${A}/../${B}/${FILE}`, `./${A}/${FILE}`, `/${A}/${FILE}`, `${A}//${FILE}`, `${A}/${FILE}\n`, `\n${A}/${FILE}`, `${A}/${FILE} `, ` ${A}/${FILE}`,
+  `${A}/${FILE}?x=1`, `${A}/${FILE}#x`, `${A}%2F${FILE}`, `${A}/${FID}-clip one.mp4`, `${A}/${FID}-clip/one.mp4`, `${A}\\${FILE}`,
+  `${A}/${FID}_clip.mp4`, `${A}-${FILE}`, `${A}_${FILE}`, `${A}/${FID}-clip+one.mp4`, `${A}/${FID}-clip~.mp4`, `${A}/${FID}-clip(1).mp4`,
+  `${A}/${FID}-clip%20one.mp4`, `${A}/${FID}-clip@2x.mp4`, `${A}/${FID}-a,b.mp4`, `${A}/${FID}-a=b.mp4`,
+  'm/clip.mp4', 'clip.mp4', '', ' ', `${A}/${FILE}\u0000`, `${A}/${FID}-ｃlip.mp4`, `g666abcd-6666-4666-8666-6666abcdef66/${FILE}`,
+  `${A.slice(0, 14)}0${A.slice(15)}x/${FILE}`, `${A.replace(/-/g, '')}/${FILE}`,
+  // U+017F and U+212A fold to s and k: a `u` flag added to either twin would start accepting them
+  `${A}/${FID}-ſong.mp4`, `${A}/${FID}-Klip.mp4`,
+];
+const PATHS = [...WELL_FORMED, ...REFUSED];
+const BUCKETS = ['mnet-media', 'MNET-MEDIA', 'mnet-media ', ' mnet-media', 'mnet-media/', 'mnet-media/..', 'mnet-avatars', 'mcc-gated-audio', 'creator-masters', '', null, undefined, 7];
 
 test('the path rule is the media function\'s rule, case for case', () => {
-  let accepted = 0;
+  assert.notEqual(A.toUpperCase(), A, 'the fixture can tell cases apart');
+  assert.equal(new Set(PATHS).size, PATHS.length, 'no path is listed twice');
+  const accepted = [];
   for (const bucket_id of BUCKETS) for (const object_path of [...PATHS, null, undefined, 7, {}, [`${A}/${FILE}`]]) {
     const asset = { bucket_id, object_path };
     assert.equal(canonicalMediaUploader(asset), edgeUploader(asset), `${JSON.stringify(bucket_id)} ${JSON.stringify(object_path)}`);
-    if (canonicalMediaUploader(asset)) accepted += 1;
+    if (canonicalMediaUploader(asset)) accepted.push(`${bucket_id}|${object_path}`);
   }
-  assert.equal(accepted, 4, 'only the upload bucket with the four well-formed paths');
+  assert.deepEqual(accepted, WELL_FORMED.map((p) => `mnet-media|${p}`), 'only the upload bucket, only the well-formed paths');
+  for (const object_path of WELL_FORMED) assert.equal(canonicalMediaUploader(row({ object_path })), A, 'the uploader is always the lowercased prefix');
   assert.equal(canonicalMediaUploader(null), null);
-  assert.equal(canonicalMediaUploader(row()), A);
-  assert.equal(canonicalMediaUploader(row({ object_path: `${A.toUpperCase()}/${FILE}` })), A, 'the uploader is compared lowercased');
   assert.equal(MEDIA_BUCKET, 'mnet-media');
 });
 
@@ -61,8 +71,15 @@ test('a canonical row is the owner\'s own upload only when its prefix is linked 
   assert.equal(await isOwnMediaUpload(row({ owner_m_uid: OWNER_B }), reader(links)), false, 'the prefix belongs to a different owner');
   assert.equal(await isOwnMediaUpload(row(), reader([])), false, 'no link, no proof');
   assert.equal(await isOwnMediaUpload(row({ owner_m_uid: undefined }), reader(links)), false);
-  assert.equal(await isOwnMediaUpload(row({ owner_m_uid: `${OWNER_A},${OWNER_B}` }), reader(links)), false, 'an owner that is not one uuid never reaches the query');
-  assert.equal(await isOwnMediaUpload(row({ owner_m_uid: OWNER_A.toUpperCase() }), reader(links)), true, 'uuid case does not matter');
+  const asked = [];
+  for (const owner_m_uid of [`${OWNER_A},${OWNER_B}`, `${OWNER_A})&or=(m_uid.not.is.null`, `in.(${OWNER_A})`, `${OWNER_A}\n`, ` ${OWNER_A}`, '*', '', 7, null, [OWNER_A], { toString: () => OWNER_A }]) {
+    assert.equal(await isOwnMediaUpload(row({ owner_m_uid }), reader(links, asked)), false, JSON.stringify(owner_m_uid));
+  }
+  assert.deepEqual(asked, [], 'an owner that is not one uuid never reaches the query');
+  const cased = [];
+  assert.equal(await isOwnMediaUpload(row({ owner_m_uid: OWNER_A.toUpperCase(), object_path: `${A.toUpperCase()}/${FILE}` }), reader(links, cased)), true, 'uuid case does not matter');
+  assert.equal(cased[0], `m_auth_user_links?auth_user_id=in.(${A})&m_uid=in.(${OWNER_A})&select=auth_user_id,m_uid`, 'and the lookup is asked in lower case');
+  assert.equal(await isOwnMediaUpload(row(), reader([{ auth_user_id: A.toUpperCase(), m_uid: OWNER_A.toUpperCase() }])), true, 'however the link table spells it');
   assert.equal(await isOwnMediaUpload(null, reader(links)), false);
 });
 
