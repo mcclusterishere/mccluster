@@ -214,6 +214,28 @@ Three things to know before the Worker ships:
   the same two operator actions for every organization; both signed routes, the read included, claim their
   nonce in the shared replay store.
 
+## 8. E=Up module policy (written 2026-11-10)
+
+| File (+ rollback) | Creates | Callers | Proof before apply |
+|---|---|---|---|
+| `eup_module_policy_v1.sql` (+ `eup_module_policy_v1.rollback.sql`, `eup_module_policy_v1.provenance.json`) | `eup_module_policies`, `eup_module_policy_commands` (append-only), and six service-role functions: `eup_module_policy_read`, `eup_module_control_read`, `eup_module_policy_install`, `eup_module_policy_command`, `eup_module_guard`, `eup_module_guard_reduce`, plus the trigger function `eup_module_guard_trigger` | `workers/mccluster/src/eup/modules.js`, `workers/mccluster/src/world-environment.js`, and the guard calls inside `eup_intake_v1.sql` | `scripts/test/eup-module-policy.integration.mjs` (257 assertions, PGlite); native PostgreSQL 16 proof of the fair drain queue in the handoff |
+
+**Order.** Apply `eup_module_policy_v1.sql` first, then `eup_league_v1.sql` and `eup_intake_v1.sql`
+(`eup_intake_v1.sql` raises 55000 when the guard functions are absent). Roll back in the reverse order: the
+domain files first, the policy file last, or the backstop triggers go with the cascade and direct table
+writes are unguarded.
+
+**After apply nothing is enabled.** The file creates no row. Every guarded write, and the consumer E=Up tab
+on the World, refuses until the house owner installs a module (it starts `disabled` at revision 0) and then
+enables it, from Control, System, E=Up, Overview. States are `enabled`, `draining`, `disabled`; a drain waits
+for writes already in flight and refuses later ones; reads, exact replays and actions that only stop work or
+remove exposure stay open in every state. The API login role runs with 8 second statement and lock timeouts
+(read on production, 2026-11-09); the policy functions wait at most 5 seconds for a lock and then change
+nothing.
+
+The import job (`workers/mccluster/src/eup/import-runner.js`) is tested and unscheduled: no route and no
+cron calls it, nothing writes a run's cursor, and every connector is still disabled.
+
 ## Names with no SQL anywhere
 
 `live-callers.json` → `missing_everywhere`: the `crm_*` tables
