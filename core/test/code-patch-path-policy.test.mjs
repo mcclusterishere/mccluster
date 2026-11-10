@@ -6,10 +6,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdtemp, mkdir, writeFile, rm, symlink, unlink, rename } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, rm, symlink, unlink, rename, readdir } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { codePatch, inventoryChanges, checkPaths } from '../src/executors/code-patch.mjs';
+import { assertCompletionEvidence, buildCompletionEvidence } from '../src/completion-evidence.mjs';
 
 const sh = (cwd, args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
 
@@ -217,4 +218,108 @@ test('C3: a lost lease stops the job before the coding agent, the push or the pu
   await assert.rejects(codePatch(job(['docs']), { ...h3.deps, signal: lease3.signal }), (e) => e.code === 'LEASE_LOST' && /before opening the pull request/.test(e.message));
   assert.equal(h3.calls.push.length, 1);
   assert.equal(h3.calls.pr.length, 0);
+});
+
+// Close-out (2026-11-10): the C4 repair wrapped `git diff --check` in .catch(() => {}) and dropped
+// verification.git_diff_check, so a whitespace-broken commit was pushed and opened as a draft, and every
+// changed code_patch then failed completion evidence (docs/control-plane/COMPLETION-EVIDENCE.md) after its push.
+test('C4: a diff that fails git diff --check (trailing whitespace, leftover conflict markers) is rejected before any push or PR', async (t) => {
+  const fx = await fixture();
+  t.after(() => rm(fx.root, { recursive: true, force: true }));
+  for (const [id, file, content, detail] of [
+    ['job-aaaa-0000-0001', 'docs/ws.md', 'a line with trailing whitespace   \n', /docs\/ws\.md:1: trailing whitespace/],
+    ['job-aaaa-0000-0002', 'docs/conflict.md', '<<<<<<< HEAD\nours\n=======\ntheirs\n>>>>>>> agent\n', /docs\/conflict\.md:1: leftover conflict marker/],
+  ]) {
+    const { deps, calls } = harness(fx, async (wt) => { await writeFile(path.join(wt, file), content); });
+    await assert.rejects(codePatch({ ...job(['docs']), id }, deps), (error) => /failed git diff --check/.test(error.message) && detail.test(error.message));
+    assert.deepEqual(calls, { push: [], pr: [] }, file);
+    assert.deepEqual(await readdir(fx.worktreeRoot), [], `${file}: the rejected worktree is removed like every other rejection`);
+  }
+});
+
+test('C4: a changed and an unchanged code_patch output both pass the completion evidence the runner applies', async (t) => {
+  const fx = await fixture();
+  t.after(() => rm(fx.root, { recursive: true, force: true }));
+  const codeJob = (id) => ({ ...job(['docs']), id, job_type: 'code_patch' });
+  const changed = harness(fx, async (wt) => { await writeFile(path.join(wt, 'docs/note.md'), 'evidence\n'); });
+  const out = await codePatch(codeJob('job-bbbb-0000-0001'), changed.deps);
+  assert.equal(out.changed, true);
+  // core/src/runner.mjs runs exactly this on the executor output before completeJob.
+  const evidenced = buildCompletionEvidence(codeJob('job-bbbb-0000-0001'), out);
+  assert.equal(assertCompletionEvidence(codeJob('job-bbbb-0000-0001'), evidenced), true);
+  assert.equal(out.verification.git_diff_check, true);
+  const commit = evidenced.completion_evidence.records.find((record) => record.kind === 'git_commit');
+  assert.deepEqual([commit.base_sha, commit.commit_sha, commit.pushed, commit.draft_pr], [out.base_commit, out.commit, true, 'https://github.com/example/pr/1']);
+
+  const unchanged = harness(fx, async () => {});
+  const clean = await codePatch(codeJob('job-bbbb-0000-0002'), unchanged.deps);
+  assert.equal(clean.changed, false);
+  const cleanEvidence = buildCompletionEvidence(codeJob('job-bbbb-0000-0002'), clean);
+  assert.equal(cleanEvidence.completion_evidence.records.find((record) => record.kind === 'git_no_change').base_sha, clean.base_commit);
+});
+
+test('C4: a staged gitlink (submodule) is rejected before any push or PR', async (t) => {
+  const fx = await fixture();
+  t.after(() => rm(fx.root, { recursive: true, force: true }));
+  const { deps, calls } = harness(fx, async (wt) => {
+    // An empty directory keeps the gitlink through `git add -A`; .gitmodules alone is an ordinary allowed file.
+    await mkdir(path.join(wt, 'docs/sub'));
+    await writeFile(path.join(wt, '.gitmodules'), '[submodule "docs/sub"]\n\tpath = docs/sub\n\turl = https://example.invalid/sub.git\n');
+    sh(wt, ['update-index', '--add', '--cacheinfo', `160000,${sh(wt, ['rev-parse', 'HEAD'])},docs/sub`]);
+  });
+  // No allowed_paths: the submodule flag is the only rule that can refuse this change.
+  await assert.rejects(codePatch(job(), deps), /docs\/sub \(submodule\)/);
+  assert.deepEqual(calls, { push: [], pr: [] });
+});
+
+test('C4: a path whose name carries a newline is rejected as an unsafe path name', async (t) => {
+  const fx = await fixture();
+  t.after(() => rm(fx.root, { recursive: true, force: true }));
+  // Inside allowed_paths and matching no sensitive rule as one name; read line by line it is a workflow.
+  const sneaky = 'docs/x\n.github/workflows/evil.yml';
+  const { deps, calls } = harness(fx, async (wt) => {
+    await mkdir(path.join(wt, path.dirname(sneaky)), { recursive: true });
+    await writeFile(path.join(wt, sneaky), 'on: push\n');
+  });
+  await assert.rejects(codePatch(job(['docs']), deps), /docs\/x \.github\/workflows\/evil\.yml \(unsafe path name\)/);
+  assert.deepEqual(calls, { push: [], pr: [] });
+});
+
+/* Backstops behind the checks above. `git commit` runs the repository's hooks, which sit in the shared
+   .git directory outside the worktree inventory. Whatever a hook does, the commit that is published must
+   hold exactly the checked files and sit on the recorded base. If hooks stop running, the second branch
+   of each assertion still holds. */
+async function installHook(fx, name, script) {
+  await writeFile(path.join(fx.repoRoot, 'mccluster/.git/hooks', name), `#!/bin/sh\n${script}\n`, { mode: 0o755 });
+}
+
+const settle = (promise) => promise.then((out) => ({ out }), (error) => ({ error }));
+
+test('C4 backstop: a commit hook that slips an extra file into the commit is caught before the push', async (t) => {
+  const fx = await fixture();
+  t.after(() => rm(fx.root, { recursive: true, force: true }));
+  await installHook(fx, 'pre-commit', 'printf "on: push\\n" > .github/workflows/evil.yml && git add .github/workflows/evil.yml');
+  const { deps, calls } = harness(fx, async (wt) => { await writeFile(path.join(wt, 'docs/note.md'), 'hooked\n'); });
+  const { out, error } = await settle(codePatch(job(['docs']), deps));
+  if (error) {
+    assert.match(error.message, /committed tree differs from the checked inventory/);
+    assert.deepEqual(calls, { push: [], pr: [] });
+  } else {
+    assert.equal(sh(path.join(fx.repoRoot, 'mccluster'), ['diff', '--name-only', out.base_commit, out.commit]), 'docs/note.md');
+  }
+});
+
+test('C4 backstop: a commit hook that stacks another commit on the branch is caught before the push', async (t) => {
+  const fx = await fixture();
+  t.after(() => rm(fx.root, { recursive: true, force: true }));
+  const marker = path.join(fx.root, 'post-commit-ran');
+  await installHook(fx, 'post-commit', `[ -e '${marker}' ] && exit 0; : > '${marker}'; git -c user.name=hook -c user.email=hook@example.invalid commit -q --allow-empty -m 'hook commit'`);
+  const { deps, calls } = harness(fx, async (wt) => { await writeFile(path.join(wt, 'docs/note.md'), 'hooked\n'); });
+  const { out, error } = await settle(codePatch(job(['docs']), deps));
+  if (error) {
+    assert.match(error.message, /produced commit does not sit on the recorded base/);
+    assert.deepEqual(calls, { push: [], pr: [] });
+  } else {
+    assert.equal(sh(path.join(fx.repoRoot, 'mccluster'), ['rev-parse', `${out.commit}^`]), out.base_commit);
+  }
 });

@@ -271,7 +271,15 @@ export async function codePatch(job, deps = {}) {
     throw new Error('committed tree differs from the checked inventory');
   }
   const checkedTree = (await git(worktree, ['rev-parse', `${commit}^{tree}`])).stdout.trim();
-  await git(worktree, ['diff', '--check', baseCommit, commit], 60_000).catch(() => {});
+  // A publication gate, and completion evidence requires it (verification.git_diff_check below):
+  // trailing whitespace or leftover conflict markers stop the job before the push and the draft PR.
+  try {
+    await git(worktree, ['diff', '--check', baseCommit, commit], 60_000);
+  } catch (error) {
+    await cleanWorktree(repo, worktree);
+    const problems = String(error?.result?.stdout || '').split('\n').filter((line) => /:\d+: /.test(line) && !line.startsWith('+'));
+    throw new Error(`agent diff failed git diff --check${problems.length ? `: ${problems.slice(0, 12).join('; ')}` : ` (${error.message})`}`);
+  }
 
   let pushed = false;
   let prUrl = null;
@@ -319,7 +327,7 @@ export async function codePatch(job, deps = {}) {
     stat,
     pushed,
     draft_pr: prUrl,
-    verification: { path_policy: 'complete-change-set:v2', checked_tree: checkedTree, staged_tree_revalidated: true },
+    verification: { git_diff_check: true, path_policy: 'complete-change-set:v2', checked_tree: checkedTree, staged_tree_revalidated: true },
     model: MODEL,
     agent_output_tail: agent.stdout.slice(-12000),
   };
