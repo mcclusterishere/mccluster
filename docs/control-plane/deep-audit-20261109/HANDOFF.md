@@ -1,6 +1,28 @@
 # Deep-audit response handoff, 9 November 2026
 
-> **Session 3 (2026-11-09 evening into 2026-11-10 UTC) is recorded first, then session 2, then the original session, each unchanged below the newer one.**
+> **Session 4 (2026-11-10 UTC) is recorded first, then session 3, session 2 and the original session, each unchanged below the newer one.**
+
+## Session 4: the League member mission loop, buyer retry edge cases, native proofs, Core lease checkpoint, patch series
+
+Nothing here is merged, applied or deployed. Every SQL file named below is pending.
+
+### The member mission "Write a song for a healthier world" (queue item 1)
+
+The Environmental Justice League loop now runs end to end over HTTP, through the real Worker router over the real pending SQL: a member applies, the owner decides, the member accepts the offer (with the current requirements and a participation notice), writes lyrics with autosave, records or uploads a take (the microphone is asked for only on Record), submits, the owner reviews (needs changes, a second version, accepted, credit), the member consents to publication, the owner publishes to the campaign audience, the member can revoke and appeal. The owner's controls cover policy, campaign and mission setup, invitations and testers, applications with rubric and accommodation reads (audited), proof review with signed 300 s media links, publication and withdrawal, holds, appeals, retention and purge of due media, and an outbox of ids-and-revisions events.
+
+- SQL: `supabase/pending/eup_league_v1.sql` (+ rollback), all 35 owner and 15 member contract actions; the wire contract is frozen in `workers/mccluster/src/eup/league-contract.js`.
+- Worker: owner routes `/v1/eup/league/*` (house owner only) and member routes (session-verified actor; answers cut to the contract's member shapes at every depth); `league-media.js` for signed uploads, the seal and retention.
+- Pages: `action/league.html` with `js/eup-league-member.js` (member); Control › System › E=Up › League (`js/control-room/eup-league.js`).
+- Proof on the integrated tree (`integ-league`, Node v22.23.4): Worker 1890/1890; Core 638/638; root 2248 pass, 0 fail, 3 skipped; Python 7/7; League PGlite 1427 assertions; journey 1529 (real router over real SQL, five identities, every route); module policy 257; intake 236; native League 1578 assertions on PostgreSQL 16.15 and 17.7 (200 mixed rounds, 12 sessions, no deadlock); native policy 96 and intake 33 on both; browser: member page 274/274 and Control 223/223 at 390 and 1440 (no horizontal overflow at 390); source validator 2658/2658.
+- Defects found by the lanes and fixed before landing: an upload grant could outlive a purged row and store an object outside retention (a discarded or rejected row is now due no earlier than its staged deadline); `/v1/eup/sources` always reported the civic registry unavailable because the injected fetch was called as a method (now bare, with a Worker-fetch regression test).
+- Recorded, not changed: a replayed `uploads.begin` key returns the stored receipt and signs a grant from it even if the row was discarded since (nothing it stores can outlive a purge now, and storage refuses an overwrite of a sealed row; closing it fully changes the frozen contract's begin order: owner decision). The member page has no app bar, because the bar's World soundtrack could play into a recording (owner decision). PostgreSQL returns timestamps as `+00:00`; the pages parse them and never echo a stored timestamp as an input.
+- Gates: apply `eup_module_policy_v1.sql`, then `eup_league_v1.sql`, then `eup_intake_v1.sql` (`PROMOTION-ORDER.md` section 8). After apply nothing is enabled: the owner installs and enables the League module from Control, and sets the League policy (no value ships). Merging to `main` deploys the Worker routes, which answer not available until then.
+
+### Also pushed this session
+
+Buyer download retry edge cases (`5d16a2a9`); native concurrency proofs for module policy and intake as repository tests (`2bcb5dd5`); Core lease checkpoint before outward actions and one daily report per window with a pending unique index (`c58b9fb6`; production read 02:29 UTC: 48 report rows, none with a window id, no duplicates); patch series for #760, #758 and #789 (`48411532`); C5 mutation survivors killed and the late-success audit written before assets (`169909e9`). The Equity Uprise product candidate was repaired as 0.1.0-review.5 and its installation core is being built in that repository, delivered as bundles (no push permission there).
+
+## Session 3: the fourth applied release, production evidence, C5 identifiers, media signing
 
 ## Session 3: the fourth applied release, production evidence, C5 identifiers, media signing
 
