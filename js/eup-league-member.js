@@ -277,7 +277,7 @@
   }
   /* Why the working copy cannot be saved as it stands (control characters, lengths), or []. */
   function draftProblems(w) {
-    var p = [textProblem('The title', w.doc.title, MAX.title, 0, false), textProblem('The lyrics', w.doc.lyrics, MAX.lyrics, 0, true),
+    var p = [textProblem('The title', w.doc.title, MAX.title, 0, false), textProblem('The lyrics field', w.doc.lyrics, MAX.lyrics, 0, true),
       w.path === 'statement' ? textProblem('The statement', w.doc.statement, MAX.statement, 0, true) : null,
       typeof w.doc.rights.derivative_permissions === 'string' ? textProblem('The permission note', w.doc.rights.derivative_permissions, MAX.derivative, 0, true) : null];
     w.doc.credits.forEach(function (c, i) { p.push(textProblem('Credit ' + (i + 1) + ' name', c.name, MAX.credit_name, 0, false), textProblem('Credit ' + (i + 1) + ' role', c.role, MAX.credit_role, 0, false)); });
@@ -289,7 +289,7 @@
     var p = [];
     if (!notice(me, 'private_review')) p.push('The League has no private review notice set yet, so nothing can be submitted.');
     var t = textProblem('The title', w.doc.title, MAX.title, 1, false); if (t) p.push(t);
-    var l = textProblem('The lyrics', w.doc.lyrics, MAX.lyrics, 1, true); if (l) p.push(l);
+    var l = textProblem('The lyrics field', w.doc.lyrics, MAX.lyrics, 1, true); if (l) p.push(l);
     var credits = w.doc.credits.filter(function (c) { return c.name !== '' || c.role !== ''; });
     if (!credits.length) p.push('Add at least one credit: a name and a role.');
     credits.forEach(function (c, i) { var a1 = textProblem('Credit ' + (i + 1) + ' name', c.name, MAX.credit_name, 1, false), a2 = textProblem('Credit ' + (i + 1) + ' role', c.role, MAX.credit_role, 1, false); if (a1) p.push(a1); if (a2) p.push(a2); });

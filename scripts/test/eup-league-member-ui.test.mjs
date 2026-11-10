@@ -852,5 +852,7 @@ test('the stylesheet is phone first: min-width queries only, minmax(0, 1fr) trac
   assert.match(css, /font: 600 max\(16px, 1rem\)/);
   assert.match(css, /font: 400 max\(16px, 1rem\)\/1\.5/);
   assert.match(css, /min-height: 44px; min-width: 44px/);
+  assert.match(css, /\.eul \[hidden\] \{ display: none !important; \}/, 'a hidden player stays hidden whatever its class says');
+  assert.deepEqual([CAP.megabytes(0), CAP.megabytes(1), CAP.megabytes(19000), CAP.megabytes(5 * 1048576)], ['0 bytes', '1 byte', '19 KB', '5 MB'], 'no take reads as 0 MB');
   assert.match(css, /@media \(prefers-reduced-motion: no-preference\)[\s\S]*eul-pulse/);
 });

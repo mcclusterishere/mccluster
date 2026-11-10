@@ -323,6 +323,13 @@ async function journey(viewport) {
     check(scope, 'three Record presses, three device requests, and every track ended after the take was sent', (await gum(page)) === 3 && await page.evaluate(() => window.__eulStreams.every((x) => x.getTracks().every((y) => y.readyState === 'ended'))));
     await waitSaved(page, aid);
     await audit(scope, 'sealed take', plane, s);
+    /* play the sealed take back through its 300 s signed link: the link lives in the media element and nowhere else */
+    const takeId = await page.evaluate((fp) => [...document.querySelectorAll('[data-eul-upload]')].find((li) => li.innerText.includes(fp))?.getAttribute('data-eul-upload'), recorded);
+    check(scope, 'an unplayed take shows no empty player', !(await page.locator(`[data-eul-player="${takeId}"]`).isVisible()));
+    await clickAct(page, `play:${takeId}`);
+    await page.waitForFunction(([id, origin]) => { const el = document.querySelector(`[data-eul-player="${id}"]`); return !!el && !el.hidden && el.src.startsWith(origin + '/storage/v1/object/sign/') && el.readyState >= 1; }, [takeId, plane.supabase], { timeout: 20000 });
+    check(scope, 'Play loads the sealed take from its signed link (metadata read through a range request)', plane.log.some((e) => e.method === 'GET' && e.path.startsWith('/storage/v1/object/sign/') && e.status === 206));
+    await audit(scope, 'playing a sealed take', plane, s);
 
     /* 7. denied permission keeps the other ways open; unsupported files are refused before anything is sent */
     await page.evaluate(() => { window.__eulDeny = true; });
