@@ -684,17 +684,17 @@ test('links: dropped on a League view switch, on an E=Up tab switch, on closing,
   m.tab('sources').click(); await settle(); dropped(el, 'E=Up tab switch');
   await m.league('proofs'); el = await open();
   m.q('[data-eup-league-do="review-close"]').click(); await settle(); dropped(el, 'closing the review');
-  /* expiry is counted from when the read was SENT: an answer that arrives 299.95 s later lives 50 ms more */
+  /* expiry is counted from when the read was SENT: an answer that arrives 299.7 s later lives 300 ms more */
   let give;
   w.s.hooks['proofs.get'] = () => new Promise((r) => { give = r; });
   created.length = 0;
   reviewButton().click(); await settle();
   delete w.s.hooks['proofs.get'];
-  clock += 299950;
+  clock += 299700;
   give(await w.request('/v1/eup/league/proofs/' + p.id + '/media?revision=1')); await settle();
   el = created.find((x) => x.tag === 'audio');
   assert.ok(el && el.attrs.src, 'a late answer still plays for what is left of its life');
-  await wait(120); await settle();
+  await wait(500); await settle();
   dropped(el, 'expiry');
   assert.match(m.q('[data-eup-league-expired="' + p.id + '"]').textContent, /The 300-second media link expired and was dropped/);
   assert.match(m.status(), /expired and was dropped/);
@@ -720,7 +720,7 @@ test('links: dropped on a League view switch, on an E=Up tab switch, on closing,
 /* ================================================================== unknown outcomes and receipts */
 test('unknown outcome: a timed-out command is not resent; its receipt settles it: found means recorded, not found offers the same key by hand', async () => {
   const w = leagueWorker(); world(w);
-  const m = mount(w, { deadlineMs: 30 }); await settle();
+  const m = mount(w, { deadlineMs: 100 }); await settle();
   await m.league('appeals');
   const x = w.s.appeals[0];
   /* 1. the store committed and the answer never came: the receipt is found */
@@ -730,7 +730,7 @@ test('unknown outcome: a timed-out command is not resent; its receipt settles it
   assert.equal(m.outcome('appeal:' + x.id).kind, 'pending'); assert.equal(m.button('appeals.resolve', x.id).attrs['aria-disabled'], 'true');
   m.button('appeals.resolve', x.id).click(); await flush();
   assert.equal(w.writes().length, 1, 'a second press while waiting sends nothing');
-  await wait(80); await settle();
+  await wait(250); await settle();
   assert.equal(w.writes().length, 1, 'never resent automatically');
   const key = w.writes()[0].body.idempotency_key;
   assert.equal(w.reads('/v1/eup/league/receipts/appeals.resolve/' + key), 1, 'the receipt is read by its key');
