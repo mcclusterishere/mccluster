@@ -289,3 +289,26 @@ Paid-media claims v2 is applied at `20261110220135` and is no longer pending.
 See `docs/control-plane/evidence/releases-2026-11-10/CLAIMS-V2-APPLIED-VERIFICATION.md`.
 The rollback stays here for operator-controlled recovery, after rolling back the Worker.
 No other candidate in this document was applied by that release.
+
+## Network media assets pointer guard (pending, 2026-11-10)
+
+`network_media_assets_pointer_guard_v1.sql` (+ rollback) is pending source-only hardening with no caller change: it takes the write of
+`public.network_media_assets` from members, pins `id`, `bucket_id` and `object_path` against every UPDATE (the service
+role's and SECURITY DEFINER code's too; only the table's owner can switch the trigger off), gives `owner_m_uid` one
+audited path after an identity merge, and takes the member's own token off the `mnet-media` bucket's writes. No pending
+prerequisite and nothing shipped calls what it creates. It does have production prerequisites, all read-only and all in
+`README.md`: `scripts/db/media-asset-legacy-count.sql` must answer `not_canonical = 0` (the guard checks this itself
+under the table's lock and refuses to apply, changing nothing, otherwise;
+`scripts/db/media-asset-pointer-guard-precheck.sql` is the breakdown), the API logs must show no member-token write
+to the table or the bucket, the deployed `mnet-media` function must be this repository's, and the two SECURITY DEFINER
+writers must still be SECURITY DEFINER and owned by a role that is neither `anon` nor `authenticated`. It is
+complementary to the Worker's signing fix, already on main: retain that signing check because this candidate
+does not repair historical owner/path mismatches. This source merge is not promotion or permission to apply SQL. Proof before apply: `bash scripts/test-network-media-pointer-guard-db.sh` (PostgreSQL 16 and 17),
+`node --test scripts/test/network-media-pointer-guard.test.mjs` and, with Docker,
+`bash scripts/test-network-media-storage-flow.sh` (the real Storage API; with
+`SUPABASE_DB_IMAGE=supabase/postgres:17.11.0.018` on the official Supabase Postgres image, every statement as its
+restricted `postgres` role). After apply: the smoke and the `validate constraint` step in `README.md`, then a
+production snapshot. After any later `m_merge_people`: one service-role call of
+`public.network_media_assets_follow_merge(p_keep, p_merge, p_reason)`, or the merged person's uploads stay unsigned.
+The rollback does nothing where the guard is not applied and keeps the record of merges when it holds a row. At
+promotion, fix the one fixture `README.md` names (`supabase/tests/action_clipping_regression.sql`).
