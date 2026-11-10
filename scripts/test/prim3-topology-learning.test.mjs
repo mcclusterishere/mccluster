@@ -5,6 +5,9 @@ import {LEARNING_VARIANTS,learningContext,latticeQuestion} from '../../js/prim3-
 import {cellCenter} from '../../js/spatial/metric-frame.mjs';
 import {FRAME as transit} from '../../js/prim3-tactics/levels/transit-relay.mjs';
 import {FRAME as hq} from '../../js/prim3-tactics/levels/equity-uprise-hq.mjs';
+import * as transitLevel from '../../js/prim3-tactics/levels/transit-relay.mjs';
+import * as hqLevel from '../../js/prim3-tactics/levels/equity-uprise-hq.mjs';
+import * as b1Level from '../../js/prim3-tactics/levels/equity-uprise-b1.mjs';
 const region=JSON.parse(readFileSync('data/spatial/bridgeport-downtown.v2.json'));
 for(const topology of ['square','hex'])test(`${topology} evaluator agrees with canonical neighbor BFS, not graph indices`,()=>{
  const context={version:'prim3.lattice-learning/v1',variant:'city',topology},neighbors=region.contract.topologies[topology].neighbors;
@@ -20,6 +23,18 @@ for(const topology of ['square','hex'])test(`${topology} evaluator agrees with c
 test('authored frames and unsupported/forged context fail closed',()=>{
  assert.deepEqual(transit,{x0:32,y0:31,yUp:true});assert.deepEqual(hq,{x0:3,y0:8,yUp:true});
  for(const value of [{version:'future',variant:'city',topology:'hex'},{version:'prim3.lattice-learning/v1',variant:'equity-uprise-hq',topology:'hex'},{version:'prim3.lattice-learning/v1',variant:'city',topology:'hex',expected:1}])assert.throws(()=>learningContext(value));
+});
+test('authored frames follow their level modules: an HQ/B1 cell is the plan\'s 12 ft WORLD_M, the 3.54 m rule tile is named apart (audit W5)',()=>{
+ for(const [variant,level] of [['transit-relay',transitLevel],['equity-uprise-hq',hqLevel],['equity-uprise-b1',b1Level],['equity-uprise-b1-attack',b1Level]]){
+  const {frame}=LEARNING_VARIANTS[variant],prompt=latticeQuestion({version:'prim3.lattice-learning/v1',variant,topology:'square'},0,1,1).prompt;
+  assert.ok(frame.startsWith(`X=x−${level.FRAME.x0}, Y=${level.FRAME.y0}−y; +X east, +Y north; `),`${variant}: origin and axes follow the level FRAME`);
+  assert.ok(prompt.startsWith(frame),`${variant}: every question shows the frame`);
+  if(level.WORLD_M===undefined){assert.equal(Number(frame.match(/; (\d+(?:\.\d+)?) m\/tile$/)?.[1]),level.TILE_M,`${variant}: drawn and ruled on the shared tile`);continue;}
+  const cell=frame.match(/one cell is (\d+) ft \((\d+(?:\.\d+)?) m\) on the building plan/),rule=frame.match(/tactical rules use the separate (\d+(?:\.\d+)?) m game tile/);
+  assert.ok(cell&&rule,`${variant}: names the plan cell and the rule tile separately: ${frame}`);
+  assert.equal(Number(cell[1]),hqLevel.FT_PER_TILE);assert.ok(Math.abs(Number(cell[2])-level.WORLD_M)<1e-9&&Math.abs(Number(cell[1])*hqLevel.FT-level.WORLD_M)<1e-9,`${variant}: a cell is the level's WORLD_M`);
+  assert.equal(Number(rule[1]),level.TILE_M);assert.doesNotMatch(frame,/m\/tile/,`${variant}: the rule tile is not the cell size`);
+ }
 });
 test('the published mission UI imports the published runtime; the private path only re-exports it (audit W5)',async()=>{
  // deploy-pages.yml strips PRIM3/: a published import of PRIM3/game/halo/adaptive/ leaves the page without its runtime.
