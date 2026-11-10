@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { handleEup, EUP_PREFIX, EUP_SECTIONS } from '../src/eup/router.js';
+import { handleEup, EUP_PREFIX, EUP_SECTIONS, EUP_MEMBER_LEAGUE_PREFIX } from '../src/eup/router.js';
 
 const env = { ALLOWED_ORIGINS: 'https://matthew.mccluster.org' };
 const req = (path, init) => new Request(`https://api.mccluster.org${path}`, init);
@@ -49,4 +49,51 @@ test('modules is one of the sections: listed in the index, and its commands are 
     assert.equal(d.status, 403); assert.equal((await d.json()).reason, 'owner_required'); assert.equal(d.headers.get('cache-control'), 'private, no-store');
   }
   assert.equal(fetched, 0, 'a refused caller reaches neither the store nor the body parser');
+});
+
+// --- the one member branch: /v1/eup/member/league ------------------------------------------------------
+const MEMBER_ID = '22222222-2222-4222-8222-222222222222';
+const storeEnv = { ...env, SUPABASE_URL: 'https://fixture.invalid', SUPABASE_SERVICE_ROLE_KEY: 'fixture-only' };
+const counted = () => {
+  const seen = { owner: 0, session: 0, fetched: 0 };
+  return {
+    seen,
+    requireHouseOwner: async () => { seen.owner += 1; throw Object.assign(new Error('McCluster house owner access required'), { status: 403 }); },
+    authUser: async (request) => { seen.session += 1; return request.headers.get('authorization') === 'Bearer fixture-member-session' ? { id: MEMBER_ID } : null; },
+    fetchImpl: async () => { seen.fetched += 1; return Response.json({ code: 'EU011', message: 'synthetic' }, { status: 400 }); }
+  };
+};
+
+test('the League member branch is the one exception: it never asks for a house owner, and nothing else under /v1/eup opens without one', async () => {
+  assert.equal(EUP_MEMBER_LEAGUE_PREFIX, '/v1/eup/member/league');
+  assert.ok(!EUP_SECTIONS.includes('member'), 'the member branch is not an owner section');
+  for (const path of [EUP_MEMBER_LEAGUE_PREFIX, `${EUP_MEMBER_LEAGUE_PREFIX}/`, `${EUP_MEMBER_LEAGUE_PREFIX}/uploads/0a000000-0000-4000-8000-000000000008/url`]) {
+    const c = counted();
+    const r = await handleEup(req(path, { headers: { authorization: 'Bearer fixture-member-session' } }), storeEnv, { ...c, fetchImpl: c.fetchImpl });
+    assert.equal(r.status, 404, path); assert.deepEqual(await r.json(), { ok: false, error: 'Not available', reason: 'not_available' });
+    assert.deepEqual([c.seen.owner, c.seen.session], [0, 1], `${path}: the session check, never the owner check`);
+  }
+  /* Everything else under the prefix, the member root included, stays owner-only. */
+  for (const path of ['/v1/eup/member', '/v1/eup/member/', '/v1/eup/member/environment', '/v1/eup/member/leagues', '/v1/eup/member/league-x', '/v1/eup/memberleague']) {
+    const c = counted();
+    const r = await handleEup(req(path, { headers: { authorization: 'Bearer fixture-member-session' } }), storeEnv, { ...c, fetchImpl: c.fetchImpl });
+    assert.equal(r.status, 403, path); assert.equal((await r.json()).reason, 'owner_required');
+    assert.deepEqual([c.seen.owner, c.seen.session, c.seen.fetched], [1, 0, 0], path);
+  }
+});
+
+test('the member branch: no bearer is 401 before anything; a hidden tab, an admin parameter or a header is not identity; answers vary on Origin and Authorization', async () => {
+  for (const init of [{}, { headers: { 'x-mcc-admin': 'true', 'x-we-user-id': MEMBER_ID, 'x-we-role': 'owner' } }]) {
+    const c = counted();
+    const r = await handleEup(req(`${EUP_MEMBER_LEAGUE_PREFIX}?admin=true&actor=${MEMBER_ID}`, init), storeEnv, { ...c, fetchImpl: c.fetchImpl });
+    assert.equal(r.status, 401); assert.equal((await r.json()).reason, 'authentication_required');
+    assert.deepEqual([c.seen.owner, c.seen.session, c.seen.fetched], [0, 0, 0], 'nothing was asked');
+    assert.equal(r.headers.get('cache-control'), 'private, no-store'); assert.equal(r.headers.get('vary'), 'Origin, Authorization');
+  }
+  const c = counted();
+  const unknown = await handleEup(req(EUP_MEMBER_LEAGUE_PREFIX, { headers: { authorization: 'Bearer someone-else' } }), storeEnv, { ...c, fetchImpl: c.fetchImpl });
+  assert.equal(unknown.status, 401); assert.deepEqual([c.seen.session, c.seen.fetched], [1, 0]);
+  /* The owner sections keep their answer headers. */
+  const o = await handleEup(req(EUP_PREFIX), env, { requireHouseOwner: owner });
+  assert.equal(o.headers.get('cache-control'), 'private, no-store');
 });

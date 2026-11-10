@@ -105,7 +105,7 @@ const release = (response) => { try { response?.body?.cancel().catch(() => {}); 
    (RPC_ARGUMENTS); they are sent in that order and nothing else is sent. A redirect (never followed), the deadline,
    an unreachable store, an answer that is not JSON and any SQLSTATE the tables do not name are all
    503 storage_unavailable, and none of them returns data. fetchImpl is called bare, never as a method. */
-export async function leagueRpc(env, { fetchImpl = globalThis.fetch, fail, timeoutMs = LEAGUE_RPC_TIMEOUT_MS } = {}, surface, args = {}) {
+export async function leagueFunctionCall(env, { fetchImpl = globalThis.fetch, fail, timeoutMs = LEAGUE_RPC_TIMEOUT_MS } = {}, surface, args = {}) {
   const fn = surface === 'media' ? 'seal' : surface;
   const name = Object.hasOwn(RPC, fn) ? RPC[fn] : null;
   if (!name || !env?.SUPABASE_URL || !env?.SUPABASE_SERVICE_ROLE_KEY || typeof fetchImpl !== 'function') throw unavailable(fail);
@@ -161,7 +161,7 @@ export async function leagueCall(env, ctx, surface, { action, actor, id = '', do
   const table = ACTIONS[surface === 'owner' ? 'owner' : 'member'];
   const spec = typeof action === 'string' && Object.hasOwn(table, action) ? table[action] : null;
   if (!spec) throw leagueFailure(ctx.fail, 'invalid', 422);
-  const data = await leagueRpc(env, ctx, surface === 'owner' ? 'owner' : 'member',
+  const data = await leagueFunctionCall(env, ctx, surface === 'owner' ? 'owner' : 'member',
     { p_action: action, p_actor: actor, p_id: id || '', p_document: document, p_revision: revision, p_key: key });
   return expectResult(spec, data, ctx.fail);
 }

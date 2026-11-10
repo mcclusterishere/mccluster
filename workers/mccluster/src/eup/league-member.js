@@ -26,7 +26,7 @@
    field that names another account (FOREIGN_ID_FIELDS), at any depth, whatever the store answered. */
 import { FOREIGN_ID_FIELDS, MEMBER_ACTIONS, ROUTES, matchRoute, projectShape } from './league-contract.js';
 import { beginUpload, completeUpload, discardUpload, signOwnRead } from './league-media.js';
-import { leagueCall, leagueFailure, leagueRpc, mediaContext, prepareCall, routePath, rpcContext } from './league.js';
+import { leagueCall, leagueFailure, leagueFunctionCall, mediaContext, prepareCall, routePath, rpcContext } from './league.js';
 
 const FOREIGN = new Set(FOREIGN_ID_FIELDS);
 const isPlainObject = (value) => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -86,7 +86,7 @@ export async function handleLeagueMember(request, env, ctx) {
       const row = await command('uploads.get', { id: call.id, document: {} });
       const seal = async (args) => {
         if (!isPlainObject(args) || typeof args.p_actor !== 'string' || args.p_actor.toLowerCase() !== actor) throw leagueFailure(fail, 'storage_unavailable', 503);
-        const sealed = await leagueRpc(env, rpc, 'media', { p_upload: args.p_upload, p_actor: actor, p_result: args.p_result });
+        const sealed = await leagueFunctionCall(env, rpc, 'media', { p_upload: args.p_upload, p_actor: actor, p_result: args.p_result });
         if (!isPlainObject(sealed)) throw leagueFailure(fail, 'storage_unavailable', 503);
         return sealed;
       };
