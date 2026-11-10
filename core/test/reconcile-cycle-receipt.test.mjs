@@ -54,6 +54,10 @@ done
 echo "the fixture refuses anything but a public key" >&2
 exit 1
 `;
+// What real systemctl prints. A property whose name holds "USec" is printed as
+// a time span, never as a number (systemd 255: LastTriggerUSecMonotonic reads
+// "12h 46min 21.250283s" while D-Bus holds 45981250283). A name that does not,
+// such as ExecMainStartTimestampMonotonic, is printed as the number itself.
 const FAKE_SYSTEMCTL = `#!/usr/bin/env bash
 echo "systemctl $*" >> "$FIXTURE_STATE/calls.log"
 [[ -n "\${FAKE_SYSTEMCTL_HANG:-}" ]] && exec sleep "$FAKE_SYSTEMCTL_HANG"
@@ -61,17 +65,45 @@ case "$*" in
   --version) echo "systemd \${FAKE_SYSTEMD_VERSION:-255} (fixture)"; echo "+PAM +AUDIT" ;;
   *"--property=InvocationID --property=ExecMainStartTimestampMonotonic"*)
     echo "InvocationID=\${FAKE_UNIT_INVOCATION:-}"; echo "ExecMainStartTimestampMonotonic=\${FAKE_START_US:-0}" ;;
-  *"--property=LastTriggerUSecMonotonic --value"*) echo "\${FAKE_TIMER_US:-0}" ;;
+  *"--property=LastTriggerUSecMonotonic --value"*) echo "\${FAKE_TIMER_SPAN:-0}" ;;
   *) echo "unexpected systemctl call: $*" >&2; exit 64 ;;
 esac
 `;
+// busctl prints a D-Bus property as its type and value: "t 45981250283".
+const FAKE_BUSCTL = `#!/usr/bin/env bash
+echo "busctl $*" >> "$FIXTURE_STATE/calls.log"
+[[ -n "\${FAKE_BUSCTL_HANG:-}" ]] && exec sleep "$FAKE_BUSCTL_HANG"
+case "$*" in
+  "get-property org.freedesktop.systemd1 /org/freedesktop/systemd1/unit/mccluster_2dvps_2dreconcile_2etimer org.freedesktop.systemd1.Timer LastTriggerUSecMonotonic")
+    echo "t \${FAKE_TIMER_US:-0}" ;;
+  *) echo "unexpected busctl call: $*" >&2; exit 64 ;;
+esac
+`;
+// systemd's format_timespan with accuracy 0, which systemctl uses for "USec"
+// properties. Checked against systemd-analyze timespan on systemd 255.
+function systemctlTimespan(text) {
+  if (!/^[1-9][0-9]*$/.test(text)) return text;
+  let t = BigInt(text);
+  const units = [['y', 31557600000000n], ['month', 2629800000000n], ['w', 604800000000n], ['d', 86400000000n], ['h', 3600000000n], ['min', 60000000n], ['s', 1000000n], ['ms', 1000n], ['us', 1n]];
+  const parts = [];
+  for (const [suffix, usec] of units) {
+    if (t === 0n) break;
+    if (t < usec) continue;
+    const whole = t / usec;
+    const rest = t % usec;
+    if (t < 60000000n && rest > 0n && usec > 1n) { parts.push(`${whole}.${String(rest).padStart(String(usec).length - 1, '0')}${suffix}`); break; }
+    parts.push(`${whole}${suffix}`);
+    t = rest;
+  }
+  return parts.join(' ');
+}
 
 function sandbox(t) {
   const root = mkdtempSync(join(tmpdir(), 'mcc-cycle-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const state = join(root, 'reconcile');
   for (const dir of ['bin', 'fixture', 'home', 'reconcile/ssh', 'reconcile/source/.git']) mkdirSync(join(root, dir), { recursive: true });
-  for (const [name, body] of [['git', FAKE_GIT], ['ssh-keygen', FAKE_SSH_KEYGEN], ['systemctl', FAKE_SYSTEMCTL]]) {
+  for (const [name, body] of [['git', FAKE_GIT], ['ssh-keygen', FAKE_SSH_KEYGEN], ['systemctl', FAKE_SYSTEMCTL], ['busctl', FAKE_BUSCTL]]) {
     writeFileSync(join(root, 'bin', name), body);
     chmodSync(join(root, 'bin', name), 0o755);
   }
@@ -102,6 +134,8 @@ function sandbox(t) {
         env: {
           PATH: path || `${join(root, 'bin')}:${process.env.PATH}`, HOME: join(root, 'home'), LC_ALL: 'C',
           MCCLUSTER_RECONCILE_STATE_ROOT: state, FIXTURE_STATE: join(root, 'fixture'), ...env,
+          // The one timer elapse, as each tool really prints it.
+          FAKE_TIMER_SPAN: systemctlTimespan(env.FAKE_TIMER_US ?? '0'),
         },
       });
     },
@@ -296,6 +330,9 @@ test('older systemd: a timer cycle is inferred only for this invocation, inside 
     box.run({ ...box.ssh, INVOCATION_ID: id.repeat(32), FAKE_UNIT_INVOCATION: id.repeat(32), FAKE_SYSTEMD_VERSION: '249', ...extra });
     return box.json('last-cycle.json');
   };
+  // systemctl would answer "16min 40s" for this elapse: the number comes from D-Bus.
+  assert.equal(systemctlTimespan('1000000000'), '16min 40s');
+  assert.equal(systemctlTimespan('45981250283'), '12h 46min 21.250283s');
   const near = old('1', { FAKE_TIMER_US: '1000000000', FAKE_START_US: '1000040000' });
   assert.equal(near.trigger, 'timer_inferred');
   assert.equal(near.timer_trigger_monotonic_usec, '1000000000');
@@ -334,6 +371,16 @@ test('evidence is bounded: a helper that hangs costs the budget, never the cycle
   assert.equal(last.trigger, 'other', 'an unanswered question is recorded as unknown, not guessed');
   assert.equal(last.outcome, 'verified_no_change');
   assert.equal(last.cycle_id, '1'.repeat(32));
+  // The same for the D-Bus read of the timer's last elapse.
+  const busStarted = Date.now();
+  const bus = box.run({ ...box.ssh, INVOCATION_ID: '2'.repeat(32), FAKE_SYSTEMD_VERSION: '249', FAKE_BUSCTL_HANG: '30', FAKE_UNIT_INVOCATION: '2'.repeat(32),
+    FAKE_TIMER_US: '1000000000', FAKE_START_US: '1000040000' }, 'CYCLE_EVIDENCE_BUDGET=3\nmcc_cycle_receipt verified_no_change 0 || true\necho after');
+  assert.equal(bus.status, 0, bus.stderr);
+  assert.equal(bus.stdout, 'after\n');
+  assert.ok(Date.now() - busStarted < 10_000, `a hanging busctl is cut at the budget (took ${Date.now() - busStarted} ms)`);
+  assert.match(box.calls(), /^busctl get-property /m);
+  assert.equal(box.json('last-cycle.json').trigger, 'other');
+  assert.equal(box.json('last-cycle.json').cycle_id, '2'.repeat(32));
   assert.match(head, /CYCLE_EVIDENCE_BUDGET=10\n/);
   assert.match(head, /timeout --foreground --signal=TERM --kill-after=1s "\$\{left\}s" "\$@" <\/dev\/null 2>\/dev\/null/);
 });

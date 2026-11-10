@@ -185,7 +185,11 @@ mcc_cycle_receipt_write() {
             ExecMainStartTimestampMonotonic=*) start_us="${entry#*=}" ;;
           esac
         done <<< "${text}"
-        timer_us="$(mcc_cycle_bounded systemctl show --property=LastTriggerUSecMonotonic --value mccluster-vps-reconcile.timer)"
+        # The timer's last elapse, as a number. systemctl prints every property
+        # whose name holds "USec" as a time span ("12h 46min 21.250283s"), so it
+        # is read from systemd over D-Bus, where busctl prints "t <usec>".
+        text="$(mcc_cycle_bounded busctl get-property org.freedesktop.systemd1 /org/freedesktop/systemd1/unit/mccluster_2dvps_2dreconcile_2etimer org.freedesktop.systemd1.Timer LastTriggerUSecMonotonic)"
+        [[ "${text}" =~ ^t\ ([1-9][0-9]{0,17})$ ]] && timer_us="${BASH_REMATCH[1]}"
         if [[ "${unit_invocation}" == "${invocation}" \
               && "${timer_us}" =~ ^[1-9][0-9]{0,17}$ && "${start_us}" =~ ^[1-9][0-9]{0,17}$ ]] \
            && (( start_us >= timer_us && start_us - timer_us <= CYCLE_TIMER_INFER_WINDOW_US )); then
