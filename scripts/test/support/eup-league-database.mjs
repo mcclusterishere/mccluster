@@ -64,6 +64,7 @@ export function leagueContractEmbedding(contract = C) {
     if (a.revision) o.revision = a.revision;
     if (a.revision_min === 0) o.revision_min = 0;
     if (a.kind === 'mutation' && !a.keyed) o.keyed = false;
+    if (a.kind === 'mutation' && a.outbox === false) o.outbox = false;
     if (a.reduce_when) o.reduce_when = a.reduce_when;
     if (a.gates) o.gates = a.gates;
     return o;
@@ -80,6 +81,7 @@ export function leagueContractEmbedding(contract = C) {
     releasable_templates: contract.ENUMS.RELEASABLE_TEMPLATES,
     template_rules: contract.TEMPLATE_RULES,
     media: { types: contract.MEDIA.types, hard_max_bytes: contract.MEDIA.hard_max_bytes, staged_ttl_seconds: contract.MEDIA.staged_ttl_seconds },
+    outbox: { type_prefix: contract.OUTBOX.type_prefix, payload_keys: contract.OUTBOX.payload_keys },
     actions: { owner: table(contract.OWNER_ACTIONS), member: table(contract.MEMBER_ACTIONS), media: table(contract.MEDIA_SEAL) },
     documents: contract.DOCUMENTS
   }));

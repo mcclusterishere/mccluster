@@ -21,19 +21,25 @@
 -- Order inside every mutation (one rule, both command functions and the seal):
 --   1. actor (42501)            2. idempotency key lock, then exact replay (EU003 on a changed payload)
 --   3. module guard, or the reduce guard for an action that only stops work or removes exposure
---   4. row locks in the single order campaign, mission, application, assignment, proof, upload
+--   4. row locks in the single order campaign, mission, application, assignment, proof, upload. Rows that hang
+--      off a proof (its consents, then its publications) are locked after the proof and before any upload; an
+--      appeal after its subject. A command that locks several rows of one kind locks them in id order.
 --   5. member gates, first failure wins: the row exists (P0002), released audience (EU011), the row is the
 --      actor's (42501), a valid League policy (EU010), entitlement (EU012), media enabled (EU010)
---   6. the document (22023), revision and state (40001), then the action's own rules.
+--   6. the document (22023), revision and state (40001), then the action's own rules (EU013..EU017).
+--   7. exactly one outbox event (ids and revisions only), allocated under the per-tenant outbox lock, which is
+--      the LAST lock a mutation takes, so events commit in seq order. Then the receipt.
 -- Reads take no key, write nothing and are never guarded: they answer in every module state, and so does an
--- exact replay. A failed command leaves no receipt. No guard is ever called under an EXCEPTION handler: this file
--- has none.
+-- exact replay. The one read that writes is applications.accommodation.get: it appends who read which request
+-- (no content) to a table that carries no guard trigger. A failed command leaves no receipt and no event. No
+-- guard is ever called under an EXCEPTION handler: this file has none.
 --
--- FIRST PASS (core loop). The owner-control set is added by the second pass and until then answers 0A000
--- "not implemented in this pass": owner publications.list, publications.decide, appeals.list, appeals.resolve,
--- proofs.moderate, media.due, media.purged, outbox.list, outbox.ack, credits.list,
--- applications.accommodation.get; member appeals.open, appeals.withdraw. The outbox table, the audit record of
--- an accommodation read and the EU017 rate bounds come with it.
+-- SECOND PASS (owner control): publications (released audience only, bound to one publish consent and through it
+-- to the exact proof and asset revision; withdrawn in the same transaction as the revocation, the hold, the purge
+-- or the mission or campaign withdrawal that ends them), appeals (an overturn reopens the subject), the moderation
+-- hold (EU016 for consent, publication, review and signed media reads), retention (media.due, media.purged; the
+-- digest is kept), the transactional outbox with per-consumer acknowledgements, credits.list, the audited
+-- accommodation read and the EU017 bounds of the contract's LIMITS.rate.
 --
 -- Apply AFTER eup_module_policy_v1.sql. Rollback: eup_league_v1.rollback.sql.
 begin;
@@ -291,6 +297,8 @@ create table public.eup_proof_revisions (
   actor uuid not null references auth.users(id),
   created_at timestamptz not null default now(),
   primary key (proof_id, revision),
+  -- The exact triple a review, a credit, a consent and (through its consent) a publication bind to.
+  unique (proof_id, revision, asset_revision),
   foreign key (tenant, proof_id) references public.eup_proofs(tenant, id)
 );
 -- The sealed files one proof revision lists, in submitted order, with the values copied from the sealed row.
@@ -325,7 +333,7 @@ create table public.eup_proof_reviews (
   rubric jsonb not null default '[]'::jsonb,
   reason text check (reason is null or length(reason) <= 2000),
   created_at timestamptz not null default now(),
-  foreign key (proof_id, proof_revision) references public.eup_proof_revisions(proof_id, revision),
+  foreign key (proof_id, proof_revision, asset_revision) references public.eup_proof_revisions(proof_id, revision, asset_revision),
   check (decision = case when 'fail' in (mission_decision, rights_decision, safety_decision) then 'rejected'
     when mission_decision = 'pass' and rights_decision = 'pass' and safety_decision = 'pass' then 'accepted' else 'needs_changes' end)
 );
@@ -349,7 +357,7 @@ create table public.eup_mission_credits (
   foreign key (tenant, campaign_id) references public.eup_campaigns(tenant, id),
   foreign key (tenant, mission_id) references public.eup_missions(tenant, id),
   foreign key (tenant, assignment_id) references public.eup_assignments(tenant, id),
-  foreign key (proof_id, proof_revision) references public.eup_proof_revisions(proof_id, revision)
+  foreign key (proof_id, proof_revision, asset_revision) references public.eup_proof_revisions(proof_id, revision, asset_revision)
 );
 create index eup_mission_credits_mission on public.eup_mission_credits (mission_id, created_at);
 
@@ -376,7 +384,9 @@ create table public.eup_consents (
   foreign key (tenant, mission_id) references public.eup_missions(tenant, id),
   foreign key (tenant, assignment_id) references public.eup_assignments(tenant, id),
   foreign key (tenant, proof_id) references public.eup_proofs(tenant, id),
-  foreign key (proof_id, proof_revision) references public.eup_proof_revisions(proof_id, revision),
+  foreign key (proof_id, proof_revision, asset_revision) references public.eup_proof_revisions(proof_id, revision, asset_revision),
+  -- The exact scope a publication names (eup_publications below).
+  unique (id, proof_id, proof_revision, asset_revision),
   check ((purpose = 'private_review' and audience = 'reviewers') or (purpose = 'publish_proof' and audience = 'released_audience')),
   check (purpose <> 'publish_proof' or expires_at is not null),
   check ((revoked_at is null) = (revoked_by is null)),
@@ -385,6 +395,124 @@ create table public.eup_consents (
 create unique index eup_consents_one_open_publish on public.eup_consents (proof_id) where purpose = 'publish_proof' and revoked_at is null and superseded_at is null;
 create index eup_consents_proof on public.eup_consents (proof_id, proof_revision);
 create index eup_consents_assignment on public.eup_consents (assignment_id);
+
+-- Moderation history: every hold and every release, with its reason, appended. The proof row carries the state.
+create table public.eup_proof_moderations (
+  id uuid primary key default gen_random_uuid(),
+  tenant uuid not null,
+  proof_id uuid not null,
+  proof_revision integer not null,
+  hold boolean not null,
+  reason text not null check (length(reason) between 1 and 2000),
+  actor uuid not null references auth.users(id),
+  created_at timestamptz not null default now(),
+  foreign key (tenant, proof_id) references public.eup_proofs(tenant, id),
+  foreign key (proof_id, proof_revision) references public.eup_proof_revisions(proof_id, revision)
+);
+create index eup_proof_moderations_proof on public.eup_proof_moderations (proof_id, created_at);
+
+-- Publication means: visible to the campaign's released audience, and to nobody else. A row is bound to one
+-- publish consent and, through that consent's key, to the exact proof revision and asset revision it was granted
+-- for. A withdrawal is a state, never a delete. Whether a published row is EFFECTIVE (shown, media signable) is
+-- computed at read: its consent open and unexpired, the proof clear, campaign and mission released.
+create table public.eup_publications (
+  id uuid primary key default gen_random_uuid(),
+  tenant uuid not null,
+  campaign_id uuid not null,
+  mission_id uuid not null,
+  assignment_id uuid not null,
+  proof_id uuid not null,
+  proof_revision integer not null,
+  asset_revision text not null check (asset_revision ~ '^[0-9a-f]{64}$'),
+  consent_id uuid not null,
+  audience text not null default 'released_audience' check (audience = 'released_audience'),
+  state text not null default 'published' check (state in ('published','withdrawn')),
+  published_by uuid not null references auth.users(id),
+  published_at timestamptz not null default now(),
+  published_note text check (published_note is null or length(published_note) between 1 and 500),
+  withdrawn_by uuid references auth.users(id),
+  withdrawn_at timestamptz,
+  withdrawn_reason text check (withdrawn_reason is null or withdrawn_reason in
+    ('owner','consent_revoked','moderation_hold','media_purged','assignment_withdrawn','mission_withdrawn','campaign_withdrawn')),
+  withdrawn_note text check (withdrawn_note is null or length(withdrawn_note) between 1 and 500),
+  foreign key (tenant, campaign_id) references public.eup_campaigns(tenant, id),
+  foreign key (tenant, mission_id) references public.eup_missions(tenant, id),
+  foreign key (tenant, assignment_id) references public.eup_assignments(tenant, id),
+  foreign key (tenant, proof_id) references public.eup_proofs(tenant, id),
+  foreign key (consent_id, proof_id, proof_revision, asset_revision) references public.eup_consents(id, proof_id, proof_revision, asset_revision),
+  check ((state = 'withdrawn') = (withdrawn_at is not null)),
+  check ((withdrawn_at is null) = (withdrawn_reason is null)),
+  check ((withdrawn_at is null) = (withdrawn_by is null)),
+  check (withdrawn_at is not null or withdrawn_note is null)
+);
+-- At most one live publication per proof.
+create unique index eup_publications_one_live on public.eup_publications (proof_id) where state = 'published';
+create index eup_publications_campaign on public.eup_publications (campaign_id, published_at);
+create index eup_publications_consent on public.eup_publications (consent_id);
+
+-- Appeals: a member asks for a second look at their declined application or rejected proof. The statement is the
+-- member's own text; mutation results never carry it, only reads do.
+create table public.eup_appeals (
+  id uuid primary key default gen_random_uuid(),
+  tenant uuid not null,
+  subject text not null check (subject in ('application','proof')),
+  application_id uuid,
+  proof_id uuid,
+  appellant uuid not null references auth.users(id),
+  state text not null default 'open' check (state in ('open','withdrawn','upheld','overturned')),
+  statement text not null check (length(statement) between 1 and 4000),
+  resolved_by uuid references auth.users(id),
+  resolution_reason text check (resolution_reason is null or length(resolution_reason) between 1 and 2000),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  resolved_at timestamptz,
+  foreign key (tenant, application_id) references public.eup_applications(tenant, id),
+  foreign key (tenant, proof_id) references public.eup_proofs(tenant, id),
+  check ((subject = 'application') = (application_id is not null)),
+  check ((subject = 'proof') = (proof_id is not null)),
+  check ((state = 'open') = (resolved_at is null)),
+  check ((state = 'upheld' or state = 'overturned') = (resolved_by is not null)),
+  check ((state = 'upheld' or state = 'overturned') = (resolution_reason is not null))
+);
+-- One open appeal per subject.
+create unique index eup_appeals_one_open_application on public.eup_appeals (application_id) where state = 'open' and application_id is not null;
+create unique index eup_appeals_one_open_proof on public.eup_appeals (proof_id) where state = 'open' and proof_id is not null;
+create index eup_appeals_appellant on public.eup_appeals (tenant, appellant);
+
+-- The transactional outbox: exactly one event per League mutation (outbox.ack excepted, and a seal that changed
+-- nothing), written in the mutation's own transaction, carrying ids and revisions only. seq is allocated under a
+-- per-tenant transaction lock that is the last lock a mutation takes, so events commit in seq order and a consumer
+-- that reads "after N" cannot skip an event that commits later with a lower number. Rolled-back events leave gaps.
+create table public.eup_outbox (
+  seq bigint generated always as identity primary key,
+  tenant uuid not null references public.orgs(id),
+  type text not null check (type ~ '^league\.[a-z][a-z0-9_.]{2,63}$'),
+  payload jsonb not null check (jsonb_typeof(payload) = 'object'),
+  created_at timestamptz not null default now(),
+  unique (tenant, seq)
+);
+-- What each consumer acknowledged. Acknowledging twice keeps one row.
+create table public.eup_outbox_consumptions (
+  tenant uuid not null,
+  seq bigint not null,
+  consumer text not null check (consumer ~ '^[a-z0-9][a-z0-9_-]{0,63}$'),
+  actor uuid not null references auth.users(id),
+  consumed_at timestamptz not null default now(),
+  primary key (seq, consumer),
+  foreign key (tenant, seq) references public.eup_outbox(tenant, seq)
+);
+
+-- Who read which accommodation request, and when. No content. NOT behind the module guard trigger: it is written
+-- by a read (applications.accommodation.get), and reads answer in every module state.
+create table public.eup_accommodation_reads (
+  id uuid primary key default gen_random_uuid(),
+  tenant uuid not null,
+  application_id uuid not null,
+  actor uuid not null references auth.users(id),
+  read_at timestamptz not null default now(),
+  foreign key (tenant, application_id) references public.eup_applications(tenant, id)
+);
+create index eup_accommodation_reads_application on public.eup_accommodation_reads (application_id, read_at);
 
 -- Idempotency receipts, keyed (tenant, actor, operation, idempotency_key); operation is the action name.
 -- NOT behind the module guard trigger: an exact replay answers in every module state, and a receipt is only
@@ -404,15 +532,19 @@ create table public.eup_command_receipts (
 -- Private tables: RLS on with no policy, nothing for anon or authenticated, and for service_role only what the
 -- functions below use (they are SECURITY INVOKER). History tables are append-only by privilege. Every League
 -- domain table takes the module guard as a statement trigger, so a direct table write obeys the module state too.
+-- Two tables carry no trigger: the receipts (an exact replay answers in every module state) and the accommodation
+-- access record (written by a read, and reads answer in every module state). The outbox sequence is revoked from
+-- every API role: an identity column needs no sequence privilege, so nothing can draw numbers outside an insert.
 do $$
 declare
   v_mutable text[] := array['eup_league_policy','eup_campaigns','eup_campaign_audience_grants','eup_missions','eup_applications',
-    'eup_assignments','eup_proof_drafts','eup_media_uploads','eup_proofs','eup_consents'];
+    'eup_assignments','eup_proof_drafts','eup_media_uploads','eup_proofs','eup_consents','eup_publications','eup_appeals'];
   v_append_only text[] := array['eup_league_policy_revisions','eup_campaign_revisions','eup_mission_revisions','eup_application_decisions',
-    'eup_assignment_acceptances','eup_proof_revisions','eup_proof_media','eup_proof_reviews','eup_mission_credits'];
+    'eup_assignment_acceptances','eup_proof_revisions','eup_proof_media','eup_proof_reviews','eup_mission_credits','eup_proof_moderations',
+    'eup_outbox','eup_outbox_consumptions'];
   v_table text;
 begin
-  foreach v_table in array v_mutable || v_append_only || array['eup_command_receipts'] loop
+  foreach v_table in array v_mutable || v_append_only || array['eup_command_receipts','eup_accommodation_reads'] loop
     execute format('alter table public.%I enable row level security', v_table);
     execute format('revoke all on public.%I from public, anon, authenticated, service_role', v_table);
     execute format('grant select, insert on public.%I to service_role', v_table);
@@ -424,6 +556,7 @@ begin
     execute format('create trigger %I before insert or update or delete on public.%I for each statement execute function public.eup_module_guard_trigger(%L)',
       v_table || '_module_policy', v_table, 'league');
   end loop;
+  revoke all on sequence public.eup_outbox_seq_seq from public, anon, authenticated, service_role;
 end $$;
 
 -- The contract values this file needs, embedded once: document specs, patterns, text rules, limits, the media
@@ -445,6 +578,7 @@ begin
 "releasable_templates":["write-a-song"],
 "template_rules":{"write-a-song":{"modes_allowed":["audio","video","lyrics"],"modes_required":["lyrics"],"modes_any_of":["audio","video"]}},
 "media":{"types":{"audio/mpeg":{"kind":"audio","ext":"mp3","families":["mpeg"]},"audio/mp4":{"kind":"audio","ext":"m4a","families":["iso_bmff"]},"audio/x-m4a":{"kind":"audio","ext":"m4a","families":["iso_bmff"]},"audio/wav":{"kind":"audio","ext":"wav","families":["riff_wave"]},"audio/webm":{"kind":"audio","ext":"webm","families":["ebml"]},"audio/ogg":{"kind":"audio","ext":"ogg","families":["ogg"]},"video/mp4":{"kind":"video","ext":"mp4","families":["iso_bmff"]},"video/webm":{"kind":"video","ext":"webm","families":["ebml"]},"video/quicktime":{"kind":"video","ext":"mov","families":["iso_bmff"]}},"hard_max_bytes":104857600,"staged_ttl_seconds":86400},
+"outbox":{"type_prefix":"league.","payload_keys":["campaign_id","mission_id","application_id","assignment_id","proof_id","upload_id","upload_ids","consent_id","publication_id","publication_ids","appeal_id","credit_id","grant_id","review_id","revision","requirements_revision","proof_revision","asset_revision","policy_revision"]},
 "actions":{
  "owner":{
   "overview":{"kind":"read","guard":"none"},
@@ -481,7 +615,7 @@ begin
   "publications.decide":{"kind":"mutation","guard":"enabled","id":"proof","document":"publication_decide","revision":"proof","reduce_when":{"field":"decision","values":["withdrawn"]}},
   "appeals.resolve":{"kind":"mutation","guard":"enabled","id":"appeal","document":"appeal_resolve"},
   "media.purged":{"kind":"mutation","guard":"reduce","document":"media_purged"},
-  "outbox.ack":{"kind":"mutation","guard":"enabled","id":"outbox_seq","document":"outbox_ack"}
+  "outbox.ack":{"kind":"mutation","guard":"enabled","id":"outbox_seq","document":"outbox_ack","outbox":false}
  },
  "member":{
   "me.get":{"kind":"read","guard":"none","gates":[]},
@@ -930,7 +1064,44 @@ language sql stable security invoker set search_path = '' as $$
     'purpose', (k).purpose, 'audience', (k).audience, 'notice_revision', (k).notice_revision, 'state', public.eup_league_consent_state(k),
     'granted_at', (k).granted_at, 'expires_at', (k).expires_at, 'revoked_at', (k).revoked_at, 'superseded_at', (k).superseded_at)
 $$;
--- A participant's own proof: no account id, no storage identity. Publication and appeals arrive with the second pass.
+-- A publication is EFFECTIVE (shown to the released audience, its media signable) only while it is published, its
+-- consent is open and unexpired, the proof is clear, and campaign and mission are released. Expiry and a pause hide
+-- it without a write; nothing runs on a schedule in this build.
+create function public.eup_league_publication_effective(b public.eup_publications) returns boolean
+language sql stable security invoker set search_path = '' as $$
+  select coalesce((b).state = 'published' and exists (
+    select 1 from public.eup_consents kk
+      join public.eup_proofs pp on pp.id = kk.proof_id and pp.tenant = kk.tenant
+      join public.eup_missions mm on mm.id = (b).mission_id and mm.tenant = kk.tenant
+      join public.eup_campaigns cc on cc.id = (b).campaign_id and cc.tenant = kk.tenant
+     where kk.id = (b).consent_id and kk.tenant = (b).tenant and public.eup_league_consent_state(kk) = 'open'
+       and pp.moderation_state = 'clear' and mm.state = 'released' and cc.state = 'released'), false)
+$$;
+create function public.eup_league_publication_json(b public.eup_publications) returns jsonb
+language sql stable security invoker set search_path = '' as $$
+  select jsonb_build_object('id', (b).id, 'tenant', (b).tenant, 'campaign_id', (b).campaign_id, 'mission_id', (b).mission_id,
+    'assignment_id', (b).assignment_id, 'proof_id', (b).proof_id, 'proof_revision', (b).proof_revision, 'asset_revision', (b).asset_revision,
+    'consent_id', (b).consent_id, 'audience', (b).audience, 'state', (b).state, 'effective', public.eup_league_publication_effective(b),
+    'published_by', (b).published_by, 'published_at', (b).published_at, 'withdrawn_by', (b).withdrawn_by, 'withdrawn_at', (b).withdrawn_at,
+    'withdrawn_reason', (b).withdrawn_reason)
+$$;
+-- What a participant reads of a publication of their own proof: no account id.
+create function public.eup_league_member_publication_json(b public.eup_publications) returns jsonb
+language sql stable security invoker set search_path = '' as $$
+  select jsonb_build_object('id', (b).id, 'proof_id', (b).proof_id, 'proof_revision', (b).proof_revision, 'asset_revision', (b).asset_revision,
+    'consent_id', (b).consent_id, 'state', (b).state, 'effective', public.eup_league_publication_effective(b), 'published_at', (b).published_at,
+    'withdrawn_at', (b).withdrawn_at, 'withdrawn_reason', (b).withdrawn_reason)
+$$;
+-- An appeal, owner or member view, with or without the appellant's statement (reads carry it, results never do).
+create function public.eup_league_appeal_json(x public.eup_appeals, p_member boolean, p_statement boolean) returns jsonb
+language sql stable security invoker set search_path = '' as $$
+  select jsonb_build_object('id', (x).id, 'subject', (x).subject, 'subject_id', coalesce((x).application_id, (x).proof_id), 'state', (x).state,
+      'resolution_reason', (x).resolution_reason, 'created_at', (x).created_at, 'resolved_at', (x).resolved_at)
+    || case when p_member then '{}'::jsonb else jsonb_build_object('tenant', (x).tenant, 'appellant', (x).appellant, 'resolved_by', (x).resolved_by) end
+    || case when p_statement then jsonb_build_object('statement', (x).statement) else '{}'::jsonb end
+$$;
+-- A participant's own proof: no account id, no storage identity. publication is the latest publication row of the
+-- proof (live or withdrawn), or null.
 create function public.eup_league_own_proof_json(p public.eup_proofs) returns jsonb
 language sql stable security invoker set search_path = '' as $$
   select jsonb_build_object('id', (p).id, 'assignment_id', (p).assignment_id, 'revision', (p).revision, 'state', (p).state,
@@ -942,7 +1113,11 @@ language sql stable security invoker set search_path = '' as $$
         from public.eup_proof_reviews rr where rr.proof_id = (p).id), '[]'::jsonb),
     'consents', coalesce((select jsonb_agg(public.eup_league_member_consent_json(kk) order by kk.granted_at, kk.id)
         from public.eup_consents kk where kk.proof_id = (p).id), '[]'::jsonb),
-    'publication', null, 'appeals', '[]'::jsonb, 'created_at', (p).created_at, 'updated_at', (p).updated_at)
+    'publication', (select public.eup_league_member_publication_json(bb) from public.eup_publications bb
+        where bb.proof_id = (p).id and bb.tenant = (p).tenant order by bb.published_at desc, bb.id desc limit 1),
+    'appeals', coalesce((select jsonb_agg(public.eup_league_appeal_json(xx, true, true) order by xx.created_at, xx.id)
+        from public.eup_appeals xx where xx.proof_id = (p).id and xx.tenant = (p).tenant), '[]'::jsonb),
+    'created_at', (p).created_at, 'updated_at', (p).updated_at)
 $$;
 create function public.eup_league_credit_json(x public.eup_mission_credits) returns jsonb
 language sql stable security invoker set search_path = '' as $$
@@ -965,17 +1140,70 @@ language sql stable security invoker set search_path = '' as $$
    where rr.tenant = p_tenant and rr.actor = p_actor and rr.surface = p_surface and rr.operation = p_document ->> 'operation' and rr.idempotency_key = p_document ->> 'key'
 $$;
 
+-- The one outbox event of a mutation: type 'league.' || action, a payload checked against the contract's closed key
+-- list and value kinds (a uuid, a list of uuids, a non-negative integer, a sha256 hex digest; null values are
+-- dropped). The per-tenant outbox lock is taken here, as the LAST lock of the transaction: seq order is commit
+-- order. A payload outside the list is a defect of this file, never of a caller, and fails the whole command.
+create function public.eup_league_outbox(p_tenant uuid, p_action text, p_payload jsonb) returns bigint
+language plpgsql security invoker set search_path = '' as $$
+declare
+  v_payload jsonb := jsonb_strip_nulls(coalesce(p_payload, '{}'::jsonb));
+  v_keys jsonb := public.eup_league_contract('{outbox,payload_keys}');
+  v_uuid text := public.eup_league_contract('{patterns,uuid}') #>> '{}';
+  v_sha text := public.eup_league_contract('{patterns,sha256}') #>> '{}';
+  v_key text; v_value jsonb; v_seq bigint;
+begin
+  for v_key, v_value in select e.key, e.value from jsonb_each(v_payload) e loop
+    if not (v_keys ? v_key) or not coalesce(
+         (jsonb_typeof(v_value) = 'string' and ((v_value #>> '{}') ~ v_uuid or (v_value #>> '{}') ~ v_sha))
+      or (jsonb_typeof(v_value) = 'number' and (v_value #>> '{}') ~ '^(0|[1-9][0-9]{0,15})$')
+      or (jsonb_typeof(v_value) = 'array' and not exists (select 1 from jsonb_array_elements(v_value) x
+            where jsonb_typeof(x) <> 'string' or not ((x #>> '{}') ~ v_uuid))), false) then
+      raise exception 'An outbox payload carries ids and revisions only (%)', v_key using errcode = 'XX000';
+    end if;
+  end loop;
+  perform pg_advisory_xact_lock(hashtextextended('eup.league.outbox|' || p_tenant::text, 0));
+  insert into public.eup_outbox(tenant, type, payload)
+    values (p_tenant, (public.eup_league_contract('{outbox,type_prefix}') #>> '{}') || p_action, v_payload) returning seq into v_seq;
+  return v_seq;
+end $$;
+
+-- Withdraws the named publications that are still live, with p_reason (one of the contract's WITHDRAWN_REASONS),
+-- and marks their proofs withdrawn. The caller already holds the row lock of every proof involved (the lock order
+-- puts a proof before the rows that hang off it), so two withdrawals of one publication cannot interleave.
+-- Returns the ids it withdrew, in id order.
+create function public.eup_league_withdraw_publications(p_tenant uuid, p_publications uuid[], p_actor uuid, p_reason text, p_note text default null) returns uuid[]
+language plpgsql security invoker set search_path = '' as $$
+declare v_ids uuid[]; v_proofs uuid[];
+begin
+  with withdrawn as (
+    update public.eup_publications bb set state = 'withdrawn', withdrawn_at = now(), withdrawn_by = p_actor, withdrawn_reason = p_reason, withdrawn_note = p_note
+     where bb.tenant = p_tenant and bb.id = any (coalesce(p_publications, '{}'::uuid[])) and bb.state = 'published'
+     returning bb.id, bb.proof_id)
+  select coalesce(array_agg(ww.id order by ww.id), '{}'::uuid[]), coalesce(array_agg(ww.proof_id), '{}'::uuid[]) into v_ids, v_proofs from withdrawn ww;
+  update public.eup_proofs pp set publication_state = 'withdrawn', updated_at = now()
+   where pp.tenant = p_tenant and pp.id = any (v_proofs) and pp.publication_state = 'published_released_audience';
+  return v_ids;
+end $$;
+
 -- What ends with an assignment (a member's withdrawal, a mission or campaign withdrawal): its open consents are
--- revoked. p_reason names why; the second pass withdraws the assignment's publication here with that reason.
-create function public.eup_league_release_assignments(p_tenant uuid, p_assignments uuid[], p_actor uuid, p_reason text) returns void
-language sql security invoker set search_path = '' as $$
+-- revoked and its live publication is withdrawn with p_reason. The proofs of the assignments are locked first, in id
+-- order. The uploads stay until retention.withdrawn_days. Returns the publications withdrawn.
+create function public.eup_league_release_assignments(p_tenant uuid, p_assignments uuid[], p_actor uuid, p_reason text) returns uuid[]
+language plpgsql security invoker set search_path = '' as $$
+begin
+  perform 1 from public.eup_proofs pp where pp.tenant = p_tenant and pp.assignment_id = any (p_assignments) order by pp.id for update;
   update public.eup_consents kk set revoked_at = now(), revoked_by = p_actor
    where kk.tenant = p_tenant and kk.assignment_id = any (p_assignments) and kk.revoked_at is null and kk.superseded_at is null
-     and (kk.expires_at is null or kk.expires_at > now())
-$$;
+     and (kk.expires_at is null or kk.expires_at > now());
+  return public.eup_league_withdraw_publications(p_tenant, array(select bb.id from public.eup_publications bb
+    where bb.tenant = p_tenant and bb.assignment_id = any (p_assignments) and bb.state = 'published' order by bb.id), p_actor, p_reason);
+end $$;
 -- The mission-withdrawal cascade, under the mission row lock its caller holds: open applications are declined
--- (each with a decision row), open assignments are withdrawn with the assignment effects. Completed assignments
--- and credits stay. p_reason is mission_withdrawn or campaign_withdrawn.
+-- (each with a decision row), open assignments are withdrawn with the assignment effects, and every publication of
+-- the mission is withdrawn, completed work included. Completed assignments and credits stay. p_reason is
+-- mission_withdrawn or campaign_withdrawn. Rows are written in the lock order: applications, assignments, then
+-- every proof of the mission (locked in id order) before its consents and publications.
 create function public.eup_league_withdraw_mission(p_tenant uuid, p_mission uuid, p_actor uuid, p_reason text) returns void
 language plpgsql security invoker set search_path = '' as $$
 declare v_assignments uuid[];
@@ -992,8 +1220,54 @@ begin
      where ss.mission_id = p_mission and ss.tenant = p_tenant and ss.status in ('offered', 'accepted')
      returning ss.id)
   select coalesce(array_agg(ww.id), '{}'::uuid[]) into v_assignments from withdrawn ww;
+  perform 1 from public.eup_proofs pp join public.eup_assignments ss on ss.id = pp.assignment_id and ss.tenant = pp.tenant
+   where ss.mission_id = p_mission and pp.tenant = p_tenant order by pp.id for update of pp;
   perform public.eup_league_release_assignments(p_tenant, v_assignments, p_actor, p_reason);
+  perform public.eup_league_withdraw_publications(p_tenant, array(select bb.id from public.eup_publications bb
+    where bb.tenant = p_tenant and bb.mission_id = p_mission and bb.state = 'published' order by bb.id), p_actor, p_reason);
 end $$;
+
+-- Retention: the retention object of the VALID League policy, or null when there is none. With null a sealed upload
+-- is never due (retention is not evaluated) and only the policy-independent reasons are computed: discarded and
+-- rejected objects stay removable while the League is unconfigured.
+create function public.eup_league_retention(p_tenant uuid) returns jsonb
+language sql stable security invoker set search_path = '' as $$
+  select pp.document -> 'retention' from public.eup_league_policy pp where pp.tenant = p_tenant and public.eup_league_policy_valid(pp.document)
+$$;
+-- Why and when an upload's stored object becomes removable if nothing else changes: { reason, due_at }, or null
+-- when it never will (purged; a sealed file of work in progress; a sealed file with no retention to evaluate).
+--   discarded -> 'discarded' at discarded_at          rejected -> 'rejected' when the seal refused it
+--   expired   -> 'expired' at expires_at              staged   -> 'staged_expired' at expires_at (no signed
+--                                                                 upload outlives the row's lifetime)
+--   sealed    -> 'retention_completed' at completed_at + completed_days, or 'retention_withdrawn' at withdrawn_at +
+--                withdrawn_days, by its assignment (completed and withdrawn are terminal: the date never moves)
+create function public.eup_league_upload_due(u public.eup_media_uploads, p_retention jsonb) returns jsonb
+language sql stable security invoker set search_path = '' as $$
+  select case (u).state
+    when 'discarded' then jsonb_build_object('reason', 'discarded', 'due_at', (u).discarded_at)
+    when 'rejected' then jsonb_build_object('reason', 'rejected', 'due_at', (u).updated_at)
+    when 'expired' then jsonb_build_object('reason', 'expired', 'due_at', (u).expires_at)
+    when 'staged' then jsonb_build_object('reason', 'staged_expired', 'due_at', (u).expires_at)
+    when 'sealed' then (select case
+        when p_retention is null then null
+        when ss.status = 'completed' then jsonb_build_object('reason', 'retention_completed',
+          'due_at', ss.completed_at + make_interval(days => (p_retention ->> 'completed_days')::integer))
+        when ss.status = 'withdrawn' then jsonb_build_object('reason', 'retention_withdrawn',
+          'due_at', ss.withdrawn_at + make_interval(days => (p_retention ->> 'withdrawn_days')::integer))
+      end from public.eup_assignments ss where ss.id = (u).assignment_id and ss.tenant = (u).tenant)
+  end
+$$;
+create function public.eup_league_upload_is_due(u public.eup_media_uploads, p_retention jsonb) returns boolean
+language sql stable security invoker set search_path = '' as $$
+  select coalesce((public.eup_league_upload_due(u, p_retention) ->> 'due_at')::timestamptz <= now(), false)
+$$;
+-- The due_upload shape. due is true once due_at has passed.
+create function public.eup_league_due_json(u public.eup_media_uploads, p_retention jsonb) returns jsonb
+language sql stable security invoker set search_path = '' as $$
+  select jsonb_build_object('id', (u).id, 'tenant', (u).tenant, 'assignment_id', (u).assignment_id, 'ext', (u).ext, 'kind', (u).kind,
+    'state', (u).state, 'due', coalesce((q.d ->> 'due_at')::timestamptz <= now(), false), 'reason', q.d -> 'reason', 'due_at', q.d -> 'due_at')
+  from (select public.eup_league_upload_due(u, p_retention) as d) q
+$$;
 
 -- ---------------------------------------------------------------- owner command
 -- House owner only, rechecked on every call. Reads first (never guarded, no key); then mutations in the order
@@ -1001,15 +1275,14 @@ end $$;
 create function public.eup_league_command(p_action text, p_actor uuid, p_id text, p_document jsonb default null, p_revision integer default null, p_key text default null)
 returns jsonb language plpgsql security invoker set search_path = '' set lock_timeout = '5s' as $$
 declare
-  -- The owner-control set of the second pass. Named here so that nothing half-works until it lands.
-  v_deferred constant text[] := array['publications.list','publications.decide','appeals.list','appeals.resolve','proofs.moderate',
-    'media.due','media.purged','outbox.list','outbox.ack','credits.list','applications.accommodation.get'];
-  v_house uuid; v_act jsonb; v_doc jsonb; v_id uuid; v_id_text text; v_digest text; v_result jsonb; v_guard text;
+  v_house uuid; v_act jsonb; v_doc jsonb; v_id uuid; v_id_text text; v_seq bigint; v_digest text; v_result jsonb; v_event jsonb; v_guard text;
   v_rows integer; v_to text; v_other uuid; v_link uuid; v_changed boolean; v_capacity integer; v_merged jsonb; v_rubric text; v_outcome text; v_media boolean;
+  v_retention jsonb; v_ids uuid[]; v_done uuid[]; v_withdrawn uuid[]; v_read_at timestamptz;
   receipt public.eup_command_receipts%rowtype;
   pol public.eup_league_policy%rowtype;
   c public.eup_campaigns%rowtype; m public.eup_missions%rowtype; a public.eup_applications%rowtype; s public.eup_assignments%rowtype;
   p public.eup_proofs%rowtype; r public.eup_proof_reviews%rowtype; g public.eup_campaign_audience_grants%rowtype; x public.eup_mission_credits%rowtype;
+  k public.eup_consents%rowtype; b public.eup_publications%rowtype; ap public.eup_appeals%rowtype; oc public.eup_outbox_consumptions%rowtype;
 begin
   -- 1. Authorization: canonical house ownership.
   select oo.id into v_house from public.org_members mm join public.orgs oo on oo.id = mm.org_id
@@ -1018,12 +1291,15 @@ begin
 
   v_act := public.eup_league_contract(array['actions', 'owner', coalesce(p_action, '')]);
   if v_act is null then raise exception 'Unknown action' using errcode = '22023'; end if;
-  if p_action = any (v_deferred) then raise exception 'not implemented in this pass: %', p_action using errcode = '0A000'; end if;
   v_doc := coalesce(p_document, '{}'::jsonb);
   if octet_length(v_doc::text) > (public.eup_league_contract('{limits,document_max_bytes}') #>> '{}')::integer then
     raise exception 'Document too large' using errcode = '22023'; end if;
   v_id_text := nullif(p_id, '');
-  if v_id_text is not null then
+  if v_id_text is not null and (v_act ->> 'id') = 'outbox_seq' then
+    -- outbox.ack names an event by its sequence number, not by a uuid.
+    if not coalesce(v_id_text ~ (public.eup_league_contract('{patterns,outbox_seq}') #>> '{}'), false) then raise exception 'Invalid id' using errcode = '22023'; end if;
+    v_seq := v_id_text::bigint;
+  elsif v_id_text is not null then
     if not coalesce(v_id_text ~* (public.eup_league_contract('{patterns,uuid}') #>> '{}'), false) then raise exception 'Invalid id' using errcode = '22023'; end if;
     v_id := v_id_text::uuid;
   elsif v_act ? 'id' and (v_act -> 'id_optional') is distinct from 'true'::jsonb then
@@ -1043,12 +1319,13 @@ begin
             from public.eup_campaigns cc where cc.tenant = v_house),
           'missions', (select jsonb_build_object('drafts', count(*) filter (where mm.state = 'draft'), 'released', count(*) filter (where mm.state = 'released'))
             from public.eup_missions mm where mm.tenant = v_house),
-          -- appeals and media_due are counted by the second pass; null says "not computed", never zero.
           'queues', jsonb_build_object(
             'applications', (select count(*) from public.eup_applications aa where aa.tenant = v_house and aa.status = 'submitted'),
             'proofs', (select count(*) from public.eup_proofs pp where pp.tenant = v_house and pp.state = 'submitted'),
             'reviews', (select count(*) from public.eup_proofs pp where pp.tenant = v_house and pp.state = 'needs_changes'),
-            'appeals', null, 'media_due', null),
+            'appeals', (select count(*) from public.eup_appeals xx where xx.tenant = v_house and xx.state = 'open'),
+            'media_due', (select count(*) from public.eup_media_uploads uu where uu.tenant = v_house and uu.state <> 'purged'
+              and public.eup_league_upload_is_due(uu, public.eup_league_retention(v_house)))),
           'policy', jsonb_build_object('present', pol.tenant is not null, 'valid', coalesce(public.eup_league_policy_valid(pol.document), false),
             'media_enabled', coalesce(public.eup_league_policy_valid(pol.document) and (pol.document #> '{media,enabled}') = 'true'::jsonb, false),
             'revision', coalesce(pol.revision, 0)),
@@ -1061,6 +1338,8 @@ begin
               union all select max(aa.updated_at) from public.eup_applications aa where aa.tenant = v_house
               union all select max(ss.updated_at) from public.eup_assignments ss where ss.tenant = v_house
               union all select max(pp.updated_at) from public.eup_proofs pp where pp.tenant = v_house
+              union all select max(xx.updated_at) from public.eup_appeals xx where xx.tenant = v_house
+              union all select max(uu.updated_at) from public.eup_media_uploads uu where uu.tenant = v_house
               union all select max(pp.updated_at) from public.eup_league_policy pp where pp.tenant = v_house) t));
       when 'policy.get' then
         return public.eup_league_policy_json(v_house);
@@ -1116,6 +1395,59 @@ begin
         return coalesce((select jsonb_agg(q.j order by q.granted_at, q.id) from (
           select kk.granted_at, kk.id, public.eup_league_consent_json(kk) as j from public.eup_consents kk
            where kk.tenant = v_house and (v_id is null or kk.proof_id = v_id) order by kk.granted_at, kk.id limit v_rows) q), '[]'::jsonb);
+      when 'applications.accommodation.get' then
+        -- The one audited read: who read which request and when (no content), in a table without the guard trigger,
+        -- so it answers in every module state like every other read.
+        select * into a from public.eup_applications aa where aa.id = v_id and aa.tenant = v_house;
+        if not found then raise exception 'Application not found' using errcode = 'P0002'; end if;
+        insert into public.eup_accommodation_reads(tenant, application_id, actor) values (v_house, a.id, p_actor) returning read_at into v_read_at;
+        return jsonb_build_object('application_id', a.id, 'applicant', a.applicant, 'accommodation', a.accommodation, 'read_at', v_read_at);
+      when 'publications.list' then
+        return coalesce((select jsonb_agg(q.j order by q.published_at, q.id) from (
+          select bb.published_at, bb.id, public.eup_league_publication_json(bb) as j from public.eup_publications bb
+           where bb.tenant = v_house and (v_id is null or bb.campaign_id = v_id) and (not (v_doc ? 'state') or bb.state = v_doc ->> 'state')
+           order by bb.published_at, bb.id limit v_rows) q), '[]'::jsonb);
+      when 'appeals.list' then
+        return coalesce((select jsonb_agg(q.j order by q.created_at, q.id) from (
+          select xx.created_at, xx.id, public.eup_league_appeal_json(xx, false, true) as j from public.eup_appeals xx
+           where xx.tenant = v_house and (not (v_doc ? 'state') or xx.state = v_doc ->> 'state')
+           order by xx.created_at, xx.id limit v_rows) q), '[]'::jsonb);
+      when 'credits.list' then
+        return coalesce((select jsonb_agg(q.j order by q.created_at, q.id) from (
+          select xx.created_at, xx.id, public.eup_league_credit_json(xx) as j from public.eup_mission_credits xx
+           where xx.tenant = v_house and (v_id is null or xx.mission_id = v_id)
+           order by xx.created_at, xx.id limit v_rows) q), '[]'::jsonb);
+      when 'media.due' then
+        -- Without uploads: the due rows, the longest due first, up to limit. With uploads: every named row in the
+        -- order named, with its due flag (P0002 if one is unknown), so the purge route can refuse before it deletes.
+        v_retention := public.eup_league_retention(v_house);
+        if v_doc ? 'uploads' then
+          if exists (select 1 from jsonb_array_elements_text(v_doc -> 'uploads') e
+                      where not exists (select 1 from public.eup_media_uploads uu where uu.id = e.value::uuid and uu.tenant = v_house)) then
+            raise exception 'Upload not found' using errcode = 'P0002'; end if;
+          return jsonb_build_object('retention_evaluated', v_retention is not null, 'uploads', (
+            select jsonb_agg(public.eup_league_due_json(uu, v_retention) order by e.ord)
+              from jsonb_array_elements_text(v_doc -> 'uploads') with ordinality e(value, ord)
+              join public.eup_media_uploads uu on uu.id = e.value::uuid and uu.tenant = v_house));
+        end if;
+        return jsonb_build_object('retention_evaluated', v_retention is not null, 'uploads', coalesce((
+          select jsonb_agg(q.j order by q.due_at, q.id) from (
+            select uu.id, (public.eup_league_upload_due(uu, v_retention) ->> 'due_at')::timestamptz as due_at, public.eup_league_due_json(uu, v_retention) as j
+              from public.eup_media_uploads uu
+             where uu.tenant = v_house and uu.state <> 'purged' and public.eup_league_upload_is_due(uu, v_retention)
+             order by 2, 1
+             limit coalesce((v_doc ->> 'limit')::integer, (public.eup_league_contract('{limits,list,purge_batch}') #>> '{}')::integer)) q), '[]'::jsonb));
+      when 'outbox.list' then
+        -- seq ascending, seq > after. consumed says whether the named consumer acknowledged the event (null when no
+        -- consumer is named). Events commit in seq order (eup_league_outbox), so paging by "after" skips nothing.
+        return coalesce((select jsonb_agg(q.j order by q.seq) from (
+          select oo.seq, jsonb_build_object('seq', oo.seq, 'tenant', oo.tenant, 'type', oo.type, 'payload', oo.payload, 'created_at', oo.created_at,
+              'consumed', case when v_doc ? 'consumer' then exists (select 1 from public.eup_outbox_consumptions cc
+                  where cc.seq = oo.seq and cc.consumer = v_doc ->> 'consumer') end) as j
+            from public.eup_outbox oo
+           where oo.tenant = v_house and oo.seq > coalesce((v_doc ->> 'after')::bigint, 0)
+           order by oo.seq
+           limit coalesce((v_doc ->> 'limit')::integer, (public.eup_league_contract('{limits,list,outbox}') #>> '{}')::integer)) q), '[]'::jsonb);
       when 'receipts.get' then
         v_result := public.eup_league_receipt_json(v_house, p_actor, 'owner', v_doc);
         if v_result is null then raise exception 'Receipt not found' using errcode = 'P0002'; end if;
@@ -1164,6 +1496,7 @@ begin
       end if;
       insert into public.eup_league_policy_revisions(tenant, revision, document, reason, actor) values (v_house, pol.revision, pol.document, v_doc ->> 'reason', p_actor);
       v_result := public.eup_league_policy_json(v_house);
+      v_event := jsonb_build_object('policy_revision', pol.revision);
 
     when 'campaigns.create' then
       -- Always created admin_preview; widening is campaigns.audience.set. The audience lives in its column only.
@@ -1174,6 +1507,7 @@ begin
       insert into public.eup_campaign_revisions(campaign_id, revision, tenant, state, audience, document, actor)
         values (c.id, c.revision, c.tenant, c.state, c.audience, c.document, p_actor);
       v_result := public.eup_league_campaign_json(c);
+      v_event := jsonb_build_object('campaign_id', c.id, 'revision', c.revision);
 
     when 'campaigns.transition' then
       select * into c from public.eup_campaigns cc where cc.id = v_id and cc.tenant = v_house for update;
@@ -1197,6 +1531,7 @@ begin
         end loop;
       end if;
       v_result := public.eup_league_campaign_json(c);
+      v_event := jsonb_build_object('campaign_id', c.id, 'revision', c.revision);
 
     when 'campaigns.audience.set' then
       select * into c from public.eup_campaigns cc where cc.id = v_id and cc.tenant = v_house for update;
@@ -1206,6 +1541,7 @@ begin
       insert into public.eup_campaign_revisions(campaign_id, revision, tenant, state, audience, document, actor)
         values (c.id, c.revision, c.tenant, c.state, c.audience, c.document, p_actor);
       v_result := public.eup_league_campaign_json(c);
+      v_event := jsonb_build_object('campaign_id', c.id, 'revision', c.revision);
 
     when 'audience.grants.grant' then
       select * into c from public.eup_campaigns cc where cc.id = v_id and cc.tenant = v_house for share;
@@ -1217,6 +1553,7 @@ begin
         on conflict (campaign_id, account) where state = 'open' do nothing returning * into g;
       if not found then raise exception 'An open grant exists for this account' using errcode = '23505'; end if;
       v_result := public.eup_league_grant_json(g);
+      v_event := jsonb_build_object('campaign_id', g.campaign_id, 'grant_id', g.id);
 
     when 'audience.grants.revoke' then
       -- Reduce-only. The account keeps reading its own records and can still withdraw, discard and revoke.
@@ -1226,6 +1563,7 @@ begin
       update public.eup_campaign_audience_grants gg set state = 'revoked', revoked_by = p_actor, revoked_at = now(), revoked_reason = v_doc ->> 'reason'
        where gg.id = g.id returning * into g;
       v_result := public.eup_league_grant_json(g);
+      v_event := jsonb_build_object('campaign_id', g.campaign_id, 'grant_id', g.id);
 
     when 'missions.create' then
       -- The campaign is locked FOR SHARE: a mission cannot slip in beside a campaign withdrawal and miss its cascade.
@@ -1240,6 +1578,7 @@ begin
       insert into public.eup_mission_revisions(mission_id, revision, tenant, state, requirements_revision, capacity, proof_modes, document, actor)
         values (m.id, m.revision, m.tenant, m.state, m.requirements_revision, m.capacity, m.proof_modes, m.document, p_actor);
       v_result := public.eup_league_mission_json(m);
+      v_event := jsonb_build_object('campaign_id', m.campaign_id, 'mission_id', m.id, 'revision', m.revision, 'requirements_revision', m.requirements_revision);
 
     when 'missions.update' then
       -- PATCH: omitted fields keep their value, capacity included (an explicit null removes the limit).
@@ -1269,6 +1608,7 @@ begin
          where ss.mission_id = m.id and ss.tenant = v_house and ss.status in ('offered', 'accepted');
       end if;
       v_result := public.eup_league_mission_json(m);
+      v_event := jsonb_build_object('campaign_id', m.campaign_id, 'mission_id', m.id, 'revision', m.revision, 'requirements_revision', m.requirements_revision);
 
     when 'missions.transition' then
       select mm.campaign_id into v_other from public.eup_missions mm where mm.id = v_id and mm.tenant = v_house;
@@ -1289,6 +1629,7 @@ begin
         values (m.id, m.revision, m.tenant, m.state, m.requirements_revision, m.capacity, m.proof_modes, m.document, p_actor);
       if v_to = 'withdrawn' then perform public.eup_league_withdraw_mission(v_house, m.id, p_actor, 'mission_withdrawn'); end if;
       v_result := public.eup_league_mission_json(m);
+      v_event := jsonb_build_object('campaign_id', m.campaign_id, 'mission_id', m.id, 'revision', m.revision, 'requirements_revision', m.requirements_revision);
 
     when 'applications.create' then
       -- An owner records an application for an account; the row keeps recorded_by. The applicant must be in the
@@ -1308,6 +1649,7 @@ begin
         on conflict (mission_id, applicant) do nothing returning * into a;
       if not found then raise exception 'This account already has an application' using errcode = '23505'; end if;
       v_result := public.eup_league_application_row_json(a);
+      v_event := jsonb_build_object('mission_id', a.mission_id, 'application_id', a.id, 'revision', a.revision, 'requirements_revision', a.requirements_revision);
 
     when 'applications.decide' then
       -- Lock order mission, then application: the same order every mission command uses.
@@ -1336,6 +1678,8 @@ begin
         values (v_house, a.id, a.status, a.decision_reason, coalesce(v_doc -> 'rubric', '[]'::jsonb), a.requirements_revision, p_actor);
       v_result := public.eup_league_application_row_json(a)
         || jsonb_build_object('assignment', case when s.id is not null then public.eup_league_assignment_json(s) end);
+      v_event := jsonb_build_object('mission_id', a.mission_id, 'application_id', a.id, 'revision', a.revision, 'requirements_revision', a.requirements_revision,
+        'assignment_id', s.id);
 
     when 'proofs.review' then
       -- Bound to the exact proof revision (p_revision) AND the exact media digest (asset_revision) that was shown.
@@ -1369,11 +1713,155 @@ begin
       end if;
       v_result := public.eup_league_proof_row_json(p) || jsonb_build_object('review', public.eup_league_review_json(r),
         'credit', case when x.id is not null then public.eup_league_credit_json(x) end);
+      v_event := jsonb_build_object('assignment_id', p.assignment_id, 'proof_id', p.id, 'proof_revision', r.proof_revision, 'asset_revision', r.asset_revision,
+        'review_id', r.id, 'credit_id', x.id);
+
+    when 'proofs.moderate' then
+      -- p_revision confirms which proof revision is held or released; moderation never changes it. A hold is
+      -- reduce-only (it removes exposure) and withdraws a live publication in this transaction; a release is new work
+      -- and publishes nothing again by itself. Every hold and release is appended with its reason.
+      select * into p from public.eup_proofs pp where pp.id = v_id and pp.tenant = v_house for update;
+      if not found then raise exception 'Proof not found' using errcode = 'P0002'; end if;
+      if p_revision <> p.revision then raise exception 'Revision conflict' using errcode = '40001'; end if;
+      if (v_doc -> 'hold') = 'true'::jsonb then
+        if p.moderation_state <> 'clear' then raise exception 'Proof is already held' using errcode = '40001'; end if;
+        update public.eup_proofs pp set moderation_state = 'held', updated_at = now() where pp.id = p.id;
+        v_withdrawn := public.eup_league_withdraw_publications(v_house, array(select bb.id from public.eup_publications bb
+          where bb.proof_id = p.id and bb.tenant = v_house and bb.state = 'published' order by bb.id), p_actor, 'moderation_hold');
+      else
+        if p.moderation_state <> 'held' then raise exception 'Proof is not held' using errcode = '40001'; end if;
+        update public.eup_proofs pp set moderation_state = 'clear', updated_at = now() where pp.id = p.id;
+      end if;
+      insert into public.eup_proof_moderations(tenant, proof_id, proof_revision, hold, reason, actor)
+        values (v_house, p.id, p.revision, (v_doc -> 'hold') = 'true'::jsonb, v_doc ->> 'reason', p_actor);
+      select * into p from public.eup_proofs pp where pp.id = v_id and pp.tenant = v_house;
+      v_result := public.eup_league_proof_row_json(p);
+      v_event := jsonb_build_object('proof_id', p.id, 'proof_revision', p.revision,
+        'publication_ids', case when cardinality(v_withdrawn) > 0 then v_withdrawn end);
+
+    when 'publications.decide' then
+      -- Publication means the campaign's released audience, nothing wider; nothing here writes a public projection.
+      -- p_revision is the proof revision. Lock order: campaign, mission, assignment, proof, then its consent and
+      -- publication, so a concurrent revocation (proof, consent, publication) serialises on the proof row.
+      select ss.mission_id, ss.id into v_other, v_link from public.eup_proofs pp join public.eup_assignments ss on ss.id = pp.assignment_id and ss.tenant = pp.tenant
+       where pp.id = v_id and pp.tenant = v_house;
+      if not found then raise exception 'Proof not found' using errcode = 'P0002'; end if;
+      select * into c from public.eup_campaigns cc where cc.tenant = v_house and cc.id = (select mm.campaign_id from public.eup_missions mm where mm.id = v_other) for share;
+      select * into m from public.eup_missions mm where mm.id = v_other and mm.tenant = v_house for share;
+      select * into s from public.eup_assignments ss where ss.id = v_link and ss.tenant = v_house for share;
+      select * into p from public.eup_proofs pp where pp.id = v_id and pp.tenant = v_house for update;
+      if p_revision <> p.revision then raise exception 'Revision conflict' using errcode = '40001'; end if;
+      if v_doc ->> 'decision' = 'published' then
+        if p.state <> 'accepted' or p.publication_state = 'published_released_audience' then
+          raise exception 'Only an accepted proof that is not published can be published' using errcode = '40001'; end if;
+        if p.moderation_state = 'held' then raise exception 'Proof is held' using errcode = 'EU016'; end if;
+        if c.state is distinct from 'released' or m.state is distinct from 'released' then
+          raise exception 'Campaign and mission must be released' using errcode = 'EU011'; end if;
+        -- An open, unexpired publish consent of the participant for exactly this proof revision and asset revision.
+        -- Anything else, an unknown consent id included, is EU015.
+        select * into k from public.eup_consents kk where kk.id = (v_doc ->> 'consent_id')::uuid and kk.tenant = v_house for share;
+        if not found or k.proof_id <> p.id or k.purpose <> 'publish_proof' or k.actor <> p.participant or k.proof_revision <> p.revision
+           or k.asset_revision <> p.asset_revision or public.eup_league_consent_state(k) <> 'open' then
+          raise exception 'The consent does not match its exact scope' using errcode = 'EU015'; end if;
+        -- Media whose retention ended is gone: there is nothing left to show.
+        if exists (select 1 from public.eup_proof_media pm join public.eup_media_uploads uu on uu.id = pm.upload_id and uu.tenant = pm.tenant
+                    where pm.proof_id = p.id and pm.proof_revision = p.revision and uu.state = 'purged') then
+          raise exception 'The media of this proof was purged' using errcode = '40001'; end if;
+        insert into public.eup_publications(tenant, campaign_id, mission_id, assignment_id, proof_id, proof_revision, asset_revision, consent_id, published_by, published_note)
+          values (v_house, c.id, m.id, s.id, p.id, p.revision, p.asset_revision, k.id, p_actor, v_doc ->> 'reason') returning * into b;
+        update public.eup_proofs pp set publication_state = 'published_released_audience', updated_at = now() where pp.id = p.id;
+      else
+        -- Reduce-only: the live publication of the proof is withdrawn, reason owner.
+        select * into b from public.eup_publications bb where bb.proof_id = p.id and bb.tenant = v_house and bb.state = 'published' for update;
+        if not found then raise exception 'Proof is not published' using errcode = '40001'; end if;
+        perform public.eup_league_withdraw_publications(v_house, array[b.id], p_actor, 'owner', v_doc ->> 'reason');
+        select * into b from public.eup_publications bb where bb.id = b.id;
+      end if;
+      v_result := public.eup_league_publication_json(b);
+      v_event := jsonb_build_object('proof_id', b.proof_id, 'proof_revision', b.proof_revision, 'asset_revision', b.asset_revision,
+        'publication_id', b.id, 'consent_id', b.consent_id);
+
+    when 'appeals.resolve' then
+      -- Lock order: the subject's mission, the subject (the application; or the assignment and the proof), then the
+      -- appeal. The resolver is never the appellant (EU002); only an open appeal is resolved (40001).
+      select * into ap from public.eup_appeals xx where xx.id = v_id and xx.tenant = v_house;
+      if not found then raise exception 'Appeal not found' using errcode = 'P0002'; end if;
+      if ap.subject = 'application' then
+        select aa.mission_id into v_other from public.eup_applications aa where aa.id = ap.application_id and aa.tenant = v_house;
+        select * into m from public.eup_missions mm where mm.id = v_other and mm.tenant = v_house for share;
+        select * into a from public.eup_applications aa where aa.id = ap.application_id and aa.tenant = v_house for update;
+      else
+        select ss.mission_id, ss.id into v_other, v_link from public.eup_proofs pp join public.eup_assignments ss on ss.id = pp.assignment_id and ss.tenant = pp.tenant
+         where pp.id = ap.proof_id and pp.tenant = v_house;
+        select * into m from public.eup_missions mm where mm.id = v_other and mm.tenant = v_house for share;
+        select * into s from public.eup_assignments ss where ss.id = v_link and ss.tenant = v_house for share;
+        select * into p from public.eup_proofs pp where pp.id = ap.proof_id and pp.tenant = v_house for update;
+      end if;
+      select * into ap from public.eup_appeals xx where xx.id = v_id and xx.tenant = v_house for update;
+      if ap.appellant = p_actor then raise exception 'An appellant cannot resolve their own appeal' using errcode = 'EU002'; end if;
+      if ap.state <> 'open' then raise exception 'Appeal is not open' using errcode = '40001'; end if;
+      if v_doc ->> 'outcome' = 'overturned' then
+        -- The subject reopens: a declined application returns to submitted, a rejected proof to submitted at the same
+        -- revision. Not on a withdrawn mission or a closed assignment, where nothing could follow from it.
+        if m.state = 'withdrawn' then raise exception 'The mission is withdrawn' using errcode = '40001'; end if;
+        if ap.subject = 'application' then
+          if a.status <> 'declined' then raise exception 'The application is not declined' using errcode = '40001'; end if;
+          update public.eup_applications aa set status = 'submitted', decided_by = null, decision_reason = null, decided_at = null,
+              revision = aa.revision + 1, updated_at = now() where aa.id = a.id returning * into a;
+        else
+          if p.state <> 'rejected' or s.status not in ('offered', 'accepted') then raise exception 'The proof is not rejected' using errcode = '40001'; end if;
+          update public.eup_proofs pp set state = 'submitted', updated_at = now() where pp.id = p.id returning * into p;
+        end if;
+      end if;
+      update public.eup_appeals xx set state = v_doc ->> 'outcome', resolved_by = p_actor, resolution_reason = v_doc ->> 'reason',
+          resolved_at = now(), updated_at = now() where xx.id = ap.id returning * into ap;
+      v_result := public.eup_league_appeal_json(ap, false, false);
+      v_event := jsonb_build_object('appeal_id', ap.id, 'application_id', ap.application_id, 'proof_id', ap.proof_id,
+        'revision', case when ap.subject = 'application' then a.revision end, 'proof_revision', case when ap.subject = 'proof' then p.revision end);
+
+    when 'media.purged' then
+      -- Reduce-only. The Worker calls it AFTER it deleted the objects. Every named upload must be due or already
+      -- purged, else nothing changes (40001). Lock order: the proofs that list these uploads in any revision (their
+      -- live publications are withdrawn here, reason media_purged), then the uploads, each in id order.
+      v_ids := array(select distinct e.value::uuid from jsonb_array_elements_text(v_doc -> 'uploads') e order by 1);
+      if (select count(*) from public.eup_media_uploads uu where uu.id = any (v_ids) and uu.tenant = v_house) <> cardinality(v_ids) then
+        raise exception 'Upload not found' using errcode = 'P0002'; end if;
+      perform 1 from public.eup_proofs pp where pp.tenant = v_house
+        and pp.id in (select pm.proof_id from public.eup_proof_media pm where pm.upload_id = any (v_ids) and pm.tenant = v_house) order by pp.id for update;
+      perform 1 from public.eup_media_uploads uu where uu.id = any (v_ids) and uu.tenant = v_house order by uu.id for update;
+      v_retention := public.eup_league_retention(v_house);
+      if exists (select 1 from public.eup_media_uploads uu where uu.id = any (v_ids) and uu.tenant = v_house
+                  and uu.state <> 'purged' and not public.eup_league_upload_is_due(uu, v_retention)) then
+        raise exception 'An upload is neither due nor purged' using errcode = '40001'; end if;
+      v_done := array(select uu.id from public.eup_media_uploads uu where uu.id = any (v_ids) and uu.tenant = v_house and uu.state = 'purged' order by uu.id);
+      -- The digest, the byte count and the storage identity stay: they are the record of what existed.
+      with purged as (
+        update public.eup_media_uploads uu set state = 'purged', purged_at = now(), updated_at = now()
+         where uu.id = any (v_ids) and uu.tenant = v_house and uu.state <> 'purged' returning uu.id)
+      select coalesce(array_agg(pu.id order by pu.id), '{}'::uuid[]) into v_ids from purged pu;
+      v_withdrawn := public.eup_league_withdraw_publications(v_house, array(select bb.id from public.eup_publications bb
+          where bb.tenant = v_house and bb.state = 'published' and exists (select 1 from public.eup_proof_media pm
+            where pm.proof_id = bb.proof_id and pm.proof_revision = bb.proof_revision and pm.upload_id = any (v_ids || v_done))
+          order by bb.id), p_actor, 'media_purged');
+      v_result := jsonb_build_object('purged', to_jsonb(v_ids), 'already_purged', to_jsonb(v_done), 'publications_withdrawn', to_jsonb(v_withdrawn));
+      v_event := jsonb_build_object('upload_ids', v_ids, 'publication_ids', case when cardinality(v_withdrawn) > 0 then v_withdrawn end);
+
+    when 'outbox.ack' then
+      -- State-idempotent: acknowledging twice keeps one consumption row and answers it. It writes no event: an
+      -- acknowledgement that produced one would never drain.
+      if not exists (select 1 from public.eup_outbox oo where oo.seq = v_seq and oo.tenant = v_house) then
+        raise exception 'Event not found' using errcode = 'P0002'; end if;
+      insert into public.eup_outbox_consumptions(tenant, seq, consumer, actor) values (v_house, v_seq, v_doc ->> 'consumer', p_actor)
+        on conflict (seq, consumer) do nothing;
+      select * into oc from public.eup_outbox_consumptions cc where cc.seq = v_seq and cc.consumer = v_doc ->> 'consumer';
+      v_result := jsonb_build_object('seq', oc.seq, 'consumer', oc.consumer, 'consumed_at', oc.consumed_at);
 
     else
       raise exception 'Unknown action' using errcode = '22023';
   end case;
 
+  -- 7. Exactly one event (the contract marks the one mutation without it), then the receipt.
+  if (v_act -> 'outbox') is distinct from 'false'::jsonb then perform public.eup_league_outbox(v_house, p_action, v_event); end if;
   insert into public.eup_command_receipts(tenant, actor, surface, operation, idempotency_key, payload_digest, result)
     values (v_house, p_actor, 'owner', p_action, p_key, v_digest, v_result);
   return v_result;
@@ -1386,12 +1874,12 @@ end $$;
 create function public.eup_league_member_command(p_action text, p_actor uuid, p_id text, p_document jsonb default null, p_revision integer default null, p_key text default null)
 returns jsonb language plpgsql security invoker set search_path = '' set lock_timeout = '5s' as $$
 declare
-  v_deferred constant text[] := array['appeals.open','appeals.withdraw'];
   v_house uuid; v_act jsonb; v_doc jsonb; v_id uuid; v_id_text text; v_digest text; v_result jsonb; v_policy jsonb;
   v_rows integer; v_owner boolean; v_mission uuid; v_campaign uuid; v_link uuid; v_holder uuid; v_types jsonb; v_kind text; v_cap integer; v_status text;
   v_statement text; v_accommodation jsonb; v_entry jsonb; v_media jsonb := '[]'::jsonb; v_manifest jsonb; v_asset text;
   v_expires timestamptz; v_catalogue jsonb; v_applications jsonb; v_assignments jsonb; v_sign boolean;
-  receipt public.eup_command_receipts%rowtype;
+  v_event jsonb; v_subject text; v_withdrawn uuid[]; v_rate jsonb;
+  receipt public.eup_command_receipts%rowtype; b public.eup_publications%rowtype; ap public.eup_appeals%rowtype;
   c public.eup_campaigns%rowtype; m public.eup_missions%rowtype; a public.eup_applications%rowtype; s public.eup_assignments%rowtype;
   d public.eup_proof_drafts%rowtype; u public.eup_media_uploads%rowtype; p public.eup_proofs%rowtype; k public.eup_consents%rowtype;
 begin
@@ -1402,7 +1890,6 @@ begin
 
   v_act := public.eup_league_contract(array['actions', 'member', coalesce(p_action, '')]);
   if v_act is null then raise exception 'Unknown action' using errcode = '22023'; end if;
-  if p_action = any (v_deferred) then raise exception 'not implemented in this pass: %', p_action using errcode = '0A000'; end if;
   v_doc := coalesce(p_document, '{}'::jsonb);
   if octet_length(v_doc::text) > (public.eup_league_contract('{limits,document_max_bytes}') #>> '{}')::integer then
     raise exception 'Document too large' using errcode = '22023'; end if;
@@ -1414,6 +1901,7 @@ begin
     raise exception 'An id is required' using errcode = '22023';
   end if;
   v_rows := (public.eup_league_contract('{limits,list,rows}') #>> '{}')::integer;
+  v_rate := public.eup_league_contract('{limits,rate}');
 
   -- Reads: never guarded. A participant reads their own records in every campaign, grant and module state.
   if (v_act ->> 'kind') = 'read' then
@@ -1433,7 +1921,9 @@ begin
         select coalesce(jsonb_agg(q.j order by q.created_at, q.id), '[]'::jsonb) into v_applications from (
           select aa.created_at, aa.id, public.eup_league_member_application_json(aa) || jsonb_build_object(
               'mission', public.eup_league_mission_card(mm, cc.state), 'document', aa.document, 'accommodation', aa.accommodation,
-              'decisions', public.eup_league_decisions_json(aa.id, true), 'appeals', '[]'::jsonb) as j
+              'decisions', public.eup_league_decisions_json(aa.id, true),
+              'appeals', coalesce((select jsonb_agg(public.eup_league_appeal_json(xx, true, true) order by xx.created_at, xx.id)
+                  from public.eup_appeals xx where xx.application_id = aa.id and xx.tenant = v_house), '[]'::jsonb)) as j
             from public.eup_applications aa join public.eup_missions mm on mm.id = aa.mission_id join public.eup_campaigns cc on cc.id = mm.campaign_id
            where aa.tenant = v_house and aa.applicant = p_actor order by aa.created_at, aa.id limit v_rows) q;
         select coalesce(jsonb_agg(q.j order by q.created_at, q.id), '[]'::jsonb) into v_assignments from (
@@ -1455,13 +1945,26 @@ begin
                 'retention', pp.document -> 'retention', 'notices', pp.document -> 'notices')
               from public.eup_league_policy pp where pp.tenant = v_house and public.eup_league_policy_valid(pp.document)),
           'catalogue', v_catalogue, 'applications', v_applications, 'assignments', v_assignments,
-          -- Effective publications of the released audience: none exist before the second pass.
-          'published', '[]'::jsonb);
+          -- What the released audience sees of the effective publications of the campaigns the actor is in the
+          -- audience of: the words, the credits list (the only attribution) and the media. No account id.
+          'published', coalesce((select jsonb_agg(q.j order by q.published_at, q.id) from (
+            select bb.published_at, bb.id, jsonb_build_object('publication_id', bb.id, 'campaign_id', bb.campaign_id, 'mission_id', bb.mission_id,
+                'title', pr.document ->> 'title', 'lyrics', pr.document ->> 'lyrics', 'credits', pr.document -> 'credits',
+                'media', public.eup_league_proof_media_json(bb.proof_id, bb.proof_revision), 'published_at', bb.published_at) as j
+              from public.eup_publications bb join public.eup_proof_revisions pr on pr.proof_id = bb.proof_id and pr.revision = bb.proof_revision
+             where bb.tenant = v_house and bb.state = 'published' and public.eup_league_publication_effective(bb)
+               and public.eup_league_in_audience(v_house, p_actor, bb.campaign_id)
+             order by bb.published_at, bb.id limit v_rows) q), '[]'::jsonb));
       when 'uploads.get' then
         select * into u from public.eup_media_uploads uu where uu.id = v_id and uu.tenant = v_house;
         if not found then raise exception 'Upload not found' using errcode = 'P0002'; end if;
-        -- The row's participant always reads it. (Second pass: also the released audience of an effective publication.)
-        if u.participant <> p_actor then raise exception 'Not the record of this account' using errcode = '42501'; end if;
+        -- The row's participant always reads it; so does the released audience of a campaign where the upload belongs
+        -- to an EFFECTIVE publication (that is how the audience plays it). Anyone else: 42501.
+        if u.participant <> p_actor and not exists (
+            select 1 from public.eup_publications bb join public.eup_proof_media pm on pm.proof_id = bb.proof_id and pm.proof_revision = bb.proof_revision
+             where pm.upload_id = u.id and bb.tenant = v_house and bb.state = 'published' and public.eup_league_publication_effective(bb)
+               and public.eup_league_in_audience(v_house, p_actor, bb.campaign_id)) then
+          raise exception 'Not the record of this account' using errcode = '42501'; end if;
         perform public.eup_league_require_document(v_act ->> 'document', v_doc);
         v_sign := coalesce((v_doc -> 'sign') = 'true'::jsonb, false);
         if v_sign then
@@ -1505,6 +2008,17 @@ begin
     elsif (v_act ->> 'id') = 'proof' then
       select ss.mission_id, ss.id into v_mission, v_link from public.eup_proofs pp join public.eup_assignments ss on ss.id = pp.assignment_id
        where pp.id = v_id and pp.tenant = v_house;
+    elsif (v_act ->> 'id') = 'subject' then
+      -- appeals.open: the document says which kind of row p_id names. Without a valid subject no row is named at all.
+      v_subject := case when jsonb_typeof(v_doc) = 'object' and jsonb_typeof(v_doc -> 'subject') = 'string' then v_doc ->> 'subject' end;
+      if v_subject = 'application' then
+        select aa.mission_id into v_mission from public.eup_applications aa where aa.id = v_id and aa.tenant = v_house;
+      elsif v_subject = 'proof' then
+        select ss.mission_id, ss.id into v_mission, v_link from public.eup_proofs pp join public.eup_assignments ss on ss.id = pp.assignment_id
+         where pp.id = v_id and pp.tenant = v_house;
+      else
+        raise exception 'Invalid document: $.subject: one of application, proof expected' using errcode = '22023';
+      end if;
     end if;
     select mm.campaign_id into v_campaign from public.eup_missions mm where mm.id = v_mission and mm.tenant = v_house;
     if v_campaign is null then raise exception 'Not found' using errcode = 'P0002'; end if;
@@ -1512,12 +2026,15 @@ begin
     select * into m from public.eup_missions mm where mm.id = v_mission and mm.tenant = v_house for share;
     if (v_act ->> 'id') = 'assignment' then
       select * into s from public.eup_assignments ss where ss.id = v_id and ss.tenant = v_house for update;
-    elsif (v_act ->> 'id') = 'proof' then
+    elsif (v_act ->> 'id') = 'proof' or v_subject = 'proof' then
       select * into s from public.eup_assignments ss where ss.id = v_link and ss.tenant = v_house for share;
       select * into p from public.eup_proofs pp where pp.id = v_id and pp.tenant = v_house for update;
+    elsif v_subject = 'application' then
+      select * into a from public.eup_applications aa where aa.id = v_id and aa.tenant = v_house for update;
     end if;
     v_policy := public.eup_league_gate(v_house, p_actor, m.id,
-      case v_act ->> 'id' when 'assignment' then s.participant when 'proof' then p.participant end,
+      case v_act ->> 'id' when 'assignment' then s.participant when 'proof' then p.participant
+        when 'subject' then case v_subject when 'application' then a.applicant else p.participant end end,
       (v_act -> 'gates') ? 'media');
     -- uploads.begin answers the two refusals a client can act on with a hint (415, 413), before the generic check.
     if p_action = 'uploads.begin' and jsonb_typeof(v_doc) = 'object' then
@@ -1558,6 +2075,17 @@ begin
       end if;
       -- The applicant names the requirements they were shown; anything but the current revision means "look again".
       if (v_doc ->> 'requirements_revision')::numeric <> m.requirements_revision then raise exception 'Requirements changed' using errcode = 'EU013'; end if;
+      -- EU017: a bounded number of saves of one application, and of open applications per account across missions.
+      if a.id is not null and a.revision >= (v_rate ->> 'application_saves_per_application')::integer then
+        raise exception 'This application was saved too many times' using errcode = 'EU017'; end if;
+      if a.id is null or a.status = 'withdrawn' then
+        -- This save opens an application. The count is taken under a per-account lock, so concurrent saves on
+        -- different missions cannot all pass the same count.
+        perform pg_advisory_xact_lock(hashtextextended('eup.league.rate.applications|' || v_house::text || '|' || p_actor::text, 0));
+        if (select count(*) from public.eup_applications aa where aa.tenant = v_house and aa.applicant = p_actor
+              and aa.status in ('draft', 'submitted', 'changes_requested')) >= (v_rate ->> 'applications_open_per_actor')::integer then
+          raise exception 'Too many open applications' using errcode = 'EU017'; end if;
+      end if;
       v_status := case when (v_doc -> 'submit') = 'true'::jsonb then 'submitted' when a.status = 'changes_requested' then 'changes_requested' else 'draft' end;
       v_statement := case when v_doc ? 'statement' then v_doc ->> 'statement' else coalesce(a.document ->> 'statement', '') end;
       v_accommodation := case when v_doc ? 'accommodation' then nullif(v_doc -> 'accommodation', 'null'::jsonb) else a.accommodation end;
@@ -1577,6 +2105,7 @@ begin
         if not found then raise exception 'Revision conflict' using errcode = '40001'; end if;
       end if;
       v_result := public.eup_league_member_application_json(a);
+      v_event := jsonb_build_object('mission_id', a.mission_id, 'application_id', a.id, 'revision', a.revision, 'requirements_revision', a.requirements_revision);
 
     when 'applications.withdraw' then
       select * into a from public.eup_applications aa where aa.id = v_id and aa.tenant = v_house for update;
@@ -1586,6 +2115,7 @@ begin
       if a.status not in ('draft', 'submitted', 'changes_requested') then raise exception 'Application cannot be withdrawn now' using errcode = '40001'; end if;
       update public.eup_applications aa set status = 'withdrawn', revision = aa.revision + 1, updated_at = now() where aa.id = a.id returning * into a;
       v_result := public.eup_league_member_application_json(a);
+      v_event := jsonb_build_object('mission_id', a.mission_id, 'application_id', a.id, 'revision', a.revision);
 
     when 'assignments.accept' then
       if p_revision <> s.revision then raise exception 'Revision conflict' using errcode = '40001'; end if;
@@ -1600,6 +2130,7 @@ begin
       insert into public.eup_assignment_acceptances(tenant, assignment_id, requirements_revision, notice_revision, actor)
         values (v_house, s.id, s.accepted_requirements_revision, s.accepted_notice_revision, p_actor);
       v_result := public.eup_league_assignment_json(s);
+      v_event := jsonb_build_object('mission_id', s.mission_id, 'assignment_id', s.id, 'revision', s.revision, 'requirements_revision', s.accepted_requirements_revision);
 
     when 'assignments.withdraw' then
       select * into s from public.eup_assignments ss where ss.id = v_id and ss.tenant = v_house for update;
@@ -1611,20 +2142,25 @@ begin
       -- The seat is freed. The uploads stay until the retention date for withdrawn work.
       update public.eup_assignments ss set status = 'withdrawn', withdrawn_at = now(), revision = ss.revision + 1, updated_at = now()
        where ss.id = s.id returning * into s;
-      perform public.eup_league_release_assignments(v_house, array[s.id], p_actor, 'assignment_withdrawn');
+      v_withdrawn := public.eup_league_release_assignments(v_house, array[s.id], p_actor, 'assignment_withdrawn');
       v_result := public.eup_league_assignment_json(s);
+      v_event := jsonb_build_object('mission_id', s.mission_id, 'assignment_id', s.id, 'revision', s.revision,
+        'publication_ids', case when cardinality(v_withdrawn) > 0 then v_withdrawn end);
 
     when 'drafts.save' then
       -- p_id is the ASSIGNMENT. Full replace of the working copy; p_revision 0 means "no draft yet".
       select * into d from public.eup_proof_drafts dd where dd.assignment_id = s.id and dd.tenant = v_house for update;
       if found then
         if p_revision <> d.revision then raise exception 'Revision conflict' using errcode = '40001'; end if;
+        if d.revision >= (v_rate ->> 'draft_saves_per_assignment')::integer then
+          raise exception 'This draft was saved too many times' using errcode = 'EU017'; end if;
         update public.eup_proof_drafts dd set document = v_doc, revision = dd.revision + 1, updated_at = now() where dd.assignment_id = s.id returning * into d;
       else
         if p_revision <> 0 then raise exception 'Revision conflict' using errcode = '40001'; end if;
         insert into public.eup_proof_drafts(assignment_id, tenant, participant, document) values (s.id, v_house, p_actor, v_doc) returning * into d;
       end if;
       v_result := jsonb_build_object('assignment_id', d.assignment_id, 'revision', d.revision, 'updated_at', d.updated_at);
+      v_event := jsonb_build_object('assignment_id', d.assignment_id, 'revision', d.revision);
 
     when 'uploads.begin' then
       -- Creates the staged row only. The result carries no URL and no path: the Worker signs one upload for the
@@ -1635,12 +2171,20 @@ begin
       v_cap := (v_policy #>> array['document', 'media', v_kind || '_max_bytes'])::numeric::integer;
       if v_cap is null or (v_doc ->> 'bytes')::numeric > v_cap then
         raise exception 'Media too large' using errcode = '22023', hint = 'media_too_large'; end if;
+      -- EU017: a few staged at one time (a staged row past its lifetime no longer counts), a bounded number ever.
+      -- The assignment row is locked FOR UPDATE above, so concurrent begins count one after another.
+      if (select count(*) from public.eup_media_uploads uu where uu.assignment_id = s.id and uu.tenant = v_house and uu.state = 'staged' and uu.expires_at > now())
+           >= (v_rate ->> 'uploads_staged_per_assignment')::integer
+         or (select count(*) from public.eup_media_uploads uu where uu.assignment_id = s.id and uu.tenant = v_house)
+           >= (v_rate ->> 'uploads_total_per_assignment')::integer then
+        raise exception 'Too many uploads for this assignment' using errcode = 'EU017'; end if;
       insert into public.eup_media_uploads(tenant, assignment_id, participant, kind, mime, ext, declared_bytes, max_bytes, duration_seconds, expires_at)
         values (v_house, s.id, p_actor, v_kind, v_doc ->> 'mime', public.eup_league_contract(array['media', 'types', v_doc ->> 'mime', 'ext']) #>> '{}',
           (v_doc ->> 'bytes')::numeric::integer, v_cap, (v_doc ->> 'duration_seconds')::numeric::integer,
           now() + make_interval(secs => (public.eup_league_contract('{media,staged_ttl_seconds}') #>> '{}')::integer))
         returning * into u;
       v_result := public.eup_league_upload_json(u, false);
+      v_event := jsonb_build_object('assignment_id', u.assignment_id, 'upload_id', u.id);
 
     when 'uploads.discard' then
       select * into u from public.eup_media_uploads uu where uu.id = v_id and uu.tenant = v_house for update;
@@ -1654,6 +2198,7 @@ begin
         raise exception 'Upload is listed by the current proof' using errcode = 'EU014'; end if;
       update public.eup_media_uploads uu set state = 'discarded', discarded_at = now(), updated_at = now() where uu.id = u.id returning * into u;
       v_result := public.eup_league_upload_json(u, false);
+      v_event := jsonb_build_object('assignment_id', u.assignment_id, 'upload_id', u.id);
 
     when 'proofs.submit' then
       -- p_id is the ASSIGNMENT; p_revision is the proof revision being replaced, 0 for the first submission.
@@ -1661,12 +2206,17 @@ begin
       select * into p from public.eup_proofs pp where pp.assignment_id = s.id and pp.tenant = v_house for update;
       if found then
         if p_revision <> p.revision or p.state not in ('submitted', 'needs_changes') then raise exception 'Revision conflict' using errcode = '40001'; end if;
+        if p.revision >= (v_rate ->> 'proof_revisions_per_assignment')::integer then
+          raise exception 'This proof was submitted too many times' using errcode = 'EU017'; end if;
       elsif p_revision <> 0 then
         raise exception 'Revision conflict' using errcode = '40001';
       end if;
       if public.eup_league_contract(array['template_rules', m.template]) is null then
         raise exception 'This mission template has no proof rule' using errcode = '22023'; end if;
       -- Media: only files this participant uploaded for this assignment, sealed, and with the digest they were shown.
+      -- The named uploads are locked first, in id order: one order for every command that locks several uploads.
+      perform 1 from public.eup_media_uploads uu where uu.tenant = v_house and uu.id = any (array(
+          select (e ->> 'upload_id')::uuid from jsonb_array_elements(coalesce(v_doc -> 'media', '[]'::jsonb)) e)) order by uu.id for update;
       for v_entry in select t.e from jsonb_array_elements(coalesce(v_doc -> 'media', '[]'::jsonb)) with ordinality t(e, ord) order by t.ord loop
         select * into u from public.eup_media_uploads uu where uu.id = (v_entry ->> 'upload_id')::uuid and uu.tenant = v_house for update;
         if not found or u.assignment_id <> s.id or u.participant <> p_actor or u.state <> 'sealed' or u.sha256 is distinct from (v_entry ->> 'sha256') then
@@ -1699,6 +2249,7 @@ begin
       v_result := jsonb_build_object('id', p.id, 'assignment_id', p.assignment_id, 'revision', p.revision, 'state', p.state, 'asset_revision', p.asset_revision,
         'moderation_state', p.moderation_state, 'publication_state', p.publication_state, 'media', public.eup_league_proof_media_json(p.id, p.revision),
         'consent', public.eup_league_member_consent_json(k), 'created_at', p.created_at, 'updated_at', p.updated_at);
+      v_event := jsonb_build_object('assignment_id', s.id, 'proof_id', p.id, 'proof_revision', p.revision, 'asset_revision', p.asset_revision, 'consent_id', k.id);
 
     when 'consents.grant' then
       -- p_id is the PROOF; p_revision is the proof revision the consent is for. A consent publishes nothing:
@@ -1716,6 +2267,7 @@ begin
         values (v_house, m.id, s.id, p.id, p.revision, p.asset_revision, p_actor, 'publish_proof', 'released_audience', v_doc ->> 'notice_revision', v_expires)
         returning * into k;
       v_result := public.eup_league_member_consent_json(k);
+      v_event := jsonb_build_object('proof_id', k.proof_id, 'proof_revision', k.proof_revision, 'asset_revision', k.asset_revision, 'consent_id', k.id);
 
     when 'consents.revoke' then
       -- By consent id, at any proof revision, in every campaign, mission, grant and module state.
@@ -1729,13 +2281,52 @@ begin
       if k.purpose <> 'publish_proof' then raise exception 'Only a publication consent is revoked by command' using errcode = '22023'; end if;
       if k.revoked_at is not null or k.superseded_at is not null then raise exception 'Consent is already closed' using errcode = '40001'; end if;
       update public.eup_consents kk set revoked_at = now(), revoked_by = p_actor where kk.id = k.id returning * into k;
-      -- (Second pass: the publication bound to this consent is withdrawn here, in this transaction.)
-      v_result := public.eup_league_member_consent_json(k) || jsonb_build_object('publication', null);
+      -- The publication bound to this consent is withdrawn in this same transaction (after the consent, in the lock
+      -- order), so a publication can never stand on a revoked consent. The credit is untouched.
+      select * into b from public.eup_publications bb where bb.consent_id = k.id and bb.tenant = v_house and bb.state = 'published' for update;
+      if found then
+        perform public.eup_league_withdraw_publications(v_house, array[b.id], p_actor, 'consent_revoked');
+        select * into b from public.eup_publications bb where bb.id = b.id;
+      end if;
+      v_result := public.eup_league_member_consent_json(k)
+        || jsonb_build_object('publication', case when b.id is not null then public.eup_league_member_publication_json(b) end);
+      v_event := jsonb_build_object('proof_id', k.proof_id, 'consent_id', k.id, 'publication_id', b.id);
+
+    when 'appeals.open' then
+      -- p_id is the application or the proof named by document.subject, locked above with the gates passed. Only the
+      -- actor's declined application or rejected proof (40001 otherwise); one open appeal per subject (23505); a
+      -- bounded number ever (EU017). The statement is stored, never answered in the result.
+      if (v_subject = 'application' and a.status <> 'declined') or (v_subject = 'proof' and p.state <> 'rejected') then
+        raise exception 'Only a declined application or a rejected proof is appealed' using errcode = '40001'; end if;
+      if exists (select 1 from public.eup_appeals xx where xx.tenant = v_house and xx.state = 'open'
+                  and (xx.application_id = a.id or xx.proof_id = p.id)) then
+        raise exception 'An appeal is already open for this' using errcode = '23505'; end if;
+      if (select count(*) from public.eup_appeals xx where xx.tenant = v_house and (xx.application_id = a.id or xx.proof_id = p.id))
+           >= (v_rate ->> 'appeals_per_subject')::integer then
+        raise exception 'Too many appeals for this' using errcode = 'EU017'; end if;
+      insert into public.eup_appeals(tenant, subject, application_id, proof_id, appellant, statement)
+        values (v_house, v_subject, case when v_subject = 'application' then a.id end, case when v_subject = 'proof' then p.id end, p_actor, v_doc ->> 'statement')
+        returning * into ap;
+      v_result := public.eup_league_appeal_json(ap, true, false);
+      v_event := jsonb_build_object('appeal_id', ap.id, 'application_id', ap.application_id, 'proof_id', ap.proof_id);
+
+    when 'appeals.withdraw' then
+      -- Reduce-only: the appellant can always take an open appeal back, whatever happened around it.
+      select * into ap from public.eup_appeals xx where xx.id = v_id and xx.tenant = v_house for update;
+      if not found then raise exception 'Not found' using errcode = 'P0002'; end if;
+      if ap.appellant <> p_actor then raise exception 'Not the record of this account' using errcode = '42501'; end if;
+      perform public.eup_league_require_document(v_act ->> 'document', v_doc);
+      if ap.state <> 'open' then raise exception 'Appeal is not open' using errcode = '40001'; end if;
+      update public.eup_appeals xx set state = 'withdrawn', resolved_at = now(), updated_at = now() where xx.id = ap.id returning * into ap;
+      v_result := public.eup_league_appeal_json(ap, true, false);
+      v_event := jsonb_build_object('appeal_id', ap.id, 'application_id', ap.application_id, 'proof_id', ap.proof_id);
 
     else
       raise exception 'Unknown action' using errcode = '22023';
   end case;
 
+  -- 7. Exactly one event, then the receipt.
+  perform public.eup_league_outbox(v_house, p_action, v_event);
   insert into public.eup_command_receipts(tenant, actor, surface, operation, idempotency_key, payload_digest, result)
     values (v_house, p_actor, 'member', p_action, p_key, v_digest, v_result);
   return v_result;
@@ -1744,7 +2335,8 @@ end $$;
 -- ---------------------------------------------------------------- media seal
 -- Called only by the Worker, after it read the stored object itself: p_result is what the Worker measured (byte
 -- count, SHA-256, magic-byte family, storage identity), never what the client claimed. No idempotency key: the
--- seal is idempotent by state, and the digest and identity are written once.
+-- seal is idempotent by state, and the digest and identity are written once. A seal that changes the row writes its
+-- one outbox event; the same measurement again changes nothing and writes none (it is the seal's replay).
 create function public.eup_league_media_seal(p_upload uuid, p_actor uuid, p_result jsonb)
 returns jsonb language plpgsql security invoker set search_path = '' set lock_timeout = '5s' as $$
 declare
@@ -1785,6 +2377,7 @@ begin
     else
       update public.eup_media_uploads uu set state = 'rejected', rejected_reason = v_doc ->> 'reason', updated_at = now() where uu.id = u.id returning * into u;
     end if;
+    perform public.eup_league_outbox(v_house, 'media.seal', jsonb_build_object('assignment_id', u.assignment_id, 'upload_id', u.id));
   elsif u.state = 'sealed' and v_doc ->> 'outcome' = 'sealed' then
     -- Written once: the same measurement returns the row unchanged, a different one is refused.
     if u.sha256 <> (v_doc ->> 'sha256') or u.bytes <> (v_doc ->> 'bytes')::numeric or u.family <> (v_doc ->> 'family')

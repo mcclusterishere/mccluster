@@ -7,7 +7,8 @@
 // over a mutation corpus; both manifest vectors through the SQL canonicalisation; and the command rules listed
 // beside each section below.
 // PGlite is one session: lock ORDER and real races (same-key duplicates, capacity under contention, zero
-// deadlocks) are NOT proven here. What is proven here about locks is that they are taken, and where.
+// deadlocks, revocation racing publication) are NOT proven here; scripts/test/eup-league.native.integration.mjs
+// proves them on real sessions. What is proven here about locks is that they are taken, and where.
 import assert from 'node:assert/strict';
 import * as C from '../../workers/mccluster/src/eup/league-contract.js';
 import { drainModule, disableModule, enableModule, readModulePolicy } from './support/eup-module-policy-database.mjs';
@@ -58,11 +59,14 @@ async function inState(state, work) {
   try { return await work(); } finally { await enableModule(db, 'league', OWNER); }
 }
 const GUARD_CODE = { draining: 'EUM02', disabled: 'EUM03' };
-// The second-pass sets, exactly as the SQL defers them.
-const DEFERRED = {
-  owner: ['publications.list', 'publications.decide', 'appeals.list', 'appeals.resolve', 'proofs.moderate', 'media.due', 'media.purged', 'outbox.list', 'outbox.ack', 'credits.list', 'applications.accommodation.get'],
-  member: ['appeals.open', 'appeals.withdraw']
-};
+// The tables. Mutable rows (select, insert, update for service_role) and append-only history (select, insert), all
+// behind the module guard trigger; and the two tables without it: the receipts (an exact replay answers in every
+// module state) and the accommodation access record (written by a read; reads answer in every module state).
+const MUTABLE = ['eup_league_policy', 'eup_campaigns', 'eup_campaign_audience_grants', 'eup_missions', 'eup_applications', 'eup_assignments', 'eup_proof_drafts', 'eup_media_uploads', 'eup_proofs', 'eup_consents',
+  'eup_publications', 'eup_appeals'];
+const APPEND_ONLY = ['eup_league_policy_revisions', 'eup_campaign_revisions', 'eup_mission_revisions', 'eup_application_decisions', 'eup_assignment_acceptances', 'eup_proof_revisions', 'eup_proof_media', 'eup_proof_reviews', 'eup_mission_credits',
+  'eup_proof_moderations', 'eup_outbox', 'eup_outbox_consumptions'];
+const UNGUARDED = ['eup_command_receipts', 'eup_accommodation_reads'];
 
 try {
   /* ================================================================== A. the file: apply, rollback, privileges */
@@ -71,7 +75,7 @@ try {
   // second apply builds the identical schema. (Plain CREATE: applying twice without a rollback is an error.)
   const first = await fingerprint();
   const built = await objects();
-  ok(built.relations > 20 && built.functions > 30 && built.triggers === 19, `the file builds relations, functions and 19 guard triggers (${JSON.stringify(built)})`);
+  ok(built.relations > 26 && built.functions > 40 && built.triggers === MUTABLE.length + APPEND_ONLY.length, `the file builds relations, functions and ${MUTABLE.length + APPEND_ONLY.length} guard triggers (${JSON.stringify(built)})`);
   await league.rollback();
   eq(await objects(), { relations: 0, functions: 0, types: 0, triggers: 0 }, 'rollback leaves no eup_ relation, function, type or trigger behind (policy objects excepted)');
   ok((await one(`select count(*)::int as n from pg_proc where proname like 'eup\\_module%'`)).n >= 9 && (await moduleState()) === 'enabled', 'the module policy objects and the policy row survive the League rollback');
@@ -83,8 +87,6 @@ try {
 
   // A2. Private at the data boundary: RLS on, no policy, nothing for anon / authenticated / PUBLIC, and for
   // service_role exactly what the invoker functions use (history tables are append-only by privilege).
-  const MUTABLE = ['eup_league_policy', 'eup_campaigns', 'eup_campaign_audience_grants', 'eup_missions', 'eup_applications', 'eup_assignments', 'eup_proof_drafts', 'eup_media_uploads', 'eup_proofs', 'eup_consents'];
-  const APPEND_ONLY = ['eup_league_policy_revisions', 'eup_campaign_revisions', 'eup_mission_revisions', 'eup_application_decisions', 'eup_assignment_acceptances', 'eup_proof_revisions', 'eup_proof_media', 'eup_proof_reviews', 'eup_mission_credits'];
   const tables = await admin(`select c.relname as t, c.relrowsecurity as rls, c.relforcerowsecurity as forced,
       (select count(*)::int from pg_policy p where p.polrelid = c.oid) as policies,
       (select count(*)::int from aclexplode(c.relacl) a where a.grantee = 0) as public_grants,
@@ -92,13 +94,19 @@ try {
       (select coalesce(array_agg(x order by x), '{}') from unnest(array['SELECT','INSERT','UPDATE','DELETE','TRUNCATE','REFERENCES','TRIGGER']) x where has_table_privilege('authenticated', c.oid, x)) as authenticated,
       (select coalesce(array_agg(x order by x), '{}') from unnest(array['SELECT','INSERT','UPDATE','DELETE','TRUNCATE','REFERENCES','TRIGGER']) x where has_table_privilege('service_role', c.oid, x)) as service_role
     from pg_class c where ${LEAGUE_TABLES} and c.relkind = 'r' order by c.relname`);
-  eq(tables.map((t) => t.t), [...MUTABLE, ...APPEND_ONLY, 'eup_command_receipts'].sort(), 'the League tables are exactly the expected twenty');
+  eq(tables.map((t) => t.t), [...MUTABLE, ...APPEND_ONLY, ...UNGUARDED].sort(), `the League tables are exactly the expected ${MUTABLE.length + APPEND_ONLY.length + UNGUARDED.length}`);
   for (const t of tables) {
     const want = MUTABLE.includes(t.t) ? ['INSERT', 'SELECT', 'UPDATE'] : ['INSERT', 'SELECT'];
     ok(t.rls && t.policies === 0 && t.public_grants === 0 && t.anon.length === 0 && t.authenticated.length === 0, `${t.t}: RLS on, no policy, nothing for anon, authenticated or PUBLIC`);
     eq(t.service_role, want, `${t.t}: service_role holds exactly ${want.join(', ')}`);
   }
-  eq((await one(`select count(*)::int as n from pg_class c where ${LEAGUE_TABLES} and c.relkind = 'S'`)).n, 0, 'the file creates no sequence (nothing for default privileges to hand out)');
+  // One sequence: the outbox's identity. Supabase default privileges would hand it to every API role; the file takes it
+  // back from all of them, service_role included (an identity insert needs no sequence privilege).
+  const sequences = await admin(`select c.relname as s, (select count(*)::int from aclexplode(c.relacl) a where a.grantee = 0) as public_grants,
+      (select coalesce(array_agg(r || ':' || x order by r, x), '{}') from unnest(array['anon','authenticated','service_role']) r, unnest(array['USAGE','SELECT','UPDATE']) x where has_sequence_privilege(r, c.oid, x)) as held
+    from pg_class c where ${LEAGUE_TABLES} and c.relkind = 'S'`);
+  eq(sequences, [{ s: 'eup_outbox_seq_seq', public_grants: 0, held: [] }], 'the only sequence is the outbox identity, and no API role holds anything on it');
+  await rejects(() => as('service_role', () => db.query(`select nextval('public.eup_outbox_seq_seq')`)), '42501', 'service_role cannot draw outbox numbers outside an insert');
   const functions = await admin(`select p.proname as f, p.prosecdef as definer, p.proconfig as config,
       has_function_privilege('anon', p.oid, 'EXECUTE') as anon, has_function_privilege('authenticated', p.oid, 'EXECUTE') as authenticated,
       has_function_privilege('service_role', p.oid, 'EXECUTE') as service_role,
@@ -124,7 +132,7 @@ try {
   // A3. The module guard backstop: a statement trigger on every League domain table, none on the receipts table.
   const triggers = await admin(`select c.relname as t, t.tgname as name, p.proname as fn, encode(t.tgargs, 'escape') as args, t.tgtype::int as type
     from pg_trigger t join pg_class c on c.oid = t.tgrelid join pg_proc p on p.oid = t.tgfoid where not t.tgisinternal and ${LEAGUE_TABLES} order by c.relname`);
-  eq(triggers.map((t) => t.t), [...MUTABLE, ...APPEND_ONLY].sort(), 'every League domain table has the guard trigger; eup_command_receipts has none');
+  eq(triggers.map((t) => t.t), [...MUTABLE, ...APPEND_ONLY].sort(), 'every League domain table has the guard trigger; the receipts and the accommodation access record have none');
   // tgtype 30 = BEFORE (2) + INSERT (4) + DELETE (8) + UPDATE (16), statement level (bit 1 clear).
   ok(triggers.every((t) => t.name === `${t.t}_module_policy` && t.fn === 'eup_module_guard_trigger' && t.args.replace(/\\000$/, '') === 'league' && t.type === 30),
     'each is BEFORE INSERT OR UPDATE OR DELETE, FOR EACH STATEMENT, eup_module_guard_trigger(league)');
@@ -157,7 +165,9 @@ try {
     ['eup_media_uploads', 'state', C.ENUMS.UPLOAD_STATES], ['eup_media_uploads', 'family', C.ENUMS.MEDIA_FAMILIES], ['eup_media_uploads', 'rejected_reason', C.ENUMS.REJECT_REASONS],
     ['eup_proofs', 'state', C.ENUMS.PROOF_STATES], ['eup_proofs', 'moderation_state', C.ENUMS.MODERATION_STATES], ['eup_proofs', 'publication_state', C.ENUMS.PUBLICATION_STATES],
     ['eup_proof_reviews', 'mission_decision', C.ENUMS.DIMENSION_DECISIONS], ['eup_proof_reviews', 'rights_decision', C.ENUMS.DIMENSION_DECISIONS], ['eup_proof_reviews', 'safety_decision', C.ENUMS.DIMENSION_DECISIONS],
-    ['eup_consents', 'purpose', C.ENUMS.CONSENT_PURPOSES], ['eup_consents', 'audience', C.ENUMS.CONSENT_AUDIENCES], ['eup_command_receipts', 'surface', C.ENUMS.SURFACES]
+    ['eup_consents', 'purpose', C.ENUMS.CONSENT_PURPOSES], ['eup_consents', 'audience', C.ENUMS.CONSENT_AUDIENCES], ['eup_command_receipts', 'surface', C.ENUMS.SURFACES],
+    ['eup_publications', 'state', C.ENUMS.PUBLICATION_ROW_STATES], ['eup_publications', 'withdrawn_reason', C.ENUMS.WITHDRAWN_REASONS],
+    ['eup_appeals', 'subject', C.ENUMS.APPEAL_SUBJECTS], ['eup_appeals', 'state', C.ENUMS.APPEAL_STATES]
   ];
   for (const [table, column, values] of ENUM_COLUMNS) eq(literals(table, column).sort(), [...values].sort(), `${table}.${column} is the contract enumeration`);
   ok(C.ENUMS.SCAN_STATES.length === 1 && checks.some((k) => k.t === 'eup_media_uploads' && k.def.includes(`scan_state = '${C.ENUMS.SCAN_STATES[0]}'::text`)), 'scan_state can only say not_scanned');
@@ -321,11 +331,9 @@ try {
   }
   await rejects(() => owner('no.such.action', { actor: OWNER }), '22023', 'an unknown action is refused');
   await rejects(() => owner(null, { actor: OWNER }), '22023', 'a missing action is refused');
-  for (const action of DEFERRED.owner) {
-    ok(Object.hasOwn(C.OWNER_ACTIONS, action), `${action} is a contract action`);
-    const e = await rejects(() => owner(action, { actor: OWNER, id: U(1), document: {}, revision: 1, key: key('deferred') }), '0A000', `${action} is left to the second pass`);
-    ok(/not implemented in this pass/.test(e.message), `${action}: the refusal says why`);
-    await rejects(() => owner(action, { actor: PEER, id: U(1), document: {}, revision: 1, key: key('deferred') }), '42501', `${action}: a non-owner is refused before anything else`);
+  // Every owner action of the contract exists, and a non-owner is refused before anything else.
+  for (const action of Object.keys(C.OWNER_ACTIONS)) {
+    await rejects(() => owner(action, { actor: PEER, id: U(1), document: {}, revision: 1, key: key('owner-only') }), '42501', `${action}: a non-owner is refused before anything else`);
   }
   await rejects(() => owner('campaigns.create', { actor: OWNER, document: CAMPAIGN }), '22023', 'a mutation needs an idempotency key');
   await rejects(() => owner('campaigns.create', { actor: OWNER, document: CAMPAIGN, key: 'short' }), '22023', 'a malformed idempotency key is refused');
@@ -529,18 +537,25 @@ try {
 
   // C7. The key is locked before the lookup: inside one transaction the advisory lock is held after the command,
   // for a first execution and for a replay alike. (That a concurrent duplicate then waits and replays is native proof.)
+  // The two single-key advisory locks of a mutation have known keys: the receipt key and the tenant's outbox lock.
+  const receiptLock = (actor, operation, k) => `hashtextextended('eup.league.receipt|' || '${OWNER}' || '|' || '${actor}' || '|' || '${operation}' || '|' || '${k}', 0)`;
+  const OUTBOX_LOCK = `hashtextextended('eup.league.outbox|' || '${OWNER}', 0)`;
+  const advisory = (t) => t.query(`select case when ((classid::bigint << 32) | objid::bigint) = (select ${OUTBOX_LOCK}) then 'outbox' else 'key' end as lock, mode, granted
+      from pg_locks where locktype = 'advisory' and objsubid = 1 order by 1`);
   const lockEvidence = async (params) => tx(async (t) => {
     const before = (await t.query(`select count(*)::int as n from pg_locks where locktype = 'advisory' and objsubid = 1`)).rows[0].n;
     await t.query(`select public.${C.RPC.owner}($1, $2, $3, $4::jsonb, $5, $6)`, params);
-    const held = (await t.query(`select mode, granted from pg_locks where locktype = 'advisory' and objsubid = 1`)).rows;
+    const held = (await advisory(t)).rows;
+    const exact = (await t.query(`select count(*)::int as n from pg_locks where locktype = 'advisory' and objsubid = 1 and ((classid::bigint << 32) | objid::bigint) = (select ${receiptLock(params[1], params[0], params[5])})`)).rows[0].n;
     const module = (await t.query(`select mode from pg_locks where locktype = 'advisory' and objsubid = 2`)).rows.map((r) => r.mode);
-    return { before, held, module };
+    return { before, held, exact, module };
   });
   const lockKey = key('lock');
   const firstRun = await lockEvidence(['campaigns.create', OWNER, '', JSON.stringify({ ...CAMPAIGN, slug: 'lock-evidence' }), null, lockKey]);
-  eq([firstRun.before, firstRun.held, firstRun.module], [0, [{ mode: 'ExclusiveLock', granted: true }], ['ShareLock']], 'a first execution holds the receipt key lock (exclusive) and the module lock (shared) to the end of its transaction');
+  eq([firstRun.before, firstRun.held, firstRun.exact, firstRun.module], [0, [{ lock: 'key', mode: 'ExclusiveLock', granted: true }, { lock: 'outbox', mode: 'ExclusiveLock', granted: true }], 1, ['ShareLock']],
+    'a first execution holds the receipt key lock, the module lock (shared) and the outbox lock to the end of its transaction');
   const replayRun = await lockEvidence(['campaigns.create', OWNER, '', JSON.stringify({ ...CAMPAIGN, slug: 'lock-evidence' }), null, lockKey]);
-  eq([replayRun.held, replayRun.module], [[{ mode: 'ExclusiveLock', granted: true }], []], 'a replay takes the key lock and returns before any module lock');
+  eq([replayRun.held, replayRun.exact, replayRun.module], [[{ lock: 'key', mode: 'ExclusiveLock', granted: true }], 1, []], 'a replay takes the key lock and returns before any module or outbox lock');
 
   // C8. Module state: reads and exact replays answer in every state; reduce-only owner actions are admitted while
   // draining and disabled; every other mutation is refused with the guard's own code.
@@ -645,7 +660,7 @@ try {
   await admin(`insert into public.eup_campaign_audience_grants(tenant, campaign_id, account, granted_by) values ($1, $2, $3, $4)`, [FOREIGN_TENANT, foreign.id, TESTER, OTHER_ORG_OWNER]);
   const draftDocument = { submit: false, requirements_revision: 1, statement: 'Half a thought' };
 
-  // D1. The actor is a known account; the two functions do not share actions; deferred actions say so.
+  // D1. The actor is a known account; the two functions do not share actions; every contract action is implemented.
   await rejects(() => me(null), '42501', 'no actor');
   await rejects(() => me(UNKNOWN), '42501', 'an unknown account is not a signed-in account');
   await rejects(() => member('applications.save', { actor: UNKNOWN, id: ML.id, document: draftDocument, revision: 0, key: key('unknown') }), '42501', 'an unknown account cannot write');
@@ -653,18 +668,15 @@ try {
   await rejects(() => member('campaigns.create', { actor: OWNER, document: CAMPAIGN, key: key('wrong-surface') }), '22023', 'the member function has no owner action, even for a house owner');
   await rejects(() => owner('applications.save', { actor: OWNER, id: ML.id, document: draftDocument, revision: 0, key: key('wrong-surface') }), '22023', 'and the owner function has no member action');
   await rejects(() => owner('proofs.submit', { actor: OWNER, id: U(1), document: {}, revision: 0, key: key('wrong-surface') }), '22023', 'the participant actions left the owner function');
-  for (const action of DEFERRED.member) {
-    ok(Object.hasOwn(C.MEMBER_ACTIONS, action), `${action} is a contract action`);
-    await rejects(() => member(action, { actor: TESTER, id: U(1), document: {}, key: key('deferred') }), '0A000', `${action} is left to the second pass`);
-    await rejects(() => member(action, { actor: UNKNOWN, id: U(1), document: {}, key: key('deferred') }), '42501', `${action}: an unknown account is refused first`);
+  for (const action of Object.keys(C.MEMBER_ACTIONS)) {
+    await rejects(() => member(action, { actor: UNKNOWN, id: U(1), document: {}, key: key('unknown') }), '42501', `${action}: an unknown account is refused first`);
   }
-  // Every other contract action is implemented in this pass: with nothing to act on, each answers something else
-  // than "unknown action" or "not implemented".
-  const implemented = { owner: Object.keys(C.OWNER_ACTIONS).filter((x) => !DEFERRED.owner.includes(x)), member: Object.keys(C.MEMBER_ACTIONS).filter((x) => !DEFERRED.member.includes(x)) };
-  eq([implemented.owner.length, implemented.member.length], [24, 13], '24 owner and 13 member actions are in this pass');
-  for (const [surface, call, actor] of [['owner', owner, OWNER], ['member', member, TESTER]]) for (const action of implemented[surface]) {
+  // Every contract action is implemented: with nothing to act on, each answers something else than "unknown action"
+  // or "not implemented". (The first pass deferred 11 owner and 2 member actions with 0A000; none is left.)
+  eq([Object.keys(C.OWNER_ACTIONS).length, Object.keys(C.MEMBER_ACTIONS).length], [35, 15], 'the contract has 35 owner and 15 member actions');
+  for (const [surface, call, actor] of [['owner', owner, OWNER], ['member', member, TESTER]]) for (const action of Object.keys(surface === 'owner' ? C.OWNER_ACTIONS : C.MEMBER_ACTIONS)) {
     const answer = await call(action, { actor, id: U(404), document: { receipt_probe: true }, revision: 1, key: key('probe') }).then(() => ({ code: 'ok', message: '' }), (e) => e);
-    ok(answer.code !== '0A000' && !/Unknown action/.test(answer.message), `${surface} ${action} is implemented (${answer.code})`);
+    ok(answer.code !== '0A000' && !/Unknown action|not implemented/.test(answer.message), `${surface} ${action} is implemented (${answer.code})`);
   }
   await rejects(() => member('applications.save', { actor: TESTER, id: ML.id, document: draftDocument, revision: 0 }), '22023', 'a member mutation needs an idempotency key');
   await rejects(() => member('applications.save', { actor: TESTER, document: draftDocument, revision: 0, key: key('no-id') }), '22023', 'and the id of the row it names');
@@ -693,7 +705,7 @@ try {
   eq(listedA.missions.map((x) => x.slug), ['write-a-song'], 'only released missions are listed (the draft mission of campaign A is not)');
   eq(Object.keys(listedA.missions[0]).sort(), Object.keys(C.shapeFields('mission_card')).sort(), 'as mission cards');
   eq(listedA.missions[0], await owner('missions.preview', { actor: OWNER, id: song.id }), 'the owner preview IS the member view of the mission');
-  eq([mine.actor, mine.policy.revision, mine.policy.entitlement, mine.policy.notices.participation.revision, mine.published], [TESTER, 3, 'none_required', NOTICES.participation.revision, []], 'the member reads the policy they will be held to, and no publication exists before the second pass');
+  eq([mine.actor, mine.policy.revision, mine.policy.entitlement, mine.policy.notices.participation.revision, mine.published], [TESTER, 3, 'none_required', NOTICES.participation.revision, []], 'the member reads the policy they will be held to, and nothing is published yet');
   eq(Object.keys(mine.policy).sort(), Object.keys(C.shapeFields('member_policy')).sort(), 'the member policy is the contract shape (no account id)');
 
   // D3. Applying: draft, read back, submit; the document is closed; the application compares its OWN revision.
@@ -1085,9 +1097,11 @@ try {
   // The key lock, for the member function.
   const memberLock = await tx(async (t) => {
     await t.query(`select public.${C.RPC.member}('applications.save', $1, $2, $3::jsonb, 0, $4)`, [TESTER_B, missionB.id, JSON.stringify(draftDocument), key('lock')]);
-    return (await t.query(`select mode, granted, objsubid::int as sub from pg_locks where locktype = 'advisory' order by objsubid`)).rows;
+    return { single: (await advisory(t)).rows, module: (await t.query(`select mode from pg_locks where locktype = 'advisory' and objsubid = 2`)).rows.map((r) => r.mode),
+      account: (await t.query(`select count(*)::int as n from pg_locks where locktype = 'advisory' and objsubid = 1 and ((classid::bigint << 32) | objid::bigint) = (select hashtextextended('eup.league.rate.applications|' || $1 || '|' || $2, 0))`, [OWNER, TESTER_B])).rows[0].n };
   });
-  eq(memberLock, [{ mode: 'ExclusiveLock', granted: true, sub: 1 }, { mode: 'ShareLock', granted: true, sub: 2 }], 'a member mutation holds the receipt key lock and the module lock to the end of its transaction');
+  eq(memberLock, { single: [{ lock: 'key', mode: 'ExclusiveLock', granted: true }, { lock: 'key', mode: 'ExclusiveLock', granted: true }, { lock: 'outbox', mode: 'ExclusiveLock', granted: true }], module: ['ShareLock'], account: 1 },
+    'a member mutation that opens an application holds the receipt key lock, the per-account count lock, the module lock and the outbox lock to the end of its transaction');
 
   // D12. The five gates of a member mutation, each alone, each with its own code, and their order.
   // The probe passes every gate and is then refused for its stale revision (40001): a gate that answers shows its own code.
@@ -1293,8 +1307,8 @@ try {
   const spareUpload = await begin(TESTER, seatT);
   eq(await tx(async (t) => {
     await t.query(`select public.${C.RPC.seal}($1, $2, $3::jsonb)`, [spareUpload.id, TESTER, JSON.stringify(sealed(4, { sha256: SHA('e') }))]);
-    return (await t.query(`select mode, objsubid::int as sub from pg_locks where locktype = 'advisory'`)).rows;
-  }), [{ mode: 'ShareLock', sub: 2 }], 'the seal holds the module lock and no receipt key lock');
+    return { single: (await advisory(t)).rows, module: (await t.query(`select mode from pg_locks where locktype = 'advisory' and objsubid = 2`)).rows.map((r) => r.mode) };
+  }), { single: [{ lock: 'outbox', mode: 'ExclusiveLock', granted: true }], module: ['ShareLock'] }, 'the seal holds the module lock and the outbox lock (it changed the row), and no receipt key lock');
 
   // E3. uploads.get: the participant's own row in every state; the storage identity only when a read is to be signed.
   eq((await member('uploads.get', { actor: TESTER, id: staged.id })).storage, null, 'without sign the storage identity is not answered');
@@ -1378,7 +1392,7 @@ try {
   eq(await comparable(seatT.id), await comparable(assignment.id), 'a private media proof and an accommodation proof earn the identical credit (same participant, same kind, nothing else on the row)');
   eq((await me(TESTER)).assignments.find((x) => x.id === seatT.id).uploads.map((x) => x.state).sort(), ['discarded', 'discarded', 'discarded', 'discarded', 'discarded', 'expired', 'sealed'], 'the participant keeps reading every upload row after completion');
   // No storage path is stored anywhere, in any column or receipt.
-  for (const t of [...MUTABLE, ...APPEND_ONLY, 'eup_command_receipts']) eq(await n(t, `${t}::text ~ 'league/v1|equity-uprise-private|https?://|token='`), 0, `${t} holds no path, bucket, URL or token`);
+  for (const t of [...MUTABLE, ...APPEND_ONLY, ...UNGUARDED]) eq(await n(t, `${t}::text ~ 'league/v1|equity-uprise-private|https?://|token='`), 0, `${t} holds no path, bucket, URL or token`);
 
   /* ================================================================== F. not installed, and no League policy */
   const bare = await createLeagueDatabase({ enable: false });

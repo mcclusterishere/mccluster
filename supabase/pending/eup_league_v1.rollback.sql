@@ -1,6 +1,7 @@
 -- Recovery artifact for pending/eup_league_v1.sql: never a forward migration.
 -- Drops the private Environmental Justice League records: policy, campaigns, missions, applications,
--- assignments, drafts, upload rows, proofs, reviews, credits, consents and receipts recorded here are lost. The
+-- assignments, drafts, upload rows, proofs, reviews, moderation history, credits, consents, publications, appeals,
+-- the outbox and its acknowledgements, the accommodation access record and the receipts recorded here are lost. The
 -- stored media objects are NOT touched by this file: purge them first, or they stay in the private bucket with
 -- no row that names them. Do not run after real participation without an export and a coordinated recovery
 -- decision. The module policy (eup_module_policy_v1.sql) is a separate file and stays.
@@ -14,6 +15,12 @@ begin
     execute format('drop function %s', v_function);
   end loop;
 end $$;
+drop table if exists public.eup_outbox_consumptions;
+drop table if exists public.eup_outbox;
+drop table if exists public.eup_accommodation_reads;
+drop table if exists public.eup_appeals;
+drop table if exists public.eup_publications;
+drop table if exists public.eup_proof_moderations;
 drop table if exists public.eup_command_receipts;
 drop table if exists public.eup_consents;
 drop table if exists public.eup_mission_credits;
