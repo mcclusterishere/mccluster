@@ -32,15 +32,23 @@ import { moduleControl } from './modules.js';
 import { readRunCounts } from './intake.js';
 
 const MODULES = [
-  { id: 'league', label: 'Environmental Justice League', state: 'draft', detail: 'Private admin intake (pending eup_league_v1.sql). Campaign/mission/application/proof/review/consent loop; no points, payment, publication or broadcast.' },
+  { id: 'league', label: 'Environmental Justice League', state: 'draft', detail: 'Member mission loop and owner controls (pending eup_league_v1.sql): application, offer, draft, recorded or uploaded take, review, consent, publication to the campaign audience, appeal. No points, payment or broadcast; nothing runs until the owner installs and enables the module.' },
   { id: 'civic', label: 'Civic League', state: 'planned', detail: 'Offices, terms, legislation, elections from official sources into private intake; public civic rows stay a separate release surface.' },
   { id: 'companies', label: 'Companies & Finance', state: 'planned', detail: 'SEC/GLEIF identity, sourced locations, filings, federal awards; market quotes only under a verified licence.' },
   { id: 'sources', label: 'Sources & Review', state: 'planned', detail: 'Connector registry (all disabled), rights/configuration, review queue, bounded refresh/pause.' },
   { id: 'consumer_environment', label: 'Consumer environment globe', state: 'held', detail: '20261107120000_world_environment_v1.sql and 20261108120000_world_environment_proofs_v1.sql are held for admin-only scope; no member join/proof activation.' },
   { id: 'arcade', label: 'City Arcade cloud', state: 'dormant', detail: 'Schema applied as 20261109181623_city_arcade_v1; ARCADE_CLOUD_ENABLED absent; startKey-aware Worker not deployed.' },
-  { id: 'c5', label: 'Core-signed replay protection', state: 'partial', detail: 'Nonce table applied as 20261109180829_core_signed_nonces_v1; CORE_REPLAY_STORE not configured; paid-operation claim and uncertain-provider reconciliation open.' }
+  { id: 'c5', label: 'Core-signed replay protection', state: 'partial', detail: '' }
 ];
 /* Which persisted policy unit governs each Overview module. Civic, Companies and Sources share the intake unit. */
+/* The C5 line is computed from this Worker's configuration, by the rule media/core-signature.js applies. */
+function c5Detail(env) {
+  const mode = String(env?.CORE_REPLAY_STORE || '').trim().toLowerCase();
+  const replay = mode === 'supabase' ? 'signed nonces are claimed in the shared core_signed_nonces table'
+    : mode === 'isolate' ? 'replay protection is per isolate only (CORE_REPLAY_STORE is isolate)'
+      : 'CORE_REPLAY_STORE is not set, so signed mutating requests are refused';
+  return `Nonce table applied as 20261109180829_core_signed_nonces_v1; ${replay}. Paid-operation claims v1 applied as 20261109194957; claims v2 (crash and operator recovery) is pending and must be applied before this Worker ships.`;
+}
 const POLICY_UNIT = Object.freeze({ league: 'league', civic: 'intake', companies: 'intake', sources: 'intake', consumer_environment: 'environment', arcade: null, c5: null });
 const POLICY_UNKNOWN = Object.freeze({ installed: null, state: 'unknown', revision: null, updated_at: null });
 
@@ -132,6 +140,7 @@ export async function handleOverview(_request, env, ctx) {
   const runs = await importRunCounts(env, ctx);
   const modules = MODULES.map((m) => {
     if (m.id === 'league') return league;
+    if (m.id === 'c5') return { ...m, detail: c5Detail(env) };
     if (m.id === 'sources' && sources) return { ...m, state: sources.state || m.state, detail: sources.detail || m.detail };
     return m;
   }).map((m) => {
