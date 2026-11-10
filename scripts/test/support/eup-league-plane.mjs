@@ -119,7 +119,7 @@ export async function createLeaguePlane({
   const env = Object.freeze({ SUPABASE_URL: supabaseOrigin, SUPABASE_SERVICE_ROLE_KEY: SERVICE_KEY, SUPABASE_ANON_KEY: ANON_KEY, ALLOWED_ORIGINS: allowedOrigins.join(',') });
   const storage = createLeagueStorageDouble({ origin: supabaseOrigin, serviceKey: SERVICE_KEY, now });
   const log = []; // every request the plane answered: { method, path, as, status, fault } (no token, no body)
-  const rpcLog = []; // every RPC: { name, role, action, actor, id, status, code }
+  const rpcLog = []; // every RPC: { name, role, action, actor, id, key, status, code } (key: the idempotency key sent, if any)
   const pending = new Set(); // rejecters of 'hang' faults, released by close()
 
   /* ---------------------------------------------------------------- sessions */
@@ -202,12 +202,12 @@ export async function createLeaguePlane({
     return Response.json({ code, details: error?.detail ?? null, hint: error?.hint ?? null, message: error?.message ?? 'error' }, { status: postgrestStatus(code, role) });
   };
   async function rpc(name, who, text) {
-    const entry = { name, role: who.role, action: null, actor: null, id: null, status: null, code: null };
+    const entry = { name, role: who.role, action: null, actor: null, id: null, key: null, status: null, code: null };
     rpcLog.push(entry);
     let args;
     try { args = text ? JSON.parse(text) : {}; } catch { args = undefined; }
     if (!args || typeof args !== 'object' || Array.isArray(args)) { entry.status = 400; entry.code = 'PGRST102'; return pgrst(400, 'PGRST102', 'Empty or invalid json'); }
-    Object.assign(entry, { action: args.p_action ?? null, actor: args.p_actor ?? null, id: args.p_id ?? args.p_upload ?? null });
+    Object.assign(entry, { action: args.p_action ?? null, actor: args.p_actor ?? null, id: args.p_id ?? args.p_upload ?? null, key: args.p_key ?? null });
     const keys = Object.keys(args);
     const candidates = IDENT.test(name) ? await functionsNamed(name) : [];
     const matches = candidates.filter((f) => keys.every((k) => f.inputs.some((a) => a.name === k)) && f.required.every((r) => keys.includes(r)));
