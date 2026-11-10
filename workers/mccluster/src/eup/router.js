@@ -79,7 +79,14 @@ export async function handleEup(request, env, { requireHouseOwner, authUser, fet
   };
   try {
     if (typeof requireHouseOwner !== 'function') throw fail(503, 'Authorization unavailable', 'authorization_unavailable');
-    const user = await requireHouseOwner(request, env);
+    /* 401 and 403 are the owner check's answers; anything else it throws (an unconfigured house, an upstream 5xx, a
+       network failure) means it could not answer: 503 authorization_unavailable, the reason the contract lists, as on
+       the member branch (review 2026-11-10: it was 503 "unavailable" or 500 "error", neither in the contract). */
+    let user;
+    try { user = await requireHouseOwner(request, env); } catch (error) {
+      if (error?.status === 401 || error?.status === 403) throw error;
+      throw fail(503, 'Authorization unavailable', 'authorization_unavailable');
+    }
     if (!user?.id) throw fail(401, 'Authentication required', 'authentication_required');
     const rest = path.slice(EUP_PREFIX.length + 1);
     const [section, ...parts] = rest ? rest.split('/') : [];

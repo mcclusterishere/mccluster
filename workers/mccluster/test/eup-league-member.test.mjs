@@ -109,6 +109,26 @@ test('a body naming an account is refused at any depth with 422 before any call'
   assert.equal(plane.all().length, 0);
 });
 
+/* Review 2026-11-10: a body within the 64 KiB limit can nest 32 765 arrays deep; the walk for account-naming keys
+   recursed and overflowed the stack, which answered 500 "E=Up request failed" instead of a 4xx. */
+test('a body nested as deep as the body limit allows answers 4xx with no call, and a key buried in it is still refused', async () => {
+  const plane = leaguePlane();
+  const nested = (depth, inner = '0') => `${'['.repeat(depth)}${inner}${']'.repeat(depth)}`;
+  const depth = Math.floor((C.LIMITS.body_max_bytes - 128) / 2);
+  const bodies = [
+    [`missions/${U(7)}/application`, `{"idempotency_key":"${KEY}","expected_revision":0,"application":{"submit":false,"requirements_revision":1,"x":${nested(depth - 60)}}}`, [422, 'invalid']],
+    [`assignments/${U(7)}/draft`, `{"idempotency_key":"${KEY}","expected_revision":0,"draft":{"media":${nested(depth - 60)}}}`, [422, 'invalid']],
+    [`missions/${U(7)}/application`, `{"a":${nested(depth)}}`, [400, 'idempotency_key_required']],
+    [`missions/${U(7)}/application`, `{"idempotency_key":"${KEY}","expected_revision":0,"application":{"submit":false,"requirements_revision":1,"x":${nested(depth - 80, `{"actor":"${U(9)}"}`)}}}`, [422, 'field_refused']]
+  ];
+  for (const [rest, raw, expected] of bodies) {
+    assert.ok(raw.length <= C.LIMITS.body_max_bytes, `${raw.length} bytes is within the body limit`);
+    const r = await member(plane, rest, { method: 'POST', raw });
+    assert.deepEqual([r.status, r.body.reason], expected, `${rest} (${raw.length} bytes)`);
+  }
+  assert.equal(plane.all().length, 0, 'no RPC and no storage call');
+});
+
 /* ------------------------------------------------------------------ the member error table */
 
 test('not_available: no such row, not your row, not released to you and no schema are one answer with nothing else in it', async () => {

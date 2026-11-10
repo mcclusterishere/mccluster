@@ -301,18 +301,23 @@ export const rpcContext = (ctx) => ({ fetchImpl: ctx.fetchImpl ?? globalThis.fet
 
 /* ------------------------------------------------------------------ owner routes */
 
-/* POST media/purge, in the order MEDIA.order.purge names: ask which of the named uploads are due; refuse (409,
-   before deleting anything) when one is neither due nor already purged; delete the due objects; and only when
-   every deletion succeeded record media.purged with exactly the uploads asked for. */
+/* POST media/purge, in the order MEDIA.order.purge names: record the decision for the named uploads (media.purging,
+   with the request's own key) BEFORE anything is deleted, which refuses (409) when one is neither due, decided nor
+   purged; delete the due objects; and only when every deletion succeeded record media.purged with exactly the
+   uploads asked for and the same key. A decided upload stays due whatever policy change follows, so a retry after a
+   deletion always completes it (review 2026-11-10). */
 async function purgeRoute(env, ctx, route, call) {
   const { fail } = ctx;
   const uploads = call.document.uploads;
   const command = (action, extra) => leagueCall(env, rpcContext(ctx), 'owner', { action, actor: ctx.user.id, ...extra });
-  const due = await command('media.due', { document: { uploads } });
+  const due = await command('media.purging', { document: { uploads }, key: call.key }).catch((error) => {
+    if (error?.reason === 'revision_conflict') throw leagueFailure(fail, 'revision_conflict', 409, 'An upload asked for is neither due nor purged; nothing was decided or deleted');
+    throw error;
+  });
   const rows = Array.isArray(due.uploads) ? due.uploads : null;
   const asked = new Set(uploads.map((u) => u.toLowerCase()));
   if (!rows || rows.length !== asked.size || !rows.every((row) => isPlainObject(row) && typeof row.id === 'string' && asked.has(row.id.toLowerCase()))) throw unavailable(fail);
-  if (rows.some((row) => row.due !== true && row.state !== 'purged')) throw leagueFailure(fail, 'revision_conflict', 409, 'An upload asked for is neither due nor purged; nothing was deleted');
+  if (rows.some((row) => row.due !== true && row.state !== 'purged')) throw unavailable(fail); // the decision answered something it never decides
   const { failed } = await purgeDue(mediaContext(env, ctx), due);
   if (failed.length) throw unavailable(fail);
   const result = await command(route.action, { document: call.document, key: call.key });

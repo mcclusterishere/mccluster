@@ -59,7 +59,8 @@ test('the source quotes no pending table or helper name, only the three RPC name
 test('every action is complete: kind, guard class, id, document, revision, result, errors', () => {
   const ROWS = ['policy', 'campaign', 'mission', 'application', 'assignment', 'draft', 'proof'];
   const IDS = [null, 'campaign', 'mission', 'application', 'assignment', 'proof', 'upload', 'consent', 'appeal', 'grant', 'subject', 'outbox_seq'];
-  assert.equal(Object.keys(C.OWNER_ACTIONS).length, 35);
+  /* 36 since the review of 2026-11-10 added media.purging: the purge decision, kept before anything is deleted. */
+  assert.equal(Object.keys(C.OWNER_ACTIONS).length, 36);
   assert.equal(Object.keys(C.MEMBER_ACTIONS).length, 15);
   assert.deepEqual(Object.keys(C.MEDIA_SEAL), ['media.seal']);
   for (const { surface, name, spec } of allActions()) {
@@ -116,7 +117,8 @@ test('the existing owner actions stay, move or are added exactly as the design m
     'campaigns.create', 'campaigns.transition', 'missions.create', 'missions.update', 'missions.transition', 'applications.create', 'applications.decide', 'proofs.review'];
   const added = ['policy.get', 'policy.set', 'campaigns.audience.set', 'audience.grants.list', 'audience.grants.grant', 'audience.grants.revoke', 'missions.preview',
     'applications.accommodation.get', 'proofs.get', 'proofs.moderate', 'appeals.list', 'appeals.resolve', 'publications.list', 'publications.decide', 'credits.list',
-    'media.due', 'media.purged', 'outbox.list', 'outbox.ack', 'receipts.get'];
+    'media.due', 'media.purged', 'outbox.list', 'outbox.ack', 'receipts.get',
+    'media.purging']; // review 2026-11-10: the purge decision is kept before the Worker deletes anything
   assert.deepEqual([...owner].sort(), [...stay, ...added].sort());
   for (const moved of ['assignments.accept', 'proofs.submit', 'consents.set']) assert.ok(!owner.includes(moved), `${moved} left the owner function`);
   assert.deepEqual(Object.keys(C.MEMBER_ACTIONS).sort(), ['me.get', 'applications.save', 'applications.withdraw', 'assignments.accept', 'assignments.withdraw', 'drafts.save',
@@ -126,11 +128,12 @@ test('the existing owner actions stay, move or are added exactly as the design m
 test('the reduce-only set equals DECISIONS.md section 4', () => {
   /* member consents.revoke, applications.withdraw, assignments.withdraw, uploads.discard, appeals.withdraw;
      owner campaign/mission transitions to paused or withdrawn, publication withdrawal, proofs.moderate when it places
-     a hold, media.purged, audience grant revoke. Everything else uses the normal guard. */
+     a hold, media.purged, audience grant revoke. Everything else uses the normal guard. media.purging (review
+     2026-11-10) is the first half of the purge, so it is reduce-only as media.purged is. */
   const expected = [
     'member:consents.revoke', 'member:applications.withdraw', 'member:assignments.withdraw', 'member:uploads.discard', 'member:appeals.withdraw',
     'owner:campaigns.transition?to=paused', 'owner:campaigns.transition?to=withdrawn', 'owner:missions.transition?to=paused', 'owner:missions.transition?to=withdrawn',
-    'owner:publications.decide?decision=withdrawn', 'owner:proofs.moderate?hold=true', 'owner:media.purged', 'owner:audience.grants.revoke'
+    'owner:publications.decide?decision=withdrawn', 'owner:proofs.moderate?hold=true', 'owner:media.purging', 'owner:media.purged', 'owner:audience.grants.revoke'
   ].sort();
   assert.deepEqual([...C.REDUCE_ONLY], expected);
   /* The same set, derived a second way: ask guardClass about every action and every value its conditional field can take. */
@@ -234,7 +237,14 @@ test('ROUTES: every route names a known action and states what is required befor
     }
     if (r.wrapper) { assert.equal(r.fields.length, 0, `${at}: a wrapper or named fields, not both`); assert.match(r.wrapper, /^[a-z_]+$/); assert.notEqual(r.method, 'GET', at); }
     if (r.method === 'GET') assert.equal(r.fields.length, 0, `${at}: a GET has no body fields`);
-    for (const b of r.before) { assert.ok(Object.hasOwn(C[r.surface === 'owner' ? 'OWNER_ACTIONS' : 'MEMBER_ACTIONS'], b), `${at} before ${b}`); assert.equal(TABLES[r.surface][b].kind, 'read', at); }
+    /* What a route calls first is a read, or (review 2026-11-10) the one reduce-only keyed decision the purge route
+       records with the request's own key before it deletes anything. */
+    for (const b of r.before) {
+      assert.ok(Object.hasOwn(C[r.surface === 'owner' ? 'OWNER_ACTIONS' : 'MEMBER_ACTIONS'], b), `${at} before ${b}`);
+      const first = TABLES[r.surface][b];
+      assert.ok(first.kind === 'read' || (first.guard === 'reduce' && first.keyed && r.idempotency_key && b === 'media.purging'), `${at}: ${b} is a read or the purge decision`);
+      reached.add(`${r.surface}:${b}`); // the purge decision is reached through the purge route only
+    }
     if (r.media) assert.ok(Object.hasOwn(C.MEDIA_MODULE.functions, r.media), `${at} media function ${r.media}`);
     if (r.answer) assert.ok(C.shapeFields(r.answer), `${at} answer shape`);
   }
@@ -331,7 +341,8 @@ test('state machines: states match the enums and every transition names a known 
   }
   /* Every mutation that is not pure configuration or bookkeeping moves at least one machine. */
   const still = allActions().filter((a) => a.spec.kind === 'mutation').map((a) => `${a.surface}:${a.name}`).filter((a) => !performers.has(a)).sort();
-  assert.deepEqual(still, ['member:drafts.save', 'owner:campaigns.audience.set', 'owner:outbox.ack', 'owner:policy.set']);
+  /* media.purging (review 2026-11-10) records the purge decision and moves no state: media.purged does. */
+  assert.deepEqual(still, ['member:drafts.save', 'owner:campaigns.audience.set', 'owner:media.purging', 'owner:outbox.ack', 'owner:policy.set']);
   /* Seats: no stored paused assignment; a withdrawal frees the seat. */
   assert.deepEqual([...C.ENUMS.SEAT_STATUSES], ['offered', 'accepted', 'completed']);
   assert.ok(!C.ENUMS.ASSIGNMENT_STATUSES.includes('paused'));
@@ -763,4 +774,54 @@ test('nothing for points, payouts, commission, broadcast, or publication beyond 
   assert.ok(into.length > 0 && into.every((t) => t.by.length === 1 && t.by[0] === 'owner:publications.decide'));
   assert.ok(C.DOCUMENTS.publication_decide.fields.consent_id);
   assert.ok(!Object.hasOwn(C.DOCUMENTS.publication_decide.fields, 'audience'));
+});
+
+/* ------------------------------------------------------------------ review of 2026-11-10 */
+
+test('a timestamp the contract accepts is a real calendar instant, as the SQL checks it (no Date.parse roll-over)', () => {
+  const at = (expires_at) => C.checkDocument(C.DOCUMENTS.consent_grant, { purpose: 'publish_proof', audience: 'released_audience', asset_revision: SHA, notice_revision: 'fixture-1', expires_at });
+  for (const impossible of ['2027-02-30T00:00:00Z', '2027-02-29T00:00:00Z', '2100-02-29T00:00:00Z', '2027-04-31T23:59:59Z', '2027-01-01T24:00:00Z', '2027-01-01T24:00:00.000000Z', '0000-01-01T00:00:00Z', '2027-01-01T23:59:60Z']) {
+    assert.equal(at(impossible), '$.expires_at: UTC timestamp expected', impossible);
+  }
+  for (const real of ['2028-02-29T00:00:00Z', '2000-02-29T12:00:00Z', '0001-01-01T00:00:00Z', '2027-12-31T23:59:59.999999Z', '9999-12-31T23:59:59Z']) assert.equal(at(real), null, real);
+});
+
+test('answers print timestamps in the result form; inputs stay Z only', () => {
+  for (const printed of ['2026-11-10T05:14:00.123+00:00', '2026-11-10T05:14:00.12+00:00', '2026-11-10T05:14:00+00:00', '2026-11-10T05:14:00.123456+00:00', '2026-11-10T05:14:00.123Z']) assert.match(printed, C.RESULT_TIMESTAMP, printed);
+  for (const other of ['2026-11-10T00:14:00.123-05:00', '2026-11-10T05:14:00', '2026-11-10 05:14:00+00', '2026-11-10T05:14:00.1234567+00:00']) assert.doesNotMatch(other, C.RESULT_TIMESTAMP, other);
+  assert.doesNotMatch('2026-11-10T05:14:00.123+00:00', C.PATTERNS.timestamp, 'an answered timestamp is not an input: a client parses it and never echoes it');
+});
+
+test('the publish-consent rules say what the SQL enforces: one unrevoked consent (open or expired), and a bound per proof', () => {
+  const grant = C.MEMBER_ACTIONS['consents.grant'];
+  assert.match(grant.effects.find((e) => e.includes('23505')), /open or expired.*revoke it, even after it expired/);
+  assert.match(C.ERRORS['23505'].meaning, /unrevoked publish consent \(open or expired\)/);
+  assert.ok(grant.errors.includes('EU017') && Number.isSafeInteger(C.LIMITS.rate.publish_consents_per_proof));
+  assert.ok(C.LIMITS.rate.publish_consents_per_proof + C.LIMITS.rate.proof_revisions_per_assignment <= C.LIMITS.list.rows, 'one proof never has more consent rows than an owner list returns');
+});
+
+test('the review read rests on the private_review consent (EU015); the purge decision is kept before anything is deleted', () => {
+  assert.ok(C.OWNER_ACTIONS['proofs.get'].errors.includes('EU015'));
+  const purging = C.OWNER_ACTIONS['media.purging'];
+  assert.deepEqual([purging.kind, purging.guard, purging.keyed, purging.document, purging.result], ['mutation', 'reduce', true, 'media_purged', 'due_list']);
+  const route = C.ROUTES.find((r) => r.surface === 'owner' && r.path === 'media/purge');
+  assert.deepEqual([route.before, route.action], [['media.purging'], 'media.purged']);
+  const order = C.MEDIA.order.purge;
+  assert.ok(order.findIndex((s) => s.startsWith('owner:media.purging')) < order.indexOf('delete the due objects'), 'decided before anything is deleted');
+});
+
+test('authorization_unavailable is a reason the contract lists (the Worker\'s session or owner check could not answer)', () => {
+  assert.equal(C.HTTP_REASONS.authorization_unavailable, 503);
+});
+
+test('a member body nested to the body limit is walked without overflowing the stack, in the same order as before', () => {
+  let deep = {}; let at = deep;
+  for (let i = 0; i < 40000; i += 1) { at.a = [{}]; at = at.a[0]; }
+  at.actor = U(1);
+  assert.equal(C.refusedMemberField(deep).split('.').length, 80001, 'the account-naming key is found at depth 40000');
+  let arrays = [];
+  for (let i = 0; i < 40000; i += 1) arrays = [arrays];
+  assert.equal(C.refusedMemberField({ a: arrays }), null);
+  assert.equal(C.refusedMemberField({ a: { actor: 1 }, actor: 2 }), 'a.actor', 'depth first: a key inside an earlier value wins over a later key');
+  assert.equal(C.refusedMemberField([{ x: 1 }, { tenant: 1 }]), '1.tenant', 'array indexes are path segments, never refused keys');
 });
