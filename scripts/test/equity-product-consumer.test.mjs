@@ -22,5 +22,15 @@ test('host auth adapter consumes the product transport but retains McCluster ide
 test('Worker implements product server contracts over the existing auth and persistence adapters', () => {
   const source=read('workers/mccluster/src/world-environment.js').toString();
   assert.match(source,/createEnvironmentServer/);assert.match(source,/world_environment_team/);assert.match(source,/world_environment_join/);assert.match(source,/bearerUser/);assert.match(source,/isHouseOwner/);
-  assert.match(source,/state:'enabled'/);assert.match(source,/not a persisted owner module toggle/);
+  // Module policy is the persisted owner decision, not a constant in the adapter (changed on purpose 2026-11-10:
+  // this line used to pin a built-in state:'enabled'). The adapter holds no policy literal of any state and
+  // loadPolicy reads module 'environment' through the one reader, which names the service-only RPC.
+  assert.doesNotMatch(source,/implementationPolicy/);assert.doesNotMatch(source,/state\s*:\s*['"`](?:enabled|draining|disabled)['"`]/);
+  assert.doesNotMatch(source,/equity-uprise\.module-policy\/v1/);
+  assert.match(source,/loadPolicy:\(\)=>readModulePolicy\(env,fetchImpl,'environment'\)/);
+  assert.match(source,/import \{[^}]*\breadModulePolicy\b[^}]*\} from '\.\/eup\/modules\.js'/);
+  const reader=read('workers/mccluster/src/eup/modules.js').toString();
+  assert.match(reader,/export async function readModulePolicy\(env, fetchImpl, module\)/);
+  assert.match(reader,/call\(env, fetchImpl, plain, 'eup_module_policy_read', \{ p_module: module \}/);
+  assert.doesNotMatch(reader,/state\s*:\s*['"`](?:enabled|draining|disabled)['"`]/);
 });
