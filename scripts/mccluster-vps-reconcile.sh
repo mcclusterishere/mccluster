@@ -335,12 +335,22 @@ PROVENANCE_DRIFT=""
 if [[ ! -d "${LIVE_CORE}" ]]; then
   CORE_DRIFT="live core missing"
 else
+  # An empty list means "no drift" only when rsync finished the comparison. One
+  # that failed (an I/O error, a broken library, an OOM kill) compared nothing,
+  # so the cycle fails here instead of attesting a host it did not check. The
+  # whole list is read, never cut short by a pipe that could kill rsync.
+  DRIFT_RC=0
   CORE_DRIFT="$(rsync -acni --delete --omit-dir-times \
     --exclude '.env' \
     --exclude '.env.*' \
     --exclude '.mccluster-artifacts' \
     --exclude '.mccluster-deploy.json' \
-    "${CHECKOUT}/core/" "${LIVE_CORE}/" | head -n 1 || true)"
+    "${CHECKOUT}/core/" "${LIVE_CORE}/")" || DRIFT_RC=$?
+  if (( DRIFT_RC != 0 )); then
+    echo "drift comparison failed (rsync exit ${DRIFT_RC}); refusing to attest ${TARGET_SHA}" >&2
+    exit 4
+  fi
+  CORE_DRIFT="${CORE_DRIFT%%$'\n'*}"
 fi
 
 for unit in "${CHECKOUT}"/core/systemd/*.service "${CHECKOUT}"/core/systemd/*.timer; do
