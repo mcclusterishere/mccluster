@@ -116,6 +116,24 @@ for(const kind of ['sole','tea']){
   assert.equal(readStartIntent(SCOPE,cloudId(kind)),null,'success clears the key');
   view.dispose();
  });
+ // A cross-origin handoff stores only the tokens; MCC.refresh() later stores the full answer with `user`.
+ // Both shapes name the same account, so a start whose response was lost before the refresh is retried
+ // after it with the same key: one run, not two (review of 9bda5896, result-outbox.mjs:11).
+ test(`${kind}: a handoff session and the refreshed full session keep one start key across a lost response`,async()=>{
+  fresh();server=fakeWorker(kind);loseNextStart=true;
+  const jwt=sub=>['eyJhbGciOiJIUzI1NiJ9',Buffer.from(JSON.stringify({sub,role:'authenticated'})).toString('base64url'),'synthetic-signature'].join('.');
+  localStorage.setItem('mccdb_session',JSON.stringify({access_token:jwt(SCOPE),refresh_token:'synthetic-refresh',expires_at:4102444800}));
+  let view=await loadAndPlay(kind,1);
+  await until(()=>/Failed to fetch/.test(view.text()),'lost start reported');
+  assert.equal(sends[0].storedAtSend,sends[0].startKey,'the handoff session stores the key under the account, before the send');
+  view.dispose();
+  localStorage.setItem('mccdb_session',JSON.stringify({access_token:jwt(SCOPE),refresh_token:'synthetic-refresh-2',expires_at:4102444800,user:{id:SCOPE}}));
+  view=await loadAndPlay(kind,1);
+  await until(()=>/Playing/.test(view.text()),'retried start playing');
+  assert.equal(sends.length,2);assert.equal(sends[1].startKey,sends[0].startKey,'the retry after the refresh sends the same key');
+  assert.equal(readStartIntent(SCOPE,cloudId(kind)),null,'success clears the key');
+  view.dispose();
+ });
  test(`${kind}: a 409 on start clears the stored key, so the next start sends a new one`,async()=>{
   fresh();server=fakeWorker(kind,{conflicts:1});
   const view=await loadAndPlay(kind,1);

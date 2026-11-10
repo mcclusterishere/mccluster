@@ -7,8 +7,18 @@
 export const RESULT_OUTBOX_PREFIX='here.city-arcade.result-outbox.v1:';
 export const START_INTENT_PREFIX='here.city-arcade.start-intent.v1:';
 const UUID=/^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
+// The account a stored access token names (its JWT `sub`), read locally and never trusted for anything but
+// choosing this device's storage key: the server checks the bearer on every request.
+function tokenSubject(token){
+  try{const part=typeof token==='string'?token.split('.')[1]:'';if(!part)return null;
+    const claims=JSON.parse(atob(part.replace(/-/g,'+').replace(/_/g,'/').padEnd(Math.ceil(part.length/4)*4,'=')));
+    return typeof claims?.sub==='string'&&claims.sub?claims.sub:null;}catch{return null;}
+}
+// One scope per account whatever shape the session has: a cross-origin handoff stores only the tokens and
+// MCC.refresh() the full answer with `user`; both name the same account, so receipts and start keys written
+// under one are found under the other.
 export function accountScope(){
-  try{const s=JSON.parse(localStorage.getItem('mccdb_session')||'null');const id=s?.user?.id||s?.user_id||s?.id;return typeof id==='string'&&id?id:'device';}catch{return 'device';}
+  try{const s=JSON.parse(localStorage.getItem('mccdb_session')||'null');const id=s?.user?.id||s?.user_id||tokenSubject(s?.access_token)||s?.id;return typeof id==='string'&&id?id:'device';}catch{return 'device';}
 }
 export function outboxKey(scope){return RESULT_OUTBOX_PREFIX+scope;}
 function validEntry(e){
@@ -16,6 +26,8 @@ function validEntry(e){
     &&e.body&&typeof e.body==='object'&&['won','failed'].includes(e.body.status)&&Number.isInteger(e.body.served)&&e.body.served>=0&&e.body.served<=12
     &&(e.body.encounters===undefined||(Array.isArray(e.body.encounters)&&e.body.encounters.length<=3&&e.body.encounters.every(id=>typeof id==='string')));
 }
+// True for a receipt the outbox would accept (the shape every stored entry has).
+export function validReceipt(entry){return validEntry(entry);}
 export function readOutbox(scope=accountScope()){
   try{const list=JSON.parse(localStorage.getItem(outboxKey(scope))||'[]');return Array.isArray(list)?list.filter(validEntry):[];}catch{return [];}
 }

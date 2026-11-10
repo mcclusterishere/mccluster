@@ -40,7 +40,7 @@ const {SOLE_MISSION}=await import('../../js/city-arcade/sole-config.mjs');
 const {newTeaAction,TEA_MISSION}=await import('../../js/city-arcade/tea-action.mjs');
 const {mountTea}=await import('../../js/city-arcade/tea-view.mjs');
 const {mountSoleStreet}=await import('../../js/city-arcade/sole-street-view.mjs');
-const {readOutbox,outboxKey,enqueueResult,RESULT_OUTBOX_PREFIX}=await import('../../js/city-arcade/result-outbox.mjs');
+const {readOutbox,outboxKey,enqueueResult,accountScope,RESULT_OUTBOX_PREFIX}=await import('../../js/city-arcade/result-outbox.mjs');
 const d=JSON.parse(await readFile(new URL('../../core/data/fictional-city/district.v1.json',import.meta.url),'utf8')),neighborhood=d.neighborhoods.find(n=>n.id==='bridgeport-robbery-1s'),point=[51.1422,-253.0175];
 const id='bridgeport-main-elm',run='11111111-1111-4111-8111-111111111111',session={access_token:'synthetic-owner',user:{id:'owner-a'}};
 const nextRun='22222222-2222-4222-8222-222222222222';
@@ -74,6 +74,46 @@ for(const kind of ['sole','tea']){
   assert.equal(root.querySelector(retryButton(kind)).hidden,false);
   assert.equal(root.querySelector(discardButton(kind)).hidden,false,'discard is offered while a result waits');
   dispose();
+ });
+ // Review of 9bda5896 (tea-view.mjs:150): storage that refuses the outbox write (a full quota) must not
+ // cost the legacy receipt. It stays offered for retry and discard, and its session is kept on dispose.
+ test(`${kind}: an outbox write the storage refuses keeps the legacy receipt, its controls and its session`,async()=>{
+  seed(kind);const setItem=localStorage.setItem,sessionKey=kind==='sole'?'here.city-arcade.sole-street.session.v1:'+id:'here.city-arcade.tea-action.session.v1:'+id;
+  localStorage.setItem=(k,v)=>{if(k.startsWith(RESULT_OUTBOX_PREFIX))throw Object.assign(new Error('quota'),{name:'QuotaExceededError'});return setItem(k,v);};
+  try{
+   const root=new Element();const dispose=mount(kind,root);await flush();await flush();
+   assert.deepEqual(readOutbox('owner-a'),[],'the outbox write was refused');
+   assert.equal(root.querySelector(retryButton(kind)).hidden,false,'retry is still offered');
+   assert.equal(root.querySelector(discardButton(kind)).hidden,false,'discard is still offered');
+   dispose();
+   const kept=JSON.parse(store.get(sessionKey)||'null');
+   assert.ok(kept,'the session that holds the receipt is not deleted');
+   assert.deepEqual(kind==='sole'?kept.pending:kept.pendingResult,{id:run,body:pendingBody(kind)},'with its receipt');
+   // A restart while storage still refuses the outbox, then a reload: the receipt is still offered.
+   let again=new Element(),disposeAgain=mount(kind,again);await flush();
+   again.querySelector(resetButton(kind)).click();await flush();disposeAgain();
+   again=new Element();disposeAgain=mount(kind,again);await flush();await flush();
+   assert.equal(again.querySelector(retryButton(kind)).hidden,false,'after a restart and a reload the receipt is still offered');
+   assert.equal(again.querySelector(discardButton(kind)).hidden,false);
+   disposeAgain();
+  }finally{localStorage.setItem=setItem;}
+  const root=new Element();const dispose=mount(kind,root);await flush();
+  assert.deepEqual(readOutbox('owner-a').map(e=>[e.id,e.body]),[[run,pendingBody(kind)]],'once storage accepts it, the receipt moves into the outbox');
+  dispose();
+ });
+ test(`${kind}: a kept receipt that is malformed, or whose run the outbox already holds with another body, is never offered`,async()=>{
+  const sessionKey=kind==='sole'?'here.city-arcade.sole-street.session.v1:'+id:'here.city-arcade.tea-action.session.v1:'+id;
+  for(const [label,body,queued] of [['malformed',{status:'cheated',served:99},null],['conflicting',pendingBody(kind),kind==='sole'?{status:'won',served:4,encounters:[]}:{status:'won',served:5}]]){
+   store.clear();localStorage.setItem('mccdb_session',JSON.stringify(session));capability=false;routes={};
+   if(queued)assert.equal(enqueueResult('owner-a',{id:run,game:kind==='sole'?'designer-kicks-sole-run':'gauranfucking-tea-tea-rush',locationId:id,body:queued}),true);
+   const ready=kind==='sole'?{...newStreetRun(SOLE_MISSION,neighborhood,point),locationId:id,cloudRun:null,pending:null}:{state:newTeaAction(),cloudRun:null,pendingResult:null};
+   store.set(sessionKey,JSON.stringify({...ready,unqueued:{id:run,body}}));
+   const root=new Element();const dispose=mount(kind,root);await flush();
+   if(queued){assert.deepEqual(readOutbox('owner-a').map(e=>e.body),[queued],label+': the stored receipt is unchanged');assert.equal(root.querySelector(retryButton(kind)).hidden,false,label+': the stored receipt is offered');}
+   else{assert.deepEqual(readOutbox('owner-a'),[],label+': nothing is queued');assert.equal(root.querySelector(retryButton(kind)).hidden,true,label+': nothing is offered');}
+   dispose();
+   assert.equal(JSON.parse(store.get(sessionKey)||'{}').unqueued,undefined,label+': it is not kept in the session either');
+  }
  });
  test(`${kind}: restart/apply does not erase the pending result and keeps retry visible`,async()=>{
   seed(kind);const root=new Element();const dispose=mount(kind,root);await flush();
@@ -166,6 +206,44 @@ for(const kind of ['sole','tea']){
   assert.deepEqual(readOutbox('owner-a').map(e=>e.id),[run],'still queued after the view closes');
  });
 }
+// The finish path of the same review finding: a cloud run that ends while storage refuses the outbox write.
+test('tea: a cloud run that finishes while the outbox write is refused keeps its receipt through dispose',async()=>{
+ store.clear();capability=false;routes={};requests.length=0;localStorage.setItem('mccdb_session',JSON.stringify(session));
+ const state=newTeaAction();state.status='paused';state.remaining=0.01;
+ const sessionKey='here.city-arcade.tea-action.session.v1:'+id;
+ store.set(sessionKey,JSON.stringify({state,cloudRun:run,pendingResult:null}));
+ const setItem=localStorage.setItem,raf=globalThis.requestAnimationFrame,frames=[];
+ globalThis.requestAnimationFrame=cb=>{frames.push(cb);return frames.length;};
+ localStorage.setItem=(k,v)=>{if(k.startsWith(RESULT_OUTBOX_PREFIX))throw Object.assign(new Error('quota'),{name:'QuotaExceededError'});return setItem(k,v);};
+ try{
+  const finished=[];const root=new Element();const dispose=mountTea(root,r=>finished.push(r),{locationId:id,onReturn(){}});
+  root.querySelector('[data-pause]').click();
+  frames.shift()(1000);
+  assert.equal(finished.at(-1)?.status,'failed','the restored shift ran out');assert.equal(finished.at(-1)?.cloud,'pending');
+  await flush();await flush();
+  assert.deepEqual(readOutbox('owner-a'),[],'the outbox write was refused');
+  assert.equal(root.querySelector('[data-cloud-retry]').hidden,false,'retry is offered');
+  assert.equal(root.querySelector('[data-cloud-discard]').hidden,false,'discard is offered');
+  dispose();
+  assert.deepEqual(JSON.parse(store.get(sessionKey)||'null')?.pendingResult,{id:run,body:{status:'failed',served:0}},'the finished run keeps its receipt in its session');
+ }finally{localStorage.setItem=setItem;globalThis.requestAnimationFrame=raf;}
+});
+// Review of 9bda5896 (result-outbox.mjs:11): a cross-origin handoff stores only the tokens, MCC.refresh() the
+// full answer. Both name one account, so both must give one scope, or receipts and start keys split in two.
+test('the account scope is the same for a handoff session and the full session of one account, and differs by account',()=>{
+ store.clear();
+ const jwt=payload=>['eyJhbGciOiJIUzI1NiJ9',Buffer.from(JSON.stringify(payload)).toString('base64url'),'synthetic-signature'].join('.');
+ localStorage.setItem('mccdb_session',JSON.stringify({access_token:jwt({sub:'owner-a',role:'authenticated'}),refresh_token:'r',expires_at:4102444800}));
+ assert.equal(accountScope(),'owner-a','tokens only: the access token names the account');
+ localStorage.setItem('mccdb_session',JSON.stringify({access_token:jwt({sub:'owner-a',role:'authenticated'}),refresh_token:'r2',expires_at:4102444800,user:{id:'owner-a'}}));
+ assert.equal(accountScope(),'owner-a','the full session names the same account');
+ localStorage.setItem('mccdb_session',JSON.stringify({access_token:jwt({sub:'owner-b'}),refresh_token:'r',expires_at:4102444800}));
+ assert.equal(accountScope(),'owner-b','another account has another scope');
+ for(const token of ['synthetic-owner','a.b.c',jwt({role:'anon'}),jwt({sub:''}),jwt({sub:42})]){
+  localStorage.setItem('mccdb_session',JSON.stringify({access_token:token}));assert.equal(accountScope(),'device',token);
+ }
+ store.clear();assert.equal(accountScope(),'device','signed out');
+});
 test('outbox keys are account scoped and separate from gameplay session keys',()=>{
  assert.equal(outboxKey('owner-a'),RESULT_OUTBOX_PREFIX+'owner-a');
  assert.notEqual(outboxKey('owner-a'),outboxKey('owner-b'));
