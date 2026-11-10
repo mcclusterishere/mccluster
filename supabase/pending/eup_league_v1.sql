@@ -1741,6 +1741,64 @@ begin
   return v_result;
 end $$;
 
+-- ---------------------------------------------------------------- media seal
+-- Called only by the Worker, after it read the stored object itself: p_result is what the Worker measured (byte
+-- count, SHA-256, magic-byte family, storage identity), never what the client claimed. No idempotency key: the
+-- seal is idempotent by state, and the digest and identity are written once.
+create function public.eup_league_media_seal(p_upload uuid, p_actor uuid, p_result jsonb)
+returns jsonb language plpgsql security invoker set search_path = '' set lock_timeout = '5s' as $$
+declare
+  v_house uuid; v_mission uuid; v_campaign uuid; v_doc jsonb := coalesce(p_result, '{}'::jsonb); v_bytes numeric;
+  u public.eup_media_uploads%rowtype;
+begin
+  select oo.id into v_house from public.orgs oo where oo.slug = 'mccluster' limit 1;
+  if p_actor is null or v_house is null or not public.eup_league_actor_known(p_actor) then
+    raise exception 'A signed-in account is required' using errcode = '42501'; end if;
+  if octet_length(v_doc::text) > (public.eup_league_contract('{limits,document_max_bytes}') #>> '{}')::integer then
+    raise exception 'Document too large' using errcode = '22023'; end if;
+  -- Sealing is new work: the normal guard for both outcomes. While the module drains a staged upload stays staged.
+  perform public.eup_module_guard('league');
+  select mm.id, mm.campaign_id into v_mission, v_campaign
+    from public.eup_media_uploads uu join public.eup_assignments ss on ss.id = uu.assignment_id join public.eup_missions mm on mm.id = ss.mission_id
+   where uu.id = p_upload and uu.tenant = v_house;
+  if not found then raise exception 'Not found' using errcode = 'P0002'; end if;
+  perform 1 from public.eup_campaigns cc where cc.id = v_campaign and cc.tenant = v_house for share;
+  perform 1 from public.eup_missions mm where mm.id = v_mission and mm.tenant = v_house for share;
+  select * into u from public.eup_media_uploads uu where uu.id = p_upload and uu.tenant = v_house for update;
+  perform public.eup_league_gate(v_house, p_actor, v_mission, u.participant, true);
+  perform public.eup_league_require_document('seal_result', v_doc);
+
+  if u.state = 'staged' then
+    if now() > u.expires_at then
+      -- Not an error: the state is committed, and the Worker deletes the object after this answer.
+      update public.eup_media_uploads uu set state = 'expired', updated_at = now() where uu.id = u.id returning * into u;
+    elsif v_doc ->> 'outcome' = 'sealed' then
+      v_bytes := (v_doc ->> 'bytes')::numeric;
+      -- A recorder knows its blob size, so a different size is a different file. (storage.size = bytes is a document rule.)
+      if v_bytes <> u.declared_bytes or v_bytes > u.max_bytes or v_bytes > (public.eup_league_contract('{media,hard_max_bytes}') #>> '{}')::numeric
+         or not coalesce(public.eup_league_contract(array['media', 'types', u.mime, 'families']) ? (v_doc ->> 'family'), false) then
+        raise exception 'The stored object is not the declared upload' using errcode = 'EU014'; end if;
+      update public.eup_media_uploads uu set state = 'sealed', bytes = v_bytes::integer, sha256 = v_doc ->> 'sha256', family = v_doc ->> 'family',
+          storage_object_id = (v_doc #>> '{storage,object_id}')::uuid, storage_etag = v_doc #>> '{storage,etag}',
+          storage_size = (v_doc #>> '{storage,size}')::numeric::integer, sealed_at = now(), updated_at = now()
+       where uu.id = u.id returning * into u;
+    else
+      update public.eup_media_uploads uu set state = 'rejected', rejected_reason = v_doc ->> 'reason', updated_at = now() where uu.id = u.id returning * into u;
+    end if;
+  elsif u.state = 'sealed' and v_doc ->> 'outcome' = 'sealed' then
+    -- Written once: the same measurement returns the row unchanged, a different one is refused.
+    if u.sha256 <> (v_doc ->> 'sha256') or u.bytes <> (v_doc ->> 'bytes')::numeric or u.family <> (v_doc ->> 'family')
+       or u.storage_object_id <> (v_doc #>> '{storage,object_id}')::uuid or u.storage_etag <> (v_doc #>> '{storage,etag}')
+       or u.storage_size <> (v_doc #>> '{storage,size}')::numeric then
+      raise exception 'The upload is sealed with a different digest or identity' using errcode = 'EU014'; end if;
+  elsif u.state = 'rejected' and v_doc ->> 'outcome' = 'rejected' and u.rejected_reason = (v_doc ->> 'reason') then
+    null;
+  else
+    raise exception 'Upload cannot be sealed now' using errcode = '40001';
+  end if;
+  return public.eup_league_upload_json(u, true);
+end $$;
+
 -- Functions: nothing for public, anon or authenticated; service_role executes them. The three entry points are
 -- eup_league_command, eup_league_member_command and eup_league_media_seal; the rest are the helpers those
 -- SECURITY INVOKER functions call (an invoker function can only call what its caller may execute).
