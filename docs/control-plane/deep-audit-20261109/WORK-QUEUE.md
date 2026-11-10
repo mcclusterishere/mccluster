@@ -21,30 +21,25 @@ Everything needed to finish is pushed. If the build machine is gone, another age
   - `patches/README.md`;
   - `supabase/pending/PROMOTION-ORDER.md`.
 
-  CI is green except the City Arcade progression journey at 1280 px. It stalls one waypoint short of checkpoint 2,
-  and the PR comment of 2026-11-10 15:55 UTC explains it.
+  CI is green on `7473dc06`: all 68 checks passed or were skipped by their own conditions (read 2026-11-10 20:10 UTC).
 - **`mcclusterishere/equity-uprise`** (private product repository):
 
   | Branch | What it holds |
   | --- | --- |
-  | `claude/installation-core-m1` | stage 3, in progress (the site task module) |
+  | `claude/installation-core-m1` | stage 3, complete at `b1f2723` (0.1.0-review.11): the first task module, `site` |
+  | `claude/installation-core-m1-wip` | snapshots of uncommitted edits taken at each checkpoint; unverified, for recovery only |
   | `claude/installation-core-stage1`, `claude/installation-core-stage2` | the delivered stages |
   | `claude/composed-candidate-r1` | the repaired candidate |
-  | `claude/installation-core-handoff` | `handoff/README.md` (where stage 3 stands and the steps left) and `handoff/stage3/` (the builders' brief, the frozen design and the lane reports) |
+  | `claude/installation-core-handoff` | `handoff/README.md` (where stage 3 stands and its open notes) and `handoff/stage3/` (the builders' brief, the frozen design, the two reviews, and the lane, repair, verification and follow-up reports) |
 
-- **COM-3 (#782)**: `patches/pr-782-com3/BRIEF.md` is the brief. Nothing is built yet.
+- **COM-3 (#782)**: `patches/pr-782-com3/BRIEF.md` is the brief. Its build started at 20:05 UTC on 2026-11-10 (design,
+  implementation, proof, in that order); the built series is added here as soon as it exists, before its reviews.
 
 Open items and the next step for each:
 
-1. **Stage 3.** Follow `handoff/README.md` on the product's handoff branch:
-   - finish lane 3 (its final runs and report);
-   - two adversarial reviews;
-   - a repair round to `0.1.0-review.11`;
-   - an independent final verification.
-
-   Push each green step to `claude/installation-core-m1`.
-2. **COM-3.** Follow its brief: build the series against #782's head `53dcd552`, have it reviewed twice, repair it,
-   have it checked independently, then add it here.
+1. **Stage 3.** Done at `b1f2723` (see the queue's row 8). Its open notes, none blocking, are in `handoff/README.md`.
+2. **COM-3.** Follow its brief: build the series against #782's head `53dcd552` (running), have it reviewed twice,
+   repair it, have it checked independently, then add it here.
 3. **Close-out.**
    - Refresh the PR #793 description.
    - Confirm CI on the final head, re-running a failed job at most once.
@@ -68,8 +63,8 @@ Rules for whoever continues:
 | 4 | Buyer download retry | Done on the branch: a 4xx without the function's reason is an unknown outcome; the key is shared with a second tab; a limit answer just after a signing failure is not final; the key lifetime stays the server's longest answer window (checked against the applied SQL: shorter could cost a download). 18 page tests, 12 real-handler scenarios. | Nothing. The purchased-version title fix stays a separate patch (merging it deploys the function). |
 | 5 | Native concurrency proofs for module policy and intake | Done on the branch: `scripts/test/eup-module-policy.native.integration.mjs` (96) and `scripts/test/eup-intake.native.integration.mjs` (33) on a disposable local server (`scripts/test/support/native-postgres.mjs`), green on PostgreSQL 16.15 and 17.7; seven SQL mutations each make them fail. The policy proof uses a guarded fixture table, so it does not depend on the League commands being rewritten. | Nothing. |
 | 6 | Core follow-ups | Done on the branch: a lost lease stops ten executors before their next outward action (coding agent, push, pull request, preview build and publish, meeting join and chat, text message, public posts and comments, news pairs); the daily report is one row per window (pending unique index, not applied; the digest reads a racing run's row and leaves its text to that run). | Applying the index is the owner's, on its own, after the duplicate check (none on production today). |
-| 7 | Findings that live on other PR heads (758, 760, 789, 787, 734, 782, 792, and the A7 decision) | Series under `docs/control-plane/deep-audit-20261109/patches/` with manifests and a README: #760 (A3, A4), #758 (W4), #789 (A6), #787 (W5) and #734 (C8), each checked to apply on its PR head; the W5 and C8 series were each re-run by an independent skeptic. | COM-3 (#782): a patch series (persisted attempt state, recovery only for a verified pre-session rejection, an operator queue) runs after stage 3, one workflow at a time; A7 is the owner's decision; #792 needs a rebase. All three are listed in the README with their next step. Applying a series to its PR is that PR owner's step. |
-| 8 | Reusable product: composed candidate and a small installation core | Candidate repaired as 0.1.0-review.5 (panel ownership across host nodes and module copies; PostgreSQL 17 provisioning): `npm run check` 394/394, PGlite control PASS, native PostgreSQL 17.7 acceptance PASS. Installation core stage 1 (configuration, independence guard, secret references, registry, installation-owned identity, operator CLI) at `635395d` (0.1.0-review.6) and stage 2 (reference host, effects ledger, backup and restore into a fresh database, two unrelated installations, operator runbook, and two review-and-repair rounds) at `e0be88a` (0.1.0-review.9): `npm run check` 522/522, PGlite 38/38. Now pushed to `mcclusterishere/equity-uprise` (the owner granted push access on 2026-11-10): `claude/composed-candidate-20261109`, `claude/composed-candidate-r1`, `claude/installation-core-stage1`, `claude/installation-core-stage2`. | Stage 3 (the first task: site draft, preview, review, publish, rollback, export, as one swappable module) is being built; its work in progress is pushed as `claude/installation-core-m1` (`4a7f719`, 0.1.0-review.10, 547/547: the module, the host routes and export, the native proofs and the docs). Then the native proofs and docs, two independent reviews, a repair round and a final verification, each delivered as it lands. |
+| 7 | Findings that live on other PR heads (758, 760, 789, 787, 734, 782, 792, and the A7 decision) | Series under `docs/control-plane/deep-audit-20261109/patches/` with manifests and a README: #760 (A3, A4), #758 (W4), #789 (A6), #787 (W5) and #734 (C8), each checked to apply on its PR head; the W5 and C8 series were each re-run by an independent skeptic. | COM-3 (#782): a patch series (persisted attempt state, recovery only for a verified pre-session rejection, an operator queue) is being built, then reviewed twice, repaired and checked independently, one workflow at a time; A7 is the owner's decision; #792 needs a rebase. All three are listed in the README with their next step. Applying a series to its PR is that PR owner's step. |
+| 8 | Reusable product: composed candidate and a small installation core | Candidate repaired as 0.1.0-review.5 (panel ownership across host nodes and module copies; PostgreSQL 17 provisioning): `npm run check` 394/394, PGlite control PASS, native PostgreSQL 17.7 acceptance PASS. Installation core stage 1 (configuration, independence guard, secret references, registry, installation-owned identity, operator CLI) at `635395d` (0.1.0-review.6) and stage 2 (reference host, effects ledger, backup and restore into a fresh database, two unrelated installations, operator runbook, and two review-and-repair rounds) at `e0be88a` (0.1.0-review.9): `npm run check` 522/522, PGlite 38/38. Now pushed to `mcclusterishere/equity-uprise` (the owner granted push access on 2026-11-10): `claude/composed-candidate-20261109`, `claude/composed-candidate-r1`, `claude/installation-core-stage1`, `claude/installation-core-stage2`. | Stage 3 is done at `b1f2723` (0.1.0-review.11) on `claude/installation-core-m1`: the first task module, `site` (a neutral site draft, preview, review, publish, rollback, unpublish and export, as one swappable module). Two adversarial reviews found 10 findings (3 major), all fixed with tests that fail before; an independent verification took each fix back out and saw its test fail (17 of 17); two follow-ups corrected the documents where that verification and its own check found them wrong (a findings count, the runbook's deploy and nginx block, a stale capacity figure, and whether systemd was installed) and proved two claims with native tests. `npm run check` 560/560 on Node 22 and 24 and inside an export; PGlite 77/77; native suites on PostgreSQL 16.15 and 17.7 (17.7 backups unproven: no `pg_dump` 17). Records on `claude/installation-core-handoff`. Owner: `independent_install_accepted` stays false until the owner accepts the edition; the runbook's open notes (`handoff/README.md`). |
 | 9 | Close-out | Verification done: every ledger row checked by a verifier and an independent skeptic; 16 rows stood, the rest are rewritten and their code and test gaps fixed on this branch (C4's swallowed publication gate, A1's per-view state across accounts, W2's lost 409 text and dropped receipts, and tests that now bite for C5, C5-c, C6, C7, C7b, W3, COM-1, EQ1). | Map the owner's P0 to P9 list to its state; refresh the PR description; confirm CI on the final head. |
 
 ## Owner decisions that do not block the queue
