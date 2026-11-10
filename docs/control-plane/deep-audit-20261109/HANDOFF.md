@@ -197,7 +197,7 @@ Generated PRIM3 side operations from the stripped export; environment mode on th
 
 ## Deferred scope
 
-Executors honouring the lost-lease `signal` mid-execution; a dedicated `lease_token` column; a unique index for digest windows; `attempt_key` from `js/music-purchase.js`; composition of the control follow-on with the mission follow-on; independent installation proofs; Admin stack composition (#789); COM-3; A3/A4/A6; W4/W5; C8; the historical backlog dispositions marked salvage/park in the PR table.
+Executors honouring the lost-lease `signal` mid-execution; a dedicated `lease_token` column; a unique index for digest windows; publishing the page that now sends `attempt_key` (`js/music-purchase.js`, source only) and releasing the purchased-title Edge candidate (not in this branch); composition of the control follow-on with the mission follow-on; independent installation proofs; Admin stack composition (#789); COM-3; A3/A4/A6; W4/W5; C8; the historical backlog dispositions marked salvage/park in the PR table.
 
 ## Rollback and data recovery
 

@@ -27,7 +27,34 @@ Re-applying `20261031180839_music_direct_sales_v1.sql` after this file would res
 
 `PGHOST=127.0.0.1 PGPORT=5499 PGUSER=postgres bash scripts/test-music-direct-sales-db.sh` → `music direct sales: ok`, covering: v1 applied twice; the new behaviour file **fails** on v1 alone (regression bites); backfill of an unchanged-offer order and refusal of an edited-offer order; this migration applied twice; v1 behaviour (unchanged) and new behaviour pass; both rollbacks; legacy inactive offer preserved; re-apply of both; both behaviours again. `node --test scripts/test/music-direct-sales.test.mjs`: 23/23.
 
-The purchase page (`js/music-purchase.js`) does not yet send `attempt_key`; without it each click is a new attempt (still correct, just no retry coalescing). Wiring the key is UI follow-up.
+## Follow-up, 2026-11-10: the buyer's retry key (source only; not published)
+
+Receipt item 6, first half. `js/music-purchase.js` now sends `attempt_key`. It is a static file: it takes effect when the site is published, and nothing in Supabase changes (v42 already accepts the key).
+
+What the applied SQL does with a repeated key, which is what the page is built against:
+
+| Attempt state when the key arrives again | Answer |
+| --- | --- |
+| never seen | a new attempt (counted once a URL is issued) |
+| `reserved`, hold still live (120 s; the handler passes no hold) | 200, `replay: true`, the same attempt, then counted once |
+| `issued`, inside 300 s of issue | 200, `replay: true`, a newly signed URL, nothing more counted |
+| `issued`, past 300 s | 409 `attempt_spent` |
+| `released` (signing failed, or settlement refused) | 409 `attempt_spent` |
+| `reserved`, hold lapsed | 409 `attempt_spent` |
+| purchase revoked, refunded, expired or unresolved | that refusal, decided before the key is looked at |
+
+The page: a fresh random key for every deliberate download; the same key again while the outcome is unknown (no network, no answer in 20 s, a 5xx, an unreadable body), with the buyer told the download may or may not have been counted and that trying again will not use another; no key once a URL or a refusal came back. The unresolved key is kept in `sessionStorage` per purchase token for 20 s + 120 s + 300 s after its last send.
+
+Two things in v42 the page works around rather than relies on:
+
+- 503 `sign_retry` echoes `attempt_key`, but the attempt it names was just released, so sending that key again answers 409 `attempt_spent`. The page drops the key on a first-send `sign_retry` and starts a new attempt.
+- The same 503, on the retry of an attempt that was already issued, says "Nothing was used" although that attempt stays issued and counted (an issued attempt is never released). The page keeps the key in that one case and says the outcome is not known.
+
+Limits, stated rather than hidden: a new tab or another device has no kept key; a retry later than the window is a new download and the lost one stays counted; a replay signs a new URL (receipt item 7).
+
+Proof (synthetic, local): `node --test scripts/test/music-purchase-retry.test.mjs` (15); `PGLITE_MODULE=… node scripts/test/music-direct-buyer-recovery.integration.mjs` (12 scenarios: the real page script, the real handler source and the applied SQL on PGlite, PostgreSQL 17.5); `node scripts/e2e/music-direct-checkout.e2e.mjs` in Chromium at 390px with fixture answers. No production request, purchase or download.
+
+Receipt item 6, second half (claim and status still name a purchase after the live offer's title and format) is prepared as an Edge source candidate and is **not in this branch**: the committed `music-direct-access` sources stay byte-identical to deployed v42, and any change under `supabase/functions/` that reaches `main` is deployed by `.github/workflows/supabase-functions-deploy.yml`.
 
 ## Not verified
 
