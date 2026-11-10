@@ -1,0 +1,65 @@
+{
+ "lane": "a6",
+ "finding_ids": [
+  "A6"
+ ],
+ "pr": 789,
+ "base_sha": "5f5766ee7c3e1b538263f368e588f429a7a19639",
+ "local_head_sha": "dd7f74968b9939c0be73eb1915cc23c3a90bc7fc",
+ "patches": [
+  "0001-fix-control-bound-every-layout-request-and-make-an-u.patch"
+ ],
+ "files_changed": [
+  "docs/admin/ADMIN-LAYOUT-FOLLOWTHROUGH.md",
+  "docs/admin/ANALYTICS-LAYOUT-PERSISTENCE.md",
+  "js/control-room/analytics-layout-adapter.js",
+  "js/control-room/analytics-layout.js",
+  "js/control-room/bounded-request.js",
+  "scripts/e2e/admin-layout.e2e.mjs",
+  "scripts/e2e/analytics-layout-recovery.e2e.mjs",
+  "scripts/test-owner-analytics-layout-native.mjs",
+  "scripts/test/control-analytics-layout-adapter.test.mjs",
+  "scripts/test/control-bounded-request.test.mjs"
+ ],
+ "tests": [
+  {
+   "command": "node --test scripts/test/control-bounded-request.test.mjs scripts/test/control-analytics-layout-adapter.test.mjs",
+   "result": "head: 23 tests, 23 pass, 0 fail (re-run 2026-11-10 02:40 UTC)"
+  },
+  {
+   "command": "node --test scripts/test/control-*.test.mjs",
+   "result": "head: 135 pass, 0 fail"
+  },
+  {
+   "command": "node --test scripts/test/*.test.mjs",
+   "result": "head: 2012 pass, 0 fail"
+  },
+  {
+   "command": "node scripts/e2e/analytics-layout-recovery.e2e.mjs",
+   "result": "head: 104 passed, 0 failed; three further runs 94/94 each"
+  },
+  {
+   "command": "node scripts/e2e/admin-layout.e2e.mjs (and the Control shell journey)",
+   "result": "head: no failing check in the admin layout journey (its log prints no total); Control shell journey 214/214"
+  },
+  {
+   "command": "scripts/test-owner-analytics-layout-native.mjs on native PostgreSQL",
+   "result": "base and head identical (the fix changes no SQL)"
+  }
+ ],
+ "fail_before": {
+  "base 5f5766ee": "control-bounded-request 0 pass / 9 fail (no helper); adapter 5 pass / 9 fail; analytics-layout-recovery browser journey 24 passed, 22 failed (e.g. 'missing shared helper: the editor fails closed instead of running unbounded' failed: the editor loaded and ran without a deadline)"
+ },
+ "pass_after": {
+  "head": "every test above passes"
+ },
+ "not_run": [
+  "Firefox, WebKit and physical devices: Chromium only, headless, software GL",
+  "An authenticated live owner session and the real layout service: every request was answered by synthetic fixtures",
+  "GitHub Actions on the new head: nothing was pushed to #789"
+ ],
+ "notes": [
+  "Cut by the deep-audit branch session on 2026-11-10 from a lane that finished its code and evidence runs at 00:37 UTC; the container restarted at 00:38 before the lane produced its patch. The staged change was committed unchanged and its unit tests re-run before cutting.",
+  "#789 is stacked on #788 (aae4102c); the patch touches files from that stack (analytics layout editor and adapter), so it belongs on #789 or on the stack's next head."
+ ]
+}

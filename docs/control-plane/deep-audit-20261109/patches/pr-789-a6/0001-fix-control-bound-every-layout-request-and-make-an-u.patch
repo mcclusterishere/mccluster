@@ -1,0 +1,805 @@
+From dd7f74968b9939c0be73eb1915cc23c3a90bc7fc Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 10 Nov 2026 02:32:42 +0000
+Subject: [PATCH] fix(control): bound every layout request and make an
+ unanswered save an explicit state (A6)
+
+Deep-audit finding A6 on #789's stack (analytics layout editor and adapter).
+A request had no deadline and no cancellation: a hung credential refresh,
+header or body wait left the editor busy for ever, a late answer could land
+after the owner moved on, and an unanswered save was reported as neither
+saved nor failed.
+
+- js/control-room/bounded-request.js: one helper for Control editors. Every
+  await of a request (credential refresh, headers, body) sits under one
+  deadline; the transport gets an AbortSignal; a generation counter drops
+  whatever settles late; a newer request supersedes the older one. It never
+  retries. Without timers or AbortController it refuses to construct.
+- The adapter and the editor use it. Without the helper the editor stays
+  unavailable instead of running unbounded.
+- A save with no usable answer is the state `unknown`: the arrangement is
+  kept, writes stay off, and only an explicit readback reconciles it (it says
+  what was stored). A possibly committed save is never replayed.
+- Tests: control-bounded-request (9), adapter (14), a browser recovery journey
+  at 390 and 1280 (late success from a transport that ignores abort, hung
+  stages, superseded loads, missing helper).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ docs/admin/ADMIN-LAYOUT-FOLLOWTHROUGH.md      |  17 +-
+ docs/admin/ANALYTICS-LAYOUT-PERSISTENCE.md    |  49 +++-
+ js/control-room/analytics-layout-adapter.js   |  54 +++--
+ js/control-room/analytics-layout.js           |  59 +++--
+ js/control-room/bounded-request.js            |  59 +++++
+ scripts/e2e/admin-layout.e2e.mjs              |   8 +-
+ scripts/e2e/analytics-layout-recovery.e2e.mjs | 212 ++++++++++++++++++
+ .../test-owner-analytics-layout-native.mjs    |   8 +-
+ .../control-analytics-layout-adapter.test.mjs |  23 +-
+ scripts/test/control-bounded-request.test.mjs | 108 +++++++++
+ 10 files changed, 555 insertions(+), 42 deletions(-)
+ create mode 100644 js/control-room/bounded-request.js
+ create mode 100644 scripts/e2e/analytics-layout-recovery.e2e.mjs
+ create mode 100644 scripts/test/control-bounded-request.test.mjs
+
+diff --git a/docs/admin/ADMIN-LAYOUT-FOLLOWTHROUGH.md b/docs/admin/ADMIN-LAYOUT-FOLLOWTHROUGH.md
+index cc32644d..82c4a75a 100644
+--- a/docs/admin/ADMIN-LAYOUT-FOLLOWTHROUGH.md
++++ b/docs/admin/ADMIN-LAYOUT-FOLLOWTHROUGH.md
+@@ -23,9 +23,9 @@ counts are navigation descriptions, not operational metrics.
+ ## Additive shared hooks (release owner)
+ 
+ 1. In `control.html`, load `css/control-admin-layout.css`, then defer
+-   `js/control-room/section-groups.js` and `js/control-room/analytics-layout.js`
+-   before `control-room-v2.js`. Keep #780's widget definition and #771's readiness
+-   modules and their hooks intact.
++   `js/control-room/section-groups.js`, `js/control-room/bounded-request.js` and
++   `js/control-room/analytics-layout.js` before `control-room-v2.js`. Keep #780's
++   widget definition and #771's readiness modules and their hooks intact.
+ 2. In `sectionHead(entry, right)` of `js/control-room-v2.js`, immediately before
+    `var views = it.views && it.views.length > 1 ?`, insert:
+    ```js
+@@ -85,8 +85,15 @@ revision contract. Until then, production saving is unavailable.
+   atomic revision match server-side. The revision is opaque to the browser.
+ - Reject revoked/denied access with status 401/403, stale state with 409, and
+   missing schema/service with an error. Never turn an error into a default
+-  successful response. Any failed write disables further edits until reload,
+-  because its commit outcome may be uncertain. No automatic retry occurs.
++  successful response. Any failed write that may have left the page disables
++  further edits until reload, because its commit outcome may be uncertain. No
++  automatic retry occurs.
++- `load`, `save` and `identity` are each called with `{signal}` (an `AbortSignal`)
++  and should stop when it aborts. The editor bounds every call with
++  `CR.boundedRequest` whether or not the adapter does, so a call that never
++  settles ends at the deadline: a read locks until reload, a sent save becomes the
++  `unknown` state that keeps the arrangement until an explicit readback. An error
++  with `outcome: 'not_sent'` tells the editor the save never left.
+ 
+ The canonical backend must validate the exact same versioned schema independently:
+ Overview stays first; all six groups occur once; every default belongs to its
+diff --git a/docs/admin/ANALYTICS-LAYOUT-PERSISTENCE.md b/docs/admin/ANALYTICS-LAYOUT-PERSISTENCE.md
+index 1bebb515..01af730e 100644
+--- a/docs/admin/ANALYTICS-LAYOUT-PERSISTENCE.md
++++ b/docs/admin/ANALYTICS-LAYOUT-PERSISTENCE.md
+@@ -57,8 +57,10 @@ Shared `control.html`, `control-room-v2.js`, Worker routing and Analytics render
+ files are unchanged. Keep #780's publisher and #771's inspector hooks intact.
+ 
+ 1. Promote and verify the pending SQL through the release-owned process first.
+-   Load `analytics-layout.js`, `analytics-layout-adapter.js` and the #784 stylesheet
+-   before the shell. #784's category hook remains independently applicable.
++   Load `bounded-request.js`, then `analytics-layout.js` and
++   `analytics-layout-adapter.js`, and the #784 stylesheet before the shell. Without
++   the helper the adapter refuses to construct and the editor stays unavailable.
++   #784's category hook remains independently applicable.
+ 2. Append `CR.analyticsLayout.render()` to Analytics Setup, retaining its existing
+    property forms. At the bind point use the authoritative selected membership's
+    `org_id`, not a route parameter, inferred slug, email or default tenant:
+@@ -94,6 +96,40 @@ files are unchanged. Keep #780's publisher and #771's inspector hooks intact.
+    retrieves the committed revision/value. A conflict preserves the draft for
+    inspection but never silently overwrites the remote version. A denied account
+    clears the editor. Scope mismatches and unavailable schema fail closed.
++   Requests are bounded and an unanswered save is an explicit state; see below.
++
++## Bounded requests and recovery (deep-audit finding A6)
++
++`js/control-room/bounded-request.js` is the one helper the adapter and the editor
++both use. It puts every await of a request (credential refresh, response headers,
++response body) under one deadline, hands the transport an `AbortSignal`, and its
++generation counter discards whatever settles late. It never retries. The deadline
++is 15 s by default; `timeoutMs` on `CR.analyticsLayoutAdapter.create` and on
++`CR.analyticsLayout.bind` changes it. Controls are off only while a request is
++inside its deadline, so Reload always comes back.
++
++The editor publishes its state as `data-layout-state` on the editor section:
++`unavailable`, `loading`, `saving`, `ready`, `locked` (reload first) or `unknown`.
++
++- A read with no answer ends `locked`; "Reload saved layout" retries the read.
++- A save that never left the page (the sign-in check stalled or failed first)
++  changes nothing: arrangement and revision stand and Save is usable again.
++- A save that was sent and did not end in success, a conflict (409) or a denial
++  (401/403) may have committed: deadline, lost connection, unreadable body,
++  unusable envelope, service error. The editor enters `unknown`: the owner's
++  arrangement stays on screen, edits and Save stay off, and nothing is replayed.
++  "Reload saved layout" is the readback. If the stored layout matches the
++  arrangement, nothing more needs storing. If it does not, the arrangement returns
++  as unsaved changes against the freshly read revision and only the owner's next
++  Save sends it. A failed readback keeps both the arrangement and the state.
++- The kept arrangement lives in the mounted editor only. Remounting the editor or
++  reloading the page drops it and simply reads the stored layout again.
++- A conflict (409) behaves as before. Access or account loss aborts the request in
++  flight and clears the editor, arrangement included; `dispose()` aborts too.
++
++The adapter labels a failed save: `error.outcome` is `not_sent`, `unknown`, or
++absent when the service refused it with a status below 500. `load`, `save` and
++`identity` accept `{signal}`; the editor passes its own.
+ 
+ ## Promotion, rollback and evidence
+ 
+@@ -122,6 +158,15 @@ readback, browser full-page reload and error recovery at 390/1280, rollback and
+ reapply. This proves native database/transport/UI integration, not managed
+ production authentication, deployment or live owner acceptance.
+ 
++Stalled and unanswered requests are covered separately, with no database:
++`scripts/test/control-bounded-request.test.mjs` and
++`scripts/test/control-analytics-layout-adapter.test.mjs` use an injected clock;
++`scripts/e2e/analytics-layout-recovery.e2e.mjs` (also run by
++`admin-layout.e2e.mjs`) drives the real editor, adapter and fetch in Chromium at
++390/1280 against a loopback stand-in that stalls before the answer, in the body
++and after the commit. The stand-in is synthetic; modules still need the actual
++Control composition before any of this is owner acceptance.
++
+ ## Concrete original editor work still outstanding
+ 
+ Navigation grouping alone does not finish these original simplification goals:
+diff --git a/js/control-room/analytics-layout-adapter.js b/js/control-room/analytics-layout-adapter.js
+index 34a1dff3..8fa92240 100644
+--- a/js/control-room/analytics-layout-adapter.js
++++ b/js/control-room/analytics-layout-adapter.js
+@@ -2,28 +2,56 @@
+ (function(root){
+  'use strict';root.CR=root.CR||{};
+  function create(options){
+-  var org=options.orgId,supa=options.supa;
++  var org=options.orgId,supa=options.supa,bounded=root.CR.boundedRequest;
+   if(typeof org!=='string'||!/^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(org)||!supa||typeof supa.token!=='function'||typeof supa.url!=='string'||!supa.key)throw Error('Authenticated workspace configuration required');
++  // Fail closed: without js/control-room/bounded-request.js a stalled connection would never return.
++  if(!bounded||typeof bounded.create!=='function')throw Error('Bounded request helper required');
++  bounded.create({timeoutMs:options.timeoutMs});
+   var principal=null;
+-  function fail(message,status){return Object.assign(Error(message),{status:status});}
+-  async function session(){
+-   var token=await supa.token(),sub;
++  function fail(message,status,more){return Object.assign(Error(message),{status:status},more);}
++  async function session(ctl){
++   var token=await ctl.step(supa.token()),sub;
+    try{sub=JSON.parse(root.atob(token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))).sub;}catch(_){throw fail('Sign in required',401);}
+    if(typeof sub!=='string'||!sub)throw fail('Sign in required',401);
+    // This comparison fences UI identity only. PostgreSQL verifies the signed JWT and owner role.
+    if(principal&&principal!==sub)throw fail('Account changed. Reopen layout settings.',403);
+    principal=sub;return {token:token,sub:sub};
+   }
+-  async function rpc(name,args){
+-   var before=await session(),response;
+-   try{response=await (options.fetch||root.fetch)(supa.url.replace(/\/$/,'')+'/rest/v1/rpc/'+name,{method:'POST',redirect:'error',cache:'no-store',headers:{apikey:supa.key,authorization:'Bearer '+before.token,'content-type':'application/json'},body:JSON.stringify(args)});}catch(_){throw fail('Layout request outcome is unknown. Reload before saving again.',503);}
+-   var data;try{data=await response.json();}catch(_){throw fail('Layout response unavailable. Reload before saving again.',503);}
+-   if(!response.ok)throw fail(response.status===409?'Layout changed elsewhere.':response.status===401||response.status===403?'Owner access required.':'Layout service unavailable. Reload before saving again.',response.status);
+-   await session();
+-   if(!data||data.org_id!==org||data.schema!=='analytics-layout/v1'||typeof data.revision!=='string'||!/^\d+$/.test(data.revision))throw fail('Unexpected layout scope or revision.',503);
+-   return {schema:data.schema,revision:data.revision,layout:root.CR.analyticsLayout.validate(data.layout)};
++  // One deadline per call covers the credential refresh, the response headers and the response
++  // body; the transport gets its AbortSignal and a caller's signal can cancel it. No retries.
++  function bound(task,input){return bounded.create({timeoutMs:options.timeoutMs}).run(task,{signal:input&&input.signal});}
++  async function rpc(name,args,input,write){
++   var sent=false;
++   try{
++    return await bound(async function(ctl){
++     var before=await session(ctl),response,data;
++     sent=true;
++     try{response=await ctl.step((options.fetch||root.fetch)(supa.url.replace(/\/$/,'')+'/rest/v1/rpc/'+name,{method:'POST',redirect:'error',cache:'no-store',signal:ctl.signal,headers:{apikey:supa.key,authorization:'Bearer '+before.token,'content-type':'application/json'},body:JSON.stringify(args)}));}catch(error){if(error&&error.bounded)throw error;throw fail('Layout request outcome is unknown. Reload before saving again.',503);}
++     try{data=await ctl.step(response.json());}catch(error){if(error&&error.bounded)throw error;throw fail('Layout response unavailable. Reload before saving again.',503);}
++     if(!response.ok)throw fail(response.status===409?'Layout changed elsewhere.':response.status===401||response.status===403?'Owner access required.':'Layout service unavailable. Reload before saving again.',response.status);
++     await session(ctl);
++     if(!data||data.org_id!==org||data.schema!=='analytics-layout/v1'||typeof data.revision!=='string'||!/^\d+$/.test(data.revision))throw fail('Unexpected layout scope or revision.',503);
++     return {schema:data.schema,revision:data.revision,layout:root.CR.analyticsLayout.validate(data.layout)};
++    },input);
++   }catch(error){
++    if(!error||!error.bounded){
++     // What a failed save leaves known: the service refused it (a status below 500), it was never
++     // sent, or it was sent and got no usable answer, so it may have committed: unknown.
++     if(write&&error&&typeof error==='object'&&error.outcome===undefined&&!(error.status<500))error.outcome=sent?'unknown':'not_sent';
++     throw error;
++    }
++    // Deadline or cancellation. Say what is known and stop: a save is never sent again from here.
++    var late=error.code==='timeout',why=sent?(late?'no answer arrived in time':'it was cancelled before an answer arrived'):(late?'the sign-in check did not finish in time':'it was cancelled first');
++    throw fail(write?(sent?'Layout request outcome is unknown: '+why+'. Reload before saving again.':'Layout request was not sent: '+why+'.'):'Layout was not loaded: '+why+'.',503,Object.assign({code:error.code},write?{outcome:sent?'unknown':'not_sent'}:null));
++   }
+   }
+-  return {identity:async function(){return (await session()).sub;},load:function(){return rpc('owner_analytics_layout_read_v1',{p_org_id:org});},save:function(input){return rpc('owner_analytics_layout_save_v1',{p_org_id:org,p_expected_revision:input.expectedRevision,p_layout:root.CR.analyticsLayout.validate(input.layout)});}};
++  function identity(input){
++   return bound(function(ctl){return session(ctl).then(function(current){return current.sub;});},input).catch(function(error){
++    if(!error||!error.bounded)throw error;
++    throw fail(error.code==='timeout'?'Sign-in check did not finish in time.':'Sign-in check was cancelled.',503,{code:error.code});
++   });
++  }
++  return {identity:identity,load:function(input){return rpc('owner_analytics_layout_read_v1',{p_org_id:org},input,false);},save:function(input){return rpc('owner_analytics_layout_save_v1',{p_org_id:org,p_expected_revision:input.expectedRevision,p_layout:root.CR.analyticsLayout.validate(input.layout)},input,true);}};
+  }
+  root.CR.analyticsLayoutAdapter={create:create};
+ })(typeof window==='undefined'?globalThis:window);
+diff --git a/js/control-room/analytics-layout.js b/js/control-room/analytics-layout.js
+index c8b24e1b..39402456 100644
+--- a/js/control-room/analytics-layout.js
++++ b/js/control-room/analytics-layout.js
+@@ -14,31 +14,60 @@
+  }
+  function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function render(){return '<section class="cr-layout-editor" data-analytics-layout><h2>Analytics layout</h2><p>Keep Overview first. Arrange the other five views and choose the detail each opens. Every metric, route and data-status action remains available.</p><p role="status" aria-live="polite" data-layout-status>Shared layout saving is unavailable until the owner configuration service supports Analytics.</p><div data-layout-body></div><div class="cr-layout-actions"><button type="button" data-layout-reload>Reload saved layout</button><button type="button" data-layout-reset>Use default arrangement</button><button type="button" data-layout-save>Save layout</button></div></section>';}
++ function same(a,b){return a.order.join()===b.order.join()&&groups.every(function(g){return a.defaults[g[0]]===b.defaults[g[0]];});}
+  function bind(container,options){
+   var host=container.querySelector('[data-analytics-layout]');if(!host||host.dataset.bound)return null;host.dataset.bound='true';
+-  options=options||{};var adapter=options.adapter,identity=options.identity,seq=0,disposed=false,busy=false,snapshot=null,account=null,draft=defaults();
++  options=options||{};var adapter=options.adapter,identity=options.identity,requests=null,disposed=false,busy=false,snapshot=null,account=null,unknown=null,draft=defaults();
+   var status=host.querySelector('[data-layout-status]'),body=host.querySelector('[data-layout-body]');
+   function note(text){status.textContent=text;}
+-  function buttons(){host.querySelectorAll('button,select').forEach(function(el){el.disabled=busy||!snapshot;});host.querySelector('[data-layout-reload]').disabled=busy||!adapter;host.querySelectorAll('[data-layout-up]').forEach(function(el){if(Number(el.dataset.layoutUp)<=1)el.disabled=true;});}
++  // data-layout-state: unavailable | loading | saving | ready | locked (reload first) | unknown
++  // (a save got no usable answer: the arrangement is kept, writes stay off until a readback).
++  function buttons(){host.dataset.layoutState=!adapter?'unavailable':busy||(unknown?'unknown':snapshot?'ready':'locked');host.querySelectorAll('button,select').forEach(function(el){el.disabled=!!busy||!snapshot;});host.querySelector('[data-layout-reload]').disabled=!!busy||!adapter;host.querySelectorAll('[data-layout-up]').forEach(function(el){if(Number(el.dataset.layoutUp)<=1)el.disabled=true;});}
+   function draw(){body.innerHTML='<ol>'+draft.order.map(function(id,index){var group=groups.find(function(g){return g[0]===id;});return '<li><div><b>'+esc(labels[id])+'</b><br><button type="button" data-layout-up="'+index+'" aria-label="Move '+esc(labels[id])+' earlier">Move earlier</button></div><label>Opening detail<select data-layout-default="'+id+'">'+group[1].map(function(detail){return '<option value="'+detail+'"'+(draft.defaults[id]===detail?' selected':'')+'>'+esc(labels[detail])+'</option>';}).join('')+'</select></label></li>';}).join('')+'</ol>';buttons();}
+-  function invalidate(){seq++;snapshot=null;account=null;busy=false;draft=defaults();body.innerHTML='';buttons();note('Access or account changed. Reload to verify owner access.');if(options.onInvalidate)options.onInvalidate();}
++  // One bounded scope for this editor (js/control-room/bounded-request.js): a deadline over the
++  // identity checks and the adapter call, an AbortSignal for the adapter, and the generation that
++  // fences late results. Without it the editor stays unavailable rather than waiting unbounded.
++  if(adapter){try{requests=root.CR.boundedRequest.create({timeoutMs:options.timeoutMs});}catch(_){adapter=null;note('Layout settings are unavailable: a required script did not load. Reload the page.');}}
++  function invalidate(){if(requests)requests.cancel();snapshot=null;account=null;unknown=null;busy=false;draft=defaults();body.innerHTML='';buttons();note('Access or account changed. Reload to verify owner access.');if(options.onInvalidate)options.onInvalidate();}
+   function envelope(data){if(!data||data.schema!=='analytics-layout/v1'||typeof data.revision!=='string'||!data.revision||data.revision.length>200)throw Error('Unsupported layout response.');return {schema:data.schema,revision:data.revision,layout:validate(data.layout)};}
+   async function run(save){
+    if(busy||disposed||!adapter||typeof identity!=='function')return;
+    if(save&&!snapshot)return;
+-   busy=true;var ticket=++seq,expected=snapshot&&snapshot.revision,value=validate(draft);buttons();note(save?'Saving…':'Loading…');
+-   try{
+-    var before=await identity();if(!before||account&&account!==before)throw Object.assign(Error('Account changed.'),{status:403});
+-    var result=await (save?adapter.save({expectedRevision:expected,layout:value}):adapter.load());
+-    var after=await identity();if(ticket!==seq||disposed||!host.isConnected)return;
++   var expected=snapshot&&snapshot.revision,value=validate(draft),kept=unknown,sent=false;
++   busy=save?'saving':'loading';buttons();note(save?'Saving…':'Loading…');
++   var pending=requests.run(async function(ctl){
++    var before=await ctl.step(identity({signal:ctl.signal}));if(!before||account&&account!==before)throw Object.assign(Error('Account changed.'),{status:403});
++    sent=true;
++    var result=await ctl.step(save?adapter.save({expectedRevision:expected,layout:value,signal:ctl.signal}):adapter.load({signal:ctl.signal}));
++    var after=await ctl.step(identity({signal:ctl.signal}));
+     if(before!==after||!after)throw Object.assign(Error('Account changed.'),{status:403});
+-    var data=envelope(result);account=before;snapshot=data;draft=validate(data.layout);draw();
+-    if(options.onSaved)options.onSaved(validate(data.layout));note(save?'Layout saved by the owner service.':'Saved layout loaded.');
+-   }catch(error){if(ticket!==seq||disposed||!host.isConnected)return;
++    return {account:before,data:envelope(result)};
++   }),ticket=requests.generation();
++   function stale(){return ticket!==requests.generation()||disposed||!host.isConnected;}
++   try{
++    var done=await pending;if(stale())return;
++    var data=done.data,stored=!kept||same(kept.layout,data.layout);
++    account=done.account;snapshot=data;unknown=null;draft=validate(stored?data.layout:kept.layout);draw();
++    if(options.onSaved)options.onSaved(validate(data.layout));
++    // Readback after an unknown save: say what was stored. An arrangement that was not stored
++    // comes back as unsaved changes; only the owner's next Save sends it again.
++    note(save?'Layout saved by the owner service.':!kept?'Saved layout loaded.':stored?'Saved layout loaded. It matches the arrangement you tried to save.':'The stored layout does not include the arrangement you tried to save. It is kept below as unsaved changes: Save layout to store it, or Reload saved layout to discard it.');
++   }catch(error){if(stale())return;error=error||{};
+     if(error.status===401||error.status===403){invalidate();return;}
+-    // A failed write may have committed. Never retry using an uncertain revision.
+-    snapshot=null;buttons();note((error.status===409?'Layout changed elsewhere.':error.message||'Layout service unavailable.')+' Reload before editing or saving again.');
+-   }finally{if(ticket===seq&&!disposed){busy=false;buttons();}}
++    var late=error.code==='timeout';
++    if(save&&(!sent||error.outcome==='not_sent')){
++     // Nothing left this page, so nothing can have committed: the revision and arrangement stand.
++     note('Save was not sent'+(late?': the sign-in check did not answer in time.':'.')+' Nothing was changed. Save layout to try again.');
++    }else if(save&&error.status!==409){
++     // A sent save with no usable answer may have committed. Never retry it, and never reuse its
++     // revision: keep the arrangement, stop writes, and let an explicit readback reconcile.
++     snapshot=null;unknown={layout:value};
++     note('Save outcome is unknown: the layout service '+(late?'did not answer in time':'gave no usable answer')+'. Your arrangement is kept. Reload saved layout to check what was stored.');
++    }else{
++     snapshot=null;
++     note((error.status===409?'Layout changed elsewhere.':late?'Layout service did not answer in time.':error.message||'Layout service unavailable.')+(kept?' Your arrangement is still kept. Reload saved layout to try again.':' Reload before editing or saving again.'));
++    }
++   }finally{if(ticket===requests.generation()&&!disposed){busy=false;buttons();}}
+   }
+   host.querySelector('[data-layout-reload]').onclick=function(){if(snapshot&&JSON.stringify(draft)!==JSON.stringify(snapshot.layout)&&!root.confirm('Discard unsaved layout changes and reload?'))return;run(false);};
+   host.querySelector('[data-layout-save]').onclick=function(){run(true);};
+@@ -48,7 +77,7 @@
+   function storage(event){if(event.key===null||event.key==='mccdb_session')invalidate();}
+   root.addEventListener('mcc:auth-changed',invalidate);root.addEventListener('storage',storage);
+   draw();if(adapter&&identity)run(false);
+-  return {invalidate:invalidate,dispose:function(){disposed=true;seq++;root.removeEventListener('mcc:auth-changed',invalidate);root.removeEventListener('storage',storage);}};
++  return {invalidate:invalidate,dispose:function(){disposed=true;if(requests)requests.cancel();root.removeEventListener('mcc:auth-changed',invalidate);root.removeEventListener('storage',storage);}};
+  }
+  root.CR.analyticsLayout={defaults:defaults,validate:validate,render:render,bind:bind};
+ })(typeof window==='undefined'?globalThis:window);
+diff --git a/js/control-room/bounded-request.js b/js/control-room/bounded-request.js
+new file mode 100644
+index 00000000..0c046118
+--- /dev/null
++++ b/js/control-room/bounded-request.js
+@@ -0,0 +1,59 @@
++/* One bounded request helper for Control editors and their adapters.
++   Every await a request makes (credential refresh, response headers, response
++   body) sits under one deadline; the transport gets an AbortSignal; a generation
++   counter discards whatever settles late. It never retries: a write that got no
++   answer is reported to its caller as stopped, and the caller decides. */
++(function(root){
++ 'use strict';root.CR=root.CR||{};
++ var DEFAULT_TIMEOUT_MS=15000;
++ function ignore(){}
++ function usable(ms){return typeof ms==='number'&&isFinite(ms)&&ms>0?ms:0;}
++ function create(options){
++  options=options||{};
++  var setTimer=options.setTimeout||root.setTimeout,clearTimer=options.clearTimeout||root.clearTimeout,Controller=options.AbortController||root.AbortController;
++  // Fail closed: without a clock or a way to cancel, a request could wait for ever.
++  if(typeof setTimer!=='function'||typeof clearTimer!=='function'||typeof Controller!=='function')throw Error('Bounded requests need timers and AbortController');
++  var limit=usable(options.timeoutMs)||DEFAULT_TIMEOUT_MS,generation=0,active=null;
++  // run(task, {timeoutMs, signal}): task(control) starts at once and is the scope's only live
++  // request. Rejects with {bounded:true, code:'timeout'|'aborted'|'superseded'} when stopped.
++  function run(task,request){
++   request=request||{};
++   if(active)active.stop('superseded','A newer request replaced this one.');
++   var ticket=++generation,controller=new Controller(),outer=request.signal,reason=null,settled=false,timer;
++   return new Promise(function(resolve,reject){
++    function finish(settle,value){
++     if(settled)return;settled=true;clearTimer(timer);
++     if(outer)outer.removeEventListener('abort',cancelled);
++     if(active&&active.ticket===ticket)active=null;
++     settle(value);
++    }
++    // The caller learns why first; then the transport and every pending step are cut loose.
++    function stop(code,message){
++     if(settled)return;reason=Object.assign(Error(message),{bounded:true,code:code});
++     finish(reject,reason);controller.abort(reason);
++    }
++    function cancelled(){stop('aborted','The request was cancelled.');}
++    var control={signal:controller.signal,ticket:ticket,
++     current:function(){return !reason&&ticket===generation;},
++     // Await one thing under the deadline. Once the request is stopped the step rejects, so
++     // the task ends there and nothing after it (such as sending the request) can run late.
++     step:function(value){return new Promise(function(pass,fail){
++      if(reason){Promise.resolve(value).then(ignore,ignore);fail(reason);return;}
++      function halt(){fail(reason);}
++      controller.signal.addEventListener('abort',halt);
++      Promise.resolve(value).then(function(result){controller.signal.removeEventListener('abort',halt);pass(result);},function(error){controller.signal.removeEventListener('abort',halt);fail(error);});
++     });}};
++    active={ticket:ticket,stop:stop};
++    timer=setTimer(function(){stop('timeout','The request did not finish in time.');},usable(request.timeoutMs)||limit);
++    if(outer){if(outer.aborted){cancelled();return;}outer.addEventListener('abort',cancelled);}
++    var result;try{result=task(control);}catch(error){finish(reject,error);return;}
++    // A result that arrives after a stop finds the request settled and is dropped here.
++    Promise.resolve(result).then(function(value){finish(resolve,value);},function(error){finish(reject,error);});
++   });
++  }
++  // Invalidate: holders of an earlier ticket are stale, and the request in flight is aborted.
++  function cancel(){generation++;if(!active)return false;active.stop('aborted','The request was cancelled.');return true;}
++  return {run:run,cancel:cancel,generation:function(){return generation;},pending:function(){return !!active;}};
++ }
++ root.CR.boundedRequest={create:create,DEFAULT_TIMEOUT_MS:DEFAULT_TIMEOUT_MS};
++})(typeof window==='undefined'?globalThis:window);
+diff --git a/scripts/e2e/admin-layout.e2e.mjs b/scripts/e2e/admin-layout.e2e.mjs
+index 5822af36..c13f0d15 100644
+--- a/scripts/e2e/admin-layout.e2e.mjs
++++ b/scripts/e2e/admin-layout.e2e.mjs
+@@ -3,6 +3,7 @@ import {createRequire} from 'node:module';
+ import {readFile,mkdir,writeFile} from 'node:fs/promises';
+ import {join} from 'node:path';
+ import assert from 'node:assert/strict';
++import {layoutRecovery} from './analytics-layout-recovery.e2e.mjs';
+ const {chromium}=createRequire(join(process.env.PLAYWRIGHT_DIR||'/opt/node-tools/node_modules','x'))('playwright');
+ const out=process.argv[2]||'/tmp/admin-layout-proof';await mkdir(out,{recursive:true});
+ const browser=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE||undefined,args:['--no-sandbox']});
+@@ -13,7 +14,7 @@ try{for(const width of [390,1280]){
+  await page.route('**/*',r=>r.fulfill({contentType:'text/html',body:'<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:12px;font:16px system-ui}*{box-sizing:border-box}</style><main id="editor"></main><div id="routes"></div><div id="deck"></div>'}));
+  await page.goto('https://fixture.invalid/');
+  await page.addStyleTag({content:await readFile('css/control-admin-layout.css','utf8')});
+- for(const f of ['nav','section-groups','analytics-layout','analytics-deck'])await page.addScriptTag({content:await readFile('js/control-room/'+f+'.js','utf8')});
++ for(const f of ['nav','bounded-request','section-groups','analytics-layout','analytics-deck'])await page.addScriptTag({content:await readFile('js/control-room/'+f+'.js','utf8')});
+  await page.evaluate(()=>{
+   window.record={schema:'analytics-layout/v1',revision:'1',layout:CR.analyticsLayout.defaults()};window.user='owner';window.allow=true;window.writes=0;window.delay=false;
+   window.adapter={load:async()=>{if(!allow)throw Object.assign(Error('Denied'),{status:403});return structuredClone(record);},save:async({expectedRevision,layout})=>{writes++;if(delay)await new Promise(r=>window.release=r);if(!allow)throw Object.assign(Error('Denied'),{status:403});if(expectedRevision!==record.revision)throw Object.assign(Error('Conflict'),{status:409});record={schema:'analytics-layout/v1',revision:String(Number(record.revision)+1),layout};return structuredClone(record);}};
+@@ -41,4 +42,7 @@ try{for(const width of [390,1280]){
+  await page.evaluate(()=>{location.hash='#sell:orders';});await page.waitForTimeout(30);await page.evaluate(()=>{location.hash='#system:apps';});await page.waitForTimeout(30);await page.goBack();await page.waitForTimeout(30);check(width+' browser Back restores local category',await page.locator('.cr-local-items [aria-current="page"]').textContent()==='Orders');
+  check(width+' phone/desktop no horizontal page overflow',await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth));
+  await page.screenshot({path:join(out,`layout-${width}.png`),fullPage:true});check(width+' no script errors',errors.length===0);await page.close();
+-}}finally{await writeFile(join(out,'results.json'),JSON.stringify(results,null,2));await browser.close();}
++}
++ // Stalled, dropped and unanswered requests through the real adapter: bounded recovery (A6).
++ for(const result of await layoutRecovery({browser,out})){if(!result.pass)console.log('FAIL '+result.name+' :: '+JSON.stringify(result.detail??null));check(result.name,result.pass);}
++}finally{await writeFile(join(out,'results.json'),JSON.stringify(results,null,2));await browser.close();}
+diff --git a/scripts/e2e/analytics-layout-recovery.e2e.mjs b/scripts/e2e/analytics-layout-recovery.e2e.mjs
+new file mode 100644
+index 00000000..bb47acd5
+--- /dev/null
++++ b/scripts/e2e/analytics-layout-recovery.e2e.mjs
+@@ -0,0 +1,212 @@
++/* Analytics layout editor: bounded requests and recovery (finding A6). Real Chromium,
++   the real editor, the real adapter and real fetch, against a loopback stand-in for
++   the two layout RPCs that can stall or drop a request exactly where one can hang:
++   before the answer, in the middle of the body, after the commit. It proves the
++   controls come back within the deadline, an unanswered save is an explicit unknown
++   state that keeps the owner's arrangement, nothing is replayed, and an explicit
++   readback reconciles. Synthetic service and identity only; never a backend claim.
++   Runs inside scripts/e2e/admin-layout.e2e.mjs and on its own:
++   PLAYWRIGHT_DIR=<node_modules> [CHROMIUM_EXECUTABLE=…] node scripts/e2e/analytics-layout-recovery.e2e.mjs [outDir] */
++import {createServer} from 'node:http';
++import {createRequire} from 'node:module';
++import {readFile,mkdir,writeFile} from 'node:fs/promises';
++import {join} from 'node:path';
++import {fileURLToPath,pathToFileURL} from 'node:url';
++
++const ROOT=fileURLToPath(new URL('../../',import.meta.url));
++const ORG='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
++const DEFAULT_LAYOUT={version:1,order:['overview','audience','content','action','intelligence','inventory'],defaults:{overview:'overview',audience:'audience',content:'content',action:'action',intelligence:'intelligence',inventory:'inventory'}};
++const SERVED=['/css/control-admin-layout.css','/js/control-room/bounded-request.js','/js/control-room/analytics-layout.js','/js/control-room/analytics-layout-adapter.js'];
++const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
++
++function shell(deadline){return '<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/css/control-admin-layout.css"><style>body{margin:12px;font:16px system-ui}*{box-sizing:border-box}</style><main></main>'+SERVED.filter(path=>path.endsWith('.js')).map(path=>'<script src="'+path+'"></script>').join('')+'<script>'+
++ 'window.T='+deadline+';window.sub="owner";window.holdToken=false;window.jwt=function(){return "x."+btoa(JSON.stringify({sub:window.sub}))+".x";};'+
++ 'window.supa={url:location.origin+"/service",key:"fixture",token:function(){return window.holdToken?new Promise(function(resolve){window.releaseToken=function(){resolve(window.jwt());};}):Promise.resolve(window.jwt());}};'+
++ // A transport that ignores AbortSignal, to prove the editor's own deadline and generation fence.
++ 'window.deaf=function(){var record={schema:"analytics-layout/v1",revision:"1",layout:CR.analyticsLayout.defaults()};window.deafCalls={loads:0,saves:0,signals:[]};return {load:async function(){window.deafCalls.loads++;return JSON.parse(JSON.stringify(record));},save:function(input){window.deafCalls.saves++;window.deafCalls.signals.push(input.signal);return new Promise(function(resolve){window.releaseSave=function(){record={schema:"analytics-layout/v1",revision:String(Number(record.revision)+1),layout:input.layout};resolve(JSON.parse(JSON.stringify(record)));};});}};};'+
++ 'window.mount=function(adapter,identity){if(window.editor)window.editor.dispose();document.querySelector("main").innerHTML=CR.analyticsLayout.render();window.deck=[];window.cleared=0;adapter=adapter||CR.analyticsLayoutAdapter.create({orgId:'+JSON.stringify(ORG)+',supa:window.supa,timeoutMs:window.T});window.editor=CR.analyticsLayout.bind(document,{adapter:adapter,identity:identity||adapter.identity,timeoutMs:window.T,onSaved:function(layout){window.deck.push(layout);},onInvalidate:function(){window.cleared++;}});};'+
++ '</script>';}
++
++/* Loopback stand-in for owner_analytics_layout_read_v1 / _save_v1: one record, a
++   revision check, and a switch for where the next read or save goes silent. */
++async function service(deadline){
++ const state={read:'ok',save:'ok',reads:0,saves:0,cancelled:0,record:null,epoch:0,hanging:new Set()};
++ state.reset=()=>{state.epoch++;for(const res of state.hanging)res.socket?.destroy();state.hanging.clear();state.record={revision:'1',layout:structuredClone(DEFAULT_LAYOUT)};state.read=state.save='ok';state.reads=state.saves=state.cancelled=0;};
++ state.reset();
++ const page=shell(deadline);
++ const server=createServer(async(req,res)=>{
++  try{
++   const path=new URL(req.url,'http://fixture').pathname;res.setHeader('connection','close');
++   if(req.method==='GET'&&path==='/'){res.setHeader('content-type','text/html');res.end(page);return;}
++   if(req.method==='GET'&&SERVED.includes(path)){let body;try{body=await readFile(join(ROOT,path));}catch{res.writeHead(404);res.end();return;}res.setHeader('content-type',path.endsWith('.css')?'text/css':'text/javascript');res.end(body);return;}
++   const rpc=/^\/service\/rest\/v1\/rpc\/owner_analytics_layout_(read|save)_v1$/.exec(path);
++   if(req.method!=='POST'||!rpc){res.writeHead(404);res.end();return;}
++   let text='';for await(const chunk of req)text+=chunk;
++   const args=JSON.parse(text),write=rpc[1]==='save',mode=write?state.save:state.read,epoch=state.epoch;
++   if(write)state.saves++;else state.reads++;
++   // A connection that closes before its answer is complete was cancelled by the page.
++   state.hanging.add(res);res.on('close',()=>{state.hanging.delete(res);if(!res.writableEnded&&epoch===state.epoch)state.cancelled++;});
++   if(mode==='stall')return; // no commit, no answer
++   if(mode==='drop'){req.socket.destroy();return;} // no commit, connection lost
++   let status=200,body;
++   if(write&&args.p_expected_revision!==state.record.revision){status=409;body={code:'PT409',message:'Layout changed. Reload before saving.'};}
++   else if(write)state.record={revision:String(Number(state.record.revision)+1),layout:args.p_layout};
++   body=JSON.stringify(body||{schema:'analytics-layout/v1',org_id:ORG,revision:state.record.revision,layout:state.record.layout});
++   if(mode==='commit-stall')return; // committed, the answer never leaves
++   if(mode==='commit-drop'){req.socket.destroy();return;} // committed, connection lost
++   res.writeHead(status,{'content-type':'application/json'});
++   if(mode==='stall-body'){res.write(body.slice(0,24));return;} // headers and part of the body, then silence
++   res.end(body);
++  }catch{try{res.writeHead(500);res.end();}catch{}}
++ });
++ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
++ state.origin='http://127.0.0.1:'+server.address().port;
++ state.close=async()=>{server.closeAllConnections?.();await new Promise(resolve=>server.close(resolve));};
++ return state;
++}
++
++export async function layoutRecovery({browser,out,widths=[390,1280],deadline=1200}){
++ const results=[],svc=await service(deadline),limit=deadline*2+1500;
++ try{for(const width of widths){
++  const page=await browser.newPage({viewport:{width,height:900}}),errors=[];page.on('pageerror',error=>errors.push(error.message));
++  await page.goto(svc.origin+'/');
++  const status=page.locator('[data-layout-status]'),host=page.locator('[data-analytics-layout]');
++  const save=page.getByRole('button',{name:'Save layout',exact:true}),reload=page.getByRole('button',{name:'Reload saved layout'});
++  const record=(name,pass,detail)=>{results.push({name:width+' '+name,pass:!!pass,...(pass||detail===undefined?{}:{detail})});};
++  const expect=(name,pass,detail)=>{record(name,pass,detail);if(!pass)throw Object.assign(Error(name),{reported:true});};
++  const says=async(text,ms=limit)=>{try{await status.filter({hasText:text}).waitFor({timeout:ms});return true;}catch{return false;}};
++  const until=async(test,ms=limit)=>{for(const end=Date.now()+ms;Date.now()<end;await pause(25))if(await test())return true;return !!(await test());};
++  const mode=()=>host.getAttribute('data-layout-state');
++  const controls=async()=>({status:await status.textContent(),state:await mode(),reloadDisabled:await reload.isDisabled(),saveDisabled:await save.isDisabled()});
++  const mount=async(modes,source)=>{svc.reset();Object.assign(svc,modes);await page.evaluate(source||'mount()');};
++  const loaded=async()=>expect('setup: saved layout loads',await says('Saved layout loaded'),await status.textContent().catch(()=>null));
++  const arrange=async()=>{await page.getByRole('button',{name:'Move Content earlier',exact:true}).click();await page.locator('[data-layout-default="content"]').selectOption('adaptive');};
++  const draftShown=async()=>await page.locator('[data-layout-body] li').nth(1).locator('b').textContent()==='Content'&&await page.locator('[data-layout-default="content"]').inputValue()==='adaptive';
++  const scenario=async(name,body)=>{try{await body();}catch(error){if(!error.reported)record(name,false,String(error.message||error).split('\n')[0]);}};
++
++  await scenario('stalled read',async()=>{
++   await mount({read:'stall'});
++   expect('stalled read: Reload is usable again within the deadline',await until(()=>reload.isEnabled()),await controls());
++   expect('stalled read: status reports no answer and nothing is editable',await says('did not answer in time')&&await save.isDisabled()&&await mode()==='locked',await controls());
++   expect('stalled read: the stalled request was cancelled, not left hanging',await until(()=>svc.cancelled>=1,2000),svc.cancelled);
++   svc.read='ok';await reload.click();
++   expect('stalled read: retry-read recovers the saved layout',await says('Saved layout loaded')&&await page.locator('[data-layout-body] li').count()===6&&await mode()==='ready');
++  });
++
++  await scenario('stalled read body',async()=>{
++   await mount({read:'stall-body'});
++   expect('stalled read body: Reload is usable again within the deadline',await until(()=>reload.isEnabled()),await controls());
++   expect('stalled read body: status reports no answer',await says('did not answer in time')&&await mode()==='locked',await controls());
++   svc.read='ok';await reload.click();
++   expect('stalled read body: retry-read recovers the saved layout',await says('Saved layout loaded')&&await mode()==='ready');
++  });
++
++  await scenario('committed save without an answer',async()=>{
++   await mount();await loaded();await arrange();svc.save='commit-stall';await save.click();
++   expect('committed save without an answer: Reload is usable again within the deadline',await until(()=>reload.isEnabled()),await controls());
++   expect('committed save without an answer: outcome is reported as unknown',await says('outcome is unknown'),await controls());
++   expect('committed save without an answer: explicit unknown state, no further writes',await mode()==='unknown'&&await save.isDisabled()&&await page.locator('[data-layout-default="content"]').isDisabled(),await controls());
++   expect('committed save without an answer: the arrangement is still shown',await draftShown());
++   expect('committed save without an answer: no horizontal overflow in the unknown state',await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth));
++   if(out)await page.screenshot({path:join(out,'layout-unknown-'+width+'.png'),fullPage:true});
++   await pause(deadline*2);
++   expect('committed save without an answer: the save is never replayed automatically',svc.saves===1&&await mode()==='unknown',svc.saves);
++   expect('committed save without an answer: an unknown save is not applied as saved',await page.evaluate(()=>deck.length===1&&deck[0].order[1]==='audience'));
++   svc.save='ok';await reload.click();
++   expect('committed save without an answer: readback finds it stored',await says('matches the arrangement you tried to save')&&await says('Saved layout loaded')&&await mode()==='ready'&&await draftShown()&&svc.saves===1,await status.textContent());
++   await page.locator('[data-layout-default="content"]').selectOption('content');await save.click();
++   expect('committed save without an answer: the next explicit save uses the committed revision',await says('Layout saved')&&svc.saves===2&&svc.record.revision==='3'&&svc.record.layout.defaults.content==='content',svc.record.revision);
++  });
++
++  await scenario('save stalled before commit',async()=>{
++   await mount();await loaded();await arrange();svc.save='stall';await save.click();
++   expect('save stalled before commit: outcome is reported as unknown within the deadline',await says('outcome is unknown')&&await mode()==='unknown',await status.textContent());
++   svc.save='ok';await reload.click();
++   expect('save stalled before commit: readback keeps the arrangement as unsaved changes',await says('does not include the arrangement you tried to save')&&await mode()==='ready'&&await draftShown()&&await save.isEnabled(),await status.textContent());
++   expect('save stalled before commit: nothing was written by the readback',svc.saves===1&&svc.record.revision==='1'&&svc.record.layout.order[1]==='audience'&&await page.evaluate(()=>deck[deck.length-1].order[1]==='audience'));
++   await save.click();
++   expect('save stalled before commit: only the owner\'s explicit Save stores it',await says('Layout saved')&&svc.saves===2&&svc.record.layout.order[1]==='content'&&svc.record.layout.defaults.content==='adaptive');
++  });
++
++  await scenario('connection lost after commit',async()=>{
++   await mount();await loaded();await arrange();svc.save='commit-drop';await save.click();
++   expect('connection lost after commit: outcome is reported as unknown',await says('outcome is unknown')&&await mode()==='unknown'&&await draftShown(),await status.textContent());
++   expect('connection lost after commit: not replayed',svc.saves===1);
++   svc.save='ok';await reload.click();
++   expect('connection lost after commit: readback finds it stored',await says('matches the arrangement you tried to save')&&await mode()==='ready'&&svc.saves===1);
++  });
++
++  await scenario('connection lost before commit',async()=>{
++   await mount();await loaded();await arrange();svc.save='drop';await save.click();
++   expect('connection lost before commit: outcome is reported as unknown with the arrangement still shown',await says('outcome is unknown')&&await draftShown(),await controls());
++   svc.save='ok';await reload.click();await until(async()=>await reload.isEnabled()&&!(await status.textContent()).includes('Loading'));
++   expect('connection lost before commit: the readback does not discard the owner\'s arrangement',await draftShown(),{status:await status.textContent(),secondView:await page.locator('[data-layout-body] li').nth(1).locator('b').textContent().catch(()=>null)});
++   expect('connection lost before commit: it returns as unsaved changes and nothing was written',await says('does not include the arrangement you tried to save')&&await mode()==='ready'&&await save.isEnabled()&&svc.saves===1&&svc.record.revision==='1',await controls());
++   await save.click();
++   expect('connection lost before commit: only the owner\'s explicit Save stores it',await says('Layout saved')&&svc.saves===2&&svc.record.layout.order[1]==='content');
++  });
++
++  await scenario('signed out during a stalled save',async()=>{
++   await mount();await loaded();await arrange();svc.save='stall';await save.click();
++   expect('signed out during a stalled save: request reaches the service',await until(()=>svc.saves===1,2000));
++   await page.evaluate(()=>{window.sub='other';dispatchEvent(new Event('mcc:auth-changed'));});
++   expect('signed out during a stalled save: editor and arrangement are cleared',await says('Access or account changed')&&await page.locator('[data-layout-body] li').count()===0&&await page.evaluate(()=>cleared===1));
++   expect('signed out during a stalled save: the pending request is cancelled',await until(()=>svc.cancelled>=1,2000),svc.cancelled);
++   await pause(deadline+400);
++   expect('signed out during a stalled save: no late deadline message replaces the cleared state',await says('Access or account changed',50)&&await reload.isEnabled());
++   await page.evaluate(()=>{window.sub='owner';});
++  });
++
++  await scenario('stalled sign-in check before a save',async()=>{
++   await mount();await loaded();await arrange();await page.evaluate(()=>{window.holdToken=true;});await save.click();
++   expect('stalled sign-in check before a save: reported as not sent within the deadline',await says('Save was not sent'),await status.textContent());
++   expect('stalled sign-in check before a save: arrangement kept and Save usable again',await mode()==='ready'&&await save.isEnabled()&&await draftShown());
++   await page.evaluate(()=>{window.releaseToken();window.holdToken=false;});await pause(400);
++   expect('stalled sign-in check before a save: the late sign-in answer never dispatches the save',svc.saves===0,svc.saves);
++   await save.click();
++   expect('stalled sign-in check before a save: the owner\'s next Save stores it',await says('Layout saved')&&svc.saves===1&&svc.record.layout.order[1]==='content');
++  });
++  await page.evaluate(()=>{window.holdToken=false;});
++
++  await scenario('readback fails while the outcome is unknown',async()=>{
++   await mount();await loaded();await arrange();svc.save='commit-stall';await save.click();
++   expect('readback fails while the outcome is unknown: unknown state reached',await says('outcome is unknown')&&await mode()==='unknown',await status.textContent());
++   svc.read='stall';await reload.click();
++   expect('readback fails while the outcome is unknown: arrangement and unknown state are kept',await says('still kept')&&await mode()==='unknown'&&await draftShown()&&await reload.isEnabled()&&await save.isDisabled(),await status.textContent());
++   svc.read='ok';await reload.click();
++   expect('readback fails while the outcome is unknown: the next readback reconciles',await says('matches the arrangement you tried to save')&&await mode()==='ready'&&svc.saves===1);
++  });
++
++  await scenario('late success from a transport that ignores abort',async()=>{
++   await mount(null,'mount(deaf(),async function(){return "owner";})');await loaded();await arrange();await save.click();
++   expect('late success from a transport that ignores abort: the editor still reports unknown within the deadline',await says('outcome is unknown')&&await mode()==='unknown',await status.textContent());
++   expect('late success from a transport that ignores abort: the transport was handed an aborted AbortSignal',await page.evaluate(()=>deafCalls.signals.length===1&&deafCalls.signals[0] instanceof AbortSignal&&deafCalls.signals[0].aborted));
++   await page.evaluate(()=>releaseSave());await pause(400);
++   expect('late success from a transport that ignores abort: the late answer is discarded',await says('outcome is unknown',50)&&await mode()==='unknown'&&await save.isDisabled()&&await page.evaluate(()=>deck.length===1&&deafCalls.saves===1));
++   await reload.click();
++   expect('late success from a transport that ignores abort: explicit readback reconciles',await says('matches the arrangement you tried to save')&&await mode()==='ready');
++  });
++
++  await scenario('missing shared helper',async()=>{
++   await mount(null,'window.keptHelper=CR.boundedRequest;delete CR.boundedRequest;mount(deaf(),async function(){return "owner";})');await pause(300);
++   const closed=await mode()==='unavailable'&&await reload.isDisabled()&&await save.isDisabled()&&await page.evaluate(()=>deafCalls.loads===0&&deafCalls.saves===0);
++   await page.evaluate(()=>{if(window.keptHelper)CR.boundedRequest=window.keptHelper;});
++   expect('missing shared helper: the editor fails closed instead of running unbounded',closed,await status.textContent());
++  });
++
++  record('no script errors',errors.length===0,errors);
++  await page.close();
++ }}finally{await svc.close();}
++ return results;
++}
++
++if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
++ const {chromium}=createRequire(join(process.env.PLAYWRIGHT_DIR||'/opt/node-tools/node_modules','x'))('playwright');
++ const out=process.argv[2]||'/tmp/analytics-layout-recovery-proof';await mkdir(out,{recursive:true});
++ const browser=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE||process.env.CHROMIUM_PATH||undefined,args:['--no-sandbox']});
++ let results=[];
++ try{results=await layoutRecovery({browser,out});}finally{await browser.close();await writeFile(join(out,'recovery-results.json'),JSON.stringify(results,null,2));}
++ for(const result of results)console.log((result.pass?'PASS ':'FAIL ')+result.name+(result.pass||result.detail===undefined?'':' :: '+JSON.stringify(result.detail)));
++ const failed=results.filter(result=>!result.pass).length;console.log(results.length-failed+' passed, '+failed+' failed');
++ process.exitCode=failed||!results.length?1:0;
++}
+diff --git a/scripts/test-owner-analytics-layout-native.mjs b/scripts/test-owner-analytics-layout-native.mjs
+index 3ec851fb..07e34ae7 100644
+--- a/scripts/test-owner-analytics-layout-native.mjs
++++ b/scripts/test-owner-analytics-layout-native.mjs
+@@ -60,8 +60,8 @@ try{
+  check('two native concurrent saves yield one commit and one conflict',concurrent.map(x=>x.status).sort().join(',')==='200,409');
+  const current=await read();check('each successful revision has atomic audit evidence',sql('select count(*) from owner_analytics_layout_history')==='2'&&sql('select count(*) from owner_analytics_layouts l join owner_analytics_layout_history h using(revision) where h.layout=l.layout')==='1');
+  // Actual commit, then transport loss at the adapter boundary; reload reconciles it.
+- const w={CR:{},atob:s=>Buffer.from(s,'base64').toString(),fetch:async(url,opts)=>fetch(url.replace('/rest/v1',''),opts)};vm.createContext(w);w.window=w;
+- for(const file of ['analytics-layout','analytics-layout-adapter'])vm.runInContext(await readFile('js/control-room/'+file+'.js','utf8'),w);
++ const w={CR:{},atob:s=>Buffer.from(s,'base64').toString(),setTimeout,clearTimeout,AbortController,fetch:async(url,opts)=>fetch(url.replace('/rest/v1',''),opts)};vm.createContext(w);w.window=w;
++ for(const file of ['bounded-request','analytics-layout','analytics-layout-adapter'])vm.runInContext(await readFile('js/control-room/'+file+'.js','utf8'),w);
+  let drop=true;const adapter=w.CR.analyticsLayoutAdapter.create({orgId:scope,supa:{url:base,key:'fixture',token:async()=>token(owner)},fetch:async(url,opts)=>{const r=await w.fetch(url,opts);if(drop&&url.endsWith('_save_v1')){drop=false;throw Error('simulated lost response after real commit');}return r;}});
+  await assert.rejects(adapter.save({expectedRevision:current.body.revision,layout:defaults}),e=>e.status===503);
+  const recovered=await adapter.load();check('uncertain committed write recovers by readback',recovered.revision!==current.body.revision&&recovered.layout.order[1]==='audience');
+@@ -73,8 +73,8 @@ try{
+  sql("update orgs set enabled=false where id='"+house+"'");check('disabled house denies target scope',(await read()).status===403);sql("update orgs set enabled=true where id='"+house+"'");
+  if(process.env.PLAYWRIGHT_DIR){
+   const {chromium}=createRequire(join(process.env.PLAYWRIGHT_DIR,'x'))('playwright');browser=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE||undefined,args:['--no-sandbox']});
+-  const html='<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/css/control-admin-layout.css"><style>body{margin:12px;font:16px system-ui}*{box-sizing:border-box}</style><main></main><script src="/js/control-room/analytics-layout.js"></script><script src="/js/control-room/analytics-layout-adapter.js"></script><script>const a=CR.analyticsLayoutAdapter.create({orgId:'+JSON.stringify(scope)+',supa:{url:'+JSON.stringify(base+'/rest-proxy')+',key:"fixture",token:async()=>window.TEST_TOKEN}});document.querySelector("main").innerHTML=CR.analyticsLayout.render();CR.analyticsLayout.bind(document,{adapter:a,identity:a.identity});</script>';
+-  server=createServer(async(req,res)=>{try{const path=new URL(req.url,'http://fixture').pathname;if(path==='/'){res.setHeader('content-type','text/html');res.end(html);return;}const allowed=['/css/control-admin-layout.css','/js/control-room/analytics-layout.js','/js/control-room/analytics-layout-adapter.js'];if(!allowed.includes(path)){res.writeHead(404);res.end();return;}res.setHeader('content-type',path.endsWith('.css')?'text/css':'text/javascript');res.end(await readFile('.'+path));}catch{res.writeHead(500);res.end();}});await new Promise(r=>server.listen(0,'127.0.0.1',r));
++  const html='<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/css/control-admin-layout.css"><style>body{margin:12px;font:16px system-ui}*{box-sizing:border-box}</style><main></main><script src="/js/control-room/bounded-request.js"></script><script src="/js/control-room/analytics-layout.js"></script><script src="/js/control-room/analytics-layout-adapter.js"></script><script>const a=CR.analyticsLayoutAdapter.create({orgId:'+JSON.stringify(scope)+',supa:{url:'+JSON.stringify(base+'/rest-proxy')+',key:"fixture",token:async()=>window.TEST_TOKEN}});document.querySelector("main").innerHTML=CR.analyticsLayout.render();CR.analyticsLayout.bind(document,{adapter:a,identity:a.identity});</script>';
++  server=createServer(async(req,res)=>{try{const path=new URL(req.url,'http://fixture').pathname;if(path==='/'){res.setHeader('content-type','text/html');res.end(html);return;}const allowed=['/css/control-admin-layout.css','/js/control-room/bounded-request.js','/js/control-room/analytics-layout.js','/js/control-room/analytics-layout-adapter.js'];if(!allowed.includes(path)){res.writeHead(404);res.end();return;}res.setHeader('content-type',path.endsWith('.css')?'text/css':'text/javascript');res.end(await readFile('.'+path));}catch{res.writeHead(500);res.end();}});await new Promise(r=>server.listen(0,'127.0.0.1',r));
+   for(const width of [390,1280]){
+    const context=await browser.newContext({viewport:{width,height:900}});await context.addInitScript(t=>window.TEST_TOKEN=t,token(owner));
+    // Forward only the local fixture URL to the actual isolated PostgREST process.
+diff --git a/scripts/test/control-analytics-layout-adapter.test.mjs b/scripts/test/control-analytics-layout-adapter.test.mjs
+index 44996b89..7102752c 100644
+--- a/scripts/test/control-analytics-layout-adapter.test.mjs
++++ b/scripts/test/control-analytics-layout-adapter.test.mjs
+@@ -4,8 +4,29 @@ import vm from 'node:vm';
+ import {readFile} from 'node:fs/promises';
+ const org='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+ function token(sub){return 'x.'+Buffer.from(JSON.stringify({sub})).toString('base64url')+'.x';}
+-async function setup(){const calls=[];let sub='owner',reply,thrown;const window={CR:{},atob:s=>Buffer.from(s,'base64').toString()};window.fetch=async(url,init)=>{calls.push({url,init});if(thrown)throw thrown;return {ok:reply.status===200,status:reply.status,json:async()=>reply.body};};vm.runInNewContext(await readFile('js/control-room/analytics-layout.js','utf8'),{window});vm.runInNewContext(await readFile('js/control-room/analytics-layout-adapter.js','utf8'),{window});reply={status:200,body:{schema:'analytics-layout/v1',org_id:org,revision:'1',layout:window.CR.analyticsLayout.defaults()}};const adapter=window.CR.analyticsLayoutAdapter.create({orgId:org,supa:{url:'https://fixture.invalid',key:'public-fixture',token:async()=>token(sub)}});return {window,adapter,calls,reply,setUser:s=>sub=s,drop:()=>thrown=Error('lost')};}
++const flush=async()=>{for(let i=0;i<3;i++)await new Promise(resolve=>setImmediate(resolve));};
++function fakeClock(){let now=0,next=0;const timers=new Map();return {set:(fn,ms)=>{timers.set(++next,{at:now+ms,fn});return next;},clear:id=>{timers.delete(id);},advance(ms){now+=ms;for(const [id,timer] of [...timers])if(timer.at<=now){timers.delete(id);timer.fn();}},pending:()=>timers.size};}
++function watch(promise){const seen={state:'pending'};promise.then(value=>{seen.state='resolved';seen.value=value;},error=>{seen.state='rejected';seen.error=error;});return seen;}
++function gate(){let open;const promise=new Promise(resolve=>{open=resolve;});return {promise,open};}
++// Script tags as a page would load them: a missing file is a failed tag, not a harness crash.
++async function tags(window,files){for(const file of files){let source;try{source=await readFile('js/control-room/'+file+'.js','utf8');}catch(error){if(error.code!=='ENOENT')throw error;continue;}vm.runInNewContext(source,{window});}}
++async function setup(options={}){const calls=[],clock=fakeClock();let sub='owner',reply,thrown;const window={CR:{},atob:s=>Buffer.from(s,'base64').toString(),setTimeout:clock.set,clearTimeout:clock.clear,AbortController};window.fetch=async(url,init)=>{calls.push({url,init});if(options.fetch)return options.fetch(url,init,reply);if(thrown)throw thrown;return {ok:reply.status===200,status:reply.status,json:async()=>reply.body};};await tags(window,options.tags||['bounded-request','analytics-layout','analytics-layout-adapter']);reply={status:200,body:{schema:'analytics-layout/v1',org_id:org,revision:'1',layout:window.CR.analyticsLayout.defaults()}};const config={orgId:org,supa:{url:'https://fixture.invalid',key:'public-fixture',token:options.token||(async()=>token(sub))},...options.adapter};const adapter=options.create===false?null:window.CR.analyticsLayoutAdapter.create(config);return {window,adapter,calls,reply,clock,config,setUser:s=>sub=s,drop:()=>thrown=Error('lost')};}
+ test('adapter uses user token, fixed scope, no redirect and no storage authority',async()=>{const x=await setup();await x.adapter.load();await x.adapter.save({expectedRevision:'1',layout:x.reply.body.layout});assert.equal(x.calls.length,2);assert.equal(x.calls[1].init.headers.authorization,'Bearer '+token('owner'));assert.equal(x.calls[1].init.redirect,'error');assert.deepEqual(JSON.parse(x.calls[1].init.body),{p_org_id:org,p_expected_revision:'1',p_layout:JSON.parse(JSON.stringify(x.reply.body.layout))});});
+ test('rejects cross-scope, corrupt revision, invalid layout and versioned envelope',async()=>{for(const mutate of [x=>x.reply.body.org_id='elsewhere',x=>x.reply.body.revision=1,x=>x.reply.body.schema='wrong',x=>x.reply.body.layout.order.pop()]){const x=await setup();mutate(x);await assert.rejects(x.adapter.load());}});
+ test('account change fences a previously constructed workspace adapter',async()=>{const x=await setup();await x.adapter.load();x.setUser('other');await assert.rejects(x.adapter.save({expectedRevision:'1',layout:x.reply.body.layout}),e=>e.status===403);assert.equal(x.calls.length,1);});
+ test('HTTP failure and uncertain transport never become successful defaults or automatic retries',async()=>{for(const status of [401,403,409,404,500]){const x=await setup();x.reply.status=status;await assert.rejects(x.adapter.load(),e=>e.status===status);assert.equal(x.calls.length,1);}const x=await setup();x.drop();await assert.rejects(x.adapter.save({expectedRevision:'1',layout:x.reply.body.layout}),e=>e.status===503);assert.equal(x.calls.length,1);});
++
++// A6: every await the adapter makes sits under one deadline, the transport can be aborted,
++// an unanswered save is reported as unknown (never as stored, never replayed).
++const answer=reply=>({ok:true,status:200,json:async()=>reply.body});
++const stalled=()=>new Promise(()=>{});
++test('the layout request hands its transport an AbortSignal',async()=>{const x=await setup({fetch:stalled});watch(x.adapter.load());await flush();assert.equal(x.calls.length,1);assert.ok(x.calls[0].init.signal instanceof AbortSignal,'fetch receives an AbortSignal');assert.equal(x.calls[0].init.signal.aborted,false);});
++test('a stalled fetch ends at the 15 s deadline, aborts the transport and leaves no timer behind',async()=>{const x=await setup({fetch:stalled}),seen=watch(x.adapter.load());await flush();x.clock.advance(14999);await flush();assert.equal(seen.state,'pending');x.clock.advance(1);await flush();assert.equal(seen.state,'rejected','a stalled read must not stay pending');assert.equal(seen.error.status,503);assert.equal(seen.error.code,'timeout');assert.equal(seen.error.outcome,undefined,'a read has no write outcome');assert.equal(x.calls[0].init.signal.aborted,true);assert.equal(x.clock.pending(),0);});
++test('a stalled credential refresh is bounded and the save is never dispatched late',async()=>{const credential=gate(),x=await setup({token:()=>credential.promise}),seen=watch(x.adapter.save({expectedRevision:'1',layout:x.reply.body.layout}));await flush();x.clock.advance(15000);await flush();assert.equal(seen.state,'rejected','a stalled credential refresh must not stay pending');assert.equal(seen.error.status,503);assert.equal(seen.error.outcome,'not_sent');assert.match(seen.error.message,/not sent/);credential.open(token('owner'));await flush();assert.equal(x.calls.length,0,'the save is never sent after its deadline');const y=await setup({token:async()=>{throw Error('offline');}});await assert.rejects(y.adapter.save({expectedRevision:'1',layout:y.reply.body.layout}),e=>e.message==='offline'&&e.outcome==='not_sent');assert.equal(y.calls.length,0);await assert.rejects(y.adapter.load(),e=>e.message==='offline'&&e.outcome===undefined);});
++test('a stalled response body is bounded for reads and saves',async()=>{for(const save of [false,true]){const x=await setup({fetch:async()=>({ok:true,status:200,json:stalled})}),seen=watch(save?x.adapter.save({expectedRevision:'1',layout:x.reply.body.layout}):x.adapter.load());await flush();x.clock.advance(15000);await flush();assert.equal(seen.state,'rejected','a stalled body must not stay pending');assert.equal(seen.error.status,503);assert.equal(seen.error.code,'timeout');assert.equal(seen.error.outcome,save?'unknown':undefined);assert.equal(x.calls[0].init.signal.aborted,true);}});
++test('an unanswered or unreadable save reports an unknown outcome and is never replayed',async()=>{const modes={'no response headers':stalled,'no response body':async()=>({ok:true,status:200,json:stalled}),'lost connection':async()=>{throw Error('lost');},'unreadable body':async()=>({ok:true,status:200,json:async()=>{throw Error('truncated');}}),'unusable envelope':async()=>({ok:true,status:200,json:async()=>({schema:'analytics-layout/v1'})}),'gateway failure':async()=>({ok:false,status:504,json:async()=>({message:'upstream'})})};for(const [name,fetch] of Object.entries(modes)){const x=await setup({fetch}),seen=watch(x.adapter.save({expectedRevision:'1',layout:x.reply.body.layout}));await flush();x.clock.advance(15000);await flush();assert.equal(seen.state,'rejected',name);assert.equal(seen.error.outcome,'unknown',name+' leaves the save outcome unknown');x.clock.advance(60000);await flush();assert.equal(x.calls.length,1,name+' is never retried automatically');assert.equal(x.clock.pending(),0,name);}});
++test('server verdicts stay definite: a refused save is not reported as unknown',async()=>{for(const status of [400,401,403,404,409]){const x=await setup();x.reply.status=status;await assert.rejects(x.adapter.save({expectedRevision:'1',layout:x.reply.body.layout}),e=>e.status===status&&e.outcome===undefined);assert.equal(x.calls.length,1);}const x=await setup();x.reply.status=500;await assert.rejects(x.adapter.load(),e=>e.status===500&&e.outcome===undefined);});
++test('a success that arrives after the deadline is discarded',async()=>{const late=gate(),x=await setup({fetch:()=>late.promise}),seen=watch(x.adapter.save({expectedRevision:'1',layout:x.reply.body.layout}));await flush();x.clock.advance(15000);await flush();assert.equal(seen.state,'rejected');assert.equal(seen.error.outcome,'unknown');late.open(answer(x.reply));await flush();assert.equal(seen.state,'rejected','a late success never turns an unknown save into a stored one');assert.equal(seen.value,undefined);assert.equal(x.calls.length,1);});
++test('a caller AbortSignal cancels the request and a shorter deadline can be configured',async()=>{const x=await setup({fetch:stalled}),caller=new AbortController(),seen=watch(x.adapter.load({signal:caller.signal}));await flush();caller.abort();await flush();assert.equal(seen.state,'rejected');assert.equal(seen.error.status,503);assert.equal(seen.error.code,'aborted');assert.equal(x.calls[0].init.signal.aborted,true);assert.equal(x.clock.pending(),0);const y=await setup({fetch:stalled,adapter:{timeoutMs:2000}}),quick=watch(y.adapter.load());await flush();y.clock.advance(2000);await flush();assert.equal(quick.error.code,'timeout');});
++test('the identity check is bounded too',async()=>{const x=await setup({token:stalled}),seen=watch(x.adapter.identity());await flush();x.clock.advance(15000);await flush();assert.equal(seen.state,'rejected','a stalled identity check must not stay pending');assert.equal(seen.error.status,503);assert.equal(seen.error.code,'timeout');assert.equal(x.clock.pending(),0);const y=await setup();assert.equal(await y.adapter.identity(),'owner');});
++test('the adapter refuses to start without the shared bounded request helper or a clock',async()=>{const x=await setup({tags:['analytics-layout','analytics-layout-adapter'],create:false});assert.throws(()=>x.window.CR.analyticsLayoutAdapter.create(x.config),/Bounded request helper required/);const y=await setup({create:false});y.window.setTimeout=undefined;assert.throws(()=>y.window.CR.analyticsLayoutAdapter.create(y.config),/timers and AbortController/);});
+diff --git a/scripts/test/control-bounded-request.test.mjs b/scripts/test/control-bounded-request.test.mjs
+new file mode 100644
+index 00000000..95db26c1
+--- /dev/null
++++ b/scripts/test/control-bounded-request.test.mjs
+@@ -0,0 +1,108 @@
++/* The one bounded request helper Control editors share (js/control-room/bounded-request.js):
++   a deadline over every await, an AbortSignal for the transport, and a generation
++   counter that discards whatever settles late. Deterministic: the clock is injected. */
++import test from 'node:test';
++import assert from 'node:assert/strict';
++import vm from 'node:vm';
++import {readFile} from 'node:fs/promises';
++
++const unhandled=[];process.on('unhandledRejection',reason=>unhandled.push(reason));
++const flush=async()=>{for(let i=0;i<3;i++)await new Promise(resolve=>setImmediate(resolve));};
++function fakeClock(){let now=0,next=0;const timers=new Map();return {set:(fn,ms)=>{timers.set(++next,{at:now+ms,fn});return next;},clear:id=>{timers.delete(id);},advance(ms){now+=ms;for(const [id,timer] of [...timers])if(timer.at<=now){timers.delete(id);timer.fn();}},pending:()=>timers.size};}
++function watch(promise){const seen={state:'pending'};promise.then(value=>{seen.state='resolved';seen.value=value;},error=>{seen.state='rejected';seen.error=error;});return seen;}
++function gate(){let open,fail;const promise=new Promise((resolve,reject)=>{open=resolve;fail=reject;});return {promise,open,fail};}
++async function setup(options={}){
++ const clock=fakeClock(),window={CR:{},setTimeout:clock.set,clearTimeout:clock.clear,AbortController,...options.window};
++ vm.runInNewContext(await readFile('js/control-room/bounded-request.js','utf8'),{window});
++ return {clock,window,bounded:window.CR.boundedRequest,scope:options.create===false?null:window.CR.boundedRequest.create(options.config)};
++}
++
++test('resolves with the task value, hands the task an AbortSignal and leaves no timer behind',async()=>{
++ const x=await setup();let control,calls=0;
++ const value=await x.scope.run(c=>{calls++;control=c;return Promise.resolve('answer');});
++ assert.equal(value,'answer');assert.equal(calls,1);
++ assert.ok(control.signal instanceof AbortSignal);assert.equal(control.signal.aborted,false);
++ assert.equal(control.ticket,1);assert.equal(x.scope.generation(),1);assert.equal(x.scope.pending(),false);
++ assert.equal(x.clock.pending(),0,'the deadline timer is cleared when the request settles');
++});
++
++test('the default deadline is 15 s and ends a request that never answers; the late answer is discarded',async()=>{
++ const x=await setup(),late=gate();let control;
++ assert.equal(x.bounded.DEFAULT_TIMEOUT_MS,15000);
++ const seen=watch(x.scope.run(c=>{control=c;return late.promise;}));
++ x.clock.advance(14999);await flush();assert.equal(seen.state,'pending');assert.equal(control.signal.aborted,false);
++ x.clock.advance(1);await flush();
++ assert.equal(seen.state,'rejected');assert.equal(seen.error.bounded,true);assert.equal(seen.error.code,'timeout');
++ assert.equal(control.signal.aborted,true,'the transport is told to stop');assert.equal(control.current(),false);
++ assert.equal(x.scope.pending(),false);assert.equal(x.clock.pending(),0);
++ late.open('late success');await flush();
++ assert.equal(seen.state,'rejected','a late success never replaces the reported outcome');assert.equal(seen.value,undefined);
++});
++
++test('a scope deadline and a per-request deadline both override the default',async()=>{
++ const x=await setup({config:{timeoutMs:400}});
++ const scoped=watch(x.scope.run(()=>new Promise(()=>{})));
++ x.clock.advance(399);await flush();assert.equal(scoped.state,'pending');
++ x.clock.advance(1);await flush();assert.equal(scoped.error.code,'timeout');
++ const single=watch(x.scope.run(()=>new Promise(()=>{}),{timeoutMs:50}));
++ x.clock.advance(50);await flush();assert.equal(single.error.code,'timeout');
++ for(const bad of [0,-5,NaN,Infinity,'40']){const y=await setup({config:{timeoutMs:bad}}),seen=watch(y.scope.run(()=>new Promise(()=>{})));y.clock.advance(14999);await flush();assert.equal(seen.state,'pending','an unusable deadline falls back to the default, never to no deadline');y.clock.advance(1);await flush();assert.equal(seen.error.code,'timeout');}
++});
++
++test('a stalled step ends the task: nothing after it runs when the wait finally answers',async()=>{
++ const x=await setup(),credential=gate();let dispatched=0;
++ const seen=watch(x.scope.run(async control=>{await control.step(credential.promise);dispatched++;return 'sent';}));
++ x.clock.advance(15000);await flush();assert.equal(seen.error.code,'timeout');
++ credential.open('late credential');await flush();
++ assert.equal(dispatched,0,'a request is never dispatched after its deadline');
++ const quick=await x.scope.run(async control=>{const first=await control.step(Promise.resolve(1)),second=await control.step(2);return first+second;});
++ assert.equal(quick,3,'steps pass values through while the request is live');
++});
++
++test('cancel() advances the generation and stops the request in flight as aborted',async()=>{
++ const x=await setup();let control;
++ const seen=watch(x.scope.run(c=>{control=c;return new Promise(()=>{});}));
++ assert.equal(x.scope.pending(),true);assert.equal(control.current(),true);
++ assert.equal(x.scope.cancel(),true);await flush();
++ assert.equal(seen.error.bounded,true);assert.equal(seen.error.code,'aborted');
++ assert.equal(control.signal.aborted,true);assert.equal(control.current(),false);
++ assert.equal(x.scope.generation(),2,'holders of the old ticket can see it is stale');
++ assert.equal(x.clock.pending(),0,'a cancelled request leaves no deadline behind to fire later');
++ assert.equal(x.scope.cancel(),false);assert.equal(x.scope.generation(),3);
++});
++
++test('a newer request supersedes the one in flight and only the newer result is delivered',async()=>{
++ const x=await setup(),first=gate();let old;
++ const stale=watch(x.scope.run(c=>{old=c;return first.promise;}));
++ const fresh=watch(x.scope.run(()=>Promise.resolve('fresh')));
++ first.open('stale');await flush();
++ assert.equal(stale.state,'rejected');assert.equal(stale.error.code,'superseded');assert.equal(old.signal.aborted,true);
++ assert.equal(fresh.value,'fresh');assert.equal(x.scope.generation(),2);assert.equal(x.clock.pending(),0);
++});
++
++test('a caller AbortSignal stops the request, and an already aborted one never starts the task',async()=>{
++ const x=await setup(),caller=new AbortController();let control;
++ const seen=watch(x.scope.run(c=>{control=c;return new Promise(()=>{});},{signal:caller.signal}));
++ caller.abort();await flush();
++ assert.equal(seen.error.code,'aborted');assert.equal(control.signal.aborted,true);assert.equal(x.clock.pending(),0);
++ let started=0;const refused=watch(x.scope.run(()=>{started++;return 'never';},{signal:caller.signal}));await flush();
++ assert.equal(refused.error.code,'aborted');assert.equal(started,0);assert.equal(x.clock.pending(),0);
++});
++
++test('task failures pass through unchanged, are never retried, and late failures are swallowed',async()=>{
++ const x=await setup(),boom=Object.assign(Error('refused'),{status:409});let calls=0;
++ await assert.rejects(x.scope.run(()=>{calls++;return Promise.reject(boom);}),error=>error===boom&&!error.bounded);
++ await assert.rejects(x.scope.run(()=>{calls++;throw boom;}),error=>error===boom);
++ assert.equal(calls,2);assert.equal(x.clock.pending(),0);
++ const late=gate(),step=gate(),seen=watch(x.scope.run(control=>{control.step(step.promise).catch(()=>{});return late.promise;}));
++ x.clock.advance(15000);await flush();assert.equal(seen.error.code,'timeout');
++ late.fail(Error('late failure'));step.fail(Error('late step failure'));await flush();
++ assert.deepEqual(unhandled,[],'nothing that settles after a stop becomes an unhandled rejection');
++});
++
++test('fails closed without timers or AbortController instead of running unbounded',async()=>{
++ for(const missing of ['setTimeout','clearTimeout','AbortController']){
++  const x=await setup({create:false,window:{[missing]:undefined}});
++  assert.throws(()=>x.bounded.create(),/timers and AbortController/);
++ }
++});
+-- 
+2.43.0
+
