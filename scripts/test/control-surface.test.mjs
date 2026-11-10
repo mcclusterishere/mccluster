@@ -425,8 +425,9 @@ test('Control operates one chosen workspace and pins its reads and writes to it'
   /* the shell load passes its authority AbortSignal (audit A1); the workspace pin is what this guards */
   assert.match(js,/request\("\/v1\/ai\/decisions\?limit=25&org_id=" \+ encodeURIComponent\(org\.id\)(?:, \{ signal: signal \})?\)/);
   assert.match(js,/"\/v1\/ai\/decisions\/" \+ encodeURIComponent\(decisionId\) \+ "\/status" \+ \(state\.org && state\.org\.id \? "\?org_id="/);
-  assert.match(js,/supa\("media_assets\?select=\*&order=created_at\.desc&limit=150" \+ scope\)/);
-  assert.match(js,/supa\("media_jobs\?select=\*&order=created_at\.desc&limit=120" \+ scope\)/);
+  /* the creative reads also pass the load's AbortSignal (A1 close-out); the workspace scope is what this guards */
+  assert.match(js,/supa\("media_assets\?select=\*&order=created_at\.desc&limit=150" \+ scope(?:, opts)?\)/);
+  assert.match(js,/supa\("media_jobs\?select=\*&order=created_at\.desc&limit=120" \+ scope(?:, opts)?\)/);
   assert.match(js,/supa\("ops_agent_jobs\?select=\*&org_id=eq\." \+ encodeURIComponent\(org\.id\)/);
 
   /* leads: the house sees its pre-tenancy null-org leads, a client workspace only its own */
