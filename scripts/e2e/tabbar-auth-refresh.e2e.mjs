@@ -1,7 +1,7 @@
 // Real browser, local HTTP only. Every auth and API answer is a fixture: no account, no production request or write.
-// The session here is stale on every call, as on a device whose clock runs ahead of the server's: each refreshed
-// token already looks expired, so every MCC.user() and MCC.api() refreshes again. The bar must still ask once,
-// settle, keep its owner answer when the token moves under it, and not be set off again by another tab.
+// The session here is stale on every call: each refreshed token lives 30 seconds, under the client's one-minute
+// margin, so it already counts as expiring and every MCC.user() and MCC.api() refreshes again. The bar must still ask
+// once, settle, keep its owner answer when the token moves under it, and not be set off again by another tab.
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { createServer } from 'node:http';
@@ -45,7 +45,7 @@ async function visit({ page: path = PAGE, tabs = 1, owner = false, holdStatus = 
     const cors = { 'access-control-allow-origin': '*' };
     if (u.pathname === '/auth/v1/token' && u.searchParams.get('grant_type') === 'refresh_token') {
       counts.refresh++;
-      return route.fulfill({ json: { access_token: token(), refresh_token: 'fixture-refresh-' + counts.refresh, token_type: 'bearer', expires_in: 3600, expires_at: seconds() - 5, user: { id: SUB } }, headers: cors });
+      return route.fulfill({ json: { access_token: token(), refresh_token: 'fixture-refresh-' + counts.refresh, token_type: 'bearer', expires_in: 30, expires_at: seconds() + 30, user: { id: SUB } }, headers: cors });
     }
     if (u.pathname === '/auth/v1/user') { counts.user++; return route.fulfill({ json: { id: SUB, email: 'fixture@example.test', user_metadata: { name: 'Fixture Member' } }, headers: cors }); }
     if (u.href === 'https://api.mccluster.org/v1/status') {

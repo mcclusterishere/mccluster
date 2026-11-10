@@ -25,8 +25,12 @@ const BAR_ACCOUNT_STATE = '"use strict";\n' + [
 
 const SUPABASE = 'https://zmnhbrjyhxzhkxmhkexs.supabase.co', API = 'https://api.mccluster.org';
 const HOUR = 3600;
+/* A token lifetime under the canonical client's one-minute margin: every new token already counts as expiring, so
+   every lookup refreshes it. That is the session that is stale on every call. */
+const SHORT = 30;
 const encode = (claims) => Buffer.from(JSON.stringify(claims)).toString('base64url');
 const subjectOf = (token) => { try { return JSON.parse(Buffer.from(String(token).split('.')[1], 'base64url')).sub || ''; } catch { return ''; } };
+const expiryOf = (token) => { try { return Number(JSON.parse(Buffer.from(String(token).split('.')[1], 'base64url')).exp) || 0; } catch { return 0; } };
 const turn = () => new Promise((resolve) => setImmediate(resolve));
 /* A lookup that never lands leaves nothing for Node to wait on, and the runner would cancel every case after it.
    This deadline keeps the loop alive so that case fails by itself, with the reason. */
@@ -39,9 +43,9 @@ const test = (name, run) => runnerTest(name, async () => {
 const quietTimeout = (fn, ms) => { const timer = setTimeout(fn, ms); timer.unref(); return timer; };
 
 /* One browser profile: a shelf of localStorage every tab shares, and the fixture servers behind them.
-   clockAhead is how far this device's clock runs ahead of the server's, in seconds. An hour ahead with
-   one-hour tokens is the session that is stale on every call: each new token already looks expired. */
-function profile({ clockAhead = 0, owners = [], refreshLimit = 40 } = {}) {
+   lifetime is how long the server's tokens last, in seconds; SHORT makes the session that is stale on every call.
+   clockAhead is how far this device's clock runs ahead of the server's, in seconds (negative: behind). */
+function profile({ clockAhead = 0, lifetime = HOUR, owners = [], refreshLimit = 40 } = {}) {
   let serial = 0, moving = 0, elapsed = 0;       // elapsed: seconds the test has let pass, for the server and the device alike
   const serverNow = () => Math.floor(Date.now() / 1000) + elapsed;
   const counts = { refresh: 0, user: 0, status: 0, bootstrap: 0 };
@@ -51,8 +55,8 @@ function profile({ clockAhead = 0, owners = [], refreshLimit = 40 } = {}) {
     const n = ++serial, refresh_token = 'fixture-refresh-' + n;
     refreshTokens.set(refresh_token, sub);
     return {
-      access_token: 'fixture.' + encode({ sub, email: sub + '@example.test', exp: issuedAt + HOUR, n }) + '.fixture',
-      refresh_token, token_type: 'bearer', expires_in: HOUR, expires_at: issuedAt + HOUR,
+      access_token: 'fixture.' + encode({ sub, email: sub + '@example.test', exp: issuedAt + lifetime, n }) + '.fixture',
+      refresh_token, token_type: 'bearer', expires_in: lifetime, expires_at: issuedAt + lifetime,
       user: { id: sub, email: sub + '@example.test' }
     };
   }
@@ -79,6 +83,7 @@ function profile({ clockAhead = 0, owners = [], refreshLimit = 40 } = {}) {
     }
     if (kind === 'password') return reply(issue(JSON.parse(init.body || '{}').email.split('@')[0]));
     if (!sub) return reply({ code: 'bad_jwt', msg: 'Invalid token' }, 401);
+    if (expiryOf(bearer) <= serverNow()) return reply({ code: 'bad_jwt', msg: 'JWT expired' }, 401);   // on the server's own clock
     if (kind === 'user') return reply({ id: sub, email: sub + '@example.test' });
     if (kind === 'status') return owners.includes(sub) ? reply({ ok: true }) : reply({ error: 'forbidden' }, 403);
     return reply({ identity: { mccluster_id: sub }, profile: { display_name: sub } });
@@ -185,13 +190,15 @@ const signedIn = (user) => ({ signed_in: true, verified: true, user });
 const paintedAs = (tab, user) => tab.paints.some((paint) => paint.user === user);
 
 test('a session that is stale on every call is looked up once and painted signed in', async () => {
-  const device = profile({ clockAhead: HOUR });
+  const device = profile({ lifetime: SHORT });
   device.seed('member-1');
   const bar = device.open();
   await device.quiet();
   assert.deepEqual(device.counts, { refresh: 1, user: 1, status: 1, bootstrap: 1 }, 'one refresh, one account lookup, then the owner check and the member\'s own profile with that token');
   assert.deepEqual(bar.state(), signedIn('member-1'));
   assert.equal(subjectOf(device.stored().access_token), 'member-1', 'the refreshed session is the one kept');
+  await bar.MCC.user(); await bar.MCC.user();
+  assert.equal(device.counts.refresh, 3, 'the premise of every SHORT case: each call refreshes this session again');
 });
 
 test('an expired session on an honest clock is one refresh and one lookup', async () => {
@@ -213,7 +220,7 @@ test('a fresh session is one lookup and no refresh', async () => {
 });
 
 test('with no answer and a token that keeps moving the bar spends its three lookups and settles signed out', async () => {
-  const device = profile({ clockAhead: HOUR });
+  const device = profile({ lifetime: SHORT });
   device.seed('member-1');
   device.fail('user');
   const bar = device.open();
@@ -268,7 +275,7 @@ test('an account that changes under every lookup is not painted from any answer,
 });
 
 test('after an account switch during the lookup the bar still has lookups left for the new account', async () => {
-  const device = profile({ clockAhead: HOUR });
+  const device = profile({ lifetime: SHORT });
   device.seed('member-1');
   device.hold('user');
   const bar = device.open();
@@ -284,7 +291,7 @@ test('after an account switch during the lookup the bar still has lookups left f
 
 for (const [who, owners, expected] of [['the owner', ['member-1'], true], ['a member', [], false]]) {
   test(`the owner check keeps its answer for ${who} when the token was refreshed for the same account meanwhile`, async () => {
-    const device = profile({ clockAhead: HOUR, owners });
+    const device = profile({ lifetime: SHORT, owners });
     device.seed('member-1');
     device.hold('status');
     const bar = device.open();
@@ -313,7 +320,7 @@ for (const [what, next] of [['another account', (device) => device.issue('member
 }
 
 test('two tabs on a session that is stale on every call do not keep answering each other', async () => {
-  const device = profile({ clockAhead: HOUR });
+  const device = profile({ lifetime: SHORT });
   device.seed('member-1');
   const first = device.open(), second = device.open();
   await device.quiet();
@@ -324,7 +331,7 @@ test('two tabs on a session that is stale on every call do not keep answering ea
 });
 
 test('a tab that loses the refresh to its neighbour twice still settles signed in', async () => {
-  const device = profile({ clockAhead: HOUR });
+  const device = profile({ lifetime: SHORT });
   device.seed('member-1');
   device.hold('refresh');
   const first = device.open(), second = device.open();
@@ -395,7 +402,7 @@ test('a bar that settled signed out asks again when another tab stores a session
 });
 
 test('a page asking the bar shares the lookup in the air and is not answered by a second one', async () => {
-  const device = profile({ clockAhead: HOUR });
+  const device = profile({ lifetime: SHORT });
   device.seed('member-1');
   device.hold('user');
   const bar = device.open();
@@ -453,7 +460,7 @@ test('a bar that spent its lookups without an answer asks again once it has rest
 });
 
 test('a session the server rejects under the last lookup is a sign-out, and signing in again elsewhere still reaches the bar', async () => {
-  const device = profile({ clockAhead: HOUR });
+  const device = profile({ lifetime: SHORT });
   device.seed('member-1');
   device.fail('user');
   device.hold('refresh');
