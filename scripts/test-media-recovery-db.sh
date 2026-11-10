@@ -13,6 +13,12 @@
 #   3. supabase/tests/media_operation_claims_v2.behaviour.sql: 24 scenarios, as
 #      the owner for fixtures and as service_role, anon and authenticated
 #   4. three concurrent sessions on one expired claim: exactly one takes over
+#   4b. the claim-row lock: a test-only trigger holds the first takeover inside
+#       its UPDATE until the two other sessions wait on a lock; exactly one
+#       takes over (three do when the claim-row read loses its FOR UPDATE)
+#   4c. an operator's bind decision against a same-id retry repairing the same
+#       open claim: no deadlock, the claim is bound once (40P01 when the
+#       decision locks the job row FOR UPDATE instead of FOR NO KEY UPDATE)
 #   5. the rollback: the six functions, four columns and four indexes are gone;
 #      v1's table (11 columns) and three RPCs, 0054's release and 0053's
 #      record_actual are byte-for-byte what they were before the file
@@ -80,7 +86,10 @@ echo "behaviour: $(grep -c '^=== ' "$OUT/behaviour.out") scenarios, all assertio
 q "insert into public.media_operation_claims (org_id, operation_id, fingerprint, actor_id, claimed_at)
    values ('$ORG', 'op-race', 'fp-race', '$OWNER', now() - interval '16 minutes')" >/dev/null
 CLAIM="select (public.media_claim_operation_v2('$ORG', 'op-race', 'fp-race', '$OWNER') - 'claim')::text"
-# A takes the claim row and holds it; B and C arrive while it is held.
+# A takes the claim row over and holds its transaction open; B and C arrive
+# while it is held. They wait inside INSERT ... ON CONFLICT on A's new index
+# entry and read the claim only after A commits, so this race does not depend
+# on the claim-row lock; 4b exercises that lock.
 psql -qAt -v ON_ERROR_STOP=1 -d "$DB" -c "begin" -c "$CLAIM" -c "select pg_sleep(1.5)" -c "commit" >"$OUT/race-a.out" &
 sleep 0.5
 psql -qAt -v ON_ERROR_STOP=1 -d "$DB" -c "$CLAIM" >"$OUT/race-b.out" &
@@ -92,6 +101,109 @@ wait
 [ "$(q "select attempt || ':' || jsonb_array_length(history) || ':' || state from public.media_operation_claims where operation_id = 'op-race'")" = "2:1:claimed" ] \
   || fail "race: the claim was taken over more than once"
 echo "race: three sessions on one expired claim, exactly one takeover (attempt 2), two pending with expires_at"
+
+# Sessions of this run that are waiting on a heavyweight lock (a row, tuple or
+# transaction lock). Its callers loop inside one transaction, so each reading
+# runs pg_stat_clear_snapshot() first: pg_stat_activity is otherwise read once
+# per transaction and cached.
+WAITING_SQL="(select count(*) from pg_stat_activity where datname = current_database() and pid <> pg_backend_pid() and wait_event_type = 'Lock')"
+
+# 4b. the claim-row lock -------------------------------------------------------
+# A test-only BEFORE UPDATE trigger holds the first takeover of op-race-lock
+# inside its UPDATE (the claim row is locked, but no new row version or index
+# entry exists yet, so INSERT ... ON CONFLICT does not wait) until both other
+# sessions wait on a lock. With the FOR UPDATE on media_claim_operation_v2's
+# claim-row read they wait at that read and then see the takeover; without it
+# they read the expired row, wait at their own takeover UPDATE and each takes
+# the claim over again behind the first. The trigger refuses to let the race go
+# unexercised, and it is dropped before anything else runs.
+q "create function public.test_hold_first_takeover() returns trigger language plpgsql as \$t\$
+   declare v_waiting bigint := 0;
+   begin
+     if new.operation_id = 'op-race-lock' and old.attempt = 1 then
+       for i in 1..400 loop
+         perform pg_stat_clear_snapshot();
+         v_waiting := $WAITING_SQL;
+         exit when v_waiting >= 2;
+         perform pg_sleep(0.05);
+       end loop;
+       if v_waiting < 2 then
+         raise exception 'race fixture: % session(s), not 2, waited behind the first takeover', v_waiting;
+       end if;
+     end if;
+     return new;
+   end \$t\$;
+   create trigger test_hold_first_takeover before update on public.media_operation_claims
+     for each row execute function public.test_hold_first_takeover()" >/dev/null
+q "insert into public.media_operation_claims (org_id, operation_id, fingerprint, actor_id, claimed_at)
+   values ('$ORG', 'op-race-lock', 'fp-race-lock', '$OWNER', now() - interval '16 minutes')" >/dev/null
+HELD_CLAIM="select (public.media_claim_operation_v2('$ORG', 'op-race-lock', 'fp-race-lock', '$OWNER') - 'claim')::text"
+for s in a b c; do psql -qAt -v ON_ERROR_STOP=1 -d "$DB" -c "$HELD_CLAIM" >"$OUT/lock-$s.out" 2>&1 & done
+wait
+q "drop trigger test_hold_first_takeover on public.media_operation_claims; drop function public.test_hold_first_takeover()" >/dev/null
+LOCK_STATE="$(q "select attempt || ':' || jsonb_array_length(history) || ':' || state from public.media_operation_claims where operation_id = 'op-race-lock'")"
+lock_fail() { cat "$OUT"/lock-?.out >&2; fail "claim-row lock: $1 (attempt:history:state $LOCK_STATE)"; }
+[ "$(cat "$OUT"/lock-?.out | grep -c '"takeover": true')" = 1 ] || lock_fail "expected exactly one takeover"
+[ "$(cat "$OUT"/lock-?.out | grep '"outcome": "existing"' | grep -c '"expires_at": "')" = 2 ] || lock_fail "expected the two others to read the pending claim, with expires_at"
+[ "$LOCK_STATE" = "2:1:claimed" ] || lock_fail "the claim was taken over more than once"
+echo "claim-row lock: the first takeover held inside its UPDATE while two sessions waited; exactly one takeover (attempt 2), two pending"
+
+# 4c. the operator's bind against a same-id retry ------------------------------
+# A claim that is still 'claimed' although its job exists (the winner reserved
+# and stopped before the bind). The retry R holds the claim row, the first lock
+# media_claim_operation_v2 takes, until the operator's bind decision O has
+# locked the job row and waits for the claim row; then R repairs the claim to
+# the job, and binding takes the foreign key's KEY SHARE lock on that job row.
+# media_resolve_operation_job_v1 locks the job FOR NO KEY UPDATE, which does not
+# conflict with KEY SHARE: R binds, then O answers already_bound. FOR UPDATE
+# would make the two wait on each other until PostgreSQL aborts one (40P01).
+[ "$(q "select public.media_claim_operation_v2('$ORG', 'op-race-bind', 'fp-race-bind', '$OWNER') ->> 'outcome'")" = won ] \
+  || fail "bind race: the fixture claim was not won"
+BIND_JOB="$(q "select id from public.media_create_budgeted_job_v2('$ORG', '$OWNER', 'fal', 'fal-ai/flux-2', 'text-to-image', 'p', '{\"prompt\":\"p\"}'::jsonb,
+  jsonb_build_object('operation_id', 'op-race-bind', 'requested_by', '$OWNER', 'submit_protocol', 'cas-v1'),
+  12000, 5, '{}'::jsonb, '{\"units\":1,\"unit\":\"megapixel\",\"unit_price_usd_micros\":12000}'::jsonb)")"
+[ "$(q "select state || ':' || coalesce(job_id::text, 'none') from public.media_operation_claims where operation_id = 'op-race-bind'")" = "claimed:none" ] \
+  || fail "bind race: the fixture claim is not open"
+PGAPPNAME=media-race-retry psql -qAt -v ON_ERROR_STOP=1 -d "$DB" \
+  -c "begin" \
+  -c "select 'retry holds the claim row' from public.media_operation_claims where org_id = '$ORG' and operation_id = 'op-race-bind' for update" \
+  -c "do \$w\$ declare v_waiting bigint := 0; begin
+        for i in 1..400 loop
+          perform pg_stat_clear_snapshot();
+          v_waiting := $WAITING_SQL;
+          exit when v_waiting >= 1;
+          perform pg_sleep(0.05);
+        end loop;
+        if v_waiting < 1 then raise exception 'race fixture: the operator decision never waited on the claim row'; end if;
+      end \$w\$" \
+  -c "select 'retry: ' || (public.media_claim_operation_v2('$ORG', 'op-race-bind', 'fp-race-bind', '$OWNER') - 'claim')::text" \
+  -c "commit" >"$OUT/bind-retry.out" 2>&1 &
+RETRY_PID=$!
+# The operator starts once the retry holds the claim row: its row lock gave it a transaction id.
+held=f
+for _ in $(seq 400); do
+  held="$(q "select exists (select 1 from pg_stat_activity a join pg_locks l on l.pid = a.pid
+    where a.datname = current_database() and a.application_name = 'media-race-retry' and l.locktype = 'transactionid' and l.granted)")"
+  [ "$held" = t ] && break
+  sleep 0.05
+done
+[ "$held" = t ] || fail "bind race: the retry never held the claim row"
+psql -qAt -v ON_ERROR_STOP=1 -d "$DB" \
+  -c "select 'operator: ' || (public.media_resolve_operation_job_v1('$ORG', '$BIND_JOB', 'bind', '$OWNER', 'race: bind while a retry repairs', '{}'::jsonb, null) - 'resolution' - 'claim')::text" \
+  >"$OUT/bind-operator.out" 2>&1 &
+OPERATOR_PID=$!
+retry_status=0; wait "$RETRY_PID" || retry_status=$?
+operator_status=0; wait "$OPERATOR_PID" || operator_status=$?
+bind_fail() {
+  { echo "retry (exit $retry_status):"; cat "$OUT/bind-retry.out"; echo "operator (exit $operator_status):"; cat "$OUT/bind-operator.out"; } >&2
+  fail "bind race: $1"
+}
+[ "$retry_status" = 0 ] && [ "$operator_status" = 0 ] || bind_fail "a session failed (a deadlock, 40P01, when the decision locks the job FOR UPDATE)"
+grep -q '^retry: .*"repaired": true' "$OUT/bind-retry.out" || bind_fail "the retry did not repair the claim to its job"
+grep -q '^operator: .*"outcome": "already_bound"' "$OUT/bind-operator.out" || bind_fail "the operator's bind did not find the claim bound to its job"
+[ "$(q "select state || ':' || job_id from public.media_operation_claims where operation_id = 'op-race-bind'")" = "bound:$BIND_JOB" ] || bind_fail "the claim is not bound to the job"
+[ "$(q "select routing -> 'operator_resolution' ->> 'decision' from public.media_jobs where id = '$BIND_JOB'")" = bind ] || bind_fail "the decision is not recorded on the job"
+echo "bind race: an operator bind and a same-id retry on one open claim, no deadlock; the retry repaired it, the operator answered already_bound"
 
 # 5. rollback ------------------------------------------------------------------
 apply supabase/pending/media_operation_claims_v2.rollback.sql
