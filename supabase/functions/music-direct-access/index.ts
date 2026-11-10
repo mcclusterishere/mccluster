@@ -13,7 +13,10 @@
 //                       order). It answers the entitlement TOKEN, and only for
 //                       DIRECT_DEFAULTS.tokenRevealHours after payment: after that the
 //                       session id opens nothing, the token link is what the buyer keeps.
-//   status {token}      what the purchase page shows, without counting a download.
+//   status {token}      what the purchase page shows, without counting a download. Claim and
+//                       status name the purchase by the version it pinned (title, format),
+//                       never by the offer as it reads today; title_source says "purchase",
+//                       or "offer" for a legacy purchase that has no pinned version.
 //   download {token, attempt_key?}
 //                       a download is an ATTEMPT (20261109120000_music_direct_asset_versions_v1):
 //                       public.music_direct_reserve_download holds one slot under a row lock
@@ -56,17 +59,26 @@ async function entitlementView(orderId: string) {
   const { data: ent } = await admin.from("music_direct_entitlements").select(ENT_COLUMNS).eq("order_id", orderId).limit(1).maybeSingle();
   return ent as any;
 }
-async function offerTitle(offerKey: string) {
-  const { data } = await admin.from("music_direct_offers").select("title,catalog_key,asset_path").eq("offer_key", offerKey).limit(1).maybeSingle();
-  const d = (data as any) || { title: "Your track", catalog_key: null, asset_path: null };
+/* What claim and status call a purchase: the title and format of the version it PINNED
+   (the bytes a download delivers), never the offer as it reads today. A purchase with no
+   pinned version (a legacy order the owner has not resolved; its downloads refuse) is the
+   only one named after the live offer, and title_source says which it was. */
+async function purchasedTitle(ent: any, offerKey: string) {
+  if (ent?.asset_version_id) {
+    const { data: v } = await admin.from("music_direct_asset_versions").select("title,asset_path").eq("id", ent.asset_version_id).limit(1).maybeSingle();
+    if (v) return { title: (v as any).title, format: audioFormatOf((v as any).asset_path), title_source: "purchase" };
+  }
+  const { data } = await admin.from("music_direct_offers").select("title,asset_path").eq("offer_key", offerKey).limit(1).maybeSingle();
+  const d = (data as any) || { title: "Your track", asset_path: null };
   /* the delivered format, never the path */
-  return { title: d.title, catalog_key: d.catalog_key, format: audioFormatOf(d.asset_path) };
+  return { title: d.title, format: audioFormatOf(d.asset_path), title_source: "offer" };
 }
-function describe(ent: any, orderStatus: string, title: string, format: string | null = null) {
+function describe(ent: any, orderStatus: string, shown: { title: string; format: string | null; title_source: string }) {
   const refusal = downloadRefusal(ent, orderStatus);
   return {
-    title,
-    format,
+    title: shown.title,
+    format: shown.format,
+    title_source: shown.title_source,
     downloads_used: ent ? ent.download_count : 0,
     downloads_left: ent && ent.max_downloads != null ? Math.max(0, ent.max_downloads - ent.download_count) : 0,
     max_downloads: ent?.max_downloads ?? null,
@@ -121,8 +133,7 @@ async function claim(sessionId: string) {
   }
   const { data: fresh } = await admin.from("music_direct_orders").select(ORDER_COLUMNS).eq("id", o.id).limit(1).maybeSingle();
   const ent = await entitlementView(o.id);
-  const offer = await offerTitle(o.offer_key);
-  const view = describe(ent, (fresh as any)?.status, offer.title, offer.format);
+  const view = describe(ent, (fresh as any)?.status, await purchasedTitle(ent, o.offer_key));
   if (!ent) throw new Error("entitlement missing after fulfilment");
   if (!tokenRevealAllowed((fresh as any)?.paid_at)) {
     return { ok: true, state: "paid", token_hidden: true, ...view,
@@ -274,8 +285,7 @@ Deno.serve(async (req) => {
       if (!TOKEN_RE.test(token)) return json({ error: "invalid download link" }, 400);
       if (action === "status") {
         const { ent, orderStatus } = await tokenRow(token);
-        const offer = await offerTitle(ent.offer_key);
-        return json({ ok: true, state: orderStatus === "paid" && !ent.revoked_at ? "paid" : "revoked", ...describe(ent, orderStatus, offer.title, offer.format) });
+        return json({ ok: true, state: orderStatus === "paid" && !ent.revoked_at ? "paid" : "revoked", ...describe(ent, orderStatus, await purchasedTitle(ent, ent.offer_key)) });
       }
       const attemptKey = body.attempt_key === undefined || body.attempt_key === null ? null : String(body.attempt_key);
       if (attemptKey !== null && !ATTEMPT_KEY_RE.test(attemptKey)) return json({ error: "invalid attempt key" }, 400);
@@ -288,8 +298,10 @@ Deno.serve(async (req) => {
         return json({ error: h.message, reason: r?.reason || "refused" }, h.status);
       }
       /* 2. sign the pinned object; 3. settle: issued (counted) or released (slot returned) */
+      /* the file name agrees with the bytes: the pinned name, unless its type is not the pinned file's */
+      const fileName = audioFormatOf(r.download_name) === audioFormatOf(r.path) ? r.download_name : downloadNameFor(r.title, r.path);
       const { data: signed, error: signError } = await admin.storage.from(r.bucket)
-        .createSignedUrl(r.path, DIRECT_DEFAULTS.signedUrlSeconds, { download: r.download_name });
+        .createSignedUrl(r.path, DIRECT_DEFAULTS.signedUrlSeconds, { download: fileName });
       if (signError || !signed?.signedUrl) {
         const { data: released, error: releaseError } = await admin.rpc("music_direct_settle_download", { p_attempt: r.attempt_id, p_outcome: "released" });
         console.error("music direct sign failed", { attempt: r.attempt_id, sign: signError?.message || "no url", released: (released as any)?.state, releaseError: releaseError?.message });

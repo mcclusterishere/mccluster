@@ -16,6 +16,8 @@ import {
   tokenRevealAllowed
 } from '../../supabase/functions/_shared/music-direct.ts';
 
+import { loadAccessHandler, paidSession } from './support/music-direct-access-handler.mjs';
+
 const read = (p) => readFile(p, 'utf8');
 
 const ORDER = {
@@ -231,6 +233,124 @@ test('music-direct-access: orders found by the stored session, fulfilled by the 
   assert.match(src, /createSignedUploadUrl\(path, \{ upsert: false \}\)/, 'uploads never overwrite');
 });
 
+test('music-direct-access: claim and status name the purchase by its pinned version, never the live offer', async () => {
+  const src = await read('supabase/functions/music-direct-access/index.ts');
+  assert.doesNotMatch(src, /offerTitle\(/, 'no helper that names a purchase from the offer alone');
+  const named = src.slice(src.indexOf('async function purchasedTitle('), src.indexOf('function describe('));
+  const pinned = named.indexOf('admin.from("music_direct_asset_versions").select("title,asset_path").eq("id", ent.asset_version_id)');
+  const offer = named.indexOf('admin.from("music_direct_offers")');
+  assert.ok(pinned > 0 && offer > pinned, 'the pinned version is read first; the offer only after it');
+  assert.match(named, /if \(ent\?\.asset_version_id\) \{/);
+  assert.match(named, /if \(v\) return \{ title: \(v as any\)\.title, format: audioFormatOf\(\(v as any\)\.asset_path\), title_source: "purchase" \};/);
+  assert.match(named, /return \{ title: d\.title, format: audioFormatOf\(d\.asset_path\), title_source: "offer" \};/, 'the fallback says it is the offer');
+  assert.equal((src.match(/music_direct_offers"\)\.select\("title/g) || []).length, 1, 'one place reads a title from the offer: that fallback');
+  /* both answers go through it, with the entitlement */
+  const claimFn = src.slice(src.indexOf('async function claim('), src.indexOf('async function tokenRow('));
+  assert.match(claimFn, /describe\(ent, \(fresh as any\)\?\.status, await purchasedTitle\(ent, o\.offer_key\)\)/);
+  assert.match(src, /describe\(ent, orderStatus, await purchasedTitle\(ent, ent\.offer_key\)\)/);
+  assert.match(src, /title_source: shown\.title_source,/);
+  assert.match(src, /const ENT_COLUMNS = "[^"]*asset_version_id"/, 'the entitlement row carries its pin');
+  /* the download: the pinned title, the pinned file's format, and a file name of the same type as the bytes */
+  const download = src.slice(src.indexOf('music_direct_reserve_download'), src.indexOf('if (action === "operator-status")'));
+  assert.match(download, /const fileName = audioFormatOf\(r\.download_name\) === audioFormatOf\(r\.path\) \? r\.download_name : downloadNameFor\(r\.title, r\.path\);/);
+  assert.match(download, /createSignedUrl\(r\.path, DIRECT_DEFAULTS\.signedUrlSeconds, \{ download: fileName \}\)/);
+  assert.match(download, /title: r\.title, format: audioFormatOf\(r\.path\), url: signed\.signedUrl/);
+  /* and the version row does record both, immutably */
+  const sql = await read('supabase/migrations/20261109175747_music_direct_asset_versions_v1.sql');
+  assert.match(sql, /download_name text not null,\s+title text not null,\s+format text generated always as \(lower\(substring\(asset_path from/);
+  assert.match(sql, /if tg_op = 'UPDATE' then raise exception 'music_direct_asset_version_immutable'; end if;/);
+  assert.match(sql, /'title', v\.title, 'bucket', v\.asset_bucket, 'path', v\.asset_path, 'download_name', v\.download_name/);
+});
+
+/* The function's own source over in-memory rows (the applied SQL half runs in
+   music-direct-purchased-version.integration.mjs): an offer edited AFTER the purchase,
+   title and format both changed. */
+async function editedOfferFixture() {
+  const OLD = { id: '10000000-0000-4000-8000-000000000001', offer_key: 'here--antisocial', asset_bucket: DIRECT_BUCKET, asset_path: 'direct-sales/here/antisocial/v1-antisocial.wav', download_name: 'McCluster - Antisocial.wav', title: 'Antisocial' };
+  const NEW = { id: '10000000-0000-4000-8000-000000000002', offer_key: 'here--antisocial', asset_bucket: DIRECT_BUCKET, asset_path: 'direct-sales/here/antisocial/v2-remaster.flac', download_name: 'McCluster - Antisocial (2027 Remaster).flac', title: 'Antisocial (2027 Remaster)' };
+  const order = (n, version) => ({ id: `50000000-0000-4000-8000-00000000000${n}`, offer_key: 'here--antisocial', stripe_checkout_session_id: 'cs_test_edit' + n, amount_cents: 199, currency: 'usd', status: 'paid', paid_at: new Date().toISOString(), asset_version_id: version });
+  const ent = (n, version) => ({ id: `60000000-0000-4000-8000-00000000000${n}`, order_id: `50000000-0000-4000-8000-00000000000${n}`, offer_key: 'here--antisocial', token: `70000000-0000-4000-8000-00000000000${n}`, download_count: 0, max_downloads: 5, expires_at: '2999-01-01T00:00:00Z', revoked_at: null, asset_version_id: version });
+  const tables = {
+    music_direct_offers: [{ offer_key: 'here--antisocial', catalog_key: 'here:antisocial', title: NEW.title, asset_path: NEW.asset_path, download_name: NEW.download_name, current_version_id: NEW.id }],
+    music_direct_asset_versions: [OLD, NEW],
+    /* 1 bought before the edit, 2 after it, 3 a legacy purchase with no pin */
+    music_direct_orders: [order(1, OLD.id), order(2, NEW.id), order(3, null)],
+    music_direct_entitlements: [ent(1, OLD.id), ent(2, NEW.id), ent(3, null)]
+  };
+  const signed = [];
+  const from = (table) => {
+    const filters = [];
+    const rows = () => tables[table].filter((r) => filters.every(([c, v]) => r[c] === v));
+    const b = { select: () => b, limit: () => b, eq: (c, v) => { filters.push([c, v]); return b; }, maybeSingle: async () => ({ data: rows()[0] ?? null, error: null }) };
+    return b;
+  };
+  const rpc = async (name, args) => {
+    if (name === 'music_direct_fulfil') return { data: { ok: true, newly_paid: false }, error: null };
+    if (name === 'music_direct_settle_download') return { data: { ok: true, state: args.p_outcome, downloads_left: 4 }, error: null };
+    /* what public.music_direct_reserve_download answers: the entitlement's pinned version row */
+    const e = tables.music_direct_entitlements.find((x) => x.token === args.p_token);
+    const v = tables.music_direct_asset_versions.find((x) => x.id === e.asset_version_id);
+    if (!v) return { data: { ok: false, reason: 'asset_unresolved' }, error: null };
+    return { data: { ok: true, attempt_id: 'a', state: 'reserved', replay: false, title: v.title, bucket: v.asset_bucket, path: v.asset_path, download_name: v.download_name, expires_at: e.expires_at }, error: null };
+  };
+  const storage = { from: (bucket) => ({ createSignedUrl: async (path, _seconds, options) => { signed.push({ bucket, path, download: options.download }); return { data: { signedUrl: 'https://storage.invalid/' + path }, error: null }; } }) };
+  const sessions = new Map(tables.music_direct_orders.map((o) => [o.stripe_checkout_session_id, paidSession({ sessionId: o.stripe_checkout_session_id, orderId: o.id, offerKey: o.offer_key, amountCents: 199 })]));
+  const { call, logged } = await loadAccessHandler({ admin: { from, rpc, storage }, sessions });
+  return { OLD, NEW, tables, signed, call, logged };
+}
+
+test('an offer edited after the purchase: claim, status and download still name the purchased title and format', async () => {
+  const { OLD, NEW, tables, signed, call, logged } = await editedOfferFixture();
+  const token = (n) => tables.music_direct_entitlements[n - 1].token;
+  for (const [n, want] of [[1, OLD], [2, NEW]]) {
+    const format = audioFormatOf(want.asset_path);
+    const claim = await call({ action: 'claim', session_id: 'cs_test_edit' + n });
+    assert.equal(claim.status, 200);
+    assert.deepEqual([claim.data.title, claim.data.format, claim.data.title_source, claim.data.token], [want.title, format, 'purchase', token(n)], 'claim ' + n);
+    const status = await call({ action: 'status', token: token(n) });
+    assert.deepEqual([status.data.title, status.data.format, status.data.title_source, status.data.can_download], [want.title, format, 'purchase', true], 'status ' + n);
+    const download = await call({ action: 'download', token: token(n) });
+    assert.deepEqual([download.status, download.data.title, download.data.format], [200, want.title, format], 'download ' + n);
+    assert.deepEqual(signed.at(-1), { bucket: DIRECT_BUCKET, path: want.asset_path, download: want.download_name }, 'the pinned bytes under the pinned name');
+  }
+  assert.notEqual(OLD.title, NEW.title);
+  assert.deepEqual([audioFormatOf(OLD.asset_path), audioFormatOf(NEW.asset_path)], ['wav', 'flac'], 'title and format both changed');
+  assert.deepEqual(logged, []);
+});
+
+test('only a purchase with no pinned version is named after the live offer, and the answer says so', async () => {
+  const { NEW, tables, signed, call } = await editedOfferFixture();
+  const token = tables.music_direct_entitlements[2].token;
+  for (const r of [await call({ action: 'claim', session_id: 'cs_test_edit3' }), await call({ action: 'status', token })]) {
+    assert.equal(r.status, 200);
+    assert.deepEqual([r.data.title, r.data.format, r.data.title_source], [NEW.title, 'flac', 'offer']);
+    assert.equal(r.data.can_download, false);
+    assert.equal(r.data.refusal.reason, 'asset_unresolved');
+  }
+  const download = await call({ action: 'download', token });
+  assert.deepEqual([download.status, download.data.reason], [409, 'asset_unresolved']);
+  assert.deepEqual(signed, [], 'nothing is signed for it');
+  /* an offer that is gone altogether still answers, as before */
+  tables.music_direct_offers.length = 0;
+  const bare = await call({ action: 'status', token });
+  assert.deepEqual([bare.data.title, bare.data.format, bare.data.title_source], ['Your track', null, 'offer']);
+});
+
+test('the download file name is the type of the bytes delivered', async () => {
+  const { OLD, tables, signed, call } = await editedOfferFixture();
+  const token = tables.music_direct_entitlements[0].token;
+  /* a pinned row whose name says another type (a row written by hand, not by operator-direct-save) */
+  OLD.download_name = 'Antisocial (album cut).mp3';
+  let r = await call({ action: 'download', token });
+  assert.equal(r.data.format, 'wav');
+  assert.deepEqual(signed.at(-1), { bucket: DIRECT_BUCKET, path: OLD.asset_path, download: downloadNameFor(OLD.title, OLD.asset_path) });
+  assert.equal(signed.at(-1).download, 'McCluster - Antisocial.wav');
+  /* a chosen name of the right type is kept */
+  OLD.download_name = 'Antisocial (album cut).WAV';
+  r = await call({ action: 'download', token });
+  assert.equal(signed.at(-1).download, 'Antisocial (album cut).WAV');
+});
+
 test('stripe-webhook: direct sales bound, platform only, refunds revoke', async () => {
   const src = await read('supabase/functions/stripe-webhook/index.ts');
   assert.match(src, /directFulfilmentRefusal\(session as any, event as any, order\)/);
@@ -316,6 +436,7 @@ test('the buyer is told the real format: the file is delivered unconverted', asy
   assert.match(purchase, /"Download " \+ fmt/);
   const access = await read('supabase/functions/music-direct-access/index.ts');
   assert.match(access, /format: audioFormatOf\(d\.asset_path\)/);
+  assert.match(access, /format: audioFormatOf\(\(v as any\)\.asset_path\)/, 'a purchase is labelled with the format of its pinned file');
   const desk = await read('js/control-room/music-direct-sales.js');
   assert.match(desk, /sold as " \+ e\(fmtOf\(file\)\) \+ ", unconverted\)/);
 });
