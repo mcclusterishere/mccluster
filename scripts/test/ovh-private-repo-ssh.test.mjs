@@ -115,9 +115,37 @@ fi
 exit 1
 `,
  // systemd's merged view: the unit file's Environment, then each drop-in in name order.
+ // The reconcile unit is a oneshot. A cycle keeps the environment that was loaded
+ // when it started, and a start request while a cycle runs joins THAT cycle
+ // instead of starting another (systemd merges the start job into the running
+ // one). $FIXTURE/running is such a cycle: "<invocation> <transport> <polls left>".
+ // Each cycle that ends leaves last-cycle.json as scripts/mccluster-vps-reconcile.sh
+ // writes it (unless FAKE_NO_RECEIPT: a reconciler that predates the receipts).
  systemctl:`#!/usr/bin/env bash
 echo "systemctl $*" >> "$FIXTURE/calls.log"
+loaded_transport() { cat "$FIXTURE/loaded-transport" 2>/dev/null || echo https; }
+receipt() { # receipt <invocation> <transport> <outcome> <trigger>
+  [[ -z "\${FAKE_NO_RECEIPT:-}" ]] || return 0
+  local pinned=false fingerprint=""
+  if [[ "$2" == ssh ]]; then pinned=true; fingerprint="\${FAKE_CYCLE_KEY_FINGERPRINT:-${KEY_FP}}"; fi
+  printf '{"schema_version":"mccluster-reconcile-cycle/v1","repository":"mcclusterishere/mccluster","promoted_ref":"deploy/ovh-production","cycle_id":"%s","trigger":"%s","timer_trigger_monotonic_usec":"","outcome":"%s","stage":"complete","exit_code":0,"interrupted":false,"transport":"%s","ssh_host_key_pinned":%s,"ssh_key_fingerprint":"%s","https_credential_configured":false,"github_main_sha":"","github_promoted_sha":"","deployed_sha":"","started_at":"2026-11-10T00:00:00Z","finished_at":"2026-11-10T00:00:01Z"}\\n' "$1" "$4" "$3" "$2" "$pinned" "$fingerprint" > "$FAKE_STATE_DIR/last-cycle.json"
+}
+finish_running() {
+  local id transport polls
+  read -r id transport polls < "$FIXTURE/running"
+  receipt "$id" "$transport" verified_no_change timer
+  echo "$id" > "$FIXTURE/invocation"
+  rm -f "$FIXTURE/running"
+}
 case "$*" in
+  "show --property=ActiveState --value mccluster-vps-reconcile.service")
+    if [[ -f "$FIXTURE/running" ]]; then
+      read -r id transport polls < "$FIXTURE/running"
+      if (( polls > 0 )); then echo "$id $transport $((polls - 1))" > "$FIXTURE/running"; echo activating; exit 0; fi
+      finish_running
+    fi
+    echo inactive ;;
+  "show --property=InvocationID --value mccluster-vps-reconcile.service") cat "$FIXTURE/invocation" 2>/dev/null || echo ;;
   "show --property=Environment --value mccluster-vps-reconcile.service")
     out="HOME=/var/lib/mccluster/reconcile MCCLUSTER_REPO_URL=https://github.com/mcclusterishere/mccluster.git MCCLUSTER_DEPLOY_REF=deploy/ovh-production"
     for file in "$FAKE_DROPIN_DIR"/*.conf; do
@@ -136,8 +164,18 @@ case "$*" in
   "is-active mccluster-vps-reconcile.timer") echo "\${FAKE_TIMER:-active}" ;;
   "is-active --quiet mccluster-vps-reconcile.timer") [[ "\${FAKE_TIMER:-active}" == active ]] || exit 3 ;;
   "show --property=LastTriggerUSec --value mccluster-vps-reconcile.timer") echo "Mon 2026-11-09 22:40:01 UTC" ;;
-  "daemon-reload") ;;
-  "start mccluster-vps-reconcile.service") exit "\${FAKE_START_RC:-0}" ;;
+  "daemon-reload")
+    # The timer elapsing between the drop-in and this reload starts a cycle on the environment loaded before it.
+    if [[ -n "\${FAKE_TIMER_FIRES_BEFORE_RELOAD:-}" && ! -f "$FIXTURE/timer-fired" ]]; then
+      touch "$FIXTURE/timer-fired"; echo "$(printf 'd%.0s' {1..32}) $(loaded_transport) 0" > "$FIXTURE/running"
+    fi
+    if grep -qsF 'Environment="MCCLUSTER_REPO_URL=${REPO_SSH}"' "$FAKE_DROPIN_DIR"/*.conf; then echo ssh; else echo https; fi > "$FIXTURE/loaded-transport" ;;
+  "start mccluster-vps-reconcile.service")
+    if [[ -f "$FIXTURE/running" ]]; then finish_running; exit 0; fi
+    count=$(( $(cat "$FIXTURE/started" 2>/dev/null || echo 0) + 1 )); echo "$count" > "$FIXTURE/started"
+    id="$(printf '%032x' "$count")"; echo "$id" > "$FIXTURE/invocation"
+    if [[ "\${FAKE_START_RC:-0}" == 0 ]]; then receipt "$id" "$(loaded_transport)" verified_no_change other; else receipt "$id" "$(loaded_transport)" failed other; fi
+    exit "\${FAKE_START_RC:-0}" ;;
   *) echo "fixture: unexpected systemctl call: $*" >&2; exit 64 ;;
 esac
 `,
@@ -179,6 +217,8 @@ function host(t){
  ];
  let copy=source;
  for(const [from,to] of redirects){assert.equal(copy.split(from).length-1,1,`redirect anchor: ${from}`);copy=copy.replace(from,to);}
+ // Timing only, so applied where present: activate's wait for a running cycle, in tenths of seconds.
+ for(const [from,to] of [['RECONCILE_IDLE_WAIT_SECONDS=1260','RECONCILE_IDLE_WAIT_SECONDS=3'],['RECONCILE_IDLE_POLL_SECONDS=2','RECONCILE_IDLE_POLL_SECONDS=0.1']])copy=copy.replace(from,to);
  const live=copy.split('\n').filter(line=>!/^\s*#/.test(line)).join('\n');
  assert.doesNotMatch(live,/(^|[^A-Za-z0-9_.-])\/(var\/lib\/mccluster|etc\/systemd|usr\/bin\/ssh)/,'the copy cannot reach a real host path or the real ssh');
  assert.doesNotMatch(live,/"\$\{EUID\}"/);
@@ -204,7 +244,7 @@ function host(t){
   run(mode,env={}){
    const before=readFile(p('fixture/calls.log'),'utf8').length;
    const result=spawnSync('/bin/bash',[p('setup.sh'),...(mode?[mode]:[])],{encoding:'utf8',timeout:60_000,killSignal:'SIGKILL',
-    env:{PATH:`${p('bin')}:${process.env.PATH}`,HOME:p('home'),LC_ALL:'C',FIXTURE:p('fixture'),FAKE_DROPIN_DIR:dropinDir,REAL_STAT,REAL_INSTALL,...env}});
+    env:{PATH:`${p('bin')}:${process.env.PATH}`,HOME:p('home'),LC_ALL:'C',FIXTURE:p('fixture'),FAKE_DROPIN_DIR:dropinDir,FAKE_STATE_DIR:state,REAL_STAT,REAL_INSTALL,...env}});
    return {...result,calls:readFile(p('fixture/calls.log'),'utf8').slice(before),
     lines:Object.fromEntries(result.stdout.split('\n').filter(line=>/^[a-z_]+=/.test(line)&&!line.startsWith('timer_cycle=')).map(line=>[line.slice(0,line.indexOf('=')),line.slice(line.indexOf('=')+1)])),
     timerCycles:result.stdout.split('\n').filter(line=>line.startsWith('timer_cycle=')).map(line=>line.slice('timer_cycle='.length))};
@@ -359,6 +399,82 @@ test('activate reports a first cycle that fails, and how to go back',(t)=>{
  const stopped=box.run('activate',{FAKE_TIMER:'inactive'});
  assert.equal(stopped.status,4);
  assert.match(stopped.stderr,/mccluster-vps-reconcile\.timer is not active/);
+});
+
+/*
+ * SSH-1. The reconciler is a oneshot its timer starts every two minutes or so. A
+ * start request while a cycle runs joins THAT cycle, which keeps the environment
+ * it started with: activate's "first cycle" could be an HTTPS timer cycle, and
+ * activate called the switch proven and stopped guarding it. The fake systemctl
+ * above models both (the job merge, and an environment fixed at the start).
+ */
+test('activate waits for a cycle the timer already started, so the cycle it starts is a new one over SSH (SSH-1)',(t)=>{
+ const box=host(t);
+ box.run('prepare');
+ // A timer cycle started before the switch, on the transport loaded then (HTTPS), still running.
+ writeFileSync(box.p('fixture/running'),`${'e'.repeat(32)} https 3\n`);
+ const result=box.run('activate');
+ assert.equal(result.status,0,result.stderr);
+ const receipt=JSON.parse(readFile(join(box.state,'last-cycle.json'),'utf8'));
+ assert.equal(receipt.transport,'ssh','the first cycle after the switch fetched over SSH');
+ assert.notEqual(receipt.cycle_id,'e'.repeat(32),'and it is not the cycle that was already running');
+ assert.equal(receipt.ssh_key_fingerprint,KEY_FP);
+ assert.match(result.stdout,/A reconcile cycle is running; waiting for it to end before switching/);
+ const calls=result.calls.split('\n');
+ const reload=calls.indexOf('systemctl daemon-reload');
+ assert.equal(calls.slice(0,reload).filter((line)=>line==='systemctl show --property=ActiveState --value mccluster-vps-reconcile.service').length,4,
+  'three polls while it ran and one that saw it end, all before the switch');
+ assert.match(result.stdout,new RegExp(`switched to authenticated read-only GitHub SSH after verified ref access\\.\\nIts first cycle, ${receipt.cycle_id}, fetched over SSH with this key\\.\\n`));
+});
+
+test('activate puts the transport back when the cycle it waited for was not a new cycle over SSH with this key (SSH-1)',(t)=>{
+ for(const [name,env] of [
+  ['the timer started a cycle between the wait and the reload',{FAKE_TIMER_FIRES_BEFORE_RELOAD:'1'}],
+  ['the reconciler on the host writes no cycle receipts',{FAKE_NO_RECEIPT:'1'}],
+  ['the cycle offered another key',{FAKE_CYCLE_KEY_FINGERPRINT:OTHER_FP}],
+ ]){
+  const box=host(t);
+  box.run('prepare');
+  const result=box.run('activate',env);
+  assert.equal(result.status,4,`${name}: ${result.stdout}${result.stderr}`);
+  assert.match(result.stderr,/The cycle that ran after the switch was not a new cycle over SSH with this key/,name);
+  assert.match(result.stderr,/put back as it was before this run/,name);
+  assert.equal(existsSync(box.dropin),false,`${name}: the previous transport is back`);
+  assert.doesNotMatch(result.stdout,/switched to authenticated/,name);
+ }
+});
+
+test('activate changes nothing when a cycle that is already running does not end in time (SSH-1)',(t)=>{
+ const box=host(t);
+ box.run('prepare');
+ writeFileSync(box.p('fixture/running'),`${'e'.repeat(32)} https 100000\n`);
+ const before=box.snapshot();
+ const result=box.run('activate');
+ assert.equal(result.status,4,result.stdout+result.stderr);
+ assert.match(result.stderr,/A reconcile cycle has been running for over \d+ minutes\. Nothing was changed; run activate again when it has ended\./);
+ assert.equal(existsSync(box.dropinDir),false);
+ assert.doesNotMatch(result.calls,/systemctl (daemon-reload|start)/);
+ assert.equal(box.snapshot(),before);
+});
+
+test('activate waits out a running cycle before any change, and checks its own cycle\'s receipt before it calls the switch done (SSH-1)',()=>{
+ const unit=readFileSync(new URL('../../core/systemd/mccluster-vps-reconcile.service',import.meta.url),'utf8');
+ const limit=Number(unit.match(/^TimeoutStartSec=(\d+)min$/m)?.[1])*60;
+ const wait=Number(source.match(/^RECONCILE_IDLE_WAIT_SECONDS=(\d+)$/m)?.[1]);
+ assert.ok(limit>0&&wait>limit,`the wait (${wait}s) outlasts a cycle that runs to the unit's start limit (${limit}s)`);
+ assert.match(source,/^RECONCILE_IDLE_POLL_SECONDS=2$/m);
+ const idle=source.indexOf('if ! mcc_wait_reconciler_idle; then');
+ const firstChange=source.indexOf('install -d -o root -g root -m 0755 "${DROPIN_DIR}"');
+ assert.ok(idle>0&&idle<firstChange,'the wait comes before the first change');
+ const start=source.indexOf('if ! systemctl start "${RECONCILE_UNIT}"; then');
+ const proof=source.indexOf('if ! mcc_first_cycle_used_this_key; then');
+ const done=source.indexOf('SWITCH_PENDING=0\nsystemctl is-active');
+ assert.ok(firstChange<start&&start<proof&&proof<done,'the receipt is checked while the switch is still undone on exit');
+ // The receipt fields it reads are the ones the reconciler writes.
+ const reconciler=readFileSync(new URL('../../scripts/mccluster-vps-reconcile.sh',import.meta.url),'utf8');
+ for(const field of ['cycle_id','outcome','transport','ssh_host_key_pinned','ssh_key_fingerprint'])assert.ok(reconciler.includes(`"${field}":`),field);
+ assert.match(reconciler,/^CYCLE_FILE="\$\{STATE_ROOT\}\/last-cycle\.json"$/m);
+ assert.match(reconciler,/invocation="\$\{INVOCATION_ID:-\}"/,'cycle_id is the unit\'s invocation id');
 });
 
 test('status proves every claim from the host and changes nothing',(t)=>{

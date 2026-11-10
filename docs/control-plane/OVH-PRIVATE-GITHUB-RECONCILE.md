@@ -18,7 +18,7 @@ The checked-in systemd service defaults to unauthenticated HTTPS, which worked w
    - GitHub refuses the key for writing. The probe is a dry-run push from a throwaway repository, so nothing is ever sent. A dry run that is accepted means the key can write, and the key is refused;
    - Git as the reconciler runs it resolves the SSH URL to itself, with no `url.*.insteadOf` rewrite.
 
-   Only then does it install the persistent systemd drop-in and start one reconcile cycle by hand.
+   Only then does it wait until no reconcile cycle is running (a cycle the timer has already started keeps the transport it started with, and a start request would join it), install the persistent systemd drop-in and start one reconcile cycle by hand. It reports the switch only when that cycle's receipt names the unit's invocation and shows a successful fetch over SSH with the pinned host key and this key; otherwise it puts the previous transport back and exits 4.
 4. Wait about five minutes, then run `sudo bash scripts/ovh-private-repo-ssh.sh status`. It is read-only: it creates no key, writes no unit and no drop-in, and does not start or reload anything. The only thing it creates is the throwaway repository of the write probe, which it removes. It prints `key=value` evidence and exits 0 only when every proof holds. `proofs_unproven=` names whatever does not. The drop-in survives versioned unit reinstall.
 5. Only after `status` exits 0 and both local and public `/health` attest the deployed SHA, and only if the owner decides to, switch repository visibility to private and repeat the status, reconciliation and local/public health checks. Record results on #510. A GitHub branch head or green workflow alone cannot prove the live runtime SHA.
 
