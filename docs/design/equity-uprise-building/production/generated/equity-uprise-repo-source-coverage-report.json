@@ -20,7 +20,6 @@
     "CODEX.md",
     "GEMINI.md",
     "LICENSE",
-    "PRIM3/game/halo/adaptive/topology-learning.mjs",
     "README.md",
     "_unfinished/README.md",
     "_unfinished/creator-selection-desk.html",
@@ -305,6 +304,7 @@
     "js/onboard.js",
     "js/payments.js",
     "js/policy-fellowship-ladder.js",
+    "js/prim3-mission/topology-learning.mjs",
     "js/prim3-tactics/SOURCE.json",
     "js/prim3-tactics/adapters/equity-uprise/adapter.mjs",
     "js/prim3-tactics/adapters/equity-uprise/equity-uprise-package.json",
@@ -12842,22 +12842,22 @@
       "detail": ""
     },
     {
-      "name": "PRIM3/game/halo/adaptive/topology-learning.mjs capability ids known",
+      "name": "js/prim3-mission/topology-learning.mjs capability ids known",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "PRIM3/game/halo/adaptive/topology-learning.mjs classified",
+      "name": "js/prim3-mission/topology-learning.mjs classified",
       "passed": true,
       "detail": "classification='building_projection_support'"
     },
     {
-      "name": "PRIM3/game/halo/adaptive/topology-learning.mjs support-only semantics coherent",
+      "name": "js/prim3-mission/topology-learning.mjs support-only semantics coherent",
       "passed": true,
       "detail": "support-only sources must not also claim capability ownership"
     },
     {
-      "name": "PRIM3/game/halo/adaptive/topology-learning.mjs support rationale present",
+      "name": "js/prim3-mission/topology-learning.mjs support rationale present",
       "passed": true,
       "detail": ""
     },

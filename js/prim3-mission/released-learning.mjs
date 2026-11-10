@@ -1,4 +1,4 @@
-import { learningContext } from '../../PRIM3/game/halo/adaptive/topology-learning.mjs';
+import { learningContext } from './topology-learning.mjs';
 // Reusable in-mission adapter. Local checkpoint state controls presentation only;
 // the server's signed item/evaluator owns answer validation. No tactical win credit.
 export function checkpointReady(state, recipeId, checkpointId) {

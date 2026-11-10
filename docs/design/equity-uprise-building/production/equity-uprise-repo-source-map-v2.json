@@ -4720,7 +4720,7 @@
       "rationale": "Tests binding existing building screens to inventoried hardware."
     },
     {
-      "path": "PRIM3/game/halo/adaptive/topology-learning.mjs",
+      "path": "js/prim3-mission/topology-learning.mjs",
       "classification": "building_projection_support",
       "capability_ids": [],
       "support_only": true,

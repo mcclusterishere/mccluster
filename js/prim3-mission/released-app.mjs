@@ -1,4 +1,4 @@
-import { LEARNING_VARIANTS, learningContext } from '../../PRIM3/game/halo/adaptive/topology-learning.mjs';
+import { LEARNING_VARIANTS, learningContext } from './topology-learning.mjs';
 import {storedToken,SESSION_KEY} from '../owner-only.mjs';
 import {createPracticeClient} from './client.mjs';
 import {createReleasedLearning} from './released-learning.mjs';

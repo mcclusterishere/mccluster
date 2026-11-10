@@ -1,4 +1,4 @@
-import { learningContext } from '../../../../PRIM3/game/halo/adaptive/topology-learning.mjs';
+import { learningContext } from '../../../../js/prim3-mission/topology-learning.mjs';
 /* Bounded owner-only practice adapter on the existing learning evidence tables.
  * Disabled unless explicitly configured. No news/ops feeds, credentials or mastery writes.
  * HMAC authenticates evaluator payloads because the existing evidence RLS also permits

@@ -20,6 +20,8 @@ Turn readiness is browser-reported presentation context. It is not proof of miss
 
 `prim3.lattice-learning/v1` pins variant and topology. `square-cardinal-distance/v1` counts four-neighbor steps with Manhattan distance. `hex-axial-distance/v1` counts six-neighbor steps using pointy axial coordinates `(q,r)`, cube `s=-q-r` and half the sum of absolute cube deltas. Inputs are generated on the server from the signed seed and question ordinal. Submitted numbers, question IDs and checkpoint IDs are checked by the existing evaluator and signed evidence path; submitted correctness/expected answers confer no authority.
 
+The evaluator and its frames live in `js/prim3-mission/topology-learning.mjs`, which the export publishes with the reviewed-mission page that imports it; the Worker imports the same file. `deploy-pages.yml` strips `PRIM3/`, so `PRIM3/game/halo/adaptive/topology-learning.mjs` is only a re-export shim for the adaptive engine beside it, and no published module may import it.
+
 These are explicitly **unobstructed practice lattice exercises**, not shortest paths through the actual buildings, metric graph routes or AP costs. The server never interprets opaque City node indices as coordinates. Questions display their frame and unit, `lattice steps`.
 
 Authorities:

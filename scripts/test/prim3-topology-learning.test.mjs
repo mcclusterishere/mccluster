@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {learningContext,latticeQuestion} from '../../PRIM3/game/halo/adaptive/topology-learning.mjs';
+import {LEARNING_VARIANTS,learningContext,latticeQuestion} from '../../js/prim3-mission/topology-learning.mjs';
 import {cellCenter} from '../../js/spatial/metric-frame.mjs';
 import {FRAME as transit} from '../../js/prim3-tactics/levels/transit-relay.mjs';
 import {FRAME as hq} from '../../js/prim3-tactics/levels/equity-uprise-hq.mjs';
@@ -20,4 +20,14 @@ for(const topology of ['square','hex'])test(`${topology} evaluator agrees with c
 test('authored frames and unsupported/forged context fail closed',()=>{
  assert.deepEqual(transit,{x0:32,y0:31,yUp:true});assert.deepEqual(hq,{x0:3,y0:8,yUp:true});
  for(const value of [{version:'future',variant:'city',topology:'hex'},{version:'prim3.lattice-learning/v1',variant:'equity-uprise-hq',topology:'hex'},{version:'prim3.lattice-learning/v1',variant:'city',topology:'hex',expected:1}])assert.throws(()=>learningContext(value));
+});
+test('the published mission UI imports the published runtime; the private path only re-exports it (audit W5)',async()=>{
+ // deploy-pages.yml strips PRIM3/: a published import of PRIM3/game/halo/adaptive/ leaves the page without its runtime.
+ for(const file of ['js/prim3-mission/released-app.mjs','js/prim3-mission/released-learning.mjs']){
+  const source=readFileSync(file,'utf8');
+  assert.match(source,/from '\.\/topology-learning\.mjs'/,`${file} imports the published runtime`);assert.doesNotMatch(source,/PRIM3\//,`${file} must not import the private PRIM3 tree`);
+ }
+ const shim=await import('../../PRIM3/game/halo/adaptive/topology-learning.mjs');
+ assert.equal(shim.LEARNING_VARIANTS,LEARNING_VARIANTS);assert.equal(shim.learningContext,learningContext);assert.equal(shim.latticeQuestion,latticeQuestion);
+ assert.match(readFileSync('PRIM3/game/halo/adaptive/topology-learning.mjs','utf8'),/^export \* from '\.\.\/\.\.\/\.\.\/\.\.\/js\/prim3-mission\/topology-learning\.mjs';$/m,'one source of truth, no second copy');
 });
