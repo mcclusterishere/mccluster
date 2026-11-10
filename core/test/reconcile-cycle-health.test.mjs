@@ -24,6 +24,7 @@ import {
   summarizeReconcileCycles,
   verifiedReconcileCycle,
 } from '../src/reconciler-source-receipt.mjs';
+import * as receiptModule from '../src/reconciler-source-receipt.mjs';
 
 const read = (path) => readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
 const NOW = Date.parse('2026-11-09T22:10:00.000Z');
@@ -167,17 +168,25 @@ test('repeated failures are counted, and a lost write never hides the newest rec
   assert.equal(summarizeReconcileCycles({ history: `${'x'.repeat(5000)}\n${JSON.stringify(good)}` }, { nowMs: NOW }).status, 'verified', 'an oversized line is skipped');
 });
 
-test('the staleness threshold follows the timer period and the unit start limit', () => {
+test('the staleness threshold follows the timer period, its accuracy and the unit start limit', () => {
   const timer = read('core/systemd/mccluster-vps-reconcile.timer');
   const service = read('core/systemd/mccluster-vps-reconcile.service');
   const minutes = (text, key) => { const match = text.match(new RegExp(`^${key}=(\\d+)min$`, 'm')); assert.ok(match, key); return Number(match[1]) * 60_000; };
   const seconds = (text, key) => { const match = text.match(new RegExp(`^${key}=(\\d+)s$`, 'm')); assert.ok(match, key); return Number(match[1]) * 1000; };
   assert.equal(minutes(timer, 'OnUnitActiveSec'), RECONCILE_TIMER_PERIOD_MS);
   assert.equal(seconds(timer, 'RandomizedDelaySec'), RECONCILE_TIMER_JITTER_MS);
+  // systemd may elapse a timer up to AccuracySec after it is due, to coalesce
+  // wakeups. Unset, that is one minute (systemd 255 loads this unit with
+  // AccuracyUSec=1min).
+  const accuracySetting = timer.match(/^AccuracySec=(\d+)(us|ms|s|min)$/m);
+  assert.ok(accuracySetting || !/^AccuracySec=/m.test(timer), 'AccuracySec is unset or in a unit this test reads');
+  const accuracy = accuracySetting ? Number(accuracySetting[1]) * { us: 0.001, ms: 1, s: 1000, min: 60_000 }[accuracySetting[2]] : 60_000;
+  const { RECONCILE_TIMER_ACCURACY_MS } = receiptModule;
+  assert.equal(RECONCILE_TIMER_ACCURACY_MS, accuracy, 'the window accounts for how late the timer may elapse');
   assert.equal(minutes(service, 'TimeoutStartSec'), RECONCILE_START_LIMIT_MS);
   assert.match(service, /^Type=oneshot$/m);
-  const longestHealthyGap = RECONCILE_TIMER_PERIOD_MS + RECONCILE_TIMER_JITTER_MS + RECONCILE_START_LIMIT_MS;
-  assert.equal(longestHealthyGap, 22 * 60_000 + 20_000);
+  const longestHealthyGap = RECONCILE_TIMER_PERIOD_MS + RECONCILE_TIMER_JITTER_MS + RECONCILE_TIMER_ACCURACY_MS + RECONCILE_START_LIMIT_MS;
+  assert.equal(longestHealthyGap, 23 * 60_000 + 20_000);
   assert.equal(RECONCILE_STALE_AFTER_MS, 25 * 60_000);
   assert.ok(RECONCILE_STALE_AFTER_MS > longestHealthyGap, 'a deploy that runs to the start limit is not stale');
   assert.ok(RECONCILE_STALE_AFTER_MS - longestHealthyGap <= 5 * 60_000, 'and a dead reconciler is reported within one more health run');

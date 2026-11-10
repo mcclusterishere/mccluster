@@ -74,7 +74,7 @@ Over SSH, GitHub only answers a key that is registered with it. So `authenticate
 
 A `failed` or `stale` status adds a warning, `deployment/reconcile_cycle_failed` or `deployment/reconcile_cycle_stale`, at the same level as the existing `reconcile_timer_inactive`. `unverified` adds nothing, so a host that still runs the older reconciler reports exactly what it reported before.
 
-The window is 25 minutes. The timer starts a cycle two minutes after the previous one started, plus up to 20 seconds of jitter, and a cycle that deploys may run to the service's 20 minute start limit. The longest gap a healthy host can show between two successes is therefore 22 minutes 20 seconds. A test reads both unit files and fails if they stop matching these numbers.
+The window is 25 minutes. The timer starts a cycle two minutes after the previous one started, plus up to 20 seconds of jitter, plus up to one minute because the timer sets no `AccuracySec` and systemd's default lets it elapse that late, and a cycle that deploys may run to the service's 20 minute start limit. The longest gap a healthy host can show between two successes is therefore 23 minutes 20 seconds. A test reads both unit files and fails if they stop matching these numbers.
 
 ### None of this is on the host until it is promoted
 
