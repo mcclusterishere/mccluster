@@ -78,6 +78,20 @@
   })();
   function session() { return jget("session", null); }
   function jwtExp(tok) { try { return JSON.parse(atob(tok.split(".")[1])).exp * 1000; } catch (e) { return 0; } }
+  /* ONE CLOCK, as js/mcc-auth.js keeps it. A token's exp claim is a time on
+     the auth server's clock and Date.now() is this device's, so a device an
+     hour ahead read every token as expired and refreshed on every call, and
+     one behind kept sending tokens the server had expired. What is kept of
+     an answer the server has just given now carries its expiry on this
+     device's clock, now + expires_in, and token() decides on that. The exp
+     claim stands in only for a session stored without one (an older write,
+     or a sign-in link that carried no expires_in). */
+  function kept(j) {
+    var s = { access_token: j.access_token, refresh_token: j.refresh_token || "" };
+    if (Number(j.expires_in) > 0) s.expires_at = Math.floor(Date.now() / 1000) + Number(j.expires_in);
+    return s;
+  }
+  function expiresMs(s) { return Number(s.expires_at) > 0 ? Number(s.expires_at) * 1000 : jwtExp(s.access_token); }
 
   // magic-link landing: tokens arrive in the URL hash. If Supabase bounced the
   // link (expired, wrong Site URL, redirect not allow-listed), the REASON lands
@@ -94,7 +108,7 @@
       var p = kv.split("="); q[p[0]] = decodeURIComponent((p[1] || "").replace(/\+/g, " "));
     });
     if (q.access_token) {
-      saveSession({ access_token: q.access_token, refresh_token: q.refresh_token || "" });
+      saveSession(kept(q));
       history.replaceState(null, "", location.pathname + location.search);
       return;
     }
@@ -126,7 +140,7 @@
       headers: { apikey: KEY, "Content-Type": "application/json" },
       body: JSON.stringify({ refresh_token: s.refresh_token }),
     }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
-      if (j && j.access_token) { saveSession({ access_token: j.access_token, refresh_token: j.refresh_token }); return session(); }
+      if (j && j.access_token) { saveSession(kept(j)); return session(); }
       jdel("session"); return null;
     }).catch(function () { return s; }); // offline: keep the session, RLS still guards
   }
@@ -134,7 +148,7 @@
   function token() {
     var s = session();
     if (!s) return Promise.resolve(null);
-    if (jwtExp(s.access_token) - Date.now() < 60000) return refresh().then(function (s2) { return s2 && s2.access_token; });
+    if (expiresMs(s) - Date.now() < 60000) return refresh().then(function (s2) { return s2 && s2.access_token; });
     return Promise.resolve(s.access_token);
   }
 
@@ -238,7 +252,7 @@
           if (!r.ok || !j.access_token) {
             throw new Error(j.msg || j.error_description || j.error || "That key doesn't turn this lock.");
           }
-          saveSession({ access_token: j.access_token, refresh_token: j.refresh_token || "" });
+          saveSession(kept(j));
           window.MCC_DB = sb;
           try { window.dispatchEvent(new CustomEvent("mcc:auth-changed", { detail: { signed_in: true } })); } catch (e) {}
           return true;
@@ -261,7 +275,7 @@
         return r.json().catch(function () { return {}; }).then(function (j) {
           if (!r.ok) throw new Error(j.msg || j.error_description || j.error || "sign-up failed");
           if (j.access_token) {
-            saveSession({ access_token: j.access_token, refresh_token: j.refresh_token || "" });
+            saveSession(kept(j));
             window.MCC_DB = sb;
             try { window.dispatchEvent(new CustomEvent("mcc:auth-changed", { detail: { signed_in: true } })); } catch (e) {}
             return { session: true };
@@ -315,7 +329,7 @@
           if (!r.ok || !j.access_token) {
             throw new Error(j.msg || j.error_description || j.error || "Instant start is switched off. Enable Anonymous sign-ins in Supabase.");
           }
-          saveSession({ access_token: j.access_token, refresh_token: j.refresh_token || "" });
+          saveSession(kept(j));
           window.MCC_DB = sb;
           return true;
         });

@@ -1,7 +1,9 @@
 // Real browser, local HTTP only. Every auth and API answer is a fixture: no account, no production request or write.
 // The session here is stale on every call: each refreshed token lives 30 seconds, under the client's one-minute
-// margin, so it already counts as expiring and every MCC.user() and MCC.api() refreshes again. The bar must still ask
-// once, settle, keep its owner answer when the token moves under it, and not be set off again by another tab.
+// margin, so it already counts as expiring and every MCC.user() and MCC.api() refreshes again. (A device clock ahead
+// of the server's used to do the same with one-hour tokens; the client now measures expiry on the device's own clock,
+// scripts/e2e/auth-clock-skew.e2e.mjs.) The bar must still ask once, settle, keep its owner answer when the token moves
+// under it, and not be set off again by another tab.
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { createServer } from 'node:http';

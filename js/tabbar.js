@@ -762,7 +762,9 @@
       PERSPECTIVE=readPerspective();
       lastVerifiedSubject=subject;
     }
-    var exp = Number(payload.exp || 0) * 1000;
+    /* A first answer before the lookup: the expiry the auth client stored on this device's clock. The token's exp
+       claim is the server's clock, so on a device an hour ahead it painted every member signed out first. */
+    var exp = (Number(session.expires_at) || Number(payload.exp || 0)) * 1000;
     paintAuthState(exp > Date.now(), null, false);
     var flight = loadCanonicalAuth().then(function (mcc) {
       if (!mcc || typeof mcc.user !== "function") throw new Error("Auth unavailable");
@@ -872,10 +874,13 @@
       .then(function (r) { return r.ok ? r.json() : Promise.reject(new Error("verify refused")); })
       .then(function (s) {
         if (!s || !s.access_token) throw new Error("no session");
-        var session = JSON.stringify({
-          access_token: s.access_token, refresh_token: s.refresh_token || "",
-          expires_at: Number(s.expires_at) || Math.floor(Date.now() / 1000) + (Number(s.expires_in) || 3600)
-        });
+        /* Its expiry on this device's clock, as the auth client writes it (js/mcc-auth.js stampExpiry): expires_in
+           counts from this answer, while the server's expires_at is a time on the server's clock, kept beside it. */
+        var life = Number(s.expires_in) > 0 ? Number(s.expires_in) : 0, issued = Number(s.expires_at) > 0 ? Number(s.expires_at) : 0;
+        var arrived = { access_token: s.access_token, refresh_token: s.refresh_token || "",
+          expires_at: life ? Math.floor(Date.now() / 1000) + life : issued || Math.floor(Date.now() / 1000) + 3600 };
+        if (life && issued) arrived.server_expires_at = issued;
+        var session = JSON.stringify(arrived);
         localStorage.setItem("mccdb_session", session);
         try { localStorage.setItem("mcc_sess_keep", session); } catch (e) {}
         /* NO SECOND PAINT (owner, 2026-10-20: no screen flashes). A page that can take the session where it stands says so

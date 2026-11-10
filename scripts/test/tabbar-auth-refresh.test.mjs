@@ -44,7 +44,10 @@ const quietTimeout = (fn, ms) => { const timer = setTimeout(fn, ms); timer.unref
 
 /* One browser profile: a shelf of localStorage every tab shares, and the fixture servers behind them.
    lifetime is how long the server's tokens last, in seconds; SHORT makes the session that is stale on every call.
-   clockAhead is how far this device's clock runs ahead of the server's, in seconds (negative: behind). */
+   clockAhead is how far this device's clock runs ahead of the server's, in seconds (negative: behind). The canonical
+   client measures a session's expiry on the device's own clock (js/mcc-auth.js stampExpiry), so a clock an hour
+   ahead with one-hour tokens no longer makes every token look expired: only a session an older client stored with
+   the server's expiry does, once. */
 function profile({ clockAhead = 0, lifetime = HOUR, owners = [], refreshLimit = 40 } = {}) {
   let serial = 0, moving = 0, elapsed = 0;       // elapsed: seconds the test has let pass, for the server and the device alike
   const serverNow = () => Math.floor(Date.now() / 1000) + elapsed;
@@ -492,4 +495,109 @@ test('an answer about another account is not painted, even when the first accoun
   await device.quiet();
   assert.equal(paintedAs(bar, 'member-2'), false, 'member-2 was never painted');
   assert.deepEqual(bar.state(), signedIn('member-1'));
+});
+
+/* ---------- a device clock ahead of the server's, or behind it: freshness on one clock (js/mcc-auth.js stampExpiry) ---------- */
+
+for (const count of [6, 12]) {
+  test(`${count} tabs restored together on a clock an hour ahead refresh once each at most, and every bar is signed in`, async () => {
+    const device = profile({ clockAhead: HOUR });
+    device.seed('member-1');                     // stored by an older client with the server's expiry, which looks spent on this clock
+    const bars = Array.from({ length: count }, () => device.open());
+    await device.quiet();
+    assert.ok(device.counts.refresh <= count, `${device.counts.refresh} refresh requests for ${count} tabs`);
+    for (const bar of bars) assert.deepEqual(bar.state(), signedIn('member-1'));
+    assert.ok(device.stored().server_expires_at > 0, 'stored again, with its expiry on this device\'s clock and the server\'s beside it');
+    const settled = device.counts.refresh;
+    for (const bar of bars) { await bar.MCC.user(); await bar.MCC.refreshIfNeeded(); }
+    await device.quiet();
+    assert.equal(device.counts.refresh, settled, 'and after that no call in any tab refreshes it');
+  });
+}
+
+test('on a clock an hour ahead, a session signed in here is fresh in every tab opened after it, and painted signed in from the start', async () => {
+  const device = profile({ clockAhead: HOUR });
+  const first = device.open();
+  await device.quiet();
+  await first.MCC.signInWithPassword('member-1@example.test', 'fixture-password');
+  await device.quiet();
+  const later = Array.from({ length: 11 }, () => device.open());
+  await device.quiet();
+  assert.equal(device.counts.refresh, 0, 'no tab refreshes a token with most of its hour left');
+  for (const bar of [first, ...later]) assert.deepEqual(bar.state(), signedIn('member-1'));
+  for (const bar of later) assert.deepEqual(bar.paints[0], { signed_in: true, verified: false, user: null }, 'the first paint, before the lookup, is not signed out');
+  for (const bar of later) { await bar.MCC.user(); await bar.MCC.refreshIfNeeded(); }
+  await device.quiet();
+  assert.equal(device.counts.refresh, 0, 'nor does any call made after');
+});
+
+test('on a clock an hour behind, a token the server has expired is refreshed before the bar uses it', async () => {
+  const device = profile({ clockAhead: -HOUR });
+  const first = device.open();
+  await device.quiet();
+  await first.MCC.signInWithPassword('member-1@example.test', 'fixture-password');
+  await device.quiet();
+  assert.deepEqual(first.state(), signedIn('member-1'));
+  device.rest(HOUR + HOUR / 2);                 // the server expired that token half an hour ago; by the server's expiry this clock has an hour to go
+  const before = device.counts.refresh;
+  const second = device.open();
+  await device.quiet();
+  assert.equal(device.counts.refresh, before + 1, 'the expired token is refreshed first');
+  assert.deepEqual(second.state(), signedIn('member-1'), 'and the lookup is answered with the new one');
+});
+
+/* ---------- the handoff's own write, cut from the bar and run beside the canonical client in one tab ---------- */
+
+function arrival({ clockAhead = 0, answer }) {
+  const shelf = new Map(), requests = [];
+  const local = { getItem: (key) => (shelf.has(key) ? shelf.get(key) : null), setItem: (key, value) => { shelf.set(key, String(value)); }, removeItem: (key) => { shelf.delete(key); } };
+  const window = {
+    localStorage: local, sessionStorage: local,
+    location: { origin: 'https://mccluster.org', hostname: 'mccluster.org', pathname: '/mnet.html', search: '', hash: '#mcc_handoff=fixture-carried',
+      reload() { throw new Error('this page takes the carried session where it stands'); } },
+    addEventListener() {}, dispatchEvent() { return true; }
+  };
+  const real = Date;
+  const context = vm.createContext({
+    window, localStorage: local, location: window.location, history: { replaceState() {} },
+    AbortController, URL, URLSearchParams, setTimeout: quietTimeout, clearTimeout, atob, btoa,
+    CustomEvent: class { constructor(type, init) { this.type = type; this.detail = init && init.detail; } },
+    Date: class extends real { static now() { return real.now() + clockAhead * 1000; } },
+    API_ORIGIN: API, SB_URL: SUPABASE, SB_KEY: 'fixture-key',
+    emit: (name) => name === 'mcc:handoff',      // the World cancels mcc:handoff and takes the session without a reload (js/mnet.js)
+    fetch: async (url) => {
+      requests.push(url);
+      if (url === API + '/v1/auth/handoff') return { ok: true, json: async () => ({ token_hash: 'fixture-hash' }) };
+      if (url === SUPABASE + '/auth/v1/verify') return { ok: true, json: async () => answer };
+      throw new TypeError('fixture has no route for ' + url);
+    }
+  });
+  vm.runInContext(AUTH, context, { filename: 'js/mcc-auth.js' });
+  vm.runInContext('"use strict";\n' + cut('function readAuthSession()', 'function jwtPayload(') + cut('function arriveWithHandoff()', "/* ON THE WORLD'S HOST"), context, { filename: 'js/tabbar.js' });
+  return { context, window, shelf, requests, stored: () => JSON.parse(shelf.get('mccdb_session') || 'null') };
+}
+const carriedAnswer = (serverNow, fields) => ({
+  access_token: 'fixture.' + encode({ sub: 'member-1', exp: serverNow + HOUR }) + '.fixture',
+  refresh_token: 'fixture-refresh-carried', token_type: 'bearer', user: { id: 'member-1' }, ...fields
+});
+
+test('a sign-in carried from another host is stored with its expiry on this device\'s clock, and the client takes it as fresh', async () => {
+  const serverNow = Math.floor(Date.now() / 1000);
+  const answer = carriedAnswer(serverNow, { expires_in: HOUR, expires_at: serverNow + HOUR });
+  const here = arrival({ clockAhead: HOUR, answer });
+  assert.equal(await here.context.arriveWithHandoff(), true);
+  const stored = here.stored(), deviceNow = Math.floor(Date.now() / 1000) + HOUR;
+  assert.ok(Math.abs(stored.expires_at - (deviceNow + HOUR)) <= 2, `an hour from now on this device's clock: ${stored.expires_at - deviceNow}s`);
+  assert.equal(stored.server_expires_at, serverNow + HOUR, 'the server\'s own expiry kept beside it');
+  assert.equal(here.shelf.get('mcc_sess_keep'), here.shelf.get('mccdb_session'));
+  assert.equal((await here.window.MCC.refreshIfNeeded()).access_token, answer.access_token, 'fresh to the canonical client');
+  assert.deepEqual(here.requests, [API + '/v1/auth/handoff', SUPABASE + '/auth/v1/verify'], 'no refresh asked');
+});
+
+test('a carried answer without expires_in keeps the server\'s expiry, as before', async () => {
+  const serverNow = Math.floor(Date.now() / 1000);
+  const here = arrival({ answer: carriedAnswer(serverNow, { expires_at: serverNow + HOUR }) });
+  assert.equal(await here.context.arriveWithHandoff(), true);
+  assert.equal(here.stored().expires_at, serverNow + HOUR);
+  assert.equal('server_expires_at' in here.stored(), false);
 });
