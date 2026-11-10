@@ -121,7 +121,9 @@ try {
     insert into public.orgs values ('${OWNER}', 'mccluster');
     insert into public.org_members values ('${OWNER}', '${OWNER}', 'owner'), ('${OWNER}', '${REVIEWER}', 'owner');`);
   await admin.query(await file('supabase/pending/eup_module_policy_v1.sql'));
-  const leagueSql = await file('supabase/pending/eup_league_v1.sql');
+  // EUP_LEAGUE_SQL names another file to apply instead, for one purpose only: running these races against a
+  // deliberately broken copy of the SQL to see that they notice (as in the PGlite harness).
+  const leagueSql = process.env.EUP_LEAGUE_SQL ? await readFile(process.env.EUP_LEAGUE_SQL, 'utf8') : await file('supabase/pending/eup_league_v1.sql');
   await admin.query(leagueSql);
   await admin.query(await file('supabase/pending/eup_league_v1.rollback.sql'));
   await admin.query(leagueSql);
