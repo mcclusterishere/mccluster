@@ -3,6 +3,7 @@ import { createAddressSearch } from './address-search.mjs';
 import { journeyStore } from './journey-store.mjs';
 import { fetchRoute } from './route-client.mjs';
 import { navigationProgress } from './navigation-progress.mjs';
+import { movementHeading } from './navigation-heading.mjs';
 import { rideHandoff } from './ride-handoff.mjs';
 import { attachWhipBooking } from './whip-booking.mjs';
 
@@ -67,29 +68,9 @@ panel.innerHTML = `
       <div class="wt-field wt-origin-field"><span class="wt-trip-dot wt-trip-dot--from" aria-hidden="true"></span><label for="wtFrom">Pickup</label><input id="wtFrom" name="from" autocomplete="off" maxlength="240" placeholder="Use my location" aria-describedby="wtLocationStatus"><div class="wt-field-tools"><button type="button" id="wtPickFrom" class="wt-field-tool" data-map-pick="from" aria-pressed="false" aria-label="Pick your starting point on the globe" title="Pick on the globe">${icon('globe')}</button><button type="button" id="wtLocate" class="wt-locate wt-field-tool" aria-label="Use my current location" title="Use my location">${icon('target')}</button></div><div id="wtFromResults" class="wt-suggest" hidden></div></div>
       <div class="wt-field wt-destination-field"><span class="wt-trip-dot wt-trip-dot--to" aria-hidden="true"></span><label for="wtTo">Destination</label><input id="wtTo" name="to" autocomplete="off" maxlength="240" placeholder="Where would you like to go?" required aria-describedby="wtEndpointHint wtRoutePrivacy"><div class="wt-field-tools"><span class="wt-field-glyph" aria-hidden="true">${icon('search')}</span><button type="button" id="wtPickTo" class="wt-field-tool" data-map-pick="to" aria-pressed="false" aria-label="Pick your destination on the globe" title="Pick on the globe">${icon('globe')}</button></div><div id="wtToResults" class="wt-suggest" hidden></div></div>
     </div>
-    <!-- TRIP TYPE (owner, 2026-10-20): two tiles, the icon on top, each split by an on/off switch. Rides is Directions (the
-         street route and a ride) or Rentals (cars to rent); Flights is Commercial (the longer-trip planner) or Private.
-         Door-to-door, the multi-city draft, stays under Plan a trip. -->
-    <div class="wt-kinds" role="group" aria-label="Trip type">
-      <div class="wt-kind"><button type="button" class="wt-kind-head" data-travel-chip="rides" aria-pressed="true">${icon('drive')}<span>Rides</span></button>
-        <div class="wt-switch" role="group" aria-label="Rides"><button type="button" data-travel-sub="directions" aria-pressed="true">Directions</button><button type="button" data-travel-sub="rentals" aria-pressed="false">Rentals</button></div></div>
-      <div class="wt-kind"><button type="button" class="wt-kind-head" data-travel-chip="flights" aria-pressed="false">${icon('flight')}<span>Flights</span></button>
-        <div class="wt-switch" role="group" aria-label="Flights"><button type="button" data-travel-sub="commercial" aria-pressed="true">Commercial</button><button type="button" data-travel-sub="private" aria-pressed="false">Private</button></div></div>
-    </div>
-    <section id="wtRentals" class="wt-rentals" aria-labelledby="wtRentalsTitle" hidden>
-      <div class="wt-rentals-head"><h3 id="wtRentalsTitle" class="wt-section-h">Rent a car</h3><a href="https://matthew.mccluster.org/whip/rentals/" target="_blank" rel="noopener">See all ›</a></div>
-      <p class="wt-rentals-by">From Whip Equipped LLC, a separate company. Booking and payment happen in Whip Equipped's rentals app.</p>
-      <div class="wt-cars" id="wtCars"></div>
-    </section>
-    <section id="wtPrivate" class="wt-private" aria-labelledby="wtPrivateTitle" hidden>
-      <h3 id="wtPrivateTitle" class="wt-section-h">Private flights</h3>
-      <p>Private jets and charters aren't bookable here yet. Commercial flights plan from your destination.</p>
-    </section>
     <p id="wtLocationStatus" class="wt-location-status" role="status" aria-live="polite">Allow location, or enter your starting address.</p>
     <p id="wtEndpointHint" class="wt-location-status" role="status" aria-live="polite"></p>
     <p id="wtRoutePrivacy" class="wt-route-privacy">Choose a destination to get directions. Your starting point and destination are shared with the <a href="https://routing.openstreetmap.de/about.html" target="_blank" rel="noopener noreferrer">routing provider</a>.</p>
-    <!-- GO SOMEWHERE: real shortcuts only. Home and Work are not stored anywhere, so they are not offered. -->
-    <section class="wt-go" id="wtGo" aria-labelledby="wtGoTitle"><h3 id="wtGoTitle" class="wt-section-h">Go somewhere</h3><div class="wt-go-row"><button type="button" data-travel-go="near">${icon('near')}<span>Near me</span></button><button type="button" data-travel-go="airports">${icon('flight')}<span>Airports</span></button><button type="button" data-travel-go="hotels">${icon('stay')}<span>Hotels</span></button><button type="button" data-travel-go="globe">${icon('globe')}<span>On the globe</span></button><button type="button" data-travel-go="saved">${icon('saved')}<span>Saved</span></button></div></section>
     <div id="wtGroundOptions" class="wt-ground-options" hidden>
       <nav class="wt-toolbar wt-local-toolbar" aria-label="Directions mode">${groundModes.map(m => `<button type="button" data-travel-kind="${m}" aria-pressed="${m === 'drive'}">${icon(m)}${labels[m]}</button>`).join('')}</nav>
       <button id="wtRide" class="wt-ride-button" type="button" aria-expanded="false" aria-controls="wtRidePanel">Get a ride</button>
@@ -117,6 +98,26 @@ panel.innerHTML = `
       <p id="wtDirectionsHint" class="wt-navigation-hint"></p>
       <details id="wtSteps" class="wt-steps" hidden><summary>Step-by-step directions</summary><ol id="wtRouteSteps"></ol></details>
       <p id="wtRouteAttribution" class="wt-attribution" hidden></p>
+    </section>
+    <!-- GO SOMEWHERE: real shortcuts only. Home and Work are not stored anywhere, so they are not offered. -->
+    <section class="wt-go" id="wtGo" aria-labelledby="wtGoTitle"><h3 id="wtGoTitle" class="wt-section-h">Go somewhere</h3><div class="wt-go-row"><button type="button" data-travel-go="near">${icon('near')}<span>Near me</span></button><button type="button" data-travel-go="airports">${icon('flight')}<span>Airports</span></button><button type="button" data-travel-go="hotels">${icon('stay')}<span>Hotels</span></button><button type="button" data-travel-go="globe">${icon('globe')}<span>On the globe</span></button><button type="button" data-travel-go="saved">${icon('saved')}<span>Saved</span></button></div></section>
+    <!-- TRIP TYPE (owner, 2026-10-20): two tiles, the icon on top, each split by an on/off switch. Rides is Directions (the
+         street route and a ride) or Rentals (cars to rent); Flights is Commercial (the longer-trip planner) or Private.
+         Door-to-door, the multi-city draft, stays under Plan a trip. -->
+    <div class="wt-kinds" role="group" aria-label="Trip type">
+      <div class="wt-kind"><button type="button" class="wt-kind-head" data-travel-chip="rides" aria-pressed="true">${icon('drive')}<span>Rides</span></button>
+        <div class="wt-switch" role="group" aria-label="Rides"><button type="button" data-travel-sub="directions" aria-pressed="true">Directions</button><button type="button" data-travel-sub="rentals" aria-pressed="false">Rentals</button></div></div>
+      <div class="wt-kind"><button type="button" class="wt-kind-head" data-travel-chip="flights" aria-pressed="false">${icon('flight')}<span>Flights</span></button>
+        <div class="wt-switch" role="group" aria-label="Flights"><button type="button" data-travel-sub="commercial" aria-pressed="true">Commercial</button><button type="button" data-travel-sub="private" aria-pressed="false">Private</button></div></div>
+    </div>
+    <section id="wtRentals" class="wt-rentals" aria-labelledby="wtRentalsTitle" hidden>
+      <div class="wt-rentals-head"><h3 id="wtRentalsTitle" class="wt-section-h">Rent a car</h3><a href="https://matthew.mccluster.org/whip/rentals/" target="_blank" rel="noopener">See all ›</a></div>
+      <p class="wt-rentals-by">From Whip Equipped LLC, a separate company. Booking and payment happen in Whip Equipped's rentals app.</p>
+      <div class="wt-cars" id="wtCars"></div>
+    </section>
+    <section id="wtPrivate" class="wt-private" aria-labelledby="wtPrivateTitle" hidden>
+      <h3 id="wtPrivateTitle" class="wt-section-h">Private flights</h3>
+      <p>Private jets and charters aren't bookable here yet. Commercial flights plan from your destination.</p>
     </section>
     <details id="wtOptions" class="wt-options" hidden><summary>Plan a longer trip</summary>
       <nav class="wt-toolbar wt-long-toolbar" aria-label="Longer trip options">${['flight','train','stay'].map(m => `<button type="button" data-travel-kind="${m}" ${m !== 'stay' ? 'aria-pressed="false"' : ''}>${icon(m)}${labels[m]}</button>`).join('')}</nav>
@@ -185,7 +186,7 @@ function stopNavigation(message = '', { resetProgress = false } = {}) {
   if (resetProgress) progress = null;
   navigationNotice = message;
   root.classList.remove('wt-navigating');
-  if (liveFix) send({ type:'hu:location', coordinates:liveFix.coordinates, accuracy:liveFix.accuracy, follow:false });
+  if (liveFix) send({ type:'hu:location', coordinates:liveFix.coordinates, accuracy:liveFix.accuracy, heading:liveFix.heading, speed:liveFix.speed, mode:draft.mode, follow:false });
 }
 function invalidateRoute({ clearPosition = false, preserveOriginLookup = false } = {}) {
   stopNavigation('', { resetProgress:true }); if (!preserveOriginLookup) cancelLocate(); cancelRideRefresh();
@@ -216,7 +217,7 @@ function renderGlobe(fly = false) {
   send({ type:'hu:map-pick-mode', kind:travel ? mapPick : null });
   send({ type:'hu:journey', points:[draft.from, draft.to].filter(hasCoordinates).map(p => ({ label:p.label.split(',')[0], coordinates:p.coordinates })), connect:draft.mode === 'flight', fly });
   send({ type:'hu:route', route:travel && route ? { geometry:route.geometry, origin:route.origin, destination:route.destination } : null, fly });
-  send({ type:'hu:location', coordinates:travel ? liveFix?.coordinates || null : null, accuracy:liveFix?.accuracy, follow:travel && navigating && navigationFollow, fly:fly && !route });
+  send({ type:'hu:location', coordinates:travel ? liveFix?.coordinates || null : null, accuracy:liveFix?.accuracy, heading:liveFix?.heading, speed:liveFix?.speed, mode:draft.mode, follow:travel && navigating && navigationFollow, fly:fly && !route });
   const dest = $('wtDestination'); dest.hidden = !travel || !!route || !hasCoordinates(draft.to);
   if (!dest.hidden) {
     dest.replaceChildren(); const title = document.createElement('strong'), sub = document.createElement('small');
@@ -260,7 +261,7 @@ function renderSteps() {
     button.onclick = () => {
       if (!route || !hasCoordinates({ coordinates:step.location })) return;
       navigationFollow = false;
-      if (liveFix) send({ type:'hu:location', coordinates:liveFix.coordinates, accuracy:liveFix.accuracy, follow:false });
+      if (liveFix) send({ type:'hu:location', coordinates:liveFix.coordinates, accuracy:liveFix.accuracy, heading:liveFix.heading, speed:liveFix.speed, mode:draft.mode, follow:false });
       send({ type:'hu:route-step', coordinates:step.location }); renderDirections();
     };
     item.append(button); list.append(item);
@@ -292,6 +293,7 @@ function renderRide() {
 }
 function renderDirections() {
   renderMapNav();
+  panel.dataset.navigating = String(navigating);
   const destinationReady = hasCoordinates(draft.to), endpointsReady = destinationReady && hasCoordinates(draft.from);
   $('wtEndpointHint').textContent = endpointHint();
   $('wtGroundOptions').hidden = !destinationReady; $('wtOptions').hidden = !destinationReady; $('wtGo').hidden = destinationReady;
@@ -399,7 +401,7 @@ function announceAddressPicking(){
   window.dispatchEvent(new CustomEvent('mcc:travel-autocomplete',{detail:{active}}));
 }
 function autocomplete(id, resultId, key) {
-  const input = $(id), results = $(resultId); let seq = 0, timer;
+  const input = $(id), results = $(resultId); let seq = 0, timer, press = null;
   const refit = () => fitSuggestions(results, input, { scrolled:true });
   window.addEventListener('resize', refit, { passive:true }); window.visualViewport?.addEventListener('resize', refit, { passive:true });
   $('mnWorldFeed').addEventListener('scroll', refit, { passive:true });
@@ -407,7 +409,7 @@ function autocomplete(id, resultId, key) {
   // measurement happens with the options rendered and the viewport settled.
   window.addEventListener('mcc:travel-autocomplete', e => { if (e.detail?.active && !results.hidden) fitSuggestions(results, input); });
   input.setAttribute('role', 'combobox'); input.setAttribute('aria-autocomplete', 'list'); input.setAttribute('aria-controls', resultId); input.setAttribute('aria-expanded', 'false'); results.setAttribute('role', 'listbox');
-  const close = () => { seq++; clearTimeout(timer); results.hidden = true; input.setAttribute('aria-expanded', 'false'); input.removeAttribute('aria-busy'); announceAddressPicking(); };
+  const close = () => { press = null; seq++; clearTimeout(timer); results.hidden = true; input.setAttribute('aria-expanded', 'false'); input.removeAttribute('aria-busy'); announceAddressPicking(); };
   searchClosers.push(close);
   input.addEventListener('input', () => {
     close(); addressController?.abort(); addressController = new AbortController(); const signal = addressController.signal;
@@ -422,7 +424,36 @@ function autocomplete(id, resultId, key) {
         results.replaceChildren();
         for (const row of matches) {
           const button = document.createElement('button'); button.type = 'button'; button.setAttribute('role', 'option'); button.textContent = row.label;
-          button.onclick = e => { try { input.blur(); choosePlace(key, row); close(); if (!e.detail) input.focus({ preventScroll:true }); } catch (error) { status(error.message); } }; results.append(button);
+          const choose = keyboard => {
+            if (results.hidden) return;
+            try {
+              // Commit before blurring: the mobile keyboard and focus styles can
+              // move the row between pointerdown and click.
+              choosePlace(key, row); close();
+              if (keyboard) input.focus({ preventScroll:true }); else input.blur();
+            } catch (error) { status(error.message); }
+          };
+          button.addEventListener('pointerdown', e => {
+            if (!e.isPrimary || e.button !== 0) return;
+            press = { id:e.pointerId, x:e.clientX, y:e.clientY, scroll:results.scrollTop };
+            // Keep mouse focus on the field until the selection is committed.
+            // Touch scrolling is still governed by the list's pan-y touch action.
+            e.preventDefault();
+          });
+          button.addEventListener('pointermove', e => {
+            if (press && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 10) press = null;
+          });
+          button.addEventListener('pointercancel', () => { press = null; });
+          button.addEventListener('pointerup', e => {
+            const selected = press && press.id === e.pointerId && results.scrollTop === press.scroll &&
+              Math.hypot(e.clientX - press.x, e.clientY - press.y) <= 10 &&
+              button.contains(document.elementFromPoint(e.clientX, e.clientY));
+            press = null;
+            if (selected) { e.preventDefault(); choose(false); }
+          });
+          // Keyboard and assistive activation have no preceding pointerup.
+          button.onclick = e => { if (e.detail === 0) choose(true); };
+          results.append(button);
         }
         if (fallback || !matches.length) {
           const note = document.createElement('small'); note.className = 'wt-search-note';
@@ -469,7 +500,15 @@ async function requestRoute({ reroute = false, originOverride = null, reveal = f
     route = { ...result, origin:[...origin], destination, mode, fromLive:!!originOverride };
     routeState = 'ready'; routeError = ''; retryOrigin = null; progress = null; offRouteFixes = 0;
     renderSteps(); renderDirections(); renderGlobe(!navigating);
-    if (reveal) $('wtRouteCard').scrollIntoView({ block:'start', behavior:'auto' });
+    if (reveal) {
+      const feed = $('mnWorldFeed').getBoundingClientRect();
+      const clearance = parseFloat(getComputedStyle(root).getPropertyValue('--mn-bar-clear')) || 96;
+      const available = Math.min(feed.bottom, (window.visualViewport?.height ?? innerHeight) - clearance) - Math.max(0, feed.top);
+      const needed = $('wtNavigate').getBoundingClientRect().bottom - $('wtGroundOptions').getBoundingClientRect().top;
+      // Keep mode choices in view when they fit; on a short screen the route
+      // summary and Go take priority over the retained music player's dock.
+      $(needed + 12 <= available ? 'wtGroundOptions' : 'wtRouteCard').scrollIntoView({ block:'start', behavior:'auto' });
+    }
     if (navigating && liveFix) applyFix(liveFix, false);
   } catch (error) {
     if (controller.signal.aborted || request !== routeSequence || version !== revision || epoch !== tripEpoch) return;
@@ -486,7 +525,11 @@ function locationError(error) {
 function positionFix(position) {
   const coordinates = [position?.coords?.longitude, position?.coords?.latitude], accuracy = position?.coords?.accuracy;
   if (!hasCoordinates({ coordinates }) || !Number.isFinite(accuracy) || accuracy < 0) throw Error('Your location could not be read. Try again or enter your starting address.');
-  return { coordinates, accuracy, timestamp:Number.isFinite(position.timestamp) ? position.timestamp : Date.now() };
+  const fix = { coordinates, accuracy, timestamp:Number.isFinite(position.timestamp) ? position.timestamp : Date.now(),
+    speed:Number.isFinite(position.coords.speed) && position.coords.speed >= 0 ? position.coords.speed : null,
+    heading:Number.isFinite(position.coords.heading) ? position.coords.heading : null };
+  fix.heading = movementHeading(fix, liveFix);
+  return fix;
 }
 async function locate({ automatic = false } = {}) {
   if (locating || !hostVisible || currentMode !== 'travel') return;
@@ -504,7 +547,7 @@ async function locate({ automatic = false } = {}) {
     if (wasNavigating) {
       navigationFollow = true;
       if (!liveFix || fix.timestamp > liveFix.timestamp) { liveFix = fix; applyFix(fix); }
-      send({ type:'hu:location', coordinates:liveFix.coordinates, accuracy:liveFix.accuracy, follow:navigating, fly:true });
+      send({ type:'hu:location', coordinates:liveFix.coordinates, accuracy:liveFix.accuracy, heading:liveFix.heading, speed:liveFix.speed, mode:draft.mode, follow:navigating && liveFix.accuracy <= 100, fly:liveFix.accuracy <= 100 });
       $('wtLocationStatus').textContent = 'Location updated.'; renderDirections(); return;
     }
     choosePlace('from', { label:'Current location', coordinates:fix.coordinates }, { source:'device' }); liveFix = fix;
@@ -536,14 +579,14 @@ async function refreshRidePickup() {
     if (!liveFix || fix.timestamp >= liveFix.timestamp) liveFix = fix;
     root.classList.add('wt-local-map');
     $('wtRideLocationStatus').textContent = 'Pickup updated to your current location. Review the pickup pin in Uber.';
-    send({ type:'hu:location', coordinates:fix.coordinates, accuracy:fix.accuracy, follow:navigating && navigationFollow, fly:!navigating });
+    send({ type:'hu:location', coordinates:fix.coordinates, accuracy:fix.accuracy, heading:fix.heading, speed:fix.speed, mode:draft.mode, follow:navigating && navigationFollow, fly:!navigating });
   } catch (error) { if (request === rideLocationSequence) $('wtRideLocationStatus').textContent = typeof error?.code === 'number' ? locationError(error) : error?.message || locationError(error); }
   finally { if (request === rideLocationSequence) { rideLocating = false; renderRide(); } }
 }
 function applyFix(fix, allowReroute = true) {
   if (!navigating || !route || !hostVisible) return;
   const next = navigationProgress(route, fix.coordinates, { accuracy:fix.accuracy, previousProgressMeters:progress?.distanceAlongMeters || 0 });
-  send({ type:'hu:location', coordinates:fix.coordinates, accuracy:fix.accuracy, follow:navigationFollow && next.usable !== false });
+  send({ type:'hu:location', coordinates:fix.coordinates, accuracy:fix.accuracy, heading:fix.heading, speed:fix.speed, mode:draft.mode, follow:navigationFollow && next.usable !== false });
   if (next.usable === false) { offRouteFixes = 0; navigationNotice = 'Location accuracy is low. Waiting for a clearer signal…'; renderDirections(); return; }
   progress = next;
   if (next.arrived) { stopNavigation('You’ve reached your destination. Location tracking has stopped.'); renderDirections(); return; }
@@ -594,6 +637,9 @@ function startNavigation() {
   navigationNotice = 'Finding your location. Keep this page open for live directions.';
   renderDirections();
   $('wtNavigation').scrollIntoView({ block:'start', behavior:'auto' });
+  // A fresh existing fix can engage follow immediately while the watch starts.
+  if (liveFix && Date.now() - liveFix.timestamp < 20000 && liveFix.accuracy <= 100) applyFix(liveFix, false);
+  if (!navigating) return;
   try {
     watchId = navigator.geolocation.watchPosition(position => {
       if (request !== navigationSequence || !navigating || document.hidden || currentMode !== 'travel') return;
@@ -622,8 +668,11 @@ $('wtStopNavigation').onclick = () => {
   if (rerouting) { route = null; send({ type:'hu:route', route:null }); } renderDirections();
 };
 $('wtRecenter').onclick = () => {
+  if (!liveFix || liveFix.accuracy > 100 || Date.now() - liveFix.timestamp >= 20000) {
+    navigationNotice = 'Waiting for a fresh, accurate location to recenter…'; renderDirections(); return;
+  }
   navigationFollow = true;
-  if (liveFix) send({ type:'hu:location', coordinates:liveFix.coordinates, accuracy:liveFix.accuracy, follow:true, fly:true });
+  if (liveFix) send({ type:'hu:location', coordinates:liveFix.coordinates, accuracy:liveFix.accuracy, heading:liveFix.heading, speed:liveFix.speed, mode:draft.mode, follow:true, fly:true });
   renderDirections();
 };
 $('wtRide').onclick = () => { const show = $('wtRidePanel').hidden; $('wtRidePanel').hidden = !show; $('wtRide').setAttribute('aria-expanded', String(show)); if (!show) cancelRideRefresh(); renderRide(); };

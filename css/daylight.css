@@ -76,6 +76,21 @@ html[data-daylight="day"] .wt-suggest button { color:#000000; }
 html[data-daylight="day"] .wt-suggest button:is(:hover,:focus-visible) { background:#f0f0f0; }
 html[data-daylight="day"] .wt-date-row button, html[data-daylight="day"] .wt-text-button, html[data-daylight="day"] .wt-toolbar button { color:#000000; }
 html[data-daylight="day"] .wt-toolbar [aria-pressed="true"] { color:#dc0f2d; border-bottom-color:#dc0f2d; }
+/* Ground modes need a complete day palette: black labels on the night
+   toolbar looked disabled and the selected red label disappeared on red. */
+html[data-daylight="day"] .wt-local-toolbar { background:#edf1f5;border-color:#b5c0cc; }
+html[data-daylight="day"] .wt-local-toolbar button { background:#ffffff;color:#172536;border-color:#9daab8; }
+html[data-daylight="day"] .wt-local-toolbar [aria-pressed="true"] { background:#a9082b;color:#ffffff;border-color:#a9082b;box-shadow:inset 0 -3px #ffc1cf; }
+html[data-daylight="day"] .wt-local-toolbar button:hover { border-color:#172536; }
+html[data-daylight="day"] :is(.wt-location-status,.wt-route-privacy,.wt-navigation-hint,.wt-route-label,.wt-attribution,.wt-search-note) { color:#435263; }
+html[data-daylight="day"] .wt-field>label { color:#435263; }
+html[data-daylight="day"] .wt-route-card { background:#f2f5f8;border-color:#bbc6d0; }
+html[data-daylight="day"] :is(.wt-route-summary strong,.wt-route-summary span,.wt-route-message,.wt-steps>summary) { color:#172536; }
+html[data-daylight="day"] .wt-steps { border-color:#bbc6d0; }
+html[data-daylight="day"] .wt-steps button { color:#243548; }
+html[data-daylight="day"] .wt-steps button small { color:#435263; }
+html[data-daylight="day"] .wt-steps button[aria-current="step"] { background:#daeee8;border-color:#688c80;color:#163e32; }
+html[data-daylight="day"] #wtPlanner :is(button,a,input,select,summary):focus-visible { outline-color:#172536; }
 html[data-daylight="day"] .wt-inspiration button, html[data-daylight="day"] .wt-actions button, html[data-daylight="day"] .wt-leg a, html[data-daylight="day"] .wt-leg button { background:#000000; color:#ffffff; border-color:#000000; }
 html[data-daylight="day"] .wt-actions .wt-primary { background:#dc0f2d; border-color:#dc0f2d; }
 html[data-daylight="day"] .wt-leg, html[data-daylight="day"] .wt-leg-symbol { border-color:#00000026; color:#000000; }
