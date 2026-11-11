@@ -206,17 +206,25 @@ async function haloChecks(scope,page,host,width,ctx,loseOwner,calls){
  await page.locator('#hxTab-missions').click();
  await page.waitForFunction(()=>document.querySelectorAll('.hx-left .hx-card').length>=2,null,{timeout:8000}).catch(()=>{});
  check(scope,'Missions: active missions listed, Review counted, mission places on the Earth',(await page.locator('.hx-left .hx-card').count())===2&&/Review\s*1/.test(await page.textContent('.hx-seg'))&&(await state()).marks===4,{cards:await page.locator('.hx-left .hx-card').count(),marks:(await state()).marks});
- // A coverage-age repaint can land between pointer-down and pointer-up.
- // Drive that exact boundary: metadata must not replace the pressed mission.
+ // A freshness/due-date repaint can land between pointer-down and pointer-up.
+ // Cross UTC midnight explicitly, regardless of when CI runs. Metadata must
+ // update without replacing the pressed mission or losing keyboard focus.
  const missionCard=page.locator('.hx-left .hx-card').first();
  const repaintMissionStatus=({offset,gesture=false})=>{
    const card=document.querySelector('.hx-left .hx-card');
    const repaint=()=>{
-     const now=Date.now,before=document.querySelector('.hx-left [role="status"]').textContent;
-     try { Date.now=()=>now()+offset; HaloConsole.setView('missions'); }
-     finally { Date.now=now; }
+     const RealDate=Date,before=document.querySelector('.hx-left [role="status"]').textContent;
+     const beforeDue=[...card.querySelectorAll('.hx-card__meta > span')].at(-1).textContent;
+     const midnight=new RealDate();midnight.setUTCHours(24,0,0,0);
+     const at=midnight.getTime()+offset;
+     // Date.now and new Date() must agree; mocking only one made this proof
+     // depend on its wall-clock start time near midnight.
+     class Clock extends RealDate {constructor(...args){super(...(args.length?args:[at]));}static now(){return at;}}
+     try { window.Date=Clock; HaloConsole.setView('missions'); }
+     finally { window.Date=RealDate; }
      const status=document.querySelector('.hx-left [role="status"]');
-     return {attached:card.isConnected&&card===document.querySelector('.hx-left .hx-card'),focused:document.activeElement===card,statusUpdated:status.textContent!==before&&status.getClientRects().length>0};
+     const due=[...document.querySelector('.hx-left .hx-card').querySelectorAll('.hx-card__meta > span')].at(-1).textContent;
+     return {attached:card.isConnected&&card===document.querySelector('.hx-left .hx-card'),focused:document.activeElement===card,statusUpdated:status.textContent!==before&&status.getClientRects().length>0,dueUpdated:due!==beforeDue};
    };
    if(!gesture)return repaint();
    window.__missionGesture=null;
@@ -238,7 +246,7 @@ async function haloChecks(scope,page,host,width,ctx,loseOwner,calls){
  // Keep Playwright's complete actionability checks and pointer dispatch together.
  await missionCard.click();
  const pressed=await page.evaluate(()=>window.__missionGesture);
- check(scope,'coverage refresh updates visible freshness without replacing the pressed mission card',pressed?.attached&&pressed.focused&&pressed.statusUpdated&&pressed.down.onCard&&pressed.down.hitCard&&pressed.up.onCard&&pressed.up.hitCard,pressed);
+ check(scope,'midnight refresh updates freshness and due date without replacing the pressed mission card',pressed?.attached&&pressed.focused&&pressed.statusUpdated&&pressed.dueUpdated&&pressed.down.onCard&&pressed.down.hitCard&&pressed.up.onCard&&pressed.up.hitCard,pressed);
  await page.waitForFunction(()=>/Harbor water check/.test((document.querySelector('.hx-detail h2')||{}).textContent||''),null,{timeout:8000}).catch(()=>{});
  st=await state();
  check(scope,'a mission opens with its progress, team, next steps and evidence',st.selected&&st.selected.kind==='mission'&&await page.locator('.hx-detail h2').isVisible()&&/Harbor water check/.test(await page.textContent('.hx-detail h2'))&&/1 of 3 verified/.test(await page.textContent('.hx-detail'))&&/Review 2 submitted proofs/.test(await page.textContent('.hx-detail'))&&(await page.locator('.hx-detail .hx-team li').count())===3,{sel:st.selected,text:(await page.textContent('.hx-detail')).slice(0,400),team:await page.locator('.hx-detail .hx-team li').count()});
@@ -254,7 +262,7 @@ async function haloChecks(scope,page,host,width,ctx,loseOwner,calls){
  }
  await missionCard.focus();
  const focused=await page.evaluate(repaintMissionStatus,{offset:240000});
- check(scope,'coverage refresh preserves mission keyboard focus and updates its status',focused.attached&&focused.focused&&focused.statusUpdated,focused);
+ check(scope,'midnight refresh preserves mission keyboard focus and updates its status and due date',focused.attached&&focused.focused&&focused.statusUpdated&&focused.dueUpdated,focused);
  await page.keyboard.press('Enter');
  await page.waitForFunction(()=>HaloConsole.state().selected?.kind==='mission'&&HaloConsole.state().selected?.id==='a1b2c3d4-0000-4000-8000-000000000001',null,{timeout:8000});
  check(scope,'the focused mission still opens with Enter after a coverage refresh',(await state()).selected?.id==='a1b2c3d4-0000-4000-8000-000000000001');
