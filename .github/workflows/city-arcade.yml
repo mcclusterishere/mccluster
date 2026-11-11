@@ -11,6 +11,7 @@ on:
       - 'workers/mccluster/src/arcade/**'
       - 'supabase/migrations/20261109181623_city_arcade_v1.sql'
       - 'scripts/test/city-arcade*'
+      - 'scripts/test/bridgeport-walk-clock.test.mjs'
       - 'scripts/test/sole-street-session.test.mjs'
       - 'scripts/test/sole-shared-progression.test.mjs'
       - 'scripts/test/support/arcade-database.mjs'
@@ -27,6 +28,7 @@ on:
       - 'workers/mccluster/src/arcade/**'
       - 'supabase/migrations/20261109181623_city_arcade_v1.sql'
       - 'scripts/test/city-arcade*'
+      - 'scripts/test/bridgeport-walk-clock.test.mjs'
       - 'scripts/test/sole-street-session.test.mjs'
       - 'scripts/test/sole-shared-progression.test.mjs'
       - 'scripts/test/support/arcade-database.mjs'
@@ -64,7 +66,7 @@ jobs:
           set -euo pipefail
           export CHROMIUM_PATH="$(node -e "console.log(require('/tmp/arcade-qa/node_modules/playwright').chromium.executablePath())")"
           node tools/publish-fictional-city.mjs
-          node --test scripts/test/city-arcade*.test.mjs scripts/test/sole-street-session.test.mjs scripts/test/sole-shared-progression.test.mjs
+          node --test scripts/test/city-arcade*.test.mjs scripts/test/sole-street-session.test.mjs scripts/test/sole-shared-progression.test.mjs scripts/test/bridgeport-walk-clock.test.mjs
           node scripts/test/city-arcade-database.integration.mjs
           node scripts/test/city-arcade-start-recovery.integration.mjs
           node scripts/test/city-arcade-spatial-contract.integration.mjs

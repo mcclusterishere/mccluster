@@ -27,8 +27,17 @@ const base=process.env.ARCADE_BASE||'http://127.0.0.1:8768',build=process.env.CE
  async function enter(){
   await page.locator('#arcade-globe').scrollIntoViewIfNeeded();await page.waitForFunction(()=>document.querySelector('#arcade-globe')?.contentWindow?.location.href.includes('action-globe'));
   frame=page.frames().find(f=>f.url().includes('action-globe'));await frame.waitForFunction(()=>!!window.HuGlobe?.viewer()&&window.HuGlobe.owner());
-  // Fixture clock acceleration only: route math, movement, clearance and arrival are real.
-  await frame.evaluate(()=>{if(!window.__clock){window.__clock=true;const raf=window.requestAnimationFrame.bind(window);window.requestAnimationFrame=fn=>raf(t=>fn(t*12));}window.__viewer=HuGlobe.viewer();});
+  // Fixture clock acceleration only: RAF and monotonic reads share one scale.
+  // Route math, movement, clearance, visibility pause and arrival are real.
+  await frame.evaluate(()=>{
+   if(!window.__clock){
+    window.__clock=true;const raf=window.requestAnimationFrame.bind(window),now=performance.now.bind(performance);
+    const origin=now(),scale=time=>origin+(time-origin)*12;
+    Object.defineProperty(performance,'now',{value:()=>scale(now()),configurable:true});
+    window.requestAnimationFrame=fn=>raf(t=>fn(scale(t)));
+   }
+   window.__viewer=HuGlobe.viewer();
+  });
   await page.locator('[data-spatial-enter]').click();await page.waitForFunction(()=>document.querySelector('[data-spatial-status]').textContent.startsWith('Shared downtown ready'));
  }
  await enter();const initial=await snapshot();
