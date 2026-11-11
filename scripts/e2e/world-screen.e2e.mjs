@@ -1155,8 +1155,10 @@ if (runs('editorial-video')) for (const device of DEVICES.filter((d) => ['iphone
 }
 
 /* the composer: the picture is taken while the clip uploads, shown on the chip, and posted beside the video */
-if (runs('editorial-video-composer') && (!process.env.EDITORIAL_DEVICE || process.env.EDITORIAL_DEVICE === 'iphone-portrait')) {
-  const scope = 'editorial-video-composer';
+/* Three bounded fresh-page samples retain the original failing run and expose scheduling-sensitive capture loss.
+   Every sample uploads/posts through the real composer and must satisfy all original checks. */
+if (runs('editorial-video-composer') && (!process.env.EDITORIAL_DEVICE || process.env.EDITORIAL_DEVICE === 'iphone-portrait')) for (let sample = 0; sample < 3; sample++) {
+  const scope = 'editorial-video-composer' + (sample ? '-sample-' + (sample + 1) : '');
   const { ctx, page, world, errors } = await open(DEVICES[0], { member: true });
   try {
     await page.waitForSelector('#mnPostBody');
@@ -1165,13 +1167,34 @@ if (runs('editorial-video-composer') && (!process.env.EDITORIAL_DEVICE || proces
     /* Capture actual decoder/encoder progress without changing media behavior or deadlines. A missing poster must
        retain its reason and event timing even if a later screenshot fails. This observes only the fixture upload. */
     await page.evaluate(() => {
-      const trace = window.__composerPosterTrace = { started: performance.now(), captures: [], videos: [], encodes: [] };
+      const trace = window.__composerPosterTrace = { started: performance.now(), captures: [], videos: [], encodes: [], canvasCalls: [], longTasks: [] };
       const at = () => Math.round(performance.now() - trace.started);
-      const create = document.createElement;
+      if (typeof PerformanceObserver === 'function' && PerformanceObserver.supportedEntryTypes.includes('longtask')) {
+        new PerformanceObserver((list) => {
+          for (const entry of list.getEntries()) trace.longTasks.push({ at: Math.round(entry.startTime - trace.started), duration: Math.round(entry.duration) });
+        }).observe({ type: 'longtask' });
+      }
+      const create = document.createElement, observedContexts = new WeakSet();
       document.createElement = function (tag, ...args) {
         const node = create.call(this, tag, ...args);
         if (String(tag).toLowerCase() === 'video') {
-          const record = { events: [] }; trace.videos.push(record);
+          const record = { events: [], frames: [], plays: [] }; trace.videos.push(record);
+          if (node.requestVideoFrameCallback) {
+            const frame = node.requestVideoFrameCallback;
+            node.requestVideoFrameCallback = function (callback) {
+              const call = { requested: at() }; record.frames.push(call);
+              return frame.call(this, (now, metadata) => {
+                call.finished = at(); call.mediaTime = metadata.mediaTime; callback(now, metadata);
+              });
+            };
+          }
+          const play = node.play;
+          node.play = function (...args) {
+            const call = { started: at() }; record.plays.push(call);
+            const promise = play.apply(this, args);
+            if (promise && typeof promise.then === 'function') promise.then(() => { call.finished = at(); }, (error) => { call.finished = at(); call.error = String(error); });
+            return promise;
+          };
           const state = (event) => ({ at: at(), event, ready: node.readyState, network: node.networkState,
             time: node.currentTime, duration: Number.isFinite(node.duration) ? node.duration : String(node.duration),
             width: node.videoWidth, height: node.videoHeight, paused: node.paused, seeking: node.seeking,
@@ -1181,6 +1204,23 @@ if (runs('editorial-video-composer') && (!process.env.EDITORIAL_DEVICE || proces
             node.addEventListener(event, () => record.events.push(state(event)));
           }
         } else if (String(tag).toLowerCase() === 'canvas') {
+          const context = node.getContext;
+          node.getContext = function (...args) {
+            const ctx = context.apply(this, args);
+            if (args[0] === '2d' && ctx && !observedContexts.has(ctx)) {
+              observedContexts.add(ctx);
+              for (const method of ['drawImage', 'getImageData']) {
+                const original = ctx[method];
+                ctx[method] = function (...args) {
+                  const call = { method, started: at(), width: node.width, height: node.height,
+                    source: args[0] && args[0].tagName || null }; trace.canvasCalls.push(call);
+                  try { return original.apply(this, args); }
+                  finally { call.finished = at(); }
+                };
+              }
+            }
+            return ctx;
+          };
           const encode = node.toBlob;
           node.toBlob = function (callback, ...args) {
             const record = { started: at(), width: node.width, height: node.height }; trace.encodes.push(record);
