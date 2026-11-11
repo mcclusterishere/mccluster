@@ -25,7 +25,7 @@
       "GEMINI.md"
     ]
   },
-  "tracked_count": 366,
+  "tracked_count": 368,
   "categories": {
     "active_references": [
       "docs/design/equity-uprise-building/references/basement-b1/README.md",
@@ -87,6 +87,7 @@
       "docs/design/equity-uprise-building/BUILDING-SERVICES-NERVOUS-SYSTEM-SPEC.md",
       "docs/design/equity-uprise-building/BUILDING-SYSTEMS-AND-FACADE-CORE-RULES.md",
       "docs/design/equity-uprise-building/COMPUTER-HARDWARE-WORKBENCH.md",
+      "docs/design/equity-uprise-building/DEVICE-PLACEMENT-RECONCILIATION.md",
       "docs/design/equity-uprise-building/DIGITAL-PHYSICAL-ASSET-REGISTRY-SPEC.md",
       "docs/design/equity-uprise-building/ELECTRONICS-IT-INFRASTRUCTURE-SPEC.md",
       "docs/design/equity-uprise-building/EXTERIOR-FACADE-UPGRADE-SPEC.md",
@@ -141,8 +142,6 @@
     "context": [
       "docs/design/equity-uprise-building/AGENTS.md",
       "docs/design/equity-uprise-building/BUILD-PIPELINE.md",
-      "docs/design/equity-uprise-building/BUILDING-FILE-INDEX.json",
-      "docs/design/equity-uprise-building/BUILDING-FILE-INDEX.json",
       "docs/design/equity-uprise-building/BUILDING-FILE-INDEX.json",
       "docs/design/equity-uprise-building/HISTORICAL-REFERENCE-BUILDS.md",
       "docs/design/equity-uprise-building/MASTER-INDEX.md",
@@ -352,9 +351,12 @@
       "docs/design/equity-uprise-building/production/generate_core_v2_plans.py",
       "docs/design/equity-uprise-building/production/generate_core_v2_production_packages.py",
       "docs/design/equity-uprise-building/production/interior-envelope-audit.json",
+      "docs/design/equity-uprise-building/production/interiors/audit_device_placement.py",
       "docs/design/equity-uprise-building/production/interiors/audit_interior_consistency.py",
+      "docs/design/equity-uprise-building/production/interiors/device-placement-audit-v1.json",
       "docs/design/equity-uprise-building/production/interiors/eu_furniture_kit.py",
       "docs/design/equity-uprise-building/production/interiors/furniture-catalog-v3.json",
+      "docs/design/equity-uprise-building/production/interiors/test_device_placement.py",
       "docs/design/equity-uprise-building/production/lab-runtime/assessment-policy-v1.json",
       "docs/design/equity-uprise-building/production/lab-runtime/cisa-itot-scenario-pack-v1.json",
       "docs/design/equity-uprise-building/production/lab-runtime/computer-hardware-profile-v1.json",

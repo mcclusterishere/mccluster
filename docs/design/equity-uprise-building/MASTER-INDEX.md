@@ -388,3 +388,10 @@ Every display surface (148 screens, B1–L7) is bound to its canonical asset id 
 - `production/lab-runtime/verify_computer_workbench_browser.mjs`
 
 This extension does not change the reconciled floor programs, equipment placement authority, original server-lab scoring or #707 learning-backend status.
+
+## Device placement reconciliation — active repair
+
+- `DEVICE-PLACEMENT-RECONCILIATION.md` — measured defects, proposed maker floors, corrective sequence and live-device truth boundary.
+- `production/interiors/audit_device_placement.py` — cross-layer real-mesh contact and monitor-intersection diagnostic, with a strict acceptance mode.
+- `production/interiors/test_device_placement.py` — isolated geometry regressions.
+- `production/interiors/device-placement-audit-v1.json` — exact-source baseline evidence; unresolved defects are not visual approval.

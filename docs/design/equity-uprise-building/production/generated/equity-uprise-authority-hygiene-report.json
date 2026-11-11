@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0.0",
   "scope": "Equity Uprise active authority hygiene",
-  "checks_total": 576,
-  "checks_passed": 576,
+  "checks_total": 584,
+  "checks_passed": 584,
   "checks_failed": 0,
   "passed": true,
   "checks": [
@@ -498,6 +498,16 @@
     },
     {
       "name": "no deprecated authority ref: docs/design/equity-uprise-building/COMPUTER-HARDWARE-WORKBENCH.md :: BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md",
+      "passed": true,
+      "detail": "BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md"
+    },
+    {
+      "name": "no deprecated authority ref: docs/design/equity-uprise-building/DEVICE-PLACEMENT-RECONCILIATION.md :: FLOOR-01-LOBBY-INTAKE-360-SPEC.md",
+      "passed": true,
+      "detail": "FLOOR-01-LOBBY-INTAKE-360-SPEC.md"
+    },
+    {
+      "name": "no deprecated authority ref: docs/design/equity-uprise-building/DEVICE-PLACEMENT-RECONCILIATION.md :: BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md",
       "passed": true,
       "detail": "BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md"
     },
@@ -2482,12 +2492,32 @@
       "detail": "BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md"
     },
     {
+      "name": "no deprecated authority ref: docs/design/equity-uprise-building/production/interiors/audit_device_placement.py :: FLOOR-01-LOBBY-INTAKE-360-SPEC.md",
+      "passed": true,
+      "detail": "FLOOR-01-LOBBY-INTAKE-360-SPEC.md"
+    },
+    {
+      "name": "no deprecated authority ref: docs/design/equity-uprise-building/production/interiors/audit_device_placement.py :: BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md",
+      "passed": true,
+      "detail": "BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md"
+    },
+    {
       "name": "no deprecated authority ref: docs/design/equity-uprise-building/production/interiors/audit_interior_consistency.py :: FLOOR-01-LOBBY-INTAKE-360-SPEC.md",
       "passed": true,
       "detail": "FLOOR-01-LOBBY-INTAKE-360-SPEC.md"
     },
     {
       "name": "no deprecated authority ref: docs/design/equity-uprise-building/production/interiors/audit_interior_consistency.py :: BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md",
+      "passed": true,
+      "detail": "BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md"
+    },
+    {
+      "name": "no deprecated authority ref: docs/design/equity-uprise-building/production/interiors/device-placement-audit-v1.json :: FLOOR-01-LOBBY-INTAKE-360-SPEC.md",
+      "passed": true,
+      "detail": "FLOOR-01-LOBBY-INTAKE-360-SPEC.md"
+    },
+    {
+      "name": "no deprecated authority ref: docs/design/equity-uprise-building/production/interiors/device-placement-audit-v1.json :: BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md",
       "passed": true,
       "detail": "BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md"
     },
@@ -2508,6 +2538,16 @@
     },
     {
       "name": "no deprecated authority ref: docs/design/equity-uprise-building/production/interiors/furniture-catalog-v3.json :: BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md",
+      "passed": true,
+      "detail": "BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md"
+    },
+    {
+      "name": "no deprecated authority ref: docs/design/equity-uprise-building/production/interiors/test_device_placement.py :: FLOOR-01-LOBBY-INTAKE-360-SPEC.md",
+      "passed": true,
+      "detail": "FLOOR-01-LOBBY-INTAKE-360-SPEC.md"
+    },
+    {
+      "name": "no deprecated authority ref: docs/design/equity-uprise-building/production/interiors/test_device_placement.py :: BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md",
       "passed": true,
       "detail": "BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md"
     },

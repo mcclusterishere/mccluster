@@ -172,6 +172,29 @@ jobs:
       - name: Verify model consistency (furniture, doors, egress, walkability, brand slots, distinct floors)
         run: python docs/design/equity-uprise-building/production/interiors/audit_interior_consistency.py
 
+      - name: Test cross-layer device contact diagnostics
+        run: python docs/design/equity-uprise-building/production/interiors/test_device_placement.py
+
+      - name: Record unresolved electronics and furniture placement
+        run: |
+          # Report mode records existing defects without calling placement approved.
+          # --strict is the future remodeling acceptance gate, not a baseline waiver.
+          python docs/design/equity-uprise-building/production/interiors/audit_device_placement.py --output "${RUNNER_TEMP}/device-placement-audit.json"
+          python - <<'PYTHON'
+          import json, os
+          from pathlib import Path
+          d = json.loads((Path(os.environ['RUNNER_TEMP']) / 'device-placement-audit.json').read_text())
+          if not d['passed']:
+              print('::warning::Device placement remains unresolved: ' + json.dumps(d['summary']))
+          PYTHON
+
+      - name: Upload device placement evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: equity-uprise-device-placement
+          path: ${{ runner.temp }}/device-placement-audit.json
+          if-no-files-found: error
+
       - name: Verify Floor 1 / B1 authority boundary
         run: python docs/design/equity-uprise-building/production/verify_floor_01_b1_simulation.py
 
