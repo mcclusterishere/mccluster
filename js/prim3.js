@@ -1,6 +1,7 @@
-(function () {
+(async function () {
   "use strict";
 
+  var semesters = await import('./prim3-tactics/semester-progression.mjs');
   var STORAGE_KEY = "prim3_course_progress_v4";
   var LESSONS = window.PRIM3_LESSONS || {};
   var course = null;
@@ -8,6 +9,7 @@
   var activeId = null;
   var passMark = 80;
 
+  var progressWriteBlocked = false;
   var state = loadState();
   var els = {
     gate: document.getElementById("courseGate"),
@@ -66,17 +68,19 @@
   function loadState() {
     try {
       var parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-      return {
+      return semesters.migrateProgress({ ...parsed,
         read: Array.isArray(parsed.read) ? parsed.read : [],
         passed: Array.isArray(parsed.passed) ? parsed.passed : [],
         scores: parsed.scores && typeof parsed.scores === "object" ? parsed.scores : {}
-      };
+      });
     } catch (_) {
-      return { read: [], passed: [], scores: {} };
+      progressWriteBlocked = true;
+      return semesters.migrateProgress({ read: [], passed: [], scores: {} });
     }
   }
 
   function saveState() {
+    if (progressWriteBlocked) return;
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
   }
 
@@ -145,6 +149,11 @@
   }
 
   function renderProgress() {
+    if (progressWriteBlocked && !document.getElementById("progressRecovery")) {
+      var warning = document.createElement("p"); warning.id = "progressRecovery"; warning.setAttribute("role", "alert");
+      warning.textContent = "Saved course progress could not be read. The original is retained and local writes are paused. Reset progress only if you want to replace it.";
+      els.course.prepend(warning);
+    }
     var total = modules.length || 66;
     var passed = state.passed.filter(function (id) { return !!byId(id); }).length;
     var percent = total ? Math.round((passed / total) * 100) : 0;
@@ -217,7 +226,8 @@
       var passed = seasonModules.filter(function (module) { return has(state.passed, module.id); }).length;
       var head = document.createElement("div");
       head.className = "p3-season__head";
-      head.innerHTML = "<span>Season " + season + "</span><span>" + passed + "/" + seasonModules.length + " passed</span>";
+      var term = semesters.SEMESTERS[season - 1];
+      head.innerHTML = "<span>Semester " + season + " · " + term.term + " " + term.year + "</span><span>" + passed + "/" + seasonModules.length + " passed</span>";
       wrap.appendChild(head);
 
       var currentUnit = null;
@@ -227,11 +237,14 @@
           var unit = document.createElement("div");
           unit.className = "p3-unit-label";
           unit.innerHTML = "<b>" + lessonText(module.unit_id) + " · " + lessonText(module.song || "Open song slot") + "</b>" +
-            "<span>" + lessonText(module.episode_id) + " · " + lessonText(module.episode_title) + "</span>";
+            "<span>" + semesters.episodeTerm(Number(module.unit_sequence)).stage.toUpperCase() + " · " + lessonText(module.episode_id) + " · " + lessonText(module.episode_title) + "</span>";
           wrap.appendChild(unit);
         }
         appendModuleButton(wrap, module);
       });
+      var breakNote = document.createElement("p");
+      breakNote.textContent = term.break.charAt(0).toUpperCase() + term.break.slice(1) + " break adventure follows separately · not yet released. Opening, midterms and finals are all core episodes.";
+      wrap.appendChild(breakNote);
       els.list.appendChild(wrap);
     }
   }
@@ -317,7 +330,8 @@
       els.song.textContent = "No song attached";
     } else {
       els.number.textContent = "Module " + lessonText(module.id) + " · " + lessonText(module.unit_id) + " · Part " + module.part + "/3";
-      els.season.textContent = "Season " + module.season;
+      var term = semesters.episodeTerm(Number(module.unit_sequence));
+      els.season.textContent = "Semester " + term.semester + " · " + term.term + " " + term.year + " · " + term.stage;
       els.episode.textContent = lessonText(module.episode_id);
       els.song.textContent = module.song ? "Song · " + lessonText(module.song) : "Song · Open slot";
     }
@@ -391,7 +405,9 @@
     });
     els.reset.addEventListener("click", function () {
       if (!window.confirm("Reset all PRIM3 course progress for this account on this device?")) return;
-      state = { read: [], passed: [], scores: {} };
+      document.getElementById("progressRecovery")?.remove();
+      progressWriteBlocked = false;
+      state = semesters.migrateProgress({ read: [], passed: [], scores: {} });
       saveState();
       activeId = null;
       els.content.hidden = true;

@@ -1,4 +1,4 @@
-import { normalizeMetricNavigation, metricPoint, metricDistance, metricSight, metricEdge, metricOccupant, metricReach } from './tactical-metric-navigation.mjs';
+import { normalizeMetricNavigation, metricPoint, metricDistance, metricSight, metricEdge, metricOccupant, metricReach, metricCover } from './tactical-metric-navigation.mjs';
 const CARDINALS = ['N', 'E', 'S', 'W'];
 
 // Rule constants. Canon (TACTICAL-CORE-MECHANICS.yaml, XCOM2-MECHANIC-ADAPTATION-AUTHORITY.md) names
@@ -287,8 +287,9 @@ function createState(config = {}) {
     };
   }
   if (config.metricNavigation) {
-    if (state.floors !== 1 || state.height !== 1 || state.cover.length || state.blockers.length || state.links.length || state.surfaces || state.nodes.length || state.machines?.length || (state.battlefield.extractionZone?.r ?? 0) !== 0) throw new Error('Metric scenario supports one street surface, no cover/machines/technical nodes');
+    if (state.floors !== 1 || state.height !== 1 || state.cover.length || state.blockers.length || state.links.length || state.surfaces || state.machines?.length || (state.battlefield.extractionZone?.r ?? 0) !== 0) throw new Error('Metric scenario supports one street surface, no cover/machines/technical nodes');
     state.metricNavigation = normalizeMetricNavigation(config.metricNavigation);
+    if (state.nodes.some(n => !n.at || !metricPoint(state, n.at) || !Number.isFinite(n.at.range) || n.at.range < 0)) throw new Error('Invalid metric technical node');
     if (state.width !== state.metricNavigation.nodes.length || state.units.some(u => !metricPoint(state,u))) throw new Error('Metric unit outside graph');
   }
   return state;
@@ -369,14 +370,15 @@ function phaseUpkeep(next, side) {
   if (Array.isArray(next.machines)) noteSightings(next);
 }
 
-function resolveClockStatePhase(state) {
+function resolveClockStatePhase(state, { advance = true } = {}) {
+  if (typeof advance !== 'boolean') throw new Error('Clock advance must be boolean');
   const next = copyState(state);
   next.phase = 'CLOCK_STATE';
-  next.mission.clock = Math.max(0, next.mission.clock - 1);
+  if (advance) next.mission.clock = Math.max(0, next.mission.clock - 1);
   if (next.mission.clock === 0) next.mission.escalation = 'TERMINAL';
   else if (next.mission.clock <= 2) next.mission.escalation = 'CRITICAL';
   else if (next.mission.clock <= 5 && next.mission.escalation === 'STABLE') next.mission.escalation = 'DEGRADED';
-  next.events.push({ type: 'CLOCK_STATE_RESOLVED', round: next.round, clock: next.mission.clock, escalation: next.mission.escalation });
+  next.events.push({ type: 'CLOCK_STATE_RESOLVED', ...(advance ? {} : { clockPaused: true }), round: next.round, clock: next.mission.clock, escalation: next.mission.escalation });
   return next;
 }
 
@@ -562,6 +564,7 @@ function sourceSide(target, attacker) {
 }
 
 function coverForAttack(state, target, attacker) {
+  if (state.metricNavigation) return metricCover(state, target, attacker);
   const cover = state.cover.find((item) => item.x === target.x && item.y === target.y && item.z === target.z);
   if (!cover) return { type: 'NONE', bonus: 0, flanked: false };
   const protectedSide = cover.sides.includes(sourceSide(target, attacker));
@@ -585,7 +588,7 @@ function previewShot(state, attacker, stats, target, options = {}) {
   const distance = gridDistance(attacker, target, state);
   if (stats.weaponRange != null && distance > stats.weaponRange) return { legal: false, reason: 'OUT_OF_RANGE' };
   const cover = coverForAttack(state, target, attacker);
-  const rangePenalty = Math.max(0, distance - 6) * 4;
+  const rangePenalty = Math.max(0, distance / (state.metricNavigation?.weaponRangeUnitM || 1) - 6) * 4;
   const elevationBonus = attacker.z > target.z ? 10 : 0;
   const hunkerPenalty = target.hunkered ? 20 : 0;
   const flankBonus = cover.flanked ? 15 : 0;
@@ -900,7 +903,7 @@ function moveUnit(state, unitId, destination, mode = 'MOVE', options = {}) {
       if (!geo.walkable(step.x, step.y, step.z)) throw new Error('Route leaves the walkable surface');
       at = step;
     }
-    if (total > maxDistance) throw new Error('Route outside movement range');
+    if (total > maxDistance + (next.metricNavigation ? 1e-7 : 0)) throw new Error('Route outside movement range');
   } else {
     if (occupied(next, dest.x, dest.y, dest.z, unit.id)) throw new Error('Destination occupied');
     path = findPath(next, unit.id, dest, maxDistance);
@@ -1010,7 +1013,7 @@ function technicalAction(state, actorId, nodeId, actionId) {
   const node = nodeById(next, nodeId);
   if (node.at) {
     // positioned interaction: on the node's floor, within range (Manhattan), and an allowed role
-    const within = actor.z === node.at.z && Math.abs(actor.x - node.at.x) + Math.abs(actor.y - node.at.y) <= node.at.range;
+    const within = actor.z === node.at.z && (next.metricNavigation ? metricDistance(next, actor, node.at) <= node.at.range && metricSight(next, actor, node.at) : Math.abs(actor.x - node.at.x) + Math.abs(actor.y - node.at.y) <= node.at.range);
     if (!within) throw new Error(`Actor is not in position for ${nodeId}`);
     if (node.at.roles && !node.at.roles.includes(String(actor.role))) throw new Error(`Role ${actor.role} cannot operate ${nodeId}`);
   }

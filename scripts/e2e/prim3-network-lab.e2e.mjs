@@ -1,0 +1,36 @@
+import {createRequire} from 'node:module';import {readFile,mkdir,writeFile} from 'node:fs/promises';import {fileURLToPath} from 'node:url';import {resolve,extname} from 'node:path';import assert from 'node:assert/strict';
+const {chromium}=createRequire('/opt/codex/cua_node/lib/node_modules/fixture.cjs')('playwright');
+const root=fileURLToPath(new URL('../../',import.meta.url)),base='https://matthew.mccluster.org',out=process.argv[2]||'/tmp/prim3-hex-proof';await mkdir(out,{recursive:true});
+const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',args:['--no-sandbox','--enable-unsafe-swiftshader']});
+const types={'.mjs':'text/javascript','.js':'text/javascript','.html':'text/html','.json':'application/json','.css':'text/css','.png':'image/png','.webp':'image/webp','.glb':'model/gltf-binary'},results=[];
+async function context(width,owner=true){const ctx=await browser.newContext({viewport:{width,height:1000},serviceWorkers:'block'});if(owner)await ctx.addInitScript(()=>localStorage.setItem('mccdb_session',JSON.stringify({access_token:'fixture-owner'})));
+ await ctx.route('**/*',async route=>{const u=new URL(route.request().url());if(u.hostname==='api.mccluster.org')return route.fulfill({status:owner?200:403,headers:{'access-control-allow-origin':'*'},contentType:'application/json',body:'{}'});
+ let path=u.pathname;if(u.hostname==='cdn.jsdelivr.net'){if(path.endsWith('/build/three.module.js'))path='/vendor/three.module.min.js';else if(path.endsWith('/build/three.core.js'))path='/vendor/three.core.min.js';else if(path.includes('/examples/jsm/'))path='/vendor/three-addons/'+path.split('/examples/jsm/')[1];else return route.abort();}else if(u.origin!==base)return route.abort();
+ try{return route.fulfill({body:await readFile(resolve(root,'.'+path)),contentType:types[extname(path)]||'application/octet-stream'});}catch{return route.fulfill({status:404,body:''});}});return ctx;}
+try{for(const width of [390,768,1024,1280]){const ctx=await context(width),page=await ctx.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto(base+'/prim3-hex-tactics.html?lab=network&view=2d');await page.locator('#status').waitFor();
+ assert.match(await page.locator('#status').textContent(),/Turn 1/);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth),true);
+ const target=await page.evaluate(async()=>{const {createRun,movePreview}=await import('/js/prim3-tactics/network-simulation.mjs');const r=createRun();return r.state.metricNavigation.nodes.map((_,i)=>i).find(i=>movePreview(r,'E1',i)?.mode==='MOVE');});
+ await page.locator(`[data-cell="${target}"]`).press('Enter');assert.match(await page.locator('#preview').textContent(),/MOVE/);assert.equal(await page.evaluate(()=>localStorage.getItem('here.prim3.training.network.local.v1.foundation')),null);
+ await page.locator('#confirm').click();const saved=await page.evaluate(()=>localStorage.getItem('here.prim3.training.network.local.v1.foundation'));assert.ok(saved);await page.reload();await page.locator('#status').waitFor();assert.equal(await page.evaluate(()=>localStorage.getItem('here.prim3.training.network.local.v1.foundation')),saved);
+ await page.locator('#end').click();assert.match(await page.locator('#status').textContent(),/Turn 2/);
+ await page.screenshot({path:`${out}/${width}-map.png`,fullPage:true});
+ await page.locator('#view').click();await page.waitForFunction(()=>!document.querySelector('#graphics').textContent.includes('Loading'));const graphics=await page.locator('#graphics').textContent();
+ assert.match(graphics,/same hex graph/);assert.equal(await page.locator('#scene canvas').count(),1);await page.locator('#focus').click();await page.waitForTimeout(800);await page.screenshot({path:`${out}/${width}-3d.png`,fullPage:true});
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth),true);assert.deepEqual(errors,[]);results.push({width,move:true,previewNoMutation:true,reload:true,enemyTurn:true,webgl:true,errors});await ctx.close();}
+ const journey=await context(768),jp=await journey.newPage();await jp.goto(base+'/prim3-hex-tactics.html?lab=network&view=2d');await jp.locator('#status').waitFor();
+ const walkthrough=[['R1','fire','H2'],['R1','fire','H2'],['E1','move',296],['E1','move',249],['T1','move',265],['T1','fire','H1'],['E1','end'],['R1','move',266],['R1','fire','H1'],['E1','fire','H1'],['E1','move',297],['T1','move',212],['T1','move',177],['E1','end'],['R1','observe'],['E1','hold'],['T1','configure',{targetId:'training-edge',prefix:27,gateway:'10.44.8.65',reservedMbps:22}],['T1','verify'],['E1','end'],['R1','move',313],['R1','extract'],['E1','move',313],['E1','extract'],['T1','move',229],['T1','move',279],['E1','end'],['T1','move',313],['T1','extract']];
+ for(const [id,action,target] of walkthrough){
+  await jp.locator(`[data-unit="${id}"]`).click();
+  if(action==='move'||action==='fire'){
+   const selector=action==='move'?`[data-cell="${target}"]`:`[data-target="${target}"]`;
+   await jp.locator(selector).click();const before=await jp.evaluate(()=>localStorage.getItem('here.prim3.training.network.local.v1.foundation'));
+   await jp.locator('#cancel').click();assert.equal(await jp.locator('#confirm').isDisabled(),true);
+   await jp.locator(selector).click();assert.equal(await jp.evaluate(()=>localStorage.getItem('here.prim3.training.network.local.v1.foundation')),before);
+   await jp.locator('#confirm').click();await jp.locator('#confirm').evaluate(b=>b.click());
+  }else if(action==='configure'){await jp.locator('#lab-prefix').fill(String(target.prefix));await jp.locator('#lab-gateway').fill(target.gateway);await jp.locator('#lab-bandwidth').fill(String(target.reservedMbps));await jp.locator('#lab-prepare').click();await jp.locator('#confirm').click();assert.match(await jp.locator('#lab-result').textContent(),/not verified/);}else if(['observe','hold','verify'].includes(action))await jp.locator(`[data-lab-action="${action}"]`).click();else if(action==='end')await jp.locator('#end').click();else await jp.locator(`[data-action="${action}"]`).click();
+  const saved=await jp.evaluate(()=>localStorage.getItem('here.prim3.training.network.local.v1.foundation'));assert.ok(saved);
+  await jp.reload();await jp.locator('#status').waitFor();assert.equal(await jp.evaluate(()=>localStorage.getItem('here.prim3.training.network.local.v1.foundation')),saved);
+ }
+ assert.equal(await jp.locator('#status').textContent(),'COMPLETE');results.push({completeJourney:true,reloadEveryAction:true,cancel:true,repeatedConfirm:true});await journey.close();
+ const ctx=await context(390,false),p=await ctx.newPage();let engineFetched=false;p.on('request',r=>{if(r.url().includes('hex-ui.mjs'))engineFetched=true;});await p.goto(base+'/prim3-hex-tactics.html?lab=network&view=2d');await p.waitForFunction(()=>document.querySelector('[data-owner-msg]')?.textContent.includes('Sign in'));assert.equal(await p.locator('#confirm').count(),0);assert.equal(engineFetched,false);results.push({deniedRole:true,engineNotFetched:true});await ctx.close();
+ console.log(JSON.stringify(results,null,2));await writeFile(out+'/results.json',JSON.stringify(results,null,2));}finally{await browser.close();}

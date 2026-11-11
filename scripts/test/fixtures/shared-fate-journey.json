@@ -1,0 +1,538 @@
+[
+  {
+    "id": "R1",
+    "action": "observe",
+    "payload": null
+  },
+  {
+    "id": "E1",
+    "action": "prioritize",
+    "payload": "reduced"
+  },
+  {
+    "id": "R1",
+    "action": "move",
+    "payload": {
+      "id": "R1",
+      "target": 180,
+      "path": [
+        {
+          "x": 178,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 179,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 180,
+          "y": 0,
+          "z": 0
+        }
+      ],
+      "costM": 10.619999999999997,
+      "mode": "MOVE",
+      "stateHash": "7649ef2d"
+    }
+  },
+  {
+    "id": "T1",
+    "action": "move",
+    "payload": {
+      "id": "T1",
+      "target": 127,
+      "path": [
+        {
+          "x": 147,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 136,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 124,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 125,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 126,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 127,
+          "y": 0,
+          "z": 0
+        }
+      ],
+      "costM": 21.239999999999995,
+      "mode": "DASH",
+      "stateHash": "d3a9c5e8"
+    }
+  },
+  {
+    "id": "E1",
+    "action": "end",
+    "payload": null
+  },
+  {
+    "id": "R1",
+    "action": "fire",
+    "payload": "H2"
+  },
+  {
+    "id": "R1",
+    "action": "fire",
+    "payload": "H2"
+  },
+  {
+    "id": "T1",
+    "action": "move",
+    "payload": {
+      "id": "T1",
+      "target": 69,
+      "path": [
+        {
+          "x": 111,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 112,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 113,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 97,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 81,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 69,
+          "y": 0,
+          "z": 0
+        }
+      ],
+      "costM": 21.240000000000002,
+      "mode": "DASH",
+      "stateHash": "4a167dd2"
+    }
+  },
+  {
+    "id": "E1",
+    "action": "end",
+    "payload": null
+  },
+  {
+    "id": "R1",
+    "action": "move",
+    "payload": {
+      "id": "R1",
+      "target": 97,
+      "path": [
+        {
+          "x": 164,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 152,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 141,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 129,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 113,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 97,
+          "y": 0,
+          "z": 0
+        }
+      ],
+      "costM": 21.240000000000006,
+      "mode": "DASH",
+      "stateHash": "e7479a91"
+    }
+  },
+  {
+    "id": "T1",
+    "action": "fire",
+    "payload": "H1"
+  },
+  {
+    "id": "T1",
+    "action": "fire",
+    "payload": "H1"
+  },
+  {
+    "id": "E1",
+    "action": "end",
+    "payload": null
+  },
+  {
+    "id": "R1",
+    "action": "fire",
+    "payload": "H1"
+  },
+  {
+    "id": "E1",
+    "action": "end",
+    "payload": null
+  },
+  {
+    "id": "T1",
+    "action": "move",
+    "payload": {
+      "id": "T1",
+      "target": 37,
+      "path": [
+        {
+          "x": 70,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 58,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 59,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 48,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 49,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 37,
+          "y": 0,
+          "z": 0
+        }
+      ],
+      "costM": 21.239999999999995,
+      "mode": "DASH",
+      "stateHash": "19adfabe"
+    }
+  },
+  {
+    "id": "E1",
+    "action": "hold",
+    "payload": null
+  },
+  {
+    "id": "E1",
+    "action": "end",
+    "payload": null
+  },
+  {
+    "id": "E1",
+    "action": "hold",
+    "payload": null
+  },
+  {
+    "id": "T1",
+    "action": "configure",
+    "payload": {
+      "targetId": "client-edge",
+      "prefix": 27,
+      "gateway": "10.44.8.65",
+      "reservedMbps": 24,
+      "uplink": "fallback"
+    }
+  },
+  {
+    "id": "T1",
+    "action": "testFailure",
+    "payload": null
+  },
+  {
+    "id": "E1",
+    "action": "end",
+    "payload": null
+  },
+  {
+    "id": "E1",
+    "action": "hold",
+    "payload": null
+  },
+  {
+    "id": "T1",
+    "action": "verify",
+    "payload": null
+  },
+  {
+    "id": "E1",
+    "action": "end",
+    "payload": null
+  },
+  {
+    "id": "E1",
+    "action": "extract",
+    "payload": null
+  },
+  {
+    "id": "R1",
+    "action": "move",
+    "payload": {
+      "id": "R1",
+      "target": 163,
+      "path": [
+        {
+          "x": 113,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 129,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 141,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 152,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 151,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 163,
+          "y": 0,
+          "z": 0
+        }
+      ],
+      "costM": 21.239999999999995,
+      "mode": "DASH",
+      "stateHash": "4994ff87"
+    }
+  },
+  {
+    "id": "T1",
+    "action": "move",
+    "payload": {
+      "id": "T1",
+      "target": 81,
+      "path": [
+        {
+          "x": 36,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 48,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 59,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 58,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 70,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 81,
+          "y": 0,
+          "z": 0
+        }
+      ],
+      "costM": 21.24,
+      "mode": "DASH",
+      "stateHash": "34c61124"
+    }
+  },
+  {
+    "id": "E1",
+    "action": "end",
+    "payload": null
+  },
+  {
+    "id": "R1",
+    "action": "move",
+    "payload": {
+      "id": "R1",
+      "target": 176,
+      "path": [
+        {
+          "x": 179,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 178,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 177,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 176,
+          "y": 0,
+          "z": 0
+        }
+      ],
+      "costM": 14.160000000000002,
+      "mode": "DASH",
+      "stateHash": "58e7d62f"
+    }
+  },
+  {
+    "id": "T1",
+    "action": "move",
+    "payload": {
+      "id": "T1",
+      "target": 151,
+      "path": [
+        {
+          "x": 97,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 113,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 129,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 141,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 140,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 151,
+          "y": 0,
+          "z": 0
+        }
+      ],
+      "costM": 21.239999999999995,
+      "mode": "DASH",
+      "stateHash": "7c518b46"
+    }
+  },
+  {
+    "id": "E1",
+    "action": "end",
+    "payload": null
+  },
+  {
+    "id": "R1",
+    "action": "extract",
+    "payload": null
+  },
+  {
+    "id": "T1",
+    "action": "move",
+    "payload": {
+      "id": "T1",
+      "target": 176,
+      "path": [
+        {
+          "x": 150,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 149,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 148,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 160,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 176,
+          "y": 0,
+          "z": 0
+        }
+      ],
+      "costM": 17.700000000000003,
+      "mode": "DASH",
+      "stateHash": "43b0a70c"
+    }
+  },
+  {
+    "id": "E1",
+    "action": "end",
+    "payload": null
+  },
+  {
+    "id": "T1",
+    "action": "extract",
+    "payload": null
+  }
+]
