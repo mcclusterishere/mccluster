@@ -1,0 +1,245 @@
+From 63c26995181e681dca90f173a7d2a63ac37be9d3 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 10 Nov 2026 11:52:32 +0000
+Subject: [PATCH 1/2] fix(prim3): publish the lattice-learning runtime the
+ reviewed-mission page imports (W5)
+
+js/prim3-mission/released-app.mjs and released-learning.mjs imported
+PRIM3/game/halo/adaptive/topology-learning.mjs, and deploy-pages.yml strips
+all of PRIM3/ from the published tree: the exported reviewed-mission page
+would load without its learning runtime. This is the second private-tree
+import of its kind; audit W1 fixed the first (the generated-recipe compiler).
+
+Promote the runtime the same way W1 did: copy it byte-identical to
+js/prim3-mission/topology-learning.mjs (git sees a 100% copy), point both
+published importers, the Worker and the unit test at it, and leave the
+private path as a one-line re-export so the adaptive engine beside it keeps
+resolving with no second copy. The Equity Uprise source map follows the file
+(the shim no longer names the product); its coverage report is regenerated.
+
+The new test in scripts/test/prim3-topology-learning.test.mjs fails on the
+PR head (both importers reach into PRIM3/ and the private file is the only
+copy) and passes here. Merged with the deep-audit branch, which carries
+scripts/test/published-import-closure.test.mjs, the closure test fails on
+the PR head naming both importers and passes with this change.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01RNT2Nvh5aJGtEzBMdqUF4T
+---
+ .../game/halo/adaptive/topology-learning.mjs  | 35 +++++--------------
+ .../equity-uprise-repo-source-map-v2.json     |  2 +-
+ ...ty-uprise-repo-source-coverage-report.json | 10 +++---
+ docs/prim3/TOPOLOGY-LEARNING.md               |  2 ++
+ js/prim3-mission/released-app.mjs             |  2 +-
+ js/prim3-mission/released-learning.mjs        |  2 +-
+ js/prim3-mission/topology-learning.mjs        | 26 ++++++++++++++
+ scripts/test/prim3-topology-learning.test.mjs | 12 ++++++-
+ .../mccluster/src/prim3/adaptive-learning.js  |  2 +-
+ 9 files changed, 57 insertions(+), 36 deletions(-)
+ create mode 100644 js/prim3-mission/topology-learning.mjs
+
+diff --git a/PRIM3/game/halo/adaptive/topology-learning.mjs b/PRIM3/game/halo/adaptive/topology-learning.mjs
+index 89b30c92..e4b3d85c 100644
+--- a/PRIM3/game/halo/adaptive/topology-learning.mjs
++++ b/PRIM3/game/halo/adaptive/topology-learning.mjs
+@@ -1,26 +1,9 @@
+-// Versioned mathematical exercises. Coordinates are declared lattice coordinates,
+-// never opaque resolver node indices, navigable routes, AP, or combat evidence.
+-export const LEARNING_VARIANTS = Object.freeze({
+- 'generated': {title:'Generated side operation',href:null,frame:'Signed Forge display: +X east, +Y north; origin is the tile containing Forge (0,0); 3.54 m/tile',topologies:['square']},
+- 'transit-relay': {title:'Transit / Relay',href:'prim3-transit.html?level=transit-relay',frame:'X=x−32, Y=31−y; +X east, +Y north; 3.54 m/tile',topologies:['square']},
+- 'equity-uprise-hq': {title:'Equity Uprise HQ',href:'prim3-transit.html?level=equity-uprise-hq',frame:'X=x−3, Y=8−y; +X east, +Y north; 3.54 m/tile',topologies:['square']},
+- 'equity-uprise-b1': {title:'Equity Uprise B1 · Restore the Picture',href:'prim3-transit.html?level=equity-uprise-b1&side=defend',frame:'X=x−3, Y=8−y; +X east, +Y north; 3.54 m/tile',topologies:['square']},
+- 'equity-uprise-b1-attack': {title:'Equity Uprise B1 · Blind the Floor',href:'prim3-transit.html?level=equity-uprise-b1&side=attack',frame:'X=x−3, Y=8−y; +X east, +Y north; 3.54 m/tile',topologies:['square']},
+- 'courtyard': {title:'Courtyard study',href:'demos/prim3-courtyard/index.html',frame:'Integer cell (q,r): +q right, +r down. Display X=q−4.5, Y=4.5−r; no geographic anchor or metre scale',topologies:['square']},
+- 'city': {title:'City street simulation',href:'prim3-city-tactics.html',frame:'bridgeport-golden-hill.enu.v1; +x east, +y up, +z south; street floor',topologies:['square','hex']}
+-});
+-export function learningContext(value) {
+- if(!value||Object.keys(value).some(k=>!['version','variant','topology'].includes(k))||value.version!=='prim3.lattice-learning/v1'||!Object.hasOwn(LEARNING_VARIANTS,value.variant)||!LEARNING_VARIANTS[value.variant].topologies.includes(value.topology))throw Error('Unsupported learning context');
+- return {version:value.version,variant:value.variant,topology:value.topology};
+-}
+-export function latticeQuestion(context,seed,ordinal,level) {
+- const c=learningContext(context),n=ordinal+(seed%7),span=level+1;
+- const a={q:level===1?n:-n,r:level===3?-span:span},b={q:a.q+span+(n%3),r:a.r+(n%2?span:-span)};
+- const dq=b.q-a.q,dr=b.r-a.r;
+- const expected=c.topology==='hex'?(Math.abs(dq)+Math.abs(dr)+Math.abs(dq+dr))/2:Math.abs(dq)+Math.abs(dr);
+- const axes=c.topology==='hex'?'Pointy axial (q,r), s=−q−r. +q east; +r southeast. Radius 1.5 m; one neighbor edge is √3×1.5 m.':c.variant==='city'?'Square (q,r): +q east, +r south; 2 m per edge.':LEARNING_VARIANTS[c.variant].frame;
+- return {expected,frame:axes,unit:'lattice steps',skill:c.topology==='hex'?'hex-axial-distance/v1':'square-cardinal-distance/v1',
+-  prompt:`${axes} On an unobstructed ${c.topology} practice lattice, find the minimum number of neighbor steps from (${a.q}, ${a.r}) to (${b.q}, ${b.r}). This is not a route through walls or an AP cost.`,
+-  hint:c.topology==='hex'?'Find Δq and Δr. Δs=−Δq−Δr. Add |Δq|+|Δr|+|Δs| and divide by 2.':'Only cardinal neighbors count. Add the absolute changes of the two coordinates.',
+-  feedback:c.topology==='hex'?`(|${dq}| + |${dr}| + |${-dq-dr}|) / 2 = ${expected} lattice steps.`:`|${dq}| + |${dr}| = ${expected} lattice steps.`};
+-}
++/* The lattice-learning runtime is PUBLIC browser runtime: the reviewed-mission UI
++   (js/prim3-mission/released-app.mjs and released-learning.mjs) imports it, and
++   deploy-pages.yml strips all of PRIM3/ from the published tree (audit W5, the
++   defect W1 fixed for the generated-recipe compiler). The one source of truth now
++   lives at js/prim3-mission/topology-learning.mjs, which the export publishes and
++   the Worker imports. This shim keeps the private-tree path resolving for the
++   adaptive engine beside it and for tooling; nothing published may import this
++   path (scripts/test/prim3-topology-learning.test.mjs). */
++export * from '../../../../js/prim3-mission/topology-learning.mjs';
+diff --git a/docs/design/equity-uprise-building/production/equity-uprise-repo-source-map-v2.json b/docs/design/equity-uprise-building/production/equity-uprise-repo-source-map-v2.json
+index 4ca3fc4d..fcdfcaf5 100644
+--- a/docs/design/equity-uprise-building/production/equity-uprise-repo-source-map-v2.json
++++ b/docs/design/equity-uprise-building/production/equity-uprise-repo-source-map-v2.json
+@@ -4720,7 +4720,7 @@
+       "rationale": "Tests binding existing building screens to inventoried hardware."
+     },
+     {
+-      "path": "PRIM3/game/halo/adaptive/topology-learning.mjs",
++      "path": "js/prim3-mission/topology-learning.mjs",
+       "classification": "building_projection_support",
+       "capability_ids": [],
+       "support_only": true,
+diff --git a/docs/design/equity-uprise-building/production/generated/equity-uprise-repo-source-coverage-report.json b/docs/design/equity-uprise-building/production/generated/equity-uprise-repo-source-coverage-report.json
+index a0a896b1..b2b91e89 100644
+--- a/docs/design/equity-uprise-building/production/generated/equity-uprise-repo-source-coverage-report.json
++++ b/docs/design/equity-uprise-building/production/generated/equity-uprise-repo-source-coverage-report.json
+@@ -20,7 +20,6 @@
+     "CODEX.md",
+     "GEMINI.md",
+     "LICENSE",
+-    "PRIM3/game/halo/adaptive/topology-learning.mjs",
+     "README.md",
+     "_unfinished/README.md",
+     "_unfinished/creator-selection-desk.html",
+@@ -305,6 +304,7 @@
+     "js/onboard.js",
+     "js/payments.js",
+     "js/policy-fellowship-ladder.js",
++    "js/prim3-mission/topology-learning.mjs",
+     "js/prim3-tactics/SOURCE.json",
+     "js/prim3-tactics/adapters/equity-uprise/adapter.mjs",
+     "js/prim3-tactics/adapters/equity-uprise/equity-uprise-package.json",
+@@ -12842,22 +12842,22 @@
+       "detail": ""
+     },
+     {
+-      "name": "PRIM3/game/halo/adaptive/topology-learning.mjs capability ids known",
++      "name": "js/prim3-mission/topology-learning.mjs capability ids known",
+       "passed": true,
+       "detail": ""
+     },
+     {
+-      "name": "PRIM3/game/halo/adaptive/topology-learning.mjs classified",
++      "name": "js/prim3-mission/topology-learning.mjs classified",
+       "passed": true,
+       "detail": "classification='building_projection_support'"
+     },
+     {
+-      "name": "PRIM3/game/halo/adaptive/topology-learning.mjs support-only semantics coherent",
++      "name": "js/prim3-mission/topology-learning.mjs support-only semantics coherent",
+       "passed": true,
+       "detail": "support-only sources must not also claim capability ownership"
+     },
+     {
+-      "name": "PRIM3/game/halo/adaptive/topology-learning.mjs support rationale present",
++      "name": "js/prim3-mission/topology-learning.mjs support rationale present",
+       "passed": true,
+       "detail": ""
+     },
+diff --git a/docs/prim3/TOPOLOGY-LEARNING.md b/docs/prim3/TOPOLOGY-LEARNING.md
+index 5e104c8b..d148afaa 100644
+--- a/docs/prim3/TOPOLOGY-LEARNING.md
++++ b/docs/prim3/TOPOLOGY-LEARNING.md
+@@ -20,6 +20,8 @@ Turn readiness is browser-reported presentation context. It is not proof of miss
+ 
+ `prim3.lattice-learning/v1` pins variant and topology. `square-cardinal-distance/v1` counts four-neighbor steps with Manhattan distance. `hex-axial-distance/v1` counts six-neighbor steps using pointy axial coordinates `(q,r)`, cube `s=-q-r` and half the sum of absolute cube deltas. Inputs are generated on the server from the signed seed and question ordinal. Submitted numbers, question IDs and checkpoint IDs are checked by the existing evaluator and signed evidence path; submitted correctness/expected answers confer no authority.
+ 
++The evaluator and its frames live in `js/prim3-mission/topology-learning.mjs`, which the export publishes with the reviewed-mission page that imports it; the Worker imports the same file. `deploy-pages.yml` strips `PRIM3/`, so `PRIM3/game/halo/adaptive/topology-learning.mjs` is only a re-export shim for the adaptive engine beside it, and no published module may import it.
++
+ These are explicitly **unobstructed practice lattice exercises**, not shortest paths through the actual buildings, metric graph routes or AP costs. The server never interprets opaque City node indices as coordinates. Questions display their frame and unit, `lattice steps`.
+ 
+ Authorities:
+diff --git a/js/prim3-mission/released-app.mjs b/js/prim3-mission/released-app.mjs
+index a726f2d7..ff185323 100644
+--- a/js/prim3-mission/released-app.mjs
++++ b/js/prim3-mission/released-app.mjs
+@@ -1,4 +1,4 @@
+-import { LEARNING_VARIANTS, learningContext } from '../../PRIM3/game/halo/adaptive/topology-learning.mjs';
++import { LEARNING_VARIANTS, learningContext } from './topology-learning.mjs';
+ import {storedToken,SESSION_KEY} from '../owner-only.mjs';
+ import {createPracticeClient} from './client.mjs';
+ import {createReleasedLearning} from './released-learning.mjs';
+diff --git a/js/prim3-mission/released-learning.mjs b/js/prim3-mission/released-learning.mjs
+index eaba4667..036b2496 100644
+--- a/js/prim3-mission/released-learning.mjs
++++ b/js/prim3-mission/released-learning.mjs
+@@ -1,4 +1,4 @@
+-import { learningContext } from '../../PRIM3/game/halo/adaptive/topology-learning.mjs';
++import { learningContext } from './topology-learning.mjs';
+ // Reusable in-mission adapter. Local checkpoint state controls presentation only;
+ // the server's signed item/evaluator owns answer validation. No tactical win credit.
+ export function checkpointReady(state, recipeId, checkpointId) {
+diff --git a/js/prim3-mission/topology-learning.mjs b/js/prim3-mission/topology-learning.mjs
+new file mode 100644
+index 00000000..89b30c92
+--- /dev/null
++++ b/js/prim3-mission/topology-learning.mjs
+@@ -0,0 +1,26 @@
++// Versioned mathematical exercises. Coordinates are declared lattice coordinates,
++// never opaque resolver node indices, navigable routes, AP, or combat evidence.
++export const LEARNING_VARIANTS = Object.freeze({
++ 'generated': {title:'Generated side operation',href:null,frame:'Signed Forge display: +X east, +Y north; origin is the tile containing Forge (0,0); 3.54 m/tile',topologies:['square']},
++ 'transit-relay': {title:'Transit / Relay',href:'prim3-transit.html?level=transit-relay',frame:'X=x−32, Y=31−y; +X east, +Y north; 3.54 m/tile',topologies:['square']},
++ 'equity-uprise-hq': {title:'Equity Uprise HQ',href:'prim3-transit.html?level=equity-uprise-hq',frame:'X=x−3, Y=8−y; +X east, +Y north; 3.54 m/tile',topologies:['square']},
++ 'equity-uprise-b1': {title:'Equity Uprise B1 · Restore the Picture',href:'prim3-transit.html?level=equity-uprise-b1&side=defend',frame:'X=x−3, Y=8−y; +X east, +Y north; 3.54 m/tile',topologies:['square']},
++ 'equity-uprise-b1-attack': {title:'Equity Uprise B1 · Blind the Floor',href:'prim3-transit.html?level=equity-uprise-b1&side=attack',frame:'X=x−3, Y=8−y; +X east, +Y north; 3.54 m/tile',topologies:['square']},
++ 'courtyard': {title:'Courtyard study',href:'demos/prim3-courtyard/index.html',frame:'Integer cell (q,r): +q right, +r down. Display X=q−4.5, Y=4.5−r; no geographic anchor or metre scale',topologies:['square']},
++ 'city': {title:'City street simulation',href:'prim3-city-tactics.html',frame:'bridgeport-golden-hill.enu.v1; +x east, +y up, +z south; street floor',topologies:['square','hex']}
++});
++export function learningContext(value) {
++ if(!value||Object.keys(value).some(k=>!['version','variant','topology'].includes(k))||value.version!=='prim3.lattice-learning/v1'||!Object.hasOwn(LEARNING_VARIANTS,value.variant)||!LEARNING_VARIANTS[value.variant].topologies.includes(value.topology))throw Error('Unsupported learning context');
++ return {version:value.version,variant:value.variant,topology:value.topology};
++}
++export function latticeQuestion(context,seed,ordinal,level) {
++ const c=learningContext(context),n=ordinal+(seed%7),span=level+1;
++ const a={q:level===1?n:-n,r:level===3?-span:span},b={q:a.q+span+(n%3),r:a.r+(n%2?span:-span)};
++ const dq=b.q-a.q,dr=b.r-a.r;
++ const expected=c.topology==='hex'?(Math.abs(dq)+Math.abs(dr)+Math.abs(dq+dr))/2:Math.abs(dq)+Math.abs(dr);
++ const axes=c.topology==='hex'?'Pointy axial (q,r), s=−q−r. +q east; +r southeast. Radius 1.5 m; one neighbor edge is √3×1.5 m.':c.variant==='city'?'Square (q,r): +q east, +r south; 2 m per edge.':LEARNING_VARIANTS[c.variant].frame;
++ return {expected,frame:axes,unit:'lattice steps',skill:c.topology==='hex'?'hex-axial-distance/v1':'square-cardinal-distance/v1',
++  prompt:`${axes} On an unobstructed ${c.topology} practice lattice, find the minimum number of neighbor steps from (${a.q}, ${a.r}) to (${b.q}, ${b.r}). This is not a route through walls or an AP cost.`,
++  hint:c.topology==='hex'?'Find Δq and Δr. Δs=−Δq−Δr. Add |Δq|+|Δr|+|Δs| and divide by 2.':'Only cardinal neighbors count. Add the absolute changes of the two coordinates.',
++  feedback:c.topology==='hex'?`(|${dq}| + |${dr}| + |${-dq-dr}|) / 2 = ${expected} lattice steps.`:`|${dq}| + |${dr}| = ${expected} lattice steps.`};
++}
+diff --git a/scripts/test/prim3-topology-learning.test.mjs b/scripts/test/prim3-topology-learning.test.mjs
+index fc9f5a54..03c6841f 100644
+--- a/scripts/test/prim3-topology-learning.test.mjs
++++ b/scripts/test/prim3-topology-learning.test.mjs
+@@ -1,7 +1,7 @@
+ import test from 'node:test';
+ import assert from 'node:assert/strict';
+ import {readFileSync} from 'node:fs';
+-import {learningContext,latticeQuestion} from '../../PRIM3/game/halo/adaptive/topology-learning.mjs';
++import {LEARNING_VARIANTS,learningContext,latticeQuestion} from '../../js/prim3-mission/topology-learning.mjs';
+ import {cellCenter} from '../../js/spatial/metric-frame.mjs';
+ import {FRAME as transit} from '../../js/prim3-tactics/levels/transit-relay.mjs';
+ import {FRAME as hq} from '../../js/prim3-tactics/levels/equity-uprise-hq.mjs';
+@@ -21,3 +21,13 @@ test('authored frames and unsupported/forged context fail closed',()=>{
+  assert.deepEqual(transit,{x0:32,y0:31,yUp:true});assert.deepEqual(hq,{x0:3,y0:8,yUp:true});
+  for(const value of [{version:'future',variant:'city',topology:'hex'},{version:'prim3.lattice-learning/v1',variant:'equity-uprise-hq',topology:'hex'},{version:'prim3.lattice-learning/v1',variant:'city',topology:'hex',expected:1}])assert.throws(()=>learningContext(value));
+ });
++test('the published mission UI imports the published runtime; the private path only re-exports it (audit W5)',async()=>{
++ // deploy-pages.yml strips PRIM3/: a published import of PRIM3/game/halo/adaptive/ leaves the page without its runtime.
++ for(const file of ['js/prim3-mission/released-app.mjs','js/prim3-mission/released-learning.mjs']){
++  const source=readFileSync(file,'utf8');
++  assert.match(source,/from '\.\/topology-learning\.mjs'/,`${file} imports the published runtime`);assert.doesNotMatch(source,/PRIM3\//,`${file} must not import the private PRIM3 tree`);
++ }
++ const shim=await import('../../PRIM3/game/halo/adaptive/topology-learning.mjs');
++ assert.equal(shim.LEARNING_VARIANTS,LEARNING_VARIANTS);assert.equal(shim.learningContext,learningContext);assert.equal(shim.latticeQuestion,latticeQuestion);
++ assert.match(readFileSync('PRIM3/game/halo/adaptive/topology-learning.mjs','utf8'),/^export \* from '\.\.\/\.\.\/\.\.\/\.\.\/js\/prim3-mission\/topology-learning\.mjs';$/m,'one source of truth, no second copy');
++});
+diff --git a/workers/mccluster/src/prim3/adaptive-learning.js b/workers/mccluster/src/prim3/adaptive-learning.js
+index 08cef27f..231a372a 100644
+--- a/workers/mccluster/src/prim3/adaptive-learning.js
++++ b/workers/mccluster/src/prim3/adaptive-learning.js
+@@ -1,4 +1,4 @@
+-import { learningContext } from '../../../../PRIM3/game/halo/adaptive/topology-learning.mjs';
++import { learningContext } from '../../../../js/prim3-mission/topology-learning.mjs';
+ /* Bounded owner-only practice adapter on the existing learning evidence tables.
+  * Disabled unless explicitly configured. No news/ops feeds, credentials or mastery writes.
+  * HMAC authenticates evaluator payloads because the existing evidence RLS also permits
+-- 
+2.43.0
+

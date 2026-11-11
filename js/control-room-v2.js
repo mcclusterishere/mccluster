@@ -93,8 +93,15 @@
     leadTotal: null,
     pending: {},
     drafts: {},
-    search: ""
+    search: "",
+    /* A line the shell itself shows ({ text, reload }): why the page was
+       concealed or reloaded. */
+    notice: null
   };
+  /* What a fresh page holds. An account change puts every field back to this
+     value except the shell's own place (SHELL_KEYS), so a field added above
+     later belongs to the account by default. (Audit A1.) */
+  var STATE_TEMPLATE = JSON.stringify(state);
 
   var bridge = {
     /* Specialized products are Apps. Operator administration does not leave
@@ -124,10 +131,13 @@
   function sbBase() { return window.MCC_SUPA && window.MCC_SUPA.url; }
   function sbKey() { return window.MCC_SUPA && window.MCC_SUPA.key; }
 
+  /* Every private read below (the shell's, every per-view loader's, every
+     action's and every module's that was handed request or supa) is made
+     under the current account generation: see CONTROL AUTHORITY GENERATION. */
   function request(path, opts) {
     opts = opts || {};
-    return token().then(function (t) {
-      if (!t) throw new Error("signed out");
+    var gen = authority.gen;
+    return fenced(gen, tokenFor(gen).then(function (t) {
       var headers = { authorization: "Bearer " + t };
       if (state.org && state.org.id) headers["x-mccluster-org-id"] = state.org.id;
       if (window.crypto && typeof window.crypto.randomUUID === "function") headers["x-mccluster-trace-id"] = window.crypto.randomUUID();
@@ -136,6 +146,7 @@
         method: opts.method || "GET",
         headers: headers,
         cache: "no-store",
+        signal: readSignal(opts.signal),
         body: opts.body === undefined ? undefined : JSON.stringify(opts.body)
       }).then(function (r) {
         return r.text().then(function (body) {
@@ -148,13 +159,14 @@
           return data;
         });
       });
-    });
+    }));
   }
 
   var coreRpcSeq = 1;
-  function coreMcp(method, params) {
+  function coreMcp(method, params, opts) {
     return request("/v1/core/mcp", {
       method: "POST",
+      signal: opts && opts.signal,
       body: {
         jsonrpc: "2.0",
         id: "operator-" + Date.now() + "-" + (coreRpcSeq++),
@@ -190,8 +202,8 @@
     return current;
   }
 
-  function callCoreTool(name, args) {
-    return coreMcp("tools/call", { name: name, arguments: args || {} })
+  function callCoreTool(name, args, opts) {
+    return coreMcp("tools/call", { name: name, arguments: args || {} }, opts)
       .then(parseCoreToolResult)
       .then(unwrapCoreResult);
   }
@@ -235,8 +247,9 @@
 
   function supa(path, opts) {
     opts = opts || {};
-    return token().then(function (t) {
-      if (!t || !sbBase() || !sbKey()) throw new Error("signed out");
+    var gen = authority.gen;
+    return fenced(gen, tokenFor(gen).then(function (t) {
+      if (!sbBase() || !sbKey()) throw new Error("signed out");
       var headers = { apikey: sbKey(), Authorization: "Bearer " + t };
       if (opts.body !== undefined) headers["Content-Type"] = "application/json";
       if (opts.prefer) headers.Prefer = opts.prefer;
@@ -244,6 +257,7 @@
         method: opts.method || "GET",
         headers: headers,
         cache: "no-store",
+        signal: readSignal(opts.signal),
         body: opts.body === undefined ? undefined : JSON.stringify(opts.body)
       }).then(function (r) {
         if (!r.ok) {
@@ -267,7 +281,7 @@
           return { rows: rows || [], total: Number.isFinite(total) ? total : null };
         });
       });
-    });
+    }));
   }
 
 
@@ -934,12 +948,39 @@
     return c.display_name || c.address || t.relay_address || "Conversation";
   }
 
+  /* A fresh host health result in which Core found something wrong: its
+     overall is "degraded" or "fail", and `health.degradation` names each
+     finding (a reconcile cycle that failed at a stage, a ledger drift). The
+     tile and Needs you both read this, so a finding is never left to the
+     tile's text and the raw inspector alone. A stale result has its own
+     notice; a healthy one has none. */
+  function hostHealthProblem() {
+    var h = state.aiHealth;
+    if (!h || h.stale || (h.overall !== "degraded" && h.overall !== "fail")) return null;
+    var found = h.health && Array.isArray(h.health.degradation) ? h.health.degradation : [];
+    var named = found.filter(function (d) { return d && d.code; })
+      .sort(function (a, b) { return (b.severity === "critical") - (a.severity === "critical"); })
+      .map(function (d) {
+        var stage = d.detail && (d.detail.stage || d.detail.last_cycle_stage);
+        return d.code + (stage ? " (stage " + stage + ")" : "");
+      });
+    return {
+      kind: h.overall === "fail" ? "bad" : "warn",
+      title: "OVH host health is " + (h.overall === "fail" ? "failing" : "degraded"),
+      sub: named.length
+        ? named.slice(0, 3).join(" · ") + (named.length > 3 ? " · +" + (named.length - 3) + " more" : "")
+        : "Core reports the host " + h.overall + " without naming a finding."
+    };
+  }
+
   function attentionItems() {
     var items = [];
     if (!state.sources.health || !state.sources.health.ok) items.push({ title: "Edge health unreachable", sub: "api.mccluster.org/health did not respond.", kind: "bad", action: "system-overview" });
     else if (!state.health || !state.health.ok) items.push({ title: "API reports unhealthy", sub: "The edge responded but did not report healthy.", kind: "bad", action: "system-overview" });
     if (state.status && state.status.database && !state.status.database.reachable) items.push({ title: "Database unavailable", sub: "Canonical Supabase reachability failed.", kind: "bad", action: "system-overview" });
     if (state.aiHealth && state.aiHealth.stale) items.push({ title: "Host health is stale", sub: "Core has not recorded a fresh host health result.", kind: "warn", action: "system-workload" });
+    var hostProblem = hostHealthProblem();
+    if (hostProblem) items.push({ title: hostProblem.title, sub: hostProblem.sub, kind: hostProblem.kind, action: "system-overview" });
     var failed = state.jobs.filter(function (j) { return j.status === "failed"; });
     if (failed.length) items.push({ title: failed.length + " failed workload" + (failed.length === 1 ? "" : "s"), sub: "Inspect the execution queue and failure output.", kind: "bad", action: "system-workload" });
     var awaiting = state.threads.filter(function (t) { return threadInQueue(t, "inbound"); });
@@ -1788,6 +1829,7 @@
 
   function serviceRows() {
     var s = state.status || {};
+    var hostProblem = hostHealthProblem();
     return [
       {
         key: "workspace",
@@ -1808,7 +1850,7 @@
         value: state.coreBridge && state.coreBridge.ok ? state.coreTools.length + " tools" : "Inspect",
         kind: state.coreBridge && state.coreBridge.ok ? "ai" : "warn"
       },
-      { key: "host", title: "OVH host", sub: state.aiHealth && state.aiHealth.checked_at ? "Checked " + ago(state.aiHealth.checked_at) + " ago" : "No fresh host health", value: state.aiHealth && !state.aiHealth.stale ? titleCase(state.aiHealth.overall || "Healthy") : "Refresh", kind: state.aiHealth && !state.aiHealth.stale ? "ok" : "warn" },
+      { key: "host", title: "OVH host", sub: state.aiHealth && state.aiHealth.checked_at ? "Checked " + ago(state.aiHealth.checked_at) + " ago" : "No fresh host health", value: state.aiHealth && !state.aiHealth.stale ? titleCase(state.aiHealth.overall || "Healthy") : "Refresh", kind: !state.aiHealth || state.aiHealth.stale ? "warn" : hostProblem ? hostProblem.kind : "ok" },
       { key: "comms", title: "Communications", sub: state.threads.length + " thread" + (state.threads.length === 1 ? "" : "s"), value: "Live", kind: "info" },
       { key: "creative", title: "Creative", sub: state.mediaJobs.length + " media job" + (state.mediaJobs.length === 1 ? "" : "s"), value: state.mediaJobs.some(function (x) { return x.status === "failed"; }) ? "Check" : "Ready", kind: state.mediaJobs.some(function (x) { return x.status === "failed"; }) ? "warn" : "ok" }
     ];
@@ -2072,6 +2114,10 @@
   function loadSocialAccounts(force) {
     if (state.socialAccounts && !force) return Promise.resolve();
     state.socialAccounts = null;
+    /* Before the first load has committed the workspace is not known yet, not
+       absent: the render after that commit reads the list. (A page reloaded
+       for another account lands on the view it was on, often this one.) */
+    if ((!state.org || !state.org.id) && !state.refreshedAt) return Promise.resolve();
     if (!state.org || !state.org.id) { state.socialAccounts = badResult("failed", "No workspace is selected, so there are no social accounts to read."); render(); return Promise.resolve(); }
     return src(request("/v1/social/accounts?org_id=" + encodeURIComponent(state.org.id))).then(function (result) {
       state.socialAccounts = result;
@@ -2339,7 +2385,7 @@
   function renderApps() {
     var registered = state.apps.map(function (a) { return appCard(a.name || a.app_key, [a.product_family, a.kind].filter(Boolean).join(" · ") || "Registered application", a.public_url || "#", a.app_key || "registered", true); }).join("") || '<div class="cr-panel__body cr-muted">No registered applications were returned.</div>';
     var specialty = [bridge.whip, bridge.prim3, bridge.halo, bridge.manufacture].map(function (a) { return appCard(a.title, a.subtitle, a.href, "Specialized workspace", a.external); }).join("");
-    return '<section class="cr-app-section"><div class="cr-panel__head"><h2>Registered applications</h2><span class="cr-panel__meta">' + state.apps.length + '</span></div><div class="cr-app-grid">' + registered + '</div></section><section class="cr-app-section"><div class="cr-panel__head"><h2>Specialized workspaces</h2></div><div class="cr-app-grid">' + specialty + '</div></section>';
+    return (window.CR.productReadiness ? window.CR.productReadiness.render() : '') + '<section class="cr-app-section"><div class="cr-panel__head"><h2>Registered applications</h2><span class="cr-panel__meta">' + state.apps.length + '</span></div><div class="cr-app-grid">' + registered + '</div></section><section class="cr-app-section"><div class="cr-panel__head"><h2>Specialized workspaces</h2></div><div class="cr-app-grid">' + specialty + '</div></section>';
   }
 
   /* ---------------------------------------------------------------------
@@ -2760,18 +2806,28 @@
     if (history.replaceState) history.replaceState(null, "", leaf.leaf.route);
     renderNav();
   }
+  /* The shell's own line: why the page was concealed, or is reloading. */
+  function noticeHtml() {
+    var n = state.notice; if (!n || !n.text) return "";
+    var buttons = (authority.reloading ? "" : '<button class="cr-btn cr-btn--ghost cr-btn--sm" type="button" data-action="dismiss-notice">Dismiss</button> ') +
+      (n.reload || authority.reloading ? '<button class="cr-btn cr-btn--primary cr-btn--sm" type="button" data-action="reload-control">Reload Admin Home</button>' : "");
+    return '<div class="cr-gap" role="status" data-cr-notice><b>' + esc(n.text) + '</b>' + (buttons ? '<span>' + buttons + '</span>' : "") + '</div>';
+  }
   function render() {
     renderNav(); renderTopStatus();
     var root = $("crSurface"); if (!root) return;
     var section = state.leaf ? state.leaf.section.id : "home";
-    if (state.loading && !state.status && !state.health && state.surface !== "analytics") root.innerHTML = renderLoading();
+    /* A page being replaced shows only why (and a way to reload by hand if
+       the browser held the reload back). */
+    if (authority.reloading) { root.innerHTML = '<div class="cr-canvas">' + noticeHtml() + '</div>'; root.setAttribute("data-cr-mount", "notice"); bindActions(root); return; }
+    if (state.loading && !state.status && !state.health && state.surface !== "analytics") root.innerHTML = noticeHtml() + renderLoading();
     /* Analytics keeps its mount between Control Room repaints: it owns its own
        paint, and its globe frame (the 60/40 layout) would reload the Earth on
        every unrelated state change if the mount were rebuilt. */
     else if (state.surface === "analytics") {
       if (!(root.getAttribute("data-cr-mount") === "analytics" && $("crAnalyticsMount"))) root.innerHTML = renderAnalytics();
     }
-    else root.innerHTML = renderLeaf();
+    else root.innerHTML = noticeHtml() + renderLeaf();
     root.setAttribute("data-cr-mount", state.surface === "analytics" ? "analytics" : "leaf");
     root.setAttribute("data-cr-surface", section);
     root.setAttribute("data-cr-route", state.route);
@@ -3364,6 +3420,8 @@
       setSurface("work", "inbox");
     }
     else if (action === "refresh") load(true);
+    else if (action === "dismiss-notice") { state.notice = null; render(); }
+    else if (action === "reload-control") location.reload();
     else if (action === "hero-command") handleCommand($("crHeroInput") && $("crHeroInput").value);
     else if (action === "command-plan") {
       var planBox = $("crSystemCommand"), planText = planBox && planBox.value.trim();
@@ -3764,6 +3822,7 @@
     });
   }
   function bindSurfaceControls() {
+    if (window.CR.productReadiness) window.CR.productReadiness.bind($("crSurface"), { request: request, orgId: state.org && state.org.id });
     bindActions($("crSurface"));
     window.CR.media.bind($("crSurface"));
     if (window.CR.workTools) window.CR.workTools.bind($("crSurface"));
@@ -3779,7 +3838,7 @@
     if (window.CR.frontPage) window.CR.frontPage.bind($("crSurface"));
     /* a NAV mount point whose module has registered binds its own view */
     var slotMod = state.leaf && state.leaf.leaf.renderer === "slot" && window.CR[state.leaf.leaf.module];
-    if (slotMod && typeof slotMod.bind === "function") slotMod.bind($("crSurface"));
+    if (slotMod && typeof slotMod.bind === "function") slotMod.bind($("crSurface"), { request: request, orgId: state.org && state.org.id });
     var search = $("crWorkSearch");
     if (search) {
       search.value = state.search || "";
@@ -3882,8 +3941,10 @@
     try { return window.localStorage.getItem(ORG_KEY); } catch (e) { return null; }
   }
   function isHouseWorkspace(org) { return Boolean(org) && org.slug === "mccluster" && org.kind === "studio"; }
-  function discoverWorkspace() {
-    return src(request("/v1/workspaces/me")).then(function (result) {
+  /* Answers which workspace a load is for. It writes nothing: load() commits
+     the list with everything else, at its commit boundary. */
+  function discoverWorkspace(signal) {
+    return src(request("/v1/workspaces/me", { signal: signal })).then(function (result) {
       var data = dataOf(result);
       var list = (data && data.workspaces) || [];
       var wanted = preferredOrgId();
@@ -3897,9 +3958,9 @@
       if (!chosen) {
         chosen = list.filter(function (w) { return w.enabled; })[0] || null;
       }
-      state.workspaces = list;
       return {
         source: result,
+        workspaces: list,
         membership: chosen,
         org: chosen ? { id: chosen.org_id, slug: chosen.slug, name: chosen.name, kind: chosen.kind, role: chosen.role } : null
       };
@@ -3943,49 +4004,235 @@
     }));
   }
 
-  function loadCreative(org) {
+  function loadCreative(org, signal) {
     var orgId = org && org.id;
     var scope = orgId ? "&org_id=eq." + encodeURIComponent(orgId) : "";
+    var opts = { signal: signal };
     return Promise.all([
-      src(supa("media_assets?select=*&order=created_at.desc&limit=150" + scope)),
-      src(supa("media_jobs?select=*&order=created_at.desc&limit=120" + scope)),
-      src(supa("social_campaigns?select=*&order=created_at.desc&limit=100" + scope)),
-      src(supa("social_variants?select=*&order=created_at.desc&limit=200" + scope)),
-      src(supa("social_publish_jobs?select=*&order=scheduled_at.desc&limit=200" + scope)),
-      src(supa("social_posts?select=*&order=published_at.desc&limit=200" + scope))
+      src(supa("media_assets?select=*&order=created_at.desc&limit=150" + scope, opts)),
+      src(supa("media_jobs?select=*&order=created_at.desc&limit=120" + scope, opts)),
+      src(supa("social_campaigns?select=*&order=created_at.desc&limit=100" + scope, opts)),
+      src(supa("social_variants?select=*&order=created_at.desc&limit=200" + scope, opts)),
+      src(supa("social_publish_jobs?select=*&order=scheduled_at.desc&limit=200" + scope, opts)),
+      src(supa("social_posts?select=*&order=published_at.desc&limit=200" + scope, opts))
     ]).then(function (r) {
       return { mediaAssets: r[0], mediaJobs: r[1], campaigns: r[2], variants: r[3], publishJobs: r[4], posts: r[5] };
     });
   }
 
+  /* CONTROL AUTHORITY GENERATION. One lifecycle for the whole default shell,
+     not only the opt-in ?workspace=1 presentation (audit A1, 2026-11-09;
+     close-out 2026-11-10).
+
+     - The generation is the stored session's subject. Sign-out, another
+       account in another tab, a page restored from the back/forward cache
+       into another account, and a session that ends inside this tab (a
+       refused token refresh) each move it.
+     - Moving it resets every per-account field of `state` to a fresh page's
+       value (everything but the shell's place, SHELL_KEYS) and clears the
+       shell's DOM that held account data, synchronously, before anything
+       can render again. Unsent drafts belong to the account and go too.
+     - Every private read goes through request() or supa(): the shell's,
+       every per-view loader's, every action's and every module's that was
+       handed them. A read carries the generation it was made under; its
+       outcome (data or failure) is never delivered once the generation has
+       moved, so nothing can commit it, and the generation's reads are
+       aborted when it ends.
+     - A page that has held one account's data is never reused for another.
+       A sign-out shows the gate. One that no module heard (another tab, a
+       restored page, a session that ended in this tab) also replaces the
+       page, and so does any sign-in after a sign-out, or another account
+       while the page is open. Reloading is the only conceal that also
+       reaches the module caches outside this file (analytics, work records,
+       media and the rest), as switchWorkspace already does for a workspace;
+       the account menu's own sign-out reloads after its in-tab event.
+     - A same-account token refresh keeps the subject, so it keeps the
+       generation, the reads in flight and the unsent drafts.
+     - load() commits only if it is still the newest load of the current
+       generation, principal and selected workspace. An older load is
+       dropped without touching what a newer one committed. */
+  var authority = { gen: 0, principal: undefined, abort: null, scope: null, seq: 0, held: false, spent: false, reloading: false };
+  function jwtSubject(token) {
+    try {
+      var raw = String(token).split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+      while (raw.length % 4) raw += "=";
+      var payload = JSON.parse(decodeURIComponent(Array.prototype.map.call(atob(raw), function (c) {
+        return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join("")));
+      return payload && payload.sub ? String(payload.sub) : null;
+    } catch (e) { return null; }
+  }
+  function principalOf(token) { return token ? (jwtSubject(token) || "opaque") : null; }
+  function storedPrincipal() {
+    var raw = null;
+    try { raw = window.localStorage.getItem("mccdb_session"); } catch (e) { raw = null; }
+    if (!raw) return null;
+    try { var s = JSON.parse(raw); return s && s.access_token ? principalOf(s.access_token) : null; } catch (e) { return null; }
+  }
+  function authorityOrg() {
+    var org = null;
+    try { org = preferredOrgId(); } catch (e) { org = null; }
+    return org || null;
+  }
+  function authoritySnapshot() { return { gen: authority.gen, principal: storedPrincipal(), org: authorityOrg() }; }
+  function authorityHolds(snap) {
+    return snap.gen === authority.gen && snap.principal === storedPrincipal() && snap.org === authorityOrg();
+  }
+  /* The token for a private read made under generation `gen`. No token, or a
+     token for another subject, means the session changed without an event
+     this tab heard: the generation is reconciled first, so the read is never
+     sent, or answered, for the wrong account. */
+  function tokenFor(gen) {
+    return token().then(function (t) {
+      var who = principalOf(t);
+      if (authority.principal !== undefined && who !== authority.principal) reconcileAuthority(null);
+      if (!t) throw new Error("signed out");
+      if (gen !== authority.gen || (authority.principal !== undefined && who !== authority.principal)) throw new Error("The signed-in account changed.");
+      authority.held = true;
+      return t;
+    });
+  }
+  /* Delivers a read's outcome only while its generation is current;
+     otherwise it never settles, so no caller can commit it. */
+  function fenced(gen, promise) {
+    function never() { return new Promise(function () {}); }
+    return promise.then(function (value) { return gen === authority.gen ? value : never(); },
+      function (error) { if (gen !== authority.gen) return never(); throw error; });
+  }
+  /* A read runs under its caller's signal (a load's) and the generation's,
+     so ending the generation aborts every read it started. */
+  function readSignal(own) {
+    if (typeof AbortController !== "function") return own;
+    if (!authority.scope) authority.scope = new AbortController();
+    var scope = authority.scope.signal;
+    if (!own) return scope;
+    return typeof AbortSignal !== "undefined" && typeof AbortSignal.any === "function" ? AbortSignal.any([own, scope]) : own;
+  }
+  /* The shell's place survives an account change; nothing else in `state`. */
+  var SHELL_KEYS = ["route", "leaf", "section", "surface", "workView", "createView", "systemView", "analyticsSection", "analyticsApplied", "health", "publicRecord"];
+  function concealPrivateState() {
+    if (authority.abort) { try { authority.abort.abort(); } catch (e) {} authority.abort = null; }
+    if (authority.scope) { try { authority.scope.abort(); } catch (e) {} authority.scope = null; }
+    stopAiVoiceListening(true); stopAiVoiceSpeech();
+    clearTimeout(leadSearchTimer); leadSearchTimer = null;
+    if (state.pending && state.pending.obsSearchTimer) clearTimeout(state.pending.obsSearchTimer);
+    var fresh = JSON.parse(STATE_TEMPLATE);
+    Object.keys(state).forEach(function (k) { if (SHELL_KEYS.indexOf(k) < 0 && !(k in fresh)) delete state[k]; });
+    Object.keys(fresh).forEach(function (k) { if (SHELL_KEYS.indexOf(k) < 0) state[k] = fresh[k]; });
+    transcriptInflight = {};
+    closeInspector(); closeMore();
+    /* closeInspector() only hides it: its title, subtitle and tabs still
+       name the record that was open. */
+    ["crInspectorBody", "crInspectorTabs", "crPaletteResults", "crOrgSelect"].forEach(function (id) { var node = $(id); if (node) node.innerHTML = ""; });
+    var title = $("crInspectorTitle"); if (title) title.textContent = "Details";
+    var sub = $("crInspectorSub"); if (sub) sub.textContent = "McCluster Admin Home";
+    var input = $("crPaletteInput"); if (input) input.value = "";
+    var palette = $("crPalette"); if (palette) { palette.classList.remove("is-open"); palette.setAttribute("aria-hidden", "true"); }
+    var wrap = $("crOrgWrap"); if (wrap) wrap.hidden = true;
+    var menu = $("crAccountMenu"); if (menu) menu.classList.remove("is-open");
+  }
+  /* Says why, wherever the viewer is looking: the gate's note and the shell. */
+  function announce(text, reload) {
+    state.error = text; state.notice = { text: text, reload: Boolean(reload) };
+    note(text);
+  }
+  var NOTICE_KEY = "mcc.control.notice";
+  /* Replaces a page that held one account's data instead of reusing it.
+     `after` rides across the reload so the next page can say why; `gate`
+     marks a line that belongs on the sign-in gate only. */
+  function reloadControl(text, after, gate) {
+    announce(text);
+    if (authority.reloading) return;
+    authority.reloading = true;
+    try { if (after) window.sessionStorage.setItem(NOTICE_KEY, JSON.stringify({ text: after, gate: Boolean(gate), at: Date.now() })); } catch (e) {}
+    try { location.reload(); } catch (e) {}
+  }
+  function takeCarriedNotice() {
+    var raw = null;
+    try { raw = window.sessionStorage.getItem(NOTICE_KEY); if (raw) window.sessionStorage.removeItem(NOTICE_KEY); } catch (e) { raw = null; }
+    if (!raw) return;
+    try {
+      var carried = JSON.parse(raw);
+      if (!carried || !carried.text || Date.now() - Number(carried.at || 0) > 120000) return;
+      if (carried.gate) note(String(carried.text));
+      else { announce(String(carried.text)); state.error = null; }
+    } catch (e) {}
+  }
+  /* Called on every account-lifecycle signal. Returns true when the
+     principal changed (or a sign-out was signalled) and the page was
+     concealed. */
+  function reconcileAuthority(detail) {
+    var now = storedPrincipal(), before = authority.principal;
+    /* An in-tab sign-out event: every module on the page heard it too. */
+    var signalled = Boolean(detail && detail.signed_in === false);
+    if (!signalled && now === before) return false;
+    authority.gen += 1; authority.principal = now;
+    if (authority.held) authority.spent = true;
+    concealPrivateState();
+    if (signalled || now === null) {
+      var app = $("crApp"), gate = $("cpGate");
+      if (app) app.hidden = true;
+      if (gate) gate.hidden = false;
+      announce("Signed out. Sign in to open Admin Home.");
+      /* A sign-out no module heard (another tab, a restored page, a session
+         that ended inside this tab) leaves their caches full: replace the page. */
+      if (!signalled && authority.spent) reloadControl("Signed out. Sign in to open Admin Home.", "Signed out. Sign in to open Admin Home.", true);
+    } else if (authority.spent) {
+      if (before) reloadControl("Account changed. Reloading Admin Home for the account now signed in.", "Account changed. Admin Home was reloaded for the account now signed in.");
+      else reloadControl("Reloading Admin Home for the account now signed in.");
+    }
+    try { render(); } catch (e) {}
+    return true;
+  }
+  function bindAuthorityLifecycle() {
+    authority.principal = storedPrincipal();
+    takeCarriedNotice();
+    window.addEventListener("mcc:auth-changed", function (e) { reconcileAuthority(e && e.detail); });
+    window.addEventListener("storage", function (e) { if (!e || e.key === null || e.key === "mccdb_session") reconcileAuthority(null); });
+    window.addEventListener("pageshow", function (e) { if (e && e.persisted) reconcileAuthority(null); });
+  }
   function load(force) {
+    /* A concealed page (spent) loads nothing again: it is replaced instead. */
+    if (authority.reloading || authority.spent) return Promise.resolve();
     if (state.loading && !force) return Promise.resolve();
+    if (force) state.notice = null;
     state.loading = true; state.error = null; render();
-    var health = src(fetch(API + "/health", { cache: "no-store" }).then(function (r) {
+    var snap = authoritySnapshot();
+    if (authority.principal === undefined) authority.principal = snap.principal;
+    var seq = authority.seq += 1;
+    if (authority.abort) { try { authority.abort.abort(); } catch (e) {} }
+    var ac = typeof AbortController === "function" ? new AbortController() : null;
+    authority.abort = ac;
+    var signal = ac ? ac.signal : undefined;
+    var health = src(fetch(API + "/health", { cache: "no-store", signal: signal }).then(function (r) {
       if (!r.ok) throw Object.assign(new Error("Edge health returned HTTP " + r.status), { status: r.status });
       return r.json();
     }));
     var publicRecord = loadPublicRecord();
     var authed = token().then(function (t) {
       if (!t) return { signedOut: true };
-      return discoverWorkspace().then(function (ws) {
+      /* The token that answers must belong to the principal this load was
+         started for. A refreshed token for the same subject passes. */
+      if (principalOf(t) !== snap.principal) return { stale: true };
+      authority.held = true;
+      return discoverWorkspace(signal).then(function (ws) {
         var org = ws.org;
         /* No workspace is a state to render, not an exception to throw.
            The old code reached straight for org.id and died on a
            TypeError, which surfaced as a generic console error. */
         if (!org) return { workspace: ws, org: null };
         return Promise.all([
-          src(request("/v1/core")),
-          src(coreMcp("tools/list")),
-          src(callCoreTool("core.resume", { org_id: org.id, since_hours: 24, limit: 25 })),
-          src(request("/v1/status")), src(request("/v1/apps")), src(request("/v1/ai/status")), src(request("/v1/ai/system-health")),
-          src(request("/v1/ai/decisions?limit=25&org_id=" + encodeURIComponent(org.id))),
-          src(request("/v1/comms/threads?limit=100")), src(supa(leadQueryPath(LEAD_PAGE, 0), { count: true, prefer: "count=exact" })),
-          src(supa("site_requests?select=*&order=created_at.desc&limit=100")),
-          src(supa("ops_agent_jobs?select=*&org_id=eq." + encodeURIComponent(org.id) + "&order=created_at.desc&limit=200")),
-          src(supa("ops_ai_threads?select=*&org_id=eq." + encodeURIComponent(org.id) + "&status=eq.active&order=last_message_at.desc&limit=100")),
-          loadCreative(org),
-          src(request("/v1/audit/recent?limit=25&org_id=" + encodeURIComponent(org.id)))
+          src(request("/v1/core", { signal: signal })),
+          src(coreMcp("tools/list", {}, { signal: signal })),
+          src(callCoreTool("core.resume", { org_id: org.id, since_hours: 24, limit: 25 }, { signal: signal })),
+          src(request("/v1/status", { signal: signal })), src(request("/v1/apps", { signal: signal })), src(request("/v1/ai/status", { signal: signal })), src(request("/v1/ai/system-health", { signal: signal })),
+          src(request("/v1/ai/decisions?limit=25&org_id=" + encodeURIComponent(org.id), { signal: signal })),
+          src(request("/v1/comms/threads?limit=100", { signal: signal })), src(supa(leadQueryPath(LEAD_PAGE, 0), { count: true, prefer: "count=exact", signal: signal })),
+          src(supa("site_requests?select=*&order=created_at.desc&limit=100", { signal: signal })),
+          src(supa("ops_agent_jobs?select=*&org_id=eq." + encodeURIComponent(org.id) + "&order=created_at.desc&limit=200", { signal: signal })),
+          src(supa("ops_ai_threads?select=*&org_id=eq." + encodeURIComponent(org.id) + "&status=eq.active&order=last_message_at.desc&limit=100", { signal: signal })),
+          loadCreative(org, signal),
+          src(request("/v1/audit/recent?limit=25&org_id=" + encodeURIComponent(org.id), { signal: signal }))
         ]).then(function (r) {
           return {
             org: org, workspace: ws,
@@ -3998,7 +4245,23 @@
       });
     });
     return Promise.all([health, authed, publicRecord]).then(function (r) {
+      /* A newer load, or a newer account, owns the page now: this result is
+         dropped without touching anything that belongs to it. */
+      if (seq !== authority.seq || snap.gen !== authority.gen) return;
       var a = r[1] || {}; var c = a.creative || {};
+      /* The commit boundary: a result read for a principal or a workspace
+         that is no longer the stored one is discarded, never rendered. An
+         account that changed without an event this tab heard is reconciled
+         here (gate or reload); a workspace switched in another tab ends this
+         generation's reads and says so. */
+      if (a.stale || (a.signedOut && snap.principal !== null) || !authorityHolds(snap)) {
+        if (reconcileAuthority(null)) return;
+        authority.gen += 1;
+        concealPrivateState();
+        if (snap.org !== authorityOrg()) announce("The selected workspace changed in another tab while Admin Home was loading. Reload Admin Home to open it.", true);
+        else announce("Admin Home could not confirm the signed-in account. Reload Admin Home.", true);
+        return;
+      }
       var signedOut = badResult("unauthorized", "This session is not signed in.", 401);
       state.sources = {
         health: r[0], coreBridge: a.coreBridge || signedOut, coreTools: a.coreTools || signedOut, coreResume: a.coreResume || signedOut,
@@ -4011,6 +4274,7 @@
         mediaAssets: c.mediaAssets || signedOut, mediaJobs: c.mediaJobs || signedOut, campaigns: c.campaigns || signedOut,
         variants: c.variants || signedOut, publishJobs: c.publishJobs || signedOut, posts: c.posts || signedOut
       };
+      state.workspaces = (a.workspace && a.workspace.workspaces) || [];
       state.health = dataOf(state.sources.health); state.publicRecord = dataOf(state.sources.publicRecord); state.org = a.org || null; renderWorkspaceSwitcher(); loadRecentErrors();
       /* Refresh re-reads the per-view sources too, not just the shell's. */
       if (force && state.musicOrders) loadMusicOrders(true);
@@ -4040,11 +4304,23 @@
       state.publishJobs = rowsOf(state.sources.publishJobs); state.posts = rowsOf(state.sources.posts);
       state.refreshedAt = new Date().toISOString();
       state.error = state.sources.status.ok ? null : state.sources.status.message || "Operator status unavailable";
-    }).catch(function (e) { state.error = e.message || "Control Room state unavailable"; })
-      .then(function () { state.loading = false; render(); });
+    }).catch(function (e) { if (seq === authority.seq && snap.gen === authority.gen) state.error = e.message || "Control Room state unavailable"; })
+      .then(function () {
+        /* Only the newest load ends the loading state it started. */
+        if (seq !== authority.seq) return;
+        if (authority.abort === ac) authority.abort = null;
+        state.loading = false; render();
+      });
   }
 
-  function boot() { $("cpGate").hidden = true; $("crApp").hidden = false; readHash(); setHash(true); render(); load(); }
+  function boot() {
+    if (authority.reloading) return;
+    /* A page that already held one account's data opens no second session:
+       signing in again reloads it. */
+    if (authority.spent) { reloadControl("Opening Admin Home for the account now signed in."); return; }
+    authority.held = true;
+    $("cpGate").hidden = true; $("crApp").hidden = false; readHash(); setHash(true); render(); load();
+  }
   function bindAuth() {
     $("cpIn").addEventListener("click", function () { var em = $("cpEmail").value.trim(), pw = $("cpPass").value; if (!em) { note("Email first.", true); return; } if (!pw) { note("Password required.", true); return; } var b = $("cpIn"); b.disabled = true; b.textContent = "Opening…"; window.MCC_AUTH.signInPassword(em, pw).then(boot).catch(function (e) { b.disabled = false; b.textContent = "Open Control Room"; note(String(e && e.message || e), true); }); });
     $("cpPass").addEventListener("keydown", function (e) { if (e.key === "Enter") $("cpIn").click(); });
@@ -4118,6 +4394,6 @@
     }
   });
 
-  function init() { bindAuth(); bindShell(); bindActions(document); tryResume(); setTimeout(tryResume, 700); }
+  function init() { bindAuthorityLifecycle(); bindAuth(); bindShell(); bindActions(document); tryResume(); setTimeout(tryResume, 700); }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
 })();

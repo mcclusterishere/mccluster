@@ -5,9 +5,15 @@ on:
     paths:
       - 'js/prim3-tactics/**'
       - 'js/prim3-world/**'
+      - 'PRIM3/game/halo/generated/**'
+      - 'js/prim3-tactics/levels/recipe.mjs'
+      - 'scripts/test/published-import-closure.test.mjs'
+      - 'scripts/e2e/prim3-generated-missions.e2e.mjs'
       - 'prim3-world.html'
       - 'prim3-tactics-preview.html'
       - 'prim3-transit.html'
+      - 'prim3-city-tactics.html'
+      - 'scripts/e2e/prim3-city-simulation.e2e.mjs'
       - 'scripts/test/prim3-*.test.mjs'
       - 'scripts/e2e/prim3-tactics-hints.e2e.mjs'
       - 'scripts/e2e/prim3-transit-lifecycle.e2e.mjs'
@@ -63,12 +69,55 @@ jobs:
           THREE_DIR: /tmp/prim3-qa/node_modules/three
         run: node scripts/e2e/prim3-transit-completion.e2e.mjs /tmp/prim3-proof/completion
       - name: Preserve browser evidence
+      # City combat uses the same pinned browser, with fixture owner replies and no live services.
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: prim3-tactical-browser-evidence
           path: /tmp/prim3-proof
           if-no-files-found: ignore
+      - name: Complete shared-city square and hex simulations
+        env:
+          PLAYWRIGHT_DIR: /tmp/prim3-qa/node_modules
+        run: node scripts/e2e/prim3-city-simulation.e2e.mjs /tmp/prim3-city-proof
+      - name: Preserve city simulation evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: prim3-city-browser-evidence
+          path: /tmp/prim3-city-proof
+          if-no-files-found: ignore
+
+  generated-missions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Install pinned local browser and renderer fixtures
+        run: |
+          npm install --prefix /tmp/prim3-qa --ignore-scripts --no-audit --no-fund --no-save playwright@1.57.0 three@0.180.0
+          /tmp/prim3-qa/node_modules/.bin/playwright install --with-deps chromium
+      - name: Verify generated review, rendering and ordinary-threat completion
+        env:
+          PLAYWRIGHT_DIR: /tmp/prim3-qa/node_modules
+          THREE_DIR: /tmp/prim3-qa/node_modules/three
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/prim3-proof/generated
+          node scripts/e2e/prim3-generated-missions.e2e.mjs /tmp/prim3-proof/generated 2>&1 | tee /tmp/prim3-proof/generated/run.log
+      - name: Preserve generated mission browser evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: prim3-generated-browser-evidence
+          path: /tmp/prim3-proof/generated
+          if-no-files-found: warn
 
   spatial:
     runs-on: ubuntu-latest

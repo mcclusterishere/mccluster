@@ -9,6 +9,7 @@ import {
 } from '../comms-policy.mjs';
 import { extractJsonObject } from '../reflection-policy.mjs';
 import { localAiChat } from '../compute/local-ai-client.mjs';
+import { stopIfLeaseLost } from '../lease.mjs';
 
 const MODEL = process.env.MCCLUSTER_OLLAMA_MODEL || 'qwen3:8b';
 const OWNER_ALIAS = String(process.env.MCCLUSTER_PERSONAL_ALIAS || 'PRIM3').trim().slice(0, 80) || 'PRIM3';
@@ -135,7 +136,7 @@ async function createReply({ job, thread, contact, inbound, body }) {
   return message;
 }
 
-export async function smsAssistantTurn(job) {
+export async function smsAssistantTurn(job, { signal } = {}) {
   if (!job.org_id) throw new Error('sms_assistant_turn requires org_id');
   const threadId = String(job.input?.thread_id || job.target_id || '');
   const inboundMessageId = String(job.input?.inbound_message_id || '');
@@ -202,6 +203,7 @@ export async function smsAssistantTurn(job) {
   }
 
   const body = withAssistantDisclosure(decision.reply, thread.disclosure_sent_at, OWNER_ALIAS);
+  stopIfLeaseLost(job, signal, 'queueing the text message');
   const outbound = await createReply({ job, thread, contact, inbound, body });
   return {
     executor: 'sms_assistant_turn:v1',

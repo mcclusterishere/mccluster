@@ -288,6 +288,7 @@
     {
      "title": "Dive In",
      "src": "assets/audio/dive-in.mp3",
+     "lyrics_generation": "awaiting-vocal-take",
      "poster": "assets/frames/prim3_0001.jpg",
      "seconds": 163.9
     },

@@ -1,14 +1,5 @@
-import { rest, workerId } from './supabase.mjs';
+import { rest, ownedRunningParams, leaseLostError } from './supabase.mjs';
 import { classifyDependencyRows, dependencyEvidenceFromRows, dependencyIdsFromJob } from './dependency-policy.mjs';
-
-function ownedRunningParams(job) {
-  return new URLSearchParams({
-    id: `eq.${job.id}`,
-    org_id: `eq.${job.org_id}`,
-    status: 'eq.running',
-    locked_by: `eq.${workerId}`,
-  }).toString();
-}
 
 export async function checkpointJobInput(job, input) {
   const { body: rows = [] } = await rest(`ops_agent_jobs?${ownedRunningParams(job)}`, {
@@ -19,7 +10,7 @@ export async function checkpointJobInput(job, input) {
       updated_at: new Date().toISOString(),
     }),
   });
-  if (!rows.length) throw new Error(`Lost ownership of job ${job.id} while checkpointing input`);
+  if (!rows.length) throw leaseLostError(job, 'while checkpointing input');
   return rows[0];
 }
 
@@ -115,7 +106,7 @@ export async function prepareClaimedDagJob(job, { recheckMs } = {}) {
         updated_at: now.toISOString(),
       }),
     });
-    if (!rows.length) throw new Error(`Lost ownership of blocked job ${job.id}`);
+    if (!rows.length) throw leaseLostError(job, 'while blocking on failed prerequisites');
     return { action: 'blocked', job: rows[0], dependency };
   }
 
@@ -133,6 +124,6 @@ export async function prepareClaimedDagJob(job, { recheckMs } = {}) {
       updated_at: now.toISOString(),
     }),
   });
-  if (!rows.length) throw new Error(`Lost ownership of waiting job ${job.id}`);
+  if (!rows.length) throw leaseLostError(job, 'while waiting on prerequisites');
   return { action: 'waiting', job: rows[0], dependency };
 }

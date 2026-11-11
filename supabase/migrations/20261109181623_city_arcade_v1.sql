@@ -64,7 +64,11 @@ create table public.arcade_runs (
  id uuid primary key, actor uuid not null references auth.users(id), mission_id text not null,
  revision integer not null, status text not null default 'running' check(status in ('running','won','failed')),
  served integer, score numeric, encounters jsonb not null default '[]'::jsonb, started_at timestamptz not null default now(), finished_at timestamptz,
+ -- Owner-bound start idempotency key (W3): the client persists it before sending, so an uncertain
+ -- start is retried with the same key and receives the same frozen run instead of a second one.
+ start_key uuid not null,
  foreign key(mission_id,revision) references public.arcade_mission_versions(mission_id,revision),
+ unique(actor,start_key),
  check(served is null or served between 0 and 12), check(score is null or score between 0 and 6000)
 );
 create index arcade_runs_actor_time on public.arcade_runs(actor,started_at desc);
@@ -83,6 +87,11 @@ begin
  where o.slug='mccluster' and mm.profile_id=p_actor and mm.role='owner') then raise exception 'House owner required' using errcode='42501'; end if;
  if p_action='history' then
   return coalesce((select jsonb_agg(row_to_json(q)) from (select id,mission_id,status,served,score,revision,finished_at from public.arcade_runs where actor=p_actor and status<>'running' order by finished_at desc limit 20) q),'[]'::jsonb);
+ end if;
+ if p_action='current' then
+  -- Bounded recovery read: the actor's still-running runs with their frozen mission documents, so a
+  -- start whose response was lost can be resumed or finished instead of silently replaced.
+  return coalesce((select jsonb_agg(row_to_json(q)) from (select ar.id,ar.mission_id,ar.status,ar.revision,ar.start_key,ar.started_at,v.document from public.arcade_runs ar join public.arcade_mission_versions v on v.mission_id=ar.mission_id and v.revision=ar.revision where ar.actor=p_actor and ar.status='running' order by ar.started_at desc limit 10) q),'[]'::jsonb);
  end if;
  if p_action='finish' then
   select * into r from public.arcade_runs where id=p_id::uuid and actor=p_actor for update;
@@ -120,8 +129,17 @@ begin
  end if;
  if p_action='start' then
   if m.id is null then raise exception 'Save a mission first' using errcode='P0002'; end if;
+  if coalesce(p_document->>'startKey','') !~ '^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$' then raise exception 'Start key required' using errcode='22023'; end if;
+  -- Exact retry of an earlier start (same actor, key, mission and revision) returns that run unchanged;
+  -- reusing the key for anything else is a conflict, never a silent replacement.
+  select * into r from public.arcade_runs where actor=p_actor and start_key=(p_document->>'startKey')::uuid;
+  if found then
+   if r.mission_id<>m.id or p_revision is null or r.revision<>p_revision then raise exception 'Start key reused' using errcode='40001'; end if;
+   select document into d from public.arcade_mission_versions where mission_id=r.mission_id and revision=r.revision;
+   return to_jsonb(r)||jsonb_build_object('document',d);
+  end if;
   if p_revision is null or p_revision<>m.revision then raise exception 'Revision conflict' using errcode='40001'; end if;
-  insert into public.arcade_runs(id,actor,mission_id,revision) values(gen_random_uuid(),p_actor,m.id,m.revision) returning * into r;
+  insert into public.arcade_runs(id,actor,mission_id,revision,start_key) values(gen_random_uuid(),p_actor,m.id,m.revision,(p_document->>'startKey')::uuid) returning * into r;
   return to_jsonb(r)||jsonb_build_object('document',m.document);
  end if;
  raise exception 'Invalid action' using errcode='22023';

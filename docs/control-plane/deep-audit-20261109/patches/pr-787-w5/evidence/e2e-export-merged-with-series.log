@@ -1,0 +1,48 @@
+# BROWSER PASS AFTER (W5 isolated): the PUBLISHED tree of the series head f8499fad MERGED with claude/new-session-83ken5 9bda5896 (uncommitted merge, conflicts resolved as in combined-closure-with-series.log), built by build-export.sh and served to Chromium by the recorded scratch variant (MCC_SERVE_ROOT; it also prints each journey's frame and first question); all 8 journeys; Worker from that merged tree over memory-rest.mjs; 2026-11-10T12:11:53Z, node v22.23.4
+DRIVER: worker /tmp/claude-0/-home-user/837dc966-2a9c-597b-ab55-b955b1d35f73/scratchpad/pr-fixes2/wt-w5-merge-base; journey module /tmp/claude-0/-home-user/837dc966-2a9c-597b-ab55-b955b1d35f73/scratchpad/pr-fixes2/w5-tools/prim3-topology-learning.serve-root.e2e.mjs; served root /tmp/claude-0/-home-user/837dc966-2a9c-597b-ab55-b955b1d35f73/scratchpad/pr-fixes2/w5-export-merged-with; variant filter (all)
+Learning journey transit-relay/square 390px
+FRAME transit-relay/square: Transit / Relay. X=x−32, Y=31−y; +X east, +Y north; 3.54 m/tile. Answer after a first action or turn, then after turns two and three. Combat progress is browser-reported.
+QUESTION transit-relay/square: X=x−32, Y=31−y; +X east, +Y north; 3.54 m/tile On an unobstructed square practice lattice, find the minimum number of neighbor steps from (5, 2) to (9, 4). This is not a route through walls or an AP cost.
+PASS transit-relay/square 390px brief → real turns → wrong/hinted/correct math → abandoned debrief/reload (no combat completion claim)
+Learning journey equity-uprise-hq/square 390px
+FRAME equity-uprise-hq/square: Equity Uprise HQ. X=x−3, Y=8−y; +X east, +Y north; one cell is 12 ft (3.6576 m) on the building plan; tactical rules use the separate 3.54 m game tile. Answer after a first action or turn, then after turns two and three. Combat progress is browser-reported.
+HTTP 404 https://matthew.mccluster.org/equity-uprise-preview/equity-uprise-building-core-v2.glb
+CONSOLE ERROR Failed to load resource: the server responded with a status of 404 (Not Found)
+HTTP 404 https://matthew.mccluster.org/docs/design/equity-uprise-building/production/generated/equity-uprise-building-core-v2.glb
+CONSOLE ERROR Failed to load resource: the server responded with a status of 404 (Not Found)
+QUESTION equity-uprise-hq/square: X=x−3, Y=8−y; +X east, +Y north; one cell is 12 ft (3.6576 m) on the building plan; tactical rules use the separate 3.54 m game tile On an unobstructed square practice lattice, find the minimum number of neighbor steps from (6, 2) to (8, 0). This is not a route through walls or an AP cost.
+PASS equity-uprise-hq/square 390px brief → real turns → wrong/hinted/correct math → abandoned debrief/reload (no combat completion claim)
+Learning journey equity-uprise-b1/square 390px
+FRAME equity-uprise-b1/square: Equity Uprise B1 · Restore the Picture. X=x−3, Y=8−y; +X east, +Y north; one cell is 12 ft (3.6576 m) on the building plan; tactical rules use the separate 3.54 m game tile. Answer after a first action or turn, then after turns two and three. Combat progress is browser-reported.
+HTTP 404 https://matthew.mccluster.org/equity-uprise-preview/equity-uprise-building-core-v2.glb
+CONSOLE ERROR Failed to load resource: the server responded with a status of 404 (Not Found)
+HTTP 404 https://matthew.mccluster.org/docs/design/equity-uprise-building/production/generated/equity-uprise-building-core-v2.glb
+CONSOLE ERROR Failed to load resource: the server responded with a status of 404 (Not Found)
+QUESTION equity-uprise-b1/square: X=x−3, Y=8−y; +X east, +Y north; one cell is 12 ft (3.6576 m) on the building plan; tactical rules use the separate 3.54 m game tile On an unobstructed square practice lattice, find the minimum number of neighbor steps from (1, 2) to (4, 4). This is not a route through walls or an AP cost.
+PASS equity-uprise-b1/square 390px brief → real turns → wrong/hinted/correct math → abandoned debrief/reload (no combat completion claim)
+Learning journey equity-uprise-b1-attack/square 390px
+FRAME equity-uprise-b1-attack/square: Equity Uprise B1 · Blind the Floor. X=x−3, Y=8−y; +X east, +Y north; one cell is 12 ft (3.6576 m) on the building plan; tactical rules use the separate 3.54 m game tile. Answer after a first action or turn, then after turns two and three. Combat progress is browser-reported.
+HTTP 404 https://matthew.mccluster.org/equity-uprise-preview/equity-uprise-building-core-v2.glb
+CONSOLE ERROR Failed to load resource: the server responded with a status of 404 (Not Found)
+HTTP 404 https://matthew.mccluster.org/docs/design/equity-uprise-building/production/generated/equity-uprise-building-core-v2.glb
+CONSOLE ERROR Failed to load resource: the server responded with a status of 404 (Not Found)
+QUESTION equity-uprise-b1-attack/square: X=x−3, Y=8−y; +X east, +Y north; one cell is 12 ft (3.6576 m) on the building plan; tactical rules use the separate 3.54 m game tile On an unobstructed square practice lattice, find the minimum number of neighbor steps from (7, 2) to (10, 4). This is not a route through walls or an AP cost.
+PASS equity-uprise-b1-attack/square 390px brief → real turns → wrong/hinted/correct math → abandoned debrief/reload (no combat completion claim)
+Learning journey courtyard/square 390px
+FRAME courtyard/square: Courtyard study. Integer cell (q,r): +q right, +r down. Display X=q−4.5, Y=4.5−r; no geographic anchor or metre scale. Answer after a first action or turn, then after turns two and three. Combat progress is browser-reported.
+QUESTION courtyard/square: Integer cell (q,r): +q right, +r down. Display X=q−4.5, Y=4.5−r; no geographic anchor or metre scale On an unobstructed square practice lattice, find the minimum number of neighbor steps from (4, 2) to (7, 0). This is not a route through walls or an AP cost.
+PASS courtyard/square 390px brief → real turns → wrong/hinted/correct math → abandoned debrief/reload (no combat completion claim)
+Learning journey city/square 390px
+FRAME city/square: City street simulation. bridgeport-golden-hill.enu.v1; +x east, +y up, +z south; street floor. Answer after a first action or turn, then after turns two and three. Combat progress is browser-reported.
+QUESTION city/square: Square (q,r): +q east, +r south; 2 m per edge. On an unobstructed square practice lattice, find the minimum number of neighbor steps from (5, 2) to (9, 4). This is not a route through walls or an AP cost.
+PASS city/square 390px brief → real turns → wrong/hinted/correct math → abandoned debrief/reload (no combat completion claim)
+Learning journey city/hex 390px
+FRAME city/hex: City street simulation. bridgeport-golden-hill.enu.v1; +x east, +y up, +z south; street floor. Answer after a first action or turn, then after turns two and three. Combat progress is browser-reported.
+QUESTION city/hex: Pointy axial (q,r), s=−q−r. +q east; +r southeast. Radius 1.5 m; one neighbor edge is √3×1.5 m. On an unobstructed hex practice lattice, find the minimum number of neighbor steps from (2, 2) to (6, 0). This is not a route through walls or an AP cost.
+PASS city/hex 390px brief → real turns → wrong/hinted/correct math → abandoned debrief/reload (no combat completion claim)
+Learning journey city/hex 1280px
+FRAME city/hex: City street simulation. bridgeport-golden-hill.enu.v1; +x east, +y up, +z south; street floor. Answer after a first action or turn, then after turns two and three. Combat progress is browser-reported.
+QUESTION city/hex: Pointy axial (q,r), s=−q−r. +q east; +r southeast. Radius 1.5 m; one neighbor edge is √3×1.5 m. On an unobstructed hex practice lattice, find the minimum number of neighbor steps from (3, 2) to (5, 4). This is not a route through walls or an AP cost.
+PASS city/hex 1280px brief → real turns → wrong/hinted/correct math → abandoned debrief/reload (no combat completion claim)
+DRIVER: PASS in 106.0 s; fixture requests 516; releases 8; sessions 8; evidence rows 70
+exit=0

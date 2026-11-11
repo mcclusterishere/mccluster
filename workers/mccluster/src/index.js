@@ -1,4 +1,6 @@
+import { handleProductWidgetReadiness, PRODUCT_WIDGET_READINESS } from './product-widget-readiness.js';
 import { handleArcade, ARCADE_PREFIX } from './arcade/index.js';
+import { handleEup, EUP_PREFIX } from './eup/router.js';
 import { guardWorldRelease } from './world-release.js';
 import { handleFundingIntelligence, FUNDING_PREFIX } from './funding-intelligence.js';
 import { allowedOrigins, applyCors, corsHeaders, fail, logEvent, reply } from './lib/http.js';
@@ -13,6 +15,7 @@ import { buildEquityUpriseHaloProjection } from './seek-first/equity-uprise-halo
 import { handleWorldLayers } from './world-layers.js';
 import { handleHaloLayers, handleWorldGeocode, WORLD_GEOCODE_PATH } from './world-halo-layers.js';
 import { handleHaloOps } from './world-halo-ops.js';
+import { handleWorldEnvironment, ENVIRONMENT_PATH } from './world-environment.js';
 import { handleWorldMembers, MEMBERS_PATH } from './world-members.js';
 import { handleWorldCctv } from './world-cctv.js';
 import { handleWorldAccess } from './world-access.js';
@@ -158,6 +161,12 @@ export default {
         return handleArcade(request, env, { requireHouseOwner });
       }
 
+      /* Admin-only E=Up product workspace (Control → Products → E=Up). The one exception, the League member
+         branch /v1/eup/member/league, verifies the session with authUser instead (./eup/router.js). */
+      if (path === EUP_PREFIX || path.startsWith(EUP_PREFIX + '/')) {
+        return handleEup(request, env, { requireHouseOwner, authUser });
+      }
+
       if (path === PRIM3_LEVELS_PREFIX || path.startsWith(`${PRIM3_LEVELS_PREFIX}/`)) {
         return handlePrim3Levels(request, env, { requireHouseOwner });
       }
@@ -201,6 +210,11 @@ export default {
       if (path === MEMBERS_PATH) {
         const members = await handleWorldMembers(request, env);
         if (members) return members;
+      }
+
+      /* Consumer public-government environmental contract; no Halo gates are changed. */
+      if (path === ENVIRONMENT_PATH || path.startsWith(`${ENVIRONMENT_PATH}/`)) {
+        return handleWorldEnvironment(request, env);
       }
 
       /* Optional World layers: release guard above, then provider adapter. */
@@ -396,6 +410,10 @@ export default {
           channels: Array.isArray(channels) ? channels : [],
           harness
         });
+      }
+
+      if (path === PRODUCT_WIDGET_READINESS) {
+        return handleProductWidgetReadiness(request, env, { requireHouseOwner, read: p => sb(env, p) });
       }
 
       if (path === '/v1/apps' && request.method === 'GET') {

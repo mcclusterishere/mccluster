@@ -1,5 +1,6 @@
 import { addSignal, enqueueJob, rest } from '../supabase.mjs';
 import { callCoreCapability, unwrapCapabilityResult } from '../game-studio/capability-client.mjs';
+import { scopedOperationId } from '../tools/mcp-http.mjs';
 
 const DEFAULT_DELIVERABLES = Object.freeze([
   { id: 'environment-keyframe', label: 'Environment keyframe', capability: 'text-to-image', prompt_suffix: 'cinematic environment concept art, navigable tactical space, no text, production design sheet quality' },
@@ -84,22 +85,28 @@ export function createGameStudioExecutors({ callCapability = callCoreCapability,
 
     const perItemBudget = Math.max(1, Math.floor(budgetCents / deliverables.length));
     const submissions = [];
-    for (const deliverable of deliverables) {
+    for (const [index, deliverable] of deliverables.entries()) {
       const recommendation = await callCapability('media.model.recommend', { capability: deliverable.capability, preference: input.preference || 'quality', required: { commercial_use: true }, top_k: 1 });
       const [choice] = candidatesFrom(recommendation);
       const modelId = choice?.model?.id || choice?.model?.model_id;
       if (!modelId) throw new Error(`No enabled ${deliverable.capability} model available for ${deliverable.id}`);
       const prompt = buildPrompt({ brief, campaign, deliverable, revisionNotes, iteration });
+      // One operation per (job, deliverable ordinal): a re-attempt of this job
+      // after a crash or a lost lease asks the Worker for the same operation
+      // and gets back the job it already paid for, never a second one. The
+      // ordinal, not deliverable.id, keeps the id inside the Worker's 128 chars.
+      const operationId = scopedOperationId(job.id, index);
       const generated = await callCapability('media.generate', {
         org_id: orgId,
         model_id: modelId,
         prompt,
         input: { prompt },
         budget_cents: perItemBudget,
+        operation_id: operationId,
       });
       const jobId = mediaJobId(generated);
       if (!jobId) throw new Error(`media.generate did not return a job id for ${deliverable.id}`);
-      submissions.push({ deliverable, media_job_id: jobId, model_id: modelId, provider: generated?.provider || null, prompt });
+      submissions.push({ deliverable, media_job_id: jobId, model_id: modelId, provider: generated?.provider || null, prompt, operation_id: operationId });
     }
 
     const collector = await enqueue({ orgId, jobType: 'game_media_collect', targetType: 'campaign', targetId: campaign, priority: 70, runAfter: new Date(Date.now() + 60_000).toISOString(), maxAttempts: 3, input: { campaign, brief, iteration, revision_notes: revisionNotes, budget_cents: budgetCents, repository: text(input.repository, 500) || 'mcclusterishere/hitmans-halo', submissions, poll_count: 0 } });

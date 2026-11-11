@@ -83,5 +83,6 @@ Before production: independent review, actual multi-session Postgres concurrency
 production session authorization, real ion/provider availability, physical touch devices and the
 normal promotion process. Generate an approved migration from the pending schema only as part of
 that separate process. Lower roles remain denied. Cloud result data is self-reported practice;
-it cannot award real currency or cross-world benefits. Sole's failed finish retry is screen-local;
-reload recovery of a pending Sole submission remains an explicit limitation.
+it cannot award real currency or cross-world benefits. Sole's pending finish now survives reload (merged in #761). The browser regression
+`city-arcade-recovery.e2e.mjs` verifies lost success responses, denied sessions and idempotent retry
+at 390px and 1280px against the isolated database. See `ACTIVATION-HANDOFF.md` for current rollout prerequisites.

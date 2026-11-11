@@ -22,7 +22,7 @@ and canonical shoe wearers remain untouched.
 
 ## Canonical storage and authorization
 
-`supabase/pending/city_arcade_v1.sql` is a reviewed LOCAL schema, not an applied migration.
+`supabase/migrations/20261109181623_city_arcade_v1.sql` is the reviewed schema, **applied in production on 2026-11-09** as version `20261109181623` (three empty service-only tables, two invoker functions; receipt `docs/control-plane/evidence/releases-2026-11-09/MIGRATION-RELEASE-RECEIPT.md`). `ARCADE_CLOUD_ENABLED` is absent, so the feature is dormant: schema presence is not activation.
 It follows the existing Level Forge service-only SECURITY INVOKER/RLS pattern:
 
 - canonical Worker `/v1/arcade` calls the existing `requireHouseOwner` for every request;
@@ -43,8 +43,8 @@ sessions and production session authorization have not been verified by the loca
 Mission cloud controls use the existing API origin. They report unavailable until the reviewed
 schema and Worker are intentionally promoted. They never silently label a local save as cloud.
 Mission configuration also supports local play. Failed cloud finish can be retried with the same
-run ID; Tea preserves the pending finish with its local session. Sole's retry is available while
-its result screen remains mounted; reload recovery of that pending submission is not implemented.
+run ID; Tea preserves the pending finish with its local session. Sole also preserves terminal runs and their pending submission across reloads. A lost success
+response can be retried with the same run ID; denied sessions retain the local pending result.
 Local sessions and scores are untrusted device state and use new versioned keys; old scores,
 city saves, government identities and PRIM3 saves are unchanged.
 
@@ -90,3 +90,16 @@ live ion imagery, account entitlements and live road-routing services are NOT ve
 
 Not implemented: 3D GTA camera work, city-wide vehicle gameplay/racing, mobile native packaging,
 server-validated competitive rewards, full canonical story integration or production promotion.
+
+## Default-off cloud release gate
+
+Arcade cloud operations require the exact server binding `ARCADE_CLOUD_ENABLED=true`
+plus existing Supabase configuration. No deployment binding is enabled by this change.
+Owner authentication remains first; disabled requests stop before the Arcade RPC.
+The owner-only `GET /v1/arcade/capabilities` reports configuration readiness without
+querying mission tables. It does not certify that the schema is installed.
+Both games disable cloud controls until this bounded capability check succeeds, and
+disable them again on cloud unavailability. Local play and device saves remain available;
+pending cloud results are retained under the existing game persistence rules. Re-enter
+the game to recheck availability. An explicit flag is used only by local database fixtures.
+Activation still requires separately approved schema, grants, and release verification.

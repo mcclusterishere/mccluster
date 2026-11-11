@@ -29,3 +29,9 @@ test('review rejection never calls the publisher',async()=>{
 test('pause while inference runs is an evidenced no-op',async()=>{
  const f=fixture({publish:{published:false,reason:'inactive_or_stale'}}),out=await actorLiveComment(job,f);assert.equal(out.published,false);assert.doesNotThrow(()=>buildCompletionEvidence(job,out));
 });
+test('a lease lost during inference stops before the publisher (C3)',async()=>{
+ const f=fixture(),lease=new AbortController(),chat=f.chat;
+ f.chat=async(input)=>{const r=await chat(input);lease.abort(new Error('heartbeat matched no row'));return r;};
+ await assert.rejects(actorLiveComment(job,{...f,signal:lease.signal}),(e)=>e.code==='LEASE_LOST'&&/before publishing a live comment/.test(e.message));
+ assert.equal(f.calls.length,1,'the context was read; nothing was published');
+});

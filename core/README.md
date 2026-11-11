@@ -10,7 +10,7 @@ Allowlisted executors:
 
 - `repo_health` — fetches repository state and can run already-installed local tests; it never installs packages during a health check.
 - `local_analysis` — sends a bounded analysis task to the local Ollama model. Its evidence scope is explicitly `job_input_only`.
-- `code_patch` — creates a disposable Git worktree, asks a separate low-privilege OpenCode service to edit it with the local model, rejects sensitive-path diffs, commits the accepted diff, optionally pushes a branch, and attempts to open a **draft PR**. It never auto-merges or deploys.
+- `code_patch` — creates a disposable Git worktree, asks a separate low-privilege OpenCode service to edit it with the local model, rejects sensitive-path diffs, commits the accepted diff, refuses a commit that fails `git diff --check` before any push (completion evidence requires `verification.git_diff_check`), optionally pushes a branch, and attempts to open a **draft PR**. It never auto-merges or deploys.
 
 - `lyrics_align` — the lyric machine for an uploaded release (`core/src/executors/lyrics-align.mjs`, engine in `core/src/lyrics/`): downloads the master with the service key into a private temp dir, separates the vocal with Demucs, recognises it with faster-whisper, maps the creator's lyric sheet (or DistroKid TTML / LRC) onto what is sung, refines word times with wav2vec2 CTC forced alignment, and writes `creator_tracks.lyrics` unreviewed. It never replaces lyrics the owner reviewed. Queued by the trigger in `supabase/pending/20261031180000_lyrics_machine_v1.sql`, by Control's "Re-run machine", or by the `lyrics.align` capability. See "Lyric machine runtime" below.
 
@@ -64,6 +64,33 @@ The default is `qwen3:8b` through Ollama. Keep Ollama loopback-only. `core/syste
 Only allowlisted models (`MCCLUSTER_OLLAMA_EXTRA_MODELS`) can be named; anything else, or one not yet installed, runs on the default model. The deploy pulls only the small resident models (`MCCLUSTER_OLLAMA_DEPLOY_PULL`) inside its 20-minute limit; the larger on-demand ones are installed by an `ai_diagnostics` job with `pull_missing: true`. The CPU is shared: more models add abilities, not throughput.
 
 A larger model can be tested later, but do not make a ~19–20 GB model the always-loaded default on a 24 GB VPS: it leaves too little recovery and OS headroom.
+
+### Inference transport and cancellation
+
+The local chat client and Ollama chat hop use `src/compute/inference-http.mjs`,
+not native `fetch`: a non-streaming CPU inference can withhold HTTP headers past
+Undici's independent five-minute header timeout even with a ten-minute
+`AbortSignal`. The existing caller and adapter deadlines remain unchanged and
+cover headers plus the complete body. Model fallback shares the adapter's one
+deadline. Responses are capped at 8 MiB, redirects are not followed, and invalid
+or interrupted JSON fails explicitly. Transport errors expose controlled codes,
+not upstream bodies, prompts, URLs or raw causes.
+
+`localAiChat({ ..., signal })` accepts caller cancellation. Disconnecting a
+queued caller removes it from the queue; disconnecting an active caller aborts
+the upstream request and releases the single inference slot. Accepted resident
+turns still belong to Core, so browser closure must not be forwarded as their
+cancellation signal. Queue bounds, model policy and inference settings are
+unchanged.
+
+Run `npm test` in `core/` for the bounded transport and cancellation regressions.
+For an optional real-time reproduction, run
+`node scripts/probe-inference-transport.mjs --full` from `core/`. It takes about
+310 seconds and compares native fetch with the inference transport against a
+synthetic loopback server. It uses no models, credentials or external services.
+Without `--full`, it is a quick smoke test, not proof of the five-minute cutoff.
+The other adapter routes and compute-node HTTP executor are outside this chat
+transport change.
 
 ## Host layout
 

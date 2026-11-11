@@ -3,9 +3,17 @@
     "Names shipped code calls that are not deployed: a name counts as deployed only when supabase/schema-manifest.json (the CI reset) AND the latest production evidence (docs/control-plane/evidence/production-schema-snapshot-<date>.json) both have it. A name only replay SQL defines is not deployed.",
     "Checked by scripts/test/rpc-names-exist.test.mjs over js/, root pages, workers/mccluster/src, workers/mccluster-mcp/src and supabase/functions; the test fails for any such name missing here and for any entry that is stale, so both lists can only shrink.",
     "pending_only: pending, not applied. Defined by the named file under supabase/pending/ and not yet applied in production; promote it (supabase/pending/PROMOTION-ORDER.md), commit the new production snapshot, and remove the entry.",
-    "missing_everywhere: not deployed and no pending SQL defines it; production did not have it (verified read-only on 2026-10-27); the calling page or route fails today. Write and promote the SQL, or remove the call, then remove the entry."
+    "missing_everywhere: not deployed and no pending SQL defines it; production did not have it (verified read-only on 2026-10-27); the calling page or route fails today. Write and promote the SQL, or remove the call, then remove the entry.",
+    "applied_awaiting_evidence: applied in production by a dated receipt (version present in supabase/production-ledger.json and its exact SQL under supabase/migrations/), but supabase/schema-manifest.json and the latest production snapshot were not regenerated at import time. Each entry names the migration file and the receipt. The test fails once evidence shows the name, so this list only shrinks; regenerate the manifest with the supported clean reset and capture a snapshot to retire the entries."
   ],
   "pending_only": {
+    "action_environment_missions": {
+      "kind": "table",
+      "pending": "20261107120000_world_environment_v1.sql",
+      "callers": [
+        "workers/mccluster/src/world-environment.js"
+      ]
+    },
     "action_globe_public_business_pins": {
       "kind": "function",
       "pending": "20261015230000_action_mission_pins_arcs_black_business.sql",
@@ -155,13 +163,6 @@
         "workers/mccluster/src/action-connect.js"
       ]
     },
-    "arcade_command": {
-      "kind": "function",
-      "pending": "city_arcade_v1.sql",
-      "callers": [
-        "workers/mccluster/src/arcade/index.js"
-      ]
-    },
     "at_night_verifications": {
       "kind": "table",
       "pending": "20261009220000_at_night_adult_verification.sql",
@@ -196,6 +197,111 @@
       "callers": [
         "workers/mccluster/src/creator-site-publish.js",
         "workers/mccluster/src/creator-site-view.js"
+      ]
+    },
+    "eup_civic_read": {
+      "kind": "function",
+      "pending": "eup_intake_v1.sql",
+      "callers": [
+        "workers/mccluster/src/eup/intake.js"
+      ]
+    },
+    "eup_company_read": {
+      "kind": "function",
+      "pending": "eup_intake_v1.sql",
+      "callers": [
+        "workers/mccluster/src/eup/intake.js"
+      ]
+    },
+    "eup_import_run_claim": {
+      "kind": "function",
+      "pending": "eup_intake_v1.sql",
+      "callers": [
+        "workers/mccluster/src/eup/intake.js"
+      ]
+    },
+    "eup_import_run_finish": {
+      "kind": "function",
+      "pending": "eup_intake_v1.sql",
+      "callers": [
+        "workers/mccluster/src/eup/intake.js"
+      ]
+    },
+    "eup_import_run_release": {
+      "kind": "function",
+      "pending": "eup_intake_v1.sql",
+      "callers": [
+        "workers/mccluster/src/eup/intake.js"
+      ]
+    },
+    "eup_intake_apply": {
+      "kind": "function",
+      "pending": "eup_intake_v1.sql",
+      "callers": [
+        "workers/mccluster/src/eup/intake.js"
+      ]
+    },
+    "eup_league_command": {
+      "kind": "function",
+      "pending": "eup_league_v1.sql",
+      "callers": [
+        "workers/mccluster/src/eup/league-contract.js"
+      ]
+    },
+    "eup_league_media_seal": {
+      "kind": "function",
+      "pending": "eup_league_v1.sql",
+      "callers": [
+        "workers/mccluster/src/eup/league-contract.js"
+      ]
+    },
+    "eup_league_member_command": {
+      "kind": "function",
+      "pending": "eup_league_v1.sql",
+      "callers": [
+        "workers/mccluster/src/eup/league-contract.js"
+      ]
+    },
+    "eup_module_control_read": {
+      "kind": "function",
+      "pending": "eup_module_policy_v1.sql",
+      "callers": [
+        "workers/mccluster/src/eup/modules.js"
+      ]
+    },
+    "eup_module_policy_command": {
+      "kind": "function",
+      "pending": "eup_module_policy_v1.sql",
+      "callers": [
+        "workers/mccluster/src/eup/modules.js"
+      ]
+    },
+    "eup_module_policy_install": {
+      "kind": "function",
+      "pending": "eup_module_policy_v1.sql",
+      "callers": [
+        "workers/mccluster/src/eup/modules.js"
+      ]
+    },
+    "eup_module_policy_read": {
+      "kind": "function",
+      "pending": "eup_module_policy_v1.sql",
+      "callers": [
+        "workers/mccluster/src/eup/modules.js"
+      ]
+    },
+    "eup_sources_command": {
+      "kind": "function",
+      "pending": "eup_intake_v1.sql",
+      "callers": [
+        "workers/mccluster/src/eup/intake.js"
+      ]
+    },
+    "eup_sources_read": {
+      "kind": "function",
+      "pending": "eup_intake_v1.sql",
+      "callers": [
+        "workers/mccluster/src/eup/intake.js"
       ]
     },
     "front-media": {
@@ -447,6 +553,27 @@
         "workers/mccluster/src/prim3/levels.js"
       ]
     },
+    "prim3_release_claim": {
+      "kind": "function",
+      "pending": "prim3_reviewed_releases_v1.sql",
+      "callers": [
+        "workers/mccluster/src/prim3/adaptive-learning.js"
+      ]
+    },
+    "prim3_release_publish": {
+      "kind": "function",
+      "pending": "prim3_reviewed_releases_v1.sql",
+      "callers": [
+        "workers/mccluster/src/prim3/reviewed-releases.js"
+      ]
+    },
+    "prim3_reviewed_releases": {
+      "kind": "table",
+      "pending": "prim3_reviewed_releases_v1.sql",
+      "callers": [
+        "workers/mccluster/src/prim3/reviewed-releases.js"
+      ]
+    },
     "profile_edit_review_decide": {
       "kind": "function",
       "pending": "20261016010000_profile_edit_gate_v1.sql",
@@ -539,6 +666,69 @@
         "js/policy-fellowship-desk.js"
       ]
     },
+    "world_environment_join": {
+      "kind": "function",
+      "pending": "20261107120000_world_environment_v1.sql",
+      "callers": [
+        "workers/mccluster/src/world-environment.js"
+      ]
+    },
+    "world_environment_proof_read": {
+      "kind": "function",
+      "pending": "20261108120000_world_environment_proofs_v1.sql",
+      "callers": [
+        "workers/mccluster/src/environment-proofs.js"
+      ]
+    },
+    "world_environment_proof_review": {
+      "kind": "function",
+      "pending": "20261108120000_world_environment_proofs_v1.sql",
+      "callers": [
+        "workers/mccluster/src/environment-proofs.js"
+      ]
+    },
+    "world_environment_proof_share": {
+      "kind": "function",
+      "pending": "20261108120000_world_environment_proofs_v1.sql",
+      "callers": [
+        "workers/mccluster/src/environment-proofs.js"
+      ]
+    },
+    "world_environment_proof_submit": {
+      "kind": "function",
+      "pending": "20261108120000_world_environment_proofs_v1.sql",
+      "callers": [
+        "workers/mccluster/src/environment-proofs.js"
+      ]
+    },
+    "world_environment_proofs": {
+      "kind": "function",
+      "pending": "20261108120000_world_environment_proofs_v1.sql",
+      "callers": [
+        "workers/mccluster/src/environment-proofs.js"
+      ]
+    },
+    "world_environment_propose": {
+      "kind": "function",
+      "pending": "20261107120000_world_environment_v1.sql",
+      "callers": [
+        "workers/mccluster/src/world-environment.js"
+      ]
+    },
+    "world_environment_review": {
+      "kind": "function",
+      "pending": "20261107120000_world_environment_v1.sql",
+      "callers": [
+        "workers/mccluster/src/world-environment.js"
+      ]
+    },
+    "world_environment_team": {
+      "kind": "function",
+      "pending": "20261107120000_world_environment_v1.sql",
+      "callers": [
+        "workers/mccluster/src/world-environment.js"
+      ]
+    },
     "world_member_regions": {
       "kind": "function",
       "pending": "world_member_regions_v1.sql",
@@ -547,6 +737,7 @@
       ]
     }
   },
+  "applied_awaiting_evidence": {},
   "missing_everywhere": {
     "crm_contacts": {
       "kind": "table",

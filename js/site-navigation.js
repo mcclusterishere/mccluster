@@ -41,6 +41,7 @@
     // Existing product doors; these are links, not newly granted entitlements.
     return native.concat([
       {label:'World', group:'Products', href:world, context:'Equity Uprise'},
+      {label:'Policy', group:'Products', href:world + '&policy=1', context:'Owner preview · Go Live · Globe · Feed'},
       {label:'Your desk', group:'Inbox', href:new URL('mnet.html?view=feed&desk', root).href, context:'Personal work'},
       /* ONE HALO (owner, 2026-10-22: "it takes you to multiple different places. Not everything is consolidated"): every
          Halo door opens the four screens on the globe (World, Missions, People, Intelligence), never the separate app */
@@ -51,6 +52,9 @@
       /* the owner's mission globe and World builder (owner, 2026-11-02: "its own tab … only admin can see as its own app");
          this panel is the owner's only, and the page checks the owner again itself */
       {label:'PRIM3 World', group:'Products', href:new URL('prim3-world.html', house).href, context:'Missions · World builder'},
+      /* the admin-only E=Up product workspace (owner, 2026-11-09: "an admin only experience … the E=Up tab in the admin
+         experience"): Control › System › E=Up; the Worker's /v1/eup routes repeat the owner check on every request */
+      {label:'E=Up', group:'Products', href:new URL('control.html#system:eup', house).href, context:'Admin only · League · Civic · Companies · Sources'},
       {label:'Whip', group:'Products', href:new URL('whip.html', house).href, context:'Mobility'},
       {label:'WE Manufacture', group:'Products', href:new URL('we-manufacture.html', house).href, context:'Manufacturing'}
     ]);

@@ -1,4 +1,5 @@
 import os from 'node:os';
+import { randomBytes } from 'node:crypto';
 import { assertCompletionEvidence } from './completion-evidence.mjs';
 
 const SB = String(process.env.SUPABASE_URL || '').replace(/\/$/, '');
@@ -193,7 +194,7 @@ export async function claimNext(supportedTypes) {
         status: 'running',
         attempts,
         locked_at: now,
-        locked_by: workerId,
+        locked_by: issueLease(),
         last_error: null,
         updated_at: now,
       }),
@@ -203,13 +204,38 @@ export async function claimNext(supportedTypes) {
   return null;
 }
 
-function ownedRunningParams(job) {
-  return new URLSearchParams({
+/* ONE CLAIM, ONE LEASE.
+ *
+ * Audit finding C3: ownership predicates used only status=running and
+ * locked_by=workerId, so with a static MCCLUSTER_CORE_ID an attempt that lost
+ * its lock and was reclaimed by the same identity could still complete, fail or
+ * checkpoint the newer attempt, and a heartbeat that matched zero rows looked
+ * like success. Every claim now writes `${workerId}#${random}` into locked_by
+ * (no schema change: the column is text) and every later write matches that
+ * exact lease plus the claimed attempt number. A zero-row update is a lost
+ * lease and says so with code LEASE_LOST, which the runner turns into an abort. */
+export function issueLease(id = workerId) {
+  return `${id}#${randomBytes(16).toString('base64url')}`;
+}
+
+export function leaseOf(job) {
+  const value = String(job?.locked_by || '');
+  return value.includes('#') ? value : workerId;
+}
+
+export function ownedRunningParams(job) {
+  const params = new URLSearchParams({
     id: `eq.${job.id}`,
     org_id: `eq.${job.org_id}`,
     status: 'eq.running',
-    locked_by: `eq.${workerId}`,
-  }).toString();
+    locked_by: `eq.${leaseOf(job)}`,
+  });
+  if (Number.isFinite(Number(job?.attempts)) && job.attempts !== null) params.set('attempts', `eq.${Number(job.attempts)}`);
+  return params.toString();
+}
+
+export function leaseLostError(job, action) {
+  return Object.assign(new Error(`Lost ownership of job ${job.id} ${action}`), { code: 'LEASE_LOST', job_id: job.id });
 }
 
 export async function checkpointJobInput(job, input) {
@@ -221,16 +247,18 @@ export async function checkpointJobInput(job, input) {
       updated_at: new Date().toISOString(),
     }),
   });
-  if (!rows.length) throw new Error(`Lost ownership of job ${job.id} while checkpointing input`);
+  if (!rows.length) throw leaseLostError(job, 'while checkpointing input');
   return rows[0];
 }
 
 export async function heartbeat(job) {
-  await rest(`ops_agent_jobs?${ownedRunningParams(job)}`, {
+  const { body: rows = [] } = await rest(`ops_agent_jobs?${ownedRunningParams(job)}`, {
     method: 'PATCH',
-    headers: { Prefer: 'return=minimal' },
+    headers: { Prefer: 'return=representation' },
     body: JSON.stringify({ locked_at: new Date().toISOString(), updated_at: new Date().toISOString() }),
   });
+  if (!Array.isArray(rows) || !rows.length) throw leaseLostError(job, 'while heartbeating');
+  return rows[0];
 }
 
 export async function completeJob(job, output) {
@@ -248,7 +276,7 @@ export async function completeJob(job, output) {
       updated_at: now,
     }),
   });
-  if (!rows.length) throw new Error(`Lost ownership of job ${job.id} before completion`);
+  if (!rows.length) throw leaseLostError(job, 'before completion');
   return rows[0];
 }
 
@@ -399,7 +427,9 @@ let houseOrgPromise = null;
 export function houseOrgId() {
   if (!houseOrgPromise) {
     houseOrgPromise = rest(`orgs?slug=eq.${encodeURIComponent(HOUSE_SLUG)}&select=id&limit=1`)
-      .then((rows) => (Array.isArray(rows) && rows[0] ? String(rows[0].id) : null))
+      // rest() resolves to { body, headers, status }; the earlier code read the
+      // envelope as the row array and therefore always resolved null.
+      .then(({ body: rows } = {}) => (Array.isArray(rows) && rows[0] ? String(rows[0].id) : null))
       .catch(() => null);
   }
   return houseOrgPromise;

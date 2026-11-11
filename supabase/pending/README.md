@@ -17,6 +17,25 @@ list and on any entry that is stale, so the list only shrinks: promoting a file
 and committing the new production snapshot means removing its names. Regenerate
 the view with `RPC_NAMES_REPORT=1 node scripts/test/rpc-names-exist.test.mjs`.
 
+Promoted 2026-11-09 (owner-run releases; receipts under
+`docs/control-plane/evidence/releases-2026-11-09/`). The live ledger went from 359 to 363
+rows. Rollback files stay here under their pending names as recovery-only artifacts:
+
+| Pending file | Applied as | Note |
+|---|---|---|
+| `20261109120000_music_direct_asset_versions_v1.sql` (branch draft, deleted) | `supabase/migrations/20261109175747_music_direct_asset_versions_v1.sql` | the applied SQL is the independently corrected version (lock order, settlement eligibility, 300 s replay bound); never replay the draft |
+| `core_signed_nonces_v1.sql` (moved) | `supabase/migrations/20261109180829_core_signed_nonces_v1.sql` | bytes unchanged; Worker `CORE_REPLAY_STORE` not yet deployed |
+| `city_arcade_v1.sql` (moved) | `supabase/migrations/20261109181623_city_arcade_v1.sql` | bytes unchanged; `ARCADE_CLOUD_ENABLED` absent, feature dormant |
+| `media_operation_claims_v1.sql` (moved) | `supabase/migrations/20261109194957_media_operation_claims_v1.sql` | bytes unchanged (stored statement and file: 5895 bytes, SHA-256 `c1733f48…08c1`); the live Worker predates the claim protocol and does not call it yet |
+
+Evidence for all four: `docs/control-plane/evidence/production-schema-snapshot-2026-11-09.json`
+is a production snapshot read at 22:17 UTC that day (363 ledger rows; each of the four stored
+statements equals its file here byte for byte), and `supabase/schema-manifest.json` carries the
+objects all four create. `live-callers.json` → `applied_awaiting_evidence` and
+`docs/control-plane/evidence/ledger-receipts.json` are therefore empty again. The read-only
+verification of the fourth, whose release receipt is not in this repository, is
+`docs/control-plane/evidence/releases-2026-11-09/CLAIMS-APPLIED-VERIFICATION.md`.
+
 Promoted 2026-10-29 (owner-approved), group 0 of `PROMOTION-ORDER.md` plus
 `public_music_reads_lean_v1.sql`, from
 `docs/control-plane/PRODUCTION-SCHEMA-RECONCILIATION-2026-10-28.md`. Each was applied with
@@ -58,6 +77,109 @@ Promoted 2026-10-21: `listener_state_v1.sql` is applied in production as `202610
 
 
 Pending (2026-10-21): `member_fronts_v1.sql` gives every account its own front page (owner: "all the accounts need to be able to recreate with their own media this exact same experience"). It adds `public.member_fronts`, which only the Worker's service role reaches (forced RLS, revoked from anon and authenticated), and the public `front-media` bucket, where each account lists, writes, replaces and removes only its own folder (its auth uid), up to 2,500 files and 1 GiB (`public.front_media_has_room()`). Until it is applied, `/v1/fronts` answers 503. Test: `scripts/test-member-fronts-db.sh`. Docs: `docs/control-plane/MEMBER-FRONT-PAGES.md`. Rollback: in the file's header. Promote it using the steps below.
+
+Pending (2026-11-10): `network_media_assets_pointer_guard_v1.sql` (rollback
+`network_media_assets_pointer_guard_v1.rollback.sql`) is **source-only, NOT applied**.
+It preserves the candidate from Claude commits `4ae47c5b` and `1ea9b3f0`, reconciled
+with main. It is additional hardening, not a replacement for the media-signing
+owner/path checks in `supabase/functions/mnet-media/storage-path.mjs` and
+`workers/mccluster/src/lib/media-storage.js`. No Worker or Edge source changes,
+production apply, Storage-policy changes, grant changes or rollout are authorized
+by merging this pending file. A separate owner decision is required before promotion.
+
+The existing migration `20260920071811_mnet_real_network_v1.sql` permits owners to
+write their media rows and objects. The pending candidate would:
+
+- Refuse to apply, transactionally under the table lock, while any existing row
+  is not a canonical upload. A NOT VALID check still affects later updates,
+  including a post foreign key's SET NULL, so legacy rows need a decision first.
+- Remove direct member INSERT/UPDATE/DELETE and broader write privileges and
+  write policies on `network_media_assets`, leaving owner reads intact. A trigger
+  rejects member writes even if a later grant is added back.
+- Pin `id`, `bucket_id` and `object_path` against UPDATE by service-role and
+  SECURITY DEFINER writers too, and require new rows to point to a linked login.
+- Permit owner changes through the service-only
+  `network_media_assets_follow_merge(p_keep, p_merge, p_reason)` path, after an
+  identity merge, with an append-only record in `network_media_asset_owner_moves`.
+- Remove the three named member-write policies on `mnet-media`; signed-upload
+  URLs remain the upload path. This does not protect bytes from server writes.
+
+What must be true in production before `network_media_assets_pointer_guard_v1.sql` may be applied:
+
+1. Re-run `scripts/db/media-asset-legacy-count.sql`: `not_canonical = 0` is
+   mandatory. Use `scripts/db/media-asset-pointer-guard-precheck.sql` for counts
+   by referenced surface and merge eligibility. Both are read-only, counts-only
+   queries. Do not publish their operational results here. The legacy-count file
+   is already on main and is unchanged by this integration. A historical result
+   is not current approval or evidence. Canonical rows with an unlinked prefix
+   do not block the CHECK but remain unsigned; the existing signing checks must
+   stay. Decide noncanonical rows, missing referenced rows and unlinked uploads
+   with the owner rather than automatically deleting or rewriting them.
+2. Verify that deployed clients, including old native builds and satellites,
+   do not write the table or bucket with member tokens. Check a representative
+   period of API logs (at least 30 days) for authenticated POST/PATCH/DELETE on
+   `/rest/v1/network_media_assets` and POST/PUT/DELETE on ordinary
+   `/storage/v1/object/mnet-media/...` routes. Signed-upload PUTs are expected.
+   The repository contract test only covers source in this repository.
+3. Verify deployed `mnet-media` matches the repository's upload contract:
+   `upload-url` must supply `upload.token` or fail. Four client fallbacks still
+   POST using the member token when the token is missing. Removing the policy
+   would refuse those fallbacks, so deployment compatibility must be established.
+4. Verify the current schema, grants, triggers and all applicable Storage
+   policies privately. `action_share_assignment_internal` and
+   `publish_antisocial_collaboration` must be SECURITY DEFINER functions owned
+   by a trusted server role, and `service_role` must retain the table writes.
+   Unexpected triggers, policies, role inheritance or column grants require a
+   fresh review. Removing three named policies is not proof that no broader
+   policy grants bucket writes. Committed snapshots are fixture references,
+   not a current production attestation.
+5. Run `bash scripts/test-network-media-pointer-guard-db.sh` on disposable
+   PostgreSQL 16 and 17 and `node --test scripts/test/network-media-pointer-guard.test.mjs`.
+   Separately run `bash scripts/test-network-media-storage-flow.sh` with Docker
+   for real Storage API behavior; also exercise the restricted postgres role with
+   `SUPABASE_DB_IMAGE=supabase/postgres:17.11.0.018`. Native database fixtures use
+   stand-ins for Storage and are not equivalent to the real API or that role.
+   Keep each result explicit; an unavailable Docker run is not a pass.
+6. At promotion, update `supabase/tests/action_clipping_regression.sql`: its
+   hand-made `regress/clip-source-<uuid>.mp3` path lacks a linked login and would
+   be rejected. Do not move this candidate to migrations or the reset manifest
+   until this and the other prerequisites and owner approval are satisfied.
+
+After a separately approved apply, test member upload, signed PUT, finalize,
+post, view and discard; confirm direct member row and object writes are refused.
+With the legacy count still clear, run
+`alter table public.network_media_assets validate constraint network_media_assets_canonical_upload_check;`
+and record verification privately. This checklist is a future procedure, not a
+claim that any production action was performed for the source integration.
+
+Rollback restores the original migration's grants and six write policies, so it
+**reopens the vulnerability**. It is not a snapshot restore of arbitrary intervening
+policy changes. It is a no-op if the guard was never applied, and preserves a
+nonempty merge audit table and its append-only triggers. Rehearse it against the
+actual pre-promotion state before choosing it as recovery.
+
+Owner decisions and residual risks left open:
+
+- Merge following is a manual service-role call after `m_merge_people`, not
+  automatic. A chain needs one call per merged person naming the current login
+  holder. Rows not eligible remain counted as `left`. The link's `admin_merge`
+  marker does not identify which of multiple merged people originally held it.
+  Logins left nonprimary by the existing merge are still rejected by the Edge
+  function's primary-link lookup until addressed separately.
+- `finalize` currently sets ready regardless of the prior status. A member can
+  use that service-backed route to revive blocked/deleted/reserved rows and then
+  discard them. `discard` may remove bytes referenced by proof, level or clipping
+  records. Fixing those Edge routes is separate work, not supplied here.
+- Service-role and other privileged writers can still delete/reinsert a row
+  under the same id, or overwrite/delete its bytes. Table owners can disable
+  triggers. Object pinning, a byte-version check or a Storage trigger requires
+  owner decisions about takedowns, retention, erasure and recovery.
+- The candidate leaves any PostgreSQL 17 MAINTAIN privilege unchanged. It does
+  not make a platform-wide privilege decision.
+
+The candidate creates no object called by shipped code, so it has no entry in
+`live-callers.json`. Source merge, local fixture success, real Storage validation,
+promotion and production acceptance are separate milestones.
 
 Promoted 2026-10-30: `music_release_payment_integrity_v1.sql` is applied in production and is
 `supabase/migrations/20261030001000_music_release_payment_integrity_v1.sql` (bytes unchanged,
@@ -344,3 +466,11 @@ Promoted 2026-10-17 to repair Analytics missing-function responses:
 - `20261017030554_analytics_region_v1.sql` is applied in production; its exact SQL is in `supabase/migrations/`.
 - `20261017030617_intel_mission_canon_v1.sql` is applied in production; its exact SQL is in `supabase/migrations/`.
 The applied SQL headers retain their original pending wording to preserve byte-for-byte production history. The intel rollback remains in this folder; collectors remain separately controlled.
+
+### Applied 2026-11-10: paid-media recovery
+
+`media_operation_claims_v2.sql` moved byte-for-byte to
+`supabase/migrations/20261110220135_media_operation_claims_v2.sql` after a verified
+transactional production apply. Its rollback remains here and must follow a
+Worker rollback. See the dated claims-v2 release receipt under
+`docs/control-plane/evidence/releases-2026-11-10/`. Other candidates remain pending.

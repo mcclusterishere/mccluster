@@ -152,7 +152,7 @@ test('no purple anywhere in the new page, scripts or styles (owner rule)', () =>
 
 test('the owner gate: nothing but "Owner only" ships in the page, and the app and mission file load only after a yes', () => {
   assert.match(PAGE, /<h1>Owner only<\/h1>/);
-  assert.match(PAGE, /<template id="pwTpl"><div id="pwApp" hidden><\/div><\/template>/);
+  assert.match(PAGE, /<template id="pwTpl"><p><a href="prim3-city-tactics\.html">[^<]+<\/a><\/p><div id="pwApp" hidden><\/div><\/template>/);
   assert.match(PAGE, /data-owner-gate data-owner-template="pwTpl" data-owner-load="js\/prim3-world\/news-desk\.mjs js\/prim3-world\/app\.mjs"/);
   assert.doesNotMatch(PAGE, /<script[^>]+src="js\/prim3-world\//, 'no app module is a page script: js/owner-only.mjs imports them after a yes');
   assert.match(PAGE, /<script type="module" src="js\/owner-only\.mjs\?v=__STAMP__"><\/script>/);
@@ -201,7 +201,7 @@ test('World is an owner-only door: the Control panel lists it, the tactics menu 
   const adminMarkup = bar.slice(bar.indexOf('function adminBar'), bar.indexOf('function paintAdmin'));
   assert.doesNotMatch(adminMarkup, /href=[^\n]*prim3-world/, 'World uses the shared Games entry rather than a dedicated tab');
   assert.match(bar, /data-appnav="games"/, 'the owner Games entry remains available');
-  assert.match(bar, /data-appnav="halo" aria-label="Open Hitman’s Halo"/, 'the owner globe still opens Hitman\'s Halo');
+  assert.match(bar, /data-appnav="world" aria-label="Open the World globe"/, 'the owner can reach the consumer World alongside Games');
 });
 
 test('no pins on the globe; a country card names the stationed agent and holds the News \u2192 mission hook', async () => {
@@ -210,8 +210,9 @@ test('no pins on the globe; a country card names the stationed agent and holds t
   assert.doesNotMatch(PAGE, /\.pw-pin/);
   assert.match(app, /Agent on assignment here/);
   assert.match(app, /<section class="pw-news" id="pwNews" data-country="\$\{esc\(code\)\}"/);
-  assert.match(app, /data-news-placeholder disabled/);
-  assert.match(app, /emitCountryCard\(code, \$\('pwNews'\), name\)/);
+  assert.match(app, /import '\.\/mission-generator\.mjs'/);
+  assert.match(app, /Automatic news ingestion is not connected/);
+  assert.match(app, /emitCountryCard\(code, \$\('pwNews'\), name, \{ geography:/);
   assert.doesNotMatch(app, /v1\/world\/news/, 'the news build is not implemented here');
   // node's global is not an EventTarget; give it one for this check, as a browser window is
   if (typeof globalThis.dispatchEvent !== 'function') { const t = new EventTarget(); for (const k of ['addEventListener', 'removeEventListener', 'dispatchEvent']) globalThis[k] = t[k].bind(t); }
@@ -284,4 +285,17 @@ test('news desk card: asks the owner-only route with the session and never witho
   let called = false;
   assert.deepEqual(await loadDesk('JP', { storage: { getItem: () => null }, fetchImpl: async () => { called = true; } }), { error: 'signed-out' });
   assert.equal(called, false);
+});
+
+test('a late globe-ready never rebuilds the editor under the owner\'s caret (only the country list refreshes)', () => {
+  /* PR #793 tactics job, 1280px: the globe finished loading while Playwright was filling the
+     briefing; renderSide() replaced the textarea and the typed briefing never reached the draft. */
+  const app = read('js/prim3-world/app.mjs');
+  const ready = app.slice(app.indexOf('globe.ready.then('), app.indexOf('.catch((e) => { document.body.dataset.pwGlobe'));
+  assert.match(ready, /if \(ui\.mode === 'edit'\) refreshCountryOptions\(\);/, 'edit mode refreshes the country options in place');
+  assert.doesNotMatch(ready, /renderSide\(\)|renderEditor\(\)|render\(\)/, 'and never re-renders the side panel from the globe event');
+  const refresh = app.slice(app.indexOf('function refreshCountryOptions()'), app.indexOf('function renderEditor()'));
+  assert.match(refresh, /\$\('pwF-country'\)/, 'it targets the country select');
+  assert.match(refresh, /sel\.innerHTML = countryOptionsHtml\(list, m\.country\.code\)/, 'and only replaces its options, keeping the current country selected');
+  assert.doesNotMatch(refresh, /innerHTML = `<|pwSide|pwF-briefing|pwF-title/, 'without touching any other field');
 });

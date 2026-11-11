@@ -72,6 +72,8 @@ export const CATALOG_KEY_RE = /^[a-z0-9-]+:[a-z0-9-]+$/;
 export const OFFER_KEY_RE = /^[a-z0-9][a-z0-9-]{2,79}$/;
 export const SESSION_ID_RE = /^cs_(?:test|live)_[A-Za-z0-9]+$/;
 export const TOKEN_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** A buyer-chosen download attempt key: the same key retries the same attempt (one slot), never a second. */
+export const ATTEMPT_KEY_RE = /^[A-Za-z0-9._-]{8,80}$/;
 
 /** One offer per catalogue recording; the key is derived, never chosen. */
 export function offerKeyFor(catalogKey: string): string | null {
@@ -186,6 +188,8 @@ export type DirectEntitlementRow = {
   download_count: number;
   max_downloads: number;
   expires_at: string | null;
+  /** the pinned file (20261109120000_music_direct_asset_versions_v1); null = a legacy purchase the owner must resolve */
+  asset_version_id?: string | null;
 };
 /**
  * May this entitlement download now? null = yes. Mirrors
@@ -203,6 +207,7 @@ export function downloadRefusal(
   if (orderStatus !== "paid") return "not_paid";
   if (!ent.expires_at || new Date(ent.expires_at).getTime() <= now.getTime()) return "expired";
   if (!Number.isSafeInteger(ent.max_downloads) || ent.download_count >= ent.max_downloads) return "download_limit";
+  if (ent.asset_version_id === null) return "asset_unresolved";
   return null;
 }
 
@@ -220,4 +225,9 @@ export const REFUSAL_HTTP: Record<string, { status: number; message: string }> =
   not_paid: { status: 409, message: "The payment for this purchase is not complete." },
   expired: { status: 410, message: "This download window has closed." },
   download_limit: { status: 429, message: "This purchase has used all of its downloads." },
+  asset_unresolved: { status: 409, message: "This purchase needs the owner's attention before it can be downloaded. Nothing has been used." },
+  attempt_spent: { status: 409, message: "That download attempt is over. Start a new one." },
+  /** signing failed; the slot was given back; try again */
+  sign_retry: { status: 503, message: "The download could not be prepared just now. Nothing was used; please try again." },
 };
+

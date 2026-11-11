@@ -9,8 +9,8 @@ export function evidenceDb() {
     if (!rows) throw new Error('Unexpected test request: ' + table);
     const body = init.body ? JSON.parse(init.body) : null;
     calls.push({ method, table, body, search: u.search });
-    const match = row => [...u.searchParams].every(([k, v]) => !v.startsWith('eq.') || String(row[k]) === v.slice(3));
-    if (method === 'GET') return json(rows.filter(match).sort((a,b)=>(a.seq||0)-(b.seq||0)).slice(0,Number(u.searchParams.get('limit'))||1000));
+    const match = row => [...u.searchParams].every(([k, v]) => v.startsWith('eq.') ? String(row[k]) === v.slice(3) : v.startsWith('in.(') ? v.slice(4,-1).split(',').includes(String(row[k])) : true);
+    if (method === 'GET') return json(rows.filter(match).sort((a,b)=>u.searchParams.get('order')==='ended_at.desc,id.desc' ? String(b.ended_at).localeCompare(String(a.ended_at)) || b.id.localeCompare(a.id) : (a.seq||0)-(b.seq||0)).slice(0,Number(u.searchParams.get('limit'))||1000));
     if (method === 'POST') {
       if (rows.some(r=>r.id===body.id)) return json({message:'duplicate key'},409);
       const row=structuredClone(body);

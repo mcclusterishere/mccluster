@@ -45,11 +45,21 @@ $('pmReturn').onclick = () => { returned = true; render(); };
 $('pmHint').onclick = () => run(() => client.submit('hint'));
 $('pmForm').onsubmit = e => { e.preventDefault(); void run(async () => { const r = await client.submit('answer', { answer: $('pmAnswer').value }); $('pmAnswer').value = ''; return r; }); };
 $('pmFinish').onclick = () => run(() => client.submit('finish', { outcome: $('pmOutcome').value }));
+$('pmNew').onclick = () => run(async () => {
+  client.newPractice(); returned = false;
+  $('pmFiction').checked = false; $('pmGeography').checked = false;
+  await showProgress();
+});
+async function showProgress() {
+  const { progress } = await client.progress();
+  $('pmProgress').textContent = `Next practice starts at level ${progress.next_level} of 3, based on ${progress.recent.length} verified recent sessions${progress.has_older_sessions ? ' (latest 10)' : ''}. ${progress.label}`;
+}
 $('pmRetry').onclick = () => run(() => client.retry());
 function accountChanged() { client.clear(); document.querySelector('.pm').hidden = true; }
 window.addEventListener('mcc:auth-changed', accountChanged);
 window.addEventListener('storage', e => { if (e.key === SESSION_KEY || e.key === null) accountChanged(); });
 try { const { config } = await client.connect(); available = config.enabled;
+  if (available) await showProgress();
   $('pmConfig').textContent = available ? 'Owner-only practice service ready.' : 'This integration is disabled until the owner configures the practice service.';
   message(client.pending ? 'A request is pending. Retry it to recover the original receipt.' : client.current ? 'Your practice session was restored.' : available ? 'Complete owner review before release.' : 'Service disabled. No learning record has been written.');
 } catch (e) { message(e.message); }

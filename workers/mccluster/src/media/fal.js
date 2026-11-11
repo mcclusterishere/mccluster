@@ -1,5 +1,9 @@
 const FAL_JWKS_URL = 'https://rest.fal.ai/.well-known/jwks.json';
 const FAL_BILLING_EVENTS_URL = 'https://api.fal.ai/v1/models/billing-events';
+const FAL_QUEUE_URL = 'https://queue.fal.run';
+/* A catalog model id is a path under the queue host: owner/app[/more]. Anything
+   else never becomes part of a URL. */
+const FAL_MODEL_ID = /^[A-Za-z0-9][A-Za-z0-9._-]*(?:\/[A-Za-z0-9][A-Za-z0-9._-]*)+$/;
 const FAL_WEBHOOK_MAX_AGE_SECONDS = 300;
 const FAL_JWKS_CACHE_MS = 6 * 60 * 60 * 1000;
 let jwksCache = { keys: null, expiresAt: 0 };
@@ -8,10 +12,11 @@ function configured(env) {
   return Boolean(env.FAL_KEY);
 }
 
-// Only submit/status/result reach the vendor SDK. Webhook verification, billing
-// lookups and asset parsing are plain fetch + WebCrypto, so a static import
-// would make the whole media module graph unlinkable — and those paths
-// untestable — on any checkout where the optional package is not installed.
+// Only status/result reach the vendor SDK (read-only; its retries are harmless
+// there). Submission, webhook verification, billing lookups and asset parsing
+// are plain fetch + WebCrypto, so a static import would make the whole media
+// module graph unlinkable — and those paths untestable — on any checkout where
+// the optional package is not installed.
 let falClient = null;
 
 async function loadFal() {
@@ -19,14 +24,19 @@ async function loadFal() {
     try {
       ({ fal: falClient } = await import('@fal-ai/client'));
     } catch {
-      throw Object.assign(new Error('fal gateway client is not installed'), { status: 503 });
+      throw Object.assign(new Error('fal gateway client is not installed'), { status: 503, preflight: true });
     }
   }
   return falClient;
 }
 
+/* The preflight every provider call shares: nothing is sent without a key. */
+function requireKey(env) {
+  if (!configured(env)) throw Object.assign(new Error('fal gateway is not configured'), { status: 503, preflight: true });
+}
+
 async function setup(env) {
-  if (!configured(env)) throw Object.assign(new Error('fal gateway is not configured'), { status: 503 });
+  requireKey(env);
   const fal = await loadFal();
   fal.config({ credentials: env.FAL_KEY });
   return fal;
@@ -62,12 +72,91 @@ async function falJwks() {
   return keys;
 }
 
+/* Audit C5: a thrown submit error is NOT proof the provider did not accept
+   the request. Only an error raised before anything was sent (our own
+   preflight) or a provider answer that refused the request (4xx) is definite;
+   a timeout, abort, network failure or 5xx after the bytes left is uncertain
+   and the caller must keep the budget reservation for reconciliation rather
+   than release it and risk paying twice on a retry. */
+export function classifySubmitError(error) {
+  if (!error || typeof error !== 'object') return 'uncertain';
+  if (error.preflight === true || error.definite === true) return 'definite';
+  if (error.uncertain === true || error.timeoutType) return 'uncertain';
+  const status = Number(error.status ?? error.statusCode);
+  /* A 4xx is the provider refusing the request: the queue endpoint returns
+     2xx + request_id when it accepts, so nothing was queued. A 5xx is not
+     proof of that: 502, 504 and the edge's 520 to 526 come from an
+     intermediary, and a 500 or 503 can follow an accepted request just as a
+     timeout can. A reservation is released only on a definite answer, so
+     every 5xx stays uncertain and goes to reconciliation. No status at all =
+     nothing came back. */
+  if (Number.isInteger(status) && status >= 400 && status < 500) return 'definite';
+  return 'uncertain';
+}
+
+/* ONE provider request per call, never retried here.
+
+   The vendor SDK's queue.submit retries a paid POST up to three more times on
+   429/502/503/504 and on transport errors, and its per-call retry option
+   overrides any client configuration (@fal-ai/client 1.10.1, queue.js and
+   request.js). A 502 or a dropped connection can hide an accepted request, so
+   a hidden retry is a second paid job under one reservation. This is a plain
+   POST to the queue endpoint the SDK itself calls: the caller sees exactly
+   what the single attempt produced and decides (classifySubmitError above).
+
+   Inputs are JSON from validated request bodies. The SDK also uploaded Blob
+   and File inputs to provider storage; a model that needs binary input must
+   add an explicit upload step, not bring the retrying client back. */
 export async function submitFal(env, modelId, input, options = {}) {
-  const fal = await setup(env);
-  const submitOptions = { input };
-  if (options.webhookUrl) submitOptions.webhookUrl = options.webhookUrl;
-  const result = await fal.queue.submit(modelId, submitOptions);
-  return { request_id: result.request_id || result.requestId };
+  requireKey(env);
+  if (typeof modelId !== 'string' || !FAL_MODEL_ID.test(modelId)) {
+    throw Object.assign(new Error('fal model id is not a valid queue endpoint'), { status: 400, preflight: true });
+  }
+  const url = new URL(`${FAL_QUEUE_URL}/${modelId}`);
+  if (options.webhookUrl) url.searchParams.set('fal_webhook', options.webhookUrl);
+
+  let res;
+  try {
+    res = await fetch(url.toString(), {
+      method: 'POST',
+      headers: {
+        authorization: `Key ${env.FAL_KEY}`,
+        accept: 'application/json',
+        'content-type': 'application/json',
+        'x-fal-queue-priority': 'normal'
+      },
+      body: JSON.stringify(input ?? {})
+    });
+  } catch (error) {
+    /* Nothing came back: the bytes may have left. */
+    throw Object.assign(new Error(error instanceof Error ? error.message : String(error), { cause: error }), {
+      name: error?.name || 'Error', uncertain: true
+    });
+  }
+
+  let text = '';
+  let unreadable = false;
+  try { text = await res.text(); } catch { unreadable = true; }
+  let body = null;
+  try { body = text ? JSON.parse(text) : null; } catch { body = text; }
+
+  if (!res.ok) {
+    const message = (typeof body?.message === 'string' && body.message)
+      || (typeof body?.detail === 'string' && body.detail)
+      || `fal queue request failed (HTTP ${res.status})`;
+    throw Object.assign(new Error(message), {
+      status: res.status,
+      detail: body,
+      timeoutType: res.headers.get('x-fal-request-timeout-type') || undefined
+    });
+  }
+  const requestId = body && typeof body === 'object' ? (body.request_id || body.requestId) : null;
+  if (unreadable || !requestId || typeof requestId !== 'string') {
+    /* The provider answered 2xx, so it may have queued the request, but the
+       handle is missing: never treat that as "not submitted". */
+    throw Object.assign(new Error('fal accepted the submission but returned no request id'), { uncertain: true, provider_status_code: res.status });
+  }
+  return { request_id: requestId };
 }
 
 export async function statusFal(env, modelId, requestId) {
@@ -141,13 +230,22 @@ export async function billingEventsFal(env, requestIds) {
   };
 }
 
-export async function verifyFalWebhook(request) {
+/* fal signs every webhook it sends, for every customer, with the same keys:
+   the signature proves "fal sent this for that account's request", not "this
+   is one of ours". FAL_WEBHOOK_USER_ID, when configured, pins the signed
+   account id to the house's own, so another fal customer's signed webhook is
+   refused outright. */
+export async function verifyFalWebhook(request, env = null) {
   const requestId = request.headers.get('x-fal-webhook-request-id');
   const userId = request.headers.get('x-fal-webhook-user-id');
   const timestamp = request.headers.get('x-fal-webhook-timestamp');
   const signatureHex = request.headers.get('x-fal-webhook-signature');
   if (!requestId || !userId || !timestamp || !signatureHex) {
     throw Object.assign(new Error('Missing fal webhook signature headers'), { status: 401 });
+  }
+  const pinnedUserId = String(env?.FAL_WEBHOOK_USER_ID || '').trim();
+  if (pinnedUserId && pinnedUserId !== userId) {
+    throw Object.assign(new Error('fal webhook is not from the configured fal account'), { status: 401 });
   }
 
   const timestampSeconds = Number.parseInt(timestamp, 10);

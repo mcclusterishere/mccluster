@@ -1,0 +1,643 @@
+# series head f8499fad, 2026-11-10T11:54:25Z, node v22.23.4, cwd workers/mccluster
+# node --import ./test/support/offline-network.mjs --test test/prim3-*.test.mjs
+TAP version 13
+# Subtest: owner/config gates precede all evidence reads; defaults are disabled
+ok 1 - owner/config gates precede all evidence reads; defaults are disabled
+  ---
+  duration_ms: 24.442052
+  type: 'test'
+  ...
+# Subtest: review → issue → brief → server answer → debrief writes existing evidence without competency credit
+ok 2 - review → issue → brief → server answer → debrief writes existing evidence without competency credit
+  ---
+  duration_ms: 53.670164
+  type: 'test'
+  ...
+# Subtest: lost ACK and concurrent identical retries persist one validated answer
+ok 3 - lost ACK and concurrent identical retries persist one validated answer
+  ---
+  duration_ms: 43.316237
+  type: 'test'
+  ...
+# Subtest: cross-user reads, forged signatures, and copied receipts fail closed
+ok 4 - cross-user reads, forged signatures, and copied receipts fail closed
+  ---
+  duration_ms: 15.660366
+  type: 'test'
+  ...
+# Subtest: expiry rejects new answers but returns original receipt; incomplete close retries safely
+ok 5 - expiry rejects new answers but returns original receipt; incomplete close retries safely
+  ---
+  duration_ms: 22.382637
+  type: 'test'
+  ...
+# Subtest: body limits and invalid answers do not append evidence
+ok 6 - body limits and invalid answers do not append evidence
+  ---
+  duration_ms: 9.30723
+  type: 'test'
+  ...
+# Subtest: release retries preserve one session/start event and stored JSON key order is irrelevant
+ok 7 - release retries preserve one session/start event and stored JSON key order is irrelevant
+  ---
+  duration_ms: 3.706923
+  type: 'test'
+  ...
+# Subtest: concurrent conflicting answers cannot both occupy the same event slot
+ok 8 - concurrent conflicting answers cannot both occupy the same event slot
+  ---
+  duration_ms: 27.360544
+  type: 'test'
+  ...
+# Subtest: assessment cannot bypass the explicit tactical handoff
+ok 9 - assessment cannot bypass the explicit tactical handoff
+  ---
+  duration_ms: 7.103786
+  type: 'test'
+  ...
+# Subtest: verified math carries across sessions; tactical outcome and requested level do not grant credit
+ok 10 - verified math carries across sessions; tactical outcome and requested level do not grant credit
+  ---
+  duration_ms: 56.759457
+  type: 'test'
+  ...
+# Subtest: hinted success, active sessions and other users cannot advance cross-session practice
+ok 11 - hinted success, active sessions and other users cannot advance cross-session practice
+  ---
+  duration_ms: 38.348948
+  type: 'test'
+  ...
+# Subtest: tampered or incomplete closed history fails closed instead of seeding another level
+ok 12 - tampered or incomplete closed history fails closed instead of seeding another level
+  ---
+  duration_ms: 20.21237
+  type: 'test'
+  ...
+# Subtest: progress route stays disabled before database access
+ok 13 - progress route stays disabled before database access
+  ---
+  duration_ms: 0.38165
+  type: 'test'
+  ...
+# Subtest: legacy signed releases without initial level replay and seed new practice
+ok 14 - legacy signed releases without initial level replay and seed new practice
+  ---
+  duration_ms: 39.596215
+  type: 'test'
+  ...
+# Subtest: recent history is bounded and explicitly reports older sessions
+ok 15 - recent history is bounded and explicitly reports older sessions
+  ---
+  duration_ms: 330.870245
+  type: 'test'
+  ...
+# Subtest: PRIM3 keeps 21 source units and builds exactly 66 LMS modules
+ok 16 - PRIM3 keeps 21 source units and builds exactly 66 LMS modules
+  ---
+  duration_ms: 15.687345
+  type: 'test'
+  ...
+# Subtest: the first three modules are certification foundations with no song or episode attachment
+ok 17 - the first three modules are certification foundations with no song or episode attachment
+  ---
+  duration_ms: 2.96976
+  type: 'test'
+  ...
+# Subtest: authored coursework is separated from the controller and blocks forbidden dash punctuation
+ok 18 - authored coursework is separated from the controller and blocks forbidden dash punctuation
+  ---
+  duration_ms: 3.36653
+  type: 'test'
+  ...
+# Subtest: High Alert is shifted to M04 through M06 and White Grey Black Hat is shifted to M07 through M09
+ok 19 - High Alert is shifted to M04 through M06 and White Grey Black Hat is shifted to M07 through M09
+  ---
+  duration_ms: 1.821869
+  type: 'test'
+  ...
+# Subtest: hat and box material remains separate in the curriculum adapter
+ok 20 - hat and box material remains separate in the curriculum adapter
+  ---
+  duration_ms: 1.058145
+  type: 'test'
+  ...
+# Subtest: team role source unit still separates red and blue from purple and white
+ok 21 - team role source unit still separates red and blue from purple and white
+  ---
+  duration_ms: 2.584268
+  type: 'test'
+  ...
+# Subtest: Security Plus and Network Plus are mandatory complete coverage targets
+ok 22 - Security Plus and Network Plus are mandatory complete coverage targets
+  ---
+  duration_ms: 1.638674
+  type: 'test'
+  ...
+# Subtest: active LMS documentation no longer treats 63 as the whole course
+ok 23 - active LMS documentation no longer treats 63 as the whole course
+  ---
+  duration_ms: 1.5168
+  type: 'test'
+  ...
+# Subtest: course access and progress are private to the house owner (owner, 2026-11-03)
+ok 24 - course access and progress are private to the house owner (owner, 2026-11-03)
+  ---
+  duration_ms: 1.608385
+  type: 'test'
+  ...
+# Subtest: new module meanings use new remote and local progress namespaces
+ok 25 - new module meanings use new remote and local progress namespaces
+  ---
+  duration_ms: 2.015807
+  type: 'test'
+  ...
+# Subtest: PRIM3 routes remain inside the canonical mccluster Worker
+ok 26 - PRIM3 routes remain inside the canonical mccluster Worker
+  ---
+  duration_ms: 1.167951
+  type: 'test'
+  ...
+# Subtest: source provenance, foundation curriculum and enrichment are distinguished
+ok 27 - source provenance, foundation curriculum and enrichment are distinguished
+  ---
+  duration_ms: 0.953556
+  type: 'test'
+  ...
+# Subtest: protected owner source remains uninvented
+ok 28 - protected owner source remains uninvented
+  ---
+  duration_ms: 1.232947
+  type: 'test'
+  ...
+# Subtest: the API exposes all instructional modules and the original source units
+ok 29 - the API exposes all instructional modules and the original source units
+  ---
+  duration_ms: 1.239634
+  type: 'test'
+  ...
+# Subtest: the lesson certification map contains exactly the fixed sixty six modules
+ok 30 - the lesson certification map contains exactly the fixed sixty six modules
+  ---
+  duration_ms: 6.422691
+  type: 'test'
+  ...
+# Subtest: all twenty one PRIM3 source slots map to exactly three consecutive LMS modules
+ok 31 - all twenty one PRIM3 source slots map to exactly three consecutive LMS modules
+  ---
+  duration_ms: 1.988016
+  type: 'test'
+  ...
+# Subtest: the planned module map assigns every numbered objective on both mandatory exams
+ok 32 - the planned module map assigns every numbered objective on both mandatory exams
+  ---
+  duration_ms: 9.844568
+  type: 'test'
+  ...
+# Subtest: the concept crosswalk covers every source slot without inventing the protected open song
+ok 33 - the concept crosswalk covers every source slot without inventing the protected open song
+  ---
+  duration_ms: 1.466334
+  type: 'test'
+  ...
+# Subtest: every concept exam reference is valid and empty mappings remain legal
+ok 34 - every concept exam reference is valid and empty mappings remain legal
+  ---
+  duration_ms: 1.181122
+  type: 'test'
+  ...
+# Subtest: lesson map song identities agree with the source concept crosswalk
+ok 35 - lesson map song identities agree with the source concept crosswalk
+  ---
+  duration_ms: 1.994106
+  type: 'test'
+  ...
+# Subtest: coverage contract points to the comprehensive maps without claiming planned work is complete
+ok 36 - coverage contract points to the comprehensive maps without claiming planned work is complete
+  ---
+  duration_ms: 1.942144
+  type: 'test'
+  ...
+# Subtest: the LMS is house-owner only today, behind one switch
+ok 37 - the LMS is house-owner only today, behind one switch
+  ---
+  duration_ms: 36.90515
+  type: 'test'
+  ...
+# Subtest: the registry serves every pack with its version, and the catalog says "prepares you for"
+ok 38 - the registry serves every pack with its version, and the catalog says "prepares you for"
+  ---
+  duration_ms: 6.824006
+  type: 'test'
+  ...
+# Subtest: a session must name a real pack, version and scenario, and is never LIVE
+ok 39 - a session must name a real pack, version and scenario, and is never LIVE
+  ---
+  duration_ms: 10.520544
+  type: 'test'
+  ...
+# Subtest: evidence is validated against the scenario and closed sessions are final
+ok 40 - evidence is validated against the scenario and closed sessions are final
+  ---
+  duration_ms: 13.625485
+  type: 'test'
+  ...
+# Subtest: certificates upload to the learner's own private folder and start self-reported
+ok 41 - certificates upload to the learner's own private folder and start self-reported
+  ---
+  duration_ms: 4.989769
+  type: 'test'
+  ...
+# Subtest: reviewers verify other people's certificates and rate above the automated ceiling
+ok 42 - reviewers verify other people's certificates and rate above the automated ceiling
+  ---
+  duration_ms: 10.902209
+  type: 'test'
+  ...
+# Subtest: pathway status: official course, then uploaded evidence, then drills unlock
+ok 43 - pathway status: official course, then uploaded evidence, then drills unlock
+  ---
+  duration_ms: 13.170717
+  type: 'test'
+  ...
+# Subtest: every learner-facing pathway step links the issuer and never claims certification
+ok 44 - every learner-facing pathway step links the issuer and never claims certification
+  ---
+  duration_ms: 0.770123
+  type: 'test'
+  ...
+# Subtest: HSEEP exercises: real types, EEG criteria from the pack, owners before a final AAR/IP
+ok 45 - HSEEP exercises: real types, EEG criteria from the pack, owners before a final AAR/IP
+  ---
+  duration_ms: 37.486452
+  type: 'test'
+  ...
+# Subtest: event validation is strict about payload size and types
+ok 46 - event validation is strict about payload size and types
+  ---
+  duration_ms: 1.62646
+  type: 'test'
+  ...
+# Subtest: dispatcher registers the private level handler ahead of general PRIM3 learning routes
+ok 47 - dispatcher registers the private level handler ahead of general PRIM3 learning routes
+  ---
+  duration_ms: 10.118919
+  type: 'test'
+  ...
+# Subtest: guests and ordinary members cannot read, save, publish, or archive; authentication runs before storage
+ok 48 - guests and ordinary members cannot read, save, publish, or archive; authentication runs before storage
+  ---
+  duration_ms: 39.07447
+  type: 'test'
+  ...
+# Subtest: missing authorization dependency and failed owner lookup fail closed without internal details
+ok 49 - missing authorization dependency and failed owner lookup fail closed without internal details
+  ---
+  duration_ms: 2.127418
+  type: 'test'
+  ...
+# Subtest: catalog exposes only the pinned 24-asset metadata set, with no caller-defined URL
+ok 50 - catalog exposes only the pinned 24-asset metadata set, with no caller-defined URL
+  ---
+  duration_ms: 2.011099
+  type: 'test'
+  ...
+# Subtest: draft creation validates the level then binds the actor to authenticated identity
+ok 51 - draft creation validates the level then binds the actor to authenticated identity
+  ---
+  duration_ms: 9.780652
+  type: 'test'
+  ...
+# Subtest: unknown asset IDs, external asset URLs, transforms and extra code fields are rejected before writing
+ok 52 - unknown asset IDs, external asset URLs, transforms and extra code fields are rejected before writing
+  ---
+  duration_ms: 8.660281
+  type: 'test'
+  ...
+# Subtest: full transformed footprints and non-centered 128–256-cell bounds follow the editor compiler
+ok 53 - full transformed footprints and non-centered 128–256-cell bounds follow the editor compiler
+  ---
+  duration_ms: 0.390598
+  type: 'test'
+  ...
+# Subtest: oversized streamed bodies, malformed JSON and content-type mistakes cannot reach storage
+ok 54 - oversized streamed bodies, malformed JSON and content-type mistakes cannot reach storage
+  ---
+  duration_ms: 1.945818
+  type: 'test'
+  ...
+# Subtest: save needs an expected revision and matching immutable document ID
+ok 55 - save needs an expected revision and matching immutable document ID
+  ---
+  duration_ms: 1.309875
+  type: 'test'
+  ...
+# Subtest: revision conflicts become a clear 409 rather than overwriting or retrying
+ok 56 - revision conflicts become a clear 409 rather than overwriting or retrying
+  ---
+  duration_ms: 1.371297
+  type: 'test'
+  ...
+# Subtest: list returns metadata only and applies bounded pagination
+ok 57 - list returns metadata only and applies bounded pagination
+  ---
+  duration_ms: 1.597133
+  type: 'test'
+  ...
+# Subtest: publishing requires E/R/T and actual routes to the relay and extraction
+ok 58 - publishing requires E/R/T and actual routes to the relay and extraction
+  ---
+  duration_ms: 26.874097
+  type: 'test'
+  ...
+# Subtest: unsupported rooftop spawns and teleport traversal costs fail the canonical playability check
+ok 59 - unsupported rooftop spawns and teleport traversal costs fail the canonical playability check
+  ---
+  duration_ms: 9.224755
+  type: 'test'
+  ...
+# Subtest: a route that requires an unaffordable traversal cannot be published as playable
+ok 60 - a route that requires an unaffordable traversal cannot be published as playable
+  ---
+  duration_ms: 5.650286
+  type: 'test'
+  ...
+# Subtest: a save racing publication cannot silently publish the newer draft
+ok 61 - a save racing publication cannot silently publish the newer draft
+  ---
+  duration_ms: 19.682584
+  type: 'test'
+  ...
+# Subtest: a playable publication pins a version; DELETE archives without a hard-delete database call
+ok 62 - a playable publication pins a version; DELETE archives without a hard-delete database call
+  ---
+  duration_ms: 17.251084
+  type: 'test'
+  ...
+# Subtest: an absent migration reports storage unavailable rather than a fictitious empty catalog
+ok 63 - an absent migration reports storage unavailable rather than a fictitious empty catalog
+  ---
+  duration_ms: 2.472863
+  type: 'test'
+  ...
+# Subtest: storage is asked without redirect: error (workerd throws on it); a redirect answer is storage unavailable
+ok 64 - storage is asked without redirect: error (workerd throws on it); a redirect answer is storage unavailable
+  ---
+  duration_ms: 32.786438
+  type: 'test'
+  ...
+# Subtest: publication is decided by the game itself: the Forge document exported to the level shape and run through the vendored resolver
+ok 65 - publication is decided by the game itself: the Forge document exported to the level shape and run through the vendored resolver
+  ---
+  duration_ms: 12.218249
+  type: 'test'
+  ...
+# Subtest: Mission Variant Compiler prefers a valid variant targeting the learner review concept
+ok 66 - Mission Variant Compiler prefers a valid variant targeting the learner review concept
+  ---
+  duration_ms: 2.946976
+  type: 'test'
+  ...
+# Subtest: Scaffolding changes distractor budget without changing technical truth
+ok 67 - Scaffolding changes distractor budget without changing technical truth
+  ---
+  duration_ms: 0.331932
+  type: 'test'
+  ...
+# Subtest: Transfer challenge can expose authored optional objectives
+ok 68 - Transfer challenge can expose authored optional objectives
+  ---
+  duration_ms: 0.156874
+  type: 'test'
+  ...
+# Subtest: Variant Compiler rejects any readiness profile that removed a required tool
+ok 69 - Variant Compiler rejects any readiness profile that removed a required tool
+  ---
+  duration_ms: 0.487525
+  type: 'test'
+  ...
+# Subtest: Lab recipe compiler accepts only bounded isolated primitives and approved templates
+ok 70 - Lab recipe compiler accepts only bounded isolated primitives and approved templates
+  ---
+  duration_ms: 0.484864
+  type: 'test'
+  ...
+# Subtest: Lab recipe compiler rejects freeform command execution
+ok 71 - Lab recipe compiler rejects freeform command execution
+  ---
+  duration_ms: 0.161853
+  type: 'test'
+  ...
+# Subtest: Lab recipe compiler rejects public or unrestricted egress
+ok 72 - Lab recipe compiler rejects public or unrestricted egress
+  ---
+  duration_ms: 0.218164
+  type: 'test'
+  ...
+# Subtest: Lab recipe compiler requires deterministic teardown at both ends of the recipe
+ok 73 - Lab recipe compiler requires deterministic teardown at both ends of the recipe
+  ---
+  duration_ms: 0.163654
+  type: 'test'
+  ...
+# Subtest: a country returns its latest brief and reactions with publisher links
+ok 74 - a country returns its latest brief and reactions with publisher links
+  ---
+  duration_ms: 33.30426
+  type: 'test'
+  ...
+# Subtest: without a country it returns one latest brief per agent
+ok 75 - without a country it returns one latest brief per agent
+  ---
+  duration_ms: 1.746374
+  type: 'test'
+  ...
+# Subtest: only the house owner may read; bad input and methods are refused
+ok 76 - only the house owner may read; bad input and methods are refused
+  ---
+  duration_ms: 1.861096
+  type: 'test'
+  ...
+# Subtest: public PRIM copy assigns one learning modality to each letter
+ok 77 - public PRIM copy assigns one learning modality to each letter
+  ---
+  duration_ms: 8.152083
+  type: 'test'
+  ...
+# Subtest: PRIM dashboard exposes four modality meters and three exam trackers
+ok 78 - PRIM dashboard exposes four modality meters and three exam trackers
+  ---
+  duration_ms: 2.076653
+  type: 'test'
+  ...
+# Subtest: tracking uses the existing authenticated PRIM3 progress API and mastery field
+ok 79 - tracking uses the existing authenticated PRIM3 progress API and mastery field
+  ---
+  duration_ms: 4.102411
+  type: 'test'
+  ...
+# Subtest: objective tracker reads all three certification maps without making A Plus a completion gate
+ok 80 - objective tracker reads all three certification maps without making A Plus a completion gate
+  ---
+  duration_ms: 2.17377
+  type: 'test'
+  ...
+# Subtest: backend contract preserves Cloudflare Supabase and VPS authority boundaries
+ok 81 - backend contract preserves Cloudflare Supabase and VPS authority boundaries
+  ---
+  duration_ms: 1.564778
+  type: 'test'
+  ...
+# Subtest: Training Range 01 preserves the complete required tool floor at low mastery
+ok 82 - Training Range 01 preserves the complete required tool floor at low mastery
+  ---
+  duration_ms: 13.093855
+  type: 'test'
+  ...
+# Subtest: readiness adaptation changes support without changing the fairness contract
+ok 83 - readiness adaptation changes support without changing the fairness contract
+  ---
+  duration_ms: 3.6317
+  type: 'test'
+  ...
+# Subtest: weak CIA concept evidence deterministically selects the matching approved variant
+ok 84 - weak CIA concept evidence deterministically selects the matching approved variant
+  ---
+  duration_ms: 2.002301
+  type: 'test'
+  ...
+# Subtest: scaffolding controls nonmaterial evidence density and never required evidence
+ok 85 - scaffolding controls nonmaterial evidence density and never required evidence
+  ---
+  duration_ms: 2.883494
+  type: 'test'
+  ...
+# Subtest: technical truth stays fixed after deployment
+ok 86 - technical truth stays fixed after deployment
+  ---
+  duration_ms: 2.359182
+  type: 'test'
+  ...
+# Subtest: a correct mission path writes all four canonical evidence traces
+ok 87 - a correct mission path writes all four canonical evidence traces
+  ---
+  duration_ms: 3.328511
+  type: 'test'
+  ...
+# Subtest: wrong decisions consume the mission window and can terminate the attempt
+ok 88 - wrong decisions consume the mission window and can terminate the attempt
+  ---
+  duration_ms: 3.072194
+  type: 'test'
+  ...
+# Subtest: all three authored variants are solvable through the same deterministic evidence cycle
+ok 89 - all three authored variants are solvable through the same deterministic evidence cycle
+  ---
+  duration_ms: 2.410898
+  type: 'test'
+  ...
+# Subtest: the browser vertical slice gates on M01 and writes mission evidence through the existing M Account progress route
+ok 90 - the browser vertical slice gates on M01 and writes mission evidence through the existing M Account progress route
+  ---
+  duration_ms: 2.20872
+  type: 'test'
+  ...
+# Subtest: Training Range author CSS cannot override HTML hidden state
+ok 91 - Training Range author CSS cannot override HTML hidden state
+  ---
+  duration_ms: 8.615194
+  type: 'test'
+  ...
+# Subtest: Training Range gate action starts hidden and learner shell starts hidden
+ok 92 - Training Range gate action starts hidden and learner shell starts hidden
+  ---
+  duration_ms: 1.995392
+  type: 'test'
+  ...
+# Subtest: successful readiness compilation removes the gate before rendering the range
+ok 93 - successful readiness compilation removes the gate before rendering the range
+  ---
+  duration_ms: 5.088365
+  type: 'test'
+  ...
+# Subtest: strong Principles evidence earns preparation and transfer challenge without changing the required tool floor
+ok 94 - strong Principles evidence earns preparation and transfer challenge without changing the required tool floor
+  ---
+  duration_ms: 2.56262
+  type: 'test'
+  ...
+# Subtest: developing learner receives more scaffolding while retaining every required tool
+ok 95 - developing learner receives more scaffolding while retaining every required tool
+  ---
+  duration_ms: 2.045815
+  type: 'test'
+  ...
+# Subtest: Rhythm and Immersion create support resources but never inflate Principles readiness
+ok 96 - Rhythm and Immersion create support resources but never inflate Principles readiness
+  ---
+  duration_ms: 0.455567
+  type: 'test'
+  ...
+# Subtest: tactical challenge stays independent from technical challenge
+ok 97 - tactical challenge stays independent from technical challenge
+  ---
+  duration_ms: 0.438851
+  type: 'test'
+  ...
+# Subtest: readiness engine rejects a mission that does not declare a fair minimum toolset
+ok 98 - readiness engine rejects a mission that does not declare a fair minimum toolset
+  ---
+  duration_ms: 0.553385
+  type: 'test'
+  ...
+# Subtest: published readiness level vocabulary stays stable
+ok 99 - published readiness level vocabulary stays stable
+  ---
+  duration_ms: 0.241004
+  type: 'test'
+  ...
+# Subtest: Security Plus surgical ledger covers all 28 objectives with topic families and LEARN homes
+ok 100 - Security Plus surgical ledger covers all 28 objectives with topic families and LEARN homes
+  ---
+  duration_ms: 8.378943
+  type: 'test'
+  ...
+# Subtest: Network Plus surgical ledger covers all 25 objectives with topic families and LEARN homes
+ok 101 - Network Plus surgical ledger covers all 25 objectives with topic families and LEARN homes
+  ---
+  duration_ms: 2.934941
+  type: 'test'
+  ...
+# Subtest: A Plus v15 is tracked as a 63 objective precursor overlay and is not a completion gate
+ok 102 - A Plus v15 is tracked as a 63 objective precursor overlay and is not a completion gate
+  ---
+  duration_ms: 1.100713
+  type: 'test'
+  ...
+# Subtest: overlap graph credits shared concept mastery without duplicate conventional work
+ok 103 - overlap graph credits shared concept mastery without duplicate conventional work
+  ---
+  duration_ms: 2.021092
+  type: 'test'
+  ...
+# Subtest: coverage contract keeps 66 modules and distinguishes mandatory exams from A Plus precursor tracking
+ok 104 - coverage contract keeps 66 modules and distinguishes mandatory exams from A Plus precursor tracking
+  ---
+  duration_ms: 2.298161
+  type: 'test'
+  ...
+# Subtest: modality contract makes LEARN complete and keeps music story and game as reinforcement or application
+ok 105 - modality contract makes LEARN complete and keeps music story and game as reinforcement or application
+  ---
+  duration_ms: 1.232015
+  type: 'test'
+  ...
+1..105
+# tests 105
+# suites 0
+# pass 105
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 788.970961
+exit=0

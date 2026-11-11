@@ -394,3 +394,29 @@ test('event names are normalised to dotted lowercase identifiers', () => {
   assert.equal(eventName('Social Publish/Retried'), 'social_publish_retried');
   assert.equal(eventName('  '), null);
 });
+
+test('the fal webhook route is recorded without its per-job hint or token', async () => {
+  const backend = mockBackend();
+  const { pending, ctx } = waitCtx();
+  try {
+    const token = 'A'.repeat(43);
+    const path = `/v1/media/webhooks/fal/11111111-1111-4111-8111-111111111111/${token}`;
+    await observeControlRequest(controlRequest({ method: 'POST', path }), env(), ctx, async () => json({ ok: true }, 200));
+    await Promise.all(pending);
+    const rows = backend.writes().flatMap((write) => write.body);
+    assert.ok(rows.length > 0, 'expected a retained event write');
+    for (const row of rows) {
+      assert.equal(row.route, '/v1/media/webhooks/fal');
+      assert.equal(JSON.stringify(row).includes(token), false, 'the token is in no column');
+    }
+    /* the plain webhook path and unrelated routes are unchanged */
+    const plain = mockBackend();
+    const second = waitCtx();
+    try {
+      await observeControlRequest(controlRequest({ method: 'POST', path: '/v1/media/webhooks/fal' }), env(), second.ctx, async () => json({ ok: true }, 200));
+      await Promise.all(second.pending);
+      assert.equal(plain.writes().flatMap((write) => write.body)[0].route, '/v1/media/webhooks/fal');
+    } finally { plain.restore(); }
+  } finally { backend.restore(); }
+});
+

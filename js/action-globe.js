@@ -404,6 +404,7 @@ function homeAltitude(){
 }
 function homePosition(){return Cesium.Cartesian3.fromDegrees(EDITORIAL?-35:0,EDITORIAL?25:15,homeAltitude())}
 
+const environmentPins=window.MCC_ENVIRONMENT_PINS?.create(()=>viewer,()=>window.Cesium,msg=>tell(msg));
 let readyMessage=null;function tell(msg){if(EXPLORE)exploreTell(msg);if(!parentFrame)return;try{parentFrame.postMessage(msg,location.origin)}catch(e){}}
 /* on the full pane there is no parent to tell, so the layer line and a guest's lock are painted here, in the World's own words
    (js/mnet.js paintLayerLine). The Vaunt lead is the owner's referral, the same one the World shows. */
@@ -442,6 +443,8 @@ function focusMission(id){
 }
 window.addEventListener('message',e=>{if(!parentFrame||e.source!==parentFrame||e.origin!==location.origin)return;const d=e.data||{};
 if(d.type==='hu:hello'){if(readyMessage)tell(readyMessage);return}
+if(d.type==='hu:environment-pins'&&!ANALYTICS){environmentPins?.set(d);return}
+if(d.type==='hu:environment-focus'&&!ANALYTICS){environmentPins?.focus(d.id);return}
 if(d.type==='hu:travel-mode'&&!ANALYTICS){setTravelMode(d.on===true);return}
 if(d.type==='hu:map-pick-mode'&&!ANALYTICS){travelPickKind(d.kind);return}
 if(d.type==='hu:completed-missions'&&!ANALYTICS){setCompletedEvents(d.events,d.on);return}
@@ -599,7 +602,8 @@ function styleScene(){const sc=viewer.scene;sc.backgroundColor=Cesium.Color.from
   // Sharpen small Retina globes; cap large canvases at an 800k-pixel budget.
   sizeEditorialResolution();
   sc.backgroundColor=Cesium.Color.fromCssColorString('#090b0d');sc.globe.baseColor=Cesium.Color.fromCssColorString('#082b4b');
-  if(sc.skyBox)sc.skyBox.show=false;if(sc.sun)sc.sun.show=false;if(sc.moon)sc.moon.show=false;
+  // Keep the existing Cesium starfield in the public World, including embedded globes.
+  if(sc.skyBox)sc.skyBox.show=true;if(sc.sun)sc.sun.show=false;if(sc.moon)sc.moon.show=false;
   /* DAY AND NIGHT BY THE REAL SUN (owner, 2026-10-19): the lit side and the dark side follow the actual time, not a studio lamp.
      The night side carries NASA's city lights; the Sun disc itself stays hidden on the editorial globe. */
   sc.globe.enableLighting=true;sc.light=new Cesium.SunLight();sc.globe.dynamicAtmosphereLightingFromSun=true;sc.globe.atmosphereSaturationShift=.1;sc.globe.atmosphereBrightnessShift=-.05;
@@ -1017,7 +1021,7 @@ window.addEventListener('message',event=>{
  const m=event.data;if(m?.schema!=='mccluster.spatial-lifecycle/v1')return;
  if(m.type==='bridgeport:enter'&&['bridgeport-main-elm','bridgeport-main-fairfield','bridgeport-middle-golden-hill','bridgeport-main-south','bridgeport-main-golden-hill','golden-hill-west'].includes(m.entranceId)){if(m.regionId&&!['bridgeport-golden-hill.v1','bridgeport-downtown.v2'].includes(m.regionId))return;if(bridgeportLoading)bridgeportCancel();bridgeportRegion=m.regionId||'bridgeport-golden-hill.v1';bridgeportEntrance=m.entranceId;document.getElementById('bridgeportEnter')?.click();}
  if(m.type==='bridgeport:leave')bridgeportCancel(true);
- if(m.type==='bridgeport:preview')window.BridgeportSlice?.previewDestination(m.destinationId);
+ if(m.type==='bridgeport:preview')window.BridgeportSlice?.previewDestination(m.destinationId,m.requestId);
  if(m.type==='bridgeport:closures')window.BridgeportSlice?.setClosures(m.closedRoadIds);
  if(m.type==='bridgeport:confirm')window.BridgeportSlice?.confirm();
 });
@@ -1065,6 +1069,7 @@ window.HuGlobe=Object.freeze({
  hideInspection:()=>closeSheet(true),
  openAircraft:contact=>openAircraft(contact),openSatellite:sat=>openSatellite(sat),satPosition:sat=>satPos(sat,new Date()),
  ion:()=>ion,
+ ionState:()=>({configured:!!ion,terrain:!!ionGround,imagery:!!(ionImagery&&ionImagery.ready),buildings:!!ionBuildings}),
  /* the base map, the zoom and near-me buttons, and the World's own mission pins and member regions, for Halo's own controls */
  basemap:Object.freeze({get:()=>layerMode,set:m=>{if(viewer)setLayer(m==='map'?'map':'auto')}}),
  zoom:inward=>{if(!viewer)return;const h=viewer.camera.positionCartographic.height;inward?viewer.camera.zoomIn(h*.45):viewer.camera.zoomOut(h*.8)},
@@ -1087,7 +1092,7 @@ viewer.screenSpaceEventHandler.setInputAction(p=>{
   if(coordinates){const kind=mapPickKind;travelPickKind(null);tell({type:'hu:travel-location-selected',kind,coordinates})}
   return;
  }
- const e=pickSolid(p.position);if(window.HaloConsole&&HaloConsole.pick(e))return;if(window.BridgeportSlice?.pick(e,p.position))return;if(e&&e.id&&e.id.layer==='satellites'){openSatellite(e.id.sat);return}const selectedSat=e?.id?.properties?.satellite?.getValue?.();if(selectedSat){openSatellite(selectedSat);return}const launch=e?.id?.properties?.launch?.getValue?.();if(launch){openLaunch(launch);return}if(e&&e.id&&e.id.layer==='flights'){openAircraft(e.id);return}if(e&&e.id&&e.id.layer==='cctv'){openCamera(String(e.id.cam));return}const ac=e?.id?.properties?.analyticsCode?.getValue?.();if(ac){selectAnalytics(ac,false);tell({type:'hu:analytics-region',code:ac});return}const newsId=e?.id?.properties?.worldNewsId?.getValue?.();if(newsId&&publicNewsOn){tell({type:'hu:world-news-selected',id:newsId});return}const completedId=e?.id?.properties?.completedEventId?.getValue?.();if(completedId&&selectCompletedEvent(completedId))return;const liveCode=e?.id?.properties?.liveCountry?.getValue?.();if(liveCode&&countries){countries.select(liveCode);return}const n=e?.id?.properties?.missionIndex?.getValue();if(Number.isInteger(n)){show(n);announce();return;}if(travelMode&&(roadRoute||currentLocation))return;if(countries&&!(e&&e.id&&e.id.properties&&e.id.properties.region_key)&&countries.click(p.position))return;const regionKey=e?.id?.properties?.region_key?.getValue?.();if(regionKey){const match=regions.find(r=>r.region_key===regionKey);if(match)setRegion(match);}},Cesium.ScreenSpaceEventType.LEFT_CLICK);
+ const e=pickSolid(p.position);if(window.HaloConsole&&HaloConsole.pick(e))return;if(environmentPins?.pick(e))return;if(window.BridgeportSlice?.pick(e,p.position))return;if(e&&e.id&&e.id.layer==='satellites'){openSatellite(e.id.sat);return}const selectedSat=e?.id?.properties?.satellite?.getValue?.();if(selectedSat){openSatellite(selectedSat);return}const launch=e?.id?.properties?.launch?.getValue?.();if(launch){openLaunch(launch);return}if(e&&e.id&&e.id.layer==='flights'){openAircraft(e.id);return}if(e&&e.id&&e.id.layer==='cctv'){openCamera(String(e.id.cam));return}const ac=e?.id?.properties?.analyticsCode?.getValue?.();if(ac){selectAnalytics(ac,false);tell({type:'hu:analytics-region',code:ac});return}const newsId=e?.id?.properties?.worldNewsId?.getValue?.();if(newsId&&publicNewsOn){tell({type:'hu:world-news-selected',id:newsId});return}const completedId=e?.id?.properties?.completedEventId?.getValue?.();if(completedId&&selectCompletedEvent(completedId))return;const liveCode=e?.id?.properties?.liveCountry?.getValue?.();if(liveCode&&countries){countries.select(liveCode);return}const n=e?.id?.properties?.missionIndex?.getValue();if(Number.isInteger(n)){show(n);announce();return;}if(travelMode&&(roadRoute||currentLocation))return;if(countries&&!(e&&e.id&&e.id.properties&&e.id.properties.region_key)&&countries.click(p.position))return;const regionKey=e?.id?.properties?.region_key?.getValue?.();if(regionKey){const match=regions.find(r=>r.region_key===regionKey);if(match)setRegion(match);}},Cesium.ScreenSpaceEventType.LEFT_CLICK);
 /* NEAR ME: the approximate place from this connection first (the Worker's request.cf, in the access map; never stored), then
    the precise one only if the browser asks the person and they allow it. Browsers enforce that prompt; nothing here gets around it. */
 $('nearMe').onclick=()=>{const ap=access&&access.approximate_location,apl=ap&&lonLat(ap.lon,ap.lat);if(apl&&viewer){viewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(apl[0],apl[1],1500000),duration:1.2});$('status').hidden=false;$('status').textContent='Near '+[ap.city,ap.region,ap.country].filter(Boolean).join(', ')+' (approximate, from your connection).'}
@@ -1098,6 +1103,7 @@ $('missionsLayer').onclick=()=>{showMissions=!showMissions;draw()};$('citiesLaye
 let touchY;const deck=$('deck');deck.addEventListener('touchstart',e=>{touchY=e.touches[0].clientY},{passive:true});deck.addEventListener('touchend',e=>{if(touchY===undefined)return;const d=e.changedTouches[0].clientY-touchY;if(Math.abs(d)>45)show(i+(d<0?1:-1));touchY=undefined},{passive:true});
 // Navigation can start as soon as the renderer is ready. Public mission RPCs
 // enrich this message later; they cannot hold a visitor's street map hostage.
+environmentPins?.draw();
 if(!ANALYTICS){readyMessage={type:'hu:globe-ready',missionIds:[],dataPending:true};tell(readyMessage)}
 try{[missions,cities]=await dataP;regions=cities.slice();const requestedSong=new URLSearchParams(location.search).get('song');if(requestedSong){missions=missions.filter(m=>String(m.song_title||'').toLocaleLowerCase()===requestedSong.toLocaleLowerCase());}allMissions=missions.slice();if(ANALYTICS||NO_MISSIONS){showMissions=false;showCities=false}draw();if(!ANALYTICS&&!NO_MISSIONS)drawBoundaries();$('status').textContent=missions.length||NO_MISSIONS?'':(requestedSong?'No approved regional missions are linked to this song yet.':'No approved globe missions published yet.');if(NO_MISSIONS)$('status').hidden=true;if(missions.length){$('status').hidden=true;setSelection(false)}renderFeed();if(countries&&countries.refresh)countries.refresh();readyMessage={type:'hu:globe-ready',missionIds:allMissions.map(m=>m.mission_id),missions:allMissions.slice(0,200).map(publicMission)};tell(readyMessage)}catch(e){if(leaving)return;$('status').textContent='Globe data is not available yet.';readyMessage={type:'hu:globe-ready',missionIds:[],dataUnavailable:true};tell(readyMessage);console.warn(e)}}
 // Layout and the parent-owned location request work even if WebGL cannot load.

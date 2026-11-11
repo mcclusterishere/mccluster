@@ -46,10 +46,45 @@
     } catch (e) { return null; }
   }
 
+  /* ONE CLOCK FOR "IS THIS SESSION FRESH?"
+
+     fresh() compares a session's expires_at with Date.now(), which is this
+     device's clock. The auth server's expires_at is a time on the server's
+     clock. Stored as sent, the comparison held only while the two clocks
+     agreed: a device an hour ahead, with one-hour tokens, read every token as
+     expired the moment it arrived, so every user(), api(), mUid(), touch(),
+     identities() and refreshIfNeeded() refreshed and rewrote both keys, and
+     every other open tab heard a storage event for each write. A device
+     behind kept offering a token the server had already expired.
+
+     expires_in is a duration, and a duration needs no shared clock. So the
+     expires_at stored here is on this device's clock, measured when the
+     answer arrives: now + expires_in. The answer lands a moment after the
+     token was issued, so the stamp runs late by at most one request's
+     flight, well inside the one-minute margin. The server's own expires_at
+     is kept beside it as server_expires_at, so nothing the server said is
+     lost. Only an answer the server has just given comes through here
+     (expires_in counts from then); a stored session is never written back
+     through it. An answer without expires_in keeps a server expires_at as
+     it was, and one with neither is given an hour, as before. Nothing
+     changes at the server, which still refuses an expired token. */
+  function stampExpiry(s) {
+    var now = Math.floor(Date.now() / 1000), life = Number(s.expires_in), server = Number(s.expires_at);
+    if (life > 0) {
+      if (server > 0) s.server_expires_at = server;
+      s.expires_at = now + life;
+    } else if (!(server > 0)) {
+      s.expires_at = now + 3600;
+    }
+    return s;
+  }
+
+  /* More than a minute left, both sides read on this device's clock. */
+  function fresh(s) { return !!(s && s.expires_at > Date.now() / 1000 + 60); }
+
   function writeSession(s) {
     if (!s) { del('localStorage', SESSION); del('localStorage', KEEP); return null; }
-    s.expires_at = s.expires_at || (Math.floor(Date.now() / 1000) + (s.expires_in || 3600));
-    var raw = JSON.stringify(s);
+    var raw = JSON.stringify(stampExpiry(s));
     set('localStorage', SESSION, raw);
     set('localStorage', KEEP, raw);
     return s;
@@ -236,8 +271,7 @@
     user: function () {
       var s = readSession();
       if (!s || !s.access_token) return Promise.resolve(null);
-      var fresh = s.expires_at && s.expires_at > (Date.now() / 1000) + 60;
-      var chain = fresh ? Promise.resolve(s) : MCC.refresh();
+      var chain = fresh(s) ? Promise.resolve(s) : MCC.refresh();
       return chain.then(function (session) {
         if (!session) return null;
         return authApi('user', { token: session.access_token });
@@ -276,7 +310,7 @@
     refreshIfNeeded: function () {
       var s = readSession();
       if (!s) return Promise.resolve(null);
-      if (s.expires_at && s.expires_at > (Date.now() / 1000) + 60) return Promise.resolve(s);
+      if (fresh(s)) return Promise.resolve(s);
       return MCC.refresh();
     },
 

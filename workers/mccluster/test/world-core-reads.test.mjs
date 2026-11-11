@@ -47,6 +47,8 @@ function withFetch(fn, { owners = [{ profile_id: OWNER }], bearerUser = null, is
     asked.push(href);
     const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
     if (href.includes('/auth/v1/user')) return bearerUser ? json(bearerUser) : json({}, 401);
+    /* The shared replay store (C5) answers the media POST's atomic nonce claim. */
+    if (href.endsWith('/rest/v1/core_signed_nonces')) return new Response(null, { status: 201 });
     if (href.includes('/rest/v1/orgs?')) return json([{ id: 'house-org' }]);
     if (href.includes('/rest/v1/org_members?') && href.includes('profile_id=eq.')) return json(isOwner ? [{ role: 'owner' }] : []);
     if (href.includes('/rest/v1/org_members?')) return json(owners);
@@ -262,7 +264,8 @@ test('a correctly signed media call still reaches media and keeps its nonce', as
   __resetCoreNonces();
   await withFetch(async (asked) => {
     const body = '{"jsonrpc":"2.0","id":1,"method":"tools/list"}';
-    const res = await entry.fetch(signed('/v1/media/mcp', { method: 'POST', body }), env, ctx);
+    const res = await entry.fetch(signed('/v1/media/mcp', { method: 'POST', body }), { ...env, CORE_REPLAY_STORE: 'supabase' }, ctx);
+    assert.ok(asked.some((u) => u.endsWith('/rest/v1/core_signed_nonces')), 'the mutating call claimed its nonce in the shared store');
     assert.notEqual(res.status, 401, 'the gate did not consume or refuse the signature');
     assert.notEqual(res.status, 403);
     assert.notEqual(res.status, 409);
