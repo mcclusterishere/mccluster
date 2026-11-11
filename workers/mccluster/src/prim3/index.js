@@ -1,3 +1,4 @@
+import { CHRONOLOGY_VERSION, SEMESTERS, episodeTerm } from './semester-progression.mjs';
 import { fail, reply } from '../lib/http.js';
 
 const DEFAULT_FEED = 'https://raw.githubusercontent.com/mcclusterishere/Prim3/main/learning/course/course-feed.json';
@@ -331,6 +332,7 @@ function expandUnit(unit, unitIndex) {
     unit_id: `U${String(unitIndex + 1).padStart(2, '0')}`,
     unit_sequence: unitIndex + 1,
     season: Number(unit.season),
+    chronology: episodeTerm(unitIndex + 1),
     episode_id: unit.episode_id,
     episode_title: unit.episode_title,
     song: unit.song ?? null,
@@ -406,6 +408,7 @@ function normalizedCourse(payload) {
     id: `U${String(index + 1).padStart(2, '0')}`,
     sequence: index + 1,
     season: Number(unit.season),
+    chronology: episodeTerm(index + 1),
     episode_id: unit.episode_id,
     episode_title: unit.episode_title,
     song: unit.song ?? null,
@@ -433,6 +436,9 @@ function normalizedCourse(payload) {
     subtitle: 'Program for Resilient Infrastructure Management',
     schema_version: '3.0.0',
     source_schema_version: payload.schema_version,
+    chronology_version: CHRONOLOGY_VERSION,
+    academic_duration_years: 3.5,
+    semesters: SEMESTERS,
     pass_mark: Number(sourceCourse.pass_mark || 80),
     progression: 'guided',
     account_required: true,

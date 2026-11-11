@@ -1,12 +1,12 @@
 {
   "note": "Exact copies of the PRIM3 tactical engine files, vendored for the tactics pages (courtyard preview, Transit / Relay and the Equity Uprise levels). Do not edit here; change them in mcclusterishere/Prim3 and re-copy. scripts/test/prim3-tactics-vendor.test.mjs checks these hashes.",
   "repository": "mcclusterishere/Prim3",
-  "ref": "codex/shared-city-engine-20261107",
-  "commit": "197bc2d8df4dc5638249125804eba752e534710e",
+  "ref": "codex/prim3-shared-fate-20261111",
+  "commit": "451f631400efa8d94360da452cfad26d231fa346",
   "files": {
     "tactical-resolver.mjs": {
       "from": "game/runtime/tactical-resolver.mjs",
-      "sha256": "ca29bf690301e734afdd05d87387758126c65d6891d64b91ed060e16eb407be3"
+      "sha256": "abff67cfcd96e21e28d12d94ea69db3dd7c260cc517ad6188e76c598d9100d6d"
     },
     "tactical-hints.mjs": {
       "from": "game/runtime/tactical-hints.mjs",
@@ -18,7 +18,24 @@
     },
     "tactical-metric-navigation.mjs": {
       "from": "game/runtime/tactical-metric-navigation.mjs",
-      "sha256": "fc747dfafd7e3fb41460c44376a290cb731fa00f4d0356707a9baa8411d0e0f7"
+      "sha256": "5991b73a9369c10acee076e0101bc459f1a95f1196726ad8ed9bb9e4228d44d5"
+    },
+    "hex-graph.mjs": {
+      "from": "game/runtime/hex-graph.mjs",
+      "sha256": "e332cc77d95520d57c833b550e874d97f423e32fc5e9b22318c6019393a3e042"
+    },
+    "semester-progression.mjs": {
+      "from": "game/runtime/semester-progression.mjs",
+      "sha256": "3511c20adf5429ef0726c775bbb0cfe2fa01242b79652774114eee98066656be"
+    },
+    "network-path-lab.mjs": {
+      "from": "game/runtime/network-path-lab.mjs",
+      "sha256": "f9941e7e4f0119a0454d5bb58290e35b3f688d0d536a095f4b56b5f3f9ea8bfc"
+    },
+    "shared-fate-lab.mjs": {
+      "from": "game/runtime/shared-fate-lab.mjs",
+      "sha256": "53622ed14252100cf8e8bc6240cd07f3d231e81387e0012b710437f29e373c7a"
     }
-  }
+  },
+  "publicationStatus": "Draft source PR https://github.com/mcclusterishere/Prim3/pull/24; merge and deployment require separate approval."
 }

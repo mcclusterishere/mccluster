@@ -246,7 +246,11 @@ export function createLevel3D(host, { level, onTap, onHover = null, onDoubleTap 
   for (const g of Object.values(proc)) world.add(g);
   // Level Forge props (levels/forge.mjs): kit pieces at their exact authored place and size, in world units; a plain
   // stand-in box until the kit mesh arrives. Scenery only: the rules already have them as tiles.
-  for (const p of SCENE.props || []) add(new THREE.BoxGeometry(p.w, Math.max(p.h, 0.01), p.d), p.kind === 'water' ? M_WATER : M_CONC, p.x, p.y + Math.max(p.h, 0.01) / 2, p.z, { cast: p.kind !== 'water' && p.kind !== 'ground', parent: proc.props });
+  for (const p of SCENE.props || []) {
+    // Authored roofless tactical cutaway: rendering only; collision/LOS retain full wall height.
+    const h = p.cutawayH ?? p.h;
+    add(new THREE.BoxGeometry(p.w, Math.max(h, 0.01), p.d), p.kind === 'water' ? M_WATER : p.kind === 'ground' ? M_ROOF : M_CONC, p.x, p.y + Math.max(h, 0.01) / 2, p.z, { cast: p.kind !== 'water' && p.kind !== 'ground', parent: proc.props });
+  }
   // a container is a real 40 ft box (12.19 × 2.44 m) standing in the middle of its 4 × 1 tile footprint
   const BOX_L = M(12.19), BOX_W = M(2.44);
   const boxDims = (c) => { const long = c.w >= c.d; return { long, w: long ? Math.min(BOX_L, c.w) : Math.min(BOX_W, c.w), d: long ? Math.min(BOX_W, c.d) : Math.min(BOX_L, c.d) }; };
@@ -451,16 +455,16 @@ export function createLevel3D(host, { level, onTap, onHover = null, onDoubleTap 
   rain.frustumCulled = false; scene.add(rain);
 
   /* ---------- overlays (instanced: a 64×64 board never builds thousands of meshes) ---------- */
-  const tileGeo = new THREE.PlaneGeometry(0.92, 0.92); tileGeo.rotateX(-Math.PI / 2);
+  const tileGeo = level.hexGrid ? new THREE.CircleGeometry(level.hexGrid.radius * .94, 6, Math.PI / 6) : new THREE.PlaneGeometry(0.92, 0.92); tileGeo.rotateX(-Math.PI / 2);
   const ovMat = (color, opacity) => new THREE.MeshBasicMaterial({ color, transparent: true, opacity, depthWrite: false, toneMapped: false });
   // reachable tiles read like the reference: a thin lit outline and a faint fill, so the ground shows through
   const tileTex = canvasTex(64, 64, (g) => { g.clearRect(0, 0, 64, 64); g.fillStyle = 'rgba(255,255,255,.16)'; g.fillRect(3, 3, 58, 58); g.strokeStyle = 'rgba(255,255,255,.95)'; g.lineWidth = 2.5; g.strokeRect(3, 3, 58, 58); }, false);
-  const reachMat = ovMat(0x22d3e6, 0.85); reachMat.map = tileTex;
+  const reachMat = ovMat(0x22d3e6, 0.85); if (!level.hexGrid) reachMat.map = tileTex;
   const reachMesh = new THREE.InstancedMesh(tileGeo, reachMat, W * H * 2); reachMesh.count = 0; reachMesh.renderOrder = 2; reachMesh.frustumCulled = false; scene.add(reachMesh);
-  const dashMat = ovMat(0xf59a23, 0.85); dashMat.map = tileTex;
+  const dashMat = ovMat(0xf59a23, 0.85); if (!level.hexGrid) dashMat.map = tileTex;
   const dashMesh = new THREE.InstancedMesh(tileGeo, dashMat, W * H * 2); dashMesh.count = 0; dashMesh.renderOrder = 2; dashMesh.frustumCulled = false; scene.add(dashMesh);
   const edgeGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(0.96, 0.001, 0.96));
-  const reachEdge = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.98, 0.98).rotateX(-Math.PI / 2), ovMat(0x22d3e6, 0.05), W * H * 2); reachEdge.count = 0; reachEdge.renderOrder = 1; reachEdge.frustumCulled = false; scene.add(reachEdge);
+  const reachEdge = new THREE.InstancedMesh(tileGeo.clone(), ovMat(0x22d3e6, 0.05), W * H * 2); reachEdge.count = 0; reachEdge.renderOrder = 1; reachEdge.frustumCulled = false; scene.add(reachEdge);
   const pathMesh = new THREE.InstancedMesh(tileGeo, ovMat(0xffb547, 0.32), 256); pathMesh.count = 0; pathMesh.renderOrder = 3; pathMesh.frustumCulled = false; scene.add(pathMesh);
   const hintMesh = new THREE.InstancedMesh(tileGeo, ovMat(0xffffff, 0.35), 256); hintMesh.count = 0; hintMesh.renderOrder = 3; hintMesh.frustumCulled = false; scene.add(hintMesh);
   const destFrame = new THREE.LineSegments(edgeGeo, new THREE.LineBasicMaterial({ color: 0xffb547, toneMapped: false })); destFrame.visible = false; scene.add(destFrame);
@@ -482,7 +486,22 @@ export function createLevel3D(host, { level, onTap, onHover = null, onDoubleTap 
   const gridFine = new THREE.LineBasicMaterial({ color: 0x5fe6f2, transparent: true, opacity: 0.14, depthWrite: false, toneMapped: false });
   const gridMat = new THREE.LineBasicMaterial({ color: 0x5fe6f2, transparent: true, opacity: 0.42, depthWrite: false, toneMapped: false });
   const gridMajor = new THREE.LineBasicMaterial({ color: 0x9ff3fb, transparent: true, opacity: 0.7, depthWrite: false, toneMapped: false });
-  { const minor = [], major = [], fine = [], put = (arr, ...v) => arr.push(...v);
+  if (level.hexGrid) {
+    const positions=[];
+    for (const ring of level.hexGrid.polygons) for(let i=0;i<ring.length;i++) { const a=ring[i],b=ring[(i+1)%ring.length]; positions.push(a.x,.03,a.y,b.x,.03,b.y); }
+    const geometry=new THREE.BufferGeometry(); geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+    gridGroup.add(new THREE.LineSegments(geometry,gridMat));
+    const coverPositions=[];
+    for(const c of level.hexGrid.cover || []) {
+      const x=c.x+Math.cos(c.bearing)*.43,y=c.y+Math.sin(c.bearing)*.43;
+      const dx=-Math.sin(c.bearing)*.23,dy=Math.cos(c.bearing)*.23;
+      coverPositions.push(x-dx,.08,y-dy,x+dx,.08,y+dy);
+      if(c.type==='HIGH')coverPositions.push(x-dx,.13,y-dy,x+dx,.13,y+dy);
+    }
+    const coverGeometry=new THREE.BufferGeometry();coverGeometry.setAttribute('position',new THREE.Float32BufferAttribute(coverPositions,3));
+    gridGroup.add(new THREE.LineSegments(coverGeometry,new THREE.LineBasicMaterial({color:0xffffff,depthTest:false,transparent:true,opacity:.9})));
+
+  } else { const minor = [], major = [], fine = [], put = (arr, ...v) => arr.push(...v);
     const isMajorX = (x) => (x - level.FRAME.x0) % 8 === 0, isMajorY = (y) => (level.FRAME.y0 - y + 1) % 8 === 0;
     const cut = (x, y) => !!canal && y >= canal.y && y < canal.y + canal.d && !SCENE.bridges.some((b) => x >= b.x && x < b.x + b.w && y >= b.y && y < b.y + b.d);
     for (let x = 0; x <= W; x += 1) for (let y = 0; y < H; y += 1) { if (cut(x, y) && cut(x - 1, y)) continue; put(isMajorX(x) ? major : minor, x - 0.5, 0.03, y - 0.5, x - 0.5, 0.03, y + 0.5); }
@@ -674,6 +693,8 @@ export function createLevel3D(host, { level, onTap, onHover = null, onDoubleTap 
      Each instance is fitted to the footprint and height of the object it stands for, so the rules
      (blockers, cover, heights) stay exactly what the level declares; the kit only changes the look. */
   async function loadKit() {
+    // Exact authored cutaway walls/floors must not disappear when a generic kit loads.
+    if (SCENE.authoredCutaway) return;
     try {
       const res = await fetch(new URL('catalog.json', KIT_ROOT)); if (!res.ok) return;
       const cat = await res.json(); if (destroyed) return;
@@ -889,7 +910,7 @@ export function createLevel3D(host, { level, onTap, onHover = null, onDoubleTap 
   const rayR = new THREE.Raycaster(), ndcR = new THREE.Vector2(), hitR = new THREE.Vector3(), plane0 = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
   function groundAt(px, py, r) { ndcR.set(px / r.width * 2 - 1, -(py / r.height) * 2 + 1); rayR.setFromCamera(ndcR, camera); return rayR.ray.intersectPlane(plane0, hitR) ? hitR.clone() : null; }
   function edgeRulers() {
-    if (!rulersOn || showcase) return '';
+    if (!rulersOn || showcase || level.hexGrid) return '';
     const r = renderer.domElement.getBoundingClientRect(); if (r.width < 10) return '';
     let out = '';
     const along = (p0, p1, pick, label, place) => { // walk a screen edge, chip each grid line it crosses
@@ -1062,7 +1083,7 @@ export function createLevel3D(host, { level, onTap, onHover = null, onDoubleTap 
       seen.add(u.id);
       let a = actors.get(u.id);
       if (!a) { a = makeActor(u); a.face = faceFor(u, m); a.g.position.set(u.x, surfaceHeight(u.x, u.y, u.z) + 0.02, u.y); actors.set(u.id, a); unitsGroup.add(a.g); }
-      const end = a.walk ? a.walk.pts[a.walk.pts.length - 1] : { x: Math.round(a.g.position.x), y: Math.round(a.g.position.z), z: a.unit.z };
+      const end = a.walk ? a.walk.pts[a.walk.pts.length - 1] : { x: a.g.position.x, y: a.g.position.z, z: a.unit.z };
       if (end.x !== u.x || end.y !== u.y || (end.z ?? a.unit.z) !== u.z) {
         const path = m.moves && m.moves[u.id];
         if (path && path.length && !reducedMotion) {
@@ -1107,6 +1128,7 @@ export function createLevel3D(host, { level, onTap, onHover = null, onDoubleTap 
     placeCamera(); ray.setFromCamera(ndc, camera);
     const bodies = ray.intersectObjects(unitsGroup.children, true);
     if (bodies.length) { let o = bodies[0].object; while (o && !o.userData.unitId) o = o.parent; const a = o && actors.get(o.userData.unitId); if (a) return { x: a.unit.x, y: a.unit.y, z: a.unit.z, unitId: a.unit.id }; }
+    if (level.hexGrid) return ray.ray.intersectPlane(ground, hit) ? level.hexGrid.pick(hit.x, hit.z) : null;
     // every walkable surface the ray crosses, top first, then the ground; a tile the current reach
     // lights wins (so a tap through a see-through roof can still mean the floor below)
     const cands = [];

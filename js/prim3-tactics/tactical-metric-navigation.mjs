@@ -7,6 +7,7 @@ export function normalizeMetricNavigation(input) {
       !Array.isArray(n.nodes) || !n.nodes.length || n.nodes.length > 5000 ||
       !Array.isArray(n.occluders) || n.sightPolicy !== 'opaque-footprints' ||
       !Number.isFinite(n.radiusM) || n.radiusM <= 0) throw new Error('Invalid metric navigation');
+  if (n.weaponRangeUnitM != null && (!Number.isFinite(n.weaponRangeUnitM) || n.weaponRangeUnitM <= 0)) throw new Error('Invalid metric weapon scale');
   const ids = new Set();
   for (const node of n.nodes) {
     if (typeof node.id !== 'string' || ids.has(node.id) || !node.position ||
@@ -21,6 +22,13 @@ export function normalizeMetricNavigation(input) {
   }
   for (const ring of n.occluders) if (!Array.isArray(ring) || ring.length < 3 ||
     ring.some(p => !Number.isFinite(p.x) || !Number.isFinite(p.z))) throw new Error('Invalid sight footprint');
+  if (n.coverEdges != null) {
+    if (!Array.isArray(n.coverEdges)) throw new Error('Invalid metric cover');
+    for (const c of n.coverEdges) if (!Number.isInteger(c.node) || !n.nodes[c.node] ||
+        !['LOW', 'HIGH'].includes(c.type) || !Number.isFinite(c.bearing) ||
+        !Number.isFinite(c.halfAngle) || c.halfAngle <= 0 || c.halfAngle > Math.PI / 2)
+      throw new Error('Invalid metric cover');
+  }
   const freeze = v => { if (v && typeof v === 'object') { Object.values(v).forEach(freeze); Object.freeze(v); } return v; };
   return freeze(n);
 }
@@ -73,9 +81,21 @@ export function metricReach(state,start,maxCost,{occupants,exceptId,stopAt},geo)
     if(k===stopAt)break;
     for(const edge of state.metricNavigation.nodes[k].edges) {
       const to={x:edge.to,y:0,z:0},from={x:k,y:0,z:0},nd=cost.get(k)+edge.cost;
-      if(nd>maxCost||!geo.walkable(to.x,0,0)||metricOccupant(state,from,to,occupants,exceptId))continue;
+      if(nd>maxCost+1e-7||!geo.walkable(to.x,0,0)||metricOccupant(state,from,to,occupants,exceptId))continue;
       if(nd<(cost.get(edge.to)??Infinity)) {cost.set(edge.to,nd);prev.set(edge.to,{from:k,linkId:null});open.add(edge.to);}
     }
   }
   return {cost,prev,geo,startKey};
+}
+
+// Bearings are world X/Z radians, never the opaque node index. Cover protects a
+// wedge towards a physical obstacle; moving around that wedge exposes a flank.
+export function metricCover(state, target, attacker) {
+  const p = metricPoint(state, target), a = metricPoint(state, attacker);
+  const edges = (state.metricNavigation.coverEdges || []).filter(c => c.node === target.x);
+  if (!p || !a || !edges.length) return { type: 'NONE', bonus: 0, flanked: false };
+  const bearing = Math.atan2(a.z - p.z, a.x - p.x);
+  const protectedEdges = edges.filter(c => Math.abs(Math.atan2(Math.sin(bearing - c.bearing), Math.cos(bearing - c.bearing))) <= c.halfAngle);
+  const type = protectedEdges.some(c => c.type === 'HIGH') ? 'HIGH' : protectedEdges.length ? 'LOW' : 'NONE';
+  return { type, bonus: type === 'HIGH' ? 40 : type === 'LOW' ? 20 : 0, flanked: type === 'NONE' };
 }
