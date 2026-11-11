@@ -11,12 +11,16 @@ import argparse
 import hashlib
 import itertools
 import json
+import math
+import sys
 from pathlib import Path
 
 PROD = Path(__file__).resolve().parents[1]
 ROOT = PROD.parents[3]
 FT = 0.3048
 CONTACT_TOLERANCE_FT = 0.25 / 12
+sys.path.insert(0, str(PROD / "electronics"))
+from device_placement_bindings import load_bindings, bound_position
 
 
 def surface_height(triangle, x, y):
@@ -65,6 +69,26 @@ def intersection(a, b, tolerance=1e-4):
     return [round(x, 5) for x in overlap] if min(overlap) > tolerance else None
 
 
+def binding_geometry_matches(binding, nodes, elevation):
+    """Check authored origin and facing from real geometry, not copied metadata."""
+    aid = binding['asset_id']
+    kind = binding['asset_type']
+    p = bound_position(binding, elevation)
+    offset = [0, 0, .20] if kind == 'monitor' else [0, 0, 0]
+    front_offset = [0, -.125, .20] if kind == 'monitor' else [-.05, -.59, .48]
+    front = aid + ('::PART::BEZEL' if kind == 'monitor' else '::PART::FRONT_IO')
+    angle = math.radians(binding['yaw_degrees'])
+    for node, local in ((aid, offset), (front, front_offset)):
+        if node not in nodes:
+            return False
+        expected = [p[0] + local[0] * math.cos(angle) - local[1] * math.sin(angle),
+                    p[1] + local[0] * math.sin(angle) + local[1] * math.cos(angle), p[2] + local[2]]
+        actual = [(a + b) / 2 for a, b in zip(*nodes[node])]
+        if any(abs(a - b) > .001 for a, b in zip(actual, expected)):
+            return False
+    return True
+
+
 def read_geometry(path, scale=1, elevation=0):
     import numpy as np
     import trimesh
@@ -92,7 +116,10 @@ def audit(production=PROD):
     core = json.loads((production / "building-core-v2.json").read_text())
     ffe = {int(x["level"]): x["finished_floor_elevation_ft"] for x in core["levels"]}
     nodes, _ = read_geometry(glb)  # electronics is already absolute feet
-    source_paths = [components_path, glb, production / "building-core-v2.json"]
+    bindings_path = electronics.parent / "device-placement-bindings-v1.json"
+    bindings = load_bindings(bindings_path)
+    source_paths = [components_path, glb, production / "building-core-v2.json", bindings_path]
+    binding_checks = []
     floors = []
     for level in range(8):
         tag = "B1" if level == 0 else "L7" if level == 7 else f"F{level}"
@@ -108,6 +135,15 @@ def audit(production=PROD):
             aid = device["asset_id"]
             node = aid + "::PART::STAND_OR_MOUNT" if device["asset_type"] == "monitor" else aid
             bounds = nodes[node]  # Missing authored geometry must fail, never be treated as a pass.
+            if aid in bindings:
+                binding = bindings[aid]
+                declared_surfaces = [(name, tri) for name, tri in surfaces if name == binding["support_node"]]
+                contact = support_contact(bounds, declared_surfaces)
+                metadata_matches = device.get("support_binding") == binding
+                geometry_matches = binding_geometry_matches(binding, nodes, ffe[level])
+                binding_checks.append({"asset_id": aid, "support_node": binding["support_node"],
+                                       "metadata_matches": metadata_matches, "origin_and_facing_match": geometry_matches, **contact,
+                                       "passed": metadata_matches and geometry_matches and contact["status"] == "contact"})
             contacts.append({"asset_id": aid, "asset_type": device["asset_type"], "mesh_node": node,
                              "bottom_aff_ft": round(bounds[0][2] - ffe[level], 5),
                              **support_contact(bounds, surfaces)})
@@ -120,6 +156,9 @@ def audit(production=PROD):
                 collisions.append({"asset_ids": [a["asset_id"], b["asset_id"]], "panel_overlap_ft": overlap})
         floors.append({"level": level, "level_id": tag, "hosts": len(hosts), "monitors": len(monitors),
                        "monitor_panel_intersections": collisions, "support_contacts": contacts})
+    observed = {x["asset_id"] for x in binding_checks}
+    for aid in sorted(set(bindings) - observed):
+        binding_checks.append({"asset_id": aid, "passed": False, "status": "missing_bound_device"})
     unresolved = [x for f in floors for x in f["support_contacts"] if x["status"] != "contact"]
     collisions = [x for f in floors for x in f["monitor_panel_intersections"]]
     return {"schema_version": "1.0.0", "status": "diagnostic_not_visual_approval", "not_for_construction": True,
@@ -132,18 +171,21 @@ def audit(production=PROD):
             "sources": [{"path": str(p.relative_to(production)), "sha256": hashlib.sha256(p.read_bytes()).hexdigest()} for p in source_paths],
             "summary": {"hosts": sum(f["hosts"] for f in floors), "monitors": sum(f["monitors"] for f in floors),
                         "unresolved_support_contacts": len(unresolved), "monitor_panel_intersections": len(collisions)},
+            "bound_placement_passed": bool(binding_checks) and all(x["passed"] for x in binding_checks),
+            "binding_checks": binding_checks,
             "passed": not unresolved and not collisions, "floors": floors}
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--strict", action="store_true", help="fail while any placement diagnostic remains unresolved")
-    parser.add_argument("--output", type=Path, default=PROD / "interiors/device-placement-audit-v1.json")
+    parser.add_argument("--require-bound", action="store_true", help="fail if any authored binding is absent or loses contact with its exact support")
+    parser.add_argument("--output", type=Path, default=PROD / "interiors/device-placement-audit-v2.json")
     args = parser.parse_args()
     result = audit()
     args.output.write_text(json.dumps(result, indent=2) + "\n")
     print(json.dumps({"placement_passed": result["passed"], **result["summary"], "report": str(args.output)}, indent=2))
-    return 1 if args.strict and not result["passed"] else 0
+    return 1 if (args.strict and not result["passed"]) or (args.require_bound and not result["bound_placement_passed"]) else 0
 
 
 if __name__ == "__main__":

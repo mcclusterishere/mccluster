@@ -1,0 +1,113 @@
+{
+  "schema_version": "1.0.0",
+  "status": "schematic_repair_not_visual_or_installation_approval",
+  "not_for_construction": true,
+  "scope": "F1 existing identities only. Generic training hardware, no manufacturer or live connection asserted. Other floors remain explicitly unresolved.",
+  "coordinate_frame": "floor-local-ft-xy-and-aff-z",
+  "bindings": [
+    {
+      "asset_id": "F1-USER-WS-01",
+      "asset_type": "workstation",
+      "level": 1,
+      "station_id": "F1-RECEPTION-DESK-01",
+      "support_node": "F1-RECEPTION-DESK-01::worktop",
+      "support_top_aff_ft": 3.46,
+      "origin_xy_ft": [
+        40.7,
+        46.1
+      ],
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F1-USER-MON-01-01",
+      "asset_type": "monitor",
+      "level": 1,
+      "station_id": "F1-RECEPTION-DESK-01",
+      "support_node": "F1-RECEPTION-DESK-01::worktop",
+      "support_top_aff_ft": 3.46,
+      "origin_xy_ft": [
+        36.1,
+        45.6
+      ],
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F1-USER-WS-02",
+      "asset_type": "workstation",
+      "level": 1,
+      "station_id": "F1-PASSPORT-TABLE-01",
+      "support_node": "F1-PASSPORT-TABLE-01::table_rect",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        30.5,
+        35.6
+      ],
+      "yaw_degrees": 0
+    },
+    {
+      "asset_id": "F1-USER-MON-02-01",
+      "asset_type": "monitor",
+      "level": 1,
+      "station_id": "F1-PASSPORT-TABLE-01",
+      "support_node": "F1-PASSPORT-TABLE-01::table_rect",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        26.75,
+        35.1
+      ],
+      "yaw_degrees": 0
+    },
+    {
+      "asset_id": "F1-USER-WS-03",
+      "asset_type": "workstation",
+      "level": 1,
+      "station_id": "F1-PASSPORT-TABLE-02",
+      "support_node": "F1-PASSPORT-TABLE-02::table_rect",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        43.5,
+        40.8
+      ],
+      "yaw_degrees": 0
+    },
+    {
+      "asset_id": "F1-USER-MON-03-01",
+      "asset_type": "monitor",
+      "level": 1,
+      "station_id": "F1-PASSPORT-TABLE-02",
+      "support_node": "F1-PASSPORT-TABLE-02::table_rect",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        39.75,
+        40.3
+      ],
+      "yaw_degrees": 0
+    },
+    {
+      "asset_id": "F1-USER-WS-04",
+      "asset_type": "workstation",
+      "level": 1,
+      "station_id": "F1-INTAKE-CREDENZA-01",
+      "support_node": "F1-INTAKE-CREDENZA-01::credenza",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        3.2,
+        42.9
+      ],
+      "yaw_degrees": 0
+    },
+    {
+      "asset_id": "F1-USER-MON-04-01",
+      "asset_type": "monitor",
+      "level": 1,
+      "station_id": "F1-INTAKE-CREDENZA-01",
+      "support_node": "F1-INTAKE-CREDENZA-01::credenza",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        4.6,
+        42.9
+      ],
+      "yaw_degrees": 0
+    }
+  ]
+}

@@ -25,7 +25,7 @@
       "GEMINI.md"
     ]
   },
-  "tracked_count": 368,
+  "tracked_count": 372,
   "categories": {
     "active_references": [
       "docs/design/equity-uprise-building/references/basement-b1/README.md",
@@ -242,6 +242,8 @@
       "docs/design/equity-uprise-building/production/electronics/build_device_archetype_coverage_v1.py",
       "docs/design/equity-uprise-building/production/electronics/build_equity_uprise_electronics_v1.py",
       "docs/design/equity-uprise-building/production/electronics/device-archetypes-v1.json",
+      "docs/design/equity-uprise-building/production/electronics/device-placement-bindings-v1.json",
+      "docs/design/equity-uprise-building/production/electronics/device_placement_bindings.py",
       "docs/design/equity-uprise-building/production/electronics/electronics-population-policy-v1.json",
       "docs/design/equity-uprise-building/production/electronics/equity-uprise-electronics-spatial-bindings-v1.mjs",
       "docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-device-archetype-coverage-v1.json",
@@ -354,8 +356,10 @@
       "docs/design/equity-uprise-building/production/interiors/audit_device_placement.py",
       "docs/design/equity-uprise-building/production/interiors/audit_interior_consistency.py",
       "docs/design/equity-uprise-building/production/interiors/device-placement-audit-v1.json",
+      "docs/design/equity-uprise-building/production/interiors/device-placement-audit-v2.json",
       "docs/design/equity-uprise-building/production/interiors/eu_furniture_kit.py",
       "docs/design/equity-uprise-building/production/interiors/furniture-catalog-v3.json",
+      "docs/design/equity-uprise-building/production/interiors/glb-export-equivalence-v1.json",
       "docs/design/equity-uprise-building/production/interiors/test_device_placement.py",
       "docs/design/equity-uprise-building/production/lab-runtime/assessment-policy-v1.json",
       "docs/design/equity-uprise-building/production/lab-runtime/cisa-itot-scenario-pack-v1.json",

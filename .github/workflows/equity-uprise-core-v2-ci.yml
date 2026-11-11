@@ -177,9 +177,9 @@ jobs:
 
       - name: Record unresolved electronics and furniture placement
         run: |
-          # Report mode records existing defects without calling placement approved.
+          # The repaired F1 bindings are required; other existing defects remain diagnostic.
           # --strict is the future remodeling acceptance gate, not a baseline waiver.
-          python docs/design/equity-uprise-building/production/interiors/audit_device_placement.py --output "${RUNNER_TEMP}/device-placement-audit.json"
+          python docs/design/equity-uprise-building/production/interiors/audit_device_placement.py --require-bound --output "${RUNNER_TEMP}/device-placement-audit.json"
           python - <<'PYTHON'
           import json, os
           from pathlib import Path

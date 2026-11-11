@@ -14,6 +14,7 @@ from collections import Counter,defaultdict
 from pathlib import Path
 import numpy as np
 import trimesh
+from device_placement_bindings import load_bindings, bound_position
 
 ROOT=Path(__file__).resolve().parents[5]
 HERE=Path(__file__).resolve().parent
@@ -68,6 +69,7 @@ wireless_links=[]
 transient_profiles=[]
 positions={}
 device_component_records=[]
+placement_bindings=load_bindings()
 connection_counter=0
 rel_counter=0
 
@@ -322,7 +324,10 @@ def make_asset(aid,label,asset_type,level=None,position=None,systems=None,logica
     physical_status="not_applicable" if logical else "planned"
     commissioning="not_applicable" if logical else "not_started"
     tag_status="not_applicable" if logical else "unassigned"
-    p=position
+    binding=placement_bindings.get(aid)
+    if binding and (binding["asset_type"] != asset_type or binding["level"] != ln):
+        raise ValueError(f"Placement binding does not match asset {aid}")
+    p=bound_position(binding,ffe(ln)) if binding else position
     a={
       "asset_id":aid,"label":label,
       "source_snapshot":{"source":"electronics_step4a_policy","asset_type":asset_type,"design_intent":True},
@@ -358,6 +363,10 @@ def make_asset(aid,label,asset_type,level=None,position=None,systems=None,logica
       "lifecycle":{"design_status":"conceptual","physical_status":physical_status,"as_built_verified":False,"commissioning_status":commissioning,"last_verified_revision":None},
       "operations":{"service_access_required":not logical,"service_access_refs":[],"maintenance_procedure_refs":[],"documentation_refs":[SOURCE_REL],"replacement_route_refs":[]}
     }
+    if binding:
+        a["source_snapshot"]["support_binding"]=binding
+        a["authority"]["source_refs"].append("docs/design/equity-uprise-building/production/electronics/device-placement-bindings-v1.json")
+        a["authority"]["provenance_notes"] += " Authored support binding; generic model, not visually or physically approved."
     return a
 
 def add_asset(a):
@@ -1291,6 +1300,9 @@ def _place(mesh,center,direction=None):
     return mesh
 
 def _component_mesh(asset_id,component_id,mesh,color,role,asset_type,metadata=None):
+    binding=placement_bindings.get(asset_id)
+    if binding:
+        mesh.apply_transform(trimesh.transformations.rotation_matrix(math.radians(binding["yaw_degrees"]),[0,0,1],point=positions[asset_id]))
     mesh.visual.face_colors=color
     mesh.metadata={
         "asset_id":asset_id,
@@ -1449,6 +1461,8 @@ def _record_componentized_device(a,archetype_key,parts):
         "simulated_capabilities":archetype.get("simulated_capabilities",[]),
         "planned_behaviors":archetype.get("planned_behaviors",[]),
     }
+    if aid in placement_bindings:
+        record["support_binding"]=placement_bindings[aid]
     device_component_records.append(record)
 
 def access_switch_component_meshes(a):
@@ -2523,8 +2537,11 @@ def cyl_between(a,b,radius,color):
     T[:3,3]=np.round((a+b)/2,6)
     m=trimesh.creation.cylinder(radius=round(float(radius),6),height=L,sections=8,transform=T)
     m.vertices=np.round(m.vertices,6)
-    # trimesh exports primitive metadata as GLTF extras; pin it too.
-    m.metadata={"shape":"cylinder","height":L,"radius":round(float(radius),6),"sections":8}
+    # Cable identity is the exact connection/segment node name. Constructor
+    # recipes are redundant with vertices and are not operational metadata.
+    # Omitting these 19k repeated extras reduces download/parse cost without
+    # touching vertices, materials, device-component extras or connection IDs.
+    m.metadata={}
     m.visual.face_colors=color
     return m
 for c in connections:

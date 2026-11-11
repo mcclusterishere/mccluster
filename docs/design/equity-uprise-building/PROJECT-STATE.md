@@ -8,12 +8,17 @@ The actual electronics overlay and furnished floor GLBs were checked together at
 main `8e631683`. The new cross-layer diagnostic finds 33 intersecting monitor-panel
 pairs and 98 unresolved support contacts (36 workstation chassis, 62 monitor
 stands). The earlier furniture audit does not load the electronics overlay, so
-its pass is not placement approval. No geometry or floor program is changed by
-this audit checkpoint. Manufacturer floors remain unconfirmed proposals, not
+its pass is not placement approval. Eight F1 devices now use exact authored
+reception/passport/intake support bindings and correct reception facing. Their
+geometry checks pass; 90 unsupported contacts and all 33 overlapping panel pairs
+elsewhere remain open. Generated electronics and screen registries are refreshed.
+No floor program changes. Manufacturer floors remain unconfirmed proposals, not
 sponsor agreements, exact finished models or live devices.
 
 See `DEVICE-PLACEMENT-RECONCILIATION.md` and
-`production/interiors/device-placement-audit-v1.json`. Repair remains active:
+`production/interiors/device-placement-audit-v1.json` (baseline) and
+`production/interiors/device-placement-audit-v2.json` (F1 repair). Browser startup
+was blocked before page load; visual approval is still outstanding. Repair remains active:
 explicit station/support binding, removal of exact duplicate scenic screens,
 source-backed models, B1 rack reconciliation, then strict geometry and visual QA.
 

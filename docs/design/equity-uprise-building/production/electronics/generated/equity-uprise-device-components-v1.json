@@ -13074,8 +13074,8 @@
       "maturity": "componentized",
       "position_ft": [
         36.1,
-        44.175,
-        4.25
+        45.6,
+        4.38
       ],
       "components": [
         {
@@ -13138,7 +13138,20 @@
         "power_loss",
         "video_signal_loss",
         "panel_fault"
-      ]
+      ],
+      "support_binding": {
+        "asset_id": "F1-USER-MON-01-01",
+        "asset_type": "monitor",
+        "level": 1,
+        "station_id": "F1-RECEPTION-DESK-01",
+        "support_node": "F1-RECEPTION-DESK-01::worktop",
+        "support_top_aff_ft": 3.46,
+        "origin_xy_ft": [
+          36.1,
+          45.6
+        ],
+        "yaw_degrees": 180
+      }
     },
     {
       "asset_id": "F1-USER-MON-01-01::PWR-OUTLET",
@@ -13148,7 +13161,7 @@
       "maturity": "componentized",
       "position_ft": [
         36.32,
-        44.355,
+        45.78,
         0.12
       ],
       "components": [
@@ -13211,9 +13224,9 @@
       "archetype": "monitor",
       "maturity": "componentized",
       "position_ft": [
-        27.95,
-        35.6,
-        4.25
+        26.75,
+        35.1,
+        3.3367
       ],
       "components": [
         {
@@ -13276,7 +13289,20 @@
         "power_loss",
         "video_signal_loss",
         "panel_fault"
-      ]
+      ],
+      "support_binding": {
+        "asset_id": "F1-USER-MON-02-01",
+        "asset_type": "monitor",
+        "level": 1,
+        "station_id": "F1-PASSPORT-TABLE-01",
+        "support_node": "F1-PASSPORT-TABLE-01::table_rect",
+        "support_top_aff_ft": 2.4166666666666665,
+        "origin_xy_ft": [
+          26.75,
+          35.1
+        ],
+        "yaw_degrees": 0
+      }
     },
     {
       "asset_id": "F1-USER-MON-02-01::PWR-OUTLET",
@@ -13285,8 +13311,8 @@
       "archetype": "receptacle",
       "maturity": "componentized",
       "position_ft": [
-        28.17,
-        35.78,
+        26.97,
+        35.28,
         0.12
       ],
       "components": [
@@ -13349,9 +13375,9 @@
       "archetype": "monitor",
       "maturity": "componentized",
       "position_ft": [
-        38.55,
-        40.8,
-        4.25
+        39.75,
+        40.3,
+        3.3367
       ],
       "components": [
         {
@@ -13414,7 +13440,20 @@
         "power_loss",
         "video_signal_loss",
         "panel_fault"
-      ]
+      ],
+      "support_binding": {
+        "asset_id": "F1-USER-MON-03-01",
+        "asset_type": "monitor",
+        "level": 1,
+        "station_id": "F1-PASSPORT-TABLE-02",
+        "support_node": "F1-PASSPORT-TABLE-02::table_rect",
+        "support_top_aff_ft": 2.4166666666666665,
+        "origin_xy_ft": [
+          39.75,
+          40.3
+        ],
+        "yaw_degrees": 0
+      }
     },
     {
       "asset_id": "F1-USER-MON-03-01::PWR-OUTLET",
@@ -13423,8 +13462,8 @@
       "archetype": "receptacle",
       "maturity": "componentized",
       "position_ft": [
-        38.77,
-        40.98,
+        39.97,
+        40.48,
         0.12
       ],
       "components": [
@@ -13487,9 +13526,9 @@
       "archetype": "monitor",
       "maturity": "componentized",
       "position_ft": [
-        9.0,
-        39.2,
-        4.25
+        4.6,
+        42.9,
+        3.3367
       ],
       "components": [
         {
@@ -13552,7 +13591,20 @@
         "power_loss",
         "video_signal_loss",
         "panel_fault"
-      ]
+      ],
+      "support_binding": {
+        "asset_id": "F1-USER-MON-04-01",
+        "asset_type": "monitor",
+        "level": 1,
+        "station_id": "F1-INTAKE-CREDENZA-01",
+        "support_node": "F1-INTAKE-CREDENZA-01::credenza",
+        "support_top_aff_ft": 2.4166666666666665,
+        "origin_xy_ft": [
+          4.6,
+          42.9
+        ],
+        "yaw_degrees": 0
+      }
     },
     {
       "asset_id": "F1-USER-MON-04-01::PWR-OUTLET",
@@ -13561,8 +13613,8 @@
       "archetype": "receptacle",
       "maturity": "componentized",
       "position_ft": [
-        9.22,
-        39.38,
+        4.82,
+        43.08,
         0.12
       ],
       "components": [
@@ -13625,9 +13677,9 @@
       "archetype": "workstation",
       "maturity": "componentized",
       "position_ft": [
-        36.1,
-        44.175,
-        3.15
+        40.7,
+        46.1,
+        4.27
       ],
       "components": [
         {
@@ -13706,7 +13758,20 @@
         "network_link_loss",
         "display_disconnect",
         "simulated_os_fault"
-      ]
+      ],
+      "support_binding": {
+        "asset_id": "F1-USER-WS-01",
+        "asset_type": "workstation",
+        "level": 1,
+        "station_id": "F1-RECEPTION-DESK-01",
+        "support_node": "F1-RECEPTION-DESK-01::worktop",
+        "support_top_aff_ft": 3.46,
+        "origin_xy_ft": [
+          40.7,
+          46.1
+        ],
+        "yaw_degrees": 180
+      }
     },
     {
       "asset_id": "F1-USER-WS-01::DATA-JACK",
@@ -13715,8 +13780,8 @@
       "archetype": "data_jack",
       "maturity": "componentized",
       "position_ft": [
-        35.88,
-        44.175,
+        40.48,
+        46.1,
         1.4
       ],
       "components": [
@@ -13781,8 +13846,8 @@
       "archetype": "receptacle",
       "maturity": "componentized",
       "position_ft": [
-        36.32,
-        44.355,
+        40.92,
+        46.28,
         0.12
       ],
       "components": [
@@ -13845,9 +13910,9 @@
       "archetype": "workstation",
       "maturity": "componentized",
       "position_ft": [
-        27.95,
+        30.5,
         35.6,
-        3.15
+        3.2267
       ],
       "components": [
         {
@@ -13926,7 +13991,20 @@
         "network_link_loss",
         "display_disconnect",
         "simulated_os_fault"
-      ]
+      ],
+      "support_binding": {
+        "asset_id": "F1-USER-WS-02",
+        "asset_type": "workstation",
+        "level": 1,
+        "station_id": "F1-PASSPORT-TABLE-01",
+        "support_node": "F1-PASSPORT-TABLE-01::table_rect",
+        "support_top_aff_ft": 2.4166666666666665,
+        "origin_xy_ft": [
+          30.5,
+          35.6
+        ],
+        "yaw_degrees": 0
+      }
     },
     {
       "asset_id": "F1-USER-WS-02::DATA-JACK",
@@ -13935,7 +14013,7 @@
       "archetype": "data_jack",
       "maturity": "componentized",
       "position_ft": [
-        27.73,
+        30.28,
         35.6,
         1.4
       ],
@@ -14001,7 +14079,7 @@
       "archetype": "receptacle",
       "maturity": "componentized",
       "position_ft": [
-        28.17,
+        30.72,
         35.78,
         0.12
       ],
@@ -14065,9 +14143,9 @@
       "archetype": "workstation",
       "maturity": "componentized",
       "position_ft": [
-        38.55,
+        43.5,
         40.8,
-        3.15
+        3.2267
       ],
       "components": [
         {
@@ -14146,7 +14224,20 @@
         "network_link_loss",
         "display_disconnect",
         "simulated_os_fault"
-      ]
+      ],
+      "support_binding": {
+        "asset_id": "F1-USER-WS-03",
+        "asset_type": "workstation",
+        "level": 1,
+        "station_id": "F1-PASSPORT-TABLE-02",
+        "support_node": "F1-PASSPORT-TABLE-02::table_rect",
+        "support_top_aff_ft": 2.4166666666666665,
+        "origin_xy_ft": [
+          43.5,
+          40.8
+        ],
+        "yaw_degrees": 0
+      }
     },
     {
       "asset_id": "F1-USER-WS-03::DATA-JACK",
@@ -14155,7 +14246,7 @@
       "archetype": "data_jack",
       "maturity": "componentized",
       "position_ft": [
-        38.33,
+        43.28,
         40.8,
         1.4
       ],
@@ -14221,7 +14312,7 @@
       "archetype": "receptacle",
       "maturity": "componentized",
       "position_ft": [
-        38.77,
+        43.72,
         40.98,
         0.12
       ],
@@ -14285,9 +14376,9 @@
       "archetype": "workstation",
       "maturity": "componentized",
       "position_ft": [
-        9.0,
-        39.2,
-        3.15
+        3.2,
+        42.9,
+        3.2267
       ],
       "components": [
         {
@@ -14366,7 +14457,20 @@
         "network_link_loss",
         "display_disconnect",
         "simulated_os_fault"
-      ]
+      ],
+      "support_binding": {
+        "asset_id": "F1-USER-WS-04",
+        "asset_type": "workstation",
+        "level": 1,
+        "station_id": "F1-INTAKE-CREDENZA-01",
+        "support_node": "F1-INTAKE-CREDENZA-01::credenza",
+        "support_top_aff_ft": 2.4166666666666665,
+        "origin_xy_ft": [
+          3.2,
+          42.9
+        ],
+        "yaw_degrees": 0
+      }
     },
     {
       "asset_id": "F1-USER-WS-04::DATA-JACK",
@@ -14375,8 +14479,8 @@
       "archetype": "data_jack",
       "maturity": "componentized",
       "position_ft": [
-        8.78,
-        39.2,
+        2.98,
+        42.9,
         1.4
       ],
       "components": [
@@ -14441,8 +14545,8 @@
       "archetype": "receptacle",
       "maturity": "componentized",
       "position_ft": [
-        9.22,
-        39.38,
+        3.42,
+        43.08,
         0.12
       ],
       "components": [

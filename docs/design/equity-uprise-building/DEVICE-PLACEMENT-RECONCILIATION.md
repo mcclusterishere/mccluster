@@ -1,6 +1,6 @@
 # Device placement and proposed manufacturer floors
 
-Status: **ACTIVE REPAIR / audit checkpoint, not completed remodeling or visual approval**.
+Status: **ACTIVE REPAIR / F1 support repair, not completed remodeling or visual approval**.
 Baseline: main `8e631683b6960fee283ea923c22b1d72cfd09495`.
 The 72-foot Core V2 plate, vertical systems, floor functions, room boundaries,
 recurring staff stations and permission boundaries remain authoritative.
@@ -53,6 +53,49 @@ is inferred from this analysis.
 - The already documented B1 MDF mismatch remains: the telecom room is X32–52 /
   Y22–34; the electronics MDF anchor is around (45, 62.8). That is a separate
   room/rack/cabling reconciliation, not cured by moving workstation displays.
+
+## First implemented repair: F1 support bindings
+
+The electronics generator now resolves eight F1 asset IDs through an authored
+binding file, rather than the round-robin fallback: four existing chassis and
+four existing monitors. Stable identities, host/monitor connections, room roles
+and staff assignments are unchanged.
+
+- Reception uses the actual 3.46-foot worktop, with the monitor and host facing
+  north toward staff. The public-facing authored reception display remains a
+  separate canonical surface pending explicit scenic-display reconciliation.
+- The two passport stations use the actual 29-inch tabletops. Each host sits to
+  the side of its screen instead of sharing the same origin.
+- The intake host and display use the existing 29-inch credenza, keeping the
+  conversation table open. Its measured v3 GLB location is used, not the obsolete
+  hand-authored cabinet bounding box.
+- Every binding names the exact support mesh. CI requires five support-contact
+  samples, matching binding metadata, and actual mesh origin/facing checks. A
+  missing support cannot borrow a nearby surface. No binding promotes an asset
+  to as-built, manufacturer-accurate, commissioned or live.
+- Generated electronics geometry, cord paths, asset registry and both copies of
+  the screen registry are refreshed together. Cord endpoints remain the existing
+  conceptual device-center routing; this does not certify physical wiring.
+
+Current evidence is `production/interiors/device-placement-audit-v2.json`: all
+eight authored F1 bindings pass; unresolved support contacts fall from 98 to 90.
+The 33 overlapping panel pairs elsewhere remain open. The v1 report is retained
+as the exact original baseline. This pilot does not resolve all F1 devices,
+scenic duplicate displays, service clearances, manufacturer models or the other
+floors. Generic training chassis have not been relabeled as branded hardware.
+
+The export also omits redundant cable-cylinder construction recipes. The complete
+BIN chunk is byte-identical; a normalized-JSON comparison proves every other
+node, transform, material and device identity is unchanged. This reduces the
+fabric from 13,707,068 to 12,444,600 bytes. Evidence is
+`production/interiors/glb-export-equivalence-v1.json`.
+
+Validation: 19 geometry/binding/export unit tests; 37 screen/mission/object tests; 67
+computer-hardware checks; electronics 86/86 and its independent verifier pass.
+The full root suite also passes: 2,503 Node tests (4 skipped) and 7 Python
+tests. The derived PRIM3 package changes only four source provenance hashes, not
+its building/game geometry or runtime data. The browser could not start: Chromium failed with `socket() failed: Operation
+not permitted` before page load. No desktop/mobile visual approval is claimed.
 
 ## Proposed floor partners and reference models
 
@@ -122,10 +165,12 @@ python docs/design/equity-uprise-building/production/interiors/audit_device_plac
 python docs/design/equity-uprise-building/production/interiors/audit_device_placement.py --strict
 ```
 
-The baseline strict command **must exit 1** with unresolved defects. Report mode
+The full strict command **must still exit 1** with unresolved defects. The new
+`--require-bound` gate passes only when every authored repair is supported and
+correctly oriented in the generated meshes. Report mode
 only records diagnostics and does not call the geometry approved. Building CI
 uploads a fresh diagnostic and emits a warning while remodeling proceeds.
 Existing acceptance gates are unchanged; this is not a waiver or a replacement
 for their checks. The strict command is the additional placement acceptance gate
-for the repair. The committed JSON is an exact-source baseline, not a current
-as-built or proof that later modifications were tested.
+for the repair. The committed v1 JSON is the exact-source baseline and v2 records this repair,
+not a current as-built or proof that later modifications were tested.

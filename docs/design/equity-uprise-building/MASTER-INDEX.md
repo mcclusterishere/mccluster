@@ -395,3 +395,7 @@ This extension does not change the reconciled floor programs, equipment placemen
 - `production/interiors/audit_device_placement.py` — cross-layer real-mesh contact and monitor-intersection diagnostic, with a strict acceptance mode.
 - `production/interiors/test_device_placement.py` — isolated geometry regressions.
 - `production/interiors/device-placement-audit-v1.json` — exact-source baseline evidence; unresolved defects are not visual approval.
+- `production/interiors/device-placement-audit-v2.json` — F1 repair evidence, including exact support and facing checks.
+- `production/electronics/device-placement-bindings-v1.json` and `device_placement_bindings.py` — explicit asset-to-furniture bindings for the staged repair; no inferred station ownership.
+
+- `production/interiors/glb-export-equivalence-v1.json` — byte/semantic equivalence of the cable metadata cleanup; no visual approval.
