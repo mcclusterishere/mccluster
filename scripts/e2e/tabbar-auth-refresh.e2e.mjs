@@ -116,7 +116,8 @@ try {
   restored.answerUser();
   await settled(restored.pages[0], restored.counts); await released(restored.pages[0], true);
   assert.deepEqual(await quiet(restored.counts, 'restore/focus storms settle'), { refresh: 1, user: 1, status: 1 });
-  assert.equal(await restored.pages[0].locator('.appbar [data-appnav]').count(), 7);
+  assert.equal(await restored.pages[0].locator('.appbar [data-appnav]:not([data-dock-section])').count(), 7);
+  assert.equal(await restored.pages[0].locator('.appbar [data-appnav]').count(), 10, 'current canonical Control sections are retained');
   assert.deepEqual(restored.errors, []); await restored.context.close();
   lines.push('ten concurrent page-restoration/focus pairs shared one owner lookup and recovered seven destinations');
 
