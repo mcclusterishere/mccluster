@@ -64,6 +64,18 @@ Cells refresh after 12 m of movement. The source roads/buildings, route and play
 existing Cesium viewer. This reduces cell entities, not graph transfer: the complete payload still
 loads once per entry. Existing camera/owner gating, cancellation and disposal remain. A camera centre chosen for phone usability keeps the initial walk above the control panel; no permission or geometry changes with width.
 
+Confirmed walks own a monotonic clock and advance at two metres per visible second, independent
+of render cadence. Preview and time before confirmation never count. Hiding the document pauses
+the clock; resuming starts from the current pose without spending hidden time. Stop, a new preview,
+closure/topology changes, unload and owner revocation discard the route and its clock. A late
+visible frame consumes each remaining waypoint in order with the existing swept-clearance checks;
+it cannot take a direct shortcut across a building. Arrival is emitted once at the exact target.
+This is the shared street walk's clock only; the Arcade mission timer stays paused during it.
+`scripts/test/bridgeport-walk-clock.test.mjs` exercises the actual mounted navigation module with
+controlled time and graphics doubles. Hosted City Arcade checks still exercise real Cesium and
+both viewport widths. Its fixture accelerates RAF and monotonic reads together, without changing
+route, collision, progression or the 120-second checkpoint deadline.
+
 ## Doors and stairs: concrete source blocker
 
 The retained CT GeoJSON supplies footprint rings and OBJECTID, not door openings, interior floors,
