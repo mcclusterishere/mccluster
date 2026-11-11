@@ -3,8 +3,8 @@
 <head><script src="js/shell-boot.js?v=__STAMP__"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Verified action · Human Uprise</title>
-  <meta name="description" content="A verified action on Human Uprise. Don't just watch. Act.">
+  <title>Verified action · Equity Uprise</title>
+  <meta name="description" content="A verified action on Equity Uprise. Don't just watch. Act.">
   <meta name="robots" content="noindex">
   <meta name="theme-color" content="#0a0807">
   <link rel="icon" type="image/png" href="assets/img/m-mark.png">
@@ -100,12 +100,12 @@
       $("rcTake").href = "mnet.html?mission=" + encodeURIComponent(r.mission_id);
       $("rcTake").hidden = !r.mission_open;
       $("rcCard").hidden = false; $("rcActs").hidden = false;
-      document.title = "Verified: " + r.title + " · Human Uprise";
+      document.title = "Verified: " + r.title + " · Equity Uprise";
     }).catch(missing);
 
     function note(t) { $("rcNote").textContent = t; }
     $("rcShare").addEventListener("click", function () {
-      var text = "I did something about it: " + (R && R.title) + ". Verified on Human Uprise.";
+      var text = "I did something about it: " + (R && R.title) + ". Verified on Equity Uprise.";
       if (navigator.share) { navigator.share({ title: "Verified action", text: text, url: location.href }).catch(function () {}); return; }
       (navigator.clipboard ? navigator.clipboard.writeText(location.href) : Promise.reject()).then(function () { note("Link copied."); }, function () { note(location.href); });
     });

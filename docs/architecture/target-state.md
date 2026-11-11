@@ -1,3 +1,5 @@
+> Superseded 2026-10 by `docs/control-plane/CANONICAL-ARCHITECTURE.md`: `apps/api` is an archive; the one API is Worker `mccluster`.
+
 # TARGET STATE: the deployable platform
 
 The smallest durable production system that serves Here + Prayer
@@ -129,6 +131,8 @@ versioned asset, never AI-generated.
 
 ## Native strategy
 
+Superseded by `native/STORE-READINESS.md` (2026-10): the app is the Expo
+project in `native/`; the root Capacitor wrapper was removed. Historical:
 Capacitor is already in the repo for Android with the site bundled in
 `www/` (store-compliant, not a remote wrapper). Add the iOS project,
 then: Sign in with Apple, Stripe PaymentSheet + Apple Pay for

@@ -9,9 +9,30 @@ RECONCILE_TARGET="${TARGET_ROOT}/reconcile"
 RECONCILE_SCRIPT="${RECONCILE_TARGET}/mccluster-vps-reconcile.sh"
 RELEASE_ROOT="${TARGET_ROOT}/releases"
 SYSTEMD_DIR="/etc/systemd/system"
-STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
+STAMP="$(date -u +%Y%m%dT%H%M%S-%NZ)"
 BACKUP_DIR="${RELEASE_ROOT}/predeploy-${STAMP}"
 DEPLOY_MANIFEST="${CORE_TARGET}/.mccluster-deploy.json"
+# Set once the live install is about to change; rollback restarts and verifies
+# only when there is something live to recover.
+LIVE_TOUCHED=0
+DRAIN_STARTED=0
+# Local model runtime: Ollama's service settings are a drop-in shipped by the
+# repo (core/systemd/ollama-mccluster.conf); restarted only when it changes.
+OLLAMA_DROPIN_DIR="${SYSTEMD_DIR}/ollama.service.d"
+OLLAMA_DROPIN="${OLLAMA_DROPIN_DIR}/mccluster.conf"
+OLLAMA_RESTART=0
+mcc_wait_ollama() {
+  local i
+  for i in $(seq 1 60); do
+    if curl -fsS --max-time 2 http://127.0.0.1:11434/api/tags >/dev/null 2>&1; then return 0; fi
+    sleep 1
+  done
+  return 1
+}
+
+# Shared restart + health probe: the forward gate and rollback use one probe.
+# shellcheck source=scripts/ovh-core-health.sh
+source "$(dirname "${BASH_SOURCE[0]}")/ovh-core-health.sh"
 
 if [[ -z "${SOURCE_DIR}" || ! -d "${SOURCE_DIR}/core" ]]; then
   echo "usage: $0 <checked-out-repo-dir> <exact-commit-sha>" >&2
@@ -32,11 +53,15 @@ command -v rsync >/dev/null
 command -v node >/dev/null
 command -v npm >/dev/null
 command -v systemctl >/dev/null
+command -v flock >/dev/null
 
 mkdir -p "${RELEASE_ROOT}"
+# Serialize manual and reconciler deployments of this installation.
+exec 8>"${TARGET_ROOT}/deploy.lock"
+flock -n 8 || { echo "another Core deploy is running" >&2; exit 75; }
 # Only the exact checkout selected by the promotion/reconcile gate may be stamped.
 test "$(git -C "${SOURCE_DIR}" rev-parse HEAD)" = "${DEPLOY_SHA}"
-git -C "${SOURCE_DIR}" diff --quiet HEAD -- core scripts/deploy-ovh-core.sh scripts/mccluster-vps-reconcile.sh
+git -C "${SOURCE_DIR}" diff --quiet HEAD -- core scripts/deploy-ovh-core.sh scripts/ovh-core-health.sh scripts/mccluster-vps-reconcile.sh scripts/ovh-core-compute-drain.mjs
 
 # Validate the incoming Core tree before touching the live install.
 pushd "${SOURCE_DIR}/core" >/dev/null
@@ -45,14 +70,44 @@ npm test
 popd >/dev/null
 
 rollback() {
-  local rc=$?
+  local rc=${1:-$?}
+  local ollama_restore=0
+  # Recovery is handled explicitly below: a failing step inside rollback must
+  # neither re-enter this trap nor exit silently under errexit.
+  trap - ERR
+  # systemd control-group termination also reaches the wrapper and helper.
+  # Once recovery starts, do not let another catchable signal cut it short.
+  trap '' HUP INT TERM
+  set +e
   if [[ ${rc} -eq 0 ]]; then
     return 0
   fi
-  echo "deploy failed (rc=${rc}); attempting rollback" >&2
+  if ! mcc_restore_timeout_bootstrap; then
+    mcc_log "TIMEOUT BOOTSTRAP RECOVERY FAILED: no workload was restarted; verify effective supervisor configuration"
+    exit "${MCC_ROLLBACK_UNHEALTHY_RC}"
+  fi
+  if [[ ${LIVE_TOUCHED} -eq 0 ]]; then
+    if [[ ${DRAIN_STARTED:-0} -eq 1 ]] && ! mcc_resume_producers; then
+      mcc_log "DRAIN RECOVERY FAILED: dependencies were not changed; operator attention required"
+      exit "${MCC_ROLLBACK_UNHEALTHY_RC}"
+    fi
+    mcc_log "deploy failed (rc=${rc}) before the live install changed; nothing to roll back"
+    exit "${rc}"
+  fi
+  # A failed health gate may have resumed producers. Drain again before
+  # restoring their dependencies; never overwrite code beneath active work.
+  if ! mcc_drain_producers; then
+    mcc_log "ROLLBACK DEFERRED: producers did not drain; leaving current dependencies intact"
+    mcc_resume_producers || true
+    exit "${MCC_ROLLBACK_UNHEALTHY_RC}"
+  fi
+  mcc_log "deploy failed (rc=${rc}); rolling back to the previous release"
   if [[ -d "${BACKUP_DIR}/core" ]]; then
     mkdir -p "${CORE_TARGET}"
-    rsync -a --delete "${BACKUP_DIR}/core/" "${CORE_TARGET}/"
+    if ! rsync -a --delete "${BACKUP_DIR}/core/" "${CORE_TARGET}/"; then
+      mcc_log "ROLLBACK FAILED: could not restore Core files from ${BACKUP_DIR}/core"
+      exit "${MCC_ROLLBACK_UNHEALTHY_RC}"
+    fi
     # Restore the unit files as well as code. Otherwise a failed release leaves
     # new ExecStart paths or privileges behind while claiming code rollback.
     if [[ -d "${BACKUP_DIR}/units" ]]; then
@@ -72,17 +127,23 @@ rollback() {
     elif [[ -f "${BACKUP_DIR}/new-preview-rule" ]]; then
       rm -f /etc/polkit-1/rules.d/50-mccluster-preview-build.rules
     fi
+    if [[ -f "${BACKUP_DIR}/ollama-mccluster.conf" ]]; then
+      install -m 0644 "${BACKUP_DIR}/ollama-mccluster.conf" "${SYSTEMD_DIR}/ollama.service.d/mccluster.conf"
+      ollama_restore=1
+    elif [[ -f "${BACKUP_DIR}/new-ollama-dropin" ]]; then
+      rm -f "${SYSTEMD_DIR}/ollama.service.d/mccluster.conf"
+      ollama_restore=1
+    fi
     if [[ -f "${BACKUP_DIR}/node-capabilities.json" ]]; then
       install -o root -g mccluster-node -m 0640 "${BACKUP_DIR}/node-capabilities.json" /etc/mccluster-node/capabilities.json
     elif [[ -f "${BACKUP_DIR}/new-node-capabilities" ]]; then
       rm -f /etc/mccluster-node/capabilities.json
     fi
-    systemctl daemon-reload || true
-    for unit in mccluster-core-runner.service mccluster-core-tool-broker.service mccluster-preview-gateway.service mccluster-compute-gateway.service mccluster-ollama-adapter.service mccluster-compute-node.service; do
-      if systemctl list-unit-files "${unit}" --no-legend 2>/dev/null | grep -q "${unit}"; then
-        systemctl try-restart "${unit}" || true
-      fi
-    done
+    systemctl daemon-reload || mcc_log "rollback: systemctl daemon-reload failed"
+    if [[ ${ollama_restore} -eq 1 ]]; then
+      systemctl restart ollama.service || mcc_log "rollback: ollama restart failed"
+      mcc_wait_ollama || mcc_log "rollback: ollama did not answer after restart"
+    fi
   fi
   # The reconciler has its own backup marker so it can be restored even if this
   # was the first Core deployment and there was no prior Core tree to restore.
@@ -92,10 +153,60 @@ rollback() {
   elif [[ -f "${BACKUP_DIR}/new-reconcile-script" ]]; then
     rm -f "${RECONCILE_SCRIPT}"
   fi
+  if [[ ! -d "${BACKUP_DIR}/core" ]]; then
+    mcc_log "ROLLBACK FAILED: no previous Core release was captured (first deploy); there is no healthy release to restore"
+    exit "${MCC_ROLLBACK_UNHEALTHY_RC}"
+  fi
+  # Restoring files is not recovery. A release that failed to start leaves its
+  # units inactive, so restart every unit the deploy restarted and verify the
+  # restored release with the deploy's own health probe.
+  if ! mcc_recover_restored_release; then
+    mcc_log "deploy rc=${rc}; rollback restored files from ${BACKUP_DIR} but the restored release is unhealthy"
+    exit "${MCC_ROLLBACK_UNHEALTHY_RC}"
+  fi
+  mcc_log "deploy failed (rc=${rc}); previous release restored from ${BACKUP_DIR} and healthy"
   exit "${rc}"
 }
 trap rollback ERR
+trap 'rollback 129' HUP
+trap 'rollback 130' INT
+trap 'rollback 143' TERM
 
+# The first legacy invocation may install only the reviewed timeout override.
+# A nonzero exit deliberately prevents the old reconciler from stamping this
+# code revision as deployed. The existing timer will retry with fresh guards.
+if ! mcc_verify_reconcile_recovery_budget; then
+  mcc_bootstrap_reconcile_timeout
+  exit 75
+fi
+
+# Optional downloads have one two-minute budget, before any live changes.
+# Ollama retains downloaded layers; a later release can resume a missing model.
+mcc_pull_extra_models() {
+  local budget="${1:-120}" deadline remaining model extra_models
+  [[ "${budget}" =~ ^[1-9][0-9]*$ ]] && (( budget <= 120 )) || return 2
+  deadline=$((SECONDS + budget))
+  extra_models="$(sed -n 's/^Environment=MCCLUSTER_OLLAMA_DEPLOY_PULL=//p' "${SOURCE_DIR}/core/systemd/mccluster-ollama-adapter.service" | tail -n 1 | tr ',' ' ')"
+  for model in ${extra_models}; do
+    [[ "${model}" =~ ^[a-z0-9][a-z0-9._:-]{1,80}$ ]] || continue
+    remaining=$((deadline - SECONDS))
+    if (( remaining <= 0 )); then mcc_log "optional model download budget exhausted; deferring remaining pulls"; break; fi
+    if ! curl -fsS --max-time "$((remaining < 5 ? remaining : 5))" http://127.0.0.1:11434/api/tags 2>/dev/null | grep -qF "\"name\":\"${model}\""; then
+      remaining=$((deadline - SECONDS))
+      (( remaining > 0 )) || break
+      if ! curl -fsS --max-time "${remaining}" -X POST http://127.0.0.1:11434/api/pull \
+          -H 'content-type: application/json' -d "{\"model\":\"${model}\",\"stream\":false}" >/dev/null 2>&1; then
+        mcc_log "extra model ${model} not pulled; the adapter falls back to the default model"
+      fi
+    fi
+  done
+}
+mcc_pull_extra_models
+
+# No live code or dependency changes until both canonical consumers finish.
+mcc_drain_producers
+
+# Snapshot failures must not attempt to restore an incomplete snapshot.
 # Snapshot only the deploy-controlled Core tree. Secrets remain under /etc/mccluster.
 # The deployment manifest lives inside Core, so rollback restores provenance too.
 if [[ -d "${CORE_TARGET}" ]]; then
@@ -112,6 +223,7 @@ if [[ -f "${RECONCILE_SCRIPT}" ]]; then
 else
   touch "${BACKUP_DIR}/new-reconcile-script"
 fi
+LIVE_TOUCHED=1
 install -d -o root -g root -m 0755 "${RECONCILE_TARGET}"
 install -o root -g root -m 0755 "${SOURCE_DIR}/scripts/mccluster-vps-reconcile.sh" "${RECONCILE_SCRIPT}"
 
@@ -177,37 +289,61 @@ if [[ -r /etc/mccluster-node/node.env ]]; then
   fi
 fi
 
+# Ollama service settings (loaded models, keep-alive, memory/CPU caps).
+if systemctl list-unit-files ollama.service --no-legend 2>/dev/null | grep -q '^ollama.service'; then
+  if ! cmp -s "${SOURCE_DIR}/core/systemd/ollama-mccluster.conf" "${OLLAMA_DROPIN}"; then
+    if [[ -f "${OLLAMA_DROPIN}" ]]; then
+      cp -p "${OLLAMA_DROPIN}" "${BACKUP_DIR}/ollama-mccluster.conf"
+    else
+      touch "${BACKUP_DIR}/new-ollama-dropin"
+    fi
+    install -d -m 0755 "${OLLAMA_DROPIN_DIR}"
+    install -m 0644 "${SOURCE_DIR}/core/systemd/ollama-mccluster.conf" "${OLLAMA_DROPIN}"
+    OLLAMA_RESTART=1
+  fi
+fi
+
 systemctl daemon-reload
 
+if [[ ${OLLAMA_RESTART} -eq 1 ]]; then
+  systemctl restart ollama.service
+  mcc_wait_ollama
+fi
+
 # Keep timers enabled; restart only services that already exist on this host.
-for timer in mccluster-core-actors.timer mccluster-core-knowledge.timer mccluster-core-digest.timer mccluster-core-portfolio-plan.timer mccluster-core-reflection.timer mccluster-core-system-health.timer mccluster-vps-reconcile.timer; do
+# mccluster-core-weather.timer is installed above but deliberately NOT in this
+# list: Connecticut weather ingest stays off until the owner enables the timer
+# and sets WEATHER_INGEST_ENABLED=true (docs/control-plane/CONNECTICUT-WEATHER.md).
+for timer in mccluster-core-actors.timer mccluster-core-prim3-news.timer mccluster-core-world-news-pairing.timer mccluster-core-knowledge.timer mccluster-core-digest.timer mccluster-core-portfolio-plan.timer mccluster-core-reflection.timer mccluster-core-system-health.timer mccluster-vps-reconcile.timer; do
   if systemctl list-unit-files "${timer}" --no-legend 2>/dev/null | grep -q "${timer}"; then
     systemctl enable --now "${timer}"
   fi
 done
 
-# Catch up the knowledge export after deployment without blocking inference.
-systemctl start --no-block mccluster-core-knowledge.service
-
-for unit in mccluster-core-tool-broker.service mccluster-compute-gateway.service mccluster-ollama-adapter.service mccluster-compute-node.service mccluster-core-runner.service; do
-  if systemctl list-unit-files "${unit}" --no-legend 2>/dev/null | grep -q "${unit}"; then
+for unit in "${MCC_CORE_SERVICES[@]}"; do
+  [[ "${unit}" == mccluster-core-runner.service || "${unit}" == mccluster-compute-node.service ]] && continue
+  if mcc_unit_installed "${unit}"; then
     systemctl restart "${unit}"
   fi
 done
 
 # The preview file server is loopback-only and receives no Core credentials.
-systemctl enable --now mccluster-preview-gateway.service
-systemctl restart mccluster-preview-gateway.service
-curl --fail --silent --show-error --retry 5 --retry-connrefused --retry-delay 1 --max-time 5 http://127.0.0.1:4799/health >/dev/null
+systemctl enable --now "${MCC_PREVIEW_SERVICE}"
+systemctl restart "${MCC_PREVIEW_SERVICE}"
 
 # The resident AI path is part of the minimum healthy Core surface.
 # A release that leaves the adapter unable to reach Ollama must roll back
 # instead of stamping a deployment where Control can queue work but never reply.
-systemctl is-active --quiet mccluster-core-runner.service
-systemctl is-active --quiet mccluster-core-tool-broker.service
-systemctl is-active --quiet mccluster-ollama-adapter.service
-systemctl is-active --quiet mccluster-compute-node.service
-curl --fail --silent --show-error --retry 5 --retry-connrefused --retry-delay 1 --max-time 5 http://127.0.0.1:4790/health >/dev/null
+# Same probe rollback uses: preview /health, required units active, adapter /health.
+# Confirm inference is reachable AND the default model is installed (/ready
+# answers 503 otherwise) before allowing either consumer to claim work.
+mcc_probe "${MCC_ADAPTER_HEALTH_URL}"
+mcc_probe "${MCC_ADAPTER_READY_URL}"
+mcc_resume_producers
+mcc_verify_core_health strict
+
+# Catch up the knowledge export only after inference and consumers are ready.
+systemctl start --no-block mccluster-core-knowledge.service
 
 grep -Fq "\"commit_sha\":\"${DEPLOY_SHA}\"" "${DEPLOY_MANIFEST}"
 printf 'deployed_core=%s\ncommit_sha=%s\nmanifest=%s\nbackup=%s\n' "${CORE_TARGET}" "${DEPLOY_SHA}" "${DEPLOY_MANIFEST}" "${BACKUP_DIR}"

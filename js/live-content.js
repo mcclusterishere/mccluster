@@ -169,8 +169,44 @@
     dismiss: writeSeen
   };
 
-  /* The policy itself must remain readable before acknowledgement. */
-  if (page === "privacy.html" || readSeen()) return;
+  /* The policy itself must remain readable before acknowledgement, and it is
+     where someone who answered "Not now" can still agree (the policy says so:
+     privacy.html#entry-notice). The page carries the control, hidden until
+     this script shows it. Agreeing here records the same agreement as the
+     notice; analytics start with the next page view. */
+  if (page === "privacy.html") {
+    var answer = function () {
+      var box = d.getElementById("mccPrivacyAnswer");
+      var status = d.getElementById("mccPrivacyAnswerStatus");
+      var agree = d.getElementById("mccPrivacyAnswerAgree");
+      if (!box || !status || !agree) return;
+      var show = function (justNow) {
+        if (readAck()) {
+          status.textContent = justNow
+            ? "You agreed to notice version " + VERSION + ". McCluster's analytics start with your next page."
+            : "You have agreed to notice version " + VERSION + " on this browser.";
+          agree.hidden = true;
+        } else {
+          status.textContent = readSeen()
+            ? "You answered \u201cNot now\u201d to notice version " + VERSION + ": McCluster's analytics are off."
+            : "You have not answered notice version " + VERSION + ": McCluster's analytics are off.";
+          agree.hidden = false;
+        }
+      };
+      show(false);
+      box.hidden = false;
+      agree.addEventListener("click", function () {
+        writeAck();
+        show(true);
+        /* the button hides, so focus moves to the answer it produced */
+        try { status.setAttribute("tabindex", "-1"); status.focus(); } catch (_) {}
+      });
+    };
+    if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", answer, { once: true });
+    else answer();
+    return;
+  }
+  if (readSeen()) return;
   var framed = true;
   try { framed = w.top !== w; } catch (_) {}
   if (framed) return;
@@ -219,8 +255,10 @@
       'color:#f5efe6;font:14px/1.4 system-ui,sans-serif;box-shadow:0 12px 40px rgba(0,0,0,.45)}' +
       '#mccPrivacyNotice p{margin:0 0 8px;color:#d8cfc3}' +
       '#mccPrivacyNotice .mccpn__actions{display:flex;flex-wrap:wrap;gap:6px}' +
-      '#mccPrivacyNotice a,#mccPrivacyNotice button{min-height:40px;border-radius:9px;padding:8px 12px;' +
+      '#mccPrivacyNotice a,#mccPrivacyNotice button{display:inline-flex;align-items:center;justify-content:center;' +
+      'min-height:44px;min-width:44px;border-radius:9px;padding:8px 12px;' +
       'font:inherit;font-weight:700;text-align:center;cursor:pointer}' +
+      '#mccPrivacyNotice a:focus-visible,#mccPrivacyNotice button:focus-visible{outline:3px solid #f5efe6;outline-offset:2px}' +
       '#mccPrivacyNotice a{border:1px solid rgba(255,255,255,.25);color:#f5efe6;text-decoration:none}' +
       '#mccPrivacyNotice .mccpn__agree{border:0;background:#f5efe6;color:#0b0908}' +
       '#mccPrivacyNotice .mccpn__later{border:1px solid rgba(255,255,255,.25);background:transparent;color:#f5efe6}' +
@@ -238,7 +276,8 @@
       bar.innerHTML =
         /* Short on purpose: Google's guidance is a banner that takes "a small
            fraction of the screen". The full notice is one tap away. */
-        '<p>Nothing from this visit is recorded until you agree to the Privacy Policy. ' +
+        '<p>McCluster&rsquo;s analytics stay off until you agree to the Privacy Policy; ' +
+        '&ldquo;Not now&rdquo; records only that you saw this notice. ' +
         'It is notice, not blanket consent: location and device permissions keep their own controls.</p>' +
         '<div class="mccpn__actions">' +
         '<button type="button" class="mccpn__agree" id="mccPrivacyNoticeAgree">I agree &amp; continue</button>' +
@@ -255,53 +294,91 @@
         writeSeen();
         bar.remove();
       });
+      /* Escape from inside the bar is "Not now", the same as the dialog. */
+      bar.addEventListener("keydown", function (e) {
+        if (e.key !== "Escape" && e.key !== "Esc") return;
+        writeSeen();
+        bar.remove();
+      });
     };
     if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", mountBanner, { once: true });
     else mountBanner();
   }
 
+  /* THE ENTRY DIALOG. Two answers, the same two the banner and the Privacy
+     Policy name ("I agree & continue" and "Not now"; pinned by
+     scripts/test/privacy-notice-policy.test.mjs):
+     - "I agree & continue" records agreement and reloads, so the page starts
+       with it in place (analytics may begin).
+     - "Not now" (or Escape) records only that the notice was seen, closes the
+       dialog and lets the visitor in without reloading. Nothing that needs
+       agreement starts: js/analytics.js stays off on this and every later
+       page until the visitor agrees, which they can still do on the Privacy
+       Policy page. Like every answer, it is not asked again for this version.
+     Leaving the page without answering is no answer: the next page asks. */
   function wall() {
     d.documentElement.setAttribute("data-privacy-gate", "pending");
     var style = d.createElement("style");
     style.id = "mccPrivacyGateStyle";
+    /* Mobile first: one column at phone width; min-width only ever adds room.
+       The overlay scrolls, and the card centres with auto margins, so a short
+       landscape phone can still reach every answer. */
     style.textContent =
       'html[data-privacy-gate="pending"] body{overflow:hidden!important}' +
       'html[data-privacy-gate="pending"] body>*:not(#mccPrivacyGate){visibility:hidden!important;pointer-events:none!important}' +
-      '#mccPrivacyGate{visibility:visible!important;position:fixed;inset:0;z-index:2147483647;' +
-      'display:grid;place-items:center;padding:20px;background:#0b0908;color:#f5efe6;font:16px/1.5 system-ui,sans-serif}' +
-      '#mccPrivacyGate .mccpg__card{width:min(100%,560px);padding:24px;border:1px solid rgba(255,255,255,.18);' +
-      'border-radius:18px;background:#15110f;box-shadow:0 24px 80px rgba(0,0,0,.5)}' +
+      '#mccPrivacyGate{visibility:visible!important;position:fixed;inset:0;z-index:2147483647;box-sizing:border-box;' +
+      'display:flex;overflow-y:auto;padding:16px;background:#0b0908;color:#f5efe6;font:16px/1.5 system-ui,sans-serif}' +
+      '#mccPrivacyGate *{box-sizing:border-box}' +
+      '#mccPrivacyGate .mccpg__card{margin:auto;width:min(100%,560px);min-width:0;padding:20px;border:1px solid rgba(255,255,255,.18);' +
+      'border-radius:18px;background:#15110f;box-shadow:0 24px 80px rgba(0,0,0,.5);overflow-wrap:anywhere}' +
       '#mccPrivacyGate h1{margin:0 0 12px;font-size:1.45rem;line-height:1.1}' +
+      '#mccPrivacyGate h1:focus{outline:none}' +
       '#mccPrivacyGate p{margin:0 0 14px;color:#d8cfc3}' +
-      '#mccPrivacyGate .mccpg__actions{display:grid;gap:10px;margin-top:18px}' +
-      '#mccPrivacyGate a,#mccPrivacyGate button{min-height:48px;border-radius:12px;padding:12px 16px;font:inherit;font-weight:700;text-align:center}' +
+      '#mccPrivacyGate .mccpg__actions{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin-top:18px}' +
+      '#mccPrivacyGate a,#mccPrivacyGate button{display:flex;align-items:center;justify-content:center;min-height:48px;min-width:44px;' +
+      'border-radius:12px;padding:12px 16px;font:inherit;font-size:max(16px,1rem);font-weight:700;text-align:center;cursor:pointer}' +
       '#mccPrivacyGate a{border:1px solid rgba(255,255,255,.25);color:#f5efe6;text-decoration:none}' +
-      '#mccPrivacyGate button{border:0;background:#f5efe6;color:#0b0908;cursor:pointer}' +
-      '#mccPrivacyGate small{display:block;margin-top:12px;color:#a99d91}';
+      '#mccPrivacyGate .mccpg__agree{border:0;background:#f5efe6;color:#0b0908}' +
+      '#mccPrivacyGate .mccpg__later{border:1px solid rgba(255,255,255,.25);background:transparent;color:#f5efe6}' +
+      '#mccPrivacyGate a:focus-visible,#mccPrivacyGate button:focus-visible{outline:3px solid #f5efe6;outline-offset:3px}' +
+      '#mccPrivacyGate small{display:block;margin-top:12px;color:#a99d91}' +
+      '@media (min-width:560px){#mccPrivacyGate{padding:24px}#mccPrivacyGate .mccpg__card{padding:24px}' +
+      '#mccPrivacyGate .mccpg__actions{grid-template-columns:repeat(2,minmax(0,1fr))}' +
+      '#mccPrivacyGate .mccpg__review{grid-column:1/-1}}';
     (d.head || d.documentElement).appendChild(style);
 
     function mount() {
       if (d.getElementById("mccPrivacyGate")) return;
+      var before = d.activeElement || null;
       var gate = d.createElement("div");
       gate.id = "mccPrivacyGate";
       gate.setAttribute("role", "dialog");
       gate.setAttribute("aria-modal", "true");
       gate.setAttribute("aria-labelledby", "mccPrivacyGateTitle");
+      gate.setAttribute("aria-describedby", "mccPrivacyGateBody");
       gate.innerHTML =
         '<div class="mccpg__card">' +
-        '<h1 id="mccPrivacyGateTitle">Privacy before entry</h1>' +
-        '<p>McCluster records account, device, network, location and activity data as described in the Privacy Policy. Optional live video, microphone audio and verification media are captured only in features that request them. Review the updated notice before entering.</p>' +
+        '<h1 id="mccPrivacyGateTitle" tabindex="-1">Privacy before entry</h1>' +
+        '<div id="mccPrivacyGateBody">' +
+        '<p>McCluster records account, device, network, location and activity data as described in the Privacy Policy. Optional live video, microphone audio and verification media are captured only in features that request them.</p>' +
+        '<p><b>McCluster&rsquo;s own analytics stay off until you agree.</b> &ldquo;Not now&rdquo; lets you in and records only that you saw this notice. Either answer is kept for this version of the policy, so it is not asked again; you can agree later on the Privacy Policy page.</p>' +
         '<p><b>This acknowledgement is not blanket consent.</b> Precise location and other protected device permissions still use their own browser or operating-system controls, and privacy signals remain honored.</p>' +
+        '</div>' +
         '<div class="mccpg__actions">' +
-        '<a href="/privacy.html">Review the Privacy Policy</a>' +
-        '<button type="button" id="mccPrivacyAgree">I agree &amp; continue</button>' +
+        '<button type="button" class="mccpg__agree" id="mccPrivacyAgree">I agree &amp; continue</button>' +
+        '<button type="button" class="mccpg__later" id="mccPrivacyLater">Not now</button>' +
+        '<a class="mccpg__review" href="/privacy.html">Review the Privacy Policy</a>' +
         '</div>' +
         '<small>Privacy notice version ' + VERSION + '</small>' +
         '</div>';
       d.body.appendChild(gate);
       var btn = d.getElementById("mccPrivacyAgree");
+      var later = d.getElementById("mccPrivacyLater");
+      var open = true;
       btn.addEventListener("click", function () {
+        if (!open) return;
         btn.disabled = true;
+        later.disabled = true;
         /* the page reloads to start with the agreement in place; a member's
            record gets a moment to be written first, never more than that */
         var reloaded = false;
@@ -309,6 +386,35 @@
         writeAck().then(go, go);
         setTimeout(go, 1500);
       });
+      /* "Not now": seen, not agreed. No reload: nothing that waits for
+         agreement started on this page, and nothing starts now. */
+      function notNow() {
+        if (!open || btn.disabled) return;
+        open = false;
+        writeSeen();
+        gate.remove();
+        if (style.remove) style.remove();
+        d.documentElement.removeAttribute("data-privacy-gate");
+        var back = before && before !== d.body && before.focus ? before : null;
+        try { (back || (d.querySelector && d.querySelector("main,[role=main]")) || d.body).focus({ preventScroll: true }); } catch (_) {}
+      }
+      later.addEventListener("click", notNow);
+      /* A modal dialog: Escape is "Not now", and Tab stays inside it. */
+      gate.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" || e.key === "Esc") {
+          if (e.preventDefault) e.preventDefault();
+          notNow();
+          return;
+        }
+        if (e.key !== "Tab" || !gate.querySelectorAll) return;
+        var items = Array.prototype.filter.call(gate.querySelectorAll("a[href],button:not([disabled])"), function (n) { return !n.disabled; });
+        if (!items.length) return;
+        var first = items[0], last = items[items.length - 1], at = d.activeElement;
+        if (e.shiftKey && (at === first || !gate.contains(at))) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && (at === last || !gate.contains(at))) { e.preventDefault(); first.focus(); }
+      });
+      /* Focus starts on the agree button, the way it always has; the dialog
+         is labelled and described, so a screen reader hears the notice. */
       btn.focus();
     }
 

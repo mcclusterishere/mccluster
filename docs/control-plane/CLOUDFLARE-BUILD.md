@@ -12,10 +12,30 @@ In Cloudflare → Workers & Pages → `mccluster` → Settings → Build:
 | Branch | `main` |
 | **Root directory** | `workers/mccluster` |
 | Build command | *(leave empty)* |
-| **Deploy command** | `npx wrangler deploy` |
+| **Deploy command** | `npx --no-install wrangler deploy` (owner change from the older `npx wrangler deploy`; see below) |
 | Build watch paths | `workers/mccluster/**` |
 
 Do not set an assets / static directory.
+
+### Pinned tooling
+
+Wrangler is an exact `devDependency` of `workers/mccluster` (`package.json` +
+`package-lock.json`), and Node is pinned by `workers/mccluster/.node-version`,
+which Workers Builds reads from the root directory. The pin is 24.22.1, the
+Workers Builds default production was already building with when it was set
+(2026-10-28), so the pin freezes today's build rather than changing it; the
+GitHub deploy and CI paths read the same file. Workers Builds installs the
+locked dependencies before the deploy command, so even the older
+`npx wrangler deploy` now resolves to the locked binary; `--no-install` makes
+that guaranteed by failing the build instead of downloading a CLI if the
+install ever did not happen. `scripts/test/deploy-controls.test.mjs` fails if
+the pin loosens or a workflow runs a downloaded Wrangler.
+
+### Production does not wait for CI (yet)
+
+Cloudflare Git builds and deploys every push to `main` immediately, in
+parallel with GitHub Actions. The controls that close that gap, and which of
+them are owner settings, are in `DEPLOYMENT-CONTROLS-PROPOSAL.md`.
 Do not point this project at `Here`.
 Do not create a Worker named `mccluster-core`.
 

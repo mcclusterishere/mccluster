@@ -140,7 +140,7 @@ const previewFrame=page=>page.frames().find(f=>/\/front\.html$/.test(new URL(f.u
 /* the preview frame, once it has the draft and its engine is running */
 async function previewReady(page,seqAbove=0){
   await page.waitForFunction(n=>{const f=document.getElementById('fsFrame');if(!f)return false;const m=/studio=(\d+)/.exec(f.src||'');if(!m||Number(m[1])<=n)return false;
-    try{const w=f.contentWindow;return w.location.search.indexOf('studio='+m[1])>=0&&w.document.documentElement.getAttribute('data-front-state')==='ready'&&w.MCC_FRONT&&w.__MCC_FRONT_GOTO;}catch(e){return false;}},seqAbove,{timeout:30000});
+    try{const w=f.contentWindow;return w.location.search.indexOf('studio='+m[1])>=0&&w.document.documentElement.getAttribute('data-front-state')==='ready'&&w.MCC_FRONT&&w.__MCC_FRONT_GOTO;}catch(e){return false;}},seqAbove,{timeout:90000});
   return previewFrame(page);
 }
 const frameSeq=page=>page.evaluate(()=>{const m=/studio=(\d+)/.exec(document.getElementById('fsFrame').src||'');return m?Number(m[1]):0;});

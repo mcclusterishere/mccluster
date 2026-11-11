@@ -1,0 +1,64 @@
+name: Site smoke gate
+# The site's own phone/desktop release gate (scripts/smoke.mjs): boots a
+# local server, walks the public rooms headless at 390 and 1280 px, and
+# fails on any page error, sideways scroll, missing mount or orphaned
+# door. It runs sealed (no request leaves 127.0.0.1), so it measures this
+# checkout and never production. Always on for main, never on a feature
+# branch push (AGENTS.md hard rule 2).
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: site-smoke-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+      - name: Install pinned browser runtime outside the repository
+        run: |
+          npm install --prefix /tmp/smoke-qa --ignore-scripts --no-audit --no-fund --no-save playwright@1.57.0
+          /tmp/smoke-qa/node_modules/.bin/playwright install --with-deps chromium
+      - name: Walk the house at phone and desktop width
+        env:
+          PW_MODULE: /tmp/smoke-qa/node_modules/playwright
+        run: node scripts/smoke.mjs
+
+      - name: Verify BLS owner inspector (sealed fixtures)
+        env:
+          PW_MODULE: /tmp/smoke-qa/node_modules/playwright
+          BLS_PROOF_DIR: /tmp/bls-explorer-proof
+        run: node scripts/e2e/bls-explorer.e2e.mjs
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: bls-explorer-proof
+          path: /tmp/bls-explorer-proof
+          retention-days: 7
+          if-no-files-found: warn
+
+      - name: Verify physical computer workbench (sealed fixtures)
+        env:
+          PW_MODULE: /tmp/smoke-qa/node_modules/playwright
+          EQUIPMENT_PROOF_DIR: /tmp/equipment-proof
+          EQUIPMENT_BROWSER_QA: '1'
+        run: node --test scripts/test/server-lab.test.mjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: equipment-workbench-proof
+          path: /tmp/equipment-proof
+          retention-days: 7
+          if-no-files-found: warn

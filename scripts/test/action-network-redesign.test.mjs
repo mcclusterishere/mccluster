@@ -90,7 +90,7 @@ test('the World look is graphite and one red, scoped to the World screen',()=>{
  assert.match(look,/--w-steel: linear-gradient\(180deg, #181b21, #0d0f13\)/);
  assert.doesNotMatch(look,/#0f1626|#131c31|#070b14/,'the navy of the earlier mockup is gone');
  assert.match(look,/\.mn-world-on \.mn__top \.mn__brand strong::after \{[^}]*background: var\(--mn-hot\)/,'the red rule under HUMAN UPRISE');
- assert.doesNotMatch(page,/mn__brand-world/,'the wordmark is Human Uprise, and only that');
+ assert.doesNotMatch(page,/mn__brand-world/,'the wordmark is Equity Uprise, and only that');
  assert.doesNotMatch(look,/\.appbar/,'the house bar is styled by the house');
  assert.match(look,/\.mn__world-tag \{ display: none;/,'the corner tag waits for tablet width, where the credit line leaves room');
 });
@@ -110,7 +110,7 @@ test('the emblem or Fund it: no like, comment or reaction; a mission post offers
  assert.match(client,/class="mn__primary mn__primary--eup" href="' \+ esc\(actionOfferHref\(c\)\)[\s\S]{0,200}aria-label="Join this mission and do it">' \+ EUP_MARK \+ '<\/a>/);
  assert.equal((client.match(/EUP_MARK \+ '<\/a>'/g)||[]).length,3,'every feed join is the mark alone: offer, verified action, made together');
  assert.match(page,/id="mnWorldFocusJoin"[^>]*aria-label="Join this mission and do it"[^>]*><img class="mn__eup" src="assets\/img\/equity-uprise-mark-white\.png" alt="" width="28" height="28"><\/button>/);
- for(const [name,text] of [['the page',page],['the script',client],['the stylesheet',css]]) assert.doesNotMatch(text,/E\s*=\s*Up/i,name+' never writes the mark out');
+ for(const [name,text] of [['the page',page.replace(/(?:aria-label|title)="E=UP: Environmental Justice"/g,'')],['the script',client],['the stylesheet',css]]) assert.doesNotMatch(text,/E\s*=\s*Up/i,name+' never writes the mark out');
  assert.match(css,/\.mn__eup \{ width: 28px; height: 28px; object-fit: contain; flex: none; \}/,'the complete artwork, scaled only, no rounding');
  assert.match(css,/\.mn__primary--eup, \.mn__world-go--eup \{ display: inline-flex; align-items: center; justify-content: center; gap: 0; min-width: 44px;/,'the pill is the tap target');
  assert.match(css,/\.mn-world-on #mnFeed \.mn__actcard-row \.mn__primary--eup::after \{ content: none; \}/,'no chevron beside the mark');

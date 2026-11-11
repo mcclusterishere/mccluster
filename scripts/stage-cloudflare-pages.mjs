@@ -20,13 +20,13 @@ import { basename, dirname, join, resolve, sep } from 'node:path';
 const allowedDirectories = new Set([
   'assets','auth','oauth','action','closet','css','data','demos',
   'engineering','equity-uprise-preview','js','portfolio','site0',
-  'tracks','walls','whip','vendor'
+  'screens','tracks','walls','whip','vendor','prim3-level-builder'
 ]);
 /* This list is for web-delivered assets only. Site 0 authoring GLBs,
    CAD manifests and tools under assets/3d are NOT runtime assets:
    tools/publish-site0.sh separately promotes the approved runtime into site0/. */
 const publicAssetGroups = new Set([
-  'frames','flags','brand','img','video','audio','credentials','landmarks',
+  'frames','flags','img','video','audio','credentials','landmarks',
   'fonts','captions','resume','hitman','likeness','nfc','outfit'
 ]);
 const allowedExtensions = new Set([
@@ -73,7 +73,6 @@ function shouldPublish(path) {
   if (pieces.length > 1 && !allowedDirectories.has(pieces[0])) return false;
   if (pieces[0] === 'assets') {
     if (pieces.length < 3 || !publicAssetGroups.has(pieces[1])) return false;
-    if (pieces[1] === 'brand' && !/\.(?:png|jpe?g|webp|avif|svg|gif|css|json)$/i.test(posix)) return false;
     /* Credentials are the published PDFs plus the raster scans that pages such
        as policy.html and the credentials gallery load as posters and figures. */
     if (pieces[1] === 'credentials' && !/\.(?:pdf|jpe?g|png|webp|avif)$/i.test(posix)) return false;

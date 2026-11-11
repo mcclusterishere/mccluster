@@ -1,0 +1,43 @@
+name: Public profile project preview
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'front.html'
+      - 'index.html'
+      - 'member-front.html'
+      - 'guest-globe.html'
+      - 'js/front-*.js'
+      - 'js/main.js'
+      - 'js/guest-world.js'
+      - 'css/profile-shell.css'
+      - 'scripts/e2e/vaunt-project.e2e.mjs'
+      - 'front-studio.html'
+      - 'workers/mccluster/src/member-fronts.js'
+      - 'packages/front-config/**'
+      - 'scripts/e2e/member-front.e2e.mjs'
+      - '.github/workflows/profile-project-preview.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: '22'
+      - run: npm install --prefix /tmp/profile-tools playwright@1.58.2 --ignore-scripts --no-audit --no-fund
+      - run: /tmp/profile-tools/node_modules/.bin/playwright install --with-deps chromium
+      - run: node scripts/e2e/vaunt-project.e2e.mjs /tmp/profile-proof
+        env:
+          PLAYWRIGHT_DIR: /tmp/profile-tools/node_modules
+      - run: node scripts/e2e/member-front.e2e.mjs /tmp/profile-proof/member-front
+        env:
+          PLAYWRIGHT_DIR: /tmp/profile-tools/node_modules
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        if: always()
+        with:
+          name: public-profile-proof
+          path: /tmp/profile-proof

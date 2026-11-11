@@ -1,0 +1,228 @@
+# FAIL BEFORE (ii), scratch variant: PR head cf8c3cc7 with the series' scripts/test/prim3-topology-learning.test.mjs whose ONE runtime import line is pointed back at the PR head's only copy (../../PRIM3/game/halo/adaptive/topology-learning.mjs), so every test reports separately; 2026-11-10T11:57:01Z, node v22.23.4
+# the variant's import line: import {LEARNING_VARIANTS,learningContext,latticeQuestion} from '../../PRIM3/game/halo/adaptive/topology-learning.mjs';
+# node --test scripts/test/prim3-topology-learning.test.mjs scripts/test/prim3-released-learning.test.mjs scripts/test/prim3-mission-client.test.mjs
+TAP version 13
+# Subtest: review and integer validation happen before queuing or network writes
+ok 1 - review and integer validation happen before queuing or network writes
+  ---
+  duration_ms: 27.426809
+  type: 'test'
+  ...
+# Subtest: lost request stays scoped to verified owner and retries exact body
+ok 2 - lost request stays scoped to verified owner and retries exact body
+  ---
+  duration_ms: 1.203107
+  type: 'test'
+  ...
+# Subtest: account change during response discards old pending account data
+ok 3 - account change during response discards old pending account data
+  ---
+  duration_ms: 0.77977
+  type: 'test'
+  ...
+# Subtest: storage failure refuses mutation rather than losing a queue
+ok 4 - storage failure refuses mutation rather than losing a queue
+  ---
+  duration_ms: 0.604525
+  type: 'test'
+  ...
+# Subtest: final event slot rejects answers and hints before persistence while allowing debrief
+ok 5 - final event slot rejects answers and hints before persistence while allowing debrief
+  ---
+  duration_ms: 1.93228
+  type: 'test'
+  ...
+# Subtest: reserve an answer before the final slot when only scaffolds have been used
+ok 6 - reserve an answer before the final slot when only scaffolds have been used
+  ---
+  duration_ms: 1.146754
+  type: 'test'
+  ...
+# Subtest: new practice requires acknowledged closed debrief and clears only local session state
+ok 7 - new practice requires acknowledged closed debrief and clears only local session state
+  ---
+  duration_ms: 1.457905
+  type: 'test'
+  ...
+# Subtest: lost reviewed lattice start retains the exact versioned context
+ok 8 - lost reviewed lattice start retains the exact versioned context
+  ---
+  duration_ms: 1.579594
+  type: 'test'
+  ...
+# Subtest: unavailable release detachment preserves rejected queue until server confirmation, including reload
+ok 9 - unavailable release detachment preserves rejected queue until server confirmation, including reload
+  ---
+  duration_ms: 4.252418
+  type: 'test'
+  ...
+# Subtest: expired rejected start can detach without a current session and never posts a synthetic finish
+ok 10 - expired rejected start can detach without a current session and never posts a synthetic finish
+  ---
+  duration_ms: 1.20857
+  type: 'test'
+  ...
+# Subtest: checkpoint presentation requires exact recipe and completed canonical step
+ok 11 - checkpoint presentation requires exact recipe and completed canonical step
+  ---
+  duration_ms: 0.938265
+  type: 'test'
+  ...
+# Subtest: shared adapter binds server release and forwards answer, never client correctness
+ok 12 - shared adapter binds server release and forwards answer, never client correctness
+  ---
+  duration_ms: 1.646207
+  type: 'test'
+  ...
+# Subtest: authored turn presentation requires the signed variant and topology
+ok 13 - authored turn presentation requires the signed variant and topology
+  ---
+  duration_ms: 0.438867
+  type: 'test'
+  ...
+# Subtest: premature completed debrief is rejected before it can poison the durable queue
+ok 14 - premature completed debrief is rejected before it can poison the durable queue
+  ---
+  duration_ms: 0.300977
+  type: 'test'
+  ...
+# Subtest: square evaluator agrees with canonical neighbor BFS, not graph indices
+ok 15 - square evaluator agrees with canonical neighbor BFS, not graph indices
+  ---
+  duration_ms: 12.121389
+  type: 'test'
+  ...
+# Subtest: hex evaluator agrees with canonical neighbor BFS, not graph indices
+ok 16 - hex evaluator agrees with canonical neighbor BFS, not graph indices
+  ---
+  duration_ms: 8.323528
+  type: 'test'
+  ...
+# Subtest: authored frames and unsupported/forged context fail closed
+ok 17 - authored frames and unsupported/forged context fail closed
+  ---
+  duration_ms: 0.92614
+  type: 'test'
+  ...
+# Subtest: authored frames follow their level modules: an HQ/B1 cell is the plan's 12 ft WORLD_M, the 3.54 m rule tile is named apart (audit W5)
+not ok 18 - authored frames follow their level modules: an HQ/B1 cell is the plan's 12 ft WORLD_M, the 3.54 m rule tile is named apart (audit W5)
+  ---
+  duration_ms: 0.997709
+  type: 'test'
+  location: '/tmp/claude-0/-home-user/837dc966-2a9c-597b-ab55-b955b1d35f73/scratchpad/pr-fixes2/wt-w5-merge-base/scripts/test/prim3-topology-learning.test.mjs:27:1'
+  failureType: 'testCodeFailure'
+  error: 'equity-uprise-hq: names the plan cell and the rule tile separately: X=x−3, Y=8−y; +X east, +Y north; 3.54 m/tile'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: ~
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///tmp/claude-0/-home-user/837dc966-2a9c-597b-ab55-b955b1d35f73/scratchpad/pr-fixes2/wt-w5-merge-base/scripts/test/prim3-topology-learning.test.mjs:34:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: the published mission UI imports the published runtime; the private path only re-exports it (audit W5)
+not ok 19 - the published mission UI imports the published runtime; the private path only re-exports it (audit W5)
+  ---
+  duration_ms: 0.410578
+  type: 'test'
+  location: '/tmp/claude-0/-home-user/837dc966-2a9c-597b-ab55-b955b1d35f73/scratchpad/pr-fixes2/wt-w5-merge-base/scripts/test/prim3-topology-learning.test.mjs:39:1'
+  failureType: 'testCodeFailure'
+  error: 'js/prim3-mission/released-app.mjs imports the published runtime'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+    import { LEARNING_VARIANTS, learningContext } from '../../PRIM3/game/halo/adaptive/topology-learning.mjs';
+    import {storedToken,SESSION_KEY} from '../owner-only.mjs';
+    import {createPracticeClient} from './client.mjs';
+    import {createReleasedLearning} from './released-learning.mjs';
+    import {saveGeneratedRecipe} from '../prim3-tactics/levels/generated.mjs';
+    const $=id=>document.getElementById(id),practice=createPracticeClient({token:()=>storedToken()});
+    const base='https://api.mccluster.org/v1/prim3/learning/adaptive/releases';
+    let selected=null,learning=null,busy=false,publishId=crypto.randomUUID(),timer=null,sources=[],context=null,citySnapshot=null;
+    const status=text=>{$('releaseStatus').textContent=text;};
+    async function api(path='',method='GET',body){const token=storedToken();if(!token)throw Error('Sign in again.');const r=await fetch(base+path,{method,headers:{authorization:`Bearer ${token}`,'content-type':'application/json'},body:body?JSON.stringify(body):undefined,cache:'no-store',redirect:'error',signal:AbortSignal.timeout(12000)});if(storedToken()!==token)throw Error('Account changed. Reload.');const out=await r.json();if(!r.ok)throw Error(out.error||'Release unavailable');return out;}
+    async function run(fn){if(busy)return;busy=true;try{await fn();}catch(e){status(e.message);}finally{busy=false;render();}}
+    function render(){
+     $('releaseRetry').hidden=!practice.pending;
+     $('releaseLeave').hidden=!practice.releaseId;
+     $('releaseLeave').disabled=busy;
+     if(!learning)return;
+     const v=learning.current,play=v.flow.phase==='play';
+     $('releaseQuestion').textContent=v.flow.question?.prompt||'';
+     $('releaseCheckpoint').textContent=v.released_mission.next_checkpoint_id?`${v.released_mission.next_checkpoint_id} · ${learning.ready?'Ready for math':'Complete this step in the game to answer'}`:'All checkpoint math completed.';
+     $('releaseSubmit').disabled=busy||practice.pending||!play||!learning.ready||practice.mustFinish;
+     $('releaseHint').disabled=$('releaseSubmit').disabled||practice.mustAnswer;
+     const completed=$('releaseOutcome').querySelector('[value=completed]');
+     completed.disabled=!!v.released_mission.next_checkpoint_id;
+     if(completed.disabled&&$('releaseOutcome').value==='completed')$('releaseOutcome').value='abandoned';
+     $('releaseFinish').disabled=busy||practice.pending||!play||v.flow.debrief.attempts===0;
+     $('releaseSummary').textContent=v.flow.phase==='debrief'?`${v.flow.debrief.correct}/${v.flow.debrief.attempts} answers correct; ${v.flow.debrief.independent} independent. Tactical outcome: ${v.flow.debrief.gameOutcome} (your report). No competency credit.`:'';
+    }
+    async function list(){const out=await api();$('releaseList').replaceChildren();for(const r of out.releases){const b=document.createElement('button');b.textContent=`${r.recipe_id} · expires ${new Date(r.expires_at).toLocaleString()}${r.revoked_at?' · revoked':''}`;b.onclick=()=>run(()=>choose(r.id));$('releaseList').append(b);}}
+    async function choose(id){const out=await api('/'+id);selected=out.release;$('releaseBrief').hidden=false;$('releaseTitle').textContent=selected.recipe.title;$('releaseBriefText').textContent=selected.recipe.disclaimer+' '+selected.recipe.objectives.map(o=>`${o.role}: ${o.steps.join(' → ')} at ${o.label}`).join('. ');$('releaseExpiry').textContent=`Expires ${new Date(selected.expires_at).toLocaleString()}. ${selected.source_snapshot?'Reviewed source: '+selected.source_snapshot.url:'Offline practice; no live news claim.'}`;$('releaseStart').disabled=!selected.available;$('releaseRevoke').disabled=!!selected.revoked_at;}
+    $('releaseReview').addEventListener('input',()=>{publishId=crypto.randomUUID();});
+    $('releaseSource').onchange=()=>{const s=sources.find(s=>s.id===$('releaseSource').value);$('releaseSourceLink').hidden=!s;if(s)$('releaseSourceLink').href=s.canonical_url;$('releaseNews').checked=false;};
+    $('releasePublish').onclick=()=>run(async()=>{const id=publishId,b={id,article_id:$('releaseSource').value||null,theme:$('releaseTheme').value,review:{fiction:$('releaseFiction').checked,geography:$('releaseGeography').checked,source:$('releaseNews').checked},input:{schema:'prim3.generated-input/v1',seed:Number($('releaseSeed').value),objective:$('releaseObjective').value,geography:{country:$('releaseCountry').value.toUpperCase(),place:$('releasePlace').value,lat:Number($('releaseLat').value),lon:Number($('releaseLon').value),terrain:$('releaseTerrain').value,sourceUrl:$('releaseGeo').value,reviewId:id}}};const out=await api('','POST',b);await list();await choose(out.release.id);status('Reviewed release saved.');});
+    $('releaseStart').onclick=()=>run(async()=>{
+     if(!selected)throw Error('Choose a release.');
+     if(timer){clearInterval(timer);timer=null;}learning=null;
+     if(practice.current?.flow.phase==='debrief')practice.newPractice();
+     if(practice.current&&practice.current.released_mission?.id!==selected.id)throw Error('Finish the existing practice before changing releases.');
+     context=practice.current?.flow.learning_context??($('learningTopology').value==='legacy'?null:learningContext({version:'prim3.lattice-learning/v1',variant:$('learningVariant').value,topology:$('learningTopology').value}));
+     if(context){$('learningVariant').value=context.variant;$('learningTopology').value=context.topology;describeMode();}
+     if(!context&&$('learningVariant').value!=='generated')throw Error('Select a supported lattice learning mode for this variant.');
+     const candidate=createReleasedLearning({practice,release:selected,getTacticalState:gameSnapshot,context});
+     await candidate.open();learning=candidate;
+     // Save only the immutable reviewed input; the existing generated level owns gameplay.
+     const saved=!context||context.variant==='generated'?saveGeneratedRecipe(selected.recipe_input):{href:LEARNING_VARIANTS[context.variant].href+(context.variant==='city'?'?topology='+context.topology:'')};
+     citySnapshot=null;
+     $('releaseGame').hidden=false;$('releaseGame').src=saved.href;$('releasePlay').hidden=false;
+     if(timer)clearInterval(timer);timer=setInterval(render,500);status('Complete the mission steps and answer their math here.');
+    });
+    $('releaseSubmit').onclick=()=>run(async()=>{const v=await learning.answer($('releaseAnswer').value);status(v.result.feedback);$('releaseAnswer').value='';});
+    $('releaseHint').onclick=()=>run(async()=>{const v=await learning.hint();status(v.result.hint);});
+    $('releaseFinish').onclick=()=>run(async()=>{await learning.finish($('releaseOutcome').value);status('Debrief saved. Tactical outcome remains your report.');});
+    $('releaseRetry').onclick=()=>run(async()=>{await practice.retry();status('Original learning receipt recovered. Re-enter the same release to continue.');});
+    $('releaseLeave').onclick=()=>run(async()=>{await practice.leaveUnavailableRelease();if(timer){clearInterval(timer);timer=null;}learning=null;$('releaseGame').src='about:blank';$('releasePlay').hidden=true;status('Unavailable mission left locally. Saved evidence remains; choose a fresh release.');});
+    $('releaseRevoke').onclick=()=>run(async()=>{await api('/'+selected.id+'/revoke','POST',{});await choose(selected.id);await list();status('Release revoked. Existing evidence is retained.');});
+    function conceal(){if(timer)clearInterval(timer);practice.clear();$('releaseGame').src='about:blank';document.querySelector('.pm').hidden=true;}
+    window.addEventListener('mcc:auth-changed',conceal);window.addEventListener('storage',e=>{if(e.key===SESSION_KEY||e.key===null)conceal();});window.addEventListener('pagehide',()=>{if(timer)clearInterval(timer);});
+    await run(async()=>{const {config}=await practice.connect();if(!config.enabled||!config.releases_enabled)throw Error('Reviewed missions are not enabled. No release has been written.');$('releasePublish').disabled=false;await list();try{sources=(await api('/sources')).sources;for(const s of sources){let u;try{u=new URL(s.canonical_url);}catch{continue;}if(u.protocol!=='https:')continue;const o=document.createElement('option');o.value=s.id;o.textContent=`${s.title} · ${s.published_at}`;$('releaseSource').append(o);}}catch{status('News discovery unavailable; reviewed offline practice remains available.');}if(practice.current?.released_mission){await choose(practice.current.released_mission.id);if(practice.current.flow.phase==='debrief'){context=practice.current.flow.learning_context??null;learning=createReleasedLearning({practice,release:selected,getTacticalState:()=>null,context});$('releasePlay').hidden=false;$('releaseGame').hidden=true;}}});
+    
+    function gameSnapshot(){
+     const w=$('releaseGame').contentWindow;if(!context||context.variant==='generated')return w?.__tx?.state;
+     if(context.variant==='city')return citySnapshot?.();
+     if(context.variant==='courtyard'){const s=w?.__PRIM3?.snapshot();return s?{variant:'courtyard',topology:'square',turn:s.turn,hasActed:s.units.some(u=>u.ap<2)}:null;}
+     const s=w?.__tx?.state;return s?{variant:context.variant,topology:'square',turn:s.round,hasActed:s.units.some(u=>u.faction==='PLAYER'&&u.ap<2)}:null;
+    }
+    $('releaseGame').addEventListener('load',async()=>{if(context?.variant==='city'){try{const w=$('releaseGame').contentWindow;citySnapshot=()=>w.__prim3CityLearningSnapshot?.();}catch{status('City learning snapshot unavailable. Resume the same mission.');}}});
+    function describeMode(){const v=$('learningVariant').value,t=$('learningTopology').value;$('learningFrame').textContent=LEARNING_VARIANTS[v].title+'. '+LEARNING_VARIANTS[v].frame+'. '+(v==='generated'?'Math follows the generated objective steps.':'Answer after a first action or turn, then after turns two and three. Combat progress is browser-reported.');$('learningTopology').querySelector('[value=hex]').disabled=v!=='city';$('learningTopology').querySelector('[value=legacy]').disabled=v!=='generated';if((t==='hex'&&v!=='city')||(t==='legacy'&&v!=='generated'))$('learningTopology').value='square';}
+    $('learningVariant').onchange=describeMode;describeMode();
+    
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///tmp/claude-0/-home-user/837dc966-2a9c-597b-ab55-b955b1d35f73/scratchpad/pr-fixes2/wt-w5-merge-base/scripts/test/prim3-topology-learning.test.mjs:43:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..19
+# tests 19
+# suites 0
+# pass 17
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 153.4178
+exit=1

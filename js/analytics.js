@@ -1397,11 +1397,19 @@ window.MCC_MODEL = (function () {
     if (/Twitter/i.test(ua)) return "twitter";
     return null;
   })();
-  var INJECTED = /webkit\.messageHandlers|Java object is gone|_AutofillCallbackHandler|__gCrWeb|instantSearchSDKJSBridge|zaloJSV2|ucbrowser|vivoNewsDetailPage/i;
-  function errorOrigin(file, msg) {
+  var INJECTED = /webkit\.messageHandlers|Java object is gone|__gCrWeb|instantSearchSDKJSBridge|zaloJSV2|ucbrowser|vivoNewsDetailPage/i;
+  // A name mention alone is not proof of browser injection. Keep script-backed
+  // failures actionable, even when a browser callback is named in the message.
+  function autofillDiagnostic(file, msg, stack) {
+    return /^(?:ReferenceError: )?Can't find variable: _AutofillCallbackHandler$/.test(String(msg || "").trim()) &&
+      !/\.(?:m?js)(?:[?:#]|$)/i.test(String(file || "")) &&
+      !/\.(?:m?js)(?:[?:#]|$)/i.test(String(stack || ""));
+  }
+  function errorOrigin(file, msg, stack) {
     file = String(file || ""); msg = String(msg || "");
     if (/^script error\.?$/i.test(msg) && !file) return "opaque";
     if (/^(iabjs|chrome-extension|moz-extension|safari-extension|safari-web-extension|webkit-masked-url|resource):/i.test(file)) return "injected";
+    if (autofillDiagnostic(file, msg, stack)) return "injected";
     if (INJECTED.test(msg)) return "injected";
     if (file) {
       var u = safe(function () { return new URL(file, location.href); });
@@ -1419,7 +1427,7 @@ window.MCC_MODEL = (function () {
       msg: String(e.message).slice(0, 200),
       src: String(e.filename || "").slice(0, 160),
       line: e.lineno || null, col: e.colno || null,
-      origin: errorOrigin(e.filename, e.message),
+      origin: errorOrigin(e.filename, e.message, e.error && e.error.stack),
       iab: IAB,
       stack: stackTop(e.error),
     });
@@ -1430,7 +1438,7 @@ window.MCC_MODEL = (function () {
     T("js_rejection", {
       msg: msg,
       name: r && r.name ? String(r.name).slice(0, 60) : null,
-      origin: INJECTED.test(msg) ? "injected" : "site",
+      origin: errorOrigin("", msg, r && r.stack),
       iab: IAB,
       stack: stackTop(r),
     });

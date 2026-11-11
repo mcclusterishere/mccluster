@@ -1,0 +1,92 @@
+/* HALO MARKETS card (js/halo/markets.js): a bottom sheet on a phone, a side panel from 760px. Mobile first, min-width only,
+   44px targets, inputs at 16px or more. Uses Halo's own tokens (css/halo.css). */
+.hm{position:fixed;z-index:11;left:0;right:0;bottom:var(--hx-bottom,0px);display:flex;flex-direction:column;max-height:min(74dvh,calc(100dvh - var(--hx-head,0px) - var(--hx-bottom,0px) - 8px));
+  background:var(--hx-panel,#070e1a);border:1px solid var(--hx-line-2,#22364f);border-bottom:0;border-radius:18px 18px 0 0;box-shadow:0 -12px 40px rgba(0,0,0,.5);
+  color:var(--hx-ink,#eef3f9);font:400 14px/1.45 Inter,system-ui,sans-serif;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-sizing:border-box;min-width:0}
+.hm[hidden]{display:none}
+.hm *,.hm *::before,.hm *::after{box-sizing:border-box}
+.hm__head{flex:none;display:flex;align-items:flex-start;gap:8px;padding:14px 12px 10px 16px;border-bottom:1px solid var(--hx-line,#15243a)}
+.hm__titles{flex:1 1 auto;min-width:0}
+.hm__kicker{margin:0 0 4px;color:var(--hx-mute,#8e9fb5);font:600 11px/1.2 Inter,system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase}
+.hm h2{margin:0;font:600 20px/1.2 Inter,system-ui,sans-serif;overflow-wrap:anywhere}
+.hm__sub{margin:4px 0 0;color:var(--hx-ink-2,#c6d1df);font-size:13px;overflow-wrap:anywhere}
+.hm__close{flex:none;display:grid;place-items:center;width:44px;height:44px;border:1px solid var(--hx-line-2,#22364f);border-radius:999px;background:transparent;color:var(--hx-ink,#eef3f9);cursor:pointer}
+.hm__close svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2}
+.hm__body{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:4px 16px 16px}
+.hm__sec{padding:12px 0;border-bottom:1px solid var(--hx-line,#15243a)}
+.hm__sec:last-child{border-bottom:0}
+.hm h3{margin:0 0 10px;font:600 13px/1.2 Inter,system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--hx-ink-2,#c6d1df)}
+.hm__note{margin:8px 0 0;color:var(--hx-mute,#8e9fb5);font-size:12.5px;overflow-wrap:anywhere}
+.hm__note a,.hm__news a{color:var(--hx-cyan-2,#91e1f6)}
+.hm__sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.hm__stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.hm__stat{min-width:0;padding:10px 12px;border:1px solid var(--hx-line-2,#22364f);border-radius:8px;background:var(--hx-panel-2,#0b1526)}
+.hm__stat-label{display:block;color:var(--hx-mute,#8e9fb5);font-size:12px;overflow-wrap:anywhere}
+.hm__stat b{display:block;margin:2px 0;font:600 18px/1.25 Inter,system-ui,sans-serif;overflow-wrap:anywhere}
+.hm__stat[data-tone="green"] b{color:var(--hx-green,#4fdf98)}
+.hm__stat[data-tone="red"] b{color:var(--hx-red,#ff7a7a)}
+.hm__stat small{display:block;color:var(--hx-mute,#8e9fb5);font-size:11.5px;overflow-wrap:anywhere}
+.hm ul{list-style:none;margin:0;padding:0}
+.hm__ex li+li,.hm__rows li+li{border-top:1px solid var(--hx-line,#15243a)}
+.hm__ex button,.hm__rows button{display:grid;align-items:center;gap:10px;width:100%;min-height:44px;padding:8px 6px;border:0;border-radius:6px;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.hm__ex button{grid-template-columns:auto minmax(0,1fr) auto}
+.hm__ex button[aria-pressed="true"],.hm__rows button[aria-current="true"]{background:var(--hx-raise,#0e1b2f);box-shadow:inset 3px 0 0 var(--hx-cyan,#45b8f4)}
+.hm__ex b,.hm__rows b{font-weight:600}
+.hm__ex small,.hm__rows small{display:block;color:var(--hx-mute,#8e9fb5);font-size:12px;overflow-wrap:anywhere}
+.hm__ex-main{min-width:0}
+.hm__ex-state{text-align:right}
+.hm__dot{width:10px;height:10px;border-radius:50%;background:var(--hx-mute,#7f90a6);opacity:.6}
+.hm__dot[data-open="true"]{background:var(--hx-green,#4fdf98);opacity:1;box-shadow:0 0 0 4px rgba(79,223,152,.18)}
+.hm__find{display:flex;align-items:center;min-height:44px;margin:4px 0 0;padding:0 12px;border:1px solid var(--hx-line-2,#22364f);border-radius:6px;background:#060e1b}
+.hm__find input{flex:1 1 auto;min-width:0;min-height:44px;border:0;background:transparent;color:var(--hx-ink,#eef3f9);font:400 max(16px,1rem)/1.2 Inter,system-ui,sans-serif;outline:none}
+.hm__find input::placeholder{color:var(--hx-mute,#8e9fb5)}
+.hm__find:focus-within{border-color:var(--hx-cyan,#45b8f4)}
+.hm__rows{margin-top:8px}
+.hm__rows button{grid-template-columns:minmax(0,4.5em) minmax(0,1fr) minmax(0,auto)}
+.hm__tick{font:600 13px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;overflow-wrap:anywhere}
+.hm__name{min-width:0;overflow-wrap:anywhere;font-size:13px}
+.hm__px{text-align:right;min-width:0;max-width:9.5em}
+.hm__px b span{color:var(--hx-mute,#8e9fb5);font-weight:400;font-size:11px}
+.hm__px small[data-tone="green"]{color:var(--hx-green,#4fdf98)}
+.hm__px small[data-tone="red"]{color:var(--hx-red,#ff7a7a)}
+.hm__price-note{color:var(--hx-amber,#f2b448)!important}
+.hm__link{display:flex;align-items:center;min-height:44px;color:var(--hx-cyan-2,#91e1f6)}
+.hm__more{width:100%;min-height:44px;margin-top:8px;border:1px solid var(--hx-line-2,#22364f);border-radius:6px;background:transparent;color:var(--hx-ink,#eef3f9);font:600 14px/1 Inter,system-ui,sans-serif;cursor:pointer}
+.hm__more[hidden]{display:none}
+.hm__company{margin:0 0 10px;padding:10px;border:1px solid var(--hx-cyan,#45b8f4);border-radius:8px}
+.hm__company-head{display:flex;align-items:center;gap:8px;margin:0 0 8px;min-width:0}
+.hm__company-head b{min-width:0;overflow-wrap:anywhere}
+.hm__company-head span{flex:1 1 auto;min-width:0;color:var(--hx-mute,#8e9fb5);font-size:12px;overflow-wrap:anywhere}
+.hm__company .hm__stats{grid-template-columns:minmax(0,1fr)}
+.hm__news li+li{border-top:1px solid var(--hx-line,#15243a)}
+.hm__news a{display:block;min-height:44px;padding:8px 0;text-decoration:none;color:inherit}
+.hm__news b{display:block;font-weight:500;font-size:13.5px;overflow-wrap:anywhere}
+.hm__news small{display:block;color:var(--hx-mute,#8e9fb5);font-size:12px}
+.hm__news+.hm__note{margin-bottom:10px}
+.hm .hm__kicker{margin-top:10px}
+.hm button:focus-visible,.hm a:focus-visible{outline:2px solid var(--hx-cyan,#45b8f4);outline-offset:2px}
+
+/* from 760px the card is a side panel beside the Earth, under Halo's header and above its timeline */
+@media (min-width:760px){
+  .hm{left:auto;right:12px;top:calc(var(--hx-head,0px) + 10px);bottom:calc(var(--hx-bottom,0px) + 8px);width:min(400px,calc(100vw - 24px));max-height:none;border-bottom:1px solid var(--hx-line-2,#22364f);border-radius:10px;box-shadow:0 18px 40px rgba(0,0,0,.5)}
+}
+/* from 1100px it takes the place of Halo's own detail panel, so the map tools beside it stay clear */
+@media (min-width:1100px){
+  .hm{right:var(--hx-gap,16px);width:var(--hx-right-w,320px)}
+}
+
+/* Observed prices use HTML labels so text stays legible at phone width. */
+.hm__chart{display:block;width:100%;height:120px;fill:var(--hm-green,#4fdf98)}
+.hm__observations{padding-left:1.5rem;max-height:180px;overflow:auto;font-size:14px;overflow-wrap:anywhere}
+.hm__company details{min-width:0;font-size:14px}
+.hm__company summary{min-height:44px;cursor:pointer}
+
+/* Finance remains inside the existing responsive globe bottom/side panel. */
+.hm__finance { overflow-wrap:anywhere; }
+.hm__finance input,.hm__finance select { display:block; box-sizing:border-box; width:100%; min-height:44px; font:inherit; font-size:16px; background:#142333; color:#fff; border:1px solid #526577; border-radius:6px; padding:8px; }
+.hm__finance button { min-height:44px; max-width:100%; margin:4px 4px 4px 0; padding:8px 12px; border:1px solid #526577; border-radius:6px; background:#172f42; color:#e8f3ff; font:inherit; overflow-wrap:anywhere; }
+.hm__finance button:disabled { opacity:.5; }
+.hm__finance label { display:block; margin-block:8px; }
+.hm__finance ul { padding-left:18px; }
+.hm__finance p { color:#b9cbd9; font-size:13px; line-height:1.5; }
+.hm__finance h4 { margin-block:16px 8px; }

@@ -18,6 +18,10 @@ export const WORD_LIMITS = Object.freeze({
   nightKicker: 60, nightTitle1: 12, nightTitle2: 12
 });
 const SCENES = ['doors', 'vaunt', 'night', 'world'];
+/* index.html (owner, 2026-10-29): where the page opens, its one song, and whether the public sees it at all.
+   The same lists as FRONT_DEFAULT / FRONT_SONGS in js/main.js. */
+export const STARTS = Object.freeze(['cabin', 'plane']);
+export const SONGS = Object.freeze(['antisocial', 'whodidtheshoot', 'vaunt', 'runway', 'here', 'environmental-injustice']);
 
 const num = (v, lo, hi) => (typeof v === 'number' && Number.isFinite(v) && v >= lo && v <= hi ? v : undefined);
 const bool = (v) => (typeof v === 'boolean' ? v : undefined);
@@ -92,6 +96,15 @@ export function validateFront(raw, { mediaPrefix: prefix = '' } = {}) {
       spots
     });
   }
+
+  if ('start' in r) out.start = note('start', STARTS.includes(r.start) ? r.start : undefined);
+  if ('song' in r) out.song = note('song', SONGS.includes(r.song) ? r.song : undefined);
+  /* visible:false tucks the page away: a holding screen and noindex for visitors, the real page for the house owner.
+     A static site still serves the files themselves, so this hides the page; it does not make it secret. */
+  if ('visible' in r) out.visible = note('visible', bool(r.visible));
+  if (out.start === undefined) delete out.start;
+  if (out.song === undefined) delete out.song;
+  if (out.visible === undefined) delete out.visible;
 
   const n = r.night && typeof r.night === 'object' ? r.night : null;
   if (n) out.night = clean({ arrive: 'arrive' in n ? note('night.arrive', num(n.arrive, 0.5, 0.86)) : undefined });

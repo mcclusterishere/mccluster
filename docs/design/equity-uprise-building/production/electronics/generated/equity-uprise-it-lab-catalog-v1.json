@@ -977,6 +977,287 @@
       "reset": "restore baseline",
       "mode": "SIMULATION",
       "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-041",
+      "tier": "FOUNDATION",
+      "title": "Server Rack & Component Identification",
+      "skills": [
+        "rack units",
+        "server components",
+        "identification"
+      ],
+      "fault_injection": [
+        "none"
+      ],
+      "target_selectors": [
+        "B1-SRV-HYP-01-I001",
+        "collapsed_core_switch",
+        "rack_ups",
+        "pdu"
+      ],
+      "student_tasks": [
+        "identify rack equipment and server components"
+      ],
+      "success_criteria": [
+        "every prompted item identified"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-042",
+      "tier": "TECHNICIAN",
+      "title": "Server Rebuild: CPU, Memory, Storage, Power",
+      "skills": [
+        "CPU/heatsink",
+        "memory population",
+        "drives/RAID card",
+        "redundant power",
+        "cabling"
+      ],
+      "fault_injection": [
+        "none"
+      ],
+      "target_selectors": [
+        "B1-SRV-HYP-01-I001",
+        "pdu",
+        "collapsed_core_switch"
+      ],
+      "student_tasks": [
+        "rebuild a stripped 2U server to specification"
+      ],
+      "success_criteria": [
+        "build validated with no seating, order or population error"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-043",
+      "tier": "ADMIN",
+      "title": "Server Bring-Up: POST, Out-of-Band, RAID",
+      "skills": [
+        "POST",
+        "BMC/SEL",
+        "RAID levels",
+        "link verification"
+      ],
+      "fault_injection": [
+        "none"
+      ],
+      "target_selectors": [
+        "B1-SRV-HYP-01-I001",
+        "LOGIC-VLAN-MGMT"
+      ],
+      "student_tasks": [
+        "power on, read POST/BMC, configure RAID, verify links"
+      ],
+      "success_criteria": [
+        "virtual disk meets requirement and both links verified"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-044",
+      "tier": "ADVANCED",
+      "title": "Server Memory Failure",
+      "skills": [
+        "ECC",
+        "POST",
+        "DIMM replacement"
+      ],
+      "fault_injection": [
+        "dimm_uncorrectable_error"
+      ],
+      "target_selectors": [
+        "B1-SRV-HYP-01-I001"
+      ],
+      "student_tasks": [
+        "locate and replace the failed DIMM"
+      ],
+      "success_criteria": [
+        "full memory restored"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-045",
+      "tier": "ADVANCED",
+      "title": "Degraded RAID Member",
+      "skills": [
+        "RAID",
+        "hot-swap",
+        "rebuild"
+      ],
+      "fault_injection": [
+        "raid_member_failed"
+      ],
+      "target_selectors": [
+        "B1-SRV-HYP-01-I001"
+      ],
+      "student_tasks": [
+        "replace the failed member only"
+      ],
+      "success_criteria": [
+        "virtual disk optimal"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-046",
+      "tier": "ADVANCED",
+      "title": "Server PSU Failure",
+      "skills": [
+        "redundant power",
+        "hot-swap"
+      ],
+      "fault_injection": [
+        "psu_failed"
+      ],
+      "target_selectors": [
+        "B1-SRV-HYP-01-I001"
+      ],
+      "student_tasks": [
+        "restore 1+1 redundancy"
+      ],
+      "success_criteria": [
+        "redundancy regained"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-047",
+      "tier": "ADVANCED",
+      "title": "Server Fan Failure / Thermal Throttle",
+      "skills": [
+        "cooling",
+        "sensors"
+      ],
+      "fault_injection": [
+        "fan_failed"
+      ],
+      "target_selectors": [
+        "B1-SRV-HYP-01-I001"
+      ],
+      "student_tasks": [
+        "replace the failed fan"
+      ],
+      "success_criteria": [
+        "temperatures and clocks normal"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-048",
+      "tier": "ADVANCED",
+      "title": "Server NIC Link Down",
+      "skills": [
+        "NIC bonding",
+        "DAC/transceivers"
+      ],
+      "fault_injection": [
+        "server_nic_link_down"
+      ],
+      "target_selectors": [
+        "B1-SRV-HYP-01-I001"
+      ],
+      "student_tasks": [
+        "restore the failed bond member"
+      ],
+      "success_criteria": [
+        "both links up at 10 Gb/s"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-049",
+      "tier": "ADVANCED",
+      "title": "CMOS Battery / Clock Drift",
+      "skills": [
+        "RTC",
+        "firmware settings",
+        "NTP"
+      ],
+      "fault_injection": [
+        "cmos_battery_depleted"
+      ],
+      "target_selectors": [
+        "B1-SRV-HYP-01-I001"
+      ],
+      "student_tasks": [
+        "replace battery and restore time"
+      ],
+      "success_criteria": [
+        "clock synchronized and settings persist"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-050",
+      "tier": "EXPERT",
+      "title": "Server Firmware Baseline Mismatch",
+      "skills": [
+        "firmware",
+        "update order"
+      ],
+      "fault_injection": [
+        "firmware_mismatch"
+      ],
+      "target_selectors": [
+        "B1-SRV-HYP-01-I001"
+      ],
+      "student_tasks": [
+        "apply the baseline in dependency order"
+      ],
+      "success_criteria": [
+        "inventory matches baseline"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-051",
+      "tier": "EXPERT",
+      "title": "Multi-Fault Server Incident",
+      "skills": [
+        "prioritization",
+        "redundancy",
+        "RAID"
+      ],
+      "fault_injection": [
+        "psu_failed",
+        "raid_member_failed"
+      ],
+      "target_selectors": [
+        "B1-SRV-HYP-01-I001"
+      ],
+      "student_tasks": [
+        "restore power redundancy before the rebuild"
+      ],
+      "success_criteria": [
+        "redundancy regained and virtual disk optimal"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
     }
   ]
 }

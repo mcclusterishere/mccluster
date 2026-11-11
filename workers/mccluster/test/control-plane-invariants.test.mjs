@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { access, readFile } from 'node:fs/promises';
+import { access, readdir, readFile } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
@@ -41,8 +41,38 @@ test('heavy Site 0 source artifacts stay out of the active git tree',async()=>{
   assert.match(ignore,/_full_res\.spz/);
 });
 
-test('retired material skin remains an inert stub',async()=>{
-  const css=await readFile(resolve(repoRoot,'css/here-material.css'),'utf8');
-  assert.match(css,/REMOVED 2026-08-15/);
-  assert.doesNotMatch(css,/background-image|box-shadow|linear-gradient|url\(/i);
+test('retired material skin stays removed (AGENTS.md: do not resurrect it)',async()=>{
+  for(const path of ['css/here-material.css','css/signature.css','js/here-material.js','js/signature.js','assets/brand']){
+    assert.equal(await exists(resolve(repoRoot,path)),false,`${path} was removed 2026-08-15 and must not return`);
+  }
+});
+
+async function packageManifestsUnder(dir){
+  const found=[];
+  for(const entry of await readdir(dir,{withFileTypes:true})){
+    if(entry.name==='node_modules')continue;
+    const path=resolve(dir,entry.name);
+    if(entry.isDirectory())found.push(...await packageManifestsUnder(path));
+    else if(entry.name==='package.json')found.push(path);
+  }
+  return found;
+}
+
+test('archived platform/ backend stays fail-closed',async()=>{
+  const platformRoot=resolve(repoRoot,'platform');
+  assert.equal(await exists(resolve(platformRoot,'railway.toml')),false);
+  assert.equal(await exists(resolve(platformRoot,'deploy/systemd')),false);
+  assert.equal(await exists(resolve(platformRoot,'deploy')),false);
+  assert.equal(await exists(resolve(platformRoot,'DISABLED.md')),true);
+  assert.match(await readFile(resolve(platformRoot,'DISABLED.md'),'utf8'),/workers\/mccluster/);
+  const manifests=await packageManifestsUnder(platformRoot);
+  assert.ok(manifests.includes(resolve(platformRoot,'package.json')));
+  for(const manifest of manifests){
+    const pkg=JSON.parse(await readFile(manifest,'utf8'));
+    for(const name of ['start','dev']){
+      if(pkg.scripts?.[name]!==undefined)assert.match(pkg.scripts[name],/DISABLED/,`${manifest} scripts.${name}`);
+    }
+  }
+  const root=JSON.parse(await readFile(resolve(platformRoot,'package.json'),'utf8'));
+  for(const [name,command] of Object.entries(root.scripts))assert.match(command,/DISABLED/,`platform/package.json scripts.${name}`);
 });

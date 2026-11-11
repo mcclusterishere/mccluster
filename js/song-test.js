@@ -15,7 +15,7 @@
      t.refresh()          re-ask the server (a song just ended)
      t.focus("pull-up")   bring one song's card into view
 
-   Both the album player and end-racism.html mount it. Nothing here
+   The album player mounts it. Nothing here
    throws or blocks playback; signed out, it says how to take part.
    ============================================================ */
 (function (root, doc) {

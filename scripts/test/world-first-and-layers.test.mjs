@@ -84,7 +84,7 @@ test('the page writes the layers\' line over the Earth, and Flights carries the 
   const js = await read('js/mnet.js'), html = await read('mnet.html'), css = await read('css/mnet.css');
   assert.match(html, /<p class="mn__world-layers" id="mnWorldLayers" aria-live="polite" hidden><\/p>/);
   assert.match(js, /var VAUNT_LEAD = "https:\/\/vauntapi\.flyvaunt\.com\/referral\/nuao1K";/, 'the referral link the front page\'s VR wall already carries');
-  assert.equal((await read('index.html')).includes('https://vauntapi.flyvaunt.com/referral/nuao1K'), true, 'the same link, not a new one');
+  assert.equal((await read('js/front-projects.js')).includes('https://vauntapi.flyvaunt.com/referral/nuao1K'), true, 'the same link, not a new one');
   assert.match(js, /aircraft in the air right now/);
   assert.match(js, /<a class="mn__world-lead" href="' \+ VAUNT_LEAD \+ '" target="_blank" rel="noopener sponsored">Fly Vaunt \\u2192<\/a>/, 'simple and shorter (owner, 2026-10-15)');
   assert.match(js, /satellites · calculated positions/);
@@ -94,18 +94,19 @@ test('the page writes the layers\' line over the Earth, and Flights carries the 
   assert.match(css, /\.mn__world-layers \{ position: absolute; z-index: 4; left: 12px; bottom: 82px;/);
 });
 
-test('the Worker serves the three layers, members only for two, and the pins SQL waits for the owner', async () => {
+test('the Worker serves the three layers, members only for two, and the demo pins SQL is the applied fixture', async () => {
   const w = await read('workers/mccluster/src/world-layers.js');
   assert.match(w, /flights: \{ public: true, ttl: 600/); assert.match(w, /satellites: \{ public: false, ttl: 7200/); assert.match(w, /launches: \{ public: false, ttl: 1800/);
   assert.match(w, /const user = await bearerUser\(request, env, fetchImpl\);\n    if \(!user\) return fail\(/);
   assert.match(w, /OpenSky's data is for non-commercial research/, 'the licence caveat is written where the code is');
   await access(join(ROOT, 'workers/mccluster/test/world-layers.test.mjs'));
-  const sql = await read('supabase/pending/action_globe_demo_pins_v1.sql');
+  const sql = await read('supabase/tests/action_globe_demo_pins_v1.applied.sql');
+  assert.match(sql, /APPLIED IN PRODUCTION/);
   assert.match(sql, /insert into public\.action_globe_regions \(region_key, country_code, subdivision_code, region_label, centroid_lat, centroid_lon\)/);
   assert.match(sql, /\('US-CT', 'US', 'CT', 'Connecticut', 41\.6032, -73\.0877\)/);
   assert.match(sql, /when m\.campaign_id = 'critical-minerals-drc-001' then 'CD-HK'/);
   assert.match(sql, /on conflict \(mission_id\) do update/);
-  assert.match(await read('supabase/pending/README.md'), /action_globe_demo_pins_v1\.sql/);
+  assert.match(await read('supabase/pending/README.md'), /Applied as data, file removed 2026-10-27: `action_globe_demo_pins_v1\.sql`/);
 });
 
 test('the onboarding is three pages: this, that, that, boom (owner, 2026-10-15)', async () => {
@@ -114,9 +115,9 @@ test('the onboarding is three pages: this, that, that, boom (owner, 2026-10-15)'
   assert.match(html, /<ol class="mn__steps" id="mnSteps" aria-label="Three steps"><li data-step="1" class="is-current"><\/li><li data-step="2"><\/li><li data-step="3"><\/li><\/ol>/);
   /* the copy names the thing (owner, 2026-10-20: "instead of saying make it yours, it should be like make a profile"), in order:
      the public profile, where we can reach you (private), phone and sign-in */
-  assert.match(html, /id="mnStep1" data-step="1">\s*<h1 class="mn__onboard-h" id="mnProfileTitle">Make your profile<em>\.<\/em><\/h1>\s*<p class="mn__lede" id="mnProfileLede">Your username and name\. It's how people find you\.<\/p>/);
-  assert.match(html, /id="mnStep2" data-step="2" hidden>\s*<h1 class="mn__onboard-h">Where we can reach you<em>\.<\/em><\/h1>\s*<p class="mn__lede">Your legal name and mailing address\. Private, never on your profile\.<\/p>/);
-  assert.match(html, /id="mnStep3" data-step="3" hidden>\s*<h1 class="mn__onboard-h" id="mnStep3Title">Your phone and sign-in<em>\.<\/em><\/h1>/);
+  assert.match(html, /id="mnStep1" data-step="1">\s*<h2 class="mn__onboard-h" id="mnProfileTitle">Make your profile<em>\.<\/em><\/h2>\s*<p class="mn__lede" id="mnProfileLede">Your username and name\. It's how people find you\.<\/p>/);
+  assert.match(html, /id="mnStep2" data-step="2" hidden>\s*<h2 class="mn__onboard-h">Where we can reach you<em>\.<\/em><\/h2>\s*<p class="mn__lede">Your legal name and mailing address\. Private, never on your profile\.<\/p>/);
+  assert.match(html, /id="mnStep3" data-step="3" hidden>\s*<h2 class="mn__onboard-h" id="mnStep3Title">Your phone and sign-in<em>\.<\/em><\/h2>/);
   for (const src of [html, js, await read('js/mnet-tour.js')]) assert.doesNotMatch(src, /Make it yours|Lock it in|Your place in the movement/, 'the old copy is gone everywhere');
   assert.match(html, /<details class="mn__about" id="mnAbout">[\s\S]*?<strong>About you<\/strong><small>Optional · Private<\/small>/, 'the demographics ride along, collapsed, optional, private');
   assert.doesNotMatch(html, /A response is required/, 'the demographics are optional and say so');
@@ -173,7 +174,7 @@ test('a member whose World did not load still gets the World (owner, 2026-10-15:
   const fn = js.slice(js.indexOf('function showSignedInLoadError(error)'), js.indexOf('function letSessionGo()'));
   assert.match(fn, /if \(error && error\.status === 401\) return letSessionGo\(\);/, 'a session the API refuses is let go');
   assert.match(fn, /state\.stall = "retry";\n    showGate\("app"\);\n    setView\("feed"\);/, 'anything else opens the World: the feed view, the Earth');
-  assert.doesNotMatch(fn, /You are signed in\. Human Uprise could not load the feed/, 'no message hidden inside a hidden view');
+  assert.doesNotMatch(fn, /You are signed in\. (?:Human|Equity) Uprise could not load the feed/, 'no message hidden inside a hidden view');
   assert.match(js, /function letSessionGo\(\) \{\n    var done = function \(\) \{ state\.stall = "signin"; enterGuestWorld\(\); paintFinishCard\(\); \};/);
   assert.match(js, /var publicRead = state\.guest \|\| !!needsStep\(\) \|\| !!state\.stall;/, 'the public posts while the member\'s own feed is not there');
   assert.match(js, /\$\("mnFinishTitle"\)\.textContent = stall === "signin" \? "Your sign-in ended\." : "Your feed didn\\u2019t load\.";/);

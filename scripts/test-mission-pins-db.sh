@@ -22,7 +22,7 @@ apply supabase/migrations/20261014013557_action_globe_regions.sql
 apply supabase/migrations/20261014014547_action_globe_region_activation.sql
 apply supabase/migrations/20261014184518_action_globe_join_authorization.sql
 apply supabase/tests/action_mission_pins.stub.sql
-apply supabase/pending/action_globe_demo_pins_v1.sql
+apply supabase/tests/action_globe_demo_pins_v1.applied.sql
 apply supabase/pending/20261015230000_action_mission_pins_arcs_black_business.sql
 apply supabase/pending/20261015230000_action_mission_pins_arcs_black_business.sql
 psql -q -v ON_ERROR_STOP=1 -d "$DB" -f supabase/tests/action_mission_pins_arcs_business.behaviour.sql

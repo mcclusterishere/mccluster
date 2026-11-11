@@ -1,0 +1,63 @@
+/* GAMES ON THE GLOBE (js/globe-games.js): the house owner's experimental overlay. Mobile first: a full-height sheet between
+   the globe's header and the bottom bar at phone width; from 768px it becomes a side panel. min-width queries only. */
+
+/* Owner-only controls are not drawn until the server's owner answer arrives (js/action-globe.js sets html.globe-owner),
+   so nothing flashes for anyone else. The Games tab and the globe's own Missions mode, layer and story feed are the
+   owner's for now (owner, 2026-11-03: missions hidden behind admin; code kept, not deleted). */
+html:not(.globe-owner) :is(#ctlGames,#ctlGamesDoor,#feedMode,#missionsLayer,#worldFeed,#worldDetail,#gamesSheet){display:none!important}
+
+.globe-ctl.globe-ctl--games{display:inline-flex;align-items:center;gap:6px;width:auto;padding:0 12px;font:600 13px/1 Inter,system-ui,sans-serif;color:#eef0f4}
+.globe-ctl.globe-ctl--games svg{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.6}
+.globe-ctl.globe-ctl--games[aria-pressed="true"]{border-color:#e0b45a;background:#2a2314}
+
+.games-sheet{position:fixed;z-index:13;left:8px;right:8px;top:calc(56px + env(safe-area-inset-top,0px));bottom:calc(var(--hu-bar-h,0px) + 8px);
+  display:grid;grid-template-rows:auto minmax(0,1fr);min-width:0;background:#11171cf5;color:#eef0f4;border:1px solid #ffffff28;border-radius:12px;
+  font:500 14px/1.45 Inter,system-ui,sans-serif;box-shadow:0 18px 40px rgba(0,0,0,.45)}
+.games-sheet[hidden]{display:none}
+.games-head{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:8px;padding:10px 10px 8px;border-bottom:1px solid #ffffff1c}
+.games-heading{min-width:0}
+.games-crumb{display:block;color:#9ba4ad;font-size:12px;overflow-wrap:anywhere}
+.games-sheet h2{margin:0;font:600 19px/1.25 Inter,system-ui,sans-serif;overflow-wrap:anywhere}
+.games-back,.games-close{width:44px;height:44px;border:1px solid #ffffff26;border-radius:50%;background:transparent;color:#eef0f4;font-size:20px;cursor:pointer}
+.games-back[hidden]{display:none}
+.games-head .games-close{grid-column:3}
+.games-body{overflow-y:auto;overscroll-behavior:contain;padding:8px 10px 14px;min-width:0}
+.games-sheet h3{margin:14px 2px 6px;font:600 12px/1.3 Inter,system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#c9b27a}
+.games-sheet h4{margin:12px 2px 4px;font:600 13px/1.3 Inter,system-ui,sans-serif;color:#c6ced6}
+.games-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+.games-pick{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto;align-items:center;column-gap:8px;width:100%;min-height:52px;padding:8px 12px;
+  text-align:left;border:1px solid #ffffff22;border-radius:10px;background:#161d23;color:#eef0f4;font:600 16px/1.3 Inter,system-ui,sans-serif;cursor:pointer}
+.games-pick span{overflow-wrap:anywhere}
+.games-pick small{grid-row:2;color:#9ba4ad;font:500 12px/1.35 Inter,system-ui,sans-serif;overflow-wrap:anywhere}
+.games-pick i{grid-row:1/3;grid-column:2;font-style:normal;color:#9ba4ad;font-size:20px}
+.games-pick:hover,.games-pick:focus-visible{border-color:#e0b45a}
+.games-story,.games-entry{padding:10px 12px;border:1px solid #ffffff22;border-radius:10px;background:#161d23;min-width:0}
+.games-story__top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px}
+.games-live{font:600 11px/1 Inter,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#1b1406;background:#e0b45a;border-radius:999px;padding:4px 8px}
+.games-now{margin:8px 0 2px;overflow-wrap:anywhere}
+.games-now span,.games-next,.games-sum,.games-entry p,.games-entry small{color:#b8c0c8;font-size:13px}
+.games-sum,.games-next{margin:4px 0;overflow-wrap:anywhere}
+.games-scenes{margin:6px 0 8px;font-size:13px}
+.games-scenes summary{cursor:pointer;color:#c6ced6;min-height:32px;display:flex;align-items:center}
+.games-scenes ol{margin:4px 0 0;padding-left:22px}
+.games-scenes li{margin:2px 0;overflow-wrap:anywhere}
+.games-scenes li[aria-current]{color:#e0b45a;font-weight:600}
+.games-scenes small{color:#9ba4ad;font-size:12px}
+.games-entry{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+.games-entry b{display:block;overflow-wrap:anywhere}
+.games-entry p{margin:4px 0 0;overflow-wrap:anywhere}
+.games-tag{display:inline-block;margin-bottom:4px;font:600 11px/1 Inter,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#9ad6df}
+.games-start{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 14px;border-radius:8px;background:#e0b45a;color:#1b1406;
+  font:600 14px/1.2 Inter,system-ui,sans-serif;text-decoration:none;justify-self:start;max-width:100%;overflow-wrap:anywhere;text-align:center}
+.games-start:focus-visible,.games-pick:focus-visible,.games-back:focus-visible,.games-close:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.games-msg{color:#b8c0c8}
+
+/* the owner's door from the World's globe frame, above Halo and World in the same corner */
+.globe-editorial .globe-editorial-world a#ctlGamesDoor{text-decoration:none}
+
+@media (min-width:768px){
+  .games-sheet{left:auto;right:16px;width:400px;top:calc(64px + env(safe-area-inset-top,0px))}
+  .games-entry{grid-template-columns:minmax(0,1fr) auto;align-items:start}
+  .games-entry .games-start{justify-self:end}
+}
+@media (min-width:1280px){ .games-sheet{width:440px} }

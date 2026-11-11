@@ -37,9 +37,9 @@ const hasCoordinates = place => Array.isArray(place?.coordinates) && place.coord
 const freshDraft = () => normalizeJourney({ mode:'drive' });
 let draft = freshDraft(), savedId = null, dirty = false, busy = false, revision = 0, tripEpoch = 0, tripShape = 'rides';
 let rideSub = 'directions', flightSub = 'commercial';
-/* THE WORLD IS THE SOCIAL FEED (owner, 2026-10-20): with hu-social-only on <html> (mnet.html) the feed is the only mode,
-   and nothing switches to Travel or Missions until they come back */
-const MODES = document.documentElement.classList.contains('hu-social-only') ? ['posts'] : ['travel', 'missions', 'posts'];
+/* Consumer World: feed plus Environmental Justice on the same globe. The
+   hu-social-only switch still keeps general Travel and Missions owner-only. */
+const MODES = document.documentElement.classList.contains('hu-social-only') ? ['posts', 'environment'] : ['travel', 'missions', 'posts', 'environment'];
 let catalogPromise, currentMode = MODES[0], hostVisible = document.body.dataset.worldAudioVisible !== 'false';
 const send = data => frame?.contentWindow?.postMessage(data, location.origin);
 const status = (message = '') => { $('wtMessage').textContent = message; };
@@ -695,20 +695,20 @@ function setMode(mode) {
   if (mode !== currentMode) { setMapPick(null); invalidateRoute(); closeSearches(); }
   currentMode = mode; root.dataset.worldMode = mode;
   if (mode !== 'travel') root.classList.remove('wt-expanded');
-  frame.title = mode === 'travel' ? 'Travel map. Drag to explore; your selected places and road directions appear here.' : 'Equity Uprise globe. Drag to explore; select a mission pin to see its details.';
+  frame.title = mode === 'environment' ? 'Environmental Justice globe. Drag to explore; select an observation to see its source and safe actions.' : mode === 'travel' ? 'Travel map. Drag to explore; your selected places and road directions appear here.' : 'Equity Uprise globe. Drag to explore; select a mission pin to see its details.';
   root.classList.remove('hu-search-open'); $('huSearchToggle').setAttribute('aria-expanded', 'false');
   document.querySelectorAll('[data-world-mode][aria-pressed]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.worldMode === mode)));
   $('mnWorldFeed').scrollTop = 0; renderDirections(); renderGlobe(); autoLocate();
   window.dispatchEvent(new CustomEvent('mcc:world-mode', { detail:{ mode } }));
 }
 window.MCC_WORLD_MODE = { set:setMode, get:() => currentMode };
-const modeButtons = [...document.querySelectorAll('.wt-world-modes button')];
+const modeButtons = [...document.querySelectorAll('.wt-world-modes button')].filter(button => MODES.includes(button.dataset.worldMode));
 modeButtons.forEach(button => {
   button.onclick = () => setMode(button.dataset.worldMode);
   button.onkeydown = e => {
     if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) {
       e.preventDefault(); let index = modeButtons.indexOf(button);
-      index = e.key === 'Home' ? 0 : e.key === 'End' ? 2 : (index + (e.key === 'ArrowRight' ? 1 : -1) + 3) % 3;
+      index = e.key === 'Home' ? 0 : e.key === 'End' ? modeButtons.length - 1 : (index + (e.key === 'ArrowRight' ? 1 : -1) + modeButtons.length) % modeButtons.length;
       modeButtons[index].click(); modeButtons[index].focus();
     }
   };
@@ -864,11 +864,11 @@ $('wtMapNavGo').onclick = () => $('wtNavigate').click();
 $('wtMapNavStop').onclick = () => $('wtStopNavigation').click();
 $('wtMapNavRecenter').onclick = () => $('wtRecenter').click();
 expanded.addEventListener('click', e => {
-  if (currentMode !== 'travel') return;
+  if (currentMode !== 'travel' && currentMode !== 'environment') return;
   e.preventDefault();
   if (mapPick) { setMapPick(null); return; }
   const on = root.classList.toggle('wt-expanded');
-  expanded.setAttribute('aria-label', on ? 'Return to directions' : 'Expand the map');
+  expanded.setAttribute('aria-label', on ? currentMode === 'environment' ? 'Return to environmental actions' : 'Return to directions' : 'Expand the map');
   renderMapNav();
 });
 document.addEventListener('keydown', e => {

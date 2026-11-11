@@ -2,10 +2,10 @@
   "schema_version": "mccluster-supabase-production-ledger/v1",
   "project_ref": "zmnhbrjyhxzhkxmhkexs",
   "production_sql_cutover_version": "20260919020830",
-  "migration_count": 348,
-  "latest_version": "20261024014732",
-  "latest_name": "analytics_forensics_search_index_v8",
-  "ledger_sha256": "831e4c7ab8f77390573bf72269e860c47b1f113198d709ff2f0c3f724e47e3ab",
+  "migration_count": 364,
+  "latest_version": "20261110220135",
+  "latest_name": "media_operation_claims_v2",
+  "ledger_sha256": "6fcada89fc8d3d3621b4c49242ca84a1aff050758cb1ecd60753cfbbbba35054",
   "migrations": [
     {
       "version": "0001",
@@ -1398,6 +1398,70 @@
     {
       "version": "20261024014732",
       "name": "analytics_forensics_search_index_v8"
+    },
+    {
+      "version": "20261029010919",
+      "name": "privilege_hygiene_v1"
+    },
+    {
+      "version": "20261029011001",
+      "name": "definer_views_invoker_v1"
+    },
+    {
+      "version": "20261029011108",
+      "name": "public_music_reads_lean_v1"
+    },
+    {
+      "version": "20261029011314",
+      "name": "rls_initplan_select_wrap_v1"
+    },
+    {
+      "version": "20261029011534",
+      "name": "eu_runtime_and_media_rollup_v1"
+    },
+    {
+      "version": "20261030001000",
+      "name": "music_release_payment_integrity_v1"
+    },
+    {
+      "version": "20261031180839",
+      "name": "music_direct_sales_v1"
+    },
+    {
+      "version": "20261103003049",
+      "name": "prim3_agent_news_desk_v1"
+    },
+    {
+      "version": "20261103010802",
+      "name": "prim3_agent_news_longer_v1"
+    },
+    {
+      "version": "20261103012656",
+      "name": "world_news_pairs_v1"
+    },
+    {
+      "version": "20261103182544",
+      "name": "learning_evidence_v1"
+    },
+    {
+      "version": "20261109175747",
+      "name": "music_direct_asset_versions_v1"
+    },
+    {
+      "version": "20261109180829",
+      "name": "core_signed_nonces_v1"
+    },
+    {
+      "version": "20261109181623",
+      "name": "city_arcade_v1"
+    },
+    {
+      "version": "20261109194957",
+      "name": "media_operation_claims_v1"
+    },
+    {
+      "version": "20261110220135",
+      "name": "media_operation_claims_v2"
     }
   ]
 }

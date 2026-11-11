@@ -35,6 +35,7 @@
 
 import Stripe from "npm:stripe@14";
 import { priceCart as computeCart, type Line, type Product } from "./price.ts";
+import { checkoutBindingFailure } from "../_shared/checkout-binding.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SK")!);
 const SB = Deno.env.get("SUPABASE_URL")!;
@@ -144,8 +145,14 @@ Deno.serve(async (req) => {
       // the session has to be the one we opened for THIS order
       if (order.payment_ref !== sessionId) return json({ error: "session mismatch" }, 400);
 
-      if (session.payment_status === "paid" && order.status === "pending_payment") {
-        await db(`shake_orders?id=eq.${order.id}`, {
+      // ...on the platform account, for this order's total in dollars, paid
+      const refusal = checkoutBindingFailure(session as any, {
+        sessionId: order.payment_ref, amountCents: Number(order.total_cents), currency: "usd", account: null,
+      });
+      if (refusal && refusal !== "not_paid") return json({ error: "payment does not match this order" }, 409);
+      if (!refusal && order.status === "pending_payment") {
+        // only a pending order moves, once, however many tabs confirm it
+        await db(`shake_orders?id=eq.${order.id}&status=eq.pending_payment&payment_ref=eq.${encodeURIComponent(sessionId)}`, {
           method: "PATCH",
           headers: { Prefer: "return=minimal" },
           body: JSON.stringify({ status: "paid" }),

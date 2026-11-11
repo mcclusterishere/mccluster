@@ -129,7 +129,8 @@ test('the authorities name the host: three hosts, still two entities, one Worker
   assert.match(entry, /set `WORLD_ORIGIN = "https:\/\/humanuprise\.com\/"` in `js\/tabbar\.js`/, 'the flip is the last step, after routing');
   assert.match(entry, /\*\*One M Account, every host\.\*\* A session is per origin/);
   const domains = await read('docs/control-plane/DOMAINS-AND-ENTITIES.md');
-  assert.match(domains, /## Human Uprise's host: `humanuprise\.com`/);
+  assert.match(domains, /## The legacy-named host: `humanuprise\.com`/);
+  assert.match(domains, /## The public brand is Equity Uprise \(owner, 2026-10-28\)/);
   assert.match(domains, /Three hosts, still two entities\./);
   const arch = JSON.parse(await read('data/seo/domain-architecture.json'));
   assert.equal(arch.properties.human_uprise.origin, 'https://humanuprise.com');
@@ -142,7 +143,8 @@ test('the authorities name the host: three hosts, still two entities, one Worker
   assert.equal(canon.public_properties.human_uprise.served_by, 'worker:mccluster', 'no second Worker');
   assert.equal(canon.public_properties.human_uprise.entity, canon.public_properties.company.entity);
   assert.match(await read('AGENTS.md'), /Three hosts, still two entities:/);
-  assert.match(await read('CLAUDE.md'), /`https:\/\/humanuprise\.com` is Human Uprise's own door to the World, a \*\*McCluster Corp\*\* host/);
+  assert.match(await read('CLAUDE.md'), /`https:\/\/humanuprise\.com` is a legacy-named door to the World, a \*\*McCluster Corp\*\* host/);
+  assert.match(await read('CLAUDE.md'), /\*\*the public brand is Equity Uprise, not Human Uprise\*\* \(owner, 2026-10-28\)/);
   assert.match(await read('docs/action-network/HUMAN-UPRISE-WORLD-FEED.md'), /### The World's own door: `humanuprise\.com`[\s\S]*### A creator's perspective/);
 });
 
@@ -158,12 +160,15 @@ test('one M Account, every host: the bar carries the sign-in across and the arri
   assert.match(bar, /if \(!a \|\| a\.target === "_blank" \|\| a\.hasAttribute\("download"\) \|\| a\.closest\("\.appbar"\)\) return;/, 'any page link carries it; the bar sails itself');
   /* arriving: scrub first, exchange from this origin, verify, store, reload */
   const scrub = bar.indexOf('history.replaceState(null, "", location.pathname + location.search + rest)');
-  const exchange = bar.indexOf('fetch(API_ORIGIN + "/v1/auth/handoff"');
+  const exchange = bar.indexOf('boundedFetchJson(API_ORIGIN + "/v1/auth/handoff"');
   assert.ok(scrub > 0 && exchange > scrub, 'the fragment is scrubbed before anything is sent');
-  assert.match(bar, /if \(!token \|\| readAuthSession\(\)\) return Promise\.resolve\(false\);/, 'a page that already holds a session keeps it');
+  assert.match(bar, /if \(!token\) \{ emit\("mcc:handoff", \{ ok: false, reason: "malformed" \}\); return Promise\.resolve\(false\); \}/, 'a malformed fragment ends the handoff without throwing');
+  assert.match(bar, /if \(existing && storedSessionUsable\(existing\)\) return Promise\.resolve\(false\);/, 'a page that already holds a usable session keeps it');
+  assert.match(bar, /if \(now\.main !== before\.main \|\| now\.keep !== before\.keep\) throw/, 'a session that changed while the handoff was verified is never overwritten (audit A2)');
   assert.match(bar, /headers: \{ authorization: "Bearer " \+ token, "content-type": "application\/json" \}, body: "\{\}"/);
   assert.match(bar, /body: JSON\.stringify\(\{ type: "magiclink", token_hash: j\.token_hash \}\)/);
-  assert.match(bar, /expires_at: Number\(s\.expires_at\) \|\| Math\.floor\(Date\.now\(\) \/ 1000\) \+ \(Number\(s\.expires_in\) \|\| 3600\)/, 'the stored session carries its expiry, as the auth client writes it');
+  assert.match(bar, /var life = Number\(s\.expires_in\) > 0 \? Number\(s\.expires_in\) : 0, issued = Number\(s\.expires_at\) > 0 \? Number\(s\.expires_at\) : 0;/);
+  assert.match(bar, /expires_at: life \? Math\.floor\(Date\.now\(\) \/ 1000\) \+ life : issued \|\| Math\.floor\(Date\.now\(\) \/ 1000\) \+ 3600 \};/, 'the stored session carries its expiry on this device\'s clock, as the auth client writes it (scripts/test/tabbar-auth-refresh.test.mjs runs it)');
   assert.match(bar, /localStorage\.setItem\("mccdb_session", session\);/);
   assert.match(bar, /location\.reload\(\);/);
   assert.match(bar, /arriveWithHandoff\(\)\.then\(function \(carried\) \{ if \(!carried\) refreshAuthState\(\); \}\);/);

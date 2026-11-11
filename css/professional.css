@@ -28,7 +28,7 @@
    for how the page lands than everything below it. */
 .bio .bio__lede {
   font-family: var(--body);
-  font-size: clamp(1rem, 1.15vw, 1.09rem);
+  font-size: 1rem;
   line-height: 1.72;
   letter-spacing: 0;
   text-transform: none;
@@ -96,6 +96,4 @@
    focus. This only reclaims the space the bar's padding reserved. */
 body:not(.has-appbar) { padding-bottom: 3rem; }
 
-@media (max-width: 40rem) {
-  .bio .bio__lede { font-size: 1rem; }
-}
+@media (min-width: 40.001rem) { .bio .bio__lede { font-size: clamp(1rem, 1.15vw, 1.09rem); } }

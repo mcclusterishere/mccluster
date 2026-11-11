@@ -1,0 +1,2266 @@
+{
+ "duration_seconds": 256,
+ "language": "en",
+ "songTitle": "Data Breach",
+ "source": "imported",
+ "reviewed": false,
+ "machine": {
+  "version": "lyrics-machine/1",
+  "engine": {
+   "separator": "demucs htdemucs_6s",
+   "asr": "faster-whisper small.en",
+   "aligner": "wav2vec2-ctc WAV2VEC2_ASR_BASE_960H"
+  },
+  "generated_at": "2026-10-31T19:03:46.879Z",
+  "word_timing": "audio",
+  "ctc_aligned_lines": 58,
+  "timing": {
+   "align_seconds": 16.5,
+   "separate_seconds": 125,
+   "asr_seconds": 49.1,
+   "map_seconds": 0
+  },
+  "mismatched_lines": 0
+ },
+ "plain": "Know… How you know… How you… You…\nHow you know… How you know… How you… You…\nYou clicked an ad, the computer crashed, the error message says it's booting slow.\nThis is how you know…\nThe files are inaccessible, the ransom message tells you send a dough…\nThis is how you know.\nUnusual network traffic, slow performance after a download.\nThis is how you know.\nChat GPT leaks secret briefs on C19 and even UFOs.\nThis is how you know.\nData breach.\nPhysical attacks, script from a USB.\nSkim a couple tags quick: RFID.\nPhysical access is guaranteed.\nPrevention is proactive technology.\nPassword attacks: Dictionary.\nBrute Force cracked it. PWNED. RIP.\nComplex passwords change frequently.\nEnable multi-factor security.\nWhen the chipset got hit with the EMP and the store's got nothing more.\nThis is how you know.\nThis is how you know.\nSupply chain attacks; a priority.\nKeep track of traffic activity, unauthorized access,\nFinally, compromised asset abilities.\nPrevention isn't bad, vet all third-party vendors and patch it periodically.\nCloud-based attacks versus on-premises.\nAbnormal data transfer signaling\ntotal breach of access.\nTo prevent these things, go review the access logs.\ncritically\nCryptographic hacks could put a wrench in things.\nCollision with the hash? Salts for the seasoned Gs.\nI seen these things. How to make a bag? Maybe repeat these things.\nI been livin’ that shit\nand the precinct seen the MacBook address impeding.\nYou clicked an ad, the computer crashed.\nAn error message says it’s booting slow.\nThis is how you know.\nIt's a data breach.\nThe files are inaccessible.\nA ransom message tells you send the dough.\nThis is how you know.\nIt's a data breach.\nUnusual network traffic.\nSlow performance after a download.\nThis is how you know.\nIt's a data breach.\nChad GPT leaks secret briefs on C19 and the UFOs.\nThis is how you know.\nIt's a data breach.\nData breach.\nIt's a data breach.\nOh, data breach.\nIt's a data breach.\nOh, data breach.\nIt's a data breach.\nOh, data breach.\nIt's a data breach.",
+ "timed": {
+  "line": [
+   {
+    "begin": 0.04,
+    "end": 7.015,
+    "content": "Know… How you know… How you… You…",
+    "confidence": 1,
+    "words": [
+     {
+      "begin": 0.04,
+      "end": 0.22,
+      "content": "Know…"
+     },
+     {
+      "begin": 1.644,
+      "end": 1.984,
+      "content": "How"
+     },
+     {
+      "begin": 2.145,
+      "end": 2.265,
+      "content": "you"
+     },
+     {
+      "begin": 2.345,
+      "end": 2.505,
+      "content": "know…"
+     },
+     {
+      "begin": 4.009,
+      "end": 4.309,
+      "content": "How"
+     },
+     {
+      "begin": 4.49,
+      "end": 4.951,
+      "content": "you…"
+     },
+     {
+      "begin": 6.835,
+      "end": 7.015,
+      "content": "You…"
+     }
+    ],
+    "align_score": 0.675
+   },
+   {
+    "begin": 8.668,
+    "end": 16.6,
+    "content": "How you know… How you know… How you… You…",
+    "confidence": 0.778,
+    "words": [
+     {
+      "begin": 8.668,
+      "end": 8.928,
+      "content": "How"
+     },
+     {
+      "begin": 9.168,
+      "end": 9.289,
+      "content": "you"
+     },
+     {
+      "begin": 9.409,
+      "end": 9.589,
+      "content": "know…"
+     },
+     {
+      "begin": 11.031,
+      "end": 11.352,
+      "content": "How"
+     },
+     {
+      "begin": 11.492,
+      "end": 11.612,
+      "content": "you"
+     },
+     {
+      "begin": 11.752,
+      "end": 11.893,
+      "content": "know…"
+     },
+     {
+      "begin": 13.455,
+      "end": 13.776,
+      "content": "How"
+     },
+     {
+      "begin": 13.896,
+      "end": 14.356,
+      "content": "you…"
+     },
+     {
+      "begin": 16.239,
+      "end": 16.6,
+      "content": "You…"
+     }
+    ],
+    "align_score": 0.641
+   },
+   {
+    "begin": 18.617,
+    "end": 23.723,
+    "content": "You clicked an ad, the computer crashed, the error message says it's booting slow.",
+    "confidence": 0.643,
+    "words": [
+     {
+      "begin": 18.617,
+      "end": 18.677,
+      "content": "You"
+     },
+     {
+      "begin": 18.858,
+      "end": 19.138,
+      "content": "clicked"
+     },
+     {
+      "begin": 19.198,
+      "end": 19.238,
+      "content": "an"
+     },
+     {
+      "begin": 19.498,
+      "end": 19.638,
+      "content": "ad,"
+     },
+     {
+      "begin": 19.739,
+      "end": 19.819,
+      "content": "the"
+     },
+     {
+      "begin": 19.879,
+      "end": 20.379,
+      "content": "computer"
+     },
+     {
+      "begin": 20.479,
+      "end": 21.02,
+      "content": "crashed,"
+     },
+     {
+      "begin": 21.06,
+      "end": 21.14,
+      "content": "the"
+     },
+     {
+      "begin": 21.3,
+      "end": 21.581,
+      "content": "error"
+     },
+     {
+      "begin": 21.621,
+      "end": 22.121,
+      "content": "message"
+     },
+     {
+      "begin": 22.181,
+      "end": 22.602,
+      "content": "says"
+     },
+     {
+      "begin": 22.642,
+      "end": 22.782,
+      "content": "it's"
+     },
+     {
+      "begin": 22.842,
+      "end": 23.443,
+      "content": "booting"
+     },
+     {
+      "begin": 23.503,
+      "end": 23.723,
+      "content": "slow."
+     }
+    ],
+    "align_score": 0.524
+   },
+   {
+    "begin": 24.702,
+    "end": 28.134,
+    "content": "This is how you know…",
+    "confidence": 0.8,
+    "words": [
+     {
+      "begin": 24.702,
+      "end": 24.883,
+      "content": "This"
+     },
+     {
+      "begin": 25.004,
+      "end": 25.064,
+      "content": "is"
+     },
+     {
+      "begin": 25.165,
+      "end": 25.506,
+      "content": "how"
+     },
+     {
+      "begin": 25.667,
+      "end": 25.767,
+      "content": "you"
+     },
+     {
+      "begin": 28.134,
+      "end": 28.134,
+      "content": "know…"
+     }
+    ],
+    "align_score": 0.815
+   },
+   {
+    "begin": 28.134,
+    "end": 34.157,
+    "content": "The files are inaccessible, the ransom message tells you send a dough…",
+    "confidence": 0.667,
+    "words": [
+     {
+      "begin": 28.134,
+      "end": 28.214,
+      "content": "The"
+     },
+     {
+      "begin": 28.274,
+      "end": 28.634,
+      "content": "files"
+     },
+     {
+      "begin": 28.694,
+      "end": 28.794,
+      "content": "are"
+     },
+     {
+      "begin": 28.915,
+      "end": 29.776,
+      "content": "inaccessible,"
+     },
+     {
+      "begin": 29.876,
+      "end": 30.376,
+      "content": "the"
+     },
+     {
+      "begin": 30.576,
+      "end": 31.017,
+      "content": "ransom"
+     },
+     {
+      "begin": 31.097,
+      "end": 31.477,
+      "content": "message"
+     },
+     {
+      "begin": 31.598,
+      "end": 32.038,
+      "content": "tells"
+     },
+     {
+      "begin": 32.078,
+      "end": 32.158,
+      "content": "you"
+     },
+     {
+      "begin": 32.218,
+      "end": 32.439,
+      "content": "send"
+     },
+     {
+      "begin": 33.059,
+      "end": 33.079,
+      "content": "a"
+     },
+     {
+      "begin": 34.157,
+      "end": 34.157,
+      "content": "dough…"
+     }
+    ],
+    "align_score": 0.615
+   },
+   {
+    "begin": 34.157,
+    "end": 35.625,
+    "content": "This is how you know.",
+    "confidence": 0.8,
+    "words": [
+     {
+      "begin": 34.157,
+      "end": 34.318,
+      "content": "This"
+     },
+     {
+      "begin": 34.419,
+      "end": 34.499,
+      "content": "is"
+     },
+     {
+      "begin": 34.58,
+      "end": 34.781,
+      "content": "how"
+     },
+     {
+      "begin": 34.921,
+      "end": 35.062,
+      "content": "you"
+     },
+     {
+      "begin": 35.283,
+      "end": 35.625,
+      "content": "know."
+     }
+    ],
+    "align_score": 0.809
+   },
+   {
+    "begin": 37.509,
+    "end": 43.196,
+    "content": "Unusual network traffic, slow performance after a download.",
+    "confidence": 0.875,
+    "words": [
+     {
+      "begin": 37.509,
+      "end": 38.23,
+      "content": "Unusual"
+     },
+     {
+      "begin": 38.47,
+      "end": 39.071,
+      "content": "network"
+     },
+     {
+      "begin": 39.251,
+      "end": 39.872,
+      "content": "traffic,"
+     },
+     {
+      "begin": 39.992,
+      "end": 40.192,
+      "content": "slow"
+     },
+     {
+      "begin": 40.292,
+      "end": 41.133,
+      "content": "performance"
+     },
+     {
+      "begin": 41.353,
+      "end": 41.614,
+      "content": "after"
+     },
+     {
+      "begin": 41.754,
+      "end": 41.774,
+      "content": "a"
+     },
+     {
+      "begin": 41.874,
+      "end": 43.196,
+      "content": "download."
+     }
+    ],
+    "align_score": 0.749
+   },
+   {
+    "begin": 43.533,
+    "end": 45.559,
+    "content": "This is how you know.",
+    "confidence": 0.8,
+    "words": [
+     {
+      "begin": 43.533,
+      "end": 43.693,
+      "content": "This"
+     },
+     {
+      "begin": 43.814,
+      "end": 43.874,
+      "content": "is"
+     },
+     {
+      "begin": 43.934,
+      "end": 44.135,
+      "content": "how"
+     },
+     {
+      "begin": 44.255,
+      "end": 44.416,
+      "content": "you"
+     },
+     {
+      "begin": 44.697,
+      "end": 45.559,
+      "content": "know."
+     }
+    ],
+    "align_score": 0.656
+   },
+   {
+    "begin": 46.738,
+    "end": 52.364,
+    "content": "Chat GPT leaks secret briefs on C19 and even UFOs.",
+    "confidence": 0.9,
+    "words": [
+     {
+      "begin": 46.738,
+      "end": 46.978,
+      "content": "Chat"
+     },
+     {
+      "begin": 47.038,
+      "end": 47.518,
+      "content": "GPT"
+     },
+     {
+      "begin": 47.939,
+      "end": 48.199,
+      "content": "leaks"
+     },
+     {
+      "begin": 48.239,
+      "end": 48.62,
+      "content": "secret"
+     },
+     {
+      "begin": 48.68,
+      "end": 49.08,
+      "content": "briefs"
+     },
+     {
+      "begin": 49.241,
+      "end": 49.301,
+      "content": "on"
+     },
+     {
+      "begin": 49.401,
+      "end": 50.082,
+      "content": "C19"
+     },
+     {
+      "begin": 50.442,
+      "end": 50.502,
+      "content": "and"
+     },
+     {
+      "begin": 50.762,
+      "end": 50.943,
+      "content": "even"
+     },
+     {
+      "begin": 51.143,
+      "end": 52.364,
+      "content": "UFOs."
+     }
+    ],
+    "align_score": 0.694
+   },
+   {
+    "begin": 53.063,
+    "end": 54.834,
+    "content": "This is how you know.",
+    "confidence": 0.8,
+    "words": [
+     {
+      "begin": 53.063,
+      "end": 53.184,
+      "content": "This"
+     },
+     {
+      "begin": 53.285,
+      "end": 53.345,
+      "content": "is"
+     },
+     {
+      "begin": 53.425,
+      "end": 53.647,
+      "content": "how"
+     },
+     {
+      "begin": 53.808,
+      "end": 53.908,
+      "content": "you"
+     },
+     {
+      "begin": 54.109,
+      "end": 54.834,
+      "content": "know."
+     }
+    ],
+    "align_score": 0.836
+   },
+   {
+    "begin": 55.261,
+    "end": 55.841,
+    "content": "Data breach.",
+    "confidence": 0,
+    "words": [
+     {
+      "begin": 55.261,
+      "end": 55.783,
+      "content": "Data"
+     },
+     {
+      "begin": 55.841,
+      "end": 55.841,
+      "content": "breach."
+     }
+    ],
+    "align_score": 0.53
+   },
+   {
+    "begin": 55.841,
+    "end": 58.184,
+    "content": "Physical attacks, script from a USB.",
+    "confidence": 1,
+    "words": [
+     {
+      "begin": 55.841,
+      "end": 56.622,
+      "content": "Physical"
+     },
+     {
+      "begin": 56.722,
+      "end": 57.083,
+      "content": "attacks,"
+     },
+     {
+      "begin": 57.143,
+      "end": 57.383,
+      "content": "script"
+     },
+     {
+      "begin": 57.443,
+      "end": 57.563,
+      "content": "from"
+     },
+     {
+      "begin": 57.623,
+      "end": 57.644,
+      "content": "a"
+     },
+     {
+      "begin": 57.764,
+      "end": 58.184,
+      "content": "USB."
+     }
+    ],
+    "align_score": 0.636
+   },
+   {
+    "begin": 58.484,
+    "end": 60.435,
+    "content": "Skim a couple tags quick: RFID.",
+    "confidence": 0.833,
+    "words": [
+     {
+      "begin": 58.484,
+      "end": 58.725,
+      "content": "Skim"
+     },
+     {
+      "begin": 58.785,
+      "end": 58.806,
+      "content": "a"
+     },
+     {
+      "begin": 58.826,
+      "end": 59.067,
+      "content": "couple"
+     },
+     {
+      "begin": 59.148,
+      "end": 59.429,
+      "content": "tags"
+     },
+     {
+      "begin": 59.53,
+      "end": 59.691,
+      "content": "quick:"
+     },
+     {
+      "begin": 59.972,
+      "end": 60.435,
+      "content": "RFID."
+     }
+    ],
+    "align_score": 0.562
+   },
+   {
+    "begin": 60.915,
+    "end": 62.577,
+    "content": "Physical access is guaranteed.",
+    "confidence": 0.75,
+    "words": [
+     {
+      "begin": 60.915,
+      "end": 61.376,
+      "content": "Physical"
+     },
+     {
+      "begin": 61.657,
+      "end": 62.078,
+      "content": "access"
+     },
+     {
+      "begin": 62.199,
+      "end": 62.279,
+      "content": "is"
+     },
+     {
+      "begin": 62.359,
+      "end": 62.577,
+      "content": "guaranteed."
+     }
+    ],
+    "align_score": 0.738
+   },
+   {
+    "begin": 62.577,
+    "end": 65.471,
+    "content": "Prevention is proactive technology.",
+    "confidence": 0.75,
+    "words": [
+     {
+      "begin": 62.577,
+      "end": 63.543,
+      "content": "Prevention"
+     },
+     {
+      "begin": 63.603,
+      "end": 63.684,
+      "content": "is"
+     },
+     {
+      "begin": 63.704,
+      "end": 64.308,
+      "content": "proactive"
+     },
+     {
+      "begin": 64.509,
+      "end": 65.471,
+      "content": "technology."
+     }
+    ],
+    "align_score": 0.636
+   },
+   {
+    "begin": 65.471,
+    "end": 67.535,
+    "content": "Password attacks: Dictionary.",
+    "confidence": 1,
+    "words": [
+     {
+      "begin": 65.471,
+      "end": 66.053,
+      "content": "Password"
+     },
+     {
+      "begin": 66.114,
+      "end": 66.455,
+      "content": "attacks:"
+     },
+     {
+      "begin": 66.876,
+      "end": 67.535,
+      "content": "Dictionary."
+     }
+    ],
+    "align_score": 0.434
+   },
+   {
+    "begin": 67.535,
+    "end": 69.929,
+    "content": "Brute Force cracked it. PWNED. RIP.",
+    "confidence": 0.5,
+    "words": [
+     {
+      "begin": 67.535,
+      "end": 67.917,
+      "content": "Brute"
+     },
+     {
+      "begin": 68.259,
+      "end": 68.501,
+      "content": "Force"
+     },
+     {
+      "begin": 68.561,
+      "end": 68.903,
+      "content": "cracked"
+     },
+     {
+      "begin": 68.984,
+      "end": 69.064,
+      "content": "it."
+     },
+     {
+      "begin": 69.205,
+      "end": 69.426,
+      "content": "PWNED."
+     },
+     {
+      "begin": 69.668,
+      "end": 69.929,
+      "content": "RIP."
+     }
+    ],
+    "align_score": 0.47
+   },
+   {
+    "begin": 70.33,
+    "end": 71.893,
+    "content": "Complex passwords change frequently.",
+    "confidence": 0.75,
+    "words": [
+     {
+      "begin": 70.33,
+      "end": 70.792,
+      "content": "Complex"
+     },
+     {
+      "begin": 70.932,
+      "end": 71.434,
+      "content": "passwords"
+     },
+     {
+      "begin": 71.494,
+      "end": 71.735,
+      "content": "change"
+     },
+     {
+      "begin": 71.815,
+      "end": 71.893,
+      "content": "frequently."
+     }
+    ],
+    "align_score": 0.811
+   },
+   {
+    "begin": 71.893,
+    "end": 75.06,
+    "content": "Enable multi-factor security.",
+    "confidence": 0.667,
+    "words": [
+     {
+      "begin": 71.893,
+      "end": 73.037,
+      "content": "Enable"
+     },
+     {
+      "begin": 73.097,
+      "end": 74.341,
+      "content": "multi-factor"
+     },
+     {
+      "begin": 75.06,
+      "end": 75.06,
+      "content": "security."
+     }
+    ],
+    "align_score": 0.431
+   },
+   {
+    "begin": 75.06,
+    "end": 80.848,
+    "content": "When the chipset got hit with the EMP and the store's got nothing more.",
+    "confidence": 0.857,
+    "words": [
+     {
+      "begin": 75.06,
+      "end": 75.2,
+      "content": "When"
+     },
+     {
+      "begin": 75.24,
+      "end": 75.321,
+      "content": "the"
+     },
+     {
+      "begin": 75.401,
+      "end": 76.122,
+      "content": "chipset"
+     },
+     {
+      "begin": 76.222,
+      "end": 76.443,
+      "content": "got"
+     },
+     {
+      "begin": 76.563,
+      "end": 76.763,
+      "content": "hit"
+     },
+     {
+      "begin": 76.944,
+      "end": 77.284,
+      "content": "with"
+     },
+     {
+      "begin": 77.465,
+      "end": 77.585,
+      "content": "the"
+     },
+     {
+      "begin": 77.866,
+      "end": 78.146,
+      "content": "EMP"
+     },
+     {
+      "begin": 78.687,
+      "end": 78.747,
+      "content": "and"
+     },
+     {
+      "begin": 78.808,
+      "end": 78.868,
+      "content": "the"
+     },
+     {
+      "begin": 78.908,
+      "end": 79.329,
+      "content": "store's"
+     },
+     {
+      "begin": 79.389,
+      "end": 79.629,
+      "content": "got"
+     },
+     {
+      "begin": 79.729,
+      "end": 80.21,
+      "content": "nothing"
+     },
+     {
+      "begin": 80.31,
+      "end": 80.848,
+      "content": "more."
+     }
+    ],
+    "align_score": 0.609
+   },
+   {
+    "begin": 80.848,
+    "end": 84.199,
+    "content": "This is how you know.",
+    "confidence": 1,
+    "words": [
+     {
+      "begin": 80.848,
+      "end": 81.43,
+      "content": "This"
+     },
+     {
+      "begin": 81.55,
+      "end": 81.611,
+      "content": "is"
+     },
+     {
+      "begin": 81.731,
+      "end": 82.032,
+      "content": "how"
+     },
+     {
+      "begin": 82.132,
+      "end": 82.253,
+      "content": "you"
+     },
+     {
+      "begin": 82.513,
+      "end": 84.199,
+      "content": "know."
+     }
+    ],
+    "align_score": 0.506
+   },
+   {
+    "begin": 90.721,
+    "end": 93.314,
+    "content": "This is how you know.",
+    "confidence": 0.8,
+    "words": [
+     {
+      "begin": 90.721,
+      "end": 90.922,
+      "content": "This"
+     },
+     {
+      "begin": 91.043,
+      "end": 91.123,
+      "content": "is"
+     },
+     {
+      "begin": 91.143,
+      "end": 91.424,
+      "content": "how"
+     },
+     {
+      "begin": 91.565,
+      "end": 91.706,
+      "content": "you"
+     },
+     {
+      "begin": 91.867,
+      "end": 93.314,
+      "content": "know."
+     }
+    ],
+    "align_score": 0.489
+   },
+   {
+    "begin": 93.733,
+    "end": 96.04,
+    "content": "Supply chain attacks; a priority.",
+    "confidence": 0.8,
+    "words": [
+     {
+      "begin": 93.733,
+      "end": 94.074,
+      "content": "Supply"
+     },
+     {
+      "begin": 94.174,
+      "end": 94.355,
+      "content": "chain"
+     },
+     {
+      "begin": 94.435,
+      "end": 94.816,
+      "content": "attacks;"
+     },
+     {
+      "begin": 95.117,
+      "end": 95.137,
+      "content": "a"
+     },
+     {
+      "begin": 95.198,
+      "end": 96.04,
+      "content": "priority."
+     }
+    ],
+    "align_score": 0.795
+   },
+   {
+    "begin": 96.219,
+    "end": 99.674,
+    "content": "Keep track of traffic activity, unauthorized access,",
+    "confidence": 1,
+    "words": [
+     {
+      "begin": 96.219,
+      "end": 96.4,
+      "content": "Keep"
+     },
+     {
+      "begin": 96.52,
+      "end": 96.661,
+      "content": "track"
+     },
+     {
+      "begin": 96.741,
+      "end": 96.782,
+      "content": "of"
+     },
+     {
+      "begin": 96.802,
+      "end": 97.264,
+      "content": "traffic"
+     },
+     {
+      "begin": 97.545,
+      "end": 98.288,
+      "content": "activity,"
+     },
+     {
+      "begin": 98.489,
+      "end": 99.152,
+      "content": "unauthorized"
+     },
+     {
+      "begin": 99.312,
+      "end": 99.674,
+      "content": "access,"
+     }
+    ],
+    "align_score": 0.736
+   },
+   {
+    "begin": 100.054,
+    "end": 103.14,
+    "content": "Finally, compromised asset abilities.",
+    "confidence": 0.75,
+    "words": [
+     {
+      "begin": 100.054,
+      "end": 100.656,
+      "content": "Finally,"
+     },
+     {
+      "begin": 100.957,
+      "end": 101.479,
+      "content": "compromised"
+     },
+     {
+      "begin": 101.619,
+      "end": 102.001,
+      "content": "asset"
+     },
+     {
+      "begin": 102.241,
+      "end": 103.14,
+      "content": "abilities."
+     }
+    ],
+    "align_score": 0.814
+   },
+   {
+    "begin": 103.14,
+    "end": 107.981,
+    "content": "Prevention isn't bad, vet all third-party vendors and patch it periodically.",
+    "confidence": 0.818,
+    "words": [
+     {
+      "begin": 103.14,
+      "end": 103.52,
+      "content": "Prevention"
+     },
+     {
+      "begin": 103.58,
+      "end": 103.8,
+      "content": "isn't"
+     },
+     {
+      "begin": 103.86,
+      "end": 104.08,
+      "content": "bad,"
+     },
+     {
+      "begin": 104.18,
+      "end": 104.361,
+      "content": "vet"
+     },
+     {
+      "begin": 104.561,
+      "end": 104.661,
+      "content": "all"
+     },
+     {
+      "begin": 104.681,
+      "end": 105.361,
+      "content": "third-party"
+     },
+     {
+      "begin": 105.662,
+      "end": 106.062,
+      "content": "vendors"
+     },
+     {
+      "begin": 106.102,
+      "end": 106.162,
+      "content": "and"
+     },
+     {
+      "begin": 106.222,
+      "end": 106.502,
+      "content": "patch"
+     },
+     {
+      "begin": 106.622,
+      "end": 106.702,
+      "content": "it"
+     },
+     {
+      "begin": 106.823,
+      "end": 107.981,
+      "content": "periodically."
+     }
+    ],
+    "align_score": 0.64
+   },
+   {
+    "begin": 107.981,
+    "end": 110.093,
+    "content": "Cloud-based attacks versus on-premises.",
+    "confidence": 0.5,
+    "words": [
+     {
+      "begin": 107.981,
+      "end": 108.443,
+      "content": "Cloud-based"
+     },
+     {
+      "begin": 108.464,
+      "end": 108.806,
+      "content": "attacks"
+     },
+     {
+      "begin": 108.886,
+      "end": 109.148,
+      "content": "versus"
+     },
+     {
+      "begin": 109.208,
+      "end": 110.093,
+      "content": "on-premises."
+     }
+    ],
+    "align_score": 0.534
+   },
+   {
+    "begin": 110.493,
+    "end": 112.54,
+    "content": "Abnormal data transfer signaling",
+    "confidence": 0.75,
+    "words": [
+     {
+      "begin": 110.493,
+      "end": 110.834,
+      "content": "Abnormal"
+     },
+     {
+      "begin": 110.894,
+      "end": 111.135,
+      "content": "data"
+     },
+     {
+      "begin": 111.215,
+      "end": 111.596,
+      "content": "transfer"
+     },
+     {
+      "begin": 111.757,
+      "end": 112.54,
+      "content": "signaling"
+     }
+    ],
+    "align_score": 0.898
+   },
+   {
+    "begin": 112.675,
+    "end": 113.111,
+    "content": "total breach of access.",
+    "confidence": 0.75,
+    "words": [
+     {
+      "begin": 112.675,
+      "end": 112.917,
+      "content": "total"
+     },
+     {
+      "begin": 112.957,
+      "end": 113.111,
+      "content": "breach"
+     },
+     {
+      "begin": 113.111,
+      "end": 113.111,
+      "content": "of"
+     },
+     {
+      "begin": 113.111,
+      "end": 113.111,
+      "content": "access."
+     }
+    ],
+    "align_score": 0.508
+   },
+   {
+    "begin": 113.111,
+    "end": 115.731,
+    "content": "To prevent these things, go review the access logs.",
+    "confidence": 0.889,
+    "words": [
+     {
+      "begin": 113.111,
+      "end": 113.912,
+      "content": "To"
+     },
+     {
+      "begin": 113.992,
+      "end": 114.313,
+      "content": "prevent"
+     },
+     {
+      "begin": 114.373,
+      "end": 114.533,
+      "content": "these"
+     },
+     {
+      "begin": 114.593,
+      "end": 114.814,
+      "content": "things,"
+     },
+     {
+      "begin": 115.034,
+      "end": 115.114,
+      "content": "go"
+     },
+     {
+      "begin": 115.214,
+      "end": 115.415,
+      "content": "review"
+     },
+     {
+      "begin": 115.475,
+      "end": 115.535,
+      "content": "the"
+     },
+     {
+      "begin": 115.715,
+      "end": 115.731,
+      "content": "access"
+     },
+     {
+      "begin": 115.731,
+      "end": 115.731,
+      "content": "logs."
+     }
+    ],
+    "align_score": 0.812
+   },
+   {
+    "begin": 115.731,
+    "end": 116.513,
+    "content": "critically",
+    "confidence": 0,
+    "words": [
+     {
+      "begin": 115.731,
+      "end": 116.513,
+      "content": "critically"
+     }
+    ],
+    "align_score": 0.454
+   },
+   {
+    "begin": 116.513,
+    "end": 119.02,
+    "content": "Cryptographic hacks could put a wrench in things.",
+    "confidence": 0.875,
+    "words": [
+     {
+      "begin": 116.513,
+      "end": 117.918,
+      "content": "Cryptographic"
+     },
+     {
+      "begin": 117.998,
+      "end": 118.219,
+      "content": "hacks"
+     },
+     {
+      "begin": 118.299,
+      "end": 118.48,
+      "content": "could"
+     },
+     {
+      "begin": 118.58,
+      "end": 118.681,
+      "content": "put"
+     },
+     {
+      "begin": 118.741,
+      "end": 118.761,
+      "content": "a"
+     },
+     {
+      "begin": 118.881,
+      "end": 119.02,
+      "content": "wrench"
+     },
+     {
+      "begin": 119.02,
+      "end": 119.02,
+      "content": "in"
+     },
+     {
+      "begin": 119.02,
+      "end": 119.02,
+      "content": "things."
+     }
+    ],
+    "align_score": 0.724
+   },
+   {
+    "begin": 119.02,
+    "end": 121.511,
+    "content": "Collision with the hash? Salts for the seasoned Gs.",
+    "confidence": 0.889,
+    "words": [
+     {
+      "begin": 119.02,
+      "end": 119.985,
+      "content": "Collision"
+     },
+     {
+      "begin": 120.025,
+      "end": 120.125,
+      "content": "with"
+     },
+     {
+      "begin": 120.186,
+      "end": 120.266,
+      "content": "the"
+     },
+     {
+      "begin": 120.326,
+      "end": 120.547,
+      "content": "hash?"
+     },
+     {
+      "begin": 120.628,
+      "end": 120.869,
+      "content": "Salts"
+     },
+     {
+      "begin": 120.97,
+      "end": 121.07,
+      "content": "for"
+     },
+     {
+      "begin": 121.09,
+      "end": 121.151,
+      "content": "the"
+     },
+     {
+      "begin": 121.191,
+      "end": 121.511,
+      "content": "seasoned"
+     },
+     {
+      "begin": 121.511,
+      "end": 121.511,
+      "content": "Gs."
+     }
+    ],
+    "align_score": 0.673
+   },
+   {
+    "begin": 121.511,
+    "end": 125.688,
+    "content": "I seen these things. How to make a bag? Maybe repeat these things.",
+    "confidence": 0.538,
+    "words": [
+     {
+      "begin": 121.511,
+      "end": 121.531,
+      "content": "I"
+     },
+     {
+      "begin": 123.54,
+      "end": 123.741,
+      "content": "seen"
+     },
+     {
+      "begin": 123.761,
+      "end": 123.922,
+      "content": "these"
+     },
+     {
+      "begin": 124.022,
+      "end": 124.284,
+      "content": "things."
+     },
+     {
+      "begin": 124.464,
+      "end": 124.565,
+      "content": "How"
+     },
+     {
+      "begin": 124.625,
+      "end": 124.685,
+      "content": "to"
+     },
+     {
+      "begin": 125.047,
+      "end": 125.288,
+      "content": "make"
+     },
+     {
+      "begin": 125.308,
+      "end": 125.328,
+      "content": "a"
+     },
+     {
+      "begin": 125.348,
+      "end": 125.469,
+      "content": "bag?"
+     },
+     {
+      "begin": 125.509,
+      "end": 125.688,
+      "content": "Maybe"
+     },
+     {
+      "begin": 125.688,
+      "end": 125.688,
+      "content": "repeat"
+     },
+     {
+      "begin": 125.688,
+      "end": 125.688,
+      "content": "these"
+     },
+     {
+      "begin": 125.688,
+      "end": 125.688,
+      "content": "things."
+     }
+    ],
+    "align_score": 0.573
+   },
+   {
+    "begin": 125.688,
+    "end": 127.532,
+    "content": "I been livin’ that shit",
+    "confidence": 0,
+    "words": [
+     {
+      "begin": 125.688,
+      "end": 125.708,
+      "content": "I"
+     },
+     {
+      "begin": 125.868,
+      "end": 126.23,
+      "content": "been"
+     },
+     {
+      "begin": 126.37,
+      "end": 127.234,
+      "content": "livin’"
+     },
+     {
+      "begin": 127.532,
+      "end": 127.532,
+      "content": "that"
+     },
+     {
+      "begin": 127.532,
+      "end": 127.532,
+      "content": "shit"
+     }
+    ],
+    "align_score": 0.289
+   },
+   {
+    "begin": 127.532,
+    "end": 131.064,
+    "content": "and the precinct seen the MacBook address impeding.",
+    "confidence": 0,
+    "words": [
+     {
+      "begin": 127.532,
+      "end": 127.793,
+      "content": "and"
+     },
+     {
+      "begin": 128.074,
+      "end": 128.134,
+      "content": "the"
+     },
+     {
+      "begin": 128.275,
+      "end": 128.475,
+      "content": "precinct"
+     },
+     {
+      "begin": 128.756,
+      "end": 128.977,
+      "content": "seen"
+     },
+     {
+      "begin": 129.037,
+      "end": 129.118,
+      "content": "the"
+     },
+     {
+      "begin": 129.178,
+      "end": 129.579,
+      "content": "MacBook"
+     },
+     {
+      "begin": 129.639,
+      "end": 130.001,
+      "content": "address"
+     },
+     {
+      "begin": 130.422,
+      "end": 131.064,
+      "content": "impeding."
+     }
+    ],
+    "align_score": 0.329
+   },
+   {
+    "begin": 131.402,
+    "end": 133.079,
+    "content": "You clicked an ad, the computer crashed.",
+    "confidence": 0.429,
+    "words": [
+     {
+      "begin": 131.402,
+      "end": 131.523,
+      "content": "You"
+     },
+     {
+      "begin": 131.804,
+      "end": 132.065,
+      "content": "clicked"
+     },
+     {
+      "begin": 132.145,
+      "end": 132.185,
+      "content": "an"
+     },
+     {
+      "begin": 132.446,
+      "end": 132.587,
+      "content": "ad,"
+     },
+     {
+      "begin": 132.687,
+      "end": 132.767,
+      "content": "the"
+     },
+     {
+      "begin": 132.828,
+      "end": 133.079,
+      "content": "computer"
+     },
+     {
+      "begin": 133.079,
+      "end": 133.079,
+      "content": "crashed."
+     }
+    ],
+    "align_score": 0.683
+   },
+   {
+    "begin": 133.079,
+    "end": 136.71,
+    "content": "An error message says it’s booting slow.",
+    "confidence": 0.857,
+    "words": [
+     {
+      "begin": 133.079,
+      "end": 133.119,
+      "content": "An"
+     },
+     {
+      "begin": 133.22,
+      "end": 134.443,
+      "content": "error"
+     },
+     {
+      "begin": 134.564,
+      "end": 135.045,
+      "content": "message"
+     },
+     {
+      "begin": 135.186,
+      "end": 135.547,
+      "content": "says"
+     },
+     {
+      "begin": 135.627,
+      "end": 135.707,
+      "content": "it’s"
+     },
+     {
+      "begin": 135.767,
+      "end": 136.369,
+      "content": "booting"
+     },
+     {
+      "begin": 136.409,
+      "end": 136.71,
+      "content": "slow."
+     }
+    ],
+    "align_score": 0.508
+   },
+   {
+    "begin": 137.711,
+    "end": 139.076,
+    "content": "This is how you know.",
+    "confidence": 1,
+    "words": [
+     {
+      "begin": 137.711,
+      "end": 137.852,
+      "content": "This"
+     },
+     {
+      "begin": 137.932,
+      "end": 138.012,
+      "content": "is"
+     },
+     {
+      "begin": 138.093,
+      "end": 138.394,
+      "content": "how"
+     },
+     {
+      "begin": 138.534,
+      "end": 138.655,
+      "content": "you"
+     },
+     {
+      "begin": 138.835,
+      "end": 139.076,
+      "content": "know."
+     }
+    ],
+    "align_score": 0.96
+   },
+   {
+    "begin": 139.556,
+    "end": 140.879,
+    "content": "It's a data breach.",
+    "confidence": 0.75,
+    "words": [
+     {
+      "begin": 139.556,
+      "end": 139.716,
+      "content": "It's"
+     },
+     {
+      "begin": 139.917,
+      "end": 139.937,
+      "content": "a"
+     },
+     {
+      "begin": 140.017,
+      "end": 140.479,
+      "content": "data"
+     },
+     {
+      "begin": 140.559,
+      "end": 140.879,
+      "content": "breach."
+     }
+    ],
+    "align_score": 0.609
+   },
+   {
+    "begin": 140.879,
+    "end": 142.488,
+    "content": "The files are inaccessible.",
+    "confidence": 1,
+    "words": [
+     {
+      "begin": 140.879,
+      "end": 140.96,
+      "content": "The"
+     },
+     {
+      "begin": 141.201,
+      "end": 141.523,
+      "content": "files"
+     },
+     {
+      "begin": 141.603,
+      "end": 141.844,
+      "content": "are"
+     },
+     {
+      "begin": 142.046,
+      "end": 142.488,
+      "content": "inaccessible."
+     }
+    ],
+    "align_score": 0.409
+   },
+   {
+    "begin": 142.488,
+    "end": 147.121,
+    "content": "A ransom message tells you send the dough.",
+    "confidence": 0.75,
+    "words": [
+     {
+      "begin": 142.488,
+      "end": 142.508,
+      "content": "A"
+     },
+     {
+      "begin": 143.491,
+      "end": 143.953,
+      "content": "ransom"
+     },
+     {
+      "begin": 144.073,
+      "end": 144.474,
+      "content": "message"
+     },
+     {
+      "begin": 144.575,
+      "end": 144.976,
+      "content": "tells"
+     },
+     {
+      "begin": 145.016,
+      "end": 145.096,
+      "content": "you"
+     },
+     {
+      "begin": 145.156,
+      "end": 145.417,
+      "content": "send"
+     },
+     {
+      "begin": 145.457,
+      "end": 145.558,
+      "content": "the"
+     },
+     {
+      "begin": 145.899,
+      "end": 147.121,
+      "content": "dough."
+     }
+    ],
+    "align_score": 0.675
+   },
+   {
+    "begin": 147.121,
+    "end": 148.529,
+    "content": "This is how you know.",
+    "confidence": 1,
+    "words": [
+     {
+      "begin": 147.121,
+      "end": 147.242,
+      "content": "This"
+     },
+     {
+      "begin": 147.363,
+      "end": 147.443,
+      "content": "is"
+     },
+     {
+      "begin": 147.504,
+      "end": 147.685,
+      "content": "how"
+     },
+     {
+      "begin": 147.866,
+      "end": 148.026,
+      "content": "you"
+     },
+     {
+      "begin": 148.248,
+      "end": 148.529,
+      "content": "know."
+     }
+    ],
+    "align_score": 0.971
+   },
+   {
+    "begin": 149.011,
+    "end": 150.397,
+    "content": "It's a data breach.",
+    "confidence": 0.25,
+    "words": [
+     {
+      "begin": 149.011,
+      "end": 149.172,
+      "content": "It's"
+     },
+     {
+      "begin": 149.333,
+      "end": 149.353,
+      "content": "a"
+     },
+     {
+      "begin": 149.433,
+      "end": 149.915,
+      "content": "data"
+     },
+     {
+      "begin": 150.016,
+      "end": 150.397,
+      "content": "breach."
+     }
+    ],
+    "align_score": 0.684
+   },
+   {
+    "begin": 150.474,
+    "end": 152.822,
+    "content": "Unusual network traffic.",
+    "confidence": 1,
+    "words": [
+     {
+      "begin": 150.474,
+      "end": 151.157,
+      "content": "Unusual"
+     },
+     {
+      "begin": 151.357,
+      "end": 151.899,
+      "content": "network"
+     },
+     {
+      "begin": 152.06,
+      "end": 152.822,
+      "content": "traffic."
+     }
+    ],
+    "align_score": 0.744
+   },
+   {
+    "begin": 152.921,
+    "end": 156.157,
+    "content": "Slow performance after a download.",
+    "confidence": 0.8,
+    "words": [
+     {
+      "begin": 152.921,
+      "end": 153.122,
+      "content": "Slow"
+     },
+     {
+      "begin": 153.223,
+      "end": 154.087,
+      "content": "performance"
+     },
+     {
+      "begin": 154.308,
+      "end": 154.549,
+      "content": "after"
+     },
+     {
+      "begin": 154.71,
+      "end": 154.73,
+      "content": "a"
+     },
+     {
+      "begin": 154.83,
+      "end": 156.157,
+      "content": "download."
+     }
+    ],
+    "align_score": 0.71
+   },
+   {
+    "begin": 156.596,
+    "end": 158.102,
+    "content": "This is how you know.",
+    "confidence": 0.8,
+    "words": [
+     {
+      "begin": 156.596,
+      "end": 156.837,
+      "content": "This"
+     },
+     {
+      "begin": 156.978,
+      "end": 157.058,
+      "content": "is"
+     },
+     {
+      "begin": 157.118,
+      "end": 157.299,
+      "content": "how"
+     },
+     {
+      "begin": 157.46,
+      "end": 157.6,
+      "content": "you"
+     },
+     {
+      "begin": 157.761,
+      "end": 158.102,
+      "content": "know."
+     }
+    ],
+    "align_score": 0.951
+   },
+   {
+    "begin": 158.463,
+    "end": 160.01,
+    "content": "It's a data breach.",
+    "confidence": 0.75,
+    "words": [
+     {
+      "begin": 158.463,
+      "end": 158.624,
+      "content": "It's"
+     },
+     {
+      "begin": 158.764,
+      "end": 158.784,
+      "content": "a"
+     },
+     {
+      "begin": 158.885,
+      "end": 159.368,
+      "content": "data"
+     },
+     {
+      "begin": 159.468,
+      "end": 160.01,
+      "content": "breach."
+     }
+    ],
+    "align_score": 0.735
+   },
+   {
+    "begin": 160.01,
+    "end": 165.952,
+    "content": "Chad GPT leaks secret briefs on C19 and the UFOs.",
+    "confidence": 1,
+    "words": [
+     {
+      "begin": 160.01,
+      "end": 160.21,
+      "content": "Chad"
+     },
+     {
+      "begin": 160.27,
+      "end": 160.77,
+      "content": "GPT"
+     },
+     {
+      "begin": 161.251,
+      "end": 161.471,
+      "content": "leaks"
+     },
+     {
+      "begin": 161.491,
+      "end": 161.871,
+      "content": "secret"
+     },
+     {
+      "begin": 161.971,
+      "end": 162.292,
+      "content": "briefs"
+     },
+     {
+      "begin": 162.472,
+      "end": 162.532,
+      "content": "on"
+     },
+     {
+      "begin": 162.612,
+      "end": 163.093,
+      "content": "C19"
+     },
+     {
+      "begin": 163.713,
+      "end": 163.793,
+      "content": "and"
+     },
+     {
+      "begin": 163.853,
+      "end": 163.913,
+      "content": "the"
+     },
+     {
+      "begin": 164.094,
+      "end": 165.952,
+      "content": "UFOs."
+     }
+    ],
+    "align_score": 0.615
+   },
+   {
+    "begin": 165.952,
+    "end": 167.517,
+    "content": "This is how you know.",
+    "confidence": 0.8,
+    "words": [
+     {
+      "begin": 165.952,
+      "end": 166.092,
+      "content": "This"
+     },
+     {
+      "begin": 166.193,
+      "end": 166.273,
+      "content": "is"
+     },
+     {
+      "begin": 166.333,
+      "end": 166.574,
+      "content": "how"
+     },
+     {
+      "begin": 166.715,
+      "end": 166.855,
+      "content": "you"
+     },
+     {
+      "begin": 167.076,
+      "end": 167.517,
+      "content": "know."
+     }
+    ],
+    "align_score": 0.841
+   },
+   {
+    "begin": 167.849,
+    "end": 169.277,
+    "content": "It's a data breach.",
+    "confidence": 0.5,
+    "words": [
+     {
+      "begin": 167.849,
+      "end": 168.051,
+      "content": "It's"
+     },
+     {
+      "begin": 168.171,
+      "end": 168.191,
+      "content": "a"
+     },
+     {
+      "begin": 168.272,
+      "end": 168.754,
+      "content": "data"
+     },
+     {
+      "begin": 168.855,
+      "end": 169.277,
+      "content": "breach."
+     }
+    ],
+    "align_score": 0.777
+   },
+   {
+    "begin": 170.895,
+    "end": 171.937,
+    "content": "Data breach.",
+    "confidence": 0.5,
+    "words": [
+     {
+      "begin": 170.895,
+      "end": 171.376,
+      "content": "Data"
+     },
+     {
+      "begin": 171.436,
+      "end": 171.937,
+      "content": "breach."
+     }
+    ],
+    "align_score": 0.581
+   },
+   {
+    "begin": 172.747,
+    "end": 175.083,
+    "content": "It's a data breach.",
+    "confidence": 0.5,
+    "words": [
+     {
+      "begin": 172.747,
+      "end": 172.888,
+      "content": "It's"
+     },
+     {
+      "begin": 172.988,
+      "end": 173.008,
+      "content": "a"
+     },
+     {
+      "begin": 173.089,
+      "end": 173.55,
+      "content": "data"
+     },
+     {
+      "begin": 173.631,
+      "end": 175.083,
+      "content": "breach."
+     }
+    ],
+    "align_score": 0.625
+   },
+   {
+    "begin": 175.083,
+    "end": 176.369,
+    "content": "Oh, data breach.",
+    "confidence": 0.667,
+    "words": [
+     {
+      "begin": 175.083,
+      "end": 175.163,
+      "content": "Oh,"
+     },
+     {
+      "begin": 175.485,
+      "end": 175.947,
+      "content": "data"
+     },
+     {
+      "begin": 176.028,
+      "end": 176.369,
+      "content": "breach."
+     }
+    ],
+    "align_score": 0.697
+   },
+   {
+    "begin": 177.332,
+    "end": 179.118,
+    "content": "It's a data breach.",
+    "confidence": 0.5,
+    "words": [
+     {
+      "begin": 177.332,
+      "end": 177.533,
+      "content": "It's"
+     },
+     {
+      "begin": 177.653,
+      "end": 177.673,
+      "content": "a"
+     },
+     {
+      "begin": 177.753,
+      "end": 178.235,
+      "content": "data"
+     },
+     {
+      "begin": 178.376,
+      "end": 179.118,
+      "content": "breach."
+     }
+    ],
+    "align_score": 0.622
+   },
+   {
+    "begin": 179.981,
+    "end": 181.227,
+    "content": "Oh, data breach.",
+    "confidence": 0.667,
+    "words": [
+     {
+      "begin": 179.981,
+      "end": 180.062,
+      "content": "Oh,"
+     },
+     {
+      "begin": 180.323,
+      "end": 180.765,
+      "content": "data"
+     },
+     {
+      "begin": 180.825,
+      "end": 181.227,
+      "content": "breach."
+     }
+    ],
+    "align_score": 0.672
+   },
+   {
+    "begin": 182.07,
+    "end": 183.575,
+    "content": "It's a data breach.",
+    "confidence": 0.5,
+    "words": [
+     {
+      "begin": 182.07,
+      "end": 182.211,
+      "content": "It's"
+     },
+     {
+      "begin": 182.311,
+      "end": 182.331,
+      "content": "a"
+     },
+     {
+      "begin": 182.411,
+      "end": 182.913,
+      "content": "data"
+     },
+     {
+      "begin": 182.993,
+      "end": 183.575,
+      "content": "breach."
+     }
+    ],
+    "align_score": 0.828
+   },
+   {
+    "begin": 184.618,
+    "end": 185.724,
+    "content": "Oh, data breach.",
+    "confidence": 0.333,
+    "words": [
+     {
+      "begin": 184.618,
+      "end": 184.739,
+      "content": "Oh,"
+     },
+     {
+      "begin": 184.96,
+      "end": 185.342,
+      "content": "data"
+     },
+     {
+      "begin": 185.422,
+      "end": 185.724,
+      "content": "breach."
+     }
+    ],
+    "align_score": 0.486
+   },
+   {
+    "begin": 216.998,
+    "end": 220.005,
+    "content": "It's a data breach.",
+    "confidence": 0,
+    "words": [
+     {
+      "begin": 216.998,
+      "end": 217.75,
+      "content": "It's"
+     },
+     {
+      "begin": 217.75,
+      "end": 218.502,
+      "content": "a"
+     },
+     {
+      "begin": 218.502,
+      "end": 219.253,
+      "content": "data"
+     },
+     {
+      "begin": 219.253,
+      "end": 220.005,
+      "content": "breach."
+     }
+    ],
+    "align_score": 0.027
+   }
+  ]
+ }
+}

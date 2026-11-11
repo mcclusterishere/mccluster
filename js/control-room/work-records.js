@@ -257,7 +257,7 @@
       document.addEventListener("click",onClick);document.addEventListener("change",onChange);
     },
     reset:function(){W.loaded={};W.rows=emptyRows();W.unprov={};W.history=null;},
-    renderForm:renderForm,section:section,openForm:openForm,
+    renderForm:renderForm,section:section,openForm:openForm,ensure:ensure,
     kinds:KINDS.slice(),postSale:POST_SALE.slice(),
     state:W
   };

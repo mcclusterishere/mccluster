@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* McCLUSTER CORP'S HOUSE: the company property at https://mccluster.org/.
-   The root of that host is the Human Uprise World (owner, 2026-10-15), the
+   The root of that host is the Equity Uprise World (owner, 2026-10-15), the
    company's platform, served by workers/mccluster/src/company-site/router.js;
    the page rendered here, "What is McCluster Corp?", is site.company_path
    (/company), with the host's robots.txt, sitemap.xml and llms.txt.
@@ -106,7 +106,8 @@ footer a{margin-right:1rem;display:inline-block;padding:.2rem 0}
 
 export function renderHome(site, graph) {
   const m = site.meta, origin = site.origin;
-  const door = (d) => `      <article class="card"><p class="kind">${esc(d.kind)}</p><h3>${esc(d.name)}</h3><p>${esc(d.line)}</p><a class="go" href="${esc(d.href)}">${esc(d.cta)} &#8594;</a></article>`;
+  const door = (d) => `      <article class="card"><p class="kind">${esc(d.kind)}</p><h3>${esc(d.name)}</h3><p>${esc(d.line)}</p>${d.href ? `<a class="go" href="${esc(d.href)}">${esc(d.cta)} &#8594;</a>` : ""}</article>`;
+  /* a door with no href is named, not linked: a product that is not public (PRIM3 is the owner's, 2026-11-03) */
   const work = (w) => `      <article class="card"><h3>${esc(w.title)}</h3><p>${esc(w.body)}</p><a class="go" href="${esc(w.href)}">${esc(w.cta)}</a></article>`;
   const fact = (f) => `      <div><dt>${esc(f.label)}</dt><dd>${f.href ? `<a href="${esc(f.href)}">${esc(f.value)}</a>` : esc(f.value)}</dd></div>`;
   return `<!doctype html>
@@ -212,7 +213,7 @@ export function renderLlms(site) {
     ...(site.world ? ["", `${site.origin}/ is ${site.world.line}`, `${site.origin}${pagePath(site)} is this page: what McCluster Corp is.`] : []),
     "",
     "## Products and initiatives",
-    ...site.doors.map((d) => `- [${d.name}](${d.href}): ${d.kind}. ${d.line}`),
+    ...site.doors.map((d) => (d.href ? `- [${d.name}](${d.href})` : `- ${d.name}`) + `: ${d.kind}. ${d.line}`),
     ...(site.product_map ? [`- [${site.product_map.cta}](${site.product_map.href}): ${site.product_map.line}`] : []),
     "",
     "## Company",

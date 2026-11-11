@@ -7,8 +7,9 @@
   const {root, house, world, go} = bar.navigation;
   const dock = document.querySelector('.appbar');
   const get = id => document.getElementById(id);
-  let coreReady, panel, profile, installed = false, group = 'All', opening = 0;
-  const groups = ['All', 'Analytics', 'Operations', 'Studio', 'System', 'Products'];
+  let coreReady, panel, profile, installed = false, group = 'All', opening = 0, lastControlTap = null;
+  // The six Control sections come from NAV (js/control-room/nav.js); Products are the product doors.
+  const groups = ['All', 'Home', 'Inbox', 'Sell', 'Create', 'Analytics', 'System', 'Products'];
   function element(tag, className, text) {
     const el = document.createElement(tag); el.className = className;
     if (text) el.textContent = text; return el;
@@ -16,9 +17,13 @@
   function core() {
     if (window.CR?.workspaceCore) return Promise.resolve(window.CR.workspaceCore);
     if (!coreReady) coreReady = new Promise((resolve, reject) => {
-      const s = document.createElement('script'); s.src = root + 'js/control-room/workspace-core.js?v=__STAMP__';
-      s.onload = () => window.CR?.workspaceCore ? resolve(window.CR.workspaceCore) : reject(Error('Routes unavailable'));
-      s.onerror = reject; document.head.appendChild(s);
+      const load = path => new Promise((done, fail) => {
+        const s = document.createElement('script'); s.src = root + path + '?v=__STAMP__';
+        s.onload = done; s.onerror = fail; document.head.appendChild(s);
+      });
+      (window.CR?.nav ? Promise.resolve() : load('js/control-room/nav.js'))
+        .then(() => load('js/control-room/workspace-core.js'))
+        .then(() => window.CR?.workspaceCore ? resolve(window.CR.workspaceCore) : reject(Error('Routes unavailable')), reject);
     }).catch(error => {coreReady = null; throw error;});
     return coreReady;
   }
@@ -31,33 +36,59 @@
     const C = window.CR.workspaceCore;
     const native = C.routes.map(route => ({
       href: controlHref(route.hash), hash: route.hash,
-      label: route.hash === '#analytics' ? 'Analytics' : route.label,
-      group: route.hash.startsWith('#system:') ? 'System' : route.hash === '#apps' ? 'Products' :
-        route.page === 'intelligence' ? 'Analytics' : route.page === 'studio' ? 'Studio' : 'Operations',
-      context: route.group
+      label: route.label, group: route.group, context: route.group
     }));
     // Existing product doors; these are links, not newly granted entitlements.
     return native.concat([
       {label:'World', group:'Products', href:world, context:'Equity Uprise'},
-      {label:'Your desk', group:'Operations', href:new URL('mnet.html?view=feed&desk', root).href, context:'Personal work'},
+      {label:'Policy', group:'Products', href:world + '&policy=1', context:'Owner preview · Go Live · Globe · Feed'},
+      {label:'Your desk', group:'Inbox', href:new URL('mnet.html?view=feed&desk', root).href, context:'Personal work'},
       /* ONE HALO (owner, 2026-10-22: "it takes you to multiple different places. Not everything is consolidated"): every
          Halo door opens the four screens on the globe (World, Missions, People, Intelligence), never the separate app */
       {label:'Hitman’s Halo', group:'Products', href:new URL('action-globe.html?explore=1&halo=1', house).href, context:'World · Missions · People · Intelligence'},
       {label:'PRIM3', group:'Products', href:new URL('prim3.html', house).href, context:'Learning'},
+      /* the learning hub is now the game hub (owner, 2026-11-03): a mini game per course, each with its paired music */
+      {label:'Game Hub', group:'Products', href:new URL('game-hub.html', house).href, context:'Course mini games'},
+      /* the owner's mission globe and World builder (owner, 2026-11-02: "its own tab … only admin can see as its own app");
+         this panel is the owner's only, and the page checks the owner again itself */
+      {label:'PRIM3 World', group:'Products', href:new URL('prim3-world.html', house).href, context:'Missions · World builder'},
+      /* the admin-only E=Up product workspace (owner, 2026-11-09: "an admin only experience … the E=Up tab in the admin
+         experience"): Control › System › E=Up; the Worker's /v1/eup routes repeat the owner check on every request */
+      {label:'E=Up', group:'Products', href:new URL('control.html#system:eup', house).href, context:'Admin only · League · Civic · Companies · Sources'},
       {label:'Whip', group:'Products', href:new URL('whip.html', house).href, context:'Mobility'},
-      {label:'WE Manufacture', group:'Products', href:new URL('we-manufacture.html', house).href, context:'Manufacturing'},
-      {label:'Asset Lab', group:'Studio', href:new URL('asset-lab.html', house).href, context:'Asset tools'}
+      {label:'WE Manufacture', group:'Products', href:new URL('we-manufacture.html', house).href, context:'Manufacturing'}
     ]);
   }
   function closePanel(focus = false) {
-    ++opening;
+    ++opening; lastControlTap = null; // a double tap is two taps with nothing chosen or closed between them
     if (panel?.matches(':popover-open')) panel.hidePopover();
     const button = get('mccControlToggle');
     button?.setAttribute('aria-expanded', 'false');
     if (focus) button?.focus();
   }
+  /* The six Control sections, straight from NAV, with the live counts Control
+     publishes when it is the page underneath (window.CR.navBadges). */
+  function renderSections() {
+    const host = get('mccSections'), N = window.CR?.nav;
+    if (!host || !N) return;
+    const here = /\/control\.html$/.test(location.pathname) ? window.CR.workspaceCore.resolve(location.hash).section : null;
+    const badges = window.CR.navBadges || {};
+    host.replaceChildren();
+    N.NAV.forEach(section => {
+      if (section.id === 'insights') return; // Analytics has its own bottom destination.
+      const link = element('a', 'mcc-section'); link.href = controlHref(section.route);
+      link.dataset.controlSection = section.id;
+      link.innerHTML = N.icon(section.icon);
+      link.append(element('strong', '', section.label));
+      const count = Number(badges[section.id]) || 0;
+      if (count) { const b = element('span', 'mcc-section__badge', count > 99 ? '99+' : String(count)); b.setAttribute('aria-label', count + ' waiting'); link.append(b); }
+      if (here === section.id) link.setAttribute('aria-current', 'true');
+      host.appendChild(link);
+    });
+  }
   function render() {
     if (!panel) return;
+    renderSections();
     const query = get('mccDestinationSearch').value.trim().toLowerCase();
     const items = entries().filter(item => (group === 'All' || item.group === group) &&
       query.split(/\s+/).every(word => `${item.label} ${item.group} ${item.context} ${item.hash || ''}`.toLowerCase().includes(word)));
@@ -84,9 +115,10 @@
     if (panel) return;
     panel = element('section', 'mcc-destinations'); panel.id = 'mccDestinations';
     panel.setAttribute('popover', 'auto'); panel.setAttribute('role', 'dialog');
-    panel.setAttribute('aria-label', 'Control destinations');
-    panel.innerHTML = '<header><div><small>CONTROL ROOM</small><h2>Where do you want to go?</h2></div><button type="button" id="mccDestinationsClose" aria-label="Close destinations">×</button></header>' +
-      '<label class="mcc-destinations__search">Find a destination<input id="mccDestinationSearch" type="search" placeholder="People, missions, publishing…" autocomplete="off"></label>' +
+    panel.setAttribute('aria-label', 'Home destinations');
+    panel.innerHTML = '<header><div><small>HOME · TAP TWICE FOR TODAY</small><h2>Where do you want to go?</h2></div><button type="button" id="mccDestinationsClose" aria-label="Close destinations">×</button></header>' +
+      '<label class="mcc-destinations__search">Find a destination<input id="mccDestinationSearch" type="search" placeholder="Inbox, missions, publishing…" autocomplete="off"></label>' +
+      '<nav class="mcc-sections" id="mccSections" aria-label="Home sections"></nav>' +
       '<div class="mcc-destinations__groups" role="group" aria-label="Destination groups"></div>' +
       '<nav id="mccDestinationList" aria-label="Admin destinations"></nav><p id="mccDestinationCount" role="status" aria-live="polite"></p>';
     groups.forEach(name => {
@@ -109,6 +141,35 @@
       });
     });
   }
+  /* THE CONTROL BUTTON, ONE TAP AND TWO (owner, 2026-11-02: "you tap it once
+     and it'll open up the bar and then you tap it twice, it actually goes to
+     the situation"). One tap: a light haptic tick and the sections panel,
+     drawn from NAV (js/control-room/nav.js). Two taps inside DOUBLE_TAP_MS
+     (the same 350 ms gap the World's globe double tap uses,
+     js/world-countries.js TAP_GAP): a double tick and straight to Control →
+     Home → Today. The vibration is a no-op where the platform has none, and
+     is skipped when the person asked for reduced motion. */
+  const DOUBLE_TAP_MS = 350;
+  function haptic(pattern) {
+    try {
+      if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      if (navigator.vibrate) navigator.vibrate(pattern);
+    } catch (_) {}
+  }
+  function controlTap(event) {
+    const now = event && event.timeStamp ? event.timeStamp : performance.now();
+    const double = lastControlTap !== null && now - lastControlTap <= DOUBLE_TAP_MS;
+    lastControlTap = double ? null : now;
+    if (double) {
+      haptic([12, 40, 12]);
+      closePanel();
+      if (!bar.admin()) return;
+      go(controlHref('#home:today'));
+      return;
+    }
+    haptic(10);
+    openPanel();
+  }
   async function openPanel() {
     if (panel?.matches(':popover-open')) {closePanel(true); return;}
     const attempt = ++opening, button = get('mccControlToggle');
@@ -123,10 +184,72 @@
   }
   function ready() { if (document.body.dataset.siteNavigation === 'ready') window.dispatchEvent(new Event('mcc:navigation-ready')); }
   window.addEventListener('mcc:navigation-style-ready', () => { if (!bar.admin() || installed) ready(); });
+  let dockHints, dockLeft, dockRight, dockObservers = false;
+  function revealDockItem(item) {
+    if (!item || !bar.admin()) return;
+    const r = item.getBoundingClientRect(), d = dock.getBoundingClientRect();
+    if (r.left < d.left + 4) dock.scrollLeft -= d.left + 4 - r.left;
+    else if (r.right > d.right - 4) dock.scrollLeft += r.right - d.right + 4;
+    updateDockHints();
+  }
+  function updateDockHints() {
+    if (!dockHints) return;
+    const overflow = bar.admin() && dock.scrollWidth > dock.clientWidth + 2;
+    dockLeft.hidden = !overflow || dock.scrollLeft <= 2;
+    dockRight.hidden = !overflow || dock.scrollLeft >= dock.scrollWidth - dock.clientWidth - 2;
+    dockHints.hidden = !overflow;
+    const focus = document.activeElement;
+    if ((focus === dockLeft || focus === dockRight) && focus.hidden) {
+      const next = !dockLeft.hidden ? dockLeft : !dockRight.hidden ? dockRight : dock.querySelector('[aria-current="page"],[data-appnav]');
+      next?.focus({preventScroll:true});
+    }
+  }
+  function syncDockSections() {
+    const N = window.CR?.nav;
+    if (!bar.admin() || !N) {updateDockHints();return;}
+    N.NAV.filter(section => !['home','people','insights'].includes(section.id)).forEach(section => {
+      let link = dock.querySelector('[data-dock-section="'+section.id+'"]');
+      if (!link) {
+        link = element('a', 'appbar__tab'); link.dataset.appnav = 'admin-'+section.id; link.dataset.dockSection = section.id;
+        link.innerHTML = N.icon(section.icon); link.append(element('span', '', section.label)); dock.append(link);
+      }
+      link.href = controlHref(section.route);
+    });
+    if (!dockHints) {
+      dock.id = dock.id || 'mccAppbar';
+      dockHints = element('div', 'mcc-dock-hints'); dockHints.id = 'mccDockHints';
+      dockLeft = element('button', '', '‹'); dockRight = element('button', '', '›');
+      [dockLeft,dockRight].forEach((button,i) => {
+        button.type = 'button'; button.setAttribute('aria-label',i?'Scroll navigation right':'Scroll navigation left'); button.setAttribute('aria-controls',dock.id);
+        button.onclick = () => dock.scrollBy({left:(i?1:-1)*dock.clientWidth*.7,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
+        dockHints.append(button);
+      });
+      document.body.append(dockHints);
+    }
+    if (!dockObservers) {
+      dockObservers = true;
+      dock.addEventListener('scroll',updateDockHints,{passive:true});
+      dock.addEventListener('focusin',event=>revealDockItem(event.target.closest('[data-appnav]')));
+      dock.addEventListener('keydown',event=>{
+        if (!bar.admin() || !['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return;
+        const items=[...dock.querySelectorAll('[data-appnav]')],index=items.indexOf(document.activeElement);
+        if(index<0)return;
+        event.preventDefault();
+        const next=event.key==='Home'?0:event.key==='End'?items.length-1:Math.max(0,Math.min(items.length-1,index+(event.key==='ArrowRight'?1:-1)));
+        items[next].focus({preventScroll:true});revealDockItem(items[next]);
+      });
+      const resized=()=>{revealDockItem(dock.querySelector(':focus') || dock.querySelector('[aria-current="page"]'));updateDockHints();};
+      new ResizeObserver(resized).observe(dock);
+      new MutationObserver(updateDockHints).observe(dock,{childList:true,subtree:true});
+      window.addEventListener('resize',resized);
+    }
+    requestAnimationFrame(()=>{revealDockItem(dock.querySelector(':focus') || dock.querySelector('[aria-current="page"]'));updateDockHints();});
+  }
+
   async function syncAdmin() {
     if (!bar.admin()) {
       closePanel(); panel?.remove(); panel = null; installed = false;
-      delete document.body.dataset.adminNavigation; ready(); return;
+      delete document.body.dataset.adminNavigation; updateDockHints(); ready(); return;
     }
     try { await core(); } catch (_) { ready(); return; } // Original Home link and rails remain usable on load failure.
     if (!bar.admin()) return;
@@ -136,24 +259,39 @@
       const button = element('button', old.className); button.type = 'button';
       button.id = 'mccControlToggle'; button.dataset.appnav = 'admin-home';
       button.innerHTML = old.innerHTML;
-      button.querySelector('span').textContent = 'Control';
-      button.setAttribute('aria-label', 'Open all Control destinations');
+      button.querySelector('span').textContent = 'Home';
+      button.setAttribute('aria-label', 'Home: tap for sections, tap twice for Today');
       button.setAttribute('aria-expanded', 'false'); button.setAttribute('aria-controls', 'mccDestinations');
-      button.setAttribute('aria-haspopup', 'dialog'); button.onclick = openPanel;
+      button.setAttribute('aria-haspopup', 'dialog'); button.onclick = controlTap;
       old.replaceWith(button);
     }
+    syncDockSections();
     installed = true; document.body.dataset.adminNavigation = 'ready';
     markCurrent(); ready();
   }
+  let lastDockDestination = null;
   function markCurrent() {
     if (!installed) return;
     const button = get('mccControlToggle');
-    const on = /\/control\.html$/.test(location.pathname) && location.hash !== '#analytics';
+    const on = /\/control\.html$/.test(location.pathname) && window.CR.workspaceCore.resolve(location.hash).section === 'home';
     button?.classList.toggle('is-here', on);
     if (on) button?.setAttribute('aria-current', 'page'); else button?.removeAttribute('aria-current');
     // Analytics uses the same document, preserving org, draft editors and the globe instance.
     const analytics = dock.querySelector('[data-appnav="analytics"]');
-    if (analytics) analytics.href = controlHref('#analytics');
+    if (analytics) analytics.href = controlHref('#insights:overview');
+    const inbox = dock.querySelector('[data-appnav="admin-inbox"]');
+    if (inbox) {
+      inbox.href = controlHref('#people:inbox:conversations');
+      const active = /\/control\.html$/.test(location.pathname) && window.CR.workspaceCore.resolve(location.hash).section === 'people';
+      inbox.classList.toggle('is-here', active);
+      if (active) inbox.setAttribute('aria-current', 'page'); else inbox.removeAttribute('aria-current');
+    }
+    dock.querySelectorAll('[data-dock-section]').forEach(link=>{
+      const active = /\/control\.html$/.test(location.pathname) && window.CR.workspaceCore.resolve(location.hash).section === link.dataset.dockSection;
+      link.classList.toggle('is-here',active);if(active)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');
+    });
+    const destination = dock.querySelector('[aria-current="page"]')?.dataset.appnav || null;
+    if(destination !== lastDockDestination){lastDockDestination = destination;requestAnimationFrame(()=>revealDockItem(dock.querySelector(':focus') || dock.querySelector('[aria-current="page"]')));}
     if (panel?.matches(':popover-open')) render();
   }
   function closeProfile(focus = false) {
@@ -161,7 +299,19 @@
     get('mccAuthChip')?.setAttribute('aria-expanded', 'false');
     if (focus) get('mccAuthChip')?.focus();
   }
+  function syncProfileOwner() {
+    [get('mnMenu'), get('crAccountMenu')].filter(Boolean).forEach(menu => {
+      if (!menu.querySelector('[data-owner-profile-action="home"]')) {
+        const home = element('a', '', 'Home · Command Room'); home.dataset.ownerProfileAction = 'home'; home.href = controlHref('#home:today');
+        menu.appendChild(home);
+      }
+    });
+    [profile, get('mnMenu'), get('crAccountMenu')].filter(Boolean).forEach(menu => {
+      menu.querySelectorAll('[data-owner-profile-action]').forEach(el => {el.hidden = !bar.admin();});
+    });
+  }
   function syncProfile() {
+    syncProfileOwner();
     const chip = get('mccAuthChip'); if (!chip) return;
     const signed = bar.auth().signed_in;
     document.body.toggleAttribute('data-native-profile', !!get('mnMe') && !get('mnMe').hidden && signed);
@@ -187,9 +337,13 @@
       const view = element('a', '', 'View profile'); view.href = new URL(world).origin === location.origin ? new URL(world).href.replace('view=feed','view=profile') : new URL('mnet.html?view=profile', root).href;
       const account = element('a', '', 'Settings & account'); account.href = root + 'account.html?stay=1';
       const close = element('button', '', 'Close'); close.type = 'button'; close.onclick = () => closeProfile(true);
-      profile.append(view, account, close); document.body.appendChild(profile);
+      const home = element('a', '', 'Home · Command Room'); home.href = controlHref('#home:today'); home.dataset.ownerProfileAction = 'home';
+      const search = element('button', '', 'Search commands'); search.type = 'button'; search.dataset.ownerProfileAction = 'search';
+      search.onclick = async () => {if (!await bar.verifyAdmin()) {syncProfileOwner();return;}closeProfile();if (window.MCC_PALETTE) window.MCC_PALETTE.open();else openPanel();};
+      profile.append(view, account, home, search, close); document.body.appendChild(profile);
       profile.addEventListener('toggle', event => get('mccAuthChip')?.setAttribute('aria-expanded', String(event.newState === 'open')));
     }
+    syncProfileOwner();
     if (profile.matches(':popover-open')) closeProfile(true);
     else {profile.showPopover(); profile.querySelector('a').focus();}
   }, true);
@@ -209,7 +363,7 @@
     get('mccAuthChip')?.setAttribute('aria-expanded', String(get('crAccountMenu').classList.contains('is-open')));
   }).observe(get('crAccountMenu'), {attributes:true,attributeFilter:['class']});
   window.addEventListener('hashchange', markCurrent);
-  window.addEventListener('mcc:appbar-admin', syncAdmin);
+  window.addEventListener('mcc:appbar-admin', () => {syncAdmin();syncProfileOwner();});
   window.addEventListener('mcc:auth-state', () => {syncProfile(); if (!bar.auth().signed_in) {closePanel();closeProfile();get('crAccountMenu')?.classList.remove('is-open');}});
   window.addEventListener('pagehide', () => {closePanel();closeProfile();});
   if (get('mnMe')) new MutationObserver(syncProfile).observe(get('mnMe'), {attributes:true,attributeFilter:['hidden']});

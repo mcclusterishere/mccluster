@@ -258,7 +258,7 @@ Canonical exterior/egress simulation authority:
 The layer defines:
 - public/accessible south approach;
 - Stair A east discharge;
-- Stair B north/rear discharge;
+- Stair B discharge through the Floor 1 west service approach to the paired west exit door (v3, 2026-11-03: the former north door faced the stair mid-landing and could not exist);
 - secure west service entrance/apron;
 - public-way connection;
 - primary and alternate assembly areas;

@@ -12,6 +12,10 @@ const BUILTIN_MCP_SERVERS = [
     namespace: 'mccluster',
     url: 'https://api.mccluster.org/v1/media/mcp',
     protocolVersion: '2026-07-28',
+    // The Worker accepts a Core signature on this route and acts as the house
+    // owner. MCCLUSTER_API_BEARER is a legacy fallback: it holds a Supabase user
+    // token, which expires within the hour, so it cannot be the standing path.
+    signEnv: 'CORE_EDGE_SIGNING_KEY',
     bearerEnv: 'MCCLUSTER_API_BEARER'
   }
 ];
@@ -63,6 +67,19 @@ function publicMcpName(server, remoteName) {
   const combined = `${server.namespace}.${remoteName}`;
   if (!NAME.test(combined)) throw new Error(`Remote MCP tool name is unsafe: ${combined}`);
   return combined;
+}
+
+/* Only the options the MCP transport understands cross into callMcpTool
+   (./mcp-http.mjs): a caller-scoped operation id, the opt-in that mints one
+   for an unsigned server, and the retry/timeout budget. Broker context
+   (actor, source, requirements) stays on this side of the hop. */
+const MCP_TRANSPORT_OPTIONS = Object.freeze(['operationId', 'operationIds', 'retries', 'timeoutMs']);
+export function mcpTransportOptions(options) {
+  const picked = {};
+  for (const key of MCP_TRANSPORT_OPTIONS) {
+    if (options?.[key] !== undefined) picked[key] = options[key];
+  }
+  return picked;
 }
 
 function addRecord(records, record) {
@@ -182,7 +199,7 @@ export class ToolRegistry {
     } else if (record.transport === 'http') {
       result = await callHttpTool(record.target, args);
     } else if (record.transport === 'mcp-http') {
-      result = await callMcpTool(record.target.server, record.remoteName, args);
+      result = await callMcpTool(record.target.server, record.remoteName, args, mcpTransportOptions(options));
     } else if (record.transport === 'compute') {
       result = await callComputeTool(record.target, args, options);
     } else {

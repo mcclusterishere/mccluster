@@ -2,10 +2,10 @@
 <html lang="en">
 <head><script src="js/shell-boot.js?v=__STAMP__"></script>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>PRIM3 · Training Range 01</title>
-  <meta name="description" content="PRIM3 Training Range 01 applies Security Foundations and Risk through a deterministic practical mission.">
-  <link rel="canonical" href="https://matthew.mccluster.org/prim3-range.html">
+  <meta name="description" content="PRIM3 Training Range 01. Owner only.">
+  <meta name="robots" content="noindex, nofollow">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/img/prim3-mark-32.png">
   <link rel="icon" type="image/png" sizes="512x512" href="assets/img/prim3-mark-512.png">
   <link rel="apple-touch-icon" href="assets/img/prim3-mark-180.png">
@@ -16,6 +16,15 @@
   <script src="js/live-content.js?v=__STAMP__"></script>
 </head>
 <body class="prim3-range-page">
+  <!-- OWNER ONLY (owner, 2026-11-03: "the whole learning management system is going to be on my private account").
+       Nothing but this panel exists until the server says this is the house owner (js/owner-only.mjs); the course
+       markup below stays inert and the lesson scripts load only after that yes. -->
+  <section class="owner-gate" aria-live="polite" data-owner-gate data-owner-template="rangeTpl" data-owner-load="js/prim3-range-core.js?v=__STAMP__ js/prim3-range.js?v=__STAMP__ js/pip.js?v=__STAMP__ js/site-editor.js?v=__STAMP__">
+    <img class="owner-gate__mark" src="assets/img/prim3-lockup-512.png" alt="PRIM3" width="62" height="44">
+    <h1>Owner only</h1>
+    <p data-owner-msg>Checking access with the server…</p>
+  </section>
+  <template id="rangeTpl">
   <header class="range-topbar">
     <a class="range-home" href="prim3.html">PRIM3 LMS</a>
     <div class="range-brand">
@@ -25,7 +34,7 @@
     <span id="rangeSyncStatus" class="range-sync" data-kind="neutral">Connecting</span>
   </header>
 
-  <section id="rangeGate" class="range-gate">
+  <main id="rangeGate" class="range-gate">
     <div class="range-gate-card">
       <img src="assets/img/prim3-tab.png" alt="" width="96" height="96">
       <p class="range-kicker">MISSION GATE</p>
@@ -33,14 +42,14 @@
       <p id="rangeGateCopy">Checking M Account and Principles progress.</p>
       <a id="rangeGateAction" class="range-primary-link" href="account.html" hidden>Open M Account</a>
     </div>
-  </section>
+  </main>
 
   <main id="rangeShell" class="range-shell" hidden>
     <section id="rangeBriefing" class="range-briefing">
       <div class="range-hero">
         <div>
           <p class="range-kicker">M · MISSIONS</p>
-          <h1>Training Range 01<br><span>Risk and Controls</span></h1>
+          <h2>Training Range 01<br><span>Risk and Controls</span></h2>
           <p>This simulator applies Module M01 after instruction. Technical truth is selected before deployment and remains fixed for the entire attempt.</p>
         </div>
         <div class="range-contract">
@@ -97,7 +106,7 @@
       <header class="range-mission-head">
         <div>
           <p class="range-kicker">ACTIVE MISSION · <span id="variantValue"></span></p>
-          <h1 id="missionTitle"></h1>
+          <h2 id="missionTitle"></h2>
           <p id="missionBrief"></p>
         </div>
         <div class="range-clock-grid" aria-label="Mission state">
@@ -127,12 +136,10 @@
     <strong>PRIM3</strong>
     <span>Principles · Rhythm · Immersion · Missions</span>
   </footer>
+  </template>
 
   <script src="js/mcc-auth.js?v=__STAMP__"></script>
-  <script src="js/prim3-range-core.js?v=__STAMP__"></script>
-  <script src="js/prim3-range.js?v=__STAMP__"></script>
-  <script defer src="js/pip.js?v=__STAMP__"></script>
-  <script src="js/site-editor.js?v=__STAMP__" defer></script>
   <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script type="module" src="js/owner-only.mjs?v=__STAMP__"></script>
 </body>
 </html>

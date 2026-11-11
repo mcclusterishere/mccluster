@@ -77,6 +77,7 @@ async function haloChecks(scope,page,host,width,ctx,loseOwner,calls){
  check(scope,'the owner gets the Halo view on World, with its four tabs, from the link',!!st&&st.mounted&&st.view==='world'&&(await page.locator('.hx-tabs [role=tab]').count())===4&&await page.locator('.hx-top').isVisible(),st&&st.view);
  check(scope,'the supplied HM mark, scaled, never drawn',await page.evaluate(()=>{const i=document.querySelector('.hx-brand img');return !!i&&/assets\/img\/hm-mark-96\.png$/.test(i.getAttribute('src'))&&!document.querySelector('.hx-brand svg')}));
  check(scope,'the page chrome steps aside (the way-back header, the deck, the corner controls)',await page.evaluate(()=>['header','#deck','.globe-controls'].every(q=>{const e=document.querySelector(q);return !e||getComputedStyle(e).display==='none'})));
+ check(scope,'Bridgeport walk entry cannot cover Halo tabs',await page.locator('#bridgeportEnter').isHidden()&&await page.locator('#bridgeportWalk').isHidden());
  await page.waitForFunction(()=>/2/.test(document.querySelector('.hx-stats').textContent),null,{timeout:8000}).catch(()=>{});
  check(scope,'the counts strip reads the owner\'s missions',/2\s*Active missions/.test(await page.textContent('.hx-stats'))&&/1\s*Awaiting review/.test(await page.textContent('.hx-stats')),await page.textContent('.hx-stats'));
  const crowd=await page.evaluate(()=>{const q=['.hx-brand','.hx-operator','.hx-tabs','.hx-stats','.hx-clock','.hx-search','.hx-layers-btn','.hx-ctl','.hx-left','.hx-time'],els=q.map(s=>[s,document.querySelector(s)]).filter(([,e])=>e&&e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden'),hits=[];for(let i=0;i<els.length;i++)for(let j=i+1;j<els.length;j++){if(els[i][1].contains(els[j][1])||els[j][1].contains(els[i][1]))continue;const a=els[i][1].getBoundingClientRect(),b=els[j][1].getBoundingClientRect();if(a.left<b.right-1&&b.left<a.right-1&&a.top<b.bottom-1&&b.top<a.bottom-1)hits.push(els[i][0]+' × '+els[j][0])}return hits});
@@ -109,7 +110,9 @@ async function haloChecks(scope,page,host,width,ctx,loseOwner,calls){
     Math.abs(restored.height-initial.height)<4&&restored.clear>=220,restored);
  }
  await page.waitForFunction(()=>MCC_BAR.admin());
- check(scope,'Halo retains the same five owner destinations',await page.locator('.appbar [data-appnav]').count()===5);
+ await page.waitForSelector('body[data-admin-navigation][data-site-navigation]');
+ const destinations=await page.locator('.appbar [data-appnav]').evaluateAll(nodes=>nodes.map(n=>n.dataset.appnav));
+ check(scope,'Halo retains the shared owner destinations in their reviewed order',JSON.stringify(destinations)===JSON.stringify(['music','admin-inbox','admin-home','home','analytics','world','games','admin-sell','admin-create','admin-system']),destinations);
  await shot('start');
  let small=await smallTargets();
  check(scope,'every visible Halo control is a full 44px tap target',small.length===0,small);
@@ -154,7 +157,9 @@ async function haloChecks(scope,page,host,width,ctx,loseOwner,calls){
  check(scope,'natural events have distinct visual families and finite detail budgets',await page.evaluate(()=>{const s=HaloConsole.state().events;return s.types.length>=14&&s.models<=8&&s.animated<=48}),await state());
  if(width<1100)await page.locator('.hx-grip').click();
  await page.evaluate(()=>{const v=HuGlobe.viewer();v.camera.lookAt(Cesium.Cartesian3.fromDegrees(-97.5,35.4,5000),new Cesium.HeadingPitchRange(0,Cesium.Math.toRadians(-38),180000));v.camera.lookAtTransform(Cesium.Matrix4.IDENTITY);});
- await page.waitForTimeout(1200);
+ /* the event layer builds its models on the frames after the camera arrives: wait for that condition, not a fixed
+    1200ms that a slow software-GL runner can overrun; the assertion below is unchanged */
+ await page.waitForFunction(()=>HaloConsole.state().events.models>0,null,{timeout:15000}).catch(()=>{});
  check(scope,'nearby event builds 3D representation',await page.evaluate(()=>HaloConsole.state().events.models>0));
  const renderedEvent=()=>{const v=HuGlobe.viewer();return v.entities.values.filter(e=>e.haloObjectPick?.layer==='weather'&&e.ellipsoid).map(e=>{const p=e.position.getValue(v.clock.currentTime),s=Cesium.SceneTransforms.worldToWindowCoordinates(v.scene,p);return {screen:s&&{x:s.x,y:s.y},show:e.show,radii:e.ellipsoid.radii.getValue(v.clock.currentTime),picked:!!s&&v.scene.drillPick(s,20).some(h=>h.id===e)};});};
  await page.waitForFunction('('+renderedEvent.toString()+')().some(e=>e.picked)',null,{timeout:8000}).catch(()=>{});
@@ -201,7 +206,47 @@ async function haloChecks(scope,page,host,width,ctx,loseOwner,calls){
  await page.locator('#hxTab-missions').click();
  await page.waitForFunction(()=>document.querySelectorAll('.hx-left .hx-card').length>=2,null,{timeout:8000}).catch(()=>{});
  check(scope,'Missions: active missions listed, Review counted, mission places on the Earth',(await page.locator('.hx-left .hx-card').count())===2&&/Review\s*1/.test(await page.textContent('.hx-seg'))&&(await state()).marks===4,{cards:await page.locator('.hx-left .hx-card').count(),marks:(await state()).marks});
- await page.locator('.hx-left .hx-card').first().click();
+ // A freshness/due-date repaint can land between pointer-down and pointer-up.
+ // Cross UTC midnight explicitly, regardless of when CI runs. Metadata must
+ // update without replacing the pressed mission or losing keyboard focus.
+ const missionCard=page.locator('.hx-left .hx-card').first();
+ const repaintMissionStatus=({offset,gesture=false})=>{
+   const card=document.querySelector('.hx-left .hx-card');
+   const repaint=()=>{
+     const RealDate=Date,before=document.querySelector('.hx-left [role="status"]').textContent;
+     const beforeDue=[...card.querySelectorAll('.hx-card__meta > span')].at(-1).textContent;
+     const midnight=new RealDate();midnight.setUTCHours(24,0,0,0);
+     const at=midnight.getTime()+offset;
+     // Date.now and new Date() must agree; mocking only one made this proof
+     // depend on its wall-clock start time near midnight.
+     class Clock extends RealDate {constructor(...args){super(...(args.length?args:[at]));}static now(){return at;}}
+     try { window.Date=Clock; HaloConsole.setView('missions'); }
+     finally { window.Date=RealDate; }
+     const status=document.querySelector('.hx-left [role="status"]');
+     const due=[...document.querySelector('.hx-left .hx-card').querySelectorAll('.hx-card__meta > span')].at(-1).textContent;
+     return {attached:card.isConnected&&card===document.querySelector('.hx-left .hx-card'),focused:document.activeElement===card,statusUpdated:status.textContent!==before&&status.getClientRects().length>0,dueUpdated:due!==beforeDue};
+   };
+   if(!gesture)return repaint();
+   window.__missionGesture=null;
+   card.addEventListener('pointerdown',down=>{
+     const box=card.getBoundingClientRect(),hit=document.elementFromPoint(down.clientX,down.clientY);
+     const result=repaint();
+     result.down={onCard:card.contains(down.target),hitCard:hit===card||card.contains(hit),x:down.clientX,y:down.clientY,box:{x:box.x,y:box.y,width:box.width,height:box.height}};
+     // Pointer-up follows the browser's default focus action, but precedes the
+     // click handler's selection repaint. Never synthesize focus or selection.
+     document.addEventListener('pointerup',up=>{
+       const hit=document.elementFromPoint(up.clientX,up.clientY);
+       result.focused=document.activeElement===card;
+       result.up={onCard:card.contains(up.target),hitCard:hit===card||card.contains(hit)};
+       window.__missionGesture=result;
+     },{once:true,capture:true});
+   },{once:true});
+ };
+ await page.evaluate(repaintMissionStatus,{offset:120000,gesture:true});
+ // Keep Playwright's complete actionability checks and pointer dispatch together.
+ await missionCard.click();
+ const pressed=await page.evaluate(()=>window.__missionGesture);
+ check(scope,'midnight refresh updates freshness and due date without replacing the pressed mission card',pressed?.attached&&pressed.focused&&pressed.statusUpdated&&pressed.dueUpdated&&pressed.down.onCard&&pressed.down.hitCard&&pressed.up.onCard&&pressed.up.hitCard,pressed);
  await page.waitForFunction(()=>/Harbor water check/.test((document.querySelector('.hx-detail h2')||{}).textContent||''),null,{timeout:8000}).catch(()=>{});
  st=await state();
  check(scope,'a mission opens with its progress, team, next steps and evidence',st.selected&&st.selected.kind==='mission'&&await page.locator('.hx-detail h2').isVisible()&&/Harbor water check/.test(await page.textContent('.hx-detail h2'))&&/1 of 3 verified/.test(await page.textContent('.hx-detail'))&&/Review 2 submitted proofs/.test(await page.textContent('.hx-detail'))&&(await page.locator('.hx-detail .hx-team li').count())===3,{sel:st.selected,text:(await page.textContent('.hx-detail')).slice(0,400),team:await page.locator('.hx-detail .hx-team li').count()});
@@ -210,6 +255,17 @@ async function haloChecks(scope,page,host,width,ctx,loseOwner,calls){
  small=await smallTargets();
  check(scope,'Missions: every visible control is a full tap target',small.length===0,small);
  await shot('missions');
+ // The same metadata refresh must preserve keyboard focus and activation.
+ if(width<1100){
+   await page.locator('.hx-detail .hx-close').click();
+   await page.waitForFunction(()=>document.querySelector('.hx-left .hx-card')?.getAttribute('aria-current')==='false',null,{timeout:8000});
+ }
+ await missionCard.focus();
+ const focused=await page.evaluate(repaintMissionStatus,{offset:240000});
+ check(scope,'midnight refresh preserves mission keyboard focus and updates its status and due date',focused.attached&&focused.focused&&focused.statusUpdated&&focused.dueUpdated,focused);
+ await page.keyboard.press('Enter');
+ await page.waitForFunction(()=>HaloConsole.state().selected?.kind==='mission'&&HaloConsole.state().selected?.id==='a1b2c3d4-0000-4000-8000-000000000001',null,{timeout:8000});
+ check(scope,'the focused mission still opens with Enter after a coverage refresh',(await state()).selected?.id==='a1b2c3d4-0000-4000-8000-000000000001');
  /* People: no one's location, ever */
  await page.locator('#hxTab-people').click();
  await page.waitForFunction(()=>document.querySelectorAll('.hx-left .hx-person').length>=4,null,{timeout:8000}).catch(()=>{});
@@ -278,14 +334,14 @@ const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||u
 try {
 for(const width of (process.env.WORLD_QA_WIDTH?[Number(process.env.WORLD_QA_WIDTH)]:[390,820,1280]))for(const persona of (process.env.WORLD_QA_PERSONA?[process.env.WORLD_QA_PERSONA]:['guest','member','creator','owner','halo','failed'])){
  const scope=width+' '+persona, ctx=await browser.newContext({viewport:{width,height:844},isMobile:width===390,hasTouch:width===390});
- let owner=persona==='owner'||persona==='halo', calls=0, slow=false, mapReads=0, haloCode=0;const errors=[];
+ let owner=persona==='owner'||persona==='halo', calls=0, slow=false, mapReads=0, haloCode=0;const errors=[],skyFaces=new Set();
  await ctx.addInitScript(p=>{localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));if(p!=='guest'){const exp=Math.floor(Date.now()/1000)+3600;localStorage.setItem('mccdb_session',JSON.stringify({access_token:'x.'+btoa(JSON.stringify({sub:'owner-'+p,exp}))+'.y',expires_at:exp,refresh_token:'fixture-only',user:{id:'owner-'+p,email:'fixture@example.invalid'}}));}},persona);
  await ctx.route('**/*',async route=>{
   const url=new URL(route.request().url()), headers={'access-control-allow-origin':'*','access-control-allow-headers':'*'};
   const json=(body,status=200)=>route.fulfill({status,headers,contentType:'application/json',body:JSON.stringify(body)});
   if(url.origin===BASE){if(/^\/(js\/halo\/|css\/halo)/.test(url.pathname))haloCode++;if(url.pathname==='/__world-release_host')return route.fulfill({contentType:'text/html',body:'<!doctype html><html><body style="margin:0"><iframe style="width:100%;height:100vh;border:0" src="/action-globe.html?embedded=1&surface=network"></iframe></body></html>'});return route.continue();}
   if(url.hostname==='cesium.com'){
-   const path=url.pathname.split('/Build/Cesium/')[1];try{return route.fulfill({body:await readFile(join(process.env.CESIUM_DIR,path)),contentType:TYPES[extname(path)]||'application/octet-stream'});}catch{return route.abort();}
+   const path=url.pathname.split('/Build/Cesium/')[1];try{const body=await readFile(join(process.env.CESIUM_DIR,path));await route.fulfill({body,contentType:TYPES[extname(path)]||'application/octet-stream'});if(/^Assets\/Textures\/SkyBox\/tycho2t3_80_[pm][xyz]\.jpg$/.test(path))skyFaces.add(path);return;}catch{return route.abort();}
   }
   if(url.hostname==='api.mccluster.org'){
    if(route.request().method()==='OPTIONS')return route.fulfill({status:204,headers});
@@ -306,6 +362,11 @@ for(const width of (process.env.WORLD_QA_WIDTH?[Number(process.env.WORLD_QA_WIDT
  await host.goto(BASE+(persona==='creator'?'/__world-release_host':persona==='halo'?'/action-globe.html?explore=1&halo=1':'/action-globe.html?explore=1'));const page=persona==='creator'?host.frames().find(f=>f.url().includes('action-globe.html')):host;await page.waitForFunction(()=>typeof window.__huGlobeSettled==='function');
  await page.waitForTimeout(300);
  check(scope,'base globe remains available',await page.locator('#globe canvas').count()>0);
+ if(persona!=='halo'){
+  check(scope,'the public Cesium globe preserves stars, Earth colors and clouds',await page.evaluate(()=>{const s=window.__huGlobeStyle?.();return s?.editorial&&s.stars&&s.saturation===1.1&&s.cloudAlpha===.65&&s.atmosphereSaturation===.1}));
+  for(let n=0;n<50&&skyFaces.size<6;n++)await page.waitForTimeout(100);
+  check(scope,'all six real Cesium starfield textures load',skyFaces.size===6,[...skyFaces]);
+ }
  check(scope,'no document horizontal overflow',await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth));
  if(!owner){
   await page.waitForTimeout(400);
@@ -356,6 +417,7 @@ for(const width of (process.env.WORLD_QA_WIDTH?[Number(process.env.WORLD_QA_WIDT
   check(scope,'mapless owner revocation removes private data',!(await page.locator('#haloShell').count()));
 
  }else{
+  check(scope,'extra owner dock arrows do not intercept Globe controls',await page.locator('#mccDockHints').isHidden());
   await page.locator('.globe-editorial-tools > summary').click();
   check(scope,'the owner sees the Halo door beside ← World, a full tap target',await page.evaluate(()=>{const d=document.getElementById('haloEnter'),b=d&&d.getBoundingClientRect();return !!d&&!d.hidden&&d.getAttribute('href')==='action-globe.html?explore=1&halo=1'&&b.height>=44&&b.width>=44}));
   check(scope,'verified owner has preview control',await page.locator('#ctlFlights').isVisible());
@@ -370,6 +432,7 @@ for(const width of (process.env.WORLD_QA_WIDTH?[Number(process.env.WORLD_QA_WIDT
  }
  check(scope,'no JavaScript runtime errors',errors.length===0,errors);
  if(persona==='guest')await page.screenshot({path:join(OUT,'curated-world-'+width+'.png')});
+ if(persona==='creator')await host.screenshot({path:join(OUT,'embedded-world-'+width+'.png')});
  await ctx.close();
 }
 }finally{await browser.close();server.close();}

@@ -71,7 +71,7 @@ Future applications are registered the same way.
 Recommended public platform surface:
 
 - `matthew.mccluster.org` — public website / account UI
-- `auth.mccluster.org` — Supabase Auth custom domain when enabled
+- `auth.mccluster.org` — retired, not provisioned (no DNS record); sign-in is `account.html` on the M Account, and `login.html` only forwards there
 - `api.mccluster.org` — Cloudflare Worker API gateway
 - app-specific domains — product frontends only
 

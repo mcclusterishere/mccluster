@@ -1,14 +1,13 @@
 /* ============================================================
    THE GATEWAYS — a record as the front door to a campaign.
 
-   heal-the-3rd-world.html (Heal the 3) and end-racism.html (CIA Mind
-   Control) are the same four acts, and both run on this file:
+   heal-the-3rd-world.html (Heal the 3) runs on this file, in four acts:
      I   LOOK        the chapters (live campaigns) and what is true,
                      scored by the record's dark side
      II  LISTEN      the record itself; the full player is one tap away
      III DO SOMETHING the network's real count and the lanes,
                      scored by the record's light side
-     IV  ENTER       into the campaign, and Human Uprise
+     IV  ENTER       into the campaign, and Equity Uprise
 
    What differs lives in the page, as data: <script type=
    "application/json" id="gwConfig"> names the songs, the lock-screen

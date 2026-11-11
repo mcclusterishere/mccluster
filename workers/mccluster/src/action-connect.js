@@ -59,8 +59,9 @@ export async function handleActionConnect(request,env){
  if(record.environment!=='test')return fail(request,env,'Account environment mismatch',409);
  const link=await stripeRequest(env,'account_links',{
   account:record.stripe_account_id,
-  refresh_url:ORIGIN+'/action-network.html?connect=refresh',
-  return_url:ORIGIN+'/action-network.html?connect=returned',
+  /* the hire page is where recipients onboard; action-network.html never existed (scripts/test/stripe-return-urls.test.mjs) */
+  refresh_url:ORIGIN+'/action-network-hire.html?connect=refresh',
+  return_url:ORIGIN+'/action-network-hire.html?connect=returned',
   type:'account_onboarding'
  });
  return reply(request,env,{url:link.url,expires_at:link.expires_at});

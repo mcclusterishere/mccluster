@@ -1,0 +1,107 @@
+# McCluster fictional city — implementation and canon
+
+The owner authorized this private playable district on November 3, 2026: recovered joke brands,
+eight active businesses, three new adult staff per business, a Whip Equipped garage, and an Equity
+Uprise island. This is a new exploration universe, not a revival of the shelved Uprise World.
+
+The same day's Bridgeport expansion adds `neighborhoods` and `storyArcs` in that one source.
+Read `ROBBERY-1S.md` and `BRIDGEPORT-GEOGRAPHY.md` before changing its story or geography.
+Preserve the original eight commercial businesses, 24 adult staff, three garage characters,
+existing coordinates and save key. Neighborhood story cast and places are separate collections;
+Malik and Kiara retain their source ages and are not inserted into the adult staff roster.
+All 16 selected CT footprint polygons remain present. Building heights, doors, interiors,
+tenant names and the two connecting walks are authored adaptations, not surveyed attributes.
+Retain CT source metadata and visible OpenStreetMap attribution for derived road geometry.
+
+## Source authority
+
+- Author city fiction once in `core/data/fictional-city/district.v1.json`.
+- `tools/publish-fictional-city.mjs` derives the browser copy and the screenplay reader.
+- Existing Whip canon remains in `docs/music/WHIP-EQUIPPED-STORY.md` and its accompanying current
+  screenplay/manifest. The garage is a pre-finale free-roam context. It does not resurrect Alana
+  after the plane ending, alter Mr. Lock Changer's dual perspective, or move Salvage before Tears.
+- Brand provenance distinguishes recovered owner concepts, proposal-only operations, current owner
+  direction, and newly authored storefronts/people/dialogue. Countries are NPC biographies, not
+  retroactively established origins of the tea brand. Private source URLs and raw chats stay out of Git.
+- `data/brands.json` remains the real company map. Fictional shops are not incorporated subsidiaries.
+- Psychological profiles and MNET settings for every adult character live in `core/data/characters/cast.v1.json`
+  (`MNET-CHARACTER-CAST.md`). It points at this manifest by id and never overrides it; a new adult character here
+  needs a cast entry (`node core/scripts/character-cast.mjs --draft`), and a minor never gets one.
+
+## Runtime
+
+- Host: `fictional-city.html`. Script loading uses the existing server-checked owner gate.
+- Engine: `js/fictional-city/`; original lightweight Three.js scene, separate from other engines.
+- State: `here.universe.mccluster-fictional-city.state`, local to this device. Game credits have no
+  cash value and are not a secure payment ledger. No real goods, adult services or financial donations
+  are purchased by this experience.
+- Portals are data. Existing target routes enforce their own permissions. Never turn on the archived
+  Uprise experience or modify Site 0 geometry to satisfy a city request.
+- Schema revision 2 (2026-11-03) adds the wider city's lore beside the v1 arrays: `expansionNeighborhoods`,
+  `parcels`, `expansionBusinesses`, `expansionNpcs`, `families`, `expansionItems`. These records carry
+  parcel IDs and route anchors, never coordinates; the spatial layer binds them. Expansion students
+  are minors (`minor: true`): no sexual content, injury, purchases or bribes involving them. The
+  satire targets posers, the rich school and middlemen who sell influence they do not have, never Black
+  people or public-school kids, and uses no phonetic dialect.
+- Real places (owner, 2026-11-03): real streets, the city and its government buildings keep their real,
+  sourced names; fictional private businesses, occupants and people are the overlay. No invented police
+  precinct, public school or government office. `civic-center/police-station` is the Bridgeport Police
+  Department and `northside-residential/public-school` is Harding High School, each with a sourced
+  `realInstitution` block, staffed only by fictional civilians, teachers and students; `idAliases` keeps
+  `precinct-zero` and `municipal-high-9` resolvable. Payoff interactions (`type: "bribe"`, `price` in
+  credits) belong only to fictional private middlemen (Hail Mary's expediting desk), never to a real
+  institution or person.
+- Corruption storylines reenact only real, proven public-record cases (`publicRecordArcs`): conviction,
+  plea, court finding or official record, each scene with `basis` and `sources: [{title, url, date}]`,
+  real people shown only doing what the record establishes, pending charges reported as pending. Read
+  `PUBLIC-RECORD-STORYLINES.md` before changing them.
+- All 24 v1 residents are adults. Humor is in the businesses, interactions, wordplay
+  and unreliable pitches. Do not substitute a fake racial accent for character writing.
+- Preserve the existing shared navigation and private audience. Static authored fiction is public-safe
+  source, not confidential account data; the browser gate does not make static assets secret.
+- Optional Core reads use the current authenticated MCP bridge and require exact manifest hash parity.
+  Private ai_context and resident conversations never enter this fictional dataset.
+
+## Geometry
+
+The eight shops and garage are original procedural game assets. The island HQ is explicitly a
+simplified exterior representation derived from the canonical 72 ft square / 81 ft roof datum,
+with six enclosed occupied floors and an open roof. Its doorway opens the existing HQ tactical emergency exercise, with the detailed canonical
+building geometry and its own controls. This is not an alternative building-authority package. Read the building's local contract
+before changing its geometry, program, entrances, floors, signs or canonical viewers.
+
+The wider city's geography has its own authority, `core/data/fictional-city/places.v1.json`
+(see `EXPANSION.md`): land, streets, neighbourhoods, parcels, entrances, anchors, landmarks and
+chunk IDs. Lore and geography are joined only by stable IDs; never put coordinates in the lore
+file or names/people in the places file. The original block's coordinates are frozen (mirrored as
+`legacyParcels` and tested). Keep the frames distinct: city metres Y-up, HQ GLBs metres Z-up, HQ
+cells 12 ft, PRIM3 tiles 3.54 m; never resize the HQ. Render chunks are derived by the publisher;
+collision is always resident. Every new published file needs a path in `deploy-pages.yml` and the
+publication test.
+
+## Verification
+
+Check manifest references, 3-per-business / 24-new-resident counts, walkable approaches, patrol
+routes, item prices and state restoration. Exercise keyboard and touch controls, enter/exit,
+dialogue topics, purchases, insufficient funds, story-reader order, owner/non-owner gating, and
+390 px overflow, v1→v2 save migration, chunk load/unload/failure, B1 traversal through the HQ
+doorway's level, and that minors never offer a paid interaction. Report measured render metrics with the test environment; never infer real-device
+frame rates from a software-rendered browser. New actors/shops should preserve the one-source export.
+
+For Bridgeport, run `scripts/test/bridgeport-story.test.mjs` plus city spatial/publication tests.
+Validate old-save migration, ordered scene progression, all story-stop walking routes, footprint
+parity with public source evidence, and exterior-only donation-bin custody. Later scene titles
+and cast outcomes must remain hidden until reached. Do not turn narrative completion into a
+shoe power, money payout, new canonical wearer, or explanation of the pastor's unresolved reveal.
+
+## Real geography and government identity — owner correction, 2026-11-03
+
+- Preserve real city names, street names, official geographic names and sourced street layout.
+- Preserve verified government institutions, buildings, addresses and public functions. Do not assign a fictional commercial tenant to a government site.
+- Author non-government businesses, premises and story people. Check both parcel ownership and institutional use before placement; unknown ownership is not private ownership, and private ownership does not rule out a government tenant.
+- Preserve public offices and roles. Whether a named incumbent or a fictional officeholder performs a role remains an undecided casting choice; do not fill it by assumption.
+- Gang naming, owner decision 2026-11-03 (final, supersedes the earlier Elm Street label): there is one Willy Whackers gang, the School of Hard Knocks kids’ **Bond Street Willy Whackers**, named for the real street of the real public school they harass (Harding High School, 379 Bond Street) and led by Bryce, the school’s adult hired extortionist. The kids are minors; every minor protection applies. Mr. GREAT and Harold’s Night Shift Club crew stays unnamed.
+- `geography/bridgeport-government-classification.json` records the checked parcels and limits. The two courts are protected public landmarks; Ashline and the two yards occupy the corrected private parcels. Keep all 16 original CT footprint rings.
+- Expansion lore remains separate from playable geography. The invented government proposals are resolved (owner, 2026-11-03): `precinct-zero` is now the real Bridgeport Police Department and `municipal-high-9` the real Harding High School, both with verified identity and authored footprint/coordinates in `realInstitution.fieldProvenance`, and `geography/real-institutions.v1.json` hands their sourced address and lon/lat to the map-alignment work. Also resolve authored neighborhood labels against actual geographic names.
+- Read `CLAUDE-HANDOFF.md` before integration and `EPISODE-PRODUCTION.md` before cinematic work. The existing city has already been merged through #721; #720's lore uses `expansionNeighborhoods`. Do not build another city from the README.
+- The owner authorized branch publication for review and explicitly withheld main integration in this session. Keep this follow-up on its review branch; a previous merge by another session does not extend that authorization.

@@ -99,6 +99,34 @@ function policyEvidence(job, output) {
       }
       break;
     }
+    case 'prim3_agent_news': {
+      requireValue(job, text(output.agent_key) === text(job.target_id), 'PRIM3 news receipt must match its agent');
+      requireValue(job, Number.isInteger(output.commented) && output.commented >= 0 && typeof output.briefed === 'boolean', 'PRIM3 news desk must report comment and brief counts');
+      records.push({ kind: 'prim3_news_desk', agent_key: output.agent_key, country_iso: output.country_iso || null, commented: output.commented, briefed: output.briefed, backlog: Number(output.backlog || 0) });
+      break;
+    }
+    case 'character_post': {
+      requireValue(job, Array.isArray(output.receipts) && Number.isInteger(output.published) && output.published === output.receipts.length, 'character posts must report one receipt per published post');
+      if (output.published > 0) {
+        requireValue(job, output.receipts.every((r) => text(r.publication_id) && (text(r.post_id) || text(r.comment_id))), 'each character post needs a durable publication and post or comment receipt');
+        records.push({ kind: 'character_posts', published: output.published, characters: output.receipts.map((r) => r.character_id), withheld: (output.withheld || []).length });
+      } else {
+        requireValue(job, output.reason === 'flag_off' || (Array.isArray(output.withheld) && output.withheld.length > 0), 'a character batch with no post needs a bounded reason');
+        records.push({ kind: 'bounded_noop', reason: output.reason || 'all_withheld', withheld: (output.withheld || []).length });
+      }
+      break;
+    }
+    case 'world_news_pairing': {
+      const counts = ['articles_read', 'strong', 'weak', 'pairs_sent', 'pairs_new'];
+      requireValue(job, counts.every((key) => Number.isInteger(output[key]) && output[key] >= 0), 'world news pairing must report article, candidate and pair counts');
+      requireValue(job, validDate(output.cursor) && validDate(output.cursor_from), 'world news pairing must report the cursor it read from and advanced to');
+      requireValue(job, nonEmptyArray(output.layers) && output.layers.some((layer) => ['ok', 'stale'].includes(layer?.status)), 'world news pairing needs at least one Halo layer that answered');
+      const model = output.model || {};
+      requireValue(job, ['calls', 'asked', 'confirmed', 'rejected'].every((key) => Number.isInteger(model[key]) && model[key] >= 0) && model.confirmed + model.rejected <= model.asked, 'world news pairing must report honest model counts');
+      requireValue(job, output.pairs_new <= output.pairs_sent && output.pairs_sent >= output.strong, 'world news pairing wrote fewer pairs than it found strong, or more than it sent');
+      records.push({ kind: 'world_news_pairing', cursor: output.cursor, articles_read: output.articles_read, strong: output.strong, weak: output.weak, model_calls: model.calls, model_confirmed: model.confirmed, pairs_sent: output.pairs_sent, pairs_new: output.pairs_new, layers_ok: output.layers.filter((layer) => ['ok', 'stale'].includes(layer?.status)).map((layer) => layer.layer) });
+      break;
+    }
     case 'ai_diagnostics': {
       requireValue(job, Boolean(text(output.installed?.ollama_version)) && Boolean(text(output.installed?.digest)), 'AI diagnostics require an installed version and model digest');
       if (job.input?.benchmark === true) requireValue(job, output.benchmarks?.length === 4 && output.benchmarks.every(sample => sample.exact_match && Number(sample.usage?.total_duration_ns) > 0), 'AI benchmarks require four correct timed results');

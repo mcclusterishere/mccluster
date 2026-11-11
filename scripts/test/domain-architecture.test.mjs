@@ -122,6 +122,7 @@ test("the agent-facing law says the same thing everywhere", () => {
     "CODEX.md",
     "GEMINI.md",
     ".cursorrules",
+    ".cursor/rules/mccluster.mdc",
     ".github/copilot-instructions.md",
     ".github/instructions/mccluster.instructions.md",
   ];
@@ -147,4 +148,41 @@ test("the agent-facing law says the same thing everywhere", () => {
   assert.ok(!JSON.stringify(b("mccluster-corp").divisions || []).match(/Whip/), "Whip is not a McCluster Corp division");
   assert.equal(b("equity-uprise").segment, "projects");
   assert.doesNotMatch(JSON.stringify(brands), /registered as a public charity in Connecticut|ran the Docket 516R fight/);
+});
+
+/* AGENTS.md is the only file with prose rules. Every vendor adapter is a thin pointer: it names
+   all fifteen hard-rule headings, carries the AI-HARNESS gate, sends building work to the local
+   contract, and copies none of the Equity Uprise block (no floor file lists, no program status,
+   no geometry, no retired branch). The building block itself cites Floor 1 only by the authority
+   the hygiene verifier calls canonical. */
+test("the adapters are thin pointers at AGENTS.md: every hard-rule heading, no copied building block", () => {
+  const agents = read("AGENTS.md");
+  const hardRules = agents.split("## Hard rules")[1].split("\n## ")[0];
+  const headings = [...hardRules.matchAll(/^(\d+)\. \*\*(.+?)\*\*/gm)].map((m) => [Number(m[1]), m[2]]);
+  assert.deepEqual(headings.map(([n]) => n), Array.from({ length: 15 }, (_, i) => i + 1), "AGENTS.md carries hard rules 1–15");
+  assert.match(agents, /^## AI work: read the harness first$/m, "the AI-HARNESS read gate is law, not a vendor courtesy");
+  assert.match(agents, /^## Autonomous operations contract$/m, "the unattended-agent contract applies to every agent");
+  assert.match(agents, /docs\/design\/equity-uprise-building\/AGENTS\.md/, "AGENTS.md sends building work to the local contract");
+  const verifier = read("docs/design/equity-uprise-building/production/verify_equity_uprise_authority_hygiene.py");
+  const canonicalF1 = verifier.match(/canonical_f1=BUILDING\/"([^"]+)"/)[1];
+  for (const m of agents.matchAll(/FLOOR-01-[A-Z0-9-]+-360-SPEC\.md/g)) assert.equal(m[0], canonicalF1, "AGENTS.md cites Floor 1 only by its canonical authority");
+  for (const stale of ["locked six-floor", "architecture/equity-uprise-core-v2", "only Floor 1 is currently program-reconciled", "FLOOR-01-LOBBY-INTAKE-360-SPEC.md"]) assert.ok(!agents.includes(stale), `AGENTS.md: retired wording "${stale}"`);
+  const adapters = ["CLAUDE.md", "CODEX.md", "GEMINI.md", ".cursorrules", ".cursor/rules/mccluster.mdc", ".github/copilot-instructions.md", ".github/instructions/mccluster.instructions.md"];
+  for (const f of adapters) {
+    const body = read(f);
+    assert.match(body, /AGENTS\.md/, `${f}: points at AGENTS.md`);
+    assert.match(body, /docs\/control-plane\/AI-HARNESS\.md/, `${f}: carries the AI-HARNESS read gate`);
+    assert.match(body, /Hard rules[^\n]*AGENTS\.md/, `${f}: says the hard rules live in AGENTS.md`);
+    for (const [n, h] of headings) assert.ok(body.includes(`${n}. ${h}`), `${f}: names hard rule ${n} by number and heading (${h})`);
+    assert.match(body, /docs\/design\/equity-uprise-building\/AGENTS\.md/, `${f}: sends Equity Uprise spatial work to the local contract`);
+    assert.match(body, /docs\/design\/equity-uprise-building\/REFERENCE-AUTHORITY\.md/, `${f}: and to the reference authority`);
+    assert.match(body, /docs\/uprise-world\//, `${f}: points at the Uprise World gate`);
+    assert.match(body, /assets\/3d\/prim3-site0\/AGENTS\.md/, `${f}: points at the Site 0 gate`);
+    for (const stale of ["FLOOR-0", "locked six-floor", "architecture/equity-uprise-core-v2", "program-reconciled", "X54–62", "Y54–72"]) assert.ok(!body.includes(stale), `${f}: carries no copy of the building block ("${stale}")`);
+  }
+  assert.match(read("CLAUDE.md"), /`AGENTS\.md` → Hard rules → 14\./, "CLAUDE.md's mobile rule points at hard rule 14");
+  assert.match(read(".github/copilot-instructions.md"), /AGENTS\.md` → "Autonomous operations contract"/, "Copilot points at the moved contract");
+  const kit = "`CLAUDE.md`, `CODEX.md`, `GEMINI.md`, `.cursorrules`, `.cursor/rules/mccluster.mdc`, `.github/copilot-instructions.md`, `.github/instructions/mccluster.instructions.md`";
+  for (const f of ["AGENTS.md", "docs/control-plane/ECOSYSTEM.md", "docs/control-plane/SATELLITE.md"]) assert.ok(read(f).includes(kit), `${f}: names the same seven-file satellite kit`);
+  for (const f of ["docs/control-plane/ECOSYSTEM.md", "docs/control-plane/SATELLITE.md"]) assert.match(read(f), /never copy|never copied/i, `${f}: satellites never copy the building block`);
 });

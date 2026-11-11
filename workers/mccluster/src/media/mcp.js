@@ -2,11 +2,23 @@
 // canonical REST handlers so org authorization, budgets, provider costs and
 // asset lineage have one implementation.
 
-import { createGeneration, getGeneration, listModels } from './router.js';
+import { createGeneration, getGeneration, jobForOperation, listModels } from './router.js';
 import { createBakeoff } from './orchestrator.js';
 import { recommendModels } from './recommend.js';
+import { listRecoveryCandidates, reconcileJob } from './recovery.js';
 
 export const MCP_VERSION = '2026-07-28';
+
+/* Audit C5: a stable caller operation id, independent of the per-request
+   HMAC nonce, so a retried call (new signature, new isolate) resolves to the
+   one paid job the first call made. Core sends one per logical tool call
+   (core/src/tools/mcp-http.mjs); a signed call without one falls back to its
+   nonce, which only protects the exact same envelope. */
+const OPERATION_ID_SCHEMA = {
+  type: 'string',
+  pattern: '^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$',
+  description: 'Stable id for this logical operation. Repeating a call with the same id and the same arguments returns the one job it created instead of reserving and submitting again; a different payload under the same id is refused. Omit for a deliberate one-off.'
+};
 
 function semanticTool(name, title, description, extra = {}) {
   return {
@@ -22,6 +34,7 @@ function semanticTool(name, title, description, extra = {}) {
         references: { type: 'array' },
         budget_cents: { type: 'number', minimum: 0 },
         preference: { type: 'string', enum: ['quality', 'balanced', 'speed', 'price'] },
+        operation_id: OPERATION_ID_SCHEMA,
         ...extra,
       },
     },
@@ -71,7 +84,8 @@ const TOOLS = [
         prompt: { type: 'string' },
         input: { type: 'object' },
         budget_cents: { type: 'number' },
-        strategy: { type: 'string' }
+        strategy: { type: 'string' },
+        operation_id: OPERATION_ID_SCHEMA
       }
     }
   },
@@ -98,7 +112,8 @@ const TOOLS = [
         model_ids: { type: 'array', items: { type: 'string' }, minItems: 2, maxItems: 5 },
         prompt: { type: 'string' },
         input: { type: 'object' },
-        budget_cents: { type: 'number' }
+        budget_cents: { type: 'number' },
+        operation_id: OPERATION_ID_SCHEMA
       }
     }
   },
@@ -108,8 +123,40 @@ const TOOLS = [
     description: 'Fetch one job including status, costs, provider result and asset lineage.',
     inputSchema: {
       type: 'object',
-      required: ['org_id', 'job_id'],
-      properties: { org_id: { type: 'string' }, job_id: { type: 'string' } }
+      required: ['org_id'],
+      properties: { org_id: { type: 'string' }, job_id: { type: 'string' }, operation_id: OPERATION_ID_SCHEMA }
+    }
+  },
+  /* Recovery (./recovery.js): house operator only, whatever organization the
+     job belongs to. The handlers refuse everyone else. */
+  {
+    name: 'media.recovery.list',
+    title: 'List media recovery candidates',
+    description: 'House operator only. Paid media claims and jobs the normal path could not finish, by class (expired claims, unbound claims, reservations never submitted, unknown submit outcomes, stale pollable jobs, failed jobs still holding a reservation, failed jobs the provider billed), with counts per organization and the next action for each.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        org_id: { type: 'string' },
+        older_than_minutes: { type: 'integer', minimum: 1, maximum: 1440 },
+        limit: { type: 'integer', minimum: 1, maximum: 200 }
+      }
+    }
+  },
+  {
+    name: 'media.job.reconcile',
+    title: 'Reconcile a stuck media job',
+    description: 'House operator only. Record one decision for a stuck paid media job: release its reservation (evidence required unless the submit provably never started or the job already failed), settle it by attaching the provider request id (the refresh path then settles status and cost), or bind its claim. Written to the audit ledger before it runs; repeating the same decision returns the one on record.',
+    inputSchema: {
+      type: 'object',
+      required: ['org_id', 'job_id', 'decision', 'reason'],
+      properties: {
+        org_id: { type: 'string' },
+        job_id: { type: 'string' },
+        decision: { type: 'string', enum: ['release', 'settle', 'bind'] },
+        reason: { type: 'string', minLength: 3, maxLength: 500 },
+        evidence: { type: 'object' },
+        provider_request_id: { type: 'string' }
+      }
     }
   }
 ];
@@ -132,6 +179,16 @@ function synthetic(request, { method = 'GET', path, query, body } = {}) {
   return new Request(url, init);
 }
 
+/* A Core-signed call carries a signed nonce (media/core-signature.js); that
+   nonce is the operation's stable identity, so a replay that reaches a second
+   isolate before the shared claim lands still maps to the one job. Callers
+   may also pass operation_id themselves; an explicit one wins. */
+function operationIdForCall(request, args) {
+  if (args && args.operation_id) return args.operation_id;
+  const nonce = request.headers.get('x-mccluster-nonce');
+  return nonce ? `core:${nonce}` : undefined;
+}
+
 function capabilityForSemanticTool(name, args) {
   if (name === 'image.generate') return Array.isArray(args.references) && args.references.length ? 'image-to-image' : 'text-to-image';
   if (name === 'video.generate') return Array.isArray(args.references) && args.references.length ? 'image-to-video' : 'text-to-video';
@@ -140,8 +197,27 @@ function capabilityForSemanticTool(name, args) {
   return null;
 }
 
-function providerInputForSemanticTool(name, args) {
-  const input = { prompt: args.prompt };
+// A catalog row may say how its provider takes a semantic request, so the
+// tool follows the catalog instead of assuming every provider's field names:
+//   parameter_schema['x-reference-field']  where the first reference URL goes
+//                                          (default image_url)
+//   parameter_schema['x-fixed-input']      provider options this row is priced
+//                                          for (e.g. PBR on, a face count)
+// A prompt is sent only when the schema accepts one.
+function catalogHints(model) {
+  const schema = model?.parameter_schema && typeof model.parameter_schema === 'object' ? model.parameter_schema : {};
+  const fixed = schema['x-fixed-input'] && typeof schema['x-fixed-input'] === 'object' && !Array.isArray(schema['x-fixed-input'])
+    ? schema['x-fixed-input'] : {};
+  const refField = typeof schema['x-reference-field'] === 'string' && /^[a-z0-9_]+_url$/i.test(schema['x-reference-field'])
+    ? schema['x-reference-field'] : 'image_url';
+  const closed = schema.additionalProperties === false && schema.properties && typeof schema.properties === 'object';
+  const acceptsPrompt = !closed || Object.prototype.hasOwnProperty.call(schema.properties, 'prompt');
+  return { fixed, refField, acceptsPrompt };
+}
+
+export function providerInputForSemanticTool(name, args, model = null) {
+  const hints = catalogHints(model);
+  const input = hints.acceptsPrompt ? { prompt: args.prompt } : {};
   if (name === 'video.generate') {
     if (args.duration_seconds !== undefined) input.duration = args.duration_seconds;
     if (args.aspect_ratio) input.aspect_ratio = args.aspect_ratio;
@@ -149,9 +225,9 @@ function providerInputForSemanticTool(name, args) {
   if (Array.isArray(args.references) && args.references.length) {
     const first = args.references[0];
     const url = typeof first === 'string' ? first : first?.url;
-    if (url) input.image_url = url;
+    if (url) input[hints.refField] = url;
   }
-  return input;
+  return { ...input, ...hints.fixed };
 }
 
 async function semanticGenerate(name, args, request, env, user) {
@@ -175,10 +251,11 @@ async function semanticGenerate(name, args, request, env, user) {
   const job = await createGeneration(synthetic(request, {
     method: 'POST',
     body: {
+      operation_id: operationIdForCall(request, args),
       org_id: args.org_id,
       model_id: model.id,
       prompt: args.prompt,
-      input: providerInputForSemanticTool(name, args),
+      input: providerInputForSemanticTool(name, args, model),
       budget_cents: args.budget_cents,
       strategy: `semantic:${name}`
     }
@@ -194,19 +271,44 @@ async function callTool(name, args, request, env, user) {
     case 'media.recommend':
       return textResult(await recommendModels(synthetic(request, { method: 'POST', body: args }), env));
     case 'media.generate':
-      return textResult({ job: await createGeneration(synthetic(request, { method: 'POST', body: args }), env, user) });
+      return textResult({ job: await createGeneration(synthetic(request, { method: 'POST', body: { ...args, operation_id: operationIdForCall(request, args) } }), env, user) });
     case 'image.generate':
     case 'video.generate':
     case 'audio.generate':
     case 'model3d.generate':
       return semanticGenerate(name, args, request, env, user);
     case 'media.compare':
-      return textResult(await createBakeoff(synthetic(request, { method: 'POST', body: args }), env, user));
-    case 'media.job.get':
-      if (!args.job_id) throw Object.assign(new Error('job_id is required'), { status: 400 });
+      /* The bakeoff derives one stable child id per requested model from this
+         operation id (orchestrator.js), so a retried compare cannot fan out twice. */
+      return textResult(await createBakeoff(synthetic(request, { method: 'POST', body: { ...args, operation_id: operationIdForCall(request, args) } }), env, user));
+    case 'media.job.get': {
+      let jobId = args.job_id;
+      if (!jobId && args.operation_id) {
+        /* A loser (or a retry after an uncertain outcome) reads the durable
+           outcome back by the operation id it already holds. */
+        const job = await jobForOperation(synthetic(request, { method: 'POST', body: { org_id: args.org_id, operation_id: args.operation_id } }), env, user);
+        if (!job) throw Object.assign(new Error('No job is bound to that operation_id yet'), { status: 404 });
+        jobId = job.id;
+      }
+      if (!jobId) throw Object.assign(new Error('job_id or operation_id is required'), { status: 400 });
       return textResult(await getGeneration(
-        synthetic(request, { path: `/v1/media/jobs/${args.job_id}`, query: { org_id: args.org_id } }),
-        env, user, args.job_id, true
+        synthetic(request, { path: `/v1/media/jobs/${jobId}`, query: { org_id: args.org_id } }),
+        env, user, jobId, true
+      ));
+    }
+    case 'media.recovery.list':
+      return textResult(await listRecoveryCandidates(
+        synthetic(request, { path: '/v1/media/recovery', query: { org_id: args.org_id, older_than_minutes: args.older_than_minutes, limit: args.limit } }),
+        env, user
+      ));
+    case 'media.job.reconcile':
+      return textResult(await reconcileJob(
+        synthetic(request, {
+          method: 'POST',
+          path: `/v1/media/jobs/${args.job_id}/reconcile`,
+          body: { org_id: args.org_id, decision: args.decision, reason: args.reason, evidence: args.evidence, provider_request_id: args.provider_request_id }
+        }),
+        env, user, args.job_id
       ));
     default:
       throw Object.assign(new Error(`Unknown tool: ${name}`), { status: 404 });

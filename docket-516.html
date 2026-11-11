@@ -74,7 +74,7 @@
       {
         "@type": "BreadcrumbList",
         "itemListElement": [
-          { "@type": "ListItem", "position": 1, "name": "Human Uprise", "item": "https://matthew.mccluster.org/action/" },
+          { "@type": "ListItem", "position": 1, "name": "Equity Uprise", "item": "https://matthew.mccluster.org/action/" },
           { "@type": "ListItem", "position": 2, "name": "Equity Uprise", "item": "https://matthew.mccluster.org/docket-516.html" }
         ]
       }
@@ -130,20 +130,20 @@
 
     <!-- ============ the group this record fronts ============ -->
     <!-- This record is the front page of the Equity Uprise group on the
-         Human Uprise (network_groups.front_page_url, seeded by
+         Equity Uprise (network_groups.front_page_url, seeded by
          supabase/migrations/20261005054036_equity_uprise_group_docket_516r.sql).
          The band says so up top; the loop itself is near the end, after the
          reader has seen what a record can do. -->
-    <section class="dkt" aria-label="Equity Uprise on Human Uprise">
+    <section class="dkt" aria-label="The Equity Uprise group">
       <div class="bexp__panel">
-        <p><b>Equity Uprise</b> is McCluster Corp's civic program. On Human Uprise it is the
+        <p><b>Equity Uprise</b> is McCluster Corp's civic program and platform. Its Equity Uprise group is the
           <b>cohort group for people who want to become Equity Uprise cohort policy writers</b>.</p>
         <p style="margin-top:0.6rem"><a class="btn btn--ruby" href="mnet.html?group=equity-uprise" data-cta="d516-group-top">Join the Equity Uprise group</a></p>
       </div>
     </section>
 
     <!-- ============ the timeline rail; the parse lights the phase it's reading ============ -->
-    <section class="dkt__rail" aria-label="Docket 516 timeline">
+    <section class="dkt__rail" tabindex="0" aria-label="Docket 516 timeline">
       <ol class="dkt__tl" id="dktTimeline">
         <li data-t="consultation" data-cats="Municipal Consultation Filing" title="Before filing, UI briefs Fairfield and Bridgeport on the plan"><span class="dkt__tldot"></span><b>Pre-filing</b><em>Consultation</em></li>
         <li data-t="application" data-cats="Application|Bulk-Filed Exhibits" title="UI files for the Certificate of Environmental Compatibility and Public Need. The application volumes in this archive carry no filing date of their own; the earliest dated record in the docket is February 21, 2023"><span class="dkt__tldot"></span><b>Early 2023</b><em>Application</em></li>
@@ -235,52 +235,6 @@
       </div>
     </section>
 
-    <!-- ============ THE LOOP: what to do with a record like this ============ -->
-    <!-- Each step is a Human Uprise mission (seeded with fixed ids by
-         supabase/migrations/20261005054036_equity_uprise_group_docket_516r.sql),
-         so it is joined, proved and reviewed by the server like every other
-         mission. Three verified missions open the fellowship application,
-         and the desk gives accepted fellows a seat in the cohort with
-         admit_fellow_to_cohort() (supabase/pending_migrations/
-         20261003160000_action_cohort_admission_v1.sql). -->
-    <section class="dkt" id="equity-uprise" aria-labelledby="euLoopH">
-      <div class="rec" style="padding:0;max-width:none">
-        <p class="rec__k">Equity Uprise · the loop</p>
-        <h2 id="euLoopH" class="section-title" style="font-size:clamp(2rem,5vw,3.2rem)">Do something with it</h2>
-        <p class="rec__lede">Each step is a Human Uprise mission. <b>Three verified missions open the application for the next cohort of Equity Uprise policy writers</b>.</p>
-        <ol class="rec__log">
-          <li>
-            <h3>1 · Read the record</h3>
-            <p>Open three filings. Say what turned the case.</p>
-            <p class="rec__note"><a href="mnet.html?mission=58eeb75d-a5b6-4280-9cd7-3b0cabf02264" data-cta="d516-m-read">Take the mission</a></p>
-          </li>
-          <li>
-            <h3>2 · Write a policy memo</h3>
-            <p>Model: <a href="policy-memo-dna.html">the memo to Governor Kemp on DNA collection</a>.</p>
-            <p class="rec__note"><a href="mnet.html?mission=368fd75a-77d2-4de0-9722-17020674a914" data-cta="d516-m-memo">Take the mission</a></p>
-          </li>
-          <li>
-            <h3>3 · Co-write a policy reform paper</h3>
-            <p>Model: <a href="policy.html">A Policy Blueprint for Healthy School Meals in Georgia</a>.</p>
-            <p class="rec__note"><a href="mnet.html?mission=df26314d-d4e1-47e3-b980-1b60b1a682ea" data-cta="d516-m-paper">Take the mission</a></p>
-          </li>
-          <li>
-            <h3>4 · File a public comment</h3>
-            <p>On an open proceeding near you. Keep private information out.</p>
-            <p class="rec__note"><a href="mnet.html?mission=7cfac26a-d757-42b9-803b-970f9d5030a8" data-cta="d516-m-comment">Take the mission</a></p>
-          </li>
-          <li>
-            <h3>Then · Apply for the next cohort</h3>
-            <p class="rec__note"><a href="mnet.html?view=missions" data-cta="d516-record">See your Action Record</a></p>
-          </li>
-        </ol>
-        <div class="rec__cta">
-          <a class="hot" href="mnet.html?group=equity-uprise" data-cta="d516-group">Join the Equity Uprise group &#8594;</a>
-          <a href="action/?c=equity-uprise" data-cta="d516-campaign">The Equity Uprise campaign &#8594;</a>
-        </div>
-      </div>
-    </section>
-
     <!-- ============ compliance ============ -->
     <section class="dkt">
       <div class="bexp__panel">
@@ -302,7 +256,7 @@
   </main>
   <footer class="site-foot">
     <div class="site-foot__brand"><img class="brand__mark" src="assets/img/m-mark.png" alt="M">cCluster</div>
-    <p class="site-foot__note"><a href="action/">Human Uprise</a> · <a href="matthew-mccluster.html">Matthew McCluster</a> · <a href="newsroom.html">Newsroom</a></p>
+    <p class="site-foot__note"><a href="action/">Equity Uprise</a> · <a href="matthew-mccluster.html">Matthew McCluster</a> · <a href="newsroom.html">Newsroom</a></p>
     <p class="site-foot__note">© 2026 Matthew McCluster · Equity Uprise · the record, kept.</p>
   </footer>
   <script src="js/masthead.js?v=__STAMP__"></script>

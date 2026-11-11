@@ -13,7 +13,10 @@ import urllib.request
 from pathlib import Path
 
 API = 'https://api.cloudflare.com/client/v4'
-WRANGLER = 'wrangler@4.131.1'
+# The exact Wrangler locked in workers/mccluster/package-lock.json, run with
+# --no so a missing install fails instead of downloading a CLI at apply time.
+WORKER_PACKAGE = Path(__file__).resolve().parent.parent / 'workers' / 'mccluster'
+WRANGLER = ['npm', 'exec', '--prefix', str(WORKER_PACKAGE), '--no', '--', 'wrangler']
 
 def canonical(value):
     return json.dumps(value, sort_keys=True, separators=(',', ':'))
@@ -135,7 +138,7 @@ def main():
         raise ValueError('Apply requires a fresh live inventory, never an offline snapshot')
     if not re.fullmatch('[a-f0-9]{64}', args.expected_digest) or result['review_digest'] != args.expected_digest:
         raise ValueError('Reviewed plan digest missing or stale; no triggers changed')
-    command = ['npx','--yes',WRANGLER,'triggers','deploy','--config',str(config_path)]
+    command = WRANGLER + ['triggers','deploy','--config',str(config_path.resolve())]
     subprocess.run(command + ['--dry-run'], check=True)
     if plan(client.snapshot(config['name']), target)['review_digest'] != args.expected_digest:
         raise ValueError('Live triggers changed during preflight; no triggers changed')

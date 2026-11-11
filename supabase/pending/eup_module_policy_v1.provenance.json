@@ -1,0 +1,87 @@
+{
+  "schema": "mccluster.pending-sql-provenance/v1",
+  "file": "supabase/pending/eup_module_policy_v1.sql",
+  "relationship": "Semantic port into the canonical McCluster data plane. No upstream bytes are copied; no production data and no seed row is included.",
+  "upstream": {
+    "repository": "mcclusterishere/Equity-Uprise (private, unpublished local follow-on)",
+    "patch": "local-source-review/portable-control-followon.patch",
+    "bytes": 102808,
+    "sha256": "d4d6d087f2e30811884b9a0ae097f53aa942e98fe536935e952d16bbde8342cd",
+    "source_base_sha": "5880179931848181c6ebd55bba5727f29a21c6e2",
+    "source_target_sha": "1c76d64176e4be929817517496b8d342d65a6d7b",
+    "excluded_paths": [
+      "AGENTS.md"
+    ],
+    "status": "Unpublished review evidence; contains known audit defects. Not an installable release or authorization to apply.",
+    "ported_files": [
+      {
+        "path": "database/control/001-baseline.sql",
+        "sha256": "815907f426f7f95d1b54ef6c918c5157e22a131c3e74a927f1e1b905cf950c9e",
+        "notice": "-- Portable, private control baseline. Not a production Supabase migration."
+      },
+      {
+        "path": "database/control/002-audit-reason.sql",
+        "sha256": "cd1df626bfb07b23cef33320e48a09cc750d0ce7654a9c93e49428215ca7afb2",
+        "notice": "-- Additive v1 -> v2 upgrade. Existing settings, owners, policy revisions and idempotency receipts are retained."
+      }
+    ],
+    "consulted_only": [
+      "src/control/postgres.mjs",
+      "src/control/roles.mjs",
+      "src/control/migrations.mjs",
+      "docs/PERSISTENT-CONTROL.md",
+      "scripts/test-control-postgres.mjs",
+      "test/support/control-acceptance.mjs"
+    ],
+    "license": {
+      "path": "vendor/equity-uprise/LICENSE",
+      "sha256": "052edcdd83590be9ea9d37a32b03c5f967b8b1fdfde75f557bd7aa675f39defd",
+      "note": "Patches retain original source/license context; redistribution terms are not changed."
+    }
+  },
+  "ported_semantics": [
+    "states enabled, draining, disabled; enabled -> disabled refused until drained; every other transition is admitted, disabled -> draining included (kept as upstream: in this file it admits no write, because the guard refuses both states and the reduce guard answers in both, and it moves the revision; the pinned product reader answers reads while draining and nothing while disabled)",
+    "revision 0..9007199254740991, incremented only on a real state change; no-ops audited",
+    "owner command idempotency: exact replay returns the stored receipt, changed replay fails",
+    "guard taken in the domain write's own transaction and held to commit",
+    "new modules start disabled; nothing is deleted; runtime holds function grants only and no table privilege",
+    "policy JSON schema equity-uprise.module-policy/v1"
+  ],
+  "deliberate_differences": [
+    "installations/owners tables, installer, schema_versions, restricted runtime role and equity.* settings are not ported: public.orgs, public.org_members(role='owner'), the Supabase ledger and service_role are the canonical authorities",
+    "provision() is replaced by an owner-authorised install command; the migration creates no row",
+    "the guard adds a per-module transaction-level advisory lock (shared) in front of the upstream FOR SHARE row lock, and the owner command takes it exclusively, because a new FOR SHARE locker is admitted ahead of a waiting FOR UPDATE on native PostgreSQL 16.15 and 17.7",
+    "refusals carry stable SQLSTATEs EUM00..EUM07 (upstream distinguishes them by message text only)",
+    "the expected policy revision on a guarded write is optional (required for jobs, optional for one-request commands)",
+    "a non-empty reason (1..500 characters) is required; upstream allowed an empty one",
+    "idempotency key is the E=Up text key (8..128 safe characters) instead of a uuid",
+    "a reduce-only entry point public.eup_module_guard_reduce(p_module text) exists beside the guard (upstream has one guard and no such door). Reason: actions that only stop work or remove exposure (a member revoking consent and the publication withdrawal it causes, withdrawing an application or assignment, discarding an upload, withdrawing an appeal, an owner pausing or withdrawing a campaign or mission, withdrawing a publication, placing a moderation hold, recording a media purge, revoking an audience grant, pausing an intake source) must stay possible while a module is draining or disabled; refusing them would trap a member's consent or keep retained media past its date. It takes the same shared advisory lock and FOR SHARE row lock as the guard and holds both to commit, so a state command still waits for an in-flight reduce writer; it raises EUM00 and EUM01 only",
+    "the statement-trigger backstop public.eup_module_guard_trigger() treats the transaction-local marker eup.module_reduce as a mode, never a bypass: when the marker is non-empty and names that trigger's own module the trigger performs public.eup_module_guard_reduce for that module, and a marker for another module, an empty one or none performs the full guard; no path returns without one of the two. Reason: a reduce-only action writes the same guarded tables, and a transaction that writes a guarded table must always hold the shared advisory lock and the FOR SHARE row lock and have had the EUM00 / EUM01 check, whoever set the marker, so a state command always waits for it and a marker set by hand (set_config without the reduce guard) on a module with no row is refused EUM01. The marker changes one thing only: the write is not refused for draining or disabled. It is a correctness backstop, not a security boundary against the service role: a session that can run arbitrary SQL can still choose reduce mode for a write that is not reduce-only",
+    "service_role therefore executes six functions, not upstream's five: policy_read, control_read, policy_install, policy_command, guard, guard_reduce",
+    "the file is idempotent (create ... if not exists, create or replace) so a second run changes nothing; upstream's baseline is a one-shot installer step",
+    "the trigger function returns the row when it is attached FOR EACH ROW by mistake, so a mis-attached backstop still guards instead of silently dropping the write"
+  ],
+  "rollback": "supabase/pending/eup_module_policy_v1.rollback.sql",
+  "status": "Pending, unapplied, reviewed local schema. Creates no policy row; applying it changes no behaviour until a domain file calls the guards.",
+  "stable_codes": {
+    "EUM00": "module_policy_unavailable: the house organisation row is absent or the module id is null",
+    "EUM01": "module_not_installed: no policy row for the module (read, guard, reduce guard, trigger with or without the reduce marker, state command)",
+    "EUM02": "module_draining: guarded write refused while draining",
+    "EUM03": "module_disabled: guarded write refused while disabled",
+    "EUM04": "module_policy_changed: the expected policy revision passed to the guard differs",
+    "EUM05": "drain_required: enabled -> disabled refused until drained",
+    "EUM06": "command_conflict: an idempotency key replayed with a different payload",
+    "EUM07": "module_already_installed: a second install with a new key",
+    "40001": "revision_conflict: the expected revision of a state command is stale",
+    "42501": "house owner required; also direct edits of the command log or an out-of-sequence policy row",
+    "22023": "invalid_policy_command: unknown module or state, bad key, missing or over-long reason, control characters",
+    "55P03": "lock wait exceeded 5 s; nothing changed, the same key can be sent again"
+  },
+  "advisory_lock": {
+    "key1": 1163219023,
+    "key2": "hashtext(<house org id>::text || ':' || <module id>)",
+    "guard": "pg_advisory_xact_lock_shared",
+    "reduce_guard": "pg_advisory_xact_lock_shared",
+    "install_and_state_command": "pg_advisory_xact_lock"
+  }
+}

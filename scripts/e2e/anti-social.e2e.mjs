@@ -27,7 +27,7 @@ let chromium;
 try { ({ chromium } = require('playwright')); }
 catch { ({ chromium } = createRequire(join(process.env.PLAYWRIGHT_DIR || '/opt/node-tools/node_modules', 'x'))('playwright')); }
 
-const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg' };
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg' };
 const server = createServer(async (req, res) => {
   const path = normalize(decodeURIComponent(new URL(req.url, 'http://x').pathname)).replace(/^([.][.][/\\])+/, '');
   /* Missions is switched off in the World as it ships; this suite guards Anti-Social's missions, so it drives them switched on */
@@ -91,7 +91,8 @@ async function routeBackends(ctx) {
     }
     if (rpc === 'action_collaboration_cards') return json(route, (body.p_post_ids || []).includes(POST) ? [{ post_id: POST, mission_id: MISSION, title: 'North Bank', kind: 'song', link: 'https://example.org/north-bank', credits: [{ m_uid: ANA.m_uid, name: 'Fixture Ana', handle: 'fixture.ana' }, { m_uid: ME.m_uid, name: 'Fixture You', handle: 'fixture.you' }], verified: false, mission_open: true }] : []);
     if (rpc === 'request_connection') { world.connection = { id: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', status: 'pending', direction: 'sent' }; return json(route, world.connection); }
-    if (rpc === 'answer_connection') { world.connection = { id: body.p_connection_id, status: body.p_accept ? 'accepted' : 'declined', direction: 'both' }; if (body.p_accept) world.connections = [{ m_uid: ANA.m_uid, display_name: 'Fixture Ana', mccluster_id: 'fixture.ana', since: new Date().toISOString() }]; return json(route, world.connection); }
+    if (rpc === 'answer_connection') { world.connection = { id: body.p_connection_id, status: body.p_accept ? 'accepted' : 'declined', direction: 'both' }; (world.notifications || []).forEach((n) => { if (n.metadata && n.metadata.connection_id === body.p_connection_id) n.metadata.answered = true; });   /* as the server marks the request answered */
+    if (body.p_accept) world.connections = [{ m_uid: ANA.m_uid, display_name: 'Fixture Ana', mccluster_id: 'fixture.ana', since: new Date().toISOString() }]; return json(route, world.connection); }
     if (rpc === 'action_offer_cards' || rpc === 'action_feed_cards') return json(route, []);
     if (rpc === 'antisocial_public_collaborations') return json(route, []);
     if (rpc === 'action_bounty_public') return json(route, { support_open: false, support_note: '' });
@@ -175,10 +176,22 @@ check(S, 'Level 3 opens with the publish-together form and no partner yet', !(aw
 check(S, 'the way to a partner is written down', await page.evaluate(() => !!document.querySelector('#mnAntisocialCollab a[href="mnet.html?view=discover"]')));
 await page.screenshot({ path: join(OUT, 'level-3-no-partner.png') });
 
+/* the Posts tab of the World's mode bar, pressed until the World says it is on Posts (the bar is wired once the World boots) */
+async function toPosts() {
+  const tab = page.locator('.wt-world-modes [data-world-mode="posts"]');
+  for (let i = 0; i < 20; i++) {
+    await tab.click({ timeout: 60000 });
+    if (await page.waitForFunction(() => document.documentElement.getAttribute('data-world-mode') === 'posts', null, { timeout: 3000 }).then(() => true, () => false)) return;
+  }
+  throw new Error('the World never switched to Posts');
+}
 /* 4. Connect on Ana's profile: Connect → Requested; Ana accepts (through the bell, as if she had asked us) */
 await page.click('#mnMissionClose');
 /* a profile opens from a post's author, as it does for a member */
 await page.goto(`${BASE}/mnet.html?view=feed`, { waitUntil: 'domcontentloaded' });
+/* this run serves the World with Travel and Missions switched back on (./world-switch.mjs), which opens on Travel: the posts are
+   one tap away, on the Posts tab (the World as it ships has only the posts) */
+await toPosts();
 await page.waitForSelector('.mn__post-card .mn__author-link[data-person="fixture.ana"]', { timeout: 60000 });
 await page.click('.mn__post-card .mn__author-link[data-person="fixture.ana"]');
 await page.waitForSelector('#mnPersonConnect', { timeout: 60000 });
@@ -195,8 +208,9 @@ await page.click('#mnBell');
 await page.waitForSelector('[data-connection-answer][data-accept="1"]', { timeout: 15000 });
 check(S, 'a connection request shows Accept and Decline in the bell', await page.evaluate(() => !!document.querySelector('[data-connection-answer][data-accept="1"]') && !!document.querySelector('[data-connection-answer][data-accept="0"]')));
 await page.click('[data-connection-answer][data-accept="1"]');
-await page.waitForFunction(() => /Connected/.test(document.querySelector('#mnNotifications .mn__notification strong').textContent), null, { timeout: 15000 });
-check(S, 'Accept answers the server and reads Connected', world.calls.some((c) => c.rpc === 'answer_connection' && c.body.p_accept === true));
+/* the card reads Connected; a later refresh of the bell drops an answered request (js/mnet.js: meta.answered), never offers it again */
+const connected = await page.waitForFunction(() => { const cards = [...document.querySelectorAll('#mnNotifications .mn__notification')]; return cards.some((n) => /Connected/.test((n.querySelector('strong') || {}).textContent || '')) || !cards.some((n) => n.querySelector('[data-connection-answer]')); }, null, { timeout: 15000 }).then(() => true, () => false);
+check(S, 'Accept answers the server and reads Connected (or the answered request leaves the bell)', connected && world.calls.some((c) => c.rpc === 'answer_connection' && c.body.p_accept === true), await page.evaluate(() => ({ cards: [...document.querySelectorAll('#mnNotifications .mn__notification')].map((n) => n.textContent.slice(0, 120)), status: (document.getElementById('mnNotificationStatus') || {}).textContent })));
 await page.screenshot({ path: join(OUT, 'bell-connected.png') });
 
 /* 5. Level 3 publishes together: partner from my connections, title, kind, link */
@@ -223,6 +237,7 @@ check(S, 'the Action Record reads 2 / 3 · Awaiting review', /2 \/ 3 · Awaiting
 check(S, 'the Missions card says one mission, three levels · you: 2 / 3', /One mission, three levels · you: 2 \/ 3/.test(await page.textContent('#mnMissionList')));
 await page.screenshot({ path: join(OUT, 'record-2-of-3.png') });
 await page.goto(`${BASE}/mnet.html?view=feed`, { waitUntil: 'domcontentloaded' });
+await toPosts();   // the Posts tab, as above
 await page.waitForSelector('.mn__actcard--collab', { timeout: 60000 });
 /* the evidence shot waits for the Earth's tiles (up to 25s) and brings the card into view */
 const globe = page.frame({ url: /action-globe\.html/ });

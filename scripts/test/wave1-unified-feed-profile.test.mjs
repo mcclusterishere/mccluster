@@ -21,7 +21,7 @@ test('news discussion backend remains off without explicit server approval',asyn
   assert.match(api,/WORLD_NEWS_COMMENTS_ENABLED/);
   assert.match(api,/!==\s*'true'/);
   assert.match(api,/media_news_comments/);
-  const sql=await source('supabase/pending/world_news_discussions_v1.sql');
+  const sql=await source('supabase/migrations/20261021011443_royce_platform_actor.sql');
   assert.match(sql,/row level security|enable row level security/i);
 });
 test('member self-view stays bound to account, never a news or editor role',async()=>{

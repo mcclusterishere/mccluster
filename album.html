@@ -2,7 +2,7 @@
 <html lang="en" data-theme-lock="dark">
 <head><script src="js/shell-boot.js?v=__STAMP__"></script>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>I AM HERE: the album · Matthew McCluster</title>
   <meta name="description" content="I AM HERE: the six-song album by Matthew McCluster, playing in its own player: Who Did The Shoot, Lightroom, Runway Walk, Write a Song, Here, Antisocial. Have no fear, McCluster is here.">
   <meta name="keywords" content="I AM HERE album, Matthew McCluster, Who Did The Shoot, Antisocial, Lightroom, Runway Walk">
@@ -181,7 +181,7 @@
       color: #fff; font-family: var(--ui); font-weight: 800; font-size: 0.98rem;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 14px 36px -14px rgba(229,56,59,0.6); }
     .alb__play:active { transform: translateY(1px); }
-    /* Heal the 3 only: the door from the EP to Human Uprise gateway */
+    /* Heal the 3 only: the door from the EP to Equity Uprise gateway */
     .alb-test { padding: 1.6rem 0 0.4rem; }
     .alb-test__sub { margin: 0.2rem 0 0.9rem; color: var(--cream-dim); font-size: 0.92rem; line-height: 1.6; max-width: 60ch; }
     .alb__gate { display: inline-flex; align-items: center; margin: 0.9rem 0 0 0.5rem; padding: 0.8rem 1.2rem;
@@ -616,7 +616,6 @@
   </style>
   <link rel="stylesheet" href="css/music-system-v2.css?v=__STAMP__">
   <link rel="stylesheet" href="css/music-director.css?v=__STAMP__">
-  <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
   <link rel="stylesheet" href="css/deskchat.css?v=__STAMP__">
   <link rel="stylesheet" href="css/control-system.css?v=__STAMP__">
   <link rel="stylesheet" href="css/song-test.css?v=__STAMP__">
@@ -654,10 +653,10 @@
 
 
     <!-- THE SHELF FRONT: the chips filter, the curated cards preview on tap -->
-    <div class="chips" id="chips" role="tablist" aria-label="Filter">
-      <button type="button" class="on" data-chip="all">All</button>
-      <button type="button" data-chip="albums">Albums</button>
-      <button type="button" data-chip="playlists">Playlists</button>
+    <div class="chips" id="chips" role="group" aria-label="Filter">
+      <button type="button" class="on" data-chip="all" aria-pressed="true">All</button>
+      <button type="button" data-chip="albums" aria-pressed="false">Albums</button>
+      <button type="button" data-chip="playlists" aria-pressed="false">Playlists</button>
     </div>
     <section id="featWrap" aria-label="Curated">
       <p class="lib__k">Curated by the house</p>
@@ -677,7 +676,7 @@
         <button class="alb__play" id="playAll" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>Play</button>
         <a class="alb__gate" id="albGate" href="heal-the-3rd-world.html" hidden>Enter Heal the 3rd World &#8594;</a>
         <!-- THE LABEL RAIL: install it, download it, syndicate it -->
-        <div class="lrail" id="labelRail" aria-label="The label"></div>
+        <div class="lrail" id="labelRail" role="group" aria-label="The label"></div>
       </div>
     </header>
 
@@ -762,7 +761,7 @@
 
   <!-- the deck: the mini player that rides above the bar -->
   <div id="seekStatus" role="status" aria-live="polite" style="text-align:center;font-size:.85rem;padding:.3rem .8rem;color:#f0c8a0" hidden></div>
-  <div class="deckbar" id="deckbar" data-off="1">
+  <div class="deckbar" id="deckbar" data-off="1" role="region" aria-label="Player">
     <button class="deckbar__seek" id="seek" type="button" aria-label="Seek"><i><b id="seekFill"></b></i></button>
     <div class="deckbar__row">
       <img class="deckbar__art" src="assets/img/here-cover.jpg" alt="">
@@ -775,7 +774,7 @@
 
   <!-- THE BAR · Music · HERE · Hitman Halo · Profile. One tap goes where it says; hold a tab to open its wing. -->
   <!-- THE ROOM: fans speak under the record -->
-  <div data-comments="the-album"></div>
+  <div data-comments="the-album" role="region" aria-label="Comments"></div>
 
   <nav class="appbar" aria-label="Sections">
     <a class="appbar__tab" id="appbarNP" href="listen.html" data-appnav="music">
@@ -800,6 +799,8 @@
   <script src="js/masthead.js?v=__STAMP__"></script>
   <script src="js/analytics.js?v=__STAMP__"></script>
   <script src="js/lyric-commerce.js?v=__STAMP__"></script>
+  <script src="js/lyrics-sync.js?v=__STAMP__"></script>
+  <script src="js/music-direct.js?v=__STAMP__"></script>
   <script>
   /* ============================================================
      THE I AM HERE PLAYER: the album's own Spotify.
@@ -908,6 +909,7 @@
       var g = t.gated || null;
       return '<li data-src="' + t.src + '"' +
         ' data-key="' + escAttr(listenKey(t)) + '"' +
+        (!g && t.seconds > 0 ? ' data-seconds="' + Number(t.seconds) + '"' : "") +
         (g ? ' data-gated-bucket="' + escAttr(g.bucket) + '"' +
              ' data-gated-object="' + escAttr(g.object) + '"' +
              ' data-preview-src="' + escAttr(t.src) + '"' : "") +
@@ -971,7 +973,7 @@
         (data.albums || []).forEach(function (a) { if (a.slug === ALBUM) alb = a; });
         if (!alb) alb = data.albums[0];
         ALBUM = alb.slug;
-        head = { name: alb.name, tag: alb.tag || ("The album · " + alb.tracks.length + " tracks"), by: alb.by || "", art: alb.art, artist: alb.artist || "" };
+        head = { name: alb.name, tag: alb.tag || ("The album · " + alb.tracks.length + " tracks"), by: alb.by || "", art: alb.art, artist: alb.artist || "", artistPage: alb.artist_page || "" };
         queue = alb.tracks.map(function (t) {
           return Object.assign({}, t, {
             albSlug: alb.slug, albName: "", art: alb.art,
@@ -987,12 +989,16 @@
       /* an album may be billed to someone other than the house */
       ARTIST = head.artist || HOUSE;
       /* the artist's name was plain bold text and got tapped like a link;
-         the house artist now opens his own page, other billings stay text */
+         the house artist opens his own page, an act with its own artist
+         page (data/albums.json artist_page, a same-site .html file) opens
+         that, other billings stay text */
       document.getElementById("albArtist").textContent = ARTIST;
-      if (ARTIST === HOUSE) {
+      var artistHref = ARTIST === HOUSE ? "matthew-mccluster.html"
+        : (/^[a-z0-9-]+\.html$/.test(head.artistPage || "") ? head.artistPage : "");
+      if (artistHref) {
         var artistEl = document.getElementById("albArtist");
         var artistLink = document.createElement("a");
-        artistLink.href = "matthew-mccluster.html";
+        artistLink.href = artistHref;
         artistLink.className = "alb__artist";
         artistLink.setAttribute("data-cta", "album-artist");
         artistLink.textContent = ARTIST;
@@ -1003,8 +1009,7 @@
       document.getElementById("albBySep").hidden = !head.by;
       /* a record that opens onto a cause gets a door to its gateway */
       var GATEWAYS = {
-        "heal-the-3": ["heal-the-3rd-world.html", "Enter Heal the 3rd World"],
-        "cia-mind-control": ["end-racism.html", "End Racism · listen, answer, take action"]
+        "heal-the-3": ["heal-the-3rd-world.html", "Enter Heal the 3rd World"]
       };
       var gate = document.getElementById("albGate"), gw = GATEWAYS[ALBUM];
       gate.hidden = !gw;
@@ -1021,6 +1026,7 @@
       init();
     }
     var CRED = {}; /* title → credit line, from the QT6KV registry */
+    var LEN = {};  /* listen key → seconds, the catalogue's stored lengths */
     Promise.all([
       fetch("data/albums.json", { cache: "no-cache" }).then(function (r) { return r.json(); }),
       fetch("data/playlists.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).catch(function () { return null; }),
@@ -1034,7 +1040,11 @@
           .catch(function () { return null; });
       }),
     ]).then(function (all) {
-      ((all[2] && all[2].tracks) || []).forEach(function (t) { if (t.credit) CRED[t.title.toLowerCase()] = t.credit; });
+      ((all[2] && all[2].tracks) || []).forEach(function (t) {
+        if (t.credit) CRED[t.title.toLowerCase()] = t.credit;
+        var s = storedSeconds(t.length);
+        if (s && t.slug) LEN[String(t.slug).toLowerCase()] = s;
+      });
       boot(all[0], all[1], all[3]);
     }).catch(function () {
         document.getElementById("tracks").innerHTML = "<li><span class='t'>The shelf is warming up. Refresh in a moment.</span></li>";
@@ -1104,6 +1114,28 @@
         if (cell) cell.textContent = rowTime(probe.duration);
         probe.src = "";
       });
+    }
+    /* "2:10" as data/catalogue.json stores it → 130; anything else → 0 */
+    function storedSeconds(len) {
+      var m = /^(\d+):([0-5]\d)$/.exec(String(len == null ? "" : len).trim());
+      return m ? Number(m[1]) * 60 + Number(m[2]) : 0;
+    }
+    /* THE CLOCK COMES OFF THE SHELF, NOT OFF THE WIRE. Probing every row for
+       its metadata opened one audio request per track on every visit, each
+       cut off as soon as the header arrived: fifteen aborted loads before a
+       single play. data/albums.json carries every committed song's measured
+       length (`seconds`, stamped by scripts/music-track-lengths.mjs), and the
+       catalogue's stored length backs it up, so a row is painted from those
+       and asks nothing of the server until the listener presses play. A gated row is still probed: its
+       clock is the length of whatever it points at right now, the public
+       preview or the signed master, and the catalogue knows neither. So is
+       a row the catalogue has no length for. */
+    function paintDuration(row) {
+      var s = row.getAttribute("data-gated-bucket") ? 0
+        : (Number(row.getAttribute("data-seconds")) || LEN[String(row.getAttribute("data-key") || "").toLowerCase()]);
+      if (!s) return probeDuration(row);
+      var cell = row.querySelector(".d");
+      if (cell) cell.textContent = rowTime(s);
     }
     function gatedRows() {
       return rows.filter(function (r) { return r.getAttribute("data-gated-bucket"); });
@@ -1336,7 +1368,7 @@
       if (chips) chips.addEventListener("click", function (e) {
         var b = e.target.closest && e.target.closest("[data-chip]");
         if (!b) return;
-        chips.querySelectorAll("button").forEach(function (x) { x.classList.toggle("on", x === b); });
+        chips.querySelectorAll("button").forEach(function (x) { x.classList.toggle("on", x === b); x.setAttribute("aria-pressed", String(x === b)); });
         var w = b.getAttribute("data-chip");
         document.getElementById("featWrap").hidden = w === "playlists";
         document.getElementById("plWrap").hidden = w === "albums";
@@ -1353,8 +1385,8 @@
     var fmt = function (s) { s = Math.max(0, Math.round(s || 0)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
     var el = function (id) { return document.getElementById(id); };
 
-    /* durations on the rows: metadata only, one probe per track */
-    rows.forEach(probeDuration);
+    /* durations on the rows: off the catalogue; a probe only where it has none */
+    rows.forEach(paintDuration);
 
     function announce(playing) {
       window.dispatchEvent(new CustomEvent("mcc:nowplaying", {
@@ -1852,7 +1884,9 @@
       }
       var line = "", t = deck.currentTime;
       if (lyrTimed && lyrTimed.length) {
-        for (var k = 0; k < lyrTimed.length; k++) if (t >= lyrTimed[k].begin) line = lyrTimed[k].content;
+        /* lyrTimed is the shared reader's lines ({t, text}): js/lyrics-sync.js */
+        var k = window.MCC_LYRICS ? window.MCC_LYRICS.indexAt(lyrTimed, t) : -1;
+        line = k >= 0 ? lyrTimed[k].text : "";
       } else if (lyrPlain && deck.duration && lyrLines.length) {
         var idx = Math.min(lyrLines.length - 1, Math.floor(t / deck.duration * lyrLines.length));
         line = lyrLines[idx] ? lyrLines[idx].textContent : "";
@@ -2024,7 +2058,7 @@
       syncFilm(false);
     });
     function loadLyrics(src) {
-      lyrTimed = null; lyrPlain = false; lyrLines = [];
+      lyrTimed = null; lyrPlain = false; lyrLines = []; lyrCtl = null;
       if (src === "@inline") { paintLyrics(INLINE.lyrics || null); return; }
       if (!src) {
         nowLyr.innerHTML = "<p class='now__none'>The words land here soon. For now, let the record talk.</p>";
@@ -2038,49 +2072,21 @@
         nowLyr.innerHTML = "<p class='now__none'>The words land here soon.</p>";
       });
     }
+    /* the words: one shared renderer (js/lyrics-sync.js) for every player.
+       Timed lines light and scroll with the song, words light as they are
+       sung where the file has word times, and a tap on a line seeks there. */
+    var lyrCtl = null, lyrRaf = 0;
     function paintLyrics(j) {
-      var timed = j && j.timed && j.timed.line && j.timed.line.length ? j.timed.line : null;
-      if (!timed && j && j.lines && j.lines.length && j.lines[0].t != null) {
-        timed = j.lines.map(function (l) { return { begin: l.t, content: l.text || l.line || "" }; });
-      }
       var exp = {};
       if (cur > -1) { try { exp = JSON.parse(rows[cur].getAttribute("data-experience") || "{}"); } catch (e) {} }
       var context = { track: cur > -1 ? rows[cur].getAttribute("data-title") : null, album: ALBUM, surface: "album", track_view:false };
-      nowLyr.textContent = "";
-      function addLine(text) {
-        var p = document.createElement("p");
-        if (window.MCC_LYRIC_COMMERCE) window.MCC_LYRIC_COMMERCE.renderLine(p, text, exp, context);
-        else p.textContent = text;
-        nowLyr.appendChild(p);
-      }
-      if (timed) {
-        lyrTimed = timed;
-        timed.forEach(function (l) { addLine(l.content || ""); });
-      } else if (j && j.plain) {
-        lyrPlain = true;
-        j.plain.split("\n").forEach(addLine);
-      } else {
-        var none = document.createElement("p"); none.className = "now__none";
-        none.textContent = "The words land here soon."; nowLyr.appendChild(none);
-      }
-      lyrLines = Array.prototype.slice.call(nowLyr.querySelectorAll("p"));
-      nowLyr.scrollTop = 0;
-    }
-    function paintSheet() {
-      if (!sheetOn()) return;
-      el("nowT0").textContent = fmt(deck.currentTime);
-      /* the premium read: what's LEFT, counting down */
-      el("nowT1").textContent = deck.duration ? "-" + fmt(Math.max(0, deck.duration - deck.currentTime)) : "-:--";
-      el("nowSeekFill").style.width = deck.duration ? (deck.currentTime / deck.duration * 100) + "%" : "0";
-      el("nowPlayIc").innerHTML = deck.paused ? '<path d="M8 5l11 7-11 7z"/>' : '<path d="M7 5h3.4v14H7zM13.6 5H17v14h-3.4z"/>';
-      /* the words ride the music: timed lines light up; plain lyrics
-         roll with the song's progress */
-      if (lyrTimed && lyrLines.length) {
-        var t = deck.currentTime, live = -1;
-        for (var i = 0; i < lyrTimed.length; i++) if (t >= lyrTimed[i].begin) live = i;
-        lyrLines.forEach(function (p, i2) { p.classList.toggle("is-live", i2 === live); });
-        if (live > -1) {
-          var target = lyrLines[live];
+      lyrCtl = window.MCC_LYRICS ? window.MCC_LYRICS.mount(nowLyr, j, {
+        seek: function (t) { try { deck.currentTime = Math.max(0, t); } catch (e) {} if (deck.paused) play(); },
+        renderLine: function (p, text) {
+          if (window.MCC_LYRIC_COMMERCE) return !!window.MCC_LYRIC_COMMERCE.renderLine(p, text, exp, context) || !!p.querySelector("a");
+          p.textContent = text; return false;
+        },
+        onLive: function (i, target) {
           var cta = target && target.querySelector && target.querySelector(".lyric-service-cta");
           if (cta && !target.dataset.ctaViewed) {
             target.dataset.ctaViewed = "1";
@@ -2089,24 +2095,37 @@
               offer:cta.dataset.offer||null, phrase:cta.dataset.phrase||null, surface:"album"
             });
           }
-          nowLyr.scrollTo({ top: target.offsetTop - nowLyr.clientHeight * 0.32, behavior: "smooth" });
         }
-      } else if (lyrPlain && deck.duration && lyrLines.length) {
-        var prog = deck.currentTime / deck.duration;
-        var live2 = Math.min(lyrLines.length - 1, Math.floor(prog * lyrLines.length));
-        lyrLines.forEach(function (p, i3) { p.classList.toggle("is-live", i3 === live2); });
-        var target2 = lyrLines[live2];
-        if (target2) {
-          var cta2 = target2.querySelector && target2.querySelector(".lyric-service-cta");
-          if (cta2 && !target2.dataset.ctaViewed) {
-            target2.dataset.ctaViewed = "1";
-            if (window.MCC_TRACK) window.MCC_TRACK("lyric_service_cta_view", {
-              track:rows[cur].getAttribute("data-title"),album:ALBUM,
-              offer:cta2.dataset.offer||null,phrase:cta2.dataset.phrase||null,surface:"album"
-            });
-          }
-          nowLyr.scrollTo({ top: target2.offsetTop - nowLyr.clientHeight * 0.32, behavior: "smooth" });
-        }
+      }) : null;
+      lyrTimed = lyrCtl && lyrCtl.timed ? lyrCtl.lines : null;
+      lyrPlain = !!(lyrCtl && !lyrCtl.empty && !lyrCtl.timed);
+      if (!lyrCtl || lyrCtl.empty) {
+        nowLyr.textContent = "";
+        var none = document.createElement("p"); none.className = "now__none";
+        none.textContent = "The words land here soon."; nowLyr.appendChild(none);
+      }
+      lyrLines = lyrCtl ? lyrCtl.nodes : [];
+      nowLyr.setAttribute("data-lyrics-mode", lyrTimed ? "timed" : lyrPlain ? "plain" : "none");
+      if (lyrCtl) lyrCtl.update(deck.currentTime || 0, deck.duration);
+    }
+    /* timeupdate ticks ~4 times a second; sung words need a frame clock */
+    function lyrFrame() {
+      lyrRaf = 0;
+      if (!lyrCtl || deck.paused || !sheetOn()) return;
+      lyrCtl.update(deck.currentTime, deck.duration);
+      lyrRaf = requestAnimationFrame(lyrFrame);
+    }
+    function paintSheet() {
+      if (!sheetOn()) return;
+      el("nowT0").textContent = fmt(deck.currentTime);
+      /* the premium read: what's LEFT, counting down */
+      el("nowT1").textContent = deck.duration ? "-" + fmt(Math.max(0, deck.duration - deck.currentTime)) : "-:--";
+      el("nowSeekFill").style.width = deck.duration ? (deck.currentTime / deck.duration * 100) + "%" : "0";
+      el("nowPlayIc").innerHTML = deck.paused ? '<path d="M8 5l11 7-11 7z"/>' : '<path d="M7 5h3.4v14H7zM13.6 5H17v14h-3.4z"/>';
+      /* the words ride the music (js/lyrics-sync.js) */
+      if (lyrCtl) {
+        lyrCtl.update(deck.currentTime, deck.duration);
+        if (!deck.paused && !lyrRaf) lyrRaf = requestAnimationFrame(lyrFrame);
       }
     }
     /* tap the PLAYING row again: instead of pausing, the record opens up
@@ -2146,7 +2165,6 @@
   <script src="js/gyro.js?v=__STAMP__"></script>
   <script src="js/intuition.js?v=__STAMP__"></script>
   <script src="js/pip.js?v=__STAMP__"></script>
-  <script defer src="js/here-material.js?v=__STAMP__"></script>
   <!-- the gate on a record: the M session, then the signer that trades it
        for a URL to the master. Both load after the shelf paints, because a
        locked row is the correct first frame and never a spinner. -->
@@ -2154,6 +2172,7 @@
   <script defer src="js/listen-ledger.js?v=__STAMP__"></script>
   <script defer src="js/gated-audio.js?v=__STAMP__"></script>
   <script defer src="js/song-test.js?v=__STAMP__"></script>
+  <script src="js/control-room/nav.js?v=__STAMP__"></script>
   <script src="js/control-registry.js?v=__STAMP__"></script>
   <script src="js/control-palette.js?v=__STAMP__" defer></script>
   <script src="js/site-editor.js?v=__STAMP__" defer></script>

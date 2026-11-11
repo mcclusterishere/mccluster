@@ -66,7 +66,7 @@ test('Mnet Worker exposes a real social graph and safety API', async()=>{
 
 test('Action Network supports access-checked likes/comments and enforces group membership', async()=>{
   const api=await read('workers/mccluster/src/platform-api.js');
-  assert.match(api,/Comments are retired on Human Uprise/);
+  assert.match(api,/Comments are retired on Equity Uprise/);
   assert.match(api,/network_reactions/);
   assert.match(api,/network_post_comments/);
   assert.match(api,/if\(post\.group_id\)/);
@@ -215,7 +215,7 @@ test("Action Network profile treats the member website as the identity front pag
 test("unified identity presentation carries public front page through people profiles",async()=>{const js=await read("js/mnet.js");assert.match(js,/presentation=data\.presentation\|\|\{\}/);assert.match(js,/presentation\.front_page_url\|\|p\.website_url/);assert.match(js,/mnet\.html\?profile=/);});
 
 
-test("Action Network product language is doer-first and legacy Mnet branding is absent from the primary surface",async()=>{const html=await read("mnet.html"),listen=await read("listen.html");assert.match(html,/The place for doers/);assert.match(html,/id="mnToWorld"[^>]*>← World</);assert.match(html,/placeholder="Share a live moment from the world…"/);assert.doesNotMatch(html,/\bMnet\b|M Network/);assert.match(listen,/Put your music into action/);assert.match(listen,/Every creator is part of Human Uprise/);});
+test("Action Network product language is doer-first and legacy Mnet branding is absent from the primary surface",async()=>{const html=await read("mnet.html"),listen=await read("listen.html");assert.match(html,/The place for doers/);assert.match(html,/id="mnToWorld"[^>]*>← World</);assert.match(html,/placeholder="Share a live moment from the world…"/);assert.doesNotMatch(html,/\bMnet\b|M Network/);assert.match(listen,/Put your music into action/);assert.match(listen,/Every creator is part of Equity Uprise/);assert.doesNotMatch(listen,/Human Uprise/);});
 
 
 test('Action Network runtime keeps invite rooms private and makes mission/proof the response path', async()=>{

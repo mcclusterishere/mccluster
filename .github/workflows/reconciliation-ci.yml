@@ -1,9 +1,10 @@
+          # compute_lease_authority_v2 (20261020210718) and intel_decision_integrity_v2 (20261020211313)
+          # were promoted; the reset above applies them from supabase/migrations/.
 name: Reconciliation CI
 
 on:
   push:
-    branches:
-      - reconcile/equity-uprise-20260908
+    branches: [main, reconcile/equity-uprise-20260908]
   pull_request:
     branches:
       - main
@@ -23,12 +24,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '22'
       - name: Install Worker dependencies
         working-directory: workers/mccluster
-        run: npm install --ignore-scripts --no-audit --no-fund
+        run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Run Worker tests
         working-directory: workers/mccluster
         run: npm test
@@ -46,7 +47,7 @@ jobs:
           node --check js/prim3.js
           node --check js/prim3-sync.js
           node --check js/equity-uprise-institutional.js
-          node --check js/equity-uprise-fellowship-live.js
+          node --check _unfinished/equity-uprise/js/equity-uprise-fellowship-live.js
       - name: Assert private conversation ingestion boundary
         run: |
           grep -F 'private_context_reference_only: true' workers/mccluster/src/ai/objectives.js
@@ -67,7 +68,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '22'
       - name: Parse Core runner, broker, and executors
@@ -76,6 +77,7 @@ jobs:
       - name: Parse VPS control-plane scripts
         run: |
           bash -n scripts/deploy-ovh-core.sh
+          bash -n scripts/ovh-core-health.sh
           bash -n scripts/mccluster-vps-reconcile.sh
           bash -n scripts/bootstrap-vps-self-management.sh
       - name: Test Operator OS control spine
@@ -198,7 +200,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '22'
       - name: Test measurement, funding and offline research contracts
@@ -217,19 +219,74 @@ jobs:
           node scripts/test-intel-integrity-db.mjs
           node scripts/funding/validate-register-db.mjs
 
+  equity-uprise-rls:
+    name: Equity Uprise RLS wall and offline function contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+      - name: Install PostgreSQL 16 server binaries
+        run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends postgresql-16
+      - name: Stand up a throwaway cluster and try to break into the Equity Uprise tables
+        # supabase/tests/run-eu-tests.sh creates its own cluster in a temp
+        # directory from /usr/lib/postgresql/16/bin and destroys it on exit;
+        # nothing here touches the live project.
+        run: bash supabase/tests/run-eu-tests.sh
+      - name: Run the offline Supabase function contracts
+        # Pure unit suites over the edge-function sources (TypeScript via
+        # --experimental-strip-types); no Supabase, no network. Suites that
+        # need a live stack stay in the `database` job above.
+        run: |
+          for suite in brain desk-flows domain flows inbox-auth mcp platforms price; do
+            echo "== supabase/tests/$suite.test.mjs"
+            node --experimental-strip-types "supabase/tests/$suite.test.mjs"
+          done
+
   database:
     name: Supabase migration reset
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: supabase/setup-cli@ab058987d8d6c725971f6cf9d0b5c98467e30bd1 # v1
+      - uses: supabase/setup-cli@d239d1052f6f024a8d746d7e5aeddead63b9cb53 # v1
         with:
           version: 2.117.0
       - name: Start isolated Supabase stack
         run: bash scripts/supabase-local-reset-with-replay.sh start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor
       - name: Rebuild database from migrations
         run: bash scripts/supabase-local-reset-with-replay.sh
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+      - name: Compare the rebuilt schema with supabase/schema-manifest.json
+        # The manifest is what supabase/migrations/ + supabase/replay_migrations/ build:
+        # tables, columns, RLS, policies, functions (SECURITY DEFINER, EXECUTE grants),
+        # triggers, buckets and views' security_invoker, by the same read-only SQL
+        # scripts/db/verify-production-schema.mjs runs against production. No production
+        # credentials here: this is the disposable stack. When a migration changes the
+        # schema on purpose, refresh the manifest from the uploaded artifact
+        # (reset-schema/schema-manifest.json). Runs before the behaviour tests write rows.
+        env:
+          RESET_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: |
+          mkdir -p "$RUNNER_TEMP/reset-schema"
+          node scripts/db/verify-production-schema.mjs --database-url-env RESET_DB_URL --mode reset \
+            --snapshot-out "$RUNNER_TEMP/reset-schema/reset-schema-snapshot.json" \
+            --write-manifest --manifest "$RUNNER_TEMP/reset-schema/schema-manifest.json" \
+            --report-json "$RUNNER_TEMP/reset-schema/report.json" --no-fail
+          node scripts/db/verify-production-schema.mjs --snapshot "$RUNNER_TEMP/reset-schema/reset-schema-snapshot.json" --mode reset \
+            --report-json "$RUNNER_TEMP/reset-schema/manifest-diff.json"
+      - name: Upload the rebuilt schema snapshot
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: reset-schema
+          path: ${{ runner.temp }}/reset-schema/
+          if-no-files-found: ignore
+          retention-days: 14
       - name: Verify analytics funnel exact-window boundaries
         env:
           PGPASSWORD: postgres
@@ -240,7 +297,7 @@ jobs:
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' -v ON_ERROR_STOP=1 -f supabase/tests/action_globe_rejoin_capacity.integration.sql
       - name: Verify ingestion leases, unknown measurements and private spatial storage
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' -v ON_ERROR_STOP=1 -f supabase/tests/analytics_ingestion_pipeline.behaviour.sql
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '22'
       - name: Verify native PostgreSQL evidence and lease races
@@ -248,12 +305,8 @@ jobs:
           npm install --prefix "$RUNNER_TEMP/native-admin-tools" --ignore-scripts --no-audit --no-fund --package-lock=false postgres@3.4.5
           export POSTGRES_MODULE_PATH="$RUNNER_TEMP/native-admin-tools/node_modules/postgres/src/index.js"
           export NATIVE_TEST_DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:54322/postgres'
-          # Exercise pending DDL on the complete reset schema as well as the isolated fixtures.
-          # Promoted files have already been applied by the reset and are skipped here.
-          for migration in supabase/pending/*_compute_lease_authority_v2.sql supabase/pending/*_intel_decision_integrity_v2.sql; do
-            [ -f "$migration" ] || continue
-            psql "$NATIVE_TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f "$migration"
-          done
+          # compute_lease_authority_v2 (20261020210718) and intel_decision_integrity_v2 (20261020211313)
+          # were promoted; the reset above applies them from supabase/migrations/.
           node scripts/compute-lease-sql-check.mjs
           node scripts/test-intel-integrity-db.mjs
       - name: Stop isolated stack

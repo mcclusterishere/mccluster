@@ -29,7 +29,7 @@ const graph = JSON.parse(read("data/seo/entity-graph.json"));
 const PROFILE_PAGE = `${PROFILE}#profile-page`;
 
 /* the published tree: what deploy-pages.yml leaves after stripping internals */
-const STRIPPED = new Set(["docs", "packages", "apps", "scripts", "supabase", ".github", "tests", "node_modules", "redirects", "tools", "_unfinished", "workers", ".git"]);
+const STRIPPED = new Set(["docs", "packages", "apps", "scripts", "supabase", ".github", "tests", "node_modules", "redirects", "tools", "_unfinished", "workers", "platform", "core", "native", "PRIM3", "dns", "audit", ".cursor", ".git"]);
 function publishedHtml(dir = "") {
   const out = [];
   for (const e of readdirSync(join(ROOT, dir), { withFileTypes: true })) {
@@ -67,6 +67,7 @@ const ENGINEERING = ["engineering/index.html", "engineering/it-support-systems.h
 test("the music catalogue markup matches its data, and llms.txt says only what is true", () => {
   /* profile, hire, newsroom and sitemap generators are checked by seo-authority.test.mjs */
   execFileSync("node", ["tools/build-catalogue.mjs", "--check"], { cwd: ROOT, stdio: "pipe" });
+  execFileSync("node", ["tools/build-walls.mjs", "--check"], { cwd: ROOT, stdio: "pipe" });
   execFileSync("python3", ["tools/verify-llms.py"], { cwd: ROOT, stdio: "pipe" });
 });
 

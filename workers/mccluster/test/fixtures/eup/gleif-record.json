@@ -1,0 +1,17 @@
+{
+  "data": {
+    "type": "lei-records",
+    "id": "SYNTH00000000000GRID",
+    "attributes": {
+      "lei": "SYNTH00000000000GRID",
+      "entity": {
+        "legalName": { "name": "Synthetic Grid Components Inc", "language": "en" },
+        "legalAddress": { "addressLines": ["1 Synthetic Way", "Suite 400"], "city": "Stamford", "region": "US-CT", "country": "US", "postalCode": "06901" },
+        "headquartersAddress": { "addressLines": ["250 Harbor Example Drive"], "city": "Bridgeport", "region": "US-CT", "country": "US", "postalCode": "06604" },
+        "status": "ACTIVE"
+      },
+      "registration": { "initialRegistrationDate": "2019-04-02T00:00:00Z", "lastUpdateDate": "2026-09-30T12:00:00Z", "status": "ISSUED", "nextRenewalDate": "2027-04-02T00:00:00Z" }
+    },
+    "relationships": { "direct-parent": { "links": { "reporting-exception": "https://api.gleif.org/api/v1/lei-records/SYNTH00000000000GRID/direct-parent-reporting-exception" } } }
+  }
+}

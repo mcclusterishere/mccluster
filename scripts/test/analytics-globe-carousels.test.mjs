@@ -121,15 +121,15 @@ test('applied country reads: security invoker over events_lean, country only, an
   assert.match(sql, /not e\.is_bot/);
 });
 
-test('owner bar: five tabs for the owner from the server\'s answer, three for everyone else; the M is the supplied PNG', async () => {
+test('owner bar: seven tabs for the owner from the server\'s answer, three for everyone else; the M is the supplied PNG', async () => {
   const js = await read('js/tabbar.js');
-  const block = js.slice(js.indexOf("THE OWNER'S FIVE TABS"), js.indexOf('function loadCanonicalAuth'));
+  const block = js.slice(js.indexOf("THE OWNER'S SEVEN TABS"), js.indexOf('function loadCanonicalAuth'));
   assert.match(block, /fetch\(API_ORIGIN \+ "\/v1\/status"/, 'the same owner check the Control Room uses');
   assert.doesNotMatch(block, /localStorage\.(get|set)Item\(ADMIN_KEY/, 'never this browser\'s long-lived storage');
   assert.match(block, /sessionStorage\.setItem\(ADMIN_KEY, JSON\.stringify\(\{ sub: sub, at: Date\.now\(\), admin: r\.ok \}\)\)/);
   assert.match(block, /if \(r\.ok \|\| r\.status === 401 \|\| r\.status === 403\)/, 'only a definite answer changes the bar');
   const order = [...block.matchAll(/data-appnav="([a-z-]+)"/g)].map((m) => m[1]);
-  assert.deepEqual(order, ['music', 'admin-home', 'home', 'analytics', 'halo']);
+  assert.deepEqual(order, ['music', 'admin-inbox', 'admin-home', 'home', 'analytics', 'world', 'games']);
   assert.match(block, /control\.html#home/);
   assert.match(block, /control\.html#analytics/);
   assert.match(block, /<img class="appbar__m" src="' \+ ROOT \+ 'assets\/img\/m-mark\.png" alt="">/, 'the supplied mark, no plate, nothing drawn');
@@ -138,7 +138,7 @@ test('owner bar: five tabs for the owner from the server\'s answer, three for ev
   assert.match(js, /paintAuthState\(false, null, true\);\n\s*paintAdmin\(false\);/, 'signed out: back to three');
   assert.match(js, /var ORDER = \["music", "home", "world"\];/, 'everyone else keeps Music | M | Globe');
   const css = await read('css/style.css');
-  const adminCss = css.slice(css.indexOf('THE OWNER\'S FIVE TABS'));
+  const adminCss = css.slice(css.indexOf('THE OWNER\'S SEVEN TABS'));
   assert.doesNotMatch(adminCss, /@media[^{]*max-width/);
   assert.doesNotMatch(adminCss, /\.appbar__m\{[^}]*(background|border-radius)/, 'no plate behind the M');
 });
@@ -151,6 +151,7 @@ test('the bar never leaves: the Control Room carries the shared bar (no data-no-
   const v2 = await read('js/control-room-v2.js');
   assert.match(v2, /document\.body\.setAttribute\("data-cr-surface", state\.surface\)/);
   const css = await read('css/control-analytics.css');
-  assert.match(css, /body\.cr\.has-appbar\[data-cr-surface="analytics"\] \.cr-bottom\{display:none\}/);
+  /* one bottom bar: beside the shared bar the Control sections step out of the analytics screen on a phone */
+  assert.match(await read('css/control-room-v2.css'), /body\.cr\.has-appbar\[data-cr-surface="analytics"\] \.cr-sections\{display:none\}/);
   assert.doesNotMatch(css, /\.appbar\{display:none|\.appbar[^{]*\{[^}]*display:none/);
 });

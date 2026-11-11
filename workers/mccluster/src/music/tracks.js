@@ -36,6 +36,66 @@ export const TRACKS = {
     "album": "prim3",
     "seconds": 92.4
   },
+  "high-alert": {
+    "title": "High Alert",
+    "album": "prim3",
+    "seconds": 167.6
+  },
+  "osint": {
+    "title": "OSINT",
+    "album": "prim3",
+    "seconds": 97
+  },
+  "anti-social-engineering": {
+    "title": "Anti-Social Engineering (Draft)",
+    "album": "prim3",
+    "seconds": 109.7
+  },
+  "red-blue-purple-white-team": {
+    "title": "Red, Blue, Purple, White Team",
+    "album": "prim3",
+    "seconds": 87.7
+  },
+  "data-breach": {
+    "title": "Data Breach",
+    "album": "prim3",
+    "seconds": 256.1
+  },
+  "app-attacks": {
+    "title": "App Attacks",
+    "album": "prim3",
+    "seconds": 86.1
+  },
+  "dive-in": {
+    "title": "Dive In",
+    "album": "prim3",
+    "seconds": 163.9
+  },
+  "iot": {
+    "title": "IOT (Draft)",
+    "album": "prim3",
+    "seconds": 72.1
+  },
+  "per-diem": {
+    "title": "Per Diem (Draft)",
+    "album": "prim3",
+    "seconds": 85.2
+  },
+  "raid-hot-site": {
+    "title": "RAID (Hot Site)",
+    "album": "prim3",
+    "seconds": 219.5
+  },
+  "evil-twin-middle-man": {
+    "title": "Evil Twin (Middle Man)",
+    "album": "prim3",
+    "seconds": 219.5
+  },
+  "ghost-in-the-wires": {
+    "title": "Ghost in the Wires",
+    "album": "prim3",
+    "seconds": 249.8
+  },
   "environmental-injustice": {
     "title": "Environmental Injustice",
     "album": "equity-uprise",
@@ -71,6 +131,26 @@ export const TRACKS = {
     "album": "vaunt-ep",
     "seconds": 92.4
   },
+  "test-drive": {
+    "title": "Test Drive",
+    "album": "whip-equipped",
+    "seconds": 95.2
+  },
+  "salvage-title-b-side": {
+    "title": "Salvage Title (B-Side)",
+    "album": "whip-equipped",
+    "seconds": 89.1
+  },
+  "repo-guy-b-side": {
+    "title": "Repo Guy (B-Side)",
+    "album": "whip-equipped",
+    "seconds": 120.2
+  },
+  "hundun-b-side": {
+    "title": "Hundun (B-Side)",
+    "album": "whip-equipped",
+    "seconds": 143
+  },
   "dealer-plates": {
     "title": "Dealer Plates (A-Side)",
     "album": "whip-equipped",
@@ -79,7 +159,32 @@ export const TRACKS = {
   "dealer-plates-b": {
     "title": "Dealer Plates (B-Side)",
     "album": "whip-equipped",
-    "seconds": 22.8
+    "seconds": 97.4
+  },
+  "towyard-killer": {
+    "title": "Towyard Killer",
+    "album": "whip-equipped",
+    "seconds": 65.7
+  },
+  "mr-lock-changer-remix": {
+    "title": "Mr. Lock Changer (Remix)",
+    "album": "whip-equipped",
+    "seconds": 108.1
+  },
+  "lana-b-side": {
+    "title": "Lana (B-Side)",
+    "album": "whip-equipped",
+    "seconds": 85.3
+  },
+  "stand-on-business-b-side": {
+    "title": "Stand On Business (B-Side)",
+    "album": "whip-equipped",
+    "seconds": 120.7
+  },
+  "all-in-the-details": {
+    "title": "All in the Details",
+    "album": "whip-equipped",
+    "seconds": 155
   },
   "upset": {
     "title": "Upset",

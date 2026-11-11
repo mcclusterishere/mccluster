@@ -29,7 +29,7 @@ Control → Analytics → Forensics now shows the same inventory live:
 | Share did nothing in in-app browsers. | `navigator.share` is refused there. | Share falls back to copying the link, unless the visitor cancelled. |
 | "Keep the masters" did nothing. | It gave no feedback. | It answers the tap at once and says when there is nothing to keep. |
 | `crm_signals` returned 404 on every page that loads `js/signals.js`. | The table does not exist. | Signals ride the first-party event stream as `desk_signal` events. No new table was added. |
-| `listener_state` returned 404 for every signed-in page (21 in one day). | The table was never created. | `js/pip.js` parks the sync for a day after a 404. The table is a pending migration (below). |
+| `listener_state` returned 404 for every signed-in page (21 in one day). | The table was never created. | `js/pip.js` parks the sync for a day after a 404. The table now exists (`20261021125121_listener_state_v1`, below). |
 | `rpc/my_imprint` returned 404. | No migration ever defined it. | The call is removed. |
 | Worker `/v1/status` returned 404 on `rpc/ai_harness_status`. | The RPC is retired. | The call is removed; the status points at `/v1/ai`. |
 | `/v1/analytics/business` returned 502. | Twenty exact counts ran over full `events` rows. | The counts read `events_lean`. |
@@ -42,27 +42,21 @@ Control → Analytics → Forensics now shows the same inventory live:
 | Dead clicks on every form field | A field takes focus on press, before the click, and a checkbox changes a property, not an attribute. Neither shows the detector anything. | Fields, labels and editable text are never dead. Neither are links to another document, new-tab, download, `mailto:` and `tel:` links. Media play/pause, print, blur and page leave count as an answer. |
 | 31 of 38 recorded JS errors | They came from the Instagram/Facebook in-app browsers (`window.webkit.messageHandlers`, `Java object is gone`, `_AutofillCallbackHandler`, `iabjs://`) or from extensions. | Each error now carries its `origin`, the in-app browser and the top of its stack. Forensics shows the site's own errors first and folds injected ones behind a toggle. The tenant SDK sends the message too. |
 
-## Waiting on the owner: database changes
+## Database changes: all three applied
 
-These are written and verified but **not applied**. Applying schema changes to production was refused for this session. Each file:
+These were written and verified while applying schema changes to production was refused for
+that session. Each is bounded by `set local lock_timeout = '5s'` and covered by
+`supabase/tests/journey_errors.stub.sql` + `journey_errors_regression.sql`. All three are now
+applied in production and recorded in `supabase/migrations/` under the version production
+gave them, byte for byte; none is pending.
 
-- is in `supabase/pending/`;
-- is bounded by `set local lock_timeout = '5s'`;
-- is covered by `supabase/tests/journey_errors.stub.sql` + `journey_errors_regression.sql`, which pass locally.
-
-`anon_policy_scope_v1.sql` was also dry-run against production in a rolled-back transaction.
-
-| File | Fixes |
+| Migration | Fixes |
 |---|---|
-| `anon_policy_scope_v1.sql` | Signed-out reads of `creator_tracks` and `music_creator_profiles` fail with 401. That leaves the "From creators" shelf empty for every visitor. The P0 containment (`20260913174500`) revoked anon EXECUTE on `current_m_uid()`, but 21 policies still applied to anon and called it. Self policies move to `authenticated`. Mixed read rules are split so anon gets exactly its public half. Nothing is re-granted. |
-| `public_music_reads_lean_v1.sql` | `play_counts()` timed out 23 times in one day, and `v_track_signals` / `v_track_affinity` 8 times: visitors saw no counts and no ordering. They now read `events_lean`, which cuts `play_counts` from 4.5 s to 131 ms. |
-| `listener_state_v1.sql` | Creates the table the pocket player's cross-device resume writes to: one row per user, forced RLS, own-row only, 4 KB cap. |
+| `20261016031123_anon_policy_scope_v1.sql` (applied 2026-10-16) | Signed-out reads of `creator_tracks` and `music_creator_profiles` fail with 401. That leaves the "From creators" shelf empty for every visitor. The P0 containment (`20260913174500`) revoked anon EXECUTE on `current_m_uid()`, but 21 policies still applied to anon and called it. Self policies move to `authenticated`. Mixed read rules are split so anon gets exactly its public half. Nothing is re-granted. |
+| `20261029011108_public_music_reads_lean_v1.sql` (applied 2026-10-29, after `20261029011001_definer_views_invoker_v1`) | `play_counts()` timed out 23 times in one day, and `v_track_signals` / `v_track_affinity` 8 times: visitors saw no counts and no ordering. They now read `events_lean`, which cuts `play_counts` from 4.5 s to 131 ms; the two views stay `security_invoker` over their `private.*_rows()` functions. |
+| `20261021125121_listener_state_v1.sql` (applied 2026-10-21) | Creates the table the pocket player's cross-device resume writes to: one row per user, forced RLS, own-row only, 4 KB cap. |
 
-To apply one, run it through the Supabase migration path. Then:
-
-1. move it to `supabase/migrations/<version>_<name>.sql`, using the version recorded in `supabase_migrations.schema_migrations`, byte-for-byte;
-2. update `supabase/production-ledger.json` and `core/drift-contract.json`;
-3. run `node scripts/control-plane-drift-contract-check.mjs`.
+How a pending file is promoted: `supabase/pending/README.md` ("To promote one").
 
 ## Not ours, so no code change
 

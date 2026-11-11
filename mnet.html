@@ -16,6 +16,8 @@
   <link rel="stylesheet" href="css/member-desk.css?v=__STAMP__">
   <link rel="stylesheet" href="css/human-uprise-editorial.css?v=__STAMP__">
   <link rel="stylesheet" href="css/world-travel.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/world-environment.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/policy-mode.css?v=__STAMP__">
   <link rel="stylesheet" href="css/mission-swipe-deck.css?v=__STAMP__">
   <link rel="stylesheet" href="css/mnet-audio.css?v=__STAMP__">
   <link rel="stylesheet" href="css/daylight.css?v=__STAMP__">
@@ -38,7 +40,8 @@
   <!-- THE WORLD IS THE SOCIAL FEED (owner, 2026-10-20: "the transport and the missions feature will be taken off and the
        social feature will be the only feature with no tab selecting between the other two"). Travel and Missions stay in
        the code, switched off, until they are refined: hu-social-only on <html> is the switch, and missions=0 tells the
-       globe (the frame and the expanded globe) to draw no missions. Remove both to bring them back. -->
+       globe (the frame and the expanded globe) to draw no general missions. Environmental Justice (2026-11-07)
+       is a scoped public mode on this same globe; it does not remove either owner switch. -->
   <main class="mn">
     <header class="mn__top">
       <a class="mn__brand" href="mnet.html" aria-label="Equity Uprise home">
@@ -126,7 +129,7 @@
         <p id="mnGuestWhy" role="status"></p>
       </div>
       <p class="mn__eyebrow">The place for doers.</p>
-      <h1>Turn what you care about into action.</h1>
+      <h2>Turn what you care about into action.</h2>
       <p class="mn__lede">Get Your Hu Up!</p>
       <div class="mn__panel">
         <div class="mn__auth-tabs" role="tablist" aria-label="Equity Uprise account">
@@ -177,7 +180,7 @@
       </div>
       <form class="mn__profile-form mn__onboard-form" id="mnProfileForm" novalidate>
         <section class="mn__step" id="mnStep1" data-step="1">
-          <h1 class="mn__onboard-h" id="mnProfileTitle">Make your profile<em>.</em></h1>
+          <h2 class="mn__onboard-h" id="mnProfileTitle">Make your profile<em>.</em></h2>
           <p class="mn__lede" id="mnProfileLede">Your username and name. It's how people find you.</p>
           <label class="mn__label" for="mnHandle">Username</label>
           <div class="mn__field mn__field--handle"><span class="mn__field-at" aria-hidden="true">@</span><input class="mn__input" id="mnHandle" maxlength="32" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="yourname" required><span class="mn__field-state" id="mnHandleState" aria-live="polite"></span></div>
@@ -190,7 +193,7 @@
           </details>
         </section>
         <section class="mn__step" id="mnStep2" data-step="2" hidden>
-          <h1 class="mn__onboard-h">Where we can reach you<em>.</em></h1>
+          <h2 class="mn__onboard-h">Where we can reach you<em>.</em></h2>
           <p class="mn__lede">Your legal name and mailing address. Private, never on your profile.</p>
           <label class="mn__label" for="mnLegalName">Full legal name</label>
           <div class="mn__field"><span class="mn__field-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg></span><input class="mn__input" id="mnLegalName" maxlength="160" autocomplete="name" placeholder="First and last name" required></div>
@@ -208,7 +211,7 @@
           <p class="mn__hint">A complete address also makes the account eligible for McCluster's monthly swag selections.</p>
         </section>
         <section class="mn__step" id="mnStep3" data-step="3" hidden>
-          <h1 class="mn__onboard-h" id="mnStep3Title">Your phone and sign-in<em>.</em></h1>
+          <h2 class="mn__onboard-h" id="mnStep3Title">Your phone and sign-in<em>.</em></h2>
           <p class="mn__lede" id="mnStep3Lede">Your phone is optional and private. Add a password to sign in with your email too.</p>
           <label class="mn__label" for="mnPhone">Phone <span>optional</span></label>
           <div class="mn__field mn__field--phone"><span class="mn__field-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.5h4l1.5 4.5-2.2 1.6a12 12 0 0 0 4.6 4.6l1.6-2.2 4.5 1.5v4a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 4.5 5.7a2 2 0 0 1 2-2.2z"/></svg></span><input class="mn__input mn__dial" id="mnDial" inputmode="tel" autocomplete="tel-country-code" maxlength="5" placeholder="+ code" aria-label="Country code"><input class="mn__input" id="mnPhone" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="Your number"></div>
@@ -258,7 +261,7 @@
       <section class="mn__view" id="mnLiveView" hidden>
         <section class="mn__onair mn__onair--directory" id="mnLive" aria-live="polite">
           <div class="mn__live-head">
-            <div><p class="mn__live-k"><i aria-hidden="true"></i>Live now</p><h1 class="mn__live-title">See the work while it happens.</h1></div>
+            <div><p class="mn__live-k"><i aria-hidden="true"></i>Live now</p><h2 class="mn__live-title">See the work while it happens.</h2></div>
             <button class="mn__golive" id="mnGoLive" type="button" hidden>Go live</button>
           </div>
           <div class="mn__live-filters" id="mnLiveFilters" aria-label="Live room filters">
@@ -291,7 +294,7 @@
         <section class="mn__world-home" id="mnWorld" aria-label="The world">
           <h1 class="wt-headline">The world is your feed.</h1>
           <div id="wtDestination" class="wt-destination" hidden></div>
-          <nav class="wt-world-modes" aria-label="World mode"><button type="button" data-world-mode="travel" aria-pressed="true">Travel</button><button type="button" data-world-mode="missions" aria-pressed="false">Missions</button><button type="button" data-world-mode="posts" aria-pressed="false">News feed</button></nav>
+          <nav class="wt-world-modes" aria-label="World mode"><button type="button" data-world-mode="travel" aria-pressed="false">Travel</button><button type="button" data-world-mode="missions" aria-pressed="false">Missions</button><button type="button" data-world-mode="posts" aria-pressed="true">News feed</button><button type="button" data-world-mode="environment" aria-pressed="false" aria-label="E=UP: Environmental Justice" title="E=UP: Environmental Justice"><img src="assets/img/equity-uprise-mark-white.png" alt="" width="30" height="30"></button></nav>
           <iframe class="mn__world-frame" id="mnWorldFrame" src="action-globe.html?embedded=1&amp;surface=network&amp;missions=0&amp;v=__STAMP__" title="Equity Uprise globe. Drag to turn the Earth; tap a red pin to open its mission." loading="lazy" allow="geolocation" referrerpolicy="strict-origin-when-cross-origin"></iframe>
           <!-- the place card (owner, 2026-10-21: "only in the middle ... how many users ... news articles ... posts"): drawn by paintPlaceCard in the page script -->
           <div class="mn__place-card" id="mnPlaceCard" role="status" aria-live="polite" hidden></div>
@@ -324,6 +327,7 @@
         </section>
         <div class="mn__world-feed" id="mnWorldFeed" aria-label="World content" tabindex="0">
         <section id="wtPlanner" aria-labelledby="wtTitle"></section>
+        <section id="wePanel" class="we-panel" aria-labelledby="weTitle" hidden></section>
         <div id="wtSocial"><!-- One stream: public news, community posts, and verified activity are interleaved below. -->
         <section class="mn__world-context" id="mnWorldContext" aria-label="On the globe" aria-live="polite">
           <!-- EXPLORE THE WORLD (owner's signed-out reference, 2026-10-14):
@@ -720,12 +724,14 @@
   <script src="js/name-integrity.js?v=__STAMP__"></script>
   <script src="js/creator-onboarding.js?v=__STAMP__"></script>
   <script src="js/mission-swipe-deck.js?v=__STAMP__"></script>
+  <script src="js/image-resize.js?v=__STAMP__"></script>
   <script src="js/video-poster.js?v=__STAMP__"></script>
   <script src="js/mnet.js?v=__STAMP__"></script>
   <script src="js/docket-cohort-showcase.js?v=__STAMP__"></script><script src="js/world-news-globe.js?v=__STAMP__"></script>
   <!-- async: the Travel module (switched off while the World is the social feed) never holds the World's boot, which runs
        at DOMContentLoaded; it wires itself whenever it arrives -->
   <script type="module" async src="js/travel/world-travel.mjs?v=__STAMP__"></script>
+  <script type="module" src="js/world-environment-mccluster.mjs?v=__STAMP__"></script>
   <script src="js/mnet-tour.js?v=__STAMP__"></script>
   <script src="js/mnet-live.js?v=__STAMP__"></script>
   <script src="js/mnet-audio.js?v=__STAMP__"></script>
@@ -736,8 +742,11 @@
   <script src="js/identity-capture-core.js?v=__STAMP__"></script>
   <script src="js/profile-edit-gate.js?v=__STAMP__"></script>
   <script src="js/member-desk.js?v=__STAMP__"></script>
+  <script src="js/control-room/nav.js?v=__STAMP__"></script>
   <script src="js/control-registry.js?v=__STAMP__"></script>
   <script src="js/control-palette.js?v=__STAMP__" defer></script>
   <script src="js/site-editor.js?v=__STAMP__" defer></script>
+  <script src="js/policy-mode-core.js?v=__STAMP__"></script>
+  <script src="js/policy-mode.js?v=__STAMP__"></script>
 </body>
 </html>

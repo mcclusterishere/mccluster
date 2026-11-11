@@ -1,0 +1,58 @@
+# combined check WITH patch 0001 only (63c26995181e681dca90f173a7d2a63ac37be9d3): scratch worktree at 63c26995181e681dca90f173a7d2a63ac37be9d3 + git merge --no-ff --no-commit claude/new-session-83ken5 (9bda58962d8163fbf34c63c5b03da6246eab13c6); 2026-11-10T11:56:30Z, node v22.23.4
+## merge
+Auto-merging docs/design/equity-uprise-building/production/equity-uprise-repo-source-map-v2.json
+CONFLICT (content): Merge conflict in docs/design/equity-uprise-building/production/equity-uprise-repo-source-map-v2.json
+Auto-merging docs/design/equity-uprise-building/production/generated/equity-uprise-repo-source-coverage-report.json
+CONFLICT (content): Merge conflict in docs/design/equity-uprise-building/production/generated/equity-uprise-repo-source-coverage-report.json
+Automatic merge failed; fix conflicts and then commit the result.
+## unresolved after merge:
+docs/design/equity-uprise-building/production/equity-uprise-repo-source-map-v2.json
+docs/design/equity-uprise-building/production/generated/equity-uprise-repo-source-coverage-report.json
+## resolution 1: source map = union of entries by path (union_source_map.py, index stages 2 and 3)
+{
+ "ours_entries": 640,
+ "theirs_entries": 691,
+ "merged_entries": 696,
+ "added_from_theirs": 56,
+ "same_path_different_entry": [],
+ "header_keys_differing": [
+  "candidate_count",
+  "support_only_count"
+ ]
+}
+## resolution 2: regenerate the coverage report with the verifier on the merged tree
+{
+  "candidate_count": 696,
+  "capability_source_count": 104,
+  "support_only_count": 592,
+  "checks_total": 2682,
+  "checks_passed": 2682,
+  "checks_failed": 0,
+  "passed": true
+}
+verifier exit=0
+## unresolved after resolution:
+## node --test scripts/test/published-import-closure.test.mjs
+TAP version 13
+# Subtest: every literal local dependency of a published module survives the strip
+ok 1 - every literal local dependency of a published module survives the strip
+  ---
+  duration_ms: 161.519058
+  type: 'test'
+  ...
+# Subtest: the generated-recipe compiler ships with its importers (audit W1)
+ok 2 - the generated-recipe compiler ships with its importers (audit W1)
+  ---
+  duration_ms: 0.723628
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 238.297726
+exit=0

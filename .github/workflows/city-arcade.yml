@@ -1,0 +1,82 @@
+name: City Arcade release checks
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'city-arcade.html'
+      - 'js/city-arcade/**'
+      - 'js/spatial/**'
+      - 'js/action-globe.js'
+      - 'data/spatial/**'
+      - 'workers/mccluster/src/arcade/**'
+      - 'supabase/migrations/20261109181623_city_arcade_v1.sql'
+      - 'scripts/test/city-arcade*'
+      - 'scripts/test/bridgeport-walk-clock.test.mjs'
+      - 'scripts/test/sole-street-session.test.mjs'
+      - 'scripts/test/sole-shared-progression.test.mjs'
+      - 'scripts/test/support/arcade-database.mjs'
+      - 'scripts/e2e/city-arcade*'
+      - '.github/workflows/city-arcade.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'city-arcade.html'
+      - 'js/city-arcade/**'
+      - 'js/spatial/**'
+      - 'js/action-globe.js'
+      - 'data/spatial/**'
+      - 'workers/mccluster/src/arcade/**'
+      - 'supabase/migrations/20261109181623_city_arcade_v1.sql'
+      - 'scripts/test/city-arcade*'
+      - 'scripts/test/bridgeport-walk-clock.test.mjs'
+      - 'scripts/test/sole-street-session.test.mjs'
+      - 'scripts/test/sole-shared-progression.test.mjs'
+      - 'scripts/test/support/arcade-database.mjs'
+      - 'scripts/e2e/city-arcade*'
+      - '.github/workflows/city-arcade.yml'
+permissions:
+  contents: read
+concurrency:
+  group: city-arcade-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  arcade:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Install pinned local browser, renderer and database fixtures
+        run: |
+          npm install --prefix /tmp/arcade-qa --ignore-scripts --no-audit --no-fund --no-save playwright@1.57.0 cesium@1.131.0 @electric-sql/pglite@0.3.14
+          /tmp/arcade-qa/node_modules/.bin/playwright install --with-deps chromium
+      - name: Verify disabled cloud, enabled fixtures and shared Cesium lifecycle
+        env:
+          NODE_PATH: /tmp/arcade-qa/node_modules
+          CODEX_PRIMARY_RUNTIME_NODE_MODULES: /tmp/arcade-qa/node_modules
+          PGLITE_MODULE: /tmp/arcade-qa/node_modules/@electric-sql/pglite/dist/index.js
+          CESIUM_BUILD: /tmp/arcade-qa/node_modules/cesium/Build/Cesium
+          ARCADE_BASE: http://127.0.0.1:8768
+        shell: bash
+        run: |
+          set -euo pipefail
+          export CHROMIUM_PATH="$(node -e "console.log(require('/tmp/arcade-qa/node_modules/playwright').chromium.executablePath())")"
+          node tools/publish-fictional-city.mjs
+          node --test scripts/test/city-arcade*.test.mjs scripts/test/sole-street-session.test.mjs scripts/test/sole-shared-progression.test.mjs scripts/test/bridgeport-walk-clock.test.mjs
+          node scripts/test/city-arcade-database.integration.mjs
+          node scripts/test/city-arcade-start-recovery.integration.mjs
+          node scripts/test/city-arcade-spatial-contract.integration.mjs
+          python3 -m http.server 8768 --bind 127.0.0.1 > /tmp/arcade-server.log 2>&1 &
+          arcade_server_pid=$!
+          trap 'kill "$arcade_server_pid" 2>/dev/null || true' EXIT
+          curl --retry 10 --retry-connrefused --retry-delay 1 -fsS "$ARCADE_BASE/city-arcade.html" > /dev/null
+          node scripts/e2e/city-arcade-cloud-gate.e2e.mjs
+          node scripts/e2e/city-arcade-action.e2e.mjs
+          node scripts/e2e/city-arcade-recovery.e2e.mjs
+          node scripts/e2e/city-arcade-progression.e2e.cjs
+          node scripts/e2e/city-arcade-spatial.e2e.cjs
+          ARCADE_WIDTHS=390 ARCADE_DROP_RETURN=1 node scripts/e2e/city-arcade-spatial.e2e.cjs

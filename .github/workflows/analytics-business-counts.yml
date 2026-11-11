@@ -6,8 +6,6 @@ on:
       - 'supabase/tests/analytics_business_event_counts.behaviour.sql'
       - 'supabase/migrations/*_analytics_read_hotpaths_v2.sql'
       - 'supabase/migrations/*_analytics_region_covering_v3.sql'
-      - 'supabase/pending/analytics_read_hotpaths_v2.sql'
-      - 'supabase/pending/analytics_region_covering_v3.sql'
       - 'supabase/ops/*_v2_idx.sql'
       - 'supabase/ops/*_v3_idx.sql'
       - 'scripts/test-analytics-hotpaths-db.mjs'
@@ -56,7 +54,7 @@ jobs:
       PGUSER: postgres
       PGPASSWORD: postgres
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Validate Worker module
         run: |
           node --check workers/mccluster/src/analytics/business-event-counts.js

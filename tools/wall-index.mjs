@@ -1,6 +1,7 @@
 /* Read what actually landed on disk and write it into the gallery.
 
      node tools/wall-index.mjs candler-crossing
+     node tools/wall-index.mjs --check     # exit 1 if the gallery has drifted
 
    Or with no argument, every wall named in data/walls-intake.json.
 
@@ -16,7 +17,9 @@ const intake = JSON.parse(readFileSync(join(ROOT, "data/walls-intake.json"), "ut
 const gPath = join(ROOT, "data/gallery.json");
 const gallery = JSON.parse(readFileSync(gPath, "utf8"));
 
-const only = process.argv[2];
+const CHECK = process.argv.includes("--check");
+const only = process.argv.slice(2).find((a) => !a.startsWith("--"));
+const before = readFileSync(gPath, "utf8");
 const walls = (intake.walls || []).filter((w) => !only || w.event === only);
 if (!walls.length) {
   console.error(only ? `no wall named "${only}" in data/walls-intake.json` : "no walls in the intake");
@@ -67,8 +70,15 @@ for (const w of walls) {
   console.log(`${w.event}: ${ev.media.length} on the wall (${stills.length} stills) · cover ${ev.cover}`);
 }
 
-if (touched) {
-  writeFileSync(gPath, JSON.stringify(gallery, null, 1) + "\n");
+const next = JSON.stringify(gallery, null, 1) + "\n";
+if (CHECK) {
+  if (next !== before) {
+    console.error("data/gallery.json drifted from the walls on disk (assets/img/<event>/): run node tools/wall-index.mjs");
+    process.exit(1);
+  }
+  console.log("walls: current");
+} else if (touched) {
+  writeFileSync(gPath, next);
   console.log("wrote data/gallery.json");
 } else {
   console.log("nothing changed");

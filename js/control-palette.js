@@ -10,7 +10,7 @@
    It reads js/control-registry.js and nothing else, so a surface added
    there is instantly reachable from every page without touching this.
    ============================================================ */
-(function (root, doc) {
+(function mountPalette(root, doc) {
   var w = root;
   "use strict";
 
@@ -18,45 +18,16 @@
   if (!R) return;                       // registry absent: stay silent
   if (doc.getElementById("cmdkRoot")) return;  // already mounted
 
-  /* WHO GETS THIS. Some surfaces in the registry are public pages --
-     the listening room and Human Uprise are the product, not the back office --
-     and mounting an operator menu there would show every visitor a list
-     of the owner's internal desks. Not a hole, since each page gates
-     itself, but a map of the house handed to strangers.
-
-     So the palette only mounts for the owner. It reads the same session
-     key the rest of the site uses, and on a page with no session (or in
-     a private window where storage throws) it simply never appears. */
-  var OWNER = "matthew@mccluster.org";
-
-  function isOwner() {
-    try {
-      var raw = localStorage.getItem("mccdb_session");
-      if (!raw) return false;
-      var s = JSON.parse(raw);
-      var email = s && s.user && s.user.email;
-      if (!email && s && s.access_token) {
-        /* Fall back to the token's own claim: backend.js and mcc-auth.js
-           do not always store the user object, but both store the token. */
-        var body = s.access_token.split(".")[1];
-        if (body) {
-          var pad = body.replace(/-/g, "+").replace(/_/g, "/");
-          while (pad.length % 4) pad += "=";
-          email = (JSON.parse(atob(pad)) || {}).email;
-        }
-      }
-      return String(email || "").toLowerCase() === OWNER;
-    } catch (e) { return false; }
-  }
-
+  // Use the shared server-verified role, never a browser email claim. Wait
+  // for role restoration in place rather than reloading the current page.
+  function isOwner() { return !!root.MCC_BAR?.admin(); }
   if (!isOwner()) {
-    /* Signing in later should not require a reload to get navigation. */
-    root.addEventListener("mcc:auth-changed", function (e) {
-      /* a sign-in carried in from another host is taken in place by the World (js/tabbar.js, js/mnet.js) so the page is
-         never painted twice (owner, 2026-10-20: no screen flashes); the palette mounts on the next page instead */
-      if (e && e.detail && e.detail.carried) return;
-      if (isOwner() && !doc.getElementById("cmdkRoot")) location.reload();
-    });
+    function ready() {
+      if (!isOwner()) return;
+      root.removeEventListener('mcc:appbar-admin', ready);
+      mountPalette(root, doc);
+    }
+    root.addEventListener('mcc:appbar-admin', ready);
     return;
   }
 
@@ -86,6 +57,7 @@
      Command Room its own direct entrance plus an account menu. */
   var navStyle = doc.createElement("style");
   navStyle.textContent =
+    ".cmdk-owner-nav[hidden]{display:none!important}" +
     ".cmdk-owner-nav{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:clamp(12px,3vw,32px);z-index:198;display:flex;align-items:center;gap:7px;font:600 12px/1.3 system-ui,sans-serif}" +
     ".cmdk-owner-nav a,.cmdk-owner-nav button{box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:9px 13px;border:1px solid rgba(255,255,255,.25);border-radius:12px;background:rgba(15,16,20,.92);color:#f4efe6;text-decoration:none;cursor:pointer;backdrop-filter:blur(16px);font:inherit}" +
     ".cmdk-owner-nav a:focus-visible,.cmdk-owner-nav button:focus-visible{outline:2px solid #ff6a6c;outline-offset:2px}" +
@@ -203,6 +175,7 @@
   }
 
   function open() {
+    if (!isOwner()) return;
     lastFocus = doc.activeElement;
     el.classList.add("is-open");
     input.value = "";
@@ -265,5 +238,9 @@
     }
   });
 
+  root.addEventListener('mcc:appbar-admin', function(){
+    ownerNav.hidden = !isOwner();
+    if (!isOwner()) close();
+  });
   root.MCC_PALETTE = { open: open, close: close };
 })(window, document);

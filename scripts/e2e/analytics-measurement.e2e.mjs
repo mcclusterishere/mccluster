@@ -16,7 +16,7 @@ try {
   const key=theme+'-'+size.width;
   const {ctx,page,errors}=await context(size,{reduced:true,theme,fixedTime,deviceScaleFactor:1});
   await page.goto(BASE+'/control.html#analytics',{waitUntil:'domcontentloaded'});
-  check(key+' real globe',await settle(page));await page.waitForFunction(()=>window.CR.analytics.state.loaded);await page.waitForSelector('.cu-metrics');
+  check(key+' real globe',await settle(page));await page.waitForFunction(()=>window.CR.analytics.state.loaded);await page.waitForSelector('.cu-summary-groups .cu-summary-group');
   const w=await widths(page);check(key+' no horizontal overflow',w.scrollW===w.clientW);
   const g=await page.evaluate(()=>({theme:document.documentElement.dataset.theme,themeLock:document.documentElement.dataset.themeLock,layout:Object.fromEntries(['.cra-stage','.cad-body','.appbar','.cu-geography'].map(s=>{const r=document.querySelector(s).getBoundingClientRect();return[s,{x:r.x,y:r.y,width:r.width,height:r.height}];}))}));
   check(key+' respects existing dark theme lock',g.theme==='dark'&&g.themeLock==='dark');

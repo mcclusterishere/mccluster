@@ -98,9 +98,11 @@ begin
     from joined
     group by 1
   )
-  select coalesce(jsonb_agg(to_jsonb(g) order by g.key desc), '[]'::jsonb) into v_rows from grouped g;
-
-  select jsonb_build_object(
+  -- One statement: the CTEs above are visible only to the statement that defines them,
+  -- so the rows and the totals are read together (a second statement saw no "joined").
+  select
+    (select coalesce(jsonb_agg(to_jsonb(g) order by g.key desc), '[]'::jsonb) from grouped g),
+    (select jsonb_build_object(
     'jobs', coalesce(count(*), 0)::int,
     'reserved_cents', coalesce(sum(reserved_cents), 0)::int,
     'released_cents', coalesce(sum(released_cents), 0)::int,
@@ -110,7 +112,8 @@ begin
     -- Stated so a reader knows how much of the committed figure is still an
     -- estimate rather than a settled provider charge.
     'unsettled_cents', coalesce(sum(case when in_flight then committed_cents else 0 end), 0)::int
-  ) into v_totals from joined;
+  ) from joined)
+  into v_rows, v_totals;
 
   return jsonb_build_object(
     'ok', true,

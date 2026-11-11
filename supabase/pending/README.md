@@ -1,9 +1,241 @@
 # Pending migrations
 
+Read `PROMOTION-ORDER.md` (in this folder) for the order in which the files here
+are meant to be applied, what each needs first, and how each is tested.
+
+`live-callers.json` lists every RPC, table and bucket that shipped code (`js/`,
+root pages, `workers/mccluster/src`, `workers/mccluster-mcp/src`,
+`supabase/functions/`) calls but that is not deployed. Since 2026-10-29 a name
+counts as deployed only when `supabase/schema-manifest.json` (what the CI reset
+builds) AND the latest production evidence
+(`docs/control-plane/evidence/production-schema-snapshot-<date>.json`) both have
+it; a name only replay SQL defines is not deployed. `pending_only` names
+(pending, not applied) are defined by the named file here and fail in
+production until it is promoted; `missing_everywhere` names have no pending SQL.
+`scripts/test/rpc-names-exist.test.mjs` fails on any such name missing from the
+list and on any entry that is stale, so the list only shrinks: promoting a file
+and committing the new production snapshot means removing its names. Regenerate
+the view with `RPC_NAMES_REPORT=1 node scripts/test/rpc-names-exist.test.mjs`.
+
+Promoted 2026-11-09 (owner-run releases; receipts under
+`docs/control-plane/evidence/releases-2026-11-09/`). The live ledger went from 359 to 363
+rows. Rollback files stay here under their pending names as recovery-only artifacts:
+
+| Pending file | Applied as | Note |
+|---|---|---|
+| `20261109120000_music_direct_asset_versions_v1.sql` (branch draft, deleted) | `supabase/migrations/20261109175747_music_direct_asset_versions_v1.sql` | the applied SQL is the independently corrected version (lock order, settlement eligibility, 300 s replay bound); never replay the draft |
+| `core_signed_nonces_v1.sql` (moved) | `supabase/migrations/20261109180829_core_signed_nonces_v1.sql` | bytes unchanged; Worker `CORE_REPLAY_STORE` not yet deployed |
+| `city_arcade_v1.sql` (moved) | `supabase/migrations/20261109181623_city_arcade_v1.sql` | bytes unchanged; `ARCADE_CLOUD_ENABLED` absent, feature dormant |
+| `media_operation_claims_v1.sql` (moved) | `supabase/migrations/20261109194957_media_operation_claims_v1.sql` | bytes unchanged (stored statement and file: 5895 bytes, SHA-256 `c1733f48…08c1`); the live Worker predates the claim protocol and does not call it yet |
+
+Evidence for all four: `docs/control-plane/evidence/production-schema-snapshot-2026-11-09.json`
+is a production snapshot read at 22:17 UTC that day (363 ledger rows; each of the four stored
+statements equals its file here byte for byte), and `supabase/schema-manifest.json` carries the
+objects all four create. `live-callers.json` → `applied_awaiting_evidence` and
+`docs/control-plane/evidence/ledger-receipts.json` are therefore empty again. The read-only
+verification of the fourth, whose release receipt is not in this repository, is
+`docs/control-plane/evidence/releases-2026-11-09/CLAIMS-APPLIED-VERIFICATION.md`.
+
+Promoted 2026-10-29 (owner-approved), group 0 of `PROMOTION-ORDER.md` plus
+`public_music_reads_lean_v1.sql`, from
+`docs/control-plane/PRODUCTION-SCHEMA-RECONCILIATION-2026-10-28.md`. Each was applied with
+`apply_migration`, and the statement production stored is the committed file byte for byte
+(md5 checked):
+
+| Pending file | Applied as |
+|---|---|
+| `20261029100000_privilege_hygiene_v1.sql` | `supabase/migrations/20261029010919_privilege_hygiene_v1.sql` |
+| `20261029100100_definer_views_invoker_v1.sql` | `supabase/migrations/20261029011001_definer_views_invoker_v1.sql` |
+| `public_music_reads_lean_v1.sql` | `supabase/migrations/20261029011108_public_music_reads_lean_v1.sql` |
+| `20261029100200_rls_initplan_select_wrap_v1.sql` | `supabase/migrations/20261029011314_rls_initplan_select_wrap_v1.sql` |
+| `20261029100300_eu_runtime_and_media_rollup_v1.sql` | `supabase/migrations/20261029011534_eu_runtime_and_media_rollup_v1.sql` |
+
+Their four `.rollback.sql` files stay here under the pending names, as
+`20261015210000_intel_mission_canon_v1.rollback.sql` does for its promoted file
+(`supabase/migrations/` holds only what production ran). Applied files' headers keep their
+original pending wording, so the bytes still match production. Test:
+`bash scripts/test-schema-hygiene-db.sh` on a scratch Postgres. Production evidence after
+the apply: `docs/control-plane/evidence/production-schema-snapshot-2026-10-29.json`. Step 0
+before them is replay-only and changed nothing in production:
+`supabase/replay_migrations/20261028230000_schema_reconcile_production_only_v1.sql`
+(test: `bash scripts/test-schema-reconcile-db.sh`).
+
+Hygiene, 2026-10-27: `supabase/migrations/pending/` (a second staging folder
+that the drift check could not see) was retired; its twelve unapplied files
+moved here unchanged, and its five byte-identical copies of applied creator
+migrations were deleted. `scripts/control-plane-drift-contract-check.mjs` now
+fails if `supabase/migrations/` holds a subdirectory or a non-`.sql` file.
+Removed as already applied: `20261019222500_world_place_scope_v1.sql`
+(promoted as `20261021173729_world_place_scope_v1`) and
+`world_news_discussions_v1.sql` with its rollback (`media_news_comments`, its
+rate guard and RLS were created in production by
+`20261021011443_royce_platform_actor`; the tests that read the pending file
+now read that migration).
+
+
 Promoted 2026-10-21: `listener_state_v1.sql` is applied in production as `20261021125121_listener_state_v1.sql`. The Pocket cross-device state table now exists, with authenticated ownership RLS, forced RLS, a 4 KiB JSON cap, and no anon read. Exact stored production SQL matches the reviewed pending source. Test: `bash scripts/test-listener-state-db.sh`. Do not replay the pending file.
 
 
 Pending (2026-10-21): `member_fronts_v1.sql` gives every account its own front page (owner: "all the accounts need to be able to recreate with their own media this exact same experience"). It adds `public.member_fronts`, which only the Worker's service role reaches (forced RLS, revoked from anon and authenticated), and the public `front-media` bucket, where each account lists, writes, replaces and removes only its own folder (its auth uid), up to 2,500 files and 1 GiB (`public.front_media_has_room()`). Until it is applied, `/v1/fronts` answers 503. Test: `scripts/test-member-fronts-db.sh`. Docs: `docs/control-plane/MEMBER-FRONT-PAGES.md`. Rollback: in the file's header. Promote it using the steps below.
+
+Pending (2026-11-10): `network_media_assets_pointer_guard_v1.sql` (rollback
+`network_media_assets_pointer_guard_v1.rollback.sql`) is **source-only, NOT applied**.
+It preserves the candidate from Claude commits `4ae47c5b` and `1ea9b3f0`, reconciled
+with main. It is additional hardening, not a replacement for the media-signing
+owner/path checks in `supabase/functions/mnet-media/storage-path.mjs` and
+`workers/mccluster/src/lib/media-storage.js`. No Worker or Edge source changes,
+production apply, Storage-policy changes, grant changes or rollout are authorized
+by merging this pending file. A separate owner decision is required before promotion.
+
+The existing migration `20260920071811_mnet_real_network_v1.sql` permits owners to
+write their media rows and objects. The pending candidate would:
+
+- Refuse to apply, transactionally under the table lock, while any existing row
+  is not a canonical upload. A NOT VALID check still affects later updates,
+  including a post foreign key's SET NULL, so legacy rows need a decision first.
+- Remove direct member INSERT/UPDATE/DELETE and broader write privileges and
+  write policies on `network_media_assets`, leaving owner reads intact. A trigger
+  rejects member writes even if a later grant is added back.
+- Pin `id`, `bucket_id` and `object_path` against UPDATE by service-role and
+  SECURITY DEFINER writers too, and require new rows to point to a linked login.
+- Permit owner changes through the service-only
+  `network_media_assets_follow_merge(p_keep, p_merge, p_reason)` path, after an
+  identity merge, with an append-only record in `network_media_asset_owner_moves`.
+- Remove the three named member-write policies on `mnet-media`; signed-upload
+  URLs remain the upload path. This does not protect bytes from server writes.
+
+What must be true in production before `network_media_assets_pointer_guard_v1.sql` may be applied:
+
+1. Re-run `scripts/db/media-asset-legacy-count.sql`: `not_canonical = 0` is
+   mandatory. Use `scripts/db/media-asset-pointer-guard-precheck.sql` for counts
+   by referenced surface and merge eligibility. Both are read-only, counts-only
+   queries. Do not publish their operational results here. The legacy-count file
+   is already on main and is unchanged by this integration. A historical result
+   is not current approval or evidence. Canonical rows with an unlinked prefix
+   do not block the CHECK but remain unsigned; the existing signing checks must
+   stay. Decide noncanonical rows, missing referenced rows and unlinked uploads
+   with the owner rather than automatically deleting or rewriting them.
+2. Verify that deployed clients, including old native builds and satellites,
+   do not write the table or bucket with member tokens. Check a representative
+   period of API logs (at least 30 days) for authenticated POST/PATCH/DELETE on
+   `/rest/v1/network_media_assets` and POST/PUT/DELETE on ordinary
+   `/storage/v1/object/mnet-media/...` routes. Signed-upload PUTs are expected.
+   The repository contract test only covers source in this repository.
+3. Verify deployed `mnet-media` matches the repository's upload contract:
+   `upload-url` must supply `upload.token` or fail. Four client fallbacks still
+   POST using the member token when the token is missing. Removing the policy
+   would refuse those fallbacks, so deployment compatibility must be established.
+4. Verify the current schema, grants, triggers and all applicable Storage
+   policies privately. `action_share_assignment_internal` and
+   `publish_antisocial_collaboration` must be SECURITY DEFINER functions owned
+   by a trusted server role, and `service_role` must retain the table writes.
+   Unexpected triggers, policies, role inheritance or column grants require a
+   fresh review. Removing three named policies is not proof that no broader
+   policy grants bucket writes. Committed snapshots are fixture references,
+   not a current production attestation.
+5. Run `bash scripts/test-network-media-pointer-guard-db.sh` on disposable
+   PostgreSQL 16 and 17 and `node --test scripts/test/network-media-pointer-guard.test.mjs`.
+   Separately run `bash scripts/test-network-media-storage-flow.sh` with Docker
+   for real Storage API behavior; also exercise the restricted postgres role with
+   `SUPABASE_DB_IMAGE=supabase/postgres:17.11.0.018`. Native database fixtures use
+   stand-ins for Storage and are not equivalent to the real API or that role.
+   Keep each result explicit; an unavailable Docker run is not a pass.
+6. At promotion, update `supabase/tests/action_clipping_regression.sql`: its
+   hand-made `regress/clip-source-<uuid>.mp3` path lacks a linked login and would
+   be rejected. Do not move this candidate to migrations or the reset manifest
+   until this and the other prerequisites and owner approval are satisfied.
+
+After a separately approved apply, test member upload, signed PUT, finalize,
+post, view and discard; confirm direct member row and object writes are refused.
+With the legacy count still clear, run
+`alter table public.network_media_assets validate constraint network_media_assets_canonical_upload_check;`
+and record verification privately. This checklist is a future procedure, not a
+claim that any production action was performed for the source integration.
+
+Rollback restores the original migration's grants and six write policies, so it
+**reopens the vulnerability**. It is not a snapshot restore of arbitrary intervening
+policy changes. It is a no-op if the guard was never applied, and preserves a
+nonempty merge audit table and its append-only triggers. Rehearse it against the
+actual pre-promotion state before choosing it as recovery.
+
+Owner decisions and residual risks left open:
+
+- Merge following is a manual service-role call after `m_merge_people`, not
+  automatic. A chain needs one call per merged person naming the current login
+  holder. Rows not eligible remain counted as `left`. The link's `admin_merge`
+  marker does not identify which of multiple merged people originally held it.
+  Logins left nonprimary by the existing merge are still rejected by the Edge
+  function's primary-link lookup until addressed separately.
+- `finalize` currently sets ready regardless of the prior status. A member can
+  use that service-backed route to revive blocked/deleted/reserved rows and then
+  discard them. `discard` may remove bytes referenced by proof, level or clipping
+  records. Fixing those Edge routes is separate work, not supplied here.
+- Service-role and other privileged writers can still delete/reinsert a row
+  under the same id, or overwrite/delete its bytes. Table owners can disable
+  triggers. Object pinning, a byte-version check or a Storage trigger requires
+  owner decisions about takedowns, retention, erasure and recovery.
+- The candidate leaves any PostgreSQL 17 MAINTAIN privilege unchanged. It does
+  not make a platform-wide privilege decision.
+
+The candidate creates no object called by shipped code, so it has no entry in
+`live-callers.json`. Source merge, local fixture success, real Storage validation,
+promotion and production acceptance are separate milestones.
+
+Promoted 2026-10-30: `music_release_payment_integrity_v1.sql` is applied in production and is
+`supabase/migrations/20261030001000_music_release_payment_integrity_v1.sql` (bytes unchanged,
+md5 `5212054a89f62d77b2a11e8826bc73cf`; its header keeps the original pending wording). The
+owner ran the file in the Supabase SQL Editor (the MCP `apply_migration` approval could not
+reach him), then recorded the ledger row by hand: `supabase_migrations.schema_migrations`
+version `20261030001000`, name `music_release_payment_integrity_v1`, `statements` null (so
+there is no stored statement to md5 against the file), created_by `owner via SQL Editor
+(#666 rollout)`; the ledger went from 353 rows (latest `20261029011534`
+`eu_runtime_and_media_rollup_v1`) to 354. Its `.rollback.sql` stays here under the pending
+name. Rollout as run on 2026-10-30, against the steps below:
+step 1 as recorded below (unchanged); step 2 applied; step 3 every health query returned 0,
+the `music_storage_object_guard_%` trigger count is 2, and there are 0 `creator_tracks`, 0
+`music_orders`, 0 `music_entitlements`, 2 creator storage objects and 2 registry rows in
+`public.music_creator_assets` (the backfill); step 4 PR #666 merged as `249163db`, the
+"Supabase Edge Functions deploy" run 40978491536 succeeded and redeployed `music-access`,
+`music-checkout` and `stripe-webhook` at 2026-10-30T00:16Z, and unauthenticated probes answer
+401 / 401 / 400 (bad signature); step 4a not needed (no approved release). **Step 5 was NOT
+run**: no test release, Verify + listen or test purchase is created in production; it waits
+for the first real release, and is the first thing to do when that release reaches review.
+Production evidence after the apply:
+`docs/control-plane/evidence/production-schema-snapshot-2026-10-30.json`.
+
+Was pending (2026-10-28): `music_release_payment_integrity_v1.sql` closes four owner security findings on creator music: (a) a release's master, preview, audio URL and artwork must be objects its creator uploaded, by the server's record (`public.music_creator_assets`, written by `music-access` when it issues an upload grant, or the owner Storage stamps), never by path; the storage update/delete/own-read policies follow the same record; (b) any change to an approved or published release sends it back to `pending_review` and takes its offers off sale, and what is published equals the frozen `reviewed_snapshot`; (c) the licence commission is `public.music_platform_fee_bps()` (1500, the same constant `music-checkout` uses), not the creator-writable offer column; (d) a music order becomes paid only from pending/failed under its stored checkout session, its terms are immutable, and entitlements need a paid order; (e) approval pins the master's exact Storage identity (object id, version, eTag, size) in `public.music_asset_versions` and its sha256 review digest, a trigger on `storage.objects` refuses overwriting, moving or deleting a pinned object or one an approved/published release references (every role), each order and entitlement records the pinned version bought, and `music-access` signs exactly that version for purchasers (revoked refuses; a takedown or replacement does not take the bought version away); (f) approval is bound to the audio BYTES the reviewer heard (owner, 2026-10-29: "still needs approval tied to the exact reviewed audio before it goes live"): `music-access` `operator-review-prepare` pins the release's master (`public.music_prepare_review`, which locks the object from then on), streams that pinned object once through an incremental SHA-256 (native `node:crypto` `createHash`, chunk by chunk, never buffered; capped at 524288000 bytes, the `creator-masters` bucket limit, and failing closed above it, on a missing object or a short/failed read) and records it write-once on the version (`public.music_record_asset_sha256`; a recompute that disagrees invalidates the version, sends its releases back to review and off sale). The music desk (`js/music-admin.js`) plays THAT pinned object and shows the short hash; Publish stays disabled until then and carries the full hash (`expected_master_sha256`) to `public.music_operator_review`, and the track guard refuses entering approved/published unless the pinned master has a recorded hash equal to it (`release_master_unhashed`, `release_master_hash_required`, `release_master_hash_mismatch`, `release_master_invalid`). The hash is in the reviewed snapshot and digest (`approved_master_sha256`); orders and entitlements record it (`asset_sha256`, set by the guards, immutable). A replacement master is a new path: back to review, a new version with no hash, verified and approved again. What is hashed: the master only. It is what is sold and delivered; the preview and artwork are public, are not sold, and are locked by path against overwrite once the release is approved; between the reviewer's listen and the approval, a same-path overwrite of the PREVIEW or ARTWORK is still possible (the master is locked from preparation on): residual, follow-up if the owner wants previews hash-bound too. Bytes are hashed once, not per download or per checkout (a full read of a master each time, against the Edge CPU budget): the pinned object cannot change (storage trigger, every role), `music_asset_version_intact()` re-checks object id, version, eTag and size on every signed URL and every new order, and the recorded hash is what was approved; `recheck: true` on `operator-review-prepare` re-hashes on demand. `music-access` now FAILS CLOSED (503) without this file. Test: `scripts/test-music-release-integrity-db.sh`. Rollback: `music_release_payment_integrity_v1.rollback.sql` (reopens the findings and loses the pinned-version record). Promote it using the steps below.
+
+Rollout for `music_release_payment_integrity_v1.sql` (dependency-safe order; the database first, because the new functions refuse without it and the old functions work on top of it):
+
+1. Pre-check (read-only): `select status, count(*) from public.creator_tracks group by 1; select count(*) from public.music_orders; select count(*) from public.music_entitlements; select count(*) from storage.objects where bucket_id in ('creator-masters','creator-previews','creator-artwork');` Record the numbers.
+   Production read-only on 2026-10-29: 0 `creator_tracks` (0 approved/published), 0 `music_orders`, 0 `music_entitlements`, 0 objects in `creator-masters` (2 creator objects in total, in the other two buckets), `public.music_asset_versions` absent, `creator-masters` `file_size_limit` 524288000. There is no existing approved master to hash today.
+2. Apply the file (it backfills: the asset registry from `storage.objects`; every approved/published release's master pinned as it stands now, or sent back to review if not its creator's or missing; each existing order's and entitlement's purchased version). The database cannot read bytes, so a backfilled pin has NO `content_sha256`: until it has one, `music_asset_version_intact()` is false, so that release is not streamed, not sold (no new order) and its purchases are not delivered (409). Production has none (step 1), so nothing goes dark.
+3. Health after apply, every query must return 0 rows/0:
+   - `select id from public.creator_tracks where status in ('approved','published') and coalesce(master_path,'') <> '' and approved_master_version_id is null;`
+   - `select t.id from public.creator_tracks t join public.music_asset_versions v on v.id = t.approved_master_version_id where public.music_object_identity(v.bucket_id, v.object_name) is distinct from v.identity;`
+   - `select id from public.creator_tracks where status in ('approved','published') and reviewed_digest is distinct from public.music_review_digest(public.music_track_reviewed_snapshot(creator_tracks));`
+   - `select o.id from public.music_orders o where o.status = 'paid' and o.asset_version_id is null;` and the same for `music_entitlements e where e.revoked_at is null and e.asset_version_id is null` (any row: decide its version with the owner before step 4; music-access refuses it with 409 meanwhile)
+   - `select count(*) from pg_trigger where tgrelid = 'storage.objects'::regclass and tgname like 'music_storage_object_guard_%';` returns 2.
+   - No approved release without content_sha256 (expected to list every backfilled release until step 4a; 0 rows in production today): `select t.id from public.creator_tracks t left join public.music_asset_versions v on v.id = t.approved_master_version_id where t.status in ('approved','published') and (v.content_sha256 is null or v.invalidated_at is not null);`
+   - Storage API smoke (test creator account): upload to a fresh grant path succeeds; re-upload with `x-upsert: true` over an object an approved/published test release references is refused and `select version from storage.objects` for it is unchanged.
+4. Deploy `music-access`, then `music-checkout`, then `stripe-webhook`.
+   4a. Hash backfill (only if step 3's content_sha256 query listed rows): for each listed release, an operator opens the music desk and presses **Verify + listen** (`operator-review-prepare`), which hashes the pinned master and records it; the reviewed snapshot gains the hash of the same pinned bytes and its purchases record it. A row whose master is over 524288000 bytes or whose read fails stays listed and dark: resolve it with the owner (re-upload). Re-run the query: no approved release without content_sha256 (0 rows) before step 5.
+5. Health after deploy: on a test release, **Verify + listen** shows a short hash and plays the pinned object, `select content_sha256 from public.music_asset_versions where id = <version>` equals the full hash the desk returned and equals `sha256sum` of the file the creator uploaded, Publish without verifying is refused, and a second Verify answers the same hash without reading the object again (`hashed_now: false`); re-run the content_sha256 health query (0 rows); `music-access` `stream` of a published release returns a URL for the pinned `object_name`; `download` for a test purchase returns the pinned object; a revoked test entitlement returns 403; Edge logs show no `music-access dependency missing` lines; `music-checkout` for a release without `approved_master_version_id` answers 409.
+
+Back out: functions first (redeploy the previous `music-access`, which tolerates the file either way), then the rollback file.
+
+Applied 2026-10-31 as `20261031180839_music_direct_sales_v1.sql`: `music_direct_sales_v1` makes the hand-made `music_direct_*` tables safe for Matthew McCluster's direct checkout of his own recordings (owner, 2026-10-30: "I definitely need a direct checkout for all the music. I would like to be able to put some of my music for sale"). Offers: one per `public.music_catalog_objects` recording (FK), 50..50000 cents, the full-quality file only in the private `mcc-gated-audio` bucket under `direct-sales/`, `max_downloads` (default 5, 1..50) and `download_window_days` (default 30, 1..365), an optional sale window; anon/authenticated read only offers on sale now and only the buy-button columns (never bucket, path or file name). Orders: inserted pending with a stored Checkout Session id at the offer's own price (the guard refuses anything else); offer, session, amount and currency immutable; paid only from pending/failed; paid -> refunded is the only exit and revokes the entitlement in the same transaction. Entitlements: only for a paid order, server-random token, limit and expiry snapshotted, count only up to the limit, revocation final. `public.music_direct_fulfil()` (the one writer of paid + entitlement, re-binding session/amount/currency) and `public.music_direct_claim_download()` (one counted download under a row lock), both service-role only. Callers: `supabase/functions/music-direct-checkout`, `music-direct-access`, `stripe-webhook`; The production schema is applied; checkout code deployment and sale offers are tracked in PR #678. No buy button appears until an offer is active. Test: `scripts/test-music-direct-sales-db.sh` (also `.github/workflows/music-direct-sales-db.yml`) and `scripts/test/music-direct-sales.test.mjs`. Rollback: `music_direct_sales_v1.rollback.sql`.
+
+Rollout for `music_direct_sales_v1.sql` (owner approval required):
+
+1. Pre-check: orders and entitlements must be 0; active offers must satisfy the private-path contract. Inactive legacy offers are preserved. Passed on 2026-10-31.
+2. Applied with `apply_migration` as `music_direct_sales_v1`, production version `20261031180839`; committed SQL is byte-identical to the stored statement.
+3. Health: `select count(*) from pg_trigger where tgname like 'music_direct_%_trg';` returns 4; as anon, `select asset_path from public.music_direct_offers` is refused; `select has_function_privilege('anon', 'public.music_direct_claim_download(uuid)', 'execute');` is false.
+4. Merge the PR: the "Supabase Edge Functions deploy" run deploys `music-direct-checkout`, `music-direct-access` and `stripe-webhook` from Git (replacing the hand-deployed versions). Unauthenticated probes: `music-direct-checkout` `{action:"offers"}` answers 200 with `[]`; `music-direct-access` `{action:"operator-direct-list"}` answers 401.
+5. In Stripe (test mode first), the webhook endpoint already sends `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.expired`, `payment_intent.payment_failed` and `charge.refunded`; nothing to add.
+6. Owner, in Control → Create → Music → Direct sales (`control.html#create:music`): upload a file, set a price, put one track on sale; the album page shows "Buy <format> — $X" with the uploaded file's real format; one test-mode purchase lands on `purchase.html` with a download; a test refund closes it.
+
+Back out: take every offer off sale on the desk (or `update public.music_direct_offers set active=false`), then the rollback file.
 
 Promoted on 2026-10-17: `action_archive_cohort_v1.sql` is
 `supabase/migrations/20261017164335_action_archive_cohort_v1.sql`, and
@@ -78,12 +310,14 @@ Worker only. `WORLD_NEWS_INGEST_ENABLED = "true"` in
 `workers/mccluster/wrangler.toml`; `"false"` stops the ingest. Tested by
 `scripts/test-world-news-db.sh`.
 
-Pending: `action_globe_demo_pins_v1.sql` puts the first pins on the World
-(owner, 2026-10-15: "we need to have it populated with missions"). It inserts
-three regions (Connecticut, Georgia, Haut-Katanga) with centroids and places
-every open mission in one by its campaign, published. Idempotent; apply as the
-service role, then promote with the steps above. Regional impact totals still
-need five consenting members per region and are not seeded.
+Applied as data, file removed 2026-10-27: `action_globe_demo_pins_v1.sql` put the
+first pins on the World (owner, 2026-10-15: "we need to have it populated with
+missions"). Production holds its three regions (US-CT, US-GA, CD-HK, written
+2026-10-15) and the mission-region rows; it was run as the service role, not
+recorded as a migration, and had nothing left to promote. The SQL lives on as
+`supabase/tests/action_globe_demo_pins_v1.applied.sql`, the fixture
+`scripts/test-mission-pins-db.sh` applies before the pins migration. Regional impact totals
+still need five consenting members per region and are not seeded.
 
 Pending: `20261015210000_intel_mission_canon_v1.sql` is the one evidence ->
 claim -> briefing -> decision -> mission -> outcome schema for Halo and the
@@ -98,9 +332,10 @@ steps above. The Worker's intel routes answer `intel_schema_not_ready` until
 then, and its USGS collector stays off until `INTEL_USGS_COLLECTOR_ENABLED`
 is `"true"`.
 
-Superseded, do not apply: `20261011190000_decision_intelligence_evidence_v1.sql`
+Superseded and removed 2026-10-27: `20261011190000_decision_intelligence_evidence_v1.sql`
 (a private schema with no grants that nothing can reach, and a second source
-registry beside `ops_ingest_*`). The intel canon replaces it.
+registry beside `ops_ingest_*`). The intel canon replaced it; the file is in
+Git history only.
 
 Pending: `policy_fellowship_ladder_v1.sql` is the Policy Fellowship ladder
 (owner, 2026-10-15): every unlock as a data row (`action_unlock_rules`: the
@@ -215,8 +450,8 @@ v5.1.2 references; a "first world" list from the World Bank FY27 high-income cla
 data), a display-only origin ("Started by the Connecticut cohort"), the policy arc (memo → reform
 paper, unlocked by an admin-verified memo), and Black business listings reviewed by the desk. It
 also makes existing pins display-only (`join_scope` 'anywhere'): today every pinned open mission is
-unjoinable because no member has a region. Promote `action_globe_demo_pins_v1.sql` (already
-applied) first. Test: `scripts/test-mission-pins-db.sh`. Design and apply checklist:
+unjoinable because no member has a region. Its regions (the former `action_globe_demo_pins_v1.sql`) are already in
+production. Test: `scripts/test-mission-pins-db.sh`. Design and apply checklist:
 `docs/action-network/MISSION-PINS-ARCS-BLACK-BUSINESS.md`.
 
 Reconciled from production on 2026-10-16 (SQL was already applied; not re-executed):
@@ -231,3 +466,11 @@ Promoted 2026-10-17 to repair Analytics missing-function responses:
 - `20261017030554_analytics_region_v1.sql` is applied in production; its exact SQL is in `supabase/migrations/`.
 - `20261017030617_intel_mission_canon_v1.sql` is applied in production; its exact SQL is in `supabase/migrations/`.
 The applied SQL headers retain their original pending wording to preserve byte-for-byte production history. The intel rollback remains in this folder; collectors remain separately controlled.
+
+### Applied 2026-11-10: paid-media recovery
+
+`media_operation_claims_v2.sql` moved byte-for-byte to
+`supabase/migrations/20261110220135_media_operation_claims_v2.sql` after a verified
+transactional production apply. Its rollback remains here and must follow a
+Worker rollback. See the dated claims-v2 release receipt under
+`docs/control-plane/evidence/releases-2026-11-10/`. Other candidates remain pending.

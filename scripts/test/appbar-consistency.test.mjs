@@ -29,21 +29,23 @@ const read = (p) => readFile(join(ROOT, p), 'utf8');
    A page is not exempt because somebody forgot — it is exempt because it
    is not a place you navigate around from. */
 const EXEMPT = {
-  'equity-uprise.html': 'public logged-out globe gateway with deliberately minimal navigation',
   'embed.html': 'an embeddable widget that runs inside somebody else\'s page',
   'archive.html': 'redirect stub', 'brand.html': 'redirect stub',
   'cut.html': 'redirect stub', 'door.html': 'redirect stub',
   'feed.html': 'redirect stub', 'merch.html': 'redirect stub',
   'prints.html': 'redirect stub', 'role.html': 'redirect stub',
   'sponsor.html': 'redirect stub', 'walls.html': 'redirect stub',
-  'insights.html': 'redirect stub to Analytics · Audience',
+  'insights.html': 'redirect stub to Control · Insights',
+  'inbox.html': 'redirect stub to Control · People · Inbox (AI reply settings at control.html#people:inbox:ai-reply)',
+  'admin.html': 'redirect stub to Control · Sell · Store', 'crm.html': 'redirect stub to Control · People · Deals',
+  'desk.html': 'redirect stub to Control · People · Outreach', 'studio.html': 'redirect stub to Control · Create · Projects',
+  'management.html': 'redirect stub to Control · Create · Publish', 'lanes.html': 'redirect stub to Control · Sell · Music',
+  'vault.html': 'redirect stub to Control · Sell · Music', 'music-admin.html': 'redirect stub to Control · Sell · Music',
   '404.html': 'the not-found page GitHub Pages serves for a bad address; it forwards /action/<slug> and links home',
   'dashboard.html': 'same-origin legacy redirect stub: destination is enforced by the route regression suite',
   'feed.html': 'same-origin legacy redirect stub: destination is enforced by the route regression suite',
   'fellowship.html': 'same-origin legacy redirect stub: destination is enforced by the route regression suite',
   'fellowships.html': 'same-origin legacy redirect stub: destination is enforced by the route regression suite',
-  'lab-landmark.html': 'same-origin legacy redirect stub: destination is enforced by the route regression suite',
-  'lab-props.html': 'same-origin legacy redirect stub: destination is enforced by the route regression suite',
   'lb-harness.html': 'same-origin legacy redirect stub: destination is enforced by the route regression suite',
   'profile.html': 'same-origin legacy redirect stub: destination is enforced by the route regression suite',
   'topics.html': 'same-origin legacy redirect stub: destination is enforced by the route regression suite',
@@ -85,8 +87,10 @@ test('every tab destination has the bar it was reached from', async () => {
      destination carries the bar, the Control Room included (it no longer opts out) */
   const admin = all.slice(all.indexOf('function adminBar()'), all.indexOf('function markAdminHere()'));
   const adminHrefs = [...admin.matchAll(/href="'\s*\+\s*HOUSE\s*\+\s*'([a-z0-9-]+\.html)/g)].map((m) => m[1]);
-  /* the owner's globe is Hitman's Halo (2026-10-22), on the house like the other four */
-  assert.deepEqual(adminHrefs, ['listen.html', 'control.html', 'index.html', 'control.html', 'action-globe.html']);
+  /* World follows the canonical World host; the other owner destinations stay on the house. */
+  assert.deepEqual(adminHrefs, ['listen.html', 'control.html', 'control.html', 'index.html', 'control.html', 'game-hub.html']);
+  assert.ok(admin.includes('worldAt("?view=feed")'));
+  assert.match(admin, /data-appnav="world"/);
   for (const href of new Set(adminHrefs)) {
     const html = await read(href);
     assert.match(html, /js\/tabbar\.js/, `${href} is an owner tab destination but has no app bar`);
@@ -125,6 +129,10 @@ test('exactly three columns for everyone: Music | M | Globe', async () => {
   const wing = bar.slice(bar.indexOf('  var WINGS = {'));
   const world = wing.slice(wing.indexOf('world: {'), wing.indexOf('\n  };'));
   assert.equal((world.match(/\["[a-z0-9-]+\.html[^"]*",/g) || []).length, 2, 'the Globe wing carries two rooms');
+  /* Missions is the admin's for now (owner, 2026-11-03): the room stays in the wing, gated on the server's owner answer,
+     and everyone else gets its column empty so the wing still holds two cells (scripts/test/globe-games-gate.test.mjs) */
+  assert.match(world, /"Missions", \{[\s\S]*?\}, \{ admin: true \}\]/, 'the Missions room is admin-only');
+  assert.match(world, /"account\.html\?stay=1", "key", "Account", \{[\s\S]*?\}\]/, 'Account stays open to everyone');
   assert.match(bar, /var FIXED = \{\};/);
 });
 
@@ -152,4 +160,26 @@ test('the retired Create column is removed from legacy bars', async () => {
   assert.match(bar, /tab\.remove\(\)/);
   const create = await read('create.html');
   assert.match(create, /js\/tabbar\.js/);
+});
+
+ test('shared bars reserve role loading before first paint and immersive lab has an exit',async()=>{
+  for(const file of (await readdir(ROOT)).filter(f=>f.endsWith('.html'))){
+    const html=await read(file);
+    if(!html.includes('js/tabbar.js')||html.includes('data-no-appbar'))continue;
+    assert.match(html,/js\/shell-boot\.js/,file+' must reserve owner navigation');
+  }
+  assert.match(await read('equity-uprise-server-lab-3d.html'),/href="game-hub.html">Back to Games/);
+ });
+
+test('owner navigation rechecks server permission on iPad page restoration and foreground focus', async () => {
+  const bar = await read('js/tabbar.js');
+  assert.match(bar, /window\.addEventListener\("pageshow", function \(event\) \{[^\n]*restoreAuthState\(\)/,
+    'back-forward cache restoration must revalidate the signed-in owner navigation');
+  assert.match(bar, /window\.addEventListener\("focus", function \(\) \{[\s\S]*?!ADMIN_ON \|\| currentSubject\(\) !== lastVerifiedSubject\) restoreAuthState\(\)/,
+    'returning to a public dock with an existing session must recheck owner permission');
+  assert.match(bar, /fetch\(API_ORIGIN \+ "\/v1\/status", \{ headers: \{ authorization: "Bearer " \+ token \}/,
+    'the seven-tab dock must remain gated by the server owner status endpoint');
+  const owner = bar.slice(bar.indexOf('function adminBar()'),bar.indexOf('function markAdminHere()'));
+  assert.equal([...owner.matchAll(/data-appnav="/g)].length, 7,
+    'revalidated owners must see exactly seven primary destinations');
 });

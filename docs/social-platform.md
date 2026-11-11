@@ -1,3 +1,5 @@
+> Superseded 2026-10 by `docs/control-plane/CANONICAL-ARCHITECTURE.md`: `apps/api` is an archive; the one API is Worker `mccluster`.
+
 # The Social Desk platform: phase-2 spec (written, not built)
 
 The $400 tier sells the **service** today: clients send content, the desk

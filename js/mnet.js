@@ -735,7 +735,23 @@
      auth.uid()::text`. Getting this wrong is a 403, not a silent
      mis-file. */
   var AVATAR_BUCKET = "mnet-avatars";
-  var AVATAR_MAX = 5 * 1024 * 1024;
+  var AVATAR_MAX = 5 * 1024 * 1024;        // what the bucket accepts, and the most a phone is asked to decode
+  /* THE PICTURE IS MADE SMALL HERE, NOT SHOWN SMALL THERE (js/image-resize.js).
+     A face is painted into 42px circles on every row its owner appears in,
+     and the World was loading a 1.6 MB PNG into each of them. So a face goes
+     up as a 512px square WebP (around 30 KB), and a post picture no longer
+     than 1600px on its long edge. The caps stay on both sides of the resize:
+     before it, what the bucket enforces anyway; after it, a catch for a
+     resize that did not happen. A GIF is left alone and keeps its animation.
+     Without the helper the picture goes up as it did before. */
+  var AVATAR_OUT_MAX = 1024 * 1024;
+  var PICTURE_OUT_MAX = 5 * 1024 * 1024;
+  var AVATAR_FIT = { maxEdge: 512, square: true, maxBytes: AVATAR_OUT_MAX };
+  var PICTURE_FIT = { maxEdge: 1600, square: false, maxBytes: PICTURE_OUT_MAX };
+  function shrinkForUpload(file, fit) {
+    if (!window.MCCImageResize) return Promise.resolve(file);
+    return window.MCCImageResize.resize(file, fit).then(function (r) { return r.file; });
+  }
 
   function uploadAvatar(file) {
     var token = sessionToken();
@@ -745,20 +761,25 @@
     if (!/^image\/(png|jpeg|webp|gif)$/.test(file.type || "")) {
       return Promise.reject(new Error("Use a PNG, JPEG, WebP or GIF."));
     }
-    /* A fresh name every time: same-name overwrites are what make a new
-       photo show the old one until the cache gives up. */
-    var ext = (file.type.split("/")[1] || "png").replace("jpeg", "jpg");
-    var path = uid + "/avatar-" + Date.now() + "." + ext;
     setStatus($("mnAvatarStatus"), "Uploading…");
-    return fetch(SB_URL + "/storage/v1/object/" + AVATAR_BUCKET + "/" + path, {
-      method: "POST",
-      headers: {
-        apikey: SB_KEY,
-        authorization: "Bearer " + token,
-        "content-type": file.type,
-        "x-upsert": "true"
-      },
-      body: file
+    var path;
+    return shrinkForUpload(file, AVATAR_FIT).then(function (pic) {
+      /* A fresh name every time: same-name overwrites are what make a new
+         photo show the old one until the cache gives up. The extension is
+         the picture actually being sent (a PNG usually leaves here as WebP). */
+      var type = pic.type || file.type;
+      var ext = (type.split("/")[1] || "png").replace("jpeg", "jpg");
+      path = uid + "/avatar-" + Date.now() + "." + ext;
+      return fetch(SB_URL + "/storage/v1/object/" + AVATAR_BUCKET + "/" + path, {
+        method: "POST",
+        headers: {
+          apikey: SB_KEY,
+          authorization: "Bearer " + token,
+          "content-type": type,
+          "x-upsert": "true"
+        },
+        body: pic
+      });
     }).then(function (res) {
       if (!res.ok) return res.text().then(function (t) { throw new Error(t || "Upload failed."); });
       var url = SB_URL + "/storage/v1/object/public/" + AVATAR_BUCKET + "/" + path;
@@ -907,6 +928,11 @@
     }).finally(function () { button.disabled = false; });
   }
 
+  /* MNET STORY CHARACTERS (owner, 2026-11-03: a small "Character" badge, no other disclaimers).
+     The Worker marks a platform actor whose persona is a story character with actor_kind "character". */
+  function isCharacter(a) { return !!(a && a.actor_kind === "character"); }
+  function characterBadge(a) { return isCharacter(a) ? ' <span class="mn__character-badge">Character</span>' : ""; }
+
   function authorHtml(actor) {
     actor = actor || {};
     var name = actor.display_name || actor.mccluster_id || "Member";
@@ -917,7 +943,8 @@
       : esc(initials(name));
     var inner = '<div class="mn__author-avatar" style="--hue:' + hueOf(actor.mccluster_id || name) + '">' + av + '</div>' +
       '<div class="mn__author-meta"><span class="mn__author-name">' + esc(name) + '</span>' +
-      '<div class="mn__author-sub">' + esc(handle) + '</div></div>';
+      /* badge before the handle: a long handle ellipsizes, the badge never does */
+      '<div class="mn__author-sub">' + (isCharacter(actor) ? '<span class="mn__character-badge">Character</span> ' : '') + esc(handle) + '</div></div>';
     return actor.mccluster_id
       ? '<button class="mn__author-link" type="button" data-person="' + esc(actor.mccluster_id) + '">' + inner + '</button>'
       : inner;
@@ -1422,6 +1449,7 @@
       time.textContent = timeAgo(comment.created_at || '');
       var body = document.createElement('p');
       body.textContent = String(comment.body || '').slice(0,1000);
+      if (isCharacter(comment.actor)) { var badge = document.createElement('span'); badge.className = 'mn__character-badge'; badge.textContent = 'Character'; by.append(' ', badge); }
       row.append(by,time,body);
       list.appendChild(row);
     });
@@ -2324,7 +2352,8 @@
     var chain=Promise.resolve();
     files.forEach(function(file){
       chain=chain.then(function(){
-        return uploadMediaWithPoster(file).then(function(out){
+        /* a picture goes up at the size it is shown (js/image-resize.js); a video or a sound file goes as it is */
+        return shrinkForUpload(file,PICTURE_FIT).then(function(pic){return uploadMediaWithPoster(pic);}).then(function(out){
           var ready=out.asset;
           state.mediaAssets.push({
             id:ready.id,
@@ -2575,8 +2604,12 @@
       if (!THUMB_TYPES.test(String(f.type || "").toLowerCase())) { thumbStatus("Use a JPEG, PNG or WebP picture.", "error"); return; }
       if (f.size > 25 * 1024 * 1024) { thumbStatus("That picture is over 25 MB. Choose a smaller one.", "error"); return; }
       thumbBusy(true); thumbStatus("Saving the thumbnail…");
-      (window.MCCVideoPoster ? window.MCCVideoPoster.imageSize(f) : Promise.resolve({}))
-        .then(function (meta) { return saveThumbnail(f, meta); })
+      /* a thumbnail is shown no larger than a post picture, so it goes up at that size (js/image-resize.js) */
+      shrinkForUpload(f, PICTURE_FIT)
+        .then(function (pic) {
+          return (window.MCCVideoPoster ? window.MCCVideoPoster.imageSize(pic) : Promise.resolve({}))
+            .then(function (meta) { return saveThumbnail(pic, meta); });
+        })
         .catch(function (e) { thumbStatus(e.message || "The thumbnail did not save.", "error"); })
         .then(function () { thumbBusy(false); });
     });
@@ -2686,11 +2719,11 @@
         kind:"member", handle:String(id.mccluster_id||handle).toLowerCase(),
         name:name, avatar:safeHttpUrl(p.avatar_url)
       } })); } catch (_) {}
-      var avatar=safeHttpUrl(p.avatar_url),banner=safeHttpUrl(p.banner_url),avatarHtml=avatar?'style="background-image:url('+JSON.stringify(avatar)+')"':"";
+      var avatar=safeHttpUrl(p.avatar_url),banner=safeHttpUrl(p.banner_url),avatarHtml=avatar?'style="background-image:url(\''+esc(avatar.replace(/'/g,'%27'))+'\')"':"";
       var front=safeHttpUrl(presentation.front_page_url||p.website_url), frontHtml=front?'<div class="mn__frontpage mn__frontpage--person"><div class="mn__frontpage-head"><div><span>Front page</span><strong>'+esc(name)+' · public home</strong></div><a href="'+esc(front)+'" target="_blank" rel="noopener">Open site ↗</a></div><div class="mn__frontpage-stage"><iframe title="'+esc(name)+' front page" loading="lazy" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" src="'+esc(front)+'"></iframe></div></div>':'';
       var perspectiveLink='<p class="mn__perspective-link"><a href="'+esc('https://matthew.mccluster.org/member-front.html?handle='+encodeURIComponent(String(id.mccluster_id||handle).toLowerCase()))+'">Open '+esc(name)+'\u2019s full front page in the center →</a></p>';
-      $("mnPersonBody").innerHTML='<div class="mn__person-sheet">'+perspectiveLink+frontHtml+'<div class="mn__person-hero"'+(banner?' style="background-image:url('+JSON.stringify(banner)+')"':'')+'></div>' +
-        '<div class="mn__person-main"><div class="mn__profile-avatar" '+avatarHtml+'>'+(avatar?"":esc(initials(name)))+'</div><h2>'+esc(name)+'</h2><p class="mn__handle">@'+esc(id.mccluster_id||"")+'</p>' +
+      $("mnPersonBody").innerHTML='<div class="mn__person-sheet">'+perspectiveLink+frontHtml+'<div class="mn__person-hero"'+(banner?' style="background-image:url(\''+esc(banner.replace(/'/g,'%27'))+'\')"':'')+'></div>' +
+        '<div class="mn__person-main"><div class="mn__profile-avatar" '+avatarHtml+'>'+(avatar?"":esc(initials(name)))+'</div><h2>'+esc(name)+'</h2><p class="mn__handle">@'+esc(id.mccluster_id||"")+characterBadge(id)+'</p>' +
         (p.headline?'<p class="mn__profile-headline">'+esc(p.headline)+'</p>':'')+(p.bio?'<p class="mn__profile-bio">'+esc(p.bio)+'</p>':'')+
         '<div class="mn__profile-counts"><span><strong>'+Number(data.counts&&data.counts.followers||0)+'</strong> followers</span><span><strong>'+Number(data.counts&&data.counts.following||0)+'</strong> following</span><span><strong>'+Number(data.counts&&data.counts.posts||0)+'</strong> posts</span></div>'+
         '<div class="mn__person-actions"><button class="is-primary" type="button" id="mnPersonFollow">'+(data.following?"Following":"Follow")+'</button>'+connectButtonHtml(data.connection)+'<button type="button" id="mnPersonMessage">Message</button><button type="button" id="mnPersonMute">'+(data.muted?"Unmute":"Mute")+'</button><button type="button" class="mn__danger" id="mnPersonBlock">Block</button><button type="button" id="mnPersonReport">Report</button></div>'+
@@ -2832,6 +2865,10 @@
   function setView(name) {
     /* notifications are the bell's drop down, never a page of their own (owner, 2026-10-20) */
     if (name === "notifications") { if (state.guest) { askToSignIn(name); return; } openAlerts(); return; }
+    /* the menu closes on every pick, including the ones that stop at a gate
+       below (sign in, finish your profile); otherwise it stays open over the
+       World when the visitor comes back from the gate */
+    closeMenu();
     if (MISSIONS_OFF && name === "missions") name = "feed";
     if (state.guest && name !== "feed") { askToSignIn(name); return; }
     if (name !== "feed" && name !== "missions" && askToFinish(name)) return;
@@ -3713,7 +3750,7 @@
       /* clip campaigns are paid work and live in the Clips tab */
       missions.all=(out[0]||[]).filter(function(m){return m.kind!=="clip";}).map(publicMission);missions.stats={};
       (out[1]||[]).forEach(function(st){if(st&&st.mission_id)missions.stats[st.mission_id]=st;});
-      var helpGateway=(!missions.campaign||missions.campaign==="homelessness-action-001")
+      var helpGateway=!missions.campaign
         ? '<article class="mn__panel"><p class="mn__eyebrow">Help · private resource navigation</p><h3>Find services for yourself or someone you know</h3><p>Official national and international resource directories. No account or public proof required.</p><a class="mn__primary" href="/help.html">Find help now ↗</a></article>' : "";
       host.innerHTML=helpGateway+(missions.all.length?missions.all.map(missionCard).join(""):(helpGateway?"":'<div class="mn__empty">No open missions right now.</div>'));
       if(worldMissionDeck)worldMissionDeck.update(missions.all);

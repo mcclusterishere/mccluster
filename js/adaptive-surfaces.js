@@ -91,7 +91,7 @@
 
   function action(){
     var path=location.pathname;
-    if(!/(?:mnet|action|end-racism|heal-the-3rd-world|docket-516)/.test(path))return;
+    if(!/(?:mnet|action|heal-the-3rd-world|docket-516)/.test(path))return;
     var els=document.querySelectorAll('[data-mission], [data-open-mission], [data-take-mission], a[href*="/action/"]');
     instrument("action.next_step",els,"mission",Math.min(8,els.length||1));
   }

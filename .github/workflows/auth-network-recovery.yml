@@ -1,0 +1,44 @@
+name: Account network recovery
+on:
+  pull_request:
+    paths:
+      - 'js/mcc-auth.js'
+      - 'js/backend.js'
+      - 'js/tabbar.js'
+      - 'js/guest-world.js'
+      - 'js/owner-only.mjs'
+      - 'account.html'
+      - 'auth/**'
+      - 'scripts/e2e/auth-network-recovery.e2e.mjs'
+      - 'scripts/e2e/auth-clock-skew.e2e.mjs'
+      - 'scripts/e2e/tabbar-auth-refresh.e2e.mjs'
+      - 'scripts/test/auth-network-recovery.test.mjs'
+      - 'scripts/test/auth-session-clock.test.mjs'
+      - 'scripts/test/tabbar-auth-refresh.test.mjs'
+      - '.github/workflows/auth-network-recovery.yml'
+permissions:
+  contents: read
+jobs:
+  account:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Prepare pinned browser dependencies
+        run: |
+          npm install --prefix /tmp/capsule-qa --ignore-scripts --no-audit --no-fund --no-save playwright@1.57.0
+          /tmp/capsule-qa/node_modules/.bin/playwright install --with-deps chromium
+      - name: Verify password timeout and recovery
+        env:
+          CODEX_PRIMARY_RUNTIME_NODE_MODULES: /tmp/capsule-qa/node_modules
+        run: |
+          export CHROMIUM_PATH="$(node -e "console.log(require('/tmp/capsule-qa/node_modules/playwright').chromium.executablePath())")"
+          node --test scripts/test/auth-network-recovery.test.mjs scripts/test/auth-session-clock.test.mjs scripts/test/tabbar-auth-refresh.test.mjs
+          node scripts/e2e/auth-network-recovery.e2e.mjs
+          node scripts/e2e/auth-clock-skew.e2e.mjs
+          node scripts/e2e/tabbar-auth-refresh.e2e.mjs

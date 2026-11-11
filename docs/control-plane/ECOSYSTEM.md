@@ -74,8 +74,8 @@ The McCluster Network is the internal social layer for those identities: profile
 ## Adding a satellite
 
 1. Create the GitHub repo.
-2. Copy `CLAUDE.md`, `GEMINI.md`, `.cursorrules`, `.github/copilot-instructions.md` from this kit.
-3. Write an `AGENTS.md` that starts with the control-plane block and then any local law.
+2. Copy the seven thin agent adapters from this repo unchanged: `CLAUDE.md`, `CODEX.md`, `GEMINI.md`, `.cursorrules`, `.cursor/rules/mccluster.mdc`, `.github/copilot-instructions.md`, `.github/instructions/mccluster.instructions.md`. They point at `AGENTS.md` and carry no rule of their own. Never copy the control repo's building block (the Equity Uprise building, Uprise World and PRIM3 Site 0 gates in its `AGENTS.md`): a satellite has no building.
+3. Write an `AGENTS.md` that starts with the control-plane block (`docs/control-plane/SATELLITE.md`, copied whole) and then any local law.
 4. Add a row to `docs/control-plane/registry.json`.
 5. Consume canonical McCluster identity. Do not add a satellite username/account namespace.
 6. Register app/org membership and permissions separately from identity.

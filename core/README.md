@@ -10,7 +10,11 @@ Allowlisted executors:
 
 - `repo_health` — fetches repository state and can run already-installed local tests; it never installs packages during a health check.
 - `local_analysis` — sends a bounded analysis task to the local Ollama model. Its evidence scope is explicitly `job_input_only`.
-- `code_patch` — creates a disposable Git worktree, asks a separate low-privilege OpenCode service to edit it with the local model, rejects sensitive-path diffs, commits the accepted diff, optionally pushes a branch, and attempts to open a **draft PR**. It never auto-merges or deploys.
+- `code_patch` — creates a disposable Git worktree, asks a separate low-privilege OpenCode service to edit it with the local model, rejects sensitive-path diffs, commits the accepted diff, refuses a commit that fails `git diff --check` before any push (completion evidence requires `verification.git_diff_check`), optionally pushes a branch, and attempts to open a **draft PR**. It never auto-merges or deploys.
+
+- `lyrics_align` — the lyric machine for an uploaded release (`core/src/executors/lyrics-align.mjs`, engine in `core/src/lyrics/`): downloads the master with the service key into a private temp dir, separates the vocal with Demucs, recognises it with faster-whisper, maps the creator's lyric sheet (or DistroKid TTML / LRC) onto what is sung, refines word times with wav2vec2 CTC forced alignment, and writes `creator_tracks.lyrics` unreviewed. It never replaces lyrics the owner reviewed. Queued by the trigger in `supabase/pending/20261031180000_lyrics_machine_v1.sql`, by Control's "Re-run machine", or by the `lyrics.align` capability. See "Lyric machine runtime" below.
+
+- `stems_separate` — every instrument of one track (`core/src/executors/stems-separate.mjs`): Demucs `htdemucs_6s` (vocals, drums, bass, guitar, piano, other) plus an instrumental, 320 kbps MP3 with one shared gain so nothing clips, uploaded to the private bucket `mcc-gated-audio/stems/<track_key>/` with the manifest in `public.music_stem_sets` (`supabase/pending/20261031190000_music_stem_sets_v1.sql`). Shelf tracks are read from `https://matthew.mccluster.org/assets/audio/` only; uploads from their master. `lyrics_align` stores the stems its own separation made. The owner plays, solos, mutes and downloads them in Control → Create → Music → Stems.
 
 Existing unsupported queue types remain queued. Core does not fake completion for jobs whose real data/tool adapter has not been built yet.
 
@@ -47,9 +51,46 @@ Canonical conversation/memory truth remains in Supabase (`ops_ai_threads`, `ops_
 
 ## Local model
 
-The default is `qwen3:8b` through Ollama. Keep Ollama loopback-only. `core/systemd/ollama-mccluster.conf` caps the host at one loaded model and one parallel request, with a 16k default context and a 10 GB service memory ceiling.
+The default is `qwen3:8b` through Ollama. Keep Ollama loopback-only. `core/systemd/ollama-mccluster.conf` (installed and kept current by `scripts/deploy-ovh-core.sh`) allows four loaded models within a 19 GB service memory ceiling (the box has 24 GB), one parallel request each, a 16k default context and 6 CPU threads. Models (owner, 2026-11-03: "add an embedding model and a coding model loaded on demand and a small vision model on demand"):
+
+| Model | Use | Kept loaded |
+| --- | --- | --- |
+| `qwen3:8b` (default) | owner chat, reasoning | 24 h |
+| `qwen3:4b-instruct-2507-q4_K_M` | high-volume desk work (news desk, pairing checks) | 24 h |
+| `nomic-embed-text:v1.5` | embeddings: `POST /embed` on the adapter, `localAiEmbed()` in Core | 24 h |
+| `qwen2.5-coder:7b` | code jobs, by `model:` on a chat request | on demand, unloads after 5 min idle |
+| `qwen2.5vl:3b` | images, by `model:` plus `messages[].images` (base64) | on demand, unloads after 5 min idle |
+
+Only allowlisted models (`MCCLUSTER_OLLAMA_EXTRA_MODELS`) can be named; anything else, or one not yet installed, runs on the default model. The deploy pulls only the small resident models (`MCCLUSTER_OLLAMA_DEPLOY_PULL`) inside its 20-minute limit; the larger on-demand ones are installed by an `ai_diagnostics` job with `pull_missing: true`. The CPU is shared: more models add abilities, not throughput.
 
 A larger model can be tested later, but do not make a ~19–20 GB model the always-loaded default on a 24 GB VPS: it leaves too little recovery and OS headroom.
+
+### Inference transport and cancellation
+
+The local chat client and Ollama chat hop use `src/compute/inference-http.mjs`,
+not native `fetch`: a non-streaming CPU inference can withhold HTTP headers past
+Undici's independent five-minute header timeout even with a ten-minute
+`AbortSignal`. The existing caller and adapter deadlines remain unchanged and
+cover headers plus the complete body. Model fallback shares the adapter's one
+deadline. Responses are capped at 8 MiB, redirects are not followed, and invalid
+or interrupted JSON fails explicitly. Transport errors expose controlled codes,
+not upstream bodies, prompts, URLs or raw causes.
+
+`localAiChat({ ..., signal })` accepts caller cancellation. Disconnecting a
+queued caller removes it from the queue; disconnecting an active caller aborts
+the upstream request and releases the single inference slot. Accepted resident
+turns still belong to Core, so browser closure must not be forwarded as their
+cancellation signal. Queue bounds, model policy and inference settings are
+unchanged.
+
+Run `npm test` in `core/` for the bounded transport and cancellation regressions.
+For an optional real-time reproduction, run
+`node scripts/probe-inference-transport.mjs --full` from `core/`. It takes about
+310 seconds and compares native fetch with the inference transport against a
+synthetic loopback server. It uses no models, credentials or external services.
+Without `--full`, it is a quick smoke test, not proof of the five-minute cutoff.
+The other adapter routes and compute-node HTTP executor are outside this chat
+transport change.
 
 ## Host layout
 
@@ -201,6 +242,20 @@ sudo journalctl -u mccluster-core-runner -u mccluster-opencode -u mccluster-core
 ```
 
 The runner logs one JSON object per lifecycle event, so journald can be shipped later without changing the application protocol.
+
+## Lyric machine runtime
+
+`lyrics_align` needs ffmpeg and a Python with the open models' runtime (CPU is enough). Owned, self-hosted weights only; no paid API:
+
+```bash
+sudo apt-get install -y ffmpeg python3-venv
+sudo -u mccluster-core python3 -m venv /var/lib/mccluster-core/lyrics-venv
+sudo -u mccluster-core /var/lib/mccluster-core/lyrics-venv/bin/pip install --no-cache-dir \
+  torch==2.7.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cpu
+sudo -u mccluster-core /var/lib/mccluster-core/lyrics-venv/bin/pip install --no-cache-dir faster-whisper==1.2.1 demucs==4.1.0 soundfile
+```
+
+Then in `/etc/mccluster/core.env`: `LYRICS_PYTHON=/var/lib/mccluster-core/lyrics-venv/bin/python` (optional: `LYRICS_ASR_MODEL=large-v3-turbo` (default) or `medium.en` on a small host, `LYRICS_SEPARATOR_MODEL=htdemucs_6s` (default) or `htdemucs`, `LYRICS_ASR_THREADS`). First use downloads the weights into the service user's cache (~1.6 GB Whisper large-v3-turbo, ~80 MB Demucs, ~360 MB wav2vec2). Measured on a 4-vCPU container per ~2-minute track: separation 50–80 s, medium.en recognition on the vocal 50–140 s, CTC alignment ~10 s. Only after this is in place should the pending trigger be applied; until then Core quarantines `lyrics_align` jobs as unsupported.
 
 ## Queue examples
 

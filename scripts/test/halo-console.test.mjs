@@ -17,16 +17,16 @@ test('the globe loads Halo only for the owner the Worker names, only on the full
   assert.match(sync, /if\(HALO_OPEN===null\)return;/, 'the view opens only from a Halo link (?halo=…)');
   assert.ok(sync.indexOf('if(!owner)') < sync.indexOf('haloScript('), 'no Halo code is fetched before the owner answer');
   assert.match(sync, /enter\.hidden=!owner\|\|HALO_OPEN!==null;/, 'the header door shows for the owner only');
-  assert.match(sync, /Promise\.all\(\['css\/halo\.css','css\/halo-hud\.css'\]\.map\(haloStyle\)\)/, 'the styles land before the view mounts');
+  assert.match(sync, /Promise\.all\(\['css\/halo\.css','css\/halo-hud\.css','css\/halo-markets\.css'\]\.map\(haloStyle\)\)/, 'the styles land before the view mounts');
   assert.match(js, /paintLayerCredits\(\);haloSync\(\)\}/, 'every access repaint re-decides');
   assert.match(js, /const e=pickSolid\(p\.position\);if\(window\.HaloConsole&&HaloConsole\.pick\(e\)\)return;/, 'picks go to Halo first');
   assert.match(js, /halo\.id='ctlHalo';halo\.className='globe-ctl';halo\.hidden=true;halo\.href='action-globe\.html\?explore=1&halo=1';halo\.target='_top'/);
   assert.match(js, /const HU_V=\(\(\)=>\{try\{return new URL\(document\.currentScript\.src\)\.searchParams\.get\('v'\)\|\|''\}catch\(e\)\{return ''\}\}\)\(\);/);
-  for (const f of ['vision', 'hud', 'layers', 'data', 'chart', 'halo']) assert.ok(sync.includes("'js/halo/" + f + ".js'"), f + ' is loaded');
+  for (const f of ['vision', 'hud', 'layers', 'data', 'chart', 'markets', 'halo']) assert.ok(sync.includes("'js/halo/" + f + ".js'"), f + ' is loaded');
 });
 
 test('the view talks only to the Worker, through the globe bridge', () => {
-  for (const f of ['js/halo/halo.js', 'js/halo/layers.js', 'js/halo/data.js', 'js/halo/chart.js']) {
+  for (const f of ['js/halo/halo.js', 'js/halo/layers.js', 'js/halo/data.js', 'js/halo/chart.js', 'js/halo/markets.js']) {
     const js = read(f);
     assert.doesNotMatch(js, /https:\/\//, f + ' names no provider to call (official links are checked as patterns only)');
     assert.doesNotMatch(js, /fetch\((?!G\.api)/, f + ' fetches only G.api');
@@ -108,11 +108,13 @@ test('the Control Room and the site menu no longer point at Seek First; every Ha
     assert.doesNotMatch(read(f), /prime\.mccluster\.org/, f + ' links no other Halo');
 });
 
-test('the owner\'s globe in the bar is Hitman\'s Halo; Halo carries the way to the World feed (owner, 2026-10-22)', () => {
+test('the owner globe opens the consumer World and Halo retains its separate door', () => {
   const bar = read('js/tabbar.js');
   const admin = bar.slice(bar.indexOf('function adminBar()'), bar.indexOf('function markAdminHere()'));
-  assert.match(admin, /href="' \+ HOUSE \+ 'action-globe\.html\?explore=1&amp;halo=1" data-appnav="halo" aria-label="Open Hitman’s Halo"/);
-  assert.doesNotMatch(admin, /worldAt\(|data-appnav="world"/, 'the owner bar has no second, user globe');
+  assert.ok(admin.includes('worldAt("?view=feed")'));
+  assert.match(admin, /data-appnav="world" aria-label="Open the World globe"/);
+  assert.doesNotMatch(admin, /data-appnav="halo"/, 'the existing seven-tab layout is retained');
+  assert.match(read('js/site-navigation.js'), /label:'Hitman’s Halo', group:'Products'/);
   /* lit while Halo is on screen */
   assert.match(bar, /action-globe\\\.html\$\/\.test\(location\.pathname\) && new URLSearchParams\(location\.search\)\.has\("halo"\)\) return "halo";/);
   /* everyone else's globe is still the World */

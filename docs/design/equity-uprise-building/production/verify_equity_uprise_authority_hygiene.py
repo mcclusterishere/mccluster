@@ -1,14 +1,31 @@
 #!/usr/bin/env python3
 from pathlib import Path
-import json, sys
+import json, re, sys
 HERE=Path(__file__).resolve().parent;BUILDING=HERE.parent;ROOT=HERE.parents[3];GENERATED=HERE/"generated"
+sys.path.insert(0,str(HERE))
+from audit_building_context import AGENT_ENTRYPOINTS
 canonical_f1=BUILDING/"FLOOR-01-ARRIVAL-ORIENTATION-INTAKE-360-SPEC.md";canonical_b1=BUILDING/"BASEMENT-B1-UNDERGROUND-OPERATIONS-PROGRAM.md";stub_f1=BUILDING/"FLOOR-01-LOBBY-INTAKE-360-SPEC.md";stub_b1=BUILDING/"BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md"
+rel=lambda p:p.relative_to(ROOT).as_posix()
 checks=[]
 def check(name,passed,detail=""): checks.append({"name":name,"passed":bool(passed),"detail":detail})
-check("canonical Floor 1 authority exists",canonical_f1.exists(),str(canonical_f1));check("canonical B1 authority exists",canonical_b1.exists(),str(canonical_b1))
-check("deprecated Floor 1 path is stub",stub_f1.exists() and "DEPRECATED COMPATIBILITY PATH" in stub_f1.read_text(),str(stub_f1));check("deprecated B1 path is stub",stub_b1.exists() and "DEPRECATED COMPATIBILITY PATH" in stub_b1.read_text(),str(stub_b1))
-for agent in ("CLAUDE.md","CODEX.md","GEMINI.md"):
-    txt=(ROOT/agent).read_text(errors="ignore");check(f"{agent} no locked six-floor wording","locked six-floor building inventory" not in txt);check(f"{agent} no old migration branch","architecture/equity-uprise-core-v2" not in txt);check(f"{agent} current Floor 1 authority","FLOOR-01-ARRIVAL-ORIENTATION-INTAKE-360-SPEC.md" in txt);check(f"{agent} B1 sandbox boundary","sandboxed clone" in txt and "B1" in txt)
+check("canonical Floor 1 authority exists",canonical_f1.exists(),rel(canonical_f1));check("canonical B1 authority exists",canonical_b1.exists(),rel(canonical_b1))
+check("deprecated Floor 1 path is stub",stub_f1.exists() and "DEPRECATED COMPATIBILITY PATH" in stub_f1.read_text(),rel(stub_f1));check("deprecated B1 path is stub",stub_b1.exists() and "DEPRECATED COMPATIBILITY PATH" in stub_b1.read_text(),rel(stub_b1))
+# Pointer model: every agent entry file (the root law plus every vendor adapter) sends building work to the local
+# contract and REFERENCE-AUTHORITY.md. Program status, per-floor file lists and the deprecated Floor 1 path never
+# live in an entry file; AGENTS.md may cite Floor 1 only by its canonical authority.
+ENTRYPOINTS=sorted(set(AGENT_ENTRYPOINTS)|{".cursor/rules/mccluster.mdc",".github/instructions/mccluster.instructions.md"})
+STALE=("locked six-floor","architecture/equity-uprise-core-v2","only Floor 1 is currently program-reconciled","remain provisional until",stub_f1.name,stub_b1.name)
+for agent in ENTRYPOINTS:
+    txt=(ROOT/agent).read_text(errors="ignore")
+    for old in STALE: check(f"{agent} no stale authority wording :: {old}",old not in txt,old)
+    check(f"{agent} points to REFERENCE-AUTHORITY.md","docs/design/equity-uprise-building/REFERENCE-AUTHORITY.md" in txt)
+    check(f"{agent} points to the local building contract","docs/design/equity-uprise-building/AGENTS.md" in txt)
+    if agent=="AGENTS.md":
+        cited=sorted(set(re.findall(r"FLOOR-01-[A-Z0-9-]+-360-SPEC\.md",txt)))
+        check("AGENTS.md Floor 1 citation is the canonical authority",set(cited)<={canonical_f1.name},", ".join(cited) or "none")
+        check("AGENTS.md B1 sandbox boundary","sandboxed clone" in txt and "B1" in txt)
+    else:
+        check(f"{agent} carries no per-floor file list","FLOOR-0" not in txt)
 # Generated reports are evidence outputs, not active authority inputs; exclude them from recursive stale-reference scanning.
 intentional_compatibility_checkers={
     HERE/"verify_equity_uprise_authority_hygiene.py",

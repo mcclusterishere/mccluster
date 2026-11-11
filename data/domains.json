@@ -4,7 +4,7 @@
   { "site_id": "here",          "host": "matthew.mccluster.org",    "status": "live",     "repo": "mcclusterishere/Here",
     "former_hosts": ["here.mccluster.org"],
     "owns": "EVERYTHING PUBLIC. The album world, the studio and its services, the bio and credentials, and the Equity Uprise civic platform. One property, one repo.",
-    "note": "site_id stays 'here' because the offerings ledger and the campaigns table key off it; only the host changed. Renamed here.mccluster.org -> matthew.mccluster.org on 2026-08-17, per the 2026-07-30 owner's call in docs/architecture/subdomain-split.md. The old host is kept alive as a forwarding property built by tools/build-redirects.mjs." },
+    "note": "site_id stays 'here' because the offerings ledger and the campaigns table key off it; only the host changed. Renamed here.mccluster.org -> matthew.mccluster.org on 2026-08-17, per the 2026-07-30 owner's call in docs/architecture/subdomain-split.md. The old host is kept alive by a Cloudflare redirect rule (301, every path) to matthew.mccluster.org; see docs/control-plane/DOMAINS-AND-ENTITIES.md." },
   { "site_id": "matthew",       "host": "matthew.mccluster.org", "status": "merged",  "repo": "mcclusterishere/Here",
     "owns": "Nothing separate any more. This entry used to plan a standalone headquarters property and said 'do not build in Here'; the multi-subdomain split was called off on 2026-07-30 and the headquarters IS the Here repo, now served at this host. Kept as a tombstone so the old instruction is not followed by mistake." },
   { "site_id": "account",       "host": "account.mccluster.org", "status": "planned",  "repo": "shared backend",

@@ -23,7 +23,13 @@ import { meetingDelegateCollect } from './executors/meeting-delegate-collect.mjs
 import { residentAiTurn } from './executors/resident-ai-turn.mjs';
 import { actorLiveComment } from './executors/actor-live-comment.mjs';
 import { actorNewsComment } from './executors/actor-news-comment.mjs';
+import { prim3AgentNews } from './executors/prim3-agent-news.mjs';
+import { characterPost } from './executors/character-post.mjs';
+import { worldNewsPairing } from './executors/world-news-pairing.mjs';
+import { weatherRegionSnapshot } from './executors/weather-region-snapshot.mjs';
 import { aiDiagnostics } from './executors/ai-diagnostics.mjs';
+import { lyricsAlign } from './executors/lyrics-align.mjs';
+import { stemsSeparate } from './executors/stems-separate.mjs';
 import { emitCoreEvent, jobTraceId } from './observability.mjs';
 
 const executors = new Map([
@@ -51,7 +57,13 @@ const executors = new Map([
   ['resident_ai_turn', residentAiTurn],
   ['ai_diagnostics', aiDiagnostics],
   ['actor_news_comment', actorNewsComment],
+  ['prim3_agent_news', prim3AgentNews],
+  ['character_post', characterPost],
+  ['world_news_pairing', worldNewsPairing],
+  ['weather_region_snapshot', weatherRegionSnapshot],
   ['actor_live_comment', actorLiveComment],
+  ['lyrics_align', lyricsAlign],
+  ['stems_separate', stemsSeparate],
 ]);
 
 const pollMs = Math.max(2000, Number(process.env.MCCLUSTER_POLL_MS || 15_000));
@@ -77,11 +89,26 @@ async function execute(job) {
   const executor = executors.get(job.job_type);
   if (!executor) throw new Error(`unsupported job type: ${job.job_type}`);
   const startedAt = new Date().toISOString();
-  log('job_started', { job_id: job.id, job_type: job.job_type, target_id: job.target_id, attempt: job.attempts });
-  const timer = setInterval(() => { heartbeat(job).catch((error) => log('job_heartbeat_failed', { job_id: job.id, message: error.message })); }, heartbeatMs);
+  log('job_started', { job_id: job.id, job_type: job.job_type, target_id: job.target_id, attempt: job.attempts, lease: job.locked_by || null });
+  /* Audit finding C3: a heartbeat that matches zero rows means another attempt
+     owns this job now. Abort the executor, and never mark done afterwards: the
+     newer attempt owns the outcome, and ours is recorded as lost, not finished. */
+  const lease = new AbortController();
+  const lost = (error) => {
+    if (lease.signal.aborted) return;
+    lease.abort(error);
+    log('job_lease_lost', { job_id: job.id, job_type: job.job_type, attempt: job.attempts, message: error.message });
+  };
+  const timer = setInterval(() => {
+    heartbeat(job).catch((error) => {
+      if (error?.code === 'LEASE_LOST') lost(error);
+      else log('job_heartbeat_failed', { job_id: job.id, message: error.message });
+    });
+  }, heartbeatMs);
   timer.unref();
   try {
-    const rawOutput = await executor(job);
+    const rawOutput = await executor(job, { signal: lease.signal, lease: job.locked_by || null });
+    if (lease.signal.aborted) throw lease.signal.reason || new Error(`Lost ownership of job ${job.id} during execution`);
     const output = buildCompletionEvidence(job, rawOutput, {
       startedAt,
       completedAt: new Date().toISOString(),
@@ -104,6 +131,19 @@ async function execute(job) {
     });
     await safeNotify('owner_sms', () => notifyJobSuccess(job, output));
   } catch (error) {
+    if (error?.code === 'LEASE_LOST' || lease.signal.aborted) {
+      const reason = lease.signal.reason || error;
+      log('job_abandoned_lease_lost', { job_id: job.id, job_type: job.job_type, attempt: job.attempts, message: String(reason?.message || reason) });
+      await emitCoreEvent({
+        orgId: job.org_id, traceId: jobTraceId(job), requestId: job.id, kind: 'job',
+        name: `core.job.${job.job_type}.lease_lost`, route: `core:job:${job.job_type}`,
+        level: 'warn', outcome: 'retry', resourceType: 'ops_agent_job', resourceId: job.id,
+        durationMs: Date.now() - Date.parse(startedAt),
+        message: String(reason?.message || reason).slice(0, 500),
+        detail: { attempt: job.attempts ?? null, status: 'lease_lost' },
+      });
+      return;
+    }
     const updated = await failJob(job, error).catch((writeError) => { log('job_failure_write_failed', { job_id: job.id, message: writeError.message }); return null; });
     const status = updated?.status || 'unknown';
     const terminal = status === 'failed';

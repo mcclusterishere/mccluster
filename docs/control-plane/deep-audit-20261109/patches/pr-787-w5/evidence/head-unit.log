@@ -1,0 +1,127 @@
+# series head f8499fad (cf8c3cc7 + 2 patches), 2026-11-10T11:54:25Z, node v22.23.4
+# node --test scripts/test/prim3-topology-learning.test.mjs scripts/test/prim3-released-learning.test.mjs scripts/test/prim3-mission-client.test.mjs
+TAP version 13
+# Subtest: review and integer validation happen before queuing or network writes
+ok 1 - review and integer validation happen before queuing or network writes
+  ---
+  duration_ms: 33.244068
+  type: 'test'
+  ...
+# Subtest: lost request stays scoped to verified owner and retries exact body
+ok 2 - lost request stays scoped to verified owner and retries exact body
+  ---
+  duration_ms: 1.440922
+  type: 'test'
+  ...
+# Subtest: account change during response discards old pending account data
+ok 3 - account change during response discards old pending account data
+  ---
+  duration_ms: 0.946061
+  type: 'test'
+  ...
+# Subtest: storage failure refuses mutation rather than losing a queue
+ok 4 - storage failure refuses mutation rather than losing a queue
+  ---
+  duration_ms: 0.805815
+  type: 'test'
+  ...
+# Subtest: final event slot rejects answers and hints before persistence while allowing debrief
+ok 5 - final event slot rejects answers and hints before persistence while allowing debrief
+  ---
+  duration_ms: 2.181211
+  type: 'test'
+  ...
+# Subtest: reserve an answer before the final slot when only scaffolds have been used
+ok 6 - reserve an answer before the final slot when only scaffolds have been used
+  ---
+  duration_ms: 1.361984
+  type: 'test'
+  ...
+# Subtest: new practice requires acknowledged closed debrief and clears only local session state
+ok 7 - new practice requires acknowledged closed debrief and clears only local session state
+  ---
+  duration_ms: 1.713922
+  type: 'test'
+  ...
+# Subtest: lost reviewed lattice start retains the exact versioned context
+ok 8 - lost reviewed lattice start retains the exact versioned context
+  ---
+  duration_ms: 1.500366
+  type: 'test'
+  ...
+# Subtest: unavailable release detachment preserves rejected queue until server confirmation, including reload
+ok 9 - unavailable release detachment preserves rejected queue until server confirmation, including reload
+  ---
+  duration_ms: 3.492579
+  type: 'test'
+  ...
+# Subtest: expired rejected start can detach without a current session and never posts a synthetic finish
+ok 10 - expired rejected start can detach without a current session and never posts a synthetic finish
+  ---
+  duration_ms: 1.296848
+  type: 'test'
+  ...
+# Subtest: checkpoint presentation requires exact recipe and completed canonical step
+ok 11 - checkpoint presentation requires exact recipe and completed canonical step
+  ---
+  duration_ms: 0.750265
+  type: 'test'
+  ...
+# Subtest: shared adapter binds server release and forwards answer, never client correctness
+ok 12 - shared adapter binds server release and forwards answer, never client correctness
+  ---
+  duration_ms: 1.559724
+  type: 'test'
+  ...
+# Subtest: authored turn presentation requires the signed variant and topology
+ok 13 - authored turn presentation requires the signed variant and topology
+  ---
+  duration_ms: 0.454533
+  type: 'test'
+  ...
+# Subtest: premature completed debrief is rejected before it can poison the durable queue
+ok 14 - premature completed debrief is rejected before it can poison the durable queue
+  ---
+  duration_ms: 0.338786
+  type: 'test'
+  ...
+# Subtest: square evaluator agrees with canonical neighbor BFS, not graph indices
+ok 15 - square evaluator agrees with canonical neighbor BFS, not graph indices
+  ---
+  duration_ms: 14.434052
+  type: 'test'
+  ...
+# Subtest: hex evaluator agrees with canonical neighbor BFS, not graph indices
+ok 16 - hex evaluator agrees with canonical neighbor BFS, not graph indices
+  ---
+  duration_ms: 9.862088
+  type: 'test'
+  ...
+# Subtest: authored frames and unsupported/forged context fail closed
+ok 17 - authored frames and unsupported/forged context fail closed
+  ---
+  duration_ms: 1.372389
+  type: 'test'
+  ...
+# Subtest: authored frames follow their level modules: an HQ/B1 cell is the plan's 12 ft WORLD_M, the 3.54 m rule tile is named apart (audit W5)
+ok 18 - authored frames follow their level modules: an HQ/B1 cell is the plan's 12 ft WORLD_M, the 3.54 m rule tile is named apart (audit W5)
+  ---
+  duration_ms: 0.927202
+  type: 'test'
+  ...
+# Subtest: the published mission UI imports the published runtime; the private path only re-exports it (audit W5)
+ok 19 - the published mission UI imports the published runtime; the private path only re-exports it (audit W5)
+  ---
+  duration_ms: 1.359585
+  type: 'test'
+  ...
+1..19
+# tests 19
+# suites 0
+# pass 19
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 154.529076
+exit=0

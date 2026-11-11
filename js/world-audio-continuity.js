@@ -61,6 +61,8 @@
       // Both World routers canonicalize www before serving the document.
       u.hostname = u.hostname.replace(/^www\./, ""); return u;
     }
+    if (u.origin === HOUSE && /\/action-globe\.html$/.test(u.pathname) &&
+        ['explore','halo','games','embedded'].some(function(key){return u.searchParams.has(key);})) return null;
     if (u.origin === HOUSE && /\/(?:mnet|action-globe)\.html$/.test(u.pathname)) {
       var w = new URL("https://mccluster.org/"); w.search = u.search; w.hash = u.hash;
       w.searchParams.delete("embedded"); w.searchParams.delete("explore");
@@ -72,7 +74,10 @@
     var u = urlOf(href);
     return u && u.origin === HOUSE && u.pathname === "/listen.html" && !u.search && !u.hash;
   }
-  function musicSurface() { return !!root.MCC_MUSIC || !!doc.getElementById("deck"); }
+  function musicSurface() {
+    var deck = doc.getElementById("deck");
+    return !!root.MCC_MUSIC || !!(deck && /^(AUDIO|VIDEO)$/.test(deck.tagName));
+  }
   function selected() {
     var engine = root.MCC_MUSIC;
     if (engine && engine.current && engine.current()) {
@@ -93,15 +98,42 @@
     var src = audio && (audio.currentSrc || audio.src) || "", m = /\/([^\/?#]+)\.[a-z0-9]+(?:[?#]|$)/i.exec(src);
     return m ? m[1].toLowerCase() : "";
   }
+  /* WHICH WORDS BELONG TO A FILE is data/albums.json's to say (its track.lyrics), not a
+     guess from the file name: Money or the Power's audio is money-or-the-power.mp3 and its
+     words are data/lyrics/money-or-the-power.dk.json. The shelf is read once, for the
+     rotation below, and lyrics wait for it: a track the shelf lists with no lyrics file has
+     no words (guessing its slug's file asked for a file that does not exist, a 404 on every
+     play of Heal the 3rd World); only a file the shelf does not list at all is still tried
+     at its slug's own path under data/lyrics/. */
+  var lyricsBySlug = null;
+  function lyricsPath(slug) {
+    var named = lyricsBySlug && Object.prototype.hasOwnProperty.call(lyricsBySlug, slug) ? lyricsBySlug[slug] : null;
+    if (named === "") return null; // the shelf lists the track and names no words for it
+    return named ? ROOT + named : ROOT + "data/lyrics/" + encodeURIComponent(slug) + ".json";
+  }
+  /* THE SHAPE OF A LYRICS FILE is album.html's rule (paintLyrics): the files the shelf names keep
+     their lines as timed.line[] with begin/content (most committed files, the .dk.json ones among
+     them); a file written as lines[] with t/text is read too. Either way the World gets a sorted
+     list of {t, text}, or null when the file has no timed line to show. */
+  function lyricLines(d) {
+    var raw = d && d.timed && Array.isArray(d.timed.line) && d.timed.line.length ? d.timed.line
+      : d && Array.isArray(d.lines) ? d.lines : [];
+    var lines = [];
+    raw.forEach(function (l) {
+      if (!l || typeof l !== "object") return;
+      var t = Number.isFinite(l.begin) ? l.begin : l.t, text = typeof l.content === "string" ? l.content : typeof l.text === "string" ? l.text : l.line;
+      if (Number.isFinite(t) && typeof text === "string") lines.push({t:t, text:text});
+    });
+    lines.sort(function (a, b) { return a.t - b.t; });
+    return lines.length ? lines : null;
+  }
   function loadLyrics(slug) {
     if (!slug) return Promise.resolve(null);
-    if (!lyricCache[slug]) lyricCache[slug] = fetch(ROOT + "data/lyrics/" + encodeURIComponent(slug) + ".json", {credentials:"omit"})
+    if (!lyricsBySlug) return loadRotation().then(function () { return lyricsBySlug ? loadLyrics(slug) : null; });
+    var path = lyricsPath(slug); if (!path) return Promise.resolve(null);
+    if (!lyricCache[slug]) lyricCache[slug] = fetch(path, {credentials:"omit"})
       .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (d) {
-        var lines = d && Array.isArray(d.lines) ? d.lines.filter(function (l) { return l && typeof l.text === "string" && Number.isFinite(l.t); }) : [];
-        lines.sort(function (a, b) { return a.t - b.t; });
-        return lines.length ? lines : null;
-      })
+      .then(lyricLines)
       .catch(function () { return null; });
     return lyricCache[slug];
   }
@@ -189,18 +221,24 @@
   function loadRotation() {
     if (rotationLoad) return rotationLoad;
     rotationLoad = fetch(ROOT + "data/albums.json", {credentials:"omit"}).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
-      var list = [];
+      var list = [], words = {};
       (d && Array.isArray(d.albums) ? d.albums : []).forEach(function (a) {
         (a && Array.isArray(a.tracks) ? a.tracks : []).forEach(function (t) {
           var src = t && typeof t.src === "string" ? t.src : "";
+          // every track on the shelf, gated or not, that names a lyrics file (or names none with "") is taken at its word: same-origin data/ paths only
+          var fileSlug = src.replace(/^.*\//, "").replace(/\.[a-z0-9]+$/i, "").toLowerCase();
+          // a track on the shelf with no lyrics key has no words: no file is guessed for it
+          if (t && fileSlug) words[fileSlug] = typeof t.lyrics === "string" && /^data\/lyrics\/[a-z0-9._-]+\.json$/i.test(t.lyrics) ? t.lyrics : "";
           // public catalog files only: never a gated master, a preview or anything off the house's audio folder
           if (!t || t.gated || /preview/i.test(src) || !/^assets\/audio\/[a-z0-9._-]+\.(?:mp3|m4a)$/i.test(src)) return;
           list.push({title:String(t.title || "").slice(0, 120), src:src, slug:src.replace(/^.*\//, "").replace(/\.[a-z0-9]+$/i, "").toLowerCase(), album:String(a.slug || "").slice(0, 60)});
         });
       });
       rotation = list.length ? list : [FALLBACK_SONG];
+      // a lyric file guessed before the shelf arrived is forgotten, so the shelf's answer is the one used
+      lyricsBySlug = words; lyricCache = {};
       return rotation;
-    }).catch(function () { rotation = [FALLBACK_SONG]; return rotation; });
+    }).catch(function () { rotation = [FALLBACK_SONG]; lyricsBySlug = lyricsBySlug || {}; return rotation; });
     return rotationLoad;
   }
   function pickSong() {
@@ -648,7 +686,7 @@
   doc.addEventListener("click", function (e) {
     if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     var a = e.target.closest && e.target.closest("a[href]");
-    if (!a || a.target === "_blank" || a.hasAttribute("download") || a.closest(".world-audio-status")) return;
+    if (!a || a.target === "_blank" || a.hasAttribute("download") || a.closest(".world-audio-status,#mccAuthChip,#mccProfileMenu,#mccDestinations")) return;
     if (navigate(a.href)) { e.preventDefault(); e.stopPropagation(); }
   }, true);
   /* A TAP THAT LEAVES THE WORLD DOES NOT START ITS SONG (owner, 2026-10-20: no flashes). A bar tab (Music, the M) or the

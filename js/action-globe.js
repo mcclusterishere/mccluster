@@ -15,7 +15,7 @@ const EXPLORE=!embedded&&new URLSearchParams(location.search).has('explore');if(
    (owner, 2026-10-15): it stays here as on every other experience. The imagery credit stays (the licences ask for it), and
    one small corner control (and Escape) brings the chrome back. */
 const BARE=EXPLORE&&new URLSearchParams(location.search).get('chrome')==='0';if(BARE)document.documentElement.classList.add('globe-bare');
-/* Network surface: the globe inside the Human Uprise World tab. The parent page owns the feed and the mission context,
+/* Network surface: the globe inside the Equity Uprise World tab. The parent page owns the feed and the mission context,
    so this frame shows only the Earth and talks to its same-origin parent. Messages carry public mission fields only. */
 const parentFrame=embedded&&window.parent!==window?window.parent:null;if(parentFrame&&new URLSearchParams(location.search).get('surface')==='network')document.documentElement.classList.add('globe-surface-network');
 const ANALYTICS=!!parentFrame&&new URLSearchParams(location.search).get('surface')==='analytics';if(ANALYTICS)document.documentElement.classList.add('globe-surface-analytics');
@@ -179,18 +179,24 @@ function wireTravelGestures(){
  canvas.addEventListener('wheel',pauseTravelFollow,{passive:true});
  for(const id of ['ctlZoomIn','ctlZoomOut'])$(id)?.addEventListener('click',pauseTravelFollow,{capture:true});
 }
-/* Parent and iframe controls share one phone canvas: the page's own bar, tabs and buttons that lie over this frame */
+/* Parent and iframe controls share one phone canvas: the page's own bar, tabs and buttons that lie over this frame.
+   Words the page lays over the map without taking a touch (pointer-events:none on it and everything inside it, the headline above all, which the World's
+   music rewrites with each lyric line) are SOFT: a control keeps clear of them when it can, and sits over them when the
+   alternative is a slot under a tab or button, because a tap passes through words and never through a tab */
 function frameObstacles(){
  const frame=window.frameElement.getBoundingClientRect(),doc=parentFrame.document;
- const rect=selector=>{const el=doc.querySelector(selector),r=el?.getBoundingClientRect(),style=el&&parentFrame.getComputedStyle(el);return r&&r.width&&r.height&&style.display!=='none'&&style.visibility!=='hidden'?r:null};
+ // soft only when nothing in it takes a touch: the top header is pointer-events:none, but its mark, bell and avatar are not
+ const untouchable=(el,style)=>style.pointerEvents==='none'&&[...el.querySelectorAll('*')].every(child=>parentFrame.getComputedStyle(child).pointerEvents==='none');
+ const rect=selector=>{const el=doc.querySelector(selector),r=el?.getBoundingClientRect(),style=el&&parentFrame.getComputedStyle(el);return r&&r.width&&r.height&&style.display!=='none'&&style.visibility!=='hidden'?{left:r.left,right:r.right,top:r.top,bottom:r.bottom,soft:untouchable(el,style)}:null};
  const overlap=(a,b)=>a&&b&&a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;
  const clearance=parseFloat(parentFrame.getComputedStyle(doc.documentElement).getPropertyValue('--mn-bar-clear'))||0;
  const dock=rect('.appbar')||(doc.body.dataset.worldAudioChild==='ready'&&clearance>0?{left:0,right:doc.documentElement.clientWidth,top:parentFrame.innerHeight-clearance,bottom:parentFrame.innerHeight}:null);
  return {frame,overlap,obstacles:[dock,...['#mccWorldAudioControls','#mnWorldStack','.mn__world-expand','#mnWorldPlay','.wt-world-modes','.wt-headline','.wt-destination','.mn__top','#wtMapNav','#wtMapPickBanner'].map(rect)].filter(r=>overlap(frame,r))};
 }
-/* the lowest free slot for a control of this size, bottom right first, then bottom left (or the sides given); null when there is none */
-function clearSlot(size,base,margin,sides=['right','left']){
- const {frame,overlap,obstacles}=frameObstacles();
+/* the lowest free slot for a control of this size, bottom right first, then bottom left (or the sides given); null when there is none.
+   With hardOnly the soft obstacles (words that take no touch) are left out, for when nothing is free of them as well */
+function clearSlot(size,base,margin,sides=['right','left'],hardOnly=false){
+ const found=frameObstacles(),{frame,overlap}=found,obstacles=hardOnly?found.obstacles.filter(r=>!r.soft):found.obstacles;
  for(const side of sides){
   const left=side==='right'?frame.right-size.width-margin:frame.left+margin,right=left+size.width;
   const blocking=obstacles.filter(r=>left<r.right&&right>r.left);
@@ -208,11 +214,12 @@ function liftTravelControls(){
  for(const key of ['bottom','left','right','flex-direction'])rail.style.removeProperty(key);
  if(!travelMode||!parentFrame||!window.frameElement)return;
  try{
-  // Check every obstacle, including Expand when the dock does not overlap this stacked map.
+  // Check every obstacle, including Expand when the dock does not overlap this stacked map. A long lyric line can wrap the
+  // headline over the only free slot on a phone: then the controls sit over the words, never under the mode tabs.
   const preferred=getComputedStyle(rail).flexDirection;
-  for(const direction of [preferred,preferred==='row'?'column':'row']){
+  for(const hardOnly of [false,true])for(const direction of [preferred,preferred==='row'?'column':'row']){
    rail.style.flexDirection=direction;
-   const slot=clearSlot(rail.getBoundingClientRect(),26,12);
+   const slot=clearSlot(rail.getBoundingClientRect(),26,12,undefined,hardOnly);
    if(slot){rail.style.left=slot.side==='left'?'12px':'auto';rail.style.right=slot.side==='right'?'12px':'auto';rail.style.bottom=slot.bottom+'px';return}
   }
   // Extremely short keyboard viewports retain full-size controls. The normal
@@ -227,7 +234,7 @@ function liftWorldCorner(){
  for(const key of ['bottom','left','right'])corner.style.removeProperty(key);
  if(travelMode||!parentFrame||!window.frameElement)return;
  try{
-  const slot=clearSlot(corner.getBoundingClientRect(),24,8);
+  const slot=clearSlot(corner.getBoundingClientRect(),24,8)||clearSlot(corner.getBoundingClientRect(),24,8,undefined,true);
   if(slot){corner.style.left=slot.side==='left'?'8px':'auto';corner.style.right=slot.side==='right'?'8px':'auto';corner.style.bottom=slot.bottom+'px'}
  }catch(_){}
 }
@@ -412,6 +419,7 @@ function homeAltitude(){
 }
 function homePosition(){return Cesium.Cartesian3.fromDegrees(EDITORIAL?-35:0,EDITORIAL?25:15,homeAltitude())}
 
+const environmentPins=window.MCC_ENVIRONMENT_PINS?.create(()=>viewer,()=>window.Cesium,msg=>tell(msg));
 let readyMessage=null;function tell(msg){if(EXPLORE)exploreTell(msg);if(!parentFrame)return;try{parentFrame.postMessage(msg,location.origin)}catch(e){}}
 /* on the full pane there is no parent to tell, so the layer line and a guest's lock are painted here, in the World's own words
    (js/mnet.js paintLayerLine). The Vaunt lead is the owner's referral, the same one the World shows. */
@@ -450,6 +458,8 @@ function focusMission(id){
 }
 window.addEventListener('message',e=>{if(!parentFrame||e.source!==parentFrame||e.origin!==location.origin)return;const d=e.data||{};
 if(d.type==='hu:hello'){if(readyMessage)tell(readyMessage);return}
+if(d.type==='hu:environment-pins'&&!ANALYTICS){environmentPins?.set(d);return}
+if(d.type==='hu:environment-focus'&&!ANALYTICS){environmentPins?.focus(d.id);return}
 if(d.type==='hu:travel-mode'&&!ANALYTICS){setTravelMode(d.on===true);return}
 if(d.type==='hu:map-pick-mode'&&!ANALYTICS){travelPickKind(d.kind);return}
 if(d.type==='hu:completed-missions'&&!ANALYTICS){setCompletedEvents(d.events,d.on);return}
@@ -607,7 +617,8 @@ function styleScene(){const sc=viewer.scene;sc.backgroundColor=Cesium.Color.from
   // Sharpen small Retina globes; cap large canvases at an 800k-pixel budget.
   sizeEditorialResolution();
   sc.backgroundColor=Cesium.Color.fromCssColorString('#090b0d');sc.globe.baseColor=Cesium.Color.fromCssColorString('#082b4b');
-  if(sc.skyBox)sc.skyBox.show=false;if(sc.sun)sc.sun.show=false;if(sc.moon)sc.moon.show=false;
+  // Keep the existing Cesium starfield in the public World, including embedded globes.
+  if(sc.skyBox)sc.skyBox.show=true;if(sc.sun)sc.sun.show=false;if(sc.moon)sc.moon.show=false;
   /* DAY AND NIGHT BY THE REAL SUN (owner, 2026-10-19): the lit side and the dark side follow the actual time, not a studio lamp.
      The night side carries NASA's city lights; the Sun disc itself stays hidden on the editorial globe. */
   sc.globe.enableLighting=true;sc.light=new Cesium.SunLight();sc.globe.dynamicAtmosphereLightingFromSun=true;sc.globe.atmosphereSaturationShift=.1;sc.globe.atmosphereBrightnessShift=-.05;
@@ -636,7 +647,7 @@ function searchPins(q){$('worldSearch').value=q;const t=q.trim().toLocaleLowerCa
 /* COUNTRIES (js/world-countries.js): borders, flags, the red-white-blue United States, the fade on zoom. A tapped country filters the pins
    to the missions pinned there (by the rows' own country codes; none means none) without moving the camera. */
 let countries=null;function inCountry(m){return !countries||countries.keep(m)}
-function mountCountries(){if(!window.HuCountries||ANALYTICS||!viewer)return;countries=HuCountries.mount(viewer,{quiet:EDITORIAL,missions:()=>allMissions,regions:()=>regions,missionsOn:()=>!NO_MISSIONS,heatCells:newsHeatCells,onLegend:()=>scheduleTravelControls(),onStats:s=>tell({type:'hu:place-stats',place:s}),onSelect:c=>{searchPins($('worldSearch').value);tell({type:'hu:country',country:c})}});loadNewsHeat();loadMembers()}
+function mountCountries(){if(!window.HuCountries||ANALYTICS||!viewer)return;countries=HuCountries.mount(viewer,{quiet:EDITORIAL,missions:()=>allMissions,regions:()=>regions,missionsOn:()=>!NO_MISSIONS,heatCells:newsHeatCells,onLegend:()=>scheduleTravelControls(),onStats:s=>tell({type:'hu:place-stats',place:s}),onSelect:c=>{searchPins($('worldSearch').value);tell({type:'hu:country',country:c});/* Halo's Markets card listens (js/halo/markets.js) */try{window.dispatchEvent(new CustomEvent('hu:country',{detail:c}))}catch(e){}}});loadNewsHeat();loadMembers()}
 /* three looks, one button: the lit Earth (real sun), the night Earth (city lights everywhere, the owner's World mockups), the street map */
 function setLayer(mode){layerMode=mode;const night=mode==='night',g=viewer.scene.globe;if(mapLayer)mapLayer.show=mode==='map'||(mode==='auto'&&streetAuto(viewer.camera.positionCartographic.height));
  if(dayLayer)dayLayer.show=EDITORIAL||!night;if(cloudLayer)cloudLayer.show=EDITORIAL||!night;if(nightLayer){nightLayer.dayAlpha=night?1:0;nightLayer.brightness=night?2.1:6}
@@ -731,7 +742,7 @@ async function toggleLayer(k){const spec=DATA_LAYERS[k],b=$(spec.id),L=layerStat
  b.setAttribute('aria-busy','true');try{const data=await layerFetch(k);if(lockOf(k))return;if(k==='flights')drawFlights(data);else if(k==='satellites')await drawSatellites(data);else drawLaunches(data);if(lockOf(k)){clearLayer(k);return}L.credit=typeof data.credit==='string'?data.credit.slice(0,60):'';L.on=true;b.setAttribute('aria-pressed','true');paintLayerCredits();
   tell({type:'hu:layer',layer:k,on:true,count:L.count,creditHeight:creditHeight(),unavailable:!!data.unavailable,stale:!!data.stale,attribution:String(data.attribution||''),next:k==='launches'?(data.launches||[]).slice(0,3).map(l=>({name:String(l.name||''),net:l.net||null,where:String(l.pad&&(l.pad.location||l.pad.name)||'')})):undefined})}
  catch(e){if(String(e&&e.message)==='members'){paintDataLocks();tell({type:'hu:ask-sign-in',reason:'layers'})}else{try{console.warn('[world layer] '+k+': '+(e&&e.message||e))}catch(_){}tell({type:'hu:layer',layer:k,on:false,failed:true})}}finally{b.removeAttribute('aria-busy')}}
-function wireDataLayers(){Object.keys(DATA_LAYERS).forEach(k=>{const b=$(DATA_LAYERS[k].id);if(b)b.onclick=()=>toggleLayer(k)});paintDataLocks();window.addEventListener('storage',paintDataLocks);const cb=$('ctlCctv');if(cb)cb.onclick=()=>toggleCctv();const mb=$('ctlMusic');if(mb)mb.onclick=showMusic;const ib=$('ctlIntel');if(ib)ib.onclick=()=>toggleIntel();const tb=$('ctlTransport');if(tb)tb.onclick=()=>openWhip();window.addEventListener('storage',e=>{if(e.key==='mccdb_session')loadAccess()});const cx=$('cctvClose');if(cx)cx.onclick=closeSheet;window.addEventListener('storage',e=>{if(e.key==='mccdb_session')cctvEligibility()});
+function wireDataLayers(){Object.keys(DATA_LAYERS).forEach(k=>{const b=$(DATA_LAYERS[k].id);if(b)b.onclick=()=>toggleLayer(k)});paintDataLocks();window.addEventListener('storage',paintDataLocks);const cb=$('ctlCctv');if(cb)cb.onclick=()=>toggleCctv();const mb=$('ctlMusic');if(mb)mb.onclick=showMusic;const ib=$('ctlIntel');if(ib)ib.onclick=()=>toggleIntel();const tb=$('ctlTransport');if(tb)tb.onclick=()=>openWhip();const gb=$('ctlGames');if(gb)gb.onclick=()=>toggleGames();window.addEventListener('storage',e=>{if(e.key==='mccdb_session')loadAccess()});const cx=$('cctvClose');if(cx)cx.onclick=()=>closeSheet();window.addEventListener('storage',e=>{if(e.key==='mccdb_session')cctvEligibility()});
  if(BARE){const ex=$('bareExit');if(ex)ex.hidden=false;document.addEventListener('keydown',e=>{if(e.key==='Escape'&&($('cctvSheet')||{}).hidden!==false)location.href='action-globe.html?explore=1'})}liftAboveCredit();window.addEventListener('resize',liftAboveCredit);
  /* the full pane: the bar arrives after this script (js/tabbar.js), and the sheet grows when a mission is chosen */
  if(EXPLORE){new MutationObserver(liftAboveCredit).observe(document.body,{childList:true});if(window.ResizeObserver)new ResizeObserver(liftAboveCredit).observe($('deck'));window.addEventListener('load',liftAboveCredit);const hint=document.querySelector('#worldFilters p');if(hint)hint.textContent='Tap a pin to open its mission. Drag to turn the Earth, pinch to zoom.'}}
@@ -744,7 +755,7 @@ function lockOf(id){
  if(!sessionToken()||!access||access.release?.version!=='globe-admin-preview/v1'||access.release.admin_preview!==true||accessToken!==sessionToken())return{id,reason:'admin_preview'};
  if(!access.unlocked_layers.includes(id))return(access.locked_layers||[]).find(x=>x.id===id)||{id,reason:'feature_withdrawn'};
  return null}
-function paintAccess(){loadMembers();Object.keys(ACCESS_IDS).forEach(k=>{const b=$(ACCESS_IDS[k]);if(!b)return;const l=lockOf(k);b.hidden=ANALYTICS||!!l;b.setAttribute('aria-disabled',l?'true':'false')});
+function paintAccess(){loadMembers();Object.keys(ACCESS_IDS).forEach(k=>{const b=$(ACCESS_IDS[k]);if(!b)return;const l=lockOf(k);b.hidden=ANALYTICS||!!l;b.setAttribute('aria-disabled',l?'true':'false')});paintGames();
  const a=$('ctlAudience');if(a&&lockOf('audience'))a.hidden=true;
  if(!viewer){haloSync();return;}
  Object.keys(DATA_LAYERS).forEach(k=>{if(lockOf(k)&&layerState[k].on){layerState[k].on=false;clearLayer(k);const b=$(DATA_LAYERS[k].id);if(b)b.setAttribute('aria-pressed','false');tell({type:'hu:layer',layer:k,on:false})}});
@@ -756,6 +767,27 @@ async function loadAccess(){const seq=++accessSeq,t=sessionToken(),controller=ne
 window.addEventListener('storage',e=>{if(!e.key||e.key==='mccdb_session'){access=null;accessSeq++;accessToken='';paintAccess();loadAccess()}});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)loadAccess()});
 setInterval(()=>{if(!document.hidden)loadAccess()},60000);
+/* ---------- GAMES (owner, 2026-11-03: "a new tab on the globe called Games", its own overlay like the data layers; experimental,
+   admin/owner only for now) ----------
+   The house owner only, on the server's word: the same release answer as Halo (isOwner: /v1/world/access admin_preview, which
+   the Worker gives the house owner alone). Until it says yes the tab is hidden (html.globe-owner, css/globe-games.css), and
+   nothing of Games is fetched. The overlay itself is js/globe-games.js; its data is data/games/world.v1.json.
+   The globe's own Missions mode, layer and story feed ride the same answer (owner, 2026-11-03: missions hidden behind admin
+   until they are brought back; the code stays). ?games=1 opens it on arrival; ?games=<country>/<state>/<town> opens a town. */
+const GAMES_OPEN=new URLSearchParams(location.search).get('games');
+let games=null,gamesArrived=false;
+function paintGames(){const own=isOwner()&&!ANALYTICS;document.documentElement.classList.toggle('globe-owner',own);
+ const b=$('ctlGames');if(b){b.hidden=!own;b.setAttribute('aria-disabled',own?'false':'true')}const door=$('ctlGamesDoor');if(door)door.hidden=!own;
+ if(!own){if(games&&games.isOpen())games.close();return}
+ if(GAMES_OPEN&&EXPLORE&&!BARE&&!gamesArrived){gamesArrived=true;openGames(GAMES_OPEN==='1'?'':GAMES_OPEN)}}
+function openGames(start){if(!isOwner()||!window.HuGames)return;
+ if(!games)games=HuGames.mount({dataUrl:'data/games/world.v1.json'+(HU_V?'?v='+encodeURIComponent(HU_V):''),target:window.top!==window?'_top':'',
+  onFly:(lat,lon)=>{if(viewer&&Number.isFinite(lat)&&Number.isFinite(lon))viewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(lon,lat,90000),duration:1.4})},
+  onClose:()=>{const b=$('ctlGames');if(b)b.setAttribute('aria-pressed','false')}});
+ closeSheet();document.querySelectorAll('details.globe-editorial-tools[open]').forEach(d=>{d.open=false});
+ const b=$('ctlGames');if(b)b.setAttribute('aria-pressed','true');return games.open(start)}
+function toggleGames(){if(games&&games.isOpen()){games.close();return}openGames()}
+window.__huGames=()=>games;
 /* a locked layer explains itself: a guest is asked to sign in; a member is told what unlocks it */
 function explainLock(id){const l=lockOf(id);if(!l)return false;
  if(l.reason==='admin_preview'||l.reason==='feature_withdrawn'){return true}
@@ -806,7 +838,7 @@ function cctvFetch(path,init){const t=sessionToken();if(!t)return Promise.reject
 async function cctvEligibility(){const b=$('ctlCctv');if(!b)return null;if(!sessionToken()||ANALYTICS||lockOf('cctv')){cctv.state=null;if(cctv.on)cctvOff();paintAccess();return null}
  try{const r=await cctvFetch('/v1/world/cctv/eligibility');if(!r.ok)throw Error('eligibility '+r.status);const d=await r.json();cctv.state=d;paintAccess();if(!d.eligible&&cctv.on)cctvOff();return d}
  catch(e){cctv.state=null;paintAccess();return null}}
-function sheet(title,html){$('cctvClose').onclick=closeSheet;clearSpaceFocus();const s=$('cctvSheet');if(!s)return;$('cctvTitle').textContent=title;$('cctvBody').innerHTML=html;s.hidden=false}
+function sheet(title,html){$('cctvClose').onclick=()=>closeSheet();clearSpaceFocus();const s=$('cctvSheet');if(!s)return;$('cctvTitle').textContent=title;$('cctvBody').innerHTML=html;s.hidden=false;/* a sheet opened from the tools tray must not sit under it: the open tray (z 12) covered the sheet's own buttons at 390px */document.querySelectorAll('details.globe-editorial-tools[open]').forEach(d=>{d.open=false})}
 function closeSheet(keepFocus=false){if(!keepFocus)clearSpaceFocus();const s=$('cctvSheet');if(s)s.hidden=true;if(cctv.url){URL.revokeObjectURL(cctv.url);cctv.url=null}cctv.seq++}
 function cctvGate(d){d=d||cctv.state;if(!d){sheet('Camera access','<p>Could not check camera access. Close this panel and try again.</p>');return;}const c=d.checks||{},row=(ok,title,detail,action)=>'<li class="cctv-check'+(ok?' is-ok':'')+'"><span class="cctv-check__mark" aria-hidden="true">'+(ok?'✓':'✕')+'</span><span><b>'+title+'</b><small>'+(ok?'Done.':detail)+'</small>'+(ok?'':action||'')+'</span></li>';
  const target=window.top!==window?' target="_top"':'';
@@ -882,6 +914,9 @@ function wireEditorialTools(){
   /* the owner's door to Halo, above World: hidden until the server says owner (haloSync); it opens the full-screen globe with the console */
   const halo=document.createElement('a');halo.id='ctlHalo';halo.className='globe-ctl';halo.hidden=true;halo.href='action-globe.html?explore=1&halo=1';halo.target='_top';halo.setAttribute('aria-label',"Open Hitman's Halo");
   halo.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>';corner.insertBefore(halo,corner.firstChild);
+  /* the owner's door to Games, above Halo: hidden until the server says owner (paintGames); it opens the full-screen globe with Games open */
+  const games=document.createElement('a');games.id='ctlGamesDoor';games.className='globe-ctl';games.hidden=true;games.href='action-globe.html?explore=1&games=1';games.target='_top';games.setAttribute('aria-label','Open Games');
+  games.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="7" width="19" height="11" rx="5.5"/><path d="M7.5 10.5v4M5.5 12.5h4"/><circle cx="15.5" cy="11.5" r=".9"/><circle cx="17.5" cy="13.8" r=".9"/></svg>';corner.insertBefore(games,corner.firstChild);paintGames();
   const shelf=document.createElement('div');shelf.className='globe-editorial-shelf';shelf.hidden=true;if(nav)shelf.appendChild(nav);if(row)shelf.appendChild(row);document.body.appendChild(shelf);
   const rail=document.createElement('nav');rail.className='globe-travel-controls';rail.setAttribute('aria-label','Travel globe controls');document.body.appendChild(rail);setTravelMode(travelMode);
   return;
@@ -981,7 +1016,50 @@ let haloPhotoreal=false,haloLoad=null,haloMapFailed=false;
 function isOwner(){const t=sessionToken();return !!(t&&access&&access.release?.version==='globe-admin-preview/v1'&&access.release.admin_preview===true&&accessToken===t)}
 function haloScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+(HU_V?'?v='+encodeURIComponent(HU_V):'');s.onload=res;s.onerror=()=>rej(Error(src));document.head.appendChild(s)})}
 function haloStyle(href){return new Promise(res=>{if(document.querySelector('link[data-halo="'+href+'"]'))return res();const l=document.createElement('link');l.rel='stylesheet';l.href=href+(HU_V?'?v='+encodeURIComponent(HU_V):'');l.dataset.halo=href;l.onload=l.onerror=()=>res();document.head.appendChild(l)})}
-function haloSync(){const owner=isOwner()&&!ANALYTICS&&EDITORIAL,door=$('ctlHalo');if(door)door.hidden=!owner;
+let bridgeportGeneration=0,bridgeportLoading=false,bridgeportDeepLink=false,bridgeportEntrance=null,bridgeportRegion=new URLSearchParams(location.search).get('bridgeport')==='2'?'bridgeport-downtown.v2':'bridgeport-golden-hill.v1';
+// Imports cannot be aborted; invalidate their request before leaving or losing access.
+function bridgeportCancel(acknowledge=false){
+ ++bridgeportGeneration;bridgeportLoading=false;
+ const door=document.getElementById('bridgeportEnter');if(door)door.disabled=false;
+ if(window.BridgeportSlice){window.BridgeportSlice.leave();return;}
+ if(acknowledge&&window.parent!==window)window.parent.postMessage({
+  schema:'mccluster.spatial-lifecycle/v1',type:'bridgeport:state',event:'returned',
+  regionId:bridgeportRegion,revision:bridgeportRegion.endsWith('.v2')?2:1,
+  frameId:'bridgeport-golden-hill.enu.v1',floorId:'street',entranceId:bridgeportEntrance,
+  entered:false,loaded:false,position:null,topology:'hex',closedRoadIds:[],navigationRevision:0,
+  capabilities:['exterior-navigation','square','hex','preview-confirm','local-resume',
+   ...(bridgeportRegion.endsWith('.v2')?['road-closures','explicit-v1-pose-import']:[])]
+ },location.origin);
+}
+window.addEventListener('message',event=>{
+ if(event.origin!==location.origin||event.source!==window.parent||window.parent===window||!isOwner())return;
+ const m=event.data;if(m?.schema!=='mccluster.spatial-lifecycle/v1')return;
+ if(m.type==='bridgeport:enter'&&['bridgeport-main-elm','bridgeport-main-fairfield','bridgeport-middle-golden-hill','bridgeport-main-south','bridgeport-main-golden-hill','golden-hill-west'].includes(m.entranceId)){if(m.regionId&&!['bridgeport-golden-hill.v1','bridgeport-downtown.v2'].includes(m.regionId))return;if(bridgeportLoading)bridgeportCancel();bridgeportRegion=m.regionId||'bridgeport-golden-hill.v1';bridgeportEntrance=m.entranceId;document.getElementById('bridgeportEnter')?.click();}
+ if(m.type==='bridgeport:leave')bridgeportCancel(true);
+ if(m.type==='bridgeport:preview')window.BridgeportSlice?.previewDestination(m.destinationId,m.requestId);
+ if(m.type==='bridgeport:closures')window.BridgeportSlice?.setClosures(m.closedRoadIds);
+ if(m.type==='bridgeport:confirm')window.BridgeportSlice?.confirm();
+});
+window.addEventListener('pagehide',()=>{bridgeportCancel();window.BridgeportSlice?.destroy();window.BridgeportSlice=null;});
+function bridgeportSync(){
+ if(!viewer)return;let door=document.getElementById('bridgeportEnter');
+ if(!door){door=document.createElement('button');door.id='bridgeportEnter';door.type='button';door.textContent='Bridgeport walk';door.style.cssText='position:fixed;top:80px;left:12px;z-index:120;font:16px system-ui;min-height:44px';document.body.append(door);
+ door.onclick=async()=>{
+  if(!isOwner()||bridgeportLoading)return;
+  const options={entranceId:bridgeportEntrance,regionId:bridgeportRegion};
+  if(window.BridgeportSlice){window.BridgeportSlice.enter(options);return;}
+  const generation=++bridgeportGeneration;bridgeportLoading=true;door.disabled=true;
+  try{const m=await import('./spatial/bridgeport-globe.mjs');
+   if(generation!==bridgeportGeneration||!isOwner())return;
+   window.BridgeportSlice=m.mountBridgeport({globe:window.HuGlobe,C:Cesium});
+   window.BridgeportSlice.enter(options);
+  }catch(e){if(generation===bridgeportGeneration)door.textContent='Retry Bridgeport walk';}
+  finally{if(generation===bridgeportGeneration){bridgeportLoading=false;door.disabled=false;}}
+ };}
+ door.hidden=!isOwner();if(!isOwner())bridgeportCancel();
+ if(isOwner()&&!bridgeportDeepLink&&['1','2'].includes(new URLSearchParams(location.search).get('bridgeport'))){bridgeportDeepLink=true;door.click();}
+}
+function haloSync(){bridgeportSync();const owner=isOwner()&&!ANALYTICS&&EDITORIAL,door=$('ctlHalo');if(door)door.hidden=!owner;
  if(!EXPLORE||BARE||(!viewer&&!haloMapFailed))return;
  /* the full-screen globe's own door to Halo, beside "← World", for the owner only */
  let enter=$('haloEnter');const back=$('worldBack');if(!enter&&back){enter=document.createElement('a');enter.id='haloEnter';enter.className='halo-enter';enter.href='action-globe.html?explore=1&halo=1';enter.setAttribute('aria-label',"Open Hitman's Halo");enter.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg><span>Halo</span>';back.after(enter)}
@@ -990,7 +1068,7 @@ function haloSync(){const owner=isOwner()&&!ANALYTICS&&EDITORIAL,door=$('ctlHalo
  if(HALO_OPEN===null)return;
  if(window.HaloConsole){HaloConsole.mount(window.HuGlobe,{view:HALO_VIEW});return}
  /* the view lays the Earth out by its stylesheet, so the styles land before the view mounts */
- if(!haloLoad){haloLoad=['js/halo/events.js','js/halo/objects.js','js/halo/vision.js','js/halo/hud.js','js/halo/layers.js','js/halo/data.js','js/halo/chart.js','js/halo/halo.js'].reduce((p,src)=>p.then(()=>haloScript(src)),Promise.all(['css/halo.css','css/halo-hud.css'].map(haloStyle)))
+ if(!haloLoad){haloLoad=['js/halo/events.js','js/halo/objects.js','js/halo/vision.js','js/halo/hud.js','js/halo/layers.js','js/halo/data.js','js/halo/chart.js','js/halo/finance.js','js/halo/markets.js','js/halo/halo.js'].reduce((p,src)=>p.then(()=>haloScript(src)),Promise.all(['css/halo.css','css/halo-hud.css','css/halo-markets.css'].map(haloStyle)))
    .then(()=>haloSync(),e=>{haloLoad=null;try{console.warn('[halo] '+(e&&e.message||e))}catch(_){}})}}
 /* what the Halo console may use of this globe; nothing here widens what the owner's session can read */
 window.HuGlobe=Object.freeze({
@@ -1006,6 +1084,7 @@ window.HuGlobe=Object.freeze({
  hideInspection:()=>closeSheet(true),
  openAircraft:contact=>openAircraft(contact),openSatellite:sat=>openSatellite(sat),satPosition:sat=>satPos(sat,new Date()),
  ion:()=>ion,
+ ionState:()=>({configured:!!ion,terrain:!!ionGround,imagery:!!(ionImagery&&ionImagery.ready),buildings:!!ionBuildings}),
  /* the base map, the zoom and near-me buttons, and the World's own mission pins and member regions, for Halo's own controls */
  basemap:Object.freeze({get:()=>layerMode,set:m=>{if(viewer)setLayer(m==='map'?'map':'auto')}}),
  zoom:inward=>{if(!viewer)return;const h=viewer.camera.positionCartographic.height;inward?viewer.camera.zoomIn(h*.45):viewer.camera.zoomOut(h*.8)},
@@ -1018,7 +1097,7 @@ window.HuGlobe=Object.freeze({
 async function boot(){paintMembersDoor();
  /* the layout, the data toggles and the mission data do not wait on the ion status; only the Earth itself does */
  wireDataLayers();const ionP=Promise.race([loadAccess().then(()=>lockOf('ion')?null:ionStatus()),new Promise(r=>setTimeout(()=>r(null),ION_WAIT))]),dataP=Promise.all([NO_MISSIONS?Promise.resolve([]):rpc('action_globe_public_region_missions').then(groupPins),rpc('action_globe_public_regions')]);dataP.catch(()=>{});
- ion=await ionP;viewer=new Cesium.Viewer('globe',{creditContainer:ion?$('ionCredits'):undefined,baseLayerPicker:false,geocoder:false,homeButton:false,sceneModePicker:false,navigationHelpButton:false,animation:false,timeline:false,fullscreenButton:false,infoBox:false,selectionIndicator:false,baseLayer:(dayLayer=new Cesium.ImageryLayer(new Cesium.UrlTemplateImageryProvider({url:DAY_TILES,maximumLevel:8,credit:'NASA Blue Marble (GIBS)'}),{saturation:1.15,contrast:1.05}))});/* the night side is lit at Cesium's 30% floor, so the lights are lifted six-fold to read as navy sea and gold cities */nightLayer=new Cesium.ImageryLayer(new Cesium.UrlTemplateImageryProvider({url:NIGHT_TILES,maximumLevel:8,credit:'NASA Black Marble (GIBS)'}),{dayAlpha:0,nightAlpha:1,brightness:6,contrast:1.1,saturation:1.15,gamma:0.85,hue:0.2});viewer.imageryLayers.add(nightLayer);cloudLayer=Cesium.ImageryLayer.fromProviderAsync(Cesium.SingleTileImageryProvider.fromUrl(CLOUDS,{rectangle:Cesium.Rectangle.fromDegrees(-180,-90,180,90),credit:'NASA Visible Earth'}),{dayAlpha:0.92,nightAlpha:0.1});viewer.imageryLayers.add(cloudLayer);mapLayer=new Cesium.ImageryLayer(new Cesium.OpenStreetMapImageryProvider({url:'https://tile.openstreetmap.org/'}));viewer.imageryLayers.add(mapLayer);mapLayer.show=false;styleScene();wireControls();startIon();mountCountries();loadAccess().then(()=>cctvEligibility());if(ANALYTICS)drawAnalytics();
+ ion=await ionP;viewer=new Cesium.Viewer('globe',{creditContainer:ion?$('ionCredits'):undefined,baseLayerPicker:false,geocoder:false,homeButton:false,sceneModePicker:false,navigationHelpButton:false,animation:false,timeline:false,fullscreenButton:false,infoBox:false,selectionIndicator:false,baseLayer:(dayLayer=new Cesium.ImageryLayer(new Cesium.UrlTemplateImageryProvider({url:DAY_TILES,maximumLevel:8,credit:'NASA Blue Marble (GIBS)'}),{saturation:1.15,contrast:1.05}))});if(parentFrame&&new URLSearchParams(location.search).get('arcade')==='1'){import('./city-arcade/globe-observer.mjs').then(m=>{if(!viewer.isDestroyed()){const stop=m.observeArcadeView(viewer,Cesium,tell);window.addEventListener('pagehide',stop,{once:true})}}).catch(()=>tell({type:'arcade:view-unavailable'}));}/* the night side is lit at Cesium's 30% floor, so the lights are lifted six-fold to read as navy sea and gold cities */nightLayer=new Cesium.ImageryLayer(new Cesium.UrlTemplateImageryProvider({url:NIGHT_TILES,maximumLevel:8,credit:'NASA Black Marble (GIBS)'}),{dayAlpha:0,nightAlpha:1,brightness:6,contrast:1.1,saturation:1.15,gamma:0.85,hue:0.2});viewer.imageryLayers.add(nightLayer);cloudLayer=Cesium.ImageryLayer.fromProviderAsync(Cesium.SingleTileImageryProvider.fromUrl(CLOUDS,{rectangle:Cesium.Rectangle.fromDegrees(-180,-90,180,90),credit:'NASA Visible Earth'}),{dayAlpha:0.92,nightAlpha:0.1});viewer.imageryLayers.add(cloudLayer);mapLayer=new Cesium.ImageryLayer(new Cesium.OpenStreetMapImageryProvider({url:'https://tile.openstreetmap.org/'}));viewer.imageryLayers.add(mapLayer);mapLayer.show=false;styleScene();wireControls();startIon();mountCountries();loadAccess().then(()=>cctvEligibility());if(ANALYTICS)drawAnalytics();
  if(ion){const box=viewer.container.querySelector('.cesium-credit-lightbox');if(box)box.addEventListener('click',e=>{if(!(e.target.closest&&e.target.closest('a[href]')))viewer.creditDisplay.hideLightbox()})}
  viewer.camera.setView({destination:homePosition()});travelSceneReady=true;wireTravelGestures();restoreTravelScene();haloSync();
  if(EDITORIAL&&window.ResizeObserver){let sizeTimer;new ResizeObserver(()=>{clearTimeout(sizeTimer);sizeTimer=setTimeout(()=>{sizeEditorialResolution();if(!selectionShown&&viewer.camera.positionCartographic.height>7e6){const p=viewer.camera.positionCartographic;viewer.camera.setView({destination:Cesium.Cartesian3.fromRadians(p.longitude,p.latitude,homeAltitude())})}},100)}).observe(viewer.scene.canvas)}
@@ -1028,7 +1107,7 @@ viewer.screenSpaceEventHandler.setInputAction(p=>{
   if(coordinates){const kind=mapPickKind;travelPickKind(null);tell({type:'hu:travel-location-selected',kind,coordinates})}
   return;
  }
- const e=pickSolid(p.position);if(window.HaloConsole&&HaloConsole.pick(e))return;if(e&&e.id&&e.id.layer==='satellites'){openSatellite(e.id.sat);return}const selectedSat=e?.id?.properties?.satellite?.getValue?.();if(selectedSat){openSatellite(selectedSat);return}const launch=e?.id?.properties?.launch?.getValue?.();if(launch){openLaunch(launch);return}if(e&&e.id&&e.id.layer==='flights'){openAircraft(e.id);return}if(e&&e.id&&e.id.layer==='cctv'){openCamera(String(e.id.cam));return}const ac=e?.id?.properties?.analyticsCode?.getValue?.();if(ac){selectAnalytics(ac,false);tell({type:'hu:analytics-region',code:ac});return}const newsId=e?.id?.properties?.worldNewsId?.getValue?.();if(newsId&&publicNewsOn){tell({type:'hu:world-news-selected',id:newsId});return}const completedId=e?.id?.properties?.completedEventId?.getValue?.();if(completedId&&selectCompletedEvent(completedId))return;const liveCode=e?.id?.properties?.liveCountry?.getValue?.();if(liveCode&&countries){countries.select(liveCode);return}const n=e?.id?.properties?.missionIndex?.getValue();if(Number.isInteger(n)){show(n);announce();return;}if(travelMode&&(roadRoute||currentLocation))return;if(countries&&!(e&&e.id&&e.id.properties&&e.id.properties.region_key)&&countries.click(p.position))return;const regionKey=e?.id?.properties?.region_key?.getValue?.();if(regionKey){const match=regions.find(r=>r.region_key===regionKey);if(match)setRegion(match);}},Cesium.ScreenSpaceEventType.LEFT_CLICK);
+ const e=pickSolid(p.position);if(window.HaloConsole&&HaloConsole.pick(e))return;if(environmentPins?.pick(e))return;if(window.BridgeportSlice?.pick(e,p.position))return;if(e&&e.id&&e.id.layer==='satellites'){openSatellite(e.id.sat);return}const selectedSat=e?.id?.properties?.satellite?.getValue?.();if(selectedSat){openSatellite(selectedSat);return}const launch=e?.id?.properties?.launch?.getValue?.();if(launch){openLaunch(launch);return}if(e&&e.id&&e.id.layer==='flights'){openAircraft(e.id);return}if(e&&e.id&&e.id.layer==='cctv'){openCamera(String(e.id.cam));return}const ac=e?.id?.properties?.analyticsCode?.getValue?.();if(ac){selectAnalytics(ac,false);tell({type:'hu:analytics-region',code:ac});return}const newsId=e?.id?.properties?.worldNewsId?.getValue?.();if(newsId&&publicNewsOn){tell({type:'hu:world-news-selected',id:newsId});return}const completedId=e?.id?.properties?.completedEventId?.getValue?.();if(completedId&&selectCompletedEvent(completedId))return;const liveCode=e?.id?.properties?.liveCountry?.getValue?.();if(liveCode&&countries){countries.select(liveCode);return}const n=e?.id?.properties?.missionIndex?.getValue();if(Number.isInteger(n)){show(n);announce();return;}if(travelMode&&(roadRoute||currentLocation))return;if(countries&&!(e&&e.id&&e.id.properties&&e.id.properties.region_key)&&countries.click(p.position))return;const regionKey=e?.id?.properties?.region_key?.getValue?.();if(regionKey){const match=regions.find(r=>r.region_key===regionKey);if(match)setRegion(match);}},Cesium.ScreenSpaceEventType.LEFT_CLICK);
 /* NEAR ME: the approximate place from this connection first (the Worker's request.cf, in the access map; never stored), then
    the precise one only if the browser asks the person and they allow it. Browsers enforce that prompt; nothing here gets around it. */
 $('nearMe').onclick=()=>{const ap=access&&access.approximate_location,apl=ap&&lonLat(ap.lon,ap.lat);if(apl&&viewer){viewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(apl[0],apl[1],1500000),duration:1.2});$('status').hidden=false;$('status').textContent='Near '+[ap.city,ap.region,ap.country].filter(Boolean).join(', ')+' (approximate, from your connection).'}
@@ -1039,6 +1118,7 @@ $('missionsLayer').onclick=()=>{showMissions=!showMissions;draw()};$('citiesLaye
 let touchY;const deck=$('deck');deck.addEventListener('touchstart',e=>{touchY=e.touches[0].clientY},{passive:true});deck.addEventListener('touchend',e=>{if(touchY===undefined)return;const d=e.changedTouches[0].clientY-touchY;if(Math.abs(d)>45)show(i+(d<0?1:-1));touchY=undefined},{passive:true});
 // Navigation can start as soon as the renderer is ready. Public mission RPCs
 // enrich this message later; they cannot hold a visitor's street map hostage.
+environmentPins?.draw();
 if(!ANALYTICS){readyMessage={type:'hu:globe-ready',missionIds:[],dataPending:true};tell(readyMessage)}
 try{[missions,cities]=await dataP;regions=cities.slice();const requestedSong=new URLSearchParams(location.search).get('song');if(requestedSong){missions=missions.filter(m=>String(m.song_title||'').toLocaleLowerCase()===requestedSong.toLocaleLowerCase());}allMissions=missions.slice();if(ANALYTICS||NO_MISSIONS){showMissions=false;showCities=false}draw();if(!ANALYTICS&&!NO_MISSIONS)drawBoundaries();$('status').textContent=missions.length||NO_MISSIONS?'':(requestedSong?'No approved regional missions are linked to this song yet.':'No approved globe missions published yet.');if(NO_MISSIONS)$('status').hidden=true;if(missions.length){$('status').hidden=true;setSelection(false)}renderFeed();if(countries&&countries.refresh)countries.refresh();readyMessage={type:'hu:globe-ready',missionIds:allMissions.map(m=>m.mission_id),missions:allMissions.slice(0,200).map(publicMission)};tell(readyMessage)}catch(e){if(leaving)return;$('status').textContent='Globe data is not available yet.';readyMessage={type:'hu:globe-ready',missionIds:[],dataUnavailable:true};tell(readyMessage);console.warn(e)}}
 // Layout and the parent-owned location request work even if WebGL cannot load.

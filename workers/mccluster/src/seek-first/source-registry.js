@@ -62,7 +62,7 @@ export const SOURCES = Object.freeze([
   source({ key: 'census', name: 'U.S. Census Data API', credentialEnv: ['CENSUS_API_KEY'], capabilities: ['demographics', 'housing', 'commuting', 'business'], adapter: 'census', upstream: 'https://api.census.gov' }),
   source({ key: 'eia', name: 'U.S. Energy Information Administration', credentialEnv: ['EIA_API_KEY'], capabilities: ['electricity', 'generation', 'demand', 'prices', 'grid-flows'], adapter: 'eia', upstream: 'https://api.eia.gov' }),
   source({ key: 'data_commons', name: 'Data Commons', credentialEnv: ['DATA_COMMONS_API_KEY'], capabilities: ['knowledge-graph', 'statistics', 'place-variables'], adapter: 'data_commons', upstream: 'https://api.datacommons.org' }),
-  source({ key: 'bls', name: 'Bureau of Labor Statistics', credentialEnv: ['BLS_API_KEY'], capabilities: ['labor', 'wages', 'employment', 'prices'], adapter: 'bls', upstream: 'https://api.bls.gov' }),
+  source({ key: 'bls', name: 'Bureau of Labor Statistics', optionalCredentialEnv: ['BLS_API_KEY'], capabilities: ['labor', 'wages', 'employment', 'prices'], adapter: 'bls', upstream: 'https://api.bls.gov' }),
   source({ key: 'fred', name: 'Federal Reserve Economic Data', credentialEnv: ['FRED_API_KEY'], capabilities: ['macroeconomics', 'regional-economics', 'housing', 'finance'], adapter: 'fred', upstream: 'https://api.stlouisfed.org' }),
   source({ key: 'usaspending', name: 'USAspending', capabilities: ['federal-awards', 'contracts', 'grants', 'recipients'], adapter: 'usaspending', upstream: 'https://api.usaspending.gov' }),
   source({ key: 'grants_gov', name: 'Grants.gov', capabilities: ['grant-opportunities', 'agencies'], adapter: 'grants_gov', upstream: 'https://api.grants.gov' }),

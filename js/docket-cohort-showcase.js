@@ -260,7 +260,7 @@
     var event=el('section','dc-section');event.append(eventCard(data,false));host.append(event);
     var extra=(data.media||[]).filter(function(m){return m.kind==='cohort_video'||m.kind==='cohort_promo'||m.id===PROJECT+':cohort-promo';});
     if(extra.length){var media=el('section','dc-section');media.append(el('h2','','From the cohort'));extra.forEach(function(m){media.append(mediaCard(m));});host.append(media);}
-    var links=el('div','dc-actions');links.append(link('Try Write a Song','mnet.html?mission=053cbd0d-6bdb-49c6-bd80-8c5b8be36068','dc-button dc-button--primary'),link('Explore the public record',data.project.canonical_url||'docket-516.html','dc-button'));host.append(links);
+    var links=el('div','dc-actions');links.append(link('Explore the public record',data.project.canonical_url||'docket-516.html','dc-button dc-button--primary'));host.append(links);
     openHash(host);
   }
   window.addEventListener('mcc:world-mode',function(e){worldMode=e.detail&&e.detail.mode||'travel';syncMap();});

@@ -29,7 +29,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 0
 
@@ -72,6 +72,12 @@ jobs:
 
       - name: Build detailed B1 in workspace
         run: python docs/design/equity-uprise-building/production/basement-b1/build_equity_uprise_basement_b1_v2.py
+
+      - name: Build detailed Floors 1-6 in workspace (v3 interior furnishing layer)
+        run: |
+          for n in 01 02 03 04 05 06; do
+            python docs/design/equity-uprise-building/production/floor-${n}/build_equity_uprise_floor_${n}_v2.py
+          done
 
       - name: Build detailed Level 7 roof in workspace
         run: python docs/design/equity-uprise-building/production/floor-07/build_equity_uprise_floor_07_v2.py
@@ -127,6 +133,21 @@ jobs:
       - name: Verify Lab Runtime Step 8 3D viewer integration
         run: node docs/design/equity-uprise-building/production/lab-runtime/verify_viewer_lab_integration_v1.mjs
 
+      - name: Verify HSEEP building-safety exercises, ICS roles and AAR/IP drafts
+        run: node docs/design/equity-uprise-building/production/lab-runtime/verify_hseep_scenarios_v1.mjs
+
+      - name: Verify learning pathways and industry certification map
+        run: python docs/design/equity-uprise-development/verify_learning_pathways.py
+
+      - name: Verify Server Lab (rack/server hardware, IT-LAB-041..051)
+        run: node docs/design/equity-uprise-building/production/lab-runtime/verify_server_lab_v1.mjs
+
+      - name: Verify the building screen registry is current
+        run: node docs/design/equity-uprise-building/production/screens/build_screen_registry_v1.mjs --check
+
+      - name: Building screens and screen apps (registry, contract, shell, modes)
+        run: node --test scripts/test/eu-screens.test.mjs
+
       - name: Verify B1-to-roof human walkability
         run: python docs/design/equity-uprise-building/production/audit_vertical_circulation_walkability.py
 
@@ -147,6 +168,9 @@ jobs:
 
       - name: Verify combined model
         run: python docs/design/equity-uprise-building/production/verify_equity_uprise_building_v2.py
+
+      - name: Verify model consistency (furniture, doors, egress, walkability, brand slots, distinct floors)
+        run: python docs/design/equity-uprise-building/production/interiors/audit_interior_consistency.py
 
       - name: Verify Floor 1 / B1 authority boundary
         run: python docs/design/equity-uprise-building/production/verify_floor_01_b1_simulation.py
@@ -191,7 +215,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref_name }}
           fetch-depth: 0
@@ -242,6 +266,11 @@ jobs:
           python docs/design/equity-uprise-building/production/audit_building_context.py
 
       - name: Commit one deterministic generated-output snapshot
+        # The branch name reaches the script through the environment, never
+        # by interpolating ${{ }} into it (a branch name is attacker-chosen
+        # text on a pull request; actionlint flags the inline form).
+        env:
+          TARGET_BRANCH: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref_name }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -264,6 +293,5 @@ jobs:
             exit 0
           fi
           git commit -m "Regenerate Equity Uprise Core V2 derived artifacts"
-          TARGET_BRANCH="${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref_name }}"
           git pull --rebase origin "${TARGET_BRANCH}"
           git push origin "HEAD:${TARGET_BRANCH}"

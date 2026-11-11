@@ -1,10 +1,22 @@
 import http from 'node:http';
+import { inferenceFetch, inferenceJson, inferenceError } from './inference-http.mjs';
 import { inferenceSettings, inferenceUsage } from './inference-settings.mjs';
 
 const HOST = '127.0.0.1';
 const PORT = Number(process.env.MCCLUSTER_OLLAMA_ADAPTER_PORT || 4790);
 const OLLAMA = String(process.env.MCCLUSTER_OLLAMA_URL || 'http://127.0.0.1:11434').replace(/\/$/, '');
 const MODEL = process.env.MCCLUSTER_OLLAMA_MODEL || 'qwen3:8b';
+// Extra local models a caller may name (comma-separated allowlist). Anything
+// else, or an extra model that is not installed yet, runs on MODEL instead.
+const EXTRA_MODELS = String(process.env.MCCLUSTER_OLLAMA_EXTRA_MODELS || '').split(',').map(s => s.trim()).filter(Boolean);
+// Resident models stay loaded (keep_alive from inference-settings); every other
+// allowlisted model is on demand and unloads after a short idle window so it
+// never pushes the resident ones out of memory.
+const RESIDENT_MODELS = new Set([MODEL, ...String(process.env.MCCLUSTER_OLLAMA_RESIDENT_MODELS || '').split(',').map(s => s.trim()).filter(Boolean)]);
+const ON_DEMAND_KEEP_ALIVE = /^(?:\d{1,4}[smh])$/.test(String(process.env.MCCLUSTER_OLLAMA_ON_DEMAND_KEEP_ALIVE || '')) ? String(process.env.MCCLUSTER_OLLAMA_ON_DEMAND_KEEP_ALIVE) : '5m';
+const EMBED_MODEL = String(process.env.MCCLUSTER_OLLAMA_EMBED_MODEL || 'nomic-embed-text:v1.5');
+function keepAliveFor(model, settings) { return RESIDENT_MODELS.has(model) ? settings.keep_alive : ON_DEMAND_KEEP_ALIVE; }
+function pickModel(requested) { return requested && EXTRA_MODELS.includes(String(requested)) ? String(requested) : MODEL; }
 const MAX_QUEUE = Math.max(1, Math.min(256, Number(process.env.MCCLUSTER_OLLAMA_ADAPTER_MAX_QUEUE || 32)));
 
 let active = null;
@@ -30,7 +42,8 @@ async function readJson(req) {
   let size = 0;
   for await (const chunk of req) {
     size += chunk.length;
-    if (size > 1024 * 1024) throw Object.assign(new Error('request too large'), { status: 413 });
+    // Loopback only; large enough for a vision request's base64 image.
+    if (size > 8 * 1024 * 1024) throw Object.assign(new Error('request too large'), { status: 413 });
     chunks.push(chunk);
   }
   return JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
@@ -65,41 +78,58 @@ async function execute(body, queuedAt, callerSignal) {
     throw Object.assign(new Error('messages or prompt is required'), { status: 400, code: 'INPUT_REQUIRED' });
   }
 
-  const response = await fetch(`${OLLAMA}/api/chat`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({
-      model: MODEL,
-      stream: false,
-      messages,
-      think: settings.think,
-      keep_alive: settings.keep_alive,
-      tools: Array.isArray(input.tools) ? input.tools.slice(0, 16) : undefined,
-      format: input.json === true ? 'json' : undefined,
-      options: {
-        temperature: settings.temperature,
-        num_ctx: settings.num_ctx,
-        num_predict: settings.num_predict,
-      },
-    }),
-    signal: callerSignal
-      ? AbortSignal.any([
-          callerSignal,
-          AbortSignal.timeout(Number(process.env.MCCLUSTER_OLLAMA_ADAPTER_TIMEOUT_MS || 600000)),
-        ])
-      : AbortSignal.timeout(Number(process.env.MCCLUSTER_OLLAMA_ADAPTER_TIMEOUT_MS || 600000)),
-  });
+  const requestedModel = pickModel(input.model);
+  // One existing deadline covers the full execution, including a model fallback.
+  const timeout = AbortSignal.timeout(Number(process.env.MCCLUSTER_OLLAMA_ADAPTER_TIMEOUT_MS || 600000));
+  const signal = callerSignal ? AbortSignal.any([callerSignal, timeout]) : timeout;
+  const callOllama = async (model) => {
+    try {
+      const response = await inferenceFetch(`${OLLAMA}/api/chat`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          model,
+          stream: false,
+          messages,
+          // Only the default model is a thinking model; instruct-only models reject the flag.
+          ...(model === MODEL ? { think: settings.think } : {}),
+          keep_alive: keepAliveFor(model, settings),
+          tools: Array.isArray(input.tools) ? input.tools.slice(0, 16) : undefined,
+          // A JSON Schema object constrains decoding to that shape (Ollama structured
+          // outputs); plain json:true keeps the old free-form JSON mode.
+          format: input.schema && typeof input.schema === 'object' ? input.schema : (input.json === true ? 'json' : undefined),
+          options: {
+            temperature: settings.temperature,
+            num_ctx: settings.num_ctx,
+            num_predict: settings.num_predict,
+            ...(settings.num_thread ? { num_thread: settings.num_thread } : {}),
+          },
+        }),
+        signal,
+      });
+      return { response, data: await inferenceJson(response) };
+    } catch (error) {
+      throw inferenceError(error, { signal, peer: 'ollama' });
+    }
+  };
 
-  const data = await response.json().catch(() => null);
+  let usedModel = requestedModel;
+  let fallbackFrom = null;
+  let { response, data } = await callOllama(usedModel);
+  if (!response.ok && usedModel !== MODEL && (response.status === 404 || /not found|pull/i.test(String(data?.error || '')))) {
+    fallbackFrom = usedModel; usedModel = MODEL;
+    ({ response, data } = await callOllama(usedModel));
+  }
   if (!response.ok) {
-    throw Object.assign(new Error(data?.error || `Ollama returned HTTP ${response.status}`), {
+    throw Object.assign(new Error(`Ollama returned HTTP ${response.status}`), {
       status: response.status,
       code: 'OLLAMA_UPSTREAM_ERROR'
     });
   }
 
   return {
-    model: MODEL,
+    model: usedModel,
+    ...(fallbackFrom ? { fallback_from: fallbackFrom } : {}),
     implementation: body.implementation || null,
     content: String(data?.message?.content || ''),
     tool_calls: Array.isArray(data?.message?.tool_calls) ? data.message.tool_calls : [],
@@ -181,6 +211,63 @@ function enqueueInference(body, signal) {
   });
 }
 
+// Readiness probe. Liveness (daemon reachable) and readiness (configured
+// default model installed with a digest; optional bounded inference) are
+// reported separately so a daemon with zero installed models is never "ok".
+const READY_PROBE = String(process.env.MCCLUSTER_OLLAMA_READY_PROBE || '') === 'true';
+const READY_PROBE_TTL_MS = 60_000;
+let lastInferenceProbe = null;
+function modelMatches(item, name) { return item && (item.name === name || item.model === name); }
+async function readiness({ inference = false } = {}) {
+  const result = {
+    ok: false, daemon_reachable: false, model_installed: false, digest: null,
+    inference_probe: inference ? 'pending' : 'skipped', error: null,
+  };
+  let tags;
+  try {
+    const response = await fetch(`${OLLAMA}/api/tags`, { signal: AbortSignal.timeout(3000) });
+    if (!response.ok) { result.error = `tags: HTTP ${response.status}`; return result; }
+    tags = await response.json();
+    result.daemon_reachable = true;
+  } catch (error) {
+    result.error = String(error?.message || error).slice(0, 300);
+    return result;
+  }
+  const installed = Array.isArray(tags?.models) ? tags.models.find(item => modelMatches(item, MODEL)) : null;
+  if (!installed || !installed.digest) {
+    result.error = installed ? 'default model has no digest' : 'default model is not installed';
+    return result;
+  }
+  result.model_installed = true;
+  result.digest = String(installed.digest);
+  if (!inference) { result.ok = true; return result; }
+  // Bounded one-token probe, never while a real job holds the single slot, and
+  // cached briefly so repeated deploy probes do not reload the model.
+  if (lastInferenceProbe && Date.now() - lastInferenceProbe.at < READY_PROBE_TTL_MS && lastInferenceProbe.digest === result.digest) {
+    result.inference_probe = lastInferenceProbe.ok ? 'ok' : 'failed';
+    result.ok = lastInferenceProbe.ok;
+    if (!lastInferenceProbe.ok) result.error = lastInferenceProbe.error;
+    return result;
+  }
+  if (active) { result.inference_probe = 'busy'; result.ok = true; return result; }
+  try {
+    const response = await fetch(`${OLLAMA}/api/chat`, {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ model: MODEL, stream: false, think: false, messages: [{ role: 'user', content: 'ok' }], options: { num_predict: 1 } }),
+      signal: AbortSignal.timeout(Number(process.env.MCCLUSTER_OLLAMA_READY_PROBE_TIMEOUT_MS || 20_000)),
+    });
+    const ok = response.ok;
+    const error = ok ? null : `inference probe: HTTP ${response.status}`;
+    lastInferenceProbe = { at: Date.now(), digest: result.digest, ok, error };
+    result.inference_probe = ok ? 'ok' : 'failed'; result.ok = ok; result.error = error;
+  } catch (error) {
+    const message = String(error?.message || error).slice(0, 300);
+    lastInferenceProbe = { at: Date.now(), digest: result.digest, ok: false, error: message };
+    result.inference_probe = 'failed'; result.error = message;
+  }
+  return result;
+}
+
 const server = http.createServer(async (req, res) => {
   try {
     if (req.method === 'GET' && req.url === '/diagnostics') {
@@ -203,16 +290,21 @@ const server = http.createServer(async (req, res) => {
         model_info: show.model_info || {}, model_parameters: show.parameters || null,
         thinking_support: show.thinking || null,
         running: (running.models || []).filter(item => item.name === MODEL || item.model === MODEL),
+        extra_models: EXTRA_MODELS.map(name => ({ name, installed: Boolean(tags.models?.some(item => item.name === name || item.model === name)), running: Boolean((running.models || []).some(item => item.name === name || item.model === name)) })),
         defaults: inferenceSettings(), busy: Boolean(active), queue_depth: pending.length,
         max_concurrency: 1,
       });
     }
+    // Liveness: this process is up and the Ollama daemon answers. It says
+    // nothing about whether the configured model can run; /ready does.
     if (req.method === 'GET' && req.url === '/health') {
-      const check = await fetch(`${OLLAMA}/api/tags`, { signal: AbortSignal.timeout(3000) });
-      return send(res, check.ok ? 200 : 503, {
-        ok: check.ok,
+      const probe = await readiness({ inference: false });
+      return send(res, probe.daemon_reachable ? 200 : 503, {
+        ok: probe.daemon_reachable,
+        ready: probe.ok,
         service: 'mccluster-ollama-adapter',
         model: MODEL,
+        model_installed: probe.model_installed,
         busy: Boolean(active),
         queue_depth: pending.length,
         max_queue: MAX_QUEUE,
@@ -220,6 +312,60 @@ const server = http.createServer(async (req, res) => {
         last_completed_at: lastCompletedAt,
         last_error: lastError,
       });
+    }
+    // Readiness: the configured default model is installed with a digest (and,
+    // when MCCLUSTER_OLLAMA_READY_PROBE=true, a bounded one-token inference
+    // succeeds). A daemon with no usable model answers 503 here, so a deploy
+    // gate that probes this route cannot pass on liveness alone.
+    if (req.method === 'GET' && req.url === '/ready') {
+      const probe = await readiness({ inference: READY_PROBE });
+      return send(res, probe.ok ? 200 : 503, {
+        ...probe,
+        service: 'mccluster-ollama-adapter',
+        model: MODEL,
+        busy: Boolean(active),
+        queue_depth: pending.length,
+      });
+    }
+
+    // Install an allowlisted extra model (MCCLUSTER_OLLAMA_EXTRA_MODELS) through
+    // the Ollama daemon and report exactly what it said. Loopback only, like
+    // every route here; any other model name is refused.
+    // Embeddings: text in, vectors out, on the allowlisted embedding model.
+    if (req.method === 'POST' && req.url === '/embed') {
+      const body = await readJson(req);
+      const model = body.model ? String(body.model) : EMBED_MODEL;
+      if (model !== EMBED_MODEL && !EXTRA_MODELS.includes(model)) return send(res, 400, { error: 'model is not an allowlisted embedding model', code: 'MODEL_NOT_ALLOWED' });
+      const input = (Array.isArray(body.input) ? body.input : [body.input]).map(t => String(t ?? '').slice(0, 8000));
+      if (!input.length || input.length > 64 || input.some(t => !t.trim())) return send(res, 400, { error: 'input must be 1 to 64 non-empty texts', code: 'INPUT_REQUIRED' });
+      const started = Date.now();
+      const response = await fetch(`${OLLAMA}/api/embed`, {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ model, input, keep_alive: '24h' }),
+        signal: AbortSignal.timeout(120_000),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) return send(res, response.status === 404 ? 503 : 502, { error: data?.error || `Ollama returned HTTP ${response.status}`, code: 'OLLAMA_UPSTREAM_ERROR', model });
+      const embeddings = Array.isArray(data?.embeddings) ? data.embeddings : [];
+      return send(res, 200, { model, embeddings, dims: embeddings[0]?.length || 0, wall_ms: Date.now() - started });
+    }
+
+    if (req.method === 'POST' && req.url === '/models/pull') {
+      const body = await readJson(req);
+      const name = String(body.model || '');
+      if (!EXTRA_MODELS.includes(name)) return send(res, 400, { ok: false, error: 'model is not an allowlisted extra model', model: name });
+      const started = Date.now();
+      try {
+        const pulled = await fetch(`${OLLAMA}/api/pull`, {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ model: name, stream: false }),
+          signal: AbortSignal.timeout(Number(process.env.MCCLUSTER_OLLAMA_PULL_TIMEOUT_MS || 1_500_000)),
+        });
+        const data = await pulled.json().catch(() => null);
+        return send(res, pulled.ok ? 200 : 502, { ok: pulled.ok && data?.status === 'success', model: name, http_status: pulled.status, status: data?.status || null, error: data?.error || null, wall_ms: Date.now() - started });
+      } catch (error) {
+        return send(res, 502, { ok: false, model: name, error: String(error?.message || error).slice(0, 300), wall_ms: Date.now() - started });
+      }
     }
 
     if (req.method === 'POST' && req.url === '/execute') {
@@ -246,5 +392,5 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(JSON.stringify({ event: 'ollama_adapter_ready', host: HOST, port: PORT, model: MODEL, max_queue: MAX_QUEUE }));
+  console.log(JSON.stringify({ event: 'ollama_adapter_ready', host: HOST, port: server.address().port, model: MODEL, max_queue: MAX_QUEUE }));
 });

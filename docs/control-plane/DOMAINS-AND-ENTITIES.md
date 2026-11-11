@@ -11,7 +11,7 @@ collapse them.
 | | `https://mccluster.org/` | `https://matthew.mccluster.org/` |
 | --- | --- | --- |
 | Whose house | **McCluster Corp** | **Matthew McCluster** |
-| Answers | At its root, the Human Uprise World (the company's platform: where is the movement, what can I do today); at `/company`, what is McCluster Corp? | Who is Matthew McCluster, what has he made, what does he do? |
+| Answers | At its root, the Equity Uprise World (the company's platform: where is the movement, what can I do today); at `/company`, what is McCluster Corp? | Who is Matthew McCluster, what has he made, what does he do? |
 | Share preview | McCluster Corp, explained | Matthew McCluster, not "only the album" |
 | Entity | Organization `https://matthew.mccluster.org/#mccluster-corp` | Person `https://matthew.mccluster.org/#matthew-mccluster` |
 | WebSite node | `https://mccluster.org/#website`, published by the Organization | `https://matthew.mccluster.org/#website`, published by the Person |
@@ -25,19 +25,40 @@ a spectacular front door. **Do not confuse a door with the building.** The
 album stays the entrance to Matthew's property; it is not the semantic identity
 of the property, and it is never the company's homepage.
 
+## The public brand is Equity Uprise (owner, 2026-10-28)
+
+Owner, 2026-10-28: **the public brand is Equity Uprise, not Human Uprise.**
+Every public-facing name says Equity Uprise: the World root's title,
+description, Open Graph and Twitter tags and JSON-LD `name` on
+`mccluster.org` ("Equity Uprise · McCluster"), page titles and descriptions,
+headings and product copy, `llms.txt`, the company page and the entity graph
+(the platform's SoftwareApplication is "Equity Uprise World", keeping its
+stable `@id` and listing its former names as `alternateName`). The company
+stays the site: `og:site_name` on `mccluster.org` is McCluster Corp, and the
+Organization's `@id` and `url` do not move.
+
+"Human Uprise" survives only where compatibility needs it, as a legacy
+technical identifier, never as a public name: the `humanuprise.com` host and
+its routing (`workers/mccluster/src/human-uprise/router.js`,
+`HUMAN_UPRISE_ORIGIN`), file names (`human-uprise-*`, `HUMAN-UPRISE-*`),
+function and variable names, CSS classes, storage keys, event names, URL
+paths, `@id`s, and the `domain-architecture.json` key `human_uprise`. Dated
+records (audits, migration notes) keep the name they were written with.
+
 ## Ownership hierarchy
 
 ```
 Matthew McCluster  (Person, matthew.mccluster.org)
 ├── founder of ─► McCluster Corp  (Organization, url https://mccluster.org/)
-│                 ├── Equity Uprise            public-interest project
-│                 ├── Human Uprise             movement-creation social platform (formerly the Uprise Action Network); Equity Uprise runs on it as a program
+│                 ├── Equity Uprise            the public brand (owner, 2026-10-28): the public-interest project and its movement-creation social platform, the Equity Uprise World (formerly "Human Uprise", before that the Uprise Action Network)
 │                 ├── PRIM3                    learning project / product
+│                 │   └── PRIM3 (the artist)   its music act, its own entity (MusicGroup); artist of Cyber Security Specialist
 │                 ├── McCluster Platform       the technical platform operated for McCluster Corp
 │                 ├── McCluster Sites          web services
 │                 └── media, creative and music/catalogue services
 ├── founder and owner of ─► Whip Equipped LLC   a SEPARATE company. Never a McCluster Corp sub-brand.
-└── artist of ─► I AM HERE                       his album; published through the ecosystem (publisher McCluster Corp, ISRC registrant QT6KV)
+├── artist of ─► I AM HERE                       his album; published through the ecosystem (publisher McCluster Corp, ISRC registrant QT6KV)
+└── account manager of ─► PRIM3 (the artist)     manages it from his M Account until it has its own login; NOT its artist, NOT its identity
 ```
 
 Rules that follow from it:
@@ -55,6 +76,25 @@ Rules that follow from it:
   name the personal WebSite after the company, and never call the company
   "Matthew McCluster / McCluster Corp".
 - PRIM3 is McCluster Corp's learning product, not Matthew's recording alias.
+- **PRIM3 the artist is its own entity** (owner, 2026-11-02: "The album is
+  actually called Cyber Security Specialist ... the artist is PRIM3. PRIM3
+  needs their own artist page as that is its own artist. Separate entity
+  from Matthew McCluster. But controlled by Matthew McCluster's account until
+  it gets its own login."). It is the MusicGroup
+  `https://matthew.mccluster.org/prim3-artist.html#prim3-artist`, the music
+  act of PRIM3, defined in full on its page `prim3-artist.html` and in
+  `data/seo/entity-graph.json` → `music_acts.prim3`; every Cyber Security
+  Specialist recording is `byArtist` that node, never Matthew's `@id` (he
+  appears only where a track's credits name him; none do yet). The album keeps
+  its slug `prim3` and catalog keys `prim3:*`, so no URL moves.
+  "Managed by Matthew McCluster" is account control, not authorship: PRIM3 is
+  its own M identity with no login, and Matthew's account acts for it as its
+  label admin (`supabase/pending/music_label_artists_v1.sql`, the label
+  model). PRIM3 getting its own login is one `m_auth_user_links` row for its
+  identity (and, if wanted, revoking the manager row); its profile, tracks and
+  assets do not move. Matthew's pages keep their Matthew-first metadata; his
+  profile graph does not list the act. Equity Uprise's music act
+  (`catalogue.html#artist-equity-uprise`) is the same kind of entity.
 - Whip Equipped LLC appears under Matthew, never under McCluster Corp.
 
 ## What lives where (and why most URLs do not move)
@@ -67,8 +107,8 @@ Rules that follow from it:
 - **McCluster Corp products hosted on Matthew's property for compatibility:**
   the company's product map (`mccluster-corp.html`, with
   `data/product-context.json`; it explains how the products connect, the
-  company property links to it, and it keeps its URL), the Docket 516R record (Equity Uprise's front page), Human Uprise,
-  formerly the Action Network (`/action/`, `mnet.html`, `action-globe.html`, receipts), the campaign pages, PRIM3, McCluster
+  company property links to it, and it keeps its URL), the Docket 516R record (Equity Uprise's front page), the Equity Uprise World,
+  formerly Human Uprise and the Action Network (`/action/`, `mnet.html`, `action-globe.html`, receipts), the campaign pages, PRIM3, McCluster
   Sites, services and booking, the music-creator platform, the privacy policy.
 - **Whip Equipped LLC** (separate company) at `whip.html`.
 
@@ -81,7 +121,7 @@ does not move a URL.** The company *apps* stay where they are, deliberately:
 - The Supabase Auth redirect allowlist names that host.
 - Printed QR codes and live campaign links point at these paths.
 
-Moving Human Uprise, accounts or checkout to `mccluster.org` would sign
+Moving the World, accounts or checkout to `mccluster.org` would sign
 members out and break payment returns. Serving the World *additionally* at
 `https://mccluster.org/` (owner, 2026-10-15, below) moves nothing: every URL
 on Matthew's property keeps working, the bar carries a member's sign-in
@@ -140,8 +180,13 @@ depends on the old origin.
 5. Verify:
    - `curl -I https://mccluster.org/` returns 200, the World (its body is
      `mnet.html`; its head names `https://mccluster.org/` as canonical and
-     McCluster Corp as the site; no `noindex`).
-   - `curl -I https://mccluster.org/company` returns 200, the company page.
+     McCluster Corp as the site; its title and share card "Equity Uprise ·
+     McCluster" with the M mark; no `noindex`).
+   - `curl -I https://mccluster.org/company` returns 200, the company page;
+     `https://mccluster.org/company/` is a 301 to it.
+   - `curl -I http://mccluster.org/` returns a 301 to `https://mccluster.org/`
+     (the Worker answers plain http on the apex; Cloudflare's "Always Use
+     HTTPS" on the zone does the same at the edge).
    - `curl -I 'https://mccluster.org/mnet.html?view=feed'` returns a 301 to `https://mccluster.org/?view=feed`.
    - `curl -I https://mccluster.org/docket-516.html` returns a 301 to the same path on `matthew.mccluster.org`.
    - `curl -I https://www.mccluster.org/` returns a 301 to `https://mccluster.org/`.
@@ -164,9 +209,9 @@ without checking the MX and TXT records survive.
 
 "We don't need humanuprise.com live right now. We need mccluster.org to
 actually show the World." So the company host's root is the World, by the
-same mechanics as Human Uprise's own door below (`workers/mccluster/src/
+same mechanics as the `humanuprise.com` door below (`workers/mccluster/src/
 world-host.js`, shared by both routers), and the bar's Globe goes there from
-Matthew's site. Human Uprise is McCluster Corp's platform, so the company's
+Matthew's site. Equity Uprise is McCluster Corp's platform, so the company's
 root stays company-first: canonical `https://mccluster.org/`, `og:site_name`
 McCluster Corp, a WebPage node that belongs to `https://mccluster.org/#website`
 and is about the Organization (the same stable `@id`). The company page,
@@ -191,17 +236,21 @@ newsroom on Matthew's property (`/newsroom.html`, built from the evidence
 ledger) is a different thing and stays where it is. How it gets into Google
 News and GDELT: `docs/action-network/NEWSROOM.md`.
 
-## Human Uprise's host: `humanuprise.com`
+## The legacy-named host: `humanuprise.com`
 
-Three hosts, still two entities. Human Uprise is McCluster Corp's platform
+Three hosts, still two entities. The World is McCluster Corp's platform
 (the Organization above), so `humanuprise.com` is a company host, not a third
 entity and not Matthew's. Owner, 2026-10-14: the World (the globe, the context
-strip, the feed) is Human Uprise's own solo experience at its own address,
-interconnected with the rest.
+strip, the feed) is its own solo experience at its own address,
+interconnected with the rest. Since 2026-10-28 the public brand is Equity
+Uprise (above): the host keeps its legacy name, and what it serves names
+Equity Uprise (`og:site_name` "Equity Uprise"). Whether `humanuprise.com`
+should stay a door at all, be redirected to `mccluster.org`, or be dropped is
+the owner's call; nothing about its routing changed with the brand.
 
 | | `https://humanuprise.com/` |
 | --- | --- |
-| Whose | McCluster Corp's platform, Human Uprise |
+| Whose | McCluster Corp's platform, the Equity Uprise World |
 | Answers | Where is the movement, and what can I do today? |
 | Entity | Organization `https://matthew.mccluster.org/#mccluster-corp` (the same stable `@id`) |
 | Source | the World, `mnet.html`, as published on Matthew's property; nothing is duplicated |
@@ -238,3 +287,6 @@ interconnected with the rest.
   `node tools/build-profile-entity.mjs` and `node tools/build-company-site.mjs`.
 - Personal root metadata (`index.html` `<head>`): Matthew-first. Change the
   metadata only; the album UI is not rewritten (AGENTS.md).
+- Which file under `data/` is the record for a fact, which is generated from
+  it (and by which `tools/build-*.mjs`, each with `--check`), and which is a
+  display mirror of a Supabase table: `data/README.md`.

@@ -1,5 +1,5 @@
 /**
- * Camera/library proof capture using Human Uprise's existing private
+ * Camera/library proof capture using Equity Uprise's existing private
  * media bucket. No proof file is made public by this helper; verification and
  * optional feed sharing remain separate server-side decisions.
  */

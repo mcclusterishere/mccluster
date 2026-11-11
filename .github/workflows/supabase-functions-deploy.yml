@@ -37,21 +37,21 @@ jobs:
   deploy:
     name: Deploy changed Edge Functions
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     env:
       SUPABASE_PROJECT_REF: zmnhbrjyhxzhkxmhkexs
       HAS_DEPLOY_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN != '' }}
     steps:
       # Deploy what main holds now, not what this push held: a run that
       # starts late can never put older code back over a newer deploy.
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: main
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '22'
+          node-version-file: workers/mccluster/.node-version
 
       # Planned from the last successful push run, not just this push: a
       # cancelled or failed run's functions roll into the next run. With no
@@ -69,6 +69,15 @@ jobs:
             node scripts/supabase-functions-deploy.mjs plan --before "$BEFORE" --after HEAD --base-from-last-success true
           fi
 
+      # Mandatory for every nonempty deployment plan, including manual runs.
+      - name: Require every deploy-gate check green on this exact commit
+        if: steps.plan.outputs.count != '0'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        # The commit this run deploys is main's HEAD at checkout, not
+        # necessarily the pushed one; gate exactly what ships.
+        run: node scripts/require-green-ci.mjs --sha "$(git rev-parse HEAD)"
+
       - name: Wait for the Supabase integration on this commit
         if: steps.plan.outputs.count != '0' && github.event_name == 'push'
         env:
@@ -84,7 +93,7 @@ jobs:
           manual=false; [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && manual=true
           node scripts/supabase-functions-deploy.mjs gate --functions "$FUNCTIONS" --verdict "$RUNNER_TEMP/integration.json" --has-token "$HAS_DEPLOY_TOKEN" --manual "$manual" --baseline "$BASELINE"
 
-      - uses: supabase/setup-cli@ab058987d8d6c725971f6cf9d0b5c98467e30bd1 # v1
+      - uses: supabase/setup-cli@d239d1052f6f024a8d746d7e5aeddead63b9cb53 # v1
         if: steps.plan.outputs.count != '0' && env.HAS_DEPLOY_TOKEN == 'true'
         with:
           version: 2.117.0

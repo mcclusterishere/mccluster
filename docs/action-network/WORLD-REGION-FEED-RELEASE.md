@@ -22,7 +22,7 @@ Only top-level published **public** posts from **public** author profiles, no gr
 
 ## Release sequence
 
-1. Apply `supabase/pending/20261019222500_world_place_scope_v1.sql` through the approved ledger workflow, not a dashboard paste by surprise.
+1. Applied: `supabase/migrations/20261021173729_world_place_scope_v1.sql` went through the ledger workflow on 2026-10-21 (the pending copy was removed 2026-10-27).
 2. Verify public/nonpublic posts and globe country news classification against Supabase; test both guest and member endpoints on staging.
 3. Verify feed page cursors, empty results, user-selected region, off-flag behavior, GPC and iPhone layout.
 4. Coordinate privacy-policy re-acknowledgement if any new capture/placement policy is introduced; do not turn on audio rooms with this flag.

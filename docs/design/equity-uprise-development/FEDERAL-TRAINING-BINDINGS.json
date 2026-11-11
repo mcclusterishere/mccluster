@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "status": "canonical-federal-training-building-bindings-v1",
-  "last_verified": "2026-09-22",
+  "last_verified": "2026-11-03",
   "rule": "Bindings are instructional mappings. They do not certify the building, alter issuer requirements, or grant live-system authorization.",
   "bindings": [
     {
@@ -36,7 +36,15 @@
         "no live systems required for Equity Uprise scenario"
       ],
       "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
-      "live_control_allowed": false
+      "live_control_allowed": false,
+      "hseep_scenario_ids": [
+        "EU-HSEEP-FIRE-SMOKE-V1",
+        "EU-HSEEP-SHELTER-WEATHER-V1",
+        "EU-HSEEP-ACTIVE-THREAT-TTX-V1",
+        "EU-HSEEP-HAZMAT-V1",
+        "EU-HSEEP-FULL-BUILDING-EVAC-V1",
+        "EU-HSEEP-ACCESSIBLE-EVAC-V1"
+      ]
     },
     {
       "binding_id": "BIND-FEMA-IS-120-C",
@@ -71,7 +79,12 @@
         "facilitated exercise optional"
       ],
       "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
-      "live_control_allowed": false
+      "live_control_allowed": false,
+      "hseep_scenario_ids": [
+        "EU-HSEEP-FIRE-SMOKE-V1",
+        "EU-HSEEP-FULL-BUILDING-EVAC-V1",
+        "EU-HSEEP-PLAN-TTX-V1"
+      ]
     },
     {
       "binding_id": "BIND-FEMA-IS-130-A",
@@ -104,7 +117,10 @@
         "facilitated exercise optional"
       ],
       "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
-      "live_control_allowed": false
+      "live_control_allowed": false,
+      "hseep_scenario_ids": [
+        "EU-HSEEP-PLAN-TTX-V1"
+      ]
     },
     {
       "binding_id": "BIND-FEMA-IS-200-C",
@@ -137,7 +153,11 @@
         "multi-role facilitation optional"
       ],
       "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
-      "live_control_allowed": false
+      "live_control_allowed": false,
+      "hseep_scenario_ids": [
+        "EU-HSEEP-HAZMAT-V1",
+        "EU-HSEEP-FULL-BUILDING-EVAC-V1"
+      ]
     },
     {
       "binding_id": "BIND-FEMA-IS-201-A",
@@ -170,7 +190,8 @@
         "none"
       ],
       "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
-      "live_control_allowed": false
+      "live_control_allowed": false,
+      "hseep_scenario_ids": []
     },
     {
       "binding_id": "BIND-FEMA-IS-235-C",
@@ -194,9 +215,6 @@
         "f1-building-ops"
       ],
       "scenario_ids": [
-        "basic_evacuation",
-        "blocked_stair_a",
-        "passenger_elevator_outage",
         "power_interruption"
       ],
       "lab_ids": [
@@ -207,7 +225,12 @@
         "none for tabletop/simulation"
       ],
       "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
-      "live_control_allowed": false
+      "live_control_allowed": false,
+      "hseep_scenario_ids": [
+        "EU-HSEEP-SHELTER-WEATHER-V1",
+        "EU-HSEEP-PLAN-TTX-V1"
+      ],
+      "binding_notes": "IS-235.C teaches jurisdictional (community) emergency operations planning, not a workplace emergency action plan. Rebound 2026-11-03 from the evacuation drills to the plan tabletop, the shelter-in-place drill and continuity planning. The workplace EAP authority is OSHA 29 CFR 1910.38 (reference only)."
     },
     {
       "binding_id": "BIND-FEMA-IS-238",
@@ -229,7 +252,6 @@
       ],
       "scenario_ids": [
         "power_interruption",
-        "public_service_surge",
         "service_area_incident"
       ],
       "lab_ids": [
@@ -240,7 +262,9 @@
         "none for tabletop/simulation"
       ],
       "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
-      "live_control_allowed": false
+      "live_control_allowed": false,
+      "hseep_scenario_ids": [],
+      "binding_notes": "Supply-chain flow and resilience: bound to continuity of power and the freight/service delivery area. Unbound from the lobby public-service queue surge on 2026-11-03 (a queue is not a supply chain)."
     },
     {
       "binding_id": "BIND-IRS-VITA-BASIC-2025",
@@ -272,7 +296,8 @@
         "authorized current-year TaxSlayer Practice Lab access for software practice"
       ],
       "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
-      "live_control_allowed": false
+      "live_control_allowed": false,
+      "hseep_scenario_ids": []
     },
     {
       "binding_id": "BIND-IRS-VITA-ADVANCED-2025",
@@ -304,7 +329,8 @@
         "authorized current-year TaxSlayer Practice Lab access for software practice"
       ],
       "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
-      "live_control_allowed": false
+      "live_control_allowed": false,
+      "hseep_scenario_ids": []
     },
     {
       "binding_id": "BIND-IRS-VITA-VSC-2025",
@@ -331,7 +357,8 @@
         "real service requires site authorization and supervision"
       ],
       "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
-      "live_control_allowed": false
+      "live_control_allowed": false,
+      "hseep_scenario_ids": []
     },
     {
       "binding_id": "BIND-IRS-VITA-IIQR-2025",
@@ -361,7 +388,8 @@
         "supervised VITA/TCE site for real taxpayer interactions"
       ],
       "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
-      "live_control_allowed": false
+      "live_control_allowed": false,
+      "hseep_scenario_ids": []
     },
     {
       "binding_id": "BIND-HHS-OHRP-HRPF",
@@ -389,7 +417,8 @@
         "actual human-subjects research requires institutional/IRB authorization as applicable"
       ],
       "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
-      "live_control_allowed": false
+      "live_control_allowed": false,
+      "hseep_scenario_ids": []
     },
     {
       "binding_id": "BIND-HHS-OHRP-PCIC",
@@ -417,7 +446,8 @@
         "real research consent requires applicable protocol/IRB authority"
       ],
       "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
-      "live_control_allowed": false
+      "live_control_allowed": false,
+      "hseep_scenario_ids": []
     },
     {
       "binding_id": "BIND-CISA-ICS-300",
@@ -451,7 +481,6 @@
         "f1-building-ops"
       ],
       "scenario_ids": [
-        "network_checkin_outage",
         "power_interruption"
       ],
       "lab_ids": [
@@ -470,7 +499,9 @@
         "isolated OT cyber range for any non-simulated exercises"
       ],
       "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
-      "live_control_allowed": false
+      "live_control_allowed": false,
+      "hseep_scenario_ids": [],
+      "binding_notes": "Industrial Control Systems (OT) cybersecurity. Unbound from the directory/IdP check-in outage on 2026-11-03: that outage is IT, not OT. The honest fits are BAS, BACnet, IT/OT segmentation and the cross-system incident labs."
     },
     {
       "binding_id": "BIND-CISA-ICS-401",
@@ -503,7 +534,6 @@
         "f1-building-ops"
       ],
       "scenario_ids": [
-        "network_checkin_outage",
         "power_interruption"
       ],
       "lab_ids": [
@@ -518,7 +548,9 @@
         "isolated OT cyber range for non-simulated validation"
       ],
       "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
-      "live_control_allowed": false
+      "live_control_allowed": false,
+      "hseep_scenario_ids": [],
+      "binding_notes": "Industrial Control Systems (OT) cybersecurity. Unbound from the directory/IdP check-in outage on 2026-11-03: that outage is IT, not OT. The honest fits are BAS, BACnet, IT/OT segmentation and the cross-system incident labs."
     },
     {
       "binding_id": "BIND-CISA-ICS-301",
@@ -544,7 +576,6 @@
         "f1-it-electrical"
       ],
       "scenario_ids": [
-        "network_checkin_outage",
         "power_interruption"
       ],
       "lab_ids": [
@@ -559,7 +590,9 @@
         "never use live Equity Uprise B1/OT"
       ],
       "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
-      "live_control_allowed": false
+      "live_control_allowed": false,
+      "hseep_scenario_ids": [],
+      "binding_notes": "Industrial Control Systems (OT) cybersecurity. Unbound from the directory/IdP check-in outage on 2026-11-03: that outage is IT, not OT. The honest fits are BAS, BACnet, IT/OT segmentation and the cross-system incident labs."
     },
     {
       "binding_id": "BIND-DOE-FEMP-TRAINING-CATALOG",
@@ -605,7 +638,8 @@
         "site-specific energy baseline and operating permissions"
       ],
       "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
-      "live_control_allowed": false
+      "live_control_allowed": false,
+      "hseep_scenario_ids": []
     },
     {
       "binding_id": "BIND-EPA-ENERGYSTAR-PM-TRAINING",
@@ -640,7 +674,8 @@
         "real utility/meter data only with authorization"
       ],
       "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
-      "live_control_allowed": false
+      "live_control_allowed": false,
+      "hseep_scenario_ids": []
     },
     {
       "binding_id": "BIND-NOAA-DIGITAL-COAST-ACADEMY",
@@ -664,7 +699,8 @@
         "none for GIS/data labs; local sensors optional"
       ],
       "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
-      "live_control_allowed": false
+      "live_control_allowed": false,
+      "hseep_scenario_ids": []
     },
     {
       "binding_id": "BIND-NASA-ARSET",
@@ -688,7 +724,8 @@
         "none for remote-sensing coursework; roof sensor correlation optional later"
       ],
       "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
-      "live_control_allowed": false
+      "live_control_allowed": false,
+      "hseep_scenario_ids": []
     },
     {
       "binding_id": "BIND-CDC-EHTER-AWARENESS",
@@ -725,7 +762,10 @@
         "none for online/simulated exercise"
       ],
       "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
-      "live_control_allowed": false
+      "live_control_allowed": false,
+      "hseep_scenario_ids": [
+        "EU-HSEEP-HAZMAT-V1"
+      ]
     },
     {
       "binding_id": "BIND-CDC-EHTER-OPERATIONS",
@@ -759,7 +799,8 @@
         "CDP enrollment/eligibility or equivalent authorized emergency-response field lab"
       ],
       "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
-      "live_control_allowed": false
+      "live_control_allowed": false,
+      "hseep_scenario_ids": []
     },
     {
       "binding_id": "BIND-ATSDR-PHAT",
@@ -788,7 +829,340 @@
         "site sampling/instrumentation only for future real environmental lab"
       ],
       "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
-      "live_control_allowed": false
+      "live_control_allowed": false,
+      "hseep_scenario_ids": []
+    },
+    {
+      "binding_id": "BIND-FEMA-IS-700-B",
+      "competency_ids": [
+        "CORE-06",
+        "CORE-08",
+        "PSC-05"
+      ],
+      "floor_ids": [
+        "F1",
+        "BUILDING"
+      ],
+      "building_asset_ids": [],
+      "building_space_ids": [
+        "f1-building-ops"
+      ],
+      "scenario_ids": [
+        "basic_evacuation",
+        "medical_incident_lobby"
+      ],
+      "lab_ids": [],
+      "hseep_scenario_ids": [
+        "EU-HSEEP-FIRE-SMOKE-V1",
+        "EU-HSEEP-FULL-BUILDING-EVAC-V1"
+      ],
+      "current_lab_readiness": "ready-now-simulation",
+      "real_lab_requirements": [
+        "none for tabletop/simulation"
+      ],
+      "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
+      "catalog_id": "FEMA-IS-700-B",
+      "live_control_allowed": false,
+      "binding_notes": "NIMS baseline taken with IS-100.C; a usual prerequisite for classroom ICS-300."
+    },
+    {
+      "binding_id": "BIND-FEMA-IS-800-D",
+      "competency_ids": [
+        "CORE-06",
+        "PSC-03",
+        "PSC-05"
+      ],
+      "floor_ids": [
+        "F1",
+        "BUILDING"
+      ],
+      "building_asset_ids": [],
+      "building_space_ids": [
+        "f1-building-ops"
+      ],
+      "scenario_ids": [],
+      "lab_ids": [],
+      "hseep_scenario_ids": [
+        "EU-HSEEP-PLAN-TTX-V1"
+      ],
+      "current_lab_readiness": "ready-now-simulation",
+      "real_lab_requirements": [
+        "none for tabletop/simulation"
+      ],
+      "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
+      "catalog_id": "FEMA-IS-800-D",
+      "live_control_allowed": false,
+      "binding_notes": "Usual prerequisite for classroom ICS-300 (G0300), with IS-100, IS-200 and IS-700."
+    },
+    {
+      "binding_id": "BIND-FEMA-IS-317-A",
+      "competency_ids": [
+        "PSC-01",
+        "PSC-05",
+        "CORE-08"
+      ],
+      "floor_ids": [
+        "F1"
+      ],
+      "building_asset_ids": [],
+      "building_space_ids": [
+        "f1-building-ops"
+      ],
+      "scenario_ids": [
+        "medical_incident_lobby",
+        "service_area_incident"
+      ],
+      "lab_ids": [],
+      "hseep_scenario_ids": [
+        "EU-HSEEP-SHELTER-WEATHER-V1",
+        "EU-HSEEP-ACCESSIBLE-EVAC-V1"
+      ],
+      "current_lab_readiness": "ready-now-simulation",
+      "real_lab_requirements": [
+        "local CERT Basic Training (classroom, delivered by local government) for the full program; IS-317.A does not replace it"
+      ],
+      "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
+      "catalog_id": "FEMA-IS-317-A",
+      "live_control_allowed": false,
+      "binding_notes": "Online introduction only. CERT Basic Training is classroom-based and delivered by local emergency management, fire or police."
+    },
+    {
+      "binding_id": "BIND-FEMA-IS-907-A",
+      "competency_ids": [
+        "CORE-08",
+        "CORE-02"
+      ],
+      "floor_ids": [
+        "F1"
+      ],
+      "building_asset_ids": [],
+      "building_space_ids": [
+        "f1-building-ops"
+      ],
+      "scenario_ids": [],
+      "lab_ids": [],
+      "hseep_scenario_ids": [
+        "EU-HSEEP-ACTIVE-THREAT-TTX-V1"
+      ],
+      "current_lab_readiness": "ready-now-simulation",
+      "real_lab_requirements": [
+        "none for tabletop/simulation"
+      ],
+      "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
+      "catalog_id": "FEMA-IS-907-A",
+      "live_control_allowed": false,
+      "binding_notes": "Bound only to a non-graphic tabletop that repeats the official Run, Hide, Fight guidance and adds no tactics."
+    },
+    {
+      "binding_id": "BIND-FEMA-IS-230-E",
+      "competency_ids": [
+        "CORE-06",
+        "PSC-05",
+        "SHR-01"
+      ],
+      "floor_ids": [
+        "F1",
+        "BUILDING"
+      ],
+      "building_asset_ids": [],
+      "building_space_ids": [
+        "f1-building-ops"
+      ],
+      "scenario_ids": [],
+      "lab_ids": [],
+      "hseep_scenario_ids": [
+        "EU-HSEEP-PLAN-TTX-V1"
+      ],
+      "current_lab_readiness": "ready-now-simulation",
+      "real_lab_requirements": [
+        "none for tabletop/simulation"
+      ],
+      "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
+      "catalog_id": "FEMA-IS-230-E",
+      "live_control_allowed": false,
+      "binding_notes": "FEMA Professional Development Series course. Code verified on the PDS page 2026-11-03; hours/CEU to re-confirm on the course page."
+    },
+    {
+      "binding_id": "BIND-FEMA-IS-240-C",
+      "competency_ids": [
+        "CORE-03",
+        "SHR-05",
+        "PSC-05"
+      ],
+      "floor_ids": [
+        "F1",
+        "BUILDING"
+      ],
+      "building_asset_ids": [],
+      "building_space_ids": [
+        "f1-building-ops"
+      ],
+      "scenario_ids": [],
+      "lab_ids": [],
+      "hseep_scenario_ids": [
+        "EU-HSEEP-FULL-BUILDING-EVAC-V1"
+      ],
+      "current_lab_readiness": "ready-now-simulation",
+      "real_lab_requirements": [
+        "none for tabletop/simulation"
+      ],
+      "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
+      "catalog_id": "FEMA-IS-240-C",
+      "live_control_allowed": false,
+      "binding_notes": "FEMA Professional Development Series course. Code verified on the PDS page 2026-11-03; hours/CEU to re-confirm on the course page."
+    },
+    {
+      "binding_id": "BIND-FEMA-IS-241-C",
+      "competency_ids": [
+        "CORE-08",
+        "OPS-05",
+        "PSC-05"
+      ],
+      "floor_ids": [
+        "F1",
+        "BUILDING"
+      ],
+      "building_asset_ids": [],
+      "building_space_ids": [
+        "f1-building-ops"
+      ],
+      "scenario_ids": [],
+      "lab_ids": [],
+      "hseep_scenario_ids": [
+        "EU-HSEEP-FULL-BUILDING-EVAC-V1"
+      ],
+      "current_lab_readiness": "ready-now-simulation",
+      "real_lab_requirements": [
+        "none for tabletop/simulation"
+      ],
+      "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
+      "catalog_id": "FEMA-IS-241-C",
+      "live_control_allowed": false,
+      "binding_notes": "FEMA Professional Development Series course. Code verified on the PDS page 2026-11-03; hours/CEU to re-confirm on the course page."
+    },
+    {
+      "binding_id": "BIND-FEMA-IS-242-C",
+      "competency_ids": [
+        "CORE-02",
+        "PSC-05",
+        "SHR-05"
+      ],
+      "floor_ids": [
+        "F1",
+        "BUILDING"
+      ],
+      "building_asset_ids": [],
+      "building_space_ids": [
+        "f1-building-ops"
+      ],
+      "scenario_ids": [],
+      "lab_ids": [],
+      "hseep_scenario_ids": [
+        "EU-HSEEP-SHELTER-WEATHER-V1"
+      ],
+      "current_lab_readiness": "ready-now-simulation",
+      "real_lab_requirements": [
+        "none for tabletop/simulation"
+      ],
+      "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
+      "catalog_id": "FEMA-IS-242-C",
+      "live_control_allowed": false,
+      "binding_notes": "FEMA Professional Development Series course. Code verified on the PDS page 2026-11-03; hours/CEU to re-confirm on the course page."
+    },
+    {
+      "binding_id": "BIND-FEMA-IS-244-B",
+      "competency_ids": [
+        "PSC-01",
+        "PSC-04",
+        "SHR-01"
+      ],
+      "floor_ids": [
+        "F1"
+      ],
+      "building_asset_ids": [],
+      "building_space_ids": [
+        "f1-building-ops"
+      ],
+      "scenario_ids": [],
+      "lab_ids": [],
+      "hseep_scenario_ids": [
+        "EU-HSEEP-ACCESSIBLE-EVAC-V1"
+      ],
+      "current_lab_readiness": "ready-now-simulation",
+      "real_lab_requirements": [
+        "none for tabletop/simulation"
+      ],
+      "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
+      "catalog_id": "FEMA-IS-244-B",
+      "live_control_allowed": false,
+      "binding_notes": "FEMA Professional Development Series course. Code verified on the PDS page 2026-11-03; hours/CEU to re-confirm on the course page."
+    },
+    {
+      "binding_id": "BIND-CISA-ICS-100W",
+      "competency_ids": [
+        "CORE-05",
+        "OPS-01",
+        "OPS-02",
+        "OPS-04"
+      ],
+      "floor_ids": [
+        "B1",
+        "L7"
+      ],
+      "building_asset_ids": [
+        "LOGIC-VLAN-BAS-OT"
+      ],
+      "building_space_ids": [
+        "f1-it-electrical"
+      ],
+      "scenario_ids": [],
+      "lab_ids": [
+        "IT-LAB-027",
+        "IT-LAB-029"
+      ],
+      "hseep_scenario_ids": [],
+      "current_lab_readiness": "ready-now-simulation",
+      "real_lab_requirements": [
+        "isolated OT cyber range for any non-simulated exercise"
+      ],
+      "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
+      "catalog_id": "CISA-ICS-100W",
+      "live_control_allowed": false,
+      "binding_notes": "Entry point for building OT cyber before ICS 401/300. 'ICS' here means Industrial Control Systems, not FEMA's Incident Command System."
+    },
+    {
+      "binding_id": "BIND-CISA-ICS-210W",
+      "competency_ids": [
+        "CORE-05",
+        "OPS-01",
+        "OPS-02",
+        "OPS-04"
+      ],
+      "floor_ids": [
+        "B1",
+        "L7"
+      ],
+      "building_asset_ids": [
+        "LOGIC-VLAN-BAS-OT"
+      ],
+      "building_space_ids": [
+        "f1-it-electrical"
+      ],
+      "scenario_ids": [],
+      "lab_ids": [
+        "IT-LAB-027",
+        "IT-LAB-028",
+        "IT-LAB-029"
+      ],
+      "hseep_scenario_ids": [],
+      "current_lab_readiness": "ready-now-simulation",
+      "real_lab_requirements": [
+        "isolated OT cyber range for any non-simulated exercise"
+      ],
+      "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
+      "catalog_id": "CISA-ICS-210W",
+      "live_control_allowed": false,
+      "binding_notes": "Entry point for building OT cyber before ICS 401/300. 'ICS' here means Industrial Control Systems, not FEMA's Incident Command System."
     }
   ]
 }

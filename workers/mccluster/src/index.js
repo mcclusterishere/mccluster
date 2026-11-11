@@ -1,14 +1,21 @@
+import { handleProductWidgetReadiness, PRODUCT_WIDGET_READINESS } from './product-widget-readiness.js';
+import { handleArcade, ARCADE_PREFIX } from './arcade/index.js';
+import { handleEup, EUP_PREFIX } from './eup/router.js';
 import { guardWorldRelease } from './world-release.js';
 import { handleFundingIntelligence, FUNDING_PREFIX } from './funding-intelligence.js';
 import { allowedOrigins, applyCors, corsHeaders, fail, logEvent, reply } from './lib/http.js';
 import whip from './whip/booking-gate.js';
 import {handleAtNight} from './at-night.js';
 import prim3 from './prim3/index.js';
+import { handlePrim3Levels, PRIM3_LEVELS_PREFIX } from './prim3/levels.js';
+import { handleNewsDesk, NEWS_DESK_PATH } from './prim3/news-desk.js';
+import { handleLearning, LEARNING_PATH } from './prim3/learning.js';
 import seekFirst from './seek-first/index.js';
 import { buildEquityUpriseHaloProjection } from './seek-first/equity-uprise-halo.js';
 import { handleWorldLayers } from './world-layers.js';
 import { handleHaloLayers, handleWorldGeocode, WORLD_GEOCODE_PATH } from './world-halo-layers.js';
 import { handleHaloOps } from './world-halo-ops.js';
+import { handleWorldEnvironment, ENVIRONMENT_PATH } from './world-environment.js';
 import { handleWorldMembers, MEMBERS_PATH } from './world-members.js';
 import { handleWorldCctv } from './world-cctv.js';
 import { handleWorldAccess } from './world-access.js';
@@ -17,6 +24,8 @@ import { handlePublicComment } from './public-comment.js';
 import { handleWorldIon, WORLD_ION_PATH } from './world-ion.js';
 import { AccessError, verifyAccess } from './seek-first/access.js';
 import { handleWorldNews, handleWorldNewsHeat, NEWS_PATH, NEWS_HEAT_PATH } from './world-news.js';
+import { handleWorldNewsPairs, NEWS_PAIRS_PATH } from './world-news-pairs.js';
+import { handleWorldWeather, WEATHER_PREFIX } from './world-weather.js';
 import SEEK_FIRST_CONSOLE_HTML from './seek-first/console.html';
 import { CATALOG } from './ai/envelope.js';
 
@@ -148,6 +157,30 @@ export default {
         return reply(request, env, CATALOG);
       }
 
+      if (path === ARCADE_PREFIX || path.startsWith(ARCADE_PREFIX + '/')) {
+        return handleArcade(request, env, { requireHouseOwner });
+      }
+
+      /* Admin-only E=Up product workspace (Control → Products → E=Up). The one exception, the League member
+         branch /v1/eup/member/league, verifies the session with authUser instead (./eup/router.js). */
+      if (path === EUP_PREFIX || path.startsWith(EUP_PREFIX + '/')) {
+        return handleEup(request, env, { requireHouseOwner, authUser });
+      }
+
+      if (path === PRIM3_LEVELS_PREFIX || path.startsWith(`${PRIM3_LEVELS_PREFIX}/`)) {
+        return handlePrim3Levels(request, env, { requireHouseOwner });
+      }
+
+      /* PRIM3 news desk: the 24 agents' briefs and reactions, owner only (./prim3/news-desk.js) */
+      if (path === NEWS_DESK_PATH) {
+        return handleNewsDesk(request, env, { requireHouseOwner });
+      }
+
+      /* PRIM3 learning evidence: lab sessions, certificates, pathways, HSEEP exercises; house owner only for now (./prim3/learning.js) */
+      if (path === LEARNING_PATH || path.startsWith(`${LEARNING_PATH}/`)) {
+        return handleLearning(request, env, { requireHouseOwner, authUser });
+      }
+
       if (path === '/v1/prim3' || path.startsWith('/v1/prim3/')) {
         return prim3.fetch(request, env);
       }
@@ -162,11 +195,26 @@ export default {
         const heat = await handleWorldNewsHeat(request, env);
         if (heat) return heat;
       }
+      /* headlines paired with Halo map items by McCluster Core, house owner only (./world-news-pairs.js) */
+      if (path === NEWS_PAIRS_PATH) {
+        const pairs = await handleWorldNewsPairs(request, env);
+        if (pairs) return pairs;
+      }
+      /* Connecticut weather, read from McCluster Core's once-per-region snapshot, house owner only (./world-weather.js) */
+      if (path === WEATHER_PREFIX || path.startsWith(`${WEATHER_PREFIX}/`)) {
+        const weather = await handleWorldWeather(request, env);
+        if (weather) return weather;
+      }
       /* accounts by the IP place of their latest signed-in visit: exact for the house owner, countries of five or more for
          everyone else (./world-members.js) */
       if (path === MEMBERS_PATH) {
         const members = await handleWorldMembers(request, env);
         if (members) return members;
+      }
+
+      /* Consumer public-government environmental contract; no Halo gates are changed. */
+      if (path === ENVIRONMENT_PATH || path.startsWith(`${ENVIRONMENT_PATH}/`)) {
+        return handleWorldEnvironment(request, env);
       }
 
       /* Optional World layers: release guard above, then provider adapter. */
@@ -362,6 +410,10 @@ export default {
           channels: Array.isArray(channels) ? channels : [],
           harness
         });
+      }
+
+      if (path === PRODUCT_WIDGET_READINESS) {
+        return handleProductWidgetReadiness(request, env, { requireHouseOwner, read: p => sb(env, p) });
       }
 
       if (path === '/v1/apps' && request.method === 'GET') {

@@ -25,12 +25,12 @@ it.
 | `action_member_verifications` (status-only, one row per user, purpose `referral_signup`), `action_unlock_rules`, `action_unlock_progress()` | ladder pending file (PR #440) | **Extended**, not duplicated: one row per (user, purpose), purpose `halo_full` added, requirement kind `identity_verified`, rule `halo_full`. |
 | Referral codes: `action_participants.referral_code` / `referred_by` | `20260930235851_uprise_action_network.sql` | The E=Up rule counts referred people whose `referral_signup` row is verified. Unchanged. |
 | Marketplace referral contract (commissions) | `docs/marketplace/referral-contract-5000.md` | Money only, payouts disabled; no identity data. Not touched. |
-| `at_night_verifications` (server-only provider assertions, no ID images) | `supabase/migrations/pending/20261009220000_at_night_adult_verification.sql` | The pattern followed: status and provider reference only, never documents. |
+| `at_night_verifications` (server-only provider assertions, no ID images) | `supabase/pending/20261009220000_at_night_adult_verification.sql` | The pattern followed: status and provider reference only, never documents. |
 | Whip Equipped's Stripe Identity (`identity_verifications`, `workers/mccluster/src/whip/identity-gateway.js`) | replay `0037_whip_mobility.sql` | Whip Equipped LLC is a **separate company**; its verification data is not shared or reused here. |
 | Private bucket patterns | `20260920035720_gated_audio_bucket_live.sql` (`mcc-gated-audio`, private), `20260921051000_mnet_avatar_bucket.sql` (owner-folder `storage.foldername(name)[1] = auth.uid()` policies) | The new bucket follows both: private, typed, size-capped, owner-folder paths. |
-| Camera code | `js/mnet-live.js` (`getUserMedia` for live rooms); mission proofs use `<input capture>` (camera-loop) | Proof capture accepts files, so it is **not** reused for identity; the identity page records with `getUserMedia` + `MediaRecorder` only. `creator-capture.html` is empty in this tree. |
+| Camera code | `js/mnet-live.js` (`getUserMedia` for live rooms); mission proofs use `<input capture>` (camera-loop) | Proof capture accepts files, so it is **not** reused for identity; the identity page records with `getUserMedia` + `MediaRecorder` only. `creator-capture.html` was a placeholder and is shelved in `_unfinished/`. |
 | Notifications | `network_notifications` | Each decision notifies the member (`type = 'identity_verification_review'`). |
-| Owner control room | `control.html` → `js/control-room/action-network.js` (Human Uprise: proof review, fellowship, Policy memos) | New **Identity** tab there, module `js/control-room/identity-review.js`. |
+| Owner control room | `control.html` → `js/control-room/action-network.js` (Equity Uprise: proof review, fellowship, Policy memos) | New **Identity** tab there, module `js/control-room/identity-review.js`. |
 | Halo's gate | `hitmans-halo`: owner-only behind Cloudflare Access / a reviewed HTTPS boundary (its `AGENTS.md`, `SECURITY.md`) | Not edited. Section 6 is the contract for extending it. |
 
 ## 2. The two levels
@@ -158,7 +158,7 @@ automated matching is ever proposed, it needs **separate, explicit consent**
 (a new consent version for that purpose), counsel review, and its own
 retention schedule; it may not be added under these consents.
 
-## 4. Owner review (control room → Human Uprise → Identity)
+## 4. Owner review (control room → Equity Uprise → Identity)
 
 - The queue lists submitted videos oldest first with **age**, the 24-hour
   target (`sla_due_at`, "over 24 h" flagged), attempt number, region, and for

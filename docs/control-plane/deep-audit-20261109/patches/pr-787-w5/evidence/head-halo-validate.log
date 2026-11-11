@@ -1,0 +1,54 @@
+# series head f8499fad, 2026-11-10T11:55:01Z, node v22.23.4, cwd PRIM3/game/halo (the prim3-halo-canon.yml step; PRIM3/game/halo/** changed)
+# npm run validate
+
+> @prim3/halo-game@0.1.0 validate
+> node validate-campaign.mjs && node --test canon-boundary.test.mjs context-doctrine.test.mjs
+
+{"ok":true,"campaign":"prim3-halo-earth-campaign-v1","missions":66,"core_arcs":21}
+TAP version 13
+# Subtest: PRIM3 Halo is Earth-only and live-ops isolated
+ok 1 - PRIM3 Halo is Earth-only and live-ops isolated
+  ---
+  duration_ms: 0.846609
+  type: 'test'
+  ...
+# Subtest: campaign contains exactly 66 missions
+ok 2 - campaign contains exactly 66 missions
+  ---
+  duration_ms: 0.460471
+  type: 'test'
+  ...
+# Subtest: country placement requires technology and cultural evidence
+ok 3 - country placement requires technology and cultural evidence
+  ---
+  duration_ms: 1.317622
+  type: 'test'
+  ...
+# Subtest: canon rejects technology hierarchy and SIM/eSIM oversimplification
+ok 4 - canon rejects technology hierarchy and SIM/eSIM oversimplification
+  ---
+  duration_ms: 0.369081
+  type: 'test'
+  ...
+# Subtest: cultural learning is implicit and anti-stereotype
+ok 5 - cultural learning is implicit and anti-stereotype
+  ---
+  duration_ms: 0.401474
+  type: 'test'
+  ...
+# Subtest: Ghana remains a sourced candidate rather than an invented locked assignment
+ok 6 - Ghana remains a sourced candidate rather than an invented locked assignment
+  ---
+  duration_ms: 0.458421
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 77.642745
+exit=0

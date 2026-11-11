@@ -1,4 +1,4 @@
-import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.57.0';
+import {createClient} from '../vendor/supabase-js-2.57.0.mjs';
 const db=createClient('https://zmnhbrjyhxzhkxmhkexs.supabase.co','sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4',{auth:{persistSession:true,autoRefreshToken:true}});
 const status=document.getElementById('accountStatus');
 async function importLegacySession(){
@@ -19,7 +19,7 @@ db.auth.onAuthStateChange(()=>{setTimeout(refresh,0)});
 const sessionReady=importLegacySession().catch(()=>{});
 sessionReady.finally(refresh);
 
-// Persist through the existing owner-checked Human Uprise RPC; never write directly to network_profiles.
+// Persist through the existing owner-checked Equity Uprise RPC; never write directly to network_profiles.
 const save=document.getElementById('saveAccount');
 if(save)save.addEventListener('click',async()=>{
   save.disabled=true;

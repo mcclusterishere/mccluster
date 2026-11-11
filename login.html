@@ -6,76 +6,51 @@
   <title>Sign in · McCluster</title>
   <meta name="robots" content="noindex,nofollow">
   <style>
-    *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#0b0b0c;color:#f4efe6;font-family:system-ui,-apple-system,sans-serif}body{display:grid;place-items:center;min-height:100svh;padding:24px}.card{width:min(92vw,430px);border:1px solid var(--mcc-rule-strong);border-radius:24px;padding:28px;background:linear-gradient(160deg,var(--mcc-surface-2),var(--mcc-surface));box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 24px 70px rgba(0,0,0,.35);animation:mcc-rise .5s var(--mcc-ease) both}.mark{font-weight:900;letter-spacing:.18em;text-transform:uppercase;color:#d9b96a;font-size:.72rem}.card h1{font-size:2.25rem;line-height:1;margin:.75rem 0}.card p{color:#b9b6ac;line-height:1.6}.google{margin-top:24px;min-height:44px}.status{min-height:1.5em;margin-top:16px;font-size:.9rem}.ok{color:#9ee5a8}.bad{color:#f2a49c}.back{display:inline-block;margin-top:18px;color:#d9b96a;text-decoration:none;font-weight:700}
-    .alt{margin-top:20px}.alt__rule{display:block;text-align:center;color:#6f6c66;font-size:.74rem;letter-spacing:.16em;text-transform:uppercase;font-weight:800;margin-bottom:14px}
-    .alt__btn{display:block;padding:13px 16px;border-radius:13px;background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1px #2d2b28;color:#f4efe6;text-decoration:none;text-align:center;font-weight:800;font-size:.95rem}
-    .alt__btn{transition:transform .22s var(--mcc-spring),background .2s,box-shadow .2s}.alt__btn:hover{background:rgba(255,255,255,.11);transform:translateY(-1px)}.alt__btn:active{transform:scale(.98)}
-    .alt__link{display:block;margin-top:10px;text-align:center;color:#d9b96a;text-decoration:none;font-weight:700;font-size:.88rem}
+    *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#0b0b0c;color:#f4efe6;font-family:system-ui,-apple-system,sans-serif}body{display:grid;place-items:center;min-height:100svh;padding:24px}.card{width:min(92vw,430px);border:1px solid var(--mcc-rule-strong);border-radius:24px;padding:28px;background:linear-gradient(160deg,var(--mcc-surface-2),var(--mcc-surface));box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 24px 70px rgba(0,0,0,.35);animation:mcc-rise .5s var(--mcc-ease) both}.mark{font-weight:900;letter-spacing:.18em;text-transform:uppercase;color:#d9b96a;font-size:.72rem}.card h1{font-size:2.25rem;line-height:1;margin:.75rem 0}.card p{color:#b9b6ac;line-height:1.6}
+    .go{display:block;margin-top:20px;padding:13px 16px;border-radius:13px;background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1px #2d2b28;color:#f4efe6;text-decoration:none;text-align:center;font-weight:800;font-size:.95rem;transition:transform .22s var(--mcc-spring),background .2s}.go:hover{background:rgba(255,255,255,.11);transform:translateY(-1px)}
+    .back{display:inline-block;margin-top:18px;color:#d9b96a;text-decoration:none;font-weight:700}
   </style>
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <link rel="stylesheet" href="css/style.css?v=__STAMP__">
-  <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
-  <script src="js/live-content.js?v=__STAMP__"></script>
 </head>
 <body>
   <main class="card">
     <div class="mark">McCluster Platform</div>
     <h1>Sign in.</h1>
-    <p>One account for your website, app, messaging, domains and client console.</p>
-    <div id="googleButton" class="google"></div>
-    <div id="status" class="status" aria-live="polite">Loading Google sign-in…</div>
-
-    <!-- This page only speaks Google, against a different auth service to the
-         M Account used by the rest of the site. Anyone who signed up with an
-         email and password had no route onward from here, and no way to reach
-         a password reset at all. These two links are that route. They do not
-         merge the two systems; they just stop this being a dead end. -->
-    <div class="alt">
-      <span class="alt__rule">or</span>
-      <a class="alt__btn" href="account.html">Sign in with email and password</a>
-      <a class="alt__link" href="forgot-password.html">Forgot or don't know your password?</a>
-    </div>
-
-    <a class="back" href="index.html">← Back to HERE</a>
+    <p>Sign-in is your M Account. Taking you there&hellip;</p>
+    <a class="go" id="go" href="account.html">Continue to sign in</a>
+    <a class="back" href="index.html">&larr; Back to HERE</a>
   </main>
 <script>
-(async function(){
-  const status=document.getElementById('status');
-  const button=document.getElementById('googleButton');
-  // The Google credential must never be posted to a URL chosen by a link.
-  const authOrigin='https://auth.mccluster.org';
-  function safeNext(){
-    const raw=new URLSearchParams(location.search).get('next')||'/account.html';
-    if(raw.includes('\\')||/[\u0000-\u001f\u007f]/.test(raw))return '/account.html';
-    try{const target=new URL(raw,location.origin);if(target.origin!==location.origin||!['https:','http:'].includes(target.protocol))return '/account.html';return target.pathname+target.search+target.hash;}
-    catch{return '/account.html';}
+/* THIN FORWARDER. Sign-in lives on account.html (js/mcc-auth.js, the M
+   Account on Supabase). This page once rendered a Google button against a
+   separate auth host that was never provisioned (no DNS record), so nobody
+   could sign in here. Old links and bookmarks still arrive, so it forwards
+   them on this origin and carries ?next= through under the same rule as
+   MCC.safeNext: a path on THIS origin only. A scheme (https:, javascript:),
+   a protocol-relative //host, a backslash or a control character is refused
+   and the person lands on account.html with no destination. account.html
+   refuses itself as a destination, so that is dropped here too. */
+(function () {
+  function safeNext() {
+    var raw = '';
+    try { raw = new URLSearchParams(location.search).get('next') || ''; } catch (_) {}
+    raw = String(raw).trim();
+    if (!raw || raw.length > 2000) return '';
+    if (/[\u0000-\u001f\u007f\\]/.test(raw) || /^\/\//.test(raw) || /^[a-z][a-z0-9+.-]*:/i.test(raw)) return '';
+    try {
+      var target = new URL(raw, location.origin);
+      if (target.origin !== location.origin || !/^https?:$/.test(target.protocol)) return '';
+      return target.pathname + target.search + target.hash;
+    } catch (_) { return ''; }
   }
-  function say(text,kind=''){status.textContent=text;status.className='status '+kind;}
-  try{
-    const cfg=await fetch(authOrigin+'/v1/auth/config',{credentials:'include'}).then(r=>{if(!r.ok)throw new Error('Auth service unavailable');return r.json();});
-    if(!cfg.googleClientId) throw new Error('Google login has not been configured yet');
-    while(!window.google?.accounts?.id) await new Promise(r=>setTimeout(r,50));
-    google.accounts.id.initialize({
-      client_id:cfg.googleClientId,
-      callback:async(response)=>{
-        say('Signing you in…');
-        try{
-          const r=await fetch(authOrigin+'/v1/auth/google',{method:'POST',credentials:'include',headers:{'content-type':'application/json'},body:JSON.stringify({credential:response.credential})});
-          const out=await r.json(); if(!r.ok) throw new Error(out.error||'Sign-in failed');
-          say('Signed in. Opening your account…','ok');
-          const next=safeNext();
-          setTimeout(()=>location.assign(next),350);
-        }catch(e){say(e.message,'bad');}
-      }
-    });
-    google.accounts.id.renderButton(button,{theme:'filled_black',size:'large',shape:'pill',text:'continue_with',width:360});
-    say('');
-  }catch(e){say(e.message,'bad');}
+  var next = safeNext();
+  if (/(^|\/)account\.html$/.test(next.split(/[?#]/)[0])) next = '';
+  var to = 'account.html' + (next ? '?next=' + encodeURIComponent(next) : '');
+  var go = document.getElementById('go');
+  if (go) go.href = to;
+  location.replace(to);
 })();
 </script>
   <script src="js/tabbar.js?v=__STAMP__"></script>
-  <script defer src="js/pip.js?v=__STAMP__"></script>
-  <script defer src="js/here-material.js?v=__STAMP__"></script>
-  <script src="js/site-editor.js?v=__STAMP__" defer></script>
 </body>
 </html>

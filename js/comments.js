@@ -28,7 +28,7 @@
   var CSS = document.createElement("style");
   CSS.textContent =
     '.cmroom{position:relative;z-index:2;max-width:44rem;margin:2.5rem auto 0;padding:0 clamp(1.1rem,4vw,2rem) 8rem;font-family:var(--ui,Manrope,sans-serif)}' +
-    '.cmroom h3{font-weight:800;font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;color:#e5383b;margin:0 0 .9rem}' +
+    '.cmroom h2{font-weight:800;font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;color:#e5383b;margin:0 0 .9rem}' +
     '.cm{border-radius:16px;padding:.8rem .95rem;margin-bottom:.55rem;background:linear-gradient(180deg,var(--glass-hi,rgba(255,255,255,.08)),var(--glass-lo,rgba(255,255,255,.03)));box-shadow:inset 0 1px 0 rgba(255,255,255,.1)}' +
     '.cm b{font-weight:800;font-size:.84rem;color:var(--cream,#f2e9db)}' +
     '.cm .wh{float:right;font-weight:700;font-size:.68rem;color:var(--cream-dim,#a08f81)}' +
@@ -44,7 +44,7 @@
        card or a field together. On the bone coat the hairlines went white
        on white — the comment box lost its outline and the text field
        stopped looking like somewhere you could type. */
-    'html[data-theme="light"] .cmroom h3{color:#a4101a}' +
+    'html[data-theme="light"] .cmroom h2{color:#a4101a}' +
     'html[data-theme="light"] .cm{box-shadow:inset 0 0 0 1px rgba(26,20,13,.12)}' +
     'html[data-theme="light"] .cm .rm{color:#9c4a24}' +
     'html[data-theme="light"] .cmroom textarea,html[data-theme="light"] .cmroom input{' +
@@ -55,7 +55,7 @@
 
   function room(mount) {
     var subject = mount.getAttribute("data-comments") || location.pathname.split("/").pop() || "index.html";
-    mount.innerHTML = '<div class="cmroom"><h3>The comments</h3><div data-list><p class="note">Opening the comments…</p></div><div data-write></div></div>';
+    mount.innerHTML = '<div class="cmroom"><h2>The comments</h2><div data-list><p class="note">Opening the comments…</p></div><div data-write></div></div>';
     var list = mount.querySelector("[data-list]");
     var write = mount.querySelector("[data-write]");
 

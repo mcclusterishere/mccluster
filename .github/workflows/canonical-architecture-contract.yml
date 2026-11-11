@@ -14,7 +14,7 @@ jobs:
   architecture:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
@@ -119,6 +119,24 @@ jobs:
             exit 1
           fi
           grep -F 'name = "mccluster"' workers/mccluster/wrangler.toml
+
+      - name: Reject loose Worker sources outside the canonical edges
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs');
+          const a = JSON.parse(fs.readFileSync('docs/control-plane/canonical-architecture.json', 'utf8'));
+          const allowed = [a.planes.public_edge.source, ...(a.planes.public_edge.transport_edges || []).map((e) => e.source)]
+            .map((s) => s.replace(/^workers\//, ''));
+          const loose = fs.readdirSync('workers', { withFileTypes: true })
+            .filter((e) => (e.isDirectory() ? !allowed.includes(e.name) : /\.m?js$/.test(e.name)))
+            .map((e) => e.name);
+          if (loose.length) {
+            console.error(`Loose Worker source under workers/: ${loose.join(', ')}. The only Worker sources are ${allowed.join(', ')} (docs/control-plane/canonical-architecture.json); a Worker with no wrangler config and no deploy is a ghost backend.`);
+            process.exit(1);
+          }
+          NODE
 
       - name: Enforce canonical deployment path
         shell: bash

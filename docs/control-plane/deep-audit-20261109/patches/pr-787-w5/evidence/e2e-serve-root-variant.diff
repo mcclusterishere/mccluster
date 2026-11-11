@@ -1,0 +1,36 @@
+--- /dev/fd/63	2026-11-10 12:08:30.765313126 +0000
++++ prim3-topology-learning.serve-root.e2e.mjs	2026-11-10 12:08:30.765204930 +0000
+@@ -6,7 +6,7 @@
+ const require=createRequire(join(process.env.PRIM3_BROWSER_TOOLS||'/tmp/prim3-release-browser/node_modules','x'));
+ const {chromium}=require('playwright');
+ const THREE=join(process.env.PRIM3_BROWSER_TOOLS||'/tmp/prim3-release-browser/node_modules','three');
+-const ROOT=resolve(import.meta.dirname,'../..'),BASE='https://matthew.mccluster.org';
++const ROOT=resolve(process.env.MCC_SERVE_ROOT||resolve(import.meta.dirname,'../..')),BASE='https://matthew.mccluster.org'; // SCRATCH VARIANT: serve an emitted export (MCC_SERVE_ROOT)
+ const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.json':'application/json','.css':'text/css','.svg':'image/svg+xml','.png':'image/png'};
+ export async function runTopologyLearningBrowser({handleLearning,env,options}){
+  assert.equal(JSON.parse(await readFile(join(THREE,'package.json'),'utf8')).version,'0.180.0');
+@@ -15,6 +15,7 @@
+   if(process.env.PRIM3_TOPOLOGY_VARIANT&&variant!==process.env.PRIM3_TOPOLOGY_VARIANT)continue;
+   const ctx=await browser.newContext({viewport:{width,height:900}}),page=await ctx.newPage(),errors=[];
+   page.on('pageerror',e=>errors.push(e.message));
++  page.on('response',r=>{if(r.status()===404)console.log(`HTTP 404 ${r.url()}`);});page.on('console',m=>{if(m.type()==='error')console.log(`CONSOLE ERROR ${m.text()}`);}); // SCRATCH VARIANT: diagnostics only
+   await ctx.addInitScript(()=>localStorage.setItem('mccdb_session',JSON.stringify({access_token:'synthetic-owner'})));
+   await ctx.route('**/*',async route=>{
+    const req=route.request(),u=new URL(req.url());
+@@ -36,7 +37,7 @@
+   await page.waitForFunction(()=>document.getElementById('releasePublish')?.disabled===false);
+   await page.fill('#releaseSeed',String(10000+width+['transit-relay','equity-uprise-hq','equity-uprise-b1','equity-uprise-b1-attack','courtyard','city'].indexOf(variant)*10+(topology==='hex'?1:0)));
+   await page.check('#releaseFiction');await page.check('#releaseGeography');await page.click('#releasePublish');
+-  await page.locator('#releaseBrief').waitFor({state:'visible'});await page.selectOption('#learningVariant',variant);await page.selectOption('#learningTopology',topology);await page.click('#releaseStart');
++  await page.locator('#releaseBrief').waitFor({state:'visible'});await page.selectOption('#learningVariant',variant);await page.selectOption('#learningTopology',topology);console.log(`FRAME ${variant}/${topology}: ${await page.locator('#learningFrame').textContent()}`);await page.click('#releaseStart');
+   const frame=await (await page.locator('#releaseGame').elementHandle()).contentFrame();
+   if(variant==='city'){await frame.locator('summary').click();await frame.locator('#start').click();await frame.waitForFunction(()=>window.__prim3CityLearningSnapshot?.());assert.equal(await frame.locator('#topology').inputValue(),topology);}
+   else if(variant==='courtyard')await frame.waitForFunction(()=>window.__PRIM3?.snapshot());
+@@ -49,6 +50,7 @@
+    else if(variant==='courtyard')await frame.locator('#end-turn').click();
+    else {await frame.locator('#txEndTurn').click();await frame.waitForFunction(()=>!__tx.busy);}
+    await page.waitForFunction(()=>!document.getElementById('releaseSubmit').disabled);
++   if(i===0)console.log(`QUESTION ${variant}/${topology}: ${await page.locator('#releaseQuestion').textContent()}`);
+    if(i===0){await page.fill('#releaseAnswer','-1');await page.click('#releaseSubmit');await page.waitForFunction(()=>document.getElementById('releaseStatus').textContent.includes('lattice steps'));await page.click('#releaseHint');await page.waitForFunction(()=>document.getElementById('releaseStatus').textContent.includes('absolute')||document.getElementById('releaseStatus').textContent.includes('Δq'));}
+    const text=await page.locator('#releaseQuestion').textContent(),m=text.match(/from \((-?\d+), (-?\d+)\) to \((-?\d+), (-?\d+)\)/),[,x,y,X,Y]=m.map(Number),dq=X-x,dr=Y-y;
+    const old=await page.locator('#releaseCheckpoint').textContent();

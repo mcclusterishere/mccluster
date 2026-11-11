@@ -311,10 +311,14 @@ try{
     await context.close();
   }
   {
-    /* the catalog's draw can land on the song the theme already holds (1 in 19): it is still the catalog's pick, and its
-       events say so (pick random, the whole pool), never a fallback of one */
+    /* the catalog's draw can land on the song the theme already holds (1 in the pool): it is still the catalog's pick, and
+       its events say so (pick random, the whole pool), never a fallback of one. The draw is pinned to Heal the 3rd World
+       (the theme's fallback) wherever it sits in the public catalog, so a longer or reordered shelf cannot move it */
     const {context,page}=await setup();
-    await page.addInitScript(()=>{Math.random=()=>12.5/19;}); // index 12 of the 19 public songs: Heal the 3rd World
+    const shelf=JSON.parse(await readFile(join(ROOT,'data/albums.json'),'utf8')).albums.flatMap(a=>a.tracks||[]).filter(t=>!t.gated&&/^assets\/audio\/[a-z0-9._-]+\.(?:mp3|m4a)$/i.test(t.src||'')&&!/preview/i.test(t.src));
+    const heal=shelf.findIndex(t=>t.src==='assets/audio/heal-the-3rd-world.m4a');
+    if(heal<0)throw new Error('Heal the 3rd World is no longer a public song: this check needs a new fixed point');
+    await page.addInitScript(([i,n])=>{Math.random=()=>(i+0.5)/n;},[heal,shelf.length]);
     await page.goto(WORLD+'/?view=feed');
     await page.waitForFunction(()=>!!window.MCC_WORLD_AUDIO?.song()?.pool);
     await page.waitForTimeout(200);
@@ -324,7 +328,11 @@ try{
   }
   {
     const {context,page}=await setup();
-    /* timed lyrics are looked up by the audio file's slug; the theme has none in the repo, so the fixture supplies two lines */
+    /* timed lyrics come from the lyrics file data/albums.json names for the song; a song it lists without one has no words.
+       The draw is pinned to the first public song that names a file, and the fixture supplies two lines for it */
+    const songs=JSON.parse(await readFile(join(ROOT,'data/albums.json'),'utf8')).albums.flatMap(a=>a.tracks||[]).filter(t=>!t.gated&&/^assets\/audio\/[a-z0-9._-]+\.(?:mp3|m4a)$/i.test(t.src||'')&&!/preview/i.test(t.src));
+    const worded=songs.findIndex(t=>typeof t.lyrics==='string'&&t.lyrics);
+    await page.addInitScript(([i,n])=>{Math.random=()=>(i+0.5)/n;},[worded,songs.length]);
     await context.route('**/data/lyrics/*.json',r=>r.fulfill({contentType:'application/json',body:JSON.stringify({title:'Fixture song',lines:[{t:0.2,text:'Fixture line one'},{t:40,text:'Fixture line two'}]})}));
     await page.goto(WORLD+'/?view=feed');
     await page.waitForFunction(()=>!!window.MCC_WORLD_AUDIO?.song()?.pool&&document.getElementById('mnWorldPlay'));
@@ -424,6 +432,27 @@ try{
     await play(page);const frame=await world(page);
     check('privacy: after Not now, the World that Music opens does not show it either',none(await notice(page))&&none(await notice(frame))&&await frame.evaluate(()=>!MCC_PRIVACY.accepted()&&MCC_PRIVACY.seen()));
     check('privacy: no notice errors after Not now',privacyErrors(errors).length===0,errors);
+    await context.close();
+  }
+  {
+    /* owner finding, 2026-10-28: "The policy promises 'Not now', but the live entry dialog doesn't offer it."
+       The wall offers it now, with the behaviour privacy.html#entry-notice describes: in without a reload, seen and
+       never agreed, analytics off, not asked again on either host or in the World that Music opens. */
+    const {context,page,errors}=await setup(390,false,{privacy:false});
+    const first=await notice(page);
+    check('privacy: the entry dialog offers Not now',first.wall&&first.pending==='pending'&&await page.locator('#mccPrivacyLater').isVisible()&&(await page.locator('#mccPrivacyLater').boundingBox()).height>=44,first);
+    let reloaded=false;page.on('framenavigated',f=>{if(f===page.mainFrame())reloaded=true;});
+    await page.locator('#mccPrivacyLater').click();
+    check('privacy: Not now on the entry dialog lets the visitor in without a reload',none(await notice(page))&&!reloaded&&await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth));
+    const jar=await context.cookies(HOUSE),seen=jar.find(c=>c.name==='mcc_privacy_seen');
+    check('privacy: Not now on the entry dialog is kept as seen, never as agreed',seen?.domain==='.mccluster.org'&&seen.value==='2026-10-19'&&!jar.some(c=>c.name==='mcc_privacy_ack')&&await page.evaluate(()=>!MCC_PRIVACY.accepted()&&MCC_PRIVACY.seen()),jar);
+    for(const url of [HOUSE+'/account.html',WORLD+'/mnet.html?view=feed']){
+      await page.goto(url,{waitUntil:'load'});
+      const u=new URL(url);
+      check(`privacy: after Not now on the entry dialog, ${u.host}${u.pathname} does not ask again`,none(await notice(page))&&await page.evaluate(()=>!MCC_PRIVACY.accepted()));
+    }
+    check('privacy: after Not now on the entry dialog, analytics records nothing',await page.evaluate(()=>window.MCC_TRACK('privacy_fixture')===false));
+    check('privacy: no notice errors after Not now on the entry dialog',privacyErrors(errors).length===0,errors);
     await context.close();
   }
   {

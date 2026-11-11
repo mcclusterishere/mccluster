@@ -108,7 +108,12 @@ test('derivative and parody releases cannot self-clear commercial rights', async
   assert.match(studio,/parody_or_derivative/);
   assert.match(studio,/derivativePermissions/);
   assert.match(access,/operator-review/);
-  assert.match(access,/patch\.rights_status = "cleared"/);
+  /* only the operator's decision clears rights: music-access calls the
+     operator-only RPC, which sets 'cleared' for publish/approve (and needs
+     the reviewed audio's hash, supabase/migrations/20261030001000_music_release_payment_integrity_v1.sql) */
+  assert.match(access,/admin\.rpc\("music_operator_review"/);
+  const integrity=await read('supabase/migrations/20261030001000_music_release_payment_integrity_v1.sql');
+  assert.match(integrity,/rights_status = case p_decision when 'publish' then 'cleared' when 'approve' then 'cleared'/);
   assert.match(access,/operator permission required/);
   assert.match(terms,/does not automatically clear it for commercial licensing/i);
 });
@@ -139,10 +144,12 @@ test('public creator profiles play in-place and can enter first-party checkout',
 });
 
 test('operator review desk is gated by existing ops authority', async()=>{
+  /* music-admin.html is a compatibility stub into Control → Sell → Music; the
+     review client and its server gate are what this guards. */
   const page=await read('music-admin.html');
   const js=await read('js/music-admin.js');
   const access=await read('supabase/functions/music-access/index.ts');
-  assert.match(page,/Operator only/);
+  assert.match(page,/control\.html#sell:music:catalog/);
   assert.match(js,/operator-status/);
   assert.match(js,/operator-review/);
   assert.match(js,/operator-license/);
@@ -154,7 +161,7 @@ test('operator review desk is gated by existing ops authority', async()=>{
 test('Music V2 uses one shell across listener, creator, licensing and operator surfaces', async()=>{
   const surfaces=[
     'listen.html','album.html','catalogue.html','creator.html',
-    'music-creator.html','music-admin.html','music-creator-terms.html'
+    'music-creator.html','music-creator-terms.html'
   ];
   for(const path of surfaces){
     const html=await read(path);
@@ -199,7 +206,7 @@ test('Music V2 is mobile-first dark by contract, not desktop-first responsive', 
   const css=await read('css/music-system-v2.css');
   const firstMedia=css.indexOf('@media(');
   const baseShell=css.indexOf('--music-shell:calc(100vw - 24px)');
-  const mobileGrid=css.indexOf('.music-v2 .creator-grid{display:grid;grid-template-columns:1fr');
+  const mobileGrid=css.indexOf('.music-v2 .creator-grid{display:grid;grid-template-columns:minmax(0,1fr)');
   const darkBg=css.indexOf('--music-bg:#050506');
   assert.ok(baseShell > -1 && baseShell < firstMedia, 'phone-width shell must be a base rule');
   assert.ok(mobileGrid > -1 && mobileGrid < firstMedia, 'one-column creator layout must be a base rule');

@@ -1,0 +1,188 @@
+/* ============================================================
+   Environmental Justice League · member page
+   (action/league.html, drawn by js/eup-league-member.js).
+
+   Built at 390px first: one column, every control at least 44px
+   tall, form text at max(16px, 1rem) so iOS never zooms, long
+   words and fingerprints wrap instead of pushing the page sideways.
+   Wider screens only get more room: min-width queries only,
+   minmax(0, 1fr) tracks, nothing the phone shows is taken away.
+   Every rule hangs off .eul, so the module can be mounted on any
+   page the owner names without restyling that page. Text headings
+   only: no mark, no logo. Motion only for people who did not ask
+   for less.
+   ============================================================ */
+@font-face { font-family: "Manrope"; font-weight: 400; font-style: normal; font-display: swap;
+  src: url("/assets/fonts/manrope-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Manrope"; font-weight: 600; font-style: normal; font-display: swap;
+  src: url("/assets/fonts/manrope-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Manrope"; font-weight: 800; font-style: normal; font-display: swap;
+  src: url("/assets/fonts/manrope-latin-800-normal.woff2") format("woff2"); }
+
+.eul {
+  --eul-ground: #0b0a09;
+  --eul-raise: #16120f;
+  --eul-raise-2: #201a16;
+  --eul-ink: #f4efe6;
+  --eul-dim: #bdb2a5;
+  --eul-rule: rgba(244, 239, 230, 0.18);
+  --eul-strong-rule: rgba(244, 239, 230, 0.42);
+  --eul-hot: #ff6a5c;
+  --eul-hot-ink: #1a0503;
+  --eul-ok: #8fdcaa;
+  --eul-warn: #f0d58a;
+  --eul-focus: #ffd27a;
+  --eul-ui: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --eul-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --eul-pad: 16px;
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 0 var(--eul-pad) 48px;
+  color: var(--eul-ink);
+  font-family: var(--eul-ui);
+  font-size: 1rem;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+.eul *, .eul *::before, .eul *::after { box-sizing: border-box; }
+/* hidden means hidden, whatever display a class gives (a player stays out of sight until it has a link to play) */
+.eul [hidden] { display: none !important; }
+
+/* the page around the module (action/league.html only) */
+body.eul-page { margin: 0; min-height: 100vh; background: #0b0a09; color: #f4efe6; color-scheme: dark; font-family: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+.eul-top { display: flex; justify-content: flex-end; max-width: 46rem; margin: 0 auto; padding: 8px 16px 0; }
+.eul-top__link { display: inline-flex; align-items: center; min-height: 44px; padding: 0 4px; color: #f4efe6; font-weight: 600; text-underline-offset: 3px; }
+.eul-top__link:focus-visible { outline: 3px solid #ffd27a; outline-offset: 2px; }
+
+/* headings, text */
+.eul h1 { margin: 16px 0 8px; font-size: clamp(1.7rem, 7vw, 2.4rem); line-height: 1.15; font-weight: 800; letter-spacing: -0.01em; }
+.eul h2 { margin: 32px 0 12px; font-size: 1.35rem; line-height: 1.25; font-weight: 800; }
+.eul h3 { margin: 0 0 6px; font-size: 1.12rem; line-height: 1.3; font-weight: 800; }
+.eul h4 { margin: 18px 0 6px; font-size: 1rem; font-weight: 800; }
+.eul p { margin: 0 0 10px; }
+.eul h1:focus { outline: none; }
+.eul-lede { color: var(--eul-ink); max-width: 62ch; }
+.eul-muted { color: var(--eul-dim); }
+.eul-fine { color: var(--eul-dim); font-size: 0.9rem; }
+.eul-pre { white-space: pre-line; }
+.eul-status { font-size: 0.98rem; }
+.eul-lyrics { padding: 12px; border-left: 3px solid var(--eul-rule); background: var(--eul-raise); }
+.eul code { font-family: var(--eul-mono); font-size: 0.86rem; word-break: break-all; overflow-wrap: anywhere; }
+.eul-fp { display: block; margin: 6px 0; }
+.eul-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
+.eul-head { padding-top: 4px; }
+.eul-neutral { padding: 24px 0 8px; }
+.eul-neutral p { color: var(--eul-dim); max-width: 52ch; }
+
+/* sections and cards */
+.eul-sec { margin-top: 8px; }
+.eul-campaign { margin-bottom: 20px; }
+.eul-campaign__title { font-size: 1.05rem; }
+.eul-card { margin: 0 0 16px; padding: 16px; border: 1px solid var(--eul-rule); border-radius: 14px; background: var(--eul-raise); }
+.eul-card--assignment { background: var(--eul-raise-2); }
+.eul-req, .eul-notice, .eul-offer, .eul-proof, .eul-publish, .eul-submit, .eul-uploads, .eul-statement { margin-top: 12px; }
+.eul-notice { padding: 12px; border: 1px dashed var(--eul-strong-rule); border-radius: 10px; }
+.eul-list { margin: 8px 0; padding-left: 1.2rem; }
+.eul-list li { margin-bottom: 10px; }
+.eul-todo { margin: 8px 0; padding: 10px 10px 10px 1.6rem; border: 1px dashed var(--eul-strong-rule); border-radius: 10px; color: var(--eul-ink); }
+.eul-save { margin: 8px 0; color: var(--eul-dim); font-size: 0.92rem; }
+
+/* notes: a text label first, and a border style per kind, so nothing depends on colour */
+.eul-note { margin: 10px 0; padding: 10px 12px; border-left: 4px solid var(--eul-strong-rule); border-radius: 6px; background: rgba(244, 239, 230, 0.05); }
+.eul-note--done, .eul-note--saved { border-left-style: solid; border-left-color: var(--eul-ok); }
+.eul-note--refused { border-left: 6px double var(--eul-hot); }
+.eul-note--unknown, .eul-note--checking { border-left-style: dashed; border-left-color: var(--eul-warn); }
+.eul-note--pending { border-left-style: dotted; }
+.eul-note--stopped { border-left-width: 8px; border-left-color: var(--eul-warn); }
+.eul-note--info { border-left-style: solid; }
+
+/* controls */
+.eul-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 12px 0 4px; }
+.eul-actions--quiet { margin-top: 18px; }
+.eul-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 44px; min-width: 44px; padding: 10px 16px;
+  border: 1px solid var(--eul-strong-rule); border-radius: 999px;
+  background: transparent; color: var(--eul-ink);
+  font: 600 max(16px, 1rem)/1.2 var(--eul-ui); text-align: center; text-decoration: none;
+  cursor: pointer; touch-action: manipulation;
+}
+.eul-btn--primary { background: var(--eul-hot); border-color: var(--eul-hot); color: var(--eul-hot-ink); font-weight: 800; }
+.eul-btn[aria-disabled="true"] { cursor: not-allowed; opacity: 0.62; border-style: dashed; background: transparent; color: var(--eul-ink); }
+.eul-btn:focus-visible, .eul-check input:focus-visible, .eul-field input:focus-visible, .eul-field textarea:focus-visible { outline: 3px solid var(--eul-focus); outline-offset: 2px; }
+.eul-why { display: block; flex-basis: 100%; color: var(--eul-dim); font-size: 0.9rem; }
+.eul-field { display: block; margin: 12px 0; }
+.eul-field > span { display: block; margin-bottom: 6px; font-weight: 600; }
+.eul-field input[type="text"], .eul-field input[type="date"], .eul-field textarea {
+  display: block; width: 100%; min-height: 44px; padding: 10px 12px;
+  border: 1px solid var(--eul-strong-rule); border-radius: 10px;
+  background: var(--eul-ground); color: var(--eul-ink);
+  font: 400 max(16px, 1rem)/1.5 var(--eul-ui);
+}
+.eul-field textarea { resize: vertical; }
+.eul-field input[readonly], .eul-field textarea[readonly] { border-style: dashed; color: var(--eul-dim); }
+.eul-check { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 4px 6px 4px 0; cursor: pointer; font-size: max(16px, 1rem); }
+.eul-check input { width: 22px; height: 22px; margin: 0; accent-color: var(--eul-hot); }
+.eul fieldset { margin: 16px 0; padding: 12px; border: 1px solid var(--eul-rule); border-radius: 10px; min-width: 0; }
+.eul legend { padding: 0 6px; font-weight: 800; }
+.eul-yn { margin: 10px 0; border-style: dashed; }
+.eul-yn legend { font-weight: 600; }
+.eul-yn__row { display: flex; flex-wrap: wrap; gap: 4px 18px; }
+.eul-credit { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0 12px; padding-bottom: 6px; border-bottom: 1px dashed var(--eul-rule); }
+
+/* the four ways to send the song: one size, one weight, side by side when there is room */
+.eul-choice-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.eul-choice-row .eul-btn { width: 100%; }
+.eul-choice-row .eul-why { margin-top: -4px; }
+.eul-file { position: relative; }
+.eul-file__input { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
+.eul-file:focus-within { outline: 3px solid var(--eul-focus); outline-offset: 2px; }
+
+/* a take: preview, recording, progress */
+.eul-take { margin: 12px 0; padding: 12px; border: 1px solid var(--eul-rule); border-radius: 12px; background: var(--eul-ground); }
+.eul-player { display: block; width: 100%; max-width: 100%; margin: 8px 0; }
+.eul-camera { display: block; width: 100%; max-width: 100%; height: auto; margin: 0 0 8px; border-radius: 10px; background: #000; aspect-ratio: 4 / 3; }
+.eul-rec { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.eul-rec__dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: var(--eul-hot); }
+.eul-progress label { display: block; }
+.eul-progress progress { display: block; width: 100%; height: 14px; margin-top: 6px; accent-color: var(--eul-hot); }
+.eul-uploads li { padding-bottom: 6px; border-bottom: 1px dashed var(--eul-rule); }
+
+/* the apply sheet: a native modal dialog, nearly full width on a phone */
+.eul-sheet {
+  width: calc(100% - 16px); max-width: 40rem; max-height: calc(100dvh - 16px);
+  margin: auto; padding: 0; overflow: auto;
+  border: 1px solid var(--eul-strong-rule); border-radius: 16px;
+  background: var(--eul-raise); color: var(--eul-ink);
+}
+.eul-sheet::backdrop { background: rgba(0, 0, 0, 0.66); }
+.eul-sheet__body { padding: 16px; }
+.eul-sheet h2 { margin-top: 4px; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .eul-btn { transition: background-color 0.15s ease, border-color 0.15s ease; }
+  .eul-rec__dot { animation: eul-pulse 1.2s ease-in-out infinite; }
+  @keyframes eul-pulse { 50% { opacity: 0.35; } }
+}
+
+@media (min-width: 30rem) {
+  .eul-choice-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .eul-credit { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); align-items: end; }
+  .eul-credit .eul-btn { grid-column: 1 / -1; justify-self: start; }
+  .eul-sheet__body { padding: 20px 24px; }
+}
+@media (min-width: 48rem) {
+  .eul { --eul-pad: 24px; max-width: 56rem; }
+  .eul-top { max-width: 56rem; padding: 12px 24px 0; }
+  .eul-card { padding: 20px 24px; }
+  .eul-campaign { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }
+  .eul-campaign > h3, .eul-campaign > p { grid-column: 1 / -1; }
+}
+@media (min-width: 64rem) {
+  .eul { max-width: 64rem; }
+  .eul-top { max-width: 64rem; }
+  .eul-choice-row { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}

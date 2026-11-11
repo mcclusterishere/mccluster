@@ -9,6 +9,7 @@
   <link rel="icon" href="assets/img/m-mark.png">
   <link rel="stylesheet" href="css/style.css?v=__STAMP__">
   <link rel="stylesheet" href="css/member-front.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/profile-shell.css?v=__STAMP__">
 </head>
 <body class="member-front" data-member-front="1">
   <main id="memberFront" class="mf" aria-live="polite">
@@ -63,6 +64,11 @@
       <a href="mnet.html?view=feed">Explore the World</a>
     </nav>
   </main>
+  <section id="guestWorld" class="guest-world" aria-label="Explore the World" data-profile-world>
+    <div class="guest-world__frame"><iframe title="Interactive globe preview" data-src="guest-globe.html?entry=parent" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
+    <div class="guest-world__cta"><a href="account.html" data-world-entry>Sign in / Join the World →</a><span>Explore freely. An account is needed for member activity.</span></div>
+  </section>
+  <script defer src="js/guest-world.js?v=__STAMP__"></script>
   <dialog id="mfEditor" class="mf__editor" aria-labelledby="mfEditorTitle">
     <form method="dialog" id="mfEditForm">
       <h2 id="mfEditorTitle">Customize your page</h2>

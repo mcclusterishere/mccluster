@@ -397,7 +397,7 @@
       "@type": "Project",
       "@id": "https://matthew.mccluster.org/prim3.html#prim3",
       "name": "PRIM3",
-      "url": "https://matthew.mccluster.org/prim3.html",
+      "url": "https://mccluster.org/company",
       "parentOrganization": {
         "@id": "https://matthew.mccluster.org/#mccluster-corp"
       },
@@ -417,15 +417,17 @@
       "founder": {
         "@id": "https://matthew.mccluster.org/#matthew-mccluster"
       },
-      "description": "Music-and-action gateway connecting the Heal the 3 project to campaigns in Human Uprise."
+      "description": "Music-and-action gateway connecting the Heal the 3 project to campaigns in Equity Uprise."
     }
   },
   "software": {
     "action_network": {
       "@type": "SoftwareApplication",
       "@id": "https://matthew.mccluster.org/mnet.html#uprise-action-network",
-      "name": "Human Uprise",
+      "name": "Equity Uprise World",
       "alternateName": [
+        "Equity Uprise",
+        "Human Uprise",
         "Uprise Action Network",
         "Action Network"
       ],
@@ -495,6 +497,17 @@
         "@id": "https://matthew.mccluster.org/#matthew-mccluster"
       },
       "url": "https://soundcloud.com/ashon_voyage/sjw-prod-matthew-mccluster"
+    }
+  },
+  "music_acts": {
+    "_note": "Music acts that are their own entities: each is billed as an artist (byArtist) and is NOT Matthew McCluster, even where his account manages it. Not emitted on Matthew's profile (tools/build-profile-entity.mjs reads person, organization, projects, software and creative_works only); each act's node lives on its own page and in the catalogue graph (tools/build-catalogue.mjs). Account management (who may act for the act until it has its own login) is not a schema.org fact: data/seo/domain-architecture.json -> entities.prim3_artist and supabase/pending/music_label_artists_v1.sql.",
+    "prim3": {
+      "@type": "MusicGroup",
+      "@id": "https://matthew.mccluster.org/prim3-artist.html#prim3-artist",
+      "name": "PRIM3",
+      "url": "https://matthew.mccluster.org/prim3-artist.html",
+      "image": "https://matthew.mccluster.org/assets/img/prim3-logo.png",
+      "description": "The music act of PRIM3, McCluster Corp's cybersecurity learning product. An artist in its own right, separate from Matthew McCluster. Its album is Cyber Security Specialist."
     }
   },
   "identity_resolution": {

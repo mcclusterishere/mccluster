@@ -1,0 +1,7 @@
+# lane w4, head 027efd52bde35d4a90c26915140fed3ef98cd582, base 90ce7c4ce2
+# CHROMIUM_PATH=/opt/pw-browsers/chromium node scripts/e2e/game-hub-capsule.e2e.mjs  (Playwright 1.63.0, Chrome for Testing 153.0.8010.12)
+# trial.mjs sha256: c940d76d1f1c8948e3d823bcd59772225d3e65895f71642ff7eb4638fe85f33e
+PASS: one real shared transport, playback/course switch/next/pause, mouse/touch/keyboard movement, reset/persistence, collapse/focus, answer hit-testing compact+expanded at 320/390/844/1024, 200% text, screenshots. Auth and audio fixtures; actual shared navigation loaded.
+PASS: Chem 108 trial account answers stay with the session that asked (real js/mcc-auth.js and bar; account-service replies held by a fixture): late answer after sign-out, account switch from another tab, same-member token refresh then sign-out in another tab mid-round, unreachable account service keeps the guest preview.
+PASS: a trial page restored from the back/forward cache after signing out elsewhere is not verified (real restore of the same document, pageshow persisted).
+exit=0

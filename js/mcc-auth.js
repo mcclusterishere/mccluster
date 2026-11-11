@@ -46,10 +46,45 @@
     } catch (e) { return null; }
   }
 
+  /* ONE CLOCK FOR "IS THIS SESSION FRESH?"
+
+     fresh() compares a session's expires_at with Date.now(), which is this
+     device's clock. The auth server's expires_at is a time on the server's
+     clock. Stored as sent, the comparison held only while the two clocks
+     agreed: a device an hour ahead, with one-hour tokens, read every token as
+     expired the moment it arrived, so every user(), api(), mUid(), touch(),
+     identities() and refreshIfNeeded() refreshed and rewrote both keys, and
+     every other open tab heard a storage event for each write. A device
+     behind kept offering a token the server had already expired.
+
+     expires_in is a duration, and a duration needs no shared clock. So the
+     expires_at stored here is on this device's clock, measured when the
+     answer arrives: now + expires_in. The answer lands a moment after the
+     token was issued, so the stamp runs late by at most one request's
+     flight, well inside the one-minute margin. The server's own expires_at
+     is kept beside it as server_expires_at, so nothing the server said is
+     lost. Only an answer the server has just given comes through here
+     (expires_in counts from then); a stored session is never written back
+     through it. An answer without expires_in keeps a server expires_at as
+     it was, and one with neither is given an hour, as before. Nothing
+     changes at the server, which still refuses an expired token. */
+  function stampExpiry(s) {
+    var now = Math.floor(Date.now() / 1000), life = Number(s.expires_in), server = Number(s.expires_at);
+    if (life > 0) {
+      if (server > 0) s.server_expires_at = server;
+      s.expires_at = now + life;
+    } else if (!(server > 0)) {
+      s.expires_at = now + 3600;
+    }
+    return s;
+  }
+
+  /* More than a minute left, both sides read on this device's clock. */
+  function fresh(s) { return !!(s && s.expires_at > Date.now() / 1000 + 60); }
+
   function writeSession(s) {
     if (!s) { del('localStorage', SESSION); del('localStorage', KEEP); return null; }
-    s.expires_at = s.expires_at || (Math.floor(Date.now() / 1000) + (s.expires_in || 3600));
-    var raw = JSON.stringify(s);
+    var raw = JSON.stringify(stampExpiry(s));
     set('localStorage', SESSION, raw);
     set('localStorage', KEEP, raw);
     return s;
@@ -120,19 +155,35 @@
     });
   }
 
+  // Bound account requests, including response-body reads. Late replies cannot commit a session.
+  function accountRequest(url, init) {
+    var controller = typeof AbortController === 'function' ? new AbortController() : null;
+    var timer;
+    var deadline = new Promise(function (_, reject) {
+      timer = setTimeout(function () {
+        reject(Object.assign(new Error('The account service did not respond. Check your connection and try again.'), { code: 'auth_request_timeout' }));
+        if (controller) controller.abort();
+      }, 12000);
+    });
+    init = Object.assign({}, init);
+    if (controller) init.signal = controller.signal;
+    return Promise.race([Promise.resolve().then(function () { return fetch(url, init); }).then(parseResponse), deadline])
+      .finally(function () { clearTimeout(timer); });
+  }
+
   function authApi(path, init) {
     init = init || {};
     var headers = { apikey: KEY, 'content-type': 'application/json' };
     if (init.token) headers.authorization = 'Bearer ' + init.token;
-    return fetch(URL_ + '/auth/v1/' + path, {
+    return accountRequest(URL_ + '/auth/v1/' + path, {
       method: init.method || 'GET',
       headers: headers,
       body: init.body ? JSON.stringify(init.body) : undefined
-    }).then(parseResponse);
+    });
   }
 
   function rpc(name, body, token) {
-    return fetch(URL_ + '/rest/v1/rpc/' + name, {
+    return accountRequest(URL_ + '/rest/v1/rpc/' + name, {
       method: 'POST',
       headers: {
         apikey: KEY,
@@ -140,7 +191,7 @@
         'content-type': 'application/json'
       },
       body: JSON.stringify(body || {})
-    }).then(parseResponse);
+    });
   }
 
   function random(bytes) {
@@ -215,12 +266,12 @@
     });
   }
 
+  var refreshFlight = null;
   var MCC = {
     user: function () {
       var s = readSession();
       if (!s || !s.access_token) return Promise.resolve(null);
-      var fresh = s.expires_at && s.expires_at > (Date.now() / 1000) + 60;
-      var chain = fresh ? Promise.resolve(s) : MCC.refresh();
+      var chain = fresh(s) ? Promise.resolve(s) : MCC.refresh();
       return chain.then(function (session) {
         if (!session) return null;
         return authApi('user', { token: session.access_token });
@@ -233,15 +284,33 @@
     refresh: function () {
       var s = readSession();
       if (!s || !s.refresh_token) return Promise.resolve(null);
-      return authApi('token?grant_type=refresh_token', { method: 'POST', body: { refresh_token: s.refresh_token } })
-        .then(writeSession)
-        .catch(function () { writeSession(null); return null; });
+      if (refreshFlight && refreshFlight.token === s.refresh_token && refreshFlight.access === s.access_token) return refreshFlight.promise;
+      var flight = { token: s.refresh_token, access: s.access_token };
+      function stillCurrent() {
+        var now = readSession();
+        return now && now.refresh_token === s.refresh_token && now.access_token === s.access_token;
+      }
+      flight.promise = authApi('token?grant_type=refresh_token', { method: 'POST', body: { refresh_token: s.refresh_token } })
+        .then(function (next) {
+          if (!stillCurrent()) return null; // sign-out, another tab's refresh, or another account won
+          if (!next || !next.access_token || !next.refresh_token) throw new Error('The account service returned an incomplete session. Try again.');
+          return writeSession(next);
+        }).catch(function (error) {
+          if (!stillCurrent()) return null;
+          // Clear only an explicit server rejection of this session, never a timeout/429/5xx/offline response.
+          if (['refresh_token_not_found', 'refresh_token_already_used', 'session_expired', 'session_not_found', 'user_banned', 'user_not_found'].indexOf(error && error.code) !== -1 && error.status >= 400 && error.status < 500) {
+            writeSession(null); return null;
+          }
+          throw error; // stored credentials survive; callers still fail closed until a server check succeeds
+        }).finally(function () { if (refreshFlight === flight) refreshFlight = null; });
+      refreshFlight = flight;
+      return flight.promise;
     },
 
     refreshIfNeeded: function () {
       var s = readSession();
       if (!s) return Promise.resolve(null);
-      if (s.expires_at && s.expires_at > (Date.now() / 1000) + 60) return Promise.resolve(s);
+      if (fresh(s)) return Promise.resolve(s);
       return MCC.refresh();
     },
 

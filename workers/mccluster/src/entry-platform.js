@@ -27,6 +27,7 @@ import { handleTravelRouting } from './travel-routing.js';
 import { handleAudioRooms } from './audio-sfu-rooms.js';
 import { handleRegionScope } from './world-region-feed.js';
 import { handleMemberFronts } from './member-fronts.js';
+import { coreSignedGate } from './world-core-reads.js';
 
 export { HereTenantAgent } from './here-tenant-agent.js';
 
@@ -64,6 +65,12 @@ export default {
     const humanUprise = await humanUpriseResponse(request, env);
     if (humanUprise) return humanUprise;
     try {
+      /* McCluster Core's signature reaches only POST /v1/media/mcp, the two
+         media recovery operator routes and the read-only World layers the
+         news pairing reads; anything else that announces it is refused before
+         any other handler (./world-core-reads.js) */
+      const coreRead = await coreSignedGate(request, env);
+      if (coreRead) return coreRead;
       const url = new URL(request.url);
       if (request.method === 'GET' && (url.pathname === '/healthz' || url.pathname === '/v1/health')) {
         return healthResponse(request, env);

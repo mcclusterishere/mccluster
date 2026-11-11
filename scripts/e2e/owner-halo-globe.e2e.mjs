@@ -1,6 +1,5 @@
-/* The owner's globe is Hitman's Halo (owner, 2026-10-22: "click the globe as matthew@mccluster.org signed in. It'll take
-   you to the user globe and not the Hitman Halo globe"). Real pages and scripts from this checkout; the owner answers
-   (/v1/status, /v1/world/access) and everything else are synthetic fixtures. A member's globe stays the World.
+/* Owner navigation keeps the consumer World and Halo as distinct destinations.
+   Network identity and data answers are synthetic fixtures.
    PLAYWRIGHT_DIR=<node_modules> CESIUM_DIR=<Cesium Build dir> [CHROMIUM_EXECUTABLE=…] node scripts/e2e/owner-halo-globe.e2e.mjs [outDir] */
 import {createRequire} from 'node:module';
 import {readFile,mkdir} from 'node:fs/promises';
@@ -19,7 +18,7 @@ await mkdir(OUT,{recursive:true});
 const json=(r,b,s=200)=>r.fulfill({status:s,contentType:'application/json',headers:{'access-control-allow-origin':'*','access-control-allow-headers':'*'},body:JSON.stringify(b)});
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE||process.env.CHROMIUM_PATH||undefined,args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader','--disable-dev-shm-usage']});
 async function setup(viewport,who){
-  const ctx=await browser.newContext({viewport,deviceScaleFactor:1,hasTouch:viewport.width<1000,ignoreHTTPSErrors:true});
+  const ctx=await browser.newContext({viewport,deviceScaleFactor:1,hasTouch:viewport.width<1000,ignoreHTTPSErrors:true,serviceWorkers:'block'});
   const errors=[];const owner=who===OWNER;
   await ctx.addInitScript(({who})=>{localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));
     const exp=Math.floor(Date.now()/1000)+3600;localStorage.setItem('mccdb_session',JSON.stringify({access_token:'x.'+btoa(JSON.stringify({exp,sub:who,email:who+'@fixture.invalid'})).replace(/=+$/,'')+'.y',refresh_token:'fixture',expires_at:exp,user:{id:who}}));},{who});
@@ -45,24 +44,47 @@ async function setup(viewport,who){
 }
 const overflow=p=>p.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
 try{
-  for(const vp of [{width:390,height:844},{width:1280,height:800}]){
+  for(const vp of [{width:390,height:844},{width:820,height:1180},{width:1280,height:800}]){
     const scope='owner-'+vp.width;const {ctx,page,errors}=await setup(vp,OWNER);
     await page.goto(BASE+'/index.html',{waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>document.body.hasAttribute('data-appbar-admin'),null,{timeout:30000}).catch(()=>{});
-    const globe=await page.evaluate(()=>{const a=document.querySelector('.appbar [data-appnav="halo"]');return a?{href:a.getAttribute('href'),label:a.getAttribute('aria-label')}:null;});
-    check(scope,'the owner\'s bar globe opens Hitman\'s Halo, and there is no second (user) globe',!!globe&&/action-globe\.html\?explore=1&halo=1$/.test(globe.href)&&/Hitman’s Halo/.test(globe.label)&&!(await page.$('.appbar [data-appnav="world"]')),globe);
-    await page.click('.appbar [data-appnav="halo"]');
-    await page.waitForURL(/action-globe\.html\?explore=1&halo=1$/,{timeout:20000}).catch(()=>{});
+    const globe=await page.evaluate(()=>{const a=document.querySelector('.appbar [data-appnav="world"]');return a?{href:a.getAttribute('href'),label:a.getAttribute('aria-label')}:null;});
+    check(scope,'the owner globe opens the consumer World',!!globe&&/view=feed/.test(globe.href)&&!/halo=/.test(globe.href)&&/World globe/.test(globe.label),globe);
+    await page.click('.appbar [data-appnav="world"]');
+    await page.waitForFunction(()=>/view=feed/.test(location.href)||(()=>{const f=document.getElementById('mccWorldAudioFrame');return !!(f&&/view=feed/.test(f.getAttribute('src')||''))&&!document.getElementById('mccWorldAudioShell').hidden;})(),null,{timeout:20000});
+    check(scope,'tapping the globe opens the consumer World',true);
+    await page.goto(BASE+'/index.html',{waitUntil:'domcontentloaded'});
+    await page.waitForSelector('#mccControlToggle');
+    await page.click('#mccControlToggle');
+    await page.locator('#mccDestinations:popover-open').waitFor();
+    const haloDoor=page.locator('#mccDestinationList a').filter({hasText:'Hitman’s Halo'});
+    check(scope,'Halo retains a distinct owner Products destination',await haloDoor.count()===1);
+    await haloDoor.click();
+    await page.waitForURL(/action-globe\.html\?explore=1&halo=/,{timeout:20000}).catch(()=>{});
     await page.waitForSelector('.hx-top',{timeout:60000}).catch(()=>{});
     await page.waitForTimeout(1500);
-    const there=await page.evaluate(()=>({url:location.pathname+location.search,halo:!!document.querySelector('.hx-top'),lit:(document.querySelector('.appbar [data-appnav="halo"]')||{}).classList?.contains('is-here'),feed:(document.querySelector('.hx-feed')||{}).getAttribute?.('href')}));
-    check(scope,'tapping it lands in Halo (the four screens), with the globe lit',there.url==='/action-globe.html?explore=1&halo=1'&&there.halo&&there.lit===true,there);
+    const there=await page.evaluate(()=>({url:location.pathname+location.search,halo:!!document.querySelector('.hx-top'),worldLit:(document.querySelector('.appbar [data-appnav="world"]')||{}).classList?.contains('is-here'),feed:(document.querySelector('.hx-feed')||{}).getAttribute?.('href')}));
+    /* Halo writes its own route once it mounts (3f5a73eb, 2026-10-24): halo=1 opens on its World screen and the URL then reads
+       halo=world&hours=24, so a reload or Back returns to the same screen and window */
+    const landed=new URL(there.url,'http://x');
+    check(scope,'the separate Halo door opens Halo without marking consumer World active',landed.pathname==='/action-globe.html'&&landed.searchParams.get('explore')==='1'&&landed.searchParams.get('halo')==='world'&&landed.searchParams.get('hours')==='24'&&there.halo&&there.worldLit===false,there);
     check(scope,'Halo carries the way to the World feed',!!there.feed&&/(mnet\.html\?view=feed|\?view=feed)$/.test(there.feed),there);
-    const box=await page.evaluate(()=>{const f=document.querySelector('.hx-feed').getBoundingClientRect(),o=document.querySelector('.hx-operator').getBoundingClientRect(),b=document.querySelector('.hx-brand').getBoundingClientRect();return {feed:[Math.round(f.left),Math.round(f.right),Math.round(f.height)],op:[Math.round(o.left)],brand:[Math.round(b.right)],w:innerWidth};});
-    check(scope,'the World feed door sits whole in the header, 44px tall, clear of the brand and the account button',box.feed[2]>=44&&box.feed[0]>=box.brand[0]-1&&box.feed[1]<=box.op[0]+1&&box.feed[1]<=box.w,box);
+    const box=await page.evaluate(()=>{
+      const f=document.querySelector('.hx-feed').getBoundingClientRect(),o=document.querySelector('.hx-operator').getBoundingClientRect(),b=document.querySelector('.hx-brand').getBoundingClientRect();
+      // Shared navigation replaces Halo's legacy operator only after it is ready.
+      const shared=document.body.hasAttribute('data-site-navigation'),account=o.width?o:document.querySelector('#mccAuthChip')?.getBoundingClientRect();
+      const clear=account&&account.width>0&&account.height>=44&&!(f.left<account.right&&f.right>account.left&&f.top<account.bottom&&f.bottom>account.top);
+      return {feed:[Math.round(f.left),Math.round(f.right),Math.round(f.height)],brand:[Math.round(b.right)],w:innerWidth,accountReady:!!(o.width||shared&&account?.width),clear:!!clear};
+    });
+    check(scope,'the World feed door sits whole in the header, 44px tall, clear of the brand and the active account control',box.feed[2]>=44&&box.feed[0]>=box.brand[0]-1&&box.feed[1]<=box.w&&box.accountReady&&box.clear,box);
     const brand=await page.evaluate(()=>{const s=document.querySelector('.hx-brand span');return {full:s.scrollWidth<=s.clientWidth+1,label:getComputedStyle(document.querySelector('.hx-feed__long')).display!=='none'?'World feed':'Feed'};});
     check(scope,'the Halo name stays whole beside it ('+brand.label+')',brand.full&&(vp.width>=420?brand.label==='World feed':brand.label==='Feed'),brand);
     check(scope,'no horizontal overflow',(await overflow(page))===0,await overflow(page));
+    await page.click('#mccAuthChip');
+    await page.locator('#mccProfileMenu:popover-open').waitFor();
+    check(scope,'the shared Profile opens account settings and owner controls',await page.locator('#mccProfileMenu a[href$="account.html?stay=1"]').isVisible()&&await page.locator('#mccProfileMenu [data-owner-profile-action="home"]').isVisible());
+    await page.keyboard.press('Escape');
+
     await page.screenshot({path:join(OUT,`owner-halo-${vp.width}.png`)});
     /* the site opens the World the way it always does from a page with the player: in its own layer over the page (the
        music carries on, the address gains world=1), or as the page itself; either way it is the World feed */

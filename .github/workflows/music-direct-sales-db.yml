@@ -1,0 +1,104 @@
+name: Music direct sales
+permissions:
+  contents: read
+on:
+  pull_request:
+    paths:
+      - 'supabase/pending/music_direct_sales_v1.rollback.sql'
+      - 'supabase/migrations/*_music_direct_sales_v1.sql'
+      - 'supabase/migrations/*_music_direct_asset_versions_v1.sql'
+      - 'supabase/tests/music_direct_asset_versions.behaviour.sql'
+      - 'scripts/test/music-direct-release*.integration.mjs'
+      - 'supabase/pending/music_direct_asset_versions_v1.rollback.sql'
+      - 'supabase/replay_migrations/20261028230000_schema_reconcile_production_only_v1.sql'
+      - 'supabase/tests/music_direct_sales.*.sql'
+      - 'supabase/tests/supabase_api_roles.stub.sql'
+      - 'supabase/functions/_shared/checkout-binding.ts'
+      - 'supabase/functions/_shared/music-direct.ts'
+      - 'supabase/functions/_shared/house-ops.ts'
+      - 'supabase/functions/music-direct-*/**'
+      - 'supabase/functions/stripe-webhook/**'
+      - 'js/music-direct.js'
+      - 'js/music-purchase.js'
+      - 'js/control-room/music-direct-sales.js'
+      - 'js/control-room/music-ops.js'
+      - 'control.html'
+      - 'purchase.html'
+      - 'scripts/test-music-direct-sales-db.sh'
+      - 'scripts/test/music-direct-sales.test.mjs'
+      - 'scripts/test/music-purchase-retry.test.mjs'
+      - 'scripts/test/music-direct-buyer-recovery.integration.mjs'
+      - 'scripts/test/support/music-direct-access-handler.mjs'
+      - 'scripts/test/support/music-direct-database.mjs'
+      - 'scripts/test/support/music-purchase-page.mjs'
+      - 'scripts/e2e/music-direct-checkout.e2e.mjs'
+      - 'album.html'
+      - 'catalogue.html'
+      - '.github/workflows/music-direct-sales-db.yml'
+  workflow_dispatch:
+jobs:
+  music-direct-sales:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: '22'
+      - name: Install PostgreSQL client
+        run: sudo apt-get update -qq && sudo apt-get install -y postgresql-client
+      - name: Binding, download-limit and config contracts
+        run: node --test scripts/test/music-direct-sales.test.mjs
+      - name: Buyer retry key on the purchase page
+        run: node --test scripts/test/music-purchase-retry.test.mjs
+      - name: Extracted Edge handler download scenarios
+        run: node scripts/test/music-direct-release-handler.integration.mjs
+      - name: Buyer recovery with the real page script, handler and SQL (PGlite)
+        run: |
+          npm install --prefix /tmp/md-db --ignore-scripts --no-audit --no-fund --no-save @electric-sql/pglite@0.3.14
+          PGLITE_MODULE=/tmp/md-db/node_modules/@electric-sql/pglite/dist/index.js node scripts/test/music-direct-buyer-recovery.integration.mjs
+      - name: Isolated PostgreSQL guards, RLS, fulfilment and downloads
+        run: bash scripts/test-music-direct-sales-db.sh
+
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: '22'
+      - name: Prepare the browser outside the repository
+        run: |
+          npm install --prefix /tmp/md-qa --ignore-scripts --no-audit --no-fund --no-save playwright@1.57.0
+          /tmp/md-qa/node_modules/.bin/playwright install --with-deps chromium
+      - name: Buy buttons and purchase page at 390px
+        env:
+          PLAYWRIGHT_DIR: /tmp/md-qa/node_modules
+        run: node scripts/e2e/music-direct-checkout.e2e.mjs /tmp/md-proof
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        if: always()
+        with:
+          name: music-direct-checkout-${{ github.run_id }}
+          path: /tmp/md-proof
+          retention-days: 7

@@ -6,10 +6,12 @@
    repository, so the company host rides the one Worker, routed by host.
 
    WHAT THE HOST SERVES (owner, 2026-10-15: "we need mccluster.org to
-   actually show the World"). `/` is the World: mnet.html, Human Uprise's
+   actually show the World"). `/` is the World: mnet.html, Equity Uprise's
    globe, mission context and feed, passed through from the personal
-   origin with this host's own head (../world-host.js). Human Uprise is the
-   company's platform, so the company's root is company-first: canonical
+   origin with this host's own head (../world-host.js). Equity Uprise is the
+   public brand (owner, 2026-10-28: "the public brand is Equity Uprise, not
+   Human Uprise") and the company's platform, so the root's title and share
+   card name Equity Uprise while the root stays company-first: canonical
    https://mccluster.org/, site name McCluster Corp, and a WebPage node
    that belongs to the company WebSite and is about the Organization. The
    rooms the World opens, the sign-in pages and the static files ride the
@@ -17,7 +19,8 @@
    mission dialog, the account and the governed support rail. The company
    page itself, "What is McCluster Corp?", is /company, with robots.txt,
    sitemap.xml and llms.txt (PAGES, generated). humanuprise.com stays the
-   World's own door for later (../human-uprise/router.js).
+   World's own door for later (../human-uprise/router.js; the file keeps
+   its legacy name).
 
    INERT UNTIL ROUTED. This answers only requests whose host is mccluster.org
    or www.mccluster.org; every other host (api.mccluster.org first of all)
@@ -47,19 +50,35 @@ const PAGE_HEADERS = {
 /* The World's head on the company host: company-first, stable @ids
    (data/seo/domain-architecture.json). The WebSite node itself is declared
    on /company with the Organization; the root only belongs to it. */
+const WORLD_NAME = 'Equity Uprise · McCluster';
+const WORLD_DESCRIPTION = 'Equity Uprise is McCluster Corp\'s movement platform: the World\'s globe, live context and member feed, where people find the movement and turn what they care about into verified action.';
 const WORLD_NODE = JSON.stringify({
   '@context': 'https://schema.org',
   '@type': 'WebPage',
   '@id': `${COMPANY_ORIGIN}/`,
   url: `${COMPANY_ORIGIN}/`,
-  name: 'Human Uprise · McCluster',
+  name: WORLD_NAME,
+  description: WORLD_DESCRIPTION,
   isPartOf: { '@id': `${COMPANY_ORIGIN}/#website` },
   about: { '@id': 'https://matthew.mccluster.org/#mccluster-corp' },
   publisher: { '@id': 'https://matthew.mccluster.org/#mccluster-corp' }
 });
+/* properties.company.share_preview: "The root shares as Equity Uprise ·
+   McCluster, site name McCluster Corp." The image is the supplied M mark,
+   unaltered, until the owner supplies a 1200x630 company card
+   (edge.activation_owner_steps). */
+export const WORLD_SHARE = {
+  title: WORLD_NAME,
+  description: WORLD_DESCRIPTION,
+  image: 'https://matthew.mccluster.org/assets/img/m-mark.png',
+  imageWidth: 256,
+  imageHeight: 256,
+  imageAlt: 'The McCluster M mark'
+};
 export const WORLD_HEAD = {
   origin: COMPANY_ORIGIN,
   siteName: 'McCluster Corp',
+  share: WORLD_SHARE,
   extra: `<script type="application/ld+json">${WORLD_NODE}</script>`
 };
 
@@ -71,6 +90,10 @@ export async function companySiteResponse(request, env = {}, fetchImpl = fetch) 
   const url = new URL(request.url);
   const host = url.hostname.toLowerCase();
   if (host !== APEX && host !== WWW) return null;
+  /* never plain http on the apex: one hop to https (www already answers with https targets) */
+  if (host === APEX && url.protocol === 'http:') return moved(`${COMPANY_ORIGIN}${url.pathname}${url.search}`);
+  /* the company page has one address; with a trailing slash it is the same page, not a path on Matthew's site */
+  if (url.pathname === `${COMPANY_PAGE_PATH}/`) return moved(`${COMPANY_ORIGIN}${COMPANY_PAGE_PATH}${url.search}`);
 
   /* the old root document name is the root here, not the album */
   const path = url.pathname === '/index.html' ? '/' : url.pathname;
