@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 702,
+  "candidate_count": 708,
   "capability_source_count": 104,
-  "support_only_count": 598,
+  "support_only_count": 604,
   "entries": [
     {
       "path": ".cursorrules",
@@ -1758,6 +1758,13 @@
       "rationale": "PRIM3 tracking contract; names the Equity Uprise learning-evidence routes only to route readers. No spatial or program capability is added."
     },
     {
+      "path": "docs/prim3/SHARED-FATE-LOCAL-HANDOFF.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Documents a proposed fictional client-site drill and narrative workplace introductions; no building geometry or program capability is added."
+    },
+    {
       "path": "docs/prim3/SHARED-SPATIAL-CONTRACT.md",
       "classification": "building_projection_support",
       "capability_ids": [],
@@ -2433,6 +2440,13 @@
       "rationale": "Binds a PRIM3 mission's fault ledger to the electronics SANDBOX's own packaged consequences (SANDBOX only, live control refused). It never writes the building or the sandbox baseline."
     },
     {
+      "path": "js/prim3-tactics/hex-ui.mjs",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared tactical UI links existing building return tokens and fictional client drill; does not author building geometry or control equipment."
+    },
+    {
       "path": "js/prim3-tactics/level3d.mjs",
       "classification": "building_projection_support",
       "capability_ids": [],
@@ -2459,6 +2473,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "PRIM3 level registry; names the Equity Uprise HQ drill level so the game can load it. No building program or physical capability is added."
+    },
+    {
+      "path": "js/prim3-tactics/levels/shared-fate.mjs",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Separate fictional client-site hex map; workplace references are narrative staging, not traversable HQ geometry or building capability."
     },
     {
       "path": "js/prim3-tactics/missions/blind-the-floor.mjs",
@@ -2773,6 +2794,13 @@
       "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
     },
     {
+      "path": "prim3-shared-fate.html",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Owner-gated fictional client continuity exercise with character workplace introductions; simulation only, no live equipment or program inventory."
+    },
+    {
       "path": "privacy.html",
       "classification": "shared_site_support",
       "capability_ids": [],
@@ -3043,6 +3071,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Plays the PRIM3 Equity Uprise HQ drill at full strength with a heuristic squad; test tooling, no building capability."
+    },
+    {
+      "path": "scripts/prim3/local-network-review.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Disposable loopback-only review harness for synthetic network drills; no deployed service or live building control."
     },
     {
       "path": "scripts/sites-buy-smoke.mjs",
@@ -3386,6 +3421,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Verifies player-known tactical movement, physical floor heights and existing HQ stairs; changes no building geometry or capability."
+    },
+    {
+      "path": "scripts/test/prim3-shared-fate.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Validates fictional client drill geometry, scoped configuration, recovery and replay; no independent building capability."
     },
     {
       "path": "scripts/test/prim3-transit-level.test.mjs",
