@@ -222,7 +222,8 @@
     },
     "artist_brand": "Matthew McCluster",
     "commerce_mode": "lyric-service"
-   }
+   },
+   "artist_profile_id": "https://matthew.mccluster.org/#matthew-mccluster"
   },
   {
    "slug": "prim3",
@@ -327,7 +328,8 @@
      "lyrics": "data/lyrics/ghost-in-the-wires.json",
      "seconds": 249.8
     }
-   ]
+   ],
+   "artist_profile_id": "https://matthew.mccluster.org/#matthew-mccluster"
   },
   {
    "slug": "equity-uprise",
@@ -378,7 +380,8 @@
      "music_video": "assets/video/moneyglitch.mp4",
      "seconds": 216.1
     }
-   ]
+   ],
+   "artist_profile_id": "https://matthew.mccluster.org/catalogue.html#artist-equity-uprise"
   },
   {
    "slug": "heal-the-3",
@@ -405,7 +408,8 @@
      "music_video": "assets/video/angel.mp4",
      "seconds": 146
     }
-   ]
+   ],
+   "artist_profile_id": "https://matthew.mccluster.org/#matthew-mccluster"
   },
   {
    "slug": "vaunt-ep",
@@ -422,7 +426,8 @@
      "music_video": "assets/video/vauntlive.mp4",
      "seconds": 92.4
     }
-   ]
+   ],
+   "artist_profile_id": "https://matthew.mccluster.org/#matthew-mccluster"
   },
   {
    "slug": "whip-equipped",
@@ -523,7 +528,8 @@
      "story": "I got a dealership, it's retail: give me a call if you need a whip or a detail.",
      "seconds": 155
     }
-   ]
+   ],
+   "artist_profile_id": "https://matthew.mccluster.org/#matthew-mccluster"
   },
   {
    "slug": "singles",
@@ -542,7 +548,8 @@
      "music_video": "assets/video/coffeecam.mp4",
      "seconds": 184.2
     }
-   ]
+   ],
+   "artist_profile_id": "https://matthew.mccluster.org/#matthew-mccluster"
   },
   {
    "slug": "cia-mind-control",
@@ -600,5 +607,15 @@
     }
    ]
   }
- ]
+ ],
+ "artist_profiles": {
+  "https://matthew.mccluster.org/#matthew-mccluster": {
+   "home": "matthew-mccluster.html",
+   "logo": "assets/img/m-mark.png"
+  },
+  "https://matthew.mccluster.org/catalogue.html#artist-equity-uprise": {
+   "home": "platform-home.html",
+   "logo": "assets/img/equity-uprise-mark-white.png"
+  }
+ }
 }

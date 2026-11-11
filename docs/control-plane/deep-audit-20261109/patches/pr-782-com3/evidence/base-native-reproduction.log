@@ -1,0 +1,23 @@
+{
+  "base": "53dcd55243e6d847b4ced44817bb22d11bdcce18",
+  "postgres": "17.11",
+  "uid": 1000,
+  "listen": "127.0.0.1",
+  "statuses": [
+    503,
+    409,
+    409,
+    409
+  ],
+  "synthetic_provider_calls": 1,
+  "real_provider_calls": 0,
+  "rows": [
+    {
+      "owner_user_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+      "request_id": "fixture-request-0001",
+      "price_id": "price_fixture",
+      "checkout_session_id": null,
+      "expires_at": "2026-11-10T21:02:55.893Z"
+    }
+  ]
+}

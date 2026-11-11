@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 702,
+  "candidate_count": 723,
   "capability_source_count": 104,
-  "support_only_count": 598,
+  "support_only_count": 619,
   "entries": [
     {
       "path": ".cursorrules",
@@ -739,6 +739,13 @@
       ],
       "support_only": false,
       "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "data/equity-uprise-offers-template.json",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
     },
     {
       "path": "data/eu-fellowships.json",
@@ -1807,6 +1814,48 @@
       "rationale": "Shared or adjacent documentation mentions Equity Uprise context but does not define a distinct program capability beyond canonical mapped sources."
     },
     {
+      "path": "docs/selfservice/FIRST-OFFER-ACTIVATION.md",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
+    },
+    {
+      "path": "docs/selfservice/PR638-PROPOSED-METADATA.md",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
+    },
+    {
+      "path": "docs/selfservice/platform-offers.md",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
+    },
+    {
+      "path": "docs/selfservice/reconciliation/branch-inventory.json",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
+    },
+    {
+      "path": "docs/selfservice/reconciliation/live-migration-ledger.json",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
+    },
+    {
+      "path": "docs/selfservice/reconciliation/pr-inventory.json",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
+    },
+    {
       "path": "docs/seo-matthew-mccluster.md",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -2278,6 +2327,13 @@
       "rationale": "City-to-tactics adapter keeps the HQ adapter's 12 ft cells and the city's 3.54 m tiles distinct and maps HQ feet to city metres for placement checks; a derived projection that never resizes or edits the building."
     },
     {
+      "path": "js/front-studio.js",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
+    },
+    {
       "path": "js/gateway.js",
       "classification": "shared_frontend_support",
       "capability_ids": [],
@@ -2389,6 +2445,13 @@
       ],
       "support_only": false,
       "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "js/platform-home.js",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
     },
     {
       "path": "js/policy-fellowship-ladder.js",
@@ -2722,6 +2785,13 @@
       "rationale": "Shared optional-globe release policy, including the existing Halo projection route. Adds no building geometry or program capability."
     },
     {
+      "path": "platform-home.html",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
+    },
+    {
       "path": "platform/sql/001_init.sql",
       "classification": "archived_backend_evidence",
       "capability_ids": [],
@@ -2889,11 +2959,32 @@
       "rationale": "Building screens and screen apps: owner-gated phone apps opened from the 3D building's display surfaces over the Lab Runtime SANDBOX (SCREENS-AND-SCREEN-APPS-SPEC.md). Projects existing building/runtime authority; defines no new program capability."
     },
     {
+      "path": "scripts/e2e/canonical-artist-owner.e2e.mjs",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
+    },
+    {
+      "path": "scripts/e2e/composer-overlay.e2e.mjs",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
+    },
+    {
       "path": "scripts/e2e/control-eup.e2e.mjs",
       "classification": "test_support",
       "capability_ids": [],
       "support_only": true,
       "rationale": "Browser proof of the Control E=Up workspace including the module-policy controls; names Equity Uprise in fixture copy. Test only; no building capability, program or geometry."
+    },
+    {
+      "path": "scripts/e2e/equity-offers-artist.e2e.mjs",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
     },
     {
       "path": "scripts/e2e/eu-screens.e2e.mjs",
@@ -2943,6 +3034,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Browser checks for the owner-only globe Games overlay verify that its Bridgeport links reach the existing Equity Uprise HQ and B1 routes; verification support only, with no building program or geometry implementation."
+    },
+    {
+      "path": "scripts/e2e/managed-projects.e2e.mjs",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
     },
     {
       "path": "scripts/e2e/prim3-artist.e2e.mjs",
@@ -3164,6 +3262,13 @@
       "rationale": "Pins the public brand, Equity Uprise (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise), in the strings it tests; defines no building capability."
     },
     {
+      "path": "scripts/test/customer-site-addresses-db.mjs",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
+    },
+    {
       "path": "scripts/test/domain-architecture.test.mjs",
       "classification": "test_support",
       "capability_ids": [],
@@ -3262,6 +3367,13 @@
       "rationale": "Recorded full-strength PRIM3 HQ drill game replayed by the tests; test fixture, no building capability."
     },
     {
+      "path": "scripts/test/free-site-minimum-db.mjs",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
+    },
+    {
       "path": "scripts/test/games-world.test.mjs",
       "classification": "test_support",
       "capability_ids": [],
@@ -3337,6 +3449,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Pins the public brand, Equity Uprise (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise), in the strings it tests; defines no building capability."
+    },
+    {
+      "path": "scripts/test/platform-center-nav.browser.mjs",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
     },
     {
       "path": "scripts/test/policy-fellowship-ladder.test.mjs",
@@ -3449,6 +3568,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Test/verification file exercises Equity Uprise surfaces but is not itself a program capability."
+    },
+    {
+      "path": "scripts/test/site-offers.test.mjs",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
     },
     {
       "path": "scripts/test/song-test.test.mjs",
@@ -4220,6 +4346,13 @@
       "rationale": "Pending Action Network bounty claim-row existence guard preserves the lookup result across aggregate SELECT statements. Runtime reservation integrity support, not a physical building capability."
     },
     {
+      "path": "supabase/pending/canonical_artist_bindings_v1.sql",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
+    },
+    {
       "path": "supabase/pending/equity_uprise_clipping_sources.sql",
       "classification": "shared_backend_support",
       "capability_ids": [],
@@ -4898,6 +5031,13 @@
       "rationale": "Shared Action Network audio-room Worker module (Realtime SFU proxy, member-authenticated, flagged off) with Equity Uprise desk context; not an independent Equity Uprise capability."
     },
     {
+      "path": "workers/mccluster/src/canonical-artists.js",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
+    },
+    {
       "path": "workers/mccluster/src/company-site/news.js",
       "classification": "shared_site_support",
       "capability_ids": [],
@@ -5117,6 +5257,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Test or behaviour harness for shared Action Network / intelligence governance; references Equity Uprise context but defines no program capability."
+    },
+    {
+      "path": "workers/mccluster/test/managed-projects.test.mjs",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
     },
     {
       "path": "workers/mccluster/test/mission-proof-media.test.mjs",

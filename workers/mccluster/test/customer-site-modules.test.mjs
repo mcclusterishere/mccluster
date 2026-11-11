@@ -1,0 +1,21 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {handleCustomerSiteModules,SITE_MODULES} from '../src/customer-site-modules.js';
+test('module configuration is owner bound, default off, rejects authority fields and never grants admin',async()=>{
+ let enabled=false;const calls=[];
+ const db={actor:async r=>{if(!r.headers.has('authorization'))throw Object.assign(Error('Sign in'),{status:401});return{auth_uid:'alice',m_uid:'alice-person'};},select:async(t,f)=>t==='managed_projects'?(f.slug==='eq.alpha'?[{slug:'alpha'}]:[]):[{enabled}],rpc:async(n,b)=>{calls.push({n,b});enabled=b.p_enabled;}};
+ const env={CUSTOMER_SITE_OFFER_ENABLED:'true'};
+ const call=async(method='GET',body,path='',auth=true)=>{const r=await handleCustomerSiteModules(new Request('https://api.mccluster.org/v1/customer-site/modules'+path,{method,headers:auth?{authorization:'Bearer alice'}:{},body:body?JSON.stringify(body):undefined}),env,{db});return{status:r.status,data:await r.json()};};
+ assert.equal((await call()).data.modules.find(m=>m.key==='world_discovery').enabled,false);
+ assert.equal((await call('GET',null,'',false)).status,401);
+ assert.equal((await call('GET',null,'?project=beta')).status,404);
+ assert.equal((await call('POST',{module:'world_discovery',enabled:true,owner_user_id:'bob'})).status,400);
+ assert.equal((await call('POST',{module:'advertising',enabled:true})).status,400);
+ assert.equal((await call('POST',{module:'site',enabled:false})).status,400);
+ const on=await call('POST',{module:'world_discovery',enabled:true},'?project=alpha');assert.equal(on.status,200);
+ assert.deepEqual(calls[0].b,{p_user:'alice',p_actor:'alice-person',p_kind:'project',p_key:'alpha',p_module:'world_discovery',p_enabled:true});
+ assert.equal(on.data.global_membership_unchanged,true);assert.equal(SITE_MODULES.some(x=>/admin/.test(x.key)),false);
+ assert.equal((await call('POST',{module:'world_discovery',enabled:false},'?project=alpha')).data.modules.find(m=>m.key==='world_discovery').enabled,false);
+ db.select=async()=>{throw Error('missing schema');};assert.equal((await call()).status,503);
+ env.CUSTOMER_SITE_OFFER_ENABLED='false';assert.equal((await call()).status,503);
+});

@@ -15,9 +15,26 @@
   var V = (function () { try { return new URL(me.src).searchParams.get("v") || ""; } catch (e) { return ""; } })();
   var params = new URLSearchParams(location.search);
   var handle = String(params.get("u") || "").toLowerCase();
+  var projectSlug = String(params.get("project") || "").toLowerCase();
   var HANDLE = /^[a-z0-9][a-z0-9._-]{2,39}$/;
+  // Only the verified-host Worker injects this binding. Query parameters cannot
+  // choose a different tenant or a credential destination on a custom domain.
+  var hostBinding = w.MCC_FRONT_HOST;
+  if (hostBinding && hostBinding.api === location.origin && HANDLE.test(hostBinding.handle || "")) {
+    handle = hostBinding.handle;
+    projectSlug = /^[a-z0-9][a-z0-9-]{2,39}$/.test(hostBinding.project || "") ? hostBinding.project : "";
+    if (projectSlug) params.set("project", projectSlug); else params.delete("project");
+    API = location.origin;
+  }
   var inStudio = false;
-  try { inStudio = w.parent !== w && w.parent.location.origin === location.origin && /front-studio\.html$/.test(w.parent.location.pathname); } catch (e) {}
+  try { inStudio = w.parent !== w && w.parent.location.origin === location.origin && /(?:front|project)-studio\.html$/.test(w.parent.location.pathname); } catch (e) {}
+  // The editor replaces this frame whenever words/media change. Cross-document
+  // page transitions can still be running when that replacement happens.
+  if (inStudio) {
+    var previewStyle = d.createElement('style');
+    previewStyle.textContent = '@view-transition { navigation: none; }';
+    d.head.appendChild(previewStyle);
+  }
   d.documentElement.setAttribute("data-front-state", "loading");
 
   function text(el, v) { if (el) el.textContent = v == null ? "" : String(v); }
@@ -56,6 +73,9 @@
     if (/^https:/i.test(href)) { a.target = "_blank"; a.rel = "noopener"; }
   }
   function fill(page) {
+    w.MCC_SITE_POLICY=page.site_modules||null;
+    if(w.MCC_BAR&&w.MCC_BAR.sitePolicy)w.MCC_BAR.sitePolicy(w.MCC_SITE_POLICY);
+    else w.dispatchEvent(new CustomEvent('mcc:site-policy-changed'));
     var t = words(page), c = page.config || {}, m = c.media || {};
     Array.prototype.forEach.call(d.querySelectorAll("[data-fw]"), function (el) { text(el, t[el.getAttribute("data-fw")]); });
     /* the hero's and the close's letters are built by the engine from data-word */
@@ -91,22 +111,49 @@
     c.scenes = c.scenes || {};
     if (!m.scene1 && !m.scene2 && !m.cabin) c.scenes.vaunt = false;
     if (!m.night) c.scenes.night = false;
-    c.scenes.world = true; // the shared World entry belongs to every public page
+    c.scenes.world = !w.MCC_SITE_POLICY || w.MCC_SITE_POLICY.world === true;
     return c;
   }
   function start(page) {
+    var project = w.MCC_FRONT_PROJECTS && w.MCC_FRONT_PROJECTS.get(projectSlug);
+    var isProject = !!project && (project === page || page.registry_key === projectSlug);
+    if (isProject && project !== page) {
+      // The server alone binds a managed record to this immutable registry.
+      // Owners edit words/settings; original project assets never become a
+      // broader permission to load another member's files.
+      var merged = JSON.parse(JSON.stringify(project.config));
+      ["words", "scenes", "scroll", "vr"].forEach(function (key) { if (page.config && page.config[key]) merged[key] = Object.assign({}, merged[key], page.config[key]); });
+      if (page.config && page.config.links) merged.links = page.config.links;
+      page = Object.assign({}, page, { config: merged, ownerHref: project.ownerHref });
+    }
     fill(page);
+    // Public presentation belongs to the viewed page, not the signed-in viewer.
+    // The shared bar validates the same-origin destination/logo independently.
+    if (!isProject && !inStudio) {
+      var pageProfile = {name: page.name || page.handle, logo: page.config?.offer_page?.logo || page.avatar || "",
+        home: hostBinding ? location.pathname : "front.html?" + (projectSlug ? "project=" + encodeURIComponent(projectSlug) : "u=" + encodeURIComponent(page.handle))};
+      w.MCC_PAGE_PROFILE = pageProfile;
+      if (w.MCC_BAR && w.MCC_BAR.pageProfile) w.MCC_BAR.pageProfile(pageProfile);
+    }
     var config = settings(page);
-    var project = w.MCC_FRONT_PROJECTS && w.MCC_FRONT_PROJECTS.get(params.get("project"));
-    var isProject = !inStudio && project === page;
+    if(config.layout==='offers'&&!isProject&&w.MCC_SITE_OFFERS){
+      d.documentElement.setAttribute('data-front-layout','offers');
+      d.getElementById('top').hidden=true;d.getElementById('frontFoot').hidden=true;
+      var offers=w.MCC_SITE_OFFERS.render(page);d.getElementById('top').before(offers);
+      w.MCC_FRONT_SOURCE={handle:page.handle,name:page.name,config:config,studio:inStudio};
+      d.documentElement.setAttribute('data-front-state','ready');
+      w.dispatchEvent(new CustomEvent('mcc:site-policy-changed'));
+      return;
+    }
     if (isProject) {
       d.documentElement.setAttribute("data-front-project", params.get("project"));
       d.querySelectorAll('[data-project-detail]').forEach(function (el) { el.hidden = false; });
       var note = d.createElement('p'); note.className = 'front-project-note';
-      note.textContent = 'Managed by ' + project.owner + '. ' + project.attribution;
+      note.textContent = 'Managed by ' + project.owner;
       d.querySelector('.hero__content').appendChild(note);
       var profile = d.getElementById('frontProfile');
       profile.textContent = 'About ' + project.owner;
+      if (w.MCC_PROJECT_ENTRY) w.MCC_PROJECT_ENTRY.mount(project);
     }
     /* without the night film the close moves to the foot of the page */
     if (config.scenes.night === false) Array.prototype.forEach.call(d.querySelectorAll("[data-fw-foot]"), function (el) { el.hidden = false; });
@@ -117,6 +164,8 @@
     d.body.appendChild(s);
   }
   function empty(title, why, links) {
+    w.MCC_PAGE_PROFILE = null;
+    if (w.MCC_BAR && w.MCC_BAR.pageProfile) w.MCC_BAR.pageProfile(null);
     d.documentElement.setAttribute("data-front-state", "empty");
     var main = d.getElementById("top"); if (main) main.hidden = true;
     var foot = d.getElementById("frontFoot"); if (foot) foot.hidden = true;
@@ -134,16 +183,26 @@
       if (e.origin !== location.origin || e.source !== w.parent || !e.data || e.data.type !== "mcc:front-draft" || asked) return;
       asked = true;
       var p = e.data.page;
-      if (p && HANDLE.test(String(p.handle || ""))) start({ handle: p.handle, name: p.name, avatar: p.avatar, headline: p.headline, config: p.config || {} });
+      if (p && HANDLE.test(String(p.handle || ""))) start({ handle: p.handle, name: p.name, avatar: p.avatar, headline: p.headline, registry_key: p.registry_key || null, config: p.config || {} });
       else empty("Nothing to preview yet", "Your editor did not send a page.", []);
     });
     w.parent.postMessage({ type: "mcc:front-need-draft" }, location.origin);
     return;
   }
-  if (params.has("project")) {
-    var project = w.MCC_FRONT_PROJECTS && w.MCC_FRONT_PROJECTS.get(params.get("project"));
-    if (project) start(project);
-    else empty("No project here", "This link does not name a published project.", [{ label: "Matthew’s portfolio", href: "index.html" }]);
+  if (projectSlug) {
+    if (!/^[a-z0-9][a-z0-9-]{2,39}$/.test(projectSlug)) { empty("No project here", "Choose a valid project address.", []); return; }
+    fetch(API + "/v1/projects/" + encodeURIComponent(projectSlug), { credentials: "omit", headers: { accept: "application/json" } })
+      .then(function (r) { return r.json().then(function (b) { return { status: r.status, body: b }; }); })
+      .then(function (r) {
+        var registry = w.MCC_FRONT_PROJECTS && w.MCC_FRONT_PROJECTS.get(projectSlug);
+        var tileURL = "website-studio-view.html?project=" + encodeURIComponent(projectSlug);
+        if (r.status === 200 && r.body && r.body.ok && r.body.presentation === "tiles" && r.body.url === tileURL) {
+          location.replace(new URL(tileURL, document.baseURI).href); return;
+        }
+        if (r.status === 200 && r.body && r.body.ok && r.body.config && (!r.body.registry_key || registry && r.body.registry_key === projectSlug)) { start(r.body); return; }
+        if (r.status === 404 && r.body && r.body.code === "project_not_found" && registry) { start(registry); return; }
+        empty(r.status === 404 ? "No public project here" : "This project cannot be read right now", "The project may be unpublished or temporarily unavailable.", [{ label: "Your projects", href: "customer-projects.html" }]);
+      }).catch(function () { empty("This project cannot be read right now", "Try again in a moment.", []); });
     return;
   }
   if (!HANDLE.test(handle)) { empty("No front page here", "This link does not name an account.", [{ label: "Make your own front page", href: "front-studio.html" }]); return; }

@@ -302,9 +302,8 @@
        no coin rather than lighting one that is not on the bar. The pages
        still answer — nothing here deletes a room, it only stops the bar
        pointing at one. */
-    /* the front door is the house: the landing page opens on the emblem,
-       so / and /index.html light the M coin; the record lives behind Music */
-    "": "home", "index.html": "home",
+    /* Personal home remains the default; the platform landing brands its own document. */
+    "": "home", "index.html": "home", "platform-home.html": "home",
     "hire.html": "home",
     "ecosystem.html": "home",
     "portfolio.html": "home", "shots.html": "home", "production.html": "home", "archive.html": "home", "gallery.html": "home", "prints.html": "home",
@@ -338,35 +337,24 @@
     /* "/" and "/index.html" are the same page (the HERE tab links the
        latter; the canonical home URL is the former) */
     var same = function (p) { return p.replace(/\/index\.html$/, "/"); };
-    if (to.origin !== location.origin || same(to.pathname) !== same(location.pathname)) return;
+    if (to.origin !== location.origin || same(to.pathname) !== same(location.pathname) || to.search !== location.search) return;
     e.preventDefault();
+    if (PAGE_PROFILE && window.__MCC_FRONT_GOTO) { window.__MCC_FRONT_GOTO("top"); return; }
     try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch (err) { window.scrollTo(0, 0); }
   });
   var HOME_BAR = dock.innerHTML;
   var wingOn = null;
   var AUTH_STATE = { signed_in: false, verified: false, user: null };
 
-  /* ---------- A CREATOR'S PERSPECTIVE ----------
-     Owner, 2026-10-14: from Music, "if they select one individual, they
-     should be able to go to their front page and experience the site from
-     their perspective, just like they experience the site from my
-     perspective" with the M in the middle. A creator's front page
-     (music-creator.html?handle=) tells the bar whose it is (the
-     mcc:perspective event from js/music-creator-profile.js), and for the
-     rest of the session the middle cell is that creator: their own avatar,
-     round, or the initial of their name (never a mark drawn for them,
-     AGENTS.md), and it opens their front page. The held wing keeps the way
-     to McCluster's house, the M as supplied, beside Everything. The house
-     clears it: standing at Matthew's front door, the M is back. */
+  /* Preserve the established account perspective across ordinary navigation.
+     An explicitly branded document may override it locally, never persistently. */
   var PERSPECTIVE_KEY = "mcc_perspective";
   var PERSPECTIVE_SUB_KEY = "mcc_perspective_account";
   var SELF_PROFILE = null, selfProfileEpoch = 0, lastVerifiedSubject = "";
   var HANDLE_RE = /^[a-z0-9][a-z0-9._-]{2,39}$/;
   var HOUSE_ROOM = WINGS.home.slots[0];
-  var HOUSE_LABEL = (function () {
-    var t = dock.querySelector('[data-appnav="home"] span:last-child');
-    return t && t.textContent ? t.textContent : "HERE";
-  })();
+  var HOUSE_LABEL = "HERE";
+  var EVERYTHING_ROOM = WINGS.home.slots[1];
   function textOf(x) { var d = document.createElement("i"); d.textContent = x == null ? "" : String(x); return d.innerHTML; }
   function attrOf(x) { return textOf(x).replace(/"/g, "&quot;"); }
   function cleanPerspective(p) {
@@ -414,49 +402,89 @@
   }
   function initialOf(name) { var m = String(name).match(/[A-Za-z0-9\u00C0-\u024F]/); return m ? m[0].toUpperCase() : "@"; }
   function shortName(name) { var w = String(name).split(" ")[0]; return w.length > 12 ? w.slice(0, 11) + "\u2026" : w; }
+  /* A public profile may brand its own page for guests and members alike.
+     This context is document-local: never saved as an account perspective. */
+  function cleanPageProfile(raw) {
+    if (!raw || typeof raw !== "object") return null;
+    var name = String(raw.name || "").trim().slice(0, 60), home, logo = "";
+    try { home = new URL(raw.home, location.href); } catch (e) { return null; }
+    if (!name || !raw.home || home.origin !== location.origin || !/^https?:$/.test(home.protocol)) return null;
+    if (raw.logo) try {
+      var image = new URL(raw.logo, document.baseURI), assets = new URL(ROOT, location.href);
+      // Custom-domain HTML uses the canonical static base. Permit only that
+      // asset directory in addition to same-origin logos, never arbitrary hosts.
+      var suppliedAsset = image.origin === assets.origin && image.pathname.indexOf(assets.pathname + "assets/") === 0;
+      // Published front config validates ownership before this presentation call.
+      // Only the canonical public front-media bucket is an additional image source;
+      // never trust arbitrary avatar hosts, private buckets, credentials or queries.
+      var ownedFrontMedia = image.origin === "https://zmnhbrjyhxzhkxmhkexs.supabase.co" &&
+        /^\/storage\/v1\/object\/public\/front-media\/[0-9a-f-]{36}\/(?:projects\/[a-z0-9][a-z0-9-]{2,39}\/)?[a-z0-9_-]+\.(?:png|jpe?g|webp)$/i.test(image.pathname) && !image.search && !image.hash && !image.username && !image.password;
+      if ((image.origin === location.origin || suppliedAsset || ownedFrontMedia) && /^https?:$/.test(image.protocol)) logo = image.href;
+    } catch (e) {}
+    return { kind: "page", handle: "page-profile", name: name, home: home.href, avatar: logo };
+  }
+  var PAGE_PROFILE = cleanPageProfile(window.MCC_PAGE_PROFILE);
+  var SITE_POLICY = window.MCC_SITE_POLICY || null;
+  function paintSitePolicy() {
+    if (ADMIN_ON) return; // Tenant module switches do not hide or redirect the owner World.
+    var tab=dock.querySelector('[data-appnav="world"]');if(!tab)return;
+    var disabled=SITE_POLICY&&SITE_POLICY.world!==true;
+    tab.hidden=!!disabled;tab.style.display=disabled?'none':'';
+    dock.style.gridTemplateColumns=disabled?'repeat(2,minmax(0,1fr))':'';
+    if(SITE_POLICY&&SITE_POLICY.world===true) {
+      try{var dest=new URL(SITE_POLICY.world_href,document.baseURI);if(dest.origin===new URL(ROOT,location.href).origin&&/\/customer-world\.html$/.test(dest.pathname)){tab.href=dest.href;WINGS.world.home=dest.href;}}catch(e){}
+    }
+  }
+  function setSitePolicy(policy) {
+    SITE_POLICY=policy&&typeof policy.world==='boolean'?policy:null;
+    window.MCC_SITE_POLICY=SITE_POLICY;
+    if(wingOn)revert();
+    var tab=dock.querySelector('[data-appnav="world"]');if(tab)tab.href=worldAt('?view=feed');WINGS.world.home=worldAt('?view=feed');
+    paintSitePolicy();HOME_BAR=dock.innerHTML;
+    window.dispatchEvent(new CustomEvent('mcc:site-policy-changed'));
+  }
+  function setPageProfile(raw) {
+    PAGE_PROFILE = cleanPageProfile(raw);
+    if (wingOn) revert();
+    paintPerspective();
+    HOME_BAR = dock.innerHTML;
+    return !!PAGE_PROFILE;
+  }
   function paintPerspective() {
-    var homeTab = dock.querySelector('[data-appnav="home"]');
-    if (!homeTab) return;
-    var p = PERSPECTIVE || (AUTH_STATE.signed_in ? SELF_PROFILE : null),
-      label = homeTab.querySelector("span:last-child"), coin = homeTab.querySelector(".appbar__m");
-    if(p && p.kind==="house") p=null;
-    /* THE OWNER'S M IS HIS FRONT PAGE (owner, 2026-10-21: "My front page as the admin is not my actual site's front
-       page ... it should represent as my actual front page"). With the owner's bar on, the M is index.html, the page
-       Control → Create → Front page shows and controls, never a member card. */
-    if (ADMIN_ON) p = null;
-    if (!p) {
-      /* M is the McCluster platform home for everyone (owner, 2026-10-14);
-         the member feed lives in World, not behind the emblem. */
-      homeTab.href = HOUSE + "index.html";
-      homeTab.setAttribute("aria-label", "Open the McCluster home");
-      homeTab.removeAttribute("data-perspective");
-      if (coin && (coin.tagName !== "IMG" || coin.classList.contains("appbar__m--creator"))) {
-        coin.outerHTML = '<img class="appbar__m" src="' + ROOT + 'assets/img/m-mark.png" alt="">';
-      }
-      if (label) label.textContent = HOUSE_LABEL;
+    // Customer page branding never rewrites the verified owner's seven-tab bar.
+    if (ADMIN_ON) {
+      dock.style.gridTemplateColumns = "";
       WINGS.home.home = HOUSE + "index.html";
       WINGS.home.slots[0] = HOUSE_ROOM;
       return;
     }
-    var door = HOUSE + (p.kind==="artist" ? "music-creator.html" : "member-front.html") +
-      "?handle=" + encodeURIComponent(p.handle);
+    paintSitePolicy();
+    var homeTab = dock.querySelector('[data-appnav="home"]');
+    if (!homeTab) return;
+    var p = PAGE_PROFILE || PERSPECTIVE || (AUTH_STATE.signed_in ? SELF_PROFILE : null);
+    if (p && p.kind === "house") p = null;
+    var door = p ? (p.kind === "page" ? p.home : HOUSE +
+      (p.kind === "artist" ? "music-creator.html" : "member-front.html") + "?handle=" + encodeURIComponent(p.handle)) : HOUSE + "index.html";
     homeTab.href = door;
-    homeTab.setAttribute("aria-label", "Open " + p.name + "\u2019s front page");
-    homeTab.setAttribute("data-perspective", p.handle);
-    if (coin) {
-      coin.outerHTML = p.avatar
-        ? '<img class="appbar__m appbar__m--creator" src="' + attrOf(p.avatar) + '" alt="">'
-        : '<span class="appbar__m appbar__m--initial" aria-hidden="true">' + textOf(initialOf(p.name)) + "</span>";
-    }
-    if (label) label.textContent = shortName(p.name);
-    /* their own front page lights the middle coin, as the house lights the M */
-    var theirs = /(?:music-creator|member-front)\.html$/.test(location.pathname) &&
-      String(new URLSearchParams(location.search).get("handle") || "").toLowerCase() === p.handle;
-    homeTab.classList.toggle("is-here", theirs);
+    homeTab.setAttribute("aria-label", p ? "Open " + p.name + "’s front page" : "Open the McCluster home");
+    if (p) homeTab.setAttribute("data-perspective", p.handle);
+    else homeTab.removeAttribute("data-perspective");
+    homeTab.innerHTML = (p ? (p.avatar
+      ? '<img class="appbar__m appbar__m--creator' + (p.kind === "page" ? ' appbar__m--brand' : '') + '" src="' + attrOf(p.avatar) + '" alt="">'
+      : '<span class="appbar__m appbar__m--initial" aria-hidden="true">' + textOf(initialOf(p.name)) + '</span>')
+      : '<img class="appbar__m" src="' + ROOT + 'assets/img/m-mark.png" alt="">') +
+      '<span class="appbar__sr">' + textOf(p ? shortName(p.name) : HOUSE_LABEL) + '</span>';
+    var destination = new URL(door, location.href);
+    var samePath = function (path) { return path.replace(/\/index\.html$/, "/"); };
+    var current = p ? destination.origin === location.origin && samePath(destination.pathname) === samePath(location.pathname) && destination.search === location.search : PAGE_WING[PAGE_KEY] === "home";
+    homeTab.classList.toggle("is-here", current);
+    if (current) homeTab.setAttribute("aria-current", "page"); else homeTab.removeAttribute("aria-current");
     WINGS.home.home = door;
-    WINGS.home.slots[0] = [HOUSE + "index.html?front=house", "mmark", "McCluster", { title: "McCluster, the house",
-      sub: "Matthew McCluster\u2019s front door: the M, the records and the World from his side." }];
+    WINGS.home.slots[0] = p ? [HOUSE + "index.html?front=house", "mmark", "McCluster", { title: "McCluster, the house",
+      sub: "Matthew McCluster’s front door: the M, the records and the World from his side." }] : HOUSE_ROOM;
+    WINGS.home.slots[1] = EVERYTHING_ROOM;
   }
+
   function setPerspective(raw) {
     var p = cleanPerspective(raw);
     if (!p || !AUTH_STATE.signed_in) return false;
@@ -542,7 +570,7 @@
     body.classList.toggle("mcc-auth-out", !signedIn);
     body.setAttribute("data-mcc-auth", signedIn ? "in" : "out");
 
-    /* Center tab: visited profile > authenticated owner profile > original guest house. */
+    /* Restore account context, unless this document supplies its own branding. */
     paintPerspective();
     /* Exactly three columns, signed in or not. Record and Analytics were
        member-only columns; they are contextual now (Create in the World
@@ -1213,6 +1241,7 @@
     if (url && url.origin === location.origin && samePath(url.pathname) === samePath(location.pathname) && url.search === location.search) {
       veilOff(); revert();
       if (url.hash) location.hash = url.hash;
+      else if (PAGE_PROFILE && window.__MCC_FRONT_GOTO) window.__MCC_FRONT_GOTO("top");
       else window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
@@ -1415,6 +1444,8 @@
     wing: function () { return wingOn; },
     refreshAuth: currentAuthState,
     auth: function () { return AUTH_STATE; },
+    pageProfile: function (p) { return arguments.length ? setPageProfile(p) : PAGE_PROFILE; },
+    sitePolicy: function (p) { return arguments.length ? setSitePolicy(p) : SITE_POLICY; },
     perspective: function (p) { return arguments.length ? setPerspective(p) : PERSPECTIVE; },
     clearPerspective: clearPerspective,
     ownPerspective: function(){return SELF_PROFILE;},

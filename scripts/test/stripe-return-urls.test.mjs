@@ -162,7 +162,7 @@ test('the pages the live functions return to are the ones that exist', () => {
   assert.deepEqual(by('supabase/functions/music-checkout/index.ts'), ['/listen.html', '/listen.html']);
   /* direct sales return to Matthew's general purchase page, never a campaign page */
   assert.deepEqual(by('supabase/functions/music-direct-checkout/index.ts'), ['/purchase.html', '/purchase.html']);
-  assert.deepEqual(by('workers/mccluster/src/creator-billing.js'), ['/mccluster-platform.html', '/mccluster-platform.html']);
+  assert.deepEqual(by('workers/mccluster/src/creator-billing.js'), Array(3).fill('/customer-commerce.html'));
   assert.deepEqual(by('supabase/functions/org-connect-onboard/index.ts'), ['/account.html', '/account.html']);
   assert.deepEqual(by('supabase/functions/connect-org/index.ts'), ['/account.html', '/account.html']);
   assert.deepEqual(by('workers/mccluster/src/connect.js'), ['/control.html', '/control.html']);

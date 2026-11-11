@@ -1,0 +1,99 @@
+COM-3 independent git-am verification
+2026-11-10T22:07:54Z
+SOURCE BASE 53dcd55243e6d847b4ced44817bb22d11bdcce18
+EXPECTED TREE 0c4e32c8a2b5d2b6214d7fd88a7e4076b91d4d3c
+Preparing worktree (new branch 'verify/com3-independent-apply-20261110')
+Updating files:  56% (3735/6635)Updating files:  57% (3782/6635)Updating files:  58% (3849/6635)Updating files:  59% (3915/6635)Updating files:  60% (3981/6635)Updating files:  61% (4048/6635)Updating files:  62% (4114/6635)Updating files:  63% (4181/6635)Updating files:  64% (4247/6635)Updating files:  65% (4313/6635)Updating files:  66% (4380/6635)Updating files:  67% (4446/6635)Updating files:  68% (4512/6635)Updating files:  69% (4579/6635)Updating files:  70% (4645/6635)Updating files:  71% (4711/6635)Updating files:  72% (4778/6635)Updating files:  73% (4844/6635)Updating files:  74% (4910/6635)Updating files:  75% (4977/6635)Updating files:  76% (5043/6635)Updating files:  77% (5109/6635)Updating files:  78% (5176/6635)Updating files:  79% (5242/6635)Updating files:  80% (5308/6635)Updating files:  81% (5375/6635)Updating files:  82% (5441/6635)Updating files:  83% (5508/6635)Updating files:  84% (5574/6635)Updating files:  85% (5640/6635)Updating files:  86% (5707/6635)Updating files:  87% (5773/6635)Updating files:  88% (5839/6635)Updating files:  89% (5906/6635)Updating files:  90% (5972/6635)Updating files:  91% (6038/6635)Updating files:  92% (6105/6635)Updating files:  93% (6171/6635)Updating files:  94% (6237/6635)Updating files:  95% (6304/6635)Updating files:  96% (6370/6635)Updating files:  97% (6436/6635)Updating files:  98% (6503/6635)Updating files:  99% (6569/6635)Updating files: 100% (6635/6635)Updating files: 100% (6635/6635), done.
+HEAD is now at 53dcd552 Merge commit '6d63bc7ae1838ec975632db5a5cd639fec2d86e1' into codex/customer-current-release-20261107
+53dcd55243e6d847b4ced44817bb22d11bdcce18
+aaca3843b24b3b9d61f0c3e66c3856cd7cacbd0f1f5ba1156144982a309a5e51  docs/control-plane/deep-audit-20261109/patches/pr-782-com3/0001-fix-billing-persist-and-safely-reconcile-checkout-at.patch
+e6a0b94573a8934a2ae41cac0439c4f2e95cbf2fa723ce39309e57bdfced2571  docs/control-plane/deep-audit-20261109/patches/pr-782-com3/0002-feat-billing-expose-buyer-recovery-and-audited-owner.patch
+Applying: fix(billing): persist and safely reconcile checkout attempts (COM-3)
+Applying: feat(billing): expose buyer recovery and audited owner controls
+3854a6c62ac1fc0458dc7c58827ddd584a8df3e3 0c4e32c8a2b5d2b6214d7fd88a7e4076b91d4d3c feat(billing): expose buyer recovery and audited owner controls
+9e55278af43dc0b35c2bad412e31d28a8772a30d 0471f063c934de7765636035c34c60444b4793a8 fix(billing): persist and safely reconcile checkout attempts (COM-3)
+EXACT TREE MATCH: 0c4e32c8a2b5d2b6214d7fd88a7e4076b91d4d3c
+Applied worktree clean; both patches applied without repair or conflict.
+
+Focused contracts on independently applied tree
+2026-11-10T22:08:14Z
+✔ live checkout requires an explicit opt-in and defaults to Stripe test key (5.013283ms)
+✔ live webhook events fail closed and invoice subscription links include modern nested shape (2.043029ms)
+✔ Stripe webhook verifies signature and retrieves provider subscription (6.857878ms)
+✔ billing event ledger is private and provision requires active subscription (2.695577ms)
+✔ webhook is routed ahead of generic rate limiting (1.522778ms)
+✔ creator Checkout is routed through deployed platform entrypoint (4.233828ms)
+✔ creator Checkout authenticates, selects only server-owned prices and fails closed (2.762036ms)
+✔ COM-3 definitive pre-session rejection releases only that identity; replay remains retired (17.772782ms)
+✔ COM-3 timeout_before stays fail-closed and replays the immutable original (4.320216ms)
+✔ COM-3 timeout_after stays fail-closed and replays the immutable original (4.99079ms)
+✔ COM-3 5xx stays fail-closed and replays the immutable original (2.529059ms)
+✔ COM-3 unproven400 stays fail-closed and replays the immutable original (2.38751ms)
+✔ COM-3 bind failure retains recovery identity and resume binds the same provider session (2.025173ms)
+✔ COM-3 reload/new device finds server-owned pending request with no browser identifier (2.477032ms)
+✔ COM-3 original retry after expiry uses old payload and releases only provider-confirmed expired session (2.073505ms)
+✔ COM-3 retention deadline requires audited owner reconciliation, never a blind new POST (3.85726ms)
+✔ COM-3 owner cannot attach another owner, price, or request identity (1.811757ms)
+✔ COM-3 plan change cannot replace original binding; account switch cannot read or resume it (3.463876ms)
+✔ COM-3 a later validation error never frees an earlier uncertain attempt (1.391092ms)
+✔ COM-3 failed rejection persistence stays uncertain and blocks a new checkout (1.278075ms)
+✔ COM-3 live-mode guard covers resume and operator reconciliation (0.524588ms)
+✔ COM-3 delayed/out-of-order signed webhook and replay never open a second subscription (12.117426ms)
+✔ COM-3 upgrading a known legacy session preserves GET recovery without inventing a POST (1.508957ms)
+✔ COM-3 changing provider mode cannot replay an uncertain payment against another mode (1.339707ms)
+✔ COM-3 mismatch on a bound current session persists owner-required state and appears in queue (2.40772ms)
+✔ COM-3 completed session remains pending across status/reload instead of falsely ready (4.18832ms)
+✔ COM-3 blocked second-device checkout returns canonical pending identity and plan (1.087883ms)
+✔ checkout retries bind idempotency to owner; portal refuses another tenant subscription (12.513894ms)
+ℹ tests 28
+ℹ suites 0
+ℹ pass 28
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 192.293023
+
+Native PostgreSQL 16 acceptance on independently applied tree
+{"version":"16.15","uid":1000,"host":"127.0.0.1","port":39531,"external_provider_calls":0}
+PASS upgrade preserves old guards; unknown payload requires owner; known expired session reconciles
+PASS first definitive 400 releases guard, keeps receipt, permits new request, blocks replay
+PASS unproven/malformed errors never release, nor does later valid rejection after uncertainty
+PASS crash before outcome write cannot make the second provider call a safe rejection
+PASS timeout before and after provider acceptance keep original identity across a new connection
+PASS bind failure preserves pending attempt; exact session binds idempotently, other binding refused
+PASS original retry after checkout expiry stays byte-equivalent within 23h; later retry needs owner
+PASS request/price/full payload and account binding are immutable
+PASS delayed negative outcomes cannot erase session; delayed subscription blocks release/new attempts
+PASS verified expired bound session is the only expiry release; its identity remains retired
+PASS all blocking subscription statuses still protect owner, never another tenant
+PASS owner reconciliation audit is durable, append-only, and has no force release action
+PASS Supabase broad defaults are revoked: anon/authenticated cannot read data or invoke any RPC
+PASS real concurrent requests serialize per owner; rejection cannot erase a queued second dispatch
+PASS actual recovery worker + native RPCs classify rejection and preserve exact request after lost response/bind failure
+PASS repeat application and emergency rollback preserve guards, receipts and audit
+{"result":"PASS","version":"16.15","checks":16,"names":["upgrade preserves old guards; unknown payload requires owner; known expired session reconciles","first definitive 400 releases guard, keeps receipt, permits new request, blocks replay","unproven/malformed errors never release, nor does later valid rejection after uncertainty","crash before outcome write cannot make the second provider call a safe rejection","timeout before and after provider acceptance keep original identity across a new connection","bind failure preserves pending attempt; exact session binds idempotently, other binding refused","original retry after checkout expiry stays byte-equivalent within 23h; later retry needs owner","request/price/full payload and account binding are immutable","delayed negative outcomes cannot erase session; delayed subscription blocks release/new attempts","verified expired bound session is the only expiry release; its identity remains retired","all blocking subscription statuses still protect owner, never another tenant","owner reconciliation audit is durable, append-only, and has no force release action","Supabase broad defaults are revoked: anon/authenticated cannot read data or invoke any RPC","real concurrent requests serialize per owner; rejection cannot erase a queued second dispatch","actual recovery worker + native RPCs classify rejection and preserve exact request after lost response/bind failure","repeat application and emergency rollback preserve guards, receipts and audit"]}
+
+Native PostgreSQL 17 acceptance on independently applied tree
+{"version":"17.11","uid":1000,"host":"127.0.0.1","port":35747,"external_provider_calls":0}
+PASS upgrade preserves old guards; unknown payload requires owner; known expired session reconciles
+PASS first definitive 400 releases guard, keeps receipt, permits new request, blocks replay
+PASS unproven/malformed errors never release, nor does later valid rejection after uncertainty
+PASS crash before outcome write cannot make the second provider call a safe rejection
+PASS timeout before and after provider acceptance keep original identity across a new connection
+PASS bind failure preserves pending attempt; exact session binds idempotently, other binding refused
+PASS original retry after checkout expiry stays byte-equivalent within 23h; later retry needs owner
+PASS request/price/full payload and account binding are immutable
+PASS delayed negative outcomes cannot erase session; delayed subscription blocks release/new attempts
+PASS verified expired bound session is the only expiry release; its identity remains retired
+PASS all blocking subscription statuses still protect owner, never another tenant
+PASS owner reconciliation audit is durable, append-only, and has no force release action
+PASS Supabase broad defaults are revoked: anon/authenticated cannot read data or invoke any RPC
+PASS real concurrent requests serialize per owner; rejection cannot erase a queued second dispatch
+PASS actual recovery worker + native RPCs classify rejection and preserve exact request after lost response/bind failure
+PASS repeat application and emergency rollback preserve guards, receipts and audit
+{"result":"PASS","version":"17.11","checks":16,"names":["upgrade preserves old guards; unknown payload requires owner; known expired session reconciles","first definitive 400 releases guard, keeps receipt, permits new request, blocks replay","unproven/malformed errors never release, nor does later valid rejection after uncertainty","crash before outcome write cannot make the second provider call a safe rejection","timeout before and after provider acceptance keep original identity across a new connection","bind failure preserves pending attempt; exact session binds idempotently, other binding refused","original retry after checkout expiry stays byte-equivalent within 23h; later retry needs owner","request/price/full payload and account binding are immutable","delayed negative outcomes cannot erase session; delayed subscription blocks release/new attempts","verified expired bound session is the only expiry release; its identity remains retired","all blocking subscription statuses still protect owner, never another tenant","owner reconciliation audit is durable, append-only, and has no force release action","Supabase broad defaults are revoked: anon/authenticated cannot read data or invoke any RPC","real concurrent requests serialize per owner; rejection cannot erase a queued second dispatch","actual recovery worker + native RPCs classify rejection and preserve exact request after lost response/bind failure","repeat application and emergency rollback preserve guards, receipts and audit"]}
+
+Final independently applied tree
+3854a6c62ac1fc0458dc7c58827ddd584a8df3e3 0c4e32c8a2b5d2b6214d7fd88a7e4076b91d4d3c feat(billing): expose buyer recovery and audited owner controls
+INDEPENDENT APPLY AND TESTS PASSED

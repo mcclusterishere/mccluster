@@ -1,0 +1,16 @@
+{
+  "result": "blocked; no mobile browser pass or screenshot claimed",
+  "existing_browser": "Provisioned Chrome CDP browser 1; initial inventory had no tabs. Other active lane confirmed no browser use.",
+  "documented_limits": ["Playwright evaluate is read-only", "No documented viewport-setting or request-routing API"],
+  "fixture": "browser-fixture/index.html with unchanged customer-commerce.js and synthetic fetch; CSP connect-src none. Intended viewport: true 390 CSS-pixel iframe.",
+  "attempts": [
+    {"action":"Start loopback-only fixture HTTP server on 127.0.0.1:18782", "outcome":"Shell server process started; not reachable from subsequent shell call or provisioned cloud browser"},
+    {"action":"Navigate existing cloud browser to http://127.0.0.1:18782/index.html", "outcome":"net::ERR_CONNECTION_REFUSED; capability/connectivity failure, not security denial"},
+    {"action":"Navigate existing cloud browser to the exact local fixture file URL", "outcome":"Denied by browser URL security policy: only http and https protocols allowed. No alternate protocol or bypass attempted after this denial."}
+  ],
+  "source_sha256": {
+    "js/customer-commerce.js":"d5ecb723add92c71faf5c4bce3ad326480ce513b295463ac4fb8eae5963347a0",
+    "customer-commerce.html":"e08428e76c20ebe74e5876be45a5f792bff10299f47ceda90887d5b494be6a98"
+  },
+  "remaining": "Run the existing and new Playwright suites in an authorized environment that permits Chromium sockets, or provide an authorized HTTP preview reachable by the provisioned cloud browser. No production or provider calls were made."
+}

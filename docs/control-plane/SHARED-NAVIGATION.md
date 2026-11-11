@@ -1,5 +1,33 @@
 # Shared navigation contract
 
+## Profile context without a global navigation replacement
+
+Preserve the established artist/account perspective across ordinary Music and
+personal-site browsing. The default center remains the supplied M linked to
+`index.html`. The explicit `index.html?front=house` door resets the selected
+perspective. A held artist center retains McCluster's supplied M and Everything.
+
+An explicitly branded document may override the center locally through #630's
+`MCC_BAR.pageProfile()` hook: Vaunt uses its supplied logo and profile home, and
+`platform-home.html` uses its supplied E=Up mark on that document. Clearing or
+leaving this document restores account perspective, not a new global platform
+fallback. Ordinary `index.html` browsing must not overwrite the stored artist.
+
+The verified house owner keeps the personal M linked to `index.html`, canonical
+Control extensions and consumer World destination. Customer branding, account
+perspectives and module switches never hide or redirect those owner controls.
+
+Profile homes must be same-origin HTTP(S). Customer logos may use same-origin
+URLs, canonical supplied assets or the strictly validated public front-media
+bucket. Arbitrary external/private logo sources remain rejected, with an initial
+fallback. Music artist artwork follows its existing `safeArtwork` validation and
+account-scoped perspective path; it does not expand customer logo permissions.
+Account changes clear stale presentation and retain the existing response fences.
+
+The earlier proposed global E=Up fallback is not the integration contract. This
+source reconciliation preserves established behavior and grants no deployment,
+domain-routing, provider or production-data authority.
+
 Owner direction, 2026-10-16: every admin destination belongs in the same bottom
 control bar used across the site. Profile and account belong at the top right.
 This implements navigation; it does not claim a completed redesign of each editor,

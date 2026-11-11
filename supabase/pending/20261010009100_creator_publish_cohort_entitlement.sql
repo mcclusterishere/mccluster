@@ -28,7 +28,7 @@ begin
  ) then
   raise exception 'creator publishing entitlement required';
  end if;
- if char_length(p_title) not between 1 and 120
+ if p_title is null or char_length(trim(p_title)) not between 1 and 120
     or char_length(coalesce(p_tagline,''))>300
     or char_length(coalesce(p_bio,''))>4000 then
   raise exception 'invalid site content';
@@ -41,9 +41,11 @@ begin
  returning slug into v_slug;
  return v_slug;
 end $function$;
--- Keep the old four-argument RPC temporarily for zero-downtime rollout.
--- It continues to require a paid subscription; the new five-argument RPC
--- enforces creator identity and cohort eligibility. Remove the old RPC in
--- a later migration after all deployed Workers use the new signature.
+-- Worker creator-site-publish.js supplies all five parameters, including the
+-- verified auth user. Apply 09000 before this migration; deploy the Worker only
+-- after the five-argument RPC exists. The legacy overload is retained for staged
+-- rollback but revoked from browser roles below. It must never be used as an
+-- authentication fallback when the identity-bound RPC is unavailable.
+revoke all on function public.creator_publish_site(uuid,text,text,text) from public,anon,authenticated;
 revoke all on function public.creator_publish_site(uuid,text,text,text,uuid) from public,anon,authenticated;
 grant execute on function public.creator_publish_site(uuid,text,text,text,uuid) to service_role;

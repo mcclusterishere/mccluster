@@ -37,7 +37,7 @@ async function supabase(url,init={}){
   if(u.pathname==='/auth/v1/user'){const a=who(h.get('authorization'));return a?json({id:a.id}):json({msg:'bad jwt'},401);}
   if(u.pathname==='/rest/v1/m_auth_user_links'){const a=ACCOUNTS.find(x=>x.id===q('auth_user_id'));return json(a?[{m_uid:a.m_uid}]:[]);}
   if(u.pathname==='/rest/v1/platform_profiles'){const a=ACCOUNTS.find(x=>x.id===q('user_id'));return json(a?[{mccluster_id:a.handle||null,display_name:a.name,avatar_url:''}]:[]);}
-  if(u.pathname==='/rest/v1/network_profiles'){const a=ACCOUNTS.find(x=>x.m_uid===q('m_uid'));return json(a?[{display_name:a.name,avatar_url:'',headline:'Producer',visibility:'public'}]:[]);}
+  if(u.pathname==='/rest/v1/network_profiles'){const a=ACCOUNTS.find(x=>x.m_uid===q('m_uid'));return json(a?[{display_name:a.name,avatar_url:'',headline:'Producer',visibility:a.visibility||'public'}]:[]);}
   if(u.pathname==='/rest/v1/member_fronts'){
     if(method==='GET'){
       let rows=world.fronts.slice();
@@ -77,6 +77,15 @@ async function setup(viewport,account){
         const res=await handleMemberFronts(new Request(req.url(),{method:req.method(),headers,body}),ENV,{fetchImpl:supabase});
         if(!res)return json(route,{error:'Not found'},404);
         return route.fulfill({status:res.status,headers:Object.fromEntries(res.headers),body:Buffer.from(await res.arrayBuffer())});
+      }
+      if(p==='/v1/customer-site/media'&&req.method()==='POST'){
+        const path=u.searchParams.get('path')||'',a=who(req.headers().authorization);
+        if(!a||path.split('/')[0]!==a.id){world.refused.push(path);return json(route,{error:'Forbidden'},403);}
+        const picked=/\/cabin-[^/]+\.jpg$/.test(path)?'room360.jpg':/\/sound-[^/]+\.wav$/.test(path)?'beat.wav':'';
+        const body=req.postDataBuffer()||(picked?await readFile(join(FIX,picked)):null);
+        if(!body||Number(req.headers()['x-site-bytes'])!==body.length)return json(route,{error:'Invalid upload size'},400);
+        world.objects.set(path,{type:req.headers()['content-type'],body});world.uploads.push(path);
+        return json(route,{ok:true});
       }
       if(p==='/v1/collect')return json(route,{ok:true});
       if(p==='/v1/status')return json(route,{error:'Forbidden'},403);
@@ -165,6 +174,23 @@ try{
     }
   }
 
+  /* A private profile can draft, then recover publishing access without losing unsaved edits. */
+  {
+    const scope='private-recovery'; VISITOR.visibility='private';
+    const app=await setup({width:390,height:844},VISITOR); const {page,errors}=app;
+    await page.goto(BASE+'/front-studio.html',{waitUntil:'domcontentloaded'});
+    await page.waitForSelector('#fsForm [name="words.title1"]',{timeout:30000});
+    check(scope,'private profile blocks Publish, allows Save, and links visibility settings',await page.locator('[data-act="publish"]').isDisabled()&&!await page.locator('[data-act="save"]').isDisabled()&&await page.locator('#fsStatus a').getAttribute('href')==='mccluster-creator-studio.html');
+    await page.fill('[name="words.title1"]','MY NEW PAGE');
+    VISITOR.visibility='public';
+    await page.click('[data-act="refresh-access"]');
+    await page.waitForFunction(()=>!window.__MCC_FRONT_STUDIO.me.publish_blocker);
+    const s=await studio(page);
+    check(scope,'checking access preserves unsaved words and enables publishing',s.dirty&&s.draft.words.title1==='MY NEW PAGE'&&!await page.locator('[data-act="publish"]').isDisabled(),s);
+    check(scope,'recovery fits the phone and has no script errors',(await overflow(page))===0&&errors.length===0,errors);
+    await app.ctx.close();
+  }
+
   /* 2. BENJI BUILDS HIS PAGE ON HIS PHONE: words, a film cut into frames, a 360 photo, a track, a link, a tag; publish */
   {
     const scope='studio-390';const app=await setup({width:390,height:844},BENJI);const {page,errors}=app;
@@ -229,6 +255,9 @@ try{
     check(scope,'fixed, Save and Publish come back',await page.evaluate(()=>!document.querySelector('#fsTop [data-act="publish"]').disabled));
 
     /* the 360 room in the preview: open it, take its view as the opening view, pin a tag where it looks */
+    // The last link input schedules an 800 ms preview reload; wait for that
+    // document before sending navigation to its 360 viewer.
+    await page.waitForTimeout(900);
     fr=await previewReady(page,seq);
     await page.click('[data-act="view"]');
     s=await studio(page);

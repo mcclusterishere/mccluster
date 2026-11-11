@@ -54,19 +54,21 @@ test('the bar knows the World\'s own host and keeps today\'s behaviour until the
   assert.match(bar, /var ECOSYSTEM = \[HOUSE_ORIGIN\.replace\(\/\\\/\$\/, ""\), "https:\/\/mccluster\.org", "https:\/\/www\.mccluster\.org", "https:\/\/humanuprise\.com", "https:\/\/www\.humanuprise\.com"\];/, 'the sign-in crosses to the company host too');
 });
 
-test('a creator\'s front page puts the creator in the middle of the bar, with their own picture or initial', async () => {
+test('creator perspective persists globally with a document-local branding override', async () => {
   const bar = await read('js/tabbar.js');
   assert.match(bar, /var PERSPECTIVE_KEY = "mcc_perspective";/);
   assert.match(bar, /window\.addEventListener\("mcc:perspective",function\(e\) \{ if\(AUTH_STATE\.signed_in\)setPerspective\(e\.detail\); \}\);/, "only authenticated users select another perspective");
   assert.match(bar, /var HANDLE_RE = \/\^\[a-z0-9\]\[a-z0-9\._-\]\{2,39\}\$\/;/, 'a handle is validated before it becomes a link');
   assert.match(bar, /if \(u\.protocol === "https:"\) avatar = u\.href;/, 'only an https picture is painted');
-  assert.match(bar, /p\.kind==="artist" \? "music-creator\.html" : "member-front\.html"/, "creators retain artist pages and all members have front pages");
-  assert.match(bar, /<img class="appbar__m appbar__m--creator" src="' \+ attrOf\(p\.avatar\) \+ '" alt="">/);
-  assert.match(bar, /<span class="appbar__m appbar__m--initial" aria-hidden="true">' \+ textOf\(initialOf\(p\.name\)\) \+ "<\/span>/);
-  assert.match(bar, /homeTab\.setAttribute\("data-perspective", p\.handle\);/);
+  assert.match(bar, /p\.kind === "artist" \? "music-creator\.html" : "member-front\.html"/, "creators retain artist pages and all members have front pages");
+  assert.match(bar, /var p = PAGE_PROFILE \|\| PERSPECTIVE \|\| \(AUTH_STATE\.signed_in \? SELF_PROFILE : null\)/);
+  assert.match(bar, /: HOUSE \+ "index\.html"/);
+  assert.match(bar, /homeTab\.removeAttribute\("data-perspective"\)/);
+  assert.match(bar, /WINGS\.home\.slots\[0\] = HOUSE_ROOM/);
+  assert.match(bar, /WINGS\.home\.slots\[1\] = EVERYTHING_ROOM/);
+  assert.match(bar, /WINGS\.home\.slots\[0\] = p \? \[HOUSE \+ "index\.html\?front=house", "mmark", "McCluster"/);
   /* the house is one hold away: the M as supplied, beside Everything */
   assert.match(bar, /mmark: \["assets\/img\/m-mark\.png", "appbar__m"\],/);
-  assert.match(bar, /WINGS\.home\.slots\[0\] = \[HOUSE \+ "index\.html\?front=house", "mmark", "McCluster",/);
   /* Matthew's front door lets the perspective go */
   assert.match(bar, /var PERSPECTIVE=readPerspective\(\);/);
   assert.match(bar, /if\(HOUSE_VISIT && currentSubject\(\)\)/, "founder perspective is explicit and owner-scoped");
@@ -77,7 +79,15 @@ test('a creator\'s front page puts the creator in the middle of the bar, with th
 
   const page = await read('js/music-creator-profile.js');
   assert.match(page, /var perspective = \{ kind: "artist", handle: p\.handle, name: p\.artist_name, avatar: avatar \|\| "" \};/);
-  assert.match(page, /root\.sessionStorage\.setItem\("mcc_perspective", JSON\.stringify\(perspective\)\)/);
+  assert.doesNotMatch(page, /(?:sessionStorage|localStorage)\s*\.\s*setItem\s*\(/,
+    'the artist page must not persist perspective directly or bypass the shared bar account scope');
+  assert.match(bar, /var PERSPECTIVE_SUB_KEY = "mcc_perspective_account";/);
+  assert.match(bar, /sub && sessionStorage\.getItem\(PERSPECTIVE_SUB_KEY\)===sub/,
+    'a stored perspective is restored only for the current account');
+  assert.match(bar, /sessionStorage\.setItem\(PERSPECTIVE_SUB_KEY,sub\)/,
+    'the shared bar persists the perspective with its account owner');
+  assert.match(bar, /if \(!p \|\| !AUTH_STATE\.signed_in\) return false;/,
+    'the shared setter rejects perspective changes without a signed-in account');
   assert.match(page, /root\.dispatchEvent\(new CustomEvent\("mcc:perspective", \{ detail: perspective \}\)\)/);
   const i = page.indexOf('var avatar = PAGE.safeArtwork(p.avatar_url);'), j = page.indexOf('var perspective = {');
   assert.ok(i > 0 && j > i, 'the picture the bar gets is the one the page already vetted');

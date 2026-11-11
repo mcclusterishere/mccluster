@@ -4,15 +4,15 @@
   'use strict';
   var projects = {
     vaunt: {
-      attribution: 'Independent creator portfolio; not an official Vaunt company account or an endorsed partnership.',
+      entry: 'scene', logo: 'assets/img/vaunt-logo.webp', home: 'front.html?project=vaunt',
       handle: 'vaunt', name: 'Vaunt', owner: 'Matthew McCluster', ownerHref: 'matthew-mccluster.html',
       config: {
         scenes: { doors: true, vaunt: true, night: false, world: true },
         words: {
-          eyebrow: 'An independent creator project by Matthew McCluster', title1: 'VAUNT', title2: '',
-          sub: 'Film · 360 · Music',
-          door1: { label: 'Enter the runway experience', href: '#work' },
-          door2: { label: 'Listen to Vaunt EP', href: 'album.html?album=vaunt-ep' },
+          eyebrow: 'Film · 360 · Music', title1: 'VAUNT', title2: '',
+          sub: 'Scroll to take off',
+          door1: { label: 'Listen to Vaunt EP', href: 'album.html?album=vaunt-ep' },
+          door2: { label: 'Matthew’s portfolio', href: 'index.html#work' },
           gateKicker: 'Vaunt · inside the jet', gateTitle: 'Blurred until you allow it.',
           gateLede: 'Real 360 footage, shot inside the jet. It takes the page and your thumb while it plays, so it does not start until you say so.',
           cabinTag: 'Inside the jet · 360 · live footage'

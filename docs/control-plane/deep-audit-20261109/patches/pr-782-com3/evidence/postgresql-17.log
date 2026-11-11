@@ -1,0 +1,18 @@
+{"version":"17.11","uid":1000,"host":"127.0.0.1","port":34971,"external_provider_calls":0}
+PASS upgrade preserves old guards; unknown payload requires owner; known expired session reconciles
+PASS first definitive 400 releases guard, keeps receipt, permits new request, blocks replay
+PASS unproven/malformed errors never release, nor does later valid rejection after uncertainty
+PASS crash before outcome write cannot make the second provider call a safe rejection
+PASS timeout before and after provider acceptance keep original identity across a new connection
+PASS bind failure preserves pending attempt; exact session binds idempotently, other binding refused
+PASS original retry after checkout expiry stays byte-equivalent within 23h; later retry needs owner
+PASS request/price/full payload and account binding are immutable
+PASS delayed negative outcomes cannot erase session; delayed subscription blocks release/new attempts
+PASS verified expired bound session is the only expiry release; its identity remains retired
+PASS all blocking subscription statuses still protect owner, never another tenant
+PASS owner reconciliation audit is durable, append-only, and has no force release action
+PASS Supabase broad defaults are revoked: anon/authenticated cannot read data or invoke any RPC
+PASS real concurrent requests serialize per owner; rejection cannot erase a queued second dispatch
+PASS actual recovery worker + native RPCs classify rejection and preserve exact request after lost response/bind failure
+PASS repeat application and emergency rollback preserve guards, receipts and audit
+{"result":"PASS","version":"17.11","checks":16,"names":["upgrade preserves old guards; unknown payload requires owner; known expired session reconciles","first definitive 400 releases guard, keeps receipt, permits new request, blocks replay","unproven/malformed errors never release, nor does later valid rejection after uncertainty","crash before outcome write cannot make the second provider call a safe rejection","timeout before and after provider acceptance keep original identity across a new connection","bind failure preserves pending attempt; exact session binds idempotently, other binding refused","original retry after checkout expiry stays byte-equivalent within 23h; later retry needs owner","request/price/full payload and account binding are immutable","delayed negative outcomes cannot erase session; delayed subscription blocks release/new attempts","verified expired bound session is the only expiry release; its identity remains retired","all blocking subscription statuses still protect owner, never another tenant","owner reconciliation audit is durable, append-only, and has no force release action","Supabase broad defaults are revoked: anon/authenticated cannot read data or invoke any RPC","real concurrent requests serialize per owner; rejection cannot erase a queued second dispatch","actual recovery worker + native RPCs classify rejection and preserve exact request after lost response/bind failure","repeat application and emergency rollback preserve guards, receipts and audit"]}
