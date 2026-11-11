@@ -837,6 +837,20 @@
     return Promise.resolve(AUTH_STATE);
   }
 
+
+  // Restore/focus is not a new sign-in. Share pending authentication and keep
+  // failed lookups within the existing budget. A verified account still asks
+  // the server about owner access, bypassing a cached negative after promotion.
+  function restoreAuthState() {
+    var subject = currentSubject();
+    if (!subject || subject !== lastVerifiedSubject) return currentAuthState();
+    var ready = authFlight || (AUTH_STATE.verified && AUTH_STATE.signed_in && Date.now() - authLookedAt >= AUTH_REST
+      ? refreshAuthState() : currentAuthState());
+    return ready.then(function (state) {
+      return state.verified && state.signed_in ? checkAdmin(true) : false;
+    });
+  }
+
   /* ---------- ONE M ACCOUNT, EVERY HOST ----------
      Owner, 2026-10-14: "one M Account works on every site". A session is
      per origin (localStorage), so crossing from one house to another
@@ -994,7 +1008,7 @@
   // iPad Safari may restore a page from the back-forward cache without a
   // storage event. The permission still comes from the server, never the UI.
   window.addEventListener("focus", function () {
-    if (readAuthSession()?.access_token && !ADMIN_ON && !adminFlight) refreshAuthState();
+    if (!ADMIN_ON || currentSubject() !== lastVerifiedSubject) restoreAuthState();
   });
 
   var ICONS = {
@@ -1411,7 +1425,7 @@
     if (peekEl) unpeek();
     if (wingOn) revert();
   }, true);
-  window.addEventListener("pageshow", function () { clearTimeout(lpTimer); veilOff(); unpeek(); revert(); if (readAuthSession()?.access_token) refreshAuthState(); });
+  window.addEventListener("pageshow", function (event) { clearTimeout(lpTimer); veilOff(); unpeek(); revert(); if (event.persisted) restoreAuthState(); });
 
   window.MCC_BAR = {
     morph: morph,
