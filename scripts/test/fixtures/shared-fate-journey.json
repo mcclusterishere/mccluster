@@ -1,40 +1,45 @@
 [
   {
     "id": "R1",
-    "action": "observe",
-    "payload": null
-  },
-  {
-    "id": "E1",
-    "action": "prioritize",
-    "payload": "reduced"
-  },
-  {
-    "id": "R1",
     "action": "move",
     "payload": {
       "id": "R1",
-      "target": 180,
+      "target": 160,
       "path": [
         {
-          "x": 178,
+          "x": 204,
           "y": 0,
           "z": 0
         },
         {
-          "x": 179,
+          "x": 205,
           "y": 0,
           "z": 0
         },
         {
-          "x": 180,
+          "x": 206,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 190,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 175,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 160,
           "y": 0,
           "z": 0
         }
       ],
-      "costM": 10.619999999999997,
-      "mode": "MOVE",
-      "stateHash": "7649ef2d"
+      "costM": 21.24,
+      "mode": "DASH",
+      "stateHash": "a52b0894"
     }
   },
   {
@@ -42,121 +47,25 @@
     "action": "move",
     "payload": {
       "id": "T1",
-      "target": 127,
+      "target": 142,
       "path": [
         {
-          "x": 147,
+          "x": 170,
           "y": 0,
           "z": 0
         },
         {
-          "x": 136,
+          "x": 155,
           "y": 0,
           "z": 0
         },
         {
-          "x": 124,
+          "x": 139,
           "y": 0,
           "z": 0
         },
         {
-          "x": 125,
-          "y": 0,
-          "z": 0
-        },
-        {
-          "x": 126,
-          "y": 0,
-          "z": 0
-        },
-        {
-          "x": 127,
-          "y": 0,
-          "z": 0
-        }
-      ],
-      "costM": 21.239999999999995,
-      "mode": "DASH",
-      "stateHash": "d3a9c5e8"
-    }
-  },
-  {
-    "id": "E1",
-    "action": "end",
-    "payload": null
-  },
-  {
-    "id": "R1",
-    "action": "fire",
-    "payload": "H2"
-  },
-  {
-    "id": "R1",
-    "action": "fire",
-    "payload": "H2"
-  },
-  {
-    "id": "T1",
-    "action": "move",
-    "payload": {
-      "id": "T1",
-      "target": 69,
-      "path": [
-        {
-          "x": 111,
-          "y": 0,
-          "z": 0
-        },
-        {
-          "x": 112,
-          "y": 0,
-          "z": 0
-        },
-        {
-          "x": 113,
-          "y": 0,
-          "z": 0
-        },
-        {
-          "x": 97,
-          "y": 0,
-          "z": 0
-        },
-        {
-          "x": 81,
-          "y": 0,
-          "z": 0
-        },
-        {
-          "x": 69,
-          "y": 0,
-          "z": 0
-        }
-      ],
-      "costM": 21.240000000000002,
-      "mode": "DASH",
-      "stateHash": "4a167dd2"
-    }
-  },
-  {
-    "id": "E1",
-    "action": "end",
-    "payload": null
-  },
-  {
-    "id": "R1",
-    "action": "move",
-    "payload": {
-      "id": "R1",
-      "target": 97,
-      "path": [
-        {
-          "x": 164,
-          "y": 0,
-          "z": 0
-        },
-        {
-          "x": 152,
+          "x": 140,
           "y": 0,
           "z": 0
         },
@@ -166,35 +75,106 @@
           "z": 0
         },
         {
-          "x": 129,
+          "x": 142,
+          "y": 0,
+          "z": 0
+        }
+      ],
+      "costM": 21.239999999999995,
+      "mode": "DASH",
+      "stateHash": "0e67ba8b"
+    }
+  },
+  {
+    "id": "E1",
+    "action": "end",
+    "payload": null
+  },
+  {
+    "id": "R1",
+    "action": "move",
+    "payload": {
+      "id": "R1",
+      "target": 67,
+      "path": [
+        {
+          "x": 144,
           "y": 0,
           "z": 0
         },
         {
-          "x": 113,
+          "x": 128,
           "y": 0,
           "z": 0
         },
         {
-          "x": 97,
+          "x": 112,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 96,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 83,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 67,
+          "y": 0,
+          "z": 0
+        }
+      ],
+      "costM": 21.239999999999995,
+      "mode": "DASH",
+      "stateHash": "f6dadc07"
+    }
+  },
+  {
+    "id": "T1",
+    "action": "move",
+    "payload": {
+      "id": "T1",
+      "target": 84,
+      "path": [
+        {
+          "x": 126,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 127,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 128,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 112,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 96,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 84,
           "y": 0,
           "z": 0
         }
       ],
       "costM": 21.240000000000006,
       "mode": "DASH",
-      "stateHash": "e7479a91"
+      "stateHash": "27bb23eb"
     }
-  },
-  {
-    "id": "T1",
-    "action": "fire",
-    "payload": "H1"
-  },
-  {
-    "id": "T1",
-    "action": "fire",
-    "payload": "H1"
   },
   {
     "id": "E1",
@@ -207,39 +187,122 @@
     "payload": "H1"
   },
   {
+    "id": "R1",
+    "action": "fire",
+    "payload": "H1"
+  },
+  {
+    "id": "T1",
+    "action": "fire",
+    "payload": "H1"
+  },
+  {
+    "id": "T1",
+    "action": "fire",
+    "payload": "H2"
+  },
+  {
     "id": "E1",
     "action": "end",
     "payload": null
   },
   {
+    "id": "R1",
+    "action": "fire",
+    "payload": "H2"
+  },
+  {
+    "id": "R1",
+    "action": "fire",
+    "payload": "H2"
+  },
+  {
     "id": "T1",
+    "action": "fire",
+    "payload": "H2"
+  },
+  {
+    "id": "T1",
+    "action": "fire",
+    "payload": "H2"
+  },
+  {
+    "id": "E1",
+    "action": "end",
+    "payload": null
+  },
+  {
+    "id": "R1",
+    "action": "fire",
+    "payload": "H2"
+  },
+  {
+    "id": "E1",
+    "action": "end",
+    "payload": null
+  },
+  {
+    "id": "R1",
     "action": "move",
     "payload": {
-      "id": "T1",
+      "id": "R1",
+      "target": 7,
+      "path": [
+        {
+          "x": 54,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 39,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 24,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 9,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 8,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 7,
+          "y": 0,
+          "z": 0
+        }
+      ],
+      "costM": 21.24,
+      "mode": "DASH",
+      "stateHash": "5131da03"
+    }
+  },
+  {
+    "id": "E1",
+    "action": "end",
+    "payload": null
+  },
+  {
+    "id": "R1",
+    "action": "move",
+    "payload": {
+      "id": "R1",
       "target": 37,
       "path": [
         {
-          "x": 70,
+          "x": 6,
           "y": 0,
           "z": 0
         },
         {
-          "x": 58,
-          "y": 0,
-          "z": 0
-        },
-        {
-          "x": 59,
-          "y": 0,
-          "z": 0
-        },
-        {
-          "x": 48,
-          "y": 0,
-          "z": 0
-        },
-        {
-          "x": 49,
+          "x": 22,
           "y": 0,
           "z": 0
         },
@@ -249,20 +312,177 @@
           "z": 0
         }
       ],
-      "costM": 21.239999999999995,
-      "mode": "DASH",
-      "stateHash": "19adfabe"
+      "costM": 10.619999999999997,
+      "mode": "MOVE",
+      "stateHash": "bc62cc82"
     }
   },
   {
-    "id": "E1",
-    "action": "hold",
+    "id": "R1",
+    "action": "observe",
     "payload": null
   },
   {
     "id": "E1",
     "action": "end",
     "payload": null
+  },
+  {
+    "id": "T1",
+    "action": "move",
+    "payload": {
+      "id": "T1",
+      "target": 164,
+      "path": [
+        {
+          "x": 96,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 112,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 129,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 146,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 163,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 164,
+          "y": 0,
+          "z": 0
+        }
+      ],
+      "costM": 21.23999999999999,
+      "mode": "DASH",
+      "stateHash": "d0b2e8a2"
+    }
+  },
+  {
+    "id": "E1",
+    "action": "move",
+    "payload": {
+      "id": "E1",
+      "target": 107,
+      "path": [
+        {
+          "x": 186,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 170,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 155,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 139,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 123,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 107,
+          "y": 0,
+          "z": 0
+        }
+      ],
+      "costM": 21.24,
+      "mode": "DASH",
+      "stateHash": "b5908f6c"
+    }
+  },
+  {
+    "id": "E1",
+    "action": "end",
+    "payload": null
+  },
+  {
+    "id": "T1",
+    "action": "move",
+    "payload": {
+      "id": "T1",
+      "target": 166,
+      "path": [
+        {
+          "x": 165,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 166,
+          "y": 0,
+          "z": 0
+        }
+      ],
+      "costM": 7.080000000000005,
+      "mode": "MOVE",
+      "stateHash": "1306348f"
+    }
+  },
+  {
+    "id": "E1",
+    "action": "move",
+    "payload": {
+      "id": "E1",
+      "target": 81,
+      "path": [
+        {
+          "x": 108,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 109,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 95,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 81,
+          "y": 0,
+          "z": 0
+        }
+      ],
+      "costM": 14.159999999999998,
+      "mode": "DASH",
+      "stateHash": "888cd925"
+    }
+  },
+  {
+    "id": "E1",
+    "action": "end",
+    "payload": null
+  },
+  {
+    "id": "E1",
+    "action": "prioritize",
+    "payload": "reduced"
   },
   {
     "id": "E1",
@@ -307,81 +527,61 @@
   },
   {
     "id": "E1",
-    "action": "extract",
-    "payload": null
+    "action": "move",
+    "payload": {
+      "id": "E1",
+      "target": 139,
+      "path": [
+        {
+          "x": 95,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 109,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 108,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 107,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 123,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 139,
+          "y": 0,
+          "z": 0
+        }
+      ],
+      "costM": 21.240000000000002,
+      "mode": "DASH",
+      "stateHash": "480a6640"
+    }
   },
   {
     "id": "R1",
     "action": "move",
     "payload": {
       "id": "R1",
-      "target": 163,
+      "target": 108,
       "path": [
         {
-          "x": 113,
+          "x": 52,
           "y": 0,
           "z": 0
         },
         {
-          "x": 129,
-          "y": 0,
-          "z": 0
-        },
-        {
-          "x": 141,
-          "y": 0,
-          "z": 0
-        },
-        {
-          "x": 152,
-          "y": 0,
-          "z": 0
-        },
-        {
-          "x": 151,
-          "y": 0,
-          "z": 0
-        },
-        {
-          "x": 163,
-          "y": 0,
-          "z": 0
-        }
-      ],
-      "costM": 21.239999999999995,
-      "mode": "DASH",
-      "stateHash": "4994ff87"
-    }
-  },
-  {
-    "id": "T1",
-    "action": "move",
-    "payload": {
-      "id": "T1",
-      "target": 81,
-      "path": [
-        {
-          "x": 36,
-          "y": 0,
-          "z": 0
-        },
-        {
-          "x": 48,
-          "y": 0,
-          "z": 0
-        },
-        {
-          "x": 59,
-          "y": 0,
-          "z": 0
-        },
-        {
-          "x": 58,
-          "y": 0,
-          "z": 0
-        },
-        {
-          "x": 70,
+          "x": 66,
           "y": 0,
           "z": 0
         },
@@ -389,49 +589,26 @@
           "x": 81,
           "y": 0,
           "z": 0
+        },
+        {
+          "x": 95,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 109,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 108,
+          "y": 0,
+          "z": 0
         }
       ],
       "costM": 21.24,
       "mode": "DASH",
-      "stateHash": "34c61124"
-    }
-  },
-  {
-    "id": "E1",
-    "action": "end",
-    "payload": null
-  },
-  {
-    "id": "R1",
-    "action": "move",
-    "payload": {
-      "id": "R1",
-      "target": 176,
-      "path": [
-        {
-          "x": 179,
-          "y": 0,
-          "z": 0
-        },
-        {
-          "x": 178,
-          "y": 0,
-          "z": 0
-        },
-        {
-          "x": 177,
-          "y": 0,
-          "z": 0
-        },
-        {
-          "x": 176,
-          "y": 0,
-          "z": 0
-        }
-      ],
-      "costM": 14.160000000000002,
-      "mode": "DASH",
-      "stateHash": "58e7d62f"
+      "stateHash": "e930b661"
     }
   },
   {
@@ -439,48 +616,195 @@
     "action": "move",
     "payload": {
       "id": "T1",
-      "target": 151,
+      "target": 160,
       "path": [
         {
-          "x": 97,
+          "x": 165,
           "y": 0,
           "z": 0
         },
         {
-          "x": 113,
+          "x": 164,
           "y": 0,
           "z": 0
         },
         {
-          "x": 129,
+          "x": 163,
           "y": 0,
           "z": 0
         },
         {
-          "x": 141,
+          "x": 162,
           "y": 0,
           "z": 0
         },
         {
-          "x": 140,
+          "x": 161,
           "y": 0,
           "z": 0
         },
         {
-          "x": 151,
+          "x": 160,
           "y": 0,
           "z": 0
         }
       ],
-      "costM": 21.239999999999995,
+      "costM": 21.240000000000002,
       "mode": "DASH",
-      "stateHash": "7c518b46"
+      "stateHash": "7ecb69f9"
     }
   },
   {
     "id": "E1",
     "action": "end",
     "payload": null
+  },
+  {
+    "id": "E1",
+    "action": "move",
+    "payload": {
+      "id": "E1",
+      "target": 202,
+      "path": [
+        {
+          "x": 155,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 170,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 186,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 202,
+          "y": 0,
+          "z": 0
+        }
+      ],
+      "costM": 14.159999999999997,
+      "mode": "DASH",
+      "stateHash": "eb53863d"
+    }
+  },
+  {
+    "id": "R1",
+    "action": "move",
+    "payload": {
+      "id": "R1",
+      "target": 186,
+      "path": [
+        {
+          "x": 107,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 123,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 139,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 155,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 170,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 186,
+          "y": 0,
+          "z": 0
+        }
+      ],
+      "costM": 21.239999999999995,
+      "mode": "DASH",
+      "stateHash": "0e402266"
+    }
+  },
+  {
+    "id": "T1",
+    "action": "move",
+    "payload": {
+      "id": "T1",
+      "target": 203,
+      "path": [
+        {
+          "x": 159,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 174,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 173,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 172,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 187,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 203,
+          "y": 0,
+          "z": 0
+        }
+      ],
+      "costM": 21.24,
+      "mode": "DASH",
+      "stateHash": "9b91c745"
+    }
+  },
+  {
+    "id": "E1",
+    "action": "end",
+    "payload": null
+  },
+  {
+    "id": "E1",
+    "action": "extract",
+    "payload": null
+  },
+  {
+    "id": "R1",
+    "action": "move",
+    "payload": {
+      "id": "R1",
+      "target": 202,
+      "path": [
+        {
+          "x": 202,
+          "y": 0,
+          "z": 0
+        }
+      ],
+      "costM": 3.5400000000000027,
+      "mode": "MOVE",
+      "stateHash": "b77fd48e"
+    }
   },
   {
     "id": "R1",
@@ -492,43 +816,18 @@
     "action": "move",
     "payload": {
       "id": "T1",
-      "target": 176,
+      "target": 202,
       "path": [
         {
-          "x": 150,
-          "y": 0,
-          "z": 0
-        },
-        {
-          "x": 149,
-          "y": 0,
-          "z": 0
-        },
-        {
-          "x": 148,
-          "y": 0,
-          "z": 0
-        },
-        {
-          "x": 160,
-          "y": 0,
-          "z": 0
-        },
-        {
-          "x": 176,
+          "x": 202,
           "y": 0,
           "z": 0
         }
       ],
-      "costM": 17.700000000000003,
-      "mode": "DASH",
-      "stateHash": "43b0a70c"
+      "costM": 3.539999999999999,
+      "mode": "MOVE",
+      "stateHash": "0deeb5f9"
     }
-  },
-  {
-    "id": "E1",
-    "action": "end",
-    "payload": null
   },
   {
     "id": "T1",

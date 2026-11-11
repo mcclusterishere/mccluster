@@ -246,7 +246,11 @@ export function createLevel3D(host, { level, onTap, onHover = null, onDoubleTap 
   for (const g of Object.values(proc)) world.add(g);
   // Level Forge props (levels/forge.mjs): kit pieces at their exact authored place and size, in world units; a plain
   // stand-in box until the kit mesh arrives. Scenery only: the rules already have them as tiles.
-  for (const p of SCENE.props || []) add(new THREE.BoxGeometry(p.w, Math.max(p.h, 0.01), p.d), p.kind === 'water' ? M_WATER : M_CONC, p.x, p.y + Math.max(p.h, 0.01) / 2, p.z, { cast: p.kind !== 'water' && p.kind !== 'ground', parent: proc.props });
+  for (const p of SCENE.props || []) {
+    // Authored roofless tactical cutaway: rendering only; collision/LOS retain full wall height.
+    const h = p.cutawayH ?? p.h;
+    add(new THREE.BoxGeometry(p.w, Math.max(h, 0.01), p.d), p.kind === 'water' ? M_WATER : p.kind === 'ground' ? M_ROOF : M_CONC, p.x, p.y + Math.max(h, 0.01) / 2, p.z, { cast: p.kind !== 'water' && p.kind !== 'ground', parent: proc.props });
+  }
   // a container is a real 40 ft box (12.19 × 2.44 m) standing in the middle of its 4 × 1 tile footprint
   const BOX_L = M(12.19), BOX_W = M(2.44);
   const boxDims = (c) => { const long = c.w >= c.d; return { long, w: long ? Math.min(BOX_L, c.w) : Math.min(BOX_W, c.w), d: long ? Math.min(BOX_W, c.d) : Math.min(BOX_L, c.d) }; };
@@ -689,6 +693,8 @@ export function createLevel3D(host, { level, onTap, onHover = null, onDoubleTap 
      Each instance is fitted to the footprint and height of the object it stands for, so the rules
      (blockers, cover, heights) stay exactly what the level declares; the kit only changes the look. */
   async function loadKit() {
+    // Exact authored cutaway walls/floors must not disappear when a generic kit loads.
+    if (SCENE.authoredCutaway) return;
     try {
       const res = await fetch(new URL('catalog.json', KIT_ROOT)); if (!res.ok) return;
       const cat = await res.json(); if (destroyed) return;

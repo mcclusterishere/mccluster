@@ -2,7 +2,7 @@
   "note": "Exact copies of the PRIM3 tactical engine files, vendored for the tactics pages (courtyard preview, Transit / Relay and the Equity Uprise levels). Do not edit here; change them in mcclusterishere/Prim3 and re-copy. scripts/test/prim3-tactics-vendor.test.mjs checks these hashes.",
   "repository": "mcclusterishere/Prim3",
   "ref": "codex/prim3-shared-fate-20261111",
-  "commit": "2fe190a742f15beb5eb5b3b195c10f2aa64f0eab",
+  "commit": "451f631400efa8d94360da452cfad26d231fa346",
   "files": {
     "tactical-resolver.mjs": {
       "from": "game/runtime/tactical-resolver.mjs",

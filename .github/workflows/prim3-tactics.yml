@@ -12,6 +12,9 @@ on:
       - 'prim3-world.html'
       - 'prim3-tactics-preview.html'
       - 'prim3-transit.html'
+      - 'prim3-shared-fate.html'
+      - 'scripts/e2e/prim3-shared-fate.e2e.mjs'
+      - 'scripts/test/fixtures/shared-fate-journey.json'
       - 'prim3-city-tactics.html'
       - 'scripts/e2e/prim3-city-simulation.e2e.mjs'
       - 'scripts/test/prim3-*.test.mjs'
@@ -151,3 +154,34 @@ jobs:
           name: prim3-spatial-browser-evidence
           path: /tmp/prim3-proof
           if-no-files-found: ignore
+
+  shared-fate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Install existing pinned browser fixtures
+        run: |
+          npm install --prefix /tmp/prim3-qa --ignore-scripts --no-audit --no-fund --no-save playwright@1.57.0 three@0.180.0
+          /tmp/prim3-qa/node_modules/.bin/playwright install --with-deps chromium
+      - name: Complete Shared Fate interiors with fixture-only services
+        env:
+          PLAYWRIGHT_DIR: /tmp/prim3-qa/node_modules
+          THREE_DIR: /tmp/prim3-qa/node_modules/three
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/prim3-shared-fate-proof
+          node scripts/e2e/prim3-shared-fate.e2e.mjs /tmp/prim3-shared-fate-proof 2>&1 | tee /tmp/prim3-shared-fate-proof/run.log
+      - name: Preserve Shared Fate browser evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: prim3-shared-fate-browser-evidence
+          path: /tmp/prim3-shared-fate-proof
+          if-no-files-found: warn
