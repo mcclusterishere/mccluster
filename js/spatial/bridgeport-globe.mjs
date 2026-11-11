@@ -12,7 +12,7 @@ export function terrainDescription(state){
 
 // Draws the bounded region inside the existing Cesium viewer/ion pipeline. Never creates a second globe.
 export function mountBridgeport({globe,C=window.Cesium}){
- const viewer=globe.viewer();let entered=false,region=null,frame=null,source=null,position=null,topology='hex',preview=null,walking=null,last=0,original=null,actor=null,routeEntity=null,raf=0,entranceId=null,requestedRegion='bridgeport-golden-hill.v1',closedRoadIds=[],navigationRevision=0,cellOrigin=null,importController=null,arrivalRequest=null;
+ const viewer=globe.viewer();let entered=false,region=null,frame=null,source=null,position=null,topology='hex',preview=null,walking=null,walkAt=null,original=null,actor=null,routeEntity=null,raf=0,entranceId=null,requestedRegion='bridgeport-golden-hill.v1',closedRoadIds=[],navigationRevision=0,cellOrigin=null,importController=null,arrivalRequest=null;
  const panel=document.createElement('section');panel.id='bridgeportWalk';panel.setAttribute('aria-label','Bridgeport walking review');panel.hidden=true;
  panel.innerHTML='<strong>Golden Hill Street · Bridgeport</strong><p data-status role="status">Fly to the walking region to load it.</p><label>Navigation <select aria-label="Navigation topology"><option value="hex">Hex</option><option value="square">Square</option></select></label><label data-destination>Destination <select aria-label="Street destination"><option value="court-exterior-approach">Court exterior approach</option></select></label><button data-preview>Preview route</button><button data-confirm disabled>Confirm walk</button><button data-stop>Stop</button><button data-locate>Find me</button><button data-return>Return to globe</button><label data-closures hidden>Simulation closure <select aria-label="Simulation road closure"><option value="">All roads open</option></select></label><button data-import hidden>Import previous slice position</button><small data-ion></small><small>Exterior simulation · estimated road width and heights. Not pedestrian directions. © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a> · CT GIS footprints.</small>';
  const style=document.createElement('style');style.textContent='#bridgeportWalk{position:fixed;z-index:300;left:12px;right:12px;bottom:100px;max-height:42vh;overflow:auto;padding:12px;background:#101a29f5;color:white;border:1px solid #81b9da;border-radius:12px;font:16px/1.35 system-ui}#bridgeportWalk[hidden]{display:none}#bridgeportWalk button,#bridgeportWalk select{font:inherit;min-height:44px;margin:3px;padding:5px 9px}#bridgeportWalk small{display:block;margin-top:6px;font-size:12px}#bridgeportWalk p{margin:5px 0}#bridgeportWalk a{color:#a7ddff}@media(min-width:768px){#bridgeportWalk{right:auto;width:390px;bottom:30px}}';document.head.append(style);document.body.append(panel);
@@ -21,7 +21,7 @@ export function mountBridgeport({globe,C=window.Cesium}){
  const save=()=>{if(!region||!position)return;try{localStorage.setItem(region.contract.state.key,JSON.stringify({schema:region.contract.state.schema,regionId:region.contract.id,revision:region.contract.revision,frameId:region.contract.frame.id,floorId:'street',position,topology,closedRoadIds}));notify('saved');}catch{status('Position cannot be saved on this device.');}};
  const cart=p=>{const g=frame.toGeo(p);return C.Cartesian3.fromDegrees(g.lon,g.lat,0);};
  const line=points=>points.map(cart);
- function clearRoute(){preview=null;walking=null;arrivalRequest=null;panel.querySelector('[data-confirm]').disabled=true;if(routeEntity&&source)source.entities.remove(routeEntity);routeEntity=null;}
+ function clearRoute(){preview=null;walking=null;walkAt=null;arrivalRequest=null;panel.querySelector('[data-confirm]').disabled=true;if(routeEntity&&source)source.entities.remove(routeEntity);routeEntity=null;}
  function drawCells(){
   if(!source)return;for(const e of [...source.entities.values])if(e.properties?.spatialCell)source.entities.remove(e);
   cellOrigin={...position};for(const n of visibleCells(region,topology,position))source.entities.add({id:n.id,properties:{spatialCell:n.id},polygon:{hierarchy:line(polygon(region.contract,topology,n.q,n.r)),material:C.Color.CYAN.withAlpha(.16),heightReference:C.HeightReference.CLAMP_TO_GROUND,outline:false}});
@@ -53,9 +53,16 @@ export function mountBridgeport({globe,C=window.Cesium}){
   if(!globe.owner()&&entered){leave(false);return;}
   gate.update({owner:globe.owner(),entered,view:view()});panel.querySelector('[data-ion]').textContent=terrainDescription(globe.ionState?.());
  }
- function animate(now){raf=requestAnimationFrame(animate);const dt=Math.min(1,(now-last)/1000||0);last=now;if(!walking||!source||!globe.owner()||document.hidden)return;let budget=dt*2;
+ // Only a confirmed, visible route owns elapsed time. Rendering can be sparse;
+ // keep its two metres/second without spending pre-confirm or hidden-page time.
+ function resetWalkClock(){walkAt=walking&&source&&globe.owner()&&!document.hidden?performance.now():null;}
+ document.addEventListener('visibilitychange',resetWalkClock);
+ function animate(){raf=requestAnimationFrame(animate);if(!walking||!source||!globe.owner()||document.hidden){walkAt=null;return;}
+  const now=performance.now(),dt=walkAt===null?0:Math.max(0,(now-walkAt)/1000);walkAt=now;let budget=dt*2;
+  // Consume every waypoint, retaining swept clearance on each partial/full edge.
+  // Even a large visible-frame gap cannot cut straight across a street corner.
   while(budget>0&&walking.length){const next=walking[0],d=Math.hypot(next.x-position.x,next.z-position.z),t=d?Math.min(1,budget/d):1;const p={x:position.x+(next.x-position.x)*t,y:0,z:position.z+(next.z-position.z)*t};if(!clearEdge(region,position,p,{closedRoadIds})){clearRoute();status('Movement blocked; preview again.');break;}position=p;budget-=d;if(t===1)walking.shift();else break;}
-  actor.position=cart(position);if(cellOrigin&&Math.hypot(position.x-cellOrigin.x,position.z-cellOrigin.z)>12)drawCells();viewer.scene.requestRender();if(walking&&!walking.length){walking=null;save();status('Arrived at the selected exterior street cell.');notify('arrived',arrivalRequest||{});arrivalRequest=null;}else if(walking){status(`Walking · ${walking.length} waypoints remaining`);}
+  actor.position=cart(position);if(cellOrigin&&Math.hypot(position.x-cellOrigin.x,position.z-cellOrigin.z)>12)drawCells();viewer.scene.requestRender();if(walking&&!walking.length){walking=null;walkAt=null;save();status('Arrived at the selected exterior street cell.');notify('arrived',arrivalRequest||{});arrivalRequest=null;}else if(walking){status(`Walking · ${walking.length} waypoints remaining`);}
  }
  function leave(restore=true){save();entered=false;gate.dispose();panel.hidden=true;if(restore&&original)viewer.camera.setView(original);original=null;notify('returned');}
  function previewDestination(id,requestId=null){if(!region)return;const target=id==='court-exterior-approach'?region.graphs[topology].destinationId:region.graphs[topology].entrances?.find(e=>e.id===id)?.nodeId;if(target)plan(target,id==='court-exterior-approach'?null:id,requestId);}
@@ -64,7 +71,7 @@ export function mountBridgeport({globe,C=window.Cesium}){
  panel.querySelector('[aria-label="Street destination"]').onchange=()=>clearRoute();
  panel.querySelector('[data-import]').onclick=async()=>{if(!region?.contract.state.importFrom||!globe.owner())return;const target=region;importController?.abort();const control=new AbortController();importController=control;try{const previous=await fetch('data/spatial/bridgeport-golden-hill.v1.json',{signal:control.signal}).then(r=>{if(!r.ok)throw Error('Previous region unavailable');return r.json();});const raw=JSON.parse(localStorage.getItem(target.contract.state.importFrom.key)),next=importCompatiblePose(target,previous,raw);if(control.signal.aborted||region!==target||!globe.owner())return;if(!next)throw Error('No compatible previous position to import');localStorage.setItem(target.contract.state.key,JSON.stringify(next));clearRoute();position={...next.position};topology=next.topology;closedRoadIds=[];panel.querySelector('[aria-label="Navigation topology"]').value=topology;panel.querySelector('[aria-label="Simulation road closure"]').value='';drawCells();actor.position=cart(position);notify('imported');status('Previous position copied. Original save preserved.');}catch(e){if(!control.signal.aborted)status(e.message);}finally{if(importController===control)importController=null;}};
  panel.querySelector('[data-preview]').onclick=()=>previewDestination(panel.querySelector('[aria-label="Street destination"]').value);
- panel.querySelector('[data-confirm]').onclick=()=>{if(!preview||!globe.owner())return;const fresh=preview.entranceId?routeToEntrance(region,topology,position,preview.entranceId,{closedRoadIds}):route(region,topology,position,preview.ids.at(-1),{closedRoadIds});if(!fresh){clearRoute();return;}walking=fresh.points.slice(1);preview=null;panel.querySelector('[data-confirm]').disabled=true;};
+ panel.querySelector('[data-confirm]').onclick=()=>{if(!preview||!globe.owner())return;const fresh=preview.entranceId?routeToEntrance(region,topology,position,preview.entranceId,{closedRoadIds}):route(region,topology,position,preview.ids.at(-1),{closedRoadIds});if(!fresh){clearRoute();return;}walking=fresh.points.slice(1);resetWalkClock();preview=null;panel.querySelector('[data-confirm]').disabled=true;};
  panel.querySelector('[data-stop]').onclick=()=>{clearRoute();save();status('Stopped. Preview a route to continue.');};
  panel.querySelector('[data-locate]').onclick=()=>{
   if(!entered||!region||!position||!globe.owner())return;
@@ -89,6 +96,6 @@ export function mountBridgeport({globe,C=window.Cesium}){
   },
   leave,
   snapshot(){return {entered,topology,position,regionId:region?.contract.id,closedRoadIds:[...closedRoadIds],navigationRevision,entities:source?.entities.values.length||0,walking:!!walking,...gate.status()};},
-  destroy(){leave(false);clearInterval(interval);cancelAnimationFrame(raf);viewer.camera.moveEnd.removeEventListener(tick);panel.remove();style.remove();}
+  destroy(){leave(false);document.removeEventListener('visibilitychange',resetWalkClock);clearInterval(interval);cancelAnimationFrame(raf);viewer.camera.moveEnd.removeEventListener(tick);panel.remove();style.remove();}
  };
 }
