@@ -1155,13 +1155,93 @@ if (runs('editorial-video')) for (const device of DEVICES.filter((d) => ['iphone
 }
 
 /* the composer: the picture is taken while the clip uploads, shown on the chip, and posted beside the video */
-if (runs('editorial-video-composer') && (!process.env.EDITORIAL_DEVICE || process.env.EDITORIAL_DEVICE === 'iphone-portrait')) {
-  const scope = 'editorial-video-composer';
+/* Three bounded fresh-page samples retain the original failing run and expose scheduling-sensitive capture loss.
+   Every sample uploads/posts through the real composer and must satisfy all original checks. */
+if (runs('editorial-video-composer') && (!process.env.EDITORIAL_DEVICE || process.env.EDITORIAL_DEVICE === 'iphone-portrait')) for (let sample = 0; sample < 3; sample++) {
+  const scope = 'editorial-video-composer' + (sample ? '-sample-' + (sample + 1) : '');
   const { ctx, page, world, errors } = await open(DEVICES[0], { member: true });
   try {
     await page.waitForSelector('#mnPostBody');
     await page.focus('#mnPostBody');
     await page.waitForFunction(() => document.getElementById('mnComposer').classList.contains('is-open'), null, { timeout: 5000 }).catch(() => {});
+    /* Capture actual decoder/encoder progress without changing media behavior or deadlines. A missing poster must
+       retain its reason and event timing even if a later screenshot fails. This observes only the fixture upload. */
+    await page.evaluate(() => {
+      const trace = window.__composerPosterTrace = { started: performance.now(), captures: [], videos: [], encodes: [], canvasCalls: [], longTasks: [] };
+      const at = () => Math.round(performance.now() - trace.started);
+      if (typeof PerformanceObserver === 'function' && PerformanceObserver.supportedEntryTypes.includes('longtask')) {
+        new PerformanceObserver((list) => {
+          for (const entry of list.getEntries()) trace.longTasks.push({ at: Math.round(entry.startTime - trace.started), duration: Math.round(entry.duration) });
+        }).observe({ type: 'longtask' });
+      }
+      const create = document.createElement, observedContexts = new WeakSet();
+      document.createElement = function (tag, ...args) {
+        const node = create.call(this, tag, ...args);
+        if (String(tag).toLowerCase() === 'video') {
+          const record = { events: [], frames: [], plays: [] }; trace.videos.push(record);
+          if (node.requestVideoFrameCallback) {
+            const frame = node.requestVideoFrameCallback;
+            node.requestVideoFrameCallback = function (callback) {
+              const call = { requested: at() }; record.frames.push(call);
+              return frame.call(this, (now, metadata) => {
+                call.finished = at(); call.mediaTime = metadata.mediaTime; callback(now, metadata);
+              });
+            };
+          }
+          const play = node.play;
+          node.play = function (...args) {
+            const call = { started: at() }; record.plays.push(call);
+            const promise = play.apply(this, args);
+            if (promise && typeof promise.then === 'function') promise.then(() => { call.finished = at(); }, (error) => { call.finished = at(); call.error = String(error); });
+            return promise;
+          };
+          const state = (event) => ({ at: at(), event, ready: node.readyState, network: node.networkState,
+            time: node.currentTime, duration: Number.isFinite(node.duration) ? node.duration : String(node.duration),
+            width: node.videoWidth, height: node.videoHeight, paused: node.paused, seeking: node.seeking,
+            error: node.error && { code: node.error.code, message: node.error.message },
+            ranges: Array.from({ length: node.seekable.length }, (_, i) => [node.seekable.start(i), node.seekable.end(i)]) });
+          for (const event of ['loadstart', 'loadedmetadata', 'loadeddata', 'canplay', 'play', 'playing', 'pause', 'waiting', 'stalled', 'seeking', 'seeked', 'error', 'emptied']) {
+            node.addEventListener(event, () => record.events.push(state(event)));
+          }
+        } else if (String(tag).toLowerCase() === 'canvas') {
+          const context = node.getContext;
+          node.getContext = function (...args) {
+            const ctx = context.apply(this, args);
+            if (args[0] === '2d' && ctx && !observedContexts.has(ctx)) {
+              observedContexts.add(ctx);
+              for (const method of ['drawImage', 'getImageData']) {
+                const original = ctx[method];
+                ctx[method] = function (...args) {
+                  const call = { method, started: at(), width: node.width, height: node.height,
+                    source: args[0] && args[0].tagName || null }; trace.canvasCalls.push(call);
+                  try { return original.apply(this, args); }
+                  finally { call.finished = at(); }
+                };
+              }
+            }
+            return ctx;
+          };
+          const encode = node.toBlob;
+          node.toBlob = function (callback, ...args) {
+            const record = { started: at(), width: node.width, height: node.height }; trace.encodes.push(record);
+            return encode.call(this, (blob) => {
+              record.finished = at(); record.bytes = blob && blob.size; record.type = blob && blob.type;
+              callback(blob);
+            }, ...args);
+          };
+        }
+        return node;
+      };
+      const capture = window.MCCVideoPoster.capture;
+      window.MCCVideoPoster.capture = function (...args) {
+        const record = { started: at() }; trace.captures.push(record);
+        return capture.apply(this, args).then((result) => {
+          Object.assign(record, { finished: at(), reason: result && result.reason, bytes: result && result.file && result.file.size,
+            width: result && result.width, height: result && result.height, frame: result && result.at, video: result && result.video });
+          return result;
+        }, (error) => { record.finished = at(); record.error = String(error); throw error; });
+      };
+    });
     await page.setInputFiles('#mnMediaInput', join(ROOT, 'assets/video/hero.webm'));
     await page.waitForSelector('#mnMediaQueue .mn__media-chip.is-video', { timeout: 20000 }).catch(() => {});
     const chip = await page.evaluate(() => { const c = document.querySelector('#mnMediaQueue .mn__media-chip.is-video'); const img = c && c.querySelector('img'); return c ? { img: img ? img.src.slice(0, 5) : '', w: img ? img.naturalWidth : 0, play: !!c.querySelector('.mn__media-play'), video: !!c.querySelector('video') } : null; });
@@ -1187,7 +1267,7 @@ if (runs('editorial-video-composer') && (!process.env.EDITORIAL_DEVICE || proces
     }
     await page.waitForFunction(() => /Posted/.test(document.getElementById('mnPostStatus').textContent), null, { timeout: 8000 }).catch(() => {});
     const sent = req(world, 'POST', /^\/v1\/mnet\/posts$/).at(-1);
-    check(scope, 'Post sends the clip with its picture beside it', !!sent && JSON.stringify(sent.body.media_asset_ids) === JSON.stringify([vId]) && JSON.stringify(sent.body.poster_asset_ids) === JSON.stringify([pId]), sent && sent.body);
+    check(scope, 'Post sends the clip with its picture beside it', !!vId && !!pId && !!sent && JSON.stringify(sent.body.media_asset_ids) === JSON.stringify([vId]) && JSON.stringify(sent.body.poster_asset_ids) === JSON.stringify([pId]), sent && sent.body);
     const posted = world.posts[0];
     await page.waitForSelector(`#mnFeed article[data-post-id="${posted.id}"] video[poster]`, { timeout: 10000 }).catch(() => {});
     const card = await thumbOf(page, posted.id).evaluate((n) => { const v = n.querySelector('video'); return v ? { poster: v.getAttribute('poster'), preload: v.getAttribute('preload') } : null; }).catch(() => null);
@@ -1197,7 +1277,13 @@ if (runs('editorial-video-composer') && (!process.env.EDITORIAL_DEVICE || proces
     await page.waitForTimeout(600);
     await page.locator(`#mnFeed article[data-post-id="${posted.id}"]`).screenshot({ path: join(OUT, scope + '-feed-card.png') });
     check(scope, 'no JavaScript errors', errors.length === 0, errors);
-  } finally { await ctx.close(); }
+  } finally {
+    const diagnostic = await page.evaluate(() => window.__composerPosterTrace || null).catch(() => null);
+    const report = { trace: diagnostic, errors, mediaRequests: world.requests.filter((r) => /\/mnet\/(?:media|posts)/.test(r.path)) };
+    console.log('Composer poster diagnostic:', JSON.stringify(report));
+    await writeFile(join(OUT, scope + '-poster-diagnostic.json'), JSON.stringify(report, null, 2));
+    await ctx.close();
+  }
 }
 
 /* Create: a cover is taken while the clip uploads; a tap on a frame of the strip chooses another; Post sends it */
@@ -1412,7 +1498,7 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
       const coin = await page.evaluate(()=>{const c=document.querySelector('.appbar [data-appnav="home"] .appbar__m--initial'),r=c&&c.getBoundingClientRect();return {coin:!!c,text:c?c.textContent:'',w:r?Math.round(r.width):0,img:!!document.querySelector('.appbar [data-appnav="home"] img.appbar__m--creator')};});
       check(scope,'a member without a photo gets the initial of their name in the middle tab, drawn at full size, never an image',coin.coin&&coin.text==='F'&&coin.w>=20&&!coin.img,coin);
     }
-    check(scope,'actual Cesium uses natural Earth colors, soft clouds and no starfield', await globe.evaluate(() => { const s=window.__huGlobeStyle?.();return s?.editorial && s.saturation===1.1 && s.cloudAlpha===.65 && s.atmosphereSaturation===.1 && !s.stars; }));
+    check(scope,'actual Cesium keeps its starfield, natural Earth colors and soft clouds', await globe.evaluate(() => { const s=window.__huGlobeStyle?.();return s?.editorial && s.saturation===1.1 && s.cloudAlpha===.65 && s.atmosphereSaturation===.1 && s.stars; }));
     await page.click('.wt-world-modes [data-world-mode=missions]');
     await page.waitForSelector('.mn-swipe__card[data-mission="'+M1+'"]');
     /* THE WORLD'S GLOBE (owner, 2026-10-20: "Replace the filter button with the button that zooms you all the way back out"):

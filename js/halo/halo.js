@@ -110,8 +110,8 @@
   function due(iso) {
     const t = ms(iso);
     if (t === null) return 'No end date';
-    const d = new Date(t), today = new Date(), day = (x) => x.toISOString().slice(0, 10);
-    const tomorrow = new Date(Date.now() + 864e5);
+    const now = Date.now(), d = new Date(t), today = new Date(now), day = (x) => x.toISOString().slice(0, 10);
+    const tomorrow = new Date(now + 864e5);
     if (day(d) === day(today)) return 'Today, ' + hhmm(t) + ' UTC';
     if (day(d) === day(tomorrow)) return 'Tomorrow, ' + hhmm(t) + ' UTC';
     return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: d.getUTCFullYear() === today.getUTCFullYear() ? undefined : 'numeric', timeZone: 'UTC' });
@@ -706,7 +706,7 @@
       '<span class="hx-card__title">' + esc(m.title) + '</span><span class="hx-card__place">' + esc(placed(m) ? m.place.label : 'No place on the map') + '</span>' +
       '<span class="hx-status" data-tone="' + missionTone(m) + '">' + esc(m.review ? 'Evidence ready' : missionWord(m)) + '</span>' +
       '<span class="hx-bar"><i style="width:' + p.pct + '%"></i></span>' +
-      '<span class="hx-card__meta"><span>' + (p.known ? n(p.done) : '—') + ' of ' + (p.known ? n(p.total) : '—') + ' verified' + (fin(c.pending_proofs) && c.pending_proofs ? ' · ' + n(c.pending_proofs) + ' to review' : '') + '</span><span>' + esc(m.ends_at ? 'Due ' + due(m.ends_at) : '') + '</span></span>' +
+      '<span class="hx-card__meta"><span>' + (p.known ? n(p.done) : '—') + ' of ' + (p.known ? n(p.total) : '—') + ' verified' + (fin(c.pending_proofs) && c.pending_proofs ? ' · ' + n(c.pending_proofs) + ' to review' : '') + '</span><span data-mission-due="' + esc(m.ends_at || '') + '"></span></span>' +
       '<span class="hx-faces"><span>' + faces + '</span>' + who + '</span></span>' + ICON.chev.replace('<svg', '<svg class="hx-card__chev"') + '</button></li>';
   }
   function personRow(p, cur) {
@@ -766,9 +766,16 @@
     const statusHTML = view === 'missions' ? coverage('missions') : view === 'people' ? coverage('people')
       : tabs.intel === 'briefs' ? coverage('briefs') : coverage('evidence');
     if (status && status.innerHTML !== statusHTML) status.innerHTML = statusHTML;
-    if (html === listSig) return;
+    // Relative due dates also change with the clock, not the mission. Update
+    // their text in place so midnight cannot detach a focused/pressed card.
+    const paintDates = () => $$('[data-mission-due]', list).forEach((el) => {
+      const text = el.dataset.missionDue ? 'Due ' + due(el.dataset.missionDue) : '';
+      if (el.textContent !== text) el.textContent = text;
+    });
+    if (html === listSig) { paintDates(); return; }
     listSig = html;
     list.innerHTML = html;
+    paintDates();
     $$('[data-sel]', list).forEach((b) => { b.onclick = () => { const [k, ...rest] = b.dataset.sel.split(':'); select({ kind: k, id: rest.join(':') }); }; });
     $$('[data-feed]', list).forEach((b) => { b.onclick = () => { const f = feed().find((x) => x.key === b.dataset.feed); if (f) select(f.sel); }; });
     $$('[data-brief]', list).forEach((b) => { b.onclick = () => select({ kind: 'brief', id: b.dataset.brief }, { fly: false }); });
