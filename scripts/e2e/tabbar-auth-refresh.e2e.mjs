@@ -29,8 +29,9 @@ const pause = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /* One browser profile with the stale-on-every-call session already stored, and `tabs` pages open on it.
    owner: what GET /v1/status answers. holdStatus keeps that answer in the air until answerStatus() is called. */
-async function visit({ page: path = PAGE, tabs = 1, owner = false, holdStatus = false } = {}) {
-  let serial = 0, answerStatus = () => {};
+async function visit({ page: path = PAGE, tabs = 1, owner = false, holdStatus = false, holdUser = false } = {}) {
+  let serial = 0, answerStatus = () => {}, answerUser = () => {};
+  const userHeld = holdUser ? new Promise((resolve) => { answerUser = resolve; }) : null;
   const held = holdStatus ? new Promise((resolve) => { answerStatus = resolve; }) : null;
   const token = () => 'fixture.' + Buffer.from(JSON.stringify({ sub: SUB, email: 'fixture@example.test', exp: seconds() - 5, n: ++serial })).toString('base64url') + '.fixture';
   const counts = { refresh: 0, user: 0, status: 0 }, errors = [];
@@ -49,7 +50,7 @@ async function visit({ page: path = PAGE, tabs = 1, owner = false, holdStatus = 
       counts.refresh++;
       return route.fulfill({ json: { access_token: token(), refresh_token: 'fixture-refresh-' + counts.refresh, token_type: 'bearer', expires_in: 30, expires_at: seconds() + 30, user: { id: SUB } }, headers: cors });
     }
-    if (u.pathname === '/auth/v1/user') { counts.user++; return route.fulfill({ json: { id: SUB, email: 'fixture@example.test', user_metadata: { name: 'Fixture Member' } }, headers: cors }); }
+    if (u.pathname === '/auth/v1/user') { counts.user++; await userHeld; return route.fulfill({ json: { id: SUB, email: 'fixture@example.test', user_metadata: { name: 'Fixture Member' } }, headers: cors }); }
     if (u.href === 'https://api.mccluster.org/v1/status') {
       counts.status++;
       await held;
@@ -64,7 +65,7 @@ async function visit({ page: path = PAGE, tabs = 1, owner = false, holdStatus = 
     pages.push(page);
   }
   await Promise.all(pages.map((page) => page.goto(base + path, { waitUntil: 'domcontentloaded' })));   // tabs restored together
-  return { context, pages, counts, errors, answerStatus };
+  return { context, pages, counts, errors, answerStatus, answerUser };
 }
 /* The bar has an answer when its state is verified. Unfixed, it never does: it is still asking. */
 async function settled(page, counts) {
@@ -102,6 +103,23 @@ try {
   assert.deepEqual(one.errors, []);
   await one.context.close();
   lines.push(`one tab settled signed in and visible after ${single.refresh} refresh and ${single.user} user request, then asked nothing for 1.5 seconds`);
+
+  // Repeated restore/focus events must not restart a pending owner lookup.
+  const restored = await visit({ owner: true, holdUser: true });
+  await restored.pages[0].waitForFunction(() => !!window.MCC);
+  await restored.pages[0].evaluate(() => {
+    for (let i = 0; i < 10; i++) {
+      dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
+      dispatchEvent(new Event('focus'));
+    }
+  });
+  restored.answerUser();
+  await settled(restored.pages[0], restored.counts); await released(restored.pages[0], true);
+  assert.deepEqual(await quiet(restored.counts, 'restore/focus storms settle'), { refresh: 1, user: 1, status: 1 });
+  assert.equal(await restored.pages[0].locator('.appbar [data-appnav]:not([data-dock-section])').count(), 7);
+  assert.equal(await restored.pages[0].locator('.appbar [data-appnav]').count(), 10, 'current canonical Control sections are retained');
+  assert.deepEqual(restored.errors, []); await restored.context.close();
+  lines.push('ten concurrent page-restoration/focus pairs shared one owner lookup and recovered seven destinations');
 
   // The owner check is still in the air when another request on the page refreshes the token: its answer still counts.
   for (const owner of [true, false]) {

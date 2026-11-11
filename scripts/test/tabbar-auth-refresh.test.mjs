@@ -20,6 +20,7 @@ const BAR_ACCOUNT_STATE = '"use strict";\n' + [
   cut('function resolveOwnPerspective(', 'function authDisplay('),            // and readAuthSession, jwtPayload
   cut('function readAdminMemo(', 'window.addEventListener("hashchange", markAdminHere);'), // and checkAdmin
   cut('function loadCanonicalAuth()', '/* ---------- ONE M ACCOUNT, EVERY HOST'),          // and refreshAuthState, currentAuthState
+  BAR.match(/  window\.addEventListener\("pageshow",[^\n]+/)[0],
   cut('arriveWithHandoff().then(', 'var ICONS = {')                           // the boot lookup and both listeners
 ].join('\n');
 
@@ -150,7 +151,8 @@ function profile({ clockAhead = 0, lifetime = HOUR, owners = [], refreshLimit = 
       /* everything the cut functions close over in the bar, and the painting they call */
       AUTH_STATE: { signed_in: false, verified: false, user: null },
       SELF_PROFILE: null, PERSPECTIVE: null, selfProfileEpoch: 0, lastVerifiedSubject: '',
-      adminEpoch: 0, authEpoch: 0, adminSession: null, adminFlight: null,
+      adminEpoch: 0, authEpoch: 0, adminSession: null, adminFlight: null, ADMIN_ON: false,
+      lpTimer: null, veilOff() {}, unpeek() {}, revert() {},
       ADMIN_KEY: 'mcc_appbar_admin', ADMIN_TTL: 60000, API_ORIGIN: API,
       wingOn: null, HOME_BAR: '', dock: { innerHTML: '' },
       paintAuthState(signedIn, user, verified) {
@@ -159,7 +161,7 @@ function profile({ clockAhead = 0, lifetime = HOUR, owners = [], refreshLimit = 
         /* the bar has read the session and not yet asked: where a test slips a write in between the two */
         if (!verified && tab.beforeAsking) { const write = tab.beforeAsking; tab.beforeAsking = null; write(); }
       },
-      paintAdmin(on) { adminPaints.push(!!on); },
+      paintAdmin(on) { context.ADMIN_ON = !!on; adminPaints.push(!!on); },
       paintPerspective() {}, storePerspective() {}, readPerspective: () => null, cleanPerspective: (p) => p,
       arriveWithHandoff: () => Promise.resolve(false)
     });
@@ -600,4 +602,59 @@ test('a carried answer without expires_in keeps the server\'s expiry, as before'
   assert.equal(await here.context.arriveWithHandoff(), true);
   assert.equal(here.stored().expires_at, serverNow + HOUR);
   assert.equal('server_expires_at' in here.stored(), false);
+});
+
+
+test('concurrent restore and focus share pending auth without restarting its epoch', async () => {
+  const device = profile({ lifetime: SHORT, owners: ['owner'] });
+  device.seed('owner'); device.hold('user');
+  const bar = device.open(); await device.quiet();
+  for (let i = 0; i < 10; i++) {
+    bar.window.dispatchEvent({ type: 'pageshow', persisted: true });
+    bar.window.dispatchEvent({ type: 'focus' });
+  }
+  device.release('user'); await device.quiet();
+  assert.equal(device.counts.user, 1, 'all restore/focus requests share the pending lookup');
+  assert.equal(device.counts.status, 1);
+  assert.deepEqual(bar.state(), signedIn('owner'));
+  assert.equal(bar.adminPaints.at(-1), true);
+});
+
+
+test('restore and focus preserve failed-auth retry budget until its rest period', async () => {
+  const device = profile({ lifetime: SHORT }); device.seed('member'); device.fail('user');
+  const bar = device.open(); await device.quiet();
+  assert.equal(device.counts.user, 3);
+  for (let i = 0; i < 10; i++) {
+    bar.window.dispatchEvent({ type: 'pageshow', persisted: true }); bar.window.dispatchEvent({ type: 'focus' });
+    await device.quiet();
+  }
+  assert.equal(device.counts.user, 3);
+  device.fail('user', false); device.rest(31);
+  bar.window.dispatchEvent({ type: 'focus' }); await device.quiet();
+  assert.equal(device.counts.user, 4); assert.deepEqual(bar.state(), signedIn('member'));
+});
+
+test('restore forces fresh server owner permission despite a cached denial, and withdraws revoked access', async () => {
+  const owners = [], device = profile({ owners }); device.seed('member');
+  const bar = device.open(); await device.quiet();
+  assert.equal(bar.adminPaints.at(-1), false);
+  owners.push('member'); device.rest(31);
+  bar.window.dispatchEvent({ type: 'focus' }); await device.quiet();
+  assert.equal(bar.adminPaints.at(-1), true, 'promotion bypasses the one-minute negative memo');
+  owners.length = 0;
+  bar.window.dispatchEvent({ type: 'pageshow', persisted: true }); await device.quiet();
+  assert.equal(bar.adminPaints.at(-1), false, 'restore never keeps a revoked owner grant');
+});
+
+test('restore during an account switch or sign-out never paints the previous owner', async () => {
+  const device = profile({ owners: ['owner'] }); device.seed('owner'); device.hold('user');
+  const bar = device.open(); await device.quiet();
+  device.store(device.issue('member'));
+  bar.window.dispatchEvent({ type: 'pageshow', persisted: true }); bar.window.dispatchEvent({ type: 'focus' });
+  device.release('user'); await device.quiet();
+  assert.deepEqual(bar.state(), signedIn('member'));
+  assert.equal(paintedAs(bar, 'owner'), false); assert.equal(bar.adminPaints.includes(true), false);
+  device.store(null); bar.window.dispatchEvent({ type: 'pageshow', persisted: true }); await device.quiet();
+  assert.deepEqual(bar.state(), SIGNED_OUT); assert.equal(bar.adminPaints.at(-1), false);
 });
