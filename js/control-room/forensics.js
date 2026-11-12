@@ -103,6 +103,7 @@
     var email = x.email || (x.profile && x.profile.email);
     var handle = x.handle || (x.profile && x.profile.handle);
     if (name || email || handle) return { known: true, name: name || handle || email, sub: [handle ? "@" + handle : "", email && email !== name ? email : ""].filter(Boolean).join(" · ") };
+    if (x.uid) return { known: true, name: "Account " + shortId(x.uid), sub: "Profile unavailable; account evidence remains" };
     return { known: false, name: "Visitor " + shortId(x.device_id || (x.devices && x.devices[0]) || x.visitor_key), sub: "" };
   }
   function initials(w) {
@@ -189,8 +190,8 @@
       case "song_stop": t = "Stopped " + q(p.song || p.track || "the track"); break;
       case "acquired": case "ad_visit": t = "Arrived from " + (sourceLabel(p.src || p.source) || "an unknown source");
         d = [p.med || p.medium, p.cmp || p.campaign, p.acq].filter(Boolean).join(" · "); break;
-      case "account_created": t = "Created an account" + (p.track ? " after hearing " + q(p.track) : "");
-        d = [p.source, p.medium, p.campaign, p.seconds_since_track != null ? dur(p.seconds_since_track) + " after the song" : ""].filter(Boolean).join(" · "); break;
+      case "account_created": t = "Account creation reported";
+        d = p.track ? "Client-reported signup context: " + q(p.track) + ". This does not establish account listening." : ""; break;
       case "form_start": t = "Started typing in " + (p.field || p.form || "a form"); break;
       case "form_submit": t = "Submitted a form" + (p.fields ? " (" + p.fields + " field" + (p.fields === 1 ? "" : "s") + ")" : ""); break;
       case "section_view": t = "Saw the " + (p.section || "a") + " section"; break;
@@ -278,6 +279,7 @@
     var t = top(); if (!t || !F.request) return;
     var seq = ++F.dseq, key = F.rangeKey; F.historyLoading = false; F.historyError = null; F.loadingDetail = true; F.detailError = null; F.detail = null; paint();
     var path = t.type === "session" ? "/v1/analytics/sessions/" + encodeURIComponent(t.id) : "/v1/analytics/visitors/" + encodeURIComponent(t.key);
+    if (t.type === "session" && t.visitorKey) path += "?visitor_key=" + encodeURIComponent(t.visitorKey);
     F.request(path).then(function (out) { if (seq === F.dseq && key === F.rangeKey && top() === t) F.detail = out; }, function (err) { if (seq === F.dseq && key === F.rangeKey && top() === t) F.detailError = err; })
       .then(function () { if (seq === F.dseq && key === F.rangeKey && top() === t) { F.loadingDetail = false; paint(); } });
   }
@@ -286,7 +288,7 @@
     var seq = F.dseq, key = F.rangeKey;
     var mine = function () { return seq === F.dseq && key === F.rangeKey && top() === t; };
     F.historyLoading = true; F.historyError = null; paint();
-    F.request("/v1/analytics/sessions/" + encodeURIComponent(t.id) + "?include_history=1").then(function (out) {
+    F.request("/v1/analytics/sessions/" + encodeURIComponent(t.id) + "?include_history=1" + (t.visitorKey ? "&visitor_key=" + encodeURIComponent(t.visitorKey) : "")).then(function (out) {
       if (mine()) F.detail.visitor = out.visitor;
     }, function (err) { if (mine()) F.historyError = err; }).then(function () {
       if (mine()) { F.historyLoading = false; paint(); }
@@ -298,6 +300,8 @@
   function badge(text, kind, title) { return '<span class="crf-badge' + (kind ? " crf-badge--" + kind : "") + '"' + (title ? ' title="' + e(title) + '"' : "") + ">" + e(text) + "</span>"; }
   function sessionBadges(s) {
     var b = [];
+    if (s.identity_status === "mixed") b.push(badge("Mixed identity", "info"));
+    if (s.identity_missing_events) b.push(badge("Identity evidence incomplete", "muted"));
     if (s.is_bot) b.push(badge("Bot", "muted"));
     if (s.signed_up) b.push(badge("Signed up", "win"));
     if (s.checkout) b.push(badge("Checkout", "win"));
@@ -316,9 +320,9 @@
     var shown = seq.slice(0, 4), more = seq.length - shown.length;
     return '<span class="crf-strip">' + shown.map(function (p) { return "<i>" + e(p) + "</i>"; }).join('<b aria-hidden="true">→</b>') + (more > 0 ? "<em>+" + more + "</em>" : "") + "</span>";
   }
-  function sessionCard(s, current) {
+  function sessionCard(s, current, visitorKey) {
     var w = who(s);
-    return '<button type="button" class="crf-item' + (current ? " is-current" : "") + '" data-crf-session="' + e(s.session_id) + '">' + avatar(s) +
+    return '<button type="button" class="crf-item' + (current ? " is-current" : "") + '" data-crf-session="' + e(s.session_id) + '"' + (visitorKey || s.visitor_key ? ' data-crf-visitor-scope="' + e(visitorKey || s.visitor_key) + '"' : '') + '>' + avatar(s) +
       '<span class="crf-item__main"><span class="crf-item__top"><b>' + e(w.known ? w.name : (place(s) || w.name)) + "</b><time>" + e(when(s.started_at)) + "</time></span>" +
       '<span class="crf-item__sub">' + e([w.known ? place(s) : w.name, deviceLine(s), s.network].filter(Boolean).join(" · ")) + "</span>" +
       strip(s.pages) + '<span class="crf-badges">' + sessionBadges(s) + "</span></span>" +
@@ -343,7 +347,7 @@
     var c = (F.list && F.list.counts) || {}, label = F.range && F.range.label ? " in " + F.range.label.toLowerCase() : "";
     if (!F.list) return "";
     if (F.mode === "visitors") {
-      return '<p class="crf-lead"><b>' + n(c.all) + " visitors" + e(label) + ".</b> " + n(c.identified) + " signed in, " + n(c.returning) + " came back more than once, " +
+      return '<p class="crf-lead"><b>' + n(c.all) + " observed profiles" + e(label) + ".</b> " + n(c.identified) + " event-bound accounts, " + n(c.returning) + " appear in multiple sessions, " +
         n(c.signup) + " signed up, " + n(c.friction) + " hit friction." + (c.bots ? " " + n(c.bots) + " bots set aside." : "") + "</p>";
     }
     var un = Number(F.list.unsessioned_events);
@@ -529,11 +533,11 @@
       (F.historyError ? '<p role="alert" class="crf-muted">Visitor history did not load: ' + e(F.historyError.message || F.historyError) + '. The recorded session remains available.</p>' : '') +
       '<button type="button" class="crf-btn" data-crf-history' + (F.historyLoading ? ' disabled' : '') + '>' + (F.historyLoading ? 'Loading visitor history…' : F.historyError ? 'Retry visitor history' : 'Load visitor history') + '</button>';
     var list = (v && v.sessions) || [];
-    if (!list.length) return '<p class="crf-muted">No other sessions on this device in the last 180 days.</p>';
+    if (!list.length) return '<p class="crf-muted">No session evidence in this scope in the last 180 days.</p>';
     var oldest = list[list.length - 1];
-    return '<div class="crf-items crf-items--compact">' + list.map(function (s) { return sessionCard(s, s.session_id === currentId); }).join("") + "</div>" +
+    return '<div class="crf-items crf-items--compact">' + list.map(function (s) { return sessionCard(s, s.session_id === currentId, v.key); }).join("") + "</div>" +
       (Number(v.total) > list.length ? '<p class="crf-count">Showing the latest ' + n(list.length) + " of " + n(v.total) + "</p>" :
-        '<p class="crf-origin">Their journey begins ' + e(when(oldest.started_at)) + " on " + e(page(oldest.entry_path)) + ".</p>");
+        '<p class="crf-origin">Earliest evidence in this window: ' + e(when(oldest.started_at)) + " on " + e(page(oldest.entry_path)) + ".</p>");
   }
   /* Every moment the session went wrong, with what the visitor had just
      tapped and what they did next: the two questions a raw error row never
@@ -602,15 +606,16 @@
   function sessionDetail(d) {
     var s = d.session || {}, ev = d.events || [], v = d.visitor || {}, w = who(Object.assign({}, s, { profile: v.profile })), arr = arrival(ev, s), dev = s.device || {}, u = uaInfo(s.user_agent);
     var groups = pageVisits(ev), maxDepth = s.max_depth != null ? s.max_depth : groups.reduce(function (m, g) { return Math.max(m, g.depth || 0); }, 0);
+    var identityLabel = s.identity_status === "mixed" ? "Mixed identity session" : s.identity_status === "partial_identity" ? "Partial identity evidence" : "Unattributed device activity";
     var head = '<header class="crf-dh">' + avatar(Object.assign({}, s, { display_name: w.known ? w.name : null })) +
-      '<div class="crf-dh__t"><h2>' + e(w.known ? w.name : "Anonymous visitor") + "</h2><p>" + e([when(s.started_at), dur(s.duration_s), place(s)].filter(Boolean).join(" · ")) + "</p>" +
+      '<div class="crf-dh__t"><h2>' + e(w.known ? w.name : identityLabel) + "</h2><p>" + e([when(s.started_at), dur(s.duration_s), place(s)].filter(Boolean).join(" · ")) + "</p>" +
       '<span class="crf-badges">' + sessionBadges(s) + "</span></div>" +
       (v.key ? '<button type="button" class="crf-btn" data-crf-visitor="' + e(v.key) + '">Visitor profile</button>' : "") + "</header>";
-    var kpis = '<div class="crf-kpis">' + kpi("Session", dur(s.duration_s), clock(s.started_at) + " – " + clock(s.ended_at)) + kpi("On screen", dur(s.engaged_s)) +
-      kpi("Pages", n(s.page_views)) + kpi("Taps", n(s.clicks)) + kpi("Plays", n(s.plays)) + kpi("Deepest read", maxDepth ? pct(maxDepth) : "—") +
+    var kpis = '<div class="crf-kpis">' + kpi(d.scope ? "Observed span" : "Session", dur(s.duration_s), clock(s.started_at) + " – " + clock(s.ended_at)) + kpi("On screen", dur(s.engaged_s)) +
+      kpi("Pages", n(s.page_views)) + kpi("Taps", n(s.clicks)) + kpi(s.play_metric_version === "browser-start/v3" ? "Full start reports" : "Plays", n(s.plays)) + kpi("Deepest read", maxDepth ? pct(maxDepth) : "—") +
       kpi("Recorded friction signals", n(s.friction), [s.rage_clicks ? s.rage_clicks + " rage" : "", s.dead_clicks ? s.dead_clicks + " dead" : "", s.errors ? s.errors + " script events (includes browser diagnostics)" : ""].filter(Boolean).join(" · ")) + "</div>";
     var cards = '<div class="crf-cards">' +
-      card("Who", facts([["Person", w.known ? w.name : "Not signed in"], ["Account", w.sub], ["Visit", s.visit_number ? "#" + n(s.visit_number) + (s.days_known ? " · known " + n(s.days_known) + " days" : "") : (s.device_sessions > 1 ? "Returning in this range" : "First seen in this range")],
+      card("Who", facts([["Account evidence", w.known ? w.name : identityLabel], ["Account", w.sub], ["Visit", s.visit_number ? "#" + n(s.visit_number) + (s.days_known ? " · known " + n(s.days_known) + " days" : "") : (s.device_sessions > 1 ? "Returning in this range" : "First seen in this range")],
         ["Device id", s.device_id ? "<code>" + e(s.device_id) + "</code>" : "", true], ["Session id", "<code>" + e(s.session_id) + "</code>", true]])) +
       card("Arrived", facts([["Source", arr.source], ["Medium", arr.medium], ["Campaign", arr.campaign], ["Referrer", arr.referrer ? host(arr.referrer) : "none"], ["Landed on", page(s.entry_path)], ["Left from", page(s.exit_path)]])) +
       card("Where", facts([["Place", place(s) + (s.postal ? " " + s.postal : "")], ["Time zone", s.timezone], ["IP", s.ip ? "<code>" + e(s.ip) + "</code>" : "", true],
@@ -622,11 +627,16 @@
     var wrong = troubleSection(groups, s.started_at || (ev[0] && ev[0].at)), pagesSec = pagesSection(groups);
     var journey = '<section class="crf-sec"><h3>Journey</h3><p class="crf-muted">' + n(groups.length) + (groups.length === 1 ? " page visit" : " page visits") + ", " + n(ev.length) + " events. Tap any step to see exactly what was recorded." + (d.truncated ? " Showing the first " + n(ev.length) + " events." : "") + "</p>" +
       journeyPath(groups) + '<div class="crf-timeline">' + timeline(ev) + "</div></section>";
-    var tracks = (s.tracks || []).length ? '<section class="crf-sec"><h3>Music heard</h3><div class="crf-badges">' + s.tracks.map(function (t) { return badge("▶ " + t, "music"); }).join("") + "</div></section>" : "";
+    var tracks = (s.tracks || []).length ? '<section class="crf-sec"><h3>Music reports</h3><div class="crf-badges">' + s.tracks.map(function (t) { return badge("▶ " + t, "music"); }).join("") + "</div></section>" : "";
     var hist = v.key ? '<section class="crf-sec"><h3>' + (w.known ? e(w.name) + "’s sessions" : "This visitor’s sessions") + "</h3>" + historyList(v, s.session_id) + "</section>" : "";
     var diagnostics = ev.filter(isDiagnostic).length;
     var diagnosticNote = diagnostics ? '<section class="crf-sec"><h3>Browser diagnostics <small>' + n(diagnostics) + '</small></h3><p class="crf-muted">Likely injected by an in-app browser or extension. These events alone do not establish a failed user flow. Each remains visible in Journey; tap it for the original record.</p></section>' : "";
-    return head + kpis + wrong + diagnosticNote + cards + pagesSec + journey + tracks + hist;
+    var scopeNote = d.scope ? '<section class="crf-sec"><p class="crf-muted">Only events in the selected account/device scope are shown. Other activity in the same session is separate evidence.</p><button type="button" class="crf-btn" data-crf-session="' + e(s.session_id) + '">View whole session</button></section>' : "";
+    var identities = !d.scope && (v.identity_buckets || []).length > 1 ? '<section class="crf-sec"><h3>Identity evidence</h3><p class="crf-muted">This session spans multiple account/device scopes. No single account owns the entire timeline. Open a scope to inspect only its recorded events.</p><div class="crf-badges">' + v.identity_buckets.map(function (b) {
+      return b.key ? '<button type="button" class="crf-btn" data-crf-visitor="' + e(b.key) + '">' + e(b.key.indexOf("u:") === 0 ? "Account " + shortId(b.key.slice(2)) : "Unattributed device " + shortId(b.key.slice(2))) + ' · ' + n(b.events) + ' events</button>' : '<span>Unattributed events without a device: ' + n(b.events) + '</span>';
+    }).join("") + '</div></section>' : "";
+    var missing = v.identity_missing_events ? '<p role="status" class="crf-muted">' + n(v.identity_missing_events) + ' projected events lack matching raw identity evidence and remain unattributed.</p>' : "";
+    return head + scopeNote + identities + missing + kpis + wrong + diagnosticNote + cards + pagesSec + journey + tracks + hist;
   }
   function card(title, body) { return '<section class="crf-card"><h3>' + e(title) + "</h3>" + body + "</section>"; }
 
@@ -645,19 +655,21 @@
   }
   function visitorDetail(d) {
     var v = d.visitor || {}, list = v.sessions || [], latest = list[0] || {}, oldest = list[list.length - 1] || {};
-    var w = who(Object.assign({}, latest, { profile: v.profile, devices: v.devices, visitor_key: v.key }));
+    var w = who(Object.assign({}, latest, { profile: v.profile, uid: v.uid, devices: v.devices, visitor_key: v.key }));
     var engaged = 0, plays = 0, friction = 0, days = {};
     list.forEach(function (s) { engaged += Number(s.engaged_s) || 0; plays += Number(s.plays) || 0; friction += Number(s.friction) || 0; days[new Date(s.started_at).toDateString()] = 1; });
     var signed = list.some(function (s) { return s.signed_up; });
     var head = '<header class="crf-dh">' + avatar(Object.assign({}, latest, { display_name: w.known ? w.name : null })) +
       '<div class="crf-dh__t"><h2>' + e(w.known ? w.name : "Anonymous visitor") + "</h2><p>" + e([w.sub, place(latest), deviceLine(latest)].filter(Boolean).join(" · ")) + "</p>" +
-      '<span class="crf-badges">' + (signed ? badge("Signed up", "win") : "") + (v.uid ? badge("Signed-in account", "info") : badge("Anonymous device", "muted")) + (v.devices && v.devices.length > 1 ? badge(n(v.devices.length) + " devices", "info") : "") + "</span></div></header>";
-    var kpis = '<div class="crf-kpis">' + kpi("Sessions", n(v.total || list.length), "last " + (v.history_days || 180) + " days") + kpi("Active days", n(Object.keys(days).length)) +
-      kpi("On screen", dur(engaged)) + kpi("Plays", n(plays)) + kpi("Friction", n(friction)) + kpi("First seen", oldest.started_at ? when(oldest.started_at) : "—") + kpi("Last seen", latest.ended_at ? when(latest.ended_at) : "—") + "</div>";
+      '<span class="crf-badges">' + (signed ? badge("Signed up", "win") : "") + (v.uid ? badge("Signed-in account", "info") : badge("Unattributed device", "muted")) + (v.devices && v.devices.length > 1 ? badge(n(v.devices.length) + " devices", "info") : "") + "</span></div></header>";
+    var partial = Number(v.total) > list.length;
+    var kpis = '<div class="crf-kpis">' + kpi("Sessions with evidence", n(v.total == null ? list.length : v.total), "last " + (v.history_days || 180) + " days") + kpi("Active days", n(Object.keys(days).length), "shown sessions") +
+      kpi("On screen", dur(engaged), "shown sessions") + kpi("Full start reports", n(plays), "shown sessions") + kpi("Friction", n(friction), "shown sessions") + kpi(partial ? "First shown" : "First in window", oldest.started_at ? when(oldest.started_at) : "—") + kpi("Last in window", latest.ended_at ? when(latest.ended_at) : "—") + "</div>";
     var heat = '<section class="crf-sec"><h3>Activity</h3>' + activity(list, v.history_days || 180) + "</section>";
     var profile = v.profile ? '<section class="crf-sec">' + card("Account", facts([["Name", v.profile.display_name], ["Handle", v.profile.handle ? "@" + v.profile.handle : ""], ["Email", v.profile.email], ["Account since", v.profile.created_at ? when(v.profile.created_at) : ""], ["User id", "<code>" + e(v.uid) + "</code>", true]])) + "</section>" : "";
     var sessions = '<section class="crf-sec"><h3>Every session</h3>' + historyList(v, null) + "</section>";
-    return head + kpis + profile + heat + sessions;
+    var note = '<section class="crf-sec"><p class="crf-muted">' + (v.uid ? 'Only events recorded with this account ID contribute to this profile. Anonymous or other-account activity on shared devices is excluded.' : 'Only events without an account attribution on this device contribute here. A later login does not claim this history.') + ' Sessions can contain several scopes; these counts describe evidence, not distinct people.</p>' + (v.identity_missing_events ? '<p role="status">Some projected events lack matching raw identity evidence and remain unattributed.</p>' : '') + '</section>';
+    return head + note + kpis + profile + heat + sessions;
   }
 
   function detailPane() {
@@ -703,7 +715,7 @@
     h.querySelectorAll("[data-crf-more]").forEach(function (b) { b.onclick = function () { loadList(true); }; });
     h.querySelectorAll("[data-crf-session]").forEach(function (b) { b.onclick = function () {
       var id = b.getAttribute("data-crf-session"), inDetail = !!(b.closest && b.closest(".crf-detail"));
-      open({ type: "session", id: id }, !inDetail);
+      open({ type: "session", id: id, visitorKey: b.getAttribute("data-crf-visitor-scope") || null }, !inDetail);
     }; });
     h.querySelectorAll("[data-crf-visitor]").forEach(function (b) { b.onclick = function () {
       var key = b.getAttribute("data-crf-visitor"), inDetail = !!(b.closest && b.closest(".crf-detail"));
