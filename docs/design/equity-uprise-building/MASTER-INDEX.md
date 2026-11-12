@@ -392,6 +392,7 @@ This extension does not change the reconciled floor programs, equipment placemen
 ## Device placement reconciliation and manufacturer references
 
 - `FLOOR-DEVICE-REPAIR-V1.md` — all-floor source repair, model proposals, passed final strict/bound diagnostic gate and remaining review gates.
+- `references/device-repair-visual-v1/README.md` — 66 unmodified real phone/desktop captures from source head c17c20bf, 110/110 checks each, scoped geometry/framing review and explicit remaining limits; not geometry authority or deployment evidence.
 - `DEVICE-PLACEMENT-RECONCILIATION.md` — exact baseline, historical F1 pilot, current repair sequence and live-device truth boundary.
 - `MANUFACTURER-MODEL-REFERENCES.md` — eight exact product references, dimensions, source links and explicit fidelity/variant limits. These are partial exterior proxies, not approved CAD.
 - `production/electronics/manufacturer-model-references-v1.json`, `manufacturer_models.py`, `test_manufacturer_models.py` — reference catalog, deterministic exterior geometry and tests.

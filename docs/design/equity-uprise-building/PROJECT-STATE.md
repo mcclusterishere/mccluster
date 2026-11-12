@@ -2,7 +2,7 @@
 
 > Update this file whenever completion, maturity, visual direction, or next work changes.
 
-## Device placement and maker-reference repair — 2026-11-12 — DIAGNOSTIC GATE PASSED, visual review open
+## Device placement and maker-reference repair — 2026-11-12 — DIAGNOSTIC AND SCOPED RENDERED GATES PASSED, owner review open
 
 The source repair now covers all **36 existing workstation hosts and 62 monitors**
 across B1–F6 through 98 explicit support/station bindings. No floor functions,
@@ -50,10 +50,10 @@ v2 records the historical F1-only pilot, not the current all-floor scope.
 Read `FLOOR-DEVICE-REPAIR-V1.md`, `DEVICE-PLACEMENT-RECONCILIATION.md` and
 `MANUFACTURER-MODEL-REFERENCES.md`. B1's separate MDF/rack room mismatch,
 manufacturer installation/thermal/service requirements, complete device fidelity,
-and desktop/mobile visual review remain open. Local browser startup was blocked
+and final owner/material/physical-device review remain open. Local browser startup was blocked
 by the existing socket-permission failure; real CI browser captures are now
-available and exposed framing defects. No visual approval, physical commissioning,
-PR merge or production deployment is claimed.
+available and exposed framing defects. No final design approval, physical commissioning, PR merge or production
+deployment is claimed.
 
 A read-only PR visual workflow now captures the actual canonical scene at phone
 and desktop widths from a loopback fixture server. It never deploys, calls
@@ -64,7 +64,13 @@ failures. A follow-up adds a labeled, reversible 7.5 ft AFF isolated-floor cutaw
 HUD-aware horizontal/vertical FOV fitting, and real chair-side host/monitor views.
 Room/stack/facade/infrastructure modes retain full architecture. Nineteen targeted
 checks pass with generated floor inputs required; no geometry or pixel threshold
-was changed. Rendered acceptance remains pending fresh screenshots and review.
+was changed. The subsequent run on `c17c20bf3cb98210431e9ff76f22887a760c1e1d`
+passes **110/110 checks at both 390 px and 1440 px**. Actual overviews and sampled
+station/mode/failure images pass scoped geometry visibility/support/framing review.
+All 66 original captures and reports are preserved in
+`references/device-repair-visual-v1/README.md`, with byte hashes and stated limits.
+LOW software rendering is not final material or physical-device performance
+approval. The record retains minor prefetch-status and non-room resize-reset issues.
 
 ## Local screen and object reconstruction — 2026-11-03
 
