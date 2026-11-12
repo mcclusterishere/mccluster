@@ -486,7 +486,13 @@
    "zone": "cohort-desks",
    "occupant": "Chioma Okeke",
    "source": "production/workplace-occupancy-v1.json F2",
-   "purpose": "Cohort-03 Lead Desk"
+   "purpose": "Cohort-03 Lead Desk",
+   "size": {
+    "monitors": 0,
+    "keyboard": true
+   },
+   "device_station_ref": "../electronics/device-stations-f2-f3-v1.json",
+   "placement_override_reason": "Registered single-monitor workstation occupies this existing staff desk. Suppress only embedded scenic monitors; preserve the keyboard, chair, desk location and occupant."
   },
   {
    "id": "F2-DESK-CHIOMA-OKEKE-CHAIR",
@@ -524,7 +530,13 @@
    "zone": "cohort-desks",
    "occupant": "Sari Wulandari",
    "source": "production/workplace-occupancy-v1.json F2",
-   "purpose": "Telecom / Cohort Operator Desk"
+   "purpose": "Telecom / Cohort Operator Desk",
+   "size": {
+    "monitors": 0,
+    "keyboard": true
+   },
+   "device_station_ref": "../electronics/device-stations-f2-f3-v1.json",
+   "placement_override_reason": "Registered single-monitor workstation occupies this existing staff desk. Suppress only embedded scenic monitors; preserve the keyboard, chair, desk location and occupant."
   },
   {
    "id": "F2-DESK-SARI-WULANDARI-CHAIR",

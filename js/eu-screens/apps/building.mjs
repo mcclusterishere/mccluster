@@ -11,6 +11,7 @@ import { whenOwner } from "../gate.mjs";
 import { createScreenHooks, loadRegistry, consumeReturn, approachPose } from "../enter.mjs";
 import { MODE_LABELS, normalizeMode, FLOORS } from "../contract.mjs";
 import { openScreenSession } from "../sandbox-session.mjs";
+import { WORKSTATION_FILE, prepareWorkstationRoot, fetchWorkstationCatalog, syncWorkstationVisibility } from "../workstation-layer.mjs";
 import { monitorVisualState } from "../monitor-visual-state.mjs";
 import { getPref, setPref, setMissionFaults, loadSession, resetSession } from "../state.mjs";
 
@@ -131,22 +132,8 @@ async function ensureMonitorAssemblies() {
   if (electronicsPromise) return electronicsPromise;
   electronicsPromise = (async () => {
   try {
-    const g = await loadGlb(q("equity-uprise-electronics-fabric-v1.glb"));
-    const r = g.scene;
-    r.scale.setScalar(FT); r.rotation.x = -Math.PI / 2;
-    const monitors = registry.screens.filter(s => s.asset_type === "monitor");
-    const assets = new Map();
-    for (const s of monitors) { assets.set(s.asset_id, s.floor); assets.set(s.network_asset_id, s.floor); }
-    r.traverse(o => {
-      if (!o.isMesh) return;
-      const name = o.userData?.name || o.name || "";
-      /* Preserve the modeled device, its stand, ports and power termination.
-         Do not reveal unrelated infrastructure or generate substitute screens. */
-      const id = name.split("::")[0];
-      o.userData.euAssemblyFloor = assets.get(id) || null;
-      o.userData.euPhysicalAssembly = true;
-      o.visible = false;
-    });
+    const [g, catalog] = await Promise.all([loadGlb(q(WORKSTATION_FILE)), fetchWorkstationCatalog()]);
+    const r = prepareWorkstationRoot(g.scene, catalog);
     scene.add(r); r.updateMatrixWorld(true);
     for (const lv of FLOORS) hooks.bindFloor(lv, r);
     electronics = r; electronicsError = false;
@@ -157,7 +144,7 @@ async function ensureMonitorAssemblies() {
 }
 
 function showMonitorAssemblies(lv) {
-  electronics?.traverse(o => { if (o.isMesh) o.visible = o.userData.euAssemblyFloor === lv; });
+  syncWorkstationVisibility(electronics, { floorVisible: floor => floor === lv && !!loaded.get(lv)?.visible });
 }
 
 /* The face is the exact native base mesh, not the bezel, mount or host case.
@@ -267,10 +254,14 @@ function select(screen) {
   if (isModeled(screen)) flyTo(approachPose(screen), 650);
   const app = registry.apps[screen.app.id];
   const ok = app.modes.includes(mode);
+  const record=(electronics?.userData.euWorkstationMeshes||[]).find(mesh=>mesh.userData.assetId===(screen.network_asset_id||screen.asset_id))?.userData.euDeviceRecord;
+  const model=record?.manufacturer_model;
+  const modelNote=model ? `<span class="muted" style="font-size:12px">${esc(model.display_name||model.model_id)} · exterior proposal. Sponsor unconfirmed; not vendor-approved or a live host. ${esc(record.port_scope||'Training connections only.')}</span>` : '';
   openSheet(`<div style="display:grid;gap:10px">
     <div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><span class="pill">${esc(app.title)}</span><span class="mono muted" style="font-size:11px">${esc(screen.floor)} · ${esc(screen.room.label)}</span></div>
     <b style="font-size:18px">${esc(screen.title || screen.label)}</b>
     <span class="muted" style="font-size:13px">${esc(screen.host ? screen.host + " · " : "")}${esc(screen.kind.replace(/_/g, " "))} · ${isModeled(screen) ? "modeled device" : "directory only; physical model unavailable"}${screen.asset_type === "monitor" ? " · <span data-monitor-state>Sandbox: " + esc(monitorStates.get(screen.screen_id)?.label || "State unavailable") + "</span>" : ""}${ok ? "" : ` · opens in Workplace (not part of ${esc(MODE_LABELS[mode])})`}</span>
+    ${modelNote}
     <button class="btn primary block" type="button" data-open="${esc(screen.screen_id)}" style="min-height:54px">Open device interface</button></div>`);
 }
 function listSheet() {

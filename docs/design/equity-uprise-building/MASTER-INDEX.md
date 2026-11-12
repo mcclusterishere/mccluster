@@ -388,3 +388,29 @@ Every display surface (148 screens, B1–L7) is bound to its canonical asset id 
 - `production/lab-runtime/verify_computer_workbench_browser.mjs`
 
 This extension does not change the reconciled floor programs, equipment placement authority, original server-lab scoring or #707 learning-backend status.
+
+## Device placement reconciliation and manufacturer references
+
+- `FLOOR-DEVICE-REPAIR-V1.md` — all-floor source repair, model proposals, passed final strict/bound diagnostic gate and remaining review gates.
+- `references/device-repair-visual-v1/README.md` — 66 unmodified real phone/desktop captures from source head c17c20bf, 110/110 checks each, scoped geometry/framing review and explicit remaining limits; not geometry authority or deployment evidence.
+- `DEVICE-PLACEMENT-RECONCILIATION.md` — exact baseline, historical F1 pilot, current repair sequence and live-device truth boundary.
+- `MANUFACTURER-MODEL-REFERENCES.md` — eight exact product references, dimensions, source links and explicit fidelity/variant limits. These are partial exterior proxies, not approved CAD.
+- `production/electronics/manufacturer-model-references-v1.json`, `manufacturer_models.py`, `test_manufacturer_models.py` — reference catalog, deterministic exterior geometry and tests.
+- `production/electronics/device-placement-bindings-v1.json` and `device_placement_bindings.py` — canonical entrypoint resolving all 98 explicit bindings. No proximity or hash-derived station ownership.
+- `production/electronics/device-stations-b1-v1.json`, `device-stations-f2-f3-v1.json`, `device-stations-f4-f6-v1.json` — authored station fragments, reasons and exact scenic supersession.
+- `production/electronics/device-repair-b1-v1.md`, `device-stations-f2-f3-repair-report-v1.md`, `device-stations-f4-f6-repair-report-v1.md` — floor design and clearance evidence.
+- `production/electronics/test_device_stations_f2_f3.py`, `test_device_stations_f4_f6.py` — persistent real-floor station regressions.
+- `production/interiors/audit_device_placement.py`, `test_device_placement.py` — integrated real-mesh contact, origin/facing and monitor-intersection checks; strict/bound mode is the acceptance gate.
+- `production/interiors/device-placement-audit-v1.json` — exact-source baseline, 98 unsupported contacts and 33 panel intersections.
+- `production/interiors/device-placement-audit-v2.json` — historical F1-only pilot.
+- `production/interiors/device-placement-audit-v3.json` — final all-floor diagnostic report: 98/98 bindings, zero unsupported contacts and zero monitor-panel intersections. Recheck source hashes and both placement/binding results after each rebuild; this is not visual or installation approval.
+- `production/interiors/test_furniture_device_bindings.py` — keyboard retention and concave L-desk footprint regressions.
+- `production/interiors/glb-export-equivalence-v1.json` — historical cable-metadata cleanup equivalence, not later-model or visual approval.
+- `production/electronics/generated/equity-uprise-workstations-v1.glb` — derived workstation/monitor-only asset for normal room views, separate from racks/cabling/plant overlays.
+- Repository `js/eu-screens/workstation-layer.mjs` and `scripts/test/eu-workstation-layer.test.mjs` — shared authored-geometry consumer and loading/visibility/state checks.
+
+B1–F6 maker assignments are unconfirmed prospects: no supplied hardware, physical
+ownership, commissioned device or live connection is asserted. The ASUS ET900N
+reference covers its published main body only; installed height including
+unsized projecting handles/feet is unverified. L7 stays an open roof and its
+closed ProArt laptop remains a portable prospect with no permanent station.

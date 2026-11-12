@@ -728,6 +728,68 @@ export function createLevel3D(host, { level, onTap, onHover = null, onDoubleTap 
   const partState = new Map(); // id → 'loading' | 'ready' | 'failed'
   let modelReady = false, wantCut = null, showAll = false, lastCutKey;
   const cutStorey = () => (MODEL && modelReady && !showAll && wantCut != null && wantCut < 7 ? wantCut : null);
+  // Optional authored workstations only. The full electronics fabric never loads in game views.
+  let workstations = null, workstationHelpers = null, workstationStateRequest = 0;
+  const workstationNotice = document.createElement('div');
+  workstationNotice.className = 'b3-workstation-status'; workstationNotice.setAttribute('role', 'status');
+  workstationNotice.style.cssText = 'position:absolute;left:8px;bottom:8px;max-width:calc(100% - 16px);font:11px/1.4 system-ui;color:#fff;background:#10151dcc;padding:4px 7px;pointer-events:none';
+  workstationNotice.hidden = !MODEL?.workstations; host.appendChild(workstationNotice);
+  async function refreshWorkstationStates() {
+    if (!workstations || destroyed) return;
+    const request = ++workstationStateRequest;
+    workstationHelpers.paintWorkstationMonitors(workstations, null);
+    try {
+      const { openScreenSession } = await import('../eu-screens/sandbox-session.mjs');
+      const ss = await openScreenSession(level.HOOKS?.screenFaults ? 'MISSION' : 'WORKPLACE');
+      if (destroyed || request !== workstationStateRequest) return;
+      workstationHelpers.paintWorkstationMonitors(workstations, ss.screens, ss.hardware);
+      workstationNotice.textContent = 'Sandbox monitor indicators'; needs = true;
+    } catch { workstationNotice.textContent = 'Sandbox monitor state unavailable'; needs = true; }
+  }
+  function syncWorkstations() {
+    if (!workstations) return;
+    const st = cutStorey();
+    workstationHelpers.syncWorkstationVisibility(workstations, { floorVisible(floor) {
+      const storey = floor === 'B1' ? 0 : Number(floor.slice(1));
+      const part = storey === 0 ? 'basement' : 'floor-0' + storey;
+      return partState.get(part) === 'ready' && (st == null || storey <= st);
+    } });
+  }
+  async function loadBuildingWorkstations() {
+    if (!MODEL?.workstations) return;
+    workstationNotice.textContent = 'Loading authored workstations…';
+    try {
+      const [helpers, { GLTFLoader }] = await Promise.all([
+        import('../eu-screens/workstation-layer.mjs'), import('three/addons/loaders/GLTFLoader.js')
+      ]);
+      workstationHelpers = helpers;
+      const spec = MODEL.workstations, origin = level.modelToWorld(0, 0, 0);
+      async function source(file, read) {
+        for (const root of spec.roots) {
+          try { return await read(new URL(file, root).href); } catch { /* next canonical location */ }
+        }
+        throw new Error('Authored workstation asset unavailable: ' + file);
+      }
+      const loader = new GLTFLoader();
+      const layer = helpers.createWorkstationLayer({
+        loadAsset: () => source(spec.file, url => loader.loadAsync(url)),
+        loadCatalog: () => source(spec.catalog, helpers.fetchWorkstationCatalog),
+        frame: { metresPerWorldUnit: UNIT_M, origin: [origin.X, origin.Y, origin.Z] }
+      });
+      const root = await layer.ensure();
+      if (destroyed) return;
+      root.traverse(mesh => {
+        if (!mesh.isMesh) return;
+        mesh.castShadow = false; mesh.receiveShadow = tier !== 'low';
+        for (const material of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) {
+          material.clippingPlanes = [cutPlane]; material.clipShadows = true;
+        }
+      });
+      workstations = root; modelGroup.add(root); syncWorkstations();
+      window.addEventListener('focus', refreshWorkstationStates);
+      await refreshWorkstationStates(); needs = true;
+    } catch { workstationNotice.textContent = 'Workstation models unavailable · no substitute screens'; }
+  }
   const modelMats = new Map();
   function modelMat(opacity) { // one opaque material, a few glass ones; every one vertex-coloured and cut by the plane
     const key = opacity >= 1 ? 'solid' : 'glass' + opacity;
@@ -822,6 +884,7 @@ export function createLevel3D(host, { level, onTap, onHover = null, onDoubleTap 
     fogPlane.position.y = below && SCENE.basement ? M(SCENE.basement.height) + 0.06 : 0.06;
     // the storey in play brings its own detailed floor (Floors 2–6 load the first time the cutaway reaches them)
     if (modelReady && st != null) for (const p of MODEL.parts) if (p.lazy && p.storey === st && !partState.has(p.id)) loadPart(p);
+    syncWorkstations();
     needs = true;
   }
   async function loadBuildingModel() {
@@ -831,6 +894,7 @@ export function createLevel3D(host, { level, onTap, onHover = null, onDoubleTap 
       await loadPart(first.find((p) => p.required) || first[0]);
       if (destroyed) return;
       modelReady = true; refreshModel();
+      loadBuildingWorkstations();
       await Promise.all(first.filter((p) => !partState.has(p.id)).map(loadPart));
     } catch (e) { modelReady = false; modelGroup.visible = false; /* the plan massing stays */ }
   }
@@ -1216,6 +1280,6 @@ export function createLevel3D(host, { level, onTap, onHover = null, onDoubleTap 
     screenOf(x, y, h = 0, z = 0) { placeCamera(); const p = project(x, y, h + surfaceHeight(x, y, z)); const r = el.getBoundingClientRect(); return { x: r.left + p.x, y: r.top + p.y }; },
     tileAt,
     surfaceHeight,
-    destroy() { window.removeEventListener('blur', resetPointerGuidance); destroyed = true; cancelAnimationFrame(raf); ro.disconnect(); if (composer) composer.dispose(); renderer.dispose(); host.innerHTML = ''; }
+    destroy() { window.removeEventListener('focus', refreshWorkstationStates); window.removeEventListener('blur', resetPointerGuidance); destroyed = true; cancelAnimationFrame(raf); ro.disconnect(); if (composer) composer.dispose(); renderer.dispose(); host.innerHTML = ''; }
   };
 }

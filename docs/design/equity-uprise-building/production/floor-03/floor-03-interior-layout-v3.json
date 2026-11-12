@@ -523,7 +523,13 @@
    "zone": "field-ops",
    "occupant": "Nusrat Rahman",
    "source": "production/workplace-occupancy-v1.json F3",
-   "purpose": "Access Policy / Operations Desk"
+   "purpose": "Access Policy / Operations Desk",
+   "size": {
+    "monitors": 0,
+    "keyboard": true
+   },
+   "device_station_ref": "../electronics/device-stations-f2-f3-v1.json",
+   "placement_override_reason": "Registered single-monitor workstation occupies this existing staff desk. Suppress only embedded scenic monitors; preserve the keyboard, chair, desk location and occupant."
   },
   {
    "id": "F3-DESK-NUSRAT-RAHMAN-CHAIR",
@@ -542,7 +548,13 @@
    "zone": "field-ops",
    "occupant": "Arjun Mehta",
    "source": "production/workplace-occupancy-v1.json F3",
-   "purpose": "Field-E Entry / Safety Planning Desk"
+   "purpose": "Field-E Entry / Safety Planning Desk",
+   "size": {
+    "monitors": 0,
+    "keyboard": true
+   },
+   "device_station_ref": "../electronics/device-stations-f2-f3-v1.json",
+   "placement_override_reason": "Registered single-monitor workstation occupies this existing staff desk. Suppress only embedded scenic monitors; preserve the keyboard, chair, desk location and occupant."
   },
   {
    "id": "F3-DESK-ARJUN-MEHTA-CHAIR",
@@ -561,7 +573,13 @@
    "zone": "field-ops",
    "occupant": "Rafael Costa",
    "source": "production/workplace-occupancy-v1.json F3",
-   "purpose": "Field-R Overwatch Workstation"
+   "purpose": "Field-R Overwatch Workstation",
+   "size": {
+    "monitors": 0,
+    "keyboard": true
+   },
+   "device_station_ref": "../electronics/device-stations-f2-f3-v1.json",
+   "placement_override_reason": "Registered single-monitor workstation occupies this existing staff desk. Suppress only embedded scenic monitors; preserve the keyboard, chair, desk location and occupant."
   },
   {
    "id": "F3-DESK-RAFAEL-COSTA-CHAIR",
@@ -580,7 +598,13 @@
    "zone": "field-ops",
    "occupant": "McCluster",
    "source": "production/workplace-occupancy-v1.json F3",
-   "purpose": "Wildcard / Fellowship Desk"
+   "purpose": "Wildcard / Fellowship Desk",
+   "size": {
+    "monitors": 0,
+    "keyboard": true
+   },
+   "device_station_ref": "../electronics/device-stations-f2-f3-v1.json",
+   "placement_override_reason": "Registered single-monitor workstation occupies this existing staff desk. Suppress only embedded scenic monitors; preserve the keyboard, chair, desk location and occupant."
   },
   {
    "id": "F3-DESK-MCCLUSTER-FELLOWSHIP-CHAIR",

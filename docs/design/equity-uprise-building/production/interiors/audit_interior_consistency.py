@@ -82,6 +82,32 @@ def rot_pts(x, y, w, d, rot):
     return np.array([(x + lx * ca - ly * sa, y + lx * sa + ly * ca) for lx, ly in ((-w / 2, -d / 2), (w / 2, -d / 2), (w / 2, d / 2), (-w / 2, d / 2))])
 
 
+def occupied_footprints(item, spec, width, depth):
+    """Convex occupied regions; L-desk knee space is not a solid rectangle.
+
+    Mirrors form_desk_l's main top and return exactly. No collision exemption:
+    architecture, furniture, doors and route rasterization test both regions.
+    """
+    x, y, angle = item['x'], item['y'], item.get('rot_deg', 0)
+    if spec['form'] != 'desk_l':
+        return [rot_pts(x, y, width, depth, angle)]
+    settings = {**spec, **(item.get('size') or {})}
+    main_depth = settings.get('main_depth_in', 36) / 12
+    return_depth = settings.get('return_depth_in', 24) / 12
+    if not 0 < main_depth < depth or not 0 < return_depth < width:
+        raise ValueError('Invalid L-desk main/return dimensions')
+    a = math.radians(angle)
+    def rectangle(cx, cy, w, d):
+        return rot_pts(x + cx * math.cos(a) - cy * math.sin(a),
+                       y + cx * math.sin(a) + cy * math.cos(a), w, d, angle)
+    return [rectangle(0, -depth / 2 + main_depth / 2, width, main_depth),
+            rectangle(-width / 2 + return_depth / 2, main_depth / 2, return_depth, depth - main_depth)]
+
+
+def footprint_overlap(parts, other_parts):
+    return sum(poly_overlap_area(p, q) for p in parts for q in other_parts)
+
+
 def poly_overlap_area(p, q, res=0.1):
     """Approximate overlap area of two convex quads by sampling the bbox intersection."""
     x1 = max(p[:, 0].min(), q[:, 0].min()); x2 = min(p[:, 0].max(), q[:, 0].max())
@@ -217,7 +243,8 @@ def audit_floor(tag, layout_rel, glb_name, inv_rel, all_summ):
             poly = np.array([(i["x"] + math.cos(k * math.tau / 16) * w / 2, i["y"] + math.sin(k * math.tau / 16) * d / 2) for k in range(16)])
         else:
             poly = rot_pts(i["x"], i["y"], w, d, i.get("rot_deg", 0))
-        fp[i["id"]] = {"poly": poly, "h": h, "z": i.get("z_ft", 0.0), "spec": spec, "item": i, "w": w, "d": d}
+        parts = [poly] if spec["form"] in ROUND_FORMS else occupied_footprints(i, spec, w, d)
+        fp[i["id"]] = {"poly": poly, "parts": parts, "h": h, "z": i.get("z_ft", 0.0), "spec": spec, "item": i, "w": w, "d": d}
     furn_nodes = {f"{i['id']}::{i['type']}" for i in items}
 
     # architecture boxes (everything that is not furniture, a door leaf, a slot, a rug-thin plate or overhead)
@@ -254,7 +281,7 @@ def audit_floor(tag, layout_rel, glb_name, inv_rel, all_summ):
             if n.startswith(("floor_slab", "B1-SLAB", "B1-CEILING")):
                 continue
             q = np.array([[lo[0], lo[1]], [hi[0], lo[1]], [hi[0], hi[1]], [lo[0], hi[1]]])
-            a = poly_overlap_area(p, q)
+            a = footprint_overlap(f["parts"], [q])
             if a > 0.05:
                 hits.append(f"{iid} x {n} ({a:.2f} sq ft)")
     ck(scope, "no furniture intersects walls, cores or equipment", not hits, hits[:40])
@@ -266,7 +293,7 @@ def audit_floor(tag, layout_rel, glb_name, inv_rel, all_summ):
         if not fa["spec"].get("blocks", True) or not fb["spec"].get("blocks", True):
             continue
         tuck = (fa["spec"].get("tucks_under") and fb["spec"].get("is_surface")) or (fb["spec"].get("tucks_under") and fa["spec"].get("is_surface"))
-        ar = poly_overlap_area(fa["poly"], fb["poly"])
+        ar = footprint_overlap(fa["parts"], fb["parts"])
         if ar > (1.6 if tuck else 0.05):
             pairs.append(f"{a} x {b} ({ar:.2f} sq ft)")
     ck(scope, "no furniture intersects other furniture (chairs may tuck under a surface)", not pairs, pairs[:40])
@@ -277,7 +304,7 @@ def audit_floor(tag, layout_rel, glb_name, inv_rel, all_summ):
         b = z["bounds_ft"]
         q = np.array([[b["x1"], b["y1"]], [b["x2"], b["y1"]], [b["x2"], b["y2"]], [b["x1"], b["y2"]]])
         for iid, f in fp.items():
-            if f["spec"].get("blocks", True) and poly_overlap_area(f["poly"], q) > 0.05:
+            if f["spec"].get("blocks", True) and footprint_overlap(f["parts"], [q]) > 0.05:
                 kc.append(f"{iid} in {z['id']}")
     ck(scope, "keep-clear zones are clear", not kc, kc)
 
@@ -298,7 +325,8 @@ def audit_floor(tag, layout_rel, glb_name, inv_rel, all_summ):
     for iid, f in fp.items():
         # tuck-under seats are movable and do not form permanent obstructions
         if f["spec"].get("blocks", True) and not f["spec"].get("tucks_under") and f["z"] < BODY_Z[1]:
-            raster_poly(full, f["poly"])
+            for part in f["parts"]:
+                raster_poly(full, part)
     free = ~full
     route = erode(free, ROUTE_R)
     start = cell(52.3, 39.0)
@@ -357,7 +385,7 @@ def audit_floor(tag, layout_rel, glb_name, inv_rel, all_summ):
             if hi[2] > 0.5 and lo[2] < 6.5 and lo[0] < x2 and hi[0] > x1 and lo[1] < y2 and hi[1] > y1:
                 blocked.append(f"{name}: {n}")
         for iid, f in fp.items():
-            if f["spec"].get("blocks", True) and poly_overlap_area(f["poly"], q) > 0.02:
+            if f["spec"].get("blocks", True) and footprint_overlap(f["parts"], [q]) > 0.02:
                 blocked.append(f"{name}: {iid}")
         if in_pt is not None and not free[cell(*in_pt)]:
             blocked.append(f"{name}: no floor behind the door")

@@ -345,17 +345,19 @@
     "w_in": 60,
     "d_in": 24,
     "monitors": 0,
-    "pedestal": false
+    "pedestal": false,
+    "keyboard": true
    },
    "finish": {
     "top": "wood_dark"
-   }
+   },
+   "electronics_reconciliation": "Registered USER monitors supply the screens; retain one physical keyboard and the canonical work surface."
   },
   {
    "id": "F4-RECORDING-CHAIR-01",
    "type": "task_chair",
-   "x": 5.4,
-   "y": 9.7,
+   "x": 6.6,
+   "y": 9.4,
    "rot_deg": 180,
    "zone": "creator-recording",
    "realizes_inventory_id": "F4-RECORDING-CHAIR-01"
@@ -363,9 +365,9 @@
   {
    "id": "F4-RECORDING-CHAIR-02",
    "type": "task_chair",
-   "x": 8.2,
-   "y": 9.7,
-   "rot_deg": 180,
+   "x": 9.7,
+   "y": 10.2,
+   "rot_deg": 135,
    "zone": "creator-recording",
    "realizes_inventory_id": "F4-RECORDING-CHAIR-02"
   },
@@ -399,16 +401,19 @@
    "size": {
     "w_in": 96,
     "d_in": 36,
-    "monitors": 0
+    "monitors": 0,
+    "keyboard": true,
+    "keyboard_y_ft": 0.75
    },
    "finish": {
     "top": "wood_dark"
-   }
+   },
+   "electronics_reconciliation": "Registered USER monitors supply the screens; retain one physical keyboard and the canonical work surface."
   },
   {
    "id": "F4-EDIT-CHAIR-01",
    "type": "task_chair",
-   "x": 21.5,
+   "x": 23.0,
    "y": 11.6,
    "rot_deg": 180,
    "zone": "edit-suite",
@@ -417,7 +422,7 @@
   {
    "id": "F4-EDIT-CHAIR-02",
    "type": "task_chair",
-   "x": 24.5,
+   "x": 25.6,
    "y": 11.6,
    "rot_deg": 180,
    "zone": "edit-suite",
@@ -520,7 +525,12 @@
    },
    "occupant": "Priya Srisawat",
    "source": "production/workplace-occupancy-v1.json F4",
-   "purpose": "Brand / Public Identity Desk"
+   "purpose": "Brand / Public Identity Desk",
+   "size": {
+    "monitors": 0,
+    "keyboard": true
+   },
+   "electronics_reconciliation": "Registered USER monitors supply the screens; retain one physical keyboard and the canonical work surface."
   },
   {
    "id": "F4-DESK-PRIYA-SRISAWAT-CHAIR",
@@ -542,7 +552,12 @@
    },
    "occupant": "Maren Quill",
    "source": "production/workplace-occupancy-v1.json F4",
-   "purpose": "Communications / Media Desk"
+   "purpose": "Communications / Media Desk",
+   "size": {
+    "monitors": 0,
+    "keyboard": true
+   },
+   "electronics_reconciliation": "Registered USER monitors supply the screens; retain one physical keyboard and the canonical work surface."
   },
   {
    "id": "F4-DESK-MAREN-QUILL-CHAIR",
@@ -555,16 +570,16 @@
   {
    "id": "F4-BRAND-MOODBOARD-01",
    "type": "pinboard_mobile",
-   "x": 59.2,
-   "y": 13.4,
+   "x": 58.2,
+   "y": 15.7,
    "rot_deg": -180.0,
    "zone": "brand-comms"
   },
   {
    "id": "F4-BRAND-EASEL-01",
    "type": "easel",
-   "x": 54.0,
-   "y": 14.6,
+   "x": 53.4,
+   "y": 15.6,
    "rot_deg": -168.23,
    "zone": "brand-comms"
   },
@@ -572,37 +587,41 @@
    "id": "F4-BRAND-REVIEW-TABLE-01",
    "type": "table_round",
    "x": 65.8,
-   "y": 17.6,
+   "y": 16.0,
    "rot_deg": 0,
    "zone": "brand-comms",
    "size": {
     "w_in": 42,
     "d_in": 42
-   }
+   },
+   "placement_override_reason": "Retain the small shared brand-review table; separate its seats from the north production stations."
   },
   {
    "id": "F4-BRAND-REVIEW-CHAIR-1",
    "type": "side_chair",
    "x": 63.263,
-   "y": 16.677,
+   "y": 15.077,
    "rot_deg": -70.0,
-   "zone": "brand-comms"
+   "zone": "brand-comms",
+   "placement_override_reason": "Retain the small shared brand-review table; separate its seats from the north production stations."
   },
   {
    "id": "F4-BRAND-REVIEW-CHAIR-2",
    "type": "side_chair",
    "x": 68.337,
-   "y": 16.677,
+   "y": 15.077,
    "rot_deg": 70.0,
-   "zone": "brand-comms"
+   "zone": "brand-comms",
+   "placement_override_reason": "Retain the small shared brand-review table; separate its seats from the north production stations."
   },
   {
    "id": "F4-BRAND-REVIEW-CHAIR-3",
    "type": "side_chair",
    "x": 65.8,
-   "y": 20.3,
+   "y": 18.7,
    "rot_deg": -180.0,
-   "zone": "brand-comms"
+   "zone": "brand-comms",
+   "placement_override_reason": "Retain the small shared brand-review table; separate its seats from the north production stations."
   },
   {
    "id": "F4-BRAND-STORAGE-01",
@@ -615,6 +634,114 @@
     "w_in": 72,
     "d_in": 20
    }
+  },
+  {
+   "id": "F4-PRODUCTION-DESK-01",
+   "type": "desk",
+   "x": 55.5,
+   "y": 9.2,
+   "rot_deg": 0,
+   "zone": "brand-comms",
+   "size": {
+    "w_in": 72,
+    "d_in": 30,
+    "monitors": 0,
+    "keyboard": true,
+    "pedestal": false
+   },
+   "source": "FLOOR-04-MEDIA-CULTURE-360-SPEC.md sections 9, 21 and 26A; existing F4-USER workstation identities",
+   "purpose": "Caption and subtitle review",
+   "placement_override_reason": "Place existing unbound computer identities at deliberate work surfaces inside the existing media work area, not in the listening lounge or on meeting tables."
+  },
+  {
+   "id": "F4-PRODUCTION-DESK-01-CHAIR",
+   "type": "task_chair",
+   "x": 55.5,
+   "y": 11.85,
+   "rot_deg": 180,
+   "zone": "brand-comms",
+   "source": "F4-PRODUCTION-DESK-01"
+  },
+  {
+   "id": "F4-PRODUCTION-DESK-02",
+   "type": "desk",
+   "x": 63.6,
+   "y": 9.2,
+   "rot_deg": 0,
+   "zone": "brand-comms",
+   "size": {
+    "w_in": 72,
+    "d_in": 30,
+    "monitors": 0,
+    "keyboard": true,
+    "pedestal": false
+   },
+   "source": "FLOOR-04-MEDIA-CULTURE-360-SPEC.md sections 9, 21 and 26A; existing F4-USER workstation identities",
+   "purpose": "Photo selects and communications production",
+   "placement_override_reason": "Place existing unbound computer identities at deliberate work surfaces inside the existing media work area, not in the listening lounge or on meeting tables."
+  },
+  {
+   "id": "F4-PRODUCTION-DESK-02-CHAIR",
+   "type": "task_chair",
+   "x": 63.6,
+   "y": 11.85,
+   "rot_deg": 180,
+   "zone": "brand-comms",
+   "source": "F4-PRODUCTION-DESK-02"
+  },
+  {
+   "id": "F4-PRODUCTION-DESK-03",
+   "type": "desk",
+   "x": 55.5,
+   "y": 22.2,
+   "rot_deg": 0,
+   "zone": "brand-comms",
+   "size": {
+    "w_in": 72,
+    "d_in": 30,
+    "monitors": 0,
+    "keyboard": true,
+    "pedestal": false
+   },
+   "source": "FLOOR-04-MEDIA-CULTURE-360-SPEC.md sections 9, 21 and 26A; existing F4-USER workstation identities",
+   "purpose": "Creator collaboration and production preparation",
+   "placement_override_reason": "Place existing unbound computer identities at deliberate work surfaces inside the existing media work area, not in the listening lounge or on meeting tables."
+  },
+  {
+   "id": "F4-PRODUCTION-DESK-03-CHAIR",
+   "type": "task_chair",
+   "x": 55.5,
+   "y": 24.849999999999998,
+   "rot_deg": 180,
+   "zone": "brand-comms",
+   "source": "F4-PRODUCTION-DESK-03"
+  },
+  {
+   "id": "F4-PRODUCTION-DESK-04",
+   "type": "desk",
+   "x": 63.6,
+   "y": 22.2,
+   "rot_deg": 0,
+   "zone": "brand-comms",
+   "size": {
+    "w_in": 72,
+    "d_in": 30,
+    "monitors": 0,
+    "keyboard": true,
+    "pedestal": false
+   },
+   "source": "FLOOR-04-MEDIA-CULTURE-360-SPEC.md sections 9, 21 and 26A; existing F4-USER workstation identities",
+   "purpose": "Public release asset preparation",
+   "placement_override_reason": "Place existing unbound computer identities at deliberate work surfaces inside the existing media work area, not in the listening lounge or on meeting tables."
+  },
+  {
+   "id": "F4-PRODUCTION-DESK-04-CHAIR",
+   "type": "task_chair",
+   "x": 63.6,
+   "y": 24.849999999999998,
+   "rot_deg": 180,
+   "zone": "brand-comms",
+   "source": "F4-PRODUCTION-DESK-04"
   }
  ]
 }

@@ -172,6 +172,25 @@ jobs:
       - name: Verify model consistency (furniture, doors, egress, walkability, brand slots, distinct floors)
         run: python docs/design/equity-uprise-building/production/interiors/audit_interior_consistency.py
 
+      - name: Test authored workstation geometry and supports
+        run: |
+          python docs/design/equity-uprise-building/production/interiors/test_device_placement.py
+          python docs/design/equity-uprise-building/production/interiors/test_furniture_device_bindings.py
+          python docs/design/equity-uprise-building/production/electronics/test_manufacturer_models.py
+          python docs/design/equity-uprise-building/production/electronics/test_glb_export_hygiene.py
+          python docs/design/equity-uprise-building/production/electronics/test_device_stations_f2_f3.py
+          python docs/design/equity-uprise-building/production/electronics/test_device_stations_f4_f6.py
+
+      - name: Require all authored workstation supports and nonintersecting panels
+        run: python docs/design/equity-uprise-building/production/interiors/audit_device_placement.py --strict --require-bound --output "${RUNNER_TEMP}/device-placement-audit.json"
+
+      - name: Upload device placement evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: equity-uprise-device-placement
+          path: ${{ runner.temp }}/device-placement-audit.json
+          if-no-files-found: error
+
       - name: Verify Floor 1 / B1 authority boundary
         run: python docs/design/equity-uprise-building/production/verify_floor_01_b1_simulation.py
 
