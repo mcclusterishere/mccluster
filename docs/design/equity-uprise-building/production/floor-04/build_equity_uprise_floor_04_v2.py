@@ -24,6 +24,12 @@ LAYOUT=load_layout(HERE/"floor-04-interior-layout-v3.json")
 # Inventory furniture realized by the v3 layout is built ONLY by the shared kit;
 # the legacy per-floor box furniture for those ids is suppressed here.
 _REALIZED={i["realizes_inventory_id"] for i in LAYOUT["items"] if i.get("realizes_inventory_id")}
+# These exact desk displays are supplied by the registered electronics layer.
+# Keep the canonical capability IDs, but do not claim removed scenic meshes exist.
+SCENIC_DISPLAY_REPLACEMENTS = {
+    "F4-RECORDING-MONITOR-01": ["F4-USER-MON-03-01", "F4-USER-MON-03-02"],
+    "F4-EDIT-DISPLAY-01": ["F4-USER-MON-04-01", "F4-USER-MON-04-02"],
+}
 
 H=11.0
 PASS=(54.,34.,62.,44.); FREIGHT=(0.,60.,8.,72.); SB=(8.,54.,18.,72.); SA=(60.,54.,72.,72.); MEP=(50.,66.,60.,72.)
@@ -195,7 +201,7 @@ x,y=center("F4-MIC-STAND-01")
 cyl("F4-MIC-STAND-01::base",(x,y),.55,.12,0,C["core"],"F4-MIC-STAND-01",24)
 cyl("F4-MIC-STAND-01::pole",(x,y),.06,4.45,.12,C["black"],"F4-MIC-STAND-01",16)
 cyl("F4-MIC-STAND-01::mic",(x,y),.15,.7,4.5,C["black"],"F4-MIC-STAND-01",18)
-screen("F4-RECORDING-MONITOR-01",bounds("F4-RECORDING-MONITOR-01"),3.0,2.0)
+# F4-RECORDING-MONITOR-01 is represented by SCENIC_DISPLAY_REPLACEMENTS.
 box("F4-RECORDING-ACOUSTIC-01::ceiling",(2.5,4.5,14.5,15.5),.18,10.65,C["acoustic"],"F4-RECORDING-ACOUSTIC-01")
 for n,x0 in enumerate((3.0,8.5,13.0),1): box(f"F4-RECORDING-ACOUSTIC-01::panel-{n}",(x0,4.18,x0+1.5,4.34),4.0,2.0,C["acoustic"],"F4-RECORDING-ACOUSTIC-01")
 # Recording-room completeness details: side absorption, cable trough and door frame.
@@ -208,16 +214,17 @@ box("recording_door_header",(10.35,15.72,13.65,15.9),.45,8.5,C["core"])
 table("F4-EDIT-DESK-01",bounds("F4-EDIT-DESK-01"),2.3,.22)
 for i in ("F4-EDIT-CHAIR-01","F4-EDIT-CHAIR-02","F4-EDIT-VISITOR-CHAIR-01","F4-EDIT-VISITOR-CHAIR-02"):
     x,y=center(i); chair(i,x,y,(23,8.5))
-screen("F4-EDIT-DISPLAY-01",bounds("F4-EDIT-DISPLAY-01"),3.1,2.6)
+# F4-EDIT-DISPLAY-01 is represented by SCENIC_DISPLAY_REPLACEMENTS.
 for n,x0 in enumerate((20.0,26.0),1):
-    box(f"F4-EDIT-SPEAKER-01::{n}",(x0-.45,9.45,x0+.45,10.05),1.2,3.0,C["speaker"],"F4-EDIT-SPEAKER-01")
+    box(f"F4-EDIT-SPEAKER-01::{n}",(x0-.45,7.7,x0+.45,8.3),1.2,29/12,C["speaker"],"F4-EDIT-SPEAKER-01")
 box("F4-EDIT-ACOUSTIC-01::ceiling",(17.5,4.5,30.5,15.5),.18,10.65,C["acoustic"],"F4-EDIT-ACOUSTIC-01")
 for n,x0 in enumerate((18.0,23.0,28.0),1): box(f"F4-EDIT-ACOUSTIC-01::panel-{n}",(x0,4.18,x0+1.5,4.34),4.0,2.0,C["acoustic"],"F4-EDIT-ACOUSTIC-01")
 # Edit-suite completeness details: side treatment, desk cable raceway and display backing.
 for n,y0 in enumerate((6.0,10.0,13.5),1):
     box(f"edit_acoustic_side_{n}",(30.66,y0,30.82,y0+1.6),4.2,2.0,C["acoustic"])
 box("edit_cable_raceway",(19.3,7.1,26.7,7.24),.18,.45,C["black"])
-box("edit_display_backer",(19.6,9.68,26.4,9.82),3.2,2.7,C["stone"])
+# The exact old edit_display_backer is superseded with the scenic display;
+# it previously stood between the operator and the registered rear-desk panels.
 
 # Floor control
 cabinet("F4-FLOOR-CONTROL-01",bounds("F4-FLOOR-CONTROL-01"),4.0,C["core"])
@@ -284,12 +291,12 @@ box("F4-EMERGENCY-LIGHT-01::bar",(25,59.75,47,59.9),.08,9.8,C["safety"],"F4-EMER
 
 scene.metadata.update({"scene_id":"equity-uprise-floor-04","version":"media-culture-hybrid-v2","floor_identity":"Media + Culture","inventory_ref":"floor-04-object-inventory.json","not_for_construction":True})
 data=scene.export(file_type="glb"); OUT.write_bytes(data)
-ext=(scene.extents/FT).tolist(); missing=sorted(set(INV)-modeled)
+ext=(scene.extents/FT).tolist(); missing=sorted(set(INV)-modeled-set(SCENIC_DISPLAY_REPLACEMENTS))
 checks=[]
 def ck(n,p,a=None,e=None): checks.append({"name":n,"passed":bool(p),"actual":a,"expected":e})
 ck("72ft width",abs(ext[0]-72)<.05,ext[0],72); ck("72ft depth",abs(ext[1]-72)<.05,ext[1],72)
 ck("inventory summary matches records",inventory["summary"]["object_records"]==len(INV),len(INV),inventory["summary"]["object_records"])
-ck("all inventory records modeled",not missing,len(modeled),len(INV))
+ck("all inventory records modeled or explicitly replaced",not missing,len(modeled)+len(SCENIC_DISPLAY_REPLACEMENTS),len(INV))
 ck("feature-wall identity is a brand slot",len(BRAND_SLOTS)==1)
 _lay_inv={i.get("realizes_inventory_id") for i in LAYOUT["items"]}-{None}
 _furn={k for k,o in INV.items() if o["category"] in ("furniture","decorative_functional")}
@@ -297,14 +304,15 @@ ck("v3 layout realizes every inventory furniture record",_furn<=_lay_inv,sorted(
 ck("media wall modeled","F4-MEDIA-WALL-01" in modeled); ck("listening zone modeled","F4-LISTENING-SECTIONAL-01" in modeled)
 ck("six gallery frames",all(f"F4-GALLERY-FRAME-{i:02d}" in modeled for i in range(1,7)))
 ck("recording room modeled",all(x in modeled for x in ("F4-RECORDING-GLAZING-01","F4-MIC-STAND-01","F4-RECORDING-WORKSURFACE-01")))
-ck("edit suite modeled",all(x in modeled for x in ("F4-EDIT-DESK-01","F4-EDIT-DISPLAY-01","F4-EDIT-SPEAKER-01")))
+ck("edit suite modeled with declared registered display",all(x in modeled for x in ("F4-EDIT-DESK-01","F4-EDIT-SPEAKER-01")) and "F4-EDIT-DISPLAY-01" in SCENIC_DISPLAY_REPLACEMENTS)
 ck("floor control modeled","F4-FLOOR-CONTROL-01" in modeled); ck("passenger interface","F4-PASS-ELEV-DOOR-01" in modeled)
 ck("freight interface","F4-FREIGHT-DOOR-01" in modeled); ck("both stair doors",all(x in modeled for x in ("F4-STAIR-A-DOOR-01","F4-STAIR-B-DOOR-01")))
 # Visual-completeness gate: inventory presence alone is not enough.
 gkeys=list(scene.geometry.keys())
 ck("media wall architectural surround",any("media_wall_plinth" in x for x in gkeys) and sum("media_wall_acoustic_fin" in x for x in gkeys)>=5)
 ck("recording room detailed enclosure",any("recording_door_header" in x for x in gkeys) and sum("recording_acoustic_side" in x for x in gkeys)>=3)
-ck("edit suite detailed enclosure",any("edit_display_backer" in x for x in gkeys) and sum("edit_acoustic_side" in x for x in gkeys)>=3)
+ck("edit suite detailed enclosure",sum("edit_acoustic_side" in x for x in gkeys)>=3 and any("edit_cable_raceway" in x for x in gkeys))
+ck("superseded scenic displays absent",not any(n.startswith(tuple(SCENIC_DISPLAY_REPLACEMENTS)) or n=="edit_display_backer" for n in scene.graph.nodes_geometry))
 ck("support rooms have doors",sum("support_door_" in x and "handle" not in x for x in gkeys)>=5)
 ck("restrooms have mirrors and sinks",sum("restroom_mirror_" in x for x in gkeys)>=2 and sum("restroom_sink_" in x for x in gkeys)>=2)
 ck("media storage visibly equipped",sum("media_storage_case_" in x for x in gkeys)>=6)
@@ -312,6 +320,6 @@ ck("media IT rack visibly equipped",sum("media_it_device_" in x for x in gkeys)>
 ck("support and corridor ceilings modeled",all(any(tag in x for x in gkeys) for tag in ("support_ceiling_west","support_ceiling_east","north_corridor_ceiling")))
 ck("gallery and elevator-lobby ceilings modeled",all(any(tag in x for x in gkeys) for tag in ("gallery_ceiling","elevator_lobby_ceiling")))
 failed=[x for x in checks if not x["passed"]]
-report={"scene_id":"equity-uprise-floor-04","interior_layout":"floor-04-interior-layout-v3.json","furniture":KIT.summary(),"furniture_placements":KIT.placed,"brand_slots":BRAND_SLOTS,"triangles":int(sum(len(scene.geometry[scene.graph[_n][1]].faces) for _n in scene.graph.nodes_geometry)),"version":"media-culture-hybrid-v2","mesh_count":len(scene.geometry),"glb_bytes":len(data),"sha256":hashlib.sha256(data).hexdigest(),"extents_ft":ext,"inventory_records":len(INV),"inventory_records_modeled":len(modeled),"inventory_records_missing":missing,"visual_completion_gate":"architectural-room-and-support-detail-v1","checks_total":len(checks),"checks_passed":len(checks)-len(failed),"checks_failed":len(failed),"passed":not failed,"checks":checks}
+report={"scene_id":"equity-uprise-floor-04","interior_layout":"floor-04-interior-layout-v3.json","furniture":KIT.summary(),"furniture_placements":KIT.placed,"brand_slots":BRAND_SLOTS,"triangles":int(sum(len(scene.geometry[scene.graph[_n][1]].faces) for _n in scene.graph.nodes_geometry)),"version":"media-culture-hybrid-v2","mesh_count":len(scene.geometry),"glb_bytes":len(data),"sha256":hashlib.sha256(data).hexdigest(),"extents_ft":ext,"inventory_records":len(INV),"inventory_records_modeled":len(modeled),"inventory_records_missing":missing,"inventory_records_replaced":SCENIC_DISPLAY_REPLACEMENTS,"visual_completion_gate":"architectural-room-and-support-detail-v1","checks_total":len(checks),"checks_passed":len(checks)-len(failed),"checks_failed":len(failed),"passed":not failed,"checks":checks}
 REPORT.write_text(json.dumps(report,indent=2)+"\n"); print(json.dumps({k:report[k] for k in ("version","mesh_count","inventory_records","inventory_records_modeled","checks_passed","checks_total","passed")},indent=2))
 if failed: raise SystemExit(1)

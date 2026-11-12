@@ -150,6 +150,18 @@
    },
    "purpose": "Li Wei, Marc Dubois",
    "source": "production/workplace-occupancy-v1.json F6"
+  },
+  {
+   "id": "command-preparation",
+   "label": "Institutional briefing preparation",
+   "bounds_ft": {
+    "x1": 33,
+    "y1": 2,
+    "x2": 49,
+    "y2": 22
+   },
+   "purpose": "Two focused briefing-preparation workstations, leaving the six-seat command table clear.",
+   "source": "FLOOR-06-PENTHOUSE-COMMAND-360-SPEC.md sections 1, 7, 14; existing F6-USER workstation identities"
   }
  ],
  "keep_clear": [
@@ -494,15 +506,23 @@
    "zone": "director-office",
    "occupant": "Helen Clarke",
    "source": "production/workplace-occupancy-v1.json F6",
-   "purpose": "Director Office / Command Desk"
+   "purpose": "Director Office / Command Desk",
+   "size": {
+    "monitors": 0,
+    "keyboard": true,
+    "pedestal": false,
+    "keyboard_y_ft": -0.35
+   },
+   "electronics_reconciliation": "Registered USER monitors replace the exact desk scenic screens; host stands on the actual slab in a verified side bay."
   },
   {
    "id": "F6-OFFICE-HELEN-CLARKE-CHAIR",
    "type": "task_chair_exec",
-   "x": 65.4,
-   "y": 4.4,
+   "x": 65.1,
+   "y": 6.65,
    "rot_deg": 0,
-   "zone": "director-office"
+   "zone": "director-office",
+   "placement_override_reason": "Bring the director chair to the L-desk working edge and align it with the retained keyboard, without occupying the return."
   },
   {
    "id": "F6-OFFICE-GUEST-CHAIR-01",
@@ -544,13 +564,14 @@
    "id": "F6-OFFICE-RUG-01",
    "type": "rug",
    "x": 65.4,
-   "y": 10.0,
+   "y": 13.45,
    "rot_deg": 0,
    "zone": "director-office",
    "size": {
     "w_in": 120,
-    "d_in": 132
-   }
+    "d_in": 48
+   },
+   "placement_override_reason": "Retain the office rug beneath the guest seating, leaving the floor-standing tower on the exposed hard slab."
   },
   {
    "id": "F6-DESK-LI-WEI",
@@ -564,15 +585,22 @@
    },
    "occupant": "Li Wei",
    "source": "production/workplace-occupancy-v1.json F6",
-   "purpose": "Governance / Authority Desk"
+   "purpose": "Governance / Authority Desk",
+   "size": {
+    "monitors": 0,
+    "keyboard": true,
+    "pedestal": false
+   },
+   "electronics_reconciliation": "Registered USER monitors replace the exact desk scenic screens; host stands on the actual slab in a verified side bay."
   },
   {
    "id": "F6-DESK-LI-WEI-CHAIR",
    "type": "task_chair",
-   "x": 65.6,
+   "x": 66.1,
    "y": 22.0,
    "rot_deg": -90,
-   "zone": "governance-desks"
+   "zone": "governance-desks",
+   "placement_override_reason": "Bring the chair to the actual keyboard working edge; keep the under-desk tower in its separate side bay."
   },
   {
    "id": "F6-DESK-MARC-DUBOIS",
@@ -586,15 +614,22 @@
    },
    "occupant": "Marc Dubois",
    "source": "production/workplace-occupancy-v1.json F6",
-   "purpose": "Risk / Mission Sponsor Desk"
+   "purpose": "Risk / Mission Sponsor Desk",
+   "size": {
+    "monitors": 0,
+    "keyboard": true,
+    "pedestal": false
+   },
+   "electronics_reconciliation": "Registered USER monitors replace the exact desk scenic screens; host stands on the actual slab in a verified side bay."
   },
   {
    "id": "F6-DESK-MARC-DUBOIS-CHAIR",
    "type": "task_chair",
-   "x": 65.6,
+   "x": 66.1,
    "y": 28.0,
    "rot_deg": -90,
-   "zone": "governance-desks"
+   "zone": "governance-desks",
+   "placement_override_reason": "Bring the chair to the actual keyboard working edge; keep the under-desk tower in its separate side bay."
   },
   {
    "id": "F6-GOVERNANCE-FILE-01",
@@ -615,6 +650,84 @@
     "w_in": 60
    },
    "source": "HALO-GLOBE-SPATIAL-INTELLIGENCE-SPEC.md (viewing the globe from the south glass)"
+  },
+  {
+   "id": "F6-BRIEFING-PREP-DESK-01",
+   "type": "desk",
+   "x": 37,
+   "y": 4,
+   "rot_deg": 0,
+   "zone": "command-preparation",
+   "size": {
+    "w_in": 72,
+    "d_in": 30,
+    "monitors": 0,
+    "keyboard": true,
+    "pedestal": false
+   },
+   "purpose": "Institutional briefing preparation",
+   "source": "FLOOR-06-PENTHOUSE-COMMAND-360-SPEC.md; existing F6-USER workstation identities"
+  },
+  {
+   "id": "F6-BRIEFING-PREP-DESK-01-CHAIR",
+   "type": "task_chair",
+   "x": 37,
+   "y": 6.65,
+   "rot_deg": 180,
+   "zone": "command-preparation",
+   "source": "F6-BRIEFING-PREP-DESK-01"
+  },
+  {
+   "id": "F6-BRIEFING-PREP-DESK-02",
+   "type": "desk",
+   "x": 45,
+   "y": 4,
+   "rot_deg": 0,
+   "zone": "command-preparation",
+   "size": {
+    "w_in": 72,
+    "d_in": 30,
+    "monitors": 0,
+    "keyboard": true,
+    "pedestal": false
+   },
+   "purpose": "Partner briefing coordination",
+   "source": "FLOOR-06-PENTHOUSE-COMMAND-360-SPEC.md; existing F6-USER workstation identities"
+  },
+  {
+   "id": "F6-BRIEFING-PREP-DESK-02-CHAIR",
+   "type": "task_chair",
+   "x": 45,
+   "y": 6.65,
+   "rot_deg": 180,
+   "zone": "command-preparation",
+   "source": "F6-BRIEFING-PREP-DESK-02"
+  },
+  {
+   "id": "F6-BRIEFING-PREP-DESK-03",
+   "type": "desk",
+   "x": 37,
+   "y": 14.4,
+   "rot_deg": 0,
+   "zone": "command-preparation",
+   "size": {
+    "w_in": 72,
+    "d_in": 30,
+    "monitors": 0,
+    "keyboard": true,
+    "pedestal": false
+   },
+   "purpose": "Current institutional work and briefing coordination",
+   "source": "FLOOR-06-PENTHOUSE-COMMAND-360-SPEC.md; existing F6-USER workstation identities"
+  },
+  {
+   "id": "F6-BRIEFING-PREP-DESK-03-CHAIR",
+   "type": "task_chair",
+   "x": 37,
+   "y": 17.05,
+   "rot_deg": 180,
+   "zone": "command-preparation",
+   "source": "F6-BRIEFING-PREP-DESK-03"
   }
  ]
 }

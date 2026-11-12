@@ -19,9 +19,9 @@
       "tool_chest",
       "workbench"
     ],
-    "furniture_unique_meshes": 15,
-    "furniture_triangles_instanced": 8120,
-    "furniture_triangles_unique": 2436
+    "furniture_unique_meshes": 16,
+    "furniture_triangles_instanced": 7808,
+    "furniture_triangles_unique": 2376
   },
   "furniture_placements": [
     {
@@ -1412,9 +1412,9 @@
   "not_for_construction": true,
   "public_navigation": true,
   "access_model": "normal staffed floor (owner 2026-11-03); plant rooms keep safety doors; live systems simulation-only",
-  "glb_bytes": 269784,
-  "sha256": "b054de2c5e02d15c17a14d5570798defe0b8daee27411c8d41dc60a01325a6e8",
-  "mesh_count": 328,
+  "glb_bytes": 269688,
+  "sha256": "adaf020157ebe6aa0404d4192d14ee00fdf7d72f144c7506a566895ebd647a56",
+  "mesh_count": 329,
   "inventory_records": 67,
   "inventory_modeled": 67,
   "checks_total": 18,

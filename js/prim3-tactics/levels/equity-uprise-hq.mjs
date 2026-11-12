@@ -263,6 +263,13 @@ const floorPart = (n) => ({
 export const MODEL = {
   // published copies first (the web root has no docs/), then the repository checkout
   roots: [new URL('equity-uprise-preview/', ROOT).href, new URL(GENERATED, ROOT).href],
+  // Separate native device layer: absolute feet, including FFE, unlike the metre/local-floor parts.
+  workstations: {
+    file: 'equity-uprise-workstations-v1.glb',
+    catalog: 'equity-uprise-device-components-v1.json',
+    roots: [new URL('equity-uprise-preview/', ROOT).href,
+      new URL('docs/design/equity-uprise-building/production/electronics/generated/', ROOT).href]
+  },
   up: 'z', units: 'm', storeyFt: 13.5,
   // the height above a storey's finished floor where the cutaway slices the building (ceilings, lights and
   // everything above go): 8 ft, under the 11 ft ceilings and over the 7 ft door heads

@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 702,
+  "candidate_count": 710,
   "capability_source_count": 104,
-  "support_only_count": 598,
+  "support_only_count": 606,
   "entries": [
     {
       "path": ".cursorrules",
@@ -52,6 +52,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Single coordinated read-only-by-default Core V2 validation pipeline; generated repository writes are manual, serialized, and non-main only."
+    },
+    {
+      "path": ".github/workflows/equity-uprise-visual.yml",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Read-only PR browser validation captures the canonical building on a loopback fixture server. No deployment, credentials, production calls or program capability."
     },
     {
       "path": ".github/workflows/reconciliation-ci.yml",
@@ -2229,6 +2236,20 @@
       "rationale": "Building screens and screen apps: owner-gated phone apps opened from the 3D building's display surfaces over the Lab Runtime SANDBOX (SCREENS-AND-SCREEN-APPS-SPEC.md). Projects existing building/runtime authority; defines no new program capability."
     },
     {
+      "path": "js/eu-screens/view-framing.mjs",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Fits the existing Equity Uprise scene to unobstructed viewport bounds and computes reversible isolated-floor cutaways. Changes presentation only, not authored geometry or program capability."
+    },
+    {
+      "path": "js/eu-screens/workstation-layer.mjs",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Loads the authored workstation/monitor subset in furnished building views, preserving source coordinates, node identities and visibility. Adds no program capability."
+    },
+    {
       "path": "js/eup-league-member.js",
       "classification": "shared_site_support",
       "capability_ids": [],
@@ -2896,6 +2917,13 @@
       "rationale": "Browser proof of the Control E=Up workspace including the module-policy controls; names Equity Uprise in fixture copy. Test only; no building capability, program or geometry."
     },
     {
+      "path": "scripts/e2e/eu-building-visual.e2e.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Captures actual canonical B1\u2013L7 WebGL views and checks authored device identity, isolation and unavailable state using local test assets."
+    },
+    {
       "path": "scripts/e2e/eu-screens.e2e.mjs",
       "classification": "test_support",
       "capability_ids": [],
@@ -2936,6 +2964,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Accessibility ratchet baseline (axe-core node counts per sitemap page, scripts/e2e/sitemap-a11y.e2e.mjs); it lists the heal-the-3rd-world page by path only. No spatial or program capability is added."
+    },
+    {
+      "path": "scripts/e2e/fixtures/eu-building-visual.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Test-only read-only loopback server and observation fixture for canonical building visual evidence. It is not a published viewer or geometry authority."
     },
     {
       "path": "scripts/e2e/globe-games.e2e.mjs",
@@ -3185,6 +3220,13 @@
       "rationale": "Verifies the B1 mission's real sandbox camera outages reach the building screens' MISSION session and never WORKPLACE; verification support only."
     },
     {
+      "path": "scripts/test/eu-building-visual.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Tests isolation and integrity of the read-only building visual fixture and asynchronous floor visibility. Adds no program capability."
+    },
+    {
       "path": "scripts/test/eu-object-inspector.test.mjs",
       "classification": "test_support",
       "capability_ids": [],
@@ -3204,6 +3246,20 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Tests for the building screens and screen apps (SCREENS-AND-SCREEN-APPS-SPEC.md)."
+    },
+    {
+      "path": "scripts/test/eu-view-framing.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Tests camera field-of-view fitting, HUD exclusion, close inspection and reversible floor cutaway boundaries without changing authored geometry."
+    },
+    {
+      "path": "scripts/test/eu-workstation-layer.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Tests authored workstation asset identity, transforms, availability and normal/plant visibility. Adds no building capability."
     },
     {
       "path": "scripts/test/eup-intake.integration.mjs",

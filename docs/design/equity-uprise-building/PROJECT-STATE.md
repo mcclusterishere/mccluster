@@ -2,6 +2,76 @@
 
 > Update this file whenever completion, maturity, visual direction, or next work changes.
 
+## Device placement and maker-reference repair — 2026-11-12 — DIAGNOSTIC AND SCOPED RENDERED GATES PASSED, owner review open
+
+The source repair now covers all **36 existing workstation hosts and 62 monitors**
+across B1–F6 through 98 explicit support/station bindings. No floor functions,
+Core V2 systems, recurring staff floors or live-control permissions changed.
+B1 technical stations and F2/F3 staff desks retain their furniture placement. F1's
+intake credenza is deepened for the selected Dell envelope. F4 gets coherent
+recording/editing and production stations, F5 gets five wider research carrels,
+and F6 keeps its command/briefing tables clear while Helen remains in her office.
+Only exactly superseded scenic screens are removed; keyboard, seat and capability
+identities are retained. Two F4 display IDs have explicit registered-screen
+replacement mappings instead of being falsely counted as existing scenic meshes.
+
+Seven floor model assignments use source-backed **partial exterior proxies** for
+Lenovo, Dell, Framework, System76, Apple, HP and ASUS. The eight-profile catalog
+also includes a closed ASUS ProArt laptop as an **L7 portable prospect only**.
+L7 remains the open roof, with no new permanent workstation. These are original
+scene meshes with published envelopes and simplified details, not manufacturer
+CAD, approved digital twins or verified physical installations. All sponsor
+states remain unconfirmed, physical assets not received, and live connections
+not connected. The ASUS ET900N G3/DGX Station profile covers its published main
+body only: unsized projecting handles/feet are omitted, and total installed
+height remains unverified.
+
+The generator consumes the complete binding set and manufacturer profiles. A
+separate authored workstation GLB and shared viewer layer are wired into normal
+building/floor views and PRIM3 integration; this is source integration, not browser
+or deployment approval. Unknown monitor state remains dark and sandbox state
+never asserts a live physical host.
+
+Final regenerated geometry passes the combined **`--strict --require-bound`**
+gate: **98/98 bindings**, **0 unsupported contacts**, **0 monitor-panel
+intersections**, including exact manufacturer model, origin and facing checks.
+Both `passed` and `bound_placement_passed` are true in the final v3 report.
+Electronics checks pass **86/86** plus the independent verifier; the canonical
+fabric retains **1,883 assets and 1,330 routed, port-complete connections**.
+Interior **120/120**, combined-building **46/46**, vertical-circulation **44/44**,
+program **466/466** and hardware **67/67** checks pass. F2/F3 station tests **7/7**,
+F4–F6 station tests **7/7**, and manufacturer-model tests **18/18** also pass.
+The post-regeneration root suite passed **2,522 Node tests (4 skipped) and 7 Python
+tests**. Dedicated viewer checks pass **9/9**, and lossless same-export cleanup
+checks pass **16/16**. Remote CI is a separate publication check.
+The original v1 baseline remains 98 unsupported contacts / 33 panel intersections;
+v2 records the historical F1-only pilot, not the current all-floor scope.
+
+Read `FLOOR-DEVICE-REPAIR-V1.md`, `DEVICE-PLACEMENT-RECONCILIATION.md` and
+`MANUFACTURER-MODEL-REFERENCES.md`. B1's separate MDF/rack room mismatch,
+manufacturer installation/thermal/service requirements, complete device fidelity,
+and final owner/material/physical-device review remain open. Local browser startup was blocked
+by the existing socket-permission failure; real CI browser captures are now
+available and exposed framing defects. No final design approval, physical commissioning, PR merge or production
+deployment is claimed.
+
+A read-only PR visual workflow now captures the actual canonical scene at phone
+and desktop widths from a loopback fixture server. It never deploys, calls
+production, uses credentials or changes shipped owner gates. It also exercises
+corrected late-loaded B1/F1 and facade visibility races. Initial captures verified
+all 98 device identities but exposed ceiling occlusion and narrow-screen framing
+failures. A follow-up adds a labeled, reversible 7.5 ft AFF isolated-floor cutaway,
+HUD-aware horizontal/vertical FOV fitting, and real chair-side host/monitor views.
+Room/stack/facade/infrastructure modes retain full architecture. Nineteen targeted
+checks pass with generated floor inputs required; no geometry or pixel threshold
+was changed. The subsequent run on `c17c20bf3cb98210431e9ff76f22887a760c1e1d`
+passes **110/110 checks at both 390 px and 1440 px**. Actual overviews and sampled
+station/mode/failure images pass scoped geometry visibility/support/framing review.
+All 66 original captures and reports are preserved in
+`references/device-repair-visual-v1/README.md`, with byte hashes and stated limits.
+LOW software rendering is not final material or physical-device performance
+approval. The record retains minor prefetch-status and non-room resize-reset issues.
+
 ## Local screen and object reconstruction — 2026-11-03
 
 Unpublished repair based on physical-computer-lab source `18a518f2457eb7985c702e8e4a839ed0dc255a74`. Earlier unpushed patch artifacts were unavailable in this workspace; this is a fresh reconstruction, not proof of a previously saved change.

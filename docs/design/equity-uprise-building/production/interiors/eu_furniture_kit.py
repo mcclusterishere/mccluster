@@ -337,7 +337,9 @@ def form_desk(p, w, d, h, s):
         for i in range(n):
             x = -span / 2 + mw * (i + 0.5) + i * 0.05
             _monitor(p, x, -d / 2 + 0.55, mw, mw * 0.58, h)
-        p.cbox(0, 0.15, min(1.5, w * 0.35), 0.5, h, h + 0.04, "metal")
+    # Registered electronics can replace scenic screens without erasing input furniture.
+    if s.get("keyboard", bool(n)):
+        p.cbox(0, s.get("keyboard_y_ft", 0.15), min(1.5, w * 0.35), 0.5, h, h + 0.04, "metal")
     if s.get("pedestal", True):
         p.cbox(w / 2 - 0.85, -0.2, 1.3, d - 0.9, 0.05, h - 0.2, s.get("pedestal_finish", "metal"))
     if s.get("privacy_screen"):
@@ -359,7 +361,10 @@ def form_desk_l(p, w, d, h, s):
     p.cbox(0.6, -d / 2 + 0.1, w - 1.4, 0.12, 0.3, h - th, top)
     p.cbox(-w / 2 + rd / 2, d / 2 - 0.1, rd, 0.2, 0, h - th, top)
     p.cbox(-w / 2 + rd / 2, ym + md / 2 + 0.6, rd - 0.15, 1.2, 0.05, h - th, "wood_dark")
-    _monitor(p, 0.3, -d / 2 + 0.6, 27 * IN, 27 * IN * 0.58, h)
+    if s.get("monitors", 1):
+        _monitor(p, 0.3, -d / 2 + 0.6, 27 * IN, 27 * IN * 0.58, h)
+    if s.get("keyboard", False):
+        p.cbox(0.3, s.get("keyboard_y_ft", ym + 0.3), min(1.5, w * 0.35), 0.5, h, h + 0.04, "metal")
     p.cbox(1.6, -d / 2 + 0.9, 0.9, 0.6, h, h + 0.05, "paper")
 
 
@@ -378,6 +383,8 @@ def form_workbench(p, w, d, h, s):
         p.cbox(-w * 0.25, -d / 2 + 0.32, 0.9, 0.04, h + 0.12, h + 0.45, "screen")
     if s.get("monitors"):
         _monitor(p, w * 0.22, -d / 2 + 0.55, 24 * IN, 24 * IN * 0.58, h)
+    if s.get("keyboard", False):
+        p.cbox(0, 0.45, min(1.5, w * 0.35), 0.5, h, h + 0.04, "metal")
     if s.get("vise"):
         p.cbox(w / 2 - 0.4, d / 2 - 0.25, 0.5, 0.5, h, h + 0.35, "metal_light")
 
@@ -393,6 +400,8 @@ def form_carrel(p, w, d, h, s):
     p.cbox(0, -d / 2 + 0.2, w * 0.5, 0.06, h + 0.1, h + 0.3, "accent" if s.get("lamp_accent") else "white")
     if s.get("paper", True):
         p.cbox(0.2, 0.1, 0.8, 1.0, h, h + 0.04, "paper")
+    if s.get("keyboard", False):
+        p.cbox(0, 0.45, min(1.5, w * 0.35), 0.5, h, h + 0.04, "metal")
 
 
 def form_shelving(p, w, d, h, s):
