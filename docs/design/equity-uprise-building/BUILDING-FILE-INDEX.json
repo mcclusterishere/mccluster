@@ -14,7 +14,8 @@
     "public_viewer_regex": "^equity-uprise-(?:building-core-v2|floor-0[1-7]|basement-b1)-3d\\.html$",
     "workflows": [
       ".github/workflows/deploy-pages.yml",
-      ".github/workflows/equity-uprise-core-v2-ci.yml"
+      ".github/workflows/equity-uprise-core-v2-ci.yml",
+      ".github/workflows/equity-uprise-visual.yml"
     ],
     "agent_entrypoints": [
       ".cursorrules",
@@ -25,7 +26,7 @@
       "GEMINI.md"
     ]
   },
-  "tracked_count": 391,
+  "tracked_count": 392,
   "categories": {
     "active_references": [
       "docs/design/equity-uprise-building/references/basement-b1/README.md",
@@ -434,7 +435,8 @@
     ],
     "workflows": [
       ".github/workflows/deploy-pages.yml",
-      ".github/workflows/equity-uprise-core-v2-ci.yml"
+      ".github/workflows/equity-uprise-core-v2-ci.yml",
+      ".github/workflows/equity-uprise-visual.yml"
     ]
   },
   "historical_reference_commits": [

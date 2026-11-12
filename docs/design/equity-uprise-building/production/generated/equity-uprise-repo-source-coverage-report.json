@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 704,
+  "candidate_count": 708,
   "capability_source_count": 104,
-  "support_only_count": 600,
-  "checks_total": 2714,
-  "checks_passed": 2714,
+  "support_only_count": 604,
+  "checks_total": 2730,
+  "checks_passed": 2730,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -14,6 +14,7 @@
     ".github/instructions/mccluster.instructions.md",
     ".github/workflows/api-economic-core-ci.yml",
     ".github/workflows/equity-uprise-core-v2-ci.yml",
+    ".github/workflows/equity-uprise-visual.yml",
     ".github/workflows/reconciliation-ci.yml",
     "AGENTS.md",
     "CLAUDE.md",
@@ -397,12 +398,14 @@
     "screens/vms.html",
     "screens/wall.html",
     "scripts/e2e/control-eup.e2e.mjs",
+    "scripts/e2e/eu-building-visual.e2e.mjs",
     "scripts/e2e/eu-screens.e2e.mjs",
     "scripts/e2e/eup-league-member.e2e.mjs",
     "scripts/e2e/fictional-city-camera-inputs.mjs",
     "scripts/e2e/fictional-city-upstairs-audit.e2e.mjs",
     "scripts/e2e/fictional-city.e2e.mjs",
     "scripts/e2e/fixtures/axe-baseline.json",
+    "scripts/e2e/fixtures/eu-building-visual.mjs",
     "scripts/e2e/globe-games.e2e.mjs",
     "scripts/e2e/prim3-artist.e2e.mjs",
     "scripts/e2e/prim3-direct-landings.e2e.mjs",
@@ -438,6 +441,7 @@
     "scripts/test/domain-architecture.test.mjs",
     "scripts/test/equity-product-consumer.test.mjs",
     "scripts/test/equity-uprise-mission-screens.test.mjs",
+    "scripts/test/eu-building-visual.test.mjs",
     "scripts/test/eu-object-inspector.test.mjs",
     "scripts/test/eu-screen-hardware-binding.test.mjs",
     "scripts/test/eu-screens.test.mjs",
@@ -718,7 +722,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "704 entries"
+      "detail": "708 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -822,6 +826,26 @@
     },
     {
       "name": ".github/workflows/equity-uprise-core-v2-ci.yml support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": ".github/workflows/equity-uprise-visual.yml capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": ".github/workflows/equity-uprise-visual.yml classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": ".github/workflows/equity-uprise-visual.yml support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": ".github/workflows/equity-uprise-visual.yml support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -8186,6 +8210,26 @@
       "detail": ""
     },
     {
+      "name": "scripts/e2e/eu-building-visual.e2e.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/eu-building-visual.e2e.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/e2e/eu-building-visual.e2e.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/e2e/eu-building-visual.e2e.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "scripts/e2e/eu-screens.e2e.mjs capability ids known",
       "passed": true,
       "detail": ""
@@ -8302,6 +8346,26 @@
     },
     {
       "name": "scripts/e2e/fixtures/axe-baseline.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/fixtures/eu-building-visual.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/fixtures/eu-building-visual.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/e2e/fixtures/eu-building-visual.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/e2e/fixtures/eu-building-visual.mjs support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -8997,6 +9061,26 @@
     },
     {
       "name": "scripts/test/equity-uprise-mission-screens.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/eu-building-visual.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/eu-building-visual.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/eu-building-visual.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/eu-building-visual.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     },

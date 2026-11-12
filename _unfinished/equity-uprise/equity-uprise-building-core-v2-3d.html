@@ -211,7 +211,7 @@ function ensureDetailedFloor(level){
  const cfg=FLOOR_LOAD_CONFIG[level];if(!cfg)return Promise.reject(new Error('Unknown floor '+level));
  floorLoadErrors.delete(level);status.textContent=(level===0?'B1':'Floor '+level)+' · loading detailed model…';
  const p=loadGltfWithRetry(cfg.url,(level===0?'B1':'Floor '+level)+' detailed model').then(g=>{
-  const root=g.scene;root.rotation.x=-Math.PI/2;if(cfg.y)root.position.y=ft(cfg.y);root.updateMatrixWorld(true);scene.add(root);makeReliable(root);cfg.assign(root);hideDetailedCoreDuplicates(root,level);
+  const root=g.scene;root.rotation.x=-Math.PI/2;if(cfg.y)root.position.y=ft(cfg.y);root.visible=currentFocus==='stack'||currentFocus===String(level);root.updateMatrixWorld(true);scene.add(root);makeReliable(root);cfg.assign(root);hideDetailedCoreDuplicates(root,level);
   if(level===1){enhanceFloor1Interior(root);buildRoomLightRig();markLabVisualRootReady(2)}
   detailedPerimeterMeshes=null;if(level===0)b1StackDupMeshes=null;if(level===7)f7StackDupMeshes=null;stackFrameCache=null;refreshArchitectureGhostAfterLoad();floorLoadErrors.delete(level);return root
  }).catch(err=>{floorLoadPromises.delete(level);floorLoadErrors.set(level,err);throw err});

@@ -1,0 +1,67 @@
+name: Equity Uprise rendered building proof
+
+on:
+  pull_request:
+    paths:
+      - '_unfinished/equity-uprise/**'
+      - 'docs/design/equity-uprise-building/**'
+      - 'js/eu-screens/**'
+      - 'screens/data/**'
+      - 'scripts/e2e/eu-building-visual.e2e.mjs'
+      - 'scripts/e2e/fixtures/eu-building-visual.mjs'
+      - 'scripts/test/eu-building-visual.test.mjs'
+      - '.github/workflows/equity-uprise-visual.yml'
+  workflow_dispatch:
+
+# Artifact-only validation. No deployment, branch writes, secrets or production auth.
+permissions:
+  contents: read
+concurrency:
+  group: equity-uprise-visual-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  rendered-building:
+    name: Render B1–L7 at ${{ matrix.width }}px
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        width: [390, 1440]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Prepare official pinned browser and renderer fixtures
+        run: |
+          npm install --prefix /tmp/eu-building-qa --ignore-scripts --no-audit --no-fund --no-save playwright@1.57.0 three@0.180.0
+          /tmp/eu-building-qa/node_modules/.bin/playwright install --with-deps chromium
+          python -m pip install --disable-pip-version-check numpy scipy trimesh pillow
+      - name: Build ignored detailed floor models from their canonical sources
+        run: |
+          for n in 01 02 03 04 05 06; do
+            python docs/design/equity-uprise-building/production/floor-${n}/build_equity_uprise_floor_${n}_v2.py
+          done
+      - name: Verify fixture boundaries and authored geometry
+        run: node --test scripts/test/eu-building-visual.test.mjs scripts/test/eu-workstation-layer.test.mjs
+      - name: Capture actual local building views and failures
+        env:
+          EU_VISUAL_WIDTH: ${{ matrix.width }}
+          PLAYWRIGHT_DIR: /tmp/eu-building-qa/node_modules
+          THREE_DIR: /tmp/eu-building-qa/node_modules/three
+        run: node scripts/e2e/eu-building-visual.e2e.mjs /tmp/eu-building-proof
+      - name: Preserve screenshots, console, HTTP and per-floor evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: equity-uprise-visual-${{ github.run_id }}-${{ matrix.width }}
+          path: /tmp/eu-building-proof
+          retention-days: 7
+          if-no-files-found: error
