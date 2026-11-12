@@ -1,0 +1,57 @@
+name: Customer self-service
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/customer-selfservice-ci.yml'
+      - 'front*.html'
+      - 'customer-*.html'
+      - 'js/front-*.js'
+      - 'js/customer-*.js'
+      - 'packages/front-config/**'
+      - 'workers/mccluster/src/member-fronts.js'
+      - 'workers/mccluster/src/creator-*.js'
+      - 'workers/mccluster/src/customer-*.js'
+      - 'workers/mccluster/test/**'
+      - 'supabase/pending/**'
+      - 'supabase/tests/**'
+      - 'scripts/test-member-fronts-db.sh'
+      - 'scripts/test/member-front-pages.test.mjs'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  member-fronts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Test real storage policies with isolated accounts
+        run: bash scripts/test-member-fronts-db.sh
+      - name: Test publish, privacy, recovery and tenant boundaries without network
+        run: >-
+          node --import ./workers/mccluster/test/support/offline-network.mjs --test
+          workers/mccluster/test/member-fronts.test.mjs
+          scripts/test/member-front-pages.test.mjs

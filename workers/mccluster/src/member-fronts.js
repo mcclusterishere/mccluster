@@ -81,11 +81,18 @@ export async function handleMemberFronts(request, env, { fetchImpl = fetch } = {
     const prefix = mediaPrefix(env.SUPABASE_URL, user.id);
     const rows = await service(env, `member_fronts?m_uid=eq.${acct.m_uid}&select=draft,published,published_at,updated_at,removed_at,handle&limit=1`, {}, fetchImpl);
     const row = (rows && rows[0]) || null;
+    // Publishing must not claim success for a page the public read route hides.
+    // Never change the member's profile visibility as a side effect of publishing.
+    const profiles = await service(env, `network_profiles?m_uid=eq.${acct.m_uid}&select=visibility&limit=1`, {}, fetchImpl);
+    const profile = profiles && profiles[0];
+    const publishBlocker = row?.removed_at ? 'removed' : !profile ? 'profile_required' : profile.visibility === 'private' ? 'private_profile' : null;
+    const availability = { profile_visibility: profile?.visibility || null, publish_blocker: publishBlocker,
+      publicly_available: Boolean(row?.published && !publishBlocker) };
 
     if (rest === 'me' && request.method === 'GET') {
       return send(request, env, { ok: true, handle: acct.handle, name: acct.name, avatar: acct.avatar, media_prefix: prefix, max_bytes: FRONT_MAX_BYTES,
         draft: row ? row.draft : null, published: row ? row.published : null, published_at: row ? row.published_at : null,
-        updated_at: row ? row.updated_at : null, removed: !!(row && row.removed_at), url: `front.html?u=${encodeURIComponent(acct.handle)}` });
+        updated_at: row ? row.updated_at : null, removed: !!(row && row.removed_at), ...availability, url: `front.html?u=${encodeURIComponent(acct.handle)}` });
     }
     if (rest === 'me' && request.method === 'POST') {
       let body;
@@ -95,12 +102,17 @@ export async function handleMemberFronts(request, env, { fetchImpl = fetch } = {
       if (!checked.ok) return refuse(request, env, 'The front page is too large', 413, { size: checked.size, max: FRONT_MAX_BYTES });
       const publish = body.publish === true;
       if (publish && row && row.removed_at) return refuse(request, env, 'This front page was taken down by McCluster and cannot be published', 403, { code: 'removed' });
+      if (publish && publishBlocker) return refuse(request, env,
+        publishBlocker === 'private_profile' ? 'Your profile is private. Change its visibility before publishing your front page.' : 'Complete your profile before publishing your front page.',
+        409, { code: publishBlocker, recovery_url: publishBlocker === 'private_profile' ? 'mccluster-creator-studio.html' : 'mnet.html?view=profile' });
       const now = new Date().toISOString();
       const fields = { m_uid: acct.m_uid, auth_user_id: user.id, handle: acct.handle, draft: checked.config, updated_at: now };
       if (publish) { fields.published = checked.config; fields.published_at = now; }
       await service(env, 'member_fronts?on_conflict=m_uid', { method: 'POST', headers: { prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify(fields) }, fetchImpl);
       return send(request, env, { ok: true, handle: acct.handle, draft: checked.config, published: publish ? checked.config : (row ? row.published : null),
-        published_at: publish ? now : (row ? row.published_at : null), dropped: checked.dropped, url: `front.html?u=${encodeURIComponent(acct.handle)}` });
+        published_at: publish ? now : (row ? row.published_at : null), ...availability,
+        publicly_available: !publishBlocker && (publish || Boolean(row?.published)),
+        dropped: checked.dropped, url: `front.html?u=${encodeURIComponent(acct.handle)}` });
     }
     if (rest === 'me/published' && request.method === 'DELETE') {
       if (row) await service(env, `member_fronts?m_uid=eq.${acct.m_uid}`, { method: 'PATCH', headers: { prefer: 'return=minimal' }, body: JSON.stringify({ published: null, published_at: null, updated_at: new Date().toISOString() }) }, fetchImpl);
@@ -131,7 +143,7 @@ export async function handleMemberFronts(request, env, { fetchImpl = fetch } = {
     /* a private profile has no public front page either */
     const prof = await service(env, `network_profiles?m_uid=eq.${row.m_uid}&select=display_name,avatar_url,headline,visibility&limit=1`, {}, fetchImpl);
     const p = (prof && prof[0]) || {};
-    if (p.visibility === 'private') return refuse(request, env, 'No front page here yet', 404, { code: 'no_front' });
+    if (!prof?.length || p.visibility === 'private') return refuse(request, env, 'No front page here yet', 404, { code: 'no_front' });
     /* checked again on the way out: a row can only ever show its own account's media */
     const checked = validateFront(row.published, { mediaPrefix: mediaPrefix(env.SUPABASE_URL, row.auth_user_id) });
     if (!checked.ok) return refuse(request, env, 'No front page here yet', 404, { code: 'no_front' });
