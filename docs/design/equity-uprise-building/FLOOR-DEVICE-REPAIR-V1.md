@@ -42,9 +42,11 @@ Only the exact bound desk/bench scenic screens are suppressed. Independent keybo
 
 F4 has two explicit replacements: `F4-RECORDING-MONITOR-01` maps to USER monitor pair 03; `F4-EDIT-DISPLAY-01` maps to pair 04. Only their old bezel/screen geometry and the exact obsolete edit display backer are removed. The F4 floor report records **66 modeled inventory IDs plus 2 replaced IDs**, instead of claiming absent meshes still exist. These capability identities remain in the source inventory and their mappings must remain discoverable.
 
-`production/electronics/generated/equity-uprise-workstations-v1.glb` provides an authored workstation-only layer. `js/eu-screens/workstation-layer.mjs` is wired into building/floor views, the screen building app and PRIM3 integration, with floor isolation, duplicate-layer avoidance and explicit unavailable state. It does not generate replacement geometry, invent placement, advance boot state or connect a real host. Unknown monitor state stays dark; visible signal is labeled sandbox state. A late-loaded B1/F1 neighbor now inherits current floor/stack visibility instead of reappearing after isolation.
+`production/electronics/generated/equity-uprise-workstations-v1.glb` provides an authored workstation-only layer. `js/eu-screens/workstation-layer.mjs` is wired into building/floor views, the screen building app and PRIM3 integration, with floor isolation, duplicate-layer avoidance and explicit unavailable state. It does not generate replacement geometry, invent placement, advance boot state or connect a real host. Unknown monitor state stays dark; visible signal is labeled sandbox state. Late-loaded B1/F1 neighbors and the facade now inherit current floor/stack visibility instead of reappearing after isolation.
 
 The read-only `equity-uprise-visual.yml` PR workflow captures actual canonical WebGL views at 390 and 1440 pixels using local assets and pinned browser/renderer packages. A test-only observer is appended only by its loopback server. It uses no credentials, production requests, deployment or branch writes, and does not promote unfinished viewers. PNGs, exact device counts, world bounds, asset hashes and failure logs are artifacts for review, not automatic aesthetic approval.
+
+The first real phone/desktop captures exposed ceiling occlusion and camera framing failures despite correct component identities. The follow-up uses a labeled, reversible 7.5 ft AFF presentation cutaway for isolated B1–F6 views, preserves full architecture in room/stack/facade/infrastructure modes, and fits the real visible bounds to the HUD-free viewport using both horizontal and vertical field of view. Device views use actual authored seats and post-controls triangle sightlines, with individual host/monitor captures where a complete station cannot fit. No model geometry, placement, owner gate or pixel threshold is changed. Fresh rendered acceptance remains pending.
 
 ## Verification checkpoint
 
@@ -56,8 +58,8 @@ The following are measured source/geometry checkpoints, not visual acceptance:
 - Final `production/interiors/device-placement-audit-v3.json`: **98/98 bindings passed**, **0 unresolved contacts**, **0 monitor-panel intersections**, with both `passed` and `bound_placement_passed` true. Exact support, manufacturer model, origin and facing pass against regenerated geometry. The intermediate Framework-origin mismatch was fixed by rebuilding, not exempted.
 - Electronics checks **86/86** plus the independent verifier pass. The fabric retains **1,883 assets and 1,330 routed, port-complete connections**. Final full electronics GLB: **12,432,680 bytes**; dedicated workstation GLB: **1,066,788 bytes**.
 - Interior checks **120/120**, combined building **46/46**, vertical circulation **44/44**, program coverage **466/466**, and hardware **67/67** pass.
-- The full root suite after final regeneration passed **2,518 Node tests (4 skipped) and 7 Python tests**. The dedicated viewer suite passed **9/9**, including exact final-GLB component identities and world transforms. The same-export cleanup suite passed **16/16**; its proof preserves every node, primitive, populated metadata record and BIN byte while removing only allowed redundant optional fields.
-- Browser startup failed before page load with the existing socket-permission restriction. No desktop/mobile screenshots, browser approval or visual completion are claimed.
+- The full root suite after final regeneration passed **2,522 Node tests (4 skipped) and 7 Python tests**. The dedicated viewer suite passed **9/9**, including exact final-GLB component identities and world transforms. The same-export cleanup suite passed **16/16**; its proof preserves every node, primitive, populated metadata record and BIN byte while removing only allowed redundant optional fields.
+- Local browser startup remains unavailable because of the existing socket-permission restriction. The first CI browser captures loaded all 98 device identities correctly, but exposed real framing/occlusion defects. The camera/cutaway follow-up passes 19 targeted tests with all generated floor inputs required. Fresh screenshots must be reviewed before visual completion is claimed.
 
 The final regenerated floors and electronics passed this diagnostic acceptance command:
 
@@ -69,7 +71,7 @@ Both the report's placement result and all bound support/origin/facing checks pa
 
 ## Remaining work
 
-1. Complete the post-regeneration full-root regression run and existing PR publication/CI checks. The final strict combined geometry gate has passed; this is not a merge or deployment claim.
+1. Complete the framing follow-up PR publication/CI checks. The post-regeneration root suite and final strict combined geometry gate have passed; this is not a merge or deployment claim.
 2. Review normal-room, isolated-floor and stacked views on desktop and mobile. No test substitutes for visual acceptance.
 3. Reconcile B1's separate MDF/rack anchor at about (45, 62.8) with the actual Network/Telecom room at X32–52 / Y22–34, including service/cable routing. Workstation repair does not resolve that mismatch.
 4. Verify manufacturer installation/service requirements and improve visual fidelity where references remain incomplete. Procurement, sponsor outreach, asset receipt and physical compute allocation require separate real-world evidence and authorization.

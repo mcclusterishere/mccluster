@@ -18,6 +18,7 @@ test('read-only visual workflow is artifact-only, pinned, and cannot publish or 
   assert.match(yml,/width: \[390, 1440\]/);
   assert.match(yml,/playwright@1\.57\.0 three@0\.180\.0/);
   assert.match(yml,/for n in 01 02 03 04 05 06/);
+  assert.match(yml,/EU_VISUAL_REQUIRE_GENERATED: '1'/);assert.match(yml,/eu-view-framing\.test\.mjs/);
   assert.match(yml,/if: always\(\)/);assert.match(yml,/actions\/upload-artifact@[a-f0-9]{40}/);
   for(const line of yml.split('\n').filter(l=>/uses:/.test(l)))assert.match(line,/@[a-f0-9]{40}\s*$/);
 });
@@ -103,4 +104,20 @@ test('visual runner requires every B1–L7 capture and preserves evidence instea
   assert.match(runner,/return route\.abort\('blockedbyclient'\)/);
   assert.doesNotMatch(runner,/access_token|refresh_token|mccdb_session|https:\/\/api\.mccluster\.org|--no-sandbox/);
   assert.match(runner,/Human visual approval pending/);assert.match(runner,/process\.exitCode=1/);
+});
+
+test('late facade loading cannot re-cover an isolated floor or room, but stack and facade keep it',async()=>{
+  const html=await source('_unfinished/equity-uprise'+VIEWER_PATH);
+  const start=html.indexOf('function ensureFacadeRoot(){'),end=html.indexOf('function ensureServicesLayer',start);
+  assert.ok(start>0&&end>start);
+  for(const selected of ['0','1','6','stack','facade']){
+    let finish;const deferred=new Promise(resolve=>finish=resolve),noOp=()=>{};
+    const root={visible:true,rotation:{x:0},updateMatrixWorld(){}};
+    const ctx={Promise,facade:null,facadeLoadPromise:null,currentFocus:'stack',loadGltfWithRetry:()=>deferred,
+      scene:{add:noOp},makeFacadeReliable:noOp,applyFacadeBrandSlots:noOp,stackFrameCache:{},refreshArchitectureGhostAfterLoad:noOp};
+    runInNewContext(html.slice(start,end),ctx);
+    const loading=ctx.ensureFacadeRoot();ctx.currentFocus=selected;finish({scene:root});await loading;
+    assert.equal(root.visible,selected==='stack'||selected==='facade',selected);
+    assert.equal(root.rotation.x,-Math.PI/2);assert.equal(ctx.facade,root);
+  }
 });

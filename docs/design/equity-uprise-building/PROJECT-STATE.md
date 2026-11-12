@@ -41,7 +41,7 @@ fabric retains **1,883 assets and 1,330 routed, port-complete connections**.
 Interior **120/120**, combined-building **46/46**, vertical-circulation **44/44**,
 program **466/466** and hardware **67/67** checks pass. F2/F3 station tests **7/7**,
 F4–F6 station tests **7/7**, and manufacturer-model tests **18/18** also pass.
-The post-regeneration root suite passed **2,518 Node tests (4 skipped) and 7 Python
+The post-regeneration root suite passed **2,522 Node tests (4 skipped) and 7 Python
 tests**. Dedicated viewer checks pass **9/9**, and lossless same-export cleanup
 checks pass **16/16**. Remote CI is a separate publication check.
 The original v1 baseline remains 98 unsupported contacts / 33 panel intersections;
@@ -50,15 +50,21 @@ v2 records the historical F1-only pilot, not the current all-floor scope.
 Read `FLOOR-DEVICE-REPAIR-V1.md`, `DEVICE-PLACEMENT-RECONCILIATION.md` and
 `MANUFACTURER-MODEL-REFERENCES.md`. B1's separate MDF/rack room mismatch,
 manufacturer installation/thermal/service requirements, complete device fidelity,
-and desktop/mobile visual review remain open. Browser startup was blocked before
-page load by the existing socket-permission failure. No visual approval, physical
-commissioning, PR merge or production deployment is claimed.
+and desktop/mobile visual review remain open. Local browser startup was blocked
+by the existing socket-permission failure; real CI browser captures are now
+available and exposed framing defects. No visual approval, physical commissioning,
+PR merge or production deployment is claimed.
 
 A read-only PR visual workflow now captures the actual canonical scene at phone
 and desktop widths from a loopback fixture server. It never deploys, calls
 production, uses credentials or changes shipped owner gates. It also exercises
-a corrected late-loaded B1/F1 neighbor visibility race. Rendered acceptance
-remains pending until its screenshots and results are reviewed.
+corrected late-loaded B1/F1 and facade visibility races. Initial captures verified
+all 98 device identities but exposed ceiling occlusion and narrow-screen framing
+failures. A follow-up adds a labeled, reversible 7.5 ft AFF isolated-floor cutaway,
+HUD-aware horizontal/vertical FOV fitting, and real chair-side host/monitor views.
+Room/stack/facade/infrastructure modes retain full architecture. Nineteen targeted
+checks pass with generated floor inputs required; no geometry or pixel threshold
+was changed. Rendered acceptance remains pending fresh screenshots and review.
 
 ## Local screen and object reconstruction — 2026-11-03
 

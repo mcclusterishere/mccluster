@@ -10,6 +10,7 @@ on:
       - 'scripts/e2e/eu-building-visual.e2e.mjs'
       - 'scripts/e2e/fixtures/eu-building-visual.mjs'
       - 'scripts/test/eu-building-visual.test.mjs'
+      - 'scripts/test/eu-view-framing.test.mjs'
       - '.github/workflows/equity-uprise-visual.yml'
   workflow_dispatch:
 
@@ -50,7 +51,9 @@ jobs:
             python docs/design/equity-uprise-building/production/floor-${n}/build_equity_uprise_floor_${n}_v2.py
           done
       - name: Verify fixture boundaries and authored geometry
-        run: node --test scripts/test/eu-building-visual.test.mjs scripts/test/eu-workstation-layer.test.mjs
+        env:
+          EU_VISUAL_REQUIRE_GENERATED: '1'
+        run: node --test scripts/test/eu-building-visual.test.mjs scripts/test/eu-workstation-layer.test.mjs scripts/test/eu-view-framing.test.mjs
       - name: Capture actual local building views and failures
         env:
           EU_VISUAL_WIDTH: ${{ matrix.width }}

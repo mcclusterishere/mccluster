@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 708,
+  "candidate_count": 710,
   "capability_source_count": 104,
-  "support_only_count": 604,
+  "support_only_count": 606,
   "entries": [
     {
       "path": ".cursorrules",
@@ -2236,6 +2236,13 @@
       "rationale": "Building screens and screen apps: owner-gated phone apps opened from the 3D building's display surfaces over the Lab Runtime SANDBOX (SCREENS-AND-SCREEN-APPS-SPEC.md). Projects existing building/runtime authority; defines no new program capability."
     },
     {
+      "path": "js/eu-screens/view-framing.mjs",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Fits the existing Equity Uprise scene to unobstructed viewport bounds and computes reversible isolated-floor cutaways. Changes presentation only, not authored geometry or program capability."
+    },
+    {
       "path": "js/eu-screens/workstation-layer.mjs",
       "classification": "building_projection_support",
       "capability_ids": [],
@@ -3239,6 +3246,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Tests for the building screens and screen apps (SCREENS-AND-SCREEN-APPS-SPEC.md)."
+    },
+    {
+      "path": "scripts/test/eu-view-framing.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Tests camera field-of-view fitting, HUD exclusion, close inspection and reversible floor cutaway boundaries without changing authored geometry."
     },
     {
       "path": "scripts/test/eu-workstation-layer.test.mjs",

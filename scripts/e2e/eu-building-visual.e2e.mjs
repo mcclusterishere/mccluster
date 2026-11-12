@@ -57,6 +57,12 @@ function verifyFloor(state,level) {
   assert.equal(new Set(names).size,names.length,'no duplicate component rendering');
   assert.equal(state.fullElectronicsVisible,false,'normal view does not expose full fabric');
   assert.equal(state.servicesVisible,false,'normal view does not expose services');
+  assert.equal(state.facadeVisible,false,'late facade cannot cover an isolated floor');
+  assert.equal(state.presentation.clipPlanes,level===7?0:1,'only isolated interior overview uses the labeled cutaway');
+  const rect=state.camera.viewport;
+  assert.equal(state.camera.projectedBounds.length,8,'real visible floor bounds were projected');
+  assert.ok(state.camera.projectedBounds.every(p=>p.x>=rect.left-1&&p.x<=rect.right+1&&p.y>=rect.top-1&&p.y<=rect.bottom+1),
+    'entire floor fits the actual HUD-free viewport');
   assert.deepEqual(state.rootTransform.position,[0,0,0]);
   for(const scale of state.rootTransform.scale)assert.ok(Math.abs(scale-.3048)<1e-9);
   assert.ok(Math.abs(state.rootTransform.rotation[0]+Math.PI/2)<1e-9,'one Z-up conversion');
@@ -121,15 +127,23 @@ try {
   const initial=await capture('B1-initial-stream');
   check('initial B1 stream keeps its prefetched F1 neighbor hidden',
     initial.floors.filter(f=>f.visible).map(f=>f.level).join(',')==='0',initial.floors);
+  check('initial B1 stream keeps the asynchronously loaded facade hidden',!initial.facadeVisible,initial.facadeVisible);
   for(let level=0;level<=7;level++){
     try{
       await selectFloor(level);
       const state=await capture(`${floorName(level)}-overview`);
       check(floorName(level)+': authored floor/device contract',true,verifyFloor(state,level));
       const host=expectedFor(level).find(d=>d.archetype==='workstation');
-      if(host){const framing=await page.evaluate(id=>__euVisualFixture.frameStation(id),host.asset_id);
-        await capture(`${floorName(level)}-station`,{framing,manufacturer:host.manufacturer_model,
-          note:'Source-backed proposed exterior; sponsor unconfirmed, no live host. Camera-only detail view.'});}
+      if(host){
+        const stationDevices=expectedFor(level).filter(d=>d.support_binding?.station_id===host.support_binding.station_id);
+        for(const device of stationDevices){
+          const framing=await page.evaluate(({hostId,focusId})=>__euVisualFixture.frameStation(hostId,focusId),{hostId:host.asset_id,focusId:device.asset_id});
+          const suffix=device.archetype==='workstation'?'':`-${device.asset_id}`;
+          await capture(`${floorName(level)}-station${suffix}`,{framing,manufacturer:host.manufacturer_model,
+            note:'Source-backed proposed exterior; sponsor unconfirmed, no live host. Each exact assembly captured separately without hiding other objects.'});
+          check(`${device.asset_id}: unobstructed post-controls sightline`,framing.clearSightlines.includes(device.asset_id),framing);
+        }
+      }
     }catch(error){check(floorName(level)+': capture/contract',false,String(error.stack||error));
       await page.screenshot({path:join(OUT,`${WIDTH}-${floorName(level)}-failure.png`)}).catch(()=>{});}
   }
@@ -137,22 +151,29 @@ try {
   await page.waitForFunction(()=>__euVisualFixture.snapshot().focus==='stack');
   const stack=await capture('whole-building-stack');
   check('whole stack retains all eight loaded detailed floors',stack.floors.every(f=>f.loaded&&f.visible),stack.floors);
+  check('whole stack restores unclipped architecture',stack.presentation.clipPlanes===0,stack.presentation);
+  const stackRect=stack.camera.viewport;
+  check('whole stack fits the actual HUD-free viewport',stack.camera.projectedBounds.length===8&&stack.camera.projectedBounds.every(p=>
+    p.x>=stackRect.left-1&&p.x<=stackRect.right+1&&p.y>=stackRect.top-1&&p.y<=stackRect.bottom+1),stack.camera);
   check('whole stack renders exactly 98 authored hosts/monitors',stack.devices.length===records.length,stack.devices.length);
   await page.locator('[data-f="facade"]').click();
   await page.waitForFunction(()=>__euVisualFixture.snapshot().focus==='facade');
   const facade=await capture('facade');
   check('facade hides all detailed floors and workstation descendants',facade.devices.length===0&&facade.floors.every(f=>!f.visible));
+  check('facade restores unclipped architecture',facade.presentation.clipPlanes===0,facade.presentation);
   await selectFloor(1);
   await page.locator('#plant').click();
   await page.waitForFunction(()=>__euVisualFixture.snapshot().fullElectronicsVisible,null,{timeout:90000});
   const plant=await capture('F1-physical-plant');
   check('plant owns the assemblies without duplicate dedicated meshes',plant.plant&&plant.devices.length===0&&
     !plant.workstationRootVisible&&expectedFor(1).every(d=>plant.fullDeviceIds.includes(d.asset_id)),plant.fullDeviceIds.length);
+  check('plant restores unclipped architecture',plant.presentation.clipPlanes===0,plant.presentation);
   await page.locator('#roommode').click();
   await page.waitForFunction(()=>__euVisualFixture.snapshot().room);
   const room=await capture('F1-room-from-plant');
   check('room restores authored workstations and hides full electronics',room.devices.length===expectedFor(1).length&&
     !room.fullElectronicsVisible&&!room.servicesVisible,room.devices.length);
+  check('room restores unclipped architecture',room.presentation.clipPlanes===0,room.presentation);
   await page.locator('#roomExit').click();
   await page.waitForFunction(()=>!__euVisualFixture.snapshot().room);
   await page.locator('#plant').click();
@@ -168,6 +189,7 @@ try {
   const unavailable=await capture('missing-workstation-asset');
   check('missing asset fails closed with unavailable text and zero substitutes',unavailable.devices.length===0&&
     /unavailable.*no substitute screens/i.test(await page.locator('#workstationStatus').textContent()));
+  check('missing workstation asset still preserves isolated-floor architecture',!unavailable.facadeVisible,unavailable.facadeVisible);
   report.expectedMissingAssetResponses=report.httpFailures.slice(expectedFailureStart)
     .filter(r=>r.status===404&&new URL(r.url).pathname.endsWith('/equity-uprise-workstations-v1.glb'));
   report.httpFailures=report.httpFailures.filter(r=>!report.expectedMissingAssetResponses.includes(r));
