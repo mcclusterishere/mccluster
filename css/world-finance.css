@@ -1,0 +1,9 @@
+/* Finance adds one owner mode; private holdings never become a public World layer. */
+.hu-social-only .wt-world-modes [data-world-mode="finance"] { display:none; }
+html[data-world-owner] .wt-world-modes { width:min(330px,calc(100% - 24px)); }
+[data-world-mode="finance"] :is(#wtPlanner,#wtSocial,#mnPlaceCard,#huWorldFilters,#mnWorldLayers,#mnWorldLive,.mn__world-tag,.wt-headline) { display:none!important; }
+.wf-panel { min-width:0; color:#edf4f0; font:400 15px/1.5 var(--mn-ui,system-ui,sans-serif); }
+.wf-panel h3 { font-size:23px; line-height:1.2; }
+.wf-panel [data-f-roster] { border-top:0; }
+.wf-panel a { color:#91e1f6; }
+.wf-panel button:focus-visible,.wf-panel input:focus-visible,.wf-panel a:focus-visible { outline:3px solid #91e1f6; outline-offset:3px; }

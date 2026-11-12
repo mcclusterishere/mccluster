@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 
 const source=readFileSync(new URL('../../js/action-globe.js',import.meta.url),'utf8');
 const layer=source.slice(source.indexOf('/* Completed cohort events'),source.indexOf('/* the network band'));
-const mode=source.slice(source.indexOf('function setTravelMode('),source.indexOf('function drawJourney('));
+const mode=source.slice(source.indexOf('function setFinanceMode('),source.indexOf('function drawJourney('));
 const listener=source.slice(source.indexOf("window.addEventListener('message'"),source.indexOf(';let missions=[]'));
 const event={id:'docket-516r-2025-capstone',title:'Equity Rise Graduation & Showcase',latitude:41.169913500774,longitude:-73.187838263174,date:'2025-10-05',url:'https://matthew.mccluster.org/docket-516r-cohort.html#capstone'};
 
@@ -16,10 +16,11 @@ function harness({analytics=false}={}){
  const window={addEventListener:(type,fn)=>{if(type==='message')receive=fn;}};
  const document={documentElement:{classList:{toggle(){}}},querySelector(){return null;}};
  const Cesium={Color:{fromCssColorString:c=>c,BLACK:'#000'},Cartesian3:{fromDegrees:(...p)=>p},Cartesian2:class {constructor(x,y){this.x=x;this.y=y;}},DistanceDisplayCondition:class {constructor(near,far){this.near=near;this.far=far;}},LabelStyle:{FILL_AND_OUTLINE:'outline'}};
- const viewer={camera:{cancelFlight(){}},entities:{add:e=>{entities.push(e);return e;},remove:e=>{const i=entities.indexOf(e);if(i>=0)entities.splice(i,1);}}};
+ const viewer={camera:{cancelFlight(){}},scene:{requestRender(){}},entities:{add:e=>{entities.push(e);return e;},remove:e=>{const i=entities.indexOf(e);if(i>=0)entities.splice(i,1);}}};
  const api=new Function('window','document','location','parentFrame','ANALYTICS','EDITORIAL','Cesium','tell',`
-  let viewer,travelMode=false,journeyEntities=[],showMissions=true,showCities=true,readyMessage=null;
+  let viewer,travelMode=false,financeMode=false,journeyEntities=[],showMissions=true,showCities=true,readyMessage=null;
   let currentLocation=null,routeFlyPending=false,locationFlyPending=false,locationAnimatePending=false,journeyFlyPending=false;
+  const isOwner=()=>true,regionOutlines=[],setSelection=()=>{},closeDetail=()=>{};
   const $=()=>null,travelStyle=()=>{},draw=()=>{},travelVisibility=()=>{},scheduleTravelControls=()=>{},scheduleTravelCamera=()=>{};
   function clear(arr){arr.forEach(e=>viewer.entities.remove(e));arr.length=0;}
   ${mode}
@@ -74,6 +75,11 @@ test('Travel and other modes clear the completed layer, and stale selections do 
  h.send({type:'hu:completed-missions',events:[event],on:true});
  assert.equal(h.entities.length,0,'archive messages cannot show pins in Travel');
  h.send({type:'hu:travel-mode',on:false});
+ assert.equal(h.entities.length,1);
+ h.send({type:'hu:finance-mode',on:true});
+ assert.equal(h.entities.length,0,'Finance suppresses unrelated completed mission pins');
+ assert.equal(h.select(event.id),false);
+ h.send({type:'hu:finance-mode',on:false});
  assert.equal(h.entities.length,1);
  h.send({type:'hu:completed-missions',events:[],on:false});
  assert.deepEqual(h.state(),{on:false,events:0,pins:0});

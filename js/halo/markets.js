@@ -91,7 +91,7 @@
 
     /* ---------- the card ---------- */
     function onCountry(e) { const c = e && e.detail; if (!on || !c || c.stateOnly || !/^[A-Z]{2}$/.test(c.code || '')) return; openCountry(c.code, c.name); }
-    function pick(id) { if (!on || !id || !id.marketPick) return false; openCountry(id.country, null, id.mic); return true; }
+    function pick(id) { if (!on || !id || !id.marketPick) return false; if(id.financeCompany){build();ui.root.hidden=false;finance?.setVisible(true);finance?.selectLeadership(id.symbol,id.mic);document.documentElement.setAttribute('data-halo-markets','open');return true;} openCountry(id.country, null, id.mic); return true; }
 
     function ago(iso) {
       const t = Date.parse(iso || ''); if (!Number.isFinite(t)) return 'age unknown';
@@ -141,6 +141,7 @@
     }
     function close() {
       if (!ui) return;
+      finance?.setVisible(false);
       ui.root.hidden = true; card = null; listing = null; company = null; chart = null; companySeq++; cardSeq++; listSeq++;
       document.documentElement.removeAttribute('data-halo-markets');
       changed();
@@ -149,6 +150,7 @@
       build();
       const my = ++cardSeq; listSeq++;
       card = { country: { iso2: code, name: name || code } }; listing = null; company = null; chart = null; companySeq++; listQ = ''; listMic = mic || null; ui.q.value = '';
+      finance?.setVisible(true);
       ui.root.hidden = false; document.documentElement.setAttribute('data-halo-markets', 'open');
       ui.title.textContent = name || code; ui.sub.textContent = 'Loading…';
       ui.gdp.innerHTML = ui.ex.innerHTML = ui.company.innerHTML = ui.chart.innerHTML = ui.news.innerHTML = ui.rows.innerHTML = ''; ui.note.textContent = ''; ui.more.hidden = true;

@@ -39,7 +39,7 @@ let draft = freshDraft(), savedId = null, dirty = false, busy = false, revision 
 let rideSub = 'directions', flightSub = 'commercial';
 /* Consumer World: feed plus Environmental Justice on the same globe. The
    hu-social-only switch still keeps general Travel and Missions owner-only. */
-const MODES = document.documentElement.classList.contains('hu-social-only') ? ['posts', 'environment'] : ['travel', 'missions', 'posts', 'environment'];
+const MODES = document.documentElement.classList.contains('hu-social-only') ? ['posts', 'environment'] : ['travel', 'missions', 'posts', 'environment', 'finance'];
 let catalogPromise, currentMode = MODES[0], hostVisible = document.body.dataset.worldAudioVisible !== 'false';
 const send = data => frame?.contentWindow?.postMessage(data, location.origin);
 const status = (message = '') => { $('wtMessage').textContent = message; };
@@ -214,6 +214,7 @@ function renderGlobe(fly = false) {
   const travel = currentMode === 'travel';
   root.classList.toggle('wt-local-map', travel && (!!route || !!liveFix));
   send({ type:'hu:travel-mode', on:travel });
+  send({ type:'hu:finance-mode', on:currentMode === 'finance' });
   send({ type:'hu:map-pick-mode', kind:travel ? mapPick : null });
   send({ type:'hu:journey', points:[draft.from, draft.to].filter(hasCoordinates).map(p => ({ label:p.label.split(',')[0], coordinates:p.coordinates })), connect:draft.mode === 'flight', fly });
   send({ type:'hu:route', route:travel && route ? { geometry:route.geometry, origin:route.origin, destination:route.destination } : null, fly });
@@ -695,7 +696,7 @@ function setMode(mode) {
   if (mode !== currentMode) { setMapPick(null); invalidateRoute(); closeSearches(); }
   currentMode = mode; root.dataset.worldMode = mode;
   if (mode !== 'travel') root.classList.remove('wt-expanded');
-  frame.title = mode === 'environment' ? 'Environmental Justice globe. Drag to explore; select an observation to see its source and safe actions.' : mode === 'travel' ? 'Travel map. Drag to explore; your selected places and road directions appear here.' : 'Equity Uprise globe. Drag to explore; select a mission pin to see its details.';
+  frame.title = mode === 'finance' ? 'Owner Finance globe. Company business addresses, sourced financial snapshots and public leadership.' : mode === 'environment' ? 'Environmental Justice globe. Drag to explore; select an observation to see its source and safe actions.' : mode === 'travel' ? 'Travel map. Drag to explore; your selected places and road directions appear here.' : 'Equity Uprise globe. Drag to explore; select a mission pin to see its details.';
   root.classList.remove('hu-search-open'); $('huSearchToggle').setAttribute('aria-expanded', 'false');
   document.querySelectorAll('[data-world-mode][aria-pressed]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.worldMode === mode)));
   $('mnWorldFeed').scrollTop = 0; renderDirections(); renderGlobe(); autoLocate();
@@ -864,11 +865,11 @@ $('wtMapNavGo').onclick = () => $('wtNavigate').click();
 $('wtMapNavStop').onclick = () => $('wtStopNavigation').click();
 $('wtMapNavRecenter').onclick = () => $('wtRecenter').click();
 expanded.addEventListener('click', e => {
-  if (currentMode !== 'travel' && currentMode !== 'environment') return;
+  if (currentMode !== 'travel' && currentMode !== 'environment' && currentMode !== 'finance') return;
   e.preventDefault();
   if (mapPick) { setMapPick(null); return; }
   const on = root.classList.toggle('wt-expanded');
-  expanded.setAttribute('aria-label', on ? currentMode === 'environment' ? 'Return to environmental actions' : 'Return to directions' : 'Expand the map');
+  expanded.setAttribute('aria-label', on ? currentMode === 'finance' ? 'Return to Finance' : currentMode === 'environment' ? 'Return to environmental actions' : 'Return to directions' : 'Expand the map');
   renderMapNav();
 });
 document.addEventListener('keydown', e => {

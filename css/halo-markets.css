@@ -90,3 +90,11 @@
 .hm__finance ul { padding-left:18px; }
 .hm__finance p { color:#b9cbd9; font-size:13px; line-height:1.5; }
 .hm__finance h4 { margin-block:16px 8px; }
+
+/* Public corporate roles stay in the same phone-first Finance surface. */
+[data-f-roster] { border-block:1px solid #526577; padding-block:8px; min-width:0; }
+[data-f-roster] h5 { font-size:16px; margin-block:16px 8px; }
+[data-r-detail] li { margin-block:12px; overflow-wrap:anywhere; }
+[data-r-detail] a { display:inline-block; color:#91e1f6; min-height:44px; padding-block:8px; }
+[data-r-detail] small { font-size:12px; line-height:1.5; }
+[data-r-detail] summary { min-height:44px; cursor:pointer; }

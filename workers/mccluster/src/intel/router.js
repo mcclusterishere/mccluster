@@ -28,6 +28,7 @@ import { portfolioRequest } from '../finance/portfolio.js';
 import { createAlpacaClient } from '../finance/alpaca.js';
 import { accountRequest } from '../finance/account.js';
 import { valueAccount } from '../finance/valuation.js';
+import { leadershipView } from '../finance/leadership.js';
 const alpacaClient = createAlpacaClient();
 import EXCHANGE_REFERENCE from '../../../../data/markets/exchanges.json' with { type: 'json' };
 const indicatorClient = createIndicatorClient();
@@ -170,6 +171,22 @@ export async function handleIntelRequest(request, env, options = {}) {
       };
       if (env.FINANCE_DEV_ENABLED !== 'true') return respond({ ok: false, code: 'not_found' }, 404);
       const market = options.financeMarket || alpacaClient;
+      if (path === '/v1/intel/finance/leadership' && request.method === 'GET') {
+        if ([...url.searchParams.keys()].some(k=>!['symbol','mic'].includes(k)||url.searchParams.getAll(k).length!==1)) return respond({ok:false,code:'unsupported_parameter'},400);
+        try { return respond({ok:true,...leadershipView({symbol:url.searchParams.get('symbol'),mic:url.searchParams.get('mic')})}); }
+        catch(error) { return respond({ok:false,code:error.code||'leadership_unavailable'},error.status||503); }
+      }
+      if (path === '/v1/intel/finance/leadership-quote' && request.method === 'GET') {
+        if ([...url.searchParams.keys()].some(k=>!['symbol','mic'].includes(k)||url.searchParams.getAll(k).length!==1) || !url.searchParams.has('symbol') || !url.searchParams.has('mic')) return respond({ok:false,code:'unsupported_parameter'},400);
+        try {
+          const symbol=url.searchParams.get('symbol'),mic=url.searchParams.get('mic');
+          const roster=leadershipView({symbol,mic});
+          if(roster.status!=='available')return respond({ok:false,code:'listing_not_covered'},404);
+          const quote=await market.quote(env,symbol);
+          if(quote.instrument?.symbol!==symbol||quote.instrument?.mic!==mic)return respond({ok:false,code:'instrument_identity_changed'},409);
+          return respond({ok:true,issuer_id:roster.company.issuer_id,quote});
+        }catch(error){return respond({ok:false,code:error.code||'quote_unavailable'},error.status||503);}
+      }
       if (path === '/v1/intel/finance/market' && request.method === 'GET') {
         if ([...url.searchParams.keys()].some(k=>!['q','symbol','period'].includes(k)||url.searchParams.getAll(k).length!==1)) return respond({ok:false,code:'unsupported_parameter'},400);
         try {

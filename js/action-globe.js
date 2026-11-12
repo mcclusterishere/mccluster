@@ -25,7 +25,7 @@ const ANALYTICS=!!parentFrame&&new URLSearchParams(location.search).get('surface
 const NO_MISSIONS=new URLSearchParams(location.search).get('missions')==='0'&&!(()=>{try{return !!parentFrame&&!parentFrame.document.documentElement.classList.contains('hu-social-only')}catch(e){return false}})();if(NO_MISSIONS)document.documentElement.classList.add('globe-no-missions');
 // Public World reference approved 2026-10-16. Analytics retains its own rendering contract.
 const EDITORIAL=!ANALYTICS; if(EDITORIAL)document.documentElement.classList.add('globe-editorial');
-let travelMode=false,journeyPoints=[],journeyEntities=[],journeyConnect=true,journeyFlyPending=false;
+let travelMode=false,financeMode=false,journeyPoints=[],journeyEntities=[],journeyConnect=true,journeyFlyPending=false;
 // Private travel state lives only in this frame. The parent owns GPS permission,
 // routing and navigation; neither coordinates nor route geometry enter analytics.
 const MAX_TRAVEL_ROUTE_POINTS=10000,MAX_TRAVEL_ACCURACY=100000;
@@ -273,6 +273,10 @@ function travelStyle(){
  if(nightLayer){nightLayer.show=true;nightLayer.dayAlpha=0;nightLayer.nightAlpha=1;nightLayer.brightness=NIGHT_LIGHTS.brightness;nightLayer.contrast=NIGHT_LIGHTS.contrast;nightLayer.gamma=NIGHT_LIGHTS.gamma;}
  if(cloudLayer)cloudLayer.alpha=travelMode?.3:EDITORIAL_CLOUD_ALPHA;
 }
+function setFinanceMode(on){
+ const next=on===true&&!!parentFrame&&!ANALYTICS&&isOwner();if(next===financeMode)return;financeMode=next;
+ if(viewer){draw();drawCompletedEvents();for(const source of regionOutlines)source.show=!financeMode;if(financeMode){setSelection(false);closeDetail();}viewer.scene.requestRender();}
+}
 function setTravelMode(on){
  if(!EDITORIAL||!parentFrame)return;
  const changed=travelMode!==on;travelMode=on;document.documentElement.classList.toggle('globe-travel',on);
@@ -398,7 +402,7 @@ function sanitizeCompletedEvents(rows){
   seen.add(e.id);return [{id:e.id,title,latitude,longitude,date}];
  });
 }
-function completedVisible(){return !!parentFrame&&!ANALYTICS&&!travelMode&&completedOn;}
+function completedVisible(){return !!parentFrame&&!ANALYTICS&&!travelMode&&!financeMode&&completedOn;}
 function setCompletedEvents(rows,on){
  if(!parentFrame||ANALYTICS)return;completedEvents=sanitizeCompletedEvents(rows);completedOn=on===true;drawCompletedEvents();drawWorldNewsPins();
 }
@@ -460,6 +464,7 @@ window.addEventListener('message',e=>{if(!parentFrame||e.source!==parentFrame||e
 if(d.type==='hu:hello'){if(readyMessage)tell(readyMessage);return}
 if(d.type==='hu:environment-pins'&&!ANALYTICS){environmentPins?.set(d);return}
 if(d.type==='hu:environment-focus'&&!ANALYTICS){environmentPins?.focus(d.id);return}
+if(d.type==='hu:finance-mode'&&!ANALYTICS){setFinanceMode(d.on);return}
 if(d.type==='hu:travel-mode'&&!ANALYTICS){setTravelMode(d.on===true);return}
 if(d.type==='hu:map-pick-mode'&&!ANALYTICS){travelPickKind(d.kind);return}
 if(d.type==='hu:completed-missions'&&!ANALYTICS){setCompletedEvents(d.events,d.on);return}
@@ -506,10 +511,10 @@ function clear(arr){arr.forEach(e=>viewer.entities.remove(e));arr.length=0}
 window.__huMissionPins=()=>missionPins.length;
 function draw(){clear(missionPins);clear(missionHalos);clear(cityPins);drawContinents();
 /* a mission can have many pins (countries, an origin, a context region): every pin opens the same mission */
-if(showMissions)missions.forEach((m,n)=>(m.pins||[m]).forEach((p,k)=>{const off=activeRegion&&p.region_key!==activeRegion,ctx=p.pin_role==='context',color=off?'#8b93a3':ctx?'#ffb15e':'#ff3d5e',size=EDITORIAL?(ctx?16:22):(ctx?22:30),position=Cesium.Cartesian3.fromDegrees(p.longitude,p.latitude,3000);
+if(showMissions&&!financeMode)missions.forEach((m,n)=>(m.pins||[m]).forEach((p,k)=>{const off=activeRegion&&p.region_key!==activeRegion,ctx=p.pin_role==='context',color=off?'#8b93a3':ctx?'#ffb15e':'#ff3d5e',size=EDITORIAL?(ctx?16:22):(ctx?22:30),position=Cesium.Cartesian3.fromDegrees(p.longitude,p.latitude,3000);
  if(!off){const phase=(n*7+k*3)%11,halo=size*2.6;missionHalos.push(viewer.entities.add({position,billboard:{image:glowHalo(color),width:halo,height:halo,scale:PULSE?new Cesium.CallbackProperty(()=>1+.24*Math.sin(Date.now()/280+phase),false):1.12,color:Cesium.Color.fromAlpha(Cesium.Color.WHITE,.85),eyeOffset:new Cesium.Cartesian3(0,0,120)},properties:{missionIndex:n,halo:true}}))}
  missionPins.push(viewer.entities.add({position,billboard:{image:glowPin(color),width:size,height:size,scale:n===i&&selectionShown?1.5:1},label:off?{text:'🔒',font:'14px sans-serif',pixelOffset:new Cesium.Cartesian2(0,-20)}:undefined,properties:{missionIndex:n}}))}));drawBusinesses();
-if(showCities)cities.forEach(c=>cityPins.push(viewer.entities.add({position:Cesium.Cartesian3.fromDegrees(c.longitude,c.latitude),point:{pixelSize:Math.min(22,7+Math.sqrt(c.member_count)),color:Cesium.Color.fromCssColorString('#f4b2b6')},label:{text:c.region_label+' · '+c.member_count+' members · '+c.verified_actions+' actions',font:'12px sans-serif',pixelOffset:new Cesium.Cartesian2(0,-20),distanceDisplayCondition:new Cesium.DistanceDisplayCondition(0,2400000)}})))}
+if(showCities&&!financeMode)cities.forEach(c=>cityPins.push(viewer.entities.add({position:Cesium.Cartesian3.fromDegrees(c.longitude,c.latitude),point:{pixelSize:Math.min(22,7+Math.sqrt(c.member_count)),color:Cesium.Color.fromCssColorString('#f4b2b6')},label:{text:c.region_label+' · '+c.member_count+' members · '+c.verified_actions+' actions',font:'12px sans-serif',pixelOffset:new Cesium.Cartesian2(0,-20),distanceDisplayCondition:new Cesium.DistanceDisplayCondition(0,2400000)}})))}
 function show(n){if(!missions.length)return;const next=(n+missions.length)%missions.length;const m=missions[next];i=next;selectionShown=true;missionPins.forEach(p=>{if(p.billboard)p.billboard.scale=p.properties?.missionIndex?.getValue()===i?1.5:1});$('title').textContent=m.title;$('description').textContent=m.description;$('path').textContent=(m.action_path||'mission').replace('_',' ').toUpperCase()+' · '+m.region_label;$('position').textContent=(i+1)+' / '+missions.length;$('missionLink').href='mnet.html?mission='+encodeURIComponent(m.mission_id);setSelection(true);viewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(m.longitude,m.latitude,1150000),orientation:{heading:Cesium.Math.toRadians(0),pitch:Cesium.Math.toRadians(-75),roll:0},duration:2.2,easingFunction:Cesium.EasingFunction.QUADRATIC_IN_OUT})}
 function setMode(mode){if(mode==='feed'){$('worldFeed').scrollTo({top:0,behavior:'smooth'});$('feedMode').classList.add('is-active');$('globeMode').classList.remove('is-active');}else{$('globeMode').classList.add('is-active');$('feedMode').classList.remove('is-active');closeDetail();}viewer?.resize();}
 function setSelection(selected){$('worldFilters').hidden=selected;$('mission').hidden=!selected;$('clearSelection').hidden=!selected;$('filterBack').hidden=!selected;$('deckHeading').textContent=selected?'Selected mission':'Explore the world';}
@@ -525,10 +530,10 @@ function groupPins(rows){const by=new Map();(Array.isArray(rows)?rows:[]).forEac
  return [...by.values()].map(m=>{const reach=new Set(m.pins.filter(p=>p.pin_role!=='context').map(p=>p.country_code)).size;if(m.pins.length>1&&reach>1)m.region_label=reach+' countries';return m})}
 /* approved Black businesses (owner-reviewed listings): coarse points unless the business chose exact */
 let businesses=[],businessPins=[],businessesTried=false;
-function drawBusinesses(){if(!viewer)return;clear(businessPins);if(!businessesTried){businessesTried=true;rpc('action_globe_public_business_pins').then(r=>{businesses=(Array.isArray(r)?r:[]).filter(b=>Number.isFinite(b.latitude)&&Number.isFinite(b.longitude)&&!(b.latitude===0&&b.longitude===0));drawBusinesses()}).catch(()=>{});return}if(!showMissions)return;
+function drawBusinesses(){if(!viewer)return;clear(businessPins);if(financeMode)return;if(!businessesTried){businessesTried=true;rpc('action_globe_public_business_pins').then(r=>{businesses=(Array.isArray(r)?r:[]).filter(b=>Number.isFinite(b.latitude)&&Number.isFinite(b.longitude)&&!(b.latitude===0&&b.longitude===0));drawBusinesses()}).catch(()=>{});return}if(!showMissions)return;
  businesses.forEach(b=>businessPins.push(viewer.entities.add({position:Cesium.Cartesian3.fromDegrees(b.longitude,b.latitude,2000),point:{pixelSize:9,color:Cesium.Color.fromCssColorString('#f5c542'),outlineColor:Cesium.Color.fromCssColorString('#03060c'),outlineWidth:2},label:{text:String(b.business_name||'').slice(0,60)+' · '+String(b.area_label||'').slice(0,60),font:'12px sans-serif',pixelOffset:new Cesium.Cartesian2(0,-16),distanceDisplayCondition:new Cesium.DistanceDisplayCondition(0,1500000)}})))}
 function setRegion(region){activeRegion=region?.region_key||null;const button=$('nearMe');button.textContent=activeRegion?'Region: '+region.region_label:'Near me';$('status').hidden=false;$('status').textContent=activeRegion?'Showing missions in '+region.region_label+'. Other regions are locked in this view; location does not establish mission eligibility.':'Worldwide exploration restored.';filterMissions();}
-async function drawBoundaries(){let rows;try{rows=await rpc('action_globe_public_boundaries')}catch(e){if(!leaving)console.warn('Boundaries not available',e);return;}regionOutlines.forEach(x=>viewer.dataSources.remove(x));regionOutlines=[];for(const row of rows){try{const feature={type:'Feature',properties:{region_key:row.region_key,region_label:row.region_label},geometry:row.geometry};const source=await Cesium.GeoJsonDataSource.load(feature,{stroke:Cesium.Color.fromCssColorString('#8cb2d9').withAlpha(.65),strokeWidth:1,fill:Cesium.Color.TRANSPARENT,clampToGround:true});await viewer.dataSources.add(source);regionOutlines.push(source);}catch(e){console.warn('Invalid public boundary',row.region_key,e)}}}
+async function drawBoundaries(){let rows;try{rows=await rpc('action_globe_public_boundaries')}catch(e){if(!leaving)console.warn('Boundaries not available',e);return;}regionOutlines.forEach(x=>viewer.dataSources.remove(x));regionOutlines=[];for(const row of rows){try{const feature={type:'Feature',properties:{region_key:row.region_key,region_label:row.region_label},geometry:row.geometry};const source=await Cesium.GeoJsonDataSource.load(feature,{stroke:Cesium.Color.fromCssColorString('#8cb2d9').withAlpha(.65),strokeWidth:1,fill:Cesium.Color.TRANSPARENT,clampToGround:true});await viewer.dataSources.add(source);source.show=!financeMode;regionOutlines.push(source);}catch(e){console.warn('Invalid public boundary',row.region_key,e)}}}
 function nearestKnownRegion(latitude,longitude){/* Centroids are not boundaries: never use nearest centroid to assert residency. */return null;}
 function paintMembersDoor(){const card=$('worldMembers');if(!card)return;let member=false;try{const s=JSON.parse(localStorage.getItem('mccdb_session')||'null');member=!!(s&&(s.access_token||s.refresh_token))}catch(e){}if(member){$('worldMembersText').textContent='Your feed sits under the globe on your World screen.';const a=$('worldMembersLink');a.textContent='Open World';a.href='mnet.html?view=feed'}}
 /* ---------- the World look (owner's mockups, 2026-10-14) ----------
@@ -1059,7 +1064,7 @@ function bridgeportSync(){
  door.hidden=!isOwner();if(!isOwner())bridgeportCancel();
  if(isOwner()&&!bridgeportDeepLink&&['1','2'].includes(new URLSearchParams(location.search).get('bridgeport'))){bridgeportDeepLink=true;door.click();}
 }
-function haloSync(){bridgeportSync();const owner=isOwner()&&!ANALYTICS&&EDITORIAL,door=$('ctlHalo');if(door)door.hidden=!owner;
+function haloSync(){if(financeMode&&!isOwner())setFinanceMode(false);tell({type:'hu:finance-access'});bridgeportSync();const owner=isOwner()&&!ANALYTICS&&EDITORIAL,door=$('ctlHalo');if(door)door.hidden=!owner;
  if(!EXPLORE||BARE||(!viewer&&!haloMapFailed))return;
  /* the full-screen globe's own door to Halo, beside "← World", for the owner only */
  let enter=$('haloEnter');const back=$('worldBack');if(!enter&&back){enter=document.createElement('a');enter.id='haloEnter';enter.className='halo-enter';enter.href='action-globe.html?explore=1&halo=1';enter.setAttribute('aria-label',"Open Hitman's Halo");enter.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg><span>Halo</span>';back.after(enter)}
@@ -1068,7 +1073,7 @@ function haloSync(){bridgeportSync();const owner=isOwner()&&!ANALYTICS&&EDITORIA
  if(HALO_OPEN===null)return;
  if(window.HaloConsole){HaloConsole.mount(window.HuGlobe,{view:HALO_VIEW});return}
  /* the view lays the Earth out by its stylesheet, so the styles land before the view mounts */
- if(!haloLoad){haloLoad=['js/halo/events.js','js/halo/objects.js','js/halo/vision.js','js/halo/hud.js','js/halo/layers.js','js/halo/data.js','js/halo/chart.js','js/halo/finance.js','js/halo/markets.js','js/halo/halo.js'].reduce((p,src)=>p.then(()=>haloScript(src)),Promise.all(['css/halo.css','css/halo-hud.css','css/halo-markets.css'].map(haloStyle)))
+ if(!haloLoad){haloLoad=['js/halo/events.js','js/halo/objects.js','js/halo/vision.js','js/halo/hud.js','js/halo/layers.js','js/halo/data.js','js/halo/chart.js','js/halo/finance-roster.js','js/halo/finance.js','js/halo/markets.js','js/halo/halo.js'].reduce((p,src)=>p.then(()=>haloScript(src)),Promise.all(['css/halo.css','css/halo-hud.css','css/halo-markets.css'].map(haloStyle)))
    .then(()=>haloSync(),e=>{haloLoad=null;try{console.warn('[halo] '+(e&&e.message||e))}catch(_){}})}}
 /* what the Halo console may use of this globe; nothing here widens what the owner's session can read */
 window.HuGlobe=Object.freeze({
@@ -1107,7 +1112,7 @@ viewer.screenSpaceEventHandler.setInputAction(p=>{
   if(coordinates){const kind=mapPickKind;travelPickKind(null);tell({type:'hu:travel-location-selected',kind,coordinates})}
   return;
  }
- const e=pickSolid(p.position);if(window.HaloConsole&&HaloConsole.pick(e))return;if(environmentPins?.pick(e))return;if(window.BridgeportSlice?.pick(e,p.position))return;if(e&&e.id&&e.id.layer==='satellites'){openSatellite(e.id.sat);return}const selectedSat=e?.id?.properties?.satellite?.getValue?.();if(selectedSat){openSatellite(selectedSat);return}const launch=e?.id?.properties?.launch?.getValue?.();if(launch){openLaunch(launch);return}if(e&&e.id&&e.id.layer==='flights'){openAircraft(e.id);return}if(e&&e.id&&e.id.layer==='cctv'){openCamera(String(e.id.cam));return}const ac=e?.id?.properties?.analyticsCode?.getValue?.();if(ac){selectAnalytics(ac,false);tell({type:'hu:analytics-region',code:ac});return}const newsId=e?.id?.properties?.worldNewsId?.getValue?.();if(newsId&&publicNewsOn){tell({type:'hu:world-news-selected',id:newsId});return}const completedId=e?.id?.properties?.completedEventId?.getValue?.();if(completedId&&selectCompletedEvent(completedId))return;const liveCode=e?.id?.properties?.liveCountry?.getValue?.();if(liveCode&&countries){countries.select(liveCode);return}const n=e?.id?.properties?.missionIndex?.getValue();if(Number.isInteger(n)){show(n);announce();return;}if(travelMode&&(roadRoute||currentLocation))return;if(countries&&!(e&&e.id&&e.id.properties&&e.id.properties.region_key)&&countries.click(p.position))return;const regionKey=e?.id?.properties?.region_key?.getValue?.();if(regionKey){const match=regions.find(r=>r.region_key===regionKey);if(match)setRegion(match);}},Cesium.ScreenSpaceEventType.LEFT_CLICK);
+ const e=pickSolid(p.position);if(window.HaloConsole&&HaloConsole.pick(e))return;if(parentFrame&&isOwner()&&e?.id?.financeCompany){tell({type:'hu:finance-company',symbol:e.id.symbol,mic:e.id.mic});return;}if(environmentPins?.pick(e))return;if(window.BridgeportSlice?.pick(e,p.position))return;if(e&&e.id&&e.id.layer==='satellites'){openSatellite(e.id.sat);return}const selectedSat=e?.id?.properties?.satellite?.getValue?.();if(selectedSat){openSatellite(selectedSat);return}const launch=e?.id?.properties?.launch?.getValue?.();if(launch){openLaunch(launch);return}if(e&&e.id&&e.id.layer==='flights'){openAircraft(e.id);return}if(e&&e.id&&e.id.layer==='cctv'){openCamera(String(e.id.cam));return}const ac=e?.id?.properties?.analyticsCode?.getValue?.();if(ac){selectAnalytics(ac,false);tell({type:'hu:analytics-region',code:ac});return}const newsId=e?.id?.properties?.worldNewsId?.getValue?.();if(newsId&&publicNewsOn){tell({type:'hu:world-news-selected',id:newsId});return}const completedId=e?.id?.properties?.completedEventId?.getValue?.();if(completedId&&selectCompletedEvent(completedId))return;const liveCode=e?.id?.properties?.liveCountry?.getValue?.();if(liveCode&&countries){countries.select(liveCode);return}const n=e?.id?.properties?.missionIndex?.getValue();if(Number.isInteger(n)){show(n);announce();return;}if(travelMode&&(roadRoute||currentLocation))return;if(countries&&!(e&&e.id&&e.id.properties&&e.id.properties.region_key)&&countries.click(p.position))return;const regionKey=e?.id?.properties?.region_key?.getValue?.();if(regionKey){const match=regions.find(r=>r.region_key===regionKey);if(match)setRegion(match);}},Cesium.ScreenSpaceEventType.LEFT_CLICK);
 /* NEAR ME: the approximate place from this connection first (the Worker's request.cf, in the access map; never stored), then
    the precise one only if the browser asks the person and they allow it. Browsers enforce that prompt; nothing here gets around it. */
 $('nearMe').onclick=()=>{const ap=access&&access.approximate_location,apl=ap&&lonLat(ap.lon,ap.lat);if(apl&&viewer){viewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(apl[0],apl[1],1500000),duration:1.2});$('status').hidden=false;$('status').textContent='Near '+[ap.city,ap.region,ap.country].filter(Boolean).join(', ')+' (approximate, from your connection).'}
