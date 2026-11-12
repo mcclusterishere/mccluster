@@ -13,6 +13,8 @@ on:
       - 'data/markets/company-leadership.json'
       - 'data/markets/sec-listing-directory.json'
       - 'data/markets/sector-research-pilot.json'
+      - 'data/markets/direct-ownership-routes.json'
+      - 'scripts/test-finance-ownership-dom.mjs'
       - 'scripts/validate-finance-universe.mjs'
       - 'scripts/test-finance-dashboard-dom.mjs'
       - 'scripts/test-finance-leadership-dom.mjs'
@@ -56,7 +58,7 @@ jobs:
         run: |
           node scripts/import-company-leadership.mjs data/markets/company-leadership.json
           node scripts/validate-finance-universe.mjs
-          node --test scripts/test-finance-leadership-dom.mjs scripts/test-finance-dashboard-dom.mjs
+          node --test scripts/test-finance-leadership-dom.mjs scripts/test-finance-dashboard-dom.mjs scripts/test-finance-ownership-dom.mjs
       - name: World Finance mode and sourced company pins
         env:
           PLAYWRIGHT_DIR: /tmp/finance-qa/node_modules

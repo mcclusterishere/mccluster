@@ -1073,7 +1073,7 @@ function haloSync(){if(financeMode&&!isOwner())setFinanceMode(false);tell({type:
  if(HALO_OPEN===null)return;
  if(window.HaloConsole){HaloConsole.mount(window.HuGlobe,{view:HALO_VIEW});return}
  /* the view lays the Earth out by its stylesheet, so the styles land before the view mounts */
- if(!haloLoad){haloLoad=['js/halo/events.js','js/halo/objects.js','js/halo/vision.js','js/halo/hud.js','js/halo/layers.js','js/halo/data.js','js/halo/chart.js','js/halo/finance-dashboard.js','js/halo/finance-roster.js','js/halo/finance.js','js/halo/markets.js','js/halo/halo.js'].reduce((p,src)=>p.then(()=>haloScript(src)),Promise.all(['css/halo.css','css/halo-hud.css','css/halo-markets.css'].map(haloStyle)))
+ if(!haloLoad){haloLoad=['js/halo/events.js','js/halo/objects.js','js/halo/vision.js','js/halo/hud.js','js/halo/layers.js','js/halo/data.js','js/halo/chart.js','js/halo/finance-ownership.js','js/halo/finance-dashboard.js','js/halo/finance-roster.js','js/halo/finance.js','js/halo/markets.js','js/halo/halo.js'].reduce((p,src)=>p.then(()=>haloScript(src)),Promise.all(['css/halo.css','css/halo-hud.css','css/halo-markets.css'].map(haloStyle)))
    .then(()=>haloSync(),e=>{haloLoad=null;try{console.warn('[halo] '+(e&&e.message||e))}catch(_){}})}}
 /* what the Halo console may use of this globe; nothing here widens what the owner's session can read */
 window.HuGlobe=Object.freeze({

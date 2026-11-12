@@ -31,6 +31,7 @@ import { valueAccount } from '../finance/valuation.js';
 import { leadershipView } from '../finance/leadership.js';
 import { universeSummary, universeView } from '../finance/universe.js';
 import { ownershipBaseline } from '../finance/baseline.js';
+import { ownershipOptionsView } from '../finance/ownership-options.js';
 const alpacaClient = createAlpacaClient();
 import EXCHANGE_REFERENCE from '../../../../data/markets/exchanges.json' with { type: 'json' };
 const indicatorClient = createIndicatorClient();
@@ -173,6 +174,11 @@ export async function handleIntelRequest(request, env, options = {}) {
       };
       if (env.FINANCE_DEV_ENABLED !== 'true') return respond({ ok: false, code: 'not_found' }, 404);
       const market = options.financeMarket || alpacaClient;
+      if (path === '/v1/intel/finance/ownership-options' && request.method === 'GET') {
+        if([...url.searchParams.keys()].some(k=>!['issuer_id','symbol','mic'].includes(k)||url.searchParams.getAll(k).length!==1||url.searchParams.get(k)===''))return respond({ok:false,code:'unsupported_parameter'},400);
+        try{return respond({ok:true,...ownershipOptionsView({issuer_id:url.searchParams.get('issuer_id'),symbol:url.searchParams.get('symbol'),mic:url.searchParams.get('mic')})});}
+        catch(error){return respond({ok:false,code:error.code||'ownership_reference_unavailable'},error.status||503);}
+      }
       if (path === '/v1/intel/finance/dashboard' && request.method === 'GET') {
         if(url.search)return respond({ok:false,code:'unsupported_parameter'},400);
         // A paper account is not ownership evidence. No actual-position adapter is configured.

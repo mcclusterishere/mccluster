@@ -39,7 +39,7 @@ try{for(const width of [390,1280]){
   let file;
   if(u.hostname==='cesium.com'){const part=p.split('/Build/Cesium/')[1];if(part){const f=resolve(CESIUM,part);if(f.startsWith(resolve(CESIUM)+sep))file=f;}}
   else if(u.origin===BASE){const f=resolve(ROOT,decodeURIComponent(p.slice(1)));if(f.startsWith(resolve(ROOT)+sep))file=f;}
-  if(file){try{let body=await readFile(file);if(p==='/mnet.html')body=Buffer.from(body.toString().replace(/<script\b([^>]*)>[\s\S]*?<\/script>/gi,(whole,attrs)=>/src="js\/(?:world-owner-modes\.js|world-news-globe\.js|travel\/world-travel\.mjs|halo\/finance(?:-roster|-dashboard)?\.js|world-finance\.mjs)/.test(attrs)?whole:''));return route.fulfill({body,contentType:MIME[extname(file)]||'application/octet-stream',headers:{'access-control-allow-origin':'*'}});}catch{return route.fulfill({status:404,body:''});}}
+  if(file){try{let body=await readFile(file);if(p==='/mnet.html')body=Buffer.from(body.toString().replace(/<script\b([^>]*)>[\s\S]*?<\/script>/gi,(whole,attrs)=>/src="js\/(?:world-owner-modes\.js|world-news-globe\.js|travel\/world-travel\.mjs|halo\/finance(?:-roster|-dashboard|-ownership)?\.js|world-finance\.mjs)/.test(attrs)?whole:''));return route.fulfill({body,contentType:MIME[extname(file)]||'application/octet-stream',headers:{'access-control-allow-origin':'*'}});}catch{return route.fulfill({status:404,body:''});}}
   return route.abort();
  });
  const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
@@ -50,8 +50,20 @@ try{for(const width of [390,1280]){
  await page.locator('.wt-world-modes [data-world-mode="finance"]').click();
  await page.waitForSelector('#worldFinance [data-r-symbol="AMD"]');
  assert.equal(await page.locator('#mnWorldFrame').count(),1);assert.match(await page.locator('[data-r-status]').textContent(),/5 company business addresses/);
+ await page.waitForFunction(()=>document.querySelectorAll('.hm__ownership-route').length===13);
+ assert.match(await page.locator('[data-o-routes]').textContent(),/Plan nominee holding; whole-share DRS exit/);
+ assert.match(await page.locator('[data-o-routes]').textContent(),/1 existing whole share/);
+ assert.match(await page.locator('[data-o-routes]').textContent(),/Unknown, not a zero fee/);
+ await page.locator('[data-o-domicile]').selectOption('JP');
+ assert.equal(await page.locator('.hm__ownership-route').count(),1);
+ assert.match(await page.locator('[data-o-routes]').textContent(),/Registered ADRs, not underlying ordinary shares/);
+ await page.locator('[data-o-all]').click();await page.waitForFunction(()=>document.querySelectorAll('.hm__ownership-route').length===13);
+ await page.screenshot({path:join(OUT,'finance-ownership-'+width+'.png'),fullPage:true});
  await page.locator('[data-r-symbol="AMD"]').click();await page.waitForFunction(()=>document.querySelector('[data-r-detail]')?.textContent.includes('Lisa T. Su'));
  assert.match(await page.locator('[data-r-detail]').textContent(),/2485 Augustine Drive/);assert.match(await page.locator('[data-r-detail]').textContent(),/address range interpolated/);
+ await page.locator('[data-r-detail] [data-f-ownership-issuer]').click();
+ await page.waitForFunction(()=>document.querySelector('[data-o-routes]')?.textContent.includes('No verified reference match'));
+ assert.ok(requests.some(r=>r.path==='/v1/intel/finance/ownership-options?issuer_id=sec%3A0000002488'),'Roster selects exact issuer, not ticker coincidence');
  await page.locator('[data-r-map]').click();await page.waitForFunction(()=>document.querySelector('[data-r-status]').textContent.includes('5 company business addresses'));
  const count=await page.evaluate(()=>window.__originalViewer.scene.primitives.length);
  await page.locator('[data-r-locate]').click();await page.waitForTimeout(1200);
@@ -69,8 +81,9 @@ try{for(const width of [390,1280]){
  for(let n=0;n<3;n++){await page.locator('.wt-world-modes [data-world-mode="posts"]').click();assert.equal(await page.locator('#worldFinance').count(),0);assert.ok(await page.evaluate(()=>window.__originalViewer.scene.primitives.length)<count);await page.locator('.wt-world-modes [data-world-mode="finance"]').click();await page.waitForSelector('[data-r-symbol="AMD"]');}
  assert.ok(await page.evaluate(()=>document.getElementById('mnWorldFrame')===window.__originalFrame&&window.__originalFrame.contentWindow.HuGlobe.viewer()===window.__originalViewer));
  allowed=false;await page.locator('[data-r-reload]').click();await page.waitForFunction(()=>document.querySelector('[data-r-status]')?.textContent==='Owner authentication required.');assert.equal(await page.locator('[data-r-detail]').textContent(),'');
+ await page.waitForFunction(()=>document.querySelector('[data-o-status]')?.textContent==='Owner authentication required.');assert.equal(await page.locator('[data-o-routes]').textContent(),'');assert.ok(await page.locator('[data-o-all]').isDisabled());
  assert.ok(requests.every(r=>r.method==='GET'),'No mutation or trade');assert.deepEqual(errors,[]);
- results.push({width,same_viewer:true,owner_tab:true,public_roster:true,address_pins:5,source_precision:true,quote_fixture:true,no_overflow:true,repeated_modes:true,stale_selection_discarded:true,denied_clears:true,no_writes:true});await context.close();
+ results.push({width,same_viewer:true,owner_tab:true,public_roster:true,address_pins:5,source_precision:true,quote_fixture:true,ownership_routes:13,ownership_units_and_unknowns:true,adr_distinct:true,issuer_bound_research:true,no_overflow:true,repeated_modes:true,stale_selection_discarded:true,denied_clears:true,no_writes:true});await context.close();
  }
  await writeFile(join(OUT,'results.json'),JSON.stringify(results,null,2));console.log(JSON.stringify(results,null,2));
 }finally{await browser.close();}

@@ -1,7 +1,7 @@
 # Finance market coverage and ownership baseline
 
-Status: local review candidate, not published, merged, deployed or connected to real
-positions. This extends the existing owner-only Finance World mode and canonical
+Status: preserved in draft [PR #803](https://github.com/mcclusterishere/mccluster/pull/803),
+not merged, deployed or connected to real positions. This extends the existing owner-only Finance World mode and canonical
 Worker. It does not place orders, enroll in purchase plans, import private assets,
 activate data feeds, create credentials or apply a database migration.
 
@@ -178,7 +178,9 @@ actual-DOM lifecycle tests cover this extension. Final local results:
 
  The previous real Chromium test
 could not launch because of the executor's socket restriction, including after a
-reviewed escalation. DOM tests do not prove WebGL rendering or mobile overflow.
+reviewed escalation. The published baseline at `b33bd663` subsequently passed actual
+390/1280px Chromium/Cesium integration in [Finance CI](https://github.com/mcclusterishere/mccluster/actions/runs/43126463349).
+DOM tests alone do not prove rendering; later changes need their own CI result.
 
 Before release: user selects the candidate, inspect then-current main, run exact-head
 CI and actual browser/full World tests, verify 390px layout, all five address pins,

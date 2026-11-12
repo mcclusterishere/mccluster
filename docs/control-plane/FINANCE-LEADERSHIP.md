@@ -1,9 +1,11 @@
 # Finance company leadership and address layer
 
-Status: local review candidate. No remote push, PR publication, production migration,
-provider activation, deployment or investment action is included. Browser rendering
-acceptance is still pending. This builds on the existing Halo Finance implementation,
-not a new globe, brokerage, identity service or database.
+Status: preserved in draft [PR #803](https://github.com/mcclusterishere/mccluster/pull/803).
+Not merged or deployed. The published baseline at `b33bd663` passed the actual
+390/1280px Cesium module integration in [Finance CI](https://github.com/mcclusterishere/mccluster/actions/runs/43126463349).
+No production migration, provider activation or investment action is included.
+This builds on the existing Halo Finance implementation, not a new globe,
+brokerage, identity service or database.
 
 ## Existing-work and data audit
 
@@ -137,8 +139,9 @@ an actual Cesium viewer, intercepted network and fixture identity/quotes. It iso
 unrelated World modules and is a Finance/World-mode module integration test, not a
 complete end-to-end product/authentication acceptance. Local Chromium launch was
 blocked by the executor's socket restriction, including after a reviewed escalation.
-No rendered-device pass is claimed. The existing Finance workflow now includes the
-reference, DOM tests and this browser check after publication is authorized.
+The published baseline later passed that 390/1280px test in the CI run linked above.
+The existing Finance workflow reruns the reference, DOM and actual browser checks
+for subsequent changes; baseline evidence is not proof of an untested extension.
 
 Before release: owner selects this candidate; reconcile the active Travel/Halo
 branches against then-current main; run all exact-head CI, browser and full World

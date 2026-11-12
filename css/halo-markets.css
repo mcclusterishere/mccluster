@@ -103,3 +103,9 @@
 .hm__finance [data-d-results] li { padding:8px 0; border-bottom:1px solid #ffffff20; overflow-wrap:anywhere; }
 .hm__finance [data-d-coverage],.hm__finance [data-d-baseline] { overflow-wrap:anywhere; }
 .hm__finance [data-d-results] { max-height:320px; overflow-y:auto; }
+.hm__finance [data-o-filters] { display:grid; gap:8px; }
+.hm__finance [data-o-routes] { max-height:540px; overflow-y:auto; overscroll-behavior:contain; }
+.hm__ownership-route { padding:12px 0; border-bottom:1px solid #ffffff20; overflow-wrap:anywhere; }
+.hm__ownership-route h5 { font-size:16px; margin:8px 0; }
+.hm__ownership-route dt { font-weight:600; }
+.hm__ownership-route dd { margin:0 0 8px; }
