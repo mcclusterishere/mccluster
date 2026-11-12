@@ -66,9 +66,13 @@ try{for(const width of [390,1280]){
  assert.ok(requests.some(r=>r.path==='/v1/intel/finance/ownership-options?issuer_id=sec%3A0000002488'),'Roster selects exact issuer, not ticker coincidence');
  await page.locator('[data-r-map]').click();await page.waitForFunction(()=>document.querySelector('[data-r-status]').textContent.includes('5 company business addresses'));
  const count=await page.evaluate(()=>window.__originalViewer.scene.primitives.length);
- await page.locator('[data-r-locate]').click();await page.waitForTimeout(1200);
+ await page.locator('[data-r-locate]').click();
+ // Wait for actual flight/render completion and a pickable pin, not elapsed wall time.
+ await page.waitForFunction(()=>{const w=document.getElementById('mnWorldFrame').contentWindow,v=w.HuGlobe.viewer(),p=w.Cesium.SceneTransforms.worldToWindowCoordinates(v.scene,w.Cesium.Cartesian3.fromDegrees(-121.971776930382,37.382307061778,100));if(!p||Math.abs(v.camera.positionCartographic.height-3000)>30)return false;v.scene.requestRender();return v.scene.pick(p)?.id?.symbol==='AMD';});
  const screen=await page.evaluate(()=>{const w=document.getElementById('mnWorldFrame').contentWindow,v=w.HuGlobe.viewer(),p=w.Cesium.SceneTransforms.worldToWindowCoordinates(v.scene,w.Cesium.Cartesian3.fromDegrees(-121.971776930382,37.382307061778,100));return {x:p.x,y:p.y};});
- const bounds=await page.locator('#mnWorldFrame').boundingBox();await page.mouse.move(bounds.x+screen.x,bounds.y+screen.y);await page.waitForFunction(()=>document.querySelector('[data-r-quote-status]')?.textContent.includes('123.45'));
+ const bounds=await frame.locator('canvas.cesium-widget-canvas, .cesium-widget canvas').first().boundingBox();
+ await page.mouse.move(bounds.x+5,bounds.y+5);await page.mouse.move(bounds.x+screen.x,bounds.y+screen.y);
+ try{await page.waitForFunction(()=>document.querySelector('[data-r-quote-status]')?.textContent.includes('123.45'));}catch(error){await page.screenshot({path:join(OUT,'finance-hover-failure-'+width+'.png'),fullPage:true});await writeFile(join(OUT,'finance-hover-failure-'+width+'.json'),JSON.stringify({width,screen,bounds,requests,errors},null,2));throw error;}
  assert.equal(requests.filter(r=>r.path.startsWith('/v1/intel/finance/leadership-quote?symbol=AMD')).length,1,'Pin hover requests a financial snapshot before the accessible button is used');
  await page.locator('[data-r-quote]').click();await page.waitForFunction(()=>document.querySelector('[data-r-quote-status]')?.textContent.includes('123.45'));
  assert.match(await page.locator('[data-r-quote-status]').textContent(),/stale.*iex.*closed/);assert.equal(requests.filter(r=>r.path.startsWith('/v1/intel/finance/leadership-quote?symbol=AMD')).length,1);
