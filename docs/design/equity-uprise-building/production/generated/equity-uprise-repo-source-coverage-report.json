@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 702,
+  "candidate_count": 704,
   "capability_source_count": 104,
-  "support_only_count": 598,
-  "checks_total": 2706,
-  "checks_passed": 2706,
+  "support_only_count": 600,
+  "checks_total": 2714,
+  "checks_passed": 2714,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -305,6 +305,7 @@
     "js/eu-screens/sandbox-session.mjs",
     "js/eu-screens/shell.mjs",
     "js/eu-screens/state.mjs",
+    "js/eu-screens/workstation-layer.mjs",
     "js/eup-league-member.js",
     "js/fan-intake.js",
     "js/fbi.js",
@@ -440,6 +441,7 @@
     "scripts/test/eu-object-inspector.test.mjs",
     "scripts/test/eu-screen-hardware-binding.test.mjs",
     "scripts/test/eu-screens.test.mjs",
+    "scripts/test/eu-workstation-layer.test.mjs",
     "scripts/test/eup-intake.integration.mjs",
     "scripts/test/eup-league-member-ui.test.mjs",
     "scripts/test/eup-league.integration.mjs",
@@ -716,7 +718,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "702 entries"
+      "detail": "704 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -6404,6 +6406,26 @@
       "detail": ""
     },
     {
+      "name": "js/eu-screens/workstation-layer.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/eu-screens/workstation-layer.mjs classified",
+      "passed": true,
+      "detail": "classification='building_projection_support'"
+    },
+    {
+      "name": "js/eu-screens/workstation-layer.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/eu-screens/workstation-layer.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "js/eup-league-member.js capability ids known",
       "passed": true,
       "detail": ""
@@ -9035,6 +9057,26 @@
     },
     {
       "name": "scripts/test/eu-screens.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/eu-workstation-layer.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/eu-workstation-layer.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/eu-workstation-layer.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/eu-workstation-layer.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     },

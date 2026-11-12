@@ -179,7 +179,21 @@
    "zone": "tech-security-pod",
    "occupant": "Hassan Raza",
    "source": "production/workplace-occupancy-v1.json B1",
-   "purpose": "Tech-Zone Security Station"
+   "purpose": "Tech-Zone Security Station",
+   "size": {
+    "monitors": 0,
+    "keyboard": true
+   },
+   "device_binding_ref": "../electronics/device-stations-b1-v1.json",
+   "scenic_display_supersession": {
+    "registered_host": "B1-USER-WS-02",
+    "registered_monitors": [
+     "B1-USER-MON-02-01",
+     "B1-USER-MON-02-02"
+    ],
+    "removed_scenic_display_count": 3,
+    "reason": "Replace only this station's baked scenic displays with its explicitly bound registered monitor pair; retain the work surface, keyboard, seating and other bench equipment."
+   }
   },
   {
    "id": "B1-DESK-HASSAN-RAZA-CHAIR",
@@ -197,11 +211,23 @@
    "rot_deg": -90,
    "zone": "tech-security-pod",
    "size": {
-    "w_in": 60
+    "w_in": 60,
+    "monitors": 0,
+    "keyboard": true
    },
    "occupant": "Emre Yildiz",
    "source": "production/workplace-occupancy-v1.json B1",
-   "purpose": "Physical Systems / Facilities Desk"
+   "purpose": "Physical Systems / Facilities Desk",
+   "device_binding_ref": "../electronics/device-stations-b1-v1.json",
+   "scenic_display_supersession": {
+    "registered_host": "B1-USER-WS-03",
+    "registered_monitors": [
+     "B1-USER-MON-03-01",
+     "B1-USER-MON-03-02"
+    ],
+    "removed_scenic_display_count": 2,
+    "reason": "Replace only this station's baked scenic displays with its explicitly bound registered monitor pair; retain the work surface, keyboard, seating and other bench equipment."
+   }
   },
   {
    "id": "B1-DESK-EMRE-YILDIZ-CHAIR",
@@ -291,12 +317,23 @@
    "size": {
     "w_in": 120,
     "d_in": 30,
-    "monitors": true
+    "monitors": 0,
+    "keyboard": true
    },
    "occupant": "Minh Tran",
    "source": "production/workplace-occupancy-v1.json B1",
    "purpose": "Hardware / Firmware Bench",
-   "placement_override_reason": "the inventory bench was a bare top; now a real bench with pegboard, instruments and a stool"
+   "placement_override_reason": "the inventory bench was a bare top; now a real bench with pegboard, instruments and a stool",
+   "device_binding_ref": "../electronics/device-stations-b1-v1.json",
+   "scenic_display_supersession": {
+    "registered_host": "B1-USER-WS-01",
+    "registered_monitors": [
+     "B1-USER-MON-01-01",
+     "B1-USER-MON-01-02"
+    ],
+    "removed_scenic_display_count": 1,
+    "reason": "Replace only this station's baked scenic displays with its explicitly bound registered monitor pair; retain the work surface, keyboard, seating and other bench equipment."
+   }
   },
   {
    "id": "B1-WORKSHOP-BENCH-STOOL-01",
@@ -331,7 +368,21 @@
    "zone": "systems-lab",
    "occupant": "Jonas Weber",
    "source": "production/workplace-occupancy-v1.json B1",
-   "purpose": "Pylon Systems Liaison Console"
+   "purpose": "Pylon Systems Liaison Console",
+   "size": {
+    "monitors": 0,
+    "keyboard": true
+   },
+   "device_binding_ref": "../electronics/device-stations-b1-v1.json",
+   "scenic_display_supersession": {
+    "registered_host": "B1-USER-WS-04",
+    "registered_monitors": [
+     "B1-USER-MON-04-01",
+     "B1-USER-MON-04-02"
+    ],
+    "removed_scenic_display_count": 3,
+    "reason": "Replace only this station's baked scenic displays with its explicitly bound registered monitor pair; retain the work surface, keyboard, seating and other bench equipment."
+   }
   },
   {
    "id": "B1-LAB-LIAISON-CONSOLE-CHAIR",

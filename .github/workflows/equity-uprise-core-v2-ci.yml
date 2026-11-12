@@ -172,21 +172,17 @@ jobs:
       - name: Verify model consistency (furniture, doors, egress, walkability, brand slots, distinct floors)
         run: python docs/design/equity-uprise-building/production/interiors/audit_interior_consistency.py
 
-      - name: Test cross-layer device contact diagnostics
-        run: python docs/design/equity-uprise-building/production/interiors/test_device_placement.py
-
-      - name: Record unresolved electronics and furniture placement
+      - name: Test authored workstation geometry and supports
         run: |
-          # The repaired F1 bindings are required; other existing defects remain diagnostic.
-          # --strict is the future remodeling acceptance gate, not a baseline waiver.
-          python docs/design/equity-uprise-building/production/interiors/audit_device_placement.py --require-bound --output "${RUNNER_TEMP}/device-placement-audit.json"
-          python - <<'PYTHON'
-          import json, os
-          from pathlib import Path
-          d = json.loads((Path(os.environ['RUNNER_TEMP']) / 'device-placement-audit.json').read_text())
-          if not d['passed']:
-              print('::warning::Device placement remains unresolved: ' + json.dumps(d['summary']))
-          PYTHON
+          python docs/design/equity-uprise-building/production/interiors/test_device_placement.py
+          python docs/design/equity-uprise-building/production/interiors/test_furniture_device_bindings.py
+          python docs/design/equity-uprise-building/production/electronics/test_manufacturer_models.py
+          python docs/design/equity-uprise-building/production/electronics/test_glb_export_hygiene.py
+          python docs/design/equity-uprise-building/production/electronics/test_device_stations_f2_f3.py
+          python docs/design/equity-uprise-building/production/electronics/test_device_stations_f4_f6.py
+
+      - name: Require all authored workstation supports and nonintersecting panels
+        run: python docs/design/equity-uprise-building/production/interiors/audit_device_placement.py --strict --require-bound --output "${RUNNER_TEMP}/device-placement-audit.json"
 
       - name: Upload device placement evidence
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

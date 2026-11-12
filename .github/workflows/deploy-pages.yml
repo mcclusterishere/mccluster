@@ -186,6 +186,7 @@ jobs:
           cp docs/design/equity-uprise-building/production/brand/brand-manifest.json equity-uprise-preview/brand/brand-manifest.json
           cp docs/design/equity-uprise-building/production/brand/equity-uprise-brand-slots.mjs equity-uprise-preview/brand/equity-uprise-brand-slots.mjs
           cp docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-electronics-fabric-v1.glb equity-uprise-preview/equity-uprise-electronics-fabric-v1.glb
+          cp docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-workstations-v1.glb equity-uprise-preview/equity-uprise-workstations-v1.glb
           cp docs/design/equity-uprise-building/production/electronics/equity-uprise-electronics-spatial-bindings-v1.mjs equity-uprise-preview/electronics/
           cp docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-electronics-manifest-v1.json equity-uprise-preview/equity-uprise-electronics-manifest-v1.json
           cp docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-device-components-v1.json equity-uprise-preview/equity-uprise-device-components-v1.json

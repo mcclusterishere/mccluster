@@ -1,6 +1,7 @@
 # Device placement and proposed manufacturer floors
 
-Status: **ACTIVE REPAIR / F1 support repair, not completed remodeling or visual approval**.
+Status, 2026-11-12: **ALL-FLOOR DIAGNOSTIC GATE PASSED / visual and installation review remain open**.
+Current implementation summary: `FLOOR-DEVICE-REPAIR-V1.md` (2026-11-12).
 Baseline: main `8e631683b6960fee283ea923c22b1d72cfd09495`.
 The 72-foot Core V2 plate, vertical systems, floor functions, room boundaries,
 recurring staff stations and permission boundaries remain authoritative.
@@ -12,8 +13,8 @@ The v3 furnished floor models and componentized electronics are separate layers.
 The existing interior-consistency audit loads the furnished floors but never the
 electronics GLB. Passing that audit does not validate combined device placement.
 
-The electronics generator currently chooses a work-area anchor and adds a
-round-robin offset. It does not bind the result to a particular furniture surface,
+At the reproduced baseline, the electronics generator chose a work-area anchor
+and added a round-robin offset. It did not bind the result to a particular furniture surface,
 height, orientation or mount. The furniture kit separately embeds decorative
 monitors. Consequently, promoting every visible desk prop into a real computer
 would invent extra devices and duplicate screens.
@@ -54,9 +55,9 @@ is inferred from this analysis.
   Y22–34; the electronics MDF anchor is around (45, 62.8). That is a separate
   room/rack/cabling reconciliation, not cured by moving workstation displays.
 
-## First implemented repair: F1 support bindings
+## Historical first repair: F1 support bindings (v2 checkpoint)
 
-The electronics generator now resolves eight F1 asset IDs through an authored
+At the v2 checkpoint, the electronics generator resolved eight F1 asset IDs through an authored
 binding file, rather than the round-robin fallback: four existing chassis and
 four existing monitors. Stable identities, host/monitor connections, room roles
 and staff assignments are unchanged.
@@ -77,12 +78,12 @@ and staff assignments are unchanged.
   the screen registry are refreshed together. Cord endpoints remain the existing
   conceptual device-center routing; this does not certify physical wiring.
 
-Current evidence is `production/interiors/device-placement-audit-v2.json`: all
+Historical pilot evidence is `production/interiors/device-placement-audit-v2.json`: all
 eight authored F1 bindings pass; unresolved support contacts fall from 98 to 90.
-The 33 overlapping panel pairs elsewhere remain open. The v1 report is retained
-as the exact original baseline. This pilot does not resolve all F1 devices,
+The 33 overlapping panel pairs elsewhere were still open at that checkpoint. The v1 report is retained
+as the exact original baseline. That pilot did not resolve all F1 devices,
 scenic duplicate displays, service clearances, manufacturer models or the other
-floors. Generic training chassis have not been relabeled as branded hardware.
+floors. Generic training chassis were not relabeled as branded hardware by the pilot.
 
 The export also omits redundant cable-cylinder construction recipes. The complete
 BIN chunk is byte-identical; a normalized-JSON comparison proves every other
@@ -97,30 +98,68 @@ tests. The derived PRIM3 package changes only four source provenance hashes, not
 its building/game geometry or runtime data. The browser could not start: Chromium failed with `socket() failed: Operation
 not permitted` before page load. No desktop/mobile visual approval is claimed.
 
+## All-floor source repair (2026-11-12)
+
+The canonical binding loader now resolves **98 exact records** through the F1
+entrypoint and B1, F2/F3 and F4–F6 fragments: all 36 existing workstation hosts and
+62 existing monitors. It names the selected floor, station, actual support mesh,
+AFF height, XY and cardinal facing. Missing identities/supports fail instead of
+borrowing a nearby surface. Manufacturer host models use their support/base datum
+rather than the obsolete generic half-height offset; floor elevation is applied
+once. `floor_slab` is an explicit host-only support, never an inferred fallback.
+
+The existing floor programs and recurring staff assignments remain authoritative.
+The repair preserves B1/F2/F3 furniture placement, deepens the F1 intake credenza,
+adds deliberate F4 production stations, widens five F5 carrels, and keeps F6's
+command/briefing tables usable. Exact scenic-screen replacements retain keyboards
+and canonical capability IDs. F4 records its two replaced inventory display IDs
+separately from physically modeled objects. Detailed placements and limitations
+are in `FLOOR-DEVICE-REPAIR-V1.md` and the three floor repair reports it links.
+
+Source-backed partial exterior proxies now replace the generic host shells for
+all 36 workstation identities. Eight catalog profiles cover seven floor makers
+plus the portable L7 concept. Original meshes preserve selected published
+proportions and recognizable exterior features; they are not manufacturer CAD,
+complete replicas, validated internals or approved installation drawings.
+`MANUFACTURER-MODEL-REFERENCES.md` records exact configurations, sources and gaps.
+
+The workstation-only GLB and shared consumer are wired into normal room views,
+with explicit floor isolation and no duplicate full-electronics rendering.
+This is implementation evidence, not proof of desktop/mobile browser behavior.
+The final regenerated v3 report passes `--strict --require-bound`: **98/98
+bindings**, **0 unsupported contacts** and **0 monitor-panel intersections**.
+Both `passed` and `bound_placement_passed` are true, including exact model,
+origin and facing checks. The earlier intermediate Framework-origin mismatch
+was resolved by the final rebuild; it is not waived. Electronics checks pass
+86/86 plus the independent verifier, with 1,883 canonical assets and 1,330 routed,
+port-complete connections. Baseline v1 and pilot v2 are retained as historical
+evidence and must not be described as fresh tests. These diagnostic results do
+not establish complete device fidelity, physical installation safety or visual approval.
+
 ## Proposed floor partners and reference models
 
-These are **unconfirmed prospects and research references**, not installed assets,
-confirmed sponsors or manufacturer-approved digital twins. A flagship reference
-is not a claim that every station needs that configuration. Borrowed/donated
-hardware availability, exact SKU, dimensions, port layout, serviceability and
-artwork permissions must be verified before its model is promoted.
+These are **unconfirmed prospects and source-backed exterior references**. No
+sponsor agreement, received physical asset or live connection is asserted. The
+catalog records selected configurations and published envelopes; unknown ports,
+internal components, service clearances and artwork rights are not invented. A
+flagship reference does not establish hardware availability or installation suitability.
 
 | Level and preserved purpose | Proposed lead maker / model | Appropriate showcase |
 | --- | --- | --- |
 | B1: Technical Operations / Infrastructure / Hands-On Lab | [Lenovo ThinkStation PX](https://www.lenovo.com/us/en/thinkstations/) | Supervised technical workstation and isolated infrastructure exercises, separate from live plant and rack controls. |
 | F1: Arrival / Orientation / Intake | [Dell Pro Precision 9 T6 PW9T6260](https://www.dell.com/en-us/shop/workstation/spd/dellproprecision9t6pw9t6260) | One reception/service demonstration host and public onboarding stations with separate private sessions, rather than a lobby full of towers. |
 | F2: Public Forum | [Framework Desktop Ryzen AI Max+ PRO 495](https://frame.work/desktop) | Quiet workshop/cohort computing and repairability demonstrations at the existing workshop/operator stations. Preserve the human forum and listening circle. |
-| F3: Fellowship + Network | [System76 Thelio Major](https://system76.com/desktops/thelio-major) | Linux/software fellowship and field-operations work at established desks, with interview rooms kept conversational. |
+| F3: Fellowship + Network | [System76 Thelio Major r5-n4](https://system76.com/tech-docs/models/thelio-major-r5-n4/external-overview) | Linux/software fellowship and field-operations work at established desks, with interview rooms kept conversational. |
 | F4: Media + Culture | [Apple Mac Studio M5 Ultra](https://www.apple.com/mac-studio/) | Editing/audio-production hero station. Model the actual compact enclosure and ports, not a generic tower labeled Apple. |
 | F5: Policy + Proof | [HP Z8 Fury G6i](https://www.hp.com/us-en/workstations/z8-fury.html) | Evidence/data workstation and research demonstrations, preserving paper/archive areas and quiet review rooms. |
-| F6: Penthouse Command | [NVIDIA DGX Station](https://www.nvidia.com/en-us/products/workstations/dgx-station/) | Sanitized analysis demonstrations and an explicitly isolated proposed compute host. No access to protected Halo or operational data is implied. |
-| L7: Roof / Mobility Portal | [ASUS ProArt P16 H7606](https://www.asus.com/laptops/for-creators/proart/proart-p16-h7606/techspec/) | Portable field/media demonstration only. No permanent outdoor desktop, invented enclosed seventh floor or weatherproofing claim. |
+| F6: Penthouse Command | [ASUS ExpertCenter Pro ET900N G3](https://www.asus.com/us/displays-desktops/workstations/performance/expertcenter-pro-et900n-g3/) with NVIDIA DGX Station architecture | Sanitized institutional analysis at separate desks. Published main-body envelope only; projecting handles/feet and total installed height are unverified. No protected Halo or operational access is implied. |
+| L7: Roof / Mobility Portal | [ASUS ProArt P16 H7606WX, RTX 5090, closed](https://www.asus.com/laptops/for-creators/proart/proart-p16-h7606/techspec/) | Portable field/media demonstration only. No permanent outdoor desktop, invented enclosed seventh floor or weatherproofing claim. |
 
-Other makers may supply secondary demonstration bays or later rotations; eight
-lead prospects do not exhaust the research. Manufacturer labels and sponsorship
+Additional makers and future rotations remain research options; these eight
+product references do not establish eight agreements or exhaust the research. Manufacturer labels and sponsorship
 state belong in data, not hard-coded geometry or invented logo artwork.
 
-## Corrective floor-plan sequence
+## Required repair and acceptance sequence
 
 1. Preserve the existing room functions and v3 furniture inventory. Keep forum,
    lounge, interview, gallery, archive and command tables usable by people.
@@ -165,12 +204,18 @@ python docs/design/equity-uprise-building/production/interiors/audit_device_plac
 python docs/design/equity-uprise-building/production/interiors/audit_device_placement.py --strict
 ```
 
-The full strict command **must still exit 1** with unresolved defects. The new
-`--require-bound` gate passes only when every authored repair is supported and
-correctly oriented in the generated meshes. Report mode
-only records diagnostics and does not call the geometry approved. Building CI
-uploads a fresh diagnostic and emits a warning while remodeling proceeds.
-Existing acceptance gates are unchanged; this is not a waiver or a replacement
-for their checks. The strict command is the additional placement acceptance gate
-for the repair. The committed v1 JSON is the exact-source baseline and v2 records this repair,
-not a current as-built or proof that later modifications were tested.
+After the final floor and electronics rebuild, run from the repository root:
+
+```sh
+python docs/design/equity-uprise-building/production/interiors/audit_device_placement.py --strict --require-bound --output docs/design/equity-uprise-building/production/interiors/device-placement-audit-v3.json
+```
+The combined gate must fail on unresolved contact, intersecting panels, missing
+bindings or mismatched actual origin/facing. Report mode records diagnostics only.
+A stale green summary or a passed furniture-only audit cannot replace this gate.
+
+The committed v1 JSON remains the original baseline and v2 the historical F1
+pilot. v3 is the all-floor integration report; source hashes and both
+`passed`/`bound_placement_passed` must match the final generated files before
+claiming geometry acceptance. Existing floor, circulation, screen, capability and
+runtime checks remain required. Browser review remains blocked before page load;
+no report establishes visual approval or a current physical as-built.

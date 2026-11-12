@@ -2,25 +2,57 @@
 
 > Update this file whenever completion, maturity, visual direction, or next work changes.
 
-## Device placement repair — 2026-11-11 — ACTIVE, not visually approved
+## Device placement and maker-reference repair — 2026-11-12 — DIAGNOSTIC GATE PASSED, visual review open
 
-The actual electronics overlay and furnished floor GLBs were checked together at
-main `8e631683`. The new cross-layer diagnostic finds 33 intersecting monitor-panel
-pairs and 98 unresolved support contacts (36 workstation chassis, 62 monitor
-stands). The earlier furniture audit does not load the electronics overlay, so
-its pass is not placement approval. Eight F1 devices now use exact authored
-reception/passport/intake support bindings and correct reception facing. Their
-geometry checks pass; 90 unsupported contacts and all 33 overlapping panel pairs
-elsewhere remain open. Generated electronics and screen registries are refreshed.
-No floor program changes. Manufacturer floors remain unconfirmed proposals, not
-sponsor agreements, exact finished models or live devices.
+The source repair now covers all **36 existing workstation hosts and 62 monitors**
+across B1–F6 through 98 explicit support/station bindings. No floor functions,
+Core V2 systems, recurring staff floors or live-control permissions changed.
+B1 technical stations and F2/F3 staff desks retain their furniture placement. F1's
+intake credenza is deepened for the selected Dell envelope. F4 gets coherent
+recording/editing and production stations, F5 gets five wider research carrels,
+and F6 keeps its command/briefing tables clear while Helen remains in her office.
+Only exactly superseded scenic screens are removed; keyboard, seat and capability
+identities are retained. Two F4 display IDs have explicit registered-screen
+replacement mappings instead of being falsely counted as existing scenic meshes.
 
-See `DEVICE-PLACEMENT-RECONCILIATION.md` and
-`production/interiors/device-placement-audit-v1.json` (baseline) and
-`production/interiors/device-placement-audit-v2.json` (F1 repair). Browser startup
-was blocked before page load; visual approval is still outstanding. Repair remains active:
-explicit station/support binding, removal of exact duplicate scenic screens,
-source-backed models, B1 rack reconciliation, then strict geometry and visual QA.
+Seven floor model assignments use source-backed **partial exterior proxies** for
+Lenovo, Dell, Framework, System76, Apple, HP and ASUS. The eight-profile catalog
+also includes a closed ASUS ProArt laptop as an **L7 portable prospect only**.
+L7 remains the open roof, with no new permanent workstation. These are original
+scene meshes with published envelopes and simplified details, not manufacturer
+CAD, approved digital twins or verified physical installations. All sponsor
+states remain unconfirmed, physical assets not received, and live connections
+not connected. The ASUS ET900N G3/DGX Station profile covers its published main
+body only: unsized projecting handles/feet are omitted, and total installed
+height remains unverified.
+
+The generator consumes the complete binding set and manufacturer profiles. A
+separate authored workstation GLB and shared viewer layer are wired into normal
+building/floor views and PRIM3 integration; this is source integration, not browser
+or deployment approval. Unknown monitor state remains dark and sandbox state
+never asserts a live physical host.
+
+Final regenerated geometry passes the combined **`--strict --require-bound`**
+gate: **98/98 bindings**, **0 unsupported contacts**, **0 monitor-panel
+intersections**, including exact manufacturer model, origin and facing checks.
+Both `passed` and `bound_placement_passed` are true in the final v3 report.
+Electronics checks pass **86/86** plus the independent verifier; the canonical
+fabric retains **1,883 assets and 1,330 routed, port-complete connections**.
+Interior **120/120**, combined-building **46/46**, vertical-circulation **44/44**,
+program **466/466** and hardware **67/67** checks pass. F2/F3 station tests **7/7**,
+F4–F6 station tests **7/7**, and manufacturer-model tests **18/18** also pass.
+The post-regeneration root suite passed **2,512 Node tests (4 skipped) and 7 Python
+tests**. Dedicated viewer checks pass **9/9**, and lossless same-export cleanup
+checks pass **16/16**. Remote CI is a separate publication check.
+The original v1 baseline remains 98 unsupported contacts / 33 panel intersections;
+v2 records the historical F1-only pilot, not the current all-floor scope.
+
+Read `FLOOR-DEVICE-REPAIR-V1.md`, `DEVICE-PLACEMENT-RECONCILIATION.md` and
+`MANUFACTURER-MODEL-REFERENCES.md`. B1's separate MDF/rack room mismatch,
+manufacturer installation/thermal/service requirements, complete device fidelity,
+and desktop/mobile visual review remain open. Browser startup was blocked before
+page load by the existing socket-permission failure. No visual approval, physical
+commissioning, PR merge or production deployment is claimed.
 
 ## Local screen and object reconstruction — 2026-11-03
 

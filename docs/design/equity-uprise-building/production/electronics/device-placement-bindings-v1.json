@@ -2,7 +2,7 @@
   "schema_version": "1.0.0",
   "status": "schematic_repair_not_visual_or_installation_approval",
   "not_for_construction": true,
-  "scope": "F1 existing identities only. Generic training hardware, no manufacturer or live connection asserted. Other floors remain explicitly unresolved.",
+  "scope": "All existing B1-F6 workstation and monitor identities, with exact authored supports and proposed manufacturer exteriors. No physical asset, sponsor agreement or live connection is asserted.",
   "coordinate_frame": "floor-local-ft-xy-and-aff-z",
   "bindings": [
     {
@@ -91,8 +91,8 @@
       "support_node": "F1-INTAKE-CREDENZA-01::credenza",
       "support_top_aff_ft": 2.4166666666666665,
       "origin_xy_ft": [
-        3.2,
-        42.9
+        3.25,
+        42.65
       ],
       "yaw_degrees": 0
     },
@@ -104,10 +104,24 @@
       "support_node": "F1-INTAKE-CREDENZA-01::credenza",
       "support_top_aff_ft": 2.4166666666666665,
       "origin_xy_ft": [
-        4.6,
-        42.9
+        4.9,
+        42.6
       ],
       "yaw_degrees": 0
     }
-  ]
+  ],
+  "binding_sources": [
+    "device-stations-b1-v1.json",
+    "device-stations-f2-f3-v1.json",
+    "device-stations-f4-f6-v1.json"
+  ],
+  "model_ids_by_level": {
+    "0": "lenovo-thinkstation-px",
+    "1": "dell-pro-precision-9-t6-pw9t6260",
+    "2": "framework-desktop-ryzen-ai-max-plus-pro-495-192gb",
+    "3": "system76-thelio-major-r5-n4",
+    "4": "apple-mac-studio-m5-ultra",
+    "5": "hp-z8-fury-g6i-standard-panel",
+    "6": "asus-expertcenter-pro-et900n-g3"
+  }
 }

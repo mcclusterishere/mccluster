@@ -27,8 +27,9 @@ button{border:1px solid #555;border-radius:999px;background:#252525;color:#fff;p
 <button id="ceil">Hide ceiling</button>
 <button id="wire">Wireframe</button>
 </div></div>
-<div class="s" id="status">Loading Floor 4…</div>
+<div id="workstationStatus" role="status" style="position:fixed;z-index:4;left:8px;bottom:8px;max-width:calc(100vw - 16px);font:11px system-ui;background:#111d;padding:6px;border-radius:6px"></div><div class="s" id="status">Loading Floor 4…</div>
 <script type="module">
+import {mountFloorWorkstations} from '/js/eu-screens/workstation-layer.mjs';
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
@@ -53,7 +54,8 @@ function frameLoadedModel(){
   return {size,center};
 }
 new GLTFLoader().load('/equity-uprise-preview/equity-uprise-floor-04-core-v2.glb?v=__STAMP__',g=>{
-  model=g.scene;model.rotation.x=-Math.PI/2;model.updateMatrixWorld(true);scene.add(model);
+  model=g.scene;
+  mountFloorWorkstations({THREE,loader:new GLTFLoader(),scene,floor:'F4',ffeFt:40.5,getFloorRoot:()=>model,onStatus:state=>{const el=document.getElementById('workstationStatus');el.textContent=state==='unavailable'?'Workstation models unavailable · no substitute screens':state==='ready'?'Authored workstations · sandbox indicators':'Loading authored workstations…'}});model.rotation.x=-Math.PI/2;model.updateMatrixWorld(true);scene.add(model);
   let n=0;model.traverse(o=>{if(o.isMesh){n++;o.castShadow=o.receiveShadow=true;o.frustumCulled=false;const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{m.side=THREE.DoubleSide;m.needsUpdate=true});if((o.name||'').toLowerCase().includes('ceiling'))ceil.push(o)}});
   const f=frameLoadedModel();status.textContent=n+' meshes · 68 inventory records · '+(f.size.x/FT).toFixed(1)+"' × "+(f.size.z/FT).toFixed(1)+"'";
 },undefined,e=>{console.error(e);status.textContent='Model load failed: '+(e?.message||e)});

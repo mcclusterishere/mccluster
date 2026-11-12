@@ -14,8 +14,8 @@
    "items": 35,
    "furniture_types": 12,
    "furnished_zones": 5,
-   "triangles": 13424,
-   "glb_bytes": 269784
+   "triangles": 13112,
+   "glb_bytes": 269688
   },
   "F1": {
    "items": 35,
@@ -28,36 +28,36 @@
    "items": 48,
    "furniture_types": 19,
    "furnished_zones": 4,
-   "triangles": 11516,
-   "glb_bytes": 211528
+   "triangles": 11336,
+   "glb_bytes": 208712
   },
   "F3": {
    "items": 49,
    "furniture_types": 24,
    "furnished_zones": 5,
-   "triangles": 11836,
-   "glb_bytes": 217672
+   "triangles": 11548,
+   "glb_bytes": 211916
   },
   "F4": {
-   "items": 44,
+   "items": 52,
    "furniture_types": 21,
    "furnished_zones": 6,
-   "triangles": 10104,
-   "glb_bytes": 252172
+   "triangles": 11540,
+   "glb_bytes": 247836
   },
   "F5": {
    "items": 55,
    "furniture_types": 13,
    "furnished_zones": 5,
-   "triangles": 13024,
-   "glb_bytes": 240572
+   "triangles": 12772,
+   "glb_bytes": 239132
   },
   "F6": {
-   "items": 41,
-   "furniture_types": 19,
-   "furnished_zones": 6,
-   "triangles": 15024,
-   "glb_bytes": 301556
+   "items": 47,
+   "furniture_types": 20,
+   "furnished_zones": 7,
+   "triangles": 16044,
+   "glb_bytes": 299832
   }
  },
  "vocabulary_similarity": {
@@ -65,23 +65,23 @@
   "F1-F3": 0.429,
   "F1-F4": 0.321,
   "F1-F5": 0.318,
-  "F1-F6": 0.522,
+  "F1-F6": 0.565,
   "F1-B1": 0.217,
   "F2-F3": 0.433,
   "F2-F4": 0.25,
   "F2-F5": 0.231,
-  "F2-F6": 0.357,
+  "F2-F6": 0.345,
   "F2-B1": 0.192,
   "F3-F4": 0.324,
   "F3-F5": 0.233,
-  "F3-F6": 0.387,
+  "F3-F6": 0.419,
   "F3-B1": 0.385,
   "F4-F5": 0.214,
-  "F4-F6": 0.379,
+  "F4-F6": 0.414,
   "F4-B1": 0.179,
-  "F5-F6": 0.391,
+  "F5-F6": 0.375,
   "F5-B1": 0.19,
-  "F6-B1": 0.192
+  "F6-B1": 0.231
  },
  "unique_types": {
   "F1": [
@@ -213,13 +213,13 @@
    "scope": "B1",
    "name": "phone budget: <= 40000 triangles",
    "passed": true,
-   "detail": 13424
+   "detail": 13112
   },
   {
    "scope": "B1",
    "name": "phone budget: <= 700000 bytes",
    "passed": true,
-   "detail": 269784
+   "detail": 269688
   },
   {
    "scope": "F1",
@@ -393,13 +393,13 @@
    "scope": "F2",
    "name": "phone budget: <= 40000 triangles",
    "passed": true,
-   "detail": 11516
+   "detail": 11336
   },
   {
    "scope": "F2",
    "name": "phone budget: <= 700000 bytes",
    "passed": true,
-   "detail": 211528
+   "detail": 208712
   },
   {
    "scope": "F3",
@@ -483,13 +483,13 @@
    "scope": "F3",
    "name": "phone budget: <= 40000 triangles",
    "passed": true,
-   "detail": 11836
+   "detail": 11548
   },
   {
    "scope": "F3",
    "name": "phone budget: <= 700000 bytes",
    "passed": true,
-   "detail": 217672
+   "detail": 211916
   },
   {
    "scope": "F4",
@@ -573,13 +573,13 @@
    "scope": "F4",
    "name": "phone budget: <= 40000 triangles",
    "passed": true,
-   "detail": 10104
+   "detail": 11540
   },
   {
    "scope": "F4",
    "name": "phone budget: <= 700000 bytes",
    "passed": true,
-   "detail": 252172
+   "detail": 247836
   },
   {
    "scope": "F5",
@@ -663,13 +663,13 @@
    "scope": "F5",
    "name": "phone budget: <= 40000 triangles",
    "passed": true,
-   "detail": 13024
+   "detail": 12772
   },
   {
    "scope": "F5",
    "name": "phone budget: <= 700000 bytes",
    "passed": true,
-   "detail": 240572
+   "detail": 239132
   },
   {
    "scope": "F6",
@@ -753,13 +753,13 @@
    "scope": "F6",
    "name": "phone budget: <= 40000 triangles",
    "passed": true,
-   "detail": 15024
+   "detail": 16044
   },
   {
    "scope": "F6",
    "name": "phone budget: <= 700000 bytes",
    "passed": true,
-   "detail": 301556
+   "detail": 299832
   },
   {
    "scope": "building",
@@ -945,23 +945,23 @@
     "F1-F3": 0.429,
     "F1-F4": 0.321,
     "F1-F5": 0.318,
-    "F1-F6": 0.522,
+    "F1-F6": 0.565,
     "F1-B1": 0.217,
     "F2-F3": 0.433,
     "F2-F4": 0.25,
     "F2-F5": 0.231,
-    "F2-F6": 0.357,
+    "F2-F6": 0.345,
     "F2-B1": 0.192,
     "F3-F4": 0.324,
     "F3-F5": 0.233,
-    "F3-F6": 0.387,
+    "F3-F6": 0.419,
     "F3-B1": 0.385,
     "F4-F5": 0.214,
-    "F4-F6": 0.379,
+    "F4-F6": 0.414,
     "F4-B1": 0.179,
-    "F5-F6": 0.391,
+    "F5-F6": 0.375,
     "F5-B1": 0.19,
-    "F6-B1": 0.192
+    "F6-B1": 0.231
    }
   },
   {

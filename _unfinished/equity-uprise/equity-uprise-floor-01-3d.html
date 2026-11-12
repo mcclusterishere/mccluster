@@ -49,10 +49,11 @@ button.active{background:#8b1e1e;border-color:#b52c31}
 <button id="wire">Wireframe</button>
 </div>
 </div>
-<div id="status"><span id="north">NORTH ↑</span> · 72' × 72' · camera datum (36,28) · <span id="meshCount">loading…</span></div>
+<div id="workstationStatus" role="status" style="position:fixed;z-index:4;left:8px;bottom:8px;max-width:calc(100vw - 16px);font:11px system-ui;background:#111d;padding:6px;border-radius:6px"></div><div id="status"><span id="north">NORTH ↑</span> · 72' × 72' · camera datum (36,28) · <span id="meshCount">loading…</span></div>
 <div id="boot">Loading Floor 1 3D…</div>
 
 <script type="module">
+import {mountFloorWorkstations} from '/js/eu-screens/workstation-layer.mjs';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -112,6 +113,7 @@ function frameLoadedModel(){
 const loader=new GLTFLoader();
 loader.load('/equity-uprise-preview/equity-uprise-floor-01-core-v2.glb?v=__STAMP__',g=>{
   model=g.scene;
+  mountFloorWorkstations({THREE,loader:new GLTFLoader(),scene,floor:'F1',ffeFt:0,getFloorRoot:()=>model,onStatus:state=>{document.getElementById('workstationStatus').textContent=state==='unavailable'?'Workstation models unavailable · no substitute screens':state==='ready'?'Authored workstations · sandbox indicators':'Loading authored workstations…'}});
   // Trimesh authoring coordinates are Z-up (X/Y floor plane, Z height).
   // Three.js renders Y-up, so rotate the imported GLB onto the floor.
   model.rotation.x=-Math.PI/2;

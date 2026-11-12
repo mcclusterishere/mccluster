@@ -19,6 +19,13 @@ def rectangle(x1, y1, x2, y2, z):
 
 
 class DevicePlacementTest(unittest.TestCase):
+    def test_strict_acceptance_requires_exact_geometry_and_bindings(self):
+        self.assertFalse(audit.acceptance_passed([], [], []))
+        self.assertFalse(audit.acceptance_passed([], [], [{"passed": False}]))
+        self.assertFalse(audit.acceptance_passed(["unsupported"], [], [{"passed": True}]))
+        self.assertFalse(audit.acceptance_passed([], ["intersection"], [{"passed": True}]))
+        self.assertTrue(audit.acceptance_passed([], [], [{"passed": True}]))
+
     def test_supported_monitor(self):
         self.assertEqual(audit.support_contact([[1, 1, 2.5], [2, 2, 3.2]], rectangle(0, 0, 3, 3, 2.5))['status'], 'contact')
 
@@ -69,9 +76,10 @@ class AuthoredBindingTest(unittest.TestCase):
             path.write_text(json.dumps({'schema_version': '1.0.0', 'bindings': rows}))
             return audit.load_bindings(path)
 
-    def test_eight_explicit_bindings(self):
-        self.assertEqual(len(self.bindings), 8)
-        self.assertTrue(all(x['level'] == 1 for x in self.bindings.values()))
+    def test_all_explicit_bindings(self):
+        self.assertEqual(len(self.bindings), 98)
+        self.assertEqual(sum(x['level'] == 1 for x in self.bindings.values()), 8)
+        self.assertEqual(sum(bool(x.get('model_id')) for x in self.bindings.values()), 36)
 
     def test_no_duplicate_id_fallback(self):
         with self.assertRaises(ValueError):
@@ -95,6 +103,7 @@ class AuthoredBindingTest(unittest.TestCase):
 
     def test_geometry_must_face_the_declared_direction(self):
         b = self.binding
+        b.pop("model_id", None)
         p = audit.bound_position(b, 0)
         def point_bounds(center):
             return [[v - .02 for v in center], [v + .02 for v in center]]
@@ -106,6 +115,7 @@ class AuthoredBindingTest(unittest.TestCase):
 
     def test_bound_height_adds_ffe_once(self):
         from device_placement_bindings import bound_position
+        self.binding.pop('model_id', None)
         self.binding.update(asset_type='monitor', support_top_aff_ft=2.5)
         self.assertAlmostEqual(bound_position(self.binding, 67.5)[2], 70.92)
 

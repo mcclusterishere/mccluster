@@ -217,8 +217,8 @@
       "status": "training_load_profile_not_fixed_asset"
     }
   ],
-  "overlay_glb_bytes": 12444600,
-  "overlay_glb_sha256": "ad664bade0a6e018e4767aa49078a6462e565e8876e583c1135296d8bf5ccbc7",
+  "overlay_glb_bytes": 12432680,
+  "overlay_glb_sha256": "797ec46913e749902a526d43e4a51e45b4bc0ad63ad78b732bb72f89e87f2f8f",
   "checks_total": 86,
   "checks_passed": 86,
   "checks_failed": 0,
@@ -477,7 +477,7 @@
       "detail": "36/36"
     },
     {
-      "name": "workstation assemblies expose chassis, IO, power, NIC, display outputs, and status",
+      "name": "workstation assemblies match their source-backed exterior or generic simulation archetype",
       "passed": true,
       "detail": ""
     },
@@ -685,7 +685,7 @@
     {
       "name": "overlay GLB generated",
       "passed": true,
-      "detail": 12444600
+      "detail": 12432680
     }
   ],
   "passed": true

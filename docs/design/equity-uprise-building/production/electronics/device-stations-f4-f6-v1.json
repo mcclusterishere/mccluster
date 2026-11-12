@@ -1,0 +1,1508 @@
+{
+  "schema_version": "1.0.0",
+  "status": "authored_station_reconciliation_pending_integrated_electronics_and_visual_review",
+  "not_for_construction": true,
+  "coordinate_frame": "floor-local-ft-xy-and-aff-z",
+  "scope": "Explicit F4/F5/F6 existing USER identities only. No host identity, room, staff floor, live access or sponsor agreement is created.",
+  "bindings": [
+    {
+      "asset_id": "F4-USER-WS-01",
+      "asset_type": "workstation",
+      "support_node": "F4-DESK-PRIYA-SRISAWAT::desk_dual",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        58.25,
+        2.55
+      ],
+      "level": 4,
+      "station_id": "F4-DESK-PRIYA-SRISAWAT",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F4-USER-MON-01-01",
+      "asset_type": "monitor",
+      "support_node": "F4-DESK-PRIYA-SRISAWAT::desk_dual",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        55.0,
+        1.55
+      ],
+      "level": 4,
+      "station_id": "F4-DESK-PRIYA-SRISAWAT",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F4-USER-MON-01-02",
+      "asset_type": "monitor",
+      "support_node": "F4-DESK-PRIYA-SRISAWAT::desk_dual",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        57.0,
+        1.55
+      ],
+      "level": 4,
+      "station_id": "F4-DESK-PRIYA-SRISAWAT",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F4-USER-WS-02",
+      "asset_type": "workstation",
+      "support_node": "F4-DESK-MAREN-QUILL::desk_dual",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        64.65,
+        2.55
+      ],
+      "level": 4,
+      "station_id": "F4-DESK-MAREN-QUILL",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F4-USER-MON-02-01",
+      "asset_type": "monitor",
+      "support_node": "F4-DESK-MAREN-QUILL::desk_dual",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        61.4,
+        1.55
+      ],
+      "level": 4,
+      "station_id": "F4-DESK-MAREN-QUILL",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F4-USER-MON-02-02",
+      "asset_type": "monitor",
+      "support_node": "F4-DESK-MAREN-QUILL::desk_dual",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        63.4,
+        1.55
+      ],
+      "level": 4,
+      "station_id": "F4-DESK-MAREN-QUILL",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F4-USER-WS-03",
+      "asset_type": "workstation",
+      "support_node": "F4-RECORDING-WORKSURFACE-01::desk",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        8.7,
+        7.35
+      ],
+      "level": 4,
+      "station_id": "F4-RECORDING-WORKSURFACE-01",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F4-USER-MON-03-01",
+      "asset_type": "monitor",
+      "support_node": "F4-RECORDING-WORKSURFACE-01::desk",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        5.6,
+        6.45
+      ],
+      "level": 4,
+      "station_id": "F4-RECORDING-WORKSURFACE-01",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F4-USER-MON-03-02",
+      "asset_type": "monitor",
+      "support_node": "F4-RECORDING-WORKSURFACE-01::desk",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        7.6,
+        6.45
+      ],
+      "level": 4,
+      "station_id": "F4-RECORDING-WORKSURFACE-01",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F4-USER-WS-04",
+      "asset_type": "workstation",
+      "support_node": "F4-EDIT-DESK-01::desk",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        26.2,
+        8.8
+      ],
+      "level": 4,
+      "station_id": "F4-EDIT-DESK-01",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F4-USER-MON-04-01",
+      "asset_type": "monitor",
+      "support_node": "F4-EDIT-DESK-01::desk",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        22.0,
+        7.8
+      ],
+      "level": 4,
+      "station_id": "F4-EDIT-DESK-01",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F4-USER-MON-04-02",
+      "asset_type": "monitor",
+      "support_node": "F4-EDIT-DESK-01::desk",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        24.0,
+        7.8
+      ],
+      "level": 4,
+      "station_id": "F4-EDIT-DESK-01",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F4-USER-WS-05",
+      "asset_type": "workstation",
+      "support_node": "F4-PRODUCTION-DESK-01::desk",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        57.9,
+        9.5
+      ],
+      "level": 4,
+      "station_id": "F4-PRODUCTION-DESK-01",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F4-USER-MON-05-01",
+      "asset_type": "monitor",
+      "support_node": "F4-PRODUCTION-DESK-01::desk",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        54.5,
+        8.5
+      ],
+      "level": 4,
+      "station_id": "F4-PRODUCTION-DESK-01",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F4-USER-MON-05-02",
+      "asset_type": "monitor",
+      "support_node": "F4-PRODUCTION-DESK-01::desk",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        56.5,
+        8.5
+      ],
+      "level": 4,
+      "station_id": "F4-PRODUCTION-DESK-01",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F4-USER-WS-06",
+      "asset_type": "workstation",
+      "support_node": "F4-PRODUCTION-DESK-02::desk",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        66.0,
+        9.5
+      ],
+      "level": 4,
+      "station_id": "F4-PRODUCTION-DESK-02",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F4-USER-MON-06-01",
+      "asset_type": "monitor",
+      "support_node": "F4-PRODUCTION-DESK-02::desk",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        62.6,
+        8.5
+      ],
+      "level": 4,
+      "station_id": "F4-PRODUCTION-DESK-02",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F4-USER-MON-06-02",
+      "asset_type": "monitor",
+      "support_node": "F4-PRODUCTION-DESK-02::desk",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        64.6,
+        8.5
+      ],
+      "level": 4,
+      "station_id": "F4-PRODUCTION-DESK-02",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F4-USER-WS-07",
+      "asset_type": "workstation",
+      "support_node": "F4-PRODUCTION-DESK-03::desk",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        57.9,
+        22.5
+      ],
+      "level": 4,
+      "station_id": "F4-PRODUCTION-DESK-03",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F4-USER-MON-07-01",
+      "asset_type": "monitor",
+      "support_node": "F4-PRODUCTION-DESK-03::desk",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        54.5,
+        21.5
+      ],
+      "level": 4,
+      "station_id": "F4-PRODUCTION-DESK-03",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F4-USER-MON-07-02",
+      "asset_type": "monitor",
+      "support_node": "F4-PRODUCTION-DESK-03::desk",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        56.5,
+        21.5
+      ],
+      "level": 4,
+      "station_id": "F4-PRODUCTION-DESK-03",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F4-USER-WS-08",
+      "asset_type": "workstation",
+      "support_node": "F4-PRODUCTION-DESK-04::desk",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        66.0,
+        22.5
+      ],
+      "level": 4,
+      "station_id": "F4-PRODUCTION-DESK-04",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F4-USER-MON-08-01",
+      "asset_type": "monitor",
+      "support_node": "F4-PRODUCTION-DESK-04::desk",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        62.6,
+        21.5
+      ],
+      "level": 4,
+      "station_id": "F4-PRODUCTION-DESK-04",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F4-USER-MON-08-02",
+      "asset_type": "monitor",
+      "support_node": "F4-PRODUCTION-DESK-04::desk",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        64.6,
+        21.5
+      ],
+      "level": 4,
+      "station_id": "F4-PRODUCTION-DESK-04",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F5-USER-WS-01",
+      "asset_type": "workstation",
+      "support_node": "floor_slab",
+      "support_top_aff_ft": 0,
+      "origin_xy_ft": [
+        68.45,
+        8.8
+      ],
+      "level": 5,
+      "station_id": "F5-DESK-OKSANA-BONDARENKO",
+      "yaw_degrees": 270
+    },
+    {
+      "asset_id": "F5-USER-MON-01-01",
+      "asset_type": "monitor",
+      "support_node": "F5-DESK-OKSANA-BONDARENKO::desk_dual",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        69.3,
+        6.0
+      ],
+      "level": 5,
+      "station_id": "F5-DESK-OKSANA-BONDARENKO",
+      "yaw_degrees": 270
+    },
+    {
+      "asset_id": "F5-USER-MON-01-02",
+      "asset_type": "monitor",
+      "support_node": "F5-DESK-OKSANA-BONDARENKO::desk_dual",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        69.3,
+        8.0
+      ],
+      "level": 5,
+      "station_id": "F5-DESK-OKSANA-BONDARENKO",
+      "yaw_degrees": 270
+    },
+    {
+      "asset_id": "F5-USER-WS-02",
+      "asset_type": "workstation",
+      "support_node": "floor_slab",
+      "support_top_aff_ft": 0,
+      "origin_xy_ft": [
+        68.45,
+        14.8
+      ],
+      "level": 5,
+      "station_id": "F5-DESK-LEILA-HOSSEINI",
+      "yaw_degrees": 270
+    },
+    {
+      "asset_id": "F5-USER-MON-02-01",
+      "asset_type": "monitor",
+      "support_node": "F5-DESK-LEILA-HOSSEINI::desk_dual",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        69.3,
+        12.0
+      ],
+      "level": 5,
+      "station_id": "F5-DESK-LEILA-HOSSEINI",
+      "yaw_degrees": 270
+    },
+    {
+      "asset_id": "F5-USER-MON-02-02",
+      "asset_type": "monitor",
+      "support_node": "F5-DESK-LEILA-HOSSEINI::desk_dual",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        69.3,
+        14.0
+      ],
+      "level": 5,
+      "station_id": "F5-DESK-LEILA-HOSSEINI",
+      "yaw_degrees": 270
+    },
+    {
+      "asset_id": "F5-USER-WS-03",
+      "asset_type": "workstation",
+      "support_node": "floor_slab",
+      "support_top_aff_ft": 0,
+      "origin_xy_ft": [
+        68.45,
+        20.8
+      ],
+      "level": 5,
+      "station_id": "F5-DESK-AMIRA-HASSAN",
+      "yaw_degrees": 270
+    },
+    {
+      "asset_id": "F5-USER-MON-03-01",
+      "asset_type": "monitor",
+      "support_node": "F5-DESK-AMIRA-HASSAN::desk_dual",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        69.3,
+        18.0
+      ],
+      "level": 5,
+      "station_id": "F5-DESK-AMIRA-HASSAN",
+      "yaw_degrees": 270
+    },
+    {
+      "asset_id": "F5-USER-MON-03-02",
+      "asset_type": "monitor",
+      "support_node": "F5-DESK-AMIRA-HASSAN::desk_dual",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        69.3,
+        20.0
+      ],
+      "level": 5,
+      "station_id": "F5-DESK-AMIRA-HASSAN",
+      "yaw_degrees": 270
+    },
+    {
+      "asset_id": "F5-USER-WS-04",
+      "asset_type": "workstation",
+      "support_node": "floor_slab",
+      "support_top_aff_ft": 0,
+      "origin_xy_ft": [
+        37.25,
+        3.65
+      ],
+      "level": 5,
+      "station_id": "F5-CARREL-01",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F5-USER-MON-04-01",
+      "asset_type": "monitor",
+      "support_node": "F5-CARREL-01::carrel",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        34.7,
+        3.4
+      ],
+      "level": 5,
+      "station_id": "F5-CARREL-01",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F5-USER-MON-04-02",
+      "asset_type": "monitor",
+      "support_node": "F5-CARREL-01::carrel",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        36.7,
+        3.4
+      ],
+      "level": 5,
+      "station_id": "F5-CARREL-01",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F5-USER-WS-05",
+      "asset_type": "workstation",
+      "support_node": "floor_slab",
+      "support_top_aff_ft": 0,
+      "origin_xy_ft": [
+        42.25,
+        3.65
+      ],
+      "level": 5,
+      "station_id": "F5-CARREL-02",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F5-USER-MON-05-01",
+      "asset_type": "monitor",
+      "support_node": "F5-CARREL-02::carrel",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        39.7,
+        3.4
+      ],
+      "level": 5,
+      "station_id": "F5-CARREL-02",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F5-USER-MON-05-02",
+      "asset_type": "monitor",
+      "support_node": "F5-CARREL-02::carrel",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        41.7,
+        3.4
+      ],
+      "level": 5,
+      "station_id": "F5-CARREL-02",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F5-USER-WS-06",
+      "asset_type": "workstation",
+      "support_node": "floor_slab",
+      "support_top_aff_ft": 0,
+      "origin_xy_ft": [
+        47.25,
+        3.65
+      ],
+      "level": 5,
+      "station_id": "F5-CARREL-03",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F5-USER-MON-06-01",
+      "asset_type": "monitor",
+      "support_node": "F5-CARREL-03::carrel",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        44.7,
+        3.4
+      ],
+      "level": 5,
+      "station_id": "F5-CARREL-03",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F5-USER-MON-06-02",
+      "asset_type": "monitor",
+      "support_node": "F5-CARREL-03::carrel",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        46.7,
+        3.4
+      ],
+      "level": 5,
+      "station_id": "F5-CARREL-03",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F5-USER-WS-07",
+      "asset_type": "workstation",
+      "support_node": "floor_slab",
+      "support_top_aff_ft": 0,
+      "origin_xy_ft": [
+        52.25,
+        3.65
+      ],
+      "level": 5,
+      "station_id": "F5-CARREL-04",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F5-USER-MON-07-01",
+      "asset_type": "monitor",
+      "support_node": "F5-CARREL-04::carrel",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        49.7,
+        3.4
+      ],
+      "level": 5,
+      "station_id": "F5-CARREL-04",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F5-USER-MON-07-02",
+      "asset_type": "monitor",
+      "support_node": "F5-CARREL-04::carrel",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        51.7,
+        3.4
+      ],
+      "level": 5,
+      "station_id": "F5-CARREL-04",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F5-USER-WS-08",
+      "asset_type": "workstation",
+      "support_node": "floor_slab",
+      "support_top_aff_ft": 0,
+      "origin_xy_ft": [
+        57.25,
+        3.65
+      ],
+      "level": 5,
+      "station_id": "F5-CARREL-05",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F5-USER-MON-08-01",
+      "asset_type": "monitor",
+      "support_node": "F5-CARREL-05::carrel",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        54.7,
+        3.4
+      ],
+      "level": 5,
+      "station_id": "F5-CARREL-05",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F5-USER-MON-08-02",
+      "asset_type": "monitor",
+      "support_node": "F5-CARREL-05::carrel",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        56.7,
+        3.4
+      ],
+      "level": 5,
+      "station_id": "F5-CARREL-05",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F6-USER-WS-01",
+      "asset_type": "workstation",
+      "support_node": "floor_slab",
+      "support_top_aff_ft": 0,
+      "origin_xy_ft": [
+        63.1,
+        9.8
+      ],
+      "level": 6,
+      "station_id": "F6-OFFICE-HELEN-CLARKE-DESK",
+      "yaw_degrees": 0
+    },
+    {
+      "asset_id": "F6-USER-MON-01-01",
+      "asset_type": "monitor",
+      "support_node": "F6-OFFICE-HELEN-CLARKE-DESK::desk_exec_l",
+      "support_top_aff_ft": 2.5,
+      "origin_xy_ft": [
+        64.1,
+        11.0
+      ],
+      "level": 6,
+      "station_id": "F6-OFFICE-HELEN-CLARKE-DESK",
+      "yaw_degrees": 0
+    },
+    {
+      "asset_id": "F6-USER-MON-01-02",
+      "asset_type": "monitor",
+      "support_node": "F6-OFFICE-HELEN-CLARKE-DESK::desk_exec_l",
+      "support_top_aff_ft": 2.5,
+      "origin_xy_ft": [
+        66.1,
+        11.0
+      ],
+      "level": 6,
+      "station_id": "F6-OFFICE-HELEN-CLARKE-DESK",
+      "yaw_degrees": 0
+    },
+    {
+      "asset_id": "F6-USER-WS-02",
+      "asset_type": "workstation",
+      "support_node": "floor_slab",
+      "support_top_aff_ft": 0,
+      "origin_xy_ft": [
+        68.4,
+        23.8
+      ],
+      "level": 6,
+      "station_id": "F6-DESK-LI-WEI",
+      "yaw_degrees": 270
+    },
+    {
+      "asset_id": "F6-USER-MON-02-01",
+      "asset_type": "monitor",
+      "support_node": "F6-DESK-LI-WEI::desk_dual",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        69.3,
+        21.0
+      ],
+      "level": 6,
+      "station_id": "F6-DESK-LI-WEI",
+      "yaw_degrees": 270
+    },
+    {
+      "asset_id": "F6-USER-MON-02-02",
+      "asset_type": "monitor",
+      "support_node": "F6-DESK-LI-WEI::desk_dual",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        69.3,
+        23.0
+      ],
+      "level": 6,
+      "station_id": "F6-DESK-LI-WEI",
+      "yaw_degrees": 270
+    },
+    {
+      "asset_id": "F6-USER-WS-03",
+      "asset_type": "workstation",
+      "support_node": "floor_slab",
+      "support_top_aff_ft": 0,
+      "origin_xy_ft": [
+        68.4,
+        29.8
+      ],
+      "level": 6,
+      "station_id": "F6-DESK-MARC-DUBOIS",
+      "yaw_degrees": 270
+    },
+    {
+      "asset_id": "F6-USER-MON-03-01",
+      "asset_type": "monitor",
+      "support_node": "F6-DESK-MARC-DUBOIS::desk_dual",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        69.3,
+        27.0
+      ],
+      "level": 6,
+      "station_id": "F6-DESK-MARC-DUBOIS",
+      "yaw_degrees": 270
+    },
+    {
+      "asset_id": "F6-USER-MON-03-02",
+      "asset_type": "monitor",
+      "support_node": "F6-DESK-MARC-DUBOIS::desk_dual",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        69.3,
+        29.0
+      ],
+      "level": 6,
+      "station_id": "F6-DESK-MARC-DUBOIS",
+      "yaw_degrees": 270
+    },
+    {
+      "asset_id": "F6-USER-WS-04",
+      "asset_type": "workstation",
+      "support_node": "floor_slab",
+      "support_top_aff_ft": 0,
+      "origin_xy_ft": [
+        38.8,
+        4.2
+      ],
+      "level": 6,
+      "station_id": "F6-BRIEFING-PREP-DESK-01",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F6-USER-MON-04-01",
+      "asset_type": "monitor",
+      "support_node": "F6-BRIEFING-PREP-DESK-01::desk",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        36.0,
+        3.3
+      ],
+      "level": 6,
+      "station_id": "F6-BRIEFING-PREP-DESK-01",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F6-USER-MON-04-02",
+      "asset_type": "monitor",
+      "support_node": "F6-BRIEFING-PREP-DESK-01::desk",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        38.0,
+        3.3
+      ],
+      "level": 6,
+      "station_id": "F6-BRIEFING-PREP-DESK-01",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F6-USER-WS-05",
+      "asset_type": "workstation",
+      "support_node": "floor_slab",
+      "support_top_aff_ft": 0,
+      "origin_xy_ft": [
+        46.8,
+        4.2
+      ],
+      "level": 6,
+      "station_id": "F6-BRIEFING-PREP-DESK-02",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F6-USER-MON-05-01",
+      "asset_type": "monitor",
+      "support_node": "F6-BRIEFING-PREP-DESK-02::desk",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        44.0,
+        3.3
+      ],
+      "level": 6,
+      "station_id": "F6-BRIEFING-PREP-DESK-02",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F6-USER-MON-05-02",
+      "asset_type": "monitor",
+      "support_node": "F6-BRIEFING-PREP-DESK-02::desk",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        46.0,
+        3.3
+      ],
+      "level": 6,
+      "station_id": "F6-BRIEFING-PREP-DESK-02",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F6-USER-WS-06",
+      "asset_type": "workstation",
+      "support_node": "floor_slab",
+      "support_top_aff_ft": 0,
+      "origin_xy_ft": [
+        38.8,
+        14.6
+      ],
+      "level": 6,
+      "station_id": "F6-BRIEFING-PREP-DESK-03",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F6-USER-MON-06-01",
+      "asset_type": "monitor",
+      "support_node": "F6-BRIEFING-PREP-DESK-03::desk",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        36.0,
+        13.7
+      ],
+      "level": 6,
+      "station_id": "F6-BRIEFING-PREP-DESK-03",
+      "yaw_degrees": 180
+    },
+    {
+      "asset_id": "F6-USER-MON-06-02",
+      "asset_type": "monitor",
+      "support_node": "F6-BRIEFING-PREP-DESK-03::desk",
+      "support_top_aff_ft": 2.4166666666666665,
+      "origin_xy_ft": [
+        38.0,
+        13.7
+      ],
+      "level": 6,
+      "station_id": "F6-BRIEFING-PREP-DESK-03",
+      "yaw_degrees": 180
+    }
+  ],
+  "stations": [
+    {
+      "station_id": "F4-DESK-PRIYA-SRISAWAT",
+      "level": 4,
+      "host_asset_id": "F4-USER-WS-01",
+      "monitor_asset_ids": [
+        "F4-USER-MON-01-01",
+        "F4-USER-MON-01-02"
+      ],
+      "chair_id": "F4-DESK-PRIYA-SRISAWAT-CHAIR",
+      "keyboard_node": "F4-DESK-PRIYA-SRISAWAT::desk_dual",
+      "desk_yaw_degrees": 0,
+      "device_yaw_degrees": 180,
+      "design_reason": "Retain Priya at her existing brand/public-identity desk.",
+      "monitor_bezel_gap_ft": 0.18,
+      "host_support": "exact desk mesh, top AFF 2.4166666666666665 ft",
+      "clearance_evidence": {
+        "host_to_chair_min_component_distance_ft": 1.86934,
+        "host_to_desk_noncontact_component_distance_ft": 0.11049,
+        "host_to_monitor_envelope_distance_ft": 0.51711,
+        "method": "Minimum separation of manufacturer envelope from split real-GLB component AABBs; desk contact top excluded for desktop F4 hosts. Conservative geometry evidence, not manufacturer ventilation approval."
+      }
+    },
+    {
+      "station_id": "F4-DESK-MAREN-QUILL",
+      "level": 4,
+      "host_asset_id": "F4-USER-WS-02",
+      "monitor_asset_ids": [
+        "F4-USER-MON-02-01",
+        "F4-USER-MON-02-02"
+      ],
+      "chair_id": "F4-DESK-MAREN-QUILL-CHAIR",
+      "keyboard_node": "F4-DESK-MAREN-QUILL::desk_dual",
+      "desk_yaw_degrees": 0,
+      "device_yaw_degrees": 180,
+      "design_reason": "Retain Maren at her existing communications/media desk.",
+      "monitor_bezel_gap_ft": 0.18,
+      "host_support": "exact desk mesh, top AFF 2.4166666666666665 ft",
+      "clearance_evidence": {
+        "host_to_chair_min_component_distance_ft": 1.86934,
+        "host_to_desk_noncontact_component_distance_ft": 0.11049,
+        "host_to_monitor_envelope_distance_ft": 0.51711,
+        "method": "Minimum separation of manufacturer envelope from split real-GLB component AABBs; desk contact top excluded for desktop F4 hosts. Conservative geometry evidence, not manufacturer ventilation approval."
+      }
+    },
+    {
+      "station_id": "F4-RECORDING-WORKSURFACE-01",
+      "level": 4,
+      "host_asset_id": "F4-USER-WS-03",
+      "monitor_asset_ids": [
+        "F4-USER-MON-03-01",
+        "F4-USER-MON-03-02"
+      ],
+      "chair_id": "F4-RECORDING-CHAIR-01",
+      "keyboard_node": "F4-RECORDING-WORKSURFACE-01::desk",
+      "desk_yaw_degrees": 0,
+      "device_yaw_degrees": 180,
+      "design_reason": "Use the existing recording worktop for the compact capture computer, with the artist companion seat retained.",
+      "monitor_bezel_gap_ft": 0.18,
+      "host_support": "exact desk mesh, top AFF 2.4166666666666665 ft",
+      "clearance_evidence": {
+        "host_to_chair_min_component_distance_ft": 1.56761,
+        "host_to_desk_noncontact_component_distance_ft": 0.10417,
+        "host_to_monitor_envelope_distance_ft": 0.41684,
+        "method": "Minimum separation of manufacturer envelope from split real-GLB component AABBs; desk contact top excluded for desktop F4 hosts. Conservative geometry evidence, not manufacturer ventilation approval."
+      }
+    },
+    {
+      "station_id": "F4-EDIT-DESK-01",
+      "level": 4,
+      "host_asset_id": "F4-USER-WS-04",
+      "monitor_asset_ids": [
+        "F4-USER-MON-04-01",
+        "F4-USER-MON-04-02"
+      ],
+      "chair_id": "F4-EDIT-CHAIR-01",
+      "keyboard_node": "F4-EDIT-DESK-01::desk",
+      "desk_yaw_degrees": 0,
+      "device_yaw_degrees": 180,
+      "design_reason": "Keep the two-person editing worktop and collaborator seat; the primary keyboard and screens face the editor.",
+      "monitor_bezel_gap_ft": 0.18,
+      "host_support": "exact desk mesh, top AFF 2.4166666666666665 ft",
+      "clearance_evidence": {
+        "host_to_chair_min_component_distance_ft": 2.80626,
+        "host_to_desk_noncontact_component_distance_ft": 0.2,
+        "host_to_monitor_envelope_distance_ft": 1.09631,
+        "method": "Minimum separation of manufacturer envelope from split real-GLB component AABBs; desk contact top excluded for desktop F4 hosts. Conservative geometry evidence, not manufacturer ventilation approval."
+      }
+    },
+    {
+      "station_id": "F4-PRODUCTION-DESK-01",
+      "level": 4,
+      "host_asset_id": "F4-USER-WS-05",
+      "monitor_asset_ids": [
+        "F4-USER-MON-05-01",
+        "F4-USER-MON-05-02"
+      ],
+      "chair_id": "F4-PRODUCTION-DESK-01-CHAIR",
+      "keyboard_node": "F4-PRODUCTION-DESK-01::desk",
+      "desk_yaw_degrees": 0,
+      "device_yaw_degrees": 180,
+      "design_reason": "Caption and subtitle review within the existing brand/comms work area, not on the shared review table.",
+      "monitor_bezel_gap_ft": 0.18,
+      "host_support": "exact desk mesh, top AFF 2.4166666666666665 ft",
+      "clearance_evidence": {
+        "host_to_chair_min_component_distance_ft": 1.96494,
+        "host_to_desk_noncontact_component_distance_ft": 0.17197,
+        "host_to_monitor_envelope_distance_ft": 0.5431,
+        "method": "Minimum separation of manufacturer envelope from split real-GLB component AABBs; desk contact top excluded for desktop F4 hosts. Conservative geometry evidence, not manufacturer ventilation approval."
+      }
+    },
+    {
+      "station_id": "F4-PRODUCTION-DESK-02",
+      "level": 4,
+      "host_asset_id": "F4-USER-WS-06",
+      "monitor_asset_ids": [
+        "F4-USER-MON-06-01",
+        "F4-USER-MON-06-02"
+      ],
+      "chair_id": "F4-PRODUCTION-DESK-02-CHAIR",
+      "keyboard_node": "F4-PRODUCTION-DESK-02::desk",
+      "desk_yaw_degrees": 0,
+      "device_yaw_degrees": 180,
+      "design_reason": "Photo selects and communications production within the existing brand/comms work area, not on the shared review table.",
+      "monitor_bezel_gap_ft": 0.18,
+      "host_support": "exact desk mesh, top AFF 2.4166666666666665 ft",
+      "clearance_evidence": {
+        "host_to_chair_min_component_distance_ft": 1.96494,
+        "host_to_desk_noncontact_component_distance_ft": 0.17197,
+        "host_to_monitor_envelope_distance_ft": 0.5431,
+        "method": "Minimum separation of manufacturer envelope from split real-GLB component AABBs; desk contact top excluded for desktop F4 hosts. Conservative geometry evidence, not manufacturer ventilation approval."
+      }
+    },
+    {
+      "station_id": "F4-PRODUCTION-DESK-03",
+      "level": 4,
+      "host_asset_id": "F4-USER-WS-07",
+      "monitor_asset_ids": [
+        "F4-USER-MON-07-01",
+        "F4-USER-MON-07-02"
+      ],
+      "chair_id": "F4-PRODUCTION-DESK-03-CHAIR",
+      "keyboard_node": "F4-PRODUCTION-DESK-03::desk",
+      "desk_yaw_degrees": 0,
+      "device_yaw_degrees": 180,
+      "design_reason": "Creator collaboration and production preparation within the existing brand/comms work area, not on the shared review table.",
+      "monitor_bezel_gap_ft": 0.18,
+      "host_support": "exact desk mesh, top AFF 2.4166666666666665 ft",
+      "clearance_evidence": {
+        "host_to_chair_min_component_distance_ft": 1.96494,
+        "host_to_desk_noncontact_component_distance_ft": 0.17197,
+        "host_to_monitor_envelope_distance_ft": 0.5431,
+        "method": "Minimum separation of manufacturer envelope from split real-GLB component AABBs; desk contact top excluded for desktop F4 hosts. Conservative geometry evidence, not manufacturer ventilation approval."
+      }
+    },
+    {
+      "station_id": "F4-PRODUCTION-DESK-04",
+      "level": 4,
+      "host_asset_id": "F4-USER-WS-08",
+      "monitor_asset_ids": [
+        "F4-USER-MON-08-01",
+        "F4-USER-MON-08-02"
+      ],
+      "chair_id": "F4-PRODUCTION-DESK-04-CHAIR",
+      "keyboard_node": "F4-PRODUCTION-DESK-04::desk",
+      "desk_yaw_degrees": 0,
+      "device_yaw_degrees": 180,
+      "design_reason": "Public release asset preparation within the existing brand/comms work area, not on the shared review table.",
+      "monitor_bezel_gap_ft": 0.18,
+      "host_support": "exact desk mesh, top AFF 2.4166666666666665 ft",
+      "clearance_evidence": {
+        "host_to_chair_min_component_distance_ft": 1.96494,
+        "host_to_desk_noncontact_component_distance_ft": 0.17197,
+        "host_to_monitor_envelope_distance_ft": 0.5431,
+        "method": "Minimum separation of manufacturer envelope from split real-GLB component AABBs; desk contact top excluded for desktop F4 hosts. Conservative geometry evidence, not manufacturer ventilation approval."
+      }
+    },
+    {
+      "station_id": "F5-DESK-OKSANA-BONDARENKO",
+      "level": 5,
+      "host_asset_id": "F5-USER-WS-01",
+      "monitor_asset_ids": [
+        "F5-USER-MON-01-01",
+        "F5-USER-MON-01-02"
+      ],
+      "chair_id": "F5-DESK-OKSANA-BONDARENKO-CHAIR",
+      "keyboard_node": "F5-DESK-OKSANA-BONDARENKO::desk_dual",
+      "desk_yaw_degrees": 90,
+      "device_yaw_degrees": 270,
+      "design_reason": "Retain the named analyst and review role on F5; the tower occupies the under-desk side bay.",
+      "monitor_bezel_gap_ft": 0.18,
+      "host_support": "actual selected-floor floor_slab, top AFF 0 ft",
+      "clearance_evidence": {
+        "host_to_chair_min_component_distance_ft": 0.90869,
+        "host_to_desk_noncontact_component_distance_ft": 0.15301,
+        "host_to_monitor_envelope_distance_ft": 0.95636,
+        "method": "Minimum separation of manufacturer envelope from split real-GLB component AABBs; desk contact top excluded for desktop F4 hosts. Conservative geometry evidence, not manufacturer ventilation approval."
+      }
+    },
+    {
+      "station_id": "F5-DESK-LEILA-HOSSEINI",
+      "level": 5,
+      "host_asset_id": "F5-USER-WS-02",
+      "monitor_asset_ids": [
+        "F5-USER-MON-02-01",
+        "F5-USER-MON-02-02"
+      ],
+      "chair_id": "F5-DESK-LEILA-HOSSEINI-CHAIR",
+      "keyboard_node": "F5-DESK-LEILA-HOSSEINI::desk_dual",
+      "desk_yaw_degrees": 90,
+      "device_yaw_degrees": 270,
+      "design_reason": "Retain the named analyst and review role on F5; the tower occupies the under-desk side bay.",
+      "monitor_bezel_gap_ft": 0.18,
+      "host_support": "actual selected-floor floor_slab, top AFF 0 ft",
+      "clearance_evidence": {
+        "host_to_chair_min_component_distance_ft": 0.90869,
+        "host_to_desk_noncontact_component_distance_ft": 0.15301,
+        "host_to_monitor_envelope_distance_ft": 0.95636,
+        "method": "Minimum separation of manufacturer envelope from split real-GLB component AABBs; desk contact top excluded for desktop F4 hosts. Conservative geometry evidence, not manufacturer ventilation approval."
+      }
+    },
+    {
+      "station_id": "F5-DESK-AMIRA-HASSAN",
+      "level": 5,
+      "host_asset_id": "F5-USER-WS-03",
+      "monitor_asset_ids": [
+        "F5-USER-MON-03-01",
+        "F5-USER-MON-03-02"
+      ],
+      "chair_id": "F5-DESK-AMIRA-HASSAN-CHAIR",
+      "keyboard_node": "F5-DESK-AMIRA-HASSAN::desk_dual",
+      "desk_yaw_degrees": 90,
+      "device_yaw_degrees": 270,
+      "design_reason": "Retain the named analyst and review role on F5; the tower occupies the under-desk side bay.",
+      "monitor_bezel_gap_ft": 0.18,
+      "host_support": "actual selected-floor floor_slab, top AFF 0 ft",
+      "clearance_evidence": {
+        "host_to_chair_min_component_distance_ft": 0.90869,
+        "host_to_desk_noncontact_component_distance_ft": 0.15301,
+        "host_to_monitor_envelope_distance_ft": 0.95636,
+        "method": "Minimum separation of manufacturer envelope from split real-GLB component AABBs; desk contact top excluded for desktop F4 hosts. Conservative geometry evidence, not manufacturer ventilation approval."
+      }
+    },
+    {
+      "station_id": "F5-CARREL-01",
+      "level": 5,
+      "host_asset_id": "F5-USER-WS-04",
+      "monitor_asset_ids": [
+        "F5-USER-MON-04-01",
+        "F5-USER-MON-04-02"
+      ],
+      "chair_id": "F5-CARREL-01-CHAIR",
+      "keyboard_node": "F5-CARREL-01::carrel",
+      "desk_yaw_degrees": 0,
+      "device_yaw_degrees": 180,
+      "design_reason": "Widen this research carrel to 54 inches. Set the dual monitors forward of the real back shelf, and the host beside the centered knee space.",
+      "monitor_bezel_gap_ft": 0.18,
+      "host_support": "actual selected-floor floor_slab, top AFF 0 ft",
+      "clearance_evidence": {
+        "host_to_chair_min_component_distance_ft": 1.01146,
+        "host_to_desk_noncontact_component_distance_ft": 0.23993,
+        "host_to_monitor_envelope_distance_ft": 0.95636,
+        "method": "Minimum separation of manufacturer envelope from split real-GLB component AABBs; desk contact top excluded for desktop F4 hosts. Conservative geometry evidence, not manufacturer ventilation approval."
+      }
+    },
+    {
+      "station_id": "F5-CARREL-02",
+      "level": 5,
+      "host_asset_id": "F5-USER-WS-05",
+      "monitor_asset_ids": [
+        "F5-USER-MON-05-01",
+        "F5-USER-MON-05-02"
+      ],
+      "chair_id": "F5-CARREL-02-CHAIR",
+      "keyboard_node": "F5-CARREL-02::carrel",
+      "desk_yaw_degrees": 0,
+      "device_yaw_degrees": 180,
+      "design_reason": "Widen this research carrel to 54 inches. Set the dual monitors forward of the real back shelf, and the host beside the centered knee space.",
+      "monitor_bezel_gap_ft": 0.18,
+      "host_support": "actual selected-floor floor_slab, top AFF 0 ft",
+      "clearance_evidence": {
+        "host_to_chair_min_component_distance_ft": 1.01146,
+        "host_to_desk_noncontact_component_distance_ft": 0.23993,
+        "host_to_monitor_envelope_distance_ft": 0.95636,
+        "method": "Minimum separation of manufacturer envelope from split real-GLB component AABBs; desk contact top excluded for desktop F4 hosts. Conservative geometry evidence, not manufacturer ventilation approval."
+      }
+    },
+    {
+      "station_id": "F5-CARREL-03",
+      "level": 5,
+      "host_asset_id": "F5-USER-WS-06",
+      "monitor_asset_ids": [
+        "F5-USER-MON-06-01",
+        "F5-USER-MON-06-02"
+      ],
+      "chair_id": "F5-CARREL-03-CHAIR",
+      "keyboard_node": "F5-CARREL-03::carrel",
+      "desk_yaw_degrees": 0,
+      "device_yaw_degrees": 180,
+      "design_reason": "Widen this research carrel to 54 inches. Set the dual monitors forward of the real back shelf, and the host beside the centered knee space.",
+      "monitor_bezel_gap_ft": 0.18,
+      "host_support": "actual selected-floor floor_slab, top AFF 0 ft",
+      "clearance_evidence": {
+        "host_to_chair_min_component_distance_ft": 1.01146,
+        "host_to_desk_noncontact_component_distance_ft": 0.23993,
+        "host_to_monitor_envelope_distance_ft": 0.95636,
+        "method": "Minimum separation of manufacturer envelope from split real-GLB component AABBs; desk contact top excluded for desktop F4 hosts. Conservative geometry evidence, not manufacturer ventilation approval."
+      }
+    },
+    {
+      "station_id": "F5-CARREL-04",
+      "level": 5,
+      "host_asset_id": "F5-USER-WS-07",
+      "monitor_asset_ids": [
+        "F5-USER-MON-07-01",
+        "F5-USER-MON-07-02"
+      ],
+      "chair_id": "F5-CARREL-04-CHAIR",
+      "keyboard_node": "F5-CARREL-04::carrel",
+      "desk_yaw_degrees": 0,
+      "device_yaw_degrees": 180,
+      "design_reason": "Widen this research carrel to 54 inches. Set the dual monitors forward of the real back shelf, and the host beside the centered knee space.",
+      "monitor_bezel_gap_ft": 0.18,
+      "host_support": "actual selected-floor floor_slab, top AFF 0 ft",
+      "clearance_evidence": {
+        "host_to_chair_min_component_distance_ft": 1.01146,
+        "host_to_desk_noncontact_component_distance_ft": 0.23993,
+        "host_to_monitor_envelope_distance_ft": 0.95636,
+        "method": "Minimum separation of manufacturer envelope from split real-GLB component AABBs; desk contact top excluded for desktop F4 hosts. Conservative geometry evidence, not manufacturer ventilation approval."
+      }
+    },
+    {
+      "station_id": "F5-CARREL-05",
+      "level": 5,
+      "host_asset_id": "F5-USER-WS-08",
+      "monitor_asset_ids": [
+        "F5-USER-MON-08-01",
+        "F5-USER-MON-08-02"
+      ],
+      "chair_id": "F5-CARREL-05-CHAIR",
+      "keyboard_node": "F5-CARREL-05::carrel",
+      "desk_yaw_degrees": 0,
+      "device_yaw_degrees": 180,
+      "design_reason": "Widen this research carrel to 54 inches. Set the dual monitors forward of the real back shelf, and the host beside the centered knee space.",
+      "monitor_bezel_gap_ft": 0.18,
+      "host_support": "actual selected-floor floor_slab, top AFF 0 ft",
+      "clearance_evidence": {
+        "host_to_chair_min_component_distance_ft": 1.01146,
+        "host_to_desk_noncontact_component_distance_ft": 0.23993,
+        "host_to_monitor_envelope_distance_ft": 0.95636,
+        "method": "Minimum separation of manufacturer envelope from split real-GLB component AABBs; desk contact top excluded for desktop F4 hosts. Conservative geometry evidence, not manufacturer ventilation approval."
+      }
+    },
+    {
+      "station_id": "F6-OFFICE-HELEN-CLARKE-DESK",
+      "level": 6,
+      "host_asset_id": "F6-USER-WS-01",
+      "monitor_asset_ids": [
+        "F6-USER-MON-01-01",
+        "F6-USER-MON-01-02"
+      ],
+      "chair_id": "F6-OFFICE-HELEN-CLARKE-CHAIR",
+      "keyboard_node": "F6-OFFICE-HELEN-CLARKE-DESK::desk_exec_l",
+      "desk_yaw_degrees": 180,
+      "device_yaw_degrees": 0,
+      "design_reason": "Helen remains in her F6 director office. Align the chair to the keyboard in the empty L-desk knee space, with the tower on the slab beside it.",
+      "monitor_bezel_gap_ft": 0.18,
+      "host_support": "actual selected-floor floor_slab, top AFF 0 ft",
+      "clearance_evidence": {
+        "host_to_chair_min_component_distance_ft": 1.53753,
+        "host_to_desk_noncontact_component_distance_ft": 0.11942,
+        "host_to_monitor_envelope_distance_ft": 0.65151,
+        "method": "Minimum separation of the published ET900N main-body envelope from split real-GLB component AABBs. Unsized projecting handles and feet are omitted; installed total height is unverified. Not complete physical installation or ventilation clearance."
+      }
+    },
+    {
+      "station_id": "F6-DESK-LI-WEI",
+      "level": 6,
+      "host_asset_id": "F6-USER-WS-02",
+      "monitor_asset_ids": [
+        "F6-USER-MON-02-01",
+        "F6-USER-MON-02-02"
+      ],
+      "chair_id": "F6-DESK-LI-WEI-CHAIR",
+      "keyboard_node": "F6-DESK-LI-WEI::desk_dual",
+      "desk_yaw_degrees": 90,
+      "device_yaw_degrees": 270,
+      "design_reason": "Retain the existing governance/risk desk and named staff placement; keep the command table clear.",
+      "monitor_bezel_gap_ft": 0.18,
+      "host_support": "actual selected-floor floor_slab, top AFF 0 ft",
+      "clearance_evidence": {
+        "host_to_chair_min_component_distance_ft": 0.83286,
+        "host_to_desk_noncontact_component_distance_ft": 0.16199,
+        "host_to_monitor_envelope_distance_ft": 0.56299,
+        "method": "Minimum separation of the published ET900N main-body envelope from split real-GLB component AABBs. Unsized projecting handles and feet are omitted; installed total height is unverified. Not complete physical installation or ventilation clearance."
+      }
+    },
+    {
+      "station_id": "F6-DESK-MARC-DUBOIS",
+      "level": 6,
+      "host_asset_id": "F6-USER-WS-03",
+      "monitor_asset_ids": [
+        "F6-USER-MON-03-01",
+        "F6-USER-MON-03-02"
+      ],
+      "chair_id": "F6-DESK-MARC-DUBOIS-CHAIR",
+      "keyboard_node": "F6-DESK-MARC-DUBOIS::desk_dual",
+      "desk_yaw_degrees": 90,
+      "device_yaw_degrees": 270,
+      "design_reason": "Retain the existing governance/risk desk and named staff placement; keep the command table clear.",
+      "monitor_bezel_gap_ft": 0.18,
+      "host_support": "actual selected-floor floor_slab, top AFF 0 ft",
+      "clearance_evidence": {
+        "host_to_chair_min_component_distance_ft": 0.83286,
+        "host_to_desk_noncontact_component_distance_ft": 0.16199,
+        "host_to_monitor_envelope_distance_ft": 0.56299,
+        "method": "Minimum separation of the published ET900N main-body envelope from split real-GLB component AABBs. Unsized projecting handles and feet are omitted; installed total height is unverified. Not complete physical installation or ventilation clearance."
+      }
+    },
+    {
+      "station_id": "F6-BRIEFING-PREP-DESK-01",
+      "level": 6,
+      "host_asset_id": "F6-USER-WS-04",
+      "monitor_asset_ids": [
+        "F6-USER-MON-04-01",
+        "F6-USER-MON-04-02"
+      ],
+      "chair_id": "F6-BRIEFING-PREP-DESK-01-CHAIR",
+      "keyboard_node": "F6-BRIEFING-PREP-DESK-01::desk",
+      "desk_yaw_degrees": 0,
+      "device_yaw_degrees": 180,
+      "design_reason": "Focused institutional briefing preparation in the south work area; no equipment on the six-seat command or partner briefing tables.",
+      "monitor_bezel_gap_ft": 0.18,
+      "host_support": "actual selected-floor floor_slab, top AFF 0 ft",
+      "clearance_evidence": {
+        "host_to_chair_min_component_distance_ft": 0.93608,
+        "host_to_desk_noncontact_component_distance_ft": 0.16199,
+        "host_to_monitor_envelope_distance_ft": 0.56299,
+        "method": "Minimum separation of the published ET900N main-body envelope from split real-GLB component AABBs. Unsized projecting handles and feet are omitted; installed total height is unverified. Not complete physical installation or ventilation clearance."
+      }
+    },
+    {
+      "station_id": "F6-BRIEFING-PREP-DESK-02",
+      "level": 6,
+      "host_asset_id": "F6-USER-WS-05",
+      "monitor_asset_ids": [
+        "F6-USER-MON-05-01",
+        "F6-USER-MON-05-02"
+      ],
+      "chair_id": "F6-BRIEFING-PREP-DESK-02-CHAIR",
+      "keyboard_node": "F6-BRIEFING-PREP-DESK-02::desk",
+      "desk_yaw_degrees": 0,
+      "device_yaw_degrees": 180,
+      "design_reason": "Focused partner briefing coordination in the south work area; no equipment on the six-seat command or partner briefing tables.",
+      "monitor_bezel_gap_ft": 0.18,
+      "host_support": "actual selected-floor floor_slab, top AFF 0 ft",
+      "clearance_evidence": {
+        "host_to_chair_min_component_distance_ft": 0.93608,
+        "host_to_desk_noncontact_component_distance_ft": 0.16199,
+        "host_to_monitor_envelope_distance_ft": 0.56299,
+        "method": "Minimum separation of the published ET900N main-body envelope from split real-GLB component AABBs. Unsized projecting handles and feet are omitted; installed total height is unverified. Not complete physical installation or ventilation clearance."
+      }
+    },
+    {
+      "station_id": "F6-BRIEFING-PREP-DESK-03",
+      "level": 6,
+      "host_asset_id": "F6-USER-WS-06",
+      "monitor_asset_ids": [
+        "F6-USER-MON-06-01",
+        "F6-USER-MON-06-02"
+      ],
+      "chair_id": "F6-BRIEFING-PREP-DESK-03-CHAIR",
+      "keyboard_node": "F6-BRIEFING-PREP-DESK-03::desk",
+      "desk_yaw_degrees": 0,
+      "device_yaw_degrees": 180,
+      "design_reason": "Focused current institutional work and briefing coordination in the south work area; no equipment on the six-seat command or partner briefing tables.",
+      "monitor_bezel_gap_ft": 0.18,
+      "host_support": "actual selected-floor floor_slab, top AFF 0 ft",
+      "clearance_evidence": {
+        "host_to_chair_min_component_distance_ft": 0.93608,
+        "host_to_desk_noncontact_component_distance_ft": 0.16199,
+        "host_to_monitor_envelope_distance_ft": 0.56299,
+        "method": "Minimum separation of the published ET900N main-body envelope from split real-GLB component AABBs. Unsized projecting handles and feet are omitted; installed total height is unverified. Not complete physical installation or ventilation clearance."
+      }
+    }
+  ],
+  "scenic_screen_supersessions": [
+    {
+      "level": 4,
+      "old_asset_id": "F4-RECORDING-MONITOR-01",
+      "removed_nodes": [
+        "F4-RECORDING-MONITOR-01::bezel",
+        "F4-RECORDING-MONITOR-01::screen"
+      ],
+      "replacement_asset_ids": [
+        "F4-USER-MON-03-01",
+        "F4-USER-MON-03-02"
+      ],
+      "reason": "The old front-edge scenic screen obstructed the recording operator sight line."
+    },
+    {
+      "level": 4,
+      "old_asset_id": "F4-EDIT-DISPLAY-01",
+      "removed_nodes": [
+        "F4-EDIT-DISPLAY-01::bezel",
+        "F4-EDIT-DISPLAY-01::screen",
+        "edit_display_backer"
+      ],
+      "replacement_asset_ids": [
+        "F4-USER-MON-04-01",
+        "F4-USER-MON-04-02"
+      ],
+      "reason": "The old front-edge display and backer stood between the seated editor and registered rear-desk screens."
+    },
+    {
+      "level": 4,
+      "layout_item_id": "F4-DESK-PRIYA-SRISAWAT",
+      "exact_mesh": "F4-DESK-PRIYA-SRISAWAT::desk_dual",
+      "removed_geometry": "Only the scenic _monitor recipe components via size.monitors=0. The containing desk mesh and independent keyboard remain.",
+      "replacement_asset_ids": [
+        "F4-USER-MON-01-01",
+        "F4-USER-MON-01-02"
+      ]
+    },
+    {
+      "level": 4,
+      "layout_item_id": "F4-DESK-MAREN-QUILL",
+      "exact_mesh": "F4-DESK-MAREN-QUILL::desk_dual",
+      "removed_geometry": "Only the scenic _monitor recipe components via size.monitors=0. The containing desk mesh and independent keyboard remain.",
+      "replacement_asset_ids": [
+        "F4-USER-MON-02-01",
+        "F4-USER-MON-02-02"
+      ]
+    },
+    {
+      "level": 5,
+      "layout_item_id": "F5-DESK-OKSANA-BONDARENKO",
+      "exact_mesh": "F5-DESK-OKSANA-BONDARENKO::desk_dual",
+      "removed_geometry": "Only the scenic _monitor recipe components via size.monitors=0. The containing desk mesh and independent keyboard remain.",
+      "replacement_asset_ids": [
+        "F5-USER-MON-01-01",
+        "F5-USER-MON-01-02"
+      ]
+    },
+    {
+      "level": 5,
+      "layout_item_id": "F5-DESK-LEILA-HOSSEINI",
+      "exact_mesh": "F5-DESK-LEILA-HOSSEINI::desk_dual",
+      "removed_geometry": "Only the scenic _monitor recipe components via size.monitors=0. The containing desk mesh and independent keyboard remain.",
+      "replacement_asset_ids": [
+        "F5-USER-MON-02-01",
+        "F5-USER-MON-02-02"
+      ]
+    },
+    {
+      "level": 5,
+      "layout_item_id": "F5-DESK-AMIRA-HASSAN",
+      "exact_mesh": "F5-DESK-AMIRA-HASSAN::desk_dual",
+      "removed_geometry": "Only the scenic _monitor recipe components via size.monitors=0. The containing desk mesh and independent keyboard remain.",
+      "replacement_asset_ids": [
+        "F5-USER-MON-03-01",
+        "F5-USER-MON-03-02"
+      ]
+    },
+    {
+      "level": 6,
+      "layout_item_id": "F6-OFFICE-HELEN-CLARKE-DESK",
+      "exact_mesh": "F6-OFFICE-HELEN-CLARKE-DESK::desk_exec_l",
+      "removed_geometry": "Only the scenic _monitor recipe components via size.monitors=0. The containing desk mesh and independent keyboard remain.",
+      "replacement_asset_ids": [
+        "F6-USER-MON-01-01",
+        "F6-USER-MON-01-02"
+      ]
+    },
+    {
+      "level": 6,
+      "layout_item_id": "F6-DESK-LI-WEI",
+      "exact_mesh": "F6-DESK-LI-WEI::desk_dual",
+      "removed_geometry": "Only the scenic _monitor recipe components via size.monitors=0. The containing desk mesh and independent keyboard remain.",
+      "replacement_asset_ids": [
+        "F6-USER-MON-02-01",
+        "F6-USER-MON-02-02"
+      ]
+    },
+    {
+      "level": 6,
+      "layout_item_id": "F6-DESK-MARC-DUBOIS",
+      "exact_mesh": "F6-DESK-MARC-DUBOIS::desk_dual",
+      "removed_geometry": "Only the scenic _monitor recipe components via size.monitors=0. The containing desk mesh and independent keyboard remain.",
+      "replacement_asset_ids": [
+        "F6-USER-MON-03-01",
+        "F6-USER-MON-03-02"
+      ]
+    }
+  ],
+  "preserved_surfaces": [
+    "F4 LISTEN/WATCH/ARCHIVE media wall, six gallery frames, interview monitor cart, floor-control terminal",
+    "F5 research/evidence/record wall, archive search, source/publication room displays and secure workstation",
+    "F6 NOW/PAST/JOIN wall, salon surface, strategy and partner briefing displays, Halo Globe and roof-transition terminal"
+  ],
+  "manufacturer_envelopes_m": {
+    "F4": {
+      "model": "Apple Mac Studio M5 Ultra",
+      "width": 0.197,
+      "height": 0.095,
+      "depth": 0.197
+    },
+    "F5": {
+      "model": "HP Z8 Fury G6i, standard side panel, rear handle excluded",
+      "width": 0.2195,
+      "height": 0.4451,
+      "depth": 0.559
+    },
+    "F6": {
+      "model": "ASUS ExpertCenter Pro ET900N G3, NVIDIA DGX Station GB300 architecture",
+      "width": 0.232,
+      "height": 0.565,
+      "depth": 0.584,
+      "dimension_scope": "Published ET900N main-body envelope only. Unsized projecting handles and feet are omitted; installed total height remains unverified."
+    }
+  },
+  "limitations": [
+    "Manufacturer shells and Z origin offsets are integrated separately. Geometry clearance evidence is not structural, ventilation or installation approval.",
+    "No claimed sponsor agreement, shipped hardware, physical ownership, operational connection or manufacturer logo.",
+    "Browser startup blocked before page load; no visual approval.",
+    "F6 clearance covers the published ASUS ET900N main-body envelope only; unsized projecting handles/feet and total installed height remain unverified."
+  ],
+  "validation": {
+    "floor_builder_checks": {
+      "F4": "25/25",
+      "F5": "24/24",
+      "F6": "26/26"
+    },
+    "focused_interior_checks": "45/45",
+    "station_regression_tests": "7/7",
+    "exact_support_contacts": 66,
+    "exact_support_samples": 330,
+    "manufacturer_and_monitor_envelope_intersections": 0,
+    "dual_monitor_bezel_gap_ft": 0.18,
+    "browser_visual_approval": false
+  }
+}

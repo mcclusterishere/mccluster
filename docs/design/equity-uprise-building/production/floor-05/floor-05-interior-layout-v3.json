@@ -479,102 +479,144 @@
   {
    "id": "F5-CARREL-01",
    "type": "carrel",
-   "x": 35.5,
-   "y": 2.3,
+   "x": 35.7,
+   "y": 3.5,
    "rot_deg": 0,
    "zone": "research-floor",
-   "source": "workplace-occupancy-v1.json F5 archetype Researcher"
+   "source": "workplace-occupancy-v1.json F5 archetype Researcher",
+   "size": {
+    "w_in": 54,
+    "d_in": 30,
+    "paper": false,
+    "keyboard": true
+   },
+   "placement_override_reason": "54-inch research carrels fit two 21.84-inch monitor bezels with a positive center gap; the sixth remains a paper-reading carrel."
   },
   {
    "id": "F5-CARREL-01-CHAIR",
    "type": "task_chair",
-   "x": 35.5,
-   "y": 5.1,
+   "x": 35.7,
+   "y": 6.3,
    "rot_deg": 180,
    "zone": "research-floor"
   },
   {
    "id": "F5-CARREL-02",
    "type": "carrel",
-   "x": 38.75,
-   "y": 2.3,
+   "x": 40.7,
+   "y": 3.5,
    "rot_deg": 0,
    "zone": "research-floor",
-   "source": "workplace-occupancy-v1.json F5 archetype Researcher"
+   "source": "workplace-occupancy-v1.json F5 archetype Researcher",
+   "size": {
+    "w_in": 54,
+    "d_in": 30,
+    "paper": false,
+    "keyboard": true
+   },
+   "placement_override_reason": "54-inch research carrels fit two 21.84-inch monitor bezels with a positive center gap; the sixth remains a paper-reading carrel."
   },
   {
    "id": "F5-CARREL-02-CHAIR",
    "type": "task_chair",
-   "x": 38.75,
-   "y": 5.1,
+   "x": 40.7,
+   "y": 6.3,
    "rot_deg": 180,
    "zone": "research-floor"
   },
   {
    "id": "F5-CARREL-03",
    "type": "carrel",
-   "x": 42.0,
-   "y": 2.3,
+   "x": 45.7,
+   "y": 3.5,
    "rot_deg": 0,
    "zone": "research-floor",
-   "source": "workplace-occupancy-v1.json F5 archetype Researcher"
+   "source": "workplace-occupancy-v1.json F5 archetype Researcher",
+   "size": {
+    "w_in": 54,
+    "d_in": 30,
+    "paper": false,
+    "keyboard": true
+   },
+   "placement_override_reason": "54-inch research carrels fit two 21.84-inch monitor bezels with a positive center gap; the sixth remains a paper-reading carrel."
   },
   {
    "id": "F5-CARREL-03-CHAIR",
    "type": "task_chair",
-   "x": 42.0,
-   "y": 5.1,
+   "x": 45.7,
+   "y": 6.3,
    "rot_deg": 180,
    "zone": "research-floor"
   },
   {
    "id": "F5-CARREL-04",
    "type": "carrel",
-   "x": 45.25,
-   "y": 2.3,
+   "x": 50.7,
+   "y": 3.5,
    "rot_deg": 0,
    "zone": "research-floor",
-   "source": "workplace-occupancy-v1.json F5 archetype Researcher"
+   "source": "workplace-occupancy-v1.json F5 archetype Researcher",
+   "size": {
+    "w_in": 54,
+    "d_in": 30,
+    "paper": false,
+    "keyboard": true
+   },
+   "placement_override_reason": "54-inch research carrels fit two 21.84-inch monitor bezels with a positive center gap; the sixth remains a paper-reading carrel."
   },
   {
    "id": "F5-CARREL-04-CHAIR",
    "type": "task_chair",
-   "x": 45.25,
-   "y": 5.1,
+   "x": 50.7,
+   "y": 6.3,
    "rot_deg": 180,
    "zone": "research-floor"
   },
   {
    "id": "F5-CARREL-05",
    "type": "carrel",
-   "x": 48.5,
-   "y": 2.3,
+   "x": 55.7,
+   "y": 3.5,
    "rot_deg": 0,
    "zone": "research-floor",
-   "source": "workplace-occupancy-v1.json F5 archetype Researcher"
+   "source": "workplace-occupancy-v1.json F5 archetype Researcher",
+   "size": {
+    "w_in": 54,
+    "d_in": 30,
+    "paper": false,
+    "keyboard": true
+   },
+   "placement_override_reason": "54-inch research carrels fit two 21.84-inch monitor bezels with a positive center gap; the sixth remains a paper-reading carrel."
   },
   {
    "id": "F5-CARREL-05-CHAIR",
    "type": "task_chair",
-   "x": 48.5,
-   "y": 5.1,
+   "x": 55.7,
+   "y": 6.3,
    "rot_deg": 180,
    "zone": "research-floor"
   },
   {
    "id": "F5-CARREL-06",
    "type": "carrel",
-   "x": 51.75,
-   "y": 2.3,
+   "x": 61.0,
+   "y": 3.5,
    "rot_deg": 0,
    "zone": "research-floor",
-   "source": "workplace-occupancy-v1.json F5 archetype Researcher"
+   "source": "workplace-occupancy-v1.json F5 archetype Researcher",
+   "size": {
+    "w_in": 36,
+    "d_in": 30,
+    "paper": true,
+    "keyboard": false
+   },
+   "placement_override_reason": "54-inch research carrels fit two 21.84-inch monitor bezels with a positive center gap; the sixth remains a paper-reading carrel."
   },
   {
    "id": "F5-CARREL-06-CHAIR",
    "type": "task_chair",
-   "x": 51.75,
-   "y": 5.1,
+   "x": 61.0,
+   "y": 6.3,
    "rot_deg": 180,
    "zone": "research-floor"
   },
@@ -586,19 +628,24 @@
    "rot_deg": 90,
    "zone": "research-floor",
    "size": {
-    "paper": true
+    "paper": true,
+    "monitors": 0,
+    "keyboard": true,
+    "pedestal": false
    },
    "occupant": "Oksana Bondarenko",
    "source": "production/workplace-occupancy-v1.json F5",
-   "purpose": "Intelligence / Source Review Desk"
+   "purpose": "Intelligence / Source Review Desk",
+   "electronics_reconciliation": "Registered USER dual displays replace only the desk scenic monitors. Floor-standing tower occupies the side bay, not the knee space."
   },
   {
    "id": "F5-DESK-OKSANA-BONDARENKO-CHAIR",
    "type": "task_chair",
-   "x": 65.6,
+   "x": 66.1,
    "y": 7.0,
    "rot_deg": -90,
-   "zone": "research-floor"
+   "zone": "research-floor",
+   "placement_override_reason": "Bring the chair to the actual keyboard working edge; keep the under-desk tower in its separate side bay."
   },
   {
    "id": "F5-DESK-LEILA-HOSSEINI",
@@ -608,19 +655,24 @@
    "rot_deg": 90,
    "zone": "research-floor",
    "size": {
-    "paper": true
+    "paper": true,
+    "monitors": 0,
+    "keyboard": true,
+    "pedestal": false
    },
    "occupant": "Leila Hosseini",
    "source": "production/workplace-occupancy-v1.json F5",
-   "purpose": "Authority Analysis Desk"
+   "purpose": "Authority Analysis Desk",
+   "electronics_reconciliation": "Registered USER dual displays replace only the desk scenic monitors. Floor-standing tower occupies the side bay, not the knee space."
   },
   {
    "id": "F5-DESK-LEILA-HOSSEINI-CHAIR",
    "type": "task_chair",
-   "x": 65.6,
+   "x": 66.1,
    "y": 13.0,
    "rot_deg": -90,
-   "zone": "research-floor"
+   "zone": "research-floor",
+   "placement_override_reason": "Bring the chair to the actual keyboard working edge; keep the under-desk tower in its separate side bay."
   },
   {
    "id": "F5-DESK-AMIRA-HASSAN",
@@ -630,19 +682,24 @@
    "rot_deg": 90,
    "zone": "research-floor",
    "size": {
-    "paper": true
+    "paper": true,
+    "monitors": 0,
+    "keyboard": true,
+    "pedestal": false
    },
    "occupant": "Amira Hassan",
    "source": "production/workplace-occupancy-v1.json F5",
-   "purpose": "Mission Sponsor / Ethics Review Desk"
+   "purpose": "Mission Sponsor / Ethics Review Desk",
+   "electronics_reconciliation": "Registered USER dual displays replace only the desk scenic monitors. Floor-standing tower occupies the side bay, not the knee space."
   },
   {
    "id": "F5-DESK-AMIRA-HASSAN-CHAIR",
    "type": "task_chair",
-   "x": 65.6,
+   "x": 66.1,
    "y": 19.0,
    "rot_deg": -90,
-   "zone": "research-floor"
+   "zone": "research-floor",
+   "placement_override_reason": "Bring the chair to the actual keyboard working edge; keep the under-desk tower in its separate side bay."
   },
   {
    "id": "F5-RESEARCH-BOOKCASE-01",
@@ -702,8 +759,8 @@
   {
    "id": "F5-RESEARCH-PLANT-01",
    "type": "planter_tall",
-   "x": 57.6,
-   "y": 2.4,
+   "x": 59.6,
+   "y": 11.0,
    "rot_deg": 0,
    "zone": "research-floor"
   }

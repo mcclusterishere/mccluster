@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 702,
+  "candidate_count": 704,
   "capability_source_count": 104,
-  "support_only_count": 598,
+  "support_only_count": 600,
   "entries": [
     {
       "path": ".cursorrules",
@@ -2229,6 +2229,13 @@
       "rationale": "Building screens and screen apps: owner-gated phone apps opened from the 3D building's display surfaces over the Lab Runtime SANDBOX (SCREENS-AND-SCREEN-APPS-SPEC.md). Projects existing building/runtime authority; defines no new program capability."
     },
     {
+      "path": "js/eu-screens/workstation-layer.mjs",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Loads the authored workstation/monitor subset in furnished building views, preserving source coordinates, node identities and visibility. Adds no program capability."
+    },
+    {
       "path": "js/eup-league-member.js",
       "classification": "shared_site_support",
       "capability_ids": [],
@@ -3204,6 +3211,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Tests for the building screens and screen apps (SCREENS-AND-SCREEN-APPS-SPEC.md)."
+    },
+    {
+      "path": "scripts/test/eu-workstation-layer.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Tests authored workstation asset identity, transforms, availability and normal/plant visibility. Adds no building capability."
     },
     {
       "path": "scripts/test/eup-intake.integration.mjs",

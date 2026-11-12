@@ -3,7 +3,8 @@
 
 Diagnostic only: does not move devices, invent support bindings, or certify an
 installation. Report mode succeeds after producing evidence; --strict fails on
-any unresolved contact or intersecting monitor pair. NOT FOR CONSTRUCTION.
+any missing/wrong authored binding, unresolved contact or intersecting monitor
+pair. NOT FOR CONSTRUCTION.
 """
 from __future__ import annotations
 
@@ -13,6 +14,7 @@ import itertools
 import json
 import math
 import sys
+from functools import lru_cache
 from pathlib import Path
 
 PROD = Path(__file__).resolve().parents[1]
@@ -20,7 +22,7 @@ ROOT = PROD.parents[3]
 FT = 0.3048
 CONTACT_TOLERANCE_FT = 0.25 / 12
 sys.path.insert(0, str(PROD / "electronics"))
-from device_placement_bindings import load_bindings, bound_position
+from device_placement_bindings import load_bindings, bound_position, origin_height
 
 
 def surface_height(triangle, x, y):
@@ -69,11 +71,31 @@ def intersection(a, b, tolerance=1e-4):
     return [round(x, 5) for x in overlap] if min(overlap) > tolerance else None
 
 
+@lru_cache(maxsize=16)
+def expected_manufacturer_model(model_id):
+    from manufacturer_models import build_manufacturer_model
+    return build_manufacturer_model(model_id)
+
+
 def binding_geometry_matches(binding, nodes, elevation):
     """Check authored origin and facing from real geometry, not copied metadata."""
     aid = binding['asset_id']
     kind = binding['asset_type']
     p = bound_position(binding, elevation)
+    if binding.get('model_id'):
+        import numpy as np
+        import trimesh
+        model = expected_manufacturer_model(binding['model_id'])
+        transform = trimesh.transformations.translation_matrix([p[0], p[1], p[2] - origin_height(binding)]) @ trimesh.transformations.rotation_matrix(math.radians(binding['yaw_degrees']), [0, 0, 1])
+        for cid, mesh in model.components.items():
+            node = aid if cid == 'CHASSIS' else aid + '::PART::' + cid
+            if node not in nodes:
+                return False
+            vertices = trimesh.transform_points(mesh.vertices, transform)
+            expected = np.array([vertices.min(0), vertices.max(0)])
+            if not np.allclose(expected, nodes[node], atol=.001, rtol=0):
+                return False
+        return True
     offset = [0, 0, .20] if kind == 'monitor' else [0, 0, 0]
     front_offset = [0, -.125, .20] if kind == 'monitor' else [-.05, -.59, .48]
     front = aid + ('::PART::BEZEL' if kind == 'monitor' else '::PART::FRONT_IO')
@@ -107,6 +129,11 @@ def read_geometry(path, scale=1, elevation=0):
     return nodes, surfaces
 
 
+def acceptance_passed(unresolved, collisions, binding_checks):
+    """A contact-only pass cannot mask a stale model, wrong facing or missing binding."""
+    return bool(binding_checks) and all(x["passed"] for x in binding_checks) and not unresolved and not collisions
+
+
 def audit(production=PROD):
     production = Path(production)
     electronics = production / "electronics/generated"
@@ -119,6 +146,9 @@ def audit(production=PROD):
     bindings_path = electronics.parent / "device-placement-bindings-v1.json"
     bindings = load_bindings(bindings_path)
     source_paths = [components_path, glb, production / "building-core-v2.json", bindings_path]
+    binding_manifest = json.loads(bindings_path.read_text())
+    source_paths += [bindings_path.with_name(p) for p in binding_manifest.get("binding_sources", [])]
+    source_paths += [bindings_path.with_name("manufacturer-model-references-v1.json"), bindings_path.with_name("manufacturer_models.py")]
     binding_checks = []
     floors = []
     for level in range(8):
@@ -161,6 +191,7 @@ def audit(production=PROD):
         binding_checks.append({"asset_id": aid, "passed": False, "status": "missing_bound_device"})
     unresolved = [x for f in floors for x in f["support_contacts"] if x["status"] != "contact"]
     collisions = [x for f in floors for x in f["monitor_panel_intersections"]]
+    bound_passed = bool(binding_checks) and all(x["passed"] for x in binding_checks)
     return {"schema_version": "1.0.0", "status": "diagnostic_not_visual_approval", "not_for_construction": True,
             "scope": "Authored workstation chassis and monitor stands against the actual B1-L7 furnished floor meshes; monitor-panel pair intersections",
             "limitations": ["Five base samples establish geometric contact only, not structural or installation safety.",
@@ -171,16 +202,16 @@ def audit(production=PROD):
             "sources": [{"path": str(p.relative_to(production)), "sha256": hashlib.sha256(p.read_bytes()).hexdigest()} for p in source_paths],
             "summary": {"hosts": sum(f["hosts"] for f in floors), "monitors": sum(f["monitors"] for f in floors),
                         "unresolved_support_contacts": len(unresolved), "monitor_panel_intersections": len(collisions)},
-            "bound_placement_passed": bool(binding_checks) and all(x["passed"] for x in binding_checks),
+            "bound_placement_passed": bound_passed,
             "binding_checks": binding_checks,
-            "passed": not unresolved and not collisions, "floors": floors}
+            "passed": acceptance_passed(unresolved, collisions, binding_checks), "floors": floors}
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--strict", action="store_true", help="fail while any placement diagnostic remains unresolved")
     parser.add_argument("--require-bound", action="store_true", help="fail if any authored binding is absent or loses contact with its exact support")
-    parser.add_argument("--output", type=Path, default=PROD / "interiors/device-placement-audit-v2.json")
+    parser.add_argument("--output", type=Path, default=PROD / "interiors/device-placement-audit-v3.json")
     args = parser.parse_args()
     result = audit()
     args.output.write_text(json.dumps(result, indent=2) + "\n")
