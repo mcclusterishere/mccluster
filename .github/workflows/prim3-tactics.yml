@@ -71,7 +71,7 @@ jobs:
       - name: Preserve browser evidence
       # City combat uses the same pinned browser, with fixture owner replies and no live services.
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: prim3-tactical-browser-evidence
           path: /tmp/prim3-proof
@@ -82,7 +82,7 @@ jobs:
         run: node scripts/e2e/prim3-city-simulation.e2e.mjs /tmp/prim3-city-proof
       - name: Preserve city simulation evidence
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: prim3-city-browser-evidence
           path: /tmp/prim3-city-proof
@@ -113,7 +113,7 @@ jobs:
           node scripts/e2e/prim3-generated-missions.e2e.mjs /tmp/prim3-proof/generated 2>&1 | tee /tmp/prim3-proof/generated/run.log
       - name: Preserve generated mission browser evidence
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: prim3-generated-browser-evidence
           path: /tmp/prim3-proof/generated
@@ -146,7 +146,7 @@ jobs:
           node scripts/e2e/prim3-direct-landings.e2e.mjs /tmp/prim3-proof/direct-landings
       - name: Preserve spatial browser evidence
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: prim3-spatial-browser-evidence
           path: /tmp/prim3-proof
