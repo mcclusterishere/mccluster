@@ -17,3 +17,15 @@ test('Finance suppresses unrelated news and mission pins without deleting their 
 test('public reference and browser lifecycle checks are wired into the existing Finance workflow',()=>{
  const workflow=read('.github/workflows/finance-globe.yml');for(const path of ['js/world-finance.mjs','data/markets/company-leadership.json','scripts/e2e/finance-leadership.mjs','scripts/test-finance-leadership-dom.mjs'])assert.ok(workflow.includes(path),path);
 });
+test('editorial viewport gate requires the exact owner modes including Finance and retains the public two-mode gate',()=>{
+ const source=read('scripts/e2e/world-screen.e2e.mjs');
+ const owner=source.split('\n').find(line=>line.includes("the owner\\'s World has"));
+ assert.ok(owner);assert.match(owner,/Travel, Missions, Feed, E=UP and Finance/);
+ const expression=owner.match(/(JSON\.stringify\(shell\.modes\)===JSON\.stringify\(\[[^\]]+\]\)&&shell\.mode==='posts')/)[1];
+ const check=shell=>Function('shell','return '+expression)(shell);
+ const modes=['travel','missions','posts','environment','finance'];
+ assert.equal(check({modes,mode:'posts'}),true);
+ for(const wrong of [modes.slice(0,-1),[...modes,'finance'],[...modes].reverse(),['posts','environment']])assert.equal(check({modes:wrong,mode:'posts'}),false);
+ assert.equal(check({modes,mode:'finance'}),false,'Owner still opens on the Feed');
+ assert.match(source,/shell\.social&&shell\.mode==='posts'&&JSON\.stringify\(shell\.modes\)===JSON\.stringify\(\['posts','environment'\]\)/);
+});
