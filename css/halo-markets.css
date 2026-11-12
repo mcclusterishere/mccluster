@@ -98,3 +98,8 @@
 [data-r-detail] a { display:inline-block; color:#91e1f6; min-height:44px; padding-block:8px; }
 [data-r-detail] small { font-size:12px; line-height:1.5; }
 [data-r-detail] summary { min-height:44px; cursor:pointer; }
+.hm__finance [data-d-search],.hm__finance [data-d-plan] { display:grid; gap:8px; }
+.hm__finance [data-d-results] { padding-left:18px; }
+.hm__finance [data-d-results] li { padding:8px 0; border-bottom:1px solid #ffffff20; overflow-wrap:anywhere; }
+.hm__finance [data-d-coverage],.hm__finance [data-d-baseline] { overflow-wrap:anywhere; }
+.hm__finance [data-d-results] { max-height:320px; overflow-y:auto; }

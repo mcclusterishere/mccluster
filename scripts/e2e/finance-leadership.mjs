@@ -39,7 +39,7 @@ try{for(const width of [390,1280]){
   let file;
   if(u.hostname==='cesium.com'){const part=p.split('/Build/Cesium/')[1];if(part){const f=resolve(CESIUM,part);if(f.startsWith(resolve(CESIUM)+sep))file=f;}}
   else if(u.origin===BASE){const f=resolve(ROOT,decodeURIComponent(p.slice(1)));if(f.startsWith(resolve(ROOT)+sep))file=f;}
-  if(file){try{let body=await readFile(file);if(p==='/mnet.html')body=Buffer.from(body.toString().replace(/<script\b([^>]*)>[\s\S]*?<\/script>/gi,(whole,attrs)=>/src="js\/(?:world-owner-modes\.js|world-news-globe\.js|travel\/world-travel\.mjs|halo\/finance(?:-roster)?\.js|world-finance\.mjs)/.test(attrs)?whole:''));return route.fulfill({body,contentType:MIME[extname(file)]||'application/octet-stream',headers:{'access-control-allow-origin':'*'}});}catch{return route.fulfill({status:404,body:''});}}
+  if(file){try{let body=await readFile(file);if(p==='/mnet.html')body=Buffer.from(body.toString().replace(/<script\b([^>]*)>[\s\S]*?<\/script>/gi,(whole,attrs)=>/src="js\/(?:world-owner-modes\.js|world-news-globe\.js|travel\/world-travel\.mjs|halo\/finance(?:-roster|-dashboard)?\.js|world-finance\.mjs)/.test(attrs)?whole:''));return route.fulfill({body,contentType:MIME[extname(file)]||'application/octet-stream',headers:{'access-control-allow-origin':'*'}});}catch{return route.fulfill({status:404,body:''});}}
   return route.abort();
  });
  const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
