@@ -1,0 +1,85 @@
+{
+  "template_key": "motion-portfolio",
+  "version": 1,
+  "status": "development",
+  "default_document": {
+    "schema_version": "website-studio/v1",
+    "template_key": "motion-portfolio",
+    "template_version": 1,
+    "title": "Your website",
+    "mode": "standard",
+    "tiles": [
+      {
+        "id": "tile-1",
+        "kind": "music",
+        "headline": "Listen to my work",
+        "body": "",
+        "source_ref": null,
+        "transition": null,
+        "playback": "manual",
+        "action": null
+      },
+      {
+        "id": "tile-2",
+        "kind": "native_video",
+        "headline": "Watch my work",
+        "body": "",
+        "source_ref": null,
+        "transition": null,
+        "playback": "manual",
+        "action": null
+      },
+      {
+        "id": "tile-3",
+        "kind": "immersive360",
+        "headline": "Explore my space",
+        "body": "",
+        "source_ref": null,
+        "transition": null,
+        "playback": "manual",
+        "action": null
+      }
+    ]
+  },
+  "guidance": {
+    "version": 1,
+    "transition": {
+      "recommended_selected_seconds": [
+        4,
+        8
+      ],
+      "suggested_selected_seconds": 6,
+      "headline": "One clear movement is enough",
+      "help": "Choose a short reveal, camera move or moment of your work. Check the phone crop. Add wording in the editor, not inside the footage. A scroll transition does not need to loop.",
+      "export_recipe": "MP4 with H.264 video, 1080p, 24 or 30 fps is the proposed pilot recipe. Server inspection and conversion must be implemented before claiming uploader support.",
+      "support_status": "No upload processor is enabled by this template."
+    },
+    "framing": {
+      "desktop": "1920 x 1080 is a useful landscape starting point.",
+      "phone": "An optional 1080 x 1920 portrait version can preserve a different composition. Otherwise approve the crop.",
+      "limits": "The editor must show actual dimensions, rotation, selected duration and upload/processing limits from server policy."
+    },
+    "music": {
+      "help": "Choose your recording or upload through the existing music flow. Selling uses an approved offer, payment confirmation and download entitlement. Do not expose a paid master as the public player source."
+    },
+    "native_video": {
+      "help": "Choose your existing native video post, or upload through the native publishing flow. Pinning references that post; it does not silently make a private or removed post public."
+    },
+    "immersive360": {
+      "help": "Use a real 360 panorama or supported 360 video. An ordinary flat clip does not become a 360 scene. The visitor chooses Enter and can exit at any time.",
+      "maximum_per_site": 1,
+      "production_offer": "A separately scoped capture/production service can supply an experience; no fee or vendor is activated here."
+    },
+    "playback": {
+      "help": "Automatic start can be requested only after the visitor enables sound and the browser permits playback. Always retain a Play button. Transition motion never scrubs song audio."
+    },
+    "modes": {
+      "standard": "Three ordinary content tiles.",
+      "cinematic": "Each configured transition precedes its content tile. Reduced motion omits the transitions, not the content."
+    },
+    "account": {
+      "help": "The real demo is public. Using and saving the template requires a free M Account. Profile identity and branded website publishing remain distinct. Preserve selected template and draft through sign-in.",
+      "pricing_status": "Free hosting limits, $5 social access and $33 tool bundles are proposals, not active billing plans."
+    }
+  }
+}

@@ -1,0 +1,43 @@
+name: Website Studio isolated checks
+on:
+  pull_request:
+    paths:
+      - 'js/website-studio/**'
+      - 'data/website-studio/**'
+      - 'workers/mccluster/src/website-studio/**'
+      - 'core/src/website-studio/**'
+      - 'supabase/pending/website_studio_v2.sql'
+      - 'supabase/tests/website_studio_v2*'
+      - 'scripts/test/website-studio*'
+      - '.github/workflows/website-studio-ci.yml'
+permissions:
+  contents: read
+jobs:
+  isolated:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:16.6
+        env:
+          POSTGRES_PASSWORD: studio_ci_only
+          POSTGRES_DB: studio_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s
+          --health-timeout 5s --health-retries 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg postgresql-client
+      - run: node --test scripts/test/website-studio-v1.test.mjs scripts/test/website-studio-connected.test.mjs
+      - name: Disposable PostgreSQL only
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: '5432'
+          PGUSER: postgres
+          PGPASSWORD: studio_ci_only
+          PGDATABASE: studio_test
+        run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/tests/website_studio_v2.stub.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/pending/website_studio_v2.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/tests/website_studio_v2.behaviour.sql

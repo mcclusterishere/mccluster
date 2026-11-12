@@ -1,0 +1,127 @@
+{
+  "document": {
+    "schema_version": "website-studio/v1",
+    "template_key": "motion-portfolio",
+    "template_version": 1,
+    "title": "McCluster \u00b7 Motion demonstration",
+    "mode": "cinematic",
+    "tiles": [
+      {
+        "id": "tile-1",
+        "kind": "music",
+        "headline": "Listen to the work",
+        "body": "Demonstration using McCluster footage. Your template starts blank.",
+        "source_ref": {
+          "type": "media_asset",
+          "key": "demo-content"
+        },
+        "transition": {
+          "asset_ref": {
+            "type": "media_asset",
+            "key": "demo-transition"
+          },
+          "in_ms": 0,
+          "out_ms": 6000,
+          "pace": "standard",
+          "focal": {
+            "desktop": {
+              "x": 0.5,
+              "y": 0.5
+            },
+            "mobile": {
+              "x": 0.5,
+              "y": 0.5
+            }
+          }
+        },
+        "playback": "manual",
+        "action": null
+      },
+      {
+        "id": "tile-2",
+        "kind": "native_video",
+        "headline": "Watch the work",
+        "body": "Demonstration using McCluster footage. Your template starts blank.",
+        "source_ref": {
+          "type": "media_asset",
+          "key": "demo-content"
+        },
+        "transition": {
+          "asset_ref": {
+            "type": "media_asset",
+            "key": "demo-transition"
+          },
+          "in_ms": 0,
+          "out_ms": 6000,
+          "pace": "standard",
+          "focal": {
+            "desktop": {
+              "x": 0.5,
+              "y": 0.5
+            },
+            "mobile": {
+              "x": 0.5,
+              "y": 0.5
+            }
+          }
+        },
+        "playback": "manual",
+        "action": null
+      },
+      {
+        "id": "tile-3",
+        "kind": "native_video",
+        "headline": "Make your own entrance",
+        "body": "Demonstration using McCluster footage. Your template starts blank.",
+        "source_ref": {
+          "type": "media_asset",
+          "key": "demo-content"
+        },
+        "transition": {
+          "asset_ref": {
+            "type": "media_asset",
+            "key": "demo-transition"
+          },
+          "in_ms": 0,
+          "out_ms": 6000,
+          "pace": "standard",
+          "focal": {
+            "desktop": {
+              "x": 0.5,
+              "y": 0.5
+            },
+            "mobile": {
+              "x": 0.5,
+              "y": 0.5
+            }
+          }
+        },
+        "playback": "manual",
+        "action": null
+      }
+    ]
+  },
+  "media": {
+    "tile-1:content": {
+      "url": "https://matthew.mccluster.org/assets/audio/money-or-the-power.mp3"
+    },
+    "tile-1:transition": {
+      "desktop_url": "https://matthew.mccluster.org/assets/video/hero.mp4",
+      "poster_url": "https://matthew.mccluster.org/assets/frames/hero_0001.jpg"
+    },
+    "tile-2:content": {
+      "url": "https://matthew.mccluster.org/assets/video/hero.mp4"
+    },
+    "tile-2:transition": {
+      "desktop_url": "https://matthew.mccluster.org/assets/video/hero.mp4",
+      "poster_url": "https://matthew.mccluster.org/assets/frames/hero_0001.jpg"
+    },
+    "tile-3:content": {
+      "url": "https://matthew.mccluster.org/assets/video/hero.mp4"
+    },
+    "tile-3:transition": {
+      "desktop_url": "https://matthew.mccluster.org/assets/video/hero.mp4",
+      "poster_url": "https://matthew.mccluster.org/assets/frames/hero_0001.jpg"
+    }
+  }
+}
