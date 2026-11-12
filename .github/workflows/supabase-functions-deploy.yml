@@ -93,7 +93,7 @@ jobs:
           manual=false; [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && manual=true
           node scripts/supabase-functions-deploy.mjs gate --functions "$FUNCTIONS" --verdict "$RUNNER_TEMP/integration.json" --has-token "$HAS_DEPLOY_TOKEN" --manual "$manual" --baseline "$BASELINE"
 
-      - uses: supabase/setup-cli@d239d1052f6f024a8d746d7e5aeddead63b9cb53 # v1
+      - uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v1
         if: steps.plan.outputs.count != '0' && env.HAS_DEPLOY_TOKEN == 'true'
         with:
           version: 2.117.0
