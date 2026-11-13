@@ -19,7 +19,7 @@ try {
 for (const width of [390,1280]) {
  const context=await browser.newContext({viewport:{width,height:844},serviceWorkers:'block'});
  const page=await context.newPage(), unexpected=[],errors=[];
- page.on('pageerror',e=>errors.push(e.message));
+ page.on('pageerror',e=>{errors.push(e.message);console.error('page error:',e.message);});
  await context.route('**/*',async route=>{
   const u=new URL(route.request().url());
   if(u.origin!==base){unexpected.push(u.href);return route.abort();}
@@ -33,7 +33,7 @@ for (const width of [390,1280]) {
    await route.fulfill({status:200,contentType:types[extname(path)]||'application/octet-stream',body});
   }catch{await route.fulfill({status:404,body:''});}
  });
- await page.goto(base); await page.locator('#wtBookWhip').waitFor();
+ await page.goto(base+'/whip/rider/index.html'); await page.locator('#wtBookWhip').waitFor();
  check((await page.locator('main').innerText()).includes('No real ride is booked.'));
  for (const entry of ['rider','world']) {
   if(entry==='world') {
