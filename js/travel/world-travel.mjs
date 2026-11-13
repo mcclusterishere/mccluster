@@ -30,6 +30,7 @@ const paths = {
 };
 const icon = name => `<svg class="wt-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="${paths[name] || paths.drive}"/></svg>`;
 const labels = { flight:'Flights', train:'Trains', drive:'Drive', stay:'Stays', transit:'Transit', walk:'Walk', cycle:'Bike' };
+const DRIVING_PREVIEW = true; // Release presentation; never controlled by a URL or local preference.
 const groundModes = ['drive', 'walk', 'cycle'];
 const isGround = () => groundModes.includes(draft.mode);
 const hasCoordinates = place => Array.isArray(place?.coordinates) && place.coordinates.length === 2 &&
@@ -60,6 +61,7 @@ const rideFixMaxAge = 30000;
 
 panel.innerHTML = `
   <div class="wt-sheet-grab" aria-hidden="true"></div>
+  <p class="wt-route-privacy"><strong>Driving &amp; cab demo.</strong> No real Whip ride is booked. Flying and other transport modes are saved for later.</p>
   <header class="wt-planner-head"><h2 id="wtTitle">Where to?</h2><span class="wt-status" id="wtDraftStatus">Draft</span><button type="button" id="wtActivity" class="wt-activity">${icon('clock')}<span>Activity</span><b aria-hidden="true">›</b></button></header>
   <form id="wtForm">
     <!-- THE TRIP CARD (owner's reference, 2026-10-19): pickup over destination, joined by a dotted thread. The pickup
@@ -73,10 +75,10 @@ panel.innerHTML = `
     <p id="wtRoutePrivacy" class="wt-route-privacy">Choose a destination to get directions. Your starting point and destination are shared with the <a href="https://routing.openstreetmap.de/about.html" target="_blank" rel="noopener noreferrer">routing provider</a>.</p>
     <div id="wtGroundOptions" class="wt-ground-options" hidden>
       <nav class="wt-toolbar wt-local-toolbar" aria-label="Directions mode">${groundModes.map(m => `<button type="button" data-travel-kind="${m}" aria-pressed="${m === 'drive'}">${icon(m)}${labels[m]}</button>`).join('')}</nav>
-      <button id="wtRide" class="wt-ride-button" type="button" aria-expanded="false" aria-controls="wtRidePanel">Get a ride</button>
+      <button id="wtRide" class="wt-ride-button" type="button" aria-expanded="false" aria-controls="wtRidePanel">Hail a cab · demo</button>
     </div>
     <section id="wtRidePanel" class="wt-ride-panel" aria-labelledby="wtRideTitle" hidden>
-      <h3 id="wtRideTitle">Get a ride</h3><p>Ride booking is not connected here yet.</p>
+      <h3 id="wtRideTitle">Hail a cab · demo</h3><p>Live ride booking is not connected here yet. Explore Whip Equipped. No real ride is booked.</p>
       <p id="wtRidePickup" class="wt-ride-pickup"></p>
       <p id="wtRideHint">Choose your pickup and destination to continue in Uber.</p>
       <a id="wtUber" target="_blank" rel="noopener noreferrer" hidden>Continue in Uber ↗</a>
@@ -137,6 +139,11 @@ panel.innerHTML = `
   </form>
   <div class="wt-footer" id="wtSaveFooter" hidden><p id="wtSaveHint">Your saved journeys are private.</p><button class="wt-text-button" type="button" id="wtSaved">Saved journeys</button></div>
   <p class="wt-attribution">Address search: <a href="https://photon.komoot.io/" target="_blank" rel="noopener noreferrer">Photon</a> · <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap contributors</a> · <a href="https://www.openstreetmap.org/fixthemap" target="_blank" rel="noopener noreferrer">Fix the map</a> · <a href="mailto:matthew@mccluster.org">Contact</a></p><p class="wt-message" id="wtMessage" role="status" aria-live="polite"></p>`;
+
+// Presentation gate only: keep future engines, saved journeys and markup intact.
+if (DRIVING_PREVIEW) for (const element of panel.querySelectorAll('.wt-kinds, .wt-plan, #wtOptions, #wtRentals, #wtPrivate, [data-travel-kind]:not([data-travel-kind="drive"]), [data-travel-go="hotels"], #wtUber, #wtRideHint')) {
+  element.hidden = true; element.inert = true; element.style.setProperty('display', 'none', 'important');
+}
 
 const dialog = document.createElement('dialog');
 dialog.className = 'wt-saved'; dialog.id = 'wtSavedDialog';
@@ -805,6 +812,7 @@ function paintSubs() {
   $('wtRentals').hidden = sub !== 'rentals'; $('wtPrivate').hidden = sub !== 'private';
 }
 function chooseSub(sub) {
+  if (DRIVING_PREVIEW && sub !== 'directions') return;
   if (sub === 'directions' || sub === 'rentals') { rideSub = sub; if (tripShape !== 'rides') chooseMode(isGround() || draft.mode === 'transit' ? draft.mode : 'drive', { shape:'rides' }); }
   else { flightSub = sub; if (tripShape === 'rides') chooseMode('flight', { shape:'flights' }); }
   paintSubs();
@@ -812,6 +820,7 @@ function chooseSub(sub) {
 /* Rides, Flights and Multi-city are the three shapes a trip takes here. Rides is the street route (and a ride);
    Flights and Multi-city are the same longer-trip draft, Multi-city with the airports and stay fields open. */
 function chooseMode(kind, { shape = null, details = false } = {}) {
+  if (DRIVING_PREVIEW && (kind !== 'drive' || (shape && shape !== 'rides'))) return;
   if (shape) tripShape = shape;
   if (details) { $('wtOptions').open = true; $('wtDetails').open = true; }
   if (kind === draft.mode) { syncInputs(); return; }
@@ -822,6 +831,7 @@ function goSomewhere(what) {
   if (what === 'near') { $('wtLocate').click(); return; }
   if (what === 'globe') { $('wtPickTo').click(); return; }
   if (what === 'saved') { $('wtSaved').click(); return; }
+  if (DRIVING_PREVIEW && what === 'hotels') return;
   if (what === 'hotels') {
     if (!draft.to) { $('wtEndpointHint').textContent = 'Choose a destination, then search places to stay there.'; $('wtTo').focus(); return; }
     editField('stay'); return;
@@ -896,6 +906,7 @@ $('wtSave').onclick = async () => {
 };
 let listRequest = 0;
 function replaceDraft(plan, id = null) {
+  if (DRIVING_PREVIEW && plan.mode !== 'drive') { $('wtSavedMessage').textContent = 'This journey is preserved for later. Only driving is available in this preview.'; return; }
   invalidateRoute({ clearPosition:true }); closeSearches(); tripEpoch++; revision++;
   draft = plan; originSource = draft.from?.label === 'Current location' ? 'device' : 'manual'; savedId = id; dirty = false; $('wtOptions').open = ['flight', 'train'].includes(draft.mode);
   $('wtLocationStatus').textContent = draft.from ? 'Starting point from your journey. Use location to update it.' : 'Allow location, or enter your starting address.';

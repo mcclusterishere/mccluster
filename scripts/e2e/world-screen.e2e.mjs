@@ -29,7 +29,7 @@
    resolvable from here) and network access to the Cesium CDN and
    OpenStreetMap tiles. Exits non-zero on any failed check. */
 import { createServer } from 'node:http';
-import { withTravelAndMissions } from './world-switch.mjs';
+import { withTravelAndMissions, withFutureTransport } from './world-switch.mjs';
 import { createRequire } from 'node:module';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
@@ -48,6 +48,7 @@ const server = createServer(async (req, res) => {
   const path = normalize(decodeURIComponent(new URL(req.url, 'http://x').pathname)).replace(/^([.][.][/\\])+/, '');
   try {
     let body = await readFile(join(ROOT, path === '/' ? 'index.html' : path));
+    if (path === '/js/travel/world-travel.mjs') body = Buffer.from(withFutureTransport(body));
     const type = TYPES[extname(path)] || 'application/octet-stream';
     /* the World as it ships is the social feed; the suites that guard Travel and Missions get them switched back on */
     if (/^[/\\]mnet\.html$/.test(path) && !/(?:^|; )world=social(?:;|$)/.test(req.headers.cookie || '')) body = Buffer.from(withTravelAndMissions(body));

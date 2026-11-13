@@ -1,0 +1,31 @@
+name: Whip driving demo proof
+on:
+  pull_request:
+    paths:
+      - 'js/travel/**'
+      - 'whip/rider/**'
+      - 'css/whip-booking.css'
+      - 'scripts/e2e/whip-driving-demo.e2e.mjs'
+      - '.github/workflows/whip-driving-demo-proof.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: '24'
+      - run: npm install --prefix /tmp/whip-tools playwright@1.58.2
+      - run: /tmp/whip-tools/node_modules/.bin/playwright install --with-deps chromium
+      - run: node scripts/e2e/whip-driving-demo.e2e.mjs /tmp/whip-driving-proof
+        env:
+          PLAYWRIGHT_DIR: /tmp/whip-tools/node_modules
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        if: always()
+        with:
+          name: whip-driving-demo-proof
+          path: /tmp/whip-driving-proof
