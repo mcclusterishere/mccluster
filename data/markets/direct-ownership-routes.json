@@ -1,0 +1,998 @@
+{
+  "schemaVersion": 1,
+  "verifiedAt": "2026-11-12",
+  "researchScope": "Primary-source candidate directory; not exhaustive, not an investment recommendation, and not live account eligibility verification. No accounts opened or trades placed.",
+  "enums": {
+    "newInvestorAccess": [
+      "yes",
+      "no",
+      "unverified"
+    ],
+    "usResidentEligibility": [
+      "yes_explicit",
+      "yes_general_public",
+      "unverified",
+      "no"
+    ],
+    "registrationModel": [
+      "plan_nominee_with_drs_exit",
+      "plan_book_entry_details_unverified",
+      "registered_plan_shares",
+      "pure_registered",
+      "registered_adr"
+    ],
+    "evidenceStatus": [
+      "verified_primary",
+      "current_offer_older_terms",
+      "partial_primary"
+    ],
+    "entryPath": [
+      "direct_purchase_plan",
+      "existing_holder_drip_optional_cash",
+      "pure_registered_account"
+    ],
+    "planSponsorType": [
+      "issuer",
+      "transfer_agent",
+      "transfer_agent_affiliate",
+      "depositary"
+    ]
+  },
+  "interpretation": [
+    "Separate acquisition route, security identity, legal registration and residency eligibility.",
+    "A registrar client list is not a list of purchasable plans.",
+    "Null means unknown, never zero or eligible.",
+    "Provider-sponsored plans are not strictly issuer-sponsored.",
+    "Whole-share DRS withdrawal and fractional plan balances need separate treatment.",
+    "Fixed enrollment and transaction fees can materially increase the cost of small purchases; compare the full fee schedule and required contribution amounts.",
+    "Sample route counts do not measure provider inventory, sector leadership or exchange coverage.",
+    "General-public source wording does not verify U.S.-specific acceptance or any particular investor eligibility.",
+    "A retrieval date is not a terms effective date. Older and undated documents require current-term review."
+  ],
+  "routes": [
+    {
+      "id": "us-cik-80424-common-eq-dspp",
+      "issuerName": "The Procter & Gamble Company",
+      "ticker": "PG",
+      "domicile": "US",
+      "issuerIdentity": {
+        "cik": "0000080424",
+        "homeListing": "NYSE:PG"
+      },
+      "provider": "EQ Shareowner Services",
+      "providerRole": "transfer_agent_plan_administrator",
+      "securityType": "ordinary_common",
+      "entryPath": "direct_purchase_plan",
+      "planSponsorType": "issuer",
+      "newInvestorAccess": "yes",
+      "usResidentEligibility": "yes_general_public",
+      "registrationModel": "plan_nominee_with_drs_exit",
+      "initialMinimum": {
+        "amount": 250,
+        "currency": "USD",
+        "note": "Plus enrollment fee",
+        "unit": "currency"
+      },
+      "optionalMinimum": {
+        "amount": 50,
+        "currency": "USD",
+        "note": null,
+        "unit": "currency"
+      },
+      "fees": {
+        "enrollment": 15,
+        "purchase": "ACH $1; check $5; plus $0.03/share",
+        "drip": "5%, maximum $5, plus $0.03/share",
+        "sale": "Batch $15 + $0.12/share; other methods differ",
+        "note": "USD; reconfirm before enrollment"
+      },
+      "evidenceStatus": "verified_primary",
+      "sources": [
+        {
+          "url": "https://www.shareowneronline.com/umbraco/api/sosfileservices/File?fileId=3926a663-d832-4f62-9bec-3f30cfef967b&filename=Brochure",
+          "title": "P&G DSPP prospectus",
+          "documentDate": "2026-10-15",
+          "verifiedAt": "2026-11-12"
+        },
+        {
+          "url": "https://www.pginvestor.com/resources/investor-contacts/default.aspx",
+          "title": "P&G investor contacts",
+          "documentDate": null,
+          "verifiedAt": "2026-11-12"
+        }
+      ],
+      "caveats": [
+        "Plan holdings differ from DRS. Prospectus allows DRS placement when no dividends are reinvested; verify whole-share withdrawal."
+      ]
+    },
+    {
+      "id": "us-cik-788784-common-eq-enterprise-direct",
+      "issuerName": "Public Service Enterprise Group Incorporated",
+      "ticker": "PEG",
+      "domicile": "US",
+      "issuerIdentity": {
+        "cik": "0000788784",
+        "homeListing": "NYSE:PEG"
+      },
+      "provider": "EQ Shareowner Services",
+      "providerRole": "transfer_agent_plan_administrator",
+      "securityType": "ordinary_common",
+      "entryPath": "direct_purchase_plan",
+      "planSponsorType": "issuer",
+      "newInvestorAccess": "yes",
+      "usResidentEligibility": "yes_general_public",
+      "registrationModel": "plan_nominee_with_drs_exit",
+      "initialMinimum": {
+        "amount": 250,
+        "currency": "USD",
+        "note": "Plus enrollment fee",
+        "unit": "currency"
+      },
+      "optionalMinimum": {
+        "amount": 50,
+        "currency": "USD",
+        "note": null,
+        "unit": "currency"
+      },
+      "fees": {
+        "enrollment": 10,
+        "purchase": "Company paid",
+        "drip": "Company paid",
+        "sale": "Batch $10 + $0.05/share; other methods differ",
+        "note": "USD; reconfirm before enrollment"
+      },
+      "evidenceStatus": "verified_primary",
+      "sources": [
+        {
+          "url": "https://www.sec.gov/Archives/edgar/data/788784/000119312526451934/d127569ds3asr.htm",
+          "title": "PSEG Enterprise Direct prospectus",
+          "documentDate": "2026-11-06",
+          "verifiedAt": "2026-11-12"
+        }
+      ],
+      "caveats": [
+        "All plan common stock explicitly held in nominee name. Whole shares convert to DRS on termination if no sale election; fractional shares handled separately."
+      ]
+    },
+    {
+      "id": "us-cik-92122-common-eq-southern-investment",
+      "issuerName": "The Southern Company",
+      "ticker": "SO",
+      "domicile": "US",
+      "issuerIdentity": {
+        "cik": "0000092122",
+        "homeListing": "NYSE:SO"
+      },
+      "provider": "EQ Shareowner Services",
+      "providerRole": "transfer_agent_plan_administrator",
+      "securityType": "ordinary_common",
+      "entryPath": "direct_purchase_plan",
+      "planSponsorType": "issuer",
+      "newInvestorAccess": "yes",
+      "usResidentEligibility": "yes_explicit",
+      "registrationModel": "plan_nominee_with_drs_exit",
+      "initialMinimum": {
+        "amount": 250,
+        "currency": "USD",
+        "note": "Plus enrollment fee",
+        "unit": "currency"
+      },
+      "optionalMinimum": {
+        "amount": 25,
+        "currency": "USD",
+        "note": null,
+        "unit": "currency"
+      },
+      "fees": {
+        "enrollment": 15,
+        "purchase": "$2.50/investment plus $0.06/share for open-market purchases",
+        "drip": "Company paid",
+        "sale": null,
+        "note": "USD; reconfirm before enrollment"
+      },
+      "evidenceStatus": "verified_primary",
+      "sources": [
+        {
+          "url": "https://www.sec.gov/Archives/edgar/data/92122/000009212226000074/sosips-311x26.htm",
+          "title": "Southern Investment Plan prospectus",
+          "documentDate": "2026-11-10",
+          "verifiedAt": "2026-11-12"
+        }
+      ],
+      "caveats": [
+        "Whole shares convert to DRS on termination if no sale election. Weekly purchases."
+      ]
+    },
+    {
+      "id": "us-cik-310158-common-eq-merck-stock-plan",
+      "issuerName": "Merck & Co., Inc.",
+      "ticker": "MRK",
+      "domicile": "US",
+      "issuerIdentity": {
+        "cik": "0000310158",
+        "homeListing": "NYSE:MRK"
+      },
+      "provider": "EQ Shareowner Services",
+      "providerRole": "transfer_agent_plan_administrator",
+      "securityType": "ordinary_common",
+      "entryPath": "direct_purchase_plan",
+      "planSponsorType": "issuer",
+      "newInvestorAccess": "yes",
+      "usResidentEligibility": "yes_general_public",
+      "registrationModel": "plan_book_entry_details_unverified",
+      "initialMinimum": {
+        "amount": 350,
+        "currency": "USD",
+        "note": "Waived with automatic contributions per enrollment form",
+        "unit": "currency"
+      },
+      "optionalMinimum": {
+        "amount": 50,
+        "currency": "USD",
+        "note": null,
+        "unit": "currency"
+      },
+      "fees": {
+        "enrollment": 10,
+        "purchase": null,
+        "drip": null,
+        "sale": null,
+        "note": "Enrollment amount from publicly hosted form; other current fees unverified"
+      },
+      "evidenceStatus": "current_offer_older_terms",
+      "sources": [
+        {
+          "url": "https://www.merck.com/investor-relations/investor-resources/",
+          "title": "Merck investor resources",
+          "documentDate": null,
+          "verifiedAt": "2026-11-12"
+        },
+        {
+          "url": "https://www.shareowneronline.com/umbraco/api/sosfileservices/File?fileId=3709f74d-f11b-41d8-93a1-7316dc17a5c4&filename=Account+Authorization+Form+",
+          "title": "Merck enrollment form",
+          "documentDate": null,
+          "verifiedAt": "2026-11-12"
+        }
+      ],
+      "caveats": [
+        "Current issuer confirms EQ plan; reconfirm prospectus fees and registration treatment."
+      ]
+    },
+    {
+      "id": "us-camden-common-broadridge-dsp",
+      "issuerName": "Camden National Corporation",
+      "ticker": "CAC",
+      "domicile": "US",
+      "issuerIdentity": {
+        "cik": null,
+        "homeListing": "NASDAQ:CAC"
+      },
+      "provider": "Broadridge",
+      "providerRole": "transfer_agent_plan_administrator",
+      "securityType": "ordinary_common",
+      "entryPath": "direct_purchase_plan",
+      "planSponsorType": "transfer_agent_affiliate",
+      "newInvestorAccess": "yes",
+      "usResidentEligibility": "yes_general_public",
+      "registrationModel": "plan_book_entry_details_unverified",
+      "initialMinimum": {
+        "amount": 250,
+        "currency": "USD",
+        "note": null,
+        "unit": "currency"
+      },
+      "optionalMinimum": {
+        "amount": 25,
+        "currency": "USD",
+        "note": null,
+        "unit": "currency"
+      },
+      "fees": {
+        "enrollment": 15,
+        "purchase": "ACH $2.50; check $5; plus $0.10/share",
+        "drip": "2%, maximum $2.50, plus $0.10/share",
+        "sale": "Batch $15 + $0.10/share",
+        "note": "2021 hosted terms; live portal advertises enrollment, but fees require reconfirmation"
+      },
+      "evidenceStatus": "current_offer_older_terms",
+      "sources": [
+        {
+          "url": "https://shareholder.broadridge.com/cac/",
+          "title": "Camden National shareholder portal",
+          "documentDate": null,
+          "verifiedAt": "2026-11-12"
+        },
+        {
+          "url": "https://shareholder.broadridge.com/pdf/camden-national/broadridge-dsp-camden-national-corp.pdf",
+          "title": "Camden National Broadridge DSP",
+          "documentDate": "2021-06-25",
+          "verifiedAt": "2026-11-12"
+        }
+      ],
+      "caveats": [
+        "Sponsor is Matrix Trust, a Broadridge affiliate, not the issuer. Book-entry plan ownership is not automatically pure DRS."
+      ]
+    },
+    {
+      "id": "us-cik-715072-common-broadridge-dsp",
+      "issuerName": "Renasant Corporation",
+      "ticker": "RNST",
+      "domicile": "US",
+      "issuerIdentity": {
+        "cik": "0000715072",
+        "homeListing": "NYSE:RNST"
+      },
+      "provider": "Broadridge",
+      "providerRole": "transfer_agent_plan_administrator",
+      "securityType": "ordinary_common",
+      "entryPath": "direct_purchase_plan",
+      "planSponsorType": "transfer_agent",
+      "newInvestorAccess": "yes",
+      "usResidentEligibility": "yes_general_public",
+      "registrationModel": "plan_book_entry_details_unverified",
+      "initialMinimum": {
+        "amount": 250,
+        "currency": "USD",
+        "note": null,
+        "unit": "currency"
+      },
+      "optionalMinimum": {
+        "amount": 50,
+        "currency": "USD",
+        "note": null,
+        "unit": "currency"
+      },
+      "fees": {
+        "enrollment": null,
+        "purchase": null,
+        "drip": null,
+        "sale": null,
+        "note": "Current full fee schedule unverified; null is not free"
+      },
+      "evidenceStatus": "current_offer_older_terms",
+      "sources": [
+        {
+          "url": "https://shareholder.broadridge.com/rnst/",
+          "title": "Renasant shareholder portal",
+          "documentDate": null,
+          "verifiedAt": "2026-11-12"
+        },
+        {
+          "url": "https://shareholder.broadridge.com/pdf/renasant-corp/broadridge-dsp-tempalte-rnst-6-7-19-final.pdf",
+          "title": "Renasant Broadridge DSP",
+          "documentDate": "2019-06-07",
+          "verifiedAt": "2026-11-12"
+        },
+        {
+          "url": "https://investors.renasant.com/news-releases/news-release-details/renasant-announces-transfer-listing-common-stock-new-york-stock/",
+          "title": "Renasant NYSE listing",
+          "documentDate": null,
+          "verifiedAt": "2026-11-12"
+        }
+      ],
+      "caveats": [
+        "Current portal advertises new enrollment; plan terms hosted are old."
+      ]
+    },
+    {
+      "id": "us-old-national-common-continental-plan",
+      "issuerName": "Old National Bancorp",
+      "ticker": "ONB",
+      "domicile": "US",
+      "issuerIdentity": {
+        "cik": null,
+        "homeListing": "NASDAQ:ONB"
+      },
+      "provider": "Continental Stock Transfer & Trust",
+      "providerRole": "transfer_agent_plan_administrator",
+      "securityType": "ordinary_common",
+      "entryPath": "direct_purchase_plan",
+      "planSponsorType": "issuer",
+      "newInvestorAccess": "yes",
+      "usResidentEligibility": "yes_general_public",
+      "registrationModel": "plan_book_entry_details_unverified",
+      "initialMinimum": {
+        "amount": 500,
+        "currency": "USD",
+        "note": null,
+        "unit": "currency"
+      },
+      "optionalMinimum": {
+        "amount": 25,
+        "currency": "USD",
+        "note": null,
+        "unit": "currency"
+      },
+      "fees": {
+        "enrollment": null,
+        "purchase": "No service charge; open-market trading fee applies",
+        "drip": "No service charge; open-market trading fee applies",
+        "sale": "$0.15/share service charge plus trading fee",
+        "note": "No verified open-market purchase trading-fee amount; absent enrollment charge is not a verified zero"
+      },
+      "evidenceStatus": "current_offer_older_terms",
+      "sources": [
+        {
+          "url": "https://continentalstock.com/wp-content/uploads/2024/08/ONB-Stock-Purchase-and-Dividend-Reinvestment-Plan-Prospectus-8.13.24.pdf",
+          "title": "Old National plan prospectus",
+          "documentDate": "2024-08-13",
+          "verifiedAt": "2026-11-12"
+        },
+        {
+          "url": "https://continentalstock.com/for-shareholders/drip-dspp-plan-details/",
+          "title": "Continental plan directory",
+          "documentDate": null,
+          "verifiedAt": "2026-11-12"
+        }
+      ],
+      "caveats": [
+        "Reconfirm current fees and registration treatment."
+      ]
+    },
+    {
+      "id": "us-nb-bancorp-common-continental-plan",
+      "issuerName": "NB Bancorp, Inc.",
+      "ticker": "NBBK",
+      "domicile": "US",
+      "issuerIdentity": {
+        "cik": "0001979330",
+        "homeListing": "NASDAQ:NBBK"
+      },
+      "provider": "Continental Stock Transfer & Trust",
+      "providerRole": "transfer_agent_plan_administrator",
+      "securityType": "ordinary_common",
+      "entryPath": "direct_purchase_plan",
+      "planSponsorType": "transfer_agent",
+      "newInvestorAccess": "yes",
+      "usResidentEligibility": "yes_general_public",
+      "registrationModel": "plan_book_entry_details_unverified",
+      "initialMinimum": {
+        "amount": 250,
+        "currency": "USD",
+        "note": null,
+        "unit": "currency"
+      },
+      "optionalMinimum": {
+        "amount": 50,
+        "currency": "USD",
+        "note": null,
+        "unit": "currency"
+      },
+      "fees": {
+        "enrollment": 25,
+        "purchase": "$2.50/purchase plus prorated brokerage commission",
+        "drip": "5%, maximum $2.50, plus prorated brokerage commission",
+        "sale": "$15 plus unspecified per-share commission",
+        "note": "USD; commission amount varies. Initial investment requires U.S.-bank check even when recurring debits are elected."
+      },
+      "evidenceStatus": "partial_primary",
+      "sources": [
+        {
+          "url": "https://continentalstock.com/for-shareholders/drip-dspp-plan-details/",
+          "title": "Continental plan directory",
+          "documentDate": null,
+          "verifiedAt": "2026-11-12"
+        },
+        {
+          "url": "https://continentalstock.com/wp-content/uploads/2026/01/NB-Bancorp-Inc.-Plan-Prospectus.pdf",
+          "title": "NB Bancorp plan prospectus",
+          "documentDate": null,
+          "verifiedAt": "2026-11-12"
+        },
+        {
+          "url": "https://nbbancorp.com/overview/default.aspx",
+          "title": "NB Bancorp issuer profile",
+          "documentDate": null,
+          "verifiedAt": "2026-11-12"
+        },
+        {
+          "url": "https://www.sec.gov/Archives/edgar/data/1979330/000110465926123880/nbbk-20261106x8k.htm",
+          "title": "NB Bancorp current report",
+          "documentDate": null,
+          "verifiedAt": "2026-11-12"
+        }
+      ],
+      "caveats": [
+        "Provider-offered plan. Written withdrawal yields a DRS statement. U.S.-bank initial check required."
+      ]
+    },
+    {
+      "id": "us-seacoast-common-continental-plan",
+      "issuerName": "Seacoast Banking Corporation of Florida",
+      "ticker": "SBCF",
+      "domicile": "US",
+      "issuerIdentity": {
+        "cik": null,
+        "homeListing": "NASDAQ:SBCF"
+      },
+      "provider": "Continental Stock Transfer & Trust",
+      "providerRole": "transfer_agent_plan_administrator",
+      "securityType": "ordinary_common",
+      "entryPath": "direct_purchase_plan",
+      "planSponsorType": "issuer",
+      "newInvestorAccess": "yes",
+      "usResidentEligibility": "yes_explicit",
+      "registrationModel": "plan_book_entry_details_unverified",
+      "initialMinimum": {
+        "amount": 1000,
+        "currency": "USD",
+        "note": null,
+        "unit": "currency"
+      },
+      "optionalMinimum": {
+        "amount": 50,
+        "currency": "USD",
+        "note": null,
+        "unit": "currency"
+      },
+      "fees": {
+        "enrollment": null,
+        "purchase": null,
+        "drip": null,
+        "sale": "$10 plus unspecified per-share commission",
+        "note": "USD; reconfirm before enrollment"
+      },
+      "evidenceStatus": "partial_primary",
+      "sources": [
+        {
+          "url": "https://continentalstock.com/for-shareholders/drip-dspp-plan-details/",
+          "title": "Continental plan directory",
+          "documentDate": null,
+          "verifiedAt": "2026-11-12"
+        },
+        {
+          "url": "https://continentalstock.com/wp-content/uploads/2024/01/Seacoast-Banking-Corp-of-Florida-SBCF-Prospectus.pdf",
+          "title": "Seacoast plan prospectus",
+          "documentDate": "2014-11-21",
+          "verifiedAt": "2026-11-12"
+        }
+      ],
+      "caveats": [
+        "Current directory says U.S. residents only and full reinvestment only. Hosted prospectus is dated 2014, so unlisted current fees remain unknown."
+      ]
+    },
+    {
+      "id": "ca-cik-1086888-common-tsxtrust-us-drip",
+      "issuerName": "Manulife Financial Corporation",
+      "ticker": "MFC",
+      "domicile": "CA",
+      "issuerIdentity": {
+        "cik": "0001086888",
+        "homeListing": "TSX:MFC; NYSE:MFC common shares"
+      },
+      "provider": "TSX Trust",
+      "providerRole": "transfer_agent_plan_administrator",
+      "securityType": "ordinary_common",
+      "entryPath": "existing_holder_drip_optional_cash",
+      "planSponsorType": "issuer",
+      "newInvestorAccess": "no",
+      "usResidentEligibility": "yes_explicit",
+      "registrationModel": "registered_plan_shares",
+      "initialMinimum": {
+        "amount": 1,
+        "unit": "existing_whole_share",
+        "currency": null,
+        "note": "Not a first-share purchase facility"
+      },
+      "optionalMinimum": {
+        "amount": 50,
+        "currency": "USD",
+        "note": null,
+        "unit": "currency"
+      },
+      "fees": {
+        "enrollment": null,
+        "purchase": null,
+        "drip": "Issuer states no brokerage or administrative fees",
+        "sale": null,
+        "note": "Obtain current full U.S. plan fee schedule"
+      },
+      "evidenceStatus": "partial_primary",
+      "sources": [
+        {
+          "url": "https://www.manulife.com/ca/en/about-us/investors/shareholder-services",
+          "title": "Manulife shareholder services",
+          "documentDate": null,
+          "verifiedAt": "2026-11-12"
+        },
+        {
+          "url": "https://services.tsxtrust.com/InvestorServices/Search-Issuer-Id/34359996564/?lang=en",
+          "title": "TSX Trust Manulife plan summary",
+          "documentDate": null,
+          "verifiedAt": "2026-11-12"
+        },
+        {
+          "url": "https://services.tsxtrust.com/InvestorServices/PDFDownload?pdf_file=4658131462.pdf",
+          "title": "Manulife U.S. plan prospectus with administrator update",
+          "documentDate": null,
+          "verifiedAt": "2026-11-12"
+        },
+        {
+          "url": "https://tsxtrust.com/manulife/drips",
+          "title": "TSX Trust Manulife DRIPs",
+          "documentDate": null,
+          "verifiedAt": "2026-11-12"
+        },
+        {
+          "url": "https://www.manulife.com/ca/en/about-us/news/manulife-cautions-investors-regarding-ocehan-llc-offer-for-shares0",
+          "title": "Manulife listing identity",
+          "documentDate": null,
+          "verifiedAt": "2026-11-12"
+        }
+      ],
+      "caveats": [
+        "Current issuer names TSX Trust. Legacy prospectus mentions old administrator; existing one-share requirement verified from excerpt, not live enrollment."
+      ]
+    },
+    {
+      "id": "fr-air-liquide-ordinary-direct-registered",
+      "issuerName": "Air Liquide",
+      "ticker": "AI",
+      "domicile": "FR",
+      "issuerIdentity": {
+        "cik": null,
+        "homeListing": "Euronext Paris:AI",
+        "isin": "FR0000120073"
+      },
+      "provider": "Air Liquide Shareholder Services",
+      "providerRole": "issuer_shareholder_services",
+      "securityType": "ordinary_common",
+      "entryPath": "pure_registered_account",
+      "planSponsorType": "issuer",
+      "newInvestorAccess": "yes",
+      "usResidentEligibility": "unverified",
+      "registrationModel": "pure_registered",
+      "initialMinimum": {
+        "amount": 1,
+        "unit": "whole_share",
+        "currency": null,
+        "note": "No minimum monetary purchase; whole-share price applies"
+      },
+      "optionalMinimum": null,
+      "fees": {
+        "enrollment": 0,
+        "purchase": "Online 0.10% excluding tax; other channels 0.15%",
+        "drip": null,
+        "sale": "Online 0.10% excluding tax",
+        "note": "No custody or management fee stated; transaction tax, FX and payment costs may apply"
+      },
+      "evidenceStatus": "partial_primary",
+      "sources": [
+        {
+          "url": "https://www.airliquide.com/help/becoming-air-liquide-shareholder",
+          "title": "Becoming an Air Liquide shareholder",
+          "documentDate": null,
+          "verifiedAt": "2026-11-12"
+        },
+        {
+          "url": "https://www.airliquide.com/investors/individual-shareholders/buying-shares",
+          "title": "Buying Air Liquide shares",
+          "documentDate": null,
+          "verifiedAt": "2026-11-12"
+        },
+        {
+          "url": "https://action.airliquide.com/authv2/ocel.preamble.action",
+          "title": "Account-opening requirements",
+          "documentDate": null,
+          "verifiedAt": "2026-11-12"
+        },
+        {
+          "url": "https://www.airliquide.com/about-air-liquide",
+          "title": "Air Liquide official identity",
+          "documentDate": null,
+          "verifiedAt": "2026-11-12"
+        }
+      ],
+      "caveats": [
+        "Non-French tax residents welcomed, but U.S.-specific acceptance not verified. Online application requires SEPA-domiciled bank details; manual route needs checking."
+      ]
+    },
+    {
+      "id": "fr-totalenergies-euronext-ordinary-sgss",
+      "issuerName": "TotalEnergies SE",
+      "ticker": "TTE",
+      "domicile": "FR",
+      "issuerIdentity": {
+        "cik": null,
+        "homeListing": "Euronext Paris:TTE",
+        "isin": "FR0000120271"
+      },
+      "provider": "Société Générale Securities Services",
+      "providerRole": "registrar_account_administrator",
+      "securityType": "ordinary_common",
+      "entryPath": "pure_registered_account",
+      "planSponsorType": "issuer",
+      "newInvestorAccess": "yes",
+      "usResidentEligibility": "unverified",
+      "registrationModel": "pure_registered",
+      "initialMinimum": {
+        "amount": 1,
+        "unit": "whole_share",
+        "currency": null,
+        "note": "Price and current fees apply"
+      },
+      "optionalMinimum": null,
+      "fees": {
+        "enrollment": null,
+        "purchase": null,
+        "drip": null,
+        "sale": null,
+        "note": "Current fees and U.S.-resident opening conditions not verified"
+      },
+      "evidenceStatus": "partial_primary",
+      "sources": [
+        {
+          "url": "https://totalenergies.com/investors/why-invest-in-totalenergies/becoming-shareholder",
+          "title": "Becoming a TotalEnergies shareholder",
+          "documentDate": null,
+          "verifiedAt": "2026-11-12"
+        },
+        {
+          "url": "https://totalenergies.com/investors/individual-shareholders/managing-your-shares-euronext",
+          "title": "Managing Euronext shares",
+          "documentDate": null,
+          "verifiedAt": "2026-11-12"
+        },
+        {
+          "url": "https://totalenergies.com/investors/shares-and-dividends/totalenergies-shares/totalenergies-shares-listed-on-the-nyse",
+          "title": "TotalEnergies NYSE ordinary shares",
+          "documentDate": null,
+          "verifiedAt": "2026-11-12"
+        }
+      ],
+      "caveats": [
+        "Separate Euronext route. Current NYSE line is ordinary shares, not automatically ADRs, with Computershare U.S. register and a registered intermediary structure."
+      ]
+    },
+    {
+      "id": "jp-sony-adr-computershare-gid",
+      "issuerName": "Sony Group Corporation",
+      "ticker": "SONY",
+      "domicile": "JP",
+      "issuerIdentity": {
+        "cik": null,
+        "homeListing": "Tokyo ordinary shares; NYSE:SONY ADR"
+      },
+      "provider": "Computershare Investor Centre / depositary plan",
+      "providerRole": "adr_plan_administrator",
+      "securityType": "adr",
+      "entryPath": "direct_purchase_plan",
+      "planSponsorType": "depositary",
+      "newInvestorAccess": "yes",
+      "usResidentEligibility": "yes_explicit",
+      "registrationModel": "registered_adr",
+      "initialMinimum": null,
+      "optionalMinimum": null,
+      "fees": {
+        "enrollment": null,
+        "purchase": null,
+        "drip": null,
+        "sale": null,
+        "note": "Current brochure minimums and fees unverified"
+      },
+      "evidenceStatus": "partial_primary",
+      "sources": [
+        {
+          "url": "https://www.sony.com/en/SonyInfo/IR/invest/",
+          "title": "Sony investment information",
+          "documentDate": null,
+          "verifiedAt": "2026-11-12"
+        }
+      ],
+      "caveats": [
+        "New U.S./Canadian investors accepted per issuer; links Computershare, so not a non-Computershare alternative. Registering ADRs does not register underlying Japanese ordinary shares in the holder's name."
+      ]
+    }
+  ],
+  "providerDirectory": [
+    {
+      "name": "EQ / Equiniti",
+      "market": "US",
+      "role": "Transfer agent and plan administrator",
+      "url": "https://www.shareowneronline.com/",
+      "note": "Former AST is now EQ, not an independent alternative.",
+      "sources": [
+        {
+          "url": "https://equiniti.com/us/ast-access/individuals/",
+          "title": "EQ former AST resources",
+          "documentDate": null,
+          "verifiedAt": "2026-11-12"
+        },
+        {
+          "url": "https://equiniti.com/media/15199/global-payment-form-standard_052423.pdf",
+          "title": "AST now EQ notice",
+          "documentDate": null,
+          "verifiedAt": "2026-11-12"
+        }
+      ]
+    },
+    {
+      "name": "Broadridge",
+      "market": "US",
+      "role": "Transfer agent; some provider-sponsored DSPs",
+      "url": "https://dsppwizard.broadridge.com/Plans",
+      "note": "Wizard not readable in research tool. Verified issuer portals advertise enrollment; generic FAQ alone is insufficient.",
+      "sources": [
+        {
+          "url": "https://shareholder.broadridge.com/bcis/",
+          "title": "Broadridge portal",
+          "documentDate": null,
+          "verifiedAt": "2026-11-12"
+        }
+      ]
+    },
+    {
+      "name": "Continental Stock Transfer & Trust",
+      "market": "US",
+      "role": "Transfer agent; issuer- and bank-sponsored plans",
+      "url": "https://continentalstock.com/for-shareholders/drip-dspp-plan-details/",
+      "note": "Includes DSPPs and existing-holder DRPs; do not equate them.",
+      "sources": [
+        {
+          "url": "https://continentalstock.com/for-issuers/issuer-services-overview/drip-dspp-plans/",
+          "title": "Continental plan services",
+          "documentDate": null,
+          "verifiedAt": "2026-11-12"
+        }
+      ]
+    },
+    {
+      "name": "TSX Trust",
+      "market": "Canada",
+      "role": "Registrar and DRIP/optional purchase administrator",
+      "url": "https://services.tsxtrust.com/InvestorServices/Search-DRIP?lang=en",
+      "note": "Check issuer residency and initial-share rules individually.",
+      "sources": [
+        {
+          "url": "https://www.tsxtrust.com/issuer-and-investor-services/transfer-agent-services",
+          "title": "TSX Trust services",
+          "documentDate": null,
+          "verifiedAt": "2026-11-12"
+        }
+      ]
+    },
+    {
+      "name": "EQ Shareview",
+      "market": "UK",
+      "role": "Registrar, dealing and corporate-sponsored nominee",
+      "url": "https://shareview.co.uk/",
+      "note": "Reviewed online certificate trading is UK-resident only; CSN eligible country list excludes U.S. Not a verified U.S. first-purchase route.",
+      "sources": [
+        {
+          "url": "https://invest.shareview.co.uk/sview/trade/certificated/trade.htm",
+          "title": "Shareview dealing",
+          "documentDate": null,
+          "verifiedAt": "2026-11-12"
+        },
+        {
+          "url": "https://shareview.co.uk/csn/",
+          "title": "Shareview corporate-sponsored nominee",
+          "documentDate": null,
+          "verifiedAt": "2026-11-12"
+        }
+      ]
+    },
+    {
+      "name": "MUFG Corporate Markets (former Link)",
+      "market": "Australia / UK / international",
+      "role": "Registry services",
+      "url": "https://www.mpms.mufg.com/",
+      "note": "Registry function does not establish a U.S.-eligible direct-purchase plan.",
+      "sources": [
+        {
+          "url": "https://www.mpms.mufg.com/en/media/link-group-becomes-mufg-pension-market-services-backed-by-one-of-the-largest-global-financial-institutions/",
+          "title": "Link becomes MUFG Pension & Market Services",
+          "documentDate": "2024-05-16",
+          "verifiedAt": "2026-11-12"
+        }
+      ]
+    }
+  ],
+  "marketNotes": [
+    {
+      "market": "Japan",
+      "finding": "No general Japanese registrar first-purchase DSPP for U.S. residents verified.",
+      "details": [
+        "Nichicon's Mizuho-administered special accounts cannot normally trade except under-unit purchases/top-ups; transfers need a securities-company account.",
+        "JPX names MUFG Trust as its registrar. Registrar presence is not purchase-plan evidence.",
+        "Domestic common shares normally trade in 100-share exchange units. Broker-specific odd lots and U.S. eligibility are separate."
+      ],
+      "sources": [
+        {
+          "url": "https://www.nichicon.co.jp/english/ir/stockinfo/procedure/",
+          "title": "Nichicon share procedures",
+          "documentDate": null,
+          "verifiedAt": "2026-11-12"
+        },
+        {
+          "url": "https://www.jpx.co.jp/english/corporate/investor-relations/shareholders/basic-info/",
+          "title": "JPX share information",
+          "documentDate": null,
+          "verifiedAt": "2026-11-12"
+        },
+        {
+          "url": "https://www.jpx.co.jp/english/equities/trading/domestic/03.html",
+          "title": "JPX trading units",
+          "documentDate": null,
+          "verifiedAt": "2026-11-12"
+        }
+      ]
+    },
+    {
+      "market": "Australia",
+      "finding": "Issuer-sponsored SRN holdings provide a registration method, not an automatic initial-purchase service.",
+      "details": [
+        "ASX says broker-sponsored CHESS clients also retain legal title; do not import U.S. street-name assumptions.",
+        "U.S. eligibility and issuer DRP terms require verification."
+      ],
+      "sources": [
+        {
+          "url": "https://www.asx.com.au/about/regulation/clearing-and-settlement-of-cash-equities-in-australia/settlement/settlement-services-and-pricing.html",
+          "title": "ASX registration systems",
+          "documentDate": null,
+          "verifiedAt": "2026-11-12"
+        },
+        {
+          "url": "https://www.asx.com.au/content/dam/asx/documents/unlinked-docs/fact-sheet-chess-sponsored-and-issuer-sponsored-holdings.pdf",
+          "title": "ASX holdings fact sheet",
+          "documentDate": null,
+          "verifiedAt": "2026-11-12"
+        }
+      ]
+    },
+    {
+      "market": "US",
+      "finding": "DRS is a holding method; DSPP is an acquisition arrangement.",
+      "details": [
+        "Eligible securities can be broker-purchased then directly registered without an issuer purchase plan.",
+        "Issuer purchase plans may use brokers and batch trades; exact execution price and time may not be controllable."
+      ],
+      "sources": [
+        {
+          "url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins-97",
+          "title": "SEC Holding Your Securities",
+          "documentDate": null,
+          "verifiedAt": "2026-11-12"
+        },
+        {
+          "url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/direct-investment-plans-buying-stock-directly",
+          "title": "SEC direct plans",
+          "documentDate": null,
+          "verifiedAt": "2026-11-12"
+        }
+      ]
+    }
+  ],
+  "staleClaimsToAvoid": [
+    {
+      "claim": "Dominion remains with Broadridge",
+      "correction": "Moved to Computershare after August 22, 2025.",
+      "source": {
+        "url": "https://investors.dominionenergy.com/buy-stock-direct/default.aspx",
+        "title": "Dominion direct investing",
+        "documentDate": null,
+        "verifiedAt": "2026-11-12"
+      }
+    },
+    {
+      "claim": "JPMorgan common shares are a non-Computershare option",
+      "correction": "Current issuer page names Computershare.",
+      "source": {
+        "url": "https://jpmorganchaseco.gcs-web.com/ir/shareholder-information/transfer-agent/",
+        "title": "JPMorgan transfer agent",
+        "documentDate": null,
+        "verifiedAt": "2026-11-12"
+      }
+    },
+    {
+      "claim": "TotalEnergies NYSE shares must be ADRs",
+      "correction": "Current issuer describes NYSE ordinary shares and a U.S. register.",
+      "source": {
+        "url": "https://totalenergies.com/investors/shares-and-dividends/totalenergies-shares/totalenergies-shares-listed-on-the-nyse",
+        "title": "TotalEnergies NYSE shares",
+        "documentDate": null,
+        "verifiedAt": "2026-11-12"
+      }
+    }
+  ]
+}

@@ -17,6 +17,8 @@
   <link rel="stylesheet" href="css/human-uprise-editorial.css?v=__STAMP__">
   <link rel="stylesheet" href="css/world-travel.css?v=__STAMP__">
   <link rel="stylesheet" href="css/world-environment.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/halo-markets.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/world-finance.css?v=__STAMP__">
   <link rel="stylesheet" href="css/policy-mode.css?v=__STAMP__">
   <link rel="stylesheet" href="css/mission-swipe-deck.css?v=__STAMP__">
   <link rel="stylesheet" href="css/mnet-audio.css?v=__STAMP__">
@@ -294,7 +296,7 @@
         <section class="mn__world-home" id="mnWorld" aria-label="The world">
           <h1 class="wt-headline">The world is your feed.</h1>
           <div id="wtDestination" class="wt-destination" hidden></div>
-          <nav class="wt-world-modes" aria-label="World mode"><button type="button" data-world-mode="travel" aria-pressed="false">Travel</button><button type="button" data-world-mode="missions" aria-pressed="false">Missions</button><button type="button" data-world-mode="posts" aria-pressed="true">News feed</button><button type="button" data-world-mode="environment" aria-pressed="false" aria-label="E=UP: Environmental Justice" title="E=UP: Environmental Justice"><img src="assets/img/equity-uprise-mark-white.png" alt="" width="30" height="30"></button></nav>
+          <nav class="wt-world-modes" aria-label="World mode"><button type="button" data-world-mode="travel" aria-pressed="false">Travel</button><button type="button" data-world-mode="missions" aria-pressed="false">Missions</button><button type="button" data-world-mode="posts" aria-pressed="true">News feed</button><button type="button" data-world-mode="environment" aria-pressed="false" aria-label="E=UP: Environmental Justice" title="E=UP: Environmental Justice"><img src="assets/img/equity-uprise-mark-white.png" alt="" width="30" height="30"></button><button type="button" data-world-mode="finance" aria-pressed="false">Finance</button></nav>
           <iframe class="mn__world-frame" id="mnWorldFrame" src="action-globe.html?embedded=1&amp;surface=network&amp;missions=0&amp;v=__STAMP__" title="Equity Uprise globe. Drag to turn the Earth; tap a red pin to open its mission." loading="lazy" allow="geolocation" referrerpolicy="strict-origin-when-cross-origin"></iframe>
           <!-- the place card (owner, 2026-10-21: "only in the middle ... how many users ... news articles ... posts"): drawn by paintPlaceCard in the page script -->
           <div class="mn__place-card" id="mnPlaceCard" role="status" aria-live="polite" hidden></div>
@@ -732,6 +734,11 @@
        at DOMContentLoaded; it wires itself whenever it arrives -->
   <script type="module" async src="js/travel/world-travel.mjs?v=__STAMP__"></script>
   <script type="module" src="js/world-environment-mccluster.mjs?v=__STAMP__"></script>
+  <script src="js/halo/finance-ownership.js?v=__STAMP__"></script>
+  <script src="js/halo/finance-dashboard.js?v=__STAMP__"></script>
+  <script src="js/halo/finance-roster.js?v=__STAMP__"></script>
+  <script src="js/halo/finance.js?v=__STAMP__"></script>
+  <script type="module" src="js/world-finance.mjs?v=__STAMP__"></script>
   <script src="js/mnet-tour.js?v=__STAMP__"></script>
   <script src="js/mnet-live.js?v=__STAMP__"></script>
   <script src="js/mnet-audio.js?v=__STAMP__"></script>

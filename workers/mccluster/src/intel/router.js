@@ -28,6 +28,10 @@ import { portfolioRequest } from '../finance/portfolio.js';
 import { createAlpacaClient } from '../finance/alpaca.js';
 import { accountRequest } from '../finance/account.js';
 import { valueAccount } from '../finance/valuation.js';
+import { leadershipView } from '../finance/leadership.js';
+import { universeSummary, universeView } from '../finance/universe.js';
+import { ownershipBaseline } from '../finance/baseline.js';
+import { ownershipOptionsView } from '../finance/ownership-options.js';
 const alpacaClient = createAlpacaClient();
 import EXCHANGE_REFERENCE from '../../../../data/markets/exchanges.json' with { type: 'json' };
 const indicatorClient = createIndicatorClient();
@@ -170,6 +174,45 @@ export async function handleIntelRequest(request, env, options = {}) {
       };
       if (env.FINANCE_DEV_ENABLED !== 'true') return respond({ ok: false, code: 'not_found' }, 404);
       const market = options.financeMarket || alpacaClient;
+      if (path === '/v1/intel/finance/ownership-options' && request.method === 'GET') {
+        if([...url.searchParams.keys()].some(k=>!['issuer_id','symbol','mic'].includes(k)||url.searchParams.getAll(k).length!==1||url.searchParams.get(k)===''))return respond({ok:false,code:'unsupported_parameter'},400);
+        try{return respond({ok:true,...ownershipOptionsView({issuer_id:url.searchParams.get('issuer_id'),symbol:url.searchParams.get('symbol'),mic:url.searchParams.get('mic')})});}
+        catch(error){return respond({ok:false,code:error.code||'ownership_reference_unavailable'},error.status||503);}
+      }
+      if (path === '/v1/intel/finance/dashboard' && request.method === 'GET') {
+        if(url.search)return respond({ok:false,code:'unsupported_parameter'},400);
+        // A paper account is not ownership evidence. No actual-position adapter is configured.
+        return respond({ok:true,baseline:ownershipBaseline(),universe:universeSummary(),
+          controls:{actual_holdings_storage:'not_connected',plan_eligibility:'not_connected',automatic_quotes:false,trade_execution:false},
+          quote_coverage:{provider:'alpaca',feed:'iex',scope:'supported US listings only',configured:!!(env.APCA_API_KEY_ID&&env.APCA_API_SECRET_KEY),enabled:env.FINANCE_ALPACA_ENABLED==='true',consolidated:false}});
+      }
+      if (path === '/v1/intel/finance/universe' && request.method === 'GET') {
+        if([...url.searchParams.keys()].some(k=>!['q','exchange','scope','offset','limit'].includes(k)||url.searchParams.getAll(k).length!==1))return respond({ok:false,code:'unsupported_parameter'},400);
+        const integer=(k,fallback)=>url.searchParams.has(k)?(/^\d{1,5}$/.test(url.searchParams.get(k))?Number(url.searchParams.get(k)):NaN):fallback;
+        try{return respond({ok:true,...universeView({q:url.searchParams.get('q')||'',exchange:url.searchParams.get('exchange')||'',scope:url.searchParams.get('scope')||'directory',offset:integer('offset',0),limit:integer('limit',25)})});}
+        catch(error){return respond({ok:false,code:error.code||'universe_unavailable'},error.status||503);}
+      }
+      if (path === '/v1/intel/finance/economy' && request.method === 'GET') {
+        if(url.search)return respond({ok:false,code:'unsupported_parameter'},400);
+        try{return respond({ok:true,...await (options.indicatorClient||indicatorClient)({economy:'US',indicators:['NY.GDP.MKTP.CD','NY.GDP.MKTP.KD.ZG']})});}
+        catch(error){return respond({ok:false,code:error.code||'economy_unavailable'},503);}
+      }
+      if (path === '/v1/intel/finance/leadership' && request.method === 'GET') {
+        if ([...url.searchParams.keys()].some(k=>!['symbol','mic'].includes(k)||url.searchParams.getAll(k).length!==1)) return respond({ok:false,code:'unsupported_parameter'},400);
+        try { return respond({ok:true,...leadershipView({symbol:url.searchParams.get('symbol'),mic:url.searchParams.get('mic')})}); }
+        catch(error) { return respond({ok:false,code:error.code||'leadership_unavailable'},error.status||503); }
+      }
+      if (path === '/v1/intel/finance/leadership-quote' && request.method === 'GET') {
+        if ([...url.searchParams.keys()].some(k=>!['symbol','mic'].includes(k)||url.searchParams.getAll(k).length!==1) || !url.searchParams.has('symbol') || !url.searchParams.has('mic')) return respond({ok:false,code:'unsupported_parameter'},400);
+        try {
+          const symbol=url.searchParams.get('symbol'),mic=url.searchParams.get('mic');
+          const roster=leadershipView({symbol,mic});
+          if(roster.status!=='available')return respond({ok:false,code:'listing_not_covered'},404);
+          const quote=await market.quote(env,symbol);
+          if(quote.instrument?.symbol!==symbol||quote.instrument?.mic!==mic)return respond({ok:false,code:'instrument_identity_changed'},409);
+          return respond({ok:true,issuer_id:roster.company.issuer_id,quote});
+        }catch(error){return respond({ok:false,code:error.code||'quote_unavailable'},error.status||503);}
+      }
       if (path === '/v1/intel/finance/market' && request.method === 'GET') {
         if ([...url.searchParams.keys()].some(k=>!['q','symbol','period'].includes(k)||url.searchParams.getAll(k).length!==1)) return respond({ok:false,code:'unsupported_parameter'},400);
         try {

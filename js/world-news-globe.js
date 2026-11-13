@@ -22,7 +22,7 @@
     if (frame.contentWindow) frame.contentWindow.postMessage(data, location.origin);
   }
   function sync() {
-    const on = mode() !== 'travel' && mode() !== 'environment';
+    const on = mode() !== 'travel' && mode() !== 'environment' && mode() !== 'finance';
     send({type:'hu:world-news-pins',on,items:on ? items().filter(geo).map(x => ({id:x.id,lat:x.lat,lon:x.lon})) : []});
   }
 
@@ -95,7 +95,7 @@
     if (e.source !== frame.contentWindow || e.origin !== location.origin) return;
     const data = e.data || {};
     if (data.type === 'hu:globe-ready') sync();
-    if (data.type === 'hu:world-news-selected' && typeof data.id === 'string') {
+    if (data.type === 'hu:world-news-selected' && typeof data.id === 'string' && mode() !== 'finance') {
       window.MCC_WORLD_MODE?.set?.('posts');
       discussion(data.id);
     }

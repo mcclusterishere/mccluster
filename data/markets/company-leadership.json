@@ -1,0 +1,3180 @@
+{
+  "schema_version": 1,
+  "retrieved_at": "2026-11-11",
+  "purpose": "Public corporate reference facts for five selected issuers; not evidence of user ownership, watchlist membership, investment intent or personal location.",
+  "sources": [
+    {
+      "id": "amd_exec",
+      "url": "https://www.amd.com/en/corporate/leadership.html",
+      "title": "AMD executive leadership team",
+      "source_type": "official_issuer",
+      "published_at": null,
+      "as_of": null,
+      "retrieved_at": "2026-11-11",
+      "retrieval_method": "public_web_page"
+    },
+    {
+      "id": "amd_board",
+      "url": "https://ir.amd.com/governance/board-of-directors",
+      "title": "AMD board of directors",
+      "source_type": "official_issuer",
+      "published_at": null,
+      "as_of": null,
+      "retrieved_at": "2026-11-11",
+      "retrieval_method": "public_web_page"
+    },
+    {
+      "id": "cvx_roster",
+      "url": "https://www.chevron.com/who-we-are/leadership",
+      "title": "Chevron corporate officers and board",
+      "source_type": "official_issuer",
+      "published_at": null,
+      "as_of": null,
+      "retrieved_at": "2026-11-11",
+      "retrieval_method": "search_index_of_official_page",
+      "note": "Direct page fetch returned HTTP 403; full officer and board list was available in the public search index of this official URL. Exact page publication date not established."
+    },
+    {
+      "id": "cvx_umpleby",
+      "url": "https://www.chevron.com/who-we-are/leadership/jim-umpleby",
+      "title": "Chevron lead director profile",
+      "source_type": "official_issuer",
+      "published_at": null,
+      "as_of": null,
+      "retrieved_at": "2026-11-11",
+      "retrieval_method": "search_index_of_official_page"
+    },
+    {
+      "id": "cvx_treasurer",
+      "url": "https://www.chevron.com/newsroom/2026/q3/chevron-announces-leadership-changes",
+      "title": "Chevron treasurer appointment",
+      "source_type": "official_issuer",
+      "published_at": "2026-08-11",
+      "as_of": null,
+      "retrieved_at": "2026-11-11",
+      "retrieval_method": "search_index_of_official_page"
+    },
+    {
+      "id": "cvx_2027_finance",
+      "url": "https://www.sec.gov/Archives/edgar/data/93410/000009341026000188/cvx-20260930.htm",
+      "title": "Chevron Form 8-K: officer elections effective January 2027",
+      "source_type": "sec_filing",
+      "published_at": "2026-10-05",
+      "as_of": "2026-09-30",
+      "retrieved_at": "2026-11-11",
+      "retrieval_method": "public_web_page"
+    },
+    {
+      "id": "cvx_2027_secretary",
+      "url": "https://chevroncorp.gcs-web.com/news-releases/news-release-details/siva-barnwell-adams-named-corporate-secretary-and-chief",
+      "title": "Chevron secretary appointment effective January 2027",
+      "source_type": "official_issuer",
+      "published_at": "2026-11-02",
+      "as_of": null,
+      "retrieved_at": "2026-11-11",
+      "retrieval_method": "public_web_page"
+    },
+    {
+      "id": "cvx_10k",
+      "url": "https://www.sec.gov/Archives/edgar/data/93410/000009341026000078/cvx-20251231.htm",
+      "title": "Chevron 2025 Form 10-K",
+      "source_type": "sec_filing",
+      "published_at": "2026-02-24",
+      "as_of": "2025-12-31",
+      "retrieved_at": "2026-11-11",
+      "retrieval_method": "public_web_page"
+    },
+    {
+      "id": "cvx_proxy",
+      "url": "https://www.sec.gov/Archives/edgar/data/93410/000119312526145617/d77994ddef14a.htm",
+      "title": "Chevron 2026 definitive proxy",
+      "source_type": "sec_filing",
+      "published_at": "2026-04-07",
+      "as_of": null,
+      "retrieved_at": "2026-11-11",
+      "retrieval_method": "public_web_page"
+    },
+    {
+      "id": "vz_exec",
+      "url": "https://www.verizon.com/about/our-company/executive-bios",
+      "title": "Verizon executive leadership",
+      "source_type": "official_issuer",
+      "published_at": null,
+      "as_of": null,
+      "retrieved_at": "2026-11-11",
+      "retrieval_method": "public_web_page"
+    },
+    {
+      "id": "vz_board",
+      "url": "https://www.verizon.com/about/investors/board-directors",
+      "title": "Verizon board of directors",
+      "source_type": "official_issuer",
+      "published_at": null,
+      "as_of": null,
+      "retrieved_at": "2026-11-11",
+      "retrieval_method": "public_web_page"
+    },
+    {
+      "id": "vz_dan",
+      "url": "https://www.verizon.com/about/our-company/executive-bios/dan-schulman",
+      "title": "Verizon Dan Schulman leadership profile",
+      "source_type": "official_issuer",
+      "published_at": null,
+      "as_of": null,
+      "retrieved_at": "2026-11-11",
+      "retrieval_method": "public_web_page"
+    },
+    {
+      "id": "vz_proxy",
+      "url": "https://www.sec.gov/Archives/edgar/data/732712/000130817926000210/vz014688_def14a.htm",
+      "title": "Verizon 2026 definitive proxy",
+      "source_type": "sec_filing",
+      "published_at": "2026-04-06",
+      "as_of": null,
+      "retrieved_at": "2026-11-11",
+      "retrieval_method": "public_web_page"
+    },
+    {
+      "id": "aep_exec",
+      "url": "https://www.aep.com/about/leadership/",
+      "title": "AEP executive leadership and regional presidents",
+      "source_type": "official_issuer",
+      "published_at": null,
+      "as_of": null,
+      "retrieved_at": "2026-11-11",
+      "retrieval_method": "public_web_page"
+    },
+    {
+      "id": "aep_board",
+      "url": "https://www.aep.com/investors/governance/board/",
+      "title": "AEP board of directors",
+      "source_type": "official_issuer",
+      "published_at": null,
+      "as_of": null,
+      "retrieved_at": "2026-11-11",
+      "retrieval_method": "public_web_page"
+    },
+    {
+      "id": "aep_new_directors",
+      "url": "https://www.aep.com/news/stories/view/12106/",
+      "title": "AEP elects David Marriott and Charles Meyers",
+      "source_type": "official_issuer",
+      "published_at": "2026-07-21",
+      "as_of": null,
+      "retrieved_at": "2026-11-11",
+      "retrieval_method": "public_web_page"
+    },
+    {
+      "id": "t_exec",
+      "url": "https://investors.att.com/corporate-governance/leadership",
+      "title": "AT&T leadership",
+      "source_type": "official_issuer",
+      "published_at": null,
+      "as_of": null,
+      "retrieved_at": "2026-11-11",
+      "retrieval_method": "public_web_page"
+    },
+    {
+      "id": "t_board",
+      "url": "https://investors.att.com/corporate-governance/board-of-directors",
+      "title": "AT&T board of directors",
+      "source_type": "official_issuer",
+      "published_at": null,
+      "as_of": null,
+      "retrieved_at": "2026-11-11",
+      "retrieval_method": "public_web_page"
+    },
+    {
+      "id": "t_10k",
+      "url": "https://www.sec.gov/Archives/edgar/data/732717/000073271726000120/t-20251231.htm",
+      "title": "AT&T 2025 Form 10-K",
+      "source_type": "sec_filing",
+      "published_at": "2026-02-09",
+      "as_of": "2025-12-31",
+      "retrieved_at": "2026-11-11",
+      "retrieval_method": "public_web_page"
+    },
+    {
+      "id": "t_proxy",
+      "url": "https://www.sec.gov/Archives/edgar/data/732717/000119312526119888/d919223ddef14a.htm",
+      "title": "AT&T 2026 definitive proxy",
+      "source_type": "sec_filing",
+      "published_at": "2026-03-23",
+      "as_of": null,
+      "retrieved_at": "2026-11-11",
+      "retrieval_method": "public_web_page"
+    },
+    {
+      "id": "amd_hq",
+      "url": "https://www.amd.com/en/legal/privacy.html",
+      "title": "AMD headquarters identification in privacy statement",
+      "source_type": "official_issuer",
+      "published_at": "2026-06-05",
+      "as_of": null,
+      "retrieved_at": "2026-11-11",
+      "retrieval_method": "public_web_page"
+    },
+    {
+      "id": "cvx_hq",
+      "url": "https://www.chevron.com/who-we-are/contact",
+      "title": "Chevron corporate headquarters",
+      "source_type": "official_issuer",
+      "published_at": null,
+      "as_of": null,
+      "retrieved_at": "2026-11-11",
+      "retrieval_method": "search_index_of_official_page"
+    },
+    {
+      "id": "vz_hq",
+      "url": "https://www.verizon.com/about/our-company/verizon-corporate-headquarters",
+      "title": "Verizon official and operational headquarters",
+      "source_type": "official_issuer",
+      "published_at": null,
+      "as_of": null,
+      "retrieved_at": "2026-11-11",
+      "retrieval_method": "public_web_page"
+    },
+    {
+      "id": "aep_hq",
+      "url": "https://www.aep.com/contact/",
+      "title": "AEP corporate headquarters",
+      "source_type": "official_issuer",
+      "published_at": null,
+      "as_of": null,
+      "retrieved_at": "2026-11-11",
+      "retrieval_method": "public_web_page"
+    },
+    {
+      "id": "t_hq",
+      "url": "https://investors.att.com/resources/contacts",
+      "title": "AT&T corporate headquarters mailing address",
+      "source_type": "official_issuer",
+      "published_at": null,
+      "as_of": null,
+      "retrieved_at": "2026-11-11",
+      "retrieval_method": "public_web_page"
+    },
+    {
+      "id": "amd_sec_metadata",
+      "url": "https://data.sec.gov/submissions/CIK0000002488.json",
+      "title": "Advanced Micro Devices, Inc. SEC company metadata",
+      "source_type": "sec_filing",
+      "published_at": null,
+      "as_of": null,
+      "retrieved_at": "2026-11-11",
+      "retrieval_method": "SEC_JSON_API",
+      "note": "Company-level SEC metadata, not an individual filing. Verified name, CIK, ticker, exchange and business address; no reported publication timestamp."
+    },
+    {
+      "id": "cvx_sec_metadata",
+      "url": "https://data.sec.gov/submissions/CIK0000093410.json",
+      "title": "Chevron Corporation SEC company metadata",
+      "source_type": "sec_filing",
+      "published_at": null,
+      "as_of": null,
+      "retrieved_at": "2026-11-11",
+      "retrieval_method": "SEC_JSON_API",
+      "note": "Company-level SEC metadata, not an individual filing. Verified name, CIK, ticker, exchange and business address; no reported publication timestamp."
+    },
+    {
+      "id": "vz_sec_metadata",
+      "url": "https://data.sec.gov/submissions/CIK0000732712.json",
+      "title": "Verizon Communications Inc. SEC company metadata",
+      "source_type": "sec_filing",
+      "published_at": null,
+      "as_of": null,
+      "retrieved_at": "2026-11-11",
+      "retrieval_method": "SEC_JSON_API",
+      "note": "Company-level SEC metadata, not an individual filing. Verified name, CIK, ticker, exchange and business address; no reported publication timestamp."
+    },
+    {
+      "id": "aep_sec_metadata",
+      "url": "https://data.sec.gov/submissions/CIK0000004904.json",
+      "title": "American Electric Power Company, Inc. SEC company metadata",
+      "source_type": "sec_filing",
+      "published_at": null,
+      "as_of": null,
+      "retrieved_at": "2026-11-11",
+      "retrieval_method": "SEC_JSON_API",
+      "note": "Company-level SEC metadata, not an individual filing. Verified name, CIK, ticker, exchange and business address; no reported publication timestamp."
+    },
+    {
+      "id": "t_sec_metadata",
+      "url": "https://data.sec.gov/submissions/CIK0000732717.json",
+      "title": "AT&T Inc. SEC company metadata",
+      "source_type": "sec_filing",
+      "published_at": null,
+      "as_of": null,
+      "retrieved_at": "2026-11-11",
+      "retrieval_method": "SEC_JSON_API",
+      "note": "Company-level SEC metadata, not an individual filing. Verified name, CIK, ticker, exchange and business address; no reported publication timestamp."
+    },
+    {
+      "id": "amd_geocode",
+      "url": "https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=2485+Augustine+Drive%2C+Santa+Clara%2C+CA+95054&benchmark=Public_AR_Current&format=json",
+      "title": "AMD headquarters address geocoding",
+      "source_type": "official_geocoder",
+      "published_at": null,
+      "as_of": null,
+      "retrieved_at": "2026-11-11",
+      "retrieval_method": "public_geocoder_JSON",
+      "note": "House number, street, city, state and ZIP match the verified issuer business address after abbreviation normalization. Coordinates are interpolated along the matching street address range, not surveyed or verified rooftop coordinates. No numeric positional accuracy is claimed."
+    },
+    {
+      "id": "cvx_geocode",
+      "url": "https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=1400+Smith+Street%2C+Houston%2C+TX+77002&benchmark=Public_AR_Current&format=json",
+      "title": "CVX headquarters address geocoding",
+      "source_type": "official_geocoder",
+      "published_at": null,
+      "as_of": null,
+      "retrieved_at": "2026-11-11",
+      "retrieval_method": "public_geocoder_JSON",
+      "note": "House number, street, city, state and ZIP match the verified issuer business address after abbreviation normalization. Coordinates are interpolated along the matching street address range, not surveyed or verified rooftop coordinates. No numeric positional accuracy is claimed."
+    },
+    {
+      "id": "vz_geocode",
+      "url": "https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=1095+Avenue+of+the+Americas%2C+New+York%2C+NY+10036&benchmark=Public_AR_Current&format=json",
+      "title": "VZ headquarters address geocoding",
+      "source_type": "official_geocoder",
+      "published_at": null,
+      "as_of": null,
+      "retrieved_at": "2026-11-11",
+      "retrieval_method": "public_geocoder_JSON",
+      "note": "House number, street, city, state and ZIP match the verified issuer business address after abbreviation normalization. Coordinates are interpolated along the matching street address range, not surveyed or verified rooftop coordinates. No numeric positional accuracy is claimed."
+    },
+    {
+      "id": "aep_geocode",
+      "url": "https://nominatim.openstreetmap.org/search?q=American+Electric+Power%2C+1+Riverside+Plaza%2C+Columbus%2C+Ohio&format=jsonv2&addressdetails=1&limit=3",
+      "title": "AEP headquarters address geocoding",
+      "source_type": "openstreetmap_geocoder",
+      "published_at": null,
+      "as_of": null,
+      "retrieved_at": "2026-11-11",
+      "retrieval_method": "public_geocoder_JSON",
+      "note": "Mapped office building named American Electric Power with matching house number, street, city, state and ZIP. Point represents the mapped building, not a surveyed entrance or an executive location. High confidence refers to address/entity matching, not numeric positional accuracy."
+    },
+    {
+      "id": "t_geocode",
+      "url": "https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=208+S+Akard+St%2C+Dallas%2C+TX+75202&benchmark=Public_AR_Current&format=json",
+      "title": "T headquarters address geocoding",
+      "source_type": "official_geocoder",
+      "published_at": null,
+      "as_of": null,
+      "retrieved_at": "2026-11-11",
+      "retrieval_method": "public_geocoder_JSON",
+      "note": "House number, street, city, state and ZIP match the verified issuer business address after abbreviation normalization. Coordinates are interpolated along the matching street address range, not surveyed or verified rooftop coordinates. No numeric positional accuracy is claimed."
+    }
+  ],
+  "companies": [
+    {
+      "ticker": "AMD",
+      "name": "Advanced Micro Devices, Inc.",
+      "cik": "0000002488",
+      "mic": "XNAS",
+      "exchange": "Nasdaq",
+      "identity_source_ids": [
+        "amd_sec_metadata"
+      ],
+      "headquarters": {
+        "city": "Santa Clara",
+        "region": "California",
+        "country": "United States",
+        "address": "2485 Augustine Drive, Santa Clara, CA 95054",
+        "source_ids": [
+          "amd_hq",
+          "amd_sec_metadata"
+        ],
+        "geolocation": {
+          "type": "headquarters_business_address",
+          "latitude": 37.382307061778,
+          "longitude": -121.971776930382,
+          "matched_address": "2485 AUGUSTINE DR, SANTA CLARA, CA, 95054",
+          "query_address": "2485 Augustine Drive, Santa Clara, CA 95054",
+          "source_ids": [
+            "amd_geocode"
+          ],
+          "source_url": "https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=2485+Augustine+Drive%2C+Santa+Clara%2C+CA+95054&benchmark=Public_AR_Current&format=json",
+          "geocoder": "U.S. Census Geocoder",
+          "precision": "address_range_interpolated",
+          "confidence": "moderate",
+          "retrieved_at": "2026-11-11",
+          "attribution": "U.S. Census Bureau, MAF/TIGER address ranges",
+          "license": "U.S. government public data",
+          "note": "House number, street, city, state and ZIP match the verified issuer business address after abbreviation normalization. Coordinates are interpolated along the matching street address range, not surveyed or verified rooftop coordinates. No numeric positional accuracy is claimed."
+        }
+      },
+      "coverage": {
+        "executives": "All unique entries in the selected issuer executive leadership or corporate officers roster.",
+        "directors": "All unique entries in the selected issuer board roster.",
+        "limitations": [
+          "Publicly listed leadership is not a complete employee directory or a statement that every vice president or subsidiary officer is included.",
+          "Observed publication does not establish that an executive works at headquarters."
+        ],
+        "executive_count": 25,
+        "regional_executive_count": 0,
+        "director_count": 8,
+        "unique_people_count": 32
+      },
+      "people": [
+        {
+          "name": "Lisa T. Su",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Chair and Chief Executive Officer",
+              "organization": "Advanced Micro Devices, Inc.",
+              "source_ids": [
+                "amd_exec",
+                "amd_board"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed",
+              "date_note": "CEO since 2014-10; Chair since 2022-02, expressly stated in amd_board. Combined-role start is not assigned."
+            },
+            {
+              "category": "director",
+              "title": "Chair of the Board",
+              "organization": "Advanced Micro Devices, Inc.",
+              "source_ids": [
+                "amd_board"
+              ],
+              "role_start": "2022-02",
+              "role_start_precision": "month",
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Darren Grasby",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Executive Vice President, Chief Sales Officer and President AMD EMEA",
+              "organization": "Advanced Micro Devices, Inc.",
+              "source_ids": [
+                "amd_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Philip Guido",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Executive Vice President, Chief Commercial Officer",
+              "organization": "Advanced Micro Devices, Inc.",
+              "source_ids": [
+                "amd_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Jean Hu",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Executive Vice President, Chief Financial Officer and Treasurer",
+              "organization": "Advanced Micro Devices, Inc.",
+              "source_ids": [
+                "amd_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Forrest Norrod",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Executive Vice President and General Manager of the Data Center Solutions Business Group",
+              "organization": "Advanced Micro Devices, Inc.",
+              "source_ids": [
+                "amd_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Mark Papermaster",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Executive Vice President, Chief Technology Officer",
+              "organization": "Advanced Micro Devices, Inc.",
+              "source_ids": [
+                "amd_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Brian Amick",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Senior Vice President, Technology and Engineering",
+              "organization": "Advanced Micro Devices, Inc.",
+              "source_ids": [
+                "amd_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Martin Ashton",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Senior Vice President, Hardware IP and Architecture",
+              "organization": "Advanced Micro Devices, Inc.",
+              "source_ids": [
+                "amd_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Vamsi Boppana",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Senior Vice President, Artificial Intelligence",
+              "organization": "Advanced Micro Devices, Inc.",
+              "source_ids": [
+                "amd_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Ruth Cotter",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Senior Vice President, Chief Administrative Officer",
+              "organization": "Advanced Micro Devices, Inc.",
+              "source_ids": [
+                "amd_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Mark Fuselier",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Senior Vice President, Technology and Product Engineering",
+              "organization": "Advanced Micro Devices, Inc.",
+              "source_ids": [
+                "amd_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Robert Gama",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Senior Vice President, Chief Human Resources Officer",
+              "organization": "Advanced Micro Devices, Inc.",
+              "source_ids": [
+                "amd_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Ava Hahn",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Senior Vice President, General Counsel and Corporate Secretary",
+              "organization": "Advanced Micro Devices, Inc.",
+              "source_ids": [
+                "amd_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Mathew Hein",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Senior Vice President and Chief Strategy Officer, Corporate Development",
+              "organization": "Advanced Micro Devices, Inc.",
+              "source_ids": [
+                "amd_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Jack Huynh",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Senior Vice President and GM, Computing and Graphics Group",
+              "organization": "Advanced Micro Devices, Inc.",
+              "source_ids": [
+                "amd_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Keivan Keshvari",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Senior Vice President, Global Operations & Quality",
+              "organization": "Advanced Micro Devices, Inc.",
+              "source_ids": [
+                "amd_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Dan McNamara",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Senior Vice President and General Manager, Compute & Enterprise AI",
+              "organization": "Advanced Micro Devices, Inc.",
+              "source_ids": [
+                "amd_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Salil Raje",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Senior Vice President and General Manager, Adaptive and Embedded Computing Group",
+              "organization": "Advanced Micro Devices, Inc.",
+              "source_ids": [
+                "amd_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Hasmukh Ranjan",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Senior Vice President, Chief Information Officer",
+              "organization": "Advanced Micro Devices, Inc.",
+              "source_ids": [
+                "amd_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Jane Roney",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Senior Vice President, Business Operations",
+              "organization": "Advanced Micro Devices, Inc.",
+              "source_ids": [
+                "amd_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Keith Strier",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Senior Vice President, Global AI Markets",
+              "organization": "Advanced Micro Devices, Inc.",
+              "source_ids": [
+                "amd_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "David Wang",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Senior Vice President, GPU Technologies and Engineering",
+              "organization": "Advanced Micro Devices, Inc.",
+              "source_ids": [
+                "amd_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Thomas Zacharia",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Senior Vice President, Global Public Sector and Strategic Partnerships",
+              "organization": "Advanced Micro Devices, Inc.",
+              "source_ids": [
+                "amd_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Nazar Zaidi",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Senior Vice President, AI Solutions Engineering",
+              "organization": "Advanced Micro Devices, Inc.",
+              "source_ids": [
+                "amd_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Andrej Zdravkovic",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Senior Vice President, GPU Technologies and Engineering Software and Chief Software Officer",
+              "organization": "Advanced Micro Devices, Inc.",
+              "source_ids": [
+                "amd_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Nora M. Denzel",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Lead Independent Director",
+              "organization": "Advanced Micro Devices, Inc.",
+              "source_ids": [
+                "amd_board"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Mike P. Gregoire",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "Advanced Micro Devices, Inc.",
+              "source_ids": [
+                "amd_board"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "John W. Marren",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "Advanced Micro Devices, Inc.",
+              "source_ids": [
+                "amd_board"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "KC McClure",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "Advanced Micro Devices, Inc.",
+              "source_ids": [
+                "amd_board"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Timothy F. Ryan",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "Advanced Micro Devices, Inc.",
+              "source_ids": [
+                "amd_board"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Abhi Y. Talwalkar",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "Advanced Micro Devices, Inc.",
+              "source_ids": [
+                "amd_board"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Elizabeth (Beth) W. Vanderslice",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "Advanced Micro Devices, Inc.",
+              "source_ids": [
+                "amd_board"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "ticker": "CVX",
+      "name": "Chevron Corporation",
+      "cik": "0000093410",
+      "mic": "XNYS",
+      "exchange": "New York Stock Exchange",
+      "identity_source_ids": [
+        "cvx_sec_metadata"
+      ],
+      "headquarters": {
+        "city": "Houston",
+        "region": "Texas",
+        "country": "United States",
+        "address": "1400 Smith Street, Houston, TX 77002",
+        "source_ids": [
+          "cvx_hq",
+          "cvx_sec_metadata"
+        ],
+        "geolocation": {
+          "type": "headquarters_business_address",
+          "latitude": 29.756019356854,
+          "longitude": -95.370834008035,
+          "matched_address": "1400 SMITH ST, HOUSTON, TX, 77002",
+          "query_address": "1400 Smith Street, Houston, TX 77002",
+          "source_ids": [
+            "cvx_geocode"
+          ],
+          "source_url": "https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=1400+Smith+Street%2C+Houston%2C+TX+77002&benchmark=Public_AR_Current&format=json",
+          "geocoder": "U.S. Census Geocoder",
+          "precision": "address_range_interpolated",
+          "confidence": "moderate",
+          "retrieved_at": "2026-11-11",
+          "attribution": "U.S. Census Bureau, MAF/TIGER address ranges",
+          "license": "U.S. government public data",
+          "note": "House number, street, city, state and ZIP match the verified issuer business address after abbreviation normalization. Coordinates are interpolated along the matching street address range, not surveyed or verified rooftop coordinates. No numeric positional accuracy is claimed."
+        }
+      },
+      "coverage": {
+        "executives": "All unique entries in the selected issuer executive leadership or corporate officers roster.",
+        "directors": "All unique entries in the selected issuer board roster.",
+        "limitations": [
+          "Publicly listed leadership is not a complete employee directory or a statement that every vice president or subsidiary officer is included.",
+          "Observed publication does not establish that an executive works at headquarters.",
+          "Roster is read from the public search index of the official issuer page because direct page fetch returned HTTP 403. Index may lag issuer changes. Treasurer was corroborated by dated issuer announcement; future elections are separate."
+        ],
+        "executive_count": 17,
+        "regional_executive_count": 0,
+        "director_count": 12,
+        "unique_people_count": 28
+      },
+      "people": [
+        {
+          "name": "Michael K. (Mike) Wirth",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Chairman of the Board and Chief Executive Officer",
+              "organization": "Chevron Corporation",
+              "source_ids": [
+                "cvx_roster"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            },
+            {
+              "category": "director",
+              "title": "Chairman of the Board",
+              "organization": "Chevron Corporation",
+              "source_ids": [
+                "cvx_roster"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Mark A. Nelson",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Vice Chairman and Executive Vice President, Oil, Products & Gas",
+              "organization": "Chevron Corporation",
+              "source_ids": [
+                "cvx_roster",
+                "cvx_2027_finance"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Eimear P. Bonner",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Chief Financial Officer",
+              "organization": "Chevron Corporation",
+              "source_ids": [
+                "cvx_roster"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "T. Ryder Booth",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Chief Technology and Engineering Officer",
+              "organization": "Chevron Corporation",
+              "source_ids": [
+                "cvx_roster"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Jeff B. Gustavson",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "President, New Energies",
+              "organization": "Chevron Corporation",
+              "source_ids": [
+                "cvx_roster",
+                "cvx_2027_finance"
+              ],
+              "role_start": "2021-08",
+              "role_start_precision": "month",
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "R. Hewitt Pate",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Chief Legal Officer",
+              "organization": "Chevron Corporation",
+              "source_ids": [
+                "cvx_roster"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Robert Clay Neff",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "President, Upstream",
+              "organization": "Chevron Corporation",
+              "source_ids": [
+                "cvx_roster"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Andy Walz",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "President, Downstream, Midstream & Chemicals",
+              "organization": "Chevron Corporation",
+              "source_ids": [
+                "cvx_roster"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Paul R. Antebi",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Chief Tax Officer and General Tax Counsel",
+              "organization": "Chevron Corporation",
+              "source_ids": [
+                "cvx_roster"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Danny Woodall",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Chief Health, Safety and Environment Officer",
+              "organization": "Chevron Corporation",
+              "source_ids": [
+                "cvx_roster"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Mary A. Francis",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Corporate Secretary and Chief Governance Officer",
+              "organization": "Chevron Corporation",
+              "source_ids": [
+                "cvx_roster",
+                "cvx_2027_secretary"
+              ],
+              "role_start": "2015",
+              "role_start_precision": "year",
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Michelle R. Green",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Chief Human Resources Officer",
+              "organization": "Chevron Corporation",
+              "source_ids": [
+                "cvx_roster"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Amit Ghai",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Controller",
+              "organization": "Chevron Corporation",
+              "source_ids": [
+                "cvx_roster"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Laura J. Lane",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Chief Corporate Affairs Officer",
+              "organization": "Chevron Corporation",
+              "source_ids": [
+                "cvx_roster"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Kevin Lyon",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Chief Strategy Officer",
+              "organization": "Chevron Corporation",
+              "source_ids": [
+                "cvx_roster"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Uriel Oseguera",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Treasurer",
+              "organization": "Chevron Corporation",
+              "source_ids": [
+                "cvx_roster",
+                "cvx_treasurer"
+              ],
+              "role_start": "2026-11-01",
+              "role_start_precision": "day",
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Jake R. Spiering",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "President, Corporate Business Development",
+              "organization": "Chevron Corporation",
+              "source_ids": [
+                "cvx_roster"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "D. James Umpleby III",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Lead Director",
+              "organization": "Chevron Corporation",
+              "source_ids": [
+                "cvx_roster",
+                "cvx_umpleby"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Wanda M. Austin",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "Chevron Corporation",
+              "source_ids": [
+                "cvx_roster"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "John B. Frank",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "Chevron Corporation",
+              "source_ids": [
+                "cvx_roster"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Enrique Hernandez, Jr.",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "Chevron Corporation",
+              "source_ids": [
+                "cvx_roster"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "John B. Hess",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "Chevron Corporation",
+              "source_ids": [
+                "cvx_roster"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Marillyn A. Hewson",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "Chevron Corporation",
+              "source_ids": [
+                "cvx_roster"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Thomas W. Horton",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "Chevron Corporation",
+              "source_ids": [
+                "cvx_roster"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Jon M. Huntsman Jr.",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "Chevron Corporation",
+              "source_ids": [
+                "cvx_roster"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Dambisa F. Moyo",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "Chevron Corporation",
+              "source_ids": [
+                "cvx_roster"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Debra Reed-Klages",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "Chevron Corporation",
+              "source_ids": [
+                "cvx_roster"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Cynthia J. Warner",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "Chevron Corporation",
+              "source_ids": [
+                "cvx_roster"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        }
+      ],
+      "scheduled_changes": [
+        {
+          "name": "Mark A. Nelson",
+          "title": "Vice Chairman, with responsibility for Strategy and Business Development; ceases Executive Vice President, Oil, Products & Gas",
+          "effective_at": "2027-01-01",
+          "source_ids": [
+            "cvx_2027_finance"
+          ]
+        },
+        {
+          "name": "Eimear P. Bonner",
+          "title": "President, Oil, Products & Gas; ceases Chief Financial Officer",
+          "effective_at": "2027-01-01",
+          "source_ids": [
+            "cvx_2027_finance"
+          ]
+        },
+        {
+          "name": "Jeff B. Gustavson",
+          "title": "Chief Financial Officer",
+          "effective_at": "2027-01-01",
+          "source_ids": [
+            "cvx_2027_finance"
+          ]
+        },
+        {
+          "name": "Siva Barnwell Adams",
+          "title": "Corporate Secretary and Chief Governance Officer",
+          "effective_at": "2027-01-01",
+          "source_ids": [
+            "cvx_2027_secretary"
+          ]
+        },
+        {
+          "name": "Mary A. Francis",
+          "title": "Senior Advisor to incoming Chief Legal Officer Scott A. Keller",
+          "effective_at": "2027-01-01",
+          "source_ids": [
+            "cvx_2027_secretary"
+          ]
+        }
+      ]
+    },
+    {
+      "ticker": "VZ",
+      "name": "Verizon Communications Inc.",
+      "cik": "0000732712",
+      "mic": "XNYS",
+      "exchange": "New York Stock Exchange",
+      "identity_source_ids": [
+        "vz_sec_metadata"
+      ],
+      "headquarters": {
+        "city": "New York",
+        "region": "New York",
+        "country": "United States",
+        "address": "1095 Avenue of the Americas, New York, NY 10036",
+        "source_ids": [
+          "vz_hq",
+          "vz_sec_metadata"
+        ],
+        "geolocation": {
+          "type": "headquarters_business_address",
+          "latitude": 40.754254727249,
+          "longitude": -73.984626291039,
+          "matched_address": "1095 AVE OF THE AMERICAS, NEW YORK, NY, 10036",
+          "query_address": "1095 Avenue of the Americas, New York, NY 10036",
+          "source_ids": [
+            "vz_geocode"
+          ],
+          "source_url": "https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=1095+Avenue+of+the+Americas%2C+New+York%2C+NY+10036&benchmark=Public_AR_Current&format=json",
+          "geocoder": "U.S. Census Geocoder",
+          "precision": "address_range_interpolated",
+          "confidence": "moderate",
+          "retrieved_at": "2026-11-11",
+          "attribution": "U.S. Census Bureau, MAF/TIGER address ranges",
+          "license": "U.S. government public data",
+          "note": "House number, street, city, state and ZIP match the verified issuer business address after abbreviation normalization. Coordinates are interpolated along the matching street address range, not surveyed or verified rooftop coordinates. No numeric positional accuracy is claimed."
+        }
+      },
+      "coverage": {
+        "executives": "All unique entries in the selected issuer executive leadership or corporate officers roster.",
+        "directors": "All unique entries in the selected issuer board roster.",
+        "limitations": [
+          "Publicly listed leadership is not a complete employee directory or a statement that every vice president or subsidiary officer is included.",
+          "Observed publication does not establish that an executive works at headquarters."
+        ],
+        "executive_count": 10,
+        "regional_executive_count": 0,
+        "director_count": 10,
+        "unique_people_count": 19
+      },
+      "people": [
+        {
+          "name": "Dan Schulman",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Chief Executive Officer",
+              "organization": "Verizon Communications Inc.",
+              "source_ids": [
+                "vz_exec",
+                "vz_dan"
+              ],
+              "role_start": "2025-10",
+              "role_start_precision": "month",
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            },
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "Verizon Communications Inc.",
+              "source_ids": [
+                "vz_board",
+                "vz_dan"
+              ],
+              "role_start": "2018",
+              "role_start_precision": "year",
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Kyle Malady",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Executive Vice President and CEO, Verizon Business Group",
+              "organization": "Verizon Communications Inc.",
+              "source_ids": [
+                "vz_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Alfonso Villanueva",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Executive Vice President and CEO, Verizon Consumer Group",
+              "organization": "Verizon Communications Inc.",
+              "source_ids": [
+                "vz_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Leslie Berland",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Executive Vice President and Chief Marketing Officer",
+              "organization": "Verizon Communications Inc.",
+              "source_ids": [
+                "vz_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Donna Epps",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Senior Vice President and Chief Responsible Business Officer",
+              "organization": "Verizon Communications Inc.",
+              "source_ids": [
+                "vz_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Franz Paasche",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Executive Vice President, Corporate Affairs",
+              "organization": "Verizon Communications Inc.",
+              "source_ids": [
+                "vz_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Joe Russo",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Executive Vice President and President of Global Networks and Technology",
+              "organization": "Verizon Communications Inc.",
+              "source_ids": [
+                "vz_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Christina Schelling",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Executive Vice President and Chief People Officer",
+              "organization": "Verizon Communications Inc.",
+              "source_ids": [
+                "vz_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Tony Skiadas",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Executive Vice President and Chief Financial Officer",
+              "organization": "Verizon Communications Inc.",
+              "source_ids": [
+                "vz_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Vandana Venkatesh",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Executive Vice President and Chief Legal Officer",
+              "organization": "Verizon Communications Inc.",
+              "source_ids": [
+                "vz_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Mark T. Bertolini",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Chair of the Board",
+              "organization": "Verizon Communications Inc.",
+              "source_ids": [
+                "vz_board"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Shellye L. Archambeau",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "Verizon Communications Inc.",
+              "source_ids": [
+                "vz_board"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Roxanne S. Austin",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "Verizon Communications Inc.",
+              "source_ids": [
+                "vz_board"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Vittorio Colao",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "Verizon Communications Inc.",
+              "source_ids": [
+                "vz_board"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Caroline Litchfield",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "Verizon Communications Inc.",
+              "source_ids": [
+                "vz_board"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Jennifer Mann",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "Verizon Communications Inc.",
+              "source_ids": [
+                "vz_board"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Laxman Narasimhan",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "Verizon Communications Inc.",
+              "source_ids": [
+                "vz_board"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Charles Phillips",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "Verizon Communications Inc.",
+              "source_ids": [
+                "vz_board"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Carol B. Tomé",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "Verizon Communications Inc.",
+              "source_ids": [
+                "vz_board"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "ticker": "AEP",
+      "name": "American Electric Power Company, Inc.",
+      "cik": "0000004904",
+      "mic": "XNAS",
+      "exchange": "Nasdaq",
+      "identity_source_ids": [
+        "aep_sec_metadata"
+      ],
+      "headquarters": {
+        "city": "Columbus",
+        "region": "Ohio",
+        "country": "United States",
+        "address": "1 Riverside Plaza, Columbus, OH 43215",
+        "source_ids": [
+          "aep_hq",
+          "aep_sec_metadata"
+        ],
+        "geolocation": {
+          "type": "headquarters_business_address",
+          "latitude": 39.9650746,
+          "longitude": -83.0054418,
+          "matched_address": "American Electric Power, 1, Riverside Plaza, Civic Center, Downtown, Columbus, Franklin County, Ohio, 43215, United States",
+          "query_address": "American Electric Power, 1 Riverside Plaza, Columbus, Ohio",
+          "source_ids": [
+            "aep_geocode"
+          ],
+          "source_url": "https://nominatim.openstreetmap.org/search?q=American+Electric+Power%2C+1+Riverside+Plaza%2C+Columbus%2C+Ohio&format=jsonv2&addressdetails=1&limit=3",
+          "geocoder": "OpenStreetMap Nominatim",
+          "precision": "mapped_office_building",
+          "confidence": "high_address_match",
+          "retrieved_at": "2026-11-11",
+          "attribution": "© OpenStreetMap contributors",
+          "license": "ODbL-1.0",
+          "license_url": "https://www.openstreetmap.org/copyright",
+          "osm_type": "way",
+          "osm_id": 374899040,
+          "osm_url": "https://www.openstreetmap.org/way/374899040",
+          "note": "Mapped office building named American Electric Power with matching house number, street, city, state and ZIP. Point represents the mapped building, not a surveyed entrance or an executive location. High confidence refers to address/entity matching, not numeric positional accuracy."
+        }
+      },
+      "coverage": {
+        "executives": "All 14 entries under Executive Leadership and all 7 Regional Presidents on the issuer page; regional roles retain subsidiary organization.",
+        "directors": "All unique entries in the selected issuer board roster.",
+        "limitations": [
+          "Publicly listed leadership is not a complete employee directory or a statement that every vice president or subsidiary officer is included.",
+          "Observed publication does not establish that an executive works at headquarters."
+        ],
+        "executive_count": 14,
+        "regional_executive_count": 7,
+        "director_count": 12,
+        "unique_people_count": 32
+      },
+      "people": [
+        {
+          "name": "William J. Fehrman",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Chairman of the Board of Directors, President and Chief Executive Officer",
+              "organization": "American Electric Power Company, Inc.",
+              "source_ids": [
+                "aep_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            },
+            {
+              "category": "director",
+              "title": "Chairman of the Board",
+              "organization": "American Electric Power Company, Inc.",
+              "source_ids": [
+                "aep_board"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed",
+              "board_service_start": "2024",
+              "board_service_start_precision": "year"
+            }
+          ]
+        },
+        {
+          "name": "Rob Berntsen",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Executive Vice President and General Counsel",
+              "organization": "American Electric Power Company, Inc.",
+              "source_ids": [
+                "aep_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Doug Cannon",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "President, AEP Transmission",
+              "organization": "American Electric Power Company, Inc.",
+              "source_ids": [
+                "aep_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Johannes Eckert",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Executive Vice President and Chief Information & Technology Officer",
+              "organization": "American Electric Power Company, Inc.",
+              "source_ids": [
+                "aep_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Kelly Ferneau",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Executive Vice President and Chief Nuclear Officer",
+              "organization": "American Electric Power Company, Inc.",
+              "source_ids": [
+                "aep_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Greg Hall",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "President, AEP Infrastructure",
+              "organization": "American Electric Power Company, Inc.",
+              "source_ids": [
+                "aep_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Shane Lies",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "President, Nuclear Development",
+              "organization": "American Electric Power Company, Inc.",
+              "source_ids": [
+                "aep_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Trevor I. Mihalik",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Executive Vice President and Chief Financial Officer",
+              "organization": "American Electric Power Company, Inc.",
+              "source_ids": [
+                "aep_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Joseph F. Moore",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Executive Vice President, Operational Excellence",
+              "organization": "American Electric Power Company, Inc.",
+              "source_ids": [
+                "aep_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Phil Ulrich",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Executive Vice President and Chief Human Resources Officer",
+              "organization": "American Electric Power Company, Inc.",
+              "source_ids": [
+                "aep_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Kate Dixon",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Senior Vice President, Controller and Chief Accounting Officer",
+              "organization": "American Electric Power Company, Inc.",
+              "source_ids": [
+                "aep_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Emily Duncan",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Senior Vice President, Federal Affairs",
+              "organization": "American Electric Power Company, Inc.",
+              "source_ids": [
+                "aep_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Matthew Fransen",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Senior Vice President and Treasurer",
+              "organization": "American Electric Power Company, Inc.",
+              "source_ids": [
+                "aep_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Puesh Kumar",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Senior Vice President, Enterprise Security, Resilience and National Security Policy",
+              "organization": "American Electric Power Company, Inc.",
+              "source_ids": [
+                "aep_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Marc Reitter",
+          "roles": [
+            {
+              "category": "regional_executive",
+              "title": "President and Chief Operating Officer",
+              "organization": "Ohio Power Company",
+              "source_ids": [
+                "aep_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Adrian Rodriguez",
+          "roles": [
+            {
+              "category": "regional_executive",
+              "title": "President and Chief Operating Officer",
+              "organization": "AEP Texas",
+              "source_ids": [
+                "aep_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Brian Abraham",
+          "roles": [
+            {
+              "category": "regional_executive",
+              "title": "President and Chief Operating Officer",
+              "organization": "Appalachian Power",
+              "source_ids": [
+                "aep_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Maryam Brown",
+          "roles": [
+            {
+              "category": "regional_executive",
+              "title": "President and Chief Operating Officer",
+              "organization": "Indiana Michigan Power",
+              "source_ids": [
+                "aep_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Cindy Wiseman",
+          "roles": [
+            {
+              "category": "regional_executive",
+              "title": "President and Chief Operating Officer",
+              "organization": "Kentucky Power",
+              "source_ids": [
+                "aep_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Leigh Anne Strahler",
+          "roles": [
+            {
+              "category": "regional_executive",
+              "title": "President and Chief Operating Officer",
+              "organization": "Public Service Company of Oklahoma",
+              "source_ids": [
+                "aep_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Brett Mattison",
+          "roles": [
+            {
+              "category": "regional_executive",
+              "title": "President and Chief Operating Officer",
+              "organization": "Southwestern Electric Power Company",
+              "source_ids": [
+                "aep_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Sara Martinez Tucker",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Lead Director",
+              "organization": "American Electric Power Company, Inc.",
+              "source_ids": [
+                "aep_board"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed",
+              "board_service_start": "2009",
+              "board_service_start_precision": "year"
+            }
+          ]
+        },
+        {
+          "name": "Benjamin Fowke, III",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "American Electric Power Company, Inc.",
+              "source_ids": [
+                "aep_board"
+              ],
+              "role_start": "2022",
+              "role_start_precision": "year",
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Art Garcia",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "American Electric Power Company, Inc.",
+              "source_ids": [
+                "aep_board"
+              ],
+              "role_start": "2019",
+              "role_start_precision": "year",
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Sandra Beach Lin",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "American Electric Power Company, Inc.",
+              "source_ids": [
+                "aep_board"
+              ],
+              "role_start": "2012",
+              "role_start_precision": "year",
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "David S. Marriott",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "American Electric Power Company, Inc.",
+              "source_ids": [
+                "aep_board",
+                "aep_new_directors"
+              ],
+              "role_start": "2026-07-20",
+              "role_start_precision": "day",
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Margaret McCarthy",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "American Electric Power Company, Inc.",
+              "source_ids": [
+                "aep_board"
+              ],
+              "role_start": "2019",
+              "role_start_precision": "year",
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Charles J. Meyers",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "American Electric Power Company, Inc.",
+              "source_ids": [
+                "aep_board",
+                "aep_new_directors"
+              ],
+              "role_start": "2026-07-20",
+              "role_start_precision": "day",
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Joseph G. Sauvage",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "American Electric Power Company, Inc.",
+              "source_ids": [
+                "aep_board"
+              ],
+              "role_start": "2025",
+              "role_start_precision": "year",
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Daryl Roberts",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "American Electric Power Company, Inc.",
+              "source_ids": [
+                "aep_board"
+              ],
+              "role_start": "2020",
+              "role_start_precision": "year",
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Dan Stoddard",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "American Electric Power Company, Inc.",
+              "source_ids": [
+                "aep_board"
+              ],
+              "role_start": "2023",
+              "role_start_precision": "year",
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Lewis \"Lou\" Von Thaer",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "American Electric Power Company, Inc.",
+              "source_ids": [
+                "aep_board"
+              ],
+              "role_start": "2022",
+              "role_start_precision": "year",
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "ticker": "T",
+      "name": "AT&T Inc.",
+      "cik": "0000732717",
+      "mic": "XNYS",
+      "exchange": "New York Stock Exchange",
+      "identity_source_ids": [
+        "t_sec_metadata",
+        "t_10k"
+      ],
+      "headquarters": {
+        "city": "Dallas",
+        "region": "Texas",
+        "country": "United States",
+        "address": "208 S. Akard St., Dallas, TX 75202",
+        "source_ids": [
+          "t_hq",
+          "t_sec_metadata"
+        ],
+        "geolocation": {
+          "type": "headquarters_business_address",
+          "latitude": 32.779734866159,
+          "longitude": -96.799211261405,
+          "matched_address": "208 S AKARD ST, DALLAS, TX, 75202",
+          "query_address": "208 S Akard St, Dallas, TX 75202",
+          "source_ids": [
+            "t_geocode"
+          ],
+          "source_url": "https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=208+S+Akard+St%2C+Dallas%2C+TX+75202&benchmark=Public_AR_Current&format=json",
+          "geocoder": "U.S. Census Geocoder",
+          "precision": "address_range_interpolated",
+          "confidence": "moderate",
+          "retrieved_at": "2026-11-11",
+          "attribution": "U.S. Census Bureau, MAF/TIGER address ranges",
+          "license": "U.S. government public data",
+          "note": "House number, street, city, state and ZIP match the verified issuer business address after abbreviation normalization. Coordinates are interpolated along the matching street address range, not surveyed or verified rooftop coordinates. No numeric positional accuracy is claimed."
+        }
+      },
+      "coverage": {
+        "executives": "All unique entries in the selected issuer executive leadership or corporate officers roster.",
+        "directors": "All unique entries in the selected issuer board roster.",
+        "limitations": [
+          "Publicly listed leadership is not a complete employee directory or a statement that every vice president or subsidiary officer is included.",
+          "Observed publication does not establish that an executive works at headquarters.",
+          "Issuer HTML repeats the leadership/board sections and has stale image alt text attached to some new names. Only visible textual name/title entries were imported, with duplicates removed; image alt text was not used as identity evidence."
+        ],
+        "executive_count": 9,
+        "regional_executive_count": 0,
+        "director_count": 11,
+        "unique_people_count": 19
+      },
+      "people": [
+        {
+          "name": "John Stankey",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Chairman and Chief Executive Officer",
+              "organization": "AT&T Inc.",
+              "source_ids": [
+                "t_exec"
+              ],
+              "role_start": "2025-02",
+              "role_start_precision": "month",
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            },
+            {
+              "category": "director",
+              "title": "Chairman of the Board",
+              "organization": "AT&T Inc.",
+              "source_ids": [
+                "t_board"
+              ],
+              "role_start": "2025-02",
+              "role_start_precision": "month",
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Pascal Desroches",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Senior Executive Vice President and Chief Financial Officer",
+              "organization": "AT&T Inc.",
+              "source_ids": [
+                "t_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Ed Gillespie",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Senior Executive Vice President, External and Legislative Affairs",
+              "organization": "AT&T Services, Inc.",
+              "source_ids": [
+                "t_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Darcie Henry",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Chief Human Resources Officer",
+              "organization": "AT&T Inc.",
+              "source_ids": [
+                "t_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Kellyn Smith Kenny",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Chief Marketing & Growth Officer",
+              "organization": "AT&T Inc.",
+              "source_ids": [
+                "t_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Lori Lee",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Global Marketing Officer and Senior Executive Vice President, International",
+              "organization": "AT&T Inc.",
+              "source_ids": [
+                "t_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Jeremy Legg",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Chief Technology Officer",
+              "organization": "AT&T Services, Inc.",
+              "source_ids": [
+                "t_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "David R. McAtee II",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Senior Executive Vice President and General Counsel",
+              "organization": "AT&T Inc.",
+              "source_ids": [
+                "t_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Jeff McElfresh",
+          "roles": [
+            {
+              "category": "executive",
+              "title": "Chief Operating Officer",
+              "organization": "AT&T Inc.",
+              "source_ids": [
+                "t_exec"
+              ],
+              "role_start": null,
+              "role_start_precision": null,
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "William E. Kennard",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Independent Lead Director",
+              "organization": "AT&T Inc.",
+              "source_ids": [
+                "t_board"
+              ],
+              "role_start": "2025-02",
+              "role_start_precision": "month",
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Kelly J. Grier",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "AT&T Inc.",
+              "source_ids": [
+                "t_board"
+              ],
+              "role_start": "2025",
+              "role_start_precision": "year",
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Stephen J. Luczo",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "AT&T Inc.",
+              "source_ids": [
+                "t_board"
+              ],
+              "role_start": "2019",
+              "role_start_precision": "year",
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Marissa A. Mayer",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "AT&T Inc.",
+              "source_ids": [
+                "t_board"
+              ],
+              "role_start": "2024-03",
+              "role_start_precision": "month",
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Michael B. McCallister",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "AT&T Inc.",
+              "source_ids": [
+                "t_board"
+              ],
+              "role_start": "2013",
+              "role_start_precision": "year",
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Fazal F. Merchant",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "AT&T Inc.",
+              "source_ids": [
+                "t_board"
+              ],
+              "role_start": "2026",
+              "role_start_precision": "year",
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Beth E. Mooney",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "AT&T Inc.",
+              "source_ids": [
+                "t_board"
+              ],
+              "role_start": "2013",
+              "role_start_precision": "year",
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Matthew K. Rose",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "AT&T Inc.",
+              "source_ids": [
+                "t_board"
+              ],
+              "role_start": "2010",
+              "role_start_precision": "year",
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Cynthia B. Taylor",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "AT&T Inc.",
+              "source_ids": [
+                "t_board"
+              ],
+              "role_start": "2013",
+              "role_start_precision": "year",
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        },
+        {
+          "name": "Luis A. Ubiñas",
+          "roles": [
+            {
+              "category": "director",
+              "title": "Director",
+              "organization": "AT&T Inc.",
+              "source_ids": [
+                "t_board"
+              ],
+              "role_start": "2021-06",
+              "role_start_precision": "month",
+              "role_end": null,
+              "observed_at": "2026-11-11",
+              "verification": "issuer_roster_observed"
+            }
+          ]
+        }
+      ],
+      "listing_note": "XNYS is the primary common-share listing. The 2025 Form 10-K also lists common shares on NYSE Texas; this dataset does not assert exclusive listing."
+    }
+  ],
+  "licensing_audit": [
+    {
+      "dataset": "SEC EDGAR public filings and company metadata",
+      "paid_license_required": false,
+      "source_urls": [
+        "https://www.sec.gov/about/webmaster-frequently-asked-questions",
+        "https://www.sec.gov/search-filings/edgar-application-programming-interfaces",
+        "https://www.sec.gov/search-filings/edgar-search-assistance/accessing-edgar-data"
+      ],
+      "retrieved_at": "2026-11-11",
+      "finding": "SEC states its government-created content and EDGAR public filing content are free to access and reuse. The public data APIs require no API key. Submissions metadata and financial XBRL are structured, but no complete current executive/director roster API was established. DEF 14A, 10-K and subsequent 8-K role changes require extraction and reconciliation. Follow SEC fair-access limits; do not copy unrelated stock photography."
+    },
+    {
+      "dataset": "Wikidata structured data",
+      "paid_license_required": false,
+      "license": "CC0-1.0",
+      "source_urls": [
+        "https://www.wikidata.org/wiki/Wikidata:Licensing",
+        "https://www.wikidata.org/wiki/Wikidata:For_developers"
+      ],
+      "retrieved_at": "2026-11-11",
+      "finding": "An openly reusable knowledge base exists and can augment names, entity identifiers and coordinates. Completeness and currentness of all executive/director memberships were not established. Official issuer or SEC evidence should verify roles. Wikidata prose/media licenses differ from structured facts."
+    },
+    {
+      "dataset": "Official issuer leadership pages",
+      "paid_license_required": false,
+      "license": "No general open license established for page text or media",
+      "source_urls": [
+        "https://www.amd.com/en/corporate/leadership.html",
+        "https://ir.amd.com/governance/board-of-directors",
+        "https://www.chevron.com/who-we-are/leadership",
+        "https://www.verizon.com/about/our-company/executive-bios",
+        "https://www.verizon.com/about/investors/board-directors",
+        "https://www.aep.com/about/leadership/",
+        "https://www.aep.com/investors/governance/board/",
+        "https://investors.att.com/corporate-governance/leadership",
+        "https://investors.att.com/corporate-governance/board-of-directors"
+      ],
+      "retrieved_at": "2026-11-11",
+      "finding": "This deliverable transcribes minimal public name/title facts with source links, not biographies, photos or page designs. A paid roster vendor is not necessary for this five-issuer reference dataset. This is not a determination that every third-party database can be bulk imported or commercially redistributed."
+    },
+    {
+      "dataset": "U.S. Census Geocoder",
+      "paid_license_required": false,
+      "source_urls": [
+        "https://www.census.gov/programs-surveys/geography/technical-documentation/complete-technical-documentation/census-geocoder.html"
+      ],
+      "retrieved_at": "2026-11-11",
+      "finding": "Public address-range geocoder; coordinates are explicitly interpolated or approximated. No API key or payment was needed. Matching the address does not establish exact building/entrance coordinates."
+    },
+    {
+      "dataset": "OpenStreetMap / Nominatim",
+      "paid_license_required": false,
+      "license": "ODbL-1.0",
+      "source_urls": [
+        "https://www.openstreetmap.org/copyright",
+        "https://operations.osmfoundation.org/policies/nominatim/"
+      ],
+      "retrieved_at": "2026-11-11",
+      "finding": "AEP matched a named mapped office building. Preserve attribution to OpenStreetMap contributors and ODbL notice. Public Nominatim requires an identifying User-Agent, at most one request per second, cached results and no generic automated geocoding service integration without deliberate developer choice. ODbL share-alike obligations may apply to distributed derived databases."
+    }
+  ],
+  "mic_standard": {
+    "source_url": "https://www.iso20022.org/sites/default/files/documents/D7/ISO15022_Data_Source_Schemes.pdf",
+    "retrieved_at": "2026-11-11",
+    "mapping": {
+      "XNAS": "Nasdaq",
+      "XNYS": "New York Stock Exchange"
+    },
+    "note": "MICs normalize issuer exchange names; they are not a claim of exclusive listing."
+  },
+  "limitations": [
+    "Research is scoped to AMD, CVX, VZ, AEP and T. No complete-market import or paid vendor used.",
+    "Retrieved date is observation date, not page publication/as-of date. Undated rosters keep publication and as_of null.",
+    "No biographies, photographs, birth dates, personal contact data, homes, travel, or personal coordinates are included.",
+    "Roles are those explicitly listed publicly. Do not infer employment location from an issuer affiliation.",
+    "Future announced changes are separate and must not replace observed roles before their effective dates.",
+    "Pins are verified public company business addresses. AMD, CVX, VZ and T coordinates are address-range interpolation, not rooftop precision. AEP is an OpenStreetMap mapped office-building point. Never label any pin as an executive location.",
+    "OpenStreetMap-derived AEP coordinates require OpenStreetMap attribution and ODbL notice; preserve the source URL and license. Results were cached from a small, one-time, rate-limited lookup. Do not build the public Nominatim endpoint into a generic in-app geocoding service."
+  ]
+}

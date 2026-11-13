@@ -1430,19 +1430,19 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>(!process.env.EDIT
   } finally { await ctx.close(); }
 }
 
-/* ALL THREE FOR THE HOUSE OWNER (owner, 2026-10-20: "keep the social feed on and then develop those other projects in the
+/* OWNER WORLD MODES (owner, 2026-10-20: "keep the social feed on and then develop those other projects in the
    back end. Probably keep all three on admin"). The page as it ships; the server says this member is the house owner. */
 if (runs('editorial')) for (const device of DEVICES.filter(d=>(!process.env.EDITORIAL_DEVICE&&d.name==='iphone-portrait')||d.name===process.env.EDITORIAL_DEVICE)) {
   const scope = `editorial-owner-${device.name}`;
   const {ctx,page,world,errors} = await open(device,{member:true,social:true,owner:true});
   try {
-    /* the first time on this browser, the owner's answer opens the World again, once, with all three */
+    /* the first time on this browser, the owner's answer opens the World again, once, with the owner modes */
     await page.waitForFunction(()=>!document.documentElement.classList.contains('hu-social-only')&&document.documentElement.hasAttribute('data-world-owner'),null,{timeout:20000}).catch(()=>{});
     await page.waitForSelector('.wt-world-modes button',{state:'visible',timeout:15000}).catch(()=>{});
     const shell=await page.evaluate(()=>({modes:[...document.querySelectorAll('.wt-world-modes button')].filter(b=>b.getClientRects().length).map(b=>b.dataset.worldMode),
       mode:document.documentElement.dataset.worldMode,memo:JSON.parse(localStorage.getItem('mcc_world_owner')||'null'),reloaded:performance.getEntriesByType('navigation')[0].type,
       expand:document.querySelector('.mn__world-expand').getAttribute('href')}));
-    check(scope,'the owner\'s World has Travel, Missions, Feed and E=UP, and opens on the Feed',JSON.stringify(shell.modes)===JSON.stringify(['travel','missions','posts','environment'])&&shell.mode==='posts',shell);
+    check(scope,'the owner\'s World has Travel, Missions, Feed, E=UP and Finance, and opens on the Feed',JSON.stringify(shell.modes)===JSON.stringify(['travel','missions','posts','environment','finance'])&&shell.mode==='posts',shell);
     check(scope,'the server\'s yes is remembered for this account; the World opened again once to show it',!!shell.memo&&/^aaaaaaaa/.test(shell.memo.sub)&&shell.reloaded==='reload',shell);
     check(scope,'the expanded globe shows the missions too',!/missions=0/.test(shell.expand),shell.expand);
     const globe=page.frame({url:/action-globe\.html/});
@@ -1453,12 +1453,12 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>(!process.env.EDIT
     check(scope,'Missions opens for the owner',await page.evaluate(()=>document.documentElement.dataset.worldMode==='missions'&&!!document.querySelector('.mn-swipe__card')));
     await page.click('.wt-world-modes [data-world-mode=travel]');
     check(scope,'Travel opens for the owner',await page.evaluate(()=>document.documentElement.dataset.worldMode==='travel'));
-    /* the next World opens with all three straight away: no second opening */
+    /* the next World opens with the owner modes straight away: no second opening */
     await page.goto(BASE+'/mnet.html',{waitUntil:'domcontentloaded'});
     const early=await page.evaluate(()=>({social:document.documentElement.classList.contains('hu-social-only'),type:performance.getEntriesByType('navigation')[0].type}));
     await page.waitForTimeout(2500);
     const after=await page.evaluate(()=>performance.getEntriesByType('navigation')[0].type);
-    check(scope,'the next visit opens with all three from the first paint, without opening again',!early.social&&early.type==='navigate'&&after==='navigate',{early,after});
+    check(scope,'the next visit opens with the owner modes from the first paint, without opening again',!early.social&&early.type==='navigate'&&after==='navigate',{early,after});
     /* signed out, the World is the social feed again */
     await page.evaluate(()=>localStorage.removeItem('mccdb_session'));
     await page.goto(BASE+'/mnet.html',{waitUntil:'domcontentloaded'});
