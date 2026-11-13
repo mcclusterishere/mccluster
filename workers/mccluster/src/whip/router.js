@@ -23,7 +23,7 @@ async function requireUser(req,env){const user=await userFromRequest(req,env);if
 // Operator membership grants scope; the role independently grants actions.
 // A viewer/dispatcher/finance member must not modify brand or vehicle pricing.
 const OPERATOR_READ_ROLES=['owner','admin','dispatcher','finance','viewer'];
-async function requireOperator(req,env,tenantId,roles=['owner','admin']){
+export async function requireOperator(req,env,tenantId,roles=['owner','admin']){
   const user=await requireUser(req,env);
   const rows=await sb(env,`operator_members?tenant_id=eq.${encodeURIComponent(tenantId)}&auth_user_id=eq.${encodeURIComponent(user.id)}&select=role,tenant_id,auth_user_id&limit=1`);
   const membership=rows?.[0];

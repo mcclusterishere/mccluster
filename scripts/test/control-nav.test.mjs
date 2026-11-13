@@ -82,7 +82,7 @@ test('every renderer a leaf names exists in the Control shell',async()=>{
 
 test('the in-flight PRs only have to register a renderer',()=>{
   const slots=Object.fromEntries(N.leaves().filter(l=>l.leaf.module).map(l=>[l.leaf.route,l.leaf.module]));
-  assert.deepEqual(slots,{'#sell:store:marketplace':'marketplace','#sell:store:direct':'musicDirect','#sell:music:lyrics':'lyrics','#create:level-forge':'prim3Levels','#sell:music:artists':'musicLabel','#system:eup':'eup'});
+  assert.deepEqual(slots,{'#sell:store:marketplace':'marketplace','#sell:store:direct':'musicDirect','#sell:music:lyrics':'lyrics','#create:level-forge':'prim3Levels','#sell:music:artists':'musicLabel','#system:eup':'eup','#system:rentals':'rentals'});
 });
 
 test('E=Up is an owner door under System: #products:eup and its old names land on #system:eup',()=>{

@@ -4,7 +4,7 @@ import { handleEup, EUP_PREFIX } from './eup/router.js';
 import { guardWorldRelease } from './world-release.js';
 import { handleFundingIntelligence, FUNDING_PREFIX } from './funding-intelligence.js';
 import { allowedOrigins, applyCors, corsHeaders, fail, logEvent, reply } from './lib/http.js';
-import whip from './whip/booking-gate.js';
+import whip from './whip/rental-preparation.js';
 import {handleAtNight} from './at-night.js';
 import prim3 from './prim3/index.js';
 import { handlePrim3Levels, PRIM3_LEVELS_PREFIX } from './prim3/levels.js';

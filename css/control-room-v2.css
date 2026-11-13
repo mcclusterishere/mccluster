@@ -492,3 +492,10 @@ body.cr.has-appbar .cr-more__box{padding-bottom:calc(var(--appbar-h,64px) + 2.2r
   .cr-order__meta{display:none}
   .cr-order__state{justify-self:start}
 }
+
+/* Rental preparation follows the existing Control panel system. */
+[data-rental-admin] { overflow-wrap:anywhere; min-width:0; }
+[data-rental-admin] :is(input,select,button) { max-width:100%; min-height:44px; font-size:max(16px,1em); }
+.cr-rental-fields { display:grid; gap:12px; grid-template-columns:minmax(0,1fr); margin-block:16px; }
+.cr-rental-fields label { display:grid; gap:6px; min-width:0; }
+@media(min-width:820px) { .cr-rental-fields { grid-template-columns:repeat(2,minmax(0,1fr)); } }

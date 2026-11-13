@@ -1,4 +1,13 @@
 (() => {
+  // Launch review is a source boundary, not a query-string or local-storage flag.
+  // Preserve the legacy renter workflow below for a separate reviewed release.
+  document.querySelector('#splash')?.remove();
+  document.querySelectorAll('.bottom-nav,.sticky-price,.operator-drawer').forEach(el=>el.remove());
+  document.querySelectorAll('.app-header button').forEach(el=>{el.disabled=true;});
+  const main=document.querySelector('main');
+  main.innerHTML='<section style="padding:24px;overflow-wrap:anywhere"><h1>Self-drive rentals are in preparation</h1><p>No verified vehicles are published. No reservation, payment or vehicle pickup is available here.</p><p>Whip Equipped LLC is a separate company. Owner consent, title, rental insurance, availability, renter clearance and payment fulfillment must be verified before launch.</p><p><a href="https://mccluster.org/">Explore the World</a></p><p><a href="https://matthew.mccluster.org/control.html#system:rentals">Owner fleet and booking records in Control</a></p><p>Vehicle buying and seller accounts are planned. Square vehicle checkout is not connected; card payment is not financing.</p></section>';
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  return;
   const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
   const OFFICIAL={name:'Whip Equipped',accent:'#F04449',accent2:'#F6AD62'};
   const params=new URLSearchParams(location.search),apiBase='https://api.mccluster.org';
