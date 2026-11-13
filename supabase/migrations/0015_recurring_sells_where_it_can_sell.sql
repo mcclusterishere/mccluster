@@ -1,4 +1,0 @@
--- REPLAY_ANCHOR_ONLY
--- Production ledger anchor for 0015_recurring_sells_where_it_can_sell.
--- Executable reconstruction SQL: supabase/replay_migrations/0015_recurring_sells_where_it_can_sell.sql
--- Intentionally no-op in production; this version is already registered live.

@@ -1,4 +1,0 @@
--- REPLAY_ANCHOR_ONLY
--- Production ledger anchor for 0012_management_upgrade_offerings.
--- Executable reconstruction SQL: supabase/replay_migrations/0012_management_upgrade_offerings.sql
--- Intentionally no-op in production; this version is already registered live.
