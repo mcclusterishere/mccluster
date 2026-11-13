@@ -438,3 +438,6 @@ body:has(.wt-suggest:not([hidden])) #mccWorldAudioControls {
 /* THE WORLD IS THE SOCIAL FEED (owner, 2026-10-20): Travel and Missions are off (hu-social-only on <html>, mnet.html), so
    their mode buttons stay hidden. Environmental Justice has its own scoped public mode (2026-11-07). */
 .hu-social-only :is([data-mn-view="missions"],#mnProfileRecord,#mnClipDoor,#mnFeedMissions,.mn__actionboard,.mn__understand) { display:none!important; }
+
+.wt-market { grid-column:1/-1; min-width:0; overflow-wrap:anywhere; }
+.wt-market summary { min-height:44px; cursor:pointer; padding-block:10px; }

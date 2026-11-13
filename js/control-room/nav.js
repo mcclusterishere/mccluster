@@ -136,6 +136,7 @@
       v("workload", "Workload", "system.workload", ["#system:workload", "System · Workload", "jobs", "agents", "runs", "queues", "failures", "core"]),
       v("observability", "Activity & errors", "system.observability", ["#system:observability", "System · Observability", "logs", "traces", "incidents"]),
       v("resources", "Resources", "system.resources", ["#system:resources", "System · Resources", "providers", "usage", "spend", "api", "integrations", "ai costs"]),
+      v("rentals", "Vehicle market", "slot", ["#products:rentals", "Whip rentals", "fleet", "self-drive", "vehicle marketplace"], { module: "rentals" }),
       v("apps", "Apps", "apps", ["#apps", "Apps", "whip", "prim3", "manufacture", "specialized workspaces"]),
       v("build", "Build", "create.build", ["#create:build", "Create · Build", "build code", "code", "draft pull request"]),
       v("uprise", "Equity Uprise ops", null, [], { views: [

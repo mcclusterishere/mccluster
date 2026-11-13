@@ -1,3 +1,4 @@
+import { vehicleMarketMarkup } from './vehicle-market.mjs';
 import { normalizeJourney, journeyTitle, itinerary, legAction, searchCities } from './journey-core.mjs';
 import { createAddressSearch } from './address-search.mjs';
 import { journeyStore } from './journey-store.mjs';
@@ -112,9 +113,10 @@ panel.innerHTML = `
       <div class="wt-kind"><button type="button" class="wt-kind-head" data-travel-chip="flights" aria-pressed="false">${icon('flight')}<span>Flights</span></button>
         <div class="wt-switch" role="group" aria-label="Flights"><button type="button" data-travel-sub="commercial" aria-pressed="true">Commercial</button><button type="button" data-travel-sub="private" aria-pressed="false">Private</button></div></div>
     </div>
+    <button type="button" class="wt-text-button" id="wtMarketOpen" aria-expanded="false" aria-controls="wtRentals">Vehicle market · Rent &amp; buy</button>
     <section id="wtRentals" class="wt-rentals" aria-labelledby="wtRentalsTitle" hidden>
-      <div class="wt-rentals-head"><h3 id="wtRentalsTitle" class="wt-section-h">Rent a car</h3><a href="https://matthew.mccluster.org/whip/rentals/" target="_blank" rel="noopener">See all ›</a></div>
-      <p class="wt-rentals-by">From Whip Equipped LLC, a separate company. Booking and payment happen in Whip Equipped's rentals app.</p>
+      <div class="wt-rentals-head"><h3 id="wtRentalsTitle" class="wt-section-h">Vehicle market</h3></div>
+      <p class="wt-rentals-by">From Whip Equipped LLC, a separate company. Self-drive rentals and vehicle purchases are separate from the cab demo.</p>
       <div class="wt-cars" id="wtCars"></div>
     </section>
     <section id="wtPrivate" class="wt-private" aria-labelledby="wtPrivateTitle" hidden>
@@ -141,7 +143,7 @@ panel.innerHTML = `
   <p class="wt-attribution">Address search: <a href="https://photon.komoot.io/" target="_blank" rel="noopener noreferrer">Photon</a> · <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap contributors</a> · <a href="https://www.openstreetmap.org/fixthemap" target="_blank" rel="noopener noreferrer">Fix the map</a> · <a href="mailto:matthew@mccluster.org">Contact</a></p><p class="wt-message" id="wtMessage" role="status" aria-live="polite"></p>`;
 
 // Presentation gate only: keep future engines, saved journeys and markup intact.
-if (DRIVING_PREVIEW) for (const element of panel.querySelectorAll('.wt-kinds, .wt-plan, #wtOptions, #wtRentals, #wtPrivate, [data-travel-kind]:not([data-travel-kind="drive"]), [data-travel-go="hotels"], #wtUber, #wtRideHint')) {
+if (DRIVING_PREVIEW) for (const element of panel.querySelectorAll('.wt-kinds, .wt-plan, #wtOptions, #wtPrivate, [data-travel-kind]:not([data-travel-kind="drive"]), [data-travel-go="hotels"], #wtUber, #wtRideHint')) {
   element.hidden = true; element.inert = true; element.style.setProperty('display', 'none', 'important');
 }
 
@@ -793,23 +795,20 @@ function editField(key) {
   const ids = { from:'wtFrom', departureHub:'wtDepartureHub', arrivalHub:'wtArrivalHub', stay:'wtStay' };
   if (key !== 'from') { $('wtOptions').open = true; $('wtDetails').open = true; } $(ids[key] || 'wtFrom').focus();
 }
-/* RENTALS (owner, 2026-10-20: "it's meant to be a rental travel app"): cars for rent from Whip Equipped LLC, Matthew's
-   separate company. Isabeata is a fictional make and the Isabeata 2024 the cheapest car on the marketplace, at the owner's
-   price of $350 a week. Reserve continues in Whip Equipped's own rentals app, which takes the booking and the payment. */
-const RENTAL_CARS = [{ id:'we-rental-isabeata-2024', name:'Isabeata 2024', kind:'Economy', seats:5, weekly:350, color:'#c9ced4' }];
-const carArt = color => `<svg class="wt-car-svg" viewBox="0 0 120 50" aria-hidden="true"><path d="M8 35c0-5 4-8 12-9l17-10c4-2 9-3 15-3h21c6 0 10 2 14 6l8 7c9 1 15 4 17 8v3c0 2-2 3-4 3H12c-3 0-4-2-4-5z" fill="${color}"/><path d="M41 18l11-3h17v10H35zM72 15h7c3 0 6 2 9 5l3 5H72z" fill="#0f1a24" opacity=".75"/><circle cx="31" cy="39" r="8.5" fill="#0b0d10"/><circle cx="31" cy="39" r="3.6" fill="#b9bec4"/><circle cx="92" cy="39" r="8.5" fill="#0b0d10"/><circle cx="92" cy="39" r="3.6" fill="#b9bec4"/></svg>`;
-function renderCars() {
-  $('wtCars').innerHTML = RENTAL_CARS.map(car => `<article class="wt-car"><div class="wt-car-art">${carArt(car.color)}</div>
-    <h4>${esc(car.name)}</h4><p>${esc(car.kind)} · ${car.seats} seats</p><p class="wt-car-price"><strong>$${car.weekly}</strong><small>/week</small></p>
-    <a class="wt-car-go" href="https://matthew.mccluster.org/whip/rentals/?vehicle=${encodeURIComponent(car.id)}" target="_blank" rel="noopener" aria-label="Reserve the ${esc(car.name)} with Whip Equipped">Reserve</a></article>`).join('');
-}
+// Shared market entry on the existing globe; no vehicle data or auth is copied here.
+function renderCars() { $('wtCars').innerHTML = vehicleMarketMarkup(); }
 renderCars();
+$('wtMarketOpen').onclick = () => {
+  const open = $('wtRentals').hidden;
+  $('wtRentals').hidden = !open;
+  $('wtMarketOpen').setAttribute('aria-expanded', String(open));
+};
 /* the switch under each tile: one side on, the other off. Rentals and Private stand in for the route and the flight draft. */
 function paintSubs() {
   const sub = tripShape === 'rides' ? rideSub : flightSub;
   panel.dataset.travelView = sub;
   panel.querySelectorAll('button[data-travel-sub]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.travelSub === (['directions','rentals'].includes(b.dataset.travelSub) ? rideSub : flightSub))));
-  $('wtRentals').hidden = sub !== 'rentals'; $('wtPrivate').hidden = sub !== 'private';
+  $('wtRentals').hidden = sub !== 'rentals'; $('wtMarketOpen').setAttribute('aria-expanded', String(sub === 'rentals')); $('wtPrivate').hidden = sub !== 'private';
 }
 function chooseSub(sub) {
   if (DRIVING_PREVIEW && sub !== 'directions') return;

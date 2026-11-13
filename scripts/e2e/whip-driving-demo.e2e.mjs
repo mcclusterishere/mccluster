@@ -45,6 +45,16 @@ for (const width of [390,1280]) {
    check(await page.locator('[data-travel-kind="walk"]').isHidden());
    check(await page.locator('[data-travel-sub="rentals"]').isHidden());
    check(await page.locator('#wtUber').isHidden());
+   await page.locator('#wtMarketOpen').click();
+   check(await page.locator('#wtRentals').isVisible());
+   check((await page.locator('#wtRentals').innerText()).includes('No verified listings'));
+   await page.getByText('Buy a vehicle',{exact:true}).click();
+   check((await page.locator('#wtRentals').innerText()).includes('Card payment is not financing'));
+   check(await page.locator('#wtRentals a[href$="control.html#system:rentals"]').count()===1);
+   check(await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth));
+   await page.screenshot({path:join(out,`vehicle-market-${width}.png`),fullPage:true});
+   await page.locator('#wtMarketOpen').click();
+   check(await page.locator('#wtRentals').isHidden());
    check((await page.locator('#wtPlanner').innerText()).includes('Driving & cab demo.'));
   }
   const before=unexpected.length;

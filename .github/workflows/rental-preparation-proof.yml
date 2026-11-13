@@ -1,0 +1,39 @@
+name: Rental preparation proof
+on:
+  pull_request:
+    paths:
+      - 'js/control-room/rentals.js'
+      - 'js/control-room/nav.js'
+      - 'js/travel/**'
+      - 'workers/mccluster/src/whip/rental-preparation.js'
+      - 'workers/mccluster/test/rental-preparation.test.mjs'
+      - 'whip/rentals/**'
+      - 'scripts/e2e/rental-preparation.e2e.mjs'
+      - '.github/workflows/rental-preparation-proof.yml'
+permissions:
+  contents: read
+jobs:
+  proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: '24'
+      - run: node --test workers/mccluster/test/rental-preparation.test.mjs scripts/test/world-travel-rentals.test.mjs scripts/test/control-nav.test.mjs
+      - run: npm install --prefix /tmp/rental-tools playwright@1.58.2
+      - run: /tmp/rental-tools/node_modules/.bin/playwright install --with-deps chromium
+      - run: node scripts/e2e/rental-preparation.e2e.mjs /tmp/rental-proof
+        env:
+          PLAYWRIGHT_DIR: /tmp/rental-tools/node_modules
+      - run: node scripts/e2e/whip-driving-demo.e2e.mjs /tmp/rental-globe-proof
+        env:
+          PLAYWRIGHT_DIR: /tmp/rental-tools/node_modules
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        if: always()
+        with:
+          name: rental-preparation-proof
+          path: |
+            /tmp/rental-proof
+            /tmp/rental-globe-proof
