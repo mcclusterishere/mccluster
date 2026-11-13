@@ -108,20 +108,21 @@ in `docs/seo/evidence-review.json`; `docs/` is stripped from the deploy.
 The evidence pages share one stylesheet, `css/authority.css`: `auth__*`
 cards for routing pages and the `rec__*` long-form coat for documents.
 
-### 2.1 The privacy notice on public document pages
+### 2.1 Privacy at entry: two choices, no dismissal
 
-`js/live-content.js` shows a full-screen "Privacy before entry" dialog that
-hides the page until the visitor agrees. On pages that carry
-`<meta name="mcc-privacy-notice" content="banner">` it is a compact bar at
-the bottom instead. **What is recorded does not change:** `js/analytics.js`
-still records nothing, sets no device or session id and registers no service
-worker until the notice is acknowledged. The words on the page become
-readable first, to a recruiter, a search engine and a browser agent.
-Opted in: the profile, both résumés, the engineering pages, services, hire,
-press, newsroom, catalogue, gallery, portfolio, policy pages, the Docket
-explainer, the Designer Kicks case study, card, sites-details, whip, license. The house itself (accounts,
-Mnet, the desks, players) keeps the gate. The banner never prints.
-**This is an owner decision to confirm** (§13).
+As of 2026-11-05, the shared `js/live-content.js` presents exactly two
+answers on every top-level page that requires agreement: **I agree & continue**
+or **Go back**. A refusal navigates away without recording consent or treating
+the notice as seen-and-dismissed. Legacy `mcc_privacy_seen` records cannot bypass
+the gate. The Privacy Policy document remains readable before agreement.
+
+The previous document-page banner was removed from presentation; legacy
+`<meta name="mcc-privacy-notice" content="banner">` markers are inert and may
+be removed in a separate content cleanup. All first-party analytics continue
+to require actual agreement, and GPC/DNT and browser permissions remain separate.
+Blocking document pages can affect reader and crawler access; the owner chose
+this explicit either-agree-or-exit behavior. Do not quietly re-enable a
+dismissible banner as an SEO optimization.
 
 ---
 

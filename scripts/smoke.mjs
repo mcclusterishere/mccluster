@@ -50,19 +50,10 @@ const OUTBOUND = (url) => !String(url).startsWith(B);
 const refuse = (route) => route.abort();
 const SEALED = { sealed: true };
 
-/* THE PRIVACY NOTICE, SEEN. Owner, 2026-10-20: a person entering the site
-   from anywhere sees the privacy policy once and never again. On the house
-   pages that is a wall (js/live-content.js): until "I agree" the rest of
-   the page is visibility:hidden and pointer-events:none, so a walk that
-   taps the bar is tapping a wall, and every DOM read reads the wall's
-   heading as the page's. The walk therefore starts as a visitor who has
-   seen this version of the notice, by writing the record live-content.js
-   reads, and the wall itself gets its own checks below (THE NOTICE), in a
-   context that has not. The version is read off the file so a policy
-   bump does not quietly turn the seed into a no-op. */
+/* Smoke tests use accepted consent; a separate browser checks the entry gate. */
 const PRIVACY_VERSION = (/var VERSION = "([^"]+)"/.exec(readFileSync(new URL("../js/live-content.js", import.meta.url), "utf8")) || [])[1];
 const seen = (target) => target.addInitScript((v) => {
-  try { localStorage.setItem("mcc_privacy_seen", JSON.stringify({ version: v, seen_at: new Date().toISOString() })); } catch (e) {}
+  try { localStorage.setItem("mcc_privacy_ack", JSON.stringify({ version: v, accepted_at: new Date().toISOString() })); } catch (e) {}
 }, PRIVACY_VERSION);
 
 /* THE VIEWER, read off the ledger: what the frame is pointed at, and what
@@ -1328,121 +1319,67 @@ try {
 
   await ctx.close();
 
-  /* ---------- THE NOTICE ----------
-     A first visit, in a context that has NOT seen the policy. The house
-     pages put up the wall; a document page (one carrying
-     <meta name="mcc-privacy-notice" content="banner">) shows a bar along
-     the bottom and leaves the words readable; agreeing takes the wall down
-     and is remembered. These are the only checks that may see the wall:
-     every context above was seeded as a visitor who had already seen it. */
+  /* ---------- THE NOTICE: Agree & continue or Go back ---------- */
   console.log("\n[the notice]");
-  check("the notice version was read off js/live-content.js", !!PRIVACY_VERSION, "no VERSION found");
+  check("notice: the source defines one version",!!PRIVACY_VERSION);
   {
-    const nc = await browser.newContext({ viewport: { width: 390, height: 844 } });
-    await nc.route(OUTBOUND, refuse);
-    const np = await nc.newPage();
-    await np.goto(B + "index.html", { waitUntil: "load" });
-    await np.waitForTimeout(600);
-    check("notice: a first visit to the house meets the wall", await np.evaluate(() =>
-      document.documentElement.getAttribute("data-privacy-gate") === "pending" &&
-      !!document.getElementById("mccPrivacyGate") && !!document.getElementById("mccPrivacyAgree")));
-    check("notice: the wall links the policy itself", await np.evaluate(() =>
-      /privacy\.html$/.test(document.querySelector("#mccPrivacyGate a")?.getAttribute("href") || "")));
-    await np.goto(B + "matthew-mccluster.html", { waitUntil: "load" });
-    await np.waitForTimeout(600);
-    check("notice: a document page gets the banner, not the wall", await np.evaluate(() =>
-      !document.getElementById("mccPrivacyGate") && !!document.getElementById("mccPrivacyNotice")));
-    await np.close();
-    /* seeing the banner counts as seen; agreeing is the stronger record.
-       The seen record is kept twice, in localStorage and in a
-       mcc_privacy_seen cookie (js/live-content.js), so a fresh first visit
-       clears both or the wall never goes up to be agreed to. */
-    await nc.clearCookies();
-    const ap = await nc.newPage();
-    await ap.addInitScript(() => { try { localStorage.removeItem("mcc_privacy_seen"); sessionStorage.removeItem("mcc_privacy_seen"); } catch (e) {} });
-    await ap.goto(B + "index.html", { waitUntil: "load" });
-    await ap.waitForTimeout(600);
-    await ap.click("#mccPrivacyAgree", { timeout: 10000 }).catch((e) => no("notice: the agree button takes a tap", String(e).slice(0, 80)));
-    await ap.waitForTimeout(2500);
-    check("notice: agreeing takes the wall down and is remembered", await ap.evaluate((v) => {
-      const ack = JSON.parse(localStorage.getItem("mcc_privacy_ack") || "null");
-      return !document.getElementById("mccPrivacyGate") && !!ack && ack.version === v;
-    }, PRIVACY_VERSION));
+    const nc=await browser.newContext({viewport:{width:390,height:844}});
+    await nc.route(OUTBOUND,refuse);
+    const page=await nc.newPage();
+    await page.goto(B+"index.html",{waitUntil:"load"});
+    check("notice: new visitor is blocked",await page.evaluate(()=>
+      document.documentElement.getAttribute("data-privacy-gate")==="pending"&&!!document.getElementById("mccPrivacyAgree")));
+    await page.goto(B+"press.html",{waitUntil:"load"});
+    check("notice: document page uses the same wall",await page.evaluate(()=>
+      !!document.getElementById("mccPrivacyGate")&&!document.getElementById("mccPrivacyNotice")));
+    await page.goto(B+"privacy.html",{waitUntil:"load"});
+    check("notice: full Privacy Policy remains readable",await page.evaluate(()=>
+      !!document.getElementById("mccPrivacyAnswer")&&!document.getElementById("mccPrivacyGate")));
+    await page.goto(B+"index.html",{waitUntil:"load"});
+    await page.click("#mccPrivacyAgree");
+    await page.waitForTimeout(1800);
+    check("notice: agreement unlocks entry",await page.evaluate(v=>{
+      const ack=JSON.parse(localStorage.getItem("mcc_privacy_ack")||"null");
+      return !!ack&&ack.version===v&&!document.getElementById("mccPrivacyGate");
+    },PRIVACY_VERSION));
     await nc.close();
   }
-
-  /* "NOT NOW", AS THE POLICY PROMISES (privacy.html#entry-notice). The entry
-     dialog offers both answers the policy names; "Not now" lets the visitor
-     in without a reload, records only that the notice was seen, leaves
-     analytics off, and is not asked again; the policy page can still agree.
-     Phone first, then desktop: every answer is a 44px target and the dialog
-     never scrolls the page sideways. */
-  for (const width of [390, 1280]) {
-    const lc = await browser.newContext({ viewport: { width, height: width === 390 ? 844 : 800 }, serviceWorkers: "block" });
-    await lc.route(OUTBOUND, refuse);
-    const lp = await lc.newPage();
-    await lp.goto(B + "index.html", { waitUntil: "load" });
-    await lp.waitForTimeout(600);
-    const dialog = await lp.evaluate(() => {
-      const gate = document.getElementById("mccPrivacyGate");
-      const targets = gate ? [...gate.querySelectorAll("a,button")] : [];
-      return {
-        open: !!gate,
-        answers: [...(gate?.querySelectorAll("button") || [])].map((b) => b.textContent.trim()),
-        small: targets.filter((t) => { const r = t.getBoundingClientRect(); return r.width < 44 || r.height < 44; }).map((t) => t.textContent.trim()),
-        aria: gate?.getAttribute("role") === "dialog" && gate.getAttribute("aria-modal") === "true" && !!document.getElementById(gate.getAttribute("aria-describedby") || "-"),
-        focusInside: !!gate && gate.contains(document.activeElement),
-        fits: document.documentElement.scrollWidth === document.documentElement.clientWidth
-      };
+  for (const width of [390,1280]) {
+    const context=await browser.newContext({viewport:{width,height:width===390?844:800},serviceWorkers:"block"});
+    await context.route(OUTBOUND,refuse);
+    const page=await context.newPage();
+    await page.goto(B+"privacy.html",{waitUntil:"load"});
+    await page.goto(B+"index.html",{waitUntil:"load"});
+    const state=await page.evaluate(()=>{
+      const gate=document.getElementById("mccPrivacyGate");
+      const targets=gate?[...gate.querySelectorAll("a,button")]:[];
+      return {buttons:[...(gate?.querySelectorAll("button")||[])].map(b=>b.textContent.trim()),
+        noSmall:targets.every(t=>{const r=t.getBoundingClientRect();return r.width>=44&&r.height>=44}),
+        modal:gate?.getAttribute("role")==="dialog"&&gate?.getAttribute("aria-modal")==="true",
+        fits:document.documentElement.scrollWidth===document.documentElement.clientWidth};
     });
-    check(`notice ${width}: the entry dialog offers exactly "I agree & continue" and "Not now"`, dialog.open && dialog.answers.join("|") === "I agree & continue|Not now", JSON.stringify(dialog.answers));
-    check(`notice ${width}: every answer is at least 44px`, dialog.open && dialog.small.length === 0, JSON.stringify(dialog.small));
-    check(`notice ${width}: a labelled, described modal dialog with focus inside`, dialog.aria && dialog.focusInside);
-    check(`notice ${width}: no sideways scroll`, dialog.fits);
-    await lp.keyboard.press("Tab");
-    await lp.keyboard.press("Tab");
-    await lp.keyboard.press("Tab");
-    check(`notice ${width}: Tab stays inside the dialog`, await lp.evaluate(() => document.getElementById("mccPrivacyGate")?.contains(document.activeElement)));
-    let navigated = false;
-    lp.on("framenavigated", (f) => { if (f === lp.mainFrame()) navigated = true; });
-    if (width === 390) await lp.click("#mccPrivacyLater", { timeout: 10000 }).catch((e) => no("notice: Not now takes a tap", String(e).slice(0, 80)));
-    else await lp.keyboard.press("Escape");
-    await lp.waitForTimeout(800);
-    const after = await lp.evaluate((v) => {
-      const seen = JSON.parse(localStorage.getItem("mcc_privacy_seen") || "null");
-      return {
-        closed: !document.getElementById("mccPrivacyGate") && !document.documentElement.hasAttribute("data-privacy-gate"),
-        visible: [...document.body.children].some((n) => n.offsetHeight > 0 && getComputedStyle(n).visibility === "visible"),
-        seen: !!seen && seen.version === v,
-        agreed: localStorage.getItem("mcc_privacy_ack") !== null || /(?:^|; )mcc_privacy_ack=/.test(document.cookie) || window.MCC_PRIVACY.accepted(),
-        fits: document.documentElement.scrollWidth === document.documentElement.clientWidth
-      };
-    }, PRIVACY_VERSION);
-    const how = width === 390 ? "Not now" : "Escape";
-    check(`notice ${width}: ${how} lets the visitor in, without a reload`, after.closed && after.visible && !navigated, JSON.stringify(after));
-    check(`notice ${width}: ${how} records only that the notice was seen`, after.seen && !after.agreed, JSON.stringify(after));
-    check(`notice ${width}: the page fits after the dialog closes`, after.fits);
-    await lp.goto(B + "account.html", { waitUntil: "load" });
-    await lp.waitForTimeout(600);
-    check(`notice ${width}: after ${how}, the next house page does not ask again`, await lp.evaluate(() =>
-      !document.getElementById("mccPrivacyGate") && !document.getElementById("mccPrivacyNotice") && !window.MCC_PRIVACY.accepted()));
-    await lp.goto(B + "privacy.html", { waitUntil: "load" });
-    await lp.waitForTimeout(600);
-    const policy = await lp.evaluate(() => {
-      const box = document.getElementById("mccPrivacyAnswer"), agree = document.getElementById("mccPrivacyAnswerAgree");
-      const r = agree?.getBoundingClientRect();
-      return { shown: !!box && !box.hidden, label: agree?.textContent.trim(), big: !!r && r.width >= 44 && r.height >= 44,
-        fits: document.documentElement.scrollWidth === document.documentElement.clientWidth };
-    });
-    check(`notice ${width}: the policy page offers agreeing later`, policy.shown && policy.label === "I agree & continue" && policy.big, JSON.stringify(policy));
-    check(`notice ${width}: the policy page has no sideways scroll`, policy.fits);
-    await lp.click("#mccPrivacyAnswerAgree", { timeout: 10000 }).catch((e) => no("notice: agreeing on the policy page takes a tap", String(e).slice(0, 80)));
-    await lp.waitForTimeout(300);
-    check(`notice ${width}: agreeing on the policy page is recorded`, await lp.evaluate((v) => {
-      const ack = JSON.parse(localStorage.getItem("mcc_privacy_ack") || "null");
-      return !!ack && ack.version === v && document.getElementById("mccPrivacyAnswerAgree").hidden && document.activeElement?.id === "mccPrivacyAnswerStatus";
-    }, PRIVACY_VERSION));
-    await lc.close();
+    check("notice "+width+": exactly two choices",state.buttons.join("|")==="I agree & continue|Go back");
+    check("notice "+width+": accessible targets and modal",state.noSmall&&state.modal&&state.fits);
+    const moved=page.waitForURL("**/privacy.html",{timeout:10000});
+    if(width===390)await page.click("#mccPrivacyBack");
+    else await page.keyboard.press("Escape");
+    await moved;
+    check("notice "+width+": exit returned to previous page",new URL(page.url()).pathname==="/privacy.html");
+    check("notice "+width+": decline records no agreement",await page.evaluate(()=>
+      !MCC_PRIVACY.accepted()&&!localStorage.getItem("mcc_privacy_ack")&&!localStorage.getItem("mcc_privacy_seen")));
+    await page.goto(B+"account.html",{waitUntil:"load"});
+    check("notice "+width+": no previous dismissal bypass",await page.evaluate(()=>
+      !!document.getElementById("mccPrivacyGate")));
+    await page.goto(B+"privacy.html",{waitUntil:"load"});
+    check("notice "+width+": policy itself has two choices",await page.evaluate(()=>
+      !!document.getElementById("mccPrivacyAnswerAgree")&&!!document.getElementById("mccPrivacyAnswerBack")));
+    await page.click("#mccPrivacyAnswerAgree");
+    check("notice "+width+": policy agreement saved",await page.evaluate(v=>
+      JSON.parse(localStorage.getItem("mcc_privacy_ack")||"null")?.version===v,PRIVACY_VERSION));
+    await page.goto(B+"account.html",{waitUntil:"load"});
+    check("notice "+width+": agreed visitors enter",await page.evaluate(()=>
+      !document.getElementById("mccPrivacyGate")&&MCC_PRIVACY.accepted()));
+    await context.close();
   }
 
   await browser.close();

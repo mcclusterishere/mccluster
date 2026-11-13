@@ -1,45 +1,13 @@
-/* SITE-ENTRY PRIVACY NOTICE: ONCE PER POLICY VERSION, ACROSS THE WHOLE HOUSE.
-   Runs before the live-content fetch because this file is loaded in the head
-   across the public property. This is notice acknowledgement, not a blanket
-   override of browser/OS permissions or privacy signals.
-
-   Owner, 2026-10-20: "when a person first enters the site, no matter where
-   they enter from, they see the privacy policy, and then they never see it
-   again." The policy is one site-wide document, so seeing it is one
-   site-wide event:
-
-   - SEEN IS NOT AGREED. A document page's banner counts as seen the moment
-     it is shown (answered or ignored), and so does any answer to the wall,
-     which covers the page and still needs "I agree" to enter. Once THIS
-     version is seen, neither the banner nor the wall shows again for it, on
-     any page or any McCluster host. Agreement stays the separate, stronger
-     record: js/analytics.js records nothing until it exists, and a feature
-     that needs it (the World's automatic location, the CCTV lock) asks at
-     its own point of use through MCC_PRIVACY.accepted(). Nothing reopens
-     this notice for a version already seen.
-   - ONE RECORD FOR EVERY McCLUSTER HOST. Browser storage belongs to one
-     origin, so an answer given on matthew.mccluster.org was invisible on
-     mccluster.org (the bar's Globe, and the World that Music opens in a
-     frame) and the notice came back. The cookie is written for
-     Domain=mccluster.org, which every *.mccluster.org host reads; anywhere
-     else (a preview, localhost) it stays host-only. localStorage and
-     sessionStorage keep copies, and whichever source answers fills in the
-     others.
-   - A MEMBER'S OWN ACCOUNT RECORD COUNTS. The join flow (js/action.js,
-     account.html) and the CCTV lock (js/action-globe.js) write
-     user_metadata.privacy_policy_version on the member's auth record; a
-     signed-in member whose record carries this version has agreed, on any
-     host or device. Agreeing here while signed in writes the same record.
-   - NEVER INSIDE A FRAME. The page that holds the frame owns the notice.
-   - NOT DURING THE SIGN-IN HANDOFF. A cross-host arrival (#mcc_handoff=,
-     js/tabbar.js) reloads the page signed in; the notice waits for that and
-     then looks again.
-   A new policy VERSION is a new notice: everyone sees it once more. */
+/* SITE-ENTRY PRIVACY NOTICE: AGREE OR LEAVE.
+   Only agreement unlocks the page or enables first-party analytics.
+   The Privacy Policy itself stays readable before any answer; frames defer to
+   their parent page. A legacy "seen" record never authorizes entry.
+   Guest and member consent remain separate from browser/OS permissions, GPC,
+   Do Not Track, and each feature's own permissions. */
 (function (w, d) {
   "use strict";
   var VERSION = "2026-10-19";
   var KEY = "mcc_privacy_ack";    /* agreed: {version, accepted_at}; cookie mcc_privacy_ack=<VERSION> */
-  var SEEN = "mcc_privacy_seen";  /* banner shown, or "Not now": {version, seen_at}; cookie mcc_privacy_seen=<VERSION> */
   var MAX_AGE = 34560000;         /* 400 days, the longest a browser keeps any cookie */
   var SB = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
   var SB_KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
@@ -109,21 +77,6 @@
     }
     return true;
   }
-  /* SEEN: agreed, or the banner was shown. This alone decides whether the notice shows. */
-  function readSeen() {
-    if (readAck()) return true;
-    var local = stored("localStorage", SEEN), sess = stored("sessionStorage", SEEN), cookie = cookieHas(SEEN);
-    if (!local && !sess && !cookie) return false;
-    if (!synced) {
-      synced = "seen";
-      var value = local || sess || { version: VERSION, seen_at: new Date().toISOString() };
-      if (!local) store("localStorage", SEEN, value);
-      if (!sess) store("sessionStorage", SEEN, value);
-      setCookie(SEEN);
-    }
-    return true;
-  }
-
   function writeAck() {
     var value = { version: VERSION, accepted_at: new Date().toISOString() };
     store("localStorage", KEY, value);
@@ -132,15 +85,6 @@
     synced = "agreed";
     w.MCC_PRIVACY_ACK = value;
     return recordMember(value.accepted_at);
-  }
-  /* the banner shown, or "Not now": seen, not agreed, and never a downgrade of an agreement */
-  function writeSeen() {
-    if (readAck()) return;
-    var value = { version: VERSION, seen_at: new Date().toISOString() };
-    store("localStorage", SEEN, value);
-    store("sessionStorage", SEEN, value);
-    setCookie(SEEN);
-    synced = "seen";
   }
   /* Agreeing while signed in writes the member's own auth record: the two
      fields, the call and the headers the join flow and the CCTV lock use
@@ -161,25 +105,43 @@
     }).then(function (r) { return !!(r && r.ok); }, function () { return false; });
   }
 
+  /* "Go back" must never manufacture an agreement, clear the wall, or write
+     a dismiss/seen marker. A direct-entry tab has no prior page, so exit to a
+     neutral blank document instead of opening the site content. */
+  function returnToPrevious() {
+    try {
+      if (w.history && w.history.length > 1 && typeof w.history.back === "function") {
+        w.history.back();
+        return;
+      }
+    } catch (_) {}
+    try {
+      var previous = d.referrer ? new URL(d.referrer, location.href) : null;
+      if (previous && (previous.protocol === "https:" || previous.protocol === "http:") &&
+          previous.href !== location.href) {
+        location.replace(previous.href);
+        return;
+      }
+    } catch (_) {}
+    location.replace("about:blank");
+  }
+
   w.MCC_PRIVACY = {
     version: VERSION,
-    accepted: readAck,   /* agreed: analytics, and features that ask at their point of use */
-    seen: readSeen,      /* answered at all: whether the notice may show */
-    acknowledge: writeAck,
-    dismiss: writeSeen
+    accepted: readAck,
+    seen: readAck, /* backwards-compatible alias: only agreement now counts */
+    acknowledge: writeAck
   };
 
-  /* The policy itself must remain readable before acknowledgement, and it is
-     where someone who answered "Not now" can still agree (the policy says so:
-     privacy.html#entry-notice). The page carries the control, hidden until
-     this script shows it. Agreeing here records the same agreement as the
-     notice; analytics start with the next page view. */
+  /* The Privacy Policy remains readable before a choice and presents the
+     same Agree / Go back options as the entry dialog. */
   if (page === "privacy.html") {
     var answer = function () {
       var box = d.getElementById("mccPrivacyAnswer");
       var status = d.getElementById("mccPrivacyAnswerStatus");
       var agree = d.getElementById("mccPrivacyAnswerAgree");
-      if (!box || !status || !agree) return;
+      var back = d.getElementById("mccPrivacyAnswerBack");
+      if (!box || !status || !agree || !back) return;
       var show = function (justNow) {
         if (readAck()) {
           status.textContent = justNow
@@ -187,14 +149,14 @@
             : "You have agreed to notice version " + VERSION + " on this browser.";
           agree.hidden = true;
         } else {
-          status.textContent = readSeen()
-            ? "You answered \u201cNot now\u201d to notice version " + VERSION + ": McCluster's analytics are off."
-            : "You have not answered notice version " + VERSION + ": McCluster's analytics are off.";
+          status.textContent = "You have not agreed to notice version " + VERSION +
+            ". McCluster's analytics are off. Choose Agree & continue or Go back.";
           agree.hidden = false;
         }
       };
       show(false);
       box.hidden = false;
+      back.addEventListener("click", returnToPrevious);
       agree.addEventListener("click", function () {
         writeAck();
         show(true);
@@ -206,116 +168,21 @@
     else answer();
     return;
   }
-  if (readSeen()) return;
+  if (readAck()) return;
   var framed = true;
   try { framed = w.top !== w; } catch (_) {}
   if (framed) return;
 
   var shown = false;
   function present() {
-    if (shown || readSeen()) return;
+    if (shown || readAck()) return;
     shown = true;
-    var noticeMeta = d.querySelector('meta[name="mcc-privacy-notice"]');
-    if (noticeMeta && noticeMeta.getAttribute("content") === "banner") banner();
-    else wall();
+    wall();
   }
 
-  /* PUBLIC DOCUMENT PAGES: THE NOTICE AS A BANNER, NOT A WALL.
-
-     A page that carries <meta name="mcc-privacy-notice" content="banner">
-     in its head (before this script) is a document meant to be read cold:
-     the résumé a hiring manager opens from an application, the press kit,
-     the engineering record, the music catalogue, the newsroom. On those
-     the notice is a bar along the bottom of the screen instead of a
-     full-screen dialog that hides the page.
-
-     Nothing about what is recorded changes. js/analytics.js still records
-     nothing, sets no device or session id and registers no service worker
-     until the notice is agreed to; this branch only decides whether the
-     words on the page can be read first. Agreeing here does not reload the
-     page, so recording begins on the next page view. The bar counts as
-     seen as soon as it is shown (owner, 2026-10-20: "they see the privacy
-     policy, and then they never see it again"): whether it is agreed to,
-     dismissed with "Not now" or simply left, it does not come back, and
-     nothing is recorded until someone agrees.
-
-     Why: Google's guidance on interstitials says a dialog covering the
-     content "make[s] it hard for Google and other search engines to
-     understand your content" and recommends a banner instead; browser
-     agents acting for a person hit the same wall; and a recruiter who has
-     to accept a policy before seeing a résumé often does not. Pages that
-     are the house itself (accounts, the network, the desks) keep the gate.
-     Opt a page in by adding the meta; there is no list to keep here. */
-  function banner() {
-    var bannerStyle = d.createElement("style");
-    bannerStyle.id = "mccPrivacyNoticeStyle";
-    bannerStyle.textContent =
-      '#mccPrivacyNotice{position:fixed;left:8px;right:8px;bottom:8px;z-index:2147483646;' +
-      'padding:10px 12px;border:1px solid rgba(255,255,255,.18);border-radius:12px;background:#15110f;' +
-      'color:#f5efe6;font:14px/1.4 system-ui,sans-serif;box-shadow:0 12px 40px rgba(0,0,0,.45)}' +
-      '#mccPrivacyNotice p{margin:0 0 8px;color:#d8cfc3}' +
-      '#mccPrivacyNotice .mccpn__actions{display:flex;flex-wrap:wrap;gap:6px}' +
-      '#mccPrivacyNotice a,#mccPrivacyNotice button{display:inline-flex;align-items:center;justify-content:center;' +
-      'min-height:44px;min-width:44px;border-radius:9px;padding:8px 12px;' +
-      'font:inherit;font-weight:700;text-align:center;cursor:pointer}' +
-      '#mccPrivacyNotice a:focus-visible,#mccPrivacyNotice button:focus-visible{outline:3px solid #f5efe6;outline-offset:2px}' +
-      '#mccPrivacyNotice a{border:1px solid rgba(255,255,255,.25);color:#f5efe6;text-decoration:none}' +
-      '#mccPrivacyNotice .mccpn__agree{border:0;background:#f5efe6;color:#0b0908}' +
-      '#mccPrivacyNotice .mccpn__later{border:1px solid rgba(255,255,255,.25);background:transparent;color:#f5efe6}' +
-      '@media (min-width:720px){#mccPrivacyNotice{left:auto;right:20px;bottom:20px;max-width:520px}}' +
-      /* a fixed bar prints on every page: never on paper (the résumé PDF
-         is printed from these pages by tools/build-resume.mjs) */
-      '@media print{#mccPrivacyNotice{display:none!important}}';
-    (d.head || d.documentElement).appendChild(bannerStyle);
-    var mountBanner = function () {
-      if (d.getElementById("mccPrivacyNotice")) return;
-      var bar = d.createElement("div");
-      bar.id = "mccPrivacyNotice";
-      bar.setAttribute("role", "region");
-      bar.setAttribute("aria-label", "Privacy notice");
-      bar.innerHTML =
-        /* Short on purpose: Google's guidance is a banner that takes "a small
-           fraction of the screen". The full notice is one tap away. */
-        '<p>McCluster&rsquo;s analytics stay off until you agree to the Privacy Policy; ' +
-        '&ldquo;Not now&rdquo; records only that you saw this notice. ' +
-        'It is notice, not blanket consent: location and device permissions keep their own controls.</p>' +
-        '<div class="mccpn__actions">' +
-        '<button type="button" class="mccpn__agree" id="mccPrivacyNoticeAgree">I agree &amp; continue</button>' +
-        '<a href="/privacy.html">Privacy Policy</a>' +
-        '<button type="button" class="mccpn__later" id="mccPrivacyNoticeLater">Not now</button>' +
-        '</div>';
-      d.body.appendChild(bar);
-      writeSeen();
-      d.getElementById("mccPrivacyNoticeAgree").addEventListener("click", function () {
-        writeAck();
-        bar.remove();
-      });
-      d.getElementById("mccPrivacyNoticeLater").addEventListener("click", function () {
-        writeSeen();
-        bar.remove();
-      });
-      /* Escape from inside the bar is "Not now", the same as the dialog. */
-      bar.addEventListener("keydown", function (e) {
-        if (e.key !== "Escape" && e.key !== "Esc") return;
-        writeSeen();
-        bar.remove();
-      });
-    };
-    if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", mountBanner, { once: true });
-    else mountBanner();
-  }
-
-  /* THE ENTRY DIALOG. Two answers, the same two the banner and the Privacy
-     Policy name ("I agree & continue" and "Not now"; pinned by
-     scripts/test/privacy-notice-policy.test.mjs):
-     - "I agree & continue" records agreement and reloads, so the page starts
-       with it in place (analytics may begin).
-     - "Not now" (or Escape) records only that the notice was seen, closes the
-       dialog and lets the visitor in without reloading. Nothing that needs
-       agreement starts: js/analytics.js stays off on this and every later
-       page until the visitor agrees, which they can still do on the Privacy
-       Policy page. Like every answer, it is not asked again for this version.
-     Leaving the page without answering is no answer: the next page asks. */
+  /* Every unagreed top-level entry page gets the same two-option wall.
+     Agree enters; Go back navigates out and does not persist any answer.
+     Escape has the same effect as Go back. Privacy Policy stays readable. */
   function wall() {
     d.documentElement.setAttribute("data-privacy-gate", "pending");
     var style = d.createElement("style");
@@ -339,7 +206,7 @@
       'border-radius:12px;padding:12px 16px;font:inherit;font-size:max(16px,1rem);font-weight:700;text-align:center;cursor:pointer}' +
       '#mccPrivacyGate a{border:1px solid rgba(255,255,255,.25);color:#f5efe6;text-decoration:none}' +
       '#mccPrivacyGate .mccpg__agree{border:0;background:#f5efe6;color:#0b0908}' +
-      '#mccPrivacyGate .mccpg__later{border:1px solid rgba(255,255,255,.25);background:transparent;color:#f5efe6}' +
+      '#mccPrivacyGate .mccpg__back{border:1px solid rgba(255,255,255,.25);background:transparent;color:#f5efe6}' +
       '#mccPrivacyGate a:focus-visible,#mccPrivacyGate button:focus-visible{outline:3px solid #f5efe6;outline-offset:3px}' +
       '#mccPrivacyGate small{display:block;margin-top:12px;color:#a99d91}' +
       '@media (min-width:560px){#mccPrivacyGate{padding:24px}#mccPrivacyGate .mccpg__card{padding:24px}' +
@@ -349,7 +216,6 @@
 
     function mount() {
       if (d.getElementById("mccPrivacyGate")) return;
-      var before = d.activeElement || null;
       var gate = d.createElement("div");
       gate.id = "mccPrivacyGate";
       gate.setAttribute("role", "dialog");
@@ -361,24 +227,24 @@
         '<h1 id="mccPrivacyGateTitle" tabindex="-1">Privacy before entry</h1>' +
         '<div id="mccPrivacyGateBody">' +
         '<p>McCluster records account, device, network, location and activity data as described in the Privacy Policy. Optional live video, microphone audio and verification media are captured only in features that request them.</p>' +
-        '<p><b>McCluster&rsquo;s own analytics stay off until you agree.</b> &ldquo;Not now&rdquo; lets you in and records only that you saw this notice. Either answer is kept for this version of the policy, so it is not asked again; you can agree later on the Privacy Policy page.</p>' +
+        '<p><b>Choose one:</b> Agree &amp; continue to enter, or Go back to leave without accepting. No analytics are collected until you agree. Returning without agreeing will ask again.</p>' +
         '<p><b>This acknowledgement is not blanket consent.</b> Precise location and other protected device permissions still use their own browser or operating-system controls, and privacy signals remain honored.</p>' +
         '</div>' +
         '<div class="mccpg__actions">' +
         '<button type="button" class="mccpg__agree" id="mccPrivacyAgree">I agree &amp; continue</button>' +
-        '<button type="button" class="mccpg__later" id="mccPrivacyLater">Not now</button>' +
+        '<button type="button" class="mccpg__back" id="mccPrivacyBack">Go back</button>' +
         '<a class="mccpg__review" href="/privacy.html">Review the Privacy Policy</a>' +
         '</div>' +
         '<small>Privacy notice version ' + VERSION + '</small>' +
         '</div>';
       d.body.appendChild(gate);
       var btn = d.getElementById("mccPrivacyAgree");
-      var later = d.getElementById("mccPrivacyLater");
+      var back = d.getElementById("mccPrivacyBack");
       var open = true;
       btn.addEventListener("click", function () {
         if (!open) return;
         btn.disabled = true;
-        later.disabled = true;
+        back.disabled = true;
         /* the page reloads to start with the agreement in place; a member's
            record gets a moment to be written first, never more than that */
         var reloaded = false;
@@ -386,24 +252,18 @@
         writeAck().then(go, go);
         setTimeout(go, 1500);
       });
-      /* "Not now": seen, not agreed. No reload: nothing that waits for
-         agreement started on this page, and nothing starts now. */
-      function notNow() {
+      function goBack() {
         if (!open || btn.disabled) return;
         open = false;
-        writeSeen();
-        gate.remove();
-        if (style.remove) style.remove();
-        d.documentElement.removeAttribute("data-privacy-gate");
-        var back = before && before !== d.body && before.focus ? before : null;
-        try { (back || (d.querySelector && d.querySelector("main,[role=main]")) || d.body).focus({ preventScroll: true }); } catch (_) {}
+        back.disabled = true;
+        returnToPrevious();
       }
-      later.addEventListener("click", notNow);
-      /* A modal dialog: Escape is "Not now", and Tab stays inside it. */
+      back.addEventListener("click", goBack);
+      /* Escape is equivalent to Go back; Tab stays trapped until navigation. */
       gate.addEventListener("keydown", function (e) {
         if (e.key === "Escape" || e.key === "Esc") {
           if (e.preventDefault) e.preventDefault();
-          notNow();
+          goBack();
           return;
         }
         if (e.key !== "Tab" || !gate.querySelectorAll) return;
