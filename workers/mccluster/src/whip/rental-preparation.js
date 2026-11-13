@@ -79,6 +79,8 @@ export function createRentalPreparation(next=app) {
     if(editing) {
       if(typeof body.expected_updated_at!=='string'||!Number.isFinite(Date.parse(body.expected_updated_at)))
         throw error('Reload the vehicle before saving; its revision is required.',409);
+      // Advance even across a shared clock tick or a previous writer with a clock ahead.
+      patch.updated_at=new Date(Math.max(Date.now(),Date.parse(body.expected_updated_at)+1)).toISOString();
       rows=await db(env,'rental_vehicles?tenant_id=eq.'+encodeURIComponent(tenantId)+'&id=eq.'+encodeURIComponent(vehicles[2])+
         '&updated_at=eq.'+encodeURIComponent(body.expected_updated_at)+'&select='+VEHICLE_FIELDS,{method:'PATCH',body:JSON.stringify(patch)});
       if(!rows.length) throw error('Vehicle changed or is unavailable. Reload before editing.',409);

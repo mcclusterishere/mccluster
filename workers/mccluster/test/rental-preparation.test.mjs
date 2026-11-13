@@ -7,7 +7,7 @@ const json=(body,status=200)=>new Response(JSON.stringify(body),{status});
 const req=(path,method='GET',body,auth=true)=>new Request('https://api.mccluster.org'+path,{method,headers:{...(auth?{authorization:'Bearer fixture'}:{}),'content-type':'application/json'},...(body===undefined?{}:{body:typeof body==='string'?body:JSON.stringify(body)})});
 const draft={name:'Synthetic vehicle',category:'sedan',location_label:'General town',daily_rate_cents:5000};
 async function fixture(options,fn){
- const old=globalThis.fetch,calls=[];let row={id:'car',tenant_id:tenant,...draft,available:false,updated_at:'2026-11-01T00:00:00Z'};
+ const old=globalThis.fetch,calls=[];let row={id:'car',tenant_id:tenant,...draft,available:false,updated_at:options.revision||'2026-11-01T00:00:00Z'};
  globalThis.fetch=async(resource,init={})=>{
   const u=new URL(resource),method=init.method||'GET';calls.push({u,method,body:init.body&&JSON.parse(init.body)});
   if(u.pathname==='/auth/v1/user')return json({id:user});
@@ -69,4 +69,12 @@ test('backend failure cannot look like an empty fleet or leak database errors',a
 }));
 test('pass-through preserves cab demo/backend and rental read ownership chain',async()=>fixture({},async(app)=>{
  for(const path of ['/api/rides','/api/rentals/bookings/x','/api/operators/mine'])assert.deepEqual(await(await app.fetch(req(path),env)).json(),{next:true});
+}));
+
+test('revision advances when stored revision is ahead of worker clock',async()=>fixture({revision:'2099-01-01T00:00:00.000Z'},async(app)=>{
+ const body={...draft,expected_updated_at:'2099-01-01T00:00:00.000Z'};
+ const result=await app.fetch(req('/api/operators/'+tenant+'/vehicles/car','PATCH',body),env);
+ assert.equal(result.status,200);
+ assert.equal((await result.json()).vehicle.updated_at,'2099-01-01T00:00:00.001Z');
+ assert.equal((await app.fetch(req('/api/operators/'+tenant+'/vehicles/car','PATCH',body),env)).status,409);
 }));
