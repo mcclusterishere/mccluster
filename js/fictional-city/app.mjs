@@ -587,7 +587,7 @@ async function openStory(chapterId) {
   const loading = el('p', 'Opening the screenplay…'); root.append(loading);
   try {
     if (!storyCache) {
-      const response = await fetch('data/fictional-city/whip-story.v1.json?v=__STAMP__', { cache: 'no-cache' });
+      const response = await fetch('data/fictional-city/whip-story.v1.json?v=fc1986ec0f4c', { cache: 'no-cache' });
       if (!response.ok) throw new Error('story');
       storyCache = await response.json();
     }
@@ -625,7 +625,7 @@ async function loadChunk(id, { signal } = {}) {
   const abort = () => controller.abort();
   if (signal?.aborted) abort(); else signal?.addEventListener('abort', abort, { once: true });
   try {
-    const response = await fetch('data/fictional-city/' + meta.file + '?v=__STAMP__', { cache: 'no-cache', signal: controller.signal });
+    const response = await fetch('data/fictional-city/' + meta.file + '?v=fc1986ec0f4c', { cache: 'no-cache', signal: controller.signal });
     if (!response.ok) throw new Error('chunk ' + id + ' answered ' + response.status);
     const buffer = await response.arrayBuffer();
     if (meta.sha256 && globalThis.crypto?.subtle) {
@@ -720,7 +720,7 @@ function bindControls() {
 }
 async function start() {
   try {
-    let response = await fetch('data/fictional-city/district.v1.json?v=__STAMP__', { cache: 'no-cache' });
+    let response = await fetch('data/fictional-city/district.v1.json?v=fc1986ec0f4c', { cache: 'no-cache' });
     if (!response.ok) throw new Error('The district data could not load.');
     const text = await response.text();
     if (text.length > 1024 * 1024) throw new Error('The district data is too large.');
@@ -731,8 +731,8 @@ async function start() {
     // Geography is a separate authority. Without it the original district still plays exactly as before.
     try {
       const [placesResponse, indexResponse] = await Promise.all([
-        fetch('data/fictional-city/places.v1.json?v=__STAMP__', { cache: 'no-cache' }),
-        fetch('data/fictional-city/chunks/index.v1.json?v=__STAMP__', { cache: 'no-cache' })
+        fetch('data/fictional-city/places.v1.json?v=fc1986ec0f4c', { cache: 'no-cache' }),
+        fetch('data/fictional-city/chunks/index.v1.json?v=fc1986ec0f4c', { cache: 'no-cache' })
       ]);
       if (!placesResponse.ok) throw new Error('places');
       places = await placesResponse.json();
@@ -752,7 +752,7 @@ async function start() {
     const rotateAd = () => { const ad = ads[adIndex++ % ads.length]; $('city-ad').textContent = '“' + (typeof ad.line === 'string' ? ad.line : ad.line.text) + '”'; $('city-ad-brand').textContent = ad.brand; };
     rotateAd(); adTimer = setInterval(rotateAd, 18000);
     try {
-      const { createCityScene } = await import('./scene.mjs?v=__STAMP__');
+      const { createCityScene } = await import('./scene.mjs?v=fc1986ec0f4c');
       const restoredPosition = { ...state.position };
       scene = createCityScene({
         canvas: $('city-canvas'), manifest, places, vacant, chunkIndex, loadChunk, onInteract: handleTarget,

@@ -622,7 +622,7 @@ const SCENARIOS = { visibility, journey, switching, keyboard, worldHost };
   if (exported) {
     let stripped = true;
     for (const internal of ['scripts', 'workers', 'supabase', 'docs']) { try { await stat(join(SERVE, internal)); stripped = false; } catch { /* absent, as published */ } }
-    check('export', 'the page is the emitted one: stamps replaced, internals stripped', !page.includes('__STAMP__') && /\?v=[a-z0-9]+"/.test(page) && stripped);
+    check('export', 'the page is the emitted one: stamps replaced, internals stripped', !page.includes('fc1986ec0f4c') && /\?v=[a-z0-9]+"/.test(page) && stripped);
   }
 }
 try {

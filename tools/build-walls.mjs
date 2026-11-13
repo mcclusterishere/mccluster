@@ -230,8 +230,8 @@ ${ev.sources.map((u) => `        <li><a href="${esc(u)}" rel="noopener">${esc(u.
   <meta name="twitter:title" content="${esc(title)}">
   <meta name="twitter:description" content="${esc(desc)}">
   <meta name="twitter:image" content="${esc(cover)}">
-  <link rel="stylesheet" href="../css/style.css?v=__STAMP__">
-  <script src="../js/theme.js?v=__STAMP__"></script>
+  <link rel="stylesheet" href="../css/style.css?v=fc1986ec0f4c">
+  <script src="../js/theme.js?v=fc1986ec0f4c"></script>
   <style>
     :root { --ui: "Manrope", system-ui, -apple-system, sans-serif; }
     .wl { max-width: 68rem; margin: 0 auto; padding: 0 clamp(1.1rem, 4vw, 2.2rem) 7rem;
@@ -364,13 +364,13 @@ pages.set("walls.html", `<!doctype html>
   <link rel="canonical" href="${SITE}/gallery.html">
   <script>location.replace("gallery.html");<\/script>
   <meta http-equiv="refresh" content="0;url=gallery.html">
-  <script src="js/live-content.js?v=__STAMP__"><\/script>
+  <script src="js/live-content.js?v=fc1986ec0f4c"><\/script>
 </head>
 <body>
   <p style="font-family:sans-serif;padding:2rem">The walls hang in the Gallery now.
     <a href="gallery.html">Continue</a>.</p>
-  <script defer src="js/pip.js?v=__STAMP__"><\/script>
-  <script src="js/site-editor.js?v=__STAMP__" defer><\/script>
+  <script defer src="js/pip.js?v=fc1986ec0f4c"><\/script>
+  <script src="js/site-editor.js?v=fc1986ec0f4c" defer><\/script>
 </body>
 </html>
 `);

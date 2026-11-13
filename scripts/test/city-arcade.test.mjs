@@ -110,9 +110,9 @@ test('the arcade is owner only: noindex, the shared server gate, and no game cod
   const gate = html.match(/<section class="owner-gate"[^>]*data-owner-gate[^>]*>/);
   assert.ok(gate, 'the gate panel');
   assert.match(gate[0], /data-owner-template="arcadeTpl"/);
-  assert.match(gate[0], /data-owner-load="js\/city-arcade\/app\.mjs\?v=__STAMP__"/);
+  assert.match(gate[0], /data-owner-load="js\/city-arcade\/app\.mjs\?v=fc1986ec0f4c"/);
   assert.match(html, /<template id="arcadeTpl">[\s\S]*id="arcade-list"[\s\S]*id="arcade-play"[\s\S]*<\/template>/);
-  assert.match(html, /<script type="module" src="js\/owner-only\.mjs\?v=__STAMP__"><\/script>/);
+  assert.match(html, /<script type="module" src="js\/owner-only\.mjs\?v=fc1986ec0f4c"><\/script>/);
   /* outside the inert template, nothing loads the arcade: only the gate, auth and the bar */
   const outside = html.replace(/<template[\s\S]*?<\/template>/g, '');
   assert.doesNotMatch(outside, /<script[^>]+src="[^"]*(city-arcade\/|engine\.mjs)/);

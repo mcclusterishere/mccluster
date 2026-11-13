@@ -25,7 +25,7 @@
     if (worldAudioReady) return worldAudioReady;
     worldAudioReady = new Promise(function (resolve) {
       var script = document.createElement("script");
-      script.src = ROOT + "js/world-audio-continuity.js?v=__STAMP__";
+      script.src = ROOT + "js/world-audio-continuity.js?v=fc1986ec0f4c";
       script.onload = function () {
         var ready = !!window.MCC_WORLD_AUDIO;
         if (!ready) worldAudioReady = null;
@@ -732,7 +732,7 @@
         }
         resolve(window.MCC);
       }
-      script.src = ROOT + "js/mcc-auth.js?v=__STAMP__";
+      script.src = ROOT + "js/mcc-auth.js?v=fc1986ec0f4c";
       script.async = true;
       script.setAttribute("data-mcc-auth-loader", "1");
       script.onload = function () { finish(null); };
@@ -1145,7 +1145,7 @@
   /* the arithmetic only, for the veil above: the World's own page has it already, nothing else on this page is touched */
   if (!window.MCC_DAYLIGHT_CORE && !ON_WORLD_HOST) {
     var daylightCore = document.createElement("script");
-    daylightCore.src = ROOT + "js/daylight.js?v=__STAMP__";
+    daylightCore.src = ROOT + "js/daylight.js?v=fc1986ec0f4c";
     daylightCore.async = true;
     daylightCore.setAttribute("data-daylight-core", "");
     document.head.appendChild(daylightCore);
@@ -1446,12 +1446,12 @@
   };
   // One shared implementation on every page carrying the bar, including nested rooms.
   var navigationStyle = document.createElement("link");
-  navigationStyle.rel = "stylesheet"; navigationStyle.href = ROOT + "css/site-navigation.css?v=__STAMP__";
+  navigationStyle.rel = "stylesheet"; navigationStyle.href = ROOT + "css/site-navigation.css?v=fc1986ec0f4c";
   navigationStyle.onload = function () { document.body.dataset.siteNavigation = "ready"; window.dispatchEvent(new Event("mcc:navigation-style-ready")); };
   navigationStyle.onerror = function () { navPresentationReady = true; revealNavigation(); };
   document.head.appendChild(navigationStyle);
   var navigationScript = document.createElement("script");
-  navigationScript.src = ROOT + "js/site-navigation.js?v=__STAMP__";
+  navigationScript.src = ROOT + "js/site-navigation.js?v=fc1986ec0f4c";
   navigationScript.onerror = function () { navPresentationReady = true; revealNavigation(); };
   document.head.appendChild(navigationScript);
   if (window.MCC_TRACK) window.MCC_TRACK("bar_boot", { page: location.pathname.split("/").pop() });

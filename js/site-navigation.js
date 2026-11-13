@@ -18,7 +18,7 @@
     if (window.CR?.workspaceCore) return Promise.resolve(window.CR.workspaceCore);
     if (!coreReady) coreReady = new Promise((resolve, reject) => {
       const load = path => new Promise((done, fail) => {
-        const s = document.createElement('script'); s.src = root + path + '?v=__STAMP__';
+        const s = document.createElement('script'); s.src = root + path + '?v=fc1986ec0f4c';
         s.onload = done; s.onerror = fail; document.head.appendChild(s);
       });
       (window.CR?.nav ? Promise.resolve() : load('js/control-room/nav.js'))

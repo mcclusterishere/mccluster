@@ -118,7 +118,7 @@ test("the games and the PRIM3 learning management system are owner only: noindex
     const html = read(f);
     assert.match(html, NOINDEX, f);
     assert.match(html, /<section class="[^"]*owner-gate[^"]*"[^>]*data-owner-gate/, `${f}: the gate panel`);
-    assert.match(html, /<script type="module" src="(?:\.\.\/\.\.\/)?js\/owner-only\.mjs(?:\?v=__STAMP__)?"><\/script>/, `${f}: the shared gate`);
+    assert.match(html, /<script type="module" src="(?:\.\.\/\.\.\/)?js\/owner-only\.mjs(?:\?v=fc1986ec0f4c)?"><\/script>/, `${f}: the shared gate`);
     assert.doesNotMatch(html, /<link rel="canonical"/, `${f}: no canonical on a page search engines are told to skip`);
     assert.ok(!listed.some((u) => u.endsWith("/" + f)), `${f} is out of the sitemap`);
     /* nothing the gate protects is a page script: lesson and game scripts are in data-owner-load only */

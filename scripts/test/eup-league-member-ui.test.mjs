@@ -286,7 +286,7 @@ test('the page is neutral, noindex and linked from nowhere; it loads only what t
   assert.match(html, /<title>Equity Uprise<\/title>/, 'the static title names no program');
   const visible = html.replace(/<!--[\s\S]*?-->/g, '').replace(/<script[\s\S]*?<\/script>/g, '').replace(/<[^>]+>/g, ' ');
   assert.doesNotMatch(visible, /Environmental Justice League|Write a song|mission|campaign/i, 'nothing in the static page names the program, a campaign or a mission');
-  for (const src of ['/js/backend.js', '/js/eup-league-capture.js', '/js/eup-league-member.js', '/css/eup-league-member.css', '/js/live-content.js']) assert.ok(html.includes(`${src}?v=__STAMP__`), src);
+  for (const src of ['/js/backend.js', '/js/eup-league-capture.js', '/js/eup-league-member.js', '/css/eup-league-member.css', '/js/live-content.js']) assert.ok(html.includes(`${src}?v=fc1986ec0f4c`), src);
   assert.ok(html.indexOf('src="/js/eup-league-capture.js') < html.indexOf('src="/js/eup-league-member.js'), 'capture loads before the member module');
   assert.ok(html.indexOf('src="/js/backend.js') < html.indexOf('src="/js/eup-league-member.js'), 'the session layer loads before the member module');
   assert.doesNotMatch(html, /tabbar\.js|analytics\.js|world-audio/, 'no bar, no analytics, no soundtrack continuity on a page that records');

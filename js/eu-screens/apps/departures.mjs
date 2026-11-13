@@ -5,7 +5,7 @@
 
 import { bootApp } from "../app-shell.mjs";
 
-const STAMP = "__STAMP__";
+const STAMP = "fc1986ec0f4c";
 let reg = null;
 
 async function loadDestinations() {
