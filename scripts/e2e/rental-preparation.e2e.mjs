@@ -62,7 +62,7 @@ try {for(const width of [390,1280]){
  await page.getByLabel('Rental operator').selectOption('other');await page.getByText('No sample data is substituted.',{exact:false}).waitFor();
  check(!(await page.locator('body').innerText()).includes('Revised synthetic vehicle'));
  await page.goto('http://rental.test/whip/rentals/index.html');await page.getByRole('heading',{name:'Self-drive rentals are in preparation'}).waitFor();
- check(await page.locator('.vehicle-card').count()===0);check(await page.locator('#bookButton').count()===0);
+ check(await page.locator('#profileButton').count()===0);check(await page.locator('.vehicle-card').count()===0);check(await page.locator('#bookButton').count()===0);
  check(await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth));
  await page.screenshot({path:join(out,`public-${width}.png`),fullPage:true});
  check(errors.length===0);check(unexpected.length===0);await context.close();
