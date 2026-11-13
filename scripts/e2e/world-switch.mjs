@@ -9,3 +9,12 @@ export function withTravelAndMissions(html) {
   if (!page.includes(SOCIAL_SWITCH)) throw new Error('mnet.html no longer carries the social-only switch: update scripts/e2e/world-switch.mjs');
   return page.replace(SOCIAL_SWITCH, '').replace('data-world-mode="posts"', 'data-world-mode="travel"').replaceAll('&amp;missions=0', '');
 }
+
+// Historical suites continue exercising deferred transport engines. This transform
+// exists only in the test server; public URLs and preferences cannot enable them.
+// Default driving-only presentation is covered by whip-driving-demo.e2e.mjs.
+export function withFutureTransport(source) {
+  const code = String(source);
+  if (!code.includes('const DRIVING_PREVIEW = true;')) throw Error('Driving preview gate missing');
+  return code.replace('const DRIVING_PREVIEW = true;', 'const DRIVING_PREVIEW = false;');
+}

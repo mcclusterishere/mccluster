@@ -4,7 +4,7 @@
 .we-book-head{display:flex;justify-content:space-between;align-items:center;gap:14px}
 .we-book-head h2{font:500 clamp(24px,6vw,34px)/1.2 Georgia,serif;letter-spacing:-.035em;margin:0}
 .we-book-kicker{font:700 10px/1.5 system-ui,sans-serif;color:#f2aa76;letter-spacing:.16em;margin:0 0 6px}
-.we-book-head #weBookClose{flex:none;width:44px;height:44px;border-radius:50%;border:1px solid #fff4;background:#22313d;color:white;font-size:24px;cursor:pointer}
+.we-book-head :is(#weBookClose,#weDemoClose){flex:none;width:44px;height:44px;border-radius:50%;border:1px solid #fff4;background:#22313d;color:white;font-size:24px;cursor:pointer}
 .we-book-dialog #weBookJourney{padding:14px 0;margin:15px 0 8px;border-top:1px solid #fff3;border-bottom:1px solid #fff3;font-weight:600;overflow-wrap:anywhere}
 .we-book-dialog #weBookNotice,.we-book-dialog #weBookStatus,.we-book-terms{font-size:12px;line-height:1.6;color:#c0cbd4}
 .we-book-dialog #weBookStatus{min-height:22px;color:#f6c7ba}
@@ -20,3 +20,8 @@
 .we-book-dialog :is(button,a):focus-visible{outline:2px solid #fff;outline-offset:3px}
 .we-book-dialog{max-height:calc(100dvh - 12px)}
 @media(min-width:431px){.we-book-dialog{padding:22px;border-radius:22px;max-height:calc(100dvh - 24px)}}
+
+.we-book-dialog [hidden]{display:none!important}
+.we-book-dialog select{display:block;width:100%;font:inherit;font-size:max(16px,1em);min-height:44px;margin:12px 0}
+
+.we-book-dialog button:not(.we-book-primary){min-height:44px;font:inherit}

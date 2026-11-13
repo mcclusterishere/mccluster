@@ -1,7 +1,12 @@
+import { attachWhipDemo } from './whip-demo.mjs';
+
+// Public entry is deliberately demo-only. Live booking remains preserved below.
+export function attachWhipBooking(options) { return attachWhipDemo(options); }
+
 /* Whip Equipped booking sheet for the World travel planner.
  * Trips are quoted/created ONLY through the Whip server. This module never
  * synthesizes a price, a driver, a journey line, or a booking confirmation. */
-export function attachWhipBooking({ panel, currentTrip, accountApi }) {
+export function attachLiveWhipBooking({ panel, currentTrip, accountApi }) {
   if (!panel || typeof currentTrip !== 'function' || typeof accountApi !== 'function') return null;
   const button = document.createElement('button');
   button.type = 'button'; button.id = 'wtBookWhip'; button.textContent = 'Book inside Whip Equipped';
