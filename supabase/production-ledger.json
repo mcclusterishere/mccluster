@@ -2,10 +2,10 @@
   "schema_version": "mccluster-supabase-production-ledger/v1",
   "project_ref": "zmnhbrjyhxzhkxmhkexs",
   "production_sql_cutover_version": "20260919020830",
-  "migration_count": 359,
-  "latest_version": "20261103182544",
-  "latest_name": "learning_evidence_v1",
-  "ledger_sha256": "41b4bd62a4cdd052b95aa96de6ffce745611f0bcd65cb2395b3ebc0f9a862bfc",
+  "migration_count": 364,
+  "latest_version": "20261110220135",
+  "latest_name": "media_operation_claims_v2",
+  "ledger_sha256": "6fcada89fc8d3d3621b4c49242ca84a1aff050758cb1ecd60753cfbbbba35054",
   "migrations": [
     {
       "version": "0001",
@@ -1442,6 +1442,26 @@
     {
       "version": "20261103182544",
       "name": "learning_evidence_v1"
+    },
+    {
+      "version": "20261109175747",
+      "name": "music_direct_asset_versions_v1"
+    },
+    {
+      "version": "20261109180829",
+      "name": "core_signed_nonces_v1"
+    },
+    {
+      "version": "20261109181623",
+      "name": "city_arcade_v1"
+    },
+    {
+      "version": "20261109194957",
+      "name": "media_operation_claims_v1"
+    },
+    {
+      "version": "20261110220135",
+      "name": "media_operation_claims_v2"
     }
   ]
 }

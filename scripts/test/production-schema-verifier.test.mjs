@@ -4,6 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { SECTIONS, SECTION_NAMES, canonicalJsonbText, normalizeSqlCode, MANAGED_SCHEMAS } from '../db/schema-queries.mjs';
 import {
@@ -55,7 +56,27 @@ test('the latest evidence ledger reconciles with the repo and the committed prod
   const latest = (await readdir(evidenceDir)).filter((f) => /^production-schema-snapshot-\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort().at(-1);
   const snap = JSON.parse(await readFile(path.join(evidenceDir, latest), 'utf8'));
   const l = await compareLedger(snap.sections.ledger.rows, root);
-  assert.equal(l.committed_ledger.matches_live, true);
+  if (!l.committed_ledger.matches_live) {
+    // The committed ledger may run AHEAD of the captured snapshot only for versions
+    // applied afterwards under a dated receipt (docs/control-plane/evidence/ledger-receipts.json);
+    // everything up to the snapshot's latest version must still match row for row.
+    const receipts = JSON.parse(await readFile(path.join(root, 'docs', 'control-plane', 'evidence', 'ledger-receipts.json'), 'utf8')).applied_after_snapshot || {};
+    const committed = JSON.parse(await readFile(path.join(root, 'supabase', 'production-ledger.json'), 'utf8')).migrations || [];
+    const liveLatest = l.live_latest.slice(0, 14);
+    const liveRows = snap.sections.ledger.rows.map(([version, name]) => `${version}:${name}`).sort();
+    const committedUpToSnapshot = committed.filter((r) => String(r.version) <= liveLatest).map((r) => `${r.version}:${r.name}`).sort();
+    assert.deepEqual(committedUpToSnapshot, liveRows, 'committed ledger disagrees with the snapshot for versions the snapshot covers');
+    const ahead = committed.filter((r) => String(r.version) > liveLatest);
+    assert.ok(ahead.length, 'committed ledger differs from the snapshot but is not ahead of it');
+    for (const r of ahead) {
+      const receipt = receipts[String(r.version)];
+      assert.ok(receipt, `${r.version}_${r.name} is in the committed ledger but not in the snapshot and has no entry in ledger-receipts.json`);
+      assert.equal(receipt.name, r.name, `${r.version}: receipt name ${receipt.name} differs from ledger name ${r.name}`);
+      assert.ok(existsSync(path.join(root, receipt.receipt)), `${r.version}: receipt ${receipt.receipt} does not exist`);
+      assert.ok(existsSync(path.join(root, 'supabase', 'migrations', `${r.version}_${r.name}.sql`)), `${r.version}_${r.name}.sql is not under supabase/migrations/`);
+    }
+    for (const version of Object.keys(receipts)) assert.ok(version > liveLatest, `ledger-receipts.json lists ${version}, which the latest snapshot already contains: remove it`);
+  }
   assert.deepEqual(l.missing_in_repo, []);
   // Files added to supabase/migrations/ after the capture would show here; promotion
   // records a new capture, so a non-empty list means the evidence is stale, not wrong.
