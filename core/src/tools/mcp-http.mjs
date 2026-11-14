@@ -6,7 +6,8 @@ const DEFAULT_TIMEOUT_MS = 15_000;
 
 function safeRemoteUrl(raw) {
   const url = new URL(raw);
-  const loopback = ['127.0.0.1', '::1', 'localhost'].includes(url.hostname);
+  if (url.username || url.password || url.hash) throw new Error('MCP endpoint must not contain credentials or a fragment');
+  const loopback = ['127.0.0.1', '[::1]', 'localhost'].includes(url.hostname);
   if (url.protocol !== 'https:' && !(loopback && url.protocol === 'http:')) {
     throw new Error(`MCP endpoint must use HTTPS (or loopback HTTP): ${url.origin}`);
   }
@@ -152,8 +153,16 @@ async function mcpRpcOnce(server, method, params = {}, { timeoutMs = DEFAULT_TIM
     method: 'POST',
     headers,
     body,
-    signal: AbortSignal.timeout(timeoutMs)
+    signal: AbortSignal.timeout(timeoutMs),
+    // A redirect must never forward custom auth/signature headers or private
+    // tool arguments to a destination that was not configured by the owner.
+    redirect: 'manual'
   });
+  if (res.status >= 300 && res.status < 400) {
+    // Cleanup must not turn this policy refusal into a retriable transport error.
+    try { await res.body?.cancel(); } catch { /* preserve the redirect refusal */ }
+    throw new Error('MCP endpoint redirected; verify and configure its exact destination before retrying');
+  }
   return parseRpcResponse(res);
 }
 
