@@ -50,7 +50,8 @@ Open items and the next step for each:
 
 1. **Stage 3.** Done at `b1f2723` and merged into the product's main (PR #4). Its open notes, none blocking, are in
    `handoff/README.md`.
-2. **COM-3.** Done in #796. #782 stays a draft: hosted checks on its exact head, the authorized SQL rollout and the
+2. **COM-3.** Built in #796, which merged into #782's branch only: on 2026-11-16 COM-3 was in neither `main` nor
+   production. #782 stays a draft: hosted checks on its exact head, the authorized SQL rollout and the
    owner's cutover decision come before any paid activation.
 3. **Close-out.** Done. PR #793 merged on 2026-11-10, and the owner's P0 to P9 priorities are mapped to their state in
    `TRACEABILITY.md`. CI on the merged head `6ce5ef7c`, which carries the owner's four commits, was read on 2026-11-16: all 70 check runs completed, 68 succeeded and 2 were skipped (`Publish generated building artifacts`, `Supabase Preview`), none failed.
