@@ -1,0 +1,64 @@
+{
+ "ok": true,
+ "schema": "world-environment-shakemap/v1",
+ "event_id": "us7000tyca",
+ "generated_at": "2026-11-17T20:01:00.000Z",
+ "sources": [
+  {
+   "id": "usgs_event",
+   "label": "USGS event detail",
+   "status": "available",
+   "reason": null,
+   "fetched_at": "2026-11-17T20:01:00.000Z",
+   "last_success_at": "2026-11-17T20:01:00.000Z",
+   "coverage": "The products USGS lists for one earthquake",
+   "attribution": "U.S. Geological Survey, Earthquake Hazards Program",
+   "license": "Public domain (U.S. Government work)",
+   "url": "https://earthquake.usgs.gov/"
+  },
+  {
+   "id": "usgs_shakemap",
+   "label": "USGS ShakeMap",
+   "status": "available",
+   "reason": null,
+   "fetched_at": "2026-11-17T20:01:00.000Z",
+   "last_success_at": "2026-11-17T20:01:00.000Z",
+   "coverage": "ShakeMap exists for about M5.4 and larger worldwide, and from about M3 to M3.5 in some U.S. regional networks",
+   "attribution": "U.S. Geological Survey ShakeMap",
+   "license": "Public domain (U.S. Government work)",
+   "url": "https://earthquake.usgs.gov/data/shakemap/"
+  }
+ ],
+ "modelled": true,
+ "units": "MMI",
+ "notes": {
+  "shakemap": "ShakeMap is the USGS's modelled estimate of shaking intensity (Modified Mercalli Intensity, MMI), combining recordings with ground-motion models. It is versioned and can change; it is not a measurement at every place.",
+  "contours": "Each contour is a line of equal estimated intensity (an isoseismal), coloured as USGS colours it."
+ },
+ "usgs_preferred_id": "us7000tyca",
+ "version": 3,
+ "process_time": "2026-11-16T05:17:59.000Z",
+ "review_status": "automatic",
+ "map_status": "automatic",
+ "max_mmi": 1.7,
+ "update_time": "2026-11-16T05:18:38.832Z",
+ "product_code": "us7000tyca",
+ "product_source": "us",
+ "available": true,
+ "reason": null,
+ "contours": [],
+ "counts": {
+  "contours": 0,
+  "lines": 0,
+  "vertices": 0
+ },
+ "thinned": false,
+ "truncated": false,
+ "lines_dropped": 0,
+ "features_dropped": 0,
+ "caps": {
+  "contours": 24,
+  "lines": 600,
+  "vertices": 20000
+ }
+}

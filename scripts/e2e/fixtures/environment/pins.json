@@ -1,0 +1,1619 @@
+[
+ {
+  "id": "usgs:us7000tyhr",
+  "title": "20 km NW of Anamizu, Japan",
+  "lat": 37.3664,
+  "lon": 136.7444,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us7000tyhr"
+  },
+  "observed_at": "2026-11-16T04:24:11.718Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "5.4"
+   },
+   {
+    "label": "Depth",
+    "value": "273.6 km"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "usgs:us7000tyca",
+  "title": "Fiji region",
+  "lat": -19.5554,
+  "lon": -177.8215,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us7000tyca"
+  },
+  "observed_at": "2026-11-15T05:15:02.697Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "5.6"
+   },
+   {
+    "label": "Depth",
+    "value": "560 km"
+   }
+  ],
+  "significant": true
+ },
+ {
+  "id": "usgs:nc75467542",
+  "title": "8 km NW of The Geysers, CA",
+  "lat": 38.8,
+  "lon": -122.8,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/nc75467542"
+  },
+  "observed_at": "2026-11-17T15:10:44.020Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "3.1"
+   },
+   {
+    "label": "Depth",
+    "value": "2.1 km"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "usgs:fx-m62",
+  "title": "Fixture region, offshore Chile",
+  "lat": -33.1,
+  "lon": -71.9,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-m62"
+  },
+  "observed_at": "2026-11-17T18:40:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "6.2"
+   },
+   {
+    "label": "Depth",
+    "value": "35 km"
+   }
+  ],
+  "significant": true
+ },
+ {
+  "id": "usgs:fx-m71",
+  "title": "Fixture region, Aleutian arc",
+  "lat": 51.5,
+  "lon": -176,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-m71"
+  },
+  "observed_at": "2026-11-17T19:12:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "7.1"
+   },
+   {
+    "label": "Depth",
+    "value": "20 km"
+   },
+   {
+    "label": "USGS tsunami flag",
+    "value": "Flagged by source; consult official warnings"
+   }
+  ],
+  "significant": true
+ },
+ {
+  "id": "usgs:fx-m45",
+  "title": "Fixture region, Searles Valley",
+  "lat": 35.7,
+  "lon": -117.5,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-m45"
+  },
+  "observed_at": "2026-11-17T19:50:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "4.5"
+   },
+   {
+    "label": "Depth",
+    "value": "8 km"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "usgs:fx-gen-7",
+  "title": "Fixture region 7",
+  "lat": -41,
+  "lon": -29,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-7"
+  },
+  "observed_at": "2026-11-17T02:55:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "3.2"
+   },
+   {
+    "label": "Depth",
+    "value": "119 km"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "usgs:fx-gen-8",
+  "title": "Fixture region 8",
+  "lat": -4,
+  "lon": 44,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-8"
+  },
+  "observed_at": "2026-11-17T03:20:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "3.3"
+   },
+   {
+    "label": "Depth",
+    "value": "136 km"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "usgs:fx-gen-9",
+  "title": "Fixture region 9",
+  "lat": 33,
+  "lon": 117,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-9"
+  },
+  "observed_at": "2026-11-17T03:45:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "3.4"
+   },
+   {
+    "label": "Depth",
+    "value": "153 km"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "usgs:fx-gen-10",
+  "title": "Fixture region 10",
+  "lat": -50,
+  "lon": -170,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-10"
+  },
+  "observed_at": "2026-11-17T04:10:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "3.5"
+   },
+   {
+    "label": "Depth",
+    "value": "170 km"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "usgs:fx-gen-11",
+  "title": "Fixture region 11",
+  "lat": -13,
+  "lon": -97,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-11"
+  },
+  "observed_at": "2026-11-17T04:35:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "3.6"
+   },
+   {
+    "label": "Depth",
+    "value": "187 km"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "usgs:fx-gen-12",
+  "title": "Fixture region 12",
+  "lat": 24,
+  "lon": -24,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-12"
+  },
+  "observed_at": "2026-11-17T05:00:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "5.7"
+   },
+   {
+    "label": "Depth",
+    "value": "204 km"
+   }
+  ],
+  "significant": true
+ },
+ {
+  "id": "usgs:fx-gen-13",
+  "title": "Fixture region 13",
+  "lat": -59,
+  "lon": 49,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-13"
+  },
+  "observed_at": "2026-11-17T05:25:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "3.8"
+   },
+   {
+    "label": "Depth",
+    "value": "221 km"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "usgs:fx-gen-14",
+  "title": "Fixture region 14",
+  "lat": -22,
+  "lon": 122,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-14"
+  },
+  "observed_at": "2026-11-17T05:50:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "3.9"
+   },
+   {
+    "label": "Depth",
+    "value": "238 km"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "usgs:fx-gen-15",
+  "title": "Fixture region 15",
+  "lat": 15,
+  "lon": -165,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-15"
+  },
+  "observed_at": "2026-11-17T06:15:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "4"
+   },
+   {
+    "label": "Depth",
+    "value": "255 km"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "usgs:fx-gen-16",
+  "title": "Fixture region 16",
+  "lat": 52,
+  "lon": -92,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-16"
+  },
+  "observed_at": "2026-11-17T06:40:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "4.1"
+   },
+   {
+    "label": "Depth",
+    "value": "272 km"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "usgs:fx-gen-17",
+  "title": "Fixture region 17",
+  "lat": -31,
+  "lon": -19,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-17"
+  },
+  "observed_at": "2026-11-17T07:05:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "4.2"
+   },
+   {
+    "label": "Depth",
+    "value": "289 km"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "usgs:fx-gen-18",
+  "title": "Fixture region 18",
+  "lat": 6,
+  "lon": 54,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-18"
+  },
+  "observed_at": "2026-11-17T07:30:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "4.3"
+   },
+   {
+    "label": "Depth",
+    "value": "6 km"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "usgs:fx-gen-19",
+  "title": "Fixture region 19",
+  "lat": 43,
+  "lon": 127,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-19"
+  },
+  "observed_at": "2026-11-17T07:55:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "4.4"
+   },
+   {
+    "label": "Depth",
+    "value": "23 km"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "usgs:fx-gen-20",
+  "title": "Fixture region 20",
+  "lat": -40,
+  "lon": -160,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-20"
+  },
+  "observed_at": "2026-11-17T08:20:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "4.5"
+   },
+   {
+    "label": "Depth",
+    "value": "40 km"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "usgs:fx-gen-21",
+  "title": "Fixture region 21",
+  "lat": -3,
+  "lon": -87,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-21"
+  },
+  "observed_at": "2026-11-17T08:45:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "4.6"
+   },
+   {
+    "label": "Depth",
+    "value": "57 km"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "usgs:fx-gen-22",
+  "title": "Fixture region 22",
+  "lat": 34,
+  "lon": -14,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-22"
+  },
+  "observed_at": "2026-11-17T09:10:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "4.7"
+   },
+   {
+    "label": "Depth",
+    "value": "74 km"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "usgs:fx-gen-23",
+  "title": "Fixture region 23",
+  "lat": -49,
+  "lon": 59,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-23"
+  },
+  "observed_at": "2026-11-17T09:35:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "4.8"
+   },
+   {
+    "label": "Depth",
+    "value": "91 km"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "usgs:fx-gen-24",
+  "title": "Fixture region 24",
+  "lat": -12,
+  "lon": 132,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-24"
+  },
+  "observed_at": "2026-11-17T10:00:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "5.9"
+   },
+   {
+    "label": "Depth",
+    "value": "108 km"
+   }
+  ],
+  "significant": true
+ },
+ {
+  "id": "usgs:fx-gen-25",
+  "title": "Fixture region 25",
+  "lat": 25,
+  "lon": -155,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-25"
+  },
+  "observed_at": "2026-11-17T10:25:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "5"
+   },
+   {
+    "label": "Depth",
+    "value": "125 km"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "usgs:fx-gen-26",
+  "title": "Fixture region 26",
+  "lat": -58,
+  "lon": -82,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-26"
+  },
+  "observed_at": "2026-11-17T10:50:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "5.1"
+   },
+   {
+    "label": "Depth",
+    "value": "142 km"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "usgs:fx-gen-27",
+  "title": "Fixture region 27",
+  "lat": -21,
+  "lon": -9,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-27"
+  },
+  "observed_at": "2026-11-17T11:15:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "5.2"
+   },
+   {
+    "label": "Depth",
+    "value": "159 km"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "usgs:fx-gen-28",
+  "title": "Fixture region 28",
+  "lat": 16,
+  "lon": 64,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-28"
+  },
+  "observed_at": "2026-11-17T11:40:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "5.3"
+   },
+   {
+    "label": "Depth",
+    "value": "176 km"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "usgs:fx-gen-29",
+  "title": "Fixture region 29",
+  "lat": 53,
+  "lon": 137,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-29"
+  },
+  "observed_at": "2026-11-17T12:05:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "5.4"
+   },
+   {
+    "label": "Depth",
+    "value": "193 km"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "usgs:fx-gen-30",
+  "title": "Fixture region 30",
+  "lat": -30,
+  "lon": -150,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-30"
+  },
+  "observed_at": "2026-11-17T12:30:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "2.5"
+   },
+   {
+    "label": "Depth",
+    "value": "210 km"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "usgs:fx-gen-31",
+  "title": "Fixture region 31",
+  "lat": 7,
+  "lon": -77,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-31"
+  },
+  "observed_at": "2026-11-17T12:55:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "2.6"
+   },
+   {
+    "label": "Depth",
+    "value": "227 km"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "usgs:fx-gen-32",
+  "title": "Fixture region 32",
+  "lat": 44,
+  "lon": -4,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-32"
+  },
+  "observed_at": "2026-11-17T13:20:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "2.7"
+   },
+   {
+    "label": "Depth",
+    "value": "244 km"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "usgs:fx-gen-33",
+  "title": "Fixture region 33",
+  "lat": -39,
+  "lon": 69,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-33"
+  },
+  "observed_at": "2026-11-17T13:45:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "2.8"
+   },
+   {
+    "label": "Depth",
+    "value": "261 km"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "usgs:fx-gen-34",
+  "title": "Fixture region 34",
+  "lat": -2,
+  "lon": 142,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-34"
+  },
+  "observed_at": "2026-11-17T14:10:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "2.9"
+   },
+   {
+    "label": "Depth",
+    "value": "278 km"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "usgs:fx-gen-35",
+  "title": "Fixture region 35",
+  "lat": 35,
+  "lon": -145,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-35"
+  },
+  "observed_at": "2026-11-17T14:35:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "3"
+   },
+   {
+    "label": "Depth",
+    "value": "295 km"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "usgs:fx-gen-36",
+  "title": "Fixture region 36",
+  "lat": -48,
+  "lon": -72,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-36"
+  },
+  "observed_at": "2026-11-17T15:00:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "6.1"
+   },
+   {
+    "label": "Depth",
+    "value": "12 km"
+   }
+  ],
+  "significant": true
+ },
+ {
+  "id": "usgs:fx-gen-37",
+  "title": "Fixture region 37",
+  "lat": -11,
+  "lon": 1,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-37"
+  },
+  "observed_at": "2026-11-17T15:25:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "3.2"
+   },
+   {
+    "label": "Depth",
+    "value": "29 km"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "usgs:fx-gen-38",
+  "title": "Fixture region 38",
+  "lat": 26,
+  "lon": 74,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-38"
+  },
+  "observed_at": "2026-11-17T15:50:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "3.3"
+   },
+   {
+    "label": "Depth",
+    "value": "46 km"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "usgs:fx-gen-39",
+  "title": "Fixture region 39",
+  "lat": -57,
+  "lon": 147,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-39"
+  },
+  "observed_at": "2026-11-17T16:15:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "3.4"
+   },
+   {
+    "label": "Depth",
+    "value": "63 km"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "usgs:fx-gen-40",
+  "title": "Fixture region 40",
+  "lat": -20,
+  "lon": -140,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-40"
+  },
+  "observed_at": "2026-11-17T16:40:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "3.5"
+   },
+   {
+    "label": "Depth",
+    "value": "80 km"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "usgs:fx-gen-41",
+  "title": "Fixture region 41",
+  "lat": 17,
+  "lon": -67,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-41"
+  },
+  "observed_at": "2026-11-17T17:05:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "3.6"
+   },
+   {
+    "label": "Depth",
+    "value": "97 km"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "usgs:fx-gen-42",
+  "title": "Fixture region 42",
+  "lat": 54,
+  "lon": 6,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-42"
+  },
+  "observed_at": "2026-11-17T17:30:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "3.7"
+   },
+   {
+    "label": "Depth",
+    "value": "114 km"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "usgs:fx-gen-43",
+  "title": "Fixture region 43",
+  "lat": -29,
+  "lon": 79,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-43"
+  },
+  "observed_at": "2026-11-17T17:55:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "3.8"
+   },
+   {
+    "label": "Depth",
+    "value": "131 km"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "usgs:fx-gen-44",
+  "title": "Fixture region 44",
+  "lat": 8,
+  "lon": 152,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-44"
+  },
+  "observed_at": "2026-11-17T18:20:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "3.9"
+   },
+   {
+    "label": "Depth",
+    "value": "148 km"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "usgs:fx-gen-45",
+  "title": "Fixture region 45",
+  "lat": 45,
+  "lon": -135,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-45"
+  },
+  "observed_at": "2026-11-17T18:45:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "4"
+   },
+   {
+    "label": "Depth",
+    "value": "165 km"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "usgs:fx-gen-46",
+  "title": "Fixture region 46",
+  "lat": -38,
+  "lon": -62,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-46"
+  },
+  "observed_at": "2026-11-17T19:10:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "4.1"
+   },
+   {
+    "label": "Depth",
+    "value": "182 km"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "usgs:fx-gen-47",
+  "title": "Fixture region 47",
+  "lat": -1,
+  "lon": 11,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-47"
+  },
+  "observed_at": "2026-11-17T19:35:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "4.2"
+   },
+   {
+    "label": "Depth",
+    "value": "199 km"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "usgs:fx-gen-48",
+  "title": "Fixture region 48",
+  "lat": 36,
+  "lon": 84,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-48"
+  },
+  "observed_at": "2026-11-17T20:00:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "6.3"
+   },
+   {
+    "label": "Depth",
+    "value": "216 km"
+   }
+  ],
+  "significant": true
+ },
+ {
+  "id": "usgs:fx-gen-49",
+  "title": "Fixture region 49",
+  "lat": -47,
+  "lon": 157,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-49"
+  },
+  "observed_at": "2026-11-17T20:25:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "4.4"
+   },
+   {
+    "label": "Depth",
+    "value": "233 km"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "usgs:fx-gen-50",
+  "title": "Fixture region 50",
+  "lat": -10,
+  "lon": -130,
+  "stale": false,
+  "category": "quake",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-50"
+  },
+  "observed_at": "2026-11-17T20:50:00.000Z",
+  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "facts": [
+   {
+    "label": "Magnitude",
+    "value": "4.5"
+   },
+   {
+    "label": "Depth",
+    "value": "250 km"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "nws:fx-flood-az",
+  "title": "Flood Warning issued November 17 at 8:21AM MST until November 24 at 11:00AM MST by NWS Phoenix AZ",
+  "lat": 32.97,
+  "lon": -113.33,
+  "stale": false,
+  "category": "flood",
+  "location_kind": "area_label",
+  "source": {
+   "label": "NOAA NWS",
+   "url": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.cd2a32c09604bbb4ce3dbd25f55fa89188207a8c.001.1"
+  },
+  "observed_at": "2026-11-17T15:21:00.000Z",
+  "fetched_at": "2026-11-17T20:05:00.000Z",
+  "facts": [
+   {
+    "label": "Severity",
+    "value": "Severe"
+   },
+   {
+    "label": "Certainty",
+    "value": "Likely"
+   },
+   {
+    "label": "Urgency",
+    "value": "Expected"
+   },
+   {
+    "label": "Area",
+    "value": "Maricopa, AZ; Yuma, AZ"
+   }
+  ],
+  "significant": true
+ },
+ {
+  "id": "nws:fx-flood-tx",
+  "title": "Flood Warning issued November 17 at 8:27AM CST until November 18 at 7:36PM CST by NWS Corpus Christi TX",
+  "lat": 28.17,
+  "lon": -98.8,
+  "stale": false,
+  "category": "flood",
+  "location_kind": "area_label",
+  "source": {
+   "label": "NOAA NWS",
+   "url": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.1b79e2369a65d3d53cd09b2d82bcdcea2177543a.001.1"
+  },
+  "observed_at": "2026-11-17T14:27:00.000Z",
+  "fetched_at": "2026-11-17T20:05:00.000Z",
+  "facts": [
+   {
+    "label": "Severity",
+    "value": "Severe"
+   },
+   {
+    "label": "Certainty",
+    "value": "Observed"
+   },
+   {
+    "label": "Urgency",
+    "value": "Immediate"
+   },
+   {
+    "label": "Area",
+    "value": "McMullen, TX"
+   }
+  ],
+  "significant": true
+ },
+ {
+  "id": "nws:fx-tornado-ok",
+  "title": "Tornado Warning issued November 17 at 1:05PM CST until November 17 at 1:45PM CST by NWS Norman OK",
+  "lat": 35.5,
+  "lon": -97.5,
+  "stale": false,
+  "category": "tornado",
+  "location_kind": "area_label",
+  "source": {
+   "label": "NOAA NWS",
+   "url": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.fixture.tornado.ok.001.1"
+  },
+  "observed_at": "2026-11-17T19:05:00.000Z",
+  "fetched_at": "2026-11-17T20:05:00.000Z",
+  "facts": [
+   {
+    "label": "Severity",
+    "value": "Extreme"
+   },
+   {
+    "label": "Certainty",
+    "value": "Observed"
+   },
+   {
+    "label": "Urgency",
+    "value": "Immediate"
+   },
+   {
+    "label": "Area",
+    "value": "Cleveland, OK; Oklahoma, OK"
+   }
+  ],
+  "significant": true
+ },
+ {
+  "id": "nws:fx-wind-wy",
+  "title": "High Wind Watch issued November 17 at 3:00AM MST until November 18 at 5:00PM MST by NWS Riverton WY",
+  "lat": 42.8,
+  "lon": -108.7,
+  "stale": false,
+  "category": "wind",
+  "location_kind": "area_label",
+  "source": {
+   "label": "NOAA NWS",
+   "url": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.fixture.wind.wy.001.1"
+  },
+  "observed_at": "2026-11-17T10:00:00.000Z",
+  "fetched_at": "2026-11-17T20:05:00.000Z",
+  "facts": [
+   {
+    "label": "Severity",
+    "value": "Moderate"
+   },
+   {
+    "label": "Certainty",
+    "value": "Possible"
+   },
+   {
+    "label": "Urgency",
+    "value": "Future"
+   },
+   {
+    "label": "Area",
+    "value": "Natrona, WY"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "nws:fx-fog-fl",
+  "title": "Dense Fog Advisory issued November 17 at 4:30AM EST until November 17 at 10:00AM EST by NWS Jacksonville FL",
+  "lat": 29.2,
+  "lon": -82.1,
+  "stale": false,
+  "category": "dust",
+  "location_kind": "area_label",
+  "source": {
+   "label": "NOAA NWS",
+   "url": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.fixture.fog.fl.001.1"
+  },
+  "observed_at": "2026-11-17T09:30:00.000Z",
+  "fetched_at": "2026-11-17T20:05:00.000Z",
+  "facts": [
+   {
+    "label": "Severity",
+    "value": "Minor"
+   },
+   {
+    "label": "Certainty",
+    "value": "Likely"
+   },
+   {
+    "label": "Urgency",
+    "value": "Expected"
+   },
+   {
+    "label": "Area",
+    "value": "Marion, FL"
+   }
+  ],
+  "significant": false
+ },
+ {
+  "id": "eonet:EONET_fx_fire_1",
+  "title": "Fixture Ridge Fire, Montana",
+  "lat": 46.9,
+  "lon": -113.9,
+  "stale": true,
+  "category": "fire",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "NASA EONET",
+   "url": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_fx_fire_1"
+  },
+  "observed_at": "2026-11-16T00:00:00.000Z",
+  "fetched_at": "2026-11-17T14:00:00.000Z",
+  "facts": [
+   {
+    "label": "Reported magnitude",
+    "value": "45210.5 acres"
+   }
+  ],
+  "significant": true
+ },
+ {
+  "id": "eonet:EONET_fx_fire_2",
+  "title": "Fixture Bushfire, Queensland",
+  "lat": -23.4,
+  "lon": 146.1,
+  "stale": true,
+  "category": "fire",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "NASA EONET",
+   "url": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_fx_fire_2"
+  },
+  "observed_at": "2026-11-15T00:00:00.000Z",
+  "fetched_at": "2026-11-17T14:00:00.000Z",
+  "facts": [
+   {
+    "label": "Reported magnitude",
+    "value": "12400 acres"
+   }
+  ],
+  "significant": true
+ },
+ {
+  "id": "eonet:EONET_fx_storm_1",
+  "title": "Tropical Cyclone Fengal",
+  "lat": 11.2,
+  "lon": 82.1,
+  "stale": true,
+  "category": "cyclone",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "NASA EONET",
+   "url": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_fx_storm_1"
+  },
+  "observed_at": "2026-11-17T06:00:00.000Z",
+  "fetched_at": "2026-11-17T14:00:00.000Z",
+  "facts": [
+   {
+    "label": "Reported magnitude",
+    "value": "55 kts"
+   }
+  ],
+  "significant": true
+ },
+ {
+  "id": "eonet:EONET_fx_storm_2",
+  "title": "Fixture Severe Storms, Oklahoma",
+  "lat": 35.3,
+  "lon": -97.1,
+  "stale": true,
+  "category": "storm",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "NASA EONET",
+   "url": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_fx_storm_2"
+  },
+  "observed_at": "2026-11-17T12:00:00.000Z",
+  "fetched_at": "2026-11-17T14:00:00.000Z",
+  "facts": [],
+  "significant": true
+ },
+ {
+  "id": "eonet:EONET_fx_volcano_1",
+  "title": "Fixture Volcano, Sicily",
+  "lat": 37.75,
+  "lon": 14.99,
+  "stale": true,
+  "category": "volcano",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "NASA EONET",
+   "url": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_fx_volcano_1"
+  },
+  "observed_at": "2026-11-17T00:00:00.000Z",
+  "fetched_at": "2026-11-17T14:00:00.000Z",
+  "facts": [],
+  "significant": true
+ },
+ {
+  "id": "eonet:EONET_fx_ice_1",
+  "title": "Fixture Iceberg, Weddell Sea",
+  "lat": -62.3,
+  "lon": -45.1,
+  "stale": true,
+  "category": "ice",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "NASA EONET",
+   "url": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_fx_ice_1"
+  },
+  "observed_at": "2026-11-10T00:00:00.000Z",
+  "fetched_at": "2026-11-17T14:00:00.000Z",
+  "facts": [],
+  "significant": false
+ },
+ {
+  "id": "nhc:fx-al19",
+  "title": "Tropical Storm Sara",
+  "lat": 16.2,
+  "lon": -83.4,
+  "stale": false,
+  "category": "cyclone",
+  "location_kind": "reported_point",
+  "source": {
+   "label": "NOAA NHC",
+   "url": "https://www.nhc.noaa.gov/"
+  },
+  "observed_at": null,
+  "fetched_at": "2026-11-17T20:03:00.000Z",
+  "facts": [
+   {
+    "label": "Maximum sustained wind",
+    "value": "60 kt"
+   },
+   {
+    "label": "Classification",
+    "value": "TS"
+   }
+  ],
+  "significant": true
+ }
+]
