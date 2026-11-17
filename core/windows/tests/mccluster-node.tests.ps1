@@ -62,6 +62,13 @@ $script:MockMemory = $null
 $script:MockUserEnvironment = @{}
 $script:MockIcaclsCalls = New-Object System.Collections.Generic.List[string]
 $script:MockTaskRegistrations = 0
+$script:MockBrowserTaskRegistrations = 0
+$script:MockNpmCalls = New-Object System.Collections.Generic.List[string]
+$script:MockPlaywrightCalls = New-Object System.Collections.Generic.List[string]
+$script:MockAnswer = 'y'
+$script:MockStoppedTasks = New-Object System.Collections.Generic.List[string]
+$script:MockStartedTasks = New-Object System.Collections.Generic.List[string]
+$script:MockNodeRuns = New-Object System.Collections.Generic.List[object]
 function Get-McCimVideoControllers { return @($script:MockControllers) }
 function Get-McRegistryDisplayEntries { return @($script:MockRegistry) }
 function Get-McMemoryInfo { return $script:MockMemory }
@@ -77,9 +84,34 @@ function Invoke-McIcacls {
   return $true
 }
 function Register-McScheduledTasks {
-  param([string]$StateRoot, [string]$UserId)
-  $script:MockTaskRegistrations++
+  param([string]$StateRoot, [string]$UserId, [switch]$Browser)
+  if ($Browser) { $script:MockBrowserTaskRegistrations++ } else { $script:MockTaskRegistrations++ }
   return $true
+}
+function Start-McScheduledTask { param([string]$Name) $script:MockStartedTasks.Add($Name); return $true }
+function Stop-McScheduledTask { param([string]$Name) $script:MockStoppedTasks.Add($Name); return $true }
+function Get-McNpmCliPath { return 'npm-cli.js' }
+function Invoke-McNpm {
+  # the mocked registry install lands the package: the package.json the doctor verifies afterwards
+  param([string[]]$Arguments, [string]$WorkingDirectory, [int]$TimeoutSeconds = 600)
+  $script:MockNpmCalls.Add(($Arguments -join ' '))
+  $packageDir = [System.IO.Path]::Combine($WorkingDirectory, 'node_modules', 'playwright')
+  New-Item -ItemType Directory -Path $packageDir -Force | Out-Null
+  [System.IO.File]::WriteAllText([System.IO.Path]::Combine($packageDir, 'package.json'), ('{"name":"playwright","version":"' + $script:McPlaywrightVersion + '"}'))
+  [System.IO.File]::WriteAllText([System.IO.Path]::Combine($packageDir, 'cli.js'), '// fixture')
+  return [pscustomobject]@{ ExitCode = 0; TimedOut = $false; StdOut = ''; StdErr = '' }
+}
+function Invoke-McPlaywrightCli {
+  param([string]$StateRoot, [string[]]$Arguments, [int]$TimeoutSeconds = 900)
+  $script:MockPlaywrightCalls.Add(($Arguments -join ' '))
+  return [pscustomobject]@{ ExitCode = 0; TimedOut = $false; StdOut = "browser: chromium version 143.0.7499.4`n  Install location: STORE`n  Download url: fixture`n"; StdErr = '' }
+}
+function Read-McAnswer { param([string]$Prompt) return $script:MockAnswer }
+function Invoke-McBrowserJson { param([string]$Path, [int]$TimeoutSec = 5) return $null }
+function Invoke-McNodeProcess {
+  param([string]$Script, [string[]]$Arguments = @(), [hashtable]$Environment = @{}, [string]$WorkingDirectory, [int]$TimeoutSeconds = 120, [switch]$Interactive)
+  $script:MockNodeRuns.Add([pscustomobject]@{ Script = $Script; Arguments = @($Arguments); Environment = $Environment.Clone(); Interactive = [bool]$Interactive; TimeoutSeconds = $TimeoutSeconds })
+  return [pscustomobject]@{ ExitCode = 0; TimedOut = $false; StdOut = ''; StdErr = '' }
 }
 function Use-Fixture {
   param([string]$Cim, [string]$Reg, [int64]$FreeBytes = 12000000000)
@@ -444,8 +476,15 @@ Assert-Null (Get-McBackendNote -LogLines @()) 'no log lines, no note'
 # ---- manifest rendering from the real template -------------------------------------------------
 $templateJson = [System.IO.File]::ReadAllText($templatePath)
 $template = $templateJson | ConvertFrom-Json
-Assert-Equal 4 (@($template.capabilities).Count) 'the template carries the four entries the tiers choose from'
+Assert-Equal 5 (@($template.capabilities).Count) 'the template carries the four ai.chat entries the tiers choose from and the browser entry'
 Assert-Equal 'qwen3-vl.8b.local' (@($template.capabilities)[0].implementation) 'the resident vision model is the first template entry'
+Assert-Equal 'browser.act' (@($template.capabilities)[4].capability) 'the browser entry is the last template entry'
+Assert-Equal 'chromium.local' (@($template.capabilities)[4].implementation) 'the browser implementation is chromium.local'
+Assert-Equal $true (@($template.capabilities)[0].features.vision) 'the resident vision model advertises vision'
+Assert-Equal $true (@($template.capabilities)[3].features.vision) 'the small vision model advertises vision'
+Assert-Null (@($template.capabilities)[1].features.vision) 'the OVH twin claims no vision'
+$withBrowserRender = (ConvertTo-McManifestJson -TemplateJson $templateJson -Settings (Get-McTierSettings 'C') -ExtraImplementations @('chromium.local')) | ConvertFrom-Json
+Assert-Equal 'qwen3-vl.8b.local,qwen3.8b.local,chromium.local' (@($withBrowserRender.capabilities | ForEach-Object { $_.implementation }) -join ',') 'tier C with the browser installed keeps chromium.local in template order'
 $renderedA = (ConvertTo-McManifestJson -TemplateJson $templateJson -Settings (Get-McTierSettings 'A')) | ConvertFrom-Json
 Assert-Equal 'qwen3-vl.8b.local,qwen3.8b.local,qwen3.14b.local' (@($renderedA.capabilities | ForEach-Object { $_.implementation }) -join ',') 'tier A: three entries in template order'
 foreach ($tierName in @('B', 'C')) {
@@ -469,6 +508,44 @@ $readded = Add-McManifestImplementation -ManifestJson $pruned -TemplateJson $tem
 Assert-Equal 2 (@(($readded | ConvertFrom-Json).capabilities).Count) 'the twin comes back from the template'
 Assert-Equal 'qwen3:8b' (@(($readded | ConvertFrom-Json).capabilities)[1].model) 'the re-added entry is the twin'
 Assert-Equal $readded (Add-McManifestImplementation -ManifestJson $readded -TemplateJson $templateJson -Implementation 'qwen3.8b.local') 'adding it twice changes nothing'
+
+# ---- the node's own browser (slice N2): paths, policy, environment, launcher, report lines ------
+Assert-Equal ([System.IO.Path]::Combine('STATE', 'browser')) (Get-McBrowserDir 'STATE') 'browser dir under the state root'
+Assert-Equal ([System.IO.Path]::Combine('STATE', 'browser-profile')) (Get-McBrowserProfileDir 'STATE') 'profile dir under the state root'
+Assert-Equal ([System.IO.Path]::Combine('STATE', 'browser-policy.json')) (Get-McBrowserPolicyPath 'STATE') 'policy beside the manifest'
+Assert-Equal ([System.IO.Path]::Combine('STATE', 'browser', 'node_modules', 'playwright')) (Get-McPlaywrightDir 'STATE') 'playwright package dir'
+Assert-Equal ([System.IO.Path]::Combine('STATE', 'browser', 'ms-playwright')) (Get-McPlaywrightBrowsersPath 'STATE') 'Chromium store under the state root'
+$policyDefault = (Get-McBrowserPolicyText) | ConvertFrom-Json
+Assert-Equal 'mccluster-browser-policy/1' $policyDefault.schema 'default policy schema'
+Assert-Equal 0 (@($policyDefault.allowed_hosts).Count) 'default policy allows no host'
+Assert-Equal $false $policyDefault.allow_subdomains 'default policy: subdomains off'
+Assert-Equal 'absent (run -Browser, then edit allowed_hosts)' (ConvertFrom-McBrowserPolicy -Text $null).Summary 'policy summary: absent'
+Assert-Equal 'unreadable (invalid JSON)' (ConvertFrom-McBrowserPolicy -Text 'not json').Summary 'policy summary: invalid JSON'
+Assert-Equal 'schema_mismatch' (ConvertFrom-McBrowserPolicy -Text '{"schema":"other/1","allowed_hosts":["a.example"]}').Error 'policy summary: wrong schema'
+$twoHosts = ConvertFrom-McBrowserPolicy -Text '{"schema":"mccluster-browser-policy/1","allowed_hosts":["a.example","b.example:8443"],"allow_subdomains":true}'
+Assert-Equal 2 $twoHosts.HostCount 'policy summary: counts the hosts'
+Assert-Equal 'allowed_hosts 2, allow_subdomains true' $twoHosts.Summary 'policy summary: shape only'
+Assert-Equal $false ($twoHosts.Summary.Contains('a.example')) 'policy summary never names a host'
+Assert-True ((ConvertFrom-McBrowserPolicy -Text (Get-McBrowserPolicyText)).Summary.Contains('BROWSER_POLICY_EMPTY')) 'policy summary: an empty allowlist says every open is refused'
+$browserValues = Get-McBrowserEnvironment -StateRoot 'STATE'
+Assert-Equal '4791' $browserValues['MCCLUSTER_BROWSER_EXECUTOR_PORT'] 'browser env: the executor port'
+Assert-Equal ([System.IO.Path]::Combine('STATE', 'browser-policy.json')) $browserValues['MCCLUSTER_BROWSER_POLICY'] 'browser env: the policy path'
+Assert-Equal ([System.IO.Path]::Combine('STATE', 'browser-profile')) $browserValues['MCCLUSTER_BROWSER_PROFILE_DIR'] 'browser env: the profile dir'
+Assert-Equal ([System.IO.Path]::Combine('STATE', 'browser', 'node_modules', 'playwright')) $browserValues['MCCLUSTER_BROWSER_PLAYWRIGHT_DIR'] 'browser env: the pinned package dir'
+Assert-Equal ([System.IO.Path]::Combine('STATE', 'browser', 'ms-playwright')) $browserValues['PLAYWRIGHT_BROWSERS_PATH'] 'browser env: the Chromium store'
+Assert-Equal ([System.IO.Path]::Combine('STATE', 'capabilities.json')) $browserValues['MCCLUSTER_NODE_MANIFEST'] 'browser env: the manifest (the policy sits beside it)'
+Assert-Equal $false $browserValues.Contains('MCCLUSTER_BROWSER_HEADED') 'browser env: headless by default (no HEADED key)'
+foreach ($key in @($browserValues.Keys)) {
+  if ($key -like 'MCCLUSTER_*') { Assert-True ((Get-McReportValueAllowlist) -contains $key) ('the report allowlist names the browser variable ' + $key) }
+}
+$browserLauncherText = Get-McLauncherText -Kind 'browser' -Environment $browserValues -RepoPath 'REPO' -StateRoot 'STATE'
+Assert-True ($browserLauncherText.Contains('node src\compute\browser-executor.mjs >> ')) 'browser launcher runs the executor'
+Assert-True ($browserLauncherText.Contains('set MCCLUSTER_BROWSER_EXECUTOR_PORT=4791')) 'browser launcher carries the port'
+Assert-True ($browserLauncherText.Contains('browser.log')) 'browser launcher logs to browser.log'
+Assert-Equal $false $browserLauncherText.Contains('ENROLL_TOKEN') 'browser launcher carries no token'
+$playwrightEnv = Format-McEnvironmentLines -Variables @{ PLAYWRIGHT_BROWSERS_PATH = 'STATE-browsers'; MCCLUSTER_BROWSER_EXECUTOR_PORT = '4791'; MCCLUSTER_BROWSER_POLICY = 'STATE-policy' }
+Assert-True (($playwrightEnv -join "`n").Contains('PLAYWRIGHT_BROWSERS_PATH = STATE-browsers')) 'report lists the Chromium store path'
+Assert-True (($playwrightEnv -join "`n").Contains('MCCLUSTER_BROWSER_POLICY = STATE-policy')) 'report prints the browser policy path (non-secret)'
 
 # ---- mocks for the benchmark: free memory as a sequence of readings, a daemon that answers in memory --------
 $script:MockFreeSequence = New-Object System.Collections.Generic.List[int64]
@@ -595,6 +672,106 @@ try {
   $bigger = Invoke-McInstall -RepoPath $repoRoot -StateRoot $tempRoot -NodeName 'owner-windows-gpu' -ComputeUrl 'https://compute.mccluster.org' -TierOverride 'A'
   Assert-Equal 'A' $bigger.Tier 'install with -Tier A: override applied'
   Assert-Equal 3 (@(([System.IO.File]::ReadAllText((Join-Path $tempRoot 'capabilities.json')) | ConvertFrom-Json).capabilities).Count) 'install with -Tier A: three entries written'
+
+  # ---- the node's own browser: -WhatIf writes nothing, declining the download changes nothing, the real run lands everything once ----
+  $script:MockNpmCalls.Clear(); $script:MockPlaywrightCalls.Clear(); $script:MockStartedTasks.Clear(); $script:MockBrowserTaskRegistrations = 0; $script:MockAnswer = 'y'
+  Invoke-McBrowserInstall -StateRoot $tempRoot -RepoPath $repoRoot -WhatIf | Out-Null
+  Assert-Equal $false (Test-Path -LiteralPath (Join-Path $tempRoot 'browser')) '-Browser -WhatIf creates no browser folder'
+  Assert-Equal $false (Test-Path -LiteralPath (Join-Path $tempRoot 'browser-profile')) '-Browser -WhatIf creates no profile folder'
+  Assert-Equal 0 $script:MockNpmCalls.Count '-Browser -WhatIf runs no npm'
+  Assert-Equal 0 $script:MockPlaywrightCalls.Count '-Browser -WhatIf runs no Playwright installer'
+  Assert-Equal 0 $script:MockBrowserTaskRegistrations '-Browser -WhatIf registers no task'
+  Assert-Equal $false (Test-Path -LiteralPath (Join-Path $tempRoot 'browser-policy.json')) '-Browser -WhatIf writes no policy'
+  Assert-Equal 3 (@(([System.IO.File]::ReadAllText((Join-Path $tempRoot 'capabilities.json')) | ConvertFrom-Json).capabilities).Count) '-Browser -WhatIf changes no manifest'
+
+  $script:MockAnswer = 'n'
+  $declined = Invoke-McBrowserInstall -StateRoot $tempRoot -RepoPath $repoRoot
+  Assert-Equal 2 $declined.ExitCode 'browser: declining the Chromium download exits 2'
+  Assert-Equal $false $declined.Installed 'browser: declined is not installed'
+  Assert-Equal 1 $script:MockNpmCalls.Count 'browser: the package was installed before the dry run (the dry run needs it)'
+  Assert-Equal 'install --dry-run chromium' ($script:MockPlaywrightCalls -join '|') 'browser: only the dry run ran when the owner declined'
+  Assert-Equal 0 $script:MockBrowserTaskRegistrations 'browser: no task when declined'
+  Assert-Equal $false (Test-Path -LiteralPath (Join-Path $tempRoot 'browser-policy.json')) 'browser: no policy when declined'
+  Assert-Equal $false (Test-Path -LiteralPath (Join-Path $tempRoot 'browser.cmd')) 'browser: no launcher when declined'
+  Assert-Equal 3 (@(([System.IO.File]::ReadAllText((Join-Path $tempRoot 'capabilities.json')) | ConvertFrom-Json).capabilities).Count) 'browser: manifest unchanged when declined'
+  Assert-Null (Read-McNodeConfig $tempRoot).browser 'browser: node.config.json has no browser flag when declined'
+
+  $script:MockAnswer = 'y'; $script:MockNpmCalls.Clear(); $script:MockPlaywrightCalls.Clear(); $script:MockIcaclsCalls.Clear()
+  $nodeTasksBefore = $script:MockTaskRegistrations
+  $browserRun = Invoke-McBrowserInstall -StateRoot $tempRoot -RepoPath $repoRoot
+  Assert-Equal 0 $browserRun.ExitCode 'browser: install exits 0'
+  Assert-True $browserRun.Installed 'browser: installed'
+  Assert-True (([string]$script:MockNpmCalls[0]) -like ('install --prefix * --no-audit --no-fund --no-save playwright@' + $script:McPlaywrightVersion)) 'browser: npm installs the pinned version with --no-save'
+  Assert-Equal 'install --dry-run chromium|install chromium' ($script:MockPlaywrightCalls -join '|') 'browser: the dry run precedes the Chromium install'
+  Assert-True (Test-Path -LiteralPath (Join-Path $tempRoot 'browser')) 'browser: browser folder created'
+  Assert-True (Test-Path -LiteralPath (Join-Path $tempRoot 'browser-profile')) 'browser: profile folder created'
+  Assert-True (($script:MockIcaclsCalls -join ';').Contains((Join-Path $tempRoot 'browser-profile') + ' (OI)(CI)F')) 'browser: owner-only ACL on the profile'
+  $policyPath = Join-Path $tempRoot 'browser-policy.json'
+  Assert-True (Test-Path -LiteralPath $policyPath) 'browser: policy written'
+  $writtenPolicy = [System.IO.File]::ReadAllText($policyPath) | ConvertFrom-Json
+  Assert-Equal 'mccluster-browser-policy/1' $writtenPolicy.schema 'browser: policy schema'
+  Assert-Equal 0 (@($writtenPolicy.allowed_hosts).Count) 'browser: policy starts with no allowed host'
+  Assert-Equal $false $writtenPolicy.allow_subdomains 'browser: subdomains off by default'
+  $browserLauncher = [System.IO.File]::ReadAllText((Join-Path $tempRoot 'browser.cmd'))
+  Assert-True ($browserLauncher.Contains('node src\compute\browser-executor.mjs >> ')) 'browser: launcher runs the executor'
+  Assert-True ($browserLauncher.Contains('set MCCLUSTER_BROWSER_EXECUTOR_PORT=4791')) 'browser: launcher carries the port'
+  Assert-Equal $false $browserLauncher.Contains('MCCLUSTER_BROWSER_HEADED') 'browser: the task runs headless (no HEADED in the launcher)'
+  Assert-True ($browserLauncher.Contains('set PLAYWRIGHT_BROWSERS_PATH=')) 'browser: launcher pins the Chromium store'
+  Assert-Equal 1 $script:MockBrowserTaskRegistrations 'browser: the browser task registered once'
+  Assert-Equal $nodeTasksBefore $script:MockTaskRegistrations 'browser: the adapter and agent tasks are not re-registered by -Browser'
+  Assert-True ($script:MockStartedTasks -contains 'McCluster Node Browser') 'browser: the task was started'
+  $withBrowser = [System.IO.File]::ReadAllText((Join-Path $tempRoot 'capabilities.json')) | ConvertFrom-Json
+  Assert-Equal 'qwen3-vl.8b.local,qwen3.8b.local,qwen3.14b.local,chromium.local' (@($withBrowser.capabilities | ForEach-Object { $_.implementation }) -join ',') 'browser: chromium.local appended to the tier A manifest'
+  Assert-Equal 'browser.act' (@($withBrowser.capabilities)[3].capability) 'browser: the appended entry is browser.act'
+  Assert-Equal 'http://127.0.0.1:4791/ready' (@($withBrowser.capabilities)[3].executor.health_url) 'browser: the entry comes from the template unchanged'
+  Assert-Equal $true (Read-McNodeConfig $tempRoot).browser 'browser: node.config.json records browser=true'
+  Assert-Equal 'A' (Read-McNodeConfig $tempRoot).tier 'browser: the other config keys are kept'
+
+  # the policy is the owner's file: a second -Browser never overwrites it, the entry is not duplicated, -Install keeps it
+  [System.IO.File]::WriteAllText($policyPath, '{"schema":"mccluster-browser-policy/1","allowed_hosts":["docs.example"],"allow_subdomains":true}')
+  $again = Invoke-McBrowserInstall -StateRoot $tempRoot -RepoPath $repoRoot
+  Assert-Equal 0 $again.ExitCode 'browser again: exits 0'
+  Assert-True (([System.IO.File]::ReadAllText($policyPath)).Contains('docs.example')) 'browser again: the owner''s policy is kept'
+  Assert-Equal 4 (@(([System.IO.File]::ReadAllText((Join-Path $tempRoot 'capabilities.json')) | ConvertFrom-Json).capabilities).Count) 'browser again: the entry is not duplicated'
+  $kept = Invoke-McInstall -RepoPath $repoRoot -StateRoot $tempRoot -NodeName 'owner-windows-gpu' -ComputeUrl 'https://compute.mccluster.org' -TierOverride ''
+  Assert-Equal 'C' $kept.Tier 'install after -Browser: the tier rule still decides'
+  Assert-Equal 'qwen3-vl.8b.local,qwen3.8b.local,chromium.local' (@(([System.IO.File]::ReadAllText((Join-Path $tempRoot 'capabilities.json')) | ConvertFrom-Json).capabilities | ForEach-Object { $_.implementation }) -join ',') 'install after -Browser: the browser entry survives the tier prune'
+  Assert-Equal $true (Read-McNodeConfig $tempRoot).browser 'install after -Browser: browser=true kept in node.config.json'
+  $reportLines = Format-McBrowserReportLines -StateRoot $tempRoot -TaskState 'Running' -Health $null -Ready $null
+  $reportText = ($reportLines -join "`n")
+  Assert-True ($reportText.Contains('task McCluster Node Browser: Running')) 'report: the browser task state'
+  Assert-True ($reportText.Contains('playwright: ' + $script:McPlaywrightVersion)) 'report: the installed playwright version'
+  Assert-True ($reportText.Contains('allowed_hosts 1, allow_subdomains true')) 'report: the policy shape'
+  Assert-Equal $false $reportText.Contains('docs.example') 'report: the allowed hosts themselves are never printed'
+  Assert-True ($reportText.Contains('/health: not answering')) 'report: an executor that does not answer says so'
+  Assert-True ($reportText.Contains('/ready: not ready')) 'report: readiness that does not answer says so'
+  $healthyLines = Format-McBrowserReportLines -StateRoot $tempRoot -TaskState 'Running' -Health ([pscustomobject]@{ ok = $true; busy = $false; last_error = $null; playwright = [pscustomobject]@{ found = $true; version = $script:McPlaywrightVersion }; policy = [pscustomobject]@{ allowed_hosts_count = 1 } }) -Ready ([pscustomobject]@{ ok = $true; browser_ready = $true; chromium_version = '143.0.7499.4' })
+  Assert-True (($healthyLines -join "`n").Contains('ok True, busy False, playwright found True, policy hosts 1, last_error none')) 'report: health fields'
+  Assert-True (($healthyLines -join "`n").Contains('/ready: ready, chromium 143.0.7499.4')) 'report: readiness'
+  $absentLines = Format-McBrowserReportLines -StateRoot (Join-Path $tempRoot 'nowhere') -TaskState '' -Health $null -Ready $null
+  Assert-True (($absentLines -join "`n").Contains('task McCluster Node Browser: absent')) 'report: no task says absent'
+  Assert-True (($absentLines -join "`n").Contains('playwright: not installed')) 'report: nothing installed says so'
+  Assert-True (($absentLines -join "`n").Contains('browser-policy.json: absent')) 'report: no policy says absent'
+
+  # -BrowserHeaded stops the task, runs the executor headed on this console, starts the task again
+  $script:MockStoppedTasks.Clear(); $script:MockStartedTasks.Clear(); $script:MockNodeRuns.Clear()
+  $headedExit = Invoke-McBrowserHeaded -StateRoot $tempRoot -RepoPath $repoRoot
+  Assert-Equal 0 $headedExit 'headed: exits 0'
+  Assert-Equal 'McCluster Node Browser' ($script:MockStoppedTasks -join ',') 'headed: the task is stopped first'
+  Assert-Equal 'McCluster Node Browser' ($script:MockStartedTasks -join ',') 'headed: the task is started again'
+  Assert-Equal 1 $script:MockNodeRuns.Count 'headed: one executor run'
+  Assert-True (([string]$script:MockNodeRuns[0].Script).EndsWith('browser-executor.mjs')) 'headed: runs the browser executor'
+  Assert-Equal '1' $script:MockNodeRuns[0].Environment['MCCLUSTER_BROWSER_HEADED'] 'headed: MCCLUSTER_BROWSER_HEADED=1'
+  Assert-Equal '4791' $script:MockNodeRuns[0].Environment['MCCLUSTER_BROWSER_EXECUTOR_PORT'] 'headed: the same port'
+  Assert-True $script:MockNodeRuns[0].Interactive 'headed: runs on this console (interactive)'
+  Assert-Equal 0 $script:MockNodeRuns[0].TimeoutSeconds 'headed: no time limit'
+  $script:MockNodeRuns.Clear(); $script:MockStoppedTasks.Clear()
+  Invoke-McBrowserHeaded -StateRoot $tempRoot -RepoPath $repoRoot -WhatIf | Out-Null
+  Assert-Equal 0 $script:MockNodeRuns.Count 'headed -WhatIf: runs nothing'
+  Assert-Equal 0 $script:MockStoppedTasks.Count 'headed -WhatIf: stops nothing'
+  $threw = $false
+  try { Invoke-McBrowserHeaded -StateRoot (Join-Path $tempRoot 'other') -RepoPath $repoRoot | Out-Null } catch { $threw = $true }
+  Assert-True $threw 'headed without -Install refuses'
 
   $threw = $false
   try { Invoke-McInstall -RepoPath $repoRoot -StateRoot (Join-Path $tempRoot 'other') -NodeName 'x' -ComputeUrl 'https://compute.mccluster.org' -TierOverride '' | Out-Null } catch { $threw = $true }

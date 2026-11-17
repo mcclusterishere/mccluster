@@ -4,10 +4,14 @@
    that joins the compute fabric (docs/control-plane/WINDOWS-NODE.md). Static checks, always:
 
    (a) the switches the runbook names exist (Report, Install, RepoPath, NodeName, Enroll, Models,
-       Benchmark, Model, KeepAwake, ModelsPath, Vulkan, StateRoot, Tier) with SupportsShouldProcess,
-       and the library guard that lets the pwsh tests dot-source it without running anything;
-   (b) nothing is downloaded or evaluated: no Invoke-Expression, iex, DownloadString or
-       Start-BitsTransfer, and every URL literal is loopback or the Core compute host;
+       Benchmark, Model, KeepAwake, ModelsPath, Vulkan, StateRoot, Tier, and since slice N2 Browser
+       and BrowserHeaded) with SupportsShouldProcess, and the library guard that lets the pwsh tests
+       dot-source it without running anything;
+   (b) nothing is downloaded or evaluated outside -Browser: no Invoke-Expression, iex,
+       DownloadString, DownloadFile or Start-BitsTransfer, every URL literal is loopback or the Core
+       compute host, and the two downloads -Browser makes (npm fetching the pinned playwright
+       package, Playwright's own installer fetching Chromium) are called only inside
+       Invoke-McBrowserInstall, the Chromium one after a dry run and the owner's answer;
    (c) Windows-only cmdlets live inside functions (the tests mock them by name), never in the
        dispatcher that runs after the guard;
    (d) no private strings (user path, UNC host, e-mail, non-loopback IPv4) and no AI vendor or
@@ -15,8 +19,10 @@
    (e) brackets, strings, here-strings and comments balance (a cheap stand-in for a parse);
    (f) the fixtures are the five recorded sets with CRLF where reg.exe and powershell.exe emit
        CRLF, and the JSON ones parse;
-   (g) the runbook names every switch and the template, and the protocol document carries the
-       hardware_mode vocabulary, live_gpu_nodes and yield_seconds.
+   (g) the runbook names every switch and the template, the browser document
+       (docs/control-plane/AGENT-NODE-BROWSER.md) names the switches, the policy file and the
+       executor port, and the protocol document carries the hardware_mode vocabulary,
+       live_gpu_nodes and yield_seconds.
 
    The PowerShell parse ([System.Management.Automation.Language.Parser]::ParseFile) and
    core/windows/tests/mccluster-node.tests.ps1 run only where a pwsh is executable (PATH, or
@@ -36,10 +42,13 @@ const FIXTURES = "core/windows/tests/fixtures";
 const RUNBOOK = "docs/control-plane/WINDOWS-NODE.md";
 const PROTOCOL = "docs/control-plane/COMPUTE-NODE-PROTOCOL.md";
 const DEVICES = "docs/control-plane/DEVICE-NODES-AND-OWNER-GPU.md";
+const BROWSER_DOC = "docs/control-plane/AGENT-NODE-BROWSER.md";
 const read = (f) => readFileSync(join(ROOT, f), "utf8");
 const SKIP_LINE = "windows-node-script: pwsh not available, PowerShell tests skipped (unverified here)";
 
-const SWITCHES = ["Report", "Install", "Enroll", "Models", "Benchmark", "KeepAwake"];
+const SWITCHES = ["Report", "Install", "Enroll", "Models", "Benchmark", "KeepAwake", "Browser", "BrowserHeaded"];
+/* the one version -Browser installs; pinned in the doctor exactly once */
+const PLAYWRIGHT_PIN = "1.63.0";
 const VALUES = ["RepoPath", "NodeName", "Model", "ModelsPath", "Vulkan", "StateRoot", "Tier", "ComputeUrl", "OrgId"];
 /* a Windows user-profile path (raw or JSON-escaped), a UNC host (two backslashes at a path start,
    so a JSON-escaped PNP id or a regex like \\SYSTEM is not one), an e-mail, or a non-loopback IPv4 */
@@ -47,7 +56,7 @@ const PRIVATE_STRINGS = /[A-Za-z]:\\{1,2}Users\\{1,2}|(?<![\\\w])\\\\[A-Za-z0-9]
 /* AI vendor and model names (stored reversed so this file does not carry them either) */
 const reversed = (s) => [...s].reverse().join("");
 const VENDOR_NAMES = new RegExp(`\\b(?:${["edualC", "ciporhtnA", "IAnepO", "TPGtahC", "supO", "tennoS", "inimeG", "korG"].map(reversed).join("|")}|${reversed("TPG")}-?\\d)\\b`, "i");
-const WINDOWS_ONLY = /\b(?:Get-CimInstance|Get-ItemProperty|Register-ScheduledTask|Unregister-ScheduledTask|Get-ScheduledTask|Start-ScheduledTask|icacls|schtasks|powercfg|Read-Host|SetEnvironmentVariable)\b/g;
+const WINDOWS_ONLY = /\b(?:Get-CimInstance|Get-ItemProperty|Register-ScheduledTask|Unregister-ScheduledTask|Get-ScheduledTask|Start-ScheduledTask|Stop-ScheduledTask|icacls|schtasks|powercfg|Read-Host|SetEnvironmentVariable)\b/g;
 
 const script = read(SCRIPT);
 
@@ -119,7 +128,15 @@ test("the doctor declares every switch the runbook names, SupportsShouldProcess 
   assert.match(script, /compute\.mccluster\.org/, "the default compute URL is the Core's public ingress");
 });
 
-test("nothing is downloaded or evaluated, and every URL is loopback or the compute host", () => {
+/* the body of a top-level `function Name {` up to the next top-level function */
+function functionBody(src, name) {
+  const start = src.indexOf(`\nfunction ${name} {`);
+  assert.ok(start >= 0, `${name} is defined`);
+  const next = src.indexOf("\nfunction ", start + 1);
+  return { start, end: next < 0 ? src.length : next, text: src.slice(start, next < 0 ? src.length : next) };
+}
+
+test("nothing is downloaded or evaluated outside -Browser, and every URL is loopback or the compute host", () => {
   assert.doesNotMatch(script, /Invoke-Expression|\biex\b|DownloadString|DownloadFile|Start-BitsTransfer|Invoke-RestMethod\s+[^\n]*https?:\/\/(?!127\.0\.0\.1)/i);
   const urls = script.match(/https?:\/\/[^\s'")\]]+/g) || [];
   assert.ok(urls.length > 0, "the script talks to the local Ollama daemon");
@@ -128,6 +145,27 @@ test("nothing is downloaded or evaluated, and every URL is loopback or the compu
     assert.ok(["127.0.0.1", "compute.mccluster.org"].includes(host), `${url} is not loopback or the compute host`);
   }
   assert.doesNotMatch(script, /ollama\s+run\b/, "the doctor never starts an interactive model session");
+  /* -Browser is the one switch that downloads, and it says so in the header */
+  assert.match(script, /-Browser[\s\S]{0,400}downloads/, "the header says what -Browser downloads");
+  assert.match(script, new RegExp(`\\$script:McPlaywrightVersion = '${PLAYWRIGHT_PIN.replace(/\./g, "\\.")}'`), "the playwright version is pinned");
+  assert.equal(script.split(PLAYWRIGHT_PIN).length - 1, 1, "the pin appears exactly once (nowhere else to drift)");
+  assert.doesNotMatch(script, /\bnpx\b/, "no npx: the installed package's own cli.js is run through node");
+  /* the two network wrappers are called only inside Invoke-McBrowserInstall */
+  const install = functionBody(script, "Invoke-McBrowserInstall");
+  for (const wrapper of ["Invoke-McNpm", "Invoke-McPlaywrightCli"]) {
+    const calls = [...script.matchAll(new RegExp(`(?<!function )\\b${wrapper}\\b`, "g"))].map((m) => m.index);
+    assert.ok(calls.length >= 1, `${wrapper} is called`);
+    for (const at of calls) assert.ok(at > install.start && at < install.end, `${wrapper} is called outside Invoke-McBrowserInstall (offset ${at})`);
+  }
+  /* the dry run names the Chromium download, the owner answers, then the install runs; npm first (the dry run needs the package) */
+  const body = install.text;
+  const npmAt = body.indexOf("Invoke-McNpm");
+  const dryAt = body.indexOf("'--dry-run'");
+  const askAt = body.indexOf("Read-McAnswer");
+  const chromiumAt = body.indexOf("@('install', 'chromium')");
+  assert.ok(npmAt >= 0 && dryAt > npmAt && askAt > dryAt && chromiumAt > askAt, `order in Invoke-McBrowserInstall: npm ${npmAt}, dry run ${dryAt}, answer ${askAt}, chromium ${chromiumAt}`);
+  assert.match(body, /--no-save/, "npm never edits a package.json of the checkout");
+  assert.match(body, /ShouldProcess/, "-Browser steps honour -WhatIf");
 });
 
 test("Windows-only cmdlets live inside functions; the dispatcher after the guard calls none directly", () => {
@@ -136,15 +174,15 @@ test("Windows-only cmdlets live inside functions; the dispatcher after the guard
   const dispatcher = script.slice(guard.index + guard[0].length);
   const direct = dispatcher.match(WINDOWS_ONLY) || [];
   assert.deepEqual(direct, [], `dispatcher calls Windows-only cmdlets directly: ${direct.join(", ")}`);
-  for (const name of ["Get-CimInstance", "Get-ItemProperty", "Register-ScheduledTask", "icacls", "powercfg", "Read-Host"]) {
+  for (const name of ["Get-CimInstance", "Get-ItemProperty", "Register-ScheduledTask", "Stop-ScheduledTask", "icacls", "powercfg", "Read-Host"]) {
     assert.ok(script.includes(name), `${name} is used somewhere in the script`);
   }
   assert.match(script, /Read-Host\s+-AsSecureString/, "the enrolment token is read as a secure string");
   assert.doesNotMatch(script, /Write-(?:Host|Output|Verbose)[^\n]*\$(?:plain|token|secret)\b/i, "the token is never printed");
 });
 
-test("the doctor, its tests and the runbook carry no private strings and no AI vendor or model names", () => {
-  for (const file of [SCRIPT, TESTS, RUNBOOK, DEVICES]) {
+test("the doctor, its tests, the runbook and the browser document carry no private strings and no AI vendor or model names", () => {
+  for (const file of [SCRIPT, TESTS, RUNBOOK, DEVICES, BROWSER_DOC]) {
     const text = read(file);
     assert.equal(PRIVATE_STRINGS.exec(text), null, `private string in ${file}: ${PRIVATE_STRINGS.exec(text)?.[0]}`);
     assert.equal(VENDOR_NAMES.exec(text), null, `vendor or model name in ${file}: ${VENDOR_NAMES.exec(text)?.[0]}`);
@@ -196,12 +234,19 @@ test("the pwsh tests are Pester-free and dot-source the doctor as a library", ()
   assertBalanced(tests, TESTS);
 });
 
-test("the runbook names every switch and the template; the protocol document carries the new vocabulary", () => {
+test("the runbook names every switch, the template and the browser document; the protocol document carries the new vocabulary", () => {
   const runbook = read(RUNBOOK);
   for (const name of [...SWITCHES, ...VALUES, "WhatIf"]) assert.ok(runbook.includes(`-${name}`), `WINDOWS-NODE.md mentions -${name}`);
   assert.ok(runbook.includes("core/node-manifests/owner-windows-gpu.json"));
   assert.ok(runbook.includes(SCRIPT));
   assert.ok(runbook.includes("core/windows/tests/mccluster-node.tests.ps1"));
+  assert.ok(runbook.includes("AGENT-NODE-BROWSER.md"), "the runbook points at the browser document");
+  assert.ok(runbook.includes("browser-policy.json") && runbook.includes("127.0.0.1:4791"), "the runbook names the policy file and the executor port");
+  const browserDoc = read(BROWSER_DOC);
+  for (const word of ["-Browser", "-BrowserHeaded", "browser-policy.json", "mccluster-browser-policy/1", "127.0.0.1:4791", "browser.act", "chromium.local", "browser_act", "BROWSER_PRIVATE_ADDRESS", "BROWSER_HOST_NOT_ALLOWED", "BROWSER_POLICY_EMPTY", "allow_browser", "evidence"]) {
+    assert.ok(browserDoc.includes(word), `AGENT-NODE-BROWSER.md mentions ${word}`);
+  }
+  assert.match(browserDoc, /unverified|not verified|never ran|has not run/i, "the browser document says what is not verified");
   const protocol = read(PROTOCOL);
   for (const word of ["hardware_mode", "gpu-verified", "gpu-present-unverified", "cpu-only", "live_gpu_nodes", "yield_seconds", "measured-inference.json", "vram_source"]) {
     assert.ok(protocol.includes(word), `COMPUTE-NODE-PROTOCOL.md mentions ${word}`);
