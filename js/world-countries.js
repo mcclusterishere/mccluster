@@ -185,6 +185,19 @@
     (missions || []).forEach((m) => { const c = missionCountry(m, idx, features); if (!c || !m.mission_id) return; const k = c + '|' + m.mission_id; if (seen[k]) return; seen[k] = 1; out[c] = (out[c] || 0) + 1; });
     return out;
   }
+  /* the published missions pinned in a country (missionCountry, as the counts above read it), or, with a state picked, the ones
+     whose pin's own point lies inside that state's shape. The page lists them in Local and counts them on its place card, with
+     the open missions that have no pin at all (js/world-mission-posts.js, placeMissions). */
+  function missionIdsIn(missions, regions, features, a2, stateFeature) {
+    if (!a2) return [];
+    const idx = regionCountryIndex(regions), seen = new Set(), out = [];
+    for (const m of missions || []) {
+      if (!m || !m.mission_id || seen.has(m.mission_id) || missionCountry(m, idx, features) !== a2) continue;
+      if (stateFeature && !countryAt([stateFeature], Number(m.longitude), Number(m.latitude))) continue;
+      seen.add(m.mission_id); out.push(m.mission_id);
+    }
+    return out;
+  }
   function countText(n) { return n > 0 ? n + (n === 1 ? ' mission' : ' missions') + ' pinned here' : 'No missions here yet'; }
   function escHtml(s) { return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
@@ -284,7 +297,8 @@
     function told(f, n, sf, stateOnly) {
       if (!f) return null;
       const sp = sf && sf.properties;
-      return { code: f.properties.a2, a3: f.properties.a3, name: f.properties.name, missions: n || 0, state: sp ? { key: sp.key, name: sp.name, type: sp.type || null, polygons: polygonsOf(sf) } : null, stateOnly: !!stateOnly, stats: statsFor(f, sf) };
+      return { code: f.properties.a2, a3: f.properties.a3, name: f.properties.name, missions: n || 0, missionIds: missionIdsIn(o.missions ? o.missions() : [], o.regions ? o.regions() : [], st.features, f.properties.a2, sf),
+        state: sp ? { key: sp.key, name: sp.name, type: sp.type || null, polygons: polygonsOf(sf) } : null, stateOnly: !!stateOnly, stats: statsFor(f, sf) };
     }
     /* the counts moved under a selection already made (they arrive after the tap): the card and the page follow */
     function restat() {
@@ -662,5 +676,5 @@
     return api;
   }
 
-  return { decode, undelta, fadeTarget, lineTarget, stateTarget, washTarget, stepAlpha, readMode, writeMode, nextMode, isDoubleTap, countryAt, memberStates, missionCountry, missionCounts, regionCountryIndex, countText, intersects, PREF_KEY, MODES, STATES_FAR, STATES_NEAR, TAP_GAP, TAP_SLOP, mount };
+  return { decode, undelta, fadeTarget, lineTarget, stateTarget, washTarget, stepAlpha, readMode, writeMode, nextMode, isDoubleTap, countryAt, memberStates, missionCountry, missionCounts, missionIdsIn, regionCountryIndex, countText, intersects, PREF_KEY, MODES, STATES_FAR, STATES_NEAR, TAP_GAP, TAP_SLOP, mount };
 });

@@ -141,6 +141,13 @@
         "js/mnet.js"
       ]
     },
+    "action_mission_details": {
+      "kind": "table",
+      "pending": "20261117100100_action_mission_details.sql",
+      "callers": [
+        "js/mnet.js"
+      ]
+    },
     "action_policy_memos": {
       "kind": "table",
       "pending": "policy_fellowship_ladder_v1.sql",

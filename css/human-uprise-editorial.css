@@ -204,3 +204,22 @@ html.hu-editorial.mn-world-on, .hu-editorial.mn-world-on body {height:100%;overf
   .hu-editorial #mnFeed .mn__post-card.has-media {grid-template-columns:160px minmax(0,1fr);column-gap:16px;}
   .hu-editorial #mnFeed .mn__post-thumb .mn__post-media-loading {min-height:160px;}
 }
+/* MISSIONS AS POSTS (owner, 2026-11-17: "just another post in the newsfeed, not a big, large post, just the same size post as all
+   the other [posts]"): a post's card, rule and action row (js/mnet.js, missionPostHtml). Where a post shows its author's picture,
+   a plain line icon of what kind of work it is (never a mark); where the name and handle are, the mission's kind and field, then
+   its difficulty and points; the title in two lines at most; the description clamped to two; a quiet source line that opens the
+   credit; and Join (the supplied emblem alone at the strip's size, the variant made for the ground: white by night, the dark mark
+   by day, css/daylight.css), Details and Share. Tight spacing keeps it in the size of a post. */
+.mn__mission-post-icon {flex:none;display:grid;place-items:center;width:40px;height:40px;border-radius:50%;border:1px solid var(--mn-rule-2);color:var(--mn-ink);}
+.mn__mission-post-icon svg {width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;}
+.hu-editorial #mnFeed .mn__mission-post .mn__post-head {margin:0 0 8px;}
+.mn__mission-post-title {margin:0;color:var(--mn-ink);font:600 16px/1.35 var(--mn-ui);overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.hu-editorial #mnFeed .mn__mission-post .mn__post-body {margin:4px 0 0;line-height:1.5;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.mn__mission-post-source {display:flex;align-items:center;max-width:100%;min-height:24px;margin:4px 0 0;padding:0;border:0;background:none;color:var(--mn-dim);font:400 13px/1.35 var(--mn-ui);text-align:left;text-decoration:underline;text-decoration-color:var(--mn-rule-2);text-underline-offset:3px;cursor:pointer;overflow-wrap:anywhere;}
+.mn__mission-post-source:hover {color:var(--mn-ink);}
+.hu-editorial #mnFeed .mn__mission-post .mn__post-actions {margin-top:8px;}
+.mn__mission-join {justify-content:center;min-width:44px;min-height:44px;padding:0 2px;}
+.mn__mission-join .mn__eup {width:40px;height:40px;}
+.mn__mission-join .mn__eup--dark {display:none;}
+/* Local with only missions: the one line that says the place has no news today, above them */
+.mn__feed-note {margin:4px 0 6px;color:var(--mn-dim);font:400 14px/1.5 var(--mn-ui);}

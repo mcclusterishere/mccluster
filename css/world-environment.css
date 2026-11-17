@@ -42,3 +42,11 @@
 .we-proof-form input[type="checkbox"] { width:20px;height:20px; }
 
 .we-draft { white-space:pre-wrap; }
+
+/* NEVER A BROKEN PANEL FOR THE PUBLIC (owner, 2026-11-17: the panel behind the tab "is a joke"; its own fixes are a later slice).
+   The panel shows once its source has answered with a feed it accepts (html[data-we-feed] "ready", set by
+   js/world-environment-mccluster.mjs); until then nothing, and when that read failed one honest line in its place, in the Equity
+   Uprise tab only (production answers 503 until the owner releases the module, docs/control-plane/WORLD-ENVIRONMENT.md). */
+html:not([data-we-feed="ready"]) #wePanel { display:none !important; }
+.mn__we-note { display:none;margin:2px 0 12px;color:var(--mn-dim,#a3a9af);font:400 14px/1.5 var(--mn-ui,system-ui,sans-serif); }
+html.mn-feed-equity[data-we-feed="unavailable"] .mn__we-note { display:block; }

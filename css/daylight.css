@@ -139,3 +139,7 @@ html[data-daylight="day"] .mn__skel i { background:linear-gradient(90deg, #edede
 /* a change of phase while the World is already on screen (js/daylight.js) fades across instead of flipping */
 html.daylight-shift, html.daylight-shift body, html.daylight-shift body * { transition:background-color .6s ease, color .6s ease, border-color .6s ease, fill .6s ease, stroke .6s ease !important; }
 @media (prefers-reduced-motion: reduce) { html.daylight-shift, html.daylight-shift body, html.daylight-shift body * { transition:none !important; } }
+/* a mission post's join by day: the owner's dark mark on the white feed, the white one stepping aside (both supplied, scaled only;
+   choosing the variant for the ground is not recolouring) */
+html[data-daylight="day"] .mn__mission-join .mn__eup--white { display:none; }
+html[data-daylight="day"] .mn__mission-join .mn__eup--dark { display:block; }

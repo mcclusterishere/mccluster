@@ -413,6 +413,21 @@ button.mn__notification-action:disabled { opacity: 0.55; cursor: default; }
 .mn__reply-box textarea { max-height: 8rem; resize: none; }
 .mn__reply-box .mn__post { margin: 0; min-height: 48px; }
 .mn__thread > .mn__status { padding: 0 14px 8px; }
+/* the mission's dialog (js/mnet.js, missionDetailHtml): room around its words, the source's own words set apart as a quotation
+   with their credit directly beneath, and the credit in full with its links (data/missions/drawdown/README.md) */
+#mnMissionDetail { padding: 12px 16px 2px; overflow-wrap: anywhere; }
+#mnMissionDetail > p { margin: 0 0 10px; line-height: 1.5; }
+.mn__mission-note { color: var(--mn-dim); }
+.mn__mission-note b { color: var(--mn-ink); }
+.mn__mission-about { margin: 12px 0; }
+.mn__mission-about blockquote { margin: 0; padding: 2px 0 2px 12px; border-left: 2px solid var(--mn-rule-2); color: var(--mn-ink); font-style: italic; line-height: 1.55; }
+.mn__mission-about figcaption { margin: 4px 0 0 14px; color: var(--mn-faint); font-size: 0.8rem; line-height: 1.4; }
+.mn__mission-credit { margin: 12px 0; padding: 10px 12px; border-radius: 12px; background: var(--mn-raise-2); box-shadow: inset 0 0 0 1px var(--mn-rule); color: var(--mn-dim); font-size: 0.82rem; line-height: 1.5; }
+.mn__mission-credit:focus, .mn__mission-credit:focus-visible { outline: 2px solid var(--mn-hot); outline-offset: 2px; }
+.mn__mission-credit .mn__eyebrow { margin: 0 0 4px; }
+.mn__mission-credit p { margin: 0; }
+.mn__mission-credit ul { margin: 6px 0 0; padding-left: 18px; }
+.mn__mission-credit a { color: var(--mn-ink); text-decoration: underline; text-underline-offset: 2px; }
 /* THE THUMBNAIL editor (owner, 2026-10-20): one column at every width, the frame as large as the sheet allows */
 .mn__thumb-dialog { overflow-y: auto; }
 .mn__thumb-dialog .mn__thread-head button { width: 44px; height: 44px; }

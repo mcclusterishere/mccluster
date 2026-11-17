@@ -37,7 +37,11 @@
     actionOffers: {},
     /* the globe in the World tab: which missions have a public pin, and
        the one the member picked on the Earth (it narrows the feed) */
-    world: { pins: {}, focus: null, fromFeed: "", missions: {}, latest: null, stats: {}, query: "" },
+    world: { pins: {}, pinsKnown: false, focus: null, fromFeed: "", missions: {}, latest: null, stats: {}, query: "" },
+    /* the open missions, as posts (js/world-mission-posts.js): every open mission, newest first (all: null until read), their
+       details (proof hint, safety line, credit) by id, whether that table is absent here, and how many the Equity Uprise tab
+       shows before Load more */
+    missionFeed: { all: null, loading: null, error: "", details: {}, asked: {}, detailsAbsent: false, shown: 20 },
     /* a signed-out visitor on the World screen: public feed, no actions */
     guest: false
   };
@@ -151,7 +155,8 @@
     save: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.8h11v16.4l-5.5-3.9-5.5 3.9z"/></svg>',
     trash: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M9.5 7V4.8h5V7M7 7l.8 12.2h8.4L17 7"/></svg>',
     thumb: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="15" rx="2"/><circle cx="8.4" cy="9.8" r="1.7"/><path d="M3.6 17l4.9-4.4 3.9 3.4 3-2.5 5.1 4.2"/></svg>',
-    share: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5l6 6-6 6M20 11H9a5 5 0 0 0-5 5v2"/></svg>'
+    share: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5l6 6-6 6M20 11H9a5 5 0 0 0-5 5v2"/></svg>',
+    details: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="3.5" width="15" height="17" rx="2"/><path d="M8 8.5h8M8 12h8M8 15.5h5"/></svg>'
   };
   /* Every member gets a stable ring colour from their handle: abstract
      colour that tells people apart at a glance, never a mark. */
@@ -1059,6 +1064,11 @@
      shape, its tile cut away ("keep the dark part") and the mark painted white at the owner's word (owner, 2026-10-15:
      "make the actual … sign white. Just paint it white for me") */
   var EUP_MARK = '<img class="mn__eup" src="assets/img/equity-uprise-mark-white.png" alt="" width="28" height="28">';
+  /* a mission post's join sits on the feed's own ground, black by night and white by day, so it carries both supplied marks and
+     shows the one made for that ground (css/human-uprise-editorial.css, css/daylight.css): choosing the owner's variant for the
+     ground is not recolouring, and nothing is drawn over either */
+  var EUP_MARKS = '<img class="mn__eup mn__eup--white" src="assets/img/equity-uprise-mark-white.png" alt="" width="40" height="40">' +
+    '<img class="mn__eup mn__eup--dark" src="assets/img/equity-uprise-mark.png" alt="" width="40" height="40">';
   function fundButtonHtml(c) {
     return '<button class="mn__fund" type="button" data-fund-mission="' + esc(c.mission_id) + '"' + (c.campaign_id ? ' data-campaign="' + esc(c.campaign_id) + '"' : '') + ' aria-label="Fund this mission">' + ICON.fund + '<span>Fund</span></button>';
   }
@@ -1226,6 +1236,15 @@
     var n = function (v) { return typeof v === "number" && isFinite(v) && v >= 0 ? Math.round(v) : null; };
     return s && typeof s === "object" ? { news: n(s.news), posts: n(s.posts), members: n(s.members), membersUnder: n(s.membersUnder) || 0, states: s.states === true } : { news: null, posts: null, members: null, membersUnder: 0, states: false };
   }
+  /* THE PLACE'S MISSIONS (owner, 2026-11-17: "when you click on America, you should be able to say, see X amount of news, X
+     amount of missions"): the open missions pinned in the place plus the open missions with no pin at all, since those can be
+     done anywhere (js/world-mission-posts.js, missionCount). The globe says which are pinned there (missionIds, from
+     js/world-countries.js). A STATE: the missions whose pin's own point lies inside the state's shape, plus the ones with no
+     pin; a mission pinned elsewhere in the same country is that place's, not this state's. A dash until the missions and the
+     pins have loaded, never a made-up zero. */
+  function placeMissionCount(c) {
+    return MISSION_POSTS ? MISSION_POSTS.missionCount(state.missionFeed.all, state.world.pinsKnown ? state.world.pins : null, c.missionIds) : null;
+  }
   function paintPlaceCard(c) {
     var card = $("mnPlaceCard");
     if (!card) return;
@@ -1238,7 +1257,7 @@
     var sub = st8 ? c.name : s.states ? "Double-tap a state to choose it" : "";
     card.innerHTML = '<div class="mn__place-head"><span class="mn__place-name"><b>' + esc(st8 ? st8.name : c.name) + '</b>' + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</span>' +
       '<button type="button" class="mn__place-close" aria-label="' + esc(st8 ? "Show all of " + c.name : "Show every country") + '">\u00d7</button></div>' +
-      '<div class="mn__place-stats">' + cell(s.news, "news \u00b7 24 h") + (st8 ? (s.members === null ? "" : cell(s.members, "members")) : cell(s.posts, "posts") + members) + '</div>';
+      '<div class="mn__place-stats">' + cell(s.news, "news \u00b7 24 h") + cell(placeMissionCount(c), "missions") + (st8 ? (s.members === null ? "" : cell(s.members, "members")) : cell(s.posts, "posts") + members) + '</div>';
     card.querySelector(".mn__place-close").onclick = function () { tellWorld(st8 ? { type: "hu:country-back" } : { type: "hu:select-country", code: null }); };
     card.hidden = false;
     placeCardRoom();
@@ -1420,10 +1439,20 @@
     if (body) body.placeholder = "Share a live moment from " + (place || "the world") + "\u2026";
     paintPlaceOptIn();
   }
+  /* the chosen tab in view in the strip: a country picked on the globe turns the feed to Local while the strip may be scrolled
+     past it. The strip scrolls inside itself, never the page. */
+  function showScopeTab() {
+    var strip = $("mnFeedScope"), on = strip && strip.querySelector('[data-feed-scope][aria-pressed="true"]');
+    if (!on || strip.scrollWidth <= strip.clientWidth) return;
+    var sr = strip.getBoundingClientRect(), br = on.getBoundingClientRect();
+    if (br.left < sr.left) strip.scrollLeft -= Math.ceil(sr.left - br.left) + 8;
+    else if (br.right > sr.right) strip.scrollLeft += Math.ceil(br.right - sr.right) + 8;
+  }
   function setFeedScope(scope) {
     var was = state.feedScope || "global";
     state.feedScope = FEED_SCOPES.indexOf(scope) >= 0 ? scope : "global";
     paintFeedScope();
+    if (was !== state.feedScope) showScopeTab();
     if (state.feedScope === "equity") showCompletedSeries();
     if (state.feedScope === "local" && state.placeScope.enabled) loadPlaceFeed(true);
     else renderFeed(false);
@@ -1498,6 +1527,8 @@
   function feedMatches(item, query) {
     /* a news card answers to its headline, its publisher and the place it mentions */
     if (item && item.news) return [item.title, item.domain, item.place].join(" ").toLocaleLowerCase().indexOf(query.toLocaleLowerCase()) !== -1;
+    /* a mission post answers to its title, its description and its field */
+    if (item && item.missionPost) return [item.title, item.description, item.domain].join(" ").toLocaleLowerCase().indexOf(query.toLocaleLowerCase()) !== -1;
     var post = item && (item.post || item) || {}, actor = item.actor || post.actor || {};
     return [post.body, actor.display_name, actor.mccluster_id].join(" ").toLocaleLowerCase().indexOf(query.toLocaleLowerCase()) !== -1;
   }
@@ -1721,8 +1752,10 @@
       if (pk && pn.key !== pk) loadPlaceNews(true);
       news = pk && pn.key === pk && !(focus && focus.filter) ? pn.items.slice() : [];
     }
+    /* the open missions are posts in the one stream: all of them in Everything, the picked place's in Local (feedMissionsFor) */
+    var feedMissions = feedMissionsFor(state.feedScope || "global", focus);
     paintNewsCredit(false);
-    if (!items.length && !news.length) {
+    if (!items.length && !news.length && !feedMissions.length) {
       if (regionMode) {
         host.innerHTML=placeLivesHtml() + '<div class="mn__empty">' + esc(
           state.placeScope.error || (!state.world.country ? "Tap a country on the globe." :
@@ -1749,14 +1782,15 @@
     if (query) {
       items = items.filter(function (item) { return feedMatches(item, query); });
       news = news.filter(function (n) { return feedMatches(n, query); });
+      feedMissions = feedMissions.filter(function (m) { return feedMatches(m, query); });
     }
     var scope = state.feedScope || "global", place = scope === "local" ? localPlace() : "";
     if (scope === "news") items = [];
-    /* member posts are not placed on the map, so Local without the country feed shows only the place's news */
+    /* member posts are not placed on the map, so Local without the country feed shows only the place's news (and its missions) */
     if (scope === "local" && !regionMode) items = [];
-    if (!items.length && !news.length) {
+    if (!items.length && !news.length && !feedMissions.length) {
       host.innerHTML = '<div class="mn__empty">' + esc(
-        scope === "local" && !place ? "Tap a country on the globe to see the news that mentions it. Member posts are not placed on the map yet." :
+        scope === "local" && !place ? "Tap a country on the globe to see its news and missions. Member posts are not placed on the map yet." :
         scope === "local" && state.placeNews.loading ? "Loading the news from " + place + "\u2026" :
         scope === "local" && state.placeNews.error ? state.placeNews.error :
         scope === "local" ? "No news from " + place + " in the last 24 hours." :
@@ -1764,9 +1798,20 @@
         query ? "Nothing in your feed matches \u201c" + query + "\u201d." : "Nothing on the feed yet.") + '</div>';
       return;
     }
-    var seen = state.seen || (state.seen = {}), order = 0;
+    var seen = state.seen || (state.seen = {}), order = 0, drawn = withMissions(interleaveFeed(items, news), feedMissions);
+    /* Local with only the missions that can be done there (no story and no post of its own): one line above them says so */
+    var note = scope === "local" && place && !items.length && !news.length
+      ? (state.placeNews.loading ? "Loading the news from " + place + "\u2026" : state.placeNews.error || "No news from " + place + " in the last 24 hours.") : "";
     state.shownNews = news.slice();
-    host.innerHTML = (regionMode ? placeLivesHtml() : "") + interleaveFeed(items, news).map(function (item) {
+    host.innerHTML = (regionMode ? placeLivesHtml() : "") + (note ? '<p class="mn__feed-note">' + esc(note) + '</p>' : "") + drawn.map(function (item) {
+      if (item.missionPost) {
+        var post = missionPostHtml(item), mkey = "mission:" + item.id;
+        if (!seen[mkey]) {
+          seen[mkey] = true;
+          post = post.replace('<article class="mn__post-card', '<article style="--i:' + (order++ % 8) + '" class="mn__post-card is-new');
+        }
+        return post;
+      }
       if (item.news) {
         var card = newsCard(item), nkey = "news:" + item.id;
         if (!seen[nkey]) {
@@ -1793,6 +1838,8 @@
     bindNewsActions(host);
     bindDiscussions(host);
     bindPlaceLives(host);
+    bindMissionPosts(host);
+    wantMissionDetails(drawn);
   }
   /* LIVES OF THE PLACE (owner, 2026-10-19: "the news plus the posts and lives of that area"): broadcasts their host
      placed in this country lead its feed. Watching a broadcast is for members, as everywhere else on Live. */
@@ -1825,14 +1872,160 @@
   }
 
   /* THE MISSION FEED (owner, 2026-11-17: "having the missions as like just another post in the newsfeed, not a big, large
-     post, just the same size post as all the other [posts]"). The Equity Uprise tab lists every open mission as a post, and
-     Everything mixes them in at a modest ratio (docs/control-plane/WORLD-FEED-AND-MISSIONS-20261117.md, targets 3 to 6).
-     missionFeedHtml draws those posts; a mission post's join is acceptWorldMission (below), the one join every mission
-     entry in the World shares. Until the posts are drawn the tab says plainly that none are listed, never a broken list. */
-  function missionFeedHtml() { return ""; }
+     post, just the same size post as all the other [posts]"; docs/control-plane/WORLD-FEED-AND-MISSIONS-20261117.md, targets 3,
+     5 and 6). Every open mission is a post. The Equity Uprise tab lists them all, a page at a time; Everything and Local mix
+     them into the one stream, one after every three other items (js/world-mission-posts.js, interleave). A mission post is a
+     post's card and shape: where a post names its author, the mission's kind and field (never the brand); where it names the
+     handle, its difficulty and points; then its title, its description clamped, a source line when it carries a credit (it
+     opens the dialog at the credit), and the post's action row: the supplied emblem alone as Join (acceptWorldMission, the one
+     join every mission entry in the World shares), Details (the mission's dialog) and Share (its link on this origin). */
+  var MISSION_POSTS = window.MCC_MISSION_POSTS || null;
+  var MISSION_ID = /^[0-9a-f-]{36}$/i;
+  var MISSION_FEED_FIELDS = "id,title,description,domain,kind,difficulty,base_points,discovery_category,created_at";
+  var MISSION_DETAIL_FIELDS = "mission_id,catalog,proof_hint,safety_note,credit_line,about,about_credit,source_url,license_name,license_url,doi";
+  var DETAILS_ABSENT = "mcc.missionDetails.absent";
+  try { if (sessionStorage.getItem(DETAILS_ABSENT) === "1") state.missionFeed.detailsAbsent = true; } catch (_) {}
+  /* the open missions, read once through the policy "public reads open missions" (the anonymous key, or a member's session),
+     newest first; the details of the newest come with them, so the first draw already carries their source lines. Never rejects. */
+  function loadOpenMissions() {
+    var f = state.missionFeed;
+    if (!MISSION_POSTS || f.all) return Promise.resolve();
+    if (f.loading) return f.loading;
+    f.loading = sbRest("action_missions?status=eq.open&select=" + MISSION_FEED_FIELDS + "&order=created_at.desc&limit=500").then(function (rows) {
+      f.all = MISSION_POSTS.newestFirst((Array.isArray(rows) ? rows : []).map(MISSION_POSTS.cleanMission).filter(Boolean));
+      f.error = "";
+      return loadMissionDetails(f.all.slice(0, MISSION_POSTS.PAGE).map(function (m) { return m.id; }));
+    }).catch(function () {
+      if (!f.all) f.error = "The open missions could not load right now.";
+    }).then(function () {
+      f.loading = null;
+      if (state.feedAnswered && !state.loadingFeed) renderFeed(false);
+      if (state.world.country) paintPlaceCard(state.world.country);
+    });
+    return f.loading;
+  }
+  /* the details of these missions (proof hint, safety line, credit), each asked for once, in reads of forty. The table is pending
+     SQL (supabase/pending/20261117100100_action_mission_details.sql): where it is not there yet the first read answers 404
+     (PGRST205), and that is remembered for the session, so nothing more is asked and the posts are drawn without source lines.
+     Resolves true when something new arrived; never rejects. */
+  function loadMissionDetails(ids) {
+    var f = state.missionFeed, got = false, chunks = [];
+    var want = (ids || []).filter(function (id) { return MISSION_ID.test(String(id)) && !f.asked[id]; });
+    if (!MISSION_POSTS || f.detailsAbsent || !want.length) return Promise.resolve(false);
+    want.forEach(function (id) { f.asked[id] = true; });
+    for (var i = 0; i < want.length; i += 40) chunks.push(want.slice(i, i + 40));
+    return chunks.reduce(function (step, chunk) {
+      return step.then(function () {
+        if (f.detailsAbsent) return;
+        return sbRest("action_mission_details?select=" + MISSION_DETAIL_FIELDS + "&mission_id=in.(" + chunk.join(",") + ")").then(function (rows) {
+          (Array.isArray(rows) ? rows : []).map(MISSION_POSTS.cleanDetails).filter(Boolean).forEach(function (d) {
+            if (chunk.indexOf(d.mission_id) >= 0) { f.details[d.mission_id] = d; got = true; }
+          });
+        }, function (e) {
+          if (!MISSION_POSTS.detailsAbsent(e && e.status, e && e.data)) return;
+          f.detailsAbsent = true;
+          try { sessionStorage.setItem(DETAILS_ABSENT, "1"); } catch (_) {}
+        });
+      });
+    }, Promise.resolve()).then(function () { return got; });
+  }
+  /* the details of what is on screen now; when any arrive, the screen is drawn again with them (each mission is asked for once,
+     so this never loops) */
+  function wantMissionDetails(list) {
+    var ids = (list || []).filter(function (x) { return x && x.missionPost; }).map(function (m) { return m.id; });
+    if (!ids.length) return;
+    loadMissionDetails(ids).then(function (got) { if (got && !state.loadingFeed) renderFeed(false); });
+  }
+  function missionById(id) {
+    var all = state.missionFeed.all || [];
+    for (var i = 0; i < all.length; i++) if (all[i].id === id) return all[i];
+    return null;
+  }
+  /* the missions a scope carries: every open mission in Everything; in Local the picked place's (the ones pinned there and the
+     ones pinned nowhere), once the globe has said where its pins are; none in News, nor while a mission picked on the Earth
+     narrows the feed to its posts */
+  function feedMissionsFor(scope, focus) {
+    var all = state.missionFeed.all, c = state.world.country;
+    if (!MISSION_POSTS || !all || !all.length || (focus && focus.filter)) return [];
+    if (scope === "global") return all;
+    if (scope === "local" && c && state.world.pinsKnown) return MISSION_POSTS.placeMissions(all, state.world.pins, c.missionIds || []);
+    return [];
+  }
+  /* one mission after every three other items, each once, newest first (js/world-mission-posts.js) */
+  function withMissions(others, list) {
+    return MISSION_POSTS && list.length ? MISSION_POSTS.interleave(others, list, { every: MISSION_POSTS.EVERY, pageSize: MISSION_POSTS.PAGE }) : others;
+  }
+  function missionPostHtml(m) {
+    var d = state.missionFeed.details[m.id] || null, source = d ? MISSION_POSTS.sourceLine(d) : "", meta = MISSION_POSTS.metaLine(m), title = "mnMissionPost-" + m.id;
+    return '<article class="mn__post-card mn__mission-post" data-mission-post="' + esc(m.id) + '" aria-labelledby="' + esc(title) + '">' +
+      '<div class="mn__post-main">' +
+        '<div class="mn__post-head"><span class="mn__mission-post-icon" aria-hidden="true">' + (m.category === "create" ? PATH_ART.create : PATH_ART.mission) + '</span>' +
+          '<div class="mn__author-meta"><span class="mn__author-name">' + esc(MISSION_POSTS.headLine(m)) + '</span>' + (meta ? '<div class="mn__author-sub">' + esc(meta) + '</div>' : '') + '</div></div>' +
+        '<p class="mn__mission-post-title" id="' + esc(title) + '">' + esc(m.title) + '</p>' +
+        (m.description ? '<p class="mn__post-body mn__mission-post-body">' + esc(m.description) + '</p>' : '') +
+        (source ? '<button class="mn__mission-post-source" type="button" data-mission-credit="' + esc(m.id) + '">' + esc(source) + '</button>' : '') +
+      '</div>' +
+      '<div class="mn__post-actions">' +
+        '<button class="mn__action mn__mission-join" type="button" data-mission-join="' + esc(m.id) + '" aria-label="Join this mission">' + EUP_MARKS + '</button>' +
+        '<button class="mn__action mn__mission-details" type="button" data-mission-details="' + esc(m.id) + '">' + ICON.details + '<span class="mn__action-label">Details</span></button>' +
+        '<button class="mn__action mn__action--share" type="button" data-mission-share="' + esc(m.id) + '" aria-label="Share this mission">' + ICON.share + '<span class="mn__action-label">Share</span></button>' +
+      '</div></article>';
+  }
+  /* the same three doors for a guest and a member: Join is acceptWorldMission (a guest is asked to sign in with the mission kept
+     in the address; a member gets the dialog and its one join), Details and the source line open the dialog */
+  function bindMissionPosts(root) {
+    root.querySelectorAll("[data-mission-join]").forEach(function (b) {
+      b.onclick = function (e) {
+        e.preventDefault(); e.stopPropagation();
+        var m = missionById(b.getAttribute("data-mission-join"));
+        if (m) acceptWorldMission({ id: m.id, title: m.title });
+      };
+    });
+    root.querySelectorAll("[data-mission-details],[data-mission-credit]").forEach(function (b) {
+      b.onclick = function () {
+        var credit = b.hasAttribute("data-mission-credit"), id = b.getAttribute(credit ? "data-mission-credit" : "data-mission-details");
+        prepareWorldMission(id);
+        openMission(id, credit ? { at: "credit" } : null);
+      };
+    });
+    root.querySelectorAll("[data-mission-share]").forEach(function (b) {
+      b.onclick = function () { shareMission(b, b.getAttribute("data-mission-share")); };
+    });
+  }
+  /* Share copies the mission's own address on this origin (mccluster.org/?mission=…), which opens its dialog for anyone */
+  function shareMission(b, id) {
+    var link = MISSION_POSTS ? MISSION_POSTS.missionLink(location, id) : "", m = missionById(id), label = b.querySelector(".mn__action-label");
+    if (!link) return;
+    var other = function () {
+      if (navigator.share) navigator.share({ title: m ? m.title : "Mission", url: link }).catch(function () {});
+      else window.prompt("Copy the mission link", link);
+    };
+    track("mission_share", { mission: String(id).slice(0, 36) });
+    if (!(navigator.clipboard && navigator.clipboard.writeText)) { other(); return; }
+    navigator.clipboard.writeText(link).then(function () {
+      if (!label) return;
+      label.textContent = "Copied";
+      setTimeout(function () { if (label.isConnected) label.textContent = "Share"; }, 2400);
+    }, other);
+  }
+  /* the Equity Uprise tab: every open mission, a page at a time (Load more), the search narrowing them as it narrows the feed */
   function paintMissionFeed(host) {
-    var html = missionFeedHtml();
-    host.innerHTML = html || '<div class="mn__empty" data-mission-feed-empty>Open missions will appear here.</div>';
+    var f = state.missionFeed, query = state.world.query;
+    if (!f.all) {
+      if (MISSION_POSTS && !f.loading && !f.error) loadOpenMissions();
+      host.innerHTML = MISSION_POSTS && (f.loading || !f.error) ? skeleton(3)
+        : '<div class="mn__empty" data-mission-feed-error>' + esc(f.error || "The open missions could not load right now.") + '</div>';
+      return;
+    }
+    var list = query ? f.all.filter(function (m) { return feedMatches(m, query); }) : f.all;
+    if (!list.length) {
+      host.innerHTML = '<div class="mn__empty" data-mission-feed-empty>' + esc(query ? "No open mission matches \u201c" + query + "\u201d." : "No missions are open right now.") + '</div>';
+      return;
+    }
+    var page = list.slice(0, f.shown);
+    host.innerHTML = page.map(missionPostHtml).join("");
+    bindMissionPosts(host);
+    wantMissionDetails(page);
   }
 
   function skeleton(n) {
@@ -2005,7 +2198,12 @@
       more.hidden = !(state.placeNews.before || (state.placeScope.enabled && state.placeScope.postBefore));
       return;
     }
-    if (state.feedScope === "equity") { more.hidden = true; return; }
+    /* the Equity Uprise tab pages its missions the way the feed pages its posts */
+    if (state.feedScope === "equity") {
+      var f = state.missionFeed, query = state.world.query, n = !f.all ? 0 : query ? f.all.filter(function (m) { return feedMatches(m, query); }).length : f.all.length;
+      more.hidden = n <= f.shown;
+      return;
+    }
     more.hidden = !(state.nextBefore || (state.newsBefore && !(focus && focus.filter)));
   }
   function bindNewsActions(root) {
@@ -2059,8 +2257,10 @@
       /* it came after the posts were drawn: draw again */
       if (drawn && !state.loadingFeed) renderFeed(false);
     });
-    /* the posts wait a moment for the news, so both arrive in one draw, but never on it */
-    var settled = Promise.race([news, new Promise(function (r) { setTimeout(r, NEWS_WAIT); })]);
+    /* the open missions are posts too: read once, beside them (loadOpenMissions never rejects) */
+    var missionsRead = reset ? loadOpenMissions() : Promise.resolve();
+    /* the posts wait a moment for the news and the missions, so they arrive in one draw, but never on them */
+    var settled = Promise.race([Promise.all([news, missionsRead]), new Promise(function (r) { setTimeout(r, NEWS_WAIT); })]);
     return Promise.all([read, settled]).then(function (out) {
       var data = out[0], incoming = data && data.items || [];
       if (data) {
@@ -3267,6 +3467,7 @@
         .catch(function (e) { setStatus($("mnConversationStatus"),e.message||"Could not accept request.","error"); });
     };
     $("mnMore").onclick = function () {
+      if (state.feedScope === "equity") { state.missionFeed.shown += MISSION_POSTS ? MISSION_POSTS.PAGE : 20; renderFeed(false); return; }
       if (state.feedScope === "local") { loadPlaceNews(false); if (state.placeScope.enabled) loadPlaceFeed(false); }
       else loadFeed(false);
     };
@@ -4114,9 +4315,35 @@
     if(focus)setTimeout(function(){var n=f.querySelector("#mnBizName");if(n){f.scrollIntoView({block:"start"});n.focus();}},60);
     return f;
   }
-  function openMission(id){
-    var version=++missionOpenVersion;
+  /* THE MISSION'S DIALOG, for a guest as for a member (WORLD-FEED-AND-MISSIONS-20261117.md, target 6): the whole description,
+     its points, difficulty and skills, the proof hint and the safety line when it has them, the source's own words only as a
+     quotation with their credit directly beneath it, and the full credit with its links (data/missions/drawdown/README.md, "How
+     to display a mission"). Every word is escaped and every link goes through safeHttpUrl. */
+  function missionDetailHtml(m,d){
+    var html='<p>'+esc(m.description||"")+'</p><p><strong>'+esc(m.base_points)+' base points</strong> · difficulty '+esc(m.difficulty)+'</p><p>'+esc((m.skills||[]).join(" · "))+'</p>';
+    if(d&&d.proof_hint)html+='<p class="mn__mission-note"><b>Proof:</b> '+esc(d.proof_hint)+'</p>';
+    if(d&&d.safety_note)html+='<p class="mn__mission-note"><b>Safety:</b> '+esc(d.safety_note)+'</p>';
+    if(d&&d.about&&d.about_credit)html+='<figure class="mn__mission-about"><blockquote>'+esc(d.about)+'</blockquote><figcaption>'+esc(d.about_credit)+'</figcaption></figure>';
+    if(d&&d.credit_line&&MISSION_POSTS)html+=missionCreditHtml(d);
+    return html+'<p class="mn__fund-line" id="mnMissionFund" role="status">Checking funding\u2026</p>';
+  }
+  function creditLinkHtml(url){
+    var safe=safeHttpUrl(url);
+    return safe?'<a href="'+esc(safe)+'" target="_blank" rel="noopener noreferrer">'+esc(url)+'</a>':esc(url);
+  }
+  /* the credit in full: its own words with each address in it a link, then any source, DOI or licence address it does not carry */
+  function missionCreditHtml(d){
+    var words=MISSION_POSTS.parseCredit(d.credit_line).map(function(p){return p.url?creditLinkHtml(p.url):esc(p.text);}).join("");
+    var more=MISSION_POSTS.creditLinks(d).map(function(l){return '<li>'+esc(l.label)+': '+creditLinkHtml(l.url)+'</li>';}).join("");
+    return '<section class="mn__mission-credit" id="mnMissionCredit" tabindex="-1" aria-labelledby="mnMissionCreditHead"><p class="mn__eyebrow" id="mnMissionCreditHead">Credit</p><p>'+words+'</p>'+(more?'<ul>'+more+'</ul>':'')+'</section>';
+  }
+  /* opts.at "credit": a post's source line opens the dialog at the credit */
+  function openMission(id,opts){
+    var version=++missionOpenVersion,atCredit=!!(opts&&opts.at==="credit");
     return fetchMission(id).then(function(m){
+      /* the details come before anything is drawn: each mission is asked for once, and nothing where the table is absent */
+      return m?loadMissionDetails([m.id]).then(function(){return m;}):m;
+    }).then(function(m){
       if(version!==missionOpenVersion)return;
       if(!m){setStatus($("mnMissionStatus"),"That mission is not available any more.","error");return {opened:false,message:"That mission is not available any more."};}
       missions.current=m;missions.assignment=null;clearMissionCapture();antisocialReset();
@@ -4124,7 +4351,7 @@
       if($("mnMissionProofUrl"))$("mnMissionProofUrl").value="";
       if($("mnMissionProofType"))$("mnMissionProofType").value="video";
       $("mnMissionTitle").textContent=m.title;
-      $("mnMissionDetail").innerHTML='<p>'+esc(m.description||"")+'</p><p><strong>'+esc(m.base_points)+' base points</strong> · difficulty '+esc(m.difficulty)+'</p><p>'+esc((m.skills||[]).join(" · "))+'</p><p class="mn__fund-line" id="mnMissionFund" role="status">Checking funding\u2026</p>';
+      $("mnMissionDetail").innerHTML=missionDetailHtml(m,state.missionFeed.details[m.id]||null);
       if(m.id==="368fd75a-77d2-4de0-9722-17020674a914"){
         $("mnMissionDetail").innerHTML+='<p><a class="mn__primary" href="/mnet.html?view=missions#mnRecord">Policy team application → Action Record</a></p>';
       }
@@ -4149,6 +4376,8 @@
       if($("mnMissionShare"))$("mnMissionShare").checked=true;
       setStatus($("mnMissionDialogStatus"),open?"":"This mission is not taking new people.");
       if(!$("mnMissionDialog").open)$("mnMissionDialog").showModal();
+      var credit=atCredit&&$("mnMissionCredit");
+      if(credit){credit.focus({preventScroll:true});try{credit.scrollIntoView({block:"center"});}catch(_){}}
       try{history.replaceState(null,"",missionHref(m.id));}catch(_){}
       if(!state.user||!state.user.id){setStatus($("mnMissionDialogStatus"),"Sign in to join this mission.");return {opened:true};}
       return sbRest("action_mission_assignments?mission_id=eq."+encodeURIComponent(m.id)+"&user_id=eq."+encodeURIComponent(state.user.id)+"&select=id,status&limit=1").then(function(rows){
@@ -4576,6 +4805,9 @@
       if (d.type === "hu:globe-ready") {
         if (state.placeScope.livePlaces) tellWorld({ type: "hu:live-places", source: "video", places: state.placeScope.livePlaces });
         state.world.pins = {}; state.world.missions = {}; state.world.latest = null;
+        /* a place's missions need to know which missions are pinned anywhere: only a real answer counts (not the frame's first
+           word before its data, and not a read that failed) */
+        state.world.pinsKnown = !d.dataPending && !d.dataUnavailable;
         (Array.isArray(d.missionIds) ? d.missionIds : []).forEach(function (id) { if (WORLD_ID.test(String(id))) state.world.pins[id] = true; });
         (Array.isArray(d.missions) ? d.missions : []).forEach(function (m) {
           if (!m || !WORLD_ID.test(String(m.mission_id || ""))) return;
@@ -4594,8 +4826,9 @@
           : "No missions are pinned on the Earth yet. The feed below is live.";
         if (caption) caption.textContent = state.world.caption;
         /* repaint so posts can grow their "Locate on globe" door, unless
-           the first page of the feed is still on its way */
+           the first page of the feed is still on its way; the place card's missions follow the pins */
         if (!state.loadingFeed) renderFeed(false);
+        if (state.world.country) paintPlaceCard(state.world.country);
       } else if (d.type === "hu:globe-unavailable") {
         if (caption) caption.textContent = "The globe can\u2019t run on this device. Everything else works: the feed is below.";
       } else if (d.type === "hu:mission-selected" && d.mission && WORLD_ID.test(String(d.mission.mission_id || ""))) {
@@ -4624,6 +4857,8 @@
         state.world.country = d.country && typeof d.country.name === "string" ? { code: String(d.country.code || "").toUpperCase().slice(0, 2), name: d.country.name.slice(0, 80), state: tappedState } : null;
         var sameCountry = !!(prevCountry && state.world.country && prevCountry.code === state.world.country.code);
         if (state.world.country) state.world.country.stats = placeStats(d.country.stats);
+        /* the missions pinned in the place, as the globe reads its pins (Local lists them with the ones pinned nowhere) */
+        if (state.world.country && Array.isArray(d.country.missionIds)) state.world.country.missionIds = d.country.missionIds.filter(function (id) { return WORLD_ID.test(String(id)); }).slice(0, 500);
         paintPlaceCard(state.world.country);
         /* a post stays placed in the country, so a state picked or let go there keeps the member's choice */
         if ($("mnPostPlaceOptIn") && !sameCountry) $("mnPostPlaceOptIn").checked = false;

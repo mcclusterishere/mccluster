@@ -147,7 +147,7 @@ test('Local reads the picked place\'s own news from the Worker: the stories the 
   const paint = fnSource(js, 'paintFeed'), load = fnSource(js, 'loadPlaceNews');
   assert.match(paint, /if \(pk && pn\.key !== pk\) loadPlaceNews\(true\);/, 'a newly picked place is read for itself');
   assert.match(paint, /news = pk && pn\.key === pk && !\(focus && focus\.filter\) \? pn\.items\.slice\(\) : \[\];/, 'Local shows only what was read for that place');
-  assert.ok(paint.indexOf('pn.items.slice()') < paint.indexOf('if (!items.length && !news.length)'), 'before the empty check, so the country feed\'s own empty message never hides the place\'s news');
+  assert.ok(paint.indexOf('pn.items.slice()') < paint.indexOf('if (!items.length && !news.length && !feedMissions.length)'), 'before the empty check, so the country feed\'s own empty message never hides the place\'s news (or its missions, owner 2026-11-17)');
   assert.doesNotMatch(paint, /news\.filter\(function \(n\) \{ return n\.country_code/, 'no filter over the world\'s first page');
   assert.match(load, /NEWS_API \+ "\?limit=50&country=" \+ encodeURIComponent\(c\.code\) \+ \(box \? "&bbox=" \+ box\.join\(","\) : ""\)/);
   assert.match(load, /\(!pick \|\| newsInState\(onHeatGrid\(n\), pick\)\)/, 'a state keeps the stories inside its own shape, placed as the heat map counts them');

@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 720,
+  "candidate_count": 721,
   "capability_source_count": 104,
-  "support_only_count": 616,
-  "checks_total": 2778,
-  "checks_passed": 2778,
+  "support_only_count": 617,
+  "checks_total": 2782,
+  "checks_passed": 2782,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -497,6 +497,7 @@
     "scripts/test/world-environment-lifecycle.test.mjs",
     "scripts/test/world-environment.test.mjs",
     "scripts/test/world-first-and-layers.test.mjs",
+    "scripts/test/world-mission-posts.test.mjs",
     "services.html",
     "sitemap.xml",
     "sites-details.html",
@@ -734,7 +735,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "720 entries"
+      "detail": "721 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -10193,6 +10194,26 @@
     },
     {
       "name": "scripts/test/world-first-and-layers.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/world-mission-posts.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/world-mission-posts.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/world-mission-posts.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/world-mission-posts.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     },

@@ -815,7 +815,7 @@ if(runs('travel-rides')){
    request finishes after the visitor has returned to the mission feed (the feed's Equity Uprise tab). */
 if(runs('mission-archive')) {
   const scope='mission-archive-iphone', event=COHORT_ARCHIVE.event;
-  const {ctx,page,world,errors}=await open(DEVICES[0],{member:false,geo:'delayed',travel:true,entryPath:'/mnet.html?feed=equity&completed='+encodeURIComponent(event.slug),feedReady:'#mnFeed [data-mission-feed-empty]'});
+  const {ctx,page,world,errors}=await open(DEVICES[0],{member:false,geo:'delayed',travel:true,entryPath:'/mnet.html?feed=equity&completed='+encodeURIComponent(event.slug),feedReady:'#mnFeed [data-mission-post], #mnFeed [data-mission-feed-empty]'});
   try{
     const globe=page.frame({url:/action-globe\.html/});
     await page.waitForSelector('#mnCompletedSeries .dc-series__card',{state:'attached'});
@@ -949,7 +949,9 @@ if (runs('editorial-state') && (!process.env.EDITORIAL_DEVICE || process.env.EDI
     check(scope,'the place card sits in the middle at the top, not the full width: centred, under the bar, nothing over it, the buttons stepped aside',Math.abs(pc.left-pc.right)<=2&&pc.w<=300&&pc.w<pc.vw-40&&pc.top>=pc.barBottom&&pc.onTop&&pc.stackClear&&pc.liveClear&&pc.frameCard==='none',pc);
     const under = await Promise.all([eastern,nairobi].map((p)=>page.evaluate(([x,y])=>{const t=document.elementFromPoint(x,y);return t&&t.id},[p.x,p.y])));
     check(scope,'with the card up, the places to tap are still the globe\'s',under.every((t)=>t==='mnWorldFrame'),under);
-    check(scope,'it gives Kenya\'s three counts: news today, posts placed there, accounts from there (five or more, so shown)',JSON.stringify(pc.stats)===JSON.stringify(['8news · 24 h','3posts','19members'])&&/Kenya/.test(pc.text)&&/Double-tap a state to choose it/.test(pc.text),pc.stats);
+    /* and its missions (owner, 2026-11-17: "see X amount of news, X amount of missions"): the ones pinned in Kenya (none here) and the
+       one open mission pinned nowhere, which can be done anywhere */
+    check(scope,'it gives Kenya\'s counts: news today, missions (pinned there or nowhere), posts placed there, accounts from there (five or more, so shown)',JSON.stringify(pc.stats)===JSON.stringify(['8news · 24 h','1missions','3posts','19members'])&&/Kenya/.test(pc.text)&&/Double-tap a state to choose it/.test(pc.text),pc.stats);
     await page.screenshot({path:join(OUT,scope+'-place-card.png')});
     await page.waitForFunction(()=>document.querySelectorAll('#mnFeed [data-news-id]').length>0,null,{timeout:8000}).catch(()=>{});
     const kenya = await page.locator('#mnFeed [data-news-id]').count();
@@ -960,7 +962,8 @@ if (runs('editorial-state') && (!process.env.EDITORIAL_DEVICE || process.env.EDI
     const east = await now();
     await page.waitForFunction(()=>document.getElementById('huRegionLabel').textContent==='Eastern, Kenya',null,{timeout:5000}).catch(()=>{});
     check(scope,'a double tap inside the selected country picks the state: lit, named on the card and the label',east.selected==='KE'&&!!east.state&&/^Eastern\s*Kenya\s*×?\s*0news · 24 h/.test(east.card||'')&&await page.textContent('#huRegionLabel')==='Eastern, Kenya',east);
-    check(scope,'Local keeps only the stories placed in it: none in Eastern',await page.locator('#mnFeed [data-news-id]').count()===0&&/No news from Eastern, Kenya in the last 24 hours/.test(await page.textContent('#mnFeed')));
+    check(scope,'Local keeps only the stories placed in it: none in Eastern, said so above the one mission that can be done anywhere',await page.locator('#mnFeed [data-news-id]').count()===0&&/No news from Eastern, Kenya in the last 24 hours/.test(await page.textContent('#mnFeed'))
+      &&await page.locator('#mnFeed [data-mission-post]').count()===1&&await page.getAttribute('#mnFeed [data-mission-post]','data-mission-post')==='44444444-4444-4444-8444-444444444441');
     await page.screenshot({path:join(OUT,scope+'-eastern.png')});
     await gap();
     /* another state of the same country: picked the same way, with no second read of the country */
@@ -1010,19 +1013,19 @@ if (runs('editorial-members') && (!process.env.EDITORIAL_DEVICE || process.env.E
     await twice(eastern);
     await page.waitForFunction(()=>{const c=document.getElementById('mnPlaceCard');return c&&!c.hidden&&/\b23\b/.test(c.textContent)},null,{timeout:10000}).catch(()=>{});
     const ke = await stats();
-    check(scope,'Kenya\'s card gives the exact count of accounts from there',JSON.stringify(ke)===JSON.stringify(['8news · 24 h','3posts','23members']),ke);
+    check(scope,'Kenya\'s card gives the exact count of accounts from there',JSON.stringify(ke)===JSON.stringify(['8news · 24 h','1missions','3posts','23members']),ke);
     await page.waitForTimeout(700);
     await twice(eastern);
     await page.waitForFunction(()=>document.getElementById('huRegionLabel').textContent==='Eastern, Kenya',null,{timeout:8000}).catch(()=>{});
     await page.waitForFunction(()=>{const c=document.getElementById('mnPlaceCard');return c&&!c.hidden&&/members/.test(c.textContent)},null,{timeout:8000}).catch(()=>{});
     const east = await stats();
-    check(scope,'a state picked gives that state\'s accounts: 4 in Eastern',JSON.stringify(east)===JSON.stringify(['0news · 24 h','4members']),east);
+    check(scope,'a state picked gives that state\'s accounts: 4 in Eastern',JSON.stringify(east)===JSON.stringify(['0news · 24 h','1missions','4members']),east);
     await page.waitForTimeout(700);
     await twice(nairobi);
     await page.waitForFunction(()=>document.getElementById('huRegionLabel').textContent==='Nairobi, Kenya',null,{timeout:8000}).catch(()=>{});
     await page.waitForFunction(()=>{const c=document.getElementById('mnPlaceCard');return c&&!c.hidden&&/\b15\b/.test(c.textContent)},null,{timeout:8000}).catch(()=>{});
     const nb = await stats();
-    check(scope,'and Nairobi\'s 15, found by its shape (its region code is a county\'s, not the state\'s)',JSON.stringify(nb)===JSON.stringify(['8news · 24 h','15members']),nb);
+    check(scope,'and Nairobi\'s 15, found by its shape (its region code is a county\'s, not the state\'s)',JSON.stringify(nb)===JSON.stringify(['8news · 24 h','1missions','15members']),nb);
     await page.screenshot({path:join(OUT,scope+'-nairobi.png')});
     check(scope,'no horizontal overflow',await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth));
     check(scope,'no JavaScript errors',errors.length===0,errors);
@@ -1397,9 +1400,11 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>(!process.env.EDIT
     await page.click('#mnFeedScope [data-feed-scope="equity"]');
     await page.waitForSelector('#wePanel:not([hidden])',{timeout:10000}).catch(()=>{});
     const tab=await page.evaluate(()=>({pressed:document.querySelector('[data-feed-scope="equity"]').getAttribute('aria-pressed'),scope:window.MCC_FEED_SCOPE.get(),
-      panel:!document.getElementById('wePanel').hidden&&document.getElementById('wePanel').getClientRects().length>0,missions:!!document.querySelector('#mnFeed [data-mission-feed-empty]'),posts:document.querySelectorAll('#mnFeed [data-post-id]').length,
+      panel:!document.getElementById('wePanel').hidden&&document.getElementById('wePanel').getClientRects().length>0,note:getComputedStyle(document.getElementById('weUnavailable')).display==='block',missions:document.querySelectorAll('#mnFeed [data-mission-post]').length,news:document.querySelectorAll('#mnFeed [data-news-id]').length,posts:document.querySelectorAll('#mnFeed [data-post-id]').length,
       order:document.getElementById('mnFeedScope').compareDocumentPosition(document.getElementById('wePanel'))&Node.DOCUMENT_POSITION_FOLLOWING&&document.getElementById('wePanel').compareDocumentPosition(document.getElementById('mnFeed'))&Node.DOCUMENT_POSITION_FOLLOWING}));
-    check(scope,'the Equity Uprise tab shows the mission feed, no posts, with Environmental Justice above it',tab.pressed==='true'&&tab.scope==='equity'&&tab.panel&&tab.missions&&tab.posts===0&&!!tab.order,tab);
+    /* the open missions as posts (six: the clip job is the Clips tab's), nothing else; this fixture's Environmental Justice source
+       answers 401, so the tab shows the one honest line in the panel's place, never a broken panel (owner, 2026-11-17) */
+    check(scope,'the Equity Uprise tab shows the mission posts, no posts or news, with Environmental Justice above them (one honest line while its source is unavailable)',tab.pressed==='true'&&tab.scope==='equity'&&(tab.panel||tab.note)&&!(tab.panel&&tab.note)&&tab.missions===6&&tab.posts===0&&tab.news===0&&!!tab.order,tab);
     await page.screenshot({path:join(OUT,scope+'-equity.png')});
     await page.click('#mnFeedScope [data-feed-scope="global"]');
     check(scope,'leaving the tab returns to the whole feed, and the panel goes',await page.evaluate(()=>document.getElementById('wePanel').hidden&&window.MCC_FEED_SCOPE.get()==='global'&&document.querySelectorAll('#mnFeed [data-post-id]').length>0));
@@ -1520,7 +1525,7 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
     check(scope,'actual Cesium keeps its starfield, natural Earth colors and soft clouds', await globe.evaluate(() => { const s=window.__huGlobeStyle?.();return s?.editorial && s.saturation===1.1 && s.cloudAlpha===.65 && s.atmosphereSaturation===.1 && s.stars; }));
     /* the mission feed is the feed's Equity Uprise tab (owner, 2026-11-17), where the Missions mode used to be */
     await page.click('#mnFeedScope [data-feed-scope="equity"]');
-    await page.waitForSelector('#mnFeed [data-mission-feed-empty]');
+    await page.waitForSelector('#mnFeed [data-mission-post]');
     /* THE WORLD'S GLOBE (owner, 2026-10-20: "Replace the filter button with the button that zooms you all the way back out"):
        World sits where the controls menu was, nothing on the page covers it, and one tap takes the camera back to the whole Earth */
     const corner=await globe.evaluate(()=>{const w=document.getElementById('ctlWorld'),r=w&&w.getBoundingClientRect();return{inCorner:!!(w&&w.closest('.globe-editorial-world')),menu:!!document.querySelector('.globe-editorial-tools'),visible:!!(w&&w.getClientRects().length),w:r&&Math.round(r.width),h:r&&Math.round(r.height),cx:r&&r.left+r.width/2,cy:r&&r.top+r.height/2,label:w&&w.getAttribute('aria-label'),right:r&&Math.round(innerWidth-r.right),bottom:r&&Math.round(innerHeight-r.bottom)}});
@@ -1542,7 +1547,7 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
        no swipe deck; the strip reachable by keyboard; nothing pushes the page sideways */
     const eup=await page.evaluate(()=>{const b=document.querySelector('#mnFeedScope [data-feed-scope="equity"]'),shown=[...b.querySelectorAll('img')].filter(i=>i.getClientRects().length),r=shown[0]?.getBoundingClientRect();
       return{pressed:b.getAttribute('aria-pressed'),name:b.getAttribute('aria-label'),words:b.textContent.trim(),shown:shown.map(i=>i.getAttribute('src')),w:r&&Math.round(r.width),h:r&&Math.round(r.height),
-        panel:!document.getElementById('wePanel').hidden,deck:!!document.querySelector('.mn-swipe,.hu-mission-preview,#mnWorldEup'),sw:document.documentElement.scrollWidth,cw:document.documentElement.clientWidth};});
+        panel:!document.getElementById('wePanel').hidden&&(getComputedStyle(document.getElementById('wePanel')).display!=='none'||getComputedStyle(document.getElementById('weUnavailable')).display==='block'),deck:!!document.querySelector('.mn-swipe,.hu-mission-preview,#mnWorldEup'),sw:document.documentElement.scrollWidth,cw:document.documentElement.clientWidth};});
     check(scope,'the Equity Uprise tab is the supplied mark alone, scaled, pressed, with Environmental Justice above the mission feed and no deck',eup.pressed==='true'&&eup.name==='Equity Uprise'&&eup.words===''&&eup.shown.length===1&&eup.w===eup.h&&eup.w>=24&&eup.panel&&!eup.deck&&eup.sw===eup.cw,eup);
     await page.focus('#mnFeedScope [data-feed-scope="global"]');await page.keyboard.press('ArrowRight');
     check(scope,'the arrow keys walk the strip',await page.evaluate(()=>document.activeElement&&document.activeElement.dataset.feedScope==='equity'));
@@ -2166,7 +2171,13 @@ for (const device of [DEVICES[0], DEVICES[2]]) {
 
 /* ---------- WORLD NEWS IN THE FEED (owner, 2026-10-15: "GDELT news as the feed … sprinkled into that. At a ratio to like one …
    from them."). One member post to one news item, for a guest and a member, free and with no session. ---------- */
-const feedSeq = (page) => page.$$eval('#mnFeed > article', (a) => a.map((x) => x.hasAttribute('data-news-id') ? 'n' : x.hasAttribute('data-post-id') ? 'p' : '?').join(''));
+const feedSeq = (page) => page.$$eval('#mnFeed > article', (a) => a.map((x) => x.hasAttribute('data-news-id') ? 'n' : x.hasAttribute('data-post-id') ? 'p' : x.hasAttribute('data-mission-post') ? 'm' : '?').join(''));
+/* MISSIONS AS POSTS (owner, 2026-11-17): the open missions join the stream, one after every three other items (newest first, each
+   once; js/world-mission-posts.js). This fixture has six open missions that are not clip jobs. Without them, the posts and the
+   news read exactly as before; with them, every mission sits after three other items while missions remain. */
+const OPEN_FEED_MISSIONS = 6;
+const withoutMissions = (seq) => seq.replace(/m/g, '');
+const missionsEveryThird = (seq) => { const others = withoutMissions(seq).length, n = Math.min(OPEN_FEED_MISSIONS, Math.floor(others / 3)); return new RegExp('^(?:[pn]{3}m){' + n + '}[pn]*' + 'm'.repeat(Math.max(0, Math.min(OPEN_FEED_MISSIONS - n, 20 - others - n))) + '$').test(seq); };
 const newsState = (page) => page.evaluate(() => {
   const credit = document.getElementById('mnNewsCredit'), a = credit && credit.querySelector('a'), more = document.getElementById('mnMore');
   const cards = [...document.querySelectorAll('#mnFeed [data-news-id]')];
@@ -2190,7 +2201,8 @@ if (runs('news-guest')) {
   const scope = 'news-guest';
   await page.waitForSelector('#mnFeed [data-news-id]', { timeout: 15000 });
   let st = await newsState(page), seq = await feedSeq(page);
-  check(scope, 'one member post to one news item, then the news carries on once the loaded posts run out', seq === 'pn'.repeat(5) + 'n'.repeat(15) && st.posts === 5 && st.news === 20, seq);
+  check(scope, 'one member post to one news item, then the news carries on once the loaded posts run out', withoutMissions(seq) === 'pn'.repeat(5) + 'n'.repeat(15) && st.posts === 5 && st.news === 20, seq);
+  check(scope, 'the open missions join that stream, one after every three other items, each once', missionsEveryThird(seq) && (seq.match(/m/g) || []).length === OPEN_FEED_MISSIONS, seq);
   const reads = req(world, 'GET', /^\/v1\/world\/news$/);
   check(scope, 'the mixed feed and geographic news read the Worker without a session', reads.some((r) => /[?&]limit=20$/.test(r.search)) && reads.length <= 2 && reads.every((r) => !r.auth && /[?&]limit=(?:20|50)$/.test(r.search)), reads);
   check(scope, 'the GDELT credit is one line over the feed, visible with the news, to the project in a new tab', st.credit && st.creditText === 'World news from The GDELT Project' && st.href === 'https://www.gdeltproject.org/' && st.target === '_blank' && /noopener/.test(st.rel) && /noreferrer/.test(st.rel), brief(st));
@@ -2264,7 +2276,7 @@ if (runs('news-guest')) {
   st = await newsState(page); seq = await feedSeq(page);
   const pageTwo = { posts: req(world, 'GET', /^\/v1\/mnet\/public-feed$/).filter((r) => /[?&]before=/.test(r.search)), news: req(world, 'GET', /^\/v1\/world\/news$/).filter((r) => /[?&]before=/.test(r.search)) };
   check(scope, 'Load more reads the next page of both: posts from theirs, news from its opaque cursor, sent back verbatim', st.posts === 8 && st.news === 30 && pageTwo.posts.length === 1 && pageTwo.news.length === 1 && /[?&]before=cur%7C20$/.test(pageTwo.news[0].search) && !pageTwo.news[0].auth, { st: { posts: st.posts, news: st.news }, pageTwo });
-  check(scope, 'after the next page the feed is still one for one, and Load more goes when both are done', seq === 'pn'.repeat(8) + 'n'.repeat(22) && !st.more, seq);
+  check(scope, 'after the next page the feed is still one for one, and Load more goes when both are done', withoutMissions(seq) === 'pn'.repeat(8) + 'n'.repeat(22) && missionsEveryThird(seq) && !st.more, seq);
   check(scope, 'no page errors', errors.length === 0, errors);
   await ctx.close();
 }
@@ -2274,7 +2286,7 @@ if (runs('news-member')) {
   const scope = 'news-member';
   await page.waitForSelector('#mnFeed [data-news-id]', { timeout: 15000 });
   const seq = await feedSeq(page), st = await newsState(page);
-  check(scope, 'a member gets the same: one of their posts, one news item, then the news carries on', seq === 'pn'.repeat(9) + 'n'.repeat(11), seq);
+  check(scope, 'a member gets the same: one of their posts, one news item, then the news carries on', withoutMissions(seq) === 'pn'.repeat(9) + 'n'.repeat(11) && missionsEveryThird(seq), seq);
   const reads = req(world, 'GET', /^\/v1\/world\/news$/), feed = req(world, 'GET', /^\/v1\/mnet\/feed$/);
   check(scope, 'the member\'s own feed carries the session; the news never does', feed.length > 0 && feed.every((r) => r.auth) && reads.length === 1 && !reads[0].auth, { feed: feed.length, reads });
   check(scope, 'the credit is there for a member too, and nothing scrolls sideways', st.credit && st.href === 'https://www.gdeltproject.org/' && st.sw === st.cw && st.cardsFit, brief(st));

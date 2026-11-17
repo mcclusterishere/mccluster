@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 720,
+  "candidate_count": 721,
   "capability_source_count": 104,
-  "support_only_count": 616,
+  "support_only_count": 617,
   "entries": [
     {
       "path": ".cursorrules",
@@ -3603,6 +3603,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Unit test of the World screen's member paths (the World first, the data layers, the onboarding, the full pane, a World that did not load) and the white emblem variant's file path. Not a building capability."
+    },
+    {
+      "path": "scripts/test/world-mission-posts.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Unit test of the World feed's mission posts (js/world-mission-posts.js: interleave, a place's missions, credit parsing) and their wiring in js/mnet.js; names the Equity Uprise tab and the supplied marks only to check the feed shows them. Not a building capability."
     },
     {
       "path": "services.html",

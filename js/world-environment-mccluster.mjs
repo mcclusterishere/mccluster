@@ -1,6 +1,6 @@
 /* McCluster host binding. The reusable panel receives transport and identity
    through this adapter, never service-role keys, copied sessions or a new auth stack. */
-import { mountEnvironment } from './world-environment.mjs';
+import { mountEnvironment, normalizeFeed } from './world-environment.mjs';
 import { createEnvironmentTransport } from '../vendor/equity-uprise/src/environment/transport.mjs';
 export function mcclusterEnvironmentAdapter(w) {
   const token = async () => await w.MCC_SUPA?.token?.() || null;
@@ -43,6 +43,25 @@ export function mcclusterEnvironmentAdapter(w) {
   const shown = () => worldMode() === 'posts' && w.MCC_FEED_SCOPE?.get?.() === 'equity';
   const relay = () => { try { w.dispatchEvent(new w.CustomEvent('mcc:world-environment')); } catch (_) {} };
   for (const type of ['mcc:world-mode', 'mcc:feed-scope']) w.addEventListener?.(type, relay);
+  /* NEVER A BROKEN PANEL FOR THE PUBLIC (owner, 2026-11-17: the panel behind the tab "is a joke"; the panel's own fixes are a
+     later slice). The page shows the panel once its source has answered with a feed the panel accepts (html[data-we-feed]
+     "ready"); until then nothing, and if that first read fails, one honest line in its place (mnet.html #weUnavailable,
+     css/world-environment.css). Production answers 503 until the owner releases the module (WORLD-ENVIRONMENT.md). Once the
+     panel has shown, a later failed refresh stays in the panel, which says so itself. */
+  let shownOnce = false;
+  const feedState = (value) => { if (!shownOnce) try { w.document?.documentElement.setAttribute('data-we-feed', value); } catch (_) {} };
+  const request = (path, options) => {
+    if (path !== '') return transport.request(path, options);
+    feedState('checking');
+    return transport.request(path, options).then((body) => {
+      try { normalizeFeed(body); } catch (error) { feedState('unavailable'); return body; }
+      feedState('ready'); shownOnce = true;
+      return body;
+    }, (error) => {
+      if (error?.name !== 'AbortError') feedState('unavailable');
+      throw error;
+    });
+  };
   return {
     token,
     mode:()=>shown() ? 'environment' : 'feed',
@@ -56,7 +75,7 @@ export function mcclusterEnvironmentAdapter(w) {
       const url = new URL(w.location.href); url.searchParams.delete('mode');url.searchParams.set('feed','equity');url.searchParams.set('signin','1');
       w.location.assign(url.pathname+url.search);
     },
-    request:transport.request
+    request
   };
 }
 if (typeof window!=='undefined' && typeof document!=='undefined') mountEnvironment(window,document,mcclusterEnvironmentAdapter(window));
