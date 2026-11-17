@@ -12,6 +12,8 @@ import { isHouseOwner } from './world-access.js';
 import { readModulePolicy, MODULE_POLICY_ERRORS } from './eup/modules.js';
 import { environmentFeed as productFeed, clip } from '../../../vendor/equity-uprise/src/environment/evidence.mjs';
 import { createEnvironmentServer } from '../../../vendor/equity-uprise/src/environment/server.mjs';
+import { readModulePolicy as productPolicy, moduleRefusal } from '../../../vendor/equity-uprise/src/server/module-policy.mjs';
+import { handleEnvironmentLayers } from './world-environment-layers.js';
 export { ENVIRONMENT_PATH, ENVIRONMENT_TEAM, ENVIRONMENT_ACTIONS, environmentFacts } from '../../../vendor/equity-uprise/src/environment/evidence.mjs';
 const PROVIDERS = { nws:fetchWeather, eonet:fetchNatural, usgs:fetchQuakes, nhc:fetchCyclones };
 const installation = Object.freeze({
@@ -64,8 +66,22 @@ async function missions(env, fetchImpl, owner = false) {
   const rows = await service(env, `action_environment_missions?select=event_id,action_id,mission_id,${owner ? 'source_snapshot,' : ''}action_missions!inner(id,title,description,status)&${owner ? '' : 'approved_by=not.is.null&action_missions.status=in.(open,paused,closed)&'}order=created_at.desc&limit=200`, fetchImpl);
   return rows.filter(r => uuid(r.mission_id) && r.action_missions).map(r => ({ id: r.mission_id, event_id: r.event_id, action_id: r.action_id, title: r.action_missions.title, description: r.action_missions.description, status: r.action_missions.status, ...(owner ? { source_snapshot: r.source_snapshot } : {}) }));
 }
+/* The gate of the public environmental layers (./world-environment-layers.js): the same persisted
+   policy as GET /v1/world/environment, read on every request with the service key and judged by the
+   pinned product's own rules (vendor module-policy.mjs), in the order its server applies them. A
+   missing, unapplied, unreachable or malformed policy is 503 module_policy_unavailable; disabled is 404
+   module_disabled; draining refuses writes only (these routes are reads). Never defaulted to on. */
+export async function environmentGate(request, env, fetchImpl = fetch) {
+  let policy;
+  try { policy = productPolicy(await readModulePolicy(env, fetchImpl, 'environment'), installation.id, 'environment'); }
+  catch { return { code: 'module_policy_unavailable', status: 503 }; }
+  if (!installation.modules.environment) return { code: 'module_disabled', status: 404 };
+  return moduleRefusal(policy, request.method);
+}
 export async function handleWorldEnvironment(request, env, options = {}) {
   const { fetchImpl=fetch }=options;
+  const layer=await handleEnvironmentLayers(request,env,{...options,gate:()=>environmentGate(request,env,fetchImpl)});
+  if(layer)return layer;
   const planning=createMcClusterEnvironmentPlanning({request,env,fetchImpl,readEvent:async id=>(await environmentFeed(env,options)).events.find(event=>event.id===id)});
   const controller=createEnvironmentServer({
     proofs:createEnvironmentProofAdapter(request,env,{fetchImpl}),

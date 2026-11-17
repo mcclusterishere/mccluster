@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 720,
+  "candidate_count": 721,
   "capability_source_count": 104,
-  "support_only_count": 616,
+  "support_only_count": 617,
   "entries": [
     {
       "path": ".cursorrules",
@@ -5285,6 +5285,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Worker test of the consumer World environmental mode with the persisted module policy; names the Equity Uprise policy schema identifier. Test only; no building capability, program or geometry."
+    },
+    {
+      "path": "workers/mccluster/test/world-environment-layers.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Worker test of the public environmental globe layers (fires, perimeters, alerts, natural events, water levels, ShakeMap) behind the persisted environment module policy; names the policy schema identifier. Test only; no building capability, program or geometry."
     },
     {
       "path": "workers/mccluster/test/world-environment.test.mjs",

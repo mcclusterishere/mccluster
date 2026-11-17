@@ -133,7 +133,7 @@ export function clip(v, max) {
   return s ? s.slice(0, max).trim() : null;
 }
 /* a link kept only when it is https on one of the provider's own hosts */
-function providerUrl(v, hosts) {
+export function providerUrl(v, hosts) {
   if (typeof v !== 'string' || v.length > 500) return null;
   try {
     const u = new URL(v);
@@ -144,7 +144,7 @@ function providerUrl(v, hosts) {
   }
 }
 /* epoch milliseconds to ISO, within a sane span (1900 to 2200) */
-function isoFromMs(v) {
+export function isoFromMs(v) {
   const n = finite(v);
   return n === null || n < -2208988800000 || n > 7258118400000 ? null : new Date(n).toISOString();
 }
@@ -279,16 +279,21 @@ function keepTop(rows, cap) {
   return rows;
 }
 
-/* one FIRMS CSV body to fire rows; columns by header name, never by position */
-export async function parseFirmsCsv(res, satellite, cap = HALO_LAYERS.fires.max) {
-  let cols = null, total = 0, lines = 0;
+/* one FIRMS CSV body to fire rows; columns by header name, never by position.
+   `keep(row)`, when given, is asked about every valid row before it is kept (the public
+   environmental layer keeps its trailing 24 hours this way, ./world-environment-layers.js);
+   a row it refuses is neither counted in `total` nor kept. `dropped` counts the data lines
+   that could not be used (ragged, too long, or without a valid position); `cut` is true
+   when the line budget stopped the read early. */
+export async function parseFirmsCsv(res, satellite, cap = HALO_LAYERS.fires.max, { keep = null } = {}) {
+  let cols = null, total = 0, lines = 0, dropped = 0, cut = false;
   const rows = [];
   await eachLine(res, (raw) => {
     lines += 1;
-    if (lines > FIRMS_MAX_LINES) return false;
+    if (lines > FIRMS_MAX_LINES) { cut = true; return false; }
     const line = raw.replace(/\r$/, '');
     if (!line.trim()) return true;
-    if (line.length > FIRMS_MAX_LINE) return true;
+    if (line.length > FIRMS_MAX_LINE) { if (cols) dropped += 1; return true; }
     const cells = line.split(',');
     if (!cols) {
       const names = cells.map((c) => c.trim().toLowerCase());
@@ -297,18 +302,20 @@ export async function parseFirmsCsv(res, satellite, cap = HALO_LAYERS.fires.max)
       if (cols.latitude < 0 || cols.longitude < 0) throw new UpstreamError('upstream_invalid_csv', 'provider answer is not the expected CSV');
       return true;
     }
-    if (cells.length !== cols.width) return true;
+    if (cells.length !== cols.width) { dropped += 1; return true; }
     const get = (n) => (cols[n] >= 0 ? cells[cols[n]].trim() : '');
     const lon = lonOf(get('longitude')), lat = latOf(get('latitude'));
-    if (lon === null || lat === null) return true;
+    if (lon === null || lat === null) { dropped += 1; return true; }
     const dn = get('daynight').toUpperCase();
-    rows.push([lon, lat, within(get('frp'), 0, 100000, 1), FIRE_CONFIDENCE[get('confidence').toLowerCase()] || null, firmsAcq(get('acq_date'), get('acq_time')), satellite, dn === 'D' || dn === 'N' ? dn : null]);
+    const row = [lon, lat, within(get('frp'), 0, 100000, 1), FIRE_CONFIDENCE[get('confidence').toLowerCase()] || null, firmsAcq(get('acq_date'), get('acq_time')), satellite, dn === 'D' || dn === 'N' ? dn : null];
+    if (keep && !keep(row)) return true;
+    rows.push(row);
     total += 1;
     if (rows.length >= cap * 2) keepTop(rows, cap);
     return true;
   });
   if (!cols) throw new UpstreamError('upstream_invalid_csv', 'provider answer is empty');
-  return { total, rows: keepTop(rows, cap) };
+  return { total, dropped, cut, rows: keepTop(rows, cap) };
 }
 
 export async function fetchFires(env, fetchImpl = fetch) {
