@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 710,
+  "candidate_count": 711,
   "capability_source_count": 104,
-  "support_only_count": 606,
-  "checks_total": 2738,
-  "checks_passed": 2738,
+  "support_only_count": 607,
+  "checks_total": 2742,
+  "checks_passed": 2742,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -171,6 +171,7 @@
     "docs/control-plane/SPATIAL-INTELLIGENCE.md",
     "docs/control-plane/STRIPE-RECONCILER-CLAUDE-HANDOFF.md",
     "docs/control-plane/WORLD-ENVIRONMENT.md",
+    "docs/control-plane/WORLD-FEED-AND-MISSIONS-20261117.md",
     "docs/control-plane/WORLD-GLOBE-FEED-AND-ANALYTICS.md",
     "docs/control-plane/admin-evidence-20261020/README.md",
     "docs/control-plane/admin-evidence-20261020/event-taxonomy-snapshot.json",
@@ -724,7 +725,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "710 entries"
+      "detail": "711 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -3788,6 +3789,26 @@
     },
     {
       "name": "docs/control-plane/WORLD-ENVIRONMENT.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/WORLD-FEED-AND-MISSIONS-20261117.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/WORLD-FEED-AND-MISSIONS-20261117.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/control-plane/WORLD-FEED-AND-MISSIONS-20261117.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/WORLD-FEED-AND-MISSIONS-20261117.md support rationale present",
       "passed": true,
       "detail": ""
     },

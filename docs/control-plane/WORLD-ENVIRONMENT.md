@@ -3,11 +3,15 @@
 ## Product and integration
 
 Equity Uprise is the product; McCluster is the current host implementation.
-The Environmental Justice mode is a supplied-logo button in the existing
-`.wt-world-modes` bar in `mnet.html`. It retains `mnWorldFrame` and its Cesium
-viewer. News feed remains the default. Travel/general Missions remain owner-only,
-and the existing Halo release gate is unchanged. Expanding the environmental
-map reuses the same frame; selecting an observation returns to its action panel.
+Environmental Justice lives behind the Equity Uprise tab of the World feed's
+strip (`#mnFeedScope`, key `equity`; owner, 2026-11-17, see
+`WORLD-FEED-AND-MISSIONS-20261117.md`), above that tab's missions. From
+2026-11-07 to 2026-11-17 it was a supplied-logo button in the centre
+`.wt-world-modes` bar; that button is gone. It retains `mnWorldFrame` and its
+Cesium viewer. Everything (key `global`) remains the feed's default. Missions are
+public; Travel remains owner-only, and the existing Halo release gate is
+unchanged. While the tab is selected, expanding the map reuses the same frame;
+selecting an observation returns to its action panel.
 
 The environmental panel, transport/auth adapter and Cesium pin adapter are
 separate. See `packages/equity-uprise/environment/README.md` and its explicit

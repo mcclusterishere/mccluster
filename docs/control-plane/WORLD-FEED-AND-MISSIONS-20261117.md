@@ -101,6 +101,16 @@ Mobile first (`AGENTS.md`, hard rule 14): designed at 390 px, verified at 390, 8
    (`PROMOTION-ORDER.md`), then the environment module's policy row.
 6. Supabase Auth: confirm `https://mccluster.org/**` is in the Redirect URLs (dashboard).
 
+## Owner decisions (2026-11-17, answered in session)
+
+- **Joining a mission** keeps today's rule: a new member completes the three profile pages (legal name, mailing
+  address, phone), then joins instantly through `join_action_mission`. No application step for now.
+- **First visit**: the full-screen "Privacy before entry" wall on the World becomes the existing banner mode
+  (`<meta name="mcc-privacy-notice" content="banner">`), so the globe and the missions show at once. Analytics stay
+  off until the visitor agrees, as before.
+- **"Get Your Hu Up!"** is removed from the World's sign-in panel and the `/company` footer, and from anywhere else
+  it is public.
+
 ## Build queue
 
 | Slice | What | State |
