@@ -4,6 +4,9 @@ Status: v1 implementation branch, 2026-09-12. Device-node slice N1, 2026-11-17: 
 form/memory fields, `hardware_mode` derived by code, engine evidence, the measured-inference sidecar, heartbeat
 `live_gpu_nodes`, claim `yield_seconds`, capability ranking with fallback (source and tests; the OVH promotion and
 the pending claim SQL are separate, owner-gated steps). The owner's Windows runbook is `WINDOWS-NODE.md`.
+Device-node slice N2, the same day: images in `ai.chat` (bounds sniffed from bytes, vision routing), owned-only
+capabilities, and a second loopback executor on the laptop, the node's own browser (`browser.act/chromium.local`
+on `127.0.0.1:4791`; `AGENT-NODE-BROWSER.md`). Nothing deployed, no limit raised.
 
 ## Goal
 
@@ -175,6 +178,38 @@ billing = compute
 The local manifest may additionally contain an `executor` object, but that executor address/configuration is stripped from the public registration. Core learns what the node can do, not how to reach the node's private local services.
 
 Unknown capability IDs may appear in raw node inventory but do not automatically extend the Capability Registry policy catalog. A capability still has to exist in the McCluster-owned catalog, and its lifecycle must be `active`, before normal products/agents can resolve it.
+
+### Owned-only capabilities (slice N2)
+
+Some capabilities are admitted only from nodes whose labels say `trust: owned`: `browser.act` (the node's own
+browser) is the first. The Core tool bus (`core/src/tools/compute.mjs`) drops a `browser.act` entry from any
+other node at discovery and at the liveness re-read, and pins `requirements.features { browser: true }` when it
+enqueues one; the catalog entry (`core/capabilities/catalog.json`) is `active`, `async`, risk `write`, approval
+`owner`, interfaces `['agent']` only (never listed over MCP, refused on `/mcp tools/call` with
+`CAPABILITY_INTERFACE_REFUSED`), with no static binding. The laptop template advertises
+`browser.act/chromium.local` with `features { browser: true, headed: false, screenshot: true, self_hosted: true }`,
+`model null`, `max_concurrency 1`, `min_vram_bytes 0`, and a second loopback executor
+`http://127.0.0.1:4791/execute` with readiness at `/ready` and a 180 s timeout
+(`scripts/control-plane-drift-contract-check.mjs` holds it to that). Advertisement is still availability evidence,
+not authorization: the Core tool `browser_act` refuses without the owner's `allow_browser` on that turn, an owner
+actor and the house org, whatever a node advertises.
+
+### Images in `ai.chat` (slice N2)
+
+`input.messages[i].images` is a `string[]` of standard base64 (no `data:` prefix), passed through untouched to
+Ollama's `/api/chat` `messages[].images`; the `prompt` form takes no images. Bounds are sniffed from the bytes,
+never trusted from a field: at most 4 images per request and per message, 200,000 decoded bytes each, 600,000
+decoded bytes per request, JPEG, PNG or WebP by magic bytes, dimensions from the header at most 1600 px on a side
+and 2,000,000 pixels; codes `AI_CHAT_IMAGE_INVALID`, `AI_CHAT_IMAGE_TYPE`, `AI_CHAT_IMAGE_TOO_LARGE`,
+`AI_CHAT_IMAGES_TOO_MANY` (400). The same pure module (`core/src/compute/ai-chat-images.mjs`) runs in the tool
+broker, in the Ollama adapter (which also refuses images for a non-vision model,
+`AI_CHAT_IMAGE_MODEL_NOT_VISION`) and in the local AI client. A request with images requires
+`features { vision: true }`: the two `qwen3-vl` entries of the laptop template advertise it, the text entries
+never do, and the claim already matches `requirements.features <@ advertised.features`; with no live vision node
+the request fails with `AI_CHAT_NO_VISION_NODE` (MCP path) or `LOCAL_AI_NO_VISION_NODE` (Core path) instead of
+reaching a text model. No body limit was raised for this: 600,000 decoded bytes are 800,000 base64 characters,
+under the 1 MiB edge and broker limits with room for text, under the 2 MiB gateway limit; the browser task
+output cap of 1,000,000 bytes stays under the node agent's 1.5 MB executor read.
 
 ## Hardware inventory
 
@@ -483,6 +518,14 @@ The v1 node agent accepts only configured HTTP(S) executors on loopback (`127.0.
 
 That boundary is intentional. The next phase can put a McCluster adapter in front of ComfyUI so the node receives a provider-neutral input and the adapter translates it into a known versioned workflow.
 
+The laptop's second executor (slice N2) keeps the same boundary: the browser executor
+(`core/src/compute/browser-executor.mjs`) listens on `127.0.0.1:4791`, takes the typed `browser.act` input (a
+bounded batch of `open`, `read`, `find`, `click`, `type`, `select`, `scroll`, `wait`, `screenshot`, `back`,
+`done`), never evaluates model-written code in the page, checks every request against the owner's policy file
+(`browser-policy.json` beside the manifest, schema `mccluster-browser-policy/1`: exact hosts, an explicit
+subdomain rule) and refuses private, loopback and link-local addresses after DNS for every request, redirects
+included. Its vocabulary, refusal codes and bounds are in `AGENT-NODE-BROWSER.md`.
+
 ## Example node files
 
 - `core/compute-node.env.example`
@@ -490,9 +533,10 @@ That boundary is intentional. The next phase can put a McCluster adapter in fron
 - `core/systemd/mccluster-compute-node.service`
 - `core/node-manifests/ovh-primary.json` (the OVH node, deployed by `scripts/deploy-ovh-core.sh` when the host's
   `MCCLUSTER_NODE_NAME` matches the file name)
-- `core/node-manifests/owner-windows-gpu.json` (the Windows GPU laptop template: two `ai.chat` entries with the
-  OVH schema, loopback executors with per-implementation readiness `/ready?implementation=<id>`,
-  `min_vram_bytes 0`, `max_leases 1`)
+- `core/node-manifests/owner-windows-gpu.json` (the Windows GPU laptop template: four `ai.chat` entries with the
+  OVH schema, the two `qwen3-vl` ones with `features.vision true`, loopback executors with per-implementation
+  readiness `/ready?implementation=<id>`, plus `browser.act/chromium.local` behind the browser executor on
+  `127.0.0.1:4791`; `min_vram_bytes 0`, `max_leases 1`)
 - `core/windows/mccluster-node.ps1` with `core/windows/tests/` (the Windows doctor and installer; runbook
   `WINDOWS-NODE.md`)
 
