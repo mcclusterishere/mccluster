@@ -98,3 +98,26 @@ test('portable module owns lifecycle and keeps host globals in its adapter',()=>
  assert.equal(manifest.files.includes('js/world-environment-mccluster.mjs'),false);
  assert.ok(manifest.files.every(path=>/^(js|css|assets\/img|packages\/equity-uprise|vendor\/equity-uprise)\//.test(path)));
 });
+/* THE PANEL BY DAY (review of W2, R9): css/world-environment.css paints the panel for the night, and by day it sat 1.1:1 on the
+   white page. css/daylight.css gives it the day's ink and grounds; every pair must be 4.5:1 or better, and the night sheet is
+   left alone. */
+test('by day every rule for the Environmental Justice panel reads 4.5:1 or better, and the night sheet is untouched',()=>{
+ const day=read('css/daylight.css');
+ const rules=[...day.matchAll(/^html\[data-daylight="day"\] ([^{]*\.we-[^{]*)\{([^}]*)\}/gm)]
+  .map(m=>({sel:m[1].trim(),decl:Object.fromEntries(m[2].split(';').map(s=>s.trim()).filter(Boolean).map(s=>{const i=s.indexOf(':');return [s.slice(0,i).trim(),s.slice(i+1).trim()];}))}));
+ assert.ok(rules.length>=10,'the panel has its day rules: '+rules.length);
+ const hex=c=>{const m=/^#([0-9a-f]{6})$/i.exec(c);assert.ok(m,'a plain opaque hex colour: '+c);return [0,2,4].map(i=>parseInt(m[1].slice(i,i+2),16));};
+ const lum=([r,g,b])=>{const f=v=>{v/=255;return v<=0.03928?v/12.92:((v+0.055)/1.055)**2.4;};return 0.2126*f(r)+0.7152*f(g)+0.0722*f(b);};
+ const ratio=(a,b)=>{const x=lum(hex(a)),y=lum(hex(b));return (Math.max(x,y)+0.05)/(Math.min(x,y)+0.05);};
+ const panel=rules.find(r=>r.sel==='.we-panel');
+ assert.ok(panel&&panel.decl.color,'the panel takes the day ink');
+ for(const r of rules){
+  const bg=r.decl.background||'#ffffff'; /* the page is white by day */
+  if(r.decl.color)assert.ok(ratio(r.decl.color,bg)>=4.5,`${r.sel}: ${r.decl.color} on ${bg} is ${ratio(r.decl.color,bg).toFixed(2)}:1`);
+  else if(r.decl.background)assert.ok(ratio(panel.decl.color,bg)>=4.5,`${r.sel}: the panel's ink on ${bg} is ${ratio(panel.decl.color,bg).toFixed(2)}:1`);
+ }
+ for(const must of ['.we-panel','.we-eyebrow','.we-panel a',':is(.we-subtle,.we-panel small,.we-detail dt)',':is(.we-panel button,.we-button)','.we-list button[aria-pressed="true"]',':is(.we-filter input,.we-proof-form textarea,.we-proof-form input[type="url"])','.we-detail','.we-safety'])
+  assert.ok(rules.some(r=>r.sel===must),must+' has a day rule');
+ assert.doesNotMatch(read('css/world-environment.css'),/data-daylight/,'the night sheet carries no day rule');
+ assert.doesNotMatch(day.slice(day.indexOf('THE ENVIRONMENTAL JUSTICE PANEL BY DAY')),/@media\s*\(max-width|(?<!minmax\(0, ?)\b1fr/);
+});

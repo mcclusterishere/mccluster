@@ -36,6 +36,15 @@
    reload), one honest line in place of the panel, and only those two deliberate absences in the console. A member's Join on
    a post sends exactly one join_action_mission.
 
+   AFTER THE REVIEW OF W2 (the W2 row of docs/control-plane/WORLD-FEED-AND-MISSIONS-20261117.md): every mission post lies within
+   the ordinary posts' own range of heights (its source line sits in the head's second line, beside the difficulty and points);
+   a slow missions read never holds back the posts and the news; a failed read offers Try again and is read again when the tab
+   is chosen again; a country tapped on the Equity Uprise tab narrows the tab to the place's missions under the panel, and News
+   comes back when a country is let go; Escape is the × (the mission leaves the address); a drag released outside the strip
+   never swallows the next key on a tab; Local says which member posts the card counts that it cannot show; the panel reads
+   4.5:1 or better by day; hostile rows run nothing on the World; a member's denied, malformed and in-flight joins each send
+   one join_action_mission.
+
      CESIUM_DIR=/path/to/Build/Cesium node scripts/e2e/world-missions-guest.e2e.mjs [outDir]
    Needs Playwright (PLAYWRIGHT_DIR if not resolvable). Screenshots and results.json land in outDir. */
 import assert from 'node:assert/strict';
@@ -123,13 +132,17 @@ const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_EXE
    details: 'absent' answers the details read as production does until its pending SQL is applied (404 PGRST205);
    environment: 'unavailable' answers as production does until the owner releases the module (503). Those two are the only
    deliberate absences; every console error and 4xx is recorded, and a scenario allows only the ones it names. */
-async function open(device, path, { owner = false, member = false, details = 'present', environment = 'available' } = {}) {
-  const signedIn = owner || member;
+/* missions / detailRows: the rows the fake database holds; missionsDelay: ms before the list read answers; missionsStatus: the
+   list read's status, or a list of statuses answering one read each (the last one again); joinAnswer: 'ok', 'denied' (400 with a
+   message) or 'malformed' (200 with no assignment), never named join, which is node:path's inside open(); joinDelay: ms before the join answers. */
+async function open(device, path, { owner = false, member = false, details = 'present', environment = 'available', missions = MISSIONS, detailRows = DETAILS, missionsDelay = 0, missionsStatus = 200, joinAnswer = 'ok', joinDelay = 0 } = {}) {
+  const signedIn = owner || member, missionsStatuses = Array.isArray(missionsStatus) ? missionsStatus.slice() : [missionsStatus];
   const ctx = await browser.newContext({ serviceWorkers: 'block', viewport: device.viewport, deviceScaleFactor: 1, isMobile: device.mobile, hasTouch: device.mobile });
   await ctx.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: BASE });
   await ctx.addInitScript(({ who, house }) => {
     localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-10-19', accepted_at: new Date().toISOString() }));
     localStorage.setItem('mnet_tour_seen', '1');
+    window.__xss = 0;
     if (who) {
       const exp = Math.floor(Date.now() / 1000) + 3600;
       localStorage.setItem('mccdb_session', JSON.stringify({ access_token: 'x.' + btoa(JSON.stringify({ exp, sub: who })).replace(/=+$/, '') + '.y', refresh_token: 'fixture', expires_at: exp }));
@@ -137,7 +150,7 @@ async function open(device, path, { owner = false, member = false, details = 'pr
       if (house) localStorage.setItem('mcc_world_owner', JSON.stringify({ sub: who, at: new Date().toISOString() }));
     }
   }, { who: signedIn ? ME.m_uid : null, house: owner });
-  const world = { requests: [], rpc: [], calls: [], details: 0, bad: [], console: [] };
+  const world = { requests: [], rpc: [], calls: [], details: 0, missionsList: 0, missionsAnswered: 0, dialogs: [], bad: [], console: [] };
   const json = (route, body, status = 200) => route.fulfill({ status, contentType: 'application/json', headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' }, body: JSON.stringify(body) });
   await ctx.route('https://api.mccluster.org/**', (route) => {
     const req = route.request(), u = new URL(req.url()), p = u.pathname, auth = req.headers().authorization || '';
@@ -163,7 +176,7 @@ async function open(device, path, { owner = false, member = false, details = 'pr
     if (p === '/v1/world/environment') return environment === 'unavailable' ? json(route, { error: 'module_policy_unavailable' }, 503) : json(route, ENVIRONMENT);
     return json(route, {});
   });
-  await ctx.route('https://zmnhbrjyhxzhkxmhkexs.supabase.co/**', (route) => {
+  await ctx.route('https://zmnhbrjyhxzhkxmhkexs.supabase.co/**', async (route) => {
     const req = route.request(), u = new URL(req.url()), p = u.pathname, rpc = (p.match(/\/rest\/v1\/rpc\/([a-z_]+)$/) || [])[1];
     if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' } });
     if (rpc) { world.rpc.push(rpc); let body = null; try { body = req.postDataJSON(); } catch (_) {} world.calls.push({ rpc, body }); }
@@ -171,19 +184,32 @@ async function open(device, path, { owner = false, member = false, details = 'pr
     if (p === '/auth/v1/settings') return json(route, { external: { email: true } });
     if (p === '/rest/v1/action_missions') {
       const id = (u.searchParams.get('id') || '').replace(/^eq\./, '');
-      return json(route, id ? MISSIONS.filter((m) => m.id === id) : MISSIONS);
+      if (!id) {
+        /* the list read: counted, and slowed or failed as a scenario asks */
+        world.missionsList++;
+        const status = missionsStatuses.length > 1 ? missionsStatuses.shift() : missionsStatuses[0];
+        if (missionsDelay) await new Promise((r) => setTimeout(r, missionsDelay));
+        world.missionsAnswered++;
+        if (status !== 200) return json(route, { message: 'fixture failure' }, status);
+      }
+      return json(route, id ? missions.filter((m) => m.id === id) : missions);
     }
     /* the pending details table (supabase/pending/20261117100100_action_mission_details.sql): rows by mission_id=in.(…) */
     if (p === '/rest/v1/action_mission_details') {
       world.details++;
       if (details === 'absent') return json(route, { code: 'PGRST205', details: null, hint: null, message: 'Could not find the table \'public.action_mission_details\' in the schema cache' }, 404);
       const ids = ((u.searchParams.get('mission_id') || '').match(/^in\.\((.*)\)$/) || [null, ''])[1].split(',');
-      return json(route, DETAILS.filter((d) => ids.includes(d.mission_id)));
+      return json(route, detailRows.filter((d) => ids.includes(d.mission_id)));
     }
     if (p === '/rest/v1/action_mission_assignments') return json(route, []);
     if (rpc === 'action_globe_public_region_missions') return json(route, PINS);
     if (rpc === 'action_record') return json(route, { verified_actions: 0, points: 0, in_progress: 0, missions: [], skills: [], cohorts: [] });
-    if (rpc === 'join_action_mission') return json(route, { assignment_id: '7a5e0000-0000-4000-8000-000000000001', status: 'in_progress' });
+    if (rpc === 'join_action_mission') {
+      if (joinDelay) await new Promise((r) => setTimeout(r, joinDelay));
+      if (joinAnswer === 'denied') return json(route, { code: 'P0001', message: 'This mission is full.' }, 400);
+      if (joinAnswer === 'malformed') return json(route, {});
+      return json(route, { assignment_id: '7a5e0000-0000-4000-8000-000000000001', status: 'in_progress' });
+    }
     return json(route, []);
   });
   if (process.env.CESIUM_DIR) await ctx.route('https://cesium.com/**/Build/Cesium/**', async (route) => {
@@ -196,6 +222,7 @@ async function open(device, path, { owner = false, member = false, details = 'pr
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
+  page.on('dialog', (d) => { world.dialogs.push(d.type() + ':' + d.message().slice(0, 80)); d.dismiss().catch(() => {}); });
   page.on('console', (m) => {
     if (/TypeError|ReferenceError|SyntaxError/.test(m.text())) errors.push(m.text().slice(0, 300));
     if (m.type() === 'error') world.console.push({ text: m.text().slice(0, 300), url: (m.location() && m.location().url) || '' });
@@ -276,14 +303,19 @@ try {
         const sizes = await page.evaluate(() => ({ posts: [...document.querySelectorAll('#mnFeed article[data-post-id]')].map((a) => Math.round(a.getBoundingClientRect().height)),
           missions: [...document.querySelectorAll('#mnFeed article[data-mission-post]')].map((a) => Math.round(a.getBoundingClientRect().height)),
           cards: [...document.querySelectorAll('#mnFeed article[data-mission-post]')].every((a) => a.classList.contains('mn__post-card') && !a.hasAttribute('data-post-id')) }));
-        console.log(`[${scope}] card heights in px`, JSON.stringify(sizes));
-        check(scope, 'a mission post is a post\'s card, no taller than the tallest ordinary post plus 48px', sizes.cards && sizes.missions.length === MISSIONS.length && Math.max(...sizes.missions) <= Math.max(...sizes.posts) + 48, sizes);
-        /* the words of a post: kind and field where the author is, difficulty and points where the handle is; the brand never written out */
+        const median = (a) => { const s = [...a].sort((x, y) => x - y); return s.length % 2 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2; };
+        const heights = { ...sizes, medianPost: median(sizes.posts), medianMission: median(sizes.missions) };
+        console.log(`[${scope}] card heights in px`, JSON.stringify(heights));
+        /* the size of a post (owner: "just the same size post as all the other posts"): every mission post, sourced or not, lies within the
+           ordinary posts' own range of heights, its title line and two-line description included (the tallest post, plus 8px of rounding) */
+        check(scope, 'a mission post is a post\'s card, and none is taller than the tallest ordinary post', sizes.cards && sizes.missions.length === MISSIONS.length && Math.max(...sizes.missions) <= Math.max(...sizes.posts) + 8, heights);
+        /* the words of a post: kind and field where the author is, difficulty and points where the handle is, with the source line beside
+           them; the brand never written out */
         const post = await page.evaluate((id) => { const a = document.querySelector(`#mnFeed [data-mission-post="${id}"]`); return { head: a.querySelector('.mn__author-name').textContent, meta: a.querySelector('.mn__author-sub').textContent,
           title: a.querySelector('.mn__mission-post-title').textContent, clamp: getComputedStyle(a.querySelector('.mn__post-body')).webkitLineClamp, source: (a.querySelector('[data-mission-credit]') || {}).textContent || '', text: a.textContent,
-          actions: [...a.querySelectorAll('.mn__post-actions > button')].map((b) => b.getAttribute('aria-label') || b.textContent.trim()) }; }, INSULATION.row.id);
-        check(scope, 'a mission post reads kind and field, difficulty and points, title, the description clamped, its source line, and Join, Details, Share', post.head === 'Civic mission · Research' && post.meta === 'Difficulty 2 · 100 points'
-          && post.title === INSULATION.row.title && post.clamp === '2' && post.source === 'Source: Project Drawdown · CC BY 4.0' && JSON.stringify(post.actions) === JSON.stringify(['Join this mission', 'Details', 'Share this mission']) && !/equity uprise/i.test(post.text), post);
+          inHead: !!a.querySelector('.mn__author-sub [data-mission-credit]'), actions: [...a.querySelectorAll('.mn__post-actions > button')].map((b) => b.getAttribute('aria-label') || b.textContent.trim()) }; }, INSULATION.row.id);
+        check(scope, 'a mission post reads kind and field, difficulty and points with its source line beside them, title, the description clamped, and Join, Details, Share', post.head === 'Civic mission · Research' && post.meta === 'Difficulty 2 · 100 points · Source: Project Drawdown · CC BY 4.0'
+          && post.inHead && post.title === INSULATION.row.title && post.clamp === '2' && post.source === 'Source: Project Drawdown · CC BY 4.0' && JSON.stringify(post.actions) === JSON.stringify(['Join this mission', 'Details', 'Share this mission']) && !/equity uprise/i.test(post.text), post);
         check(scope, 'a mission with no details carries no source line', await page.evaluate((id) => !document.querySelector(`#mnFeed [data-mission-post="${id}"] [data-mission-credit]`), RIDE));
         const joins = await joinMarks(page);
         check(scope, 'by night each Join is the supplied white mark alone, square, no words, named "Join this mission"', joins.length === MISSIONS.length && joins.every((j) => j.name === 'Join this mission' && j.words === '' && j.shown.length === 1
@@ -369,6 +401,19 @@ try {
           await page.mouse.up();
           const after = await page.evaluate(() => ({ left: document.getElementById('mnFeedScope').scrollLeft, scope: window.MCC_FEED_SCOPE.get(), live: !document.getElementById('mnLiveView').hidden, signin: !document.getElementById('mnSignedOut').hidden }));
           check(scope, 'a mouse drags the strip sideways, and the drag does not land as a tap', after.left > 40 && after.scope === 'global' && !after.live && !after.signin, after);
+          /* a drag released below the strip sends its click elsewhere; the next key on a tab must still choose it */
+          await page.mouse.move(box.x + box.width - 30, box.y + box.height / 2);
+          await page.mouse.down();
+          await page.mouse.move(box.x + box.width - 90, box.y + box.height / 2, { steps: 6 });
+          await page.mouse.move(box.x + box.width - 150, box.y + box.height + 160, { steps: 6 });
+          await page.mouse.up();
+          await page.focus('#mnFeedScope [data-feed-scope="equity"]');
+          await page.keyboard.press('Enter');
+          await page.waitForTimeout(300);
+          const firstEnter = await page.evaluate(() => window.MCC_FEED_SCOPE.get());
+          check(scope, 'after a drag released outside the strip, the first Enter on the Equity Uprise tab chooses it', firstEnter === 'equity', firstEnter);
+          await page.click('#mnFeedScope [data-feed-scope="global"]');
+          await page.waitForSelector('#mnFeed [data-post-id]', { timeout: 15000 }).catch(() => {});
         }
 
         /* A COUNTRY (owner, 2026-11-17: "when you click on America ... see X amount of news, X amount of missions"): the globe's own
@@ -388,6 +433,9 @@ try {
         const local = await feedSeq(page);
         check(scope, 'Local lists that country\'s news and missions, interleaved the same way, newest first, never a mission pinned elsewhere', await page.evaluate(() => window.MCC_FEED_SCOPE.get() === 'local')
           && JSON.stringify(local) === JSON.stringify(expectedSeq(['n', 'n'], US_MISSIONS)) && !local.includes('m:' + TREES), local);
+        /* member posts join Local only once the country feed is on (WORLD_PLACE_SCOPE_ENABLED): the one the card counts is said, not shown */
+        const localNote = await page.evaluate(() => (document.querySelector('#mnFeed > .mn__feed-note') || {}).textContent || '');
+        check(scope, 'Local says plainly that the member post the card counts is not in Local yet', localNote === '1 member post placed in United States is not in Local yet.', localNote);
         check(scope, 'the strip shows the tab the feed turned to', await page.evaluate(() => { const s = document.getElementById('mnFeedScope'), b = s.querySelector('[aria-pressed="true"]'), sr = s.getBoundingClientRect(), br = b.getBoundingClientRect(); return b.dataset.feedScope === 'local' && br.left >= sr.left - 1 && br.right <= sr.right + 1; }));
         size = await fits(page);
         check(scope, 'nothing scrolls sideways with a country picked', size.sw === size.cw, size);
@@ -488,6 +536,175 @@ try {
     } finally { await ctx.close(); }
   }
 
+  /* ---------- a member's Join on a post, the server's say: refused, answered without an assignment, and a second tap while the join is out ---------- */
+  for (const [kind, opts, expect] of [
+    ['denied', { member: true, joinAnswer: 'denied' }, { status: /This mission is full\./, join: true }],
+    ['malformed', { member: true, joinAnswer: 'malformed' }, { status: /has not returned an active assignment/, join: true }],
+    ['in-flight', { member: true, joinDelay: 1500 }, { status: /Mission started/, join: false }]
+  ]) {
+    const scope = `member-join-${kind}-390`;
+    const { ctx, page, world, errors } = await open(VIEWPORTS[0], '/mnet.html?view=feed&daylight=night', opts);
+    try {
+      await page.waitForSelector(`#mnFeed [data-mission-post="${MANURE.row.id}"] [data-mission-join]`, { timeout: 30000 });
+      await page.click(`#mnFeed [data-mission-post="${MANURE.row.id}"] [data-mission-join]`);
+      if (kind === 'in-flight') {
+        await page.waitForFunction(() => document.getElementById('mnMissionDialog').open && document.getElementById('mnMissionJoin').disabled, null, { timeout: 15000 }).catch(() => {});
+        await page.waitForTimeout(700);
+        /* the second tap, on the post's emblem behind the dialog, while the first join is still out */
+        await page.evaluate((id) => document.querySelector(`#mnFeed [data-mission-post="${id}"] [data-mission-join]`).click(), MANURE.row.id);
+      }
+      await page.waitForFunction((re) => new RegExp(re).test(document.getElementById('mnMissionDialogStatus').textContent), expect.status.source, { timeout: 20000 }).catch(() => {});
+      await page.waitForTimeout(600);
+      const shown = await page.evaluate(() => ({ open: document.getElementById('mnMissionDialog').open, title: document.getElementById('mnMissionTitle').textContent, status: document.getElementById('mnMissionDialogStatus').textContent,
+        join: !document.getElementById('mnMissionJoin').hidden, enabled: !document.getElementById('mnMissionJoin').disabled, proof: !document.getElementById('mnMissionProof').hidden }));
+      const joins = world.calls.filter((c) => /^join_action_mission/.test(c.rpc));
+      check(scope, kind === 'in-flight' ? 'a second tap while the join is out sends no second join: one join_action_mission, and the mission starts once'
+        : kind === 'denied' ? 'a join the server refuses is said in the dialog; Join stays and nothing is started' : 'a join answered without an assignment is no acceptance: said in the dialog, Join stays',
+        joins.length === 1 && joins[0].body && joins[0].body.p_mission_id === MANURE.row.id && shown.open && shown.title === MANURE.row.title && expect.status.test(shown.status) && shown.join === expect.join && shown.enabled && shown.proof === !expect.join, { joins: joins.length, shown });
+      const heard = noise(world, [/api\.mccluster\.org\/v1\/status$/, /\/rest\/v1\/rpc\/join_action_mission$/]);
+      check(scope, 'zero console errors and no 4xx besides the house-owner check\'s 403 and the refused join', heard.console.length === 0 && heard.bad.length === 0, heard);
+      check(scope, 'no JavaScript errors', errors.length === 0, errors);
+    } finally { await ctx.close(); }
+  }
+
+  /* ---------- hostile rows: nothing a catalog editor writes runs on the World ---------- */
+  {
+    const scope = 'hostile-rows-390';
+    const X1 = '0e1f0000-0000-4000-8000-0000000000a1';
+    const hostile = { ...mission(X1, '<img src=x onerror="window.__xss=1">Title "quoted" & \'single\'', '<script>window.__xss=2</script><b>bold</b> description <img src=x onerror=window.__xss=3>', '<svg onload=alert(4)>', ago(0.5)),
+      kind: '<img src=x onerror=window.__xss=5>', discovery_category: 'create"><img src=x onerror=window.__xss=6>', difficulty: '<b>3</b>', base_points: '"><img src=x onerror=window.__xss=7>', skills: ['<img src=x onerror=window.__xss=8>'] };
+    const hostileDetails = { mission_id: X1, catalog: '<b>cat</b>', slug: 'x', proof_hint: '<img src=x onerror=window.__xss=9>proof', safety_note: '<script>window.__xss=10</script>safety',
+      credit_line: 'Adapted from Evil<img src=x onerror=window.__xss=11> Org (https://ok.example/path"><img src=x onerror=window.__xss=12>), see javascript:window.__xss=13 and data:text/html,<script>window.__xss=14</script>.',
+      about: '<img src=x onerror=window.__xss=15>quote', about_credit: '<a href="javascript:window.__xss=16">cred</a>', source_url: 'javascript:window.__xss=17', license_name: '<i>Lic</i>', license_url: 'https://creativecommons.org/licenses/by/4.0/', doi: 'javascript:window.__xss=18' };
+    const { ctx, page, world, errors } = await open(VIEWPORTS[0], '/mnet.html?view=feed&daylight=night', { missions: [...MISSIONS, hostile], detailRows: [...DETAILS, hostileDetails] });
+    try {
+      await page.waitForSelector(`#mnFeed [data-mission-post="${X1}"] [data-mission-credit]`, { timeout: 30000 });
+      const post = await page.evaluate((id) => { const a = document.querySelector(`#mnFeed [data-mission-post="${id}"]`); return { title: a.querySelector('.mn__mission-post-title').textContent, body: a.querySelector('.mn__post-body').textContent, head: a.querySelector('.mn__author-name').textContent,
+        source: a.querySelector('[data-mission-credit]').textContent, imgs: [...a.querySelectorAll('img')].map((i) => i.getAttribute('src')), markup: a.querySelectorAll('script, svg[onload], [onerror], b, i').length, xss: window.__xss }; }, X1);
+      check(scope, 'a hostile row is words on the post: title, description, field and source as written, no markup, nothing run', post.title === hostile.title && post.body === hostile.description && post.head === 'Mission · <svg onload=alert(4)>'
+        && post.source === 'Source: Evil<img src=x onerror=window.__xss=11> Org · <i>Lic</i>' && post.imgs.length === 2 && post.imgs.every((s) => /^assets\/img\/equity-uprise-mark(-white)?\.png$/.test(s)) && post.markup === 0 && post.xss === 0, post);
+      await page.click(`#mnFeed [data-mission-post="${X1}"] [data-mission-credit]`);
+      await page.waitForSelector('#mnMissionDialog[open]', { timeout: 15000 });
+      await page.waitForTimeout(500);
+      /* the dialog's own chrome (the proof form, the Anti-Social section) is static markup; what the row wrote lands in the title and #mnMissionDetail */
+      const dialog = await page.evaluate(() => { const d = document.getElementById('mnMissionDetail'); return { title: document.getElementById('mnMissionTitle').textContent, links: [...d.querySelectorAll('a')].map((a) => a.getAttribute('href')), markup: d.querySelectorAll('script, svg, img, [onerror], [onload], b:not(.mn__mission-note > b), i, u').length,
+        notes: [...d.querySelectorAll('.mn__mission-note')].map((n) => n.textContent), quote: (d.querySelector('.mn__mission-about blockquote') || {}).textContent, xss: window.__xss }; });
+      check(scope, 'and in the dialog: words only, the proof hint, the safety line and the quotation as written, and the only links are its http(s) addresses', dialog.title === hostile.title && dialog.links.length === 2 && dialog.links.every((h) => /^https?:\/\//.test(h)) && dialog.markup === 0 && dialog.xss === 0
+        && JSON.stringify(dialog.notes) === JSON.stringify(['Proof: ' + hostileDetails.proof_hint, 'Safety: ' + hostileDetails.safety_note]) && dialog.quote === hostileDetails.about, dialog);
+      check(scope, 'no browser dialog opened and nothing ran', world.dialogs.length === 0 && await page.evaluate(() => window.__xss === 0), world.dialogs);
+      check(scope, 'no JavaScript errors', errors.length === 0, errors);
+    } finally { await ctx.close(); }
+  }
+
+  /* ---------- the Equity Uprise tab with a country picked on the globe, and News with one ---------- */
+  {
+    const scope = 'guest-equity-country-390';
+    const { ctx, page, world, errors } = await open(VIEWPORTS[0], '/mnet.html?view=feed&daylight=night');
+    try {
+      await page.waitForSelector('#mnFeed [data-mission-post]', { timeout: 30000 });
+      await page.click('#mnFeedScope [data-feed-scope="equity"]');
+      await page.waitForFunction(() => document.documentElement.getAttribute('data-we-feed') === 'ready', null, { timeout: 15000 }).catch(() => {});
+      await pickCountry(page, -98, 39);
+      await page.waitForFunction(() => /United States/.test(document.getElementById('mnPlaceCard').textContent), null, { timeout: 20000 }).catch(() => {});
+      await page.waitForFunction((n) => document.querySelectorAll('#mnFeed [data-mission-post]').length === n, US_MISSIONS.length, { timeout: 20000 }).catch(() => {});
+      const picked = await page.evaluate(() => ({ scope: window.MCC_FEED_SCOPE.get(), pressed: document.querySelector('#mnFeedScope [aria-pressed="true"]').dataset.feedScope, panel: !document.getElementById('wePanel').hidden && getComputedStyle(document.getElementById('wePanel')).display !== 'none',
+        missions: [...document.querySelectorAll('#mnFeed [data-mission-post]')].map((a) => a.getAttribute('data-mission-post')), note: (document.querySelector('#mnFeed [data-mission-feed-place]') || {}).textContent || '',
+        others: document.querySelectorAll('#mnFeed [data-post-id], #mnFeed [data-news-id]').length, card: /United States/.test(document.getElementById('mnPlaceCard').textContent) }));
+      check(scope, 'a country tapped on the Equity Uprise tab keeps the tab and its panel, and narrows the list to the place\'s missions (pinned there or nowhere) under one line that says so', picked.scope === 'equity' && picked.pressed === 'equity' && picked.panel && picked.card
+        && JSON.stringify(picked.missions) === JSON.stringify(US_MISSIONS) && picked.note === 'Missions in United States: the ones pinned there and the ones that can be done anywhere.' && picked.others === 0, picked);
+      await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+      await page.waitForTimeout(1500);
+      await page.screenshot({ path: join(OUT, 'guest-equity-country-390.png') });
+      await page.click('#mnPlaceCard .mn__place-close');
+      await page.waitForFunction((n) => document.querySelectorAll('#mnFeed [data-mission-post]').length === n, MISSIONS.length, { timeout: 20000 }).catch(() => {});
+      const back = await page.evaluate(() => ({ scope: window.MCC_FEED_SCOPE.get(), card: !document.getElementById('mnPlaceCard').hidden, missions: document.querySelectorAll('#mnFeed [data-mission-post]').length, note: !!document.querySelector('#mnFeed [data-mission-feed-place]'), panel: getComputedStyle(document.getElementById('wePanel')).display !== 'none' }));
+      check(scope, 'letting the country go lists every mission again, still on the tab with its panel', back.scope === 'equity' && !back.card && back.missions === MISSIONS.length && !back.note && back.panel, back);
+      /* News: a tap turns the feed to Local, and letting the country go comes back to News */
+      await page.click('#mnFeedScope [data-feed-scope="news"]');
+      await pickCountry(page, 2.3, 46.6);
+      await page.waitForFunction(() => /France/.test(document.getElementById('mnPlaceCard').textContent) && window.MCC_FEED_SCOPE.get() === 'local', null, { timeout: 20000 }).catch(() => {});
+      const fromNews = await page.evaluate(() => window.MCC_FEED_SCOPE.get());
+      await page.click('#mnPlaceCard .mn__place-close');
+      await page.waitForFunction(() => window.MCC_FEED_SCOPE.get() !== 'local', null, { timeout: 20000 }).catch(() => {});
+      const backToNews = await page.evaluate(() => ({ scope: window.MCC_FEED_SCOPE.get(), pressed: document.querySelector('#mnFeedScope [aria-pressed="true"]').dataset.feedScope }));
+      check(scope, 'from News a country turns the feed to Local, and letting it go returns to News, not to Everything', fromNews === 'local' && backToNews.scope === 'news' && backToNews.pressed === 'news', { fromNews, backToNews });
+      const heard = noise(world);
+      check(scope, 'zero console errors and no 4xx', heard.console.length === 0 && heard.bad.length === 0, heard);
+      check(scope, 'no JavaScript errors', errors.length === 0, errors);
+    } finally { await ctx.close(); }
+  }
+
+  /* ---------- a slow missions read never holds back the posts and the news ---------- */
+  {
+    const scope = 'guest-slow-missions-390';
+    const { ctx, page, world, errors } = await open(VIEWPORTS[0], '/mnet.html?view=feed&daylight=night', { missionsDelay: 3500 });
+    try {
+      await page.waitForSelector('#mnFeed [data-post-id]', { timeout: 30000 });
+      const first = { seq: await feedSeq(page), answered: world.missionsAnswered };
+      await page.waitForFunction((n) => document.querySelectorAll('#mnFeed [data-mission-post]').length === n, MISSIONS.length, { timeout: 20000 }).catch(() => {});
+      const later = await feedSeq(page);
+      check(scope, 'the posts and the news draw before a slow missions read answers, and the missions join the stream when it does', first.answered === 0 && first.seq.includes('p') && first.seq.includes('n') && !first.seq.some((x) => x.startsWith('m:'))
+        && JSON.stringify(later) === JSON.stringify(expectedSeq(['p', 'n', 'p', 'n', 'p', 'n', 'p', 'n', 'p', 'n', 'n'], NEWEST)) && world.missionsList === 1, { first, later, reads: world.missionsList });
+      check(scope, 'no JavaScript errors', errors.length === 0, errors);
+    } finally { await ctx.close(); }
+  }
+
+  /* ---------- a missions read that fails: Everything keeps its posts and news; the tab offers Try again and reads again when chosen again ---------- */
+  {
+    const scope = 'guest-failed-missions-390';
+    const failures = [/\/rest\/v1\/action_missions\?/];
+    /* the first three list reads fail: the feed's own, the one choosing the tab makes, and the one choosing it again makes; Try again's succeeds */
+    const { ctx, page, world, errors } = await open(VIEWPORTS[0], '/mnet.html?view=feed&daylight=night', { missionsStatus: [500, 500, 500, 200] });
+    try {
+      await page.waitForSelector('#mnFeed [data-post-id]', { timeout: 30000 });
+      await page.waitForTimeout(800);
+      const seq = await feedSeq(page);
+      check(scope, 'Everything shows its posts and news without the missions', seq.includes('p') && seq.includes('n') && !seq.some((x) => x.startsWith('m:')) && world.missionsList === 1, { seq, reads: world.missionsList });
+      await page.click('#mnFeedScope [data-feed-scope="equity"]');
+      await page.waitForSelector('#mnFeed [data-mission-feed-error]', { timeout: 15000 }).catch(() => {});
+      const tab = await page.evaluate(() => ({ text: (document.querySelector('#mnFeed [data-mission-feed-error]') || {}).textContent || '', retry: !!document.querySelector('#mnFeed [data-mission-feed-retry]') }));
+      check(scope, 'choosing the tab after a failed read reads again, and the tab says the missions could not load and offers Try again', world.missionsList === 2 && /could not load/.test(tab.text) && tab.retry, { tab, reads: world.missionsList });
+      await page.click('#mnFeedScope [data-feed-scope="global"]');
+      await page.click('#mnFeedScope [data-feed-scope="equity"]');
+      await page.waitForFunction(() => !!document.querySelector('#mnFeed [data-mission-feed-retry]'), null, { timeout: 15000 }).catch(() => {});
+      await page.waitForTimeout(500);
+      check(scope, 'choosing the tab again reads the missions again, once', world.missionsList === 3 && await page.evaluate(() => !!document.querySelector('#mnFeed [data-mission-feed-retry]')), world.missionsList);
+      await page.click('#mnFeed [data-mission-feed-retry]');
+      await page.waitForFunction((n) => document.querySelectorAll('#mnFeed [data-mission-post]').length === n, MISSIONS.length, { timeout: 20000 }).catch(() => {});
+      const after = await page.evaluate(() => ({ missions: document.querySelectorAll('#mnFeed [data-mission-post]').length, error: !!document.querySelector('#mnFeed [data-mission-feed-error]') }));
+      check(scope, 'Try again reads once more and lists the missions', world.missionsList === 4 && after.missions === MISSIONS.length && !after.error, { after, reads: world.missionsList });
+      await page.click('#mnFeedScope [data-feed-scope="global"]');
+      await page.waitForFunction(() => document.querySelectorAll('#mnFeed [data-mission-post]').length > 0, null, { timeout: 15000 }).catch(() => {});
+      check(scope, 'and Everything carries them too', (await feedSeq(page)).some((x) => x.startsWith('m:')));
+      const heard = noise(world, failures);
+      check(scope, 'no console error and no 4xx besides the three failed reads', heard.console.length === 0 && heard.bad.length === 0, heard);
+      check(scope, 'no JavaScript errors', errors.length === 0, errors);
+    } finally { await ctx.close(); }
+  }
+
+  /* ---------- Escape on the dialog is the ×: the mission leaves the address ---------- */
+  {
+    const scope = 'guest-escape-390';
+    const { ctx, page, world, errors } = await open(VIEWPORTS[0], '/mnet.html?view=feed&daylight=night');
+    try {
+      await page.waitForSelector(`#mnFeed [data-mission-post="${COAL.row.id}"] [data-mission-details]`, { timeout: 30000 });
+      await page.click(`#mnFeed [data-mission-post="${COAL.row.id}"] [data-mission-details]`);
+      await page.waitForSelector('#mnMissionDialog[open]', { timeout: 15000 });
+      const opened = await page.evaluate(() => new URL(location.href).searchParams.get('mission'));
+      await page.keyboard.press('Escape');
+      await page.waitForFunction(() => !document.getElementById('mnMissionDialog').open, null, { timeout: 5000 }).catch(() => {});
+      const after = await page.evaluate(() => ({ open: document.getElementById('mnMissionDialog').open, href: location.pathname + location.search, feed: !document.getElementById('mnFeedView').hidden }));
+      check(scope, 'Escape closes the dialog as the × does: the mission leaves the address and the World stays', opened === COAL.row.id && !after.open && after.href === '/mnet.html' && after.feed, { opened, after });
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.waitForSelector('#mnFeed [data-post-id]', { timeout: 30000 }).catch(() => {});
+      await page.waitForTimeout(800);
+      check(scope, 'a reload after Escape does not bring the dismissed mission back', await page.evaluate(() => !document.getElementById('mnMissionDialog').open && !new URL(location.href).searchParams.get('mission')));
+      const heard = noise(world);
+      check(scope, 'zero console errors and no 4xx', heard.console.length === 0 && heard.bad.length === 0, heard);
+      check(scope, 'no JavaScript errors', errors.length === 0, errors);
+    } finally { await ctx.close(); }
+  }
+
   /* ---------- as production stands today: the details table not there yet, the Environmental Justice module not released ---------- */
   {
     const scope = 'guest-production-today-390';
@@ -560,6 +777,17 @@ try {
       await page.click('#mnFeedScope [data-feed-scope="equity"]');
       const pressed = (await strip(page))[2];
       check(scope, 'by day the pressed tab (red) shows the supplied white mark alone', pressed.pressed === 'true' && pressed.marks.length === 1 && pressed.marks[0].src === 'assets/img/equity-uprise-mark-white.png', pressed);
+      /* the Environmental Justice panel at the top of the tab, by day: the page's ink on the page's grounds (css/daylight.css) */
+      await page.waitForFunction(() => document.documentElement.getAttribute('data-we-feed') === 'ready', null, { timeout: 15000 }).catch(() => {});
+      const contrast = await page.evaluate(() => {
+        const bgOf = (el) => { for (let n = el; n; n = n.parentElement) { const b = getComputedStyle(n).backgroundColor; if (b && b !== 'rgba(0, 0, 0, 0)' && b !== 'transparent') return b; } return 'rgb(255, 255, 255)'; };
+        const rgb = (s) => (s.match(/[\d.]+/g) || []).slice(0, 3).map(Number);
+        const lum = (a) => { const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }; return 0.2126 * f(a[0]) + 0.7152 * f(a[1]) + 0.0722 * f(a[2]); };
+        const ratio = (x, y) => { const a = lum(rgb(x)), b = lum(rgb(y)); return Math.round(((Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)) * 100) / 100; };
+        const of = (el) => (el ? { text: el.textContent.trim().slice(0, 40), ink: getComputedStyle(el).color, ground: bgOf(el), ratio: ratio(getComputedStyle(el).color, bgOf(el)) } : null);
+        return { shown: getComputedStyle(document.getElementById('wePanel')).display !== 'none', title: of(document.getElementById('weTitle')), eyebrow: of(document.querySelector('#wePanel .we-eyebrow')), subtle: of(document.querySelector('#wePanel .we-subtle')), button: of(document.getElementById('weRefresh')) };
+      });
+      check(scope, 'by day the Environmental Justice panel at the top of the tab reads 4.5:1 or better: heading, eyebrow, small print and button', contrast.shown && [contrast.title, contrast.eyebrow, contrast.subtle, contrast.button].every((c) => c && c.ratio >= 4.5), contrast);
       const size = await fits(page);
       check(scope, 'nothing scrolls sideways by day', size.sw === size.cw, size);
       await page.evaluate(() => { document.getElementById('mnFeedScope').scrollIntoView({ block: 'start' }); });

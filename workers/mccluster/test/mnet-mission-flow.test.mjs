@@ -29,7 +29,7 @@ function harness(){
   const state={user:{id:'user-1'},guest:false,boot:{next_step:'ready'},stall:'',missionFeed:vm.runInNewContext('('+MISSION_FEED+')')};
   const session={access_token:'fixture-mission-session'};
   const missions={all:[],current:null,assignment:null,stats:{},campaign:'',content:'',source:'',attributedMission:'',liveSession:'',liveMission:'',returnHref:'',proofFile:null,proofPreview:''};
-  const stored=new Map();
+  const stored=new Map(),hist=[];
   const context={
     /* missions are public (owner, 2026-11-17): js/mnet.js has no switch for them, so the flow runs as it ships */
     missions,$:el,state,MCC:{session(){return session;}},MISSION_FIELDS:'id,title,status',MISSION_POSTS,
@@ -42,12 +42,14 @@ function harness(){
     fundState(){return Promise.resolve({open:false,note:''});},fundLineHtml(){return '';},
     missionHref:id=>'/mnet.html?mission='+id,loadMissions(){},
     uploadProofFile(){return Promise.resolve(null);},
-    history:{replaceState(){}},location:{assign(){},origin:'https://mccluster.org'},
+    history:{replaceState(a,b,url){hist.push(url);}},location:{assign(){},origin:'https://mccluster.org'},
     sessionStorage:{getItem(k){return stored.has(k)?stored.get(k):null;},setItem(k,v){stored.set(k,String(v));}},
     window:{MCC_TRACK(){}},URL:HarnessURL,
     encodeURIComponent,Promise,console
   };
   const block=slice('  var missionOpenVersion=0;','  /* A shared mission link opens that mission');
+  /* the × button's close, which the dialog's cancel (Escape) runs too: the mission leaves the address */
+  const closeBlock=slice('  function closeMission(){','  var missionOpenVersion=0;');
   const fetchBlock=slice('  function fetchMission(id){','  function clearMissionCapture(){');
   const missionDisplay=slice('  function publicMission(m) {','  var MISSION_FIELDS=');
   // Exercise the real account predicates; only the UI prompt and transport are doubles.
@@ -59,8 +61,8 @@ function harness(){
   const linkBlock=slice('  function safeHttpUrl(value) {','  /* Line icons for the post actions');
   const feedConstants=slice('  var MISSION_ID = /^[0-9a-f-]{36}$/i;','  /* the open missions, read once');
   const detailsBlock=slice('  function loadMissionDetails(ids) {','  /* the details of what is on screen now;');
-  vm.runInNewContext(escBlock+linkBlock+feedConstants+detailsBlock+sessionBlock+stepBlock+missionDisplay+fetchBlock+block+';globalThis.actions={openMission,joinMission,submitMissionProof,creditLinkHtml};',context);
-  return {actions:context.actions,missions,calls,el,state,session,stored};
+  vm.runInNewContext(escBlock+linkBlock+feedConstants+detailsBlock+sessionBlock+stepBlock+missionDisplay+fetchBlock+closeBlock+block+';globalThis.actions={openMission,joinMission,submitMissionProof,creditLinkHtml,closeMission};',context);
+  return {actions:context.actions,missions,calls,el,state,session,stored,hist};
 }
 const MISSION_A='0e1f0000-0000-4000-8000-00000000000a',MISSION_B='0e1f0000-0000-4000-8000-00000000000b';
 const detailReads=h=>h.calls.filter(c=>c.kind==='rest'&&/^action_mission_details\?/.test(c.path));
@@ -270,4 +272,31 @@ test('the dialog escapes every word of a mission and its details, and links only
   assert.equal(h.actions.creditLinkHtml('javascript:alert(12)'),'javascript:alert(12)');
   assert.equal(h.actions.creditLinkHtml('data:text/html,<script>alert(13)</script>'),'data:text/html,&lt;script&gt;alert(13)&lt;/script&gt;');
   assert.equal(h.actions.creditLinkHtml('https://ok.example/a"b<c'),'<a href="https://ok.example/a%22b%3Cc" target="_blank" rel="noopener noreferrer">https://ok.example/a&quot;b&lt;c</a>');
+});
+/* ESCAPE IS THE × (review of W2, R5): the dialog's cancel runs the same close as its × button, so the mission leaves the address
+   and neither a reload nor a guest's later sign-in brings back a mission the visitor dismissed; a mission still opening when
+   the dialog is dismissed never draws */
+test('Escape closes the dialog as the × does: the mission leaves the address, and a late answer draws nothing',async()=>{
+  assert.match(source,/\$\("mnMissionClose"\)\.addEventListener\("click",closeMission\);[\s\S]{0,700}\$\("mnMissionDialog"\)\.addEventListener\("cancel",function\(\)\{closeMission\(\);\}\);/,'the dialog\'s cancel runs closeMission, as the × button does');
+  const h=harness();
+  h.state.user=null;h.state.guest=true;
+  const opening=h.actions.openMission(MISSION_A);
+  h.calls[0].resolve([{id:MISSION_A,title:'A',status:'open',skills:[]}]);
+  await settle();
+  detailReads(h)[0].resolve([]);
+  await opening;
+  assert.equal(h.el('mnMissionDialog').open,true);
+  assert.equal(h.hist.at(-1),'/mnet.html?mission='+MISSION_A,'the open mission is in the address');
+  h.actions.closeMission();
+  assert.equal(h.el('mnMissionDialog').open,false);
+  assert.equal(h.hist.at(-1),'/mnet.html','and out of it once dismissed');
+  const late=h.actions.openMission(MISSION_B);
+  h.calls.at(-1).resolve([{id:MISSION_B,title:'B',status:'open',skills:[]}]);
+  await settle();
+  h.actions.closeMission();
+  detailReads(h).at(-1).resolve([]);
+  await late;
+  assert.equal(h.el('mnMissionDialog').open,false,'dismissed while opening: it stays closed');
+  assert.notEqual(h.el('mnMissionTitle').textContent,'B');
+  assert.equal(h.hist.at(-1),'/mnet.html');
 });

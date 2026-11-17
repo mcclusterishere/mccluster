@@ -228,3 +228,27 @@ test('a state picked or let go keeps the member\'s choice to place their post; a
   const handler = js.slice(js.indexOf('var prevCountry = state.world.country'), js.indexOf('paintFeedScope();', js.indexOf('var prevCountry = state.world.country')));
   assert.doesNotMatch(handler, /if \(\$\("mnPostPlaceOptIn"\)\) \$\("mnPostPlaceOptIn"\)\.checked = false;/, 'no unconditional reset when the globe speaks');
 });
+
+/* THE POSTS NEVER WAIT ON THE MISSIONS (review of W2, R2). The first draw waits a moment for the news, as it did before the
+   missions were posts, and for the missions only while the news is still out: MISSION_GRACE after the news at most, never
+   NEWS_WAIT. A slow missions read joins the stream when it answers (loadOpenMissions draws again). The page's own loadFeed,
+   run on fakes with short waits. */
+test('a slow missions read holds back the first posts for MISSION_GRACE after the news at most, never for NEWS_WAIT', async () => {
+  const js = await read('js/mnet.js');
+  assert.match(js, /NEWS_WAIT = 4000, MISSION_GRACE = 600;/, 'the grace is a fraction of the news wait');
+  const load = fnSource(js, 'loadFeed');
+  assert.match(load, /var settled = Promise\.race\(\[Promise\.all\(\[news, missionsRead\]\), news\.then\(function \(\) \{ return wait\(MISSION_GRACE\); \}\), wait\(NEWS_WAIT\)\]\);/);
+  const drawn = [], t0 = Date.now();
+  const ctx = { NEWS_WAIT: 400, MISSION_GRACE: 40,
+    state: { loadingFeed: false, guest: true, stall: '', nextBefore: null, feed: [], feedAnswered: false, newsBefore: undefined, newsSeq: 0 },
+    $: () => ({ children: { length: 1 }, innerHTML: '' }), skeleton: () => '', needsStep: () => null, APP: 'fixture', parse: (r) => r, api: () => Promise.resolve({ items: [] }),
+    fetch: () => Promise.resolve({ items: [{ post_id: 'p1' }], next_before: null }), fetchNews: () => Promise.resolve({ ok: true, items: [] }), applyNews() {},
+    renderFeed() { drawn.push(Date.now() - t0); }, loadOpenMissions: () => new Promise(() => {}), openLinkedPost() {},
+    loadActionCards: () => Promise.resolve(false), loadActionOfferCards: () => Promise.resolve(false), loadCollaborationCards: () => Promise.resolve(false), loadMissionStats() {}, paintMore() {}, setStatus() {},
+    encodeURIComponent, Promise, setTimeout, console };
+  await new Function(...Object.keys(ctx), load + '\nreturn loadFeed(true);')(...Object.values(ctx));
+  assert.equal(drawn.length, 1, 'the posts were drawn once');
+  assert.ok(drawn[0] < 250, 'drawn ' + drawn[0] + ' ms after the news answered (MISSION_GRACE 40 here), not at NEWS_WAIT (400 here)');
+  assert.deepEqual(ctx.state.feed, [{ post_id: 'p1' }]);
+  assert.equal(ctx.state.feedAnswered, true);
+});
