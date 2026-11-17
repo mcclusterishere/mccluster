@@ -1,9 +1,11 @@
 -- JOINING A PINNED MISSION: A PIN SHOWS WHERE, IT DOES NOT DECIDE WHO (join scope v1)
 --
--- PENDING. Not applied to production. Owner approval required. Apply as the service role with the
--- Supabase MCP `apply_migration` under the name `action_globe_join_scope_v1`, then promote with the
--- steps in supabase/pending/README.md ("To promote one"). Order: supabase/pending/PROMOTION-ORDER.md,
--- section 10. Rollback: 20261117100000_action_globe_join_scope_v1.rollback.sql.
+-- PENDING. Not applied to production. Owner approval required. Apply with the Supabase MCP
+-- `apply_migration` (it runs as postgres, which owns the table and both functions) under the name
+-- `action_globe_join_scope_v1`, then promote with the steps in supabase/pending/README.md ("To promote
+-- one"). The service role cannot apply it: it owns neither the table nor the functions (read 2026-11-17).
+-- Order: supabase/pending/PROMOTION-ORDER.md, section 10.
+-- Rollback: 20261117100000_action_globe_join_scope_v1.rollback.sql.
 -- Proof before apply: scripts/test/mission-catalog.native.integration.mjs (a disposable PostgreSQL built
 -- to production's shape as read on 2026-11-17).
 --

@@ -6,8 +6,9 @@
 --   node tools/build-mission-import.mjs
 -- and check with node tools/build-mission-import.mjs --check (scripts/test/mission-import.test.mjs runs it).
 --
--- Owner approval required, like the forward file. Apply as the service role. If the missions were published,
--- run 20261117100300_action_mission_drawdown_publish.rollback.sql first.
+-- Owner approval required, like the forward file. Run it as postgres, as the forward file was (the Supabase
+-- MCP `apply_migration` runs as postgres). If the missions were published, run
+-- 20261117100300_action_mission_drawdown_publish.rollback.sql first.
 --
 -- What it does, in one transaction: deletes exactly the 125 missions the import wrote (the ids below) and their
 -- 125 details rows. Row counts: public.action_missions -125, public.action_mission_details -125 (fewer if some

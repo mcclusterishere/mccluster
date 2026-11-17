@@ -1,8 +1,9 @@
 -- MISSION DETAILS: A MISSION'S PROOF HINT, SAFETY LINE AND CREDIT (action_mission_details v1)
 --
--- PENDING. Not applied to production. Owner approval required. Apply as the service role with the
--- Supabase MCP `apply_migration` under the name `action_mission_details`, then promote with the steps in
--- supabase/pending/README.md ("To promote one"). Order: supabase/pending/PROMOTION-ORDER.md, section 10.
+-- PENDING. Not applied to production. Owner approval required. Apply with the Supabase MCP
+-- `apply_migration` (it runs as postgres) under the name `action_mission_details`, then promote with the
+-- steps in supabase/pending/README.md ("To promote one"). The service role cannot apply it: it has no CREATE
+-- on schema public (read 2026-11-17). Order: supabase/pending/PROMOTION-ORDER.md, section 10.
 -- Rollback: 20261117100100_action_mission_details.rollback.sql.
 -- Proof before apply: scripts/test/mission-catalog.native.integration.mjs.
 --

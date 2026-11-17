@@ -6,7 +6,8 @@
 --   node tools/build-mission-import.mjs
 -- and check with node tools/build-mission-import.mjs --check (scripts/test/mission-import.test.mjs runs it).
 --
--- Owner approval required, like the forward file. Apply as the service role.
+-- Owner approval required, like the forward file. Run it as postgres, as the forward file was (the Supabase
+-- MCP `apply_migration` runs as postgres).
 --
 -- What it does, in one transaction: sets status 'draft' on exactly the 125 missions the import wrote (the ids
 -- below), and only where the status is 'open': a mission the owner has since paused or closed is left alone.

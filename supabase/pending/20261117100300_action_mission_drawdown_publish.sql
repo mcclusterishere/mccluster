@@ -6,8 +6,8 @@
 --   node tools/build-mission-import.mjs
 -- and check with node tools/build-mission-import.mjs --check (scripts/test/mission-import.test.mjs runs it).
 --
--- PENDING. Not applied to production. Owner approval required. Apply as the service role with the Supabase
--- MCP `apply_migration` under the name `action_mission_drawdown_publish`, AFTER
+-- PENDING. Not applied to production. Owner approval required. Apply with the Supabase MCP `apply_migration`
+-- (it runs as postgres) under the name `action_mission_drawdown_publish`, AFTER
 -- 20261117100200_action_mission_drawdown_import.sql, then promote with the steps in supabase/pending/README.md.
 -- Order: supabase/pending/PROMOTION-ORDER.md, section 10.
 -- Rollback: 20261117100300_action_mission_drawdown_publish.rollback.sql.

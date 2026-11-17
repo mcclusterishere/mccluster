@@ -161,6 +161,11 @@ try {
   await apply('delete from public.action_globe_mission_regions');
 
   /* ---- 1. join scope ------------------------------------------------------------------------------------- */
+  // Who can apply it: as in production, the service role owns none of these objects and has no CREATE on schema
+  // public, so only the owner can (the MCP's apply_migration runs as postgres).
+  eq((await one("select has_schema_privilege('service_role', 'public', 'CREATE') as c")).c, false, 'as in production, the service role has no CREATE on schema public');
+  await fails(service.query(sql.joinScope), '42501', /must be owner of table action_globe_mission_regions/, 'so it cannot apply 10.1');
+  await service.query('rollback');
   await apply(sql.joinScope); await apply(sql.joinScope);
   const col = await one("select column_default, is_nullable from information_schema.columns where table_schema = 'public' and table_name = 'action_globe_mission_regions' and column_name = 'join_scope'");
   eq([col.column_default, col.is_nullable], ["'anywhere'::text", 'NO'], "join scope applies twice: join_scope text not null default 'anywhere'");
@@ -190,6 +195,8 @@ try {
   /* ---- 2. mission details -------------------------------------------------------------------------------- */
   await refused(sql.import, '55000', /apply 20261117100100_action_mission_details\.sql/, 'the import refuses, changing nothing, before the details table exists');
   eq(await statusCounts(), {}, 'and wrote no mission');
+  await fails(service.query(sql.details), '42501', /permission denied for schema public/, 'the service role cannot apply 10.2 either');
+  await service.query('rollback');
   await apply(sql.details); await apply(sql.details);
   const priv = (await admin.query(`select r as role, has_table_privilege(r, 'public.action_mission_details', 'SELECT') as s,
       has_table_privilege(r, 'public.action_mission_details', 'INSERT') or has_table_privilege(r, 'public.action_mission_details', 'UPDATE')

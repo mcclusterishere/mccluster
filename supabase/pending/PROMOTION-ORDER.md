@@ -294,7 +294,9 @@ code works with or without the index.
 
 The production steps 1 to 3 of `docs/control-plane/WORLD-FEED-AND-MISSIONS-20261117.md`. **Owner approval
 required for each file, each on its own**, in this order; roll back in the reverse order. Each is one
-transaction and safe to run twice.
+transaction and safe to run twice. Apply each with the Supabase MCP `apply_migration`, which runs as postgres,
+the owner of everything they change. The service role cannot apply 10.1 or 10.2, or roll them back: it owns
+none of those objects and has no CREATE on schema public (read 2026-11-17).
 
 | # | File (+ rollback) | What | Callers | Proof before apply |
 |---|---|---|---|---|

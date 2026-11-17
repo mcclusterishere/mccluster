@@ -251,6 +251,24 @@ test('every pending file says owner approval is required, names its rollback and
   assert.match(read(OUTPUT_FILES.importRollback), /Row counts: public\.action_missions -125, public\.action_mission_details -125/);
 });
 
+test('every mission SQL file says to run it as postgres, never as the service role', () => {
+  // In production the service role owns none of these objects and has no CREATE on schema public, and the MCP
+  // runs as postgres (read 2026-11-17): "apply as the service role" would fail with 42501 on 10.1 and 10.2.
+  const ownerOnly = [
+    'supabase/pending/20261117100000_action_globe_join_scope_v1.sql',
+    'supabase/pending/20261117100000_action_globe_join_scope_v1.rollback.sql',
+    'supabase/pending/20261117100100_action_mission_details.sql',
+    'supabase/pending/20261117100100_action_mission_details.rollback.sql',
+  ];
+  for (const f of [...ownerOnly, ...Object.values(OUTPUT_FILES)]) {
+    const header = read(f).split(/^begin;$/m)[0].replace(/\n-- /g, ' ');
+    assert.doesNotMatch(header, /as the service role/i, `${f} must not say to apply it as the service role`);
+    assert.match(header, /apply_migration`? \(it runs as postgres|apply_migration` runs as postgres/, `${f} says the MCP runs as postgres`);
+  }
+  for (const f of ownerOnly) assert.match(read(f).split(/^begin;$/m)[0].replace(/\n-- /g, ' '), /the service role cannot/i, `${f} says why the service role cannot`);
+  assert.match(read('supabase/pending/PROMOTION-ORDER.md'), /Apply each with the Supabase MCP `apply_migration`, which runs as postgres/);
+});
+
 test('the details table: constraints match the tool, https URLs, guests read only what its mission shows', () => {
   const sql = read('supabase/pending/20261117100100_action_mission_details.sql');
   for (const [key, rule] of Object.entries(DETAIL_LIMITS)) {
