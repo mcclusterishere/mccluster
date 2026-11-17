@@ -38,17 +38,19 @@ the exact change.
 ## The target
 
 1. **The feed strip** (`#mnFeedScope`, the drag-scrolling row under the globe): Local · Everything (key `global`,
-   pressed on load) · Equity Uprise (key `equity`) · Environment (key `environment`) · Live · News · People.
-   Environment is a labelled tab with a small globe-and-leaf icon, never the logo (owner, 2026-11-17, later
-   decision below).
+   pressed on load) · Equity Uprise (key `equity`) · Live · News · People. There is no separate Environment tab:
+   the environmental globe lives in the Equity Uprise tab (owner, 2026-11-17, latest decision below).
 2. **The Equity Uprise tab** shows the owner-supplied PNG only: `assets/img/equity-uprise-mark-white.png` on a dark
    ground, `assets/img/equity-uprise-mark.png` on a light (daylight) ground. Choosing a supplied variant is not
    recolouring. Scale proportionally to the strip's icon size; no plate, filter, crop or visible words. Its
    accessible name is "Equity Uprise". (`AGENTS.md`, "THE LOGOS ARE NOT YOURS TO DRAW".)
 3. **Everything** combines member posts, news and missions in one stream. Missions are interleaved at a modest
    ratio (no more than one mission per few other items), each mission at most once per page.
-4. **The Equity Uprise tab** is the mission feed: every open mission as a post. The Environmental Justice panel
-   is NOT in this tab: observations stay separate from missions (see 11).
+4. **The Equity Uprise tab** holds the missions and the environmental globe together. Selecting it turns the
+   globe into the environmental globe (item 11) and the feed into mission posts and environmental observation
+   posts, interleaved by time, each clearly typed (an observation is never presented as a mission or as its
+   cause). The Environmental Justice panel (source health, filters, list and 2D fallbacks) sits at the top of the
+   tab.
 5. **A mission post** is the same size and shape as any post (`mn__post-card`): a header with the mission's kind
    and domain (never the brand written out), the title, the description clamped like a post body, one meta line
    (difficulty and points), a compact source line for sourced missions that opens the full credit, and the
@@ -67,14 +69,24 @@ the exact change.
    anywhere. Picking a country turns the feed to Local, which lists that country's posts, news and missions.
 10. **The globe** shows mission pins to everyone (no `missions=0`). A pin exists only where the owner placed a
     mission; a mission that can be done anywhere has no pin. Production has no pins today.
-11. **The Environment tab** opens the environmental globe: its layers on the same globe and the Environmental
-    Justice panel, which reads clearly by day and by night, shows each source's health and last success, says
-    plainly when its sources are unavailable instead of showing a broken state, and lists official reports (NWS,
-    NASA EONET, USGS, NOAA NHC, and the public-safe additions the owner asked for on 2026-11-17) with their
-    source, timestamps, coverage and links. A report is not evidence of exposure or injustice and is never
-    labelled so. Observations never mix with missions in one list. The abandoned branch
-    `codex/equity-environment-always-visible-20261109` (`a47f9a31`) is salvaged where it helps. The cinematic,
-    real-data requirements are in the owner's later request of the same day (environmental globe section below).
+11. **The environmental globe** (in the Equity Uprise tab): its layers on the same globe, drawn in proportion to
+    the geography and magnitudes the sources report, never as uniform dots (see "The environmental globe" below),
+    and the Environmental Justice panel, which reads clearly by day and by night, shows each source's health and
+    last success, says plainly when its sources are unavailable instead of showing a broken state, and lists
+    official reports (NWS, NASA EONET, USGS, NOAA NHC, and the public-safe additions the owner asked for on
+    2026-11-17) with their source, timestamps, coverage and links. A report is not evidence of exposure or
+    injustice and is never labelled so. The abandoned branch `codex/equity-environment-always-visible-20261109`
+    (`a47f9a31`) is salvaged where it helps.
+13. **Environmental observation posts**: each environmental event appears in the feed as a post from the system
+    (a system author such as "Environmental desk" with a plain icon, never a person and never the logo), the
+    same size and shape as any post, stamped with the time the event was recorded (local time and how long ago;
+    sorted by it). A source that gives no event time says so and is ordered by its retrieval time, labelled as
+    such. Each post: what was observed, where, the measured facts the source gives (magnitude and depth;
+    sensor and radiative power; acres; severity, certainty and urgency; wind), the source and its link, coverage
+    and status, and "Show on globe". All of them appear in the Equity Uprise tab; significant ones (for example
+    an M4.5+ earthquake, a Severe or Extreme NWS warning, an active NHC storm, a large fire perimeter) also appear
+    in Everything at a low ratio. Thousands of fire detections are never thousands of posts: they are summarised
+    per area. One post per event; a source update edits that post ("Updated" time), never duplicates it.
 12. **Sign in and return**: from a mission post, the dialog, a pin, a shared link or the bar's Sign in chip, a
     guest who signs in (or creates an account and confirms it) comes back to that mission, and Join sends exactly
     one `join_action_mission`.
@@ -123,8 +135,7 @@ generic collection of flashing icons", truthful about every source, and "Add a c
 preserve the existing design identity." "Keep observations separate from Project Drawdown-informed actions and
 fictional PRIM3 missions." Answered in session:
 
-- **Entry**: a labelled "Environment" tab in the feed strip (globe-and-leaf icon, never the logo). The logo stays
-  the missions tab and the Join control. This supersedes any placement of `#wePanel` in the Equity Uprise tab.
+- **Entry (superseded the same hour, see below)**: a labelled "Environment" tab was chosen first.
 - **Shipping**: the environmental work ships with this branch, together with the feed work, once both are verified.
 - **Production**: the owner approved applying `supabase/pending/eup_module_policy_v1.sql`. It was applied on
   2026-11-17 as migration `20261117144103_eup_module_policy_v1`; production stored it byte for byte (MD5
@@ -133,6 +144,46 @@ fictional PRIM3 missions." Answered in session:
   `GET /v1/world/environment` keeps answering 503 `module_policy_unavailable`, as designed.
 - Owner-only Halo routes stay owner-only; the public globe grows only through the narrowly scoped public bridge,
   behind the same module policy. Illustrative animation is labelled as such; nothing is fabricated.
+
+## Owner decision, latest on 2026-11-17 (supersedes the Environment tab)
+
+The owner's words: "missions, the E equals up should actually be in the same thing … the E equals up and this
+environmental globe thing should be in the same like tab", "the environmental globe updates should be updates like
+as posts from the admin system, like from the system, like it would look like posts just like on the news feed",
+"obviously what time the event was recorded", "make the cinematic experience way more cinematic and like beautiful
+versus just a bunch of … icons flashing", "make the visuals proportionate to the geographical data we are
+collecting, not just … dots on the board."
+
+So: one Equity Uprise tab for missions and the environmental globe (target items 1, 4 and 11), environmental
+events as system posts stamped with their recorded time (item 13), and the globe below.
+
+## The environmental globe
+
+Truth first, then beauty. Every visual encodes a real quantity from the source and says which; nothing flashes.
+
+- **Earthquakes (USGS)**: where USGS publishes a ShakeMap, its intensity (MMI) contours, coloured by intensity,
+  labelled measured and modelled shaking from USGS. Otherwise a disc whose area grows with the energy the
+  magnitude implies, coloured by depth and labelled "size shows magnitude, not the area affected". The last 24
+  hours can be replayed in order of recorded time. One restrained ripple on the selected quake only, labelled
+  illustrative, never a recording of shaking; built as one primitive whose material animates, never by
+  rebuilding ground geometry each frame (Halo's notes record the frame-rate regression that caused).
+- **Fires (NASA FIRMS, NIFC WFIGS)**: each satellite detection at its true footprint (about 375 m for VIIRS)
+  when close, coloured by radiative power, with its sensor and detection time; summarised by area when far,
+  sized by the summed radiative power. A detection is not a confirmed fire or perimeter. WFIGS perimeters as
+  their actual polygons with their acres and dates; malformed rings are dropped, never closed by guesswork.
+- **Alerts (NWS)**: the alert's own polygon, tinted by severity; zone-only alerts stay in the list, never placed.
+- **Natural events (NASA EONET)**: the reported geometry; a storm's successive reported points as its track.
+- **Tropical cyclones (NOAA NHC)**: the reported centre, and published track or wind-field geometry only where
+  NHC publishes it; nothing inferred.
+- **Coastal water levels (NOAA CO-OPS)**: station columns whose height shows the observed water level against
+  the station's datum (preliminary data labelled), never as ocean currents.
+- **Ocean currents and satellite orbits**: only after a verified product and licence; currents only from real
+  U/V vectors with their model or observation time and depth; orbits labelled predicted with their epoch.
+- **Cinematic**: smooth, interruptible camera moves between these scenes, a tour that pauses, soft fades instead
+  of blinking, the atmosphere and night side of the Earth; no automatic motion under reduced motion; a list and
+  a 2D view for anyone who cannot use the 3D globe. Every selection shows source, recorded time, retrieval time,
+  coverage and status. Render on demand; benchmark at phone and desktop sizes. The music preference is never
+  touched.
 
 ## Build queue
 
