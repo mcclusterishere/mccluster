@@ -106,8 +106,10 @@ function callerAborted(taskId) {
 }
 
 // Returns { outcome: 'done', data, waitMs } or { outcome: 'fallback', reason, waitMs };
-// throws LOCAL_AI_FABRIC_TIMEOUT or CALLER_ABORTED. Never runs anything itself.
-async function fabricChat({ input, priority, metadata, signal, fabric, now, sleep, log }) {
+// throws LOCAL_AI_FABRIC_TIMEOUT or CALLER_ABORTED. Never runs anything itself,
+// and never reports a fallback while a node may still own the task: a local run
+// follows only a task that was canceled while queued, or one that failed.
+async function fabricChat({ input, priority, metadata, signal, fabric, now, sleep, log, budgetMs }) {
   let nodes;
   try { nodes = await fabric.listNodes({ orgId: fabric.orgId, liveOnly: true, limit: 500 }); }
   catch (error) {
@@ -138,14 +140,28 @@ async function fabricChat({ input, priority, metadata, signal, fabric, now, slee
   log({ event: 'local_ai_fabric_enqueued', task_id: taskId, nodes: eligible.length, implementation: fabric.implementation });
 
   const start = now();
-  const deadline = start + fabric.waitMs;
+  // The caller's budget (timeoutMs) bounds the fabric: at most half of it is
+  // spent waiting for a claim, so a local fallback keeps the other half, and
+  // the whole of it is the most a held task may take before the retryable
+  // timeout. The configured waits only ever shorten those bounds.
+  const queuedDeadline = start + Math.min(fabric.waitMs, Math.floor(budgetMs / 2));
+  const runningBound = start + Math.min(fabric.waitMs + fabric.runningWaitMs, budgetMs);
   let failedReads = 0;
   let lastStatus = 'queued';
+  const tryCancel = async (reason) => {
+    try { return await fabric.cancelQueuedComputeTask({ orgId: fabric.orgId, taskId, reason }); }
+    catch { return null; }
+  };
   const abort = async () => {
-    if (lastStatus === 'queued') {
-      try { await fabric.cancelQueuedComputeTask({ orgId: fabric.orgId, taskId, reason: 'canceled: caller aborted' }); } catch { /* the node, if any, keeps it */ }
-    }
+    // Still queued, or nobody could say: take it back if it is still ours.
+    if (lastStatus === 'queued' || lastStatus === 'unknown') await tryCancel('canceled: caller aborted');
     throw callerAborted(taskId);
+  };
+  const timeout = (status) => {
+    log({ event: 'local_ai_fabric_timeout', task_id: taskId, status, wait_ms: now() - start });
+    return Object.assign(new Error('Local AI fabric task is still running after the bounded wait'), {
+      status: 504, code: 'LOCAL_AI_FABRIC_TIMEOUT', retryable: true, compute_task_id: taskId,
+    });
   };
   while (true) {
     if (signal?.aborted) await abort();
@@ -156,7 +172,21 @@ async function fabricChat({ input, priority, metadata, signal, fabric, now, slee
     catch { task = null; }
     if (!task) {
       failedReads += 1;
-      if (failedReads >= 3) return { outcome: 'fallback', reason: 'poll_failed', waitMs: now() - start, taskId };
+      if (failedReads < 3) continue;
+      // Three reads failed, so ownership is unknown. A queued task is taken
+      // back first: a returned row means it is gone and a local run is safe.
+      // Null (a node holds it, or it already ended) or a failed cancel means
+      // a node may own it, so the local adapter is never called; polling goes
+      // on to the running bound and then the retryable timeout is thrown.
+      failedReads = 0;
+      const canceled = await tryCancel('canceled: local-ai-fabric task reads failed');
+      if (canceled) {
+        const waitMs = now() - start;
+        log({ event: 'local_ai_fabric_canceled', task_id: taskId, wait_ms: waitMs, reason: 'poll_failed' });
+        return { outcome: 'fallback', reason: 'poll_failed', waitMs, taskId };
+      }
+      lastStatus = 'unknown';
+      if (now() >= runningBound) throw timeout('unknown');
       continue;
     }
     failedReads = 0;
@@ -169,24 +199,20 @@ async function fabricChat({ input, priority, metadata, signal, fabric, now, slee
     if (task.status === 'failed' || task.status === 'canceled') {
       return { outcome: 'fallback', reason: 'failed', waitMs: now() - start, status: task.status, taskId };
     }
-    if (now() < deadline) continue;
+    if (now() < queuedDeadline) continue;
     if (task.status === 'queued') {
-      let canceled = null;
-      try { canceled = await fabric.cancelQueuedComputeTask({ orgId: fabric.orgId, taskId, reason: 'canceled: local-ai-fabric wait exceeded' }); }
-      catch { canceled = null; }
+      const canceled = await tryCancel('canceled: local-ai-fabric wait exceeded');
       if (canceled) {
         const waitMs = now() - start;
-        log({ event: 'local_ai_fabric_canceled', task_id: taskId, wait_ms: waitMs });
+        log({ event: 'local_ai_fabric_canceled', task_id: taskId, wait_ms: waitMs, reason: 'wait_timeout' });
         return { outcome: 'fallback', reason: 'wait_timeout_canceled', waitMs, taskId };
       }
-      continue; // the status moved under us: a node owns it now
+      // The status moved under us (a node owns it now), or the cancel itself
+      // failed: either way the task is not ours to run, so keep polling.
+      if (now() >= runningBound) throw timeout(task.status);
+      continue;
     }
-    if ((task.status === 'leased' || task.status === 'running') && now() >= deadline + fabric.runningWaitMs) {
-      log({ event: 'local_ai_fabric_timeout', task_id: taskId, status: task.status, wait_ms: now() - start });
-      throw Object.assign(new Error('Local AI fabric task is still running after the bounded wait'), {
-        status: 504, code: 'LOCAL_AI_FABRIC_TIMEOUT', retryable: true, compute_task_id: taskId,
-      });
-    }
+    if ((task.status === 'leased' || task.status === 'running') && now() >= runningBound) throw timeout(task.status);
   }
 }
 
@@ -214,6 +240,10 @@ export async function localAiChat({
   }
   const input = buildInput({ messages, prompt, temperature, numCtx, json, think, numPredict, tools, schema, model });
 
+  // One budget for the whole call, fabric attempt included: the local floor of
+  // 30 s is the only thing that can stretch it.
+  const budgetMs = Math.max(30_000, Number(timeoutMs || 600_000));
+  const startedAt = now();
   let fabricResult = { attempted: false, reason: 'disabled', wait_ms: null };
   const config = typeof fabric === 'function' ? fabric() : fabric;
   if (route !== 'local' && config?.mode !== 'off') {
@@ -224,7 +254,7 @@ export async function localAiChat({
         log({ event: 'local_ai_fabric_disabled', reason: disabledReason });
       }
     } else {
-      const attempt = await fabricChat({ input, priority, metadata, signal: callerSignal, fabric: config, now, sleep, log });
+      const attempt = await fabricChat({ input, priority, metadata, signal: callerSignal, fabric: config, now, sleep, log, budgetMs });
       if (attempt.outcome === 'done') {
         return shapeChatResult(attempt.data, { route: 'fabric', computeTaskId: attempt.taskId ?? null, fabric: { attempted: true, reason: 'done', wait_ms: attempt.waitMs } });
       }
@@ -233,7 +263,7 @@ export async function localAiChat({
     }
   }
 
-  const timeout = AbortSignal.timeout(Math.max(30_000, Number(timeoutMs || 600_000)));
+  const timeout = AbortSignal.timeout(Math.max(30_000, budgetMs - (now() - startedAt)));
   const signal = callerSignal ? AbortSignal.any([callerSignal, timeout]) : timeout;
   let response;
   let data;
