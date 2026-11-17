@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 721,
+  "candidate_count": 722,
   "capability_source_count": 104,
-  "support_only_count": 617,
-  "checks_total": 2782,
-  "checks_passed": 2782,
+  "support_only_count": 618,
+  "checks_total": 2786,
+  "checks_passed": 2786,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -726,6 +726,7 @@
     "workers/mccluster/test/prim3-learning.test.mjs",
     "workers/mccluster/test/seek-first-catalogs.test.mjs",
     "workers/mccluster/test/world-environment-action-media.test.mjs",
+    "workers/mccluster/test/world-environment-layers.test.mjs",
     "workers/mccluster/test/world-environment.test.mjs",
     "workers/mccluster/test/world-layers.test.mjs",
     "workers/mccluster/test/world-release.test.mjs",
@@ -735,7 +736,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "721 entries"
+      "detail": "722 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -14559,6 +14560,26 @@
     },
     {
       "name": "workers/mccluster/test/world-environment-action-media.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/world-environment-layers.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/world-environment-layers.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "workers/mccluster/test/world-environment-layers.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/test/world-environment-layers.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     },
