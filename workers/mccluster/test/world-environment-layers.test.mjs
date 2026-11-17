@@ -831,3 +831,19 @@ test('shakemap contours: bad values, units, colours and lines are dropped and co
   for (const [i, l] of big.contours[0].lines.entries()) { const src = line(1500, i ? 140 : 136); assert.deepEqual(l[0], src[0]); assert.deepEqual(l.at(-1), [Math.round(src.at(-1)[0] * 1e4) / 1e4, Math.round(src.at(-1)[1] * 1e4) / 1e4]); }
   assert.throws(() => readShakemapContours({ features: 'no' }), (e) => e.code === 'upstream_invalid_json');
 });
+
+/* ---------- the source keeps its promises ---------- */
+test('the layers module reaches providers only through the safe fetch, logs nothing, and builds the FIRMS URL in one place', () => {
+  const src = readFileSync(new URL('../src/world-environment-layers.js', import.meta.url), 'utf8');
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
+  assert.doesNotMatch(code, /\bfetchImpl\(/, 'providers are only reached through upstream() (fetchNoCrossHostRedirect)');
+  assert.doesNotMatch(code, /redirect:\s*['"](error|follow)['"]/);
+  assert.doesNotMatch(code, /console\.|logEvent/, 'nothing here logs');
+  assert.doesNotMatch(code, /\.message\b/, 'no provider or error message is read into an answer');
+  assert.equal((code.match(/FIRMS_MAP_KEY/g) || []).length, 2, 'the key is read once for the request URL and once to know it is configured');
+  assert.equal((code.match(/api\/area\/csv/g) || []).length, 1);
+  assert.doesNotMatch(code, /VIIRS_SNPP/, 'Suomi NPP production ceased on 2026-11-02');
+  for (const host of ['firms.modaps.eosdis.nasa.gov', 'api.weather.gov', 'eonet.gsfc.nasa.gov', 'api.tidesandcurrents.noaa.gov', 'earthquake.usgs.gov']) assert.ok(src.includes(host), host);
+  const index = readFileSync(new URL('../src/index.js', import.meta.url), 'utf8');
+  assert.ok(index.indexOf('await guardWorldRelease(request, env)') < index.indexOf('return handleWorldEnvironment(request, env)'), 'the release guard still runs first');
+});

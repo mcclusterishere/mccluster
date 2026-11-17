@@ -1,3 +1,4 @@
+/* Portions derived from gods-eye-view (MIT, Copyright (c) 2026 Bilawal Sidhu): see THIRD-PARTY-NOTICES at the repository root. */
 /* Current release policy: world-release.js requires live house-owner preview
    before dispatch. packages/release-policy/globe.mjs maps every path below to
    an owner-only globe feature; nothing in this file publishes a feed. */
