@@ -140,7 +140,7 @@ fictional PRIM3 missions." Answered in session:
 | --- | --- | --- |
 | W1 | Law, missions public, Travel owner-only, swipe deck and centre buttons removed, Equity Uprise tab, Everything label, guest deep links | not started |
 | W2 | Mission posts in Everything and the Equity Uprise tab, the dialog's credits, country card counts, Local missions | not started |
-| D1 | Pending SQL: join scope, mission details table, catalog import generator and its tests | not started |
+| D1 | Pending SQL: join scope, mission details table, catalog import generator and its tests | done: four pending files with rollbacks (`PROMOTION-ORDER.md` section 10), `tools/build-mission-import.mjs`, `scripts/test/mission-import.test.mjs`, native proof (84 checks) and `scripts/test-mission-pins-db.sh` passed on PostgreSQL 16.15 and 17.7 (production runs 17.6). Nothing applied. Whoever first names `action_mission_details` in shipped code adds it to `live-callers.json` `pending_only` |
 | W3 | Environmental Justice panel (salvage, daylight, honest unavailable state, browser acceptance) and its production SQL bundle | not started |
 | W4 | Sign in and return from every mission entry, with an end-to-end suite | not started |
 | W5 | The globe itself: absent-RPC 404s, render resilience and idle cost, keyboard zoom, other globe entries | not started |
