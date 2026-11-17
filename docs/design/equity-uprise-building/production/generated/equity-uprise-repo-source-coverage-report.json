@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 711,
+  "candidate_count": 720,
   "capability_source_count": 104,
-  "support_only_count": 607,
-  "checks_total": 2742,
-  "checks_passed": 2742,
+  "support_only_count": 616,
+  "checks_total": 2778,
+  "checks_passed": 2778,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -82,9 +82,10 @@
     "core/data/fictional-city/district.v1.json",
     "core/data/fictional-city/places.v1.json",
     "create.html",
+    "css/daylight.css",
     "css/equity-uprise-app.css",
     "css/equity-uprise-institutional.css",
-    "css/mission-swipe-deck.css",
+    "css/human-uprise-editorial.css",
     "css/mnet.css",
     "css/music-director-base.css",
     "css/music-director.css",
@@ -93,6 +94,7 @@
     "css/server-lab.css",
     "css/style.css",
     "css/world-audio-continuity.css",
+    "css/world-environment.css",
     "data/README.md",
     "data/action/docket-516r-archive.json",
     "data/albums.json",
@@ -400,6 +402,7 @@
     "screens/vms.html",
     "screens/wall.html",
     "scripts/e2e/control-eup.e2e.mjs",
+    "scripts/e2e/docket-cohort-showcase.e2e.mjs",
     "scripts/e2e/eu-building-visual.e2e.mjs",
     "scripts/e2e/eu-screens.e2e.mjs",
     "scripts/e2e/eup-league-member.e2e.mjs",
@@ -415,6 +418,8 @@
     "scripts/e2e/prim3-spatial-controls.e2e.mjs",
     "scripts/e2e/server-lab.e2e.mjs",
     "scripts/e2e/site-navigation.e2e.mjs",
+    "scripts/e2e/world-environment.mjs",
+    "scripts/e2e/world-missions-guest.e2e.mjs",
     "scripts/e2e/world-screen.e2e.mjs",
     "scripts/export-equity-environment.mjs",
     "scripts/funding/validate-register-db.mjs",
@@ -462,6 +467,8 @@
     "scripts/test/human-uprise-door.test.mjs",
     "scripts/test/identity-verification-levels.test.mjs",
     "scripts/test/member-desk.test.mjs",
+    "scripts/test/mission-catalog.native.integration.mjs",
+    "scripts/test/mission-import.test.mjs",
     "scripts/test/mission-pins-arcs-business.test.mjs",
     "scripts/test/mnet-real-network.test.mjs",
     "scripts/test/mobile-rule.test.mjs",
@@ -586,6 +593,7 @@
     "supabase/pending/20261029100000_privilege_hygiene_v1.rollback.sql",
     "supabase/pending/20261029100200_rls_initplan_select_wrap_v1.rollback.sql",
     "supabase/pending/20261029100300_eu_runtime_and_media_rollup_v1.rollback.sql",
+    "supabase/pending/20261117100100_action_mission_details.sql",
     "supabase/pending/PROMOTION-ORDER.md",
     "supabase/pending/README.md",
     "supabase/pending/action_bounty_claim_existing_row_guard_v1.sql",
@@ -639,6 +647,7 @@
     "supabase/schema-manifest.json",
     "supabase/tests/action_bounty_claim_guard.stub.sql",
     "supabase/tests/action_globe_demo_pins_v1.applied.sql",
+    "supabase/tests/action_mission_catalog.stub.sql",
     "supabase/tests/action_mission_pins.stub.sql",
     "supabase/tests/action_mission_reset.stub.sql",
     "supabase/tests/analytics_geo_audience.behaviour.sql",
@@ -725,7 +734,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "711 entries"
+      "detail": "720 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -2113,6 +2122,26 @@
       "detail": ""
     },
     {
+      "name": "css/daylight.css capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "css/daylight.css classified",
+      "passed": true,
+      "detail": "classification='presentation_support'"
+    },
+    {
+      "name": "css/daylight.css support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "css/daylight.css support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "css/equity-uprise-app.css capability ids known",
       "passed": true,
       "detail": ""
@@ -2153,22 +2182,22 @@
       "detail": ""
     },
     {
-      "name": "css/mission-swipe-deck.css capability ids known",
+      "name": "css/human-uprise-editorial.css capability ids known",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "css/mission-swipe-deck.css classified",
+      "name": "css/human-uprise-editorial.css classified",
       "passed": true,
       "detail": "classification='presentation_support'"
     },
     {
-      "name": "css/mission-swipe-deck.css support-only semantics coherent",
+      "name": "css/human-uprise-editorial.css support-only semantics coherent",
       "passed": true,
       "detail": "support-only sources must not also claim capability ownership"
     },
     {
-      "name": "css/mission-swipe-deck.css support rationale present",
+      "name": "css/human-uprise-editorial.css support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -2329,6 +2358,26 @@
     },
     {
       "name": "css/world-audio-continuity.css support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "css/world-environment.css capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "css/world-environment.css classified",
+      "passed": true,
+      "detail": "classification='presentation_support'"
+    },
+    {
+      "name": "css/world-environment.css support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "css/world-environment.css support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -8253,6 +8302,26 @@
       "detail": ""
     },
     {
+      "name": "scripts/e2e/docket-cohort-showcase.e2e.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/docket-cohort-showcase.e2e.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/e2e/docket-cohort-showcase.e2e.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/e2e/docket-cohort-showcase.e2e.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "scripts/e2e/eu-building-visual.e2e.mjs capability ids known",
       "passed": true,
       "detail": ""
@@ -8549,6 +8618,46 @@
     },
     {
       "name": "scripts/e2e/site-navigation.e2e.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/world-environment.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/world-environment.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/e2e/world-environment.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/e2e/world-environment.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/world-missions-guest.e2e.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/world-missions-guest.e2e.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/e2e/world-missions-guest.e2e.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/e2e/world-missions-guest.e2e.mjs support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -9484,6 +9593,46 @@
     },
     {
       "name": "scripts/test/member-desk.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/mission-catalog.native.integration.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/mission-catalog.native.integration.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/mission-catalog.native.integration.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/mission-catalog.native.integration.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/mission-import.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/mission-import.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/mission-import.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/mission-import.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -11868,6 +12017,26 @@
       "detail": ""
     },
     {
+      "name": "supabase/pending/20261117100100_action_mission_details.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261117100100_action_mission_details.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/pending/20261117100100_action_mission_details.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/20261117100100_action_mission_details.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "supabase/pending/PROMOTION-ORDER.md capability ids known",
       "passed": true,
       "detail": ""
@@ -12829,6 +12998,26 @@
     },
     {
       "name": "supabase/tests/action_globe_demo_pins_v1.applied.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/action_mission_catalog.stub.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/action_mission_catalog.stub.sql classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "supabase/tests/action_mission_catalog.stub.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/tests/action_mission_catalog.stub.sql support rationale present",
       "passed": true,
       "detail": ""
     },

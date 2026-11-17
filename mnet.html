@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme-lock="dark" class="hu-editorial hu-travel-enabled hu-social-only mn-world-on" data-world-mode="posts">
+<html lang="en" data-theme-lock="dark" class="hu-editorial hu-travel-enabled hu-travel-off mn-world-on" data-world-mode="posts">
 <head><script src="js/shell-boot.js?v=__STAMP__"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="css/style.css?v=__STAMP__">
   <link rel="stylesheet" href="css/mnet.css?v=__STAMP__">
   <script src="js/theme.js?v=__STAMP__"></script>
-  <!-- the house owner keeps Travel, Missions and Feed: must run before the scripts that read hu-social-only -->
+  <!-- the house owner keeps Travel: must run before the scripts that read hu-travel-off -->
   <script src="js/world-owner-modes.js?v=__STAMP__"></script>
   <link rel="stylesheet" href="css/control-system.css?v=__STAMP__">
   <link rel="stylesheet" href="css/member-desk.css?v=__STAMP__">
@@ -18,7 +18,6 @@
   <link rel="stylesheet" href="css/world-travel.css?v=__STAMP__">
   <link rel="stylesheet" href="css/world-environment.css?v=__STAMP__">
   <link rel="stylesheet" href="css/policy-mode.css?v=__STAMP__">
-  <link rel="stylesheet" href="css/mission-swipe-deck.css?v=__STAMP__">
   <link rel="stylesheet" href="css/mnet-audio.css?v=__STAMP__">
   <link rel="stylesheet" href="css/daylight.css?v=__STAMP__">
   <!-- day or night follows the real Sun before first paint (owner, 2026-10-19) -->
@@ -37,11 +36,11 @@
   <script src="js/live-content.js?v=__STAMP__"></script>
 </head>
 <body class="songpage has-appbar">
-  <!-- THE WORLD IS THE SOCIAL FEED (owner, 2026-10-20: "the transport and the missions feature will be taken off and the
-       social feature will be the only feature with no tab selecting between the other two"). Travel and Missions stay in
-       the code, switched off, until they are refined: hu-social-only on <html> is the switch, and missions=0 tells the
-       globe (the frame and the expanded globe) to draw no general missions. Environmental Justice (2026-11-07)
-       is a scoped public mode on this same globe; it does not remove either owner switch. -->
+  <!-- ONE FEED, MISSIONS IN IT (owner, 2026-11-17: "the missions should low key just be placed in the newsfeed instead of
+       having that Tinder swipe tab"; AGENTS.md, "Public World"). Missions are public: the globe draws their pins for
+       everyone and the feed's Equity Uprise tab is the mission feed, with Environmental Justice above it. Travel stays
+       the house owner's (owner, 2026-10-20): hu-travel-off on <html> is its switch, and js/world-owner-modes.js lifts it
+       for the house owner alone, who keeps the centre mode bar (Travel, News feed). Nobody else sees that bar. -->
   <main class="mn">
     <header class="mn__top">
       <a class="mn__brand" href="mnet.html" aria-label="Equity Uprise home">
@@ -63,7 +62,7 @@
         <div class="mn__suggest" id="mnSuggest" hidden>
           <div id="mnSuggestRows"></div>
           <div class="mn__suggest-foot">
-            <button type="button" data-mn-view="missions">All missions</button>
+            <button type="button" data-mn-feed="equity">All missions</button>
             <button type="button" data-mn-view="discover">Find people</button>
             <button type="button" data-mn-view="groups">Browse groups</button>
           </div>
@@ -294,16 +293,15 @@
         <section class="mn__world-home" id="mnWorld" aria-label="The world">
           <h1 class="wt-headline">The world is your feed.</h1>
           <div id="wtDestination" class="wt-destination" hidden></div>
-          <nav class="wt-world-modes" aria-label="World mode"><button type="button" data-world-mode="travel" aria-pressed="false">Travel</button><button type="button" data-world-mode="missions" aria-pressed="false">Missions</button><button type="button" data-world-mode="posts" aria-pressed="true">News feed</button><button type="button" data-world-mode="environment" aria-pressed="false" aria-label="E=UP: Environmental Justice" title="E=UP: Environmental Justice"><img src="assets/img/equity-uprise-mark-white.png" alt="" width="30" height="30"></button></nav>
-          <iframe class="mn__world-frame" id="mnWorldFrame" src="action-globe.html?embedded=1&amp;surface=network&amp;missions=0&amp;v=__STAMP__" title="Equity Uprise globe. Drag to turn the Earth; tap a red pin to open its mission." loading="lazy" allow="geolocation" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+          <nav class="wt-world-modes" aria-label="World mode"><button type="button" data-world-mode="travel" aria-pressed="false">Travel</button><button type="button" data-world-mode="posts" aria-pressed="true">News feed</button></nav>
+          <iframe class="mn__world-frame" id="mnWorldFrame" src="action-globe.html?embedded=1&amp;surface=network&amp;v=__STAMP__" title="Equity Uprise globe. Drag to turn the Earth; tap a red pin to open its mission." loading="lazy" allow="geolocation" referrerpolicy="strict-origin-when-cross-origin"></iframe>
           <!-- the place card (owner, 2026-10-21: "only in the middle ... how many users ... news articles ... posts"): drawn by paintPlaceCard in the page script -->
           <div class="mn__place-card" id="mnPlaceCard" role="status" aria-live="polite" hidden></div>
           <!-- the globe's corner stack (owner, 2026-10-19): the World music play/pause sits with the fullscreen control, same size, same place -->
           <div class="mn__world-stack" id="mnWorldStack">
           <button class="mn__world-play" id="mnWorldPlay" type="button" aria-label="Play music" aria-pressed="false" hidden><span aria-hidden="true">▶</span></button>
-          <a class="mn__world-expand" href="action-globe.html?explore=1&amp;missions=0" aria-label="Expand the globe"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7"/></svg></a>
+          <a class="mn__world-expand" href="action-globe.html?explore=1" aria-label="Expand the globe"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7"/></svg></a>
           </div>
-          <!-- DO SOMETHING ABOUT IT (owner, 2026-10-15): the supplied Equity Uprise artwork, white, scaled only, is the control; no plate, no caption, never written out. It opens the missions. -->
 
           <!-- what is on air right now, over the Earth; opens the live rooms -->
           <button class="mn__world-live" id="mnWorldLive" type="button" data-mn-view="live" hidden><i aria-hidden="true"></i>Live <b id="mnWorldLiveCount"></b></button>
@@ -327,7 +325,6 @@
         </section>
         <div class="mn__world-feed" id="mnWorldFeed" aria-label="World content" tabindex="0">
         <section id="wtPlanner" aria-labelledby="wtTitle"></section>
-        <section id="wePanel" class="we-panel" aria-labelledby="weTitle" hidden></section>
         <div id="wtSocial"><!-- One stream: public news, community posts, and verified activity are interleaved below. -->
         <section class="mn__world-context" id="mnWorldContext" aria-label="On the globe" aria-live="polite">
           <!-- EXPLORE THE WORLD (owner's signed-out reference, 2026-10-14):
@@ -349,27 +346,33 @@
               <button class="mn__world-locate" id="mnWorldFocusFund" type="button" aria-label="Fund this mission"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6.5" width="19" height="11" rx="2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 12h.01M18 12h.01"/></svg><span>Fund</span></button>
               <button class="mn__world-locate" id="mnWorldFocusLocate" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg><span>Locate</span></button>
               <button class="mn__world-filter" id="mnWorldFocusFilter" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg><span class="mn__label-short">Posts</span><span class="mn__label-long" id="mnWorldFocusFilterLong">Only posts about this</span></button>
-              <!-- every open mission, pinned or not, with your Action Record -->
-              <button class="mn__world-locate mn__world-all" type="button" data-mn-view="missions"><span class="mn__label-short">All</span><span class="mn__label-long">All missions</span></button>
+              <!-- every open mission, pinned or not: the feed's Equity Uprise tab (owner, 2026-11-17) -->
+              <button class="mn__world-locate mn__world-all" type="button" data-mn-feed="equity"><span class="mn__label-short">All</span><span class="mn__label-long">All missions</span></button>
             </div>
             <button class="mn__world-close" id="mnWorldFocusClear" type="button" aria-label="Let go of this mission">✕</button>
           </article>
         </section>
-          <section class="hu-mission-preview" aria-labelledby="huMissionHeading">
-            <div class="hu-section-head hu-section-head--compact"><h2 id="huMissionHeading">Missions</h2>          <button class="mn__world-eup" id="mnWorldEup" type="button" data-mn-view="missions" aria-label="Browse all missions and your Action Record"><img src="assets/img/equity-uprise-mark-white.png" alt="" width="160" height="160"></button></div>
-            <div id="huMissionList"><p class="hu-muted">Loading missions…</p></div>
-          </section>
         <!-- a guest's door into the members' side: a real Equity Uprise rally
              (Bridgeport Creates), then the public posts, read-only -->
-        <!-- THE FEED'S SCOPE (owner's reference, 2026-10-19): Local is the place the globe is on, Global is everything, Live and
-             People are the rooms and the directory, News is the publishers only. Nothing here is a new feed; it narrows the one stream. -->
+        <!-- THE FEED'S SCOPE (owner's reference, 2026-10-19): Local is the place the globe is on, Everything is the whole stream
+             (owner, 2026-11-17: "Should start on everything, but you can individualize it to select mission feed"; the key stays
+             global), Live and People are the rooms and the directory, News is the publishers only. THE EQUITY UPRISE TAB (owner,
+             2026-11-17: "another tab called the equity uprise tab ... on the feed section under the globe"; "the PNG logo that is
+             there, put that on that tab ... Just keep it as is") is the mission feed, with Environmental Justice above it: the
+             supplied artwork alone, scaled only, white on the night ground and the supplied dark mark on the white daylight
+             ground (css/daylight.css), never written out; its name is for assistive technology. Nothing here is a new feed; it
+             narrows the one stream. A finger drags the row; a mouse drags it too, and the arrow keys walk it (js/mnet.js). -->
         <nav class="hu-feed-scope" id="mnFeedScope" aria-label="What the feed shows">
           <button type="button" data-feed-scope="local" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg>Local</button>
-          <button type="button" data-feed-scope="global" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c-3 3-3 15 0 18m0-18c3 3 3 15 0 18"/></svg>Global</button>
+          <button type="button" data-feed-scope="global" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c-3 3-3 15 0 18m0-18c3 3 3 15 0 18"/></svg>Everything</button>
+          <button class="hu-feed-scope__eup" type="button" data-feed-scope="equity" aria-pressed="false" aria-label="Equity Uprise"><img class="hu-eup-mark hu-eup-mark--white" src="assets/img/equity-uprise-mark-white.png" alt="" width="40" height="40"><img class="hu-eup-mark hu-eup-mark--dark" src="assets/img/equity-uprise-mark.png" alt="" width="40" height="40"></button>
           <button type="button" data-mn-view="live"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2.2"/><path d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"/></svg>Live</button>
           <button type="button" data-feed-scope="news" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4zM8 9h8M8 13h8M8 17h5"/></svg>News</button>
           <button type="button" data-mn-view="discover"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><circle cx="16.5" cy="9.5" r="2.6"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0M14 18.5a4.5 4.5 0 0 1 7 0"/></svg>People</button>
         </nav>
+        <!-- ENVIRONMENTAL JUSTICE, behind the Equity Uprise tab and above its missions (owner, 2026-11-17; from 2026-11-07 it
+             was a mode button in the centre of the globe). The panel shows and hides itself (js/world-environment-mccluster.mjs). -->
+        <section id="wePanel" class="we-panel" aria-labelledby="weTitle" hidden></section>
         <aside class="mn__guest-card" id="mnGuestCard">
           <p>Sign in to share an update and connect.</p>
           <div class="mn__guest-card-row"><button class="mn__world-go" type="button" data-guest-open="signin">Sign in →</button><button class="mn__world-filter" type="button" data-guest-open="create">Create account</button></div>
@@ -436,7 +439,9 @@
           <p><b>Clip songs. Get paid on real views.</b> <span id="mnClipDoorLine"></span></p>
           <button class="mn__world-go" type="button" data-mn-view="clips">See campaigns →</button>
         </aside>
-        <section class="mn__feedmissions" id="mnFeedMissions" hidden></section>
+        <!-- COMPLETED MISSIONS (docs/control-plane/MISSION-RESET-DOCKET-516R.md): the Docket 516R series, shown in the Equity
+             Uprise tab after its missions; drawn by js/docket-cohort-showcase.js the first time the tab opens -->
+        <section class="mn__completed" id="mnCompletedSeries" aria-label="Completed mission series" hidden></section>
         </div>
       </div>
       </section>
@@ -723,13 +728,12 @@
   <script src="js/fan-intake.js?v=__STAMP__"></script>
   <script src="js/name-integrity.js?v=__STAMP__"></script>
   <script src="js/creator-onboarding.js?v=__STAMP__"></script>
-  <script src="js/mission-swipe-deck.js?v=__STAMP__"></script>
   <script src="js/image-resize.js?v=__STAMP__"></script>
   <script src="js/video-poster.js?v=__STAMP__"></script>
   <script src="js/mnet.js?v=__STAMP__"></script>
   <script src="js/docket-cohort-showcase.js?v=__STAMP__"></script><script src="js/world-news-globe.js?v=__STAMP__"></script>
-  <!-- async: the Travel module (switched off while the World is the social feed) never holds the World's boot, which runs
-       at DOMContentLoaded; it wires itself whenever it arrives -->
+  <!-- async: the Travel module (the house owner's alone, hu-travel-off) never holds the World's boot, which runs at
+       DOMContentLoaded; it wires itself whenever it arrives -->
   <script type="module" async src="js/travel/world-travel.mjs?v=__STAMP__"></script>
   <script type="module" src="js/world-environment-mccluster.mjs?v=__STAMP__"></script>
   <script src="js/mnet-tour.js?v=__STAMP__"></script>

@@ -19,10 +19,10 @@ const BARE=EXPLORE&&new URLSearchParams(location.search).get('chrome')==='0';if(
    so this frame shows only the Earth and talks to its same-origin parent. Messages carry public mission fields only. */
 const parentFrame=embedded&&window.parent!==window?window.parent:null;if(parentFrame&&new URLSearchParams(location.search).get('surface')==='network')document.documentElement.classList.add('globe-surface-network');
 const ANALYTICS=!!parentFrame&&new URLSearchParams(location.search).get('surface')==='analytics';if(ANALYTICS)document.documentElement.classList.add('globe-surface-analytics');
-/* THE WORLD IS THE SOCIAL FEED (owner, 2026-10-20): missions=0 (mnet.html, for the frame and the expanded globe) draws no
-   mission pins, regions or outlines and keeps the mission panels shut, until Missions comes back */
-/* the house owner's World keeps them (js/world-owner-modes.js lifts the switch on the page that holds this frame) */
-const NO_MISSIONS=new URLSearchParams(location.search).get('missions')==='0'&&!(()=>{try{return !!parentFrame&&!parentFrame.document.documentElement.classList.contains('hu-social-only')}catch(e){return false}})();if(NO_MISSIONS)document.documentElement.classList.add('globe-no-missions');
+/* MISSIONS ARE PUBLIC (owner, 2026-11-17: "we need them on the globe for the signed out users"): the World's frame and its
+   expanded globe draw the published mission pins for everyone. missions=0 is an embedding page asking for an Earth with no
+   mission pins, regions or outlines and the mission panels shut (the City Arcade's Bridgeport globe); nothing else sets it. */
+const NO_MISSIONS=new URLSearchParams(location.search).get('missions')==='0';if(NO_MISSIONS)document.documentElement.classList.add('globe-no-missions');
 // Public World reference approved 2026-10-16. Analytics retains its own rendering contract.
 const EDITORIAL=!ANALYTICS; if(EDITORIAL)document.documentElement.classList.add('globe-editorial');
 let travelMode=false,journeyPoints=[],journeyEntities=[],journeyConnect=true,journeyFlyPending=false;

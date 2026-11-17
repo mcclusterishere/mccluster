@@ -70,15 +70,20 @@ try{
    if(endpoint==='/missions/propose')return ok({id,status:'proposed'});
    return reply({error:'Unexpected endpoint'},404);
   });
-  await page.addInitScript(()=>{window.__testToken=null;window.MCC_SUPA={token:async()=>window.__testToken};});
+  await page.addInitScript(()=>{window.__testToken=null;window.MCC_SUPA={token:async()=>window.__testToken};
+   /* js/mnet.js is isolated here, so the feed strip's tab is wired by a stand-in that says what mnet.js says: MCC_FEED_SCOPE and
+      mcc:feed-scope (owner, 2026-11-17: Environmental Justice is behind the feed's Equity Uprise tab) */
+   let scope='global';window.MCC_FEED_SCOPE={get:()=>scope,set:next=>{if(next===scope)return;scope=next;document.querySelectorAll('[data-feed-scope]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.feedScope===scope)));window.dispatchEvent(new CustomEvent('mcc:feed-scope',{detail:{scope}}));}};
+   document.addEventListener('click',event=>{const b=event.target.closest&&event.target.closest('[data-feed-scope]');if(b)window.MCC_FEED_SCOPE.set(b.dataset.feedScope);});});
   const auth=async value=>{await page.evaluate(value=>{window.__testToken=value;window.dispatchEvent(new Event('mcc:auth-changed'));},value);};
   const waitText=async(selector,text)=>{await page.waitForFunction(({selector,text})=>document.querySelector(selector)?.textContent.includes(text),{selector,text});};
   await page.goto(origin+'/mnet.html');await page.waitForFunction(()=>!!window.MCC_WORLD_MODE);
   assert.equal(await page.locator('#mnWorldFrame').count(),1);
-  assert.equal(await page.locator('.wt-world-modes [data-world-mode="travel"]').isVisible(),false);
-  assert.equal(await page.locator('.wt-world-modes [data-world-mode="missions"]').isVisible(),false);
+  /* no centre mode bar for anyone but the house owner, and no Missions or E=UP mode in it at all */
+  assert.equal(await page.locator('.wt-world-modes').isVisible(),false);
+  assert.equal(await page.locator('.wt-world-modes [data-world-mode="missions"], .wt-world-modes [data-world-mode="environment"]').count(),0);
   const originalFrame=await page.locator('#mnWorldFrame').getAttribute('src');
-  await page.locator('.wt-world-modes [data-world-mode="environment"]').click();
+  await page.locator('#mnFeedScope [data-feed-scope="equity"]').click();
   await waitText('#weEvents','Fixture government observation');assert.equal(posts.length,0);
   assert.match(await page.locator('#weStatus').textContent(),/Some sources are unavailable/);
   await page.locator('#weEvents button').click();
@@ -88,7 +93,7 @@ try{
   assert.equal(await page.locator('a[href*="live-mission.html"]:visible').count(),0);
   const dimensions=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,client:document.documentElement.clientWidth,panel:document.getElementById('wePanel').scrollWidth,panelClient:document.getElementById('wePanel').clientWidth}));
   assert.equal(dimensions.scroll,dimensions.client,JSON.stringify(dimensions));assert.ok(dimensions.panel<=dimensions.panelClient,JSON.stringify(dimensions));
-  for(let i=0;i<3;i++){await page.locator('.wt-world-modes [data-world-mode="posts"]').click();assert.equal(await page.locator('#wePanel').isVisible(),false);await page.locator('.wt-world-modes [data-world-mode="environment"]').click();}
+  for(let i=0;i<3;i++){await page.locator('#mnFeedScope [data-feed-scope="global"]').click();assert.equal(await page.locator('#wePanel').isVisible(),false);await page.locator('#mnFeedScope [data-feed-scope="equity"]').click();}
   assert.equal(await page.locator('#mnWorldFrame').getAttribute('src'),originalFrame);assert.equal(await page.locator('#mnWorldFrame').count(),1);
   await auth('member');await waitText('#weTeam','Team membership is not available yet');assert.equal(posts.length,0);
   await page.getByRole('button',{name:'Check membership'}).click();await waitText('#weTeam','Join the team');
@@ -116,14 +121,14 @@ try{
   // An owner response completing after sign-out must never restore private rows.
   holdOwner=true;await auth('owner');
   for(let i=0;i<100&&!releaseOwner;i++)await page.waitForTimeout(20);assert.ok(releaseOwner,'owner request started');
-  await page.locator('.wt-world-modes [data-world-mode="posts"]').click();await auth(null);releaseOwner();await page.waitForTimeout(100);
-  await page.locator('.wt-world-modes [data-world-mode="environment"]').click();
+  await page.locator('#mnFeedScope [data-feed-scope="global"]').click();await auth(null);releaseOwner();await page.waitForTimeout(100);
+  await page.locator('#mnFeedScope [data-feed-scope="equity"]').click();
   assert.equal(await page.locator('#weOwner').isVisible(),false);assert.equal(await page.getByText('Private member name').count(),0);assert.equal(await page.getByRole('link',{name:'Check recording availability'}).count(),0);
   await auth('member');await waitText('#weTeam','You are on');
   unavailable=true;await page.getByRole('button',{name:'Refresh sources'}).click();await waitText('#weStatus','No current observations');assert.equal(await page.locator('#weEvents button').count(),0);await waitText('#weAssignments','Saved environmental mission');assert.match(await page.locator('#weAssignments').textContent(),/not in the current feed/);
   assert.deepEqual(errors,[],'No runtime errors in the tested modules');
   const out=process.env.WORLD_ENVIRONMENT_ARTIFACT_DIR;if(out){await mkdir(out,{recursive:true});await page.screenshot({path:path.join(out,'world-environment-'+width+'.png'),fullPage:true});}
-  console.log(`PASS ${width}px: actual World DOM, no overflow, one iframe, hidden owner modes, repeated switching, source dates/unavailability, malformed-envelope refusal, explicit team/proposal/review/join, confirmed assignment link, auth race privacy. Fixtures only.`);
+  console.log(`PASS ${width}px: actual World DOM, no overflow, one iframe, no mode bar for a visitor, repeated tab switching, source dates/unavailability, malformed-envelope refusal, explicit team/proposal/review/join, confirmed assignment link, auth race privacy. Fixtures only.`);
   await context.close();
  }
 }finally{await browser?.close();await new Promise(resolve=>server.close(resolve));}

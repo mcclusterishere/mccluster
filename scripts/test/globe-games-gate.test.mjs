@@ -1,4 +1,5 @@
-/* The Games tab and the mission surfaces are the house owner's for now (owner, 2026-11-03). Who the owner is stays the
+/* The Games tab is the house owner's for now (owner, 2026-11-03); the mission surfaces are public again (owner, 2026-11-17:
+   docs/control-plane/WORLD-FEED-AND-MISSIONS-20261117.md, "What this supersedes"). Who the owner is stays the
    server's answer: the globe reads /v1/world/access (release.admin_preview, the Worker's level === 'owner'), the bar reads
    /v1/status (requireHouseOwner). These tests hold the client to that answer with the server mocked; the browser proof is
    scripts/e2e/globe-games.e2e.mjs. Nothing here calls production. */
@@ -40,7 +41,7 @@ test('the globe decides owner from the server release answer only (mocked): gues
   assert.match(access, /admin_preview: level === 'owner'/);
 });
 
-test('paintGames shows the Games tab and lifts the mission gate only for the owner (mocked DOM)', () => {
+test('paintGames shows the Games tab and its door only for the owner (mocked DOM)', () => {
   for (const [who, owner] of [['guest', false], ['member', false], ['owner', true]]) {
     const cls = new Set(), btn = { hidden: true, attrs: {}, setAttribute(k, v) { this.attrs[k] = v; } }, door = { hidden: true };
     let closed = 0;
@@ -52,7 +53,7 @@ test('paintGames shows the Games tab and lifts the mission gate only for the own
     paintGames();
     assert.equal(btn.hidden, !owner, who + ': Games tab');
     assert.equal(door.hidden, !owner, who + ': the World frame door');
-    assert.equal(cls.has('globe-owner'), owner, who + ': mission controls');
+    assert.equal(cls.has('globe-owner'), owner, who + ': the owner-only controls (css/globe-games.css)');
     assert.equal(closed, owner ? 0 : 1, who + ': an open overlay closes when the answer is not owner');
   }
 });
@@ -64,11 +65,13 @@ test('nothing of Games is fetched or opened without the owner answer', () => {
   assert.ok(html.indexOf('css/globe-games.css') < html.indexOf('<body>'), 'the owner-only rule is in the head, so nothing flashes');
 });
 
-test('until the owner answer, the Games tab and the globe\'s Missions mode, layer and feed are not drawn', () => {
+test('until the owner answer, the Games tab is not drawn; the globe\'s Missions mode, layer, feed and pin detail are public', () => {
   const rule = /html:not\(\.globe-owner\) :is\(([^)]*)\)\{display:none!important\}/.exec(css);
   assert.ok(rule);
-  for (const id of ['#ctlGames', '#ctlGamesDoor', '#feedMode', '#missionsLayer', '#worldFeed', '#worldDetail', '#gamesSheet']) assert.ok(rule[1].split(',').includes(id), id);
-  /* gated, not deleted: the controls and their handlers are still on the page */
+  assert.deepEqual(rule[1].split(','), ['#ctlGames', '#ctlGamesDoor', '#gamesSheet'], 'only the Games controls wait on the owner answer');
+  /* missions are public (owner, 2026-11-17): a guest's pin tap in the explorer shows its story and its Join link */
+  for (const id of ['#feedMode', '#missionsLayer', '#worldFeed', '#worldDetail']) assert.ok(!css.includes(id), id + ' is not owner-gated');
+  /* the controls and their handlers are on the page for everyone */
   assert.match(html, /<button id="feedMode"[^>]*>Missions<\/button>/);
   assert.match(html, /<button id="missionsLayer">Missions<\/button>/);
   assert.match(globe, /\$\('missionsLayer'\)\.onclick=/);
@@ -89,9 +92,11 @@ test('the bar\'s Missions room is admin-only: guest and member get an empty iner
   assert.match(bar, /fetch\(API_ORIGIN \+ "\/v1\/status"[\s\S]*?paintAdmin\(r\.ok\);/);
 });
 
-test('the World\'s own mission views stay behind the same owner answer', () => {
-  assert.match(mnet, /class="[^"]*\bhu-social-only\b/);
+test('the World\'s Travel stays behind the same owner answer; its missions do not', () => {
+  assert.match(mnet, /class="[^"]*\bhu-travel-off\b/);
+  assert.doesNotMatch(mnet, /hu-social-only/, 'no switch holds the missions any more');
   assert.match(mnet, /js\/world-owner-modes\.js/);
   assert.match(ownerModes, /mcc:appbar-admin/);
-  assert.match(mnet, /missions=0/);
+  assert.match(ownerModes, /SWITCH = "hu-travel-off"/);
+  assert.doesNotMatch(mnet, /missions=0/, 'the World asks its globe and the expanded globe for the missions');
 });

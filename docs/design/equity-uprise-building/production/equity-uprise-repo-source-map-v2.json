@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 711,
+  "candidate_count": 720,
   "capability_source_count": 104,
-  "support_only_count": 607,
+  "support_only_count": 616,
   "entries": [
     {
       "path": ".cursorrules",
@@ -579,6 +579,13 @@
       "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared site page; adds no distinct program capability."
     },
     {
+      "path": "css/daylight.css",
+      "classification": "presentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Daylight palette of the consumer World; names the Equity Uprise feed tab only to swap between the two owner-supplied marks by ground (no recolouring). Presentation only; no building capability."
+    },
+    {
       "path": "css/equity-uprise-app.css",
       "classification": "presentation_support",
       "capability_ids": [],
@@ -593,11 +600,11 @@
       "rationale": "Institutional Desk styling; presentation only."
     },
     {
-      "path": "css/mission-swipe-deck.css",
+      "path": "css/human-uprise-editorial.css",
       "classification": "presentation_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Existing mission-card presentation rules; not a separate building capability."
+      "rationale": "Editorial styles of the consumer World (feed strip, Equity Uprise feed tab, mission dialog actions); presentation only, no building capability."
     },
     {
       "path": "css/mnet.css",
@@ -654,6 +661,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Music and World transport styling; shared product UI rather than building capability."
+    },
+    {
+      "path": "css/world-environment.css",
+      "classification": "presentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Styles of the Environmental Justice panel behind the World feed's Equity Uprise tab; presentation only, no building capability."
     },
     {
       "path": "data/README.md",
@@ -2924,6 +2938,13 @@
       "rationale": "Browser proof of the Control E=Up workspace including the module-policy controls; names Equity Uprise in fixture copy. Test only; no building capability, program or geometry."
     },
     {
+      "path": "scripts/e2e/docket-cohort-showcase.e2e.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Browser test of the Docket 516R archive and its completed series in the World feed's Equity Uprise tab, against fixtures; names the tab only. Not a building capability."
+    },
+    {
       "path": "scripts/e2e/eu-building-visual.e2e.mjs",
       "classification": "test_support",
       "capability_ids": [],
@@ -3027,6 +3048,20 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Browser checks for shared navigation and building destinations."
+    },
+    {
+      "path": "scripts/e2e/world-environment.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Browser harness for the Environmental Justice panel on the consumer World against fixtures; names the feed's Equity Uprise tab only, as the place the panel lives. Not a building capability."
+    },
+    {
+      "path": "scripts/e2e/world-missions-guest.e2e.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Browser test of public missions for a signed-out visitor on the consumer World (the Equity Uprise feed tab, shared mission links, the supplied marks), against fixtures. Not a building capability."
     },
     {
       "path": "scripts/e2e/world-screen.e2e.mjs",
@@ -3358,6 +3393,20 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Test or behaviour harness for shared Action Network / intelligence governance; references Equity Uprise context but defines no program capability."
+    },
+    {
+      "path": "scripts/test/mission-catalog.native.integration.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Native PostgreSQL proof of the pending mission details, Drawdown import and publish SQL in a scratch database; names the existing admin helper (eu_is_admin, eu_profiles) only to exercise it. Not a building capability."
+    },
+    {
+      "path": "scripts/test/mission-import.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Unit test of the Drawdown mission import and publish SQL generator (tools/build-mission-import.mjs); names the existing admin helper (eu_is_admin) only in the policy text it expects. Not a building capability."
     },
     {
       "path": "scripts/test/mission-pins-arcs-business.test.mjs",
@@ -4262,6 +4311,13 @@
       "rationale": "Schema reconciliation SQL from the 2026-10-28 production audit that names Equity Uprise (eu_*) tables, policies or functions among many others; database hygiene, not a building capability."
     },
     {
+      "path": "supabase/pending/20261117100100_action_mission_details.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pending (unapplied) Action Network mission details table (about, credit, source) read with public missions; its policies reuse the existing admin helper eu_is_admin. Shared backend; no building program capability."
+    },
+    {
       "path": "supabase/pending/PROMOTION-ORDER.md",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -4676,6 +4732,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "The former supabase/pending/action_globe_demo_pins_v1.sql, applied in production as service-role data on 2026-10-15 (three regions, the mission pins) and kept only as the scratch-database fixture scripts/test-mission-pins-db.sh applies before the pins migration. Names the globe's regions; not a building capability."
+    },
+    {
+      "path": "supabase/tests/action_mission_catalog.stub.sql",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Scratch-database stub for the pending mission catalog SQL; stands in production's admin helpers (eu_is_admin, eu_role, eu_profiles). Never applied to a project; not a building capability."
     },
     {
       "path": "supabase/tests/action_mission_pins.stub.sql",

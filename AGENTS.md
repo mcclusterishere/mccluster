@@ -175,6 +175,8 @@ ugly … Just keep it as is."
 - **Travel stays owner-only** (the owner did not mention it on 2026-11-17). `hu-travel-off` on `<html>` (`mnet.html`)
   is the switch. The house owner's World lifts it (`js/world-owner-modes.js`, the server's owner check) and keeps the
   centre mode bar with Travel and News feed; a visitor or member who is not the house owner sees no centre mode bar.
+  The same switch keeps the two other things the 2026-10-20 switch held, the feed's clip-campaign door and the Live
+  room's action blocks, with the house owner: the owner turned only the missions back on.
 - Still owner-only: the globe's Games controls (`css/globe-games.css`, owner 2026-11-03) and the bar's Missions room.
 - One globe. Do not expose owner Halo or publicize member assignments or locations. The Environmental Justice module's
   persistence and release gates: `docs/control-plane/WORLD-ENVIRONMENT.md`.

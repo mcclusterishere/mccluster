@@ -1,7 +1,6 @@
 /* Real archive data, real page/auth scripts, fixture APIs only. No claims,
    invitations, edits or media requests reach production. */
 import assert from 'node:assert/strict';
-import { withTravelAndMissions } from './world-switch.mjs';
 import { createServer } from 'node:http';
 import { createRequire } from 'node:module';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
@@ -16,8 +15,9 @@ try { ({chromium}=require('playwright')); }
 catch { ({chromium}=createRequire(join(process.env.PLAYWRIGHT_DIR || '/opt/node-tools/node_modules','x'))('playwright')); }
 const archive=JSON.parse(await readFile(join(ROOT,'data/action/docket-516r-archive.json'),'utf8'));
 const TYPES={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.jpg':'image/jpeg','.png':'image/png','.svg':'image/svg+xml','.webp':'image/webp'};
-/* Missions is switched off in the World as it ships; this suite guards the completed missions, so it drives them switched on */
-async function file(path){const p=normalize(decodeURIComponent(path)).replace(/^([.][.][/\\])+/,'');let body=await readFile(join(ROOT,p));if(/^[/\\]mnet\.html$/.test(p))body=Buffer.from(withTravelAndMissions(body));return {body,contentType:TYPES[extname(p)]||'application/octet-stream'};}
+/* the World as it ships: missions are public, and the completed series and its capstone live in the feed's Equity Uprise
+   tab (owner, 2026-11-17; the swipe deck that held them is gone) */
+async function file(path){const p=normalize(decodeURIComponent(path)).replace(/^([.][.][/\\])+/,'');const body=await readFile(join(ROOT,p));return {body,contentType:TYPES[extname(p)]||'application/octet-stream'};}
 const server=createServer(async(req,res)=>{try{const f=await file(new URL(req.url,'http://local').pathname);res.writeHead(200,{'content-type':f.contentType});res.end(f.body);}catch{res.writeHead(404);res.end();}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const BASE=`http://127.0.0.1:${server.address().port}`,results=[];
@@ -168,14 +168,13 @@ try{
   const s=await make({missingEvent:true});await archivePage(s);check('capstone count reflects whether an event exists',await s.page.locator('.dc-stats b').nth(2).innerText()==='0');await close(s);
  }
  {
-  const s=await make();await s.page.goto(BASE+'/mnet.html?view=feed');await s.page.waitForFunction(()=>window.MCC_WORLD_MODE&&document.documentElement.classList.contains('mn-world-on'));
-  check('World still defaults to Travel',await s.page.evaluate(()=>MCC_WORLD_MODE.get())==='travel');
-  await s.page.click('.wt-world-modes [data-world-mode="missions"]');
-  await s.page.click('.mn-swipe__filters [data-status="completed"]');
+  const s=await make();await s.page.goto(BASE+'/mnet.html?view=feed');await s.page.waitForFunction(()=>window.MCC_WORLD_MODE&&window.MCC_FEED_SCOPE&&document.documentElement.classList.contains('mn-world-on'));
+  check('World opens on the feed with Everything chosen, and no capstone marker outside the Equity Uprise tab',await s.page.evaluate(()=>MCC_WORLD_MODE.get()==='posts'&&MCC_FEED_SCOPE.get()==='global'&&document.getElementById('mnCompletedSeries').hidden)&&!(await globeMessages(s.page)).some(m=>m.type==='hu:completed-missions'&&m.on));
+  await s.page.click('#mnFeedScope [data-feed-scope="equity"]');
   await s.page.waitForSelector('#mnCompletedSeries .dc-series');
   await s.page.waitForFunction(()=>document.querySelector('#mnWorldFrame').contentWindow.__received.some(m=>m.type==='hu:completed-missions'&&m.events.length===1));
   const marker=(await globeMessages(s.page)).filter(m=>m.type==='hu:completed-missions').at(-1);
-  check('Missions sends the one confirmed capstone place',marker.on===true&&marker.events.length===1&&marker.events[0].id===archive.event.slug&&marker.events[0].latitude===archive.event.latitude&&marker.events[0].longitude===archive.event.longitude&&marker.events[0].date==='2025-10-05',marker);
+  check('the Equity Uprise tab sends the one confirmed capstone place',marker.on===true&&marker.events.length===1&&marker.events[0].id===archive.event.slug&&marker.events[0].latitude===archive.event.latitude&&marker.events[0].longitude===archive.event.longitude&&marker.events[0].date==='2025-10-05',marker);
   await s.page.locator('#mnCompletedSeries .dc-series__summary').click();
   await s.page.getByRole('button',{name:'Show on globe',exact:true}).click();
   await s.page.waitForFunction(()=>document.querySelector('#mnWorldFrame').contentWindow.__received.some(m=>m.type==='hu:focus-place'));
@@ -184,12 +183,12 @@ try{
   await s.page.waitForTimeout(30);check('parent ignores spoofed marker selection from the page',await s.page.evaluate(()=>window.__archiveScrolls)===0);
   const frame=s.page.frames().find(f=>f.url().includes('/action-globe.html'));await frame.evaluate(id=>parent.postMessage({type:'hu:completed-selected',eventId:id},location.origin),archive.event.slug);
   await s.page.waitForFunction(()=>window.__archiveScrolls===1);check('real globe marker selection opens the capstone context',true);
-  for(const mode of ['posts','travel']){await s.page.click(`.wt-world-modes [data-world-mode="${mode}"]`);await s.page.waitForFunction(()=>document.querySelector('#mnWorldFrame').contentWindow.__received.filter(m=>m.type==='hu:completed-missions').at(-1)?.on===false);const last=(await globeMessages(s.page)).filter(m=>m.type==='hu:completed-missions').at(-1);check(mode+' hides completed markers',last.on===false&&last.events.length===0);}
-  await s.page.click('.wt-world-modes [data-world-mode="missions"]');check('returning to Missions does not duplicate the showcase',await s.page.locator('#mnCompletedSeries .dc-series').count()===1);await fit(s.page,'World showcase fits 390px');
+  for(const scope of ['global','news']){await s.page.click(`#mnFeedScope [data-feed-scope="${scope}"]`);await s.page.waitForFunction(()=>document.querySelector('#mnWorldFrame').contentWindow.__received.filter(m=>m.type==='hu:completed-missions').at(-1)?.on===false);const last=(await globeMessages(s.page)).filter(m=>m.type==='hu:completed-missions').at(-1);check(scope+' hides completed markers and the series',last.on===false&&last.events.length===0&&await s.page.isHidden('#mnCompletedSeries'));}
+  await s.page.click('#mnFeedScope [data-feed-scope="equity"]');check('returning to the Equity Uprise tab does not duplicate the showcase',await s.page.locator('#mnCompletedSeries .dc-series').count()===1);await fit(s.page,'World showcase fits 390px');
   await s.page.locator('#mnCompletedSeries').screenshot({path:join(OUT,'world-showcase-390.png')});
-  await s.page.goto(BASE+'/mnet.html?mode=missions&completed='+archive.event.slug);await s.page.waitForFunction(()=>window.MCC_WORLD_MODE&&document.documentElement.classList.contains('mn-world-on'));
-  check('archive map deep link opens Missions',await s.page.evaluate(()=>MCC_WORLD_MODE.get())==='missions');
-  if(await s.page.evaluate(()=>MCC_WORLD_MODE.get())==='missions'){
+  await s.page.goto(BASE+'/mnet.html?feed=equity&completed='+archive.event.slug);await s.page.waitForFunction(()=>window.MCC_WORLD_MODE&&window.MCC_FEED_SCOPE&&document.documentElement.classList.contains('mn-world-on'));
+  check('archive map deep link opens the Equity Uprise tab',await s.page.evaluate(()=>MCC_WORLD_MODE.get()==='posts'&&MCC_FEED_SCOPE.get()==='equity'));
+  if(await s.page.evaluate(()=>MCC_FEED_SCOPE.get())==='equity'){
    await s.page.waitForSelector('#mnCompletedSeries .dc-series');await s.page.waitForFunction(()=>document.querySelector('#mnWorldFrame').contentWindow.__received.some(m=>m.type==='hu:focus-place'));
    const f=(await globeMessages(s.page)).filter(m=>m.type==='hu:focus-place').at(-1);check('archive map deep link focuses the selected capstone',f?.lat===archive.event.latitude&&f?.lon===archive.event.longitude);
   }
@@ -197,7 +196,8 @@ try{
  }
  for(const deferred of ['globe','archive']){
   const s=await make({manualGlobeReady:deferred==='globe',archiveDelay:deferred==='archive'?400:0});
-  await s.page.goto(BASE+'/mnet.html?mode=missions&completed='+archive.event.slug);await s.page.waitForSelector('#mnCompletedSeries .dc-series');
+  /* the old address of the archive's map link (?mode=missions) lands on the same tab */
+  await s.page.goto(BASE+'/mnet.html?'+(deferred==='globe'?'mode=missions':'feed=equity')+'&completed='+archive.event.slug);await s.page.waitForSelector('#mnCompletedSeries .dc-series');
   if(deferred==='globe'){
    check('deep link waits until the globe is ready',!(await globeMessages(s.page)).some(m=>m.type==='hu:focus-place'));
    const frame=s.page.frames().find(f=>f.url().includes('/action-globe.html'));await frame.evaluate(()=>window.__releaseReady());

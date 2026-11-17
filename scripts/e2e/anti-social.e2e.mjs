@@ -14,7 +14,6 @@
      node scripts/e2e/anti-social.e2e.mjs [outDir]
    ============================================================ */
 import { createServer } from 'node:http';
-import { withTravelAndMissions } from './world-switch.mjs';
 import { createRequire } from 'node:module';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
@@ -30,8 +29,8 @@ catch { ({ chromium } = createRequire(join(process.env.PLAYWRIGHT_DIR || '/opt/n
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg' };
 const server = createServer(async (req, res) => {
   const path = normalize(decodeURIComponent(new URL(req.url, 'http://x').pathname)).replace(/^([.][.][/\\])+/, '');
-  /* Missions is switched off in the World as it ships; this suite guards Anti-Social's missions, so it drives them switched on */
-  try { let body = await readFile(join(ROOT, path === '/' ? 'index.html' : path)); if (/^[/\\]mnet\.html$/.test(path)) body = Buffer.from(withTravelAndMissions(body)); res.writeHead(200, { 'content-type': TYPES[extname(path)] || 'application/octet-stream' }); res.end(body); }
+  /* missions are public in the World as it ships (owner, 2026-11-17), so this suite drives the page as it ships */
+  try { const body = await readFile(join(ROOT, path === '/' ? 'index.html' : path)); res.writeHead(200, { 'content-type': TYPES[extname(path)] || 'application/octet-stream' }); res.end(body); }
   catch { res.writeHead(404); res.end('not found'); }
 });
 await new Promise((r) => server.listen(0, '127.0.0.1', r));
@@ -176,21 +175,17 @@ check(S, 'Level 3 opens with the publish-together form and no partner yet', !(aw
 check(S, 'the way to a partner is written down', await page.evaluate(() => !!document.querySelector('#mnAntisocialCollab a[href="mnet.html?view=discover"]')));
 await page.screenshot({ path: join(OUT, 'level-3-no-partner.png') });
 
-/* the Posts tab of the World's mode bar, pressed until the World says it is on Posts (the bar is wired once the World boots) */
+/* the World's feed: a member who is not the house owner has no mode bar, and the World opens on the feed (owner,
+   2026-11-17; Travel and its bar are the house owner's). This waits for the World to say it is on the feed. */
 async function toPosts() {
-  const tab = page.locator('.wt-world-modes [data-world-mode="posts"]');
-  for (let i = 0; i < 20; i++) {
-    await tab.click({ timeout: 60000 });
-    if (await page.waitForFunction(() => document.documentElement.getAttribute('data-world-mode') === 'posts', null, { timeout: 3000 }).then(() => true, () => false)) return;
-  }
-  throw new Error('the World never switched to Posts');
+  if (await page.waitForFunction(() => document.documentElement.getAttribute('data-world-mode') === 'posts' && !!window.MCC_WORLD_MODE, null, { timeout: 60000 }).then(() => true, () => false)) return;
+  throw new Error('the World never opened on its feed');
 }
 /* 4. Connect on Ana's profile: Connect → Requested; Ana accepts (through the bell, as if she had asked us) */
 await page.click('#mnMissionClose');
 /* a profile opens from a post's author, as it does for a member */
 await page.goto(`${BASE}/mnet.html?view=feed`, { waitUntil: 'domcontentloaded' });
-/* this run serves the World with Travel and Missions switched back on (./world-switch.mjs), which opens on Travel: the posts are
-   one tap away, on the Posts tab (the World as it ships has only the posts) */
+/* the World as it ships opens on the feed: the posts are right there */
 await toPosts();
 await page.waitForSelector('.mn__post-card .mn__author-link[data-person="fixture.ana"]', { timeout: 60000 });
 await page.click('.mn__post-card .mn__author-link[data-person="fixture.ana"]');
@@ -237,7 +232,7 @@ check(S, 'the Action Record reads 2 / 3 · Awaiting review', /2 \/ 3 · Awaiting
 check(S, 'the Missions card says one mission, three levels · you: 2 / 3', /One mission, three levels · you: 2 \/ 3/.test(await page.textContent('#mnMissionList')));
 await page.screenshot({ path: join(OUT, 'record-2-of-3.png') });
 await page.goto(`${BASE}/mnet.html?view=feed`, { waitUntil: 'domcontentloaded' });
-await toPosts();   // the Posts tab, as above
+await toPosts();   // the feed, as above
 await page.waitForSelector('.mn__actcard--collab', { timeout: 60000 });
 /* the evidence shot waits for the Earth's tiles (up to 25s) and brings the card into view */
 const globe = page.frame({ url: /action-globe\.html/ });
