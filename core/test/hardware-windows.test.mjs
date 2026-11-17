@@ -277,6 +277,58 @@ test('merge rules: exclusions, prefix matching, zero VRAM, and vendor form class
   assert.equal(byDesc.gpus[0].form, 'integrated');
 });
 
+test('a stale driver subkey with the same MatchingDeviceId never shadows the live one', () => {
+  const controllers = parseWindowsVideoControllers(fixture('cim-780m-only.json'));
+  const entries = parseWindowsDisplayClassReg(fixture('reg-780m-stale-subkey.txt'));
+  assert.equal(entries.length, 2);
+  assert.equal(entries[0].subkey, '0000');
+  assert.equal(entries[0].qw_memory_size_bytes, null, 'the leftover of the earlier install carries no memory size');
+  assert.equal(entries[1].qw_memory_size_bytes, 536870912);
+  const merged = mergeWindowsGpuInventory(controllers, entries, []);
+  assert.equal(merged.gpus.length, 1);
+  assert.equal(merged.gpus[0].vram_bytes, 536870912, 'the subkey with a memory size wins among equal-length matches');
+  assert.equal(merged.gpus[0].vram_source, 'registry');
+  assert.equal(merged.gpus[0].driver, '32.0.13031.3015');
+
+  const same = 'PCI\\VEN_1002&DEV_15BF&SUBSYS_8B4A103C';
+  const bothSized = mergeWindowsGpuInventory(controllers, [
+    { subkey: '0001', driver_desc: 'AMD Radeon 780M Graphics', matching_device_id: same, qw_memory_size_bytes: 268435456, driver_version: 'new' },
+    { subkey: '0000', driver_desc: 'AMD Radeon 780M Graphics', matching_device_id: same, qw_memory_size_bytes: 134217728, driver_version: 'old' }
+  ], []);
+  assert.equal(bothSized.gpus[0].vram_bytes, 268435456, 'both sized: the highest subkey (the latest install) wins, whatever the order');
+
+  const longer = mergeWindowsGpuInventory(controllers, [
+    { subkey: '0000', driver_desc: 'AMD Radeon 780M Graphics', matching_device_id: same, qw_memory_size_bytes: null, driver_version: null },
+    { subkey: '0001', driver_desc: 'AMD Radeon 780M Graphics', matching_device_id: 'PCI\\VEN_1002&DEV_15BF', qw_memory_size_bytes: 536870912, driver_version: null }
+  ], []);
+  assert.equal(longer.gpus[0].vram_source, 'cim', 'a longer MatchingDeviceId still outranks a shorter one; AdapterRAM is then the fallback');
+
+  const byDesc = mergeWindowsGpuInventory(
+    [{ name: 'AMD Radeon 780M Graphics', adapter_compatibility: 'Advanced Micro Devices, Inc.', driver_version: null, pnp_device_id: 'PCI\\VEN_1002&DEV_FFFF\\X', adapter_ram_bytes: 0, video_processor: null, status: 'OK', vendor: 'amd', vendor_id: '1002' }],
+    [
+      { subkey: '0000', driver_desc: 'AMD Radeon 780M Graphics', matching_device_id: 'PCI\\VEN_1002&DEV_0000', qw_memory_size_bytes: null, driver_version: null },
+      { subkey: '0001', driver_desc: 'AMD Radeon 780M Graphics', matching_device_id: 'PCI\\VEN_1002&DEV_0000', qw_memory_size_bytes: 536870912, driver_version: null }
+    ],
+    []
+  );
+  assert.equal(byDesc.gpus[0].vram_source, 'registry', 'the DriverDesc fallback applies the same preference');
+
+  const { exec } = fakeExec({ cim: fixture('cim-780m-only.json'), reg: fixture('reg-780m-stale-subkey.txt') });
+  const probed = windowsInventory({ exec, env: ENV });
+  assert.equal(probed.gpus[0].vram_source, 'registry', 'through the whole Windows probe too');
+  assert.equal(probed.gpus[0].vram_bytes, 536870912);
+});
+
+test('when nvidia-smi answered, every NVIDIA CIM controller is dropped, whatever CIM calls the card', () => {
+  const controllers = parseWindowsVideoControllers(fixture('cim-nvidia-desktop.json'));
+  const smi = parseNvidiaInventoryCsv('NVIDIA GeForce RTX 4070 SUPER, GPU-1, 12282, 566.03, 8.9\n');
+  const merged = mergeWindowsGpuInventory(controllers, [], smi);
+  assert.deepEqual(merged.gpus.map((gpu) => gpu.model), ['NVIDIA GeForce RTX 4070 SUPER'], 'one card, one entry');
+  assert.deepEqual(merged.errors, []);
+  const mixed = mergeWindowsGpuInventory([...parseWindowsVideoControllers(fixture('cim-780m-only.json')), ...controllers], [], smi);
+  assert.deepEqual(mixed.gpus.map((gpu) => [gpu.vendor, gpu.vram_source]), [['nvidia', 'nvidia-smi'], ['amd', 'cim']], 'other vendors still come from CIM');
+});
+
 test('nvidia-smi entries carry the per-GPU form, memory and source fields', () => {
   const [gpu] = parseNvidiaInventoryCsv('NVIDIA RTX 4090, GPU-abc, 24564, 590.1, 8.9\n');
   assert.equal(gpu.form, 'discrete');

@@ -160,13 +160,20 @@ test("brackets, strings, here-strings and comments balance in the script and its
   assertBalanced(read(TESTS), TESTS);
 });
 
-test("the fixtures are the five recorded sets, CRLF where Windows tools emit CRLF, JSON where JSON", () => {
-  const names = readdirSync(join(ROOT, FIXTURES)).sort();
+test("the fixtures are the recorded sets, CRLF where Windows tools emit CRLF, JSON where JSON, and equal to the Node copies byte for byte", () => {
+  /* both directories carry a .gitattributes that keeps the recordings byte-exact (no CRLF normalization) */
+  const recordings = (dir) => readdirSync(join(ROOT, dir)).filter((name) => !name.startsWith(".")).sort();
+  const names = recordings(FIXTURES);
   assert.deepEqual(names, [
     "cim-780m-only.json", "cim-780m-rx7600s.json", "cim-no-gpu.json", "cim-nvidia-desktop.json",
     "nvidia-smi-desktop.csv", "powershell-error.txt",
-    "reg-780m-only.txt", "reg-780m-rx7600s.txt", "reg-no-gpu.txt", "reg-nvidia-desktop.txt",
+    "reg-780m-only.txt", "reg-780m-rx7600s.txt", "reg-780m-stale-subkey.txt", "reg-no-gpu.txt", "reg-nvidia-desktop.txt",
   ]);
+  for (const name of [...names, ".gitattributes"]) {
+    assert.equal(read(`${FIXTURES}/${name}`), read(`core/test/fixtures/windows-hardware/${name}`), `${name} equals the Node test fixture byte for byte`);
+  }
+  assert.deepEqual(recordings("core/test/fixtures/windows-hardware"), names, "the two fixture sets hold the same files");
+  assert.match(read(`${FIXTURES}/.gitattributes`), /\*\.txt -text/, "CRLF recordings are never normalized on checkout");
   for (const name of names) {
     const text = read(`${FIXTURES}/${name}`);
     if (name.endsWith(".json")) JSON.parse(text);

@@ -208,16 +208,19 @@ The probes, by platform:
   Basic Render, Remote Display, Virtual, VMware, Hyper-V, Parsec, DisplayLink or RDP are dropped into
   `gpu_probe.ignored_controllers`. Each remaining controller is matched to the registry subkey with the longest
   `MatchingDeviceId` that is a case-insensitive prefix of its `PNPDeviceID`, else to the one whose `DriverDesc`
-  equals its name; `vram_bytes` is the subkey's `HardwareInformation.qwMemorySize` (a REG_QWORD, `vram_source
-  registry`) because CIM's `AdapterRAM` is a uint32 that wraps above 4 GiB, with `AdapterRAM` as the fallback
-  (`vram_source cim`, or `none` at 0). Vendor comes from the PNP `VEN_` id (1002 amd, 10DE nvidia, 8086 intel),
-  then from `AdapterCompatibility`. Form from the name: NVIDIA discrete; AMD integrated for `Vega N Graphics`,
-  `NNNM`, `Radeon(TM) Graphics` and names ending `Radeon Graphics`, discrete for `RX`, `PRO` and `WNNNN`, else
-  unknown; Intel discrete for `Arc A/Bnnn`, else integrated. `compute` is `cuda` for NVIDIA and `vulkan` for AMD
-  and Intel; `uuid` is `pnp:<PNPDeviceID>`. When `nvidia-smi` answered, its entry wins over the CIM duplicate of
-  the same name; when an NVIDIA controller remains and `nvidia-smi` failed, `gpu_probe.errors` says so. The
-  recorded fixtures are `core/test/fixtures/windows-hardware/` and, byte for byte the same,
-  `core/windows/tests/fixtures/`.
+  equals its name; among equal matches (Windows keeps the `00NN` subkeys of earlier driver installs with the
+  same `MatchingDeviceId`) the subkey that carries a `qwMemorySize` wins, then the highest subkey number (the
+  latest install), so a stale subkey never shadows the live one. `vram_bytes` is the subkey's
+  `HardwareInformation.qwMemorySize` (a REG_QWORD, `vram_source registry`) because CIM's `AdapterRAM` is a
+  uint32 that wraps above 4 GiB, with `AdapterRAM` as the fallback (`vram_source cim`, or `none` at 0). Vendor
+  comes from the PNP `VEN_` id (1002 amd, 10DE nvidia, 8086 intel), then from `AdapterCompatibility`. Form from
+  the name: NVIDIA discrete; AMD integrated for `Vega N Graphics`, `NNNM`, `Radeon(TM) Graphics` and names
+  ending `Radeon Graphics`, discrete for `RX`, `PRO` and `WNNNN`, else unknown; Intel discrete for `Arc A/Bnnn`,
+  else integrated. `compute` is `cuda` for NVIDIA and `vulkan` for AMD and Intel; `uuid` is `pnp:<PNPDeviceID>`.
+  When `nvidia-smi` answered it is the authority for NVIDIA cards: every NVIDIA CIM controller is dropped (CIM
+  and `nvidia-smi` spell a card's name differently often enough that a name match would list it twice); when an
+  NVIDIA controller remains and `nvidia-smi` failed, `gpu_probe.errors` says so. The recorded fixtures are
+  `core/test/fixtures/windows-hardware/` and, byte for byte the same, `core/windows/tests/fixtures/`.
 - **AMD on Linux**: `/sys/class/drm/card*/device` (vendor `0x1002`, `mem_info_vram_total`), `form unknown`,
   `memory unknown`, `vram_source sysfs`, `compute rocm`.
 - **Apple silicon**: `system_profiler SPDisplaysDataType -json`, `form integrated`, `memory shared`,
@@ -257,9 +260,15 @@ processor_gpu_percent, running_models, checked_at }`, or the zero shape when not
 daemon did not answer. The agent's existing health probe (`probeHttpExecutor`, every `MCCLUSTER_NODE_ENGINE_PROBE_MS`,
 15 s) reads the body (at most 64 KiB of JSON) and carries `evidence` per implementation through
 `engineHealthSummary`; the agent takes the observation with the largest `size_vram_bytes` as `runtime.gpu_evidence`.
-No request generates a token for this. `MCCLUSTER_OLLAMA_WARM_ON_START=true` (the laptop) loads each installed
+No request generates a token for this. The probe cycle is a loopback HTTP read only: full hardware discovery
+(the process spawns, on Windows `powershell.exe`, `reg.exe` and the `nvidia-smi` attempts with a 5 s timeout each)
+runs once at start and then every `MCCLUSTER_NODE_HARDWARE_REFRESH_MS` (default 600000, floor 60000); the cycles
+in between reuse the cached snapshot. `MCCLUSTER_OLLAMA_WARM_ON_START=true` (the laptop) loads each installed
 resident model once with a one-token chat after the adapter's ready line, so evidence exists within a minute of a
-reboot; it is off on the OVH node.
+reboot; because the adapter's startup task runs before the Ollama tray app exists, a daemon that does not answer
+is tried again every `MCCLUSTER_OLLAMA_WARM_RETRY_MS` (default 30000, floor 1000) for
+`MCCLUSTER_OLLAMA_WARM_WINDOW_MS` (default 900000), each attempt logged as `ollama_adapter_warm` and the window's
+end as `ollama_adapter_warm_window_ended`; it is off on the OVH node.
 
 ### Measured inference (sidecar)
 
@@ -460,7 +469,13 @@ node other than `MCCLUSTER_LOCAL_AI_FABRIC_EXCLUDE_NODES` (default `ovh-primary`
 { gpu: true }`, `max_attempts 1` and `metadata.source local-ai-fabric`, waits a bounded time, and at the deadline
 cancels the task atomically if it is still queued (`status queued` -> `canceled`, the claim and the cancel cannot
 both win) and runs locally; while a node holds the task it keeps polling and finally throws a retryable
-`LOCAL_AI_FABRIC_TIMEOUT` rather than run the same prompt twice.
+`LOCAL_AI_FABRIC_TIMEOUT` rather than run the same prompt twice. Three task reads failing in a row (a control
+plane hiccup) do not change that rule: the client first tries the same atomic cancel and runs locally only when
+the row came back; a null (a node holds it) or a failed cancel means a node may own the task, so polling goes on
+and the timeout is thrown. The whole call is bounded by the caller's `timeoutMs` (floor 30 s): at most half of
+it waiting for a claim (`MCCLUSTER_LOCAL_AI_FABRIC_WAIT_MS` only shortens it), all of it before a held task
+becomes the timeout (`MCCLUSTER_LOCAL_AI_FABRIC_RUNNING_WAIT_MS` only shortens it), and the local fallback gets
+what is left, never under the 30 s floor.
 
 ## Local executor boundary
 

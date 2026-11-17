@@ -6,9 +6,11 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
+  DEFAULT_HARDWARE_REFRESH_MS,
   MEASURED_INFERENCE_SCHEMA,
   aclCommand,
   gpuEvidenceTtlMs,
+  hardwareRefreshMs,
   isPositiveGpuEvidence,
   readMeasuredInferenceSidecar,
   resolveNodePaths,
@@ -88,6 +90,21 @@ test('the GPU evidence TTL defaults to a day and never drops below a minute', ()
   assert.equal(gpuEvidenceTtlMs({ MCCLUSTER_NODE_GPU_EVIDENCE_TTL_MS: '3600000' }), 3_600_000);
   assert.equal(gpuEvidenceTtlMs({ MCCLUSTER_NODE_GPU_EVIDENCE_TTL_MS: '10' }), 60_000);
   assert.equal(gpuEvidenceTtlMs({ MCCLUSTER_NODE_GPU_EVIDENCE_TTL_MS: 'never' }), 86_400_000);
+});
+
+test('full hardware discovery is cached: every ten minutes by default, never more often than once a minute', () => {
+  assert.equal(hardwareRefreshMs({}), 600_000);
+  assert.equal(DEFAULT_HARDWARE_REFRESH_MS, 600_000);
+  assert.equal(hardwareRefreshMs({ MCCLUSTER_NODE_HARDWARE_REFRESH_MS: '120000' }), 120_000);
+  assert.equal(hardwareRefreshMs({ MCCLUSTER_NODE_HARDWARE_REFRESH_MS: '5000' }), 60_000, 'floor');
+  assert.equal(hardwareRefreshMs({ MCCLUSTER_NODE_HARDWARE_REFRESH_MS: 'often' }), 600_000);
+  // The agent's probe cycle takes the cached snapshot; discoverHardware (the
+  // process spawns) has exactly one call site, inside the cache.
+  assert.match(agentSource, /const HARDWARE_REFRESH_MS = hardwareRefreshMs\(process\.env\)/);
+  assert.match(agentSource, /function hardwareSnapshot\(/);
+  assert.match(agentSource, /hardwareCache = \{ at: now, value: discoverHardware\(\{ diskPath: STATE_DIR \}\) \}/);
+  assert.match(agentSource, /async function probe\(\) \{[\s\S]*?const hardware = hardwareSnapshot\(\);/);
+  assert.equal((agentSource.match(/discoverHardware\(/g) || []).length, 1, 'no other discoverHardware call');
 });
 
 test('the largest engine observation is the node observation; only VRAM-resident loads are positive', () => {
