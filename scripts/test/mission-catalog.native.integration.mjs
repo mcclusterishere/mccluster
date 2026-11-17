@@ -247,6 +247,12 @@ try {
   const draftContent = await missionsContent();
 
   /* ---- 4. publish ---------------------------------------------------------------------------------------- */
+  // A draft outside the catalog, as the owner may be writing one: the publish names its 125 ids and must leave this
+  // one alone. Without it the only other mission is the free ride, already open, so a publish that opened every
+  // draft would pass every check below.
+  const OWNER_DRAFT = '00000000-0000-4000-8000-00000000ee02';
+  await apply(`insert into public.action_missions(id, title, status) values ('${OWNER_DRAFT}', 'An owner''s draft outside the catalog', 'draft')`);
+  const ownerDraftStatus = async () => (await one('select status from public.action_missions where id = $1', [OWNER_DRAFT])).status;
   await apply(`update public.action_missions set status = 'paused' where id = '${ids[1]}'`);
   await apply(sql.publish);
   eq(await statusCounts(), { open: N - 1, paused: 1 }, 'publish opens the drafts and leaves a mission the owner paused alone');
@@ -254,12 +260,15 @@ try {
   await apply(sql.publish);
   eq(await statusCounts(), { open: N }, `run again it opens the one draft left: all ${N} open`);
   eq((await one("select count(*)::int as c from public.action_missions where status = 'open' and not (id = any ($1))", [ids])).c, 1, 'and touched no other mission (the free ride stays as it was)');
+  eq(await ownerDraftStatus(), 'draft', "an owner's draft outside the catalog stays a draft");
   eq(await sees(anon), [N, N], `a guest reads the ${N} published missions and their ${N} details rows`);
   const credits = await anon.query('select count(*)::int as c from public.action_missions m join public.action_mission_details d on d.mission_id = m.id where m.id = any ($1) and length(d.credit_line) > 0', [ids]);
   eq(credits.rows[0].c, N, 'every published mission a guest reads has its credit line');
   const afterPublish = [await missionsDigest(), await detailsDigest()];
   await apply(sql.publish);
   eq([await missionsDigest(), await detailsDigest()], afterPublish, 'rerunning the publish changes nothing');
+  eq(await ownerDraftStatus(), 'draft', "the owner's draft is still a draft after the rerun");
+  await apply(`delete from public.action_missions where id = '${OWNER_DRAFT}'`);
   await service.query(`update public.action_missions set status = 'draft' where id = $1`, [ids[2]]);
   eq(await sees(anon), [N - 1, N - 1], 'a mission set back to draft disappears for a guest, its details with it');
   eq((await anon.query('select count(*)::int as c from public.action_mission_details where mission_id = $1', [ids[2]])).rows[0].c, 0, 'a guest cannot read that draft\'s details by id');
