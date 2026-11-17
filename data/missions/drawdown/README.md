@@ -7,9 +7,16 @@ was split into two newer solutions. `solutions-catalog.json` lists all 138 Explo
 solutions as published on 2026-11-17: name, link, sector, Drawdown's classification,
 a short summary excerpt where the page has one, and the image credit.
 
-**Status: draft.** No mission here is in production. Writing these rows to the shared
-database, and choosing where any of them appear on the globe, needs the owner's
-approval of the exact SQL first.
+**Status: draft, awaiting the owner's approval.** No mission here is in production. Four
+pending files would write them, and each waits for the owner's approval of its exact SQL
+(`supabase/pending/PROMOTION-ORDER.md`, section 10), each with its rollback:
+`20261117100000_action_globe_join_scope_v1.sql` (joining no longer depends on pins),
+`20261117100100_action_mission_details.sql` (the table for proof hints, safety lines and
+credits), `20261117100200_action_mission_drawdown_import.sql` (these 125 missions as
+drafts, with their details) and `20261117100300_action_mission_drawdown_publish.sql`
+(draft to open). `tools/build-mission-import.mjs` generates the last two from
+`missions.json`; rerun it after any change here (its `--check` fails when they drift).
+Choosing where any mission appears on the globe is a separate owner decision.
 
 ## Where the content comes from
 
@@ -36,7 +43,9 @@ approval of the exact SQL first.
 1. Show the mission's own title and description.
 2. Show `about` only as a quotation, with `about_credit` directly beneath it. Thirteen
    excerpts speak in Drawdown's voice ("we define..."), so they must read as a quote.
-3. Show `credit_line` with every mission.
+3. Show `credit_line` in full in the mission's detail view, and on a feed card a compact
+   source line that opens it. CC BY 4.0, section 3(a)(2), allows the attribution in any
+   reasonable manner, such as a link to where it is given in full.
 4. Proof rules for every mission: use your own words, images and clips, or ones you
    have the right to use; no one else's face, name, address, account number or
    recording without their stated agreement; keep map attribution visible; never show

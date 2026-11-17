@@ -78,6 +78,13 @@ Rollback files sit beside the ones that have them.
    `js/member-desk.js`, `js/control-room/action-network.js`.
    Proof: `scripts/test-policy-fellowship-db.sh`.
    Design: `docs/control-plane/POLICY-FELLOWSHIP-LADDER.md`.
+   **Mission-specific part superseded (checked read-only 2026-11-17):** its seed of
+   `action_ladder_mission_kinds` maps three missions. Two were deleted on 2026-10-31
+   (`053cbd0d…` write_song, `ba803367…` attend_rally) and are skipped, because the insert joins
+   `action_missions`. The third, "Give someone a free ride" (`302dcb4e…`), is still live, so that
+   one row (help_person) WOULD still be written: it is not a no-op. Decide it with the owner, or
+   drop that seed, before this file is proposed. The ladder, rules and memos are not mission
+   content and are unchanged.
 2. `mission_admin_approval_v1.sql` (+ rollback): needs 1. Every completion
    admin-approved. No direct caller yet; `live_missions_v1.sql` is tested with
    it. Proof: `scripts/test-mission-admin-approval-db.sh`.
@@ -106,6 +113,13 @@ Rollback files sit beside the ones that have them.
    `README.md`). Callers: `js/action-globe.js`, `js/mnet.js`.
    Proof: `scripts/test-mission-pins-db.sh`.
    Design: `docs/action-network/MISSION-PINS-ARCS-BLACK-BUSINESS.md`.
+   Its join fix alone is now `20261117100000_action_globe_join_scope_v1.sql`
+   (section 10), which goes first; this whole file may still follow it
+   (`scripts/test-mission-pins-db.sh` runs it on top of the extract).
+   **Section 8 (the owner's curation) is superseded:** every one of its statements
+   reads its mission from `action_missions`, and all six missions it names
+   (`d7fc0ca4…`, `ba66d4a3…`, `368fd75a…`, `df26314d…`, `9144bd42…`, `49d654e1…`) were
+   deleted on 2026-10-31, so it writes nothing today (checked read-only 2026-11-17).
 
 ## 3. Fixes and performance, no caller change
 
@@ -147,6 +161,16 @@ Contract tests that read them: `scripts/test/action-economy-*.test.mjs`,
   data changes to `action_missions`, `action_campaigns`, `action_cohorts`,
   `action_bounties`; verify row by row against production before running,
   since later curation (2026-10-15) already changed the same rows.
+  **Superseded; never apply it (checked read-only 2026-11-17).** Its UPDATEs name 31
+  missions, all deleted on 2026-10-31, and its title matches find no row, so they
+  change nothing; its campaign, cohort and bounty updates also find no row (production
+  has no campaign, no such cohort and no such bounty). It is NOT a no-op as a whole: it
+  INSERTs two missions that never existed in production ("One Safe Night" and "Write a
+  Song for Equity Uprise", `51000000-…-000000000006` and `…007`, the second as `open`)
+  under the campaigns `homelessness-action-001` and `equity-uprise-003`, which were
+  deleted on 2026-10-31, so as written the whole file fails on the campaign foreign
+  key; restoring those campaigns would publish content the owner removed. Missions now
+  arrive through section 10.
 - `20261015210000_intel_mission_canon_v1.rollback.sql`: the rollback of a
   promoted file (`20261017030617_intel_mission_canon_v1`), kept on purpose.
 
@@ -262,6 +286,37 @@ cron calls it, nothing writes a run's cursor, and every connector is still disab
 duplicate check in its header first. Read-only on production at 2026-11-10 02:29 UTC: 48 daily-report rows,
 none with a window id yet (the host's Core predates window ids), no duplicate windows, index absent. The Core
 code works with or without the index.
+
+## 10. World missions: join scope, mission details, the Drawdown catalog (written 2026-11-17)
+
+The production steps 1 to 3 of `docs/control-plane/WORLD-FEED-AND-MISSIONS-20261117.md`. **Owner approval
+required for each file, each on its own**, in this order; roll back in the reverse order. Each is one
+transaction and safe to run twice.
+
+| # | File (+ rollback) | What | Callers | Proof before apply |
+|---|---|---|---|---|
+| 10.1 | `20261117100000_action_globe_join_scope_v1.sql` (+ `20261117100000_action_globe_join_scope_v1.rollback.sql`) | Owner approval required. Decouples joining from pins: `action_globe_mission_regions.join_scope` (default `anywhere`); `join_action_mission()` and `action_globe_can_join_mission()` gate only on a PUBLISHED pin marked `region_members`. The minimal extract of 20261015230000's sections 3 and 5, nothing else from that file. The rollback restores production's bodies byte for byte (md5(prosrc) `e0684ebe350296c5e6c06de55624ed42` for `join_action_mission`) and drops the column | `join_action_mission` and its `_attributed`, `_live` and `_origin` wrappers (`js/mnet.js`, `js/action.js`) | `scripts/test/mission-catalog.native.integration.mjs`; `scripts/test-mission-pins-db.sh` (the whole pins file still applies on top of it) |
+| 10.2 | `20261117100100_action_mission_details.sql` (+ `20261117100100_action_mission_details.rollback.sql`) | Owner approval required. Creates `action_mission_details`: one row per mission (proof hint, safety note, credit line, quotation and its credit, source URL, licence, DOI), readable by anon and authenticated exactly when its mission is (the test of "public reads open missions"), written by the service role only. Creates no row. The rollback refuses while the table holds a row | none in shipped code at the time of writing; the World's mission posts and dialog are to read it and must tolerate its absence | the native suite above |
+| 10.3 | `20261117100200_action_mission_drawdown_import.sql` (+ `20261117100200_action_mission_drawdown_import.rollback.sql`), generated by `tools/build-mission-import.mjs` from `data/missions/drawdown/missions.json` | Owner approval required. Inserts the 125 Drawdown missions as `draft` (ids: UUID v5 of `mccluster:mission:drawdown:<slug>`), then their 125 details rows (43 with a CC BY 4.0 licence and DOI). Refuses to run before 10.2. The rollback deletes exactly those ids and refuses while any assignment, proof, pin or other row references one | none; drafts are invisible to the public | `node tools/build-mission-import.mjs --check`; `scripts/test/mission-import.test.mjs`; the native suite |
+| 10.4 | `20261117100300_action_mission_drawdown_publish.sql` (+ `20261117100300_action_mission_drawdown_publish.rollback.sql`), generated the same way | Owner approval required. Sets exactly those 125 ids from `draft` to `open`, leaving any the owner paused, closed or opened; refuses unless each has its details row. The rollback sets them from `open` back to `draft` | the World reads open missions through "public reads open missions" (`js/mnet.js`) | the same three |
+
+**No pin may be written before 10.1:** with production's join function, any pin row makes its mission
+unjoinable for every member (production has 0 pins and 0 member regions, read 2026-11-17). Pins themselves are
+step 4 of the brief, a separate owner decision with its own SQL.
+
+The native proof starts a disposable PostgreSQL on 127.0.0.1 and refuses without consent:
+`ALLOW_LOCAL_EUP_DB_TESTS=1 PG_BIN=/usr/lib/postgresql/16/bin PG_MODULE=<node-postgres> node scripts/test/mission-catalog.native.integration.mjs`.
+It builds production's shape (`supabase/tests/action_mission_catalog.stub.sql` and the four applied globe
+migrations; seven function bodies checked against production's md5(prosrc)), applies 10.1 to 10.4, reruns them,
+reads as a guest, a member and an admin, joins with and without pins, then rolls each back and checks the state
+before it, `join_action_mission`'s md5 included.
+
+Read-only on production, 2026-11-17: 1 mission (open), 3 regions, 0 pins, 0 member regions, 0 campaigns, no
+`join_scope` column, no `action_mission_details`, latest migration `20261114060150`. Rerun these reads
+immediately before each apply. Superseded by this section: the mission-specific parts of
+`20261014170000_action_mission_curated_catalog_resources.sql` (section 5), of `policy_fellowship_ladder_v1.sql`
+(section 2, item 1) and section 8 of `20261015230000_action_mission_pins_arcs_black_business.sql` (section 2,
+item 7); each entry says what it would still do.
 
 ## Names with no SQL anywhere
 
