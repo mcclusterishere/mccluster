@@ -4,7 +4,7 @@
 import { createEnvironmentProofAdapter, ENVIRONMENT_PROOF_ERRORS } from './environment-proofs.js';
 import { createMcClusterEnvironmentPlanning, ENVIRONMENT_PLANNING_ERROR_CODES } from './environment-planning-mccluster.js';
 import { reply } from './lib/http.js';
-import { bearerUser, cachedLayer } from './world-layers.js';
+import { bearerUser, sourceHealth, trackedLayer } from './world-layers.js';
 import { fetchWeather, fetchNatural } from './world-events.js';
 import { fetchQuakes, fetchCyclones } from './world-halo-layers.js';
 import { service, uuid } from './world-cctv.js';
@@ -26,8 +26,25 @@ const installation = Object.freeze({
 // the code and status it answers for the same state itself.
 const MODULE_REFUSALS = MODULE_POLICY_ERRORS.consumer;
 const MODULE_FAILURE_CODES = Object.freeze(Object.values(MODULE_REFUSALS).map(([, code]) => code));
+/* Each feed source's health, added beside the pinned product's own source fields (id, label, url,
+   status, fetched_at, observed_at, coverage, stale): why it is stale or unavailable, its last
+   successful retrieval, and its attribution and licence (docs/control-plane/WORLD-ENVIRONMENT-CONTRACT.md). */
+export const FEED_SOURCE_TERMS = Object.freeze({
+  nws: Object.freeze({ attribution: 'NOAA National Weather Service', license: 'Public domain (U.S. Government work)' }),
+  eonet: Object.freeze({ attribution: 'NASA Earth Observatory Natural Event Tracker (EONET)', license: 'NASA open data; each event names the sources EONET drew it from' }),
+  usgs: Object.freeze({ attribution: 'U.S. Geological Survey, Earthquake Hazards Program', license: 'Public domain (U.S. Government work)' }),
+  nhc: Object.freeze({ attribution: 'NOAA National Hurricane Center', license: 'Public domain (U.S. Government work)' })
+});
 export async function environmentFeed(env,{fetchImpl=fetch,cacheImpl=null}={}) {
-  return productFeed({readSource:spec=>cachedLayer({layer:spec.id,key:`consumer-environment-v1-${spec.id}`,ttl:spec.ttl,rows:spec.rows,fetcher:PROVIDERS[spec.id]},env,fetchImpl,cacheImpl)});
+  const outcomes=new Map();
+  const feed=await productFeed({readSource:async spec=>{
+    const outcome=await trackedLayer({layer:spec.id,key:`consumer-environment-v1-${spec.id}`,ttl:spec.ttl,rows:spec.rows,fetcher:PROVIDERS[spec.id]},env,fetchImpl,cacheImpl);
+    outcomes.set(spec.id,outcome);return outcome;
+  }});
+  return {...feed,sources:feed.sources.map(source=>{
+    const health=sourceHealth({...source,...FEED_SOURCE_TERMS[source.id]},outcomes.get(source.id));
+    return {...source,reason:health.reason,last_success_at:health.last_success_at,attribution:health.attribution,license:health.license};
+  })};
 }
 async function rpc(request, env, name, args, fetchImpl, privileged = false) {
   const res = await fetchImpl(`${env.SUPABASE_URL}/rest/v1/rpc/${name}`, { method: 'POST', headers: {
