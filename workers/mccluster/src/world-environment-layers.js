@@ -6,6 +6,8 @@
      GET /v1/world/environment/layers/perimeters        NIFC WFIGS current interagency fire perimeters (U.S.)
      GET /v1/world/environment/layers/alerts            NOAA NWS active alerts: their own polygons; zone-only alerts listed, never placed
      GET /v1/world/environment/layers/eonet             NASA EONET open events with every reported geometry, oldest first
+     GET /v1/world/environment/layers/tides             NOAA CO-OPS water-level stations and the latest level at 20 documented stations
+     GET /v1/world/environment/tides/:station           one NOAA CO-OPS station's observed water level, last 24 h (MLLW, metres)
 
    PUBLIC, BEHIND THE SAME GATE AS GET /v1/world/environment. Every route asks `gate` first: the
    persisted environment module policy, read from the canonical store on every request and judged by
@@ -28,9 +30,10 @@
    last good copy (status stale, with the reason) for up to 6 h while it is down. */
 import { reply } from './lib/http.js';
 import { UpstreamError } from './lib/safe-fetch.js';
-import { sourceHealth, trackedLayer, upstream } from './world-layers.js';
+import { healthReason, sourceHealth, trackedLayer, upstream } from './world-layers.js';
 import { NIFC_PERIMETERS_URL, clip, finite, isoFromMs, latOf, lonOf, normalizeRing, parseFirmsCsv, providerUrl, within } from './world-halo-layers.js';
 import { boundedEventJson, normalizeAlert, normalizeNatural } from './world-events.js';
+import { STATION_ID, TIDES, boundedJson, normalizeStation, normalizeWaterLevel, waterLevelUrl } from './world-halo-ops.js';
 import { environmentRouteForPath } from '../../../packages/release-policy/globe.mjs';
 
 const ROOT = '/v1/world/environment';
@@ -60,7 +63,16 @@ export const LAYER_SOURCES = Object.freeze({
     coverage: 'United States active alerts (status Actual); many alerts name forecast zones and carry no polygon' }),
   eonet: Object.freeze({ id: 'eonet', label: 'NASA EONET', url: 'https://eonet.gsfc.nasa.gov/',
     attribution: 'NASA Earth Observatory Natural Event Tracker (EONET)', license: 'NASA open data; each event names the sources EONET drew it from',
-    coverage: 'Global open natural-event reports from the last 30 days; not exhaustive' })
+    coverage: 'Global open natural-event reports from the last 30 days; not exhaustive' }),
+  coops_stations: Object.freeze({ id: 'coops_stations', label: 'NOAA CO-OPS stations', url: 'https://tidesandcurrents.noaa.gov/',
+    attribution: 'NOAA Center for Operational Oceanographic Products and Services (CO-OPS)', license: 'Public domain (U.S. Government work); NOAA asks to be credited',
+    coverage: 'NOAA CO-OPS water-level stations: U.S. coasts, the Great Lakes and territories' }),
+  coops_latest: Object.freeze({ id: 'coops_latest', label: 'NOAA CO-OPS latest water levels', url: 'https://tidesandcurrents.noaa.gov/',
+    attribution: 'NOAA Center for Operational Oceanographic Products and Services (CO-OPS)', license: 'Public domain (U.S. Government work); NOAA asks to be credited',
+    coverage: 'The latest observed water level at 20 documented NOAA stations on U.S. coasts and territories, refreshed at most every 15 minutes' }),
+  coops_water_level: Object.freeze({ id: 'coops_water_level', label: 'NOAA CO-OPS water level', url: 'https://tidesandcurrents.noaa.gov/',
+    attribution: 'NOAA Center for Operational Oceanographic Products and Services (CO-OPS)', license: 'Public domain (U.S. Government work); NOAA asks to be credited',
+    coverage: 'One station\'s observed water level over the last 24 hours' })
 });
 
 /* ---------- answers ---------- */
@@ -424,6 +436,134 @@ async function naturalAnswer(env, fetchImpl, cacheImpl) {
   };
 }
 
+/* ---------- coastal water levels: NOAA CO-OPS ----------
+   Observed water level, in metres above the station's Mean Lower Low Water (MLLW) datum, in UTC; never a
+   tide prediction, a current or a navigation clearance. q is NOAA's quality flag: p preliminary (not yet
+   verified by NOAA, and labelled so), v verified. The station list is kept a day. The latest level is
+   read for a fixed, documented set of 20 stations (TIDE_LATEST_STATIONS), at most once per 15 minutes
+   per Cloudflare location, two requests at a time with a pause between them, following NOAA's request to
+   space and cache calls; one station's own 24 hours is read on demand and kept 6 minutes. A station must
+   be in NOAA's water-level list (while the list can be read); a station NOAA marks as not tidal (the Great
+   Lakes and other non-tidal gauges) has no MLLW and is refused rather than asked. The Halo station
+   normalizer and water-level reader (./world-halo-ops.js) do the checking. */
+export const TIDES_PUBLIC = Object.freeze({ latestTtl: 900, latestBytes: 64000, latestTimeoutMs: 8000, concurrency: 2, gapMs: 100, waterTimeoutMs: 10000 });
+export const TIDE_LATEST_STATIONS = Object.freeze([
+  ['8443970', 'Boston, MA'], ['8461490', 'New London, CT'], ['8518750', 'The Battery, NY'], ['8534720', 'Atlantic City, NJ'],
+  ['8638610', 'Sewells Point, VA'], ['8658120', 'Wilmington, NC'], ['8665530', 'Charleston, SC'], ['8723214', 'Virginia Key, FL'],
+  ['8724580', 'Key West, FL'], ['8726520', 'St. Petersburg, FL'], ['8761724', 'Grand Isle, LA'], ['8771450', 'Galveston Pier 21, TX'],
+  ['9410170', 'San Diego, CA'], ['9414290', 'San Francisco, CA'], ['9439040', 'Astoria, OR'], ['9447130', 'Seattle, WA'],
+  ['9455920', 'Anchorage, AK'], ['1612340', 'Honolulu, HI'], ['9755371', 'San Juan, PR'], ['1630000', 'Apra Harbor, Guam']
+].map(([id, place]) => Object.freeze({ id, place })));
+export function latestWaterLevelUrl(id) {
+  return `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?product=water_level&application=mccluster&station=${id}&datum=MLLW&units=metric&time_zone=gmt&format=json&date=latest`;
+}
+const STATION_COLUMNS = Object.freeze(['id', 'name', 'lon', 'lat', 'state', 'tidal', 'great_lakes']);
+const WATER_COLUMNS = Object.freeze(['observed_at', 'value_m', 'quality']);
+const qOf = (quality) => (quality === 'preliminary' ? 'p' : quality === 'verified' ? 'v' : null);
+const flagOf = (v) => (v === true ? true : v === false ? false : null);
+const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+/* [id, name, lon, lat, state, tidal, great_lakes]: the Halo row plus NOAA's own two flags, unread as null */
+export function publicStation(s) {
+  const row = normalizeStation(s);
+  return row ? [...row, flagOf(s.tidal), flagOf(s.greatlakes)] : null;
+}
+export async function fetchPublicTideStations(env, fetchImpl) {
+  const data = await upstream(TIDES.stationsUrl, {}, fetchImpl, boundedJson(TIDES.stationsBytes), 15000);
+  if (!data || !Array.isArray(data.stations)) throw new UpstreamError('upstream_invalid_json', 'NOAA answer has no station list');
+  const seen = new Set(), stations = [];
+  for (const s of data.stations) {
+    const row = publicStation(s);
+    if (!row || seen.has(row[0])) continue;
+    seen.add(row[0]);
+    if (stations.length < TIDES.stationsMax) stations.push(row);
+  }
+  return { total: data.stations.length, truncated: seen.size > stations.length, count: stations.length, stations };
+}
+export async function fetchLatestWaterLevels(env, fetchImpl, { gapMs = TIDES_PUBLIC.gapMs } = {}) {
+  const list = TIDE_LATEST_STATIONS, readings = new Array(list.length), codes = [];
+  let next = 0;
+  async function worker() {
+    while (next < list.length) {
+      const i = next++, { id, place } = list[i];
+      try {
+        const body = normalizeWaterLevel(await upstream(latestWaterLevelUrl(id), {}, fetchImpl, boundedJson(TIDES_PUBLIC.latestBytes), TIDES_PUBLIC.latestTimeoutMs), id);
+        const last = body.observations[body.observations.length - 1];
+        readings[i] = { station: id, place, name: body.station.name, lon: body.station.lon, lat: body.station.lat, value_m: last[1], observed_at: last[0], quality: last[2], q: qOf(last[2]), status: 'available', reason: null };
+      } catch (error) {
+        const code = (error && error.code) || 'upstream_error';
+        codes.push(code);
+        readings[i] = { station: id, place, name: null, lon: null, lat: null, value_m: null, observed_at: null, quality: null, q: null, status: 'unavailable', reason: healthReason(code) || 'upstream_error' };
+      }
+      if (gapMs > 0 && next < list.length) await pause(gapMs);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(TIDES_PUBLIC.concurrency, list.length) }, worker));
+  const answered = readings.filter((r) => r.status === 'available').length;
+  if (!answered) throw new UpstreamError(codes[0] || 'upstream_error', 'no station answered');
+  return { asked: list.length, answered, readings };
+}
+const tideStationsLayer = (env, fetchImpl, cacheImpl) => trackedLayer({ layer: 'tides', key: 'consumer-environment-v1-tide-stations', ttl: TIDES.stationsTtl, rows: 'stations', fetcher: fetchPublicTideStations }, env, fetchImpl, cacheImpl);
+async function tidesAnswer(env, fetchImpl, cacheImpl, gapMs) {
+  const [stations, latest] = await Promise.all([
+    tideStationsLayer(env, fetchImpl, cacheImpl),
+    trackedLayer({ layer: 'water_level_latest', key: 'consumer-environment-v1-tide-latest', ttl: TIDES_PUBLIC.latestTtl, rows: 'readings', fetcher: (e, f) => fetchLatestWaterLevels(e, f, { gapMs }) }, env, fetchImpl, cacheImpl)
+  ]);
+  const sb = stations.body && !stations.body.unavailable ? stations.body : {}, lb = latest.body && !latest.body.unavailable ? latest.body : null;
+  const rows = Array.isArray(sb.stations) ? sb.stations : [];
+  const byId = new Map(rows.map((r) => [r[0], r]));
+  const kept = lb && Array.isArray(lb.readings) ? lb.readings : [];
+  const readings = TIDE_LATEST_STATIONS.map(({ id, place }) => {
+    const r = kept.find((x) => x && x.station === id) || null, s = byId.get(id) || null;
+    return {
+      station: id, place, name: (r && r.name) || (s && s[1]) || null, lon: r && r.lon !== null ? r.lon : s ? s[2] : null, lat: r && r.lat !== null ? r.lat : s ? s[3] : null,
+      value_m: r ? r.value_m : null, observed_at: r ? r.observed_at : null, quality: r ? r.quality : null, q: r ? r.q : null,
+      status: r ? r.status : 'unavailable', reason: r ? r.reason : healthReason(latest.body && latest.body.upstream_error) || 'upstream_error'
+    };
+  });
+  return {
+    ok: true, schema: 'world-environment-tides/v1', layer: 'tides', generated_at: isoNow(),
+    sources: [sourceHealth(LAYER_SOURCES.coops_stations, stations), sourceHealth(LAYER_SOURCES.coops_latest, latest)],
+    product: 'observed_water_level', datum: 'MLLW', units: 'm',
+    stations: { columns: STATION_COLUMNS, rows, count: rows.length, total: Number(sb.total) || 0, truncated: sb.truncated === true },
+    latest: { set: 'documented', stations: TIDE_LATEST_STATIONS.length, refresh_s: TIDES_PUBLIC.latestTtl, answered: readings.filter((r) => r.status === 'available').length, readings },
+    notes: {
+      value: 'value_m is the observed water level in metres above the station\'s Mean Lower Low Water (MLLW) datum. It is an observation, not a tide prediction, not a current and not a navigation clearance.',
+      quality: 'q p (quality preliminary) has not been verified by NOAA; v (verified) has.',
+      time: 'observed_at is NOAA\'s observation time in UTC.',
+      datum: 'Stations NOAA marks as not tidal (tidal false, including the Great Lakes, which use IGLD) have no MLLW, so this service gives them no reading.'
+    }
+  };
+}
+async function waterLevelAnswer(request, env, id, fetchImpl, cacheImpl) {
+  if (!STATION_ID.test(id)) return refuse(request, env, 'invalid_station', 400);
+  const stations = await tideStationsLayer(env, fetchImpl, cacheImpl);
+  const list = stations.body && !stations.body.unavailable && Array.isArray(stations.body.stations) ? stations.body.stations : null;
+  const row = list ? list.find((r) => r[0] === id) || null : null;
+  if (list && !row) return refuse(request, env, 'unknown_station', 404);
+  if (row && row[5] === false) return refuse(request, env, 'no_mllw_datum', 404);
+  const outcome = await trackedLayer({
+    layer: 'water_level', key: `consumer-environment-v1-water-${id}`, ttl: TIDES.waterTtl, rows: 'observations',
+    fetcher: async (e, f) => normalizeWaterLevel(await upstream(waterLevelUrl(id), {}, f, boundedJson(TIDES.waterBytes), TIDES_PUBLIC.waterTimeoutMs), id)
+  }, env, fetchImpl, cacheImpl);
+  const b = outcome.body && !outcome.body.unavailable ? outcome.body : {};
+  const observations = Array.isArray(b.observations) ? b.observations : [];
+  const last = observations[observations.length - 1] || null;
+  const station = b.station || (row ? { id, name: row[1], lat: row[3], lon: row[2] } : { id, name: null, lat: null, lon: null });
+  return send(request, env, {
+    ok: true, schema: 'world-environment-water-level/v1', generated_at: isoNow(),
+    sources: [sourceHealth(LAYER_SOURCES.coops_water_level, outcome)],
+    station, product: 'observed_water_level', datum: 'MLLW', units: 'm',
+    columns: WATER_COLUMNS, observations, count: observations.length, dropped: Number(b.dropped) || 0, truncated: b.truncated === true,
+    latest: last ? { observed_at: last[0], value_m: last[1], quality: last[2], q: qOf(last[2]) } : null,
+    url: `https://tidesandcurrents.noaa.gov/stationhome.html?id=${id}`,
+    notes: {
+      value: 'Observed water level in metres above the station\'s MLLW datum, oldest first; not a tide prediction or a navigation clearance.',
+      quality: 'quality preliminary has not been verified by NOAA; verified has.',
+      time: 'observed_at is NOAA\'s observation time in UTC.'
+    }
+  });
+}
+
 /* ---------- the routes ---------- */
 function inNamespace(path) {
   if (!path.startsWith(ROOT + '/')) return false;
@@ -432,7 +572,7 @@ function inNamespace(path) {
 
 /* null when the path is not one of these routes (the pinned product answers the rest).
    `gate` is required: without one, nothing is served. */
-export async function handleEnvironmentLayers(request, env, { fetchImpl = fetch, cacheImpl = null, gate = null } = {}) {
+export async function handleEnvironmentLayers(request, env, { fetchImpl = fetch, cacheImpl = null, gate = null, tideGapMs = TIDES_PUBLIC.gapMs } = {}) {
   const path = new URL(request.url).pathname.replace(/\/+$/, '') || '/';
   const route = environmentRouteForPath(path);
   if (route && route.id === 'feed') return null;
@@ -446,5 +586,7 @@ export async function handleEnvironmentLayers(request, env, { fetchImpl = fetch,
   if (route.id === 'perimeters') return send(request, env, await perimetersAnswer(env, fetchImpl, cacheImpl));
   if (route.id === 'alerts') return send(request, env, await alertsAnswer(env, fetchImpl, cacheImpl));
   if (route.id === 'eonet') return send(request, env, await naturalAnswer(env, fetchImpl, cacheImpl));
+  if (route.id === 'tides') return send(request, env, await tidesAnswer(env, fetchImpl, cacheImpl, tideGapMs));
+  if (route.id === 'water-level') return waterLevelAnswer(request, env, route.param, fetchImpl, cacheImpl);
   return refuse(request, env, 'not_found', 404);
 }

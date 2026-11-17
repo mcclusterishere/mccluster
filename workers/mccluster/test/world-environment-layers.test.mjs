@@ -8,7 +8,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { registerHooks } from 'node:module';
 import { handleWorldEnvironment, environmentGate } from '../src/world-environment.js';
-import { FIRES, LAYER_SOURCES, fetchFirmsSatellite, GEOMETRY, strictRing, strictPolygons, strictLine, publicPerimetersQuery, PERIMETERS } from '../src/world-environment-layers.js';
+import { FIRES, LAYER_SOURCES, fetchFirmsSatellite, GEOMETRY, strictRing, strictPolygons, strictLine, publicPerimetersQuery, PERIMETERS, TIDE_LATEST_STATIONS, TIDES_PUBLIC, latestWaterLevelUrl } from '../src/world-environment-layers.js';
+import { TIDES, waterLevelUrl } from '../src/world-halo-ops.js';
 import { environmentFeed } from '../src/world-environment.js';
 import { ENVIRONMENT_PUBLIC_ROUTES, environmentRouteForPath, globeFeatureForPath } from '../../../packages/release-policy/globe.mjs';
 import { guardWorldRelease } from '../src/world-release.js';
@@ -22,7 +23,7 @@ const ENV = { SUPABASE_URL: 'https://db.example', SUPABASE_SERVICE_ROLE_KEY: 'se
 const P = '/v1/world/environment';
 const LAYER_PATHS = [`${P}/layers/fires`, `${P}/layers/perimeters`, `${P}/layers/alerts`, `${P}/layers/eonet`, `${P}/layers/tides`, `${P}/tides/8518750`, `${P}/quakes/us7000tyhr/shakemap`];
 /* the routes answered so far (the rest are gated and mapped, and answer 404 until they land) */
-const SERVED_PATHS = [`${P}/layers/fires`, `${P}/layers/perimeters`, `${P}/layers/alerts`, `${P}/layers/eonet`];
+const SERVED_PATHS = [`${P}/layers/fires`, `${P}/layers/perimeters`, `${P}/layers/alerts`, `${P}/layers/eonet`, `${P}/layers/tides`, `${P}/tides/8518750`];
 const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json' } });
 const text = (body, status = 200, type = 'text/plain') => new Response(body, { status, headers: { 'content-type': type } });
 const req = (path, { method = 'GET', auth = false } = {}) => new Request(`https://api.mccluster.org${path}`, { method, headers: { origin: ORIGIN, ...(auth ? { authorization: 'Bearer member' } : {}) } });
@@ -579,4 +580,121 @@ test('eonet: an HTTP 500 (as EONET answered on 2026-11-17) is unavailable; with 
   assert.deepEqual([stale.sources[0].status, stale.sources[0].reason], ['stale', 'upstream_error']);
   assert.deepEqual(stale.events, good.events, 'the last good copy');
   assert.equal(stale.sources[0].fetched_at, new Date(Date.parse(good.sources[0].fetched_at) - 3600e3).toISOString());
+});
+
+/* ---------- coastal water levels (NOAA CO-OPS; real samples, 2026-11-17) ---------- */
+const FX = (name) => JSON.parse(readFileSync(new URL(`./fixtures/environment/${name}`, import.meta.url), 'utf8'));
+const STATIONS_SAMPLE = FX('coops-stations-sample.json'), LATEST_SAMPLE = FX('coops-latest-8518750.json'), WATER_SAMPLE = FX('coops-water-8461490.json'), NO_MLLW = FX('coops-no-mllw-9099064.json');
+/* NOAA by URL: the station list, `date=latest` per station (the real Battery answer under each asked id), or 24 hours */
+function coops({ stations = () => json(STATIONS_SAMPLE), latest = (id) => json({ ...LATEST_SAMPLE, metadata: { ...LATEST_SAMPLE.metadata, id, name: `Station ${id}` } }), water = () => json(WATER_SAMPLE) } = {}) {
+  let inFlight = 0;
+  const impl = async (url) => {
+    assert.equal(url.hostname, 'api.tidesandcurrents.noaa.gov');
+    if (url.pathname === '/mdapi/prod/webapi/stations.json') return stations();
+    const id = url.searchParams.get('station');
+    for (const [k, v] of [['product', 'water_level'], ['datum', 'MLLW'], ['units', 'metric'], ['time_zone', 'gmt'], ['format', 'json'], ['application', 'mccluster']]) assert.equal(url.searchParams.get(k), v, k);
+    inFlight += 1; impl.peak = Math.max(impl.peak, inFlight);
+    try { await new Promise((r) => setTimeout(r, 2)); return url.searchParams.get('date') === 'latest' ? latest(id) : water(id); } finally { inFlight -= 1; }
+  };
+  impl.peak = 0;
+  return impl;
+}
+async function tides(fetchImpl, cacheImpl = memoryCache()) {
+  const r = await handleWorldEnvironment(req(`${P}/layers/tides`), ENV, { fetchImpl, cacheImpl, tideGapMs: 0 });
+  assert.equal(r.status, 200); headersOk(r);
+  const b = await r.json(); publicOnly(b);
+  for (const s of b.sources) assert.deepEqual(Object.keys(s).sort(), HEALTH_KEYS);
+  return b;
+}
+
+test('tides: the station list with NOAA\'s own flags, and the latest MLLW level at the 20 documented stations, two at a time, preliminary kept', async () => {
+  const noaa = coops({ latest: (id) => (id === '8461490' ? text('busy', 500) : json({ ...LATEST_SAMPLE, metadata: { ...LATEST_SAMPLE.metadata, id, name: `Station ${id}` } })) });
+  const f = world(noaa);
+  const b = await tides(f);
+  assert.equal(b.schema, 'world-environment-tides/v1'); assert.deepEqual([b.product, b.datum, b.units], ['observed_water_level', 'MLLW', 'm']);
+  assert.deepEqual(b.stations.columns, ['id', 'name', 'lon', 'lat', 'state', 'tidal', 'great_lakes']);
+  const duluth = STATIONS_SAMPLE.stations.find((x) => x.id === '9099064');
+  const r4 = (v) => Math.round(v * 1e4) / 1e4;
+  assert.deepEqual(b.stations.rows.find((r) => r[0] === '9099064'), ['9099064', 'Duluth', r4(duluth.lng), r4(duluth.lat), 'MN', false, true], 'rounded to 4 decimals');
+  assert.deepEqual(b.stations.rows.find((r) => r[0] === '8518750').slice(5), [true, false]);
+  const asked = providerCalls(f).map((c) => new URL(c.url));
+  assert.equal(asked.filter((u) => u.pathname.endsWith('stations.json')).length, 1);
+  assert.deepEqual(asked.filter((u) => u.searchParams.get('date') === 'latest').map((u) => u.searchParams.get('station')).sort(), TIDE_LATEST_STATIONS.map((s) => s.id).sort());
+  assert.equal(latestWaterLevelUrl('8518750'), 'https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?product=water_level&application=mccluster&station=8518750&datum=MLLW&units=metric&time_zone=gmt&format=json&date=latest');
+  assert.ok(noaa.peak <= TIDES_PUBLIC.concurrency, `at most ${TIDES_PUBLIC.concurrency} requests at a time (peak ${noaa.peak})`);
+  assert.equal(b.latest.stations, 20); assert.equal(b.latest.answered, 19); assert.equal(b.latest.refresh_s, 900);
+  const battery = b.latest.readings.find((r) => r.station === '8518750');
+  assert.deepEqual(battery, { station: '8518750', place: 'The Battery, NY', name: 'Station 8518750', lon: -74.0142, lat: 40.7006, value_m: 1.024, observed_at: '2026-11-17T15:48:00.000Z', quality: 'preliminary', q: 'p', status: 'available', reason: null });
+  const failed = b.latest.readings.find((r) => r.station === '8461490');
+  assert.deepEqual([failed.status, failed.reason, failed.value_m, failed.observed_at], ['unavailable', 'upstream_error', null, null]);
+  assert.deepEqual([failed.name, failed.lon, failed.lat], ['New London', -72.0956, 41.3717], 'placed from NOAA\'s station list, never guessed');
+  assert.deepEqual(b.sources.map((s) => [s.id, s.status]), [['coops_stations', 'available'], ['coops_latest', 'available']]);
+  assert.match(b.notes.value, /not a tide prediction/); assert.match(b.notes.quality, /preliminary/);
+  /* within the windows nobody is asked again */
+  const cache = memoryCache(), again = world(coops());
+  await tides(again, cache); const n = providerCalls(again).length;
+  await tides(again, cache);
+  assert.equal(providerCalls(again).length, n);
+});
+
+test('tides: with every station failing the latest set is unavailable (or the last good set, stale); the station list stands alone', async () => {
+  const none = await tides(world(coops({ latest: () => text('down', 503) })));
+  assert.deepEqual(none.sources.map((s) => [s.id, s.status, s.reason]), [['coops_stations', 'available', null], ['coops_latest', 'unavailable', 'upstream_error']]);
+  assert.ok(none.latest.readings.every((r) => r.status === 'unavailable' && r.value_m === null)); assert.equal(none.latest.answered, 0);
+  assert.equal(none.stations.count, 4);
+  const cache = memoryCache();
+  await tides(world(coops()), cache);
+  age(cache, TIDES_PUBLIC.latestTtl + 60);
+  const stale = await tides(world(coops({ latest: () => { throw Object.assign(new Error('slow'), { name: 'AbortError' }); } })), cache);
+  assert.deepEqual(stale.sources.map((s) => [s.id, s.status, s.reason]), [['coops_stations', 'available', null], ['coops_latest', 'stale', 'timeout']]);
+  assert.equal(stale.latest.answered, 20);
+});
+
+async function station(id, fetchImpl, cacheImpl = memoryCache()) {
+  const r = await handleWorldEnvironment(req(`${P}/tides/${id}`), ENV, { fetchImpl, cacheImpl });
+  headersOk(r);
+  return { status: r.status, body: await r.json() };
+}
+
+test('tides/{station}: 24 hours of observed MLLW water level for one listed tidal station (real sample), preliminary kept', async () => {
+  const f = world(coops());
+  const { status, body: b } = await station('8461490', f);
+  assert.equal(status, 200); publicOnly(b);
+  assert.equal(b.schema, 'world-environment-water-level/v1');
+  assert.deepEqual(b.station, { id: '8461490', name: 'New London', lat: 41.3717, lon: -72.0956 });
+  assert.deepEqual(b.columns, ['observed_at', 'value_m', 'quality']);
+  assert.equal(b.count, WATER_SAMPLE.data.length); assert.deepEqual(b.observations[0], ['2026-11-17T12:54:00.000Z', 0.425, 'preliminary']);
+  assert.ok(b.observations.every((o) => o[2] === 'preliminary'), 'q p stays preliminary');
+  const last = WATER_SAMPLE.data.at(-1);
+  assert.deepEqual(b.latest, { observed_at: `${last.t.replace(' ', 'T')}:00.000Z`, value_m: Number(last.v), quality: 'preliminary', q: 'p' });
+  assert.equal(b.url, 'https://tidesandcurrents.noaa.gov/stationhome.html?id=8461490');
+  assert.deepEqual(b.sources.map((s) => [s.id, s.status]), [['coops_water_level', 'available']]);
+  assert.ok(providerCalls(f).some((c) => c.url === waterLevelUrl('8461490')), 'the 24 hour range, MLLW, metres, UTC');
+});
+
+test('tides/{station}: a malformed id is 400, an unlisted one 404, a station NOAA marks non-tidal (no MLLW) 404, before NOAA is asked for data', async () => {
+  for (const bad of ['851875', '85187500', 'abcdefg', '8518750x', '85-1875', '8518750%20']) {
+    const f = world(coops());
+    const { status, body } = await station(bad, f);
+    assert.equal(status, 400, bad); assert.deepEqual(body, { ok: false, code: 'invalid_station' }); assert.equal(providerCalls(f).length, 0);
+  }
+  const unknown = world(coops());
+  assert.deepEqual(await station('1234567', unknown), { status: 404, body: { ok: false, code: 'unknown_station' } });
+  assert.ok(providerCalls(unknown).every((c) => c.url.includes('stations.json')), 'only the station list was read');
+  const lakes = world(coops());
+  assert.deepEqual(await station('9099064', lakes), { status: 404, body: { ok: false, code: 'no_mllw_datum' } });
+  assert.ok(providerCalls(lakes).every((c) => c.url.includes('stations.json')));
+});
+
+test('tides/{station}: NOAA errors are unavailable with their reason, a kept copy is stale, and an unreadable list does not block a reading', async () => {
+  const listDown = coops({ stations: () => text('down', 503), water: () => json(NO_MLLW) });
+  const r = await station('9099064', world(listDown));
+  assert.equal(r.status, 200, 'without the list the id is asked for, and NOAA\'s own error is reported');
+  assert.deepEqual([r.body.sources[0].status, r.body.sources[0].reason, r.body.count, r.body.latest], ['unavailable', 'upstream_error', 0, null]);
+  const cache = memoryCache();
+  const good = await station('8461490', world(coops()), cache);
+  age(cache, TIDES.waterTtl + 30);
+  const stale = await station('8461490', world(coops({ water: () => text('down', 500) })), cache);
+  assert.deepEqual([stale.body.sources[0].status, stale.body.sources[0].reason], ['stale', 'upstream_error']);
+  assert.deepEqual(stale.body.observations, good.body.observations);
 });
