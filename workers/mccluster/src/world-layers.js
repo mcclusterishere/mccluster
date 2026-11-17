@@ -1,3 +1,4 @@
+/* Portions derived from gods-eye-view (MIT, Copyright (c) 2026 Bilawal Sidhu): see THIRD-PARTY-NOTICES at the repository root. */
 /* Current release policy: world-release.js requires live house-owner preview
    before dispatch. The original adapter prerequisites below do not release data. */
 /* THE WORLD'S DATA LAYERS (owner, 2026-10-15: "we need some demo data …

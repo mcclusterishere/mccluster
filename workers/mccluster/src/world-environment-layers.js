@@ -8,6 +8,7 @@
      GET /v1/world/environment/layers/eonet             NASA EONET open events with every reported geometry, oldest first
      GET /v1/world/environment/layers/tides             NOAA CO-OPS water-level stations and the latest level at 20 documented stations
      GET /v1/world/environment/tides/:station           one NOAA CO-OPS station's observed water level, last 24 h (MLLW, metres)
+     GET /v1/world/environment/quakes/:event/shakemap   one USGS event's ShakeMap intensity (MMI) contours, on demand
 
    PUBLIC, BEHIND THE SAME GATE AS GET /v1/world/environment. Every route asks `gate` first: the
    persisted environment module policy, read from the canonical store on every request and judged by
@@ -72,7 +73,13 @@ export const LAYER_SOURCES = Object.freeze({
     coverage: 'The latest observed water level at 20 documented NOAA stations on U.S. coasts and territories, refreshed at most every 15 minutes' }),
   coops_water_level: Object.freeze({ id: 'coops_water_level', label: 'NOAA CO-OPS water level', url: 'https://tidesandcurrents.noaa.gov/',
     attribution: 'NOAA Center for Operational Oceanographic Products and Services (CO-OPS)', license: 'Public domain (U.S. Government work); NOAA asks to be credited',
-    coverage: 'One station\'s observed water level over the last 24 hours' })
+    coverage: 'One station\'s observed water level over the last 24 hours' }),
+  usgs_event: Object.freeze({ id: 'usgs_event', label: 'USGS event detail', url: 'https://earthquake.usgs.gov/',
+    attribution: 'U.S. Geological Survey, Earthquake Hazards Program', license: 'Public domain (U.S. Government work)',
+    coverage: 'The products USGS lists for one earthquake' }),
+  usgs_shakemap: Object.freeze({ id: 'usgs_shakemap', label: 'USGS ShakeMap', url: 'https://earthquake.usgs.gov/data/shakemap/',
+    attribution: 'U.S. Geological Survey ShakeMap', license: 'Public domain (U.S. Government work)',
+    coverage: 'ShakeMap exists for about M5.4 and larger worldwide, and from about M3 to M3.5 in some U.S. regional networks' })
 });
 
 /* ---------- answers ---------- */
@@ -564,6 +571,128 @@ async function waterLevelAnswer(request, env, id, fetchImpl, cacheImpl) {
   });
 }
 
+/* ---------- ShakeMap: USGS intensity contours for one earthquake ----------
+   On demand, for a USGS event id (two lower-case letters, then letters and digits). The event's detail
+   is read (kept 5 minutes; an unknown event is USGS's own 404, said so), its preferred ShakeMap product
+   chosen (highest preferredWeight, then the latest update; a deleted product never), and that product's
+   cont_mmi.json read from USGS's own host, kept a day per product version and update time, since a
+   version's contours do not change. ShakeMap is a modelled estimate of shaking intensity (Modified
+   Mercalli Intensity) that combines recordings with ground-motion models; it is versioned, can change,
+   and is labelled modelled. Each contour is an isoseismal line set, coloured as USGS colours it; lines are
+   checked like any geometry, thinned evenly past 20,000 vertices in all, and never extended or closed. */
+export const SHAKEMAP = Object.freeze({ detailTtl: 300, contoursTtl: 86400, detailBytes: 4000000, contourBytes: 8000000, timeoutMs: 12000, maxContours: 24, maxLines: 600, maxVertices: 20000, maxLinePoints: 2000 });
+export const USGS_EVENT_ID = /^[a-z]{2}[a-z0-9]{2,30}$/;
+export const shakemapDetailUrl = (id) => `https://earthquake.usgs.gov/earthquakes/feed/v1.0/detail/${id}.geojson`;
+const USGS_HOSTS = ['earthquake.usgs.gov'];
+const versionOf = (v) => (typeof v === 'number' && Number.isSafeInteger(v) && v >= 0 ? v : typeof v === 'string' && /^\d{1,6}$/.test(v.trim()) ? Number(v.trim()) : null);
+const wordOf = (v) => { const t = clip(v, 32); return t && /^[a-z][a-z_ -]*$/i.test(t) ? t.toLowerCase() : null; };
+/* the event's preferred, undeleted ShakeMap, or null when USGS lists none */
+export function readShakemapProduct(detail, id) {
+  if (!detail || typeof detail !== 'object' || !detail.properties || typeof detail.properties !== 'object') throw new UpstreamError('upstream_invalid_json', 'USGS answer is not an event');
+  const ids = typeof detail.properties.ids === 'string' ? detail.properties.ids.split(',').filter(Boolean) : [];
+  if (detail.id !== id && !ids.includes(id)) throw new UpstreamError('upstream_invalid_json', 'USGS answered for another event');
+  const preferred = clip(detail.id, 40);
+  const products = detail.properties.products && typeof detail.properties.products === 'object' ? detail.properties.products.shakemap : null;
+  const list = (Array.isArray(products) ? products : []).filter((p) => p && typeof p === 'object' && p.status !== 'DELETE');
+  if (!list.length) return { found: true, preferred_id: preferred, shakemap: null };
+  list.sort((a, b) => (finite(b.preferredWeight) ?? -Infinity) - (finite(a.preferredWeight) ?? -Infinity) || (finite(b.updateTime) ?? 0) - (finite(a.updateTime) ?? 0));
+  const p = list[0], pp = p.properties && typeof p.properties === 'object' ? p.properties : {};
+  const cont = p.contents && typeof p.contents === 'object' ? p.contents['download/cont_mmi.json'] : null;
+  return {
+    found: true, preferred_id: preferred,
+    shakemap: {
+      code: clip(p.code, 40), source: clip(p.source, 16), update_time: isoFromMs(p.updateTime), version: versionOf(pp.version),
+      process_time: isoTime(pp['process-timestamp']), review_status: wordOf(pp['review-status']), map_status: wordOf(pp['map-status']),
+      max_mmi: within(pp.maxmmi, 0, 12, 1), contours_url: cont && typeof cont === 'object' ? providerUrl(cont.url, USGS_HOSTS) : null
+    }
+  };
+}
+async function fetchShakemapDetail(id, fetchImpl) {
+  let detail;
+  try {
+    /* an event USGS no longer lists in the realtime feed is redirected, on the same host, to its FDSN
+       event service; an unknown id ends there as 404 (or 204, its no-data answer) */
+    detail = await upstream(shakemapDetailUrl(id), {}, fetchImpl, async (res) => (res.status === 204 ? null : boundedJson(SHAKEMAP.detailBytes)(res)), SHAKEMAP.timeoutMs);
+  } catch (error) {
+    if (error && error.code === 'upstream_http' && error.providerStatus === 404) return { found: false, preferred_id: null, shakemap: null };
+    throw error;
+  }
+  return detail === null ? { found: false, preferred_id: null, shakemap: null } : readShakemapProduct(detail, id);
+}
+/* cont_mmi.json (a FeatureCollection of MultiLineString isoseismals: value, units, color) to contours */
+export function readShakemapContours(fc, limits = SHAKEMAP) {
+  if (!fc || typeof fc !== 'object' || !Array.isArray(fc.features)) throw new UpstreamError('upstream_invalid_json', 'ShakeMap contours are not a feature collection');
+  const byMmi = new Map();
+  let linesDropped = 0, featuresDropped = 0;
+  for (const f of fc.features) {
+    const p = f && f.properties && typeof f.properties === 'object' ? f.properties : {};
+    const g = f && f.geometry;
+    const mmi = within(p.value, 0, 12, 2);
+    const raw = g && g.type === 'MultiLineString' && Array.isArray(g.coordinates) ? g.coordinates : g && g.type === 'LineString' ? [g.coordinates] : null;
+    if (mmi === null || !raw || (p.units !== undefined && p.units !== 'mmi')) { featuresDropped += 1; continue; }
+    let c = byMmi.get(mmi);
+    if (!c) { c = { mmi, color: typeof p.color === 'string' && /^#[0-9a-f]{6}$/i.test(p.color) ? p.color.toLowerCase() : null, lines: [] }; byMmi.set(mmi, c); }
+    for (const line of raw) { const l = strictLine(line, limits.maxLinePoints); if (l) c.lines.push(l); else linesDropped += 1; }
+  }
+  /* the strongest shaking first when anything has to go */
+  let contours = [...byMmi.values()].filter((c) => c.lines.length).sort((a, b) => b.mmi - a.mmi);
+  let truncated = contours.length > limits.maxContours, lines = 0;
+  contours = contours.slice(0, limits.maxContours).map((c) => {
+    const room = Math.max(0, limits.maxLines - lines), kept = c.lines.slice(0, room);
+    if (kept.length < c.lines.length) truncated = true;
+    lines += kept.length;
+    return { ...c, lines: kept };
+  }).filter((c) => c.lines.length);
+  /* past the vertex budget every line keeps every k-th position and both ends, k as small as fits */
+  const thin = (l, k) => { const out = l.filter((_, i) => i % k === 0); if (out[out.length - 1] !== l[l.length - 1]) out.push(l[l.length - 1]); return out; };
+  const count = (k) => contours.reduce((n, c) => n + c.lines.reduce((m, l) => m + (k === 1 ? l.length : thin(l, k).length), 0), 0);
+  let stride = 1, vertices = count(1);
+  if (vertices > limits.maxVertices) {
+    stride = Math.max(2, Math.floor(vertices / limits.maxVertices));
+    vertices = count(stride);
+    while (vertices > limits.maxVertices) { stride += 1; vertices = count(stride); }
+    contours = contours.map((c) => ({ ...c, lines: c.lines.map((l) => thin(l, stride)) }));
+  }
+  return {
+    contours: contours.sort((a, b) => a.mmi - b.mmi), counts: { contours: contours.length, lines, vertices },
+    lines_dropped: linesDropped, features_dropped: featuresDropped, thinned: stride > 1, truncated
+  };
+}
+const keyPart = (v) => String(v === null || v === undefined ? 'x' : v).replace(/[^a-z0-9]/gi, '').slice(0, 40) || 'x';
+async function shakemapAnswer(request, env, id, fetchImpl, cacheImpl) {
+  if (!USGS_EVENT_ID.test(id)) return refuse(request, env, 'invalid_event', 400);
+  const detail = await trackedLayer({ layer: 'shakemap_detail', key: `consumer-environment-v1-shakemap-${id}`, ttl: SHAKEMAP.detailTtl, rows: 'products', fetcher: (e, f) => fetchShakemapDetail(id, f) }, env, fetchImpl, cacheImpl);
+  const sources = [sourceHealth(LAYER_SOURCES.usgs_event, detail)];
+  const base = {
+    ok: true, schema: 'world-environment-shakemap/v1', event_id: id, generated_at: isoNow(), sources, modelled: true, units: 'MMI',
+    notes: {
+      shakemap: 'ShakeMap is the USGS\'s modelled estimate of shaking intensity (Modified Mercalli Intensity, MMI), combining recordings with ground-motion models. It is versioned and can change; it is not a measurement at every place.',
+      contours: 'Each contour is a line of equal estimated intensity (an isoseismal), coloured as USGS colours it.'
+    }
+  };
+  const d = detail.body && !detail.body.unavailable ? detail.body : null;
+  if (!d) return send(request, env, { ...base, available: false, reason: 'source_unavailable', contours: [] });
+  if (!d.found) return send(request, env, { ...base, available: false, reason: 'event_not_found', contours: [] });
+  if (!d.shakemap) return send(request, env, { ...base, usgs_preferred_id: d.preferred_id, available: false, reason: 'no_shakemap', contours: [] });
+  const sm = d.shakemap;
+  const product = { usgs_preferred_id: d.preferred_id, version: sm.version, process_time: sm.process_time, review_status: sm.review_status, map_status: sm.map_status, max_mmi: sm.max_mmi, update_time: sm.update_time, product_code: sm.code, product_source: sm.source };
+  if (!sm.contours_url) return send(request, env, { ...base, ...product, available: false, reason: 'no_contours', contours: [] });
+  const versionKey = [sm.source, sm.code, sm.version, Date.parse(sm.update_time)].map(keyPart).join('-');
+  const contours = await trackedLayer({
+    layer: 'shakemap_contours', key: `consumer-environment-v1-shakemap-${id}-${versionKey}`, ttl: SHAKEMAP.contoursTtl, rows: 'contours',
+    fetcher: async (e, f) => readShakemapContours(await upstream(sm.contours_url, {}, f, boundedJson(SHAKEMAP.contourBytes), SHAKEMAP.timeoutMs))
+  }, env, fetchImpl, cacheImpl);
+  sources.push(sourceHealth(LAYER_SOURCES.usgs_shakemap, contours));
+  const c = contours.body && !contours.body.unavailable ? contours.body : null;
+  if (!c) return send(request, env, { ...base, ...product, available: false, reason: 'source_unavailable', contours: [] });
+  return send(request, env, {
+    ...base, ...product, available: true, reason: null, contours: Array.isArray(c.contours) ? c.contours : [],
+    counts: c.counts || { contours: 0, lines: 0, vertices: 0 }, thinned: c.thinned === true, truncated: c.truncated === true,
+    lines_dropped: Number(c.lines_dropped) || 0, features_dropped: Number(c.features_dropped) || 0,
+    caps: { contours: SHAKEMAP.maxContours, lines: SHAKEMAP.maxLines, vertices: SHAKEMAP.maxVertices }
+  });
+}
+
 /* ---------- the routes ---------- */
 function inNamespace(path) {
   if (!path.startsWith(ROOT + '/')) return false;
@@ -588,5 +717,6 @@ export async function handleEnvironmentLayers(request, env, { fetchImpl = fetch,
   if (route.id === 'eonet') return send(request, env, await naturalAnswer(env, fetchImpl, cacheImpl));
   if (route.id === 'tides') return send(request, env, await tidesAnswer(env, fetchImpl, cacheImpl, tideGapMs));
   if (route.id === 'water-level') return waterLevelAnswer(request, env, route.param, fetchImpl, cacheImpl);
+  if (route.id === 'shakemap') return shakemapAnswer(request, env, route.param, fetchImpl, cacheImpl);
   return refuse(request, env, 'not_found', 404);
 }
