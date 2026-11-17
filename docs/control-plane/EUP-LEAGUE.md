@@ -1,6 +1,6 @@
 # E=Up → Environmental Justice League (admin-only intake)
 
-Status, 2026-11-09: source and synthetic tests on branch `claude/new-session-83ken5`. Not merged, not applied, not deployed. Owner direction: the first deeper E=Up release is admin-only at every data, API and storage boundary; the consumer environmental globe keeps its current authorized behaviour and its two SQL files stay held.
+Status, 2026-11-09: source and synthetic tests on branch `claude/new-session-83ken5`. Updated 2026-11-17: merged to main in 836e4f39, so the code is in the deployed Worker (`/v1/health` reported `deployment_sha` fc1986ec, which contains it); its SQL is not applied (a production read on 2026-11-17 found no `eup_*` tables, no `eup_league_command` and no League migration). Owner direction: the first deeper E=Up release is admin-only at every data, API and storage boundary; the consumer environmental globe keeps its current authorized behaviour and its two SQL files stay held.
 
 ## What exists
 

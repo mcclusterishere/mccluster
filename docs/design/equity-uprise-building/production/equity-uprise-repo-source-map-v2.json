@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 710,
+  "candidate_count": 711,
   "capability_source_count": 104,
-  "support_only_count": 606,
+  "support_only_count": 607,
   "entries": [
     {
       "path": ".cursorrules",
@@ -1248,6 +1248,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Environmental Justice mode of the existing consumer World: persistence and release gates; no building capability."
+    },
+    {
+      "path": "docs/control-plane/WORLD-FEED-AND-MISSIONS-20261117.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Build brief and resume point for the owner's 2026-11-17 World direction (missions as feed posts, the Equity Uprise feed tab, public missions); names Equity Uprise as the public brand and the World's tab. Defines no building geometry, program or capability."
     },
     {
       "path": "docs/control-plane/WORLD-GLOBE-FEED-AND-ANALYTICS.md",
