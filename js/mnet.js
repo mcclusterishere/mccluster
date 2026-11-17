@@ -1454,6 +1454,8 @@
     paintFeedScope();
     if (was !== state.feedScope) showScopeTab();
     if (state.feedScope === "equity") showCompletedSeries();
+    /* choosing the Equity Uprise tab again after its missions failed to load reads them again */
+    if (state.feedScope === "equity" && was !== "equity") retryOpenMissions();
     if (state.feedScope === "local" && state.placeScope.enabled) loadPlaceFeed(true);
     else renderFeed(false);
     paintMore();
@@ -1492,7 +1494,15 @@
       strip.scrollLeft = drag.left - dx;
     });
     ["pointerup", "pointercancel", "pointerleave"].forEach(function (type) { strip.addEventListener(type, function () { drag = null; }); });
-    strip.addEventListener("click", function (e) { if (dragged) { dragged = false; e.preventDefault(); e.stopPropagation(); } }, true);
+    /* the click that ends a drag is swallowed. A key's click (Enter or Space on a tab: detail 0) never is: a drag released
+       outside the strip sends its own click elsewhere, and the next key on a tab must still choose it. A pointer's next click
+       starts with a pointerdown here, which clears the drag. */
+    strip.addEventListener("click", function (e) {
+      if (!dragged) return;
+      dragged = false;
+      if (e.detail === 0) return;
+      e.preventDefault(); e.stopPropagation();
+    }, true);
     strip.addEventListener("keydown", function (e) {
       if (["ArrowLeft", "ArrowRight", "Home", "End"].indexOf(e.key) < 0) return;
       var buttons = Array.prototype.slice.call(strip.querySelectorAll("button"));
@@ -1788,20 +1798,25 @@
     if (scope === "news") items = [];
     /* member posts are not placed on the map, so Local without the country feed shows only the place's news (and its missions) */
     if (scope === "local" && !regionMode) items = [];
+    /* the place card counts the member posts placed in the country (news-heat), which Local cannot list until the country feed
+       is on (WORLD_PLACE_SCOPE_ENABLED): Local says so, rather than let the count stand for posts that are not here */
+    var counted = scope === "local" && place && !regionMode && state.world.country && !state.world.country.state && state.world.country.stats ? state.world.country.stats.posts : 0;
+    var unplaced = counted > 0 ? counted + (counted === 1 ? " member post placed in " + place + " is" : " member posts placed in " + place + " are") + " not in Local yet." : "";
     if (!items.length && !news.length && !feedMissions.length) {
       host.innerHTML = '<div class="mn__empty">' + esc(
         scope === "local" && !place ? "Tap a country on the globe to see its news and missions. Member posts are not placed on the map yet." :
         scope === "local" && state.placeNews.loading ? "Loading the news from " + place + "\u2026" :
         scope === "local" && state.placeNews.error ? state.placeNews.error :
-        scope === "local" ? "No news from " + place + " in the last 24 hours." :
+        scope === "local" ? "No news from " + place + " in the last 24 hours." + (unplaced ? " " + unplaced : "") :
         scope === "news" ? "No world news is loaded yet." :
         query ? "Nothing in your feed matches \u201c" + query + "\u201d." : "Nothing on the feed yet.") + '</div>';
       return;
     }
     var seen = state.seen || (state.seen = {}), order = 0, drawn = withMissions(interleaveFeed(items, news), feedMissions);
-    /* Local with only the missions that can be done there (no story and no post of its own): one line above them says so */
-    var note = scope === "local" && place && !items.length && !news.length
-      ? (state.placeNews.loading ? "Loading the news from " + place + "\u2026" : state.placeNews.error || "No news from " + place + " in the last 24 hours.") : "";
+    /* Local with only the missions that can be done there (no story and no post of its own): one line above them says so; the
+       member posts the card counts but Local cannot show are said on the same line */
+    var note = [scope === "local" && place && !items.length && !news.length
+      ? (state.placeNews.loading ? "Loading the news from " + place + "\u2026" : state.placeNews.error || "No news from " + place + " in the last 24 hours.") : "", unplaced].filter(Boolean).join(" ");
     state.shownNews = news.slice();
     host.innerHTML = (regionMode ? placeLivesHtml() : "") + (note ? '<p class="mn__feed-note">' + esc(note) + '</p>' : "") + drawn.map(function (item) {
       if (item.missionPost) {
@@ -1955,15 +1970,17 @@
   function withMissions(others, list) {
     return MISSION_POSTS && list.length ? MISSION_POSTS.interleave(others, list, { every: MISSION_POSTS.EVERY, pageSize: MISSION_POSTS.PAGE }) : others;
   }
+  /* the source line sits in the head's second line beside the difficulty and points, where a post keeps its handle, so a sourced
+     mission spends no row of its own on it (the line wraps rather than cuts: the licence stays in view) */
   function missionPostHtml(m) {
     var d = state.missionFeed.details[m.id] || null, source = d ? MISSION_POSTS.sourceLine(d) : "", meta = MISSION_POSTS.metaLine(m), title = "mnMissionPost-" + m.id;
+    var sub = [meta ? esc(meta) : "", source ? '<button class="mn__mission-post-source" type="button" data-mission-credit="' + esc(m.id) + '">' + esc(source) + '</button>' : ""].filter(Boolean).join(" \u00b7 ");
     return '<article class="mn__post-card mn__mission-post" data-mission-post="' + esc(m.id) + '" aria-labelledby="' + esc(title) + '">' +
       '<div class="mn__post-main">' +
         '<div class="mn__post-head"><span class="mn__mission-post-icon" aria-hidden="true">' + (m.category === "create" ? PATH_ART.create : PATH_ART.mission) + '</span>' +
-          '<div class="mn__author-meta"><span class="mn__author-name">' + esc(MISSION_POSTS.headLine(m)) + '</span>' + (meta ? '<div class="mn__author-sub">' + esc(meta) + '</div>' : '') + '</div></div>' +
+          '<div class="mn__author-meta"><span class="mn__author-name">' + esc(MISSION_POSTS.headLine(m)) + '</span>' + (sub ? '<div class="mn__author-sub">' + sub + '</div>' : '') + '</div></div>' +
         '<p class="mn__mission-post-title" id="' + esc(title) + '">' + esc(m.title) + '</p>' +
         (m.description ? '<p class="mn__post-body mn__mission-post-body">' + esc(m.description) + '</p>' : '') +
-        (source ? '<button class="mn__mission-post-source" type="button" data-mission-credit="' + esc(m.id) + '">' + esc(source) + '</button>' : '') +
       '</div>' +
       '<div class="mn__post-actions">' +
         '<button class="mn__action mn__mission-join" type="button" data-mission-join="' + esc(m.id) + '" aria-label="Join this mission">' + EUP_MARKS + '</button>' +
@@ -2008,22 +2025,47 @@
       setTimeout(function () { if (label.isConnected) label.textContent = "Share"; }, 2400);
     }, other);
   }
-  /* the Equity Uprise tab: every open mission, a page at a time (Load more), the search narrowing them as it narrows the feed */
+  /* a missions read that failed is read again only when someone asks: Try again, or choosing the Equity Uprise tab again (never
+     on a repaint, so a read that keeps failing is not asked in a loop) */
+  function retryOpenMissions() {
+    var f = state.missionFeed;
+    if (!MISSION_POSTS || f.all || f.loading || !f.error) return false;
+    f.error = "";
+    loadOpenMissions();
+    return true;
+  }
+  /* what the Equity Uprise tab lists: every open mission; with a country picked on the globe, that place's missions (the ones
+     pinned there and the ones pinned nowhere: exactly what its card counts, feedMissionsFor) once the globe has said where its
+     pins are; and the search narrows them as it narrows the feed */
+  function missionTabList() {
+    var f = state.missionFeed, query = state.world.query, c = state.world.country;
+    if (!f.all) return [];
+    var list = c && state.world.pinsKnown ? MISSION_POSTS.placeMissions(f.all, state.world.pins, c.missionIds || []) : f.all;
+    return query ? list.filter(function (m) { return feedMatches(m, query); }) : list;
+  }
+  /* the Equity Uprise tab: every open mission, a page at a time (Load more), the search narrowing them as it narrows the feed;
+     a country tapped on the globe never leaves the tab (hu:country): the list narrows to the place's missions under one line
+     that says so, and the Environmental Justice panel stays */
   function paintMissionFeed(host) {
-    var f = state.missionFeed, query = state.world.query;
+    var f = state.missionFeed, query = state.world.query, place = state.world.country ? localPlace() : "";
     if (!f.all) {
       if (MISSION_POSTS && !f.loading && !f.error) loadOpenMissions();
       host.innerHTML = MISSION_POSTS && (f.loading || !f.error) ? skeleton(3)
-        : '<div class="mn__empty" data-mission-feed-error>' + esc(f.error || "The open missions could not load right now.") + '</div>';
+        : '<div class="mn__empty" data-mission-feed-error>' + esc(f.error || "The open missions could not load right now.") +
+          (MISSION_POSTS ? '<p class="mn__empty-row"><button class="mn__world-filter" type="button" data-mission-feed-retry>Try again</button></p>' : '') + '</div>';
+      var retry = host.querySelector("[data-mission-feed-retry]");
+      if (retry) retry.onclick = function () { if (retryOpenMissions()) renderFeed(false); };
       return;
     }
-    var list = query ? f.all.filter(function (m) { return feedMatches(m, query); }) : f.all;
+    var list = missionTabList();
     if (!list.length) {
-      host.innerHTML = '<div class="mn__empty" data-mission-feed-empty>' + esc(query ? "No open mission matches \u201c" + query + "\u201d." : "No missions are open right now.") + '</div>';
+      host.innerHTML = '<div class="mn__empty" data-mission-feed-empty>' + esc(query ? "No open mission matches \u201c" + query + "\u201d." :
+        place ? "No open mission can be done in " + place + " right now." : "No missions are open right now.") + '</div>';
       return;
     }
     var page = list.slice(0, f.shown);
-    host.innerHTML = page.map(missionPostHtml).join("");
+    host.innerHTML = (place ? '<p class="mn__feed-note" data-mission-feed-place>' + esc("Missions in " + place + ": the ones pinned there and the ones that can be done anywhere.") + '</p>' : "") +
+      page.map(missionPostHtml).join("");
     bindMissionPosts(host);
     wantMissionDetails(page);
   }
@@ -2048,7 +2090,7 @@
      free for everyone, so the read is a bare public GET with no session, for a guest and a member alike, beside the
      posts' read. A news read that fails, or answers anything but a page of items, leaves the posts as they were. A
      story's place is where the article MENTIONS somewhere (GDELT's extraction), never where something happened. */
-  var FEED_NEWS_PER_POST = 1, NEWS_API = "https://api.mccluster.org/v1/world/news", NEWS_WAIT = 4000;
+  var FEED_NEWS_PER_POST = 1, NEWS_API = "https://api.mccluster.org/v1/world/news", NEWS_WAIT = 4000, MISSION_GRACE = 600;
   function cleanNews(n) {
     if (!n || typeof n !== "object" || !/^https?:\/\//i.test(String(n.url || ""))) return null;
     var id = String(n.id || "").slice(0, 64), title = String(n.title || "").replace(/\s+/g, " ").trim().slice(0, 300), url = safeHttpUrl(n.url);
@@ -2200,8 +2242,7 @@
     }
     /* the Equity Uprise tab pages its missions the way the feed pages its posts */
     if (state.feedScope === "equity") {
-      var f = state.missionFeed, query = state.world.query, n = !f.all ? 0 : query ? f.all.filter(function (m) { return feedMatches(m, query); }).length : f.all.length;
-      more.hidden = n <= f.shown;
+      more.hidden = missionTabList().length <= state.missionFeed.shown;
       return;
     }
     more.hidden = !(state.nextBefore || (state.newsBefore && !(focus && focus.filter)));
@@ -2259,8 +2300,12 @@
     });
     /* the open missions are posts too: read once, beside them (loadOpenMissions never rejects) */
     var missionsRead = reset ? loadOpenMissions() : Promise.resolve();
-    /* the posts wait a moment for the news and the missions, so they arrive in one draw, but never on them */
-    var settled = Promise.race([Promise.all([news, missionsRead]), new Promise(function (r) { setTimeout(r, NEWS_WAIT); })]);
+    /* the posts wait a moment for the news, so both arrive in one draw, but never on it (NEWS_WAIT at most, as before the
+       missions were posts). The missions get no wait of their own: they join this draw if they are in by the time the news is
+       (or MISSION_GRACE after it), and a slow missions read only joins the stream once it answers (loadOpenMissions draws
+       again), so it never holds back the posts and the news */
+    var wait = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
+    var settled = Promise.race([Promise.all([news, missionsRead]), news.then(function () { return wait(MISSION_GRACE); }), wait(NEWS_WAIT)]);
     return Promise.all([read, settled]).then(function (out) {
       var data = out[0], incoming = data && data.items || [];
       if (data) {
@@ -4487,6 +4532,10 @@
     }
     $("mnRefreshMissions").addEventListener("click",loadMissions);
     $("mnMissionClose").addEventListener("click",closeMission);
+    /* Escape (the dialog's cancel) closes it as the × does: the mission leaves the address, so neither a reload nor a guest's
+       later sign-in brings back a mission the visitor dismissed. Join closes the dialog itself for a guest and keeps the mission
+       in the address on purpose (joinMission); that close is not a cancel. */
+    $("mnMissionDialog").addEventListener("cancel",function(){closeMission();});
     $("mnMissionJoin").addEventListener("click",function(){joinMission();});
     if($("mnAntisocialForm"))$("mnAntisocialForm").addEventListener("submit",antisocialSubmit);
     $("mnMissionProof").addEventListener("submit",submitMissionProof);
@@ -4866,11 +4915,16 @@
         if ($("mnPostPlaceOptIn") && !sameCountry) $("mnPostPlaceOptIn").checked = false;
         paintFeedScope();
         /* CLICK THE PLANET, FILTER THE FEED (owner, 2026-10-19). A country tapped outside Travel narrows the one feed to
-           that country with no extra press; letting the country go returns the feed to Global, unless the member chose
-           Local themselves. In Travel a tap picks a destination and leaves the feed alone. */
+           that country with no extra press. On Everything or News the feed turns to Local (its news, missions and posts,
+           WORLD-FEED-AND-MISSIONS-20261117.md target 9), and letting the country go returns it to the tab it was on before
+           the tap, unless the member chose Local themselves. A tap never takes a visitor out of the Equity Uprise tab: its
+           missions narrow to the place's (paintMissionFeed) under the Environmental Justice panel, and letting the country go
+           lists every mission again. In Travel a tap picks a destination and leaves the feed alone. */
         var travelTap = !!(window.MCC_WORLD_MODE && window.MCC_WORLD_MODE.get && window.MCC_WORLD_MODE.get() === "travel");
-        if (state.world.country && !travelTap && state.feedScope !== "local") { state.world.scopeFromTap = true; setFeedScope("local"); }
-        else if (!state.world.country && state.world.scopeFromTap) { state.world.scopeFromTap = false; setFeedScope("global"); }
+        if (state.world.country && !travelTap && state.feedScope === "equity") renderFeed(false);
+        else if (state.world.country && !travelTap && state.feedScope !== "local") { state.world.scopeFromTap = state.feedScope || "global"; setFeedScope("local"); }
+        else if (!state.world.country && state.world.scopeFromTap) { var before = state.world.scopeFromTap; state.world.scopeFromTap = false; setFeedScope(typeof before === "string" ? before : "global"); }
+        else if (!state.world.country && state.feedScope === "equity") renderFeed(false);
         /* a state of the country already read narrows what is loaded; only another country reads again */
         else if (state.feedScope === "local" && state.placeScope.enabled && !(sameCountry && state.placeScope.country === state.world.country.code)) loadPlaceFeed(true);
         else if (state.feedScope === "local") renderFeed(false);
