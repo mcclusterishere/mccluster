@@ -3,6 +3,9 @@
    meanings: docs/control-plane/WORLD-ENVIRONMENT-CONTRACT.md).
 
      GET /v1/world/environment/layers/fires             NASA FIRMS VIIRS NOAA-20 and NOAA-21, trailing 24 h (needs FIRMS_MAP_KEY)
+     GET /v1/world/environment/layers/perimeters        NIFC WFIGS current interagency fire perimeters (U.S.)
+     GET /v1/world/environment/layers/alerts            NOAA NWS active alerts: their own polygons; zone-only alerts listed, never placed
+     GET /v1/world/environment/layers/eonet             NASA EONET open events with every reported geometry, oldest first
 
    PUBLIC, BEHIND THE SAME GATE AS GET /v1/world/environment. Every route asks `gate` first: the
    persisted environment module policy, read from the canonical store on every request and judged by
@@ -26,7 +29,8 @@
 import { reply } from './lib/http.js';
 import { UpstreamError } from './lib/safe-fetch.js';
 import { sourceHealth, trackedLayer, upstream } from './world-layers.js';
-import { parseFirmsCsv } from './world-halo-layers.js';
+import { NIFC_PERIMETERS_URL, clip, finite, isoFromMs, latOf, lonOf, normalizeRing, parseFirmsCsv, providerUrl, within } from './world-halo-layers.js';
+import { boundedEventJson, normalizeAlert, normalizeNatural } from './world-events.js';
 import { environmentRouteForPath } from '../../../packages/release-policy/globe.mjs';
 
 const ROOT = '/v1/world/environment';
@@ -34,6 +38,8 @@ const ROOT = '/v1/world/environment';
 const NAMESPACES = ['layers', 'tides', 'quakes'];
 const isoNow = () => new Date().toISOString();
 const isoOf = (ms) => (Number.isFinite(ms) ? new Date(ms).toISOString() : null);
+/* a provider's timestamp string to ISO UTC, or null (never the retrieval time in its place) */
+const isoTime = (v) => (typeof v === 'string' && v.length <= 40 && Number.isFinite(Date.parse(v)) ? new Date(v).toISOString() : null);
 
 /* ---------- the providers, as each health record names them ---------- */
 const FIRMS_HOME = 'https://firms.modaps.eosdis.nasa.gov/';
@@ -44,7 +50,17 @@ export const LAYER_SOURCES = Object.freeze({
     coverage: 'Global VIIRS active-fire detections from NOAA-20 in the 24 hours before retrieval' }),
   firms_viirs_noaa21: Object.freeze({ id: 'firms_viirs_noaa21', label: 'NASA FIRMS VIIRS NOAA-21', url: FIRMS_HOME, license: FIRMS_LICENSE,
     attribution: 'NASA FIRMS, VIIRS 375 m active fire product (NOAA-21, near real-time)',
-    coverage: 'Global VIIRS active-fire detections from NOAA-21 in the 24 hours before retrieval' })
+    coverage: 'Global VIIRS active-fire detections from NOAA-21 in the 24 hours before retrieval' }),
+  wfigs: Object.freeze({ id: 'wfigs', label: 'NIFC WFIGS perimeters', url: 'https://data-nifc.opendata.arcgis.com/',
+    attribution: 'National Interagency Fire Center, WFIGS Interagency Fire Perimeters (current)',
+    license: 'U.S. federal data with no named licence, provided as is under the NIFC disclaimer',
+    coverage: 'United States wildland fire incidents with a current interagency perimeter' }),
+  nws: Object.freeze({ id: 'nws', label: 'NOAA NWS', url: 'https://www.weather.gov/',
+    attribution: 'NOAA National Weather Service', license: 'Public domain (U.S. Government work)',
+    coverage: 'United States active alerts (status Actual); many alerts name forecast zones and carry no polygon' }),
+  eonet: Object.freeze({ id: 'eonet', label: 'NASA EONET', url: 'https://eonet.gsfc.nasa.gov/',
+    attribution: 'NASA Earth Observatory Natural Event Tracker (EONET)', license: 'NASA open data; each event names the sources EONET drew it from',
+    coverage: 'Global open natural-event reports from the last 30 days; not exhaustive' })
 });
 
 /* ---------- answers ---------- */
@@ -161,6 +177,253 @@ async function firesAnswer(env, fetchImpl, cacheImpl) {
   };
 }
 
+/* ---------- geometry exactly as published ----------
+   A ring is used only as the provider closed it: at least four positions, every one a pair of finite
+   numbers on the globe (longitude -180..180, latitude -90..90), the last equal to the first. Anything
+   else is malformed, and the polygon it belongs to is dropped whole: a hole is never promoted to an
+   exterior, and an exterior is never drawn without a hole it had, which would claim the hole's area.
+   The Halo normalizer (normalizeRing) then rounds to 4 decimals (about 11 m), drops repeated points and
+   thins a ring past the point cap evenly, re-closing it on the provider's own first point. A ring that
+   rounds to fewer than three distinct points, or to no area, is tiny: a tiny hole is left out (it is
+   below the precision of the answer), a tiny exterior drops its polygon. Nothing is closed, mended or
+   moved here. Lines (ShakeMap contours) need two distinct positions; they are thinned evenly, keeping
+   both ends. */
+export const GEOMETRY = Object.freeze({ maxPolygons: 100, maxRings: 250, maxPoints: 2000, maxLinePoints: 2000 });
+const onGlobe = (p) => Array.isArray(p) && p.length >= 2 && typeof p[0] === 'number' && typeof p[1] === 'number'
+  && Number.isFinite(p[0]) && Number.isFinite(p[1]) && p[0] >= -180 && p[0] <= 180 && p[1] >= -90 && p[1] <= 90;
+/* shoelace area in square degrees, taken about the first point so rounding noise stays small */
+function ringArea(r) {
+  const [x0, y0] = r[0];
+  let a = 0;
+  for (let i = 1; i < r.length - 1; i += 1) a += (r[i][0] - x0) * (r[i + 1][1] - y0) - (r[i + 1][0] - x0) * (r[i][1] - y0);
+  return a / 2;
+}
+const MIN_RING_AREA = 1e-9;
+export function strictRing(ring, maxPoints = GEOMETRY.maxPoints) {
+  if (!Array.isArray(ring) || ring.length < 4 || !ring.every(onGlobe)) return { ring: null, why: 'malformed' };
+  const first = ring[0], last = ring[ring.length - 1];
+  if (first[0] !== last[0] || first[1] !== last[1]) return { ring: null, why: 'malformed' };
+  const r = normalizeRing(ring, maxPoints);
+  if (!r || r.length < 4 || Math.abs(ringArea(r)) < MIN_RING_AREA) return { ring: null, why: 'tiny' };
+  return { ring: r, why: null };
+}
+/* GeoJSON Polygon or MultiPolygon to [[exterior, ...holes], ...]; anything else has no polygons */
+export function strictPolygons(geometry, { maxPolygons = GEOMETRY.maxPolygons, maxRings = GEOMETRY.maxRings, maxPoints = GEOMETRY.maxPoints } = {}) {
+  const raw = geometry && geometry.type === 'Polygon' ? [geometry.coordinates] : geometry && geometry.type === 'MultiPolygon' ? geometry.coordinates : null;
+  const out = { polygons: [], polygons_dropped: 0, truncated: false, supported: Array.isArray(raw) };
+  if (!Array.isArray(raw)) return out;
+  let rings = 0;
+  for (const poly of raw) {
+    if (out.polygons.length >= maxPolygons) { out.truncated = true; break; }
+    if (!Array.isArray(poly) || !poly.length) { out.polygons_dropped += 1; continue; }
+    const outer = strictRing(poly[0], maxPoints);
+    if (!outer.ring) { out.polygons_dropped += 1; continue; }
+    const kept = [outer.ring];
+    let malformed = false;
+    for (const hole of poly.slice(1)) {
+      const h = strictRing(hole, maxPoints);
+      if (h.ring) kept.push(h.ring);
+      else if (h.why === 'malformed') { malformed = true; break; }
+    }
+    if (malformed) { out.polygons_dropped += 1; continue; }
+    if (rings + kept.length > maxRings) { out.truncated = true; break; }
+    rings += kept.length;
+    out.polygons.push(kept);
+  }
+  return out;
+}
+export function strictLine(line, maxPoints = GEOMETRY.maxLinePoints) {
+  if (!Array.isArray(line) || line.length < 2 || !line.every(onGlobe)) return null;
+  const pts = [];
+  for (const p of line) {
+    const q = [lonOf(p[0]), latOf(p[1])], prev = pts[pts.length - 1];
+    if (prev && prev[0] === q[0] && prev[1] === q[1]) continue;
+    pts.push(q);
+  }
+  if (pts.length < 2) return null;
+  if (pts.length <= maxPoints) return pts;
+  const step = (pts.length - 1) / (maxPoints - 1), thin = [];
+  for (let k = 0; k < maxPoints; k += 1) thin.push(pts[Math.round(k * step)]);
+  return thin;
+}
+
+/* ---------- perimeters: NIFC WFIGS current interagency fire perimeters (U.S.) ----------
+   The polygons NIFC publishes, generalized by its own server to a 0.002-degree tolerance (about 200 m)
+   and 4 decimals, largest by GIS acres first. Three times, all as NIFC records them: when the polygon
+   was captured (poly_PolygonDateTime), when the record was last edited (poly_DateCurrent, UTC) and when
+   the fire was discovered (attr_FireDiscoveryDateTime). Operational mapping, not a legal boundary. */
+export const PERIMETERS = Object.freeze({ ttl: 600, max: 400, offset: '0.002', timeoutMs: 15000 });
+export function publicPerimetersQuery() {
+  return `${NIFC_PERIMETERS_URL}?${new URLSearchParams({
+    where: '1=1',
+    outFields: 'poly_IncidentName,attr_UniqueFireIdentifier,poly_GISAcres,poly_PolygonDateTime,poly_DateCurrent,attr_FireDiscoveryDateTime',
+    returnGeometry: 'true', outSR: '4326', maxAllowableOffset: PERIMETERS.offset, geometryPrecision: '4',
+    orderByFields: 'poly_GISAcres DESC', resultRecordCount: String(PERIMETERS.max), f: 'geojson'
+  }).toString()}`;
+}
+export function publicPerimeter(f, index = 0) {
+  if (!f || typeof f !== 'object') return { perimeter: null, polygons_dropped: 0 };
+  const p = f.properties && typeof f.properties === 'object' ? f.properties : {};
+  const geo = strictPolygons(f.geometry);
+  if (!geo.polygons.length) return { perimeter: null, polygons_dropped: geo.polygons_dropped };
+  return {
+    polygons_dropped: geo.polygons_dropped,
+    perimeter: {
+      id: clip(p.attr_UniqueFireIdentifier, 64) || (f.id === null || f.id === undefined ? null : clip(f.id, 64)) || `perimeter-${index}`,
+      name: clip(p.poly_IncidentName, 120), gis_acres: within(p.poly_GISAcres, 0, 10000000, 2),
+      polygon_captured_at: isoFromMs(p.poly_PolygonDateTime), last_edited_at: isoFromMs(p.poly_DateCurrent), discovered_at: isoFromMs(p.attr_FireDiscoveryDateTime),
+      polygons: geo.polygons, polygons_dropped: geo.polygons_dropped, geometry_truncated: geo.truncated
+    }
+  };
+}
+export async function fetchPublicPerimeters(env, fetchImpl) {
+  const data = await upstream(publicPerimetersQuery(), {}, fetchImpl, boundedEventJson, PERIMETERS.timeoutMs);
+  /* ArcGIS reports a failed query as 200 with an error object */
+  if (data && data.error) throw new UpstreamError('upstream_http', 'ArcGIS query failed', { providerStatus: finite(data.error.code) });
+  if (!data || !Array.isArray(data.features)) throw new UpstreamError('upstream_invalid_json', 'NIFC answer has no feature list');
+  const perimeters = [], seen = new Set();
+  let dropped = 0, polygonsDropped = 0;
+  for (let i = 0; i < data.features.length && perimeters.length < PERIMETERS.max; i += 1) {
+    const { perimeter, polygons_dropped } = publicPerimeter(data.features[i], i);
+    polygonsDropped += polygons_dropped;
+    if (!perimeter || seen.has(perimeter.id)) { dropped += 1; continue; }
+    seen.add(perimeter.id);
+    perimeters.push(perimeter);
+  }
+  const more = data.exceededTransferLimit === true || (data.properties && data.properties.exceededTransferLimit === true);
+  return { total: data.features.length, count: perimeters.length, dropped, polygons_dropped: polygonsDropped, more_available: more, perimeters };
+}
+async function perimetersAnswer(env, fetchImpl, cacheImpl) {
+  const outcome = await trackedLayer({ layer: 'perimeters', key: 'consumer-environment-v1-wfigs', ttl: PERIMETERS.ttl, rows: 'perimeters', fetcher: fetchPublicPerimeters }, env, fetchImpl, cacheImpl);
+  const b = outcome.body && !outcome.body.unavailable ? outcome.body : {};
+  const perimeters = Array.isArray(b.perimeters) ? b.perimeters : [];
+  return {
+    ok: true, schema: 'world-environment-perimeters/v1', layer: 'perimeters', generated_at: isoNow(),
+    sources: [sourceHealth(LAYER_SOURCES.wfigs, outcome)],
+    perimeters, count: perimeters.length, total: Number(b.total) || 0, cap: PERIMETERS.max,
+    truncated: b.more_available === true, dropped: Number(b.dropped) || 0, polygons_dropped: Number(b.polygons_dropped) || 0,
+    generalization_degrees: Number(PERIMETERS.offset),
+    notes: {
+      geometry: 'Polygons as NIFC publishes them, generalized by NIFC\'s server to about 200 m. A ring that is not closed, has a coordinate off the globe or is not a number is dropped with its polygon and counted, never repaired. Operational fire mapping, not a legal boundary.',
+      time: 'polygon_captured_at is when the perimeter was mapped; last_edited_at when NIFC\'s record last changed (UTC); discovered_at when the fire was discovered.'
+    }
+  };
+}
+
+/* ---------- alerts: NOAA NWS active alerts ----------
+   The same alerts, filter and ids as the feed's NWS source (normalizeAlert; an id here is the feed's
+   event id, nws:<id>). An alert carrying its own polygon is drawn with it; a zone-only alert (no geometry)
+   is counted and listed, never given a point; an alert whose polygon fails the checks is listed as
+   rejected. Times are the CAP times as NWS sent them, in UTC: sent, onset, expires, ends. An alert that
+   has expired by the time it is answered (a kept copy) is left out. */
+export const ALERTS = Object.freeze({ ttl: 120, max: 1500, url: 'https://api.weather.gov/alerts/active?status=actual' });
+export function publicAlert(f, now = Date.now()) {
+  const row = normalizeAlert(f, now);
+  if (!row) return null;
+  const p = f.properties;
+  const zoneOnly = f.geometry === null || f.geometry === undefined;
+  const geo = zoneOnly ? null : strictPolygons(f.geometry);
+  const geometry = zoneOnly ? 'zone_only' : geo.polygons.length ? 'polygon' : 'rejected';
+  return {
+    id: clip(`nws:${row.id}`, 300), event: clip(p.event, 120), headline: clip(p.headline, 300),
+    severity: clip(p.severity, 30), certainty: clip(p.certainty, 30), urgency: clip(p.urgency, 30),
+    sent: isoTime(p.sent), onset: isoTime(p.onset), expires: isoTime(p.expires), ends: isoTime(p.ends),
+    area: clip(p.areaDesc, 300), url: providerUrl(p['@id'], ['api.weather.gov']) || providerUrl(f.id, ['api.weather.gov']),
+    geometry, polygons: geometry === 'polygon' ? geo.polygons : null, polygons_dropped: geo ? geo.polygons_dropped : 0
+  };
+}
+const alertEnd = (a) => Math.min(...[a.expires, a.ends].map((t) => (t ? Date.parse(t) : Infinity)));
+export async function fetchPublicAlerts(env, fetchImpl) {
+  const data = await upstream(ALERTS.url, { headers: { accept: 'application/geo+json' } }, fetchImpl, boundedEventJson);
+  if (!data || !Array.isArray(data.features)) throw new UpstreamError('upstream_invalid_json', 'NWS answer has no feature collection');
+  const now = Date.now(), alerts = [];
+  for (const f of data.features) { const a = publicAlert(f, now); if (a) alerts.push(a); }
+  alerts.sort((a, b) => (Date.parse(b.sent) || 0) - (Date.parse(a.sent) || 0) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  const listed = alerts.slice(0, ALERTS.max);
+  return { total: data.features.length, current: alerts.length, truncated: alerts.length > listed.length, alerts: listed };
+}
+async function alertsAnswer(env, fetchImpl, cacheImpl) {
+  const outcome = await trackedLayer({ layer: 'alerts', key: 'consumer-environment-v1-nws-alerts', ttl: ALERTS.ttl, rows: 'alerts', fetcher: fetchPublicAlerts }, env, fetchImpl, cacheImpl);
+  const b = outcome.body && !outcome.body.unavailable ? outcome.body : {};
+  const now = Date.now();
+  const alerts = (Array.isArray(b.alerts) ? b.alerts : []).filter((a) => alertEnd(a) > now);
+  const counts = { polygon: 0, zone_only: 0, rejected: 0 };
+  for (const a of alerts) if (Object.hasOwn(counts, a.geometry)) counts[a.geometry] += 1;
+  return {
+    ok: true, schema: 'world-environment-alerts/v1', layer: 'alerts', generated_at: isoNow(),
+    sources: [sourceHealth(LAYER_SOURCES.nws, outcome)],
+    alerts, count: alerts.length, counts, total: Number(b.total) || 0, cap: ALERTS.max, truncated: b.truncated === true,
+    notes: {
+      geometry: 'polygon: the alert\'s own polygon, drawn as published. zone_only: NWS names forecast zones and gives no polygon, so the alert is listed and never placed. rejected: the published polygon failed the checks and is not drawn.',
+      time: 'sent is when NWS issued the message; onset when the hazard is expected to begin; expires when the message expires; ends when the hazard is expected to end. Times are UTC.',
+      id: 'Each id is the World feed\'s event id for the same alert (nws:<NWS id>).'
+    }
+  };
+}
+
+/* ---------- natural events: NASA EONET open events ----------
+   The same events and ids as the feed's EONET source (normalizeNatural; eonet:<id>), with every
+   geometry EONET reports, oldest first, so a storm's successive positions can be drawn as its track.
+   Each entry keeps its own date and magnitude. EONET often dates a report 00:00 UTC when only the day is
+   known: such an entry carries placeholder_time true, and its time of day should not be read as real. */
+export const EONET = Object.freeze({ ttl: 600, max: 500, maxTrack: 500, url: 'https://eonet.gsfc.nasa.gov/api/v3/events?status=open&days=30&limit=500' });
+export function publicNaturalEvent(e) {
+  const base = normalizeNatural(e);
+  if (!base || !base.id) return null;
+  const track = [];
+  let dropped = 0;
+  for (const g of Array.isArray(e.geometry) ? e.geometry : []) {
+    const date = g && typeof g === 'object' ? isoTime(g.date) : null;
+    let shape = null;
+    if (date && g.type === 'Point' && onGlobe(g.coordinates)) shape = { type: 'Point', coordinates: [lonOf(g.coordinates[0]), latOf(g.coordinates[1])] };
+    else if (date && (g.type === 'Polygon' || g.type === 'MultiPolygon')) {
+      const geo = strictPolygons(g);
+      if (geo.polygons.length) shape = { type: 'Polygon', polygons: geo.polygons };
+    }
+    if (!shape) { dropped += 1; continue; }
+    const magnitude = typeof g.magnitudeValue === 'number' && Number.isFinite(g.magnitudeValue) ? g.magnitudeValue : null;
+    track.push({ date, placeholder_time: date.endsWith('T00:00:00.000Z'), ...shape, magnitude, unit: magnitude === null ? null : clip(g.magnitudeUnit, 60) });
+  }
+  if (!track.length) return null;
+  track.sort((a, b) => Date.parse(a.date) - Date.parse(b.date));
+  const kept = track.slice(-EONET.maxTrack);
+  return {
+    id: clip(`eonet:${base.id}`, 300), title: clip(e.title, 180),
+    categories: (Array.isArray(e.categories) ? e.categories : []).map((c) => clip(c && (c.title || c.id), 80)).filter(Boolean).slice(0, 8),
+    kind: base.kind, url: base.url,
+    reported_by: (Array.isArray(e.sources) ? e.sources : []).map((s) => clip(s && s.id, 40)).filter(Boolean).slice(0, 10),
+    track: kept, track_count: track.length, track_truncated: track.length > kept.length, geometry_dropped: dropped,
+    placeholder_times: kept.filter((t) => t.placeholder_time).length
+  };
+}
+export async function fetchPublicNatural(env, fetchImpl) {
+  const data = await upstream(EONET.url, {}, fetchImpl, boundedEventJson);
+  if (!data || !Array.isArray(data.events)) throw new UpstreamError('upstream_invalid_json', 'EONET answer has no event collection');
+  const events = [];
+  let skipped = 0;
+  for (const e of data.events) {
+    if (events.length >= EONET.max) break;
+    const n = publicNaturalEvent(e);
+    if (n) events.push(n); else skipped += 1;
+  }
+  return { total: data.events.length, skipped, truncated: data.events.length >= EONET.max, events };
+}
+async function naturalAnswer(env, fetchImpl, cacheImpl) {
+  const outcome = await trackedLayer({ layer: 'eonet', key: 'consumer-environment-v1-eonet-tracks', ttl: EONET.ttl, rows: 'events', fetcher: fetchPublicNatural }, env, fetchImpl, cacheImpl);
+  const b = outcome.body && !outcome.body.unavailable ? outcome.body : {};
+  const events = Array.isArray(b.events) ? b.events : [];
+  return {
+    ok: true, schema: 'world-environment-eonet/v1', layer: 'eonet', generated_at: isoNow(),
+    sources: [sourceHealth(LAYER_SOURCES.eonet, outcome)],
+    events, count: events.length, total: Number(b.total) || 0, skipped: Number(b.skipped) || 0, cap: EONET.max, truncated: b.truncated === true,
+    notes: {
+      track: 'track lists every geometry EONET reports for the event, oldest first: a storm\'s successive reported positions, not an inferred path or forecast.',
+      time: 'An entry with placeholder_time true is dated exactly 00:00 UTC, which EONET often uses when only the day is known; read its date, not its time of day.',
+      coverage: 'EONET is a curated, periodically updated catalogue of open events, not continuous telemetry; it is not exhaustive.'
+    }
+  };
+}
+
 /* ---------- the routes ---------- */
 function inNamespace(path) {
   if (!path.startsWith(ROOT + '/')) return false;
@@ -180,5 +443,8 @@ export async function handleEnvironmentLayers(request, env, { fetchImpl = fetch,
   if (request.method !== 'GET') return refuse(request, env, 'method_not_allowed', 405);
   if (!route) return refuse(request, env, 'not_found', 404);
   if (route.id === 'fires') return send(request, env, await firesAnswer(env, fetchImpl, cacheImpl));
+  if (route.id === 'perimeters') return send(request, env, await perimetersAnswer(env, fetchImpl, cacheImpl));
+  if (route.id === 'alerts') return send(request, env, await alertsAnswer(env, fetchImpl, cacheImpl));
+  if (route.id === 'eonet') return send(request, env, await naturalAnswer(env, fetchImpl, cacheImpl));
   return refuse(request, env, 'not_found', 404);
 }

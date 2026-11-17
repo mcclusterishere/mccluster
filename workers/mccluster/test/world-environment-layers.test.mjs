@@ -8,7 +8,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { registerHooks } from 'node:module';
 import { handleWorldEnvironment, environmentGate } from '../src/world-environment.js';
-import { FIRES, LAYER_SOURCES, fetchFirmsSatellite } from '../src/world-environment-layers.js';
+import { FIRES, LAYER_SOURCES, fetchFirmsSatellite, GEOMETRY, strictRing, strictPolygons, strictLine, publicPerimetersQuery, PERIMETERS } from '../src/world-environment-layers.js';
+import { environmentFeed } from '../src/world-environment.js';
 import { ENVIRONMENT_PUBLIC_ROUTES, environmentRouteForPath, globeFeatureForPath } from '../../../packages/release-policy/globe.mjs';
 import { guardWorldRelease } from '../src/world-release.js';
 import { workersFetch } from './support/workers-fetch-semantics.mjs';
@@ -21,7 +22,7 @@ const ENV = { SUPABASE_URL: 'https://db.example', SUPABASE_SERVICE_ROLE_KEY: 'se
 const P = '/v1/world/environment';
 const LAYER_PATHS = [`${P}/layers/fires`, `${P}/layers/perimeters`, `${P}/layers/alerts`, `${P}/layers/eonet`, `${P}/layers/tides`, `${P}/tides/8518750`, `${P}/quakes/us7000tyhr/shakemap`];
 /* the routes answered so far (the rest are gated and mapped, and answer 404 until they land) */
-const SERVED_PATHS = [`${P}/layers/fires`];
+const SERVED_PATHS = [`${P}/layers/fires`, `${P}/layers/perimeters`, `${P}/layers/alerts`, `${P}/layers/eonet`];
 const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json' } });
 const text = (body, status = 200, type = 'text/plain') => new Response(body, { status, headers: { 'content-type': type } });
 const req = (path, { method = 'GET', auth = false } = {}) => new Request(`https://api.mccluster.org${path}`, { method, headers: { origin: ORIGIN, ...(auth ? { authorization: 'Bearer member' } : {}) } });
@@ -334,4 +335,248 @@ test('fires: the key never reaches an answer, a header, a cache key or a log lin
   } finally { for (const m of Object.keys(saved)) console[m] = saved[m]; }
   assert.equal(logged.some((l) => l.includes(FIRMS_KEY)), false, 'no log line carries the key');
   assert.deepEqual(Object.keys(LAYER_SOURCES).filter((k) => k.startsWith('firms')), ['firms_viirs_noaa20', 'firms_viirs_noaa21']);
+});
+
+/* ---------- geometry exactly as published ---------- */
+const square = (x, y, d = 0.01) => [[x, y], [x + d, y], [x + d, y + d], [x, y + d], [x, y]];
+test('a ring is kept only as the provider closed it: unclosed, short, non-finite or off-globe rings are malformed and never mended', () => {
+  assert.deepEqual(strictRing(square(-120.123456, 47.98765)).ring, [[-120.1235, 47.9877], [-120.1135, 47.9877], [-120.1135, 47.9977], [-120.1235, 47.9977], [-120.1235, 47.9877]]);
+  const open = square(-120, 47).slice(0, 4);
+  assert.deepEqual(strictRing(open), { ring: null, why: 'malformed' }, 'an unclosed ring is not closed by guesswork');
+  assert.deepEqual(strictRing([[0, 0], [1, 0], [0, 0]]), { ring: null, why: 'malformed' }, 'fewer than four positions');
+  for (const bad of [NaN, Infinity, -Infinity, null, '1.5', undefined]) {
+    const r = square(10, 10); r[2] = [bad, 10.01];
+    assert.equal(strictRing(r).why, 'malformed', `a ${String(bad)} coordinate`);
+  }
+  for (const [x, y] of [[181, 0], [-180.0001, 0], [0, 90.5], [0, -91]]) {
+    const r = square(0, 0); r[1] = [x, y];
+    assert.equal(strictRing(r).why, 'malformed', `off the globe at ${x},${y}`);
+  }
+  assert.deepEqual(strictRing([[5, 5], [5.00001, 5.00001], [5.00002, 5], [5, 5]]), { ring: null, why: 'tiny' }, 'rounds to one point');
+  assert.deepEqual(strictRing([[0, 0], [1, 1], [2, 2], [0, 0]]), { ring: null, why: 'tiny' }, 'no area');
+  assert.equal(strictRing('nope').why, 'malformed');
+});
+
+test('polygons: a malformed ring drops its whole polygon, a tiny hole is left out, and nothing is promoted or invented', () => {
+  const good = square(-100, 40, 1), hole = square(-99.6, 40.4, 0.2), tinyHole = [[-99.5, 40.5], [-99.50001, 40.50001], [-99.50002, 40.5], [-99.5, 40.5]];
+  const unclosedHole = square(-99.3, 40.3, 0.1).slice(0, 4);
+  assert.deepEqual(strictPolygons({ type: 'Polygon', coordinates: [good, hole] }).polygons.map((p) => p.length), [2]);
+  const tiny = strictPolygons({ type: 'Polygon', coordinates: [good, tinyHole] });
+  assert.deepEqual([tiny.polygons.length, tiny.polygons[0].length, tiny.polygons_dropped], [1, 1, 0]);
+  const bad = strictPolygons({ type: 'Polygon', coordinates: [good, unclosedHole] });
+  assert.deepEqual([bad.polygons.length, bad.polygons_dropped], [0, 1], 'never drawn without the hole it had');
+  const noExterior = strictPolygons({ type: 'Polygon', coordinates: [square(-100, 40).slice(0, 4), hole] });
+  assert.deepEqual([noExterior.polygons.length, noExterior.polygons_dropped], [0, 1], 'a hole is never promoted to an exterior');
+  const multi = strictPolygons({ type: 'MultiPolygon', coordinates: [[good], [[[0, 0], [1, 0], [1, 1]]], [square(10, 10)], 'x', []] });
+  assert.deepEqual([multi.polygons.length, multi.polygons_dropped], [2, 3]);
+  for (const g of [null, { type: 'Point', coordinates: [0, 0] }, { type: 'LineString', coordinates: [[0, 0], [1, 1]] }, { type: 'Polygon', coordinates: 'x' }]) {
+    const out = strictPolygons(g);
+    assert.deepEqual(out.polygons, []); assert.equal(out.supported, Boolean(g && g.type === 'Polygon'), 'only Polygon and MultiPolygon are polygons');
+  }
+  const many = strictPolygons({ type: 'MultiPolygon', coordinates: Array.from({ length: GEOMETRY.maxPolygons + 5 }, (_, i) => [square(i % 170, 0)]) });
+  assert.equal(many.polygons.length, GEOMETRY.maxPolygons); assert.equal(many.truncated, true);
+});
+
+test('lines need two distinct positions on the globe; long lines are thinned keeping both ends', () => {
+  assert.deepEqual(strictLine([[1.234567, 2.345678], [1.3, 2.4], [1.3, 2.4]]), [[1.2346, 2.3457], [1.3, 2.4]]);
+  for (const bad of [[[0, 0]], [[0, 0], [0, 0]], [[0, 0], [NaN, 1]], [[0, 0], [200, 1]], 'x', null]) assert.equal(strictLine(bad), null);
+  const long = Array.from({ length: 5001 }, (_, i) => [i / 1000, 0]);
+  const thin = strictLine(long, 100);
+  assert.equal(thin.length, 100); assert.deepEqual(thin[0], [0, 0]); assert.deepEqual(thin[99], [5, 0]);
+});
+
+/* ---------- perimeters ---------- */
+const WFIGS = JSON.parse(readFileSync(new URL('./fixtures/environment/wfigs-perimeters-sample.json', import.meta.url), 'utf8'));
+function nifc(body = WFIGS, status = 200) {
+  return (url) => { assert.equal(url.hostname, 'services3.arcgis.com'); return status === 200 ? json(body) : text('down', status); };
+}
+async function layer(name, fetchImpl, cacheImpl = memoryCache(), env = ENV) {
+  const r = await handleWorldEnvironment(req(`${P}/layers/${name}`), env, { fetchImpl, cacheImpl });
+  assert.equal(r.status, 200, name); headersOk(r);
+  const b = await r.json();
+  publicOnly(b);
+  for (const s of b.sources) assert.deepEqual(Object.keys(s).sort(), HEALTH_KEYS);
+  return b;
+}
+
+test('perimeters: NIFC WFIGS polygons with GIS acres and the three NIFC times, largest first (real sample)', async () => {
+  const f = world(nifc());
+  const b = await layer('perimeters', f);
+  const asked = new URL(providerCalls(f)[0].url);
+  assert.equal(asked.href, publicPerimetersQuery());
+  assert.deepEqual(Object.fromEntries(asked.searchParams), {
+    where: '1=1', outFields: 'poly_IncidentName,attr_UniqueFireIdentifier,poly_GISAcres,poly_PolygonDateTime,poly_DateCurrent,attr_FireDiscoveryDateTime',
+    returnGeometry: 'true', outSR: '4326', maxAllowableOffset: PERIMETERS.offset, geometryPrecision: '4', orderByFields: 'poly_GISAcres DESC', resultRecordCount: '400', f: 'geojson'
+  });
+  assert.equal(b.schema, 'world-environment-perimeters/v1'); assert.equal(b.count, 3); assert.equal(b.truncated, true, 'NIFC said more perimeters exist than were asked for');
+  assert.deepEqual(b.perimeters[0], {
+    id: '2026-MSMSR-000553', name: 'Park N Ride', gis_acres: 0.01,
+    polygon_captured_at: new Date(1787676955741).toISOString(), last_edited_at: new Date(1790095832160).toISOString(), discovered_at: new Date(1787676788000).toISOString(),
+    polygons: [[[[-88.6564, 30.4376], [-88.6568, 30.4375], [-88.6567, 30.4377], [-88.6564, 30.4376]]]], polygons_dropped: 0, geometry_truncated: false
+  });
+  assert.deepEqual(b.sources.map((s) => [s.id, s.status, s.reason]), [['wfigs', 'available', null]]);
+  assert.match(b.sources[0].license, /no named licence/); assert.match(b.notes.geometry, /never repaired/);
+});
+
+test('perimeters: unclosed, non-finite, off-globe and tiny rings are dropped and counted, never closed', async () => {
+  const feature = (id, coordinates, type = 'Polygon') => ({ type: 'Feature', properties: { attr_UniqueFireIdentifier: id, poly_IncidentName: id, poly_GISAcres: 'big', poly_PolygonDateTime: 'yesterday', poly_DateCurrent: null, attr_FireDiscoveryDateTime: 9e15 }, geometry: { type, coordinates } });
+  const body = { type: 'FeatureCollection', features: [
+    feature('unclosed', [square(-110, 40).slice(0, 4)]),
+    feature('nan', [[[-110, 40], [NaN, 40], [-109, 41], [-110, 40]]]),
+    feature('null', [[[-110, 40], [null, 40], [-109, 41], [-110, 40]]]),
+    feature('off', [[[-110, 40], [-190, 40], [-109, 41], [-110, 40]]]),
+    feature('tiny', [[[-110, 40], [-110.00001, 40.00001], [-110.00002, 40], [-110, 40]]]),
+    feature('mixed', [[square(-120, 45)], [square(-121, 45).slice(0, 4)]], 'MultiPolygon'),
+    { type: 'Feature', properties: { attr_UniqueFireIdentifier: 'nogeom' }, geometry: null },
+    { type: 'Feature', properties: { attr_UniqueFireIdentifier: 'point' }, geometry: { type: 'Point', coordinates: [-100, 40] } }
+  ] };
+  const b = await layer('perimeters', world(nifc(body)));
+  assert.deepEqual(b.perimeters.map((p) => p.id), ['mixed']);
+  assert.equal(b.perimeters[0].polygons.length, 1); assert.equal(b.perimeters[0].polygons_dropped, 1);
+  assert.deepEqual([b.perimeters[0].gis_acres, b.perimeters[0].polygon_captured_at, b.perimeters[0].last_edited_at, b.perimeters[0].discovered_at], [null, null, null, null], 'unreadable values are null, never invented');
+  assert.equal(b.dropped, 7); assert.equal(b.polygons_dropped, 6); assert.equal(b.truncated, false);
+  for (const ring of b.perimeters[0].polygons.flat()) assert.deepEqual(ring[0], ring.at(-1));
+});
+
+test('perimeters: an ArcGIS error body or a 500 is unavailable; a kept copy is served stale', async () => {
+  const err = await layer('perimeters', world(nifc({ error: { code: 400, message: 'Invalid field' } })));
+  assert.deepEqual([err.sources[0].status, err.sources[0].reason, err.count], ['unavailable', 'upstream_error', 0]);
+  const cache = memoryCache();
+  const good = await layer('perimeters', world(nifc()), cache);
+  age(cache, PERIMETERS.ttl + 30);
+  const stale = await layer('perimeters', world(nifc(null, 500)), cache);
+  assert.deepEqual([stale.sources[0].status, stale.sources[0].reason], ['stale', 'upstream_error']);
+  assert.deepEqual(stale.perimeters, good.perimeters);
+});
+
+/* ---------- alerts ---------- */
+const NWS_SAMPLE = JSON.parse(readFileSync(new URL('./fixtures/environment/nws-alerts-sample.json', import.meta.url), 'utf8'));
+/* the real sample, every CAP time moved by the same amount so it is current when the test runs */
+function nwsNow(extra = []) {
+  const shift = Date.now() - 30 * 60000 - Date.parse(NWS_SAMPLE.features[0].properties.sent);
+  const move = (v) => (typeof v === 'string' ? new Date(Date.parse(v) + shift).toISOString() : v);
+  const features = [...NWS_SAMPLE.features, ...extra].map((f) => ({ ...f, properties: { ...f.properties, ...Object.fromEntries(['sent', 'effective', 'onset', 'expires', 'ends'].map((k) => [k, move(f.properties[k])])) } }));
+  return { ...NWS_SAMPLE, features };
+}
+function nws(body) {
+  return (url, init) => {
+    if (url.hostname === 'api.weather.gov') { assert.equal(init.headers.accept, 'application/geo+json'); return body instanceof Response ? body : json(body); }
+    return feedProviders(url);
+  };
+}
+
+test('alerts: the alert\'s own polygon, zone-only alerts listed and never placed, ids equal to the feed\'s (real sample)', async () => {
+  const body = nwsNow();
+  const f = world(nws(body));
+  const b = await layer('alerts', f);
+  const call = providerCalls(f)[0];
+  assert.equal(call.url, 'https://api.weather.gov/alerts/active?status=actual');
+  assert.equal(call.init.headers['user-agent'], 'McCluster-World/1.0 (https://mccluster.org)', 'an identifying application User-Agent, no person or email');
+  assert.equal(b.schema, 'world-environment-alerts/v1'); assert.equal(b.count, 4);
+  assert.deepEqual(b.counts, { polygon: 2, zone_only: 2, rejected: 0 });
+  const polygon = b.alerts.filter((a) => a.geometry === 'polygon'), zone = b.alerts.filter((a) => a.geometry === 'zone_only');
+  for (const a of zone) { assert.equal(a.polygons, null); assert.equal('lat' in a || 'lon' in a, false, 'no point is invented'); }
+  const first = body.features[0];
+  const drawn = polygon.find((a) => a.id === `nws:${first.properties.id}`);
+  assert.deepEqual(drawn.polygons, [[first.geometry.coordinates[0].map(([x, y]) => [x, y])]], 'the published polygon itself');
+  assert.deepEqual([drawn.event, drawn.severity, drawn.certainty, drawn.urgency], ['Flood Warning', 'Severe', 'Likely', 'Expected']);
+  assert.equal(drawn.sent, body.features[0].properties.sent); assert.equal(drawn.ends, body.features[0].properties.ends);
+  assert.equal(drawn.url, first.properties['@id']);
+  for (const a of b.alerts) for (const k of ['sent', 'onset', 'expires', 'ends']) assert.ok(a[k] === null || /Z$/.test(a[k]), `${k} is UTC ISO`);
+  const feed = await environmentFeed(ENV, { fetchImpl: world(nws(body)), cacheImpl: memoryCache() });
+  assert.deepEqual(b.alerts.map((a) => a.id).sort(), feed.events.filter((e) => e.source.id === 'nws').map((e) => e.id).sort(), 'the same ids as the World feed');
+});
+
+test('alerts: a broken polygon is rejected and not drawn; expired, test and cancelled messages are not current', async () => {
+  const base = NWS_SAMPLE.features[0];
+  const later = new Date(Date.now() + 3600e3).toISOString(), earlier = new Date(Date.now() - 3600e3).toISOString();
+  const extra = [
+    { ...base, id: 'https://api.weather.gov/alerts/open', properties: { ...base.properties, id: 'open-ring' }, geometry: { type: 'Polygon', coordinates: [base.geometry.coordinates[0].slice(0, -1)] } },
+    { ...base, id: 'https://api.weather.gov/alerts/test', properties: { ...base.properties, id: 'test', status: 'Test' } },
+    { ...base, id: 'https://api.weather.gov/alerts/cancel', properties: { ...base.properties, id: 'cancel', messageType: 'Cancel' } }
+  ];
+  const b = await layer('alerts', world(nws(nwsNow(extra))));
+  assert.equal(b.alerts.find((a) => a.id === 'nws:open-ring').geometry, 'rejected');
+  assert.equal(b.alerts.find((a) => a.id === 'nws:open-ring').polygons, null);
+  assert.equal(b.alerts.some((a) => a.id === 'nws:test' || a.id === 'nws:cancel'), false);
+  assert.deepEqual(b.counts, { polygon: 2, zone_only: 2, rejected: 1 });
+  /* a kept copy past an alert's end does not show it as current */
+  const cache = memoryCache();
+  const short = { ...base, id: 'https://api.weather.gov/alerts/short', properties: { ...base.properties, id: 'short', sent: earlier, onset: earlier, expires: new Date(Date.now() + 1000).toISOString(), ends: later } };
+  await layer('alerts', world(nws({ type: 'FeatureCollection', features: [short] })), cache);
+  await new Promise((r) => setTimeout(r, 1100));
+  const kept = await layer('alerts', world(nws(text('down', 500))), cache);
+  assert.equal(kept.sources[0].status, 'available', 'still inside the 2 minute window'); assert.equal(kept.count, 0, 'the expired alert is left out');
+});
+
+test('alerts: NWS down is unavailable with its reason; a kept copy is stale', async () => {
+  const down = await layer('alerts', world(nws(text('down', 503))));
+  assert.deepEqual([down.sources[0].status, down.sources[0].reason, down.count], ['unavailable', 'upstream_error', 0]);
+  const junk = await layer('alerts', world(nws({ type: 'FeatureCollection' })));
+  assert.equal(junk.sources[0].reason, 'invalid_data');
+  const cache = memoryCache();
+  await layer('alerts', world(nws(nwsNow())), cache);
+  age(cache, 125);
+  const stale = await layer('alerts', world(() => { throw Object.assign(new Error('slow'), { name: 'AbortError' }); }), cache);
+  assert.deepEqual([stale.sources[0].status, stale.sources[0].reason, stale.count], ['stale', 'timeout', 4]);
+});
+
+/* ---------- natural events (EONET) ----------
+   EONET answered HTTP 500 on 2026-11-17, so no live sample could be taken that day: these events are
+   built here in the shape EONET v3 documents (id, title, closed, categories, sources, geometry[]). */
+const day = (n, time = '00:00:00') => `${new Date(Date.now() - n * 86400e3).toISOString().slice(0, 10)}T${time}Z`;
+const EONET_BUILT = { title: 'EONET Events', events: [
+  { id: 'EONET_9001', title: 'Tropical Storm Built', closed: null, categories: [{ id: 'severeStorms', title: 'Severe Storms' }], sources: [{ id: 'JTWC', url: 'https://www.metoc.navy.mil/jtwc/' }],
+    geometry: [
+      { magnitudeValue: 45, magnitudeUnit: 'kts', date: day(1, '06:00:00'), type: 'Point', coordinates: [140.1234567, 15.2] },
+      { magnitudeValue: 35, magnitudeUnit: 'kts', date: day(2), type: 'Point', coordinates: [141.5, 14.1] },
+      { magnitudeValue: 40, magnitudeUnit: 'kts', date: day(1), type: 'Point', coordinates: [140.8, 14.7] },
+      { magnitudeValue: 50, magnitudeUnit: 'kts', date: day(0, '00:00:00'), type: 'Point', coordinates: [139.6, 15.9] },
+      { magnitudeValue: 55, magnitudeUnit: 'kts', date: 'not a date', type: 'Point', coordinates: [139, 16] },
+      { magnitudeValue: 55, magnitudeUnit: 'kts', date: day(0, '06:00:00'), type: 'Point', coordinates: [139, 95] }
+    ] },
+  { id: 'EONET_9002', title: 'Built Wildfire', closed: null, categories: [{ id: 'wildfires', title: 'Wildfires' }], sources: [{ id: 'InciWeb' }],
+    geometry: [
+      { magnitudeValue: 1200, magnitudeUnit: 'acres', date: day(3), type: 'Polygon', coordinates: [square(-118, 34, 0.1)] },
+      { magnitudeValue: null, magnitudeUnit: null, date: day(2), type: 'Polygon', coordinates: [square(-118, 34, 0.2).slice(0, 4)] }
+    ] },
+  { id: 'EONET_9003', title: 'Closed report', closed: day(1), categories: [{ id: 'volcanoes', title: 'Volcanoes' }], geometry: [{ date: day(1), type: 'Point', coordinates: [0, 0] }] },
+  { id: 'EONET_9004', title: 'Nothing placeable', closed: null, categories: [{ id: 'volcanoes', title: 'Volcanoes' }], geometry: [{ date: day(1), type: 'Point', coordinates: [500, 0] }] }
+] };
+function eonet(body) {
+  return (url) => (url.hostname === 'eonet.gsfc.nasa.gov' ? (body instanceof Response ? body : json(body)) : feedProviders(url));
+}
+
+test('eonet: every reported geometry, oldest first, as a track; 00:00 UTC dates flagged; ids equal to the feed\'s', async () => {
+  const f = world(eonet(EONET_BUILT));
+  const b = await layer('eonet', f);
+  assert.equal(providerCalls(f)[0].url, 'https://eonet.gsfc.nasa.gov/api/v3/events?status=open&days=30&limit=500');
+  assert.equal(b.schema, 'world-environment-eonet/v1');
+  assert.deepEqual(b.events.map((e) => e.id), ['eonet:EONET_9001', 'eonet:EONET_9002'], 'closed and unplaceable events are not listed');
+  const storm = b.events[0];
+  assert.equal(storm.kind, 'cyclone'); assert.deepEqual(storm.categories, ['Severe Storms']); assert.deepEqual(storm.reported_by, ['JTWC']);
+  assert.deepEqual(storm.track.map((t) => [t.date, t.placeholder_time, t.coordinates, t.magnitude, t.unit]), [
+    [new Date(day(2)).toISOString(), true, [141.5, 14.1], 35, 'kts'],
+    [new Date(day(1)).toISOString(), true, [140.8, 14.7], 40, 'kts'],
+    [new Date(day(1, '06:00:00')).toISOString(), false, [140.1235, 15.2], 45, 'kts'],
+    [new Date(day(0)).toISOString(), true, [139.6, 15.9], 50, 'kts']
+  ]);
+  assert.equal(storm.geometry_dropped, 2, 'an undated entry and one off the globe'); assert.equal(storm.placeholder_times, 3); assert.equal(storm.url, 'https://eonet.gsfc.nasa.gov/api/v3/events/EONET_9001');
+  const fire = b.events[1];
+  assert.equal(fire.track.length, 1, 'the unclosed polygon is dropped, never closed'); assert.equal(fire.track[0].type, 'Polygon'); assert.equal(fire.geometry_dropped, 1);
+  assert.deepEqual([fire.track[0].magnitude, fire.track[0].unit], [1200, 'acres']);
+  const feed = await environmentFeed(ENV, { fetchImpl: world(eonet(EONET_BUILT)), cacheImpl: memoryCache() });
+  for (const e of b.events) assert.ok(feed.events.some((x) => x.id === e.id), `${e.id} is the feed's id`);
+});
+
+test('eonet: an HTTP 500 (as EONET answered on 2026-11-17) is unavailable; with a kept copy it is served stale', async () => {
+  const down = await layer('eonet', world(eonet(text('<!DOCTYPE html><title>Server Error</title>', 500, 'text/html'))));
+  assert.deepEqual([down.sources[0].status, down.sources[0].reason, down.sources[0].fetched_at, down.count], ['unavailable', 'upstream_error', null, 0]);
+  const cache = memoryCache();
+  const good = await layer('eonet', world(eonet(EONET_BUILT)), cache);
+  age(cache, 3600);
+  const stale = await layer('eonet', world(eonet(text('<!DOCTYPE html><title>Server Error</title>', 500, 'text/html'))), cache);
+  assert.deepEqual([stale.sources[0].status, stale.sources[0].reason], ['stale', 'upstream_error']);
+  assert.deepEqual(stale.events, good.events, 'the last good copy');
+  assert.equal(stale.sources[0].fetched_at, new Date(Date.parse(good.sources[0].fetched_at) - 3600e3).toISOString());
 });
