@@ -59,13 +59,20 @@ export function mcclusterEnvironmentAdapter(w) {
       return body;
     }, (error) => {
       if (error?.name !== 'AbortError') feedState('unavailable');
+      /* the same error object, so the gate's code (503 module_policy_unavailable, 404 module_disabled) the transport attached
+         reaches the panel and, through its CustomEvent, the page (slice G1) */
       throw error;
     });
   };
+  /* THE OBSERVATION POSTS (slice G1, target 13): the panel hands its feed to the page as this DOM CustomEvent (js/mnet.js listens;
+     nothing is fetched twice), and marks the pins' significant flag with the page's one pure rule (js/world-environment-posts.js,
+     loaded before this module). The vendor panel names neither: both reach it through this adapter. */
+  const significance = (row) => { try { return w.MCC_ENVIRONMENT_POSTS?.significance?.(row) === true; } catch (_) { return false; } };
   return {
     token,
     mode:()=>shown() ? 'environment' : 'feed',
     modeEvent:'mcc:world-environment', authEvent:'mcc:auth-changed', sessionStorageKey:'mccdb_session',
+    eventsEvent:'mcc:world-environment-events', significance,
     revealPanel() {
       w.document?.documentElement.classList.remove('wt-expanded');
       w.document?.querySelector('.mn__world-expand')?.setAttribute('aria-label','Expand the map');

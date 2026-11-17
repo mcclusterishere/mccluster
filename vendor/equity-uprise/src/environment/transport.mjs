@@ -38,7 +38,9 @@ export function createEnvironmentTransport({ installation, fetchImpl, token, all
     try { result = await response.json(); } catch {
       throw new Error('Environmental response could not be read. No change was confirmed; refresh before retrying.');
     }
-    if (!response.ok) throw Object.assign(new Error(errors[result?.code] || 'Environmental request could not be confirmed. Refresh before trying again.'), { status: response.status });
+    // The gate's own code rides with the failure (503 module_policy_unavailable, 404 module_disabled), beside the status, so the
+    // panel can say which it was (G1, 2026-11-17). Additive: a body without a string code attaches none.
+    if (!response.ok) throw Object.assign(new Error(errors[result?.code] || 'Environmental request could not be confirmed. Refresh before trying again.'), { status: response.status, ...(typeof result?.code === 'string' ? { code: result.code } : {}) });
     if (!result || typeof result !== 'object' || Array.isArray(result) || (!publicRead && result.ok !== true)) throw new Error('Unsupported environmental response.');
     return result;
   } });
