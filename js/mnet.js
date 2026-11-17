@@ -42,6 +42,9 @@
        details (proof hint, safety line, credit) by id, whether that table is absent here, and how many the Equity Uprise tab
        shows before Load more */
     missionFeed: { all: null, loading: null, error: "", details: {}, asked: {}, detailsAbsent: false, shown: 20 },
+    /* the environmental observation posts (js/world-environment-posts.js), by id and in the order the panel's feed gave them; whether
+       the module is unavailable right now and the gate's code when it refused */
+    environment: { posts: {}, order: [], unavailable: false, code: null },
     /* a signed-out visitor on the World screen: public feed, no actions */
     guest: false
   };
@@ -1539,6 +1542,8 @@
     if (item && item.news) return [item.title, item.domain, item.place].join(" ").toLocaleLowerCase().indexOf(query.toLocaleLowerCase()) !== -1;
     /* a mission post answers to its title, its description and its field */
     if (item && item.missionPost) return [item.title, item.description, item.domain].join(" ").toLocaleLowerCase().indexOf(query.toLocaleLowerCase()) !== -1;
+    /* an observation post answers to its title, its facts and its source */
+    if (item && item.observationPost) return [item.title, (item.facts || []).map(function (f) { return f.label + " " + f.value; }).join(" "), item.source && item.source.label].join(" ").toLocaleLowerCase().indexOf(query.toLocaleLowerCase()) !== -1;
     var post = item && (item.post || item) || {}, actor = item.actor || post.actor || {};
     return [post.body, actor.display_name, actor.mccluster_id].join(" ").toLocaleLowerCase().indexOf(query.toLocaleLowerCase()) !== -1;
   }
@@ -1813,12 +1818,22 @@
       return;
     }
     var seen = state.seen || (state.seen = {}), order = 0, drawn = withMissions(interleaveFeed(items, news), feedMissions);
+    /* Everything also carries the significant environmental observations, one after every six other items */
+    drawn = withObservations(drawn);
     /* Local with only the missions that can be done there (no story and no post of its own): one line above them says so; the
        member posts the card counts but Local cannot show are said on the same line */
     var note = [scope === "local" && place && !items.length && !news.length
       ? (state.placeNews.loading ? "Loading the news from " + place + "\u2026" : state.placeNews.error || "No news from " + place + " in the last 24 hours.") : "", unplaced].filter(Boolean).join(" ");
     state.shownNews = news.slice();
     host.innerHTML = (regionMode ? placeLivesHtml() : "") + (note ? '<p class="mn__feed-note">' + esc(note) + '</p>' : "") + drawn.map(function (item) {
+      if (item.observationPost) {
+        var obs = observationPostHtml(item), okey = "observation:" + item.id + ":" + item.hash;
+        if (!seen[okey]) {
+          seen[okey] = true;
+          obs = obs.replace('<article class="mn__post-card', '<article style="--i:' + (order++ % 8) + '" class="mn__post-card is-new');
+        }
+        return obs;
+      }
       if (item.missionPost) {
         var post = missionPostHtml(item), mkey = "mission:" + item.id;
         if (!seen[mkey]) {
@@ -1854,6 +1869,7 @@
     bindDiscussions(host);
     bindPlaceLives(host);
     bindMissionPosts(host);
+    bindObservationPosts(host);
     wantMissionDetails(drawn);
   }
   /* LIVES OF THE PLACE (owner, 2026-10-19: "the news plus the posts and lives of that area"): broadcasts their host
@@ -2048,25 +2064,36 @@
      that says so, and the Environmental Justice panel stays */
   function paintMissionFeed(host) {
     var f = state.missionFeed, query = state.world.query, place = state.world.country ? localPlace() : "";
+    /* the observation posts the tab carries beside the missions (every one, each clearly typed), a page at a time with them; the
+       missions never depend on them (js/world-environment-posts.js may be absent, as it is where this function runs alone in its test) */
+    var observations = typeof tabObservations === "function" ? tabObservations() : [];
+    var merge = function (missions) { return observations.length && typeof ENV_POSTS !== "undefined" && ENV_POSTS ? ENV_POSTS.interleaveByTime(missions, observations, { pageSize: f.shown }) : missions.slice(0, f.shown); };
+    var draw = function (x) { return x.observationPost ? observationPostHtml(x) : missionPostHtml(x); };
+    var bindObservations = function () { if (typeof bindObservationPosts === "function") bindObservationPosts(host); };
     if (!f.all) {
       if (MISSION_POSTS && !f.loading && !f.error) loadOpenMissions();
-      host.innerHTML = MISSION_POSTS && (f.loading || !f.error) ? skeleton(3)
+      /* the missions' own shapes, or their error with its retry, stay above the observation posts */
+      host.innerHTML = (MISSION_POSTS && (f.loading || !f.error) ? skeleton(3)
         : '<div class="mn__empty" data-mission-feed-error>' + esc(f.error || "The open missions could not load right now.") +
-          (MISSION_POSTS ? '<p class="mn__empty-row"><button class="mn__world-filter" type="button" data-mission-feed-retry>Try again</button></p>' : '') + '</div>';
+          (MISSION_POSTS ? '<p class="mn__empty-row"><button class="mn__world-filter" type="button" data-mission-feed-retry>Try again</button></p>' : '') + '</div>') +
+        merge([]).map(draw).join("");
       var retry = host.querySelector("[data-mission-feed-retry]");
       if (retry) retry.onclick = function () { if (retryOpenMissions()) renderFeed(false); };
+      bindObservations();
       return;
     }
     var list = missionTabList();
-    if (!list.length) {
+    if (!list.length && !observations.length) {
       host.innerHTML = '<div class="mn__empty" data-mission-feed-empty>' + esc(query ? "No open mission matches \u201c" + query + "\u201d." :
         place ? "No open mission can be done in " + place + " right now." : "No missions are open right now.") + '</div>';
       return;
     }
-    var page = list.slice(0, f.shown);
+    /* one list by time: the mission posts and the observation posts, newest first (js/world-environment-posts.js, interleaveByTime) */
+    var page = merge(list);
     host.innerHTML = (place ? '<p class="mn__feed-note" data-mission-feed-place>' + esc("Missions in " + place + ": the ones pinned there and the ones that can be done anywhere.") + '</p>' : "") +
-      page.map(missionPostHtml).join("");
+      page.map(draw).join("");
     bindMissionPosts(host);
+    bindObservations();
     wantMissionDetails(page);
   }
 
@@ -2082,6 +2109,99 @@
   function skeletonCards(n) {
     var one = '<div class="mn__skel mn__skel--card" aria-hidden="true"><div><i></i><i class="is-short"></i></div></div>';
     return '<div class="mng__grid">' + new Array(n + 1).join(one) + "</div>";
+  }
+
+  /* ENVIRONMENTAL OBSERVATION POSTS (owner, 2026-11-17: "the environmental globe updates should be updates like as posts from the
+     admin system, like from the system … obviously what time the event was recorded"; WORLD-FEED-AND-MISSIONS-20261117.md, target
+     13; slice G1). The Environmental Justice panel fetches the one public feed and hands it to this page as the DOM CustomEvent
+     mcc:world-environment-events (nothing is fetched twice); js/world-environment-posts.js turns that detail into posts by the
+     system author "Environmental desk", stamped with the recorded time (the retrieval time, labelled as such, when the source gives
+     none). Every observation is a post in the Equity Uprise tab, in one list with the mission posts by time; the significant ones
+     ride in Everything, one after every six other items. A known event whose words changed keeps its post and gains an Updated
+     time; an event that left the feed loses its post; while the module is unavailable there are none and the tab's honest line
+     stands. An observation is never a mission and never counted as one. */
+  var ENV_POSTS = window.MCC_ENVIRONMENT_POSTS || null;
+  /* plain line icons by kind, in currentColor: never the brand's mark */
+  var OBS_ICON = {
+    quake: '<svg viewBox="0 0 24 24"><path d="M3 12h3l2-5 3 10 3-8 2 5 2-2h3"/></svg>',
+    alert: '<svg viewBox="0 0 24 24"><path d="M12 3.5l9 16H3z"/><path d="M12 10v4M12 16.8v.2"/></svg>',
+    fire: '<svg viewBox="0 0 24 24"><path d="M12 3c1 3 4 4.5 4 8.5a4 4 0 0 1-8 0c0-1.5.5-2.5 1-3.5.5 1 1.3 1.6 2 1.8-.6-2-.3-4.3 1-6.8z"/></svg>',
+    storm: '<svg viewBox="0 0 24 24"><path d="M7 15a4 4 0 0 1 .6-7.9A5.5 5.5 0 0 1 18 8.5a3.5 3.5 0 0 1-.5 6.5H7z"/><path d="M12 15l-2 4h3l-1.5 3"/></svg>',
+    volcano: '<svg viewBox="0 0 24 24"><path d="M4 20l5-11h6l5 11z"/><path d="M12 3v3M8.5 4.5l1.5 2.5M15.5 4.5L14 7"/></svg>',
+    water: '<svg viewBox="0 0 24 24"><path d="M3 12c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/><path d="M3 17c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/></svg>',
+    other: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c3 3 3 14 0 17M12 3.5c-3 3-3 14 0 17"/></svg>',
+    globe: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c3 3 3 14 0 17M12 3.5c-3 3-3 14 0 17"/></svg>',
+    link: '<svg viewBox="0 0 24 24"><path d="M10 14l4-4M8.5 15.5l-1 1a3 3 0 0 1-4.2-4.2l3-3a3 3 0 0 1 4.2 0M15.5 8.5l1-1a3 3 0 0 1 4.2 4.2l-3 3a3 3 0 0 1-4.2 0"/></svg>'
+  };
+  function environmentPosts() { var env = state.environment; return env.order.map(function (id) { return env.posts[id]; }).filter(Boolean); }
+  function significantPosts() { return environmentPosts().filter(function (p) { return p.significant === true; }); }
+  /* the observation posts the Equity Uprise tab lists: every one, narrowed by the search as the feed is */
+  function tabObservations() {
+    var query = state.world.query, list = environmentPosts();
+    return query ? list.filter(function (p) { return feedMatches(p, query); }) : list;
+  }
+  window.addEventListener("mcc:world-environment-events", function (ev) {
+    var detail = ev && ev.detail, env = state.environment, now = Date.now();
+    if (!ENV_POSTS || !detail || typeof detail !== "object") return;
+    if (detail.unavailable === true) {
+      env.posts = {}; env.order = []; env.unavailable = true; env.code = typeof detail.code === "string" ? detail.code.slice(0, 40) : null;
+    } else {
+      var next = {}, order = [];
+      ENV_POSTS.observationPosts(detail, now).forEach(function (p) {
+        var old = env.posts[p.id];
+        /* the same event keeps its post: first seen when it first came, Updated when its words changed */
+        p.first_seen = old ? old.first_seen : now;
+        p.updated_at = old ? (old.hash === p.hash ? old.updated_at : now) : null;
+        next[p.id] = p; order.push(p.id);
+      });
+      env.posts = next; env.order = order; env.unavailable = false; env.code = null;
+    }
+    if (state.feedAnswered && !state.loadingFeed) renderFeed(false);
+  });
+  /* a post by the system: where a post names its author, "Environmental desk"; where it names the handle, the type, the source and
+     the stamp (recorded, or retrieved and said so); then the title, the facts with coverage and status, and the row: Show on globe
+     (hu:environment-focus, or "No mapped point" for a report the provider gave no point) and the source's own page */
+  function observationPostHtml(p) {
+    var title = "mnObservationPost-" + String(p.id).replace(/[^a-zA-Z0-9_-]/g, "_"), href = p.source ? safeHttpUrl(p.source.url) : "", src = /^https:\/\//.test(href) ? href : "";
+    var label = (p.source && p.source.label) || "", stamp = p.stamp && p.stamp.text ? p.stamp.text : "Time not supplied by provider";
+    var sub = ENV_POSTS.TYPE + " · " + (label || "Source not named") + " · " + stamp + (p.updated_at ? " · Updated " + ENV_POSTS.agoLabel(new Date(p.updated_at).toISOString(), Date.now()) : "");
+    var body = (p.facts || []).map(function (f) { return f.label + ": " + f.value; }).concat(["Coverage: " + p.coverage, "Status: " + p.status + (p.reason ? " (" + p.reason + ")" : "")]).join(" · ");
+    return '<article class="mn__post-card mn__observation-post" data-observation-post="' + esc(p.id) + '" aria-labelledby="' + esc(title) + '">' +
+      '<div class="mn__post-main">' +
+        '<div class="mn__post-head"><span class="mn__observation-post-icon" aria-hidden="true">' + (OBS_ICON[p.icon] || OBS_ICON.other) + '</span>' +
+          '<div class="mn__author-meta"><span class="mn__author-name">' + esc(ENV_POSTS.AUTHOR) + '</span><div class="mn__author-sub">' + esc(sub) + '</div></div></div>' +
+        '<p class="mn__observation-post-title" id="' + esc(title) + '">' + esc(p.title) + '</p>' +
+        '<p class="mn__post-body mn__observation-post-body">' + esc(body) + '</p>' +
+      '</div>' +
+      '<div class="mn__post-actions">' +
+        (p.lat === null || p.lon === null || p.lat === undefined || p.lon === undefined
+          ? '<button class="mn__action mn__observation-globe" type="button" disabled>' + OBS_ICON.globe + '<span class="mn__action-label">No mapped point</span></button>'
+          : '<button class="mn__action mn__observation-globe" type="button" data-observation-globe="' + esc(p.id) + '">' + OBS_ICON.globe + '<span class="mn__action-label">Show on globe</span></button>') +
+        (src ? '<a class="mn__action mn__observation-source" href="' + esc(src) + '" target="_blank" rel="noopener noreferrer">' + OBS_ICON.link + '<span class="mn__action-label">Source: ' + esc(label || "provider") + '</span></a>' : '') +
+      '</div></article>';
+  }
+  /* Show on globe: the environmental layers live in the Equity Uprise tab, so the feed turns to it first; the frame is asked to
+     focus the event (the globe keeps a focus it cannot honour yet until its layers arrive) and comes into view */
+  function bindObservationPosts(root) {
+    root.querySelectorAll("[data-observation-globe]").forEach(function (b) {
+      b.onclick = function () {
+        var p = state.environment.posts[b.getAttribute("data-observation-globe")];
+        if (!p) return;
+        if ((state.feedScope || "global") !== "equity") setFeedScope("equity");
+        tellWorld({ type: "hu:environment-focus", id: p.globe_id || p.id });
+        document.documentElement.classList.remove("wt-expanded");
+        var expand = document.querySelector(".mn__world-expand");
+        if (expand) expand.setAttribute("aria-label", "Expand the map");
+        var frame = $("mnWorldFrame"), still = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+        if (frame && frame.scrollIntoView) frame.scrollIntoView({ block: "start", behavior: still ? "auto" : "smooth" });
+        track("environment_show_on_globe", { kind: String(p.kind || "").slice(0, 20) });
+      };
+    });
+  }
+  /* Everything carries the significant observations, one after every six other items (js/world-environment-posts.js); Local and
+     News are left as they are */
+  function withObservations(others) {
+    return ENV_POSTS && (state.feedScope || "global") === "global" ? ENV_POSTS.withObservations(others, significantPosts(), { every: ENV_POSTS.EVERY_OBS }) : others;
   }
 
   /* WORLD NEWS IN THE FEED (owner, 2026-10-15: "GDELT news as the feed … sprinkled into that. At a ratio to like
@@ -2240,9 +2360,9 @@
       more.hidden = !(state.placeNews.before || (state.placeScope.enabled && state.placeScope.postBefore));
       return;
     }
-    /* the Equity Uprise tab pages its missions the way the feed pages its posts */
+    /* the Equity Uprise tab pages its missions and observation posts the way the feed pages its posts */
     if (state.feedScope === "equity") {
-      more.hidden = missionTabList().length <= state.missionFeed.shown;
+      more.hidden = missionTabList().length + tabObservations().length <= state.missionFeed.shown;
       return;
     }
     more.hidden = !(state.nextBefore || (state.newsBefore && !(focus && focus.filter)));
