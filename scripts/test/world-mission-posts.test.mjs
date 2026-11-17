@@ -172,6 +172,10 @@ test('the page wires them: one read of the open missions, the details asked once
   const post = js.slice(js.indexOf('function missionPostHtml'), js.indexOf('function bindMissionPosts'));
   assert.match(post, /<article class="mn__post-card mn__mission-post" data-mission-post="/);
   assert.doesNotMatch(post, /data-post-id|data-take-mission|data-fund-mission/);
+  /* the source line sits in the head's second line beside the difficulty and points, where a post keeps its handle, so a sourced
+     mission spends no row of its own on it (review of W2, R8) */
+  assert.match(post, /var sub = \[meta \? esc\(meta\) : "", source \? '<button class="mn__mission-post-source" type="button" data-mission-credit="' \+ esc\(m\.id\) \+ '">' \+ esc\(source\) \+ '<\/button>' : ""\]\.filter\(Boolean\)\.join\(" \\u00b7 "\);/);
+  assert.match(post, /\(sub \? '<div class="mn__author-sub">' \+ sub \+ '<\/div>' : ''\)/);
   assert.match(post, /aria-label="Join this mission">' \+ EUP_MARKS \+ '<\/button>/, 'the emblem alone is the join, with no words beside it');
   assert.doesNotMatch(post, /Equity Uprise/i, 'the brand is never written out on a post');
   assert.match(js, /var EUP_MARKS = '<img class="mn__eup mn__eup--white" src="assets\/img\/equity-uprise-mark-white\.png" alt="" width="40" height="40">' \+\s*'<img class="mn__eup mn__eup--dark" src="assets\/img\/equity-uprise-mark\.png" alt="" width="40" height="40">';/, 'the two supplied marks, scaled only (square, as supplied), at the strip\'s size');
@@ -189,6 +193,177 @@ test('the styles are mobile first: no max-width query, the clamp and the day mar
   const block = css.slice(css.indexOf('MISSIONS AS POSTS'));
   assert.doesNotMatch(block, /@media\s*\(max-width|(?<!minmax\(0, ?)\b1fr/);
   assert.match(block, /\.hu-editorial #mnFeed \.mn__mission-post \.mn__post-body \{[^}]*-webkit-line-clamp:2;/);
+  /* the size of a post (review of W2, R8): the head's second line wraps so the licence stays in view, the title is 15px and two
+     lines at most, the description 15px on 1.4 and two lines, the source line inline in the head, the action row 40px like a
+     post's (the emblem keeps its 40px, the join its 44px width) */
+  assert.match(block, /\.hu-editorial #mnFeed \.mn__mission-post \.mn__post-head \{margin:0 0 6px;\}/);
+  assert.match(block, /\.hu-editorial #mnFeed \.mn__mission-post \.mn__author-sub \{white-space:normal;overflow:visible;text-overflow:clip;/);
+  assert.match(block, /\.mn__mission-post-title \{margin:0;color:var\(--mn-ink\);font:600 15px\/1\.3 var\(--mn-ui\);[^}]*-webkit-line-clamp:2;/);
+  assert.match(block, /\.hu-editorial #mnFeed \.mn__mission-post \.mn__post-body \{margin:2px 0 0;font-size:15px;line-height:1\.4;/);
+  assert.match(block, /\.mn__mission-post-source \{display:inline;margin:0;padding:0;border:0;background:none;color:inherit;font:inherit;/);
+  assert.match(block, /\.hu-editorial #mnFeed \.mn__mission-post \.mn__post-actions \{margin-top:6px;\}/);
+  assert.match(block, /\.mn__mission-join \{justify-content:center;min-width:44px;min-height:40px;/);
+  assert.match(block, /\.mn__mission-join \.mn__eup \{width:40px;height:40px;\}/);
   assert.match(day, /html\[data-daylight="day"\] \.mn__mission-join \.mn__eup--dark \{ display:block; \}/);
   assert.match(env, /html:not\(\[data-we-feed="ready"\]\) #wePanel \{ display:none !important; \}/, 'never a broken panel for the public');
+});
+
+/* ---------- the page's own pieces, run on fakes (review of W2: R3, R4, R7, R11) ---------- */
+/* one function's source, from its declaration to its closing brace (these functions carry no braces in strings) */
+function fnSource(src, name) {
+  const at = src.indexOf('function ' + name + '(');
+  assert.ok(at !== -1, name + ' exists');
+  let depth = 0, i = src.indexOf('{', at);
+  for (; i < src.length; i++) { if (src[i] === '{') depth++; else if (src[i] === '}' && --depth === 0) break; }
+  return src.slice(at, i + 1);
+}
+const slice = (src, from, to) => { const a = src.indexOf(from), b = src.indexOf(to, a + 1); assert.ok(a > 0 && b > a, 'js/mnet.js still has ' + from.trim()); return src.slice(a, b); };
+
+test('a mission post escapes every word of its row and its details, and its attributes carry only its id', () => {
+  const js = read('js/mnet.js');
+  const X = id(77);
+  const m = P.cleanMission({ id: X, title: '<img src=x onerror=alert(1)>Title "quoted" & \'single\'', description: '<script>alert(2)</script> description', domain: '<svg onload=alert(3)>', kind: 'civic"><b>', discovery_category: 'create', difficulty: 3, base_points: 150, status: 'open', created_at: '2026-11-17T00:00:00Z' });
+  const d = P.cleanDetails({ mission_id: X, catalog: 'other', credit_line: 'Adapted from Evil<img src=x onerror=confirm> Org (https://ok.example/x), see <b>more</b>.', license_name: '<u>Lic</u>', license_url: 'https://creativecommons.org/licenses/by/4.0/' });
+  assert.equal(P.sourceLine(d), 'Source: Evil<img src=x onerror=confirm> Org · <u>Lic</u>', 'the row reaches the post as written');
+  const render = new Function('state', 'MISSION_POSTS', 'PATH_ART', 'EUP_MARKS', 'ICON', 'm', fnSource(js, 'esc') + '\n' + fnSource(js, 'missionPostHtml') + '\nreturn missionPostHtml(m);');
+  const art = { create: '<svg class="art"></svg>', mission: '<svg class="art"></svg>' }, icons = { details: '<svg class="i"></svg>', share: '<svg class="i"></svg>' };
+  const html = render({ missionFeed: { details: { [X]: d } } }, P, art, '<img class="mn__eup" alt="">', icons, m);
+  for (const raw of ['<img src=x', '<script', '<svg onload', '<i>', '<b>', '<u>', 'civic">']) assert.ok(!html.includes(raw), 'no raw ' + raw + ' in the post: ' + html);
+  assert.doesNotMatch(html, /<[a-z][^>]*\son(?:error|load)=/i, 'no element carries a handler: ' + html);
+  for (const shown of ['&lt;img src=x onerror=alert(1)&gt;Title &quot;quoted&quot; &amp; &#39;single&#39;', '&lt;script&gt;alert(2)&lt;/script&gt; description',
+    'Mission · &lt;svg onload=alert(3)&gt;', 'Difficulty 3 · 150 points', 'Source: Evil&lt;img src=x onerror=confirm&gt; Org · &lt;u&gt;Lic&lt;/u&gt;']) assert.ok(html.includes(shown), 'shown as words: ' + shown + ' in ' + html);
+  const attrs = [...html.matchAll(/(data-mission-(?:post|join|details|share|credit)|aria-labelledby|id)="([^"]*)"/g)].map((a) => [a[1], a[2]]);
+  assert.equal(attrs.length, 7, 'seven attributes name the mission: ' + JSON.stringify(attrs));
+  for (const [name, value] of attrs) assert.ok(value === X || value === 'mnMissionPost-' + X, name + '="' + value + '"');
+  assert.equal((html.match(/<(?:img|svg|button|article|p|div|span)\b/g) || []).length, (html.match(/<\/?(?:img|svg|button|article|p|div|span)\b/g) || []).filter((t) => !t.startsWith('</')).length, 'only the post\'s own elements');
+  /* the source button sits in the head's second line, after the difficulty and points */
+  assert.match(html, /<div class="mn__author-sub">Difficulty 3 · 150 points · <button class="mn__mission-post-source" type="button" data-mission-credit="[^"]+">Source: /);
+  /* without details: no source button and no empty line */
+  const bare = render({ missionFeed: { details: {} } }, P, art, '', icons, m);
+  assert.doesNotMatch(bare, /mn__mission-post-source/);
+  assert.match(bare, /<div class="mn__author-sub">Difficulty 3 · 150 points<\/div>/);
+});
+
+test('a failed missions read is read again on Try again or when the tab is chosen again, never on a repaint', () => {
+  const js = read('js/mnet.js');
+  const reads = [], draws = [];
+  const state = { missionFeed: { all: null, loading: null, error: 'The open missions could not load right now.', details: {}, asked: {}, detailsAbsent: false, shown: 20 },
+    world: { query: '', country: null, pinsKnown: false, pins: {} }, feedScope: 'global', placeScope: { enabled: false } };
+  let retry = null;
+  const host = { innerHTML: '', querySelector(sel) { return sel === '[data-mission-feed-retry]' && this.innerHTML.includes('data-mission-feed-retry') ? (retry = {}) : null; } };
+  const ctx = { state, MISSION_POSTS: P, loadOpenMissions() { reads.push(state.missionFeed.error); return Promise.resolve(); }, skeleton: () => '<i class="skel"></i>', esc: (s) => String(s),
+    feedMatches: (m, q) => m.title.toLowerCase().includes(q.toLowerCase()), missionPostHtml: (m) => '<article data-mission-post="' + m.id + '"></article>', bindMissionPosts() {}, wantMissionDetails() {},
+    renderFeed() { draws.push(state.feedScope); }, localPlace: () => 'United States', FEED_SCOPES: ['local', 'global', 'equity', 'news'], paintFeedScope() {}, showScopeTab() {}, showCompletedSeries() {},
+    loadPlaceFeed() {}, paintMore() {}, track() {}, window: { dispatchEvent() {} }, CustomEvent: function () {} };
+  const src = slice(js, '  function retryOpenMissions() {', '  function skeleton(n) {') + slice(js, '  function setFeedScope(scope) {', "  /* the strip's tab for other modules");
+  const api = new Function(...Object.keys(ctx), src + '\nreturn { retryOpenMissions, paintMissionFeed, setFeedScope, missionTabList };')(...Object.values(ctx));
+  api.paintMissionFeed(host);
+  assert.equal(reads.length, 0, 'a repaint after a failure does not read again: a read that keeps failing is never asked in a loop');
+  assert.match(host.innerHTML, /data-mission-feed-error/);
+  assert.match(host.innerHTML, /<button class="mn__world-filter" type="button" data-mission-feed-retry>Try again<\/button>/);
+  assert.equal(typeof (retry && retry.onclick), 'function', 'Try again is wired');
+  retry.onclick();
+  assert.deepEqual(reads, [''], 'Try again reads once, with the error cleared first');
+  assert.deepEqual(draws, ['global'], 'and the tab is drawn again (its loading shape)');
+  state.missionFeed.error = 'failed again';
+  api.setFeedScope('equity');
+  assert.equal(reads.length, 2, 'choosing the tab after a failure reads again');
+  api.setFeedScope('equity');
+  assert.equal(reads.length, 2, 'choosing it while already on it does not');
+  state.missionFeed.loading = Promise.resolve(); state.missionFeed.error = 'x';
+  assert.equal(api.retryOpenMissions(), false, 'never while a read is out');
+  state.missionFeed.loading = null; state.missionFeed.error = ''; state.missionFeed.all = [M(1), M(2), M(3)];
+  assert.equal(api.retryOpenMissions(), false, 'nor once the missions are in');
+  /* the tab with a country picked on the globe (review of W2, R4): the place's missions, under one line that says so, once the
+     globe has said where its pins are; the search narrows them further; no country, every mission and no line */
+  state.world.country = { code: 'US', name: 'United States', missionIds: [id(2)] }; state.world.pins = { [id(2)]: true, [id(3)]: true }; state.world.pinsKnown = true;
+  assert.deepEqual(api.missionTabList().map((m) => m.id), [id(1), id(2)], 'the ones pinned there and the ones pinned nowhere');
+  api.paintMissionFeed(host);
+  assert.match(host.innerHTML, /^<p class="mn__feed-note" data-mission-feed-place>Missions in United States: the ones pinned there and the ones that can be done anywhere\.<\/p><article/);
+  assert.equal((host.innerHTML.match(/data-mission-post=/g) || []).length, 2);
+  state.world.query = 'mission 2';
+  assert.deepEqual(api.missionTabList().map((m) => m.id), [id(2)]);
+  state.world.query = 'nothing here';
+  api.paintMissionFeed(host);
+  assert.match(host.innerHTML, /No open mission matches/);
+  state.world.query = ''; state.world.country.missionIds = []; state.world.pins = { [id(1)]: true, [id(2)]: true, [id(3)]: true };
+  api.paintMissionFeed(host);
+  assert.match(host.innerHTML, /No open mission can be done in United States right now\./);
+  state.world.pinsKnown = false;
+  assert.equal(api.missionTabList().length, 3, 'until the globe has said where its pins are, every mission');
+  state.world.country = null;
+  api.paintMissionFeed(host);
+  assert.doesNotMatch(host.innerHTML, /mn__feed-note/);
+  assert.equal((host.innerHTML.match(/data-mission-post=/g) || []).length, 3);
+});
+
+test('a country tapped on the globe: Everything or News turn to Local and come back when it is let go; the Equity Uprise tab is never left', () => {
+  const js = read('js/mnet.js');
+  const open = '} else if (d.type === "hu:country") {', close = '} else if (d.type === "hu:place-stats") {';
+  const a = js.indexOf(open), b = js.indexOf(close, a);
+  assert.ok(a > 0 && b > a, 'the page handles hu:country');
+  const body = js.slice(a + open.length, b);
+  const calls = [];
+  const make = (scope, mode) => {
+    const state = { guest: true, placeScope: { enabled: false, home: null, country: null }, world: { country: null, scopeFromTap: false }, feedScope: scope };
+    const label = { textContent: '' };
+    const fn = new Function('d', 'state', '$', 'askToSignIn', 'tellWorld', 'worldState', 'placeStats', 'paintPlaceCard', 'paintFeedScope', 'setFeedScope', 'loadPlaceFeed', 'renderFeed', 'WORLD_ID', 'window', body);
+    const run = (d) => fn(d, state, (i) => (i === 'huRegionLabel' ? label : null), () => calls.push('signin'), (msg) => calls.push('tell:' + msg.type), () => null, (s) => ({ news: null, posts: s && s.posts || null, members: null, membersUnder: 0, states: false }),
+      () => {}, () => {}, (s) => { calls.push('scope:' + s); state.feedScope = s; }, () => calls.push('placeFeed'), () => calls.push('render'), /^[0-9a-f-]{36}$/i, { MCC_WORLD_MODE: { get: () => mode } });
+    return { state, run, label };
+  };
+  const US = { code: 'US', name: 'United States', missionIds: [id(2)], stats: { posts: 1 } };
+  for (const scope of ['global', 'news']) {
+    calls.length = 0;
+    const { state, run } = make(scope, 'posts');
+    run({ type: 'hu:country', country: US });
+    assert.deepEqual(calls, ['scope:local'], scope + ': a tap turns the feed to Local');
+    assert.equal(state.world.scopeFromTap, scope, 'the tab the tap left is remembered');
+    run({ type: 'hu:country', country: null });
+    assert.deepEqual(calls, ['scope:local', 'scope:' + scope], scope + ': letting the country go returns to that tab');
+    assert.equal(state.world.scopeFromTap, false);
+  }
+  calls.length = 0;
+  const eq = make('equity', 'posts');
+  eq.run({ type: 'hu:country', country: US });
+  assert.deepEqual(calls, ['render'], 'the Equity Uprise tab is kept: its missions narrow to the place\'s and the panel stays');
+  assert.equal(eq.state.feedScope, 'equity');
+  assert.deepEqual([eq.state.world.country.code, eq.state.world.country.missionIds, eq.label.textContent], ['US', [id(2)], 'United States']);
+  eq.run({ type: 'hu:country', country: null });
+  assert.deepEqual(calls, ['render', 'render'], 'letting the country go lists every mission again, still on the tab');
+  assert.equal(eq.state.feedScope, 'equity');
+  assert.equal(eq.state.world.country, null);
+  /* a member who chose Local themselves stays on Local when the country is let go */
+  calls.length = 0;
+  const loc = make('local', 'posts');
+  loc.run({ type: 'hu:country', country: US }); loc.run({ type: 'hu:country', country: null });
+  assert.deepEqual(calls, ['render', 'render']);
+  assert.equal(loc.state.feedScope, 'local');
+  /* in Travel a tap picks a destination and leaves the feed alone */
+  calls.length = 0;
+  const tr = make('global', 'travel');
+  tr.run({ type: 'hu:country', country: US });
+  assert.deepEqual(calls, []);
+  assert.equal(tr.state.feedScope, 'global');
+});
+
+test('the strip: a mouse drag never lands as a tap, and a key\'s click on a tab is never swallowed, even after a drag released outside the strip', () => {
+  const js = read('js/mnet.js');
+  const handlers = {};
+  const strip = { attrs: {}, hasAttribute(n) { return n in this.attrs; }, setAttribute(n, v) { this.attrs[n] = v; }, scrollWidth: 600, clientWidth: 300, scrollLeft: 0, addEventListener(t, fn) { (handlers[t] ||= []).push(fn); }, querySelectorAll: () => [] };
+  const fire = (t, e) => (handlers[t] || []).forEach((fn) => fn(e));
+  new Function('$', 'document', fnSource(js, 'wireFeedScopeStrip') + '\nwireFeedScopeStrip();')(() => strip, { activeElement: null });
+  const click = (detail) => { const e = { detail, prevented: false, preventDefault() { this.prevented = true; }, stopPropagation() {} }; fire('click', e); return e; };
+  fire('pointerdown', { pointerType: 'mouse', button: 0, clientX: 300 }); fire('pointermove', { clientX: 220 });
+  assert.equal(strip.scrollLeft, 80, 'the mouse drags the strip');
+  assert.equal(click(1).prevented, true, 'the click that ends a drag is swallowed');
+  assert.equal(click(1).prevented, false, 'the next click is a tap');
+  fire('pointerdown', { pointerType: 'mouse', button: 0, clientX: 300 }); fire('pointermove', { clientX: 200 });
+  /* released outside the strip: no pointerup here, and its click lands elsewhere */
+  assert.equal(click(0).prevented, false, 'Enter or Space on a tab (a click with detail 0) chooses it at once');
+  assert.equal(click(1).prevented, false, 'and the drag is forgotten');
+  fire('pointerdown', { pointerType: 'mouse', button: 0, clientX: 300 }); fire('pointermove', { clientX: 302 });
+  assert.equal(click(1).prevented, false, 'a mouse that barely moved made a tap, not a drag');
+  fire('pointerdown', { pointerType: 'touch', button: 0, clientX: 300 }); fire('pointermove', { clientX: 100 });
+  assert.equal(click(1).prevented, false, 'a finger scrolls the strip natively, and its tap is a tap');
 });
