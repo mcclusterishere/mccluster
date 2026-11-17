@@ -1,5 +1,6 @@
 -- Recovery artifact for 20261117100100_action_mission_details.sql: never a forward migration.
--- Owner approval required, like the forward file. Apply as the service role.
+-- Owner approval required, like the forward file. Run it as postgres, as the forward file was (the Supabase
+-- MCP `apply_migration` runs as postgres); the service role cannot drop a table it does not own.
 --
 -- What it does, in one transaction: drops public.action_mission_details (its two policies, its grants and
 -- its constraints go with it). Nothing else references the table.

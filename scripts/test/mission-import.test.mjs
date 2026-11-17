@@ -213,8 +213,13 @@ test('the publish touches exactly the imported ids, drafts only; its rollback un
   assert.deepEqual(uuids(del), ids, 'the import rollback deletes exactly the imported ids');
   assert.match(del, /for update;/, 'after locking them');
   assert.match(del, /k\.confrelid = 'public\.action_missions'::regclass/, 'refusing on any foreign key that references them');
-  assert.match(del, /action_creator_funding/);
-  assert.match(del, /action_creator_payout_intents/);
+  assert.match(del, /v_soft_tables constant text\[\] := array\['public\.action_creator_payout_intents', 'public\.action_creator_funding'\];/,
+    'and on the two references production holds without a foreign key, payout intents first');
+  const lockMissions = del.indexOf('\n  perform 1 from public.action_missions where id = any (v_ids) for update;\n');
+  const lockSoft = del.indexOf("\n      execute format('lock table %s in share mode', to_regclass(v_soft));\n");
+  const firstCount = del.indexOf('select count(*)');
+  assert.ok(lockMissions > 0 && lockMissions < lockSoft && lockSoft < firstCount, 'it locks the missions, then those two tables, before it counts anything');
+  assert.match(del, /execute format\('select count\(\*\) from %s where mission_id = any \(\$1\)', to_regclass\(v_soft\)\) into v_n using v_ids;/);
   assert.match(del, /raise exception 'Drawdown import rollback refused/);
 });
 
@@ -244,6 +249,38 @@ test('every pending file says owner approval is required, names its rollback and
   assert.match(read(OUTPUT_FILES.import), /Row counts: public\.action_missions \+125 \(all draft\); public\.action_mission_details \+125\./);
   assert.match(read(OUTPUT_FILES.publish), /Row counts: public\.action_missions: 125 rows draft -> open on the first run; 0 on a rerun\./);
   assert.match(read(OUTPUT_FILES.importRollback), /Row counts: public\.action_missions -125, public\.action_mission_details -125/);
+});
+
+test("the catalog's credit display rule is the README's and the details table's", () => {
+  // CC BY 4.0, section 3(a)(2): the full credit in the detail view, a compact source line on a feed card that
+  // opens it (brief items 5 and 6). The catalog is the file the World's feed reads, so it must say the same.
+  const readme = read('data/missions/drawdown/README.md').replace(/\s+/g, ' ');
+  const rule = / 3\. (Show `credit_line` [^.]+\.)/.exec(readme);
+  assert.ok(rule, 'README rule 3 says how credit_line is shown');
+  const wording = rule[1].replace(/`/g, '');
+  assert.equal(wording, "Show credit_line in full in the mission's detail view, and on a feed card a compact source line that opens it.");
+  assert.equal(catalog.display_rules.filter((r) => r.startsWith(wording)).length, 1, `missions.json carries README rule 3: ${wording}`);
+  assert.deepEqual(catalog.display_rules.filter((r) => /credit_line/.test(r) && !r.startsWith(wording)), [], 'and no other credit_line rule beside it');
+  assert.ok(read('supabase/pending/20261117100100_action_mission_details.sql').includes(
+    "'Shown in full in the mission''s detail view; a feed card shows a compact source line that opens it.'"), 'the credit_line column comment says the same');
+});
+
+test('every mission SQL file says to run it as postgres, never as the service role', () => {
+  // In production the service role owns none of these objects and has no CREATE on schema public, and the MCP
+  // runs as postgres (read 2026-11-17): "apply as the service role" would fail with 42501 on 10.1 and 10.2.
+  const ownerOnly = [
+    'supabase/pending/20261117100000_action_globe_join_scope_v1.sql',
+    'supabase/pending/20261117100000_action_globe_join_scope_v1.rollback.sql',
+    'supabase/pending/20261117100100_action_mission_details.sql',
+    'supabase/pending/20261117100100_action_mission_details.rollback.sql',
+  ];
+  for (const f of [...ownerOnly, ...Object.values(OUTPUT_FILES)]) {
+    const header = read(f).split(/^begin;$/m)[0].replace(/\n-- /g, ' ');
+    assert.doesNotMatch(header, /as the service role/i, `${f} must not say to apply it as the service role`);
+    assert.match(header, /apply_migration`? \(it runs as postgres|apply_migration` runs as postgres/, `${f} says the MCP runs as postgres`);
+  }
+  for (const f of ownerOnly) assert.match(read(f).split(/^begin;$/m)[0].replace(/\n-- /g, ' '), /the service role cannot/i, `${f} says why the service role cannot`);
+  assert.match(read('supabase/pending/PROMOTION-ORDER.md'), /Apply each with the Supabase MCP `apply_migration`, which runs as postgres/);
 });
 
 test('the details table: constraints match the tool, https URLs, guests read only what its mission shows', () => {
@@ -289,6 +326,22 @@ test('the join scope file changes only the gate; its rollback is production\'s b
     assert.equal((codeOnly(s).match(/search_path ?= ?''/g) || []).length, 2, "both with search_path ''");
     assert.ok(s.includes('revoke all on function public.join_action_mission(uuid) from public, anon;\ngrant execute on function public.join_action_mission(uuid) to authenticated, service_role;'));
     assert.ok(s.includes('revoke all on function public.action_globe_can_join_mission(uuid,uuid) from public,anon,authenticated;\ngrant execute on function public.action_globe_can_join_mission(uuid,uuid) to service_role;'));
+  }
+  // Both files refuse unless the two functions are production's or the forward file's own: over anything else,
+  // such as the whole pins file's join (which also checks a mission arc's earlier step), a rerun or a rollback
+  // would silently put back an older join.
+  const accepted = [prodJoin, body(fwd, 'join_action_mission'), prodCan, body(fwd, 'action_globe_can_join_mission')].map(md5).sort();
+  assert.equal(new Set(accepted).size, 4);
+  for (const [s, tag, message] of [[fwd, 'join_scope_guard', 'join scope v1 refused'], [back, 'join_scope_rollback_guard', 'join scope v1 rollback refused']]) {
+    const guard = new RegExp(`\\ndo \\$${tag}\\$\\n([\\s\\S]*?)\\n\\$${tag}\\$;\\n`).exec(s);
+    assert.ok(guard, `${tag} is there`);
+    assert.deepEqual([...guard[1].matchAll(/'([0-9a-f]{32})'/g)].map((m) => m[1]).sort(), accepted, `${tag} accepts exactly production's bodies and the forward file's`);
+    assert.match(guard[1], /v_join is null or v_join not in \('[0-9a-f]{32}', '[0-9a-f]{32}'\)\n {5}or v_can is null or v_can not in \('[0-9a-f]{32}', '[0-9a-f]{32}'\) then\n {4}raise exception/, `${tag} refuses when either function is anything else, or absent`);
+    assert.ok(guard[1].includes(`'${message}: join_action_mission`) && guard[1].includes("errcode = '55000'"), `${tag} raises 55000`);
+    const code = s.slice(s.search(/^begin;$/m));
+    const lock = code.indexOf('\nlock table public.action_globe_mission_regions in access exclusive mode;\n');
+    const firstChange = Math.min(...[/\nalter table /, /\ncreate or replace function /].map((re) => code.search(re)));
+    assert.ok(lock > 0 && lock < code.indexOf(`\ndo $${tag}$`) && code.indexOf(`\ndo $${tag}$`) < firstChange, `${tag}: table lock, then the check, then the first change`);
   }
   assert.match(fwd, /add column if not exists join_scope text not null default 'anywhere'/);
   assert.match(fwd, /check \(join_scope in \('anywhere','region_members'\)\)/);

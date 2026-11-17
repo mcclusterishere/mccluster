@@ -1,9 +1,11 @@
 -- JOINING A PINNED MISSION: A PIN SHOWS WHERE, IT DOES NOT DECIDE WHO (join scope v1)
 --
--- PENDING. Not applied to production. Owner approval required. Apply as the service role with the
--- Supabase MCP `apply_migration` under the name `action_globe_join_scope_v1`, then promote with the
--- steps in supabase/pending/README.md ("To promote one"). Order: supabase/pending/PROMOTION-ORDER.md,
--- section 10. Rollback: 20261117100000_action_globe_join_scope_v1.rollback.sql.
+-- PENDING. Not applied to production. Owner approval required. Apply with the Supabase MCP
+-- `apply_migration` (it runs as postgres, which owns the table and both functions) under the name
+-- `action_globe_join_scope_v1`, then promote with the steps in supabase/pending/README.md ("To promote
+-- one"). The service role cannot apply it: it owns neither the table nor the functions (read 2026-11-17).
+-- Order: supabase/pending/PROMOTION-ORDER.md, section 10.
+-- Rollback: 20261117100000_action_globe_join_scope_v1.rollback.sql.
 -- Proof before apply: scripts/test/mission-catalog.native.integration.mjs (a disposable PostgreSQL built
 -- to production's shape as read on 2026-11-17).
 --
@@ -32,11 +34,37 @@
 -- an open mission, whatever its join_scope.
 -- The whole pins file can still follow this one: it adds the same column and the same check under the
 -- same names, and replaces both functions with its own versions (scripts/test-mission-pins-db.sh runs it
--- on top of this file).
+-- on top of this file). After that, this file must never run again, and its rollback must wait until the
+-- pins file is rolled back: both would replace the pins file's join_action_mission, which also checks a
+-- mission arc's earlier step. Both refuse instead (below).
+--
+-- It REFUSES, changing nothing (55000), unless both functions are still production's (the first run) or
+-- this file's own (a rerun), by md5(prosrc): anything else means another migration has replaced them,
+-- such as the pins file. The table lock comes first, so a migration that alters the same table cannot
+-- slip in between the check and the change.
 --
 -- Idempotent: safe to run twice.
 begin;
 set local lock_timeout = '5s';
+
+lock table public.action_globe_mission_regions in access exclusive mode;
+do $join_scope_guard$
+declare
+  v_join text := (select md5(p.prosrc) from pg_catalog.pg_proc p
+                   where p.oid = to_regprocedure('public.join_action_mission(uuid)'));
+  v_can text := (select md5(p.prosrc) from pg_catalog.pg_proc p
+                  where p.oid = to_regprocedure('public.action_globe_can_join_mission(uuid,uuid)'));
+begin
+  -- production's bodies (2026-11-17) and this file's own, below
+  if v_join is null or v_join not in ('e0684ebe350296c5e6c06de55624ed42', 'f29d7657d536e60f1b7df33ee17bcde4')
+     or v_can is null or v_can not in ('a73db92bb2c4b4e6da84b1e311c82b84', '70700a7b0f68a24a1664d38097685bf5') then
+    raise exception 'join scope v1 refused: join_action_mission (md5 %) or action_globe_can_join_mission (md5 %) is neither production''s nor this file''s',
+      coalesce(v_join, 'absent'), coalesce(v_can, 'absent')
+      using errcode = '55000',
+            hint = 'Another migration has replaced them, such as 20261015230000_action_mission_pins_arcs_black_business.sql, which already holds this change. Nothing was changed.';
+  end if;
+end
+$join_scope_guard$;
 
 alter table public.action_globe_mission_regions
   add column if not exists join_scope text not null default 'anywhere';

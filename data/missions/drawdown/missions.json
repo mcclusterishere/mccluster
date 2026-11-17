@@ -6,7 +6,7 @@
  "count": 125,
  "display_rules": [
   "Mission wording is original. Show \"about\" only as a quotation with \"about_credit\" directly beneath it.",
-  "Show credit_line with every mission. Do not use Project Drawdown images or logos; their solution photos are third-party stock.",
+  "Show credit_line in full in the mission's detail view, and on a feed card a compact source line that opens it. Do not use Project Drawdown images or logos; their solution photos are third-party stock.",
   "Never imply Project Drawdown endorses this site."
  ],
  "missions": [

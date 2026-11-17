@@ -13,10 +13,11 @@
 -- public.action_mission_assignments and public.action_proofs.
 -- Stand-ins, smaller than production but the same where the tested SQL reads them: m_people,
 -- m_auth_user_links, eu_profiles, action_campaigns, intel_mission_decisions, intel_decision_readiness(),
--- social_content_items (a foreign key with ON DELETE SET NULL) and action_creator_funding (a mission_id with
--- no foreign key, as production has it). public.eu_role() is production's with one change: production names
--- the house owner's address in its second branch; this repository is public, so a reserved placeholder
--- stands in. Every other admin is found through eu_profiles.role, as in production.
+-- social_content_items (a foreign key with ON DELETE SET NULL), action_creator_funding and
+-- action_creator_payout_intents (each a mission_id with no foreign key, as production has them).
+-- public.eu_role() is production's with one change: production names the house owner's address in its
+-- second branch; this repository is public, so a reserved placeholder stands in. Every other admin is found
+-- through eu_profiles.role, as in production.
 
 -- auth: production's helpers, verbatim
 create or replace function auth.uid() returns uuid language sql stable as $function$
@@ -256,3 +257,9 @@ create table public.action_creator_funding (
 );
 alter table public.action_creator_funding enable row level security;
 revoke all on public.action_creator_funding from public, anon, authenticated;
+create table public.action_creator_payout_intents (
+  id uuid primary key default gen_random_uuid(),
+  mission_id uuid
+);
+alter table public.action_creator_payout_intents enable row level security;
+revoke all on public.action_creator_payout_intents from public, anon, authenticated;

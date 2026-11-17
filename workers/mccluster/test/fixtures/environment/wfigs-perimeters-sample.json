@@ -1,0 +1,116 @@
+{
+ "type": "FeatureCollection",
+ "crs": {
+  "type": "name",
+  "properties": {
+   "name": "EPSG:4326"
+  }
+ },
+ "properties": {
+  "exceededTransferLimit": true
+ },
+ "features": [
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -88.6564,
+       30.4376
+      ],
+      [
+       -88.6568,
+       30.4375
+      ],
+      [
+       -88.6567,
+       30.4377
+      ],
+      [
+       -88.6564,
+       30.4376
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "poly_IncidentName": "Park N Ride",
+    "attr_UniqueFireIdentifier": "2026-MSMSR-000553",
+    "poly_GISAcres": 0.01,
+    "poly_PolygonDateTime": 1787676955741,
+    "poly_DateCurrent": 1790095832160,
+    "attr_FireDiscoveryDateTime": 1787676788000
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -89.8803,
+       45.9789
+      ],
+      [
+       -89.8802,
+       45.9791
+      ],
+      [
+       -89.8801,
+       45.979
+      ],
+      [
+       -89.8803,
+       45.9789
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "poly_IncidentName": "Line",
+    "attr_UniqueFireIdentifier": "2026-WIWIS-FIRE125483",
+    "poly_GISAcres": 0.1,
+    "poly_PolygonDateTime": 1792605657000,
+    "poly_DateCurrent": 1792686028000,
+    "attr_FireDiscoveryDateTime": 1792602900000
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -87.6741,
+       45.3138
+      ],
+      [
+       -87.6739,
+       45.314
+      ],
+      [
+       -87.6739,
+       45.3138
+      ],
+      [
+       -87.6741,
+       45.3138
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "poly_IncidentName": "Signal",
+    "attr_UniqueFireIdentifier": "2026-WIWIS-FIRE125501",
+    "poly_GISAcres": 0.15,
+    "poly_PolygonDateTime": 1792782964000,
+    "poly_DateCurrent": 1793022854000,
+    "attr_FireDiscoveryDateTime": 1792780200000
+   }
+  }
+ ]
+}

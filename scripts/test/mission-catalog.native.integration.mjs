@@ -9,7 +9,7 @@
 // Disposable server only (scripts/test/support/native-postgres.mjs); never the canonical project.
 import { readFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
-import { refuseUnlessAllowed, startNativePostgres, supabaseShapedDatabase } from './support/native-postgres.mjs';
+import { refuseUnlessAllowed, startNativePostgres, supabaseShapedDatabase, waitsOn } from './support/native-postgres.mjs';
 import {
   readCatalog, driftedFiles, missionId, NAMESPACE, ID_NAME_PREFIX, OUTPUT_FILES, PRODUCTION_MISSION_COLUMNS,
   PRODUCTION_MISSION_CHECKS, CC_BY,
@@ -49,6 +49,11 @@ const PRODUCTION_PROSRC_MD5 = {
 const PRODUCTION_ACL = {
   [JOIN]: ['authenticated=X/postgres', 'postgres=X/postgres', 'service_role=X/postgres'],
   [CAN_JOIN]: ['postgres=X/postgres', 'service_role=X/postgres'],
+};
+// The join scope file's own bodies: its guard, and its rollback's, accept these and production's, nothing else.
+const JOIN_SCOPE_PROSRC_MD5 = {
+  [JOIN]: 'f29d7657d536e60f1b7df33ee17bcde4',
+  [CAN_JOIN]: '70700a7b0f68a24a1664d38097685bf5',
 };
 const FREE_RIDE = '302dcb4e-ca21-4289-b633-9c397985fb9d';
 const ANA = '00000000-0000-4000-8000-0000000000a1'; // a member with no region
@@ -156,21 +161,42 @@ try {
   await apply('delete from public.action_globe_mission_regions');
 
   /* ---- 1. join scope ------------------------------------------------------------------------------------- */
+  // Who can apply it: as in production, the service role owns none of these objects and has no CREATE on schema
+  // public, so only the owner can (the MCP's apply_migration runs as postgres).
+  eq((await one("select has_schema_privilege('service_role', 'public', 'CREATE') as c")).c, false, 'as in production, the service role has no CREATE on schema public');
+  await fails(service.query(sql.joinScope), '42501', /must be owner of table action_globe_mission_regions/, 'so it cannot apply 10.1');
+  await service.query('rollback');
   await apply(sql.joinScope); await apply(sql.joinScope);
   const col = await one("select column_default, is_nullable from information_schema.columns where table_schema = 'public' and table_name = 'action_globe_mission_regions' and column_name = 'join_scope'");
   eq([col.column_default, col.is_nullable], ["'anywhere'::text", 'NO'], "join scope applies twice: join_scope text not null default 'anywhere'");
   await fails(pin(FREE_RIDE, 'US-CT', true, 'members_only'), '23514', /join_scope_check/, 'join_scope accepts only anywhere and region_members');
-  ok((await md5Of(JOIN)) !== PRODUCTION_PROSRC_MD5[JOIN] && (await md5Of(CAN_JOIN)) !== PRODUCTION_PROSRC_MD5[CAN_JOIN], 'both join functions now have the new bodies');
+  eq([await md5Of(JOIN), await md5Of(CAN_JOIN)], [JOIN_SCOPE_PROSRC_MD5[JOIN], JOIN_SCOPE_PROSRC_MD5[CAN_JOIN]], 'both join functions now have the new bodies');
   for (const sig of [JOIN, CAN_JOIN]) {
     eq(await security(sig), { prosecdef: true, proconfig: ['search_path=""'] }, `${sig} keeps SECURITY DEFINER and search_path ''`);
     eq(await aclOf(sig), PRODUCTION_ACL[sig], `${sig} keeps production's grants`);
   }
+  // Another migration replaces a join function after 10.1, as the whole pins file does (its join also waits for a
+  // mission arc's earlier step). Rerunning 10.1, or its rollback, would put an older body back over it: both refuse.
+  const joinScopeColumns = async () => (await admin.query("select column_name from information_schema.columns where table_schema = 'public' and table_name = 'action_globe_mission_regions' order by 1")).rows.map((r) => r.column_name);
+  const columnsBefore = await joinScopeColumns();
+  for (const [sig, name] of [[JOIN, 'join_action_mission'], [CAN_JOIN, 'action_globe_can_join_mission']]) {
+    const own = new RegExp(`\\ncreate or replace function public\\.${name}\\([^)]*\\)[\\s\\S]*?\\n\\$\\$;`).exec(sql.joinScope)[0];
+    await apply(own.replace('\nas $$\n', () => '\nas $$\n -- replaced by a later migration\n'));
+    const replaced = await md5Of(sig);
+    await refused(sql.joinScope, '55000', /join scope v1 refused/, `10.1 refuses to run again once another migration has replaced ${name}`);
+    await refused(sql.joinScopeRollback, '55000', /join scope v1 rollback refused/, 'and so does its rollback');
+    eq([await md5Of(sig), await joinScopeColumns()], [replaced, columnsBefore], 'neither changed the function or the table');
+    await apply(own);
+  }
+  eq([await md5Of(JOIN), await md5Of(CAN_JOIN)], [JOIN_SCOPE_PROSRC_MD5[JOIN], JOIN_SCOPE_PROSRC_MD5[CAN_JOIN]], "10.1's bodies are back for the rest of the run");
   await fails(anon.query('select public.join_action_mission($1)', [FREE_RIDE]), '42501', /permission denied/, 'a guest still cannot call join_action_mission');
   await fails(ana.query('select public.action_globe_can_join_mission($1, $2)', [mUid(ANA), FREE_RIDE]), '42501', /permission denied/, 'a member still cannot call the eligibility helper');
 
   /* ---- 2. mission details -------------------------------------------------------------------------------- */
   await refused(sql.import, '55000', /apply 20261117100100_action_mission_details\.sql/, 'the import refuses, changing nothing, before the details table exists');
   eq(await statusCounts(), {}, 'and wrote no mission');
+  await fails(service.query(sql.details), '42501', /permission denied for schema public/, 'the service role cannot apply 10.2 either');
+  await service.query('rollback');
   await apply(sql.details); await apply(sql.details);
   const priv = (await admin.query(`select r as role, has_table_privilege(r, 'public.action_mission_details', 'SELECT') as s,
       has_table_privilege(r, 'public.action_mission_details', 'INSERT') or has_table_privilege(r, 'public.action_mission_details', 'UPDATE')
@@ -221,6 +247,12 @@ try {
   const draftContent = await missionsContent();
 
   /* ---- 4. publish ---------------------------------------------------------------------------------------- */
+  // A draft outside the catalog, as the owner may be writing one: the publish names its 125 ids and must leave this
+  // one alone. Without it the only other mission is the free ride, already open, so a publish that opened every
+  // draft would pass every check below.
+  const OWNER_DRAFT = '00000000-0000-4000-8000-00000000ee02';
+  await apply(`insert into public.action_missions(id, title, status) values ('${OWNER_DRAFT}', 'An owner''s draft outside the catalog', 'draft')`);
+  const ownerDraftStatus = async () => (await one('select status from public.action_missions where id = $1', [OWNER_DRAFT])).status;
   await apply(`update public.action_missions set status = 'paused' where id = '${ids[1]}'`);
   await apply(sql.publish);
   eq(await statusCounts(), { open: N - 1, paused: 1 }, 'publish opens the drafts and leaves a mission the owner paused alone');
@@ -228,12 +260,15 @@ try {
   await apply(sql.publish);
   eq(await statusCounts(), { open: N }, `run again it opens the one draft left: all ${N} open`);
   eq((await one("select count(*)::int as c from public.action_missions where status = 'open' and not (id = any ($1))", [ids])).c, 1, 'and touched no other mission (the free ride stays as it was)');
+  eq(await ownerDraftStatus(), 'draft', "an owner's draft outside the catalog stays a draft");
   eq(await sees(anon), [N, N], `a guest reads the ${N} published missions and their ${N} details rows`);
   const credits = await anon.query('select count(*)::int as c from public.action_missions m join public.action_mission_details d on d.mission_id = m.id where m.id = any ($1) and length(d.credit_line) > 0', [ids]);
   eq(credits.rows[0].c, N, 'every published mission a guest reads has its credit line');
   const afterPublish = [await missionsDigest(), await detailsDigest()];
   await apply(sql.publish);
   eq([await missionsDigest(), await detailsDigest()], afterPublish, 'rerunning the publish changes nothing');
+  eq(await ownerDraftStatus(), 'draft', "the owner's draft is still a draft after the rerun");
+  await apply(`delete from public.action_missions where id = '${OWNER_DRAFT}'`);
   await service.query(`update public.action_missions set status = 'draft' where id = $1`, [ids[2]]);
   eq(await sees(anon), [N - 1, N - 1], 'a mission set back to draft disappears for a guest, its details with it');
   eq((await anon.query('select count(*)::int as c from public.action_mission_details where mission_id = $1', [ids[2]])).rows[0].c, 0, 'a guest cannot read that draft\'s details by id');
@@ -280,6 +315,27 @@ try {
   await apply('delete from public.social_content_items');
   await apply(`insert into public.action_creator_funding(mission_id) values ('${X}')`);
   await refused(sql.importRollback, '55000', /action_creator_funding\.mission_id: 1/, 'so does a mission_id held without a foreign key');
+  await apply('delete from public.action_creator_funding');
+  await apply(`insert into public.action_creator_payout_intents(mission_id) values ('${Y}')`);
+  await refused(sql.importRollback, '55000', /action_creator_payout_intents\.mission_id: 1/, 'and the other one, a payout intent');
+  await apply('delete from public.action_creator_payout_intents');
+  // A funding row another session is still writing when the rollback starts: no foreign key holds it back, so the
+  // rollback must wait for it (the table lock), then count it, never delete its mission under it.
+  const writer = await server.client(DB);
+  const rolling = await server.client(DB);
+  clients.push(writer, rolling);
+  const pidOf = async (c) => ({ pid: (await c.query('select pg_backend_pid() as p')).rows[0].p });
+  const [writerPid, rollingPid] = [await pidOf(writer), await pidOf(rolling)];
+  await writer.query('begin');
+  await writer.query('insert into public.action_creator_funding(mission_id) values ($1)', [X]);
+  const outcome = rolling.query(sql.importRollback).then(() => null, (error) => error);
+  await waitsOn(admin, rollingPid, writerPid, 'the import rollback waits for the funding row being written');
+  ok(true, 'the import rollback waits for a funding row another session is still writing');
+  await writer.query('commit');
+  const late = await outcome;
+  await rolling.query('rollback');
+  ok(late?.code === '55000' && /action_creator_funding\.mission_id: 1/.test(late.message), `then counts it and refuses (${late?.code} ${late?.message})`);
+  eq(await statusCounts(), { draft: N }, 'and deleted nothing');
   await apply('delete from public.action_creator_funding');
   await apply(sql.importRollback);
   eq(await missionsDigest(), preImport, 'the import rollback leaves public.action_missions exactly as before the import');

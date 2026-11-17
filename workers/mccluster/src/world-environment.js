@@ -4,7 +4,7 @@
 import { createEnvironmentProofAdapter, ENVIRONMENT_PROOF_ERRORS } from './environment-proofs.js';
 import { createMcClusterEnvironmentPlanning, ENVIRONMENT_PLANNING_ERROR_CODES } from './environment-planning-mccluster.js';
 import { reply } from './lib/http.js';
-import { bearerUser, cachedLayer } from './world-layers.js';
+import { bearerUser, sourceHealth, trackedLayer } from './world-layers.js';
 import { fetchWeather, fetchNatural } from './world-events.js';
 import { fetchQuakes, fetchCyclones } from './world-halo-layers.js';
 import { service, uuid } from './world-cctv.js';
@@ -12,6 +12,8 @@ import { isHouseOwner } from './world-access.js';
 import { readModulePolicy, MODULE_POLICY_ERRORS } from './eup/modules.js';
 import { environmentFeed as productFeed, clip } from '../../../vendor/equity-uprise/src/environment/evidence.mjs';
 import { createEnvironmentServer } from '../../../vendor/equity-uprise/src/environment/server.mjs';
+import { readModulePolicy as productPolicy, moduleRefusal } from '../../../vendor/equity-uprise/src/server/module-policy.mjs';
+import { handleEnvironmentLayers } from './world-environment-layers.js';
 export { ENVIRONMENT_PATH, ENVIRONMENT_TEAM, ENVIRONMENT_ACTIONS, environmentFacts } from '../../../vendor/equity-uprise/src/environment/evidence.mjs';
 const PROVIDERS = { nws:fetchWeather, eonet:fetchNatural, usgs:fetchQuakes, nhc:fetchCyclones };
 const installation = Object.freeze({
@@ -26,8 +28,25 @@ const installation = Object.freeze({
 // the code and status it answers for the same state itself.
 const MODULE_REFUSALS = MODULE_POLICY_ERRORS.consumer;
 const MODULE_FAILURE_CODES = Object.freeze(Object.values(MODULE_REFUSALS).map(([, code]) => code));
+/* Each feed source's health, added beside the pinned product's own source fields (id, label, url,
+   status, fetched_at, observed_at, coverage, stale): why it is stale or unavailable, its last
+   successful retrieval, and its attribution and licence (docs/control-plane/WORLD-ENVIRONMENT-CONTRACT.md). */
+export const FEED_SOURCE_TERMS = Object.freeze({
+  nws: Object.freeze({ attribution: 'NOAA National Weather Service', license: 'Public domain (U.S. Government work)' }),
+  eonet: Object.freeze({ attribution: 'NASA Earth Observatory Natural Event Tracker (EONET)', license: 'NASA open data; each event names the sources EONET drew it from' }),
+  usgs: Object.freeze({ attribution: 'U.S. Geological Survey, Earthquake Hazards Program', license: 'Public domain (U.S. Government work)' }),
+  nhc: Object.freeze({ attribution: 'NOAA National Hurricane Center', license: 'Public domain (U.S. Government work)' })
+});
 export async function environmentFeed(env,{fetchImpl=fetch,cacheImpl=null}={}) {
-  return productFeed({readSource:spec=>cachedLayer({layer:spec.id,key:`consumer-environment-v1-${spec.id}`,ttl:spec.ttl,rows:spec.rows,fetcher:PROVIDERS[spec.id]},env,fetchImpl,cacheImpl)});
+  const outcomes=new Map();
+  const feed=await productFeed({readSource:async spec=>{
+    const outcome=await trackedLayer({layer:spec.id,key:`consumer-environment-v1-${spec.id}`,ttl:spec.ttl,rows:spec.rows,fetcher:PROVIDERS[spec.id]},env,fetchImpl,cacheImpl);
+    outcomes.set(spec.id,outcome);return outcome;
+  }});
+  return {...feed,sources:feed.sources.map(source=>{
+    const health=sourceHealth({...source,...FEED_SOURCE_TERMS[source.id]},outcomes.get(source.id));
+    return {...source,reason:health.reason,last_success_at:health.last_success_at,attribution:health.attribution,license:health.license};
+  })};
 }
 async function rpc(request, env, name, args, fetchImpl, privileged = false) {
   const res = await fetchImpl(`${env.SUPABASE_URL}/rest/v1/rpc/${name}`, { method: 'POST', headers: {
@@ -47,8 +66,22 @@ async function missions(env, fetchImpl, owner = false) {
   const rows = await service(env, `action_environment_missions?select=event_id,action_id,mission_id,${owner ? 'source_snapshot,' : ''}action_missions!inner(id,title,description,status)&${owner ? '' : 'approved_by=not.is.null&action_missions.status=in.(open,paused,closed)&'}order=created_at.desc&limit=200`, fetchImpl);
   return rows.filter(r => uuid(r.mission_id) && r.action_missions).map(r => ({ id: r.mission_id, event_id: r.event_id, action_id: r.action_id, title: r.action_missions.title, description: r.action_missions.description, status: r.action_missions.status, ...(owner ? { source_snapshot: r.source_snapshot } : {}) }));
 }
+/* The gate of the public environmental layers (./world-environment-layers.js): the same persisted
+   policy as GET /v1/world/environment, read on every request with the service key and judged by the
+   pinned product's own rules (vendor module-policy.mjs), in the order its server applies them. A
+   missing, unapplied, unreachable or malformed policy is 503 module_policy_unavailable; disabled is 404
+   module_disabled; draining refuses writes only (these routes are reads). Never defaulted to on. */
+export async function environmentGate(request, env, fetchImpl = fetch) {
+  let policy;
+  try { policy = productPolicy(await readModulePolicy(env, fetchImpl, 'environment'), installation.id, 'environment'); }
+  catch { return { code: 'module_policy_unavailable', status: 503 }; }
+  if (!installation.modules.environment) return { code: 'module_disabled', status: 404 };
+  return moduleRefusal(policy, request.method);
+}
 export async function handleWorldEnvironment(request, env, options = {}) {
   const { fetchImpl=fetch }=options;
+  const layer=await handleEnvironmentLayers(request,env,{...options,gate:()=>environmentGate(request,env,fetchImpl)});
+  if(layer)return layer;
   const planning=createMcClusterEnvironmentPlanning({request,env,fetchImpl,readEvent:async id=>(await environmentFeed(env,options)).events.find(event=>event.id===id)});
   const controller=createEnvironmentServer({
     proofs:createEnvironmentProofAdapter(request,env,{fetchImpl}),

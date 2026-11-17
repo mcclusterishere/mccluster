@@ -479,8 +479,9 @@ export function waterLevelUrl(id) {
   return `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?product=water_level&application=mccluster&station=${id}&datum=MLLW&units=metric&time_zone=gmt&format=json&range=24`;
 }
 
-/* a JSON body read with a size bound, inside upstream's timeout */
-function boundedJson(maxBytes) {
+/* a JSON body read with a size bound, inside upstream's timeout
+   (exported for the public environmental layers, ./world-environment-layers.js) */
+export function boundedJson(maxBytes) {
   return async (res) => {
     if (Number(res.headers.get('content-length')) > maxBytes) throw new UpstreamError('upstream_too_large', 'provider answer is too large');
     let text = '';
