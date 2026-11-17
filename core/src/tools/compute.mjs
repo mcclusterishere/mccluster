@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import { enqueueComputeTask, liveCapabilityImplementations } from '../compute/store.mjs';
+import { HARDWARE_MODE_RANK } from '../compute/protocol.mjs';
 
 const ROUTING_KEYS = new Set(['provider', 'transport', 'hosting', 'billing']);
 
@@ -30,6 +31,43 @@ function computeRequirements(requirements = {}) {
   return Object.keys(features).length ? { features } : {};
 }
 
+function hardwareModeOf(entry) {
+  const mode = entry?.inventory?.runtime?.hardware_mode;
+  return typeof mode === 'string' && Object.hasOwn(HARDWARE_MODE_RANK, mode) ? mode : 'unknown';
+}
+
+// The node's measured generation rate for exactly this entry's model: the
+// doctor's sidecar map first, else the node's best measurement when it is
+// this model. Never a guess from another model.
+function generationRateOf(entry) {
+  const runtime = entry?.inventory?.runtime;
+  const byModel = runtime?.measured_inference_by_model?.[entry?.model]?.generation_tokens_per_second;
+  const value = byModel ?? (runtime?.measured_inference?.model === entry?.model ? runtime.measured_inference.generation_tokens_per_second : null);
+  const n = Number(value);
+  return value != null && Number.isFinite(n) && n >= 0 ? n : null;
+}
+
+// Evidence the registry ranks on: the best hardware_mode among the live nodes
+// of one (capability, implementation) group, the fastest measured generation
+// for the entry model, and the per-node detail.
+function bindingEvidence(entries) {
+  const nodes = entries.map((entry) => ({
+    node_id: entry.node_id,
+    node_name: entry.node_name,
+    hardware_mode: hardwareModeOf(entry),
+    generation_tokens_per_second: generationRateOf(entry)
+  }));
+  const best = nodes.reduce((mode, node) => (HARDWARE_MODE_RANK[node.hardware_mode] > HARDWARE_MODE_RANK[mode] ? node.hardware_mode : mode), 'unknown');
+  const rates = nodes.map((node) => node.generation_tokens_per_second).filter((rate) => rate != null);
+  return {
+    hardware_mode: best,
+    hardware_mode_rank: HARDWARE_MODE_RANK[best],
+    generation_tokens_per_second: rates.length ? Math.max(...rates) : null,
+    live_nodes: nodes.length,
+    nodes
+  };
+}
+
 export function normalizeComputeEnqueueResult(result) {
   const task = result?.task || null;
   if (!task) {
@@ -41,16 +79,16 @@ export function normalizeComputeEnqueueResult(result) {
   return { task, replayed: Boolean(result?.replayed) };
 }
 
-export async function discoverComputeTools() {
-  const orgId = process.env.MCCLUSTER_ORG_ID;
-  if (!orgId || !process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+export async function discoverComputeTools({ live = liveCapabilityImplementations, env = process.env } = {}) {
+  const orgId = env.MCCLUSTER_ORG_ID;
+  if (!orgId || !env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
     return {
       tools: [],
       diagnostic: { id: 'mccluster-compute', transport: 'compute', ok: false, reason: 'control_plane_not_configured' }
     };
   }
 
-  const implementations = await liveCapabilityImplementations({ orgId });
+  const implementations = await live({ orgId });
   const grouped = new Map();
   for (const item of implementations) {
     const key = `${item.capability}\u0000${item.implementation}`;
@@ -65,6 +103,7 @@ export async function discoverComputeTools() {
     const toolName = `compute.${first.capability}.${idHash}`;
     const bindingId = `compute.${first.capability}.${idHash}`;
     const features = mergeFeatures(entries);
+    const evidence = bindingEvidence(entries);
     tools.push({
       name: toolName,
       title: `Self-hosted ${first.capability}: ${first.implementation}`,
@@ -87,14 +126,16 @@ export async function discoverComputeTools() {
         status: 'active',
         priority: 100,
         economics: { hosting: 'self-hosted', billing: 'compute' },
-        features
+        features,
+        evidence
       },
       target: {
         orgId,
         capability: first.capability,
         implementation: first.implementation,
         nodes: entries.map((entry) => entry.node_id),
-        maxConcurrency: entries.reduce((sum, entry) => sum + Number(entry.max_concurrency || 1), 0)
+        maxConcurrency: entries.reduce((sum, entry) => sum + Number(entry.max_concurrency || 1), 0),
+        evidence
       }
     });
   }
@@ -112,8 +153,20 @@ export async function discoverComputeTools() {
   };
 }
 
-export async function callComputeTool(target, args = {}, options = {}) {
-  const result = await enqueueComputeTask({
+// The discovery snapshot can be up to CORE_TOOL_CACHE_TTL_MS old, so the live
+// nodes are re-read before a task is pinned to an implementation. No live node
+// is a fallback code (the registry tries the next binding); a failed read is not.
+export async function callComputeTool(target, args = {}, options = {}, { enqueue = enqueueComputeTask, live = liveCapabilityImplementations } = {}) {
+  const fresh = (await live({ orgId: target.orgId }))
+    .filter((item) => item.capability === target.capability && item.implementation === target.implementation);
+  if (!fresh.length) {
+    throw Object.assign(new Error(`No live compute node serves ${target.capability}/${target.implementation}`), {
+      status: 503,
+      code: 'COMPUTE_NO_LIVE_NODE',
+      retryable: true
+    });
+  }
+  const result = await enqueue({
     orgId: target.orgId,
     capability: target.capability,
     implementation: target.implementation,
@@ -125,8 +178,8 @@ export async function callComputeTool(target, args = {}, options = {}) {
     metadata: {
       source: options.source || 'mccluster-tool-bus',
       requested_at: new Date().toISOString(),
-      advertised_nodes_at_submit: target.nodes,
-      advertised_concurrency_at_submit: target.maxConcurrency
+      advertised_nodes_at_submit: fresh.map((item) => item.node_id),
+      advertised_concurrency_at_submit: fresh.reduce((sum, item) => sum + Number(item.max_concurrency || 1), 0)
     }
   });
   return normalizeComputeEnqueueResult(result);
