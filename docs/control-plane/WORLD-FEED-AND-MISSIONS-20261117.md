@@ -38,15 +38,17 @@ the exact change.
 ## The target
 
 1. **The feed strip** (`#mnFeedScope`, the drag-scrolling row under the globe): Local · Everything (key `global`,
-   pressed on load) · Equity Uprise (key `equity`) · Live · News · People.
+   pressed on load) · Equity Uprise (key `equity`) · Environment (key `environment`) · Live · News · People.
+   Environment is a labelled tab with a small globe-and-leaf icon, never the logo (owner, 2026-11-17, later
+   decision below).
 2. **The Equity Uprise tab** shows the owner-supplied PNG only: `assets/img/equity-uprise-mark-white.png` on a dark
    ground, `assets/img/equity-uprise-mark.png` on a light (daylight) ground. Choosing a supplied variant is not
    recolouring. Scale proportionally to the strip's icon size; no plate, filter, crop or visible words. Its
    accessible name is "Equity Uprise". (`AGENTS.md`, "THE LOGOS ARE NOT YOURS TO DRAW".)
 3. **Everything** combines member posts, news and missions in one stream. Missions are interleaved at a modest
    ratio (no more than one mission per few other items), each mission at most once per page.
-4. **The Equity Uprise tab** is the mission feed: every open mission as a post, with the Environmental Justice
-   panel above them.
+4. **The Equity Uprise tab** is the mission feed: every open mission as a post. The Environmental Justice panel
+   is NOT in this tab: observations stay separate from missions (see 11).
 5. **A mission post** is the same size and shape as any post (`mn__post-card`): a header with the mission's kind
    and domain (never the brand written out), the title, the description clamped like a post body, one meta line
    (difficulty and points), a compact source line for sourced missions that opens the full credit, and the
@@ -65,11 +67,14 @@ the exact change.
    anywhere. Picking a country turns the feed to Local, which lists that country's posts, news and missions.
 10. **The globe** shows mission pins to everyone (no `missions=0`). A pin exists only where the owner placed a
     mission; a mission that can be done anywhere has no pin. Production has no pins today.
-11. **The Environmental Justice panel** reads clearly by day and by night, says plainly when its sources are
-    unavailable instead of showing a broken state (production answers 503 until its SQL is applied), and lists
-    official reports (NWS, NASA EONET, USGS, NOAA NHC) with their source links. A report is not evidence of
-    exposure or injustice and is never labelled so. The abandoned branch
-    `codex/equity-environment-always-visible-20261109` (`a47f9a31`) is salvaged where it helps.
+11. **The Environment tab** opens the environmental globe: its layers on the same globe and the Environmental
+    Justice panel, which reads clearly by day and by night, shows each source's health and last success, says
+    plainly when its sources are unavailable instead of showing a broken state, and lists official reports (NWS,
+    NASA EONET, USGS, NOAA NHC, and the public-safe additions the owner asked for on 2026-11-17) with their
+    source, timestamps, coverage and links. A report is not evidence of exposure or injustice and is never
+    labelled so. Observations never mix with missions in one list. The abandoned branch
+    `codex/equity-environment-always-visible-20261109` (`a47f9a31`) is salvaged where it helps. The cinematic,
+    real-data requirements are in the owner's later request of the same day (environmental globe section below).
 12. **Sign in and return**: from a mission post, the dialog, a pin, a shared link or the bar's Sign in chip, a
     guest who signs in (or creates an account and confirms it) comes back to that mission, and Join sends exactly
     one `join_action_mission`.
@@ -110,6 +115,24 @@ Mobile first (`AGENTS.md`, hard rule 14): designed at 390 px, verified at 390, 8
   off until the visitor agrees, as before.
 - **"Get Your Hu Up!"** is removed from the World's sign-in panel and the `/company` footer, and from anywhere else
   it is public.
+
+## Owner decisions later on 2026-11-17 (the environmental globe)
+
+The owner asked for the Environmental Justice globe to become "a compelling, real-data experience … not a
+generic collection of flashing icons", truthful about every source, and "Add a clear environmental entry and
+preserve the existing design identity." "Keep observations separate from Project Drawdown-informed actions and
+fictional PRIM3 missions." Answered in session:
+
+- **Entry**: a labelled "Environment" tab in the feed strip (globe-and-leaf icon, never the logo). The logo stays
+  the missions tab and the Join control. This supersedes any placement of `#wePanel` in the Equity Uprise tab.
+- **Shipping**: the environmental work ships with this branch, together with the feed work, once both are verified.
+- **Production**: the owner approved applying `supabase/pending/eup_module_policy_v1.sql`. It was applied on
+  2026-11-17 as migration `20261117144103_eup_module_policy_v1`; production stored it byte for byte (MD5
+  `1f1daee2582fd0a6f3a659350a07491e`, 26,070 bytes; ledger 366 to 367 rows). It creates no policy row: the owner
+  installs and enables the `environment` module in Control (System, E=Up, Overview, Modules). Until then
+  `GET /v1/world/environment` keeps answering 503 `module_policy_unavailable`, as designed.
+- Owner-only Halo routes stay owner-only; the public globe grows only through the narrowly scoped public bridge,
+  behind the same module policy. Illustrative animation is labelled as such; nothing is fabricated.
 
 ## Build queue
 
