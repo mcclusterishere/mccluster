@@ -309,7 +309,8 @@ The native proof starts a disposable PostgreSQL on 127.0.0.1 and refuses without
 It builds production's shape (`supabase/tests/action_mission_catalog.stub.sql` and the four applied globe
 migrations; seven function bodies checked against production's md5(prosrc)), applies 10.1 to 10.4, reruns them,
 reads as a guest, a member and an admin, joins with and without pins, then rolls each back and checks the state
-before it, `join_action_mission`'s md5 included.
+before it, `join_action_mission`'s md5 included. Run on 2026-11-17: 84 checks passed on PostgreSQL 16.15 and on
+17.7 (production runs 17.6).
 
 Read-only on production, 2026-11-17: 1 mission (open), 3 regions, 0 pins, 0 member regions, 0 campaigns, no
 `join_scope` column, no `action_mission_details`, latest migration `20261114060150`. Rerun these reads
