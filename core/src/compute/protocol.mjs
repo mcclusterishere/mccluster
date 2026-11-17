@@ -3,6 +3,12 @@ export const SIGNATURE_ALGORITHM = 'ed25519';
 export const DEFAULT_LEASE_SECONDS = 120;
 export const DEFAULT_HEARTBEAT_SECONDS = 30;
 export const DEFAULT_CLOCK_SKEW_MS = 5 * 60_000;
+// hardware_mode is derived by the node agent (hardware.mjs deriveHardwareMode)
+// and published in inventory.runtime.hardware_mode; the rank orders bindings.
+export const HARDWARE_MODES = Object.freeze(['gpu-verified', 'gpu-present-unverified', 'cpu-only', 'unknown']);
+export const HARDWARE_MODE_RANK = Object.freeze({ 'gpu-verified': 3, 'gpu-present-unverified': 2, 'cpu-only': 1, unknown: 0 });
+// A claim may ask the scheduler to leave tasks younger than this to a GPU node.
+export const MAX_YIELD_SECONDS = 300;
 
 const CAPABILITY_ID = /^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/;
 const IMPLEMENTATION_ID = /^[a-z][a-z0-9]*(?:[._:/-][a-z0-9]+)*$/;
@@ -58,7 +64,12 @@ export function validateInventory(input) {
       uuid: value.uuid == null ? null : String(value.uuid).slice(0, 160),
       vram_bytes: Math.floor(finite(value.vram_bytes ?? 0, `inventory.gpus[${i}].vram_bytes`, { min: 0 })),
       driver: value.driver == null ? null : String(value.driver).slice(0, 120),
-      compute: value.compute == null ? null : String(value.compute).slice(0, 120)
+      compute: value.compute == null ? null : String(value.compute).slice(0, 120),
+      // integrated|discrete|unknown, dedicated|shared|unknown, and where the
+      // VRAM number came from (nvidia-smi|registry|cim|sysfs|none).
+      form: value.form == null ? null : String(value.form).slice(0, 40),
+      memory: value.memory == null ? null : String(value.memory).slice(0, 40),
+      vram_source: value.vram_source == null ? null : String(value.vram_source).slice(0, 40)
     };
   }) : [];
   return {
@@ -104,6 +115,18 @@ export function validateLoad(input = {}) {
     memory_free_bytes: load.memory_free_bytes == null ? null : Math.floor(finite(load.memory_free_bytes, 'load.memory_free_bytes', { min: 0 })),
     disk_free_bytes: load.disk_free_bytes == null ? null : Math.floor(finite(load.disk_free_bytes, 'load.disk_free_bytes', { min: 0 }))
   };
+}
+
+// Gateway helpers shared with the node agent's vocabulary.
+export function clampYieldSeconds(value) {
+  const n = Math.floor(Number(value));
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.min(MAX_YIELD_SECONDS, n));
+}
+
+export function countLiveGpuNodes(nodes, { excludeNodeId = null } = {}) {
+  if (!Array.isArray(nodes)) return 0;
+  return nodes.filter((node) => node && node.id !== excludeNodeId && node?.inventory?.runtime?.hardware_mode === 'gpu-verified').length;
 }
 
 export function capabilityIds(manifest) {

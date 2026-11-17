@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { COMPUTE_PROTOCOL, validateCapabilityManifest, validateEnrollment } from '../src/compute/protocol.mjs';
+import { COMPUTE_PROTOCOL, HARDWARE_MODES, HARDWARE_MODE_RANK, clampYieldSeconds, countLiveGpuNodes, validateCapabilityManifest, validateEnrollment, validateInventory } from '../src/compute/protocol.mjs';
 import { generateNodeIdentity, nodeIdFromPublicKey, signRequest, verifySignedRequest } from '../src/compute/signature.mjs';
 
 test('node identity is deterministically derived from its public key', () => {
@@ -130,4 +130,44 @@ test('duplicate capability implementations fail closed', () => {
     { capability: 'video.generate', implementation: 'ltx.local' },
     { capability: 'video.generate', implementation: 'ltx.local' }
   ]), /Duplicate capability implementation/);
+});
+
+test('inventory keeps the per-GPU form, memory and vram_source fields and the runtime hardware_mode, still stripping unknown gpu keys', () => {
+  const inventory = validateInventory({
+    gpus: [{ vendor: 'amd', model: 'AMD Radeon 780M Graphics', vram_bytes: 536870912, form: 'integrated', memory: 'shared', vram_source: 'registry', local_path: 'not for the plane' }],
+    runtime: { hardware_mode: 'gpu-present-unverified', gpu_probe: { ok: true } }
+  });
+  assert.equal(inventory.gpus[0].form, 'integrated');
+  assert.equal(inventory.gpus[0].memory, 'shared');
+  assert.equal(inventory.gpus[0].vram_source, 'registry');
+  assert.equal(inventory.gpus[0].local_path, undefined, 'unknown gpu keys are still dropped');
+  assert.equal(inventory.runtime.hardware_mode, 'gpu-present-unverified');
+  const bare = validateInventory({ gpus: [{ vendor: 'nvidia', vram_bytes: 1 }] }).gpus[0];
+  assert.equal(bare.form, null);
+  assert.equal(bare.memory, null);
+  assert.equal(bare.vram_source, null);
+  const long = validateInventory({ gpus: [{ vendor: 'x', form: 'y'.repeat(100) }] }).gpus[0];
+  assert.equal(long.form.length, 40);
+});
+
+test('the hardware_mode vocabulary, its rank, the yield clamp and the live GPU count are shared protocol helpers', () => {
+  assert.deepEqual(HARDWARE_MODES, ['gpu-verified', 'gpu-present-unverified', 'cpu-only', 'unknown']);
+  assert.deepEqual(HARDWARE_MODE_RANK, { 'gpu-verified': 3, 'gpu-present-unverified': 2, 'cpu-only': 1, unknown: 0 });
+  assert.equal(clampYieldSeconds(30), 30);
+  assert.equal(clampYieldSeconds('45.9'), 45);
+  assert.equal(clampYieldSeconds(100000), 300);
+  assert.equal(clampYieldSeconds(-5), 0);
+  assert.equal(clampYieldSeconds(undefined), 0);
+  assert.equal(clampYieldSeconds('soon'), 0);
+  const nodes = [
+    { id: 'node_a', inventory: { runtime: { hardware_mode: 'gpu-verified' } } },
+    { id: 'node_b', inventory: { runtime: { hardware_mode: 'gpu-present-unverified' } } },
+    { id: 'node_c', inventory: { runtime: { hardware_mode: 'gpu-verified' } } },
+    { id: 'node_d', inventory: null },
+    { id: 'node_e' }
+  ];
+  assert.equal(countLiveGpuNodes(nodes, { excludeNodeId: 'node_a' }), 1, 'a node never counts itself');
+  assert.equal(countLiveGpuNodes(nodes, { excludeNodeId: 'node_z' }), 2);
+  assert.equal(countLiveGpuNodes(nodes), 2);
+  assert.equal(countLiveGpuNodes(null), 0);
 });
