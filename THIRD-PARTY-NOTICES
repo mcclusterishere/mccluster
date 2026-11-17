@@ -29,6 +29,23 @@ gods-eye-view, and follows gods-eye-view's implementation:
   Hitman's Halo; its notice has also been kept at
   vendor/LICENSES/gods-eye-view-MIT.txt since it was added.
 
+The environmental globe (slice G1, 2026-11-17) adapted three more portions
+straight from gods-eye-view; each of these files carries a one-line pointer to
+this file in its header:
+
+- js/globe-render-governor.js: the render governor (src/renderGovernor.js: the
+  owner-keyed holds, the camera hold from moveStart to moveEnd, the one-shot
+  render requests and the diagnostics), adapted to Cesium's requestRenderMode
+  on the World's globe.
+- js/globe-scene-director.js: the scene director's camera flights
+  (src/director/camera.js, the shortest-arc longitude interpolation), the
+  ordered scene queue and its phases (src/director/playback.js) and the
+  manual-input interrupt (src/cameraVerbs.js).
+- js/environment-layers.js: the alpha-only pulse pattern
+  (src/render/cesium/draw.js, pulseAlpha and runPulses) for the one labelled
+  ripple on a selected earthquake; the geometry is never touched after it is
+  built.
+
 workers/mccluster/src/world-environment-layers.js calls helpers exported by
 world-halo-layers.js; its own code is not derived from gods-eye-view.
 
