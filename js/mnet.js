@@ -3,10 +3,12 @@
   "use strict";
 
   var APP = "mccluster-web";
-  /* THE WORLD IS THE SOCIAL FEED (owner, 2026-10-20: "open missions belong in missions not inside the newsfeed"; "the
-     transport and the missions feature will be taken off"). While hu-social-only is on <html> (mnet.html) the feed carries
-     no mission card, list or rail, search finds no missions, and every way into Missions lands on the feed. */
-  var MISSIONS_OFF = document.documentElement.classList.contains("hu-social-only");
+  /* MISSIONS ARE PUBLIC AND LIVE IN THE FEED (owner, 2026-11-17: "the missions should low key just be placed in the
+     newsfeed instead of having that Tinder swipe tab"; "we need them on the globe for the signed out users so people can
+     just go look at the missions, sign in, get that user flow"; AGENTS.md, "Public World"). A guest reads them, opens a
+     shared one and is asked to sign in only to join it. The feed's Equity Uprise tab (feed scope "equity") is the mission
+     feed. Travel stays the house owner's (hu-travel-off, js/world-owner-modes.js), and with it the clip-campaign door and
+     the Live room's action blocks, which were switched off with the missions on 2026-10-20 and were not asked back. */
   var state = {
     user: null,
     boot: null,
@@ -523,6 +525,24 @@
     showGate("app");
     setView("feed");
     loadFeed(true);
+    openGuestMissionLink();
+  }
+  /* A SHARED MISSION FOR A GUEST (owner, 2026-11-17: "people can just go look at the missions, sign in, get that user
+     flow"). ?mission=<id> opens that mission's dialog over the World with the Equity Uprise tab chosen under it; its Join
+     asks them to sign in or make an account and keeps the mission in the address, so they come back to it
+     (openDeepLinkedMission, once signed in). ?view=missions, the address every "browse missions" door uses, is the tab
+     itself. Never openDeepLinkedMission here: its Missions room (the Action Record) is a member's and asks a guest to sign in. */
+  function openGuestMissionLink() {
+    var q = null; try { q = new URLSearchParams(location.search); } catch (_) { return; }
+    var id = q.get("mission");
+    /* missions.deepLinked stays unset: signing in from this dialog must reopen the mission (openDeepLinkedMission) */
+    if (id && /^[0-9a-f-]{36}$/i.test(id)) {
+      setFeedScope("equity");
+      /* a mission that is gone says so on the World, not in the members' Missions room */
+      Promise.resolve(openMission(id)).then(function (r) { if (r && r.opened === false) setStatus($("mnFeedStatus"), r.message || "That mission is not available any more.", "error"); });
+      return;
+    }
+    if (q.get("view") === "missions") setFeedScope("equity");
   }
   /* THE WORLD FIRST (owner, 2026-10-15: "me as a signed in user … I see no
      globe"). A member whose profile, or whose private contact details, is
@@ -879,7 +899,7 @@
       var back = $("mnProfileBack"); if (back) back.hidden = true;
       showGate("app");
       paintSelf();
-      var missionDeepLink=!MISSIONS_OFF&&/[?&](mission=|view=missions(?:&|$))/.test(location.search);
+      var missionDeepLink=/[?&](mission=|view=missions(?:&|$))/.test(location.search);
       if(missionDeepLink){
         setView("missions");
         openDeepLinkedMission();
@@ -1098,7 +1118,6 @@
       '</div>' + missionStatsHtml(c.mission_id) + globeChipHtml(c.mission_id) + '</div>';
   }
   function loadActionOfferCards(items) {
-    if (MISSIONS_OFF) return Promise.resolve(false);
     var ids = (items || []).map(function (it) {
       var p = it.post;
       return p && p.content_id ? p.id : null;
@@ -1144,8 +1163,8 @@
       '<p class="mn__collab-by">' + esc(c.kind || "work") + ' · by ' + credits.join(' <span aria-hidden="true">&amp;</span> ') + '</p>' +
       '<div class="mn__actcard-row">' +
         (c.link ? '<a class="mn__quiet" href="' + esc(c.link) + '" target="_blank" rel="noopener noreferrer">Open the work ↗</a>' : '') +
-        (c.mission_open && !MISSIONS_OFF ? '<a class="mn__primary mn__primary--eup" href="' + esc(missionHref(c.mission_id)) + '" data-take-mission="' + esc(c.mission_id) + '" aria-label="Join this mission and do it">' + EUP_MARK + '</a>' : '') +
-      '</div>' + (MISSIONS_OFF ? '' : missionStatsHtml(c.mission_id)) + '</div>';
+        (c.mission_open ? '<a class="mn__primary mn__primary--eup" href="' + esc(missionHref(c.mission_id)) + '" data-take-mission="' + esc(c.mission_id) + '" aria-label="Join this mission and do it">' + EUP_MARK + '</a>' : '') +
+      '</div>' + missionStatsHtml(c.mission_id) + '</div>';
   }
   function loadCollaborationCards(items) {
     var ids = (items || []).map(function (it) { var p = it.post; return p && p.metadata && p.metadata.collaboration ? p.id : null; })
@@ -1159,7 +1178,6 @@
     }).catch(function () { return false; });
   }
   function loadActionCards(items) {
-    if (MISSIONS_OFF) return Promise.resolve(false);
     var ids = (items || []).map(function (it) { var p = it.post; return p && p.post_type === "share" && p.metadata && p.metadata.action ? p.id : null; })
       .filter(function (id) { return id && !(state.actionCards && id in state.actionCards); });
     if (!ids.length) return Promise.resolve(false);
@@ -1314,7 +1332,9 @@
           var name = placeName(status.country);
           state.world.country = { code:status.country, name:name };
           if ($("huRegionLabel")) $("huRegionLabel").textContent = name;
-          setFeedScope("local"); // Country only; no GPS and no user-post location write.
+          /* the visitor's country is where the feed starts, unless the address asked for the mission feed */
+          if ((state.feedScope || "global") === "global") setFeedScope("local"); // Country only; no GPS and no user-post location write.
+          else paintFeedScope();
         } else if (state.feedScope === "local") loadPlaceFeed(true);
         paintPlaceOptIn();
         loadLivePlaces();
@@ -1385,20 +1405,95 @@
       if (state.feedScope === "local") renderFeed(false);
     }).finally(function () { if (seq === p.seq) p.working=false; });
   }
+  /* THE STRIP'S KEYS (owner, 2026-11-17): Local, Everything (key "global": "Should start on everything"), the Equity Uprise
+     tab ("equity": the mission feed, "you can individualize it to select mission feed"), News. Live and People open rooms. */
+  var FEED_SCOPES = ["local", "global", "equity", "news"];
   function paintFeedScope() {
     var scope = state.feedScope || "global";
     document.querySelectorAll("[data-feed-scope]").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.feedScope === scope)); });
+    /* the Equity Uprise tab: Environmental Justice above the missions (the panel shows itself, js/world-environment-mccluster.mjs),
+       the completed series after them, and none of the posting chrome of Everything */
+    document.documentElement.classList.toggle("mn-feed-equity", scope === "equity");
+    var done = $("mnCompletedSeries");
+    if (done) done.hidden = scope !== "equity";
     var body = $("mnPostBody"), place = localPlace();
     if (body) body.placeholder = "Share a live moment from " + (place || "the world") + "\u2026";
     paintPlaceOptIn();
   }
   function setFeedScope(scope) {
-    state.feedScope = ["local", "global", "news"].indexOf(scope) >= 0 ? scope : "global";
+    var was = state.feedScope || "global";
+    state.feedScope = FEED_SCOPES.indexOf(scope) >= 0 ? scope : "global";
     paintFeedScope();
+    if (state.feedScope === "equity") showCompletedSeries();
     if (state.feedScope === "local" && state.placeScope.enabled) loadPlaceFeed(true);
     else renderFeed(false);
     paintMore();
+    /* the panel, the capstone's place on the Earth and the expanded map follow the tab */
+    if (was !== state.feedScope) { try { window.dispatchEvent(new CustomEvent("mcc:feed-scope", { detail: { scope: state.feedScope } })); } catch (_) {} }
     track("feed_scope", { scope: state.feedScope });
+  }
+  /* the strip's tab for other modules: Environmental Justice (js/world-environment-mccluster.mjs), the completed capstone
+     (js/docket-cohort-showcase.js) and Travel's expanded map (js/travel/world-travel.mjs) read it; mcc:feed-scope says it moved */
+  window.MCC_FEED_SCOPE = { get: function () { return state.feedScope || "global"; }, set: function (scope) { setFeedScope(scope); } };
+  /* "All missions" (the search's foot, the pin card) and a guest's ?view=missions: the Equity Uprise tab, on the World */
+  function showMissionFeed() {
+    if (state.currentView !== "feed") setView("feed");
+    setFeedScope("equity");
+    var strip = $("mnFeedScope");
+    if (strip && strip.scrollIntoView) try { strip.scrollIntoView({ block: "nearest" }); } catch (_) {}
+  }
+  /* THE STRIP MOVES UNDER A FINGER, A MOUSE AND THE KEYS (owner, 2026-11-17: "that scrolling tab thing you can like drag
+     left and right"). A finger scrolls the row natively. A mouse drags it too, and a drag never lands as a tap on the tab
+     under it. Tab reaches the row; the arrow keys, Home and End walk its buttons, and the one in focus is scrolled in. */
+  function wireFeedScopeStrip() {
+    var strip = $("mnFeedScope");
+    if (!strip || strip.hasAttribute("data-wired")) return;
+    strip.setAttribute("data-wired", "");
+    var drag = null, dragged = false;
+    strip.addEventListener("pointerdown", function (e) {
+      dragged = false;
+      if (e.pointerType !== "mouse" || e.button !== 0 || strip.scrollWidth <= strip.clientWidth) { drag = null; return; }
+      drag = { x: e.clientX, left: strip.scrollLeft };
+    });
+    strip.addEventListener("pointermove", function (e) {
+      if (!drag) return;
+      var dx = e.clientX - drag.x;
+      if (!dragged && Math.abs(dx) < 6) return;
+      dragged = true;
+      strip.scrollLeft = drag.left - dx;
+    });
+    ["pointerup", "pointercancel", "pointerleave"].forEach(function (type) { strip.addEventListener(type, function () { drag = null; }); });
+    strip.addEventListener("click", function (e) { if (dragged) { dragged = false; e.preventDefault(); e.stopPropagation(); } }, true);
+    strip.addEventListener("keydown", function (e) {
+      if (["ArrowLeft", "ArrowRight", "Home", "End"].indexOf(e.key) < 0) return;
+      var buttons = Array.prototype.slice.call(strip.querySelectorAll("button"));
+      var at = buttons.indexOf(document.activeElement);
+      if (at < 0) return;
+      e.preventDefault();
+      at = e.key === "Home" ? 0 : e.key === "End" ? buttons.length - 1 : (at + (e.key === "ArrowRight" ? 1 : -1) + buttons.length) % buttons.length;
+      buttons[at].focus();
+    });
+    strip.addEventListener("focusin", function (e) {
+      var b = e.target && e.target.closest && e.target.closest("button");
+      if (b && b.scrollIntoView) try { b.scrollIntoView({ block: "nearest", inline: "nearest" }); } catch (_) {}
+    });
+  }
+  /* the Docket 516R series (js/docket-cohort-showcase.js), drawn the first time the tab opens */
+  function showCompletedSeries() {
+    var host = $("mnCompletedSeries"), show = window.DocketCohortShowcase;
+    if (!host || !show) return;
+    if (show.mountSeries && !host.hasAttribute("data-series")) {
+      host.setAttribute("data-series", "");
+      Promise.resolve().then(function () { return show.mountSeries(host); }).catch(function () { host.removeAttribute("data-series"); });
+    }
+    if (show.ensureMap) show.ensureMap();
+  }
+  /* an address that asks for the mission feed: ?feed=equity, a completed capstone (?completed=), and the old names of the
+     modes it replaced (?mode=missions, ?mode=environment) */
+  function feedScopeFromAddress() {
+    var q = null; try { q = new URLSearchParams(location.search); } catch (_) { return ""; }
+    if (q.get("feed") === "equity" || q.has("completed") || q.get("mode") === "missions" || q.get("mode") === "environment") return "equity";
+    return "";
   }
   function feedMatches(item, query) {
     /* a news card answers to its headline, its publisher and the place it mentions */
@@ -1614,6 +1709,7 @@
     var host = $("mnFeed");
     if (!append) host.innerHTML = "";
     paintMore();
+    if (state.feedScope === "equity") { paintNewsCredit(false); paintMissionFeed(host); return; }
     var focus = state.world.focus, query = state.world.query;
     var regionMode = state.feedScope === "local" && state.placeScope.enabled;
     var items = regionMode ? state.placeScope.posts : state.feed;
@@ -1728,22 +1824,15 @@
     });
   }
 
-  /* A THIN FEED STILL HAS SOMETHING TO DO. While the network is small, open
-     missions sit under the feed so a new member always has a next move. */
-  function paintFeedMissions() {
-    var host = $("mnFeedMissions");
-    if (!host) return;
-    if (MISSIONS_OFF || state.feed.length >= 8) { host.hidden = true; return; }
-    sbRest("action_missions?status=eq.open&select=id,title,description,domain&order=created_at.desc&limit=3").then(function (rows) {
-      rows = rows || [];
-      host.hidden = !rows.length;
-      host.innerHTML = rows.length ? '<div class="mn__section-head"><div><p class="mn__eyebrow">Put it into action</p><h2>Open missions</h2></div><button class="mn__quiet" type="button" data-mn-goto="missions">All missions</button></div>' +
-        rows.map(function (m) {
-          return '<button class="mn__feedmission" type="button" data-take-mission="' + esc(m.id) + '"><span class="mn__eyebrow">' + esc(m.domain || "community") + '</span><b>' + esc(m.title) + '</b><span>' + esc(m.description || "") + '</span></button>';
-        }).join("") : "";
-      host.querySelectorAll("[data-take-mission]").forEach(function (b) { b.onclick = function () { missions.content="";missions.source="";missions.attributedMission="";setView("missions"); openMission(b.getAttribute("data-take-mission")); }; });
-      var all = host.querySelector("[data-mn-goto]"); if (all) all.onclick = function () { setView("missions"); };
-    }).catch(function () { host.hidden = true; });
+  /* THE MISSION FEED (owner, 2026-11-17: "having the missions as like just another post in the newsfeed, not a big, large
+     post, just the same size post as all the other [posts]"). The Equity Uprise tab lists every open mission as a post, and
+     Everything mixes them in at a modest ratio (docs/control-plane/WORLD-FEED-AND-MISSIONS-20261117.md, targets 3 to 6).
+     missionFeedHtml draws those posts; a mission post's join is acceptWorldMission (below), the one join every mission
+     entry in the World shares. Until the posts are drawn the tab says plainly that none are listed, never a broken list. */
+  function missionFeedHtml() { return ""; }
+  function paintMissionFeed(host) {
+    var html = missionFeedHtml();
+    host.innerHTML = html || '<div class="mn__empty" data-mission-feed-empty>Open missions will appear here.</div>';
   }
 
   function skeleton(n) {
@@ -1916,6 +2005,7 @@
       more.hidden = !(state.placeNews.before || (state.placeScope.enabled && state.placeScope.postBefore));
       return;
     }
+    if (state.feedScope === "equity") { more.hidden = true; return; }
     more.hidden = !(state.nextBefore || (state.newsBefore && !(focus && focus.filter)));
   }
   function bindNewsActions(root) {
@@ -1984,7 +2074,6 @@
       Promise.all([loadActionCards(incoming), loadActionOfferCards(incoming), loadCollaborationCards(incoming)]).then(function (flags) {
         if (flags.some(Boolean)) { loadMissionStats(); renderFeed(false); }
       });
-      if (reset && !state.guest) paintFeedMissions();
       paintMore();
       setStatus($("mnFeedStatus"), "");
     }).catch(function (e) {
@@ -2869,7 +2958,8 @@
        below (sign in, finish your profile); otherwise it stays open over the
        World when the visitor comes back from the gate */
     closeMenu();
-    if (MISSIONS_OFF && name === "missions") name = "feed";
+    /* a guest's missions are the public mission feed, the Equity Uprise tab; a member's are their Action Record (below) */
+    if (state.guest && name === "missions") { showMissionFeed(); return; }
     if (state.guest && name !== "feed") { askToSignIn(name); return; }
     if (name !== "feed" && name !== "missions" && askToFinish(name)) return;
     document.documentElement.removeAttribute("data-boot-view");
@@ -3190,7 +3280,12 @@
     $("mnEditProfile").onclick = editProfile;
     document.querySelectorAll("[data-mn-view]").forEach(function (b) { b.onclick = function () { setView(b.dataset.mnView); }; });
     document.querySelectorAll("[data-feed-scope]").forEach(function (b) { b.onclick = function () { state.world.scopeFromTap = false; setFeedScope(b.dataset.feedScope); }; });
+    /* "All missions" opens the mission feed, the Equity Uprise tab (owner, 2026-11-17) */
+    document.querySelectorAll("[data-mn-feed]").forEach(function (b) { b.onclick = function () { showMissionFeed(); }; });
+    wireFeedScopeStrip();
     paintFeedScope();
+    var askedScope = feedScopeFromAddress();
+    if (askedScope) setFeedScope(askedScope);
     loadPlaceStatus();
     $("mnBell").onclick = function () { if ($("mnAlerts").hidden) openAlerts(); else closeAlerts(); };
     /* a tap anywhere else, or Escape, closes the drop down; the page under it never moved */
@@ -3626,7 +3721,6 @@
      The page only reads. */
   var FELLOWSHIP_MIN_VERIFIED = 3; // owner-set threshold; see docs/ACTION-NETWORK-REWARD-SYSTEM.md
   var missions={all:[],current:null,assignment:null,record:null,fellowship:null,stats:{},deepLinked:false,campaign:"",content:"",source:"",attributedMission:"",liveSession:"",liveMission:"",returnHref:"",proofFile:null,proofPreview:""};
-  var worldMissionDeck=null,worldMissionDeckLoaded=false,worldMissionDeckRequest=null;
   function sbRest(path,init){
     var token=sessionToken()||SB_KEY; init=init||{}; var headers=Object.assign({apikey:SB_KEY,authorization:"Bearer "+token,"content-type":"application/json"},init.headers||{});
     return fetch(SB_URL+"/rest/v1/"+path,Object.assign({},init,{headers:headers})).then(parse);
@@ -3737,7 +3831,6 @@
     var version=++missionListVersion;
     var host=$("mnMissionList"); if(!host)return Promise.resolve(); setStatus($("mnMissionStatus"),"Loading missions…");
     if(!state.guest&&state.user)loadActionRecord();
-    if(worldMissionDeck)worldMissionDeck.loading();
     var campaignFilter=missions.campaign?"&campaign_id=eq."+encodeURIComponent(missions.campaign):"";
     return Promise.all([
       /* select=* carries kind, so clip campaigns can be left to the Clips tab */
@@ -3753,12 +3846,10 @@
       var helpGateway=!missions.campaign
         ? '<article class="mn__panel"><p class="mn__eyebrow">Help · private resource navigation</p><h3>Find services for yourself or someone you know</h3><p>Official national and international resource directories. No account or public proof required.</p><a class="mn__primary" href="/help.html">Find help now ↗</a></article>' : "";
       host.innerHTML=helpGateway+(missions.all.length?missions.all.map(missionCard).join(""):(helpGateway?"":'<div class="mn__empty">No open missions right now.</div>'));
-      if(worldMissionDeck)worldMissionDeck.update(missions.all);
-      worldMissionDeckLoaded=true;
       paintActionRecord();
       setStatus($("mnMissionStatus"),"");
       return true;
-    }).catch(function(e){if(version===missionListVersion){setStatus($("mnMissionStatus"),e.message||"Missions could not load.","error");if(worldMissionDeck)worldMissionDeck.fail(e.message||"Missions could not load.");}return false;});
+    }).catch(function(e){if(version===missionListVersion)setStatus($("mnMissionStatus"),e.message||"Missions could not load.","error");return false;});
   }
 
   /* THE ACTION RECORD: verified work, skills, cohorts, and what it unlocks.
@@ -4024,7 +4115,6 @@
     return f;
   }
   function openMission(id){
-    if(MISSIONS_OFF)return;
     var version=++missionOpenVersion;
     return fetchMission(id).then(function(m){
       if(version!==missionOpenVersion)return;
@@ -4145,7 +4235,7 @@
   }
   /* A shared mission link opens that mission, not the feed. */
   function openDeepLinkedMission(){
-    if(MISSIONS_OFF||missions.deepLinked)return;
+    if(missions.deepLinked)return;
     var id=null; try{id=new URLSearchParams(location.search).get("mission");}catch(_){}
     if(!id||!/^[0-9a-f-]{36}$/i.test(id))return;
     missions.deepLinked=true; setView("missions"); openMission(id);
@@ -4235,6 +4325,11 @@
     prepareWorldMission(m.id);focusOnGlobe(m.id);
     return openMission(m.id);
   }
+  /* THE ONE JOIN FOR A MISSION IN THE WORLD (the swipe deck's Accept, kept when the deck went on 2026-11-17): a mission
+     post's emblem (WORLD-FEED-AND-MISSIONS-20261117.md, target 5) calls it with { id, title }. A guest is asked to sign in
+     with ?mission=<id> kept in the address, so signing in comes back to that mission's dialog with Join
+     (openDeepLinkedMission); a member who must finish their profile is asked to; anyone else gets the mission's real
+     workflow, and an existing assignment is opened, never joined twice. */
   function acceptWorldMission(m){
     prepareWorldMission(m.id);
     /* Retain the selected mission through auth/onboarding. Returning opens
@@ -4253,59 +4348,6 @@
         return {accepted:true,message:"Your existing “"+m.title+"” mission is open."};
       }
       return joinMission();
-    });
-  }
-  function ensureWorldMissionDeck(){
-    if(worldMissionDeck)return worldMissionDeck;
-    if(!window.MCC_MISSION_DECK||!$("huMissionList"))return null;
-    worldMissionDeck=window.MCC_MISSION_DECK.mount($("huMissionList"),{
-      onAccept:acceptWorldMission,onOpen:openWorldMission,
-      onCompleted:function(host) {
-        if (!window.DocketCohortShowcase || !window.DocketCohortShowcase.mountSeries) throw Error("Completed mission series is unavailable.");
-        return window.DocketCohortShowcase.mountSeries(host);
-      },
-      onRefresh:function(){worldMissionDeckLoaded=false;return loadWorldMissionDeck();}
-    });
-    if(worldMissionDeckLoaded)worldMissionDeck.update(missions.all);
-    return worldMissionDeck;
-  }
-  function loadWorldMissionDeck(){
-    if(!ensureWorldMissionDeck())return Promise.resolve();
-    if(worldMissionDeckRequest)return worldMissionDeckRequest;
-    if(worldMissionDeckLoaded)return Promise.resolve();
-    /* The mission catalogue works even if WebGL or public pins are unavailable. */
-    worldMissionDeckRequest=loadMissions().then(function(){worldMissionDeckRequest=null;});
-    return worldMissionDeckRequest;
-  }
-  window.addEventListener("mcc:world-mode",function(e){
-    if(e.detail&&e.detail.mode==="missions"){
-      loadWorldMissionDeck();
-      /* The confirmed cohort capstone remains mapped independently of whether
-         someone has opened the Completed tab yet. */
-      if(window.DocketCohortShowcase&&window.DocketCohortShowcase.ensureMap)window.DocketCohortShowcase.ensureMap();
-      if(new URLSearchParams(location.search).has("completed")){
-        var completedTab=document.querySelector('.mn-swipe__filters [data-status="completed"]');
-        if(completedTab&&completedTab.getAttribute("aria-selected")!=="true")completedTab.click();
-      }
-    }
-  });
-  function paintMissionPreview() {
-    var host = $("huMissionList"); if (!host) return;
-    if(ensureWorldMissionDeck()){loadWorldMissionDeck();return;}
-    var list = Object.keys(state.world.missions).map(function (id) { return state.world.missions[id]; });
-    host.innerHTML = list.length ? list.slice(0, 2).map(function (m) {
-      return '<button type="button" class="hu-mission-row" data-hu-mission="' + esc(m.mission_id) + '">' +
-        '<span class="hu-mission-symbol" aria-hidden="true">' + (PATH_ART[m.action_path] || PATH_ART.mission) + '</span>' +
-        '<span><strong>' + esc(m.title) + '</strong><small>' + esc(m.region_label || 'Worldwide') + '</small><span class="hu-mission-link">View mission ↗</span></span></button>';
-    }).join('') : '<p class="hu-muted">No published missions on the map yet.</p>';
-    host.querySelectorAll('[data-hu-mission]').forEach(function (button) {
-      button.onclick = function () {
-        var m = state.world.missions[button.dataset.huMission];
-        if (!m) return;
-        setWorldFocus(Object.assign({}, m, { filter: false }));
-        focusOnGlobe(m.mission_id);
-        $("mnWorldFocus").scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-      };
     });
   }
   function paintWorldFocus() {
@@ -4384,11 +4426,10 @@
     suggest.n = 0;
     if (q) {
       var hits = function (fields) { return fields.join(" ").toLocaleLowerCase().indexOf(q) !== -1; };
-      var pinned = MISSIONS_OFF ? [] : Object.keys(state.world.missions).map(function (k) { return state.world.missions[k]; })
+      var pinned = Object.keys(state.world.missions).map(function (k) { return state.world.missions[k]; })
         .filter(function (m) { return hits([m.title, m.description, m.region_label, m.action_path]); }).slice(0, 4);
       if (pinned.length) html += suggestHead("On the globe") + pinned.map(function (m) { return suggestRow("globe", m.mission_id, m.title, m.region_label); }).join("");
       if (!state.guest) {
-        if (!suggest.missions && MISSIONS_OFF) suggest.missions = [];
         if (!suggest.missions) {
           suggest.missions = [];
           sbRest("action_missions?status=eq.open&select=id,title,description,domain,kind&order=created_at.desc&limit=200").then(function (rows) {
@@ -4487,8 +4528,9 @@
      terms from the campaigns are shown; hidden while none are open */
   function paintClipDoor() {
     var door = $("mnClipDoor");
-    /* no campaigns are promoted on the feed while the World is the social feed (owner, 2026-10-20) */
-    if (!door || MISSIONS_OFF) return;
+    /* no campaigns are promoted on the feed but the house owner's (owner, 2026-10-20; missions came back on 2026-11-17,
+       clip campaigns were not asked back): hu-travel-off holds them with Travel, js/world-owner-modes.js lifts it */
+    if (!door || document.documentElement.classList.contains("hu-travel-off")) return;
     if (!state.clipOpen) {
       state.clipOpen = [];
       sbRpc("clip_campaigns_open", { p_song: null }).then(function (rows) {
@@ -4541,9 +4583,6 @@
           state.world.missions[clean.mission_id] = clean;
           if (!state.world.latest) state.world.latest = clean;
         });
-        /* Published missions lead the feed; selection stays with the visitor. */
-        paintMissionPreview();
-        if (d.dataUnavailable && !worldMissionDeck) $("huMissionList").innerHTML = '<p class="hu-muted">Mission pins could not load. Use the all-missions button to browse available work.</p>';
         /* a guest starts at Explore the world (owner's signed-out reference) */
         if ($("mnWorldChipCount")) $("mnWorldChipCount").textContent = Object.keys(state.world.missions).length || "";
         if ($("mnWorldTagCount")) $("mnWorldTagCount").textContent = String(Object.keys(state.world.pins).length);
@@ -4558,8 +4597,6 @@
            the first page of the feed is still on its way */
         if (!state.loadingFeed) renderFeed(false);
       } else if (d.type === "hu:globe-unavailable") {
-        if(ensureWorldMissionDeck())loadWorldMissionDeck();
-        else $("huMissionList").innerHTML = '<p class="hu-muted">The map is unavailable. Use the all-missions button to browse available work.</p>';
         if (caption) caption.textContent = "The globe can\u2019t run on this device. Everything else works: the feed is below.";
       } else if (d.type === "hu:mission-selected" && d.mission && WORLD_ID.test(String(d.mission.mission_id || ""))) {
         var m = d.mission, id = String(m.mission_id), fromFeed = state.world.fromFeed === id;

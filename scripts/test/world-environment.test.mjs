@@ -24,15 +24,39 @@ test('source links and capture destinations reject script and foreign-origin nav
  assert.equal(captureURL('https://mccluster.org/live-mission.html?assignment='+id,id,'https://consumer.example'),'');
  assert.equal(timeLabel(null),'Not supplied by provider'); assert.equal(timeLabel('bad'),'Not supplied by provider');
 });
-test('consumer World retains one globe, supplied artwork, original feed and owner-gated modes',()=>{
- const html=read('mnet.html'),css=read('css/world-environment.css'),travel=read('js/travel/world-travel.mjs');
+test('consumer World retains one globe, supplied artwork, original feed and an owner-gated Travel',()=>{
+ const html=read('mnet.html'),css=read('css/world-environment.css'),travel=read('js/travel/world-travel.mjs'),travelCss=read('css/world-travel.css');
  assert.equal((html.match(/id="mnWorldFrame"/g)||[]).length,1);
  assert.equal((html.match(/<iframe[^>]+src="action-globe\.html/g)||[]).length,1);
- assert.match(html,/hu-social-only/);assert.match(html,/id="wePanel"[^>]*hidden/);
- assert.match(html,/data-world-mode="environment"[^>]*><img src="assets\/img\/equity-uprise-mark-white.png"/);
- assert.match(css,/hu-social-only[^\n]+data-world-mode="travel"[^\n]+data-world-mode="missions"[^\n]+display:none/);
- assert.match(travel,/\['posts', 'environment'\]/);
+ assert.match(html,/class="[^"]*\bhu-travel-off\b/);assert.match(html,/id="wePanel"[^>]*hidden/);
+ /* owner, 2026-11-17: Environmental Justice is behind the feed's Equity Uprise tab, the supplied marks alone, above its
+    missions; the centre of the globe has no E=UP or Missions button any more, and only the house owner has a mode bar */
+ const bar=/<nav class="wt-world-modes"[^>]*>([\s\S]*?)<\/nav>/.exec(html)[1];
+ assert.deepEqual([...bar.matchAll(/data-world-mode="([a-z]+)"/g)].map(m=>m[1]),['travel','posts']);
+ assert.doesNotMatch(bar,/<img/);
+ const strip=/<nav class="hu-feed-scope" id="mnFeedScope"[^>]*>([\s\S]*?)<\/nav>/.exec(html)[1];
+ assert.match(strip,/data-feed-scope="equity" aria-pressed="false" aria-label="Equity Uprise"><img class="hu-eup-mark hu-eup-mark--white" src="assets\/img\/equity-uprise-mark-white\.png" alt=""[^>]*><img class="hu-eup-mark hu-eup-mark--dark" src="assets\/img\/equity-uprise-mark\.png" alt=""[^>]*><\/button>/);
+ assert.ok(html.indexOf('id="mnFeedScope"')<html.indexOf('id="wePanel"')&&html.indexOf('id="wePanel"')<html.indexOf('id="mnFeed"'),'the panel sits under the strip, above the missions');
+ assert.doesNotMatch(css,/data-world-mode/,'no mode of its own');
+ assert.match(travelCss,/\.hu-travel-off \.wt-world-modes \{ display:none; \}/);
+ assert.match(travel,/classList\.contains\('hu-travel-off'\) \? \['posts'\] : \['travel', 'posts'\]/);
  assert.doesNotMatch(css,/@media\s*\(max-width/);
+});
+test('the McCluster adapter shows the panel exactly while the Equity Uprise tab is up on the feed, and says when that changes',async()=>{
+ const {mcclusterEnvironmentAdapter}=await import('../../js/world-environment-mccluster.mjs');
+ const listeners={},fired=[];let mode='posts',scope='global';
+ const w={MCC_WORLD_MODE:{get:()=>mode},MCC_FEED_SCOPE:{get:()=>scope},addEventListener:(type,fn)=>{(listeners[type]||=[]).push(fn);},
+  dispatchEvent:e=>{fired.push(e.type);return true;},CustomEvent:class{constructor(type){this.type=type;}},location:{href:'https://mccluster.org/?view=feed',origin:'https://mccluster.org'}};
+ const adapter=mcclusterEnvironmentAdapter(w);
+ assert.equal(adapter.modeEvent,'mcc:world-environment');
+ assert.equal(adapter.mode(),'feed');
+ scope='equity';assert.equal(adapter.mode(),'environment');
+ mode='travel';assert.equal(adapter.mode(),'feed','never in Travel');
+ mode='posts';assert.equal(adapter.mode(),'environment');
+ for(const type of ['mcc:world-mode','mcc:feed-scope'])listeners[type].forEach(fn=>fn());
+ assert.deepEqual(fired,['mcc:world-environment','mcc:world-environment']);
+ let went='';w.location.assign=u=>{went=u;};w.location.href='https://mccluster.org/?mode=environment';adapter.signIn();
+ assert.equal(went,'/?feed=equity&signin=1','signing in comes back to the tab');
 });
 test('reusable module has no first-party auth or backend dependency',()=>{
  const source=read('vendor/equity-uprise/src/environment/panel.mjs');assert.doesNotMatch(source,/https:\/\/api\.mccluster\.org|MCC_SUPA/);

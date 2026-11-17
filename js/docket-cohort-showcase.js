@@ -4,7 +4,7 @@
   'use strict';
   var PROJECT='docket-516r-2025', PAGE='docket-516r-cohort.html';
   var API='https://api.mccluster.org/v1/action-archive/';
-  var promise=null, current=null, worldMode='travel',globeReady=false;
+  var promise=null, current=null, globeReady=false;
   var pendingEventFocus=new URLSearchParams(location.search).get('completed');
   var mounted=new WeakSet(), mountedSeries=new WeakSet(), doc=document;
   function el(tag,cls,text){var n=doc.createElement(tag);if(cls)n.className=cls;if(text!=null)n.textContent=String(text);return n;}
@@ -80,7 +80,7 @@
     box.append(el('p','dc-small',e.public_title||''),el('p','dc-small',e.address||''));
     var actions=el('div','dc-actions');if(e.recording_url)actions.append(link(e.recording_label||'Watch the archived livestream',e.recording_url,'dc-button',true));
     if(doc.getElementById('mnWorldFrame'))actions.append(button('Show on the globe',function(){focusEvent(e);}));
-    else actions.append(link('See on the globe','mnet.html?mode=missions&completed='+encodeURIComponent(e.slug),'dc-button'));
+    else actions.append(link('See on the globe','mnet.html?feed=equity&completed='+encodeURIComponent(e.slug),'dc-button'));
     box.append(actions);
     if(Array.isArray(e.work_ids)&&e.work_ids.length){
       var feed=el('section','dc-event-feed');feed.append(el('h3','','Event feed'));
@@ -97,9 +97,15 @@
   function postToGlobe(message){var f=doc.getElementById('mnWorldFrame');if(f&&f.contentWindow)f.contentWindow.postMessage(message,location.origin);}
   function eventPayload(e){return {id:e.slug,title:'Docket 516R · completed capstone',latitude:e.latitude,longitude:e.longitude,date:String(e.starts_at||'').slice(0,10),url:new URL(PAGE+'#capstone',location.href).href};}
   function sendEventFocus(e){postToGlobe({type:'hu:focus-place',lat:e.latitude,lon:e.longitude,label:e.venue+' · completed capstone'});}
+  /* THE CAPSTONE'S PLACE IS ON THE EARTH WHERE THE MISSIONS ARE (owner, 2026-11-17): while the World's feed shows the
+     Equity Uprise tab (js/mnet.js, MCC_FEED_SCOPE), the mission feed, never in Travel or the rest of the feed */
+  function missionsShown(){
+    var w=window,mode=w.MCC_WORLD_MODE&&w.MCC_WORLD_MODE.get?w.MCC_WORLD_MODE.get():doc.documentElement.getAttribute('data-world-mode');
+    return mode==='posts'&&!!(w.MCC_FEED_SCOPE&&w.MCC_FEED_SCOPE.get&&w.MCC_FEED_SCOPE.get()==='equity');
+  }
   function syncMap(){
-    var events=current&&current.event&&worldMode==='missions'?[eventPayload(current.event)]:[];
-    postToGlobe({type:'hu:completed-missions',events:events,on:worldMode==='missions'});
+    var on=missionsShown(),events=current&&current.event&&on?[eventPayload(current.event)]:[];
+    postToGlobe({type:'hu:completed-missions',events:events,on:on});
     if(globeReady&&events.length&&pendingEventFocus===current.event.slug){pendingEventFocus=null;sendEventFocus(current.event);}
   }
   function focusEvent(e){pendingEventFocus=e.slug;syncMap();}
@@ -263,13 +269,14 @@
     var links=el('div','dc-actions');links.append(link('Explore the public record',data.project.canonical_url||'docket-516.html','dc-button dc-button--primary'));host.append(links);
     openHash(host);
   }
-  window.addEventListener('mcc:world-mode',function(e){worldMode=e.detail&&e.detail.mode||'travel';syncMap();});
+  window.addEventListener('mcc:world-mode',syncMap);
+  window.addEventListener('mcc:feed-scope',syncMap);
   window.addEventListener('message',function(e){
     var f=doc.getElementById('mnWorldFrame');if(!f||e.source!==f.contentWindow||e.origin!==location.origin)return;
     var d=e.data||{};if(d.type==='hu:globe-ready'){globeReady=true;syncMap();}
     if(d.type==='hu:completed-selected'&&current&&current.event&&d.eventId===current.event.slug){
-      var tab=doc.querySelector('.mn-swipe__filters [data-status="completed"]');
-      if(tab&&tab.getAttribute('aria-selected')!=='true')tab.click();
+      /* the marker is drawn only while the Equity Uprise tab is up; the series it opens sits in that tab */
+      if(window.MCC_FEED_SCOPE&&window.MCC_FEED_SCOPE.get&&window.MCC_FEED_SCOPE.get()!=='equity')window.MCC_FEED_SCOPE.set('equity');
       var target=doc.getElementById('dcPreviewCapstone')||doc.getElementById('mnCompletedSeries');
       if(target)target.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'nearest'});
     }

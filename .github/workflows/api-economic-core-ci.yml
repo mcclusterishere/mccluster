@@ -18,9 +18,7 @@ on:
       - 'supabase/tests/action_mission_reset*'
       - 'scripts/test-action-archive-db.sh'
       - 'scripts/test/action-archive-db.mjs'
-      - 'scripts/test/mission-swipe-deck.test.mjs'
       - 'scripts/test/completed-mission-globe.test.mjs'
-      - 'js/mission-swipe-deck.js'
       - 'js/action-globe.js'
       - 'workers/mccluster/src/action-archive.js'
       - 'supabase/tests/commerce_stripe_*'
@@ -48,9 +46,7 @@ on:
       - 'supabase/tests/action_mission_reset*'
       - 'scripts/test-action-archive-db.sh'
       - 'scripts/test/action-archive-db.mjs'
-      - 'scripts/test/mission-swipe-deck.test.mjs'
       - 'scripts/test/completed-mission-globe.test.mjs'
-      - 'js/mission-swipe-deck.js'
       - 'js/action-globe.js'
       - 'workers/mccluster/src/action-archive.js'
       - 'supabase/tests/commerce_stripe_*'
@@ -83,7 +79,7 @@ jobs:
       - name: Run compute/provider security tests
         run: node --test workers/mccluster/test/compute-security.test.mjs
       - name: Check cohort API and mission interaction boundaries
-        run: node --test workers/mccluster/test/action-archive.test.mjs scripts/test/mission-swipe-deck.test.mjs scripts/test/completed-mission-globe.test.mjs
+        run: node --test workers/mccluster/test/action-archive.test.mjs scripts/test/completed-mission-globe.test.mjs
       - name: Assert rate limiter precedes API handlers
         run: |
           grep -F "enforceApiRateLimit" workers/mccluster/src/entry-platform.js

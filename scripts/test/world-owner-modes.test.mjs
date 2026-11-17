@@ -1,4 +1,5 @@
-/* ALL THREE FOR THE HOUSE OWNER (owner, 2026-10-20: "Probably keep all three on admin"): js/world-owner-modes.js in a sandbox.
+/* TRAVEL FOR THE HOUSE OWNER (owner, 2026-10-20: "Probably keep all three on admin"; missions are public again since
+   2026-11-17, so the switch holds Travel): js/world-owner-modes.js in a sandbox.
    node --test scripts/test/world-owner-modes.test.mjs */
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -9,7 +10,7 @@ const ROOT = new URL('../../', import.meta.url);
 const source = readFileSync(new URL('js/world-owner-modes.js', ROOT), 'utf8');
 const token = (sub) => 'h.' + Buffer.from(JSON.stringify({ sub, exp: 2e9 })).toString('base64url') + '.s';
 function page({ session = null, memo = null, social = true, opened = null } = {}) {
-  const local = new Map(), sess = new Map(), listeners = {}, classes = new Set(social ? ['hu-editorial', 'hu-social-only'] : ['hu-editorial']), attrs = new Map();
+  const local = new Map(), sess = new Map(), listeners = {}, classes = new Set(social ? ['hu-editorial', 'hu-travel-off'] : ['hu-editorial']), attrs = new Map();
   if (session) local.set('mccdb_session', JSON.stringify({ access_token: token(session) }));
   if (memo) local.set('mcc_world_owner', JSON.stringify({ sub: memo, at: '2026-10-20T00:00:00Z' }));
   if (opened) sess.set('mcc_world_owner:opened', opened);
@@ -30,20 +31,24 @@ function page({ session = null, memo = null, social = true, opened = null } = {}
   return { win, classes, attrs, local, link, fire, reloads: () => reloads, ready: () => (listeners['doc:DOMContentLoaded'] || []).forEach((fn) => fn()) };
 }
 
-test('everyone but the remembered owner gets the social feed', () => {
+test('everyone but the remembered owner keeps Travel switched off', () => {
   for (const p of [page(), page({ session: 'member-1' }), page({ session: 'member-1', memo: 'owner-9' })]) {
-    assert.ok(p.classes.has('hu-social-only'));
+    assert.ok(p.classes.has('hu-travel-off'));
     assert.equal(p.win.MCC_WORLD_OWNER, false);
   }
 });
 
-test('the remembered owner, signed in as that account, gets all three before the page reads the switch', () => {
+test('the remembered owner, signed in as that account, gets Travel before the page reads the switch', () => {
   const p = page({ session: 'owner-9', memo: 'owner-9' });
-  assert.ok(!p.classes.has('hu-social-only'));
+  assert.ok(!p.classes.has('hu-travel-off'));
   assert.ok(p.attrs.has('data-world-owner'));
   assert.equal(p.win.MCC_WORLD_OWNER, true);
   p.ready();
-  assert.equal(p.link.href, 'action-globe.html?explore=1', 'the expanded globe keeps its missions');
+  assert.equal(p.link.href, 'action-globe.html?explore=1&missions=0', 'the switch no longer touches any globe link: missions are not its to hold');
+  /* and the World's own links ask nobody's globe to drop the missions (owner, 2026-11-17) */
+  const html = readFileSync(new URL('mnet.html', ROOT), 'utf8');
+  assert.match(html, /class="mn__world-expand" href="action-globe\.html\?explore=1"/);
+  assert.doesNotMatch(html, /missions=0/);
 });
 
 test('the server\'s first yes is remembered and opens the World again once; a no, or no account, changes nothing', () => {
@@ -65,7 +70,7 @@ test('the server\'s first yes is remembered and opens the World again once; a no
 
 test('signing out forgets the owner', () => {
   const p = page({ memo: 'owner-9' });
-  assert.ok(p.classes.has('hu-social-only'));
+  assert.ok(p.classes.has('hu-travel-off'));
   assert.equal(p.local.get('mcc_world_owner'), undefined);
 });
 
@@ -74,8 +79,11 @@ test('it loads in the head, before the scripts that read the switch; the globe a
   const at = (s) => html.indexOf(s);
   assert.ok(at('js/world-owner-modes.js') > 0 && at('js/world-owner-modes.js') < at('</head>'));
   assert.ok(at('js/world-owner-modes.js') < at('js/mnet.js?') && at('js/world-owner-modes.js') < at('js/travel/world-travel.mjs'));
+  /* the globe draws the missions for everyone; only an embedder's explicit missions=0 (the City Arcade) leaves them out */
   const globe = readFileSync(new URL('js/action-globe.js', ROOT), 'utf8');
-  assert.match(globe, /const NO_MISSIONS=new URLSearchParams\(location\.search\)\.get\('missions'\)==='0'&&!\(\(\)=>\{try\{return !!parentFrame&&!parentFrame\.document\.documentElement\.classList\.contains\('hu-social-only'\)\}catch\(e\)\{return false\}\}\)\(\);/);
+  assert.match(globe, /const NO_MISSIONS=new URLSearchParams\(location\.search\)\.get\('missions'\)==='0';/);
+  assert.doesNotMatch(globe, /hu-social-only|hu-travel-off/, 'the frame reads no switch from the page that holds it');
   const travel = readFileSync(new URL('js/travel/world-travel.mjs', ROOT), 'utf8');
+  assert.match(travel, /const MODES = document\.documentElement\.classList\.contains\('hu-travel-off'\) \? \['posts'\] : \['travel', 'posts'\];/);
   assert.match(travel, /hasAttribute\('data-world-owner'\) \? 'posts' : MODES\[0\]/);
 });

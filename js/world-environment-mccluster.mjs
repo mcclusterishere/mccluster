@@ -36,16 +36,24 @@ export function mcclusterEnvironmentAdapter(w) {
     fetchImpl:(...args)=>w.fetch(...args), token, messages,
     allowLocalhost:true
   });
+  /* WHERE THE PANEL LIVES (owner, 2026-11-17): behind the feed's Equity Uprise tab (js/mnet.js, MCC_FEED_SCOPE), on the
+     feed, never in Travel. It was the E=UP mode in the centre of the globe; the panel still asks for that mode by name, so
+     this adapter answers 'environment' exactly while the tab is chosen on the feed, and tells it whenever either changes. */
+  const worldMode = () => w.MCC_WORLD_MODE?.get?.() || w.document?.documentElement.dataset.worldMode;
+  const shown = () => worldMode() === 'posts' && w.MCC_FEED_SCOPE?.get?.() === 'equity';
+  const relay = () => { try { w.dispatchEvent(new w.CustomEvent('mcc:world-environment')); } catch (_) {} };
+  for (const type of ['mcc:world-mode', 'mcc:feed-scope']) w.addEventListener?.(type, relay);
   return {
     token,
-    mode:()=>w.MCC_WORLD_MODE?.get?.() || w.document?.documentElement.dataset.worldMode,
-    modeEvent:'mcc:world-mode', authEvent:'mcc:auth-changed', sessionStorageKey:'mccdb_session',
+    mode:()=>shown() ? 'environment' : 'feed',
+    modeEvent:'mcc:world-environment', authEvent:'mcc:auth-changed', sessionStorageKey:'mccdb_session',
     revealPanel() {
       w.document?.documentElement.classList.remove('wt-expanded');
       w.document?.querySelector('.mn__world-expand')?.setAttribute('aria-label','Expand the map');
     },
     signIn() {
-      const url = new URL(w.location.href); url.searchParams.set('mode','environment');url.searchParams.set('signin','1');
+      /* back to this tab after signing in (?feed=equity, js/mnet.js) */
+      const url = new URL(w.location.href); url.searchParams.delete('mode');url.searchParams.set('feed','equity');url.searchParams.set('signin','1');
       w.location.assign(url.pathname+url.search);
     },
     request:transport.request

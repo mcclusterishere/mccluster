@@ -22,9 +22,7 @@
 .hu-travel-enabled .hu-world-filters { bottom:66px;left:16px;transform:none;max-width:calc(100% - 90px); }
 .hu-travel-enabled #mnWorldLive { top:96px; }
 [data-world-mode="travel"] :is(#huWorldFilters,#mnWorldLive,#mnWorldLayers,#wtSocial),
-[data-world-mode="missions"] #wtPlanner,[data-world-mode="posts"] #wtPlanner { display:none!important; }
-[data-world-mode="missions"] #wtSocial>:not(.mn__world-context):not(.hu-mission-preview) { display:none!important; }
-[data-world-mode="posts"] .hu-mission-preview { display:none; }
+[data-world-mode="posts"] #wtPlanner { display:none!important; }
 .hu-travel-enabled .mn__world-feed { padding-top:14px; }
 .wt-planner-head { display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px; }
 #wtTitle { margin:0;color:#f6f2eb;font:400 clamp(27px,3vw,36px)/1.15 Georgia,'Times New Roman',serif;letter-spacing:-.03em; }
@@ -170,8 +168,6 @@
   margin:0;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,.43fr) minmax(0,.57fr);
 }
 .hu-travel-enabled.mn-world-on.wt-navigating #mnFeedView:not([hidden]) { grid-template-rows:minmax(0,1fr) minmax(0,calc(var(--mn-bar-clear,96px) + 260px)); }
-/* Missions is one screen (css/mission-swipe-deck.css): the globe gives the deck the room, as it does for navigation */
-.hu-travel-enabled.mn-world-on[data-world-mode="missions"] #mnFeedView:not([hidden]) { grid-template-rows:minmax(0,.34fr) minmax(0,.66fr); }
 .hu-travel-enabled.mn-world-on .mn__world-home { margin:0;grid-row:1;grid-column:1; }
 .hu-travel-enabled.mn-world-on .mn__world-frame { inset:0;width:100%;height:100%; }
 .hu-travel-enabled.mn-world-on .wt-headline { top:70px;left:16px;font-size:24px;z-index:9; }
@@ -245,7 +241,6 @@
 @media (min-width:1000px), (min-width:600px) and (orientation:landscape) {
   .hu-travel-enabled.mn-world-on #mnFeedView:not([hidden]) { grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr); }
   .hu-travel-enabled.mn-world-on.wt-navigating #mnFeedView:not([hidden]) { grid-template-rows:minmax(0,1fr); }
-  .hu-travel-enabled.mn-world-on[data-world-mode="missions"] #mnFeedView:not([hidden]) { grid-template-rows:minmax(0,1fr); }
   .hu-travel-enabled.mn-world-on .mn__world-feed { grid-row:1;grid-column:2;margin:72px 16px 0 0;padding-top:20px;border:1px solid #ffffff20;border-radius:22px 22px 0 0; }
   .hu-travel-enabled.mn-world-on .wt-world-modes { bottom:calc(var(--mn-bar-clear,96px) + 28px); }
   .hu-travel-enabled.mn-world-on .wt-destination,.hu-travel-enabled.mn-world-on .hu-world-filters { bottom:calc(var(--mn-bar-clear,96px) + 58px); }
@@ -435,6 +430,11 @@ body:has(.wt-suggest:not([hidden])) #mccWorldAudioControls {
   .wt-go-row button { font-size:12px; }
 }
 
-/* THE WORLD IS THE SOCIAL FEED (owner, 2026-10-20): Travel and Missions are off (hu-social-only on <html>, mnet.html), so
-   their mode buttons stay hidden. Environmental Justice has its own scoped public mode (2026-11-07). */
-.hu-social-only :is([data-mn-view="missions"],#mnProfileRecord,#mnClipDoor,#mnFeedMissions,.mn__actionboard,.mn__understand) { display:none!important; }
+/* TRAVEL IS THE HOUSE OWNER'S (owner, 2026-10-20; AGENTS.md, "Public World"): hu-travel-off on <html> (mnet.html) keeps the
+   centre mode bar off everyone else's World, so the feed is their one mode and nothing sits in the middle of the globe.
+   The house owner's bar (js/world-owner-modes.js lifts the switch) holds Travel and News feed. Missions are public
+   (owner, 2026-11-17): their doors show for everyone. The same switch keeps the two other things the 2026-10-20 switch
+   held, the clip-campaign door and the Live room's action blocks, with the house owner: they were not asked back. */
+.hu-travel-off .wt-world-modes { display:none; }
+.wt-world-modes { width:184px; }
+.hu-travel-off :is(#mnClipDoor,.mn__actionboard,.mn__understand) { display:none!important; }

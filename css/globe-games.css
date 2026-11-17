@@ -2,9 +2,10 @@
    the globe's header and the bottom bar at phone width; from 768px it becomes a side panel. min-width queries only. */
 
 /* Owner-only controls are not drawn until the server's owner answer arrives (js/action-globe.js sets html.globe-owner),
-   so nothing flashes for anyone else. The Games tab and the globe's own Missions mode, layer and story feed are the
-   owner's for now (owner, 2026-11-03: missions hidden behind admin; code kept, not deleted). */
-html:not(.globe-owner) :is(#ctlGames,#ctlGamesDoor,#feedMode,#missionsLayer,#worldFeed,#worldDetail,#gamesSheet){display:none!important}
+   so nothing flashes for anyone else. The Games tab, its door and its sheet are the owner's for now (owner, 2026-11-03).
+   The globe's own Missions mode, layer, story feed and pin detail are public again (owner, 2026-11-17: missions are
+   public; docs/control-plane/WORLD-FEED-AND-MISSIONS-20261117.md, "What this supersedes"). */
+html:not(.globe-owner) :is(#ctlGames,#ctlGamesDoor,#gamesSheet){display:none!important}
 
 .globe-ctl.globe-ctl--games{display:inline-flex;align-items:center;gap:6px;width:auto;padding:0 12px;font:600 13px/1 Inter,system-ui,sans-serif;color:#eef0f4}
 .globe-ctl.globe-ctl--games svg{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.6}

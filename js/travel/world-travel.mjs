@@ -37,9 +37,11 @@ const hasCoordinates = place => Array.isArray(place?.coordinates) && place.coord
 const freshDraft = () => normalizeJourney({ mode:'drive' });
 let draft = freshDraft(), savedId = null, dirty = false, busy = false, revision = 0, tripEpoch = 0, tripShape = 'rides';
 let rideSub = 'directions', flightSub = 'commercial';
-/* Consumer World: feed plus Environmental Justice on the same globe. The
-   hu-social-only switch still keeps general Travel and Missions owner-only. */
-const MODES = document.documentElement.classList.contains('hu-social-only') ? ['posts', 'environment'] : ['travel', 'missions', 'posts', 'environment'];
+/* Consumer World (owner, 2026-11-17; AGENTS.md, "Public World"): one feed, with the missions in it and Environmental
+   Justice behind the feed's Equity Uprise tab, on the same globe. The centre bar keeps only the modes that are not the
+   feed: Travel, which the hu-travel-off switch keeps the house owner's (js/world-owner-modes.js lifts it for them alone).
+   Everyone else has the feed as the one mode and sees no centre bar (css/world-travel.css). */
+const MODES = document.documentElement.classList.contains('hu-travel-off') ? ['posts'] : ['travel', 'posts'];
 let catalogPromise, currentMode = MODES[0], hostVisible = document.body.dataset.worldAudioVisible !== 'false';
 const send = data => frame?.contentWindow?.postMessage(data, location.origin);
 const status = (message = '') => { $('wtMessage').textContent = message; };
@@ -695,7 +697,7 @@ function setMode(mode) {
   if (mode !== currentMode) { setMapPick(null); invalidateRoute(); closeSearches(); }
   currentMode = mode; root.dataset.worldMode = mode;
   if (mode !== 'travel') root.classList.remove('wt-expanded');
-  frame.title = mode === 'environment' ? 'Environmental Justice globe. Drag to explore; select an observation to see its source and safe actions.' : mode === 'travel' ? 'Travel map. Drag to explore; your selected places and road directions appear here.' : 'Equity Uprise globe. Drag to explore; select a mission pin to see its details.';
+  frame.title = mode === 'travel' ? 'Travel map. Drag to explore; your selected places and road directions appear here.' : 'Equity Uprise globe. Drag to explore; select a mission pin to see its details.';
   root.classList.remove('hu-search-open'); $('huSearchToggle').setAttribute('aria-expanded', 'false');
   document.querySelectorAll('[data-world-mode][aria-pressed]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.worldMode === mode)));
   $('mnWorldFeed').scrollTop = 0; renderDirections(); renderGlobe(); autoLocate();
@@ -714,7 +716,8 @@ modeButtons.forEach(button => {
   };
 });
 let touchStart = null;
-$('mnWorldFeed').addEventListener('touchstart', e => { touchStart = e.touches.length !== 1 || e.target.closest('input,select,button,a,summary,.wt-toolbar,[data-mission-deck]') ? null : { x:e.touches[0].clientX, y:e.touches[0].clientY }; }, { passive:true });
+/* a sideways drag on the feed's scope strip scrolls the strip; it never changes the mode */
+$('mnWorldFeed').addEventListener('touchstart', e => { touchStart = e.touches.length !== 1 || e.target.closest('input,select,button,a,summary,.wt-toolbar,.hu-feed-scope') ? null : { x:e.touches[0].clientX, y:e.touches[0].clientY }; }, { passive:true });
 $('mnWorldFeed').addEventListener('touchend', e => {
   if (!touchStart) return; const dx = e.changedTouches[0].clientX - touchStart.x, dy = e.changedTouches[0].clientY - touchStart.y; touchStart = null;
   if (MODES.length > 1 && Math.abs(dx) > 100 && Math.abs(dx) > Math.abs(dy) * 2) setMode(MODES[(MODES.indexOf(currentMode) + (dx < 0 ? 1 : MODES.length - 1)) % MODES.length]);
@@ -748,7 +751,8 @@ window.addEventListener('message', e => {
     try { draft = read(); draft.to = { label:String(e.data.country.name).slice(0, 240), coordinates:null }; changed(); closeSearches(); syncInputs(); status('Country selected. Search for a city or address, then choose a result for directions.'); $('wtTo').focus(); }
     catch (error) { status(error.message); }
   }
-  if (e.data?.type === 'hu:mission-selected' && currentMode === 'travel') setMode('missions');
+  /* a mission pin tapped while planning a trip opens it where missions live: the feed */
+  if (e.data?.type === 'hu:mission-selected' && currentMode === 'travel') setMode('posts');
 });
 
 $('wtForm').addEventListener('input', e => {
@@ -863,13 +867,21 @@ $('wtMapPickCancel').onclick = () => setMapPick(null);
 $('wtMapNavGo').onclick = () => $('wtNavigate').click();
 $('wtMapNavStop').onclick = () => $('wtStopNavigation').click();
 $('wtMapNavRecenter').onclick = () => $('wtRecenter').click();
+/* Environmental Justice is behind the feed's Equity Uprise tab (js/mnet.js, MCC_FEED_SCOPE): while it is chosen the map
+   expands in place over the same frame, so its observations stay on the Earth, as Travel's directions do */
+const environmentShown = () => currentMode === 'posts' && window.MCC_FEED_SCOPE?.get?.() === 'equity';
 expanded.addEventListener('click', e => {
-  if (currentMode !== 'travel' && currentMode !== 'environment') return;
+  if (currentMode !== 'travel' && !environmentShown()) return;
   e.preventDefault();
   if (mapPick) { setMapPick(null); return; }
   const on = root.classList.toggle('wt-expanded');
-  expanded.setAttribute('aria-label', on ? currentMode === 'environment' ? 'Return to environmental actions' : 'Return to directions' : 'Expand the map');
+  expanded.setAttribute('aria-label', on ? currentMode === 'travel' ? 'Return to directions' : 'Return to environmental actions' : 'Expand the map');
   renderMapNav();
+});
+/* leaving the Equity Uprise tab lets an expanded environmental map go, as leaving Travel does */
+window.addEventListener('mcc:feed-scope', () => {
+  if (currentMode === 'travel' || environmentShown() || !root.classList.contains('wt-expanded')) return;
+  root.classList.remove('wt-expanded'); expanded.setAttribute('aria-label', 'Expand the map'); renderMapNav();
 });
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
@@ -964,7 +976,8 @@ attachWhipBooking({
 });
 syncInputs(); sessionChanged();
 const query = new URLSearchParams(location.search), requestedMode = query.get('mode');
-const wanted = query.has('mission') || query.has('completed') ? 'missions' : query.has('song') ? 'posts' : requestedMode;
-/* the house owner's World (js/world-owner-modes.js) has all three and opens on the feed, the one everyone else sees */
+/* a mission, a completed capstone or a song is in the feed; js/mnet.js chooses the Equity Uprise tab for the first two */
+const wanted = query.has('mission') || query.has('completed') || query.has('song') ? 'posts' : requestedMode;
+/* the house owner's World (js/world-owner-modes.js) has Travel too and opens on the feed, the one everyone else sees */
 setMode(MODES.includes(wanted) ? wanted : document.documentElement.hasAttribute('data-world-owner') ? 'posts' : MODES[0]);
 send({ type:'hu:hello' }); autoLocate();

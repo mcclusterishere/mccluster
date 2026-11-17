@@ -2,7 +2,8 @@
    (/v1/status, /v1/world/access) and everything else are synthetic fixtures, so production is never called. Cesium is
    served from a local Build directory, never downloaded by the test.
      owner  → the Games tab → United States → Connecticut → Bridgeport → storylines playing now / next → Start lands on the route
-     member and guest → no Games tab, no globe Missions controls, no Missions room in the bar's Globe wing
+     member and guest → no Games tab and no Missions room in the bar's Globe wing; the globe's own Missions mode, layer and
+       feed are drawn for them as for the owner (missions are public again, owner 2026-11-17)
    at 390, 768 and 1440 px, with no sideways overflow and no page errors.
    PLAYWRIGHT_DIR=<node_modules> CESIUM_DIR=<Cesium Build dir> node scripts/e2e/globe-games.e2e.mjs [outDir] */
 import { createRequire } from 'node:module';
@@ -17,6 +18,8 @@ if (!CESIUM) throw Error('CESIUM_DIR is required; the test never downloads runti
 const TYPES = { '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.html': 'text/html', '.jpg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.geojson': 'application/json', '.wasm': 'application/wasm', '.glb': 'model/gltf-binary', '.ktx2': 'image/ktx2' };
 const OWNER = '11111111-1111-4111-8111-111111111111', MEMBER = '22222222-2222-4222-8222-222222222222';
 const results = [];
+/* the owner's globe Missions controls, per width: a member's and a guest's must match them (no owner gate holds them) */
+const ownerMissions = {};
 function check(scope, name, ok, detail) { results.push(ok); console.log((ok ? 'PASS ' : 'FAIL ') + '[' + scope + '] ' + name + (ok ? '' : ' ' + JSON.stringify(detail))); }
 await mkdir(OUT, { recursive: true });
 const json = (r, b, s = 200) => r.fulfill({ status: s, contentType: 'application/json', headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*' }, body: JSON.stringify(b) });
@@ -84,7 +87,8 @@ try {
       await page.waitForFunction(() => document.documentElement.classList.contains('globe-owner'), null, { timeout: 30000 }).catch(() => {});
       await openTools(page);
       check(scope, 'the server\'s owner answer shows the Games tab in the globe\'s layers', await shown(page, '#ctlGames'), await page.evaluate(() => ({ cls: document.documentElement.className, access: window.__huAccess && window.__huAccess() })));
-      check(scope, 'the owner-only gate on the globe\'s Missions mode, layer and feed is lifted for the owner', await page.evaluate(() => document.documentElement.classList.contains('globe-owner') && !getComputedStyle(document.getElementById('missionsLayer')).getPropertyValue('display').startsWith('none') || getComputedStyle(document.querySelector('.world-tools')).display === 'none'));
+      check(scope, 'nothing holds the globe\'s Missions mode, layer and feed back from the owner', await page.evaluate(() => document.documentElement.classList.contains('globe-owner') && !getComputedStyle(document.getElementById('missionsLayer')).getPropertyValue('display').startsWith('none') || getComputedStyle(document.querySelector('.world-tools')).display === 'none'));
+      ownerMissions[vp.width] = await page.evaluate(() => ['feedMode', 'missionsLayer', 'worldFeed'].map((id) => getComputedStyle(document.getElementById(id)).display));
       check(scope, 'nothing of Games was fetched before it was opened', gamesFetches.length === 0, gamesFetches);
       await page.click('#ctlGames');
       await page.waitForSelector('#gamesSheet [data-country="us"]', { timeout: 15000 }).catch(() => {});
@@ -153,7 +157,8 @@ try {
       const g = await page.evaluate(() => ({ owner: document.documentElement.classList.contains('globe-owner'), games: (() => { const b = document.getElementById('ctlGames'); return !!b && getComputedStyle(b).display !== 'none' && !b.hidden; })(), sheet: !!document.getElementById('gamesSheet'),
         missions: ['feedMode', 'missionsLayer', 'worldFeed'].map((id) => getComputedStyle(document.getElementById(id)).display) }));
       check(scope, 'no Games tab, no overlay, even with ?games=1', !g.owner && !g.games && !g.sheet, g);
-      check(scope, 'the globe\'s Missions mode, layer and feed are not drawn', g.missions.every((d) => d === 'none'), g.missions);
+      /* missions are public (owner, 2026-11-17): the PR #726 gate holds only the Games tab, its door and its sheet */
+      check(scope, 'the globe\'s Missions mode, layer and feed are drawn as they are for the owner', JSON.stringify(g.missions) === JSON.stringify(ownerMissions[vp.width]) && !g.missions.slice(0, 2).includes('none'), { mine: g.missions, owner: ownerMissions[vp.width] });
       check(scope, 'nothing of Games was fetched', gamesFetches.length === 0, gamesFetches);
       check(scope, 'no sideways overflow', (await overflow(page)) === 0, await overflow(page));
       if (vp.width === 390) await shot(page, join(OUT, `${label}-${vp.width}-globe.png`));
