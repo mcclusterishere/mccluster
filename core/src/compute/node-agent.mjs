@@ -9,7 +9,7 @@ import { generateNodeIdentity, nodeIdFromPublicKey, signRequest } from './signat
 import { deriveHardwareMode, discoverHardware, loadSnapshot } from './hardware.mjs';
 import { capabilityReadiness, engineHealthSummary, healthyCapabilities, probeExecutors } from './engine-probes.mjs';
 import {
-  aclCommand, gpuEvidenceTtlMs, isPositiveGpuEvidence, readMeasuredInferenceSidecar, resolveNodePaths,
+  aclCommand, gpuEvidenceTtlMs, hardwareRefreshMs, isPositiveGpuEvidence, readMeasuredInferenceSidecar, resolveNodePaths,
   selectGpuEvidence, selectMeasuredInference, shutdownSignals, yieldClaimBody, yieldToGpuMs
 } from './node-agent-config.mjs';
 
@@ -31,6 +31,8 @@ const HEARTBEAT_MS = Math.max(10_000, Number(process.env.MCCLUSTER_NODE_HEARTBEA
 const ENGINE_PROBE_MS = Math.max(5_000, Number(process.env.MCCLUSTER_NODE_ENGINE_PROBE_MS || 15_000));
 const SHUTDOWN_GRACE_MS = Math.max(5_000, Number(process.env.MCCLUSTER_NODE_SHUTDOWN_GRACE_MS || 30_000));
 const GPU_EVIDENCE_TTL_MS = gpuEvidenceTtlMs(process.env);
+// Full hardware discovery (process spawns) this often; the engine probe in between reuses the snapshot.
+const HARDWARE_REFRESH_MS = hardwareRefreshMs(process.env);
 // Leave fresh tasks to a live GPU node for this long (0 = never; the OVH node's deploy-gated lever).
 const YIELD_MS = yieldToGpuMs(process.env);
 // MCCLUSTER_NODE_ENROLL_ONLY=1: enrol (or confirm the identity) and exit, so a bootstrap token never lingers.
@@ -330,11 +332,23 @@ async function gracefulShutdown(active, signal) {
   log({ event: 'compute_node_shutdown', signal, remaining_leases: active.size });
 }
 
-// One probe cycle: manifest, sidecar, hardware, executor health, evidence, mode.
+// Hardware discovery spawns processes (on Windows powershell.exe, reg.exe and
+// the nvidia-smi attempts, each with a 5 s timeout), so it runs once at start
+// and again only every HARDWARE_REFRESH_MS; the ENGINE_PROBE_MS cycle keeps
+// the cached snapshot and stays the cheap loopback health read.
+let hardwareCache = { at: 0, value: null };
+function hardwareSnapshot(now = Date.now()) {
+  if (!hardwareCache.value || now - hardwareCache.at >= HARDWARE_REFRESH_MS) {
+    hardwareCache = { at: now, value: discoverHardware({ diskPath: STATE_DIR }) };
+  }
+  return hardwareCache.value;
+}
+
+// One probe cycle: manifest, sidecar, hardware (cached), executor health, evidence, mode.
 async function probe() {
   const manifest = readManifest();
   observed.measurements = readMeasurements();
-  const hardware = discoverHardware({ diskPath: STATE_DIR });
+  const hardware = hardwareSnapshot();
   const engineHealth = await probeExecutors(manifest);
   const readiness = capabilityReadiness(manifest, engineHealth, hardware);
   const advertised = healthyCapabilities(manifest, engineHealth, hardware);

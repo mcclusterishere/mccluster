@@ -279,3 +279,61 @@ test('warm-on-start is off by default', { timeout: 15000 }, async (t) => {
   await delay(300);
   assert.equal(a.chats().length, 0);
 });
+
+// A port reserved in advance, so a fake daemon can start listening on it only
+// when the test says so: after a reboot the adapter's startup task runs before
+// the Ollama tray app exists.
+async function reservePort() {
+  const probe = http.createServer();
+  probe.listen(0, '127.0.0.1'); await once(probe, 'listening');
+  const { port } = probe.address();
+  await new Promise((resolve) => probe.close(resolve));
+  return port;
+}
+
+async function spawnAdapter(t, env) {
+  const child = spawn(process.execPath, [ADAPTER], {
+    env: { ...process.env, MCCLUSTER_OLLAMA_ADAPTER_PORT: '0', MCCLUSTER_OLLAMA_MODEL: 'qwen3:8b', MCCLUSTER_OLLAMA_ADAPTER_TIMEOUT_MS: '5000', ...env },
+    stdio: ['ignore', 'pipe', 'pipe']
+  });
+  const output = { stdout: '', stderr: '' };
+  child.stdout.on('data', (chunk) => { output.stdout += chunk; });
+  child.stderr.on('data', (chunk) => { output.stderr += chunk; });
+  t.after(() => stop(child));
+  const events = () => output.stdout.split('\n').filter(Boolean).map((line) => { try { return JSON.parse(line); } catch { return null; } }).filter(Boolean);
+  return { child, output, events };
+}
+
+test('warm-on-start retries until the daemon answers: the tray app starts after the adapter after a reboot', { timeout: 20000 }, async (t) => {
+  const port = await reservePort();
+  const a = await spawnAdapter(t, { MCCLUSTER_OLLAMA_URL: `http://127.0.0.1:${port}`, MCCLUSTER_OLLAMA_WARM_ON_START: 'true', MCCLUSTER_OLLAMA_WARM_RETRY_MS: '1000' });
+  const failed = await eventually(() => a.events().filter((e) => e.event === 'ollama_adapter_warm' && e.ok === false), (list) => list.length >= 2);
+  assert.equal(failed[0].attempt, 1);
+  assert.equal(failed[0].model, null);
+  assert.equal(failed[0].next_in_ms, 1000, 'a daemon that does not answer yet is tried again (the retry floor is one second)');
+  assert.equal(failed[1].attempt, 2);
+  assert.equal(a.events()[0].event, 'ollama_adapter_ready', 'the ready line stays first');
+
+  const { server, requests } = fakeOllama({ installed: ['qwen3:8b'] });
+  server.listen(port, '127.0.0.1'); await once(server, 'listening');
+  t.after(async () => { const closed = new Promise((resolve) => server.close(resolve)); server.closeAllConnections(); await closed; });
+  const warmed = await eventually(() => a.events().filter((e) => e.event === 'ollama_adapter_warm' && e.ok === true), (list) => list.length >= 1);
+  assert.equal(warmed[0].model, 'qwen3:8b');
+  assert.equal(requests.filter((r) => r.url === '/api/chat').length, 1);
+  await delay(600);
+  assert.equal(requests.filter((r) => r.url === '/api/chat').length, 1, 'warmed once; the retries stop once the daemon answered');
+  assert.equal(a.events().filter((e) => e.event === 'ollama_adapter_warm_window_ended').length, 0);
+});
+
+test('warm-on-start gives up after its window and says so', { timeout: 15000 }, async (t) => {
+  const port = await reservePort();
+  const a = await spawnAdapter(t, { MCCLUSTER_OLLAMA_URL: `http://127.0.0.1:${port}`, MCCLUSTER_OLLAMA_WARM_ON_START: 'true', MCCLUSTER_OLLAMA_WARM_RETRY_MS: '1000', MCCLUSTER_OLLAMA_WARM_WINDOW_MS: '1500' });
+  const ended = await eventually(() => a.events().filter((e) => e.event === 'ollama_adapter_warm_window_ended'), (list) => list.length >= 1);
+  assert.equal(ended[0].attempts, 2, 'the second attempt lands past the window, so no third is scheduled');
+  assert.equal(ended[0].window_ms, 1500);
+  const attempts = a.events().filter((e) => e.event === 'ollama_adapter_warm');
+  assert.equal(attempts.length, 2);
+  assert.equal(attempts[1].next_in_ms, null);
+  await delay(600);
+  assert.equal(a.events().filter((e) => e.event === 'ollama_adapter_warm').length, 2, 'no attempt after the window');
+});

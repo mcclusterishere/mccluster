@@ -48,18 +48,23 @@ const MAPPED_MODELS = new Set(Object.values(IMPLEMENTATIONS));
 const ALLOWED_MODELS = new Set([MODEL, ...EXTRA_MODELS, ...MAPPED_MODELS]);
 // The think key is sent only to thinking models; instruct-only builds reject
 // it. MCCLUSTER_OLLAMA_THINK_MODELS is the exact set when given; the default is
-// the default model plus every mapped qwen3 model that is not an instruct build,
-// which is byte-identical to the old "default model only" rule without a map.
+// the default model plus every mapped qwen3 or qwen3-vl model that is not an
+// instruct build, which is byte-identical to the old "default model only" rule
+// without a map.
 const THINK_MODELS_ENV = String(process.env.MCCLUSTER_OLLAMA_THINK_MODELS || '').split(',').map(s => s.trim()).filter(Boolean);
 const THINK_MODELS = THINK_MODELS_ENV.length
   ? new Set(THINK_MODELS_ENV)
-  : new Set([MODEL, ...[...MAPPED_MODELS].filter(model => /^qwen3:(?!.*instruct)/i.test(model))]);
+  : new Set([MODEL, ...[...MAPPED_MODELS].filter(model => /^qwen3(?:-vl)?:(?!.*instruct)/i.test(model))]);
 // GET /api/ps is the engine's own account of what is loaded and whether it sits
 // in VRAM; it is read at most once per window and never costs a generation.
 const EVIDENCE_TTL_MS = Math.max(5_000, Number(process.env.MCCLUSTER_OLLAMA_EVIDENCE_TTL_MS) || 60_000);
 // Load each installed resident model once after start-up (laptop nodes), so the
-// node has engine evidence within a minute of a reboot. Off by default.
+// node has engine evidence within a minute of a reboot. Off by default. While
+// the daemon does not answer (the tray app starts after the adapter's startup
+// task) the attempt repeats every WARM_RETRY_MS for at most WARM_WINDOW_MS.
 const WARM_ON_START = String(process.env.MCCLUSTER_OLLAMA_WARM_ON_START || '') === 'true';
+const WARM_RETRY_MS = Math.max(1_000, Number(process.env.MCCLUSTER_OLLAMA_WARM_RETRY_MS) || 30_000);
+const WARM_WINDOW_MS = Math.max(WARM_RETRY_MS, Number(process.env.MCCLUSTER_OLLAMA_WARM_WINDOW_MS) || 900_000);
 
 function keepAliveFor(model, settings) { return RESIDENT_MODELS.has(model) ? settings.keep_alive : ON_DEMAND_KEEP_ALIVE; }
 function pickModel(body) {
@@ -388,10 +393,26 @@ async function implementationReadiness(implementation) {
 
 // Resident models are loaded once with a 16-token chat through the normal
 // single-slot queue (lowest priority), so a rebooted node earns engine
-// evidence within a minute instead of waiting for its first task.
-async function warmResidentModels() {
+// evidence within a minute instead of waiting for its first task. After a
+// reboot the adapter's startup task runs before the Ollama tray app exists,
+// so a daemon that does not answer is tried again every WARM_RETRY_MS until
+// WARM_WINDOW_MS has passed; every attempt is logged, and so is the window
+// ending without a daemon.
+async function warmResidentModels({ startedAt = Date.now(), attempt = 1 } = {}) {
   const { tags, error } = await readTags();
-  if (!tags) { console.log(JSON.stringify({ event: 'ollama_adapter_warm', model: null, ok: false, wall_ms: 0, error })); return; }
+  if (!tags) {
+    const retry = Date.now() - startedAt + WARM_RETRY_MS <= WARM_WINDOW_MS;
+    console.log(JSON.stringify({ event: 'ollama_adapter_warm', model: null, ok: false, wall_ms: 0, error, attempt, next_in_ms: retry ? WARM_RETRY_MS : null }));
+    if (!retry) {
+      console.log(JSON.stringify({ event: 'ollama_adapter_warm_window_ended', attempts: attempt, window_ms: WARM_WINDOW_MS }));
+      return;
+    }
+    const timer = setTimeout(() => {
+      warmResidentModels({ startedAt, attempt: attempt + 1 }).catch((retryError) => console.log(JSON.stringify({ event: 'ollama_adapter_warm', model: null, ok: false, wall_ms: 0, error: String(retryError?.message || retryError).slice(0, 200), attempt: attempt + 1, next_in_ms: null })));
+    }, WARM_RETRY_MS);
+    timer.unref();
+    return;
+  }
   for (const model of RESIDENT_MODELS) {
     if (!ALLOWED_MODELS.has(model) || !tags.models.some(item => modelMatches(item, model))) continue;
     const started = Date.now();
