@@ -474,3 +474,17 @@ The applied SQL headers retain their original pending wording to preserve byte-f
 transactional production apply. Its rollback remains here and must follow a
 Worker rollback. See the dated claims-v2 release receipt under
 `docs/control-plane/evidence/releases-2026-11-10/`. Other candidates remain pending.
+
+Pending: `compute_claim_task_yield_v3.sql` (rollback `compute_claim_task_yield_v3.rollback.sql`)
+replaces `public.compute_claim_task` with the applied v2 body plus one optional parameter,
+`p_yield_seconds integer default 0` (clamped 0..300): a claim that passes it skips tasks created
+less than that many seconds ago, so a CPU node that was told a GPU node is live can leave fresh
+work to it; the returned `task` JSON also carries `priority`. It creates nothing. The 4-argument
+call keeps working through the default, so nothing changes until a node sends `yield_seconds`
+(`MCCLUSTER_NODE_YIELD_TO_GPU_MS`, off by default; `core/src/compute/store.mjs` drops the parameter
+on PostgREST PGRST202 while this file is not applied). The old 4-argument signature is dropped in
+the same transaction because a second overload would make the gateway's named call ambiguous.
+Test: `PGLITE_MODULE_PATH=<pinned PGlite>/dist/index.js node scripts/compute-lease-yield-sql-check.mjs`
+(`supabase/tests/compute_claim_task_yield.behaviour.sql`, then the rollback and a re-apply, on a
+disposable database). Never applied here. Promote it using the steps above, then
+`notify pgrst, 'reload schema';` if a claim still answers PGRST202.

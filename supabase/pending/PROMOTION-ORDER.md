@@ -328,6 +328,17 @@ these reads immediately before each apply. Superseded by this section: the missi
 (section 2, item 1) and section 8 of `20261015230000_action_mission_pins_arcs_black_business.sql` (section 2,
 item 7); each entry says what it would still do.
 
+## 11. Compute fabric preference (additive, deploy-gated; written 2026-11-17)
+
+| File (+ rollback) | Creates | Callers | Proof before apply |
+|---|---|---|---|
+| `compute_claim_task_yield_v3.sql` (+ `compute_claim_task_yield_v3.rollback.sql`) | nothing: it replaces one function's signature. `public.compute_claim_task` gets a fifth optional parameter, `p_yield_seconds integer default 0` (clamped 0..300): a claim that passes it skips tasks younger than that many seconds, so a CPU node can leave fresh work to a live GPU node; the returned `task` JSON also carries `priority`. The 4-argument call keeps working through the default; the 4-argument signature is dropped in the same transaction because a second overload would make the gateway's named call ambiguous | `core/src/compute/store.mjs` (`claimLease`, which sends `p_yield_seconds` only when a node asks to yield and, on PostgREST 404 PGRST202, retries without it and remembers for the life of the process), reached through `core/src/compute/gateway.mjs` (`POST /v1/compute/lease` clamps `body.yield_seconds`) from `core/src/compute/node-agent.mjs` (`MCCLUSTER_NODE_YIELD_TO_GPU_MS`, off by default). Nothing fails without it | `PGLITE_MODULE_PATH=<pinned PGlite>/dist/index.js node scripts/compute-lease-yield-sql-check.mjs` (base chain, apply, `supabase/tests/compute_claim_task_yield.behaviour.sql`, the v2 lease assertions on the v3 function, rollback, the 5-argument call gone, re-apply, assertions again); passed here on PGlite 0.5.10 on 2026-11-17 |
+
+Apply only when the owner wants the OVH node to yield to a live GPU node (then set
+`MCCLUSTER_NODE_YIELD_TO_GPU_MS` on that node); harmless otherwise. No prerequisite beyond the
+applied `20261020210718_compute_lease_authority_v2`. PostgREST reloads its schema cache on DDL; if
+a claim still answers PGRST202 afterwards, run `notify pgrst, 'reload schema';`. Never applied here.
+
 ## Names with no SQL anywhere
 
 `live-callers.json` → `missing_everywhere`: the `crm_*` tables
