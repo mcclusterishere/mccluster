@@ -213,8 +213,13 @@ test('the publish touches exactly the imported ids, drafts only; its rollback un
   assert.deepEqual(uuids(del), ids, 'the import rollback deletes exactly the imported ids');
   assert.match(del, /for update;/, 'after locking them');
   assert.match(del, /k\.confrelid = 'public\.action_missions'::regclass/, 'refusing on any foreign key that references them');
-  assert.match(del, /action_creator_funding/);
-  assert.match(del, /action_creator_payout_intents/);
+  assert.match(del, /v_soft_tables constant text\[\] := array\['public\.action_creator_payout_intents', 'public\.action_creator_funding'\];/,
+    'and on the two references production holds without a foreign key, payout intents first');
+  const lockMissions = del.indexOf('\n  perform 1 from public.action_missions where id = any (v_ids) for update;\n');
+  const lockSoft = del.indexOf("\n      execute format('lock table %s in share mode', to_regclass(v_soft));\n");
+  const firstCount = del.indexOf('select count(*)');
+  assert.ok(lockMissions > 0 && lockMissions < lockSoft && lockSoft < firstCount, 'it locks the missions, then those two tables, before it counts anything');
+  assert.match(del, /execute format\('select count\(\*\) from %s where mission_id = any \(\$1\)', to_regclass\(v_soft\)\) into v_n using v_ids;/);
   assert.match(del, /raise exception 'Drawdown import rollback refused/);
 });
 

@@ -9,7 +9,7 @@
 // Disposable server only (scripts/test/support/native-postgres.mjs); never the canonical project.
 import { readFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
-import { refuseUnlessAllowed, startNativePostgres, supabaseShapedDatabase } from './support/native-postgres.mjs';
+import { refuseUnlessAllowed, startNativePostgres, supabaseShapedDatabase, waitsOn } from './support/native-postgres.mjs';
 import {
   readCatalog, driftedFiles, missionId, NAMESPACE, ID_NAME_PREFIX, OUTPUT_FILES, PRODUCTION_MISSION_COLUMNS,
   PRODUCTION_MISSION_CHECKS, CC_BY,
@@ -299,6 +299,27 @@ try {
   await apply('delete from public.social_content_items');
   await apply(`insert into public.action_creator_funding(mission_id) values ('${X}')`);
   await refused(sql.importRollback, '55000', /action_creator_funding\.mission_id: 1/, 'so does a mission_id held without a foreign key');
+  await apply('delete from public.action_creator_funding');
+  await apply(`insert into public.action_creator_payout_intents(mission_id) values ('${Y}')`);
+  await refused(sql.importRollback, '55000', /action_creator_payout_intents\.mission_id: 1/, 'and the other one, a payout intent');
+  await apply('delete from public.action_creator_payout_intents');
+  // A funding row another session is still writing when the rollback starts: no foreign key holds it back, so the
+  // rollback must wait for it (the table lock), then count it, never delete its mission under it.
+  const writer = await server.client(DB);
+  const rolling = await server.client(DB);
+  clients.push(writer, rolling);
+  const pidOf = async (c) => ({ pid: (await c.query('select pg_backend_pid() as p')).rows[0].p });
+  const [writerPid, rollingPid] = [await pidOf(writer), await pidOf(rolling)];
+  await writer.query('begin');
+  await writer.query('insert into public.action_creator_funding(mission_id) values ($1)', [X]);
+  const outcome = rolling.query(sql.importRollback).then(() => null, (error) => error);
+  await waitsOn(admin, rollingPid, writerPid, 'the import rollback waits for the funding row being written');
+  ok(true, 'the import rollback waits for a funding row another session is still writing');
+  await writer.query('commit');
+  const late = await outcome;
+  await rolling.query('rollback');
+  ok(late?.code === '55000' && /action_creator_funding\.mission_id: 1/.test(late.message), `then counts it and refuses (${late?.code} ${late?.message})`);
+  eq(await statusCounts(), { draft: N }, 'and deleted nothing');
   await apply('delete from public.action_creator_funding');
   await apply(sql.importRollback);
   eq(await missionsDigest(), preImport, 'the import rollback leaves public.action_missions exactly as before the import');
