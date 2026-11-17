@@ -50,6 +50,11 @@ const PRODUCTION_ACL = {
   [JOIN]: ['authenticated=X/postgres', 'postgres=X/postgres', 'service_role=X/postgres'],
   [CAN_JOIN]: ['postgres=X/postgres', 'service_role=X/postgres'],
 };
+// The join scope file's own bodies: its guard, and its rollback's, accept these and production's, nothing else.
+const JOIN_SCOPE_PROSRC_MD5 = {
+  [JOIN]: 'f29d7657d536e60f1b7df33ee17bcde4',
+  [CAN_JOIN]: '70700a7b0f68a24a1664d38097685bf5',
+};
 const FREE_RIDE = '302dcb4e-ca21-4289-b633-9c397985fb9d';
 const ANA = '00000000-0000-4000-8000-0000000000a1'; // a member with no region
 const BEA = '00000000-0000-4000-8000-0000000000b2'; // members who consent to Georgia
@@ -160,11 +165,25 @@ try {
   const col = await one("select column_default, is_nullable from information_schema.columns where table_schema = 'public' and table_name = 'action_globe_mission_regions' and column_name = 'join_scope'");
   eq([col.column_default, col.is_nullable], ["'anywhere'::text", 'NO'], "join scope applies twice: join_scope text not null default 'anywhere'");
   await fails(pin(FREE_RIDE, 'US-CT', true, 'members_only'), '23514', /join_scope_check/, 'join_scope accepts only anywhere and region_members');
-  ok((await md5Of(JOIN)) !== PRODUCTION_PROSRC_MD5[JOIN] && (await md5Of(CAN_JOIN)) !== PRODUCTION_PROSRC_MD5[CAN_JOIN], 'both join functions now have the new bodies');
+  eq([await md5Of(JOIN), await md5Of(CAN_JOIN)], [JOIN_SCOPE_PROSRC_MD5[JOIN], JOIN_SCOPE_PROSRC_MD5[CAN_JOIN]], 'both join functions now have the new bodies');
   for (const sig of [JOIN, CAN_JOIN]) {
     eq(await security(sig), { prosecdef: true, proconfig: ['search_path=""'] }, `${sig} keeps SECURITY DEFINER and search_path ''`);
     eq(await aclOf(sig), PRODUCTION_ACL[sig], `${sig} keeps production's grants`);
   }
+  // Another migration replaces a join function after 10.1, as the whole pins file does (its join also waits for a
+  // mission arc's earlier step). Rerunning 10.1, or its rollback, would put an older body back over it: both refuse.
+  const joinScopeColumns = async () => (await admin.query("select column_name from information_schema.columns where table_schema = 'public' and table_name = 'action_globe_mission_regions' order by 1")).rows.map((r) => r.column_name);
+  const columnsBefore = await joinScopeColumns();
+  for (const [sig, name] of [[JOIN, 'join_action_mission'], [CAN_JOIN, 'action_globe_can_join_mission']]) {
+    const own = new RegExp(`\\ncreate or replace function public\\.${name}\\([^)]*\\)[\\s\\S]*?\\n\\$\\$;`).exec(sql.joinScope)[0];
+    await apply(own.replace('\nas $$\n', () => '\nas $$\n -- replaced by a later migration\n'));
+    const replaced = await md5Of(sig);
+    await refused(sql.joinScope, '55000', /join scope v1 refused/, `10.1 refuses to run again once another migration has replaced ${name}`);
+    await refused(sql.joinScopeRollback, '55000', /join scope v1 rollback refused/, 'and so does its rollback');
+    eq([await md5Of(sig), await joinScopeColumns()], [replaced, columnsBefore], 'neither changed the function or the table');
+    await apply(own);
+  }
+  eq([await md5Of(JOIN), await md5Of(CAN_JOIN)], [JOIN_SCOPE_PROSRC_MD5[JOIN], JOIN_SCOPE_PROSRC_MD5[CAN_JOIN]], "10.1's bodies are back for the rest of the run");
   await fails(anon.query('select public.join_action_mission($1)', [FREE_RIDE]), '42501', /permission denied/, 'a guest still cannot call join_action_mission');
   await fails(ana.query('select public.action_globe_can_join_mission($1, $2)', [mUid(ANA), FREE_RIDE]), '42501', /permission denied/, 'a member still cannot call the eligibility helper');
 

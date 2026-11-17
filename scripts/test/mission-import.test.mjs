@@ -290,6 +290,22 @@ test('the join scope file changes only the gate; its rollback is production\'s b
     assert.ok(s.includes('revoke all on function public.join_action_mission(uuid) from public, anon;\ngrant execute on function public.join_action_mission(uuid) to authenticated, service_role;'));
     assert.ok(s.includes('revoke all on function public.action_globe_can_join_mission(uuid,uuid) from public,anon,authenticated;\ngrant execute on function public.action_globe_can_join_mission(uuid,uuid) to service_role;'));
   }
+  // Both files refuse unless the two functions are production's or the forward file's own: over anything else,
+  // such as the whole pins file's join (which also checks a mission arc's earlier step), a rerun or a rollback
+  // would silently put back an older join.
+  const accepted = [prodJoin, body(fwd, 'join_action_mission'), prodCan, body(fwd, 'action_globe_can_join_mission')].map(md5).sort();
+  assert.equal(new Set(accepted).size, 4);
+  for (const [s, tag, message] of [[fwd, 'join_scope_guard', 'join scope v1 refused'], [back, 'join_scope_rollback_guard', 'join scope v1 rollback refused']]) {
+    const guard = new RegExp(`\\ndo \\$${tag}\\$\\n([\\s\\S]*?)\\n\\$${tag}\\$;\\n`).exec(s);
+    assert.ok(guard, `${tag} is there`);
+    assert.deepEqual([...guard[1].matchAll(/'([0-9a-f]{32})'/g)].map((m) => m[1]).sort(), accepted, `${tag} accepts exactly production's bodies and the forward file's`);
+    assert.match(guard[1], /v_join is null or v_join not in \('[0-9a-f]{32}', '[0-9a-f]{32}'\)\n {5}or v_can is null or v_can not in \('[0-9a-f]{32}', '[0-9a-f]{32}'\) then\n {4}raise exception/, `${tag} refuses when either function is anything else, or absent`);
+    assert.ok(guard[1].includes(`'${message}: join_action_mission`) && guard[1].includes("errcode = '55000'"), `${tag} raises 55000`);
+    const code = s.slice(s.search(/^begin;$/m));
+    const lock = code.indexOf('\nlock table public.action_globe_mission_regions in access exclusive mode;\n');
+    const firstChange = Math.min(...[/\nalter table /, /\ncreate or replace function /].map((re) => code.search(re)));
+    assert.ok(lock > 0 && lock < code.indexOf(`\ndo $${tag}$`) && code.indexOf(`\ndo $${tag}$`) < firstChange, `${tag}: table lock, then the check, then the first change`);
+  }
   assert.match(fwd, /add column if not exists join_scope text not null default 'anywhere'/);
   assert.match(fwd, /check \(join_scope in \('anywhere','region_members'\)\)/);
   const fwdCode = codeOnly(fwd).toLowerCase();
