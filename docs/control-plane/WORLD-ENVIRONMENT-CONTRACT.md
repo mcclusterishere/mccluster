@@ -401,3 +401,93 @@ Owner proof review also requires `expected_revision` from the displayed
 compares the complete-row revision and fails with `proof_changed` before canonical
 review. A replaced pending proof or same-content rejected retry invalidates old
 decisions. Refresh and inspect the latest evidence rather than blindly retrying.
+
+## Client (slice G1, 2026-11-17)
+
+The one globe (`#mnWorldFrame`, `action-globe.html?embedded=1&surface=network`) and the Environmental Justice panel speak
+over the existing `postMessage` spine, same origin, source checked on both sides; the panel hands the feed to the World page
+as one DOM event. Nothing is fetched twice: the feed by the panel only, the six layer routes by the globe only, nothing
+environmental by the page. The iframe ignores every `hu:environment-*` message on the ANALYTICS surface.
+
+### Panel to globe
+
+- `hu:environment-pins {on, selected, items:[{id, title, lat, lon, stale, category?, location_kind?, source?:{label,url},
+  observed_at?, fetched_at?, facts?:[{label,value}], significant?}]}`: the message that always existed, its items extended
+  additively (a key only when the normalized feed row carries it; `significant` is the host's pure rule, supplied through the
+  adapter, never derived by the globe). Only rows with a point are items. On destroy the last message is exactly
+  `{type:'hu:environment-pins', on:false, items:[]}`.
+- `hu:environment-layers {on, selected, replay:null|'quakes-24h', layers:{fires, perimeters, alerts, eonet, tides}}`: sent
+  before the pins on every activation and on `hu:globe-ready`; `on:false` before the pins-off message when the tab changes, on
+  the panel's pagehide and on destroy. `on:true` turns the typed layers on and lets the globe fetch its routes; `replay`
+  switches the quake replay; a layer flag false hides that layer without refetching.
+- `hu:environment-focus {id}`: a user-initiated focus (a pick never moves the camera); an id the globe does not hold yet is
+  kept briefly and honoured when its layer arrives, so "Show on globe" works before the layers are in.
+- `hu:environment-scene {action:'play'|'pause'|'next'|'prev'|'stop'}` and `hu:environment-view {mode:'3d'|'2d'}`.
+
+### Globe to panel
+
+- `hu:environment-selected {id, layer, kind, title, facts, source:{id,label,url,attribution,license}, observed_at,
+  observed_label:'Observed'|'Acquired'|'Sent'|'Captured'|'Reported'|'Computed'|'unknown', observed_date_only, fetched_at,
+  coverage, status, reason, lat, lon, via:'pick'|'focus'|'tour', illustrative, modelled}`: for an id in the feed the panel
+  selects its row as before; for any other id it draws the globe-selection card from the payload. `observed_at` null is shown as
+  "Time not supplied by provider"; a fetch time is never shown in the observed slot.
+- `hu:environment-layer-state {layer:'events'|'fires'|'perimeters'|'alerts'|'eonet'|'tides'|'shakemap', status:'loading'|
+  'available'|'stale'|'unavailable'|'policy'|'off', reason, http, schema, generated_at, fetched_at, last_success_at, coverage,
+  attribution, license, url, count, total, truncated, sources:[the Worker's sourceHealth records], digest}`: one per layer per
+  state change. `fetched_at`, `last_success_at`, coverage, attribution, licence and url are copied from the Worker's source
+  health and never invented; `policy` with reason `module_policy_unavailable` or `module_disabled` when the gate refused (every
+  layer at once, no retry loop). Digests: fires `{cells:[[west, south, detections, frp_sum_mw, frp_max_mw, latest_acquired_at]
+  ...] (at most 10, by summed FRP), cell_degrees:1, count, total, windows}`; perimeters `{top:[{id, name, gis_acres,
+  polygon_captured_at, last_edited_at, discovered_at, lon, lat}] (10 largest; lon/lat the first vertex of the first exterior
+  ring, never a centroid)}`; alerts `{counts:{polygon, zone_only, rejected}}`; shakemap `{event_id, available, reason, version,
+  max_mmi}` (an available ShakeMap marks its feed row `shakemap_available` and the pins are resent); events
+  `{by_provider}`; tides `{answered, stations}`.
+- `hu:environment-scene-state {playing, index, total, id, title, queue:'significant'|'quakes-24h', reason:null|
+  'reduced-motion'|'input'|'hidden'|'off'|'end'|'empty'}` and `hu:environment-view-state {mode, morphing}`.
+
+### Panel to page: `mcc:world-environment-events`
+
+Dispatched on `window` after every feed load (success or failure), after every layer state that carries a digest, and on
+destroy with `events:[]` and `code:'off'`. `detail = {events (the normalized feed rows, with shakemap_available when the globe
+reported one), sources, fetched_at (the newest source's), checked_at, unavailable, code:null|'module_policy_unavailable'|
+'module_disabled'|'network'|'bad_response'|'off', layers:{fires?:{status, reason, fetched_at, generated_at, cell_degrees:1,
+cells, label, url, coverage, attribution, license}, perimeters?:{status, reason, fetched_at, top, label, url, coverage,
+attribution, license}, alerts?:{status, counts}, shakemap?:{event_id, available}, tides?:{status}, eonet?:{status}}}`. The
+transport attaches a refusing body's string `code` to the error it throws (beside `status`, additive), which is how the gate's
+code reaches the detail. The page (`js/mnet.js`) keeps the posts by id, keeps a post's first-seen time when its words are
+unchanged, stamps "Updated" when they changed, drops ids that left the feed, and empties the map while `unavailable` is true.
+
+### Significance, time and the posts (`js/world-environment-posts.js`)
+
+- `significance(row)` is pure and reads no clock: provider is the id's prefix; `usgs` at `Magnitude >= 5.5` or
+  `shakemap_available === true`; `nws` Severity Extreme or Severe with a point of its own (a zone-only alert is never
+  significant); `nhc` always; `eonet` category fire, cyclone, tornado, storm or volcano; anything else false.
+  `significanceOfDigest`: a fire area from 500 MW summed, a perimeter from 10,000 acres.
+- `stamp(row, now)`: `observed_at` valid gives `Recorded <local> · <ago>`; else `fetched_at` valid gives `Retrieved <local>
+  · <ago> · source gives no event time`; else "Time not supplied by provider". `sort_key` orders a retrieved-only row by its
+  retrieval time and an undated row last. `agoLabel` follows the feed's own rules (now, Nm, Nh, Nd, then a short date).
+- `observationPosts(detail, now)`: one post per event id (author "Environmental desk", type "Environmental observation"), fire
+  areas from the digest with `frp_sum_mw > 0` as `firecell:<west>:<south>` (globe id `cell:<west>:<south>`), perimeters from the
+  digest's top rows; every string clipped, every link https only, no markup produced; a content hash over the words that
+  matter, not the clock. `interleaveByTime` (the tab, newest first, undated last, a page at a time) and `withObservations`
+  (Everything: one significant observation after every six other items, each once, never padding a short feed).
+
+### Pick ids and encodings (the globe side of the same slice)
+
+Every pickable primitive carries `id = {env:'mcc-environment/v1', layer, id, kind, part?, index?}` (feed ids as received;
+`fire:<satellite>:<acquired_at>:<lon>:<lat>`; `cell:<west>:<south>`; `wfigs:<id>`; `coops:<station>`; `shakemap:<event>:<mmi>`),
+and every visual encodes a stated quantity that the legend names: quake disc area from the Gutenberg-Richter energy
+(10^1.5M, capped at 1,000 km, colour by depth), FIRMS detections at their 375 m footprint coloured by radiative power and
+1-degree areas sized by summed power when far, perimeters as published, alert polygons tinted by severity (zone-only never
+placed), EONET reported positions joined in order, CO-OPS columns by metres above MLLW with preliminary readings labelled,
+ShakeMap MMI contours labelled modelled; the one illustrative animation is a labelled ripple on the selected quake. The
+panel shows for a selection exactly what the globe sends; these encodings and the layer client's policy handling are
+implemented and checked in that lane (`scripts/e2e/environment-globe.e2e.mjs`, `scripts/perf/environment-globe-perf.mjs`).
+
+### What ran here
+
+`scripts/test/world-environment-posts.test.mjs`, `scripts/test/world-environment-panel.test.mjs` (on the lifecycle harness),
+the existing environment, lifecycle, consumer and mission-post suites, and `scripts/e2e/world-environment.mjs` at 390, 820 and
+1280 with the fixtures under `scripts/e2e/fixtures/environment/` (`feed.json`, `feed-policy-503.json`, `feed-policy-404.json`)
+and a stub globe frame that records what it is told and answers as the globe would. No production answer was involved: the
+module is not enabled there and answers 503.

@@ -171,3 +171,67 @@ This used no listener or socket. It does not replace native concurrent locking,
 production schema/RLS, browser, real-provider, GPU or media acceptance. Independent
 spot-check reported no remaining confirmed blocker in the reviewed local slice.
 Browser startup was not retried; its wait-loop typo is fixed and syntax checked.
+
+## The environmental globe, slice G1 (2026-11-17): the panel, the posts and the page
+
+Owner direction and the design: `WORLD-FEED-AND-MISSIONS-20261117.md` ("The environmental globe", targets 4, 11 and 13)
+and the contract's "Client" section in `WORLD-ENVIRONMENT-CONTRACT.md`. The slice has two lanes on the one globe: the
+iframe side (typed batched primitives, the layer client, the render governor and the scene director: `js/environment-layers.js`,
+`js/environment-layers-client.js`, `js/globe-render-governor.js`, `js/globe-scene-director.js`, with `scripts/e2e/environment-globe.e2e.mjs`
+and `scripts/perf/environment-globe-perf.mjs`) and the feed side recorded here. Nothing is deployed; production still answers
+503 `module_policy_unavailable` until the owner enables the module in Control, and the pending SQL is unchanged.
+
+### What was built on the feed side
+
+- **The panel** (`vendor/equity-uprise/src/environment/panel.mjs`, local patch `G1-PANEL` in `product-source.lock.json`) speaks
+  to the one globe in a fixed order: `hu:environment-layers` before `hu:environment-pins` on every activation and again on
+  `hu:globe-ready`; layers off then pins off when the tab changes; on destroy, layers off and then exactly
+  `{type:'hu:environment-pins', on:false, items:[]}` as the last message. The pins carry, beside the fields they always had,
+  the row's category, location kind, source, observed and fetched times, facts and the host's `significant` flag (the one pure
+  rule in `js/world-environment-posts.js`, handed in through the adapter: USGS at M5.5 or with a ShakeMap, NWS Extreme or
+  Severe with a point of its own, every NHC storm, EONET fires, cyclones, tornadoes, storms and volcanoes). The feed is read
+  once at mount, so Everything can carry the significant observations before the tab is opened; the five-minute refresh still
+  runs only while the tab is open and the page visible.
+- **Per-source health** under "Sources, coverage and limitations": one row per feed source and one per globe layer that has
+  reported (`hu:environment-layer-state`): the status word, the reason in plain words, Retrieved and Last success each with
+  how long ago ("never known" is never guessed around), coverage, attribution, licence and the provider's page; the alert
+  layer's counts of alerts drawn, zone-only (listed, never placed) and rejected; one honest line when the gate refused the
+  layers. A fetch time is never shown as an observation time; relative times sit beside absolute ones in the list and detail.
+- **The tour and the 2D view**: Play/Pause, Previous, Next and "Replay last 24 h of quakes" send `hu:environment-scene` and
+  resend the layers with `replay`; "2D map" sends `hu:environment-view`; the words follow `hu:environment-scene-state` and
+  `hu:environment-view-state`, never a guess. The tour autostarts once per opening of the tab only while the frame is at least
+  a quarter in view, the page is visible, motion is allowed and the visitor has not pressed Pause in this page session.
+- **A pick that is no feed row** (a detection, a 1-degree area, a perimeter, a station, a contour) draws a "Selected on the globe"
+  card from `hu:environment-selected`: the item's own time under its own label (Acquired, Sent, Captured, Reported, Observed,
+  Computed; "Time not supplied by provider" when none), Retrieved, coverage, status and reason, the facts, the source, and the
+  words owed to a visitor (a modelled reading is said to be modelled, an illustrative ripple to be illustrative).
+- **Observation posts** (`js/world-environment-posts.js`, pure and tested; `js/mnet.js` draws them): the feed reaches the page
+  as the DOM CustomEvent `mcc:world-environment-events` (nothing is fetched twice; the transport now attaches the gate's code to a
+  refusal and the detail says `unavailable` with that code). One post per event id by the system author "Environmental desk",
+  typed "Environmental observation", with a plain line icon (never the mark), stamped "Recorded <local time> · <ago>" or, when
+  the source gives no event time, "Retrieved <local time> · <ago> · source gives no event time", the facts, coverage and status,
+  "Show on globe" (`hu:environment-focus`, after turning the feed to the Equity Uprise tab) and the source's page. A known event
+  whose words changed keeps its post and shows "Updated <ago>"; an event that left the feed loses its post; fires are summarised
+  per 1-degree area from the globe's digest (never one post per detection), perimeters post with their acres and dates. The
+  Equity Uprise tab lists every observation with the mission posts in one list by time; Everything carries the significant ones,
+  one after every six other items and never padding a short feed. While the module answers 503 or 404 there are no observation
+  posts and the tab's honest line stands.
+- **By day**: the panel's palette is tokens on `.we-panel` (`css/world-environment.css`, the night values unchanged) and
+  `css/daylight.css` turns them in one place; the observation posts use the feed's own tokens.
+
+### What was verified here (fixtures only, nothing live)
+
+- `node --test scripts/test/world-environment.test.mjs scripts/test/world-environment-posts.test.mjs scripts/test/world-environment-panel.test.mjs scripts/test/world-environment-lifecycle.test.mjs scripts/test/world-mission-posts.test.mjs`:
+  115 passed, 0 failed (the lifecycle suite's EQ1/EQ2 races unchanged; the consumer lock test passes with the new hashes).
+- `node scripts/e2e/world-environment.mjs <outDir>` (Playwright, headless Chromium, one page at a time): at 390x844, 820x1180
+  and 1280x800, harness A (the modules alone, the journey the module always had) and harness B (the page as it ships with a
+  stub globe frame): the significant observations in Everything at most one in six, every observation in the Equity Uprise tab
+  with the missions by time exactly as the pure module orders them, typed and stamped, "Show on globe" posting
+  `hu:environment-focus` (a fire area posts the globe's `cell:<west>:<south>`), layers before pins (62 items, 16 significant, the
+  public fields only), one read of the feed route and no layer route from the page, the health rows, a summarised fire post from
+  a layer digest, the globe-selection card, the tour and 2D controls, `scrollWidth === clientWidth`, no page errors; by day every
+  measured pair (panel title, eyebrow, subtle text, buttons, status words, list rows, the post's author, sub-line, title, body
+  and actions) reads 5.4:1 or better; under 503 and 404 the honest line shows, the panel stays hidden, zero observation posts
+  exist and the missions still post, with one read and no retry loop.
+- Not verified here: the iframe side (its own suite and perf benchmark belong to the other lane), any production answer (the
+  module is not enabled there), real provider health.
