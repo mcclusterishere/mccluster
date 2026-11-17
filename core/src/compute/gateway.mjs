@@ -1,5 +1,5 @@
 import http from 'node:http';
-import { COMPUTE_PROTOCOL, DEFAULT_CLOCK_SKEW_MS, validateCapabilityManifest, validateEnrollment, validateInventory, validateLoad, validateNodeId } from './protocol.mjs';
+import { COMPUTE_PROTOCOL, DEFAULT_CLOCK_SKEW_MS, clampYieldSeconds, countLiveGpuNodes, validateCapabilityManifest, validateEnrollment, validateInventory, validateLoad, validateNodeId } from './protocol.mjs';
 import { keyFingerprint, nodeIdFromPublicKey, SIGNATURE_HEADERS, verifySignedRequest } from './signature.mjs';
 import { acceptNonce, claimLease, completeLease, enqueueComputeTask, enrollNode, failLease, heartbeatLease, heartbeatNode, listNodes, liveCapabilityImplementations, nodeById, startLease } from './store.mjs';
 import { assertJsonContentType, normalizeRequestId, parseIdempotencyKey, resolveScopedOrg, secureSecretEqual } from './http-security.mjs';
@@ -176,7 +176,16 @@ async function route(req, res) {
       agentVersion: body.agent_version,
       maxLeases: body.max_leases
     });
-    return json(res, 200, { ok: true, node_id: updated.id, state: updated.state, server_time: new Date().toISOString() });
+    // Other live gpu-verified nodes, so a CPU node can leave fresh tasks to
+    // them (MCCLUSTER_NODE_YIELD_TO_GPU_MS). A failed read never fails the heartbeat.
+    let liveGpuNodes = null;
+    try {
+      const live = await listNodes({ orgId: node.org_id, liveOnly: true, limit: 500 });
+      liveGpuNodes = countLiveGpuNodes(live, { excludeNodeId: node.id });
+    } catch (error) {
+      console.error(JSON.stringify({ event: 'compute_gateway_live_gpu_unavailable', node_id: node.id, message: error.message }));
+    }
+    return json(res, 200, { ok: true, node_id: updated.id, state: updated.state, server_time: new Date().toISOString(), live_gpu_nodes: liveGpuNodes });
   }
 
   if (url.pathname === '/v1/compute/lease' && req.method === 'POST') {
@@ -186,7 +195,9 @@ async function route(req, res) {
     const lease = await claimLease(node.id, {
       capabilities,
       implementations,
-      leaseSeconds: Math.max(30, Math.min(900, Number(body.lease_seconds || process.env.CORE_COMPUTE_LEASE_SECONDS || 120)))
+      leaseSeconds: Math.max(30, Math.min(900, Number(body.lease_seconds || process.env.CORE_COMPUTE_LEASE_SECONDS || 120))),
+      // 0..300 s; the store drops it while the yield SQL is not promoted.
+      yieldSeconds: clampYieldSeconds(body.yield_seconds)
     });
     return json(res, 200, { lease: lease || null });
   }
