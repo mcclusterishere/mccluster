@@ -251,6 +251,20 @@ test('every pending file says owner approval is required, names its rollback and
   assert.match(read(OUTPUT_FILES.importRollback), /Row counts: public\.action_missions -125, public\.action_mission_details -125/);
 });
 
+test("the catalog's credit display rule is the README's and the details table's", () => {
+  // CC BY 4.0, section 3(a)(2): the full credit in the detail view, a compact source line on a feed card that
+  // opens it (brief items 5 and 6). The catalog is the file the World's feed reads, so it must say the same.
+  const readme = read('data/missions/drawdown/README.md').replace(/\s+/g, ' ');
+  const rule = / 3\. (Show `credit_line` [^.]+\.)/.exec(readme);
+  assert.ok(rule, 'README rule 3 says how credit_line is shown');
+  const wording = rule[1].replace(/`/g, '');
+  assert.equal(wording, "Show credit_line in full in the mission's detail view, and on a feed card a compact source line that opens it.");
+  assert.equal(catalog.display_rules.filter((r) => r.startsWith(wording)).length, 1, `missions.json carries README rule 3: ${wording}`);
+  assert.deepEqual(catalog.display_rules.filter((r) => /credit_line/.test(r) && !r.startsWith(wording)), [], 'and no other credit_line rule beside it');
+  assert.ok(read('supabase/pending/20261117100100_action_mission_details.sql').includes(
+    "'Shown in full in the mission''s detail view; a feed card shows a compact source line that opens it.'"), 'the credit_line column comment says the same');
+});
+
 test('every mission SQL file says to run it as postgres, never as the service role', () => {
   // In production the service role owns none of these objects and has no CREATE on schema public, and the MCP
   // runs as postgres (read 2026-11-17): "apply as the service role" would fail with 42501 on 10.1 and 10.2.
