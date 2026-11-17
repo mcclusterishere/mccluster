@@ -14,7 +14,6 @@ HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bf
     DriverDesc    REG_SZ    AMD Radeon RX 7600S
     DriverVersion    REG_SZ    32.0.13031.3015
     MatchingDeviceId    REG_SZ    PCI\VEN_1002&DEV_7480&SUBSYS_8B4B103C
-    HardwareInformation.AdapterString    REG_BINARY    41004D004400
     HardwareInformation.qwMemorySize    REG_QWORD    0x200000000
 
 HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\Properties

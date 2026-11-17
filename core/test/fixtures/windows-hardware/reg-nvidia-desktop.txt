@@ -4,7 +4,6 @@ HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bf
 
 HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000
     DriverDesc    REG_SZ    NVIDIA GeForce RTX 4070
-    DriverVersion    REG_SZ    32.0.15.6603
     MatchingDeviceId    REG_SZ    PCI\VEN_10DE&DEV_2786&SUBSYS_88E51043
     HardwareInformation.qwMemorySize    REG_QWORD    0x300000000
 
