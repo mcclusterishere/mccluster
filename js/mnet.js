@@ -4379,7 +4379,9 @@
       var credit=atCredit&&$("mnMissionCredit");
       if(credit){credit.focus({preventScroll:true});try{credit.scrollIntoView({block:"center"});}catch(_){}}
       try{history.replaceState(null,"",missionHref(m.id));}catch(_){}
-      if(!state.user||!state.user.id){setStatus($("mnMissionDialogStatus"),"Sign in to join this mission.");return {opened:true};}
+      /* a guest is asked to sign in only where Join is offered: a paused or closed mission (the public may read those too) keeps
+         the line that says it takes nobody new */
+      if(!state.user||!state.user.id){if(open)setStatus($("mnMissionDialogStatus"),"Sign in to join this mission.");return {opened:true};}
       return sbRest("action_mission_assignments?mission_id=eq."+encodeURIComponent(m.id)+"&user_id=eq."+encodeURIComponent(state.user.id)+"&select=id,status&limit=1").then(function(rows){
         if(version!==missionOpenVersion||!missions.current||missions.current.id!==m.id)return;
         var a=rows&&rows[0];if(!a||a.status==="withdrawn")return {opened:true};
