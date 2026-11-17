@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
+import { isDeepStrictEqual } from 'node:util';
 
 const root = new URL('..', import.meta.url).pathname;
 const contract = JSON.parse(await readFile(path.join(root, 'core', 'drift-contract.json'), 'utf8'));
@@ -90,6 +91,45 @@ const nodeManifest=JSON.parse(await readFile(path.join(root,'core','node-manifes
 if (!Array.isArray(nodeManifest.capabilities)) failures.push('ovh-primary node manifest must contain capabilities[]');
 if (!nodeManifest.capabilities.some((item)=>item?.capability==='ai.chat'&&item?.implementation==='qwen3.8b.local')) failures.push('ovh-primary lost ai.chat/qwen3.8b.local');
 
+// The Windows GPU laptop template (core/windows/mccluster-node.ps1 -Install writes it, pruned per
+// model tier, to that node's capabilities.json; docs/control-plane/WINDOWS-NODE.md). It must stay
+// claimable beside the OVH node and private: the same implementation id with the OVH schema (one
+// binding, one task, either node), loopback executors with per-implementation readiness, no VRAM
+// threshold (an APU reports its UMA carve-out, not the memory inference uses), one lease, owned
+// gpu-laptop labels, nothing pilot-only, and no user path, UNC host, e-mail or non-loopback address.
+const laptopPath=path.join(root,'core','node-manifests','owner-windows-gpu.json');
+let laptopRaw='';
+let laptop=null;
+try { laptopRaw=await readFile(laptopPath,'utf8'); laptop=JSON.parse(laptopRaw); }
+catch (error) { failures.push(`owner-windows-gpu node manifest is missing or unparsable: ${error.message}`); }
+const laptopEntries=Array.isArray(laptop?.capabilities)?laptop.capabilities:null;
+if (laptop&&!laptopEntries) failures.push('owner-windows-gpu node manifest must contain capabilities[]');
+if (laptopEntries) {
+  const ovhChat=nodeManifest.capabilities.find((item)=>item?.capability==='ai.chat'&&item?.implementation==='qwen3.8b.local');
+  const laptopEntry=(implementation)=>laptopEntries.find((item)=>item?.capability==='ai.chat'&&item?.implementation===implementation);
+  for (const implementation of ['qwen3.8b.local','qwen3.14b.local']) if (!laptopEntry(implementation)) failures.push(`owner-windows-gpu lost ai.chat/${implementation}`);
+  if (laptopEntries.some((item)=>item?.capability==='ai.text.draft')) failures.push('owner-windows-gpu must not advertise ai.text.draft (pilot-only, nothing submits it)');
+  const laptopChat=laptopEntry('qwen3.8b.local');
+  if (ovhChat&&laptopChat) for (const field of ['input_schema','output_schema']) {
+    if (!isDeepStrictEqual(laptopChat[field],ovhChat[field])) failures.push(`owner-windows-gpu qwen3.8b.local ${field} drifted from ovh-primary`);
+  }
+  for (const item of laptopEntries) {
+    for (const field of ['url','health_url']) {
+      let hostname=null;
+      try { hostname=new URL(item?.executor?.[field]).hostname; } catch { hostname=null; }
+      if (hostname!=='127.0.0.1') failures.push(`owner-windows-gpu ${item?.implementation||'?'} executor ${field} must be a 127.0.0.1 loopback service`);
+    }
+    if (item?.min_vram_bytes!==0) failures.push(`owner-windows-gpu ${item?.implementation||'?'} min_vram_bytes must be 0`);
+  }
+  if (laptop.max_leases!==1) failures.push('owner-windows-gpu max_leases must be 1');
+  if (laptop?.labels?.trust!=='owned'||laptop?.labels?.role!=='gpu-laptop') failures.push('owner-windows-gpu labels must say trust owned and role gpu-laptop');
+}
+// A Windows user-profile path (raw or JSON-escaped), a UNC host (two backslashes at a path start),
+// an e-mail address, or an IPv4 address other than the loopback the executors must use.
+const PRIVATE_STRINGS=/[A-Za-z]:\\{1,2}Users\\{1,2}|(?<![\\\w])\\\\[A-Za-z0-9]|@[A-Za-z0-9.-]+\.[A-Za-z]{2,}|\b(?!127\.0\.0\.1\b)\d{1,3}(?:\.\d{1,3}){3}\b/;
+const privateHit=PRIVATE_STRINGS.exec(laptopRaw);
+if (privateHit) failures.push(`owner-windows-gpu node manifest carries a private string: ${privateHit[0]}`);
+
 if (failures.length) {
   console.error('CONTROL-PLANE DRIFT CONTRACT FAILED');
   failures.forEach((failure)=>console.error(`- ${failure}`));
@@ -101,4 +141,8 @@ console.log(JSON.stringify({
   supabase:expected,
   production_ledger:{entries:ledgerRows.length,cutover,latest,ledger_sha256:ledgerSha256},
   migration_files:{active:sqlFiles.length,replay:replayFiles.filter((f)=>f.endsWith('.sql')).length},
+  node_manifests:{
+    'ovh-primary':{implementations:nodeManifest.capabilities.map((item)=>`${item.capability}/${item.implementation}`)},
+    'owner-windows-gpu':{implementations:(laptopEntries||[]).map((item)=>`${item.capability}/${item.implementation}`)},
+  },
 },null,2));
