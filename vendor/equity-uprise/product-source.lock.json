@@ -15,7 +15,7 @@
     },
     {
       "path": "src/environment/panel.mjs",
-      "sha256": "ced6036f55d45c315dde3454ec095cecb4234b1b040edf779d17bcb9f76e3555"
+      "sha256": "e88a6446b59cacaba58254480d83cb2e311bcb1db2858574c1e5fb64a7e7e958"
     },
     {
       "path": "src/environment/server.mjs",
@@ -23,7 +23,7 @@
     },
     {
       "path": "src/environment/transport.mjs",
-      "sha256": "e4f0772d3df38a1540b0dfc030f6713eaa31bb7c7e3b9d363f3e7c421fedc81c"
+      "sha256": "7f88ac25f7d7bcd7b912c4f46908e282d6cb6dc4f71f5408d5d91a80856aa687"
     },
     {
       "path": "src/installation/config.mjs",
@@ -55,6 +55,26 @@
         }
       ],
       "regression_tests": [
+        "scripts/test/world-environment-lifecycle.test.mjs"
+      ],
+      "note": "Upstream Equity-Uprise still carries the unpatched files at base_commit; port these patches upstream before re-pinning."
+    },
+    {
+      "base_commit": "645d68a740c835271ca185c52e0b31220aab16ad",
+      "applied_in": "mcclusterishere/mccluster (this consumer checkout), not published upstream",
+      "date": "2026-11-17",
+      "files": [
+        "src/environment/panel.mjs",
+        "src/environment/transport.mjs"
+      ],
+      "defects": [
+        {
+          "id": "G1-PANEL",
+          "summary": "Slice G1, the environmental globe (lane L2): the panel speaks to the one globe in a fixed order (hu:environment-layers before the pins on activation and on hu:globe-ready; layers off, then exactly the pins-off object last, on destroy), sends the pins with their additive public fields and the host adapter’s significance flag, shows per-source health rows for the feed and for the globe’s hu:environment-layer-state (status, reason in plain words, Retrieved and Last success with how long ago or never known, coverage, attribution, licence, link), adds the tour (play, pause, previous, next, replay of the last 24 h of quakes) and the 2D map toggle driven by hu:environment-scene-state and hu:environment-view-state, draws a globe-only hu:environment-selected as a card with the item’s own time under its own label (never the fetch time), reads the feed once at mount and hands it to the host page as a DOM CustomEvent named by the adapter (with the gate’s code when it refused, and the layers’ digests), and autostarts the tour once per opening of the tab only while the frame is in view, the page visible, motion allowed and the visitor has not paused. The transport attaches a refusing body’s string code to its error beside the status (additive)."
+        }
+      ],
+      "regression_tests": [
+        "scripts/test/world-environment-panel.test.mjs",
         "scripts/test/world-environment-lifecycle.test.mjs"
       ],
       "note": "Upstream Equity-Uprise still carries the unpatched files at base_commit; port these patches upstream before re-pinning."
