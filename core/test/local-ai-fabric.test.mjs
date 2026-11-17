@@ -203,12 +203,71 @@ test('an enqueue that throws or returns no task falls back to the local adapter'
   assert.equal(empty.calls.poll, 0);
 });
 
-test('three consecutive failed reads give up on the fabric and run locally', async () => {
+test('three consecutive failed reads take the queued task back first; the local adapter runs only once the cancel won', async () => {
   const h = harness({ statuses: [null] });
   const result = await localAiChat({ prompt: 'x' }, h.options);
   assert.equal(result.route, 'local');
   assert.deepEqual(result.fabric, { attempted: true, reason: 'poll_failed', wait_ms: 3_000 });
   assert.equal(h.calls.poll, 3);
+  assert.equal(h.calls.cancel.length, 1, 'the task is canceled before any local run');
+  assert.deepEqual(h.calls.cancel[0], { orgId: ORG, taskId: 'task-1', reason: 'canceled: local-ai-fabric task reads failed' });
+  assert.equal(h.local.calls.length, 1);
+  assert.deepEqual(h.events(), ['local_ai_fabric_enqueued', 'local_ai_fabric_canceled', 'local_ai_fabric_fallback']);
+});
+
+test('failed reads whose cancel finds the task claimed keep polling; a later done is returned and the local adapter never runs', async () => {
+  const statuses = [null, null, null, { status: 'running' }, { status: 'done', output: adapterOutput }];
+  const h = harness({ statuses, cancel: async (args) => { h.calls.cancel.push(args); return null; } });
+  const result = await localAiChat({ prompt: 'x' }, h.options);
+  assert.equal(result.route, 'fabric');
+  assert.equal(result.message.content, 'fabric answer');
+  assert.equal(h.calls.cancel.length, 1);
+  assert.equal(h.calls.poll, 5);
+  assert.equal(h.local.calls.length, 0, 'ownership was unknown, then a node held it: never a local duplicate');
+});
+
+test('failed reads with a failing cancel never run locally: the retryable timeout is thrown at the running bound', async () => {
+  const h = harness({ statuses: [null], cancel: async (args) => { h.calls.cancel.push(args); throw new Error('PostgREST 503'); } });
+  await assert.rejects(localAiChat({ prompt: 'x' }, h.options), (error) => {
+    assert.equal(error.code, 'LOCAL_AI_FABRIC_TIMEOUT');
+    assert.equal(error.retryable, true);
+    assert.equal(error.compute_task_id, 'task-1');
+    return true;
+  });
+  assert.equal(h.local.calls.length, 0);
+  assert.equal(h.calls.poll, 42, 'three reads per cancel attempt up to waitMs + runningWaitMs');
+  assert.equal(h.calls.cancel.length, 14);
+  const timeout = h.calls.events.find((event) => event.event === 'local_ai_fabric_timeout');
+  assert.equal(timeout.status, 'unknown');
+});
+
+test('a queued task whose cancel keeps failing past the running bound is a timeout, not a local run', async () => {
+  const h = harness({ statuses: [{ status: 'queued' }], cancel: async (args) => { h.calls.cancel.push(args); throw new Error('PostgREST 503'); } });
+  await assert.rejects(localAiChat({ prompt: 'x' }, h.options), (error) => error.code === 'LOCAL_AI_FABRIC_TIMEOUT');
+  assert.equal(h.local.calls.length, 0);
+  assert.equal(h.calls.poll, 40);
+});
+
+test("the caller's timeoutMs bounds the fabric: half of it for the claim, all of it before a held task times out", async () => {
+  const held = harness({ statuses: [{ status: 'running' }] });
+  await assert.rejects(localAiChat({ prompt: 'x', timeoutMs: 30_000 }, held.options), (error) => error.code === 'LOCAL_AI_FABRIC_TIMEOUT');
+  assert.equal(held.calls.poll, 30, 'the 30 s budget, not waitMs + runningWaitMs (40 s)');
+  assert.equal(held.local.calls.length, 0);
+
+  const queued = harness({ statuses: [{ status: 'queued' }] });
+  const result = await localAiChat({ prompt: 'x', timeoutMs: 40_000 }, queued.options);
+  assert.equal(result.route, 'local');
+  assert.deepEqual(result.fabric, { attempted: true, reason: 'wait_timeout_canceled', wait_ms: 10_000 }, 'waitMs (10 s) is already under half the budget (20 s)');
+  const shortBudget = harness({ statuses: [{ status: 'queued' }] });
+  shortBudget.fabric.waitMs = 100_000;
+  const shortResult = await localAiChat({ prompt: 'x', timeoutMs: 12_000 }, shortBudget.options);
+  assert.equal(shortResult.fabric.reason, 'wait_timeout_canceled');
+  assert.equal(shortResult.fabric.wait_ms, 15_000, 'the budget floor is 30 s, so the claim wait is capped at 15 s');
+  assert.equal(shortBudget.calls.poll, 15);
+
+  const tiny = harness({ statuses: [{ status: 'queued' }] });
+  const tinyResult = await localAiChat({ prompt: 'x', timeoutMs: 16_000 }, tiny.options);
+  assert.equal(tinyResult.fabric.wait_ms, 10_000, 'a configured waitMs shorter than half the budget still wins');
 });
 
 test('a node read failure is not an eligible node', async () => {

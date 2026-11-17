@@ -147,7 +147,12 @@ html[data-daylight="day"] .mn__mission-join .mn__eup--dark { display:block; }
    for the night, and on the white page its words read 1.1:1. By day the panel takes the page's black ink and the day's grounds;
    every pair below is 4.5:1 or better on its ground (scripts/test/world-environment.test.mjs measures them). The night look
    is untouched. */
-html[data-daylight="day"] .we-panel { color:#000000; }
+/* Slice G1 (2026-11-17): the panel reads its palette from tokens on .we-panel (css/world-environment.css), so the day turns them
+   here in one place; every pair reads 4.5:1 or better on its ground (computed on white: ink 17.9:1, dim 8.8:1, accent 6.5:1,
+   ok 5.4:1, stale 5.9:1, down 6.5:1; scripts/e2e/world-environment.mjs measures the rendered colours). The literal rules below
+   it stay as they were. */
+html[data-daylight="day"] .we-panel { color:#0b1a15; --we-ink:#0b1a15; --we-dim:#35504a; --we-bg:#ffffff; --we-raise:#f3f6f5; --we-raise-2:#eaf0ee; --we-rule:#0000001f; --we-rule-2:#00000029; --we-accent:#0f6b4f; --we-accent-ink:#0f6b4f; --we-ok:#0f7a3a; --we-stale:#8a5a00; --we-down:#b3261e; --we-focus:#172536; --we-detail-bg:#f2f7f4; --we-pressed:#d6ebe2; --we-label:#35504a; --we-safety-bg:#fff6d9; --we-button-ink:#0b2f24; --we-input-ink:#000000; }
+html[data-daylight="day"] .mn__we-note { color:#262626; }
 html[data-daylight="day"] .we-eyebrow { color:#0b5a3c; }
 html[data-daylight="day"] :is(.we-subtle,.we-panel small,.we-detail dt) { color:#3b3b3b; }
 html[data-daylight="day"] .we-panel a { color:#0b5a3c; }

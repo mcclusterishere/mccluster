@@ -62,6 +62,20 @@ on:
       - 'data/missions/drawdown/missions.json'
       - 'js/world-owner-modes.js'
       - 'js/world-environment-mccluster.mjs'
+      - 'js/world-environment.mjs'
+      - 'js/world-environment-posts.js'
+      - 'js/environment-*.js'
+      - 'js/globe-*.js'
+      - 'vendor/equity-uprise/**'
+      - 'css/world-environment.css'
+      - 'scripts/e2e/world-environment.mjs'
+      - 'scripts/e2e/environment-globe.e2e.mjs'
+      - 'scripts/e2e/fixtures/environment/**'
+      - 'scripts/e2e/support/**'
+      - 'scripts/test/world-environment*.test.mjs'
+      - 'scripts/test/environment-*.test.mjs'
+      - 'scripts/test/globe-*.test.mjs'
+      - 'scripts/perf/**'
       - 'css/daylight.css'
       - 'scripts/e2e/world-countries.e2e.mjs'
       - 'scripts/e2e/world-globe-feed.e2e.mjs'
@@ -84,7 +98,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        suite: [database, editorial-iphone-portrait, editorial-iphone-landscape, editorial-ipad-portrait, editorial-ipad-landscape, editorial-desktop, editorial-video-composer, travel-iphone-portrait, travel-iphone-landscape, travel-ipad-portrait, travel-ipad-landscape, travel-desktop, guest-travel, member-desk, music-world, news-guest, navigation, creator-onboarding, mission-pins, world-missions-guest, world-countries, world-globe-feed, world-transport, anti-social, human-uprise-door, owner-halo-globe, policy-mode]
+        suite: [database, editorial-iphone-portrait, editorial-iphone-landscape, editorial-ipad-portrait, editorial-ipad-landscape, editorial-desktop, editorial-video-composer, travel-iphone-portrait, travel-iphone-landscape, travel-ipad-portrait, travel-ipad-landscape, travel-desktop, guest-travel, member-desk, music-world, news-guest, navigation, creator-onboarding, mission-pins, world-missions-guest, world-countries, world-globe-feed, world-transport, anti-social, human-uprise-door, owner-halo-globe, policy-mode, world-environment, environment-globe, environment-unit]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -132,6 +146,9 @@ jobs:
             human-uprise-door) node scripts/e2e/human-uprise-door.e2e.mjs /tmp/hu-proof/human-uprise-door ;;
             policy-mode) node scripts/e2e/policy-mode.e2e.mjs /tmp/hu-proof/policy-mode ;;
             owner-halo-globe) node scripts/e2e/owner-halo-globe.e2e.mjs /tmp/hu-proof/owner-halo-globe ;;
+            world-environment) node scripts/e2e/world-environment.mjs /tmp/hu-proof/world-environment ;;
+            environment-globe) CESIUM_DIR=$CESIUM_DIR node scripts/e2e/environment-globe.e2e.mjs /tmp/hu-proof/environment-globe ;;
+            environment-unit) node --test scripts/test/world-environment*.test.mjs scripts/test/environment-*.test.mjs scripts/test/globe-*.test.mjs ;;
             *) echo 'Unknown suite' >&2; exit 2 ;;
           esac
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9

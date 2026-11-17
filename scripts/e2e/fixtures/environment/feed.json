@@ -1,0 +1,2111 @@
+{
+ "ok": true,
+ "schema": "world-environment/v1",
+ "sources": [
+  {
+   "id": "nws",
+   "label": "NOAA NWS",
+   "url": "https://www.weather.gov/",
+   "status": "available",
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "observed_at": "2026-11-17T19:48:00Z",
+   "coverage": "United States active alerts",
+   "stale": false,
+   "reason": null,
+   "last_success_at": "2026-11-17T20:05:00Z",
+   "attribution": "NOAA National Weather Service",
+   "license": "Public domain (U.S. Government work)"
+  },
+  {
+   "id": "eonet",
+   "label": "NASA EONET",
+   "url": "https://eonet.gsfc.nasa.gov/",
+   "status": "stale",
+   "fetched_at": "2026-11-17T14:00:00Z",
+   "observed_at": "2026-11-17T18:00:00Z",
+   "coverage": "Global open event reports in the last 30 days; not exhaustive",
+   "stale": true,
+   "reason": "upstream_error",
+   "last_success_at": "2026-11-17T14:00:00Z",
+   "attribution": "NASA Earth Observatory Natural Event Tracker (EONET)",
+   "license": "NASA open data; each event names the sources EONET drew it from"
+  },
+  {
+   "id": "usgs",
+   "label": "USGS",
+   "url": "https://earthquake.usgs.gov/",
+   "status": "available",
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "observed_at": "2026-11-17T20:50:00.000Z",
+   "coverage": "Global earthquakes reported in the past day",
+   "stale": false,
+   "reason": null,
+   "last_success_at": "2026-11-17T20:05:00Z",
+   "attribution": "U.S. Geological Survey, Earthquake Hazards Program",
+   "license": "Public domain (U.S. Government work)"
+  },
+  {
+   "id": "nhc",
+   "label": "NOAA NHC",
+   "url": "https://www.nhc.noaa.gov/",
+   "status": "available",
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "observed_at": null,
+   "coverage": "Atlantic, eastern and central Pacific; not global cyclone coverage",
+   "stale": false,
+   "reason": null,
+   "last_success_at": "2026-11-17T20:05:00Z",
+   "attribution": "NOAA National Hurricane Center",
+   "license": "Public domain (U.S. Government work)"
+  }
+ ],
+ "events": [
+  {
+   "id": "usgs:us7000tyhr",
+   "title": "20 km NW of Anamizu, Japan",
+   "lat": 37.3664,
+   "lon": 136.7444,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-16T04:24:11.718Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us7000tyhr"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "5.4"
+    },
+    {
+     "label": "Depth",
+     "value": "273.6 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:us7000tyca",
+   "title": "Fiji region",
+   "lat": -19.5554,
+   "lon": -177.8215,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-15T05:15:02.697Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us7000tyca"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "5.6"
+    },
+    {
+     "label": "Depth",
+     "value": "560 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:nc75467542",
+   "title": "8 km NW of The Geysers, CA",
+   "lat": 38.8,
+   "lon": -122.8,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T15:10:44.020Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/nc75467542"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "3.1"
+    },
+    {
+     "label": "Depth",
+     "value": "2.1 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-m62",
+   "title": "Fixture event offshore central Chile",
+   "lat": -33.1,
+   "lon": -71.9,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T09:12:00Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "6.2"
+    },
+    {
+     "label": "Depth",
+     "value": "35 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-m71",
+   "title": "Fixture event, Andreanof Islands, Alaska",
+   "lat": 51.5,
+   "lon": -176,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T17:40:00Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "7.1"
+    },
+    {
+     "label": "Depth",
+     "value": "20 km"
+    },
+    {
+     "label": "USGS tsunami flag",
+     "value": "Flagged by source; consult official warnings"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-m45",
+   "title": "Fixture event near Ridgecrest, CA",
+   "lat": 35.7,
+   "lon": -117.5,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T19:03:00Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "4.5"
+    },
+    {
+     "label": "Depth",
+     "value": "8 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-7",
+   "title": "Fixture event 7",
+   "lat": -41,
+   "lon": -29,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T02:55:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "3.2"
+    },
+    {
+     "label": "Depth",
+     "value": "119 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-8",
+   "title": "Fixture event 8",
+   "lat": -4,
+   "lon": 44,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T03:20:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "3.3"
+    },
+    {
+     "label": "Depth",
+     "value": "136 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-9",
+   "title": "Fixture event 9",
+   "lat": 33,
+   "lon": 117,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T03:45:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "3.4"
+    },
+    {
+     "label": "Depth",
+     "value": "153 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-10",
+   "title": "Fixture event 10",
+   "lat": -50,
+   "lon": -170,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T04:10:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "3.5"
+    },
+    {
+     "label": "Depth",
+     "value": "170 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-11",
+   "title": "Fixture event 11",
+   "lat": -13,
+   "lon": -97,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T04:35:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "3.6"
+    },
+    {
+     "label": "Depth",
+     "value": "187 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-12",
+   "title": "Fixture event 12",
+   "lat": 24,
+   "lon": -24,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T05:00:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "5.7"
+    },
+    {
+     "label": "Depth",
+     "value": "204 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-13",
+   "title": "Fixture event 13",
+   "lat": -59,
+   "lon": 49,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T05:25:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "3.8"
+    },
+    {
+     "label": "Depth",
+     "value": "221 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-14",
+   "title": "Fixture event 14",
+   "lat": -22,
+   "lon": 122,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T05:50:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "3.9"
+    },
+    {
+     "label": "Depth",
+     "value": "238 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-15",
+   "title": "Fixture event 15",
+   "lat": 15,
+   "lon": -165,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T06:15:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "4"
+    },
+    {
+     "label": "Depth",
+     "value": "255 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-16",
+   "title": "Fixture event 16",
+   "lat": 52,
+   "lon": -92,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T06:40:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "4.1"
+    },
+    {
+     "label": "Depth",
+     "value": "272 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-17",
+   "title": "Fixture event 17",
+   "lat": -31,
+   "lon": -19,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T07:05:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "4.2"
+    },
+    {
+     "label": "Depth",
+     "value": "289 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-18",
+   "title": "Fixture event 18",
+   "lat": 6,
+   "lon": 54,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T07:30:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "4.3"
+    },
+    {
+     "label": "Depth",
+     "value": "6 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-19",
+   "title": "Fixture event 19",
+   "lat": 43,
+   "lon": 127,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T07:55:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "4.4"
+    },
+    {
+     "label": "Depth",
+     "value": "23 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-20",
+   "title": "Fixture event 20",
+   "lat": -40,
+   "lon": -160,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T08:20:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "4.5"
+    },
+    {
+     "label": "Depth",
+     "value": "40 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-21",
+   "title": "Fixture event 21",
+   "lat": -3,
+   "lon": -87,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T08:45:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "4.6"
+    },
+    {
+     "label": "Depth",
+     "value": "57 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-22",
+   "title": "Fixture event 22",
+   "lat": 34,
+   "lon": -14,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T09:10:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "4.7"
+    },
+    {
+     "label": "Depth",
+     "value": "74 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-23",
+   "title": "Fixture event 23",
+   "lat": -49,
+   "lon": 59,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T09:35:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "4.8"
+    },
+    {
+     "label": "Depth",
+     "value": "91 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-24",
+   "title": "Fixture event 24",
+   "lat": -12,
+   "lon": 132,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T10:00:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "5.9"
+    },
+    {
+     "label": "Depth",
+     "value": "108 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-25",
+   "title": "Fixture event 25",
+   "lat": 25,
+   "lon": -155,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T10:25:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "5"
+    },
+    {
+     "label": "Depth",
+     "value": "125 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-26",
+   "title": "Fixture event 26",
+   "lat": -58,
+   "lon": -82,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T10:50:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "5.1"
+    },
+    {
+     "label": "Depth",
+     "value": "142 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-27",
+   "title": "Fixture event 27",
+   "lat": -21,
+   "lon": -9,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T11:15:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "5.2"
+    },
+    {
+     "label": "Depth",
+     "value": "159 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-28",
+   "title": "Fixture event 28",
+   "lat": 16,
+   "lon": 64,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T11:40:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "5.3"
+    },
+    {
+     "label": "Depth",
+     "value": "176 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-29",
+   "title": "Fixture event 29",
+   "lat": 53,
+   "lon": 137,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T12:05:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "5.4"
+    },
+    {
+     "label": "Depth",
+     "value": "193 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-30",
+   "title": "Fixture event 30",
+   "lat": -30,
+   "lon": -150,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T12:30:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "2.5"
+    },
+    {
+     "label": "Depth",
+     "value": "210 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-31",
+   "title": "Fixture event 31",
+   "lat": 7,
+   "lon": -77,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T12:55:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "2.6"
+    },
+    {
+     "label": "Depth",
+     "value": "227 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-32",
+   "title": "Fixture event 32",
+   "lat": 44,
+   "lon": -4,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T13:20:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "2.7"
+    },
+    {
+     "label": "Depth",
+     "value": "244 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-33",
+   "title": "Fixture event 33",
+   "lat": -39,
+   "lon": 69,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T13:45:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "2.8"
+    },
+    {
+     "label": "Depth",
+     "value": "261 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-34",
+   "title": "Fixture event 34",
+   "lat": -2,
+   "lon": 142,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T14:10:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "2.9"
+    },
+    {
+     "label": "Depth",
+     "value": "278 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-35",
+   "title": "Fixture event 35",
+   "lat": 35,
+   "lon": -145,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T14:35:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "3"
+    },
+    {
+     "label": "Depth",
+     "value": "295 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-36",
+   "title": "Fixture event 36",
+   "lat": -48,
+   "lon": -72,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T15:00:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "6.1"
+    },
+    {
+     "label": "Depth",
+     "value": "12 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-37",
+   "title": "Fixture event 37",
+   "lat": -11,
+   "lon": 1,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T15:25:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "3.2"
+    },
+    {
+     "label": "Depth",
+     "value": "29 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-38",
+   "title": "Fixture event 38",
+   "lat": 26,
+   "lon": 74,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T15:50:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "3.3"
+    },
+    {
+     "label": "Depth",
+     "value": "46 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-39",
+   "title": "Fixture event 39",
+   "lat": -57,
+   "lon": 147,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T16:15:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "3.4"
+    },
+    {
+     "label": "Depth",
+     "value": "63 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-40",
+   "title": "Fixture event 40",
+   "lat": -20,
+   "lon": -140,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T16:40:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "3.5"
+    },
+    {
+     "label": "Depth",
+     "value": "80 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-41",
+   "title": "Fixture event 41",
+   "lat": 17,
+   "lon": -67,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T17:05:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "3.6"
+    },
+    {
+     "label": "Depth",
+     "value": "97 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-42",
+   "title": "Fixture event 42",
+   "lat": 54,
+   "lon": 6,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T17:30:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "3.7"
+    },
+    {
+     "label": "Depth",
+     "value": "114 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-43",
+   "title": "Fixture event 43",
+   "lat": -29,
+   "lon": 79,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T17:55:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "3.8"
+    },
+    {
+     "label": "Depth",
+     "value": "131 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-44",
+   "title": "Fixture event 44",
+   "lat": 8,
+   "lon": 152,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T18:20:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "3.9"
+    },
+    {
+     "label": "Depth",
+     "value": "148 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-45",
+   "title": "Fixture event 45",
+   "lat": 45,
+   "lon": -135,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T18:45:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "4"
+    },
+    {
+     "label": "Depth",
+     "value": "165 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-46",
+   "title": "Fixture event 46",
+   "lat": -38,
+   "lon": -62,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T19:10:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "4.1"
+    },
+    {
+     "label": "Depth",
+     "value": "182 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-47",
+   "title": "Fixture event 47",
+   "lat": -1,
+   "lon": 11,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T19:35:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "4.2"
+    },
+    {
+     "label": "Depth",
+     "value": "199 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-48",
+   "title": "Fixture event 48",
+   "lat": 36,
+   "lon": 84,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T20:00:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "6.3"
+    },
+    {
+     "label": "Depth",
+     "value": "216 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-49",
+   "title": "Fixture event 49",
+   "lat": -47,
+   "lon": 157,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T20:25:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "4.4"
+    },
+    {
+     "label": "Depth",
+     "value": "233 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "usgs:fx-gen-50",
+   "title": "Fixture event 50",
+   "lat": -10,
+   "lon": -130,
+   "category": "quake",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T20:50:00.000Z",
+   "expires_at": null,
+   "source": {
+    "id": "usgs",
+    "label": "USGS",
+    "url": "https://earthquake.usgs.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Magnitude",
+     "value": "4.5"
+    },
+    {
+     "label": "Depth",
+     "value": "250 km"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "nws:fx-flood-az",
+   "title": "Flood Warning issued November 17 at 8:21AM MST until November 24 at 11:00AM MST by NWS Phoenix AZ",
+   "lat": 32.97,
+   "lon": -113.33,
+   "category": "flood",
+   "location_kind": "area_label",
+   "observed_at": "2026-11-17T15:21:00Z",
+   "expires_at": "2026-11-24T18:00:00Z",
+   "source": {
+    "id": "nws",
+    "label": "NOAA NWS",
+    "url": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.cd2a32c09604bbb4ce3dbd25f55fa89188207a8c.001.1"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Severity",
+     "value": "Severe"
+    },
+    {
+     "label": "Certainty",
+     "value": "Likely"
+    },
+    {
+     "label": "Urgency",
+     "value": "Expected"
+    },
+    {
+     "label": "Area",
+     "value": "Maricopa, AZ; Yuma, AZ"
+    }
+   ],
+   "instructions": "Turn around, don't drown when encountering flooded roads.",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "nws:fx-flood-tx",
+   "title": "Flood Warning issued November 17 at 8:27AM CST until November 18 at 7:36PM CST by NWS Corpus Christi TX",
+   "lat": 28.35,
+   "lon": -98.57,
+   "category": "flood",
+   "location_kind": "area_label",
+   "observed_at": "2026-11-17T14:27:00Z",
+   "expires_at": "2026-11-18T05:30:00Z",
+   "source": {
+    "id": "nws",
+    "label": "NOAA NWS",
+    "url": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.1b79e2369a65d3d53cd09b2d82bcdcea2177543a.001.1"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Severity",
+     "value": "Severe"
+    },
+    {
+     "label": "Certainty",
+     "value": "Observed"
+    },
+    {
+     "label": "Urgency",
+     "value": "Immediate"
+    },
+    {
+     "label": "Area",
+     "value": "McMullen, TX"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "nws:fx-tornado-ok",
+   "title": "Tornado Warning issued for Oklahoma, OK; Cleveland, OK",
+   "lat": 35.5,
+   "lon": -97.5,
+   "category": "tornado",
+   "location_kind": "area_label",
+   "observed_at": "2026-11-17T19:48:00Z",
+   "expires_at": "2026-11-17T20:30:00Z",
+   "source": {
+    "id": "nws",
+    "label": "NOAA NWS",
+    "url": "https://www.weather.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Severity",
+     "value": "Extreme"
+    },
+    {
+     "label": "Certainty",
+     "value": "Observed"
+    },
+    {
+     "label": "Urgency",
+     "value": "Immediate"
+    },
+    {
+     "label": "Area",
+     "value": "Oklahoma, OK; Cleveland, OK"
+    }
+   ],
+   "instructions": "Take cover now.",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "nws:fx-wind-wy",
+   "title": "High Wind Watch issued for Fremont, WY",
+   "lat": 42.8,
+   "lon": -108.7,
+   "category": "wind",
+   "location_kind": "area_label",
+   "observed_at": "2026-11-17T12:05:00Z",
+   "expires_at": "2026-11-18T18:00:00Z",
+   "source": {
+    "id": "nws",
+    "label": "NOAA NWS",
+    "url": "https://www.weather.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Severity",
+     "value": "Moderate"
+    },
+    {
+     "label": "Certainty",
+     "value": "Possible"
+    },
+    {
+     "label": "Urgency",
+     "value": "Future"
+    },
+    {
+     "label": "Area",
+     "value": "Fremont, WY"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "nws:fx-fog-fl",
+   "title": "Dense Fog Advisory issued for Marion, FL",
+   "lat": 29.2,
+   "lon": -82.1,
+   "category": "alert",
+   "location_kind": "area_label",
+   "observed_at": "2026-11-17T09:40:00Z",
+   "expires_at": "2026-11-17T14:00:00Z",
+   "source": {
+    "id": "nws",
+    "label": "NOAA NWS",
+    "url": "https://www.weather.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Severity",
+     "value": "Minor"
+    },
+    {
+     "label": "Certainty",
+     "value": "Likely"
+    },
+    {
+     "label": "Urgency",
+     "value": "Expected"
+    },
+    {
+     "label": "Area",
+     "value": "Marion, FL"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "nws:fx-heat-ca",
+   "title": "Excessive Heat Warning issued for Coachella Valley, CA",
+   "lat": null,
+   "lon": null,
+   "category": "heat",
+   "location_kind": "unmapped",
+   "observed_at": "2026-11-17T11:00:00Z",
+   "expires_at": "2026-11-18T03:00:00Z",
+   "source": {
+    "id": "nws",
+    "label": "NOAA NWS",
+    "url": "https://www.weather.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Severity",
+     "value": "Severe"
+    },
+    {
+     "label": "Certainty",
+     "value": "Likely"
+    },
+    {
+     "label": "Urgency",
+     "value": "Expected"
+    },
+    {
+     "label": "Area",
+     "value": "Coachella Valley, CA"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "nws:fx-craft-la",
+   "title": "Small Craft Advisory issued for Waters from Cameron LA to High Island TX from 20 to 60 NM",
+   "lat": null,
+   "lon": null,
+   "category": "alert",
+   "location_kind": "unmapped",
+   "observed_at": "2026-11-17T15:19:00Z",
+   "expires_at": "2026-11-19T06:00:00Z",
+   "source": {
+    "id": "nws",
+    "label": "NOAA NWS",
+    "url": "https://www.weather.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Severity",
+     "value": "Minor"
+    },
+    {
+     "label": "Certainty",
+     "value": "Likely"
+    },
+    {
+     "label": "Urgency",
+     "value": "Expected"
+    },
+    {
+     "label": "Area",
+     "value": "Waters from Cameron LA to High Island TX from 20 to 60 NM"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "nws:fx-winter-mn",
+   "title": "Winter Storm Warning issued for Cook, MN; Lake, MN",
+   "lat": null,
+   "lon": null,
+   "category": "snow",
+   "location_kind": "unmapped",
+   "observed_at": "2026-11-17T10:30:00Z",
+   "expires_at": "2026-11-18T12:00:00Z",
+   "source": {
+    "id": "nws",
+    "label": "NOAA NWS",
+    "url": "https://www.weather.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Severity",
+     "value": "Moderate"
+    },
+    {
+     "label": "Certainty",
+     "value": "Likely"
+    },
+    {
+     "label": "Urgency",
+     "value": "Expected"
+    },
+    {
+     "label": "Area",
+     "value": "Cook, MN; Lake, MN"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "eonet:EONET_fx_fire_1",
+   "title": "Fixture Ridge Fire, Montana",
+   "lat": 46.9,
+   "lon": -113.9,
+   "category": "fire",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-16T00:00:00Z",
+   "expires_at": null,
+   "source": {
+    "id": "eonet",
+    "label": "NASA EONET",
+    "url": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_fx_fire_1"
+   },
+   "fetched_at": "2026-11-17T14:00:00Z",
+   "stale": true,
+   "description": "",
+   "facts": [
+    {
+     "label": "Reported magnitude",
+     "value": "2140 acres"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "eonet:EONET_fx_fire_2",
+   "title": "Fixture Range Fire, Queensland",
+   "lat": -23.4,
+   "lon": 146.1,
+   "category": "fire",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-15T00:00:00Z",
+   "expires_at": null,
+   "source": {
+    "id": "eonet",
+    "label": "NASA EONET",
+    "url": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_fx_fire_2"
+   },
+   "fetched_at": "2026-11-17T14:00:00Z",
+   "stale": true,
+   "description": "",
+   "facts": [
+    {
+     "label": "Reported magnitude",
+     "value": "860 acres"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "eonet:EONET_fx_storm_1",
+   "title": "Tropical Cyclone Fengal",
+   "lat": 11.2,
+   "lon": 82.1,
+   "category": "cyclone",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T06:00:00Z",
+   "expires_at": null,
+   "source": {
+    "id": "eonet",
+    "label": "NASA EONET",
+    "url": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_fx_storm_1"
+   },
+   "fetched_at": "2026-11-17T14:00:00Z",
+   "stale": true,
+   "description": "",
+   "facts": [
+    {
+     "label": "Reported magnitude",
+     "value": "45 kts"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "eonet:EONET_fx_storm_2",
+   "title": "Fixture Severe Storm, Oklahoma",
+   "lat": 35.3,
+   "lon": -97.1,
+   "category": "storm",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-17T18:00:00Z",
+   "expires_at": null,
+   "source": {
+    "id": "eonet",
+    "label": "NASA EONET",
+    "url": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_fx_storm_2"
+   },
+   "fetched_at": "2026-11-17T14:00:00Z",
+   "stale": true,
+   "description": "",
+   "facts": [],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "eonet:EONET_fx_volcano_1",
+   "title": "Fixture Volcano, Sicily",
+   "lat": 37.75,
+   "lon": 14.99,
+   "category": "volcano",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-14T00:00:00Z",
+   "expires_at": null,
+   "source": {
+    "id": "eonet",
+    "label": "NASA EONET",
+    "url": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_fx_volcano_1"
+   },
+   "fetched_at": "2026-11-17T14:00:00Z",
+   "stale": true,
+   "description": "",
+   "facts": [],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "eonet:EONET_fx_ice_1",
+   "title": "Fixture Iceberg A-00",
+   "lat": -62.3,
+   "lon": -45.1,
+   "category": "ice",
+   "location_kind": "reported_point",
+   "observed_at": "2026-11-10T00:00:00Z",
+   "expires_at": null,
+   "source": {
+    "id": "eonet",
+    "label": "NASA EONET",
+    "url": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_fx_ice_1"
+   },
+   "fetched_at": "2026-11-17T14:00:00Z",
+   "stale": true,
+   "description": "",
+   "facts": [],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  },
+  {
+   "id": "nhc:fx-al19",
+   "title": "Tropical Storm Sara",
+   "lat": 16.2,
+   "lon": -83.4,
+   "category": "cyclone",
+   "location_kind": "reported_point",
+   "observed_at": null,
+   "expires_at": null,
+   "source": {
+    "id": "nhc",
+    "label": "NOAA NHC",
+    "url": "https://www.nhc.noaa.gov/"
+   },
+   "fetched_at": "2026-11-17T20:05:00Z",
+   "stale": false,
+   "description": "",
+   "facts": [
+    {
+     "label": "Maximum sustained wind",
+     "value": "60 kt"
+    },
+    {
+     "label": "Classification",
+     "value": "TS"
+    }
+   ],
+   "instructions": "",
+   "actions": [],
+   "notice": "A hazard report is not proof of environmental injustice. Follow local official instructions."
+  }
+ ],
+ "truncated": false,
+ "missions": [],
+ "missions_unavailable": false
+}

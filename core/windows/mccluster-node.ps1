@@ -14,8 +14,11 @@ unless the owner invokes a switch; with no switch it is -Report, which only read
                what is loaded and whether the last load used the GPU, the Vulkan/ROCm line from
                its log), the two scheduled tasks, and the MCCLUSTER_* / OLLAMA_* variables. The
                block between === MCCLUSTER NODE REPORT === and === END REPORT === is pasteable:
-               the user profile path, the computer name and the user name are masked and no
-               token or key value is printed.
+               the user profile path, the computer name and the user name are masked; values are
+               printed only for the non-secret names -Install writes, OLLAMA_* and
+               GGML_VK_VISIBLE_DEVICES, MCCLUSTER_ORG_ID only as set (uuid), and every other
+               MCCLUSTER_* name, and any name that says token, key, secret, password or
+               credential, only as set or unset.
   -Install     Writes <StateRoot>\capabilities.json from the repository template
                core\node-manifests\owner-windows-gpu.json pruned to the model tier, node.config.json
                (no secrets), the two launchers adapter.cmd and agent.cmd, the user-scope variables,
@@ -23,11 +26,14 @@ unless the owner invokes a switch; with no switch it is -Report, which only read
                Idempotent; -WhatIf shows every step and writes nothing.
   -Enroll      Reads the one-time enrolment token as a secure string, runs the agent once
                (MCCLUSTER_NODE_ENROLL_ONLY=1), then deletes the token file from this machine.
-  -Models      ollama pull for the tier's models.
-  -Benchmark   Measures prompt and generation tokens per second on the local Ollama and writes
-               <StateRoot>\measured-inference.json (schema mccluster-measured-inference/1), which the
-               node agent publishes as evidence. On tier C, -Model qwen3:14b adds the 14b entry
-               back into capabilities.json when it fits.
+  -Models      ollama pull for the tier's models (qwen3:14b only on tier A: owner decision 2026-11-17,
+               no 12B/14B model on a shared-memory machine).
+  -Benchmark   Measures free memory before and after the model loads, prompt and generation tokens per
+               second on the local Ollama, and writes <StateRoot>\measured-inference.json (schema
+               mccluster-measured-inference/1), which the node agent publishes as evidence. A tier whose
+               resident model leaves the machine under 4 GB free is refused (exit 1, the lower tier is
+               named); -Model qwen3:8b decides whether the on-demand twin entry qwen3.8b.local stays
+               advertised (removed when loading it leaves under 4 GB free, added back when it fits).
   -KeepAwake   Administrator only, explicit opt-in: AC standby and hibernate timeouts to 0.
   -ModelsPath  User-scope OLLAMA_MODELS (for the 50 GB partition).  -Vulkan <n>: GGML_VK_VISIBLE_DEVICES.
 
@@ -67,12 +73,29 @@ $script:McDisplayClassKey = 'HKLM:\SYSTEM\CurrentControlSet\Control\Class\{4d36e
 $script:McDisplayClassSubkeyPattern = '^HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\Class\\\{4d36e968-e325-11ce-bfc1-08002be10318\}\\(\d{4})$'
 $script:McRegistryValuePattern = '^\s{4}(\S+)\s{4}(REG_\w+)\s{4}(.*)$'
 $script:McTemplateSegments = @('core', 'node-manifests', 'owner-windows-gpu.json')
-$script:McImplementations = 'qwen3.8b.local=qwen3:8b,qwen3.14b.local=qwen3:14b'
-$script:McDefaultModel = 'qwen3:8b'
+# The models and the implementation ids that name them (core/node-manifests/owner-windows-gpu.json). Owner
+# decision 2026-11-17, headroom first: one resident model per tier, the vision model; the OVH twin qwen3:8b on
+# demand only; qwen3:14b on a discrete card with 12 GiB or more only; qwen3-vl:4b when free memory is short.
+$script:McVisionModel = 'qwen3-vl:8b'
+$script:McVisionImplementation = 'qwen3-vl.8b.local'
+$script:McSmallVisionModel = 'qwen3-vl:4b'
+$script:McSmallVisionImplementation = 'qwen3-vl.4b.local'
+$script:McTwinModel = 'qwen3:8b'
+$script:McTwinImplementation = 'qwen3.8b.local'
 $script:McBiggerModel = 'qwen3:14b'
 $script:McBiggerImplementation = 'qwen3.14b.local'
+# Free memory at install that earns the 8B vision model on shared memory; below it the 4B model is resident.
+$script:McIntegratedResidentFreeBytes = [int64]8000000000
+# No tier may leave the machine under this much free memory once its model is loaded (-Benchmark measures it).
+$script:McHeadroomFloorBytes = [int64]4000000000
+# qwen3-vl needs this Ollama or newer (older builds answer HTTP 412).
+$script:McMinimumOllamaVersion = '0.12.7'
 $script:McIgnoredControllerPattern = 'Basic Display|Basic Render|Remote Display|Virtual|VMware|Hyper-V|Parsec|DisplayLink|RDP'
-$script:McThinkModelPattern = '^qwen3:(?!.*instruct)'
+$script:McThinkModelPattern = '^qwen3(?:-vl)?:(?!.*instruct)'
+# cmd.exe reads the launchers: & | run what follows, < > redirect, ^ escapes, %NAME% and !NAME! expand, " ends a path.
+$script:McLauncherUnsafePattern = '[&|<>^"%!]'
+# A variable whose name says so never has its value printed by -Report.
+$script:McSecretNamePattern = 'TOKEN|KEY|SECRET|PASSWORD|PASSWD|PASS$|_PASS_|CREDENTIAL'
 $script:McCandidatePartitionMin = [int64]45000000000
 $script:McCandidatePartitionMax = [int64]59055800320
 $script:McGiB = [int64]1073741824
@@ -213,8 +236,32 @@ function Test-McIgnoredController {
   return $false
 }
 
+function Get-McSubkeyNumber {
+  param($Subkey)
+  $n = 0
+  if ([int]::TryParse([string]$Subkey, [ref]$n)) { return $n }
+  return -1
+}
+
+function Test-McPreferredRegistryEntry {
+  # Windows keeps the 00NN subkeys of earlier driver installs beside the live one, with the same
+  # MatchingDeviceId. The longer id wins; among equal ids the entry that carries a qwMemorySize (a stale
+  # subkey usually has none), then the highest subkey number (the latest install). The same rule as
+  # matchRegistryEntry in core/src/compute/hardware.mjs.
+  param($Candidate, $Best)
+  if ($null -eq $Best) { return $true }
+  $candidateId = [string]$Candidate.MatchingDeviceId
+  $bestId = [string]$Best.MatchingDeviceId
+  if ($candidateId.Length -ne $bestId.Length) { return ($candidateId.Length -gt $bestId.Length) }
+  $candidateHasMemory = ($null -ne $Candidate.QwMemorySize -and [int64]$Candidate.QwMemorySize -gt 0)
+  $bestHasMemory = ($null -ne $Best.QwMemorySize -and [int64]$Best.QwMemorySize -gt 0)
+  if ($candidateHasMemory -ne $bestHasMemory) { return $candidateHasMemory }
+  return ((Get-McSubkeyNumber $Candidate.Subkey) -gt (Get-McSubkeyNumber $Best.Subkey))
+}
+
 function Select-McRegistryEntry {
-  # Longest MatchingDeviceId that is a case-insensitive prefix of PNPDeviceID, else DriverDesc = Name.
+  # Longest MatchingDeviceId that is a case-insensitive prefix of PNPDeviceID, else DriverDesc = Name;
+  # equal matches are settled by Test-McPreferredRegistryEntry so a stale subkey never shadows the live one.
   param($Controller, $RegistryEntries)
   $pnpUpper = ([string]$Controller.PNPDeviceID).ToUpperInvariant()
   $best = $null
@@ -222,16 +269,19 @@ function Select-McRegistryEntry {
     if ($null -eq $entry) { continue }
     $id = [string]$entry.MatchingDeviceId
     if ($id -ne '' -and $pnpUpper.StartsWith($id.ToUpperInvariant())) {
-      if ($null -eq $best -or $id.Length -gt ([string]$best.MatchingDeviceId).Length) { $best = $entry }
+      if (Test-McPreferredRegistryEntry -Candidate $entry -Best $best) { $best = $entry }
     }
   }
   if ($null -ne $best) { return $best }
+  $byName = $null
   foreach ($entry in @($RegistryEntries)) {
     if ($null -eq $entry) { continue }
     $desc = [string]$entry.DriverDesc
-    if ($desc -ne '' -and $desc.Equals([string]$Controller.Name, [System.StringComparison]::OrdinalIgnoreCase)) { return $entry }
+    if ($desc -ne '' -and $desc.Equals([string]$Controller.Name, [System.StringComparison]::OrdinalIgnoreCase)) {
+      if (Test-McPreferredRegistryEntry -Candidate $entry -Best $byName) { $byName = $entry }
+    }
   }
-  return $null
+  return $byName
 }
 
 function Merge-McGpuInventory {
@@ -305,27 +355,107 @@ function Select-McPrimaryGpu {
 }
 
 function Get-McModelTier {
-  # A: discrete >= 12 GiB; B: discrete 6..12 GiB; C: integrated with >= 10 GB free RAM; D: the rest.
+  # A: discrete >= 12 GiB; B: discrete 6..12 GiB; C: integrated with >= 8 GB free RAM at install; D: the rest.
+  # Owner decision 2026-11-17 (headroom first): on a shared-memory box the free memory at install decides
+  # between the 8B and the 4B vision model, and nothing bigger than 8B is ever resident there.
   param($Gpu, [int64]$FreePhysicalMemoryBytes)
   if ($null -ne $Gpu -and $Gpu.Form -eq 'discrete') {
     if ([int64]$Gpu.VramBytes -ge 12 * $script:McGiB) { return 'A' }
     if ([int64]$Gpu.VramBytes -ge 6 * $script:McGiB) { return 'B' }
     return 'D'
   }
-  if ($null -ne $Gpu -and $Gpu.Form -eq 'integrated' -and $FreePhysicalMemoryBytes -ge 10000000000) { return 'C' }
+  if ($null -ne $Gpu -and $Gpu.Form -eq 'integrated' -and $FreePhysicalMemoryBytes -ge $script:McIntegratedResidentFreeBytes) { return 'C' }
   return 'D'
 }
 
-function Get-McTierSettings {
-  param([string]$Tier)
-  $both = @('qwen3.8b.local', 'qwen3.14b.local')
-  $small = @('qwen3.8b.local')
-  switch ([string]$Tier) {
-    'A' { return [pscustomobject]@{ Tier = 'A'; ResidentModels = 'qwen3:14b'; Context = 16384; KeepAlive = '24h'; Implementations = $both; BenchmarkModel = 'qwen3:14b'; PullModels = @('qwen3:8b', 'qwen3:14b'); Description = 'qwen3:14b resident, qwen3:8b on demand, both entries advertised, context 16384' } }
-    'B' { return [pscustomobject]@{ Tier = 'B'; ResidentModels = ''; Context = 16384; KeepAlive = '24h'; Implementations = $both; BenchmarkModel = 'qwen3:8b'; PullModels = @('qwen3:8b', 'qwen3:14b'); Description = 'qwen3:8b resident, qwen3:14b on demand, both entries advertised, context 16384' } }
-    'C' { return [pscustomobject]@{ Tier = 'C'; ResidentModels = ''; Context = 16384; KeepAlive = '24h'; Implementations = $small; BenchmarkModel = 'qwen3:8b'; PullModels = @('qwen3:8b'); Description = 'qwen3:8b resident on shared memory, 8b entry only; -Benchmark -Model qwen3:14b adds the 14b entry when it fits; context 16384' } }
+function Get-McImplementationModelMap {
+  # Implementation id -> Ollama model, as core/node-manifests/owner-windows-gpu.json names them.
+  $map = [ordered]@{}
+  $map[$script:McVisionImplementation] = $script:McVisionModel
+  $map[$script:McTwinImplementation] = $script:McTwinModel
+  $map[$script:McBiggerImplementation] = $script:McBiggerModel
+  $map[$script:McSmallVisionImplementation] = $script:McSmallVisionModel
+  return $map
+}
+
+function New-McTierSettings {
+  param([string]$Tier, [string]$ResidentModel, [string[]]$Implementations, [int]$Context, [string]$Description)
+  $map = Get-McImplementationModelMap
+  $pairs = New-Object System.Collections.Generic.List[string]
+  $pull = New-Object System.Collections.Generic.List[string]
+  foreach ($id in $Implementations) {
+    $pairs.Add(('{0}={1}' -f $id, $map[$id]))
+    if (-not $pull.Contains([string]$map[$id])) { $pull.Add([string]$map[$id]) }
   }
-  return [pscustomobject]@{ Tier = 'D'; ResidentModels = ''; Context = 8192; KeepAlive = '10m'; Implementations = $small; BenchmarkModel = 'qwen3:8b'; PullModels = @('qwen3:8b'); Description = 'qwen3:8b on demand (keep-alive 10m), 8b entry only, context 8192' }
+  return [pscustomobject]@{
+    Tier = $Tier
+    ResidentModel = $ResidentModel
+    # MCCLUSTER_OLLAMA_RESIDENT_MODELS stays empty: the adapter keeps exactly its default model resident.
+    ResidentModels = ''
+    Implementations = @($Implementations)
+    ImplementationMap = ($pairs -join ',')
+    PullModels = @($pull.ToArray())
+    Context = $Context
+    KeepAlive = '24h'
+    OnDemandKeepAlive = '5m'
+    BenchmarkModel = $ResidentModel
+    Description = $Description
+  }
+}
+
+function Get-McTierSettings {
+  # One resident model on every tier: the vision model the adapter keeps loaded as its default model (vision,
+  # tools and thinking; the agent model of the next slice). Every other model is on demand with a short
+  # keep-alive. qwen3:14b exists on tier A only (owner decision 2026-11-17: no 12B/14B model on a
+  # shared-memory machine); the twin of the OVH node's implementation, qwen3:8b, is on demand on A, B and C.
+  param([string]$Tier)
+  $vision = $script:McVisionModel
+  $twin = $script:McTwinModel
+  switch ([string]$Tier) {
+    'A' { return (New-McTierSettings -Tier 'A' -ResidentModel $vision -Implementations @($script:McVisionImplementation, $script:McTwinImplementation, $script:McBiggerImplementation) -Context 16384 -Description ('{0} resident (the adapter default), {1} and {2} on demand, three entries advertised, context 16384' -f $vision, $twin, $script:McBiggerModel)) }
+    'B' { return (New-McTierSettings -Tier 'B' -ResidentModel $vision -Implementations @($script:McVisionImplementation, $script:McTwinImplementation) -Context 16384 -Description ('{0} resident, {1} on demand, two entries advertised, context 16384' -f $vision, $twin)) }
+    'C' { return (New-McTierSettings -Tier 'C' -ResidentModel $vision -Implementations @($script:McVisionImplementation, $script:McTwinImplementation) -Context 8192 -Description ('{0} resident on shared memory, {1} on demand with a 5m keep-alive (not advertised when -Benchmark -Model {1} leaves under 4 GB free), context 8192' -f $vision, $twin)) }
+  }
+  return (New-McTierSettings -Tier 'D' -ResidentModel $script:McSmallVisionModel -Implementations @($script:McSmallVisionImplementation) -Context 8192 -Description ('{0} resident (the smaller vision model for a box with little free memory), nothing on demand, context 8192' -f $script:McSmallVisionModel))
+}
+
+function Get-McLowerTier {
+  # Where a refused tier goes: the smaller vision model; D has no lower tier.
+  param([string]$Tier)
+  if ($Tier -eq 'D') { return $null }
+  return 'D'
+}
+
+function Test-McModelAllowedOnTier {
+  # qwen3:14b is tier A only (a discrete card with 12 GiB or more); owner decision 2026-11-17.
+  param([string]$ModelName, [string]$Tier)
+  if ($ModelName -eq $script:McBiggerModel -and $Tier -ne 'A') { return $false }
+  return $true
+}
+
+function Get-McHeadroomVerdict {
+  # The owner's rule (2026-11-17): a tier whose resident model leaves the machine under ~4 GB free is refused;
+  # an on-demand model that would is not advertised. Unknown free memory gives no verdict.
+  param([string]$Tier, [string]$ModelName, $FreeAfterBytes, $Settings)
+  $free = ConvertTo-McInt64 $FreeAfterBytes
+  $floor = Format-McBytes $script:McHeadroomFloorBytes
+  $role = 'other'
+  if ($ModelName -eq [string]$Settings.ResidentModel) { $role = 'resident' }
+  elseif ($ModelName -eq $script:McTwinModel -and (@($Settings.Implementations) -contains $script:McTwinImplementation)) { $role = 'twin' }
+  if ($null -eq $free) { return [pscustomobject]@{ Role = $role; Fits = $null; Action = 'none'; NextTier = $null; Reason = 'free memory unknown: no verdict, nothing changed' } }
+  $fits = ($free -ge $script:McHeadroomFloorBytes)
+  if ($role -eq 'resident') {
+    if ($fits) { return [pscustomobject]@{ Role = $role; Fits = $true; Action = 'none'; NextTier = $null; Reason = ('{0} loaded leaves {1} free, above the {2} floor: tier {3} stands' -f $ModelName, (Format-McBytes $free), $floor, $Tier) } }
+    $next = Get-McLowerTier $Tier
+    $advice = 'no lower tier is left: this machine cannot keep a resident model with 4 GB of headroom'
+    if ($next) { $advice = ('re-run -Install -Tier {0}' -f $next) }
+    return [pscustomobject]@{ Role = $role; Fits = $false; Action = 'refuse'; NextTier = $next; Reason = ('{0} loaded leaves only {1} free, under the {2} floor: tier {3} is refused; {4}' -f $ModelName, (Format-McBytes $free), $floor, $Tier, $advice) }
+  }
+  if ($role -eq 'twin') {
+    if ($fits) { return [pscustomobject]@{ Role = $role; Fits = $true; Action = 'advertise'; NextTier = $null; Reason = ('{0} on demand leaves {1} free: {2} is advertised' -f $ModelName, (Format-McBytes $free), $script:McTwinImplementation) } }
+    return [pscustomobject]@{ Role = $role; Fits = $false; Action = 'prune'; NextTier = $null; Reason = ('{0} on demand leaves only {1} free, under the {2} floor: {3} is not advertised' -f $ModelName, (Format-McBytes $free), $floor, $script:McTwinImplementation) }
+  }
+  return [pscustomobject]@{ Role = $role; Fits = $fits; Action = 'none'; NextTier = $null; Reason = ('{0} loaded leaves {1} free; it is not one of this tier''s models, nothing changed' -f $ModelName, (Format-McBytes $free)) }
 }
 
 function Get-McTierDecision {
@@ -363,9 +493,11 @@ function Get-McNodeEnvironment {
   $values['MCCLUSTER_NODE_HEARTBEAT_MS'] = '30000'
   $values['MCCLUSTER_NODE_ENGINE_PROBE_MS'] = '15000'
   $values['MCCLUSTER_OLLAMA_URL'] = $script:McOllamaUrl
-  $values['MCCLUSTER_OLLAMA_MODEL'] = $script:McDefaultModel
-  $values['MCCLUSTER_OLLAMA_IMPLEMENTATIONS'] = $script:McImplementations
+  # The adapter's default model is the one resident model; the map names the on-demand ones beside it.
+  $values['MCCLUSTER_OLLAMA_MODEL'] = [string]$Settings.ResidentModel
+  $values['MCCLUSTER_OLLAMA_IMPLEMENTATIONS'] = [string]$Settings.ImplementationMap
   $values['MCCLUSTER_OLLAMA_RESIDENT_MODELS'] = [string]$Settings.ResidentModels
+  $values['MCCLUSTER_OLLAMA_ON_DEMAND_KEEP_ALIVE'] = [string]$Settings.OnDemandKeepAlive
   $values['MCCLUSTER_OLLAMA_CONTEXT'] = [string]$Settings.Context
   $values['MCCLUSTER_OLLAMA_KEEP_ALIVE'] = [string]$Settings.KeepAlive
   $values['MCCLUSTER_OLLAMA_WARM_ON_START'] = 'true'
@@ -375,14 +507,49 @@ function Get-McNodeEnvironment {
   return $values
 }
 
+function Test-McNodeName {
+  # The display name goes into the launchers and to the Core: letters, digits, dots, hyphens, underscores.
+  param([string]$Name)
+  return ([string]$Name -match '^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$')
+}
+
+function Test-McLauncherSafeValue {
+  # Everything written into the cmd launchers must be inert for cmd.exe: no metacharacter, no control
+  # character, no leading or trailing space (a trailing space would become part of the value).
+  param([string]$Value)
+  $v = [string]$Value
+  if ($v -ne $v.Trim()) { return $false }
+  if ($v -match $script:McLauncherUnsafePattern) { return $false }
+  if ($v -match '[\x00-\x1F\x7F]') { return $false }
+  return $true
+}
+
+function Assert-McLauncherValues {
+  # -Install refuses owner arguments that cmd.exe would read as commands or redirections when the scheduled
+  # task runs the launcher at every boot.
+  param([string]$NodeName, [string]$StateRoot, [string]$RepoPath, [string]$ComputeUrl)
+  if (-not (Test-McNodeName $NodeName)) { throw ('-NodeName must be 1 to 64 letters, digits, dots, hyphens or underscores (got "{0}")' -f $NodeName) }
+  foreach ($pair in @(@('-StateRoot', $StateRoot), @('-RepoPath', $RepoPath), @('-ComputeUrl', $ComputeUrl))) {
+    if (-not (Test-McLauncherSafeValue ([string]$pair[1]))) { throw ('{0} must not contain & | < > ^ " % ! or control characters, or start or end with a space: it is written into the cmd launchers (got "{1}")' -f $pair[0], $pair[1]) }
+  }
+}
+
 function Get-McLauncherText {
   # <StateRoot>\adapter.cmd / agent.cmd: a startup task without an interactive logon does not load
-  # HKCU, so the launcher carries the non-secret configuration itself.
+  # HKCU, so the launcher carries the non-secret configuration itself. Every value is checked again
+  # here: a cmd metacharacter never reaches a file that cmd.exe runs.
   param([string]$Kind, $Environment, [string]$RepoPath, [string]$StateRoot)
+  foreach ($path in @($RepoPath, $StateRoot)) {
+    if (-not (Test-McLauncherSafeValue $path)) { throw ('launcher path "{0}" contains a cmd metacharacter or an edge space; refusing to write the launcher' -f $path) }
+  }
   $lines = New-Object System.Collections.Generic.List[string]
   $lines.Add('@echo off')
   $lines.Add('rem Generated by core\windows\mccluster-node.ps1 -Install. Non-secret configuration only; re-run -Install to regenerate.')
-  foreach ($key in $Environment.Keys) { $lines.Add(('set {0}={1}' -f $key, $Environment[$key])) }
+  foreach ($key in $Environment.Keys) {
+    $value = [string]$Environment[$key]
+    if (-not (Test-McLauncherSafeValue ([string]$key)) -or -not (Test-McLauncherSafeValue $value)) { throw ('launcher value for {0} contains a cmd metacharacter or an edge space; refusing to write the launcher' -f $key) }
+    $lines.Add(('set {0}={1}' -f $key, $value))
+  }
   $lines.Add(('cd /d "{0}"' -f [System.IO.Path]::Combine($RepoPath, 'core')))
   $logName = '{0}.log' -f $Kind
   $log = [System.IO.Path]::Combine($StateRoot, 'logs', $logName)
@@ -407,7 +574,7 @@ function ConvertTo-McManifestJson {
 }
 
 function Add-McManifestImplementation {
-  # Puts one template entry back into a written capabilities.json (the 14b entry after -Benchmark fits).
+  # Puts one template entry back into a written capabilities.json (the on-demand twin once -Benchmark finds headroom).
   param([string]$ManifestJson, [string]$TemplateJson, [string]$Implementation)
   $manifest = $ManifestJson | ConvertFrom-Json
   $present = @($manifest.capabilities | Where-Object { $_.implementation -eq $Implementation })
@@ -416,6 +583,18 @@ function Add-McManifestImplementation {
   $entry = @($template.capabilities | Where-Object { $_.implementation -eq $Implementation })
   if ($entry.Count -eq 0) { throw ('the template has no entry for {0}' -f $Implementation) }
   $manifest.capabilities = @($manifest.capabilities) + @($entry[0])
+  return ($manifest | ConvertTo-Json -Depth 32)
+}
+
+function Remove-McManifestImplementation {
+  # Takes one entry out of a written capabilities.json (the on-demand twin when it leaves too little free
+  # memory); unchanged text when the entry is not there.
+  param([string]$ManifestJson, [string]$Implementation)
+  $manifest = $ManifestJson | ConvertFrom-Json
+  $all = @($manifest.capabilities)
+  $keep = @($all | Where-Object { $_.implementation -ne $Implementation })
+  if ($keep.Count -eq $all.Count) { return $ManifestJson }
+  $manifest.capabilities = $keep
   return ($manifest | ConvertTo-Json -Depth 32)
 }
 
@@ -435,19 +614,40 @@ function Get-McMaskedText {
   return $result
 }
 
+function Get-McReportValueAllowlist {
+  # The MCCLUSTER_* names whose values -Report may print: exactly the non-secret ones -Install writes
+  # (Get-McNodeEnvironment) plus the agent's hardware refresh cadence. MCCLUSTER_ORG_ID is not here: it is masked.
+  return @(
+    'MCCLUSTER_COMPUTE_URL', 'MCCLUSTER_NODE_NAME', 'MCCLUSTER_NODE_STATE_DIR', 'MCCLUSTER_NODE_MANIFEST',
+    'MCCLUSTER_NODE_POLL_MS', 'MCCLUSTER_NODE_HEARTBEAT_MS', 'MCCLUSTER_NODE_ENGINE_PROBE_MS', 'MCCLUSTER_NODE_HARDWARE_REFRESH_MS',
+    'MCCLUSTER_OLLAMA_URL', 'MCCLUSTER_OLLAMA_MODEL', 'MCCLUSTER_OLLAMA_IMPLEMENTATIONS', 'MCCLUSTER_OLLAMA_RESIDENT_MODELS',
+    'MCCLUSTER_OLLAMA_ON_DEMAND_KEEP_ALIVE', 'MCCLUSTER_OLLAMA_CONTEXT', 'MCCLUSTER_OLLAMA_KEEP_ALIVE',
+    'MCCLUSTER_OLLAMA_WARM_ON_START', 'MCCLUSTER_OLLAMA_ADAPTER_PORT'
+  )
+}
+
 function Format-McEnvironmentLines {
-  # MCCLUSTER_*, OLLAMA_* and GGML_VK_VISIBLE_DEVICES; the enrolment token only as set/unset.
+  # MCCLUSTER_*, OLLAMA_* and GGML_VK_VISIBLE_DEVICES. A value is printed only for an allowlisted MCCLUSTER_*
+  # name, OLLAMA_* and GGML_VK_VISIBLE_DEVICES; any name that says token, key, secret, password or credential
+  # is shown as set/unset whatever its prefix (the ecosystem has MCCLUSTER_* secrets beyond the enrolment
+  # token); MCCLUSTER_ORG_ID is shown as set (uuid); every other MCCLUSTER_* name as set/unset.
   param([hashtable]$Variables)
   $lines = New-Object System.Collections.Generic.List[string]
+  $allow = Get-McReportValueAllowlist
   $names = @($Variables.Keys | Where-Object { $_ -like 'MCCLUSTER_*' -or $_ -like 'OLLAMA_*' -or $_ -eq 'GGML_VK_VISIBLE_DEVICES' } | Sort-Object)
   foreach ($name in $names) {
-    if ($name -eq 'MCCLUSTER_NODE_ENROLL_TOKEN') {
-      $state = 'unset'
-      if ([string]$Variables[$name] -ne '') { $state = 'set' }
+    $value = [string]$Variables[$name]
+    $state = 'unset'
+    if ($value -ne '') { $state = 'set' }
+    if ($name -match $script:McSecretNamePattern) { $lines.Add(('  {0} = {1}' -f $name, $state)); continue }
+    if ($name -eq 'MCCLUSTER_ORG_ID') {
+      if ($value -match '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$') { $state = 'set (uuid)' }
+      elseif ($value -ne '') { $state = 'set (not a uuid)' }
       $lines.Add(('  {0} = {1}' -f $name, $state))
-    } else {
-      $lines.Add(('  {0} = {1}' -f $name, $Variables[$name]))
+      continue
     }
+    if (($name -like 'MCCLUSTER_*') -and -not ($allow -contains $name)) { $lines.Add(('  {0} = {1}' -f $name, $state)); continue }
+    $lines.Add(('  {0} = {1}' -f $name, $value))
   }
   if (-not $Variables.ContainsKey('MCCLUSTER_NODE_ENROLL_TOKEN')) { $lines.Add('  MCCLUSTER_NODE_ENROLL_TOKEN = unset') }
   if ($lines.Count -eq 0) { $lines.Add('  (none)') }
@@ -482,8 +682,9 @@ function Get-McProcessorGpuPercent {
 }
 
 function Get-McBenchmarkMetrics {
-  # prompt tok/s = prompt_eval_count * 1e9 / prompt_eval_duration; generation likewise (2 decimals).
-  param($ChatResponse, $PsResponse, [string]$ModelName)
+  # prompt tok/s = prompt_eval_count * 1e9 / prompt_eval_duration; generation likewise (2 decimals); the free
+  # memory before and after the model loaded is kept beside them (the owner's headroom rule reads it).
+  param($ChatResponse, $PsResponse, [string]$ModelName, $FreeMemoryBeforeBytes = $null, $FreeMemoryAfterBytes = $null)
   $promptCount = ConvertTo-McInt64 $ChatResponse.prompt_eval_count
   $promptNs = ConvertTo-McInt64 $ChatResponse.prompt_eval_duration
   $evalCount = ConvertTo-McInt64 $ChatResponse.eval_count
@@ -499,17 +700,9 @@ function Get-McBenchmarkMetrics {
     processor_gpu_percent = (Get-McProcessorGpuPercent -PsResponse $PsResponse -ModelName $ModelName)
     prompt_tokens = $promptCount
     generation_tokens = $evalCount
+    free_memory_before_bytes = (ConvertTo-McInt64 $FreeMemoryBeforeBytes)
+    free_memory_after_bytes = (ConvertTo-McInt64 $FreeMemoryAfterBytes)
   }
-}
-
-function Test-McModelFits {
-  # The 14b entry is advertised on tier C only when the measured run says it fits.
-  param($Metrics)
-  if ($null -eq $Metrics) { return $false }
-  $gpu = $Metrics.processor_gpu_percent
-  $gen = $Metrics.generation_tokens_per_second
-  if ($null -eq $gpu -or $null -eq $gen) { return $false }
-  return (([double]$gpu -ge 50) -and ([double]$gen -ge 5))
 }
 
 function Merge-McMeasuredInference {
@@ -541,6 +734,8 @@ function Merge-McMeasuredInference {
     generation_tokens = $Metrics.generation_tokens
     ollama_version = $version
     backend_note = $note
+    free_memory_before_bytes = $Metrics.free_memory_before_bytes
+    free_memory_after_bytes = $Metrics.free_memory_after_bytes
   }
   $document = [ordered]@{ schema = $script:McMeasuredSchema; measurements = $measurements }
   return ($document | ConvertTo-Json -Depth 8)
@@ -981,6 +1176,7 @@ function Invoke-McInstall {
   if (-not $OrgId) { throw '-Install needs -OrgId <organization uuid> the first time (it is kept in node.config.json afterwards)' }
   if ($OrgId -notmatch '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$') { throw '-OrgId must be a uuid' }
   if ($ComputeUrl -notmatch '^https://') { throw '-ComputeUrl must be an https:// URL (the Core compute gateway behind TLS ingress)' }
+  Assert-McLauncherValues -NodeName $NodeName -StateRoot $StateRoot -RepoPath $RepoPath -ComputeUrl $ComputeUrl
 
   $inventory = Get-McGpuInventory
   $memory = Get-McMemoryInfo
@@ -991,6 +1187,7 @@ function Invoke-McInstall {
   $settings = $decision.Settings
   Write-Host ('Tier {0} because {1}' -f $decision.Tier, $decision.Reason)
   Write-Host ('  ' + $settings.Description)
+  Write-Host ('  owner decision 2026-11-17, headroom first: one resident model ({0}), the rest on demand; -Benchmark measures the free memory it leaves and refuses a tier under {1}' -f $settings.ResidentModel, (Format-McBytes $script:McHeadroomFloorBytes))
 
   $values = Get-McNodeEnvironment -Settings $settings -StateRoot $StateRoot -NodeName $NodeName -OrgId $OrgId -ComputeUrl $ComputeUrl
   foreach ($key in $values.Keys) { Write-Host ('  {0}={1}' -f $key, $values[$key]) }
@@ -1025,6 +1222,7 @@ function Invoke-McInstall {
       compute_url = $ComputeUrl
       tier = $decision.Tier
       tier_reason = $decision.Reason
+      resident_model = [string]$settings.ResidentModel
       chosen_gpu = $chosen
       repo_path = $RepoPath
       state_root = $StateRoot
@@ -1129,7 +1327,14 @@ function Invoke-McModels {
   if ($null -ne $config -and $config.tier) { $tier = [string]$config.tier }
   $settings = Get-McTierSettings $tier
   $models = @($settings.PullModels)
-  if ($ModelOverride -and -not ($models -contains $ModelOverride)) { $models = $models + @($ModelOverride) }
+  if ($ModelOverride) {
+    if (-not (Test-McModelAllowedOnTier -ModelName $ModelOverride -Tier $tier)) { throw ('{0} is tier A only (a discrete card with 12 GiB or more); owner decision 2026-11-17: no 12B/14B model on a shared-memory machine (this node is tier {1})' -f $ModelOverride, $tier) }
+    if (-not ($models -contains $ModelOverride)) { $models = $models + @($ModelOverride) }
+  }
+  $version = Invoke-McOllamaJson -Path '/api/version'
+  if ($null -ne $version -and -not (Test-McVersionAtLeast -Version ([string]$version.version) -Minimum $script:McMinimumOllamaVersion)) {
+    Write-Host ('  Ollama {0} is older than {1}: the vision models answer HTTP 412 there; update the Ollama app first' -f $version.version, $script:McMinimumOllamaVersion)
+  }
   foreach ($name in $models) {
     if ($PSCmdlet.ShouldProcess($name, 'ollama pull')) {
       Write-Host ('ollama pull {0}' -f $name)
@@ -1144,7 +1349,31 @@ function Invoke-McModels {
   return 0
 }
 
+function Get-McFreeMemoryBytes {
+  # FreePhysicalMemory as bytes, or $null when the host cannot say (the tests redefine Get-McMemoryInfo).
+  $memory = Get-McMemoryInfo
+  if ($null -eq $memory) { return $null }
+  return (ConvertTo-McInt64 $memory.FreeBytes)
+}
+
+function Test-McVersionAtLeast {
+  # '0.40.16' >= '0.12.7'; a version that does not parse is treated as too old (the caller only warns).
+  param([string]$Version, [string]$Minimum)
+  $v = ([string]$Version).Trim() -replace '^v', ''
+  if ($v -match '^(\d+)\.(\d+)(?:\.(\d+))?') {
+    $patch = '0'
+    if ($matches[3]) { $patch = $matches[3] }
+    $parsed = [version]('{0}.{1}.{2}' -f $matches[1], $matches[2], $patch)
+    return ($parsed -ge [version]$Minimum)
+  }
+  return $false
+}
+
 function Invoke-McBenchmark {
+  # Measures the tier's resident model (or -Model): free memory before loading and with the model loaded, prompt
+  # and generation tokens per second, the PROCESSOR share; writes the sidecar; then applies the owner's headroom
+  # rule (2026-11-17): a resident model that leaves under 4 GB free refuses the tier (exit 1, the lower tier is
+  # named), the on-demand twin qwen3:8b is advertised or not by the same measure.
   [CmdletBinding(SupportsShouldProcess = $true)]
   param([string]$StateRoot, [string]$ModelOverride, [string]$RepoPath)
   $config = Read-McNodeConfig $StateRoot
@@ -1153,6 +1382,7 @@ function Invoke-McBenchmark {
   $settings = Get-McTierSettings $tier
   $modelName = [string]$settings.BenchmarkModel
   if ($ModelOverride) { $modelName = $ModelOverride }
+  if (-not (Test-McModelAllowedOnTier -ModelName $modelName -Tier $tier)) { throw ('{0} is tier A only (a discrete card with 12 GiB or more); owner decision 2026-11-17: no 12B/14B model on a shared-memory machine (this node is tier {1})' -f $modelName, $tier) }
   $numCtx = [int]$settings.Context
   if ($env:MCCLUSTER_OLLAMA_CONTEXT -match '^\d+$') { $numCtx = [int]$env:MCCLUSTER_OLLAMA_CONTEXT }
   $numPredict = 256
@@ -1166,15 +1396,18 @@ function Invoke-McBenchmark {
     options = @{ temperature = 0; num_ctx = $numCtx; num_predict = $numPredict }
   }
   if (Test-McThinkModel $modelName) { $body['think'] = $false }
-  Write-Host ('Benchmark {0}: warm-up call, then the measured call (num_ctx {1}, num_predict {2})' -f $modelName, $numCtx, $numPredict)
+  $before = Get-McFreeMemoryBytes
+  Write-Host ('Benchmark {0}: warm-up call, then the measured call (num_ctx {1}, num_predict {2}); free memory before loading: {3}' -f $modelName, $numCtx, $numPredict, (Format-McBytes $before))
   $warm = Invoke-McOllamaJson -Path '/api/chat' -Body $body -TimeoutSec 900
   if ($null -eq $warm) { throw ('the warm-up call to /api/chat failed for ' + $modelName + ' (is the model pulled? run -Models)') }
+  $after = Get-McFreeMemoryBytes
   $measured = Invoke-McOllamaJson -Path '/api/chat' -Body $body -TimeoutSec 900
   if ($null -eq $measured) { throw 'the measured call to /api/chat failed' }
   $ps = Invoke-McOllamaJson -Path '/api/ps'
-  $metrics = Get-McBenchmarkMetrics -ChatResponse $measured -PsResponse $ps -ModelName $modelName
+  $metrics = Get-McBenchmarkMetrics -ChatResponse $measured -PsResponse $ps -ModelName $modelName -FreeMemoryBeforeBytes $before -FreeMemoryAfterBytes $after
   $backend = Get-McBackendNote -LogLines (Get-McOllamaLogLines)
   Write-Host ('  prompt {0} tok/s; generation {1} tok/s; PROCESSOR {2}% GPU' -f $metrics.prompt_tokens_per_second, $metrics.generation_tokens_per_second, $metrics.processor_gpu_percent)
+  Write-Host ('  free memory with {0} loaded: {1} (floor {2})' -f $modelName, (Format-McBytes $after), (Format-McBytes $script:McHeadroomFloorBytes))
   if ($null -ne $backend) { Write-Host ('  backend: ' + $backend) }
 
   $measuredPath = Get-McMeasuredPath $StateRoot
@@ -1184,25 +1417,33 @@ function Invoke-McBenchmark {
     Write-Host ('  written: ' + $measuredPath)
   }
 
-  if ($modelName -eq $script:McBiggerModel -and $tier -eq 'C') {
+  $verdict = Get-McHeadroomVerdict -Tier $tier -ModelName $modelName -FreeAfterBytes $after -Settings $settings
+  Write-Host ('  ' + $verdict.Reason)
+  $exitCode = 0
+  if ($verdict.Action -eq 'refuse') { $exitCode = 1 }
+  if ($verdict.Action -eq 'prune' -or $verdict.Action -eq 'advertise') {
     $manifestPath = Get-McManifestPath $StateRoot
     if (-not $RepoPath -and $null -ne $config) { $RepoPath = [string]$config.repo_path }
-    if (Test-McModelFits $metrics) {
-      if ($RepoPath -and $PSCmdlet.ShouldProcess($manifestPath, 'add the qwen3.14b.local entry back from the template (it fits)')) {
-        $templateJson = Read-McTextFile (Get-McTemplatePath $RepoPath)
-        $current = Read-McTextFile $manifestPath
-        if ($null -eq $templateJson -or $null -eq $current) { Write-Host '  capabilities.json or the template is missing; run -Install first' }
-        else {
-          $updated = Add-McManifestImplementation -ManifestJson $current -TemplateJson $templateJson -Implementation $script:McBiggerImplementation
-          if (Write-McFileIfChanged -Path $manifestPath -Content $updated) { Write-Host '  qwen3.14b.local added to capabilities.json; the agent re-reads it within 15 s' }
-          else { Write-Host '  qwen3.14b.local was already advertised' }
-        }
+    $current = Read-McTextFile $manifestPath
+    if ($null -eq $current) { Write-Host '  capabilities.json is missing; run -Install first' }
+    elseif ($verdict.Action -eq 'prune') {
+      if ($PSCmdlet.ShouldProcess($manifestPath, ('remove the {0} entry (under the headroom floor)' -f $script:McTwinImplementation))) {
+        $updated = Remove-McManifestImplementation -ManifestJson $current -Implementation $script:McTwinImplementation
+        if (Write-McFileIfChanged -Path $manifestPath -Content $updated) { Write-Host ('  {0} removed from capabilities.json; the agent re-reads it within 15 s' -f $script:McTwinImplementation) }
+        else { Write-Host ('  {0} was not advertised' -f $script:McTwinImplementation) }
       }
     } else {
-      Write-Host ('  qwen3.14b.local stays pruned: it needs PROCESSOR >= 50% GPU and generation >= 5 tok/s (measured {0}% and {1} tok/s)' -f $metrics.processor_gpu_percent, $metrics.generation_tokens_per_second)
+      $templateJson = $null
+      if ($RepoPath) { $templateJson = Read-McTextFile (Get-McTemplatePath $RepoPath) }
+      if ($null -eq $templateJson) { Write-Host '  the template is missing (give -RepoPath); capabilities.json unchanged' }
+      elseif ($PSCmdlet.ShouldProcess($manifestPath, ('add the {0} entry back from the template (it fits)' -f $script:McTwinImplementation))) {
+        $updated = Add-McManifestImplementation -ManifestJson $current -TemplateJson $templateJson -Implementation $script:McTwinImplementation
+        if (Write-McFileIfChanged -Path $manifestPath -Content $updated) { Write-Host ('  {0} added back to capabilities.json; the agent re-reads it within 15 s' -f $script:McTwinImplementation) }
+        else { Write-Host ('  {0} was already advertised' -f $script:McTwinImplementation) }
+      }
     }
   }
-  return $metrics
+  return [pscustomobject]@{ Metrics = $metrics; Verdict = $verdict; ExitCode = $exitCode; FreeMemoryBeforeBytes = $before; FreeMemoryAfterBytes = $after }
 }
 
 function Invoke-McKeepAwake {
@@ -1281,7 +1522,7 @@ switch ($action) {
   'install' { [void](Invoke-McInstall -RepoPath $RepoPath -StateRoot $resolvedStateRoot -NodeName $NodeName -OrgId $OrgId -ComputeUrl $ComputeUrl -TierOverride $Tier) }
   'enroll' { $exitCode = [int](Invoke-McEnroll -StateRoot $resolvedStateRoot -RepoPath $RepoPath) }
   'models' { $exitCode = [int](Invoke-McModels -StateRoot $resolvedStateRoot -ModelOverride $Model) }
-  'benchmark' { [void](Invoke-McBenchmark -StateRoot $resolvedStateRoot -ModelOverride $Model -RepoPath $RepoPath) }
+  'benchmark' { $exitCode = [int](Invoke-McBenchmark -StateRoot $resolvedStateRoot -ModelOverride $Model -RepoPath $RepoPath).ExitCode }
   'keepawake' { $exitCode = [int](Invoke-McKeepAwake -ScriptPath $MyInvocation.MyCommand.Path) }
   'modelspath' { $exitCode = [int](Invoke-McModelsPath -Path $ModelsPath) }
   'vulkan' { $exitCode = [int](Invoke-McVulkan -DeviceIndex $Vulkan) }

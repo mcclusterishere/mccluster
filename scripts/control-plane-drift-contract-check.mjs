@@ -107,11 +107,13 @@ if (laptop&&!laptopEntries) failures.push('owner-windows-gpu node manifest must 
 if (laptopEntries) {
   const ovhChat=nodeManifest.capabilities.find((item)=>item?.capability==='ai.chat'&&item?.implementation==='qwen3.8b.local');
   const laptopEntry=(implementation)=>laptopEntries.find((item)=>item?.capability==='ai.chat'&&item?.implementation===implementation);
-  for (const implementation of ['qwen3.8b.local','qwen3.14b.local']) if (!laptopEntry(implementation)) failures.push(`owner-windows-gpu lost ai.chat/${implementation}`);
+  // The four entries the doctor's tiers choose from (owner decision 2026-11-17, headroom first): the resident
+  // vision model, the OVH twin on demand, qwen3:14b for a discrete card with 12 GiB or more, qwen3-vl:4b for a
+  // box with little free memory. Every entry carries the OVH ai.chat schema byte for byte.
+  for (const implementation of ['qwen3-vl.8b.local','qwen3.8b.local','qwen3.14b.local','qwen3-vl.4b.local']) if (!laptopEntry(implementation)) failures.push(`owner-windows-gpu lost ai.chat/${implementation}`);
   if (laptopEntries.some((item)=>item?.capability==='ai.text.draft')) failures.push('owner-windows-gpu must not advertise ai.text.draft (pilot-only, nothing submits it)');
-  const laptopChat=laptopEntry('qwen3.8b.local');
-  if (ovhChat&&laptopChat) for (const field of ['input_schema','output_schema']) {
-    if (!isDeepStrictEqual(laptopChat[field],ovhChat[field])) failures.push(`owner-windows-gpu qwen3.8b.local ${field} drifted from ovh-primary`);
+  if (ovhChat) for (const item of laptopEntries) for (const field of ['input_schema','output_schema']) {
+    if (!isDeepStrictEqual(item?.[field],ovhChat[field])) failures.push(`owner-windows-gpu ${item?.implementation||'?'} ${field} drifted from ovh-primary`);
   }
   for (const item of laptopEntries) {
     for (const field of ['url','health_url']) {

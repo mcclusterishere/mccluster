@@ -4,9 +4,12 @@
    writes (pruned per model tier) to a Windows GPU node's capabilities.json. These checks keep
    it claimable on both nodes and private:
 
-   (a) it validates through the protocol (core/src/compute/protocol.mjs) with exactly the two
-       ai.chat entries qwen3.8b.local and qwen3.14b.local;
-   (b) the 8b entry carries byte-for-byte the OVH node's input and output schema, so one
+   (a) it validates through the protocol (core/src/compute/protocol.mjs) with exactly the four
+       ai.chat entries the doctor's tiers choose from: qwen3-vl.8b.local (the resident vision
+       model, owner decision 2026-11-17), qwen3.8b.local (the OVH twin, on demand),
+       qwen3.14b.local (a discrete card with 12 GiB or more only) and qwen3-vl.4b.local (little
+       free memory);
+   (b) every entry carries byte-for-byte the OVH node's input and output schema, so one
        binding and one task are claimable on either node (the design: same implementation id,
        features merged with gpu:true and model_tier);
    (c) every executor and health URL is a loopback service on 127.0.0.1:4790 and readiness is
@@ -41,14 +44,15 @@ const ovh = JSON.parse(read("core/node-manifests/ovh-primary.json"));
 const ovhChat = ovh.capabilities.find((e) => e.capability === "ai.chat" && e.implementation === "qwen3.8b.local");
 const entry = (implementation) => manifest.capabilities.find((e) => e.capability === "ai.chat" && e.implementation === implementation);
 
-test("the template validates through the protocol with exactly the two laptop ai.chat entries", () => {
+test("the template validates through the protocol with exactly the four laptop ai.chat entries", () => {
   assert.ok(Array.isArray(manifest.capabilities), "capabilities[] must be an array");
   const normalized = validateCapabilityManifest(manifest.capabilities);
-  assert.equal(normalized.length, 2);
+  assert.equal(normalized.length, 4);
   assert.deepEqual(
     normalized.map((e) => `${e.capability}/${e.implementation}`).sort(),
-    ["ai.chat/qwen3.14b.local", "ai.chat/qwen3.8b.local"],
+    ["ai.chat/qwen3-vl.4b.local", "ai.chat/qwen3-vl.8b.local", "ai.chat/qwen3.14b.local", "ai.chat/qwen3.8b.local"],
   );
+  assert.equal(manifest.capabilities[0].implementation, "qwen3-vl.8b.local", "the resident vision model is the first entry (measurement ties go to it)");
   for (const item of normalized) {
     assert.equal(item.hosting, "self-hosted");
     assert.equal(item.billing, "compute");
@@ -56,26 +60,31 @@ test("the template validates through the protocol with exactly the two laptop ai
     assert.equal(item.max_concurrency, 1);
     assert.equal(item.min_vram_bytes, 0);
   }
+  assert.equal(entry("qwen3-vl.8b.local").model, "qwen3-vl:8b");
   assert.equal(entry("qwen3.8b.local").model, "qwen3:8b");
   assert.equal(entry("qwen3.14b.local").model, "qwen3:14b");
+  assert.equal(entry("qwen3-vl.4b.local").model, "qwen3-vl:4b");
   assert.equal(entry("qwen3.8b.local").version, ovhChat.version, "the shared implementation keeps the OVH entry's version");
-  assert.equal(entry("qwen3.14b.local").version, "1");
+  for (const implementation of ["qwen3-vl.8b.local", "qwen3.14b.local", "qwen3-vl.4b.local"]) assert.equal(entry(implementation).version, "1");
+  /* the implementation ids satisfy the adapter's MCCLUSTER_OLLAMA_IMPLEMENTATIONS grammar and the protocol's */
+  for (const item of manifest.capabilities) {
+    assert.match(item.implementation, /^[a-z][a-z0-9]*(?:[._:/-][a-z0-9]+)*$/);
+    assert.match(item.model, /^[A-Za-z0-9][A-Za-z0-9._/-]*(?::[A-Za-z0-9._-]+)?$/);
+  }
 });
 
-test("the 8b entry's schemas equal the OVH node's byte for byte, and the 14b entry reuses them", () => {
+test("every entry's schemas equal the OVH node's byte for byte", () => {
   assert.ok(ovhChat, "ovh-primary.json must still carry ai.chat/qwen3.8b.local");
-  const laptop = entry("qwen3.8b.local");
-  assert.deepEqual(laptop.input_schema, ovhChat.input_schema);
-  assert.deepEqual(laptop.output_schema, ovhChat.output_schema);
-  assert.equal(JSON.stringify(laptop.input_schema), JSON.stringify(ovhChat.input_schema), "same key order too");
-  assert.equal(JSON.stringify(laptop.output_schema), JSON.stringify(ovhChat.output_schema));
-  const bigger = entry("qwen3.14b.local");
-  assert.deepEqual(bigger.input_schema, laptop.input_schema);
-  assert.deepEqual(bigger.output_schema, laptop.output_schema);
+  for (const item of manifest.capabilities) {
+    assert.deepEqual(item.input_schema, ovhChat.input_schema, `${item.implementation} input_schema`);
+    assert.deepEqual(item.output_schema, ovhChat.output_schema, `${item.implementation} output_schema`);
+    assert.equal(JSON.stringify(item.input_schema), JSON.stringify(ovhChat.input_schema), `${item.implementation}: same key order too`);
+    assert.equal(JSON.stringify(item.output_schema), JSON.stringify(ovhChat.output_schema));
+  }
 });
 
 test("features merge the OVH set with gpu:true and a model tier, so requirements {gpu:true} can pin GPU work", () => {
-  for (const [implementation, tier] of [["qwen3.8b.local", "8b"], ["qwen3.14b.local", "14b"]]) {
+  for (const [implementation, tier] of [["qwen3-vl.8b.local", "8b"], ["qwen3.8b.local", "8b"], ["qwen3.14b.local", "14b"], ["qwen3-vl.4b.local", "4b"]]) {
     const features = entry(implementation).features;
     for (const [key, value] of Object.entries(ovhChat.features)) assert.equal(features[key], value, `${implementation} keeps ${key}`);
     assert.equal(features.gpu, true, `${implementation} advertises gpu:true`);
@@ -114,8 +123,12 @@ test("one lease, owned gpu-laptop labels, no VRAM threshold, no ai.text.draft", 
 
 test("the raw text carries no user path, UNC host, e-mail or non-loopback address", () => {
   assert.equal(PRIVATE_STRINGS.exec(raw), null, "private string in the template");
-  /* the regex itself catches what it should and lets loopback through */
-  for (const bad of ["C:\\Users\\someone\\x", "\"C:\\\\Users\\\\someone\"", "\\\\laptop\\share", "cd \\\\laptop\\share", "owner@example.com", "10.0.0.12", "192.168.1.2"]) {
+  /* the regex itself catches what it should and lets loopback through; the e-mail and the
+     addresses are assembled here so that this tree carries no literal address itself */
+  const email = ["owner", "example.com"].join("@");
+  const privateAddress = [10, 0, 0, 12].join(".");
+  const homeAddress = [192, 168, 1, 2].join(".");
+  for (const bad of ["C:\\Users\\someone\\x", "\"C:\\\\Users\\\\someone\"", "\\\\laptop\\share", "cd \\\\laptop\\share", email, privateAddress, homeAddress]) {
     assert.ok(PRIVATE_STRINGS.test(bad), `regex must catch ${bad}`);
   }
   for (const fine of ["http://127.0.0.1:4790/execute", "\"PNPDeviceID\":\"PCI\\\\VEN_1002&DEV_15BF\"", "'^HKEY_LOCAL_MACHINE\\\\SYSTEM'", "32.0.13031.3015"]) {
@@ -127,5 +140,5 @@ test("the control-plane drift contract check, which reads the template too, pass
   const out = execFileSync(process.execPath, ["scripts/control-plane-drift-contract-check.mjs"], { cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
   const report = JSON.parse(out.slice(out.indexOf("{")));
   assert.equal(report.ok, true);
-  assert.equal(report.node_manifests?.["owner-windows-gpu"]?.implementations?.length, 2, "the check reports the laptop template");
+  assert.equal(report.node_manifests?.["owner-windows-gpu"]?.implementations?.length, 4, "the check reports the laptop template");
 });

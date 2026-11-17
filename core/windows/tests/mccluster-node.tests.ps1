@@ -132,6 +132,8 @@ Assert-Equal 'integrated' (Get-McGpuForm 'intel' 'Intel(R) Iris(R) Xe Graphics')
 Assert-Equal 'unknown' (Get-McGpuForm 'unknown' 'Whatever') 'unknown vendor is unknown form'
 Assert-True (Test-McThinkModel 'qwen3:8b') 'qwen3:8b takes the think key'
 Assert-True (Test-McThinkModel 'qwen3:14b') 'qwen3:14b takes the think key'
+Assert-True (Test-McThinkModel 'qwen3-vl:8b') 'qwen3-vl:8b (vision, tools, thinking) takes the think key'
+Assert-True (Test-McThinkModel 'qwen3-vl:4b') 'qwen3-vl:4b takes the think key'
 Assert-Equal $false (Test-McThinkModel 'qwen3:4b-instruct-2507-q4_K_M') 'an instruct build does not'
 
 # ---- GPU selection over the fixtures -----------------------------------------------------------
@@ -152,7 +154,10 @@ Assert-Equal 0 (@($inventory.Ignored).Count) '780M only: nothing ignored'
 $primary = Select-McPrimaryGpu $inventory.Gpus
 Assert-Equal 'AMD Radeon 780M Graphics' $primary.Name '780M only: the integrated adapter is chosen'
 Assert-Equal 'C' (Get-McModelTier -Gpu $primary -FreePhysicalMemoryBytes 12000000000) '780M only with 12 GB free: tier C'
+Assert-Equal 'C' (Get-McModelTier -Gpu $primary -FreePhysicalMemoryBytes 8000000000) '780M only with 8 GB free: tier C (the owner''s ~8 GB line)'
+Assert-Equal 'D' (Get-McModelTier -Gpu $primary -FreePhysicalMemoryBytes 7999999999) '780M only just under 8 GB free: tier D (the 4B vision model)'
 Assert-Equal 'D' (Get-McModelTier -Gpu $primary -FreePhysicalMemoryBytes 6000000000) '780M only with 6 GB free: tier D'
+Assert-Equal 'D' (Get-McModelTier -Gpu $primary -FreePhysicalMemoryBytes 3500000000) '780M only with 3.5 GB free (the production heartbeat): tier D'
 
 Use-Fixture -Cim 'cim-780m-rx7600s.json' -Reg 'reg-780m-rx7600s.txt'
 $inventory = Get-McGpuInventory
@@ -191,6 +196,23 @@ $byName = Merge-McGpuInventory -Controllers @([pscustomobject]@{ Name = 'AMD Rad
 Assert-Equal 'registry' (@($byName.Gpus)[0].VramSource) 'no prefix match falls back to DriverDesc = Name'
 Assert-Equal '1.0' (@($byName.Gpus)[0].DriverVersion) 'the registry driver fills an empty CIM driver'
 
+# ---- a stale driver subkey never shadows the live one (the same rule as hardware.mjs) -----------
+$staleEntries = @(ConvertFrom-McRegQueryText (Read-Fixture 'reg-780m-stale-subkey.txt'))
+Assert-Equal 2 $staleEntries.Count 'reg-780m-stale-subkey.txt has two subkeys with the same MatchingDeviceId'
+Assert-Null $staleEntries[0].QwMemorySize 'the stale 0000 carries no qwMemorySize'
+Use-Fixture -Cim 'cim-780m-only.json' -Reg 'reg-780m-stale-subkey.txt'
+$staleInventory = Get-McGpuInventory
+$staleGpu = @($staleInventory.Gpus)[0]
+Assert-Equal 536870912 $staleGpu.VramBytes 'stale subkey: the live 0001 with a qwMemorySize wins'
+Assert-Equal 'registry' $staleGpu.VramSource 'stale subkey: vram_source registry, not the AdapterRAM path'
+Assert-Equal '0001' $staleGpu.RegistrySubkey 'stale subkey: the live subkey is the join'
+Assert-Equal '32.0.13031.3015' $staleGpu.DriverVersion 'stale subkey: the live driver version'
+$sameId = 'PCI\VEN_1002&DEV_15BF&SUBSYS_8B4A103C'
+$bothSized = Select-McRegistryEntry -Controller $script:MockControllers[0] -RegistryEntries @((New-McRegistryEntry -Subkey '0001' -DriverDesc 'AMD Radeon 780M Graphics' -MatchingDeviceId $sameId -QwMemorySize '0x10000000' -DriverVersion 'new'), (New-McRegistryEntry -Subkey '0000' -DriverDesc 'AMD Radeon 780M Graphics' -MatchingDeviceId $sameId -QwMemorySize '0x8000000' -DriverVersion 'old'))
+Assert-Equal '0001' $bothSized.Subkey 'both sized: the highest subkey (the latest install) wins, whatever the order'
+$longerId = Select-McRegistryEntry -Controller $script:MockControllers[0] -RegistryEntries @((New-McRegistryEntry -Subkey '0000' -DriverDesc 'AMD Radeon 780M Graphics' -MatchingDeviceId $sameId -QwMemorySize $null -DriverVersion $null), (New-McRegistryEntry -Subkey '0001' -DriverDesc 'AMD Radeon 780M Graphics' -MatchingDeviceId 'PCI\VEN_1002&DEV_15BF' -QwMemorySize '0x20000000' -DriverVersion $null))
+Assert-Equal '0000' $longerId.Subkey 'a longer MatchingDeviceId still outranks a shorter one, memory size or not'
+
 # ---- tier matrix and settings ------------------------------------------------------------------
 function New-TestGpu {
   param([string]$Form, [int64]$Vram)
@@ -203,7 +225,8 @@ Assert-Equal 'B' (Get-McModelTier -Gpu (New-TestGpu 'discrete' (8 * $gib)) -Free
 Assert-Equal 'B' (Get-McModelTier -Gpu (New-TestGpu 'discrete' (6 * $gib)) -FreePhysicalMemoryBytes 0) 'discrete 6 GiB: B (boundary)'
 Assert-Equal 'D' (Get-McModelTier -Gpu (New-TestGpu 'discrete' (4 * $gib)) -FreePhysicalMemoryBytes 32000000000) 'discrete 4 GiB: D even with free RAM'
 Assert-Equal 'C' (Get-McModelTier -Gpu (New-TestGpu 'integrated' (512 * 1048576)) -FreePhysicalMemoryBytes 12000000000) 'integrated + 12 GB free: C'
-Assert-Equal 'C' (Get-McModelTier -Gpu (New-TestGpu 'integrated' (512 * 1048576)) -FreePhysicalMemoryBytes 10000000000) 'integrated + 10 GB free: C (boundary)'
+Assert-Equal 'C' (Get-McModelTier -Gpu (New-TestGpu 'integrated' (512 * 1048576)) -FreePhysicalMemoryBytes 8000000000) 'integrated + 8 GB free: C (boundary, the owner''s ~8 GB line)'
+Assert-Equal 'D' (Get-McModelTier -Gpu (New-TestGpu 'integrated' (512 * 1048576)) -FreePhysicalMemoryBytes 7999999999) 'integrated just under 8 GB free: D'
 Assert-Equal 'D' (Get-McModelTier -Gpu (New-TestGpu 'integrated' (512 * 1048576)) -FreePhysicalMemoryBytes 6000000000) 'integrated + 6 GB free: D'
 Assert-Equal 'D' (Get-McModelTier -Gpu (New-TestGpu 'unknown' (8 * $gib)) -FreePhysicalMemoryBytes 12000000000) 'unknown form: D'
 $override = Get-McTierDecision -Gpu (New-TestGpu 'integrated' (512 * 1048576)) -FreePhysicalMemoryBytes 12000000000 -Override 'A'
@@ -215,30 +238,98 @@ Assert-Equal 'C' $ruled.Tier 'no override keeps the rule'
 Assert-True ($ruled.Reason -like 'test, integrated, VRAM 512 MiB*free RAM*') 'reason names gpu, form, VRAM and free RAM'
 
 $a = Get-McTierSettings 'A'
-Assert-Equal 'qwen3:14b' $a.ResidentModels 'A: 14b resident'
-Assert-Equal 2 (@($a.Implementations).Count) 'A: both entries'
+Assert-Equal 'qwen3-vl:8b' $a.ResidentModel 'A: the vision model is the one resident model'
+Assert-Equal '' $a.ResidentModels 'A: MCCLUSTER_OLLAMA_RESIDENT_MODELS stays empty (the adapter default is the resident one)'
+Assert-Equal 'qwen3-vl.8b.local,qwen3.8b.local,qwen3.14b.local' (@($a.Implementations) -join ',') 'A: three entries, qwen3:14b on demand'
+Assert-Equal 'qwen3-vl.8b.local=qwen3-vl:8b,qwen3.8b.local=qwen3:8b,qwen3.14b.local=qwen3:14b' $a.ImplementationMap 'A: implementation map'
 Assert-Equal 16384 $a.Context 'A: context 16384'
-Assert-Equal 'qwen3:14b' $a.BenchmarkModel 'A: benchmark model 14b'
+Assert-Equal 'qwen3-vl:8b' $a.BenchmarkModel 'A: the benchmark measures the resident model'
+Assert-Equal 'qwen3-vl:8b,qwen3:8b,qwen3:14b' (@($a.PullModels) -join ',') 'A: pulls the three models'
 $b = Get-McTierSettings 'B'
-Assert-Equal '' $b.ResidentModels 'B: no extra resident model'
-Assert-Equal 2 (@($b.Implementations).Count) 'B: both entries'
+Assert-Equal 'qwen3-vl:8b' $b.ResidentModel 'B: vision model resident'
+Assert-Equal 'qwen3-vl.8b.local,qwen3.8b.local' (@($b.Implementations) -join ',') 'B: two entries, no 14b on an 8 GiB card'
+Assert-Equal 16384 $b.Context 'B: context 16384'
 $c = Get-McTierSettings 'C'
-Assert-Equal 'qwen3.8b.local' (@($c.Implementations) -join ',') 'C: 8b entry only'
-Assert-Equal 1 (@($c.PullModels).Count) 'C: pulls 8b only'
+Assert-Equal 'qwen3-vl:8b' $c.ResidentModel 'C: vision model resident on shared memory'
+Assert-Equal 'qwen3-vl.8b.local,qwen3.8b.local' (@($c.Implementations) -join ',') 'C: the twin is on demand beside the resident model'
+Assert-Equal 8192 $c.Context 'C: context 8192 on shared memory (owner decision)'
+Assert-Equal '5m' $c.OnDemandKeepAlive 'C: the on-demand twin unloads after 5 m'
+Assert-Equal '24h' $c.KeepAlive 'C: the resident model keeps a long keep-alive'
+Assert-Equal 2 (@($c.PullModels).Count) 'C: pulls the vision model and the twin'
 $d = Get-McTierSettings 'D'
+Assert-Equal 'qwen3-vl:4b' $d.ResidentModel 'D: the smaller vision model'
+Assert-Equal 'qwen3-vl.4b.local' (@($d.Implementations) -join ',') 'D: one entry'
+Assert-Equal 'qwen3-vl.4b.local=qwen3-vl:4b' $d.ImplementationMap 'D: implementation map'
 Assert-Equal 8192 $d.Context 'D: context 8192'
-Assert-Equal '10m' $d.KeepAlive 'D: keep-alive 10m'
-Assert-Equal 'qwen3.8b.local' (@($d.Implementations) -join ',') 'D: 8b entry only'
+Assert-Equal '24h' $d.KeepAlive 'D: the resident model keeps a long keep-alive'
+Assert-Equal 'qwen3-vl:4b' (@($d.PullModels) -join ',') 'D: pulls the small vision model only'
+foreach ($tierName in @('A', 'B', 'C', 'D')) {
+  $tierSettings = Get-McTierSettings $tierName
+  Assert-Equal '' $tierSettings.ResidentModels ('tier ' + $tierName + ': exactly one resident model, the adapter default')
+  Assert-Equal $tierSettings.ResidentModel $tierSettings.BenchmarkModel ('tier ' + $tierName + ': the benchmark measures the resident model')
+  Assert-Equal ($tierName -eq 'A') (@($tierSettings.Implementations) -contains 'qwen3.14b.local') ('tier ' + $tierName + ': qwen3:14b on tier A only')
+}
+Assert-True (Test-McModelAllowedOnTier -ModelName 'qwen3:14b' -Tier 'A') '14b allowed on A'
+Assert-Equal $false (Test-McModelAllowedOnTier -ModelName 'qwen3:14b' -Tier 'B') '14b refused on B (an 8 GiB card)'
+Assert-Equal $false (Test-McModelAllowedOnTier -ModelName 'qwen3:14b' -Tier 'C') '14b refused on C (shared memory, owner decision)'
+Assert-Equal $false (Test-McModelAllowedOnTier -ModelName 'qwen3:14b' -Tier 'D') '14b refused on D'
+Assert-True (Test-McModelAllowedOnTier -ModelName 'qwen3:8b' -Tier 'D') 'other models are not gated here'
+Assert-Equal 'D' (Get-McLowerTier 'C') 'a refused tier C goes to D'
+Assert-Null (Get-McLowerTier 'D') 'no tier below D'
 
 # ---- environment, launchers --------------------------------------------------------------------
 $values = Get-McNodeEnvironment -Settings $d -StateRoot 'STATE' -NodeName 'owner-windows-gpu' -OrgId '00000000-0000-4000-8000-000000000001' -ComputeUrl 'https://compute.mccluster.org'
 Assert-Equal '1000' $values['MCCLUSTER_NODE_POLL_MS'] 'poll 1000 ms (Tier-1 lever)'
 Assert-Equal '8192' $values['MCCLUSTER_OLLAMA_CONTEXT'] 'D: context in the environment'
-Assert-Equal '10m' $values['OLLAMA_KEEP_ALIVE'] 'D: OLLAMA_KEEP_ALIVE 10m'
+Assert-Equal '24h' $values['OLLAMA_KEEP_ALIVE'] 'D: OLLAMA_KEEP_ALIVE 24h for the resident model'
+Assert-Equal 'qwen3-vl:4b' $values['MCCLUSTER_OLLAMA_MODEL'] 'D: the resident model is the adapter default'
+Assert-Equal 'qwen3-vl.4b.local=qwen3-vl:4b' $values['MCCLUSTER_OLLAMA_IMPLEMENTATIONS'] 'D: implementation map'
+Assert-Equal '' $values['MCCLUSTER_OLLAMA_RESIDENT_MODELS'] 'D: no second resident model'
+Assert-Equal '5m' $values['MCCLUSTER_OLLAMA_ON_DEMAND_KEEP_ALIVE'] 'on-demand models unload after 5 m'
 Assert-Equal 'true' $values['MCCLUSTER_OLLAMA_WARM_ON_START'] 'warm on start'
-Assert-Equal 'qwen3.8b.local=qwen3:8b,qwen3.14b.local=qwen3:14b' $values['MCCLUSTER_OLLAMA_IMPLEMENTATIONS'] 'implementation map'
+$valuesA = Get-McNodeEnvironment -Settings $a -StateRoot 'STATE' -NodeName 'owner-windows-gpu' -OrgId '00000000-0000-4000-8000-000000000001' -ComputeUrl 'https://compute.mccluster.org'
+Assert-Equal 'qwen3-vl:8b' $valuesA['MCCLUSTER_OLLAMA_MODEL'] 'A: the vision model is the adapter default'
+Assert-Equal 'qwen3-vl.8b.local=qwen3-vl:8b,qwen3.8b.local=qwen3:8b,qwen3.14b.local=qwen3:14b' $valuesA['MCCLUSTER_OLLAMA_IMPLEMENTATIONS'] 'A: implementation map'
+Assert-Equal '' $valuesA['MCCLUSTER_OLLAMA_RESIDENT_MODELS'] 'A: no second resident model (the adapter would keep both loaded)'
 Assert-Equal $false $values.Contains('MCCLUSTER_OLLAMA_NUM_THREAD') 'never a CPU thread cap on a GPU tier'
 Assert-Equal $false $values.Contains('MCCLUSTER_NODE_ENROLL_TOKEN') 'no token in the environment'
+foreach ($key in @($values.Keys)) {
+  if ($key -like 'MCCLUSTER_*' -and $key -ne 'MCCLUSTER_ORG_ID') { Assert-True ((Get-McReportValueAllowlist) -contains $key) ('the report allowlist names the installed variable ' + $key) }
+}
+Assert-Equal $false ((Get-McReportValueAllowlist) -contains 'MCCLUSTER_ORG_ID') 'the organization id is never on the value allowlist'
+
+# ---- launcher values are inert for cmd.exe ------------------------------------------------------
+Assert-True (Test-McNodeName 'owner-windows-gpu') 'the default node name is valid'
+Assert-True (Test-McNodeName 'owner-windows-pilot') 'the earlier node name is valid'
+Assert-Equal $false (Test-McNodeName 'laptop & calc.exe') 'a node name with cmd metacharacters is refused'
+Assert-Equal $false (Test-McNodeName '') 'an empty node name is refused'
+Assert-Equal $false (Test-McNodeName ('a' * 65)) 'a 65-character node name is refused'
+Assert-Equal $false (Test-McLauncherSafeValue 'C:\x & calc.exe') 'ampersand is refused'
+Assert-Equal $false (Test-McLauncherSafeValue 'C:\x|y') 'pipe is refused'
+Assert-Equal $false (Test-McLauncherSafeValue 'C:\x > nul') 'redirection is refused'
+Assert-Equal $false (Test-McLauncherSafeValue 'C:\x%PATH%') 'percent is refused'
+Assert-Equal $false (Test-McLauncherSafeValue 'C:\x^y') 'caret is refused'
+Assert-Equal $false (Test-McLauncherSafeValue 'C:\x ') 'a trailing space is refused'
+Assert-True (Test-McLauncherSafeValue 'C:\ProgramData\mccluster-node') 'the default state root passes'
+Assert-True (Test-McLauncherSafeValue 'qwen3-vl.8b.local=qwen3-vl:8b,qwen3.8b.local=qwen3:8b') 'the implementation map passes'
+Assert-True (Test-McLauncherSafeValue 'https://compute.mccluster.org') 'the compute URL passes'
+$hostile = Get-McNodeEnvironment -Settings $d -StateRoot 'C:\x' -NodeName 'laptop & calc.exe' -OrgId '00000000-0000-4000-8000-000000000001' -ComputeUrl 'https://compute.mccluster.org'
+$threw = $false
+try { Get-McLauncherText -Kind 'agent' -Environment $hostile -RepoPath 'C:\r' -StateRoot 'C:\x' | Out-Null } catch { $threw = $true }
+Assert-True $threw 'a launcher is never written with a cmd metacharacter in a value'
+$threw = $false
+try { Get-McLauncherText -Kind 'agent' -Environment $values -RepoPath 'C:\r & calc.exe' -StateRoot 'C:\x' | Out-Null } catch { $threw = $true }
+Assert-True $threw 'a launcher is never written with a cmd metacharacter in a path'
+$threw = $false
+try { Assert-McLauncherValues -NodeName 'laptop & calc.exe' -StateRoot 'C:\x' -RepoPath 'C:\r' -ComputeUrl 'https://compute.mccluster.org' } catch { $threw = $true }
+Assert-True $threw '-Install refuses a node name with cmd metacharacters'
+$threw = $false
+try { Assert-McLauncherValues -NodeName 'ok' -StateRoot 'C:\x > nul' -RepoPath 'C:\r' -ComputeUrl 'https://compute.mccluster.org' } catch { $threw = $true }
+Assert-True $threw '-Install refuses a state root with a redirection'
+$threw = $false
+try { Assert-McLauncherValues -NodeName 'owner-windows-gpu' -StateRoot 'C:\ProgramData\mccluster-node' -RepoPath 'C:\src\mccluster' -ComputeUrl 'https://compute.mccluster.org' } catch { $threw = $true }
+Assert-Equal $false $threw 'ordinary install values pass'
+
 $launcher = Get-McLauncherText -Kind 'agent' -Environment $values -RepoPath 'REPO' -StateRoot 'STATE'
 Assert-True ($launcher.StartsWith('@echo off')) 'launcher starts with @echo off'
 Assert-True ($launcher.Contains('set MCCLUSTER_NODE_POLL_MS=1000')) 'launcher sets the poll'
@@ -260,13 +351,26 @@ Assert-Equal 'state %USERPROFILE%/node on <host> by <user>, again <user>' $maske
 $env:USERPROFILE = $savedProfile
 $env:COMPUTERNAME = $savedComputer
 $env:USERNAME = $savedUser
-$envLines = Format-McEnvironmentLines -Variables @{ MCCLUSTER_NODE_ENROLL_TOKEN = 'secret-value-123'; MCCLUSTER_NODE_NAME = 'owner-windows-gpu'; OLLAMA_KEEP_ALIVE = '24h'; PATH = 'ignored'; GGML_VK_VISIBLE_DEVICES = '0' }
-Assert-True (($envLines -join "`n").Contains('MCCLUSTER_NODE_ENROLL_TOKEN = set')) 'token shown as set'
-Assert-Equal $false (($envLines -join "`n").Contains('secret-value-123')) 'token value never printed'
-Assert-Equal $false (($envLines -join "`n").Contains('PATH')) 'unrelated variables are not listed'
-Assert-True (($envLines -join "`n").Contains('GGML_VK_VISIBLE_DEVICES = 0')) 'Vulkan device variable is listed'
+$envLines = Format-McEnvironmentLines -Variables @{ MCCLUSTER_NODE_ENROLL_TOKEN = 'secret-value-123'; MCCLUSTER_NODE_NAME = 'owner-windows-gpu'; OLLAMA_KEEP_ALIVE = '24h'; PATH = 'ignored'; GGML_VK_VISIBLE_DEVICES = '0'; MCCLUSTER_RELAY_TOKEN = 'abc123'; MCCLUSTER_CONTEXT_TOKEN = 'ctx-secret'; MCCLUSTER_MEETING_ENGINE_API_KEY = 'k-1'; MCCLUSTER_SMSGATE_PASSWORD = 'p-1'; MCCLUSTER_ORG_ID = '00000000-0000-4000-8000-000000000001'; MCCLUSTER_SOMETHING_ELSE = 'private-value'; OLLAMA_API_KEY = 'ok-1'; MCCLUSTER_OLLAMA_MODEL = 'qwen3-vl:8b' }
+$envText = ($envLines -join "`n")
+Assert-True ($envText.Contains('MCCLUSTER_NODE_ENROLL_TOKEN = set')) 'token shown as set'
+Assert-Equal $false ($envText.Contains('secret-value-123')) 'token value never printed'
+Assert-Equal $false ($envText.Contains('PATH')) 'unrelated variables are not listed'
+Assert-True ($envText.Contains('GGML_VK_VISIBLE_DEVICES = 0')) 'Vulkan device variable is listed'
+Assert-True ($envText.Contains('OLLAMA_KEEP_ALIVE = 24h')) 'an OLLAMA_* value is printed'
+Assert-True ($envText.Contains('MCCLUSTER_NODE_NAME = owner-windows-gpu')) 'an allowlisted value is printed'
+Assert-True ($envText.Contains('MCCLUSTER_OLLAMA_MODEL = qwen3-vl:8b')) 'the model name is printed'
+Assert-True ($envText.Contains('MCCLUSTER_RELAY_TOKEN = set')) 'another MCCLUSTER_* token is shown as set only'
+Assert-True ($envText.Contains('MCCLUSTER_CONTEXT_TOKEN = set')) 'the context token is shown as set only'
+Assert-True ($envText.Contains('MCCLUSTER_MEETING_ENGINE_API_KEY = set')) 'a key is shown as set only'
+Assert-True ($envText.Contains('MCCLUSTER_SMSGATE_PASSWORD = set')) 'a password is shown as set only'
+Assert-True ($envText.Contains('OLLAMA_API_KEY = set')) 'an OLLAMA_* key is shown as set only'
+Assert-True ($envText.Contains('MCCLUSTER_SOMETHING_ELSE = set')) 'an unknown MCCLUSTER_* name never prints its value'
+Assert-True ($envText.Contains('MCCLUSTER_ORG_ID = set (uuid)')) 'the organization id is masked as a uuid'
+foreach ($secret in @('abc123', 'ctx-secret', 'k-1', 'p-1', 'ok-1', 'private-value', '00000000-0000-4000-8000-000000000001')) { Assert-Equal $false ($envText.Contains($secret)) ('value never printed: ' + $secret) }
 $envLines = Format-McEnvironmentLines -Variables @{ MCCLUSTER_NODE_NAME = 'x' }
 Assert-True (($envLines -join "`n").Contains('MCCLUSTER_NODE_ENROLL_TOKEN = unset')) 'token shown as unset when absent'
+Assert-True ((Format-McEnvironmentLines -Variables @{ MCCLUSTER_ORG_ID = 'not-a-uuid' }) -join "`n").Contains('MCCLUSTER_ORG_ID = set (not a uuid)') 'a malformed organization id is masked too'
 
 # ---- candidate partition -----------------------------------------------------------------------
 Assert-True (Test-McCandidatePartition 53687091200) '50 GiB is a candidate'
@@ -278,21 +382,49 @@ Assert-Equal $false (Test-McCandidatePartition $null) 'null is not a candidate'
 # ---- benchmark math and sidecar ----------------------------------------------------------------
 $chat = [pscustomobject]@{ prompt_eval_count = 120; prompt_eval_duration = 400000000; eval_count = 256; eval_duration = 12800000000 }
 $ps = [pscustomobject]@{ models = @([pscustomobject]@{ name = 'qwen3:8b'; model = 'qwen3:8b'; size = 6000; size_vram = 6000 }) }
-$metrics = Get-McBenchmarkMetrics -ChatResponse $chat -PsResponse $ps -ModelName 'qwen3:8b'
+$metrics = Get-McBenchmarkMetrics -ChatResponse $chat -PsResponse $ps -ModelName 'qwen3:8b' -FreeMemoryBeforeBytes 9000000000 -FreeMemoryAfterBytes 4500000000
 Assert-Equal 20 $metrics.generation_tokens_per_second 'eval_count 256 over 1.28e10 ns is 20 tok/s'
 Assert-Equal 300 $metrics.prompt_tokens_per_second 'prompt 120 over 4e8 ns is 300 tok/s'
 Assert-Equal 100 $metrics.processor_gpu_percent 'size_vram equal to size is 100% GPU'
 Assert-Equal 256 $metrics.generation_tokens 'generation tokens kept'
+Assert-Equal 9000000000 $metrics.free_memory_before_bytes 'free memory before loading is recorded'
+Assert-Equal 4500000000 $metrics.free_memory_after_bytes 'free memory with the model loaded is recorded'
 $half = [pscustomobject]@{ models = @([pscustomobject]@{ name = 'qwen3:8b'; model = 'qwen3:8b'; size = 6000; size_vram = 3000 }) }
 Assert-Equal 50 (Get-McProcessorGpuPercent -PsResponse $half -ModelName 'qwen3:8b') 'half in VRAM is 50%'
 Assert-Null (Get-McProcessorGpuPercent -PsResponse $null -ModelName 'qwen3:8b') 'no /api/ps answer is unknown'
 Assert-Null (Get-McProcessorGpuPercent -PsResponse ([pscustomobject]@{ models = @() }) -ModelName 'qwen3:8b') 'nothing loaded is unknown'
 $empty = Get-McBenchmarkMetrics -ChatResponse ([pscustomobject]@{ eval_count = 0; eval_duration = 0 }) -PsResponse $null -ModelName 'qwen3:8b'
 Assert-Null $empty.generation_tokens_per_second 'zero counts give no rate'
-Assert-True (Test-McModelFits ([pscustomobject]@{ processor_gpu_percent = 50; generation_tokens_per_second = 5 })) 'fits at 50% and 5 tok/s'
-Assert-Equal $false (Test-McModelFits ([pscustomobject]@{ processor_gpu_percent = 49; generation_tokens_per_second = 20 })) 'does not fit under 50% GPU'
-Assert-Equal $false (Test-McModelFits ([pscustomobject]@{ processor_gpu_percent = 100; generation_tokens_per_second = 4.9 })) 'does not fit under 5 tok/s'
-Assert-Equal $false (Test-McModelFits ([pscustomobject]@{ processor_gpu_percent = $null; generation_tokens_per_second = 20 })) 'unknown GPU share does not fit'
+Assert-Null $empty.free_memory_after_bytes 'no free-memory reading stays null'
+
+# ---- the owner's headroom rule (2026-11-17): the verdict on the free memory a loaded model leaves -----
+$settingsC = Get-McTierSettings 'C'
+$ok = Get-McHeadroomVerdict -Tier 'C' -ModelName 'qwen3-vl:8b' -FreeAfterBytes 5000000000 -Settings $settingsC
+Assert-Equal 'resident' $ok.Role 'verdict: the vision model is the resident model'
+Assert-Equal 'none' $ok.Action 'verdict: 5 GB free above the floor keeps the tier'
+Assert-True $ok.Fits 'verdict: fits'
+$refuse = Get-McHeadroomVerdict -Tier 'C' -ModelName 'qwen3-vl:8b' -FreeAfterBytes 3000000000 -Settings $settingsC
+Assert-Equal 'refuse' $refuse.Action 'verdict: 3 GB free refuses the tier'
+Assert-Equal 'D' $refuse.NextTier 'verdict: the lower tier is D'
+Assert-True ($refuse.Reason -like '*-Install -Tier D*') 'verdict: the exact next command is named'
+Assert-True ($refuse.Reason -like '*2.8 GiB*') 'verdict: the measured free memory is printed'
+$prune = Get-McHeadroomVerdict -Tier 'C' -ModelName 'qwen3:8b' -FreeAfterBytes 3500000000 -Settings $settingsC
+Assert-Equal 'twin' $prune.Role 'verdict: qwen3:8b is the on-demand twin on tier C'
+Assert-Equal 'prune' $prune.Action 'verdict: the twin under the floor is not advertised'
+$advertise = Get-McHeadroomVerdict -Tier 'C' -ModelName 'qwen3:8b' -FreeAfterBytes 4000000000 -Settings $settingsC
+Assert-Equal 'advertise' $advertise.Action 'verdict: exactly 4 GB free is the floor, the twin is advertised'
+$unknown = Get-McHeadroomVerdict -Tier 'C' -ModelName 'qwen3-vl:8b' -FreeAfterBytes $null -Settings $settingsC
+Assert-Equal 'none' $unknown.Action 'verdict: unknown free memory changes nothing'
+Assert-Null $unknown.Fits 'verdict: unknown free memory has no fit'
+$lastTier = Get-McHeadroomVerdict -Tier 'D' -ModelName 'qwen3-vl:4b' -FreeAfterBytes 1000000000 -Settings (Get-McTierSettings 'D')
+Assert-Equal 'refuse' $lastTier.Action 'verdict: tier D under the floor is refused too'
+Assert-Null $lastTier.NextTier 'verdict: no lower tier after D'
+$other = Get-McHeadroomVerdict -Tier 'D' -ModelName 'qwen3:8b' -FreeAfterBytes 3000000000 -Settings (Get-McTierSettings 'D')
+Assert-Equal 'none' $other.Action 'verdict: a model that is not one of the tier''s changes nothing'
+Assert-True (Test-McVersionAtLeast -Version '0.40.16' -Minimum '0.12.7') 'Ollama 0.40.16 is new enough for the vision models'
+Assert-Equal $false (Test-McVersionAtLeast -Version '0.11.2' -Minimum '0.12.7') 'Ollama 0.11.2 is too old'
+Assert-True (Test-McVersionAtLeast -Version 'v0.12.7' -Minimum '0.12.7') 'the boundary with a v prefix'
+Assert-Equal $false (Test-McVersionAtLeast -Version 'unknown' -Minimum '0.12.7') 'an unparsable version is treated as too old'
 $existingSidecar = '{"schema":"mccluster-measured-inference/1","measurements":{"qwen3:14b":{"generation_tokens_per_second":9.5,"prompt_tokens_per_second":null,"processor_gpu_percent":60,"measured_at":"2026-11-17T00:00:00Z","num_ctx":16384,"num_predict":256,"prompt_tokens":null,"generation_tokens":null,"ollama_version":null,"backend_note":null}}}'
 $mergedJson = Merge-McMeasuredInference -ExistingJson $existingSidecar -Metrics $metrics -MeasuredAt '2026-11-17T20:00:00Z' -NumCtx 16384 -NumPredict 256 -OllamaVersion '0.40.16' -BackendNote 'library=Vulkan name=test'
 $merged = $mergedJson | ConvertFrom-Json
@@ -301,6 +433,8 @@ Assert-Equal 20 $merged.measurements.'qwen3:8b'.generation_tokens_per_second 'ne
 Assert-Equal 9.5 $merged.measurements.'qwen3:14b'.generation_tokens_per_second 'other model kept'
 Assert-Equal '0.40.16' $merged.measurements.'qwen3:8b'.ollama_version 'ollama version recorded'
 Assert-Equal 'library=Vulkan name=test' $merged.measurements.'qwen3:8b'.backend_note 'backend note recorded'
+Assert-Equal 4500000000 $merged.measurements.'qwen3:8b'.free_memory_after_bytes 'the sidecar carries the free memory the loaded model left'
+Assert-Equal 9000000000 $merged.measurements.'qwen3:8b'.free_memory_before_bytes 'and the free memory before it loaded'
 $fresh = (Merge-McMeasuredInference -ExistingJson 'not json' -Metrics $metrics -MeasuredAt '2026-11-17T20:00:00Z' -NumCtx 16384 -NumPredict 256 -OllamaVersion '' -BackendNote '') | ConvertFrom-Json
 Assert-Equal 1 (@($fresh.measurements.PSObject.Properties).Count) 'invalid existing sidecar is replaced'
 Assert-Null $fresh.measurements.'qwen3:8b'.ollama_version 'empty version is null'
@@ -310,24 +444,58 @@ Assert-Null (Get-McBackendNote -LogLines @()) 'no log lines, no note'
 # ---- manifest rendering from the real template -------------------------------------------------
 $templateJson = [System.IO.File]::ReadAllText($templatePath)
 $template = $templateJson | ConvertFrom-Json
-foreach ($tierName in @('A', 'B')) {
+Assert-Equal 4 (@($template.capabilities).Count) 'the template carries the four entries the tiers choose from'
+Assert-Equal 'qwen3-vl.8b.local' (@($template.capabilities)[0].implementation) 'the resident vision model is the first template entry'
+$renderedA = (ConvertTo-McManifestJson -TemplateJson $templateJson -Settings (Get-McTierSettings 'A')) | ConvertFrom-Json
+Assert-Equal 'qwen3-vl.8b.local,qwen3.8b.local,qwen3.14b.local' (@($renderedA.capabilities | ForEach-Object { $_.implementation }) -join ',') 'tier A: three entries in template order'
+foreach ($tierName in @('B', 'C')) {
   $rendered = (ConvertTo-McManifestJson -TemplateJson $templateJson -Settings (Get-McTierSettings $tierName)) | ConvertFrom-Json
-  Assert-Equal 2 (@($rendered.capabilities).Count) ('tier ' + $tierName + ': both entries')
-}
-foreach ($tierName in @('C', 'D')) {
-  $rendered = (ConvertTo-McManifestJson -TemplateJson $templateJson -Settings (Get-McTierSettings $tierName)) | ConvertFrom-Json
-  Assert-Equal 1 (@($rendered.capabilities).Count) ('tier ' + $tierName + ': one entry')
-  Assert-Equal 'qwen3.8b.local' (@($rendered.capabilities)[0].implementation) ('tier ' + $tierName + ': the 8b entry')
+  Assert-Equal 'qwen3-vl.8b.local,qwen3.8b.local' (@($rendered.capabilities | ForEach-Object { $_.implementation }) -join ',') ('tier ' + $tierName + ': the vision model and the twin, no 14b')
   Assert-Equal 1 $rendered.max_leases ('tier ' + $tierName + ': max_leases kept')
   Assert-Equal 'gpu-laptop' $rendered.labels.role ('tier ' + $tierName + ': labels kept')
   Assert-Equal (@($template.capabilities)[0].input_schema | ConvertTo-Json -Depth 20 -Compress) (@($rendered.capabilities)[0].input_schema | ConvertTo-Json -Depth 20 -Compress) ('tier ' + $tierName + ': input_schema untouched')
-  Assert-Equal 'http://127.0.0.1:4790/ready?implementation=qwen3.8b.local' (@($rendered.capabilities)[0].executor.health_url) ('tier ' + $tierName + ': per-implementation readiness URL kept')
+  Assert-Equal 'http://127.0.0.1:4790/ready?implementation=qwen3-vl.8b.local' (@($rendered.capabilities)[0].executor.health_url) ('tier ' + $tierName + ': per-implementation readiness URL kept')
+  Assert-Equal 'qwen3-vl:8b' (@($rendered.capabilities)[0].model) ('tier ' + $tierName + ': the resident model is the first entry')
 }
-$pruned = ConvertTo-McManifestJson -TemplateJson $templateJson -Settings (Get-McTierSettings 'C')
-$readded = Add-McManifestImplementation -ManifestJson $pruned -TemplateJson $templateJson -Implementation 'qwen3.14b.local'
-Assert-Equal 2 (@(($readded | ConvertFrom-Json).capabilities).Count) 'the 14b entry comes back from the template'
-Assert-Equal 'qwen3:14b' (@(($readded | ConvertFrom-Json).capabilities)[1].model) 'the re-added entry is the 14b one'
-Assert-Equal $readded (Add-McManifestImplementation -ManifestJson $readded -TemplateJson $templateJson -Implementation 'qwen3.14b.local') 'adding it twice changes nothing'
+$renderedD = (ConvertTo-McManifestJson -TemplateJson $templateJson -Settings (Get-McTierSettings 'D')) | ConvertFrom-Json
+Assert-Equal 1 (@($renderedD.capabilities).Count) 'tier D: one entry'
+Assert-Equal 'qwen3-vl.4b.local' (@($renderedD.capabilities)[0].implementation) 'tier D: the smaller vision model'
+Assert-Equal 'qwen3-vl:4b' (@($renderedD.capabilities)[0].model) 'tier D: its model'
+Assert-Equal 'http://127.0.0.1:4790/ready?implementation=qwen3-vl.4b.local' (@($renderedD.capabilities)[0].executor.health_url) 'tier D: per-implementation readiness URL'
+$pruned = Remove-McManifestImplementation -ManifestJson (ConvertTo-McManifestJson -TemplateJson $templateJson -Settings (Get-McTierSettings 'C')) -Implementation 'qwen3.8b.local'
+Assert-Equal 'qwen3-vl.8b.local' (@(($pruned | ConvertFrom-Json).capabilities | ForEach-Object { $_.implementation }) -join ',') 'the twin can be taken out (under the headroom floor)'
+Assert-Equal $pruned (Remove-McManifestImplementation -ManifestJson $pruned -Implementation 'qwen3.8b.local') 'removing it twice changes nothing'
+$readded = Add-McManifestImplementation -ManifestJson $pruned -TemplateJson $templateJson -Implementation 'qwen3.8b.local'
+Assert-Equal 2 (@(($readded | ConvertFrom-Json).capabilities).Count) 'the twin comes back from the template'
+Assert-Equal 'qwen3:8b' (@(($readded | ConvertFrom-Json).capabilities)[1].model) 'the re-added entry is the twin'
+Assert-Equal $readded (Add-McManifestImplementation -ManifestJson $readded -TemplateJson $templateJson -Implementation 'qwen3.8b.local') 'adding it twice changes nothing'
+
+# ---- mocks for the benchmark: free memory as a sequence of readings, a daemon that answers in memory --------
+$script:MockFreeSequence = New-Object System.Collections.Generic.List[int64]
+function Get-McMemoryInfo {
+  if ($script:MockFreeSequence.Count -gt 0) {
+    $free = $script:MockFreeSequence[0]
+    $script:MockFreeSequence.RemoveAt(0)
+    return [pscustomobject]@{ TotalBytes = [int64]17179869184; FreeBytes = $free }
+  }
+  return $script:MockMemory
+}
+$script:MockChats = New-Object System.Collections.Generic.List[string]
+function Invoke-McOllamaJson {
+  param([string]$Path, $Body, [int]$TimeoutSec = 10)
+  if ($Path -eq '/api/version') { return [pscustomobject]@{ version = '0.40.16' } }
+  if ($Path -eq '/api/chat') {
+    $script:MockChats.Add([string]$Body.model)
+    return [pscustomobject]@{ prompt_eval_count = 120; prompt_eval_duration = 400000000; eval_count = 256; eval_duration = 12800000000 }
+  }
+  if ($Path -eq '/api/ps') {
+    $loaded = ''
+    if ($script:MockChats.Count -gt 0) { $loaded = [string]$script:MockChats[$script:MockChats.Count - 1] }
+    return [pscustomobject]@{ models = @([pscustomobject]@{ name = $loaded; model = $loaded; size = 6000; size_vram = 6000 }) }
+  }
+  if ($Path -eq '/api/tags') { return [pscustomobject]@{ models = @() } }
+  return $null
+}
 
 # ---- install into a temporary state root: -WhatIf writes nothing, a real run is idempotent ------
 $tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('mccluster-node-tests-' + [guid]::NewGuid().ToString('N'))
@@ -342,6 +510,11 @@ try {
   Assert-Equal 0 $script:MockTaskRegistrations '-WhatIf registers no task'
   Assert-Equal 0 $script:MockIcaclsCalls.Count '-WhatIf applies no ACL'
 
+  $threw = $false
+  try { Invoke-McInstall -RepoPath $repoRoot -StateRoot $tempRoot -NodeName 'laptop & calc.exe' -OrgId '00000000-0000-4000-8000-000000000001' -ComputeUrl 'https://compute.mccluster.org' -TierOverride '' | Out-Null } catch { $threw = $true }
+  Assert-True $threw 'install: a node name with cmd metacharacters is refused'
+  Assert-Equal $false (Test-Path -LiteralPath $tempRoot) 'install: the refusal happens before anything is written'
+
   $first = Invoke-McInstall -RepoPath $repoRoot -StateRoot $tempRoot -NodeName 'owner-windows-gpu' -OrgId '00000000-0000-4000-8000-000000000001' -ComputeUrl 'https://compute.mccluster.org' -TierOverride ''
   Assert-Equal 'C' $first.Tier 'install: 780M with 12 GB free is tier C'
   Assert-True (Test-Path -LiteralPath (Join-Path $tempRoot 'capabilities.json')) 'install: capabilities.json written'
@@ -350,23 +523,78 @@ try {
   Assert-True (Test-Path -LiteralPath (Join-Path $tempRoot 'adapter.cmd')) 'install: adapter.cmd written'
   Assert-True (Test-Path -LiteralPath (Join-Path $tempRoot 'logs')) 'install: logs folder written'
   $writtenManifest = [System.IO.File]::ReadAllText((Join-Path $tempRoot 'capabilities.json')) | ConvertFrom-Json
-  Assert-Equal 1 (@($writtenManifest.capabilities).Count) 'install: tier C manifest has the 8b entry only'
+  Assert-Equal 'qwen3-vl.8b.local,qwen3.8b.local' (@($writtenManifest.capabilities | ForEach-Object { $_.implementation }) -join ',') 'install: tier C manifest has the resident vision model and the on-demand twin'
   $writtenConfig = [System.IO.File]::ReadAllText((Join-Path $tempRoot 'node.config.json')) | ConvertFrom-Json
   Assert-Equal 'C' $writtenConfig.tier 'install: node.config.json records the tier'
+  Assert-Equal 'qwen3-vl:8b' $writtenConfig.resident_model 'install: node.config.json records the resident model'
   Assert-Equal '00000000-0000-4000-8000-000000000001' $writtenConfig.org_id 'install: node.config.json records the org'
   Assert-Equal $false ((Get-Content -Raw (Join-Path $tempRoot 'node.config.json')).Contains('TOKEN')) 'install: node.config.json carries no token'
   Assert-Equal '1000' $script:MockUserEnvironment['MCCLUSTER_NODE_POLL_MS'] 'install: user variable for the poll'
+  Assert-Equal 'qwen3-vl:8b' $script:MockUserEnvironment['MCCLUSTER_OLLAMA_MODEL'] 'install: the resident model is the adapter default'
+  Assert-Equal '8192' $script:MockUserEnvironment['MCCLUSTER_OLLAMA_CONTEXT'] 'install: context 8192 on shared memory'
   Assert-Equal (Join-Path $tempRoot 'capabilities.json') $script:MockUserEnvironment['MCCLUSTER_NODE_MANIFEST'] 'install: user variable for the manifest path'
   Assert-Equal 1 $script:MockTaskRegistrations 'install: scheduled tasks registered once'
   Assert-True (($script:MockIcaclsCalls -join ';').Contains('(OI)(CI)F')) 'install: owner-only ACL on the state root'
+  $agentLauncher = [System.IO.File]::ReadAllText((Join-Path $tempRoot 'agent.cmd'))
+  $setLines = @(($agentLauncher -split "`r`n") | Where-Object { $_ -like 'set *' })
+  Assert-True ($setLines.Count -ge 15) 'install: the launcher sets the configuration'
+  Assert-Equal 0 (@($setLines | Where-Object { $_ -match '[&|<>^%!]' })).Count 'install: no set line carries a cmd metacharacter (only the final redirection line does)'
+  Assert-True ($agentLauncher.Contains('set MCCLUSTER_OLLAMA_MODEL=qwen3-vl:8b')) 'install: the launcher carries the resident model'
 
   $second = Invoke-McInstall -RepoPath $repoRoot -StateRoot $tempRoot -NodeName 'owner-windows-gpu' -ComputeUrl 'https://compute.mccluster.org' -TierOverride ''
   Assert-Equal 0 (@($second.Written).Count) 'install again: nothing rewritten (org id taken from node.config.json)'
   Assert-Equal 0 (@($second.EnvironmentChanged).Count) 'install again: no user variable changed'
 
+  # ---- benchmark against the mocked daemon: the headroom rule decides the tier and the twin ------
+  $script:MockFreeSequence.Clear(); $script:MockFreeSequence.Add([int64]9000000000); $script:MockFreeSequence.Add([int64]5000000000)
+  $script:MockChats.Clear()
+  $residentRun = Invoke-McBenchmark -StateRoot $tempRoot -ModelOverride '' -RepoPath $repoRoot
+  Assert-Equal 0 $residentRun.ExitCode 'benchmark: the resident vision model above the floor keeps tier C'
+  Assert-Equal 'qwen3-vl:8b' $residentRun.Metrics.model 'benchmark: measures the resident model by default'
+  Assert-Equal 'qwen3-vl:8b,qwen3-vl:8b' ($script:MockChats -join ',') 'benchmark: a warm-up call and a measured call'
+  Assert-Equal 20 $residentRun.Metrics.generation_tokens_per_second 'benchmark: generation rate from the daemon'
+  Assert-Equal 9000000000 $residentRun.FreeMemoryBeforeBytes 'benchmark: free memory before loading'
+  Assert-Equal 5000000000 $residentRun.FreeMemoryAfterBytes 'benchmark: free memory with the model loaded'
+  Assert-Equal 'none' $residentRun.Verdict.Action 'benchmark: no change to the manifest'
+  $sidecar = [System.IO.File]::ReadAllText((Join-Path $tempRoot 'measured-inference.json')) | ConvertFrom-Json
+  Assert-Equal 'mccluster-measured-inference/1' $sidecar.schema 'benchmark: the sidecar schema'
+  Assert-Equal 5000000000 $sidecar.measurements.'qwen3-vl:8b'.free_memory_after_bytes 'benchmark: the sidecar carries the free memory'
+  Assert-Equal 20 $sidecar.measurements.'qwen3-vl:8b'.generation_tokens_per_second 'benchmark: the sidecar carries the rate'
+
+  $script:MockFreeSequence.Clear(); $script:MockFreeSequence.Add([int64]5000000000); $script:MockFreeSequence.Add([int64]3000000000)
+  $twinRun = Invoke-McBenchmark -StateRoot $tempRoot -ModelOverride 'qwen3:8b' -RepoPath $repoRoot
+  Assert-Equal 0 $twinRun.ExitCode 'benchmark: pruning the twin is not a refusal'
+  Assert-Equal 'prune' $twinRun.Verdict.Action 'benchmark: the twin under the floor is pruned'
+  $afterPrune = [System.IO.File]::ReadAllText((Join-Path $tempRoot 'capabilities.json')) | ConvertFrom-Json
+  Assert-Equal 'qwen3-vl.8b.local' (@($afterPrune.capabilities | ForEach-Object { $_.implementation }) -join ',') 'benchmark: capabilities.json keeps the resident entry only'
+  $twinSidecar = [System.IO.File]::ReadAllText((Join-Path $tempRoot 'measured-inference.json')) | ConvertFrom-Json
+  Assert-Equal 2 (@($twinSidecar.measurements.PSObject.Properties).Count) 'benchmark: the sidecar keeps both models'
+
+  $script:MockFreeSequence.Clear(); $script:MockFreeSequence.Add([int64]7000000000); $script:MockFreeSequence.Add([int64]4500000000)
+  $twinBack = Invoke-McBenchmark -StateRoot $tempRoot -ModelOverride 'qwen3:8b' -RepoPath $repoRoot
+  Assert-Equal 'advertise' $twinBack.Verdict.Action 'benchmark: the twin with headroom is advertised'
+  $afterReadd = [System.IO.File]::ReadAllText((Join-Path $tempRoot 'capabilities.json')) | ConvertFrom-Json
+  Assert-Equal 'qwen3-vl.8b.local,qwen3.8b.local' (@($afterReadd.capabilities | ForEach-Object { $_.implementation }) -join ',') 'benchmark: the twin entry is back from the template'
+
+  $script:MockFreeSequence.Clear(); $script:MockFreeSequence.Add([int64]4000000000); $script:MockFreeSequence.Add([int64]2500000000)
+  $refusal = Invoke-McBenchmark -StateRoot $tempRoot -ModelOverride '' -RepoPath $repoRoot
+  Assert-Equal 1 $refusal.ExitCode 'benchmark: a resident model under the floor refuses the tier (exit 1)'
+  Assert-Equal 'refuse' $refusal.Verdict.Action 'benchmark: the verdict is a refusal'
+  Assert-Equal 'D' $refusal.Verdict.NextTier 'benchmark: the refusal names tier D'
+  Assert-Equal 2 (@(([System.IO.File]::ReadAllText((Join-Path $tempRoot 'capabilities.json')) | ConvertFrom-Json).capabilities).Count) 'benchmark: a refusal changes no manifest'
+
+  $script:MockFreeSequence.Clear()
+  $noReading = Invoke-McBenchmark -StateRoot $tempRoot -ModelOverride '' -RepoPath $repoRoot
+  Assert-Equal 0 $noReading.ExitCode 'benchmark: the fixture memory reading above the floor keeps the tier'
+
+  $threw = $false
+  try { Invoke-McBenchmark -StateRoot $tempRoot -ModelOverride 'qwen3:14b' -RepoPath $repoRoot | Out-Null } catch { $threw = $true }
+  Assert-True $threw 'benchmark: qwen3:14b is refused on a shared-memory tier (owner decision)'
+  Assert-Equal 'qwen3-vl:8b,qwen3-vl:8b,qwen3:8b,qwen3:8b,qwen3:8b,qwen3:8b,qwen3-vl:8b,qwen3-vl:8b,qwen3-vl:8b,qwen3-vl:8b' ($script:MockChats -join ',') 'benchmark: the refused model never reached the daemon'
+
   $bigger = Invoke-McInstall -RepoPath $repoRoot -StateRoot $tempRoot -NodeName 'owner-windows-gpu' -ComputeUrl 'https://compute.mccluster.org' -TierOverride 'A'
   Assert-Equal 'A' $bigger.Tier 'install with -Tier A: override applied'
-  Assert-Equal 2 (@(([System.IO.File]::ReadAllText((Join-Path $tempRoot 'capabilities.json')) | ConvertFrom-Json).capabilities).Count) 'install with -Tier A: both entries written'
+  Assert-Equal 3 (@(([System.IO.File]::ReadAllText((Join-Path $tempRoot 'capabilities.json')) | ConvertFrom-Json).capabilities).Count) 'install with -Tier A: three entries written'
 
   $threw = $false
   try { Invoke-McInstall -RepoPath $repoRoot -StateRoot (Join-Path $tempRoot 'other') -NodeName 'x' -ComputeUrl 'https://compute.mccluster.org' -TierOverride '' | Out-Null } catch { $threw = $true }

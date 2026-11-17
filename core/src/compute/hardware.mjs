@@ -307,16 +307,42 @@ export function parseWindowsDisplayClassReg(text = '') {
   return entries;
 }
 
+// Windows keeps the 00NN subkeys of earlier driver installs beside the live
+// one, with the same MatchingDeviceId. Among equal-length prefix matches the
+// subkey that carries a memory size wins (a stale one usually has none), then
+// the highest subkey number (the latest install); the doctor applies the same
+// rule (Select-McRegistryEntry in core/windows/mccluster-node.ps1).
+function subkeyNumber(entry) {
+  const n = Number.parseInt(String(entry?.subkey ?? ''), 10);
+  return Number.isFinite(n) ? n : -1;
+}
+
+function preferRegistryEntry(candidate, best) {
+  if (!best) return true;
+  const candidateId = String(candidate.matching_device_id || '');
+  const bestId = String(best.matching_device_id || '');
+  if (candidateId.length !== bestId.length) return candidateId.length > bestId.length;
+  const candidateHasMemory = Number(candidate.qw_memory_size_bytes) > 0;
+  const bestHasMemory = Number(best.qw_memory_size_bytes) > 0;
+  if (candidateHasMemory !== bestHasMemory) return candidateHasMemory;
+  return subkeyNumber(candidate) > subkeyNumber(best);
+}
+
 function matchRegistryEntry(controller, regEntries) {
   const pnp = String(controller.pnp_device_id || '').toUpperCase();
   let best = null;
   for (const entry of regEntries) {
     const id = String(entry?.matching_device_id || '').toUpperCase();
-    if (id && pnp.startsWith(id) && (!best || id.length > String(best.matching_device_id).length)) best = entry;
+    if (id && pnp.startsWith(id) && preferRegistryEntry(entry, best)) best = entry;
   }
   if (best) return best;
   const name = String(controller.name || '').toLowerCase();
-  return regEntries.find((entry) => String(entry?.driver_desc || '').toLowerCase() === name) || null;
+  let byName = null;
+  for (const entry of regEntries) {
+    if (String(entry?.driver_desc || '').toLowerCase() !== name) continue;
+    if (!byName || preferRegistryEntry(entry, byName)) byName = entry;
+  }
+  return byName;
 }
 
 function formFor(vendor, name) {
@@ -345,14 +371,15 @@ function computeFor(vendor) {
 
 // Joins CIM controllers with their registry subkeys (longest MatchingDeviceId
 // prefix of the PNP id, else equal DriverDesc) and lets nvidia-smi describe
-// the NVIDIA cards it knows. Shared memory is stated as a field, never hidden
-// in the VRAM number: vram_bytes is exactly what the registry (or nvidia-smi)
-// reports.
+// the NVIDIA cards: when it answered it is the authority for that vendor, so
+// every NVIDIA CIM controller is dropped (CIM and nvidia-smi spell a card's
+// name differently often enough that a name match would list it twice).
+// Shared memory is stated as a field, never hidden in the VRAM number:
+// vram_bytes is exactly what the registry (or nvidia-smi) reports.
 export function mergeWindowsGpuInventory(controllers = [], regEntries = [], nvidiaSmiGpus = []) {
   const gpus = [...nvidiaSmiGpus];
   const ignored = [];
   const errors = [];
-  const smiModels = new Set(nvidiaSmiGpus.map((gpu) => String(gpu.model || '').toLowerCase()));
   let nvidiaWithoutSmi = false;
   for (const controller of controllers) {
     const pnp = String(controller.pnp_device_id || '');
@@ -362,8 +389,8 @@ export function mergeWindowsGpuInventory(controllers = [], regEntries = [], nvid
       continue;
     }
     if (controller.vendor === 'nvidia') {
-      if (smiModels.has(name.toLowerCase())) continue; // nvidia-smi already describes it
-      if (!nvidiaSmiGpus.length) nvidiaWithoutSmi = true;
+      if (nvidiaSmiGpus.length) continue; // nvidia-smi describes the NVIDIA cards
+      nvidiaWithoutSmi = true;
     }
     const reg = matchRegistryEntry(controller, regEntries);
     const registryBytes = reg && Number(reg.qw_memory_size_bytes) > 0 ? Math.floor(Number(reg.qw_memory_size_bytes)) : 0;

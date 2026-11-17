@@ -91,14 +91,18 @@ scheduler, Core executors that bypass the fabric, a registry that calls only one
   `hardware_mode: cpu-baseline-gpu-unverified` is superseded: the agent overwrites `labels.hardware_mode` with the
   derived value every heartbeat (`COMPUTE-NODE-PROTOCOL.md`, "Hardware mode").
 - **GAP 2, the work**: the laptop template `core/node-manifests/owner-windows-gpu.json` advertises
-  `ai.chat/qwen3.8b.local` with the OVH node's exact schema (one binding, one task, either node) plus
-  `ai.chat/qwen3.14b.local`; the Ollama adapter maps implementation ids to models
+  `ai.chat/qwen3-vl.8b.local` (the resident vision model, the owner's decision below) and
+  `ai.chat/qwen3.8b.local` with the OVH node's exact schema (one binding, one task, either node), plus
+  `ai.chat/qwen3.14b.local` for a discrete card with 12 GiB or more and `ai.chat/qwen3-vl.4b.local` for a box
+  with little free memory; the doctor prunes the template to the tier; the Ollama adapter maps implementation ids to models
   (`MCCLUSTER_OLLAMA_IMPLEMENTATIONS`) and answers readiness per implementation; the capability registry ranks
   compute bindings by `hardware_mode` and measured generation rate and falls back to the next candidate when no
   node is live; the laptop polls at 1000 ms against the OVH node's 5000 ms (Tier 1, no server change). Tier 2,
   code behind configuration and off in production: fabric-first `localAiChat` for Core's own executors
-  (`MCCLUSTER_LOCAL_AI_FABRIC=prefer`, bounded wait, atomic cancel of a still-queued task, never a silent
-  duplicate run) and a yield rule (`MCCLUSTER_NODE_YIELD_TO_GPU_MS`, heartbeat `live_gpu_nodes`, claim
+  (`MCCLUSTER_LOCAL_AI_FABRIC=prefer`, a wait bounded by the caller's `timeoutMs`, atomic cancel of a
+  still-queued task; the local adapter runs only after that cancel won or the task failed, and while a node
+  may own the task the client waits and then fails with a retryable `LOCAL_AI_FABRIC_TIMEOUT`, so a duplicate
+  run is never silent) and a yield rule (`MCCLUSTER_NODE_YIELD_TO_GPU_MS`, heartbeat `live_gpu_nodes`, claim
   `yield_seconds`) whose claim SQL is pending and owner-approved only.
 - **The device side**: `core/windows/mccluster-node.ps1` (report, install as two scheduled tasks, one-shot
   enrolment that removes the token, model pulls, a benchmark that writes `measured-inference.json`, keep-awake,
@@ -106,20 +110,37 @@ scheduler, Core executors that bypass the fabric, a registry that calls only one
   `core/windows/tests/`; runbook `WINDOWS-NODE.md`. The script could not be executed in the build session (no
   PowerShell there), so it is **unverified on Windows** until its tests run on the laptop.
 
+### Owner decision, 2026-11-17 (~20:25 UTC): the model tier, headroom first
+
+The owner, on the 16 GB shared-memory box: "i think I'll go with something that leaves us a bit more headroom so we
+dont fuck up the machine and it can be a real persistent actor." The slice implements it in the doctor
+(`core/windows/mccluster-node.ps1`, runbook `WINDOWS-NODE.md`, "Model tier rule"): one resident model on every
+tier, the vision model `qwen3-vl:8b` (vision, tools and thinking; the agent model for slice N2), kept loaded as the
+adapter's default model with a 24 h keep-alive; the OVH twin `qwen3:8b` only on demand under `qwen3.8b.local`
+with a 5 m keep-alive, never resident beside it; no 12B or 14B model on a shared-memory machine (`qwen3:14b`
+exists on tier A only, a discrete card with 12 GiB or more); `qwen3-vl:4b` is the resident model when free memory
+at install time is under 8 GB; `num_ctx` 8192 on shared memory; `max_leases` 1. `-Benchmark` measures free
+memory before and after the model loads, prints both, refuses a tier whose resident model leaves the machine under
+4 GB free (it names the lower tier to install) and does not advertise the on-demand `qwen3:8b` when loading it
+would. Images in `ai.chat` are slice N2's work: today the resident vision model answers text through the same
+`ai.chat` contract. The design's open question "which model tier to run" is answered by this decision.
+
 ### Compute task states
 
 `queued -> leased -> running -> done`; `failed -> queued` while attempts remain (bounded backoff), else `failed`;
 an expired lease requeues the task (or fails it when attempts are exhausted); and since slice N1 `canceled`: the
-fabric-first client cancels a task that is still `queued` when its wait is exceeded (`UPDATE … WHERE status =
-'queued'`, atomic against the claim's `FOR UPDATE SKIP LOCKED`) and runs locally instead; a task a node already
-holds is never canceled or duplicated, the client waits and then fails with a retryable `LOCAL_AI_FABRIC_TIMEOUT`.
+fabric-first client cancels a task that is still `queued` when its wait is exceeded, or when three task reads in
+a row failed and it can no longer tell who owns the task (`UPDATE … WHERE status = 'queued'`, atomic against the
+claim's `FOR UPDATE SKIP LOCKED`), and runs locally only when that cancel returned the row; a task a node already
+holds, or whose cancel did not win, is never duplicated: the client keeps polling and then fails with a retryable
+`LOCAL_AI_FABRIC_TIMEOUT`, all of it inside the caller's `timeoutMs`.
 
 ### Node `hardware_mode` states
 
 | Mode | Meaning | How a node leaves it |
 | --- | --- | --- |
 | `gpu-verified` | the engine was seen running a model with `size_vram > 0` within the last 24 h | no evidence for 24 h |
-| `gpu-present-unverified` | a GPU was found by the probe, nothing proves inference ran on it yet | evidence arrives (the adapter warms the resident models on start) |
+| `gpu-present-unverified` | a GPU was found by the probe, nothing proves inference ran on it yet | evidence arrives (the adapter warms the resident model once the daemon answers after start, retrying every 30 s for 15 min because the tray app starts after the adapter's task) |
 | `cpu-only` | the probe ran and found no accelerator | a GPU appears |
 | `unknown` | the probe itself failed (for example CIM access denied) | the probe succeeds |
 
@@ -139,7 +160,8 @@ evidence.
 | 6 | Health and cost per node in the pane | queued with step 3 |
 
 Open questions for the owner (from the slice design): which GPU the laptop really has (`-Report` decides;
-`-Tier` forces), whether to keep it awake on AC and run on battery, which model tier to run, whether
+`-Tier` forces), whether to keep it awake on AC and run on battery (the model tier is decided: the owner's
+decision above), whether
 `OLLAMA_MODELS` moves to the 50 GB partition, whether to re-enrol the pilot key or enrol a fresh node and revoke
 the pilot, approval of the pending claim SQL and the OVH yield value once the laptop is `gpu-verified` in
 production, when to set `MCCLUSTER_LOCAL_AI_FABRIC=prefer` on the Core, whether a 120 s fabric wait is acceptable,

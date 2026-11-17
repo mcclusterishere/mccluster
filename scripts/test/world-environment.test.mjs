@@ -121,3 +121,21 @@ test('by day every rule for the Environmental Justice panel reads 4.5:1 or bette
  assert.doesNotMatch(read('css/world-environment.css'),/data-daylight/,'the night sheet carries no day rule');
  assert.doesNotMatch(day.slice(day.indexOf('THE ENVIRONMENTAL JUSTICE PANEL BY DAY')),/@media\s*\(max-width|(?<!minmax\(0, ?)\b1fr/);
 });
+/* THE POLICY GATE'S CODE REACHES THE PANEL (slice G1, 2026-11-17): production answers 503 module_policy_unavailable until the
+   owner enables the module, and 404 module_disabled when it is off. The transport attaches the body's `code` to the error it
+   throws (additive, beside `status`), the McCluster adapter passes that error through its feed read, and the panel says which it
+   was in the mcc:world-environment-events detail. Still no api.mccluster.org or MCC_SUPA string in the vendor transport. */
+test('the adapter passes the policy gate\'s code through the feed read: 503 module_policy_unavailable, 404 module_disabled, a bare failure has none',async()=>{
+ const {mcclusterEnvironmentAdapter}=await import('../../js/world-environment-mccluster.mjs');
+ let answer={status:503,body:{ok:false,code:'module_policy_unavailable'}};
+ const w={MCC_SUPA:{token:async()=>null},fetch:async()=>({ok:answer.status<400,status:answer.status,json:async()=>answer.body}),document:{documentElement:{setAttribute(){}}}};
+ const adapter=mcclusterEnvironmentAdapter(w);
+ await assert.rejects(()=>adapter.request(''),error=>error.status===503&&error.code==='module_policy_unavailable');
+ answer={status:404,body:{ok:false,code:'module_disabled'}};
+ await assert.rejects(()=>adapter.request(''),error=>error.status===404&&error.code==='module_disabled');
+ answer={status:500,body:{error:'boom'}};
+ await assert.rejects(()=>adapter.request(''),error=>error.status===500&&error.code===undefined);
+ answer={status:503,body:{ok:false,code:{nested:true}}};
+ await assert.rejects(()=>adapter.request(''),error=>error.status===503&&error.code===undefined,'only a string code is a code');
+ assert.doesNotMatch(read('vendor/equity-uprise/src/environment/transport.mjs'),/api\.mccluster\.org|MCC_SUPA/);
+});

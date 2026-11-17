@@ -7,6 +7,8 @@ import path from 'node:path';
 export const MEASURED_INFERENCE_SCHEMA = 'mccluster-measured-inference/1';
 export const DEFAULT_GPU_EVIDENCE_TTL_MS = 86_400_000;
 const MIN_GPU_EVIDENCE_TTL_MS = 60_000;
+export const DEFAULT_HARDWARE_REFRESH_MS = 600_000;
+const MIN_HARDWARE_REFRESH_MS = 60_000;
 const MAX_YIELD_MS = 300_000;
 const MAX_MEASUREMENTS = 64;
 const TEXT_LIMIT = 120;
@@ -54,6 +56,15 @@ export function gpuEvidenceTtlMs(env = process.env) {
   const n = Number(env.MCCLUSTER_NODE_GPU_EVIDENCE_TTL_MS);
   if (!Number.isFinite(n) || n <= 0) return DEFAULT_GPU_EVIDENCE_TTL_MS;
   return Math.max(MIN_GPU_EVIDENCE_TTL_MS, Math.floor(n));
+}
+
+// Full hardware discovery spawns processes (powershell.exe, reg.exe and the
+// nvidia-smi attempts on Windows), so the agent repeats it only this often and
+// serves the cached snapshot to the engine probe in between (floor one minute).
+export function hardwareRefreshMs(env = process.env) {
+  const n = Number(env.MCCLUSTER_NODE_HARDWARE_REFRESH_MS);
+  if (!Number.isFinite(n) || n <= 0) return DEFAULT_HARDWARE_REFRESH_MS;
+  return Math.max(MIN_HARDWARE_REFRESH_MS, Math.floor(n));
 }
 
 // A node that is not GPU-verified leaves fresh tasks to a live GPU node for
