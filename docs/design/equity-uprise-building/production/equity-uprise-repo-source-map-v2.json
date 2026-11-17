@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 716,
+  "candidate_count": 720,
   "capability_source_count": 104,
-  "support_only_count": 612,
+  "support_only_count": 616,
   "entries": [
     {
       "path": ".cursorrules",
@@ -3395,6 +3395,20 @@
       "rationale": "Test or behaviour harness for shared Action Network / intelligence governance; references Equity Uprise context but defines no program capability."
     },
     {
+      "path": "scripts/test/mission-catalog.native.integration.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Native PostgreSQL proof of the pending mission details, Drawdown import and publish SQL in a scratch database; names the existing admin helper (eu_is_admin, eu_profiles) only to exercise it. Not a building capability."
+    },
+    {
+      "path": "scripts/test/mission-import.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Unit test of the Drawdown mission import and publish SQL generator (tools/build-mission-import.mjs); names the existing admin helper (eu_is_admin) only in the policy text it expects. Not a building capability."
+    },
+    {
       "path": "scripts/test/mission-pins-arcs-business.test.mjs",
       "classification": "test_support",
       "capability_ids": [],
@@ -4297,6 +4311,13 @@
       "rationale": "Schema reconciliation SQL from the 2026-10-28 production audit that names Equity Uprise (eu_*) tables, policies or functions among many others; database hygiene, not a building capability."
     },
     {
+      "path": "supabase/pending/20261117100100_action_mission_details.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pending (unapplied) Action Network mission details table (about, credit, source) read with public missions; its policies reuse the existing admin helper eu_is_admin. Shared backend; no building program capability."
+    },
+    {
       "path": "supabase/pending/PROMOTION-ORDER.md",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -4711,6 +4732,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "The former supabase/pending/action_globe_demo_pins_v1.sql, applied in production as service-role data on 2026-10-15 (three regions, the mission pins) and kept only as the scratch-database fixture scripts/test-mission-pins-db.sh applies before the pins migration. Names the globe's regions; not a building capability."
+    },
+    {
+      "path": "supabase/tests/action_mission_catalog.stub.sql",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Scratch-database stub for the pending mission catalog SQL; stands in production's admin helpers (eu_is_admin, eu_role, eu_profiles). Never applied to a project; not a building capability."
     },
     {
       "path": "supabase/tests/action_mission_pins.stub.sql",
