@@ -111,12 +111,15 @@ Mobile first (`AGENTS.md`, hard rule 14): designed at 390 px, verified at 390, 8
 1. Decouple joining from pins (`join_scope`, default `anywhere`), extracted from
    `supabase/pending/20261015230000_action_mission_pins_arcs_black_business.sql`. No pin may be written before it:
    today any pin row makes its mission unjoinable for everyone.
-2. Create `public.action_mission_details` and import the chosen missions (generated SQL, idempotent).
+2. Create `public.action_mission_details` and import all 125 Drawdown missions (owner, evening of 2026-11-17: "do
+   it"; generated SQL, idempotent).
 3. Publish them (status `open`).
 4. Place pins the owner chooses.
 5. The Environmental Justice module: `eup_module_policy_v1.sql`, then `20261107120000_world_environment_v1.sql`
    (`PROMOTION-ORDER.md`), then the environment module's policy row.
 6. Supabase Auth: confirm `https://mccluster.org/**` is in the Redirect URLs (dashboard).
+7. `WORLD_PLACE_SCOPE_ENABLED = "true"` in `workers/mccluster/wrangler.toml`, deployed with the rest, once the public-only
+   feed QA its comment names has passed (its SQL, `20261021173729_world_place_scope_v1`, is applied).
 
 ## Owner decisions (2026-11-17, answered in session)
 
@@ -157,6 +160,26 @@ collecting, not just … dots on the board."
 So: one Equity Uprise tab for missions and the environmental globe (target items 1, 4 and 11), environmental
 events as system posts stamped with their recorded time (item 13), and the globe below.
 
+## Owner decisions, evening of 2026-11-17 (the three open questions)
+
+Asked after W1, W2 and D1: publish all 125 Drawdown missions or a subset; Local or Everything on load once
+`WORLD_PLACE_SCOPE_ENABLED` is on; the clip-campaign door and the Live room's action blocks back for everyone or
+owner-only. The owner: "1 do it 2 start with the country their IP address is showing and 3 keep them mine for
+right now."
+
+- **All 125 missions are published.** Production steps 2 and 3 carry the whole catalog: the four files of
+  `supabase/pending/PROMOTION-ORDER.md` section 10 are the exact change, each applied on its own after its pre-apply
+  reads, in order, with its rollback beside it.
+- **On load, the country the visitor's IP address shows.** That is the 2026-10-20 release contract
+  (`docs/action-network/WORLD-REGION-FEED-RELEASE.md`): with the flag on, the feed opens on Local for the country
+  Cloudflare reads at the edge (`request.cf.country`, through `/v1/world/place-scope`), which `js/mnet.js` already
+  does (`state.placeScope.home`); an unknown edge country stays on Everything; no GPS, no user-supplied location,
+  nothing stored. The flag turns on at deploy time (production step 7). Still in force from 2026-10-20 unless the
+  owner says otherwise: a signed-out visitor cannot hop to another country without signing in, which now also
+  covers that country's mission and news counts.
+- **The clip-campaign door and the Live room's action blocks stay owner-only** ("keep them mine for right now"):
+  `hu-travel-off` keeps holding them with Travel; nothing changes.
+
 ## The environmental globe
 
 Truth first, then beauty. Every visual encodes a real quantity from the source and says which; nothing flashes.
@@ -189,7 +212,7 @@ Truth first, then beauty. Every visual encodes a real quantity from the source a
 
 | Slice | What | State |
 | --- | --- | --- |
-| W1 | Law, missions public, Travel owner-only, swipe deck and centre buttons removed, Equity Uprise tab, Everything label, guest deep links | done (`d8667ac1`; law `3f638709`; router test `23b06393`): `hu-travel-off` holds Travel alone (the house owner keeps Travel and News feed; the clip-campaign door and the Live room's action blocks stay with it); missions public in the feed, the globe frame, the expanded globe and the explorer (the PR #726 gate keeps Games only); swipe deck, Missions mode and centre E=UP removed; strip Local · Everything · Equity Uprise tab (supplied marks, arrow keys, mouse drag) with `#wePanel` at the top, the Docket 516R series, and a plain empty mission feed until W2 (`missionFeedHtml`, `acceptWorldMission`); guest `?mission=`, `?view=missions`, All missions, `?feed=equity`; `/mnet.html?mission=` keeps its query through the 301; `scripts/e2e/world-missions-guest.e2e.mjs` in the editorial CI matrix. Open: with `WORLD_PLACE_SCOPE_ENABLED` on (off in production) a visitor still opens on Local (2026-10-20 release contract), not Everything |
+| W1 | Law, missions public, Travel owner-only, swipe deck and centre buttons removed, Equity Uprise tab, Everything label, guest deep links | done (`d8667ac1`; law `3f638709`; router test `23b06393`): `hu-travel-off` holds Travel alone (the house owner keeps Travel and News feed; the clip-campaign door and the Live room's action blocks stay with it); missions public in the feed, the globe frame, the expanded globe and the explorer (the PR #726 gate keeps Games only); swipe deck, Missions mode and centre E=UP removed; strip Local · Everything · Equity Uprise tab (supplied marks, arrow keys, mouse drag) with `#wePanel` at the top, the Docket 516R series, and a plain empty mission feed until W2 (`missionFeedHtml`, `acceptWorldMission`); guest `?mission=`, `?view=missions`, All missions, `?feed=equity`; `/mnet.html?mission=` keeps its query through the 301; `scripts/e2e/world-missions-guest.e2e.mjs` in the editorial CI matrix. Decided (owner, evening of 2026-11-17): with `WORLD_PLACE_SCOPE_ENABLED` on, a visitor opens on Local for the country the IP address shows, as the 2026-10-20 release contract already has it |
 | W2 | Mission posts in Everything and the Equity Uprise tab, the dialog's credits, country card counts, Local missions | done (`8f933ba9`; source report `29851ea2`): every open mission is a post (`mn__post-card`: kind and field, difficulty and points, title, description clamped to two lines, a source line that opens the dialog at its credit, the supplied emblem alone as Join, Details, Share copying `?mission=` on this origin); Everything puts one mission after every three other items, newest first, each once, the rest up to the page of 20; the Equity Uprise tab lists every open mission 20 at a time with Load more; the dialog shows the proof hint, the safety line, the `about` quotation with `about_credit` beneath it and the full `credit_line` with its links; a post's Join is `acceptWorldMission` (a guest keeps `?mission=`, a member gets exactly one `join_action_mission`); `#mnPlaceCard` counts news (24 h), missions, posts and members in its two rows, a country's missions being the open missions pinned there plus the ones pinned nowhere (a state: pinned inside its shape), and Local lists them with the place's news and posts; `action_mission_details` is read once per mission and a 404 or `PGRST205` is remembered for the session (`live-callers.json` `pending_only`); `#wePanel` stays hidden until its source answers and the tab shows one honest line while `/v1/world/environment` is unavailable. Pure parts `js/world-mission-posts.js` (`scripts/test/world-mission-posts.test.mjs`); `scripts/e2e/world-missions-guest.e2e.mjs` extended at 390, 820 and 1280. Open: environmental observation posts (target 13) are not in the stream; the pin card's Join (`#mnWorldFocusJoin`) still asks a guest to sign in without keeping `?mission=` (W4); "pinned nowhere" stands for "can be done anywhere" until `join_scope` is applied; world-screen `news-member` "the strip opens on the latest mission" fails on `9d117739` as well (not in the CI matrix) |
 | D1 | Pending SQL: join scope, mission details table, catalog import generator and its tests | done: four pending files with rollbacks (`PROMOTION-ORDER.md` section 10), `tools/build-mission-import.mjs`, `scripts/test/mission-import.test.mjs`, native proof (100 checks) and `scripts/test-mission-pins-db.sh` passed on PostgreSQL 16.15 and 17.7 (production runs 17.6). Review fixes in: 10.1 and its rollback refuse over the whole pins file, the import rollback locks the two references without a foreign key before it counts, every header says to apply as postgres (`apply_migration`), the catalog carries the README's credit display rule, the publish proof keeps a draft outside the catalog a draft. Nothing applied. Whoever first names `action_mission_details` in shipped code adds it to `live-callers.json` `pending_only` |
 | W3 | Environmental Justice panel (salvage, daylight, honest unavailable state, browser acceptance) and its production SQL bundle | not started |
