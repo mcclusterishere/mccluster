@@ -143,3 +143,19 @@ html.daylight-shift, html.daylight-shift body, html.daylight-shift body * { tran
    choosing the variant for the ground is not recolouring) */
 html[data-daylight="day"] .mn__mission-join .mn__eup--white { display:none; }
 html[data-daylight="day"] .mn__mission-join .mn__eup--dark { display:block; }
+/* THE ENVIRONMENTAL JUSTICE PANEL BY DAY (#wePanel at the top of the Equity Uprise tab): css/world-environment.css paints it
+   for the night, and on the white page its words read 1.1:1. By day the panel takes the page's black ink and the day's grounds;
+   every pair below is 4.5:1 or better on its ground (scripts/test/world-environment.test.mjs measures them). The night look
+   is untouched. */
+html[data-daylight="day"] .we-panel { color:#000000; }
+html[data-daylight="day"] .we-eyebrow { color:#0b5a3c; }
+html[data-daylight="day"] :is(.we-subtle,.we-panel small,.we-detail dt) { color:#3b3b3b; }
+html[data-daylight="day"] .we-panel a { color:#0b5a3c; }
+html[data-daylight="day"] :is(.we-panel button,.we-button) { background:#f2f6f4; border-color:#00000033; color:#0b2f24; }
+html[data-daylight="day"] .we-list button { background:#f7f7f7; }
+html[data-daylight="day"] .we-list button[aria-pressed="true"] { background:#d6ebe2; border-color:#2f6f57; }
+html[data-daylight="day"] :is(.we-panel button,.we-panel a,.we-panel input):focus-visible { outline-color:#000000; }
+html[data-daylight="day"] :is(.we-filter input,.we-proof-form textarea,.we-proof-form input[type="url"]) { background:#ffffff; color:#000000; border-color:#00000033; }
+html[data-daylight="day"] :is(.we-detail,.we-team,.we-owner) { border-color:#00000022; }
+html[data-daylight="day"] .we-detail { background:#f2f7f4; }
+html[data-daylight="day"] .we-safety { background:#fff6d9; border-left-color:#8a6a12; }
