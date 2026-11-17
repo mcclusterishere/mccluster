@@ -10,6 +10,7 @@ import { registerHooks } from 'node:module';
 import { handleWorldEnvironment, environmentGate } from '../src/world-environment.js';
 import { FIRES, LAYER_SOURCES, fetchFirmsSatellite, GEOMETRY, strictRing, strictPolygons, strictLine, publicPerimetersQuery, PERIMETERS, TIDE_LATEST_STATIONS, TIDES_PUBLIC, latestWaterLevelUrl } from '../src/world-environment-layers.js';
 import { TIDES, waterLevelUrl } from '../src/world-halo-ops.js';
+import { SHAKEMAP, USGS_EVENT_ID, shakemapDetailUrl, readShakemapContours } from '../src/world-environment-layers.js';
 import { environmentFeed } from '../src/world-environment.js';
 import { ENVIRONMENT_PUBLIC_ROUTES, environmentRouteForPath, globeFeatureForPath } from '../../../packages/release-policy/globe.mjs';
 import { guardWorldRelease } from '../src/world-release.js';
@@ -22,8 +23,8 @@ const FIRMS_KEY = 'firms-map-key-SECRET-0123456789abcdef';
 const ENV = { SUPABASE_URL: 'https://db.example', SUPABASE_SERVICE_ROLE_KEY: 'server-secret', ALLOWED_ORIGINS: ORIGIN };
 const P = '/v1/world/environment';
 const LAYER_PATHS = [`${P}/layers/fires`, `${P}/layers/perimeters`, `${P}/layers/alerts`, `${P}/layers/eonet`, `${P}/layers/tides`, `${P}/tides/8518750`, `${P}/quakes/us7000tyhr/shakemap`];
-/* the routes answered so far (the rest are gated and mapped, and answer 404 until they land) */
-const SERVED_PATHS = [`${P}/layers/fires`, `${P}/layers/perimeters`, `${P}/layers/alerts`, `${P}/layers/eonet`, `${P}/layers/tides`, `${P}/tides/8518750`];
+/* every mapped route is served */
+const SERVED_PATHS = LAYER_PATHS;
 const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json' } });
 const text = (body, status = 200, type = 'text/plain') => new Response(body, { status, headers: { 'content-type': type } });
 const req = (path, { method = 'GET', auth = false } = {}) => new Request(`https://api.mccluster.org${path}`, { method, headers: { origin: ORIGIN, ...(auth ? { authorization: 'Bearer member' } : {}) } });
@@ -697,4 +698,136 @@ test('tides/{station}: NOAA errors are unavailable with their reason, a kept cop
   const stale = await station('8461490', world(coops({ water: () => text('down', 500) })), cache);
   assert.deepEqual([stale.body.sources[0].status, stale.body.sources[0].reason], ['stale', 'upstream_error']);
   assert.deepEqual(stale.body.observations, good.body.observations);
+});
+
+/* ---------- ShakeMap (USGS; real samples, 2026-11-17, trimmed) ----------
+   us7000tyhr: M5.4 near Anamizu, Japan, ShakeMap version 5 with two isoseismals; us7000tyca: M5.5 deep
+   Fiji region event whose ShakeMap has no contour at all; nc75467542: M1.0 at The Geysers, no ShakeMap. */
+const DETAIL = { us7000tyhr: FX('usgs-detail-us7000tyhr.json'), us7000tyca: FX('usgs-detail-us7000tyca.json'), nc75467542: FX('usgs-detail-nc75467542.json') };
+const CONT = { us7000tyhr: FX('usgs-cont-mmi-us7000tyhr.json'), us7000tyca: FX('usgs-cont-mmi-us7000tyca.json') };
+function usgs({ detail = (id) => (DETAIL[id] ? json(DETAIL[id]) : new Response(null, { status: 302, headers: { location: `/fdsnws/event/1/query?eventid=${id}&format=geojson` } })), contours = (id) => json(CONT[id]) } = {}) {
+  return (url) => {
+    assert.equal(url.hostname, 'earthquake.usgs.gov', 'USGS\'s own host only');
+    const m = url.pathname.match(/^\/earthquakes\/feed\/v1\.0\/detail\/([a-z0-9]+)\.geojson$/);
+    if (m) return detail(m[1]);
+    if (url.pathname === '/fdsnws/event/1/query') return text('Error 404: No Data Found', 404);
+    const c = url.pathname.match(/:shakemap:([a-z0-9]+):\d+\/contents\/download\/cont_mmi\.json$/);
+    if (c) return contours(c[1]);
+    throw new Error('unexpected USGS path ' + url.pathname);
+  };
+}
+async function shakemap(id, fetchImpl, cacheImpl = memoryCache()) {
+  const r = await handleWorldEnvironment(req(`${P}/quakes/${id}/shakemap`), ENV, { fetchImpl, cacheImpl });
+  headersOk(r);
+  const b = await r.json();
+  if (r.status === 200) { publicOnly(b); for (const s of b.sources) assert.deepEqual(Object.keys(s).sort(), HEALTH_KEYS); }
+  return { status: r.status, body: b };
+}
+
+test('shakemap: a USGS event id is validated before anyone is asked', async () => {
+  for (const bad of ['US7000TYHR', 'u', 'us', 'us-7000', 'us7000tyhr.geojson', 'us_7000', 'a'.repeat(40), '7000tyhr', 'us7000tyhr%00']) {
+    const f = world(usgs());
+    const { status, body } = await shakemap(bad, f);
+    assert.equal(status, 400, bad); assert.deepEqual(body, { ok: false, code: 'invalid_event' }); assert.equal(providerCalls(f).length, 0, bad);
+  }
+  for (const good of ['us7000tyhr', 'nc75467542', 'aka2026wufnha', 'ci41363007']) assert.match(good, USGS_EVENT_ID);
+});
+
+test('shakemap present: version, process time, review status and MMI contours, coordinates checked, labelled modelled', async () => {
+  const f = world(usgs());
+  const { status, body: b } = await shakemap('us7000tyhr', f);
+  assert.equal(status, 200);
+  assert.deepEqual(providerCalls(f).map((c) => c.url), [shakemapDetailUrl('us7000tyhr'), DETAIL.us7000tyhr.properties.products.shakemap[0].contents['download/cont_mmi.json'].url]);
+  assert.equal(b.schema, 'world-environment-shakemap/v1'); assert.equal(b.available, true); assert.equal(b.reason, null);
+  assert.deepEqual([b.version, b.process_time, b.review_status, b.map_status, b.max_mmi, b.modelled, b.units], [5, '2026-11-17T04:28:22.000Z', 'automatic', 'automatic', 2.9, true, 'MMI']);
+  assert.deepEqual(b.contours.map((c) => [c.mmi, c.color, c.lines.length]), [[2, '#bfccff', 2], [2.5, '#afd9ff', 8]]);
+  const published = CONT.us7000tyhr.features.flatMap((f) => f.geometry.coordinates);
+  assert.deepEqual(b.contours.flatMap((c) => c.lines.map((l) => l.length)), published.map((l) => l.length), 'every published line, every vertex');
+  for (const line of b.contours.flatMap((c) => c.lines)) for (const [x, y] of line) assert.ok(Number.isFinite(x) && Number.isFinite(y) && Math.abs(x) <= 180 && Math.abs(y) <= 90);
+  assert.deepEqual(b.counts, { contours: 2, lines: 10, vertices: published.reduce((n, l) => n + l.length, 0) });
+  assert.deepEqual(b.sources.map((s) => [s.id, s.status]), [['usgs_event', 'available'], ['usgs_shakemap', 'available']]);
+  assert.match(b.notes.shakemap, /modelled estimate/);
+});
+
+test('shakemap is kept by event and product version: within 5 minutes nobody is asked; a newer version is fetched again', async () => {
+  const cache = memoryCache(), f = world(usgs());
+  await shakemap('us7000tyhr', f, cache);
+  await shakemap('us7000tyhr', f, cache);
+  assert.equal(providerCalls(f).length, 2, 'the second answer came from the cache');
+  age(cache, SHAKEMAP.detailTtl + 10);
+  await shakemap('us7000tyhr', f, cache);
+  assert.equal(providerCalls(f).length, 3, 'the detail is read again; the same version\'s contours are not');
+  const v6 = structuredClone(DETAIL.us7000tyhr);
+  const sm = v6.properties.products.shakemap[0];
+  sm.properties.version = '6'; sm.updateTime += 600000; sm.contents['download/cont_mmi.json'].url = sm.contents['download/cont_mmi.json'].url.replace(':1794889743207/', `:${sm.updateTime}/`);
+  age(cache, SHAKEMAP.detailTtl + 10);
+  const g = world(usgs({ detail: () => json(v6) }));
+  const { body } = await shakemap('us7000tyhr', g, cache);
+  assert.equal(body.version, 6); assert.equal(providerCalls(g).length, 2, 'a new version brings its own contours');
+});
+
+test('shakemap absent, empty, unknown or unreachable: available false with the reason, never an error page', async () => {
+  const none = await shakemap('nc75467542', world(usgs()));
+  assert.equal(none.status, 200); assert.deepEqual([none.body.available, none.body.reason, none.body.contours], [false, 'no_shakemap', []]);
+  assert.deepEqual(none.body.sources.map((s) => s.id), ['usgs_event'], 'no contour source was consulted');
+  const empty = await shakemap('us7000tyca', world(usgs()));
+  assert.deepEqual([empty.body.available, empty.body.contours, empty.body.counts, empty.body.version, empty.body.max_mmi], [true, [], { contours: 0, lines: 0, vertices: 0 }, 3, 1.7], 'a ShakeMap with no contour is still a ShakeMap');
+  const unknown = await shakemap('zz0000000000', world(usgs()));
+  assert.deepEqual([unknown.status, unknown.body.available, unknown.body.reason, unknown.body.sources[0].status], [200, false, 'event_not_found', 'available'], 'USGS said it has no such event');
+  const down = await shakemap('us7000tyhr', world(usgs({ detail: () => text('down', 503) })));
+  assert.deepEqual([down.body.available, down.body.reason, down.body.sources[0].status, down.body.sources[0].reason], [false, 'source_unavailable', 'unavailable', 'upstream_error']);
+  const contoursDown = await shakemap('us7000tyhr', world(usgs({ contours: () => { throw Object.assign(new Error('slow'), { name: 'AbortError' }); } })));
+  assert.deepEqual([contoursDown.body.available, contoursDown.body.reason, contoursDown.body.version], [false, 'source_unavailable', 5]);
+  assert.deepEqual(contoursDown.body.sources.map((s) => [s.id, s.status, s.reason]), [['usgs_event', 'available', null], ['usgs_shakemap', 'unavailable', 'timeout']]);
+  /* the detail past its 5 minutes and the version's contours past their day: both served stale, with the reason */
+  const cache = memoryCache();
+  await shakemap('us7000tyhr', world(usgs()), cache);
+  ageWhere(cache, (k) => k.endsWith('-shakemap-us7000tyhr'), SHAKEMAP.detailTtl + 60);
+  ageWhere(cache, (k) => k.includes('-shakemap-us7000tyhr-'), SHAKEMAP.contoursTtl + 60);
+  const stale = await shakemap('us7000tyhr', world(usgs({ detail: () => text('down', 500), contours: () => text('down', 500) })), cache);
+  assert.deepEqual([stale.body.available, stale.body.contours.length], [true, 2]);
+  assert.deepEqual(stale.body.sources.map((s) => [s.id, s.status, s.reason]), [['usgs_event', 'stale', 'upstream_error'], ['usgs_shakemap', 'stale', 'upstream_error']]);
+});
+function ageWhere(cache, pick, seconds) {
+  for (const [k, v] of cache.raw) {
+    if (!pick(k)) continue;
+    const b = JSON.parse(v);
+    if (typeof b.fetched_at !== 'string') continue;
+    b.fetched_at = new Date(Date.parse(b.fetched_at) - seconds * 1000).toISOString();
+    cache.raw.set(k, JSON.stringify(b));
+  }
+}
+
+test('shakemap: a contour link off USGS, another event\'s answer, or a non-finite maxmmi are never trusted', async () => {
+  const offHost = structuredClone(DETAIL.us7000tyhr);
+  offHost.properties.products.shakemap[0].contents['download/cont_mmi.json'].url = 'https://evil.example/cont_mmi.json';
+  offHost.properties.products.shakemap[0].properties.maxmmi = 'nan';
+  const f = world(usgs({ detail: () => json(offHost) }));
+  const { body } = await shakemap('us7000tyhr', f);
+  assert.deepEqual([body.available, body.reason, body.max_mmi], [false, 'no_contours', null]);
+  assert.ok(providerCalls(f).every((c) => new URL(c.url).hostname === 'earthquake.usgs.gov'));
+  const other = await shakemap('us7000tyca', world(usgs({ detail: () => json(DETAIL.us7000tyhr) })));
+  assert.deepEqual([other.body.available, other.body.reason, other.body.sources[0].reason], [false, 'source_unavailable', 'invalid_data']);
+  const deleted = structuredClone(DETAIL.us7000tyhr);
+  deleted.properties.products.shakemap[0].status = 'DELETE';
+  assert.equal((await shakemap('us7000tyhr', world(usgs({ detail: () => json(deleted) })))).body.reason, 'no_shakemap', 'a deleted product is not a ShakeMap');
+});
+
+test('shakemap contours: bad values, units, colours and lines are dropped and counted; past the vertex budget lines are thinned keeping both ends (built input)', () => {
+  const line = (n, x0 = 136, y0 = 37) => Array.from({ length: n }, (_, i) => [x0 + i / 1000, y0 + i / 2000]);
+  const fc = { type: 'FeatureCollection', features: [
+    { type: 'Feature', properties: { value: 3, units: 'mmi', color: '#AABBCC' }, geometry: { type: 'MultiLineString', coordinates: [line(5), [[136, 37]], [[136, 37], [NaN, 37]], [[136, 37], [200, 37]], 'x'] } },
+    { type: 'Feature', properties: { value: 3, units: 'mmi', color: 'red' }, geometry: { type: 'LineString', coordinates: line(3, 137) } },
+    { type: 'Feature', properties: { value: 13, units: 'mmi', color: '#ffffff' }, geometry: { type: 'MultiLineString', coordinates: [line(3)] } },
+    { type: 'Feature', properties: { value: 4, units: 'pga', color: '#ffffff' }, geometry: { type: 'MultiLineString', coordinates: [line(3)] } },
+    { type: 'Feature', properties: { value: 4, units: 'mmi', color: '#ffffff' }, geometry: { type: 'Polygon', coordinates: [line(3)] } },
+    { type: 'Feature', properties: { value: 'x' }, geometry: null }
+  ] };
+  const out = readShakemapContours(fc);
+  assert.deepEqual(out.contours.map((c) => [c.mmi, c.color, c.lines.length]), [[3, '#aabbcc', 2]], 'colours keep only #rrggbb; the first seen colour of a level is kept');
+  assert.equal(out.lines_dropped, 4); assert.equal(out.features_dropped, 4);
+  const big = readShakemapContours({ features: [{ properties: { value: 5, units: 'mmi', color: '#ff0000' }, geometry: { type: 'MultiLineString', coordinates: [line(1500), line(1500, 140)] } }] }, { ...SHAKEMAP, maxVertices: 1000 });
+  assert.equal(big.thinned, true); assert.ok(big.counts.vertices <= 1000, `vertices ${big.counts.vertices}`);
+  for (const [i, l] of big.contours[0].lines.entries()) { const src = line(1500, i ? 140 : 136); assert.deepEqual(l[0], src[0]); assert.deepEqual(l.at(-1), [Math.round(src.at(-1)[0] * 1e4) / 1e4, Math.round(src.at(-1)[1] * 1e4) / 1e4]); }
+  assert.throws(() => readShakemapContours({ features: 'no' }), (e) => e.code === 'upstream_invalid_json');
 });
