@@ -134,3 +134,51 @@ test('discoverComputeTools without the control plane configured reports the reas
   assert.equal(result.diagnostic.ok, false);
   assert.equal(result.diagnostic.reason, 'control_plane_not_configured');
 });
+
+// browser.act is admitted from trust-owned nodes only: discovery drops the
+// entries of any other node and the enqueue-time re-read ignores them too, so
+// a node the owner did not install cannot offer the owner's browser.
+function browserEntry(overrides = {}) {
+  return liveEntry({
+    node_id: 'node_owned', node_name: 'owner-windows-gpu', capability: 'browser.act', implementation: 'chromium.local', backend: 'playwright', model: null, version: '1',
+    features: { browser: true, headed: false, screenshot: true, self_hosted: true }, labels: { trust: 'owned', site: 'owner-windows-gpu' }, ...overrides
+  });
+}
+
+test('browser.act entries from nodes that are not trust-owned are not discovered and the diagnostic counts them', async () => {
+  const live = [
+    liveEntry(),
+    browserEntry(),
+    browserEntry({ node_id: 'node_partner', node_name: 'partner-box', labels: { trust: 'partner' } }),
+    browserEntry({ node_id: 'node_unlabelled', node_name: 'no-labels', labels: {} }),
+    liveEntry({ node_id: 'node_partner', node_name: 'partner-box', labels: { trust: 'partner' } })
+  ];
+  const { tools, diagnostic } = await discoverComputeTools({ live: async () => live, env: ENV });
+  const browser = tools.find((tool) => tool.target.capability === 'browser.act');
+  assert.ok(browser, 'the owned node still advertises it');
+  assert.deepEqual(browser.target.nodes, ['node_owned']);
+  assert.equal(browser.capabilityBinding.features.browser, true);
+  assert.equal(browser.capabilityBinding.evidence.live_nodes, 1);
+  const chat = tools.find((tool) => tool.target.capability === 'ai.chat');
+  assert.deepEqual(chat.target.nodes, ['node_a', 'node_partner'], 'ai.chat is not owned-only');
+  assert.equal(diagnostic.dropped_owned_only, 2);
+  assert.equal(diagnostic.implementations, 3, 'the dropped entries are not counted as live implementations');
+});
+
+test('callComputeTool never pins browser.act to a node that is not trust-owned, and passes browser:true as a feature requirement', async () => {
+  const seen = [];
+  const target = { orgId: ORG, capability: 'browser.act', implementation: 'chromium.local', nodes: ['node_owned'], maxConcurrency: 1 };
+  await assert.rejects(
+    callComputeTool(target, { actions: [{ type: 'done' }] }, { requirements: { browser: true } }, { enqueue: async () => { seen.push('enqueued'); return { task: { id: 't' } }; }, live: async () => [browserEntry({ node_id: 'node_partner', labels: { trust: 'partner' } })] }),
+    (error) => error.code === 'COMPUTE_NO_LIVE_NODE'
+  );
+  assert.deepEqual(seen, []);
+  const result = await callComputeTool(target, { actions: [{ type: 'done' }] }, { requirements: { browser: true }, maxAttempts: 1, source: 'capability:browser.act' }, {
+    enqueue: async (args) => { seen.push(args); return { task: { id: 't2', status: 'queued' }, replayed: false }; },
+    live: async () => [browserEntry({ node_id: 'node_partner', labels: { trust: 'partner' } }), browserEntry()]
+  });
+  assert.equal(result.task.id, 't2');
+  assert.deepEqual(seen[0].requirements, { features: { browser: true } });
+  assert.deepEqual(seen[0].metadata.advertised_nodes_at_submit, ['node_owned'], 'only the owned node is counted at submit');
+  assert.equal(seen[0].maxAttempts, 1);
+});

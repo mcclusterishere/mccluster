@@ -379,3 +379,36 @@ test('call() throws the last candidate\'s error, carrying the candidates it skip
   });
   assert.equal(tools.calls.length, 2);
 });
+
+test('requirements vision:true selects only a binding whose features say vision; a text binding alone is NO_CAPABILITY_BINDING', async () => {
+  const text = computeChatTool('text111', { hardware_mode: 'gpu-verified', hardware_mode_rank: 3 });
+  const vision = { ...computeChatTool('vision22', { hardware_mode: 'gpu-verified', hardware_mode_rank: 3 }), capabilityBinding: { ...computeChatTool('vision22').capabilityBinding, features: { chat: true, self_hosted: true, vision: true } } };
+  const registry = new CapabilityRegistry({ toolRegistry: fakeTools([text, vision]), catalog });
+  const resolved = await registry.resolve('ai.chat', { requirements: { vision: true } });
+  assert.equal(resolved.binding.id, 'compute.ai.chat.vision22');
+  assert.deepEqual(resolved.alternatives, [], 'the text binding is not an alternative for an image turn');
+  const textOnly = new CapabilityRegistry({ toolRegistry: fakeTools([text]), catalog });
+  await assert.rejects(textOnly.resolve('ai.chat', { requirements: { vision: true } }), (error) => error.code === 'NO_CAPABILITY_BINDING' && error.status === 503);
+  await assert.rejects(textOnly.call('ai.chat', { messages: [] }, { requirements: { vision: true } }), (error) => error.code === 'NO_CAPABILITY_BINDING');
+});
+
+test('a capability whose interfaces exclude mcp is absent from the MCP tool list even when a live binding serves it', async () => {
+  const agentOnly = {
+    ...catalog,
+    capabilities: [...catalog.capabilities, {
+      id: 'browser.act', title: 'Drive the node browser', description: 'owner-only', domain: 'compute', lifecycle: 'active', execution: 'async', risk: 'write', approval: 'owner',
+      interfaces: ['agent'], inputSchema: { type: 'object' }, outputSchema: { type: 'object' }
+    }]
+  };
+  const tools = fakeTools([{
+    name: 'compute.browser.act.abc123', transport: 'compute',
+    capabilityBinding: { id: 'compute.browser.act.abc123', capability: 'browser.act', provider: 'mccluster-compute', transport: 'compute', status: 'active', priority: 100, economics: { hosting: 'self-hosted', billing: 'compute' }, features: { browser: true } }
+  }]);
+  const registry = new CapabilityRegistry({ toolRegistry: tools, catalog: agentOnly });
+  const listed = await registry.asMcpTools();
+  assert.equal(listed.some((tool) => tool.name === 'browser.act'), false);
+  const snapshot = await registry.list();
+  assert.equal(snapshot.capabilities.find((capability) => capability.id === 'browser.act').available, true, 'available to the agent, invisible over MCP');
+  const resolved = await registry.resolve('browser.act', { requirements: { browser: true } });
+  assert.equal(resolved.binding.tool, 'compute.browser.act.abc123');
+});

@@ -3,6 +3,13 @@ import { enqueueComputeTask, liveCapabilityImplementations } from '../compute/st
 import { HARDWARE_MODE_RANK } from '../compute/protocol.mjs';
 
 const ROUTING_KEYS = new Set(['provider', 'transport', 'hosting', 'billing']);
+// Capabilities only a trust-owned node may offer: the owner's own browser is
+// never taken from a node the owner did not install, whatever it advertises.
+export const OWNED_ONLY_CAPABILITIES = new Set(['browser.act']);
+
+function admitted(item) {
+  return !OWNED_ONLY_CAPABILITIES.has(item?.capability) || item?.labels?.trust === 'owned';
+}
 
 function hash(value) {
   return crypto.createHash('sha256').update(String(value)).digest('hex').slice(0, 12);
@@ -88,7 +95,9 @@ export async function discoverComputeTools({ live = liveCapabilityImplementation
     };
   }
 
-  const implementations = await live({ orgId });
+  const advertised = await live({ orgId });
+  const implementations = advertised.filter(admitted);
+  const droppedOwnedOnly = advertised.length - implementations.length;
   const grouped = new Map();
   for (const item of implementations) {
     const key = `${item.capability}\u0000${item.implementation}`;
@@ -148,7 +157,8 @@ export async function discoverComputeTools({ live = liveCapabilityImplementation
       ok: true,
       tools: tools.length,
       live_nodes: new Set(implementations.map((item) => item.node_id)).size,
-      implementations: implementations.length
+      implementations: implementations.length,
+      dropped_owned_only: droppedOwnedOnly
     }
   };
 }
@@ -158,6 +168,7 @@ export async function discoverComputeTools({ live = liveCapabilityImplementation
 // is a fallback code (the registry tries the next binding); a failed read is not.
 export async function callComputeTool(target, args = {}, options = {}, { enqueue = enqueueComputeTask, live = liveCapabilityImplementations } = {}) {
   const fresh = (await live({ orgId: target.orgId }))
+    .filter(admitted)
     .filter((item) => item.capability === target.capability && item.implementation === target.implementation);
   if (!fresh.length) {
     throw Object.assign(new Error(`No live compute node serves ${target.capability}/${target.implementation}`), {

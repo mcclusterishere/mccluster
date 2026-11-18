@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import { COMPUTE_PROTOCOL, HARDWARE_MODES, HARDWARE_MODE_RANK, clampYieldSeconds, countLiveGpuNodes, validateCapabilityManifest, validateEnrollment, validateInventory } from '../src/compute/protocol.mjs';
 import { generateNodeIdentity, nodeIdFromPublicKey, signRequest, verifySignedRequest } from '../src/compute/signature.mjs';
@@ -170,4 +171,31 @@ test('the hardware_mode vocabulary, its rank, the yield clamp and the live GPU c
   assert.equal(countLiveGpuNodes(nodes, { excludeNodeId: 'node_z' }), 2);
   assert.equal(countLiveGpuNodes(nodes), 2);
   assert.equal(countLiveGpuNodes(null), 0);
+});
+
+test('a browser.act manifest entry with no model and a browser feature normalizes like any other, and its executor stays node-local', () => {
+  const [entry] = validateCapabilityManifest([{
+    capability: 'browser.act', implementation: 'chromium.local', backend: 'playwright', model: null, version: '1',
+    features: { browser: true, headed: false, screenshot: true, self_hosted: true }, max_concurrency: 1, min_vram_bytes: 0,
+    executor: { type: 'http', url: 'http://127.0.0.1:4791/execute', health_url: 'http://127.0.0.1:4791/ready', health_method: 'GET', health_timeout_ms: 3000, timeout_ms: 180000 }
+  }]);
+  assert.equal(entry.capability, 'browser.act');
+  assert.equal(entry.implementation, 'chromium.local');
+  assert.equal(entry.model, null);
+  assert.equal(entry.backend, 'playwright');
+  assert.deepEqual(entry.features, { browser: true, headed: false, screenshot: true, self_hosted: true });
+  assert.equal(entry.max_concurrency, 1);
+  assert.equal(entry.min_vram_bytes, 0);
+  assert.equal(entry.executor, undefined, 'the loopback executor never leaves the node');
+  const [vision] = validateCapabilityManifest([{ capability: 'ai.chat', implementation: 'qwen3-vl.8b.local', model: 'qwen3-vl:8b', features: { gpu: true, vision: true } }]);
+  assert.equal(vision.features.vision, true, 'features.vision survives normalization: the claim SQL matches it');
+});
+
+test('the Core package never grows a Playwright dependency: the browser executor resolves it from the node at start', () => {
+  const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+  for (const section of ['dependencies', 'devDependencies', 'optionalDependencies', 'peerDependencies']) {
+    assert.equal(Object.hasOwn(pkg[section] || {}, 'playwright'), false, `${section} must not list playwright`);
+  }
+  assert.equal(pkg.scripts['compute:browser'], 'node src/compute/browser-executor.mjs');
+  assert.match(pkg.scripts['test:browser'], /browser-executor\.test\.mjs/);
 });
