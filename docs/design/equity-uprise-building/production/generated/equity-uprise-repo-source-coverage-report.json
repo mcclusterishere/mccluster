@@ -1,13 +1,13 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 736,
+  "candidate_count": 745,
   "capability_source_count": 104,
-  "support_only_count": 625,
-  "checks_total": 2814,
-  "checks_passed": 2813,
-  "checks_failed": 1,
-  "passed": false,
+  "support_only_count": 641,
+  "checks_total": 2878,
+  "checks_passed": 2878,
+  "checks_failed": 0,
+  "passed": true,
   "discovered_paths": [
     ".cursorrules",
     ".github/copilot-instructions.md",
@@ -96,6 +96,7 @@
     "css/style.css",
     "css/world-audio-continuity.css",
     "css/world-environment.css",
+    "css/world-gate.css",
     "data/README.md",
     "data/action/docket-516r-archive.json",
     "data/albums.json",
@@ -213,6 +214,7 @@
     "docs/control-plane/registry.json",
     "docs/design/HERE-BRAND-LIBRARY.md",
     "docs/design/HERE-CURRENT-STATE-AUDIT.md",
+    "docs/design/WORLD-SIGN-IN-DOOR.md",
     "docs/design/equity-uprise-development/ASSESSMENT-RUBRIC-TEMPLATE.md",
     "docs/design/equity-uprise-development/COMPETENCY-ARCHITECTURE.md",
     "docs/design/equity-uprise-development/DESIGN-RATIONALE.md",
@@ -354,9 +356,11 @@
     "js/tabbar.js",
     "js/travel/world-travel.mjs",
     "js/world-audio-continuity.js",
+    "js/world-countries.js",
     "js/world-environment-mccluster.mjs",
     "js/world-environment-posts.js",
     "js/world-environment.mjs",
+    "js/world-news-globe.js",
     "listen.html",
     "live-mission.html",
     "llms.txt",
@@ -425,6 +429,8 @@
     "scripts/e2e/server-lab.e2e.mjs",
     "scripts/e2e/site-navigation.e2e.mjs",
     "scripts/e2e/world-environment.mjs",
+    "scripts/e2e/world-first-visit.e2e.mjs",
+    "scripts/e2e/world-gate.e2e.mjs",
     "scripts/e2e/world-missions-guest.e2e.mjs",
     "scripts/e2e/world-screen.e2e.mjs",
     "scripts/export-equity-environment.mjs",
@@ -471,6 +477,7 @@
     "scripts/test/fictional-city-vertical-handoff.test.mjs",
     "scripts/test/fixtures/hq-drill-full-strength-win.json",
     "scripts/test/games-world.test.mjs",
+    "scripts/test/heat-scale.test.mjs",
     "scripts/test/homelessness-action.test.mjs",
     "scripts/test/human-uprise-door.test.mjs",
     "scripts/test/identity-verification-levels.test.mjs",
@@ -507,7 +514,9 @@
     "scripts/test/world-environment-posts.test.mjs",
     "scripts/test/world-environment.test.mjs",
     "scripts/test/world-first-and-layers.test.mjs",
+    "scripts/test/world-gate.test.mjs",
     "scripts/test/world-mission-posts.test.mjs",
+    "scripts/test/world-news-tint.test.mjs",
     "services.html",
     "sitemap.xml",
     "sites-details.html",
@@ -750,12 +759,12 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "729 entries"
+      "detail": "745 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
-      "passed": false,
-      "detail": "{\"missing_from_map\": [\".github/workflows/human-uprise-editorial.yml\", \"js/world-environment-posts.js\", \"scripts/e2e/environment-globe.e2e.mjs\", \"scripts/e2e/environment-world.e2e.mjs\", \"scripts/test/environment-globe-wiring.test.mjs\", \"scripts/test/world-environment-panel.test.mjs\", \"scripts/test/world-environment-posts.test.mjs\"], \"stale_in_map\": []}"
+      "passed": true,
+      "detail": "{\"missing_from_map\": [], \"stale_in_map\": []}"
     },
     {
       "name": ".cursorrules capability ids known",
@@ -874,6 +883,26 @@
     },
     {
       "name": ".github/workflows/equity-uprise-visual.yml support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": ".github/workflows/human-uprise-editorial.yml capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": ".github/workflows/human-uprise-editorial.yml classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": ".github/workflows/human-uprise-editorial.yml support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": ".github/workflows/human-uprise-editorial.yml support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -2394,6 +2423,26 @@
     },
     {
       "name": "css/world-environment.css support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "css/world-gate.css capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "css/world-gate.css classified",
+      "passed": true,
+      "detail": "classification='presentation_support'"
+    },
+    {
+      "name": "css/world-gate.css support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "css/world-gate.css support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -4634,6 +4683,26 @@
     },
     {
       "name": "docs/design/HERE-CURRENT-STATE-AUDIT.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/design/WORLD-SIGN-IN-DOOR.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/design/WORLD-SIGN-IN-DOOR.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/design/WORLD-SIGN-IN-DOOR.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/design/WORLD-SIGN-IN-DOOR.md support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -7378,6 +7447,26 @@
       "detail": ""
     },
     {
+      "name": "js/world-countries.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/world-countries.js classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "js/world-countries.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/world-countries.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "js/world-environment-mccluster.mjs capability ids known",
       "passed": true,
       "detail": ""
@@ -7398,6 +7487,26 @@
       "detail": ""
     },
     {
+      "name": "js/world-environment-posts.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/world-environment-posts.js classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "js/world-environment-posts.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/world-environment-posts.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "js/world-environment.mjs capability ids known",
       "passed": true,
       "detail": ""
@@ -7414,6 +7523,26 @@
     },
     {
       "name": "js/world-environment.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/world-news-globe.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/world-news-globe.js classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "js/world-news-globe.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/world-news-globe.js support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -8378,6 +8507,46 @@
       "detail": ""
     },
     {
+      "name": "scripts/e2e/environment-globe.e2e.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/environment-globe.e2e.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/e2e/environment-globe.e2e.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/e2e/environment-globe.e2e.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/environment-world.e2e.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/environment-world.e2e.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/e2e/environment-world.e2e.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/e2e/environment-world.e2e.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "scripts/e2e/eu-building-visual.e2e.mjs capability ids known",
       "passed": true,
       "detail": ""
@@ -8694,6 +8863,46 @@
     },
     {
       "name": "scripts/e2e/world-environment.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/world-first-visit.e2e.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/world-first-visit.e2e.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/e2e/world-first-visit.e2e.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/e2e/world-first-visit.e2e.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/world-gate.e2e.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/world-gate.e2e.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/e2e/world-gate.e2e.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/e2e/world-gate.e2e.mjs support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -9233,6 +9442,26 @@
       "detail": ""
     },
     {
+      "name": "scripts/test/environment-globe-wiring.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/environment-globe-wiring.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/environment-globe-wiring.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/environment-globe-wiring.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "scripts/test/equity-product-consumer.test.mjs capability ids known",
       "passed": true,
       "detail": ""
@@ -9589,6 +9818,26 @@
     },
     {
       "name": "scripts/test/games-world.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/heat-scale.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/heat-scale.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/heat-scale.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/heat-scale.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -10233,6 +10482,46 @@
       "detail": ""
     },
     {
+      "name": "scripts/test/world-environment-panel.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/world-environment-panel.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/world-environment-panel.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/world-environment-panel.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/world-environment-posts.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/world-environment-posts.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/world-environment-posts.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/world-environment-posts.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "scripts/test/world-environment.test.mjs capability ids known",
       "passed": true,
       "detail": ""
@@ -10273,6 +10562,26 @@
       "detail": ""
     },
     {
+      "name": "scripts/test/world-gate.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/world-gate.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/world-gate.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/world-gate.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "scripts/test/world-mission-posts.test.mjs capability ids known",
       "passed": true,
       "detail": ""
@@ -10289,6 +10598,26 @@
     },
     {
       "name": "scripts/test/world-mission-posts.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/world-news-tint.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/world-news-tint.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/world-news-tint.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/world-news-tint.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     },

@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 726,
+  "candidate_count": 745,
   "capability_source_count": 104,
-  "support_only_count": 622,
+  "support_only_count": 641,
   "entries": [
     {
       "path": ".cursorrules",
@@ -59,6 +59,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Read-only PR browser validation captures the canonical building on a loopback fixture server. No deployment, credentials, production calls or program capability."
+    },
+    {
+      "path": ".github/workflows/human-uprise-editorial.yml",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Read-only pull-request browser validation of the consumer World (the feed, travel, the sign-in door, the first visit, the Environmental Justice panel and globe) on loopback fixtures; it matches only through its path filter for the vendored panel (vendor/equity-uprise/**). No deployment, credentials, production calls or program capability."
     },
     {
       "path": ".github/workflows/reconciliation-ci.yml",
@@ -668,6 +675,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Styles of the Environmental Justice panel behind the World feed's Equity Uprise tab; presentation only, no building capability."
+    },
+    {
+      "path": "css/world-gate.css",
+      "classification": "presentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Styles of the consumer World's sign-in door and the members' onboarding pages; names the supplied Equity Uprise artwork only in a comment about the crest. Presentation only; no building capability."
     },
     {
       "path": "data/README.md",
@@ -1535,6 +1549,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Shared or adjacent documentation mentions Equity Uprise context but does not define a distinct program capability beyond canonical mapped sources."
+    },
+    {
+      "path": "docs/design/WORLD-SIGN-IN-DOOR.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Design record of the consumer World's sign-in door (acceptance criteria, review and verification fixes, open questions for the owner); names the supplied Equity Uprise mark as the door's crest and the feed tab beside it. Defines no building geometry, program or capability."
     },
     {
       "path": "docs/design/equity-uprise-development/ASSESSMENT-RUBRIC-TEMPLATE.md",
@@ -2573,6 +2594,13 @@
       "rationale": "Shared audio continuity across music and World; no separate building-specific capability."
     },
     {
+      "path": "js/world-countries.js",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "The consumer World's countries on the shared Cesium viewer (borders, flags, the place card and the news shading); names the feed's Equity Uprise tab only in the comment for the shading stepping aside there. A World layer, not a building capability."
+    },
+    {
       "path": "js/world-environment-mccluster.mjs",
       "classification": "shared_site_support",
       "capability_ids": [],
@@ -2580,11 +2608,25 @@
       "rationale": "McCluster adapter mounting the vendored environmental panel into the existing World globe; a World mode, not a building capability."
     },
     {
+      "path": "js/world-environment-posts.js",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pure rules that turn the environmental feed into observation posts for the consumer World (significance, time stamps, one post per event, the Equity Uprise tab's one list by time); no page, network or storage access. A World feed module, not a building capability."
+    },
+    {
       "path": "js/world-environment.mjs",
       "classification": "shared_site_support",
       "capability_ids": [],
       "support_only": true,
       "rationale": "World-side environmental mode controller (pins, panel host) on the shared Cesium viewer; no building geometry."
+    },
+    {
+      "path": "js/world-news-globe.js",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "The consumer World's news bridge between the feed and the globe frame (the story view, one marker, the news shading message); names the feed's Equity Uprise tab only where it tells the globe to hide the shading there. Not a building capability."
     },
     {
       "path": "listen.html",
@@ -2959,6 +3001,20 @@
       "rationale": "Browser test of the Docket 516R archive and its completed series in the World feed's Equity Uprise tab, against fixtures; names the tab only. Not a building capability."
     },
     {
+      "path": "scripts/e2e/environment-globe.e2e.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Browser test of the environmental globe inside its frame against fixtures (layer counts, legend, selection, policy gate, performance check); names Equity Uprise only to check the legend carries no brand name or logo. Not a building capability."
+    },
+    {
+      "path": "scripts/e2e/environment-world.e2e.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Browser test of the consumer World page with the real globe frame and the Environmental Justice panel against fixtures at three widths; names the feed's Equity Uprise tab as the place the panel and the layers live. Not a building capability."
+    },
+    {
       "path": "scripts/e2e/eu-building-visual.e2e.mjs",
       "classification": "test_support",
       "capability_ids": [],
@@ -3069,6 +3125,20 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Browser harness for the Environmental Justice panel on the consumer World against fixtures; names the feed's Equity Uprise tab only, as the place the panel lives. Not a building capability."
+    },
+    {
+      "path": "scripts/e2e/world-first-visit.e2e.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Browser test of a first visit to the consumer World (the privacy notice as a banner, analytics off until the visitor agrees) against fixtures; names the feed's Equity Uprise tab only to check it answers a tap while the banner is up. Not a building capability."
+    },
+    {
+      "path": "scripts/e2e/world-gate.e2e.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Browser test and screenshot set of the consumer World's sign-in door against fixtures; names the supplied white Equity Uprise mark's file as the crest and checks the door never writes the name out. Not a building capability."
     },
     {
       "path": "scripts/e2e/world-missions-guest.e2e.mjs",
@@ -3262,6 +3332,13 @@
       "rationale": "Tests that keep the company and personal properties and entities separate; checks Equity Uprise's parent organization. Not a building capability."
     },
     {
+      "path": "scripts/test/environment-globe-wiring.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Source-level test of the environmental globe's wiring (script order, legend, delegation, notices); names Equity Uprise only to assert the legend and the layers carry no brand name or logo. Not a building capability."
+    },
+    {
       "path": "scripts/test/equity-product-consumer.test.mjs",
       "classification": "test_support",
       "capability_ids": [],
@@ -3386,6 +3463,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Unit checks that the Games overlay's Equity Uprise HQ and B1 entries resolve to existing routes and that B1 anchors match the mission spec; verification support only."
+    },
+    {
+      "path": "scripts/test/heat-scale.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Unit test of the heat scale shared by the consumer World's news shading and the Control Room's Analytics globe; names the feed's Equity Uprise tab only in the check that the shading and its legend step aside there. Not a building capability."
     },
     {
       "path": "scripts/test/homelessness-action.test.mjs",
@@ -3612,6 +3696,20 @@
       "rationale": "Panel plus real-transport account-lifecycle regressions for the environmental mode (audit EQ1/EQ2)."
     },
     {
+      "path": "scripts/test/world-environment-panel.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Unit test of the Environmental Justice panel on a synthetic DOM with fixtures (message order, health rows, scene controls, the events it hands the page); imports the vendored panel from vendor/equity-uprise. Not a building capability."
+    },
+    {
+      "path": "scripts/test/world-environment-posts.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Unit test of the environmental observation posts (js/world-environment-posts.js) on the feed fixture; names the Equity Uprise tab's merged list and asserts the posts never write the brand out or show a logo. Not a building capability."
+    },
+    {
       "path": "scripts/test/world-environment.test.mjs",
       "classification": "test_support",
       "capability_ids": [],
@@ -3626,11 +3724,25 @@
       "rationale": "Unit test of the World screen's member paths (the World first, the data layers, the onboarding, the full pane, a World that did not load) and the white emblem variant's file path. Not a building capability."
     },
     {
+      "path": "scripts/test/world-gate.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Static and behaviour test of the consumer World's sign-in door (stylesheet law, the supplied mark as the only mark, the door's script on a fake DOM); names the white Equity Uprise mark's file and asserts the name is never written out. Not a building capability."
+    },
+    {
       "path": "scripts/test/world-mission-posts.test.mjs",
       "classification": "test_support",
       "capability_ids": [],
       "support_only": true,
       "rationale": "Unit test of the World feed's mission posts (js/world-mission-posts.js: interleave, a place's missions, credit parsing) and their wiring in js/mnet.js; names the Equity Uprise tab and the supplied marks only to check the feed shows them. Not a building capability."
+    },
+    {
+      "path": "scripts/test/world-news-tint.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Unit test that the consumer World's news shading and its legend step aside while the feed's scope is the Equity Uprise tab and return unchanged afterwards, on fakes. Not a building capability."
     },
     {
       "path": "services.html",
