@@ -34,3 +34,20 @@ test('Worker implements product server contracts over the existing auth and pers
   assert.match(reader,/call\(env, fetchImpl, plain, 'eup_module_policy_read', \{ p_module: module \}/);
   assert.doesNotMatch(reader,/state\s*:\s*['"`](?:enabled|draining|disabled)['"`]/);
 });
+
+test('a patch names the suites that exercise it: from the release polish on, every regression test names a defect of its patch (review of the release polish, RP-5)', () => {
+  // The release polish's entry first named the lifecycle suite, which exercises none of its three patches: every named file exists
+  // (the test above reads each one), so nothing noticed. From that entry on, each regression test a patch lists must name, in its
+  // own words, at least one defect of that patch; a suite carried over from the entry before it is caught here.
+  const lock = JSON.parse(read('vendor/equity-uprise/product-source.lock.json'));
+  const from = lock.local_patches.findIndex(patch => patch.defects.some(defect => defect.id === 'V2-M2'));
+  assert.ok(from >= 0, 'the release polish is recorded in the lock');
+  const held = lock.local_patches.slice(from);
+  assert.ok(held.length >= 2, 'the release polish and its review');
+  const names = (source, id) => new RegExp(`(?<![A-Za-z0-9-])${id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![A-Za-z0-9-])`).test(source);
+  for (const patch of held) {
+    const ids = patch.defects.map(defect => defect.id);
+    assert.ok(patch.regression_tests.length > 0, `${ids.join(', ')}: a patch lists at least one regression test`);
+    for (const path of patch.regression_tests) assert.ok(ids.some(id => names(read(path).toString(), id)), `${path} names none of ${ids.join(', ')}`);
+  }
+});
