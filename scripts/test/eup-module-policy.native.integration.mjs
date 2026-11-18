@@ -17,7 +17,7 @@
 //   ALLOW_LOCAL_EUP_DB_TESTS=1 PG_BIN=/usr/lib/postgresql/16/bin PG_MODULE=<node-postgres> \
 //     node scripts/test/eup-module-policy.native.integration.mjs
 //
-// EUP_POLICY_SQL replaces supabase/pending/eup_module_policy_v1.sql (for negative controls). Disposable server
+// EUP_POLICY_SQL replaces supabase/migrations/20261117144103_eup_module_policy_v1.sql (for negative controls). Disposable server
 // only (scripts/test/support/native-postgres.mjs); never the canonical project.
 import { readFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
@@ -62,7 +62,7 @@ try {
   clients.push(admin);
   const rowLocksAvailable = (await code(admin.query('create extension if not exists pgrowlocks'))) === 'ok';
   if (!rowLocksAvailable) console.log('note: pgrowlocks is not installed on this server; the two row-lock readings below are skipped');
-  const policySql = process.env.EUP_POLICY_SQL ? await readFile(process.env.EUP_POLICY_SQL, 'utf8') : await repo('supabase/pending/eup_module_policy_v1.sql');
+  const policySql = process.env.EUP_POLICY_SQL ? await readFile(process.env.EUP_POLICY_SQL, 'utf8') : await repo('supabase/migrations/20261117144103_eup_module_policy_v1.sql');
   await admin.query(policySql);
   await admin.query(await repo('supabase/pending/eup_module_policy_v1.rollback.sql'));
   await admin.query(policySql); await admin.query(policySql);

@@ -4,7 +4,7 @@
 // unresolved geography is reviewed, not promoted; identity conflicts are reviewed, not merged;
 // corrections are revision-checked and idempotent; and the public civic_* / action_policy_bills tables
 // stay at zero rows after an admin import.
-// Module policy (module 'intake', supabase/pending/eup_module_policy_v1.sql applied first and enabled by the
+// Module policy (module 'intake', supabase/migrations/20261117144103_eup_module_policy_v1.sql applied first and enabled by the
 // harness): every write refuses while the module is draining (EUM02), disabled (EUM03) or not installed (EUM01),
 // through the functions and through a direct table write; pause stays possible in every installed state and is
 // shown to take the reduce-only path (the transaction carries the marker and the shared module lock); reads and

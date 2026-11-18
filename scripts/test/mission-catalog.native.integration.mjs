@@ -23,9 +23,9 @@ refuseUnlessAllowed('mission-catalog.native');
 const DB = 'mission_catalog_native';
 const DB_ONE_FILE = 'mission_catalog_native_one_file';
 const FILES = {
-  joinScope: 'supabase/pending/20261117100000_action_globe_join_scope_v1.sql',
+  joinScope: 'supabase/migrations/20261117222809_action_globe_join_scope_v1.sql',
   joinScopeRollback: 'supabase/pending/20261117100000_action_globe_join_scope_v1.rollback.sql',
-  details: 'supabase/pending/20261117100100_action_mission_details.sql',
+  details: 'supabase/migrations/20261118021521_action_mission_details.sql',
   detailsRollback: 'supabase/pending/20261117100100_action_mission_details.rollback.sql',
   importRollback: OUTPUT_FILES.importRollback,
   publish: OUTPUT_FILES.publish,

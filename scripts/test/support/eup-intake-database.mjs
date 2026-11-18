@@ -1,5 +1,5 @@
 // Isolated PGlite database for the E=Up private intake store; never connects to canonical Supabase.
-// Applies supabase/pending/eup_module_policy_v1.sql first (the intake SQL calls its guards and refuses to run
+// Applies supabase/migrations/20261117144103_eup_module_policy_v1.sql first (the intake SQL calls its guards and refuses to run
 // without them), then supabase/pending/eup_intake_v1.sql (twice: it must be idempotent), beside minimal
 // stand-ins for the PUBLIC civic_* / action_policy_bills tables so a test can prove an admin import leaves
 // them empty. Supabase DEFAULT PRIVILEGES are switched on first (every new public table, sequence and function
