@@ -24,7 +24,10 @@ test('the door ships as its own stylesheet and script, linked where the spec put
     'docs/design/WORLD-SIGN-IN-DOOR.md', 'scripts/e2e/world-gate.e2e.mjs', 'scripts/e2e/sign-in.e2e.mjs', 'scripts/e2e/support/world-gate-harness.mjs']) assert.ok(exists(f), f);
   const html = read('mnet.html');
   assert.match(html, /<link rel="stylesheet" href="css\/daylight\.css\?v=__STAMP__">\n  <link rel="stylesheet" href="css\/world-gate\.css\?v=__STAMP__">/, 'right after css/daylight.css');
-  assert.match(html, /<script src="js\/world-gate\.js\?v=__STAMP__"><\/script>\n  <script src="js\/mnet\.js\?v=__STAMP__"><\/script>/, 'immediately before js/mnet.js');
+  /* before js/mnet.js, which calls it; js/video-poster.js keeps its pinned place directly before js/mnet.js
+     (scripts/test/action-camera-loop.test.mjs) */
+  assert.match(html, /<script src="js\/world-gate\.js\?v=__STAMP__"><\/script>\n  <script src="js\/video-poster\.js\?v=__STAMP__"><\/script>\n  <script src="js\/mnet\.js\?v=__STAMP__"><\/script>/, 'before js/video-poster.js and js/mnet.js');
+  assert.equal(html.split('<script src="js/world-gate.js').length, 2, 'loaded once');
   assert.doesNotMatch(html, /hu\s*up/i, '"Get Your Hu Up!" is gone from the World, in every form (owner, 2026-11-17)');
   assert.match(html, /The place for doers\./);
 });

@@ -28,7 +28,7 @@ Architecture: the "cinematic world" direction, with the "regal editorial" typogr
 
 | File | What |
 | --- | --- |
-| `mnet.html` | the door's markup (ids kept; new parts use the `wg-` prefix); the stylesheet link after `css/daylight.css`; the script before `js/mnet.js` |
+| `mnet.html` | the door's markup (ids kept; new parts use the `wg-` prefix); the stylesheet link after `css/daylight.css`; the script before `js/mnet.js`, ahead of `js/video-poster.js`, which keeps its pinned place directly before `js/mnet.js` |
 | `css/world-gate.css` | the door and the onboarding skin; every rule scoped by `#mnSignedOut`, `#mnProfileGate` or `html.mn-door-open` |
 | `js/world-gate.js` | `window.MCC_GATE`: presentation only, never an auth call |
 | `js/mnet.js` | only `showGate`, `openSignIn`, `askToSignIn`, the `#mnSignedOutBack` handler and the sign-in refusal line |
@@ -125,6 +125,9 @@ Check them, or use Forgot password." (for `invalid_credentials` only; every othe
 - `scripts/e2e/world-gate.e2e.mjs`: the screenshot set below and the acceptance checks; `results.json` keeps per frame the
   overflow, the rectangles, the loaded fonts, the visible text, the contrast of every text, the inert map and the request
   log.
+- Both browser suites stand on `scripts/e2e/support/world-gate-harness.mjs`: the checkout served as it ships, a fake
+  `api.mccluster.org` and Supabase in memory, the globe's Cesium from `CESIUM_DIR` when it is set (aborted otherwise), and
+  the privacy notice acknowledged except where a scenario is about the banner.
 
 Screenshots (`node scripts/e2e/world-gate.e2e.mjs <outDir>`, deviceScaleFactor 2): `door-signin-{390,820,1280}-{night,day}`,
 `door-create-{390,820,1280}-{night,day}`, `door-create-390-night-end`, `door-why-390-night`, `door-why-390-day`,

@@ -22,14 +22,15 @@ const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/ja
 export const SB = 'https://zmnhbrjyhxzhkxmhkexs.supabase.co';
 export const API = 'https://api.mccluster.org';
 
-/* the checkout, as it ships; a banner scenario adds the privacy notice's banner meta to mnet.html here, test-only */
+/* the checkout, as it ships. mnet.html carries the privacy notice's banner meta (the first-visit decision, owner 2026-11-17);
+   a banner scenario adds it here, test-only, only if the page ever stops carrying it, so the banner is always what it tests */
 export async function startServer() {
   const server = createServer(async (req, res) => {
     const url = new URL(req.url, 'http://x');
     const path = normalize(decodeURIComponent(url.pathname)).replace(/^([.][.][/\\])+/, '');
     try {
       let body = await readFile(join(ROOT, path === '/' ? 'index.html' : path));
-      if (/mnet\.html$/.test(path) && /(?:^|[?&])wgbanner=1(?:&|$)/.test(url.search)) {
+      if (/mnet\.html$/.test(path) && /(?:^|[?&])wgbanner=1(?:&|$)/.test(url.search) && !/<meta name="mcc-privacy-notice" content="banner">/.test(String(body))) {
         body = Buffer.from(String(body).replace('<meta name="robots" content="noindex">', '<meta name="robots" content="noindex">\n  <meta name="mcc-privacy-notice" content="banner">'));
       }
       res.writeHead(200, { 'content-type': TYPES[extname(path)] || 'application/octet-stream' });
