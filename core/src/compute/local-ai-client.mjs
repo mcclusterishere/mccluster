@@ -1,8 +1,11 @@
 import { inferenceFetch, inferenceJson, inferenceError } from './inference-http.mjs';
 import { cancelQueuedComputeTask, computeTaskById, enqueueComputeTask, listNodes } from './store.mjs';
+import { validateChatImages } from './ai-chat-images.mjs';
 
 const ADAPTER = String(process.env.MCCLUSTER_OLLAMA_ADAPTER_URL || 'http://127.0.0.1:4790').replace(/\/$/, '');
 const MODEL = process.env.MCCLUSTER_OLLAMA_MODEL || 'qwen3:8b';
+// The name this box answers under in the node badge of a local-route reply.
+const LOCAL_NODE_NAME = process.env.MCCLUSTER_NODE_NAME || 'core-local';
 
 function assertLoopbackAdapter(value) {
   const url = new URL(value);
@@ -31,6 +34,13 @@ function clampInt(value, fallback, min, max) {
 // default; the fabric path only ever talks to Supabase through store.mjs,
 // never to a node directly.
 const FABRIC_MODES = new Set(['off', 'prefer']);
+
+// The implementations that can see, tried in order for any turn that carries
+// an image (or asks for vision): the owner's resident vision model first.
+export function visionImplementations(env = process.env) {
+  return String(env.MCCLUSTER_LOCAL_AI_VISION_IMPLEMENTATIONS || 'qwen3-vl.8b.local,qwen3-vl.4b.local').split(',').map((s) => s.trim()).filter(Boolean);
+}
+
 export function fabricConfigFromEnv(env = process.env) {
   const rawMode = String(env.MCCLUSTER_LOCAL_AI_FABRIC || 'off').trim().toLowerCase();
   const excludeNodes = new Set(String(env.MCCLUSTER_LOCAL_AI_FABRIC_EXCLUDE_NODES ?? 'ovh-primary').split(',').map((s) => s.trim()).filter(Boolean));
@@ -41,6 +51,10 @@ export function fabricConfigFromEnv(env = process.env) {
     pollMs: clampInt(env.MCCLUSTER_LOCAL_AI_FABRIC_POLL_MS, 1_500, 250, 10_000),
     runningWaitMs: clampInt(env.MCCLUSTER_LOCAL_AI_FABRIC_RUNNING_WAIT_MS, 600_000, 30_000, 3_600_000),
     implementation: String(env.MCCLUSTER_LOCAL_AI_FABRIC_IMPLEMENTATION || 'qwen3.8b.local'),
+    visionImplementations: visionImplementations(env),
+    // A vision model on this box's own adapter (unset on OVH): without it an
+    // image turn never runs locally.
+    localVisionModel: env.MCCLUSTER_OLLAMA_VISION_MODEL ? String(env.MCCLUSTER_OLLAMA_VISION_MODEL).trim() || null : null,
     excludeNodes,
     orgId: env.MCCLUSTER_ORG_ID || null,
   };
@@ -74,7 +88,28 @@ function buildInput({ messages, prompt, temperature, numCtx, json, think, numPre
 
 // The adapter's /execute JSON (posted verbatim by a node as the lease result,
 // or answered by the local adapter) in the shape every caller reads.
-function shapeChatResult(data, { route, computeTaskId = null, fabric }) {
+// Which device answered: the live node row by the task's locked_by_node_id for
+// the fabric route, this box for the local route. The measured rate is the
+// doctor's sidecar figure for exactly the model that answered, never a guess.
+function nodeBadge({ route, node = null, nodeId = null, data }) {
+  const rate = Number.isFinite(Number(data?.usage?.generation_tokens_per_second)) && data?.usage?.generation_tokens_per_second != null ? Number(data.usage.generation_tokens_per_second) : null;
+  if (route !== 'fabric') {
+    return { route: 'local', node_id: null, node_name: LOCAL_NODE_NAME, site: null, hardware_mode: null, generation_tokens_per_second: rate, measured_generation_tokens_per_second: null };
+  }
+  const model = data?.model || null;
+  const measured = model ? node?.inventory?.runtime?.measured_inference_by_model?.[model]?.generation_tokens_per_second : null;
+  return {
+    route: 'fabric',
+    node_id: node?.id || nodeId || null,
+    node_name: node?.display_name || null,
+    site: node?.labels?.site ?? null,
+    hardware_mode: node?.inventory?.runtime?.hardware_mode ?? null,
+    generation_tokens_per_second: rate,
+    measured_generation_tokens_per_second: measured != null && Number.isFinite(Number(measured)) ? Number(measured) : null
+  };
+}
+
+function shapeChatResult(data, { route, computeTaskId = null, fabric, node = null, nodeId = null, imagesIn = 0 }) {
   const content = String(data?.content || '');
   return {
     model: data?.model || MODEL,
@@ -91,14 +126,31 @@ function shapeChatResult(data, { route, computeTaskId = null, fabric }) {
     route,
     compute_task_id: computeTaskId,
     fabric,
+    node: nodeBadge({ route, node, nodeId, data }),
+    images_in: Number.isInteger(data?.images_in) ? data.images_in : imagesIn,
   };
 }
 
-function eligibleNodes(nodes, fabric) {
+// Live gpu-verified nodes (this box and the excluded names aside) advertising
+// ai.chat/<implementation> with every required feature other than gpu (which
+// gpu-verified already proves) set true on that entry.
+function eligibleNodes(nodes, fabric, implementation, features = {}) {
+  const required = Object.entries(features || {}).filter(([key, value]) => value === true && key !== 'gpu').map(([key]) => key);
   return (Array.isArray(nodes) ? nodes : []).filter((node) => node
     && !fabric.excludeNodes.has(node.display_name)
     && node?.inventory?.runtime?.hardware_mode === 'gpu-verified'
-    && (Array.isArray(node.capabilities) ? node.capabilities : []).some((entry) => entry?.capability === 'ai.chat' && entry?.implementation === fabric.implementation));
+    && (Array.isArray(node.capabilities) ? node.capabilities : []).some((entry) => entry?.capability === 'ai.chat'
+      && entry?.implementation === implementation
+      && required.every((key) => entry?.features?.[key] === true)));
+}
+
+// The first implementation candidate some live node can take right now.
+function chooseImplementation(nodes, fabric, candidates, features) {
+  for (const implementation of candidates) {
+    const eligible = eligibleNodes(nodes, fabric, implementation, features);
+    if (eligible.length) return { implementation, eligible };
+  }
+  return { implementation: null, eligible: [] };
 }
 
 function callerAborted(taskId) {
@@ -109,24 +161,24 @@ function callerAborted(taskId) {
 // throws LOCAL_AI_FABRIC_TIMEOUT or CALLER_ABORTED. Never runs anything itself,
 // and never reports a fallback while a node may still own the task: a local run
 // follows only a task that was canceled while queued, or one that failed.
-async function fabricChat({ input, priority, metadata, signal, fabric, now, sleep, log, budgetMs }) {
+async function fabricChat({ input, priority, metadata, signal, fabric, now, sleep, log, budgetMs, candidates, features }) {
   let nodes;
   try { nodes = await fabric.listNodes({ orgId: fabric.orgId, liveOnly: true, limit: 500 }); }
   catch (error) {
     log({ event: 'local_ai_fabric_fallback', reason: 'no_eligible_node', task_id: null, error: String(error?.message || error).slice(0, 200) });
     return { outcome: 'fallback', reason: 'no_eligible_node', waitMs: null, logged: true };
   }
-  const eligible = eligibleNodes(nodes, fabric);
-  if (!eligible.length) return { outcome: 'fallback', reason: 'no_eligible_node', waitMs: null };
+  const { implementation, eligible } = chooseImplementation(nodes, fabric, candidates, features);
+  if (!implementation) return { outcome: 'fallback', reason: 'no_eligible_node', waitMs: null, candidates };
 
   let taskId = null;
   try {
     const { task } = await fabric.enqueueComputeTask({
       orgId: fabric.orgId,
       capability: 'ai.chat',
-      implementation: fabric.implementation,
+      implementation,
       input,
-      requirements: { features: { gpu: true } },
+      requirements: { features: { gpu: true, ...features } },
       priority: normalizePriority(priority),
       maxAttempts: 1,
       metadata: { source: 'local-ai-fabric', requested_at: new Date().toISOString(), ...metadata },
@@ -137,7 +189,7 @@ async function fabricChat({ input, priority, metadata, signal, fabric, now, slee
     return { outcome: 'fallback', reason: 'enqueue_failed', waitMs: null, logged: true };
   }
   if (!taskId) return { outcome: 'fallback', reason: 'enqueue_failed', waitMs: null };
-  log({ event: 'local_ai_fabric_enqueued', task_id: taskId, nodes: eligible.length, implementation: fabric.implementation });
+  log({ event: 'local_ai_fabric_enqueued', task_id: taskId, nodes: eligible.length, implementation, candidates });
 
   const start = now();
   // The caller's budget (timeoutMs) bounds the fabric: at most half of it is
@@ -193,11 +245,12 @@ async function fabricChat({ input, priority, metadata, signal, fabric, now, slee
     lastStatus = task.status;
     if (task.status === 'done') {
       const waitMs = now() - start;
-      log({ event: 'local_ai_fabric_done', task_id: taskId, wait_ms: waitMs, node_id: task.locked_by_node_id || null });
-      return { outcome: 'done', data: task.output, waitMs, taskId };
+      const nodeId = task.locked_by_node_id || null;
+      log({ event: 'local_ai_fabric_done', task_id: taskId, wait_ms: waitMs, node_id: nodeId, implementation });
+      return { outcome: 'done', data: task.output, waitMs, taskId, implementation, nodeId, node: (Array.isArray(nodes) ? nodes : []).find((node) => node?.id === nodeId) || null };
     }
     if (task.status === 'failed' || task.status === 'canceled') {
-      return { outcome: 'fallback', reason: 'failed', waitMs: now() - start, status: task.status, taskId };
+      return { outcome: 'fallback', reason: 'failed', waitMs: now() - start, status: task.status, taskId, lastError: task.last_error == null ? null : String(task.last_error).slice(0, 300) };
     }
     if (now() < queuedDeadline) continue;
     if (task.status === 'queued') {
@@ -231,6 +284,8 @@ export async function localAiChat({
   timeoutMs = Number(process.env.MCCLUSTER_OLLAMA_TIMEOUT_MS || 10 * 60_000),
   metadata = {},
   route = 'auto',
+  implementation,
+  requirements,
   signal: callerSignal,
 } = {}, { fetchImpl = inferenceFetch, fabric = defaultFabric, now = Date.now, sleep = defaultSleep, log = defaultLog } = {}) {
   const normalizedMessages = Array.isArray(messages) ? messages : undefined;
@@ -238,6 +293,8 @@ export async function localAiChat({
   if ((!normalizedMessages || !normalizedMessages.some((item) => String(item?.content || '').trim())) && !normalizedPrompt.trim()) {
     throw Object.assign(new Error('local AI requires messages or prompt'), { status: 400, retryable: false });
   }
+  // Images are validated here, before any node or adapter sees them (400 codes).
+  const imagesIn = normalizedMessages ? validateChatImages({ messages: normalizedMessages }).images : 0;
   const input = buildInput({ messages, prompt, temperature, numCtx, json, think, numPredict, tools, schema, model });
 
   // One budget for the whole call, fabric attempt included: the local floor of
@@ -246,22 +303,50 @@ export async function localAiChat({
   const startedAt = now();
   let fabricResult = { attempted: false, reason: 'disabled', wait_ms: null };
   const config = typeof fabric === 'function' ? fabric() : fabric;
-  if (route !== 'local' && config?.mode !== 'off') {
-    const disabledReason = config?.mode !== 'prefer' ? 'invalid_mode' : (!config.orgId ? 'no_org' : null);
+
+  // Per-call routing: the caller may name implementation candidates (tried in
+  // order) and feature requirements. Any image, or an explicit vision
+  // requirement, means the vision implementations and features.vision; the
+  // local adapter may take an image only when this box names a vision model.
+  const requestedFeatures = Object.fromEntries(Object.entries(requirements?.features || {}).filter(([, value]) => value === true));
+  const wantsVision = imagesIn > 0 || requestedFeatures.vision === true;
+  const features = { ...requestedFeatures, ...(imagesIn > 0 ? { vision: true } : {}) };
+  const explicit = Array.isArray(implementation) ? implementation.filter(Boolean).map(String) : (implementation ? [String(implementation)] : []);
+  const candidates = explicit.length
+    ? explicit
+    : (wantsVision ? (config?.visionImplementations || visionImplementations()) : [config?.implementation || 'qwen3.8b.local']);
+  const localVisionModel = config?.localVisionModel || null;
+  const forcedFabric = route === 'fabric' || (imagesIn > 0 && !localVisionModel);
+  const noNodeError = () => (wantsVision
+    ? Object.assign(new Error(`No live GPU-verified node advertises a vision implementation (${candidates.join(', ')}); the images were not sent to a text model`), { status: 503, code: 'LOCAL_AI_NO_VISION_NODE', retryable: false })
+    : Object.assign(new Error(`No live GPU-verified node advertises ${candidates.join(', ')}`), { status: 503, code: 'LOCAL_AI_NO_FABRIC_NODE', retryable: true }));
+
+  if (route !== 'local' && (forcedFabric || config?.mode !== 'off')) {
+    const disabledReason = !config?.orgId ? 'no_org' : (!forcedFabric && config?.mode !== 'prefer' ? 'invalid_mode' : null);
     if (disabledReason) {
+      if (forcedFabric) throw noNodeError();
       if (fabricDisabledLogged !== disabledReason) {
         fabricDisabledLogged = disabledReason;
         log({ event: 'local_ai_fabric_disabled', reason: disabledReason });
       }
     } else {
-      const attempt = await fabricChat({ input, priority, metadata, signal: callerSignal, fabric: config, now, sleep, log, budgetMs });
+      const attempt = await fabricChat({ input, priority, metadata, signal: callerSignal, fabric: config, now, sleep, log, budgetMs, candidates, features });
       if (attempt.outcome === 'done') {
-        return shapeChatResult(attempt.data, { route: 'fabric', computeTaskId: attempt.taskId ?? null, fabric: { attempted: true, reason: 'done', wait_ms: attempt.waitMs } });
+        return shapeChatResult(attempt.data, { route: 'fabric', computeTaskId: attempt.taskId ?? null, fabric: { attempted: true, reason: 'done', wait_ms: attempt.waitMs }, node: attempt.node, nodeId: attempt.nodeId, imagesIn });
       }
       if (!attempt.logged) log({ event: 'local_ai_fabric_fallback', reason: attempt.reason, task_id: attempt.taskId ?? null, ...(attempt.status ? { status: attempt.status } : {}) });
+      if (forcedFabric) {
+        // No local run for a forced fabric turn: say exactly why instead.
+        if (attempt.reason === 'no_eligible_node') throw noNodeError();
+        if (attempt.reason === 'failed') {
+          throw Object.assign(new Error(`Local AI fabric task ${attempt.status}${attempt.lastError ? `: ${attempt.lastError}` : ''}`), { status: 502, code: 'LOCAL_AI_FABRIC_FAILED', retryable: false, compute_task_id: attempt.taskId ?? null });
+        }
+        throw Object.assign(new Error(`Local AI fabric could not run the task (${attempt.reason})`), { status: 503, code: 'LOCAL_AI_FABRIC_UNAVAILABLE', retryable: true, compute_task_id: attempt.taskId ?? null });
+      }
       fabricResult = { attempted: true, reason: attempt.reason, wait_ms: attempt.waitMs };
     }
   }
+  if (imagesIn > 0 && localVisionModel && !input.model) input.model = localVisionModel;
 
   const timeout = AbortSignal.timeout(Math.max(30_000, budgetMs - (now() - startedAt)));
   const signal = callerSignal ? AbortSignal.any([callerSignal, timeout]) : timeout;
@@ -296,7 +381,7 @@ export async function localAiChat({
     throw error;
   }
 
-  return shapeChatResult(data, { route: 'local', computeTaskId: null, fabric: fabricResult });
+  return shapeChatResult(data, { route: 'local', computeTaskId: null, fabric: fabricResult, imagesIn });
 }
 
 export async function localAiEmbed(input, { model, fetchImpl = globalThis.fetch, timeoutMs = 130_000 } = {}) {
