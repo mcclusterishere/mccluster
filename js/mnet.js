@@ -1953,10 +1953,10 @@
     });
     return f.loading;
   }
-  /* the details of these missions (proof hint, safety line, credit), each asked for once, in reads of forty. The table is pending
-     SQL (supabase/pending/20261117100100_action_mission_details.sql): where it is not there yet the first read answers 404
-     (PGRST205), and that is remembered for the session, so nothing more is asked and the posts are drawn without source lines.
-     Resolves true when something new arrived; never rejects. */
+  /* the details of these missions (proof hint, safety line, credit), each asked for once, in reads of forty. The table is
+     supabase/migrations/20261118021521_action_mission_details.sql, applied to production on 2026-11-18; an installation without it
+     answers the first read with 404 (PGRST205), and that is remembered for the session, so nothing more is asked and the posts are
+     drawn without source lines. Resolves true when something new arrived; never rejects. */
   function loadMissionDetails(ids) {
     var f = state.missionFeed, got = false, chunks = [];
     var want = (ids || []).filter(function (id) { return MISSION_ID.test(String(id)) && !f.asked[id]; });

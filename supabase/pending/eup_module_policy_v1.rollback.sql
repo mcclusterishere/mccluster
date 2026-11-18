@@ -1,4 +1,4 @@
--- Recovery artifact for pending/eup_module_policy_v1.sql: never a forward migration.
+-- Recovery artifact for supabase/migrations/20261117144103_eup_module_policy_v1.sql: never a forward migration.
 -- Drops the module policy and its command log. Every guarded RPC that still calls public.eup_module_guard or
 -- public.eup_module_guard_reduce then fails closed (42883), so roll back eup_league_v1.sql / eup_intake_v1.sql
 -- first or expect their writes to refuse. The CASCADE on the trigger function removes the *_module_policy

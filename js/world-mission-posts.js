@@ -12,7 +12,8 @@
    - parseCredit / creditLinks / sourceLine: a sourced mission's credit, shown in full in its dialog, with its links, and as a
      compact source line on its post (data/missions/drawdown/README.md, "How to display a mission").
    - cleanMission / cleanDetails / detailsAbsent: what the page accepts from the database, and how it knows the details table is
-     not there yet (it is pending SQL: supabase/pending/20261117100100_action_mission_details.sql). */
+     not there (supabase/migrations/20261118021521_action_mission_details.sql, applied to production on 2026-11-18; an installation
+     without it answers 404 PGRST205). */
 (function (root, factory) {
   const api = factory();
   if (typeof module === 'object' && module.exports) module.exports = api;
