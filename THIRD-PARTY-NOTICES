@@ -6,11 +6,11 @@ that software's licence, whose notice is reproduced here as it requires. Each
 Worker file listed carries a one-line pointer to this file in its header;
 js/halo/vision.js carries its own credit in its header.
 
-================================================================================
+################################################################################
 gods-eye-view
 https://github.com/bilawalsidhu/gods-eye-view
 License: MIT
-================================================================================
+################################################################################
 
 Derived portions. Each was ported through Hitman's Halo, a private fork of
 gods-eye-view, and follows gods-eye-view's implementation:
@@ -101,11 +101,11 @@ history of gods-eye-view (4,586 commits, through 624c229 of 2026-11-16):
   workers/mccluster/src/lib/safe-fetch.js: no counterpart in gods-eye-view or in
   Hitman's Halo.
 
-================================================================================
+################################################################################
 Playfair Display (typeface)
 https://github.com/clauseggers/Playfair-Display
 License: SIL Open Font License, Version 1.1
-================================================================================
+################################################################################
 
 Copyright 2017 The Playfair Display Project Authors, with Reserved Font Name
 "Playfair Display". The licence travels with the font files, in full:
@@ -125,11 +125,11 @@ assets/fonts/OFL-playfair-display.txt (the LICENSE file of
   the prayer pages and, as the italic of the door's headline, by
   css/world-gate.css.
 
-================================================================================
+################################################################################
 Manrope (typeface)
 https://github.com/sharanda/manrope
 License: SIL Open Font License, Version 1.1
-================================================================================
+################################################################################
 
 Copyright 2019 The Manrope Project Authors. The licence travels with the font
 files, in full: assets/fonts/OFL-manrope.txt (the LICENSE file of
