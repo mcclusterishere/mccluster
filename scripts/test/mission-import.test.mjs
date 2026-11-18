@@ -503,6 +503,17 @@ test("the catalog's credit display rule is the README's and the details table's"
     "'Shown in full in the mission''s detail view; a feed card shows a compact source line that opens it.'"), 'the credit_line column comment says the same');
 });
 
+test("the catalog README's status is production's: the import applied as drafts, the publish still pending", () => {
+  const readme = read('data/missions/drawdown/README.md').replace(/\s+/g, ' ');
+  const status = /\*\*Status: ([^*]+)\*\*/.exec(readme);
+  assert.ok(status, 'the README carries a status line');
+  for (const f of ['supabase/migrations/20261117222809_action_globe_join_scope_v1.sql', 'supabase/migrations/20261118021521_action_mission_details.sql', partFiles[0], partFiles.at(-1)]) {
+    assert.ok(readme.includes(`\`${f}\``), `it names the applied ${f}`);
+  }
+  assert.ok(readme.includes(`\`${OUTPUT_FILES.publish}\``) && /is not applied/.test(readme), 'and the publish as the step that is not applied');
+  assert.doesNotMatch(readme, /No mission here is in production|`20261117100200_action_mission_drawdown_import_01\.sql`/, 'no stale pending wording');
+});
+
 test('every mission SQL file says to run it as postgres, never as the service role', () => {
   // In production the service role owns none of these objects and has no CREATE on schema public, and the MCP
   // runs as postgres (read 2026-11-17): "apply as the service role" would fail with 42501 on 10.1 and 10.2.
