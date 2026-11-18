@@ -132,3 +132,50 @@ export function countLiveGpuNodes(nodes, { excludeNodeId = null } = {}) {
 export function capabilityIds(manifest) {
   return [...new Set(validateCapabilityManifest(manifest).map((item) => item.capability))];
 }
+
+// Owned-only capabilities: the owner's own browser runs only on a node whose
+// enrolment recorded trust 'owned'. The record is labels.enrolled_trust,
+// written by the enrol call (gated by the owner's enrolment token, which the
+// Windows doctor deletes from the node after enrolling) and never by a
+// heartbeat, which a node signs with its own key alone. labels.trust is what
+// a node asserts; it is not the authority.
+export const OWNED_ONLY_CAPABILITIES = new Set(['browser.act']);
+export const ENROLLED_TRUST_LABEL = 'enrolled_trust';
+// Labels the enrolment fixes: a heartbeat keeps the stored value (or leaves the
+// label out when the enrolment did not set it); enrolling again changes them.
+export const ENROLLMENT_PINNED_LABELS = Object.freeze(['trust', 'role']);
+
+function labelObject(labels) {
+  return labels && typeof labels === 'object' && !Array.isArray(labels) ? labels : {};
+}
+
+// At enrolment: the labels as sent, with the trust they carry recorded as
+// enrolled_trust. A value the node sends for the record itself is ignored.
+export function enrollmentLabels(labels) {
+  const out = { ...labelObject(labels) };
+  delete out[ENROLLED_TRUST_LABEL];
+  if (typeof out.trust === 'string' && out.trust.trim()) out[ENROLLED_TRUST_LABEL] = out.trust.trim().slice(0, 40);
+  return out;
+}
+
+// At heartbeat: the node's labels, except that trust, role and the enrolment
+// record stay exactly what the enrolment stored.
+export function heartbeatLabels(stored, incoming) {
+  const before = labelObject(stored);
+  const out = { ...labelObject(incoming) };
+  for (const key of [...ENROLLMENT_PINNED_LABELS, ENROLLED_TRUST_LABEL]) {
+    if (before[key] === undefined) delete out[key];
+    else out[key] = before[key];
+  }
+  return out;
+}
+
+export function ownedOnlyAdmitted(capability, labels) {
+  return !OWNED_ONLY_CAPABILITIES.has(capability) || labelObject(labels)[ENROLLED_TRUST_LABEL] === 'owned';
+}
+
+// The manifest entries a node may claim tasks for: owned-only capabilities
+// only when its enrolment recorded trust 'owned'.
+export function claimableManifest(capabilities, labels) {
+  return (Array.isArray(capabilities) ? capabilities : []).filter((item) => ownedOnlyAdmitted(item?.capability, labels));
+}

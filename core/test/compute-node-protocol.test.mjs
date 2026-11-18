@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
-import { COMPUTE_PROTOCOL, HARDWARE_MODES, HARDWARE_MODE_RANK, clampYieldSeconds, countLiveGpuNodes, validateCapabilityManifest, validateEnrollment, validateInventory } from '../src/compute/protocol.mjs';
+import { COMPUTE_PROTOCOL, HARDWARE_MODES, HARDWARE_MODE_RANK, clampYieldSeconds, claimableManifest, countLiveGpuNodes, enrollmentLabels, heartbeatLabels, ownedOnlyAdmitted, validateCapabilityManifest, validateEnrollment, validateInventory } from '../src/compute/protocol.mjs';
 import { generateNodeIdentity, nodeIdFromPublicKey, signRequest, verifySignedRequest } from '../src/compute/signature.mjs';
 
 test('node identity is deterministically derived from its public key', () => {
@@ -198,4 +198,22 @@ test('the Core package never grows a Playwright dependency: the browser executor
   }
   assert.equal(pkg.scripts['compute:browser'], 'node src/compute/browser-executor.mjs');
   assert.match(pkg.scripts['test:browser'], /browser-executor\.test\.mjs/);
+});
+
+// Review N2R-3: the owned-only rule reads the trust the enrolment recorded,
+// never a label a heartbeat can write.
+test('the enrolment records trust; heartbeat labels keep trust, role and the record; only an owned record admits browser.act', () => {
+  assert.deepEqual(enrollmentLabels({ site: 'a', trust: ' owned ', role: 'gpu-laptop', enrolled_trust: 'something-else' }), { site: 'a', trust: ' owned ', role: 'gpu-laptop', enrolled_trust: 'owned' });
+  assert.deepEqual(enrollmentLabels({ site: 'a', trust: 7, enrolled_trust: 'owned' }), { site: 'a', trust: 7 }, 'no string trust, no record; a sent record is ignored');
+  assert.deepEqual(enrollmentLabels(null), {});
+  const stored = { site: 'a', trust: 'partner', role: 'cpu-helper', enrolled_trust: 'partner', hardware_mode: 'cpu-only' };
+  assert.deepEqual(heartbeatLabels(stored, { site: 'b', trust: 'owned', role: 'gpu-laptop', enrolled_trust: 'owned', hardware_mode: 'gpu-verified' }), { site: 'b', trust: 'partner', role: 'cpu-helper', enrolled_trust: 'partner', hardware_mode: 'gpu-verified' });
+  assert.deepEqual(heartbeatLabels({ site: 'a' }, { site: 'a', trust: 'owned', role: 'gpu-laptop', enrolled_trust: 'owned' }), { site: 'a' }, 'a heartbeat cannot add what the enrolment did not set');
+  assert.equal(ownedOnlyAdmitted('browser.act', { trust: 'owned' }), false);
+  assert.equal(ownedOnlyAdmitted('browser.act', { trust: 'partner', enrolled_trust: 'owned' }), true);
+  assert.equal(ownedOnlyAdmitted('ai.chat', {}), true, 'only owned-only capabilities need the record');
+  const manifest = [{ capability: 'ai.chat', implementation: 'qwen3.8b.local' }, { capability: 'browser.act', implementation: 'chromium.local' }];
+  assert.deepEqual(claimableManifest(manifest, { trust: 'owned' }).map((item) => item.capability), ['ai.chat']);
+  assert.deepEqual(claimableManifest(manifest, { enrolled_trust: 'owned' }).map((item) => item.capability), ['ai.chat', 'browser.act']);
+  assert.deepEqual(claimableManifest(null, {}), []);
 });

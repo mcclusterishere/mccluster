@@ -1,14 +1,16 @@
 import crypto from 'node:crypto';
 import { enqueueComputeTask, liveCapabilityImplementations } from '../compute/store.mjs';
-import { HARDWARE_MODE_RANK } from '../compute/protocol.mjs';
+import { HARDWARE_MODE_RANK, OWNED_ONLY_CAPABILITIES, ownedOnlyAdmitted } from '../compute/protocol.mjs';
 
 const ROUTING_KEYS = new Set(['provider', 'transport', 'hosting', 'billing']);
-// Capabilities only a trust-owned node may offer: the owner's own browser is
-// never taken from a node the owner did not install, whatever it advertises.
-export const OWNED_ONLY_CAPABILITIES = new Set(['browser.act']);
+// Capabilities only a node enrolled as owned may offer: the owner's own browser
+// is never taken from a node whose enrolment (gated by the owner's token) did
+// not record trust 'owned', whatever it advertises or asserts in labels.trust.
+// The gateway applies the same rule to the claim (protocol.claimableManifest).
+export { OWNED_ONLY_CAPABILITIES };
 
 function admitted(item) {
-  return !OWNED_ONLY_CAPABILITIES.has(item?.capability) || item?.labels?.trust === 'owned';
+  return ownedOnlyAdmitted(item?.capability, item?.labels);
 }
 
 function hash(value) {

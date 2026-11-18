@@ -135,13 +135,15 @@ test('discoverComputeTools without the control plane configured reports the reas
   assert.equal(result.diagnostic.reason, 'control_plane_not_configured');
 });
 
-// browser.act is admitted from trust-owned nodes only: discovery drops the
-// entries of any other node and the enqueue-time re-read ignores them too, so
-// a node the owner did not install cannot offer the owner's browser.
+// browser.act is admitted only from nodes whose trust was recorded as owned at
+// enrolment (labels.enrolled_trust, written by the owner-token-gated enrol
+// call and never by a heartbeat): discovery drops the entries of any other node
+// and the enqueue-time re-read ignores them too, so a node the owner did not
+// enrol as owned cannot offer the owner's browser.
 function browserEntry(overrides = {}) {
   return liveEntry({
     node_id: 'node_owned', node_name: 'owner-windows-gpu', capability: 'browser.act', implementation: 'chromium.local', backend: 'playwright', model: null, version: '1',
-    features: { browser: true, headed: false, screenshot: true, self_hosted: true }, labels: { trust: 'owned', site: 'owner-windows-gpu' }, ...overrides
+    features: { browser: true, headed: false, screenshot: true, self_hosted: true }, labels: { trust: 'owned', enrolled_trust: 'owned', site: 'owner-windows-gpu' }, ...overrides
   });
 }
 
@@ -149,7 +151,7 @@ test('browser.act entries from nodes that are not trust-owned are not discovered
   const live = [
     liveEntry(),
     browserEntry(),
-    browserEntry({ node_id: 'node_partner', node_name: 'partner-box', labels: { trust: 'partner' } }),
+    browserEntry({ node_id: 'node_partner', node_name: 'partner-box', labels: { trust: 'partner', enrolled_trust: 'partner' } }),
     browserEntry({ node_id: 'node_unlabelled', node_name: 'no-labels', labels: {} }),
     liveEntry({ node_id: 'node_partner', node_name: 'partner-box', labels: { trust: 'partner' } })
   ];
@@ -169,16 +171,35 @@ test('callComputeTool never pins browser.act to a node that is not trust-owned, 
   const seen = [];
   const target = { orgId: ORG, capability: 'browser.act', implementation: 'chromium.local', nodes: ['node_owned'], maxConcurrency: 1 };
   await assert.rejects(
-    callComputeTool(target, { actions: [{ type: 'done' }] }, { requirements: { browser: true } }, { enqueue: async () => { seen.push('enqueued'); return { task: { id: 't' } }; }, live: async () => [browserEntry({ node_id: 'node_partner', labels: { trust: 'partner' } })] }),
+    callComputeTool(target, { actions: [{ type: 'done' }] }, { requirements: { browser: true } }, { enqueue: async () => { seen.push('enqueued'); return { task: { id: 't' } }; }, live: async () => [browserEntry({ node_id: 'node_partner', labels: { trust: 'partner', enrolled_trust: 'partner' } })] }),
     (error) => error.code === 'COMPUTE_NO_LIVE_NODE'
   );
   assert.deepEqual(seen, []);
   const result = await callComputeTool(target, { actions: [{ type: 'done' }] }, { requirements: { browser: true }, maxAttempts: 1, source: 'capability:browser.act' }, {
     enqueue: async (args) => { seen.push(args); return { task: { id: 't2', status: 'queued' }, replayed: false }; },
-    live: async () => [browserEntry({ node_id: 'node_partner', labels: { trust: 'partner' } }), browserEntry()]
+    live: async () => [browserEntry({ node_id: 'node_partner', labels: { trust: 'partner', enrolled_trust: 'partner' } }), browserEntry()]
   });
   assert.equal(result.task.id, 't2');
   assert.deepEqual(seen[0].requirements, { features: { browser: true } });
   assert.deepEqual(seen[0].metadata.advertised_nodes_at_submit, ['node_owned'], 'only the owned node is counted at submit');
   assert.equal(seen[0].maxAttempts, 1);
+});
+
+// Review N2R-3: labels.trust is what a node asserts, and before the fix any
+// heartbeat could rewrite it. A node that says trust 'owned' without the trust
+// recorded at enrolment is not admitted, at discovery or at enqueue.
+test('browser.act from a node that only asserts labels.trust owned (no trust recorded at enrolment) is never admitted', async () => {
+  const asserted = browserEntry({ node_id: 'node_asserted', node_name: 'asserted-box', labels: { trust: 'owned', role: 'gpu-laptop', site: 'asserted-box' } });
+  // The recorded word must be exactly 'owned'.
+  const inexact = browserEntry({ node_id: 'node_inexact', node_name: 'inexact-box', labels: { trust: 'partner', enrolled_trust: 'Owned' } });
+  const { tools, diagnostic } = await discoverComputeTools({ live: async () => [liveEntry(), asserted, inexact], env: ENV });
+  assert.equal(tools.find((tool) => tool.target.capability === 'browser.act'), undefined, 'no browser tool from an asserted trust');
+  assert.equal(diagnostic.dropped_owned_only, 2);
+  const seen = [];
+  const target = { orgId: ORG, capability: 'browser.act', implementation: 'chromium.local', nodes: ['node_asserted'], maxConcurrency: 1 };
+  await assert.rejects(
+    callComputeTool(target, { actions: [{ type: 'done' }] }, { requirements: { browser: true } }, { enqueue: async () => { seen.push('enqueued'); return { task: { id: 't' } }; }, live: async () => [asserted, inexact] }),
+    (error) => error.code === 'COMPUTE_NO_LIVE_NODE'
+  );
+  assert.deepEqual(seen, [], 'nothing was enqueued for an asserted trust');
 });

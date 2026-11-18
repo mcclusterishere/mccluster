@@ -1,5 +1,5 @@
 import http from 'node:http';
-import { COMPUTE_PROTOCOL, DEFAULT_CLOCK_SKEW_MS, clampYieldSeconds, countLiveGpuNodes, validateCapabilityManifest, validateEnrollment, validateInventory, validateLoad, validateNodeId } from './protocol.mjs';
+import { COMPUTE_PROTOCOL, DEFAULT_CLOCK_SKEW_MS, clampYieldSeconds, claimableManifest, countLiveGpuNodes, enrollmentLabels, heartbeatLabels, validateCapabilityManifest, validateEnrollment, validateInventory, validateLoad, validateNodeId } from './protocol.mjs';
 import { keyFingerprint, nodeIdFromPublicKey, SIGNATURE_HEADERS, verifySignedRequest } from './signature.mjs';
 import { acceptNonce, claimLease, completeLease, enqueueComputeTask, enrollNode, failLease, heartbeatLease, heartbeatNode, listNodes, liveCapabilityImplementations, nodeById, startLease } from './store.mjs';
 import { assertJsonContentType, normalizeRequestId, parseIdempotencyKey, resolveScopedOrg, secureSecretEqual } from './http-security.mjs';
@@ -119,7 +119,9 @@ async function route(req, res) {
       agent_version: enrollment.agent_version,
       inventory: enrollment.inventory,
       capabilities: enrollment.capabilities,
-      labels: enrollment.labels,
+      // The owner's enrolment token authorised this call: the trust it carries
+      // is recorded (labels.enrolled_trust) where no heartbeat can reach it.
+      labels: enrollmentLabels(enrollment.labels),
       max_leases: enrollment.max_leases
     });
     return json(res, 201, {
@@ -172,7 +174,9 @@ async function route(req, res) {
       capabilities,
       inventory,
       load,
-      labels: body.labels && typeof body.labels === 'object' ? body.labels : undefined,
+      // A heartbeat is signed by the node's own key only: trust, role and the
+      // enrolment record keep what the owner-gated enrolment stored.
+      labels: body.labels && typeof body.labels === 'object' && !Array.isArray(body.labels) ? heartbeatLabels(node.labels, body.labels) : undefined,
       agentVersion: body.agent_version,
       maxLeases: body.max_leases
     });
@@ -189,7 +193,9 @@ async function route(req, res) {
   }
 
   if (url.pathname === '/v1/compute/lease' && req.method === 'POST') {
-    const manifest = Array.isArray(node.capabilities) ? node.capabilities : [];
+    // Owned-only capabilities are claimable only by a node whose enrolment
+    // recorded trust 'owned', whatever its manifest advertises.
+    const manifest = claimableManifest(node.capabilities, node.labels);
     const capabilities = [...new Set(manifest.map((item) => item.capability).filter(Boolean))];
     const implementations = [...new Set(manifest.map((item) => item.implementation).filter(Boolean))];
     const lease = await claimLease(node.id, {
