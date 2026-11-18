@@ -15,7 +15,11 @@
    - the network: nothing read on arrival, only the door's reads on opening, nothing more within five minutes;
    - every way in (the openers) and every way out (Back, Escape, the scrim, the phone's Back, a hand-off, a success);
    - motion only after a gesture, none under reduced motion, no blur over the globe; contrast from pixels; 44 px targets;
-   - the onboarding pages, still pages, in the door's hand.
+   - the onboarding pages, still pages, in the door's hand;
+   - the review of 2026-11-18 (DR-M1..DR-m11): the action wholly in view at rest, above the fade, with the privacy notice up
+     and on a laptop; the open mission on the phone's stage; the crest on the stage's dark band; the World's own credit,
+     legend and feed asleep under the veil; the names a reader hears; the faces fetched only on intent; a touch screen's
+     keyboard not raised by the door; Back from a mission's Join back in the mission.
      CESIUM_DIR=/path/to/Build/Cesium node scripts/e2e/world-gate.e2e.mjs [outDir]
    Needs Playwright (PLAYWRIGHT_DIR if not resolvable). Every PNG of the set and results.json land in outDir. */
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -38,6 +42,69 @@ const opened = (page) => page.waitForFunction(() => { const d = document.getElem
 const closed = (page) => page.waitForFunction(() => document.getElementById('mnSignedOut').hidden, null, { timeout: 5000 }).then(() => true, () => false);
 const pulseSettled = (page) => page.waitForFunction(() => ['wgPulseMission', 'wgPulseNews', 'wgPulseRecord'].filter((id) => !document.getElementById(id).hidden).length >= 1, null, { timeout: 8000 }).catch(() => {});
 const overlap = (a, b) => !!a && !!b && a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+/* the action at rest: wholly inside the sheet, clear of the fade that says there is more (34 px), and the topmost thing
+   at its centre and its four inner corners (review DR-M1, DR-M2: no scrollIntoView first) */
+async function actionAtRest(page, sel = '#mnAuthGo') {
+  return page.evaluate((sel) => {
+    const sh = document.getElementById('wgSheet'), el = document.querySelector(sel);
+    if (!sh || !el || !el.getClientRects().length) return { ok: false, why: 'not shown' };
+    const s = sh.getBoundingClientRect(), g = el.getBoundingClientRect(), more = sh.hasAttribute('data-more');
+    const floor = more ? s.bottom - 34 : s.bottom;
+    /* the centre, and four points just inside its edges that lie inside any rounded shape (a pill's ends are half circles) */
+    const mx = g.left + g.width / 2, my = g.top + g.height / 2, inset = Math.min(g.height, g.width) / 2;
+    const pts = [[mx, my], [mx, g.top + 4], [mx, g.bottom - 4], [g.left + inset, my], [g.right - inset, my]];
+    const hits = pts.map(([x, y]) => { const e = document.elementFromPoint(x, y); return !!e && (e === el || el.contains(e) || (el.tagName === 'INPUT' && !!e.closest('label') && e.closest('label').contains(el))); });
+    return { ok: g.top >= s.top - 0.5 && g.bottom <= floor + 0.5 && hits.every(Boolean), go: [Math.round(g.top), Math.round(g.bottom)], sheet: [Math.round(s.top), Math.round(s.bottom)], floor: Math.round(floor), more, hits };
+  }, sel);
+}
+/* the cards the phone's stage shows, in order */
+const stageCards = (page) => page.evaluate(() => [...document.querySelectorAll('#wgPulse > .wg-card')].filter((c) => !c.hidden && c.getClientRects().length && getComputedStyle(c).display !== 'none').map((c) => c.id));
+/* the brightest pixel in a strip of the page, 0-255 luminance (a pale seam, a peeking feed) */
+async function brightest(page, clip) {
+  const png = await page.screenshot({ clip, timeout: 90000 });
+  return page.evaluate(async (b64) => {
+    const img = new Image(); img.src = 'data:image/png;base64,' + b64; await img.decode();
+    const c = new OffscreenCanvas(img.width, img.height), g = c.getContext('2d', { willReadFrequently: true });
+    g.drawImage(img, 0, 0);
+    const d = g.getImageData(0, 0, img.width, img.height).data;
+    let max = 0;
+    for (let i = 0; i < d.length; i += 4) max = Math.max(max, 0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]);
+    return Math.round(max);
+  }, png.toString('base64'));
+}
+/* what Chrome's accessibility tree tells a screen reader about an element: its role, name and description */
+async function ax(page, sel) {
+  const client = await page.context().newCDPSession(page);
+  try {
+    const { root } = await client.send('DOM.getDocument', { depth: -1 });
+    const { nodeId } = await client.send('DOM.querySelector', { nodeId: root.nodeId, selector: sel });
+    const { nodes } = await client.send('Accessibility.getPartialAXTree', { nodeId, fetchRelatives: false });
+    const n = nodes[0] || {};
+    return { role: n.role && n.role.value, name: n.name && n.name.value, description: n.description ? n.description.value : '', pressed: (n.properties || []).some((p) => p.name === 'pressed') };
+  } finally { await client.detach().catch(() => {}); }
+}
+/* the World under the door at 700 px and up: where the veil and the lower third's shelf are solid, and where the globe
+   frame's own legend, credit and controls and the feed's row sit (review DR-m3) */
+const peek = (page) => page.evaluate(() => {
+  const r = (el) => { if (!el || !el.getClientRects().length) return null; const b = el.getBoundingClientRect(); return { top: Math.round(b.top), bottom: Math.round(b.bottom), left: Math.round(b.left), right: Math.round(b.right) }; };
+  const veil = document.querySelector('#mnSignedOut .wg-veil'), v = veil.getBoundingClientRect(), vb = getComputedStyle(veil).backgroundImage, vc = getComputedStyle(veil).backgroundColor;
+  /* the veil is solid 22 px below its top when it is a gradient, at once when it is a flat colour */
+  const veilSolid = { top: Math.round(v.top + (/gradient/.test(vb) ? 22 : 0)), left: Math.round(v.left), flat: !/gradient/.test(vb) ? vc : null };
+  const lower = document.querySelector('#mnSignedOut .wg-lower'), lb = lower.getBoundingClientRect(), shelf = getComputedStyle(lower, '::before');
+  const sh = parseFloat(shelf.height) || 0, sb = lb.bottom - (parseFloat(shelf.bottom) || 0);
+  const shelfSolid = { top: Math.round(sb - sh + sh * 0.66), bottom: Math.round(sb), left: Math.round(lb.left), right: Math.round(lb.right) };
+  const f = document.getElementById('mnWorldFrame'), fr = f.getBoundingClientRect(), d = f.contentDocument;
+  const chrome = [];
+  if (d) for (const s of ['.osm-credit', '#heatLegend', '.globe-controls', '.globe-data', '#envLegend']) {
+    const e = d.querySelector(s); if (!e || !e.getClientRects().length || getComputedStyle(e).display === 'none' || getComputedStyle(e).visibility === 'hidden') continue;
+    const b = e.getBoundingClientRect(); if (b.width < 2 || b.height < 2) continue;
+    chrome.push({ sel: s, top: Math.round(fr.top + b.top), bottom: Math.round(fr.top + b.bottom), left: Math.round(fr.left + b.left), right: Math.round(fr.left + b.right) });
+  }
+  const scope = r(document.getElementById('mnFeedScope')), guest = r(document.getElementById('mnGuestCard'));
+  return { veil: veilSolid, shelf: shelfSolid, chrome, scope, guest, vw: innerWidth, vh: innerHeight };
+});
+/* a box is asleep when the solid veil or the solid foot of the shelf covers it, or it is off screen */
+const asleep = (p, b) => !b || b.top >= p.vh || b.bottom <= 0 || (b.top >= p.veil.top && b.left >= p.veil.left - 1) || (b.top >= p.shelf.top && b.left >= p.shelf.left - 1 && b.right <= p.shelf.right + 1);
 /* the noise a scenario may allow: only its own deliberate fixture failures */
 function noise(world, allow = []) {
   /* the house owner check answers 403 to everyone here; without CESIUM_DIR the globe's library is refused on purpose */
@@ -58,13 +125,30 @@ async function frame(page, world, name, { root = '#mnSignedOut', shot = true } =
   check(name, 'nothing scrolls sideways', m.sw === m.cw, { sw: m.sw, cw: m.cw });
   check(name, 'every text reads at 4.5:1 or better (3:1 for large type), measured from pixels with the glyphs masked', c.failures.length === 0 && c.items.length > 0, c.failures.slice(0, 5));
   check(name, 'every interactive element is at least 44 x 44', small.length === 0, small.slice(0, 6));
+  /* the fade that says there is more never lies over a control at rest: text under it is not measured for contrast, so no
+     control may be there (review DR-m10) */
+  if (root === '#mnSignedOut') {
+    const faded = await page.evaluate(() => {
+      const sh = document.getElementById('wgSheet');
+      if (!sh || !sh.hasAttribute('data-more') || sh.scrollTop > 2) return [];
+      const s = sh.getBoundingClientRect(), top = s.bottom - 34;
+      /* a control's drawn words (its text's own boxes; a field's whole box), not the padding that makes it a 44 px target */
+      const drawn = (e) => { if (e.tagName === 'INPUT') return [e.getBoundingClientRect()]; const rg = document.createRange(); rg.selectNodeContents(e); return [...rg.getClientRects()].filter((x) => x.width > 1 && x.height > 1); };
+      return [...sh.querySelectorAll('button, a[href], input:not([type=hidden])')].filter((e) => e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden')
+        /* 4 px or more of the words' box between the fade's top and the sheet's foot (a sliver of a line box carries no ink) */
+        .flatMap((e) => drawn(e).map((r) => ({ el: e, r }))).filter(({ r }) => Math.min(r.bottom, s.bottom) - Math.max(r.top, top) >= 4)
+        .map(({ el, r }) => ({ id: el.id || el.textContent.trim().slice(0, 24), top: Math.round(r.top), bottom: Math.round(r.bottom), fade: Math.round(top) }));
+    });
+    check(name, 'no control lies under the fade at rest', faded.length === 0, faded);
+  }
   return m;
 }
 /* the door's law, read from the live page */
 async function law(page, scope, phase) {
   const l = await page.evaluate((phase) => {
     const d = document.getElementById('mnSignedOut'), imgs = [...d.querySelectorAll('img')];
-    const crown = imgs.map((i) => { const cs = getComputedStyle(i), r = i.getBoundingClientRect(); return { src: i.getAttribute('src'), alt: i.getAttribute('alt'), w: i.getAttribute('width'), h: i.getAttribute('height'), shown: i.getClientRects().length > 0 && cs.display !== 'none', box: [Math.round(r.width), Math.round(r.height)],
+    const band = (parseFloat(getComputedStyle(d).getPropertyValue('--wg-head')) || 72) + 2;
+    const crown = imgs.map((i) => { const cs = getComputedStyle(i), r = i.getBoundingClientRect(); return { src: i.getAttribute('src'), alt: i.getAttribute('alt'), w: i.getAttribute('width'), h: i.getAttribute('height'), shown: i.getClientRects().length > 0 && cs.display !== 'none', box: [Math.round(r.width), Math.round(r.height)], onBand: r.top >= 0 && r.bottom <= band + 0.5, inStage: !!i.closest('.wg-stage'),
       plain: cs.filter === 'none' && /^none/.test(cs.maskImage || cs.webkitMaskImage || 'none') && cs.mixBlendMode === 'normal' && cs.boxShadow === 'none' && cs.borderTopWidth === '0px' && (cs.outlineStyle === 'none' || cs.outlineWidth === '0px') && cs.backgroundImage === 'none' && /rgba\(0, 0, 0, 0\)|transparent/.test(cs.backgroundColor) && cs.borderRadius === '0px' }; });
     const text = d.innerText;
     const inputs = [...d.querySelectorAll('input:not([type=hidden])')].filter((i) => i.getClientRects().length).map((i) => ({ id: i.id, size: parseFloat(getComputedStyle(i).fontSize) }));
@@ -78,18 +162,17 @@ async function law(page, scope, phase) {
       shows: [...d.querySelectorAll('[data-reveal]')].map((b) => ({ controls: b.getAttribute('aria-controls'), pressed: b.getAttribute('aria-pressed'), name: b.getAttribute('aria-label') })),
       providers: !document.getElementById('mnProviders').hidden, or: getComputedStyle(document.querySelector('#mnSignedOut .mn__or')).display !== 'none' && !document.getElementById('mnProviders').hidden };
   }, phase);
-  const shownCrowns = l.crown.filter((c) => c.shown);
-  check(scope, 'the crown is the supplied artwork only: two files, alt "", 160 x 160, one shown for the phase, square, nothing drawn on or around it', l.crown.length === 2 && l.crown.every((c) => c.alt === '' && c.w === '160' && c.h === '160' && c.plain)
-    && shownCrowns.length === 1 && shownCrowns[0].src === (phase === 'day' ? 'assets/img/equity-uprise-mark.png' : 'assets/img/equity-uprise-mark-white.png') && shownCrowns[0].box[0] === shownCrowns[0].box[1], l.crown);
+  check(scope, 'the crest is the supplied artwork only: one file, the white mark on the stage\'s dark band by night and by day, alt "", 160 x 160, a square 52 px box, nothing drawn on or around it', l.crown.length === 1 && l.crown.every((c) => c.alt === '' && c.w === '160' && c.h === '160' && c.plain && c.shown && c.inStage && c.onBand
+    && c.src === 'assets/img/equity-uprise-mark-white.png' && c.box[0] === 52 && c.box[1] === 52), { crown: l.crown, phase });
   check(scope, 'no other entity or name: never "Equity Uprise" in words, never Matthew McCluster, I AM HERE, Whip Equipped or PRIM3; the colophon is the company\'s', !/Equity Uprise|Human Uprise|Matthew McCluster|I AM HERE|Whip Equipped|PRIM3/.test(l.text) && /A McCluster Corp program\./.test(l.text), l.text.slice(0, 300));
   check(scope, 'no "Hu Up" anywhere on the page; the headline is the line, with no lede after it', !l.hu && l.h2 === 'Turn what you care about into action.' && !l.lede);
   check(scope, 'a dialog named for its mode, without aria-modal', l.role === 'dialog' && l.modal === null && l.label === (l.mode === 'create' ? 'Create an account' : 'Sign in'), { role: l.role, modal: l.modal, label: l.label, mode: l.mode });
   check(scope, 'the doors are tabs: Sign in and Create account by name, one tab stop, the panel labelled by the chosen one', l.tabs.list === 'Sign in or create an account' && JSON.stringify(l.tabs.names) === '["Sign in","Create account"]'
     && JSON.stringify(l.tabs.tabindex) === (l.mode === 'create' ? '["-1","0"]' : '["0","-1"]') && l.tabs.panel === (l.mode === 'create' ? 'mnCreateTab' : 'mnSignInTab'), l.tabs);
   check(scope, 'fields: a label each, autocomplete as before, described by the status (and the rule, and the match)', l.fields.every((f) => f.label) && l.fields[0].ac === 'email' && l.fields[1].ac === (l.mode === 'create' ? 'new-password' : 'current-password') && l.fields[2].ac === 'new-password'
-    && l.fields[0].desc === 'mnAuthStatus' && l.fields[1].desc === 'mnPasswordHint mnAuthStatus' && l.fields[2].desc === 'wgMatch mnAuthStatus' && l.shows.every((s) => s.controls && s.pressed === 'false' && s.name === 'Show password'), { fields: l.fields, shows: l.shows });
+    && l.fields[0].desc === 'mnAuthStatus' && l.fields[1].desc === (l.mode === 'create' ? 'mnPasswordHint mnAuthStatus' : 'mnAuthStatus') && l.fields[2].desc === 'wgMatch mnAuthStatus' && l.shows.every((s) => s.controls && s.pressed === null && s.name === 'Show password'), { fields: l.fields, shows: l.shows });
   check(scope, 'form controls at 16 px or more', l.inputs.every((i) => i.size >= 16), l.inputs);
-  check(scope, 'no backdrop-filter in the door overlaps the globe frame', l.blur.every((b) => !(b.r.left < l.frame.right - 0.5 && b.r.right > l.frame.left && b.r.top < l.frame.bottom && b.r.bottom > l.frame.top)), l.blur);
+  check(scope, 'no backdrop-filter in the door overlaps the globe frame (by a whole pixel or more)', l.blur.every((b) => !(b.r.left < l.frame.right - 1 && b.r.right > l.frame.left && b.r.top < l.frame.bottom && b.r.bottom > l.frame.top)), l.blur);
   check(scope, 'only same-origin font files', l.fonts.every((f) => f.startsWith(server.base)), l.fonts);
   return l;
 }
@@ -137,16 +220,19 @@ try {
       await overlay(page, name);
       const reads = world.requests.filter((r) => r.frame === 'main' && /news-heat|action-archive|docket-516r/.test(r.p));
       check(name, 'opening reads only news-heat and the record, once each', reads.length === 2 && reads.some((r) => r.p === '/v1/world/news-heat' && !r.q) && reads.some((r) => r.p === '/v1/action-archive/docket-516r-2025'), reads);
-      check(name, 'the pulse is the World\'s real answers: Open now and the newest mission, news from 183 countries (GDELT), the Docket 516R record; never a total', m.cards[0].shown && /Give someone a free ride/.test(m.cards[0].text) && /Open now/.test(m.cards[0].text) && !/missions/.test(m.cards[0].text)
-        && /News from 183 countries/.test(m.cards[1].text) && /The GDELT Project/.test(m.cards[1].text) && !/12,?296|12,?000/.test(m.cards[1].text) && /Docket 516R · Write the Change/.test(m.cards[2].text) && /10 participants · 9 songs · Bridgeport, CT · Oct 5, 2025/.test(m.cards[2].text), m.cards);
+      check(name, 'the pulse is the World\'s real answers: Open now and the newest mission, news from 183+ countries (GDELT, a capped read), the Docket 516R record; never a total', m.cards[0].shown && /Give someone a free ride/.test(m.cards[0].text) && /Open now/.test(m.cards[0].text) && !/missions/.test(m.cards[0].text)
+        && /News from 183\+ countries/.test(m.cards[1].text) && /The GDELT Project/.test(m.cards[1].text) && !/12,?296|12,?000/.test(m.cards[1].text) && /Docket 516R · Write the Change/.test(m.cards[2].text) && /10 participants · 9 songs · Bridgeport, CT · Oct 5, 2025/.test(m.cards[2].text), m.cards);
       check(name, 'the Earth\'s credit is on the stage', /NASA imagery/.test(m.creditText) && /Natural Earth/.test(m.creditText) && /OpenStreetMap/.test(m.creditText), m.creditText);
       const prov = await page.evaluate(() => ({ providers: !document.getElementById('mnProviders').hidden, buttons: document.querySelectorAll('#mnProviderButtons button').length }));
       check(name, 'email only in the live settings: no provider button and no "or"', !prov.providers && prov.buttons === 0, prov);
-      const hit = await page.evaluate(() => { const g = document.getElementById('mnAuthGo').getBoundingClientRect(), e = document.elementFromPoint(g.left + g.width / 2, g.top + g.height / 2); return !!e && (e.id === 'mnAuthGo' || !!e.closest('#mnAuthGo')); });
-      if (w === 390 && mode === 'signin') {
-        check(name, '390 sign in: the sheet\'s top between 150 and 260, the action wholly on screen and hit-testable, the pulse showing', m.sheet.top >= 150 && m.sheet.top <= 260 && m.go.top >= 0 && m.go.bottom <= m.vh && hit && m.pulse && m.pulse.h > 0, { sheet: m.sheet, go: m.go, hit, pulse: m.pulse });
-        await tabsStayInside(page, name);
+      const rest = await actionAtRest(page);
+      check(name, 'the action is wholly in view at rest: inside the sheet, clear of the fade, the topmost thing at its centre and corners', rest.ok, rest);
+      if (w !== 1280) {
+        const cards = await stageCards(page);
+        check(name, 'the phone and tablet stage carries the World\'s pulse: the open mission first', cards[0] === 'wgPulseMission', cards);
+        if (w === 390 && mode === 'signin') check(name, '390 sign in: all three cards one under another, none cut at the edge', cards.length === 3 && m.cards.every((c) => c.shown), { cards });
       }
+      if (w === 390 && mode === 'signin') await tabsStayInside(page, name);
       if (w === 390 && mode === 'create') {
         check(name, '390 create: the sheet scrolls inside and says there is more', m.more, m.sheet);
         if (phase === 'night') {
@@ -159,14 +245,22 @@ try {
           check('door-create-390-night-end', 'at the end of the sheet the action is wholly visible and hit-testable, and the fade has gone', !end.more && end.go.top >= end.sheet.top && end.go.bottom <= end.sheet.bottom && hit2, { go: end.go, sheet: end.sheet, more: end.more });
         }
       }
+      if (w >= 820) {
+        const p = await peek(page);
+        const awake = p.chrome.filter((b) => !asleep(p, b)).concat([['scope', p.scope], ['guest', p.guest]].filter(([, b]) => !asleep(p, b)).map(([sel, b]) => ({ sel, ...b })));
+        check(name, 'the World under the door sleeps: the globe frame\'s own credit, legend and controls and the feed\'s row and guest card lie under the solid veil or shelf (one credit on screen)', awake.length === 0 && p.chrome.length > 0, { awake, veil: p.veil, shelf: p.shelf });
+      }
       if (w === 820) {
         const visibleGlobe = m.sheet.top - Math.max(m.frame.top, (await page.evaluate(() => parseFloat(getComputedStyle(document.getElementById('mnSignedOut')).getPropertyValue('--wg-head')) || 72)) + 2);
         check(name, '820: the card 500 px or less and centred, wholly visible without scrolling, 300 px or more of the globe above it', m.sheet.w <= 500 && Math.abs(m.sheet.left - (m.vw - m.sheet.right)) <= 2 && !m.more && m.sheet.bottom <= m.vh && m.sheet.top >= 0 && visibleGlobe >= 300, { sheet: m.sheet, more: m.more, visibleGlobe });
       }
       if (w === 1280) {
-        check(name, '1280: the card 484 ± 8 px in the right-hand column' + (mode === 'signin' ? ', wholly visible' : ', fitting or scrolling inside with the fade'), Math.abs(m.sheet.w - 484) <= 8 && m.sheet.left >= m.vw - 540 - 1 && (mode === 'create' ? true : !m.more) && m.sheet.top >= 0 && m.sheet.bottom <= m.vh, { sheet: m.sheet, more: m.more });
+        check(name, '1280: the card 484 ± 8 px in the right-hand column, wholly on screen, everything in it without a scroll', Math.abs(m.sheet.w - 484) <= 8 && m.sheet.left >= m.vw - 540 - 1 && !m.more && m.sheet.top >= 0 && m.sheet.bottom <= m.vh, { sheet: m.sheet, more: m.more });
         check(name, '1280: the dated lower third at the bottom left, up to three cards', /Today in the World/i.test(m.dateline) && m.pulse.left < m.sheet.left && m.pulse.bottom > m.vh / 2, { dateline: m.dateline, pulse: m.pulse });
         check(name, '1280: the veil never overlaps the globe frame', !overlap(m.veil, { ...m.frame, right: m.frame.right - 0.5 }), { veil: m.veil, frame: m.frame });
+        /* no pale seam between the Earth and the card: the strip right of the frame is dark by day too (it read 109 to 139) */
+        const seam = await brightest(page, { x: Math.max(0, m.frame.right), y: 120, width: Math.max(4, m.sheet.left - m.frame.right - 3), height: 360 });
+        check(name, '1280: the strip between the Earth and the card stays dark (brightest pixel under 40 of 255)', seam < 40, seam);
       }
       const n = noise(world);
       check(name, 'no console error and no 4xx', n.console.length === 0 && n.bad.length === 0 && world.errors.length === 0, { ...n, errors: world.errors });
@@ -199,6 +293,15 @@ try {
       await frame(page, world, name);
       const s = await page.evaluate(() => ({ why: document.getElementById('mnGuestWhy').textContent, dialog: document.getElementById('mnMissionDialog').open, mission: new URL(location.href).searchParams.get('mission'), card: document.getElementById('wgPulseMission').textContent.replace(/\s+/g, ' ').trim(), button: !!document.querySelector('#wgPulseMission button') }));
       check(name, 'from a mission Join: the reason, the dialog closed, ?mission= kept, the card reads Your mission and is not a button', s.why === 'Sign in to join this mission.' && !s.dialog && s.mission === RIDE && /Your mission/.test(s.card) && /Give someone a free ride/.test(s.card) && !s.button, s);
+      /* the way back goes back into the mission, by the Back pill and by the phone's Back (review DR-m2) */
+      for (const [how, act] of [['the Back pill', () => page.click('#mnSignedOutBack')], ['the phone\'s Back', () => page.evaluate(() => history.back())]]) {
+        await act();
+        await closed(page);
+        await page.waitForSelector('#mnMissionDialog[open]', { timeout: 10000 }).catch(() => {});
+        const back = await page.evaluate(() => ({ dialog: document.getElementById('mnMissionDialog').open, title: document.getElementById('mnMissionTitle').textContent, mission: new URL(location.href).searchParams.get('mission'), door: !document.getElementById('mnSignedOut').hidden, hist: history.state && history.state.mccDoor }));
+        check(name, `${how} from a mission's Join puts the guest back in that mission's sheet, ?mission= kept, no door and no history entry left`, back.dialog && back.title === 'Give someone a free ride' && back.mission === RIDE && !back.door && !back.hist, back);
+        if (how === 'the Back pill') { await page.click('#mnMissionJoin'); await opened(page); }
+      }
     } finally { await ctx.close(); }
   }
 
@@ -336,7 +439,7 @@ try {
   }
 
   /* ---------- the privacy banner (first visit, banner mode) ---------- */
-  if (runs('banner')) for (const [w, phase, mode] of [[390, 'night', 'signin'], [390, 'day', 'create'], [1280, 'night', 'signin']]) {
+  if (runs('banner')) for (const [w, phase, mode] of [[390, 'night', 'signin'], [390, 'day', 'create'], [1280, 'night', 'signin'], [1280, 'night', 'create']]) {
     const name = `door-banner-${mode}-${w}-${phase}`;
     const { ctx, page, world } = await openWorld(browser, server.base, DEVICES[w], '/mnet.html?view=feed', { phase, banner: true });
     try {
@@ -349,10 +452,16 @@ try {
       await tabsStayInside(page, name, 30);
       const b = await page.evaluate(() => { const a = document.getElementById('mccPrivacyNoticeAgree').getBoundingClientRect(), e = document.elementFromPoint(a.left + a.width / 2, a.top + a.height / 2); return { hit: e && e.id, inert: document.getElementById('mccPrivacyNotice').inert, safe: getComputedStyle(document.getElementById('mnSignedOut')).getPropertyValue('--wg-safe-bottom') }; });
       check(name, 'the banner is never covered and never inert; the sheet ends above it', !overlap(m.banner, m.sheet) && b.hit === 'mccPrivacyNoticeAgree' && !b.inert, { banner: m.banner, sheet: m.sheet, b });
-      await page.evaluate(() => document.getElementById('mnAuthGo').scrollIntoView({ block: 'nearest' }));
-      await page.waitForTimeout(300);
-      const reach = await page.evaluate(() => { const g = document.getElementById('mnAuthGo').getBoundingClientRect(), e = document.elementFromPoint(g.left + g.width / 2, g.top + g.height / 2); return !!e && !!e.closest('#mnAuthGo'); });
-      check(name, 'the action is reachable by scrolling the sheet', reach);
+      /* at rest: nothing scrolled first (review DR-M1). In Create account the box to tick sits above the action, so it is in
+         view too */
+      await page.evaluate(() => { const s = document.getElementById('wgSheet'); s.scrollTop = 0; });
+      await settle(page);
+      const rest = await actionAtRest(page);
+      check(name, 'with the notice up, the action is wholly in view at rest, above the fade and the notice', rest.ok && !overlap(m.banner, m.go), { rest, banner: m.banner });
+      if (mode === 'create') {
+        const box = await actionAtRest(page, '#mnCreateAgreeBox');
+        check(name, 'with the notice up, the privacy box is in view at rest too', box.ok, box);
+      }
       const tall = (await doorFrame(page)).sheet.h;
       await page.click('#mccPrivacyNoticeLater');
       await page.waitForTimeout(400);
@@ -398,6 +507,8 @@ try {
           return out;
         });
         check(name, '320 x 640: every control can be reached', reach.length === 0, reach);
+        const lines = await page.evaluate(() => { const one = (el) => { if (!el || !el.getClientRects().length) return true; const r = document.createRange(); r.selectNodeContents(el); return new Set([...r.getClientRects()].map((x) => Math.round(x.top))).size === 1; }; return { tabs: [...document.querySelectorAll('#mnSignedOut .wg-tab-w')].map(one), forgot: one(document.getElementById('mnForgot')), labels: [...document.querySelectorAll('#mnSignedOut .wg-field .mn__label')].filter((l) => l.getClientRects().length).map((l) => [l.textContent, one(l)]) }; });
+        check(name, '320: each door\'s word, every field\'s name and the Forgot line stay on one line', lines.tabs.every(Boolean) && lines.forgot && lines.labels.every(([, ok]) => ok), lines);
       } finally { await ctx.close(); }
     }
   }
@@ -407,7 +518,8 @@ try {
     const { ctx, page, world } = await openWorld(browser, server.base, DEVICES[390], '/mnet.html?view=feed', { phase: 'night', token: 'ok' });
     try {
       await worldReady(page);
-      const ways = { back: () => page.click('#mnSignedOutBack'), escape: () => page.keyboard.press('Escape'), scrim: () => page.mouse.click(195, 100), history: () => page.evaluate(() => history.back()) };
+      /* the scrim is tapped in the stage's dark band, right of the crest: the pulse cards now fill the Earth below it */
+      const ways = { back: () => page.click('#mnSignedOutBack'), escape: () => page.keyboard.press('Escape'), scrim: () => page.mouse.click(330, 34), history: () => page.evaluate(() => history.back()) };
       /* the feed settles first (its reads land and it stops growing), so the place it keeps is a place it had */
       await page.waitForFunction(() => { const f = document.getElementById('mnWorldFeed'), h = f.scrollHeight, prev = window.__feedH; window.__feedH = h; return prev === h; }, null, { timeout: 15000, polling: 400 }).catch(() => {});
       for (const [way, act] of Object.entries(ways)) {
@@ -474,7 +586,11 @@ try {
             if (window.__wgEnter || !door.classList.contains('is-entering')) return;
             const sheet = document.getElementById('wgSheet'), anims = sheet.getAnimations();
             anims.forEach((a) => { a.pause(); a.currentTime = 0; });
-            window.__wgEnter = { entering: true, sheet: getComputedStyle(sheet).transform, animations: anims.length };
+            /* everything in the door that moves on the way in, and the band over the header, read as the entrance starts */
+            const all = document.getAnimations().filter((a) => 'animationName' in a && a.effect && a.effect.target && a.effect.target.closest && a.effect.target.closest('#mnSignedOut') && a.effect.getComputedTiming().iterations !== Infinity);
+            const band = getComputedStyle(door, '::before');
+            window.__wgEnter = { entering: true, sheet: getComputedStyle(sheet).transform, animations: anims.length,
+              names: [...new Set(all.map((a) => a.animationName))].sort(), band: band.backgroundColor, bandOpacity: band.opacity, bandAnimated: all.some((a) => a.effect.pseudoElement === '::before') };
             anims.forEach((a) => a.play());
             mo.disconnect();
           });
@@ -485,7 +601,13 @@ try {
         await page.screenshot({ path: join(OUT, `door-open-${t}ms-390-night.png`), timeout: 90000 });
         const s = await page.evaluate(() => ({ entering: document.getElementById('mnSignedOut').classList.contains('is-entering'), sheet: getComputedStyle(document.getElementById('wgSheet')).transform }));
         const start = await page.evaluate(() => window.__wgEnter);
-        if (t === 0) check('motion', 'a gesture brings the entrance: the sheet starts 28 px low', !!start && start.entering && /matrix\(1, 0, 0, 1, 0, 28\)/.test(start.sheet), { start, now: s });
+        if (t === 0) {
+          check('motion', 'a gesture brings the entrance: the sheet starts 28 px low', !!start && start.entering && /matrix\(1, 0, 0, 1, 0, 28\)/.test(start.sheet), { start, now: s });
+          /* the sheet rises whole (review DR-m1): only the scrim and the sheet move, nothing inside them on its own, no sweep;
+             the band over the World's header is solid from this first frame (review DR-m9) */
+          const moving = start || {};
+          check('motion', 'only the scrim fades and the sheet rises; the header band is solid and still from the first frame', JSON.stringify(moving.names) === '["wg-fade-in","wg-rise"]' && moving.band === 'rgb(4, 6, 9)' && moving.bandOpacity === '1' && !moving.bandAnimated, moving);
+        }
         frames.push({ name: `door-open-${t}ms-390-night`, motion: s });
         await page.evaluate(() => document.getAnimations().filter((a) => a.effect && a.effect.getComputedTiming().iterations !== Infinity && a.effect.target && a.effect.target.closest && a.effect.target.closest('#mnSignedOut')).forEach((a) => a.finish()));
         await page.click('#mnSignedOutBack');
@@ -541,6 +663,69 @@ try {
     } finally { await ctx.close(); }
   }
 
+  /* ---------- what a screen reader is told (review DR-m5) ---------- */
+  if (runs('ax')) {
+    const { ctx, page } = await openWorld(browser, server.base, DEVICES[1280], '/mnet.html?view=feed', { phase: 'night', dpr: 1, globe: false });
+    try {
+      await worldReady(page);
+      await openBy(page, 'signin');
+      const sign = { email: await ax(page, '#mnEmail'), password: await ax(page, '#mnPassword'), show: await ax(page, '[data-reveal="mnPassword"]') };
+      check('ax', 'Sign in: the fields are named as written ("Email", "Password"), the password described by the status alone, Show is a plain button named for what it does', sign.email.name === 'Email' && sign.password.name === 'Password' && !/8 characters/.test(sign.password.description) && sign.show.name === 'Show password' && !sign.show.pressed, sign);
+      await page.click('[data-reveal="mnPassword"]');
+      const shown = await ax(page, '[data-reveal="mnPassword"]');
+      check('ax', 'once shown, the button is named Hide password, with no pressed state besides', shown.name === 'Hide password' && !shown.pressed, shown);
+      await page.click('#mnCreateTab');
+      const make = { password: await ax(page, '#mnPassword'), confirm: await ax(page, '#mnPassword2'), show: await ax(page, '[data-reveal="mnPassword"]') };
+      check('ax', 'Create account: the password is described by the eight-character rule; the confirm field is named as written; Show is reset', /Use at least 8 characters\./.test(make.password.description) && make.confirm.name === 'Confirm password' && make.show.name === 'Show password', make);
+    } finally { await ctx.close(); }
+  }
+
+  /* ---------- the headline's faces: fetched on intent, never on arrival (review DR-m8) ---------- */
+  if (runs('fonts')) {
+    const { ctx, page } = await openWorld(browser, server.base, DEVICES[1280], '/mnet.html?view=feed', { phase: 'night', dpr: 1, globe: false });
+    try {
+      await worldReady(page);
+      await page.waitForTimeout(3200);
+      const faces = () => page.evaluate(() => performance.getEntriesByType('resource').filter((e) => /playfair/i.test(e.name)).map((e) => e.name.replace(/^.*\//, '')));
+      const before = await faces();
+      check('fonts', 'a guest\'s arrival, and three idle seconds on the World, fetch no headline face', before.length === 0, before);
+      await page.hover('#mnGuestJoin');
+      await page.waitForFunction(() => performance.getEntriesByType('resource').filter((e) => /playfair/i.test(e.name)).length >= 2, null, { timeout: 8000 }).catch(() => {});
+      const after = await faces();
+      check('fonts', 'a pointer on the header\'s Join fetches the roman and the italic before the tap', after.length === 2 && after.some((f) => /playfair-display-latin-500-normal/.test(f)) && after.some((f) => /playfairdisplay-italic/.test(f)), after);
+    } finally { await ctx.close(); }
+  }
+
+  /* ---------- a touch screen: the door does not raise the keyboard; the keyboard does not cover the field (review DR-m11) ---------- */
+  if (runs('touch')) {
+    const { ctx, page, world } = await openWorld(browser, server.base, DEVICES[390], '/mnet.html?view=feed', { phase: 'night', dpr: 1, globe: false });
+    try {
+      await worldReady(page);
+      await page.tap('[data-guest-open="create"]');
+      await opened(page);
+      const f = await page.evaluate(() => ({ active: document.activeElement && (document.activeElement.id || document.activeElement.tagName), input: !!(document.activeElement && document.activeElement.matches('input, textarea, select')), coarse: matchMedia('(hover: none) and (pointer: coarse)').matches }));
+      check('touch', 'opened by a tap on a touch screen, the door itself takes the focus: no field, so no keyboard rises over the sheet', f.coarse && f.active === 'mnSignedOut' && !f.input, f);
+      /* the keyboard rises when a field is tapped: the visual viewport shrinks to 470 px, and the field stays in view */
+      await page.tap('#mnPassword');
+      await page.setViewportSize({ width: 390, height: 470 });
+      await page.waitForTimeout(500);
+      const k = await page.evaluate(() => {
+        const d = document.getElementById('mnSignedOut').getBoundingClientRect(), s = document.getElementById('wgSheet').getBoundingClientRect(), i = document.getElementById('mnPassword').closest('.wg-field').getBoundingClientRect(), b = document.getElementById('mnSignedOutBack').getBoundingClientRect();
+        return { vh: visualViewport.height, door: [Math.round(d.top), Math.round(d.bottom)], sheet: [Math.round(s.top), Math.round(s.bottom)], field: [Math.round(i.top), Math.round(i.bottom)], back: Math.round(b.bottom), focus: document.activeElement && document.activeElement.id, sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth };
+      });
+      check('touch', 'with the keyboard up (470 px), the door fits the visual viewport, the focused field stays in view inside the sheet, the way back stays clear, nothing scrolls sideways', k.door[1] <= k.vh + 1 && k.field[0] >= k.sheet[0] && k.field[1] <= k.sheet[1] && k.sheet[0] >= k.back && k.focus === 'mnPassword' && k.sw === k.cw, k);
+      await page.setViewportSize(DEVICES[390].viewport);
+      check('touch', 'no page errors', world.errors.length === 0, world.errors);
+    } finally { await ctx.close(); }
+    /* a keyboard at hand (1280): the first field takes the focus, as before */
+    const { ctx: c2, page: p2 } = await openWorld(browser, server.base, DEVICES[1280], '/mnet.html?view=feed', { phase: 'night', dpr: 1, globe: false });
+    try {
+      await worldReady(p2);
+      await openBy(p2, 'signin');
+      check('touch', 'on a desktop the email takes the focus at once', await p2.evaluate(() => document.activeElement && document.activeElement.id) === 'mnEmail');
+    } finally { await c2.close(); }
+  }
+
   /* ---------- the onboarding pages: still pages, the door's hand ---------- */
   if (runs('onboard')) for (const [w, phase, pages] of [[390, 'night', 3], [390, 'day', 3], [1280, 'night', 1], [1280, 'day', 1]]) {
     const { ctx, page, world } = await openWorld(browser, server.base, DEVICES[w], '/mnet.html?view=feed&finish=1', { phase, member: true, nextStep: 'profile' });
@@ -548,6 +733,8 @@ try {
       await page.waitForSelector('#mnProfileGate:not([hidden])', { timeout: 60000 });
       const p = await page.evaluate(() => ({ app: document.getElementById('mnApp').hidden, gate: document.documentElement.classList.contains('mn-gate-on'), door: document.documentElement.classList.contains('mn-door-open'), h: getComputedStyle(document.querySelector('#mnStep1 .mn__onboard-h')) }));
       check(`onboard-${w}-${phase}`, 'the pages replace the World as before (mn-gate-on), never the door', p.app && p.gate && !p.door, p);
+      const o = await page.evaluate(() => { const g = document.getElementById('mnProfileGate'), h = document.querySelector('#mnStep1 .mn__onboard-h').getBoundingClientRect(), f = document.getElementById('mnProfileSave').getBoundingClientRect(); return { slash: getComputedStyle(g, '::after').content, mid: Math.round((f.left + f.right) / 2), head: Math.round(h.left), vw: innerWidth }; });
+      check(`onboard-${w}-${phase}`, 'no stray slanted line' + (w === 1280 ? '; on a wide screen the form is one centred measure' : ''), o.slash === 'none' && (w !== 1280 || Math.abs(o.mid - o.vw / 2) <= 40), o);
       await frame(page, world, `onboard-1-${w}-${phase}`, { root: '#mnProfileGate' });
       if (pages > 1) {
         await page.fill('#mnHandle', 'fixture.member');

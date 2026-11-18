@@ -277,8 +277,19 @@ export async function contrast(page, rootSel = '#mnSignedOut') {
       const visible = (el) => { for (let n = el; n && n !== document.documentElement; n = n.parentElement) { const cs = getComputedStyle(n); if (cs.display === 'none' || cs.visibility === 'hidden' || Number(cs.opacity) === 0) return false; if (n.parentElement && n.parentElement.tagName === 'DETAILS' && !n.parentElement.open && n.tagName !== 'SUMMARY') return false; } return true; };
       /* on top: the text's middle is not under something outside the root (the floating bar over a page's last line) */
       const onTop = (el, r) => { const e = document.elementFromPoint((r.x + r.r) / 2, (r.y + r.b) / 2); return !e || root.contains(e) || e === el; };
+      /* only what shows: a text box is cut to every ancestor that clips its overflow (an ellipsised line is measured where it
+         is drawn, not where its hidden tail would be) */
+      const clipOf = (el) => {
+        let c = { x: 0, y: 0, r: innerWidth, b: innerHeight };
+        for (let n = el; n && n !== document.documentElement; n = n.parentElement) {
+          const cs = getComputedStyle(n);
+          if (/(hidden|clip|auto|scroll)/.test(cs.overflowX + ' ' + cs.overflowY)) { const b = n.getBoundingClientRect(); c = { x: Math.max(c.x, b.left), y: Math.max(c.y, b.top), r: Math.min(c.r, b.right), b: Math.min(c.b, b.bottom) }; }
+        }
+        return c;
+      };
       const push = (el, rect, text, color, size, weight) => {
-        const r = { x: Math.max(0, rect.left), y: Math.max(0, rect.top), r: Math.min(innerWidth, rect.right), b: Math.min(innerHeight, rect.bottom) };
+        const clip = clipOf(el);
+        const r = { x: Math.max(clip.x, rect.left), y: Math.max(clip.y, rect.top), r: Math.min(clip.r, rect.right), b: Math.min(clip.b, rect.bottom) };
         if (r.r - r.x < 2 || r.b - r.y < 2) return;
         if (!onTop(el, r)) return;
         if (sr && sheet.contains(el)) {

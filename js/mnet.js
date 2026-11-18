@@ -621,8 +621,11 @@
   }
   /* the door, opened from the World: the reason on the sheet, the way back on the stage, and the World where it was (no
      scroll to the top). key is askToSignIn's reason (a guest's mission Join reads "mission"). A World dialog open under
-     it (a mission, a person) is closed first: close() fires no cancel, so ?mission= stays in the address. */
+     it (a mission, a person) is closed first: close() fires no cancel, so ?mission= stays in the address. The focus goes
+     to the first field where a keyboard is at hand; on a touch screen to the door itself, so the keyboard does not rise
+     over the sheet before a field is tapped (js/world-gate.js). */
   function openSignIn(mode, why, key) {
+    state.doorFor = key || "";
     setAuthMode(mode);
     Array.prototype.forEach.call(document.querySelectorAll("dialog[open]"), function (d) { if (!$("mnSignedOut").contains(d)) d.close(); });
     showGate("signedout");
@@ -635,7 +638,15 @@
       missions: function () { return loadOpenMissions().then(function () { return state.missionFeed.all || []; }); },
       openMission: function (id) { showGate("app"); openMission(id); }
     });
-    var email = $("mnEmail"); if (email) email.focus({ preventScroll: true });
+    var email = $("mnEmail");
+    if (window.MCC_GATE && MCC_GATE.focus) MCC_GATE.focus(email);
+    else if (email) email.focus({ preventScroll: true });
+  }
+  /* the mission a guest's Join was for, while its ?mission= is still in the address */
+  function doorMission() {
+    if (state.doorFor !== "mission") return "";
+    var id = ""; try { id = new URLSearchParams(location.search).get("mission") || ""; } catch (_) {}
+    return /^[0-9a-f-]{36}$/i.test(id) ? id : "";
   }
   function leaveGuestWorld() {
     if (!state.guest) return;
@@ -3570,7 +3581,7 @@
       if (!create) {
         if (e.code === "email_not_confirmed" || /email not confirmed/i.test(e.message || "")) {
           showSignupVerification(email, 60);
-        } else setStatus($("mnAuthStatus"), e && e.code === "invalid_credentials" ? "That email and password don’t match an account. Check them, or use Forgot password." : (e.message || "Could not sign in."), "error");
+        } else setStatus($("mnAuthStatus"), e && e.code === "invalid_credentials" ? "That email and password don’t match an account. Check them, or use “Forgot or don't know your password?” above." : (e.message || "Could not sign in."), "error");
         return;
       }
       var rateLimited = e.status === 429 || /429/.test(String(e && e.code || "")) || /rate.limit|too many requests/i.test(String(e && e.message || ""));
@@ -3668,8 +3679,18 @@
     $("mnGuestSignIn").onclick = function () { openSignIn("signin"); };
     $("mnGuestJoin").onclick = function () { openSignIn("create"); };
     document.querySelectorAll("[data-guest-open]").forEach(function (b) { b.onclick = function () { openSignIn(b.getAttribute("data-guest-open")); }; });
-    /* the door closes onto the World as it was left: the room and its scroll stay, the feed loads if it never did */
-    $("mnSignedOutBack").onclick = function () { showGate("app"); if (state.currentView !== "feed") setView("feed"); if (!state.feed.length) loadFeed(true); };
+    /* the door closes onto the World as it was left: the room and its scroll stay, the feed loads if it never did. Asked
+       from a mission's Join, it goes back to that mission (its ?mission= is still in the address): the guest is where
+       they were, in the mission's sheet (review DR-m2). Every way out but a hand-off and a sign-in comes through here:
+       the Back pill, Escape, the scrim and the phone's Back. */
+    $("mnSignedOutBack").onclick = function () {
+      var mission = doorMission();
+      state.doorFor = "";
+      showGate("app");
+      if (mission) openMission(mission);
+      else if (state.currentView !== "feed") setView("feed");
+      if (!state.feed.length) loadFeed(true);
+    };
     $("mnEditProfile").onclick = editProfile;
     document.querySelectorAll("[data-mn-view]").forEach(function (b) { b.onclick = function () { setView(b.dataset.mnView); }; });
     document.querySelectorAll("[data-feed-scope]").forEach(function (b) { b.onclick = function () { state.world.scopeFromTap = false; setFeedScope(b.dataset.feedScope); }; });

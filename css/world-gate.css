@@ -3,16 +3,17 @@
    sexier, and have more shit to it ... This is royalty shit over here"). docs/design/WORLD-SIGN-IN-DOOR.md.
 
    The sign-in (#mnSignedOut) no longer replaces the World: it rises over it. The real globe keeps turning under a scrim,
-   the World's real pulse sits on the Earth, and the sheet carries the supplied Equity Uprise artwork, scaled and nothing
-   else (white by night, the owner's dark variant by day; no plate, no filter, never captioned), a Playfair headline with
-   an italic accent and a red full stop, serif doors, engraved hairlines and one red action. The three onboarding pages
-   (#mnProfileGate) stay a page and take the same hand.
+   the World's real pulse sits on the Earth in every state, the supplied Equity Uprise artwork crowns the World above the
+   door (the white mark on the stage's dark band, by night and by day; scaled and nothing else, never captioned), and the
+   sheet carries a Playfair headline with an italic accent and a red full stop, serif doors, an engraved double rule and one
+   red action. The three onboarding pages (#mnProfileGate) stay a page and take the same hand.
 
-   Phone first: 390 px is the design (a bottom sheet); 700 px and up only ADD (a floating card, a dated lower third);
-   1100 px and up add the right-hand card beside the Earth. min-width queries only, minmax(0, 1fr) for every flexible
-   track, form controls at max(16px, ...). No backdrop-filter over the globe frame: the only blur is the veil at 1100 px
-   and up, which starts at the frame's right edge. Motion respects prefers-reduced-motion (and css/mnet.css already stops
-   every transition and animation inside .mn under it).
+   Phone first: 390 px is the design (a bottom sheet); 700 px and up only ADD (a floating card, a dated lower third, the
+   Back pill's full words); 1100 px and up add the right-hand card beside the Earth, and tall screens (900 px and up) the
+   larger type. min-width queries only, minmax(0, 1fr) for every flexible track, form controls at max(16px, ...). No
+   backdrop-filter over the globe frame: the only blur is the veil at 1100 px and up, which starts at the frame's right
+   edge. Motion respects prefers-reduced-motion (and css/mnet.css already stops every transition and animation inside .mn
+   under it).
 
    Every rule is scoped by #mnSignedOut, #mnProfileGate or html.mn-door-open. Fonts are self-hosted (OFL: the licences
    travel in assets/fonts, THIRD-PARTY-NOTICES lists the files). css/mnet.css keeps its pinned gate rules; these win by
@@ -31,10 +32,11 @@
   --wg-field: rgba(255, 255, 255, 0.065); --wg-field-line: rgba(255, 255, 255, 0.17);
   --wg-rule: rgba(255, 255, 255, 0.10); --wg-rule-strong: rgba(255, 255, 255, 0.22);
   --wg-chip: rgba(9, 11, 14, 0.86); --wg-chip-line: rgba(255, 255, 255, 0.14);
-  --wg-hairline: rgba(232, 200, 119, 0.12); --wg-rim: rgba(232, 200, 119, 0.55);
-  --wg-sheet: linear-gradient(180deg, rgba(20, 23, 28, 0.97), rgba(13, 15, 19, 0.97) 160px);
+  --wg-hairline: rgba(232, 200, 119, 0.16); --wg-rim: rgba(232, 200, 119, 0.55);
+  /* the sheet is opaque: nothing of the World shows through the words */
+  --wg-sheet: linear-gradient(180deg, rgb(20, 23, 28), rgb(13, 15, 19) 160px);
   --wg-sheet-glow: radial-gradient(90% 55% at 100% 0, rgba(112, 12, 38, 0.28), transparent 60%);
-  --wg-sheet-end: rgb(13, 15, 19);
+  --wg-sheet-top: rgb(20, 23, 28); --wg-sheet-end: rgb(13, 15, 19);
   --wg-tick: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230b0c0e' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12.5 4.5 4.5L19 7.5'/%3E%3C/svg%3E");
   --wg-envelope: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230b0c0e' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3.5' y='6' width='17' height='12.5' rx='2'/%3E%3Cpath d='m4 7.5 8 6 8-6'/%3E%3C/svg%3E");
   --wg-ui: "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -50,10 +52,10 @@ html[data-daylight="day"] #mnSignedOut, html[data-daylight="day"] #mnProfileGate
   --wg-field: rgba(12, 14, 18, 0.035); --wg-field-line: rgba(12, 14, 18, 0.22);
   --wg-rule: rgba(0, 0, 0, 0.09); --wg-rule-strong: rgba(0, 0, 0, 0.18);
   --wg-chip: rgba(255, 255, 255, 0.97); --wg-chip-line: rgba(12, 14, 18, 0.14);
-  --wg-hairline: rgba(122, 88, 16, 0.14); --wg-rim: rgba(122, 88, 16, 0.35);
-  --wg-sheet: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.98));
+  --wg-hairline: rgba(122, 88, 16, 0.18); --wg-rim: rgba(122, 88, 16, 0.35);
+  --wg-sheet: linear-gradient(180deg, rgb(255, 255, 255), rgb(255, 255, 255));
   --wg-sheet-glow: linear-gradient(transparent, transparent);
-  --wg-sheet-end: rgb(255, 255, 255);
+  --wg-sheet-top: rgb(255, 255, 255); --wg-sheet-end: rgb(255, 255, 255);
   --wg-tick: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12.5 4.5 4.5L19 7.5'/%3E%3C/svg%3E");
   --wg-envelope: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3.5' y='6' width='17' height='12.5' rx='2'/%3E%3Cpath d='m4 7.5 8 6 8-6'/%3E%3C/svg%3E");
 }
@@ -70,6 +72,14 @@ html[data-daylight="day"] #mnSignedOut, html[data-daylight="day"] #mnProfileGate
 }
 @supports (height: 100dvh) { #mnSignedOut.wg-door { height: var(--wg-vvh, 100dvh); } }
 #mnSignedOut.wg-door *, #mnSignedOut.wg-door *::before, #mnSignedOut.wg-door *::after { box-sizing: border-box; }
+/* the door takes the focus itself on a touch screen (js/world-gate.js): it is a container, so it draws no ring */
+#mnSignedOut.wg-door:focus { outline: 0; }
+/* the World's header sleeps under a solid band from the door's first frame (the scrim fades in under it, and the Back pill
+   never sits over the header's own search, Join and Sign in) */
+#mnSignedOut.wg-door::before {
+  content: ""; position: absolute; z-index: 0; top: 0; right: 0; left: 0; height: calc(var(--wg-head, 72px) + 2px);
+  background: rgb(4, 6, 9); pointer-events: none;
+}
 
 /* the scrim: solid over the header (the World's own chrome sleeps under the door), the Earth showing through the middle */
 #mnSignedOut .wg-scrim {
@@ -83,36 +93,53 @@ html[data-daylight="day"] #mnSignedOut .wg-scrim {
     radial-gradient(130% 62% at 50% 34%, transparent 42%, rgba(4, 6, 9, 0.387)),
     linear-gradient(180deg, rgb(4, 6, 9) 0, rgb(4, 6, 9) calc(var(--wg-head, 72px) + 2px), rgba(4, 6, 9, 0.7224) calc(var(--wg-head, 72px) + 24px), rgba(4, 6, 9, 0.344) 150px, rgba(4, 6, 9, 0.2924) 46%, rgba(4, 6, 9, 0.774) 100%);
 }
-/* the veil: the feed under the globe goes quiet; it starts 64 px above the frame's bottom edge and feathers over 56 px */
+/* the veil: the feed under the globe sleeps. It starts 108 px above the globe frame's bottom edge (--wg-veil-top is that
+   edge less 64 px) and is solid 22 px down, so it takes the frame's own legend (its top 81 px above that edge), credit and
+   controls with it: the stage's credit is the one credit on screen, and nothing of the feed (its tabs, the guest card, a
+   half-covered mark) peeks out */
 #mnSignedOut .wg-veil {
-  position: absolute; z-index: 0; top: var(--wg-veil-top, 50%); right: 0; bottom: 0; left: 0; pointer-events: none;
-  background: linear-gradient(180deg, rgba(4, 6, 9, 0) 0, rgba(4, 6, 9, 0.78) 56px);
+  position: absolute; z-index: 0; top: calc(var(--wg-veil-top, 50%) - 44px); right: 0; bottom: 0; left: 0; pointer-events: none;
+  background: linear-gradient(180deg, rgba(4, 6, 9, 0) 0, rgb(4, 6, 9) 22px);
 }
-html[data-daylight="day"] #mnSignedOut .wg-veil { background: linear-gradient(180deg, rgba(4, 6, 9, 0) 0, rgba(4, 6, 9, 0.72) 56px); }
 
-/* the stage: the way back at the top, the World's pulse and the Earth's credit at the bottom; empty space falls through
-   to the scrim, so a tap there is Back */
+/* the stage: the way back and the crest at the top, the World's pulse and the Earth's credit at the bottom; empty space
+   falls through to the scrim, so a tap there is Back */
 #mnSignedOut .wg-stage {
   position: relative; z-index: 1; grid-row: 1; grid-column: 1; min-width: 0; min-height: 0;
   container-type: size; display: flex; flex-direction: column;
   padding: calc(12px + env(safe-area-inset-top, 0px)) 0 14px; pointer-events: none;
 }
+/* one run of text (an inline box, not a flex row), so the words added from 700 px keep their space */
 #mnSignedOut .wg-back {
-  align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; flex: none;
+  align-self: flex-start; display: inline-block; flex: none; white-space: nowrap;
   min-height: 44px; margin: 0 0 0 12px; padding: 0 16px 0 14px;
   border: 1px solid var(--wg-chip-line); border-radius: 999px; background: var(--wg-chip); color: var(--wg-ink);
-  font: 700 15px/1.2 var(--wg-ui); letter-spacing: 0; cursor: pointer; pointer-events: auto; box-shadow: none;
+  font: 700 15px/42px var(--wg-ui); letter-spacing: 0; cursor: pointer; pointer-events: auto; box-shadow: none;
+}
+/* the phone shows "← Back" (its name is "Back to the World"), so the crest has the middle of the band to itself */
+#mnSignedOut .wg-back-more { display: none; }
+/* the crest: the supplied white mark, complete, scaled proportionally into a square box, centred over the Earth in the
+   stage's dark band (dark by night and by day); 52 px keeps the 160 px file at or under its own pixels on a 3x phone, and
+   nothing is drawn on or around it */
+#mnSignedOut .wg-crest {
+  position: absolute; z-index: 1; top: calc(8px + env(safe-area-inset-top, 0px)); left: 50%; width: 52px; height: 52px; margin: 0 0 0 -26px;
+  display: block; object-fit: contain; border: 0; border-radius: 0; background: none; box-shadow: none; filter: none; outline: 0;
+  pointer-events: none; -webkit-user-drag: none; user-select: none;
 }
 #mnSignedOut .wg-lower { position: relative; display: flex; flex-direction: column; min-width: 0; margin-top: auto; }
 #mnSignedOut .wg-dateline { display: none; }
+/* the pulse on the phone: one card under another, full width, as many as the stage has room for (container heights are
+   the stage's content box: the first card from 130 px, which is the open mission whenever there is one, a second from
+   190, all three from 250); nothing is cut at the edge */
 #mnSignedOut .wg-pulse {
-  display: none; gap: 8px; margin: 0; padding: 2px 16px 4px; list-style: none;
-  overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: none; pointer-events: auto;
+  display: none; flex-direction: column; gap: 8px; margin: 0; padding: 0 16px; list-style: none; pointer-events: auto;
 }
-#mnSignedOut .wg-pulse::-webkit-scrollbar { display: none; }
-@container (min-height: 170px) { #mnSignedOut .wg-pulse { display: flex; } }
+@container (min-height: 130px) { #mnSignedOut .wg-pulse { display: flex; } }
+#mnSignedOut .wg-pulse > .wg-card:nth-child(n + 2 of :not([hidden])) { display: none; }
+@container (min-height: 190px) { #mnSignedOut .wg-pulse > .wg-card:nth-child(2 of :not([hidden])) { display: flex; } }
+@container (min-height: 250px) { #mnSignedOut .wg-pulse > .wg-card:nth-child(3 of :not([hidden])) { display: flex; } }
 #mnSignedOut .wg-card {
-  flex: none; display: flex; max-width: calc(100% - 44px); margin: 0; scroll-snap-align: start;
+  flex: none; display: flex; width: 100%; margin: 0;
   border-radius: 16px; background: var(--wg-chip); box-shadow: inset 0 0 0 1px var(--wg-chip-line); color: var(--wg-ink);
 }
 #mnSignedOut .wg-card__in, #mnSignedOut .wg-card__go {
@@ -132,7 +159,7 @@ html[data-daylight="day"] #mnSignedOut .wg-veil { background: linear-gradient(18
   display: none; align-self: flex-start; max-width: calc(100% - 32px); margin: 6px 16px 0; padding: 3px 8px; border-radius: 6px;
   background: rgba(4, 6, 9, 0.78); color: #b9bfc6; font: 600 11px/1.35 var(--wg-ui); pointer-events: auto; overflow-wrap: anywhere;
 }
-@container (min-height: 100px) { #mnSignedOut .wg-credit { display: block; } }
+@container (min-height: 80px) { #mnSignedOut .wg-credit { display: block; } }
 #mnSignedOut .wg-credit a { color: inherit; text-decoration: underline; text-underline-offset: 2px; padding: 4px 0 26px; margin: -4px 0 -26px; }
 
 /* the World's own words and controls over the Earth (its headline, the corner stack, the tags, the filters, the place
@@ -146,35 +173,54 @@ html.mn-door-open body.has-appbar #mccPrivacyNotice { bottom: calc(8px + env(saf
   html.mn-door-open body.has-appbar #mccPrivacyNotice { bottom: 20px; }
 }
 
-/* the sheet */
+/* the sheet: opaque, with an engraved double rule (a gold border, and a hairline 6 px inside it, drawn on the sheet's own
+   ground so it stays put while the words scroll). Its height: whatever it holds, but never so much that the stage loses
+   the open mission (160 px) while the action can stay in view without it, and never over the way back (68 px). The
+   action's own need (--wg-need, measured by js/world-gate.js: the action's foot plus the fade under it) wins over the
+   stage, so the action is always in view at rest where the phone has the room (with the privacy notice up too). */
 #mnSignedOut .wg-sheet {
   position: relative; z-index: 2; grid-row: 2; grid-column: 1; min-width: 0;
-  max-height: calc(var(--wg-vvh, 100vh) - 68px - var(--wg-safe-bottom, 0px));
+  max-height: clamp(var(--wg-need, 0px), calc(var(--wg-vvh, 100vh) - var(--wg-safe-bottom, 0px) - 160px), calc(var(--wg-vvh, 100vh) - var(--wg-safe-bottom, 0px) - 68px));
   overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none;
-  margin: 0; padding: 14px 22px calc(16px + env(safe-area-inset-bottom, 0px));
-  border-radius: 28px 28px 0 0; background: var(--wg-sheet-glow), var(--wg-sheet); color: var(--wg-ink);
+  margin: 0; padding: 18px 22px calc(16px + env(safe-area-inset-bottom, 0px));
+  border: 1px solid var(--wg-gold-line); border-bottom: 0; border-radius: 28px 28px 0 0;
+  background:
+    radial-gradient(circle at 27px 27px, transparent 20.5px, var(--wg-hairline) 20.5px, var(--wg-hairline) 21.5px, transparent 21.5px) 0 0 / 27px 27px no-repeat,
+    radial-gradient(circle at 0 27px, transparent 20.5px, var(--wg-hairline) 20.5px, var(--wg-hairline) 21.5px, transparent 21.5px) right 0 top 0 / 27px 27px no-repeat,
+    linear-gradient(var(--wg-hairline), var(--wg-hairline)) 27px 6px / calc(100% - 54px) 1px no-repeat,
+    linear-gradient(var(--wg-hairline), var(--wg-hairline)) 6px 27px / 1px calc(100% - 27px) no-repeat,
+    linear-gradient(var(--wg-hairline), var(--wg-hairline)) right 6px top 27px / 1px calc(100% - 27px) no-repeat,
+    var(--wg-sheet-glow), var(--wg-sheet);
+  color: var(--wg-ink);
 }
-@supports (height: 100dvh) { #mnSignedOut .wg-sheet { max-height: calc(var(--wg-vvh, 100dvh) - 68px - var(--wg-safe-bottom, 0px)); } }
+@supports (height: 100dvh) {
+  #mnSignedOut .wg-sheet { max-height: clamp(var(--wg-need, 0px), calc(var(--wg-vvh, 100dvh) - var(--wg-safe-bottom, 0px) - 160px), calc(var(--wg-vvh, 100dvh) - var(--wg-safe-bottom, 0px) - 68px)); }
+}
 #mnSignedOut .wg-sheet::-webkit-scrollbar { display: none; }
-/* the engraved rim along the top edge */
-#mnSignedOut .wg-sheet::before {
-  content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px; pointer-events: none;
-  background: linear-gradient(90deg, transparent, var(--wg-rim), transparent);
+/* scrolled: the words go soft under the top edge instead of being sliced by it */
+#mnSignedOut .wg-sheet[data-scrolled]::before {
+  content: ""; position: sticky; z-index: 3; top: -18px; display: block; height: 30px; margin: -18px -22px -12px; pointer-events: none;
+  background: linear-gradient(180deg, var(--wg-sheet-top) 12%, transparent);
 }
-/* more below: a short fade into the sheet's own ground, pinned to the bottom while there is more to scroll */
+/* more below: a short fade into the sheet's own ground, pinned to the bottom while there is more to scroll; the action is
+   drawn above it, and the sheet's height keeps the action clear of it at rest */
 #mnSignedOut .wg-sheet[data-more]::after {
   content: ""; position: sticky; bottom: -16px; display: block; height: 34px; margin: -34px -22px -16px; pointer-events: none;
   background: linear-gradient(180deg, transparent, var(--wg-sheet-end));
 }
-#mnSignedOut .wg-light {
-  position: absolute; top: 0; left: 0; width: 100%; height: 240px; pointer-events: none; opacity: 0;
-  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.07) 50%, transparent 65%);
-}
-html[data-daylight="day"] #mnSignedOut .wg-light { display: none; }
+/* while the privacy notice waits for its answer (js/world-gate.js sets data-banner), the sheet keeps a tighter hand, so
+   Create account's box and action stay clear of the fade above the notice on a phone and on a laptop (review DR-M1) */
+#mnSignedOut[data-banner] .wg-sheet { padding-top: 14px; }
+#mnSignedOut[data-banner] .wg-sheet[data-scrolled]::before { top: -14px; margin-top: -14px; margin-bottom: -16px; }
+#mnSignedOut[data-banner] .mn__eyebrow { margin-top: 0; }
+#mnSignedOut[data-banner] .wg-title { margin-top: 6px; }
+#mnSignedOut[data-banner] .mn__panel { margin-top: 10px; }
+#mnSignedOut[data-banner] .mn__auth-tab { min-height: 52px; }
+#mnSignedOut[data-banner] .wg-field { margin-top: 8px; }
 
 /* why it was asked for */
 #mnSignedOut .mn__gate-why {
-  display: flex; align-items: flex-start; gap: 10px; margin: 0 0 6px; padding: 10px 14px;
+  display: flex; align-items: flex-start; gap: 10px; margin: 0 0 10px; padding: 10px 14px;
   border-left: 2px solid var(--wg-gold); border-radius: 0 10px 10px 0; background: var(--wg-gold-soft);
 }
 #mnSignedOut .mn__gate-why:has(> p:empty) { display: none; }
@@ -185,41 +231,32 @@ html[data-daylight="day"] #mnSignedOut .wg-light { display: none; }
 }
 #mnSignedOut .mn__gate-why p { flex: 1 1 auto; min-width: 0; margin: 0; color: var(--wg-ink); font: 700 15px/1.4 var(--wg-ui); }
 
-/* the crown: the supplied file, complete, scaled proportionally into a square box; nothing drawn around it */
-#mnSignedOut .wg-crown {
-  display: block; width: 72px; height: 72px; margin: -8px auto -14px; object-fit: contain;
-  border: 0; border-radius: 0; background: none; box-shadow: none; filter: none; outline: 0; -webkit-user-drag: none; user-select: none;
-}
-#mnSignedOut .wg-crown--day { display: none; }
-html[data-daylight="day"] #mnSignedOut .wg-crown--night { display: none; }
-html[data-daylight="day"] #mnSignedOut .wg-crown--day { display: block; }
-#mnSignedOut .mn__gate-why:not([hidden]) ~ .wg-crown { width: 60px; height: 60px; }
-
 #mnSignedOut .mn__eyebrow {
-  display: flex; align-items: center; justify-content: center; gap: 12px; margin: 8px 0 0;
+  display: flex; align-items: center; justify-content: center; gap: 12px; margin: 2px 0 0;
   color: var(--wg-gold); font: 800 11.5px/1.2 var(--wg-ui); letter-spacing: 0.26em; text-transform: uppercase; text-align: center;
 }
 #mnSignedOut .mn__eyebrow::before, #mnSignedOut .mn__eyebrow::after { content: ""; flex: none; width: 20px; height: 1px; background: var(--wg-gold); }
 #mnSignedOut .wg-title {
   max-width: 16ch; margin: 8px auto 0; color: var(--wg-ink); text-align: center; text-transform: none; text-wrap: balance; overflow-wrap: normal;
-  font: 500 clamp(28px, 7.8vw, 32px)/1.06 var(--wg-serif); letter-spacing: -0.01em;
+  font: 500 clamp(26px, 7.7vw, 30px)/1.06 var(--wg-serif); letter-spacing: -0.01em;
 }
 #mnSignedOut .wg-title em { font-family: var(--wg-serif); font-style: italic; font-weight: 500; }
 #mnSignedOut .wg-title .wg-stop { color: var(--wg-stop); }
 
 /* the doors: two serif words with their kickers, one gold rule that slides between them */
-#mnSignedOut .mn__panel { margin: 16px 0 0; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; }
+#mnSignedOut .mn__panel { margin: 14px 0 0; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; }
 #mnSignedOut .mn__auth-tabs {
   position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0; margin: 0; padding: 0;
   border-radius: 0; background: none; box-shadow: inset 0 -1px 0 var(--wg-rule);
 }
 #mnSignedOut .mn__auth-tab {
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-width: 0; min-height: 60px;
-  margin: 0; padding: 8px 6px 10px; border: 0; border-radius: 0; background: none; box-shadow: none; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-width: 0; min-height: 56px;
+  margin: 0; padding: 6px 4px 9px; border: 0; border-radius: 0; background: none; box-shadow: none; cursor: pointer;
   color: var(--wg-dim); font-size: max(16px, 1.1875rem);
 }
-#mnSignedOut .wg-tab-k { color: var(--wg-faint); font: 800 10px/1.2 var(--wg-ui); letter-spacing: 0.2em; text-transform: uppercase; }
-#mnSignedOut .wg-tab-w { color: var(--wg-dim); font: 500 19px/1.15 var(--wg-serif); }
+#mnSignedOut .wg-tab-k { color: var(--wg-faint); font: 800 10px/1.2 var(--wg-ui); letter-spacing: 0.2em; text-transform: uppercase; white-space: nowrap; }
+/* the tab words stay on one line down to 320 px */
+#mnSignedOut .wg-tab-w { color: var(--wg-dim); font: 500 clamp(17px, 4.9vw, 19px)/1.15 var(--wg-serif); white-space: nowrap; }
 #mnSignedOut .mn__auth-tab.is-active .wg-tab-k { color: var(--wg-gold); }
 #mnSignedOut .mn__auth-tab.is-active .wg-tab-w { color: var(--wg-ink); }
 #mnSignedOut .wg-tabline {
@@ -232,19 +269,20 @@ html[data-daylight="day"] #mnSignedOut .wg-crown--day { display: block; }
 #mnSignedOut #mnAuthPanel { display: flex; flex-direction: column; min-width: 0; }
 #mnSignedOut #mnAuthPanel:has(> #mnResend:not([hidden])) > #mnAuthStatus { order: -2; }
 #mnSignedOut #mnAuthPanel:has(> #mnResend:not([hidden])) > #mnResend { order: -1; }
+/* under the action in Create account: the three pages to come, as a strip (this one red, the next two waiting), then what
+   they hold */
 #mnSignedOut #mnCreateNote {
-  position: relative; margin: 34px 0 2px; padding: 12px 14px; border-radius: 12px; background: var(--wg-gold-soft);
+  position: relative; margin: 30px 0 0; padding: 12px 14px; border-radius: 12px; background: var(--wg-gold-soft);
   color: var(--wg-ink); font: 600 13.5px/1.45 var(--wg-ui);
 }
-/* the three pages to come, as a strip: this one red, the next two waiting */
 #mnSignedOut #mnCreateNote::before {
-  content: ""; position: absolute; left: 0; top: -16px; width: 96px; height: 4px; border-radius: 2px;
+  content: ""; position: absolute; left: 0; top: -14px; width: 96px; height: 4px; border-radius: 2px;
   background: linear-gradient(90deg, var(--wg-red) 0 30px, transparent 30px 33px, var(--wg-rule-strong) 33px 63px, transparent 63px 66px, var(--wg-rule-strong) 66px 96px);
 }
 #mnSignedOut #mnCreateNote b { color: var(--wg-gold); font: 800 11px/1 var(--wg-ui); letter-spacing: 0.16em; text-transform: uppercase; }
 
 #mnSignedOut .wg-field {
-  position: relative; display: flex; align-items: stretch; min-height: 64px; margin: 12px 0 0;
+  position: relative; display: flex; align-items: stretch; min-height: 58px; margin: 10px 0 0;
   border-radius: 16px; background: var(--wg-field); box-shadow: inset 0 0 0 1px var(--wg-field-line);
   transition: box-shadow 200ms var(--wg-ease);
 }
@@ -259,9 +297,12 @@ html[data-daylight="day"] #mnSignedOut .wg-crown--day { display: block; }
 #mnSignedOut .wg-ico { flex: none; display: grid; place-items: center; width: 48px; color: var(--wg-faint); }
 #mnSignedOut .wg-ico svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 #mnSignedOut .wg-field:focus-within .wg-ico { color: var(--wg-gold); }
-#mnSignedOut .wg-field__body { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; min-width: 0; padding: 8px 14px 8px 0; }
+#mnSignedOut .wg-field__body { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; min-width: 0; padding: 6px 8px 6px 0; }
+/* the field's name in small capitals drawn by the font, not by text-transform, so it is read as it is written ("Email",
+   not "EMAIL"); "Confirm password" stays on one line down to 320 px */
 #mnSignedOut .wg-field .mn__label {
-  display: block; margin: 0; color: var(--wg-dim); font: 800 11px/1.25 var(--wg-ui); letter-spacing: 0.14em; text-transform: uppercase; cursor: text;
+  display: block; margin: 0; color: var(--wg-dim); font: 800 14px/14px var(--wg-ui); font-variant-caps: all-small-caps; letter-spacing: 0.06em;
+  text-transform: none; cursor: text;
 }
 #mnSignedOut .wg-field:focus-within .mn__label { color: var(--wg-gold); }
 /* the input's line is 28 px under its label; its box reaches up over the label to make a 44 px target (the label shows
@@ -274,7 +315,7 @@ html[data-daylight="day"] #mnSignedOut .wg-crown--day { display: block; }
 #mnSignedOut .wg-field .mn__input:focus { box-shadow: none; }
 #mnSignedOut .wg-field .mn__input::placeholder { color: var(--wg-faint); opacity: 1; }
 #mnSignedOut .wg-show {
-  flex: none; align-self: center; min-width: 64px; min-height: 44px; margin: 10px 6px 10px 0; padding: 0 10px;
+  flex: none; align-self: center; min-width: 56px; min-height: 44px; margin: 7px 6px 7px 0; padding: 0 8px;
   border: 0; border-radius: 10px; background: transparent; box-shadow: none; cursor: pointer;
   color: var(--wg-gold); font: 800 11px/1 var(--wg-ui); letter-spacing: 0.16em; text-transform: uppercase;
 }
@@ -287,24 +328,25 @@ html[data-daylight="day"] #mnSignedOut .wg-crown--day { display: block; }
   position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0;
 }
 /* the live rule under the password: a ring that fills gold at 8 characters */
-#mnSignedOut .wg-rule { display: flex; align-items: center; gap: 9px; margin: 10px 2px 0; color: var(--wg-dim); font: 600 13.5px/1.4 var(--wg-ui); }
+#mnSignedOut .wg-rule { display: flex; align-items: center; gap: 9px; margin: 8px 2px 0; color: var(--wg-dim); font: 600 13.5px/1.4 var(--wg-ui); }
 #mnSignedOut .wg-rule::before {
   content: ""; flex: none; width: 16px; height: 16px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--wg-gold-line);
   transition: background-color 200ms var(--wg-ease);
 }
 #mnSignedOut .wg-rule[data-met="true"] { color: var(--wg-ink); }
 #mnSignedOut .wg-rule[data-met="true"]::before { background: var(--wg-gold) var(--wg-tick) center / 10px no-repeat; box-shadow: none; }
+/* Forgot: a quiet underlined line that stays on one line down to 320 px (and balances if a larger text size wraps it) */
 #mnSignedOut #mnForgot {
-  align-self: flex-end; display: block; width: auto; max-width: 100%; min-height: 44px; margin: 6px 0 0; padding: 0 2px;
-  border: 0; border-radius: 0; background: none; box-shadow: none; cursor: pointer; text-align: right;
-  color: var(--wg-dim); font: 600 max(16px, 0.9375rem)/1.3 var(--wg-ui);
+  align-self: flex-end; display: block; width: auto; max-width: 100%; min-height: 44px; margin: 4px 0 0; padding: 0 2px;
+  border: 0; border-radius: 0; background: none; box-shadow: none; cursor: pointer; text-align: right; text-wrap: balance;
+  color: var(--wg-dim); font: 600 clamp(14px, 3.85vw, 15px)/1.3 var(--wg-ui);
   text-decoration: underline; text-decoration-color: var(--wg-gold-line); text-decoration-thickness: 1px; text-underline-offset: 4px;
 }
 #mnSignedOut #mnForgot:hover { background: none; transform: none; color: var(--wg-ink); }
 /* the privacy agreement: one line, one custom box (the input itself is the 44 px target; the 26 px box is drawn inside it) */
-#mnSignedOut #mnCreatePrivacy { margin: 12px 2px 0; color: var(--wg-dim); font: 600 15px/1.45 var(--wg-ui); }
+#mnSignedOut #mnCreatePrivacy { margin: 10px 2px 0; color: var(--wg-dim); font: 600 15px/1.45 var(--wg-ui); }
 #mnSignedOut .mn__check {
-  display: flex; align-items: center; gap: 4px; min-height: 44px; margin: 10px 0 0; padding: 0; border-radius: 0; box-shadow: none;
+  display: flex; align-items: center; gap: 4px; min-height: 44px; margin: 8px 0 0; padding: 0; border-radius: 0; box-shadow: none;
   color: var(--wg-dim); font: 600 15px/1.4 var(--wg-ui); cursor: pointer;
 }
 #mnSignedOut .mn__check span { display: block; flex: 1 1 auto; min-width: 0; gap: 0; color: var(--wg-dim); font: 600 15px/1.4 var(--wg-ui); }
@@ -320,7 +362,7 @@ html[data-daylight="day"] #mnSignedOut .wg-crown--day { display: block; }
   color: var(--wg-ink); text-decoration: underline; text-decoration-color: var(--wg-gold-line); text-underline-offset: 3px; white-space: nowrap; padding: 12px 0; margin: -12px 0;
 }
 /* the reason a step stopped, directly over the action; the emailed state is a sealed note */
-#mnSignedOut #mnAuthStatus { min-height: 0; margin: 14px 0 0; color: var(--wg-dim); font: 600 14.5px/1.45 var(--wg-ui); }
+#mnSignedOut #mnAuthStatus { min-height: 0; margin: 12px 0 0; color: var(--wg-dim); font: 600 14.5px/1.45 var(--wg-ui); }
 #mnSignedOut #mnAuthStatus:empty { margin: 0; }
 #mnSignedOut #mnAuthStatus.is-error { display: flex; align-items: flex-start; gap: 10px; color: var(--wg-error); }
 #mnSignedOut #mnAuthStatus.is-error::before {
@@ -328,22 +370,22 @@ html[data-daylight="day"] #mnSignedOut .wg-crown--day { display: block; }
   border: 1.5px solid currentColor; border-radius: 50%; font: 800 12px/1 var(--wg-ui);
 }
 #mnSignedOut #mnAuthStatus.is-ok {
-  display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; align-items: start; padding: 16px;
+  display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; align-items: start; padding: 14px 16px;
   border-radius: 14px; background: var(--wg-gold-soft); box-shadow: inset 0 0 0 1px var(--wg-gold-line);
   color: var(--wg-ink); font: 500 14.5px/1.5 var(--wg-ui);
 }
 #mnSignedOut #mnAuthStatus.is-ok::before { content: ""; width: 34px; height: 34px; border-radius: 50%; background: var(--wg-gold) var(--wg-envelope) center / 18px no-repeat; }
 
-/* the one action: a red pill with its arrow in a darker circle */
+/* the one action: a red pill with its arrow in a darker circle, drawn above the sheet's fade */
 #mnSignedOut #mnAuthGo {
-  position: relative; display: flex; align-items: center; justify-content: center; width: 100%; min-height: 58px; margin: 14px 0 0; padding: 0 66px;
+  position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; width: 100%; min-height: 56px; margin: 12px 0 0; padding: 0 66px;
   border: 0; border-radius: 999px; background: var(--wg-red); color: #ffffff; opacity: 1; cursor: pointer; overflow: hidden;
   font: 800 max(16px, 1.0625rem)/1.2 var(--wg-ui); letter-spacing: 0.01em;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 18px 40px -20px rgba(212, 0, 43, 0.9);
   transition: background-color 160ms var(--wg-ease), transform 160ms var(--wg-ease);
 }
 #mnSignedOut #mnAuthGo::after {
-  content: ""; position: absolute; top: 50%; right: 6px; bottom: auto; left: auto; width: 46px; height: 46px; margin: -23px 0 0;
+  content: ""; position: absolute; top: 50%; right: 6px; bottom: auto; left: auto; width: 44px; height: 44px; margin: -22px 0 0;
   border: 0; border-radius: 50%; animation: none; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
   background: rgba(0, 0, 0, 0.26) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h13M12.5 6.5 18 12l-5.5 5.5'/%3E%3C/svg%3E") center / 20px no-repeat;
   transition: transform 200ms var(--wg-ease);
@@ -354,7 +396,7 @@ html[data-daylight="day"] #mnSignedOut .wg-crown--day { display: block; }
 /* busy: the label stays (css/mnet.css clears it), the circle turns, a gold thread runs along the foot */
 #mnSignedOut #mnAuthGo[aria-busy="true"] { -webkit-text-fill-color: #ffffff; cursor: progress; }
 #mnSignedOut #mnAuthGo[aria-busy="true"]::after {
-  inset: auto; top: 50%; right: 6px; margin: -23px 0 0; width: 46px; height: 46px;
+  inset: auto; top: 50%; right: 6px; margin: -22px 0 0; width: 44px; height: 44px;
   background: rgba(0, 0, 0, 0.26); border: 2px solid rgba(255, 255, 255, 0.28); border-top-color: #ffffff; box-shadow: none;
   animation: wg-turn 0.9s linear infinite;
 }
@@ -406,24 +448,19 @@ html[data-daylight="day"] #mnSignedOut .wg-crown--day { display: block; }
 #mnSignedOut .wg-field .mn__input:focus-visible { outline: 0; }
 
 /* ============================================================
-   MOTION: only after a gesture (js/world-gate.js adds .is-entering); a boot open is whole in its first frame
+   MOTION: only after a gesture (js/world-gate.js adds .is-entering); a boot open is whole in its first frame. The sheet
+   rises whole: nothing inside it moves on its own, and the pulse cards appear as their reads answer
    ============================================================ */
 #mnSignedOut.is-entering .wg-scrim { animation: wg-fade-in 260ms ease-out both; }
 #mnSignedOut.is-entering .wg-sheet { will-change: transform, opacity; animation: wg-rise 420ms cubic-bezier(0.16, 1, 0.3, 1) both; }
-#mnSignedOut.is-entering .wg-card { animation: wg-card-in 360ms var(--wg-ease) both; }
-#mnSignedOut.is-entering .wg-card:nth-child(1) { animation-delay: 120ms; }
-#mnSignedOut.is-entering .wg-card:nth-child(2) { animation-delay: 180ms; }
-#mnSignedOut.is-entering .wg-card:nth-child(3) { animation-delay: 240ms; }
-#mnSignedOut.is-entering .wg-light { animation: wg-sweep 1200ms ease-in-out 300ms both; }
 #mnSignedOut.is-leaving { pointer-events: none; }
 #mnSignedOut.is-leaving .wg-sheet { animation: wg-fall 220ms ease-in both; }
 #mnSignedOut.is-leaving :is(.wg-scrim, .wg-veil, .wg-stage) { animation: wg-fade-out 200ms ease-in both; }
+#mnSignedOut.is-leaving::before { animation: wg-fade-out 200ms ease-in both; }
 @keyframes wg-fade-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes wg-fade-out { from { opacity: 1; } to { opacity: 0; } }
 @keyframes wg-rise { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: none; } }
 @keyframes wg-fall { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(28px); } }
-@keyframes wg-card-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-@keyframes wg-sweep { 0% { opacity: 1; transform: translateX(-100%); } 100% { opacity: 1; transform: translateX(100%); } }
 
 /* ============================================================
    THE ONBOARDING PAGES (#mnProfileGate): still a page; the door's hand and tokens (and a readable day)
@@ -432,6 +469,8 @@ html[data-daylight="day"] #mnSignedOut .wg-crown--day { display: block; }
   background: radial-gradient(70% 34% at 92% -2%, rgba(112, 12, 38, 0.30), transparent 62%), #090b0d;
 }
 html[data-daylight="day"] #mnProfileGate.mn__onboard::before { background: #ffffff; }
+/* the old slanted red line is not the door's hand: the pages carry the gold rule of the steps instead */
+#mnProfileGate.mn__onboard::after { content: none; }
 #mnProfileGate { color: var(--wg-ink); font-family: var(--wg-ui); }
 #mnProfileGate .mn__onboard-h {
   max-width: 14ch; margin: 0; color: var(--wg-ink); text-transform: none; overflow-wrap: normal; text-wrap: balance;
@@ -439,7 +478,8 @@ html[data-daylight="day"] #mnProfileGate.mn__onboard::before { background: #ffff
 }
 #mnProfileGate .mn__onboard-h em { font-style: normal; color: var(--wg-stop); }
 #mnProfileGate .mn__lede { color: var(--wg-dim); font: 500 16px/1.55 var(--wg-ui); }
-#mnProfileGate .mn__label { color: var(--wg-dim); font: 800 11px/1.25 var(--wg-ui); letter-spacing: 0.14em; text-transform: uppercase; }
+/* field names in small capitals drawn by the font, so they are read as written */
+#mnProfileGate .mn__label { color: var(--wg-dim); font: 800 15px/1.25 var(--wg-ui); font-variant-caps: all-small-caps; letter-spacing: 0.1em; text-transform: none; }
 #mnProfileGate .mn__label span { color: var(--wg-faint); letter-spacing: 0.04em; }
 #mnProfileGate .mn__hint { color: var(--wg-dim); }
 #mnProfileGate .mn__hint a { color: var(--wg-ink); }
@@ -483,38 +523,34 @@ html[data-daylight="day"] #mnProfileGate.mn__onboard::before { background: #ffff
 #mnProfileGate :is(button, a, summary, input[type="checkbox"]):focus-visible { outline: 2px solid var(--wg-gold); outline-offset: 2px; }
 
 /* ============================================================
-   700 px AND UP: a floating card, and the World's dated lower third
+   700 px AND UP: a floating card, the World's dated lower third, and the Back pill's full words
    ============================================================ */
 @media (min-width: 700px) {
+  #mnSignedOut .wg-back-more { display: inline; }
   #mnSignedOut .wg-sheet {
-    justify-self: center; align-self: end; width: min(500px, 100% - 64px); margin: 0 0 32px; padding: 18px 40px 22px;
+    justify-self: center; align-self: end; width: min(500px, 100% - 64px); margin: 0 0 32px; padding: 24px 40px 22px;
     border: 1px solid var(--wg-gold-line); border-radius: 28px;
-    outline: 1px solid var(--wg-hairline); outline-offset: -6px;
+    outline: 1px solid var(--wg-hairline); outline-offset: -7px;
+    background: var(--wg-sheet-glow), var(--wg-sheet);
     box-shadow: 0 40px 90px -30px rgba(0, 0, 0, 0.85);
     max-height: calc(var(--wg-vvh, 100vh) - 72px - var(--wg-safe-bottom, 0px));
   }
-  #mnSignedOut .wg-sheet::before { content: none; }
+  #mnSignedOut .wg-sheet[data-scrolled]::before { top: -24px; margin: -24px -40px -6px; }
   #mnSignedOut .wg-sheet[data-more]::after { margin: -34px -40px -22px; bottom: -22px; }
-  #mnSignedOut .wg-crown { width: 88px; height: 88px; }
-  #mnSignedOut .mn__gate-why:not([hidden]) ~ .wg-crown { width: 72px; height: 72px; }
-  #mnSignedOut .wg-title { font-size: 36px; }
+  #mnSignedOut[data-banner] .wg-sheet { padding-top: 18px; }
+  #mnSignedOut[data-banner] .wg-sheet[data-scrolled]::before { top: -18px; margin: -18px -40px -12px; }
+  #mnSignedOut .wg-title { font-size: 32px; }
   #mnSignedOut .wg-foot { flex-wrap: nowrap; column-gap: 14px; }
   #mnSignedOut .wg-colophon { flex: none; margin: 0; font-size: 14px; white-space: nowrap; }
   #mnSignedOut .wg-foot a { flex: none; font-size: 12.5px; white-space: nowrap; }
   #mnSignedOut .wg-back { margin-left: 24px; }
-  /* create mode is compact enough that the card stays clear of the Earth (at 820 x 1180, 300 px of the globe above it) */
-  #mnSignedOut[data-auth-mode="create"] .wg-crown { width: 52px; height: 52px; margin: -6px auto -8px; }
-  #mnSignedOut[data-auth-mode="create"] .wg-title { font-size: 30px; }
-  #mnSignedOut[data-auth-mode="create"] #mnCreateNote { margin-top: 26px; }
-  #mnSignedOut[data-auth-mode="create"] #mnCreateNote::before { top: -14px; }
-  #mnSignedOut[data-auth-mode="create"] .wg-field { min-height: 58px; margin-top: 8px; }
-  #mnSignedOut[data-auth-mode="create"] .wg-rule { margin-top: 8px; }
-  #mnSignedOut[data-auth-mode="create"] .wg-foot { margin-top: 10px; }
 
+  /* the lower third rides on a shelf that is solid at its foot: the globe frame's own legend, credit and controls sleep
+     under it, so the stage's credit is the one credit on screen */
   #mnSignedOut .wg-lower { align-items: center; padding-top: 24px; }
   #mnSignedOut .wg-lower::before {
     content: ""; position: absolute; z-index: -1; left: 0; right: 0; bottom: -14px; height: 210px; pointer-events: none;
-    background: linear-gradient(180deg, rgba(4, 6, 9, 0), rgba(4, 6, 9, 0.78) 50%, rgba(4, 6, 9, 0.95));
+    background: linear-gradient(180deg, rgba(4, 6, 9, 0), rgba(4, 6, 9, 0.86) 42%, rgb(4, 6, 9) 66%);
   }
   /* the dateline rides on its own plate, as the cards do: the Earth under it can be any colour */
   #mnSignedOut .wg-dateline:not([hidden]) {
@@ -523,14 +559,17 @@ html[data-daylight="day"] #mnProfileGate.mn__onboard::before { background: #ffff
   }
   #mnSignedOut .wg-dateline__k { color: var(--wg-gold); font: 800 11px/1.4 var(--wg-ui); letter-spacing: 0.2em; text-transform: uppercase; }
   #mnSignedOut .wg-dateline__sep, #mnSignedOut .wg-dateline__d { color: var(--wg-dim); font: 700 11px/1.4 var(--wg-ui); letter-spacing: 0.04em; }
-  #mnSignedOut .wg-pulse { max-width: 100%; padding: 2px 24px 4px; }
-  #mnSignedOut .wg-card { width: 236px; max-width: none; }
+  /* the pulse becomes a row of three: every card shown that has its read */
+  #mnSignedOut .wg-pulse { flex-direction: row; max-width: 100%; padding: 2px 24px 4px; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: none; }
+  #mnSignedOut .wg-pulse::-webkit-scrollbar { display: none; }
+  #mnSignedOut .wg-pulse > .wg-card:nth-child(n + 2 of :not([hidden])) { display: flex; }
+  #mnSignedOut .wg-card { width: 236px; scroll-snap-align: start; }
   #mnSignedOut .wg-card__in, #mnSignedOut .wg-card__go {
     grid-template-columns: 28px minmax(0, 1fr); grid-template-areas: "ico k" "v v" "s s"; align-content: start; align-items: center;
     row-gap: 6px; height: 100%; padding: 12px 16px 14px;
   }
-  #mnSignedOut .wg-card__v { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; white-space: normal; font: 500 18px/1.25 var(--wg-serif); }
-  #mnSignedOut .wg-card__s { white-space: normal; font: 600 12.5px/1.4 var(--wg-ui); }
+  #mnSignedOut .wg-card__v { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; white-space: normal; text-wrap: balance; font: 500 18px/1.25 var(--wg-serif); }
+  #mnSignedOut .wg-card__s { white-space: normal; text-wrap: balance; font: 600 12.5px/1.4 var(--wg-ui); }
   #mnSignedOut .wg-card__s::before { content: none; }
   #mnSignedOut .wg-card__pre { display: inline; }
   #mnSignedOut .wg-credit { align-self: center; margin-top: 10px; }
@@ -541,21 +580,18 @@ html[data-daylight="day"] #mnProfileGate.mn__onboard::before { background: #ffff
 }
 
 /* ============================================================
-   1100 px AND UP: the Earth on the left, the card on the right
+   1100 px AND UP: the Earth on the left, the card on the right; the larger type only where the screen is tall
    ============================================================ */
 @media (min-width: 1100px) {
   #mnSignedOut.wg-door { grid-template-columns: minmax(0, 1fr) 540px; grid-template-rows: minmax(0, 1fr); }
   #mnSignedOut .wg-stage { grid-column: 1; grid-row: 1; }
+  /* beside the Earth the card needs no room above it for the way back: 24 px top and bottom */
   #mnSignedOut .wg-sheet {
-    grid-column: 2; grid-row: 1; align-self: center; justify-self: start; width: 484px; margin: 0; padding: 20px 40px 16px;
+    grid-column: 2; grid-row: 1; align-self: center; justify-self: start; width: 484px; margin: 0; padding: 22px 40px 16px;
+    max-height: calc(var(--wg-vvh, 100vh) - 48px - var(--wg-safe-bottom, 0px));
   }
+  #mnSignedOut .wg-sheet[data-scrolled]::before { top: -22px; margin: -22px -40px -8px; }
   #mnSignedOut .wg-sheet[data-more]::after { margin: -34px -40px -16px; bottom: -16px; }
-  #mnSignedOut .wg-crown { width: 96px; height: 96px; }
-  #mnSignedOut .mn__gate-why:not([hidden]) ~ .wg-crown { width: 72px; height: 72px; }
-  #mnSignedOut .wg-title { font-size: 38px; }
-  #mnSignedOut[data-auth-mode="create"] .wg-crown { width: 80px; height: 80px; margin: -8px auto -14px; }
-  #mnSignedOut[data-auth-mode="create"] .wg-title { font-size: 34px; }
-  #mnSignedOut[data-auth-mode="create"] .wg-field { min-height: 64px; margin-top: 10px; }
   #mnSignedOut .wg-scrim {
     background:
       radial-gradient(70% 90% at 28% 48%, transparent 46%, rgba(4, 6, 9, 0.5)),
@@ -568,14 +604,15 @@ html[data-daylight="day"] #mnProfileGate.mn__onboard::before { background: #ffff
       linear-gradient(90deg, transparent 0, transparent 50%, rgba(4, 6, 9, 0.7224) 68%, rgba(4, 6, 9, 0.774) 100%),
       linear-gradient(180deg, rgb(4, 6, 9) 0, rgb(4, 6, 9) calc(var(--wg-head, 72px) + 2px), rgba(4, 6, 9, 0.258) calc(var(--wg-head, 72px) + 24px), rgba(4, 6, 9, 0.086) 50%, rgba(4, 6, 9, 0.258) 100%);
   }
-  /* the veil covers the feed column only: its left edge is the globe frame's right edge */
+  /* the veil covers the feed column only: its left edge is the globe frame's right edge, dark from that first pixel by
+     night and by day (no pale seam between the Earth and the card) */
   #mnSignedOut .wg-veil {
     top: 0; left: var(--wg-veil-left, 60%);
-    background: linear-gradient(90deg, rgba(4, 6, 9, 0), rgba(4, 6, 9, 0.78) 64px);
+    background: rgba(4, 6, 9, 0.94);
   }
-  /* by day the feed under the veil is white: the veil starts half dark so no pale seam runs between the Earth and the card */
-  html[data-daylight="day"] #mnSignedOut .wg-veil { background: linear-gradient(90deg, rgba(4, 6, 9, 0.5), rgba(4, 6, 9, 0.72) 64px); }
   #mnSignedOut .wg-back { margin-left: 32px; }
+  /* the crest is centred over the Earth's column */
+  #mnSignedOut .wg-crest { left: 50%; }
   #mnSignedOut .wg-lower { align-items: flex-start; padding: 24px 32px 0; }
   /* the shelf runs on through the room kept for the privacy notice, so nothing of the World shows bright beneath it */
   #mnSignedOut .wg-lower::before { height: calc(260px + var(--wg-safe-bottom, 0px)); bottom: calc(-14px - var(--wg-safe-bottom, 0px)); }
@@ -583,16 +620,23 @@ html[data-daylight="day"] #mnProfileGate.mn__onboard::before { background: #ffff
   #mnSignedOut .wg-pulse { padding: 2px 0 4px; }
   #mnSignedOut .wg-card { width: 214px; }
   #mnSignedOut .wg-credit { align-self: flex-start; margin: 10px 0 0; }
+  /* the onboarding pages keep one centred measure on a wide screen (they are a form, not a spread) */
+  #mnProfileGate.mn__onboard { padding-inline: max(0px, calc((100% - 600px) / 2)); }
 }
 @media (min-width: 1100px) {
   @container (min-height: 170px) { #mnSignedOut .wg-pulse { justify-content: flex-start; } }
+}
+@media (min-width: 1100px) and (min-height: 900px) {
+  #mnSignedOut .wg-title { font-size: 38px; }
+  #mnSignedOut .wg-field { min-height: 64px; }
+  #mnSignedOut .mn__auth-tab { min-height: 60px; }
+  #mnSignedOut #mnAuthGo { min-height: 58px; }
 }
 /* the one blur: the veil over the feed column, never over the globe, and never for someone who asked for less transparency */
 @media (min-width: 1100px) and (prefers-reduced-transparency: no-preference) {
   @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
     #mnSignedOut .wg-veil {
       -webkit-backdrop-filter: blur(12px) saturate(0.85); backdrop-filter: blur(12px) saturate(0.85);
-      -webkit-mask-image: linear-gradient(90deg, transparent, #000 64px); mask-image: linear-gradient(90deg, transparent, #000 64px);
     }
   }
 }
@@ -601,11 +645,10 @@ html[data-daylight="day"] #mnProfileGate.mn__onboard::before { background: #ffff
    REDUCED MOTION: nothing moves in the door or the pages; the busy ring and its thread hold still
    ============================================================ */
 @media (prefers-reduced-motion: reduce) {
-  #mnSignedOut *, #mnSignedOut *::before, #mnSignedOut *::after, #mnSignedOut.wg-door,
+  #mnSignedOut *, #mnSignedOut *::before, #mnSignedOut *::after, #mnSignedOut.wg-door, #mnSignedOut.wg-door::before,
   #mnProfileGate *, #mnProfileGate *::before, #mnProfileGate *::after {
     animation: none !important; transition: none !important; scroll-behavior: auto !important;
   }
-  #mnSignedOut .wg-light { display: none !important; }
   #mnSignedOut #mnAuthGo[aria-busy="true"]::before { background-size: 100% 100% !important; background-position: 0 0 !important; }
   #mnSignedOut #mnAuthGo:hover:not(:disabled)::after, #mnSignedOut #mnAuthGo:active:not(:disabled) { transform: none !important; }
 }

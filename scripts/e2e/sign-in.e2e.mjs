@@ -47,7 +47,7 @@ async function tabWalk(page, n, back = false) {
 /* the key texts and their measured contrast */
 async function keyContrast(page, scope) {
   const c = await contrast(page);
-  const keys = /Turn what|into action|The place for doers|Sign in|Create account|Welcome back|New here|Email|Password|Forgot|Sign in to find people|McCluster Corp|Back to the World|Check your email|match an account|do not match/;
+  const keys = /Turn what|into action|The place for doers|Sign in|Create account|Welcome back|New here|Email|Password|Forgot|Sign in to find people|McCluster Corp|Back|Check your email|match an account|do not match/;
   const key = c.items.filter((i) => keys.test(i.text));
   check(scope, 'the key texts read at 4.5:1 or better (3:1 for large type), measured from pixels', key.length >= 8 && c.failures.length === 0, { failures: c.failures.slice(0, 6), measured: key.length });
   /* the glyph mask came off just now: every button's colour eases back over 220 ms (css/style.css), so the next screenshot waits it out */
@@ -73,7 +73,11 @@ try {
         await opened(page);
         await page.waitForTimeout(500);
         const why = await page.evaluate(() => ({ row: !document.getElementById('mnGuestWhyRow').hidden, text: document.getElementById('mnGuestWhy').textContent, back: !document.getElementById('mnSignedOutBack').hidden, mode: document.getElementById('mnSignedOut').getAttribute('data-auth-mode'), focus: document.activeElement && document.activeElement.id }));
-        check(scope, 'a members-only tap opens the door in sign-in mode with its reason and the way back', why.row && why.text === 'Sign in to find people.' && why.back && why.mode === 'signin' && why.focus === 'mnEmail', why);
+        /* the focus: the first field where a keyboard is at hand; on a touch screen the door itself, so no keyboard rises over
+           the sheet before a field is tapped (review DR-m11) */
+        const firstFocus = device.mobile ? 'mnSignedOut' : 'mnEmail';
+        check(scope, `a members-only tap opens the door in sign-in mode with its reason and the way back, the focus on ${firstFocus === 'mnEmail' ? 'the email' : 'the door'}`, why.row && why.text === 'Sign in to find people.' && why.back && why.mode === 'signin' && why.focus === firstFocus, why);
+        await page.focus('#mnEmail');
         const fwd = await tabWalk(page, 6);
         check(scope, 'focus order forward from the email: password, Show, Forgot, the action, the footer', JSON.stringify(fwd) === JSON.stringify(['#mnPassword', 'show:mnPassword', '#mnForgot', '#mnAuthGo', 'foot:Privacy Policy', 'foot:Manage your M Account']), fwd);
         await page.focus('#mnEmail');
@@ -109,7 +113,8 @@ try {
         const token = world.auth.filter((a) => a.p === '/auth/v1/token');
         check(scope, 'Sign in calls signInWithPassword(email as typed and trimmed, password) once', c1.length === 1 && c1[0].name === 'signInWithPassword' && c1[0].args[0] === 'Member@Example.invalid' && c1[0].args[1] === 'fixture-password-1', c1);
         check(scope, 'and sends one POST to the token endpoint with the lower-cased email, the password and the apikey', token.length === 1 && token[0].m === 'POST' && token[0].q === '?grant_type=password' && token[0].apikey && JSON.stringify(token[0].body) === JSON.stringify({ email: 'member@example.invalid', password: 'fixture-password-1' }), token);
-        check(scope, 'invalid_credentials reads as the door\'s own line, beside the action, and the action comes back', refused.status === 'That email and password don’t match an account. Check them, or use Forgot password.' && refused.error && refused.go === 'Sign in' && refused.busy === null && refused.type === 'password', refused);
+        const forgotWords = await page.textContent('#mnForgot');
+        check(scope, 'invalid_credentials reads as the door\'s own line, naming the Forgot control by its own words, beside the action, and the action comes back', refused.status === `That email and password don’t match an account. Check them, or use “${forgotWords}” above.` && forgotWords === "Forgot or don't know your password?" && refused.error && refused.go === 'Sign in' && refused.busy === null && refused.type === 'password', { refused, forgotWords });
         await keyContrast(page, scope + ' refused');
         await page.screenshot({ path: join(OUT, `refused-${scope}.png`), timeout: 90000 });
         /* a field error on Create account: the passwords differ, nothing is sent */

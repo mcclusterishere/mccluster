@@ -10,6 +10,8 @@
    - opened(ctx): openSignIn's word, with the reason key, the World's own open-missions read and the World's mission opener.
      It starts the pulse: three public reads, each card hidden until its read answers and for good if it fails, and the
      globe's own credit line.
+   - focus(field): where the focus goes as the door opens: the first field where a keyboard is at hand; on a touch screen the
+     dialog itself, so the phone's keyboard does not rise over the sheet before a field is tapped.
    - leave(): showGate closing the door, for the Back pill, Escape, a tap on the scrim, the phone's Back, a mission handed to
      the World, or a sign-in that worked. Inert comes off at once, the sheet falls for 220 ms, and the history entry goes.
    Nothing here is invented: no count without a read, no zero, no placeholder, values written as text only. */
@@ -23,7 +25,7 @@
   var GDELT = "https://www.gdeltproject.org/";
   /* the World's globe credit as js/action-globe.js writes it, for when the frame cannot be read */
   var CREDIT = "NASA imagery · Natural Earth · © OpenStreetMap";
-  var KEEP_MS = 5 * 60 * 1000, READ_MS = 6000, LEAVE_MS = 220, ENTER_MS = 1600;
+  var KEEP_MS = 5 * 60 * 1000, READ_MS = 6000, LEAVE_MS = 220, ENTER_MS = 1600, FADE_PX = 34;
   /* never made inert: the privacy notice (banner mode) and its first-visit wall stay reachable */
   var SPARE = { mccPrivacyNotice: 1, mccPrivacyGate: 1 };
   var NOT_UI = /^(SCRIPT|STYLE|LINK|META|TEMPLATE|NOSCRIPT)$/i;
@@ -37,13 +39,15 @@
   var gate = {
     open: false, leaving: false, pending: "", opener: null, inert: [], hideTimer: 0, enterTimer: 0,
     ctx: null, cache: {}, seq: 0, wired: false, matched: false, expectPop: false, warmed: false,
-    bannerRO: null, bodyMO: null, bannerSeen: null, frameWired: false
+    bannerRO: null, bodyMO: null, bannerSeen: null, frameWired: false, intentWired: false
   };
 
   function $(id) { return doc.getElementById(id); }
   function door() { return $("mnSignedOut"); }
   function each(list, fn) { Array.prototype.forEach.call(list || [], fn); }
   function reduced() { try { return !!(root.matchMedia && root.matchMedia("(prefers-reduced-motion: reduce)").matches); } catch (e) { return false; } }
+  /* a touch screen with no hover: a phone or a tablet, where focusing a field raises the keyboard */
+  function touch() { try { return !!(root.matchMedia && root.matchMedia("(hover: none) and (pointer: coarse)").matches); } catch (e) { return false; } }
   function rendered(n) { try { return !!(n && n.isConnected && n.getClientRects && n.getClientRects().length); } catch (e) { return false; } }
   function shownBack() { var b = $("mnSignedOutBack"); return b && !b.hidden && rendered(b) ? b : null; }
   function https(v) {
@@ -78,14 +82,17 @@
       value: m.title.trim(), source: bits.join(" · ")
     };
   }
-  /* the countries with at least one story in the last 24 hours (GDELT); never the story total, which the API caps */
+  /* the countries with at least one story in the last 24 hours (GDELT); never the story total, which the API caps. The read
+     itself is capped (workers/mccluster/src/world-news-discovery.js reads at most 15,000 stories): when the answer says
+     capped, a country whose stories all lie past the cap is not counted, so the number is a floor and reads "N+" */
   function newsCard(heat) {
     if (!heat || typeof heat !== "object" || heat.unavailable === true) return null;
     var c = heat.countries && typeof heat.countries === "object" ? heat.countries : null;
     var n = c ? Object.keys(c).filter(function (k) { return Number(c[k]) > 0; }).length : 0;
     if (!n) return null;
     var a = heat.attribution && typeof heat.attribution === "object" ? heat.attribution : {};
-    return { kicker: "Last 24 hours", value: "News from " + fmt(n) + " " + plural(n, "country", "countries"), source: "The GDELT Project", href: https(a.url) || GDELT };
+    var count = heat.capped === true ? fmt(n) + "+ countries" : fmt(n) + " " + plural(n, "country", "countries");
+    return { kicker: "Last 24 hours", value: "News from " + count, source: "The GDELT Project", href: https(a.url) || GDELT };
   }
   function eventDate(iso, tz) {
     var t = Date.parse(iso);
@@ -257,6 +264,8 @@
       if (r.height > 0) v = Math.ceil(r.height + Math.max(0, vh - r.bottom) + 8);
     }
     el.style.setProperty("--wg-safe-bottom", v + "px");
+    /* while the notice waits, the sheet keeps its compact hand so the action stays above it (css/world-gate.css) */
+    if (v > 0) el.setAttribute("data-banner", ""); else el.removeAttribute("data-banner");
     if (b && b !== gate.bannerSeen && typeof root.ResizeObserver === "function") {
       if (gate.bannerRO) gate.bannerRO.disconnect();
       gate.bannerSeen = b;
@@ -272,7 +281,7 @@
     var f = $("mnWorldFrame"), r = f && rendered(f) ? f.getBoundingClientRect() : null;
     if (r && r.width > 0 && r.height > 0) {
       el.style.setProperty("--wg-veil-top", Math.max(0, Math.round(r.bottom - 64)) + "px");
-      el.style.setProperty("--wg-veil-left", Math.max(0, Math.ceil(r.right)) + "px");
+      el.style.setProperty("--wg-veil-left", Math.max(0, Math.floor(r.right)) + "px");
     }
     viewport();
     safeBottom();
@@ -283,20 +292,40 @@
     el.style.setProperty("--wg-vvh", Math.round(vv.height) + "px");
     el.style.setProperty("--wg-vvtop", Math.round(vv.offsetTop) + "px");
   }
-  /* more below: set while the sheet can still scroll down */
+  /* the action's need (--wg-need): how tall the sheet must be for the action to sit wholly in view at rest, above the fade
+     that says there is more (css/world-gate.css takes it over the stage's own room on a phone, never over the way back) */
+  function need() {
+    var el = door(), sh = $("wgSheet"), go = $("mnAuthGo");
+    if (!el || !sh || !go || !rendered(go)) return;
+    var s = sh.getBoundingClientRect(), g = go.getBoundingClientRect(), pad = 16;
+    try { pad = parseFloat(root.getComputedStyle(sh).paddingBottom) || 16; } catch (e) {}
+    var foot = g.bottom - s.top + (sh.scrollTop || 0) + FADE_PX + Math.max(0, pad - 16) + 4;
+    var vv = root.visualViewport, vh = vv && vv.height ? vv.height : root.innerHeight || 0;
+    var cap = vh - (parseFloat(el.style.getPropertyValue("--wg-safe-bottom")) || 0) - 68;
+    if (!isFinite(foot) || foot <= 0) return;
+    var v = Math.ceil(cap > 0 ? Math.min(foot, cap) : foot) + "px";
+    if (el.style.getPropertyValue("--wg-need") !== v) el.style.setProperty("--wg-need", v);
+  }
+  /* an attribute set or taken away only when it changes (the sheet's scroll calls this on every frame) */
+  function flag(n, name, on) { if (n.hasAttribute(name) !== on) { if (on) n.setAttribute(name, ""); else n.removeAttribute(name); } }
+  /* more below: set while the sheet can still scroll down; scrolled: set once its top has gone under the edge (a fade then
+     softens the top as the bottom one does) */
   function more() {
     var sh = $("wgSheet");
     if (!sh) return;
+    need();
     var left = (sh.scrollHeight || 0) - (sh.scrollTop || 0) - (sh.clientHeight || 0);
-    if (left > 2) sh.setAttribute("data-more", ""); else sh.removeAttribute("data-more");
+    flag(sh, "data-more", left > 2);
+    flag(sh, "data-scrolled", (sh.scrollTop || 0) > 2);
   }
 
   /* ---------------- the doors, the fields and the action ---------------- */
+  /* Show / Hide says what it will do, in its words and its name, and nothing else (no pressed state: a name that changes
+     with a pressed state that changes too says it twice, review DR-m5) */
   function setReveal(btn, show) {
     var input = $(btn.getAttribute("data-reveal"));
     if (!input) return;
     input.type = show ? "text" : "password";
-    btn.setAttribute("aria-pressed", show ? "true" : "false");
     btn.setAttribute("aria-label", show ? "Hide password" : "Show password");
     btn.textContent = show ? "Hide" : "Show";
   }
@@ -318,12 +347,15 @@
     if (b.disabled && /…$/.test(String(b.textContent || "").trim())) b.setAttribute("aria-busy", "true");
     else b.removeAttribute("aria-busy");
   }
-  /* the mode js/mnet.js set (setAuthMode): the dialog's name, the doors' roving tab stop, the panel's label */
+  /* the mode js/mnet.js set (setAuthMode): the dialog's name, the doors' roving tab stop, the panel's label, and what describes
+     the password (the eight-character rule only where it shows, in Create account) */
   function syncMode() {
     var el = door();
     if (!el) return;
     var create = el.getAttribute("data-auth-mode") === "create";
     el.setAttribute("aria-label", create ? "Create an account" : "Sign in");
+    var pw = $("mnPassword");
+    if (pw) pw.setAttribute("aria-describedby", create ? "mnPasswordHint mnAuthStatus" : "mnAuthStatus");
     var on = $(create ? "mnCreateTab" : "mnSignInTab"), off = $(create ? "mnSignInTab" : "mnCreateTab"), panel = $("mnAuthPanel");
     if (on) on.setAttribute("tabindex", "0");
     if (off) off.setAttribute("tabindex", "-1");
@@ -466,7 +498,7 @@
     /* Show / Hide, back to hidden whenever the form is sent */
     el.addEventListener("click", function (e) {
       var t = e.target, b = t && t.closest ? t.closest("[data-reveal]") : null;
-      if (b && el.contains(b)) { setReveal(b, b.getAttribute("aria-pressed") !== "true"); return; }
+      if (b && el.contains(b)) { var field = $(b.getAttribute("data-reveal")); setReveal(b, !!field && field.type === "password"); return; }
       if (t && t.closest && t.closest("#mnAuthGo")) hideAll();
     }, true);
     el.addEventListener("click", function (e) {
@@ -515,13 +547,16 @@
     var sh = $("wgSheet");
     if (sh) sh.addEventListener("scroll", more, { passive: true });
     el.addEventListener("focusin", function (e) { reveal(e.target); });
+    /* a resize, or the phone's keyboard rising (the visual viewport shrinks): the door follows, and the field being typed in
+       is brought back into the sheet's view */
+    var keep = function () { var a = doc.activeElement; if (a && el.contains(a)) reveal(a); };
     var pending = 0;
     root.addEventListener("resize", function () {
       if (!gate.open || pending) return;
-      pending = (root.requestAnimationFrame || setTimeout)(function () { pending = 0; if (gate.open) { measure(); more(); } });
+      pending = (root.requestAnimationFrame || setTimeout)(function () { pending = 0; if (gate.open) { measure(); more(); keep(); } });
     });
     if (root.visualViewport) {
-      var vv = function () { if (gate.open) { viewport(); more(); } };
+      var vv = function () { if (gate.open) { viewport(); more(); keep(); } };
       root.visualViewport.addEventListener("resize", vv);
       root.visualViewport.addEventListener("scroll", vv);
     }
@@ -539,26 +574,30 @@
     }
   }
 
-  /* the headline's faces, fetched once at idle after the World's first paint, so the first open never swaps faces */
+  /* the headline's faces (the roman and the italic, about 62 KB), fetched on intent and never on arrival (review DR-m8): a
+     pointer or a key landing on a way in (the header's Join and Sign in, the guest card), or the first open itself. A visit
+     that never asks for the door never downloads them; an open with no intent before it swaps faces once. */
+  var INTENT = "[data-guest-open], #mnGuestJoin, #mnGuestSignIn";
   function warm() {
     if (gate.warmed) return;
     gate.warmed = true;
-    if (!doc.documentElement.classList.contains("mn-guest") || !doc.fonts || typeof doc.fonts.load !== "function") return;
-    var go = function () {
-      try {
-        doc.fonts.load('500 32px "Playfair Display"').catch(function () {});
-        doc.fonts.load('italic 500 32px "Playfair Display"').catch(function () {});
-      } catch (e) {}
-    };
-    var idle = function () { if (root.requestIdleCallback) root.requestIdleCallback(go, { timeout: 2500 }); else setTimeout(go, 2500); };
-    if (doc.readyState === "complete") idle();
-    else root.addEventListener("load", idle, { once: true });
+    if (!doc.fonts || typeof doc.fonts.load !== "function") return;
+    try {
+      doc.fonts.load('500 32px "Playfair Display"').catch(function () {});
+      doc.fonts.load('italic 500 32px "Playfair Display"').catch(function () {});
+    } catch (e) {}
+  }
+  function intent() {
+    if (gate.intentWired || gate.warmed || typeof doc.addEventListener !== "function") return;
+    gate.intentWired = true;
+    var on = function (e) { var t = e && e.target; if (t && t.closest && t.closest(INTENT)) warm(); };
+    ["pointerdown", "pointerover", "touchstart", "focusin"].forEach(function (k) { doc.addEventListener(k, on, { capture: true, passive: true }); });
   }
 
   root.MCC_GATE = {
     shown: function (which) {
-      if (which === "signedout") open();
-      else warm();
+      if (which === "signedout") { warm(); open(); }
+      else intent();
     },
     opened: function (ctx) {
       gate.ctx = ctx && typeof ctx === "object" ? ctx : {};
@@ -567,6 +606,14 @@
       pulse();
       rules();
       busy();
+      /* the reason line has just been written: the action's place moved */
+      more();
+      try { if (doc.fonts && doc.fonts.ready) doc.fonts.ready.then(function () { if (gate.open) more(); }); } catch (e) {}
+    },
+    focus: function (field) {
+      var el = door();
+      if (el && touch()) { try { el.focus({ preventScroll: true }); } catch (e) {} return; }
+      if (field) { try { field.focus({ preventScroll: true }); } catch (e) {} }
     },
     leave: leave,
     isOpen: function () { return gate.open; },

@@ -36,15 +36,20 @@ function door(html) {
   const start = html.indexOf('<section class="mn__gate wg-door" id="mnSignedOut"');
   return html.slice(start, html.indexOf('</section>', html.indexOf('<footer class="wg-foot">', start)) + 10);
 }
-test('the door\'s markup: a dialog without aria-modal, the supplied crown twice and nothing else drawn, the h2, the doors, the fields', () => {
+test('the door\'s markup: a dialog without aria-modal, the supplied crest once on the stage and nothing else drawn, the h2, the doors, the fields', () => {
   const html = read('mnet.html'), d = door(html);
-  assert.match(d, /^<section class="mn__gate wg-door" id="mnSignedOut" role="dialog" aria-label="Sign in" hidden>/);
+  assert.match(d, /^<section class="mn__gate wg-door" id="mnSignedOut" role="dialog" aria-label="Sign in" tabindex="-1" hidden>/);
   assert.doesNotMatch(d, /aria-modal/);
   const imgs = d.match(/<img [^>]*>/g) || [];
-  assert.equal(imgs.length, 2, 'two images: the white mark by night, the dark mark by day');
-  assert.match(imgs[0], /class="wg-crown wg-crown--night" src="assets\/img\/equity-uprise-mark-white\.png" alt="" width="160" height="160" draggable="false"/);
-  assert.match(imgs[1], /class="wg-crown wg-crown--day" src="assets\/img\/equity-uprise-mark\.png" alt="" width="160" height="160" draggable="false"/);
-  assert.doesNotMatch(d, /<svg[^>]*class="[^"]*crown|<canvas/, 'nothing drawn for the mark');
+  /* the crest crowns the World above the door (review DR-M3): one image, the owner's white mark, on the stage's dark band by
+     night and by day; the sheet carries no mark */
+  assert.equal(imgs.length, 1, 'one image: the supplied white mark');
+  assert.match(imgs[0], /^<img class="wg-crest" src="assets\/img\/equity-uprise-mark-white\.png" alt="" width="160" height="160" draggable="false">$/);
+  const stage = d.slice(d.indexOf('<div class="wg-stage">'), d.indexOf('<div class="wg-sheet" id="wgSheet">'));
+  assert.ok(stage.includes(imgs[0]), 'the crest is on the stage, not in the sheet');
+  assert.doesNotMatch(d, /<svg[^>]*class="[^"]*(crown|crest)|<canvas|wg-light/, 'nothing drawn for the mark, and no light sweep');
+  /* the way back: "← Back" on a phone, its full words from 700 px, one name throughout */
+  assert.match(d, /<button class="mn__to-world wg-back" id="mnSignedOutBack" type="button" aria-label="Back to the World">← Back<span class="wg-back-more"> to the World<\/span><\/button>/);
   const h2 = /<h2 class="wg-title" id="wgTitle">([\s\S]*?)<\/h2>/.exec(d)[1];
   assert.equal(h2.replace(/<[^>]+>/g, ''), 'Turn what you care about into action.');
   assert.match(h2, /<em>into action<\/em><span class="wg-stop">\.<\/span>$/);
@@ -53,11 +58,17 @@ test('the door\'s markup: a dialog without aria-modal, the supplied crown twice 
   assert.match(d, /id="mnCreateTab" type="button" role="tab" aria-selected="false"[^>]*><span class="wg-tab-k" aria-hidden="true">New here<\/span><span class="wg-tab-w">Create account<\/span><\/button>/);
   assert.match(d, /<div id="mnAuthPanel" role="tabpanel" aria-labelledby="mnSignInTab">/);
   assert.match(d, /<input class="mn__input" id="mnEmail" type="email" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" placeholder="you@example\.com" aria-describedby="mnAuthStatus">/);
-  assert.match(d, /id="mnPassword" type="password" autocomplete="current-password" minlength="8" placeholder="Your password" aria-describedby="mnPasswordHint mnAuthStatus"/);
+  /* the password is described by the status in Sign in; js/world-gate.js adds the eight-character rule in Create account,
+     where it shows (review DR-m5) */
+  assert.match(d, /id="mnPassword" type="password" autocomplete="current-password" minlength="8" placeholder="Your password" aria-describedby="mnAuthStatus"/);
   assert.match(d, /id="mnPassword2" type="password" autocomplete="new-password" minlength="8" placeholder="Type it again" aria-describedby="wgMatch mnAuthStatus"/);
-  assert.equal((d.match(/class="wg-show" type="button" data-reveal="mnPassword2?" aria-controls="mnPassword2?" aria-pressed="false" aria-label="Show password">Show<\/button>/g) || []).length, 2);
-  /* the order of the panel: status directly above the action */
-  const order = ['id="mnCreateNote"', 'id="mnEmail"', 'id="mnPassword"', 'id="mnPasswordHint"', 'id="mnForgot"', 'id="mnConfirmWrap"', 'id="mnCreatePrivacy"', 'id="mnCreateAgree"', 'id="mnAuthStatus"', 'id="mnAuthGo"', 'id="mnResend"', 'id="mnProviders"'].map((s) => d.indexOf(s));
+  /* Show / Hide: its words and its name say what it will do; no pressed state as well (review DR-m5) */
+  assert.equal((d.match(/class="wg-show" type="button" data-reveal="mnPassword2?" aria-controls="mnPassword2?" aria-label="Show password">Show<\/button>/g) || []).length, 2);
+  assert.doesNotMatch(d, /aria-pressed/);
+  /* the order of the panel: status directly above the action; the note about the three pages to come under the action, so
+     the action stays in view above the privacy notice on a phone (review DR-M1) */
+  const order = ['id="mnEmail"', 'id="mnPassword"', 'id="mnPasswordHint"', 'id="mnForgot"', 'id="mnConfirmWrap"', 'id="mnCreatePrivacy"', 'id="mnCreateAgree"', 'id="mnAuthStatus"', 'id="mnAuthGo"', 'id="mnCreateNote"', 'id="mnResend"', 'id="mnProviders"'].map((s) => d.indexOf(s));
+  assert.ok(order.every((i) => i > 0), 'every part is there');
   assert.deepEqual(order, [...order].sort((a, b) => a - b), 'the panel reads in the spec\'s order');
   assert.ok(d.indexOf('class="wg-stage"') < d.indexOf('id="wgSheet"'), 'the stage first, then the sheet (DOM order is reading order)');
   /* the visible words: the brand is the mark, never written; the company is named once; no other entity */
@@ -110,10 +121,34 @@ test('the stylesheet keeps the law: mobile first, minmax(0, 1fr), 16 px controls
   assert.deepEqual(urls, ['url("../assets/fonts/playfair-display-latin-500-normal.woff2")', 'url("../assets/fonts/playfairdisplay-italic-700.woff2")'], 'no raster and nothing under assets/img: only the two font files and data: SVG icons');
   assert.doesNotMatch(css, /assets\/img/);
   assert.doesNotMatch(css, /fonts\.googleapis|fonts\.gstatic|@import/, 'self-hosted fonts only');
-  /* the crown is never altered */
-  const crown = all.filter((r) => /\.wg-crown/.test(r.head)).map((r) => r.body).join(';');
-  assert.match(crown, /filter: none/); assert.match(crown, /box-shadow: none/); assert.match(crown, /background: none/); assert.match(crown, /border-radius: 0/); assert.match(crown, /object-fit: contain/);
-  assert.doesNotMatch(crown, /mask|mix-blend|drop-shadow|opacity/);
+  /* the crest is never altered: scaled into a square box, nothing on or around it, never larger than the file's own pixels
+     on a 3x phone (52 px) */
+  const crest = all.filter((r) => /\.wg-crest/.test(r.head)).map((r) => r.body).join(';');
+  assert.match(crest, /filter: none/); assert.match(crest, /box-shadow: none/); assert.match(crest, /background: none/); assert.match(crest, /border-radius: 0/); assert.match(crest, /object-fit: contain/);
+  assert.match(crest, /width: 52px; height: 52px/);
+  assert.doesNotMatch(crest, /mask|mix-blend|drop-shadow|opacity|width: (?!52px)\d/);
+  assert.doesNotMatch(css, /wg-crown|wg-light|wg-sweep|wg-card-in/, 'no crown in the sheet, no light sweep, no card stagger (review DR-m1)');
+  /* motion: the sheet rises whole; only the scrim and the sheet move on the way in */
+  const entering = all.filter((r) => /is-entering/.test(r.head));
+  assert.deepEqual(entering.map((r) => r.head), ['#mnSignedOut.is-entering .wg-scrim', '#mnSignedOut.is-entering .wg-sheet']);
+  assert.doesNotMatch(entering.map((r) => r.body).join(';'), /animation-delay/);
+  /* the sheet is opaque by night and by day (review DR-m4) */
+  for (const m of css.matchAll(/--wg-sheet: ([^;]+);/g)) assert.doesNotMatch(m[1], /rgba\(/, 'an opaque sheet: ' + m[1]);
+  /* the action is in view at rest: the sheet's height takes the action's measured need, and the action is drawn above the
+     fade (review DR-M1, DR-M2) */
+  const sheet = all.filter((r) => r.head === '#mnSignedOut .wg-sheet' && !r.at.length).map((r) => r.body).join(';');
+  assert.match(sheet, /max-height: clamp\(var\(--wg-need, 0px\), calc\(var\(--wg-vvh, 100vh\) - var\(--wg-safe-bottom, 0px\) - 160px\), calc\(var\(--wg-vvh, 100vh\) - var\(--wg-safe-bottom, 0px\) - 68px\)\)/);
+  const go = all.filter((r) => r.head === '#mnSignedOut #mnAuthGo' && !r.at.length).map((r) => r.body).join(';');
+  assert.match(go, /z-index: 1/);
+  /* the large type only on tall desktops (review DR-M2) */
+  const tall = all.filter((r) => r.at.some((a) => /min-width: 1100px\) and \(min-height: 900px/.test(a))).map((r) => r.head);
+  assert.ok(tall.includes('#mnSignedOut .wg-title') && tall.includes('#mnSignedOut .wg-field'), tall.join(' | '));
+  assert.ok(!all.some((r) => r.head === '#mnSignedOut .wg-title' && r.at.length === 1 && /min-width: 1100px\)$/.test(r.at[0])), 'no larger title on a short desktop');
+  /* field names are read as written: small capitals from the font, never text-transform (review DR-m5) */
+  for (const head of ['#mnSignedOut .wg-field .mn__label', '#mnProfileGate .mn__label']) {
+    const body = all.filter((r) => r.head === head).map((r) => r.body).join(';');
+    assert.match(body, /font-variant-caps: all-small-caps/, head); assert.match(body, /text-transform: none/, head); assert.doesNotMatch(body, /uppercase/, head);
+  }
   /* no blur over the globe: the only backdrop-filter is the veil at 1100 px and up, never under reduced transparency */
   const blur = all.filter((r) => /backdrop-filter/.test(r.body));
   assert.equal(blur.length, 1);
@@ -153,7 +188,10 @@ test('the script stays presentation: no auth call, no console.error; js/mnet.js 
   assert.match(mnet, /MCC\.resendSignupVerification\(email\)\.then/);
   assert.match(mnet, /location\.href = "forgot-password\.html" \+ \(email \? "\?email=" \+ encodeURIComponent\(email\) : ""\);/);
   assert.match(mnet, /MCC\.signInWithProvider\(key, location\.origin \+ "\/auth\/\?next=" \+ encodeURIComponent\(next\)\)/);
-  assert.match(mnet, /e && e\.code === "invalid_credentials" \? "That email and password don\u2019t match an account\. Check them, or use Forgot password\." : \(e\.message \|\| "Could not sign in\."\)/);
+  /* the refusal names the control by its own words (review DR-m7) */
+  const forgot = /<button class="mn__secondary" id="mnForgot" type="button">([^<]+)<\/button>/.exec(read('mnet.html'))[1];
+  assert.equal(forgot, "Forgot or don't know your password?");
+  assert.ok(mnet.includes('e && e.code === "invalid_credentials" ? "That email and password don\u2019t match an account. Check them, or use \u201c' + forgot + '\u201d above." : (e.message || "Could not sign in.")'), 'the refusal quotes the Forgot control');
   /* the door rises over the World; the pages still replace it */
   const show = mnet.slice(mnet.indexOf('  function showGate(which) {'), mnet.indexOf('  function providerLabel('));
   assert.match(show, /\$\("mnApp"\)\.hidden = which === "profile";/);
@@ -164,6 +202,14 @@ test('the script stays presentation: no auth call, no console.error; js/mnet.js 
   assert.doesNotMatch(open, /scrollTo/, 'the World keeps its place');
   assert.match(open, /querySelectorAll\("dialog\[open\]"\)/);
   assert.match(mnet, /openSignIn\("signin", line, why\);/);
+  /* the focus: through MCC_GATE.focus (a touch screen gets the door, not a field: review DR-m11) */
+  assert.match(open, /if \(window\.MCC_GATE && MCC_GATE\.focus\) MCC_GATE\.focus\(email\);/);
+  assert.doesNotMatch(open.replace(/else if \(email\) email\.focus\(\{ preventScroll: true \}\);/, ''), /email\.focus\(/, 'no unconditional focus on the email');
+  /* the way back from a mission's Join goes back to that mission (review DR-m2) */
+  const back = mnet.slice(mnet.indexOf('    $("mnSignedOutBack").onclick = function () {'), mnet.indexOf('    $("mnEditProfile").onclick'));
+  assert.match(back, /var mission = doorMission\(\);/);
+  assert.match(back, /showGate\("app"\);\n      if \(mission\) openMission\(mission\);\n      else if \(state\.currentView !== "feed"\) setView\("feed"\);/);
+  assert.match(mnet, /function doorMission\(\) \{\n    if \(state\.doorFor !== "mission"\) return "";/);
 });
 
 test('the credit fallback is the World globe\'s own credit, word for word', () => {
@@ -249,6 +295,8 @@ function makeDom() {
   doc.getElementById = (id) => { const find = (n) => { for (const c of n.children) { if (c.id === id) return c; const f = find(c); if (f) return f; } return null; }; return find(doc); };
   doc.querySelector = (sel) => doc.documentElement.querySelector(sel);
   doc.readyState = 'complete'; doc.visibilityState = 'visible';
+  /* the font loader: what the door asks for, and when */
+  doc.fonts = { loads: [], load(spec) { this.loads.push(spec); return Promise.resolve([]); }, ready: Promise.resolve() };
   doc.documentElement = new Element('html'); doc.appendChild(doc.documentElement);
   doc.body = new Element('body'); doc.documentElement.appendChild(doc.body);
   doc.activeElement = doc.body;
@@ -257,12 +305,13 @@ function makeDom() {
 
 /* the World as js/mnet.js leaves it: main.mn with the header, the door, the pages and the app; the bar, the bar's chip, a
    privacy banner, an element someone else made inert, a script */
-function boot({ vv = null, activation = true, reduced = false, fetch: fetchImpl = null } = {}) {
+function boot({ vv = null, activation = true, reduced = false, touch = false, fetch: fetchImpl = null } = {}) {
   const { doc, win, Element, observers } = makeDom();
   const el = (tag, attrs = {}, parent = null, text = '') => { const e = new Element(tag); for (const [k, v] of Object.entries(attrs)) { if (k === 'class') e.className = v; else e.setAttribute(k, v); } if (text) e.textContent = text; if (parent) parent.appendChild(e); return e; };
   const main = el('main', { class: 'mn' }, doc.body);
   const top = el('header', { class: 'mn__top' }, main); top.rect = { top: 0, bottom: 69, left: 0, right: 390, width: 390, height: 69 };
-  const door = el('section', { class: 'mn__gate wg-door', id: 'mnSignedOut', role: 'dialog', 'aria-label': 'Sign in', hidden: '' }, main);
+  const door = el('section', { class: 'mn__gate wg-door', id: 'mnSignedOut', role: 'dialog', 'aria-label': 'Sign in', tabindex: '-1', hidden: '' }, main);
+  const join = el('button', { id: 'mnGuestJoin', type: 'button' }, top, 'Join');
   const pages = el('section', { class: 'mn__gate mn__onboard', id: 'mnProfileGate', hidden: '' }, main);
   const app = el('section', { class: 'mn__app', id: 'mnApp' }, main);
   const frame = el('iframe', { id: 'mnWorldFrame' }, app); frame.rect = { top: 0, bottom: 363, left: 0, right: 390, width: 390, height: 363 };
@@ -285,12 +334,12 @@ function boot({ vv = null, activation = true, reduced = false, fetch: fetchImpl 
   const createTab = el('button', { class: 'mn__auth-tab', id: 'mnCreateTab', type: 'button', tabindex: '-1' }, tabs, 'Create account');
   const panel = el('div', { id: 'mnAuthPanel', 'aria-labelledby': 'mnSignInTab' }, sheet);
   const f1 = el('div', { class: 'wg-field' }, panel); const email = el('input', { id: 'mnEmail', type: 'email' }, f1);
-  const f2 = el('div', { class: 'wg-field' }, panel); const pass = el('input', { id: 'mnPassword', type: 'password' }, f2);
-  const show1 = el('button', { class: 'wg-show', type: 'button', 'data-reveal': 'mnPassword', 'aria-pressed': 'false', 'aria-label': 'Show password' }, f2, 'Show');
+  const f2 = el('div', { class: 'wg-field' }, panel); const pass = el('input', { id: 'mnPassword', type: 'password', 'aria-describedby': 'mnAuthStatus' }, f2);
+  const show1 = el('button', { class: 'wg-show', type: 'button', 'data-reveal': 'mnPassword', 'aria-label': 'Show password' }, f2, 'Show');
   const hint = el('p', { class: 'mn__hint wg-rule', id: 'mnPasswordHint' }, panel, 'Use at least 8 characters.');
   const wrap = el('div', { id: 'mnConfirmWrap' }, panel);
   const f3 = el('div', { class: 'wg-field' }, wrap); const pass2 = el('input', { id: 'mnPassword2', type: 'password' }, f3);
-  const show2 = el('button', { class: 'wg-show', type: 'button', 'data-reveal': 'mnPassword2', 'aria-pressed': 'false', 'aria-label': 'Show password' }, f3, 'Show');
+  const show2 = el('button', { class: 'wg-show', type: 'button', 'data-reveal': 'mnPassword2', 'aria-label': 'Show password' }, f3, 'Show');
   const match = el('span', { class: 'wg-sr', id: 'wgMatch' }, f3);
   el('p', { class: 'mn__status', id: 'mnAuthStatus' }, panel);
   const go = el('button', { class: 'mn__primary', id: 'mnAuthGo', type: 'button' }, panel, 'Sign in');
@@ -319,7 +368,7 @@ function boot({ vv = null, activation = true, reduced = false, fetch: fetchImpl 
   const ctx = {
     document: doc, history, location: { href: 'https://mccluster.org/?mission=0e1f0000-0000-4000-8000-000000000001', origin: 'https://mccluster.org' },
     navigator: { userActivation: { isActive: activation } }, innerHeight: 844, visualViewport,
-    matchMedia: (q) => ({ matches: /reduce/.test(q) ? reduced : false }),
+    matchMedia: (q) => ({ matches: /reduce/.test(q) ? reduced : /coarse/.test(q) ? touch : false }),
     setTimeout, clearTimeout, URL, URLSearchParams, Promise, AbortController, queueMicrotask,
     requestAnimationFrame: (fn) => setTimeout(fn, 0),
     fetch: fetchImpl || (async () => ({ ok: false, status: 503, json: async () => ({}) })),
@@ -335,7 +384,7 @@ function boot({ vv = null, activation = true, reduced = false, fetch: fetchImpl 
   vm.runInContext(read('js/world-gate.js'), ctx);
   gateRef.g = ctx.MCC_GATE;
   const open = (mode = 'signin', ctxArg = null) => { setMode(mode); showGate('signedout'); if (ctxArg) ctx.MCC_GATE.opened(ctxArg); };
-  return { gate: ctx.MCC_GATE, ctx, doc, win, door, main, app, back, banner, theirs, sheet, signInTab, createTab, panel, email, pass, pass2, show1, show2, hint, match, go, f3, stack, hist, calls, showGate, open, vvListeners, frame };
+  return { gate: ctx.MCC_GATE, ctx, doc, win, door, main, app, back, banner, theirs, sheet, signInTab, createTab, panel, email, pass, pass2, show1, show2, hint, match, go, f3, stack, hist, calls, showGate, open, vvListeners, frame, join };
 }
 const tick = (ms = 0) => new Promise((r) => setTimeout(r, ms));
 const key = (b, k, extra = {}) => b.doc.dispatchEvent.call(b.doc.activeElement === b.doc.body ? b.doc : b.doc.activeElement, { type: 'keydown', key: k, ...extra });
@@ -419,7 +468,11 @@ test('Show / Hide toggles one field, and every field is hidden again on a mode c
   const b = boot();
   b.open();
   b.show1.click();
-  assert.equal(b.pass.type, 'text'); assert.equal(b.show1.getAttribute('aria-pressed'), 'true'); assert.equal(b.show1.getAttribute('aria-label'), 'Hide password'); assert.equal(b.show1.textContent, 'Hide');
+  /* it says what it will do next, in its words and its name; no pressed state besides (review DR-m5) */
+  assert.equal(b.pass.type, 'text'); assert.equal(b.show1.getAttribute('aria-pressed'), null); assert.equal(b.show1.getAttribute('aria-label'), 'Hide password'); assert.equal(b.show1.textContent, 'Hide');
+  b.show1.click();
+  assert.equal(b.pass.type, 'password'); assert.equal(b.show1.getAttribute('aria-label'), 'Show password'); assert.equal(b.show1.textContent, 'Show');
+  b.show1.click(); assert.equal(b.pass.type, 'text');
   b.createTab.click(); await tick();
   assert.equal(b.pass.type, 'password'); assert.equal(b.show1.textContent, 'Show');
   b.show2.click(); assert.equal(b.pass2.type, 'text');
@@ -472,9 +525,12 @@ test('the dialog follows the mode: its name, the doors\' roving tab stop, the pa
   assert.equal(b.door.getAttribute('aria-label'), 'Create an account');
   assert.equal(b.createTab.getAttribute('tabindex'), '0'); assert.equal(b.signInTab.getAttribute('tabindex'), '-1');
   assert.equal(b.panel.getAttribute('aria-labelledby'), 'mnCreateTab');
+  /* the eight-character rule describes the password only where it shows, in Create account (review DR-m5) */
+  assert.equal(b.pass.getAttribute('aria-describedby'), 'mnPasswordHint mnAuthStatus');
   b.createTab.dispatchEvent({ type: 'keydown', key: 'Home' });
   await tick();
   assert.equal(b.door.getAttribute('data-auth-mode'), 'signin'); assert.equal(b.doc.activeElement, b.signInTab);
+  assert.equal(b.pass.getAttribute('aria-describedby'), 'mnAuthStatus');
   b.signInTab.dispatchEvent({ type: 'keydown', key: 'End' });
   await tick();
   assert.equal(b.door.getAttribute('data-auth-mode'), 'create');
@@ -506,10 +562,12 @@ test('the visual viewport sizes the door, and the privacy banner reserves its he
   b.ctx.visualViewport.height = 420; b.ctx.visualViewport.offsetTop = 0; b.vvListeners.resize();
   assert.equal(b.door.style.getPropertyValue('--wg-vvh'), '420px');
   assert.equal(b.door.style.getPropertyValue('--wg-safe-bottom'), String(136 + 8 + 8) + 'px', 'the banner\'s height, its bottom offset and 8 px');
+  assert.equal(b.door.hasAttribute('data-banner'), true, 'the door knows the notice is waiting');
   assert.equal(b.door.style.getPropertyValue('--wg-head'), '69px');
   assert.equal(b.door.style.getPropertyValue('--wg-veil-top'), '299px');
   b.banner.parentNode.removeChild(b.banner); await tick();
   assert.equal(b.door.style.getPropertyValue('--wg-safe-bottom'), '0px', 'the banner gone: the full height comes back');
+  assert.equal(b.door.hasAttribute('data-banner'), false);
 });
 
 test('the pulse\'s words come from the reads, singular and plural, 500+, and nothing at all when a read is empty or fails', async () => {
@@ -528,6 +586,11 @@ test('the pulse\'s words come from the reads, singular and plural, 500+, and not
   assert.equal(mine.kicker, 'Your mission'); assert.equal(mine.value, 'Give someone a free ride'); assert.equal(mine.button, false);
   assert.equal(f.missionCard([tree, ride], 'people', ride.id).kicker, 'Open now · 2 missions', 'only a mission Join reads as yours');
   assert.deepEqual(f.newsCard({ ok: true, countries: { US: 2, BR: 2, KE: 2 }, attribution: { url: 'https://www.gdeltproject.org/' } }), { kicker: 'Last 24 hours', value: 'News from 3 countries', source: 'The GDELT Project', href: 'https://www.gdeltproject.org/' });
+  /* a capped read (the API reads at most 15,000 stories) counts a floor, so it says so (review DR-m6) */
+  const many = {}; for (let k = 0; k < 183; k++) many['C' + k] = 3;
+  assert.equal(f.newsCard({ ok: true, countries: many, total: 12296, capped: true }).value, 'News from 183+ countries');
+  assert.equal(f.newsCard({ ok: true, countries: many, total: 12296, capped: false }).value, 'News from 183 countries');
+  assert.equal(f.newsCard({ ok: true, countries: { US: 1 }, capped: true }).value, 'News from 1+ countries');
   assert.equal(f.newsCard({ countries: { US: 1 } }).value, 'News from 1 country');
   assert.equal(f.newsCard({ countries: { US: 1 }, attribution: { url: 'javascript:alert(1)' } }).href, 'https://www.gdeltproject.org/');
   assert.equal(f.newsCard({ unavailable: true, countries: { US: 2 } }), null);
@@ -570,4 +633,56 @@ test('the reads: each card fills from its own answer, a 503 hides only its card,
   assert.equal(seen.length, 3);
   /* the credit, with no frame to read: the World's own words */
   assert.equal(b.doc.getElementById('wgCredit').textContent, 'NASA imagery · Natural Earth · © OpenStreetMap');
+});
+
+test('the headline\'s faces load on intent or on the first open, never on a guest\'s arrival (review DR-m8)', async () => {
+  const b = boot();
+  b.showGate('app');
+  await tick(5);
+  assert.deepEqual(b.doc.fonts.loads, [], 'arriving, and sitting on the World, downloads no face');
+  b.join.dispatchEvent({ type: 'pointerdown' });
+  assert.deepEqual(b.doc.fonts.loads, ['500 32px "Playfair Display"', 'italic 500 32px "Playfair Display"'], 'a pointer on the header\'s Join fetches both');
+  b.join.dispatchEvent({ type: 'focusin' });
+  assert.equal(b.doc.fonts.loads.length, 2, 'once');
+  /* an open with no intent before it fetches them itself */
+  const c = boot();
+  c.showGate('app');
+  c.open();
+  assert.equal(c.doc.fonts.loads.length, 2);
+});
+
+test('the focus as the door opens: the first field where a keyboard is at hand, the door itself on a touch screen (review DR-m11)', () => {
+  const desk = boot();
+  desk.open();
+  desk.gate.focus(desk.email);
+  assert.equal(desk.doc.activeElement, desk.email);
+  const phone = boot({ touch: true });
+  phone.open();
+  phone.gate.focus(phone.email);
+  assert.equal(phone.doc.activeElement, phone.door, 'no field is focused, so no keyboard rises over the sheet');
+  /* Escape still closes from there */
+  key(phone, 'Escape');
+  assert.equal(phone.gate.isOpen(), false);
+});
+
+test('the sheet\'s measures: the action\'s need over the fade, and the scrolled flag for the top fade (review DR-M1, DR-M2, DR-m9)', async () => {
+  const b = boot();
+  b.sheet.rect = { top: 300, bottom: 844, left: 0, right: 390, width: 390, height: 544 };
+  b.go.rect = { top: 700, bottom: 756, left: 22, right: 368, width: 346, height: 56 };
+  b.sheet.scrollHeight = 700; b.sheet.clientHeight = 544;
+  b.open();
+  /* the action's foot (756 - 300) + the fade (34) + 4 px */
+  assert.equal(b.door.style.getPropertyValue('--wg-need'), '494px');
+  assert.ok(b.sheet.hasAttribute('data-more'));
+  assert.equal(b.sheet.hasAttribute('data-scrolled'), false);
+  b.sheet.scrollTop = 120;
+  b.sheet.dispatchEvent({ type: 'scroll' });
+  assert.equal(b.sheet.hasAttribute('data-scrolled'), true);
+  b.sheet.scrollTop = 0;
+  b.sheet.dispatchEvent({ type: 'scroll' });
+  assert.equal(b.sheet.hasAttribute('data-scrolled'), false);
+  /* never more than the way back allows: the phone's height less the notice's room and 68 px */
+  b.go.rect = { top: 1300, bottom: 1356, left: 22, right: 368, width: 346, height: 56 };
+  b.sheet.dispatchEvent({ type: 'scroll' });
+  assert.equal(b.door.style.getPropertyValue('--wg-need'), String(844 - (136 + 8 + 8) - 68) + 'px');
 });
