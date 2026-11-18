@@ -15,7 +15,7 @@
     },
     {
       "path": "src/environment/panel.mjs",
-      "sha256": "812b722de60fe8a981ae93fd8037bb3ff58bf5b48de4b0a8d7c74d7d8c6af18d"
+      "sha256": "a714f6973b608a07cb2c3ac7d92b564c4850bef3db2a589dc4e7d93020116737"
     },
     {
       "path": "src/environment/server.mjs",
@@ -172,9 +172,32 @@
       ],
       "regression_tests": [
         "scripts/test/world-environment-panel.test.mjs",
-        "scripts/test/world-environment-lifecycle.test.mjs"
+        "scripts/e2e/environment-world.e2e.mjs"
       ],
       "note": "Release polish of 2026-11-18 (the verifier's V2-M2 and the G1 close-out's Show on globe flip). Upstream Equity-Uprise still carries the unpatched files at base_commit; port these patches upstream before re-pinning."
+    },
+    {
+      "base_commit": "645d68a740c835271ca185c52e0b31220aab16ad",
+      "applied_in": "mcclusterishere/mccluster (this consumer checkout), not published upstream",
+      "date": "2026-11-18",
+      "files": [
+        "src/environment/panel.mjs"
+      ],
+      "defects": [
+        {
+          "id": "RP-1",
+          "summary": "Review of the release polish: a scene the visitor steps to with Next or Previous while the tour is not playing is the visitor's choice and opens its card (Observed, Retrieved, the source) with its row pressed, as before the polish. The polish had treated every arrival via 'tour' as the tour's own choice, so stepping, the only way through the significant events under reduced motion, named a scene without its dates or source. The step is matched to the scene the globe's scene state names, so a late answer for the scene before it takes nothing from the step; a scene of a playing tour, Next pressed while it plays included, and a late answer for a scene the visitor only paused on still open no card."
+        },
+        {
+          "id": "RP-2",
+          "summary": "Review of the release polish: the open list holds still. The rows the compact list showed when the toggle opened it lead the full list in the order they had and the rest follow in the feed's order, so choosing a row, or the globe choosing one, never moves a row (a row chosen deep in the list used to jump to third place); a row that has the focus keeps it through every re-render of the list, so the focus never drops to the page."
+        }
+      ],
+      "regression_tests": [
+        "scripts/test/world-environment-panel.test.mjs",
+        "scripts/e2e/environment-world.e2e.mjs"
+      ],
+      "note": "Review of the release polish at e495b7ee (2026-11-18). Upstream Equity-Uprise still carries the unpatched files at base_commit; port these patches upstream before re-pinning."
     }
   ]
 }

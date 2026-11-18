@@ -122,6 +122,9 @@ export function mountEnvironment(w, d, adapter) {
   /* the boot id of the globe that last said ready (undefined: none has yet), and whether the tour, in this opening of the tab, was
      interrupted by the visitor's own hand on the globe or ran to its end (review RV2-1) */
   let globeBoot, tourStopped = false;
+  /* the visitor pressed Next or Previous and the scene they stepped to has not arrived yet: that scene is their choice, so it opens
+     its card (review of the release polish, RP-1) */
+  let stepAsked = false;
   /* the last digest handed to the host page per layer (review G1R-7), and the search's pending pins resend (review G1R-9) */
   const lastDigests = {}; let searchTimer = null;
   const SEARCH_SYNC_MS = 250;
@@ -169,13 +172,24 @@ export function mountEnvironment(w, d, adapter) {
   }
   /* the list opens compact (compactRows above); the toggle under it lists every observation in place and collapses again. It stays
      the accessible alternative to the globe: a button that says what it does and whether the list is open (aria-expanded,
-     aria-controls), opening moves the focus to the first row it revealed, closing keeps it on the toggle */
-  let listOpen = false;
+     aria-controls), opening moves the focus to the first row it revealed, closing keeps it on the toggle.
+     THE OPEN LIST HOLDS STILL (review of the release polish, RP-2): the rows the compact list showed when the toggle opened it lead
+     the full list, in the order they had, and the rest follow in the feed's order; choosing a row, or the globe choosing one, never
+     moves a row of the open list (the few used to be worked out again around the new selection, so a row chosen deep in the list
+     jumped to third place under a keyboard or screen-reader user). A row that has the focus keeps it through every re-render of the
+     list (the visitor's own choice, the globe's answer to it, a refresh), so the focus never drops to the page. */
+  let listOpen = false, openLead = [], shownIds = [];
+  const rowButtons = new Map();
   function renderList() {
-    const list = byId('weEvents'), more = byId('weMore'); list.replaceChildren();
+    const list = byId('weEvents'), more = byId('weMore');
+    let focusedId = null;
+    for (const [id, control] of rowButtons) if (control === d.activeElement) { focusedId = id; break; }
+    list.replaceChildren(); rowButtons.clear();
     const rows = feed?.events.filter(matches) || [];
     const head = compactRows(rows, { significant: significance, selected }), compact = !listOpen && rows.length > head.length;
-    const shown = compact ? head : head.concat(rows.filter(row => !head.includes(row)));
+    const lead = listOpen ? openLead.map(id => rows.find(row => row.id === id)).filter(Boolean) : head;
+    const shown = compact ? head : lead.concat(rows.filter(row => !lead.includes(row)));
+    shownIds = shown.map(row => row.id);
     const marked = significance ? head.slice(0, COMPACT_ROWS).filter(row => significance(row)).length : 0;
     const limited = feed?.truncated ? ' (source results limited)' : '', few = !marked ? 'the most recent' : marked === Math.min(COMPACT_ROWS, head.length) ? 'the significant ones, newest first' : 'the significant ones first, then the most recent';
     byId('weCount').textContent = !feed ? '' : compact ? `Showing ${shown.length} of ${rows.length} observations: ${few}${head.length > COMPACT_ROWS ? ', and the one selected' : ''}${limited}. Select one here or on the globe.` : `${rows.length} observations shown${limited}. Select one here or on the globe.`;
@@ -186,9 +200,11 @@ export function mountEnvironment(w, d, adapter) {
       const item = el('li'), control = button('', () => select(row.id, true));
       control.setAttribute('aria-pressed', String(selected === row.id));
       control.append(el('strong', row.title), el('small', `${row.category || 'Observation'} · ${row.source.label}${row.stale ? ' · Older observation' : ''}`), el('small', `Observed: ${timeWithAgo(row.observed_at)}`));
-      item.append(control); list.append(item);
+      item.append(control); list.append(item); rowButtons.set(row.id, control);
     }
     if (feed && !rows.length) list.append(el('li', search ? 'No observations match this search.' : 'No observations returned. Check source availability below.'));
+    /* without scrolling: the card a choice opens is scrolled into view by select(), as before */
+    if (focusedId !== null) rowButtons.get(focusedId)?.focus?.({ preventScroll: true });
   }
   /* PER-SOURCE HEALTH (target 11: "shows each source's health and last success, says plainly when its sources are unavailable"):
      one row per feed source and one per globe layer that has reported, each with its status, the reason in plain words, when the
@@ -657,12 +673,12 @@ export function mountEnvironment(w, d, adapter) {
     if (destroyed) return;
     const on=active();
     panel.hidden=!on;
-    if (on&&!tabOpen) {autostartDone=false;tourStopped=false;} /* a fresh opening of the tab */
+    if (on&&!tabOpen) {autostartDone=false;tourStopped=false;stepAsked=false;} /* a fresh opening of the tab */
     tabOpen=on;
     /* the fixed order: the typed layers, then the pins (both off together when the tab changes) */
     syncLayers();syncPins();clearInterval(timer);timer=null;
     if (on) {if(!requested)void loadFeed();if(!privateBusy)void loadPrivate();timer=setInterval(()=>{if(active()&&!d.hidden)void loadFeed();},300000);maybeAutostart();}
-    else {sceneState=null;renderScene();}
+    else {sceneState=null;stepAsked=false;renderScene();}
   }
   /* THE TOUR AND THE 2D VIEW: the controls send hu:environment-scene and hu:environment-view; the words follow the globe's own
      hu:environment-scene-state and hu:environment-view-state, never a guess */
@@ -691,17 +707,18 @@ export function mountEnvironment(w, d, adapter) {
   byId('weRefresh').onclick=()=>{void loadFeed();void loadPrivate();};
   byId('weMore').onclick=()=>{
     if(destroyed)return;
-    const opening=!listOpen,before=byId('weEvents').children.length;
+    const opening=!listOpen,before=shownIds.slice();
+    if(opening)openLead=before;
     listOpen=opening;renderList();
-    if(opening)byId('weEvents').children[before]?.querySelector?.('button')?.focus?.();
+    if(opening){const first=shownIds.find(id=>!before.includes(id));if(first!==undefined)rowButtons.get(first)?.focus?.();}
     else byId('weMore').scrollIntoView?.({block:'nearest',behavior:'auto'});
   };
   /* the list follows every keystroke; the globe, which rebuilds its events layer for a changed list, is told once the typing pauses
      (review G1R-9) */
   byId('weSearch').oninput=event=>{search=event.target.value.trim().toLocaleLowerCase();renderList();clearTimeout(searchTimer);searchTimer=setTimeout(()=>{searchTimer=null;if(!destroyed)syncPins();},SEARCH_SYNC_MS);};
   byId('wePlay').onclick=()=>{if(sceneState?.playing===true){pausedByVisitor=true;sendScene('pause');}else sendScene('play');};
-  byId('wePrev').onclick=()=>sendScene('prev');
-  byId('weNext').onclick=()=>sendScene('next');
+  byId('wePrev').onclick=()=>{stepAsked=true;sendScene('prev');};
+  byId('weNext').onclick=()=>{stepAsked=true;sendScene('next');};
   byId('weReplay').onclick=()=>{replay=replay?null:'quakes-24h';renderScene();if(active())syncLayers();};
   byId('weView2d').onclick=()=>send({type:'hu:environment-view',mode:viewState.mode==='2d'?'3d':'2d'});
   listen(adapter.modeEvent || 'environment:mode',onMode);
@@ -718,14 +735,22 @@ export function mountEnvironment(w, d, adapter) {
       const boot=text(data.boot,64)||null,fresh=boot?boot!==globeBoot:globeBoot===undefined;
       if(fresh)globeBoot=boot;
       syncLayers();syncPins();
-      if(fresh){sceneState=null;renderScene();autostartDone=false;maybeAutostart();}
+      if(fresh){sceneState=null;stepAsked=false;renderScene();autostartDone=false;maybeAutostart();}
     }
     /* the globe's own selection: the panel follows it and sends nothing back (select's fromGlobe). A scene the tour chose (via
        'tour') is named by the scene line and opens no card: the card is for what the visitor chooses (a row, a tap on the globe, Show
        on globe). Opened for every scene, it put 723 px above the posts at 390 with the fixtures and another card at each scene, and
-       select() revealed the panel (closing an expanded map) and scrolled the card into view each time (release polish, 2026-11-18). A card the tour moved the globe away from closes, so the panel never describes what the globe no longer shows. */
+       select() revealed the panel (closing an expanded map) and scrolled the card into view each time (release polish, 2026-11-18). A card the tour moved the globe away from closes, so the panel never describes what the globe no longer shows.
+       A SCENE THE VISITOR STEPPED TO IS THEIR CHOICE (review of the release polish, RP-1): Next and Previous, pressed while the tour
+       is not playing, reach the panel through the same arrival (via 'tour'), and the scene they bring opens its card like a row, with
+       its dates and its source, and presses its row. Under reduced motion the tour never plays by itself and stepping is the only way
+       through the significant events. The globe tells the scene state of the step (the scene it is at) before the scene arrives, so
+       the arrival is matched to that scene: a late answer for the scene before it (its ShakeMap) takes nothing from the step, and a
+       scene of a playing tour, Next pressed while it plays included, opens no card. */
     if(data.type==='hu:environment-selected'&&active()){
-      if(data.via==='tour'){if((selected&&selected!==data.id)||globeSelection){selected='';globeSelection=null;renderDetail();renderList();}}
+      const atScene=data.via==='tour'&&!!sceneState&&data.id===sceneState.id,stepped=atScene&&stepAsked&&sceneState.playing!==true;
+      if(atScene)stepAsked=false;
+      if(data.via==='tour'&&!stepped){if((selected&&selected!==data.id)||globeSelection){selected='';globeSelection=null;renderDetail();renderList();}}
       else if(feed?.events.some(row=>row.id===data.id))select(data.id,false,true);
       else if(typeof data.id==='string'&&data.id){adapter.revealPanel?.();globeSelection=cleanSelection(data);selected='';renderDetail();renderList();byId('weDetail').scrollIntoView?.({block:'nearest',behavior:'auto'});}
     }

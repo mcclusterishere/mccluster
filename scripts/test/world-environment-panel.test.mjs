@@ -54,6 +54,7 @@ function harness({ mode = 'environment', reduced = false, observer = false, hidd
     ...(observer ? { IntersectionObserver: class { constructor(cb) { this.cb = cb; } observe(target) { this.cb([{ target, isIntersecting: true, intersectionRatio: 1 }]); } disconnect() {} } } : {})
   };
   const d = { createElement: tag => new E(tag), documentElement: { dataset: {} }, getElementById: () => null, hidden,
+    get activeElement() { return E.focused || null; },
     addEventListener: (k, v) => docHandlers.set(k, v), removeEventListener: (k) => docHandlers.delete(k) };
   const adapter = { panel, frame, token: () => null, signIn() {}, sendGlobe: data => sent.push(JSON.parse(JSON.stringify(data))),
     request: async (path) => { reads.push(path); const a = typeof answer === 'function' ? answer() : answer; if (a instanceof Error) throw a; return a; },
@@ -717,5 +718,139 @@ test('a card the tour moved the globe away from closes; a scene on the card\'s o
   assert.match(detail.text, /Selected on the globe/);
   h.message(tourScene('nws:fx-tornado-ok'));
   assert.equal(detail.hidden, true);
+  h.mounted.destroy();
+});
+
+/* THE REVIEW OF THE RELEASE POLISH (2026-11-18). RP-1: a scene the visitor stepped to with Next or Previous, the tour not playing, is
+   the visitor's choice and opens its card (its dates and source) with its row pressed; under reduced motion the tour never plays by
+   itself and stepping is the only way through the significant events. A scene of a playing tour, Next pressed while it plays
+   included, still opens no card, and neither does a late answer for a scene the visitor only paused on. RP-2: a row chosen in the
+   open list keeps its place there and keeps the focus. */
+const titleFor = (id) => FEED.events.find((e) => e.id === id).title;
+const sceneAt = (index, id, over = {}) => ({ type: 'hu:environment-scene-state', playing: false, index, total: 12, id, title: titleFor(id), queue: 'significant', reason: null, ...over });
+const pressedTitles = (h) => h.byId('weEvents').children.filter((li) => li.children[0].getAttribute('aria-pressed') === 'true').map(titleOf);
+
+test('RP-1: under reduced motion Next and Previous open the card of the scene they step to and press its row; nothing goes back to the globe', async () => {
+  const h = harness({ reduced: true });
+  await flush(8);
+  const detail = h.byId('weDetail');
+  let scrolled = 0; detail.scrollIntoView = () => { scrolled++; };
+  /* the globe refuses Play under reduced motion and says so */
+  h.byId('wePlay').onclick();
+  h.message(sceneAt(0, 'usgs:fx-gen-48', { reason: 'reduced-motion' }));
+  assert.equal(detail.hidden, true);
+  h.sent.length = 0;
+  /* Next: the step's scene state, then the scene itself (via 'tour', as every arrival of the director) */
+  h.byId('weNext').onclick();
+  assert.deepEqual(h.sent, [{ type: 'hu:environment-scene', action: 'next' }]);
+  h.message(sceneAt(1, 'nws:fx-tornado-ok'));
+  h.message(tourScene('nws:fx-tornado-ok'));
+  assert.equal(detail.hidden, false, 'the scene the visitor stepped to opens its card');
+  assert.match(detail.text, /Tornado Warning issued for Oklahoma/);
+  assert.match(detail.text, /Observed/); assert.match(detail.text, /Retrieved/); assert.match(detail.text, /Source/);
+  assert.deepEqual(pressedTitles(h), [titleFor('nws:fx-tornado-ok')], 'and its row is pressed');
+  assert.equal(h.reveals(), 1); assert.equal(scrolled, 1, 'like a row the visitor chose: the panel shown, the card in view');
+  assert.deepEqual(h.sent, [{ type: 'hu:environment-scene', action: 'next' }], 'no pins go back: the globe made this selection');
+  /* Next to a scene that is not among the few: the compact list gains it, pressed */
+  h.byId('weNext').onclick();
+  h.message(sceneAt(2, 'usgs:fx-m71'));
+  h.message(tourScene('usgs:fx-m71'));
+  assert.match(detail.text, /Andreanof Islands/);
+  assert.deepEqual(h.byId('weEvents').children.map(titleOf), [...FIRST_TWO, titleFor('usgs:fx-m71')]);
+  assert.deepEqual(pressedTitles(h), [titleFor('usgs:fx-m71')]);
+  /* Previous, and the scene's own late answer (its ShakeMap) leaves the card as it is */
+  h.byId('wePrev').onclick();
+  h.message(sceneAt(1, 'nws:fx-tornado-ok'));
+  h.message(tourScene('nws:fx-tornado-ok'));
+  assert.match(detail.text, /Tornado Warning issued for Oklahoma/);
+  h.message(tourScene('nws:fx-tornado-ok'));
+  assert.equal(detail.hidden, false); assert.match(detail.text, /Tornado Warning issued for Oklahoma/);
+  assert.equal(h.sent.filter((m) => m.type === 'hu:environment-pins').length, 0);
+  h.mounted.destroy();
+});
+
+test('RP-1: a playing tour opens no card, Next pressed while it plays included; a step while it is paused does, matched to the scene it brings', async () => {
+  const h = harness();
+  await flush(8);
+  const detail = h.byId('weDetail');
+  h.message(sceneAt(0, 'usgs:fx-gen-48', { playing: true }));
+  h.message(tourScene('usgs:fx-gen-48'));
+  assert.equal(detail.hidden, true);
+  /* Next while the tour plays: the tour goes on from the next scene, its scene opens no card */
+  h.byId('weNext').onclick();
+  h.message(sceneAt(1, 'nws:fx-tornado-ok', { playing: true }));
+  h.message(tourScene('nws:fx-tornado-ok'));
+  assert.equal(detail.hidden, true, 'the tour is playing: its scenes are named by the scene line only');
+  /* the visitor pauses; the scene's late answer is not a choice of theirs */
+  h.byId('wePlay').onclick();
+  assert.deepEqual(h.sent.at(-1), { type: 'hu:environment-scene', action: 'pause' });
+  h.message(sceneAt(1, 'nws:fx-tornado-ok'));
+  h.message(tourScene('nws:fx-tornado-ok'));
+  assert.equal(detail.hidden, true, 'pausing on a scene does not choose it');
+  /* Next while paused: the scene state names the scene the step brings; the scene before it answering late takes nothing */
+  h.byId('weNext').onclick();
+  h.message(sceneAt(2, 'usgs:fx-m71'));
+  h.message(tourScene('nws:fx-tornado-ok'));
+  assert.equal(detail.hidden, true, 'a late answer for the scene before is not the step');
+  h.message(tourScene('usgs:fx-m71'));
+  assert.equal(detail.hidden, false, 'the scene the step brought opens its card');
+  assert.match(detail.text, /Andreanof Islands/);
+  assert.deepEqual(pressedTitles(h), [titleFor('usgs:fx-m71')]);
+  /* Play resumes from that scene: its card stays while the globe is there, and closes when the tour moves on */
+  h.byId('wePlay').onclick();
+  assert.deepEqual(h.sent.at(-1), { type: 'hu:environment-scene', action: 'play' });
+  h.message(sceneAt(2, 'usgs:fx-m71', { playing: true }));
+  h.message(tourScene('usgs:fx-m71'));
+  assert.equal(detail.hidden, false);
+  h.message(sceneAt(3, 'nws:fx-flood-az', { playing: true }));
+  h.message(tourScene('nws:fx-flood-az'));
+  assert.equal(detail.hidden, true);
+  assert.deepEqual(pressedTitles(h), []);
+  /* a step asked for in an earlier opening of the tab is forgotten when the tab closes */
+  h.message(sceneAt(3, 'nws:fx-flood-az'));
+  h.byId('weNext').onclick();
+  h.setMode('feed'); h.setMode('environment');
+  h.message(sceneAt(4, 'usgs:fx-gen-48'));
+  h.message(tourScene('usgs:fx-gen-48'));
+  assert.equal(detail.hidden, true, 'no step is pending in this opening of the tab');
+  h.mounted.destroy();
+});
+
+test('RP-2: a row chosen in the open list keeps its place and the focus, through the globe\'s answer too; closing and opening again keeps the few in place', async () => {
+  const h = harness();
+  await flush(8);
+  const list = () => h.byId('weEvents').children, more = h.byId('weMore');
+  E.focused = null;
+  more.onclick();
+  assert.equal(list().length, 65);
+  const order = list().map(titleOf);
+  const target = list()[30].children[0], title = titleOf(list()[30]), id = FEED.events.find((e) => e.title === title).id;
+  target.focus();
+  target.onclick();
+  assert.deepEqual(list().map(titleOf), order, 'the open list holds still: the chosen row stays where it was');
+  assert.equal(list()[30].children[0].getAttribute('aria-pressed'), 'true');
+  assert.equal(E.focused, list()[30].children[0], 'the focus stays on the chosen row, never dropped to the page');
+  /* the globe answers the focus the row asked for: the list re-renders, nothing moves, the focus stays */
+  h.message({ type: 'hu:environment-selected', id, layer: 'events', kind: 'quake', via: 'focus' });
+  assert.deepEqual(list().map(titleOf), order);
+  assert.equal(E.focused, list()[30].children[0]);
+  /* a row chosen on the globe while the list is open: it is pressed where it is */
+  h.message({ type: 'hu:environment-selected', id: 'usgs:us7000tyhr', layer: 'events', kind: 'quake', via: 'pick' });
+  assert.deepEqual(list().map(titleOf), order);
+  assert.deepEqual(pressedTitles(h), ['20 km NW of Anamizu, Japan']);
+  /* closing: the few and the one selected; opening again: those lead in the same order and the focus goes to the first row the
+     toggle revealed */
+  more.onclick();
+  assert.deepEqual(list().map(titleOf), [...FIRST_TWO, '20 km NW of Anamizu, Japan']);
+  more.onclick();
+  assert.equal(list().length, 65);
+  assert.deepEqual(list().slice(0, 3).map(titleOf), [...FIRST_TWO, '20 km NW of Anamizu, Japan'], 'in place: the rows shown before lead');
+  assert.equal(new Set(list().map(titleOf)).size, 65, 'each once');
+  assert.equal(E.focused, list()[3].children[0], 'the focus moves to the first row the toggle revealed');
+  /* choosing another row now moves nothing either */
+  const again = list().map(titleOf);
+  list()[40].children[0].focus(); list()[40].children[0].onclick();
+  assert.deepEqual(list().map(titleOf), again);
+  assert.equal(E.focused, list()[40].children[0]);
   h.mounted.destroy();
 });

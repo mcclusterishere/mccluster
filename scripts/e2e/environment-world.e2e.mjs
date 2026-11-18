@@ -29,6 +29,10 @@
    no card in the panel (review V2-M2); Show on globe from Global keeps the clicked event selected over ten seconds of watching,
    where the panel's older selection used to echo back and take the globe (the G1 close-out's flip).
 
+   The review of the release polish (2026-11-18): the scene Next brings with the tour paused opens its card and presses its row at
+   every width, and under reduced motion Next and Previous each do so without a flight (RP-1); a row chosen with the keyboard deep in
+   the open list keeps its place, its pressed state and the focus (RP-2).
+
    Serves this checkout at 127.0.0.1 and answers api.mccluster.org, Supabase, the NASA tiles and, with CESIUM_DIR, the Cesium CDN
    in memory: no production call, no deployment, no claim beyond what ran. Run:
      CESIUM_DIR=<Build/Cesium of 1.131> node scripts/e2e/environment-world.e2e.mjs [outDir]
@@ -237,6 +241,13 @@ const listState = (page) => page.evaluate(() => {
     gap: post ? Math.round(post.getBoundingClientRect().top - row.bottom) : null, vh: innerHeight, count: document.getElementById('weCount').textContent };
 });
 const openList = async (page) => { if ((await page.evaluate(() => { const m = document.getElementById('weMore'); return !!m && !m.hidden && m.getAttribute('aria-expanded') === 'false'; }))) await page.locator('#weMore').click(); };
+/* THE REVIEW OF THE RELEASE POLISH (RP-1): the card a step opens, waited for until the globe has arrived at the scene: its title,
+   Observed, Retrieved and a link to the source, and its row the one pressed */
+const stepCard = (page, title) => until(page, (t) => {
+  const d = document.getElementById('weDetail'), x = d.textContent || '', pressed = [...document.querySelectorAll('#weEvents button[aria-pressed="true"] strong')].map((s) => s.textContent);
+  return !d.hidden && x.includes(t) && /Observed/.test(x) && /Retrieved/.test(x) && !!d.querySelector('a[href^="https://"]') && pressed.length === 1 && pressed[0] === t;
+}, title, 20000);
+const panelCard = (page) => page.evaluate(() => ({ card: !document.getElementById('weDetail').hidden, head: (document.getElementById('weDetail').textContent || '').replace(/\s+/g, ' ').slice(0, 120), pressed: [...document.querySelectorAll('#weEvents button[aria-pressed="true"] strong')].map((s) => s.textContent), scene: document.getElementById('weSceneStatus').textContent }));
 
 /* ---------- the main journey, at every width ---------- */
 for (const size of SIZES) {
@@ -350,6 +361,10 @@ for (const size of SIZES) {
   const indexBefore = (await dir(frame)).index;
   await page.locator('#weNext').click();
   check(scope, 'Next steps to the following scene', await until(frame, (i) => window.__mccSceneDirector().index === (i + 1) % 12 && window.__mccSceneDirector().playing === false, indexBefore, 15000), await dir(frame));
+  /* the scene the visitor stepped to is their choice (review of the release polish, RP-1): once the globe has flown there, its card
+     opens with Observed, Retrieved and the source, and its row is pressed */
+  const stepped = await dir(frame);
+  check(scope, 'the scene Next brought, the tour paused, opens its card (Observed, Retrieved, the source) and presses its row', !!stepped && (await stepCard(page, stepped.title)), { scene: stepped && stepped.title, panel: await panelCard(page) });
   await page.locator('#wePlay').click();
   check(scope, 'Play resumes the tour', await until(page, () => document.getElementById('wePlay').textContent === 'Pause tour', null, 15000) && (await dir(frame)).playing === true);
   const indexAtPause = (await dir(frame)).index;
@@ -518,6 +533,25 @@ for (const size of SIZES) {
   await page.locator('#wePlay').click();
   const refused = await until(page, () => /reduced motion/.test(document.getElementById('weSceneStatus').textContent), null, 10000);
   check(scope, 'Play is refused by the globe with the reason reduced-motion and the panel says so', refused && (await dir(frame)).reason === 'reduced-motion' && (await dir(frame)).playing === false, await dir(frame));
+  /* the review of the release polish, RP-1: the tour never plays by itself here, so Next and Previous are how a visitor goes through
+     the significant events; each scene they step to opens its card, without a flight, and presses its row */
+  const r0 = await dir(frame);
+  await page.locator('#weNext').click();
+  const r1ok = await until(frame, (i) => { const d = window.__mccSceneDirector(); return d.index === (i + 1) % d.total && d.playing === false; }, r0.index, 10000);
+  const r1 = await dir(frame);
+  check(scope, 'Next under reduced motion opens the card of the scene it brings (Observed, Retrieved, the source) and presses its row', r1ok && (await stepCard(page, r1.title)), { from: r0.title, to: r1.title, panel: await panelCard(page) });
+  await page.locator('#wePrev').click();
+  const r2ok = await until(frame, (i) => window.__mccSceneDirector().index === i, r0.index, 10000);
+  check(scope, 'Previous opens the card of the scene before it the same way', r2ok && (await stepCard(page, r0.title)), { to: r0.title, panel: await panelCard(page) });
+  /* RP-2: a row chosen with the keyboard deep in the open list keeps its place, is pressed and keeps the focus, also once the globe
+     has answered the focus it asked for */
+  await openList(page);
+  const deep = await page.evaluate(() => { const rows = [...document.querySelectorAll('#weEvents > li > button')]; rows[30].focus(); return { title: rows[30].querySelector('strong').textContent, rows: rows.length }; });
+  await page.keyboard.press('Enter');
+  const kept = await until(page, (t) => { const rows = [...document.querySelectorAll('#weEvents > li > button')], i = rows.findIndex((b) => b.querySelector('strong').textContent === t); return i === 30 && rows[30].getAttribute('aria-pressed') === 'true' && document.activeElement === rows[30] && document.getElementById('weDetail').textContent.includes(t); }, deep.title, 10000);
+  await page.waitForTimeout(1500);
+  const deepAfter = await page.evaluate((t) => { const rows = [...document.querySelectorAll('#weEvents > li > button')]; return { index: rows.findIndex((b) => b.querySelector('strong').textContent === t), focus: rows.indexOf(document.activeElement), rows: rows.length }; }, deep.title);
+  check(scope, 'a row chosen with the keyboard deep in the open list keeps its place, is pressed and keeps the focus, also after the globe answered', kept && deepAfter.index === 30 && deepAfter.focus === 30 && deepAfter.rows === deep.rows, { deep, after: deepAfter });
   await openList(page);
   await page.locator('#weEvents button', { hasText: QUAKE.title }).first().click();
   const focused = await until(frame, () => { const s = window.__mccEnvironmentLayers(); return !!s.selected && s.selected.id === 'usgs:us7000tyhr'; }, null, 20000);
