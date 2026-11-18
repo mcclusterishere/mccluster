@@ -22,7 +22,7 @@
    "url": "https://eonet.gsfc.nasa.gov/",
    "status": "stale",
    "fetched_at": "2026-11-17T14:00:00Z",
-   "observed_at": "2026-11-17T18:00:00Z",
+   "observed_at": "2026-11-17T12:00:00Z",
    "coverage": "Global open event reports in the last 30 days; not exhaustive",
    "stale": true,
    "reason": "upstream_error",
@@ -35,12 +35,12 @@
    "label": "USGS",
    "url": "https://earthquake.usgs.gov/",
    "status": "available",
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "observed_at": "2026-11-17T20:50:00.000Z",
    "coverage": "Global earthquakes reported in the past day",
    "stale": false,
    "reason": null,
-   "last_success_at": "2026-11-17T20:05:00Z",
+   "last_success_at": "2026-11-17T20:55:00Z",
    "attribution": "U.S. Geological Survey, Earthquake Hazards Program",
    "license": "Public domain (U.S. Government work)"
   },
@@ -74,7 +74,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us7000tyhr"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -105,7 +105,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us7000tyca"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -136,7 +136,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/earthquakes/eventpage/nc75467542"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -167,7 +167,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -198,7 +198,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -233,7 +233,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -264,7 +264,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -295,7 +295,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -326,7 +326,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -357,7 +357,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -388,7 +388,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -419,7 +419,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -450,7 +450,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -481,7 +481,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -512,7 +512,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -543,7 +543,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -574,7 +574,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -605,7 +605,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -636,7 +636,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -667,7 +667,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -698,7 +698,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -729,7 +729,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -760,7 +760,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -791,7 +791,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -822,7 +822,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -853,7 +853,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -884,7 +884,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -915,7 +915,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -946,7 +946,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -977,7 +977,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -1008,7 +1008,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -1039,7 +1039,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -1070,7 +1070,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -1101,7 +1101,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -1132,7 +1132,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -1163,7 +1163,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -1194,7 +1194,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -1225,7 +1225,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -1256,7 +1256,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -1287,7 +1287,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -1318,7 +1318,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -1349,7 +1349,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -1380,7 +1380,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -1411,7 +1411,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -1442,7 +1442,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -1473,7 +1473,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -1504,7 +1504,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -1535,7 +1535,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -1566,7 +1566,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -1597,7 +1597,7 @@
     "label": "USGS",
     "url": "https://earthquake.usgs.gov/"
    },
-   "fetched_at": "2026-11-17T20:05:00Z",
+   "fetched_at": "2026-11-17T20:55:00Z",
    "stale": false,
    "description": "",
    "facts": [
@@ -2014,7 +2014,7 @@
    "lon": -97.1,
    "category": "storm",
    "location_kind": "reported_point",
-   "observed_at": "2026-11-17T18:00:00Z",
+   "observed_at": "2026-11-17T12:00:00Z",
    "expires_at": null,
    "source": {
     "id": "eonet",

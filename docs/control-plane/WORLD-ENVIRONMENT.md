@@ -430,3 +430,92 @@ Playwright, software GL):
   changes the frame count; the on-demand saving with the layers on is the real one.
 - Not verified here: any production answer (the module answers 503 there), real provider health, a hardware GL path, and the
   flight frame-time rules, which gate only on hardware GL.
+
+### Second review fixes (2026-11-18): the ten findings at `58fef668`
+
+The second adversarial review, of the close-out (`7a4d58db..c81e4b59`) and the feed row (`b67bb9ef`, `58fef668`) at `58fef668`,
+found ten things, one of them major. Each is fixed on this branch in the smallest truthful way, with a test that fails without
+the fix (each run against the sources as the review saw them, unchanged in these files on the branch head the fixes start from).
+Nothing is deployed; production still answers 503 until the owner enables the module.
+
+- **RV2-1 (major), a tour the visitor stopped started again by itself.** The G1R-4 fix re-armed the one autostart on every
+  `hu:globe-ready`, and the globe says ready several times per boot (at boot, when its missions read answers, in answer to
+  `hu:hello`, after a bfcache restore): a tour the visitor had stopped by moving the globe, or one that had ended, flew again on
+  the next ready. `js/action-globe.js` now draws a random boot id once per page load and every `hu:globe-ready` carries it; the
+  panel re-arms the autostart and clears the tour words only for a globe that has just booted (a boot it has not heard, or the
+  first ready of all), never in an opening of the tab in which the director reported `input` (the visitor's hand on the globe, or a
+  focus the visitor chose) or `end`; the autostart also waits for the feed, so its play follows pins that carry something to tour
+  (without it, a globe ready before a slow feed would no longer get its play from a later ready). The same globe saying ready again
+  gets the layers and the pins only and keeps the words of a tour still playing (local patch `RV2-1`;
+  `scripts/test/world-environment-panel.test.mjs`: input plus ready, end plus ready, the same boot during a playing tour, a new
+  boot, the feed after the ready; `scripts/test/environment-globe-wiring.test.mjs`: every ready names the boot;
+  `scripts/e2e/environment-world.e2e.mjs`, scope `1280-late-ready`: the frame's missions read held until a wheel has paused the
+  autostarted tour, then released, and no play reaches the frame).
+- **RV2-2 (minor), a status that changed with the same rows.** The G1R-7 dedupe keyed on the digest's rows alone, so a layer whose
+  Worker answer went stale with the same cells never reached the page, and its fire-area posts kept "Status: available" beside the
+  panel's stale row. The panel now hands a layer on when the whole entry the page receives for it changed (rows, status, reason,
+  retrieval, label, link, coverage, terms); the same entry again still dispatches nothing (local patch `RV2-2`).
+- **RV2-3 (minor), a 1-degree area credited to one satellite.** The Worker sums both satellites' detections into one set of cells,
+  but an area's selection and every fire-area post named the newest satellite's record alone beside the fact "Sensor: VIIRS
+  NOAA-20/21". `js/environment-layers.js` now makes the fires layer (and its areas) speak for every satellite record that served
+  data: `source_id` `firms_viirs_noaa20+firms_viirs_noaa21`, the new layer-state field `label` "NASA FIRMS VIIRS NOAA-20 and
+  NOAA-21", the coverage and terms of each, and the newest retrieval (no acquisition in the merged cells can follow it); one
+  satellite serving speaks alone; a detection still names its own satellite. The panel takes the layer's `label` for the digest,
+  and `js/world-environment-posts.js` derives the Sensor fact from the satellites that label names, so it never claims both when
+  one served (`scripts/test/environment-layers-runtime.test.mjs`, the panel and posts suites, the in-iframe e2e's fires state
+  and cell payload).
+- **RV2-4 (minor), a pending focus the pins never honoured.** `setEvents` looked the pending id up with `picks.has(id)`, but
+  picks are keyed by layer and id, so only a layer's data could honour a focus kept pending; it now looks it up by id as
+  `onLayerData` does (`scripts/test/environment-layers-runtime.test.mjs`: focus before the pins, with no layer data).
+- **RV2-5 (minor), a guard without its own test.** The layer client's two G1R-2 guards each have a case that fails without it: the
+  ShakeMap whose 503 body is still being read when a layer route's refusal lands (the ShakeMap path does not go through `run()`,
+  so only the body-read guard holds it), and a layer whose answer was read just before another route's refusal, in the same task
+  (only the `run()` guard keeps it from saying "available" after the policy state) (`scripts/test/environment-layers-client.test.mjs`).
+- **RV2-6 (minor), the 2D toggle's two signals.** `#weView2d` read "3D globe" with `aria-pressed="true"` in 2D ("3D globe,
+  pressed"); it now keeps its one label, "2D map", and says the view with `aria-pressed` and the pressed colour (local patch
+  `RV2-6`; the panel suite and both page suites).
+- **RV2-7 (minor), 14px tabs.** The feed row's tabs are form controls at `max(16px,1em)` (`css/human-uprise-editorial.css`), the
+  reading of AGENTS.md hard rule 14 the panel's buttons already follow (G1R-6); `scripts/e2e/world-missions-guest.e2e.mjs`
+  measures every tab at 16px or more at 390, 820 and 1280.
+- **RV2-8 (minor), the sixth tab past the row's edge at 1280.** On the split desktop (1000px and wider) the row wraps onto a second
+  line, so every tab sits inside it; the phone and the stacked tablet keep their one dragging row, and at 820 the six still fit on
+  it. The guest suite checks every tab inside the row's box from 1000px; the twelve guest screenshots were rendered again.
+- **RV2-9 (minor), a ripple read in two evaluates.** The in-iframe e2e reads the ripple, the governor's holds and the legend in one
+  evaluate; a ripple already over when it is read is judged by the record it left (bounded, its hold released), and the
+  selection's own `illustrative` label is checked beside it.
+- **RV2-10 (minor), fixtures retrieved before they were observed.** `feed.json` had two quakes (20:25, 20:50) and the USGS source
+  record observed after their 20:05 retrieval and a storm observed at 18:00 in EONET's 14:00 copy; `pins.json` the same two quakes
+  after their 20:04 retrieval. The USGS retrieval is now 20:55 in `feed.json` (rows and source record) and 20:54 in `pins.json`, and
+  the storm's report time is 12:00 as `pins.json` already had it (the significance tour keeps the same twelve scenes, and no
+  quake's time moved, so the 24-hour replay is unchanged);
+  `scripts/test/environment-layers-runtime.test.mjs` asserts every row of both fixtures, and every feed source record, observed no
+  later than it was retrieved.
+
+What ran for these fixes, all with fixtures and nothing live (2026-11-18, this machine: 4 CPUs shared with two other workflows'
+browser runs, headless Chromium through Playwright, software GL; the load average is given for each browser run):
+
+- The unit suites of every file touched: `node --test scripts/test/world-environment*.test.mjs scripts/test/environment-*.test.mjs
+  scripts/test/globe-*.test.mjs scripts/test/equity-product-consumer.test.mjs scripts/test/world-mission-posts.test.mjs
+  scripts/test/action-world-home.test.mjs`: 209 passed, 0 failed.
+- Each new or changed test against the sources without its fix (the reviewed file swapped in, or only the fix's line taken out):
+  the panel's three autostart cases fail with the reviewed panel (input plus ready, end plus ready, the same boot during a playing
+  tour, the feed after the ready); the wiring case fails with the reviewed `js/action-globe.js` (no boot id); the integration
+  step `1280-late-ready` fails with the reviewed panel (a `play` reached the frame after the wheel and the director was playing
+  again); the RV2-2 panel case fails with the digest-only key; the RV2-3 runtime case fails with the fires back on the newest
+  record, the posts case with the fixed Sensor words and the panel case with the record's label preferred to the layer's; the
+  RV2-4 runtime case fails with `picks.has`; the client's body-read case fails without the body-read guard and its `run()` case
+  without the `run()` guard (with both taken out the G1R-2 case fails too); the 2D toggle case fails with the changing label; the
+  fixture assertion fails on the old `feed.json` (`usgs:fx-gen-49` observed 20:25 after its 20:05 retrieval). The row's two new
+  guest checks reject what the review measured on the unchanged CSS (every tab 14px at 390, 820 and 1280; People outside the row
+  at 1280). The ripple read (RV2-9) is a race under load and cannot be forced; the check now reads one snapshot.
+- The root suite: `node --test scripts/test/*.test.mjs`: 2,697 tests, 2,690 passed, 0 failed, 7 skipped;
+  `python3 -m unittest discover -s scripts/test -p 'test_*.py'`: 7 tests, OK.
+- `node scripts/e2e/world-environment.mjs <outDir>`: 11 passed, exit 0 (load 6.5).
+- `CESIUM_DIR=<Cesium 1.131.0 Build/Cesium> node scripts/e2e/environment-globe.e2e.mjs <outDir>`: 127 passed, 0 failed, exit 0
+  (load 6.3 to 7.1): the fires state and a 1-degree area name both satellites, the ripple read in one snapshot, the quake
+  retrieved at 20:54.
+- `CESIUM_DIR=<Cesium 1.131.0 Build/Cesium> node scripts/e2e/environment-world.e2e.mjs <outDir>`: 169 passed, 0 failed, exit 0
+  (163 before, and the six checks of `1280-late-ready`; load 6.5 to 13.0).
+- `CESIUM_DIR=<Cesium 1.131.0 Build/Cesium> node scripts/e2e/world-missions-guest.e2e.mjs <outDir>`: 246 of 246 passed, exit 0
+  (load 10.9 to 14.4): every tab at 16px or more at each width, every tab inside the row at 1280.
+- Not run again: the perf benchmark (no change here touches a render loop, a hold or the governor).

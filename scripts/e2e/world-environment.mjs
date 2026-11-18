@@ -315,7 +315,8 @@ try{
   await waitGot(page,b3v,m=>m.type==='hu:environment-view'&&m.mode==='2d','hu:environment-view 2d');
   await fromGlobe(page,{type:'hu:environment-view-state',mode:'2d',morphing:false});
   await page.waitForFunction(()=>document.getElementById('weView2d').getAttribute('aria-pressed')==='true',null,{timeout:5000});
-  assert.equal(await page.locator('#weView2d').textContent(),'3D globe');
+  /* RV2-6: the 2D map keeps its one label and says its state with aria-pressed (never "3D globe, pressed") */
+  assert.equal(await page.locator('#weView2d').textContent(),'2D map');
   /* G1R-11: the Play/Pause button changes its label and carries no aria-pressed; G1R-6: every panel button is a form control at 16px or more */
   const controls=await page.evaluate(()=>({pressed:document.getElementById('wePlay').hasAttribute('aria-pressed'),sizes:Object.fromEntries(['wePlay','wePrev','weNext','weReplay','weView2d','weRefresh'].map(id=>[id,parseFloat(getComputedStyle(document.getElementById(id)).fontSize)]))}));
   assert.equal(controls.pressed,false,'no aria-pressed on a button whose label names the next action');

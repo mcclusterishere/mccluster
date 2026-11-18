@@ -12,17 +12,24 @@
    - no full-screen wall: no #mccPrivacyGate, no data-privacy-gate on <html>, the World not hidden;
    - the notice is the bar along the bottom (#mccPrivacyNotice), inside the screen, a small part of it, with
      "I agree & continue", the Privacy Policy and "Not now", each 44 px or more;
+   - shown is not an answer (review LDR-F1/F2, 2026-11-18): the World is the house itself, not a document page, so nothing is
+     recorded while the bar waits, not even that it was seen (no mcc_privacy_seen in storage or in a cookie);
+   - the bar sits above the shared bottom bar, so every tab of it answers a tap (review LDR-F4: at 390 and 820 it covered
+     all three);
    - at once, with no tap: the globe frame on screen with its mission pins drawn, and the mission posts in the feed;
-   - with the bar still up, the Equity Uprise tab answers a tap, a mission post brought to the middle of the screen is not
-     covered by the bar, and its Details opens the mission;
+   - with the bar still up, the Equity Uprise tab answers a tap, the last mission post in the feed (the end of the feed, the
+     hardest to reach) can be scrolled clear of the bar and answers a tap, and its Details opens the mission;
    - no analytics request (https://api.mccluster.org/v1/collect, the Supabase collect function), no device or acquisition
      record, and MCC_TRACK answers false, through the whole visit;
    - "I agree & continue" closes the bar in place, with no reload and still nothing recorded on that page view; the next
      page view records (so this probe does see analytics when they are allowed);
    - nothing scrolls sideways.
    At 390 also: "Not now" records only that the notice was seen, and the next page view shows neither bar nor wall and still
-   records nothing; and a shared mission link (?mission=<id>) as the very first visit opens that mission over the World, with
-   the bar and without the wall.
+   records nothing; and a shared mission link (?mission=<id>) as the very first visit opens that mission over the World,
+   without the wall, with the bar inside the mission's modal sheet (a modal dialog makes the rest of the page inert), visible
+   and answerable below the sheet's own buttons, which stay clear; leaving from there without an answer records nothing, so
+   the next page (the house's front page) asks again with its wall; and Escape inside the bar answers "Not now" and leaves
+   the mission open.
 
      CESIUM_DIR=/path/to/Build/Cesium node scripts/e2e/world-first-visit.e2e.mjs [outDir]
    Needs Playwright (PLAYWRIGHT_DIR if not resolvable). Screenshots and results.json land in outDir. */
@@ -134,10 +141,21 @@ const notice = (page) => page.evaluate(() => {
     worldShown: getComputedStyle(document.querySelector('main.mn')).visibility === 'visible',
     bar: !!bar, role: bar && bar.getAttribute('role'), label: bar && bar.getAttribute('aria-label'),
     inside: !!r && r.left >= 0 && r.right <= innerWidth && r.bottom <= innerHeight && r.top >= 0, share: r ? Math.round((r.height / innerHeight) * 100) : null, controls,
-    agreed: MCC_PRIVACY.accepted(), seen: MCC_PRIVACY.seen(),
+    agreed: MCC_PRIVACY.accepted(), seen: MCC_PRIVACY.seen(), storedSeen: localStorage.getItem('mcc_privacy_seen'), cookie: document.cookie,
     device: localStorage.getItem('mcc_device'), acquisition: localStorage.getItem('mcc_acq'), track: typeof window.MCC_TRACK === 'function' ? window.MCC_TRACK('first_visit_probe', {}) : 'missing'
   };
 });
+/* the shared bottom bar's tabs as drawn, and whether a tap at the centre of each reaches it rather than the notice */
+const appbar = (page) => page.evaluate(() => {
+  const bar = document.getElementById('mccPrivacyNotice'), nav = document.querySelector('nav.appbar');
+  const tabs = nav ? [...nav.querySelectorAll('a, button')].filter((t) => t.getClientRects().length) : [];
+  return {
+    tabs: tabs.map((t) => { const r = t.getBoundingClientRect(), hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return { tab: (t.getAttribute('aria-label') || t.textContent || '').trim().slice(0, 30), reached: !!hit && (hit === t || t.contains(hit)) }; }),
+    clear: !!bar && !!nav && bar.getBoundingClientRect().bottom <= nav.getBoundingClientRect().top
+  };
+});
+/* what a tap at the centre of an element reaches: the element itself, or something over it */
+const reaches = (page, sel) => page.evaluate((s) => { const el = document.querySelector(s); if (!el) return false; const r = el.getBoundingClientRect(), hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return !!hit && (hit === el || el.contains(hit)); }, sel);
 /* the visitor's next page view: the World opened again (the software-rendered globe of the last one can hold its tab for a
    while as it goes, so the wait is generous) */
 async function nextPageView(page, daylight) {
@@ -164,7 +182,10 @@ try {
       check(scope, 'the notice is the bar along the bottom, inside the screen, a small part of it', first.bar && first.role === 'region' && first.label === 'Privacy notice' && first.inside && first.share <= 35, first);
       check(scope, 'the bar offers I agree & continue, the Privacy Policy and Not now, each 44 px or more', JSON.stringify(first.controls.map((c) => c.text)) === JSON.stringify(['I agree & continue', 'Privacy Policy', 'Not now'])
         && first.controls.every((c) => c.w >= 44 && c.h >= 44) && first.controls[1].href === '/privacy.html', first.controls);
-      check(scope, 'shown is seen, never agreed', first.seen === true && first.agreed === false, first);
+      check(scope, 'shown is not an answer: nothing is recorded while the bar waits, not even that it was seen', first.seen === false && first.agreed === false && first.storedSeen === null && !/mcc_privacy_(seen|ack)=/.test(first.cookie), first);
+      await page.waitForSelector('nav.appbar', { timeout: 15000 }).catch(() => {});
+      const nav = await appbar(page);
+      check(scope, 'the bar sits above the shared bottom bar: every tab of it answers a tap', nav.tabs.length >= 3 && nav.tabs.every((t) => t.reached) && nav.clear, nav);
 
       /* at once, with no tap: the mission posts in the feed, the globe on screen with the missions' pins */
       const posts = await page.waitForFunction((n) => document.querySelectorAll('#mnFeed [data-mission-post]').length === n, MISSIONS.length, { timeout: 30000 }).then(() => true, () => false);
@@ -187,14 +208,23 @@ try {
       const tab = await page.evaluate(() => ({ scope: window.MCC_FEED_SCOPE.get(), pressed: document.querySelector('#mnFeedScope [data-feed-scope="equity"]').getAttribute('aria-pressed'), bar: !!document.getElementById('mccPrivacyNotice') }));
       check(scope, 'the Equity Uprise tab answers a tap while the bar is up', tab.scope === 'equity' && tab.pressed === 'true' && tab.bar, tab);
       const clear = await page.evaluate(async () => {
-        const b = document.querySelector('#mnFeed [data-mission-details]');
+        /* the last post is the end of the feed: the notice sits just above the bottom bar, and the feed must still let it
+           scroll clear (css/mnet.css gives the feed that much more room while the notice waits) */
+        const all = [...document.querySelectorAll('#mnFeed [data-mission-details]')], b = all[all.length - 1];
+        const frame = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+        let scroller = b.parentElement;
+        while (scroller && !(/(auto|scroll)/.test(getComputedStyle(scroller).overflowY) && scroller.scrollHeight > scroller.clientHeight)) scroller = scroller.parentElement;
+        scroller = scroller || document.scrollingElement;
         b.scrollIntoView({ block: 'center' });
-        await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-        const r = b.getBoundingClientRect(), hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
-        return { hit: !!hit && (hit === b || b.contains(hit)), on: hit ? (hit.id || hit.className || hit.tagName) : null };
+        await frame();
+        const bar = document.getElementById('mccPrivacyNotice').getBoundingClientRect();
+        let r = b.getBoundingClientRect();
+        if (r.bottom > bar.top - 4 && r.top < bar.bottom && r.right > bar.left && r.left < bar.right) { scroller.scrollTop += r.bottom - (bar.top - 8); await frame(); r = b.getBoundingClientRect(); }
+        const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+        return { posts: all.length, hit: !!hit && (hit === b || b.contains(hit)), on: hit ? (hit.id || hit.className || hit.tagName) : null, details: [Math.round(r.top), Math.round(r.bottom)], bar: [Math.round(bar.top), Math.round(bar.bottom)] };
       });
-      check(scope, 'a mission post in the middle of the screen is not under the bar', clear.hit, clear);
-      await page.click('#mnFeed [data-mission-details]');
+      check(scope, 'the last mission post in the feed scrolls clear of the bar and answers a tap', clear.posts === MISSIONS.length && clear.hit, clear);
+      await page.locator('#mnFeed [data-mission-details]').last().click();
       const opened = await page.waitForFunction(() => document.getElementById('mnMissionDialog').open, null, { timeout: 10000 }).then(() => true, () => false);
       const title = await page.evaluate(() => document.getElementById('mnMissionTitle').textContent);
       check(scope, 'Details opens the mission for a first-time guest', opened && MISSIONS.some((m) => m.title === title), { opened, title });
@@ -240,16 +270,59 @@ try {
     } finally { await ctx.close(); }
   }
 
-  /* a shared mission link is somebody's very first visit */
+  /* a shared mission link is somebody's very first visit: the mission opens in a modal sheet, which makes the rest of the page
+     inert, so the bar that waits for an answer is the last thing inside that sheet (review LDR-F1) */
+  const sharedMission = async (page) => {
+    const opened = await page.waitForFunction(() => document.getElementById('mnMissionDialog').open, null, { timeout: 30000 }).then(() => true, () => false);
+    const hosted = await page.waitForFunction(() => { const d = document.getElementById('mnMissionDialog'), b = document.getElementById('mccPrivacyNotice'); return !!d && !!b && d.contains(b); }, null, { timeout: 10000 }).then(() => true, () => false);
+    return { opened, hosted };
+  };
   {
     const scope = 'shared-mission-390';
     const { ctx, page, seen } = await firstVisit({ width: 390, height: 844 }, true, `/mnet.html?mission=${RIDE}&daylight=night`);
     try {
-      const opened = await page.waitForFunction(() => document.getElementById('mnMissionDialog').open, null, { timeout: 30000 }).then(() => true, () => false);
-      const state = await page.evaluate(() => ({ title: document.getElementById('mnMissionTitle').textContent, bar: !!document.getElementById('mccPrivacyNotice'),
-        wall: !!document.getElementById('mccPrivacyGate') || document.documentElement.hasAttribute('data-privacy-gate'), mission: new URLSearchParams(location.search).get('mission') }));
-      check(scope, 'the shared mission opens over the World at once, with the bar and without the wall', opened && state.title === 'Give someone a free ride' && state.bar && !state.wall && state.mission === RIDE, state);
+      const { opened, hosted } = await sharedMission(page);
+      await page.waitForTimeout(600);
+      const state = await page.evaluate(() => {
+        const d = document.getElementById('mnMissionDialog'), b = document.getElementById('mccPrivacyNotice');
+        const box = (el) => { if (!el) return null; const r = el.getBoundingClientRect(); return { top: Math.round(r.top), bottom: Math.round(r.bottom), left: Math.round(r.left), right: Math.round(r.right) }; };
+        return { title: document.getElementById('mnMissionTitle').textContent, modal: d.matches(':modal'), inside: !!b && d.contains(b), sheet: box(d), bar: box(b), join: box(document.getElementById('mnMissionJoin')),
+          wall: !!document.getElementById('mccPrivacyGate') || document.documentElement.hasAttribute('data-privacy-gate'), mission: new URLSearchParams(location.search).get('mission'), vh: innerHeight, vw: innerWidth };
+      });
+      check(scope, 'the shared mission opens over the World at once, in its modal sheet, without the wall', opened && state.modal && state.title === 'Give someone a free ride' && !state.wall && state.mission === RIDE, state);
+      const onScreen = !!state.bar && state.bar.top >= 0 && state.bar.bottom <= state.vh && state.bar.left >= 0 && state.bar.right <= state.vw;
+      check(scope, 'the bar is the last thing in the sheet, on screen, below the sheet\'s own buttons', hosted && state.inside && onScreen && !!state.join && state.bar.top >= state.join.bottom && state.bar.bottom <= state.sheet.bottom, state);
+      const answers = { agree: await reaches(page, '#mccPrivacyNoticeAgree'), later: await reaches(page, '#mccPrivacyNoticeLater'), join: await reaches(page, '#mnMissionJoin'), close: await reaches(page, '#mnMissionClose') };
+      check(scope, 'the bar can be answered, and Take this mission and the close button are not under it', Object.values(answers).every(Boolean), answers);
+      const waiting = await notice(page);
+      check(scope, 'nothing is recorded while the bar waits', waiting.seen === false && waiting.agreed === false && waiting.storedSeen === null && !/mcc_privacy_(seen|ack)=/.test(waiting.cookie), waiting);
+      const fit = await fits(page);
+      check(scope, 'nothing scrolls sideways', fit.sw === fit.cw, fit);
       await page.screenshot({ path: join(OUT, 'first-visit-shared-mission-390.png') });
+      /* the bounce: the visitor leaves from the mission without answering; the next page asks again */
+      await page.close();
+      const next = await ctx.newPage();
+      next.on('pageerror', (e) => seen.errors.push(e.message));
+      await next.goto(BASE + '/index.html', { waitUntil: 'domcontentloaded', timeout: 60000 });
+      const asked = await next.waitForSelector('#mccPrivacyGate', { timeout: 15000 }).then(() => true, () => false);
+      const there = await next.evaluate(() => ({ wall: !!document.getElementById('mccPrivacyGate'), pending: document.documentElement.getAttribute('data-privacy-gate'), seen: localStorage.getItem('mcc_privacy_seen') }));
+      check(scope, 'leaving without an answer is not an answer: the next page asks again, with its wall', asked && there.wall && there.pending === 'pending' && there.seen === null, there);
+      check(scope, 'no analytics request', seen.collect.length === 0, seen.collect);
+      check(scope, 'no script errors', seen.errors.length === 0, seen.errors);
+    } finally { await ctx.close(); }
+  }
+  {
+    const scope = 'shared-mission-escape-390';
+    const { ctx, page, seen } = await firstVisit({ width: 390, height: 844 }, true, `/mnet.html?mission=${RIDE}&daylight=night`);
+    try {
+      const { opened, hosted } = await sharedMission(page);
+      await page.focus('#mccPrivacyNoticeAgree');
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(500);
+      const after = await page.evaluate(() => ({ bar: !!document.getElementById('mccPrivacyNotice'), open: document.getElementById('mnMissionDialog').open,
+        seen: JSON.parse(localStorage.getItem('mcc_privacy_seen') || 'null'), ack: localStorage.getItem('mcc_privacy_ack'), agreed: MCC_PRIVACY.accepted() }));
+      check(scope, 'Escape inside the bar answers Not now and leaves the mission open', opened && hosted && !after.bar && after.open && !!after.seen && after.ack === null && after.agreed === false, after);
+      check(scope, 'Take this mission is in reach once the bar is answered', await reaches(page, '#mnMissionJoin'));
       check(scope, 'no analytics request', seen.collect.length === 0, seen.collect);
       check(scope, 'no script errors', seen.errors.length === 0, seen.errors);
     } finally { await ctx.close(); }

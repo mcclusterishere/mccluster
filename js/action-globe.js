@@ -424,6 +424,10 @@ function homePosition(){return Cesium.Cartesian3.fromDegrees(EDITORIAL?-35:0,EDI
    but the pins, which keep going through the shim below (js/environment-pins.js). */
 let governor=null,director=null;const environmentLayers=window.MCC_ENVIRONMENT_LAYERS||null;
 const environmentPins=window.MCC_ENVIRONMENT_PINS?.create(()=>viewer,()=>window.Cesium,msg=>tell(msg));
+/* this page load's own id, carried by every hu:globe-ready, so the World tells a globe that has just booted from the same globe
+   saying ready again (its missions read answering, a hu:hello answered, a bfcache restore): only a new boot re-arms the tour's
+   autostart (review RV2-1). Random per load, never stored, posted to the parent page only. */
+const GLOBE_BOOT=(()=>{try{const a=new Uint32Array(2);crypto.getRandomValues(a);return a[0].toString(36)+a[1].toString(36)}catch(e){return Date.now().toString(36)+Math.random().toString(36).slice(2)}})();
 let readyMessage=null;function tell(msg){if(EXPLORE)exploreTell(msg);if(!parentFrame)return;try{parentFrame.postMessage(msg,location.origin)}catch(e){}}
 /* on the full pane there is no parent to tell, so the layer line and a guest's lock are painted here, in the World's own words
    (js/mnet.js paintLayerLine). The Vaunt lead is the owner's referral, the same one the World shows. */
@@ -1133,8 +1137,8 @@ let touchY;const deck=$('deck');deck.addEventListener('touchstart',e=>{touchY=e.
 // Navigation can start as soon as the renderer is ready. Public mission RPCs
 // enrich this message later; they cannot hold a visitor's street map hostage.
 environmentPins?.draw();
-if(!ANALYTICS){readyMessage={type:'hu:globe-ready',missionIds:[],dataPending:true};tell(readyMessage)}
-try{[missions,cities]=await dataP;regions=cities.slice();const requestedSong=new URLSearchParams(location.search).get('song');if(requestedSong){missions=missions.filter(m=>String(m.song_title||'').toLocaleLowerCase()===requestedSong.toLocaleLowerCase());}allMissions=missions.slice();if(ANALYTICS||NO_MISSIONS){showMissions=false;showCities=false}draw();if(!ANALYTICS&&!NO_MISSIONS)drawBoundaries();$('status').textContent=missions.length||NO_MISSIONS?'':(requestedSong?'No approved regional missions are linked to this song yet.':'No approved globe missions published yet.');if(NO_MISSIONS)$('status').hidden=true;if(missions.length){$('status').hidden=true;setSelection(false)}renderFeed();if(countries&&countries.refresh)countries.refresh();readyMessage={type:'hu:globe-ready',missionIds:allMissions.map(m=>m.mission_id),missions:allMissions.slice(0,200).map(publicMission)};tell(readyMessage)}catch(e){if(leaving)return;$('status').textContent='Globe data is not available yet.';readyMessage={type:'hu:globe-ready',missionIds:[],dataUnavailable:true};tell(readyMessage);console.warn(e)}}
+if(!ANALYTICS){readyMessage={type:'hu:globe-ready',boot:GLOBE_BOOT,missionIds:[],dataPending:true};tell(readyMessage)}
+try{[missions,cities]=await dataP;regions=cities.slice();const requestedSong=new URLSearchParams(location.search).get('song');if(requestedSong){missions=missions.filter(m=>String(m.song_title||'').toLocaleLowerCase()===requestedSong.toLocaleLowerCase());}allMissions=missions.slice();if(ANALYTICS||NO_MISSIONS){showMissions=false;showCities=false}draw();if(!ANALYTICS&&!NO_MISSIONS)drawBoundaries();$('status').textContent=missions.length||NO_MISSIONS?'':(requestedSong?'No approved regional missions are linked to this song yet.':'No approved globe missions published yet.');if(NO_MISSIONS)$('status').hidden=true;if(missions.length){$('status').hidden=true;setSelection(false)}renderFeed();if(countries&&countries.refresh)countries.refresh();readyMessage={type:'hu:globe-ready',boot:GLOBE_BOOT,missionIds:allMissions.map(m=>m.mission_id),missions:allMissions.slice(0,200).map(publicMission)};tell(readyMessage)}catch(e){if(leaving)return;$('status').textContent='Globe data is not available yet.';readyMessage={type:'hu:globe-ready',boot:GLOBE_BOOT,missionIds:[],dataUnavailable:true};tell(readyMessage);console.warn(e)}}
 // Layout and the parent-owned location request work even if WebGL cannot load.
 wireEditorialTools();wireTravelControlLayout();
 if(EDITORIAL&&parentFrame){$('ctlLocate').onclick=()=>{if(travelMode)tell({type:'hu:request-location'})};for(const id of ['ctlZoomIn','ctlZoomOut'])$(id).disabled=true;}

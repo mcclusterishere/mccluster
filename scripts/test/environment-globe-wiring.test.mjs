@@ -97,6 +97,19 @@ test('the typed layers keep no copy of the feed providers\' terms: they answer w
   assert.doesNotMatch(layers, /FEED_TERMS/);
   assert.match(layers, /if \(Array\.isArray\(o\.sources\)\) feedTerms = termsFrom\(o\.sources\);/);
 });
+test('every hu:globe-ready carries the one boot id this page load drew, so the World tells a new globe from the same one saying ready again (review RV2-1)', () => {
+  const js = read('js/action-globe.js');
+  const defs = js.match(/const GLOBE_BOOT=/g) || [];
+  assert.equal(defs.length, 1, 'one boot id per page load');
+  assert.match(js, /const GLOBE_BOOT=\(\(\)=>\{try\{const a=new Uint32Array\(2\);crypto\.getRandomValues\(a\);/, 'drawn at random, once');
+  const readies = [...js.matchAll(/readyMessage=\{type:'hu:globe-ready',([^}]*)\}/g)];
+  assert.equal(readies.length, 3, 'the dataPending, missions and dataUnavailable answers');
+  for (const m of readies) assert.match(m[1], /^boot:GLOBE_BOOT,/, 'each ready names the boot: ' + m[0].slice(0, 80));
+  /* the hello and the bfcache restore answer with the same message, so the same boot */
+  assert.match(js, /if\(d\.type==='hu:hello'\)\{if\(readyMessage\)tell\(readyMessage\);return\}/);
+  assert.match(js, /window\.addEventListener\('pageshow',event=>\{if\(event\.persisted&&readyMessage\)tell\(readyMessage\)\}\);/);
+  assert.doesNotMatch(js, /GLOBE_BOOT[^;]*(localStorage|sessionStorage|fetch\()/, 'never stored, never sent to a server');
+});
 test('THIRD-PARTY-NOTICES names the three adapted files and each header points back', () => {
   const notices = read('THIRD-PARTY-NOTICES');
   for (const file of ['js/globe-render-governor.js', 'js/globe-scene-director.js', 'js/environment-layers.js']) assert.ok(notices.includes(file), file + ' in the notices');

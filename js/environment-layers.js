@@ -320,7 +320,7 @@
     const by = { usgs: 0, nws: 0, eonet: 0, nhc: 0 };
     for (const i of items) if (Object.prototype.hasOwnProperty.call(by, providerOf(i.id))) by[providerOf(i.id)] += 1;
     const fetched = items.map(i => isoOrNull(i.fetched_at)).filter(Boolean).sort().pop() || null;
-    return { status: !items.length ? 'unavailable' : items.some(i => !i.stale) ? 'available' : 'stale', reason: null, http: null, schema: 'world-environment/v1', generated_at: null, fetched_at: fetched, last_success_at: fetched, coverage: '', attribution: '', license: '', url: '', source_id: null, count: items.length, total: items.length, truncated: false, sources: [], digest: { by_provider: by } };
+    return { status: !items.length ? 'unavailable' : items.some(i => !i.stale) ? 'available' : 'stale', reason: null, http: null, schema: 'world-environment/v1', generated_at: null, fetched_at: fetched, last_success_at: fetched, coverage: '', attribution: '', license: '', url: '', source_id: null, label: '', count: items.length, total: items.length, truncated: false, sources: [], digest: { by_provider: by } };
   }
   function setEvents(items, options) {
     const o = options || {};
@@ -343,7 +343,9 @@
     if (mounted && director && (changed || tourChanged || (director.state().total === 0 && data.events.length))) director.setQueue(data.events, { queue: replayMode || 'significant' });
     if (mounted && typeof o.selected === 'string' && o.selected && o.selected !== (selected && selected.id) && findEntry(o.selected, 'events')) select(o.selected, 'panel', { layer: 'events' });
     if (mounted && selected && selected.layer === 'events' && !getEntry('events', selected.id)) clearSelection();
-    if (mounted && pendingFocus && picks.has(pendingFocus)) { const id = pendingFocus; pendingFocus = null; focus(id); }
+    /* a focus kept pending is honoured by the pins that bring its id, as by a layer's data (picks are keyed by layer and id, so the
+       lookup is by id: review RV2-4) */
+    if (mounted && pendingFocus && findEntry(pendingFocus)) { const id = pendingFocus; pendingFocus = null; focus(id); }
     if (mounted) { applyVisibility(); updateLegend(); requestRender('events'); }
   }
 
@@ -641,13 +643,32 @@
     return true;
   }
   /* THE RECORD THAT SPEAKS FOR A LAYER (review G1R-3): the Worker sends every source's health in `sources`, and a layer's own
-     fetched_at, last_success_at, coverage, attribution, licence and url are copied from the one record that produced what is drawn:
-     the readings (coops_latest), never the 24-hour station catalogue, for the water levels; the contours (usgs_shakemap), never the
-     event detail, for a ShakeMap; otherwise the record with the newest retrieval (the first on a tie). A fire detection names its own
-     satellite's record (sourceOf). Every record still travels in `sources`, and nothing is invented. */
+     fetched_at, last_success_at, coverage, attribution, licence, url and label are copied from the record that produced what is
+     drawn: the readings (coops_latest), never the 24-hour station catalogue, for the water levels; the contours (usgs_shakemap),
+     never the event detail, for a ShakeMap; the fires from every satellite that served them (below); otherwise the record with the
+     newest retrieval (the first on a tie). A fire detection names its own satellite's record (sourceOf). Every record still travels
+     in `sources`, and nothing is invented. */
   const PRIMARY_SOURCE = Object.freeze({ tides: 'coops_latest', shakemap: 'usgs_shakemap' });
+  /* THE FIRES SPEAK FOR EVERY SATELLITE THAT SERVED THEM (review RV2-3): the Worker sums both satellites' detections into one set
+     of 1-degree cells, so the layer and its areas name the records that served data (available or stale) together: one label (the
+     words the labels share, once, then each record's own), the coverage and terms of each, once, and the newest retrieval, which no
+     acquisition in the merged cells can follow (each record keeps its own in `sources`). One satellite serving speaks alone; none
+     serving, all of them are named. */
+  function servedTogether(list) {
+    const served = list.filter(s => s.status === 'available' || s.status === 'stale'), use = served.length ? served : list;
+    if (use.length <= 1) return use[0] || null;
+    const once = values => [...new Set(values.filter(v => typeof v === 'string' && v))];
+    const words = use.map(s => String(s.label || '').split(' ').filter(Boolean));
+    let common = 0;
+    while (words.every(w => common < w.length - 1 && w[common] === words[0][common])) common += 1;
+    const own = once(words.map(w => w.slice(common).join(' ')));
+    const label = (common ? words[0].slice(0, common).join(' ') + ' ' : '') + own.join(' and ');
+    const newest = key => use.map(s => isoOrNull(s[key])).filter(Boolean).sort().pop() || null;
+    return { id: use.map(s => String(s.id || '')).join('+'), label, url: once(use.map(s => s.url))[0] || '', coverage: once(use.map(s => s.coverage)).join(' · '), attribution: once(use.map(s => s.attribution)).join(' · '), license: once(use.map(s => s.license)).join(' · '), fetched_at: newest('fetched_at'), last_success_at: newest('last_success_at'), status: use.some(s => s.status === 'available') ? 'available' : use[0].status, reason: use.map(s => s.reason).find(Boolean) || null };
+  }
   function primarySource(layer, sources) {
     const list = Array.isArray(sources) ? sources.filter(s => s && typeof s === 'object') : [];
+    if (layer === 'fires') return servedTogether(list);
     const named = PRIMARY_SOURCE[layer] ? list.find(s => s.id === PRIMARY_SOURCE[layer]) : null;
     if (named) return named;
     let best = null;
@@ -781,7 +802,7 @@
       status: r.status || 'unavailable', reason: r.ok ? (r.status === 'available' ? null : (first.reason || null)) : (r.reason || null), http: r.http === undefined ? null : r.http,
       schema: body ? body.schema : (route ? route.schema : null), generated_at: body ? isoOrNull(body.generated_at) : null,
       fetched_at: first.fetched_at || null, last_success_at: first.last_success_at || null, coverage: first.coverage || '', attribution: first.attribution || '', license: first.license || '', url: first.url || '',
-      source_id: typeof first.id === 'string' ? first.id : null, count, total, truncated, sources, digest: body && DIGESTS[layer] ? DIGESTS[layer](body) : null
+      source_id: typeof first.id === 'string' ? first.id : null, label: typeof first.label === 'string' ? first.label : '', count, total, truncated, sources, digest: body && DIGESTS[layer] ? DIGESTS[layer](body) : null
     };
   }
   function tellLayerState(layer) {

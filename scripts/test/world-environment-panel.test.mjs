@@ -232,7 +232,8 @@ test('the 2D toggle sends hu:environment-view and follows hu:environment-view-st
   h.message({ type: 'hu:environment-view-state', mode: '2d', morphing: true });
   assert.equal(h.byId('weView2d').getAttribute('aria-pressed'), 'true');
   h.message({ type: 'hu:environment-view-state', mode: '2d', morphing: false });
-  assert.equal(h.byId('weView2d').textContent, '3D globe');
+  /* one label that says its state, never a label naming the other view beside a pressed state (review RV2-6) */
+  assert.equal(h.byId('weView2d').textContent, '2D map'); assert.equal(h.byId('weView2d').getAttribute('aria-pressed'), 'true');
   h.byId('weView2d').onclick();
   assert.deepEqual(h.sent.at(-1), { type: 'hu:environment-view', mode: '3d' });
   h.message({ type: 'hu:environment-view-state', mode: '3d', morphing: false });
@@ -274,7 +275,7 @@ test('the DOM CustomEvent carries the feed after every load, with the gate\'s co
   assert.equal(h.events.length, 1);
   const first = h.events[0];
   assert.equal(first.type, EVENTS);
-  assert.equal(first.detail.events.length, 65); assert.equal(first.detail.sources.length, 4); assert.equal(first.detail.fetched_at, '2026-11-17T20:05:00Z'); assert.ok(Number.isFinite(Date.parse(first.detail.checked_at)));
+  assert.equal(first.detail.events.length, 65); assert.equal(first.detail.sources.length, 4); assert.equal(first.detail.fetched_at, '2026-11-17T20:55:00Z', 'the newest retrieval of the four sources (USGS, after its newest observation)'); assert.ok(Number.isFinite(Date.parse(first.detail.checked_at)));
   assert.equal(first.detail.unavailable, false); assert.equal(first.detail.code, null); assert.deepEqual(first.detail.layers, {});
   assert.equal(first.detail.events[0].id, FEED.events[0].id); assert.equal(first.detail.events[0].notice, FEED.events[0].notice, 'the normalized rows as normalizeFeed returns them');
   /* the fires digest: re-dispatched with the current feed and the cells */
@@ -324,6 +325,14 @@ test('G1R-3: with two satellites the digest handed to the page names the record 
   h.message(layerState('fires', { fetched_at: noaa21.fetched_at, last_success_at: noaa21.last_success_at, coverage: noaa21.coverage, attribution: noaa21.attribution, source_id: 'firms_viirs_noaa21', sources: [layerState('fires').sources[0], noaa21], digest: { cells: [[-119, 34, 221, 1830.4, 212.5, '2026-11-17T19:30:00Z']], cell_degrees: 1, count: 600, total: 600, windows: [] } }));
   const fires = h.events.at(-1).detail.layers.fires;
   assert.equal(fires.label, 'NASA FIRMS VIIRS NOAA-21', 'the label of the record the layer speaks for'); assert.equal(fires.attribution, noaa21.attribution); assert.equal(fires.coverage, noaa21.coverage); assert.equal(fires.fetched_at, noaa21.fetched_at);
+  /* review RV2-3: the globe names both satellites for the fires (the Worker sums both into the areas): the layer's own label wins,
+     with the coverage and terms of both, so a fire-area post never names one satellite beside data summed from two */
+  const both = { source_id: 'firms_viirs_noaa20+firms_viirs_noaa21', label: 'NASA FIRMS VIIRS NOAA-20 and NOAA-21', coverage: layerState('fires').coverage + ' · ' + noaa21.coverage, attribution: layerState('fires').attribution + ' · ' + noaa21.attribution, fetched_at: noaa21.fetched_at, last_success_at: noaa21.last_success_at };
+  h.message(layerState('fires', { ...both, sources: [layerState('fires').sources[0], noaa21], digest: { cells: [[-119, 34, 221, 1830.4, 212.5, '2026-11-17T19:30:00Z']], cell_degrees: 1, count: 600, total: 600, windows: [] } }));
+  const summed = h.events.at(-1).detail.layers.fires;
+  assert.equal(summed.label, both.label); assert.equal(summed.coverage, both.coverage); assert.equal(summed.attribution, both.attribution); assert.equal(summed.fetched_at, noaa21.fetched_at);
+  const post = P.observationPosts(h.events.at(-1).detail, Date.parse('2026-11-17T21:00:00Z')).find(p => p.id === 'firecell:-119:34');
+  assert.equal(post.source.label, both.label); assert.equal(post.facts.find(f => f.label === 'Sensor').value, 'VIIRS NOAA-20/21');
   h.mounted.destroy();
 });
 
@@ -347,25 +356,85 @@ test('autostart: play is sent once per activation only while the tab is open, th
   h.message({ type: 'hu:environment-scene-state', playing: true, index: 0, total: 12, id: 'x', title: 'x', queue: 'significant', reason: null });
   assert.equal(plays(), 1, 'not again within the same activation');
   assert.equal(h.byId('wePlay').textContent, 'Pause tour');
-  /* the globe says ready after the panel spoke (landing on the tab before the frame booted, or a frame that reloaded): a fresh globe
-     has no tour, so the stale words clear and the one autostart is said again, with the layers and the pins before it */
-  h.message({ type: 'hu:globe-ready' });
-  assert.equal(plays(), 2, 'a fresh globe is played at once more');
+  /* the first globe the panel hears say ready (landing on the tab before the frame booted: the play went to a frame that could not
+     listen yet) has no tour, so the stale words clear and the one autostart is said again, with the layers and the pins before it */
+  h.message({ type: 'hu:globe-ready', boot: 'boot-1', missionIds: [], dataPending: true });
+  assert.equal(plays(), 2, 'a globe that has just booted is played at once more');
   assert.equal(h.byId('wePlay').textContent, 'Play tour', 'no tour is claimed until the fresh globe says so');
   assert.deepEqual(h.sent.slice(-3).map(m => m.type + ':' + (m.on === undefined ? m.action : m.on)), ['hu:environment-layers:true', 'hu:environment-pins:true', 'hu:environment-scene:play'], 'layers, pins, then play');
   h.message({ type: 'hu:environment-scene-state', playing: true, index: 0, total: 12, id: 'x', title: 'x', queue: 'significant', reason: null });
   assert.equal(plays(), 2, 'not again within the same activation');
+  /* the same globe says ready again (its missions read answering, a hu:hello answered, a bfcache restore; review RV2-1): the layers
+     and the pins again, never a play, and the words of the tour still playing stay */
+  h.sent.length = 0;
+  h.message({ type: 'hu:globe-ready', boot: 'boot-1', missionIds: ['m1'], missions: [] });
+  h.message({ type: 'hu:globe-ready', boot: 'boot-1', missionIds: ['m1'], missions: [] });
+  assert.deepEqual(h.types(), ['hu:environment-layers:true', 'hu:environment-pins:true', 'hu:environment-layers:true', 'hu:environment-pins:true'], 'layers and pins only');
+  assert.equal(plays(), 0, 'the same globe saying ready again is never played at');
+  assert.equal(h.byId('wePlay').textContent, 'Pause tour', 'the words of a tour still playing are not blanked');
+  h.message({ type: 'hu:globe-ready', missionIds: [] });
+  assert.equal(plays(), 0, 'a ready that names no boot, after one that did, is the same globe');
+  /* a frame that reloaded (a new boot id) while the tour played on, with nobody stopping it: the new globe has no tour, so it is
+     played at once more */
+  h.message({ type: 'hu:globe-ready', boot: 'boot-2', missionIds: [], dataPending: true });
+  assert.equal(plays(), 1, 'a new boot re-arms the autostart');
+  assert.equal(h.byId('wePlay').textContent, 'Play tour');
   h.setMode('feed'); h.setMode('environment'); await flush();
-  assert.equal(plays(), 3, 'once per activation');
-  /* the tab change cleared the old tour state (the globe stops its director on layers off); the globe reports the new tour, then the visitor pauses it */
+  assert.equal(plays(), 2, 'once per activation');
+  /* the tab change cleared the old tour state (the globe stops its director on layers off); the globe reports the new tour, then the
+     visitor pauses it (the director reports a visitor's pause with no reason) */
   h.message({ type: 'hu:environment-scene-state', playing: true, index: 0, total: 12, id: 'x', title: 'x', queue: 'significant', reason: null });
   h.byId('wePlay').onclick();
   assert.deepEqual(h.sent.at(-1), { type: 'hu:environment-scene', action: 'pause' });
-  h.message({ type: 'hu:environment-scene-state', playing: false, index: 0, total: 12, id: 'x', title: 'x', queue: 'significant', reason: 'user' });
+  h.message({ type: 'hu:environment-scene-state', playing: false, index: 0, total: 12, id: 'x', title: 'x', queue: 'significant', reason: null });
   h.setMode('feed'); h.setMode('environment'); await flush();
-  assert.equal(plays(), 3, 'a visitor who paused is not played at again this page session');
-  h.message({ type: 'hu:globe-ready' });
-  assert.equal(plays(), 3, 'not even by a globe that says ready again');
+  assert.equal(plays(), 2, 'a visitor who paused is not played at again this page session');
+  h.message({ type: 'hu:globe-ready', boot: 'boot-3' });
+  assert.equal(plays(), 2, 'not even by a globe that has just booted');
+  h.mounted.destroy();
+});
+
+test('RV2-1: a tour the visitor stopped by moving the globe, or one that ran to its end, is never started again by a later hu:globe-ready', async () => {
+  const plays = h => h.sent.filter(m => m.type === 'hu:environment-scene' && m.action === 'play').length;
+  const state = (over = {}) => ({ type: 'hu:environment-scene-state', playing: false, index: 0, total: 12, id: 'usgs:fx-gen-48', title: 'Fixture event 48', queue: 'significant', reason: null, ...over });
+  for (const stop of [{ reason: 'input', words: /you moved the globe/ }, { reason: 'end', index: 11, words: /ended/ }]) {
+    const h = harness({ observer: true });
+    await flush(8);
+    h.message({ type: 'hu:globe-ready', boot: 'boot-1', missionIds: [], dataPending: true });
+    h.message(state({ playing: true }));
+    const before = plays(h);
+    h.message(state({ reason: stop.reason, index: stop.index ?? 0 }));
+    /* the globe's missions read answers late, then a hu:hello is answered: the same globe saying ready twice more */
+    h.message({ type: 'hu:globe-ready', boot: 'boot-1', missionIds: ['m1'], missions: [] });
+    h.message({ type: 'hu:globe-ready', boot: 'boot-1', missionIds: ['m1'], missions: [] });
+    assert.equal(plays(h), before, `${stop.reason}: the same globe saying ready again plays nothing`);
+    assert.match(h.byId('weSceneStatus').textContent, stop.words, `${stop.reason}: the panel still says why the tour stopped`);
+    /* even a globe that has just booted is not played at in this opening of the tab: the tour already ran into the visitor's hand
+       or its end */
+    h.message({ type: 'hu:globe-ready', boot: 'boot-2', missionIds: [], dataPending: true });
+    assert.equal(plays(h), before, `${stop.reason}: not by a new boot either, in this opening`);
+    /* a fresh opening of the tab has its own one autostart */
+    h.setMode('feed'); h.setMode('environment'); await flush();
+    assert.equal(plays(h), before + 1, `${stop.reason}: the next opening of the tab autostarts once`);
+    h.mounted.destroy();
+  }
+});
+
+test('RV2-1: the autostart waits for the feed, so its play follows pins that carry something to tour', async () => {
+  let release;
+  const gate = new Promise(r => { release = r; });
+  const h = harness({ observer: true, answer: () => gate.then(feedBody) });
+  await flush(8);
+  const plays = () => h.sent.filter(m => m.type === 'hu:environment-scene' && m.action === 'play').length;
+  assert.equal(plays(), 0, 'no play before the feed has answered');
+  h.message({ type: 'hu:globe-ready', boot: 'boot-1', missionIds: [], dataPending: true });
+  assert.equal(plays(), 0, 'a globe ready before the feed is not played at yet');
+  release(); await flush(8);
+  assert.equal(plays(), 1, 'the feed answered: the one autostart');
+  const at = h.sent.findIndex(m => m.type === 'hu:environment-scene'), pins = h.sent.slice(0, at).filter(m => m.type === 'hu:environment-pins' && m.on === true).at(-1);
+  assert.ok(pins && pins.items.length === 62, 'the play follows pins that carry the feed');
+  h.message({ type: 'hu:globe-ready', boot: 'boot-1', missionIds: ['m1'], missions: [] });
+  assert.equal(plays(), 1, 'the same globe saying ready again plays nothing');
   h.mounted.destroy();
 });
 
@@ -440,5 +509,29 @@ test('G1R-7: a ShakeMap digest seen before still reaches the page when it marks 
   assert.equal(marked(), true);
   h.message(shakemap);
   assert.equal(h.events.length, before + 1, 'and only once');
+  h.mounted.destroy();
+});
+
+test('RV2-2: the same rows with a changed status, reason or retrieval still reach the page, so no post keeps a status the panel no longer shows', async () => {
+  const h = harness();
+  await flush(8);
+  const cells = { cells: [[-119, 34, 220, 1830.4, 212.5, '2026-11-17T19:30:00Z']], cell_degrees: 1, count: 600, total: 600, windows: [] };
+  h.message(layerState('fires', { digest: cells }));
+  const before = h.events.length;
+  assert.equal(h.events.at(-1).detail.layers.fires.status, 'available');
+  /* the Worker's next answer is its last good copy: the same cells, served stale with the provider's reason */
+  const staleRecord = { ...layerState('fires').sources[0], status: 'stale', reason: 'upstream_error' };
+  h.message(layerState('fires', { status: 'stale', reason: 'upstream_error', generated_at: '2026-11-17T20:30:00Z', sources: [staleRecord], digest: cells }));
+  assert.equal(h.events.length, before + 1, 'a layer gone stale with the same rows is handed on');
+  const fires = h.events.at(-1).detail.layers.fires;
+  assert.equal(fires.status, 'stale'); assert.equal(fires.reason, 'upstream_error'); assert.deepEqual(fires.cells, cells.cells);
+  const post = P.observationPosts(h.events.at(-1).detail, Date.parse('2026-11-17T21:00:00Z')).find(p => p.id === 'firecell:-119:34');
+  assert.equal(post.status, 'stale', 'the fire-area post says what the panel\'s row says'); assert.equal(post.reason, 'upstream_error');
+  /* the same answer again is not handed on (review G1R-7 still holds) */
+  h.message(layerState('fires', { status: 'stale', reason: 'upstream_error', generated_at: '2026-11-17T20:30:00Z', sources: [staleRecord], digest: cells }));
+  assert.equal(h.events.length, before + 1, 'an identical answer dispatches nothing');
+  /* a newer retrieval of the same rows is the same post with a new retrieval time: handed on */
+  h.message(layerState('fires', { fetched_at: '2026-11-17T21:00:30Z', last_success_at: '2026-11-17T21:00:30Z', generated_at: '2026-11-17T21:00:00Z', digest: cells }));
+  assert.equal(h.events.length, before + 2); assert.equal(h.events.at(-1).detail.layers.fires.fetched_at, '2026-11-17T21:00:30Z'); assert.equal(h.events.at(-1).detail.layers.fires.status, 'available');
   h.mounted.destroy();
 });

@@ -138,7 +138,8 @@ html.hu-editorial.mn-world-on, .hu-editorial.mn-world-on body {height:100%;overf
    hero. Mobile first; wider screens only get more room. */
 .hu-feed-scope {display:flex;gap:8px;margin:4px 0 12px;padding:2px 0 6px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
 .hu-feed-scope::-webkit-scrollbar {display:none;}
-.hu-feed-scope button {flex:0 0 auto;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px;border:1px solid #ffffff2a;border-radius:24px;background:#12171c;color:#e4e8ec;font:400 14px var(--mn-ui);white-space:nowrap;cursor:pointer;}
+/* the tabs are form controls: never under 16px (AGENTS.md hard rule 14, the reading the panel's buttons follow; review RV2-7) */
+.hu-feed-scope button {flex:0 0 auto;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px;border:1px solid #ffffff2a;border-radius:24px;background:#12171c;color:#e4e8ec;font:400 max(16px,1em) var(--mn-ui);white-space:nowrap;cursor:pointer;}
 .hu-feed-scope button svg {width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;flex:none;}
 .hu-feed-scope [aria-pressed="true"] {background:#c00028;border-color:#f0284d;color:#fff;box-shadow:0 8px 24px -12px #ff1744aa;}
 .hu-feed-scope button:focus-visible {outline:2px solid #ffffff;outline-offset:2px;}
@@ -149,6 +150,12 @@ html.hu-editorial.mn-world-on, .hu-editorial.mn-world-on body {height:100%;overf
 .hu-feed-scope .hu-feed-scope__eup {padding:0 10px;}
 .hu-feed-scope .hu-eup-mark {display:block;width:40px;height:40px;object-fit:contain;flex:none;pointer-events:none;}
 .hu-feed-scope .hu-eup-mark--dark {display:none;}
+/* on the split desktop the feed column (about 490px at 1280) is narrower than the six tabs: the row wraps onto a second line, so
+   every tab sits inside the row and none hides past its edge with no sign that the row scrolls (review RV2-8); the phone and the
+   stacked tablet keep their one dragging row */
+@media (min-width:1000px) {
+  .hu-feed-scope {flex-wrap:wrap;}
+}
 /* the mission feed (the tab chosen): Environmental Justice, then the missions, then the completed series; the posting
    chrome of Global steps aside */
 .mn-feed-equity #wtSocial :is(#mnGuestCard,#mnComposer,#mnLiveHero) {display:none!important;}

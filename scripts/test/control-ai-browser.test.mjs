@@ -21,7 +21,8 @@
        declares images and allow_browser on the durable turn and messages[].images on ai.chat; the Core on
        OVH at build eb942248 declares none of them, and would drop the first two silently and hand an
        image to a text model (deploy-readiness review, 2026-11-18). The controls follow the declaration,
-       with one honest line in place of each that is off.
+       with one honest line in place of each that is off. A tool list that could not be read is not a Core that
+       declares nothing: the controls stay off and the line says the page does not know (review LDR-F3).
 
    Dependency-free; runs on every PR through mcp-continuity-ci.yml (node --test scripts/test/*.test.mjs).
    The browser proof is scripts/e2e/control-ai-browser.e2e.mjs. */
@@ -69,7 +70,8 @@ const OLD_TOOLS = [
   { name: "core.ai.turn.submit", inputSchema: { type: "object", required: ["org_id", "thread_id", "message_id", "content"], properties: { org_id: { type: "string" }, thread_id: { type: "string" }, message_id: { type: "string" }, content: { type: "string", minLength: 1, maxLength: 12000 }, input_mode: { type: "string", enum: ["text", "voice"] } }, additionalProperties: false } },
   { name: "core.ai.turn.get", inputSchema: { type: "object", required: ["org_id", "turn_id"], properties: { org_id: { type: "string" }, turn_id: { type: "string" } }, additionalProperties: false } }
 ];
-const NONE = { turnImages: false, turnBrowser: false, chatImages: false };
+const NONE = { known: true, turnImages: false, turnBrowser: false, chatImages: false };
+const UNKNOWN = { known: false, turnImages: false, turnBrowser: false, chatImages: false };
 /* values made inside the VM carry that context's prototypes; compare them as plain data */
 const plain = (v) => JSON.parse(JSON.stringify(v));
 const JPEG_B64 = "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AN//Z";
@@ -108,7 +110,7 @@ test("(a) the budget: two per turn, counted with what is already attached; the b
 });
 
 test("(b) the durable turn carries images and allow_browser only when set and declared; Ask home AI takes the messages form only with an image ai.chat declares", () => {
-  const now = h.aiCoreSupport(N2_TOOLS), old = h.aiCoreSupport(OLD_TOOLS);
+  const now = h.aiCoreSupport(N2_TOOLS, true), old = h.aiCoreSupport(OLD_TOOLS, true);
   const base = { org_id: "o1", thread_id: "t1", message_id: "m1", content: "hi", input_mode: "text" };
   for (const support of [now, old]) {
     assert.deepEqual(plain(h.aiTurnSubmission(base, [], false, support)), base, "a plain turn is exactly the fields every Core knows");
@@ -120,6 +122,7 @@ test("(b) the durable turn carries images and allow_browser only when set and de
   assert.throws(() => h.aiTurnSubmission({ ...base, content: "look" }, [{ base64: JPEG_B64 }], false, old), /Attach image is off/);
   assert.throws(() => h.aiTurnSubmission(base, [], true, old), /Use the browser is off/);
   assert.throws(() => h.aiTurnSubmission(base, [{ base64: JPEG_B64 }], false), /Attach image is off/, "no word from the Core is no");
+  assert.throws(() => h.aiTurnSubmission(base, [{ base64: JPEG_B64 }], false, h.aiCoreSupport(N2_TOOLS, false)), /tool list has not been read, so whether it accepts images is not known/, "an unread tool list is no, said as not known");
   assert.deepEqual(plain(h.aiChatRequest("hello", [])), { prompt: "hello", temperature: 0.2 });
   assert.deepEqual(plain(h.aiChatRequest("hello", [], false)), { prompt: "hello", temperature: 0.2 });
   assert.deepEqual(plain(h.aiChatRequest("what is this", [{ base64: JPEG_B64 }], now.chatImages)), { messages: [{ role: "user", content: "what is this", images: [JPEG_B64] }], temperature: 0.2 });
@@ -132,7 +135,7 @@ test("(b) the durable turn carries images and allow_browser only when set and de
 });
 
 test("(c) the browser switch shows only for the owner of the house workspace, and only when the durable turn declares allow_browser", () => {
-  const now = h.aiCoreSupport(N2_TOOLS), old = h.aiCoreSupport(OLD_TOOLS);
+  const now = h.aiCoreSupport(N2_TOOLS, true), old = h.aiCoreSupport(OLD_TOOLS, true);
   const house = { id: "o1", slug: "mccluster", kind: "studio" };
   assert.equal(h.aiBrowserSwitchVisible({ workspace: { role: "owner" }, org: house }, now), true);
   assert.equal(h.aiBrowserSwitchVisible({ workspace: { role: "viewer" }, org: house }, now), false, "a member never sees it");
@@ -140,7 +143,8 @@ test("(c) the browser switch shows only for the owner of the house workspace, an
   assert.equal(h.aiBrowserSwitchVisible({ workspace: { role: "owner" }, org: { id: "o2", slug: "client", kind: "tenant" } }, now), false, "a client workspace's owner is not the house owner");
   assert.equal(h.aiBrowserSwitchVisible({ workspace: null, org: house }, now), false, "no membership, no switch");
   assert.equal(h.aiBrowserSwitchVisible({ workspace: { role: "owner" }, org: house }, old), false, "a Core that does not declare allow_browser, no switch");
-  assert.equal(h.aiBrowserSwitchVisible({ workspace: { role: "owner" }, org: house }, NONE), false, "no tool list, no switch");
+  assert.equal(h.aiBrowserSwitchVisible({ workspace: { role: "owner" }, org: house }, NONE), false, "a tool list without the flag, no switch");
+  assert.equal(h.aiBrowserSwitchVisible({ workspace: { role: "owner" }, org: house }, UNKNOWN), false, "no tool list read, no switch");
   assert.equal(h.aiBrowserSwitchVisible({ workspace: { role: "owner" }, org: house }), false, "no word from the Core is no");
   assert.equal(h.aiBrowserOwner({ workspace: { role: "owner" }, org: house }), true, "the owner is told why it is off");
   assert.equal(h.aiBrowserOwner({ workspace: { role: "viewer" }, org: house }), false, "a member is told nothing about the owner's browser");
@@ -269,34 +273,54 @@ test("(e) the composer and the stylesheet: attach input, 44 px button, switch, m
 });
 
 test("(f) the controls follow what the running Core declares, read from the tool list the page already holds", () => {
-  assert.deepEqual(plain(h.aiCoreSupport(N2_TOOLS)), { turnImages: true, turnBrowser: true, chatImages: true }, "this checkout's Core declares all three");
-  assert.deepEqual(plain(h.aiCoreSupport(OLD_TOOLS)), NONE, "the Core at eb942248 declares none of them");
-  assert.deepEqual(plain(h.aiCoreSupport([])), NONE, "an empty tool list (Core unreachable, signed out) declares nothing");
-  assert.deepEqual(plain(h.aiCoreSupport(null)), NONE);
-  assert.deepEqual(plain(h.aiCoreSupport([null, { name: "core.ai.turn.submit" }, { name: "ai.chat", inputSchema: "object" }, { name: "core.ai.turn.submit", inputSchema: { properties: { images: false, allow_browser: null } } }])), NONE, "malformed or refused fields declare nothing");
+  assert.deepEqual(plain(h.aiCoreSupport(N2_TOOLS, true)), { known: true, turnImages: true, turnBrowser: true, chatImages: true }, "this checkout's Core declares all three");
+  assert.deepEqual(plain(h.aiCoreSupport(OLD_TOOLS, true)), NONE, "the Core at eb942248 declares none of them");
+  assert.deepEqual(plain(h.aiCoreSupport([], true)), NONE, "a tool list that was read and lists nothing declares nothing");
+  assert.deepEqual(plain(h.aiCoreSupport([null, { name: "core.ai.turn.submit" }, { name: "ai.chat", inputSchema: "object" }, { name: "core.ai.turn.submit", inputSchema: { properties: { images: false, allow_browser: null } } }], true)), NONE, "malformed or refused fields declare nothing");
   /* browser.act is agent-only and never listed over MCP; were it listed, it still would not be the durable turn's word */
-  assert.equal(h.aiCoreSupport([...OLD_TOOLS, { name: "browser.act", inputSchema: { type: "object" } }]).turnBrowser, false);
+  assert.equal(h.aiCoreSupport([...OLD_TOOLS, { name: "browser.act", inputSchema: { type: "object" } }], true).turnBrowser, false);
   /* each field stands on its own */
   const imagesOnly = OLD_TOOLS.map((t) => (t.name !== "core.ai.turn.submit" ? t : { ...t, inputSchema: { ...t.inputSchema, properties: { ...t.inputSchema.properties, images: { type: "array" } } } }));
-  assert.deepEqual(plain(h.aiCoreSupport(imagesOnly)), { turnImages: true, turnBrowser: false, chatImages: false });
+  assert.deepEqual(plain(h.aiCoreSupport(imagesOnly, true)), { known: true, turnImages: true, turnBrowser: false, chatImages: false });
   /* one honest line in place of each control that is off, saying why */
   assert.equal(h.AI_CAPABILITY_OFF.images, "Attach image is off: the Core running now does not accept images in a turn.");
   assert.equal(h.AI_CAPABILITY_OFF.browser, "Use the browser is off: the Core running now does not honour browser turns.");
-  const images = h.aiCapabilityLine("images"), browser = h.aiCapabilityLine("browser");
-  assert.match(images, /^<p class="cr-ai-capability" data-ai-capability="images" title="[^"]*images[^"]*">Attach image is off: the Core running now does not accept images in a turn\.<\/p>$/);
-  assert.match(browser, /^<p class="cr-ai-capability" data-ai-capability="browser" title="[^"]*allow_browser[^"]*">Use the browser is off: the Core running now does not honour browser turns\.<\/p>$/);
+  const old = h.aiCoreSupport(OLD_TOOLS, true);
+  const images = h.aiCapabilityLine("images", old), browser = h.aiCapabilityLine("browser", old);
+  assert.match(images, /^<p class="cr-ai-capability" data-ai-capability="images" data-ai-capability-basis="declared" title="Its tool list declares no images field[^"]*">Attach image is off: the Core running now does not accept images in a turn\.<\/p>$/);
+  assert.match(browser, /^<p class="cr-ai-capability" data-ai-capability="browser" data-ai-capability-basis="declared" title="Its tool list declares no allow_browser field[^"]*">Use the browser is off: the Core running now does not honour browser turns\.<\/p>$/);
+});
+
+test("(f) a tool list that could not be read is not a Core that refuses: the controls stay off and the line says it is not known", () => {
+  /* review LDR-F3: tools/list answering 503 left the page saying the Core "does not accept images" next to its own banner
+     saying the source did not respond. Not read (refused, unreachable, signed out, nothing read yet) is not declared. */
+  for (const tools of [N2_TOOLS, OLD_TOOLS, [], null]) {
+    for (const listed of [false, undefined, null, "true"]) assert.deepEqual(plain(h.aiCoreSupport(tools, listed)), UNKNOWN, `listed ${String(listed)}: nothing is known, whatever list is in hand`);
+  }
+  const unknown = h.aiCoreSupport(null, false);
+  assert.equal(h.aiCapabilityOff("images", unknown), "Attach image is off: the Core's tool list has not been read, so whether it accepts images is not known.");
+  assert.equal(h.aiCapabilityOff("browser", unknown), "Use the browser is off: the Core's tool list has not been read, so whether it honours browser turns is not known.");
+  assert.equal(h.aiCapabilityOff("images", undefined), h.AI_CAPABILITY_UNKNOWN.images, "no word at all is not known either");
+  const images = h.aiCapabilityLine("images", unknown), browser = h.aiCapabilityLine("browser", unknown);
+  assert.match(images, /^<p class="cr-ai-capability" data-ai-capability="images" data-ai-capability-basis="unknown" title="Attach comes back once the Core's tool list is read and declares an images field on core\.ai\.turn\.submit\.">Attach image is off: the Core's tool list has not been read, so whether it accepts images is not known\.<\/p>$/);
+  assert.match(browser, /^<p class="cr-ai-capability" data-ai-capability="browser" data-ai-capability-basis="unknown" title="The switch comes back once the Core's tool list is read and declares an allow_browser field on core\.ai\.turn\.submit\.">Use the browser is off: the Core's tool list has not been read, so whether it honours browser turns is not known\.<\/p>$/);
+  for (const line of [images, browser]) assert.doesNotMatch(line, /does not accept|does not honour|declares no/, "nothing is said about the Core that the page does not know");
 });
 
 test("(g) the composer reads the Core's word before it renders a control or sends a turn", () => {
+  const word = control.slice(control.indexOf("function aiCoreWord()"), control.indexOf("function sendAiMessage("));
+  assert.match(word, /var listed = state\.sources && state\.sources\.coreTools;/, "the word is the tool list the page read ...");
+  assert.match(word, /return aiCoreSupport\(state\.coreTools, Boolean\(listed && listed\.ok\)\);/, "... and whether that read answered");
   const send = control.slice(control.indexOf("function sendAiMessage("), control.indexOf("function note("));
-  assert.match(send, /var support = aiCoreSupport\(state\.coreTools\);/);
-  assert.ok(send.indexOf("aiCoreSupport(state.coreTools)") < send.indexOf("var optimistic"), "a refused turn is never shown as sent");
+  assert.match(send, /var support = aiCoreWord\(\);/);
+  assert.ok(send.indexOf("aiCoreWord()") < send.indexOf("var optimistic"), "a refused turn is never shown as sent");
+  assert.match(send, /state\.aiChatError = aiCapabilityOff\("images", support\) \+ " Remove the image to send this turn\.";/, "the refusal says what the page knows");
   assert.match(send, /var allowBrowser = state\.aiAllowBrowser === true && support\.turnBrowser;/, "a switch left on while the Core stopped declaring it sends nothing");
   const render = control.slice(control.indexOf("function renderAi()"), control.indexOf("function publicRecordLink("));
-  assert.match(render, /var support = aiCoreSupport\(state\.coreTools\);/);
+  assert.match(render, /var support = aiCoreWord\(\);/);
   const attach = render.indexOf('data-action="ai-attach"'), guard = render.indexOf("support.turnImages");
   assert.ok(guard >= 0 && guard < attach, "the attach control is drawn only behind the Core's word");
-  assert.match(render, /aiCapabilityLine\("images"\)/);
-  assert.match(render, /aiBrowserOwner\(state\)\) browserSwitch = aiCapabilityLine\("browser"\)/);
+  assert.match(render, /aiCapabilityLine\("images", support\)/);
+  assert.match(render, /aiBrowserOwner\(state\)\) browserSwitch = aiCapabilityLine\("browser", support\)/);
   assert.match(css, /\.cr-ai-capability\{[^}]*overflow-wrap:anywhere/, "the line wraps at phone width");
 });

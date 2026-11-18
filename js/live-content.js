@@ -10,7 +10,8 @@
 
    - SEEN IS NOT AGREED. A document page's banner counts as seen the moment
      it is shown (answered or ignored), and so does any answer to the wall,
-     which covers the page and still needs "I agree" to enter. Once THIS
+     which covers the page and still needs "I agree" to enter, or to the
+     World's bar, which waits for an answer the way the wall does. Once THIS
      version is seen, neither the banner nor the wall shows again for it, on
      any page or any McCluster host. Agreement stays the separate, stronger
      record: js/analytics.js records nothing until it exists, and a feature
@@ -39,7 +40,7 @@
   "use strict";
   var VERSION = "2026-10-19";
   var KEY = "mcc_privacy_ack";    /* agreed: {version, accepted_at}; cookie mcc_privacy_ack=<VERSION> */
-  var SEEN = "mcc_privacy_seen";  /* banner shown, or "Not now": {version, seen_at}; cookie mcc_privacy_seen=<VERSION> */
+  var SEEN = "mcc_privacy_seen";  /* a document page's bar shown, or "Not now": {version, seen_at}; cookie mcc_privacy_seen=<VERSION> */
   var MAX_AGE = 34560000;         /* 400 days, the longest a browser keeps any cookie */
   var SB = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
   var SB_KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
@@ -109,7 +110,7 @@
     }
     return true;
   }
-  /* SEEN: agreed, or the banner was shown. This alone decides whether the notice shows. */
+  /* SEEN: agreed, "Not now", or a document page's bar shown. This alone decides whether the notice shows. */
   function readSeen() {
     if (readAck()) return true;
     var local = stored("localStorage", SEEN), sess = stored("sessionStorage", SEEN), cookie = cookieHas(SEEN);
@@ -133,7 +134,7 @@
     w.MCC_PRIVACY_ACK = value;
     return recordMember(value.accepted_at);
   }
-  /* the banner shown, or "Not now": seen, not agreed, and never a downgrade of an agreement */
+  /* a document page's bar shown, or "Not now": seen, not agreed, and never a downgrade of an agreement */
   function writeSeen() {
     if (readAck()) return;
     var value = { version: VERSION, seen_at: new Date().toISOString() };
@@ -220,33 +221,46 @@
     else wall();
   }
 
-  /* PUBLIC DOCUMENT PAGES: THE NOTICE AS A BANNER, NOT A WALL.
+  /* THE NOTICE AS A BANNER, NOT A WALL.
 
      A page that carries <meta name="mcc-privacy-notice" content="banner">
-     in its head (before this script) is a document meant to be read cold:
-     the résumé a hiring manager opens from an application, the press kit,
-     the engineering record, the music catalogue, the newsroom. On those
-     the notice is a bar along the bottom of the screen instead of a
-     full-screen dialog that hides the page.
+     in its head (before this script) shows the notice as a bar along the
+     bottom of the screen instead of a full-screen dialog that hides the
+     page. Two kinds of page do:
+
+     - PUBLIC DOCUMENT PAGES, meant to be read cold: the résumé a hiring
+       manager opens from an application, the press kit, the engineering
+       record, the music catalogue, the newsroom. Their bar counts as seen
+       as soon as it is shown (owner, 2026-10-20: "they see the privacy
+       policy, and then they never see it again"): whether it is agreed
+       to, dismissed with "Not now" or simply left, it does not come back.
+     - THE WORLD (mnet.html, at every door; owner, 2026-11-17: the wall
+       "becomes the existing banner mode ... so the globe and the missions
+       show at once"). The World is the house itself, not a document, so it
+       also carries <meta name="mcc-privacy-notice-seen" content="answered">:
+       its bar counts only once it is answered, the rule the wall keeps and
+       the one the Privacy Policy states for every page that is not a
+       document (privacy.html#entry-notice: "Leaving without answering is
+       not an answer, so the next page asks again"). Until an answer nothing
+       is recorded, not even that the bar was shown.
 
      Nothing about what is recorded changes. js/analytics.js still records
      nothing, sets no device or session id and registers no service worker
      until the notice is agreed to; this branch only decides whether the
-     words on the page can be read first. Agreeing here does not reload the
-     page, so recording begins on the next page view. The bar counts as
-     seen as soon as it is shown (owner, 2026-10-20: "they see the privacy
-     policy, and then they never see it again"): whether it is agreed to,
-     dismissed with "Not now" or simply left, it does not come back, and
-     nothing is recorded until someone agrees.
+     page can be read first. Agreeing here does not reload the page, so
+     recording begins on the next page view.
 
      Why: Google's guidance on interstitials says a dialog covering the
      content "make[s] it hard for Google and other search engines to
      understand your content" and recommends a banner instead; browser
      agents acting for a person hit the same wall; and a recruiter who has
-     to accept a policy before seeing a résumé often does not. Pages that
-     are the house itself (accounts, the network, the desks) keep the gate.
-     Opt a page in by adding the meta; there is no list to keep here. */
+     to accept a policy before seeing a résumé often does not. The other
+     pages that are the house itself (accounts, the desks, Control) keep
+     the gate. Opt a page in by adding the meta; there is no list to keep
+     here. */
   function banner() {
+    var seenMeta = d.querySelector('meta[name="mcc-privacy-notice-seen"]');
+    var onAnswer = !!seenMeta && seenMeta.getAttribute("content") === "answered";
     var bannerStyle = d.createElement("style");
     bannerStyle.id = "mccPrivacyNoticeStyle";
     bannerStyle.textContent =
@@ -263,10 +277,83 @@
       '#mccPrivacyNotice .mccpn__agree{border:0;background:#f5efe6;color:#0b0908}' +
       '#mccPrivacyNotice .mccpn__later{border:1px solid rgba(255,255,255,.25);background:transparent;color:#f5efe6}' +
       '@media (min-width:720px){#mccPrivacyNotice{left:auto;right:20px;bottom:20px;max-width:520px}}' +
+      /* The shared bottom bar is the navigation (AGENTS.md, Shared website
+         navigation) and stays in reach while the notice waits: wherever
+         js/tabbar.js has drawn it (body.has-appbar), the notice sits just
+         above it, where the house's other floating controls sit, at every
+         width (review LDR-F4, 2026-11-18: at 390 and 820 the notice covered
+         every tab of the World's bar). */
+      'body.has-appbar #mccPrivacyNotice{bottom:calc(var(--appbar-h,4.6rem) + env(safe-area-inset-bottom,0px) + .9rem)}' +
+      /* inside an open modal dialog (the World's bar, below) the notice is
+         the last thing in the sheet, held at the sheet's bottom edge while
+         the sheet scrolls, the way the World's reply box is */
+      'dialog[open]>#mccPrivacyNotice{position:sticky;left:auto;right:auto;bottom:0;margin:8px;max-width:none}' +
       /* a fixed bar prints on every page: never on paper (the résumé PDF
          is printed from these pages by tools/build-resume.mjs) */
       '@media print{#mccPrivacyNotice{display:none!important}}';
     (d.head || d.documentElement).appendChild(bannerStyle);
+
+    /* THE WORLD'S BAR STAYS IN REACH, AND SO DOES THE WORLD. A modal
+       <dialog> (showModal) sits in the top layer and makes the rest of the
+       page inert, so a bar left in <body> waits under it, dim and out of
+       reach: a shared ?mission= link opens its mission that way (review
+       LDR-F1, 2026-11-18). While a modal dialog is open the bar is the last
+       thing inside it, the one part of the page a modal dialog leaves
+       answerable, below the dialog's own buttons rather than over them; it
+       goes back to <body> when the dialog closes. While it waits, <html>
+       carries data-privacy-notice="waiting" and the bar's height (with its
+       gap) as --mcc-privacy-notice-h, so the World's feed can end that much
+       later and its last post still scroll clear of the bar (css/mnet.css).
+       Returns what lets all of this go once the bar is answered. Only a bar
+       that still waits for its answer does this: a document page's bar
+       counted as soon as it was shown. */
+    function keepAnswerable(bar) {
+      var root = d.documentElement, open = [], watch = null, sized = null, alive = true;
+      var size = function () {
+        var h = alive && root.style ? bar.offsetHeight || 0 : 0;
+        if (h > 0) root.style.setProperty("--mcc-privacy-notice-h", (h + 8) + "px");
+      };
+      var isModal = function (dlg) {
+        if (!dlg || !dlg.open || dlg.isConnected === false) return false;
+        try { return dlg.matches(":modal"); } catch (_) { return true; }
+      };
+      var place = function () {
+        if (!alive) return;
+        var host = d.body;
+        for (var i = open.length - 1; i >= 0; i -= 1) {
+          if (isModal(open[i])) { host = open[i]; break; }
+        }
+        if (bar.parentNode !== host) host.appendChild(bar);
+      };
+      var note = function (dlg) {
+        var at = open.indexOf(dlg);
+        if (isModal(dlg)) { if (at < 0) open.push(dlg); }
+        else if (at >= 0) open.splice(at, 1);
+      };
+      if (typeof w.MutationObserver === "function" && d.querySelectorAll) {
+        Array.prototype.forEach.call(d.querySelectorAll("dialog[open]"), note);
+        watch = new w.MutationObserver(function (records) {
+          records.forEach(function (rec) { if (rec.target && rec.target.tagName === "DIALOG") note(rec.target); });
+          place();
+        });
+        watch.observe(root, { attributes: true, attributeFilter: ["open"], subtree: true });
+        place();
+      }
+      root.setAttribute("data-privacy-notice", "waiting");
+      if (typeof w.ResizeObserver === "function") {
+        sized = new w.ResizeObserver(size);
+        sized.observe(bar);
+      }
+      size();
+      return function () {
+        alive = false;
+        if (watch) watch.disconnect();
+        if (sized) sized.disconnect();
+        root.removeAttribute("data-privacy-notice");
+        if (root.style) root.style.removeProperty("--mcc-privacy-notice-h");
+      };
+    }
+
     var mountBanner = function () {
       if (d.getElementById("mccPrivacyNotice")) return;
       var bar = d.createElement("div");
@@ -285,20 +372,29 @@
         '<button type="button" class="mccpn__later" id="mccPrivacyNoticeLater">Not now</button>' +
         '</div>';
       d.body.appendChild(bar);
-      writeSeen();
+      /* a document page's bar counts once it is shown; the World's waits for its answer */
+      if (!onAnswer) writeSeen();
+      var letGo = onAnswer ? keepAnswerable(bar) : function () {};
+      var close = function () {
+        bar.remove();
+        letGo();
+      };
       d.getElementById("mccPrivacyNoticeAgree").addEventListener("click", function () {
         writeAck();
-        bar.remove();
+        close();
       });
       d.getElementById("mccPrivacyNoticeLater").addEventListener("click", function () {
         writeSeen();
-        bar.remove();
+        close();
       });
-      /* Escape from inside the bar is "Not now", the same as the dialog. */
+      /* Escape from inside the bar is "Not now", the same as the dialog.
+         Inside a modal dialog it answers the bar and leaves that dialog open. */
       bar.addEventListener("keydown", function (e) {
         if (e.key !== "Escape" && e.key !== "Esc") return;
+        var host = bar.parentNode;
+        if (host && host !== d.body && host.tagName === "DIALOG" && e.preventDefault) e.preventDefault();
         writeSeen();
-        bar.remove();
+        close();
       });
     };
     if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", mountBanner, { once: true });

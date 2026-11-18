@@ -165,6 +165,10 @@
     const fires = layers.fires;
     /* thousands of detections are never thousands of posts: one post per 1-degree area that reported radiative power */
     if (fires && typeof fires === 'object' && Array.isArray(fires.cells)) {
+      /* the satellites the areas were summed from, as the label of the records that served them names them (the globe names every
+         satellite that served the layer: review RV2-3); never both claimed when one served, and the instrument alone when unnamed */
+      const satellites = [...new Set((line(fires.label, 120).match(/NOAA-\d+/g) || []).map((n) => n.slice(5)))];
+      const sensor = satellites.length ? 'VIIRS NOAA-' + satellites.join('/') : 'VIIRS';
       for (const c of fires.cells.slice(0, 10)) {
         if (!Array.isArray(c) || c.length < 6) continue;
         const west = num(c[0]), south = num(c[1]), detections = num(c[2]), sum = num(c[3]), peak = num(c[4]), latest = iso(c[5]);
@@ -176,7 +180,7 @@
           observationPost: true, id, globe_id: 'cell:' + west + ':' + south, kind: 'fire_cell', type: TYPE, author: AUTHOR, icon: 'fire',
           title: 'Fire detections · 1° area at ' + south + '°, ' + west + '° (south-west corner)',
           facts: [{ label: 'Detections', value: String(detections) }, { label: 'Summed radiative power', value: sum + ' MW' }, { label: 'Peak radiative power', value: peak === null ? 'not reported' : peak + ' MW' },
-            { label: 'Latest overpass', value: latest ? localTime(latest) + ' (acquired)' : 'not reported' }, { label: 'Sensor', value: 'VIIRS NOAA-20/21' }],
+            { label: 'Latest overpass', value: latest ? localTime(latest) + ' (acquired)' : 'not reported' }, { label: 'Sensor', value: sensor }],
           source: { label: line(fires.label, 120) || 'NASA FIRMS', url: https(fires.url) },
           coverage: fires.coverage, status: fires.status, reason: fires.reason,
           stamp: stamp({ observed_at: latest, fetched_at: fires.fetched_at }, now), significant: significanceOfDigest('fire_cell', { frp_sum_mw: sum }), lat: south, lon: west

@@ -191,27 +191,57 @@ test('G1R-9: a selection the panel\'s list made is told as via focus (the contra
   assert.equal(answers.pop().via, 'focus');
 });
 
-test('G1R-3: the fires layer speaks for its newest retrieval and a detection for its own satellite; a 1-degree area takes the layer\'s record', () => {
+test('RV2-3: the fires layer and a 1-degree area speak for every satellite that served them (the Worker sums both); a detection for its own satellite; one satellite serving speaks alone', () => {
   const { L, told, on, layer } = realm();
   on();
   layer('fires', FIRES);
   const state = told.filter((m) => m.type === 'hu:environment-layer-state' && m.layer === 'fires').pop();
   const byId = Object.fromEntries(FIRES.sources.map((s) => [s.id, s]));
-  assert.equal(state.sources.length, 2);
-  assert.equal(state.fetched_at, byId.firms_viirs_noaa21.fetched_at, 'the newest retrieval (19:59) over the older one (19:58)'); assert.equal(state.coverage, byId.firms_viirs_noaa21.coverage);
-  assert.equal(state.source_id, 'firms_viirs_noaa21');
+  assert.equal(state.sources.length, 2, 'every record still travels');
+  assert.equal(state.source_id, 'firms_viirs_noaa20+firms_viirs_noaa21');
+  assert.equal(state.label, 'NASA FIRMS VIIRS NOAA-20 and NOAA-21', 'one label naming both, their shared words once');
+  assert.equal(state.coverage, byId.firms_viirs_noaa20.coverage + ' · ' + byId.firms_viirs_noaa21.coverage, 'the coverage of each');
+  assert.match(state.attribution, /\(NOAA-20, near real-time\).* · .*\(NOAA-21, near real-time\)/); assert.equal(state.license, byId.firms_viirs_noaa20.license, 'one licence, said once');
+  assert.equal(state.fetched_at, byId.firms_viirs_noaa21.fetched_at, 'the newest retrieval (19:59): no acquisition in the merged cells can follow it');
   for (const sat of ['NOAA-20', 'NOAA-21']) {
     const row = FIRES.detections.find((d) => d[5] === sat);
     assert.equal(L.select(`fire:${row[5]}:${row[4]}:${row[0]}:${row[1]}`, 'pick', { layer: 'fires' }), true);
     const m = selectedMessages(told).pop();
     const own = FIRES.sources.find((s) => s.label.includes(sat));
-    assert.equal(m.source.label, own.label, 'a detection names its own satellite'); assert.equal(m.fetched_at, own.fetched_at);
+    assert.equal(m.source.label, own.label, 'a detection names its own satellite'); assert.equal(m.fetched_at, own.fetched_at); assert.equal(m.coverage, own.coverage);
     assert.ok(Date.parse(m.fetched_at) >= Date.parse(m.observed_at), 'retrieved no earlier than acquired');
   }
   const c = FIRES.summary.cells[0];
   assert.equal(L.select(`cell:${c[0]}:${c[1]}`, 'pick', { layer: 'cells' }), true);
   const cell = selectedMessages(told).pop();
-  assert.equal(cell.source.label, byId.firms_viirs_noaa21.label); assert.equal(cell.fetched_at, byId.firms_viirs_noaa21.fetched_at);
+  assert.equal(cell.source.label, 'NASA FIRMS VIIRS NOAA-20 and NOAA-21', 'an area summed from both satellites names both');
+  assert.equal(cell.coverage, state.coverage); assert.equal(cell.source.attribution, state.attribution); assert.equal(cell.fetched_at, byId.firms_viirs_noaa21.fetched_at);
+  assert.ok(Date.parse(cell.fetched_at) >= Date.parse(cell.observed_at), 'retrieved no earlier than its latest overpass');
+  /* NOAA-20 did not answer and had no copy to serve: its record travels, but only NOAA-21 served the cells, and it speaks alone */
+  const one = realm();
+  one.on();
+  const body = JSON.parse(JSON.stringify(FIRES));
+  body.sources[0] = { ...body.sources[0], status: 'unavailable', reason: 'timeout', fetched_at: null };
+  one.layer('fires', body);
+  const alone = one.told.filter((m) => m.type === 'hu:environment-layer-state' && m.layer === 'fires').pop();
+  assert.equal(alone.source_id, 'firms_viirs_noaa21'); assert.equal(alone.label, 'NASA FIRMS VIIRS NOAA-21'); assert.equal(alone.coverage, byId.firms_viirs_noaa21.coverage);
+  assert.equal(alone.sources.length, 2);
+  assert.equal(one.L.select(`cell:${c[0]}:${c[1]}`, 'pick', { layer: 'cells' }), true);
+  assert.equal(selectedMessages(one.told).pop().source.label, 'NASA FIRMS VIIRS NOAA-21');
+});
+
+test('RV2-4: a focus kept pending is honoured by the pins that bring its id, with no layer data at all', () => {
+  const { L, told, on } = realm();
+  on();
+  /* "Show on globe" for a feed id the frame does not hold yet: kept pending, nothing selected */
+  L.focus('usgs:late');
+  assert.equal(L.debug().pendingFocus, 'usgs:late'); assert.equal(L.debug().selected, null);
+  /* the pins bring the id; no layer route ever answers */
+  L.setEvents([quake('usgs:late')], { on: true, selected: '' });
+  assert.equal(L.debug().pendingFocus, null, 'the pins honoured it');
+  assert.deepEqual(plain(L.debug().selected), { id: 'usgs:late', layer: 'events', kind: 'quake' });
+  const answer = selectedMessages(told).pop();
+  assert.equal(answer.id, 'usgs:late'); assert.equal(answer.via, 'focus');
 });
 
 /* the frame's legend as a tiny document: the details box and its list, the lines as written */
@@ -247,4 +277,23 @@ test('G1R-10: a feed item answers with the terms the pins carried (the feed\'s o
   const b = selectedMessages(bare.told).pop();
   assert.equal(b.source.attribution, ''); assert.equal(b.source.license, ''); assert.equal(b.coverage, '');
   assert.equal(b.source.id, 'usgs');
+});
+
+test('RV2-10: the feed and pins fixtures never have an event, or a feed source record, retrieved before it was observed', () => {
+  const PINS = JSON.parse(read('scripts/e2e/fixtures/environment/pins.json'));
+  const time = (iso) => (typeof iso === 'string' ? Date.parse(iso) : NaN);
+  for (const [name, rows] of [['feed.json', FEED.events], ['pins.json', PINS]]) {
+    let checked = 0;
+    for (const e of rows) {
+      if (!Number.isFinite(time(e.observed_at)) || !Number.isFinite(time(e.fetched_at))) continue;
+      checked += 1;
+      assert.ok(time(e.observed_at) <= time(e.fetched_at), `${name} ${e.id}: observed ${e.observed_at} after its retrieval ${e.fetched_at}`);
+    }
+    assert.ok(checked >= 55, `${name}: ${checked} rows carry both times`);
+  }
+  for (const s of FEED.sources) {
+    if (!Number.isFinite(time(s.observed_at))) continue;
+    assert.ok(time(s.observed_at) <= time(s.fetched_at), `feed.json source ${s.id}: latest observation ${s.observed_at} after its retrieval ${s.fetched_at}`);
+    assert.ok(time(s.fetched_at) <= time(s.last_success_at) || s.status !== 'available', `feed.json source ${s.id}: an available source succeeded when it was retrieved`);
+  }
 });

@@ -14,11 +14,13 @@
    the quake significant); a real tap on a fire perimeter answers with the globe-selection card (Captured, Retrieved, Coverage,
    Status, acres, source); Show on globe from the tab and from Global; the 2D map and back; leaving the tab turns the layers
    off; Local, News, the member posts and the guest's People gate are as before; nothing scrolls sideways; no page errors. Then,
-   at 390: landing on ?feed=equity (the panel spoke before the globe was ready; hu:globe-ready makes it whole); reduced motion (no
-   autostart, play refused, focus jumps, no ripple, the legend says animations are off); the gate refusing the feed and the layers
-   with 503 module_policy_unavailable and 404 module_disabled (the honest line, no panel, no posts, every layer in the policy state,
-   no retry); one layer unavailable (perimeters 500) beside the stale natural-events layer, both reported truthfully; and the day
-   palette's contrast at every width, with the layer rows and the frame's legend measured.
+   at 390: landing on ?feed=equity (the panel spoke before the globe was ready; hu:globe-ready makes it whole); at 1280, the globe's
+   missions read held until a wheel has paused the tour, so the same globe says ready again late and the tour stays paused (review
+   RV2-1); reduced motion (no autostart, play refused, focus jumps, no ripple, the legend says animations are off); the gate
+   refusing the feed and the layers with 503 module_policy_unavailable and 404 module_disabled (the honest line, no panel, no
+   posts, every layer in the policy state, no retry); one layer unavailable (perimeters 500) beside the stale natural-events
+   layer, both reported truthfully; and the day palette's contrast at every width, with the layer rows and the frame's legend
+   measured.
 
    Serves this checkout at 127.0.0.1 and answers api.mccluster.org, Supabase, the NASA tiles and, with CESIUM_DIR, the Cesium CDN
    in memory: no production call, no deployment, no claim beyond what ran. Run:
@@ -114,11 +116,14 @@ const launchOptions = process.env.E2E_GL_ARGS === '1' || process.env.CI ? { args
 const browser = await chromium.launch(launchOptions);
 
 /* feed: 'available' | '503' | '404' (the gate's answer, for the feed AND the layer routes, as one module policy governs both);
-   fail: a layer route that answers 500; query: more of the page's address */
-async function openPage(size, { daylight = 'night', feed = 'available', fail = null, reducedMotion = 'no-preference', query = '' } = {}) {
+   fail: a layer route that answers 500; query: more of the page's address; holdMissions: a promise the globe's missions read
+   waits on, so the frame says hu:globe-ready again only when the check lets it (review RV2-1); init: a script for every frame of
+   the page, run before its own */
+async function openPage(size, { daylight = 'night', feed = 'available', fail = null, reducedMotion = 'no-preference', query = '', holdMissions = null, init = null } = {}) {
   const mobile = size.width < 1000;
   const ctx = await browser.newContext({ viewport: { width: size.width, height: size.height }, deviceScaleFactor: 1, isMobile: mobile, hasTouch: mobile, serviceWorkers: 'block', reducedMotion });
   await ctx.addInitScript(() => { localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-10-19', accepted_at: new Date().toISOString() })); localStorage.setItem('mnet_tour_seen', '1'); });
+  if (init) await ctx.addInitScript(init);
   const page = await ctx.newPage();
   page.setDefaultTimeout(90000);
   const requests = [], errors = [];
@@ -151,6 +156,7 @@ async function openPage(size, { daylight = 'night', feed = 'available', fail = n
     if (url.hostname.endsWith('.supabase.co')) {
       if (p === '/auth/v1/user') return json(route, { msg: 'no session' }, 401);
       if (p === '/auth/v1/settings') return json(route, { external: { email: true } });
+      if (holdMissions && p === '/rest/v1/rpc/action_globe_public_region_missions') return holdMissions.then(() => json(route, [])).catch(() => {});
       if (p === '/rest/v1/action_missions') return json(route, MISSIONS);
       return json(route, []);
     }
@@ -331,13 +337,13 @@ for (const size of SIZES) {
   check(scope, 'Show on globe from the tab focuses that event on the globe and the panel opens its row', shown && await until(page, (t) => document.getElementById('weDetail').textContent.includes(t), NEWEST_QUAKE.title, 10000), (await env(frame)).selected);
   /* the 2D map and back */
   await page.locator('#weView2d').click();
-  const flat = await until(page, () => document.getElementById('weView2d').getAttribute('aria-pressed') === 'true' && document.getElementById('weView2d').textContent === '3D globe', null, 25000);
+  const flat = await until(page, () => document.getElementById('weView2d').getAttribute('aria-pressed') === 'true' && document.getElementById('weView2d').textContent === '2D map', null, 25000);
   const tMorph = Date.now();
   const is2d = await until(frame, () => window.HuGlobe.viewer().scene.mode === Cesium.SceneMode.SCENE2D, null, 40000);
   const morphInfo = await frame.evaluate(async () => { const scene = window.HuGlobe.viewer().scene; let frames = 0; const fn = () => { frames += 1; }; scene.postRender.addEventListener(fn); await new Promise((r) => setTimeout(r, 2000)); scene.postRender.removeEventListener(fn); return { mode: scene.mode, morphTime: scene.morphTime, framesIn2s: frames, requestRenderMode: scene.requestRenderMode, governor: window.__mccGlobeGovernor() }; });
   console.log(`INFO [${scope}] 2D morph ${is2d ? 'completed ' + (Date.now() - tMorph) + ' ms after the toggle' : 'did not complete within 40 s'} ${JSON.stringify(morphInfo).slice(0, 300)}`);
   const c2 = (await env(frame)).counts;
-  check(scope, '2D map: the globe morphs, the panel\'s toggle follows the globe\'s own state, the layers stay with their counts', flat && is2d && c2.quakeDiscs === 50 && c2.firesNear === 600 && c2.perimeters === 50 && c2.alerts.drawn === 70 && c2.tides === 14, { flat, is2d, c2 });
+  check(scope, '2D map: the globe morphs, the panel\'s toggle (one label, pressed) follows the globe\'s own state, the layers stay with their counts', flat && is2d && c2.quakeDiscs === 50 && c2.firesNear === 600 && c2.perimeters === 50 && c2.alerts.drawn === 70 && c2.tides === 14, { flat, is2d, c2 });
   await page.locator('#weView2d').click();
   check(scope, 'back to the 3D globe', await until(page, () => document.getElementById('weView2d').getAttribute('aria-pressed') === 'false' && document.getElementById('weView2d').textContent === '2D map', null, 25000) && await until(frame, () => window.HuGlobe.viewer().scene.mode === Cesium.SceneMode.SCENE3D, null, 25000));
   const dims = await fits(page), fw = await frameWidths(frame);
@@ -380,6 +386,40 @@ for (const size of SIZES) {
   const ratio = await frameVisibleRatio(page);
   const autostarted = await until(page, () => document.getElementById('wePlay').textContent === 'Pause tour', null, 15000);
   check(scope, ratio >= 0.25 ? 'the tour starts by itself once the globe is ready, though the tab was open before the globe was' : 'the tour waits for Play: the frame is not a quarter in view', ratio >= 0.25 ? autostarted : !autostarted, { frameVisible: ratio, autostarted, director: await dir(frame) });
+  { const re = await renderError(frame); if (re) console.log(`INFO [${scope}] render error record ${JSON.stringify(re)}`); check(scope, 'no page errors', errors.length === 0, { errors, renderError: re && { message: re.message, position: re.position, bad: re.badPrimitives } }); }
+  await ctx.close();
+}
+
+/* ---------- the same globe saying ready again never restarts a tour the visitor stopped (1280; review RV2-1) ----------
+   The globe's missions read is held, so it says hu:globe-ready (dataPending) at boot and again only when the check releases the
+   read: after the tour started by itself and a wheel over the globe paused it. That late ready names the same boot, and the panel
+   answers it with the layers and the pins only: no play reaches the frame and the tour stays paused, as the visitor left it. */
+{
+  const scope = '1280-late-ready';
+  let release = () => {};
+  const held = new Promise((r) => { release = r; });
+  /* every hu:globe-ready the page hears, from before the frame could say its first */
+  const init = () => { if (window.top !== window) return; window.__readies = []; window.addEventListener('message', (e) => { const d = e.data || {}; if (d.type === 'hu:globe-ready') window.__readies.push({ boot: typeof d.boot === 'string' ? d.boot : null, dataPending: d.dataPending === true, at: Date.now() }); }); };
+  const { ctx, page, errors } = await openPage(SIZES[2], { query: '&feed=equity', holdMissions: held, init });
+  const frame = await globeFrame(page);
+  check(scope, 'the tab is open from the address and the layers draw while the globe\'s missions read is still held', await layersReady(frame) && (await panelShown(page)));
+  await hookRenderError(frame);
+  if ((await frameVisibleRatio(page)) < 0.25) await page.locator('#mnWorldFrame').scrollIntoViewIfNeeded();
+  const autostarted = await until(page, () => document.getElementById('wePlay').textContent === 'Pause tour', null, 20000);
+  check(scope, 'the tour starts by itself on the globe that has just booted', autostarted && (await dir(frame)).playing === true, await dir(frame));
+  await frame.evaluate(() => { window.__sceneCommands = []; window.addEventListener('message', (e) => { const d = e.data || {}; if (d.type === 'hu:environment-scene') window.__sceneCommands.push({ action: d.action, at: Date.now() }); }); });
+  const globeBox = await frame.locator('#globe').boundingBox();
+  await page.mouse.move(globeBox.x + globeBox.width / 2, globeBox.y + globeBox.height / 2);
+  await page.mouse.wheel(0, 120);
+  const paused = await until(page, () => /you moved the globe/.test(document.getElementById('weSceneStatus').textContent) && document.getElementById('wePlay').textContent === 'Play tour', null, 10000);
+  check(scope, 'a wheel over the globe pauses the tour (reason input)', paused && (await dir(frame)).reason === 'input', await dir(frame));
+  const heardBefore = await page.evaluate(() => window.__readies.length);
+  release();
+  const late = await until(page, (n) => window.__readies.length > n && window.__readies.slice(n).some((r) => r.dataPending === false), heardBefore, 30000);
+  await page.waitForTimeout(2500);
+  const readies = await page.evaluate(() => window.__readies), commands = await frame.evaluate(() => window.__sceneCommands), d1 = await dir(frame);
+  check(scope, 'the released missions read makes the globe say ready again, naming the same boot as every ready before it', late && readies.length >= 2 && readies.every((r) => r.boot && r.boot === readies[0].boot), readies);
+  check(scope, 'the tour stays paused: no play reaches the frame after the visitor moved the globe, the director keeps reason input and the panel still says so', commands.every((c) => c.action !== 'play') && d1.playing === false && d1.reason === 'input' && /you moved the globe/.test(await page.locator('#weSceneStatus').textContent()), { commands, director: { playing: d1.playing, reason: d1.reason, index: d1.index } });
   { const re = await renderError(frame); if (re) console.log(`INFO [${scope}] render error record ${JSON.stringify(re)}`); check(scope, 'no page errors', errors.length === 0, { errors, renderError: re && { message: re.message, position: re.position, bad: re.badPrimitives } }); }
   await ctx.close();
 }
