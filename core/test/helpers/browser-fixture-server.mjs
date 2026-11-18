@@ -1,20 +1,50 @@
-// A loopback web site for the browser executor tests. Chromium reaches it as
-// http://<fixture host>:<port> through --host-resolver-rules while the
-// executor's own policy resolver answers a public address for that name, so
-// the private-network rule stays armed. Every path that must never be reached
-// (the loopback-addressed ones) counts a hit.
+// A loopback web site for the browser executor tests. The executor's policy
+// resolver answers the documentation address 203.0.113.10 for the fixture
+// host, so the private-network rule stays armed, and the executor's egress
+// proxy delivers a connection to that one address to this loopback server (the
+// test network). The same server is the public face of the rebinding names
+// (helpers/browser-rebinding-dns.mjs): whatever reaches it at 203.0.113.10 was
+// connected at the address the policy validated. Every path that must never be
+// reached (the loopback-addressed ones) counts a hit; every Host header is kept.
 import http from 'node:http';
 import { once } from 'node:events';
 
 const html = (body) => `<!doctype html><html><head><meta charset="utf-8"><title>Fixture</title></head><body>${body}</body></html>`;
 
+// A stand-in for a device on the owner's LAN: a second loopback address (Linux
+// routes all of 127/8 to loopback) on the fixture's port number, so a rebinding
+// name's later answer (127.0.0.2) would reach it on the same URL. Null when the
+// address cannot be bound here.
+export async function startLanService({ address = '127.0.0.2', port }) {
+  const hits = { count: 0, paths: [] };
+  const server = http.createServer((req, res) => {
+    hits.count += 1;
+    hits.paths.push(req.url);
+    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'access-control-allow-origin': '*', 'cache-control': 'no-store' });
+    res.end(html('<p>LAN_SECRET</p>'));
+  });
+  try {
+    server.listen(port, address);
+    await once(server, 'listening');
+  } catch {
+    server.close();
+    return null;
+  }
+  const close = async () => {
+    server.closeAllConnections?.();
+    await new Promise((resolve) => server.close(resolve));
+  };
+  return { server, address, port, hits, close };
+}
+
 export async function startBrowserFixture({ host = 'fixture.test' } = {}) {
-  const hits = { private: 0, upgrades: 0, downloads: 0, paths: [] };
+  const hits = { private: 0, upgrades: 0, downloads: 0, paths: [], hosts: [] };
   let origin = '';
   let loopback = '';
   const server = http.createServer(async (req, res) => {
     const url = new URL(req.url || '/', 'http://fixture.invalid');
     hits.paths.push(url.pathname);
+    hits.hosts.push(String(req.headers.host || ''));
     const send = (status, body, headers = {}) => {
       res.writeHead(status, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', ...headers });
       res.end(body);
@@ -76,6 +106,21 @@ export async function startBrowserFixture({ host = 'fixture.test' } = {}) {
         return send(302, '', { location: `${loopback}/private.js` });
       case '/scroll':
         return send(200, html('<div style="height:3000px">TOP_MARKER</div><p id="bottom">BOTTOM_MARKER</p>'));
+      // The public face of the rebinding names: what a connection made at the
+      // validated address 203.0.113.10 receives.
+      case '/secret':
+        return send(200, html('<p>PUBLIC_FACE</p>'), { 'access-control-allow-origin': '*' });
+      case '/rebind-sub':
+        return send(200, html(`<p>REBIND_SUB_PAGE</p><script>fetch('http://rebind-sub.test:${server.address().port}/secret').then((r) => r.text()).then((t) => { document.body.insertAdjacentHTML('beforeend', '<p>FETCHED ' + (t.match(/[A-Z_]{6,}/g) || []).join(' ') + '</p>'); }).catch(() => { document.body.insertAdjacentHTML('beforeend', '<p>FETCH_BLOCKED</p>'); });</script>`));
+      case '/redirect-rebind':
+        return send(302, '', { location: `http://rebind-hop.test:${server.address().port}/secret` });
+      // A page that fetches after its task has ended (no task, no task cache).
+      case '/rebind-idle':
+        return send(200, html(`<p>REBIND_IDLE_PAGE</p><script>setTimeout(() => { fetch('http://rebind-idle.test:${server.address().port}/secret').then((r) => r.text()).then((t) => { document.title = 'IDLE ' + (t.match(/[A-Z_]{6,}/g) || []).join(' '); }).catch(() => { document.title = 'IDLE_BLOCKED'; }); }, 800);</script>`));
+      case '/webrtc': {
+        const udp = Math.max(1, Math.min(65535, Number(url.searchParams.get('port')) || 9));
+        return send(200, html(`<p>RTC_PAGE</p><script>try { const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:127.0.0.1:${udp}' }] }); pc.createDataChannel('x'); pc.createOffer().then((offer) => pc.setLocalDescription(offer)).then(() => document.body.insertAdjacentHTML('beforeend', '<p>RTC_OFFERED</p>')); } catch (error) { document.body.insertAdjacentHTML('beforeend', '<p>RTC_UNAVAILABLE</p>'); }</script>`));
+      }
       case '/slow': {
         const ms = Math.max(0, Math.min(20_000, Number(url.searchParams.get('ms')) || 1000));
         await new Promise((resolve) => setTimeout(resolve, ms));

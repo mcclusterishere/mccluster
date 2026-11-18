@@ -3,21 +3,29 @@
 // on through the fixture-host mapping (loopback and redirect-to-loopback
 // refused), allowlist, port and scheme refusals, downloads cancelled, dialogs
 // dismissed, popups closed, websockets closed, loopback subresources blocked,
-// the step, time and output caps, one task at a time, and the 503 answers
-// without Playwright or a policy file. One Chromium at a time; every process
-// started here is stopped in after().
+// DNS rebinding defeated (a name that turns private after the check is still
+// connected at the address the check validated), WebRTC kept off loopback UDP,
+// the egress proxy's own refusals, the step, time and output caps, one task at
+// a time, and the 503 answers without Playwright or a policy file. Every
+// executor here runs with the test-only rebinding resolver preloaded
+// (helpers/browser-rebinding-dns.mjs; it changes only the rebind-*.test names).
+// One Chromium at a time; every process started here is stopped in after().
 import test, { after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
+import dgram from 'node:dgram';
+import net from 'node:net';
 import { once } from 'node:events';
 import { createRequire } from 'node:module';
 import { mkdtemp, readFile, rm, writeFile, readdir } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { startBrowserFixture } from './helpers/browser-fixture-server.mjs';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { startBrowserFixture, startLanService } from './helpers/browser-fixture-server.mjs';
 
 const EXECUTOR = fileURLToPath(new URL('../src/compute/browser-executor.mjs', import.meta.url));
+const REBINDING_DNS = pathToFileURL(fileURLToPath(new URL('./helpers/browser-rebinding-dns.mjs', import.meta.url))).href;
+const REBIND_NAMES = ['rebind-nav.test', 'rebind-sub.test', 'rebind-hop.test', 'rebind-idle.test'];
 const REPO_ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const SKIP_LINE = 'browser-executor: playwright not found, executor tests skipped (unverified here)';
 let playwrightFound = false;
@@ -36,8 +44,8 @@ async function stop(child) {
 
 // Spawns the executor on an OS-assigned port; the FIRST stdout line is the ready event.
 async function spawnExecutor(env) {
-  const child = spawn(process.execPath, [EXECUTOR], {
-    env: { ...process.env, MCCLUSTER_BROWSER_EXECUTOR_PORT: '0', MCCLUSTER_BROWSER_TEST_FIXTURE_HOST: FIXTURE_HOST, MCCLUSTER_BROWSER_NO_SANDBOX: '1', ...env },
+  const child = spawn(process.execPath, ['--import', REBINDING_DNS, EXECUTOR], {
+    env: { ...process.env, MCCLUSTER_BROWSER_EXECUTOR_PORT: '0', MCCLUSTER_BROWSER_TEST_FIXTURE_HOST: FIXTURE_HOST, MCCLUSTER_BROWSER_NO_SANDBOX: '1', MCCLUSTER_TEST_REBIND_NAMES: REBIND_NAMES.join(','), ...env },
     stdio: ['ignore', 'pipe', 'pipe']
   });
   const output = { stdout: '', stderr: '' };
@@ -65,6 +73,7 @@ async function spawnExecutor(env) {
 }
 
 let fixture;
+let lan;
 let dir;
 let policyPath;
 let executor;
@@ -75,6 +84,7 @@ const writePolicy = (hosts, allowSubdomains = false) => writeFile(policyPath, JS
 before(async () => {
   if (!playwrightFound) return;
   fixture = await startBrowserFixture({ host: FIXTURE_HOST });
+  lan = await startLanService({ address: '127.0.0.2', port: fixture.port });
   dir = await mkdtemp(path.join(os.tmpdir(), 'mccluster-browser-executor-'));
   policyPath = path.join(dir, 'browser-policy.json');
   await writePolicy([`${FIXTURE_HOST}:${fixture.port}`]);
@@ -83,9 +93,28 @@ before(async () => {
 
 after(async () => {
   if (executor) await executor.stop();
+  if (lan) await lan.close();
   if (fixture) await fixture.close();
   if (dir) await rm(dir, { recursive: true, force: true });
 });
+
+// One raw exchange with the executor's egress proxy: the status line and the
+// body of its answer (the connection is closed after the answer).
+function rawProxyExchange(port, request) {
+  return new Promise((resolve, reject) => {
+    const socket = net.connect({ host: '127.0.0.1', port });
+    let data = '';
+    const timer = setTimeout(() => { socket.destroy(); resolve({ status: 0, text: data }); }, 10000);
+    socket.on('connect', () => socket.write(request));
+    socket.on('data', (chunk) => {
+      data += chunk;
+      // A tunnel stays open: the status line of the CONNECT answer is enough.
+      if (/^HTTP\/1\.1 200/.test(data) && data.includes('\r\n\r\n') && /^CONNECT /.test(request)) { clearTimeout(timer); socket.destroy(); resolve({ status: 200, text: data }); }
+    });
+    socket.on('end', () => { clearTimeout(timer); resolve({ status: Number((/^HTTP\/1\.[01] (\d{3})/.exec(data) || [])[1] || 0), text: data }); });
+    socket.on('error', (error) => { clearTimeout(timer); reject(error); });
+  });
+}
 
 test('health says what it has; ready launches the persistent Chromium once', { skip, timeout: 60000 }, async () => {
   assert.equal(executor.ready.test_fixture_host, FIXTURE_HOST);
@@ -374,6 +403,109 @@ test('a websocket never reaches the server and loopback subresources are blocked
   assert.ok(sub.body.usage.requests_blocked >= 3, `requests_blocked ${sub.body.usage.requests_blocked}`);
 });
 
+// DNS rebinding (review N2R-1): each rebind-*.test name answers the public
+// documentation address on its first lookup and 127.0.0.2 afterwards (the
+// preloaded resolver), and a LAN stand-in listens on 127.0.0.2 at the fixture's
+// port. The check sees a public answer; a connection that resolved the name
+// again would land on the LAN service. The executor must connect at the address
+// the check validated: the fixture (the public face) answers, the LAN never.
+test('DNS rebinding: a name that answers public at the check and private afterwards is connected only at the validated address (navigation, subresource, redirect hop)', { skip, timeout: 90000 }, async (t) => {
+  if (!lan) { t.skip('no second loopback address (127.0.0.2) can be bound here'); return; }
+  lan.hits.count = 0;
+  fixture.hits.hosts.length = 0;
+  await writePolicy([`${FIXTURE_HOST}:${fixture.port}`, `rebind-nav.test:${fixture.port}`, `rebind-hop.test:${fixture.port}`]);
+  try {
+    // Each variant uses its own name, so each sees the rebinding sequence fresh.
+    await t.test('navigation', async () => {
+      const before = lan.hits.count;
+      const nav = await execute([{ type: 'open', url: `http://rebind-nav.test:${fixture.port}/secret` }, { type: 'read', max_chars: 200 }], { screenshot_on_done: false });
+      assert.equal(nav.status, 200);
+      assert.doesNotMatch(String(nav.body.page?.text), /LAN_SECRET/, `the navigation reached the LAN service: ${JSON.stringify(nav.body.steps)}`);
+      assert.equal(lan.hits.count, before, 'the LAN stand-in was reached');
+      assert.equal(nav.body.ok, true, JSON.stringify(nav.body.steps));
+      assert.match(nav.body.page.text, /PUBLIC_FACE/, 'the navigation was served from the validated public address');
+    });
+    await t.test('subresource (no allowlist needed)', async () => {
+      const before = lan.hits.count;
+      const sub = await execute([{ type: 'open', url: `${fixture.origin}/rebind-sub` }, { type: 'wait', for: 'networkidle', timeout_ms: 5000 }, { type: 'read', max_chars: 300 }], { screenshot_on_done: false });
+      assert.equal(sub.body.ok, true, JSON.stringify(sub.body.steps));
+      assert.doesNotMatch(sub.body.page.text, /LAN_SECRET/, 'the subresource fetch read the LAN service');
+      assert.equal(lan.hits.count, before, 'the LAN stand-in was reached');
+      assert.match(sub.body.page.text, /FETCHED PUBLIC_FACE/, 'the subresource was fetched from the validated public address');
+    });
+    await t.test('redirect hop', async () => {
+      const before = lan.hits.count;
+      const hop = await execute([{ type: 'open', url: `${fixture.origin}/redirect-rebind` }, { type: 'read', max_chars: 200 }], { screenshot_on_done: false });
+      assert.doesNotMatch(String(hop.body.page?.text), /LAN_SECRET/, `the redirect hop reached the LAN service: ${JSON.stringify(hop.body.steps)}`);
+      assert.equal(lan.hits.count, before, 'the LAN stand-in was reached');
+      assert.equal(hop.body.ok, true, JSON.stringify(hop.body.steps));
+      assert.equal(hop.body.steps[0].result.url, `http://rebind-hop.test:${fixture.port}/secret`);
+      assert.equal(hop.body.steps[0].result.redirects, 1);
+      assert.match(hop.body.page.text, /PUBLIC_FACE/);
+    });
+    // A page left open after its task fetches with no task (so no task DNS
+    // cache): the route check and the egress proxy each resolve once, and the
+    // proxy validates the answer it connects with, so the rebound one is refused.
+    await t.test('between tasks (no task cache)', async () => {
+      const before = lan.hits.count;
+      const refusedBefore = (await executor.get('/health')).body.egress?.refused ?? 0;
+      const idle = await execute([{ type: 'open', url: `${fixture.origin}/rebind-idle` }], { screenshot_on_done: false });
+      assert.equal(idle.body.ok, true, JSON.stringify(idle.body.steps));
+      await new Promise((resolve) => setTimeout(resolve, 2500));
+      assert.equal(lan.hits.count, before, 'the page reached the LAN service after its task');
+      const refusedAfter = (await executor.get('/health')).body.egress?.refused ?? 0;
+      assert.ok(refusedAfter > refusedBefore, `the egress proxy refused the rebound answer (${refusedBefore} -> ${refusedAfter})`);
+    });
+    assert.equal(lan.hits.count, 0, `the LAN stand-in was reached: ${lan.hits.paths.join(', ')}`);
+    for (const name of ['rebind-nav.test', 'rebind-sub.test', 'rebind-hop.test']) assert.ok(fixture.hits.hosts.includes(`${name}:${fixture.port}`), `${name} was answered by the public face`);
+  } finally {
+    await writePolicy([`${FIXTURE_HOST}:${fixture.port}`]);
+  }
+});
+
+// WebRTC does not go through an HTTP proxy or the request router: without the
+// policy flag a page's STUN request leaves as UDP to any address it names.
+test('WebRTC never sends UDP to a loopback service: a page STUN request to 127.0.0.1 is not delivered', { skip, timeout: 60000 }, async () => {
+  const udp = dgram.createSocket('udp4');
+  let packets = 0;
+  udp.on('message', () => { packets += 1; });
+  await new Promise((resolve) => udp.bind(0, '127.0.0.1', resolve));
+  try {
+    const result = await execute([{ type: 'open', url: `${fixture.origin}/webrtc?port=${udp.address().port}` }, { type: 'wait', ms: 2500 }, { type: 'read', max_chars: 200 }], { screenshot_on_done: false });
+    assert.equal(result.body.ok, true, JSON.stringify(result.body.steps));
+    assert.match(result.body.page.text, /RTC_PAGE/);
+    assert.equal(packets, 0, `${packets} UDP packets reached the loopback STUN port`);
+  } finally {
+    udp.close();
+  }
+});
+
+// The proxy the browser is launched with refuses private destinations itself,
+// for CONNECT (https, wss, the executor's own fetches) and absolute-form http,
+// and never echoes an address in its answer.
+test('the egress proxy refuses private destinations on its own: CONNECT and absolute-form requests to loopback are 403 and never reach the fixture', { skip, timeout: 60000 }, async () => {
+  const health = await executor.get('/health');
+  assert.equal(health.body.egress?.listening, true, JSON.stringify(health.body.egress));
+  const port = health.body.egress.port;
+  assert.ok(Number.isInteger(port) && port > 0);
+  assert.equal(executor.ready.egress_port, port, 'the ready event names the egress port');
+  fixture.hits.private = 0;
+  for (const authority of [`127.0.0.1:${fixture.port}`, `localhost:${fixture.port}`, `[::1]:${fixture.port}`, `127.0.0.2:${fixture.port}`]) {
+    const answer = await rawProxyExchange(port, `CONNECT ${authority} HTTP/1.1\r\nhost: ${authority}\r\n\r\n`);
+    assert.equal(answer.status, 403, `${authority}: ${answer.text.split('\r\n')[0]}`);
+    assert.match(answer.text, /x-mccluster-egress-refusal: BROWSER_(PRIVATE_ADDRESS|DNS_FAILED)/i);
+    assert.doesNotMatch(answer.text, /127\.0\.0\.[12]|::1/, 'the answer never echoes an address');
+  }
+  const absolute = await rawProxyExchange(port, `GET http://127.0.0.1:${fixture.port}/private HTTP/1.1\r\nhost: 127.0.0.1:${fixture.port}\r\nconnection: close\r\n\r\n`);
+  assert.equal(absolute.status, 403);
+  const origin = await rawProxyExchange(port, 'GET /private HTTP/1.1\r\nhost: 127.0.0.1\r\nconnection: close\r\n\r\n');
+  assert.equal(origin.status, 400, 'the proxy is not a web server');
+  const tunnel = await rawProxyExchange(port, `CONNECT ${FIXTURE_HOST}:${fixture.port} HTTP/1.1\r\nhost: ${FIXTURE_HOST}:${fixture.port}\r\n\r\n`);
+  assert.equal(tunnel.status, 200, 'a public destination is tunnelled');
+  assert.equal(fixture.hits.private, 0);
+  if (lan) assert.equal(lan.hits.count, 0);
+});
+
 test('the step cap, a bad action and the wrong capability are 400 before any browser work', { skip, timeout: 60000 }, async () => {
   const many = await execute(Array.from({ length: 26 }, () => ({ type: 'screenshot' })));
   assert.equal(many.status, 400);
@@ -495,4 +627,11 @@ test('the executor evaluates only its own extractor literals, never a task strin
   assert.match(source, /serviceWorkers: 'block'/);
   assert.match(source, /routeWebSocket\('\*\*\/\*'/);
   assert.match(source, /route\.abort\('blockedbyclient'\)/);
+  // Every connection leaves through the egress proxy: Chromium is launched with
+  // it (loopback included), WebRTC is held to proxied traffic, and no resolver
+  // rule maps a name around it.
+  assert.match(source, /proxy: \{ server: /);
+  assert.match(source, /--proxy-bypass-list=<-loopback>/);
+  assert.match(source, /--force-webrtc-ip-handling-policy=disable_non_proxied_udp/);
+  assert.doesNotMatch(source, /host-resolver-rules/);
 });

@@ -4,10 +4,16 @@
 // default, driving a fixed action vocabulary on hosts the owner allowlisted in
 // browser-policy.json beside the manifest. Every request, redirect hop
 // included, is re-checked through context.route: http(s) only, allowlisted
-// navigation, no private/loopback/link-local address after DNS. No downloads,
-// file choosers, dialogs, popups, credentials or permissions; extractors are
-// function literals in this file, never model-written code; per-task step,
-// time and byte caps; one task at a time; every action logged.
+// navigation, no private/loopback/link-local address after DNS. Every
+// connection then leaves through this process's loopback egress proxy
+// (browser-egress.mjs), which connects only to an address it validated, from
+// the same DNS answer the check validated: a name that rebinds to a private
+// address after the check is never connected there. Chromium is launched to
+// use that proxy for everything, loopback included, with WebRTC held to
+// proxied traffic. No downloads, file choosers, dialogs, popups, credentials or
+// permissions; extractors are function literals in this file, never
+// model-written code; per-task step, time and byte caps; one task at a time;
+// every action logged.
 //
 // Playwright is resolved at start from the node (MCCLUSTER_BROWSER_PLAYWRIGHT_DIR,
 // else the repository root, else this module's resolution). The Core package
@@ -15,11 +21,13 @@
 import http from 'node:http';
 import fs from 'node:fs';
 import dns from 'node:dns';
+import net from 'node:net';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import { checkRequest, parseBrowserPolicy } from './browser-policy.mjs';
+import { createEgressProxy, EGRESS_REFUSAL_HEADER } from './browser-egress.mjs';
 import { boundBrowserOutput, browserLimitsFromEnv, sanitizeActionForLog, validateBrowserTask } from './browser-actions.mjs';
 import { imageDimensions, sniffImageType } from './ai-chat-images.mjs';
 import { browserPaths } from './node-agent-config.mjs';
@@ -29,9 +37,13 @@ const PORT = Number(process.env.MCCLUSTER_BROWSER_EXECUTOR_PORT ?? 4791);
 const HEADED = String(process.env.MCCLUSTER_BROWSER_HEADED || '') === '1';
 // Container and CI only (documented): Chromium's sandbox needs user namespaces.
 const NO_SANDBOX = String(process.env.MCCLUSTER_BROWSER_NO_SANDBOX || '') === '1';
-// Test only: Chromium maps this name to loopback while the policy resolver
-// answers a public address for it, so the private-network rule stays armed.
+// Test only: the policy resolver answers the documentation address
+// FIXTURE_ADDRESS for this one name, so the private-network rule stays armed,
+// and the egress proxy delivers a connection to that one validated address to
+// the loopback fixture on the same port (the test network). Never active
+// without MCCLUSTER_BROWSER_TEST_FIXTURE_HOST.
 const FIXTURE_HOST = /^[a-z0-9.-]{1,120}$/i.test(String(process.env.MCCLUSTER_BROWSER_TEST_FIXTURE_HOST || '')) ? String(process.env.MCCLUSTER_BROWSER_TEST_FIXTURE_HOST).toLowerCase() : null;
+const FIXTURE_ADDRESS = '203.0.113.10';
 const LIMITS = browserLimitsFromEnv(process.env);
 const PATHS = browserPaths({ platform: process.platform, env: process.env });
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -100,7 +112,7 @@ function readPolicy() {
 }
 
 const resolver = FIXTURE_HOST
-  ? async (host, options) => (host === FIXTURE_HOST ? [{ address: '203.0.113.10', family: 4 }] : dns.promises.lookup(host, options))
+  ? async (host, options) => (host === FIXTURE_HOST ? [{ address: FIXTURE_ADDRESS, family: 4 }] : dns.promises.lookup(host, options))
   : (host, options) => dns.promises.lookup(host, options);
 
 // ------------------------------------------------------------------- state
@@ -118,6 +130,36 @@ const state = {
   lastError: null
 };
 
+// ------------------------------------------------------------------- egress
+// The one place a destination is resolved for a connection: inside a task the
+// task's DNS cache holds the answer the policy check validated for that name
+// (so the connection uses exactly that answer); a name the check has not seen,
+// or a request outside any task, is resolved once here. checkRequest applies
+// the same address rule as the check (any private answer refuses).
+function authorizeDestination(host) {
+  const literal = net.isIPv6(host) ? `[${host}]` : host;
+  return checkRequest(`http://${literal}/`, null, { navigation: false, resolve: resolver, cache: state.current?.dnsCache })
+    .catch((error) => ({ ok: false, code: 'BROWSER_DNS_FAILED', reason: shortMessage(error) }));
+}
+
+// Test only (FIXTURE_HOST set): the documentation address is the loopback
+// fixture. Production delivers every validated address as itself.
+const testDelivery = FIXTURE_HOST
+  ? (address, port) => (address === FIXTURE_ADDRESS ? { host: '127.0.0.1', port, test: true } : { host: address, port })
+  : undefined;
+
+const egress = createEgressProxy({
+  authorize: authorizeDestination,
+  ...(testDelivery ? { deliver: testDelivery } : {}),
+  onRefused: ({ host, kind, code }) => {
+    if (state.current) state.current.usage.egress_refused += 1;
+    log({ event: 'browser_egress_refused', task_id: state.current?.id || null, kind, host: typeof host === 'string' && !net.isIP(host) ? host.slice(0, 120) : null, code });
+  }
+});
+let egressError = null;
+try { await egress.listen(); }
+catch (error) { egressError = String(error?.message || error).split('\n')[0].slice(0, 200); }
+
 // Every request of every page goes through here. Playwright does not route
 // redirect hops (a continued request is followed by Chromium itself), so no
 // request is ever continued: the executor fetches it with maxRedirects 0 and
@@ -125,27 +167,25 @@ const state = {
 // and the address rule, then bounced through a client-side location.replace,
 // which is a fresh navigation this handler sees again; a subresource redirect
 // is followed hop by hop here, each hop checked, and the final answer served.
+// The fetch itself runs through the context's proxy, the egress proxy, which
+// connects at the address the check validated (the task's DNS cache).
 function shortMessage(error) { return String(error?.message || error).split('\n')[0].slice(0, 200); }
 
 function resolveLocation(location, base) {
   try { return new URL(String(location), base).href; } catch { return null; }
 }
 
-// Test mode only: Chromium reaches the fixture host through its resolver rule,
-// but this process has no such rule, so the fetch goes to loopback with the
-// original Host header. Never active without MCCLUSTER_BROWSER_TEST_FIXTURE_HOST.
 function fetchOptions(request, url, run) {
   const options = { maxRedirects: 0, timeout: run ? Math.max(1_000, Math.min(ACTION_TIMEOUT_MS, run.deadline - Date.now())) : ACTION_TIMEOUT_MS };
   if (url !== request.url()) options.url = url;
-  if (FIXTURE_HOST) {
-    const target = new URL(url);
-    if (target.hostname === FIXTURE_HOST) {
-      options.headers = { ...request.headers(), host: target.host };
-      target.hostname = '127.0.0.1';
-      options.url = target.href;
-    }
-  }
   return options;
+}
+
+// The egress proxy's own refusal (its CONNECT answer replayed as the response),
+// never a page: the request is refused like any other.
+function egressRefusal(response) {
+  const code = response.headers()[EGRESS_REFUSAL_HEADER];
+  return typeof code === 'string' && /^BROWSER_[A-Z_]{1,40}$/.test(code) ? { code, reason: 'the egress proxy refused the destination' } : null;
 }
 
 async function refuseRoute(route, run, navigation, url, verdict) {
@@ -223,6 +263,8 @@ async function policyRouteHandler(route, request) {
     let response;
     try { response = await route.fetch(fetchOptions(request, url, run)); }
     catch (error) { return failRoute(route, run, true, shortMessage(error)); }
+    const refusedByEgress = egressRefusal(response);
+    if (refusedByEgress) return refuseRoute(route, run, true, url, refusedByEgress);
     if (!isRedirect(response)) return route.fulfill({ response }).catch(() => {});
     const target = resolveLocation(response.headers().location, url);
     if (!target) return refuseRoute(route, run, true, url, { code: 'BROWSER_URL_INVALID', reason: 'the redirect target is not a URL' });
@@ -240,6 +282,8 @@ async function policyRouteHandler(route, request) {
     let response;
     try { response = await route.fetch(fetchOptions(request, current, run)); }
     catch (error) { return failRoute(route, run, false, shortMessage(error)); }
+    const refusedByEgress = egressRefusal(response);
+    if (refusedByEgress) return refuseRoute(route, run, false, current, refusedByEgress);
     if (!isRedirect(response)) return route.fulfill({ response }).catch(() => {});
     const target = resolveLocation(response.headers().location, current);
     if (!target || hop >= MAX_SUBRESOURCE_REDIRECTS) return refuseRoute(route, run, false, current, { code: 'BROWSER_URL_INVALID', reason: 'subresource redirect refused' });
@@ -261,12 +305,19 @@ function attachPageGuards(page) {
 async function ensureBrowser() {
   if (state.context) return state.context;
   if (!playwright.module) throw unavailable('playwright not found');
+  if (!egress.listening || !egress.port) throw unavailable(`the egress proxy is not listening${egressError ? ` (${egressError})` : ''}`);
   if (!state.launching) {
     state.launching = (async () => {
       fs.mkdirSync(PATHS.profileDir, { recursive: true, mode: 0o700 });
+      // Everything Chromium sends goes to the egress proxy: the proxy option
+      // also carries the executor's own route.fetch, the explicit switches
+      // come last so they win over any default, `<-loopback>` removes
+      // Chromium's implicit loopback bypass, and WebRTC may not send UDP that
+      // does not go through the proxy (it ignores proxies otherwise).
+      const egressServer = `http://127.0.0.1:${egress.port}`;
       const args = ['--no-first-run', '--no-default-browser-check', '--disable-background-networking', '--disable-component-update', '--disable-sync'];
       if (NO_SANDBOX) args.push('--no-sandbox');
-      if (FIXTURE_HOST) args.push(`--host-resolver-rules=MAP ${FIXTURE_HOST} 127.0.0.1`);
+      args.push(`--proxy-server=${egressServer}`, '--proxy-bypass-list=<-loopback>', '--force-webrtc-ip-handling-policy=disable_non_proxied_udp');
       const context = await playwright.module.chromium.launchPersistentContext(PATHS.profileDir, {
         headless: !HEADED,
         viewport: { ...VIEWPORT },
@@ -277,6 +328,7 @@ async function ensureBrowser() {
         ignoreHTTPSErrors: false,
         bypassCSP: false,
         javaScriptEnabled: true,
+        proxy: { server: egressServer },
         args
       });
       const page = context.pages()[0] || await context.newPage();
@@ -509,7 +561,7 @@ async function runTask(body, taskId) {
     notifyNavigationFailure: null,
     refused: null,
     failed: null,
-    usage: { steps: 0, wall_ms: 0, navigations: 0, requests_blocked: 0, downloads_cancelled: 0, dialogs_dismissed: 0, popups_closed: 0, websockets_closed: 0, file_choosers_refused: 0 }
+    usage: { steps: 0, wall_ms: 0, navigations: 0, requests_blocked: 0, egress_refused: 0, downloads_cancelled: 0, dialogs_dismissed: 0, popups_closed: 0, websockets_closed: 0, file_choosers_refused: 0 }
   };
   state.current = run;
   try {
@@ -589,13 +641,14 @@ async function readJson(req) {
 }
 
 function healthBody() {
-  const ok = Boolean(playwright.module) && Boolean(state.policy.parsed);
+  const ok = Boolean(playwright.module) && Boolean(state.policy.parsed) && egress.listening;
   return {
     ok,
     service: 'mccluster-browser-executor',
     implementation: IMPLEMENTATION,
     playwright: playwright.info,
     policy: state.policy.info,
+    egress: { listening: egress.listening, port: egress.port, ...egress.stats, error: egressError },
     profile_dir: PATHS.profileDir,
     headed: HEADED,
     browser_ready: Boolean(state.context),
@@ -655,7 +708,7 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, HOST, () => {
   // The ready event stays the first stdout line; tests read it to find the port.
-  log({ event: 'browser_executor_ready', host: HOST, port: server.address().port, playwright: playwright.info.version, headed: HEADED, policy_path: PATHS.policyPath, profile_dir: PATHS.profileDir, test_fixture_host: FIXTURE_HOST });
+  log({ event: 'browser_executor_ready', host: HOST, port: server.address().port, playwright: playwright.info.version, headed: HEADED, policy_path: PATHS.policyPath, profile_dir: PATHS.profileDir, egress_port: egress.port, test_fixture_host: FIXTURE_HOST });
 });
 
 async function shutdown(signal) {
@@ -663,6 +716,7 @@ async function shutdown(signal) {
   const context = state.context;
   state.context = null;
   try { if (context) await context.close(); } catch { /* closing anyway */ }
+  await egress.close().catch(() => {});
   server.close(() => process.exit(0));
   setTimeout(() => process.exit(1), 5_000).unref();
 }
