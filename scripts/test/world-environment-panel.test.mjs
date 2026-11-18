@@ -303,17 +303,29 @@ test('autostart: play is sent once per activation only while the tab is open, th
   const h = harness({ observer: true });
   await flush(8);
   assert.deepEqual(h.sent.filter(m => m.type === 'hu:environment-scene'), [{ type: 'hu:environment-scene', action: 'play' }], 'once');
-  h.message({ type: 'hu:globe-ready' }); h.message({ type: 'hu:environment-scene-state', playing: true, index: 0, total: 12, id: 'x', title: 'x', queue: 'significant', reason: null });
-  assert.equal(h.sent.filter(m => m.type === 'hu:environment-scene').length, 1, 'not again within the same activation');
+  const plays = () => h.sent.filter(m => m.type === 'hu:environment-scene' && m.action === 'play').length;
+  h.message({ type: 'hu:environment-scene-state', playing: true, index: 0, total: 12, id: 'x', title: 'x', queue: 'significant', reason: null });
+  assert.equal(plays(), 1, 'not again within the same activation');
+  assert.equal(h.byId('wePlay').textContent, 'Pause tour');
+  /* the globe says ready after the panel spoke (landing on the tab before the frame booted, or a frame that reloaded): a fresh globe
+     has no tour, so the stale words clear and the one autostart is said again, with the layers and the pins before it */
+  h.message({ type: 'hu:globe-ready' });
+  assert.equal(plays(), 2, 'a fresh globe is played at once more');
+  assert.equal(h.byId('wePlay').textContent, 'Play tour', 'no tour is claimed until the fresh globe says so');
+  assert.deepEqual(h.sent.slice(-3).map(m => m.type + ':' + (m.on === undefined ? m.action : m.on)), ['hu:environment-layers:true', 'hu:environment-pins:true', 'hu:environment-scene:play'], 'layers, pins, then play');
+  h.message({ type: 'hu:environment-scene-state', playing: true, index: 0, total: 12, id: 'x', title: 'x', queue: 'significant', reason: null });
+  assert.equal(plays(), 2, 'not again within the same activation');
   h.setMode('feed'); h.setMode('environment'); await flush();
-  assert.equal(h.sent.filter(m => m.type === 'hu:environment-scene' && m.action === 'play').length, 2, 'once per activation');
+  assert.equal(plays(), 3, 'once per activation');
   /* the tab change cleared the old tour state (the globe stops its director on layers off); the globe reports the new tour, then the visitor pauses it */
   h.message({ type: 'hu:environment-scene-state', playing: true, index: 0, total: 12, id: 'x', title: 'x', queue: 'significant', reason: null });
   h.byId('wePlay').onclick();
   assert.deepEqual(h.sent.at(-1), { type: 'hu:environment-scene', action: 'pause' });
   h.message({ type: 'hu:environment-scene-state', playing: false, index: 0, total: 12, id: 'x', title: 'x', queue: 'significant', reason: 'user' });
   h.setMode('feed'); h.setMode('environment'); await flush();
-  assert.equal(h.sent.filter(m => m.type === 'hu:environment-scene' && m.action === 'play').length, 2, 'a visitor who paused is not played at again this page session');
+  assert.equal(plays(), 3, 'a visitor who paused is not played at again this page session');
+  h.message({ type: 'hu:globe-ready' });
+  assert.equal(plays(), 3, 'not even by a globe that says ready again');
   h.mounted.destroy();
 });
 

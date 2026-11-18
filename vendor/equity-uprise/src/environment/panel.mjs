@@ -609,7 +609,9 @@ export function mountEnvironment(w, d, adapter) {
   listen('storage',event=>{if(adapter.sessionStorageKey && event.key===adapter.sessionStorageKey){closeProof();closePlanning();privateEpoch++;privateBusy=false;team=null;oversight=null;proofReviews=null;privateToken=null;renderTeam();renderOwner();renderDetail();if(active())void loadPrivate();}});
   listen('message',event=>{
     if(event.origin!==w.location.origin||event.source!==frame.contentWindow)return;const data=event.data||{};
-    if(data.type==='hu:globe-ready'){syncLayers();syncPins();}
+    /* a globe that just said ready has no tour yet: what the panel said before it could listen (landing on the tab before the frame
+       booted) is said again, the layers, the pins and the one autostart, and the tour's words start clean (integration pass, G1) */
+    if(data.type==='hu:globe-ready'){sceneState=null;renderScene();syncLayers();syncPins();autostartDone=false;maybeAutostart();}
     if(data.type==='hu:environment-selected'&&active()){
       if(feed?.events.some(row=>row.id===data.id))select(data.id,false);
       else if(typeof data.id==='string'&&data.id){adapter.revealPanel?.();globeSelection=cleanSelection(data);selected='';renderDetail();renderList();syncPins();byId('weDetail').scrollIntoView?.({block:'nearest',behavior:'auto'});}

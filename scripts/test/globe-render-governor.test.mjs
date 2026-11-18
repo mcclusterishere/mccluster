@@ -156,6 +156,22 @@ test('disable() restores the continuous loop and the default maximumRenderTimeCh
   assert.equal(viewer.camera.moveStart.size(), 0, 'listeners removed');
   assert.equal(viewer.entities.collectionChanged.size(), 0);
 });
+test('G1R-12: the camera guard skips a rotation about a zero-length axis or by a non-finite angle, passes every other rotation through, once per camera', () => {
+  const calls = [];
+  const camera = { rotate(axis, angle) { calls.push([axis, angle]); return 'rotated'; } };
+  const viewer = { camera };
+  assert.equal(G.guardCamera(viewer), true);
+  assert.equal(G.guardCamera(viewer), false, 'idempotent');
+  assert.equal(camera.rotate({ x: 0, y: 0, z: 0 }, 0.001), undefined, 'the zero axis Cesium 1.131 makes at the centre pixel');
+  assert.equal(camera.rotate({ x: 0, y: 1, z: 0 }, NaN), undefined);
+  assert.equal(camera.rotate({ x: NaN, y: 0, z: 0 }, 0.5), undefined);
+  assert.equal(camera.rotate(undefined, 0.5), undefined);
+  assert.deepEqual(calls, [], 'nothing reached Cesium');
+  assert.equal(camera.rotate({ x: 0, y: 0, z: 1 }, 0.25), 'rotated');
+  assert.equal(camera.rotate({ x: 0, y: 0, z: 1 }), 'rotated', 'the default angle stays Cesium\'s');
+  assert.deepEqual(calls.map(c => [c[0].z, c[1]]), [[1, 0.25], [1, undefined]]);
+  assert.equal(G.guardCamera({}), false); assert.equal(G.guardCamera(null), false);
+});
 test('diagnostics shape and the header pointer', () => {
   const { governor } = make();
   const d = governor.diagnostics();

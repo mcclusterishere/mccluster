@@ -203,7 +203,7 @@
   const picks = new Map();
   const building = new Set();
   const deferred = [];
-  let selected = null, fade = null, ripple = null, lastRipple = null, shakemap = null, selectedLabel = null, eventsSignature = '', legendLines = [], buildListener = null;
+  let selected = null, fade = null, ripple = null, lastRipple = null, shakemap = null, selectedLabel = null, eventsSignature = '', eventsTourSignature = '', legendLines = [], buildListener = null;
   const pendingMessages = [];
 
   const now = () => Date.now();
@@ -323,12 +323,17 @@
     const signature = list.map(i => `${i.id}|${i.lat}|${i.lon}|${i.stale ? 1 : 0}|${i.category || ''}|${JSON.stringify(i.facts || [])}`).join('\n');
     const changed = signature !== eventsSignature;
     data.events = list; eventsSignature = signature;
+    /* what the tour is built from (the ids, their significance, their recorded times) can change with no geometry change: a
+       ShakeMap marks a quake significant and the panel re-sends the pins with the flag. The director is told; nothing is rebuilt. */
+    const tourSignature = list.map(i => `${i.id}|${i.significant === true ? 1 : 0}|${i.observed_at || ''}|${i.category || ''}`).join('\n');
+    const tourChanged = tourSignature !== eventsTourSignature;
+    eventsTourSignature = tourSignature;
     if (mounted && changed) {
       rebuildEvents();
       states.events = eventsState();
       tellLayerState('events');
-      if (director) director.setQueue(data.events, { queue: replayMode || 'significant' });
-    } else if (mounted && director && !changed && director.state().total === 0 && data.events.length) director.setQueue(data.events, { queue: replayMode || 'significant' });
+    }
+    if (mounted && director && (changed || tourChanged || (director.state().total === 0 && data.events.length))) director.setQueue(data.events, { queue: replayMode || 'significant' });
     if (mounted && typeof o.selected === 'string' && o.selected && o.selected !== (selected && selected.id) && findEntry(o.selected, 'events')) select(o.selected, 'panel', { layer: 'events' });
     if (mounted && selected && selected.layer === 'events' && !getEntry('events', selected.id)) clearSelection();
     if (mounted && pendingFocus && picks.has(pendingFocus)) { const id = pendingFocus; pendingFocus = null; focus(id); }

@@ -15,7 +15,7 @@
     },
     {
       "path": "src/environment/panel.mjs",
-      "sha256": "e88a6446b59cacaba58254480d83cb2e311bcb1db2858574c1e5fb64a7e7e958"
+      "sha256": "70613e758cd82cb84c6130f6afe407038fbd16b8554e0cb74b462722e80978be"
     },
     {
       "path": "src/environment/server.mjs",
@@ -71,6 +71,10 @@
         {
           "id": "G1-PANEL",
           "summary": "Slice G1, the environmental globe (lane L2): the panel speaks to the one globe in a fixed order (hu:environment-layers before the pins on activation and on hu:globe-ready; layers off, then exactly the pins-off object last, on destroy), sends the pins with their additive public fields and the host adapter’s significance flag, shows per-source health rows for the feed and for the globe’s hu:environment-layer-state (status, reason in plain words, Retrieved and Last success with how long ago or never known, coverage, attribution, licence, link), adds the tour (play, pause, previous, next, replay of the last 24 h of quakes) and the 2D map toggle driven by hu:environment-scene-state and hu:environment-view-state, draws a globe-only hu:environment-selected as a card with the item’s own time under its own label (never the fetch time), reads the feed once at mount and hands it to the host page as a DOM CustomEvent named by the adapter (with the gate’s code when it refused, and the layers’ digests), and autostarts the tour once per opening of the tab only while the frame is in view, the page visible, motion allowed and the visitor has not paused. The transport attaches a refusing body’s string code to its error beside the status (additive)."
+        },
+        {
+          "id": "G1-INT-GLOBE-READY",
+          "summary": "Integration pass of slice G1 (the World page with the real globe frame): landing on the Equity Uprise tab before the frame has booted, the panel's activation words (hu:environment-layers, the pins, the one autostart of the tour) reached a frame that could not listen yet; hu:globe-ready now clears the stale tour words and says them again, the autostart included, under the same rule (frame in view, page visible, motion allowed, the visitor has not paused). The globe's director treats a second play on a tour under way as a no-op. The review of the slice at fe0d53b2 named the same defect G1R-4."
         }
       ],
       "regression_tests": [

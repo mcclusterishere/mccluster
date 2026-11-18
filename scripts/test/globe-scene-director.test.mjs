@@ -142,6 +142,22 @@ test('play flies with CUBIC_IN_OUT and a bounded hold, dwells without a hold, ad
   assert.deepEqual(Object.keys(r.told[0]).sort(), ['id', 'index', 'playing', 'queue', 'reason', 'title', 'total', 'type']);
   assert.equal(r.told[0].queue, 'significant');
 });
+test('G1R-4: play on a tour already under way is idempotent: no second flight, no restarted dwell, the state told again', () => {
+  const r = rig();
+  r.director.play();
+  assert.equal(r.flights.length, 1);
+  r.director.play();
+  assert.equal(r.flights.length, 1, 'the flight in progress is not restarted');
+  assert.equal(r.holds.length, 1, 'no second hold');
+  assert.equal(r.told.at(-1).playing, true); assert.equal(r.told.at(-1).index, 0);
+  r.complete();
+  const dwells = () => r.T.pending().filter(t => t.ms === 5000).length;
+  assert.equal(dwells(), 1);
+  r.director.play();
+  assert.equal(dwells(), 1, 'the dwell is not restarted'); assert.equal(r.flights.length, 1);
+  r.T.fire(t => t.ms === 5000);
+  assert.equal(r.flights.length, 2, 'the tour still advances on its own');
+});
 test('pause cancels the flight (through its cancel callback) and keeps the index; interrupt pauses with reason input', () => {
   const r = rig();
   r.director.play(); r.complete(); r.T.fire(t => t.ms === 5000);

@@ -59,6 +59,9 @@
         const http = Number(response && response.status) || null;
         let body;
         try { body = await response.json(); } catch (e) { body = undefined; }
+        /* the gate refused another layer while this body was being read (the abort lands in the read, not the fetch): one module
+           policy governs every route, so this layer is in the policy state too, never 'unavailable http_503' beside it (review G1R-2) */
+        if (policy) return policyResult();
         if (body && typeof body === 'object' && body.ok === false && POLICY_CODES.includes(body.code) && (http === 503 || http === 404)) return { ok: false, status: 'policy', reason: body.code, http };
         if (!response.ok) return { ok: false, status: 'unavailable', reason: 'http_' + http, http };
         if (!body || typeof body !== 'object' || body.ok !== true || body.schema !== schema) return { ok: false, status: 'unavailable', reason: 'bad_response', http };
@@ -97,7 +100,8 @@
       const gen = generation;
       if (!lastGenerated.has(layer)) emit(layer, { ok: false, status: 'loading', reason: null, http: null });
       const result = await fetchLayer(layer);
-      if (!active || gen !== generation || result.status === 'policy') return;
+      /* once the gate has refused, enterPolicy has already told every layer: nothing said after it may contradict that */
+      if (!active || gen !== generation || result.status === 'policy' || policy) return;
       const windowMs = ROUTES[layer].window * 1000;
       if (!result.ok) {
         emit(layer, result);

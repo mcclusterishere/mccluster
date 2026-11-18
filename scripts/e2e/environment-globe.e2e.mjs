@@ -299,6 +299,11 @@ for (const [status, code] of [[503, 'module_policy_unavailable'], [404, 'module_
   await page.waitForTimeout(30000);
   const after = requests.filter((p) => p.startsWith('/v1/world/environment/')).length;
   check(scope, 'no retry request within 30 s of the refusal', before === after && before <= 5, { before, after });
+  /* G1R-2: a layer whose 503 body was still being read when the first refusal landed used to end as 'unavailable http_503' after its
+     'policy' message; the LAST state of every layer must be the policy state */
+  const lastByLayer = {};
+  for (const m of await fromGlobe(page)) if (m.type === 'hu:environment-layer-state') lastByLayer[m.layer] = [m.status, m.reason];
+  check(scope, `the LAST state of every layer is policy with reason ${code}`, ['fires', 'perimeters', 'alerts', 'eonet', 'tides', 'shakemap'].every((l) => lastByLayer[l] && lastByLayer[l][0] === 'policy' && lastByLayer[l][1] === code), lastByLayer);
   check(scope, 'the frame never requested the feed route', requests.filter((p) => p === '/v1/world/environment').length === 0);
   check(scope, 'no page errors', errors.length === 0, errors);
   await ctx.close();

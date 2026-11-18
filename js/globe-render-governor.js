@@ -115,5 +115,23 @@
     root.__mccGlobeGovernor = () => governor.diagnostics();
     return governor;
   }
-  root.MCC_GLOBE_GOVERNOR = Object.freeze({ create, legacyAnimators, IDLE_MAX_TIME_CHANGE });
+  /* THE CAMERA GUARD (the slice G1 integration pass saw it on the real page in two of five runs; the review could not reproduce it;
+     review G1R-12): Cesium 1.131's zoom toward the cursor rotates the camera about cross(pickedNormal, centreNormal). With the
+     pointer at the exact centre pixel the two picks coincide, the axis is the zero vector, Camera.rotate normalises it into NaN
+     and the render loop stops ("An error occurred while rendering. Rendering has stopped"). A rotation about a zero-length axis,
+     or by a non-finite angle, is no rotation: it is skipped and the globe keeps drawing. Defensive, per viewer, idempotent; it is
+     Cesium's defect, not the slice's, and is not claimed as one. */
+  function guardCamera(viewer) {
+    const camera = viewer && viewer.camera;
+    if (!camera || typeof camera.rotate !== 'function' || camera.__mccRotateGuarded) return false;
+    const rotate = camera.rotate.bind(camera);
+    camera.rotate = function (axis, angle) {
+      const finite = !!axis && Number.isFinite(axis.x) && Number.isFinite(axis.y) && Number.isFinite(axis.z);
+      if (!finite || !(axis.x * axis.x + axis.y * axis.y + axis.z * axis.z > 0) || (angle !== undefined && !Number.isFinite(angle))) return undefined;
+      return rotate(axis, angle);
+    };
+    camera.__mccRotateGuarded = true;
+    return true;
+  }
+  root.MCC_GLOBE_GOVERNOR = Object.freeze({ create, legacyAnimators, guardCamera, IDLE_MAX_TIME_CHANGE });
 })(window);

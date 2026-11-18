@@ -142,6 +142,9 @@
       if (reducedMotion()) return refuse('reduced-motion');
       if (hidden()) return refuse('hidden');
       if (!queue.length) return refuse('empty');
+      /* play on a tour already under way is idempotent: the scene in flight or in its dwell is never restarted (the panel may
+         say play twice when the globe says ready twice, a hello answered after boot; review G1R-4) */
+      if (playing && (flight || dwell !== null)) { tellState(); return; }
       if (reason === 'end') index = 0;
       clearDwell();
       playing = true; reason = null; tellState(); go();

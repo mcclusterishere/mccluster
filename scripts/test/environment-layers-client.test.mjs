@@ -114,6 +114,31 @@ for (const [http, code] of [[503, 'module_policy_unavailable'], [404, 'module_di
     assert.equal(seen.length, 5, 'the next activation retries once');
   });
 }
+test('G1R-2: the gate refuses while a sibling response is still being read: that layer ends in the policy state too, never unavailable http_503', async () => {
+  const T = timers();
+  const states = [], data = [];
+  let releaseBodies = null;
+  const held = new Promise(resolve => { releaseBodies = resolve; });
+  const client = CLIENT.create({
+    fetchImpl: (url, init) => {
+      const layer = layerOf(url);
+      /* every route has answered 503 with the gate's body; the alerts body is read first, the others are still being read when
+         the client enters the policy state and aborts them */
+      if (layer === 'alerts') return Promise.resolve(json({ ok: false, code: 'module_policy_unavailable' }, 503));
+      return Promise.resolve({ ok: false, status: 503, json: () => new Promise((resolve, reject) => { init.signal.addEventListener('abort', () => reject(Object.assign(new Error('aborted'), { name: 'AbortError' }))); held.then(() => resolve({ ok: false, code: 'module_policy_unavailable' })); }) });
+    }, ...T, hidden: () => false
+  });
+  client.start({ onState: (layer, state) => states.push([layer, state.status, state.reason]), onData: (layer) => data.push(layer) });
+  await flush(10);
+  releaseBodies(); await flush(10);
+  const last = {};
+  for (const [layer, status, reason] of states) last[layer] = [status, reason];
+  for (const layer of ['fires', 'perimeters', 'alerts', 'eonet', 'tides', 'shakemap']) assert.deepEqual(last[layer], ['policy', 'module_policy_unavailable'], layer + ' ends in the policy state');
+  assert.equal(states.filter(([, status]) => status === 'unavailable').length, 0, 'no layer is ever told unavailable after the gate refused');
+  assert.deepEqual(data, []);
+  assert.equal(client.isPolicy(), true);
+  assert.deepEqual(T.pending().filter(t => t.ms >= 5000), [], 'no retry, no refresh');
+});
 test('a network failure retries once after 5 s, then waits for the refresh window', async () => {
   const T = timers();
   let fails = 2; const seen = [];

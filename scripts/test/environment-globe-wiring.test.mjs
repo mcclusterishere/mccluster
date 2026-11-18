@@ -36,6 +36,8 @@ test('action-globe.js: delegation before the pins line, governor and director in
   assert.ok(delegation > 0 && pinsLine > delegation, 'the delegation line comes first');
   assert.ok(js.indexOf("if(d.type==='hu:hello'){if(readyMessage)tell(readyMessage);return}") < delegation, 'after hello');
   const styled = js.indexOf('styleScene();wireControls();'), governor = js.indexOf('governor=window.MCC_GLOBE_GOVERNOR?.create(viewer'), director = js.indexOf('director=window.MCC_GLOBE_DIRECTOR?.create(');
+  const guard = js.indexOf('window.MCC_GLOBE_GOVERNOR?.guardCamera?.(viewer);');
+  assert.ok(guard > governor && guard < director, 'the camera guard is wired at boot, right after the governor (review G1R-12)');
   const mount = js.indexOf('window.MCC_ENVIRONMENT_LAYERS?.mount({'), draw = js.indexOf('environmentPins?.draw();');
   assert.ok(styled > 0 && governor > styled && director > governor && mount > director && mount < draw, JSON.stringify({ styled, governor, director, mount, draw }));
   assert.match(js, /function syncLegacyHold\(\)\{/);
