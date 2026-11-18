@@ -165,9 +165,9 @@ test('/ready?implementation= answers per entry; plain /ready keeps its verdict a
   assert.equal(plain.body.ok, true);
   assert.equal(plain.body.model, 'qwen3:8b');
   assert.deepEqual(plain.body.implementations, [
-    { implementation: 'qwen3.8b.local', model: 'qwen3:8b', installed: true, digest: 'sha256:qwen3:8b' },
-    { implementation: 'qwen3.14b.local', model: 'qwen3:14b', installed: false, digest: null },
-    { implementation: 'small.local', model: 'qwen3:4b-instruct-2507', installed: false, digest: null }
+    { implementation: 'qwen3.8b.local', model: 'qwen3:8b', installed: true, digest: 'sha256:qwen3:8b', vision: false },
+    { implementation: 'qwen3.14b.local', model: 'qwen3:14b', installed: false, digest: null, vision: false },
+    { implementation: 'small.local', model: 'qwen3:4b-instruct-2507', installed: false, digest: null, vision: false }
   ]);
 
   const health = await a.get('/health');
@@ -178,7 +178,7 @@ test('/ready?implementation= answers per entry; plain /ready keeps its verdict a
 
   const diagnostics = await a.get('/diagnostics');
   assert.equal(diagnostics.status, 200);
-  assert.deepEqual(diagnostics.body.implementations[1], { implementation: 'qwen3.14b.local', model: 'qwen3:14b', installed: false, running: false });
+  assert.deepEqual(diagnostics.body.implementations[1], { implementation: 'qwen3.14b.local', model: 'qwen3:14b', installed: false, running: false, vision: false });
   assert.equal('gpu_evidence' in diagnostics.body, true);
 });
 
@@ -336,4 +336,77 @@ test('warm-on-start gives up after its window and says so', { timeout: 15000 }, 
   assert.equal(attempts[1].next_in_ms, null);
   await delay(600);
   assert.equal(a.events().filter((e) => e.event === 'ollama_adapter_warm').length, 2, 'no attempt after the window');
+});
+
+// Images ride on messages[].images exactly as Ollama takes them; the adapter
+// validates them with the shared module, passes them through untouched and
+// refuses to put an image in front of a text model.
+const VISION_MAP = `${MAP},qwen3-vl.8b.local=qwen3-vl:8b`;
+const PNG_1X1 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+
+test('images pass through to /api/chat messages[].images untouched for a vision model and the response counts them', { timeout: 15000 }, async (t) => {
+  const a = await withAdapter(t, { installed: ['qwen3:8b', 'qwen3-vl:8b'] }, { MCCLUSTER_OLLAMA_IMPLEMENTATIONS: VISION_MAP });
+  const out = await a.post('/execute', { capability: 'ai.chat', implementation: 'qwen3-vl.8b.local', input: { messages: [{ role: 'user', content: 'what is in this image', images: [PNG_1X1] }], num_ctx: 8192 } });
+  assert.equal(out.status, 200, JSON.stringify(out.body));
+  assert.equal(out.body.model, 'qwen3-vl:8b');
+  assert.equal(out.body.images_in, 1);
+  assert.deepEqual(a.chats()[0].messages, [{ role: 'user', content: 'what is in this image', images: [PNG_1X1] }], 'the message reaches Ollama exactly as sent');
+  const text = await a.post('/execute', { capability: 'ai.chat', implementation: 'qwen3.8b.local', input: { prompt: 'hello' } });
+  assert.equal(text.body.images_in, 0);
+});
+
+test('image refusals carry their codes and happen before any /api/chat call', { timeout: 15000 }, async (t) => {
+  const a = await withAdapter(t, { installed: ['qwen3:8b', 'qwen3-vl:8b'] }, { MCCLUSTER_OLLAMA_IMPLEMENTATIONS: VISION_MAP });
+  const cases = [
+    [{ messages: [{ role: 'user', content: 'x', images: ['not base64!!'] }] }, 'AI_CHAT_IMAGE_INVALID'],
+    [{ messages: [{ role: 'user', content: 'x', images: [`data:image/png;base64,${PNG_1X1}`] }] }, 'AI_CHAT_IMAGE_INVALID'],
+    [{ messages: [{ role: 'user', content: 'x', images: [Buffer.from('GIF89a and more bytes here').toString('base64')] }] }, 'AI_CHAT_IMAGE_TYPE'],
+    [{ messages: [{ role: 'user', content: 'x', images: [PNG_1X1, PNG_1X1, PNG_1X1, PNG_1X1, PNG_1X1] }] }, 'AI_CHAT_IMAGES_TOO_MANY'],
+    [{ messages: [{ role: 'user', content: 'x', images: [Buffer.concat([Buffer.from(PNG_1X1, 'base64'), Buffer.alloc(200_000)]).toString('base64')] }] }, 'AI_CHAT_IMAGE_TOO_LARGE'],
+    [{ prompt: 'x', images: [PNG_1X1] }, 'AI_CHAT_IMAGE_INVALID']
+  ];
+  for (const [input, code] of cases) {
+    const out = await a.post('/execute', { capability: 'ai.chat', implementation: 'qwen3-vl.8b.local', input });
+    assert.equal(out.status, 400, JSON.stringify(out.body));
+    assert.equal(out.body.code, code);
+  }
+  assert.equal(a.chats().length, 0, 'nothing reached the daemon');
+});
+
+test('images in front of a text model are AI_CHAT_IMAGE_MODEL_NOT_VISION, and a missing vision model never falls back to the text default', { timeout: 15000 }, async (t) => {
+  const a = await withAdapter(t, { installed: ['qwen3:8b'] }, { MCCLUSTER_OLLAMA_IMPLEMENTATIONS: VISION_MAP });
+  const image = { messages: [{ role: 'user', content: 'look', images: [PNG_1X1] }] };
+  const text = await a.post('/execute', { capability: 'ai.chat', implementation: 'qwen3.8b.local', input: image });
+  assert.equal(text.status, 400);
+  assert.equal(text.body.code, 'AI_CHAT_IMAGE_MODEL_NOT_VISION');
+  const byDefault = await a.post('/execute', { capability: 'ai.chat', input: image });
+  assert.equal(byDefault.body.code, 'AI_CHAT_IMAGE_MODEL_NOT_VISION', 'the default model is a text model');
+  assert.equal(a.chats().length, 0);
+  const missing = await a.post('/execute', { capability: 'ai.chat', implementation: 'qwen3-vl.8b.local', input: image });
+  assert.equal(missing.status, 404, 'the vision model is not pulled: the daemon answer surfaces');
+  assert.equal(missing.body.code, 'OLLAMA_UPSTREAM_ERROR');
+  assert.deepEqual(a.chats().map((c) => c.model), ['qwen3-vl:8b'], 'no second attempt on the text default with the image still attached');
+  const plain = await a.post('/execute', { capability: 'ai.chat', implementation: 'qwen3-vl.8b.local', input: { prompt: 'no image' } });
+  assert.equal(plain.body.fallback_from, 'qwen3-vl:8b', 'without an image the text default still answers for a missing mapped model');
+});
+
+test('MCCLUSTER_OLLAMA_VISION_MODELS is the exact vision set when given', { timeout: 15000 }, async (t) => {
+  const a = await withAdapter(t, { installed: ['qwen3:8b', 'qwen3:14b', 'qwen3-vl:8b'] }, { MCCLUSTER_OLLAMA_IMPLEMENTATIONS: VISION_MAP, MCCLUSTER_OLLAMA_VISION_MODELS: 'qwen3:14b' });
+  const image = { messages: [{ role: 'user', content: 'look', images: [PNG_1X1] }] };
+  assert.equal((await a.post('/execute', { capability: 'ai.chat', implementation: 'qwen3.14b.local', input: image })).status, 200);
+  assert.equal((await a.post('/execute', { capability: 'ai.chat', implementation: 'qwen3-vl.8b.local', input: image })).body.code, 'AI_CHAT_IMAGE_MODEL_NOT_VISION');
+  assert.equal((await a.get('/ready?implementation=qwen3.14b.local')).body.vision, true);
+  assert.equal((await a.get('/ready?implementation=qwen3-vl.8b.local')).body.vision, false);
+});
+
+test('readiness bodies say which implementation can see', { timeout: 15000 }, async (t) => {
+  const a = await withAdapter(t, { installed: ['qwen3:8b', 'qwen3-vl:8b'] }, { MCCLUSTER_OLLAMA_IMPLEMENTATIONS: VISION_MAP });
+  const vision = await a.get('/ready?implementation=qwen3-vl.8b.local');
+  assert.equal(vision.status, 200);
+  assert.equal(vision.body.vision, true);
+  assert.equal((await a.get('/ready?implementation=qwen3.8b.local')).body.vision, false);
+  const byImplementation = Object.fromEntries((await a.get('/ready')).body.implementations.map((item) => [item.implementation, item.vision]));
+  assert.deepEqual(byImplementation, { 'qwen3.8b.local': false, 'qwen3.14b.local': false, 'small.local': false, 'qwen3-vl.8b.local': true });
+  assert.equal((await a.get('/health')).body.implementations.find((item) => item.implementation === 'qwen3-vl.8b.local').vision, true);
+  assert.equal((await a.get('/diagnostics')).body.implementations.find((item) => item.implementation === 'qwen3-vl.8b.local').vision, true);
 });

@@ -1,6 +1,7 @@
 import http from 'node:http';
 import { inferenceFetch, inferenceJson, inferenceError } from './inference-http.mjs';
 import { inferenceSettings, inferenceUsage } from './inference-settings.mjs';
+import { validateChatImages } from './ai-chat-images.mjs';
 
 const HOST = '127.0.0.1';
 const PORT = Number(process.env.MCCLUSTER_OLLAMA_ADAPTER_PORT || 4790);
@@ -46,6 +47,13 @@ try {
 }
 const MAPPED_MODELS = new Set(Object.values(IMPLEMENTATIONS));
 const ALLOWED_MODELS = new Set([MODEL, ...EXTRA_MODELS, ...MAPPED_MODELS]);
+// Models that take images: the exact set from MCCLUSTER_OLLAMA_VISION_MODELS
+// when given, else every allowlisted model whose name says it sees
+// (qwen3-vl:* or gemma4:*). A text model never receives an image.
+const VISION_MODELS_ENV = String(process.env.MCCLUSTER_OLLAMA_VISION_MODELS || '').split(',').map(s => s.trim()).filter(Boolean);
+const VISION_MODELS = VISION_MODELS_ENV.length
+  ? new Set(VISION_MODELS_ENV)
+  : new Set([...ALLOWED_MODELS].filter(model => /^(?:qwen3-vl|gemma4):/i.test(model)));
 // The think key is sent only to thinking models; instruct-only builds reject
 // it. MCCLUSTER_OLLAMA_THINK_MODELS is the exact set when given; the default is
 // the default model plus every mapped qwen3 or qwen3-vl model that is not an
@@ -134,7 +142,14 @@ async function execute(body, queuedAt, callerSignal) {
     throw Object.assign(new Error('messages or prompt is required'), { status: 400, code: 'INPUT_REQUIRED' });
   }
 
+  // Images ride on messages[].images exactly as Ollama takes them: validated
+  // from the bytes by the shared module, passed through untouched, and never
+  // put in front of a model that cannot see.
+  const { images: imagesIn } = validateChatImages(input);
   const { model: requestedModel, source: modelSource } = pickModel(body);
+  if (imagesIn > 0 && !VISION_MODELS.has(requestedModel)) {
+    throw Object.assign(new Error(`model ${requestedModel} does not take images`), { status: 400, code: 'AI_CHAT_IMAGE_MODEL_NOT_VISION' });
+  }
   // One existing deadline covers the full execution, including a model fallback.
   const timeout = AbortSignal.timeout(Number(process.env.MCCLUSTER_OLLAMA_ADAPTER_TIMEOUT_MS || 600000));
   const signal = callerSignal ? AbortSignal.any([callerSignal, timeout]) : timeout;
@@ -172,7 +187,9 @@ async function execute(body, queuedAt, callerSignal) {
   let usedModel = requestedModel;
   let fallbackFrom = null;
   let { response, data } = await callOllama(usedModel);
-  if (!response.ok && usedModel !== MODEL && (response.status === 404 || /not found|pull/i.test(String(data?.error || '')))) {
+  // A missing mapped model falls back to the default model, except when the
+  // request carries images and the default cannot see them.
+  if (!response.ok && usedModel !== MODEL && (imagesIn === 0 || VISION_MODELS.has(MODEL)) && (response.status === 404 || /not found|pull/i.test(String(data?.error || '')))) {
     fallbackFrom = usedModel; usedModel = MODEL;
     ({ response, data } = await callOllama(usedModel));
   }
@@ -193,6 +210,7 @@ async function execute(body, queuedAt, callerSignal) {
     done_reason: data?.done_reason || null,
     settings,
     thinking_chars: String(data?.message?.thinking || '').length,
+    images_in: imagesIn,
     queue_wait_ms: queueWaitMs,
     usage: inferenceUsage(data),
   };
@@ -286,7 +304,7 @@ function implementationsFrom(tags) {
   const models = tags?.models || [];
   return Object.entries(IMPLEMENTATIONS).map(([implementation, model]) => {
     const installed = models.find(item => modelMatches(item, model));
-    return { implementation, model, installed: Boolean(installed), digest: installed?.digest ? String(installed.digest) : null };
+    return { implementation, model, installed: Boolean(installed), digest: installed?.digest ? String(installed.digest) : null, vision: VISION_MODELS.has(model) };
   });
 }
 
@@ -380,7 +398,7 @@ async function implementationReadiness(implementation) {
   }
   const model = IMPLEMENTATIONS[implementation];
   const body = {
-    ok: false, daemon_reachable: false, implementation, model, model_installed: false, digest: null,
+    ok: false, daemon_reachable: false, implementation, model, vision: VISION_MODELS.has(model), model_installed: false, digest: null,
     inference_probe: 'skipped', gpu_evidence: await gpuEvidence(), error: null, busy: Boolean(active), queue_depth: pending.length,
   };
   const { tags, error } = await readTags();
@@ -455,7 +473,7 @@ const server = http.createServer(async (req, res) => {
         thinking_support: show.thinking || null,
         running: (running.models || []).filter(item => item.name === MODEL || item.model === MODEL),
         extra_models: EXTRA_MODELS.map(name => ({ name, installed: isInstalled(name), running: isRunning(name) })),
-        implementations: Object.entries(IMPLEMENTATIONS).map(([implementation, model]) => ({ implementation, model, installed: isInstalled(model), running: isRunning(model) })),
+        implementations: Object.entries(IMPLEMENTATIONS).map(([implementation, model]) => ({ implementation, model, installed: isInstalled(model), running: isRunning(model), vision: VISION_MODELS.has(model) })),
         gpu_evidence: evidence,
         defaults: inferenceSettings(), busy: Boolean(active), queue_depth: pending.length,
         max_concurrency: 1,
