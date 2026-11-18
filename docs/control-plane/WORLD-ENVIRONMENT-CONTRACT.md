@@ -493,7 +493,7 @@ repaints the feed only when the ordered posts' ids, content hashes, significance
   areas from the digest with `frp_sum_mw > 0` as `firecell:<west>:<south>` (globe id `cell:<west>:<south>`), perimeters from the
   digest's top rows; every string clipped, every link https only, no markup produced; a content hash over the words that
   matter, not the clock. `interleaveByTime` (the tab, newest first, undated last, a page at a time) and `withObservations`
-  (Everything: one significant observation after every six other items, each once, never padding a short feed).
+  (Global: one significant observation after every six other items, each once, never padding a short feed).
 
 ### Pick ids and encodings (the globe side of the same slice)
 
