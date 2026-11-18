@@ -386,7 +386,7 @@ test('submit writes the user message with images and the browser flag before the
     assert.deepEqual(calls.map((call) => restPath(call.url)), ['ops_ai_messages', 'rpc/ops_ai_submit_turn'], 'the message first, then the job');
     const insert = calls[0].body;
     assert.deepEqual([insert.id, insert.thread_id, insert.org_id, insert.role, insert.content], [USER, THREAD, ORG, 'user', 'look at this']);
-    assert.deepEqual(insert.metadata, { input_mode: 'text', execution_kind: 'resident_ai_turn', agent_job_id: USER, task_status: 'queued', images: [PNG], allow_browser: true, actor_user_id: OWNER });
+    assert.deepEqual(insert.metadata, { input_mode: 'text', execution_kind: 'resident_ai_turn', agent_job_id: USER, task_status: 'queued', images: [PNG], allow_browser: true, actor_user_id: OWNER, actor_kind: 'owner' }, 'the broker-injected actor kind is stored on the durable turn');
     assert.match(String(calls[0].headers.Prefer), /resolution=ignore-duplicates/);
     assert.equal(calls[1].body.p_content, 'look at this', 'the RPC compares exactly the trimmed content the row carries');
     assert.equal(Object.keys(calls[1].body).length, 6, 'the existing six-argument RPC');
@@ -494,10 +494,39 @@ test('allow_browser without the owner id on the stored turn is refused before an
   }
 });
 
+// Review N2R-2: the actor's kind is read from the durable turn (written at
+// submit from the broker-injected actor), never derived from allow_browser, so
+// a stored turn that allows the browser for an actor who is not the owner (or
+// carries no actor kind at all) is refused before any inference.
+for (const [label, metadata] of [
+  ['a member actor', { allow_browser: true, actor_user_id: OWNER, actor_kind: 'member' }],
+  ['no actor kind on the stored turn', { allow_browser: true, actor_user_id: OWNER }]
+]) {
+  test(`allow_browser with ${label} is refused before any inference, whatever allow_browser says`, async () => {
+    const savedOrg = process.env.MCCLUSTER_ORG_ID;
+    process.env.MCCLUSTER_ORG_ID = ORG;
+    const { calls, fetchImpl } = turnHarness({ metadata, content: 'open the docs' });
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = fetchImpl;
+    let chats = 0;
+    try {
+      const output = await residentAiTurnWith(job(), { agentDependencies: { chat: async () => { chats += 1; throw new Error('inference must not run'); }, execute: async () => { throw new Error('browser_act must not run'); } } });
+      assert.equal(chats, 0, 'no inference round ran');
+      assert.equal(output.inference, 'refused');
+      assert.equal(output.error_code, 'BROWSER_OWNER_REQUIRED');
+      assert.match(calls.persisted.content, /house owner/);
+      assert.equal(calls.persisted.metadata.error_code, 'BROWSER_OWNER_REQUIRED');
+    } finally {
+      globalThis.fetch = originalFetch;
+      if (savedOrg === undefined) delete process.env.MCCLUSTER_ORG_ID; else process.env.MCCLUSTER_ORG_ID = savedOrg;
+    }
+  });
+}
+
 test('an owner browser turn runs browser_act through the loop with the vision bounds and persists the screenshots, the action log, the node badge and live checkpoints', async () => {
   const savedOrg = process.env.MCCLUSTER_ORG_ID;
   process.env.MCCLUSTER_ORG_ID = ORG;
-  const { calls, fetchImpl } = turnHarness({ metadata: { allow_browser: true, actor_user_id: OWNER }, content: 'open the docs and tell me the title' });
+  const { calls, fetchImpl } = turnHarness({ metadata: { allow_browser: true, actor_user_id: OWNER, actor_kind: 'owner' }, content: 'open the docs and tell me the title' });
   const originalFetch = globalThis.fetch;
   globalThis.fetch = fetchImpl;
   const chats = [];

@@ -26,6 +26,14 @@ function requireOwnerActor(actor) {
   return clean(actor.user_id, 100);
 }
 
+// The kind of the broker-injected actor ('owner' after the Worker's house-owner
+// check), stored on the durable turn so the turn executor reads who submitted
+// it instead of inferring it from the browser flag.
+function actorKindOf(actor) {
+  const kind = clean(actor?.kind, 40).toLowerCase();
+  return /^[a-z][a-z0-9_-]{0,39}$/.test(kind) ? kind : null;
+}
+
 function normalizeImages(images, content) {
   if (images === undefined || images === null) return [];
   if (!Array.isArray(images)) throw Object.assign(new Error('images must be an array of base64 strings'), { status: 400, code: 'AI_CHAT_IMAGE_INVALID', retryable: false });
@@ -45,6 +53,7 @@ export async function submitResidentAiTurn({ orgId, threadId, messageId, content
   const mode = inputMode === 'voice' ? 'voice' : 'text';
   const browser = allowBrowser === true;
   const actorUserId = browser ? requireOwnerActor(actor) : (UUID.test(clean(actor?.user_id, 100)) ? clean(actor.user_id, 100) : null);
+  const actorKind = actorUserId ? actorKindOf(actor) : null;
   const turnImages = normalizeImages(images, body);
 
   // Images and the browser flag ride on the user message's metadata. The RPC
@@ -59,6 +68,7 @@ export async function submitResidentAiTurn({ orgId, threadId, messageId, content
       ...(turnImages.length ? { images: turnImages } : {}),
       allow_browser: browser,
       ...(actorUserId ? { actor_user_id: actorUserId } : {}),
+      ...(actorKind ? { actor_kind: actorKind } : {}),
     };
     const { body: inserted = [] } = await restImpl('ops_ai_messages?on_conflict=id&select=id', {
       method: 'POST',
@@ -87,7 +97,7 @@ export async function submitResidentAiTurn({ orgId, threadId, messageId, content
       const params = new URLSearchParams({ id: `eq.${userMessageId}`, org_id: `eq.${org}`, role: 'eq.user' });
       await restImpl(`ops_ai_messages?${params.toString()}`, {
         method: 'PATCH',
-        body: JSON.stringify({ metadata: { input_mode: mode, execution_kind: 'resident_ai_turn', agent_job_id: userMessageId, task_status: 'failed', task_error: clean(error?.message || error, 1000), allow_browser: browser, ...(actorUserId ? { actor_user_id: actorUserId } : {}), ...(turnImages.length ? { images: turnImages } : {}) } }),
+        body: JSON.stringify({ metadata: { input_mode: mode, execution_kind: 'resident_ai_turn', agent_job_id: userMessageId, task_status: 'failed', task_error: clean(error?.message || error, 1000), allow_browser: browser, ...(actorUserId ? { actor_user_id: actorUserId } : {}), ...(actorKind ? { actor_kind: actorKind } : {}), ...(turnImages.length ? { images: turnImages } : {}) } }),
       }).catch(() => null);
     }
     throw error;

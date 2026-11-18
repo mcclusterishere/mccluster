@@ -291,14 +291,17 @@ export async function residentAiTurnWith(job, { signal, agentDependencies } = {}
   const turnIndex = threadMessages.findIndex((message) => String(message.id) === userMessageId);
   if (turnIndex < 0) throw new Error('resident AI turn history does not contain its queued user message');
 
-  // Images and the browser flag ride on the user message's metadata (written by
-  // core.ai.turn.submit before the RPC); the actor is the owner's user id.
+  // Images, the browser flag and the actor ride on the user message's metadata
+  // (written by core.ai.turn.submit before the RPC). The actor's kind is the
+  // broker-injected actor's, recorded at submit: an independent fact the
+  // browser gate checks, never inferred from the browser flag itself.
   const images = Array.isArray(userMessage.metadata?.images) ? userMessage.metadata.images.filter((item) => typeof item === 'string' && item) : [];
   const allowBrowser = userMessage.metadata?.allow_browser === true;
   const actorUserId = userMessage.metadata?.actor_user_id ? clean(userMessage.metadata.actor_user_id, 100) : null;
+  const actorKind = typeof userMessage.metadata?.actor_kind === 'string' ? clean(userMessage.metadata.actor_kind, 40) || null : null;
   const multimodal = images.length > 0 || allowBrowser;
   const bounds = allowBrowser ? BROWSER_TURN : TEXT_TURN;
-  const context = { orgId, turnId: job.id, before: userMessage.created_at, allowBrowser, actorKind: allowBrowser ? 'owner' : null, actorUserId };
+  const context = { orgId, turnId: job.id, before: userMessage.created_at, allowBrowser, actorKind, actorUserId };
 
   const packed = packHistory(threadMessages.slice(0, turnIndex + 1), multimodal ? BROWSER_TURN.historyChars : bounds.historyChars, { currentId: userMessageId });
   const history = packed.messages;
