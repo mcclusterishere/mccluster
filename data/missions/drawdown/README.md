@@ -7,16 +7,21 @@ was split into two newer solutions. `solutions-catalog.json` lists all 138 Explo
 solutions as published on 2026-11-17: name, link, sector, Drawdown's classification,
 a short summary excerpt where the page has one, and the image credit.
 
-**Status: draft, awaiting the owner's approval.** No mission here is in production. Four
-pending files would write them, and each waits for the owner's approval of its exact SQL
-(`supabase/pending/PROMOTION-ORDER.md`, section 10), each with its rollback:
-`20261117100000_action_globe_join_scope_v1.sql` (joining no longer depends on pins),
+**Status: draft, awaiting the owner's approval.** No mission here is in production yet.
+Four steps write them (`supabase/pending/PROMOTION-ORDER.md`, section 10), each with its
+rollback. The first two are applied, with the owner's approval (2026-11-17 and 2026-11-18):
+`20261117100000_action_globe_join_scope_v1.sql` (joining no longer depends on pins) and
 `20261117100100_action_mission_details.sql` (the table for proof hints, safety lines and
-credits), `20261117100200_action_mission_drawdown_import.sql` (these 125 missions as
-drafts, with their details) and `20261117100300_action_mission_drawdown_publish.sql`
-(draft to open). `tools/build-mission-import.mjs` generates the last two from
-`missions.json`; rerun it after any change here (its `--check` fails when they drift).
-Choosing where any mission appears on the globe is a separate owner decision.
+credits, still empty). The last two each wait for the owner's approval of their exact SQL:
+the import, these 125 missions as drafts with their details, in seven parts applied in
+order (`20261117100200_action_mission_drawdown_import_01.sql` to `_07.sql`), and
+`20261117100300_action_mission_drawdown_publish.sql` (draft to open, which shows them on
+the live site at once, so the owner decides when). `tools/build-mission-import.mjs`
+generates the parts, their rollback and the publish from `missions.json`; rerun it after
+any change here (its `--check` fails when they drift). Once a part is applied, this file
+must not change: the parts in production must stay the committed files byte for byte, so a
+later change is a new migration. Choosing where any mission appears on the globe is a
+separate owner decision.
 
 ## Where the content comes from
 

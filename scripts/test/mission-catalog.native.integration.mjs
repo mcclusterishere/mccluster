@@ -1,29 +1,32 @@
 // The World's mission SQL on a disposable PostgreSQL built to production's shape: join scope, mission details,
-// the Drawdown import and its publish, applied in order, rerun, then each rolled back. Production's side is
-// supabase/tests/action_mission_catalog.stub.sql plus the four applied globe migrations, and every function the
+// the Drawdown import in its parts and its publish, applied in order, rerun, then each rolled back. Production's side
+// is supabase/tests/action_mission_catalog.stub.sql plus the four applied globe migrations, and every function the
 // pending SQL replaces or calls is checked against production's md5(prosrc) (read, SELECT only, 2026-11-17).
+// The parts are also proven against the one-file import they replace: a second database gets 10.1, 10.2 and that
+// file (rebuilt in memory by the tool, byte for byte the retired file), and the two databases' rows must match.
 //
 //   ALLOW_LOCAL_EUP_DB_TESTS=1 PG_BIN=/usr/lib/postgresql/16/bin PG_MODULE=<node-postgres> \
 //     node scripts/test/mission-catalog.native.integration.mjs
 //
 // Disposable server only (scripts/test/support/native-postgres.mjs); never the canonical project.
 import { readFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import assert from 'node:assert/strict';
 import { refuseUnlessAllowed, startNativePostgres, supabaseShapedDatabase, waitsOn } from './support/native-postgres.mjs';
 import {
-  readCatalog, driftedFiles, missionId, NAMESPACE, ID_NAME_PREFIX, OUTPUT_FILES, PRODUCTION_MISSION_COLUMNS,
-  PRODUCTION_MISSION_CHECKS, CC_BY,
+  readCatalog, driftedFiles, buildImportParts, singleImportReference, missionId, NAMESPACE, ID_NAME_PREFIX, OUTPUT_FILES,
+  IMPORT_PART_MAX_BYTES, PRODUCTION_MISSION_COLUMNS, PRODUCTION_MISSION_CHECKS, CC_BY,
 } from '../../tools/build-mission-import.mjs';
 
 refuseUnlessAllowed('mission-catalog.native');
 
 const DB = 'mission_catalog_native';
+const DB_ONE_FILE = 'mission_catalog_native_one_file';
 const FILES = {
   joinScope: 'supabase/pending/20261117100000_action_globe_join_scope_v1.sql',
   joinScopeRollback: 'supabase/pending/20261117100000_action_globe_join_scope_v1.rollback.sql',
   details: 'supabase/pending/20261117100100_action_mission_details.sql',
   detailsRollback: 'supabase/pending/20261117100100_action_mission_details.rollback.sql',
-  import: OUTPUT_FILES.import,
   importRollback: OUTPUT_FILES.importRollback,
   publish: OUTPUT_FILES.publish,
   publishRollback: OUTPUT_FILES.publishRollback,
@@ -34,6 +37,8 @@ const MIGRATIONS = [
   'supabase/migrations/20261014014547_action_globe_region_activation.sql',
   'supabase/migrations/20261014184518_action_globe_join_authorization.sql',
 ];
+// The one-file import the parts replace, as the tool last wrote it to disk (2026-11-17): never applied anywhere.
+const RETIRED_IMPORT = { bytes: 188022, md5: '29271e66339a48f4133d1f7171d04cce' };
 // Production, read-only 2026-11-17: md5(prosrc) and the grants of every function in the chain.
 const JOIN = 'public.join_action_mission(uuid)';
 const CAN_JOIN = 'public.action_globe_can_join_mission(uuid,uuid)';
@@ -63,6 +68,7 @@ const ADA = '00000000-0000-4000-8000-0000000000d4'; // an admin (eu_profiles.rol
 const mUid = (id) => id.replace(/^00000000/, '10000000');
 
 const repo = (p) => readFile(new URL(`../../${p}`, import.meta.url), 'utf8');
+const md5 = (s) => createHash('md5').update(s).digest('hex');
 let n = 0;
 const ok = (c, m) => { assert.ok(c, m); n += 1; console.log(`ok ${n} ${m}`); };
 const eq = (a, b, m) => { assert.deepEqual(a, b, m); n += 1; console.log(`ok ${n} ${m}`); };
@@ -76,21 +82,56 @@ const fails = async (p, code, re, m) => {
   return error;
 };
 
-const { catalog } = readCatalog();
+const input = readCatalog();
+const { catalog } = input;
 const ids = catalog.missions.map((m) => missionId(m.slug));
 const ccByCount = catalog.missions.filter((m) => m.source?.license === CC_BY.name).length;
 const aboutCount = catalog.missions.filter((m) => m.about !== null).length;
 const sourceCount = catalog.missions.filter((m) => m.source?.explorer_url).length;
 const N = ids.length;
+const PARTS = buildImportParts(input);
+const P = PARTS.length;
+const pad2 = (i) => String(i).padStart(2, '0');
+
+/** Production's shape, its rows of 2026-11-17 (one open mission, three regions) and the test's members. */
+async function productionShape(admin) {
+  await admin.query('create extension if not exists "uuid-ossp"');
+  await admin.query(await repo('supabase/tests/action_mission_catalog.stub.sql'));
+  for (const f of MIGRATIONS) await admin.query(await repo(f));
+  // join_action_mission's grants in production (an earlier migration made them; read 2026-11-17)
+  await admin.query('revoke all on function public.join_action_mission(uuid) from public, anon; grant execute on function public.join_action_mission(uuid) to authenticated, service_role;');
+  await admin.query(`insert into public.action_missions(id, title, description, domain, status, kind)
+    values ('${FREE_RIDE}', 'Give someone a free ride', 'fixture', 'mutual_aid', 'open', 'civic')`);
+  await admin.query(`insert into public.action_globe_regions(region_key, country_code, subdivision_code, region_label, centroid_lat, centroid_lon) values
+    ('US-CT','US','CT','Connecticut',41.6032,-73.0877), ('US-GA','US','GA','Georgia',32.1656,-82.9001), ('CD-HK','CD','HK','Haut-Katanga',-10.7,27.5)`);
+  for (const id of [ANA, BEA, CAL, ADA]) {
+    await admin.query('insert into auth.users(id) values ($1)', [id]);
+    await admin.query('insert into public.m_people(id) values ($1)', [mUid(id)]);
+    await admin.query('insert into public.m_auth_user_links(auth_user_id, m_uid) values ($1, $2)', [id, mUid(id)]);
+  }
+  await admin.query("insert into public.eu_profiles(id, role) values ($1, 'admin')", [ADA]);
+}
+
+/**
+ * Every row of a table, ordered by its key, every column but created_at and updated_at (the moment of the apply,
+ * which two databases never share) in PostgreSQL's own row text, plus whether the row's two timestamps are equal.
+ */
+async function rowsDump(c, table, key) {
+  const cols = (await c.query("select attname from pg_attribute where attrelid = $1::regclass and attnum > 0 and not attisdropped and attname not in ('created_at', 'updated_at') order by attnum", [table])).rows.map((r) => `t."${r.attname}"`);
+  return (await c.query(`select coalesce(string_agg(row(${cols.join(', ')}, t.created_at = t.updated_at)::text, E'\\n' order by t.${key}), '') as d from ${table} t`)).rows[0].d;
+}
 
 const server = await startNativePostgres();
 const clients = [];
 let admin;
 try {
-  eq(driftedFiles(), [], 'the generated import and publish files are current with the catalog');
+  eq(driftedFiles(), [], 'the generated import parts and publish files are current with the catalog, and no stale import file is there');
+  ok(P >= 2 && PARTS.every((p) => p.bytes <= IMPORT_PART_MAX_BYTES), `the import is ${P} parts of ${PARTS.map((p) => p.bytes).join(', ')} bytes, each at most ${IMPORT_PART_MAX_BYTES}`);
   admin = await supabaseShapedDatabase(server, DB);
   clients.push(admin);
   const sql = Object.fromEntries(await Promise.all(Object.entries(FILES).map(async ([k, f]) => [k, await repo(f)])));
+  const parts = await Promise.all(PARTS.map(async (p) => ({ ...p, text: await repo(p.file) })));
+  eq(parts.map((p) => p.text === p.sql), parts.map(() => true), 'each part file on disk is the one the tool builds');
   const apply = (text) => admin.query(text);
   const refused = async (text, code, re, m) => {
     const e = await fails(admin.query(text), code, re, m);
@@ -105,7 +146,9 @@ try {
   const missionsDigest = () => digest("select md5(coalesce(string_agg(to_jsonb(t)::text, '|' order by t.id), '')) as d from public.action_missions t");
   const missionsContent = () => digest("select md5(coalesce(string_agg((to_jsonb(t) - 'updated_at')::text, '|' order by t.id), '')) as d from public.action_missions t");
   const detailsDigest = () => digest("select md5(coalesce(string_agg(to_jsonb(t)::text, '|' order by t.mission_id), '')) as d from public.action_mission_details t");
+  const bothDigests = async () => [await missionsDigest(), await detailsDigest()];
   const statusCounts = async () => Object.fromEntries((await admin.query('select status, count(*)::int as c from public.action_missions where id = any ($1) group by 1 order by 1', [ids])).rows.map((r) => [r.status, r.c]));
+  const detailsCount = async () => (await one('select count(*)::int as c from public.action_mission_details where mission_id = any ($1)', [ids])).c;
   const persona = async (role, user) => {
     const c = await server.client(DB);
     clients.push(c);
@@ -123,31 +166,21 @@ try {
   const pin = (mission, region, published, scope) => (scope
     ? admin.query('insert into public.action_globe_mission_regions(mission_id, region_key, published, join_scope) values ($1, $2, $3, $4)', [mission, region, published, scope])
     : admin.query('insert into public.action_globe_mission_regions(mission_id, region_key, published) values ($1, $2, $3)', [mission, region, published]));
+  /** A part applied out of order: it must refuse with 55000, naming the part before it, and change nothing. */
+  const outOfOrder = async (k, m) => {
+    const before = await bothDigests();
+    await refused(parts[k - 1].text, '55000', new RegExp(`Drawdown import part ${pad2(k)} of ${pad2(P)} refused: part ${pad2(k - 1)} \\(action_mission_drawdown_import_${pad2(k - 1)}\\) is not applied`), m);
+    eq(await bothDigests(), before, `${m}: nothing changed`);
+  };
 
   /* ---- production's shape -------------------------------------------------------------------------------- */
-  await admin.query('create extension if not exists "uuid-ossp"');
-  await apply(await repo('supabase/tests/action_mission_catalog.stub.sql'));
-  for (const f of MIGRATIONS) await apply(await repo(f));
-  // join_action_mission's grants in production (an earlier migration made them; read 2026-11-17)
-  await apply('revoke all on function public.join_action_mission(uuid) from public, anon; grant execute on function public.join_action_mission(uuid) to authenticated, service_role;');
-  for (const [sig, md5] of Object.entries(PRODUCTION_PROSRC_MD5)) eq(await md5Of(sig), md5, `PostgreSQL ${server.version}: ${sig} is production's (md5(prosrc) ${md5})`);
+  await productionShape(admin);
+  for (const [sig, digestOf] of Object.entries(PRODUCTION_PROSRC_MD5)) eq(await md5Of(sig), digestOf, `PostgreSQL ${server.version}: ${sig} is production's (md5(prosrc) ${digestOf})`);
   for (const [sig, acl] of Object.entries(PRODUCTION_ACL)) eq(await aclOf(sig), acl, `${sig} has production's grants`);
   const columns = (await admin.query("select a.attname as name, format_type(a.atttypid, a.atttypmod) as type, a.attnotnull as \"notNull\" from pg_attribute a where a.attrelid = 'public.action_missions'::regclass and a.attnum > 0 and not a.attisdropped order by a.attnum")).rows;
   eq(columns, PRODUCTION_MISSION_COLUMNS.map((c) => ({ ...c })), "public.action_missions has production's 18 columns, in order");
   const checks = Object.fromEntries((await admin.query("select conname, pg_get_constraintdef(oid) as def from pg_constraint where conrelid = 'public.action_missions'::regclass and contype = 'c' order by 1")).rows.map((r) => [r.conname, r.def]));
   eq(checks, { ...PRODUCTION_MISSION_CHECKS }, "and production's nine checks, exactly as the import tool validated against them");
-
-  // production's rows on 2026-11-17: one open mission, three regions, no pin, no member region
-  await apply(`insert into public.action_missions(id, title, description, domain, status, kind)
-    values ('${FREE_RIDE}', 'Give someone a free ride', 'fixture', 'mutual_aid', 'open', 'civic')`);
-  await apply(`insert into public.action_globe_regions(region_key, country_code, subdivision_code, region_label, centroid_lat, centroid_lon) values
-    ('US-CT','US','CT','Connecticut',41.6032,-73.0877), ('US-GA','US','GA','Georgia',32.1656,-82.9001), ('CD-HK','CD','HK','Haut-Katanga',-10.7,27.5)`);
-  for (const id of [ANA, BEA, CAL, ADA]) {
-    await admin.query('insert into auth.users(id) values ($1)', [id]);
-    await admin.query('insert into public.m_people(id) values ($1)', [mUid(id)]);
-    await admin.query('insert into public.m_auth_user_links(auth_user_id, m_uid) values ($1, $2)', [id, mUid(id)]);
-  }
-  await admin.query("insert into public.eu_profiles(id, role) values ($1, 'admin')", [ADA]);
   const anon = await persona('anon');
   const ana = await persona('authenticated', ANA);
   const bea = await persona('authenticated', BEA);
@@ -155,9 +188,9 @@ try {
   const service = await persona('service_role');
   const beforeAll = await missionsDigest();
 
-  /* ---- the bug, as production has it today --------------------------------------------------------------- */
+  /* ---- the bug, as production had it before 10.1 --------------------------------------------------------- */
   await pin(FREE_RIDE, 'US-CT', false);
-  await fails(join(ana, FREE_RIDE), 'P0001', /regional mission not eligible for this member/, 'production today: one UNPUBLISHED pin makes the free ride unjoinable for a member with no region');
+  await fails(join(ana, FREE_RIDE), 'P0001', /regional mission not eligible for this member/, 'production before 10.1: one UNPUBLISHED pin makes the free ride unjoinable for a member with no region');
   await apply('delete from public.action_globe_mission_regions');
 
   /* ---- 1. join scope ------------------------------------------------------------------------------------- */
@@ -193,8 +226,8 @@ try {
   await fails(ana.query('select public.action_globe_can_join_mission($1, $2)', [mUid(ANA), FREE_RIDE]), '42501', /permission denied/, 'a member still cannot call the eligibility helper');
 
   /* ---- 2. mission details -------------------------------------------------------------------------------- */
-  await refused(sql.import, '55000', /apply 20261117100100_action_mission_details\.sql/, 'the import refuses, changing nothing, before the details table exists');
-  eq(await statusCounts(), {}, 'and wrote no mission');
+  for (const p of parts) await refused(p.text, '55000', /apply 20261117100100_action_mission_details\.sql before the Drawdown import/, `import part ${pad2(p.index)} refuses, changing nothing, before the details table exists`);
+  eq(await statusCounts(), {}, 'and no part wrote a mission');
   await fails(service.query(sql.details), '42501', /permission denied for schema public/, 'the service role cannot apply 10.2 either');
   await service.query('rollback');
   await apply(sql.details); await apply(sql.details);
@@ -211,17 +244,27 @@ try {
     { polname: 'public reads open mission details', polcmd: 'r', roles: ['anon', 'authenticated'] },
   ], 'two policies: public reads (anon, authenticated) and admins manage (authenticated)');
 
-  /* ---- 3. import: one transaction, drafts only ----------------------------------------------------------- */
+  /* ---- 3. import: the parts in order, each one transaction, drafts only ---------------------------------- */
   const stray = '00000000-0000-4000-8000-00000000ee01';
   await apply(`insert into public.action_missions(id, title, status) values ('${stray}', 'stray', 'draft')`);
   await apply(`insert into public.action_mission_details(mission_id, catalog, slug, credit_line) values ('${stray}', 'drawdown', '${catalog.missions[0].slug}', 'x')`);
-  await refused(sql.import, '23505', /action_mission_details_catalog_slug_key/, 'one failing row (a slug already taken) aborts the whole import');
-  eq(await statusCounts(), {}, 'and leaves no mission behind: it is one transaction');
+  await refused(parts[0].text, '23505', /action_mission_details_catalog_slug_key/, 'one failing row (a slug already taken) aborts the whole of part 01');
+  eq(await statusCounts(), {}, 'and leaves no mission of it behind: a part is one transaction');
   await apply(`delete from public.action_missions where id = '${stray}'`);
   const preImport = await missionsDigest();
   eq(preImport, beforeAll, 'the missions table is back to production\'s rows before the import');
-  await apply(sql.import);
-  eq(await statusCounts(), { draft: N }, `the import writes ${N} missions, every one a draft`);
+  let landed = 0;
+  for (const [i, p] of parts.entries()) {
+    // Out of order: the next part, and the one after it, refuse until this one is in.
+    if (i + 1 < P) await outOfOrder(i + 2, `part ${pad2(i + 2)} applied before part ${pad2(i + 1)} refuses`);
+    if (i + 2 < P) await outOfOrder(i + 3, `part ${pad2(i + 3)} applied two ahead refuses too`);
+    await apply(p.text);
+    landed += p.ids.length;
+    const counts = (await one('select count(*) filter (where id = any ($1))::int as part, count(*) filter (where id = any ($2))::int as so_far from public.action_missions', [p.ids, ids.slice(0, landed)]));
+    eq([counts.part, counts.so_far, await statusCounts(), await detailsCount()], [p.ids.length, landed, { draft: landed }, landed],
+      `part ${pad2(p.index)} (${p.name}, ${p.bytes} bytes) writes its ${p.ids.length} missions as drafts with their details: ${landed} of ${N} in`);
+  }
+  eq(await statusCounts(), { draft: N }, `the ${P} parts write ${N} missions, every one a draft`);
   const shape = await one(`select count(*) filter (where kind = 'civic' and proof_required and campaign_id is null and capacity is null and starts_at is null and ends_at is null)::int as c
     from public.action_missions where id = any ($1)`, [ids]);
   eq(shape.c, N, 'every one civic, proof required, with no campaign, capacity or dates');
@@ -233,15 +276,44 @@ try {
   const v5 = await one(`select count(*)::int as c from unnest($1::text[], $2::uuid[]) as x(slug, id)
     where uuid_generate_v5($3::uuid, $4 || x.slug) = x.id`, [catalog.missions.map((m) => m.slug), ids, NAMESPACE, ID_NAME_PREFIX]);
   eq(v5.c, N, 'every id equals PostgreSQL uuid-ossp uuid_generate_v5 of mccluster:mission:drawdown:<slug> under the namespace');
+
+  // The parts leave exactly the rows the one-file import leaves. A second database, built the same way, gets 10.1,
+  // 10.2 and the one file the parts replace; the two dumps must be equal byte for byte.
+  const oneFile = singleImportReference(input);
+  eq([Buffer.byteLength(oneFile), md5(oneFile)], [RETIRED_IMPORT.bytes, RETIRED_IMPORT.md5], `the tool rebuilds the one-file import byte for byte (${RETIRED_IMPORT.bytes} bytes, md5 ${RETIRED_IMPORT.md5})`);
+  const second = await supabaseShapedDatabase(server, DB_ONE_FILE);
+  clients.push(second);
+  await productionShape(second);
+  await second.query(sql.joinScope);
+  await second.query(sql.details);
+  await second.query(oneFile);
+  const dumps = {};
+  for (const [label, c] of [['parts', admin], ['one file', second]]) {
+    dumps[label] = { missions: await rowsDump(c, 'public.action_missions', 'id'), details: await rowsDump(c, 'public.action_mission_details', 'mission_id') };
+  }
+  ok(dumps.parts.missions.split('\n').length === N + 1 && dumps.parts.details.split('\n').length === N, `the dumps hold ${N + 1} missions (the free ride too) and ${N} details rows`);
+  ok(!/,f\)$/m.test(dumps.parts.missions + dumps['one file'].missions + dumps.parts.details + dumps['one file'].details), 'every row was written once: created_at equals updated_at on each');
+  eq(dumps.parts.missions, dumps['one file'].missions, `public.action_missions after the ${P} parts is, byte for byte, the one file's (${Buffer.byteLength(dumps.parts.missions)} bytes, md5 ${md5(dumps.parts.missions)}; every column but the two timestamps)`);
+  eq(dumps.parts.details, dumps['one file'].details, `public.action_mission_details too (${Buffer.byteLength(dumps.parts.details)} bytes, md5 ${md5(dumps.parts.details)})`);
+  for (const p of parts) await second.query(p.text);
+  eq([await rowsDump(second, 'public.action_missions', 'id'), await rowsDump(second, 'public.action_mission_details', 'mission_id')], [dumps['one file'].missions, dumps['one file'].details],
+    'the parts applied over the one file change nothing');
+  await second.end();
+  clients.splice(clients.indexOf(second), 1);
+
   eq(await sees(anon), [0, 0], 'a guest reads no draft and no draft\'s details');
   eq(await sees(ana), [0, 0], 'neither does a signed-in member');
   eq(await sees(ada), [N, N], 'an admin reads the drafts and their details');
-  const afterImport = [await missionsDigest(), await detailsDigest()];
-  await apply(sql.import);
-  eq([await missionsDigest(), await detailsDigest()], afterImport, 'rerunning the import changes nothing');
+  const afterImport = await bothDigests();
+  for (const p of parts) {
+    await apply(p.text);
+    eq(await bothDigests(), afterImport, `rerunning part ${pad2(p.index)} changes nothing`);
+  }
+  await apply(oneFile);
+  eq(await bothDigests(), afterImport, 'and so does the one file over the parts');
   const firstTitle = (await one('select title from public.action_missions where id = $1', [ids[0]])).title;
   await apply(`update public.action_missions set title = 'Edited by the owner' where id = '${ids[0]}'`);
-  await apply(sql.import);
+  await apply(parts[0].text);
   eq((await one('select title from public.action_missions where id = $1', [ids[0]])).title, 'Edited by the owner', 'a rerun never overwrites a mission the owner edited');
   await admin.query('update public.action_missions set title = $2 where id = $1', [ids[0], firstTitle]);
   const draftContent = await missionsContent();
@@ -253,20 +325,26 @@ try {
   const OWNER_DRAFT = '00000000-0000-4000-8000-00000000ee02';
   await apply(`insert into public.action_missions(id, title, status) values ('${OWNER_DRAFT}', 'An owner''s draft outside the catalog', 'draft')`);
   const ownerDraftStatus = async () => (await one('select status from public.action_missions where id = $1', [OWNER_DRAFT])).status;
-  await apply(`update public.action_missions set status = 'paused' where id = '${ids[1]}'`);
+  const others = () => digest("select md5(coalesce(string_agg(to_jsonb(t)::text, '|' order by t.id), '')) as d from public.action_missions t where not (t.id = any (array[" + ids.map((id) => `'${id}'::uuid`).join(',') + ']))');
+  const othersBefore = await others();
   await apply(sql.publish);
-  eq(await statusCounts(), { open: N - 1, paused: 1 }, 'publish opens the drafts and leaves a mission the owner paused alone');
+  eq(await statusCounts(), { open: N }, `after the last part the publish opens exactly the ${N} imported missions`);
+  eq(await others(), othersBefore, 'and touches no other mission: the free ride stays open, the owner\'s draft a draft');
+  await apply(`update public.action_missions set status = 'paused' where id = '${ids[1]}'`);
+  await apply(`update public.action_missions set status = 'draft' where id = '${ids[2]}'`);
+  await apply(sql.publish);
+  eq(await statusCounts(), { open: N - 1, paused: 1 }, 'run again it opens a mission set back to draft and leaves a mission the owner paused alone');
   await apply(`update public.action_missions set status = 'draft' where id = '${ids[1]}'`);
   await apply(sql.publish);
-  eq(await statusCounts(), { open: N }, `run again it opens the one draft left: all ${N} open`);
+  eq(await statusCounts(), { open: N }, `and opens the one draft left: all ${N} open`);
   eq((await one("select count(*)::int as c from public.action_missions where status = 'open' and not (id = any ($1))", [ids])).c, 1, 'and touched no other mission (the free ride stays as it was)');
   eq(await ownerDraftStatus(), 'draft', "an owner's draft outside the catalog stays a draft");
   eq(await sees(anon), [N, N], `a guest reads the ${N} published missions and their ${N} details rows`);
   const credits = await anon.query('select count(*)::int as c from public.action_missions m join public.action_mission_details d on d.mission_id = m.id where m.id = any ($1) and length(d.credit_line) > 0', [ids]);
   eq(credits.rows[0].c, N, 'every published mission a guest reads has its credit line');
-  const afterPublish = [await missionsDigest(), await detailsDigest()];
+  const afterPublish = await bothDigests();
   await apply(sql.publish);
-  eq([await missionsDigest(), await detailsDigest()], afterPublish, 'rerunning the publish changes nothing');
+  eq(await bothDigests(), afterPublish, 'rerunning the publish changes nothing');
   eq(await ownerDraftStatus(), 'draft', "the owner's draft is still a draft after the rerun");
   await apply(`delete from public.action_missions where id = '${OWNER_DRAFT}'`);
   await service.query(`update public.action_missions set status = 'draft' where id = $1`, [ids[2]]);
@@ -357,8 +435,19 @@ try {
   eq(await missionsDigest(), beforeAll, "public.action_missions ends as production's rows began");
 
   /* ---- 7. the whole chain again, after its rollbacks ----------------------------------------------------- */
-  for (const k of ['joinScope', 'details', 'import', 'publish']) await apply(sql[k]);
-  eq(await statusCounts(), { open: N }, 'after every rollback the four files apply again from the start');
+  await apply(sql.joinScope); await apply(sql.details);
+  await apply(parts[0].text); await apply(parts[1].text);
+  eq(await statusCounts(), { draft: parts[0].ids.length + parts[1].ids.length }, 'stopped after part 02, the import holds its first two parts');
+  await apply(sql.importRollback);
+  eq([await missionsDigest(), await detailsCount()], [beforeAll, 0], 'and the one import rollback undoes however many parts ran');
+  for (const p of parts.slice(0, -1)) await apply(p.text);
+  const last = parts[P - 1];
+  const beforePublish = await bothDigests();
+  await refused(sql.publish, '55000', new RegExp(`Drawdown publish refused: ${last.ids.length} of the ${N} missions are missing`), `the publish refuses, changing nothing, while part ${pad2(P)} is not in`);
+  eq(await bothDigests(), beforePublish, 'nothing was published');
+  await apply(last.text);
+  await apply(sql.publish);
+  eq(await statusCounts(), { open: N }, `after every rollback the files apply again from the start: 10.1, 10.2, parts 01 to ${pad2(P)}, the publish`);
   for (const k of ['publishRollback', 'importRollback', 'detailsRollback', 'joinScopeRollback']) await apply(sql[k]);
   eq([await missionsDigest(), await md5Of(JOIN), await md5Of(CAN_JOIN)], [beforeAll, PRODUCTION_PROSRC_MD5[JOIN], PRODUCTION_PROSRC_MD5[CAN_JOIN]], 'and roll back again to production\'s state');
 

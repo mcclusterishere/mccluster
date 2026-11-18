@@ -7,8 +7,9 @@
 -- and check with node tools/build-mission-import.mjs --check (scripts/test/mission-import.test.mjs runs it).
 --
 -- PENDING. Not applied to production. Owner approval required. Apply with the Supabase MCP `apply_migration`
--- (it runs as postgres) under the name `action_mission_drawdown_publish`, AFTER
--- 20261117100200_action_mission_drawdown_import.sql, then promote with the steps in supabase/pending/README.md.
+-- (it runs as postgres) under the name `action_mission_drawdown_publish`, AFTER the import parts
+-- 20261117100200_action_mission_drawdown_import_01.sql to _07.sql, then promote with the steps in
+-- supabase/pending/README.md.
 -- Order: supabase/pending/PROMOTION-ORDER.md, section 10.
 -- Rollback: 20261117100300_action_mission_drawdown_publish.rollback.sql.
 -- Proof before apply: scripts/test/mission-catalog.native.integration.mjs.
@@ -160,7 +161,7 @@ begin
       or not exists (select 1 from public.action_mission_details d where d.mission_id = i.id);
   if v_missing > 0 then
     raise exception 'Drawdown publish refused: % of the % missions are missing or have no details row', v_missing, cardinality(v_ids)
-      using errcode = '55000', hint = 'Apply 20261117100200_action_mission_drawdown_import.sql first; nothing was published.';
+      using errcode = '55000', hint = 'Apply the import parts 20261117100200_action_mission_drawdown_import_01.sql to _07.sql first; nothing was published.';
   end if;
 end
 $publish_guard$;

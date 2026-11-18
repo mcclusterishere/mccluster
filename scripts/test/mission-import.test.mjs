@@ -1,22 +1,50 @@
 // The Drawdown mission import (tools/build-mission-import.mjs) and the pending SQL it writes, checked offline.
-// The database side (apply, rerun, read as a guest, join, roll back) is
-// scripts/test/mission-catalog.native.integration.mjs on a disposable PostgreSQL.
+// The database side (apply the parts in order, rerun, out of order, read as a guest, join, roll back, and the
+// parts' rows against the one-file import's) is scripts/test/mission-catalog.native.integration.mjs on a
+// disposable PostgreSQL.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync, mkdtempSync, mkdirSync, writeFileSync, copyFileSync, existsSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import {
-  readCatalog, validateCatalog, buildFiles, driftedFiles, checkPredicate, missionRow, detailsRow, missionId, uuidV5,
-  creatorName, NAMESPACE, ID_NAME_PREFIX, OUTPUT_FILES, PRODUCTION_MISSION_CHECKS, PRODUCTION_MISSION_COLUMNS,
-  DETAIL_LIMITS, DETAIL_PAIRS, CC_BY,
+  readCatalog, validateCatalog, buildFiles, buildImportParts, singleImportReference, driftedFiles, staleFiles,
+  checkPredicate, missionRow, detailsRow, missionId, uuidV5, creatorName, NAMESPACE, ID_NAME_PREFIX, OUTPUT_FILES,
+  CATALOG_PATH, IMPORT_PART_MAX_BYTES, RETIRED_IMPORT_FILE, importPartFile, importPartName,
+  PRODUCTION_MISSION_CHECKS, PRODUCTION_MISSION_COLUMNS, DETAIL_LIMITS, DETAIL_PAIRS, CC_BY,
 } from '../../tools/build-mission-import.mjs';
 
 const ROOT = new URL('../../', import.meta.url);
 const read = (p) => readFileSync(new URL(p, ROOT), 'utf8');
+const md5 = (s) => createHash('md5').update(s).digest('hex');
+const bytes = (s) => Buffer.byteLength(s, 'utf8');
 const { text: catalogText, catalog } = readCatalog();
 const rows = catalog.missions;
 const ids = rows.map((m) => missionId(m.slug));
+const parts = buildImportParts({ text: catalogText, catalog });
+const pad2 = (i) => String(i).padStart(2, '0');
+/** Every part file as committed, in apply order. */
+const partFiles = parts.map((p) => p.file);
+const partSql = () => partFiles.map(read);
+
+/** The one-file import the parts replace, as the tool last wrote it (2026-11-17) for this catalog: never applied. */
+const RETIRED_IMPORT = { catalogSha256: 'b9150c5b3075862fc66b989a12791278924414d2c6fc463fcb3dbbf67c6e6f66', bytes: 188022, md5: '29271e66339a48f4133d1f7171d04cce' };
+/** The publish and both rollbacks as reviewed with the one-file import (2026-11-17). */
+const REVIEWED_MD5 = {
+  publish: 'a37a83c64b9c439896770ed7b898fc30',
+  importRollback: '893d7f115c14cc847d08bd23ab40b364',
+  publishRollback: '16cb998e034e30208bb99c098ca504b2',
+};
+/** The VALUES rows of one INSERT, between "from (values" and ") as v(". */
+function valuesBlock(sql, table) {
+  const start = sql.indexOf(`\ninsert into public.${table}\n`);
+  assert.ok(start > 0, `an insert into public.${table}`);
+  const from = sql.indexOf('  from (values\n', start) + '  from (values\n'.length;
+  return sql.slice(from, sql.indexOf('\n  ) as v(', from));
+}
 
 /** production's archive_missions_20261030.action_missions ids (40), read once with SELECT on 2026-11-17 */
 const ARCHIVED_MISSION_IDS = [
@@ -141,7 +169,7 @@ test('no id is one of production\'s archived missions or its live one', () => {
 test('every CC BY 4.0 row credits its creators, record, DOI and licence, and the import writes them', () => {
   const ccBy = rows.filter((m) => m.source.license === CC_BY.name);
   assert.equal(ccBy.length, 43);
-  const sql = read(OUTPUT_FILES.import);
+  const sql = partSql().join('\n');
   for (const m of ccBy) {
     const credit = m.credit_line.toLowerCase();
     assert.ok(m.source.creators.length > 0, m.slug);
@@ -164,32 +192,149 @@ test('every CC BY 4.0 row credits its creators, record, DOI and licence, and the
   }
 });
 
-test('the import inserts drafts only, with the fixed columns, and nothing else', () => {
-  const sql = read(OUTPUT_FILES.import);
-  const code = codeOnly(sql).toLowerCase();
-  assert.match(sql, /^begin;$/m);
-  assert.match(sql, /^commit;$/m);
-  assert.equal((code.match(/\binsert into\b/g) || []).length, 2, 'two inserts');
-  assert.match(code, /insert into public\.action_missions\b/);
-  assert.match(code, /insert into public\.action_mission_details\b/);
-  assert.doesNotMatch(code, /\b(update|delete|truncate|drop|alter|grant|revoke|create)\b/, 'no other statement');
-  assert.equal((code.match(/on conflict \(id\) do nothing;/g) || []).length, 1);
-  assert.equal((code.match(/on conflict \(mission_id\) do nothing;/g) || []).length, 1);
-  const m = /insert into public\.action_missions\s*\(([^)]*)\)\s*select (.*?)\s+from \(values/s.exec(sql);
-  const cols = m[1].split(',').map((s) => s.trim());
-  const exprs = m[2].split(/,\s*/).map((s) => s.trim());
-  assert.equal(cols.length, exprs.length);
-  const set = Object.fromEntries(cols.map((c, i) => [c, exprs[i]]));
-  assert.deepEqual(
-    [set.status, set.kind, set.proof_required, set.campaign_id, set.capacity, set.starts_at, set.ends_at],
-    ["'draft'", "'civic'", 'true', 'null', 'null', 'null', 'null'],
-    'every row: status draft, kind civic, proof required, no campaign, capacity or dates',
-  );
-  for (const c of cols) assert.ok(PRODUCTION_MISSION_COLUMNS.some((p) => p.name === c), `${c} is a production column`);
-  assert.doesNotMatch(code, /'open'/, "the word 'open' is never a value in the import");
-  const values = sql.slice(sql.indexOf('from (values'), sql.indexOf('as v(id, title'));
-  assert.deepEqual(uuids(values), ids, 'one row per catalog mission, in catalog order');
-  assert.deepEqual(uuids(sql.slice(sql.lastIndexOf('from (values'))), ids, 'and one details row each');
+test('every import part inserts drafts only, with the fixed columns, and nothing else', () => {
+  assert.equal(partSql().length, parts.length);
+  for (const [i, sql] of partSql().entries()) {
+    const f = partFiles[i];
+    const code = codeOnly(sql).toLowerCase();
+    assert.match(sql, /^begin;\nset local lock_timeout = '5s';\nset local standard_conforming_strings = on;\n$/m, `${f}: one transaction, bounded lock wait, standard strings`);
+    assert.equal((sql.match(/^begin;$/gm) || []).length, 1, f);
+    assert.equal((sql.match(/^commit;$/gm) || []).length, 1, f);
+    assert.ok(sql.endsWith('\ncommit;\n'), `${f}: commit is the last statement`);
+    assert.equal((code.match(/\binsert into\b/g) || []).length, 2, `${f}: two inserts`);
+    assert.match(code, /insert into public\.action_missions\b/);
+    assert.match(code, /insert into public\.action_mission_details\b/);
+    assert.doesNotMatch(code, /\b(update|delete|truncate|drop|alter|grant|revoke|create)\b/, `${f}: no other statement`);
+    assert.equal((code.match(/on conflict \(id\) do nothing;/g) || []).length, 1, f);
+    assert.equal((code.match(/on conflict \(mission_id\) do nothing;/g) || []).length, 1, f);
+    const m = /insert into public\.action_missions\s*\(([^)]*)\)\s*select (.*?)\s+from \(values/s.exec(sql);
+    const cols = m[1].split(',').map((s) => s.trim());
+    const exprs = m[2].split(/,\s*/).map((s) => s.trim());
+    assert.equal(cols.length, exprs.length);
+    const set = Object.fromEntries(cols.map((c, j) => [c, exprs[j]]));
+    assert.deepEqual(
+      [set.status, set.kind, set.proof_required, set.campaign_id, set.capacity, set.starts_at, set.ends_at],
+      ["'draft'", "'civic'", 'true', 'null', 'null', 'null', 'null'],
+      `${f}: every row status draft, kind civic, proof required, no campaign, capacity or dates`,
+    );
+    for (const c of cols) assert.ok(PRODUCTION_MISSION_COLUMNS.some((p) => p.name === c), `${c} is a production column`);
+    assert.doesNotMatch(code, /'open'/, `${f}: the word 'open' is never a value in the import`);
+    assert.deepEqual(uuids(valuesBlock(sql, 'action_missions')), parts[i].ids, `${f}: one row per mission of the part, in catalog order`);
+    assert.deepEqual(uuids(valuesBlock(sql, 'action_mission_details')), parts[i].ids, `${f}: and one details row each`);
+  }
+  assert.deepEqual(parts.flatMap((p) => p.ids), ids, 'the parts, in order, hold every catalog mission once, in catalog order');
+});
+
+test(`the parts: the fewest that each fit in ${IMPORT_PART_MAX_BYTES} bytes, in catalog order, named for their order`, () => {
+  assert.equal(IMPORT_PART_MAX_BYTES, 32000);
+  assert.ok(parts.length >= 2 && parts.length <= 99, `${parts.length} parts`);
+  let next = 1;
+  for (const [i, p] of parts.entries()) {
+    const sql = read(p.file);
+    assert.equal(p.index, i + 1);
+    assert.equal(p.file, `supabase/pending/20261117100200_action_mission_drawdown_import_${pad2(i + 1)}.sql`);
+    assert.equal(p.name, `action_mission_drawdown_import_${pad2(i + 1)}`, 'the migration name is the file name without its timestamp');
+    assert.equal(p.file, importPartFile(p.index));
+    assert.equal(p.name, importPartName(p.index));
+    assert.equal(bytes(sql), p.bytes);
+    assert.ok(p.bytes <= IMPORT_PART_MAX_BYTES, `${p.file} is ${p.bytes} bytes`);
+    assert.deepEqual([p.first, p.last], [next, next + p.ids.length - 1], `${p.file}: catalog missions ${next} on, no gap, no overlap`);
+    next = p.last + 1;
+  }
+  assert.equal(next, rows.length + 1, 'and the last part ends with the last mission');
+  // Fewer parts cannot fit: every part repeats a header, its guards and the two statements around the rows, so
+  // one part fewer would need the rows plus that many overheads in that many times the cap.
+  const rowsBytes = (sql) => bytes(valuesBlock(sql, 'action_missions')) + bytes(valuesBlock(sql, 'action_mission_details'));
+  const overhead = Math.min(...partSql().map((sql) => bytes(sql) - rowsBytes(sql))) - 100;
+  const allRows = partSql().reduce((sum, sql) => sum + rowsBytes(sql), 0);
+  const fewer = parts.length - 1;
+  assert.ok(allRows + fewer * overhead > fewer * IMPORT_PART_MAX_BYTES, `${fewer} parts cannot hold ${allRows} bytes of rows`);
+  assert.deepEqual(buildImportParts({ text: catalogText, catalog }).map((p) => [p.first, p.last, md5(p.sql)]),
+    parts.map((p) => [p.first, p.last, md5(p.sql)]), 'the same catalog, the same cuts');
+});
+
+test('each part is self-contained: the details guard, then from part 02 on, the part before it must be in', () => {
+  const T = pad2(parts.length);
+  const sha = createHash('sha256').update(catalogText).digest('hex');
+  for (const [i, sql] of partSql().entries()) {
+    const p = parts[i];
+    const P = pad2(p.index);
+    const header = sql.split(/^begin;$/m)[0];
+    assert.ok(header.startsWith(`-- PROJECT DRAWDOWN MISSION CATALOG: IMPORT AS DRAFTS, PART ${P} OF ${T} (catalog missions ${p.first} to ${p.last} of ${rows.length})\n`), `${p.file}: names the part and the total`);
+    assert.ok(header.includes(`(sha256 ${sha}).`), `${p.file}: names the catalog it came from`);
+    assert.ok(header.includes(`under the name \`${p.name}\`, this file byte for byte in one call,`), `${p.file}: its migration name`);
+    assert.ok(header.includes(`-- Order: parts 01 to ${T} one at a time, production read again between parts (supabase/pending/PROMOTION-ORDER.md,`), `${p.file}: the order`);
+    assert.ok(header.includes('-- Rollback: 20261117100200_action_mission_drawdown_import.rollback.sql. One rollback serves every part.'), `${p.file}: the rollback`);
+    assert.ok(header.includes('-- Proof before apply: scripts/test/mission-catalog.native.integration.mjs.'), `${p.file}: the proof`);
+    const guard = /\ndo \$import_guard\$\nbegin\n([\s\S]*?)\nend\n\$import_guard\$;\n/.exec(sql);
+    assert.ok(guard && guard.index < sql.indexOf('\ninsert into '), `${p.file}: one guard, before any insert`);
+    assert.ok(guard[1].startsWith("  if to_regclass('public.action_mission_details') is null then\n    raise exception 'apply 20261117100100_action_mission_details.sql before the Drawdown import' using errcode = '55000';\n  end if;"),
+      `${p.file}: refuses first when the details table is missing`);
+    if (i === 0) {
+      assert.equal((guard[1].match(/raise exception/g) || []).length, 1, 'part 01 has no part before it');
+      continue;
+    }
+    const before = parts[i - 1];
+    const B = pad2(before.index);
+    const lastId = before.ids[before.ids.length - 1];
+    assert.ok(guard[1].includes(`  if not exists (select 1 from public.action_missions m join public.action_mission_details d on d.mission_id = m.id\n                  where m.id = '${lastId}'::uuid) then -- ${before.slugs[before.slugs.length - 1]}\n`),
+      `${p.file}: refuses unless part ${B}'s last mission is there with its details row`);
+    assert.ok(guard[1].includes(`raise exception 'Drawdown import part ${P} of ${T} refused: part ${B} (${before.name}) is not applied'\n      using errcode = '55000', hint = 'Apply 20261117100200_action_mission_drawdown_import_${B}.sql first; nothing was imported.';`),
+      `${p.file}: with 55000, naming part ${B}`);
+    assert.equal(uuids(guard[1]).length, 1, `${p.file}: the guard names that one mission`);
+  }
+});
+
+test('the one-file import, rebuilt in memory, is the file the parts replace; the parts carry its rows byte for byte', () => {
+  const single = singleImportReference({ text: catalogText, catalog });
+  assert.equal(createHash('sha256').update(catalogText).digest('hex'), RETIRED_IMPORT.catalogSha256,
+    'the catalog is the one the one-file import was written from (a changed catalog needs new parts, a new proof and new pins)');
+  assert.deepEqual([bytes(single), md5(single)], [RETIRED_IMPORT.bytes, RETIRED_IMPORT.md5], 'byte for byte the retired file');
+  assert.ok(!existsSync(new URL(RETIRED_IMPORT_FILE, ROOT)), `${RETIRED_IMPORT_FILE} is gone: the parts replace it`);
+  assert.equal(partSql().map((sql) => valuesBlock(sql, 'action_missions')).join(',\n'), valuesBlock(single, 'action_missions'),
+    "the parts' mission rows, in order, are the one file's");
+  assert.equal(partSql().map((sql) => valuesBlock(sql, 'action_mission_details')).join(',\n'), valuesBlock(single, 'action_mission_details'),
+    "and so are their details rows");
+  // Around the rows, each part's two statements are the one file's, word for word (only the headings count differently).
+  const statements = (sql) => sql.slice(sql.indexOf('\n-- ---'), sql.lastIndexOf('\non conflict (mission_id) do nothing;\n'))
+    .replace(valuesBlock(sql, 'action_missions'), '<rows>').replace(valuesBlock(sql, 'action_mission_details'), '<rows>')
+    .replace(/^-- [12]\. .*$/gm, '<heading>');
+  for (const [i, sql] of partSql().entries()) assert.equal(statements(sql), statements(single), `${partFiles[i]}: the one file's statements`);
+});
+
+test('the publish and the import rollback differ from their reviewed bytes only where they name the import; the publish rollback not at all', () => {
+  const span = `20261117100200_action_mission_drawdown_import_01.sql to _${pad2(parts.length)}.sql`;
+  const unchanged = (text, edits) => edits.reduce((t, [now, then]) => {
+    assert.equal(t.split(now).length, 2, `exactly once: ${now}`);
+    return t.split(now).join(then);
+  }, text);
+  assert.equal(md5(unchanged(read(OUTPUT_FILES.publish), [
+    [`AFTER the import parts\n-- ${span}, then promote with the steps in\n-- supabase/pending/README.md.`,
+      'AFTER\n-- 20261117100200_action_mission_drawdown_import.sql, then promote with the steps in supabase/pending/README.md.'],
+    [`hint = 'Apply the import parts ${span} first; nothing was published.'`,
+      "hint = 'Apply 20261117100200_action_mission_drawdown_import.sql first; nothing was published.'"],
+  ])), REVIEWED_MD5.publish, 'the publish: its guard, its update and its ids are the reviewed ones');
+  assert.equal(md5(unchanged(read(OUTPUT_FILES.importRollback), [
+    [`-- Recovery artifact for the import parts ${span},\n-- however many of them ran: never a forward migration.`,
+      '-- Recovery artifact for 20261117100200_action_mission_drawdown_import.sql: never a forward migration.'],
+  ])), REVIEWED_MD5.importRollback, 'the import rollback: the reviewed lock, count, refusal and delete');
+  assert.equal(md5(read(OUTPUT_FILES.publishRollback)), REVIEWED_MD5.publishRollback, 'the publish rollback is the reviewed file');
+});
+
+test('every SQL file a generated file names is there: in supabase/pending, or promoted under supabase/migrations', () => {
+  // The publish and the import rollback used to name the one-file import; once it was gone they had to change.
+  const pending = new Set(readdirSync(new URL('supabase/pending/', ROOT)));
+  const promoted = new Set(readdirSync(new URL('supabase/migrations/', ROOT)).map((f) => f.slice(15)));
+  const files = buildFiles({ text: catalogText, catalog });
+  for (const [f, sql] of Object.entries(files)) {
+    for (const [name] of sql.matchAll(/\b[0-9]{14}_[a-z0-9_]+(?:[.]rollback)?[.]sql\b/g)) {
+      assert.ok(pending.has(name) || (!name.endsWith('.rollback.sql') && promoted.has(name.slice(15))), `${f} names ${name}, which is not there`);
+    }
+    for (const [, prefix, last] of sql.matchAll(/\b([0-9]{14}_[a-z0-9_]+_)01[.]sql to _([0-9]{2})[.]sql/g)) {
+      for (let i = 1; i <= Number(last); i += 1) assert.ok(pending.has(`${prefix}${pad2(i)}.sql`), `${f} names ${prefix}${pad2(i)}.sql`);
+    }
+  }
+  assert.ok(Object.keys(files).every((p) => pending.has(p.slice('supabase/pending/'.length))), 'and every generated file is written');
 });
 
 test('the publish touches exactly the imported ids, drafts only; its rollback undoes exactly that', () => {
@@ -225,17 +370,51 @@ test('the publish touches exactly the imported ids, drafts only; its rollback un
 
 test('the generated files are current (node tools/build-mission-import.mjs --check)', () => {
   assert.deepEqual(driftedFiles(), []);
-  const r = spawnSync(process.execPath, ['tools/build-mission-import.mjs', '--check'], { cwd: new URL('.', ROOT), encoding: 'utf8' });
+  assert.deepEqual(staleFiles(), []);
+  const r = spawnSync(process.execPath, ['tools/build-mission-import.mjs', '--check'], { cwd: fileURLToPath(ROOT), encoding: 'utf8' });
   assert.equal(r.status, 0, r.stderr);
+  assert.equal(r.stdout.trim(), `mission import SQL is current (${parts.length + 3} files)`);
   const sha = createHash('sha256').update(catalogText).digest('hex');
-  for (const f of Object.values(OUTPUT_FILES)) assert.ok(read(f).includes(`(sha256 ${sha}).`), `${f} names the catalog it came from`);
+  for (const f of [...partFiles, ...Object.values(OUTPUT_FILES)]) assert.ok(read(f).includes(`(sha256 ${sha}).`), `${f} names the catalog it came from`);
+});
+
+test('--check fails while the retired one-file import or a part the catalog does not build is on disk; a build removes them', () => {
+  // Two appliable copies of the import must never sit side by side: the one-file import beside its parts, or a part
+  // left over from an earlier cut. Proven on a copy of the tool and the catalog in a scratch directory.
+  const root = mkdtempSync(join(tmpdir(), 'mission-import-'));
+  try {
+    for (const dir of ['tools', 'data/missions/drawdown', 'supabase/pending']) mkdirSync(join(root, dir), { recursive: true });
+    copyFileSync(fileURLToPath(new URL('tools/build-mission-import.mjs', ROOT)), join(root, 'tools/build-mission-import.mjs'));
+    writeFileSync(join(root, CATALOG_PATH), catalogText);
+    const tool = (...args) => spawnSync(process.execPath, [join(root, 'tools/build-mission-import.mjs'), ...args], { encoding: 'utf8' });
+    assert.equal(tool().status, 0, 'a build writes every file');
+    assert.deepEqual(readdirSync(join(root, 'supabase/pending')).sort(), Object.keys(buildFiles({ text: catalogText, catalog })).map((p) => p.slice('supabase/pending/'.length)).sort());
+    assert.equal(tool('--check').status, 0);
+    const stray = importPartFile(parts.length + 1);
+    writeFileSync(join(root, RETIRED_IMPORT_FILE), singleImportReference({ text: catalogText, catalog }));
+    writeFileSync(join(root, stray), '-- left over from an earlier cut\n');
+    writeFileSync(join(root, 'supabase/pending/20261117100200_action_mission_drawdown_import_1.sql'), '-- a part named out of pattern\n');
+    const expected = [RETIRED_IMPORT_FILE, 'supabase/pending/20261117100200_action_mission_drawdown_import_1.sql', stray].sort();
+    assert.deepEqual(staleFiles(root), expected);
+    assert.deepEqual(driftedFiles(root), expected, '--check reports exactly them');
+    const check = tool('--check');
+    assert.equal(check.status, 1, '--check fails');
+    for (const p of expected) assert.ok(check.stderr.includes(p), `--check names ${p}`);
+    const build = tool();
+    assert.equal(build.status, 0);
+    assert.ok(build.stdout.includes(`removed ${expected.join(', ')}`), build.stdout);
+    for (const p of expected) assert.ok(!existsSync(join(root, p)), `a build removes ${p}`);
+    assert.equal(tool('--check').status, 0, 'and --check passes again');
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });
 
 test('every pending file says owner approval is required, names its rollback and states its counts', () => {
   const files = {
     'supabase/pending/20261117100000_action_globe_join_scope_v1.sql': '20261117100000_action_globe_join_scope_v1.rollback.sql',
     'supabase/pending/20261117100100_action_mission_details.sql': '20261117100100_action_mission_details.rollback.sql',
-    [OUTPUT_FILES.import]: '20261117100200_action_mission_drawdown_import.rollback.sql',
+    ...Object.fromEntries(partFiles.map((f) => [f, '20261117100200_action_mission_drawdown_import.rollback.sql'])),
     [OUTPUT_FILES.publish]: '20261117100300_action_mission_drawdown_publish.rollback.sql',
   };
   for (const [f, rollback] of Object.entries(files)) {
@@ -246,9 +425,24 @@ test('every pending file says owner approval is required, names its rollback and
     assert.match(s, /^begin;$/m, f);
     assert.match(s, /^commit;$/m, f);
   }
-  assert.match(read(OUTPUT_FILES.import), /Row counts: public\.action_missions \+125 \(all draft\); public\.action_mission_details \+125\./);
+  for (const p of parts) {
+    const k = p.ids.length;
+    assert.ok(read(p.file).includes(`Row counts: public.action_missions +${k} (all draft); public.action_mission_details +${k}. On a rerun: +0 and +0.`), p.file);
+  }
+  assert.equal(parts.reduce((sum, p) => sum + p.ids.length, 0), 125, 'the parts together: +125 and +125');
   assert.match(read(OUTPUT_FILES.publish), /Row counts: public\.action_missions: 125 rows draft -> open on the first run; 0 on a rerun\./);
   assert.match(read(OUTPUT_FILES.importRollback), /Row counts: public\.action_missions -125, public\.action_mission_details -125/);
+});
+
+test('PROMOTION-ORDER.md and README.md list every part in order, with its migration name, missions, bytes and md5', () => {
+  for (const doc of ['supabase/pending/PROMOTION-ORDER.md', 'supabase/pending/README.md']) {
+    const listed = [...read(doc).matchAll(/^\| (\d{2}) \| `([^`]+)` \| `([^`]+)` \| (\d+) to (\d+) \((\d+)\) \| ([\d,]+) \| `([0-9a-f]{32})` \|$/gm)]
+      .map((m) => ({ part: Number(m[1]), file: m[2], name: m[3], first: Number(m[4]), last: Number(m[5]), n: Number(m[6]), bytes: Number(m[7].replace(/,/g, '')), md5: m[8] }));
+    assert.deepEqual(listed, parts.map((p) => ({
+      part: p.index, file: p.file.slice('supabase/pending/'.length), name: p.name, first: p.first, last: p.last, n: p.ids.length,
+      bytes: bytes(read(p.file)), md5: md5(read(p.file)),
+    })), `${doc} lists the parts as committed`);
+  }
 });
 
 test("the catalog's credit display rule is the README's and the details table's", () => {
@@ -274,7 +468,7 @@ test('every mission SQL file says to run it as postgres, never as the service ro
     'supabase/pending/20261117100100_action_mission_details.sql',
     'supabase/pending/20261117100100_action_mission_details.rollback.sql',
   ];
-  for (const f of [...ownerOnly, ...Object.values(OUTPUT_FILES)]) {
+  for (const f of [...ownerOnly, ...partFiles, ...Object.values(OUTPUT_FILES)]) {
     const header = read(f).split(/^begin;$/m)[0].replace(/\n-- /g, ' ');
     assert.doesNotMatch(header, /as the service role/i, `${f} must not say to apply it as the service role`);
     assert.match(header, /apply_migration`? \(it runs as postgres|apply_migration` runs as postgres/, `${f} says the MCP runs as postgres`);

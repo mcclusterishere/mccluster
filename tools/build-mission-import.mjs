@@ -1,15 +1,29 @@
 #!/usr/bin/env node
 /* MISSION CATALOG IMPORT: data/missions/drawdown/missions.json -> pending SQL for the owner to approve.
 
-     node tools/build-mission-import.mjs          # validate the catalog, then write the four files
-     node tools/build-mission-import.mjs --check  # fail if any of the four drifted from the catalog
+     node tools/build-mission-import.mjs          # validate the catalog, write the files, remove stale ones
+     node tools/build-mission-import.mjs --check  # fail if a file drifted from the catalog or a stale one remains
 
    Writes, under supabase/pending/ (this tool never touches a database; every file needs the owner's
    approval of its exact SQL, see supabase/pending/PROMOTION-ORDER.md, section 10):
-     20261117100200_action_mission_drawdown_import.sql            the missions as drafts, plus their details
-     20261117100200_action_mission_drawdown_import.rollback.sql   deletes exactly those ids; refuses while referenced
+     20261117100200_action_mission_drawdown_import_01.sql ..      the missions as drafts, plus their details, in
+     20261117100200_action_mission_drawdown_import_NN.sql         parts applied in order (below)
+     20261117100200_action_mission_drawdown_import.rollback.sql   deletes exactly those ids, however many parts ran;
+                                                                  refuses while referenced
      20261117100300_action_mission_drawdown_publish.sql           draft -> open, exactly those ids
      20261117100300_action_mission_drawdown_publish.rollback.sql  open -> draft, exactly those ids
+
+   The parts. Until 2026-11-18 the import was one file, 20261117100200_action_mission_drawdown_import.sql
+   (188,022 bytes): more than one Supabase MCP `apply_migration` call can carry when the operator sends the
+   committed file byte for byte. It is now cut, in catalog order, into the fewest parts of at most
+   IMPORT_PART_MAX_BYTES bytes each, as even in size as that count allows, applied one at a time as migrations
+   action_mission_drawdown_import_01 to _NN. Each part is one transaction: its missions, then their details rows,
+   ON CONFLICT DO NOTHING. It refuses (55000), changing nothing, unless the details table exists and, from part 02
+   on, the part before it is in: that part's last mission is there with its details row (a part is one transaction,
+   so that row stands for all of it). One rollback serves every part. The one-file import is no longer written:
+   singleImportReference() rebuilds it byte for byte, in memory only, for the proofs that the parts leave exactly
+   its rows; --check fails while that file, or a part this catalog does not build, is on disk, so two appliable
+   copies of the import never sit side by side.
 
    Every row is checked before anything is written, and one bad row stops the build:
      - against production's check constraints on public.action_missions. PRODUCTION_MISSION_CHECKS below is
@@ -25,7 +39,7 @@
    Ids are deterministic: UUID v5 (RFC 9562, section 5.5) of "mccluster:mission:drawdown:<slug>" under
    NAMESPACE, so a rerun of the import inserts nothing and the publish names the same rows. */
 import { createHash } from 'node:crypto';
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, readdirSync, unlinkSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -34,11 +48,21 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 export const CATALOG_PATH = 'data/missions/drawdown/missions.json';
 export const DETAILS_SQL_PATH = 'supabase/pending/20261117100100_action_mission_details.sql';
 export const OUTPUT_FILES = Object.freeze({
-  import: 'supabase/pending/20261117100200_action_mission_drawdown_import.sql',
   importRollback: 'supabase/pending/20261117100200_action_mission_drawdown_import.rollback.sql',
   publish: 'supabase/pending/20261117100300_action_mission_drawdown_publish.sql',
   publishRollback: 'supabase/pending/20261117100300_action_mission_drawdown_publish.rollback.sql',
 });
+
+/** The most bytes (UTF-8) one import part may hold: what one `apply_migration` call carries safely. */
+export const IMPORT_PART_MAX_BYTES = 32000;
+const pad2 = (i) => String(i).padStart(2, '0');
+/** Part i (1-based): its pending file and the migration name it is applied under. */
+export const importPartFile = (i) => `supabase/pending/20261117100200_action_mission_drawdown_import_${pad2(i)}.sql`;
+export const importPartName = (i) => `action_mission_drawdown_import_${pad2(i)}`;
+const PART_FILE = /^20261117100200_action_mission_drawdown_import_[0-9]+[.]sql$/;
+/** The import as one file, written until 2026-11-18 and replaced by the parts. It must not come back beside them. */
+export const RETIRED_IMPORT_FILE = 'supabase/pending/20261117100200_action_mission_drawdown_import.sql';
+const fileName = (path) => path.slice(path.lastIndexOf('/') + 1);
 
 /** Fixed namespace for mission ids (a random version 4 UUID chosen once, 2026-11-17). Never change it: every id moves. */
 export const NAMESPACE = '4540f730-bb7d-4dde-b727-03881158e001';
@@ -262,28 +286,72 @@ const provenance = (s) => [
 const idList = (catalog, indent) => catalog.missions.map((m, i, all) =>
   `${indent}'${missionId(m.slug)}'${i < all.length - 1 ? ',' : ' '} -- ${m.slug}`).join('\n');
 
-function buildImport(catalog, s) {
-  const missions = catalog.missions.map((m, i, all) => {
-    const r = missionRow(m);
-    return [
-      `    (${lit(r.id)}::uuid, -- ${m.slug}`,
-      `     ${lit(r.title)},`,
-      `     ${lit(r.description)},`,
-      `     ${lit(r.domain)}, ${lit(r.discovery_category)}, ${r.difficulty}, ${r.base_points}, ${lit(r.verification_mode)}, ${textArray(r.skills)})${i < all.length - 1 ? ',' : ''}`,
-    ].join('\n');
-  }).join('\n');
-  const details = catalog.missions.map((m, i, all) => {
-    const d = detailsRow(m);
-    return [
-      `    (${lit(d.mission_id)}::uuid, ${lit(d.slug)},`,
-      `     ${lit(d.proof_hint)},`,
-      `     ${lit(d.safety_note)},`,
-      `     ${lit(d.credit_line)},`,
-      `     ${lit(d.about)},`,
-      `     ${lit(d.about_credit)},`,
-      `     ${lit(d.source_url)}, ${lit(d.license_name)}, ${lit(d.license_url)}, ${lit(d.doi)})${i < all.length - 1 ? ',' : ''}`,
-    ].join('\n');
-  }).join('\n');
+/** One mission's row in the VALUES list of the missions INSERT, without the comma that separates rows. */
+function missionValues(m) {
+  const r = missionRow(m);
+  return [
+    `    (${lit(r.id)}::uuid, -- ${m.slug}`,
+    `     ${lit(r.title)},`,
+    `     ${lit(r.description)},`,
+    `     ${lit(r.domain)}, ${lit(r.discovery_category)}, ${r.difficulty}, ${r.base_points}, ${lit(r.verification_mode)}, ${textArray(r.skills)})`,
+  ].join('\n');
+}
+
+/** One mission's row in the VALUES list of the details INSERT, without the comma that separates rows. */
+function detailsValues(m) {
+  const d = detailsRow(m);
+  return [
+    `    (${lit(d.mission_id)}::uuid, ${lit(d.slug)},`,
+    `     ${lit(d.proof_hint)},`,
+    `     ${lit(d.safety_note)},`,
+    `     ${lit(d.credit_line)},`,
+    `     ${lit(d.about)},`,
+    `     ${lit(d.about_credit)},`,
+    `     ${lit(d.source_url)}, ${lit(d.license_name)}, ${lit(d.license_url)}, ${lit(d.doi)})`,
+  ].join('\n');
+}
+
+/** The two INSERT statements for a run of missions, each under its heading: the missions, then their details. */
+function insertStatements(missions, missionsHeading, detailsHeading) {
+  return [
+    LINE,
+    missionsHeading,
+    'insert into public.action_missions',
+    '  (id, campaign_id, title, description, domain, difficulty, base_points, proof_required, verification_mode,',
+    '   skills, capacity, status, starts_at, ends_at, kind, discovery_category)',
+    "select v.id, null, v.title, v.description, v.domain, v.difficulty, v.base_points, true, v.verification_mode,",
+    "       v.skills, null, 'draft', null, null, 'civic', v.discovery_category",
+    '  from (values',
+    missions.map(missionValues).join(',\n'),
+    '  ) as v(id, title, description, domain, discovery_category, difficulty, base_points, verification_mode, skills)',
+    'on conflict (id) do nothing;',
+    '',
+    LINE,
+    detailsHeading,
+    'insert into public.action_mission_details',
+    '  (mission_id, catalog, slug, proof_hint, safety_note, credit_line, about, about_credit, source_url,',
+    '   license_name, license_url, doi)',
+    `select v.mission_id, ${lit(CATALOG)}, v.slug, v.proof_hint, v.safety_note, v.credit_line, v.about, v.about_credit,`,
+    '       v.source_url, v.license_name, v.license_url, v.doi',
+    '  from (values',
+    missions.map(detailsValues).join(',\n'),
+    '  ) as v(mission_id, slug, proof_hint, safety_note, credit_line, about, about_credit, source_url, license_name,',
+    '        license_url, doi)',
+    'on conflict (mission_id) do nothing;',
+  ];
+}
+
+const IMPORT_GUARD_DETAILS = [
+  "  if to_regclass('public.action_mission_details') is null then",
+  "    raise exception 'apply 20261117100100_action_mission_details.sql before the Drawdown import' using errcode = '55000';",
+  '  end if;',
+];
+
+/**
+ * The import as the one file this tool wrote until 2026-11-18 (20261117100200_action_mission_drawdown_import.sql),
+ * byte for byte. Never written to disk any more: the proofs apply it beside the parts and compare the rows.
+ */
+function buildSingleImport(catalog, s) {
   return [
     '-- PROJECT DRAWDOWN MISSION CATALOG: IMPORT AS DRAFTS',
     '--',
@@ -318,45 +386,144 @@ function buildImport(catalog, s) {
     '',
     'do $import_guard$',
     'begin',
-    "  if to_regclass('public.action_mission_details') is null then",
-    "    raise exception 'apply 20261117100100_action_mission_details.sql before the Drawdown import' using errcode = '55000';",
-    '  end if;',
+    ...IMPORT_GUARD_DETAILS,
     'end',
     '$import_guard$;',
     '',
-    LINE,
-    `-- 1. ${s.n} missions, every one a draft`,
-    'insert into public.action_missions',
-    '  (id, campaign_id, title, description, domain, difficulty, base_points, proof_required, verification_mode,',
-    '   skills, capacity, status, starts_at, ends_at, kind, discovery_category)',
-    "select v.id, null, v.title, v.description, v.domain, v.difficulty, v.base_points, true, v.verification_mode,",
-    "       v.skills, null, 'draft', null, null, 'civic', v.discovery_category",
-    '  from (values',
-    missions,
-    '  ) as v(id, title, description, domain, discovery_category, difficulty, base_points, verification_mode, skills)',
-    'on conflict (id) do nothing;',
-    '',
-    LINE,
-    `-- 2. their ${s.n} details rows: proof hint, safety note, credit, quotation, source, licence`,
-    'insert into public.action_mission_details',
-    '  (mission_id, catalog, slug, proof_hint, safety_note, credit_line, about, about_credit, source_url,',
-    '   license_name, license_url, doi)',
-    `select v.mission_id, ${lit(CATALOG)}, v.slug, v.proof_hint, v.safety_note, v.credit_line, v.about, v.about_credit,`,
-    '       v.source_url, v.license_name, v.license_url, v.doi',
-    '  from (values',
-    details,
-    '  ) as v(mission_id, slug, proof_hint, safety_note, credit_line, about, about_credit, source_url, license_name,',
-    '        license_url, doi)',
-    'on conflict (mission_id) do nothing;',
+    ...insertStatements(catalog.missions, `-- 1. ${s.n} missions, every one a draft`,
+      `-- 2. their ${s.n} details rows: proof hint, safety note, credit, quotation, source, licence`),
     '',
     'commit;',
     '',
   ].join('\n');
 }
 
-function buildImportRollback(catalog, s) {
+/**
+ * One import part. part: { index, missions, first, last } (first and last: 1-based catalog positions);
+ * total: how many parts there are; previous: the part before it, or null for part 01.
+ */
+function buildImportPart(part, total, previous, s) {
+  const k = part.missions.length;
+  const [P, T] = [pad2(part.index), pad2(total)];
+  const before = previous && previous.missions[previous.missions.length - 1];
+  const B = previous && pad2(previous.index);
   return [
-    '-- Recovery artifact for 20261117100200_action_mission_drawdown_import.sql: never a forward migration.',
+    `-- PROJECT DRAWDOWN MISSION CATALOG: IMPORT AS DRAFTS, PART ${P} OF ${T} (catalog missions ${part.first} to ${part.last} of ${s.n})`,
+    '--',
+    ...provenance(s),
+    '--',
+    '-- PENDING. Not applied to production. Owner approval required. Apply with the Supabase MCP `apply_migration`',
+    `-- (it runs as postgres) under the name \`${importPartName(part.index)}\`, this file byte for byte in one call,`,
+    '-- then promote it with the steps in supabase/pending/README.md.',
+    `-- Order: parts 01 to ${T} one at a time, production read again between parts (supabase/pending/PROMOTION-ORDER.md,`,
+    ...(previous ? [
+      `-- section 10). Part ${P} refuses, changing nothing, until part ${B} is in. After part ${T}, when the owner decides:`,
+      '-- the publish (20261117100300).',
+    ] : [
+      '-- section 10). Part 01 refuses, changing nothing, until 20261117100100_action_mission_details.sql is in, and each',
+      `-- later part until the part before it is in. After part ${T}, when the owner decides: the publish (20261117100300).`,
+    ]),
+    `-- Rollback: ${fileName(OUTPUT_FILES.importRollback)}. One rollback serves every part.`,
+    '-- Proof before apply: scripts/test/mission-catalog.native.integration.mjs.',
+    '--',
+    `-- What it does, in one transaction: inserts these ${k} missions into public.action_missions as drafts (kind civic,`,
+    `-- proof required; ids UUID v5 of "mccluster:mission:drawdown:<slug>" under ${NAMESPACE}), then`,
+    `-- their ${k} rows into public.action_mission_details, both ON CONFLICT DO NOTHING: a rerun inserts nothing and never`,
+    "-- overwrites a mission the owner has since edited or published. Every row passed production's checks on",
+    '-- public.action_missions (read 2026-11-17) and the constraints of public.action_mission_details.',
+    `-- Row counts: public.action_missions +${k} (all draft); public.action_mission_details +${k}. On a rerun: +0 and +0.`,
+    'begin;',
+    "set local lock_timeout = '5s';",
+    'set local standard_conforming_strings = on;',
+    '',
+    'do $import_guard$',
+    'begin',
+    ...IMPORT_GUARD_DETAILS,
+    ...(previous ? [
+      `  -- Part ${B} first: it is one transaction, so its last mission is there with its details row once it committed.`,
+      '  if not exists (select 1 from public.action_missions m join public.action_mission_details d on d.mission_id = m.id',
+      `                  where m.id = ${lit(missionId(before.slug))}::uuid) then -- ${before.slug}`,
+      `    raise exception 'Drawdown import part ${P} of ${T} refused: part ${B} (${importPartName(previous.index)}) is not applied'`,
+      `      using errcode = '55000', hint = 'Apply ${fileName(importPartFile(previous.index))} first; nothing was imported.';`,
+      '  end if;',
+    ] : []),
+    'end',
+    '$import_guard$;',
+    '',
+    ...insertStatements(part.missions, `-- 1. ${k} missions (catalog ${part.first} to ${part.last}), every one a draft`,
+      `-- 2. their ${k} details rows: proof hint, safety note, credit, quotation, source, licence`),
+    '',
+    'commit;',
+    '',
+  ].join('\n');
+}
+
+/* ---- the parts: catalog order, the fewest that fit, as even as that count allows ------------------------------ */
+
+/* Every real total has two digits, as this stand-in does, so a part's size does not depend on the total. */
+const PLAN_TOTAL = 99;
+const bytes = (text) => Buffer.byteLength(text, 'utf8');
+
+/**
+ * Greedy, in catalog order: a part takes the next mission while the whole part, header and guards included, stays
+ * within `budget` bytes. Throws a RangeError when one mission alone does not fit.
+ */
+function packParts(catalog, s, budget) {
+  const parts = [];
+  let open = null;
+  const fits = (part) => bytes(buildImportPart(part, PLAN_TOTAL, parts[parts.length - 1] || null, s)) <= budget;
+  catalog.missions.forEach((m, i) => {
+    const grown = open && { ...open, missions: [...open.missions, m], last: i + 1 };
+    if (grown && fits(grown)) { open = grown; return; }
+    if (open) parts.push(open);
+    open = { index: parts.length + 1, missions: [m], first: i + 1, last: i + 1 };
+    if (!fits(open)) throw new RangeError(`${m.slug} alone does not fit in an import part of ${budget} bytes`);
+  });
+  if (open) parts.push(open);
+  if (parts.length > PLAN_TOTAL) throw new RangeError(`${parts.length} import parts; at most ${PLAN_TOTAL}`);
+  return parts;
+}
+
+const planned = new Map();
+/**
+ * The parts for this catalog: the fewest that each fit in IMPORT_PART_MAX_BYTES, then the smallest byte budget that
+ * still needs no more of them, so they come out about the same size. Deterministic: the same catalog, the same cuts.
+ */
+function planParts(catalog, s) {
+  // The plan depends on the rows and on the header (which names the catalog file's sha256): key on both.
+  const key = `${s.sha}:${createHash('sha256').update(JSON.stringify(catalog.missions)).digest('hex')}`;
+  if (planned.has(key)) return planned.get(key);
+  const fewest = packParts(catalog, s, IMPORT_PART_MAX_BYTES).length;
+  let [lo, hi] = [1, IMPORT_PART_MAX_BYTES];
+  while (lo < hi) {
+    const mid = Math.floor((lo + hi) / 2);
+    let n = Infinity;
+    try { n = packParts(catalog, s, mid).length; } catch (error) { if (!(error instanceof RangeError)) throw error; }
+    if (n <= fewest) hi = mid; else lo = mid + 1;
+  }
+  const parts = packParts(catalog, s, hi);
+  if (parts.length !== fewest) throw new Error(`import parts: planned ${parts.length}, the fewest is ${fewest}`);
+  planned.set(key, parts);
+  return parts;
+}
+
+/** The SQL of every part, in order, each checked against IMPORT_PART_MAX_BYTES. */
+function renderParts(catalog, s) {
+  const parts = planParts(catalog, s);
+  return parts.map((part, i) => {
+    const sql = buildImportPart(part, parts.length, parts[i - 1] || null, s);
+    if (bytes(sql) > IMPORT_PART_MAX_BYTES) throw new Error(`${importPartFile(part.index)} is ${bytes(sql)} bytes, over ${IMPORT_PART_MAX_BYTES}`);
+    return { ...part, sql };
+  });
+}
+
+/** "<part 01's file> to _NN.sql": how the publish and the import rollback name the parts. */
+const partsSpan = (total) => `${fileName(importPartFile(1))} to _${pad2(total)}.sql`;
+
+function buildImportRollback(catalog, s, total) {
+  return [
+    `-- Recovery artifact for the import parts ${partsSpan(total)},`,
+    '-- however many of them ran: never a forward migration.',
     '--',
     ...provenance(s),
     '--',
@@ -446,15 +613,16 @@ function buildImportRollback(catalog, s) {
   ].join('\n');
 }
 
-function buildPublish(catalog, s) {
+function buildPublish(catalog, s, total) {
   return [
     '-- PROJECT DRAWDOWN MISSION CATALOG: PUBLISH',
     '--',
     ...provenance(s),
     '--',
     '-- PENDING. Not applied to production. Owner approval required. Apply with the Supabase MCP `apply_migration`',
-    '-- (it runs as postgres) under the name `action_mission_drawdown_publish`, AFTER',
-    '-- 20261117100200_action_mission_drawdown_import.sql, then promote with the steps in supabase/pending/README.md.',
+    '-- (it runs as postgres) under the name `action_mission_drawdown_publish`, AFTER the import parts',
+    `-- ${partsSpan(total)}, then promote with the steps in`,
+    '-- supabase/pending/README.md.',
     '-- Order: supabase/pending/PROMOTION-ORDER.md, section 10.',
     '-- Rollback: 20261117100300_action_mission_drawdown_publish.rollback.sql.',
     '-- Proof before apply: scripts/test/mission-catalog.native.integration.mjs.',
@@ -482,7 +650,7 @@ function buildPublish(catalog, s) {
     '      or not exists (select 1 from public.action_mission_details d where d.mission_id = i.id);',
     '  if v_missing > 0 then',
     "    raise exception 'Drawdown publish refused: % of the % missions are missing or have no details row', v_missing, cardinality(v_ids)",
-    "      using errcode = '55000', hint = 'Apply 20261117100200_action_mission_drawdown_import.sql first; nothing was published.';",
+    `      using errcode = '55000', hint = 'Apply the import parts ${partsSpan(total)} first; nothing was published.';`,
     '  end if;',
     'end',
     '$publish_guard$;',
@@ -534,25 +702,63 @@ export function readCatalog(root = ROOT) {
   return { text, catalog: JSON.parse(text) };
 }
 
-/** Validate, then return { relative path: file text } for the four generated files. Throws on any invalid row. */
-export function buildFiles({ text, catalog }) {
+/** Validate the catalog and summarize it. Throws on any invalid row. */
+function prepare({ text, catalog }) {
   const errors = validateCatalog(catalog);
   if (errors.length) throw new Error(`${CATALOG_PATH} is not importable:\n  ${errors.join('\n  ')}`);
-  const s = summary(catalog, createHash('sha256').update(text).digest('hex'));
+  return summary(catalog, createHash('sha256').update(text).digest('hex'));
+}
+
+/**
+ * The import parts, in the order they are applied: { index, name, file, first, last, slugs, ids, bytes, sql }
+ * (first and last are 1-based catalog positions). Throws on any invalid row.
+ */
+export function buildImportParts(input) {
+  const s = prepare(input);
+  return renderParts(input.catalog, s).map((p) => ({
+    index: p.index, name: importPartName(p.index), file: importPartFile(p.index), first: p.first, last: p.last,
+    slugs: p.missions.map((m) => m.slug), ids: p.missions.map((m) => missionId(m.slug)), bytes: bytes(p.sql), sql: p.sql,
+  }));
+}
+
+/**
+ * The whole import as one statement, exactly as this tool wrote 20261117100200_action_mission_drawdown_import.sql
+ * until 2026-11-18. For the proofs only (the parts must leave exactly its rows); never written to disk.
+ */
+export function singleImportReference(input) {
+  return buildSingleImport(input.catalog, prepare(input));
+}
+
+/** Validate, then return { relative path: file text } for every generated file, the parts first. Throws on any invalid row. */
+export function buildFiles(input) {
+  const s = prepare(input);
+  const { catalog } = input;
+  const parts = renderParts(catalog, s);
   return {
-    [OUTPUT_FILES.import]: buildImport(catalog, s),
-    [OUTPUT_FILES.importRollback]: buildImportRollback(catalog, s),
-    [OUTPUT_FILES.publish]: buildPublish(catalog, s),
+    ...Object.fromEntries(parts.map((p) => [importPartFile(p.index), p.sql])),
+    [OUTPUT_FILES.importRollback]: buildImportRollback(catalog, s, parts.length),
+    [OUTPUT_FILES.publish]: buildPublish(catalog, s, parts.length),
     [OUTPUT_FILES.publishRollback]: buildPublishRollback(catalog, s),
   };
 }
 
-/** Paths of generated files that differ from what the catalog builds today (empty when current). */
+/** Import files on disk that the catalog does not build: the retired one-file import, or a part beyond the last. */
+export function staleFiles(root = ROOT, files = buildFiles(readCatalog(root))) {
+  return readdirSync(join(root, 'supabase/pending'))
+    .map((f) => `supabase/pending/${f}`)
+    .filter((path) => (path === RETIRED_IMPORT_FILE || PART_FILE.test(fileName(path))) && !(path in files))
+    .sort();
+}
+
+/** Paths of generated files that differ from what the catalog builds today, then stale ones (empty when current). */
 export function driftedFiles(root = ROOT) {
   const files = buildFiles(readCatalog(root));
-  return Object.entries(files)
-    .filter(([path, out]) => !existsSync(join(root, path)) || readFileSync(join(root, path), 'utf8') !== out)
-    .map(([path]) => path);
+  return [
+    ...Object.entries(files)
+      .filter(([path, out]) => !existsSync(join(root, path)) || readFileSync(join(root, path), 'utf8') !== out)
+      .map(([path]) => path),
+    ...staleFiles(root, files),
+  ];
 }
 
 function main() {
@@ -566,14 +772,16 @@ function main() {
   if (process.argv.includes('--check')) {
     const drifted = driftedFiles();
     if (drifted.length) {
-      console.error(`generated mission SQL drifted from ${CATALOG_PATH}; run node tools/build-mission-import.mjs\n  ${drifted.join('\n  ')}`);
+      console.error(`generated mission SQL drifted from ${CATALOG_PATH}, or a stale import file is still there; run node tools/build-mission-import.mjs\n  ${drifted.join('\n  ')}`);
       process.exit(1);
     }
     console.log(`mission import SQL is current (${Object.keys(files).length} files)`);
     return;
   }
   for (const [path, out] of Object.entries(files)) writeFileSync(join(ROOT, path), out);
-  console.log(`wrote ${Object.keys(files).join(', ')}`);
+  const stale = staleFiles(ROOT, files);
+  for (const path of stale) unlinkSync(join(ROOT, path));
+  console.log(`wrote ${Object.keys(files).join(', ')}${stale.length ? `\nremoved ${stale.join(', ')}` : ''}`);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main();
