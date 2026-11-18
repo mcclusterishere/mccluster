@@ -70,6 +70,7 @@ on:
       - 'css/world-environment.css'
       - 'scripts/e2e/world-environment.mjs'
       - 'scripts/e2e/environment-globe.e2e.mjs'
+      - 'scripts/e2e/environment-world.e2e.mjs'
       - 'scripts/e2e/fixtures/environment/**'
       - 'scripts/e2e/support/**'
       - 'scripts/test/world-environment*.test.mjs'
@@ -98,7 +99,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        suite: [database, editorial-iphone-portrait, editorial-iphone-landscape, editorial-ipad-portrait, editorial-ipad-landscape, editorial-desktop, editorial-video-composer, travel-iphone-portrait, travel-iphone-landscape, travel-ipad-portrait, travel-ipad-landscape, travel-desktop, guest-travel, member-desk, music-world, news-guest, navigation, creator-onboarding, mission-pins, world-missions-guest, world-countries, world-globe-feed, world-transport, anti-social, human-uprise-door, owner-halo-globe, policy-mode, world-environment, environment-globe, environment-unit]
+        suite: [database, editorial-iphone-portrait, editorial-iphone-landscape, editorial-ipad-portrait, editorial-ipad-landscape, editorial-desktop, editorial-video-composer, travel-iphone-portrait, travel-iphone-landscape, travel-ipad-portrait, travel-ipad-landscape, travel-desktop, guest-travel, member-desk, music-world, news-guest, navigation, creator-onboarding, mission-pins, world-missions-guest, world-countries, world-globe-feed, world-transport, anti-social, human-uprise-door, owner-halo-globe, policy-mode, world-environment, environment-globe, environment-world, environment-unit]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -148,6 +149,7 @@ jobs:
             owner-halo-globe) node scripts/e2e/owner-halo-globe.e2e.mjs /tmp/hu-proof/owner-halo-globe ;;
             world-environment) node scripts/e2e/world-environment.mjs /tmp/hu-proof/world-environment ;;
             environment-globe) CESIUM_DIR=$CESIUM_DIR node scripts/e2e/environment-globe.e2e.mjs /tmp/hu-proof/environment-globe ;;
+            environment-world) CESIUM_DIR=$CESIUM_DIR node scripts/e2e/environment-world.e2e.mjs /tmp/hu-proof/environment-world ;;
             environment-unit) node --test scripts/test/world-environment*.test.mjs scripts/test/environment-*.test.mjs scripts/test/globe-*.test.mjs ;;
             *) echo 'Unknown suite' >&2; exit 2 ;;
           esac
