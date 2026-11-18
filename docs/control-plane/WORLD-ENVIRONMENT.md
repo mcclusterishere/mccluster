@@ -614,3 +614,110 @@ and at the end):
   scrolled to its first posts; nothing scrolls sideways in any of them.
 - Not run: the perf benchmark in full (only its `--check` mode, inside the in-frame suite); nothing here touches a render loop, a hold
   or the governor, and the tint's switch is read in the frame step that already set the shading's visibility.
+
+### Review of the release polish (2026-11-18): the five findings at `e495b7ee`
+
+The adversarial review of the polish left two minor findings (RP-1, RP-2) and three nits (RP-3 to RP-5). They are fixed in
+`929cd0e7` and `9e83fa17`, each with a test that fails without its fix (the fifth gained its test in the verification recorded
+below). Nothing is deployed; production still answers 503 until the owner enables the module.
+
+- **RP-1, Next and Previous named a scene without its card.** The polish treated every arrival via `'tour'` as the tour's own choice,
+  and a step the visitor makes with Next or Previous reaches the panel through that same arrival (the director's `onArrive`), so a
+  scene the visitor stepped to was named by the scene line only ("Paused at scene 2 of 12: Tornado Warning …"): no Observed, no
+  Retrieved, no source, no row pressed, and the scene's row usually hidden in the two-row list. Under reduced motion the tour never
+  starts by itself and the panel says "Next and Previous step without motion", so stepping is the only way through the significant
+  events there. A step pressed while the tour is not playing is the visitor's choice again: the scene it brings opens its card and
+  presses its row, as before the polish. The globe tells the step's scene state (the scene it is at, not playing) before the scene
+  arrives, so the panel matches the arrival to that scene: a late answer for the scene before it (its ShakeMap) takes nothing from the
+  step. The scenes of a playing tour, Next pressed while it plays included, and a late answer for a scene the visitor only paused on
+  still open no card, so the polish's first-post measure stands (local patch `RP-1` in `vendor/equity-uprise/product-source.lock.json`;
+  two panel tests; the integration suite: the step card at 390, 820 and 1280 with the tour paused, and Next and Previous under
+  reduced motion).
+- **RP-2, a row chosen in the open list jumped to third place.** The few were worked out again around the new selection, so a row
+  chosen deep in the full list moved to third under a keyboard or screen-reader user, and the focus dropped to the page (it already
+  did before the polish). The rows the compact list showed when the toggle opened it now lead the full list in their order and the
+  rest follow in the feed's order, so no choice moves a row; a row that has the focus keeps it through every re-render of the list (the
+  choice, the globe's answer to it, a refresh), and the next Tab goes to the next row (local patch `RP-2`; a panel test; the
+  integration suite at 390 under reduced motion).
+- **RP-3, a decision read as a production fact.** The feed brief's "All 125 missions are published" now records the decision and the
+  state apart: three of the four files of `PROMOTION-ORDER.md` section 10 applied (ledger 376), the 125 in production as drafts, the
+  publish pending for the deploy window (`scripts/test/mission-import.test.mjs` holds the brief to it while the publish is in
+  `supabase/pending/`).
+- **RP-4, rollbacks named staged files no longer on disk.** The first lines of the join scope, details table and import rollbacks
+  name the applied migrations under `supabase/migrations/`, then the names they were staged and reviewed under. The import rollback's
+  header comes from `tools/build-mission-import.mjs`: the seven applied parts are unchanged (`--check`), and the unit test still holds
+  the rollback to its reviewed bytes outside the lines that name the import. No file under `supabase/migrations/` changed.
+- **RP-5, the lock's regression tests.** The polish's patch entry named `scripts/test/world-environment-lifecycle.test.mjs`, which
+  tests none of its patches; it names the panel suite and the integration suite. The consumer test only read each named file, so
+  this correction had no test that failed without it: `scripts/test/equity-product-consumer.test.mjs` now holds every patch entry
+  from the release polish on to regression tests that each name one of the entry's defects, and fails with the lifecycle suite back
+  in the polish's entry.
+
+Measured again in the verification and left as it is:
+
+- **The first-post measure moves with the words above it.** At 390 it read 1,114 to 1,153 px (1.32 to 1.37 screens) as the scene
+  line's wrapping changed, and 28 px more with a two-digit hour, when "Checked <time>" is a character wider and drops under Refresh
+  sources (1,181 px, 1.40 screens, at worst here): the 1,142 px recorded above and the 1,134 px the integration suite measured in
+  this run are the same layout at different hours and scenes. At 820 it read 924 px (0.78) and at 1280 1,018 to 1,038 px (1.27 to
+  1.30). Long provider titles in the two rows would add to it; at 390 the fixtures' are one and two lines.
+- **A step's card is brought into view like a row's**, as before the polish: at 390 the card (723 to 919 px with the fixtures) then
+  leads the feed's scroll box and Next and Previous sit above it, and at 1280 likewise. The focus stays on the control pressed, so
+  Enter keeps stepping; a pointer scrolls back up to step again. Keeping the controls and the card in view together is a layout
+  decision for the owner, not a fix.
+- **The tint changes with the layers, in the same frame.** Entering the tab, the frame hears `tint:false` before the layers and the
+  pins (0.2 to 0.7 s after the tab was pressed on this machine: software GL, the page and the frame on one thread, the load above
+  4) and no frame was rendered with the layers on and the legend or the shading still shown; leaving, it hears `tint:true` within
+  11 ms and the first frame after it has them back. The row's scopes are Local, the tab, Global and News; Live and People are
+  rooms, not scopes of the feed.
+
+What ran in the verification, all with fixtures and nothing live (2026-11-18, at `9e83fa17`, this machine: 4 CPUs shared with
+another workflow's browser runs, headless Chromium through Playwright, software GL; for each browser run, the one-minute load
+average its log recorded at the start and at the end):
+
+- The review's own probes: three Next presses at 390 each opened the scene's card with its row pressed, under reduced motion (load
+  0.17, 1.91) and with motion and the tour paused (1.91, 4.87); the row chosen with Enter at index 30 of the open list stayed at
+  index 30, pressed and focused, the next Tab going to the row after it (4.96, 6.28); the review's list probe passed its eleven
+  checks, the two that were the finding included (8.12, 8.48); Show on globe from Global kept the clicked event for fifteen seconds
+  at 390 on a first visit and with an older quake held by the panel, and at 820 after a visit (8.48, 8.40; 8.40, 8.59; 8.59, 8.60).
+- Further probes written for the verification: Next, Next, Previous and Next from the keyboard each opened a card with Observed,
+  Retrieved and a link to the source, the scene's row the one pressed, the focus on the control and nothing scrolling sideways, at
+  390 under reduced motion (4.64, 6.45), at 390 with motion (6.36, 9.23) and at 1280 with motion (9.40, 8.44); in the two runs with
+  motion a playing tour, Next pressed while it played and a pause on a scene opened no card. A row chosen with Enter and one chosen
+  with the pointer deep in the open list kept their places through the globe's answer and a refresh of the sources, Tab and
+  Shift+Tab went to the rows beside it, and closing and opening again kept the few and the selected row leading, at 390 (6.74,
+  8.66) and at 1280 (8.60, 9.40). The tint and its legend were hidden on each of four visits to the tab and shown on Global, Local
+  and News between them, with the counts kept and no change of the legend while a scope lasted, at 390 by night (4.62, 6.72) and by
+  day (4.85, 6.54) and at 1280 by night (6.54, 7.64); the order of the frame's messages and its rendered frames was read at 390
+  (6.00, 4.61). The list opened on two rows under "Show all 65 observations" with the measures above, at 390 (6.10, 7.71) and at
+  1280 (7.71, 8.64).
+- Each fix taken out alone: with only the step rule out, the panel suite's two RP-1 tests fail (26 of 28 pass), and its second
+  fails again with only the playing guard, only the match to the scene, or only the clearing of the step taken out; with the open
+  list's lead or the focus kept through a re-render taken out, the RP-2 test fails, and with the rows remembered at opening taken
+  out so does the compact list's own test; with the brief's line as it was, the RP-3 test fails; with the two hand-written
+  headers, or the generated one and its generator, as they were, the RP-4 test fails (and, for the generated one, the
+  reviewed-bytes test); with the lock's line as it was, the new RP-5 test fails, where nothing failed before it. A copy of the
+  integration suite's 390 journey and its reduced-motion scenario, its own lines, passed all 62 checks on the unchanged panel
+  (8.64, 6.98) and, with RP-1 and RP-2 taken out of the panel, failed exactly the four new ones: the step card, Next and Previous
+  under reduced motion, and the keyboard choice in the open list (58 passed; 6.98, 6.63).
+- `node tools/build-mission-import.mjs --check`: current, 10 files; `node --test scripts/test/mission-import.test.mjs`: 26 passed;
+  `git diff --stat e495b7ee..9e83fa17 -- supabase/migrations`: empty.
+- The unit suites of every file touched and their neighbours (the list above with `scripts/test/mission-import.test.mjs` and
+  `scripts/test/globe-*.test.mjs`): 295 passed, 0 failed.
+- The root suite, `node --test scripts/test/*.test.mjs`: 2,739 tests, 2,732 passed, 0 failed, 7 skipped (5.93, 7.27), and with the
+  RP-5 test added 2,740 tests, 2,733 passed, 0 failed, 7 skipped; `python3 -m unittest discover -s scripts/test -p 'test_*.py'`:
+  7 tests, OK.
+- `node scripts/e2e/world-environment.mjs <outDir>`: 11 passed, exit 0 (6.34, 6.35).
+- `CESIUM_DIR=<Cesium 1.131.0 Build/Cesium> node scripts/e2e/environment-world.e2e.mjs <outDir>`: 211 passed, 0 failed, exit 0 (205
+  before and six new: the step card at 390, 820 and 1280, and at 390 under reduced motion Next, Previous and the keyboard choice in
+  the open list; 6.35, 7.78).
+- `CESIUM_DIR=<Cesium 1.131.0 Build/Cesium> node scripts/e2e/environment-globe.e2e.mjs <outDir>`: 127 passed, 0 failed, exit 0, its
+  perf self-check included (7.78, 7.52).
+- `CESIUM_DIR=<Cesium 1.131.0 Build/Cesium> node scripts/e2e/world-missions-guest.e2e.mjs <outDir>`: 246 of 246 passed, exit 0
+  (7.52, 9.41).
+- `CESIUM_DIR=<Cesium 1.131.0 Build/Cesium> node scripts/e2e/world-first-visit.e2e.mjs <outDir>`: 83 of 83 passed, exit 0 (9.41,
+  9.65).
+- Screenshots for the owner, not committed: the polish's eight views rendered again at deviceScaleFactor 2 by night (390x844 and
+  1280x800), the same but for the clock, the sun's side of the Earth and the bar's track title, and the step card at each width
+  (Next with the tour paused: the card with its dates, its row pressed); nothing scrolls sideways in any of them.
+- Not run: the perf benchmark in full (only its `--check` mode, inside the in-frame suite), and the native module-policy test that
+  needs PostgreSQL; the review's fixes touch no render loop, no hold, no governor and no SQL that runs.
