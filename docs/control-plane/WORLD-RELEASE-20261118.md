@@ -258,9 +258,13 @@ agent's only on the owner's explicit go for that step (`AGENTS.md`, "Autonomous 
 ## Checks run for this record
 
 Run on 2026-11-18 on one 4-CPU machine, one job at a time, each from its workflow's own commands. A pull request from
-the release branch starts 24 workflows and 69 jobs. The results are added by the commit that follows this one. The jobs
-that read the whole tree have to run on a committed tree (the Worker's health reports its commit only from an
-unmodified checkout), so they run at the commit that adds this record, and the tables are written from those runs.
+the release branch starts 24 workflows and 69 jobs. Every one of them is a row below, with the commit it ran at. `12d9b458`
+is the head this record was written on; `fc324947` is the commit that added this record, its source-map entry and one
+paragraph of the door's record. The browser suites of the World matrix ran at `12d9b458` and read none of those
+files. Every other pull-request job ran at `fc324947`, each step stopping at its first failing command as a CI step
+does. The rows of the second table name their own commits; `b6008b2e` is the branch three commits before
+`12d9b458`, and the CI entries, the source-map entries and the notices fix lie between the two. The commit that
+added these tables changed nothing else in the repository.
 
 Local differences from CI: Playwright 1.63.0 with its own Chromium 153 where the workflows pin 1.57.0; Cesium 1.131.0
 from a local copy of the pinned build; PostgreSQL 16.15 binaries in place of the service containers; Deno 2.9.6; Python
@@ -268,11 +272,99 @@ from a local copy of the pinned build; PostgreSQL 16.15 binaries in place of the
 failed and was run a second time before it was judged (`editorial-video-composer`, below); its failure is not one of
 timing.
 
-(The table of the 69 jobs is in the next commit.)
+| Workflow | Job | Result |
+| --- | --- | --- |
+| Canonical Architecture Contract | architecture | PASS at fc324947: 12 of 12 steps (0 s) |
+| Secret scan | scan | PASS at fc324947: 1 of 1 steps (5 s) |
+| Control Plane Drift Guard | drift-contract | PASS at fc324947: 3 of 3 steps (0 s) |
+| Production Security Contract | production-boundaries | PASS at fc324947: 12 of 12 steps; 23 tests, 23 passed, 0 failed (1 s) |
+| MCP Continuity and Preview | contracts | PASS at fc324947 on Node 24.22.1: npm ci 39 packages, npm audit 0 vulnerabilities; Core check and 851 tests, 851 passed, 0 failed; Worker 1954 tests, 1945 passed, 0 failed, 9 skipped; MCP transport 8/8; root suite 2743 tests, 2736 passed, 0 failed, 7 skipped; Python 7 tests OK; Wrangler dry-run compiles both Workers (2866.09 KiB, gzip 642.84 KiB; 16.62 KiB, gzip 5.08 KiB); workerd HTTP contract 6/6 and 6/6 checks (101 s) |
+| Reconciliation CI | Worker contracts | PASS at fc324947: 5 of 5 steps; 1954 tests, 1945 passed, 0 failed, 9 skipped; the merge-marker guard passes (22 s) **On `main`:** PASS at fc1986ec: 5 of 5 steps; 1907 tests, 1898 passed, 0 failed, 9 skipped. At bd38cb76, before the fix, this job failed on the branch at its last step: THIRD-PARTY-NOTICES had six lines of 80 equals signs. |
+| Reconciliation CI | McCluster Core contracts | PASS at fc324947: 13 of 13 steps; 221 tests, 221 passed, 0 failed (6 s) |
+| Reconciliation CI | Equity Uprise Edge Function contracts | PASS at fc324947: 2 of 2 steps (0 s) |
+| Reconciliation CI | Admin evidence and pending SQL contracts | PASS at fc324947: 3 of 3 steps; 59 tests, 59 passed, 0 failed (10 s) |
+| Reconciliation CI | Equity Uprise RLS wall and offline function contracts | PASS at fc324947: 3 of 3 steps; RLS wall on PostgreSQL 16.15: ALL PROMISES HELD, 39 ok notices, 0 not ok; 8 offline function suites ran to the end (brain, desk-flows, domain, flows, inbox-auth, mcp, platforms, price) (2 s) |
+| Reconciliation CI | Supabase migration reset | NOT RUN HERE: it needs the Supabase CLI and Docker. What stands in for it is under "Could not run here". **On `main`:** success on main at fc1986ec in GitHub Actions on 2026-11-13 (150 s), for the 364 migrations before this branch |
+| Site smoke gate | smoke | PASS at fc324947: 4 of 4 steps; the walk: 458 checks passed, 0 failed ("SMOKE CLEAN"); BLS inspector 3 PASS lines, 0 FAIL; workbench 74 tests, 74 passed, 0 failed (250 s) |
+| Equity Uprise Core V2 CI | Validate authority, program, plans, and building | PASS at fc324947: steps 3 to 49, 46 of 46 pass (66 s), the source-map validator among them; after regeneration 3 files differ from the committed ones (equity-uprise-core-v2-plan-semantics-report.json, equity-uprise-floor-01-b1-simulation-report.json, equity-uprise-program-coverage-report.json), each only by the absolute path of the checkout it embeds; with that path replaced by the runner's, step 50 passes. As written, off the runner's path, step 50 always fails on those three files **On `main`:** at fc1986ec the job as written ends the same way here: 47 of 48 steps pass and the one that fails is [50] Require committed generated artifacts to be current (exit 1), on the same three reports that embed the checkout path |
+| Analytics Platform CI | analytics-contract | PASS at fc324947: 3 of 3 steps; 42 tests, 42 passed, 0 failed (0 s) |
+| Analytics Platform CI | collector-contract | PASS at fc324947: 1 of 1 steps (1 s) |
+| Music Platform CI | music-contract | PASS at fc324947: 3 of 3 steps; 21 tests, 21 passed, 0 failed (1 s) |
+| Music Platform CI | music-edge | PASS at fc324947: 1 of 1 steps (0 s) |
+| Unified World feed and discussions | source-and-auth | PASS at fc324947: 1 of 1 steps; 35 tests, 35 passed, 0 failed (0 s) |
+| Unified World feed and discussions | Isolated PostgreSQL role and rate-limit verification | PASS at fc324947: 2 of 2 steps (1 s) |
+| Users Analytics CI | users-analytics | PASS at fc324947: 6 of 6 steps; 29 tests, 29 passed, 0 failed (1 s) |
+| API Economic Core CI | Worker security boundaries | PASS at fc324947: 3 of 3 steps; 22 tests, 22 passed, 0 failed (0 s) |
+| API Economic Core CI | Credits, billing, idempotency, rate-limit, and COGS regression | NOT RUN as a whole: steps 2 to 14 need the Supabase rebuild (Supabase CLI and Docker). Its two scratch-database steps ran on PostgreSQL 16.15: PASS at fc324947: bounty claim existence guard: ok; PASS: archive publication, claim/replay, owner edits, reseeding and API-role boundaries; PASS: three open missions, preserved proof access, idempotent acceptance, private arsenal and held CfAL draft (2 s) |
+| Social hardening tests | worker-tests | PASS at fc324947: 3 of 3 steps; 1954 tests, 1945 passed, 0 failed, 9 skipped (20 s) |
+| Music label artists | music-label | PASS at fc324947: 3 of 3 steps; 8 tests, 8 passed, 0 failed (2 s) |
+| PRIM3 adaptive PostgreSQL acceptance | PRIM3 adaptive real PostgreSQL | PARTLY RUN: the unit step PASS at fc324947 (13 tests, 13 passed, 0 failed); the PostgreSQL and PostgREST step cannot run here (no Docker daemon, no PostgREST) |
+| Halo Finance integration proof | finance | PASS at fc324947 with a stand-in for the Docker CLI (the fixture's docker run, docker exec psql and docker rm served by a disposable PostgreSQL 16.15; the workflow's image is postgres:17.6): unit 33 tests, 33 passed, 0 failed; the fixture's database permission tests passed; the globe-to-ledger run at 390 and 1280 px, 0 failed assertions, no sideways overflow (78 s) |
+| Archive and mission browser acceptance | browser | PASS at fc324947: 40 PASS lines, 0 FAIL lines; 18 tests, 18 passed, 0 failed (30 s) |
+| Control workspace visual proof | browser | PASS at fc324947: 3 of 3 steps; unit 219 tests, 219 passed, 0 failed; browser suites 1867 PASS lines, 0 FAIL lines (suite summaries: 76 site-health checks passed; 42/42 checks passed; 78/78 desk bot checks passed; 92/92 checks passed; 214/214 passed; 73/73 checks passed; all checks passed) (972 s) |
+| City Arcade release checks | arcade | PASS at fc324947: 8 PASS lines, 0 FAIL lines; 105 tests, 105 passed, 0 failed (253 s) |
+| Equity Uprise rendered building proof | Render B1–L7 at 390px | PASS at fc324947: 110 PASS lines, 0 FAIL lines; 19 tests, 19 passed, 0 failed; with playwright@1.57.0 from the registry (the suite refuses any other version: with the pre-installed 1.63.0 it stops at its own version assertion) driving the pre-installed Chromium 153 through the suite's CHROMIUM_EXECUTABLE (97 s) |
+| Equity Uprise rendered building proof | Render B1–L7 at 1440px | PASS at fc324947: 110 PASS lines, 0 FAIL lines; 19 tests, 19 passed, 0 failed; with playwright@1.57.0 from the registry (the suite refuses any other version: with the pre-installed 1.63.0 it stops at its own version assertion) driving the pre-installed Chromium 153 through the suite's CHROMIUM_EXECUTABLE (264 s) |
+| Site accessibility ratchet | axe | PASS at fc324947: axe ratchet: 66 pages at or below baseline (138 s) |
+| Curated World release proof | world-release-390 | PASS at fc324947: 113 PASS lines, 0 FAIL lines; 46 tests, 46 passed, 0 failed (150 s) |
+| Curated World release proof | world-release-820 | PASS at fc324947: 113 PASS lines, 0 FAIL lines; 46 tests, 46 passed, 0 failed (191 s) |
+| Curated World release proof | world-release-1280 | PASS at fc324947: 125 PASS lines, 0 FAIL lines; 46 tests, 46 passed, 0 failed (266 s) |
+| Human Uprise responsive visual proof | browser (database) | PASS at 12d9b458: PASS: journey CRUD, two-owner isolation, anonymous denial and server-side validation (PGlite 0.3.14) (1 s) |
+| Human Uprise responsive visual proof | browser (editorial-iphone-portrait) | PASS at 12d9b458: 186/186 checks passed by the suite's own count; 186 PASS lines, 0 FAIL lines (885 s) |
+| Human Uprise responsive visual proof | browser (editorial-iphone-landscape) | PASS at 12d9b458: 111/111 checks passed by the suite's own count; 111 PASS lines, 0 FAIL lines (389 s) |
+| Human Uprise responsive visual proof | browser (editorial-ipad-portrait) | PASS at 12d9b458: 111/111 checks passed by the suite's own count; 111 PASS lines, 0 FAIL lines (389 s) |
+| Human Uprise responsive visual proof | browser (editorial-ipad-landscape) | PASS at 12d9b458: 111/111 checks passed by the suite's own count; 111 PASS lines, 0 FAIL lines (437 s) |
+| Human Uprise responsive visual proof | browser (editorial-desktop) | PASS at 12d9b458: 128/128 checks passed by the suite's own count; 128 PASS lines, 0 FAIL lines (706 s) |
+| Human Uprise responsive visual proof | browser (editorial-video-composer) | NOT COMPLETED HERE, and the same on main: at 12d9b458 seven checks pass, then the suite's own screenshot of the posted card times out after 30 s, before its last check (two runs, 72 s and 73 s, load average 4.35 and 4.46 on 4 CPUs); the suite recorded no page error. A per-frame probe of the same scenario found the card's box unchanged and only 4 frames drawn in 4 seconds, and a whole-page screenshot timed out as well: the local Chromium 153 with software WebGL stops producing frames in this scenario, the card does not move. With playwright@1.57.0 driving the same Chromium the suite stops earlier, at its first navigation wait (15 s). **On `main`:** at fc1986ec the same seven checks pass and the same screenshot statement times out (84 s); with playwright@1.57.0 the same early stop. In GitHub Actions this suite last passed on 2026-11-13 (225 s) with the pinned Playwright 1.57.0 and its own Chromium 143. |
+| Human Uprise responsive visual proof | browser (travel-iphone-portrait) | PASS at 12d9b458: 32/32 checks passed by the suite's own count; 32 PASS lines, 0 FAIL lines (109 s) |
+| Human Uprise responsive visual proof | browser (travel-iphone-landscape) | PASS at 12d9b458: 32/32 checks passed by the suite's own count; 32 PASS lines, 0 FAIL lines (122 s) |
+| Human Uprise responsive visual proof | browser (travel-ipad-portrait) | PASS at 12d9b458: 32/32 checks passed by the suite's own count; 32 PASS lines, 0 FAIL lines (135 s) |
+| Human Uprise responsive visual proof | browser (travel-ipad-landscape) | PASS at 12d9b458: 32/32 checks passed by the suite's own count; 32 PASS lines, 0 FAIL lines (137 s) |
+| Human Uprise responsive visual proof | browser (travel-desktop) | PASS at 12d9b458: 34/34 checks passed by the suite's own count; 34 PASS lines, 0 FAIL lines (156 s) |
+| Human Uprise responsive visual proof | browser (guest-travel) | PASS at 12d9b458: 152 PASS lines, 0 FAIL lines (216 s) |
+| Human Uprise responsive visual proof | browser (member-desk) | PASS at 12d9b458: 60/60 checks passed by the suite's own count; 60 PASS lines, 0 FAIL lines (28 s) |
+| Human Uprise responsive visual proof | browser (music-world) | PASS at 12d9b458: 117 PASS lines, 0 FAIL lines (33 s) |
+| Human Uprise responsive visual proof | browser (news-guest) | PASS at 12d9b458: 22/22 checks passed by the suite's own count; 22 PASS lines, 0 FAIL lines (38 s) |
+| Human Uprise responsive visual proof | browser (navigation) | PASS at 12d9b458: 429 PASS lines, 0 FAIL lines (212 s) |
+| Human Uprise responsive visual proof | browser (creator-onboarding) | PASS at 12d9b458: 85 ok lines, 0 failed (14 s) |
+| Human Uprise responsive visual proof | browser (mission-pins) | PASS at 12d9b458: 11/11 checks passed by the suite's own count; 11 PASS lines, 0 FAIL lines (3 s) |
+| Human Uprise responsive visual proof | browser (world-missions-guest) | PASS at 12d9b458: 246/246 checks passed by the suite's own count; 246 PASS lines, 0 FAIL lines (353 s) |
+| Human Uprise responsive visual proof | browser (world-first-visit) | PASS at 12d9b458: 83/83 checks passed by the suite's own count; 83 PASS lines, 0 FAIL lines (171 s) |
+| Human Uprise responsive visual proof | browser (world-gate) | PASS at 12d9b458: 557/557 checks passed by the suite's own count; 557 PASS lines, 0 FAIL lines (1774 s) |
+| Human Uprise responsive visual proof | browser (sign-in) | PASS at 12d9b458: 174/174 checks passed by the suite's own count; 174 PASS lines, 0 FAIL lines (945 s) |
+| Human Uprise responsive visual proof | browser (world-countries) | PASS at 12d9b458: 34 PASS lines, 0 FAIL lines (185 s) |
+| Human Uprise responsive visual proof | browser (world-globe-feed) | PASS at 12d9b458: 74 PASS lines, 0 FAIL lines (475 s) |
+| Human Uprise responsive visual proof | browser (world-transport) | PASS at 12d9b458: the suite asserts in code and prints one record per state: 6 records at 390, 820, 1280 px, 0 with a failed flag, overflow or page error (193 s) |
+| Human Uprise responsive visual proof | browser (anti-social) | PASS at 12d9b458: 24/24 checks passed by the suite's own count; 24 PASS lines, 0 FAIL lines (31 s) |
+| Human Uprise responsive visual proof | browser (human-uprise-door) | PASS at 12d9b458: 122/122 checks passed by the suite's own count; 122 PASS lines, 0 FAIL lines (146 s) |
+| Human Uprise responsive visual proof | browser (policy-mode) | PASS at 12d9b458: 39/39 checks passed by the suite's own count; 39 PASS lines, 0 FAIL lines (24 s) |
+| Human Uprise responsive visual proof | browser (owner-halo-globe) | PASS at 12d9b458: 35/35 checks passed by the suite's own count; 35 PASS lines, 0 FAIL lines (89 s) |
+| Human Uprise responsive visual proof | browser (world-environment) | PASS at 12d9b458: 11 PASS lines, 0 FAIL lines (16 s) |
+| Human Uprise responsive visual proof | browser (environment-globe) | PASS at 12d9b458: 127 PASS lines, 0 FAIL lines (316 s) |
+| Human Uprise responsive visual proof | browser (environment-world) | PASS at 12d9b458: 211 PASS lines, 0 FAIL lines (500 s) |
+| Human Uprise responsive visual proof | browser (environment-unit) | PASS at 12d9b458: 191 tests, 191 passed, 0 failed (30 s) |
 
 Also run, though no pull-request job runs them:
 
-(In the next commit.)
+| Workflow | Job | Result |
+| --- | --- | --- |
+| Cloudflare Pages public-export security contract | safe-static-export (not started by this pull request: none of its paths changed) | PASS at fc324947: 2 of 2 steps; 6 tests, 6 passed, 0 failed (5 s) |
+| Compute Node CI (dispatch only) | Browser executor against real Chromium | PASS at 12d9b458: 51 tests, 51 passed, 0 failed (18 s) |
+| no workflow (local only, by consent) | native proof: replay twin, ledger rows 365 to 376 | PASS at fc324947: eu platform replay native: 45 passed on PostgreSQL 16.15 (7 s) |
+| no workflow (local only, by consent) | native proof: mission catalog, import parts, publish and rollbacks | PASS at fc324947: mission catalog native: 156 passed on PostgreSQL 16.15 (1 s) |
+| no workflow | pending compute_claim_task_yield_v3 on PGlite | PASS at 12d9b458: the v3 function, its rollback, re-apply and second behaviour run: PASS (3 s) |
+| no workflow | the globe-games browser suite (changed on this branch) | PASS at 12d9b458: 80/80 checks passed by the suite's own count; 80 PASS lines, 0 FAIL lines (199 s) |
+| no workflow (never in one) | world-screen scope E2E_ONLY=stall | FAIL (exit 1) at b6008b2e: 1 PASS, 2 FAIL, then the run stops waiting for #mnFinishGo (30 s timeout) (51 s) **On `main`:** FAIL (exit 1) at fc1986ec: 1 PASS, 2 FAIL, then the run stops waiting for #mnFinishGo (30 s timeout) (50 s) |
+| no workflow (never in one) | world-screen scope E2E_ONLY=guest- | FAIL (exit 1) at b6008b2e: 3 PASS, 3 FAIL, then the run stops waiting for [data-world-chip="regional"] (30 s timeout) (49 s) **On `main`:** FAIL (exit 1) at fc1986ec: 3 PASS, 3 FAIL, then the run stops waiting for [data-world-chip="regional"] (30 s timeout) (51 s) |
+| no workflow (never in one) | world-screen scope E2E_ONLY=layers | FAIL (exit 1) at b6008b2e: 0 PASS, 1 FAIL, then the run stops waiting for #ctlFlights (30 s timeout) (39 s) **On `main`:** FAIL (exit 1) at fc1986ec: 0 PASS, 1 FAIL, then the run stops waiting for #ctlFlights (30 s timeout) (42 s) |
+| no workflow (never in one) | world-screen scope E2E_ONLY=member-interactions | FAIL (exit 1) at 12d9b458: 14 PASS, 1 FAIL, then the run stops waiting for #mnSearchInput (30 s timeout) (71 s) **On `main`:** FAIL (exit 1) at fc1986ec: 14 PASS, 1 FAIL, then the run stops waiting for #mnSearchInput (30 s timeout) (69 s) |
+| no workflow (never in one) | world-screen scope E2E_ONLY=member-not-creator | PASS at 12d9b458: 3 PASS, 0 FAIL (20 s) **On `main`:** PASS at fc1986ec: 3 PASS, 0 FAIL (17 s) |
+| no workflow (never in one) | world-screen scope E2E_ONLY=mission-archive | PASS at 12d9b458: 6 PASS, 0 FAIL (25 s) **On `main`:** PASS at fc1986ec: 6 PASS, 0 FAIL (21 s) |
+| no workflow (never in one) | world-screen scope E2E_ONLY=news-member | FAIL (exit 1) at 12d9b458: 6 PASS, 1 FAIL (30 s) **On `main`:** FAIL (exit 1) at fc1986ec: 6 PASS, 1 FAIL (31 s) |
+| no workflow (never in one) | world-screen scope E2E_ONLY=travel-location | PASS at 12d9b458: 6 PASS, 0 FAIL (10 s) **On `main`:** PASS at fc1986ec: 6 PASS, 0 FAIL (9 s) |
+| no workflow (never in one) | world-screen scope E2E_ONLY=travel-errors | FAIL (exit 1) at 12d9b458: 1 PASS, 0 FAIL, then the run stops waiting for #wtTo (30 s timeout) (45 s) **On `main`:** FAIL (exit 1) at fc1986ec: 1 PASS, 0 FAIL, then the run stops waiting for #wtTo (30 s timeout) (46 s) |
+| no workflow (never in one) | world-screen scope E2E_ONLY=travel-fallback | PASS at 12d9b458: 3 PASS, 0 FAIL (6 s) **On `main`:** PASS at fc1986ec: 3 PASS, 0 FAIL (5 s) |
+| no workflow (never in one) | world-screen scope E2E_ONLY=travel-rides | PASS at 12d9b458: 4 PASS, 0 FAIL (4 s) **On `main`:** PASS at fc1986ec: 4 PASS, 0 FAIL (4 s) |
 
 Found and fixed in this preparation:
 
