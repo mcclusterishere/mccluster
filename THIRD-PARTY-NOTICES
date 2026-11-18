@@ -100,3 +100,46 @@ history of gods-eye-view (4,586 commits, through 624c229 of 2026-11-16):
 - workers/mccluster/src/world-events.js (NWS alerts and NASA EONET) and
   workers/mccluster/src/lib/safe-fetch.js: no counterpart in gods-eye-view or in
   Hitman's Halo.
+
+================================================================================
+Playfair Display (typeface)
+https://github.com/clauseggers/Playfair-Display
+License: SIL Open Font License, Version 1.1
+================================================================================
+
+Copyright 2017 The Playfair Display Project Authors, with Reserved Font Name
+"Playfair Display". The licence travels with the font files, in full:
+assets/fonts/OFL-playfair-display.txt (the LICENSE file of
+@fontsource/playfair-display@5.3.0, unchanged).
+
+- assets/fonts/playfair-display-latin-500-normal.woff2: the roman, weight 500,
+  Latin subset. Unmodified from the npm package @fontsource/playfair-display
+  version 5.3.0 (files/playfair-display-latin-500-normal.woff2).
+  sha256 1e3429a2122b4171bf393c8de5c501820e17ca2074c498d7080e2326975d825c.
+  Used by the World's sign-in door and its three onboarding pages
+  (css/world-gate.css).
+- assets/fonts/playfairdisplay-italic-600.woff2 and
+  assets/fonts/playfairdisplay-italic-700.woff2: the variable italic (a wght
+  axis; byte-identical files) already in the repository, sha256
+  54af24bd0f911f0fd7399d5445ea2023ff501d6a69f2d728f1213072f977ab14. Used by
+  the prayer pages and, as the italic of the door's headline, by
+  css/world-gate.css.
+
+================================================================================
+Manrope (typeface)
+https://github.com/sharanda/manrope
+License: SIL Open Font License, Version 1.1
+================================================================================
+
+Copyright 2019 The Manrope Project Authors. The licence travels with the font
+files, in full: assets/fonts/OFL-manrope.txt (the LICENSE file of
+@fontsource/manrope@5.2.8, unchanged).
+
+- assets/fonts/manrope-latin-400-normal.woff2,
+  assets/fonts/manrope-latin-600-normal.woff2 and
+  assets/fonts/manrope-latin-800-normal.woff2: byte-identical to the files of
+  the same names in @fontsource/manrope version 5.2.8, sha256
+  849290ef12a2eeb9af5c11924120d11aa4ae8b435ed3347d7fc8bc240c293ca3,
+  f7ac6258da20ab7541939b59851155753d1d24f1b30cbcb949077a3faa3d1593 and
+  74c161dbcbce7c3590803cc72dc1f63313c360e13367aba5075a7b7b3818ea49. Declared
+  in css/style.css; the house's interface face, and the door's.

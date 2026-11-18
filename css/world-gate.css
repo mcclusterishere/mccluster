@@ -1,0 +1,597 @@
+/* ============================================================
+   THE DOOR: the World's sign-in (owner, 2026-11-18: "the sign-in page just looks like shit. It needs to be fancier, look
+   sexier, and have more shit to it ... This is royalty shit over here"). docs/design/WORLD-SIGN-IN-DOOR.md.
+
+   The sign-in (#mnSignedOut) no longer replaces the World: it rises over it. The real globe keeps turning under a scrim,
+   the World's real pulse sits on the Earth, and the sheet carries the supplied Equity Uprise artwork, scaled and nothing
+   else (white by night, the owner's dark variant by day; no plate, no filter, never captioned), a Playfair headline with
+   an italic accent and a red full stop, serif doors, engraved hairlines and one red action. The three onboarding pages
+   (#mnProfileGate) stay a page and take the same hand.
+
+   Phone first: 390 px is the design (a bottom sheet); 700 px and up only ADD (a floating card, a dated lower third);
+   1100 px and up add the right-hand card beside the Earth. min-width queries only, minmax(0, 1fr) for every flexible
+   track, form controls at max(16px, ...). No backdrop-filter over the globe frame: the only blur is the veil at 1100 px
+   and up, which starts at the frame's right edge. Motion respects prefers-reduced-motion (and css/mnet.css already stops
+   every transition and animation inside .mn under it).
+
+   Every rule is scoped by #mnSignedOut, #mnProfileGate or html.mn-door-open. Fonts are self-hosted (OFL: the licences
+   travel in assets/fonts, THIRD-PARTY-NOTICES lists the files). css/mnet.css keeps its pinned gate rules; these win by
+   specificity, never by !important (the reduced-motion block is the one exception).
+   ============================================================ */
+@font-face { font-family: "Playfair Display"; font-style: normal; font-weight: 500; font-display: swap; src: url("../assets/fonts/playfair-display-latin-500-normal.woff2") format("woff2"); }
+@font-face { font-family: "Playfair Display"; font-style: italic; font-weight: 400 900; font-display: swap; src: url("../assets/fonts/playfairdisplay-italic-700.woff2") format("woff2"); }
+
+/* ---------- tokens: night, then day (html[data-daylight="day"] redefines every one) ---------- */
+#mnSignedOut, #mnProfileGate {
+  --wg-ink: #f6f7f8; --wg-dim: #c9ced4; --wg-faint: #aeb5bd; --wg-gold: #e8c877; --wg-stop: #ff4060; --wg-error: #ff958c;
+  --wg-ok: #9fdaa9;
+  --wg-gold-line: rgba(232, 200, 119, 0.30); --wg-gold-soft: rgba(232, 200, 119, 0.12);
+  --wg-red: #d4002b; --wg-red-hover: #e0062f;
+  --wg-error-soft: rgba(255, 77, 61, 0.10);
+  --wg-field: rgba(255, 255, 255, 0.065); --wg-field-line: rgba(255, 255, 255, 0.17);
+  --wg-rule: rgba(255, 255, 255, 0.10); --wg-rule-strong: rgba(255, 255, 255, 0.22);
+  --wg-chip: rgba(9, 11, 14, 0.86); --wg-chip-line: rgba(255, 255, 255, 0.14);
+  --wg-hairline: rgba(232, 200, 119, 0.12); --wg-rim: rgba(232, 200, 119, 0.55);
+  --wg-sheet: linear-gradient(180deg, rgba(20, 23, 28, 0.97), rgba(13, 15, 19, 0.97) 160px);
+  --wg-sheet-glow: radial-gradient(90% 55% at 100% 0, rgba(112, 12, 38, 0.28), transparent 60%);
+  --wg-sheet-end: rgb(13, 15, 19);
+  --wg-tick: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230b0c0e' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12.5 4.5 4.5L19 7.5'/%3E%3C/svg%3E");
+  --wg-envelope: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230b0c0e' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3.5' y='6' width='17' height='12.5' rx='2'/%3E%3Cpath d='m4 7.5 8 6 8-6'/%3E%3C/svg%3E");
+  --wg-ui: "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --wg-serif: "Playfair Display", Georgia, "Times New Roman", serif;
+  --wg-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+html[data-daylight="day"] #mnSignedOut, html[data-daylight="day"] #mnProfileGate {
+  --wg-ink: #0b0c0e; --wg-dim: #2e3339; --wg-faint: #4a5057; --wg-gold: #7a5810; --wg-stop: #d4002b; --wg-error: #a6001b;
+  --wg-ok: #1d6b34;
+  --wg-gold-line: rgba(122, 88, 16, 0.35); --wg-gold-soft: rgba(122, 88, 16, 0.07);
+  --wg-red: #d4002b; --wg-red-hover: #c00028;
+  --wg-error-soft: rgba(220, 15, 45, 0.06);
+  --wg-field: rgba(12, 14, 18, 0.035); --wg-field-line: rgba(12, 14, 18, 0.22);
+  --wg-rule: rgba(0, 0, 0, 0.09); --wg-rule-strong: rgba(0, 0, 0, 0.18);
+  --wg-chip: rgba(255, 255, 255, 0.97); --wg-chip-line: rgba(12, 14, 18, 0.14);
+  --wg-hairline: rgba(122, 88, 16, 0.14); --wg-rim: rgba(122, 88, 16, 0.35);
+  --wg-sheet: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.98));
+  --wg-sheet-glow: linear-gradient(transparent, transparent);
+  --wg-sheet-end: rgb(255, 255, 255);
+  --wg-tick: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12.5 4.5 4.5L19 7.5'/%3E%3C/svg%3E");
+  --wg-envelope: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3.5' y='6' width='17' height='12.5' rx='2'/%3E%3Cpath d='m4 7.5 8 6 8-6'/%3E%3C/svg%3E");
+}
+
+/* ============================================================
+   THE DOOR, 390 px: a bottom sheet over the living World
+   ============================================================ */
+#mnSignedOut.wg-door {
+  position: fixed; z-index: 1100; top: var(--wg-vvtop, 0px); right: 0; bottom: auto; left: 0;
+  height: var(--wg-vvh, 100vh);
+  display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto;
+  box-sizing: border-box; width: auto; max-width: none; margin: 0; padding: 0 0 var(--wg-safe-bottom, 0px);
+  color: var(--wg-ink); font-family: var(--wg-ui); -webkit-tap-highlight-color: transparent;
+}
+@supports (height: 100dvh) { #mnSignedOut.wg-door { height: var(--wg-vvh, 100dvh); } }
+#mnSignedOut.wg-door *, #mnSignedOut.wg-door *::before, #mnSignedOut.wg-door *::after { box-sizing: border-box; }
+
+/* the scrim: solid over the header (the World's own chrome sleeps under the door), the Earth showing through the middle */
+#mnSignedOut .wg-scrim {
+  position: absolute; inset: 0; z-index: 0;
+  background:
+    radial-gradient(130% 62% at 50% 34%, transparent 42%, rgba(4, 6, 9, 0.45)),
+    linear-gradient(180deg, rgb(4, 6, 9) 0, rgb(4, 6, 9) calc(var(--wg-head, 72px) + 2px), rgba(4, 6, 9, 0.84) calc(var(--wg-head, 72px) + 24px), rgba(4, 6, 9, 0.40) 150px, rgba(4, 6, 9, 0.34) 46%, rgba(4, 6, 9, 0.90) 100%);
+}
+html[data-daylight="day"] #mnSignedOut .wg-scrim {
+  background:
+    radial-gradient(130% 62% at 50% 34%, transparent 42%, rgba(4, 6, 9, 0.387)),
+    linear-gradient(180deg, rgb(4, 6, 9) 0, rgb(4, 6, 9) calc(var(--wg-head, 72px) + 2px), rgba(4, 6, 9, 0.7224) calc(var(--wg-head, 72px) + 24px), rgba(4, 6, 9, 0.344) 150px, rgba(4, 6, 9, 0.2924) 46%, rgba(4, 6, 9, 0.774) 100%);
+}
+/* the veil: the feed under the globe goes quiet; it starts 64 px above the frame's bottom edge and feathers over 56 px */
+#mnSignedOut .wg-veil {
+  position: absolute; z-index: 0; top: var(--wg-veil-top, 50%); right: 0; bottom: 0; left: 0; pointer-events: none;
+  background: linear-gradient(180deg, rgba(4, 6, 9, 0) 0, rgba(4, 6, 9, 0.78) 56px);
+}
+html[data-daylight="day"] #mnSignedOut .wg-veil { background: linear-gradient(180deg, rgba(4, 6, 9, 0) 0, rgba(4, 6, 9, 0.72) 56px); }
+
+/* the stage: the way back at the top, the World's pulse and the Earth's credit at the bottom; empty space falls through
+   to the scrim, so a tap there is Back */
+#mnSignedOut .wg-stage {
+  position: relative; z-index: 1; grid-row: 1; grid-column: 1; min-width: 0; min-height: 0;
+  container-type: size; display: flex; flex-direction: column;
+  padding: calc(12px + env(safe-area-inset-top, 0px)) 0 14px; pointer-events: none;
+}
+#mnSignedOut .wg-back {
+  align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; flex: none;
+  min-height: 44px; margin: 0 0 0 12px; padding: 0 16px 0 14px;
+  border: 1px solid var(--wg-chip-line); border-radius: 999px; background: var(--wg-chip); color: var(--wg-ink);
+  font: 700 15px/1.2 var(--wg-ui); letter-spacing: 0; cursor: pointer; pointer-events: auto; box-shadow: none;
+}
+#mnSignedOut .wg-lower { position: relative; display: flex; flex-direction: column; min-width: 0; margin-top: auto; }
+#mnSignedOut .wg-dateline { display: none; }
+#mnSignedOut .wg-pulse {
+  display: none; gap: 8px; margin: 0; padding: 2px 16px 4px; list-style: none;
+  overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: none; pointer-events: auto;
+}
+#mnSignedOut .wg-pulse::-webkit-scrollbar { display: none; }
+@container (min-height: 170px) { #mnSignedOut .wg-pulse { display: flex; } }
+#mnSignedOut .wg-card {
+  flex: none; display: flex; max-width: calc(100% - 44px); margin: 0; scroll-snap-align: start;
+  border-radius: 16px; background: var(--wg-chip); box-shadow: inset 0 0 0 1px var(--wg-chip-line); color: var(--wg-ink);
+}
+#mnSignedOut .wg-card__in, #mnSignedOut .wg-card__go {
+  display: grid; grid-template-columns: 28px auto minmax(0, 1fr); grid-template-areas: "ico v v" "ico k s"; align-items: center;
+  width: 100%; min-width: 0; min-height: 44px; margin: 0; padding: 8px 16px 9px 12px; border: 0; border-radius: inherit;
+  background: none; color: inherit; font: inherit; text-align: left;
+}
+#mnSignedOut .wg-card__go { cursor: pointer; }
+#mnSignedOut .wg-card__ico { grid-area: ico; width: 18px; height: 18px; fill: none; stroke: var(--wg-gold); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+#mnSignedOut .wg-card__v { grid-area: v; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--wg-ink); font: 800 14.5px/1.3 var(--wg-ui); }
+#mnSignedOut .wg-card__k { grid-area: k; white-space: nowrap; color: var(--wg-gold); font: 800 11px/1.4 var(--wg-ui); letter-spacing: 0.12em; text-transform: uppercase; }
+#mnSignedOut .wg-card__s { grid-area: s; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--wg-dim); font: 600 12px/1.4 var(--wg-ui); }
+#mnSignedOut .wg-card__s::before { content: "\00a0\00b7\00a0"; }
+#mnSignedOut .wg-card__pre { display: none; }
+#mnSignedOut .wg-card__s a { color: inherit; text-decoration: underline; text-decoration-color: var(--wg-gold-line); text-underline-offset: 3px; padding: 14px 0; margin: -14px 0; }
+#mnSignedOut .wg-credit {
+  display: none; align-self: flex-start; max-width: calc(100% - 32px); margin: 6px 16px 0; padding: 3px 8px; border-radius: 6px;
+  background: rgba(4, 6, 9, 0.78); color: #b9bfc6; font: 600 11px/1.35 var(--wg-ui); pointer-events: auto; overflow-wrap: anywhere;
+}
+@container (min-height: 100px) { #mnSignedOut .wg-credit { display: block; } }
+#mnSignedOut .wg-credit a { color: inherit; text-decoration: underline; text-underline-offset: 2px; padding: 4px 0 26px; margin: -4px 0 -26px; }
+
+/* the World's own headline sleeps under the door, so the stage's words never sit on top of it */
+html.mn-door-open .wt-headline { visibility: hidden; }
+
+/* the sheet */
+#mnSignedOut .wg-sheet {
+  position: relative; z-index: 2; grid-row: 2; grid-column: 1; min-width: 0;
+  max-height: calc(var(--wg-vvh, 100vh) - 68px - var(--wg-safe-bottom, 0px));
+  overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none;
+  margin: 0; padding: 14px 22px calc(16px + env(safe-area-inset-bottom, 0px));
+  border-radius: 28px 28px 0 0; background: var(--wg-sheet-glow), var(--wg-sheet); color: var(--wg-ink);
+}
+@supports (height: 100dvh) { #mnSignedOut .wg-sheet { max-height: calc(var(--wg-vvh, 100dvh) - 68px - var(--wg-safe-bottom, 0px)); } }
+#mnSignedOut .wg-sheet::-webkit-scrollbar { display: none; }
+/* the engraved rim along the top edge */
+#mnSignedOut .wg-sheet::before {
+  content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px; pointer-events: none;
+  background: linear-gradient(90deg, transparent, var(--wg-rim), transparent);
+}
+/* more below: a short fade into the sheet's own ground, pinned to the bottom while there is more to scroll */
+#mnSignedOut .wg-sheet[data-more]::after {
+  content: ""; position: sticky; bottom: -16px; display: block; height: 34px; margin: -34px -22px -16px; pointer-events: none;
+  background: linear-gradient(180deg, transparent, var(--wg-sheet-end));
+}
+#mnSignedOut .wg-light {
+  position: absolute; top: 0; left: 0; width: 100%; height: 240px; pointer-events: none; opacity: 0;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.07) 50%, transparent 65%);
+}
+html[data-daylight="day"] #mnSignedOut .wg-light { display: none; }
+
+/* why it was asked for */
+#mnSignedOut .mn__gate-why {
+  display: flex; align-items: flex-start; gap: 10px; margin: 0 0 6px; padding: 10px 14px;
+  border-left: 2px solid var(--wg-gold); border-radius: 0 10px 10px 0; background: var(--wg-gold-soft);
+}
+#mnSignedOut .mn__gate-why:has(> p:empty) { display: none; }
+#mnSignedOut .mn__gate-why::before {
+  content: ""; flex: none; width: 18px; height: 18px; margin-top: 2px; background: var(--wg-gold);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='5' y='10.5' width='14' height='10' rx='2'/%3E%3Cpath d='M8 10.5V8a4 4 0 0 1 8 0v2.5'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='5' y='10.5' width='14' height='10' rx='2'/%3E%3Cpath d='M8 10.5V8a4 4 0 0 1 8 0v2.5'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+#mnSignedOut .mn__gate-why p { flex: 1 1 auto; min-width: 0; margin: 0; color: var(--wg-ink); font: 700 15px/1.4 var(--wg-ui); }
+
+/* the crown: the supplied file, complete, scaled proportionally into a square box; nothing drawn around it */
+#mnSignedOut .wg-crown {
+  display: block; width: 72px; height: 72px; margin: -8px auto -14px; object-fit: contain;
+  border: 0; border-radius: 0; background: none; box-shadow: none; filter: none; outline: 0; -webkit-user-drag: none; user-select: none;
+}
+#mnSignedOut .wg-crown--day { display: none; }
+html[data-daylight="day"] #mnSignedOut .wg-crown--night { display: none; }
+html[data-daylight="day"] #mnSignedOut .wg-crown--day { display: block; }
+#mnSignedOut .mn__gate-why:not([hidden]) ~ .wg-crown { width: 60px; height: 60px; }
+
+#mnSignedOut .mn__eyebrow {
+  display: flex; align-items: center; justify-content: center; gap: 12px; margin: 8px 0 0;
+  color: var(--wg-gold); font: 800 11.5px/1.2 var(--wg-ui); letter-spacing: 0.26em; text-transform: uppercase; text-align: center;
+}
+#mnSignedOut .mn__eyebrow::before, #mnSignedOut .mn__eyebrow::after { content: ""; flex: none; width: 20px; height: 1px; background: var(--wg-gold); }
+#mnSignedOut .wg-title {
+  max-width: 16ch; margin: 8px auto 0; color: var(--wg-ink); text-align: center; text-transform: none; text-wrap: balance; overflow-wrap: normal;
+  font: 500 clamp(28px, 7.8vw, 32px)/1.06 var(--wg-serif); letter-spacing: -0.01em;
+}
+#mnSignedOut .wg-title em { font-family: var(--wg-serif); font-style: italic; font-weight: 500; }
+#mnSignedOut .wg-title .wg-stop { color: var(--wg-stop); }
+
+/* the doors: two serif words with their kickers, one gold rule that slides between them */
+#mnSignedOut .mn__panel { margin: 16px 0 0; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; }
+#mnSignedOut .mn__auth-tabs {
+  position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0; margin: 0; padding: 0;
+  border-radius: 0; background: none; box-shadow: inset 0 -1px 0 var(--wg-rule);
+}
+#mnSignedOut .mn__auth-tab {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-width: 0; min-height: 60px;
+  margin: 0; padding: 8px 6px 10px; border: 0; border-radius: 0; background: none; box-shadow: none; cursor: pointer;
+  color: var(--wg-dim); font-size: max(16px, 1.1875rem);
+}
+#mnSignedOut .wg-tab-k { color: var(--wg-faint); font: 800 10px/1.2 var(--wg-ui); letter-spacing: 0.2em; text-transform: uppercase; }
+#mnSignedOut .wg-tab-w { color: var(--wg-dim); font: 500 19px/1.15 var(--wg-serif); }
+#mnSignedOut .mn__auth-tab.is-active .wg-tab-k { color: var(--wg-gold); }
+#mnSignedOut .mn__auth-tab.is-active .wg-tab-w { color: var(--wg-ink); }
+#mnSignedOut .wg-tabline {
+  position: absolute; left: 0; bottom: 0; width: 50%; height: 2px; background: var(--wg-gold); pointer-events: none;
+  transform: translateX(0); transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+#mnSignedOut[data-auth-mode="create"] .wg-tabline { transform: translateX(100%); }
+
+/* the form: one column; while the emailed note shows, it leads the panel with Resend under it */
+#mnSignedOut #mnAuthPanel { display: flex; flex-direction: column; min-width: 0; }
+#mnSignedOut #mnAuthPanel:has(> #mnResend:not([hidden])) > #mnAuthStatus { order: -2; }
+#mnSignedOut #mnAuthPanel:has(> #mnResend:not([hidden])) > #mnResend { order: -1; }
+#mnSignedOut #mnCreateNote {
+  position: relative; margin: 34px 0 2px; padding: 12px 14px; border-radius: 12px; background: var(--wg-gold-soft);
+  color: var(--wg-ink); font: 600 13.5px/1.45 var(--wg-ui);
+}
+/* the three pages to come, as a strip: this one red, the next two waiting */
+#mnSignedOut #mnCreateNote::before {
+  content: ""; position: absolute; left: 0; top: -16px; width: 96px; height: 4px; border-radius: 2px;
+  background: linear-gradient(90deg, var(--wg-red) 0 30px, transparent 30px 33px, var(--wg-rule-strong) 33px 63px, transparent 63px 66px, var(--wg-rule-strong) 66px 96px);
+}
+#mnSignedOut #mnCreateNote b { color: var(--wg-gold); font: 800 11px/1 var(--wg-ui); letter-spacing: 0.16em; text-transform: uppercase; }
+
+#mnSignedOut .wg-field {
+  position: relative; display: flex; align-items: stretch; min-height: 64px; margin: 12px 0 0;
+  border-radius: 16px; background: var(--wg-field); box-shadow: inset 0 0 0 1px var(--wg-field-line);
+  transition: box-shadow 200ms var(--wg-ease);
+}
+#mnSignedOut .wg-field::after {
+  content: ""; position: absolute; left: 16px; right: 16px; bottom: 0; height: 2px; border-radius: 2px; pointer-events: none;
+  background: var(--wg-gold); transform: scaleX(0); transform-origin: left center; transition: transform 340ms var(--wg-ease);
+}
+#mnSignedOut .wg-field:focus-within { box-shadow: inset 0 0 0 1.5px var(--wg-gold), 0 0 0 4px var(--wg-gold-soft); }
+#mnSignedOut .wg-field:focus-within::after { transform: scaleX(1); }
+#mnSignedOut .wg-field:has(.mn__input[aria-invalid="true"]) { box-shadow: inset 0 0 0 1.5px var(--wg-error), 0 0 0 4px var(--wg-error-soft); }
+#mnSignedOut .wg-field:has(.mn__input[aria-invalid="true"])::after { transform: scaleX(1); background: var(--wg-error); }
+#mnSignedOut .wg-ico { flex: none; display: grid; place-items: center; width: 48px; color: var(--wg-faint); }
+#mnSignedOut .wg-ico svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+#mnSignedOut .wg-field:focus-within .wg-ico { color: var(--wg-gold); }
+#mnSignedOut .wg-field__body { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; min-width: 0; padding: 8px 14px 8px 0; }
+#mnSignedOut .wg-field .mn__label {
+  display: block; margin: 0; color: var(--wg-dim); font: 800 11px/1.25 var(--wg-ui); letter-spacing: 0.14em; text-transform: uppercase; cursor: text;
+}
+#mnSignedOut .wg-field:focus-within .mn__label { color: var(--wg-gold); }
+/* the input's line is 28 px under its label; its box reaches up over the label to make a 44 px target (the label shows
+   through: the input is transparent) */
+#mnSignedOut .wg-field .mn__input {
+  position: relative; display: block; width: 100%; height: 44px; min-height: 0; margin: -14px 0 0; padding: 16px 0 0; border: 0; border-radius: 0; outline: 0;
+  background: transparent; box-shadow: none; color: var(--wg-ink); caret-color: var(--wg-gold); resize: none;
+  font: 600 max(16px, 1.0625rem)/28px var(--wg-ui);
+}
+#mnSignedOut .wg-field .mn__input:focus { box-shadow: none; }
+#mnSignedOut .wg-field .mn__input::placeholder { color: var(--wg-faint); opacity: 1; }
+#mnSignedOut .wg-show {
+  flex: none; align-self: center; min-width: 64px; min-height: 44px; margin: 10px 6px 10px 0; padding: 0 10px;
+  border: 0; border-radius: 10px; background: transparent; box-shadow: none; cursor: pointer;
+  color: var(--wg-gold); font: 800 11px/1 var(--wg-ui); letter-spacing: 0.16em; text-transform: uppercase;
+}
+#mnSignedOut .wg-show:hover { background: var(--wg-gold-soft); }
+#mnSignedOut .wg-state { flex: none; display: grid; place-items: center; width: 30px; }
+#mnSignedOut .wg-field[data-match="true"] .wg-state::before {
+  content: ""; width: 20px; height: 20px; border-radius: 50%; background: var(--wg-gold) var(--wg-tick) center / 12px no-repeat;
+}
+#mnSignedOut .wg-sr, #mnProfileGate .wg-sr {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0;
+}
+/* the live rule under the password: a ring that fills gold at 8 characters */
+#mnSignedOut .wg-rule { display: flex; align-items: center; gap: 9px; margin: 10px 2px 0; color: var(--wg-dim); font: 600 13.5px/1.4 var(--wg-ui); }
+#mnSignedOut .wg-rule::before {
+  content: ""; flex: none; width: 16px; height: 16px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--wg-gold-line);
+  transition: background-color 200ms var(--wg-ease);
+}
+#mnSignedOut .wg-rule[data-met="true"] { color: var(--wg-ink); }
+#mnSignedOut .wg-rule[data-met="true"]::before { background: var(--wg-gold) var(--wg-tick) center / 10px no-repeat; box-shadow: none; }
+#mnSignedOut #mnForgot {
+  align-self: flex-end; display: block; width: auto; max-width: 100%; min-height: 44px; margin: 6px 0 0; padding: 0 2px;
+  border: 0; border-radius: 0; background: none; box-shadow: none; cursor: pointer; text-align: right;
+  color: var(--wg-dim); font: 600 max(16px, 0.9375rem)/1.3 var(--wg-ui);
+  text-decoration: underline; text-decoration-color: var(--wg-gold-line); text-decoration-thickness: 1px; text-underline-offset: 4px;
+}
+#mnSignedOut #mnForgot:hover { background: none; transform: none; color: var(--wg-ink); }
+/* the privacy agreement: one line, one custom box (the input itself is the 44 px target; the 26 px box is drawn inside it) */
+#mnSignedOut #mnCreatePrivacy { margin: 12px 2px 0; color: var(--wg-dim); font: 600 15px/1.45 var(--wg-ui); }
+#mnSignedOut .mn__check {
+  display: flex; align-items: center; gap: 4px; min-height: 44px; margin: 10px 0 0; padding: 0; border-radius: 0; box-shadow: none;
+  color: var(--wg-dim); font: 600 15px/1.4 var(--wg-ui); cursor: pointer;
+}
+#mnSignedOut .mn__check span { display: block; flex: 1 1 auto; min-width: 0; gap: 0; color: var(--wg-dim); font: 600 15px/1.4 var(--wg-ui); }
+#mnSignedOut .mn__check input {
+  -webkit-appearance: none; appearance: none; flex: none; width: 44px; height: 44px; margin: 0 0 0 -9px; padding: 0;
+  border: 9px solid transparent; border-radius: 16px; background-color: var(--wg-field); background-clip: padding-box;
+  background-repeat: no-repeat; background-position: center; background-size: 16px; box-shadow: inset 0 0 0 1.5px var(--wg-field-line);
+  cursor: pointer; accent-color: auto;
+}
+#mnSignedOut .mn__check input:checked { background-color: var(--wg-gold); background-image: var(--wg-tick); box-shadow: none; }
+#mnSignedOut .mn__check input[aria-invalid="true"] { outline: 0; box-shadow: inset 0 0 0 2px var(--wg-error); }
+#mnSignedOut .mn__check a, #mnSignedOut #mnCreatePrivacy a {
+  color: var(--wg-ink); text-decoration: underline; text-decoration-color: var(--wg-gold-line); text-underline-offset: 3px; white-space: nowrap; padding: 12px 0; margin: -12px 0;
+}
+/* the reason a step stopped, directly over the action; the emailed state is a sealed note */
+#mnSignedOut #mnAuthStatus { min-height: 0; margin: 14px 0 0; color: var(--wg-dim); font: 600 14.5px/1.45 var(--wg-ui); }
+#mnSignedOut #mnAuthStatus:empty { margin: 0; }
+#mnSignedOut #mnAuthStatus.is-error { display: flex; align-items: flex-start; gap: 10px; color: var(--wg-error); }
+#mnSignedOut #mnAuthStatus.is-error::before {
+  content: "!"; flex: none; display: grid; place-items: center; width: 20px; height: 20px; margin-top: 1px;
+  border: 1.5px solid currentColor; border-radius: 50%; font: 800 12px/1 var(--wg-ui);
+}
+#mnSignedOut #mnAuthStatus.is-ok {
+  display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; align-items: start; padding: 16px;
+  border-radius: 14px; background: var(--wg-gold-soft); box-shadow: inset 0 0 0 1px var(--wg-gold-line);
+  color: var(--wg-ink); font: 500 14.5px/1.5 var(--wg-ui);
+}
+#mnSignedOut #mnAuthStatus.is-ok::before { content: ""; width: 34px; height: 34px; border-radius: 50%; background: var(--wg-gold) var(--wg-envelope) center / 18px no-repeat; }
+
+/* the one action: a red pill with its arrow in a darker circle */
+#mnSignedOut #mnAuthGo {
+  position: relative; display: flex; align-items: center; justify-content: center; width: 100%; min-height: 58px; margin: 14px 0 0; padding: 0 66px;
+  border: 0; border-radius: 999px; background: var(--wg-red); color: #ffffff; opacity: 1; cursor: pointer; overflow: hidden;
+  font: 800 max(16px, 1.0625rem)/1.2 var(--wg-ui); letter-spacing: 0.01em;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 18px 40px -20px rgba(212, 0, 43, 0.9);
+  transition: background-color 160ms var(--wg-ease), transform 160ms var(--wg-ease);
+}
+#mnSignedOut #mnAuthGo::after {
+  content: ""; position: absolute; top: 50%; right: 6px; bottom: auto; left: auto; width: 46px; height: 46px; margin: -23px 0 0;
+  border: 0; border-radius: 50%; animation: none; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.26) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h13M12.5 6.5 18 12l-5.5 5.5'/%3E%3C/svg%3E") center / 20px no-repeat;
+  transition: transform 200ms var(--wg-ease);
+}
+#mnSignedOut #mnAuthGo:hover:not(:disabled) { background-color: var(--wg-red-hover); transform: none; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 18px 40px -20px rgba(212, 0, 43, 0.9); }
+#mnSignedOut #mnAuthGo:hover:not(:disabled)::after { transform: translateX(3px); }
+#mnSignedOut #mnAuthGo:active:not(:disabled) { transform: scale(0.985); }
+/* busy: the label stays (css/mnet.css clears it), the circle turns, a gold thread runs along the foot */
+#mnSignedOut #mnAuthGo[aria-busy="true"] { -webkit-text-fill-color: #ffffff; cursor: progress; }
+#mnSignedOut #mnAuthGo[aria-busy="true"]::after {
+  inset: auto; top: 50%; right: 6px; margin: -23px 0 0; width: 46px; height: 46px;
+  background: rgba(0, 0, 0, 0.26); border: 2px solid rgba(255, 255, 255, 0.28); border-top-color: #ffffff; box-shadow: none;
+  animation: wg-turn 0.9s linear infinite;
+}
+#mnSignedOut #mnAuthGo[aria-busy="true"]::before {
+  content: ""; position: absolute; left: 24px; right: 24px; bottom: 7px; height: 2px; border-radius: 2px; pointer-events: none;
+  background: linear-gradient(90deg, transparent, #f2d58c, transparent) 0 0 / 40% 100% no-repeat;
+  animation: wg-thread 1.25s linear infinite;
+}
+#mnSignedOut #mnAuthGo:disabled:not([aria-busy]) {
+  background: var(--wg-field); color: var(--wg-dim); box-shadow: inset 0 0 0 1px var(--wg-field-line); cursor: default;
+}
+#mnSignedOut #mnAuthGo:disabled:not([aria-busy])::after { display: none; }
+@keyframes wg-turn { to { transform: rotate(360deg); } }
+@keyframes wg-thread { from { background-position: -60% 0; } to { background-position: 160% 0; } }
+#mnSignedOut #mnResend {
+  display: flex; align-items: center; justify-content: center; width: 100%; min-height: 48px; margin: 12px 0 0; padding: 0 18px;
+  border: 1px solid var(--wg-gold-line); border-radius: 999px; background: transparent; box-shadow: none; cursor: pointer;
+  color: var(--wg-ink); font: 800 max(16px, 0.9375rem)/1.2 var(--wg-ui); text-decoration: none; opacity: 1;
+}
+#mnSignedOut #mnResend:disabled { background: var(--wg-rule); border-color: var(--wg-rule); color: var(--wg-dim); cursor: default; }
+/* providers appear only when the live settings switch one on: words only, never a mark */
+#mnSignedOut .mn__or {
+  position: static; display: flex; align-items: center; gap: 12px; margin: 16px 0 4px; color: var(--wg-faint);
+  font: 800 11px/1 var(--wg-ui); letter-spacing: 0.2em; text-transform: uppercase;
+}
+#mnSignedOut .mn__or::before, #mnSignedOut .mn__or::after { content: ""; position: static; flex: 1 1 auto; height: 1px; border: 0; background: var(--wg-rule); }
+#mnSignedOut .mn__or span { position: static; padding: 0; background: none; }
+#mnSignedOut .mn__provider {
+  display: flex; align-items: center; justify-content: center; width: 100%; min-height: 54px; margin: 10px 0 0; padding: 0 18px;
+  border: 1px solid var(--wg-field-line); border-radius: 999px; background: transparent; box-shadow: none; cursor: pointer;
+  color: var(--wg-ink); font: 700 max(16px, 1rem)/1.2 var(--wg-ui);
+}
+#mnSignedOut .mn__provider:disabled { color: var(--wg-dim); cursor: progress; }
+
+#mnSignedOut .wg-foot {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; column-gap: 18px; row-gap: 0;
+  margin: 14px 0 0; padding: 4px 0 0; border-top: 1px solid var(--wg-rule); text-align: center;
+}
+#mnSignedOut .wg-colophon { flex: 1 1 100%; margin: 8px 0 0; color: var(--wg-ink); font: italic 500 15px/1.4 var(--wg-serif); }
+#mnSignedOut .wg-foot a {
+  display: inline-flex; align-items: center; min-height: 44px; margin: 0; color: var(--wg-dim); font: 600 13px/1.2 var(--wg-ui);
+  text-decoration: underline; text-decoration-color: var(--wg-gold-line); text-underline-offset: 4px;
+}
+
+/* focus: a 2 px gold line, everywhere in the sheet; the stage sits on the dark scrim, so its line is the night gold */
+#mnSignedOut :is(button, a, input[type="checkbox"]):focus-visible { outline: 2px solid var(--wg-gold); outline-offset: 2px; }
+#mnSignedOut .mn__check input:focus-visible { outline-offset: -7px; }
+#mnSignedOut .wg-stage :is(button, a):focus-visible { outline: 2px solid #e8c877; outline-offset: 2px; }
+#mnSignedOut .wg-field .mn__input:focus-visible { outline: 0; }
+
+/* ============================================================
+   MOTION: only after a gesture (js/world-gate.js adds .is-entering); a boot open is whole in its first frame
+   ============================================================ */
+#mnSignedOut.is-entering .wg-scrim { animation: wg-fade-in 260ms ease-out both; }
+#mnSignedOut.is-entering .wg-sheet { will-change: transform, opacity; animation: wg-rise 420ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+#mnSignedOut.is-entering .wg-card { animation: wg-card-in 360ms var(--wg-ease) both; }
+#mnSignedOut.is-entering .wg-card:nth-child(1) { animation-delay: 120ms; }
+#mnSignedOut.is-entering .wg-card:nth-child(2) { animation-delay: 180ms; }
+#mnSignedOut.is-entering .wg-card:nth-child(3) { animation-delay: 240ms; }
+#mnSignedOut.is-entering .wg-light { animation: wg-sweep 1200ms ease-in-out 300ms both; }
+#mnSignedOut.is-leaving { pointer-events: none; }
+#mnSignedOut.is-leaving .wg-sheet { animation: wg-fall 220ms ease-in both; }
+#mnSignedOut.is-leaving :is(.wg-scrim, .wg-veil, .wg-stage) { animation: wg-fade-out 200ms ease-in both; }
+@keyframes wg-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes wg-fade-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes wg-rise { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: none; } }
+@keyframes wg-fall { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(28px); } }
+@keyframes wg-card-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes wg-sweep { 0% { opacity: 1; transform: translateX(-100%); } 100% { opacity: 1; transform: translateX(100%); } }
+
+/* ============================================================
+   THE ONBOARDING PAGES (#mnProfileGate): still a page; the door's hand and tokens (and a readable day)
+   ============================================================ */
+#mnProfileGate.mn__onboard::before {
+  background: radial-gradient(70% 34% at 92% -2%, rgba(112, 12, 38, 0.30), transparent 62%), #090b0d;
+}
+html[data-daylight="day"] #mnProfileGate.mn__onboard::before { background: #ffffff; }
+#mnProfileGate { color: var(--wg-ink); font-family: var(--wg-ui); }
+#mnProfileGate .mn__onboard-h {
+  max-width: 14ch; margin: 0; color: var(--wg-ink); text-transform: none; overflow-wrap: normal; text-wrap: balance;
+  font: 500 clamp(2.25rem, 9.6vw, 3.25rem)/1.04 var(--wg-serif); letter-spacing: -0.01em;
+}
+#mnProfileGate .mn__onboard-h em { font-style: normal; color: var(--wg-stop); }
+#mnProfileGate .mn__lede { color: var(--wg-dim); font: 500 16px/1.55 var(--wg-ui); }
+#mnProfileGate .mn__label { color: var(--wg-dim); font: 800 11px/1.25 var(--wg-ui); letter-spacing: 0.14em; text-transform: uppercase; }
+#mnProfileGate .mn__label span { color: var(--wg-faint); letter-spacing: 0.04em; }
+#mnProfileGate .mn__hint { color: var(--wg-dim); }
+#mnProfileGate .mn__hint a { color: var(--wg-ink); }
+#mnProfileGate .mn__field, #mnProfileGate .mn__about {
+  min-height: 58px; border-radius: 16px; background: var(--wg-field); box-shadow: inset 0 0 0 1px var(--wg-field-line);
+}
+#mnProfileGate .mn__field:focus-within { box-shadow: inset 0 0 0 1.5px var(--wg-gold), 0 0 0 4px var(--wg-gold-soft); }
+#mnProfileGate .mn__field.is-bad { box-shadow: inset 0 0 0 1.5px var(--wg-error), 0 0 0 4px var(--wg-error-soft); }
+#mnProfileGate .mn__field .mn__input, #mnProfileGate .mn__input {
+  min-height: 58px; color: var(--wg-ink); caret-color: var(--wg-gold); font-size: max(16px, 1.0625rem);
+}
+#mnProfileGate .mn__textarea { min-height: 8rem; background: var(--wg-field); box-shadow: inset 0 0 0 1px var(--wg-field-line); font-size: max(16px, 1rem); }
+#mnProfileGate .mn__input::placeholder { color: var(--wg-faint); opacity: 1; }
+#mnProfileGate .mn__field.is-locked .mn__input { color: var(--wg-dim); }
+#mnProfileGate .mn__field-ico, #mnProfileGate .mn__field-at { color: var(--wg-faint); border-right-color: var(--wg-rule); }
+#mnProfileGate .mn__field:focus-within .mn__field-ico { color: var(--wg-gold); }
+#mnProfileGate .mn__field--phone .mn__dial { border-right-color: var(--wg-rule); }
+#mnProfileGate .mn__about summary { color: var(--wg-ink); }
+#mnProfileGate .mn__about-t small { color: var(--wg-faint); }
+#mnProfileGate .mn__about-chev { border-color: var(--wg-dim); }
+#mnProfileGate .mn__demographics { border-color: var(--wg-rule); color: var(--wg-ink); }
+#mnProfileGate .mn__demographics legend span { color: var(--wg-stop); }
+#mnProfileGate .mn__demo-grid label { color: var(--wg-ink); }
+#mnProfileGate .mn__steps li { background: var(--wg-rule-strong); }
+#mnProfileGate .mn__steps li.is-done { background: var(--wg-gold); box-shadow: none; }
+#mnProfileGate .mn__steps li.is-current { background: var(--wg-red); box-shadow: none; }
+#mnProfileGate .mn__steps-count { color: var(--wg-gold); font: 800 12px/1 var(--wg-ui); letter-spacing: 0.2em; }
+#mnProfileGate .mn__cta {
+  min-height: 58px; background: var(--wg-red); color: #ffffff; font: 800 max(16px, 1.0625rem)/1.2 var(--wg-ui); letter-spacing: 0.01em;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 18px 40px -20px rgba(212, 0, 43, 0.9);
+}
+#mnProfileGate .mn__cta:hover:not(:disabled) { background: var(--wg-red-hover); }
+#mnProfileGate .mn__cta-arrow { right: 6px; top: 6px; bottom: 6px; width: 46px; background: rgba(0, 0, 0, 0.26); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14); }
+#mnProfileGate .mn__onboard-note { color: var(--wg-dim); }
+#mnProfileGate :is(.mn__back, .mn__text-button) { min-height: 44px; color: var(--wg-dim); }
+#mnProfileGate :is(.mn__secondary, .mn__ghost) { color: var(--wg-ink); background: transparent; box-shadow: inset 0 0 0 1px var(--wg-field-line); }
+#mnProfileGate .mn__status { color: var(--wg-dim); }
+#mnProfileGate .mn__status.is-error { color: var(--wg-error); }
+#mnProfileGate .mn__status.is-ok { color: var(--wg-ok); }
+#mnProfileGate .mn__profile-security h2 { color: var(--wg-ink); }
+#mnProfileGate :is(button, a, summary, input[type="checkbox"]):focus-visible { outline: 2px solid var(--wg-gold); outline-offset: 2px; }
+
+/* ============================================================
+   700 px AND UP: a floating card, and the World's dated lower third
+   ============================================================ */
+@media (min-width: 700px) {
+  #mnSignedOut .wg-sheet {
+    justify-self: center; align-self: end; width: min(500px, 100% - 64px); margin: 0 0 32px; padding: 18px 40px 22px;
+    border: 1px solid var(--wg-gold-line); border-radius: 28px;
+    outline: 1px solid var(--wg-hairline); outline-offset: -6px;
+    box-shadow: 0 40px 90px -30px rgba(0, 0, 0, 0.85);
+    max-height: calc(var(--wg-vvh, 100vh) - 72px - var(--wg-safe-bottom, 0px));
+  }
+  #mnSignedOut .wg-sheet::before { content: none; }
+  #mnSignedOut .wg-sheet[data-more]::after { margin: -34px -40px -22px; bottom: -22px; }
+  #mnSignedOut .wg-crown { width: 88px; height: 88px; }
+  #mnSignedOut .mn__gate-why:not([hidden]) ~ .wg-crown { width: 72px; height: 72px; }
+  #mnSignedOut .wg-title { font-size: 36px; }
+  #mnSignedOut .wg-foot { flex-wrap: nowrap; column-gap: 14px; }
+  #mnSignedOut .wg-colophon { flex: none; margin: 0; font-size: 14px; white-space: nowrap; }
+  #mnSignedOut .wg-foot a { flex: none; font-size: 12.5px; white-space: nowrap; }
+  #mnSignedOut .wg-back { margin-left: 24px; }
+  /* create mode is compact enough that the card stays clear of the Earth (at 820 x 1180, 300 px of the globe above it) */
+  #mnSignedOut[data-auth-mode="create"] .wg-crown { width: 52px; height: 52px; margin: -6px auto -8px; }
+  #mnSignedOut[data-auth-mode="create"] .wg-title { font-size: 30px; }
+  #mnSignedOut[data-auth-mode="create"] #mnCreateNote { margin-top: 26px; }
+  #mnSignedOut[data-auth-mode="create"] #mnCreateNote::before { top: -14px; }
+  #mnSignedOut[data-auth-mode="create"] .wg-field { min-height: 58px; margin-top: 8px; }
+  #mnSignedOut[data-auth-mode="create"] .wg-rule { margin-top: 8px; }
+  #mnSignedOut[data-auth-mode="create"] .wg-foot { margin-top: 10px; }
+
+  #mnSignedOut .wg-lower { align-items: center; padding-top: 24px; }
+  #mnSignedOut .wg-lower::before {
+    content: ""; position: absolute; z-index: -1; left: 0; right: 0; bottom: -14px; height: 210px; pointer-events: none;
+    background: linear-gradient(180deg, rgba(4, 6, 9, 0), rgba(4, 6, 9, 0.72) 55%, rgba(4, 6, 9, 0.90));
+  }
+  #mnSignedOut .wg-dateline:not([hidden]) { display: block; max-width: calc(100% - 48px); margin: 0 24px 10px; text-align: center; }
+  #mnSignedOut .wg-dateline__k { color: #e8c877; font: 800 11px/1.4 var(--wg-ui); letter-spacing: 0.2em; text-transform: uppercase; }
+  #mnSignedOut .wg-dateline__sep, #mnSignedOut .wg-dateline__d { color: #c9ced4; font: 700 11px/1.4 var(--wg-ui); letter-spacing: 0.04em; }
+  #mnSignedOut .wg-pulse { max-width: 100%; padding: 2px 24px 4px; }
+  #mnSignedOut .wg-card { width: 236px; max-width: none; }
+  #mnSignedOut .wg-card__in, #mnSignedOut .wg-card__go {
+    grid-template-columns: 28px minmax(0, 1fr); grid-template-areas: "ico k" "v v" "s s"; align-content: start; align-items: center;
+    row-gap: 6px; height: 100%; padding: 12px 16px 14px;
+  }
+  #mnSignedOut .wg-card__v { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; white-space: normal; font: 500 18px/1.25 var(--wg-serif); }
+  #mnSignedOut .wg-card__s { white-space: normal; font: 600 12.5px/1.4 var(--wg-ui); }
+  #mnSignedOut .wg-card__s::before { content: none; }
+  #mnSignedOut .wg-card__pre { display: inline; }
+  #mnSignedOut .wg-credit { align-self: center; margin-top: 10px; }
+  #mnProfileGate .mn__onboard-h { font-size: clamp(2.75rem, 5.6vw, 3.25rem); }
+}
+@media (min-width: 700px) {
+  @container (min-height: 170px) { #mnSignedOut .wg-pulse { display: flex; justify-content: safe center; } }
+}
+
+/* ============================================================
+   1100 px AND UP: the Earth on the left, the card on the right
+   ============================================================ */
+@media (min-width: 1100px) {
+  #mnSignedOut.wg-door { grid-template-columns: minmax(0, 1fr) 540px; grid-template-rows: minmax(0, 1fr); }
+  #mnSignedOut .wg-stage { grid-column: 1; grid-row: 1; }
+  #mnSignedOut .wg-sheet {
+    grid-column: 2; grid-row: 1; align-self: center; justify-self: start; width: 484px; margin: 0; padding: 20px 40px 16px;
+  }
+  #mnSignedOut .wg-sheet[data-more]::after { margin: -34px -40px -16px; bottom: -16px; }
+  #mnSignedOut .wg-crown { width: 96px; height: 96px; }
+  #mnSignedOut .mn__gate-why:not([hidden]) ~ .wg-crown { width: 72px; height: 72px; }
+  #mnSignedOut .wg-title { font-size: 38px; }
+  #mnSignedOut[data-auth-mode="create"] .wg-crown { width: 80px; height: 80px; margin: -8px auto -14px; }
+  #mnSignedOut[data-auth-mode="create"] .wg-title { font-size: 34px; }
+  #mnSignedOut[data-auth-mode="create"] .wg-field { min-height: 64px; margin-top: 10px; }
+  #mnSignedOut .wg-scrim {
+    background:
+      radial-gradient(70% 90% at 28% 48%, transparent 46%, rgba(4, 6, 9, 0.5)),
+      linear-gradient(90deg, transparent 0, transparent 50%, rgba(4, 6, 9, 0.84) 68%, rgba(4, 6, 9, 0.90) 100%),
+      linear-gradient(180deg, rgb(4, 6, 9) 0, rgb(4, 6, 9) calc(var(--wg-head, 72px) + 2px), rgba(4, 6, 9, 0.30) calc(var(--wg-head, 72px) + 24px), rgba(4, 6, 9, 0.10) 50%, rgba(4, 6, 9, 0.30) 100%);
+  }
+  html[data-daylight="day"] #mnSignedOut .wg-scrim {
+    background:
+      radial-gradient(70% 90% at 28% 48%, transparent 46%, rgba(4, 6, 9, 0.43)),
+      linear-gradient(90deg, transparent 0, transparent 50%, rgba(4, 6, 9, 0.7224) 68%, rgba(4, 6, 9, 0.774) 100%),
+      linear-gradient(180deg, rgb(4, 6, 9) 0, rgb(4, 6, 9) calc(var(--wg-head, 72px) + 2px), rgba(4, 6, 9, 0.258) calc(var(--wg-head, 72px) + 24px), rgba(4, 6, 9, 0.086) 50%, rgba(4, 6, 9, 0.258) 100%);
+  }
+  /* the veil covers the feed column only: its left edge is the globe frame's right edge */
+  #mnSignedOut .wg-veil {
+    top: 0; left: var(--wg-veil-left, 60%);
+    background: linear-gradient(90deg, rgba(4, 6, 9, 0), rgba(4, 6, 9, 0.78) 64px);
+  }
+  html[data-daylight="day"] #mnSignedOut .wg-veil { background: linear-gradient(90deg, rgba(4, 6, 9, 0), rgba(4, 6, 9, 0.72) 64px); }
+  #mnSignedOut .wg-back { margin-left: 32px; }
+  #mnSignedOut .wg-lower { align-items: flex-start; padding: 24px 32px 0; }
+  #mnSignedOut .wg-lower::before { height: 260px; }
+  #mnSignedOut .wg-dateline:not([hidden]) { max-width: 100%; margin: 0 0 10px; text-align: left; }
+  #mnSignedOut .wg-pulse { padding: 2px 0 4px; }
+  #mnSignedOut .wg-card { width: 214px; }
+  #mnSignedOut .wg-credit { align-self: flex-start; margin: 10px 0 0; }
+}
+@media (min-width: 1100px) {
+  @container (min-height: 170px) { #mnSignedOut .wg-pulse { justify-content: flex-start; } }
+}
+/* the one blur: the veil over the feed column, never over the globe, and never for someone who asked for less transparency */
+@media (min-width: 1100px) and (prefers-reduced-transparency: no-preference) {
+  @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    #mnSignedOut .wg-veil {
+      -webkit-backdrop-filter: blur(12px) saturate(0.85); backdrop-filter: blur(12px) saturate(0.85);
+      -webkit-mask-image: linear-gradient(90deg, transparent, #000 64px); mask-image: linear-gradient(90deg, transparent, #000 64px);
+    }
+  }
+}
+
+/* ============================================================
+   REDUCED MOTION: nothing moves in the door or the pages; the busy ring and its thread hold still
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  #mnSignedOut *, #mnSignedOut *::before, #mnSignedOut *::after, #mnSignedOut.wg-door,
+  #mnProfileGate *, #mnProfileGate *::before, #mnProfileGate *::after {
+    animation: none !important; transition: none !important; scroll-behavior: auto !important;
+  }
+  #mnSignedOut .wg-light { display: none !important; }
+  #mnSignedOut #mnAuthGo[aria-busy="true"]::before { background-size: 100% 100% !important; background-position: 0 0 !important; }
+  #mnSignedOut #mnAuthGo:hover:not(:disabled)::after, #mnSignedOut #mnAuthGo:active:not(:disabled) { transform: none !important; }
+}

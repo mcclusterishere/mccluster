@@ -470,17 +470,25 @@
   /* a hook for the browser test: the rule above, called with a country code and a number */
   window.__mnPhone = normalizePhone; window.__mnSplitPhone = splitE164;
 
+  /* THE DOOR (owner, 2026-11-18; docs/design/WORLD-SIGN-IN-DOOR.md). The sign-in ("signedout") rises over the World instead
+     of replacing it: the World stays on screen under it, inert, and keeps its place. The three onboarding pages ("profile")
+     are still a page that replaces the World. js/world-gate.js (MCC_GATE) owns the door's presentation: it is told when a
+     gate is shown, and it closes the door (leave) so the way out can move. */
   function showGate(which) {
-    $("mnSignedOut").hidden = which !== "signedout";
+    var door = $("mnSignedOut"), gate = window.MCC_GATE || null;
+    $("mnApp").hidden = which === "profile";
     $("mnProfileGate").hidden = which !== "profile";
-    $("mnApp").hidden = which !== "app";
+    if (which === "signedout") door.hidden = false;
+    else if (!door.hidden) { if (gate && gate.leave) gate.leave(); else door.hidden = true; }
     /* the head of mnet.html held the World back under a ?signin=1 form, or put an addressed room up; a gate is chosen now,
        so those holds are over */
     document.documentElement.classList.remove("mn-boot-signin");
     document.documentElement.removeAttribute("data-boot-view");
-    /* the bar's sign-in chip steps aside while a gate is up, as it does on the World */
-    document.documentElement.classList.toggle("mn-gate-on", which !== "app");
+    /* the bar's sign-in chip steps aside while the pages are up, as it does on the World; the door covers it */
+    document.documentElement.classList.toggle("mn-gate-on", which === "profile");
+    document.documentElement.classList.toggle("mn-door-open", which === "signedout");
     sizeWorld();
+    if (gate && gate.shown) gate.shown(which);
   }
 
   function providerLabel(key) {
@@ -611,14 +619,22 @@
     window.scrollTo(0, 0);
     return true;
   }
-  /* the sign-in panel, opened from the World: the reason and the way back
-     sit at the top, so neither ends up under the keyboard or the bar */
-  function openSignIn(mode, why) {
+  /* the door, opened from the World: the reason on the sheet, the way back on the stage, and the World where it was (no
+     scroll to the top). key is askToSignIn's reason (a guest's mission Join reads "mission"). A World dialog open under
+     it (a mission, a person) is closed first: close() fires no cancel, so ?mission= stays in the address. */
+  function openSignIn(mode, why, key) {
     setAuthMode(mode);
+    Array.prototype.forEach.call(document.querySelectorAll("dialog[open]"), function (d) { if (!$("mnSignedOut").contains(d)) d.close(); });
     showGate("signedout");
-    $("mnGuestWhyRow").hidden = !state.guest;
+    $("mnGuestWhyRow").hidden = !state.guest || !why;
+    $("mnSignedOutBack").hidden = !state.guest;
     $("mnGuestWhy").textContent = why || "";
-    window.scrollTo(0, 0);
+    if (window.MCC_GATE && MCC_GATE.opened) MCC_GATE.opened({
+      reason: key || "",
+      /* the World's own open-missions read (no second query shape), newest first */
+      missions: function () { return loadOpenMissions().then(function () { return state.missionFeed.all || []; }); },
+      openMission: function (id) { showGate("app"); openMission(id); }
+    });
     var email = $("mnEmail"); if (email) email.focus({ preventScroll: true });
   }
   function leaveGuestWorld() {
@@ -636,7 +652,7 @@
       rooms:"Sign in to join conversations anywhere in the world, raise your hand and speak.",
       regions:"Sign in to explore posts, news and conversations in other regions." }[why] || "Sign in to do that.";
     track("guest_sign_in_prompt", { reason: String(why || "act").slice(0, 24) });
-    openSignIn("signin", line);
+    openSignIn("signin", line, why);
   }
 
   /* a sign-up that waited on its emailed confirmation: the first sign-in after it carries on (FLOW, above), for that
@@ -3552,7 +3568,7 @@
       if (!create) {
         if (e.code === "email_not_confirmed" || /email not confirmed/i.test(e.message || "")) {
           showSignupVerification(email, 60);
-        } else setStatus($("mnAuthStatus"), e.message || "Could not sign in.", "error");
+        } else setStatus($("mnAuthStatus"), e && e.code === "invalid_credentials" ? "That email and password don’t match an account. Check them, or use Forgot password." : (e.message || "Could not sign in."), "error");
         return;
       }
       var rateLimited = e.status === 429 || /429/.test(String(e && e.code || "")) || /rate.limit|too many requests/i.test(String(e && e.message || ""));
@@ -3650,7 +3666,8 @@
     $("mnGuestSignIn").onclick = function () { openSignIn("signin"); };
     $("mnGuestJoin").onclick = function () { openSignIn("create"); };
     document.querySelectorAll("[data-guest-open]").forEach(function (b) { b.onclick = function () { openSignIn(b.getAttribute("data-guest-open")); }; });
-    $("mnSignedOutBack").onclick = function () { showGate("app"); setView("feed"); if (!state.feed.length) loadFeed(true); };
+    /* the door closes onto the World as it was left: the room and its scroll stay, the feed loads if it never did */
+    $("mnSignedOutBack").onclick = function () { showGate("app"); if (state.currentView !== "feed") setView("feed"); if (!state.feed.length) loadFeed(true); };
     $("mnEditProfile").onclick = editProfile;
     document.querySelectorAll("[data-mn-view]").forEach(function (b) { b.onclick = function () { setView(b.dataset.mnView); }; });
     document.querySelectorAll("[data-feed-scope]").forEach(function (b) { b.onclick = function () { state.world.scopeFromTap = false; setFeedScope(b.dataset.feedScope); }; });
