@@ -165,11 +165,14 @@ ugly … Just keep it as is."
   globe carry no `missions=0`), in the mission dialog and through a shared `?mission=<id>` link. Joining asks a guest to
   sign in or create an account and keeps `?mission=<id>` in the address; the server (`join_action_mission`) still decides
   who may join. A member's Action Record stays the missions view.
-- **The feed strip** (`#mnFeedScope`, under the globe, drag-scrolling): Local · Everything (key `global`, pressed on
-  load) · the Equity Uprise tab (key `equity`) · Live · News · People. The Equity Uprise tab shows the owner-supplied
-  PNG alone (`assets/img/equity-uprise-mark-white.png` on the dark ground, `assets/img/equity-uprise-mark.png` by
-  day), scaled proportionally, no plate and no visible words; its accessible name is "Equity Uprise". It is the mission
-  feed, with the Environmental Justice panel (`#wePanel`) above the missions.
+- **The feed's row** (`#mnFeedScope`, under the globe, drag-scrolling), in the owner's order (2026-11-18: "It should
+  just be local, equity up, global, live news people"): Local · the Equity Uprise tab (key `equity`) · Global (key
+  `global`, pressed on load; Local instead for the visitor's own country once `WORLD_PLACE_SCOPE_ENABLED` is on, owner
+  2026-11-17) · Live · News · People, and nothing above it for a signed-out visitor. The Equity Uprise tab shows the
+  owner-supplied PNG alone (`assets/img/equity-uprise-mark-white.png` on the dark ground,
+  `assets/img/equity-uprise-mark.png` by day), scaled proportionally, no plate and no visible words; its accessible
+  name is "Equity Uprise". It is the mission feed, with the Environmental Justice panel (`#wePanel`) above the
+  missions.
 - **No swipe deck and no Missions world mode** (the owner rejected the deck; missions are posts). The centre of the
   globe carries no Missions and no E=UP button: the 2026-11-07 E=UP centre mode is superseded by the feed tab.
 - **Travel stays owner-only** (the owner did not mention it on 2026-11-17). `hu-travel-off` on `<html>` (`mnet.html`)

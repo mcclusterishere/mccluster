@@ -8,10 +8,11 @@ strip (`#mnFeedScope`, key `equity`; owner, 2026-11-17, see
 `WORLD-FEED-AND-MISSIONS-20261117.md`), above that tab's missions. From
 2026-11-07 to 2026-11-17 it was a supplied-logo button in the centre
 `.wt-world-modes` bar; that button is gone. It retains `mnWorldFrame` and its
-Cesium viewer. Everything (key `global`) remains the feed's default. Missions are
-public; Travel remains owner-only, and the existing Halo release gate is
-unchanged. While the tab is selected, expanding the map reuses the same frame;
-selecting an observation returns to its action panel.
+Cesium viewer. Global (key `global`; labelled Everything from 2026-11-17 to
+2026-11-18) remains the feed's default. Missions are public; Travel remains
+owner-only, and the existing Halo release gate is unchanged. While the tab is
+selected, expanding the map reuses the same frame; selecting an observation
+returns to its action panel.
 
 The environmental panel, transport/auth adapter and Cesium pin adapter are
 separate. See `packages/equity-uprise/environment/README.md` and its explicit
@@ -190,7 +191,7 @@ and `scripts/perf/environment-globe-perf.mjs`) and the feed side recorded here. 
   the row's category, location kind, source, observed and fetched times, facts and the host's `significant` flag (the one pure
   rule in `js/world-environment-posts.js`, handed in through the adapter: USGS at M5.5 or with a ShakeMap, NWS Extreme or
   Severe with a point of its own, every NHC storm, EONET fires, cyclones, tornadoes, storms and volcanoes). The feed is read
-  once at mount, so Everything can carry the significant observations before the tab is opened; the five-minute refresh still
+  once at mount, so Global can carry the significant observations before the tab is opened; the five-minute refresh still
   runs only while the tab is open and the page visible.
 - **Per-source health** under "Sources, coverage and limitations": one row per feed source and one per globe layer that has
   reported (`hu:environment-layer-state`): the status word, the reason in plain words, Retrieved and Last success each with
@@ -213,7 +214,7 @@ and `scripts/perf/environment-globe-perf.mjs`) and the feed side recorded here. 
   "Show on globe" (`hu:environment-focus`, after turning the feed to the Equity Uprise tab) and the source's page. A known event
   whose words changed keeps its post and shows "Updated <ago>"; an event that left the feed loses its post; fires are summarised
   per 1-degree area from the globe's digest (never one post per detection), perimeters post with their acres and dates. The
-  Equity Uprise tab lists every observation with the mission posts in one list by time; Everything carries the significant ones,
+  Equity Uprise tab lists every observation with the mission posts in one list by time; Global carries the significant ones,
   one after every six other items and never padding a short feed. While the module answers 503 or 404 there are no observation
   posts and the tab's honest line stands.
 - **By day**: the panel's palette is tokens on `.we-panel` (`css/world-environment.css`, the night values unchanged) and
@@ -225,7 +226,7 @@ and `scripts/perf/environment-globe-perf.mjs`) and the feed side recorded here. 
   115 passed, 0 failed (the lifecycle suite's EQ1/EQ2 races unchanged; the consumer lock test passes with the new hashes).
 - `node scripts/e2e/world-environment.mjs <outDir>` (Playwright, headless Chromium, one page at a time): at 390x844, 820x1180
   and 1280x800, harness A (the modules alone, the journey the module always had) and harness B (the page as it ships with a
-  stub globe frame): the significant observations in Everything at most one in six, every observation in the Equity Uprise tab
+  stub globe frame): the significant observations in Global at most one in six, every observation in the Equity Uprise tab
   with the missions by time exactly as the pure module orders them, typed and stamped, "Show on globe" posting
   `hu:environment-focus` (a fire area posts the globe's `cell:<west>:<south>`), layers before pins (62 items, 16 significant, the
   public fields only), one read of the feed route and no layer route from the page, the health rows, a summarised fire post from
@@ -245,8 +246,8 @@ frame (Cesium 1.131 served from a local build under the CDN URL, so the page's S
 (the feed, the six layer routes, the ShakeMaps, member posts, news, missions). What it proved, with the real messages between
 the panel, the page and the frame:
 
-- Everything carries the significant observation posts from the panel's first feed load, one after at least six other items;
-  with Everything open the layers are off and the frame keeps its continuous loop byte for byte (requestRenderMode false,
+- Global carries the significant observation posts from the panel's first feed load, one after at least six other items;
+  with Global open the layers are off and the frame keeps its continuous loop byte for byte (requestRenderMode false,
   maximumRenderTimeChange 0, legend hidden).
 - The Equity Uprise tab turns the typed layers on inside the frame: 50 quake discs and dots among 62 events, 600 fire
   footprints and 20 summary cells, 50 perimeters with their rings, 70 alert polygons with 25 zone-only and 5 rejected listed
@@ -270,7 +271,7 @@ the panel, the page and the frame:
   ripple runs under its bounded hold and the legend labels it illustrative; the ShakeMap contours draw and the panel gains a
   ShakeMap health row; the ShakeMap makes the quake significant and the tour queue takes it in (capped at 12 scenes).
 - A real tap on a fire perimeter through the page answers with the globe-selection card: Captured, Retrieved, Coverage, Status,
-  the acres and the source, never an Observed slot. Show on globe focuses the event from the tab and, from Everything, turns the
+  the acres and the source, never an Observed slot. Show on globe focuses the event from the tab and, from Global, turns the
   feed to the tab, brings the layers back and honours the focus once they arrive.
 - The 2D map morphs and back with the layers and their counts intact; leaving the tab turns the layers off, stops the director,
   restores the continuous loop and hides the legend and the panel; Local, News, the member posts and the guest's People gate are

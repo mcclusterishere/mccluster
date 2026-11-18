@@ -5,7 +5,7 @@
 
    The pure parts, read by the World page (js/mnet.js draws the posts and the dialog) and by node --test
    (scripts/test/world-mission-posts.test.mjs). Nothing here touches the page, the network or storage.
-   - interleave: Everything puts one mission after every three other items, newest mission first, each mission at most once;
+   - interleave: Global puts one mission after every three other items, newest mission first, each mission at most once;
      when the other items run out the remaining missions carry on, up to the page size.
    - placeMissions / missionCount: a place's missions are the open missions pinned in it plus the open missions with no pin at
      all (they can be done anywhere).

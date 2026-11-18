@@ -33,19 +33,22 @@ the exact change.
 | `MISSION-RESET-DOCKET-516R.md`, owner 2026-10-17: the Missions tab shows one card at a time; left passes, right accepts | The swipe deck is removed. |
 | Owner 2026-11-07: the E=UP logo is a mode button in the centre of the globe | The E=UP logo is a tab in the feed's scrolling tab strip; the Environmental Justice panel lives behind that tab. |
 | Owner 2026-10-19: the strip reads Local, Global, Live, News, People; "Global is everything" | The default tab is labelled Everything (same `global` key) and the strip gains the Equity Uprise tab. |
+| Owner 2026-11-17: the strip reads Local · Everything (key `global`) · the Equity Uprise tab · Live · News · People | Owner 2026-11-18: the row reads Local · the Equity Uprise tab · Global · Live · News · People. The whole stream is labelled Global again (same `global` key, still chosen on load), and a signed-out visitor sees nothing above the row. |
 | PR #726, owner 2026-11-03: the explorer's mission feed and pin detail are owner-only (`css/globe-games.css`) | Mission pins, their detail and their join are public. The games controls stay owner-only. |
 
 ## The target
 
-1. **The feed strip** (`#mnFeedScope`, the drag-scrolling row under the globe): Local · Everything (key `global`,
-   pressed on load) · Equity Uprise (key `equity`) · Live · News · People. There is no separate Environment tab:
-   the environmental globe lives in the Equity Uprise tab (owner, 2026-11-17, latest decision below).
+1. **The feed's row** (`#mnFeedScope`, the drag-scrolling row under the globe), in the owner's order of 2026-11-18:
+   Local · Equity Uprise (key `equity`) · Global (key `global`, pressed on load) · Live · News · People, and nothing
+   above it for a signed-out visitor. There is no separate Environment tab: the environmental globe lives in the
+   Equity Uprise tab (owner, 2026-11-17, latest decision below).
 2. **The Equity Uprise tab** shows the owner-supplied PNG only: `assets/img/equity-uprise-mark-white.png` on a dark
    ground, `assets/img/equity-uprise-mark.png` on a light (daylight) ground. Choosing a supplied variant is not
    recolouring. Scale proportionally to the strip's icon size; no plate, filter, crop or visible words. Its
    accessible name is "Equity Uprise". (`AGENTS.md`, "THE LOGOS ARE NOT YOURS TO DRAW".)
-3. **Everything** combines member posts, news and missions in one stream. Missions are interleaved at a modest
-   ratio (no more than one mission per few other items), each mission at most once per page.
+3. **Global** (labelled Everything from 2026-11-17 to 2026-11-18) combines member posts, news and missions in one
+   stream. Missions are interleaved at a modest ratio (no more than one mission per few other items), each mission
+   at most once per page.
 4. **The Equity Uprise tab** holds the missions and the environmental globe together. Selecting it turns the
    globe into the environmental globe (item 11) and the feed into mission posts and environmental observation
    posts, interleaved by time, each clearly typed (an observation is never presented as a mission or as its
@@ -91,12 +94,12 @@ the exact change.
     sensor and radiative power; acres; severity, certainty and urgency; wind), the source and its link, coverage
     and status, and "Show on globe". All of them appear in the Equity Uprise tab; significant ones (for example
     an M4.5+ earthquake, a Severe or Extreme NWS warning, an active NHC storm, a large fire perimeter) also appear
-    in Everything at a low ratio. Thousands of fire detections are never thousands of posts: they are summarised
+    in Global at a low ratio. Thousands of fire detections are never thousands of posts: they are summarised
     per area. One post per event; a source update edits that post ("Updated" time), never duplicates it.
     State (2026-11-17, slice G1): source on this branch (`js/world-environment-posts.js`, `js/mnet.js`, the panel's
     `mcc:world-environment-events`); verified with fixtures at 390, 820 and 1280 (`scripts/e2e/world-environment.mjs`: the
     posts typed and stamped with the recorded time, the retrieval time labelled when the source gives none, one in six in
-    Everything, with the missions by time in the Equity Uprise tab, fires summarised per 1-degree area, Show on globe, zero
+    Global, with the missions by time in the Equity Uprise tab, fires summarised per 1-degree area, Show on globe, zero
     posts under 503 and 404) and by `scripts/test/world-environment-posts.test.mjs`; the significance line is M5.5 or a
     ShakeMap for USGS (the design's constant; this item's M4.5 example is one constant away); the integration pass verified the
     posts, Show on globe and the tab's order by time against the real frame (`scripts/e2e/environment-world.e2e.mjs`); not
@@ -187,12 +190,43 @@ right now."
 - **On load, the country the visitor's IP address shows.** That is the 2026-10-20 release contract
   (`docs/action-network/WORLD-REGION-FEED-RELEASE.md`): with the flag on, the feed opens on Local for the country
   Cloudflare reads at the edge (`request.cf.country`, through `/v1/world/place-scope`), which `js/mnet.js` already
-  does (`state.placeScope.home`); an unknown edge country stays on Everything; no GPS, no user-supplied location,
-  nothing stored. The flag turns on at deploy time (production step 7). Still in force from 2026-10-20 unless the
-  owner says otherwise: a signed-out visitor cannot hop to another country without signing in, which now also
-  covers that country's mission and news counts.
+  does (`state.placeScope.home`); an unknown edge country stays on Everything (labelled Global again since
+  2026-11-18); no GPS, no user-supplied location, nothing stored. The flag turns on at deploy time (production step
+  7). Still in force from 2026-10-20 unless the owner says otherwise: a signed-out visitor cannot hop to another
+  country without signing in, which now also covers that country's mission and news counts.
 - **The clip-campaign door and the Live room's action blocks stay owner-only** ("keep them mine for right now"):
   `hu-travel-off` keeps holding them with Travel; nothing changes.
+
+## Owner decision, 2026-11-18 (the feed's row)
+
+The owner, looking at the live World as a signed-out visitor (the live site still serves build `fc1986ec`, which shows
+everyone the old centre mode bar, Travel · Missions · News feed · E=UP, above the scope row): "I'm seeing like the
+non-logged out view. There's still that news feed, then the equity up E equals up tab. When in reality, I wanted that E
+equals up tab next to local, global, live news people. Do you know what I'm saying? And it's still as a logged out user,
+news feed, then the equity up tab. There should be no tabs from news feed to E equals up. It should just be local, equity
+up, global, live news people."
+
+- **The row** (`#mnFeedScope`) reads Local · the Equity Uprise tab · Global · Live · News · People. The Equity Uprise tab
+  is the supplied mark as it is (white by night, the supplied dark mark by day, named "Equity Uprise", never written out).
+  Everything is labelled Global again (owner, 2026-10-19: "Global is everything"); the key stays `global` and the start
+  rule is unchanged: Global on load, or Local for the visitor's IP country once `WORLD_PLACE_SCOPE_ENABLED` is on
+  (evening of 2026-11-17); `?feed=equity` opens the Equity Uprise tab. The arrow keys walk the row in this order.
+- **Nothing above the row for a signed-out visitor**: no centre mode bar, and no "News feed" or "E=UP" written anywhere on
+  the World. The house owner's own signed-in mode bar (Travel, News feed) is unchanged.
+- State (2026-11-18): source on this branch (`mnet.html`, `js/mnet.js`; no CSS change: the row keeps its 44px pills,
+  its own sideways scroll and its pressed red by night and by day). Verified with fixtures, nothing live:
+  `scripts/test/world-mission-posts.test.mjs` holds the row as shipped (names, keys, Global chosen on load),
+  `FEED_SCOPES`, the start rule and the arrow keys, and fails on the old row;
+  `scripts/e2e/world-missions-guest.e2e.mjs` (238 of 238 checks) shows a guest, at 390, 820 and 1280 by night and at
+  390 by day, the row in this order with Global and then the Equity Uprise tab chosen, in view and marked, every tab
+  44px or more, no mode bar, no control before the row, no "News feed" or "E=UP" on the page or in the globe frame,
+  and no sideways scroll; at each width by night the arrow keys, Home and End walk the row in this order; the house
+  owner's persona still gets Travel and News feed in the centre bar. That suite's Equity Uprise tab check now also
+  counts the environmental observation posts the tab has listed since slice G1 (its one fixture report is one post
+  there). The World suites whose titles now say Global pass as they are: `scripts/e2e/world-environment.mjs`,
+  `scripts/e2e/environment-world.e2e.mjs` (163 checks), `scripts/e2e/world-screen.e2e.mjs` editorial on the phone (186
+  checks, the editorial row check and the arrow-key step among them) and `scripts/e2e/docket-cohort-showcase.e2e.mjs`
+  (56 checks). Not merged, not deployed: the live site keeps showing the old bar until the owner approves a deploy.
 
 ## The environmental globe
 
