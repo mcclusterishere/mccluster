@@ -32,8 +32,9 @@ the node that answered.
 
 - **Shape.** `input.messages[i].images` is a `string[]` of standard base64 (no `data:` prefix, no whitespace),
   passed through untouched to Ollama's `/api/chat` `messages[].images`. The `prompt` form takes no images; a
-  top-level `images` field is refused (`AI_CHAT_IMAGE_INVALID`). The Control Room's "Ask home AI" sends
-  `messages: [{ role: 'user', content, images }]` when an image is attached and the `prompt` form otherwise.
+  top-level `images` field is refused (`AI_CHAT_IMAGE_INVALID`). The Control Room's "Ask home AI" has no attach
+  control and sends the `prompt` form; its request helper takes the `messages: [{ role: 'user', content, images }]`
+  form only for an `ai.chat` whose input schema declares `messages[].images`, and refuses an image otherwise.
 - **Bounds, sniffed from bytes, never trusted from a field.** At most 4 images per request (summed over
   messages), 4 per message, 200,000 decoded bytes each, 600,000 decoded bytes per request; type from the magic
   bytes (JPEG, PNG, WebP; no GIF); dimensions from the header, refused above 1600 px on either side or
@@ -195,23 +196,35 @@ the node that answered.
 
 ## The Control Room surface (`js/control-room-v2.js`, `css/control-room-v2.css`, this lane)
 
+- **What the running Core honours** (deploy-readiness review, 2026-11-18: the Core on OVH at build eb942248 drops a
+  durable turn's images and the browser flag in silence, and its `ai.chat` would hand an image to a text model). Each
+  control below appears only when the Core says it honours what the control sends, in its own tool list, the
+  `tools/list` this page already reads through the owner's bridge (no new backend call): `images` and `allow_browser`
+  declared in `core.ai.turn.submit`'s input schema, `messages[].images` in `ai.chat`'s (`aiCoreSupport` in
+  `js/control-room-v2.js`). `browser.act` is agent-only and never listed over MCP, so the durable turn's
+  `allow_browser` is the Core's word that it honours the browser; whether a browser node is live stays the readiness
+  line's job. Where a field is not declared, one honest line takes the control's place ("Attach image is off: the
+  Core running now does not accept images in a turn."; for the house owner only, "Use the browser is off: the Core
+  running now does not honour browser turns."), and a turn the Core would strip is refused before it is shown as
+  sent, never sent without its images.
 - **Attach image**: a 44 px button in the Ask McCluster composer (`accept="image/*"`, at most 2); each file
   is downscaled on the client to at most 1280 px on its longest side and encoded as JPEG at quality 0.6, 0.45
   then 0.3 until it is at most 200,000 bytes, else refused with "Image is too large after downscaling".
   Thumbnails (at most 96 px) with remove buttons; the submit carries `images: [base64, …]`.
 - **Use the browser**: a `role="switch"` in the composer, shown only to the owner of the house workspace when
-  `core.ai.turn.submit` is listed; it sends `allow_browser: true` with that turn. Its readiness line comes from
+  `core.ai.turn.submit` declares `allow_browser`; it sends `allow_browser: true` with that turn. Its readiness line comes from
   the last assistant message's `metadata.node` and `metadata.browser`, or says the state is unknown until the
   first browser turn: `browser.act` is not listed over MCP, so the client cannot ask for it.
 - **In the thread**: user images as thumbnails (`metadata.images`); assistant `metadata.browser.screenshots`
   as images inside a collapsed "Browser: N steps on <host>" block with the action log; live steps from
   `tool_receipts` while the turn runs (polled every 2 s as before); the node badge
-  `<node_name> · <hardware_mode> · <tok/s> tok/s` from `metadata.node`; the error codes as plain words: "No
+  `<node_name> · <hardware_mode> · <tok/s> tok/s` from `metadata.node`, whole at every width (the meta row wraps, so
+  the badge takes a line of its own rather than being cut off); the error codes as plain words: "No
   vision node is live" (`LOCAL_AI_NO_VISION_NODE`), "Browser unavailable on the node" (`BROWSER_UNAVAILABLE`),
   "Browser not allowed for this turn" (`BROWSER_NOT_ALLOWED`), "No allowed sites yet" (`BROWSER_POLICY_EMPTY`).
 - Mobile first: base rules at phone width, `min-width` queries only, `minmax(0, 1fr)` tracks, controls at
-  `max(16px, …)`; `scripts/e2e/control-ai-browser.e2e.mjs` renders it at 390 and 1280 and checks
-  `scrollWidth === clientWidth`.
+  `max(16px, …)`; `scripts/e2e/control-ai-browser.e2e.mjs` renders it at 390 and 1280 (the badge at 820 too) and
+  checks `scrollWidth === clientWidth`.
 
 ## On the laptop (`core/windows/mccluster-node.ps1`, this lane; runbook `WINDOWS-NODE.md`)
 
@@ -262,6 +275,25 @@ changed.
   included `browser.act`); `core/test/compute-tool-liveness.test.mjs` refuses a node that only asserts
   `labels.trust: owned`. Consequence for the owner: a node enrolled before these rules has no `enrolled_trust`
   and offers no `browser.act` until it enrols again with a fresh enrolment token.
+
+## Launch fixes (2026-11-18)
+
+- **The controls follow the running Core** (deploy-readiness review): above, "What the running Core honours". Proof:
+  `scripts/test/control-ai-browser.test.mjs` reads this checkout's Core schemas (`core/src/tools/control.mjs`,
+  `core/capabilities/catalog.json`) and the eb942248 schemas side by side, and `scripts/e2e/control-ai-browser.e2e.mjs`
+  serves both through the bridge fixture: against eb942248, at 390 and 1280, no attach control and no switch, one line
+  in place of each, and a sent turn carries only the fields that Core declares; a member sees the images line and
+  nothing about the browser. Both failed before the change (the controls rendered for any Core that listed the tool).
+- **N2V-m2, the node badge at 390 px** cut off its rate (`scrollWidth` 193 against `clientWidth` 136 in the e2e): the
+  meta row now wraps and the badge no longer clips; the e2e holds it whole and inside its message at 390, 820 and 1280.
+- **N2V-m1, a green CI job with every real-Chromium test skipped**: the harness looked for Playwright only from the
+  checkout root, which the browser-executor job never installs into, so it skipped all of them and passed. It now
+  finds Playwright where the executor does (`MCCLUSTER_BROWSER_PLAYWRIGHT_DIR`, then the checkout root, then the
+  executor's own path) and Chromium on disk, and with `MCCLUSTER_BROWSER_TESTS_REQUIRED=1`, which the job sets, a
+  missing Playwright or Chromium (or a second loopback address that cannot be bound for the rebinding proof) fails
+  instead of skipping. The job still installs Chromium through Playwright's own installer; its triggers did not
+  change. Proof: `core/test/browser-executor-required.test.mjs` runs the harness with no browser to find, required and
+  not, and failed against the old harness in all four cases.
 
 ## What is verified, and what is not
 
