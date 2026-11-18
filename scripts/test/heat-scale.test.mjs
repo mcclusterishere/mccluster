@@ -97,7 +97,9 @@ test('the World: no pin per story; the countries are shaded by the counts, and t
   assert.match(globe, /countries\.heat\(d&&d\.ok&&d\.countries&&typeof d\.countries==='object'\?d:null\)/);
   assert.doesNotMatch(globe, /Object\.keys\(d\.countries\)\.length\?d:null/);
   assert.match(wc, /function heatShown\(\) \{ return !!\(st\.heat && Object\.keys\(st\.heat\)\.length\); \}/);
-  assert.match(wc, /legend\.hidden = !heatShown\(\)/);
-  assert.match(wc, /if \(st\.heatFill\) st\.heatFill\.show = st\.lineAlpha > 0\.15;/, 'the heat shows while the borders do');
+  /* only shading shows the legend; the Equity Uprise tab quiets both and keeps the counts (release polish, 2026-11-18;
+     scripts/test/world-news-tint.test.mjs) */
+  assert.match(wc, /const hide = st\.heatQuiet \|\| !heatShown\(\); if \(legend\.hidden !== hide\) \{ legend\.hidden = hide;/);
+  assert.match(wc, /const on = !st\.heatQuiet && st\.lineAlpha > 0\.15;\s*if \(st\.heatFill\) st\.heatFill\.show = on;/, 'the heat shows while the borders do, unless the tab quiets it');
   assert.match(wc, /const hide = code === st\.selected && !!st\.stateHeat;/, 'a selected country steps aside for its states');
 });

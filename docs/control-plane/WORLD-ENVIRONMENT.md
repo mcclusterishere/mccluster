@@ -492,7 +492,8 @@ Nothing is deployed; production still answers 503 until the owner enables the mo
   later than it was retrieved.
 
 What ran for these fixes, all with fixtures and nothing live (2026-11-18, this machine: 4 CPUs shared with two other workflows'
-browser runs, headless Chromium through Playwright, software GL; the load average is given for each browser run):
+browser runs, headless Chromium through Playwright, software GL; for each browser run, the one-minute load average its log recorded
+at the start and at the end):
 
 - The unit suites of every file touched: `node --test scripts/test/world-environment*.test.mjs scripts/test/environment-*.test.mjs
   scripts/test/globe-*.test.mjs scripts/test/equity-product-consumer.test.mjs scripts/test/world-mission-posts.test.mjs
@@ -510,12 +511,106 @@ browser runs, headless Chromium through Playwright, software GL; the load averag
   at 1280). The ripple read (RV2-9) is a race under load and cannot be forced; the check now reads one snapshot.
 - The root suite: `node --test scripts/test/*.test.mjs`: 2,697 tests, 2,690 passed, 0 failed, 7 skipped;
   `python3 -m unittest discover -s scripts/test -p 'test_*.py'`: 7 tests, OK.
-- `node scripts/e2e/world-environment.mjs <outDir>`: 11 passed, exit 0 (load 6.5).
+- `node scripts/e2e/world-environment.mjs <outDir>`: 11 passed, exit 0 (load 6.45 at the start, 6.67 at the end).
 - `CESIUM_DIR=<Cesium 1.131.0 Build/Cesium> node scripts/e2e/environment-globe.e2e.mjs <outDir>`: 127 passed, 0 failed, exit 0
-  (load 6.3 to 7.1): the fires state and a 1-degree area name both satellites, the ripple read in one snapshot, the quake
-  retrieved at 20:54.
+  (load 6.54 at the start, 6.29 at the end): the fires state and a 1-degree area name both satellites, the ripple read in one
+  snapshot, the quake retrieved at 20:54.
 - `CESIUM_DIR=<Cesium 1.131.0 Build/Cesium> node scripts/e2e/environment-world.e2e.mjs <outDir>`: 169 passed, 0 failed, exit 0
-  (163 before, and the six checks of `1280-late-ready`; load 6.5 to 13.0).
+  (163 before, and the six checks of `1280-late-ready`; load 5.94 at the start, 12.97 at the end).
 - `CESIUM_DIR=<Cesium 1.131.0 Build/Cesium> node scripts/e2e/world-missions-guest.e2e.mjs <outDir>`: 246 of 246 passed, exit 0
-  (load 10.9 to 14.4): every tab at 16px or more at each width, every tab inside the row at 1280.
+  (load 12.36 at the start, 14.42 at the end): every tab at 16px or more at each width, every tab inside the row at 1280.
+- Corrected on 2026-11-18 by the release polish below (review V2-M5): the load figures above first quoted 6.5 to 13.0 for the
+  integration suite and 10.9 to 14.4 for the guest suite, and 6.5 and 6.3 to 7.1 for the other two, none of them the logs'
+  start and end readings; they are now the logs' own one-minute figures.
 - Not run again: the perf benchmark (no change here touches a render loop, a hold or the governor).
+
+### Release polish (2026-11-18): the Equity Uprise tab before release
+
+The second verification of the slice left four minor findings (V2-M1, V2-M2, V2-M3, V2-M5) and the G1 close-out one open flip;
+each is fixed here in the smallest truthful way, with a test that fails without it, and the words that still called applied SQL
+pending now say what production holds. Nothing is deployed; production still answers 503 until the owner enables the module.
+
+- **V2-M3, the news tint under the environmental layers.** The World's news heat map ("News mentions · last 24 h": each country
+  shaded by the stories that mention it, `js/world-countries.js`) stayed on in the Equity Uprise tab and coloured whole countries
+  under the quakes, fires and alerts. While the feed's scope is the tab, the page says so on the message it already sends
+  (`js/world-news-globe.js`: `hu:world-news-pins` carries `tint: false`, sent again on `mcc:feed-scope` and on every
+  `hu:globe-ready`); the frame (`js/action-globe.js`) hands the flag to the countries, which hide the fill, a picked country's
+  states and the legend and keep the counts, so a country's card still says how many stories. Any other tab, or a page that never
+  sends the flag, keeps the tint, and leaving the tab brings back the same shading and legend
+  (`scripts/test/world-news-tint.test.mjs`; `scripts/e2e/environment-world.e2e.mjs`, over the whole Earth on Global, in the tab and
+  after it, by night and by day at 390, 820 and 1280).
+- **V2-M2, a list of 65 observations before the first post.** The panel listed every observation above the posts, so the first post
+  sat 6,964 px (8.25 screens) below the feed's row at 390 with the fixtures (6,650 px at 820, 6,748 px at 1280; measured on the
+  unchanged panel right after it rendered). The list now opens on two rows: the significant observations (the host's rule, what the
+  tour plays) newest first, then the newest of the rest, and a selected row wherever it is; the posts under the panel carry every
+  observation by time, newest first. A count line says which few are shown, and a full-width toggle under them, "Show all 65
+  observations" (`aria-controls`, `aria-expanded`), lists every row in place and moves the focus to the first one it revealed;
+  "Show fewer observations" closes the list again with the focus kept on the toggle. The search narrows the whole list as before (a
+  long result opens compact too). One thing more stood between the row and the posts: the tour starts by itself in the tab, and the
+  panel opened its full card for every scene (723 px at 390 with the fixtures), and `select()` revealed the panel (closing an
+  expanded map) and scrolled the card into view each time. A scene the tour chose (`via: 'tour'`) is now named by the scene line
+  only, and a card the tour moved the globe away from closes; a visitor's own choice (a row, a tap on the globe, Show on globe) opens
+  the card as before. With the tour playing, the first post is now 1,142 px (1.35 screens) below the row at 390, 924 px
+  (0.78) at 820 and 1,018 to 1,038 px (1.27 to 1.30, as the scene line wraps) at 1280 (local patches `V2-M2` and `V2-M2-TOUR-CARD` in
+  `vendor/equity-uprise/product-source.lock.json`; `scripts/test/world-environment-panel.test.mjs`; the integration suite at each
+  width, measured with the sources' details closed as a visitor first gets them).
+- **G1 close-out, Show on globe from Global taken back.** With an event chosen earlier in the tab, Show on globe on another event's
+  post in Global flew the globe to the clicked event and then back to the earlier one, over and over, the panel with it (17 changes
+  in ten seconds at 390 with the fixtures): the reopened panel sent its older selection with the pins, the frame took it, a cached
+  ShakeMap's answer reported it as the globe's own, and the panel answered every report with the pins again. The
+  panel now follows the globe's `hu:environment-selected` without sending the pins back, so no selection can echo (local patch
+  `G1-SHOW-ON-GLOBE`; the panel suite: no pins in answer to the globe's report, and a model globe and the panel that stop talking;
+  the integration suite samples the frame's selection every 50 ms for ten seconds after the click).
+- **V2-M1, the guest suite's Local check.** `scripts/e2e/world-missions-guest.e2e.mjs` waited for the country's missions only and then
+  counted its news too; it now waits for what it checks (the country's news cards and mission posts, and France's "No news from
+  France" line). A slow news read is a race this machine cannot force, so no run here shows the old wait failing; the new wait is
+  the check's own condition.
+- **V2-M5, two load averages.** Corrected above from the run logs.
+- **Applied SQL no longer called pending.** `js/mnet.js`, `js/world-mission-posts.js`, the guest suite,
+  `scripts/test/world-mission-posts.test.mjs`, the feed brief (`WORLD-FEED-AND-MISSIONS-20261117.md`: the status line, production
+  steps 1, 2, 3, 5 and 6, the D1 row) and the first line of `supabase/pending/eup_module_policy_v1.rollback.sql` now say what
+  production holds (ledger 376): the join scope, the details table, the import's seven parts and the module policy are applied, the
+  publish is pending for the deploy window, and the owner confirmed on 2026-11-18 that the Auth Redirect URLs include
+  `https://mccluster.org/**`.
+
+What ran, all with fixtures and nothing live (2026-11-18, this machine: 4 CPUs shared with another workflow's browser runs,
+headless Chromium through Playwright, software GL; for each browser run, the one-minute load average its log recorded at the start
+and at the end):
+
+- The unit suites of every file touched and their neighbours: `node --test scripts/test/world-news-tint.test.mjs
+  scripts/test/world-environment*.test.mjs scripts/test/world-countries.test.mjs scripts/test/heat-scale.test.mjs
+  scripts/test/world-news-globe-source.test.mjs scripts/test/world-news-feed.test.mjs scripts/test/world-mission-posts.test.mjs
+  scripts/test/equity-product-consumer.test.mjs scripts/test/environment-*.test.mjs scripts/test/world-first-and-layers.test.mjs`:
+  236 passed, 0 failed.
+- The new tests against the sources without their change: with the tint, panel and heat-scale suites copied onto `31e55c9b`, the
+  branch head the polish starts from, 13 of their 36 tests fail: the four tint tests, the panel's seven new ones (the compact list,
+  its toggle and its CSS, the two Show on globe tests, the two tour-card tests), the health-rows test (it now opens the full list
+  before it reads) and the heat-scale test's new pin of the quiet flag. The two tour-card tests also fail with only the panel's tour
+  line taken out. A copy of the integration suite's new checks as they first stood (before the two-row list and the tour-card check),
+  run at 390 against `31e55c9b` (load 4.06 at the start, 3.29 at the end), failed five: the list of 65 rows with no toggle (the first
+  post 11,226 px below the row, the sources' details open), the tint in the tab by night and by day, and the Show on globe watch (the
+  globe's selection changed 17 times in ten seconds, back and forth between the clicked event and the earlier one).
+- The root suite: `node --test scripts/test/*.test.mjs`: 2,731 tests, 2,724 passed, 0 failed, 7 skipped. Its first run failed two:
+  `scripts/test/heat-scale.test.mjs` pinned the two lines of `js/world-countries.js` the tint rewrites (now pinned as they read, the
+  quiet flag included), and an empty `e2e-out/` that an early probe of this work had left at the checkout's root, which the export
+  parity test rightly refuses (removed). `python3 -m unittest discover -s scripts/test -p 'test_*.py'`: 7 tests, OK.
+- `node scripts/e2e/world-environment.mjs <outDir>`: 11 passed, exit 0 (load 0.29 at the start, 0.58 at the end).
+- `CESIUM_DIR=<Cesium 1.131.0 Build/Cesium> node scripts/e2e/environment-globe.e2e.mjs <outDir>`: 127 passed, 0 failed, exit 0, its
+  perf self-check included (`scripts/perf/environment-globe-perf.mjs --check` exits 0 with numbers for the layers off and on at 390;
+  load 7.00 at the start, 7.27 at the end).
+- `CESIUM_DIR=<Cesium 1.131.0 Build/Cesium> node scripts/e2e/environment-world.e2e.mjs <outDir>`: 205 passed, 0 failed, exit 0
+  (169 before and 36 new: nine in each width's journey, three in each width's day run; load 6.71 at the start, 8.09 at the end).
+  Three earlier runs shaped the final checks: the first measured the gap with the sources' details open (the health-row checks open
+  them); the second, with them closed, measured 1,970 px at 390 while the tour's card was open, which led to the card change above,
+  and its keyboard checks counted a fixed three rows while a tour scene had added a fourth; the third failed only the count line's
+  words, which the two rows had changed.
+- `CESIUM_DIR=<Cesium 1.131.0 Build/Cesium> node scripts/e2e/world-missions-guest.e2e.mjs <outDir>`: 246 of 246 passed, exit 0
+  (load 7.17 at the start, 9.10 at the end).
+- `CESIUM_DIR=<Cesium 1.131.0 Build/Cesium> node scripts/e2e/world-first-visit.e2e.mjs <outDir>`: 83 of 83 passed, exit 0 (load 8.77
+  at the start, 8.24 at the end).
+- Screenshots for the owner, not committed: eight at deviceScaleFactor 2 by night, at 390x844 and at 1280x800: the Equity Uprise
+  tab with the tour paused and the whole Earth in view (the layers drawn, the tint and its legend hidden), the tab scrolled to the
+  list's count line (two rows, the toggle, the first posts), Global after the tab (the same shading and legend back), and Global
+  scrolled to its first posts; nothing scrolls sideways in any of them.
+- Not run: the perf benchmark in full (only its `--check` mode, inside the in-frame suite); nothing here touches a render loop, a hold
+  or the governor, and the tint's switch is read in the frame step that already set the shading's visibility.

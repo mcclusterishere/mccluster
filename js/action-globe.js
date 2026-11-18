@@ -308,7 +308,7 @@ window.__huJourney=()=>({travel:travelMode,points:journeyPoints.length,entities:
 /* Completed cohort events are public places supplied by the World Missions archive.
    Keep this layer separate from live missions, member locations and travel paths. */
 let completedEvents=[],completedPins=[],completedOn=false;
-let publicNewsPins=[],publicNewsItems=[],publicNewsOn=false,focusedNews='';
+let publicNewsPins=[],publicNewsItems=[],publicNewsOn=false,focusedNews='',newsTintQuiet=false;
 /* THE NEWS HEAT MAP (owner, 2026-10-21: "instead of pins on the map ... a heat map of how many articles or mentions it has"):
    with the World's news on, the countries are shaded by the stories that mention them (js/world-countries.js, the counts from
    GET /v1/world/news-heat, read again every five minutes); no pin per story. The one pin left is the story whose place a
@@ -337,9 +337,13 @@ function loadMembers(){
 }
 /* a selected country's stories as places, counted by state on the globe */
 function newsHeatCells(code){return fetch(API+'/v1/world/news-heat?country='+encodeURIComponent(code),{credentials:'omit'}).then(r=>r.ok?r.json():null).then(d=>d&&d.ok&&Array.isArray(d.cells)?d.cells:null).catch(()=>null)}
-function setWorldNewsPins(items,on){
+/* THE TINT STEPS ASIDE IN THE EQUITY UPRISE TAB (release polish, 2026-11-18; review V2-M3): the page sends tint:false while the
+   feed's scope is that tab (js/world-news-globe.js); the countries hide the shading and its legend and keep the counts, and show
+   them again when the tab is left. Only an explicit false quiets it, so a page that never sends the flag keeps the tint. */
+function quietNewsTint(){if(countries&&countries.quietHeat)countries.quietHeat(newsTintQuiet)}
+function setWorldNewsPins(items,on,tint){
  if(!parentFrame||ANALYTICS)return;
- publicNewsOn=on===true;const seen=new Set();
+ publicNewsOn=on===true;newsTintQuiet=tint===false;quietNewsTint();const seen=new Set();
  publicNewsItems=(Array.isArray(items)?items:[]).slice(0,120).flatMap(x=>{
   if(!x||typeof x.id!=='string'||x.id.length>110||seen.has(x.id)||!Number.isFinite(x.lat)||!Number.isFinite(x.lon)||Math.abs(x.lat)>90||Math.abs(x.lon)>180||(x.lat===0&&x.lon===0))return [];
   seen.add(x.id);return [{id:x.id,lat:x.lat,lon:x.lon}];
@@ -387,7 +391,7 @@ function drawWorldNewsPins(){
  })));
  markNewsPin();
 }
-window.__huWorldNewsPins=()=>({on:publicNewsOn,pins:publicNewsPins.length,items:publicNewsItems.length});
+window.__huWorldNewsPins=()=>({on:publicNewsOn,tint:!newsTintQuiet,pins:publicNewsPins.length,items:publicNewsItems.length});
 
 function sanitizeCompletedEvents(rows){
  const seen=new Set();return (Array.isArray(rows)?rows:[]).slice(0,50).flatMap(e=>{
@@ -473,7 +477,7 @@ if(d.type==='hu:environment-focus'&&!ANALYTICS){environmentPins?.focus(d.id);ret
 if(d.type==='hu:travel-mode'&&!ANALYTICS){setTravelMode(d.on===true);return}
 if(d.type==='hu:map-pick-mode'&&!ANALYTICS){travelPickKind(d.kind);return}
 if(d.type==='hu:completed-missions'&&!ANALYTICS){setCompletedEvents(d.events,d.on);return}
-if(d.type==='hu:world-news-pins'&&!ANALYTICS){setWorldNewsPins(d.items,d.on);return}
+if(d.type==='hu:world-news-pins'&&!ANALYTICS){setWorldNewsPins(d.items,d.on,d.tint);return}
 if(d.type==='hu:journey'&&!ANALYTICS&&Array.isArray(d.points)){
  journeyPoints=d.points.slice(0,2).filter(p=>p&&typeof p.label==='string'&&travelCoordinates(p.coordinates)).map(p=>({label:p.label.slice(0,80),coordinates:travelCoordinates(p.coordinates)}));
  journeyConnect=d.connect!==false;journeyFlyPending=journeyFlyPending||d.fly===true;drawJourney(journeyPoints,false);scheduleTravelCamera();return;
@@ -662,7 +666,7 @@ function searchPins(q){$('worldSearch').value=q;const t=q.trim().toLocaleLowerCa
 /* COUNTRIES (js/world-countries.js): borders, flags, the red-white-blue United States, the fade on zoom. A tapped country filters the pins
    to the missions pinned there (by the rows' own country codes; none means none) without moving the camera. */
 let countries=null;function inCountry(m){return !countries||countries.keep(m)}
-function mountCountries(){if(!window.HuCountries||ANALYTICS||!viewer)return;countries=HuCountries.mount(viewer,{quiet:EDITORIAL,missions:()=>allMissions,regions:()=>regions,missionsOn:()=>!NO_MISSIONS,heatCells:newsHeatCells,onLegend:()=>scheduleTravelControls(),onStats:s=>tell({type:'hu:place-stats',place:s}),onSelect:c=>{searchPins($('worldSearch').value);tell({type:'hu:country',country:c});/* Halo's Markets card listens (js/halo/markets.js) */try{window.dispatchEvent(new CustomEvent('hu:country',{detail:c}))}catch(e){}}});loadNewsHeat();loadMembers()}
+function mountCountries(){if(!window.HuCountries||ANALYTICS||!viewer)return;countries=HuCountries.mount(viewer,{quiet:EDITORIAL,missions:()=>allMissions,regions:()=>regions,missionsOn:()=>!NO_MISSIONS,heatCells:newsHeatCells,onLegend:()=>scheduleTravelControls(),onStats:s=>tell({type:'hu:place-stats',place:s}),onSelect:c=>{searchPins($('worldSearch').value);tell({type:'hu:country',country:c});/* Halo's Markets card listens (js/halo/markets.js) */try{window.dispatchEvent(new CustomEvent('hu:country',{detail:c}))}catch(e){}}});quietNewsTint();loadNewsHeat();loadMembers()}
 /* three looks, one button: the lit Earth (real sun), the night Earth (city lights everywhere, the owner's World mockups), the street map */
 function setLayer(mode){layerMode=mode;const night=mode==='night',g=viewer.scene.globe;if(mapLayer)mapLayer.show=mode==='map'||(mode==='auto'&&streetAuto(viewer.camera.positionCartographic.height));
  if(dayLayer)dayLayer.show=EDITORIAL||!night;if(cloudLayer)cloudLayer.show=EDITORIAL||!night;if(nightLayer){nightLayer.dayAlpha=night?1:0;nightLayer.brightness=night?2.1:6}

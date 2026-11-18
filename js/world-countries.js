@@ -205,7 +205,7 @@
   function mount(viewer, opts) {
     const C = window.Cesium, o = opts || {}, quiet = !!o.quiet;
     const reducedQ = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : null;
-    const st = { mode: quiet ? 'auto' : readMode(safeStorage()), features: [], ready: false, selected: null, items: [], washAlpha: 1, lineAlpha: 1, stateAlpha: 0, borders: null, borderCount: 0, rwb: null, wash: null, flags: null, labels: null, highlight: null, outline: null, lastT: 0, camKey: '', failed: false, stateIndex: null, stateIndexAsked: false, stateIndexP: null, states: new Map(), selectedStates: null, selectGen: 0, areas: new Map(), selectedState: null, stateFill: null, stateOutline: null, tap: null, tapTimer: 0, down: null, heat: null, heatTotal: 0, posts: null, heatFill: null, heatIds: {}, stateHeat: null, stateCounts: null, heatGen: 0, members: null, stateMembers: null, membersGen: 0 };
+    const st = { mode: quiet ? 'auto' : readMode(safeStorage()), features: [], ready: false, selected: null, items: [], washAlpha: 1, lineAlpha: 1, stateAlpha: 0, borders: null, borderCount: 0, rwb: null, wash: null, flags: null, labels: null, highlight: null, outline: null, lastT: 0, camKey: '', failed: false, stateIndex: null, stateIndexAsked: false, stateIndexP: null, states: new Map(), selectedStates: null, selectGen: 0, areas: new Map(), selectedState: null, stateFill: null, stateOutline: null, tap: null, tapTimer: 0, down: null, heat: null, heatTotal: 0, posts: null, heatFill: null, heatIds: {}, stateHeat: null, stateCounts: null, heatGen: 0, heatQuiet: false, members: null, stateMembers: null, membersGen: 0 };
     const scratchColor = new C.Color(), scratchCarto = new C.Cartographic(), scratchCart3 = new C.Cartesian3(), scratchRect = new C.Rectangle(), view = [0, 0, 0, 0];
     const INK = C.Color.fromCssColorString('#f4f1ea');
     /* the borders are the map: clear enough to read on the day and the night side, in the feed's small globe too */
@@ -364,6 +364,23 @@
       }));
     }
     const heatColor = (t) => { const c = Heat.at(Heat.HEAT, t); return new C.Color(c[0], c[1], c[2], c[3]); };
+    /* THE TINT STEPS ASIDE (release polish, 2026-11-18; review V2-M3): while the World feed's Equity Uprise tab is open the page
+       says the environmental layers are the subject (js/world-news-globe.js, tint:false), so the shading, a country's states and
+       the legend hide, and come back as they were when the tab is left. The counts stay: the card still says how many stories
+       mention a place, and a new answer read while the tint is quiet is kept for when it shows again. */
+    function applyHeatShow() {
+      const on = !st.heatQuiet && st.lineAlpha > 0.15;
+      if (st.heatFill) st.heatFill.show = on;
+      if (st.stateHeat) st.stateHeat.show = on;
+      if (legend) { const hide = st.heatQuiet || !heatShown() || st.lineAlpha <= 0.15; if (legend.hidden !== hide) { legend.hidden = hide; if (o.onLegend) o.onLegend(); } }
+    }
+    function quietHeat(on) {
+      const quietNow = on === true;
+      if (st.heatQuiet === quietNow) return;
+      st.heatQuiet = quietNow;
+      applyHeatShow();
+      if (viewer.scene.requestRenderMode) viewer.scene.requestRender();
+    }
     /* a good answer with no stories in the window is still an answer: every country's news is 0, and the posts ride along;
        only shading there is shows the legend */
     function heatShown() { return !!(st.heat && Object.keys(st.heat).length); }
@@ -372,7 +389,7 @@
       st.heatTotal = st.heat ? Number(data.total) || 0 : 0;
       st.posts = data && data.posts && typeof data.posts === 'object' ? data.posts : null;
       drawHeat();
-      if (legend && legend.hidden !== !heatShown()) { legend.hidden = !heatShown(); if (o.onLegend) o.onLegend(); }
+      if (legend) { const hide = st.heatQuiet || !heatShown(); if (legend.hidden !== hide) { legend.hidden = hide; if (o.onLegend) o.onLegend(); } }
       if (st.selected) { drawStateHeat(); restat(); }
       if (viewer.scene.requestRenderMode) viewer.scene.requestRender();
     }
@@ -538,7 +555,7 @@
       });
       st.ready = true;
       /* counts that arrived before the shapes */
-      if (st.heat) { drawHeat(); if (legend && heatShown()) { legend.hidden = false; if (o.onLegend) o.onLegend(); } }
+      if (st.heat) { drawHeat(); if (legend && heatShown() && !st.heatQuiet) { legend.hidden = false; if (o.onLegend) o.onLegend(); } }
       viewer.scene.preRender.addEventListener(frame);
       if (o.onReady) o.onReady();
     }
@@ -585,10 +602,8 @@
       selectedStateMat.uniforms.color.alpha = STATE.alpha * Math.max(st.stateAlpha, st.lineAlpha);
       if (st.selectedStates) st.selectedStates.show = st.lineAlpha > 0.01;
       if (st.outline) st.outline.show = st.lineAlpha > 0.01;
-      /* the heat shows while the borders do: below them the street map or the imagery is the subject */
-      if (st.heatFill) st.heatFill.show = st.lineAlpha > 0.15;
-      if (st.stateHeat) st.stateHeat.show = st.lineAlpha > 0.15;
-      if (legend) { const hide = !heatShown() || st.lineAlpha <= 0.15; if (legend.hidden !== hide) { legend.hidden = hide; if (o.onLegend) o.onLegend(); } }
+      /* the heat shows while the borders do (below them the street map or the imagery is the subject) and the tint is not quiet */
+      applyHeatShow();
       const wt = washTarget(st.height, st.mode);
       st.washAlpha = stepAlpha(st.washAlpha, Math.min(wt, usAlpha()), dt, reduced);
       if (st.wash && st.washMat) { const u = st.washMat.uniforms; u.evenColor.alpha = st.washBase[0] * st.washAlpha; u.oddColor.alpha = st.washBase[1] * st.washAlpha; st.wash.show = st.washAlpha > 0.01; }
@@ -657,13 +672,13 @@
     const api = {
       /* the page calls this when the missions arrive: a country picked before then is applied again (card count, pin filter) */
       refresh: () => { if (!st.selected) return; const keepState = st.selectedState; select(st.features.find((f) => (f.properties.a2 || f.properties.a3) === st.selected) || null); if (keepState && st.selected) selectState(keepState); },
-      heat: setHeat, members: setMembers, backToCountry: () => { if (st.selectedState) selectState(null); }, click, keep, select: (code) => select(code ? st.features.find((f) => f.properties.a2 === code || f.properties.a3 === code) || null : null), setMode,
+      heat: setHeat, members: setMembers, quietHeat, backToCountry: () => { if (st.selectedState) selectState(null); }, click, keep, select: (code) => select(code ? st.features.find((f) => f.properties.a2 === code || f.properties.a3 === code) || null : null), setMode,
       ready: () => st.ready,
       /* Natural Earth's label point for a country, where the globe marks it (the live badges in js/action-globe.js) */
       point: (code) => { const f = st.features.find((x) => x.properties.a2 === code); return f && Array.isArray(f.properties.label) ? f.properties.label.slice(0, 2) : null; },
       /* the country a point falls in on the drawn map: its ISO code (or Natural Earth's own code where it has none), else null */
       at: (lon, lat) => { const f = countryAt(st.features, lon, lat); return f ? f.properties.a2 || f.properties.a3 : null; },
-      state: () => ({ ready: st.ready, failed: st.failed, mode: st.mode, selected: st.selected, count: st.items.length, borders: st.borderCount, lines: Math.round(st.lineAlpha * 100) / 100, statesAlpha: Math.round(st.stateAlpha * 100) / 100, states: [...st.states.entries()].filter(([, s]) => s.primitive).map(([k]) => k).sort(), selectedStates: !!st.selectedStates, selectedState: st.selectedState ? st.selectedState.properties.key : null, heat: st.heat ? { countries: Object.keys(st.heatIds).length, total: st.heatTotal, shown: !!(st.heatFill && st.heatFill.show), states: st.stateCounts ? Object.keys(st.stateCounts).length : 0, stateFill: !!st.stateHeat } : null, flags: st.flags ? st.flags.length : 0, labels: st.labels ? st.labels.length : 0, height: Math.round(st.height || 0), wash: Math.round(st.washAlpha * 100) / 100, alpha: Object.fromEntries(st.items.filter((x) => ['US', 'CA', 'MX', 'BR', 'RU', 'FR', 'GB', 'CU'].includes(x.code)).map((x) => [x.code, Math.round(x.alpha * 100) / 100])), card: card.hidden ? null : card.textContent }),
+      state: () => ({ ready: st.ready, failed: st.failed, mode: st.mode, selected: st.selected, count: st.items.length, borders: st.borderCount, lines: Math.round(st.lineAlpha * 100) / 100, statesAlpha: Math.round(st.stateAlpha * 100) / 100, states: [...st.states.entries()].filter(([, s]) => s.primitive).map(([k]) => k).sort(), selectedStates: !!st.selectedStates, selectedState: st.selectedState ? st.selectedState.properties.key : null, heat: st.heat ? { countries: Object.keys(st.heatIds).length, total: st.heatTotal, shown: !!(st.heatFill && st.heatFill.show), quiet: st.heatQuiet, legend: !!legend && !legend.hidden, states: st.stateCounts ? Object.keys(st.stateCounts).length : 0, stateFill: !!st.stateHeat } : null, flags: st.flags ? st.flags.length : 0, labels: st.labels ? st.labels.length : 0, height: Math.round(st.height || 0), wash: Math.round(st.washAlpha * 100) / 100, alpha: Object.fromEntries(st.items.filter((x) => ['US', 'CA', 'MX', 'BR', 'RU', 'FR', 'GB', 'CU'].includes(x.code)).map((x) => [x.code, Math.round(x.alpha * 100) / 100])), card: card.hidden ? null : card.textContent }),
     };
     window.__huCountries = api.state;
     window.__huCountryAt = api.at;

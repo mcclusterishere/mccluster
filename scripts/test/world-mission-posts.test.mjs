@@ -129,7 +129,8 @@ test('what the page accepts: an open, non-clip mission with an id and a title; d
   assert.equal(d.doi, '', 'a DOI only as a doi.org address');
   assert.deepEqual([d.proof_hint, d.safety_note], ['A photo.', 'Stay on public land.']);
   assert.equal(P.cleanDetails({ mission_id: id(1), credit_line: '' }), null, 'no credit, no details');
-  /* the details table is pending SQL: a 404 or PostgREST's unknown-table code means absent, anything else is a passing failure */
+  /* an installation without the details table (production has it since 2026-11-18: supabase/migrations/20261118021521_action_mission_details.sql)
+     answers a 404 or PostgREST's unknown-table code: absent; anything else is a passing failure */
   assert.equal(P.detailsAbsent(404, { code: 'PGRST205' }), true);
   assert.equal(P.detailsAbsent(400, { code: 'PGRST205' }), true);
   assert.equal(P.detailsAbsent(400, { code: '42P01' }), true);
@@ -160,7 +161,7 @@ test('the page wires them: one read of the open missions, the details asked once
   assert.ok(helperTag > 0 && helperTag < pageTag, 'the helper loads before the page script');
   assert.match(js, /sbRest\("action_missions\?status=eq\.open&select=" \+ MISSION_FEED_FIELDS \+ "&order=created_at\.desc&limit=500"\)/, 'the anonymous read the page already uses, with only the columns it needs');
   assert.match(js, /var MISSION_FEED_FIELDS = "id,title,description,domain,kind,difficulty,base_points,discovery_category,created_at";/);
-  assert.doesNotMatch(js.slice(js.indexOf('function loadOpenMissions'), js.indexOf('function wantMissionDetails')), /sbRpc\(/, 'no RPC: production lacks the pending ones');
+  assert.doesNotMatch(js.slice(js.indexOf('function loadOpenMissions'), js.indexOf('function wantMissionDetails')), /sbRpc\(/, 'no RPC: the open missions are the plain anonymous table read (the policy "public reads open missions")');
   assert.match(js, /sbRest\("action_mission_details\?select=" \+ MISSION_DETAIL_FIELDS \+ "&mission_id=in\.\(" \+ chunk\.join\(","\) \+ "\)"\)/);
   assert.match(js, /if \(!MISSION_POSTS\.detailsAbsent\(e && e\.status, e && e\.data\)\) return;\s*f\.detailsAbsent = true;\s*try \{ sessionStorage\.setItem\(DETAILS_ABSENT, "1"\); \} catch \(_\) \{\}/, 'absence is remembered for the session');
   assert.match(js, /if \(!MISSION_POSTS \|\| f\.detailsAbsent \|\| !want\.length\) return Promise\.resolve\(false\);/, 'and nothing more is asked');

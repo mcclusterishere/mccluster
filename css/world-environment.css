@@ -25,6 +25,10 @@
 .we-list button { width:100%;text-align:left;background:var(--we-raise-2); }
 .we-list button[aria-pressed="true"] { border-color:var(--we-accent);background:var(--we-pressed); }
 .we-list strong,.we-list small { display:block; }
+/* THE LIST OPENS COMPACT (release polish, 2026-11-18; review V2-M2): "Show all N observations" sits right under the few rows, full
+   width like the rows it opens; a panel button, so 44 px tall and 16 px words (the rule above) */
+.we-more { width:100%;margin:0 0 12px; }
+.we-more[hidden] { display:none; }
 .we-detail,.we-team,.we-owner { border:1px solid var(--we-rule-2);border-radius:16px;padding:15px;margin:14px 0; }
 .we-detail { background:var(--we-detail-bg); }
 .we-detail dl { margin:12px 0;display:grid;grid-template-columns:minmax(0,1fr);gap:3px; }

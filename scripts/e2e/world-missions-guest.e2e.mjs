@@ -23,9 +23,9 @@
 
    MISSIONS AS POSTS (owner, 2026-11-17: "having the missions as like just another post in the newsfeed, not a big, large post,
    just the same size post as all the other [posts]"; "when you click on America, you should be able to say, see X amount of
-   news, X amount of missions"). Three open missions are written exactly as the pending import writes them
-   (tools/build-mission-import.mjs: three Project Drawdown missions with their details rows, open as its publish step sets
-   them), beside three fixture missions with none. At each size, a guest:
+   news, X amount of missions"). Three open missions are written exactly as the import writes them (tools/build-mission-import.mjs,
+   applied to production on 2026-11-18 as drafts: three Project Drawdown missions with their details rows, open as the publish step
+   sets them, which is still pending for the deploy window), beside three fixture missions with none. At each size, a guest:
    - Global mixes posts, news and missions: one mission after every three other items, newest first, each once, then the
      rest up to the page of 20; no mission post is taller than the tallest ordinary post plus 48px (the tallest is 119
      characters, the longest public post in production on 2026-11-17);
@@ -35,10 +35,10 @@
    - a country picked with the globe's own tap gives the place card its counts (news, missions, posts, members) in two rows,
      and Local lists that country's missions: the ones pinned there and the ones pinned nowhere;
    - zero console errors and no 4xx.
-   By day at 390, the dark mark on the joins too. As production stands today (the details table not there yet, the
-   Environmental Justice module not released): no source lines, one details read for the whole visit (and none after a
-   reload), one honest line in place of the panel, and only those two deliberate absences in the console. A member's Join on
-   a post sends exactly one join_action_mission.
+   By day at 390, the dark mark on the joins too. An installation without the details table (production has had it since
+   2026-11-18) and with the Environmental Justice module not released (as production still is): no source lines, one details read
+   for the whole visit (and none after a reload), one honest line in place of the panel, and only those two deliberate absences in
+   the console. A member's Join on a post sends exactly one join_action_mission.
 
    AFTER THE REVIEW OF W2 (the W2 row of docs/control-plane/WORLD-FEED-AND-MISSIONS-20261117.md): every mission post lies within
    the ordinary posts' own range of heights (its source line sits in the head's second line, beside the difficulty and points);
@@ -80,7 +80,7 @@ const BASE = `http://127.0.0.1:${server.address().port}`;
 const ago = (days) => new Date(Date.now() - days * 864e5).toISOString();
 const RIDE = '0e1f0000-0000-4000-8000-000000000001', RIVER = '0e1f0000-0000-4000-8000-000000000002', TREES = '0e1f0000-0000-4000-8000-000000000003';
 const mission = (id, title, description, domain, created_at) => ({ id, campaign_id: null, title, description, domain, difficulty: 1, base_points: 10, proof_required: true, verification_mode: 'review', skills: ['service'], capacity: null, status: 'open', starts_at: null, ends_at: null, kind: 'civic', created_at });
-/* the catalog's own rows, as the pending import and publish SQL write them (status open: the publish step) */
+/* the catalog's own rows, as the import (applied 2026-11-18) and the publish step (pending for the deploy window) write them: status open */
 const CATALOG = JSON.parse(await readFile(join(ROOT, 'data/missions/drawdown/missions.json'), 'utf8')).missions;
 const fromCatalog = (slug, days) => { const m = CATALOG.find((x) => x.slug === slug); return { row: { ...missionRow(m), status: 'open', created_at: ago(days) }, details: detailsRow(m), about: m.about, aboutCredit: m.about_credit }; };
 const INSULATION = fromCatalog('drawdown-deploy-alternative-insulation-materials', 3);   // CC BY 4.0, with a quotation
@@ -133,8 +133,8 @@ const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_EXE
 
 /* a browser context with the fake backends.
    owner: a signed-in member the server calls the house owner, remembered on this browser; member: a signed-in member who is not.
-   details: 'absent' answers the details read as production does until its pending SQL is applied (404 PGRST205);
-   environment: 'unavailable' answers as production does until the owner releases the module (503). Those two are the only
+   details: 'absent' answers the details read as an installation without the table does (404 PGRST205; production has had it since
+   2026-11-18); environment: 'unavailable' answers as production does until the owner releases the module (503). Those two are the only
    deliberate absences; every console error and 4xx is recorded, and a scenario allows only the ones it names. */
 /* missions / detailRows: the rows the fake database holds; missionsDelay: ms before the list read answers; missionsStatus: the
    list read's status, or a list of statuses answering one read each (the last one again); joinAnswer: 'ok', 'denied' (400 with a
@@ -198,7 +198,7 @@ async function open(device, path, { owner = false, member = false, details = 'pr
       }
       return json(route, id ? missions.filter((m) => m.id === id) : missions);
     }
-    /* the pending details table (supabase/pending/20261117100100_action_mission_details.sql): rows by mission_id=in.(…) */
+    /* the details table (supabase/migrations/20261118021521_action_mission_details.sql): rows by mission_id=in.(…) */
     if (p === '/rest/v1/action_mission_details') {
       world.details++;
       if (details === 'absent') return json(route, { code: 'PGRST205', details: null, hint: null, message: 'Could not find the table \'public.action_mission_details\' in the schema cache' }, 404);
@@ -499,7 +499,10 @@ try {
            in two rows; the feed turns to Local, which lists that country's news and missions, never Brazil's tree */
         await pickCountry(page, -98, 39);
         await page.waitForFunction(() => /United States/.test(document.getElementById('mnPlaceCard').textContent) && window.MCC_FEED_SCOPE.get() === 'local', null, { timeout: 20000 }).catch(() => {});
-        await page.waitForFunction((n) => document.querySelectorAll('#mnFeed [data-mission-post]').length === n, US_MISSIONS.length, { timeout: 20000 }).catch(() => {});
+        /* Local is checked for the country's news and its missions, so it waits for both (review V2-M1: waiting for the missions alone
+           could read the feed before the country's own news read had answered) */
+        await page.waitForFunction(({ news, missions }) => window.MCC_FEED_SCOPE.get() === 'local' && document.querySelectorAll('#mnFeed [data-news-id]').length === news && document.querySelectorAll('#mnFeed [data-mission-post]').length === missions,
+          { news: NEWS.filter((n) => n.country === 'US').length, missions: US_MISSIONS.length }, { timeout: 20000 }).catch(() => {});
         const card = await page.evaluate(() => {
           const c = document.getElementById('mnPlaceCard'), stats = [...c.querySelectorAll('.mn__place-stat')], cr = c.getBoundingClientRect();
           const clash = ['mnWorldStack', 'mnWorldLive'].map((id) => document.getElementById(id)).filter((el) => el && !el.hidden && el.getClientRects().length).some((el) => { const r = el.getBoundingClientRect(); return r.left < cr.right && r.right > cr.left && r.top < cr.bottom && r.bottom > cr.top; });
@@ -526,7 +529,8 @@ try {
              under one honest line, never an empty feed */
           await pickCountry(page, 2.3, 46.6);
           await page.waitForFunction(() => /France/.test(document.getElementById('mnPlaceCard').textContent), null, { timeout: 20000 }).catch(() => {});
-          await page.waitForFunction((n) => document.querySelectorAll('#mnFeed [data-mission-post]').length === n, ANYWHERE.length, { timeout: 20000 }).catch(() => {});
+          /* the same for France: its missions and the line its empty news read writes */
+          await page.waitForFunction((n) => document.querySelectorAll('#mnFeed [data-mission-post]').length === n && /^No news from France/.test((document.querySelector('#mnFeed > .mn__feed-note') || {}).textContent || ''), ANYWHERE.length, { timeout: 20000 }).catch(() => {});
           const fr = await page.evaluate(() => ({ cells: [...document.querySelectorAll('#mnPlaceCard .mn__place-stat')].map((s) => [s.querySelector('small').textContent, s.querySelector('b').textContent]),
             note: (document.querySelector('#mnFeed > .mn__feed-note') || {}).textContent || '', missions: [...document.querySelectorAll('#mnFeed [data-mission-post]')].map((a) => a.getAttribute('data-mission-post')),
             news: document.querySelectorAll('#mnFeed [data-news-id]').length }));
@@ -783,7 +787,7 @@ try {
     } finally { await ctx.close(); }
   }
 
-  /* ---------- as production stands today: the details table not there yet, the Environmental Justice module not released ---------- */
+  /* ---------- the details table absent (as before 2026-11-18), the Environmental Justice module not released (as production still is) ---------- */
   {
     const scope = 'guest-production-today-390';
     const absences = [/\/rest\/v1\/action_mission_details\?/, /api\.mccluster\.org\/v1\/world\/environment$/];

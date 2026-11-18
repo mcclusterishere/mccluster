@@ -21,9 +21,14 @@
   function send(data) {
     if (frame.contentWindow) frame.contentWindow.postMessage(data, location.origin);
   }
+  /* THE TINT STEPS ASIDE IN THE EQUITY UPRISE TAB (release polish, 2026-11-18; review V2-M3): there the environmental layers are
+     the subject (owner, 2026-11-17: "make the visuals proportionate to the geographical data we are collecting"), so the news
+     shading and its legend hide while the feed's scope is that tab (tint:false) and come back, the same, when it is left. The news
+     stays on, so the globe keeps its counts: a country's card still says how many stories mention it. */
+  const scope = () => window.MCC_FEED_SCOPE?.get?.() || 'global';
   function sync() {
     const on = mode() !== 'travel' && mode() !== 'environment';
-    send({type:'hu:world-news-pins',on,items:on ? items().filter(geo).map(x => ({id:x.id,lat:x.lat,lon:x.lon})) : []});
+    send({type:'hu:world-news-pins',on,tint:scope() !== 'equity',items:on ? items().filter(geo).map(x => ({id:x.id,lat:x.lat,lon:x.lon})) : []});
   }
 
   const reader = document.createElement('dialog');
@@ -91,6 +96,7 @@
   /* the feed rendered a different set of stories (a country picked, a search, a scope, a mission): the pins follow */
   window.addEventListener('mcc:world-news-shown', sync);
   window.addEventListener('mcc:world-mode', sync);
+  window.addEventListener('mcc:feed-scope', sync);
   window.addEventListener('message', e => {
     if (e.source !== frame.contentWindow || e.origin !== location.origin) return;
     const data = e.data || {};
