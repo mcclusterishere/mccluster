@@ -269,7 +269,9 @@ const guestView = (page) => page.evaluate(async () => {
   return {
     modeBar: [...document.querySelectorAll('.wt-world-modes, .wt-world-modes *, body [data-world-mode]')].some(shown),
     newsFeed: /news\s*feed/i.test(words), eup: /E\s*=\s*UP/i.test(words), above,
-    buttons: [...row.querySelectorAll(':scope > button')].map((b) => { const r = b.getBoundingClientRect(); return { key: b.dataset.feedScope || b.dataset.mnView, name: b.getAttribute('aria-label') || b.textContent.trim(), pressed: b.getAttribute('aria-pressed'), w: Math.round(r.width), h: Math.round(r.height) }; }),
+    buttons: [...row.querySelectorAll(':scope > button')].map((b) => { const r = b.getBoundingClientRect(); return { key: b.dataset.feedScope || b.dataset.mnView, name: b.getAttribute('aria-label') || b.textContent.trim(), pressed: b.getAttribute('aria-pressed'), w: Math.round(r.width), h: Math.round(r.height),
+      font: parseFloat(getComputedStyle(b).fontSize), inRow: r.left >= sr.left - 1 && r.right <= sr.right + 1 && r.top >= sr.top - 1 && r.bottom <= sr.bottom + 1 }; }),
+    vw: window.innerWidth,
     chosen: on ? { key: on.dataset.feedScope, inView: br.left >= sr.left - 1 && br.right <= sr.right + 1 && br.top >= 0 && br.bottom <= window.innerHeight, ground, unchosen: off && getComputedStyle(off).backgroundColor,
       ink, ratio: on.querySelector('img') ? null : ratio(ink, ground), mark: [...on.querySelectorAll('img')].filter(shown).map((i) => i.getAttribute('src')) } : null,
     row: { sw: row.scrollWidth, cw: row.clientWidth, overflowX: getComputedStyle(row).overflowX },
@@ -300,6 +302,10 @@ function checkRow(scope, view, chosen) {
   check(scope, `one tab is chosen, ${chosen}, in view in the row and marked: its own ground, its words or mark legible on it`, view.chosen && view.chosen.key === chosen && view.buttons.filter((b) => b.pressed === 'true').length === 1
     && view.chosen.inView && view.chosen.ground !== view.chosen.unchosen && (view.chosen.ratio === null ? view.chosen.mark.length === 1 : view.chosen.ratio >= 4.5), view.chosen);
   check(scope, 'every tab in the row is a tap target of 44px or more', view.buttons.every((b) => b.w >= 44 && b.h >= 44), view.buttons.map((b) => [b.name, b.w, b.h]));
+  /* review RV2-7: the tabs are form controls at 16px or more (AGENTS.md hard rule 14), as the panel's buttons are */
+  check(scope, 'every tab is a form control at 16px or more', view.buttons.every((b) => b.font >= 16), view.buttons.map((b) => [b.name, b.font]));
+  /* review RV2-8: on the split desktop the row wraps, so no tab sits past its edge with no sign that the row scrolls */
+  if (view.vw >= 1000) check(scope, 'on the split desktop every tab lies inside the row\'s box', view.buttons.every((b) => b.inRow), { row: view.row, tabs: view.buttons.map((b) => [b.name, b.inRow]) });
   check(scope, 'a visitor sees nothing above the row: no mode bar, no control before it in the feed, no "News feed" and no "E=UP" written anywhere on the page or the globe',
     !view.modeBar && view.above.length === 0 && !view.newsFeed && !view.eup, { modeBar: view.modeBar, above: view.above, newsFeed: view.newsFeed, eup: view.eup });
   check(scope, 'the row fits or scrolls inside itself; the page never scrolls sideways', (view.row.sw <= view.row.cw || ['auto', 'scroll'].includes(view.row.overflowX)) && view.page.sw === view.page.cw, { row: view.row, page: view.page });

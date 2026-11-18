@@ -38,7 +38,8 @@ the exact change.
 
 ## The target
 
-1. **The feed's row** (`#mnFeedScope`, the drag-scrolling row under the globe), in the owner's order of 2026-11-18:
+1. **The feed's row** (`#mnFeedScope`, the row under the globe: one drag-scrolling row on the phone and the stacked tablet;
+   on the split desktop, 1000px and wider, it wraps onto a second line so every tab sits inside it), in the owner's order of 2026-11-18:
    Local · Equity Uprise (key `equity`) · Global (key `global`, pressed on load) · Live · News · People, and nothing
    above it for a signed-out visitor. There is no separate Environment tab: the environmental globe lives in the
    Equity Uprise tab (owner, 2026-11-17, latest decision below).
@@ -244,6 +245,12 @@ up, global, live news people."
   `scripts/e2e/environment-world.e2e.mjs` (163 checks), `scripts/e2e/world-screen.e2e.mjs` editorial on the phone (186
   checks, the editorial row check and the arrow-key step among them) and `scripts/e2e/docket-cohort-showcase.e2e.mjs`
   (56 checks). Not merged, not deployed: the live site keeps showing the old bar until the owner approves a deploy.
+- Second review (2026-11-18, `css/human-uprise-editorial.css`): the tabs are form controls at `max(16px,1em)` (they were
+  14px; AGENTS.md hard rule 14, the reading the Environmental Justice panel's buttons already follow), and on the split desktop
+  (1000px and wider) the row wraps onto a second line, so every tab sits inside it (at 1280 the sixth tab, People, sat past the
+  row's edge in the 491px feed column with no sign that the row scrolls). The phone and the stacked tablet keep one dragging
+  row; at 820 the six tabs still fit on it. `scripts/e2e/world-missions-guest.e2e.mjs` checks every tab at 16px or more at each
+  width and, from 1000px, every tab inside the row's box.
 
 ## The environmental globe
 
