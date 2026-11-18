@@ -3290,6 +3290,13 @@
       "rationale": "Tests building equipment selection without adding a program capability."
     },
     {
+      "path": "scripts/test/eu-platform-replay.native.integration.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Native PostgreSQL proof of the replay twin of the Equity Uprise platform registry: runs the reset script against a scratch database shaped like the CI rebuild and compares what ledger rows 365 to 376 build with production's snapshot. Names eu_platform_* objects only to exercise them; not a building capability."
+    },
+    {
       "path": "scripts/test/eu-screen-hardware-binding.test.mjs",
       "classification": "test_support",
       "capability_ids": [],
@@ -4748,6 +4755,13 @@
       "rationale": "Schema reconciliation SQL from the 2026-10-28 production audit that names Equity Uprise (eu_*) tables, policies or functions among many others; database hygiene, not a building capability."
     },
     {
+      "path": "supabase/replay_migrations/20261114015120_equity_uprise_platform_registry.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Replay twin of the Equity Uprise platform registry, applied only by the CI reset: production's stored statement with the two preflight checks a rebuilt database cannot meet relaxed. Shared backend tenancy; no building capability, program or geometry."
+    },
+    {
       "path": "supabase/schema-manifest.json",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -4809,6 +4823,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Scratch-database test or stub for the 2026-10-29 schema reconciliation and pending hygiene files; it names eu_* objects only to exercise them, not a building capability."
+    },
+    {
+      "path": "supabase/tests/eu_platform_replay.stub.sql",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Scratch-database stub of the tables the Equity Uprise platform registry and music workspace read, as the CI rebuild holds them. Never applied to a project; not a building capability."
     },
     {
       "path": "supabase/tests/eu_platform_test.sql",

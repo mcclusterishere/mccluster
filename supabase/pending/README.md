@@ -60,9 +60,15 @@ as stored) and searched for secrets and personal data before it was committed (n
 | `supabase/migrations/20261114015120_equity_uprise_platform_registry.sql` | 17,044 bytes, md5 `5687d8ab0b1af7a8d6548bbd1ed0ebb6` |
 | `supabase/migrations/20261114060150_equity_uprise_music_workspace.sql` | 13,691 bytes, md5 `ae1bd9c95a566d0a05a1ae00d0772bcb` |
 
-Their release receipt is not in this repository. The registry refuses unless the database already holds an
-authenticated McCluster owner, which a fresh CI reset does not: the reset needs a replay twin under
-`supabase/replay_migrations/` before it can build these two (not written yet).
+Their release receipt is not in this repository. A fresh CI reset cannot pass two of the registry's preflight checks:
+it has three of the four canonical apps (production registered `mnet-web` outside the replayable history), and no
+authenticated McCluster owner (nothing inserts into `auth.users`). So the reset applies the registry's replay twin,
+`supabase/replay_migrations/20261114015120_equity_uprise_platform_registry.sql`: the stored statement byte for byte
+except those two checks, which it relaxes to refuse only a disabled canonical app and more than one owner, following
+`20261016031123_anon_policy_scope_v1.sql`. It invents no owner and no app. The music workspace needs no twin. Proof,
+on a disposable PostgreSQL 16 shaped like the reset before ledger row 365, through the reset script itself:
+`scripts/test/eu-platform-replay.native.integration.mjs` (without the twin the reset stops at the registry; with it
+rows 365 to 376 apply and build what production's 2026-11-18 snapshot records). The CI reset has not run on it yet.
 
 Still pending: the publish, `20261117100300_action_mission_drawdown_publish.sql` (10.4). The owner decided it runs in
 the deploy window, after the new feed ships: the live build reads open missions straight from the database (its swipe

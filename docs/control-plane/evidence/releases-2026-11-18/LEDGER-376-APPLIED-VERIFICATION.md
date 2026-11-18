@@ -102,6 +102,10 @@ against the manifest now differs by exactly the same keys as the 10 November sna
   a replay twin under `supabase/replay_migrations/` (the mechanism `scripts/supabase-local-reset-with-replay.sh`
   provides) before it can build the registry and the music workspace. That is a separate, reviewed change; nothing
   here writes one. The manifest rows for those objects are production's until a reset confirms them.
+  Follow-up, the same day: the twin is `supabase/replay_migrations/20261114015120_equity_uprise_platform_registry.sql`.
+  A fresh reset also lacks the `mnet-web` app the registry's app check wants, and that check refuses first; the twin
+  relaxes both. Its proof, on a disposable PostgreSQL 16 and not the CI stack, is
+  `scripts/test/eu-platform-replay.native.integration.mjs`; the CI reset still has not run.
 - Who applied the two migrations outside Git, and why, is not recorded here.
 - Not applied, and still pending: the Drawdown publish (`supabase/pending/20261117100300_action_mission_drawdown_publish.sql`,
   for the deploy window after the new feed ships, by the owner's decision), `compute_claim_task_yield_v3.sql`, and
