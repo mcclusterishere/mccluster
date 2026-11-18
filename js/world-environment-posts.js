@@ -14,14 +14,14 @@
    - observationPosts: one post per event id, by the system author "Environmental desk", typed "Environmental observation";
      fires are summarised per 1-degree area (never one post per detection); perimeters post with their acres and dates.
    - interleaveByTime: the Equity Uprise tab's one list of mission posts and observation posts, newest first.
-   - withObservations: Everything carries the significant ones, one after every six other items, each once, never padding. */
+   - withObservations: Global carries the significant ones, one after every six other items, each once, never padding. */
 (function (root, factory) {
   const api = factory();
   if (typeof module === 'object' && module.exports) module.exports = api;
   else root.MCC_ENVIRONMENT_POSTS = api;
 })(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
-  /* one observation after every EVERY_OBS other items in Everything */
+  /* one observation after every EVERY_OBS other items in Global */
   const EVERY_OBS = 6;
   const AUTHOR = 'Environmental desk', TYPE = 'Environmental observation';
   const SIGNIFICANT_SEVERITY = ['Extreme', 'Severe'];
@@ -221,7 +221,7 @@
     return rows.slice(0, size).map((r) => r.item);
   }
 
-  /* ---------- Everything: a low ratio ---------- */
+  /* ---------- Global: a low ratio ---------- */
   /* one significant observation after every `every` other items, each once, in the order given; when the other items run out the
      observations stop too (a low ratio means at most one per six others: a short feed is never padded with observations) */
   function withObservations(others, observations, opts) {

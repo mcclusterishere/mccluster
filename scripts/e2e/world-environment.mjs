@@ -7,7 +7,7 @@
  *  A. the panel's modules alone on the shipped DOM (mnet-modules.html serves mnet.html with every other script removed): the
  *     journey the module always had, from the sourced observations to a joined mission and its evidence, plus the auth race.
  *  B. the page as it ships (js/mnet.js and the panel together, every read a fixture, the globe frame a stub that records what
- *     it is told and can answer as the globe would): slice G1's observation posts in Everything and in the Equity Uprise tab,
+ *     it is told and can answer as the globe would): slice G1's observation posts in Global and in the Equity Uprise tab,
  *     typed and stamped with the recorded time; Show on globe; the panel's health rows, tour and 2D controls; the fixed order
  *     of the messages; the honest line and zero posts while the module answers 503 or 404; daylight contrast by computed style;
  *     scrollWidth === clientWidth; no page errors.
@@ -215,13 +215,13 @@ try{
  const fits=page=>page.evaluate(()=>{const feed=document.getElementById('mnFeed'),edge=feed.getBoundingClientRect().right+0.5;const over=[...feed.querySelectorAll('*')].filter(el=>el.getBoundingClientRect().right>edge&&el.getClientRects().length).slice(0,8).map(el=>el.tagName.toLowerCase()+'.'+[...el.classList].join('.')+'@'+Math.round(el.getBoundingClientRect().right-edge));return {sw:document.documentElement.scrollWidth,cw:document.documentElement.clientWidth,psw:document.getElementById('wePanel').scrollWidth,pcw:document.getElementById('wePanel').clientWidth,fsw:feed.scrollWidth,fcw:feed.clientWidth,over};});
  for(const device of WIDTHS){
   const {context,page,errors,requests}=await openPage(device);
-  /* Everything: the significant observations ride along, one after every six other items, each typed by the system author */
+  /* Global: the significant observations ride along, one after every six other items, each typed by the system author */
   await page.waitForFunction(()=>document.querySelectorAll('#mnFeed .mn__observation-post').length>0,null,{timeout:30000});
   const everything=await feedSeq(page);
   const obs=everything.map((x,i)=>x.startsWith('o:')?i:-1).filter(i=>i>=0);
-  assert.ok(obs.length>=2,'significant observations in Everything: '+JSON.stringify(everything));
+  assert.ok(obs.length>=2,'significant observations in Global: '+JSON.stringify(everything));
   let since=0;for(let i=0;i<everything.length;i++){if(everything[i].startsWith('o:')){assert.ok(since>=6,'at least six other items before each observation: '+JSON.stringify(everything));since=0;}else since++;}
-  for(const x of everything.filter(x=>x.startsWith('o:')))assert.ok(SIGNIFICANT.has(x.slice(2)),'only a significant event rides in Everything: '+x);
+  for(const x of everything.filter(x=>x.startsWith('o:')))assert.ok(SIGNIFICANT.has(x.slice(2)),'only a significant event rides in Global: '+x);
   const keyed=everything.filter(x=>/^[om]:/.test(x));assert.equal(new Set(keyed).size,keyed.length,'each observation and mission once');
   const typed=await page.evaluate(()=>[...document.querySelectorAll('#mnFeed .mn__observation-post')].map(a=>({id:a.getAttribute('data-observation-post'),author:a.querySelector('.mn__author-name').textContent,sub:a.querySelector('.mn__author-sub').textContent,title:a.querySelector('.mn__observation-post-title').textContent,body:a.querySelector('.mn__observation-post-body').textContent,globe:!!a.querySelector('[data-observation-globe]'),source:(a.querySelector('.mn__observation-source')||{}).href||'',icon:!!a.querySelector('.mn__observation-post-icon svg'),img:a.querySelectorAll('img').length})));
   for(const t of typed){assert.equal(t.author,'Environmental desk');assert.match(t.sub,/^Environmental observation · /);assert.match(t.sub,/ · (Recorded|Retrieved) /);assert.match(t.body,/Coverage: .+ · Status: (available|stale|unavailable)/);assert.ok(t.icon&&t.img===0,'a plain line icon, never a picture or the mark');assert.match(t.source,/^https:\/\//);}
@@ -326,16 +326,16 @@ try{
   /* every post's action row bleeds 6 px into the gutter by design (css/mnet.css, .mn-world-on #mnFeed .mn__post-actions margin:8px -6px -4px,
      mission and member posts alike); nothing else in the feed may stick out, so an observation post that overflowed would be named here */
   assert.ok(dims.over.every(x=>/^div\.mn__post-actions@[1-6]$/.test(x)),JSON.stringify(dims));
-  /* back to Everything: Show on globe from there turns the feed to the Equity Uprise tab first */
+  /* back to Global: Show on globe from there turns the feed to the Equity Uprise tab first */
   await page.locator('#mnFeedScope [data-feed-scope="global"]').click();
   await page.waitForFunction(()=>document.querySelectorAll('#mnFeed .mn__observation-post').length>0,null,{timeout:10000});
   const b4=(await got(page)).length;
   await page.locator('#mnFeed [data-observation-globe]').first().click();
   assert.equal(await page.evaluate(()=>window.MCC_FEED_SCOPE.get()),'equity');
-  await waitGot(page,b4,m=>m.type==='hu:environment-focus','hu:environment-focus from Everything');
+  await waitGot(page,b4,m=>m.type==='hu:environment-focus','hu:environment-focus from Global');
   assert.deepEqual(errors,[],'no page errors');
   await shot(page,'world-environment-page-'+device.width);
-  console.log(`PASS B ${device.width}px: the page as it ships; significant observations in Everything at most one in six, every observation in the Equity Uprise tab with the missions by time, typed and stamped (recorded, or retrieved and said so), Show on globe, layers before pins, health rows, a summarised fire area, the globe-selection card, tour and 2D controls, no sideways scroll, no page errors. Fixtures only.`);
+  console.log(`PASS B ${device.width}px: the page as it ships; significant observations in Global at most one in six, every observation in the Equity Uprise tab with the missions by time, typed and stamped (recorded, or retrieved and said so), Show on globe, layers before pins, health rows, a summarised fire area, the globe-selection card, tour and 2D controls, no sideways scroll, no page errors. Fixtures only.`);
   await context.close();
   /* by day: the panel, its buttons and status words, and the observation post's head read 4.5:1 or better on their grounds */
   const day=await openPage(device,{daylight:'day'});

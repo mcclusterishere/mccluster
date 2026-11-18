@@ -354,18 +354,23 @@
         </section>
         <!-- a guest's door into the members' side: a real Equity Uprise rally
              (Bridgeport Creates), then the public posts, read-only -->
-        <!-- THE FEED'S SCOPE (owner's reference, 2026-10-19): Local is the place the globe is on, Everything is the whole stream
-             (owner, 2026-11-17: "Should start on everything, but you can individualize it to select mission feed"; the key stays
-             global), Live and People are the rooms and the directory, News is the publishers only. THE EQUITY UPRISE TAB (owner,
-             2026-11-17: "another tab called the equity uprise tab ... on the feed section under the globe"; "the PNG logo that is
-             there, put that on that tab ... Just keep it as is") is the mission feed, with Environmental Justice above it: the
-             supplied artwork alone, scaled only, white on the night ground and the supplied dark mark on the white daylight
-             ground (css/daylight.css), never written out; its name is for assistive technology. Nothing here is a new feed; it
-             narrows the one stream. A finger drags the row; a mouse drags it too, and the arrow keys walk it (js/mnet.js). -->
+        <!-- THE FEED'S ROW, IN THE OWNER'S ORDER (owner, 2026-11-18, looking at the World signed out: "I wanted that E equals up
+             tab next to local, global, live news people ... There should be no tabs from news feed to E equals up. It should just
+             be local, equity up, global, live news people."): Local · the Equity Uprise tab · Global · Live · News · People, and
+             nothing above the row for a visitor (the centre mode bar is the house owner's alone: hu-travel-off). Local is the
+             place the globe is on. Global is the whole stream (owner, 2026-10-19: "Global is everything"; labelled Everything
+             from 2026-11-17 to 2026-11-18): the key stays global and it is chosen on load, or Local for the visitor's own country
+             once WORLD_PLACE_SCOPE_ENABLED is on (owner, 2026-11-17). Live and People are the rooms and the directory, News is the
+             publishers only. THE EQUITY UPRISE TAB (owner, 2026-11-17: "another tab called the equity uprise tab ... on the feed
+             section under the globe"; "the PNG logo that is there, put that on that tab ... Just keep it as is") is the mission
+             feed, with Environmental Justice above it: the supplied artwork alone, scaled only, white on the night ground and the
+             supplied dark mark on the white daylight ground (css/daylight.css), never written out; its name is for assistive
+             technology. Nothing here is a new feed; it narrows the one stream. A finger drags the row; a mouse drags it too, and
+             the arrow keys walk it in this order (js/mnet.js). -->
         <nav class="hu-feed-scope" id="mnFeedScope" aria-label="What the feed shows">
           <button type="button" data-feed-scope="local" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg>Local</button>
-          <button type="button" data-feed-scope="global" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c-3 3-3 15 0 18m0-18c3 3 3 15 0 18"/></svg>Everything</button>
           <button class="hu-feed-scope__eup" type="button" data-feed-scope="equity" aria-pressed="false" aria-label="Equity Uprise"><img class="hu-eup-mark hu-eup-mark--white" src="assets/img/equity-uprise-mark-white.png" alt="" width="40" height="40"><img class="hu-eup-mark hu-eup-mark--dark" src="assets/img/equity-uprise-mark.png" alt="" width="40" height="40"></button>
+          <button type="button" data-feed-scope="global" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c-3 3-3 15 0 18m0-18c3 3 3 15 0 18"/></svg>Global</button>
           <button type="button" data-mn-view="live"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2.2"/><path d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"/></svg>Live</button>
           <button type="button" data-feed-scope="news" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4zM8 9h8M8 13h8M8 17h5"/></svg>News</button>
           <button type="button" data-mn-view="discover"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><circle cx="16.5" cy="9.5" r="2.6"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0M14 18.5a4.5 4.5 0 0 1 7 0"/></svg>People</button>

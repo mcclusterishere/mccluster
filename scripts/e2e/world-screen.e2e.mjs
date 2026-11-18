@@ -725,7 +725,7 @@ if(runs('travel')||ONLY.startsWith('travel-')) for(const device of DEVICES.filte
     check(scope,'the completed capstone has its own public marker under the Equity Uprise tab',await page.isVisible('#mnCompletedSeries')&&await globe.evaluate(()=>__huCompletedMissions().events===1&&__huCompletedMissions().pins===1&&!__huNavigation().locationVisible&&!__huNavigation().routeVisible));
     await page.click('#mnFeedScope [data-feed-scope="global"]');
     await globe.waitForFunction(()=>!__huCompletedMissions().on&&__huCompletedMissions().pins===0);
-    check(scope,'Everything hides completed markers and private navigation overlays',await globe.evaluate(()=>__huCompletedMissions().pins===0&&!__huNavigation().locationVisible&&!__huNavigation().routeVisible));
+    check(scope,'Global hides completed markers and private navigation overlays',await globe.evaluate(()=>__huCompletedMissions().pins===0&&!__huNavigation().locationVisible&&!__huNavigation().routeVisible));
     await page.click('.wt-world-modes [data-world-mode=travel]');check(scope,'switching modes preserves the planning draft',/Lisbon/.test(await page.inputValue('#wtTo')));
     if(member){
       await page.click('#wtSave');await page.waitForFunction(()=>document.getElementById('wtDraftStatus').textContent==='Saved');
@@ -1376,9 +1376,10 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>(!process.env.EDIT
     /* owner, 2026-11-17: no Missions or E=UP button in the centre of the globe, and Travel stays the house owner's, so a visitor
        or a member who is not the house owner sees no centre mode bar at all; the feed is what the World shows */
     check(scope,'the World is one feed: no centre mode bar (no Travel, Missions or E=UP), the feed is what it shows',shell.travelOff&&shell.mode==='posts'&&!shell.tabs&&shell.modes.length===0&&shell.feed&&shell.posts>0&&!shell.planner,shell);
-    /* the strip under the globe: Local, Everything (pressed on load), the Equity Uprise tab (the supplied mark alone), Live, News, People */
-    check(scope,'the feed strip reads Local, Everything (pressed), the Equity Uprise tab (image only), Live, News, People',JSON.stringify(shell.strip.map(b=>b.name))===JSON.stringify(['Local','Everything','Equity Uprise','Live','News','People'])
-      &&shell.strip[1].pressed==='true'&&shell.strip[1].key==='global'&&shell.strip[2].key==='equity'&&shell.strip[2].words===''&&shell.strip[2].imgs===2,shell.strip);
+    /* the row under the globe, in the owner's order (owner, 2026-11-18: "It should just be local, equity up, global, live news people"):
+       Local, the Equity Uprise tab (the supplied mark alone), Global (pressed on load), Live, News, People */
+    check(scope,'the feed row reads Local, the Equity Uprise tab (image only), Global (pressed), Live, News, People',JSON.stringify(shell.strip.map(b=>b.name))===JSON.stringify(['Local','Equity Uprise','Global','Live','News','People'])
+      &&shell.strip[2].pressed==='true'&&shell.strip[2].key==='global'&&shell.strip[1].key==='equity'&&shell.strip[1].words===''&&shell.strip[1].imgs===2,shell.strip);
     check(scope,'the globe, and the expanded globe, draw the public missions',!/missions=0/.test(shell.frame)&&!/missions=0/.test(shell.expand),shell);
     await globe.waitForFunction(()=>typeof window.__huMissionPins==='function'&&window.__huMissionPins()>0,null,{timeout:25000}).catch(()=>{});
     check(scope,'the Earth carries the published mission pins for everyone',await globe.evaluate(()=>typeof window.__huMissionPins==='function'&&window.__huMissionPins()===5&&!document.documentElement.classList.contains('globe-no-missions')));
@@ -1396,7 +1397,7 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>(!process.env.EDIT
     const swipe=(from,to)=>page.evaluate(([from,to])=>{const f=document.getElementById('mnWorldFeed');const fire=(type,x)=>f.dispatchEvent(new TouchEvent(type,{bubbles:true,touches:type==='touchend'?[]:[new Touch({identifier:1,target:f,clientX:x,clientY:300})],changedTouches:[new Touch({identifier:1,target:f,clientX:x,clientY:300})]}));try{fire('touchstart',from);fire('touchend',to);}catch(_){}return document.documentElement.dataset.worldMode;},[from,to]);
     const swipedLeft=await swipe(300,60);const swipedBack=await swipe(60,300);
     check(scope,'a sideways swipe keeps the feed, never Travel',swipedLeft==='posts'&&swipedBack==='posts',{swipedLeft,swipedBack});
-    /* the Equity Uprise tab: the mission feed, with Environmental Justice above it, and back to Everything */
+    /* the Equity Uprise tab: the mission feed, with Environmental Justice above it, and back to Global */
     await page.click('#mnFeedScope [data-feed-scope="equity"]');
     await page.waitForSelector('#wePanel:not([hidden])',{timeout:10000}).catch(()=>{});
     const tab=await page.evaluate(()=>({pressed:document.querySelector('[data-feed-scope="equity"]').getAttribute('aria-pressed'),scope:window.MCC_FEED_SCOPE.get(),
@@ -1549,8 +1550,9 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
       return{pressed:b.getAttribute('aria-pressed'),name:b.getAttribute('aria-label'),words:b.textContent.trim(),shown:shown.map(i=>i.getAttribute('src')),w:r&&Math.round(r.width),h:r&&Math.round(r.height),
         panel:!document.getElementById('wePanel').hidden&&(getComputedStyle(document.getElementById('wePanel')).display!=='none'||getComputedStyle(document.getElementById('weUnavailable')).display==='block'),deck:!!document.querySelector('.mn-swipe,.hu-mission-preview,#mnWorldEup'),sw:document.documentElement.scrollWidth,cw:document.documentElement.clientWidth};});
     check(scope,'the Equity Uprise tab is the supplied mark alone, scaled, pressed, with Environmental Justice above the mission feed and no deck',eup.pressed==='true'&&eup.name==='Equity Uprise'&&eup.words===''&&eup.shown.length===1&&eup.w===eup.h&&eup.w>=24&&eup.panel&&!eup.deck&&eup.sw===eup.cw,eup);
-    await page.focus('#mnFeedScope [data-feed-scope="global"]');await page.keyboard.press('ArrowRight');
-    check(scope,'the arrow keys walk the strip',await page.evaluate(()=>document.activeElement&&document.activeElement.dataset.feedScope==='equity'));
+    /* the row in the owner's order (2026-11-18): after Local, the Equity Uprise tab */
+    await page.focus('#mnFeedScope [data-feed-scope="local"]');await page.keyboard.press('ArrowRight');
+    check(scope,'the arrow keys walk the row: after Local, the Equity Uprise tab',await page.evaluate(()=>document.activeElement&&document.activeElement.dataset.feedScope==='equity'));
     await page.screenshot({path:join(OUT,scope+'-equity.png')});
     if(!member){
       const dayM=await page.evaluate(()=>{const h=document.documentElement,was=h.getAttribute('data-daylight');h.setAttribute('data-daylight','day');const m=document.querySelector('.appbar__tab[data-appnav="home"] .appbar__m'),c=m?getComputedStyle(m).content:'';if(was===null)h.removeAttribute('data-daylight');else h.setAttribute('data-daylight',was);return c;});
@@ -1634,7 +1636,7 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
     await page.click('#mnSuggestRows [data-suggest="globe"]');
     await page.waitForFunction(()=>!document.getElementById('mnWorldFocus').hidden && document.getElementById('huRegionLabel').textContent==='All regions',null,{timeout:8000}).catch(()=>{});
     check(scope,'a mission card outside the selected country opens and clears the country filter',await page.isVisible('#mnWorldFocus') && await page.textContent('#huRegionLabel')==='All regions' && await globe.evaluate(()=>window.__huCountries().selected===null));
-    check(scope,'letting the tapped country go returns the feed to Everything',await page.getAttribute('[data-feed-scope=global]','aria-pressed')==='true'&&(await page.textContent('[data-feed-scope=global]')).trim()==='Everything');
+    check(scope,'letting the tapped country go returns the feed to Global',await page.getAttribute('[data-feed-scope=global]','aria-pressed')==='true'&&(await page.textContent('[data-feed-scope=global]')).trim()==='Global');
     /* the search's words narrow the feed as they are typed: clear them, so the feed below is the whole one feed again */
     await page.evaluate(()=>{const i=document.getElementById('mnSearchInput');i.value='';i.dispatchEvent(new Event('input',{bubbles:true}));});
     await page.waitForTimeout(400);

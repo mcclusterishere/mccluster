@@ -1427,14 +1427,16 @@
       if (state.feedScope === "local") renderFeed(false);
     }).finally(function () { if (seq === p.seq) p.working=false; });
   }
-  /* THE STRIP'S KEYS (owner, 2026-11-17): Local, Everything (key "global": "Should start on everything"), the Equity Uprise
-     tab ("equity": the mission feed, "you can individualize it to select mission feed"), News. Live and People open rooms. */
-  var FEED_SCOPES = ["local", "global", "equity", "news"];
+  /* THE ROW'S KEYS, IN THE OWNER'S ORDER (owner, 2026-11-18: "It should just be local, equity up, global, live news people"):
+     Local, the Equity Uprise tab ("equity": the mission feed, owner 2026-11-17: "you can individualize it to select mission
+     feed"), Global (key "global", the whole stream and the tab chosen on load: "Global is everything", owner 2026-10-19), News.
+     Live and People open rooms. The order on screen is mnet.html's, and the arrow keys walk the row's buttons in that order. */
+  var FEED_SCOPES = ["local", "equity", "global", "news"];
   function paintFeedScope() {
     var scope = state.feedScope || "global";
     document.querySelectorAll("[data-feed-scope]").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.feedScope === scope)); });
     /* the Equity Uprise tab: Environmental Justice above the missions (the panel shows itself, js/world-environment-mccluster.mjs),
-       the completed series after them, and none of the posting chrome of Everything */
+       the completed series after them, and none of the posting chrome of Global */
     document.documentElement.classList.toggle("mn-feed-equity", scope === "equity");
     var done = $("mnCompletedSeries");
     if (done) done.hidden = scope !== "equity";
@@ -1767,7 +1769,7 @@
       if (pk && pn.key !== pk) loadPlaceNews(true);
       news = pk && pn.key === pk && !(focus && focus.filter) ? pn.items.slice() : [];
     }
-    /* the open missions are posts in the one stream: all of them in Everything, the picked place's in Local (feedMissionsFor) */
+    /* the open missions are posts in the one stream: all of them in Global, the picked place's in Local (feedMissionsFor) */
     var feedMissions = feedMissionsFor(state.feedScope || "global", focus);
     paintNewsCredit(false);
     if (!items.length && !news.length && !feedMissions.length) {
@@ -1818,7 +1820,7 @@
       return;
     }
     var seen = state.seen || (state.seen = {}), order = 0, drawn = withMissions(interleaveFeed(items, news), feedMissions);
-    /* Everything also carries the significant environmental observations, one after every six other items */
+    /* Global also carries the significant environmental observations, one after every six other items */
     drawn = withObservations(drawn);
     /* Local with only the missions that can be done there (no story and no post of its own): one line above them says so; the
        member posts the card counts but Local cannot show are said on the same line */
@@ -1904,7 +1906,7 @@
 
   /* THE MISSION FEED (owner, 2026-11-17: "having the missions as like just another post in the newsfeed, not a big, large
      post, just the same size post as all the other [posts]"; docs/control-plane/WORLD-FEED-AND-MISSIONS-20261117.md, targets 3,
-     5 and 6). Every open mission is a post. The Equity Uprise tab lists them all, a page at a time; Everything and Local mix
+     5 and 6). Every open mission is a post. The Equity Uprise tab lists them all, a page at a time; Global and Local mix
      them into the one stream, one after every three other items (js/world-mission-posts.js, interleave). A mission post is a
      post's card and shape: where a post names its author, the mission's kind and field (never the brand); where it names the
      handle, its difficulty and points; then its title, its description clamped, a source line when it carries a credit (it
@@ -1972,7 +1974,7 @@
     for (var i = 0; i < all.length; i++) if (all[i].id === id) return all[i];
     return null;
   }
-  /* the missions a scope carries: every open mission in Everything; in Local the picked place's (the ones pinned there and the
+  /* the missions a scope carries: every open mission in Global; in Local the picked place's (the ones pinned there and the
      ones pinned nowhere), once the globe has said where its pins are; none in News, nor while a mission picked on the Earth
      narrows the feed to its posts */
   function feedMissionsFor(scope, focus) {
@@ -2117,7 +2119,7 @@
      mcc:world-environment-events (nothing is fetched twice); js/world-environment-posts.js turns that detail into posts by the
      system author "Environmental desk", stamped with the recorded time (the retrieval time, labelled as such, when the source gives
      none). Every observation is a post in the Equity Uprise tab, in one list with the mission posts by time; the significant ones
-     ride in Everything, one after every six other items. A known event whose words changed keeps its post and gains an Updated
+     ride in Global, one after every six other items. A known event whose words changed keeps its post and gains an Updated
      time; an event that left the feed loses its post; while the module is unavailable there are none and the tab's honest line
      stands. An observation is never a mission and never counted as one. */
   var ENV_POSTS = window.MCC_ENVIRONMENT_POSTS || null;
@@ -2206,7 +2208,7 @@
       };
     });
   }
-  /* Everything carries the significant observations, one after every six other items (js/world-environment-posts.js); Local and
+  /* Global carries the significant observations, one after every six other items (js/world-environment-posts.js); Local and
      News are left as they are */
   function withObservations(others) {
     return ENV_POSTS && (state.feedScope || "global") === "global" ? ENV_POSTS.withObservations(others, significantPosts(), { every: ENV_POSTS.EVERY_OBS }) : others;
@@ -5043,7 +5045,7 @@
         if ($("mnPostPlaceOptIn") && !sameCountry) $("mnPostPlaceOptIn").checked = false;
         paintFeedScope();
         /* CLICK THE PLANET, FILTER THE FEED (owner, 2026-10-19). A country tapped outside Travel narrows the one feed to
-           that country with no extra press. On Everything or News the feed turns to Local (its news, missions and posts,
+           that country with no extra press. On Global or News the feed turns to Local (its news, missions and posts,
            WORLD-FEED-AND-MISSIONS-20261117.md target 9), and letting the country go returns it to the tab it was on before
            the tap, unless the member chose Local themselves. A tap never takes a visitor out of the Equity Uprise tab: its
            missions narrow to the place's (paintMissionFeed) under the Environmental Justice panel, and letting the country go

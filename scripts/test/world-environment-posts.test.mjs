@@ -3,7 +3,7 @@
    slice G1 lane L2). The pure parts in js/world-environment-posts.js, run on the feed fixture: which events are significant, how a
    post is stamped (the recorded time, else the retrieval time labelled as such, never a fetch time in the recorded slot), how
    long ago (the same rules as js/mnet.js timeAgo), one post per event id with fires summarised per area, the Equity Uprise tab's
-   merge by time and Everything's one-in-six. Nothing here touches the page, the network or storage.
+   merge by time and Global's one-in-six (the whole stream, key global; labelled Everything from 2026-11-17 to 2026-11-18). Nothing here touches the page, the network or storage.
      node --test scripts/test/world-environment-posts.test.mjs */
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -186,7 +186,7 @@ test('interleaveByTime: missions and observations in one list, newest first, und
   assert.deepEqual(P.interleaveByTime([M(1, 'x')], 'no').map((m) => m.id.slice(-1)), ['1']);
 });
 
-test('withObservations: in Everything one significant observation after every six other items, each once, never padding a short feed', () => {
+test('withObservations: in Global one significant observation after every six other items, each once, never padding a short feed', () => {
   assert.equal(P.EVERY_OBS, 6);
   const others = Array.from({ length: 14 }, (_, k) => ({ other: k + 1 }));
   const obs = [{ observationPost: true, id: 'a', significant: true }, { observationPost: true, id: 'b', significant: false }, { observationPost: true, id: 'c', significant: true }, { observationPost: true, id: 'a', significant: true }, { observationPost: true, id: 'd', significant: true }];
@@ -239,7 +239,7 @@ test('G1R-7: the page repaints the feed only when an observation post changed, n
   assert.ok(state.environment.posts['usgs:us7000tyhr'].updated_at > 0, 'and says it was updated');
   fire(detail({ events: revised }));
   assert.equal(draws.length, 2);
-  /* significance alone (a ShakeMap found for the quake) changes where the post rides in Everything: that repaints */
+  /* significance alone (a ShakeMap found for the quake) changes where the post rides in Global: that repaints */
   assert.equal(state.environment.posts['usgs:us7000tyhr'].significant, false);
   fire(detail({ events: revised.map((e) => e.id === 'usgs:us7000tyhr' ? { ...e, shakemap_available: true } : e) }));
   assert.equal(state.environment.posts['usgs:us7000tyhr'].significant, true);

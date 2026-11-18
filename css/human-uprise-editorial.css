@@ -150,7 +150,7 @@ html.hu-editorial.mn-world-on, .hu-editorial.mn-world-on body {height:100%;overf
 .hu-feed-scope .hu-eup-mark {display:block;width:40px;height:40px;object-fit:contain;flex:none;pointer-events:none;}
 .hu-feed-scope .hu-eup-mark--dark {display:none;}
 /* the mission feed (the tab chosen): Environmental Justice, then the missions, then the completed series; the posting
-   chrome of Everything steps aside */
+   chrome of Global steps aside */
 .mn-feed-equity #wtSocial :is(#mnGuestCard,#mnComposer,#mnLiveHero) {display:none!important;}
 .mn__completed {min-width:0;margin:12px 0 4px;}
 .mn__completed[hidden] {display:none;}

@@ -24,7 +24,7 @@ const M = (n, extra = {}) => ({ missionPost: true, id: id(n), title: 'Mission ' 
 const O = (n) => ({ other: n });
 const order = (list) => list.map((x) => (x.missionPost ? 'm' + x.id.slice(-2).replace(/^0/, '') : 'o' + x.other)).join(' ');
 
-test('Everything: one mission after every three other items, each once, then the rest up to the page size', () => {
+test('Global: one mission after every three other items, each once, then the rest up to the page size', () => {
   assert.equal(P.EVERY, 3);
   assert.equal(P.PAGE, 20);
   const others = Array.from({ length: 7 }, (_, k) => O(k + 1)), missions = [M(1), M(2), M(3)];
@@ -154,7 +154,7 @@ test('Share is the mission\'s address on the page\'s own origin and path', () =>
   assert.equal(P.missionLink({ origin: 'https://mccluster.org', pathname: '/' }, 'x"><script>'), '', 'only a mission id');
 });
 
-test('the page wires them: one read of the open missions, the details asked once, the posts in Everything, Local and the tab', () => {
+test('the page wires them: one read of the open missions, the details asked once, the posts in Global, Local and the tab', () => {
   const js = read('js/mnet.js'), html = read('mnet.html');
   const helperTag = html.indexOf('<script src="js/world-mission-posts.js'), pageTag = html.indexOf('<script src="js/mnet.js');
   assert.ok(helperTag > 0 && helperTag < pageTag, 'the helper loads before the page script');
@@ -164,7 +164,7 @@ test('the page wires them: one read of the open missions, the details asked once
   assert.match(js, /sbRest\("action_mission_details\?select=" \+ MISSION_DETAIL_FIELDS \+ "&mission_id=in\.\(" \+ chunk\.join\(","\) \+ "\)"\)/);
   assert.match(js, /if \(!MISSION_POSTS\.detailsAbsent\(e && e\.status, e && e\.data\)\) return;\s*f\.detailsAbsent = true;\s*try \{ sessionStorage\.setItem\(DETAILS_ABSENT, "1"\); \} catch \(_\) \{\}/, 'absence is remembered for the session');
   assert.match(js, /if \(!MISSION_POSTS \|\| f\.detailsAbsent \|\| !want\.length\) return Promise\.resolve\(false\);/, 'and nothing more is asked');
-  assert.match(js, /drawn = withMissions\(interleaveFeed\(items, news\), feedMissions\)/, 'Everything and Local: the missions into the one stream');
+  assert.match(js, /drawn = withMissions\(interleaveFeed\(items, news\), feedMissions\)/, 'Global and Local: the missions into the one stream');
   assert.match(js, /if \(scope === "local" && c && state\.world\.pinsKnown\) return MISSION_POSTS\.placeMissions\(all, state\.world\.pins, c\.missionIds \|\| \[\]\);/);
   assert.match(js, /cell\(placeMissionCount\(c\), "missions"\)/, 'the place card counts them');
   assert.match(js, /'<p class="mn__feed-note">' \+ esc\(note\) \+ '<\/p>'/, 'Local with only missions says above them that the place has no news today');
@@ -253,7 +253,7 @@ test('a failed missions read is read again on Try again or when the tab is chose
   const host = { innerHTML: '', querySelector(sel) { return sel === '[data-mission-feed-retry]' && this.innerHTML.includes('data-mission-feed-retry') ? (retry = {}) : null; } };
   const ctx = { state, MISSION_POSTS: P, loadOpenMissions() { reads.push(state.missionFeed.error); return Promise.resolve(); }, skeleton: () => '<i class="skel"></i>', esc: (s) => String(s),
     feedMatches: (m, q) => m.title.toLowerCase().includes(q.toLowerCase()), missionPostHtml: (m) => '<article data-mission-post="' + m.id + '"></article>', bindMissionPosts() {}, wantMissionDetails() {},
-    renderFeed() { draws.push(state.feedScope); }, localPlace: () => 'United States', FEED_SCOPES: ['local', 'global', 'equity', 'news'], paintFeedScope() {}, showScopeTab() {}, showCompletedSeries() {},
+    renderFeed() { draws.push(state.feedScope); }, localPlace: () => 'United States', FEED_SCOPES: ['local', 'equity', 'global', 'news'], paintFeedScope() {}, showScopeTab() {}, showCompletedSeries() {},
     loadPlaceFeed() {}, paintMore() {}, track() {}, window: { dispatchEvent() {} }, CustomEvent: function () {} };
   const src = slice(js, '  function retryOpenMissions() {', '  function skeleton(n) {') + slice(js, '  function setFeedScope(scope) {', "  /* the strip's tab for other modules");
   const api = new Function(...Object.keys(ctx), src + '\nreturn { retryOpenMissions, paintMissionFeed, setFeedScope, missionTabList };')(...Object.values(ctx));
@@ -297,7 +297,7 @@ test('a failed missions read is read again on Try again or when the tab is chose
   assert.equal((host.innerHTML.match(/data-mission-post=/g) || []).length, 3);
 });
 
-test('a country tapped on the globe: Everything or News turn to Local and come back when it is let go; the Equity Uprise tab is never left', () => {
+test('a country tapped on the globe: Global or News turn to Local and come back when it is let go; the Equity Uprise tab is never left', () => {
   const js = read('js/mnet.js');
   const open = '} else if (d.type === "hu:country") {', close = '} else if (d.type === "hu:place-stats") {';
   const a = js.indexOf(open), b = js.indexOf(close, a);
@@ -366,4 +366,41 @@ test('the strip: a mouse drag never lands as a tap, and a key\'s click on a tab 
   assert.equal(click(1).prevented, false, 'a mouse that barely moved made a tap, not a drag');
   fire('pointerdown', { pointerType: 'touch', button: 0, clientX: 300 }); fire('pointermove', { clientX: 100 });
   assert.equal(click(1).prevented, false, 'a finger scrolls the strip natively, and its tap is a tap');
+});
+
+/* THE FEED'S ROW IN THE OWNER'S ORDER (owner, 2026-11-18: "There should be no tabs from news feed to E equals up. It should just be
+   local, equity up, global, live news people."). The row as mnet.html ships it, the keys js/mnet.js accepts, the start rule, and
+   the arrow keys walking the row's buttons in that order. The browser side (no mode bar, no such words, 390/820/1280, night and
+   day) is scripts/e2e/world-missions-guest.e2e.mjs. */
+test('the feed\'s row reads Local, the Equity Uprise tab, Global, Live, News, People; Global is chosen on load; the arrow keys walk it in that order', () => {
+  const html = read('mnet.html'), js = read('js/mnet.js');
+  const row = /<nav class="hu-feed-scope" id="mnFeedScope"[^>]*>([\s\S]*?)<\/nav>/.exec(html)[1];
+  const buttons = [...row.matchAll(/<button\b([^>]*)>([\s\S]*?)<\/button>/g)].map(([, attrs, inner]) => ({
+    key: (/data-feed-scope="([a-z]+)"/.exec(attrs) || /data-mn-view="([a-z]+)"/.exec(attrs) || [])[1],
+    name: (/aria-label="([^"]+)"/.exec(attrs) || [])[1] || inner.replace(/<[^>]+>/g, '').trim(),
+    pressed: (/aria-pressed="(true|false)"/.exec(attrs) || [])[1] || null
+  }));
+  assert.deepEqual(buttons.map((b) => b.name), ['Local', 'Equity Uprise', 'Global', 'Live', 'News', 'People']);
+  assert.deepEqual(buttons.map((b) => b.key), ['local', 'equity', 'global', 'live', 'news', 'discover']);
+  assert.deepEqual(buttons.filter((b) => b.pressed === 'true').map((b) => b.key), ['global'], 'Global is chosen on load');
+  assert.doesNotMatch(row, /Everything/, 'the whole stream is labelled Global again');
+  /* the scope keys mnet.js accepts are the row's own, in the row's order */
+  assert.deepEqual(JSON.parse(/var FEED_SCOPES = (\[[^\]]*\]);/.exec(js)[1]), buttons.filter((b) => b.pressed !== null).map((b) => b.key));
+  /* the start rule is unchanged: Global, Local for the visitor's own country once the place scope is on, the tab for ?feed=equity */
+  assert.match(js, /if \(\(state\.feedScope \|\| "global"\) === "global"\) setFeedScope\("local"\);/);
+  assert.match(js, /if \(q\.get\("feed"\) === "equity" \|\| q\.has\("completed"\)/);
+  /* the arrow keys walk the buttons in the row's order and wrap; Home and End reach its ends */
+  const handlers = {}, doc = { activeElement: null };
+  const els = buttons.map((b) => ({ name: b.name, focus() { doc.activeElement = this; } }));
+  const strip = { attrs: {}, hasAttribute(n) { return n in this.attrs; }, setAttribute(n, v) { this.attrs[n] = v; }, scrollWidth: 600, clientWidth: 300, scrollLeft: 0,
+    addEventListener(t, fn) { (handlers[t] ||= []).push(fn); }, querySelectorAll: (sel) => (sel === 'button' ? els : []) };
+  new Function('$', 'document', fnSource(js, 'wireFeedScopeStrip') + '\nwireFeedScopeStrip();')(() => strip, doc);
+  const press = (key) => { (handlers.keydown || []).forEach((fn) => fn({ key, preventDefault() {} })); return doc.activeElement.name; };
+  els[0].focus();
+  const walked = [doc.activeElement.name];
+  for (let k = 0; k < 6; k++) walked.push(press('ArrowRight'));
+  assert.deepEqual(walked, ['Local', 'Equity Uprise', 'Global', 'Live', 'News', 'People', 'Local']);
+  assert.equal(press('ArrowLeft'), 'People');
+  assert.equal(press('Home'), 'Local');
+  assert.equal(press('End'), 'People');
 });

@@ -169,7 +169,7 @@ try{
  }
  {
   const s=await make();await s.page.goto(BASE+'/mnet.html?view=feed');await s.page.waitForFunction(()=>window.MCC_WORLD_MODE&&window.MCC_FEED_SCOPE&&document.documentElement.classList.contains('mn-world-on'));
-  check('World opens on the feed with Everything chosen, and no capstone marker outside the Equity Uprise tab',await s.page.evaluate(()=>MCC_WORLD_MODE.get()==='posts'&&MCC_FEED_SCOPE.get()==='global'&&document.getElementById('mnCompletedSeries').hidden)&&!(await globeMessages(s.page)).some(m=>m.type==='hu:completed-missions'&&m.on));
+  check('World opens on the feed with Global chosen, and no capstone marker outside the Equity Uprise tab',await s.page.evaluate(()=>MCC_WORLD_MODE.get()==='posts'&&MCC_FEED_SCOPE.get()==='global'&&document.getElementById('mnCompletedSeries').hidden)&&!(await globeMessages(s.page)).some(m=>m.type==='hu:completed-missions'&&m.on));
   await s.page.click('#mnFeedScope [data-feed-scope="equity"]');
   await s.page.waitForSelector('#mnCompletedSeries .dc-series');
   await s.page.waitForFunction(()=>document.querySelector('#mnWorldFrame').contentWindow.__received.some(m=>m.type==='hu:completed-missions'&&m.events.length===1));
