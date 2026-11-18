@@ -427,12 +427,20 @@ environmental by the page. The iframe ignores every `hu:environment-*` message o
   the panel's pagehide and on destroy. `on:true` turns the typed layers on and lets the globe fetch its routes; `replay`
   switches the quake replay; a layer flag false hides that layer without refetching.
 - `hu:environment-focus {id}`: a user-initiated focus (a pick never moves the camera); an id the globe does not hold yet is
-  kept briefly and honoured when its layer arrives, so "Show on globe" works before the layers are in.
+  kept briefly (30 s) and honoured when its layer's data or the pins bring it, so "Show on globe" works before the layers are in
+  and whether the pins come before the focus or after it (review RV2-4).
 - `hu:environment-scene {action:'play'|'pause'|'next'|'prev'|'stop'}` and `hu:environment-view {mode:'3d'|'2d'}`. The panel
   sends `play` by itself once per opening of the tab (frame at least a quarter in view, page visible, motion allowed, the
-  visitor has not pressed Pause in this page session); `hu:globe-ready` re-arms that one autostart and clears the panel's tour
-  words, because a globe that just said ready has no tour and may not have heard what the panel said before it booted (landing
-  on `?feed=equity`). The globe's director treats `play` on a tour already under way as a no-op, so a ready said twice is harmless.
+  visitor has not pressed Pause in this page session, and the feed has answered, so the play follows pins that carry something
+  to tour), and never again in an opening of the tab in which the director reported the tour stopped by the visitor's hand
+  (`input`: a pointer, touch, wheel or key on the globe, or a focus the visitor chose) or ran to its `end`. `hu:globe-ready`
+  carries `boot`, an id the frame draws at random once per page load (never stored, posted to the parent only): every ready gets
+  the layers and the pins again, but only a ready from a globe that has just booted (a boot the panel has not heard, or the
+  first ready of all) clears the panel's tour words and re-arms that one autostart, because that globe has no tour and may not
+  have heard what the panel said before it booted (landing on `?feed=equity`). The same globe says ready more than once (at boot,
+  when its missions read answers, in answer to `hu:hello`, after a bfcache restore): those readies never restart a tour the
+  visitor stopped or that ended, and never blank the words of a tour still playing (review RV2-1). The globe's director also
+  treats `play` on a tour already under way as a no-op.
 
 ### Globe to panel
 
@@ -445,13 +453,18 @@ environmental by the page. The iframe ignores every `hu:environment-*` message o
   (review G1R-9).
 - `hu:environment-layer-state {layer:'events'|'fires'|'perimeters'|'alerts'|'eonet'|'tides'|'shakemap', status:'loading'|
   'available'|'stale'|'unavailable'|'policy'|'off', reason, http, schema, generated_at, fetched_at, last_success_at, coverage,
-  attribution, license, url, source_id, count, total, truncated, sources:[the Worker's sourceHealth records], digest}`: one per
+  attribution, license, url, source_id, label, count, total, truncated, sources:[the Worker's sourceHealth records], digest}`: one per
   layer per state change. `fetched_at`, `last_success_at`, coverage, attribution, licence and url are copied from the Worker's
   source health and never invented, and every record travels in `sources`. THE RECORD THAT SPEAKS FOR A LAYER is chosen by
   id, and `source_id` names it (review G1R-3): the water levels' readings `coops_latest`, never the 24-hour station catalogue
-  `coops_stations`; a ShakeMap's contours `usgs_shakemap`, never the event detail `usgs_event`; otherwise the record with the
-  newest `fetched_at` (the first on a tie; the fires layer takes the newer of its two satellites). A selection follows the same
-  rule, except that a fire detection names its own satellite's record; so a reading's retrieval never precedes its observation.
+  `coops_stations`; a ShakeMap's contours `usgs_shakemap`, never the event detail `usgs_event`; the fires, which the Worker sums
+  from both satellites into one set of 1-degree cells, every satellite record that served data (available or stale) together
+  (review RV2-3): `source_id` joins their ids with `+`, `label` names them all (the words their labels share once, then each
+  record's own: "NASA FIRMS VIIRS NOAA-20 and NOAA-21"), coverage, attribution and licence give each record's words once, and
+  `fetched_at` and `last_success_at` are the newest of them, which no acquisition in the merged cells can follow; one satellite
+  serving speaks alone; otherwise the record with the newest `fetched_at` (the first on a tie). `label` is the label of the
+  record or records that speak. A selection follows the same rule (a 1-degree area names both satellites), except that a fire
+  detection names its own satellite's record; so a reading's retrieval never precedes its observation.
   The panel's row for a layer renders every record in `sources`, each with its own status, reason, Retrieved and Last success,
   under the layer's status and counts. `policy` with reason `module_policy_unavailable` or `module_disabled` when the gate
   refused (every layer at once, no retry loop; a layer whose refusing body was still being read when the first refusal landed
@@ -462,14 +475,20 @@ environmental by the page. The iframe ignores every `hu:environment-*` message o
   max_mmi}` (an available ShakeMap marks its feed row `shakemap_available` and the pins are resent); events
   `{by_provider}`; tides `{answered, stations}`.
 - `hu:environment-scene-state {playing, index, total, id, title, queue:'significant'|'quakes-24h', reason:null|
-  'reduced-motion'|'input'|'hidden'|'off'|'end'|'empty'}` and `hu:environment-view-state {mode, morphing}`.
+  'reduced-motion'|'input'|'hidden'|'off'|'end'|'empty'}` and `hu:environment-view-state {mode, morphing}`. The panel's
+  `#weView2d` keeps its one label, "2D map", and says the view the globe reports with `aria-pressed` (true in 2D), never a label
+  naming the other view beside a pressed state (review RV2-6); `#wePlay` does the other thing, its label naming the next action
+  with no `aria-pressed` (review G1R-11).
 
 ### Panel to page: `mcc:world-environment-events`
 
-Dispatched on `window` after every feed load (success or failure), after every layer state whose digest changed from the last
-one handed on for that layer or that re-marked a feed row with its ShakeMap (the same digest again, such as a tour re-selecting a
-quake, is not handed on: review G1R-7), and on destroy with `events:[]` and `code:'off'`. A digest's `label`, `url`, coverage and terms are those of the record named by the
-layer's `source_id`. `detail = {events (the normalized feed rows, with shakemap_available when the globe
+Dispatched on `window` after every feed load (success or failure), after every digest-bearing layer state whose entry for the
+page changed from the last one handed on for that layer (the whole entry under `layers` below: the digest's rows with the layer's
+status, reason, retrieval, label, link, coverage and terms, so a layer gone stale with the same rows still reaches every post that
+carries its status: review RV2-2) or that re-marked a feed row with its ShakeMap (the same entry again, such as a tour
+re-selecting a quake, is not handed on: review G1R-7), and on destroy with `events:[]` and `code:'off'`. A digest's `label` is the
+layer state's own `label` (else that of the record `source_id` names), and its `url`, coverage and terms are the layer's. A fire
+area's Sensor fact names the satellites that label names (VIIRS NOAA-20/21 when both served; review RV2-3). `detail = {events (the normalized feed rows, with shakemap_available when the globe
 reported one), sources, fetched_at (the newest source's), checked_at, unavailable, code:null|'module_policy_unavailable'|
 'module_disabled'|'network'|'bad_response'|'off', layers:{fires?:{status, reason, fetched_at, generated_at, cell_degrees:1,
 cells, label, url, coverage, attribution, license}, perimeters?:{status, reason, fetched_at, top, label, url, coverage,
@@ -532,4 +551,5 @@ together at 390, 820 and 1280 with the same fixtures and the six layer fixtures:
 `postMessage` spine in both directions, the DOM event reached the page, the ids picked on the globe reached the panel's card, and
 the page never asked for a layer route nor the frame for the feed. Record: `WORLD-ENVIRONMENT.md`, "The integration pass".
 The review of the slice at `fe0d53b2` (twelve findings) and what was fixed and run for it: `WORLD-ENVIRONMENT.md`, "Review
-fixes".
+fixes". The second review, at `58fef668` (ten findings), and what was fixed and run for it: `WORLD-ENVIRONMENT.md`, "Second
+review fixes".

@@ -12,7 +12,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us7000tyhr"
   },
   "observed_at": "2026-11-16T04:24:11.718Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -38,7 +38,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us7000tyca"
   },
   "observed_at": "2026-11-15T05:15:02.697Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -64,7 +64,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/nc75467542"
   },
   "observed_at": "2026-11-17T15:10:44.020Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -90,7 +90,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-m62"
   },
   "observed_at": "2026-11-17T18:40:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -116,7 +116,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-m71"
   },
   "observed_at": "2026-11-17T19:12:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -146,7 +146,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-m45"
   },
   "observed_at": "2026-11-17T19:50:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -172,7 +172,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-7"
   },
   "observed_at": "2026-11-17T02:55:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -198,7 +198,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-8"
   },
   "observed_at": "2026-11-17T03:20:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -224,7 +224,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-9"
   },
   "observed_at": "2026-11-17T03:45:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -250,7 +250,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-10"
   },
   "observed_at": "2026-11-17T04:10:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -276,7 +276,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-11"
   },
   "observed_at": "2026-11-17T04:35:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -302,7 +302,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-12"
   },
   "observed_at": "2026-11-17T05:00:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -328,7 +328,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-13"
   },
   "observed_at": "2026-11-17T05:25:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -354,7 +354,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-14"
   },
   "observed_at": "2026-11-17T05:50:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -380,7 +380,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-15"
   },
   "observed_at": "2026-11-17T06:15:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -406,7 +406,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-16"
   },
   "observed_at": "2026-11-17T06:40:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -432,7 +432,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-17"
   },
   "observed_at": "2026-11-17T07:05:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -458,7 +458,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-18"
   },
   "observed_at": "2026-11-17T07:30:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -484,7 +484,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-19"
   },
   "observed_at": "2026-11-17T07:55:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -510,7 +510,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-20"
   },
   "observed_at": "2026-11-17T08:20:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -536,7 +536,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-21"
   },
   "observed_at": "2026-11-17T08:45:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -562,7 +562,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-22"
   },
   "observed_at": "2026-11-17T09:10:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -588,7 +588,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-23"
   },
   "observed_at": "2026-11-17T09:35:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -614,7 +614,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-24"
   },
   "observed_at": "2026-11-17T10:00:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -640,7 +640,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-25"
   },
   "observed_at": "2026-11-17T10:25:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -666,7 +666,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-26"
   },
   "observed_at": "2026-11-17T10:50:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -692,7 +692,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-27"
   },
   "observed_at": "2026-11-17T11:15:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -718,7 +718,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-28"
   },
   "observed_at": "2026-11-17T11:40:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -744,7 +744,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-29"
   },
   "observed_at": "2026-11-17T12:05:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -770,7 +770,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-30"
   },
   "observed_at": "2026-11-17T12:30:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -796,7 +796,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-31"
   },
   "observed_at": "2026-11-17T12:55:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -822,7 +822,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-32"
   },
   "observed_at": "2026-11-17T13:20:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -848,7 +848,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-33"
   },
   "observed_at": "2026-11-17T13:45:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -874,7 +874,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-34"
   },
   "observed_at": "2026-11-17T14:10:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -900,7 +900,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-35"
   },
   "observed_at": "2026-11-17T14:35:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -926,7 +926,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-36"
   },
   "observed_at": "2026-11-17T15:00:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -952,7 +952,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-37"
   },
   "observed_at": "2026-11-17T15:25:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -978,7 +978,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-38"
   },
   "observed_at": "2026-11-17T15:50:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -1004,7 +1004,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-39"
   },
   "observed_at": "2026-11-17T16:15:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -1030,7 +1030,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-40"
   },
   "observed_at": "2026-11-17T16:40:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -1056,7 +1056,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-41"
   },
   "observed_at": "2026-11-17T17:05:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -1082,7 +1082,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-42"
   },
   "observed_at": "2026-11-17T17:30:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -1108,7 +1108,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-43"
   },
   "observed_at": "2026-11-17T17:55:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -1134,7 +1134,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-44"
   },
   "observed_at": "2026-11-17T18:20:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -1160,7 +1160,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-45"
   },
   "observed_at": "2026-11-17T18:45:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -1186,7 +1186,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-46"
   },
   "observed_at": "2026-11-17T19:10:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -1212,7 +1212,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-47"
   },
   "observed_at": "2026-11-17T19:35:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -1238,7 +1238,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-48"
   },
   "observed_at": "2026-11-17T20:00:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -1264,7 +1264,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-49"
   },
   "observed_at": "2026-11-17T20:25:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",
@@ -1290,7 +1290,7 @@
    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/fx-gen-50"
   },
   "observed_at": "2026-11-17T20:50:00.000Z",
-  "fetched_at": "2026-11-17T20:04:00.000Z",
+  "fetched_at": "2026-11-17T20:54:00.000Z",
   "facts": [
    {
     "label": "Magnitude",

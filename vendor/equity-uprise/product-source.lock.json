@@ -15,7 +15,7 @@
     },
     {
       "path": "src/environment/panel.mjs",
-      "sha256": "372829ec69bdcc5b7423e08716720171c9fd650ef7ff871e659f1b31e349c232"
+      "sha256": "bb6702235992ac17a4caab37f8801f60580e4627f9e2ed6d813a8dbc9503d897"
     },
     {
       "path": "src/environment/server.mjs",
@@ -117,6 +117,37 @@
         "scripts/test/world-environment-lifecycle.test.mjs"
       ],
       "note": "Review of slice G1 at fe0d53b2 (2026-11-18); its G1R-4 is G1-INT-GLOBE-READY above. Upstream Equity-Uprise still carries the unpatched files at base_commit; port these patches upstream before re-pinning."
+    },
+    {
+      "base_commit": "645d68a740c835271ca185c52e0b31220aab16ad",
+      "applied_in": "mcclusterishere/mccluster (this consumer checkout), not published upstream",
+      "date": "2026-11-18",
+      "files": [
+        "src/environment/panel.mjs"
+      ],
+      "defects": [
+        {
+          "id": "RV2-1",
+          "summary": "Second review of slice G1: hu:globe-ready re-arms the one autostart only for a globe that has just booted (a boot id the panel has not heard, or the first ready of all), never in an opening of the tab whose tour the visitor stopped by hand (input) or that ran to its end, and the autostart waits for the feed; the same globe saying ready again (its missions read, a hu:hello answered, a bfcache restore) gets the layers and pins only and keeps the words of a tour still playing."
+        },
+        {
+          "id": "RV2-2",
+          "summary": "Second review of slice G1: the page is told again when the whole entry it receives for a layer changed (the digest rows with the layer status, reason, retrieval, label, link, coverage and terms), not the digest rows alone, so a layer gone stale with the same rows reaches every post that carries its status."
+        },
+        {
+          "id": "RV2-3",
+          "summary": "Second review of slice G1: the panel keeps the layer state label and the digest handed to the page takes it, so the fire areas, which the Worker sums from both satellites, name every satellite record that served them."
+        },
+        {
+          "id": "RV2-6",
+          "summary": "Second review of slice G1: the 2D map toggle keeps its one label and says its state with aria-pressed, never a label naming the other view beside a pressed state."
+        }
+      ],
+      "regression_tests": [
+        "scripts/test/world-environment-panel.test.mjs",
+        "scripts/test/world-environment-lifecycle.test.mjs"
+      ],
+      "note": "Second review of slice G1 at 58fef668 (2026-11-18). Upstream Equity-Uprise still carries the unpatched files at base_commit; port these patches upstream before re-pinning."
     }
   ]
 }

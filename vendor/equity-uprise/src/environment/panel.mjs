@@ -100,6 +100,9 @@ export function mountEnvironment(w, d, adapter) {
   /* the globe's side: each layer's last reported state, the tour and view states, the replay choice, the visitor's pause (in memory
      for this page session only), the frame's visibility, one autostart per activation, and a selection that lives only on the globe */
   let layerStates = {}, sceneState = null, viewState = { mode:'3d', morphing:false }, replay = null, pausedByVisitor = false, frameVisible = false, tabOpen = false, autostartDone = false, resumeOnShow = false, observer = null, globeSelection = null, lastCode = null, checkedAt = null;
+  /* the boot id of the globe that last said ready (undefined: none has yet), and whether the tour, in this opening of the tab, was
+     interrupted by the visitor's own hand on the globe or ran to its end (review RV2-1) */
+  let globeBoot, tourStopped = false;
   /* the last digest handed to the host page per layer (review G1R-7), and the search's pending pins resend (review G1R-9) */
   const lastDigests = {}; let searchTimer = null;
   const SEARCH_SYNC_MS = 250;
@@ -224,16 +227,17 @@ export function mountEnvironment(w, d, adapter) {
   function cleanLayerState(data) {
     if (!LAYER_NAMES[data.layer] || !LAYER_STATUSES.includes(data.status)) return null;
     const sources = (Array.isArray(data.sources) ? data.sources : []).slice(0, 8).filter(s => s && typeof s === 'object').map(s => ({ id:text(s.id, 40), label:text(s.label, 120), status:text(s.status, 20), reason:text(s.reason, 40) || null, fetched_at:validTime(s.fetched_at), last_success_at:validTime(s.last_success_at), coverage:text(s.coverage, 300), attribution:text(s.attribution, 200), license:text(s.license, 200), url:safeURL(s.url) }));
-    return { layer:data.layer, status:data.status, reason:text(data.reason, 40) || null, http:num(data.http), schema:text(data.schema, 60) || null, generated_at:validTime(data.generated_at), fetched_at:validTime(data.fetched_at), last_success_at:validTime(data.last_success_at), coverage:text(data.coverage, 300), attribution:text(data.attribution, 200), license:text(data.license, 200), url:safeURL(data.url), source_id:text(data.source_id, 40) || null, count:num(data.count), total:num(data.total), truncated:data.truncated === true, sources, digest:data.digest && typeof data.digest === 'object' && !Array.isArray(data.digest) ? data.digest : null };
+    return { layer:data.layer, status:data.status, reason:text(data.reason, 40) || null, http:num(data.http), schema:text(data.schema, 60) || null, generated_at:validTime(data.generated_at), fetched_at:validTime(data.fetched_at), last_success_at:validTime(data.last_success_at), coverage:text(data.coverage, 300), attribution:text(data.attribution, 200), license:text(data.license, 200), url:safeURL(data.url), source_id:text(data.source_id, 80) || null, label:text(data.label, 120), count:num(data.count), total:num(data.total), truncated:data.truncated === true, sources, digest:data.digest && typeof data.digest === 'object' && !Array.isArray(data.digest) ? data.digest : null };
   }
   /* the digests the host page turns into posts (fire areas, the largest perimeters) and lists (alert counts, a ShakeMap's presence);
-     a digest's label is that of the record the layer's own fields came from (source_id), so the label, link, coverage and terms of a
-     post always name one and the same record (review G1R-3) */
+     a digest's label is the layer's own (the globe names the record or records its fields came from: review G1R-3; the fires, which
+     the Worker sums from both satellites, name every satellite that served them: review RV2-3), else that of the record source_id
+     names, so the label, link, coverage and terms of a post always speak for the same records */
   function layerDigests() {
     const out = {};
     for (const [layer, s] of Object.entries(layerStates)) {
       const g = s.digest, first = (s.source_id && s.sources.find(r => r.id === s.source_id)) || s.sources[0] || {};
-      const base = { status:s.status, reason:s.reason, fetched_at:s.fetched_at ?? first.fetched_at ?? null, label:first.label || '', url:s.url || first.url || '', coverage:s.coverage || first.coverage || '', attribution:s.attribution || first.attribution || '', license:s.license || first.license || '' };
+      const base = { status:s.status, reason:s.reason, fetched_at:s.fetched_at ?? first.fetched_at ?? null, label:s.label || first.label || '', url:s.url || first.url || '', coverage:s.coverage || first.coverage || '', attribution:s.attribution || first.attribution || '', license:s.license || first.license || '' };
       if (layer === 'fires') out.fires = { ...base, generated_at:s.generated_at, cell_degrees:1, cells:g && Array.isArray(g.cells) ? g.cells.slice(0, 10).filter(c => Array.isArray(c) && c.length >= 6).map(c => [num(c[0]), num(c[1]), num(c[2]), num(c[3]), num(c[4]), validTime(c[5])]) : [] };
       else if (layer === 'perimeters') out.perimeters = { ...base, top:g && Array.isArray(g.top) ? g.top.slice(0, 10).filter(r => r && typeof r === 'object').map(r => ({ id:text(r.id, 300), name:text(r.name, 120), gis_acres:num(r.gis_acres), polygon_captured_at:validTime(r.polygon_captured_at), last_edited_at:validTime(r.last_edited_at), discovered_at:validTime(r.discovered_at), lon:num(r.lon), lat:num(r.lat) })) : [] };
       else if (layer === 'alerts') out.alerts = { status:s.status, counts:g && g.counts && typeof g.counts === 'object' ? { polygon:num(g.counts.polygon) ?? 0, zone_only:num(g.counts.zone_only) ?? 0, rejected:num(g.counts.rejected) ?? 0 } : null };
@@ -252,10 +256,12 @@ export function mountEnvironment(w, d, adapter) {
       const row = feed?.events.find(r => r.id === 'usgs:' + text(state.digest.event_id, 40));
       if (row && row.shakemap_available !== true) { row.shakemap_available = true; syncPins(); marked = true; }
     }
-    /* the host page is told again only when a layer's digest changed from the last one handed on for that layer, or when it just
-       marked a feed row (a freshly loaded feed has lost the mark): a tour selecting quake after quake, or a refresh whose words did
-       not change, repaints nothing there (review G1R-7) */
-    if (state.digest) { const key = JSON.stringify(state.digest); if (marked || lastDigests[state.layer] !== key) { lastDigests[state.layer] = key; dispatchEvents(); } }
+    /* the host page is told again only when what it receives for that layer changed from the last one handed on (the whole entry
+       layerDigests() builds: the digest's rows with the layer's status, reason, retrieval, label, link, coverage and terms), or when
+       it just marked a feed row (a freshly loaded feed has lost the mark): a tour re-selecting a quake, or a refresh whose words did
+       not change, repaints nothing there (review G1R-7), while a layer gone stale with the same rows still reaches every post that
+       carries its status (review RV2-2) */
+    if (state.digest) { const key = JSON.stringify(layerDigests()[state.layer] ?? null); if (marked || lastDigests[state.layer] !== key) { lastDigests[state.layer] = key; dispatchEvents(); } }
   }
   /* THE FEED, HANDED TO THE HOST PAGE ONCE (target 13: nothing is fetched twice): after every load, success or failure, after every
      layer state whose digest changed (or marked a feed row), and on destroy. The detail says plainly when the gate refused and which
@@ -603,19 +609,21 @@ export function mountEnvironment(w, d, adapter) {
       try {body=normalizeFeed(body);} catch(error){code='bad_response';throw error;}
       if(epoch!==feedEpoch)return;feed=body;lastCode=null;checkedAt=new Date().toISOString();if(!feed.events.some(row=>row.id===selected))selected='';byId('weFreshness').textContent='Checked '+timeLabel(checkedAt);status(body.sources.some(s=>s.status==='unavailable') ? 'Some sources are unavailable. Available observations are shown below.' : 'Select an observation to inspect its dates, source and possible work.');}
     catch(error) {if(epoch!==feedEpoch)return;feed=null;selected='';lastCode=code||'network';checkedAt=new Date().toISOString();status('Environmental sources are unavailable. No current observations can be confirmed. Refresh to try again.');}
-    finally {if(epoch===feedEpoch){feedBusy=false;byId('weRefresh').disabled=false;renderList();renderSources();renderDetail();renderAssignments();syncPins();dispatchEvents();}}
+    finally {if(epoch===feedEpoch){feedBusy=false;byId('weRefresh').disabled=false;renderList();renderSources();renderDetail();renderAssignments();syncPins();maybeAutostart();dispatchEvents();}}
   }
   /* the tour starts by itself once per opening of the tab, and only when the frame is at least a quarter in view, the page is
-     visible, motion is allowed and the visitor has not pressed Pause in this page session (cinematic rules, 2026-11-17) */
+     visible, motion is allowed and the visitor has not pressed Pause in this page session (cinematic rules, 2026-11-17); never
+     again in an opening where the visitor's hand on the globe stopped it or it ran to its end; and only once the feed has
+     answered, so the play follows pins that carry something to tour (review RV2-1) */
   function maybeAutostart() {
-    if (destroyed || !tabOpen || autostartDone || !active() || d.hidden || !frameVisible || pausedByVisitor || reducedMotion()) return;
+    if (destroyed || !tabOpen || autostartDone || tourStopped || !feed || !active() || d.hidden || !frameVisible || pausedByVisitor || reducedMotion()) return;
     autostartDone=true;sendScene('play');
   }
   function onMode() {
     if (destroyed) return;
     const on=active();
     panel.hidden=!on;
-    if (on&&!tabOpen) autostartDone=false; /* a fresh opening of the tab */
+    if (on&&!tabOpen) {autostartDone=false;tourStopped=false;} /* a fresh opening of the tab */
     tabOpen=on;
     /* the fixed order: the typed layers, then the pins (both off together when the tab changes) */
     syncLayers();syncPins();clearInterval(timer);timer=null;
@@ -639,10 +647,12 @@ export function mountEnvironment(w, d, adapter) {
     }
     line.textContent=(words+(reducedMotion()&&!/reduced motion/.test(words)?' (animations off)':'')).trim();
   }
+  /* the 2D map is a toggle that keeps its one label and says its state (aria-pressed, and the pressed colour by sight), the rule
+     #wePlay follows the other way round (review RV2-6) */
   function renderView() {
     if (destroyed) return;
-    const flat=viewState.mode==='2d',b=byId('weView2d');
-    b.setAttribute('aria-pressed',String(flat));b.textContent=flat?'3D globe':'2D map';
+    const b=byId('weView2d');
+    b.setAttribute('aria-pressed',String(viewState.mode==='2d'));b.textContent='2D map';
   }
   byId('weRefresh').onclick=()=>{void loadFeed();void loadPrivate();};
   /* the list follows every keystroke; the globe, which rebuilds its events layer for a changed list, is told once the typing pauses
@@ -658,15 +668,23 @@ export function mountEnvironment(w, d, adapter) {
   listen('storage',event=>{if(adapter.sessionStorageKey && event.key===adapter.sessionStorageKey){closeProof();closePlanning();privateEpoch++;privateBusy=false;team=null;oversight=null;proofReviews=null;privateToken=null;renderTeam();renderOwner();renderDetail();if(active())void loadPrivate();}});
   listen('message',event=>{
     if(event.origin!==w.location.origin||event.source!==frame.contentWindow)return;const data=event.data||{};
-    /* a globe that just said ready has no tour yet: what the panel said before it could listen (landing on the tab before the frame
-       booted) is said again, the layers, the pins and the one autostart, and the tour's words start clean (integration pass, G1) */
-    if(data.type==='hu:globe-ready'){sceneState=null;renderScene();syncLayers();syncPins();autostartDone=false;maybeAutostart();}
+    /* the layers and the pins are said again on every ready (landing on the tab before the frame booted, integration pass G1). Only
+       a globe that has just booted (a boot id the panel has not heard, or the first ready of all) has no tour yet: its tour words
+       start clean and the one autostart is armed again under the same rule. The same globe saying ready again (its missions read
+       answering late, a hu:hello answered, a bfcache restore) never restarts a tour the visitor stopped or that ended, and never
+       blanks the words of one still playing (review RV2-1) */
+    if(data.type==='hu:globe-ready'){
+      const boot=text(data.boot,64)||null,fresh=boot?boot!==globeBoot:globeBoot===undefined;
+      if(fresh)globeBoot=boot;
+      syncLayers();syncPins();
+      if(fresh){sceneState=null;renderScene();autostartDone=false;maybeAutostart();}
+    }
     if(data.type==='hu:environment-selected'&&active()){
       if(feed?.events.some(row=>row.id===data.id))select(data.id,false);
       else if(typeof data.id==='string'&&data.id){adapter.revealPanel?.();globeSelection=cleanSelection(data);selected='';renderDetail();renderList();syncPins();byId('weDetail').scrollIntoView?.({block:'nearest',behavior:'auto'});}
     }
     if(data.type==='hu:environment-layer-state')onLayerState(data);
-    if(data.type==='hu:environment-scene-state'){sceneState={playing:data.playing===true,index:num(data.index)??0,total:num(data.total)??0,id:text(data.id,300)||null,title:text(data.title,160)||null,queue:data.queue==='quakes-24h'?'quakes-24h':'significant',reason:text(data.reason,20)||null};renderScene();}
+    if(data.type==='hu:environment-scene-state'){sceneState={playing:data.playing===true,index:num(data.index)??0,total:num(data.total)??0,id:text(data.id,300)||null,title:text(data.title,160)||null,queue:data.queue==='quakes-24h'?'quakes-24h':'significant',reason:text(data.reason,20)||null};if(active()&&(sceneState.reason==='input'||sceneState.reason==='end'))tourStopped=true;renderScene();}
     if(data.type==='hu:environment-view-state'){viewState={mode:data.mode==='2d'?'2d':'3d',morphing:data.morphing===true};renderView();}
     if(data.type==='hu:globe-unavailable'&&active())status('The interactive globe is unavailable. All available observations and actions are still accessible in this list.');
   });

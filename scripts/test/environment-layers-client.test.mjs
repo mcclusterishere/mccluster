@@ -139,6 +139,47 @@ test('G1R-2: the gate refuses while a sibling response is still being read: that
   assert.equal(client.isPolicy(), true);
   assert.deepEqual(T.pending().filter(t => t.ms >= 5000), [], 'no retry, no refresh');
 });
+/* review RV2-5: each of the two G1R-2 guards has a case of its own that fails without it */
+test('G1R-2, the body-read guard: a ShakeMap whose 503 body is still being read when a layer route\'s refusal lands ends in the policy state (the ShakeMap path does not go through run())', async () => {
+  const T = timers();
+  const states = [];
+  const client = CLIENT.create({
+    fetchImpl: (url, init) => {
+      if (layerOf(url) === 'shakemap') return Promise.resolve({ ok: false, status: 503, json: () => new Promise((resolve, reject) => { init.signal.addEventListener('abort', () => reject(Object.assign(new Error('aborted'), { name: 'AbortError' }))); }) });
+      return Promise.resolve(json({ ok: false, code: 'module_policy_unavailable' }, 503));
+    }, ...T, hidden: () => false
+  });
+  client.start({ onState: (layer, state) => states.push([layer, state.status, state.reason]), onData() {}, layers: [] });
+  const sm = client.shakemap('usgs:us7000tyhr');
+  await flush(4);
+  await client.fetchLayer('fires');
+  const result = await sm;
+  assert.deepEqual([result.status, result.reason], ['policy', 'module_policy_unavailable'], 'the ShakeMap read the refusal aborted is in the policy state, never unavailable http_503');
+  assert.equal(client.isPolicy(), true);
+  assert.deepEqual(JSON.parse(JSON.stringify(await client.shakemap('usgs:us7000tyhr'))), { ok: false, status: 'policy', reason: 'module_policy_unavailable', http: 503 }, 'and asked again, the refusal answers');
+  assert.ok(states.every(([, status]) => status === 'policy'));
+});
+test('G1R-2, the run() guard: a layer whose answer was read just before another route\'s refusal tells nothing after the policy state', async () => {
+  const T = timers();
+  const states = [], data = [];
+  const release = {};
+  const client = CLIENT.create({
+    fetchImpl: (url) => {
+      const layer = layerOf(url), refused = layer === 'alerts';
+      return Promise.resolve({ ok: !refused, status: refused ? 503 : 200, json: () => new Promise((resolve) => { release[layer] = () => resolve(refused ? { ok: false, code: 'module_policy_unavailable' } : BODIES[layer]); }) });
+    }, ...T, hidden: () => false
+  });
+  client.start({ onState: (layer, state) => states.push([layer, state.status, state.reason]), onData: (layer) => data.push(layer), layers: ['fires', 'alerts'] });
+  await flush(6);
+  /* both bodies arrive in the same task, the good one first: its read completes before the refusal, its run() resumes after it */
+  release.fires(); release.alerts();
+  await flush(10);
+  const fires = states.filter(([layer]) => layer === 'fires');
+  assert.deepEqual(fires.at(-1), ['fires', 'policy', 'module_policy_unavailable'], 'the fires layer ends in the policy state');
+  assert.equal(fires.findIndex(([, status]) => status === 'available'), -1, 'never available after the refusal');
+  assert.deepEqual(data, [], 'nothing is drawn from an answer the refusal overtook');
+  assert.deepEqual(T.pending().filter(t => t.ms >= 5000), [], 'no retry, no refresh');
+});
 test('a network failure retries once after 5 s, then waits for the refresh window', async () => {
   const T = timers();
   let fails = 2; const seen = [];

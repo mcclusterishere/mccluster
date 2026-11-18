@@ -148,7 +148,8 @@ test('observationPosts: one post per event id by the Environmental desk, typed, 
 
 test('fires are summarised per 1-degree area, never one post per detection; perimeters post with their acres and dates', () => {
   const layers = {
-    fires: { status: 'available', fetched_at: '2026-11-17T20:00:30Z', generated_at: '2026-11-17T20:00:00Z', cell_degrees: 1, label: 'NASA FIRMS VIIRS NOAA-20', url: 'https://firms.modaps.eosdis.nasa.gov/', attribution: 'NASA FIRMS, VIIRS 375 m active fire product (NOAA-20, near real-time)', license: 'NASA data, CC0 1.0 (U.S. public domain)', coverage: 'Global VIIRS active-fire detections from NOAA-20 in the 24 hours before retrieval',
+    /* the areas are summed from both satellites, and the digest names both (review RV2-3), as the globe builds it */
+    fires: { status: 'available', fetched_at: '2026-11-17T20:00:30Z', generated_at: '2026-11-17T20:00:00Z', cell_degrees: 1, label: 'NASA FIRMS VIIRS NOAA-20 and NOAA-21', url: 'https://firms.modaps.eosdis.nasa.gov/', attribution: 'NASA FIRMS, VIIRS 375 m active fire product (NOAA-20, near real-time) · NASA FIRMS, VIIRS 375 m active fire product (NOAA-21, near real-time)', license: 'NASA data, CC0 1.0 (U.S. public domain)', coverage: 'Global VIIRS active-fire detections from NOAA-20 in the 24 hours before retrieval · Global VIIRS active-fire detections from NOAA-21 in the 24 hours before retrieval',
       cells: [[-119, 34, 220, 1830.4, 212.5, '2026-11-17T19:30:00Z'], [-63, -10, 180, 420.2, 96.1, '2026-11-17T18:00:00Z'], [95, 61, 80, 0, null, null]] },
     perimeters: { status: 'available', fetched_at: '2026-11-17T20:01:00Z', label: 'NIFC WFIGS perimeters', url: 'https://data-nifc.opendata.arcgis.com/', attribution: 'National Interagency Fire Center, WFIGS Interagency Fire Perimeters (current)', license: 'U.S. federal data with no named licence, provided as is under the NIFC disclaimer',
       top: [{ id: 'wfigs:2026-CAXXX-000001', name: 'Fixture Ridge', gis_acres: 45210.5, polygon_captured_at: '2026-11-17T06:10:00Z', last_edited_at: '2026-11-17T07:00:00Z', discovered_at: '2026-11-15T20:00:00Z', lon: -118.9, lat: 34.6 }, { id: 'wfigs:2026-CAXXX-000002', name: 'Pine Flat', gis_acres: null, polygon_captured_at: null, last_edited_at: null, discovered_at: null, lon: -120.1, lat: 36.2 }] },
@@ -164,7 +165,11 @@ test('fires are summarised per 1-degree area, never one post per detection; peri
   assert.equal(cells[0].stamp.kind, 'recorded'); assert.equal(cells[0].stamp.iso, '2026-11-17T19:30:00.000Z'); assert.equal(cells[0].icon, 'fire');
   assert.equal(cells[0].significant, true, '1,830 MW summed'); assert.equal(cells[1].significant, false, '420 MW summed');
   assert.equal(cells[0].lat, 34); assert.equal(cells[0].lon, -119);
-  assert.equal(cells[0].source.label, 'NASA FIRMS VIIRS NOAA-20'); assert.equal(cells[0].source.url, 'https://firms.modaps.eosdis.nasa.gov/'); assert.equal(cells[0].coverage, layers.fires.coverage);
+  assert.equal(cells[0].source.label, 'NASA FIRMS VIIRS NOAA-20 and NOAA-21'); assert.equal(cells[0].source.url, 'https://firms.modaps.eosdis.nasa.gov/'); assert.equal(cells[0].coverage, layers.fires.coverage);
+  /* the Sensor fact names the satellites the records that served the areas name: one alone when one served, the instrument alone
+     when none is named; never both claimed beside a source that names one (review RV2-3) */
+  const sensorOf = (label) => P.observationPosts(detail({ events: [], layers: { fires: { ...layers.fires, label } } }), NOW).find((p) => p.kind === 'fire_cell').facts.find((f) => f.label === 'Sensor').value;
+  assert.equal(sensorOf('NASA FIRMS VIIRS NOAA-21'), 'VIIRS NOAA-21'); assert.equal(sensorOf('NASA FIRMS'), 'VIIRS'); assert.equal(sensorOf(''), 'VIIRS');
   assert.equal(rims.length, 2);
   assert.equal(rims[0].id, 'wfigs:2026-CAXXX-000001'); assert.equal(rims[0].globe_id, 'wfigs:2026-CAXXX-000001'); assert.equal(rims[0].title, 'Fixture Ridge fire perimeter');
   assert.deepEqual(rims[0].facts.map((f) => f.label), ['GIS acres', 'Captured', 'Last edited', 'Discovered']);
