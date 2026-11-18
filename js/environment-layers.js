@@ -314,7 +314,7 @@
     const by = { usgs: 0, nws: 0, eonet: 0, nhc: 0 };
     for (const i of items) if (Object.prototype.hasOwnProperty.call(by, providerOf(i.id))) by[providerOf(i.id)] += 1;
     const fetched = items.map(i => isoOrNull(i.fetched_at)).filter(Boolean).sort().pop() || null;
-    return { status: !items.length ? 'unavailable' : items.some(i => !i.stale) ? 'available' : 'stale', reason: null, http: null, schema: 'world-environment/v1', generated_at: null, fetched_at: fetched, last_success_at: fetched, coverage: '', attribution: '', license: '', url: '', count: items.length, total: items.length, truncated: false, sources: [], digest: { by_provider: by } };
+    return { status: !items.length ? 'unavailable' : items.some(i => !i.stale) ? 'available' : 'stale', reason: null, http: null, schema: 'world-environment/v1', generated_at: null, fetched_at: fetched, last_success_at: fetched, coverage: '', attribution: '', license: '', url: '', source_id: null, count: items.length, total: items.length, truncated: false, sources: [], digest: { by_provider: by } };
   }
   function setEvents(items, options) {
     const o = options || {};
@@ -624,6 +624,20 @@
     updateLegend(); requestRender('select');
     return true;
   }
+  /* THE RECORD THAT SPEAKS FOR A LAYER (review G1R-3): the Worker sends every source's health in `sources`, and a layer's own
+     fetched_at, last_success_at, coverage, attribution, licence and url are copied from the one record that produced what is drawn:
+     the readings (coops_latest), never the 24-hour station catalogue, for the water levels; the contours (usgs_shakemap), never the
+     event detail, for a ShakeMap; otherwise the record with the newest retrieval (the first on a tie). A fire detection names its own
+     satellite's record (sourceOf). Every record still travels in `sources`, and nothing is invented. */
+  const PRIMARY_SOURCE = Object.freeze({ tides: 'coops_latest', shakemap: 'usgs_shakemap' });
+  function primarySource(layer, sources) {
+    const list = Array.isArray(sources) ? sources.filter(s => s && typeof s === 'object') : [];
+    const named = PRIMARY_SOURCE[layer] ? list.find(s => s.id === PRIMARY_SOURCE[layer]) : null;
+    if (named) return named;
+    let best = null;
+    for (const s of list) if (!best || (isoOrNull(s.fetched_at) || '') > (isoOrNull(best.fetched_at) || '')) best = s;
+    return best;
+  }
   function sourceOf(e) {
     if (e.layer === 'events') {
       const terms = FEED_TERMS[providerOf(e.id)] || { id: providerOf(e.id), label: '', url: '', attribution: '', license: '', coverage: '' };
@@ -632,7 +646,7 @@
     }
     const layer = e.layer === 'cells' ? 'fires' : e.layer;
     const st = states[layer];
-    let src = st && Array.isArray(st.sources) ? st.sources[0] : null;
+    let src = st ? primarySource(layer, st.sources) : null;
     if (layer === 'fires' && st && Array.isArray(st.sources) && e.item.row) src = st.sources.find(s => s && typeof s.label === 'string' && s.label.includes(String(e.item.row[5]))) || src;
     const s = src || {};
     return { source: { id: s.id || layer, label: s.label || '', url: s.url || '', attribution: s.attribution || '', license: s.license || '' }, coverage: s.coverage || (st ? st.coverage : '') || '', status: st ? st.status : 'unavailable', reason: st ? st.reason : null, fetched_at: s.fetched_at || (st ? st.fetched_at : null) || null };
@@ -731,7 +745,8 @@
     const r = result || {};
     const body = r.ok ? r.body : null;
     const sources = body && Array.isArray(body.sources) ? body.sources.filter(s => s && typeof s === 'object') : [];
-    const first = sources[0] || {};
+    /* the record that speaks for the layer, named in source_id so the panel never guesses which one it was (review G1R-3) */
+    const first = primarySource(layer, sources) || {};
     const route = root.MCC_ENVIRONMENT_LAYERS_CLIENT && root.MCC_ENVIRONMENT_LAYERS_CLIENT.ROUTES[layer];
     let count = 0, total = 0, truncated = false;
     if (body) {
@@ -743,7 +758,7 @@
       status: r.status || 'unavailable', reason: r.ok ? (r.status === 'available' ? null : (first.reason || null)) : (r.reason || null), http: r.http === undefined ? null : r.http,
       schema: body ? body.schema : (route ? route.schema : null), generated_at: body ? isoOrNull(body.generated_at) : null,
       fetched_at: first.fetched_at || null, last_success_at: first.last_success_at || null, coverage: first.coverage || '', attribution: first.attribution || '', license: first.license || '', url: first.url || '',
-      count, total, truncated, sources, digest: body && DIGESTS[layer] ? DIGESTS[layer](body) : null
+      source_id: typeof first.id === 'string' ? first.id : null, count, total, truncated, sources, digest: body && DIGESTS[layer] ? DIGESTS[layer](body) : null
     };
   }
   function tellLayerState(layer) {

@@ -155,8 +155,8 @@ test('health rows: every feed source with its status, the reason in plain words,
   h.message(layerState('alerts', { status: 'unavailable', reason: 'upstream_error', fetched_at: null, last_success_at: null, count: 0, total: 0, sources: [{ id: 'nws', label: 'NOAA NWS', status: 'unavailable', reason: 'upstream_error', fetched_at: null, last_success_at: null, coverage: 'United States active alerts', attribution: 'NOAA National Weather Service', license: 'Public domain (U.S. Government work)', url: 'https://www.weather.gov/' }] }));
   const alerts = rows().find(t => /Alerts/.test(t));
   assert.match(alerts, /unavailable/); assert.match(alerts, /Retrieved: Not supplied/); assert.match(alerts, /Last success: never known/);
-  /* a second state for the same layer replaces its row */
-  h.message(layerState('fires', { status: 'stale', reason: 'upstream_error' }));
+  /* a second state for the same layer replaces its row (its record says stale too, as the Worker's own health would) */
+  h.message(layerState('fires', { status: 'stale', reason: 'upstream_error', sources: [{ ...layerState('fires').sources[0], status: 'stale', reason: 'upstream_error' }] }));
   assert.equal(rows().filter(t => /Fires/.test(t)).length, 1); assert.match(rows().find(t => /Fires/.test(t)), /stale/);
   /* the gate refused the layers: one honest line */
   assert.equal(h.byId('weLayersNote').hidden, true, 'no honest line while the gate has not refused');
@@ -166,6 +166,29 @@ test('health rows: every feed source with its status, the reason in plain words,
   assert.match(rows().find(t => /Fires/.test(t)), /policy/);
   h.message({ type: 'hu:environment-layer-state', layer: 'halo', status: 'available' });
   assert.equal(rows().length, 7, 'an unknown layer is ignored');
+  /* G1R-3: a layer's row renders every source record it carries. The water levels have two: the station catalogue (retrieved 08:00)
+     and the readings (retrieved 19:56); each is shown with its own status, Retrieved and Last success, and the layer's counts once,
+     at the head of its row, so no record's retrieval stands for another's */
+  const local = iso => new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const stations = { id: 'coops_stations', label: 'NOAA CO-OPS stations', status: 'available', reason: null, fetched_at: '2026-11-17T08:00:00Z', last_success_at: '2026-11-17T08:00:00Z', coverage: 'NOAA CO-OPS water-level stations: U.S. coasts, the Great Lakes and territories', attribution: 'NOAA CO-OPS', license: 'Public domain (U.S. Government work); NOAA asks to be credited', url: 'https://tidesandcurrents.noaa.gov/' };
+  const readings = { ...stations, id: 'coops_latest', label: 'NOAA CO-OPS latest water levels', fetched_at: '2026-11-17T19:56:00Z', last_success_at: '2026-11-17T19:56:00Z', coverage: 'The latest observed water level at 20 documented NOAA stations' };
+  h.message(layerState('tides', { status: 'available', reason: null, fetched_at: '2026-11-17T19:56:00Z', last_success_at: '2026-11-17T19:56:00Z', coverage: readings.coverage, source_id: 'coops_latest', sources: [stations, readings], count: 14, total: 20 }));
+  assert.equal(rows().length, 7, 'still one row per layer');
+  const tideRow = h.byId('weSources').children.find(li => /^Water levels/.test(li.text));
+  assert.match(tideRow.text, /NOAA CO-OPS latest water levels/, 'the readings record is shown, not only the first record');
+  assert.match(tideRow.text, new RegExp('Retrieved ' + local('2026-11-17T08:00:00Z')), 'the catalogue keeps its own retrieval time');
+  const records = tideRow.querySelectorAll('ul')[0].children;
+  assert.equal(records.length, 2, 'every record the layer carries');
+  assert.match(records[0].text, /^NOAA CO-OPS stations available/); assert.match(records[0].text, new RegExp('Retrieved ' + local('2026-11-17T08:00:00Z')));
+  assert.match(records[1].text, /^NOAA CO-OPS latest water levels available/); assert.match(records[1].text, new RegExp('Retrieved ' + local('2026-11-17T19:56:00Z')));
+  assert.match(records[1].text, /latest observed water level/); assert.match(records[0].text, /water-level stations/);
+  assert.equal((tideRow.text.match(/14 of 20 shown/g) || []).length, 1, 'the layer\'s counts once, never credited to one record');
+  assert.doesNotMatch(records[0].text, /14 of 20/); assert.doesNotMatch(records[1].text, /14 of 20/);
+  /* each record its own state: the catalogue available, the readings stale with their reason */
+  h.message(layerState('tides', { status: 'stale', reason: 'timeout', fetched_at: '2026-11-17T18:00:00Z', last_success_at: '2026-11-17T18:00:00Z', source_id: 'coops_latest', sources: [stations, { ...readings, status: 'stale', reason: 'timeout', fetched_at: '2026-11-17T18:00:00Z', last_success_at: '2026-11-17T18:00:00Z' }], count: 14, total: 20 }));
+  const again = h.byId('weSources').children.find(li => /^Water levels/.test(li.text)).querySelectorAll('ul')[0].children;
+  assert.match(again[0].text, /available/); assert.doesNotMatch(again[0].text, /did not answer in time/);
+  assert.match(again[1].text, /stale/); assert.match(again[1].text, /did not answer in time/);
   h.mounted.destroy();
 });
 
@@ -284,6 +307,16 @@ test('the DOM CustomEvent carries the feed after every load, with the gate\'s co
   assert.equal(h.events.at(-1).detail.code, 'bad_response');
   answer = feedBody; h.byId('weRefresh').onclick(); await flush(8);
   assert.equal(h.events.at(-1).detail.unavailable, false); assert.equal(h.events.at(-1).detail.events.length, 65);
+  h.mounted.destroy();
+});
+
+test('G1R-3: with two satellites the digest handed to the page names the record the layer\'s own fields came from (source_id), never the first by position', async () => {
+  const h = harness();
+  await flush(8);
+  const noaa21 = { ...layerState('fires').sources[0], id: 'firms_viirs_noaa21', label: 'NASA FIRMS VIIRS NOAA-21', fetched_at: '2026-11-17T20:01:00Z', last_success_at: '2026-11-17T20:01:00Z', coverage: 'Global VIIRS active-fire detections from NOAA-21 in the 24 hours before retrieval', attribution: 'NASA FIRMS, VIIRS 375 m active fire product (NOAA-21, near real-time)' };
+  h.message(layerState('fires', { fetched_at: noaa21.fetched_at, last_success_at: noaa21.last_success_at, coverage: noaa21.coverage, attribution: noaa21.attribution, source_id: 'firms_viirs_noaa21', sources: [layerState('fires').sources[0], noaa21], digest: { cells: [[-119, 34, 221, 1830.4, 212.5, '2026-11-17T19:30:00Z']], cell_degrees: 1, count: 600, total: 600, windows: [] } }));
+  const fires = h.events.at(-1).detail.layers.fires;
+  assert.equal(fires.label, 'NASA FIRMS VIIRS NOAA-21', 'the label of the record the layer speaks for'); assert.equal(fires.attribution, noaa21.attribution); assert.equal(fires.coverage, noaa21.coverage); assert.equal(fires.fetched_at, noaa21.fetched_at);
   h.mounted.destroy();
 });
 

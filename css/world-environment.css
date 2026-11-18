@@ -51,6 +51,9 @@
 .we-health li { border:1px solid var(--we-rule-2);border-radius:12px;padding:10px 12px;min-width:0; }
 .we-health li p { margin:4px 0; }
 .we-health strong { margin-right:8px; }
+/* a globe layer's card lists every source record it carries, each under a rule of its own (review G1R-3) */
+.we-records { display:grid;grid-template-columns:minmax(0,1fr);gap:6px;padding:0;margin:6px 0 0;list-style:none; }
+.we-health .we-records li { border:0;border-top:1px solid var(--we-rule-2);border-radius:0;padding:6px 0 0; }
 .we-status { font-weight:600;font-size:13px; }
 .we-status[data-status="available"] { color:var(--we-ok); }
 .we-status[data-status="stale"],.we-status[data-status="loading"] { color:var(--we-stale); }

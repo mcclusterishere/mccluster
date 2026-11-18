@@ -151,33 +151,63 @@ export function mountEnvironment(w, d, adapter) {
      around), its coverage, attribution and licence, and the provider's public page. A fetch time is never shown as an
      observation time. */
   const alertCounts = c => `${num(c.polygon) ?? 0} with their own polygon · ${num(c.zone_only) ?? 0} name zones only (listed, never placed) · ${num(c.rejected) ?? 0} rejected`;
-  function healthRow(title, h, layer) {
-    const item = el('li'), head = el('p'), word = text(h.status, 20), state = el('span', word || 'Availability unknown', 'we-status');
-    state.setAttribute('data-status', word || 'unknown'); head.append(el('strong', title), state); item.append(head);
+  const healthHead = (item, title, status) => { const head = el('p'), word = text(status, 20), state = el('span', word || 'Availability unknown', 'we-status'); state.setAttribute('data-status', word || 'unknown'); head.append(el('strong', title), state); item.append(head); };
+  /* a layer's own counts: how many of how many it shows, and an alert layer's placed, zone-only and rejected */
+  function countsLine(item, layer) {
+    const shown = layer.count !== null && layer.total !== null ? `${layer.count} of ${layer.total} shown${layer.truncated ? ' (results limited)' : ''}` : '';
+    const counts = layer.layer === 'alerts' && layer.digest?.counts && typeof layer.digest.counts === 'object' ? alertCounts(layer.digest.counts) : '';
+    const line = [shown, counts].filter(Boolean).join(' · ');
+    if (line) item.append(el('p', line, 'we-subtle'));
+  }
+  /* one record's health: status (beside the title), reason in plain words, coverage, Retrieved and Last success with how long ago,
+     the observation time a feed source reports, attribution and licence, and the provider's page */
+  function healthBody(item, h, observed) {
     const why = reasonWords(h.reason);
     if (why) item.append(el('p', `Reason: ${why}`, 'we-subtle'));
     if (text(h.coverage, 300)) item.append(el('p', text(h.coverage, 300), 'we-subtle'));
     item.append(el('p', `Retrieved${parseTime(h.fetched_at) === null ? ': Not supplied by provider' : ' ' + timeWithAgo(h.fetched_at)} · Last success${parseTime(h.last_success_at) === null ? ': never known' : ' ' + timeWithAgo(h.last_success_at)}`, 'we-subtle'));
-    if (!layer && parseTime(h.observed_at) !== null) item.append(el('p', `Latest observation ${timeWithAgo(h.observed_at)}`, 'we-subtle'));
-    if (layer) {
-      const shown = layer.count !== null && layer.total !== null ? `${layer.count} of ${layer.total} shown${layer.truncated ? ' (results limited)' : ''}` : '';
-      const counts = layer.layer === 'alerts' && layer.digest?.counts && typeof layer.digest.counts === 'object' ? alertCounts(layer.digest.counts) : '';
-      const line = [shown, counts].filter(Boolean).join(' · ');
-      if (line) item.append(el('p', line, 'we-subtle'));
-    }
+    if (observed && parseTime(h.observed_at) !== null) item.append(el('p', `Latest observation ${timeWithAgo(h.observed_at)}`, 'we-subtle'));
+  }
+  function healthTerms(item, h) {
     const terms = [text(h.attribution, 200), text(h.license, 200)].filter(Boolean).join(' · ');
     if (terms) item.append(el('p', terms, 'we-subtle'));
     if (safeURL(h.url)) item.append(link('Source page', safeURL(h.url)));
+  }
+  function healthRow(title, h) {
+    const item = el('li');
+    healthHead(item, title, h.status); healthBody(item, h, true); healthTerms(item, h);
+    return item;
+  }
+  /* A GLOBE LAYER'S ROW RENDERS EVERY SOURCE RECORD IT CARRIES (review G1R-3): the water levels' station catalogue and readings, a
+     ShakeMap's event detail and contours, one satellite each for the fires, each with its own status, reason, Retrieved and Last
+     success, so a reading is never shown as retrieved before it was observed and no record speaks for another; the layer's status
+     and counts head the row. A layer that reported no record (the gate refused, the route failed, still loading) is said in the
+     layer's own words. */
+  function layerRow(layer, s) {
+    const item = el('li');
+    healthHead(item, LAYER_NAMES[layer], s.status);
+    if (!s.sources.length) {
+      healthBody(item, s, false); countsLine(item, s); healthTerms(item, s);
+      return item;
+    }
+    countsLine(item, s);
+    const own = ['available', 'stale', 'unavailable'].includes(s.status), records = el('ul', '', 'we-records');
+    for (const r of s.sources) {
+      const row = el('li');
+      healthHead(row, r.label || 'Source', own && LAYER_STATUSES.includes(r.status) ? r.status : s.status);
+      healthBody(row, r, false); healthTerms(row, r);
+      records.append(row);
+    }
+    item.append(records);
     return item;
   }
   function renderSources() {
     if (destroyed) return;
     const list = byId('weSources'); list.replaceChildren();
-    for (const source of feed?.sources || []) list.append(healthRow(text(source.label, 120) || 'Source', source, null));
+    for (const source of feed?.sources || []) list.append(healthRow(text(source.label, 120) || 'Source', source));
     for (const layer of Object.keys(LAYER_NAMES)) {
       const s = layerStates[layer]; if (!s) continue;
-      const first = s.sources[0] || {};
-      list.append(healthRow(LAYER_NAMES[layer] + (first.label ? ' · ' + first.label : ''), { status:s.status, reason:s.reason ?? first.reason ?? null, coverage:s.coverage || first.coverage, fetched_at:s.fetched_at ?? first.fetched_at ?? null, last_success_at:s.last_success_at ?? first.last_success_at ?? null, attribution:s.attribution || first.attribution, license:s.license || first.license, url:s.url || first.url }, s));
+      list.append(layerRow(layer, s));
     }
     const refused = Object.values(layerStates).find(s => s.status === 'policy'), note = byId('weLayersNote');
     note.hidden = !refused; note.textContent = refused ? `Environmental layers are not available right now (${reasonWords(refused.reason) || 'the module refused'}).` : '';
@@ -186,13 +216,15 @@ export function mountEnvironment(w, d, adapter) {
   function cleanLayerState(data) {
     if (!LAYER_NAMES[data.layer] || !LAYER_STATUSES.includes(data.status)) return null;
     const sources = (Array.isArray(data.sources) ? data.sources : []).slice(0, 8).filter(s => s && typeof s === 'object').map(s => ({ id:text(s.id, 40), label:text(s.label, 120), status:text(s.status, 20), reason:text(s.reason, 40) || null, fetched_at:validTime(s.fetched_at), last_success_at:validTime(s.last_success_at), coverage:text(s.coverage, 300), attribution:text(s.attribution, 200), license:text(s.license, 200), url:safeURL(s.url) }));
-    return { layer:data.layer, status:data.status, reason:text(data.reason, 40) || null, http:num(data.http), schema:text(data.schema, 60) || null, generated_at:validTime(data.generated_at), fetched_at:validTime(data.fetched_at), last_success_at:validTime(data.last_success_at), coverage:text(data.coverage, 300), attribution:text(data.attribution, 200), license:text(data.license, 200), url:safeURL(data.url), count:num(data.count), total:num(data.total), truncated:data.truncated === true, sources, digest:data.digest && typeof data.digest === 'object' && !Array.isArray(data.digest) ? data.digest : null };
+    return { layer:data.layer, status:data.status, reason:text(data.reason, 40) || null, http:num(data.http), schema:text(data.schema, 60) || null, generated_at:validTime(data.generated_at), fetched_at:validTime(data.fetched_at), last_success_at:validTime(data.last_success_at), coverage:text(data.coverage, 300), attribution:text(data.attribution, 200), license:text(data.license, 200), url:safeURL(data.url), source_id:text(data.source_id, 40) || null, count:num(data.count), total:num(data.total), truncated:data.truncated === true, sources, digest:data.digest && typeof data.digest === 'object' && !Array.isArray(data.digest) ? data.digest : null };
   }
-  /* the digests the host page turns into posts (fire areas, the largest perimeters) and lists (alert counts, a ShakeMap's presence) */
+  /* the digests the host page turns into posts (fire areas, the largest perimeters) and lists (alert counts, a ShakeMap's presence);
+     a digest's label is that of the record the layer's own fields came from (source_id), so the label, link, coverage and terms of a
+     post always name one and the same record (review G1R-3) */
   function layerDigests() {
     const out = {};
     for (const [layer, s] of Object.entries(layerStates)) {
-      const g = s.digest, first = s.sources[0] || {};
+      const g = s.digest, first = (s.source_id && s.sources.find(r => r.id === s.source_id)) || s.sources[0] || {};
       const base = { status:s.status, reason:s.reason, fetched_at:s.fetched_at ?? first.fetched_at ?? null, label:first.label || '', url:s.url || first.url || '', coverage:s.coverage || first.coverage || '', attribution:s.attribution || first.attribution || '', license:s.license || first.license || '' };
       if (layer === 'fires') out.fires = { ...base, generated_at:s.generated_at, cell_degrees:1, cells:g && Array.isArray(g.cells) ? g.cells.slice(0, 10).filter(c => Array.isArray(c) && c.length >= 6).map(c => [num(c[0]), num(c[1]), num(c[2]), num(c[3]), num(c[4]), validTime(c[5])]) : [] };
       else if (layer === 'perimeters') out.perimeters = { ...base, top:g && Array.isArray(g.top) ? g.top.slice(0, 10).filter(r => r && typeof r === 'object').map(r => ({ id:text(r.id, 300), name:text(r.name, 120), gis_acres:num(r.gis_acres), polygon_captured_at:validTime(r.polygon_captured_at), last_edited_at:validTime(r.last_edited_at), discovered_at:validTime(r.discovered_at), lon:num(r.lon), lat:num(r.lat) })) : [] };

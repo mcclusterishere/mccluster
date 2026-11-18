@@ -15,7 +15,7 @@
     },
     {
       "path": "src/environment/panel.mjs",
-      "sha256": "70613e758cd82cb84c6130f6afe407038fbd16b8554e0cb74b462722e80978be"
+      "sha256": "168d1e2db73165c28a9cf38bf76f1a7587ebea17a5ff4594838ca29f386ed551"
     },
     {
       "path": "src/environment/server.mjs",
@@ -82,6 +82,25 @@
         "scripts/test/world-environment-lifecycle.test.mjs"
       ],
       "note": "Upstream Equity-Uprise still carries the unpatched files at base_commit; port these patches upstream before re-pinning."
+    },
+    {
+      "base_commit": "645d68a740c835271ca185c52e0b31220aab16ad",
+      "applied_in": "mcclusterishere/mccluster (this consumer checkout), not published upstream",
+      "date": "2026-11-18",
+      "files": [
+        "src/environment/panel.mjs"
+      ],
+      "defects": [
+        {
+          "id": "G1R-3",
+          "summary": "Review of slice G1: a globe layer's health row renders every source record the layer carries (the water levels' station catalogue and readings, a ShakeMap's event detail and contours, one satellite each for the fires), each with its own status, reason, Retrieved and Last success, under the layer's own status and counts, so a reading is never shown as retrieved before it was observed and no record speaks for another; the digests handed to the host page take their label from the record the layer's own fields came from (the layer state's source_id)."
+        }
+      ],
+      "regression_tests": [
+        "scripts/test/world-environment-panel.test.mjs",
+        "scripts/test/world-environment-lifecycle.test.mjs"
+      ],
+      "note": "Review of slice G1 at fe0d53b2 (2026-11-18); its G1R-4 is G1-INT-GLOBE-READY above. Upstream Equity-Uprise still carries the unpatched files at base_commit; port these patches upstream before re-pinning."
     }
   ]
 }

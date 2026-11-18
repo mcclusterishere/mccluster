@@ -56,8 +56,9 @@ const PEER = { m_uid: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', mccluster_id: 'fix
 const POSTS = [1, 2, 3, 4, 5, 6, 7, 8].map((k) => { const at = new Date(Date.now() - k * 3600e3).toISOString(), pid = `dddddddd-dddd-4ddd-8ddd-00000000000${k}`; return { item_type: 'post', post_id: pid, occurred_at: at, actor: PEER, post: { id: pid, body: `Field note ${k}: what we did, what is next, and who can help.`, visibility: 'public', created_at: at, like_count: 0, liked_by_me: false, media_locked: 0 } }; });
 const NEWS = [1, 2, 3, 4, 5, 6].map((k) => ({ id: `ffffffff-ffff-4fff-8fff-00000000000${k}`, title: `World story ${k}: councils weigh a budget for public transit`, url: `https://news${k % 2}.example/story/${k}`, domain: `news${k % 2}.example`, seen_at: new Date(Date.now() - k * 900e3).toISOString(), place: 'Hartford, Connecticut, United States', lat: 41.76, lon: -72.68, country: 'US' }));
 /* the digests the frame hands the panel from these fixtures, as js/environment-layers.js builds them (the first ten cells, the
-   first ten perimeters with their times), so the tab's order by time can be computed here with the same pure module the page uses */
-const firstSource = (body) => (Array.isArray(body.sources) && body.sources[0]) || {};
+   first ten perimeters with their times), so the tab's order by time can be computed here with the same pure module the page uses;
+   each digest names the record that speaks for its layer (review G1R-3: the newest retrieval for the fires and the perimeters) */
+const firstSource = (body) => (Array.isArray(body.sources) ? body.sources.slice().sort((a, b) => String(b.fetched_at).localeCompare(String(a.fetched_at)))[0] : null) || {};
 const DIGEST_LAYERS = {
   fires: { status: 'available', reason: null, fetched_at: firstSource(FIX['layers-fires']).fetched_at, label: firstSource(FIX['layers-fires']).label, url: firstSource(FIX['layers-fires']).url, coverage: firstSource(FIX['layers-fires']).coverage, attribution: firstSource(FIX['layers-fires']).attribution, license: firstSource(FIX['layers-fires']).license, generated_at: FIX['layers-fires'].generated_at, cell_degrees: 1, cells: FIX['layers-fires'].summary.cells.slice(0, 10) },
   perimeters: { status: 'available', reason: null, fetched_at: firstSource(FIX['layers-perimeters']).fetched_at, label: firstSource(FIX['layers-perimeters']).label, url: firstSource(FIX['layers-perimeters']).url, coverage: firstSource(FIX['layers-perimeters']).coverage, attribution: firstSource(FIX['layers-perimeters']).attribution, license: firstSource(FIX['layers-perimeters']).license, top: FIX['layers-perimeters'].perimeters.slice(0, 10).map((p) => { const ring = p.polygons && p.polygons[0] && p.polygons[0][0]; const v = Array.isArray(ring) && Array.isArray(ring[0]) ? ring[0] : [null, null]; return { id: 'wfigs:' + p.id, name: p.name, gis_acres: p.gis_acres, polygon_captured_at: p.polygon_captured_at, last_edited_at: p.last_edited_at, discovered_at: p.discovered_at, lon: v[0], lat: v[1] }; }) }
@@ -197,6 +198,8 @@ const healthRows = (page) => page.evaluate(() => [...document.querySelectorAll('
 const rowOf = (rows, re) => rows.find((r) => re.test(r)) || '';
 const shot = async (page, name) => { try { await page.screenshot({ path: join(OUT, name + '.png'), fullPage: false }); } catch (e) {} };
 const esc = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+/* a time as the panel writes it (local, medium date, short time), the same rule the page uses */
+const localTime = (iso) => new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 
 /* ---------- the main journey, at every width ---------- */
 for (const size of SIZES) {
@@ -235,6 +238,11 @@ for (const size of SIZES) {
   check(scope, 'the fires row carries the Worker\'s own words: available, 600 of 600, the VIIRS attribution, CC0', /available/.test(fires) && /600 of 600/.test(fires) && /VIIRS/.test(fires) && /CC0/.test(fires) && /Retrieved .+ · Last success/.test(fires), fires.slice(0, 240));
   check(scope, 'the natural-events layer and the EONET feed source are both stale with the provider reason in plain words, never invented', /stale/.test(eonetLayer) && /refused, failed or answered an error/.test(eonetLayer) && /stale/.test(eonetFeed) && /refused, failed or answered an error/.test(eonetFeed), { layer: eonetLayer.slice(0, 160), feed: eonetFeed.slice(0, 160) });
   check(scope, 'water levels: 14 of 20 documented stations answered; alerts: 70 placed, 25 zone-only listed never placed, 5 rejected', /14 of 20/.test(tides) && /70 with their own polygon/.test(alerts) && /25 name zones only/.test(alerts) && /5 rejected/.test(alerts), { tides: tides.slice(0, 120), alerts: alerts.slice(0, 200) });
+  /* review G1R-3: a layer's row renders every source record it carries, each with its own retrieval time; the water levels' readings
+     (retrieved 19:56) are never shown with the station catalogue's 08:00, and the two satellites each have their own line */
+  const records = await page.evaluate(() => Object.fromEntries([...document.querySelectorAll('#weSources > li')].filter((li) => li.querySelector('ul.we-records')).map((li) => [li.querySelector(':scope > p strong').textContent, [...li.querySelectorAll('ul.we-records > li')].map((r) => r.textContent)])));
+  const tideRecords = records['Water levels'] || [], fireRecords = records.Fires || [];
+  check(scope, 'the water-levels row renders the station catalogue and the readings, each with its own retrieval (08:00 and 19:56); the fires row both satellites', tideRecords.length === 2 && /^NOAA CO-OPS stations/.test(tideRecords[0]) && tideRecords[0].includes('Retrieved ' + localTime('2026-11-17T08:00:00.000Z')) && /^NOAA CO-OPS latest water levels/.test(tideRecords[1]) && tideRecords[1].includes('Retrieved ' + localTime('2026-11-17T19:56:00.000Z')) && fireRecords.length === 2 && fireRecords.some((r) => /NOAA-20/.test(r)) && fireRecords.some((r) => /NOAA-21/.test(r)), { tides: tideRecords.map((r) => r.slice(0, 120)), fires: fireRecords.map((r) => r.slice(0, 60)) });
   check(scope, 'no refusal line while the gate allows the layers', await page.evaluate(() => document.getElementById('weLayersNote').hidden === true));
   /* the tab's one list by time: the mission posts and every observation post (the fire areas and the largest perimeters from the
      frame's digests among them), exactly as the pure module orders them, each clearly typed */
@@ -308,6 +316,12 @@ for (const size of SIZES) {
   const cardOk = await until(page, () => /Selected on the globe/.test(document.getElementById('weDetail').textContent) && /Fixture Ridge/.test(document.getElementById('weDetail').textContent), null, 10000);
   const card = await page.locator('#weDetail').textContent();
   check(scope, 'a tap on a fire perimeter picks it on the real page; the panel\'s card shows Captured, Retrieved, Coverage, Status, the acres and the source, never an Observed slot', picked && cardOk && /Captured/.test(card) && /Retrieved/.test(card) && /Coverage/.test(card) && /Status\s*available/.test(card) && /45,210\.5/.test(card) && !/Observed/.test(card) && (await page.locator('#weDetail a[href^="https://"]').count()) > 0, card.slice(0, 260));
+  /* review G1R-3 through the real spine: a water-level station chosen on the globe answers with the readings' retrieval time (19:56),
+     never the station catalogue's (08:00), and the panel's card shows it under Retrieved beside the reading's own Observed time */
+  await frame.evaluate(() => window.MCC_ENVIRONMENT_LAYERS.select('coops:8518750', 'pick', { layer: 'tides' }));
+  const stationOk = await until(page, () => /Selected on the globe/.test(document.getElementById('weDetail').textContent) && /The Battery/.test(document.getElementById('weDetail').textContent), null, 10000);
+  const station = await page.locator('#weDetail').textContent();
+  check(scope, 'a station chosen on the globe: the card shows Observed 15:48 and Retrieved 19:56 (the readings), never the catalogue\'s 08:00', stationOk && station.includes('Observed' + localTime('2026-11-17T15:48:00.000Z')) && station.includes('Retrieved' + localTime('2026-11-17T19:56:00.000Z')) && !station.includes(localTime('2026-11-17T08:00:00.000Z')) && /1\.024 m above MLLW/.test(station), station.slice(0, 300));
   /* Show on globe from the tab */
   const button = page.locator('#mnFeed [data-observation-globe="usgs:fx-gen-50"]').first();
   await button.scrollIntoViewIfNeeded(); await button.click();

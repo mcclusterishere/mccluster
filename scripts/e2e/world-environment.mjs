@@ -274,6 +274,18 @@ try{
   const cell=await page.evaluate(()=>{const a=document.querySelector('#mnFeed [data-observation-post="firecell:-119:34"]');return {title:a.querySelector('.mn__observation-post-title').textContent,body:a.querySelector('.mn__observation-post-body').textContent,globe:a.querySelector('[data-observation-globe]').getAttribute('data-observation-globe')};});
   assert.equal(cell.title,'Fire detections · 1° area at 34°, -119° (south-west corner)');assert.match(cell.body,/Detections: 220 · Summed radiative power: 1830\.4 MW/);
   assert.equal(await page.locator('#mnFeed [data-observation-post^="firecell:"]').count(),2,'two areas with radiative power, not 600 detections');
+  /* G1R-3: a layer with two source records keeps one row, which renders every record with its own retrieval time; the layer's
+     counts head the row once */
+  const TIDES_STATE={...LAYER_STATE,layer:'tides',schema:'world-environment-tides/v1',fetched_at:'2026-11-17T19:56:00Z',last_success_at:'2026-11-17T19:56:00Z',coverage:'The latest observed water level at 20 documented NOAA stations',attribution:'NOAA CO-OPS',license:'Public domain (U.S. Government work); NOAA asks to be credited',url:'https://tidesandcurrents.noaa.gov/',count:14,total:20,digest:{answered:14,stations:20},
+   sources:[{id:'coops_stations',label:'NOAA CO-OPS stations',status:'available',reason:null,fetched_at:'2026-11-17T08:00:00Z',last_success_at:'2026-11-17T08:00:00Z',coverage:'NOAA CO-OPS water-level stations: U.S. coasts, the Great Lakes and territories',attribution:'NOAA CO-OPS',license:'Public domain (U.S. Government work); NOAA asks to be credited',url:'https://tidesandcurrents.noaa.gov/'},{id:'coops_latest',label:'NOAA CO-OPS latest water levels',status:'available',reason:null,fetched_at:'2026-11-17T19:56:00Z',last_success_at:'2026-11-17T19:56:00Z',coverage:'The latest observed water level at 20 documented NOAA stations',attribution:'NOAA CO-OPS',license:'Public domain (U.S. Government work); NOAA asks to be credited',url:'https://tidesandcurrents.noaa.gov/'}]};
+  await fromGlobe(page,TIDES_STATE);
+  await page.waitForFunction(()=>document.querySelectorAll('#weSources > li').length===6,null,{timeout:10000});
+  const tide=await page.evaluate(()=>{const li=[...document.querySelectorAll('#weSources > li')].find(x=>/^Water levels/.test(x.textContent));return {head:li.querySelector(':scope > p').textContent,counts:(li.textContent.match(/14 of 20 shown/g)||[]).length,records:[...li.querySelectorAll('ul.we-records > li')].map(r=>r.textContent)};});
+  assert.equal(tide.records.length,2,'every source record the layer carries');assert.match(tide.head,/^Water levels/);assert.equal(tide.counts,1,'the layer\'s counts once');
+  const localTime=iso=>new Date(iso).toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'});
+  assert.match(tide.records[0],/^NOAA CO-OPS stations/);assert.ok(tide.records[0].includes('Retrieved '+localTime('2026-11-17T08:00:00Z')),tide.records[0]);
+  assert.match(tide.records[1],/^NOAA CO-OPS latest water levels/);assert.ok(tide.records[1].includes('Retrieved '+localTime('2026-11-17T19:56:00Z')),tide.records[1]);
+  assert.doesNotMatch(tide.records.join(' '),/14 of 20/);
   const b2=(await got(page)).length;await page.locator('#mnFeed [data-observation-globe="firecell:-119:34"]').click();
   assert.deepEqual(await waitGot(page,b2,m=>m.type==='hu:environment-focus','hu:environment-focus'),{type:'hu:environment-focus',id:'cell:-119:34'},'a fire area focuses the globe\'s cell id');
   /* a pick on the globe that is no feed row: the globe-selection card, with the item's own time labelled */
