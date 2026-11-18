@@ -47,6 +47,25 @@ export function agoLabel(value, now = Date.now()) {
   return d.toLocaleDateString(undefined, { month:'short', day:'numeric', year: d.getFullYear() === new Date(now).getFullYear() ? undefined : 'numeric' });
 }
 const timeWithAgo = value => parseTime(value) === null ? 'Not supplied by provider' : `${timeLabel(value)} · ${agoLabel(value)}`;
+/* THE LIST, COMPACT BY DEFAULT (release polish, 2026-11-18; review V2-M2): with every feed observation listed above the posts, the
+   first post sat 8 screens or more below the feed's row at 390 with the fixtures' 65 observations. The list opens on the few a
+   visitor most needs first: the significant observations (the host's rule, what the tour plays) newest first, then the newest of
+   the rest, COMPACT_ROWS in all, and the selected row wherever it is; the posts under the panel carry every observation by time,
+   newest first. The panel's "Show all N observations" lists every one in place (these first, the rest in the feed's order) and
+   collapses again. A row with no time of its own never goes ahead of a dated one. */
+export const COMPACT_ROWS = 2;
+const COMPACT_SIGNIFICANT = 2;
+export function compactRows(rows, { significant = null, selected = '', limit = COMPACT_ROWS } = {}) {
+  const list = Array.isArray(rows) ? rows.filter(row => row && typeof row === 'object') : [];
+  const isSignificant = typeof significant === 'function' ? row => { try { return significant(row) === true; } catch { return false; } } : () => false;
+  const when = row => parseTime(row.observed_at) ?? -Infinity;
+  const newest = (a, b) => { const ta = when(a), tb = when(b); return ta === tb ? 0 : ta < tb ? 1 : -1; };
+  const head = list.filter(isSignificant).sort(newest).slice(0, Math.min(COMPACT_SIGNIFICANT, limit));
+  for (const row of [...list].sort(newest)) { if (head.length >= limit) break; if (!head.includes(row)) head.push(row); }
+  const chosen = selected ? list.find(row => row.id === selected) : null;
+  if (chosen && !head.includes(chosen)) head.push(chosen);
+  return head;
+}
 /* a provider's time as it gave it (ISO 8601), or null: never guessed, never a fetch time standing in for an event time */
 const validTime = value => parseTime(value) === null ? null : value.slice(0, 40);
 const num = value => typeof value === 'number' && Number.isFinite(value) ? value : null;
@@ -110,7 +129,7 @@ export function mountEnvironment(w, d, adapter) {
   let team = null, oversight = null, proofReviews=null, privateToken = null, abort = null, timer = null, joining = false, saving = false;
   const token = async () => {try{return await adapter.token()||null;}catch{return null;}};
   const sessionCurrent=async(identity,epoch)=>{const value=await token();return !destroyed&&epoch===privateEpoch&&value===identity;};
-  panel.innerHTML = '<p class="we-eyebrow">Environmental Justice</p><h2 id="weTitle">See the evidence. Take action.</h2><p class="we-subtle">Government observations, their dates and practical missions on this same globe. An event is not proof of environmental injustice.</p><div class="we-toolbar"><button type="button" id="weRefresh">Refresh sources</button><span class="we-subtle" id="weFreshness"></span></div><p id="weStatus" class="we-message" role="status" aria-live="polite"></p><div class="we-scene" role="group" aria-label="Tour of significant events on the globe"><button type="button" id="wePlay">Play tour</button><button type="button" id="wePrev">Previous</button><button type="button" id="weNext">Next</button><button type="button" id="weReplay" aria-pressed="false">Replay last 24 h of quakes</button><p class="we-subtle we-scene-status" id="weSceneStatus" role="status" aria-live="polite"></p></div><div class="we-view" role="group" aria-label="Map view"><button type="button" id="weView2d" aria-pressed="false">2D map</button><span class="we-subtle">The list below works without the globe.</span></div><section class="we-team" id="weTeam" aria-label="Environmental Justice Team"></section><section id="weAssignments" class="we-team" aria-label="Your environmental missions" hidden data-private></section><section id="wePlanning" class="we-detail" aria-label="Owner news and sponsorship planning" hidden data-private></section><section id="weProof" class="we-detail" aria-label="Mission evidence" hidden data-private></section><section id="weDetail" class="we-detail" aria-label="Selected environmental observation" hidden></section><label class="we-filter">Find an observation<input id="weSearch" type="search" placeholder="Place or event" maxlength="120"></label><p id="weCount" class="we-subtle"></p><ul class="we-list" id="weEvents"></ul><details><summary>Sources, coverage and limitations</summary><p class="we-subtle" id="weLayersNote" role="status" hidden></p><ul class="we-health" id="weSources"></ul><p class="we-subtle">No marker does not mean a place is safe. Coverage and reporting delays vary. These feeds do not measure every pollutant, establish responsibility or replace official emergency instructions.</p></details><section id="weOwner" class="we-owner" aria-label="Owner mission oversight" hidden data-private></section>';
+  panel.innerHTML = '<p class="we-eyebrow">Environmental Justice</p><h2 id="weTitle">See the evidence. Take action.</h2><p class="we-subtle">Government observations, their dates and practical missions on this same globe. An event is not proof of environmental injustice.</p><div class="we-toolbar"><button type="button" id="weRefresh">Refresh sources</button><span class="we-subtle" id="weFreshness"></span></div><p id="weStatus" class="we-message" role="status" aria-live="polite"></p><div class="we-scene" role="group" aria-label="Tour of significant events on the globe"><button type="button" id="wePlay">Play tour</button><button type="button" id="wePrev">Previous</button><button type="button" id="weNext">Next</button><button type="button" id="weReplay" aria-pressed="false">Replay last 24 h of quakes</button><p class="we-subtle we-scene-status" id="weSceneStatus" role="status" aria-live="polite"></p></div><div class="we-view" role="group" aria-label="Map view"><button type="button" id="weView2d" aria-pressed="false">2D map</button><span class="we-subtle">The list below works without the globe.</span></div><section class="we-team" id="weTeam" aria-label="Environmental Justice Team"></section><section id="weAssignments" class="we-team" aria-label="Your environmental missions" hidden data-private></section><section id="wePlanning" class="we-detail" aria-label="Owner news and sponsorship planning" hidden data-private></section><section id="weProof" class="we-detail" aria-label="Mission evidence" hidden data-private></section><section id="weDetail" class="we-detail" aria-label="Selected environmental observation" hidden></section><label class="we-filter">Find an observation<input id="weSearch" type="search" placeholder="Place or event" maxlength="120"></label><p id="weCount" class="we-subtle"></p><ul class="we-list" id="weEvents" aria-label="Observations"></ul><button type="button" id="weMore" class="we-more" hidden></button><details><summary>Sources, coverage and limitations</summary><p class="we-subtle" id="weLayersNote" role="status" hidden></p><ul class="we-health" id="weSources"></ul><p class="we-subtle">No marker does not mean a place is safe. Coverage and reporting delays vary. These feeds do not measure every pollutant, establish responsibility or replace official emergency instructions.</p></details><section id="weOwner" class="we-owner" aria-label="Owner mission oversight" hidden data-private></section>';
   const status = message => { if (!destroyed) byId('weStatus').textContent = message; };
   const signIn = () => adapter.signIn();
   const request = (path, options = {}) => adapter.request(path, options);
@@ -137,18 +156,33 @@ export function mountEnvironment(w, d, adapter) {
     send(message);
   }
   const matches = row => !search || [row.title, row.category, row.source.label].join(' ').toLocaleLowerCase().includes(search);
-  function select(id, fly) {
+  /* fromGlobe: the globe made this selection itself and said so (hu:environment-selected), so the panel follows it and sends no
+     pins back (release polish, 2026-11-18, the Show on globe flip the G1 close-out left): pins carrying a selection the globe
+     answers in turn (its ShakeMap read tells a quake the pins selected) let two selections echo between panel and globe for as
+     long as the page was open, the globe going back and forth between the event the visitor clicked and the one before it */
+  function select(id, fly, fromGlobe) {
     if (!feed?.events.some(row => row.id === id)) return;
     adapter.revealPanel?.();
-    globeSelection = null; selected = id; renderDetail(); renderList(); syncPins();
+    globeSelection = null; selected = id; renderDetail(); renderList(); if (!fromGlobe) syncPins();
     if (fly && feed.events.find(row => row.id === id)?.lat !== null) send({ type:'hu:environment-focus', id });
     byId('weDetail').scrollIntoView?.({ block:'nearest', behavior:'auto' });
   }
+  /* the list opens compact (compactRows above); the toggle under it lists every observation in place and collapses again. It stays
+     the accessible alternative to the globe: a button that says what it does and whether the list is open (aria-expanded,
+     aria-controls), opening moves the focus to the first row it revealed, closing keeps it on the toggle */
+  let listOpen = false;
   function renderList() {
-    const list = byId('weEvents'); list.replaceChildren();
+    const list = byId('weEvents'), more = byId('weMore'); list.replaceChildren();
     const rows = feed?.events.filter(matches) || [];
-    byId('weCount').textContent = feed ? `${rows.length} observations shown${feed.truncated ? " (source results limited)" : ""}. Select one here or on the globe.` : '';
-    for (const row of rows) {
+    const head = compactRows(rows, { significant: significance, selected }), compact = !listOpen && rows.length > head.length;
+    const shown = compact ? head : head.concat(rows.filter(row => !head.includes(row)));
+    const marked = significance ? head.slice(0, COMPACT_ROWS).filter(row => significance(row)).length : 0;
+    const limited = feed?.truncated ? ' (source results limited)' : '', few = !marked ? 'the most recent' : marked === Math.min(COMPACT_ROWS, head.length) ? 'the significant ones, newest first' : 'the significant ones first, then the most recent';
+    byId('weCount').textContent = !feed ? '' : compact ? `Showing ${shown.length} of ${rows.length} observations: ${few}${head.length > COMPACT_ROWS ? ', and the one selected' : ''}${limited}. Select one here or on the globe.` : `${rows.length} observations shown${limited}. Select one here or on the globe.`;
+    more.hidden = rows.length <= head.length;
+    more.textContent = listOpen ? 'Show fewer observations' : `Show all ${rows.length} observations`;
+    more.setAttribute('aria-controls', 'weEvents'); more.setAttribute('aria-expanded', String(listOpen));
+    for (const row of shown) {
       const item = el('li'), control = button('', () => select(row.id, true));
       control.setAttribute('aria-pressed', String(selected === row.id));
       control.append(el('strong', row.title), el('small', `${row.category || 'Observation'} · ${row.source.label}${row.stale ? ' · Older observation' : ''}`), el('small', `Observed: ${timeWithAgo(row.observed_at)}`));
@@ -655,6 +689,13 @@ export function mountEnvironment(w, d, adapter) {
     b.setAttribute('aria-pressed',String(viewState.mode==='2d'));b.textContent='2D map';
   }
   byId('weRefresh').onclick=()=>{void loadFeed();void loadPrivate();};
+  byId('weMore').onclick=()=>{
+    if(destroyed)return;
+    const opening=!listOpen,before=byId('weEvents').children.length;
+    listOpen=opening;renderList();
+    if(opening)byId('weEvents').children[before]?.querySelector?.('button')?.focus?.();
+    else byId('weMore').scrollIntoView?.({block:'nearest',behavior:'auto'});
+  };
   /* the list follows every keystroke; the globe, which rebuilds its events layer for a changed list, is told once the typing pauses
      (review G1R-9) */
   byId('weSearch').oninput=event=>{search=event.target.value.trim().toLocaleLowerCase();renderList();clearTimeout(searchTimer);searchTimer=setTimeout(()=>{searchTimer=null;if(!destroyed)syncPins();},SEARCH_SYNC_MS);};
@@ -679,9 +720,14 @@ export function mountEnvironment(w, d, adapter) {
       syncLayers();syncPins();
       if(fresh){sceneState=null;renderScene();autostartDone=false;maybeAutostart();}
     }
+    /* the globe's own selection: the panel follows it and sends nothing back (select's fromGlobe). A scene the tour chose (via
+       'tour') is named by the scene line and opens no card: the card is for what the visitor chooses (a row, a tap on the globe, Show
+       on globe). Opened for every scene, it put 723 px above the posts at 390 with the fixtures and another card at each scene, and
+       select() revealed the panel (closing an expanded map) and scrolled the card into view each time (release polish, 2026-11-18). A card the tour moved the globe away from closes, so the panel never describes what the globe no longer shows. */
     if(data.type==='hu:environment-selected'&&active()){
-      if(feed?.events.some(row=>row.id===data.id))select(data.id,false);
-      else if(typeof data.id==='string'&&data.id){adapter.revealPanel?.();globeSelection=cleanSelection(data);selected='';renderDetail();renderList();syncPins();byId('weDetail').scrollIntoView?.({block:'nearest',behavior:'auto'});}
+      if(data.via==='tour'){if((selected&&selected!==data.id)||globeSelection){selected='';globeSelection=null;renderDetail();renderList();}}
+      else if(feed?.events.some(row=>row.id===data.id))select(data.id,false,true);
+      else if(typeof data.id==='string'&&data.id){adapter.revealPanel?.();globeSelection=cleanSelection(data);selected='';renderDetail();renderList();byId('weDetail').scrollIntoView?.({block:'nearest',behavior:'auto'});}
     }
     if(data.type==='hu:environment-layer-state')onLayerState(data);
     if(data.type==='hu:environment-scene-state'){sceneState={playing:data.playing===true,index:num(data.index)??0,total:num(data.total)??0,id:text(data.id,300)||null,title:text(data.title,160)||null,queue:data.queue==='quakes-24h'?'quakes-24h':'significant',reason:text(data.reason,20)||null};if(active()&&(sceneState.reason==='input'||sceneState.reason==='end'))tourStopped=true;renderScene();}

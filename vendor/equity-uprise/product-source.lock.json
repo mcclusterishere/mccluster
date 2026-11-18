@@ -15,7 +15,7 @@
     },
     {
       "path": "src/environment/panel.mjs",
-      "sha256": "bb6702235992ac17a4caab37f8801f60580e4627f9e2ed6d813a8dbc9503d897"
+      "sha256": "812b722de60fe8a981ae93fd8037bb3ff58bf5b48de4b0a8d7c74d7d8c6af18d"
     },
     {
       "path": "src/environment/server.mjs",
@@ -148,6 +148,33 @@
         "scripts/test/world-environment-lifecycle.test.mjs"
       ],
       "note": "Second review of slice G1 at 58fef668 (2026-11-18). Upstream Equity-Uprise still carries the unpatched files at base_commit; port these patches upstream before re-pinning."
+    },
+    {
+      "base_commit": "645d68a740c835271ca185c52e0b31220aab16ad",
+      "applied_in": "mcclusterishere/mccluster (this consumer checkout), not published upstream",
+      "date": "2026-11-18",
+      "files": [
+        "src/environment/panel.mjs"
+      ],
+      "defects": [
+        {
+          "id": "V2-M2",
+          "summary": "Release polish of the World's Equity Uprise tab: the observation list opens compact (compactRows: up to two significant observations, the host's rule, newest first, then the newest of the rest, two in all, and the selected row wherever it is), so the first post sits within about a screen and a half of the feed's row at 390 with the fixtures; “Show all N observations” lists every observation in place (the few first, the rest in the feed’s order) and collapses again. The list stays the accessible alternative to the globe: the toggle is a button with aria-expanded and aria-controls, opening moves the focus to the first row it revealed, closing keeps it on the toggle; the count line says which few are shown."
+        },
+        {
+          "id": "V2-M2-TOUR-CARD",
+          "summary": "Release polish: a hu:environment-selected with via 'tour' (a scene the tour chose) opens no card in the panel; the scene line names the scene, and a card the tour moved the globe away from closes. The panel used to open the full card for every scene (723 px above the posts at 390 with the fixtures), and select() revealed the panel (closing an expanded map) and scrolled the card into view each time. A visitor's own choice (pick, focus, a row) opens the card as before."
+        },
+        {
+          "id": "G1-SHOW-ON-GLOBE",
+          "summary": "Release polish: a hu:environment-selected from the globe is followed without sending the pins back. Pins carrying a selection the globe answers in turn (its ShakeMap read tells a quake the pins selected) let two selections echo between panel and globe for as long as the page was open: Show on globe from Global, with the panel holding an older selection, sent the globe back and forth between the clicked event and the older one, and the panel with it (17 changes in ten seconds at 390 with the fixtures)."
+        }
+      ],
+      "regression_tests": [
+        "scripts/test/world-environment-panel.test.mjs",
+        "scripts/test/world-environment-lifecycle.test.mjs"
+      ],
+      "note": "Release polish of 2026-11-18 (the verifier's V2-M2 and the G1 close-out's Show on globe flip). Upstream Equity-Uprise still carries the unpatched files at base_commit; port these patches upstream before re-pinning."
     }
   ]
 }

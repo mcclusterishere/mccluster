@@ -12,7 +12,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
-import { mountEnvironment } from '../../vendor/equity-uprise/src/environment/panel.mjs';
+import * as Panel from '../../vendor/equity-uprise/src/environment/panel.mjs';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const read = (p) => readFileSync(ROOT + p, 'utf8');
@@ -20,6 +20,7 @@ const P = createRequire(import.meta.url)(ROOT + 'js/world-environment-posts.js')
 const FEED = JSON.parse(read('scripts/e2e/fixtures/environment/feed.json'));
 const feedBody = () => JSON.parse(JSON.stringify(FEED));
 const EVENTS = 'mcc:world-environment-events';
+const { mountEnvironment } = Panel;
 
 class E {
   constructor(tag = 'div') { this.tag = tag; this.children = []; this.textContent = ''; this.hidden = false; this.attrs = {}; this.value = ''; this.checked = false; this.disabled = false; }
@@ -30,6 +31,7 @@ class E {
   replaceChildren(...x) { this.children = x; }
   setAttribute(k, v) { this.attrs[k] = String(v); } getAttribute(k) { return this.attrs[k] ?? null; } removeAttribute(k) { delete this.attrs[k]; }
   scrollIntoView() {}
+  focus() { E.focused = this; }
   get text() { return [this.textContent, ...this.children.map(c => c.text)].filter(Boolean).join(' '); }
 }
 const flush = async (n = 6) => { for (let i = 0; i < n; i++) await new Promise(r => setImmediate(r)); };
@@ -43,7 +45,7 @@ test.afterEach(() => { for (const m of live) m.destroy(); live.clear(); });
    reporting the frame in view; hidden: document.hidden; answer: what the feed read returns (a body, or an Error to throw) */
 function harness({ mode = 'environment', reduced = false, observer = false, hidden = false, answer = feedBody } = {}) {
   const panel = new E('div'), frame = { contentWindow: {} }, handlers = new Map(), docHandlers = new Map(), sent = [], events = [], reads = [];
-  let current = mode;
+  let current = mode, reveals = 0;
   const w = {
     location: { origin: ORIGIN }, confirm: () => true,
     addEventListener: (k, v) => handlers.set(k, v), removeEventListener: (k) => handlers.delete(k),
@@ -55,11 +57,12 @@ function harness({ mode = 'environment', reduced = false, observer = false, hidd
     addEventListener: (k, v) => docHandlers.set(k, v), removeEventListener: (k) => docHandlers.delete(k) };
   const adapter = { panel, frame, token: () => null, signIn() {}, sendGlobe: data => sent.push(JSON.parse(JSON.stringify(data))),
     request: async (path) => { reads.push(path); const a = typeof answer === 'function' ? answer() : answer; if (a instanceof Error) throw a; return a; },
-    mode: () => current, eventsEvent: EVENTS, significance: P.significance };
+    mode: () => current, eventsEvent: EVENTS, significance: P.significance, revealPanel: () => { reveals++; } };
   const mounted = mountEnvironment(w, d, adapter);
   live.add(mounted);
   return {
     panel, mounted, sent, events, reads, w, d,
+    reveals: () => reveals,
     byId: id => panel.querySelector('#' + id),
     setMode(m) { current = m; handlers.get('environment:mode')(); },
     message(data) { handlers.get('message')({ origin: ORIGIN, source: frame.contentWindow, data }); },
@@ -141,6 +144,7 @@ test('health rows: every feed source with its status, the reason in plain words,
   const nws = h.byId('weSources').children.find(li => /NOAA NWS/.test(li.text));
   assert.match(nws.text, /available/); assert.equal(nws.querySelectorAll('a')[0].href, 'https://www.weather.gov/');
   assert.doesNotMatch(nws.text, /never known/);
+  h.byId('weMore').onclick(); /* the full list (V2-M2: it opens compact) */
   const list = h.byId('weEvents').children, quake = list.find(li => /Anamizu/.test(li.text)), storm = list.find(li => /Sara/.test(li.text));
   assert.match(quake.text, /Observed: .+ · (now|\d+[mhd]|[A-Z][a-z]{2} \d)/, 'the relative time beside the absolute one');
   assert.match(storm.text, /Observed: Not supplied by provider/);
@@ -533,5 +537,185 @@ test('RV2-2: the same rows with a changed status, reason or retrieval still reac
   /* a newer retrieval of the same rows is the same post with a new retrieval time: handed on */
   h.message(layerState('fires', { fetched_at: '2026-11-17T21:00:30Z', last_success_at: '2026-11-17T21:00:30Z', generated_at: '2026-11-17T21:00:00Z', digest: cells }));
   assert.equal(h.events.length, before + 2); assert.equal(h.events.at(-1).detail.layers.fires.fetched_at, '2026-11-17T21:00:30Z'); assert.equal(h.events.at(-1).detail.layers.fires.status, 'available');
+  h.mounted.destroy();
+});
+
+/* RELEASE POLISH (2026-11-18): the list compact by default (review V2-M2) and a selection the globe made followed, never echoed back
+   (the Show on globe flip the G1 close-out left) */
+const titleOf = (li) => li.children[0].children[0].textContent;
+/* the fixture feed's two significant observations, newest first (the newest observation of all, Fixture event 50, leads the posts) */
+const FIRST_TWO = ['Fixture event 48', 'Tornado Warning issued for Oklahoma, OK; Cleveland, OK'];
+
+test('V2-M2: compactRows picks the significant observations newest first, then the newest of the rest, and keeps the selected one', () => {
+  assert.equal(Panel.COMPACT_ROWS, 2);
+  const rows = [{ id: 'a', observed_at: '2026-11-17T10:00:00Z' }, { id: 'b', observed_at: '2026-11-17T12:00:00Z', sig: true }, { id: 'c', observed_at: null, sig: true }, { id: 'd', observed_at: '2026-11-17T13:00:00Z', sig: true }, { id: 'e', observed_at: '2026-11-17T14:00:00Z' }];
+  const significant = (r) => r.sig === true;
+  const ids = (list) => list.map((r) => r.id);
+  assert.deepEqual(ids(Panel.compactRows(rows, { significant })), ['d', 'b'], 'the two significant ones, newest first');
+  assert.deepEqual(ids(Panel.compactRows(rows, { significant, limit: 3 })), ['d', 'b', 'e'], 'room for more: then the newest of the rest');
+  assert.deepEqual(ids(Panel.compactRows(rows)), ['e', 'd'], 'with no significance rule: the newest');
+  assert.deepEqual(ids(Panel.compactRows(rows, { significant: () => { throw new Error('rule failed'); } })), ['e', 'd'], 'a rule that throws marks nothing significant');
+  assert.deepEqual(ids(Panel.compactRows(rows, { significant: (r) => r.id === 'b' })), ['b', 'e'], 'one significant one, then the newest of the rest');
+  assert.deepEqual(ids(Panel.compactRows(rows, { significant, selected: 'a' })), ['d', 'b', 'a'], 'the selected row stays in view');
+  assert.deepEqual(ids(Panel.compactRows(rows, { significant, selected: 'b' })), ['d', 'b'], 'once');
+  assert.deepEqual(ids(Panel.compactRows(rows.slice(0, 2), { significant })), ['b', 'a'], 'no more rows than the few: all of them');
+  assert.deepEqual(ids(Panel.compactRows([{ id: 'x', observed_at: null }, { id: 'y', observed_at: '2026-11-01T00:00:00Z' }, { id: 'z', observed_at: 'not a time' }], { limit: 3 })), ['y', 'x', 'z'], 'a row without a time never goes ahead of a dated one, and keeps its place among the undated');
+  assert.deepEqual(Panel.compactRows(null), []);
+});
+
+test('V2-M2: the list opens on the few; "Show all N observations" lists every one in place, moves the focus to the first it revealed, and collapses again', async () => {
+  const h = harness();
+  await flush(8);
+  const list = () => h.byId('weEvents').children, more = h.byId('weMore');
+  assert.ok(more, 'the toggle is part of the panel');
+  assert.deepEqual(list().map(titleOf), FIRST_TWO, 'the two significant observations, newest first');
+  assert.equal(more.hidden, false);
+  assert.equal(more.textContent, 'Show all 65 observations');
+  assert.equal(more.getAttribute('aria-expanded'), 'false');
+  assert.equal(more.getAttribute('aria-controls'), 'weEvents', 'the toggle names the list it opens');
+  assert.match(h.byId('weCount').textContent, /^Showing 2 of 65 observations: the significant ones, newest first\. Select one here or on the globe\.$/);
+  E.focused = null;
+  more.onclick();
+  assert.equal(list().length, 65, 'every observation: the list stays the alternative to the globe');
+  assert.deepEqual(list().slice(0, 2).map(titleOf), FIRST_TWO, 'in place: the few stay where they were');
+  assert.equal(new Set(list().map(titleOf)).size, 65, 'each once');
+  assert.equal(more.textContent, 'Show fewer observations');
+  assert.equal(more.getAttribute('aria-expanded'), 'true');
+  assert.match(h.byId('weCount').textContent, /^65 observations shown\. Select one here or on the globe\.$/);
+  assert.equal(E.focused, list()[2].children[0], 'the focus moves to the first row the toggle revealed');
+  more.onclick();
+  assert.deepEqual(list().map(titleOf), FIRST_TWO, 'and collapses again');
+  assert.equal(more.getAttribute('aria-expanded'), 'false');
+  /* a row chosen on the globe that is not among the few stays in view, pressed */
+  h.message({ type: 'hu:environment-selected', id: 'usgs:us7000tyhr', layer: 'events', kind: 'quake', via: 'pick' });
+  assert.deepEqual(list().map(titleOf), [...FIRST_TWO, '20 km NW of Anamizu, Japan']);
+  assert.equal(list()[2].children[0].getAttribute('aria-pressed'), 'true');
+  assert.match(h.byId('weCount').textContent, /^Showing 3 of 65 observations: the significant ones, newest first, and the one selected\. /);
+  /* the search looks through every observation; two or fewer matches need no toggle */
+  const input = h.byId('weSearch');
+  input.value = 'Anam'; input.oninput({ target: input });
+  assert.deepEqual(list().map(titleOf), ['20 km NW of Anamizu, Japan']);
+  assert.equal(more.hidden, true);
+  assert.match(h.byId('weCount').textContent, /^1 observations shown/);
+  input.value = 'Fixture event'; input.oninput({ target: input });
+  const matching = FEED.events.filter((e) => /fixture event/i.test([e.title, e.category, e.source.label].join(' '))).length;
+  assert.ok(matching > 3);
+  assert.equal(more.hidden, false);
+  assert.equal(more.textContent, `Show all ${matching} observations`);
+  assert.ok(list().length <= 3, 'a long search result opens compact too');
+  h.mounted.destroy();
+});
+
+test('V2-M2: the toggle is a 16px form control, full width under the list, with mobile-first rules only', () => {
+  const css = read('css/world-environment.css');
+  assert.match(css, /\.we-more \{ width:100%;margin:0 0 12px; \}/);
+  assert.match(css, /\.we-more\[hidden\] \{ display:none; \}/);
+  assert.match(css, /\.we-panel button,\.we-button \{[^}]*font-size:max\(16px,1em\);/, 'the panel\'s button rule covers it');
+  assert.doesNotMatch(css, /@media\s*\(\s*max-width/);
+});
+
+test('Show on globe flip (G1 close-out): a selection the globe made is followed, never sent back as pins', async () => {
+  const h = harness();
+  await flush(8);
+  const pins = () => h.sent.filter((m) => m.type === 'hu:environment-pins');
+  /* the panel's own choice in its list still says it: the pins with the selection, then the focus */
+  h.byId('weMore').onclick();
+  const row = h.byId('weEvents').children.find((li) => /Fixture event 50/.test(li.text)).children[0];
+  h.sent.length = 0; row.onclick();
+  assert.deepEqual(h.sent.map((m) => m.type), ['hu:environment-pins', 'hu:environment-focus']);
+  assert.equal(pins()[0].selected, 'usgs:fx-gen-50');
+  /* the globe answers with a selection of its own (a focus the page asked for, then a late answer for the one the old pins named):
+     the panel follows each and sends nothing back */
+  h.sent.length = 0;
+  h.message({ type: 'hu:environment-selected', id: 'usgs:fx-gen-50', layer: 'events', kind: 'quake', via: 'focus' });
+  h.message({ type: 'hu:environment-selected', id: 'usgs:us7000tyhr', layer: 'events', kind: 'quake', via: 'focus' });
+  assert.equal(pins().length, 0, 'no pins go back for a selection the globe made, so nothing can echo between the two');
+  assert.match(h.byId('weDetail').text, /Anamizu/, 'the panel shows what the globe selected last');
+  assert.equal(h.byId('weEvents').children.find((li) => /Anamizu/.test(li.text)).children[0].getAttribute('aria-pressed'), 'true');
+  /* a selection on the globe that is no feed row: its card, and still nothing sent */
+  h.message({ type: 'hu:environment-selected', id: 'cell:-119:34', layer: 'cells', kind: 'fire_cell', title: 'Fire activity', facts: [], source: {}, observed_at: null, observed_label: 'Acquired', fetched_at: null, coverage: '', status: 'available', via: 'pick' });
+  assert.equal(pins().length, 0);
+  assert.match(h.byId('weDetail').text, /Selected on the globe/);
+  h.mounted.destroy();
+});
+
+test('Show on globe from Global, against a globe that answers the selection its pins carry: the clicked event stays selected and the two stop talking', async () => {
+  const h = harness();
+  await flush(8);
+  /* the panel holds fx-gen-50 from an earlier opening of the tab */
+  h.byId('weMore').onclick();
+  h.byId('weEvents').children.find((li) => /Fixture event 50/.test(li.text)).children[0].onclick();
+  h.setMode('feed');
+  /* a model of the globe (js/environment-layers.js): the pins' selection is selected quietly, but a quake's ShakeMap answer is told,
+     so a selection the pins made is told too; a focus is selected and told */
+  let globe = null; const told = [];
+  const take = (m) => {
+    if (m.type === 'hu:environment-pins' && m.on && m.selected && m.selected !== globe) { globe = m.selected; told.push(m.selected); }
+    if (m.type === 'hu:environment-focus') { globe = m.id; told.push(m.id); }
+  };
+  /* the page's Show on globe from Global: the tab opens (the layers, then the pins with the panel's selection), then the focus */
+  h.sent.length = 0;
+  h.setMode('environment');
+  h.sent.splice(0).forEach(take);
+  take({ type: 'hu:environment-focus', id: 'usgs:us7000tyhr' });
+  let rounds = 0;
+  while (told.length && rounds < 20) {
+    rounds++;
+    for (const id of told.splice(0)) h.message({ type: 'hu:environment-selected', id, layer: 'events', kind: 'quake', via: 'focus' });
+    h.sent.splice(0).forEach(take);
+  }
+  assert.ok(rounds < 20, `the panel and the globe stop talking (${rounds} rounds)`);
+  assert.equal(globe, 'usgs:us7000tyhr', 'the clicked event stays selected on the globe');
+  assert.match(h.byId('weDetail').text, /Anamizu/, 'and in the panel');
+  h.mounted.destroy();
+});
+
+/* THE TOUR NAMES ITS SCENE, THE CARD IS THE VISITOR'S (release polish, 2026-11-18): the autostarted tour selected a scene every few
+   seconds and the panel opened the full card for each (723 px above the posts at 390 with the fixtures), revealed itself and
+   scrolled the card into view; a scene the tour chose is now named by the scene line only */
+const tourScene = (id) => ({ type: 'hu:environment-selected', id, layer: 'events', kind: 'quake', via: 'tour' });
+test('a scene the tour chose opens no card: nothing revealed or scrolled, the list stays compact with no row pressed, nothing sent back', async () => {
+  const h = harness();
+  await flush(8);
+  const detail = h.byId('weDetail');
+  let scrolled = 0; detail.scrollIntoView = () => { scrolled++; };
+  h.sent.length = 0;
+  h.message(tourScene('usgs:fx-gen-48'));
+  h.message(tourScene('nws:fx-tornado-ok'));
+  assert.equal(detail.hidden, true, 'no card for a scene of the tour');
+  assert.equal(h.reveals(), 0, 'the panel is not revealed: an expanded map stays expanded');
+  assert.equal(scrolled, 0, 'the page is not scrolled to a card');
+  assert.equal(h.sent.length, 0, 'nothing goes back to the globe');
+  assert.deepEqual(h.byId('weEvents').children.map(titleOf), FIRST_TWO, 'the list stays as it opened');
+  assert.ok(h.byId('weEvents').children.every((li) => li.children[0].getAttribute('aria-pressed') === 'false'), 'no row pressed for a tour scene');
+  /* the visitor's own choices still open the card: a tap on the globe, a focus the page asked for */
+  h.message({ ...tourScene('usgs:fx-gen-48'), via: 'pick' });
+  assert.equal(detail.hidden, false);
+  assert.match(detail.text, /Fixture event 48/);
+  assert.equal(h.reveals(), 1);
+  h.message({ ...tourScene('usgs:us7000tyhr'), via: 'focus' });
+  assert.match(detail.text, /Anamizu/);
+  h.mounted.destroy();
+});
+
+test('a card the tour moved the globe away from closes; a scene on the card\'s own event leaves it open', async () => {
+  const h = harness();
+  await flush(8);
+  const detail = h.byId('weDetail');
+  h.message({ ...tourScene('usgs:us7000tyhr'), via: 'focus' });
+  assert.match(detail.text, /Anamizu/);
+  h.message(tourScene('usgs:us7000tyhr'));
+  assert.equal(detail.hidden, false, 'the tour on the event the card shows: the card stays');
+  assert.match(detail.text, /Anamizu/);
+  h.sent.length = 0;
+  h.message(tourScene('usgs:fx-gen-48'));
+  assert.equal(detail.hidden, true, 'the globe moved on: the card closes rather than describe what the globe no longer shows');
+  assert.ok(h.byId('weEvents').children.every((li) => li.children[0].getAttribute('aria-pressed') === 'false'));
+  assert.equal(h.sent.length, 0, 'and nothing is sent back');
+  /* a card for something only the globe has (a 1-degree fire area) closes the same way */
+  h.message({ type: 'hu:environment-selected', id: 'cell:-119:34', layer: 'cells', kind: 'fire_cell', title: 'Fire activity', facts: [], source: {}, observed_at: null, observed_label: 'Acquired', fetched_at: null, coverage: '', status: 'available', via: 'pick' });
+  assert.match(detail.text, /Selected on the globe/);
+  h.message(tourScene('nws:fx-tornado-ok'));
+  assert.equal(detail.hidden, true);
   h.mounted.destroy();
 });
