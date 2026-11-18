@@ -1,4 +1,5 @@
--- Recovery artifact for 20261117100100_action_mission_details.sql: never a forward migration.
+-- Recovery artifact for supabase/migrations/20261118021521_action_mission_details.sql: never a forward migration.
+-- (Staged and reviewed as 20261117100100_action_mission_details.sql; applied 2026-11-18 and promoted.)
 -- Owner approval required, like the forward file. Run it as postgres, as the forward file was (the Supabase
 -- MCP `apply_migration` runs as postgres); the service role cannot drop a table it does not own.
 --

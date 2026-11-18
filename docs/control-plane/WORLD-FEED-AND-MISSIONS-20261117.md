@@ -232,9 +232,13 @@ Asked after W1, W2 and D1: publish all 125 Drawdown missions or a subset; Local 
 owner-only. The owner: "1 do it 2 start with the country their IP address is showing and 3 keep them mine for
 right now."
 
-- **All 125 missions are published.** Production steps 2 and 3 carry the whole catalog: the four files of
-  `supabase/pending/PROMOTION-ORDER.md` section 10 are the exact change, each applied on its own after its pre-apply
-  reads, in order, with its rollback beside it.
+- **All 125 missions are to be published** (the decision, not yet the state of production). Production steps 2 and 3
+  carry the whole catalog: the four files of `supabase/pending/PROMOTION-ORDER.md` section 10 are the exact change, each
+  applied on its own after its pre-apply reads, in order, with its rollback beside it. Three of them are applied
+  (production ledger 376: the join scope, the details table and the import's seven parts, each promoted to
+  `supabase/migrations/`), so the 125 are in production as drafts. The fourth, the publish
+  (`supabase/pending/20261117100300_action_mission_drawdown_publish.sql`), is pending for the deploy window; until it
+  runs, none of the 125 is published.
 - **On load, the country the visitor's IP address shows.** That is the 2026-10-20 release contract
   (`docs/action-network/WORLD-REGION-FEED-RELEASE.md`): with the flag on, the feed opens on Local for the country
   Cloudflare reads at the edge (`request.cf.country`, through `/v1/world/place-scope`), which `js/mnet.js` already

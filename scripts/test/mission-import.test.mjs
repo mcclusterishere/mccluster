@@ -318,8 +318,9 @@ test('the publish and the import rollback differ from their reviewed bytes only 
     [`hint = 'Apply the import parts ${span} first; nothing was published.'`,
       "hint = 'Apply 20261117100200_action_mission_drawdown_import.sql first; nothing was published.'"],
   ])), REVIEWED_MD5.publish, 'the publish: its guard, its update and its ids are the reviewed ones');
+  const lastPart = partFiles.at(-1).slice(partFiles.at(-1).lastIndexOf('/') + 1);
   assert.equal(md5(unchanged(read(OUTPUT_FILES.importRollback), [
-    [`-- Recovery artifact for the import parts ${span},\n-- however many of them ran: never a forward migration.`,
+    [`-- Recovery artifact for the import parts ${partFiles[0]} to\n-- ${lastPart}, however many of them ran: never a forward migration. They were\n-- staged and reviewed as ${span} and applied on 2026-11-18.`,
       '-- Recovery artifact for 20261117100200_action_mission_drawdown_import.sql: never a forward migration.'],
   ])), REVIEWED_MD5.importRollback, 'the import rollback: the reviewed lock, count, refusal and delete');
   assert.equal(md5(read(OUTPUT_FILES.publishRollback)), REVIEWED_MD5.publishRollback, 'the publish rollback is the reviewed file');
@@ -606,4 +607,37 @@ test("the scratch fixture's action_missions checks are the tool's, which are pro
   const found = Object.fromEntries([...fixture.matchAll(/add constraint (action_missions_\w+_check) (CHECK .*);$/gm)].map((m) => [m[1], m[2]]));
   assert.deepEqual(found, { ...PRODUCTION_MISSION_CHECKS });
   assert.doesNotMatch(fixture, /@mccluster\.org/, 'the house owner\'s address stays out of the public repository');
+});
+
+test('each mission rollback, and the module policy one, names its forward file where that file is now (review of the release polish, RP-4)', () => {
+  // The first line of a rollback says what it recovers from. A forward file applied and promoted is no longer on disk under the
+  // name it was staged and reviewed under: the line names the applied migration, and may add the staged name after it.
+  const rollbacks = [
+    'supabase/pending/20261117100000_action_globe_join_scope_v1.rollback.sql',
+    'supabase/pending/20261117100100_action_mission_details.rollback.sql',
+    OUTPUT_FILES.importRollback,
+    OUTPUT_FILES.publishRollback,
+    'supabase/pending/eup_module_policy_v1.rollback.sql',
+  ];
+  for (const f of rollbacks) {
+    const first = read(f).split('\n')[0];
+    const m = /^-- Recovery artifact for (?:the import parts )?(\S+?)[,:]?(?:\s|$)/.exec(first);
+    assert.ok(m, `${f}: its first line says what it recovers from`);
+    const named = m[1].includes('/') ? m[1] : `supabase/pending/${m[1]}`;
+    assert.ok(existsSync(new URL(named, ROOT)), `${f} names ${named}, which is not there`);
+  }
+  // the import rollback names the applied parts, the first by its path and the last by its file name, and still the names they
+  // were staged and reviewed under
+  const header = read(OUTPUT_FILES.importRollback).split(/^begin;$/m)[0], last = partFiles.at(-1);
+  assert.ok(header.includes(partFiles[0]) && header.includes(last.slice(last.lastIndexOf('/') + 1)), 'the first and the last applied part');
+  assert.ok(header.includes(`${importPartStageName(1)} to _${pad2(parts.length)}.sql`), 'and the staged names');
+});
+
+test('while the publish is pending, the feed brief does not say the missions are published (review of the release polish, RP-3)', () => {
+  // The owner decided to publish all 125 (2026-11-17); the publish runs in the deploy window. Until its file leaves
+  // supabase/pending/, the brief records the decision and the state apart: the 125 are drafts in production.
+  assert.ok(existsSync(new URL(OUTPUT_FILES.publish, ROOT)), 'the publish is still pending');
+  const brief = read('docs/control-plane/WORLD-FEED-AND-MISSIONS-20261117.md');
+  assert.doesNotMatch(brief, /\bmissions are published\b/i, 'no line says the missions are published');
+  assert.match(brief.replace(/\n +/g, ' '), /\(`supabase\/pending\/20261117100300_action_mission_drawdown_publish\.sql`\), is pending for the deploy window; until it runs, none of the 125 is published\./);
 });

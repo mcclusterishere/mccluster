@@ -543,9 +543,12 @@ function renderParts(catalog, s) {
 const partsSpan = (total) => `${importPartStageName(1)} to _${pad2(total)}.sql`;
 
 function buildImportRollback(catalog, s, total) {
+  /* the parts it recovers from, where they are now (the applied migrations), then the names they were staged and reviewed under
+     (review of the release polish, RP-4: the staged names alone are no longer on disk) */
   return [
-    `-- Recovery artifact for the import parts ${partsSpan(total)},`,
-    '-- however many of them ran: never a forward migration.',
+    `-- Recovery artifact for the import parts ${importPartFile(1)} to`,
+    `-- ${fileName(importPartFile(total))}, however many of them ran: never a forward migration. They were`,
+    `-- staged and reviewed as ${partsSpan(total)} and applied on 2026-11-18.`,
     '--',
     ...provenance(s),
     '--',

@@ -325,7 +325,9 @@ Promoted 2026-11-18 (README, "To promote one" and "Promoted 2026-11-18"): each f
 `supabase/migrations/<version>_<name>.sql`, with `supabase/production-ledger.json`, `core/drift-contract.json`, the
 production snapshot `docs/control-plane/evidence/production-schema-snapshot-2026-11-18.json`, the schema manifest and
 `live-callers.json`. The rollbacks stay here under their pending names, and the moved files' headers keep the words
-they were applied with ("PENDING. Not applied to production."), as an applied file's bytes must.
+they were applied with ("PENDING. Not applied to production."), as an applied file's bytes must. A rollback is not
+applied, so its first line now names its forward file where that file is, under `supabase/migrations/`, and then the
+name it was staged and reviewed under (review of the release polish, 2026-11-18, RP-4; `scripts/test/mission-import.test.mjs`).
 
 | # | File (+ rollback) | What | Callers | Proof before apply |
 |---|---|---|---|---|

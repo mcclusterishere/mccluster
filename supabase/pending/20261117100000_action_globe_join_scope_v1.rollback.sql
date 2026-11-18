@@ -1,4 +1,5 @@
--- Recovery artifact for 20261117100000_action_globe_join_scope_v1.sql: never a forward migration.
+-- Recovery artifact for supabase/migrations/20261117222809_action_globe_join_scope_v1.sql: never a forward migration.
+-- (Staged and reviewed as 20261117100000_action_globe_join_scope_v1.sql; applied 2026-11-17 and promoted.)
 -- Owner approval required, like the forward file. Run it as postgres, as the forward file was (the Supabase
 -- MCP `apply_migration` runs as postgres); the service role cannot, since it owns neither the table nor the
 -- functions (read 2026-11-17).
