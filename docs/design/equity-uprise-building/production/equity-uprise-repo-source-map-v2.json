@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 745,
+  "candidate_count": 746,
   "capability_source_count": 104,
-  "support_only_count": 641,
+  "support_only_count": 642,
   "entries": [
     {
       "path": ".cursorrules",
@@ -1290,6 +1290,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Control-plane design/record document; mentions Equity Uprise only as the program context for shared intelligence, fellowship, identity or mission governance. Defines no building geometry or new program capability."
+    },
+    {
+      "path": "docs/control-plane/WORLD-RELEASE-20261118.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Release record and runbook of the 2026-11-18 World release (what ships and what a visitor sees, what does not ship, production's state, the ordered steps from a pull request to a verified public release, the checks run, the owner's open decisions); names Equity Uprise as the public brand and the World's feed tab. Defines no building geometry, program or capability."
     },
     {
       "path": "docs/control-plane/admin-evidence-20261020/README.md",

@@ -195,12 +195,12 @@ Screenshots (`node scripts/e2e/world-gate.e2e.mjs <outDir>`, deviceScaleFactor 2
 off, so their timing is the door's own); without it the layout checks still hold, but only the real globe tests the words
 that sit over the Earth.
 
-The CI entry belongs to the feed lane's workflow (`.github/workflows/human-uprise-editorial.yml`), named here rather than
-edited: add the paths `css/world-gate.css`, `js/world-gate.js`, `scripts/e2e/world-gate.e2e.mjs`,
-`scripts/e2e/sign-in.e2e.mjs` and `scripts/e2e/support/world-gate-harness.mjs`; add `world-gate` and `sign-in` to
-`matrix.suite`; and add the cases
+Both browser suites run on a pull request in the feed lane's workflow (`.github/workflows/human-uprise-editorial.yml`)
+since the release preparation of 2026-11-18 (`docs/control-plane/WORLD-RELEASE-20261118.md`): its paths name
+`css/world-gate.css`, `js/world-gate.js`, `scripts/e2e/world-gate.e2e.mjs`, `scripts/e2e/sign-in.e2e.mjs` and
+`scripts/e2e/support/world-gate-harness.mjs`; `world-gate` and `sign-in` are in `matrix.suite`; and the cases are
 `world-gate) node scripts/e2e/world-gate.e2e.mjs /tmp/hu-proof/world-gate ;;` and
-`sign-in) node scripts/e2e/sign-in.e2e.mjs /tmp/hu-proof/sign-in ;;`.
+`sign-in) node scripts/e2e/sign-in.e2e.mjs /tmp/hu-proof/sign-in ;;`. Until then they ran only by hand.
 
 ## Open questions for the owner
 
