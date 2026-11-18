@@ -57,6 +57,8 @@ on:
       - 'workers/mccluster/src/world-host.js'
       - 'scripts/e2e/world-switch.mjs'
       - 'scripts/e2e/world-missions-guest.e2e.mjs'
+      - 'scripts/e2e/world-first-visit.e2e.mjs'
+      - 'js/live-content.js'
       - 'js/world-mission-posts.js'
       - 'tools/build-mission-import.mjs'
       - 'data/missions/drawdown/missions.json'
@@ -99,7 +101,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        suite: [database, editorial-iphone-portrait, editorial-iphone-landscape, editorial-ipad-portrait, editorial-ipad-landscape, editorial-desktop, editorial-video-composer, travel-iphone-portrait, travel-iphone-landscape, travel-ipad-portrait, travel-ipad-landscape, travel-desktop, guest-travel, member-desk, music-world, news-guest, navigation, creator-onboarding, mission-pins, world-missions-guest, world-countries, world-globe-feed, world-transport, anti-social, human-uprise-door, owner-halo-globe, policy-mode, world-environment, environment-globe, environment-world, environment-unit]
+        suite: [database, editorial-iphone-portrait, editorial-iphone-landscape, editorial-ipad-portrait, editorial-ipad-landscape, editorial-desktop, editorial-video-composer, travel-iphone-portrait, travel-iphone-landscape, travel-ipad-portrait, travel-ipad-landscape, travel-desktop, guest-travel, member-desk, music-world, news-guest, navigation, creator-onboarding, mission-pins, world-missions-guest, world-first-visit, world-countries, world-globe-feed, world-transport, anti-social, human-uprise-door, owner-halo-globe, policy-mode, world-environment, environment-globe, environment-world, environment-unit]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -140,6 +142,7 @@ jobs:
             creator-onboarding) node scripts/e2e/creator-onboarding.e2e.mjs /tmp/hu-proof/creator-onboarding ;;
             mission-pins) node scripts/e2e/mission-pins.e2e.mjs /tmp/hu-proof/mission-pins ;;
             world-missions-guest) node scripts/e2e/world-missions-guest.e2e.mjs /tmp/hu-proof/world-missions-guest ;;
+            world-first-visit) node scripts/e2e/world-first-visit.e2e.mjs /tmp/hu-proof/world-first-visit ;;
             world-countries) node scripts/e2e/world-countries.e2e.mjs /tmp/hu-proof/world-countries ;;
             world-globe-feed) node scripts/e2e/world-globe-feed.e2e.mjs /tmp/hu-proof/world-globe-feed ;;
             world-transport) node scripts/e2e/world-transport.e2e.mjs /tmp/hu-proof/world-transport ;;
