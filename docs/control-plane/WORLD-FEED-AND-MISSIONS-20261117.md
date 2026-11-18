@@ -195,6 +195,11 @@ Mobile first (`AGENTS.md`, hard rule 14): designed at 390 px, verified at 390, 8
   stood on 2026-11-18 (its sha256 is pinned in the test); any change to the panel, the redesign landing or one more line
   in the old panel, ends the exception and the panel is read like the rest of the page. The review's probe (a new line
   with the tagline inside the panel) passed the old guard and fails this one.
+  Verification (2026-11-18): the redesigned door (`docs/design/WORLD-SIGN-IN-DOOR.md`) carries no such line, so the
+  exception had ended; its code and the pinned sha256 are now removed from the test, which reads `mnet.html` whole and
+  proves the tagline is refused anywhere on the World (in the door, the onboarding pages, the feed, a dialog, the head,
+  an attribute). With the pinned exception still in the test, the old panel put back byte for byte passed the guard; it
+  now fails it.
 
 ## Owner decisions later on 2026-11-17 (the environmental globe)
 

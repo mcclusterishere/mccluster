@@ -10,17 +10,16 @@
      reads them). docs/ is out by the same rule that keeps it off the site: dated records keep the words they were written with;
    - what Worker mccluster serves on mccluster.org: its source (workers/mccluster/src), and the /company pages generated from
      data/seo/company-site.json by tools/build-company-site.mjs, read as a visitor gets them.
-   The World's sign-in panel (mnet.html, #mnSignedOut) is being redesigned separately under the same decision, and the
-   redesign removes the line. Until it lands, that one element is left out of the scan exactly as it stood on 2026-11-18 and
-   no longer: its sha256 is pinned below, so any change to the panel (the redesign landing, or a line added to the old panel)
-   ends the exception and the panel is read like the rest of the page (review LDR-F5, 2026-11-18: the exception had no end,
-   and a new line carrying the tagline inside the panel passed).
+   The World (mnet.html) is read whole, its sign-in door included. While the door (#mnSignedOut) was being redesigned under
+   the same decision, this guard left that one element out, exactly as it stood on 2026-11-18 (its sha256 pinned, review
+   LDR-F5). The redesigned door (2026-11-18, docs/design/WORLD-SIGN-IN-DOOR.md) carries no such line, and changing the
+   panel ended the exception; its code is gone with it, so the old panel put back byte for byte would be read, and refused,
+   like any page.
 
    Dependency-free; the root suite runs it (node --test scripts/test/*.test.mjs). */
 import test from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { createHash } from "node:crypto";
 import { readFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -46,32 +45,9 @@ const tracked = execFileSync("git", ["ls-files", "-z"], { cwd: ROOT, encoding: "
 const published = tracked.filter((f) => TEXT.test(f) && !strippedFiles.has(f) && !strippedDirs.some((d) => f === d || f.startsWith(d + "/")));
 const workerSource = tracked.filter((f) => TEXT.test(f) && f.startsWith("workers/mccluster/src/"));
 
-/* one element of a page, found by its id and closed by its own tag, nested ones of the same tag counted: [start, end) */
-function elementSpan(html, id) {
-  const at = html.indexOf(`id="${id}"`);
-  if (at < 0) return null;
-  const start = html.lastIndexOf("<", at);
-  const tag = /^<([a-z][a-z0-9-]*)/i.exec(html.slice(start))[1];
-  const re = new RegExp(`<(/?)${tag}\\b[^>]*>`, "gi");
-  re.lastIndex = start;
-  let depth = 0, m;
-  while ((m = re.exec(html))) {
-    depth += m[1] ? -1 : 1;
-    if (depth === 0) return [start, re.lastIndex];
-  }
-  throw new Error(`#${id} never closes in the page`);
-}
-const elementOf = (html, id) => { const span = elementSpan(html, id); return span ? html.slice(span[0], span[1]) : null; };
-function withoutElement(html, id) {
-  const span = elementSpan(html, id);
-  return span ? html.slice(0, span[0]) + html.slice(span[1]) : html;
-}
-/* the sign-in panel exactly as it stood on 2026-11-18 (line endings aside): the only thing this guard leaves out */
-const SIGN_IN_PANEL_2026_11_18 = "4189a8939dc2e89ccc4abf2413a8a5324e18760f3b14817e469de3db4fb34c50";
-const sha256 = (text) => createHash("sha256").update(String(text).replace(/\r\n/g, "\n")).digest("hex");
-const panelExcused = (html) => { const panel = elementOf(html, "mnSignedOut"); return !!panel && sha256(panel) === SIGN_IN_PANEL_2026_11_18; };
-const worldText = (html) => (panelExcused(html) ? withoutElement(html, "mnSignedOut") : html);
-const publicText = (f) => (f === "mnet.html" ? worldText(read(f)) : read(f));
+/* the one rule: does this text carry the tagline? Every published file is read whole; nothing is left out of any page */
+const carries = (text) => RETIRED.test(words(text));
+const publicText = (f) => read(f);
 
 test("the scan covers the public tree and the Worker, and not the records", () => {
   assert.ok(published.length > 500, `the published tree has its pages, scripts and data (${published.length} text files)`);
@@ -80,36 +56,45 @@ test("the scan covers the public tree and the Worker, and not the records", () =
   }
   assert.ok(workerSource.includes("workers/mccluster/src/company-site/pages.generated.js"), "the generated /company pages are read");
   assert.ok(!published.some((f) => f.startsWith("docs/")), "docs/ is stripped from the site and keeps its dated records");
-  /* the one element left to the sign-in redesign is cut out by its own tag, and nothing after it */
-  const world = read("mnet.html"), cut = withoutElement(world, "mnSignedOut");
-  assert.ok(cut.length < world.length && !cut.includes('id="mnSignedOut"'), "the sign-in panel is the only part left out");
-  assert.ok(cut.includes('id="mnFeedScope"') && cut.includes('id="mnMissionDialog"') && /<\/html>\s*$/.test(cut), "the rest of the World is read");
+  /* the World is read whole: the sign-in door, the onboarding pages, the feed and the dialogs, to the last tag */
+  const world = publicText("mnet.html");
+  assert.equal(world, read("mnet.html"), "nothing of the World is left out of the scan");
+  for (const id of ["mnSignedOut", "mnAuthPanel", "mnProfileGate", "mnApp", "mnFeedScope", "mnMissionDialog"]) assert.ok(world.includes(`id="${id}"`), `#${id} is read`);
+  assert.match(world, /<\/html>\s*$/, "to the end of the page");
 });
 
-test("the sign-in panel is left out only as it stood on 2026-11-18: a line added to it, or the redesign, is read", () => {
-  const world = read("mnet.html");
-  const panel = elementOf(world, "mnSignedOut");
-  assert.ok(panel, "the World has its sign-in panel");
-  /* the review's probe (LDR-F5): one more line inside the panel, which used to pass */
-  const open = world.indexOf(">", world.indexOf('id="mnSignedOut"')) + 1;
-  const probed = world.slice(0, open) + '\n      <p class="mn__hint">Get Your Hu Up! (review probe)</p>' + world.slice(open);
-  assert.equal(panelExcused(probed), false, "a changed panel is no longer the one excused");
-  assert.match(words(worldText(probed)), RETIRED, "so the guard reads it, and the probe is caught");
-  /* the redesign landing: a panel without the line is read with the rest of the page, and passes */
-  const redesigned = world.slice(0, open) + '\n      <p class="mn__hint">(the redesigned panel)</p>' + world.slice(open).replace(/<p class="mn__lede">Get Your Hu Up!<\/p>/, "");
-  assert.equal(worldText(redesigned), redesigned, "a redesigned panel is read with the rest of the page");
-  assert.doesNotMatch(words(worldText(redesigned)), RETIRED);
-  if (panelExcused(world)) {
-    /* still the old panel: exactly one line in it is excused, the one the redesign removes */
-    assert.equal(words(panel).split(/get\W*your\W*hu\W*up/i).length - 1, 1, "the old panel says it once");
-    assert.match(panel, /<p class="mn__lede">Get Your Hu Up!<\/p>/);
-  } else {
-    assert.equal(worldText(world), world, "the panel changed since 2026-11-18, so it is read like the rest of the page");
+test("the tagline fails anywhere on the World: the sign-in door, the pages, the feed, a dialog, the head, an attribute", () => {
+  const world = publicText("mnet.html");
+  assert.equal(carries(world), false, "the World as it ships says it nowhere");
+  /* just inside an element, found by its id */
+  const inside = (id) => { const at = world.indexOf(`id="${id}"`); assert.ok(at > 0, `#${id} is on the World`); return world.indexOf(">", at) + 1; };
+  const places = {
+    "the sign-in door (#mnSignedOut), which the guard once left out": inside("mnSignedOut"),
+    "the door's form (#mnAuthPanel)": inside("mnAuthPanel"),
+    "the onboarding pages (#mnProfileGate)": inside("mnProfileGate"),
+    "the World (#mnApp)": inside("mnApp"),
+    "the feed's row (#mnFeedScope)": inside("mnFeedScope"),
+    "a mission's dialog (#mnMissionDialog)": inside("mnMissionDialog"),
+    "the head": world.indexOf("<title>"),
+    "the end of the page": world.lastIndexOf("</body>")
+  };
+  /* any case, any punctuation or spacing between the four words, a non-breaking space written either way */
+  const spellings = ["Get Your Hu Up!", "GET YOUR HU UP", "get your hu-up", "Get&nbsp;Your&nbsp;Hu&nbsp;Up", "Get your Hu&#160;Up."];
+  for (const [where, at] of Object.entries(places)) {
+    assert.ok(at > 0, `${where} is on the World`);
+    for (const said of spellings) assert.equal(carries(world.slice(0, at) + `<p>${said}</p>` + world.slice(at)), true, `"${said}" in ${where} is caught`);
   }
+  /* the line the old panel carried, put back where it stood (after the headline): caught, with no panel excused */
+  const headline = world.indexOf("</h2>", inside("mnSignedOut")) + "</h2>".length;
+  assert.equal(carries(world.slice(0, headline) + '\n        <p class="mn__lede">Get Your Hu Up!</p>' + world.slice(headline)), true, "the old panel's own line, back in the door");
+  /* and where no visitor reads it but assistive technology does */
+  const named = world.replace('id="mnSignedOut"', 'id="mnSignedOut" title="Get Your Hu Up!"');
+  assert.notEqual(named, world);
+  assert.equal(carries(named), true, "in an attribute of the door");
 });
 
 test("no published page, script, stylesheet or data file carries the retired tagline", () => {
-  const found = published.filter((f) => RETIRED.test(words(publicText(f))));
+  const found = published.filter((f) => carries(publicText(f)));
   assert.deepEqual(found, [], `the retired tagline is still public in: ${found.join(", ")}`);
 });
 
