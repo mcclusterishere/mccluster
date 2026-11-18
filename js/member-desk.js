@@ -119,7 +119,7 @@
     el.hidden = true;
     el.innerHTML =
       '<div class="hu-desk__grip" aria-hidden="true"></div>' +
-      '<header class="hu-desk__head"><div><p class="hu-desk__k">Get Your Hu Up!</p><h2 id="huDeskTitle">Your desk</h2></div>' +
+      '<header class="hu-desk__head"><div><h2 id="huDeskTitle">Your desk</h2></div>' +
       '<button type="button" class="hu-desk__close" data-hu-desk-close aria-label="Close your desk">✕</button></header>' +
       '<nav class="hu-desk__tabs" id="huDeskTabs" aria-label="Desk sections"></nav>' +
       '<div class="hu-desk__body" id="huDeskBody"></div>';
