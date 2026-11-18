@@ -206,7 +206,10 @@ the node that answered.
   line's job. Where a field is not declared, one honest line takes the control's place ("Attach image is off: the
   Core running now does not accept images in a turn."; for the house owner only, "Use the browser is off: the Core
   running now does not honour browser turns."), and a turn the Core would strip is refused before it is shown as
-  sent, never sent without its images.
+  sent, never sent without its images. A tool list that could not be read (the bridge did not answer, a refused read,
+  nothing read yet) is not a Core that declares nothing: the controls stay off and each line says what the page knows,
+  "Attach image is off: the Core's tool list has not been read, so whether it accepts images is not known." (and the
+  same for the browser), beside the page's own "Source unavailable" banner (`aiCoreWord`, review LDR-F3).
 - **Attach image**: a 44 px button in the Ask McCluster composer (`accept="image/*"`, at most 2); each file
   is downscaled on the client to at most 1280 px on its longest side and encoded as JPEG at quality 0.6, 0.45
   then 0.3 until it is at most 200,000 bytes, else refused with "Image is too large after downscaling".
@@ -284,6 +287,10 @@ changed.
   serves both through the bridge fixture: against eb942248, at 390 and 1280, no attach control and no switch, one line
   in place of each, and a sent turn carries only the fields that Core declares; a member sees the images line and
   nothing about the browser. Both failed before the change (the controls rendered for any Core that listed the tool).
+  Review LDR-F3 (2026-11-18): with `tools/list` answering 503 the off lines stated as fact that the Core refused images
+  and the browser, next to the page's banner saying the source did not respond. They now say it is not known; the unit
+  test holds every unread case (refused, unreachable, signed out, nothing read yet) and the e2e serves the 503 at 390
+  (`ask-tools-unread-390.png`); both failed before the change.
 - **N2V-m2, the node badge at 390 px** cut off its rate (`scrollWidth` 193 against `clientWidth` 136 in the e2e): the
   meta row now wraps and the badge no longer clips; the e2e holds it whole and inside its message at 390, 820 and 1280.
 - **N2V-m1, a green CI job with every real-Chromium test skipped**: the harness looked for Playwright only from the
