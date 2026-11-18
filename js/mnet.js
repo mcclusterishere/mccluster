@@ -2140,9 +2140,16 @@
     var query = state.world.query, list = environmentPosts();
     return query ? list.filter(function (p) { return feedMatches(p, query); }) : list;
   }
+  /* the observation posts' words as one ordered line (id, content hash, significance, source label, update time): a detail that
+     changed none of them repaints nothing (review G1R-7; the tour re-selecting quakes, a refresh whose words did not change) */
+  function environmentSignature() {
+    var env = state.environment;
+    return (env.unavailable ? "u:" + env.code + "|" : "") + env.order.map(function (id) { var p = env.posts[id]; return p ? id + ":" + p.hash + ":" + (p.significant ? 1 : 0) + ":" + (p.source && p.source.label ? p.source.label : "") + ":" + (p.updated_at || 0) : id; }).join("|");
+  }
   window.addEventListener("mcc:world-environment-events", function (ev) {
     var detail = ev && ev.detail, env = state.environment, now = Date.now();
     if (!ENV_POSTS || !detail || typeof detail !== "object") return;
+    var before = environmentSignature();
     if (detail.unavailable === true) {
       env.posts = {}; env.order = []; env.unavailable = true; env.code = typeof detail.code === "string" ? detail.code.slice(0, 40) : null;
     } else {
@@ -2156,6 +2163,7 @@
       });
       env.posts = next; env.order = order; env.unavailable = false; env.code = null;
     }
+    if (environmentSignature() === before) return;
     if (state.feedAnswered && !state.loadingFeed) renderFeed(false);
   });
   /* a post by the system: where a post names its author, "Environmental desk"; where it names the handle, the type, the source and

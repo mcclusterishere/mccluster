@@ -5,7 +5,10 @@
    the drawing is done by the typed batched primitives of MCC_ENVIRONMENT_LAYERS (loaded before this file in
    action-globe.html). normalize() keeps today's validation and adds, ONLY when a row carries them, the G1 item's
    additive keys: category, location_kind, observed_at, fetched_at, facts and significant (the source link rides
-   with observed_at: the legacy {id,title,lat,lon,stale} message carried neither). The legacy entity renderer
+   with observed_at: the legacy {id,title,lat,lon,stale} message carried neither). The pins message may also carry
+   `sources`, the feed providers' terms as the panel copied them from the feed's own source records (id, label, url,
+   attribution, licence, coverage; review G1R-10): normalizeSources() keeps those six public fields, clipped, https
+   links only, and the typed layers answer a selection with them instead of a client copy. The legacy entity renderer
    below is kept only as the fallback that scripts/test/world-environment.test.mjs runs without the layers; it is
    never reached on the real page. */
 (function (root) {
@@ -34,11 +37,21 @@
       return [out];
     });
   }
+  /* the feed providers' terms that ride with the pins: at most eight records of six public fields, nothing else */
+  function normalizeSources(list) {
+    const seen = new Set();
+    return (Array.isArray(list) ? list : []).slice(0, 8).flatMap(s => {
+      if (!s || typeof s.id !== 'string' || !/^[a-z][a-z0-9_]{0,39}$/.test(s.id) || seen.has(s.id)) return [];
+      seen.add(s.id);
+      const str = (v, n) => (typeof v === 'string' ? v.slice(0, n) : '');
+      return [{ id: s.id, label: str(s.label, 120), url: httpsUrl(s.url), attribution: str(s.attribution, 200), license: str(s.license, 200), coverage: str(s.coverage, 300) }];
+    });
+  }
   function create(getViewer, getCesium, tell) {
     const layers = root.MCC_ENVIRONMENT_LAYERS;
     if (layers && typeof layers.setEvents === 'function') {
       return {
-        set(data) { const d = data || {}; layers.setEvents(normalize(d.items), { on: d.on === true, selected: typeof d.selected === 'string' ? d.selected : '' }); },
+        set(data) { const d = data || {}; layers.setEvents(normalize(d.items), Object.assign({ on: d.on === true, selected: typeof d.selected === 'string' ? d.selected : '' }, Array.isArray(d.sources) ? { sources: normalizeSources(d.sources) } : {})); },
         draw() { layers.redraw(); },
         destroy() { layers.setEvents([], { on: false, selected: '' }); },
         focus(id) { layers.focus(id); },
@@ -77,5 +90,5 @@
       }
     };
   }
-  root.MCC_ENVIRONMENT_PINS = Object.freeze({ normalize, create });
+  root.MCC_ENVIRONMENT_PINS = Object.freeze({ normalize, normalizeSources, create });
 })(window);

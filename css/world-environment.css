@@ -13,7 +13,8 @@
 .we-eyebrow { color:var(--we-accent);text-transform:uppercase;letter-spacing:.12em;font-size:11px; }
 .we-subtle,.we-panel small { color:var(--we-dim);font-size:13px; }
 .we-toolbar,.we-actions { display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px 0; }
-.we-panel button,.we-button { min-height:44px;max-width:100%;padding:9px 13px;border:1px solid var(--we-rule);border-radius:12px;background:var(--we-raise);color:var(--we-button-ink);font:inherit;cursor:pointer;text-decoration:none; }
+/* buttons are form controls: never under 16px (AGENTS.md hard rule 14; review G1R-6), whatever the panel's own 15px body says */
+.we-panel button,.we-button { min-height:44px;max-width:100%;padding:9px 13px;border:1px solid var(--we-rule);border-radius:12px;background:var(--we-raise);color:var(--we-button-ink);font:inherit;font-size:max(16px,1em);cursor:pointer;text-decoration:none; }
 .we-panel button:focus-visible,.we-panel a:focus-visible,.we-panel input:focus-visible { outline:3px solid var(--we-focus);outline-offset:3px; }
 .we-panel button:disabled { opacity:.55;cursor:wait; }
 .we-panel a { color:var(--we-accent-ink); }

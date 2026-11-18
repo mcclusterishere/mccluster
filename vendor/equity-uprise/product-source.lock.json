@@ -15,7 +15,7 @@
     },
     {
       "path": "src/environment/panel.mjs",
-      "sha256": "168d1e2db73165c28a9cf38bf76f1a7587ebea17a5ff4594838ca29f386ed551"
+      "sha256": "372829ec69bdcc5b7423e08716720171c9fd650ef7ff871e659f1b31e349c232"
     },
     {
       "path": "src/environment/server.mjs",
@@ -94,6 +94,22 @@
         {
           "id": "G1R-3",
           "summary": "Review of slice G1: a globe layer's health row renders every source record the layer carries (the water levels' station catalogue and readings, a ShakeMap's event detail and contours, one satellite each for the fires), each with its own status, reason, Retrieved and Last success, under the layer's own status and counts, so a reading is never shown as retrieved before it was observed and no record speaks for another; the digests handed to the host page take their label from the record the layer's own fields came from (the layer state's source_id)."
+        },
+        {
+          "id": "G1R-7",
+          "summary": "Review of slice G1: a layer state's digest is handed to the host page only when it changed from the last one handed on for that layer, so a tour selecting quake after quake, or a refresh whose words did not change, repaints nothing there."
+        },
+        {
+          "id": "G1R-9",
+          "summary": "Review of slice G1: the search narrows the list on every keystroke and re-sends the pins to the globe once the typing pauses (250 ms), never per keystroke, so the globe does not rebuild its events layer as a visitor types."
+        },
+        {
+          "id": "G1R-10",
+          "summary": "Review of slice G1: the pins carry the feed providers' terms as the feed's own source records give them (id, label, url, attribution, licence, coverage; never on an off message), so the globe answers a feed item's selection and credits its earthquake legend in the Worker's words and keeps no copy of its own."
+        },
+        {
+          "id": "G1R-11",
+          "summary": "Review of slice G1: the Play/Pause control changes its label (Play tour / Pause tour) and carries no aria-pressed: a toggle keeps one label and says its state, or changes its label and says nothing more, never both."
         }
       ],
       "regression_tests": [

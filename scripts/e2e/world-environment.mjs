@@ -200,6 +200,7 @@ try{
    }
    return route.fulfill({status:204,body:''});
   });
+  await context.addInitScript(()=>{window.__envDetails=[];window.addEventListener('mcc:world-environment-events',e=>{window.__envDetails.push(e.detail);});});
   await page.goto(origin+'/mnet.html?view=feed&daylight='+daylight,{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>!!window.MCC_WORLD_MODE&&!!window.MCC_FEED_SCOPE&&document.documentElement.classList.contains('mn-world-on'),null,{timeout:60000});
   return {context,page,errors,requests};
@@ -253,6 +254,8 @@ try{
   assert.ok(firstLayersOn>=0&&firstPinsOn>firstLayersOn,'layers on before pins on: '+spine.join(' '));
   const pinsOn=(await got(page)).filter(m=>m.type==='hu:environment-pins'&&m.on).at(-1);
   assert.equal(pinsOn.items.length,62);assert.equal(pinsOn.items.filter(i=>i.significant).length,16);assert.equal(JSON.stringify(pinsOn).includes('notice'),false,'the pins carry the public fields only');
+  /* G1R-10: the pins carry the feed providers' terms, the six public fields of the feed's own source records, for the globe to answer with */
+  assert.deepEqual(pinsOn.sources,FEED.sources.map(x=>({id:x.id,label:x.label,url:x.url,attribution:x.attribution,license:x.license,coverage:x.coverage})),'the feed\'s own terms ride with the pins');
   /* the feed route is read once by the panel; the page never reads a layer route */
   assert.equal(requests.filter(p=>p==='/v1/world/environment').length,1,JSON.stringify(requests));assert.equal(requests.some(p=>p.startsWith('/v1/world/environment/')),false);
   /* Show on globe from the tab: hu:environment-focus to the frame with the event's id */
@@ -274,6 +277,13 @@ try{
   const cell=await page.evaluate(()=>{const a=document.querySelector('#mnFeed [data-observation-post="firecell:-119:34"]');return {title:a.querySelector('.mn__observation-post-title').textContent,body:a.querySelector('.mn__observation-post-body').textContent,globe:a.querySelector('[data-observation-globe]').getAttribute('data-observation-globe')};});
   assert.equal(cell.title,'Fire detections · 1° area at 34°, -119° (south-west corner)');assert.match(cell.body,/Detections: 220 · Summed radiative power: 1830\.4 MW/);
   assert.equal(await page.locator('#mnFeed [data-observation-post^="firecell:"]').count(),2,'two areas with radiative power, not 600 detections');
+  /* G1R-7: the same layer state again (its digest unchanged) is not handed to the page again; and the same words dispatched again
+     repaint no card: the first observation card's node survives */
+  const dispatched=await page.evaluate(()=>window.__envDetails.length);
+  await fromGlobe(page,LAYER_STATE);await page.waitForTimeout(300);
+  assert.equal(await page.evaluate(()=>window.__envDetails.length),dispatched,'an identical digest is not dispatched again');
+  const kept=await page.evaluate(()=>{const first=document.querySelector('#mnFeed [data-observation-post]');first.__mark=true;window.dispatchEvent(new CustomEvent('mcc:world-environment-events',{detail:window.__envDetails.at(-1)}));const again=document.querySelector('#mnFeed [data-observation-post]');return {same:again===first,marked:again.__mark===true,cards:document.querySelectorAll('#mnFeed > article').length};});
+  assert.ok(kept.same&&kept.marked,'the same words again repaint nothing: '+JSON.stringify(kept));
   /* G1R-3: a layer with two source records keeps one row, which renders every record with its own retrieval time; the layer's
      counts head the row once */
   const TIDES_STATE={...LAYER_STATE,layer:'tides',schema:'world-environment-tides/v1',fetched_at:'2026-11-17T19:56:00Z',last_success_at:'2026-11-17T19:56:00Z',coverage:'The latest observed water level at 20 documented NOAA stations',attribution:'NOAA CO-OPS',license:'Public domain (U.S. Government work); NOAA asks to be credited',url:'https://tidesandcurrents.noaa.gov/',count:14,total:20,digest:{answered:14,stations:20},
@@ -306,6 +316,10 @@ try{
   await fromGlobe(page,{type:'hu:environment-view-state',mode:'2d',morphing:false});
   await page.waitForFunction(()=>document.getElementById('weView2d').getAttribute('aria-pressed')==='true',null,{timeout:5000});
   assert.equal(await page.locator('#weView2d').textContent(),'3D globe');
+  /* G1R-11: the Play/Pause button changes its label and carries no aria-pressed; G1R-6: every panel button is a form control at 16px or more */
+  const controls=await page.evaluate(()=>({pressed:document.getElementById('wePlay').hasAttribute('aria-pressed'),sizes:Object.fromEntries(['wePlay','wePrev','weNext','weReplay','weView2d','weRefresh'].map(id=>[id,parseFloat(getComputedStyle(document.getElementById(id)).fontSize)]))}));
+  assert.equal(controls.pressed,false,'no aria-pressed on a button whose label names the next action');
+  assert.ok(Object.values(controls.sizes).every(s=>s>=16),'panel buttons at 16px or more: '+JSON.stringify(controls.sizes));
   /* nothing scrolls sideways, in the page, the panel or the feed */
   const dims=await fits(page);
   assert.equal(dims.sw,dims.cw,JSON.stringify(dims));assert.ok(dims.psw<=dims.pcw,JSON.stringify(dims));

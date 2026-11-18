@@ -4,7 +4,10 @@
    - G1R-1: the tour queue follows the pins whenever what it is built from changed (an item's significance, its recorded time) even
      when no geometry changed, and a flag change alone never rebuilds the primitives;
    - G1R-3: a layer's state and a selection speak for the record that produced what is drawn (the water-level readings, never the
-     station catalogue; the ShakeMap contours, never the event detail), so a reading is never shown as retrieved before it was observed.
+     station catalogue; the ShakeMap contours, never the event detail), so a reading is never shown as retrieved before it was observed;
+   - G1R-8: every polygon of a multi-polygon row has its own pick id, so the selection fade and the ShakeMap dim reach all of them;
+   - G1R-9: a selection the panel's list made is told as via 'focus', never 'panel';
+   - G1R-10: a feed item's selection and the earthquake legend answer with the terms the pins carried, never a client copy.
      node --test scripts/test/environment-layers-runtime.test.mjs */
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -16,6 +19,7 @@ const TIDES = JSON.parse(read('scripts/e2e/fixtures/environment/layers-tides.jso
 const SHAKEMAP = JSON.parse(read('scripts/e2e/fixtures/environment/shakemap-us7000tyhr.json'));
 const SHAKEMAP_NONE = JSON.parse(read('scripts/e2e/fixtures/environment/shakemap-none.json'));
 const FIRES = JSON.parse(read('scripts/e2e/fixtures/environment/layers-fires.json'));
+const FEED = JSON.parse(read('scripts/e2e/fixtures/environment/feed.json'));
 const flush = async (n = 4) => { for (let i = 0; i < n; i++) await new Promise((r) => setImmediate(r)); };
 
 function realm({ shakemap = null, doc = null } = {}) {
@@ -141,6 +145,52 @@ test('G1R-3: a ShakeMap state speaks for the contours source (usgs_shakemap), fa
   assert.equal(none.digest.available, false); assert.equal(L.debug().counts.shakemapLines, 0);
 });
 
+test('G1R-8: every polygon of a multi-polygon perimeter or alert has its own pick id; the selection fade reaches all of them and a pick on any part resolves to the row; an EONET polygon fades too', () => {
+  const { L, told, on, layer, ground } = realm();
+  on();
+  layer('perimeters', { schema: 'world-environment-perimeters/v1', generated_at: '2026-11-17T20:00:00.000Z', sources: [{ id: 'wfigs', label: 'NIFC WFIGS perimeters', status: 'available', fetched_at: '2026-11-17T19:57:00.000Z' }], perimeters: [{ id: 'two', name: 'Two Lobes', gis_acres: 12, polygon_captured_at: '2026-11-17T06:10:00.000Z', last_edited_at: null, discovered_at: null, polygons: [[ring(-118, 34)], [ring(-117, 34)]], polygons_dropped: 0, geometry_truncated: false }], count: 1, total: 1 });
+  layer('alerts', { schema: 'world-environment-alerts/v1', generated_at: '2026-11-17T20:00:00.000Z', sources: [{ id: 'nws', label: 'NOAA NWS', status: 'available', fetched_at: '2026-11-17T20:00:00.000Z' }], alerts: [{ id: 'nws:split', event: 'Flood Warning', headline: 'Flood Warning', severity: 'Severe', certainty: 'Likely', urgency: 'Expected', sent: '2026-11-17T15:21:00.000Z', area: 'Two counties', geometry: 'polygon', polygons: [[ring(-98, 28)], [ring(-97, 28)], [ring(-96, 28)]] }], count: 1, counts: { polygon: 1, zone_only: 0, rejected: 0 }, total: 1 });
+  layer('eonet', { schema: 'world-environment-eonet/v1', generated_at: '2026-11-17T14:00:00.000Z', sources: [{ id: 'eonet', label: 'NASA EONET', status: 'stale', fetched_at: '2026-11-17T14:00:00.000Z' }], events: [{ id: 'eonet:ice', title: 'Iceberg', categories: ['Sea and Lake Ice'], kind: 'ice', url: 'https://eonet.gsfc.nasa.gov/', reported_by: [], track: [{ date: '2026-11-16T00:00:00.000Z', placeholder_time: true, type: 'Polygon', polygons: [[ring(-45, -62, 0.4)]] }], track_count: 1 }], count: 1, total: 1 });
+  const c = L.debug().counts;
+  assert.equal(c.perimeters, 1); assert.equal(c.perimeterRings, 2); assert.equal(c.alerts.drawn, 1); assert.equal(c.eonetPolygons, 1);
+  const fills = ground().filter((p) => p.geometryInstances.some((i) => i.attributes && i.attributes.color) && p.geometryInstances.every((i) => !(i.geometry instanceof Object && 'positions' in i.geometry && 'width' in i.geometry)));
+  const perimeterFill = fills.find((p) => p.geometryInstances.length === 2 && p.geometryInstances[0].id.layer === 'perimeters');
+  const alertFill = fills.find((p) => p.geometryInstances.length === 3 && p.geometryInstances[0].id.layer === 'alerts');
+  const eonetFill = fills.find((p) => p.geometryInstances.length === 1 && p.geometryInstances[0].id.layer === 'eonet');
+  assert.ok(perimeterFill && alertFill && eonetFill, 'one fill primitive per layer');
+  const ids = perimeterFill.geometryInstances.map((i) => i.id);
+  assert.notEqual(ids[0], ids[1], 'two polygons, two pick ids');
+  assert.deepEqual(plain(ids.map((i) => [i.layer, i.id, i.part, i.index])), [['perimeters', 'wfigs:two', 'polygon', 0], ['perimeters', 'wfigs:two', 'polygon', 1]]);
+  /* select the perimeter: both polygons take the highlight (alpha 0.28 + 0.25), through their own instance attributes */
+  assert.equal(L.select('wfigs:two', 'pick', { layer: 'perimeters' }), true);
+  const alphas = ids.map((id) => perimeterFill.getGeometryInstanceAttributes(id).color.alpha);
+  assert.deepEqual(plain(alphas.map((a) => Math.round(a * 100))), [53, 53], 'every polygon of the row highlighted: ' + JSON.stringify(alphas));
+  assert.equal(selectedMessages(told).pop().id, 'wfigs:two');
+  /* a pick on the second polygon's part resolves to the row */
+  assert.equal(L.pick({ id: ids[1] }), true);
+  assert.equal(selectedMessages(told).pop().id, 'wfigs:two'); assert.equal(selectedMessages(told).pop().via, 'pick');
+  /* the alert: three polygons, three highlights; the previous selection fades back to its base colour */
+  assert.equal(L.select('nws:split', 'pick', { layer: 'alerts' }), true);
+  const alertAlphas = alertFill.geometryInstances.map((i) => alertFill.getGeometryInstanceAttributes(i.id).color.alpha);
+  assert.deepEqual(plain(alertAlphas.map((a) => Math.round(a * 100))), [51, 51, 51], 'Severe 0.26 + 0.25 on all three');
+  assert.deepEqual(plain(ids.map((id) => Math.round(perimeterFill.getGeometryInstanceAttributes(id).color.alpha * 100))), [28, 28], 'the perimeter is back to its base');
+  /* an EONET polygon instance carries a part id; the fade reaches it as well */
+  assert.equal(L.select('eonet:ice', 'pick', { layer: 'eonet' }), true);
+  assert.equal(Math.round(eonetFill.getGeometryInstanceAttributes(eonetFill.geometryInstances[0].id).color.alpha * 100), 47, '0.22 + 0.25');
+});
+
+test('G1R-9: a selection the panel\'s list made is told as via focus (the contract\'s vocabulary), never as panel', async () => {
+  const { L, told, on } = realm({ shakemap: () => ({ ok: true, status: 'available', http: 200, body: SHAKEMAP_NONE, fetched_at: '2026-11-17T20:01:00.000Z', generated_at: null }) });
+  on();
+  L.setEvents([quake('usgs:a', { significant: true })], { on: true, selected: 'usgs:a' });
+  assert.equal(L.debug().selected.id, 'usgs:a', 'the pins message\'s selected field selects the quake');
+  await flush();
+  const answers = selectedMessages(told);
+  assert.ok(answers.length >= 1, 'the ShakeMap answer is told');
+  assert.ok(answers.every((m) => ['pick', 'focus', 'tour'].includes(m.via)), 'only the contract\'s via values: ' + JSON.stringify(answers.map((m) => m.via)));
+  assert.equal(answers.pop().via, 'focus');
+});
+
 test('G1R-3: the fires layer speaks for its newest retrieval and a detection for its own satellite; a 1-degree area takes the layer\'s record', () => {
   const { L, told, on, layer } = realm();
   on();
@@ -162,4 +212,39 @@ test('G1R-3: the fires layer speaks for its newest retrieval and a detection for
   assert.equal(L.select(`cell:${c[0]}:${c[1]}`, 'pick', { layer: 'cells' }), true);
   const cell = selectedMessages(told).pop();
   assert.equal(cell.source.label, byId.firms_viirs_noaa21.label); assert.equal(cell.fetched_at, byId.firms_viirs_noaa21.fetched_at);
+});
+
+/* the frame's legend as a tiny document: the details box and its list, the lines as written */
+const legendDoc = () => { const box = { hidden: true }, list = { lines: [], replaceChildren(...items) { this.lines = items.map((i) => i.textContent); } }; return { hidden: false, getElementById: (id) => (id === 'envLegend' ? box : id === 'envLegendList' ? list : null), createElement: () => ({ textContent: '' }), list }; };
+test('G1R-10: a feed item answers with the terms the pins carried (the feed\'s own source records), the legend too; without them nothing is invented', () => {
+  const doc = legendDoc();
+  const { L, told, on } = realm({ doc });
+  on();
+  const sources = FEED.sources.map((s) => ({ id: s.id, label: s.label, url: s.url, attribution: s.attribution, license: s.license, coverage: s.coverage }));
+  const usgs = sources.find((s) => s.id === 'usgs');
+  L.setEvents([quake('usgs:a', { significant: true, source: { label: 'USGS', url: 'https://earthquake.usgs.gov/earthquakes/eventpage/a' } })], { on: true, selected: '', sources });
+  assert.equal(L.select('usgs:a', 'pick'), true);
+  let m = selectedMessages(told).pop();
+  assert.deepEqual(plain(m.source), { id: 'usgs', label: 'USGS', url: 'https://earthquake.usgs.gov/earthquakes/eventpage/a', attribution: usgs.attribution, license: usgs.license });
+  assert.equal(m.coverage, usgs.coverage);
+  const quakeLine = doc.list.lines.find((l) => /^Earthquakes: /.test(l));
+  assert.ok(quakeLine && quakeLine.endsWith(` ${usgs.attribution} · ${usgs.license}`), 'the legend credits USGS in the feed\'s words: ' + quakeLine);
+  /* the Worker's words change: the globe follows them, as it holds no copy of its own */
+  L.setEvents([quake('usgs:a', { significant: true })], { on: true, selected: '', sources: sources.map((s) => s.id === 'usgs' ? { ...s, attribution: 'USGS, as the Worker now words it', coverage: 'Global earthquakes in the past day, as now worded' } : s) });
+  assert.equal(L.select('usgs:a', 'focus'), true);
+  m = selectedMessages(told).pop();
+  assert.equal(m.source.attribution, 'USGS, as the Worker now words it', 'the globe follows the Worker\'s words, it holds no copy'); assert.equal(m.coverage, 'Global earthquakes in the past day, as now worded');
+  assert.deepEqual(plain(L.debug().feedTerms), ['eonet', 'nhc', 'nws', 'usgs']);
+  /* the terms are keyed by provider id with no inherited keys: a provider named like an Object property is still a provider */
+  L.setEvents([quake('usgs:a', { significant: true })], { on: true, selected: '', sources: [...sources, { id: 'constructor', label: 'A provider named constructor', url: 'https://example.org/', attribution: 'Its attribution', license: 'Its licence', coverage: 'Its coverage' }] });
+  assert.deepEqual(plain(L.debug().feedTerms), ['constructor', 'eonet', 'nhc', 'nws', 'usgs']);
+  /* a pins message without terms keeps the last ones; a realm that never received any answers with empty terms, never invented ones */
+  const bareDoc = legendDoc(), bare = realm({ doc: bareDoc });
+  bare.on();
+  bare.L.setEvents([quake('usgs:b')], { on: true, selected: '' });
+  assert.match(bareDoc.list.lines.find((l) => /^Earthquakes: /.test(l)), /capped at 1,000 km; colour shows depth: red shallow \(<33 km\) to blue deep \(>=300 km\)\.$/, 'no terms given, none written');
+  assert.equal(bare.L.select('usgs:b', 'pick'), true);
+  const b = selectedMessages(bare.told).pop();
+  assert.equal(b.source.attribution, ''); assert.equal(b.source.license, ''); assert.equal(b.coverage, '');
+  assert.equal(b.source.id, 'usgs');
 });

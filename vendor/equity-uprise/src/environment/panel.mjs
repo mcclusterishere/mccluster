@@ -100,11 +100,14 @@ export function mountEnvironment(w, d, adapter) {
   /* the globe's side: each layer's last reported state, the tour and view states, the replay choice, the visitor's pause (in memory
      for this page session only), the frame's visibility, one autostart per activation, and a selection that lives only on the globe */
   let layerStates = {}, sceneState = null, viewState = { mode:'3d', morphing:false }, replay = null, pausedByVisitor = false, frameVisible = false, tabOpen = false, autostartDone = false, resumeOnShow = false, observer = null, globeSelection = null, lastCode = null, checkedAt = null;
+  /* the last digest handed to the host page per layer (review G1R-7), and the search's pending pins resend (review G1R-9) */
+  const lastDigests = {}; let searchTimer = null;
+  const SEARCH_SYNC_MS = 250;
   let proofEpoch=0,proofBusy=false,planningEpoch=0;
   let team = null, oversight = null, proofReviews=null, privateToken = null, abort = null, timer = null, joining = false, saving = false;
   const token = async () => {try{return await adapter.token()||null;}catch{return null;}};
   const sessionCurrent=async(identity,epoch)=>{const value=await token();return !destroyed&&epoch===privateEpoch&&value===identity;};
-  panel.innerHTML = '<p class="we-eyebrow">Environmental Justice</p><h2 id="weTitle">See the evidence. Take action.</h2><p class="we-subtle">Government observations, their dates and practical missions on this same globe. An event is not proof of environmental injustice.</p><div class="we-toolbar"><button type="button" id="weRefresh">Refresh sources</button><span class="we-subtle" id="weFreshness"></span></div><p id="weStatus" class="we-message" role="status" aria-live="polite"></p><div class="we-scene" role="group" aria-label="Tour of significant events on the globe"><button type="button" id="wePlay" aria-pressed="false">Play tour</button><button type="button" id="wePrev">Previous</button><button type="button" id="weNext">Next</button><button type="button" id="weReplay" aria-pressed="false">Replay last 24 h of quakes</button><p class="we-subtle we-scene-status" id="weSceneStatus" role="status" aria-live="polite"></p></div><div class="we-view" role="group" aria-label="Map view"><button type="button" id="weView2d" aria-pressed="false">2D map</button><span class="we-subtle">The list below works without the globe.</span></div><section class="we-team" id="weTeam" aria-label="Environmental Justice Team"></section><section id="weAssignments" class="we-team" aria-label="Your environmental missions" hidden data-private></section><section id="wePlanning" class="we-detail" aria-label="Owner news and sponsorship planning" hidden data-private></section><section id="weProof" class="we-detail" aria-label="Mission evidence" hidden data-private></section><section id="weDetail" class="we-detail" aria-label="Selected environmental observation" hidden></section><label class="we-filter">Find an observation<input id="weSearch" type="search" placeholder="Place or event" maxlength="120"></label><p id="weCount" class="we-subtle"></p><ul class="we-list" id="weEvents"></ul><details><summary>Sources, coverage and limitations</summary><p class="we-subtle" id="weLayersNote" role="status" hidden></p><ul class="we-health" id="weSources"></ul><p class="we-subtle">No marker does not mean a place is safe. Coverage and reporting delays vary. These feeds do not measure every pollutant, establish responsibility or replace official emergency instructions.</p></details><section id="weOwner" class="we-owner" aria-label="Owner mission oversight" hidden data-private></section>';
+  panel.innerHTML = '<p class="we-eyebrow">Environmental Justice</p><h2 id="weTitle">See the evidence. Take action.</h2><p class="we-subtle">Government observations, their dates and practical missions on this same globe. An event is not proof of environmental injustice.</p><div class="we-toolbar"><button type="button" id="weRefresh">Refresh sources</button><span class="we-subtle" id="weFreshness"></span></div><p id="weStatus" class="we-message" role="status" aria-live="polite"></p><div class="we-scene" role="group" aria-label="Tour of significant events on the globe"><button type="button" id="wePlay">Play tour</button><button type="button" id="wePrev">Previous</button><button type="button" id="weNext">Next</button><button type="button" id="weReplay" aria-pressed="false">Replay last 24 h of quakes</button><p class="we-subtle we-scene-status" id="weSceneStatus" role="status" aria-live="polite"></p></div><div class="we-view" role="group" aria-label="Map view"><button type="button" id="weView2d" aria-pressed="false">2D map</button><span class="we-subtle">The list below works without the globe.</span></div><section class="we-team" id="weTeam" aria-label="Environmental Justice Team"></section><section id="weAssignments" class="we-team" aria-label="Your environmental missions" hidden data-private></section><section id="wePlanning" class="we-detail" aria-label="Owner news and sponsorship planning" hidden data-private></section><section id="weProof" class="we-detail" aria-label="Mission evidence" hidden data-private></section><section id="weDetail" class="we-detail" aria-label="Selected environmental observation" hidden></section><label class="we-filter">Find an observation<input id="weSearch" type="search" placeholder="Place or event" maxlength="120"></label><p id="weCount" class="we-subtle"></p><ul class="we-list" id="weEvents"></ul><details><summary>Sources, coverage and limitations</summary><p class="we-subtle" id="weLayersNote" role="status" hidden></p><ul class="we-health" id="weSources"></ul><p class="we-subtle">No marker does not mean a place is safe. Coverage and reporting delays vary. These feeds do not measure every pollutant, establish responsibility or replace official emergency instructions.</p></details><section id="weOwner" class="we-owner" aria-label="Owner mission oversight" hidden data-private></section>';
   const status = message => { if (!destroyed) byId('weStatus').textContent = message; };
   const signIn = () => adapter.signIn();
   const request = (path, options = {}) => adapter.request(path, options);
@@ -122,8 +125,13 @@ export function mountEnvironment(w, d, adapter) {
     if (significance) item.significant = significance(row);
     return item;
   }
+  /* the feed providers' terms as the feed's own source records give them (id, label, url, attribution, licence, coverage): they ride
+     with the pins so the globe answers a feed item's selection in the Worker's words and keeps no copy of its own (review G1R-10) */
+  const sourceTerms = s => s && typeof s.id === 'string' && s.id ? { id:text(s.id, 40), label:text(s.label, 120), url:safeURL(s.url), attribution:text(s.attribution, 200), license:text(s.license, 200), coverage:text(s.coverage, 300) } : null;
   function syncPins() {
-    send({ type:'hu:environment-pins', on:active(), selected, items:active() && feed ? feed.events.filter(matches).filter(row => row.lat !== null && row.lon !== null).map(pinItem) : [] });
+    const on = active(), message = { type:'hu:environment-pins', on, selected, items:on && feed ? feed.events.filter(matches).filter(row => row.lat !== null && row.lon !== null).map(pinItem) : [] };
+    if (on && feed) message.sources = feed.sources.map(sourceTerms).filter(Boolean).slice(0, 8);
+    send(message);
   }
   const matches = row => !search || [row.title, row.category, row.source.label].join(' ').toLocaleLowerCase().includes(search);
   function select(id, fly) {
@@ -239,14 +247,19 @@ export function mountEnvironment(w, d, adapter) {
     layerStates[state.layer] = state;
     renderSources();
     /* a ShakeMap for a quake in the feed marks that row, so the host's significance rule and the pins see it */
+    let marked = false;
     if (state.layer === 'shakemap' && state.digest && state.digest.available === true) {
       const row = feed?.events.find(r => r.id === 'usgs:' + text(state.digest.event_id, 40));
-      if (row && row.shakemap_available !== true) { row.shakemap_available = true; syncPins(); }
+      if (row && row.shakemap_available !== true) { row.shakemap_available = true; syncPins(); marked = true; }
     }
-    if (state.digest) dispatchEvents();
+    /* the host page is told again only when a layer's digest changed from the last one handed on for that layer, or when it just
+       marked a feed row (a freshly loaded feed has lost the mark): a tour selecting quake after quake, or a refresh whose words did
+       not change, repaints nothing there (review G1R-7) */
+    if (state.digest) { const key = JSON.stringify(state.digest); if (marked || lastDigests[state.layer] !== key) { lastDigests[state.layer] = key; dispatchEvents(); } }
   }
   /* THE FEED, HANDED TO THE HOST PAGE ONCE (target 13: nothing is fetched twice): after every load, success or failure, after every
-     layer state that carries a digest, and on destroy. The detail says plainly when the gate refused and which code it answered. */
+     layer state whose digest changed (or marked a feed row), and on destroy. The detail says plainly when the gate refused and which
+     code it answered. */
   function dispatchEvents(code) {
     if (destroyed && code !== 'off') return;
     const sources = feed ? feed.sources : [];
@@ -614,7 +627,9 @@ export function mountEnvironment(w, d, adapter) {
   function renderScene() {
     if (destroyed) return;
     const play=byId('wePlay'),line=byId('weSceneStatus'),playing=sceneState?.playing===true;
-    play.textContent=playing?'Pause tour':'Play tour';play.setAttribute('aria-pressed',String(playing));
+    /* the label names the next action (Play tour / Pause tour), so the button carries no aria-pressed: a toggle keeps one label and
+       says its state, or changes its label and says nothing more, never both (review G1R-11) */
+    play.textContent=playing?'Pause tour':'Play tour';
     byId('weReplay').setAttribute('aria-pressed',String(replay==='quakes-24h'));
     let words='';
     if (sceneState) {
@@ -630,7 +645,9 @@ export function mountEnvironment(w, d, adapter) {
     b.setAttribute('aria-pressed',String(flat));b.textContent=flat?'3D globe':'2D map';
   }
   byId('weRefresh').onclick=()=>{void loadFeed();void loadPrivate();};
-  byId('weSearch').oninput=event=>{search=event.target.value.trim().toLocaleLowerCase();renderList();syncPins();};
+  /* the list follows every keystroke; the globe, which rebuilds its events layer for a changed list, is told once the typing pauses
+     (review G1R-9) */
+  byId('weSearch').oninput=event=>{search=event.target.value.trim().toLocaleLowerCase();renderList();clearTimeout(searchTimer);searchTimer=setTimeout(()=>{searchTimer=null;if(!destroyed)syncPins();},SEARCH_SYNC_MS);};
   byId('wePlay').onclick=()=>{if(sceneState?.playing===true){pausedByVisitor=true;sendScene('pause');}else sendScene('play');};
   byId('wePrev').onclick=()=>sendScene('prev');
   byId('weNext').onclick=()=>sendScene('next');
@@ -672,7 +689,7 @@ export function mountEnvironment(w, d, adapter) {
     // switch off the globe pins: a stale instance's late cleanup must not erase a
     // newer mount (audit EQ2).
     if (destroyed) return;
-    destroyed=true;proofEpoch++;planningEpoch++;clearInterval(timer);abort?.abort();privateEpoch++;feedEpoch++;listeners.forEach(([type,fn])=>w.removeEventListener(type,fn));docListeners.forEach(([type,fn])=>d.removeEventListener(type,fn));
+    destroyed=true;proofEpoch++;planningEpoch++;clearInterval(timer);clearTimeout(searchTimer);abort?.abort();privateEpoch++;feedEpoch++;listeners.forEach(([type,fn])=>w.removeEventListener(type,fn));docListeners.forEach(([type,fn])=>d.removeEventListener(type,fn));
     try {observer?.disconnect();} catch {} observer=null;
     if (owners.get(panel)!==instance) return;
     owners.delete(panel);

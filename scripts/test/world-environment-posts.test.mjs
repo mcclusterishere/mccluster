@@ -211,3 +211,41 @@ test('the module is a UMD like js/world-mission-posts.js and names its author, t
   assert.equal(P.titleFor({ id: 'nws:x', title: 'Some headline', facts: [] }), 'Some headline');
   assert.equal(P.contentHash({ title: 'a' }), P.contentHash({ title: 'a' })); assert.notEqual(P.contentHash({ title: 'a' }), P.contentHash({ title: 'b' }));
 });
+
+/* G1R-7, the page's side: js/mnet.js's mcc:world-environment-events listener, sliced out of the page as it ships and run with a
+   captured listener, the page's state and the real posts module. A detail that changed no post's words (the panel re-handing the
+   same feed, the tour re-selecting a quake) repaints nothing; a changed word, a changed significance or the gate refusing does. */
+test('G1R-7: the page repaints the feed only when an observation post changed, never for the same words again', () => {
+  const js = read('js/mnet.js');
+  const from = js.indexOf('  /* the observation posts\' words as one ordered line');
+  const to = js.indexOf('  /* a post by the system: where a post names its author');
+  assert.ok(from > 0 && to > from, 'js/mnet.js still has the listener and its signature');
+  const listeners = {}, draws = [];
+  const state = { environment: { posts: {}, order: [], unavailable: false, code: null }, feedAnswered: true, loadingFeed: false };
+  const window = { addEventListener: (type, fn) => { listeners[type] = fn; } };
+  new Function('window', 'state', 'ENV_POSTS', 'renderFeed', from === -1 ? '' : js.slice(from, to))(window, state, P, (append) => draws.push(append));
+  const fire = (d) => listeners['mcc:world-environment-events']({ detail: d });
+  assert.equal(typeof listeners['mcc:world-environment-events'], 'function');
+  fire(detail());
+  assert.equal(draws.length, 1, 'the first posts are painted');
+  assert.equal(state.environment.order.length, FEED.events.length);
+  fire(detail());
+  fire(detail({ checked_at: '2026-11-17T20:10:30Z' }));
+  assert.equal(draws.length, 1, 'the same words again repaint nothing');
+  /* a word that changed: the quake's magnitude was revised (still below the significance line) */
+  const revised = FEED.events.map((e) => e.id === 'usgs:us7000tyhr' ? { ...e, facts: [{ label: 'Magnitude', value: '5.3' }, { label: 'Depth', value: '273.6 km' }] } : e);
+  fire(detail({ events: revised }));
+  assert.equal(draws.length, 2, 'a revised post repaints');
+  assert.ok(state.environment.posts['usgs:us7000tyhr'].updated_at > 0, 'and says it was updated');
+  fire(detail({ events: revised }));
+  assert.equal(draws.length, 2);
+  /* significance alone (a ShakeMap found for the quake) changes where the post rides in Everything: that repaints */
+  assert.equal(state.environment.posts['usgs:us7000tyhr'].significant, false);
+  fire(detail({ events: revised.map((e) => e.id === 'usgs:us7000tyhr' ? { ...e, shakemap_available: true } : e) }));
+  assert.equal(state.environment.posts['usgs:us7000tyhr'].significant, true);
+  assert.equal(draws.length, 3);
+  /* the gate refuses: the posts go, and that is painted once */
+  fire({ events: [], sources: [], unavailable: true, code: 'module_policy_unavailable' });
+  fire({ events: [], sources: [], unavailable: true, code: 'module_policy_unavailable' });
+  assert.equal(draws.length, 4); assert.deepEqual(state.environment.order, []);
+});

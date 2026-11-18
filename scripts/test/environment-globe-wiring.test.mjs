@@ -65,6 +65,12 @@ test('environment-pins.js delegates to the typed layers when they are loaded and
   pins.focus('usgs:one'); assert.deepEqual(calls[2], ['focus', 'usgs:one']);
   assert.equal(pins.pick('hit'), true); assert.equal(pins.pick('miss'), false);
   pins.destroy(); assert.deepEqual(calls.at(-1), ['setEvents', [], { on: false, selected: '' }]);
+  /* the feed providers' terms ride with the pins (review G1R-10): six public fields per record, clipped, https links only, at most
+     eight records, one per id; anything else in a record never reaches the typed layers */
+  const terms = { id: 'usgs', label: 'USGS', url: 'https://earthquake.usgs.gov/', attribution: 'U.S. Geological Survey, Earthquake Hazards Program', license: 'Public domain (U.S. Government work)', coverage: 'Global earthquakes reported in the past day' };
+  pins.set({ on: true, selected: '', items: [row], sources: [{ ...terms, status: 'available', fetched_at: '2026-11-17T20:05:00Z', token: 'never-forwarded' }, { ...terms, label: 'a second usgs record is dropped' }, { id: 'nws', label: 'NOAA NWS', url: 'http://www.weather.gov/', attribution: 'x'.repeat(300) }, { id: 'Bad Id', label: 'dropped' }, null] });
+  assert.deepEqual(calls.at(-1), ['setEvents', ['usgs:one'], { on: true, selected: '', sources: [terms, { id: 'nws', label: 'NOAA NWS', url: '', attribution: 'x'.repeat(200), license: '', coverage: '' }] }]);
+  assert.equal(window.MCC_ENVIRONMENT_PINS.normalizeSources(Array.from({ length: 12 }, (_, i) => ({ id: 'p' + i }))).length, 8, 'at most eight records');
   const normalized = window.MCC_ENVIRONMENT_PINS.normalize([row, { id: 'usgs:bare', lat: 1, lon: 2 }, { ...row, id: 'usgs:http', source: { label: 'x', url: 'http://insecure.example' }, facts: Array.from({ length: 20 }, (_, i) => ({ label: 'L' + i, value: 'v' })), significant: 'yes', observed_at: 'bad', fetched_at: '2026-11-17T20:00:00.000Z', location_kind: 'x'.repeat(40) }]);
   assert.deepEqual(Object.keys(normalized[0]).sort(), ['category', 'facts', 'fetched_at', 'id', 'lat', 'location_kind', 'lon', 'observed_at', 'significant', 'source', 'stale', 'title']);
   assert.equal(normalized[0].significant, true); assert.deepEqual(plain(normalized[0].source), { label: 'USGS', url: 'https://earthquake.usgs.gov/x' });
@@ -80,6 +86,16 @@ test('environment-pins.js delegates to the typed layers when they are loaded and
   legacy.set({ on: true, items: [row] }); assert.equal(entities.size, 1);
   assert.equal(legacy.pick({ id: { properties: { environmentEventId: { getValue: () => row.id } } } }), true); assert.deepEqual(plain(sent[0]), { type: 'hu:environment-selected', id: row.id });
   legacy.destroy(); assert.equal(entities.size, 0);
+});
+test('the typed layers keep no copy of the feed providers\' terms: they answer with what the pins carried (review G1R-10)', () => {
+  const layers = read('js/environment-layers.js'), worker = read('workers/mccluster/src/world-environment.js');
+  const block = /export const FEED_SOURCE_TERMS = Object\.freeze\(\{([\s\S]*?)\n\}\);/.exec(worker);
+  assert.ok(block, 'the Worker still names its feed terms in one place');
+  const strings = [...block[1].matchAll(/(?:attribution|license): '([^']+)'/g)].map((m) => m[1]);
+  assert.ok(strings.length >= 8, 'four providers, attribution and licence each: ' + strings.length);
+  for (const t of new Set(strings)) assert.equal(layers.includes(t), false, 'no client copy of: ' + t);
+  assert.doesNotMatch(layers, /FEED_TERMS/);
+  assert.match(layers, /if \(Array\.isArray\(o\.sources\)\) feedTerms = termsFrom\(o\.sources\);/);
 });
 test('THIRD-PARTY-NOTICES names the three adapted files and each header points back', () => {
   const notices = read('THIRD-PARTY-NOTICES');

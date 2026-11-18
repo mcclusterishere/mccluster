@@ -199,12 +199,12 @@ test('the scene controls send play, pause, previous and next and follow hu:envir
   h.byId('wePlay').onclick();
   assert.deepEqual(h.sent.at(-1), { type: 'hu:environment-scene', action: 'play' });
   h.message({ type: 'hu:environment-scene-state', playing: true, index: 2, total: 12, id: 'usgs:fx-m71', title: 'M7.1 · Fixture event, Andreanof Islands, Alaska', queue: 'significant', reason: null });
-  assert.equal(h.byId('wePlay').textContent, 'Pause tour'); assert.equal(h.byId('wePlay').getAttribute('aria-pressed'), 'true');
+  assert.equal(h.byId('wePlay').textContent, 'Pause tour'); assert.equal(h.byId('wePlay').getAttribute('aria-pressed'), null, 'the label names the next action; no aria-pressed beside it (G1R-11)');
   assert.match(h.byId('weSceneStatus').textContent, /Scene 3 of 12/); assert.match(h.byId('weSceneStatus').textContent, /Andreanof/);
   h.byId('wePlay').onclick();
   assert.deepEqual(h.sent.at(-1), { type: 'hu:environment-scene', action: 'pause' });
   h.message({ type: 'hu:environment-scene-state', playing: false, index: 2, total: 12, id: 'usgs:fx-m71', title: 'x', queue: 'significant', reason: 'user' });
-  assert.equal(h.byId('wePlay').textContent, 'Play tour'); assert.equal(h.byId('wePlay').getAttribute('aria-pressed'), 'false');
+  assert.equal(h.byId('wePlay').textContent, 'Play tour'); assert.equal(h.byId('wePlay').getAttribute('aria-pressed'), null);
   h.byId('wePrev').onclick(); assert.deepEqual(h.sent.at(-1), { type: 'hu:environment-scene', action: 'prev' });
   h.byId('weNext').onclick(); assert.deepEqual(h.sent.at(-1), { type: 'hu:environment-scene', action: 'next' });
   h.message({ type: 'hu:environment-scene-state', playing: false, index: 11, total: 12, id: null, title: null, queue: 'significant', reason: 'end' });
@@ -290,6 +290,13 @@ test('the DOM CustomEvent carries the feed after every load, with the gate\'s co
   h.message(layerState('fires', { generated_at: '2026-11-17T20:30:00Z' }), 'no digest: no event');
   const all = h.events.at(-1).detail;
   assert.equal(h.events.length, 5);
+  /* G1R-7: the same digest again (the tour selecting the same quake, a refresh whose words did not change) is not handed on again;
+     a digest that changed is */
+  h.message(layerState('shakemap', { digest: { event_id: 'us7000tyhr', available: true, reason: null, version: 5, max_mmi: 2.9 } }));
+  h.message(layerState('alerts', { digest: { counts: { polygon: 70, zone_only: 25, rejected: 5 } } }));
+  assert.equal(h.events.length, 5, 'identical digests dispatch nothing');
+  h.message(layerState('shakemap', { digest: { event_id: 'us7000tyca', available: true, reason: null, version: 3, max_mmi: 1.7 } }));
+  assert.equal(h.events.length, 6, 'a changed digest is handed on');
   assert.equal(all.layers.perimeters.top[0].name, 'Fixture Ridge'); assert.deepEqual(all.layers.alerts.counts, { polygon: 70, zone_only: 25, rejected: 5 }); assert.deepEqual(all.layers.shakemap, { event_id: 'us7000tyhr', available: true });
   assert.match(h.byId('weSources').text, /25 name zones only/); assert.match(h.byId('weSources').text, /5 .*rejected/);
   /* a ShakeMap marks its quake on the feed row and the pins are sent again with it significant */
@@ -371,5 +378,67 @@ test('no private row leaks into any message to the globe or the page', async () 
   assert.doesNotMatch(sent, /assignment_id|user_id|Private Street|A Person|display_name/, 'the pins carry the public fields only');
   assert.ok(h.sent.some(m => m.type === 'hu:environment-pins' && m.items.some(i => i.id === 'usgs:leak')));
   assert.doesNotMatch(read('vendor/equity-uprise/src/environment/panel.mjs'), /MCC_SUPA|MCC_WORLD_MODE|api\.mccluster\.org|mccdb_session|mcc:auth-changed|MCC_ENVIRONMENT_POSTS/, 'host globals stay in the adapter');
+  h.mounted.destroy();
+});
+
+test('G1R-9: typing in the search narrows the list at once and re-sends the pins once the typing pauses, never per keystroke', async () => {
+  const h = harness();
+  await flush(8);
+  h.sent.length = 0;
+  const input = h.byId('weSearch');
+  for (const value of ['A', 'An', 'Ana', 'Anam']) { input.value = value; input.oninput({ target: input }); }
+  assert.match(h.byId('weCount').textContent, /^1 observations shown/, 'the list narrowed at once');
+  assert.equal(h.sent.filter(m => m.type === 'hu:environment-pins').length, 0, 'no pins message per keystroke');
+  await new Promise(r => setTimeout(r, 400));
+  const pins = h.sent.filter(m => m.type === 'hu:environment-pins');
+  assert.equal(pins.length, 1, 'one pins message once the typing paused');
+  assert.deepEqual(pins[0].items.map(i => i.id), ['usgs:us7000tyhr']);
+  /* typing then leaving: the pending resend is cancelled with the mount, nothing is said after the last pins-off */
+  input.value = 'Sara'; input.oninput({ target: input });
+  h.mounted.destroy();
+  const last = h.sent.length;
+  await new Promise(r => setTimeout(r, 400));
+  assert.equal(h.sent.length, last, 'nothing after destroy');
+  assert.deepEqual(h.sent.at(-1), { type: 'hu:environment-pins', on: false, items: [] });
+});
+
+test('G1R-10: the pins carry the feed providers\' terms as the feed\'s own source records give them, six public fields each; never when off', async () => {
+  const h = harness();
+  await flush(8);
+  const pins = h.sent.filter(m => m.type === 'hu:environment-pins' && m.on).at(-1);
+  assert.deepEqual(pins.sources, FEED.sources.map(s => ({ id: s.id, label: s.label, url: s.url, attribution: s.attribution, license: s.license, coverage: s.coverage })));
+  for (const s of pins.sources) assert.deepEqual(Object.keys(s), ['id', 'label', 'url', 'attribution', 'license', 'coverage']);
+  assert.doesNotMatch(JSON.stringify(pins.sources), /fetched_at|last_success_at|status|reason|observed_at/, 'terms only, never health');
+  h.setMode('feed'); await flush();
+  const off = h.sent.filter(m => m.type === 'hu:environment-pins').at(-1);
+  assert.equal(off.on, false); assert.equal('sources' in off, false, 'an off message carries no terms');
+  h.mounted.destroy();
+  assert.deepEqual(h.sent.at(-1), { type: 'hu:environment-pins', on: false, items: [] });
+});
+
+test('G1R-6: the panel\'s buttons are form controls at 16px or more (AGENTS.md hard rule 14), whatever the panel\'s 15px body says', () => {
+  const css = read('css/world-environment.css');
+  const rule = /\.we-panel button,\.we-button \{([^}]*)\}/.exec(css);
+  assert.ok(rule, 'the button rule');
+  assert.match(rule[1], /font:inherit;font-size:max\(16px,1em\);/, 'font-size after the font shorthand, so it wins');
+  assert.match(css, /\.we-panel \{[^}]*font:400 15px\/1\.5/, 'the body text stays at 15px');
+  assert.doesNotMatch(css, /@media\s*\(\s*max-width/, 'min-width queries only');
+});
+
+test('G1R-7: a ShakeMap digest seen before still reaches the page when it marks a row of a freshly loaded feed', async () => {
+  const h = harness();
+  await flush(8);
+  const shakemap = layerState('shakemap', { digest: { event_id: 'us7000tyhr', available: true, reason: null, version: 5, max_mmi: 2.9 } });
+  h.message(shakemap);
+  const marked = () => h.events.at(-1).detail.events.find(e => e.id === 'usgs:us7000tyhr').shakemap_available === true;
+  assert.equal(marked(), true);
+  h.byId('weRefresh').onclick(); await flush(8);
+  assert.equal(marked(), false, 'the reloaded feed has lost the mark');
+  const before = h.events.length;
+  h.message(shakemap);
+  assert.equal(h.events.length, before + 1, 'the same digest, but it marked the row again: the page is told');
+  assert.equal(marked(), true);
+  h.message(shakemap);
+  assert.equal(h.events.length, before + 1, 'and only once');
   h.mounted.destroy();
 });

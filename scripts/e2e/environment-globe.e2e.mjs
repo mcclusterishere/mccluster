@@ -147,6 +147,9 @@ for (const size of SIZES) {
   check(scope, 'alerts digest carries the Worker counts', !!alerts && alerts.digest && alerts.digest.counts.polygon === 70 && alerts.digest.counts.zone_only === 25 && alerts.digest.counts.rejected === 5, alerts && alerts.digest);
   check(scope, 'perimeters digest: the ten largest with a real first vertex', !!perims && perims.digest.top.length === 10 && perims.digest.top[0].name === 'Fixture Ridge' && perims.digest.top[0].lat === 34.6 && typeof perims.digest.top[0].lon === 'number', perims && perims.digest.top[0]);
   check(scope, 'events state counts by provider', !!events && events.count === 62 && JSON.stringify(events.digest.by_provider) === JSON.stringify({ usgs: 50, nws: 5, eonet: 6, nhc: 1 }), events && events.digest);
+  /* the feed providers' terms arrived with the pins (review G1R-10): the frame holds the feed's four records and no copy of its own */
+  const termsHeld = (await env(frame)).feedTerms;
+  check(scope, 'the pins carried the feed providers\' terms and the frame holds them (usgs, nws, eonet, nhc)', JSON.stringify(termsHeld) === JSON.stringify(['eonet', 'nhc', 'nws', 'usgs']), termsHeld);
   const legend = s.legend.join('\n');
   check(scope, 'the legend names every quantity', /Disc area shows magnitude \(energy, 10\^1\.5M\)/.test(legend) && /satellite detection \(375 m pixel\)/.test(legend) && /not a legal boundary/.test(legend) && /never placed/.test(legend) && /not a forecast or an inferred path/.test(legend) && /MLLW, metres/.test(legend) && /NASA Earth Observatory/.test(legend), s.legend);
   check(scope, 'the legend is a collapsed details element on the page, no logo', await frame.evaluate(() => { const d = document.getElementById('envLegend'); return !!d && !d.hidden && !d.open && d.querySelector('summary').textContent === 'Legend' && !d.querySelector('img') && !/Equity Uprise/.test(d.textContent) && d.querySelectorAll('li').length >= 6; }));
