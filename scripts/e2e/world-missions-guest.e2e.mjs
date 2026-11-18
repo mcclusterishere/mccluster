@@ -6,14 +6,18 @@
    The page exactly as it ships (mnet.html, with the Travel switch on, never a switch-removed copy), with the real globe
    (Cesium from CESIUM_DIR, as the other World suites run it) and a fake api.mccluster.org and Supabase in memory: no
    production call, no real sign-in, no real join. At 390x844, 820x1180 and 1280x800 a signed-out visitor sees:
-   - no centre mode bar (Travel is the house owner's; Missions and E=UP are not modes any more);
-   - the feed strip Local, Everything (pressed), the Equity Uprise tab (the supplied mark alone, named "Equity Uprise"),
-     Live, News, People; the arrow keys walk it, and a mouse drags it where it overflows;
+   - no centre mode bar (Travel is the house owner's; Missions and E=UP are not modes any more), and nothing above the feed's
+     row: no "News feed" and no "E=UP" written anywhere on the page or in the globe frame (owner, 2026-11-18: "There should be
+     no tabs from news feed to E equals up. It should just be local, equity up, global, live news people.");
+   - the feed's row in the owner's order: Local, the Equity Uprise tab (the supplied mark alone, named "Equity Uprise"),
+     Global (pressed), Live, News, People; every tab at least 44px, the chosen one in view and marked; the arrow keys, Home
+     and End walk it in that order, and a mouse drags it where it overflows;
    - the globe frame and the expanded globe without missions=0, and the published pins on the Earth;
-   - the Equity Uprise tab: the mission posts with Environmental Justice above them, and back to Everything;
+   - the Equity Uprise tab: the mission posts (and, since slice G1, the environmental observation posts) with Environmental
+     Justice above them, and back to Global;
    - ?mission=<id>: that mission's dialog over the World with Join; Join asks to sign in with mission= still in the address;
    - ?view=missions and All missions: the Equity Uprise tab, never a sign-in prompt;
-   - by day at 390, the supplied dark mark on the white tab and the white mark on the pressed red;
+   - by day at 390, the same row, the supplied dark mark on the white tab and the white mark on the pressed red;
    - scrollWidth === clientWidth everywhere.
    And the house owner's persona still gets Travel in the centre bar.
 
@@ -22,10 +26,10 @@
    news, X amount of missions"). Three open missions are written exactly as the pending import writes them
    (tools/build-mission-import.mjs: three Project Drawdown missions with their details rows, open as its publish step sets
    them), beside three fixture missions with none. At each size, a guest:
-   - Everything mixes posts, news and missions: one mission after every three other items, newest first, each once, then the
+   - Global mixes posts, news and missions: one mission after every three other items, newest first, each once, then the
      rest up to the page of 20; no mission post is taller than the tallest ordinary post plus 48px (the tallest is 119
      characters, the longest public post in production on 2026-11-17);
-   - the Equity Uprise tab lists the mission posts and nothing else;
+   - the Equity Uprise tab lists the mission posts and the observation posts, and nothing else;
    - a mission post's source line opens the dialog at its credit: the quotation with its credit directly beneath, the proof
      hint and safety line, the credit in full with its links; Share copies the mission's link on this origin;
    - a country picked with the globe's own tap gives the place card its counts (news, missions, posts, members) in two rows,
@@ -239,6 +243,67 @@ const strip = (page) => page.evaluate(() => [...document.querySelectorAll('#mnFe
   key: b.dataset.feedScope || b.dataset.mnView, name: b.getAttribute('aria-label') || b.textContent.trim(), pressed: b.getAttribute('aria-pressed'), words: b.textContent.trim(),
   marks: [...b.querySelectorAll('img')].filter((i) => i.getClientRects().length).map((i) => { const r = i.getBoundingClientRect(); return { src: i.getAttribute('src'), w: Math.round(r.width), h: Math.round(r.height), alt: i.getAttribute('alt') }; })
 })));
+/* THE ROW IN THE OWNER'S ORDER, AND NOTHING ABOVE IT (owner, 2026-11-18: "There should be no tabs from news feed to E equals up.
+   It should just be local, equity up, global, live news people."). What a signed-out visitor can read and press: the words are the
+   page's and the globe frame's rendered text (innerText) and the names of everything rendered (aria-label, title, alt); "above
+   the row" is every control the feed column renders before the row, and a mode button anywhere. The chosen tab is in the row's
+   visible box, its ground differs from an unchosen tab's, and its words or mark read on it. */
+const ROW = ['Local', 'Equity Uprise', 'Global', 'Live', 'News', 'People'];
+const ROW_KEYS = ['local', 'equity', 'global', 'live', 'news', 'discover'];
+const guestView = (page) => page.evaluate(async () => {
+  /* a tab just chosen eases into its colours (css/style.css: buttons take .22s): read them once the row has settled */
+  await Promise.all(document.getElementById('mnFeedScope').getAnimations({ subtree: true }).map((t) => t.finished.catch(() => {})));
+  const shown = (el) => !!el && el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden';
+  const frame = document.getElementById('mnWorldFrame'), inner = frame && frame.contentDocument;
+  const docs = [document].concat(inner && inner.body ? [inner] : []);
+  const words = docs.map((d) => d.body.innerText).join('\n') + '\n' + docs.flatMap((d) => [...d.querySelectorAll('[aria-label],[title],img[alt]')].filter(shown)
+    .map((el) => [el.getAttribute('aria-label'), el.getAttribute('title'), el.getAttribute('alt')].filter(Boolean).join(' '))).join('\n');
+  const row = document.getElementById('mnFeedScope'), feed = document.getElementById('mnWorldFeed');
+  const above = [...feed.querySelectorAll('button, a[href], [role="tab"], input, select, textarea')]
+    .filter((el) => shown(el) && !row.contains(el) && (row.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_PRECEDING)).map((el) => el.id || el.className || el.tagName);
+  const rgb = (s) => (s.match(/[\d.]+/g) || []).slice(0, 3).map(Number);
+  const lum = (a) => { const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }; return 0.2126 * f(a[0]) + 0.7152 * f(a[1]) + 0.0722 * f(a[2]); };
+  const ratio = (x, y) => { const a = lum(rgb(x)), b = lum(rgb(y)); return Math.round(((Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)) * 100) / 100; };
+  const sr = row.getBoundingClientRect(), on = row.querySelector('[aria-pressed="true"]'), off = row.querySelector('[data-feed-scope][aria-pressed="false"]');
+  const br = on && on.getBoundingClientRect(), ground = on && getComputedStyle(on).backgroundColor, ink = on && getComputedStyle(on).color;
+  return {
+    modeBar: [...document.querySelectorAll('.wt-world-modes, .wt-world-modes *, body [data-world-mode]')].some(shown),
+    newsFeed: /news\s*feed/i.test(words), eup: /E\s*=\s*UP/i.test(words), above,
+    buttons: [...row.querySelectorAll(':scope > button')].map((b) => { const r = b.getBoundingClientRect(); return { key: b.dataset.feedScope || b.dataset.mnView, name: b.getAttribute('aria-label') || b.textContent.trim(), pressed: b.getAttribute('aria-pressed'), w: Math.round(r.width), h: Math.round(r.height) }; }),
+    chosen: on ? { key: on.dataset.feedScope, inView: br.left >= sr.left - 1 && br.right <= sr.right + 1 && br.top >= 0 && br.bottom <= window.innerHeight, ground, unchosen: off && getComputedStyle(off).backgroundColor,
+      ink, ratio: on.querySelector('img') ? null : ratio(ink, ground), mark: [...on.querySelectorAll('img')].filter(shown).map((i) => i.getAttribute('src')) } : null,
+    row: { sw: row.scrollWidth, cw: row.clientWidth, overflowX: getComputedStyle(row).overflowX },
+    page: { sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }
+  };
+});
+/* the globe frame loaded and settled, so its own words are on screen before they are read */
+async function globeReady(page) {
+  await page.waitForFunction(() => { const f = document.getElementById('mnWorldFrame'); try { return !!f && /action-globe\.html/.test(f.contentWindow.location.href) && f.contentDocument.readyState === 'complete'; } catch (_) { return false; } }, null, { timeout: 30000 }).catch(() => {});
+  const globe = globeOf(page);
+  if (globe) await globe.waitForFunction(() => window.__huGlobeSettled && window.__huGlobeSettled(), null, { timeout: 25000 }).catch(() => {});
+}
+/* the arrow keys, Home and End walk the row: the name of the button in focus after each key */
+async function walkRow(page) {
+  await page.focus('#mnFeedScope > button:first-child');
+  const at = () => page.evaluate(() => { const b = document.activeElement; return b && b.closest('#mnFeedScope') ? (b.getAttribute('aria-label') || b.textContent.trim()) : null; });
+  const right = [await at()];
+  for (let k = 1; k < 7; k++) { await page.keyboard.press('ArrowRight'); right.push(await at()); }
+  await page.keyboard.press('ArrowLeft'); const left = await at();
+  await page.keyboard.press('End'); const end = await at();
+  await page.keyboard.press('Home'); const home = await at();
+  return { right, left, end, home };
+}
+/* the row as the owner asked for it, at this size and in this phase */
+function checkRow(scope, view, chosen) {
+  check(scope, 'the row reads Local, the Equity Uprise tab, Global, Live, News, People, in that order, and nothing else', JSON.stringify(view.buttons.map((b) => b.name)) === JSON.stringify(ROW)
+    && JSON.stringify(view.buttons.map((b) => b.key)) === JSON.stringify(ROW_KEYS) && !view.buttons.some((b) => /everything/i.test(b.name)), view.buttons);
+  check(scope, `one tab is chosen, ${chosen}, in view in the row and marked: its own ground, its words or mark legible on it`, view.chosen && view.chosen.key === chosen && view.buttons.filter((b) => b.pressed === 'true').length === 1
+    && view.chosen.inView && view.chosen.ground !== view.chosen.unchosen && (view.chosen.ratio === null ? view.chosen.mark.length === 1 : view.chosen.ratio >= 4.5), view.chosen);
+  check(scope, 'every tab in the row is a tap target of 44px or more', view.buttons.every((b) => b.w >= 44 && b.h >= 44), view.buttons.map((b) => [b.name, b.w, b.h]));
+  check(scope, 'a visitor sees nothing above the row: no mode bar, no control before it in the feed, no "News feed" and no "E=UP" written anywhere on the page or the globe',
+    !view.modeBar && view.above.length === 0 && !view.newsFeed && !view.eup, { modeBar: view.modeBar, above: view.above, newsFeed: view.newsFeed, eup: view.eup });
+  check(scope, 'the row fits or scrolls inside itself; the page never scrolls sideways', (view.row.sw <= view.row.cw || ['auto', 'scroll'].includes(view.row.overflowX)) && view.page.sw === view.page.cw, { row: view.row, page: view.page });
+}
 /* the feed in order: a member post (p), a news card (n), a mission post (m:<id>) */
 const feedSeq = (page) => page.evaluate(() => [...document.querySelectorAll('#mnFeed > article')].map((a) => a.hasAttribute('data-mission-post') ? 'm:' + a.getAttribute('data-mission-post') : a.hasAttribute('data-news-id') ? 'n' : a.hasAttribute('data-post-id') ? 'p' : '?'));
 /* the rule, written out again from the brief: one mission after every three other items; when the others run out, the rest
@@ -269,7 +334,7 @@ async function pickCountry(page, lon, lat) {
 
 try {
   for (const device of VIEWPORTS) {
-    /* ---------- a guest on the World: Everything, then the Equity Uprise tab ---------- */
+    /* ---------- a guest on the World: Global, then the Equity Uprise tab ---------- */
     {
       const scope = `guest-${device.name}`;
       /* by night (js/daylight.js follows the real Sun; ?daylight=night pins the phase for this run) */
@@ -279,11 +344,14 @@ try {
         const shell = await page.evaluate(() => ({ travelOff: document.documentElement.classList.contains('hu-travel-off'), guest: document.documentElement.classList.contains('mn-guest'),
           bar: !!document.querySelector('.wt-world-modes') && document.querySelector('.wt-world-modes').getClientRects().length > 0, mode: window.MCC_WORLD_MODE.get(), scope: window.MCC_FEED_SCOPE.get(),
           frame: document.getElementById('mnWorldFrame').getAttribute('src'), expand: document.querySelector('.mn__world-expand').getAttribute('href') }));
-        check(scope, 'a guest sees no centre mode bar: the feed is the one mode, Everything is chosen', shell.travelOff && shell.guest && !shell.bar && shell.mode === 'posts' && shell.scope === 'global', shell);
+        check(scope, 'a guest sees no centre mode bar: the feed is the one mode, Global is chosen', shell.travelOff && shell.guest && !shell.bar && shell.mode === 'posts' && shell.scope === 'global', shell);
+        /* the owner's row (2026-11-18), once the globe frame has drawn its own words too */
+        await globeReady(page);
+        checkRow(scope, await guestView(page), 'global');
+        const walk = await walkRow(page);
+        check(scope, 'the arrow keys walk the row in the owner\'s order and wrap; Home and End reach its ends', JSON.stringify(walk.right) === JSON.stringify([...ROW, ROW[0]]) && walk.left === ROW[5] && walk.end === ROW[5] && walk.home === ROW[0], walk);
         const row = await strip(page);
-        check(scope, 'the strip reads Local, Everything (pressed), Equity Uprise, Live, News, People', JSON.stringify(row.map((b) => b.name)) === JSON.stringify(['Local', 'Everything', 'Equity Uprise', 'Live', 'News', 'People'])
-          && row[1].key === 'global' && row[1].pressed === 'true' && row.filter((b) => b.pressed === 'true').length === 1 && row[2].key === 'equity' && row[2].pressed === 'false', row);
-        const eup = row[2];
+        const eup = row.find((b) => b.key === 'equity');
         check(scope, 'the Equity Uprise tab is the supplied white mark alone by night, square-scaled, no words, named for assistive technology', eup.words === '' && eup.name === 'Equity Uprise' && eup.marks.length === 1
           && eup.marks[0].src === 'assets/img/equity-uprise-mark-white.png' && eup.marks[0].alt === '' && eup.marks[0].w === eup.marks[0].h && eup.marks[0].w >= 24 && eup.marks[0].w <= 44, eup);
         check(scope, 'the globe frame and the expanded globe ask for the missions (no missions=0)', !/missions=0/.test(shell.frame) && !/missions=0/.test(shell.expand), shell);
@@ -292,13 +360,13 @@ try {
         check(scope, 'the Earth carries the published mission pins for a guest, and only those', await globe.evaluate((n) => window.__huMissionPins() === n && !document.documentElement.classList.contains('globe-no-missions'), PINS.length));
         await globe.waitForFunction(() => window.__huGlobeSettled && window.__huGlobeSettled(), null, { timeout: 25000 }).catch(() => {});
 
-        /* EVERYTHING: posts, news and missions in one stream (the five posts and six stories interleave one for one, then
+        /* GLOBAL: posts, news and missions in one stream (the five posts and six stories interleave one for one, then
            the stories carry on; one mission after every three of those, newest first, then the rest up to the page) */
         const others = ['p', 'n', 'p', 'n', 'p', 'n', 'p', 'n', 'p', 'n', 'n'];
         await page.waitForFunction((n) => document.querySelectorAll('#mnFeed > article').length === n, expectedSeq(others, NEWEST).length, { timeout: 30000 }).catch(() => {});
         const seq = await feedSeq(page);
-        check(scope, 'Everything keeps posts and news as they were, one for one', seq.filter((x) => !x.startsWith('m:')).join('') === others.join(''), seq);
-        check(scope, 'Everything puts one mission after every three other items, newest first, each once, then the rest up to the page', JSON.stringify(seq) === JSON.stringify(expectedSeq(others, NEWEST))
+        check(scope, 'Global keeps posts and news as they were, one for one', seq.filter((x) => !x.startsWith('m:')).join('') === others.join(''), seq);
+        check(scope, 'Global puts one mission after every three other items, newest first, each once, then the rest up to the page', JSON.stringify(seq) === JSON.stringify(expectedSeq(others, NEWEST))
           && new Set(seq.filter((x) => x.startsWith('m:'))).size === MISSIONS.length, { seq, expected: expectedSeq(others, NEWEST) });
         const sizes = await page.evaluate(() => ({ posts: [...document.querySelectorAll('#mnFeed article[data-post-id]')].map((a) => Math.round(a.getBoundingClientRect().height)),
           missions: [...document.querySelectorAll('#mnFeed article[data-mission-post]')].map((a) => Math.round(a.getBoundingClientRect().height)),
@@ -321,10 +389,10 @@ try {
         check(scope, 'by night each Join is the supplied white mark alone, square, no words, named "Join this mission"', joins.length === MISSIONS.length && joins.every((j) => j.name === 'Join this mission' && j.words === '' && j.shown.length === 1
           && j.shown[0].src === 'assets/img/equity-uprise-mark-white.png' && j.shown[0].w === j.shown[0].h && j.shown[0].w >= 24), joins[0]);
         let size = await fits(page);
-        check(scope, 'nothing scrolls sideways on Everything', size.sw === size.cw, size);
+        check(scope, 'nothing scrolls sideways on Global', size.sw === size.cw, size);
         await page.evaluate(() => { const f = document.getElementById('mnWorldFeed'), a = document.querySelector('#mnFeed [data-mission-post]'); if (f && a) f.scrollTop += a.getBoundingClientRect().top - f.getBoundingClientRect().top - 160; });
         await page.waitForTimeout(300);
-        await page.screenshot({ path: join(OUT, `guest-everything-${device.name}.png`) });
+        await page.screenshot({ path: join(OUT, `guest-global-${device.name}.png`) });
         /* Share copies the mission's own link on this origin */
         await page.click(`#mnFeed [data-mission-post="${COAL.row.id}"] [data-mission-share]`);
         await page.waitForFunction((id) => /Copied/.test(document.querySelector(`#mnFeed [data-mission-post="${id}"] [data-mission-share]`).textContent), COAL.row.id, { timeout: 5000 }).catch(() => {});
@@ -355,28 +423,32 @@ try {
         await page.screenshot({ path: join(OUT, `guest-dialog-credit-${device.name}.png`) });
         await page.click('#mnMissionClose');
 
-        /* the arrow keys walk the strip */
-        await page.focus('#mnFeedScope [data-feed-scope="global"]');
+        /* the arrow keys walk the row: the Equity Uprise tab is next after Local */
+        await page.focus('#mnFeedScope [data-feed-scope="local"]');
         await page.keyboard.press('ArrowRight');
-        check(scope, 'the strip is reachable by keyboard and the arrow keys walk it', await page.evaluate(() => document.activeElement && document.activeElement.dataset.feedScope === 'equity'));
+        check(scope, 'the row is reachable by keyboard and the arrow key after Local is the Equity Uprise tab', await page.evaluate(() => document.activeElement && document.activeElement.dataset.feedScope === 'equity'));
         /* the Equity Uprise tab: the mission posts, with Environmental Justice above them */
         await page.keyboard.press('Enter');
         await page.waitForSelector('#wePanel:not([hidden])', { timeout: 15000 }).catch(() => {});
         await page.waitForSelector('#mnFeed [data-mission-post]', { timeout: 15000 }).catch(() => {});
         await page.waitForFunction(() => document.documentElement.getAttribute('data-we-feed') === 'ready', null, { timeout: 15000 }).catch(() => {});
+        checkRow(scope, await guestView(page), 'equity');
+        /* since slice G1 the tab also lists the environmental observations, by time with the missions (the brief's targets 4 and 13):
+           this fixture's one official report is one observation post */
+        await page.waitForSelector('#mnFeed [data-observation-post]', { timeout: 15000 }).catch(() => {});
         const tab = await page.evaluate(() => {
           const panel = document.getElementById('wePanel'), feed = document.getElementById('mnFeed'), row = document.getElementById('mnFeedScope');
           return { scope: window.MCC_FEED_SCOPE.get(), pressed: document.querySelector('#mnFeedScope [data-feed-scope="equity"]').getAttribute('aria-pressed'),
             others: [...document.querySelectorAll('#mnFeedScope [aria-pressed="true"]')].map((b) => b.dataset.feedScope),
             panel: !panel.hidden && panel.getClientRects().length > 0, heading: (document.getElementById('weTitle') || {}).textContent || '',
             above: !!(row.compareDocumentPosition(panel) & Node.DOCUMENT_POSITION_FOLLOWING) && !!(panel.compareDocumentPosition(feed) & Node.DOCUMENT_POSITION_FOLLOWING),
-            missions: feed.querySelectorAll('[data-mission-post]').length, articles: feed.querySelectorAll('article').length, posts: feed.querySelectorAll('[data-post-id]').length, news: feed.querySelectorAll('[data-news-id]').length,
+            missions: feed.querySelectorAll('[data-mission-post]').length, observations: feed.querySelectorAll('[data-observation-post]').length, articles: feed.querySelectorAll('article').length, posts: feed.querySelectorAll('[data-post-id]').length, news: feed.querySelectorAll('[data-news-id]').length,
             order: [...feed.querySelectorAll('[data-mission-post]')].map((a) => a.getAttribute('data-mission-post')),
             note: getComputedStyle(document.getElementById('weUnavailable')).display,
             composer: document.getElementById('mnComposer').getClientRects().length > 0, guestCard: document.getElementById('mnGuestCard').getClientRects().length > 0, mode: window.MCC_WORLD_MODE.get() };
         });
-        check(scope, 'the Equity Uprise tab shows the mission posts, newest first and nothing else (no posts or news), with the Environmental Justice panel above them', tab.scope === 'equity' && tab.pressed === 'true' && JSON.stringify(tab.others) === '["equity"]'
-          && tab.panel && /See the evidence/.test(tab.heading) && tab.above && tab.missions === MISSIONS.length && tab.articles === MISSIONS.length && JSON.stringify(tab.order) === JSON.stringify(NEWEST)
+        check(scope, 'the Equity Uprise tab shows the mission posts, newest first, and the environmental observation posts, nothing else (no member posts or news), with the Environmental Justice panel above them', tab.scope === 'equity' && tab.pressed === 'true' && JSON.stringify(tab.others) === '["equity"]'
+          && tab.panel && /See the evidence/.test(tab.heading) && tab.above && tab.missions === MISSIONS.length && tab.observations === ENVIRONMENT.events.length && tab.articles === MISSIONS.length + tab.observations && JSON.stringify(tab.order) === JSON.stringify(NEWEST)
           && tab.posts === 0 && tab.news === 0 && tab.note === 'none' && !tab.composer && !tab.guestCard && tab.mode === 'posts', tab);
         await page.waitForFunction(() => /Fixture government observation/.test(document.getElementById('wePanel').textContent), null, { timeout: 15000 }).catch(() => {});
         check(scope, 'the panel lists the official report on the same globe', await page.evaluate(() => /Fixture government observation/.test(document.getElementById('wePanel').textContent)));
@@ -387,7 +459,7 @@ try {
         await page.screenshot({ path: join(OUT, `guest-equity-${device.name}.png`) });
         /* leaving the tab is the whole feed again */
         await page.click('#mnFeedScope [data-feed-scope="global"]');
-        check(scope, 'leaving the tab returns to Everything: posts back, the panel gone', await page.evaluate(() => window.MCC_FEED_SCOPE.get() === 'global' && document.getElementById('wePanel').hidden && document.querySelectorAll('#mnFeed [data-post-id]').length > 0));
+        check(scope, 'leaving the tab returns to Global: posts back, the panel gone', await page.evaluate(() => window.MCC_FEED_SCOPE.get() === 'global' && document.getElementById('wePanel').hidden && document.querySelectorAll('#mnFeed [data-post-id]').length > 0));
         /* the strip drags: a finger scrolls it natively (overflow-x), a mouse drags it too, and a drag never chooses a tab */
         const over = await page.evaluate(() => { const r = document.getElementById('mnFeedScope'); return { sw: r.scrollWidth, cw: r.clientWidth, overflowX: getComputedStyle(r).overflowX }; });
         check(scope, 'the strip scrolls sideways inside itself, never the page', over.overflowX === 'auto' && (await fits(page)).sw === (await fits(page)).cw, over);
@@ -520,7 +592,7 @@ try {
     const { ctx, page, world, errors } = await open(VIEWPORTS[0], '/mnet.html?view=feed&daylight=night', { member: true });
     try {
       await page.waitForSelector(`#mnFeed [data-mission-post="${INSULATION.row.id}"] [data-mission-join]`, { timeout: 30000 });
-      check(scope, 'a member\'s Everything carries the mission posts too', await page.evaluate(() => !document.documentElement.classList.contains('mn-guest') && document.querySelectorAll('#mnFeed [data-mission-post]').length > 0));
+      check(scope, 'a member\'s Global carries the mission posts too', await page.evaluate(() => !document.documentElement.classList.contains('mn-guest') && document.querySelectorAll('#mnFeed [data-mission-post]').length > 0));
       await page.click(`#mnFeed [data-mission-post="${INSULATION.row.id}"] [data-mission-join]`);
       await page.waitForFunction(() => document.getElementById('mnMissionDialog').open && /Mission started/.test(document.getElementById('mnMissionDialogStatus').textContent), null, { timeout: 20000 }).catch(() => {});
       await page.waitForTimeout(800);
@@ -627,7 +699,7 @@ try {
       await page.click('#mnPlaceCard .mn__place-close');
       await page.waitForFunction(() => window.MCC_FEED_SCOPE.get() !== 'local', null, { timeout: 20000 }).catch(() => {});
       const backToNews = await page.evaluate(() => ({ scope: window.MCC_FEED_SCOPE.get(), pressed: document.querySelector('#mnFeedScope [aria-pressed="true"]').dataset.feedScope }));
-      check(scope, 'from News a country turns the feed to Local, and letting it go returns to News, not to Everything', fromNews === 'local' && backToNews.scope === 'news' && backToNews.pressed === 'news', { fromNews, backToNews });
+      check(scope, 'from News a country turns the feed to Local, and letting it go returns to News, not to Global', fromNews === 'local' && backToNews.scope === 'news' && backToNews.pressed === 'news', { fromNews, backToNews });
       const heard = noise(world);
       check(scope, 'zero console errors and no 4xx', heard.console.length === 0 && heard.bad.length === 0, heard);
       check(scope, 'no JavaScript errors', errors.length === 0, errors);
@@ -649,7 +721,7 @@ try {
     } finally { await ctx.close(); }
   }
 
-  /* ---------- a missions read that fails: Everything keeps its posts and news; the tab offers Try again and reads again when chosen again ---------- */
+  /* ---------- a missions read that fails: Global keeps its posts and news; the tab offers Try again and reads again when chosen again ---------- */
   {
     const scope = 'guest-failed-missions-390';
     const failures = [/\/rest\/v1\/action_missions\?/];
@@ -659,7 +731,7 @@ try {
       await page.waitForSelector('#mnFeed [data-post-id]', { timeout: 30000 });
       await page.waitForTimeout(800);
       const seq = await feedSeq(page);
-      check(scope, 'Everything shows its posts and news without the missions', seq.includes('p') && seq.includes('n') && !seq.some((x) => x.startsWith('m:')) && world.missionsList === 1, { seq, reads: world.missionsList });
+      check(scope, 'Global shows its posts and news without the missions', seq.includes('p') && seq.includes('n') && !seq.some((x) => x.startsWith('m:')) && world.missionsList === 1, { seq, reads: world.missionsList });
       await page.click('#mnFeedScope [data-feed-scope="equity"]');
       await page.waitForSelector('#mnFeed [data-mission-feed-error]', { timeout: 15000 }).catch(() => {});
       const tab = await page.evaluate(() => ({ text: (document.querySelector('#mnFeed [data-mission-feed-error]') || {}).textContent || '', retry: !!document.querySelector('#mnFeed [data-mission-feed-retry]') }));
@@ -675,7 +747,7 @@ try {
       check(scope, 'Try again reads once more and lists the missions', world.missionsList === 4 && after.missions === MISSIONS.length && !after.error, { after, reads: world.missionsList });
       await page.click('#mnFeedScope [data-feed-scope="global"]');
       await page.waitForFunction(() => document.querySelectorAll('#mnFeed [data-mission-post]').length > 0, null, { timeout: 15000 }).catch(() => {});
-      check(scope, 'and Everything carries them too', (await feedSeq(page)).some((x) => x.startsWith('m:')));
+      check(scope, 'and Global carries them too', (await feedSeq(page)).some((x) => x.startsWith('m:')));
       const heard = noise(world, failures);
       check(scope, 'no console error and no 4xx besides the three failed reads', heard.console.length === 0 && heard.bad.length === 0, heard);
       check(scope, 'no JavaScript errors', errors.length === 0, errors);
@@ -758,7 +830,7 @@ try {
     } finally { await ctx.close(); }
   }
 
-  /* ---------- by day at 390: the supplied dark mark on the white tab and on the joins, the white mark on the pressed red ---------- */
+  /* ---------- by day at 390: the owner's row, the supplied dark mark on the white tab and on the joins, the white mark on the pressed red ---------- */
   {
     const scope = 'daylight-390';
     const { ctx, page, world, errors } = await open(VIEWPORTS[0], '/mnet.html?view=feed&daylight=day');
@@ -766,16 +838,19 @@ try {
       await page.waitForSelector('#mnFeed [data-post-id]', { timeout: 30000 });
       await page.waitForSelector('#mnFeed [data-mission-post]', { timeout: 30000 }).catch(() => {});
       check(scope, 'the World is in its daylight look', await page.evaluate(() => document.documentElement.getAttribute('data-daylight') === 'day'));
-      const unpressed = (await strip(page))[2];
+      await globeReady(page);
+      checkRow(scope, await guestView(page), 'global');
+      const unpressed = (await strip(page)).find((b) => b.key === 'equity');
       check(scope, 'by day the unpressed tab shows the supplied dark mark alone', unpressed.marks.length === 1 && unpressed.marks[0].src === 'assets/img/equity-uprise-mark.png' && unpressed.words === '', unpressed);
       const joins = await joinMarks(page);
       check(scope, 'by day each Join on the white feed is the supplied dark mark alone', joins.length === MISSIONS.length && joins.every((j) => j.words === '' && j.shown.length === 1 && j.shown[0].src === 'assets/img/equity-uprise-mark.png' && j.shown[0].w === j.shown[0].h), joins[0]);
       await page.waitForTimeout(800);
       await page.evaluate(() => { const f = document.getElementById('mnWorldFeed'), a = document.querySelector('#mnFeed [data-mission-post]'); if (f && a) f.scrollTop += a.getBoundingClientRect().top - f.getBoundingClientRect().top - 160; });
       await page.waitForTimeout(300);
-      await page.screenshot({ path: join(OUT, 'daylight-everything-390.png') });
+      await page.screenshot({ path: join(OUT, 'daylight-global-390.png') });
       await page.click('#mnFeedScope [data-feed-scope="equity"]');
-      const pressed = (await strip(page))[2];
+      checkRow(scope, await guestView(page), 'equity');
+      const pressed = (await strip(page)).find((b) => b.key === 'equity');
       check(scope, 'by day the pressed tab (red) shows the supplied white mark alone', pressed.pressed === 'true' && pressed.marks.length === 1 && pressed.marks[0].src === 'assets/img/equity-uprise-mark-white.png', pressed);
       /* the Environmental Justice panel at the top of the tab, by day: the page's ink on the page's grounds (css/daylight.css) */
       await page.waitForFunction(() => document.documentElement.getAttribute('data-we-feed') === 'ready', null, { timeout: 15000 }).catch(() => {});

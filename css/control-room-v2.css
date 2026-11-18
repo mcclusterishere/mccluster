@@ -500,6 +500,8 @@ body.cr.has-appbar .cr-more__box{padding-bottom:calc(var(--appbar-h,64px) + 2.2r
 .cr-ai-attach__btn{min-height:44px;min-width:44px;display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:max(16px,1em)}
 .cr-ai-attach__input{position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
 .cr-ai-attach__hint{flex:1 1 180px;min-width:0;color:var(--cr-faint);font-size:10px;line-height:1.5}
+/* the one honest line in place of a control the running Core does not honour */
+.cr-ai-capability{margin:0 0 8px;padding:8px 10px;border:1px dashed var(--cr-line);border-radius:10px;color:var(--cr-dim);font-size:12px;line-height:1.5;min-width:0;overflow-wrap:anywhere}
 .cr-ai-thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(0,96px));gap:8px;margin:0 0 8px}
 .cr-ai-thumb{position:relative;aspect-ratio:1;border:1px solid var(--cr-line);border-radius:10px;overflow:hidden;background:var(--cr-bg);min-width:0}
 .cr-ai-thumb img{width:100%;height:100%;object-fit:cover;display:block}
@@ -513,7 +515,11 @@ body.cr.has-appbar .cr-more__box{padding-bottom:calc(var(--appbar-h,64px) + 2.2r
 .cr-ai-browser-switch .cr-switch{align-self:center}
 .cr-ai-message__images{display:grid;grid-template-columns:repeat(auto-fill,minmax(0,96px));gap:6px;margin:0 0 6px}
 .cr-ai-message__images img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;border:1px solid var(--cr-line);display:block}
-.cr-ai-node{display:inline-flex;align-items:center;gap:5px;max-width:100%;padding:2px 7px;border:1px solid rgba(53,208,127,.3);border-radius:999px;color:var(--cr-ok);font-size:9px;font-weight:800;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* The node badge shows its whole content at every width (verification finding N2V-m2: at 390 px the rate was cut off):
+   the meta row wraps, so the badge takes a line of its own when the row is full, and it wraps inside itself only when it
+   is wider than the whole message. Nothing is clipped and nothing leaves the message. */
+.cr-ai-message__meta{flex-wrap:wrap;row-gap:4px}
+.cr-ai-node{display:inline-flex;align-items:center;gap:5px;max-width:100%;min-width:0;padding:2px 7px;border:1px solid rgba(53,208,127,.3);border-radius:999px;color:var(--cr-ok);font-size:9px;font-weight:800;letter-spacing:.04em;overflow-wrap:anywhere}
 .cr-ai-refused{margin:6px 0 0;padding:8px 10px;border-radius:10px;border:1px solid rgba(240,180,77,.42);background:rgba(240,180,77,.08);font-size:12px;line-height:1.5;color:var(--cr-text);overflow-wrap:anywhere}
 .cr-ai-refused code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:10px;color:var(--cr-faint)}
 .cr-ai-browser{margin:6px 0 0;color:var(--cr-dim);font-size:11px;line-height:1.5;min-width:0}

@@ -743,6 +743,15 @@
     var content = String(value || "").trim();
     if (!content || state.aiChatPending) return Promise.resolve();
     state.aiChatError = null;
+    /* The Core's word on images and the browser, read before anything is
+       created or shown as sent: a turn it would strip is refused here, with
+       the attachments kept so they can be removed. */
+    var support = aiCoreSupport(state.coreTools);
+    if (state.aiAttachments.length && !support.turnImages) {
+      state.aiChatError = AI_CAPABILITY_OFF.images + " Remove the image to send this turn.";
+      render();
+      return Promise.resolve();
+    }
     var inputMode = opts.inputMode === "voice" ? "voice" : "text";
     var threadPromise = state.selectedAiThreadId
       ? Promise.resolve(aiThreadById(state.selectedAiThreadId))
@@ -758,9 +767,10 @@
       var submittedAt = new Date().toISOString();
       var keepPendingAfterRecovery = false;
       /* The attachments and the switch belong to this turn: taken now, so a
-         second send cannot carry them twice. */
+         second send cannot carry them twice. A switch left on while the Core
+         stopped declaring the flag sends nothing. */
       var attachments = state.aiAttachments.slice();
-      var allowBrowser = state.aiAllowBrowser === true;
+      var allowBrowser = state.aiAllowBrowser === true && support.turnBrowser;
       var optimistic = {
         id: messageId,
         thread_id: thread.id,
@@ -798,7 +808,7 @@
         message_id: messageId,
         content: content,
         input_mode: inputMode
-      }, attachments, allowBrowser)).then(function (queued) {
+      }, attachments, allowBrowser, support)).then(function (queued) {
         if (!queued || !queued.turn_id) throw new Error("McCluster did not return a durable turn id");
         optimistic.metadata.task_status = queued.job_status || "queued";
         state.aiChatTask = { id: queued.turn_id, status: queued.job_status || "queued", job_type: "resident_ai_turn" };
@@ -1119,26 +1129,79 @@
   function aiAttachmentImages(attachments) {
     return (Array.isArray(attachments) ? attachments : []).map(function (a) { return a && a.base64; }).filter(aiBase64Valid);
   }
-  /* The durable turn: the fields an older Core knows, plus images and
-     allow_browser only when set, so nothing unknown is sent for a plain turn. */
-  function aiTurnSubmission(base, attachments, allowBrowser) {
+  /* WHAT THE RUNNING CORE HONOURS, in its own words (deploy-readiness review,
+     2026-11-18). A field counts only when the Core's tools/list, the list this
+     page already reads through the owner's bridge, declares it in that tool's
+     input schema: images and allow_browser on core.ai.turn.submit,
+     messages[].images on ai.chat. The Core on OVH at build eb942248 declares
+     none of them; it would drop a turn's images and the browser flag in
+     silence and hand an image to a text model, so against it the controls stay
+     off and one honest line says so. browser.act is agent-only and never
+     listed over MCP (AGENT-NODE-BROWSER.md), so the durable turn's
+     allow_browser is the Core's word that it honours the browser; whether a
+     browser node is live stays the readiness line's job. No backend call: the
+     tool list is already in hand. */
+  var AI_CAPABILITY_OFF = {
+    images: "Attach image is off: the Core running now does not accept images in a turn.",
+    browser: "Use the browser is off: the Core running now does not honour browser turns."
+  };
+  var AI_CAPABILITY_WHY = {
+    images: "Its tool list declares no images field on core.ai.turn.submit; attach comes back once the running Core declares one.",
+    browser: "Its tool list declares no allow_browser field on core.ai.turn.submit; the switch comes back once the running Core declares one."
+  };
+  function aiToolSchema(tools, name) {
+    var list = Array.isArray(tools) ? tools : [];
+    for (var i = 0; i < list.length; i += 1) {
+      var tool = list[i];
+      if (tool && tool.name === name) return tool.inputSchema && typeof tool.inputSchema === "object" ? tool.inputSchema : null;
+    }
+    return null;
+  }
+  function aiDeclared(schema, key) {
+    var props = schema && schema.properties && typeof schema.properties === "object" ? schema.properties : null;
+    return Boolean(props && Object.prototype.hasOwnProperty.call(props, key) && props[key] && typeof props[key] === "object");
+  }
+  function aiCoreSupport(tools) {
+    var turn = aiToolSchema(tools, "core.ai.turn.submit");
+    var chat = aiToolSchema(tools, "ai.chat");
+    var messages = chat && chat.properties && chat.properties.messages;
+    var item = messages && typeof messages === "object" && messages.items && typeof messages.items === "object" ? messages.items : null;
+    return { turnImages: aiDeclared(turn, "images"), turnBrowser: aiDeclared(turn, "allow_browser"), chatImages: aiDeclared(item, "images") };
+  }
+  function aiCapabilityLine(kind) {
+    return '<p class="cr-ai-capability" data-ai-capability="' + esc(kind) + '" title="' + esc(AI_CAPABILITY_WHY[kind]) + '">' + esc(AI_CAPABILITY_OFF[kind]) + '</p>';
+  }
+  /* The durable turn: the fields every Core knows, plus images and
+     allow_browser only when set and only to a Core that declares them. A
+     field that Core does not declare is refused here, before anything is
+     sent or shown as sent, never dropped in silence. */
+  function aiTurnSubmission(base, attachments, allowBrowser, support) {
     var submission = Object.assign({}, base);
     var images = aiAttachmentImages(attachments);
+    if (images.length && !(support && support.turnImages)) throw new Error(AI_CAPABILITY_OFF.images + " Remove the image to send this turn.");
+    if (allowBrowser === true && !(support && support.turnBrowser)) throw new Error(AI_CAPABILITY_OFF.browser);
     if (images.length) submission.images = images;
     if (allowBrowser === true) submission.allow_browser = true;
     return submission;
   }
   /* "Ask home AI" (ai.chat): the prompt form, or the messages form when an
-     image rides along (Ollama reads messages[].images). */
-  function aiChatRequest(text, attachments) {
+     image rides along (Ollama reads messages[].images), and only to an
+     ai.chat that declares messages[].images: anything else would hand the
+     image to whatever text model the fabric picks. */
+  function aiChatRequest(text, attachments, chatImages) {
     var images = aiAttachmentImages(attachments);
     if (!images.length) return { prompt: text, temperature: 0.2 };
+    if (chatImages !== true) throw new Error("Ask home AI takes no image here: the Core running now sends ai.chat to a text model.");
     return { messages: [{ role: "user", content: text, images: images }], temperature: 0.2 };
   }
-  /* The switch renders for the owner of the house workspace when the durable
-     turn tool is listed; the server decides again on every turn. */
-  function aiBrowserSwitchVisible(st, available) {
-    return Boolean(st && st.workspace && st.workspace.role === "owner" && isHouseWorkspace(st.org) && typeof available === "function" && available("core.ai.turn.submit"));
+  /* The switch renders for the owner of the house workspace, and only when the
+     running Core declares allow_browser; the server decides again on every
+     turn. The owner is told why when it is off; nobody else hears of it. */
+  function aiBrowserOwner(st) {
+    return Boolean(st && st.workspace && st.workspace.role === "owner" && isHouseWorkspace(st.org));
+  }
+  function aiBrowserSwitchVisible(st, support) {
+    return aiBrowserOwner(st) && Boolean(support && support.turnBrowser);
   }
   function aiErrorCopy(code) {
     var key = String(code || "");
@@ -1355,23 +1418,27 @@
       var lastUser = messages.filter(function (m) { return m.role === "user"; }).pop();
       body += '<div class="cr-ai-message cr-ai-message--assistant cr-ai-message--pending"><div class="cr-ai-message__meta"><span>McCluster AI</span><span>' + esc(taskStatus) + '</span></div><div class="cr-ai-message__body"><span class="cr-spin"></span> ' + esc(pendingCopy) + aiReceiptStepsHtml(lastUser) + '</div></div>';
     }
-    var attachRow = '<div class="cr-ai-attach">' +
+    /* Each control only when the running Core declares what it sends; one
+       honest line in its place otherwise. Thumbnails stay while any image is
+       attached, so one attached before the Core changed can still be removed. */
+    var support = aiCoreSupport(state.coreTools);
+    var attachRow = (support.turnImages ? '<div class="cr-ai-attach">' +
       '<button class="cr-btn cr-ai-attach__btn" type="button" data-action="ai-attach"' + (!ready || state.aiChatPending || state.aiAttachments.length >= AI_IMAGE_MAX ? " disabled" : "") + ' aria-describedby="crAiAttachHint">Attach image</button>' +
       '<input id="crAiAttach" type="file" accept="image/*" multiple class="cr-ai-attach__input" aria-label="Attach up to two images" tabindex="-1">' +
-      '<span class="cr-ai-attach__hint" id="crAiAttachHint">' + esc(state.aiAttachments.length + "/" + AI_IMAGE_MAX + " · downscaled here to " + AI_IMAGE_MAX_SIDE + " px JPEG, at most " + Math.round(AI_IMAGE_MAX_BYTES / 1000) + " KB each · a turn with an image goes to a vision model or says that none is live") + '</span></div>' +
+      '<span class="cr-ai-attach__hint" id="crAiAttachHint">' + esc(state.aiAttachments.length + "/" + AI_IMAGE_MAX + " · downscaled here to " + AI_IMAGE_MAX_SIDE + " px JPEG, at most " + Math.round(AI_IMAGE_MAX_BYTES / 1000) + " KB each · a turn with an image goes to a vision model or says that none is live") + '</span></div>' : aiCapabilityLine("images")) +
       (state.aiAttachments.length ? '<div class="cr-ai-thumbs">' + state.aiAttachments.map(function (a, i) {
         return '<div class="cr-ai-thumb"><img src="' + esc(a.preview) + '" alt="' + esc(a.name || ("Attached image " + (i + 1))) + '">' +
           '<button class="cr-ai-thumb__remove" type="button" data-action="ai-remove-attachment" data-index="' + i + '" aria-label="Remove ' + esc(a.name || "this image") + '">×</button>' +
           '<span class="cr-ai-thumb__meta">' + esc(a.width + "×" + a.height + " · " + aiKb(a.bytes)) + '</span></div>';
       }).join("") + '</div>' : "");
     var browserSwitch = "";
-    if (aiBrowserSwitchVisible(state, coreToolAvailable)) {
+    if (aiBrowserSwitchVisible(state, support)) {
       var readiness = aiBrowserReadiness(messages);
       browserSwitch = '<div class="cr-ai-browser-switch"><span class="cr-ai-browser-switch__text"><b>Use the browser</b><span>' +
         esc(state.aiAllowBrowser ? "On: each turn you send may drive the node's own browser on its allowed sites (owner-only; the Core checks again)." : "Off: your turns run without the node's browser.") + '</span>' +
         '<span class="cr-ai-browser-switch__ready" data-ai-browser-ready="' + esc(readiness.state) + '">' + esc(readiness.text) + '</span></span>' +
         '<button class="cr-switch' + (state.aiAllowBrowser ? " is-on" : "") + '" type="button" role="switch" aria-checked="' + (state.aiAllowBrowser ? "true" : "false") + '" aria-label="Use the browser for this turn" data-action="ai-browser-toggle"' + (!ready || state.aiChatPending ? " disabled" : "") + '></button></div>';
-    }
+    } else if (aiBrowserOwner(state)) browserSwitch = aiCapabilityLine("browser");
 
     return sourceBanner(state.sources.coreBridge, "Core bridge") +
       sourceBanner(state.sources.coreTools, "AI execution path") +

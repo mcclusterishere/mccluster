@@ -268,7 +268,7 @@
     return 'Last command: ' + what + same + ' · reason: ' + (last.reason || 'not returned') + ' · ' + when(last.created_at);
   }
   /* What a stopped state means for people, in words (never by colour alone). League and intake follow the guard
-     in supabase/pending/eup_module_policy_v1.sql: reads are never guarded and reduce-only actions stay open. The
+     in supabase/migrations/20261117144103_eup_module_policy_v1.sql: reads are never guarded and reduce-only actions stay open. The
      environment unit is enforced by the consumer route, which refuses every write while draining and answers
      nothing while disabled. The page is not told how much work is still in flight. */
   var STILL_OPEN = 'new work is refused. Reads still answer, and so do actions that only stop work or remove exposure (withdraw, revoke, pause).';

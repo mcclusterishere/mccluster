@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 721,
+  "candidate_count": 726,
   "capability_source_count": 104,
-  "support_only_count": 617,
+  "support_only_count": 622,
   "entries": [
     {
       "path": ".cursorrules",
@@ -1500,6 +1500,20 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Read-only production schema snapshot after media_operation_claims_v2 was applied on 2026-11-10 (catalog metadata and hashes), including eu_* objects. Evidence only; no building capability, program or geometry."
+    },
+    {
+      "path": "docs/control-plane/evidence/production-schema-snapshot-2026-11-18.json",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Read-only production schema snapshot taken on 2026-11-18 after twelve migrations recorded at ledger 376 (the Equity Uprise platform registry and music workspace, the E=Up module policy, the World mission join scope, details and Drawdown import), catalog metadata and hashes, including eu_* objects. Evidence only; no building capability, program or geometry."
+    },
+    {
+      "path": "docs/control-plane/evidence/releases-2026-11-18/LEDGER-376-APPLIED-VERIFICATION.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Read-only verification of the twelve production-only migrations recorded at ledger 376, including the two Equity Uprise platform migrations applied outside Git (eu_platform_* objects): what production holds, what was read and what it does not establish. Evidence only; no building capability, program or geometry."
     },
     {
       "path": "docs/control-plane/registry.json",
@@ -3276,6 +3290,13 @@
       "rationale": "Tests building equipment selection without adding a program capability."
     },
     {
+      "path": "scripts/test/eu-platform-replay.native.integration.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Native PostgreSQL proof of the replay twin of the Equity Uprise platform registry: runs the reset script against a scratch database shaped like the CI rebuild and compares what ledger rows 365 to 376 build with production's snapshot. Names eu_platform_* objects only to exercise them; not a building capability."
+    },
+    {
       "path": "scripts/test/eu-screen-hardware-binding.test.mjs",
       "classification": "test_support",
       "capability_ids": [],
@@ -4269,6 +4290,34 @@
       "rationale": "Learning-evidence backend on the existing McCluster plane (Worker mccluster + Supabase): records sandbox lab evidence, uploaded external certificates and HSEEP exercise records. No new building capability, no live control."
     },
     {
+      "path": "supabase/migrations/20261114015120_equity_uprise_platform_registry.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Equity Uprise platform registry (platform, tenants, app and module bindings, artist bindings) on the canonical plane, applied in production on 2026-11-14 outside Git and imported byte for byte from production's stored statement. Shared backend tenancy; no building capability, program or geometry."
+    },
+    {
+      "path": "supabase/migrations/20261114060150_equity_uprise_music_workspace.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Equity Uprise shared music workspace (artist music spaces and per-member music libraries) on the existing identity, creator and catalog plane, applied in production on 2026-11-14 outside Git and imported byte for byte from production's stored statement. Shared backend; no building capability, program or geometry."
+    },
+    {
+      "path": "supabase/migrations/20261117144103_eup_module_policy_v1.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Persisted module policy (enable, drain, disable) of the Equity Uprise product modules McCluster runs, on the canonical plane; applied in production on 2026-11-17 as version 20261117144103 and moved here byte for byte from supabase/pending/. Shared backend; no building capability, program or geometry."
+    },
+    {
+      "path": "supabase/migrations/20261118021521_action_mission_details.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Action Network mission details table (about, credit, source) read with public missions, applied in production on 2026-11-18 as version 20261118021521 and moved here byte for byte from supabase/pending/; its policies reuse the existing admin helper eu_is_admin. Shared backend; no building program capability."
+    },
+    {
       "path": "supabase/pending/20261013180000_qt6kv_creator_isrc_ledger.sql",
       "classification": "shared_backend_support",
       "capability_ids": [],
@@ -4318,13 +4367,6 @@
       "rationale": "Schema reconciliation SQL from the 2026-10-28 production audit that names Equity Uprise (eu_*) tables, policies or functions among many others; database hygiene, not a building capability."
     },
     {
-      "path": "supabase/pending/20261117100100_action_mission_details.sql",
-      "classification": "shared_backend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Pending (unapplied) Action Network mission details table (about, credit, source) read with public missions; its policies reuse the existing admin helper eu_is_admin. Shared backend; no building program capability."
-    },
-    {
       "path": "supabase/pending/PROMOTION-ORDER.md",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -4357,14 +4399,7 @@
       "classification": "documentation_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Provenance record for the pending E=Up module policy SQL: which Equity Uprise control semantics were ported, from which patch and hashes, and every deliberate difference. Evidence only; no building capability, program or geometry."
-    },
-    {
-      "path": "supabase/pending/eup_module_policy_v1.sql",
-      "classification": "shared_backend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Pending, unapplied SQL for persisted module policy (enable, drain, disable) of the Equity Uprise product modules McCluster runs, on the canonical plane. Shared backend; no building capability, program or geometry."
+      "rationale": "Provenance record for the E=Up module policy SQL, applied 2026-11-17 as supabase/migrations/20261117144103_eup_module_policy_v1.sql: which Equity Uprise control semantics were ported, from which patch and hashes, and every deliberate difference. Evidence only; no building capability, program or geometry."
     },
     {
       "path": "supabase/pending/live-callers.json",
@@ -4720,6 +4755,13 @@
       "rationale": "Schema reconciliation SQL from the 2026-10-28 production audit that names Equity Uprise (eu_*) tables, policies or functions among many others; database hygiene, not a building capability."
     },
     {
+      "path": "supabase/replay_migrations/20261114015120_equity_uprise_platform_registry.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Replay twin of the Equity Uprise platform registry, applied only by the CI reset: production's stored statement with the two preflight checks a rebuilt database cannot meet relaxed. Shared backend tenancy; no building capability, program or geometry."
+    },
+    {
       "path": "supabase/schema-manifest.json",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -4781,6 +4823,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Scratch-database test or stub for the 2026-10-29 schema reconciliation and pending hygiene files; it names eu_* objects only to exercise them, not a building capability."
+    },
+    {
+      "path": "supabase/tests/eu_platform_replay.stub.sql",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Scratch-database stub of the tables the Equity Uprise platform registry and music workspace read, as the CI rebuild holds them. Never applied to a project; not a building capability."
     },
     {
       "path": "supabase/tests/eu_platform_test.sql",

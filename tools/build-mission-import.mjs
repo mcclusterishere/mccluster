@@ -6,12 +6,16 @@
 
    Writes, under supabase/pending/ (this tool never touches a database; every file needs the owner's
    approval of its exact SQL, see supabase/pending/PROMOTION-ORDER.md, section 10):
-     20261117100200_action_mission_drawdown_import_01.sql ..      the missions as drafts, plus their details, in
-     20261117100200_action_mission_drawdown_import_NN.sql         parts applied in order (below)
      20261117100200_action_mission_drawdown_import.rollback.sql   deletes exactly those ids, however many parts ran;
                                                                   refuses while referenced
      20261117100300_action_mission_drawdown_publish.sql           draft -> open, exactly those ids
      20261117100300_action_mission_drawdown_publish.rollback.sql  open -> draft, exactly those ids
+
+   Checks, never writes, the import parts: the missions as drafts, plus their details, applied in production in
+   order on 2026-11-18 and promoted to supabase/migrations/<version>_action_mission_drawdown_import_NN.sql under
+   the versions production recorded (APPLIED_IMPORT_PART_VERSIONS). They were staged and reviewed in
+   supabase/pending/ as 20261117100200_action_mission_drawdown_import_01.sql .. _NN.sql, and the SQL still names
+   them so (importPartStageName): an applied part keeps its bytes. A build that would change one stops instead.
 
    The parts. Until 2026-11-18 the import was one file, 20261117100200_action_mission_drawdown_import.sql
    (188,022 bytes): more than one Supabase MCP `apply_migration` call can carry when the operator sends the
@@ -31,7 +35,7 @@
        is evaluated here with SQL's rules: a check fails only when it is false, never when it is null. An
        unknown shape of check stops the build instead of being skipped;
      - against the constraints of public.action_mission_details
-       (supabase/pending/20261117100100_action_mission_details.sql; DETAIL_LIMITS mirrors them and
+       (supabase/migrations/20261118021521_action_mission_details.sql; DETAIL_LIMITS mirrors them and
        scripts/test/mission-import.test.mjs holds the two together);
      - against the catalog's own rules (data/missions/drawdown/README.md): kind civic, status draft, original
        wording credited, and every CC BY 4.0 row's credit_line naming its creators, record, DOI and licence URL.
@@ -46,7 +50,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 export const CATALOG_PATH = 'data/missions/drawdown/missions.json';
-export const DETAILS_SQL_PATH = 'supabase/pending/20261117100100_action_mission_details.sql';
+export const DETAILS_SQL_PATH = 'supabase/migrations/20261118021521_action_mission_details.sql';
 export const OUTPUT_FILES = Object.freeze({
   importRollback: 'supabase/pending/20261117100200_action_mission_drawdown_import.rollback.sql',
   publish: 'supabase/pending/20261117100300_action_mission_drawdown_publish.sql',
@@ -56,9 +60,27 @@ export const OUTPUT_FILES = Object.freeze({
 /** The most bytes (UTF-8) one import part may hold: what one `apply_migration` call carries safely. */
 export const IMPORT_PART_MAX_BYTES = 32000;
 const pad2 = (i) => String(i).padStart(2, '0');
-/** Part i (1-based): its pending file and the migration name it is applied under. */
-export const importPartFile = (i) => `supabase/pending/20261117100200_action_mission_drawdown_import_${pad2(i)}.sql`;
+/** Part i (1-based): the migration name it is applied under. */
 export const importPartName = (i) => `action_mission_drawdown_import_${pad2(i)}`;
+/**
+ * Part i (1-based): the name it was staged and reviewed under in supabase/pending/. The generated SQL names the parts
+ * by it (the guards' hints, the publish, the import rollback), so it never changes: an applied part's bytes cannot.
+ */
+export const importPartStageName = (i) => `20261117100200_${importPartName(i)}.sql`;
+/**
+ * The ledger versions production recorded for parts 01 to 07, applied 2026-11-18 (read, SELECT only, that day). Each
+ * part is now that migration, supabase/migrations/<version>_<name>.sql, the stored statement byte for byte.
+ */
+export const APPLIED_IMPORT_PART_VERSIONS = Object.freeze([
+  '20261118034753', '20261118034926', '20261118035056', '20261118035221', '20261118035346', '20261118035521', '20261118035654',
+]);
+/** Part i (1-based): its file, the applied migration. A part with no applied version means the catalog changed. */
+export function importPartFile(i) {
+  const version = APPLIED_IMPORT_PART_VERSIONS[i - 1];
+  if (!version) throw new Error(`import part ${pad2(i)} has no applied migration: the parts are in production, so a change to ${CATALOG_PATH} is a new migration, never a regenerated part`);
+  return `supabase/migrations/${version}_${importPartName(i)}.sql`;
+}
+/** A staged part left in supabase/pending/: stale once the parts are applied (two appliable copies of the import). */
 const PART_FILE = /^20261117100200_action_mission_drawdown_import_[0-9]+[.]sql$/;
 /** The import as one file, written until 2026-11-18 and replaced by the parts. It must not come back beside them. */
 export const RETIRED_IMPORT_FILE = 'supabase/pending/20261117100200_action_mission_drawdown_import.sql';
@@ -444,7 +466,7 @@ function buildImportPart(part, total, previous, s) {
       '  if not exists (select 1 from public.action_missions m join public.action_mission_details d on d.mission_id = m.id',
       `                  where m.id = ${lit(missionId(before.slug))}::uuid) then -- ${before.slug}`,
       `    raise exception 'Drawdown import part ${P} of ${T} refused: part ${B} (${importPartName(previous.index)}) is not applied'`,
-      `      using errcode = '55000', hint = 'Apply ${fileName(importPartFile(previous.index))} first; nothing was imported.';`,
+      `      using errcode = '55000', hint = 'Apply ${importPartStageName(previous.index)} first; nothing was imported.';`,
       '  end if;',
     ] : []),
     'end',
@@ -512,13 +534,13 @@ function renderParts(catalog, s) {
   const parts = planParts(catalog, s);
   return parts.map((part, i) => {
     const sql = buildImportPart(part, parts.length, parts[i - 1] || null, s);
-    if (bytes(sql) > IMPORT_PART_MAX_BYTES) throw new Error(`${importPartFile(part.index)} is ${bytes(sql)} bytes, over ${IMPORT_PART_MAX_BYTES}`);
+    if (bytes(sql) > IMPORT_PART_MAX_BYTES) throw new Error(`${importPartStageName(part.index)} is ${bytes(sql)} bytes, over ${IMPORT_PART_MAX_BYTES}`);
     return { ...part, sql };
   });
 }
 
-/** "<part 01's file> to _NN.sql": how the publish and the import rollback name the parts. */
-const partsSpan = (total) => `${fileName(importPartFile(1))} to _${pad2(total)}.sql`;
+/** "<part 01's staged name> to _NN.sql": how the publish and the import rollback name the parts. */
+const partsSpan = (total) => `${importPartStageName(1)} to _${pad2(total)}.sql`;
 
 function buildImportRollback(catalog, s, total) {
   return [
@@ -742,7 +764,10 @@ export function buildFiles(input) {
   };
 }
 
-/** Import files on disk that the catalog does not build: the retired one-file import, or a part beyond the last. */
+/**
+ * Import files in supabase/pending/ that must not be there: the retired one-file import, or any staged part (the
+ * parts are applied migrations now, so a copy left in pending/ would be a second appliable one).
+ */
 export function staleFiles(root = ROOT, files = buildFiles(readCatalog(root))) {
   return readdirSync(join(root, 'supabase/pending'))
     .map((f) => `supabase/pending/${f}`)
@@ -778,10 +803,19 @@ function main() {
     console.log(`mission import SQL is current (${Object.keys(files).length} files)`);
     return;
   }
-  for (const [path, out] of Object.entries(files)) writeFileSync(join(ROOT, path), out);
+  // The import parts are applied migrations: a build checks them and never writes one. If the catalog no longer
+  // builds an applied part byte for byte, nothing is written.
+  const applied = Object.keys(files).filter((path) => path.startsWith('supabase/migrations/'));
+  const changed = applied.filter((path) => !existsSync(join(ROOT, path)) || readFileSync(join(ROOT, path), 'utf8') !== files[path]);
+  if (changed.length) {
+    console.error(`${CATALOG_PATH} no longer builds the applied import parts byte for byte; an applied migration never changes (a catalog change is a new migration). Nothing was written:\n  ${changed.join('\n  ')}`);
+    process.exit(1);
+  }
+  const written = Object.keys(files).filter((path) => !applied.includes(path));
+  for (const path of written) writeFileSync(join(ROOT, path), files[path]);
   const stale = staleFiles(ROOT, files);
   for (const path of stale) unlinkSync(join(ROOT, path));
-  console.log(`wrote ${Object.keys(files).join(', ')}${stale.length ? `\nremoved ${stale.join(', ')}` : ''}`);
+  console.log(`wrote ${written.join(', ')}; the ${applied.length} applied import parts are unchanged${stale.length ? `\nremoved ${stale.join(', ')}` : ''}`);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main();

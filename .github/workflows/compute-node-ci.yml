@@ -53,8 +53,11 @@ jobs:
 
   # The node's own browser (device-node slice N2, docs/control-plane/AGENT-NODE-BROWSER.md): the browser
   # executor's tests drive real Chromium against a loopback fixture. Playwright is installed OUTSIDE the
-  # repository (core/package.json never lists it), the executor finds it through
+  # repository (core/package.json never lists it), the executor and the test harness find it through
   # MCCLUSTER_BROWSER_PLAYWRIGHT_DIR, and the sandbox is off only because this is a CI container.
+  # MCCLUSTER_BROWSER_TESTS_REQUIRED makes the harness FAIL when Playwright or its Chromium is missing,
+  # instead of skipping every real-Chromium test and reporting green (verification finding N2V-m1;
+  # core/test/browser-executor-required.test.mjs proves the harness does that).
   browser-executor:
     name: Browser executor against real Chromium
     runs-on: ubuntu-latest
@@ -62,6 +65,7 @@ jobs:
     env:
       MCCLUSTER_BROWSER_PLAYWRIGHT_DIR: /tmp/pw/node_modules/playwright
       MCCLUSTER_BROWSER_NO_SANDBOX: '1'
+      MCCLUSTER_BROWSER_TESTS_REQUIRED: '1'
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0

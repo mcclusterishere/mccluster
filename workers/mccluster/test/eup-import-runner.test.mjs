@@ -5,7 +5,7 @@
 //   1. A scripted store and a fake upstream behind one injected fetch. Always runs. It pins the order of the
 //      steps, what is sent, every refusal the store can answer, the exact-host allow-list, and that no URL
 //      query, header, credential, lease or database text reaches a result, a log entry or a stored reason.
-//   2. The REAL pending SQL (eup_module_policy_v1.sql + eup_intake_v1.sql) in PGlite through
+//   2. The REAL SQL (the applied 20261117144103_eup_module_policy_v1.sql + the pending eup_intake_v1.sql) in PGlite through
 //      scripts/test/support/eup-intake-database.mjs, with a fake upstream. PGlite is not a dependency of this
 //      repository: these tests run when PGLITE_MODULE names it (or the package resolves) and are reported as
 //      SKIPPED, with the reason, when it does not. A PGLITE_MODULE that is set and does not load is a failure.

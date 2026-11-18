@@ -251,9 +251,15 @@ Three things to know before the Worker ships:
 
 | File (+ rollback) | Creates | Callers | Proof before apply |
 |---|---|---|---|
-| `eup_module_policy_v1.sql` (+ `eup_module_policy_v1.rollback.sql`, `eup_module_policy_v1.provenance.json`) | `eup_module_policies`, `eup_module_policy_commands` (append-only), and six service-role functions: `eup_module_policy_read`, `eup_module_control_read`, `eup_module_policy_install`, `eup_module_policy_command`, `eup_module_guard`, `eup_module_guard_reduce`, plus the trigger function `eup_module_guard_trigger` | `workers/mccluster/src/eup/modules.js`, `workers/mccluster/src/world-environment.js`, and the guard calls inside `eup_intake_v1.sql` | `scripts/test/eup-module-policy.integration.mjs` (257 assertions, PGlite); under real concurrency `scripts/test/eup-module-policy.native.integration.mjs` (96) and `scripts/test/eup-intake.native.integration.mjs` (33), on PostgreSQL 16 and 17 |
+| **Applied 2026-11-17:** `../migrations/20261117144103_eup_module_policy_v1.sql` (+ `eup_module_policy_v1.rollback.sql`, `eup_module_policy_v1.provenance.json`) | `eup_module_policies`, `eup_module_policy_commands` (append-only), and six service-role functions: `eup_module_policy_read`, `eup_module_control_read`, `eup_module_policy_install`, `eup_module_policy_command`, `eup_module_guard`, `eup_module_guard_reduce`, plus the trigger function `eup_module_guard_trigger` | `workers/mccluster/src/eup/modules.js`, `workers/mccluster/src/world-environment.js`, and the guard calls inside `eup_intake_v1.sql` | `scripts/test/eup-module-policy.integration.mjs` (257 assertions, PGlite); under real concurrency `scripts/test/eup-module-policy.native.integration.mjs` (96) and `scripts/test/eup-intake.native.integration.mjs` (33), on PostgreSQL 16 and 17 |
 
 | `eup_league_v1.sql` (+ `eup_league_v1.rollback.sql`) | the League tables (26, each with RLS on, no policy, no API-role privilege, the module guard trigger except the access record), `eup_outbox` (its sequence revoked from every API role) and three service-role functions: `eup_league_command`, `eup_league_member_command`, `eup_league_media_seal` | `workers/mccluster/src/eup/league-contract.js` (RPC names), `league.js`, `league-member.js`, `league-media.js`, `overview.js` | `scripts/test/eup-league.integration.mjs` (1427, PGlite); `scripts/test/eup-league-journey.integration.mjs` (1529, the real router over this SQL); `scripts/test/eup-league.native.integration.mjs` (1578 on PostgreSQL 16 and 17) |
+
+**Where it stands (2026-11-18).** `eup_module_policy_v1.sql` is applied, with the owner's approval, as ledger version
+`20261117144103`; the stored statement is the file byte for byte (26,070 bytes, md5 `1f1daee2582fd0a6f3a659350a07491e`),
+and it is promoted to `supabase/migrations/` (README, "Promoted 2026-11-18"). Its rollback and provenance record stay
+here. `eup_league_v1.sql` and `eup_intake_v1.sql` are not applied. Whether any module is installed or enabled was not
+read.
 
 **Order.** Apply `eup_module_policy_v1.sql` first, then `eup_league_v1.sql` and `eup_intake_v1.sql`
 (`eup_intake_v1.sql` raises 55000 when the guard functions are absent). Roll back in the reverse order: the
@@ -298,30 +304,35 @@ transaction and safe to run twice. Apply each with the Supabase MCP `apply_migra
 the owner of everything they change. The service role cannot apply 10.1 or 10.2, or roll them back: it owns
 none of those objects and has no CREATE on schema public (read 2026-11-17).
 
-**Where it stands** (read-only by the operator, 2026-11-18 02:15 UTC; 369 ledger rows): 10.1 and 10.2 are
-applied, with the owner's approval, and for each the statement production stored is the committed file byte for
-byte. 10.3 and 10.4 are not applied.
+**Where it stands** (read-only, 2026-11-18 04:17 to 04:29 UTC; 376 ledger rows): 10.1, 10.2 and the seven parts of
+10.3 are applied, with the owner's approval, and for each the statement production stored is the committed file byte
+for byte. All nine are promoted (below). 10.4 is not applied: the owner decided it runs in the deploy window, after
+the new feed ships.
 
 | # | Applied as | Ledger version | Stored statement, equal to the file |
 |---|---|---|---|
 | 10.1 | `action_globe_join_scope_v1` | `20261117222809` | 9,521 bytes, md5 `acbb15a8fa25400006d39a586abd834f` |
 | 10.2 | `action_mission_details` | `20261118021521` | 6,809 bytes, md5 `26965b3fe8bf077d1f5e9fb5f4b22557` |
+| 10.3 | `action_mission_drawdown_import_01` to `_07` | `20261118034753` to `20261118035654` | the seven parts, in the 10.3 table below |
 
 After 10.2, production has `public.action_mission_details` with row level security on, the policies "public
 reads open mission details" (SELECT, anon and authenticated) and "admins manage mission details" (ALL,
 authenticated), SELECT as the only client grant, and 0 rows; `public.action_missions` holds 1 mission, open;
-there are 0 mission pins. The promotion bookkeeping for 10.1 and 10.2 is still to do, as a step of its own
-(README, "To promote one": `git mv` to `supabase/migrations/<version>_<name>.sql`, `supabase/production-ledger.json`,
-`core/drift-contract.json`, the production snapshot evidence, `live-callers.json`). Until then both files and their
-rollbacks stay here under their pending names, and their headers keep the words they were applied with ("PENDING.
-Not applied to production."), as an applied file's bytes must.
+there are 0 mission pins. After part 07 (the operator's read, 2026-11-18 03:58 UTC) `public.action_missions` holds 1
+open and 125 draft missions and `public.action_mission_details` 125 rows; as `anon`, 1 mission, 0 drafts, 0 details.
+
+Promoted 2026-11-18 (README, "To promote one" and "Promoted 2026-11-18"): each file moved unchanged to
+`supabase/migrations/<version>_<name>.sql`, with `supabase/production-ledger.json`, `core/drift-contract.json`, the
+production snapshot `docs/control-plane/evidence/production-schema-snapshot-2026-11-18.json`, the schema manifest and
+`live-callers.json`. The rollbacks stay here under their pending names, and the moved files' headers keep the words
+they were applied with ("PENDING. Not applied to production."), as an applied file's bytes must.
 
 | # | File (+ rollback) | What | Callers | Proof before apply |
 |---|---|---|---|---|
-| 10.1 | `20261117100000_action_globe_join_scope_v1.sql` (+ `20261117100000_action_globe_join_scope_v1.rollback.sql`) | **Applied 2026-11-17** as `action_globe_join_scope_v1` (version `20261117222809`). Decouples joining from pins: `action_globe_mission_regions.join_scope` (default `anywhere`); `join_action_mission()` and `action_globe_can_join_mission()` gate only on a PUBLISHED pin marked `region_members`. The minimal extract of 20261015230000's sections 3 and 5, nothing else from that file. The rollback restores production's bodies byte for byte (md5(prosrc) `e0684ebe350296c5e6c06de55624ed42` for `join_action_mission`) and drops the column. Both refuse (55000), changing nothing, unless the two functions are production's or 10.1's own, so neither runs over the whole pins file (section 2, item 7) once it is in: roll that file back first | `join_action_mission` and its `_attributed`, `_live` and `_origin` wrappers (`js/mnet.js`, `js/action.js`) | `scripts/test/mission-catalog.native.integration.mjs`; `scripts/test-mission-pins-db.sh` (the whole pins file still applies on top of it) |
-| 10.2 | `20261117100100_action_mission_details.sql` (+ `20261117100100_action_mission_details.rollback.sql`) | **Applied 2026-11-18** as `action_mission_details` (version `20261118021521`). Creates `action_mission_details`: one row per mission (proof hint, safety note, credit line, quotation and its credit, source URL, licence, DOI), readable by anon and authenticated exactly when its mission is (the test of "public reads open missions"), written by the service role only. Creates no row. The rollback refuses while the table holds a row | none in shipped code at the time of writing; the World's mission posts and dialog are to read it and must tolerate its absence | the native suite above |
-| 10.3 | the seven import parts below, `20261117100200_action_mission_drawdown_import_01.sql` to `_07.sql` (+ `20261117100200_action_mission_drawdown_import.rollback.sql`, one rollback for every part), generated by `tools/build-mission-import.mjs` from `data/missions/drawdown/missions.json` | Owner approval required. Inserts the 125 Drawdown missions as `draft` (ids: UUID v5 of `mccluster:mission:drawdown:<slug>`), each part its missions and then their details rows (43 with a CC BY 4.0 licence and DOI in all), in catalog order. Every part refuses before 10.2, and every part from 02 on until the part before it is in. The rollback deletes exactly those ids, however many parts ran, and refuses while any assignment, proof, pin or other row references one; it locks the missions, and the two tables that name a mission without a foreign key (`action_creator_payout_intents`, `action_creator_funding`), before it counts | none; drafts are invisible to the public | `node tools/build-mission-import.mjs --check`; `scripts/test/mission-import.test.mjs`; the native suite |
-| 10.4 | `20261117100300_action_mission_drawdown_publish.sql` (+ `20261117100300_action_mission_drawdown_publish.rollback.sql`), generated the same way | Owner approval required, and the owner decides when (below). Sets exactly those 125 ids from `draft` to `open`, leaving any the owner paused, closed or opened; refuses unless each has its details row, so it cannot run before part 07. The rollback sets them from `open` back to `draft` | the World reads open missions through "public reads open missions" (`js/mnet.js`) | the same three |
+| 10.1 | `../migrations/20261117222809_action_globe_join_scope_v1.sql`, staged as `20261117100000_action_globe_join_scope_v1.sql` (+ `20261117100000_action_globe_join_scope_v1.rollback.sql`) | **Applied 2026-11-17** as `action_globe_join_scope_v1` (version `20261117222809`). Decouples joining from pins: `action_globe_mission_regions.join_scope` (default `anywhere`); `join_action_mission()` and `action_globe_can_join_mission()` gate only on a PUBLISHED pin marked `region_members`. The minimal extract of 20261015230000's sections 3 and 5, nothing else from that file. The rollback restores production's bodies byte for byte (md5(prosrc) `e0684ebe350296c5e6c06de55624ed42` for `join_action_mission`) and drops the column. Both refuse (55000), changing nothing, unless the two functions are production's or 10.1's own, so neither runs over the whole pins file (section 2, item 7) once it is in: roll that file back first | `join_action_mission` and its `_attributed`, `_live` and `_origin` wrappers (`js/mnet.js`, `js/action.js`) | `scripts/test/mission-catalog.native.integration.mjs`; `scripts/test-mission-pins-db.sh` (the whole pins file still applies on top of it) |
+| 10.2 | `../migrations/20261118021521_action_mission_details.sql`, staged as `20261117100100_action_mission_details.sql` (+ `20261117100100_action_mission_details.rollback.sql`) | **Applied 2026-11-18** as `action_mission_details` (version `20261118021521`). Creates `action_mission_details`: one row per mission (proof hint, safety note, credit line, quotation and its credit, source URL, licence, DOI), readable by anon and authenticated exactly when its mission is (the test of "public reads open missions"), written by the service role only. Creates no row. The rollback refuses while the table holds a row | none in shipped code at the time of writing; the World's mission posts and dialog are to read it and must tolerate its absence | the native suite above |
+| 10.3 | the seven import parts below, staged as `20261117100200_action_mission_drawdown_import_01.sql` to `_07.sql`, now `../migrations/<version>_action_mission_drawdown_import_01.sql` to `_07.sql` (+ `20261117100200_action_mission_drawdown_import.rollback.sql`, one rollback for every part), generated by `tools/build-mission-import.mjs` from `data/missions/drawdown/missions.json` | **Applied 2026-11-18** as the seven parts, versions `20261118034753` to `20261118035654`. Inserts the 125 Drawdown missions as `draft` (ids: UUID v5 of `mccluster:mission:drawdown:<slug>`), each part its missions and then their details rows (43 with a CC BY 4.0 licence and DOI in all), in catalog order. Every part refuses before 10.2, and every part from 02 on until the part before it is in. The rollback deletes exactly those ids, however many parts ran, and refuses while any assignment, proof, pin or other row references one; it locks the missions, and the two tables that name a mission without a foreign key (`action_creator_payout_intents`, `action_creator_funding`), before it counts | none; drafts are invisible to the public | `node tools/build-mission-import.mjs --check`; `scripts/test/mission-import.test.mjs`; the native suite |
+| 10.4 | `20261117100300_action_mission_drawdown_publish.sql` (+ `20261117100300_action_mission_drawdown_publish.rollback.sql`), generated the same way | **Not applied.** Owner approval required, and the owner decides when (below): in the deploy window, after the new feed ships. Sets exactly those 125 ids from `draft` to `open`, leaving any the owner paused, closed or opened; refuses unless each has its details row, so it cannot run before part 07. The rollback sets them from `open` back to `draft` | the World reads open missions through "public reads open missions" (`js/mnet.js`) | the same three |
 
 ### 10.3 in seven parts (2026-11-18)
 
@@ -330,7 +341,9 @@ The import was one file, `20261117100200_action_mission_drawdown_import.sql` (18
 carry, and the statement production stores must be the committed file byte for byte so the promotion can prove
 it. Seven parts replace it, each at most 32,000 bytes: `tools/build-mission-import.mjs` cuts the catalog, in
 order, into the fewest parts that fit (six cannot hold the rows and their headers), as even in size as seven
-allows. Each part is self-contained and one transaction: `lock_timeout` 5s and `standard_conforming_strings` on;
+allows (applied 2026-11-18 and promoted: the File column below is each part's migration under `supabase/migrations/`;
+the SQL names the parts by the staged names above, as applied). Each part is self-contained and one transaction:
+`lock_timeout` 5s and `standard_conforming_strings` on;
 the guard that the details table exists; from part 02 on, a guard that the part before it is in (its last mission
 is there with its details row: a part is one transaction, so that row stands for all of it); its missions,
 `ON CONFLICT (id) DO NOTHING`; then those missions' details rows, `ON CONFLICT (mission_id) DO NOTHING`. A short
@@ -349,15 +362,15 @@ unchanged.
 
 | Part | File | Migration name | Catalog missions | Bytes | md5 |
 |---|---|---|---|---|---|
-| 01 | `20261117100200_action_mission_drawdown_import_01.sql` | `action_mission_drawdown_import_01` | 1 to 14 (14) | 29,656 | `310178698d117f2a6ffe2f672fddd73a` |
-| 02 | `20261117100200_action_mission_drawdown_import_02.sql` | `action_mission_drawdown_import_02` | 15 to 29 (15) | 31,009 | `4d29872c1f27f70bdea39151ed98f1eb` |
-| 03 | `20261117100200_action_mission_drawdown_import_03.sql` | `action_mission_drawdown_import_03` | 30 to 44 (15) | 30,085 | `3de9c9a8c30dff70adccb7b5d4537b3f` |
-| 04 | `20261117100200_action_mission_drawdown_import_04.sql` | `action_mission_drawdown_import_04` | 45 to 61 (17) | 30,241 | `2b5458737baa0e8899db5d8490b4dd92` |
-| 05 | `20261117100200_action_mission_drawdown_import_05.sql` | `action_mission_drawdown_import_05` | 62 to 79 (18) | 30,478 | `15e9667dbf5e3baae43efbdc930061c3` |
-| 06 | `20261117100200_action_mission_drawdown_import_06.sql` | `action_mission_drawdown_import_06` | 80 to 100 (21) | 30,418 | `5d9b005eba3c3f9df54f54ecfd9be40a` |
-| 07 | `20261117100200_action_mission_drawdown_import_07.sql` | `action_mission_drawdown_import_07` | 101 to 125 (25) | 31,243 | `866f1f4b52bd1f1005e5634e369bcaee` |
+| 01 | `20261118034753_action_mission_drawdown_import_01.sql` | `action_mission_drawdown_import_01` | 1 to 14 (14) | 29,656 | `310178698d117f2a6ffe2f672fddd73a` |
+| 02 | `20261118034926_action_mission_drawdown_import_02.sql` | `action_mission_drawdown_import_02` | 15 to 29 (15) | 31,009 | `4d29872c1f27f70bdea39151ed98f1eb` |
+| 03 | `20261118035056_action_mission_drawdown_import_03.sql` | `action_mission_drawdown_import_03` | 30 to 44 (15) | 30,085 | `3de9c9a8c30dff70adccb7b5d4537b3f` |
+| 04 | `20261118035221_action_mission_drawdown_import_04.sql` | `action_mission_drawdown_import_04` | 45 to 61 (17) | 30,241 | `2b5458737baa0e8899db5d8490b4dd92` |
+| 05 | `20261118035346_action_mission_drawdown_import_05.sql` | `action_mission_drawdown_import_05` | 62 to 79 (18) | 30,478 | `15e9667dbf5e3baae43efbdc930061c3` |
+| 06 | `20261118035521_action_mission_drawdown_import_06.sql` | `action_mission_drawdown_import_06` | 80 to 100 (21) | 30,418 | `5d9b005eba3c3f9df54f54ecfd9be40a` |
+| 07 | `20261118035654_action_mission_drawdown_import_07.sql` | `action_mission_drawdown_import_07` | 101 to 125 (25) | 31,243 | `866f1f4b52bd1f1005e5634e369bcaee` |
 
-**How to apply them**, once the owner has approved 10.3:
+**How they were applied** (2026-11-18, the owner having approved 10.3; kept as the procedure):
 
 1. Read production first (read-only): the ledger holds `action_globe_join_scope_v1` and `action_mission_details`
    and no `action_mission_drawdown_import%` row; `public.action_mission_details` exists and is empty; none of the
@@ -372,8 +385,8 @@ unchanged.
    the ledger before anything else: a part is one transaction, so it is either all in, with its ledger row, or not
    in at all. Do not send a part the ledger already holds: its rerun inserts nothing, but it may add a second ledger
    row under the same name.
-5. After part 07 production holds 125 drafts with 125 details rows, and a visitor sees nothing new. Promoting the
-   parts is the same separate bookkeeping step as for 10.1 and 10.2.
+5. After part 07 production holds 125 drafts with 125 details rows, and a visitor sees nothing new. The parts were
+   promoted with 10.1 and 10.2 on 2026-11-18.
 
 Rollback, at any point: if 10.4 ran, `20261117100300_action_mission_drawdown_publish.rollback.sql` first; then
 `20261117100200_action_mission_drawdown_import.rollback.sql` (owner approval, as postgres). It deletes exactly the
@@ -381,7 +394,8 @@ catalog ids that are there, however many parts ran, and refuses, deleting nothin
 Once a part is applied, `missions.json` must not change: the parts in production must stay the committed files
 byte for byte, so a later change to the catalog is a new migration, never a regenerated part.
 
-**When to publish (10.4) is the owner's decision.** The live build (`fc1986ec`) reads open missions straight from
+**When to publish (10.4) is the owner's decision** (2026-11-18: in the deploy window, after the new feed ships).
+The live build (`fc1986ec`) reads open missions straight from
 the database, in its swipe deck, its guest door and the Worker's lists, so the moment 10.4 commits, all 125
 missions show on the live site. The parts write drafts only and change nothing a visitor sees, and 10.4 refuses,
 changing nothing, until all 125 missions are there with their details rows.

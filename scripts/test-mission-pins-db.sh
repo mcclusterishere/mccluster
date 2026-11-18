@@ -7,7 +7,8 @@
 # control_audit, the seven curated missions), the already-applied demo pins,
 # then the pending file TWICE (it must be idempotent), then the tests.
 # It runs the chain twice: as above, then with the minimal join scope extract
-# (20261117100000_action_globe_join_scope_v1.sql) applied first, which must
+# (applied 2026-11-17 as 20261117222809_action_globe_join_scope_v1.sql; its rollback
+# stays in supabase/pending/) applied first, which must
 # leave the whole pins file free to follow it. After the pins file, the
 # extract and its rollback must both refuse, changing nothing: either would
 # put an older join_action_mission over the pins file's, which also checks a
@@ -41,7 +42,7 @@ refused_after_pins() {
   echo "refused on top of the whole pins file, as it must: $file"
 }
 chain() {
-  local db="$1" first="${2:-}"
+  local db="$1" first="${2:-}" first_rollback="${3:-}"
   psql -q -v ON_ERROR_STOP=1 -d postgres -c "create database $db" >/dev/null
   apply() { psql -q -v ON_ERROR_STOP=1 -d "$db" -f "$1" >/dev/null; echo "applied $1"; }
   apply supabase/tests/supabase_api_roles.stub.sql
@@ -62,7 +63,7 @@ chain() {
     local before
     before=$(fingerprint "$db")
     refused_after_pins "$db" "$first"
-    refused_after_pins "$db" "${first%.sql}.rollback.sql"
+    refused_after_pins "$db" "${first_rollback:-${first%.sql}.rollback.sql}"
     if [ "$(fingerprint "$db")" != "$before" ]; then
       echo "FAIL: a refused file changed the join functions or the pin table" >&2; exit 1
     fi
@@ -75,5 +76,6 @@ chain() {
 chain "$DB"
 echo "existing join-authorization audit still passes"
 echo "mission pins chain: ok"
-chain "$DB2" supabase/pending/20261117100000_action_globe_join_scope_v1.sql
-echo "mission pins chain on top of the minimal join scope (20261117100000): ok"
+chain "$DB2" supabase/migrations/20261117222809_action_globe_join_scope_v1.sql \
+  supabase/pending/20261117100000_action_globe_join_scope_v1.rollback.sql
+echo "mission pins chain on top of the minimal join scope (20261117222809): ok"

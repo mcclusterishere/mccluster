@@ -141,13 +141,6 @@
         "js/mnet.js"
       ]
     },
-    "action_mission_details": {
-      "kind": "table",
-      "pending": "20261117100100_action_mission_details.sql",
-      "callers": [
-        "js/mnet.js"
-      ]
-    },
     "action_policy_memos": {
       "kind": "table",
       "pending": "policy_fellowship_ladder_v1.sql",
@@ -267,34 +260,6 @@
       "pending": "eup_league_v1.sql",
       "callers": [
         "workers/mccluster/src/eup/league-contract.js"
-      ]
-    },
-    "eup_module_control_read": {
-      "kind": "function",
-      "pending": "eup_module_policy_v1.sql",
-      "callers": [
-        "workers/mccluster/src/eup/modules.js"
-      ]
-    },
-    "eup_module_policy_command": {
-      "kind": "function",
-      "pending": "eup_module_policy_v1.sql",
-      "callers": [
-        "workers/mccluster/src/eup/modules.js"
-      ]
-    },
-    "eup_module_policy_install": {
-      "kind": "function",
-      "pending": "eup_module_policy_v1.sql",
-      "callers": [
-        "workers/mccluster/src/eup/modules.js"
-      ]
-    },
-    "eup_module_policy_read": {
-      "kind": "function",
-      "pending": "eup_module_policy_v1.sql",
-      "callers": [
-        "workers/mccluster/src/eup/modules.js"
       ]
     },
     "eup_sources_command": {

@@ -17,6 +17,7 @@ import dgram from 'node:dgram';
 import net from 'node:net';
 import { once } from 'node:events';
 import { createRequire } from 'node:module';
+import { existsSync } from 'node:fs';
 import { mkdtemp, readFile, rm, writeFile, readdir } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -27,10 +28,34 @@ const EXECUTOR = fileURLToPath(new URL('../src/compute/browser-executor.mjs', im
 const REBINDING_DNS = pathToFileURL(fileURLToPath(new URL('./helpers/browser-rebinding-dns.mjs', import.meta.url))).href;
 const REBIND_NAMES = ['rebind-nav.test', 'rebind-sub.test', 'rebind-hop.test', 'rebind-idle.test'];
 const REPO_ROOT = fileURLToPath(new URL('../../', import.meta.url));
-const SKIP_LINE = 'browser-executor: playwright not found, executor tests skipped (unverified here)';
-let playwrightFound = false;
-try { createRequire(path.join(REPO_ROOT, 'package.json'))('playwright'); playwrightFound = true; } catch { console.log(SKIP_LINE); }
-const skip = playwrightFound ? false : 'playwright not found';
+// The browser these tests drive, found where the executor finds it (MCCLUSTER_BROWSER_PLAYWRIGHT_DIR is the owner's pin
+// and the only place tried; otherwise the checkout root, then the executor's own path), and its Chromium on disk.
+// Without one, the tests skip as unverified here, unless MCCLUSTER_BROWSER_TESTS_REQUIRED=1 (the browser-executor CI
+// job): then the first test fails and says what is missing, so the job can never pass with every test skipped
+// (verification finding N2V-m1; proof: test/browser-executor-required.test.mjs).
+const REQUIRED = /^(?:1|true)$/i.test(String(process.env.MCCLUSTER_BROWSER_TESTS_REQUIRED || ''));
+function browserMissing() {
+  const explicit = process.env.MCCLUSTER_BROWSER_PLAYWRIGHT_DIR;
+  const loaders = explicit
+    ? [() => createRequire(EXECUTOR)(path.resolve(explicit))]
+    : [() => createRequire(path.join(REPO_ROOT, 'package.json'))('playwright'), () => createRequire(EXECUTOR)('playwright')];
+  let playwright = null;
+  for (const load of loaders) {
+    try { const loaded = load(); if (loaded?.chromium?.executablePath) { playwright = loaded; break; } } catch { /* the next place */ }
+  }
+  if (!playwright) return `playwright not found${explicit ? ` in ${path.resolve(explicit)}` : ''}`;
+  let chromium = '';
+  try { chromium = playwright.chromium.executablePath(); } catch { chromium = ''; }
+  return chromium && existsSync(chromium) ? null : `chromium not installed (${chromium || 'no executable path'})`;
+}
+const MISSING = browserMissing();
+if (MISSING) console.log(`browser-executor: ${MISSING}, executor tests skipped (unverified here)`);
+const skip = MISSING ? MISSING : false;
+if (REQUIRED) {
+  test('MCCLUSTER_BROWSER_TESTS_REQUIRED: the browser these tests need is installed, so none of them is skipped', () => {
+    assert.equal(MISSING, null, `MCCLUSTER_BROWSER_TESTS_REQUIRED is set and ${MISSING}: install Chromium through Playwright's own installer before these tests`);
+  });
+}
 const FIXTURE_HOST = 'fixture.test';
 
 async function stop(child) {
@@ -82,7 +107,7 @@ const outcomes = (result) => result.body.steps.map((step) => step.outcome);
 const writePolicy = (hosts, allowSubdomains = false) => writeFile(policyPath, JSON.stringify({ schema: 'mccluster-browser-policy/1', allowed_hosts: hosts, allow_subdomains: allowSubdomains }));
 
 before(async () => {
-  if (!playwrightFound) return;
+  if (MISSING) return;
   fixture = await startBrowserFixture({ host: FIXTURE_HOST });
   lan = await startLanService({ address: '127.0.0.2', port: fixture.port });
   dir = await mkdtemp(path.join(os.tmpdir(), 'mccluster-browser-executor-'));
@@ -410,7 +435,12 @@ test('a websocket never reaches the server and loopback subresources are blocked
 // again would land on the LAN service. The executor must connect at the address
 // the check validated: the fixture (the public face) answers, the LAN never.
 test('DNS rebinding: a name that answers public at the check and private afterwards is connected only at the validated address (navigation, subresource, redirect hop)', { skip, timeout: 90000 }, async (t) => {
-  if (!lan) { t.skip('no second loopback address (127.0.0.2) can be bound here'); return; }
+  if (!lan) {
+    // where the browser is required, the rebinding proof is too (it is the N2R-1 fix's evidence)
+    assert.ok(!REQUIRED, 'MCCLUSTER_BROWSER_TESTS_REQUIRED is set and no second loopback address (127.0.0.2) can be bound here');
+    t.skip('no second loopback address (127.0.0.2) can be bound here');
+    return;
+  }
   lan.hits.count = 0;
   fixture.hits.hosts.length = 0;
   await writePolicy([`${FIXTURE_HOST}:${fixture.port}`, `rebind-nav.test:${fixture.port}`, `rebind-hop.test:${fixture.port}`]);

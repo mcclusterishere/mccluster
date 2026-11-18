@@ -7,14 +7,21 @@
 
    (a) the image budget: at most 2 images per turn, each downscaled to 1280 px on its longest side and
        accepted only at or under 200,000 decoded bytes (the Core's cap);
-   (b) the request shapes: the durable turn carries images and allow_browser only when set; "Ask home
-       AI" takes the messages form only when an image is attached;
-   (c) the owner-only switch: the owner role in the house workspace with core.ai.turn.submit listed,
-       nothing else; the server gates independently;
+   (b) the request shapes: the durable turn carries images and allow_browser only when set and only to a
+       Core that declares them, and refuses rather than drops them otherwise; "Ask home AI" takes the
+       messages form only when an image is attached and ai.chat declares messages[].images;
+   (c) the owner-only switch: the owner role in the house workspace, with a durable turn tool that
+       declares allow_browser, nothing else; the server gates independently;
    (d) the renderers: user images, assistant screenshots inside a collapsed block with the action log,
        the node badge, live steps from tool_receipts, the plain-words error copy, the readiness line;
    (e) source and stylesheet assertions: the submit shape, the attach input, min-width-only CSS with
-       minmax(0, …) tracks and 16 px controls.
+       minmax(0, …) tracks and 16 px controls;
+   (f) what the running Core declares, read from the tool list the page already holds (tools/list through
+       the owner's bridge): this checkout's Core (core/src/tools/control.mjs, core/capabilities/catalog.json)
+       declares images and allow_browser on the durable turn and messages[].images on ai.chat; the Core on
+       OVH at build eb942248 declares none of them, and would drop the first two silently and hand an
+       image to a text model (deploy-readiness review, 2026-11-18). The controls follow the declaration,
+       with one honest line in place of each that is off.
 
    Dependency-free; runs on every PR through mcp-continuity-ci.yml (node --test scripts/test/*.test.mjs).
    The browser proof is scripts/e2e/control-ai-browser.e2e.mjs. */
@@ -23,6 +30,7 @@ import assert from "node:assert/strict";
 import vm from "node:vm";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 
 const ROOT = new URL("../../", import.meta.url).pathname;
 const control = readFileSync(join(ROOT, "js/control-room-v2.js"), "utf8");
@@ -45,6 +53,23 @@ function helpers() {
   return c;
 }
 const h = helpers();
+/* The tool list as this checkout's Core answers it (the edge passes each tool's inputSchema through untouched) ... */
+const catalog = JSON.parse(readFileSync(join(ROOT, "core/capabilities/catalog.json"), "utf8"));
+const { CONTROL_TOOLS } = await import(pathToFileURL(join(ROOT, "core/src/tools/control.mjs")).href);
+const N2_TOOLS = [
+  ...catalog.capabilities.filter((c) => ["ai.chat", "compute.task.get"].includes(c.id)).map((c) => ({ name: c.id, inputSchema: c.inputSchema })),
+  ...CONTROL_TOOLS.filter((t) => ["core.resume", "core.ai.turn.submit", "core.ai.turn.get"].includes(t.name)).map(({ name, inputSchema }) => ({ name, inputSchema }))
+];
+/* ... and as the Core on OVH at build eb942248 answers it (that build's core/src/tools/control.mjs and
+   core/capabilities/catalog.json, copied): no images and no allow_browser on the durable turn, and ai.chat's
+   messages a bare array. */
+const OLD_TOOLS = [
+  { name: "ai.chat", inputSchema: { type: "object", properties: { prompt: { type: "string" }, messages: { type: "array" }, temperature: { type: "number" }, num_ctx: { type: "integer" }, json: { type: "boolean" } }, anyOf: [{ required: ["prompt"] }, { required: ["messages"] }] } },
+  { name: "compute.task.get", inputSchema: { type: "object", required: ["org_id", "task_id"], properties: { org_id: { type: "string" }, task_id: { type: "string" } } } },
+  { name: "core.ai.turn.submit", inputSchema: { type: "object", required: ["org_id", "thread_id", "message_id", "content"], properties: { org_id: { type: "string" }, thread_id: { type: "string" }, message_id: { type: "string" }, content: { type: "string", minLength: 1, maxLength: 12000 }, input_mode: { type: "string", enum: ["text", "voice"] } }, additionalProperties: false } },
+  { name: "core.ai.turn.get", inputSchema: { type: "object", required: ["org_id", "turn_id"], properties: { org_id: { type: "string" }, turn_id: { type: "string" } }, additionalProperties: false } }
+];
+const NONE = { turnImages: false, turnBrowser: false, chatImages: false };
 /* values made inside the VM carry that context's prototypes; compare them as plain data */
 const plain = (v) => JSON.parse(JSON.stringify(v));
 const JPEG_B64 = "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AN//Z";
@@ -82,31 +107,45 @@ test("(a) the budget: two per turn, counted with what is already attached; the b
   assert.equal(h.aiBase64Valid(""), false);
 });
 
-test("(b) the durable turn carries images and allow_browser only when set; Ask home AI takes the messages form only with an image", () => {
-  const plainTurn = h.aiTurnSubmission({ org_id: "o1", thread_id: "t1", message_id: "m1", content: "hi", input_mode: "text" }, [], false);
-  assert.deepEqual(plain(plainTurn), { org_id: "o1", thread_id: "t1", message_id: "m1", content: "hi", input_mode: "text" }, "an older Core sees exactly the fields it knows");
-  const rich = h.aiTurnSubmission({ org_id: "o1", thread_id: "t1", message_id: "m1", content: "look", input_mode: "text" }, [{ base64: JPEG_B64 }], true);
+test("(b) the durable turn carries images and allow_browser only when set and declared; Ask home AI takes the messages form only with an image ai.chat declares", () => {
+  const now = h.aiCoreSupport(N2_TOOLS), old = h.aiCoreSupport(OLD_TOOLS);
+  const base = { org_id: "o1", thread_id: "t1", message_id: "m1", content: "hi", input_mode: "text" };
+  for (const support of [now, old]) {
+    assert.deepEqual(plain(h.aiTurnSubmission(base, [], false, support)), base, "a plain turn is exactly the fields every Core knows");
+  }
+  const rich = h.aiTurnSubmission({ ...base, content: "look" }, [{ base64: JPEG_B64 }], true, now);
   assert.deepEqual(plain(rich.images), [JPEG_B64]);
   assert.equal(rich.allow_browser, true);
+  /* never dropped in silence: a Core that does not declare a field gets a refusal before anything is sent */
+  assert.throws(() => h.aiTurnSubmission({ ...base, content: "look" }, [{ base64: JPEG_B64 }], false, old), /Attach image is off/);
+  assert.throws(() => h.aiTurnSubmission(base, [], true, old), /Use the browser is off/);
+  assert.throws(() => h.aiTurnSubmission(base, [{ base64: JPEG_B64 }], false), /Attach image is off/, "no word from the Core is no");
   assert.deepEqual(plain(h.aiChatRequest("hello", [])), { prompt: "hello", temperature: 0.2 });
-  assert.deepEqual(plain(h.aiChatRequest("what is this", [{ base64: JPEG_B64 }])), { messages: [{ role: "user", content: "what is this", images: [JPEG_B64] }], temperature: 0.2 });
-  /* the page's submit uses the helper and the attachments are cleared after the submit is built */
+  assert.deepEqual(plain(h.aiChatRequest("hello", [], false)), { prompt: "hello", temperature: 0.2 });
+  assert.deepEqual(plain(h.aiChatRequest("what is this", [{ base64: JPEG_B64 }], now.chatImages)), { messages: [{ role: "user", content: "what is this", images: [JPEG_B64] }], temperature: 0.2 });
+  assert.throws(() => h.aiChatRequest("what is this", [{ base64: JPEG_B64 }], old.chatImages), /text model/, "an image never goes to an ai.chat that does not declare it");
+  /* the page's submit uses the helper with the Core's word, and the attachments are cleared after the submit is built */
   assert.match(control, /callCoreTool\("core\.ai\.turn\.submit", aiTurnSubmission\(\{/);
+  assert.match(control, /\}, attachments, allowBrowser, support\)\)\.then\(/);
   assert.match(control, /state\.aiAttachments = \[\];/);
   assert.match(control, /callCoreTool\("ai\.chat", aiChatRequest\(aiText, \[\]\)\)/, "the Command Center keeps the prompt form (it has no attach control)");
 });
 
-test("(c) the browser switch shows only for the owner of the house workspace with the durable turn tool listed", () => {
-  const tools = (name) => ["core.ai.turn.submit", "core.ai.turn.get", "ai.chat"].includes(name);
+test("(c) the browser switch shows only for the owner of the house workspace, and only when the durable turn declares allow_browser", () => {
+  const now = h.aiCoreSupport(N2_TOOLS), old = h.aiCoreSupport(OLD_TOOLS);
   const house = { id: "o1", slug: "mccluster", kind: "studio" };
-  assert.equal(h.aiBrowserSwitchVisible({ workspace: { role: "owner" }, org: house }, tools), true);
-  assert.equal(h.aiBrowserSwitchVisible({ workspace: { role: "viewer" }, org: house }, tools), false, "a member never sees it");
-  assert.equal(h.aiBrowserSwitchVisible({ workspace: { role: "admin" }, org: house }, tools), false, "an admin label is not ownership");
-  assert.equal(h.aiBrowserSwitchVisible({ workspace: { role: "owner" }, org: { id: "o2", slug: "client", kind: "tenant" } }, tools), false, "a client workspace's owner is not the house owner");
-  assert.equal(h.aiBrowserSwitchVisible({ workspace: null, org: house }, tools), false, "no membership, no switch");
-  assert.equal(h.aiBrowserSwitchVisible({ workspace: { role: "owner" }, org: house }, () => false), false, "no durable turn tool, no switch");
+  assert.equal(h.aiBrowserSwitchVisible({ workspace: { role: "owner" }, org: house }, now), true);
+  assert.equal(h.aiBrowserSwitchVisible({ workspace: { role: "viewer" }, org: house }, now), false, "a member never sees it");
+  assert.equal(h.aiBrowserSwitchVisible({ workspace: { role: "admin" }, org: house }, now), false, "an admin label is not ownership");
+  assert.equal(h.aiBrowserSwitchVisible({ workspace: { role: "owner" }, org: { id: "o2", slug: "client", kind: "tenant" } }, now), false, "a client workspace's owner is not the house owner");
+  assert.equal(h.aiBrowserSwitchVisible({ workspace: null, org: house }, now), false, "no membership, no switch");
+  assert.equal(h.aiBrowserSwitchVisible({ workspace: { role: "owner" }, org: house }, old), false, "a Core that does not declare allow_browser, no switch");
+  assert.equal(h.aiBrowserSwitchVisible({ workspace: { role: "owner" }, org: house }, NONE), false, "no tool list, no switch");
+  assert.equal(h.aiBrowserSwitchVisible({ workspace: { role: "owner" }, org: house }), false, "no word from the Core is no");
+  assert.equal(h.aiBrowserOwner({ workspace: { role: "owner" }, org: house }), true, "the owner is told why it is off");
+  assert.equal(h.aiBrowserOwner({ workspace: { role: "viewer" }, org: house }), false, "a member is told nothing about the owner's browser");
   /* the server gates independently: the page sends the flag, it never asserts the right */
-  assert.match(control, /aiBrowserSwitchVisible\(state, coreToolAvailable\)/);
+  assert.match(control, /aiBrowserSwitchVisible\(state, support\)/);
   assert.match(control, /role="switch" aria-checked="/);
 });
 
@@ -227,4 +266,37 @@ test("(e) the composer and the stylesheet: attach input, 44 px button, switch, m
   assert.match(block, /\.cr-ai-browser summary\{[^}]*min-height:44px/);
   assert.match(block, /\.cr-ai-browser figure img\{[^}]*max-width:100%/);
   assert.equal((css.match(/@media[^{]*max-width/g) || []).length, 8, "the file's max-width allowance (mobile-rule.test.mjs) did not grow");
+});
+
+test("(f) the controls follow what the running Core declares, read from the tool list the page already holds", () => {
+  assert.deepEqual(plain(h.aiCoreSupport(N2_TOOLS)), { turnImages: true, turnBrowser: true, chatImages: true }, "this checkout's Core declares all three");
+  assert.deepEqual(plain(h.aiCoreSupport(OLD_TOOLS)), NONE, "the Core at eb942248 declares none of them");
+  assert.deepEqual(plain(h.aiCoreSupport([])), NONE, "an empty tool list (Core unreachable, signed out) declares nothing");
+  assert.deepEqual(plain(h.aiCoreSupport(null)), NONE);
+  assert.deepEqual(plain(h.aiCoreSupport([null, { name: "core.ai.turn.submit" }, { name: "ai.chat", inputSchema: "object" }, { name: "core.ai.turn.submit", inputSchema: { properties: { images: false, allow_browser: null } } }])), NONE, "malformed or refused fields declare nothing");
+  /* browser.act is agent-only and never listed over MCP; were it listed, it still would not be the durable turn's word */
+  assert.equal(h.aiCoreSupport([...OLD_TOOLS, { name: "browser.act", inputSchema: { type: "object" } }]).turnBrowser, false);
+  /* each field stands on its own */
+  const imagesOnly = OLD_TOOLS.map((t) => (t.name !== "core.ai.turn.submit" ? t : { ...t, inputSchema: { ...t.inputSchema, properties: { ...t.inputSchema.properties, images: { type: "array" } } } }));
+  assert.deepEqual(plain(h.aiCoreSupport(imagesOnly)), { turnImages: true, turnBrowser: false, chatImages: false });
+  /* one honest line in place of each control that is off, saying why */
+  assert.equal(h.AI_CAPABILITY_OFF.images, "Attach image is off: the Core running now does not accept images in a turn.");
+  assert.equal(h.AI_CAPABILITY_OFF.browser, "Use the browser is off: the Core running now does not honour browser turns.");
+  const images = h.aiCapabilityLine("images"), browser = h.aiCapabilityLine("browser");
+  assert.match(images, /^<p class="cr-ai-capability" data-ai-capability="images" title="[^"]*images[^"]*">Attach image is off: the Core running now does not accept images in a turn\.<\/p>$/);
+  assert.match(browser, /^<p class="cr-ai-capability" data-ai-capability="browser" title="[^"]*allow_browser[^"]*">Use the browser is off: the Core running now does not honour browser turns\.<\/p>$/);
+});
+
+test("(g) the composer reads the Core's word before it renders a control or sends a turn", () => {
+  const send = control.slice(control.indexOf("function sendAiMessage("), control.indexOf("function note("));
+  assert.match(send, /var support = aiCoreSupport\(state\.coreTools\);/);
+  assert.ok(send.indexOf("aiCoreSupport(state.coreTools)") < send.indexOf("var optimistic"), "a refused turn is never shown as sent");
+  assert.match(send, /var allowBrowser = state\.aiAllowBrowser === true && support\.turnBrowser;/, "a switch left on while the Core stopped declaring it sends nothing");
+  const render = control.slice(control.indexOf("function renderAi()"), control.indexOf("function publicRecordLink("));
+  assert.match(render, /var support = aiCoreSupport\(state\.coreTools\);/);
+  const attach = render.indexOf('data-action="ai-attach"'), guard = render.indexOf("support.turnImages");
+  assert.ok(guard >= 0 && guard < attach, "the attach control is drawn only behind the Core's word");
+  assert.match(render, /aiCapabilityLine\("images"\)/);
+  assert.match(render, /aiBrowserOwner\(state\)\) browserSwitch = aiCapabilityLine\("browser"\)/);
+  assert.match(css, /\.cr-ai-capability\{[^}]*overflow-wrap:anywhere/, "the line wraps at phone width");
 });

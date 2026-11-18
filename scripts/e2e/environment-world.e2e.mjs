@@ -4,15 +4,15 @@
    news, the missions). Lane L2 proved the page with a stub frame and lane L1 proved the frame under a stand-in host; this is the
    one place both ends meet with the real messages, so a seam between them fails here and nowhere else.
 
-   What it proves, in order, at each width: the significant observation posts in Everything from the panel's first feed load; the
-   layers off and the loop continuous while the tab is Everything; the Equity Uprise tab turns the typed layers on (counts by the
+   What it proves, in order, at each width: the significant observation posts in Global from the panel's first feed load; the
+   layers off and the loop continuous while the tab is Global; the Equity Uprise tab turns the typed layers on (counts by the
    frame's debug hook), shows the panel's health rows per feed source and per globe layer with the Worker's own words, renders on
    demand once every hold is released, and lists the observations with the missions in one list by time exactly as the pure module
    orders them; the tour starts by itself when the frame is in view (or waits when it is not), pauses on a wheel over the globe
    with the panel saying so, resumes, steps and pauses; choosing a quake in the list focuses the globe (ripple labelled
    illustrative, its bounded hold, the ShakeMap contours, the ShakeMap health row, the tour queue growing when the ShakeMap makes
    the quake significant); a real tap on a fire perimeter answers with the globe-selection card (Captured, Retrieved, Coverage,
-   Status, acres, source); Show on globe from the tab and from Everything; the 2D map and back; leaving the tab turns the layers
+   Status, acres, source); Show on globe from the tab and from Global; the 2D map and back; leaving the tab turns the layers
    off; Local, News, the member posts and the guest's People gate are as before; nothing scrolls sideways; no page errors. Then,
    at 390: landing on ?feed=equity (the panel spoke before the globe was ready; hu:globe-ready makes it whole); reduced motion (no
    autostart, play refused, focus jumps, no ripple, the legend says animations are off); the gate refusing the feed and the layers
@@ -205,13 +205,13 @@ const localTime = (iso) => new Date(iso).toLocaleString(undefined, { dateStyle: 
 for (const size of SIZES) {
   const scope = String(size.width);
   const { ctx, page, errors, requests } = await openPage(size);
-  /* Everything first: the panel read the feed at mount and handed it to the page; the significant observations ride at 1 in 6 */
+  /* Global first: the panel read the feed at mount and handed it to the page; the significant observations ride at 1 in 6 */
   const everythingPosts = await until(page, () => document.querySelectorAll('#mnFeed .mn__observation-post').length > 0, null, 30000);
   const everything = await feedSeq(page);
   let since = 0, ratioOk = true;
   for (const x of everything) { if (x.startsWith('o:')) { if (since < 6) ratioOk = false; since = 0; } else since++; }
-  check(scope, 'Everything carries the significant observation posts from the panel\'s first feed load, one after at least six other items', everythingPosts && ratioOk && everything.some((x) => x.startsWith('o:')) && everything.filter((x) => x.startsWith('o:')).every((x) => SIGNIFICANT.has(x.slice(2))), everything);
-  /* the real globe frame, with the layers off while the tab is Everything */
+  check(scope, 'Global carries the significant observation posts from the panel\'s first feed load, one after at least six other items', everythingPosts && ratioOk && everything.some((x) => x.startsWith('o:')) && everything.filter((x) => x.startsWith('o:')).every((x) => SIGNIFICANT.has(x.slice(2))), everything);
+  /* the real globe frame, with the layers off while the tab is Global */
   const frame = await globeFrame(page);
   const booted = await until(frame, () => !!window.MCC_ENVIRONMENT_LAYERS && !!window.__mccEnvironmentLayers && !!window.__mccGlobeGovernor && !!window.__mccSceneDirector, null, 120000);
   check(scope, 'the globe frame boots with the typed layers, the governor and the director mounted', booted);
@@ -220,7 +220,7 @@ for (const size of SIZES) {
   const gl = await frame.evaluate(() => { try { const gl = window.HuGlobe.viewer().scene.context._gl; const ext = gl.getExtension('WEBGL_debug_renderer_info'); return ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER); } catch (e) { return 'unknown'; } });
   console.log(`INFO [${scope}] WebGL renderer: ${gl}`);
   const offState = await env(frame), offGov = await gov(frame);
-  check(scope, 'on Everything the environmental layers are off and the globe keeps its continuous loop (byte for byte the old page)', !!offState && offState.on === false && !!offGov && offGov.enabled === false && offGov.mode === 'continuous' && (await frame.evaluate(() => window.HuGlobe.viewer().scene.requestRenderMode === false && document.getElementById('envLegend').hidden === true)), { on: offState && offState.on, governor: offGov });
+  check(scope, 'on Global the environmental layers are off and the globe keeps its continuous loop (byte for byte the old page)', !!offState && offState.on === false && !!offGov && offGov.enabled === false && offGov.mode === 'continuous' && (await frame.evaluate(() => window.HuGlobe.viewer().scene.requestRenderMode === false && document.getElementById('envLegend').hidden === true)), { on: offState && offState.on, governor: offGov });
   /* the Equity Uprise tab: the panel shows, the layers come on, the frame draws them */
   await openTab(page);
   const ready = await layersReady(frame);
@@ -347,13 +347,13 @@ for (const size of SIZES) {
   await setScope(page, 'global');
   const off = await until(frame, () => !window.__mccEnvironmentLayers().on && !window.__mccGlobeGovernor().enabled && !window.__mccSceneDirector().playing, null, 15000);
   check(scope, 'leaving the tab turns the layers off, stops the director, restores the continuous loop and hides the legend and the panel', off && (await frame.evaluate(() => document.getElementById('envLegend').hidden === true && window.HuGlobe.viewer().scene.requestRenderMode === false)) && !(await panelShown(page)), await gov(frame));
-  /* Show on globe from Everything: the feed turns to the tab, the layers come back and the globe honours the focus once they arrive */
+  /* Show on globe from Global: the feed turns to the tab, the layers come back and the globe honours the focus once they arrive */
   await page.waitForFunction(() => document.querySelectorAll('#mnFeed .mn__observation-post [data-observation-globe]').length > 0, null, { timeout: 20000 });
   const firstId = await page.evaluate(() => document.querySelector('#mnFeed .mn__observation-post [data-observation-globe]').getAttribute('data-observation-globe'));
   const wantId = firstId.startsWith('firecell:') ? 'cell:' + firstId.slice('firecell:'.length) : firstId;
   await page.locator('#mnFeed [data-observation-globe]').first().click();
   const refocused = await until(frame, (id) => { const s = window.__mccEnvironmentLayers(); return s.on && !!s.selected && s.selected.id === id; }, wantId, 40000);
-  check(scope, 'Show on globe from Everything turns the feed to the Equity Uprise tab, brings the layers back and focuses the event', (await page.evaluate(() => window.MCC_FEED_SCOPE.get())) === 'equity' && refocused && (await panelShown(page)), { firstId, selected: (await env(frame)).selected });
+  check(scope, 'Show on globe from Global turns the feed to the Equity Uprise tab, brings the layers back and focuses the event', (await page.evaluate(() => window.MCC_FEED_SCOPE.get())) === 'equity' && refocused && (await panelShown(page)), { firstId, selected: (await env(frame)).selected });
   /* nothing else regresses: Local, News, the member posts, a guest's People */
   await setScope(page, 'local');
   await page.waitForTimeout(600);
@@ -362,7 +362,7 @@ for (const size of SIZES) {
   await setScope(page, 'news');
   check(scope, 'News still lists the stories and carries no observation post', await until(page, () => document.querySelectorAll('#mnFeed [data-news-id]').length >= 1, null, 15000) && (await page.locator('#mnFeed .mn__observation-post').count()) === 0);
   await setScope(page, 'global');
-  check(scope, 'Everything still carries the member posts and the news between them', await until(page, () => document.querySelectorAll('#mnFeed [data-post-id]').length >= 1 && document.querySelectorAll('#mnFeed [data-news-id]').length >= 1, null, 15000));
+  check(scope, 'Global still carries the member posts and the news between them', await until(page, () => document.querySelectorAll('#mnFeed [data-post-id]').length >= 1 && document.querySelectorAll('#mnFeed [data-news-id]').length >= 1, null, 15000));
   await page.locator('[data-mn-view="discover"]:visible').first().click();
   check(scope, 'People asks a guest to sign in, as before', await until(page, () => !!document.getElementById('mnGuestWhy') && document.getElementById('mnGuestWhy').textContent === 'Sign in to find people.', null, 10000));
   check(scope, 'the frame never requested the feed route and the page never requested a layer route', !requests.some((r) => r.by === 'globe' && r.path === '/v1/world/environment') && !requests.some((r) => r.by === 'page' && r.path.startsWith('/v1/world/environment/')) && requests.filter((r) => r.by === 'page' && r.path === '/v1/world/environment').length === 1, requests.filter((r) => r.path.startsWith('/v1/world/environment')).map((r) => r.by[0] + ':' + r.path.replace('/v1/world/environment', '')));
