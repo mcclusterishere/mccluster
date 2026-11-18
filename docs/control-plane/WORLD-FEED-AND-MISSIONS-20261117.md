@@ -156,7 +156,7 @@ fictional PRIM3 missions." Answered in session:
 - **Shipping**: the environmental work ships with this branch, together with the feed work, once both are verified.
 - **Production**: the owner approved applying `supabase/pending/eup_module_policy_v1.sql`. It was applied on
   2026-11-17 as migration `20261117144103_eup_module_policy_v1`; production stored it byte for byte (MD5
-  `1f1daee2582fd0a6f3a659350a07491e`, 26,070 bytes; ledger 366 to 367 rows). It creates no policy row: the owner
+  `1f1daee2582fd0a6f3a659350a07491e`, 26,070 bytes; ledger 366 to 367 rows; recorded 2026-11-18 as `supabase/migrations/20261117144103_eup_module_policy_v1.sql`, ledger 376). It creates no policy row: the owner
   installs and enables the `environment` module in Control (System, E=Up, Overview, Modules). Until then
   `GET /v1/world/environment` keeps answering 503 `module_policy_unavailable`, as designed.
 - Owner-only Halo routes stay owner-only; the public globe grows only through the narrowly scoped public bridge,
