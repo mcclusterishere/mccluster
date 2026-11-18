@@ -22,6 +22,13 @@
    layer, both reported truthfully; and the day palette's contrast at every width, with the layer rows and the frame's legend
    measured.
 
+   Release polish (2026-11-18), at every width: the news tint ("News mentions · last 24 h", the countries shaded by their stories)
+   shows on Global, steps aside with its legend in the Equity Uprise tab (the counts kept) and comes back exactly as it was when the
+   tab is left, by night and by day (review V2-M3); the observation list opens on two rows with the first post within one and a
+   half screens of the feed's row, its toggle lists all 65 in place and closes again from the keyboard, and the tour's scenes open
+   no card in the panel (review V2-M2); Show on globe from Global keeps the clicked event selected over ten seconds of watching,
+   where the panel's older selection used to echo back and take the globe (the G1 close-out's flip).
+
    Serves this checkout at 127.0.0.1 and answers api.mccluster.org, Supabase, the NASA tiles and, with CESIUM_DIR, the Cesium CDN
    in memory: no production call, no deployment, no claim beyond what ran. Run:
      CESIUM_DIR=<Build/Cesium of 1.131> node scripts/e2e/environment-world.e2e.mjs [outDir]
@@ -206,6 +213,30 @@ const shot = async (page, name) => { try { await page.screenshot({ path: join(OU
 const esc = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 /* a time as the panel writes it (local, medium date, short time), the same rule the page uses */
 const localTime = (iso) => new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+/* THE NEWS TINT (release polish, review V2-M3): the countries' news shading and its legend inside the frame, as the frame's own hook
+   and the legend's DOM say; on Global they show, in the Equity Uprise tab they step aside with the counts kept, and leaving the tab
+   brings back exactly what was there */
+const tint = (frame) => frame.evaluate(() => {
+  const s = window.__huCountries ? window.__huCountries() : null, l = document.getElementById('heatLegend'), p = window.__huWorldNewsPins ? window.__huWorldNewsPins() : null;
+  return { lines: s ? s.lines : null, heat: s && s.heat ? { countries: s.heat.countries, total: s.heat.total, shown: s.heat.shown } : null, legend: l ? { hidden: l.hidden, text: l.textContent.trim(), display: getComputedStyle(l).display } : null, news: p ? { on: p.on, tint: p.tint } : null };
+});
+/* what must be the same before the tab and after it: the shading's counts and visibility, and the legend's (its place on screen
+   follows the page's own layout, so its position is not compared) */
+const tintSame = (a, b) => JSON.stringify({ heat: a.heat, legend: a.legend }) === JSON.stringify({ heat: b.heat, legend: b.legend });
+/* the camera over the whole Earth, settled: there the borders show and so would the shading (js/world-countries.js draws it while the
+   borders do), so a tint that is hidden is hidden by the tab, never by the camera's height (the tour flies low) */
+const overEarth = async (frame) => { await frame.evaluate(() => window.__huCountriesCam && window.__huCountriesCam.view(-35, 25, 1.2e7)); return until(frame, () => { const s = window.__huCountries && window.__huCountries(); return !!s && s.lines === 1; }, null, 15000); };
+const tintShown = (frame) => until(frame, () => { const s = window.__huCountries && window.__huCountries(), l = document.getElementById('heatLegend'); return !!s && !!s.heat && s.heat.countries > 0 && s.heat.shown === true && !!l && l.hidden === false; }, null, 60000);
+const tintQuiet = (frame) => until(frame, () => { const s = window.__huCountries && window.__huCountries(), l = document.getElementById('heatLegend'); return !!s && !!s.heat && s.heat.shown === false && !!l && l.hidden === true; }, null, 30000);
+/* THE LIST OPENS COMPACT (release polish, review V2-M2): the few rows, the toggle under them, and where the first post sits below the
+   feed's row; opening the full list where a check needs a row that is not among the few */
+const listState = (page) => page.evaluate(() => {
+  const row = document.getElementById('mnFeedScope').getBoundingClientRect(), post = document.querySelector('#mnFeed > article'), more = document.getElementById('weMore');
+  const mr = more ? more.getBoundingClientRect() : null;
+  return { rows: document.querySelectorAll('#weEvents > li').length, more: more ? { hidden: more.hidden, text: more.textContent, expanded: more.getAttribute('aria-expanded'), controls: more.getAttribute('aria-controls'), font: parseFloat(getComputedStyle(more).fontSize), h: Math.round(mr.height), w: Math.round(mr.width) } : null,
+    gap: post ? Math.round(post.getBoundingClientRect().top - row.bottom) : null, vh: innerHeight, count: document.getElementById('weCount').textContent };
+});
+const openList = async (page) => { if ((await page.evaluate(() => { const m = document.getElementById('weMore'); return !!m && !m.hidden && m.getAttribute('aria-expanded') === 'false'; }))) await page.locator('#weMore').click(); };
 
 /* ---------- the main journey, at every width ---------- */
 for (const size of SIZES) {
@@ -227,6 +258,11 @@ for (const size of SIZES) {
   console.log(`INFO [${scope}] WebGL renderer: ${gl}`);
   const offState = await env(frame), offGov = await gov(frame);
   check(scope, 'on Global the environmental layers are off and the globe keeps its continuous loop (byte for byte the old page)', !!offState && offState.on === false && !!offGov && offGov.enabled === false && offGov.mode === 'continuous' && (await frame.evaluate(() => window.HuGlobe.viewer().scene.requestRenderMode === false && document.getElementById('envLegend').hidden === true)), { on: offState && offState.on, governor: offGov });
+  /* the news tint on Global, over the whole Earth: the United States shaded by its fixture stories, the legend saying what the
+     colours mean */
+  await overEarth(frame);
+  const tintOn = await tintShown(frame), tintGlobal = await tint(frame);
+  check(scope, 'on Global the news tint shows: the countries shaded by their stories and the legend "News mentions · last 24 h"', tintOn && tintGlobal.lines === 1 && tintGlobal.heat.countries === 1 && tintGlobal.heat.total === 6 && tintGlobal.heat.shown === true && /^News mentions · last 24 h/.test(tintGlobal.legend.text), tintGlobal);
   /* the Equity Uprise tab: the panel shows, the layers come on, the frame draws them */
   await openTab(page);
   const ready = await layersReady(frame);
@@ -262,6 +298,26 @@ for (const size of SIZES) {
   check(scope, 'every post in the tab is typed: Civic mission or Environmental observation by the Environmental desk, stamped recorded or retrieved', heads.length > 0 && heads.every((h) => h.mission ? /^Civic mission/.test(h.head) : h.author === 'Environmental desk' && /^Environmental observation · /.test(h.sub) && / · (Recorded|Retrieved) /.test(h.sub)), heads.slice(0, 4));
   const newest = heads.find((h) => h.obs === 'usgs:fx-gen-50');
   check(scope, 'the newest quake leads the tab, stamped with its recorded time in local time', tab[0] === 'o:usgs:fx-gen-50' && !!newest && new RegExp('Recorded ' + esc(new Date(NEWEST_QUAKE.observed_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }))).test(newest.sub), newest && newest.sub);
+  /* the list opens compact: the first post within about a screen and a half of the feed's row; the toggle opens every observation
+     from the keyboard, moves the focus to the first row it revealed, and closes again with the focus kept on it. The gap is measured
+     on the panel as a visitor first gets it: the health-row checks above opened "Sources, coverage and limitations", so it is closed
+     for the measure and opened again after, for the rest of the journey */
+  await page.locator('#wePanel details > summary').first().click();
+  await until(page, () => document.querySelector('#wePanel details').open === false, null, 5000);
+  const compact = await listState(page);
+  check(scope, 'the observation list opens on two rows, with "Show all 65 observations" under them (a 16px, 44px button naming the list it opens)', compact.rows === 2 && !!compact.more && !compact.more.hidden && compact.more.text === 'Show all 65 observations' && compact.more.expanded === 'false' && compact.more.controls === 'weEvents' && compact.more.font >= 16 && compact.more.h >= 44 && /^Showing 2 of 65 observations: the significant ones, newest first\. /.test(compact.count), compact);
+  check(scope, 'the first post sits within one and a half screens of the feed\'s row', compact.gap !== null && compact.gap <= 1.5 * compact.vh, { gap: compact.gap, screens: Math.round((compact.gap / compact.vh) * 100) / 100 });
+  console.log(`INFO [${scope}] first post ${compact.gap} px below the row (${Math.round((compact.gap / compact.vh) * 100) / 100} screens of ${compact.vh})`);
+  if (compact.more) await page.focus('#weMore');
+  await page.keyboard.press('Enter');
+  const opened = await until(page, () => document.querySelectorAll('#weEvents > li').length === 65 && document.getElementById('weMore').getAttribute('aria-expanded') === 'true', null, 10000);
+  const focusOpen = await page.evaluate(() => { const a = document.activeElement, rows = [...document.querySelectorAll('#weEvents > li > button')]; return { index: rows.indexOf(a), text: document.getElementById('weMore').textContent }; });
+  check(scope, 'Enter on the toggle lists all 65 observations in place and moves the focus to the first row it revealed', opened && focusOpen.index === compact.rows && focusOpen.text === 'Show fewer observations', { ...focusOpen, shownBefore: compact.rows });
+  if (compact.more) await page.focus('#weMore');
+  await page.keyboard.press('Space');
+  const closed = await until(page, (n) => document.querySelectorAll('#weEvents > li').length === n && document.getElementById('weMore').getAttribute('aria-expanded') === 'false', compact.rows, 10000);
+  check(scope, 'Space on the toggle closes the list again and keeps the focus on the toggle', closed && (await page.evaluate(() => document.activeElement === document.getElementById('weMore'))));
+  await page.locator('#wePanel details > summary').first().click();
   /* the tour: by itself when the frame is at least a quarter in view, else it waits for Play */
   const ratio = await frameVisibleRatio(page);
   const autostarted = await until(page, () => document.getElementById('wePlay').textContent === 'Pause tour', null, 15000);
@@ -269,6 +325,12 @@ for (const size of SIZES) {
   if (!autostarted) { await page.locator('#wePlay').click(); await until(page, () => document.getElementById('wePlay').textContent === 'Pause tour', null, 15000); }
   const d0 = await dir(frame);
   check(scope, 'the significance tour plays its 12 scenes on the globe, newest first, and the panel names the scene', !!d0 && d0.playing === true && d0.queue === 'significant' && d0.total === 12 && /Scene \d+ of 12/.test(await page.locator('#weSceneStatus').textContent()), d0);
+  /* the tour's scenes are named by the scene line and open no card in the panel (release polish, V2-M2): watched over the next
+     scene, the card stays closed and the list keeps its two rows with none pressed */
+  const sceneMoved = await until(frame, (i) => { const d = window.__mccSceneDirector(); return d.playing && d.index !== i; }, d0.index, 20000);
+  await page.waitForTimeout(600);
+  const tourPanel = await page.evaluate(() => ({ card: !document.getElementById('weDetail').hidden, rows: document.querySelectorAll('#weEvents > li').length, pressed: document.querySelectorAll('#weEvents button[aria-pressed="true"]').length, scene: document.getElementById('weSceneStatus').textContent }));
+  check(scope, 'the tour\'s scenes open no card in the panel: the scene line names them, the list keeps its two rows, none pressed', sceneMoved && !tourPanel.card && tourPanel.rows === 2 && tourPanel.pressed === 0 && /Scene \d+ of 12/.test(tourPanel.scene), tourPanel);
   await page.locator('#mnWorldFrame').scrollIntoViewIfNeeded();
   const globeBox = await frame.locator('#globe').boundingBox();
   await page.mouse.move(globeBox.x + globeBox.width / 2, globeBox.y + globeBox.height / 2);
@@ -294,8 +356,14 @@ for (const size of SIZES) {
   await page.locator('#wePlay').click();
   const dPaused = await until(page, () => document.getElementById('wePlay').textContent === 'Play tour', null, 10000) ? await dir(frame) : null;
   check(scope, 'Pause stops the tour and keeps its place', !!dPaused && dPaused.playing === false && (dPaused.index === indexAtPause || dPaused.index === (indexAtPause + 1) % 12), dPaused);
+  /* with the tour paused the camera stays where it is put: over the whole Earth, where the shading would show, the Equity Uprise
+     tab keeps the news tint and its legend hidden, the counts kept for a country's card */
+  await overEarth(frame);
+  const tintOff = await tintQuiet(frame), tintTab = await tint(frame);
+  check(scope, 'in the Equity Uprise tab, over the whole Earth, the news tint and its legend stay hidden under the environmental layers; the counts stay for a country\'s card', tintOff && tintTab.lines === 1 && tintTab.heat.shown === false && tintTab.legend.hidden === true && tintTab.heat.total === tintGlobal.heat.total, tintTab);
   /* choosing a quake in the list: the globe focuses it, the detail shows the recorded and retrieval times and the source, the
      ripple runs labelled under its bounded hold, the ShakeMap draws and reports, and the tour queue grows */
+  await openList(page);
   await page.locator('#weEvents button', { hasText: QUAKE.title }).first().click();
   const focused = await until(frame, () => { const s = window.__mccEnvironmentLayers(); return !!s.selected && s.selected.id === 'usgs:us7000tyhr'; }, null, 20000);
   const r1 = await env(frame), g1 = await gov(frame);
@@ -353,13 +421,27 @@ for (const size of SIZES) {
   await setScope(page, 'global');
   const off = await until(frame, () => !window.__mccEnvironmentLayers().on && !window.__mccGlobeGovernor().enabled && !window.__mccSceneDirector().playing, null, 15000);
   check(scope, 'leaving the tab turns the layers off, stops the director, restores the continuous loop and hides the legend and the panel', off && (await frame.evaluate(() => document.getElementById('envLegend').hidden === true && window.HuGlobe.viewer().scene.requestRenderMode === false)) && !(await panelShown(page)), await gov(frame));
+  await overEarth(frame);
+  const tintBack = await tintShown(frame), tintAfter = await tint(frame);
+  check(scope, 'leaving the tab brings the news tint and its legend back exactly as they were on Global', tintBack && tintSame(tintAfter, tintGlobal), { before: tintGlobal, after: tintAfter });
   /* Show on globe from Global: the feed turns to the tab, the layers come back and the globe honours the focus once they arrive */
   await page.waitForFunction(() => document.querySelectorAll('#mnFeed .mn__observation-post [data-observation-globe]').length > 0, null, { timeout: 20000 });
   const firstId = await page.evaluate(() => document.querySelector('#mnFeed .mn__observation-post [data-observation-globe]').getAttribute('data-observation-globe'));
   const wantId = firstId.startsWith('firecell:') ? 'cell:' + firstId.slice('firecell:'.length) : firstId;
+  /* every change of the globe's selection from just before the click, sampled every 50 ms in the frame */
+  await frame.evaluate(() => { clearInterval(window.__selTimer); window.__sel = []; let last; const tick = () => { const s = window.__mccEnvironmentLayers(), id = s.selected ? s.selected.id : null; if (id !== last) { window.__sel.push({ at: Date.now(), id }); last = id; } }; tick(); window.__selTimer = setInterval(tick, 50); });
   await page.locator('#mnFeed [data-observation-globe]').first().click();
   const refocused = await until(frame, (id) => { const s = window.__mccEnvironmentLayers(); return s.on && !!s.selected && s.selected.id === id; }, wantId, 40000);
   check(scope, 'Show on globe from Global turns the feed to the Equity Uprise tab, brings the layers back and focuses the event', (await page.evaluate(() => window.MCC_FEED_SCOPE.get())) === 'equity' && refocused && (await panelShown(page)), { firstId, selected: (await env(frame)).selected });
+  /* the G1 close-out's flip: the panel held the event chosen earlier (fx-gen-50) and its pins carried it after the focus, so the two
+     echoed between panel and globe for as long as the page was open. Watched for ten seconds after the clicked event was first
+     selected, the globe's selection never leaves it, and the panel shows it */
+  await page.waitForTimeout(10000);
+  const history = await frame.evaluate(() => { clearInterval(window.__selTimer); return window.__sel; });
+  const first = history.findIndex((x) => x.id === wantId), after = first >= 0 ? history.slice(first) : [];
+  const panelNow = await page.evaluate(() => ({ detail: (document.getElementById('weDetail').textContent || '').slice(0, 120), pressed: [...document.querySelectorAll('#weEvents button[aria-pressed="true"] strong')].map((b) => b.textContent) }));
+  const wantTitle = (FIX.feed.events.find((e) => e.id === wantId) || {}).title;
+  check(scope, 'the clicked event stays selected: ten seconds on, the globe never went back to the event the panel held before, and the panel shows the clicked one', first >= 0 && after.every((x) => x.id === wantId) && (await env(frame)).selected?.id === wantId && !!wantTitle && panelNow.detail.includes(wantTitle) && JSON.stringify(panelNow.pressed) === JSON.stringify([wantTitle]), { history: history.map((x) => x.id), panel: panelNow });
   /* nothing else regresses: Local, News, the member posts, a guest's People */
   await setScope(page, 'local');
   await page.waitForTimeout(600);
@@ -436,6 +518,7 @@ for (const size of SIZES) {
   await page.locator('#wePlay').click();
   const refused = await until(page, () => /reduced motion/.test(document.getElementById('weSceneStatus').textContent), null, 10000);
   check(scope, 'Play is refused by the globe with the reason reduced-motion and the panel says so', refused && (await dir(frame)).reason === 'reduced-motion' && (await dir(frame)).playing === false, await dir(frame));
+  await openList(page);
   await page.locator('#weEvents button', { hasText: QUAKE.title }).first().click();
   const focused = await until(frame, () => { const s = window.__mccEnvironmentLayers(); return !!s.selected && s.selected.id === 'usgs:us7000tyhr'; }, null, 20000);
   const height = await frame.evaluate(() => Math.round(window.HuGlobe.viewer().camera.positionCartographic.height));
@@ -489,8 +572,17 @@ for (const size of SIZES) {
   const scope = `${size.width}-day`;
   const { ctx, page, errors } = await openPage(size, { daylight: 'day' });
   const frame = await globeFrame(page);
+  await settle(frame); await overEarth(frame);
+  const dayOn = await tintShown(frame), dayGlobal = await tint(frame);
+  check(scope, 'by day on Global the news tint and its legend show', dayOn && dayGlobal.lines === 1 && dayGlobal.heat.countries === 1 && dayGlobal.heat.shown === true && dayGlobal.legend.hidden === false, dayGlobal);
   await openTab(page);
   await layersReady(frame);
+  /* a tour that started by itself is paused as a visitor would, so the camera stays over the whole Earth for the reading */
+  await page.waitForTimeout(1500);
+  if ((await page.locator('#wePlay').textContent()) === 'Pause tour') { await page.locator('#wePlay').click(); await until(page, () => document.getElementById('wePlay').textContent === 'Play tour', null, 10000); }
+  await overEarth(frame);
+  const dayOff = await tintQuiet(frame), dayTab = await tint(frame);
+  check(scope, 'by day the Equity Uprise tab, over the whole Earth, hides the news tint and its legend, the counts kept', dayOff && dayTab.lines === 1 && dayTab.heat.shown === false && dayTab.legend.hidden === true && dayTab.heat.total === dayGlobal.heat.total, dayTab);
   await page.waitForFunction(() => document.querySelectorAll('#mnFeed .mn__observation-post').length > 0 && document.querySelectorAll('#weSources > li').length >= 10, null, { timeout: 60000 });
   await page.locator('#wePanel details > summary').first().click();
   const contrast = await page.evaluate(() => {
@@ -517,6 +609,10 @@ for (const size of SIZES) {
   const dims = await fits(page);
   check(scope, 'nothing scrolls sideways by day', dims.sw === dims.cw && dims.psw <= dims.pcw, dims);
   await shot(page, `environment-world-day-${size.width}`);
+  await setScope(page, 'global');
+  await overEarth(frame);
+  const dayBack = await tintShown(frame), dayAfter = await tint(frame);
+  check(scope, 'by day leaving the tab brings the news tint and its legend back exactly as they were', dayBack && tintSame(dayAfter, dayGlobal), { before: dayGlobal, after: dayAfter });
   { const re = await renderError(frame); if (re) console.log(`INFO [${scope}] render error record ${JSON.stringify(re)}`); check(scope, 'no page errors', errors.length === 0, { errors, renderError: re && { message: re.message, position: re.position, bad: re.badPrimitives } }); }
   await ctx.close();
 }
