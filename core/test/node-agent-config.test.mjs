@@ -9,6 +9,7 @@ import {
   DEFAULT_HARDWARE_REFRESH_MS,
   MEASURED_INFERENCE_SCHEMA,
   aclCommand,
+  browserPaths,
   gpuEvidenceTtlMs,
   hardwareRefreshMs,
   isPositiveGpuEvidence,
@@ -40,6 +41,24 @@ test('win32 defaults live under ProgramData and say which defaults were applied'
 
   const explicit = resolveNodePaths({ platform: 'win32', env: { MCCLUSTER_NODE_STATE_DIR: 'D:\\s', MCCLUSTER_NODE_MANIFEST: 'D:\\m\\capabilities.json' } });
   assert.deepEqual(explicit.defaultsApplied, []);
+});
+
+test('browser executor paths: the profile under the state dir and the policy file beside the manifest, env values winning', () => {
+  const win = browserPaths({ platform: 'win32', env: { ProgramData: 'C:\\ProgramData' } });
+  assert.equal(win.profileDir, 'C:\\ProgramData\\mccluster-node\\browser-profile');
+  assert.equal(win.policyPath, 'C:\\ProgramData\\mccluster-node\\browser-policy.json');
+  assert.deepEqual(win.defaultsApplied, ['MCCLUSTER_BROWSER_PROFILE_DIR', 'MCCLUSTER_BROWSER_POLICY']);
+  const movedManifest = browserPaths({ platform: 'win32', env: { ProgramData: 'C:\\ProgramData', MCCLUSTER_NODE_MANIFEST: 'D:\\node\\capabilities.json' } });
+  assert.equal(movedManifest.policyPath, 'D:\\node\\browser-policy.json', 'the policy file follows the manifest');
+  assert.equal(movedManifest.profileDir, 'C:\\ProgramData\\mccluster-node\\browser-profile', 'the profile follows the state dir');
+  const posix = browserPaths({ platform: 'linux', env: {} });
+  assert.equal(posix.profileDir, '/var/lib/mccluster-node/browser-profile');
+  assert.equal(posix.policyPath, '/etc/mccluster-node/browser-policy.json');
+  const explicit = browserPaths({ platform: 'linux', env: { MCCLUSTER_BROWSER_PROFILE_DIR: '/srv/profile', MCCLUSTER_BROWSER_POLICY: '/srv/policy.json' } });
+  assert.deepEqual(explicit, { profileDir: '/srv/profile', policyPath: '/srv/policy.json', defaultsApplied: [] });
+  const reused = browserPaths({ platform: 'linux', env: {}, nodePaths: { stateDir: '/opt/state', manifest: '/opt/etc/capabilities.json' } });
+  assert.equal(reused.profileDir, '/opt/state/browser-profile');
+  assert.equal(reused.policyPath, '/opt/etc/browser-policy.json');
 });
 
 test('POSIX defaults are unchanged', () => {

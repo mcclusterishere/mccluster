@@ -32,6 +32,27 @@ export function resolveNodePaths({ platform = process.platform, env = process.en
   return { stateDir, manifest, defaultsApplied };
 }
 
+// The browser executor's files: its own persistent Chromium profile under the
+// state directory (never the owner's own browser profile) and the allowlist
+// policy file beside the manifest. Environment values win; defaults follow the
+// node paths on both platforms (%ProgramData%\mccluster-node on Windows).
+export function browserPaths({ platform = process.platform, env = process.env, nodePaths = null } = {}) {
+  const p = platform === 'win32' ? path.win32 : path.posix;
+  const paths = nodePaths || resolveNodePaths({ platform, env });
+  const defaultsApplied = [];
+  let profileDir = env.MCCLUSTER_BROWSER_PROFILE_DIR;
+  if (!profileDir) {
+    defaultsApplied.push('MCCLUSTER_BROWSER_PROFILE_DIR');
+    profileDir = p.join(paths.stateDir, 'browser-profile');
+  }
+  let policyPath = env.MCCLUSTER_BROWSER_POLICY;
+  if (!policyPath) {
+    defaultsApplied.push('MCCLUSTER_BROWSER_POLICY');
+    policyPath = p.join(p.dirname(paths.manifest), 'browser-policy.json');
+  }
+  return { profileDir, policyPath, defaultsApplied };
+}
+
 // Best-effort NTFS ACL: the state directory and identity file readable by the
 // current user only (chmod has no effect on Windows). Null anywhere else.
 export function aclCommand({ platform = process.platform, env = process.env, target, isDirectory = false } = {}) {
