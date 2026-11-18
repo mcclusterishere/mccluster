@@ -16,7 +16,7 @@ function upstream(url) {
  if (u.startsWith('https://www.nhc.noaa.gov')) return json({activeStorms:[{id:'al012026',name:'Test storm',latitudeNumeric:20,longitudeNumeric:-60}]});
  throw new Error(`Unexpected request ${u}`);
 }
-// The persisted module policy the route reads first on every request (supabase/pending/eup_module_policy_v1.sql).
+// The persisted module policy the route reads first on every request (supabase/migrations/20261117144103_eup_module_policy_v1.sql).
 const POLICY_RPC='/rest/v1/rpc/eup_module_policy_read';
 const policyOf=(state='enabled',revision=3)=>({schema:'equity-uprise.module-policy/v1',installationId:'mccluster',moduleId:'environment',state,revision});
 const isPolicyRead=c=>c.url.endsWith(POLICY_RPC), isDomainRpc=c=>c.url.includes('/rpc/')&&!isPolicyRead(c);

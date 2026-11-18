@@ -4399,7 +4399,7 @@
       "classification": "documentation_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Provenance record for the pending E=Up module policy SQL: which Equity Uprise control semantics were ported, from which patch and hashes, and every deliberate difference. Evidence only; no building capability, program or geometry."
+      "rationale": "Provenance record for the E=Up module policy SQL, applied 2026-11-17 as supabase/migrations/20261117144103_eup_module_policy_v1.sql: which Equity Uprise control semantics were ported, from which patch and hashes, and every deliberate difference. Evidence only; no building capability, program or geometry."
     },
     {
       "path": "supabase/pending/live-callers.json",

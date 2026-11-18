@@ -1,16 +1,18 @@
 /* E=Up → Modules: persisted install / enable / drain / disable for the product modules McCluster runs.
    Reached only through ./router.js after the verified house-owner check. The four service-only RPCs in
-   supabase/pending/eup_module_policy_v1.sql recheck house ownership, the expected revision and the
-   idempotency key in their own transaction; the acting owner is always the verified session user and is
-   never read from a request body. This file creates no permission, holds no state and caches nothing:
-   every request reads the policy again.
+   supabase/migrations/20261117144103_eup_module_policy_v1.sql (applied in production 2026-11-17) recheck house
+   ownership, the expected revision and the idempotency key in their own transaction; the acting owner is always
+   the verified session user and is never read from a request body. This file creates no permission, holds no
+   state and caches nothing: every request reads the policy again.
 
    It is also the ONE mapping of the module-policy SQLSTATEs (EUM00..EUM07) for the Worker. Other sections
    import MODULE_POLICY_ERRORS / modulePolicyRefusal instead of keeping a copy. */
 const KEY = /^[A-Za-z0-9._:-]{8,128}$/;
 const CONTROL_CHARACTER = /[\u0000-\u001f\u007f]/;
 const MAX_BODY_BYTES = 4096;
-const PENDING_FILE = 'eup_module_policy_v1.sql';
+/* The migration that creates the module policy (applied in production 2026-11-17, ledger version 20261117144103).
+   Named when a database answers that its functions are missing. */
+export const MODULE_POLICY_MIGRATION = 'supabase/migrations/20261117144103_eup_module_policy_v1.sql';
 
 export const MODULE_POLICY_SCHEMA = 'equity-uprise.module-policy/v1';
 export const MODULE_INSTALLATION = 'mccluster';
@@ -50,7 +52,7 @@ const MESSAGES = Object.freeze({
   idempotency_conflict: 'This idempotency key was already used for a different command',
   module_already_installed: 'The module is already installed',
   drain_busy: 'Writes are still in flight; nothing changed. The same command can be sent again with the same key',
-  schema_not_applied: `Module policy schema is not applied (pending ${PENDING_FILE})`,
+  schema_not_applied: `Module policy schema is not applied (${MODULE_POLICY_MIGRATION})`,
   storage_unavailable: 'Module policy storage unavailable',
   module_policy_unavailable: 'Module policy unavailable',
   module_draining: 'The module is draining',
