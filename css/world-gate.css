@@ -135,8 +135,9 @@ html[data-daylight="day"] #mnSignedOut .wg-veil { background: linear-gradient(18
 @container (min-height: 100px) { #mnSignedOut .wg-credit { display: block; } }
 #mnSignedOut .wg-credit a { color: inherit; text-decoration: underline; text-underline-offset: 2px; padding: 4px 0 26px; margin: -4px 0 -26px; }
 
-/* the World's own headline sleeps under the door, so the stage's words never sit on top of it */
-html.mn-door-open .wt-headline { visibility: hidden; }
+/* the World's own words and controls over the Earth (its headline, the corner stack, the tags, the filters, the place
+   card) sleep under the door, so the stage holds only the Earth and the door's own parts; they are back when it closes */
+html.mn-door-open #mnWorld > :not(.mn__world-frame) { visibility: hidden; }
 
 /* the sheet */
 #mnSignedOut .wg-sheet {
@@ -506,11 +507,15 @@ html[data-daylight="day"] #mnProfileGate.mn__onboard::before { background: #ffff
   #mnSignedOut .wg-lower { align-items: center; padding-top: 24px; }
   #mnSignedOut .wg-lower::before {
     content: ""; position: absolute; z-index: -1; left: 0; right: 0; bottom: -14px; height: 210px; pointer-events: none;
-    background: linear-gradient(180deg, rgba(4, 6, 9, 0), rgba(4, 6, 9, 0.72) 55%, rgba(4, 6, 9, 0.90));
+    background: linear-gradient(180deg, rgba(4, 6, 9, 0), rgba(4, 6, 9, 0.78) 50%, rgba(4, 6, 9, 0.95));
   }
-  #mnSignedOut .wg-dateline:not([hidden]) { display: block; max-width: calc(100% - 48px); margin: 0 24px 10px; text-align: center; }
-  #mnSignedOut .wg-dateline__k { color: #e8c877; font: 800 11px/1.4 var(--wg-ui); letter-spacing: 0.2em; text-transform: uppercase; }
-  #mnSignedOut .wg-dateline__sep, #mnSignedOut .wg-dateline__d { color: #c9ced4; font: 700 11px/1.4 var(--wg-ui); letter-spacing: 0.04em; }
+  /* the dateline rides on its own plate, as the cards do: the Earth under it can be any colour */
+  #mnSignedOut .wg-dateline:not([hidden]) {
+    display: block; width: fit-content; max-width: calc(100% - 48px); margin: 0 auto 10px; padding: 5px 14px 6px;
+    border-radius: 999px; background: var(--wg-chip); box-shadow: inset 0 0 0 1px var(--wg-chip-line); text-align: center;
+  }
+  #mnSignedOut .wg-dateline__k { color: var(--wg-gold); font: 800 11px/1.4 var(--wg-ui); letter-spacing: 0.2em; text-transform: uppercase; }
+  #mnSignedOut .wg-dateline__sep, #mnSignedOut .wg-dateline__d { color: var(--wg-dim); font: 700 11px/1.4 var(--wg-ui); letter-spacing: 0.04em; }
   #mnSignedOut .wg-pulse { max-width: 100%; padding: 2px 24px 4px; }
   #mnSignedOut .wg-card { width: 236px; max-width: none; }
   #mnSignedOut .wg-card__in, #mnSignedOut .wg-card__go {
@@ -561,7 +566,8 @@ html[data-daylight="day"] #mnProfileGate.mn__onboard::before { background: #ffff
     top: 0; left: var(--wg-veil-left, 60%);
     background: linear-gradient(90deg, rgba(4, 6, 9, 0), rgba(4, 6, 9, 0.78) 64px);
   }
-  html[data-daylight="day"] #mnSignedOut .wg-veil { background: linear-gradient(90deg, rgba(4, 6, 9, 0), rgba(4, 6, 9, 0.72) 64px); }
+  /* by day the feed under the veil is white: the veil starts half dark so no pale seam runs between the Earth and the card */
+  html[data-daylight="day"] #mnSignedOut .wg-veil { background: linear-gradient(90deg, rgba(4, 6, 9, 0.5), rgba(4, 6, 9, 0.72) 64px); }
   #mnSignedOut .wg-back { margin-left: 32px; }
   #mnSignedOut .wg-lower { align-items: flex-start; padding: 24px 32px 0; }
   #mnSignedOut .wg-lower::before { height: 260px; }

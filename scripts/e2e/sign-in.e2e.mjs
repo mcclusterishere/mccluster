@@ -17,7 +17,7 @@
    Needs Playwright (PLAYWRIGHT_DIR if not resolvable). results.json and a screenshot per state land in outDir. */
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { ROOT, loadChromium, startServer, openWorld, worldReady, doorFrame, contrast, DEVICES, LAUNCH, SB } from './support/world-gate-harness.mjs';
+import { ROOT, loadChromium, startServer, openWorld, worldReady, doorFrame, contrast, settle, DEVICES, LAUNCH, SB } from './support/world-gate-harness.mjs';
 
 const OUT = process.argv[2] || join(ROOT, 'e2e-out', 'sign-in');
 await mkdir(OUT, { recursive: true });
@@ -50,6 +50,8 @@ async function keyContrast(page, scope) {
   const keys = /Turn what|into action|The place for doers|Sign in|Create account|Welcome back|New here|Email|Password|Forgot|Sign in to find people|McCluster Corp|Back to the World|Check your email|match an account|do not match/;
   const key = c.items.filter((i) => keys.test(i.text));
   check(scope, 'the key texts read at 4.5:1 or better (3:1 for large type), measured from pixels', key.length >= 8 && c.failures.length === 0, { failures: c.failures.slice(0, 6), measured: key.length });
+  /* the glyph mask came off just now: every button's colour eases back over 220 ms (css/style.css), so the next screenshot waits it out */
+  await settle(page);
   return c;
 }
 
@@ -81,7 +83,7 @@ try {
         let size = await fits(page);
         check(scope, 'nothing scrolls sideways with the door open', size.sw === size.cw, size);
         await keyContrast(page, scope + ' why');
-        await page.screenshot({ path: join(OUT, `why-${scope}.png`) });
+        await page.screenshot({ path: join(OUT, `why-${scope}.png`), timeout: 90000 });
         await page.fill('#mnEmail', 'kept@example.invalid');
         await page.click('#mnSignedOutBack');
         await closed(page);
@@ -109,7 +111,7 @@ try {
         check(scope, 'and sends one POST to the token endpoint with the lower-cased email, the password and the apikey', token.length === 1 && token[0].m === 'POST' && token[0].q === '?grant_type=password' && token[0].apikey && JSON.stringify(token[0].body) === JSON.stringify({ email: 'member@example.invalid', password: 'fixture-password-1' }), token);
         check(scope, 'invalid_credentials reads as the door\'s own line, beside the action, and the action comes back', refused.status === 'That email and password don’t match an account. Check them, or use Forgot password.' && refused.error && refused.go === 'Sign in' && refused.busy === null && refused.type === 'password', refused);
         await keyContrast(page, scope + ' refused');
-        await page.screenshot({ path: join(OUT, `refused-${scope}.png`) });
+        await page.screenshot({ path: join(OUT, `refused-${scope}.png`), timeout: 90000 });
         /* a field error on Create account: the passwords differ, nothing is sent */
         await page.click('#mnCreateTab');
         await page.fill('#mnEmail', 'new.member@example.invalid');
@@ -118,7 +120,7 @@ try {
         await page.click('#mnAuthGo');
         const mismatch = await page.evaluate(() => ({ status: document.getElementById('mnAuthStatus').textContent, invalid: document.getElementById('mnPassword2').getAttribute('aria-invalid'), focus: document.activeElement && document.activeElement.id, ring: getComputedStyle(document.getElementById('mnPassword2').closest('.wg-field')).boxShadow }));
         check(scope, 'a field error: the reason over the action, the confirm field marked and focused, nothing sent', mismatch.status === 'Those passwords do not match.' && mismatch.invalid === 'true' && mismatch.focus === 'mnPassword2' && (await calls(page)).length === 1, mismatch);
-        await page.screenshot({ path: join(OUT, `field-error-${scope}.png`) });
+        await page.screenshot({ path: join(OUT, `field-error-${scope}.png`), timeout: 90000 });
         /* the Google button, from the live settings (create mode: the return carries join=1) */
         await page.waitForSelector('#mnProviders:not([hidden]) .mn__provider', { timeout: 10000 });
         const label = await page.textContent('#mnProviderButtons .mn__provider');
@@ -154,7 +156,7 @@ try {
         await page.click('#mnAuthGo');
         const unticked = await page.evaluate(() => ({ status: document.getElementById('mnAuthStatus').textContent, invalid: document.getElementById('mnCreateAgreeBox').getAttribute('aria-invalid') }));
         check(scope, 'without the tick nothing is sent and the box is marked', /Tick the box/.test(unticked.status) && unticked.invalid === 'true' && (await calls(page)).length === 0, unticked);
-        await page.screenshot({ path: join(OUT, `privacy-error-${scope}.png`) });
+        await page.screenshot({ path: join(OUT, `privacy-error-${scope}.png`), timeout: 90000 });
         await page.click('#mnCreateAgreeBox');
         await page.click('#mnAuthGo');
         await page.waitForFunction(() => /Check your email/.test(document.getElementById('mnAuthStatus').textContent), null, { timeout: 10000 }).catch(() => {});
@@ -168,7 +170,7 @@ try {
         let size = await fits(page);
         check(scope, 'nothing scrolls sideways in the emailed state', size.sw === size.cw, size);
         await keyContrast(page, scope + ' emailed');
-        await page.screenshot({ path: join(OUT, `emailed-${scope}.png`) });
+        await page.screenshot({ path: join(OUT, `emailed-${scope}.png`), timeout: 90000 });
         /* the 60 s hold is real (above); the test lets it go rather than wait it out */
         await page.evaluate(() => { document.getElementById('mnResend').disabled = false; });
         await page.click('#mnResend');

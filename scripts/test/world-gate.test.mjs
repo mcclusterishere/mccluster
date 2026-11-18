@@ -119,6 +119,13 @@ test('the stylesheet keeps the law: mobile first, minmax(0, 1fr), 16 px controls
   assert.equal(blur.length, 1);
   assert.match(blur[0].head, /^#mnSignedOut \.wg-veil$/);
   assert.ok(blur[0].at.some((a) => /min-width: 1100px\) and \(prefers-reduced-transparency: no-preference/.test(a)));
+  /* words over the Earth ride on a plate (the Earth can be any colour: the bare dateline read 2.3:1 over the real globe) */
+  for (const part of ['.wg-back', '.wg-card', '.wg-dateline:not([hidden])']) {
+    const body = all.filter((r) => r.head === '#mnSignedOut ' + part).map((r) => r.body).join(';');
+    assert.match(body, /background: (var\(--wg-chip\)|rgba\()/, 'a plate under ' + part);
+  }
+  /* the World's own overlays sleep under the door; only the globe frame stays */
+  assert.ok(all.some((r) => r.head === 'html.mn-door-open #mnWorld > :not(.mn__world-frame)' && /visibility: hidden/.test(r.body)));
   /* day values for every token */
   const night = /#mnSignedOut, #mnProfileGate \{([\s\S]*?)\n\}/.exec(css)[1], day = /html\[data-daylight="day"\] #mnSignedOut, html\[data-daylight="day"\] #mnProfileGate \{([\s\S]*?)\n\}/.exec(css)[1];
   const names = (s) => (s.match(/--wg-[a-z-]+(?=:)/g) || []).filter((n) => !/^--wg-(ui|serif|ease)$/.test(n)).sort();

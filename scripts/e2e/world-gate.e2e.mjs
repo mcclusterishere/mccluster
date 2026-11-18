@@ -51,7 +51,8 @@ async function frame(page, world, name, { root = '#mnSignedOut', shot = true } =
   const m = await doorFrame(page);
   const c = await contrast(page, root);
   const small = await targets(page, root);
-  if (shot) await page.screenshot({ path: join(OUT, name + '.png') });
+  /* the glyph mask came off just now: every button's colour eases back over 220 ms (css/style.css), so wait it out */
+  if (shot) { await settle(page); await page.screenshot({ path: join(OUT, name + '.png'), timeout: 90000 }).catch((e) => check(name, 'the picture is taken', false, String(e && e.message || e).slice(0, 160))); }
   frames.push({ name, overflow: { sw: m.sw, cw: m.cw }, rects: { sheet: m.sheet, go: m.go, banner: m.banner, frame: m.frame, veil: m.veil }, fonts: m.fonts, visibleText: root === '#mnSignedOut' ? m.visibleText : '', cards: m.cards, dateline: m.dateline, credit: m.creditText,
     contrast: c.items.map((i) => ({ text: i.text, ratio: i.ratio, need: i.need })), inert: m.inert, requests: world.requests.filter((r) => r.frame === 'main').map((r) => `${r.m} ${r.host}${r.p}`) });
   check(name, 'nothing scrolls sideways', m.sw === m.cw, { sw: m.sw, cw: m.cw });
@@ -150,6 +151,8 @@ try {
         check(name, '390 create: the sheet scrolls inside and says there is more', m.more, m.sheet);
         if (phase === 'night') {
           await page.evaluate(() => { const s = document.getElementById('wgSheet'); s.scrollTop = s.scrollHeight; });
+          /* the fade goes on the sheet's own scroll event, which a busy renderer delivers late */
+          await page.waitForFunction(() => !document.getElementById('wgSheet').hasAttribute('data-more'), null, { timeout: 8000 }).catch(() => {});
           await page.waitForTimeout(250);
           const end = await frame(page, world, 'door-create-390-night-end');
           const hit2 = await page.evaluate(() => { const g = document.getElementById('mnAuthGo').getBoundingClientRect(), e = document.elementFromPoint(g.left + g.width / 2, g.top + g.height / 2); return !!e && !!e.closest('#mnAuthGo'); });
@@ -249,6 +252,8 @@ try {
       try {
         await worldReady(page);
         await page.click('#mccPrivacyNoticeLater').catch(() => {});
+        /* the banner has gone before the door measures its room */
+        await page.waitForFunction(() => { const b = document.getElementById('mccPrivacyNotice'); return !b || b.hidden || !b.getClientRects().length; }, null, { timeout: 5000 }).catch(() => {});
         await openBy(page, 'create');
         await page.fill('#mnEmail', 'new.member@example.invalid');
         await page.fill('#mnPassword', 'fixture-password-1');
@@ -272,7 +277,7 @@ try {
         await page.waitForTimeout(500);
         const b = await page.evaluate(() => { const g = document.getElementById('mnAuthGo'); return { text: g.textContent, busy: g.getAttribute('aria-busy'), disabled: g.disabled, fill: getComputedStyle(g).webkitTextFillColor }; });
         check('door-loading-390-night', 'busy: Signing in…, held, aria-busy, the label still readable', b.text === 'Signing in…' && b.busy === 'true' && b.disabled && /255, 255, 255/.test(b.fill), b);
-        await page.screenshot({ path: join(OUT, 'door-loading-390-night.png') });
+        await page.screenshot({ path: join(OUT, 'door-loading-390-night.png'), timeout: 90000 });
         frames.push({ name: 'door-loading-390-night', overflow: await page.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth })), requests: world.requests.filter((r) => r.frame === 'main').map((r) => `${r.m} ${r.host}${r.p}`) });
       } finally { await ctx.close(); }
     }
@@ -287,8 +292,10 @@ try {
         await page.fill('#mnPassword2', 'fixture-password-1');
         await page.click('#mnAuthGo');
         await page.waitForFunction(() => /Check your email/.test(document.getElementById('mnAuthStatus').textContent), null, { timeout: 10000 });
+        /* Resend is held for the first minute: read it now, before the picture (a busy renderer can outlast the minute) */
+        const held = await page.evaluate(() => document.getElementById('mnResend').disabled);
         await frame(page, world, name);
-        const v = await page.evaluate(() => ({ ok: document.getElementById('mnAuthStatus').classList.contains('is-ok'), resend: !document.getElementById('mnResend').hidden, held: document.getElementById('mnResend').disabled, top: document.getElementById('mnAuthStatus').getBoundingClientRect().top < document.getElementById('mnEmail').getBoundingClientRect().top }));
+        const v = await page.evaluate((held) => ({ ok: document.getElementById('mnAuthStatus').classList.contains('is-ok'), resend: !document.getElementById('mnResend').hidden, held, top: document.getElementById('mnAuthStatus').getBoundingClientRect().top < document.getElementById('mnEmail').getBoundingClientRect().top }), held);
         check(name, 'the sealed note leads, Resend under it held, the fields after', v.ok && v.resend && v.held && v.top, v);
       } finally { await ctx.close(); }
     }
@@ -419,7 +426,7 @@ try {
         const ok = await closed(page);
         const s = await page.evaluate(() => ({ inert: [...document.querySelectorAll('[inert]')].map((e) => e.id || e.className), scroll: document.getElementById('mnWorldFeed').scrollTop, focus: document.activeElement && document.activeElement.getAttribute('data-mn-view'), email: document.getElementById('mnEmail').value, type: document.getElementById('mnPassword').type, hist: history.state && history.state.mccDoor }));
         check('close-' + way, `${way} closes the door: inert gone, the feed where it was, focus back on People, the email kept, the password hidden, no history entry left`, ok && s.inert.length === 0 && s.scroll === feed && s.focus === 'discover' && s.email === 'kept@example.invalid' && s.type === 'password' && !s.hist, { ok, s, feed });
-        if (way === 'back') { await page.waitForTimeout(300); await page.screenshot({ path: join(OUT, 'door-closed-after-back-390-night.png') }); frames.push({ name: 'door-closed-after-back-390-night', overflow: await page.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth })) }); }
+        if (way === 'back') { await page.waitForTimeout(300); await page.screenshot({ path: join(OUT, 'door-closed-after-back-390-night.png'), timeout: 90000 }); frames.push({ name: 'door-closed-after-back-390-night', overflow: await page.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth })) }); }
       }
       /* Escape with a filled field focused: the first only lets go */
       await openBy(page, 'signin');
@@ -454,15 +461,31 @@ try {
 
   /* ---------- the motion frames: the sheet rises whole, paused at 0, 120, 260 and 420 ms ---------- */
   if (runs('motion')) {
-    const { ctx, page } = await openWorld(browser, server.base, DEVICES[390], '/mnet.html?view=feed', { phase: 'night' });
+    /* the door's own motion, timed: the globe's renderer stays off so the page's thread is free for the frames */
+    const { ctx, page } = await openWorld(browser, server.base, DEVICES[390], '/mnet.html?view=feed', { phase: 'night', globe: false });
     try {
       await worldReady(page);
       for (const t of [0, 120, 260, 420]) {
+        /* the entrance as it starts: read in the same task that sets is-entering, before any frame is drawn */
+        await page.evaluate(() => {
+          window.__wgEnter = null;
+          const door = document.getElementById('mnSignedOut');
+          const mo = new MutationObserver(() => {
+            if (window.__wgEnter || !door.classList.contains('is-entering')) return;
+            const sheet = document.getElementById('wgSheet'), anims = sheet.getAnimations();
+            anims.forEach((a) => { a.pause(); a.currentTime = 0; });
+            window.__wgEnter = { entering: true, sheet: getComputedStyle(sheet).transform, animations: anims.length };
+            anims.forEach((a) => a.play());
+            mo.disconnect();
+          });
+          mo.observe(door, { attributes: true, attributeFilter: ['class'] });
+        });
         await page.click('[data-guest-open="signin"]');
         await page.evaluate((t) => { document.getAnimations().filter((a) => a.effect && a.effect.target && a.effect.target.closest && a.effect.target.closest('#mnSignedOut')).forEach((a) => { a.pause(); a.currentTime = t; }); }, t);
-        await page.screenshot({ path: join(OUT, `door-open-${t}ms-390-night.png`) });
+        await page.screenshot({ path: join(OUT, `door-open-${t}ms-390-night.png`), timeout: 90000 });
         const s = await page.evaluate(() => ({ entering: document.getElementById('mnSignedOut').classList.contains('is-entering'), sheet: getComputedStyle(document.getElementById('wgSheet')).transform }));
-        if (t === 0) check('motion', 'a gesture brings the entrance: the sheet starts 28 px low', s.entering && /matrix\(1, 0, 0, 1, 0, 28\)/.test(s.sheet), s);
+        const start = await page.evaluate(() => window.__wgEnter);
+        if (t === 0) check('motion', 'a gesture brings the entrance: the sheet starts 28 px low', !!start && start.entering && /matrix\(1, 0, 0, 1, 0, 28\)/.test(start.sheet), { start, now: s });
         frames.push({ name: `door-open-${t}ms-390-night`, motion: s });
         await page.evaluate(() => document.getAnimations().filter((a) => a.effect && a.effect.getComputedTiming().iterations !== Infinity && a.effect.target && a.effect.target.closest && a.effect.target.closest('#mnSignedOut')).forEach((a) => a.finish()));
         await page.click('#mnSignedOutBack');

@@ -80,17 +80,21 @@ export const LAUNCH = { args: ['--no-sandbox', '--use-angle=swiftshader', '--ena
    opts.token: 'ok' | 'invalid' | 'unconfirmed' | 'slow'. opts.signup: 'confirm' | 'session'. opts.member: a stored session and a
    bootstrap (next_step opts.nextStep). opts.reduced: prefers-reduced-motion. opts.banner: the privacy banner (no stored
    acknowledgement, the banner meta). opts.recordAuth: wrap MCC's auth calls so each call and its arguments are recorded
-   (signInWithProvider is stubbed: it never leaves the page). opts.dpr: deviceScaleFactor (2 by default). */
+   (signInWithProvider is stubbed: it never leaves the page). opts.dpr: deviceScaleFactor (2 by default). opts.globe: false
+   leaves the globe's library out even when CESIUM_DIR is set. */
 export async function openWorld(browser, base, device, path, opts = {}) {
   const o = { phase: 'night', missions: ONE_MISSION, heat: 'production', archive: 'ok', settings: { external: { email: true } }, token: 'ok', signup: 'confirm', member: false, nextStep: null, reduced: false, banner: false, recordAuth: false, dpr: 2, ...opts };
   const ctx = await browser.newContext({ serviceWorkers: 'block', viewport: device.viewport, deviceScaleFactor: o.dpr, isMobile: device.mobile, hasTouch: device.mobile, reducedMotion: o.reduced ? 'reduce' : 'no-preference' });
   await ctx.addInitScript(({ banner, member, recordAuth, me }) => {
-    if (!banner) localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-10-19', accepted_at: new Date().toISOString() }));
-    localStorage.setItem('mnet_tour_seen', '1');
-    if (member) {
-      const exp = Math.floor(Date.now() / 1000) + 3600;
-      localStorage.setItem('mccdb_session', JSON.stringify({ access_token: 'x.' + btoa(JSON.stringify({ exp, sub: me })).replace(/=+$/, '') + '.y', refresh_token: 'fixture', expires_at: exp }));
-    }
+    /* the page's own storage; a frame with an opaque origin (no storage of its own) is left alone */
+    try {
+      if (!banner) localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-10-19', accepted_at: new Date().toISOString() }));
+      localStorage.setItem('mnet_tour_seen', '1');
+      if (member) {
+        const exp = Math.floor(Date.now() / 1000) + 3600;
+        localStorage.setItem('mccdb_session', JSON.stringify({ access_token: 'x.' + btoa(JSON.stringify({ exp, sub: me })).replace(/=+$/, '') + '.y', refresh_token: 'fixture', expires_at: exp }));
+      }
+    } catch { /* no storage in this frame */ }
     /* every frame of the first seconds: did the door paint on the way in? (owner, 2026-10-20) */
     window.__doorFlash = 0;
     const tick = () => { const g = document.getElementById('mnSignedOut'); if (g && !g.hidden && g.getClientRects().length) window.__doorFlash++; if (performance.now() < 6000) requestAnimationFrame(tick); };
@@ -186,7 +190,8 @@ export async function openWorld(browser, base, device, path, opts = {}) {
   });
   /* every read failing: the record's static fallback fails too */
   if (o.archive === 'gone') await ctx.route('**/data/action/docket-516r-archive.json', (route) => route.fulfill({ status: 404, body: 'not found' }));
-  if (process.env.CESIUM_DIR) await ctx.route('https://cesium.com/**/Build/Cesium/**', async (route) => {
+  /* opts.globe false keeps the globe's renderer off even with CESIUM_DIR: a scenario timing the door's own motion */
+  if (process.env.CESIUM_DIR && o.globe !== false) await ctx.route('https://cesium.com/**/Build/Cesium/**', async (route) => {
     const rel = new URL(route.request().url()).pathname.split('/Build/Cesium/')[1];
     if (!rel || rel.includes('..')) return route.abort();
     try { return route.fulfill({ body: await readFile(join(process.env.CESIUM_DIR, rel)), contentType: TYPES[extname(rel)] || 'application/octet-stream' }); }
@@ -248,63 +253,74 @@ export async function doorFrame(page) {
 export async function settle(page) {
   await page.evaluate(() => { window.__wgSettle = -1; });
   await page.waitForFunction(() => {
-    const sh = document.getElementById('wgSheet'), now = sh ? Math.round(sh.scrollTop) : 0, prev = window.__wgSettle;
+    /* the sheet still: its scroll, its top and its height (a banner leaving gives it room a moment later) */
+    const sh = document.getElementById('wgSheet'), box = sh ? sh.getBoundingClientRect() : null;
+    const now = sh ? [Math.round(sh.scrollTop), Math.round(box.top), Math.round(box.height)].join('|') : '', prev = window.__wgSettle;
     window.__wgSettle = now;
     const running = document.getAnimations().filter((a) => a.playState === 'running' && a.effect && a.effect.getComputedTiming && a.effect.getComputedTiming().iterations !== Infinity);
     return running.length === 0 && prev === now;
   }, null, { timeout: 6000, polling: 150 }).catch(() => {});
 }
 export async function contrast(page, rootSel = '#mnSignedOut') {
-  await settle(page);
-  const items = await page.evaluate((rootSel) => {
-    const root = document.querySelector(rootSel);
-    if (!root || root.hidden) return [];
-    const out = [], seen = new Set();
-    const sheet = document.getElementById('wgSheet'), sr = sheet && sheet.contains ? sheet.getBoundingClientRect() : null, more = !!sheet && sheet.hasAttribute('data-more');
-    /* shown: not hidden by style, not inside a closed <details> (its summary aside) */
-    const visible = (el) => { for (let n = el; n && n !== document.documentElement; n = n.parentElement) { const cs = getComputedStyle(n); if (cs.display === 'none' || cs.visibility === 'hidden' || Number(cs.opacity) === 0) return false; if (n.parentElement && n.parentElement.tagName === 'DETAILS' && !n.parentElement.open && n.tagName !== 'SUMMARY') return false; } return true; };
-    /* on top: the text's middle is not under something outside the root (the floating bar over a page's last line) */
-    const onTop = (el, r) => { const e = document.elementFromPoint((r.x + r.r) / 2, (r.y + r.b) / 2); return !e || root.contains(e) || e === el; };
-    const push = (el, rect, text, color, size, weight) => {
-      const r = { x: Math.max(0, rect.left), y: Math.max(0, rect.top), r: Math.min(innerWidth, rect.right), b: Math.min(innerHeight, rect.bottom) };
-      if (r.r - r.x < 2 || r.b - r.y < 2) return;
-      if (!onTop(el, r)) return;
-      if (sr && sheet.contains(el)) {
-        r.y = Math.max(r.y, sr.top); r.b = Math.min(r.b, sr.bottom - (more ? 34 : 0));
-        if (r.b - r.y < 4) return;
+  /* where things are: the sheet's scroll and box, and the page's scroll; a read and its masked picture must agree on it */
+  const where = () => page.evaluate(() => { const sh = document.getElementById('wgSheet'), b = sh ? sh.getBoundingClientRect() : { top: 0, height: 0 }; return [sh ? Math.round(sh.scrollTop) : 0, Math.round(b.top), Math.round(b.height), Math.round(scrollY)].join('|'); });
+  let items = [], shot = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await settle(page);
+    const before = await where();
+    items = await page.evaluate((rootSel) => {
+      const root = document.querySelector(rootSel);
+      if (!root || root.hidden) return [];
+      const out = [], seen = new Set();
+      const sheet = document.getElementById('wgSheet'), sr = sheet && sheet.contains ? sheet.getBoundingClientRect() : null, more = !!sheet && sheet.hasAttribute('data-more');
+      /* shown: not hidden by style, not inside a closed <details> (its summary aside) */
+      const visible = (el) => { for (let n = el; n && n !== document.documentElement; n = n.parentElement) { const cs = getComputedStyle(n); if (cs.display === 'none' || cs.visibility === 'hidden' || Number(cs.opacity) === 0) return false; if (n.parentElement && n.parentElement.tagName === 'DETAILS' && !n.parentElement.open && n.tagName !== 'SUMMARY') return false; } return true; };
+      /* on top: the text's middle is not under something outside the root (the floating bar over a page's last line) */
+      const onTop = (el, r) => { const e = document.elementFromPoint((r.x + r.r) / 2, (r.y + r.b) / 2); return !e || root.contains(e) || e === el; };
+      const push = (el, rect, text, color, size, weight) => {
+        const r = { x: Math.max(0, rect.left), y: Math.max(0, rect.top), r: Math.min(innerWidth, rect.right), b: Math.min(innerHeight, rect.bottom) };
+        if (r.r - r.x < 2 || r.b - r.y < 2) return;
+        if (!onTop(el, r)) return;
+        if (sr && sheet.contains(el)) {
+          r.y = Math.max(r.y, sr.top); r.b = Math.min(r.b, sr.bottom - (more ? 34 : 0));
+          if (r.b - r.y < 4) return;
+        }
+        const key = `${Math.round(r.x)},${Math.round(r.y)},${text.slice(0, 20)}`;
+        if (seen.has(key)) return; seen.add(key);
+        out.push({ text: text.slice(0, 60), sel: (el.id ? '#' + el.id : el.tagName.toLowerCase() + '.' + String(el.className || '').split(' ')[0]), rect: r, color, size, weight });
+      };
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      for (let t = walker.nextNode(); t; t = walker.nextNode()) {
+        const text = t.nodeValue.replace(/\s+/g, ' ').trim();
+        if (!text) continue;
+        const el = t.parentElement;
+        if (!el || !visible(el) || el.closest('svg') || el.closest('.wg-sr')) continue;
+        const cs = getComputedStyle(el);
+        const fill = cs.webkitTextFillColor && !/rgba\(0, 0, 0, 0\)/.test(cs.webkitTextFillColor) && cs.webkitTextFillColor !== cs.color ? cs.webkitTextFillColor : cs.color;
+        const range = document.createRange(); range.selectNodeContents(t);
+        for (const rect of range.getClientRects()) push(el, rect, text, fill, parseFloat(cs.fontSize), Number(cs.fontWeight) || 400);
       }
-      const key = `${Math.round(r.x)},${Math.round(r.y)},${text.slice(0, 20)}`;
-      if (seen.has(key)) return; seen.add(key);
-      out.push({ text: text.slice(0, 60), sel: (el.id ? '#' + el.id : el.tagName.toLowerCase() + '.' + String(el.className || '').split(' ')[0]), rect: r, color, size, weight });
-    };
-    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-    for (let t = walker.nextNode(); t; t = walker.nextNode()) {
-      const text = t.nodeValue.replace(/\s+/g, ' ').trim();
-      if (!text) continue;
-      const el = t.parentElement;
-      if (!el || !visible(el) || el.closest('svg') || el.closest('.wg-sr')) continue;
-      const cs = getComputedStyle(el);
-      const fill = cs.webkitTextFillColor && !/rgba\(0, 0, 0, 0\)/.test(cs.webkitTextFillColor) && cs.webkitTextFillColor !== cs.color ? cs.webkitTextFillColor : cs.color;
-      const range = document.createRange(); range.selectNodeContents(t);
-      for (const rect of range.getClientRects()) push(el, rect, text, fill, parseFloat(cs.fontSize), Number(cs.fontWeight) || 400);
-    }
-    root.querySelectorAll('input:not([type=checkbox]):not([type=hidden])').forEach((input) => {
-      if (!visible(input) || !input.getClientRects().length) return;
-      const cs = getComputedStyle(input);
-      const text = input.value ? (input.type === 'password' ? '••••' : input.value) : input.placeholder;
-      if (!text) return;
-      const color = input.value ? cs.color : getComputedStyle(input, '::placeholder').color;
-      const rect = input.getBoundingClientRect();
-      push(input, rect, (input.value ? 'value: ' : 'placeholder: ') + text, color, parseFloat(cs.fontSize), Number(cs.fontWeight) || 400);
-    });
-    return out;
-  }, rootSel);
-  if (!items.length) return { items: [], failures: [] };
-  const style = await page.addStyleTag({ content: `${rootSel}, ${rootSel} * { color: transparent !important; -webkit-text-fill-color: transparent !important; text-shadow: none !important; caret-color: transparent !important; text-decoration-color: transparent !important; } ${rootSel} input::placeholder { color: transparent !important; }` });
-  await page.waitForTimeout(60);
-  const shot = await page.screenshot({ type: 'png' });
-  await style.evaluate((n) => n.remove());
-  await page.waitForTimeout(30);
+      root.querySelectorAll('input:not([type=checkbox]):not([type=hidden])').forEach((input) => {
+        if (!visible(input) || !input.getClientRects().length) return;
+        const cs = getComputedStyle(input);
+        const text = input.value ? (input.type === 'password' ? '••••' : input.value) : input.placeholder;
+        if (!text) return;
+        const color = input.value ? cs.color : getComputedStyle(input, '::placeholder').color;
+        const rect = input.getBoundingClientRect();
+        push(input, rect, (input.value ? 'value: ' : 'placeholder: ') + text, color, parseFloat(cs.fontSize), Number(cs.fontWeight) || 400);
+      });
+      return out;
+    }, rootSel);
+    if (!items.length) return { items: [], failures: [] };
+    const style = await page.addStyleTag({ content: `${rootSel}, ${rootSel} * { color: transparent !important; -webkit-text-fill-color: transparent !important; text-shadow: none !important; caret-color: transparent !important; text-decoration-color: transparent !important; transition: none !important; } ${rootSel} input::placeholder { color: transparent !important; }` });
+    await page.waitForTimeout(60);
+    shot = await page.screenshot({ type: 'png', timeout: 90000 });
+    const after = await where();
+    await style.evaluate((n) => n.remove());
+    await page.waitForTimeout(30);
+    /* something moved between the read and the picture (a late scroll, a banner leaving): read and take it again */
+    if (before === after) break;
+  }
   const measured = await page.evaluate(async ({ b64, items }) => {
     const img = new Image(); img.src = 'data:image/png;base64,' + b64; await img.decode();
     const k = img.width / innerWidth, c = new OffscreenCanvas(img.width, img.height), g = c.getContext('2d', { willReadFrequently: true });

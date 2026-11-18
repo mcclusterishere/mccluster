@@ -106,13 +106,16 @@ Check them, or use Forgot password." (for `invalid_credentials` only; every othe
 - An Escape pressed inside the privacy notice is the notice's own ("Not now") and does not also close the door.
 - At 700 to 1099 px, Create account is compacted (a smaller crown and headline, 58 px fields) so the card stays clear of
   300 px of the globe at 820 x 1180; at 1100 px and up the spec's sizes apply.
-- The World's own headline ("The world is your feed.") is hidden while the door is open, so the stage's words never sit on
-  it; it comes back when the door closes.
+- The World's own words and controls over the Earth (its headline "The world is your feed.", the corner stack with the
+  music's play/pause and the expand control, the tags, the filters, the place card) are hidden while the door is open, so
+  the stage holds only the Earth and the door's own parts; they come back when the door closes, and the music plays on
+  with its setting untouched. The globe frame's own controls live inside the frame and stay, dimmed by the stage's shelf.
 - Each field's input box reaches up over its label (transparent) so the input itself is a 44 px target; the text sits where
   the design puts it.
 - While busy, `css/mnet.css` makes every busy primary's label transparent; the door keeps its label with
   `-webkit-text-fill-color` rather than `!important`.
-- The dateline sits on the dark shelf in both phases, so it keeps the night gold and grey by day.
+- The dateline rides on its own plate, as the cards do, in the phase's colours: over the real globe at 820 and 1280 the
+  bare line measured 2.3:1 to 4.2:1 against the Earth's colours, so it is never left on the imagery.
 
 ## Tests
 
@@ -136,8 +139,9 @@ Screenshots (`node scripts/e2e/world-gate.e2e.mjs <outDir>`, deviceScaleFactor 2
 `door-provider-390-night`, `door-empty-{390,1280}-night`, `door-banner-signin-390-night`, `door-banner-create-390-day`,
 `door-banner-signin-1280-night`, `door-reduced-motion-390-night`, `door-signin-320-night`, `door-create-320-day`,
 `door-closed-after-back-390-night`, `door-open-{0,120,260,420}ms-390-night`, `onboard-{1,2,3}-390-{night,day}`,
-`onboard-1-1280-{night,day}`. With `CESIUM_DIR` set the globe renders under the door; without it the layout checks still
-hold.
+`onboard-1-1280-{night,day}`. With `CESIUM_DIR` set the globe renders under the door (the motion frames keep its renderer
+off, so their timing is the door's own); without it the layout checks still hold, but only the real globe tests the words
+that sit over the Earth.
 
 The CI entry belongs to the feed lane's workflow (`.github/workflows/human-uprise-editorial.yml`), named here rather than
 edited: add the paths `css/world-gate.css`, `js/world-gate.js`, `scripts/e2e/world-gate.e2e.mjs`,
