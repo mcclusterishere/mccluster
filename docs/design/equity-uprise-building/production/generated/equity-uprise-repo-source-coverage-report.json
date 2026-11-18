@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 733,
+  "candidate_count": 736,
   "capability_source_count": 104,
-  "support_only_count": 622,
-  "checks_total": 2802,
-  "checks_passed": 2801,
+  "support_only_count": 625,
+  "checks_total": 2814,
+  "checks_passed": 2813,
   "checks_failed": 1,
   "passed": false,
   "discovered_paths": [
@@ -457,6 +457,7 @@
     "scripts/test/equity-uprise-mission-screens.test.mjs",
     "scripts/test/eu-building-visual.test.mjs",
     "scripts/test/eu-object-inspector.test.mjs",
+    "scripts/test/eu-platform-replay.native.integration.mjs",
     "scripts/test/eu-screen-hardware-binding.test.mjs",
     "scripts/test/eu-screens.test.mjs",
     "scripts/test/eu-view-framing.test.mjs",
@@ -656,6 +657,7 @@
     "supabase/replay_migrations/20260909020000_equity_uprise_initial_initiatives.sql",
     "supabase/replay_migrations/20260913174500_p0_control_plane_containment.sql",
     "supabase/replay_migrations/20261028230000_schema_reconcile_production_only_v1.sql",
+    "supabase/replay_migrations/20261114015120_equity_uprise_platform_registry.sql",
     "supabase/schema-manifest.json",
     "supabase/tests/action_bounty_claim_guard.stub.sql",
     "supabase/tests/action_globe_demo_pins_v1.applied.sql",
@@ -665,6 +667,7 @@
     "supabase/tests/analytics_geo_audience.behaviour.sql",
     "supabase/tests/analytics_measurement.deps.sql",
     "supabase/tests/definer_views_invoker_v1.stub.sql",
+    "supabase/tests/eu_platform_replay.stub.sql",
     "supabase/tests/eu_platform_test.sql",
     "supabase/tests/eu_runtime_and_media_rollup_v1.behaviour.sql",
     "supabase/tests/eu_runtime_and_media_rollup_v1.stub.sql",
@@ -747,7 +750,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "726 entries"
+      "detail": "729 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -9310,6 +9313,26 @@
       "detail": ""
     },
     {
+      "name": "scripts/test/eu-platform-replay.native.integration.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/eu-platform-replay.native.integration.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/eu-platform-replay.native.integration.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/eu-platform-replay.native.integration.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "scripts/test/eu-screen-hardware-binding.test.mjs capability ids known",
       "passed": true,
       "detail": ""
@@ -13055,6 +13078,26 @@
       "detail": ""
     },
     {
+      "name": "supabase/replay_migrations/20261114015120_equity_uprise_platform_registry.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/replay_migrations/20261114015120_equity_uprise_platform_registry.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/replay_migrations/20261114015120_equity_uprise_platform_registry.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/replay_migrations/20261114015120_equity_uprise_platform_registry.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "supabase/schema-manifest.json capability ids known",
       "passed": true,
       "detail": ""
@@ -13231,6 +13274,26 @@
     },
     {
       "name": "supabase/tests/definer_views_invoker_v1.stub.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/eu_platform_replay.stub.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/eu_platform_replay.stub.sql classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "supabase/tests/eu_platform_replay.stub.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/tests/eu_platform_replay.stub.sql support rationale present",
       "passed": true,
       "detail": ""
     },
