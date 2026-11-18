@@ -2,8 +2,10 @@
 
 Status: slice N1 built on 2026-11-17 (source and tests on this branch; nothing in production changed). The GPU
 is visible on Windows, the laptop has a manifest and an installer, and the laptop is preferred for `ai.chat` by
-poll cadence. The Control pane (step 3), the OVH promotion, the pending claim SQL and the Tier 2 switches are the
-open items. Resume point for any session; the owner's runbook is `WINDOWS-NODE.md`.
+poll cadence. Slice N2, the same day, makes the laptop the agent node: images in `ai.chat` with vision routing,
+the node's own browser as a second loopback executor driven only from the Core's agent loop, and the Control
+Room surface (`AGENT-NODE-BROWSER.md`). The Control pane (step 3), the OVH promotion, the pending claim SQL and
+the Tier 2 switches are the open items. Resume point for any session; the owner's runbook is `WINDOWS-NODE.md`.
 
 ## The owner's request (2026-11-17)
 
@@ -148,6 +150,40 @@ Derived by code at every enrolment and heartbeat, published as `inventory.runtim
 `labels.hardware_mode`; a manifest label asserts nothing. The Devices pane (step 3) shows the mode and the
 evidence.
 
+## Built in slice N2 (2026-11-17): the agent node
+
+The owner's words: "As it's own node but more powerful … the most power multimodal agent that can do anything and
+give it it's own browser and more abilities very strong agent and a model i can use to direct the best please."
+Two lanes on this branch, source and tests only; the design, the contracts and what is verified where are in
+`AGENT-NODE-BROWSER.md`.
+
+- **Images in `ai.chat`** (lane C1): `messages[].images` as Ollama takes them, bounds sniffed from bytes (4 per
+  request, 200,000 bytes each, 600,000 per request, 1600 px, JPEG/PNG/WebP), one validator in the broker, the
+  adapter and the local client; an image turn is routed to `qwen3-vl.8b.local` then `qwen3-vl.4b.local`
+  (`features.vision true` on the template's two vision entries, lane C2) and otherwise fails with
+  `LOCAL_AI_NO_VISION_NODE` / `AI_CHAT_NO_VISION_NODE`, never a text model. No body limit was raised.
+- **The node's own browser** (lane C1 the executor and the loop, lane C2 the device and the words): the
+  browser executor on `127.0.0.1:4791` (Playwright Chromium in the node's own persistent profile, headless by
+  default, a policy file of allowed hosts beside the manifest, private addresses refused after DNS on every
+  request, no downloads, choosers, dialogs or popups, fixed extractors, step/time/byte caps, every action
+  logged), advertised as `browser.act/chromium.local` only from trust-owned nodes, reached only through the
+  Core's resident agent loop as `browser_act`, which exists for a turn only when the owner's session submitted
+  it with `allow_browser: true`. The loop keeps the last two screenshots as images, wraps page text as evidence,
+  checkpoints steps into the user message and writes screenshots, the action log and a node badge into the
+  assistant message's metadata, all bounded, without SQL (the user message is pre-inserted with its metadata
+  before the existing RPC).
+- **The device side** (lane C2): `core/windows/mccluster-node.ps1 -Browser` (the one switch that downloads:
+  the pinned Playwright package through npm, Chromium through Playwright's own installer after a dry run the
+  owner answers; policy written once; profile folder; launcher; the task "McCluster Node Browser"; the
+  `chromium.local` entry; `browser: true` kept by `-Install`), `-BrowserHeaded` for signing the profile in by
+  hand, a BROWSER block in `-Report`; pwsh tests written, **unexecuted here** (no PowerShell in the build
+  container); the laptop template and the drift check carry the vision flags and the browser entry.
+- **The surface** (lane C2): the Control Room's Ask McCluster composer gets image attach (downscaled on the
+  client to 1280 px JPEG, at most 200,000 bytes, two per turn), the owner-only "Use the browser" switch with an
+  honest readiness line, user images, screenshots and the action log inline in a collapsed block, live steps
+  while the turn runs, the node badge (which node answered, its hardware mode and measured rate) and the
+  refusal codes in words; proven in Chromium at 390 and 1280 against fixtures.
+
 ## Queue
 
 | Step | What | State |
@@ -158,6 +194,9 @@ evidence.
 | 4 | Model placement on the laptop, routing to the laptop with fallback to OVH, health and cost | Tier 1 built in slice N1 (template, adapter map, registry ranking and fallback, 1000 ms poll); Tier 2 built behind configuration (fabric-first client, yield rule) and off; the claim SQL is pending, owner-approved only; the OVH promotion and its env values (`MCCLUSTER_NODE_YIELD_TO_GPU_MS`, `MCCLUSTER_LOCAL_AI_FABRIC=prefer`) are deploy-gated plan items |
 | 5 | The laptop's build and the 50 GB partition as the model store | `-Report` finds the partition; `-ModelsPath` moves the store; the owner decides |
 | 6 | Health and cost per node in the pane | queued with step 3 |
+| 7 | Images in `ai.chat` and vision routing (slice N2) | built (lane C1 the Core, lane C2 the template's vision flags); unverified against a real vision model until the laptop runs it |
+| 8 | The node's own browser: executor, `browser.act`, the Core loop's `browser_act` (slice N2) | built; the executor is proven against real Chromium in lane C1's own run; the Windows install and a live browser turn are unverified; OVH promotion deploy-gated |
+| 9 | The Control Room surface for images and browser turns (slice N2) | built and proven in Chromium against fixtures (`scripts/e2e/control-ai-browser.e2e.mjs`) |
 
 Open questions for the owner (from the slice design): which GPU the laptop really has (`-Report` decides;
 `-Tier` forces), whether to keep it awake on AC and run on battery (the model tier is decided: the owner's
@@ -165,4 +204,9 @@ decision above), whether
 `OLLAMA_MODELS` moves to the 50 GB partition, whether to re-enrol the pilot key or enrol a fresh node and revoke
 the pilot, approval of the pending claim SQL and the OVH yield value once the laptop is `gpu-verified` in
 production, when to set `MCCLUSTER_LOCAL_AI_FABRIC=prefer` on the Core, whether a 120 s fabric wait is acceptable,
-and whether the laptop should also take work while the owner is using it.
+and whether the laptop should also take work while the owner is using it. From slice N2: which hosts go into
+`browser-policy.json` first and whether subdomains are allowed, whether stopping the browser task for a headed
+sign-in is acceptable, whether the chat's image cap stays at 2, inline bounded screenshots versus a storage
+bucket and a 7-argument RPC later (SQL), whether the Command Center's Ask home AI may use the browser, whether
+the CI browser job runs on dispatch only, whether the Playwright pin follows the owner's install, whether public
+non-allowlisted subresources stay allowed, and whether a browser turn is refused on battery or off `gpu-verified`.

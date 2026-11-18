@@ -92,11 +92,14 @@ if (!Array.isArray(nodeManifest.capabilities)) failures.push('ovh-primary node m
 if (!nodeManifest.capabilities.some((item)=>item?.capability==='ai.chat'&&item?.implementation==='qwen3.8b.local')) failures.push('ovh-primary lost ai.chat/qwen3.8b.local');
 
 // The Windows GPU laptop template (core/windows/mccluster-node.ps1 -Install writes it, pruned per
-// model tier, to that node's capabilities.json; docs/control-plane/WINDOWS-NODE.md). It must stay
-// claimable beside the OVH node and private: the same implementation id with the OVH schema (one
-// binding, one task, either node), loopback executors with per-implementation readiness, no VRAM
-// threshold (an APU reports its UMA carve-out, not the memory inference uses), one lease, owned
-// gpu-laptop labels, nothing pilot-only, and no user path, UNC host, e-mail or non-loopback address.
+// model tier and with the browser entry only after -Browser, to that node's capabilities.json;
+// docs/control-plane/WINDOWS-NODE.md). It must stay claimable beside the OVH node and private: the
+// same implementation id with the OVH schema for every ai.chat entry (one binding, one task, either
+// node), the two vision entries advertising features.vision (an image turn is routed to them, never
+// to a text model), loopback executors with per-implementation readiness on 4790, one browser.act
+// entry on the second loopback executor 127.0.0.1:4791 (slice N2, docs/control-plane/AGENT-NODE-BROWSER.md),
+// no VRAM threshold (an APU reports its UMA carve-out, not the memory inference uses), one lease,
+// owned gpu-laptop labels, nothing pilot-only, and no user path, UNC host, e-mail or non-loopback address.
 const laptopPath=path.join(root,'core','node-manifests','owner-windows-gpu.json');
 let laptopRaw='';
 let laptop=null;
@@ -112,9 +115,13 @@ if (laptopEntries) {
   // box with little free memory. Every entry carries the OVH ai.chat schema byte for byte.
   for (const implementation of ['qwen3-vl.8b.local','qwen3.8b.local','qwen3.14b.local','qwen3-vl.4b.local']) if (!laptopEntry(implementation)) failures.push(`owner-windows-gpu lost ai.chat/${implementation}`);
   if (laptopEntries.some((item)=>item?.capability==='ai.text.draft')) failures.push('owner-windows-gpu must not advertise ai.text.draft (pilot-only, nothing submits it)');
-  if (ovhChat) for (const item of laptopEntries) for (const field of ['input_schema','output_schema']) {
+  const laptopChat=laptopEntries.filter((item)=>item?.capability==='ai.chat');
+  if (ovhChat) for (const item of laptopChat) for (const field of ['input_schema','output_schema']) {
     if (!isDeepStrictEqual(item?.[field],ovhChat[field])) failures.push(`owner-windows-gpu ${item?.implementation||'?'} ${field} drifted from ovh-primary`);
   }
+  // Vision routing (slice N2): the two qwen3-vl entries say vision:true, the text models never do.
+  for (const implementation of ['qwen3-vl.8b.local','qwen3-vl.4b.local']) if (laptopEntry(implementation)&&laptopEntry(implementation).features?.vision!==true) failures.push(`owner-windows-gpu ${implementation} must advertise features.vision true`);
+  for (const implementation of ['qwen3.8b.local','qwen3.14b.local']) if (laptopEntry(implementation)?.features?.vision===true) failures.push(`owner-windows-gpu ${implementation} is a text model and must not advertise features.vision`);
   for (const item of laptopEntries) {
     for (const field of ['url','health_url']) {
       let hostname=null;
@@ -122,6 +129,26 @@ if (laptopEntries) {
       if (hostname!=='127.0.0.1') failures.push(`owner-windows-gpu ${item?.implementation||'?'} executor ${field} must be a 127.0.0.1 loopback service`);
     }
     if (item?.min_vram_bytes!==0) failures.push(`owner-windows-gpu ${item?.implementation||'?'} min_vram_bytes must be 0`);
+  }
+  for (const item of laptopChat) for (const field of ['url','health_url']) {
+    let port=null;
+    try { port=new URL(item?.executor?.[field]).port; } catch { port=null; }
+    if (port!=='4790') failures.push(`owner-windows-gpu ${item?.implementation||'?'} executor ${field} must be the Ollama adapter on port 4790`);
+  }
+  // The node's own browser (slice N2): one browser.act entry, chromium.local, the second loopback executor.
+  const laptopBrowser=laptopEntries.filter((item)=>item?.capability==='browser.act');
+  if (laptopBrowser.length!==1) failures.push(`owner-windows-gpu must carry exactly one browser.act entry (found ${laptopBrowser.length})`);
+  for (const item of laptopBrowser) {
+    if (item?.implementation!=='chromium.local') failures.push(`owner-windows-gpu browser.act implementation must be chromium.local (got ${item?.implementation||'?'})`);
+    if (item?.features?.browser!==true) failures.push('owner-windows-gpu browser.act must advertise features.browser true (the tool bus pins requirements.features {browser:true})');
+    if (item?.max_concurrency!==1) failures.push('owner-windows-gpu browser.act max_concurrency must be 1');
+    if (item?.min_vram_bytes!==0) failures.push('owner-windows-gpu browser.act min_vram_bytes must be 0');
+    let url=null, health=null;
+    try { url=new URL(item?.executor?.url); health=new URL(item?.executor?.health_url); } catch { url=null; health=null; }
+    if (!url||url.hostname!=='127.0.0.1'||url.port!=='4791'||url.pathname!=='/execute') failures.push('owner-windows-gpu browser.act executor url must be http://127.0.0.1:4791/execute');
+    if (!health||health.hostname!=='127.0.0.1'||health.port!=='4791'||health.pathname!=='/ready') failures.push('owner-windows-gpu browser.act executor health_url must be http://127.0.0.1:4791/ready');
+    const timeout=Number(item?.executor?.timeout_ms);
+    if (!Number.isFinite(timeout)||timeout<=0||timeout>300000) failures.push('owner-windows-gpu browser.act executor timeout_ms must be at most 300000 (a browser task stays under the job lease)');
   }
   if (laptop.max_leases!==1) failures.push('owner-windows-gpu max_leases must be 1');
   if (laptop?.labels?.trust!=='owned'||laptop?.labels?.role!=='gpu-laptop') failures.push('owner-windows-gpu labels must say trust owned and role gpu-laptop');

@@ -36,11 +36,23 @@ unless the owner invokes a switch; with no switch it is -Report, which only read
                advertised (removed when loading it leaves under 4 GB free, added back when it fits).
   -KeepAwake   Administrator only, explicit opt-in: AC standby and hibernate timeouts to 0.
   -ModelsPath  User-scope OLLAMA_MODELS (for the 50 GB partition).  -Vulkan <n>: GGML_VK_VISIBLE_DEVICES.
+  -Browser     The one switch that downloads anything (slice N2, docs/control-plane/AGENT-NODE-BROWSER.md):
+               the node's own browser. npm installs the pinned playwright package into <StateRoot>\browser,
+               Playwright's own installer shows a dry run of the Chromium download and asks before fetching
+               it into <StateRoot>\browser\ms-playwright; then <StateRoot>\browser-policy.json is written
+               once (an empty allowlist: every open is refused until you name sites), the profile folder,
+               the browser.cmd launcher and the scheduled task "McCluster Node Browser" are set up, and the
+               browser.act/chromium.local entry from the template is added to capabilities.json.
+               -WhatIf shows every step and writes nothing; declining the download changes nothing.
+  -BrowserHeaded  Stops that task, runs the executor headed on this console (a visible Chromium on the
+               node's own persistent profile) so you can sign the profile into the allowed sites by hand,
+               and starts the task again at Ctrl+C. Nothing from your own browsers is read.
 
-This script downloads nothing and evaluates no remote text. Models come through the owner's own
-Ollama (-Models); the agent and the adapter are the Node sources in the checkout given by
--RepoPath. The compute node never holds a control-plane secret: the enrolment token lives in
-<StateRoot>\enroll.env with an owner-only ACL for the one-shot enrolment and is removed after it.
+Apart from -Browser, this script downloads nothing and evaluates no remote text. Models come through
+the owner's own Ollama (-Models); the agent, the adapter and the browser executor are the Node sources
+in the checkout given by -RepoPath. The compute node never holds a control-plane secret: the enrolment
+token lives in <StateRoot>\enroll.env with an owner-only ACL for the one-shot enrolment and is removed
+after it.
 
 .NOTES
 Tests: core\windows\tests\mccluster-node.tests.ps1 (dot-sources this file with
@@ -59,6 +71,8 @@ param(
   [switch]$Benchmark,
   [string]$Model,
   [switch]$KeepAwake,
+  [switch]$Browser,
+  [switch]$BrowserHeaded,
   [string]$ModelsPath,
   [int]$Vulkan = -1,
   [string]$StateRoot,
@@ -69,6 +83,13 @@ param(
 # ---- constants ---------------------------------------------------------------------------------
 $script:McOllamaUrl = 'http://127.0.0.1:11434'
 $script:McAdapterPort = 4790
+# The node's own browser (slice N2): a second loopback executor, the pinned Playwright, the policy file schema.
+$script:McBrowserPort = 4791
+$script:McBrowserUrl = 'http://127.0.0.1:4791'
+$script:McPlaywrightVersion = '1.63.0'
+$script:McBrowserImplementation = 'chromium.local'
+$script:McBrowserPolicySchema = 'mccluster-browser-policy/1'
+$script:McBrowserTaskName = 'McCluster Node Browser'
 $script:McDisplayClassKey = 'HKLM:\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}'
 $script:McDisplayClassSubkeyPattern = '^HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\Class\\\{4d36e968-e325-11ce-bfc1-08002be10318\}\\(\d{4})$'
 $script:McRegistryValuePattern = '^\s{4}(\S+)\s{4}(REG_\w+)\s{4}(.*)$'
@@ -535,9 +556,9 @@ function Assert-McLauncherValues {
 }
 
 function Get-McLauncherText {
-  # <StateRoot>\adapter.cmd / agent.cmd: a startup task without an interactive logon does not load
-  # HKCU, so the launcher carries the non-secret configuration itself. Every value is checked again
-  # here: a cmd metacharacter never reaches a file that cmd.exe runs.
+  # <StateRoot>\adapter.cmd / agent.cmd / browser.cmd: a startup task without an interactive logon does
+  # not load HKCU, so the launcher carries the non-secret configuration itself. Every value is checked
+  # again here: a cmd metacharacter never reaches a file that cmd.exe runs.
   param([string]$Kind, $Environment, [string]$RepoPath, [string]$StateRoot)
   foreach ($path in @($RepoPath, $StateRoot)) {
     if (-not (Test-McLauncherSafeValue $path)) { throw ('launcher path "{0}" contains a cmd metacharacter or an edge space; refusing to write the launcher' -f $path) }
@@ -555,6 +576,7 @@ function Get-McLauncherText {
   $log = [System.IO.Path]::Combine($StateRoot, 'logs', $logName)
   $source = 'src\compute\node-agent.mjs'
   if ($Kind -eq 'adapter') { $source = 'src\compute\ollama-adapter.mjs' }
+  elseif ($Kind -eq 'browser') { $source = 'src\compute\browser-executor.mjs' }
   $lines.Add(('node {0} >> "{1}" 2>&1' -f $source, $log))
   return (($lines -join "`r`n") + "`r`n")
 }
@@ -565,10 +587,11 @@ function Get-McTemplatePath {
 }
 
 function ConvertTo-McManifestJson {
-  # The template pruned to the tier's implementations; no other edit.
-  param([string]$TemplateJson, $Settings)
+  # The template pruned to the tier's implementations, plus the ones -Install must keep beside them (the
+  # browser.act/chromium.local entry once -Browser installed the executor); no other edit.
+  param([string]$TemplateJson, $Settings, [string[]]$ExtraImplementations = @())
   $manifest = $TemplateJson | ConvertFrom-Json
-  $keep = @($manifest.capabilities | Where-Object { $Settings.Implementations -contains $_.implementation })
+  $keep = @($manifest.capabilities | Where-Object { ($Settings.Implementations -contains $_.implementation) -or ($ExtraImplementations -contains $_.implementation) })
   $manifest.capabilities = $keep
   return ($manifest | ConvertTo-Json -Depth 32)
 }
@@ -598,6 +621,107 @@ function Remove-McManifestImplementation {
   return ($manifest | ConvertTo-Json -Depth 32)
 }
 
+# ---- the node's own browser (slice N2): paths, policy, environment, report lines -------------
+function Get-McBrowserDir {
+  param([string]$StateRoot)
+  return [System.IO.Path]::Combine($StateRoot, 'browser')
+}
+
+function Get-McBrowserProfileDir {
+  param([string]$StateRoot)
+  return [System.IO.Path]::Combine($StateRoot, 'browser-profile')
+}
+
+function Get-McBrowserPolicyPath {
+  param([string]$StateRoot)
+  return [System.IO.Path]::Combine($StateRoot, 'browser-policy.json')
+}
+
+function Get-McPlaywrightDir {
+  # Where npm lands the pinned package: <StateRoot>\browser\node_modules\playwright.
+  param([string]$StateRoot)
+  return [System.IO.Path]::Combine((Get-McBrowserDir $StateRoot), 'node_modules', 'playwright')
+}
+
+function Get-McPlaywrightBrowsersPath {
+  # PLAYWRIGHT_BROWSERS_PATH: Chromium stays under the state root, never under the user profile.
+  param([string]$StateRoot)
+  return [System.IO.Path]::Combine((Get-McBrowserDir $StateRoot), 'ms-playwright')
+}
+
+function Get-McBrowserPolicyText {
+  # The policy -Browser writes once and never overwrites: no site is allowed until the owner names some.
+  $policy = [ordered]@{ schema = $script:McBrowserPolicySchema; allowed_hosts = @(); allow_subdomains = $false }
+  return (($policy | ConvertTo-Json -Depth 4) + "`r`n")
+}
+
+function ConvertFrom-McBrowserPolicy {
+  # The policy file's shape for -Report: how many hosts and the subdomain rule, never the hosts themselves
+  # (the pasteable block names no site the owner uses).
+  param([string]$Text)
+  if ($null -eq $Text -or [string]$Text -eq '') { return [pscustomobject]@{ Present = $false; HostCount = 0; AllowSubdomains = $false; Error = 'absent'; Summary = 'absent (run -Browser, then edit allowed_hosts)' } }
+  $policy = $null
+  try { $policy = $Text | ConvertFrom-Json } catch { return [pscustomobject]@{ Present = $true; HostCount = 0; AllowSubdomains = $false; Error = 'invalid_json'; Summary = 'unreadable (invalid JSON)' } }
+  if ([string]$policy.schema -ne $script:McBrowserPolicySchema) { return [pscustomobject]@{ Present = $true; HostCount = 0; AllowSubdomains = $false; Error = 'schema_mismatch'; Summary = ('unreadable (schema is not {0})' -f $script:McBrowserPolicySchema) } }
+  $hosts = @($policy.allowed_hosts | Where-Object { $null -ne $_ -and [string]$_ -ne '' })
+  $subdomains = ($policy.allow_subdomains -eq $true)
+  $note = ''
+  if ($hosts.Count -eq 0) { $note = ' (empty: every open is refused with BROWSER_POLICY_EMPTY)' }
+  return [pscustomobject]@{ Present = $true; HostCount = $hosts.Count; AllowSubdomains = $subdomains; Error = $null; Summary = ('allowed_hosts {0}, allow_subdomains {1}{2}' -f $hosts.Count, $subdomains.ToString().ToLowerInvariant(), $note) }
+}
+
+function Get-McBrowserEnvironment {
+  # The browser executor's non-secret configuration (browser.cmd carries it; -BrowserHeaded adds
+  # MCCLUSTER_BROWSER_HEADED=1 for the console run). The port is fixed; the paths are under the state root.
+  param([string]$StateRoot)
+  $values = [ordered]@{}
+  $values['MCCLUSTER_BROWSER_EXECUTOR_PORT'] = [string]$script:McBrowserPort
+  $values['MCCLUSTER_BROWSER_PROFILE_DIR'] = Get-McBrowserProfileDir $StateRoot
+  $values['MCCLUSTER_BROWSER_POLICY'] = Get-McBrowserPolicyPath $StateRoot
+  $values['MCCLUSTER_BROWSER_PLAYWRIGHT_DIR'] = Get-McPlaywrightDir $StateRoot
+  $values['PLAYWRIGHT_BROWSERS_PATH'] = Get-McPlaywrightBrowsersPath $StateRoot
+  $values['MCCLUSTER_NODE_MANIFEST'] = Get-McManifestPath $StateRoot
+  return $values
+}
+
+function Get-McPlaywrightInstalledVersion {
+  # The version npm landed under the state root (its package.json), or $null when nothing is installed.
+  param([string]$StateRoot)
+  $text = Read-McTextFile ([System.IO.Path]::Combine((Get-McPlaywrightDir $StateRoot), 'package.json'))
+  if ($null -eq $text) { return $null }
+  try { return [string](($text | ConvertFrom-Json).version) } catch { return $null }
+}
+
+function Format-McBrowserReportLines {
+  # The BROWSER block of -Report: the task, what -Browser installed, the policy's shape (never its hosts),
+  # and what the executor itself answers on loopback. Pure over its arguments; the tests call it directly.
+  param([string]$StateRoot, [string]$TaskState, $Health, $Ready)
+  $lines = New-Object System.Collections.Generic.List[string]
+  $taskText = 'absent'
+  if ([string]$TaskState -ne '') { $taskText = [string]$TaskState }
+  $lines.Add(('  task {0}: {1}' -f $script:McBrowserTaskName, $taskText))
+  $version = Get-McPlaywrightInstalledVersion $StateRoot
+  if ($null -eq $version) { $lines.Add(('  playwright: not installed under {0} (run -Browser)' -f (Get-McBrowserDir $StateRoot))) }
+  else { $lines.Add(('  playwright: {0} under {1}' -f $version, (Get-McBrowserDir $StateRoot))) }
+  $store = 'absent'
+  if (Test-Path -LiteralPath (Get-McPlaywrightBrowsersPath $StateRoot)) { $store = 'present' }
+  $lines.Add(('  ms-playwright (Chromium store): {0}' -f $store))
+  $profile = 'absent'
+  if (Test-Path -LiteralPath (Get-McBrowserProfileDir $StateRoot)) { $profile = 'present' }
+  $lines.Add(('  browser-profile: {0}' -f $profile))
+  $policy = ConvertFrom-McBrowserPolicy -Text (Read-McTextFile (Get-McBrowserPolicyPath $StateRoot))
+  $lines.Add(('  browser-policy.json: {0}' -f $policy.Summary))
+  if ($null -eq $Health) { $lines.Add(('  executor {0}/health: not answering' -f $script:McBrowserUrl)) }
+  else {
+    $lastError = 'none'
+    if ([string]$Health.last_error -ne '') { $lastError = Get-McMaskedText ([string]$Health.last_error) }
+    $lines.Add(('  executor {0}/health: ok {1}, busy {2}, playwright found {3}, policy hosts {4}, last_error {5}' -f $script:McBrowserUrl, $Health.ok, $Health.busy, $Health.playwright.found, $Health.policy.allowed_hosts_count, $lastError))
+  }
+  if ($null -eq $Ready) { $lines.Add(('  executor {0}/ready: not ready (503 or not answering)' -f $script:McBrowserUrl)) }
+  else { $lines.Add(('  executor {0}/ready: ready, chromium {1}' -f $script:McBrowserUrl, $Ready.chromium_version)) }
+  return @($lines.ToArray())
+}
+
 function Get-McMaskedText {
   # The pasteable report: user profile path, computer name and user name are masked.
   param([string]$Text)
@@ -622,19 +746,22 @@ function Get-McReportValueAllowlist {
     'MCCLUSTER_NODE_POLL_MS', 'MCCLUSTER_NODE_HEARTBEAT_MS', 'MCCLUSTER_NODE_ENGINE_PROBE_MS', 'MCCLUSTER_NODE_HARDWARE_REFRESH_MS',
     'MCCLUSTER_OLLAMA_URL', 'MCCLUSTER_OLLAMA_MODEL', 'MCCLUSTER_OLLAMA_IMPLEMENTATIONS', 'MCCLUSTER_OLLAMA_RESIDENT_MODELS',
     'MCCLUSTER_OLLAMA_ON_DEMAND_KEEP_ALIVE', 'MCCLUSTER_OLLAMA_CONTEXT', 'MCCLUSTER_OLLAMA_KEEP_ALIVE',
-    'MCCLUSTER_OLLAMA_WARM_ON_START', 'MCCLUSTER_OLLAMA_ADAPTER_PORT'
+    'MCCLUSTER_OLLAMA_WARM_ON_START', 'MCCLUSTER_OLLAMA_ADAPTER_PORT',
+    'MCCLUSTER_BROWSER_EXECUTOR_PORT', 'MCCLUSTER_BROWSER_PROFILE_DIR', 'MCCLUSTER_BROWSER_POLICY', 'MCCLUSTER_BROWSER_PLAYWRIGHT_DIR',
+    'MCCLUSTER_BROWSER_HEADED', 'MCCLUSTER_BROWSER_MAX_STEPS', 'MCCLUSTER_BROWSER_MAX_MS', 'MCCLUSTER_BROWSER_MAX_OUTPUT_BYTES'
   )
 }
 
 function Format-McEnvironmentLines {
-  # MCCLUSTER_*, OLLAMA_* and GGML_VK_VISIBLE_DEVICES. A value is printed only for an allowlisted MCCLUSTER_*
-  # name, OLLAMA_* and GGML_VK_VISIBLE_DEVICES; any name that says token, key, secret, password or credential
+  # MCCLUSTER_*, OLLAMA_*, GGML_VK_VISIBLE_DEVICES and PLAYWRIGHT_BROWSERS_PATH. A value is printed only for an
+  # allowlisted MCCLUSTER_* name, OLLAMA_*, GGML_VK_VISIBLE_DEVICES and PLAYWRIGHT_BROWSERS_PATH (a path under
+  # the state root); any name that says token, key, secret, password or credential
   # is shown as set/unset whatever its prefix (the ecosystem has MCCLUSTER_* secrets beyond the enrolment
   # token); MCCLUSTER_ORG_ID is shown as set (uuid); every other MCCLUSTER_* name as set/unset.
   param([hashtable]$Variables)
   $lines = New-Object System.Collections.Generic.List[string]
   $allow = Get-McReportValueAllowlist
-  $names = @($Variables.Keys | Where-Object { $_ -like 'MCCLUSTER_*' -or $_ -like 'OLLAMA_*' -or $_ -eq 'GGML_VK_VISIBLE_DEVICES' } | Sort-Object)
+  $names = @($Variables.Keys | Where-Object { $_ -like 'MCCLUSTER_*' -or $_ -like 'OLLAMA_*' -or $_ -eq 'GGML_VK_VISIBLE_DEVICES' -or $_ -eq 'PLAYWRIGHT_BROWSERS_PATH' } | Sort-Object)
   foreach ($name in $names) {
     $value = [string]$Variables[$name]
     $state = 'unset'
@@ -815,6 +942,19 @@ function Read-McNodeConfig {
   try { return ($text | ConvertFrom-Json) } catch { return $null }
 }
 
+function Set-McNodeConfigValue {
+  # Writes one value into node.config.json (atomic, other keys kept); $true when the file changed.
+  param([string]$StateRoot, [string]$Name, $Value)
+  $config = Read-McNodeConfig $StateRoot
+  if ($null -eq $config) { throw 'run -Install first: node.config.json is missing' }
+  $current = $null
+  if ($null -ne $config.PSObject.Properties[$Name]) { $current = $config.$Name }
+  if ($null -ne $current -and ("$current" -ceq "$Value")) { return $false }
+  $config | Add-Member -NotePropertyName $Name -NotePropertyValue $Value -Force
+  Write-McAtomicFile -Path (Get-McNodeConfigPath $StateRoot) -Content ($config | ConvertTo-Json -Depth 6)
+  return $true
+}
+
 function Get-McCurrentUserId {
   $domain = [string]$env:USERDOMAIN
   $user = [string]$env:USERNAME
@@ -913,13 +1053,15 @@ function Get-McScheduledTaskInfo {
 
 function Register-McScheduledTasks {
   # Two tasks (adapter, then the agent 20 s later): AtStartup + AtLogOn, current user, S4U, Limited,
-  # restart 3 x 1 min, no time limit, start when available, battery allowed, IgnoreNew.
-  param([string]$StateRoot, [string]$UserId)
+  # restart 3 x 1 min, no time limit, start when available, battery allowed, IgnoreNew. With -Browser,
+  # only the third task (the browser executor, 10 s after start) is registered; the two others are untouched.
+  param([string]$StateRoot, [string]$UserId, [switch]$Browser)
   if (-not (Test-McWindowsOnly)) { return $false }
   $definitions = @(
     @{ Name = 'McCluster Node Adapter'; Launcher = [System.IO.Path]::Combine($StateRoot, 'adapter.cmd'); Delay = $null },
     @{ Name = 'McCluster Node Agent'; Launcher = [System.IO.Path]::Combine($StateRoot, 'agent.cmd'); Delay = 'PT20S' }
   )
+  if ($Browser) { $definitions = @(@{ Name = $script:McBrowserTaskName; Launcher = [System.IO.Path]::Combine($StateRoot, 'browser.cmd'); Delay = 'PT10S' }) }
   foreach ($definition in $definitions) {
     $existing = Get-ScheduledTask -TaskName $definition.Name -ErrorAction SilentlyContinue
     if ($existing) { Unregister-ScheduledTask -TaskName $definition.Name -Confirm:$false }
@@ -943,6 +1085,19 @@ function Start-McScheduledTask {
   try {
     $task = Get-ScheduledTask -TaskName $Name -ErrorAction Stop
     if ([string]$task.State -ne 'Running') { Start-ScheduledTask -TaskName $Name -ErrorAction Stop }
+    return $true
+  } catch {
+    Write-Warning ('scheduled task {0}: {1}' -f $Name, $_.Exception.Message)
+    return $false
+  }
+}
+
+function Stop-McScheduledTask {
+  param([string]$Name)
+  if (-not (Test-McWindowsOnly)) { return $false }
+  try {
+    $task = Get-ScheduledTask -TaskName $Name -ErrorAction Stop
+    if ([string]$task.State -eq 'Running') { Stop-ScheduledTask -TaskName $Name -ErrorAction Stop }
     return $true
   } catch {
     Write-Warning ('scheduled task {0}: {1}' -f $Name, $_.Exception.Message)
@@ -1029,6 +1184,14 @@ function Invoke-McOllamaJson {
   } catch { return $null }
 }
 
+function Invoke-McBrowserJson {
+  # Loopback only: GET JSON from the browser executor on 127.0.0.1:4791; $null when it does not answer or
+  # answers 503 (not ready).
+  param([string]$Path, [int]$TimeoutSec = 5)
+  $uri = $script:McBrowserUrl + $Path
+  try { return Invoke-RestMethod -Method Get -Uri $uri -TimeoutSec $TimeoutSec } catch { return $null }
+}
+
 function Get-McOllamaLogLines {
   param([int]$Tail = 400)
   if (-not $env:LOCALAPPDATA) { return @() }
@@ -1038,24 +1201,34 @@ function Get-McOllamaLogLines {
 }
 
 function Invoke-McNodeProcess {
-  # Runs `node <script>` once with an explicit environment (this process's own environment is not
-  # touched), bounded by a timeout; returns exit code and captured output.
-  param([string]$Script, [hashtable]$Environment, [string]$WorkingDirectory, [int]$TimeoutSeconds = 120)
+  # Runs `node <script> <arguments>` once with an explicit environment (this process's own environment is
+  # not touched), bounded by a timeout (0 = none); returns exit code and captured output. -Interactive runs
+  # it on this console instead (no capture, no limit): -BrowserHeaded, where the owner ends it with Ctrl+C.
+  param([string]$Script, [string[]]$Arguments = @(), [hashtable]$Environment = @{}, [string]$WorkingDirectory, [int]$TimeoutSeconds = 120, [switch]$Interactive)
   $nodeCommand = Get-Command node -ErrorAction SilentlyContinue
   if (-not $nodeCommand) { throw 'node was not found on PATH; install Node.js 20 or newer first' }
   $info = New-Object System.Diagnostics.ProcessStartInfo
   $info.FileName = $nodeCommand.Source
-  $info.Arguments = '"' + $Script + '"'
+  $quoted = New-Object System.Collections.Generic.List[string]
+  $quoted.Add('"' + $Script + '"')
+  foreach ($argument in @($Arguments)) { $quoted.Add('"' + ([string]$argument -replace '"', '\"') + '"') }
+  $info.Arguments = ($quoted -join ' ')
   $info.WorkingDirectory = $WorkingDirectory
   $info.UseShellExecute = $false
-  $info.RedirectStandardOutput = $true
-  $info.RedirectStandardError = $true
-  $info.CreateNoWindow = $true
+  $info.RedirectStandardOutput = (-not $Interactive)
+  $info.RedirectStandardError = (-not $Interactive)
+  $info.CreateNoWindow = (-not $Interactive)
   foreach ($key in $Environment.Keys) { $info.EnvironmentVariables[[string]$key] = [string]$Environment[$key] }
   $process = [System.Diagnostics.Process]::Start($info)
+  if ($Interactive) {
+    $process.WaitForExit()
+    return [pscustomobject]@{ ExitCode = $process.ExitCode; TimedOut = $false; StdOut = ''; StdErr = '' }
+  }
   $stdoutTask = $process.StandardOutput.ReadToEndAsync()
   $stderrTask = $process.StandardError.ReadToEndAsync()
-  $finished = $process.WaitForExit($TimeoutSeconds * 1000)
+  $finished = $true
+  if ($TimeoutSeconds -le 0) { $process.WaitForExit() }
+  else { $finished = $process.WaitForExit($TimeoutSeconds * 1000) }
   if (-not $finished) {
     try { $process.Kill() } catch { }
     $process.WaitForExit()
@@ -1063,6 +1236,41 @@ function Invoke-McNodeProcess {
   $stdout = $stdoutTask.Result
   $stderr = $stderrTask.Result
   return [pscustomobject]@{ ExitCode = $process.ExitCode; TimedOut = (-not $finished); StdOut = $stdout; StdErr = $stderr }
+}
+
+function Get-McNpmCliPath {
+  # npm's own entry point beside node (node_modules\npm\bin\npm-cli.js), run through node: no cmd.exe and no package-runner lookup.
+  $node = Get-Command node -ErrorAction SilentlyContinue
+  $npm = Get-Command npm -ErrorAction SilentlyContinue
+  $candidates = New-Object System.Collections.Generic.List[string]
+  if ($npm) { $candidates.Add([System.IO.Path]::Combine((Split-Path -Parent $npm.Source), 'node_modules', 'npm', 'bin', 'npm-cli.js')) }
+  if ($node) {
+    $bin = Split-Path -Parent $node.Source
+    $candidates.Add([System.IO.Path]::Combine($bin, 'node_modules', 'npm', 'bin', 'npm-cli.js'))
+    $candidates.Add([System.IO.Path]::Combine((Split-Path -Parent $bin), 'lib', 'node_modules', 'npm', 'bin', 'npm-cli.js'))
+  }
+  foreach ($candidate in $candidates) { if (Test-Path -LiteralPath $candidate) { return $candidate } }
+  return $null
+}
+
+function Invoke-McNpm {
+  # node <npm-cli.js> <arguments>: the registry download -Browser makes, bounded by a timeout. The tests
+  # redefine this by name; nothing else in the script calls npm.
+  param([string[]]$Arguments, [string]$WorkingDirectory, [int]$TimeoutSeconds = 600)
+  $cli = Get-McNpmCliPath
+  if ($null -eq $cli) { throw 'npm was not found beside node on PATH; install Node.js 20 or newer (it ships npm) first' }
+  return (Invoke-McNodeProcess -Script $cli -Arguments $Arguments -Environment @{} -WorkingDirectory $WorkingDirectory -TimeoutSeconds $TimeoutSeconds)
+}
+
+function Invoke-McPlaywrightCli {
+  # node <StateRoot>\browser\node_modules\playwright\cli.js <arguments>: the installed package's own command
+  # line, so the version is the one npm pinned, with PLAYWRIGHT_BROWSERS_PATH keeping Chromium under the
+  # state root. The tests redefine this by name.
+  param([string]$StateRoot, [string[]]$Arguments, [int]$TimeoutSeconds = 900)
+  $cli = [System.IO.Path]::Combine((Get-McPlaywrightDir $StateRoot), 'cli.js')
+  if (-not (Test-Path -LiteralPath $cli)) { throw ('playwright cli.js not found under {0}; the npm install did not land' -f (Get-McPlaywrightDir $StateRoot)) }
+  $environment = @{ PLAYWRIGHT_BROWSERS_PATH = (Get-McPlaywrightBrowsersPath $StateRoot) }
+  return (Invoke-McNodeProcess -Script $cli -Arguments $Arguments -Environment $environment -WorkingDirectory (Get-McBrowserDir $StateRoot) -TimeoutSeconds $TimeoutSeconds)
 }
 
 # ---- actions -----------------------------------------------------------------------------------
@@ -1147,14 +1355,24 @@ function Invoke-McReport {
   if ($tasks.Count -eq 0) { $lines.Add('  none named McCluster Node*') }
   foreach ($task in $tasks) { $lines.Add(('  {0}: {1}' -f $task.Name, $task.State)) }
 
+  $lines.Add('BROWSER')
+  $browserTask = @($tasks | Where-Object { $_.Name -eq $script:McBrowserTaskName })
+  $browserTaskState = $null
+  if ($browserTask.Count -gt 0) { $browserTaskState = [string]$browserTask[0].State }
+  foreach ($line in (Format-McBrowserReportLines -StateRoot $StateRoot -TaskState $browserTaskState -Health (Invoke-McBrowserJson -Path '/health') -Ready (Invoke-McBrowserJson -Path '/ready'))) { $lines.Add($line) }
+
   $lines.Add('NODE FILES')
-  foreach ($name in @('capabilities.json', 'node.config.json', 'identity.json', 'measured-inference.json', 'gpu-evidence.json', 'enroll.env')) {
+  foreach ($name in @('capabilities.json', 'node.config.json', 'identity.json', 'measured-inference.json', 'gpu-evidence.json', 'enroll.env', 'browser-policy.json', 'browser.cmd')) {
     $present = 'absent'
     if (Test-Path -LiteralPath ([System.IO.Path]::Combine($StateRoot, $name))) { $present = 'present' }
     $lines.Add(('  {0}: {1}' -f $name, $present))
   }
   $config = Read-McNodeConfig $StateRoot
-  if ($null -ne $config) { $lines.Add(('  node.config.json: tier {0}, node {1}, written {2}' -f $config.tier, $config.node_name, $config.written_at)) }
+  if ($null -ne $config) {
+    $browserFlag = 'no'
+    if ($config.browser -eq $true) { $browserFlag = 'yes' }
+    $lines.Add(('  node.config.json: tier {0}, node {1}, browser {2}, written {3}' -f $config.tier, $config.node_name, $browserFlag, $config.written_at))
+  }
 
   $lines.Add('ENVIRONMENT')
   $variables = @{}
@@ -1173,6 +1391,8 @@ function Invoke-McInstall {
   if (-not (Test-Path -LiteralPath $templatePath)) { throw ('template not found: ' + $templatePath) }
   $previous = Read-McNodeConfig $StateRoot
   if (-not $OrgId -and $null -ne $previous -and $previous.org_id) { $OrgId = [string]$previous.org_id }
+  # -Browser installed the executor earlier: the browser.act entry stays beside the tier's models.
+  $browserOn = ($null -ne $previous -and $previous.browser -eq $true)
   if (-not $OrgId) { throw '-Install needs -OrgId <organization uuid> the first time (it is kept in node.config.json afterwards)' }
   if ($OrgId -notmatch '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$') { throw '-OrgId must be a uuid' }
   if ($ComputeUrl -notmatch '^https://') { throw '-ComputeUrl must be an https:// URL (the Core compute gateway behind TLS ingress)' }
@@ -1188,6 +1408,7 @@ function Invoke-McInstall {
   Write-Host ('Tier {0} because {1}' -f $decision.Tier, $decision.Reason)
   Write-Host ('  ' + $settings.Description)
   Write-Host ('  owner decision 2026-11-17, headroom first: one resident model ({0}), the rest on demand; -Benchmark measures the free memory it leaves and refuses a tier under {1}' -f $settings.ResidentModel, (Format-McBytes $script:McHeadroomFloorBytes))
+  if ($browserOn) { Write-Host ('  browser executor installed earlier (-Browser): the {0} entry is kept beside the tier''s models' -f $script:McBrowserImplementation) }
 
   $values = Get-McNodeEnvironment -Settings $settings -StateRoot $StateRoot -NodeName $NodeName -OrgId $OrgId -ComputeUrl $ComputeUrl
   foreach ($key in $values.Keys) { Write-Host ('  {0}={1}' -f $key, $values[$key]) }
@@ -1207,7 +1428,9 @@ function Invoke-McInstall {
   $manifestPath = Get-McManifestPath $StateRoot
   if ($PSCmdlet.ShouldProcess($manifestPath, ('write capabilities.json from the template pruned to tier ' + $decision.Tier))) {
     $templateJson = Read-McTextFile $templatePath
-    $manifestJson = ConvertTo-McManifestJson -TemplateJson $templateJson -Settings $settings
+    $extra = @()
+    if ($browserOn) { $extra = @($script:McBrowserImplementation) }
+    $manifestJson = ConvertTo-McManifestJson -TemplateJson $templateJson -Settings $settings -ExtraImplementations $extra
     if (Write-McFileIfChanged -Path $manifestPath -Content $manifestJson) { $written.Add($manifestPath) }
   }
 
@@ -1226,13 +1449,14 @@ function Invoke-McInstall {
       chosen_gpu = $chosen
       repo_path = $RepoPath
       state_root = $StateRoot
+      browser = $browserOn
       written_at = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
     }
     $configJson = ($config | ConvertTo-Json -Depth 6)
     $existing = Read-McNodeConfig $StateRoot
     $same = $false
     if ($null -ne $existing) {
-      $same = ([string]$existing.node_name -eq $NodeName) -and ([string]$existing.org_id -eq $OrgId) -and ([string]$existing.compute_url -eq $ComputeUrl) -and ([string]$existing.tier -eq $decision.Tier) -and ([string]$existing.repo_path -eq $RepoPath) -and ([string]$existing.state_root -eq $StateRoot)
+      $same = ([string]$existing.node_name -eq $NodeName) -and ([string]$existing.org_id -eq $OrgId) -and ([string]$existing.compute_url -eq $ComputeUrl) -and ([string]$existing.tier -eq $decision.Tier) -and ([string]$existing.repo_path -eq $RepoPath) -and ([string]$existing.state_root -eq $StateRoot) -and (($existing.browser -eq $true) -eq $browserOn)
     }
     if (-not $same) { Write-McAtomicFile -Path $configPath -Content $configJson; $written.Add($configPath) }
   }
@@ -1500,6 +1724,139 @@ function Invoke-McVulkan {
   return 0
 }
 
+function Invoke-McBrowserInstall {
+  # The node's own browser (slice N2, docs/control-plane/AGENT-NODE-BROWSER.md): the pinned playwright
+  # package into <StateRoot>\browser through npm, Chromium through Playwright's own installer after a dry
+  # run the owner answers, a policy file with an empty allowlist written once, the persistent profile
+  # folder, the browser.cmd launcher, the "McCluster Node Browser" scheduled task, and the
+  # browser.act/chromium.local entry from the template. This is the one switch of this script that
+  # downloads anything; -WhatIf shows every step and writes nothing; declining the download changes nothing.
+  [CmdletBinding(SupportsShouldProcess = $true)]
+  param([string]$StateRoot, [string]$RepoPath)
+  $config = Read-McNodeConfig $StateRoot
+  if ($null -eq $config) { throw 'run -Install first: node.config.json is missing' }
+  if (-not $RepoPath) { $RepoPath = [string]$config.repo_path }
+  if (-not $RepoPath) { throw '-Browser needs -RepoPath (node.config.json has none)' }
+  $templatePath = Get-McTemplatePath $RepoPath
+  if (-not (Test-Path -LiteralPath $templatePath)) { throw ('template not found: ' + $templatePath) }
+  $executorSource = [System.IO.Path]::Combine($RepoPath, 'core', 'src', 'compute', 'browser-executor.mjs')
+  if (-not (Test-Path -LiteralPath $executorSource)) { throw ('browser executor not found in the checkout (pull the latest main): ' + $executorSource) }
+  if ($null -eq (Get-McNpmCliPath)) { throw 'npm was not found beside node on PATH; install Node.js 20 or newer (it ships npm) first' }
+  Assert-McLauncherValues -NodeName ([string]$config.node_name) -StateRoot $StateRoot -RepoPath $RepoPath -ComputeUrl ([string]$config.compute_url)
+
+  $browserDir = Get-McBrowserDir $StateRoot
+  $profileDir = Get-McBrowserProfileDir $StateRoot
+  $policyPath = Get-McBrowserPolicyPath $StateRoot
+  $browsersPath = Get-McPlaywrightBrowsersPath $StateRoot
+  $written = New-Object System.Collections.Generic.List[string]
+  Write-Host ('Browser executor for node {0}: playwright {1} into {2}, Chromium into {3}, profile {4}, policy {5}' -f $config.node_name, $script:McPlaywrightVersion, $browserDir, $browsersPath, $profileDir, $policyPath)
+  Write-Host '  this switch downloads two things and nothing else in the script does: npm fetches the pinned playwright package from the npm registry; Playwright''s own installer fetches Chromium after the dry run below and your answer.'
+
+  if ($PSCmdlet.ShouldProcess(($browserDir + ', ' + $profileDir), 'create the browser and browser-profile folders, owner-only ACL')) {
+    foreach ($directory in @($browserDir, $profileDir)) {
+      if (-not (Test-Path -LiteralPath $directory)) { New-Item -ItemType Directory -Path $directory -Force | Out-Null; $written.Add($directory) }
+      if (-not (Invoke-McIcacls -Target $directory -Rights '(OI)(CI)F')) { Write-Host ('  ACL: owner-only ACL not applied to {0} (not Windows or icacls unavailable)' -f $directory) }
+    }
+  }
+
+  if ($PSCmdlet.ShouldProcess($browserDir, ('npm install --no-save playwright@' + $script:McPlaywrightVersion))) {
+    Write-Host ('npm install --prefix {0} --no-audit --no-fund --no-save playwright@{1} (up to 600 s)' -f $browserDir, $script:McPlaywrightVersion)
+    $npm = Invoke-McNpm -Arguments @('install', '--prefix', $browserDir, '--no-audit', '--no-fund', '--no-save', ('playwright@' + $script:McPlaywrightVersion)) -WorkingDirectory $browserDir -TimeoutSeconds 600
+    if ($npm.TimedOut -or $npm.ExitCode -ne 0) {
+      foreach ($line in @(([string]$npm.StdErr -split "`r?`n") | Where-Object { $_ -ne '' } | Select-Object -Last 5)) { Write-Host ('  ' + (Get-McMaskedText $line)) }
+      throw ('npm install of playwright@{0} did not finish (exit {1}, timed out {2})' -f $script:McPlaywrightVersion, $npm.ExitCode, $npm.TimedOut)
+    }
+    $installedVersion = Get-McPlaywrightInstalledVersion $StateRoot
+    if ([string]$installedVersion -ne $script:McPlaywrightVersion) { throw ('playwright {0} was expected under {1}, found {2}' -f $script:McPlaywrightVersion, $browserDir, $installedVersion) }
+    Write-Host ('  playwright {0} installed' -f $installedVersion)
+  }
+
+  if ($PSCmdlet.ShouldProcess($browsersPath, 'dry run, then download Chromium through Playwright''s installer if you say so')) {
+    Write-Host 'Dry run (names the Chromium build, its download URL and size; downloads nothing):'
+    $dry = Invoke-McPlaywrightCli -StateRoot $StateRoot -Arguments @('install', '--dry-run', 'chromium') -TimeoutSeconds 120
+    foreach ($line in @((([string]$dry.StdOut + "`n" + [string]$dry.StdErr) -split "`r?`n") | Where-Object { $_.Trim() -ne '' })) { Write-Host ('  ' + (Get-McMaskedText $line)) }
+    if ($dry.TimedOut -or $dry.ExitCode -ne 0) { throw ('the Playwright dry run did not finish (exit {0}, timed out {1})' -f $dry.ExitCode, $dry.TimedOut) }
+    $answer = Read-McAnswer 'Download it? [y/N]'
+    if ($answer -notmatch '^[Yy]') {
+      Write-Host 'Chromium not downloaded; nothing else was changed. Run -Browser again when ready.'
+      return [pscustomobject]@{ Installed = $false; Written = @($written.ToArray()); TaskRegistered = $false; ExitCode = 2 }
+    }
+    Write-Host 'Downloading Chromium through Playwright''s installer (up to 900 s)...'
+    $get = Invoke-McPlaywrightCli -StateRoot $StateRoot -Arguments @('install', 'chromium') -TimeoutSeconds 900
+    if ($get.TimedOut -or $get.ExitCode -ne 0) {
+      foreach ($line in @(([string]$get.StdErr -split "`r?`n") | Where-Object { $_ -ne '' } | Select-Object -Last 5)) { Write-Host ('  ' + (Get-McMaskedText $line)) }
+      throw ('the Chromium download did not finish (exit {0}, timed out {1})' -f $get.ExitCode, $get.TimedOut)
+    }
+  }
+
+  if ($PSCmdlet.ShouldProcess($policyPath, 'write browser-policy.json with an empty allowlist, only when absent')) {
+    if (Test-Path -LiteralPath $policyPath) { Write-Host ('  {0} kept as you left it (never overwritten)' -f $policyPath) }
+    else {
+      Write-McAtomicFile -Path $policyPath -Content (Get-McBrowserPolicyText)
+      $written.Add($policyPath)
+      Write-Host ('  {0} written: edit allowed_hosts; empty means every open is refused (BROWSER_POLICY_EMPTY)' -f $policyPath)
+    }
+  }
+
+  $values = Get-McBrowserEnvironment -StateRoot $StateRoot
+  $launcherPath = [System.IO.Path]::Combine($StateRoot, 'browser.cmd')
+  if ($PSCmdlet.ShouldProcess($launcherPath, 'write launcher')) {
+    $text = Get-McLauncherText -Kind 'browser' -Environment $values -RepoPath $RepoPath -StateRoot $StateRoot
+    if (Write-McFileIfChanged -Path $launcherPath -Content $text) { $written.Add($launcherPath) }
+  }
+
+  $taskRegistered = $false
+  if ($PSCmdlet.ShouldProcess($script:McBrowserTaskName, 'register the scheduled task (AtStartup, AtLogOn, 10 s delay, current user) and start it')) {
+    $taskRegistered = Register-McScheduledTasks -StateRoot $StateRoot -UserId (Get-McCurrentUserId) -Browser
+    if ($taskRegistered) { [void](Start-McScheduledTask -Name $script:McBrowserTaskName) }
+    else { Write-Host '  scheduled task: not registered (not Windows)' }
+  }
+
+  $manifestPath = Get-McManifestPath $StateRoot
+  if ($PSCmdlet.ShouldProcess($manifestPath, ('add the {0} entry from the template and record browser=true in node.config.json' -f $script:McBrowserImplementation))) {
+    $current = Read-McTextFile $manifestPath
+    if ($null -eq $current) { throw 'capabilities.json is missing; run -Install first' }
+    $updated = Add-McManifestImplementation -ManifestJson $current -TemplateJson (Read-McTextFile $templatePath) -Implementation $script:McBrowserImplementation
+    if (Write-McFileIfChanged -Path $manifestPath -Content $updated) { $written.Add($manifestPath); Write-Host ('  {0} added to capabilities.json; the agent re-reads it within 15 s' -f $script:McBrowserImplementation) }
+    else { Write-Host ('  {0} was already advertised' -f $script:McBrowserImplementation) }
+    if (Set-McNodeConfigValue -StateRoot $StateRoot -Name 'browser' -Value $true) { $written.Add((Get-McNodeConfigPath $StateRoot)) }
+  }
+
+  Write-Host ('Browser install done: {0} file(s) or folder(s) written, scheduled task {1}.' -f $written.Count, $(if ($taskRegistered) { 'registered' } else { 'not registered' }))
+  Write-Host ('Next: name the sites the agent may open in {0} (allowed_hosts), sign the profile into them with -BrowserHeaded, then turn on "Use the browser" in Control for a turn.' -f $policyPath)
+  return [pscustomobject]@{ Installed = $true; Written = @($written.ToArray()); TaskRegistered = $taskRegistered; ExitCode = 0 }
+}
+
+function Invoke-McBrowserHeaded {
+  # Signs the node's own profile into sites by hand: the scheduled task is stopped, the executor runs on this
+  # console with MCCLUSTER_BROWSER_HEADED=1 (a visible Chromium on the same persistent profile) until Ctrl+C,
+  # then the task is started again. Nothing from the owner's own browsers is read: the profile is the node's.
+  [CmdletBinding(SupportsShouldProcess = $true)]
+  param([string]$StateRoot, [string]$RepoPath)
+  $config = Read-McNodeConfig $StateRoot
+  if ($null -eq $config) { throw 'run -Install first: node.config.json is missing' }
+  if ($config.browser -ne $true) { throw 'run -Browser first: this node has no browser executor installed' }
+  if (-not $RepoPath) { $RepoPath = [string]$config.repo_path }
+  if (-not $RepoPath) { throw '-BrowserHeaded needs -RepoPath (node.config.json has none)' }
+  $executorSource = [System.IO.Path]::Combine($RepoPath, 'core', 'src', 'compute', 'browser-executor.mjs')
+  if (-not (Test-Path -LiteralPath $executorSource)) { throw ('browser executor not found in the checkout: ' + $executorSource) }
+  $values = Get-McBrowserEnvironment -StateRoot $StateRoot
+  $environment = @{}
+  foreach ($key in $values.Keys) { $environment[[string]$key] = [string]$values[$key] }
+  $environment['MCCLUSTER_BROWSER_HEADED'] = '1'
+  if (-not $PSCmdlet.ShouldProcess($script:McBrowserTaskName, 'stop the task, run the executor headed on this console until Ctrl+C, start the task again')) { return 0 }
+  [void](Stop-McScheduledTask -Name $script:McBrowserTaskName)
+  Write-Host 'Headed browser executor on this console: sign the node''s profile into the allowed sites in the Chromium window, then press Ctrl+C here.'
+  Write-Host ('If this console closes before the task restarts, start "{0}" from Task Scheduler, or run -Report to check it.' -f $script:McBrowserTaskName)
+  $result = $null
+  try { $result = Invoke-McNodeProcess -Script $executorSource -Environment $environment -WorkingDirectory ([System.IO.Path]::Combine($RepoPath, 'core')) -TimeoutSeconds 0 -Interactive }
+  finally { [void](Start-McScheduledTask -Name $script:McBrowserTaskName) }
+  $exit = 'unknown'
+  if ($null -ne $result) { $exit = [string]$result.ExitCode }
+  Write-Host ('headed session ended (exit {0}); the scheduled task was started again' -f $exit)
+  return 0
+}
+
 # ---- dispatcher (not reached when the tests load this file as a library) -----------------------
 if ($env:MCCLUSTER_NODE_PS_LIBRARY -eq '1') { return }
 
@@ -1510,6 +1867,8 @@ if ($Enroll) { $actions.Add('enroll') }
 if ($Models) { $actions.Add('models') }
 if ($Benchmark) { $actions.Add('benchmark') }
 if ($KeepAwake) { $actions.Add('keepawake') }
+if ($Browser) { $actions.Add('browser') }
+if ($BrowserHeaded) { $actions.Add('browserheaded') }
 if ($ModelsPath) { $actions.Add('modelspath') }
 if ($PSBoundParameters.ContainsKey('Vulkan')) { $actions.Add('vulkan') }
 if ($Report) { $actions.Add('report') }
@@ -1524,6 +1883,8 @@ switch ($action) {
   'models' { $exitCode = [int](Invoke-McModels -StateRoot $resolvedStateRoot -ModelOverride $Model) }
   'benchmark' { $exitCode = [int](Invoke-McBenchmark -StateRoot $resolvedStateRoot -ModelOverride $Model -RepoPath $RepoPath).ExitCode }
   'keepawake' { $exitCode = [int](Invoke-McKeepAwake -ScriptPath $MyInvocation.MyCommand.Path) }
+  'browser' { $exitCode = [int](Invoke-McBrowserInstall -StateRoot $resolvedStateRoot -RepoPath $RepoPath).ExitCode }
+  'browserheaded' { $exitCode = [int](Invoke-McBrowserHeaded -StateRoot $resolvedStateRoot -RepoPath $RepoPath) }
   'modelspath' { $exitCode = [int](Invoke-McModelsPath -Path $ModelsPath) }
   'vulkan' { $exitCode = [int](Invoke-McVulkan -DeviceIndex $Vulkan) }
   default { Invoke-McReport -StateRoot $resolvedStateRoot }

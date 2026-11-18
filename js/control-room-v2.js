@@ -48,6 +48,10 @@
     aiVoiceSpeaking: false,
     aiVoiceError: null,
     aiVoiceTranscript: "",
+    /* Images attached to the next turn ({ base64, bytes, width, height, preview,
+       name }) and the owner's "Use the browser" switch (device-node slice N2). */
+    aiAttachments: [],
+    aiAllowBrowser: false,
     coreBridge: null,
     coreTools: [],
     coreResume: null,
@@ -686,6 +690,7 @@
         var turn = payload && payload.turn;
         if (!turn) throw new Error("Resident McCluster turn disappeared");
         state.aiChatTask = turn;
+        if (payload.user_message) aiMergeMessage(payload.user_message);
         render();
         if (turn.status === "done") {
           if (!payload.assistant_message) throw new Error("McCluster turn completed without a persisted assistant message");
@@ -752,6 +757,10 @@
       var messageId = newAiTurnId();
       var submittedAt = new Date().toISOString();
       var keepPendingAfterRecovery = false;
+      /* The attachments and the switch belong to this turn: taken now, so a
+         second send cannot carry them twice. */
+      var attachments = state.aiAttachments.slice();
+      var allowBrowser = state.aiAllowBrowser === true;
       var optimistic = {
         id: messageId,
         thread_id: thread.id,
@@ -765,7 +774,9 @@
           input_mode: inputMode,
           execution_kind: "resident_ai_turn",
           agent_job_id: messageId,
-          task_status: "submitting"
+          task_status: "submitting",
+          images: aiAttachmentImages(attachments),
+          allow_browser: allowBrowser
         },
         created_at: submittedAt
       };
@@ -773,6 +784,7 @@
       state.aiChatPending = true;
       state.aiChatTask = null;
       state.aiChatDraft = "";
+      state.aiAttachments = [];
       var messages = aiMessagesFor(thread.id);
       messages.push(optimistic);
       state.aiMessages[thread.id] = messages;
@@ -780,13 +792,13 @@
       thread.last_message_at = submittedAt;
       render();
 
-      return callCoreTool("core.ai.turn.submit", {
+      return callCoreTool("core.ai.turn.submit", aiTurnSubmission({
         org_id: thread.org_id,
         thread_id: thread.id,
         message_id: messageId,
         content: content,
         input_mode: inputMode
-      }).then(function (queued) {
+      }, attachments, allowBrowser)).then(function (queued) {
         if (!queued || !queued.turn_id) throw new Error("McCluster did not return a durable turn id");
         optimistic.metadata.task_status = queued.job_status || "queued";
         state.aiChatTask = { id: queued.turn_id, status: queued.job_status || "queued", job_type: "resident_ai_turn" };
@@ -1060,6 +1072,242 @@
       }).join("") + '</ol></details>';
   }
 
+  /* AI ATTACHMENTS, VISION AND BROWSER TURNS (device-node slice N2,
+     docs/control-plane/AGENT-NODE-BROWSER.md). Pure helpers first: the image
+     budget and the request shapes, the owner-only switch rule, and the
+     renderers for user images, screenshots, the action log, the node badge,
+     live steps and refusals. scripts/test/control-ai-browser.test.mjs runs
+     this block as it stands. The Core validates every image again from its
+     bytes and gates the browser independently of the switch; this page only
+     sends the flag the owner set. */
+  var AI_IMAGE_MAX = 2;
+  var AI_IMAGE_MAX_BYTES = 200000;
+  var AI_IMAGE_MAX_SIDE = 1280;
+  var AI_IMAGE_QUALITIES = [0.6, 0.45, 0.3];
+  var AI_BASE64 = /^[A-Za-z0-9+/]+={0,2}$/;
+  var AI_LOG_MAX = 100;
+  var AI_ERROR_COPY = {
+    LOCAL_AI_NO_VISION_NODE: "No vision node is live",
+    AI_CHAT_NO_VISION_NODE: "No vision node is live",
+    BROWSER_UNAVAILABLE: "Browser unavailable on the node",
+    BROWSER_NOT_ALLOWED: "Browser not allowed for this turn",
+    BROWSER_OWNER_REQUIRED: "Browser turns are owner-only",
+    BROWSER_POLICY_EMPTY: "No allowed sites yet",
+    BROWSER_HOST_NOT_ALLOWED: "That site is not on the node's allowlist",
+    BROWSER_PRIVATE_ADDRESS: "That address is private and was refused",
+    BROWSER_TASK_TIMEOUT: "The browser task ran out of time",
+    BROWSER_BUSY: "The node's browser is busy"
+  };
+  function aiImageScale(width, height) {
+    var w = Math.max(1, Math.round(Number(width) || 1)), hgt = Math.max(1, Math.round(Number(height) || 1));
+    var longest = Math.max(w, hgt);
+    if (longest <= AI_IMAGE_MAX_SIDE) return { width: w, height: hgt };
+    var factor = AI_IMAGE_MAX_SIDE / longest;
+    return { width: Math.max(1, Math.round(w * factor)), height: Math.max(1, Math.round(hgt * factor)) };
+  }
+  function aiImageBudget(attachments, incoming) {
+    var have = Array.isArray(attachments) ? attachments.length : 0;
+    var more = Number(incoming) || 0;
+    if (more <= 0) return { ok: false, reason: "Choose an image to attach." };
+    if (have + more > AI_IMAGE_MAX) return { ok: false, reason: "At most " + AI_IMAGE_MAX + " images per turn (" + have + " attached already)." };
+    return { ok: true, reason: "" };
+  }
+  function aiImageAccepted(bytes) { var n = Number(bytes); return n > 0 && n <= AI_IMAGE_MAX_BYTES; }
+  function aiBase64FromDataUrl(value) { var str = String(value || ""); var at = str.indexOf(","); return str.indexOf("data:") === 0 && at >= 0 ? str.slice(at + 1) : str; }
+  function aiBase64Bytes(b64) { var str = String(b64 || ""); if (!str) return 0; var pad = /==$/.test(str) ? 2 : (/=$/.test(str) ? 1 : 0); return Math.floor(str.length * 3 / 4) - pad; }
+  function aiBase64Valid(b64) { var str = String(b64 || ""); return str.length > 0 && str.length % 4 === 0 && AI_BASE64.test(str); }
+  function aiAttachmentImages(attachments) {
+    return (Array.isArray(attachments) ? attachments : []).map(function (a) { return a && a.base64; }).filter(aiBase64Valid);
+  }
+  /* The durable turn: the fields an older Core knows, plus images and
+     allow_browser only when set, so nothing unknown is sent for a plain turn. */
+  function aiTurnSubmission(base, attachments, allowBrowser) {
+    var submission = Object.assign({}, base);
+    var images = aiAttachmentImages(attachments);
+    if (images.length) submission.images = images;
+    if (allowBrowser === true) submission.allow_browser = true;
+    return submission;
+  }
+  /* "Ask home AI" (ai.chat): the prompt form, or the messages form when an
+     image rides along (Ollama reads messages[].images). */
+  function aiChatRequest(text, attachments) {
+    var images = aiAttachmentImages(attachments);
+    if (!images.length) return { prompt: text, temperature: 0.2 };
+    return { messages: [{ role: "user", content: text, images: images }], temperature: 0.2 };
+  }
+  /* The switch renders for the owner of the house workspace when the durable
+     turn tool is listed; the server decides again on every turn. */
+  function aiBrowserSwitchVisible(st, available) {
+    return Boolean(st && st.workspace && st.workspace.role === "owner" && isHouseWorkspace(st.org) && typeof available === "function" && available("core.ai.turn.submit"));
+  }
+  function aiErrorCopy(code) {
+    var key = String(code || "");
+    if (!key) return "";
+    return AI_ERROR_COPY[key] || key.replace(/_/g, " ").toLowerCase();
+  }
+  function aiErrorHtml(message) {
+    var meta = (message && message.metadata) || {};
+    if (!meta.error_code) return "";
+    return '<div class="cr-ai-refused"><b>' + esc(aiErrorCopy(meta.error_code)) + '</b> <code>' + esc(meta.error_code) + '</code></div>';
+  }
+  function aiHostOf(url) {
+    var m = /^[a-z][a-z0-9+.-]*:\/\/([^/?#]+)/i.exec(String(url || ""));
+    return m ? m[1].replace(/^[^@]*@/, "").replace(/:\d+$/, "").toLowerCase() : "";
+  }
+  function aiKb(bytes) {
+    var n = Number(bytes);
+    if (!Number.isFinite(n) || n <= 0) return "";
+    return n >= 1024 ? (Math.round(n / 102.4) / 10) + " KB" : n + " B";
+  }
+  function aiRate(node) {
+    var live = Number(node && node.generation_tokens_per_second);
+    if (Number.isFinite(live) && live > 0) return " · " + (Math.round(live * 10) / 10) + " tok/s";
+    var measured = Number(node && node.measured_generation_tokens_per_second);
+    if (Number.isFinite(measured) && measured > 0) return " · " + (Math.round(measured * 10) / 10) + " tok/s (measured)";
+    return "";
+  }
+  /* Which node answered: name, hardware mode (or route) and the rate the
+     task measured, from the assistant message's metadata.node. */
+  function aiNodeBadgeHtml(message) {
+    var node = message && message.metadata && message.metadata.node;
+    if (!node || typeof node !== "object" || !(node.node_name || node.node_id)) return "";
+    var where = node.hardware_mode || node.route || "node";
+    var title = [node.site, node.implementation, node.model, node.node_id].filter(Boolean).join(" · ");
+    return '<span class="cr-ai-node" title="' + esc(title) + '">' + esc(node.node_name || node.node_id) + ' · ' + esc(where) + esc(aiRate(node)) + '</span>';
+  }
+  function aiStepText(step) {
+    return [step.index, step.type, step.outcome].filter(function (v) { return v !== null && v !== undefined && v !== ""; }).join(" ");
+  }
+  /* The browser turn's record on the assistant message: a collapsed block
+     with the tasks, the last screenshots (bounded, inline) and the action
+     log. Only valid base64 reaches an <img>; a data: prefix never does. */
+  function aiBrowserHtml(message) {
+    var browser = message && message.metadata && message.metadata.browser;
+    if (!browser || typeof browser !== "object") return "";
+    var tasks = Array.isArray(browser.tasks) ? browser.tasks : [];
+    var shots = (Array.isArray(browser.screenshots) ? browser.screenshots : []).filter(function (shot) { return shot && aiBase64Valid(shot.base64); });
+    var log = Array.isArray(browser.action_log) ? browser.action_log : [];
+    if (!tasks.length && !shots.length && !log.length) return "";
+    var steps = 0, hosts = [];
+    tasks.forEach(function (task) {
+      steps += Array.isArray(task && task.steps) ? task.steps.length : 0;
+      var host = aiHostOf(task && task.page && task.page.url);
+      if (host && hosts.indexOf(host) < 0) hosts.push(host);
+    });
+    var summary = "Browser: " + steps + " step" + (steps === 1 ? "" : "s") + (hosts.length ? " on " + hosts.join(", ") : "");
+    var taskLines = tasks.map(function (task) {
+      var page = task.page || {};
+      var count = Array.isArray(task.steps) ? task.steps.length : 0;
+      return '<div class="cr-ai-browser__task' + (task.ok === false ? " is-bad" : "") + '">' + esc([task.task_id || "task", task.ok === false ? "refused or failed" : "ok", count + " step" + (count === 1 ? "" : "s"), page.title || aiHostOf(page.url), task.node_id].filter(Boolean).join(" · ")) + '</div>';
+    }).join("");
+    var figures = shots.map(function (shot) {
+      var size = shot.width && shot.height ? shot.width + "×" + shot.height : "";
+      return '<figure><img src="data:image/jpeg;base64,' + shot.base64 + '" alt="Screenshot from the node browser, step ' + esc(shot.step) + '"><figcaption>' + esc([shot.task_id, "step " + shot.step, size, aiKb(shot.bytes)].filter(Boolean).join(" · ")) + '</figcaption></figure>';
+    }).join("");
+    var shown = log.slice(0, AI_LOG_MAX);
+    var logLines = shown.map(function (entry) {
+      var bad = entry && (entry.outcome === "refused" || entry.outcome === "failed");
+      return '<li' + (bad ? ' class="is-bad"' : "") + '>' + esc([entry.index, entry.type, entry.host, entry.outcome, entry.code].filter(function (v) { return v !== null && v !== undefined && v !== ""; }).join(" ")) + '</li>';
+    }).join("");
+    var more = log.length > shown.length ? '<p class="cr-muted">' + esc(log.length - shown.length) + ' more entries in the Core record.</p>' : "";
+    var droppedCount = Number(browser.dropped_screenshots) || 0;
+    var dropped = droppedCount > 0 ? '<p class="cr-muted">' + esc(droppedCount) + ' older screenshot' + (droppedCount === 1 ? "" : "s") + ' dropped to keep the message small.</p>' : "";
+    return '<details class="cr-ai-browser"><summary>' + esc(summary) + '</summary>' + taskLines + figures + dropped +
+      (logLines ? '<ol class="cr-ai-browser__log">' + logLines + '</ol>' + more : "") + '</details>';
+  }
+  function aiUserImagesHtml(message) {
+    var images = message && message.metadata && Array.isArray(message.metadata.images) ? message.metadata.images.filter(aiBase64Valid) : [];
+    if (!images.length) return "";
+    return '<div class="cr-ai-message__images">' + images.map(function (b64, i) {
+      return '<img src="data:image/jpeg;base64,' + b64 + '" alt="Attached image ' + (i + 1) + '">';
+    }).join("") + '</div>';
+  }
+  /* Live steps while the turn runs: the Core checkpoints browser_act receipts
+     into the user message's metadata.tool_receipts after every call. */
+  function aiReceiptStepsHtml(userMessage) {
+    var receipts = userMessage && userMessage.metadata && Array.isArray(userMessage.metadata.tool_receipts) ? userMessage.metadata.tool_receipts : [];
+    var browser = receipts.filter(function (receipt) { return receipt && receipt.tool === "browser_act"; });
+    if (!browser.length) return "";
+    return '<div class="cr-ai-steps">' + browser.map(function (receipt) {
+      var steps = Array.isArray(receipt.steps) ? receipt.steps : [];
+      var head = ["browser_act", receipt.task_id || "task", steps.length + " step" + (steps.length === 1 ? "" : "s"), aiHostOf(receipt.page && receipt.page.url) || (receipt.page && receipt.page.title) || ""].filter(Boolean).join(" · ") + (receipt.ok === false ? " · refused or failed" : "");
+      var lines = steps.map(function (step) {
+        var bad = step.outcome === "refused" || step.outcome === "failed";
+        return '<span' + (bad ? ' class="is-bad"' : "") + '>' + esc(aiStepText(step)) + (step.code ? " · " + esc(aiErrorCopy(step.code)) : "") + '</span>';
+      }).join("");
+      return '<div><b>' + esc(head) + '</b>' + lines + '</div>';
+    }).join("") + '</div>';
+  }
+  /* What the page can honestly say about the browser: browser.act is not
+     listed over MCP, so the only evidence is the last browser turn. */
+  function aiBrowserReadiness(messages) {
+    var list = Array.isArray(messages) ? messages : [];
+    for (var i = list.length - 1; i >= 0; i -= 1) {
+      var m = list[i];
+      if (!m || m.role !== "assistant") continue;
+      var meta = m.metadata || {};
+      if (meta.error_code && /^BROWSER_/.test(String(meta.error_code))) return { state: "unavailable", text: "browser: " + aiErrorCopy(meta.error_code) + " (" + ago(m.created_at) + " ago)" };
+      var tasks = meta.browser && Array.isArray(meta.browser.tasks) ? meta.browser.tasks : [];
+      if (tasks.length) return { state: "ready", text: "browser: ready on " + ((meta.node && meta.node.node_name) || tasks[0].node_id || "a node") + " (last browser turn " + ago(m.created_at) + " ago)" };
+    }
+    return { state: "unknown", text: "browser: unknown until the first browser turn (the node advertises it to the Core, not to this page)" };
+  }
+  /* END AI ATTACHMENTS */
+
+  /* The browser-side half: reading the chosen files, downscaling on a canvas
+     and encoding JPEG down the quality ladder until the Core's cap holds. */
+  function aiReadImageFile(file) {
+    return new Promise(function (resolve, reject) {
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function () { URL.revokeObjectURL(url); resolve(img); };
+      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error("That file is not an image this browser can read: " + (file.name || "image"))); };
+      img.src = url;
+    });
+  }
+  function aiEncodeImage(img) {
+    var size = aiImageScale(img.naturalWidth || img.width, img.naturalHeight || img.height);
+    var canvas = document.createElement("canvas");
+    canvas.width = size.width; canvas.height = size.height;
+    var ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0, size.width, size.height);
+    for (var i = 0; i < AI_IMAGE_QUALITIES.length; i += 1) {
+      var dataUrl = canvas.toDataURL("image/jpeg", AI_IMAGE_QUALITIES[i]);
+      var b64 = aiBase64FromDataUrl(dataUrl);
+      var bytes = aiBase64Bytes(b64);
+      if (aiImageAccepted(bytes) && aiBase64Valid(b64)) return { base64: b64, bytes: bytes, width: size.width, height: size.height, quality: AI_IMAGE_QUALITIES[i], preview: dataUrl };
+    }
+    return null;
+  }
+  function addAiAttachments(files) {
+    var list = Array.prototype.slice.call(files || []);
+    if (!list.length) return Promise.resolve();
+    var budget = aiImageBudget(state.aiAttachments, list.length);
+    if (!budget.ok) { state.aiChatError = budget.reason; render(); return Promise.resolve(); }
+    state.aiChatError = null;
+    return list.reduce(function (chain, file) {
+      return chain.then(function () {
+        return aiReadImageFile(file).then(function (img) {
+          var encoded = aiEncodeImage(img);
+          if (!encoded) throw new Error("Image is too large after downscaling (" + (file.name || "image") + "): it stays above " + Math.round(AI_IMAGE_MAX_BYTES / 1000) + " KB at the lowest JPEG quality.");
+          encoded.name = file.name || "";
+          state.aiAttachments.push(encoded);
+        });
+      });
+    }, Promise.resolve()).catch(function (error) {
+      state.aiChatError = error.message || String(error);
+    }).then(function () { render(); });
+  }
+  /* A message the Core hands back mid-turn (the user message with its
+     receipts) replaces the optimistic one in place so live steps render. */
+  function aiMergeMessage(message) {
+    if (!message || !message.id || !message.thread_id) return;
+    var list = state.aiMessages[message.thread_id];
+    if (!Array.isArray(list)) return;
+    var idx = list.findIndex(function (m) { return String(m.id) === String(message.id); });
+    if (idx >= 0) list[idx] = message; else list.push(message);
+  }
+
   function renderAi() {
     if (!state.selectedAiThreadId && state.aiThreads.length) state.selectedAiThreadId = state.aiThreads[0].id;
     var selected = aiThreadById(state.selectedAiThreadId);
@@ -1092,8 +1340,9 @@
           ? '<button class="cr-ai-voice-replay" type="button" data-action="ai-speak-message" data-id="' + esc(message.id) + '" aria-label="Speak this McCluster AI reply">Speak</button>'
           : "";
         return '<div class="cr-ai-message cr-ai-message--' + (mine ? "user" : "assistant") + '">' +
-          '<div class="cr-ai-message__meta"><span>' + esc(label) + '</span><span>' + esc(ago(message.created_at)) + detail + '</span>' + speakControl + '</div>' +
-          '<div class="cr-ai-message__body">' + esc(message.content || "") + '</div>' + (mine ? "" : aiResearchHtml(message)) + '</div>';
+          '<div class="cr-ai-message__meta"><span>' + esc(label) + '</span><span>' + esc(ago(message.created_at)) + detail + '</span>' + (mine ? "" : aiNodeBadgeHtml(message)) + speakControl + '</div>' +
+          (mine ? aiUserImagesHtml(message) : "") +
+          '<div class="cr-ai-message__body">' + esc(message.content || "") + '</div>' + (mine ? "" : aiErrorHtml(message)) + (mine ? "" : aiResearchHtml(message)) + (mine ? "" : aiBrowserHtml(message)) + '</div>';
       }).join("");
     }
     if (state.aiChatPending) {
@@ -1103,7 +1352,25 @@
         : taskStatus === "leased"
           ? "Local compute reserved. Starting inference…"
           : "Queued for local compute. Your message is saved and has not been lost.";
-      body += '<div class="cr-ai-message cr-ai-message--assistant cr-ai-message--pending"><div class="cr-ai-message__meta"><span>McCluster AI</span><span>' + esc(taskStatus) + '</span></div><div class="cr-ai-message__body"><span class="cr-spin"></span> ' + esc(pendingCopy) + '</div></div>';
+      var lastUser = messages.filter(function (m) { return m.role === "user"; }).pop();
+      body += '<div class="cr-ai-message cr-ai-message--assistant cr-ai-message--pending"><div class="cr-ai-message__meta"><span>McCluster AI</span><span>' + esc(taskStatus) + '</span></div><div class="cr-ai-message__body"><span class="cr-spin"></span> ' + esc(pendingCopy) + aiReceiptStepsHtml(lastUser) + '</div></div>';
+    }
+    var attachRow = '<div class="cr-ai-attach">' +
+      '<button class="cr-btn cr-ai-attach__btn" type="button" data-action="ai-attach"' + (!ready || state.aiChatPending || state.aiAttachments.length >= AI_IMAGE_MAX ? " disabled" : "") + ' aria-describedby="crAiAttachHint">Attach image</button>' +
+      '<input id="crAiAttach" type="file" accept="image/*" multiple class="cr-ai-attach__input" aria-label="Attach up to two images" tabindex="-1">' +
+      '<span class="cr-ai-attach__hint" id="crAiAttachHint">' + esc(state.aiAttachments.length + "/" + AI_IMAGE_MAX + " · downscaled here to " + AI_IMAGE_MAX_SIDE + " px JPEG, at most " + Math.round(AI_IMAGE_MAX_BYTES / 1000) + " KB each · a turn with an image goes to a vision model or says that none is live") + '</span></div>' +
+      (state.aiAttachments.length ? '<div class="cr-ai-thumbs">' + state.aiAttachments.map(function (a, i) {
+        return '<div class="cr-ai-thumb"><img src="' + esc(a.preview) + '" alt="' + esc(a.name || ("Attached image " + (i + 1))) + '">' +
+          '<button class="cr-ai-thumb__remove" type="button" data-action="ai-remove-attachment" data-index="' + i + '" aria-label="Remove ' + esc(a.name || "this image") + '">×</button>' +
+          '<span class="cr-ai-thumb__meta">' + esc(a.width + "×" + a.height + " · " + aiKb(a.bytes)) + '</span></div>';
+      }).join("") + '</div>' : "");
+    var browserSwitch = "";
+    if (aiBrowserSwitchVisible(state, coreToolAvailable)) {
+      var readiness = aiBrowserReadiness(messages);
+      browserSwitch = '<div class="cr-ai-browser-switch"><span class="cr-ai-browser-switch__text"><b>Use the browser</b><span>' +
+        esc(state.aiAllowBrowser ? "On: each turn you send may drive the node's own browser on its allowed sites (owner-only; the Core checks again)." : "Off: your turns run without the node's browser.") + '</span>' +
+        '<span class="cr-ai-browser-switch__ready" data-ai-browser-ready="' + esc(readiness.state) + '">' + esc(readiness.text) + '</span></span>' +
+        '<button class="cr-switch' + (state.aiAllowBrowser ? " is-on" : "") + '" type="button" role="switch" aria-checked="' + (state.aiAllowBrowser ? "true" : "false") + '" aria-label="Use the browser for this turn" data-action="ai-browser-toggle"' + (!ready || state.aiChatPending ? " disabled" : "") + '></button></div>';
     }
 
     return sourceBanner(state.sources.coreBridge, "Core bridge") +
@@ -1120,6 +1387,7 @@
           '<footer class="cr-ai-chat__composer">' +
             (state.aiChatError ? '<p class="cr-fail">' + esc(state.aiChatError) + '</p>' : "") +
             (state.aiVoiceError ? '<p class="cr-fail cr-ai-voice-error">' + esc(state.aiVoiceError) + '</p>' : "") +
+            attachRow + browserSwitch +
             '<div class="cr-ai-chat__composerbox"><textarea class="cr-textarea" id="crAiComposer" rows="2" placeholder="' + (state.aiVoiceListening ? "Listening…" : "Message McCluster AI…") + '" aria-label="Message McCluster AI"' + (!ready || state.aiChatPending || state.aiVoiceListening ? " disabled" : "") + '></textarea>' +
             '<button class="cr-btn cr-btn--voice' + (state.aiVoiceListening ? " is-listening" : "") + '" type="button" data-action="ai-voice-toggle"' + (!ready || state.aiChatPending || !voiceCaps.recognition ? " disabled" : "") + ' aria-pressed="' + (state.aiVoiceListening ? "true" : "false") + '">' + (state.aiVoiceListening ? "Stop" : "Talk") + '</button>' +
             '<button class="cr-btn cr-btn--primary" type="button" data-action="ai-send"' + (!ready || state.aiChatPending || state.aiVoiceListening ? " disabled" : "") + '>Send</button></div>' +
@@ -3325,6 +3593,9 @@
     else if (action === "ai-new-thread") { stopAiVoiceListening(true); stopAiVoiceSpeech(); createAiThread(); }
     else if (action === "ai-select-thread") { stopAiVoiceListening(true); stopAiVoiceSpeech(); state.selectedAiThreadId = el.getAttribute("data-id"); state.aiChatError = null; state.aiVoiceError = null; render(); }
     else if (action === "ai-send") { var aiInput = $("crAiComposer"); sendAiMessage(aiInput && aiInput.value, { inputMode: "text", speakReply: false }); }
+    else if (action === "ai-attach") { var picker = $("crAiAttach"); if (picker) picker.click(); }
+    else if (action === "ai-remove-attachment") { var at = Number(el && el.getAttribute("data-index")); if (Number.isInteger(at) && at >= 0) state.aiAttachments.splice(at, 1); render(); }
+    else if (action === "ai-browser-toggle") { state.aiAllowBrowser = !state.aiAllowBrowser; render(); }
     else if (action === "ai-voice-toggle") { if (state.aiVoiceListening) { stopAiVoiceListening(false); render(); } else startAiVoiceTurn(); }
     else if (action === "ai-stop-speaking") { stopAiVoiceSpeech(); render(); }
     else if (action === "ai-speak-message") { var voiceMessage = aiMessageById(el && el.getAttribute("data-id")); if (voiceMessage && voiceMessage.role === "assistant") speakAiText(voiceMessage.content); }
@@ -3431,7 +3702,7 @@
       var aiBox = $("crSystemCommand"), aiText = aiBox && aiBox.value.trim();
       if (!aiText || !state.org) return;
       state.commandResult = { kind: "ai", task: { status: "queueing" } }; render();
-      callCoreTool("ai.chat", { prompt: aiText, temperature: 0.2 }).then(function (queued) {
+      callCoreTool("ai.chat", aiChatRequest(aiText, [])).then(function (queued) {
         var task = queued && queued.task;
         if (!task || !task.id) throw new Error("Home AI did not return a durable compute task");
         state.commandResult = { kind: "ai", task: task }; render();
@@ -3907,6 +4178,8 @@
         }
       });
     }
+    var aiAttach = $("crAiAttach");
+    if (aiAttach) aiAttach.addEventListener("change", function () { addAiAttachments(aiAttach.files); });
     var aiComposerInput = $("crAiComposer");
     if (aiComposerInput) {
       aiComposerInput.value = state.aiChatDraft || "";

@@ -1,7 +1,8 @@
 # The owner's Windows GPU laptop as a compute node
 
 Status: built in the device-node slice N1 (2026-11-17), source and tests only; nothing in production
-changed. The same day's review fixes are in the source too: the report prints values only for non-secret
+changed. Slice N2 (the same day) adds the node's own browser: `-Browser`, `-BrowserHeaded` and the BROWSER
+report block below, documented in `AGENT-NODE-BROWSER.md`. The same day's review fixes are in the source too: the report prints values only for non-secret
 names, the model tier follows the owner's decision below (one resident vision model, headroom first), `-Install`
 refuses arguments cmd.exe would misread, a stale registry subkey never shadows the live one, the adapter retries
 its warm-up until the Ollama app is up, and the agent caches the hardware discovery. The script was written and
@@ -24,7 +25,8 @@ pilot-only capability nothing submits, while every `ai.chat` task went to the OV
 | The node agent | `core/src/compute/node-agent.mjs` 0.4.0, scheduled task "McCluster Node Agent" | state under `%ProgramData%\mccluster-node` |
 | The Ollama adapter | `core/src/compute/ollama-adapter.mjs` on `127.0.0.1:4790`, scheduled task "McCluster Node Adapter" | loopback only |
 | Ollama | the Windows tray app on `127.0.0.1:11434`, Vulkan backend on by default for a Radeon APU or RX 7000S | owner-installed |
-| The manifest | `core/node-manifests/owner-windows-gpu.json`, written to `%ProgramData%\mccluster-node\capabilities.json` pruned to the model tier | the template is Git-managed |
+| The manifest | `core/node-manifests/owner-windows-gpu.json`, written to `%ProgramData%\mccluster-node\capabilities.json` pruned to the model tier (plus the browser entry after `-Browser`) | the template is Git-managed |
+| The browser executor (slice N2) | `core/src/compute/browser-executor.mjs` on `127.0.0.1:4791`, Playwright Chromium in the node's own profile, scheduled task "McCluster Node Browser"; installed by `-Browser` | loopback only; `AGENT-NODE-BROWSER.md` |
 
 The node holds no control-plane secret. It enrols once with a token the owner's Core shows once, then signs every
 request with its own Ed25519 key (`identity.json`, owner-only ACL). Port 4788 is never published; the node only
@@ -266,6 +268,62 @@ Prints the adapters with their indexes in CIM order and sets the user variable `
 chosen index, so Ollama's Vulkan backend uses the discrete card and not the APU. Restart the Ollama tray app
 afterwards. `-Report` shows the variable and the `inference compute` line that proves which device was picked.
 
+## 10. The node's own browser (slice N2): `-Browser`, `-BrowserHeaded`
+
+```powershell
+powershell -ExecutionPolicy Bypass -File core\windows\mccluster-node.ps1 -Browser -WhatIf
+powershell -ExecutionPolicy Bypass -File core\windows\mccluster-node.ps1 -Browser
+powershell -ExecutionPolicy Bypass -File core\windows\mccluster-node.ps1 -BrowserHeaded
+```
+
+`-Browser` is the one switch of this script that downloads anything, and it says so before it does. It needs
+`-Install` first (it reads `node.config.json`), `node` and `npm` on PATH (npm ships with Node), and a checkout
+that carries `core/src/compute/browser-executor.mjs` (pull the latest `main`). In order, each step behind
+`ShouldProcess` so `-WhatIf` prints it and writes nothing:
+
+1. creates `<StateRoot>\browser` and `<StateRoot>\browser-profile` with an owner-only ACL;
+2. runs `npm install --prefix <StateRoot>\browser --no-audit --no-fund --no-save playwright@<pin>` through
+   node's own npm entry point (no `cmd.exe`, nothing added to the checkout), the pin being the one
+   `$script:McPlaywrightVersion` names (`1.63.0` today; this file does not repeat the number elsewhere so it
+   cannot drift), and checks the landed `package.json` says that version;
+3. runs the installed package's own command line `playwright install --dry-run chromium` with
+   `PLAYWRIGHT_BROWSERS_PATH=<StateRoot>\browser\ms-playwright`, prints what it names (the Chromium build,
+   the download URL and size) and asks `Download it? [y/N]`; anything but `y` leaves everything else
+   unchanged and exits 2; `y` runs `playwright install chromium` (up to 900 s);
+4. writes `<StateRoot>\browser-policy.json` **only when absent**:
+   `{"schema":"mccluster-browser-policy/1","allowed_hosts":[],"allow_subdomains":false}`. An empty allowlist
+   refuses every `open` with `BROWSER_POLICY_EMPTY`: name the sites the agent may open (exact hosts, an
+   optional `:port`; `allow_subdomains: true` admits their subdomains). The doctor never overwrites your edits;
+5. writes `<StateRoot>\browser.cmd` (`MCCLUSTER_BROWSER_EXECUTOR_PORT=4791`, the profile and policy paths,
+   `MCCLUSTER_BROWSER_PLAYWRIGHT_DIR`, `PLAYWRIGHT_BROWSERS_PATH`, `MCCLUSTER_NODE_MANIFEST`, then `cd /d
+   <RepoPath>\core` and `node src\compute\browser-executor.mjs >> logs\browser.log`), with the same cmd-safety
+   checks as the other launchers; the task runs headless (no `MCCLUSTER_BROWSER_HEADED` in the launcher);
+6. registers the scheduled task "McCluster Node Browser" (at startup and at your logon, 10 s delay, current
+   user, S4U, Limited, restart on failure, no time limit) and starts it; the adapter and agent tasks are not
+   touched;
+7. adds the `browser.act/chromium.local` entry from the template to `capabilities.json` (the agent re-reads
+   it within 15 s) and records `browser: true` in `node.config.json`, so a later `-Install` keeps the entry
+   beside the tier's models.
+
+`-BrowserHeaded` is how the node's profile gets signed into sites: it stops the task, runs the executor on
+your console with `MCCLUSTER_BROWSER_HEADED=1` (a visible Chromium window on the same persistent profile), and
+starts the task again when you press Ctrl+C. Nothing from your own browsers (profiles, cookies, passwords) is
+read: the profile is the node's, under `<StateRoot>\browser-profile`. If the console closes before the task
+restarts, start "McCluster Node Browser" from Task Scheduler, or run `-Report` to check.
+
+`-Report` then shows a `BROWSER` block: the task state, the installed Playwright version, whether the Chromium
+store (`ms-playwright`) and the profile exist, the policy's shape (how many hosts, the subdomain rule; never
+the hosts themselves, so the pasteable block names no site you use), and what the executor answers on
+`http://127.0.0.1:4791/health` (ok, busy, Playwright found, policy hosts, last error) and `/ready` (ready with
+the Chromium version, or not ready). `NODE FILES` lists `browser-policy.json` and `browser.cmd`, and the
+`node.config.json` line says `browser yes|no`.
+
+What reaches the agent, and what never does: the browser is driven only from the Core's resident agent loop
+(`browser_act`), only for a turn the owner's own session submitted with "Use the browser" on; every `open`
+is checked against the policy file and private, loopback and link-local addresses are refused after DNS for
+every request; page text goes to the model as quoted evidence, never as instructions. The whole design, the
+action vocabulary and the refusal codes: `AGENT-NODE-BROWSER.md`.
+
 ## How work reaches the laptop
 
 - The laptop advertises `ai.chat/qwen3-vl.8b.local` (the resident vision model, laptop only) and
@@ -337,13 +395,18 @@ report is the only thing meant to leave the laptop by hand, and it is masked.
 Under `%ProgramData%\mccluster-node` (or `-StateRoot`): `capabilities.json` (the pruned template),
 `node.config.json` (no secrets), `identity.json` (the node's key, owner-only), `gpu-evidence.json` (the last
 positive engine observation, 24 h TTL), `measured-inference.json` (from `-Benchmark`), `adapter.cmd`,
-`agent.cmd`, `logs\adapter.log`, `logs\agent.log`, and `enroll.env` only during `-Enroll`.
+`agent.cmd`, `logs\adapter.log`, `logs\agent.log`, and `enroll.env` only during `-Enroll`. After `-Browser`:
+`browser\` (the pinned Playwright package under `node_modules\playwright` and Chromium under `ms-playwright`),
+`browser-profile\` (the node's own browser profile, owner-only), `browser-policy.json` (your allowlist),
+`browser.cmd` and `logs\browser.log`.
 
 ## Tests, and what is verified where
 
 - `node --test scripts/test/windows-node-script.test.mjs` (runs on every PR): static checks on the script (every
-  switch, `SupportsShouldProcess`, the library guard, no downloads or evaluation, Windows-only cmdlets only
-  inside functions, no private strings, balanced brackets), the fixtures, and this runbook; then, **only where a
+  switch, `SupportsShouldProcess`, the library guard, no downloads or evaluation outside `-Browser` and, inside
+  it, npm and Playwright's installer called only there with the dry run and your answer before the Chromium
+  download, the Playwright pin appearing exactly once, Windows-only cmdlets only inside functions, no private
+  strings, balanced brackets), the fixtures, this runbook and `AGENT-NODE-BROWSER.md`; then, **only where a
   `pwsh` is executable** (on PATH, or named by `MCCLUSTER_PWSH`), the PowerShell parse and
   `core/windows/tests/mccluster-node.tests.ps1`. Where none is, it prints
   `windows-node-script: pwsh not available, PowerShell tests skipped (unverified here)` and skips: a skip is not
@@ -362,11 +425,19 @@ positive engine observation, 24 h TTL), `measured-inference.json` (from `-Benchm
   refused with the next tier named, twin pruned or advertised, unknown reading changes nothing), the sidecar merge,
   `-Install -WhatIf` writing nothing, a real install into a temporary state root run twice, and `-Benchmark`
   against a mocked daemon and memory readings (exit 0, twin pruned, twin back, tier refused with exit 1,
-  `qwen3:14b` refused). On the laptop:
+  `qwen3:14b` refused); and, since slice N2, the browser: the template's five entries with the browser entry
+  last and the vision flags, the browser paths, the default policy and its report summary (shape only, never
+  a host), the browser environment and launcher, `-Browser -WhatIf` writing nothing, a declined download
+  changing nothing (exit 2), a real `-Browser` into the temporary state root with npm and the installer mocked
+  (pinned version, dry run before the download, policy written once and never overwritten, launcher, task
+  registered and started, `chromium.local` appended once, `browser: true` recorded), `-Install` keeping the
+  entry afterwards, the report block, and `-BrowserHeaded` stopping the task, running the executor headed
+  on the console and starting the task again. On the laptop:
 
   ```powershell
   powershell -ExecutionPolicy Bypass -File core\windows\tests\mccluster-node.tests.ps1
   ```
 
   Paste the last lines (`mccluster-node.tests.ps1: N passed, M failed`) into the chat. Until that has run on a
-  Windows machine, every claim about the doctor's behaviour on Windows is unverified.
+  Windows machine, every claim about the doctor's behaviour on Windows, `-Browser` and `-BrowserHeaded`
+  included, is unverified. The Chromium download itself has run nowhere yet.
