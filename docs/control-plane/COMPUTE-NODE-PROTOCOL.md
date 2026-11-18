@@ -6,7 +6,10 @@ form/memory fields, `hardware_mode` derived by code, engine evidence, the measur
 the pending claim SQL are separate, owner-gated steps). The owner's Windows runbook is `WINDOWS-NODE.md`.
 Device-node slice N2, the same day: images in `ai.chat` (bounds sniffed from bytes, vision routing), owned-only
 capabilities, and a second loopback executor on the laptop, the node's own browser (`browser.act/chromium.local`
-on `127.0.0.1:4791`; `AGENT-NODE-BROWSER.md`). Nothing deployed, no limit raised.
+on `127.0.0.1:4791`; `AGENT-NODE-BROWSER.md`). Nothing deployed, no limit raised. Review fixes, 2026-11-18:
+owned-only capabilities rest on the trust recorded at enrolment, which a heartbeat cannot change and the claim
+honours; the browser executor connects only at addresses it validated, through its own loopback egress proxy.
+Source and tests only; nothing deployed, no SQL.
 
 ## Goal
 
@@ -106,6 +109,13 @@ Enrollment is the only bootstrap operation that uses a shared bearer secret.
 
 A previously enrolled public key cannot move to another organization through re-enrollment. Revoked identities cannot enroll themselves again.
 
+The gateway records the `trust` label the enrolment carries as `labels.enrolled_trust` (`enrollmentLabels()` in
+`core/src/compute/protocol.mjs`; a value the node sends for that key itself is ignored). The enrolment is the one
+call gated by the owner's enrolment token, and the Windows doctor deletes that token from the node once it has
+enrolled, so this record is the owner's statement about the node. No later heartbeat can change it (below);
+enrolling again with the owner's token is the one way to change it. A node enrolled before this rule has no record
+and offers no owned-only capability until it enrols again.
+
 ## Node identity
 
 Node IDs are deterministic:
@@ -181,9 +191,14 @@ Unknown capability IDs may appear in raw node inventory but do not automatically
 
 ### Owned-only capabilities (slice N2)
 
-Some capabilities are admitted only from nodes whose labels say `trust: owned`: `browser.act` (the node's own
-browser) is the first. The Core tool bus (`core/src/tools/compute.mjs`) drops a `browser.act` entry from any
-other node at discovery and at the liveness re-read, and pins `requirements.features { browser: true }` when it
+Some capabilities are admitted only from nodes whose enrolment recorded trust `owned` (`labels.enrolled_trust`,
+written by the owner-token-gated enrol call and never by a heartbeat; `labels.trust` is only what a node
+asserts): `browser.act` (the node's own browser) is the first. The rule is one function,
+`ownedOnlyAdmitted()` in `core/src/compute/protocol.mjs`, applied in two places: the Core tool bus
+(`core/src/tools/compute.mjs`) drops a `browser.act` entry from any other node at discovery and at the liveness
+re-read, and the gateway's `/v1/compute/lease` leaves owned-only capabilities out of the claim for any other node
+(`claimableManifest()`), so such a node cannot take a queued `browser.act` task whatever its manifest
+advertises; no SQL changed for this. The tool bus pins `requirements.features { browser: true }` when it
 enqueues one; the catalog entry (`core/capabilities/catalog.json`) is `active`, `async`, risk `write`, approval
 `owner`, interfaces `['agent']` only (never listed over MCP, refused on `/mcp tools/call` with
 `CAPABILITY_INTERFACE_REFUSED`), with no static binding. The laptop template advertises
@@ -335,7 +350,9 @@ A signed heartbeat refreshes:
 - `last_seen_at`;
 - hardware inventory;
 - capability manifest;
-- labels;
+- labels, except `trust`, `role` and `enrolled_trust`, which keep exactly what the enrolment stored (a label the
+  enrolment did not set stays unset): a heartbeat is signed by the node's own key alone, so it cannot raise the
+  node's trust (`heartbeatLabels()` in `core/src/compute/protocol.mjs`);
 - current load;
 - agent version;
 - node concurrency limit.
@@ -524,7 +541,12 @@ bounded batch of `open`, `read`, `find`, `click`, `type`, `select`, `scroll`, `w
 `done`), never evaluates model-written code in the page, checks every request against the owner's policy file
 (`browser-policy.json` beside the manifest, schema `mccluster-browser-policy/1`: exact hosts, an explicit
 subdomain rule) and refuses private, loopback and link-local addresses after DNS for every request, redirects
-included. Its vocabulary, refusal codes and bounds are in `AGENT-NODE-BROWSER.md`.
+included. Every connection then leaves through the executor's own loopback egress proxy
+(`core/src/compute/browser-egress.mjs`), which connects only at an address it validated, from the same DNS answer
+the policy check validated, and checks the connected peer again, so a name that rebinds to a private address
+after the check is never connected there; Chromium is launched to use that proxy for everything, loopback
+included, with WebRTC held to proxied traffic. Its vocabulary, refusal codes and bounds are in
+`AGENT-NODE-BROWSER.md`.
 
 ## Example node files
 

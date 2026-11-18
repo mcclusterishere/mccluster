@@ -110,10 +110,12 @@ This separation lets McCluster change providers without rewriting the website, p
 
 Agent-only capabilities exist beside the MCP-exposed ones. `browser.act` (device-node slice N2,
 `docs/control-plane/AGENT-NODE-BROWSER.md`) is the first: a capability with interfaces `['agent']` only, risk
-`write`, approval `owner`, bound live only by trust-owned compute nodes that advertise it (the owner's laptop,
-installed with `-Browser`), never listed over MCP and refused on `/mcp tools/call`. The resident agent loop reaches
-it as the tool `browser_act`, which exists for a turn only when the owner's own session submitted that turn with
-`allow_browser: true`; the Core checks the flag, the owner actor and the house org again on every call. What the
+`write`, approval `owner`, bound live only by compute nodes whose enrolment (gated by the owner's enrolment token)
+recorded trust `owned` and that advertise it (the owner's laptop, installed with `-Browser`), never listed over MCP
+and refused on `/mcp tools/call`. The resident agent loop reaches it as the tool `browser_act`, which exists for a
+turn only when the owner's own session submitted that turn with `allow_browser: true`; the Core checks the flag,
+the owner actor recorded on the durable turn at submit (never inferred from the flag) and the house org again on
+every call. What the
 browser reads comes back to the model wrapped as quoted evidence, never as instructions, and never in a system
 message; screenshots come back as bounded images on observation messages (the last two kept). Four independent
 gates (the edge, the broker, the Core tools, the fabric) and the Control Room's owner-only switch keep it away

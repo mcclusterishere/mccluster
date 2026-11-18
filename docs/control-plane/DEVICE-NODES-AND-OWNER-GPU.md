@@ -165,8 +165,10 @@ Two lanes on this branch, source and tests only; the design, the contracts and w
 - **The node's own browser** (lane C1 the executor and the loop, lane C2 the device and the words): the
   browser executor on `127.0.0.1:4791` (Playwright Chromium in the node's own persistent profile, headless by
   default, a policy file of allowed hosts beside the manifest, private addresses refused after DNS on every
-  request, no downloads, choosers, dialogs or popups, fixed extractors, step/time/byte caps, every action
-  logged), advertised as `browser.act/chromium.local` only from trust-owned nodes, reached only through the
+  request and every connection made at the validated address through the executor's own egress proxy, no
+  downloads, choosers, dialogs or popups, fixed extractors, step/time/byte caps, every action logged),
+  advertised as `browser.act/chromium.local` and claimable only by nodes whose enrolment recorded trust
+  `owned` (review fixes of 2026-11-18 in `AGENT-NODE-BROWSER.md`), reached only through the
   Core's resident agent loop as `browser_act`, which exists for a turn only when the owner's session submitted
   it with `allow_browser: true`. The loop keeps the last two screenshots as images, wraps page text as evidence,
   checkpoints steps into the user message and writes screenshots, the action log and a node badge into the

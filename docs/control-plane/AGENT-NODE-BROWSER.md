@@ -20,7 +20,8 @@ An image attached in the Control Room chat rides on the `ai.chat` message exactl
 live vision implementation (`qwen3-vl.8b.local`, then `qwen3-vl.4b.local`) or fails with a clear code, never to
 a text model with the images dropped. The laptop gets a second loopback executor, the browser executor on
 `127.0.0.1:4791` (Playwright Chromium in the node's own persistent profile, headless by default), advertised
-as `browser.act/chromium.local` only from a trust-owned node the owner installed with `-Browser`. The Core's
+as `browser.act/chromium.local` and claimable only by a node whose enrolment recorded trust `owned` (the owner
+installed it with `-Browser`). The Core's
 resident agent loop reaches it as the tool `browser_act`, which exists for a turn only when the owner's own
 session submitted that turn with `allow_browser: true`; page text comes back to the model wrapped as evidence,
 never as instructions, and the last two screenshots come back as images. The Control Room shows the attach
@@ -74,13 +75,29 @@ the node that answered.
   link-local). WebSockets are closed, downloads cancelled, file choosers refused, dialogs dismissed, popups
   closed. The executor never evaluates model-written code in the page: the `read` extractor is a function
   literal in the executor's source (body text with scripts, styles and hidden nodes removed).
+- **One way out: the egress proxy** (`core/src/compute/browser-egress.mjs`, review fix N2R-1). The policy check
+  above resolves a name and validates every answer; the connection is then made at exactly that validated
+  address. Every request the route serves is fetched in Node through the context's proxy, the executor's own
+  loopback forward proxy (an ephemeral port on `127.0.0.1`, named in `/health` as `egress` and in the ready line
+  as `egress_port`). For each connection the proxy asks the executor once: inside a task the answer comes from
+  the task's DNS cache, the very answer the policy check validated; a name the check has not seen, or a request
+  made outside any task, is resolved once there. Any private answer refuses the destination
+  (`x-mccluster-egress-refusal: BROWSER_PRIVATE_ADDRESS`, 403, never an address in the answer); otherwise the
+  proxy connects to a validated IP literal (it never connects to a name, so nothing resolves it a second time)
+  and checks the connected peer again. A name that answers a public address at the check and a private one
+  afterwards (DNS rebinding) is therefore never connected at the private address, for navigations,
+  subresources and every redirect hop alike. Chromium is launched to use the same proxy for everything it
+  sends itself (`--proxy-bypass-list=<-loopback>` removes its implicit loopback bypass) and WebRTC is held to
+  proxied traffic (`--force-webrtc-ip-handling-policy=disable_non_proxied_udp`), because WebRTC ignores proxies
+  and the request router otherwise: without that flag a page's STUN request reached a loopback UDP port here.
 - **Policy file** (`core/src/compute/browser-policy.mjs`, pure; DNS injected):
   `{"schema":"mccluster-browser-policy/1","allowed_hosts":["example.com","docs.example.com:8443"],"allow_subdomains":false}`
   beside the manifest (`MCCLUSTER_BROWSER_POLICY`, default `browser-policy.json` next to
   `MCCLUSTER_NODE_MANIFEST`). Hosts are lower-cased and IDNA-normalised; a wildcard, a path or user info in an
   entry makes the file invalid; an explicit port must match, otherwise the scheme default. An empty allowlist
   refuses every `open` with `BROWSER_POLICY_EMPTY` and the reason tells the owner to edit the file. Private
-  addresses are refused after resolution for every request: the whole of the loopback, link-local, the three
+  addresses are refused after resolution for every request, and the connection is made at the address that
+  resolution validated (the egress proxy above): the whole of the loopback, link-local, the three
   private ranges, the shared-address range, multicast, the reserved block and the broadcast address in IPv4;
   the unspecified and loopback addresses, unique-local, link-local and multicast in IPv6; and the v4-mapped,
   NAT64 and 6to4 forms by the embedded IPv4 rule.
@@ -93,7 +110,7 @@ the node that answered.
   `skipped`; `ok` is false then.
 - **Output**: `{ ok, implementation, steps[], page { url, title, text?, truncated?, links?, forms? },
   screenshot? { base64, width, height, bytes, type: image/jpeg }, refused?, usage { steps, wall_ms,
-  navigations, requests_blocked, output_bytes } }`. The screenshot is a JPEG at most 1280 px wide, quality
+  navigations, requests_blocked, egress_refused, output_bytes, … } }`. The screenshot is a JPEG at most 1280 px wide, quality
   60 then 45 then 30 until it is at most 200,000 bytes, else omitted with `BROWSER_SCREENSHOT_TOO_LARGE`. The
   whole output is at most `MCCLUSTER_BROWSER_MAX_OUTPUT_BYTES` (default 1,000,000): page text is cut first,
   then links and forms dropped, then the screenshot omitted, with `BROWSER_OUTPUT_TRUNCATED` in `usage`.
@@ -109,9 +126,10 @@ the node that answered.
   `%ProgramData%\mccluster-node\browser-profile`), `MCCLUSTER_BROWSER_POLICY`, `MCCLUSTER_BROWSER_HEADED=1`,
   `MCCLUSTER_BROWSER_MAX_STEPS`, `MCCLUSTER_BROWSER_MAX_MS`, `MCCLUSTER_BROWSER_MAX_OUTPUT_BYTES`,
   `MCCLUSTER_BROWSER_PLAYWRIGHT_DIR`, `PLAYWRIGHT_BROWSERS_PATH`, and two for tests and containers only:
-  `MCCLUSTER_BROWSER_NO_SANDBOX=1` and `MCCLUSTER_BROWSER_TEST_FIXTURE_HOST` (maps one fixture name to loopback
-  in Chromium while the policy resolver answers a documentation-range address for it, so the private-address
-  rule stays on in the tests; reported in `/health`).
+  `MCCLUSTER_BROWSER_NO_SANDBOX=1` and `MCCLUSTER_BROWSER_TEST_FIXTURE_HOST` (the policy resolver answers a
+  documentation-range address (RFC 5737) for that one name, so the private-address rule stays on in the tests,
+  and the egress proxy delivers a connection to that one validated address to the loopback fixture on the same
+  port; reported in `/health`; never active without the variable).
 
 ## The capability and the agent tool
 
@@ -119,15 +137,21 @@ the node that answered.
   `active` (the only lifecycle the registry resolves), execution `async`, risk `write`, approval `owner`,
   interfaces `['agent']` only, no static binding, an honest description (owner-only; runs only on an owned
   node the owner installed with `-Browser`; absent until such a node is live; never exposed over MCP).
-- **Fabric admission.** `core/src/tools/compute.mjs` admits `browser.act` entries only from nodes whose labels
-  say `trust: owned`, and the tool bus pins `requirements.features { browser: true }`. The laptop template's
+- **Fabric admission** (review fix N2R-3). `browser.act` is admitted only from a node whose enrolment recorded
+  trust `owned` (`labels.enrolled_trust`, written by the enrol call that needs the owner's enrolment token;
+  `labels.trust` is what a node asserts). A heartbeat, signed by the node's own key alone, can no longer change
+  `trust`, `role` or that record. The rule (`ownedOnlyAdmitted()`, `core/src/compute/protocol.mjs`) holds at
+  discovery and at the enqueue-time re-read (`core/src/tools/compute.mjs`) and at the claim: the gateway leaves
+  owned-only capabilities out of the claim for any other node, so it cannot take a queued `browser.act` task
+  whatever it advertises. A node enrolled before this rule enrols again before it can offer the browser. The
+  tool bus pins `requirements.features { browser: true }`. The laptop template's
   entry (this lane): `browser.act/chromium.local`, backend `playwright`, model null, features
   `{ browser: true, headed: false, screenshot: true, self_hosted: true }`, executor
   `http://127.0.0.1:4791/execute`, health `http://127.0.0.1:4791/ready`, timeout 180 s, one at a time.
 - **The tool** (`core/src/resident-tools.mjs`): `browser_act` is added to the model's tools for a turn only
   when the turn allows the browser; `executeResidentTool('browser_act')` refuses with `BROWSER_NOT_ALLOWED`
-  without that flag, with `BROWSER_OWNER_REQUIRED` when the actor is not an owner with a UUID or the org is not
-  the house org, then calls the capability, waits at most 150 s for the task (cancelling it if still queued)
+  without that flag, with `BROWSER_OWNER_REQUIRED` when the actor kind recorded on the durable turn is not
+  `owner`, the actor has no UUID or the org is not the house org, then calls the capability, waits at most 150 s for the task (cancelling it if still queued)
   and returns the task output with `task_id` and `node_id`.
 - **The loop** (`core/src/resident-agent.mjs`, `core/src/executors/resident-ai-turn.mjs`): a browser turn has
   12 rounds, 24 calls and a 540 s deadline (under the 10 min stale-job cutoff while the runner heartbeats
@@ -144,7 +168,8 @@ the node that answered.
   implementation, model) and `images_in`, all under a 1,200,000-character serialised cap (screenshots are
   dropped first, then the log is truncated with counts).
 - **Persistence without SQL.** `submitResidentAiTurn` pre-inserts the user message with its metadata
-  (`images`, `allow_browser`, `actor_user_id`, …) before the existing 6-argument `ops_ai_submit_turn` RPC,
+  (`images`, `allow_browser`, `actor_user_id`, `actor_kind`, …) before the existing 6-argument
+  `ops_ai_submit_turn` RPC,
   whose insert is `on conflict (id) do nothing`; a failed RPC marks the orphan message failed and rethrows.
   Images and screenshots live inline in `ops_ai_messages.metadata`, bounded as above; a storage bucket or a
   7-argument RPC overload remain open questions for the owner (both would be SQL).
@@ -157,10 +182,14 @@ the node that answered.
 2. **Broker** (`core/src/tool-broker.mjs`, lane C1): `/mcp tools/call` refuses a capability whose interfaces
    exclude `mcp` (`CAPABILITY_INTERFACE_REFUSED`, 403); `browser.act` is absent from `tools/list`.
 3. **Core tools**: `core.ai.turn.submit` accepts `allow_browser` only with an owner actor
-   (`BROWSER_OWNER_REQUIRED`, 403); `browser_act` checks the flag, the actor kind, the actor UUID and the
-   house org again.
-4. **Fabric**: only trust-owned nodes advertise `browser.act`; the laptop's manifest is the owner's own file;
-   the allowlist is the owner's policy file on the device.
+   (`BROWSER_OWNER_REQUIRED`, 403) and records that actor's kind (`actor_kind`) beside `actor_user_id` on the
+   durable turn; the turn executor reads the kind from there, never from the flag (review fix N2R-2), and
+   `browser_act` checks the flag, that actor kind, the actor UUID and the house org again, before any
+   inference and on every call. A stored turn that allows the browser for any other actor kind, or for none,
+   is refused with `BROWSER_OWNER_REQUIRED`.
+4. **Fabric**: only a node whose enrolment (gated by the owner's enrolment token) recorded trust `owned` may
+   offer or claim `browser.act`, and no heartbeat can change that record; the laptop's manifest is the owner's
+   own file; the allowlist is the owner's policy file on the device.
 5. **Control Room**: the "Use the browser" switch renders only for the owner role in the house workspace,
    and the server gates independently. Nothing of this reaches public clients.
 
@@ -201,6 +230,39 @@ version, whether the Chromium store and the profile exist, the policy's shape (t
 and the subdomain rule, never the hosts themselves), and what the executor answers on `/health` and
 `/ready`.
 
+## Review fixes (2026-11-18)
+
+The adversarial review of this slice found one major and two minor gaps. Each is fixed in source with a test that
+failed before the fix and passes after it, both runs in the build container; nothing was deployed and no SQL
+changed.
+
+- **N2R-1, DNS rebinding (major).** The policy check resolved a name and validated the answer, but the fetch that
+  served the request resolved the name again, so a zero-TTL record answering public at the check and private
+  afterwards reached the owner's LAN; subresources need no allowlist, so any public page could try it. Now every
+  connection leaves through the executor's egress proxy and is made at the address the check validated ("One way
+  out", above), and WebRTC can no longer send UDP around it. Proof: `core/test/browser-executor.test.mjs` drives
+  real Chromium with a test-only resolver (`core/test/helpers/browser-rebinding-dns.mjs`) whose names answer a
+  documentation-range address first and a second loopback address afterwards, beside a LAN stand-in listening
+  on that address.
+  Before the fix the navigation, a subresource fetch, a redirect hop and a page's fetch between tasks all read
+  the LAN stand-in, and a page's STUN request delivered UDP to a loopback port; after it the first three are
+  served from the validated address, the fourth (no task cache) is refused by the proxy's own single lookup,
+  and no UDP arrives. `core/test/browser-egress.test.mjs` covers the proxy without a browser.
+- **N2R-2, the actor kind (minor).** The turn executor derived the actor's kind from `allow_browser`, so the
+  actor-kind check could never refuse a browser turn. The submit now records the broker-injected actor's kind
+  (`actor_kind`) on the durable turn and the executor reads it from there. Proof:
+  `core/test/resident-ai-turn.test.mjs`: a stored turn with `allow_browser: true` and a member actor kind, or
+  none, is refused with `BROWSER_OWNER_REQUIRED` before any inference (before the fix both reached inference).
+- **N2R-3, owned-only admission (minor).** Admission trusted `labels.trust`, which a node sends and could rewrite
+  on every heartbeat. The trust is now recorded at enrolment (`labels.enrolled_trust`, gated by the owner's
+  token), a heartbeat keeps `trust`, `role` and that record unchanged, and the same rule now governs the claim,
+  so a node not enrolled as owned cannot take a queued `browser.act` task. Proof:
+  `core/test/compute-gateway-trust.test.mjs` runs the real gateway process against a fake Supabase REST endpoint
+  with signed node requests (before the fix a heartbeat raised a partner node to owned and that node's claim
+  included `browser.act`); `core/test/compute-tool-liveness.test.mjs` refuses a node that only asserts
+  `labels.trust: owned`. Consequence for the owner: a node enrolled before these rules has no `enrolled_trust`
+  and offers no `browser.act` until it enrols again with a fresh enrolment token.
+
 ## What is verified, and what is not
 
 - Verified in the build container (this lane): `node --test scripts/test/node-manifests.test.mjs` (the template
@@ -214,6 +276,18 @@ and the subdomain rule, never the hosts themselves), and what the executor answe
 - Verified by lane C1 in its own run, not here: the executor against real Chromium and a loopback fixture
   (`core/test/browser-executor.test.mjs`), the policy and action modules, the agent loop and the turn
   executor, the images module and the body arithmetic.
+- Verified by the review-fix run (2026-11-18, build container, Linux): `cd core && npm test` (every core test,
+  the real-Chromium executor tests included, none skipped), `npm run check`, `npm run test:browser` (real
+  Chromium through Playwright 1.63.0 from the checkout root, one browser at a time), the full root suite
+  `node --test scripts/test/*.test.mjs` (its only skips are environmental: no PowerShell, no PGlite, no PRIM3
+  checkout, no built floor models) and `node scripts/control-plane-drift-contract-check.mjs`. Each finding's
+  failing run before its fix and passing run after it are in the fix report.
+- **Not verified anywhere yet** (review fixes): HTTPS through the egress proxy against a real site (the fixture
+  is plain http on loopback, so the tunnels here carried plain http; TLS inside a tunnel did not run); WebRTC
+  through a TURN server over the proxy (only the refusal of direct UDP ran); the claim filter against the
+  production `compute_claim_task` SQL (the gateway's claim payload is proven against a fake REST endpoint; that
+  the SQL claims only the capabilities it is given is read from the applied migration, not executed here); the
+  egress proxy on Windows.
 - **Not verified anywhere yet**: the doctor on Windows (`core/windows/tests/mccluster-node.tests.ps1` has not
   run on the laptop; no PowerShell exists in the build container, so every claim about `-Browser`,
   `-BrowserHeaded` and the report block on Windows is unverified until the owner runs those tests and pastes
