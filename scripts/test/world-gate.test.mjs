@@ -159,6 +159,29 @@ test('the stylesheet keeps the law: mobile first, minmax(0, 1fr), 16 px controls
     const body = all.filter((r) => r.head === '#mnSignedOut ' + part).map((r) => r.body).join(';');
     assert.match(body, /background: (var\(--wg-chip\)|rgba\()/, 'a plate under ' + part);
   }
+  /* the stage's controls (verification, 2026-11-18): the source line of a card is cut along its length only, so the link in
+     it keeps its 44 px target; the credit's links have their 44 px inside the stage; the focus marks of the cards and the
+     credit are drawn inside their own plates (a row that cuts what leaves it cannot cut them, and the Earth is never their
+     ground) */
+  const sourceLine = all.filter((r) => r.head === '#mnSignedOut .wg-card__s' && r.at.some((a) => /^@supports \(overflow: clip\)/.test(a))).map((r) => r.body).join(';');
+  assert.match(sourceLine, /overflow: visible; overflow-x: clip/, 'the source line: no cut above or below');
+  assert.match(all.filter((r) => r.head === '#mnSignedOut .wg-credit a').map((r) => r.body).join(';'), /padding: 13px 0 17px; margin: -13px 0 -17px/);
+  assert.match(all.filter((r) => r.head === '#mnSignedOut .wg-credit' && !r.at.length).map((r) => r.body).join(';'), /margin: 10px 16px 0/);
+  assert.match(all.filter((r) => r.head === '#mnSignedOut .wg-stage .wg-card__go:focus-visible').map((r) => r.body).join(';'), /outline: 2px solid var\(--wg-gold\); outline-offset: -5px/, 'the mission card: a line inside its own edge');
+  for (const head of ['#mnSignedOut .wg-stage .wg-card__s a:focus-visible', '#mnSignedOut .wg-stage .wg-credit a:focus-visible']) {
+    const body = all.filter((r) => r.head === head).map((r) => r.body).join(';');
+    assert.match(body, /outline: 0/, head); assert.match(body, /background-clip: content-box/, head); assert.match(body, /text-decoration: none/, head);
+  }
+  /* the floating card (700 px and up) on a short screen: it stops under the way back and the crest, and the stage's lower
+     third shows only what has room above the card (the stage's own height decides) */
+  const card = all.filter((r) => r.head === '#mnSignedOut .wg-sheet' && r.at.length === 1 && /min-width: 700px\)$/.test(r.at[0])).map((r) => r.body).join(';');
+  assert.match(card, /max-height: calc\(var\(--wg-vvh, 100vh\) - 100px - var\(--wg-safe-bottom, 0px\)\)/, 'the card keeps 68 px for the way back over its 32 px margin');
+  const gated = (head) => all.filter((r) => r.head === head && r.at.length === 2 && /min-width: 700px\)$/.test(r.at[0]) && /^@container/.test(r.at[1]) && /display: (flex|block)/.test(r.body)).map((r) => Number(/min-height: (\d+)px/.exec(r.at[1])[1]));
+  assert.deepEqual(gated('#mnSignedOut .wg-credit'), [104]);
+  assert.deepEqual(gated('#mnSignedOut .wg-pulse'), [246]);
+  assert.deepEqual(gated('#mnSignedOut .wg-dateline:not([hidden])'), [290]);
+  assert.ok(all.some((r) => r.head === '#mnSignedOut .wg-pulse, #mnSignedOut .wg-credit' && r.at.length === 1 && /min-width: 700px\)$/.test(r.at[0]) && /display: none/.test(r.body)), 'hidden from 700 px until the stage has the room');
+  assert.ok(!all.some((r) => r.head === '#mnSignedOut .wg-dateline:not([hidden])' && r.at.length === 1 && /display: block/.test(r.body)), 'the dateline is never shown without its room');
   /* the World's own overlays sleep under the door; only the globe frame stays */
   assert.ok(all.some((r) => r.head === 'html.mn-door-open #mnWorld > :not(.mn__world-frame)' && /visibility: hidden/.test(r.body)));
   /* day values for every token */
@@ -554,19 +577,38 @@ test('a re-open during the 220 ms exit cancels the hide; reduced motion hides at
   assert.equal(b.door.hidden, true, 'reduced motion: hidden at once');
 });
 
-test('the visual viewport sizes the door, and the privacy banner reserves its height at the bottom', async () => {
+test('the visual viewport sizes the door; the privacy banner keeps its room only where it reaches into the door', async () => {
   const b = boot({ vv: { height: 500, offsetTop: 40 } });
   b.open();
   assert.equal(b.door.style.getPropertyValue('--wg-vvh'), '500px');
   assert.equal(b.door.style.getPropertyValue('--wg-vvtop'), '40px');
-  b.ctx.visualViewport.height = 420; b.ctx.visualViewport.offsetTop = 0; b.vvListeners.resize();
-  assert.equal(b.door.style.getPropertyValue('--wg-vvh'), '420px');
-  assert.equal(b.door.style.getPropertyValue('--wg-safe-bottom'), String(136 + 8 + 8) + 'px', 'the banner\'s height, its bottom offset and 8 px');
-  assert.equal(b.door.hasAttribute('data-banner'), true, 'the door knows the notice is waiting');
   assert.equal(b.door.style.getPropertyValue('--wg-head'), '69px');
   assert.equal(b.door.style.getPropertyValue('--wg-veil-top'), '299px');
+  const vv = (height, offsetTop) => { b.ctx.visualViewport.height = height; b.ctx.visualViewport.offsetTop = offsetTop; b.vvListeners.resize(); };
+  const safe = () => b.door.style.getPropertyValue('--wg-safe-bottom');
+  /* at rest the door reaches the foot of the screen (844): the banner (700 to 836, fixed to the layout viewport) lies
+     inside it, and the door keeps the banner's height, its 8 px from the foot and 8 px more */
+  vv(844, 0);
+  assert.equal(b.door.style.getPropertyValue('--wg-vvh'), '844px');
+  assert.equal(safe(), String(136 + 8 + 8) + 'px', 'the banner\'s height, its bottom offset and 8 px');
+  assert.equal(b.door.hasAttribute('data-banner'), true, 'the door knows the notice is waiting');
+  /* the phone's keyboard is up: the visual viewport, and the door with it, ends at 420; the banner stays where it was, under
+     the keyboard and below the door's foot. The door keeps no room for a notice that is not in it (it kept 152 px of
+     nothing above the keyboard, and left the form a 184 px window) */
+  vv(420, 0);
+  assert.equal(b.door.style.getPropertyValue('--wg-vvh'), '420px');
+  assert.equal(safe(), '0px', 'nothing kept for a banner under the keyboard');
+  assert.equal(b.door.hasAttribute('data-banner'), false);
+  /* a visual viewport that reaches part of the way into the banner (scrolled down under a short keyboard: 240 to 740) keeps
+     only what it overlaps */
+  vv(500, 240);
+  assert.equal(safe(), String(740 - 700 + 8) + 'px', 'only the part of the banner inside the door, and 8 px');
+  assert.equal(b.door.hasAttribute('data-banner'), true);
+  /* the keyboard goes down: the banner's room comes back */
+  vv(844, 0);
+  assert.equal(safe(), '152px');
   b.banner.parentNode.removeChild(b.banner); await tick();
-  assert.equal(b.door.style.getPropertyValue('--wg-safe-bottom'), '0px', 'the banner gone: the full height comes back');
+  assert.equal(safe(), '0px', 'the banner gone: the full height comes back');
   assert.equal(b.door.hasAttribute('data-banner'), false);
 });
 
@@ -585,14 +627,19 @@ test('the pulse\'s words come from the reads, singular and plural, 500+, and not
   const mine = f.missionCard([tree, ride], 'mission', ride.id);
   assert.equal(mine.kicker, 'Your mission'); assert.equal(mine.value, 'Give someone a free ride'); assert.equal(mine.button, false);
   assert.equal(f.missionCard([tree, ride], 'people', ride.id).kicker, 'Open now · 2 missions', 'only a mission Join reads as yours');
-  assert.deepEqual(f.newsCard({ ok: true, countries: { US: 2, BR: 2, KE: 2 }, attribution: { url: 'https://www.gdeltproject.org/' } }), { kicker: 'Last 24 hours', value: 'News from 3 countries', source: 'The GDELT Project', href: 'https://www.gdeltproject.org/' });
+  assert.deepEqual(f.newsCard({ ok: true, window_hours: 24, countries: { US: 2, BR: 2, KE: 2 }, attribution: { url: 'https://www.gdeltproject.org/' } }), { kicker: 'Last 24 hours', value: 'News from 3 countries', source: 'The GDELT Project', href: 'https://www.gdeltproject.org/' });
   /* a capped read (the API reads at most 15,000 stories) counts a floor, so it says so (review DR-m6) */
   const many = {}; for (let k = 0; k < 183; k++) many['C' + k] = 3;
-  assert.equal(f.newsCard({ ok: true, countries: many, total: 12296, capped: true }).value, 'News from 183+ countries');
-  assert.equal(f.newsCard({ ok: true, countries: many, total: 12296, capped: false }).value, 'News from 183 countries');
-  assert.equal(f.newsCard({ ok: true, countries: { US: 1 }, capped: true }).value, 'News from 1+ countries');
-  assert.equal(f.newsCard({ countries: { US: 1 } }).value, 'News from 1 country');
-  assert.equal(f.newsCard({ countries: { US: 1 }, attribution: { url: 'javascript:alert(1)' } }).href, 'https://www.gdeltproject.org/');
+  assert.equal(f.newsCard({ ok: true, window_hours: 24, countries: many, total: 12296, capped: true }).value, 'News from 183+ countries');
+  assert.equal(f.newsCard({ ok: true, window_hours: 24, countries: many, total: 12296, capped: false }).value, 'News from 183 countries');
+  assert.equal(f.newsCard({ ok: true, window_hours: 24, countries: { US: 1 }, capped: true }).value, 'News from 1+ countries');
+  assert.equal(f.newsCard({ window_hours: 24, countries: { US: 1 } }).value, 'News from 1 country');
+  /* the hours are the answer's own (window_hours, 24 in production): another window is quoted as it is, and an answer that
+     does not say what window it counted gets no card: the door never states a window it was not told */
+  assert.equal(f.newsCard({ window_hours: 48, countries: { US: 1 } }).kicker, 'Last 48 hours');
+  assert.equal(f.newsCard({ window_hours: 1, countries: { US: 1 } }).kicker, 'Last hour');
+  for (const untold of [{ countries: { US: 1 } }, { window_hours: 0, countries: { US: 1 } }, { window_hours: '24', countries: { US: 1 } }, { window_hours: -24, countries: { US: 1 } }, { window_hours: null, countries: { US: 1 } }]) assert.equal(f.newsCard(untold), null, JSON.stringify(untold));
+  assert.equal(f.newsCard({ window_hours: 24, countries: { US: 1 }, attribution: { url: 'javascript:alert(1)' } }).href, 'https://www.gdeltproject.org/');
   assert.equal(f.newsCard({ unavailable: true, countries: { US: 2 } }), null);
   assert.equal(f.newsCard({}), null);
   assert.equal(f.newsCard({ countries: { US: 0 } }), null);
@@ -603,7 +650,7 @@ test('the pulse\'s words come from the reads, singular and plural, 500+, and not
   assert.equal(f.recordCard({ ...archive, participants: [] }), null);
   assert.equal(f.recordCard({ ...archive, works: [] }).source, '10 participants · Bridgeport, CT · Oct 5, 2025');
   /* no number is ever invented: the totals of the reads never appear */
-  assert.doesNotMatch(JSON.stringify(f.newsCard({ countries: { US: 2 }, total: 12296, capped: true })), /12/);
+  assert.doesNotMatch(JSON.stringify(f.newsCard({ window_hours: 24, countries: { US: 2 }, total: 12296, capped: true })), /12/);
 });
 
 test('the reads: each card fills from its own answer, a 503 hides only its card, the record falls back to the static file', async () => {

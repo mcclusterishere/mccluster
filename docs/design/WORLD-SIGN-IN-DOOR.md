@@ -52,7 +52,7 @@ empty, hides only its own card. Nothing is invented: no zero, no placeholder, no
 | Card | Source | Words |
 | --- | --- | --- |
 | Missions | the World's own open-missions read (`loadOpenMissions` in `js/mnet.js`: `action_missions?status=eq.open`, the anonymous key), cleaned by `js/world-mission-posts.js` | "Open now" while there is one open mission, "Open now · N missions" from two, "Open now · 500+ missions" at the read's limit; the newest title; its field and points ("Mutual aid · 100 points"). The card is a button that closes the door and opens that mission. After a mission's Join it reads "Your mission" and is not a button |
-| News | `GET https://api.mccluster.org/v1/world/news-heat` | "Last 24 hours", "News from N countries" (countries with a story), "News from N+ countries" when the answer says its read was capped (the API reads at most 15,000 stories, so a country whose stories all lie past the cap is not counted: the number is a floor); "The GDELT Project", linked. The capped story total is never shown |
+| News | `GET https://api.mccluster.org/v1/world/news-heat` | "Last 24 hours" (the hours are the answer's own `window_hours`, 24 today; an answer that does not say what window it counted gets no card), "News from N countries" (countries with a story), "News from N+ countries" when the answer says its read was capped (the API reads at most 15,000 stories, so a country whose stories all lie past the cap is not counted: the number is a floor); "The GDELT Project", linked. The capped story total is never shown |
 | Record | `GET https://api.mccluster.org/v1/action-archive/docket-516r-2025`, else `data/action/docket-516r-archive.json` | "On the record", "Docket 516R · Write the Change", "10 participants · 9 songs · Bridgeport, CT · Oct 5, 2025": counts only, no name, no photograph, no link |
 | Dateline (700 px and up) | the visitor's own clock | "Today in the World · <their date>", shown when a card is |
 | Credit | the globe frame's own credit line, copied as text and links (`#mnWorldFrame` `.osm-credit.is-editorial`) | else "NASA imagery · Natural Earth · © OpenStreetMap", the World's words |
@@ -99,7 +99,10 @@ mission: ". On a phone the way back reads "← Back" (the World's "← Back to t
   below it), and the larger type (38 px headline, 64 px fields) is kept for screens 900 px and taller.
 - **The privacy banner** (banner mode on the first visit, owner 2026-11-17): the door reserves its height at the bottom
   and, while it waits, the sheet keeps a tighter hand (`data-banner`), so Create account's box and action are in view at
-  rest above the banner at 390 x 844 and 1280 x 800; the banner is never covered, never inert and reachable by Tab.
+  rest above the banner at 390 x 844 and 1280 x 800; the banner is never covered, never inert and reachable by Tab. The
+  room kept is what of the banner lies inside the door's own box: with a phone's keyboard up the door follows the visual
+  viewport and the banner, fixed to the foot of the layout viewport, is under the keyboard, so the door keeps nothing for
+  it and the form has the whole of what is left of the screen; the room comes back when the keyboard goes down.
 
 ## The law it keeps
 
@@ -159,6 +162,9 @@ mission: ". On a phone the way back reads "← Back" (the World's "← Back to t
   Escape, Show / Hide, the live rules, busy, the doors by keyboard and what describes the password, the re-open race, the
   visual viewport and the banner flag, the pulse's words and reads with a capped read, the faces on intent, the focus on a
   touch screen, the action's need and the scrolled flag).
+- `scripts/test/retired-tagline.test.mjs` (in `npm test`): reads `mnet.html` whole, the door included (the exception it
+  kept for the old sign-in panel ended when the door replaced it, and is removed), and refuses the tagline anywhere on the
+  World.
 - `scripts/e2e/sign-in.e2e.mjs`: every flow with the auth client wrapped so each call and its arguments are recorded, and
   each request body recorded too, at 390 x 844, 820 x 1180 and 1280 x 800, by night and by day.
 - `scripts/e2e/world-gate.e2e.mjs`: the screenshot set below and the acceptance checks; `results.json` keeps per frame the
@@ -171,7 +177,9 @@ mission: ". On a phone the way back reads "← Back" (the World's "← Back to t
   accessibility tree says (names as written, the password's description by door, Show without a pressed state), the faces
   fetched only on intent, a touch screen's focus and a keyboard-sized visual viewport, the way back from a mission's Join,
   only the scrim and the sheet moving on the way in, no slash and one centred measure for the onboarding pages at 1280,
-  and 320's doors and Forgot line on one line.
+  and 320's doors and Forgot line on one line. From the verification: every control's real target (the run of points a
+  tap lands on, not its box) in each grid frame, the stage's focus marks from pixels, the keyboard with the privacy notice
+  waiting, and the news card's hours from the answer.
 - Both browser suites stand on `scripts/e2e/support/world-gate-harness.mjs`: the checkout served as it ships, a fake
   `api.mccluster.org` and Supabase in memory, the globe's Cesium from `CESIUM_DIR` when it is set (aborted otherwise), and
   the privacy notice acknowledged except where a scenario is about the banner.
@@ -220,6 +228,27 @@ edited: add the paths `css/world-gate.css`, `js/world-gate.js`, `scripts/e2e/wor
 12. Please confirm the Supabase Site URL, and that `https://mccluster.org/**` is in Redirect URLs, so a confirmation email
     sent from `mccluster.org` lands back there.
 
+## Verification fixes (2026-11-18)
+
+Found by the verification of the door at `9e83fa17` (after the review fixes below), each with a test that fails without it:
+
+| Finding | What changed | Proof |
+| --- | --- | --- |
+| A first visit on a phone, the keyboard up: the door kept the privacy banner's 219 px as empty space above the keyboard (the banner itself is under the keyboard) and left the form a 183 px window | `js/world-gate.js` keeps only what of the banner lies inside the door's own box, and measures again when the visual viewport changes | unit (the visual viewport and the banner) and e2e touch scenario, with a stand-in visual viewport |
+| "Last 24 hours" was a constant, not a read | the hours come from the answer's own `window_hours`; no stated window, no card | unit (the pulse's words) and e2e pulse scenario |
+| The news card's link could be tapped across 18 px only (the card's source line cut it), the credit's links across 37 px (the sheet, or the screen's edge, lay over the rest); the suite measured boxes, not targets | the source line is cut along its length only; the credit's links have their 44 px inside the stage | e2e: every control's real target in each grid frame; unit (stylesheet) |
+| The stage's focus marks: the mission card's line was half cut from 700 px and read under 3:1 against the Earth on a phone; the news link's line was all but cut at every width | each mark is drawn inside its own plate: a line inside the mission card's edge, a link's words on a solid ground | e2e focus scenario: the stage's focus marks from pixels at 390, 820 and 1280, by night and by day; unit (stylesheet) |
+| The floating card (700 to 1099 px) on a short screen: on a tablet on its side (1024 x 768) the card lay over half of the cards and all of the credit in Sign in, and over the crest in Create account; upright (768 x 1024) over the credit in Create account; in a 900 x 700 window over the Back pill too. Only 820 x 1180 was measured | the card stops under the way back and the crest (68 px); the stage's lower third shows what has room above the card (the credit from 104 px of stage, the row of cards from 246, the dateline from 290) and nothing runs under the card | e2e short scenario at 1024 x 768, 768 x 1024 and 1000 x 650, both doors; unit (stylesheet) |
+| The tagline guard still carried the exception for the old sign-in panel: the old panel put back byte for byte passed it | the exception and its pinned hash are removed; `mnet.html` is read whole | `scripts/test/retired-tagline.test.mjs` |
+
+Recorded, not changed: at 390 x 844 the Sign in sheet starts at 308 px (the judge's target was 150 to 260, set before the
+review moved the pulse onto the phone's stage and made the sheet as tall as what it holds); in the emailed state Resend is
+drawn above the fields but follows the action in the Tab order (the spec's CSS order); a mission whose points are not set
+reads "0 points", as it does in the World's feed (`js/world-mission-posts.js`); on a tablet on its side the stage is too
+short for the row of cards, so Sign in shows the way back, the crest and the credit there, and no pulse; with the privacy
+banner still waiting, the action needs a scroll inside the sheet at 320 x 640 (both doors) and in Create account at
+1024 x 768 (the fade says there is more): only 390 x 844 and 1280 x 800 were asked to hold it at rest.
+
 ## Review fixes (2026-11-18)
 
 The review of the door at `31e55c9b` (findings DR-M1 to DR-m11) and what changed:
@@ -242,6 +271,6 @@ The review of the door at `31e55c9b` (findings DR-M1 to DR-m11) and what changed
 | DR-m11 the keyboard rose over the sheet on open | the door, not the email, takes the focus on a touch screen; the focused field is kept in view when the visual viewport shrinks | unit and e2e touch scenario |
 
 The render-blocking stylesheet stays: the World already blocks on its own styles (`css/style.css` 412 KB and
-`css/mnet.css` 140 KB before compression), the door's 10 KB compressed is what lets `?signin=1` paint the door whole in its
+`css/mnet.css` 140 KB before compression), the door's 53 KB (13 KB compressed) is what lets `?signin=1` paint the door whole in its
 first frame and keeps the members' onboarding pages in their skin, and loading it late would bring back the old gate's look
 for a frame.

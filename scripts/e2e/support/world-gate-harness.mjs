@@ -54,6 +54,9 @@ export function heat(kind) {
   if (kind === 'unavailable') return { ok: true, unavailable: true, countries: {} };
   if (kind === 'empty') return {};
   if (kind === 'single') return { ok: true, window_hours: 24, countries: { US: 1 }, total: 1, capped: false };
+  /* an answer that counted another window, and one that does not say what window it counted */
+  if (kind === 'two-days') return { ok: true, window_hours: 48, countries: { US: 2, BR: 1 }, total: 3, capped: false };
+  if (kind === 'untold') return { ok: true, countries: { US: 2, BR: 1 }, total: 3, capped: false };
   if (kind === 'three') return { ok: true, window_hours: 24, countries: { US: 2, BR: 2, KE: 2 }, total: 6, capped: false, attribution: { name: 'The GDELT Project', url: 'https://www.gdeltproject.org/' } };
   /* production on 2026-11-18: 183 countries, 12,296 stories, capped */
   const countries = {};

@@ -152,15 +152,20 @@ html[data-daylight="day"] #mnSignedOut .wg-scrim {
 #mnSignedOut .wg-card__v { grid-area: v; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--wg-ink); font: 800 14.5px/1.3 var(--wg-ui); }
 #mnSignedOut .wg-card__k { grid-area: k; white-space: nowrap; color: var(--wg-gold); font: 800 11px/1.4 var(--wg-ui); letter-spacing: 0.12em; text-transform: uppercase; }
 #mnSignedOut .wg-card__s { grid-area: s; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--wg-dim); font: 600 12px/1.4 var(--wg-ui); }
+/* the source line is cut along its length only (an ellipsis), never above or below it: overflow: hidden cut the link in it
+   down to the line's own 17 px, a third of its 44 px target */
+@supports (overflow: clip) { #mnSignedOut .wg-card__s { overflow: visible; overflow-x: clip; } }
 #mnSignedOut .wg-card__s::before { content: "\00a0\00b7\00a0"; }
 #mnSignedOut .wg-card__pre { display: none; }
 #mnSignedOut .wg-card__s a { color: inherit; text-decoration: underline; text-decoration-color: var(--wg-gold-line); text-underline-offset: 3px; padding: 14px 0; margin: -14px 0; }
 #mnSignedOut .wg-credit {
-  display: none; align-self: flex-start; max-width: calc(100% - 32px); margin: 6px 16px 0; padding: 3px 8px; border-radius: 6px;
+  display: none; align-self: flex-start; max-width: calc(100% - 32px); margin: 10px 16px 0; padding: 3px 8px; border-radius: 6px;
   background: rgba(4, 6, 9, 0.78); color: #b9bfc6; font: 600 11px/1.35 var(--wg-ui); pointer-events: auto; overflow-wrap: anywhere;
 }
 @container (min-height: 80px) { #mnSignedOut .wg-credit { display: block; } }
-#mnSignedOut .wg-credit a { color: inherit; text-decoration: underline; text-underline-offset: 2px; padding: 4px 0 26px; margin: -4px 0 -26px; }
+/* each link's target is 44 px tall and all of it can be tapped: 13 px up to the card above, 17 px down to the stage's foot
+   (26 px down ran under the sheet, or off the screen, and left 37 px) */
+#mnSignedOut .wg-credit a { color: inherit; text-decoration: underline; text-underline-offset: 2px; padding: 13px 0 17px; margin: -13px 0 -17px; }
 
 /* the World's own words and controls over the Earth (its headline, the corner stack, the tags, the filters, the place
    card) sleep under the door, so the stage holds only the Earth and the door's own parts; they are back when it closes */
@@ -445,6 +450,17 @@ html.mn-door-open body.has-appbar #mccPrivacyNotice { bottom: calc(8px + env(saf
 #mnSignedOut :is(button, a, input[type="checkbox"]):focus-visible { outline: 2px solid var(--wg-gold); outline-offset: 2px; }
 #mnSignedOut .mn__check input:focus-visible { outline-offset: -7px; }
 #mnSignedOut .wg-stage :is(button, a):focus-visible { outline: 2px solid #e8c877; outline-offset: 2px; }
+/* the cards and the credit lie over the Earth, which can be any colour, in rows that cut what leaves them (the mission
+   card's line was half cut from 700 px and read 1.9:1 against the Earth on a phone; the news link's line was all but cut
+   at every width). Their focus mark is drawn inside their own plate: a line inside the mission card's edge in the phase's
+   gold, and a link's own words set on a solid ground, so it is whole at every width and never measured against the Earth */
+#mnSignedOut .wg-stage .wg-card__go:focus-visible { outline: 2px solid var(--wg-gold); outline-offset: -5px; }
+#mnSignedOut .wg-stage .wg-card__s a:focus-visible {
+  outline: 0; border-radius: 3px; background: var(--wg-ink); background-clip: content-box; color: var(--wg-sheet-top); text-decoration: none;
+}
+#mnSignedOut .wg-stage .wg-credit a:focus-visible {
+  outline: 0; border-radius: 3px; background: #e8c877; background-clip: content-box; color: #0b0c0e; text-decoration: none;
+}
 #mnSignedOut .wg-field .mn__input:focus-visible { outline: 0; }
 
 /* ============================================================
@@ -533,7 +549,9 @@ html[data-daylight="day"] #mnProfileGate.mn__onboard::before { background: #ffff
     outline: 1px solid var(--wg-hairline); outline-offset: -7px;
     background: var(--wg-sheet-glow), var(--wg-sheet);
     box-shadow: 0 40px 90px -30px rgba(0, 0, 0, 0.85);
-    max-height: calc(var(--wg-vvh, 100vh) - 72px - var(--wg-safe-bottom, 0px));
+    /* never over the way back and the crest (68 px), on a tablet on its side or in a short window too: with 72 px kept the
+       card's top came to 40 px and lay 16 px over the Back pill and 20 px over the crest */
+    max-height: calc(var(--wg-vvh, 100vh) - 100px - var(--wg-safe-bottom, 0px));
   }
   #mnSignedOut .wg-sheet[data-scrolled]::before { top: -24px; margin: -24px -40px -6px; }
   #mnSignedOut .wg-sheet[data-more]::after { margin: -34px -40px -22px; bottom: -22px; }
@@ -554,7 +572,7 @@ html[data-daylight="day"] #mnProfileGate.mn__onboard::before { background: #ffff
   }
   /* the dateline rides on its own plate, as the cards do: the Earth under it can be any colour */
   #mnSignedOut .wg-dateline:not([hidden]) {
-    display: block; width: fit-content; max-width: calc(100% - 48px); margin: 0 auto 10px; padding: 5px 14px 6px;
+    width: fit-content; max-width: calc(100% - 48px); margin: 0 auto 10px; padding: 5px 14px 6px;
     border-radius: 999px; background: var(--wg-chip); box-shadow: inset 0 0 0 1px var(--wg-chip-line); text-align: center;
   }
   #mnSignedOut .wg-dateline__k { color: var(--wg-gold); font: 800 11px/1.4 var(--wg-ui); letter-spacing: 0.2em; text-transform: uppercase; }
@@ -575,8 +593,15 @@ html[data-daylight="day"] #mnProfileGate.mn__onboard::before { background: #ffff
   #mnSignedOut .wg-credit { align-self: center; margin-top: 10px; }
   #mnProfileGate .mn__onboard-h { font-size: clamp(2.75rem, 5.6vw, 3.25rem); }
 }
+/* the lower third shows what the stage has room for above the card, and nothing runs under the card (on a tablet on its
+   side, 1024 x 768, the card lay over half of the cards and all of the credit; upright, 768 x 1024, over the credit in
+   Create account). The stage's own height decides: the credit from 104 px (the way back, 24 px and the credit), the row of
+   cards from 246 (242 px with every card's words on two lines), the dateline over them from 290 */
 @media (min-width: 700px) {
-  @container (min-height: 170px) { #mnSignedOut .wg-pulse { display: flex; justify-content: safe center; } }
+  #mnSignedOut .wg-pulse, #mnSignedOut .wg-credit { display: none; }
+  @container (min-height: 104px) { #mnSignedOut .wg-credit { display: block; } }
+  @container (min-height: 246px) { #mnSignedOut .wg-pulse { display: flex; justify-content: safe center; } }
+  @container (min-height: 290px) { #mnSignedOut .wg-dateline:not([hidden]) { display: block; } }
 }
 
 /* ============================================================

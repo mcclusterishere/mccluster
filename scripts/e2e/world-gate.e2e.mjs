@@ -19,7 +19,11 @@
    - the review of 2026-11-18 (DR-M1..DR-m11): the action wholly in view at rest, above the fade, with the privacy notice up
      and on a laptop; the open mission on the phone's stage; the crest on the stage's dark band; the World's own credit,
      legend and feed asleep under the veil; the names a reader hears; the faces fetched only on intent; a touch screen's
-     keyboard not raised by the door; Back from a mission's Join back in the mission.
+     keyboard not raised by the door; Back from a mission's Join back in the mission;
+   - the verification of 2026-11-18: with the privacy notice waiting and a phone's keyboard up, no room kept for a notice
+     that is under the keyboard; the news card's hours from the answer itself; every control's real target (where a tap
+     lands, not its box); the stage's focus marks whole and inside their own plates; the floating card clear of the stage
+     on a short screen (1024 x 768, 768 x 1024, 1000 x 650).
      CESIUM_DIR=/path/to/Build/Cesium node scripts/e2e/world-gate.e2e.mjs [outDir]
    Needs Playwright (PLAYWRIGHT_DIR if not resolvable). Every PNG of the set and results.json land in outDir. */
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -59,6 +63,59 @@ async function actionAtRest(page, sel = '#mnAuthGo') {
 }
 /* the cards the phone's stage shows, in order */
 const stageCards = (page) => page.evaluate(() => [...document.querySelectorAll('#wgPulse > .wg-card')].filter((c) => !c.hidden && c.getClientRects().length && getComputedStyle(c).display !== 'none').map((c) => c.id));
+/* where a tap really lands on each control: the run of points through its centre that hit it, across and down. A control's
+   box can be 44 px and its target a third of that, when a row it sits in cuts what leaves it, or the sheet lies over it
+   (the news link was 18 px tall this way, the credit's links 37) */
+const trueTargets = (page) => page.evaluate(async () => {
+  const door = document.getElementById('mnSignedOut'), small = [];
+  for (const e of [...door.querySelectorAll('button, a[href], input:not([type=hidden])')].filter((x) => x.getClientRects().length && getComputedStyle(x).visibility !== 'hidden')) {
+    e.scrollIntoView({ block: 'center' });
+    await new Promise((r) => requestAnimationFrame(r));
+    const r = e.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    const mine = (x, y) => { if (x < 0 || y < 0 || x >= innerWidth || y >= innerHeight) return false; const h = document.elementFromPoint(x, y); return !!h && (h === e || e.contains(h) || (e.tagName === 'INPUT' && !!h.closest('label') && h.closest('label').contains(e))); };
+    let up = 0, down = 0, left = 0, right = 0;
+    const hit = mine(cx, cy);
+    if (hit) { while (up < 60 && mine(cx, cy - up - 1)) up++; while (down < 60 && mine(cx, cy + down + 1)) down++; while (left < 60 && mine(cx - left - 1, cy)) left++; while (right < 60 && mine(cx + right + 1, cy)) right++; }
+    const w = hit ? left + right + 1 : 0, h = hit ? up + down + 1 : 0;
+    if (w < 44 || h < 44) small.push({ el: e.id || e.textContent.trim().slice(0, 24), w, h, box: [Math.round(r.width), Math.round(r.height)] });
+  }
+  document.getElementById('wgSheet').scrollTop = 0;
+  return small;
+});
+/* a stage control's focus mark, from pixels: what changes by 3:1 or more inside the control's own box when the keyboard's
+   focus lands on it (5 px around the Back pill, which sits on the solid band), as a share of a 2 px line around the control
+   (WCAG 2.2, 2.4.13). Nothing outside a control's own plate is counted: the Earth turns between the two pictures, and a
+   mark drawn out there can be cut by the row or lost against the Earth (the mission card's line was, and the news link's). */
+async function focusMark(page, sel) {
+  const box = await page.evaluate((sel) => {
+    const e = document.querySelector(sel);
+    if (!e || !e.getClientRects().length) return null;
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    const r = e.getBoundingClientRect(), pad = e.id === 'mnSignedOutBack' ? 5 : 0;
+    return { x: Math.max(0, r.left - pad), y: Math.max(0, r.top - pad), width: r.width + 2 * pad, height: r.height + 2 * pad, w: r.width, h: r.height };
+  }, sel);
+  if (!box) return null;
+  const clip = { x: box.x, y: box.y, width: box.width, height: box.height };
+  await page.waitForTimeout(300);
+  const before = await page.screenshot({ clip, timeout: 90000 });
+  /* a key first, so the browser treats the focus that follows as the keyboard's (:focus-visible) */
+  await page.keyboard.press('Shift');
+  const fv = await page.evaluate((sel) => { const e = document.querySelector(sel); e.focus({ preventScroll: true }); return e.matches(':focus-visible'); }, sel);
+  await page.waitForTimeout(350);
+  const after = await page.screenshot({ clip, timeout: 90000 });
+  const changed = await page.evaluate(async ([a, b]) => {
+    const load = async (b64) => { const img = new Image(); img.src = 'data:image/png;base64,' + b64; await img.decode(); const c = new OffscreenCanvas(img.width, img.height), g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(img, 0, 0); return { d: g.getImageData(0, 0, img.width, img.height).data, n: img.width * img.height }; };
+    const A = await load(a), B = await load(b);
+    const lin = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }, L = (d, i) => 0.2126 * lin(d[i]) + 0.7152 * lin(d[i + 1]) + 0.0722 * lin(d[i + 2]);
+    let count = 0;
+    for (let i = 0; i < Math.min(A.d.length, B.d.length); i += 4) { const l1 = L(A.d, i), l2 = L(B.d, i); if ((Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05) >= 3) count++; }
+    return { count, pixels: A.n };
+  }, [before.toString('base64'), after.toString('base64')]);
+  /* device pixels to CSS px: the picture holds clip.width x clip.height CSS px */
+  const area = changed.count * (clip.width * clip.height) / changed.pixels;
+  await page.evaluate(() => document.activeElement && document.activeElement.blur && document.activeElement.blur());
+  return { sel, fv, share: Math.round((area / (2 * 2 * (box.w + box.h))) * 100) / 100 };
+}
 /* the brightest pixel in a strip of the page, 0-255 luminance (a pale seam, a peeking feed) */
 async function brightest(page, clip) {
   const png = await page.screenshot({ clip, timeout: 90000 });
@@ -221,7 +278,7 @@ try {
       const reads = world.requests.filter((r) => r.frame === 'main' && /news-heat|action-archive|docket-516r/.test(r.p));
       check(name, 'opening reads only news-heat and the record, once each', reads.length === 2 && reads.some((r) => r.p === '/v1/world/news-heat' && !r.q) && reads.some((r) => r.p === '/v1/action-archive/docket-516r-2025'), reads);
       check(name, 'the pulse is the World\'s real answers: Open now and the newest mission, news from 183+ countries (GDELT, a capped read), the Docket 516R record; never a total', m.cards[0].shown && /Give someone a free ride/.test(m.cards[0].text) && /Open now/.test(m.cards[0].text) && !/missions/.test(m.cards[0].text)
-        && /News from 183\+ countries/.test(m.cards[1].text) && /The GDELT Project/.test(m.cards[1].text) && !/12,?296|12,?000/.test(m.cards[1].text) && /Docket 516R · Write the Change/.test(m.cards[2].text) && /10 participants · 9 songs · Bridgeport, CT · Oct 5, 2025/.test(m.cards[2].text), m.cards);
+        && /News from 183\+ countries/.test(m.cards[1].text) && /Last 24 hours/i.test(m.cards[1].text) && /The GDELT Project/.test(m.cards[1].text) && !/12,?296|12,?000/.test(m.cards[1].text) && /Docket 516R · Write the Change/.test(m.cards[2].text) && /10 participants · 9 songs · Bridgeport, CT · Oct 5, 2025/.test(m.cards[2].text), m.cards);
       check(name, 'the Earth\'s credit is on the stage', /NASA imagery/.test(m.creditText) && /Natural Earth/.test(m.creditText) && /OpenStreetMap/.test(m.creditText), m.creditText);
       const prov = await page.evaluate(() => ({ providers: !document.getElementById('mnProviders').hidden, buttons: document.querySelectorAll('#mnProviderButtons button').length }));
       check(name, 'email only in the live settings: no provider button and no "or"', !prov.providers && prov.buttons === 0, prov);
@@ -262,6 +319,8 @@ try {
         const seam = await brightest(page, { x: Math.max(0, m.frame.right), y: 120, width: Math.max(4, m.sheet.left - m.frame.right - 3), height: 360 });
         check(name, '1280: the strip between the Earth and the card stays dark (brightest pixel under 40 of 255)', seam < 40, seam);
       }
+      const small = await trueTargets(page);
+      check(name, 'every control can really be tapped across 44 x 44 (where a tap lands on it, not its box)', small.length === 0, small);
       const n = noise(world);
       check(name, 'no console error and no 4xx', n.console.length === 0 && n.bad.length === 0 && world.errors.length === 0, { ...n, errors: world.errors });
     } finally { await ctx.close(); }
@@ -325,6 +384,20 @@ try {
         }
       } finally { await ctx.close(); }
     }
+  }
+
+  /* ---------- the news card's hours are the answer's own (window_hours) ---------- */
+  if (runs('pulse')) for (const [kind, want] of [['two-days', 'Last 48 hours'], ['untold', null]]) {
+    const { ctx, page } = await openWorld(browser, server.base, DEVICES[1280], '/mnet.html?view=feed', { phase: 'night', heat: kind, dpr: 1, globe: false });
+    try {
+      await worldReady(page);
+      await openBy(page, 'signin');
+      await pulseSettled(page);
+      await page.waitForTimeout(700);
+      const cards = (await doorFrame(page)).cards;
+      check('pulse-window', want ? `an answer that counted 48 hours reads "${want}", never 24` : 'an answer that does not say what window it counted gets no news card; the other cards stay',
+        want ? cards[1].shown && cards[1].text.includes(want) && !/24/.test(cards[1].text) : !cards[1].shown && cards[0].shown && cards[2].shown, cards);
+    } finally { await ctx.close(); }
   }
 
   /* ---------- errors, the busy action, the emailed state, a provider ---------- */
@@ -467,6 +540,59 @@ try {
       await page.waitForTimeout(400);
       const after = await page.evaluate(() => ({ safe: getComputedStyle(document.getElementById('mnSignedOut')).getPropertyValue('--wg-safe-bottom').trim(), max: getComputedStyle(document.getElementById('wgSheet')).maxHeight }));
       check(name, 'dismissing the banner gives the sheet its full height back', after.safe === '0px', { after, before: b.safe, tall });
+    } finally { await ctx.close(); }
+  }
+
+  /* ---------- the stage's focus marks, from pixels, at every width by night and by day ---------- */
+  /* the marks are drawn inside the controls' own plates, so the Earth is not their ground: the globe's renderer stays off and
+     the two pictures of each control are quick and still */
+  if (runs('focus')) for (const w of [390, 820, 1280]) for (const phase of ['night', 'day']) {
+    const name = `focus-${w}-${phase}`;
+    const { ctx, page } = await openWorld(browser, server.base, DEVICES[w], '/mnet.html?view=feed', { phase, globe: false });
+    try {
+      await worldReady(page);
+      await openBy(page, 'signin');
+      await page.waitForFunction(() => ['wgPulseMission', 'wgPulseNews'].every((id) => !document.getElementById(id).hidden), null, { timeout: 9000 }).catch(() => {});
+      await settle(page);
+      const marks = [];
+      for (const sel of ['#mnSignedOutBack', '#wgPulseMission .wg-card__go', '#wgPulseNews a', '#wgCredit a']) {
+        const mk = await focusMark(page, sel).catch((e) => ({ sel, error: String(e && e.message || e).split('\n')[0].slice(0, 120) }));
+        if (mk) marks.push(mk);
+      }
+      check(name, 'the stage\'s focus marks: the Back pill, the mission card, the news link (and the credit\'s first link) each show the keyboard\'s focus whole, 3:1 or more against what was there, inside their own plate', marks.length >= 3 && marks.every((mk) => mk.fv && mk.share >= 0.8), marks);
+    } finally { await ctx.close(); }
+  }
+
+  /* ---------- the floating card on a short screen: a tablet on its side and upright, a laptop's window ---------- */
+  if (runs('short')) for (const [w, h] of [[1024, 768], [768, 1024], [1000, 650]]) for (const mode of ['signin', 'create']) {
+    /* a 650 px window cannot hold Create account's action above the fade without the card lying over the way back, and the
+       way back wins (as on a phone): there the sheet says there is more and the action is reached at its end */
+    const fits = !(h === 650 && mode === 'create');
+    const name = `short-${mode}-${w}x${h}`;
+    const { ctx, page, world } = await openWorld(browser, server.base, { name: String(w), viewport: { width: w, height: h }, mobile: false }, '/mnet.html?view=feed', { phase: 'night', dpr: 1, globe: false });
+    try {
+      await worldReady(page);
+      await openBy(page, mode);
+      await pulseSettled(page);
+      await settle(page);
+      const s = await page.evaluate(() => {
+        const R = (el) => { if (!el || !el.getClientRects().length) return null; const r = el.getBoundingClientRect(); return { top: Math.round(r.top), bottom: Math.round(r.bottom), left: Math.round(r.left), right: Math.round(r.right) }; };
+        const $ = (id) => document.getElementById(id), d = $('mnSignedOut'), sheet = R($('wgSheet'));
+        const parts = { back: R($('mnSignedOutBack')), crest: R(d.querySelector('.wg-crest')), dateline: R($('wgDateline')), pulse: R($('wgPulse')), credit: R($('wgCredit')) };
+        const under = Object.entries(parts).filter(([, r]) => r && r.left < sheet.right && r.right > sheet.left && r.top < sheet.bottom && r.bottom > sheet.top).map(([k, r]) => `${k} by ${Math.min(r.bottom, sheet.bottom) - Math.max(r.top, sheet.top)} px`);
+        return { sheet, under, shown: Object.keys(parts).filter((k) => parts[k]), sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth };
+      });
+      check(name, 'the card lies over nothing of the stage: the way back, the crest, the dateline, the cards and the credit are each clear of it or not shown', s.under.length === 0 && s.shown.includes('back') && s.shown.includes('crest') && s.sheet.top >= 68, s);
+      check(name, 'nothing scrolls sideways', s.sw === s.cw, { sw: s.sw, cw: s.cw });
+      const rest = await actionAtRest(page);
+      if (fits) check(name, 'the action is wholly in view at rest', rest.ok, rest);
+      else {
+        await page.evaluate(() => { const sh = document.getElementById('wgSheet'); sh.scrollTop = sh.scrollHeight; });
+        await page.waitForFunction(() => !document.getElementById('wgSheet').hasAttribute('data-more'), null, { timeout: 8000 }).catch(() => {});
+        const end = await actionAtRest(page);
+        check(name, 'too short for the action at rest: the sheet says there is more, and the action is wholly in view at its end', rest.more && end.ok && !end.more, { rest, end });
+      }
+      check(name, 'no page errors', world.errors.length === 0, world.errors);
     } finally { await ctx.close(); }
   }
 
@@ -717,6 +843,38 @@ try {
       await page.setViewportSize(DEVICES[390].viewport);
       check('touch', 'no page errors', world.errors.length === 0, world.errors);
     } finally { await ctx.close(); }
+    /* the keyboard with the privacy notice still waiting (a first visit): on a phone the visual viewport shrinks while the
+       layout viewport, and the notice fixed to its foot, stay where they were (iOS Safari, Chrome for Android), so the notice
+       is under the keyboard. The door keeps no room for a notice that is not in it: it kept the notice's 218 px as nothing
+       above the keyboard and left the form a 184 px window. Headless Chromium has no keyboard: the visual viewport is a
+       stand-in the door's script reads, put in place before the door first wires itself. */
+    {
+      const { ctx, page, world } = await openWorld(browser, server.base, DEVICES[390], '/mnet.html?view=feed', { phase: 'night', dpr: 1, globe: false, banner: true });
+      try {
+        await worldReady(page);
+        await page.waitForSelector('#mccPrivacyNotice', { timeout: 10000 });
+        await page.evaluate(() => { const vv = new EventTarget(); Object.assign(vv, { height: innerHeight, width: innerWidth, offsetTop: 0, offsetLeft: 0, scale: 1 }); Object.defineProperty(window, 'visualViewport', { configurable: true, get: () => vv }); window.__keyboard = (h) => { vv.height = h; vv.dispatchEvent(new Event('resize')); }; });
+        await page.tap('[data-guest-open="create"]');
+        await opened(page);
+        await settle(page);
+        const read = () => page.evaluate(() => { const d = document.getElementById('mnSignedOut'), dr = d.getBoundingClientRect(), s = document.getElementById('wgSheet').getBoundingClientRect(), b = document.getElementById('mccPrivacyNotice').getBoundingClientRect(), f = document.getElementById('mnPassword').closest('.wg-field').getBoundingClientRect();
+          return { safe: getComputedStyle(d).getPropertyValue('--wg-safe-bottom').trim(), flag: d.hasAttribute('data-banner'), door: [Math.round(dr.top), Math.round(dr.bottom)], sheet: [Math.round(s.top), Math.round(s.bottom)], banner: [Math.round(b.top), Math.round(b.bottom)], field: [Math.round(f.top), Math.round(f.bottom)], gap: Math.round(dr.bottom - s.bottom), focus: document.activeElement && document.activeElement.id }; });
+        const rest = await read();
+        await page.tap('#mnPassword');
+        await page.evaluate(() => window.__keyboard(470));
+        await page.waitForTimeout(400);
+        await settle(page);
+        const up = await read();
+        check('touch', 'the notice waiting and the keyboard up (the visual viewport 470 px, the notice under the keyboard): the door keeps no room for the notice, the sheet runs to the door\'s foot, the focused field is in view', rest.flag && parseFloat(rest.safe) > 100 && rest.sheet[1] <= rest.banner[0]
+          && up.safe === '0px' && !up.flag && up.door[1] === 470 && up.banner[0] >= 470 && up.gap === 0 && up.focus === 'mnPassword' && up.field[0] >= up.sheet[0] && up.field[1] <= up.sheet[1], { rest, up });
+        await page.evaluate(() => window.__keyboard(innerHeight));
+        await page.waitForTimeout(400);
+        await settle(page);
+        const down = await read();
+        check('touch', 'the keyboard down again: the notice has its room back and is not covered', down.flag && down.safe === rest.safe && down.sheet[1] <= down.banner[0], { down, rest });
+        check('touch', 'no page errors with the notice and the keyboard', world.errors.length === 0, world.errors);
+      } finally { await ctx.close(); }
+    }
     /* a keyboard at hand (1280): the first field takes the focus, as before */
     const { ctx: c2, page: p2 } = await openWorld(browser, server.base, DEVICES[1280], '/mnet.html?view=feed', { phase: 'night', dpr: 1, globe: false });
     try {

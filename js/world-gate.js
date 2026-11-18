@@ -82,17 +82,21 @@
       value: m.title.trim(), source: bits.join(" · ")
     };
   }
-  /* the countries with at least one story in the last 24 hours (GDELT); never the story total, which the API caps. The read
-     itself is capped (workers/mccluster/src/world-news-discovery.js reads at most 15,000 stories): when the answer says
-     capped, a country whose stories all lie past the cap is not counted, so the number is a floor and reads "N+" */
+  /* the countries with at least one story in the window the answer itself states (window_hours: 24 today, GDELT); never
+     the story total, which the API caps. The read itself is capped (workers/mccluster/src/world-news-discovery.js reads
+     at most 15,000 stories): when the answer says capped, a country whose stories all lie past the cap is not counted, so
+     the number is a floor and reads "N+". The hours are the answer's own too: an answer that does not say what window it
+     counted gets no card, and one that counted another window is quoted as it is */
   function newsCard(heat) {
     if (!heat || typeof heat !== "object" || heat.unavailable === true) return null;
     var c = heat.countries && typeof heat.countries === "object" ? heat.countries : null;
     var n = c ? Object.keys(c).filter(function (k) { return Number(c[k]) > 0; }).length : 0;
     if (!n) return null;
+    var hours = typeof heat.window_hours === "number" && isFinite(heat.window_hours) && heat.window_hours > 0 ? heat.window_hours : 0;
+    if (!hours) return null;
     var a = heat.attribution && typeof heat.attribution === "object" ? heat.attribution : {};
     var count = heat.capped === true ? fmt(n) + "+ countries" : fmt(n) + " " + plural(n, "country", "countries");
-    return { kicker: "Last 24 hours", value: "News from " + count, source: "The GDELT Project", href: https(a.url) || GDELT };
+    return { kicker: hours === 1 ? "Last hour" : "Last " + fmt(hours) + " hours", value: "News from " + count, source: "The GDELT Project", href: https(a.url) || GDELT };
   }
   function eventDate(iso, tz) {
     var t = Date.parse(iso);
@@ -256,12 +260,17 @@
   }
   function freeWorld() { gate.inert.splice(0).forEach(function (n) { n.removeAttribute("inert"); }); }
 
+  /* the room the door keeps for the privacy notice: what of the notice lies inside the door's own box, and 8 px. The door
+     follows the visual viewport, the notice is fixed to the foot of the layout viewport: with a phone's keyboard up the
+     notice is under the keyboard, below the door's foot, and the door keeps nothing for it (the form has the whole of
+     what is left of the screen); with the keyboard down the door reaches the foot again and keeps the notice's room */
   function safeBottom() {
     var el = door(), b = $("mccPrivacyNotice"), v = 0;
     if (!el) return;
     if (b && rendered(b)) {
-      var r = b.getBoundingClientRect(), vh = root.innerHeight || 0;
-      if (r.height > 0) v = Math.ceil(r.height + Math.max(0, vh - r.bottom) + 8);
+      var r = b.getBoundingClientRect(), vv = root.visualViewport;
+      var foot = vv && vv.height ? (vv.offsetTop || 0) + vv.height : root.innerHeight || 0;
+      if (r.height > 0 && r.top < foot) v = Math.ceil(foot - r.top + 8);
     }
     el.style.setProperty("--wg-safe-bottom", v + "px");
     /* while the notice waits, the sheet keeps its compact hand so the action stays above it (css/world-gate.css) */
@@ -556,7 +565,7 @@
       pending = (root.requestAnimationFrame || setTimeout)(function () { pending = 0; if (gate.open) { measure(); more(); keep(); } });
     });
     if (root.visualViewport) {
-      var vv = function () { if (gate.open) { viewport(); more(); keep(); } };
+      var vv = function () { if (gate.open) { viewport(); safeBottom(); more(); keep(); } };
       root.visualViewport.addEventListener("resize", vv);
       root.visualViewport.addEventListener("scroll", vv);
     }
