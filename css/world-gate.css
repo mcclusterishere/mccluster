@@ -138,6 +138,13 @@ html[data-daylight="day"] #mnSignedOut .wg-veil { background: linear-gradient(18
 /* the World's own words and controls over the Earth (its headline, the corner stack, the tags, the filters, the place
    card) sleep under the door, so the stage holds only the Earth and the door's own parts; they are back when it closes */
 html.mn-door-open #mnWorld > :not(.mn__world-frame) { visibility: hidden; }
+/* the privacy notice, while it waits for its answer, rides above the World's bottom bar (js/live-content.js); with the door
+   open that bar is under the door, so the notice goes back to the bottom edge it keeps on pages without the bar, and the
+   door's card has the room above it (the door measures the notice where it stands) */
+html.mn-door-open body.has-appbar #mccPrivacyNotice { bottom: calc(8px + env(safe-area-inset-bottom, 0px)); }
+@media (min-width: 720px) {
+  html.mn-door-open body.has-appbar #mccPrivacyNotice { bottom: 20px; }
+}
 
 /* the sheet */
 #mnSignedOut .wg-sheet {
@@ -570,7 +577,8 @@ html[data-daylight="day"] #mnProfileGate.mn__onboard::before { background: #ffff
   html[data-daylight="day"] #mnSignedOut .wg-veil { background: linear-gradient(90deg, rgba(4, 6, 9, 0.5), rgba(4, 6, 9, 0.72) 64px); }
   #mnSignedOut .wg-back { margin-left: 32px; }
   #mnSignedOut .wg-lower { align-items: flex-start; padding: 24px 32px 0; }
-  #mnSignedOut .wg-lower::before { height: 260px; }
+  /* the shelf runs on through the room kept for the privacy notice, so nothing of the World shows bright beneath it */
+  #mnSignedOut .wg-lower::before { height: calc(260px + var(--wg-safe-bottom, 0px)); bottom: calc(-14px - var(--wg-safe-bottom, 0px)); }
   #mnSignedOut .wg-dateline:not([hidden]) { max-width: 100%; margin: 0 0 10px; text-align: left; }
   #mnSignedOut .wg-pulse { padding: 2px 0 4px; }
   #mnSignedOut .wg-card { width: 214px; }

@@ -104,6 +104,10 @@ Check them, or use Forgot password." (for `invalid_credentials` only; every othe
 - The first-visit privacy wall (`#mccPrivacyGate`) is spared from inert as the banner is: inerting it would leave a
   visitor unable to answer it.
 - An Escape pressed inside the privacy notice is the notice's own ("Not now") and does not also close the door.
+- While it waits for its answer the privacy notice rides above the World's bottom bar; with the door open that bar is under
+  the door, so the notice returns to the bottom edge it keeps on pages without the bar, and the card has the room above it.
+- The room the door keeps for the privacy notice runs under the whole width; at 1100 px and up the stage's dark shelf runs on
+  through it, so the World beneath the notice (the bottom bar, the globe's legend) stays dimmed rather than bright.
 - At 700 to 1099 px, Create account is compacted (a smaller crown and headline, 58 px fields) so the card stays clear of
   300 px of the globe at 820 x 1180; at 1100 px and up the spec's sizes apply.
 - The World's own words and controls over the Earth (its headline "The world is your feed.", the corner stack with the

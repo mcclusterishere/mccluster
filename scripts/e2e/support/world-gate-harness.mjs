@@ -282,7 +282,9 @@ export async function contrast(page, rootSel = '#mnSignedOut') {
         if (r.r - r.x < 2 || r.b - r.y < 2) return;
         if (!onTop(el, r)) return;
         if (sr && sheet.contains(el)) {
-          r.y = Math.max(r.y, sr.top); r.b = Math.min(r.b, sr.bottom - (more ? 34 : 0));
+          /* text at rest only: a line passing under the sheet's frame (its rim and the hairline 6 px inside) as it scrolls,
+             or under the fade that says there is more, is measured only where it has left them */
+          r.y = Math.max(r.y, sr.top + 8); r.b = Math.min(r.b, sr.bottom - (more ? 34 : 0));
           if (r.b - r.y < 4) return;
         }
         const key = `${Math.round(r.x)},${Math.round(r.y)},${text.slice(0, 20)}`;
