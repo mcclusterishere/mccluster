@@ -10,11 +10,21 @@
    runs; the fixture turn's two screenshots and 30-entry action log render collapsed with the node badge;
    no horizontal overflow at either width.
 
+   The controls follow what the running Core declares (deploy-readiness review, 2026-11-18): the bridge's
+   tools/list answers with real input schemas, this checkout's (core/src/tools/control.mjs,
+   core/capabilities/catalog.json) for a Core that honours images and the browser flag, and the schemas of the
+   Core on OVH at build eb942248 for one that does not. Against that older Core, at 390 and 1280, the owner
+   sees no attach control and no switch, one honest line in place of each, and a turn sent carries neither
+   images nor allow_browser; a member sees the images line and nothing about the browser.
+
+   The node badge shows its whole content, the measured rate included, at 390, 820 and 1280: nothing cut
+   off, nothing outside its message (verification finding N2V-m2).
+
    PLAYWRIGHT_DIR=<node_modules> node scripts/e2e/control-ai-browser.e2e.mjs [outDir] */
 import { createRequire } from 'node:module';
 import { readFile, mkdir } from 'node:fs/promises';
 import { join, extname, resolve, sep } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 const ROOT = resolve(process.env.CONTROL_E2E_ROOT || fileURLToPath(new URL('../../', import.meta.url)));
 const OUT = process.argv[2] || '/tmp/control-ai-browser-proof';
 const { chromium } = createRequire(join(process.env.PLAYWRIGHT_DIR || '/opt/node-tools/node_modules', 'x'))('playwright');
@@ -24,6 +34,22 @@ const OWNER = '11111111-1111-4111-8111-111111111111';
 const ORG = 'o1';
 const THREAD = 'thread-1';
 const TOOLS = ['core.resume', 'ai.chat', 'compute.task.get', 'core.ai.turn.submit', 'core.ai.turn.get', 'objective.plan', 'research.web'];
+/* The input schemas the bridge's tools/list carries. 'current': this checkout's Core, as the broker lists it (raw tools
+   from core/src/tools/control.mjs, capabilities from core/capabilities/catalog.json). 'eb942248': the Core on OVH at that
+   build, copied from its two files: no images and no allow_browser on the durable turn, ai.chat's messages a bare array. */
+const { CONTROL_TOOLS } = await import(pathToFileURL(join(ROOT, 'core/src/tools/control.mjs')).href);
+const CATALOG = JSON.parse(await readFile(join(ROOT, 'core/capabilities/catalog.json'), 'utf8'));
+const SCHEMAS = {
+  current: Object.fromEntries([
+    ...CATALOG.capabilities.filter((c) => TOOLS.includes(c.id)).map((c) => [c.id, c.inputSchema]),
+    ...CONTROL_TOOLS.filter((t) => TOOLS.includes(t.name)).map((t) => [t.name, t.inputSchema])
+  ]),
+  eb942248: {
+    'ai.chat': { type: 'object', properties: { prompt: { type: 'string' }, messages: { type: 'array' }, temperature: { type: 'number' }, num_ctx: { type: 'integer' }, json: { type: 'boolean' } }, anyOf: [{ required: ['prompt'] }, { required: ['messages'] }] },
+    'core.ai.turn.submit': { type: 'object', required: ['org_id', 'thread_id', 'message_id', 'content'], properties: { org_id: { type: 'string' }, thread_id: { type: 'string' }, message_id: { type: 'string' }, content: { type: 'string', minLength: 1, maxLength: 12000 }, input_mode: { type: 'string', enum: ['text', 'voice'] } }, additionalProperties: false },
+    'core.ai.turn.get': { type: 'object', required: ['org_id', 'turn_id'], properties: { org_id: { type: 'string' }, turn_id: { type: 'string' } }, additionalProperties: false }
+  }
+};
 const results = [];
 function check(scope, name, ok, detail) { results.push({ scope, name, pass: !!ok }); console.log((ok ? 'PASS ' : 'FAIL ') + '[' + scope + '] ' + name + (ok ? '' : ' ' + JSON.stringify(detail ?? null))); }
 const json = (route, body, status = 200, headers = {}) => route.fulfill({ status, contentType: 'application/json', headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-expose-headers': 'content-range', ...headers }, body: JSON.stringify(body) }).catch(() => {});
@@ -81,7 +107,7 @@ function browserMeta(taskId, pageUrl) {
 const SAVED_USER = { id: 'saved-user-1', thread_id: THREAD, org_id: ORG, role: 'user', content: 'What does this page say? (saved fixture turn)', created_at: '2026-11-17T21:58:00Z', metadata: { input_mode: 'text', execution_kind: 'resident_ai_turn', agent_job_id: 'saved-user-1', task_status: 'done', images: [IMG.small], allow_browser: true } };
 const SAVED_ASSISTANT = { id: 'saved-asst-1', thread_id: THREAD, org_id: ORG, role: 'assistant', content: 'The fixture page says hello. (saved fixture reply)', model: 'qwen3-vl:8b', implementation: 'qwen3-vl.8b.local', created_at: '2026-11-17T22:00:00Z', metadata: { agent_job_id: 'saved-user-1', task_status: 'done', images_in: 1, node: NODE, browser: browserMeta('task-saved', 'https://fixture.test/ok'), tool_receipts: [] } };
 
-async function setup(viewport, { owner = true } = {}) {
+async function setup(viewport, { owner = true, core = 'current' } = {}) {
   const ctx = await browser.newContext({ viewport, deviceScaleFactor: 1, hasTouch: viewport.width < 1000, ignoreHTTPSErrors: true, serviceWorkers: 'block' });
   const submits = [], errors = [], polls = {};
   await ctx.addInitScript(({ OWNER }) => {
@@ -99,7 +125,7 @@ async function setup(viewport, { owner = true } = {}) {
       if (p === '/v1/workspaces/me') return json(route, { ok: true, profile: { id: OWNER }, default_org_id: ORG, workspaces: [{ org_id: ORG, slug: 'mccluster', kind: 'studio', role: owner ? 'owner' : 'viewer', enabled: true, name: 'McCluster' }] });
       if (p === '/v1/core/mcp' && req.method() === 'POST') {
         const body = req.postDataJSON();
-        if (body.method === 'tools/list') return rpc(route, body.id, { tools: TOOLS.map((name) => ({ name, description: 'fixture', inputSchema: { type: 'object' } })) });
+        if (body.method === 'tools/list') return rpc(route, body.id, { tools: TOOLS.map((name) => ({ name, description: 'fixture', inputSchema: SCHEMAS[core][name] || { type: 'object' } })) });
         if (body.method === 'tools/call') {
           const name = body.params?.name, args = body.params?.arguments || {};
           if (name === 'core.ai.turn.submit') {
@@ -145,6 +171,17 @@ async function setup(viewport, { owner = true } = {}) {
   return { ctx, page, submits, errors, polls };
 }
 const overflow = (page) => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+/* every node badge as drawn: its words, whether any of them is cut off (scrollWidth past clientWidth), and whether it stays
+   inside its own message */
+const badges = (page) => page.evaluate(() => [...document.querySelectorAll('.cr-ai-node')].map((b) => {
+  const r = b.getBoundingClientRect(), m = b.closest('.cr-ai-message').getBoundingClientRect();
+  return { text: b.textContent, sw: b.scrollWidth, cw: b.clientWidth, inside: r.left >= m.left - 0.5 && r.right <= m.right + 0.5, w: Math.round(r.width), h: Math.round(r.height) };
+}));
+const wholeBadges = (list) => list.length >= 1 && list.every((b) => b.sw <= b.cw + 1 && b.inside && /tok\/s/.test(b.text));
+/* the composer's controls and lines as drawn */
+const composer = (page) => page.evaluate(() => ({ attach: document.querySelectorAll('[data-action="ai-attach"]').length, picker: document.querySelectorAll('#crAiAttach').length,
+  switch: document.querySelectorAll('[data-action="ai-browser-toggle"]').length,
+  images: (document.querySelector('[data-ai-capability="images"]') || {}).textContent || '', browser: (document.querySelector('[data-ai-capability="browser"]') || {}).textContent || '' }));
 async function until(fn, ms = 15000) { const t0 = Date.now(); while (Date.now() - t0 < ms) { if (await fn()) return true; await new Promise((r) => setTimeout(r, 150)); } return false; }
 
 try {
@@ -161,6 +198,10 @@ try {
     check(S, 'the saved browser turn renders collapsed: "Browser: 4 steps on fixture.test"', saved.collapsed && saved.summary === 'Browser: 4 steps on fixture.test', saved);
     check(S, 'its two screenshots and 30 action-log entries are inside the block, the refused step marked', saved.imgs === 2 && saved.log === 30 && saved.refused >= 2, saved);
     check(S, 'the node badge names the node, its hardware mode and the measured rate', saved.badge === 'laptop-fixture · gpu-verified · 21.4 tok/s', saved.badge);
+    const drawn = await badges(page);
+    check(S, 'the node badge shows its whole content, the rate included, inside its message', wholeBadges(drawn), drawn);
+    const honoured = await composer(page);
+    check(S, 'a Core that declares images and the browser flag gets both controls and neither off line', honoured.attach === 1 && honoured.picker === 1 && honoured.switch === 1 && !honoured.images && !honoured.browser, honoured);
     check(S, "the saved user message shows its attached image", saved.userImgs === 1, saved.userImgs);
     const naturalOk = await page.evaluate(async () => { const img = document.querySelector('.cr-ai-browser figure img'); if (!img) return false; if (!img.complete) await new Promise((r) => { img.onload = r; img.onerror = r; }); return img.naturalWidth === 320 && img.naturalHeight === 200; });
     check(S, 'a screenshot decodes as the 320x200 JPEG the fixture carries', naturalOk);
@@ -196,6 +237,48 @@ try {
     check(S, 'no horizontal overflow after the turn', (await overflow(page)) === 0, await overflow(page));
     await page.screenshot({ path: join(OUT, `ask-turn-${vp.width}.png`) });
     check(S, 'no script errors', app.errors.length === 0, app.errors);
+    await app.ctx.close();
+  }
+  {
+    /* the badge at the tablet width (N2V-m2): the saved turn's node badge, whole and inside its message */
+    const S = '820px owner';
+    const app = await setup({ width: 820, height: 1180 }); const { page } = app;
+    await page.waitForSelector('.cr-ai-node', { timeout: 30000 });
+    const drawn = await badges(page);
+    check(S, 'the node badge shows its whole content, the rate included, inside its message', wholeBadges(drawn), drawn);
+    check(S, 'no horizontal overflow', (await overflow(page)) === 0, await overflow(page));
+    await page.screenshot({ path: join(OUT, 'ask-thread-820.png') });
+    check(S, 'no script errors', app.errors.length === 0, app.errors);
+    await app.ctx.close();
+  }
+  for (const vp of [{ width: 390, height: 844 }, { width: 1280, height: 800 }]) {
+    /* the Core on OVH at eb942248: it would drop a turn's images and the browser flag and send an image to a text model */
+    const S = vp.width + 'px owner, Core eb942248';
+    const app = await setup(vp, { core: 'eb942248' }); const { page, submits } = app;
+    await page.waitForSelector('#crAiComposer:not([disabled])', { timeout: 30000 });
+    await page.waitForSelector('.cr-ai-browser', { timeout: 15000 });
+    const off = await composer(page);
+    check(S, 'no attach control, and one honest line in its place', off.attach === 0 && off.picker === 0 && off.images === 'Attach image is off: the Core running now does not accept images in a turn.', off);
+    check(S, 'no browser switch for the owner, and one honest line in its place', off.switch === 0 && off.browser === 'Use the browser is off: the Core running now does not honour browser turns.', off);
+    check(S, 'the saved thread still renders, badge and all', (await page.locator('.cr-ai-message--assistant .cr-ai-browser').count()) === 1 && wholeBadges(await badges(page)));
+    await page.fill('#crAiComposer', 'A plain question for the older Core (proof turn)');
+    await page.click('[data-action="ai-send"]');
+    check(S, 'one durable turn is submitted', await until(() => submits.length === 1), submits.length);
+    const sent = submits[0] || {};
+    check(S, 'it carries neither images nor allow_browser: only the fields that Core declares', !('images' in sent) && !('allow_browser' in sent) && sent.content === 'A plain question for the older Core (proof turn)'
+      && Object.keys(sent).every((k) => Object.keys(SCHEMAS.eb942248['core.ai.turn.submit'].properties).includes(k)), Object.keys(sent));
+    check(S, 'no horizontal overflow', (await overflow(page)) === 0, await overflow(page));
+    await page.screenshot({ path: join(OUT, `ask-older-core-${vp.width}.png`) });
+    check(S, 'no script errors', app.errors.length === 0, app.errors);
+    await app.ctx.close();
+  }
+  {
+    const S = '390px member, Core eb942248';
+    const app = await setup({ width: 390, height: 844 }, { owner: false, core: 'eb942248' }); const { page } = app;
+    await page.waitForSelector('#crAiComposer', { timeout: 30000 });
+    await page.waitForTimeout(1500);
+    const off = await composer(page);
+    check(S, 'a member sees the images line and nothing about the owner\'s browser', off.attach === 0 && !!off.images && off.switch === 0 && !off.browser, off);
     await app.ctx.close();
   }
   {
