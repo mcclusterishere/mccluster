@@ -415,14 +415,24 @@ environmental by the page. The iframe ignores every `hu:environment-*` message o
   observed_at?, fetched_at?, facts?:[{label,value}], significant?}]}`: the message that always existed, its items extended
   additively (a key only when the normalized feed row carries it; `significant` is the host's pure rule, supplied through the
   adapter, never derived by the globe). Only rows with a point are items. On destroy the last message is exactly
-  `{type:'hu:environment-pins', on:false, items:[]}`.
+  `{type:'hu:environment-pins', on:false, items:[]}`. A pins message with `on:true` also carries `sources:[{id, label, url,
+  attribution, license, coverage}]`: the feed providers' terms as the feed's own source records give them (the Worker builds
+  those from its `FEED_SOURCE_TERMS` and the vendor's `ENVIRONMENT_SOURCES`), at most eight, https links only, never a health
+  field; the globe answers a feed item's selection and credits its earthquake legend with them and keeps no copy of its own, and
+  a provider the pins did not describe is answered with empty terms, never invented ones (review G1R-10). The search narrows the
+  panel's list on every keystroke but re-sends the pins once the typing pauses (250 ms), so the globe never rebuilds its events
+  layer per keystroke (review G1R-9).
 - `hu:environment-layers {on, selected, replay:null|'quakes-24h', layers:{fires, perimeters, alerts, eonet, tides}}`: sent
   before the pins on every activation and on `hu:globe-ready`; `on:false` before the pins-off message when the tab changes, on
   the panel's pagehide and on destroy. `on:true` turns the typed layers on and lets the globe fetch its routes; `replay`
   switches the quake replay; a layer flag false hides that layer without refetching.
 - `hu:environment-focus {id}`: a user-initiated focus (a pick never moves the camera); an id the globe does not hold yet is
   kept briefly and honoured when its layer arrives, so "Show on globe" works before the layers are in.
-- `hu:environment-scene {action:'play'|'pause'|'next'|'prev'|'stop'}` and `hu:environment-view {mode:'3d'|'2d'}`.
+- `hu:environment-scene {action:'play'|'pause'|'next'|'prev'|'stop'}` and `hu:environment-view {mode:'3d'|'2d'}`. The panel
+  sends `play` by itself once per opening of the tab (frame at least a quarter in view, page visible, motion allowed, the
+  visitor has not pressed Pause in this page session); `hu:globe-ready` re-arms that one autostart and clears the panel's tour
+  words, because a globe that just said ready has no tour and may not have heard what the panel said before it booted (landing
+  on `?feed=equity`). The globe's director treats `play` on a tour already under way as a no-op, so a ready said twice is harmless.
 
 ### Globe to panel
 
@@ -430,13 +440,22 @@ environmental by the page. The iframe ignores every `hu:environment-*` message o
   observed_label:'Observed'|'Acquired'|'Sent'|'Captured'|'Reported'|'Computed'|'unknown', observed_date_only, fetched_at,
   coverage, status, reason, lat, lon, via:'pick'|'focus'|'tour', illustrative, modelled}`: for an id in the feed the panel
   selects its row as before; for any other id it draws the globe-selection card from the payload. `observed_at` null is shown as
-  "Time not supplied by provider"; a fetch time is never shown in the observed slot.
+  "Time not supplied by provider"; a fetch time is never shown in the observed slot. A selection the panel's own list made
+  (the pins' `selected`) is user-initiated and is told as `focus`, its ShakeMap answer included; `via` carries no other word
+  (review G1R-9).
 - `hu:environment-layer-state {layer:'events'|'fires'|'perimeters'|'alerts'|'eonet'|'tides'|'shakemap', status:'loading'|
   'available'|'stale'|'unavailable'|'policy'|'off', reason, http, schema, generated_at, fetched_at, last_success_at, coverage,
-  attribution, license, url, count, total, truncated, sources:[the Worker's sourceHealth records], digest}`: one per layer per
-  state change. `fetched_at`, `last_success_at`, coverage, attribution, licence and url are copied from the Worker's source
-  health and never invented; `policy` with reason `module_policy_unavailable` or `module_disabled` when the gate refused (every
-  layer at once, no retry loop). Digests: fires `{cells:[[west, south, detections, frp_sum_mw, frp_max_mw, latest_acquired_at]
+  attribution, license, url, source_id, count, total, truncated, sources:[the Worker's sourceHealth records], digest}`: one per
+  layer per state change. `fetched_at`, `last_success_at`, coverage, attribution, licence and url are copied from the Worker's
+  source health and never invented, and every record travels in `sources`. THE RECORD THAT SPEAKS FOR A LAYER is chosen by
+  id, and `source_id` names it (review G1R-3): the water levels' readings `coops_latest`, never the 24-hour station catalogue
+  `coops_stations`; a ShakeMap's contours `usgs_shakemap`, never the event detail `usgs_event`; otherwise the record with the
+  newest `fetched_at` (the first on a tie; the fires layer takes the newer of its two satellites). A selection follows the same
+  rule, except that a fire detection names its own satellite's record; so a reading's retrieval never precedes its observation.
+  The panel's row for a layer renders every record in `sources`, each with its own status, reason, Retrieved and Last success,
+  under the layer's status and counts. `policy` with reason `module_policy_unavailable` or `module_disabled` when the gate
+  refused (every layer at once, no retry loop; a layer whose refusing body was still being read when the first refusal landed
+  ends in the policy state too, never `unavailable http_503` after it: review G1R-2). Digests: fires `{cells:[[west, south, detections, frp_sum_mw, frp_max_mw, latest_acquired_at]
   ...] (at most 10, by summed FRP), cell_degrees:1, count, total, windows}`; perimeters `{top:[{id, name, gis_acres,
   polygon_captured_at, last_edited_at, discovered_at, lon, lat}] (10 largest; lon/lat the first vertex of the first exterior
   ring, never a centroid)}`; alerts `{counts:{polygon, zone_only, rejected}}`; shakemap `{event_id, available, reason, version,
@@ -447,15 +466,19 @@ environmental by the page. The iframe ignores every `hu:environment-*` message o
 
 ### Panel to page: `mcc:world-environment-events`
 
-Dispatched on `window` after every feed load (success or failure), after every layer state that carries a digest, and on
-destroy with `events:[]` and `code:'off'`. `detail = {events (the normalized feed rows, with shakemap_available when the globe
+Dispatched on `window` after every feed load (success or failure), after every layer state whose digest changed from the last
+one handed on for that layer or that re-marked a feed row with its ShakeMap (the same digest again, such as a tour re-selecting a
+quake, is not handed on: review G1R-7), and on destroy with `events:[]` and `code:'off'`. A digest's `label`, `url`, coverage and terms are those of the record named by the
+layer's `source_id`. `detail = {events (the normalized feed rows, with shakemap_available when the globe
 reported one), sources, fetched_at (the newest source's), checked_at, unavailable, code:null|'module_policy_unavailable'|
 'module_disabled'|'network'|'bad_response'|'off', layers:{fires?:{status, reason, fetched_at, generated_at, cell_degrees:1,
 cells, label, url, coverage, attribution, license}, perimeters?:{status, reason, fetched_at, top, label, url, coverage,
 attribution, license}, alerts?:{status, counts}, shakemap?:{event_id, available}, tides?:{status}, eonet?:{status}}}`. The
 transport attaches a refusing body's string `code` to the error it throws (beside `status`, additive), which is how the gate's
 code reaches the detail. The page (`js/mnet.js`) keeps the posts by id, keeps a post's first-seen time when its words are
-unchanged, stamps "Updated" when they changed, drops ids that left the feed, and empties the map while `unavailable` is true.
+unchanged, stamps "Updated" when they changed, drops ids that left the feed, and empties the map while `unavailable` is true; it
+repaints the feed only when the ordered posts' ids, content hashes, significance, source labels or update times changed
+(review G1R-7).
 
 ### Significance, time and the posts (`js/world-environment-posts.js`)
 
@@ -483,6 +506,18 @@ placed), EONET reported positions joined in order, CO-OPS columns by metres abov
 ShakeMap MMI contours labelled modelled; the one illustrative animation is a labelled ripple on the selected quake. The
 panel shows for a selection exactly what the globe sends; these encodings and the layer client's policy handling are
 implemented and checked in that lane (`scripts/e2e/environment-globe.e2e.mjs`, `scripts/perf/environment-globe-perf.mjs`).
+Every polygon of a perimeter or an alert, and every reported EONET polygon, carries its own frozen pick id (`part:'polygon'`,
+`index`), because Cesium finds instance attributes by the id's identity: the selection fade and the ShakeMap dim reach every
+part, and a pick on any part resolves to its row, since picks are looked up by layer and id (review G1R-8).
+
+The globe's render governor holds, keyed by owner, each bounded except `legacy`: `camera` (moveStart to moveEnd, released
+after 15 s at most), `morph` (3 s), `legacy` (the page's own per-frame pulses and per-tick layers keep the loop continuous
+exactly as before, unbounded by design), `env-select` (1 s), `env-ripple` (6 s), `env-focus` and `env-director` (the flight's
+duration plus 0.6 s), `env-replay` (1 s) and `env-build` (30 s at most, while Cesium builds a ground primitive asynchronously;
+released as soon as every primitive is ready). Nothing else holds (review G1R-9). The camera guard
+(`MCC_GLOBE_GOVERNOR.guardCamera(viewer)`, wired at boot) skips a rotation about a zero-length axis or by a non-finite angle,
+which is no rotation: a Cesium 1.131 zoom toward the exact centre pixel stopped the render loop on the real page in two of five
+integration runs; the review could not reproduce it, the guard is defensive and the defect is Cesium's (review G1R-12).
 
 ### What ran here
 
@@ -491,3 +526,10 @@ the existing environment, lifecycle, consumer and mission-post suites, and `scri
 1280 with the fixtures under `scripts/e2e/fixtures/environment/` (`feed.json`, `feed-policy-503.json`, `feed-policy-404.json`)
 and a stub globe frame that records what it is told and answers as the globe would. No production answer was involved: the
 module is not enabled there and answers 503.
+
+The integration pass (`scripts/e2e/environment-world.e2e.mjs`, CI suite `environment-world`) then ran the page and the real frame
+together at 390, 820 and 1280 with the same fixtures and the six layer fixtures: every message above crossed the real
+`postMessage` spine in both directions, the DOM event reached the page, the ids picked on the globe reached the panel's card, and
+the page never asked for a layer route nor the frame for the feed. Record: `WORLD-ENVIRONMENT.md`, "The integration pass".
+The review of the slice at `fe0d53b2` (twelve findings) and what was fixed and run for it: `WORLD-ENVIRONMENT.md`, "Review
+fixes".
