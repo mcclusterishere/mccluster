@@ -15,7 +15,9 @@
    core/capabilities/catalog.json) for a Core that honours images and the browser flag, and the schemas of the
    Core on OVH at build eb942248 for one that does not. Against that older Core, at 390 and 1280, the owner
    sees no attach control and no switch, one honest line in place of each, and a turn sent carries neither
-   images nor allow_browser; a member sees the images line and nothing about the browser.
+   images nor allow_browser; a member sees the images line and nothing about the browser. When the tool list cannot be read
+   at all (the bridge answers 503), nothing is known about the Core: the controls stay off and each line says it is not
+   known, never that the Core refuses (review LDR-F3, 2026-11-18).
 
    The node badge shows its whole content, the measured rate included, at 390, 820 and 1280: nothing cut
    off, nothing outside its message (verification finding N2V-m2).
@@ -125,7 +127,11 @@ async function setup(viewport, { owner = true, core = 'current' } = {}) {
       if (p === '/v1/workspaces/me') return json(route, { ok: true, profile: { id: OWNER }, default_org_id: ORG, workspaces: [{ org_id: ORG, slug: 'mccluster', kind: 'studio', role: owner ? 'owner' : 'viewer', enabled: true, name: 'McCluster' }] });
       if (p === '/v1/core/mcp' && req.method() === 'POST') {
         const body = req.postDataJSON();
-        if (body.method === 'tools/list') return rpc(route, body.id, { tools: TOOLS.map((name) => ({ name, description: 'fixture', inputSchema: SCHEMAS[core][name] || { type: 'object' } })) });
+        if (body.method === 'tools/list') {
+          /* 'down': the bridge cannot reach the Core, so the tool list is never read */
+          if (core === 'down') return json(route, { error: 'Core bridge unavailable' }, 503);
+          return rpc(route, body.id, { tools: TOOLS.map((name) => ({ name, description: 'fixture', inputSchema: SCHEMAS[core][name] || { type: 'object' } })) });
+        }
         if (body.method === 'tools/call') {
           const name = body.params?.name, args = body.params?.arguments || {};
           if (name === 'core.ai.turn.submit') {
@@ -269,6 +275,29 @@ try {
       && Object.keys(sent).every((k) => Object.keys(SCHEMAS.eb942248['core.ai.turn.submit'].properties).includes(k)), Object.keys(sent));
     check(S, 'no horizontal overflow', (await overflow(page)) === 0, await overflow(page));
     await page.screenshot({ path: join(OUT, `ask-older-core-${vp.width}.png`) });
+    check(S, 'no script errors', app.errors.length === 0, app.errors);
+    await app.ctx.close();
+  }
+  {
+    /* the tool list could not be read (review LDR-F3): the page does not know what the Core accepts, and says so */
+    const S = '390px owner, tool list unreadable';
+    const app = await setup({ width: 390, height: 844 }, { core: 'down' }); const { page, submits } = app;
+    await page.waitForSelector('[data-ai-capability="images"]', { timeout: 30000 });
+    await page.waitForSelector('.cr-source', { timeout: 15000 }).catch(() => {});
+    const off = await composer(page);
+    const basis = await page.evaluate(() => [...document.querySelectorAll('[data-ai-capability]')].map((l) => l.getAttribute('data-ai-capability-basis') + ' ' + l.getAttribute('title')));
+    check(S, 'no attach control and no switch, and each line says the Core\'s word is not known', off.attach === 0 && off.picker === 0 && off.switch === 0
+      && off.images === "Attach image is off: the Core's tool list has not been read, so whether it accepts images is not known."
+      && off.browser === "Use the browser is off: the Core's tool list has not been read, so whether it honours browser turns is not known.", off);
+    check(S, 'the lines and their titles claim nothing about the Core', basis.length === 2 && basis.every((b) => /^unknown /.test(b) && !/declares no/.test(b)), basis);
+    const words = await page.evaluate(() => document.body.innerText);
+    check(S, 'nothing on the page says the Core refuses what the page could not read', !/does not accept images|does not honour browser turns/.test(words));
+    const banner = await page.evaluate(() => [...document.querySelectorAll('.cr-source')].map((b) => b.textContent).join(' | '));
+    check(S, 'the page says the tool list did not answer', /Source unavailable/.test(banner) && /AI execution path/.test(banner) && /HTTP 503/.test(banner), banner);
+    check(S, 'nothing was submitted', submits.length === 0, submits.length);
+    check(S, 'no horizontal overflow', (await overflow(page)) === 0, await overflow(page));
+    await page.locator('[data-ai-capability="browser"]').scrollIntoViewIfNeeded().catch(() => {});
+    await page.screenshot({ path: join(OUT, 'ask-tools-unread-390.png') });
     check(S, 'no script errors', app.errors.length === 0, app.errors);
     await app.ctx.close();
   }

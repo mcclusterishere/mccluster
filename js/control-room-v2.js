@@ -738,6 +738,13 @@
     return poll(attempts);
   }
 
+  /* What the running Core declares, from the tool list this page already
+     read, and whether that list was read at all (its source result). */
+  function aiCoreWord() {
+    var listed = state.sources && state.sources.coreTools;
+    return aiCoreSupport(state.coreTools, Boolean(listed && listed.ok));
+  }
+
   function sendAiMessage(value, opts) {
     opts = opts || {};
     var content = String(value || "").trim();
@@ -746,9 +753,9 @@
     /* The Core's word on images and the browser, read before anything is
        created or shown as sent: a turn it would strip is refused here, with
        the attachments kept so they can be removed. */
-    var support = aiCoreSupport(state.coreTools);
+    var support = aiCoreWord();
     if (state.aiAttachments.length && !support.turnImages) {
-      state.aiChatError = AI_CAPABILITY_OFF.images + " Remove the image to send this turn.";
+      state.aiChatError = aiCapabilityOff("images", support) + " Remove the image to send this turn.";
       render();
       return Promise.resolve();
     }
@@ -1140,7 +1147,11 @@
      listed over MCP (AGENT-NODE-BROWSER.md), so the durable turn's
      allow_browser is the Core's word that it honours the browser; whether a
      browser node is live stays the readiness line's job. No backend call: the
-     tool list is already in hand. */
+     tool list is already in hand.
+     A tool list that could not be read (the bridge did not answer, a refused
+     read, nothing read yet) is not a Core that declares nothing: the controls
+     stay off, and the line says the page does not know, never that the Core
+     refuses (review LDR-F3, 2026-11-18). */
   var AI_CAPABILITY_OFF = {
     images: "Attach image is off: the Core running now does not accept images in a turn.",
     browser: "Use the browser is off: the Core running now does not honour browser turns."
@@ -1148,6 +1159,14 @@
   var AI_CAPABILITY_WHY = {
     images: "Its tool list declares no images field on core.ai.turn.submit; attach comes back once the running Core declares one.",
     browser: "Its tool list declares no allow_browser field on core.ai.turn.submit; the switch comes back once the running Core declares one."
+  };
+  var AI_CAPABILITY_UNKNOWN = {
+    images: "Attach image is off: the Core's tool list has not been read, so whether it accepts images is not known.",
+    browser: "Use the browser is off: the Core's tool list has not been read, so whether it honours browser turns is not known."
+  };
+  var AI_CAPABILITY_UNKNOWN_WHY = {
+    images: "Attach comes back once the Core's tool list is read and declares an images field on core.ai.turn.submit.",
+    browser: "The switch comes back once the Core's tool list is read and declares an allow_browser field on core.ai.turn.submit."
   };
   function aiToolSchema(tools, name) {
     var list = Array.isArray(tools) ? tools : [];
@@ -1161,15 +1180,25 @@
     var props = schema && schema.properties && typeof schema.properties === "object" ? schema.properties : null;
     return Boolean(props && Object.prototype.hasOwnProperty.call(props, key) && props[key] && typeof props[key] === "object");
   }
-  function aiCoreSupport(tools) {
+  /* `listed` is whether the tool list was read at all (its source result is
+     ok); without it nothing is declared and nothing is known. */
+  function aiCoreSupport(tools, listed) {
+    if (listed !== true) return { known: false, turnImages: false, turnBrowser: false, chatImages: false };
     var turn = aiToolSchema(tools, "core.ai.turn.submit");
     var chat = aiToolSchema(tools, "ai.chat");
     var messages = chat && chat.properties && chat.properties.messages;
     var item = messages && typeof messages === "object" && messages.items && typeof messages.items === "object" ? messages.items : null;
-    return { turnImages: aiDeclared(turn, "images"), turnBrowser: aiDeclared(turn, "allow_browser"), chatImages: aiDeclared(item, "images") };
+    return { known: true, turnImages: aiDeclared(turn, "images"), turnBrowser: aiDeclared(turn, "allow_browser"), chatImages: aiDeclared(item, "images") };
   }
-  function aiCapabilityLine(kind) {
-    return '<p class="cr-ai-capability" data-ai-capability="' + esc(kind) + '" title="' + esc(AI_CAPABILITY_WHY[kind]) + '">' + esc(AI_CAPABILITY_OFF[kind]) + '</p>';
+  /* the line in place of a control that is off: the Core's own word when its
+     tool list was read, and "not known" when it was not */
+  function aiCapabilityOff(kind, support) {
+    return (support && support.known ? AI_CAPABILITY_OFF : AI_CAPABILITY_UNKNOWN)[kind];
+  }
+  function aiCapabilityLine(kind, support) {
+    var known = Boolean(support && support.known);
+    return '<p class="cr-ai-capability" data-ai-capability="' + esc(kind) + '" data-ai-capability-basis="' + (known ? "declared" : "unknown") + '" title="' +
+      esc((known ? AI_CAPABILITY_WHY : AI_CAPABILITY_UNKNOWN_WHY)[kind]) + '">' + esc(aiCapabilityOff(kind, support)) + '</p>';
   }
   /* The durable turn: the fields every Core knows, plus images and
      allow_browser only when set and only to a Core that declares them. A
@@ -1178,8 +1207,8 @@
   function aiTurnSubmission(base, attachments, allowBrowser, support) {
     var submission = Object.assign({}, base);
     var images = aiAttachmentImages(attachments);
-    if (images.length && !(support && support.turnImages)) throw new Error(AI_CAPABILITY_OFF.images + " Remove the image to send this turn.");
-    if (allowBrowser === true && !(support && support.turnBrowser)) throw new Error(AI_CAPABILITY_OFF.browser);
+    if (images.length && !(support && support.turnImages)) throw new Error(aiCapabilityOff("images", support) + " Remove the image to send this turn.");
+    if (allowBrowser === true && !(support && support.turnBrowser)) throw new Error(aiCapabilityOff("browser", support));
     if (images.length) submission.images = images;
     if (allowBrowser === true) submission.allow_browser = true;
     return submission;
@@ -1421,11 +1450,11 @@
     /* Each control only when the running Core declares what it sends; one
        honest line in its place otherwise. Thumbnails stay while any image is
        attached, so one attached before the Core changed can still be removed. */
-    var support = aiCoreSupport(state.coreTools);
+    var support = aiCoreWord();
     var attachRow = (support.turnImages ? '<div class="cr-ai-attach">' +
       '<button class="cr-btn cr-ai-attach__btn" type="button" data-action="ai-attach"' + (!ready || state.aiChatPending || state.aiAttachments.length >= AI_IMAGE_MAX ? " disabled" : "") + ' aria-describedby="crAiAttachHint">Attach image</button>' +
       '<input id="crAiAttach" type="file" accept="image/*" multiple class="cr-ai-attach__input" aria-label="Attach up to two images" tabindex="-1">' +
-      '<span class="cr-ai-attach__hint" id="crAiAttachHint">' + esc(state.aiAttachments.length + "/" + AI_IMAGE_MAX + " · downscaled here to " + AI_IMAGE_MAX_SIDE + " px JPEG, at most " + Math.round(AI_IMAGE_MAX_BYTES / 1000) + " KB each · a turn with an image goes to a vision model or says that none is live") + '</span></div>' : aiCapabilityLine("images")) +
+      '<span class="cr-ai-attach__hint" id="crAiAttachHint">' + esc(state.aiAttachments.length + "/" + AI_IMAGE_MAX + " · downscaled here to " + AI_IMAGE_MAX_SIDE + " px JPEG, at most " + Math.round(AI_IMAGE_MAX_BYTES / 1000) + " KB each · a turn with an image goes to a vision model or says that none is live") + '</span></div>' : aiCapabilityLine("images", support)) +
       (state.aiAttachments.length ? '<div class="cr-ai-thumbs">' + state.aiAttachments.map(function (a, i) {
         return '<div class="cr-ai-thumb"><img src="' + esc(a.preview) + '" alt="' + esc(a.name || ("Attached image " + (i + 1))) + '">' +
           '<button class="cr-ai-thumb__remove" type="button" data-action="ai-remove-attachment" data-index="' + i + '" aria-label="Remove ' + esc(a.name || "this image") + '">×</button>' +
@@ -1438,7 +1467,7 @@
         esc(state.aiAllowBrowser ? "On: each turn you send may drive the node's own browser on its allowed sites (owner-only; the Core checks again)." : "Off: your turns run without the node's browser.") + '</span>' +
         '<span class="cr-ai-browser-switch__ready" data-ai-browser-ready="' + esc(readiness.state) + '">' + esc(readiness.text) + '</span></span>' +
         '<button class="cr-switch' + (state.aiAllowBrowser ? " is-on" : "") + '" type="button" role="switch" aria-checked="' + (state.aiAllowBrowser ? "true" : "false") + '" aria-label="Use the browser for this turn" data-action="ai-browser-toggle"' + (!ready || state.aiChatPending ? " disabled" : "") + '></button></div>';
-    } else if (aiBrowserOwner(state)) browserSwitch = aiCapabilityLine("browser");
+    } else if (aiBrowserOwner(state)) browserSwitch = aiCapabilityLine("browser", support);
 
     return sourceBanner(state.sources.coreBridge, "Core bridge") +
       sourceBanner(state.sources.coreTools, "AI execution path") +
