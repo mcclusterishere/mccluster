@@ -76,6 +76,13 @@ with `20261119100000_eup_environment_events_v1.rollback.sql` (`PROMOTION-ORDER.m
 applying them changes nothing public until the ingest flag and the environment module are turned on. Called only by the
 owner routes (S2) and the USGS ingest behind `EUP_ENVIRONMENT_USGS_INGEST_ENABLED`, default `"false"` (S3), both on this branch.
 
+Pending (2026-11-19): the network connections consent guard, `20261119062110_network_connections_consent_guard_v1.sql` with
+`20261119062110_network_connections_consent_guard_v1.rollback.sql` (`PROMOTION-ORDER.md` section 13). A security fix, independent of
+the World release: production lets any member insert an accepted connection, accept their own request or move a row to another
+member through the REST API (two production-only policies and the member grants); the file drops those two policies and revokes
+INSERT, UPDATE and DELETE from `authenticated`, keeping the member read policy, SELECT and the RPCs the World uses. It defines no
+name, so `live-callers.json` does not change. Not applied; Matthew's approval required.
+
 Still pending: the publish, `20261117100300_action_mission_drawdown_publish.sql` (10.4). The owner decided it runs in
 the deploy window, after the new feed ships: the live build reads open missions straight from the database (its swipe
 deck, guest door and Worker lists), so all 125 show on the live site the moment it commits. It refuses until all 125

@@ -534,3 +534,57 @@ production snapshot. After any later `m_merge_people`: one service-role call of
 `public.network_media_assets_follow_merge(p_keep, p_merge, p_reason)`, or the merged person's uploads stay unsigned.
 The rollback does nothing where the guard is not applied and keeps the record of merges when it holds a row. At
 promotion, fix the one fixture `README.md` names (`supabase/tests/action_clipping_regression.sql`).
+
+## 13. Network connections: consent (security fix; written 2026-11-19)
+
+| File | Changes | Callers | Proof before apply |
+|---|---|---|---|
+| `20261119062110_network_connections_consent_guard_v1.sql` (+ `20261119062110_network_connections_consent_guard_v1.rollback.sql`) | drops the policies `network_connections_self_write` and `network_connections_self_update` and revokes INSERT, UPDATE and DELETE on `public.network_connections` from `authenticated`; keeps `network_connections_member_read`, SELECT and everything else | none new: the World already writes the table only through `request_connection`, `answer_connection` and `withdraw_connection` (SECURITY DEFINER, owned by the table's owner), and the Worker reads it with the service role | see below |
+
+The hole. Production carries two policies no migration here created (recorded in
+`supabase/replay_migrations/20261028230000_schema_reconcile_production_only_v1.sql:938-946`) and grants INSERT, UPDATE and DELETE
+on the table to `authenticated`. Any member, with their own session, through the REST API, can therefore insert a connection
+naming anyone with status `accepted`, accept their own pending request, or move a row to another member. An accepted pair turns
+a message request into a conversation (`mnet_open_direct`, live: 119 of 120 profiles take messages from `network`) and is the
+only partner check of `publish_antisocial_collaboration` (a public post crediting both; latent today, the Anti-Social mission row
+is absent in production). Read-only production checks on 2026-11-19 found no other writer (no trigger, rule, view, cron job or
+other function writes the table; the writer RPCs equal this repository's text and none lets a member accept their own request),
+2 rows (1 accepted, 1 pending; no accepted row has `created_at` equal to `updated_at`, the trace an insert as accepted would
+usually leave, which is not proof that none was forged) and a ledger of 376 rows. The file's header records all of it.
+
+The fix checks before it commits that neither `anon` nor `authenticated` can still write the table, that no member write policy
+is left and that the three writer RPCs are still SECURITY DEFINER and owned by the table's owner; otherwise it stops with 55000
+and changes nothing. One transaction, safe to run twice, a 5 s lock bound. Independent of the World release and of every other
+section here; no prerequisite.
+
+**Not applied. Owner approval required.** Apply only on Matthew's approval of the exact text, with the Supabase MCP
+`apply_migration` (it runs as postgres, the table's owner) under the name `network_connections_consent_guard_v1`; rerun the
+header's read-only check query first (it must still answer the three policies and true for all four member privileges), then
+promote with the steps in `README.md` ("To promote one").
+
+**Verify** with the same query afterwards: only `network_connections_member_read SELECT authenticated`; member SELECT true and
+INSERT, UPDATE, DELETE false; acl `{postgres=arwdDxtm/postgres,anon=rm/postgres,authenticated=rm/postgres,service_role=arwdDxtm/postgres}`;
+the ledger one row longer. In the World, Connect, Accept, Decline, Withdraw and End keep working; a member's direct POST or PATCH
+to `/rest/v1/network_connections` answers 403.
+
+**Roll back** with the rollback file (owner approval too; as postgres, name `network_connections_consent_guard_v1_rollback`). It
+puts back exactly the two policies, with production's expressions, and the three grants, touches nothing else, and reopens the
+hole; the query then answers what it answers today.
+
+Proof before apply (disposable databases only):
+`PGLITE_MODULE=<PGlite 0.3.14 dist/index.js> node scripts/test/network-connections-consent.integration.mjs` (137 checks; CI matrix
+entry `connections-consent` in `.github/workflows/human-uprise-editorial.yml`) and
+`ALLOW_LOCAL_EUP_DB_TESTS=1 PG_BIN=<PostgreSQL 16 or 17 bin> PG_MODULE=<node-postgres> node scripts/test/network-connections-consent.native.integration.mjs`
+(140 checks: the file applied statement by statement as psql does, members on another session, the 5 s lock bound; passed on
+PostgreSQL 16.15 and 17.7 on 2026-11-19, production runs 17.6). Both build production's layer from this repository's SQL and check
+it against the 2026-11-19 reads: the policies' expressions, every grant, the constraints and indexes, and the bodies of the eight
+functions that name the table, byte for byte. The static checks run in the root suite
+(`node --test scripts/test/network-connections-consent-sql.test.mjs`). `node scripts/test/network-connections-consent.mutants.mjs`
+removes each of the file's seven statements in turn: each mutant fails a check.
+
+For Matthew to decide, not changed here:
+- anon keeps SELECT (and PostgreSQL 17's MAINTAIN) on the table. No policy admits anon, so a visitor reads no row, and no shipped
+  code reads the table signed out (the connection RPCs refuse anon). Revoking it would only turn a visitor's empty answer into a
+  401.
+- MAINTAIN for `anon` and `authenticated` on this and other tables is a platform-wide question (the Data API cannot use it), left
+  as the media pointer guard left it.
