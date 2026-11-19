@@ -1,5 +1,55 @@
 # The World release of 2026-11-18: record and runbook
 
+## Recovery checkpoint, 2026-11-19
+
+This checkpoint updates the dated release snapshot below. The recovered release branch,
+`claude/new-session-83ken5`, had reached `69058f8997b36a5d1dad586481ef1febf1448373`, beyond the earlier
+`e92a2cd4` handoff. It already contains Music M1, M4 and M2, the World source page, and the public environmental
+timeline client. The recovered branch is 229 commits ahead of `main` at
+`fc1986ec0f4c473f9df8db4578058f1f39f3bd52`, with 499 changed files before the continuation. It also contains
+the separately gated Core/laptop work described below. It is not a four-file hotfix.
+
+The continuation lives on `codex/four-build-recovery-20261119`, preserving that original history. Its draft
+pull request is a review and CI candidate. No merge, production deploy, SQL application, module activation,
+mission publication or permission attestation was performed during recovery.
+
+| Stream | Recovered implementation | Recovery repairs and remaining gate |
+| --- | --- | --- |
+| Music | Background audio, shared account state and one Now Playing owner were already committed. | Studio submission now captures and locks the form before asynchronous work, reports accepted releases accurately, and bounds duration probing. Playback cancels stale selection, eligibility, metadata, claim and automatic-next effects. The phone header reserves the account chip's space. See `docs/music/MUSIC-RELEASE-20261119.md` for the exact remaining cross-page continuity, album intake and device acceptance work. |
+| Environmental timeline | USGS event storage/routes, quake visuals and the timeline client were already committed. | Module withdrawal and newer selections invalidate pending reads; held/missing events leave the cache and selection; replacement records at the same revision are accepted. The SQL and module/ingest enablement remain separately gated. |
+| Project Drawdown source page | The source door, nine areas, search, credits, sharing, history and owner preview were already committed. | A browser suite now covers the shipped page at 390, 820 and 1280px, including guest navigation, owner preview, hidden/draft/denied responses, retry and overflow. Database publication and the owner's permission-scope attestation remain separate steps. |
+| Connections consent | The exact pending guard and rollback already existed. | Independent static, caller, disposable-database and mutation proofs pass. The live permission preflight still matches the vulnerable grants/policies; the guard remains unapplied pending approval of its exact text under section 13 of `supabase/pending/PROMOTION-ORDER.md`. |
+
+Read-only production checks during recovery found 376 migration records, latest
+`20261118035654 action_mission_drawdown_import_07`, 125 Drawdown draft missions and one other open mission.
+`mission_catalog_sources` is absent. Direct public-site reads from this executor were blocked by Cloudflare
+error 1010; that is not an observed site outage or a new live-deployment receipt.
+
+Verification uses Node 22.23.5. The final complete root run passed 2,970 tests, with seven skipped and none
+failed (2,977 total); the Python suite passed 7/7. The complete Worker run with its offline network guard passed 2,022 tests,
+with nine skipped and none failed. The focused music run passed 123/123; its seven new submission regressions
+and twelve reproduced playback failures fail against the recovered implementation and pass after the repairs.
+The focused World client run passed 45/45, the Worker source/timeline routes 24/24, and their disposable PGlite
+SQL proofs 18/18. Connections passed 7/7 static/caller checks and 137/137 PGlite checks; removing each of the
+seven security statements made the proof fail. These focused counts overlap the full repository suites.
+The repository source-coverage validator passed all 2,962 checks without a classification change.
+
+Local Chromium could not launch because this executor refused its socket creation. The new source-page and
+music-header browser checks are wired into the existing Human Uprise Editorial and Music Platform CI workflows;
+the recovery PR's exact-head results are their acceptance evidence. Physical iPhone/iPad lock-screen, AirPlay,
+slow-network and complete-album playback still require device receipts. The original lyric-machine ZIP was
+preserved separately, intact, before its expiring artifact deadline; no lyric catalog was regenerated or published.
+
+**Finish order:** the connections guard is independently ready for approval and does not need to wait for the
+feature release. For the four builds, review the exact PR head and browser artifacts, finish the remaining music
+capabilities on bounded follow-up slices, then follow the production release sequence below. Drawdown mission
+publication follows the deployed feed and cache window. Its source-page
+SQL and showing require their own approval and real permission evidence. Environmental SQL and activation remain
+their own approval. The source history and the remaining tasks are preserved; this checkpoint does not declare
+the whole release or every music slice complete.
+
+## Original release snapshot and deployment runbook
+
 Status: a release candidate on the release branch. **Nothing in it is merged and nothing in it is deployed.** The public
 site still serves `main` at `fc1986ec` (read on 2026-11-18, below). No pull request is open for it: the owner decides
 when to open one, and every later step that touches production waits for the owner's approval of that exact step.
