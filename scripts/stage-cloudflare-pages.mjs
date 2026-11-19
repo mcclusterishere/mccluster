@@ -44,6 +44,9 @@ const forbiddenFiles = new Set([
   'data/analytics/application-schema-inventory.json',
   'data/clients.json','whip/manufacturing-crm.json'
 ]);
+/* Whole folders of an allowed directory that are not web assets: the frozen Drawdown mission catalog (all 125 missions'
+   text and the source excerpts, drafts included) that no page reads (docs/control-plane/WORLD-MISSION-SOURCES.md, D10). */
+const forbiddenPrefixes = new Set([ 'data/missions/drawdown/' ]);
 const forbiddenSegments = /^(?:\.git|\.github|\.cursor|\.claude|node_modules|__tests__|tests?|scripts?|src|\.env(?:\..*)?|\.dev\.vars(?:\..*)?)$/i;
 const privateName = /(?:^|[/])(?:[^/]*\.(?:pem|key|crt|p12|pfx|sql|db|sqlite|ts|tsx|py|sh|service|timer|map|md|mdx|yaml|yml|toml|lock)|[^/]*(?:credentials|secrets?|private-key)[^/]*)$/i;
 const credentialPatterns = [
@@ -70,6 +73,7 @@ function shouldPublish(path) {
   const pieces = posix.split('/');
   if (pieces.some(x=>x.startsWith('.') || forbiddenSegments.test(x))) return false;
   if (forbiddenFiles.has(posix) || privateName.test(posix)) return false;
+  if ([...forbiddenPrefixes].some((p) => posix.startsWith(p))) return false;
   if (pieces.length > 1 && !allowedDirectories.has(pieces[0])) return false;
   if (pieces[0] === 'assets') {
     if (pieces.length < 3 || !publicAssetGroups.has(pieces[1])) return false;

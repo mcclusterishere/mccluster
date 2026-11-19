@@ -46,6 +46,8 @@ function rmArguments(flag) {
 const allowedDirectories = stageSet("allowedDirectories");
 const publicAssetGroups = stageSet("publicAssetGroups");
 const forbiddenFiles = stageSet("forbiddenFiles");
+/* folders inside an allowed directory that the export refuses (the frozen Drawdown mission catalog under data/) */
+const forbiddenPrefixes = stageSet("forbiddenPrefixes");
 const stripped = rmArguments("-rf");
 const removedFiles = rmArguments("-f");
 const rootEntries = readdirSync(ROOT, { withFileTypes: true });
@@ -66,13 +68,22 @@ test("the strip never deletes a directory the public export allows, and never th
     if (arg.includes("/")) {
       /* a nested path under a public directory must be one the export refuses too */
       if (top === "assets") assert.ok(!publicAssetGroups.has(group), `${arg} is a public asset group`);
-      else assert.ok(!allowedDirectories.has(top), `${arg} is inside public directory ${top}/`);
+      else assert.ok(!allowedDirectories.has(top) || forbiddenPrefixes.has(arg + "/"), `${arg} is inside public directory ${top}/ and not a folder the export refuses`);
     } else {
       assert.ok(!allowedDirectories.has(arg), `${arg}/ is public on Cloudflare but stripped from gh-pages`);
     }
   }
-  /* control.html fetches data/analytics/application-schema-inventory.json at runtime */
-  assert.ok(![...stripped].some((a) => a === "data" || a.startsWith("data/")), "data/ is fetched by published pages");
+  /* control.html fetches data/analytics/application-schema-inventory.json at runtime; data/ itself stays */
+  assert.ok(![...stripped].some((a) => a === "data" || a === "data/analytics" || a.startsWith("data/analytics/")), "data/ and data/analytics/ are fetched by published pages");
+});
+
+test("every folder the Cloudflare export refuses inside a public directory is stripped before gh-pages too", () => {
+  assert.ok(forbiddenPrefixes.has("data/missions/drawdown/"), "the frozen Drawdown mission catalog is refused by the export");
+  for (const prefix of forbiddenPrefixes) {
+    assert.ok(prefix.endsWith("/") && !prefix.startsWith("/"), `${prefix} names a folder, relative to the web root`);
+    assert.ok(stripped.has(prefix.replace(/\/$/, "")), `deploy-pages.yml publishes ${prefix}, which the export refuses`);
+  }
+  assert.match(stage, /if \(\[\.\.\.forbiddenPrefixes\]\.some\(\(p\) => posix\.startsWith\(p\)\)\) return false;/, "shouldPublish applies the prefixes");
 });
 
 test("every root file the Cloudflare export forbids is removed, agent instructions included", () => {
