@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 758,
+  "candidate_count": 760,
   "capability_source_count": 104,
-  "support_only_count": 654,
-  "checks_total": 2930,
-  "checks_passed": 2930,
+  "support_only_count": 656,
+  "checks_total": 2938,
+  "checks_passed": 2938,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -297,6 +297,7 @@
     "js/control-room/clipping.js",
     "js/control-room/identity-review.js",
     "js/control-room/instagram.js",
+    "js/control-room/mission-sources.js",
     "js/control-room/music-label.js",
     "js/control-room/nav.js",
     "js/control-room/profile-edit-review.js",
@@ -459,6 +460,7 @@
     "scripts/test/antisocial-three-levels.test.mjs",
     "scripts/test/appbar-consistency.test.mjs",
     "scripts/test/control-eup.test.mjs",
+    "scripts/test/control-mission-sources.test.mjs",
     "scripts/test/creator-action-distribution.test.mjs",
     "scripts/test/domain-architecture.test.mjs",
     "scripts/test/environment-globe-wiring.test.mjs",
@@ -772,7 +774,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "758 entries"
+      "detail": "760 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -6320,6 +6322,26 @@
       "detail": ""
     },
     {
+      "name": "js/control-room/mission-sources.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/control-room/mission-sources.js classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "js/control-room/mission-sources.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/control-room/mission-sources.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "js/control-room/music-label.js capability ids known",
       "passed": true,
       "detail": ""
@@ -9471,6 +9493,26 @@
     },
     {
       "name": "scripts/test/control-eup.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/control-mission-sources.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/control-mission-sources.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/control-mission-sources.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/control-mission-sources.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     },
