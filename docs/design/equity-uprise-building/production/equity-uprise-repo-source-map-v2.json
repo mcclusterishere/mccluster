@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 746,
+  "candidate_count": 747,
   "capability_source_count": 104,
-  "support_only_count": 642,
+  "support_only_count": 643,
   "entries": [
     {
       "path": ".cursorrules",
@@ -3498,6 +3498,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Test or behaviour harness for shared Action Network / intelligence governance; references Equity Uprise context but defines no program capability."
+    },
+    {
+      "path": "scripts/test/logo-css-backgrounds.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Root test of the logo law over every stylesheet: no supplied mark (the Equity Uprise emblem and its two variants among them) is painted as a CSS background that is filtered, transformed, blended, cropped or tiled, and the member's Action Record paints none behind its words (release review RS-1). Names the marks' files only to refuse such uses. Not a building capability."
     },
     {
       "path": "scripts/test/member-desk.test.mjs",

@@ -778,9 +778,12 @@ button.mn__notification-action:disabled { opacity: 0.55; cursor: default; }
 /* ---------- cinematic depth pass ----------
    Keep the product architecture quiet and readable, but let major surfaces
    feel like places rather than flat panels. Existing first-party campaign
-   artwork is used as atmosphere, never as content that must be read. */
+   artwork is used as atmosphere, never as content that must be read. A supplied mark is never atmosphere: filtered, scaled and
+   pushed past the box it was recoloured and cropped (AGENTS.md, "THE LOGOS ARE NOT YOURS TO DRAW"; release review RS-1, 2026-11-19,
+   the Equity Uprise emblem behind the member's Action Record), so no layer here paints one
+   (scripts/test/logo-css-backgrounds.test.mjs). */
 .mn__manifesto,.mn__actionboard,.mn__understand,#mnMissionsView{position:relative;isolation:isolate;overflow:hidden}
-.mn__manifesto::before,.mn__actionboard::before,.mn__understand::before,#mnMissionsView::before{
+.mn__manifesto::before,.mn__actionboard::before,.mn__understand::before{
   content:"";position:absolute;inset:0;z-index:-2;background-position:center;background-size:cover;
   opacity:.28;filter:saturate(.8) contrast(1.08);transform:scale(1.035);
   transition:transform .9s var(--mn-ease),opacity .6s var(--mn-ease)
@@ -790,10 +793,8 @@ button.mn__notification-action:disabled { opacity: 0.55; cursor: default; }
   background:linear-gradient(110deg,rgba(10,8,7,.97) 5%,rgba(10,8,7,.76) 54%,rgba(10,8,7,.38)),
              linear-gradient(0deg,rgba(10,8,7,.88),transparent 65%)
 }
-.mn__manifesto::before{background-image:url("../assets/img/equity-uprise-logo.webp");background-size:58%;background-repeat:no-repeat;background-position:88% 50%;opacity:.18;filter:grayscale(.15) saturate(1.15)}
 .mn__actionboard::before{background-image:url("../assets/img/heal-the-3-cover.jpg");background-position:68% 45%;opacity:.22}
 .mn__understand::before{background-image:url("../assets/img/cia-mind-control-cover.jpg");background-position:74% 50%;opacity:.24}
-#mnMissionsView::before{background-image:url("../assets/img/equity-uprise-logo.webp");background-size:70%;background-repeat:no-repeat;background-position:115% 8%;opacity:.09}
 .mn__manifesto,.mn__actionboard,.mn__understand{
   box-shadow:inset 0 0 0 1px rgba(244,239,230,.12),0 24px 70px -42px rgba(0,0,0,.95);
   transition:transform .35s var(--mn-ease),box-shadow .35s var(--mn-ease)
@@ -815,7 +816,7 @@ button.mn__notification-action:disabled { opacity: 0.55; cursor: default; }
   .mn__manifesto:hover::before,.mn__actionboard:hover::before,.mn__understand:hover::before{transform:scale(1.07);opacity:.32}
 }
 @media (prefers-reduced-motion:reduce){
-  .mn__manifesto::before,.mn__actionboard::before,.mn__understand::before,#mnMissionsView::before,
+  .mn__manifesto::before,.mn__actionboard::before,.mn__understand::before,
   .mn__manifesto,.mn__actionboard,.mn__understand,.mn__actionboard-grid article,.mn__post-card{transition:none!important;animation:none!important}
 }
 

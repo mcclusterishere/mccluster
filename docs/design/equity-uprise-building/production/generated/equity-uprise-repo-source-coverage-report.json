@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 746,
+  "candidate_count": 747,
   "capability_source_count": 104,
-  "support_only_count": 642,
-  "checks_total": 2882,
-  "checks_passed": 2882,
+  "support_only_count": 643,
+  "checks_total": 2886,
+  "checks_passed": 2886,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -482,6 +482,7 @@
     "scripts/test/homelessness-action.test.mjs",
     "scripts/test/human-uprise-door.test.mjs",
     "scripts/test/identity-verification-levels.test.mjs",
+    "scripts/test/logo-css-backgrounds.test.mjs",
     "scripts/test/member-desk.test.mjs",
     "scripts/test/mission-catalog.native.integration.mjs",
     "scripts/test/mission-import.test.mjs",
@@ -760,7 +761,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "746 entries"
+      "detail": "747 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -9919,6 +9920,26 @@
     },
     {
       "name": "scripts/test/identity-verification-levels.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/logo-css-backgrounds.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/logo-css-backgrounds.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/logo-css-backgrounds.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/logo-css-backgrounds.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     },
