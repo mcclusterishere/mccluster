@@ -89,7 +89,8 @@ test('creator backend authors the same theme, music-video and lyric-commerce con
   assert.match(studio,/parseLyricCtas/);
   assert.match(studio,/music_video_url:/);
   assert.match(studio,/lyrics_url:/);
-  assert.match(studio,/experience: experienceFromForm\(\)/);
+  assert.match(studio,/const experience = experienceFromForm\(\)/, 'the track theme and commerce are captured before the upload waits');
+  assert.match(studio,/lyrics_url: lyricsUrl,\s*experience,\s*rights_status:/, 'the submitted release uses that captured experience');
   assert.match(access,/music_video_url,lyrics_url,experience/);
 });
 

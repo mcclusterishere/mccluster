@@ -26,9 +26,20 @@
   var previewLimit = 0;
   var startedAt = 0;
   var playbackRequest = 0;
+  var accessRefresh = 0;
+  var catalogueRequest = 0;
   var CREATOR_TRACKS = {};
   var SB_URL = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
   var SB_KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
+
+  function pauseCurrent() {
+    catalogueRequest++;
+    accessRefresh++;
+    var opening = currentAccess === "loading";
+    if (opening) { playbackRequest++; currentAccess = "idle"; }
+    audio.pause();
+    if (opening) paint();
+  }
 
   function esc(x) {
     var d = doc.createElement("i");
@@ -139,7 +150,7 @@
     doc.getElementById("musicMiniPlay").addEventListener("click", function () {
       if (!current) { if (held) resumeHeld(); return; }
       if (audio.paused) resumeCurrent().catch(function () {});
-      else audio.pause();
+      else pauseCurrent();
     });
     doc.getElementById("musicMiniOpen").addEventListener("click", function () {
       if (!current && held) { resumeHeld().then(openNow); return; }
@@ -151,7 +162,7 @@
     doc.getElementById("musicNowPlay").addEventListener("click", function () {
       if (!current) return;
       if (audio.paused) resumeCurrent().catch(function () {});
-      else audio.pause();
+      else pauseCurrent();
     });
     if (root.MCC_NOW_PLAYING && root.MCC_NOW_PLAYING.airplay) root.MCC_NOW_PLAYING.airplay(doc.getElementById("musicNowAirplay"), audio);
     doc.getElementById("musicNowPrev").addEventListener("click", function () { playAdjacent(-1); });
@@ -411,12 +422,16 @@
   /* A gated record is earned (js/gated-audio.js): locked or signed-out
      listeners get the preview, and an earned play is only spent when the
      listener actually opens the track. `peek` repaints without spending. */
-  function sourceFor(t, peek) {
+  function sourceFor(t, peek, stillCurrent) {
     if (t.creatorTrackId) return creatorSourceFor(t);
     if (!t.gated) return Promise.resolve({ state: "full", url: t.src });
     return gateReady().then(function (g) {
+      if (stillCurrent && !stillCurrent()) return { state: "superseded" };
       if (!g) return { state: "preview", url: t.src, reason: "auth-loading" };
       return g.resolve(t.gated).then(function (out) {
+        /* Resolving eligibility is not permission to spend a play after the
+           listener has already chosen something else. */
+        if (stillCurrent && !stillCurrent()) return { state: "superseded" };
         if (out.state === "earned" && !peek) {
           return g.claim(t.gated).then(function (c) {
             return c.state === "full"
@@ -502,11 +517,12 @@
   function openCreatorTrack(id, force) {
     var t = CREATOR_TRACKS[String(id)] || null;
     if (!t) return Promise.reject(new Error("Creator track not registered"));
+    catalogueRequest++;
     var same = current && current.creatorTrackId === t.creatorTrackId;
     if (same && !force && currentAccess === "loading") return Promise.resolve({state:"loading"});
     if (same && !force && (currentAccess === "full" || currentAccess === "preview")) {
       if (audio.paused) { audioSession(); return audio.play().then(function () { return { state: currentAccess }; }); }
-      audio.pause();
+      pauseCurrent();
       return Promise.resolve({ state: currentAccess });
     }
     var request = ++playbackRequest;
@@ -557,7 +573,7 @@
         return current ? { title: current.title, artist: current.artist || "Matthew McCluster", album: current.albumName || "", art: current.art } : null;
       },
       play: function () { return resumeCurrent(); },
-      pause: function () { audio.pause(); },
+      pause: pauseCurrent,
       previous: function () { return playAdjacent(-1); },
       next: function () { return playAdjacent(1); },
       seek: function (t) { audio.currentTime = previewLimit ? Math.min(t, previewLimit) : t; }
@@ -571,7 +587,12 @@
 
   function openTrack(albumSlug, title, force) {
     var request;
+    var lookup = ++catalogueRequest;
     return loadLibrary().then(function (by) {
+      /* The first catalogue read can outlive a newer creator selection or
+         Pause. Once opened, playbackRequest owns the source so another tap
+         on the same loading song does not cancel its only request. */
+      if (lookup !== catalogueRequest) return {state:"superseded"};
       var t = by[key(albumSlug, title)];
       if (!t) throw new Error("Track not found");
 
@@ -580,7 +601,7 @@
       if (same && !force && currentAccess === "loading") return {state:"loading"};
       if (same && !force && (currentAccess === "full" || currentAccess === "preview")) {
         if (audio.paused) { audioSession(); return audio.play().then(function () { return { state: currentAccess }; }); }
-        audio.pause();
+        pauseCurrent();
         return { state: currentAccess };
       }
 
@@ -594,7 +615,7 @@
       previewLimit = 0;
       paint();
 
-      return sourceFor(t).then(function (out) {
+      return sourceFor(t, false, function () { return request === playbackRequest && current === t; }).then(function (out) {
         if (request !== playbackRequest) return {state:"superseded"};
         if (out.state !== "full" && out.state !== "preview") {
           currentAccess = "unavailable";
@@ -618,7 +639,7 @@
         return audio.play().then(function () { return out; }).catch(function () { return out; });
       });
     }).catch(function (err) {
-      if (request !== undefined && request !== playbackRequest) throw err;
+      if (request === undefined ? lookup !== catalogueRequest : request !== playbackRequest) throw err;
       var p = ensureUI();
       p.hidden = false;
       currentAccess = "unavailable";
@@ -632,23 +653,31 @@
   function upgradeCurrent() {
     if (!current || !current.gated) return;
     /* the one earned play keeps playing whatever changes around it */
-    if (currentAccess === "full" || currentAccess === "spent") return;
-    var wasPlaying = !audio.paused;
-    var at = audio.currentTime || 0;
-    sourceFor(current, true).then(function (out) {
+    if (currentAccess === "full" || currentAccess === "spent" || currentAccess === "loading") return;
+    var item = current, access = currentAccess;
+    var request = playbackRequest, refresh = ++accessRefresh;
+    function stillCurrent() {
+      return request === playbackRequest && refresh === accessRefresh && current === item;
+    }
+    return sourceFor(item, true, stillCurrent).then(function (out) {
+      /* Access can answer after the next song, or after Pause. Neither this
+         reply nor its later metadata event may take the transport back. */
+      if (!stillCurrent() || currentAccess !== access) return;
       if (!out || (out.state !== "full" && out.state !== "preview")) return;
       if (out.state === currentAccess) return;
+      var wasPlaying = !audio.paused, at = audio.currentTime || 0;
       currentAccess = out.state;
-      previewLimit = out.state === "preview" ? Number(current.gated.preview_seconds || 0) : 0;
-      audio.src = out.url;
+      previewLimit = out.state === "preview" ? Number(item.gated.preview_seconds || 0) : 0;
       audio.addEventListener("loadedmetadata", function once() {
         audio.removeEventListener("loadedmetadata", once);
+        if (!stillCurrent()) return;
         try { audio.currentTime = Math.min(at, Math.max(0, audio.duration - .25)); } catch (e) {}
         if (wasPlaying) { audioSession(); audio.play().catch(function () {}); }
       });
+      audio.src = out.url;
       trackEvent("music_access_changed", { access_state: out.state });
       paint();
-    });
+    }).catch(function () { /* a failed refresh leaves the current source alone */ });
   }
 
   /* THE LISTEN LEDGER. A song heard from the top is timed by the API;
@@ -808,7 +837,7 @@
     play: openTrack,
     playCreator: openCreatorTrack,
     registerCreatorTrack: registerCreatorTrack,
-    pause: function () { audio.pause(); },
+    pause: pauseCurrent,
     resume: resumeCurrent,
     next: function () { return playAdjacent(1); },
     previous: function () { return playAdjacent(-1); },

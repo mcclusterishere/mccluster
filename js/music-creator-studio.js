@@ -116,8 +116,8 @@ function describeSize(bytes, up) {
    is no sheet. The sheet rides on its own column after the release row exists,
    and a refusal never sinks the release: until that column is live the machine
    simply writes the words from the audio. */
-async function attachLyricSheet(trackId) {
-  const sheet = ($("trackLyricSheet")?.value || "").trim();
+async function attachLyricSheet(trackId, words) {
+  const sheet = String(words || "").trim();
   if (!sheet) return;
   try {
     await rest("creator_tracks?id=eq." + encodeURIComponent(trackId), {
@@ -221,12 +221,25 @@ function durationMs(file) {
   return new Promise((resolve) => {
     const a = document.createElement("audio");
     const u = URL.createObjectURL(file);
-    a.preload = "metadata";
-    a.onloadedmetadata = () => {
-      const ms = Number.isFinite(a.duration) ? Math.round(a.duration * 1000) : null;
-      URL.revokeObjectURL(u); resolve(ms);
+    let settled = false;
+    let timer;
+    const finish = (ms) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      a.onloadedmetadata = null;
+      a.onerror = null;
+      a.removeAttribute("src");
+      a.load();
+      URL.revokeObjectURL(u);
+      resolve(ms);
     };
-    a.onerror = () => { URL.revokeObjectURL(u); resolve(null); };
+    /* A malformed or unsupported file can emit neither metadata nor error.
+       Release its local file handle and let the creator choose another file. */
+    timer = setTimeout(() => finish(null), 15000);
+    a.preload = "metadata";
+    a.onloadedmetadata = () => finish(Number.isFinite(a.duration) ? Math.round(a.duration * 1000) : null);
+    a.onerror = () => finish(null);
     a.src = u;
   });
 }
@@ -657,6 +670,16 @@ $("trackAccess").addEventListener("change", () => {
 $("trackForm").addEventListener("submit", guarded(async (e) => {
   e.preventDefault();
   const submit = $("submitTrack");
+  /* Lock before the asynchronous duration probe, not after it: two quick
+     submits used to upload and create the same release twice. Keep these
+     fields stable while the upload runs, restoring their prior state later. */
+  if (submit.disabled) return;
+  submit.disabled = true;
+  const form = $("trackForm");
+  const fields = Array.from(form.elements).filter((el) => el !== submit);
+  const disabledBefore = fields.map((el) => el.disabled);
+  fields.forEach((el) => { el.disabled = true; });
+  form.setAttribute("aria-busy", "true");
   const uploaded = [];
   let createdTrackId = null;
   let committed = false;
@@ -679,6 +702,24 @@ $("trackForm").addEventListener("submit", guarded(async (e) => {
     const artist = $("trackArtist").value.trim() || profile.artist_name;
     if (!title) throw new Error("Add a song title.");
     if (!artist) throw new Error("Add an artist name.");
+    const description = $("trackDescription").value.trim();
+    const albumId = $("trackAlbum").value;
+    const lyricSheet = $("trackLyricSheet")?.value || "";
+    const genre = $("trackGenre").value.trim();
+    const musicVideo = $("trackMusicVideo").value.trim();
+    const lyricsUrl = $("trackLyricsUrl").value.trim();
+    const experience = experienceFromForm();
+    const price = Math.round(Number($("licensePrice").value || 0) * 100);
+    const licenseTerms = $("licenseTerms").value.trim();
+    const licenseTitle = $("licenseTitle").value.trim() || "Commercial license";
+    const rights = {
+      owns_master: $("ownsMaster").checked,
+      controls_composition: $("controlsComposition").checked,
+      samples_cleared: $("samplesCleared").checked,
+      collaborators_cleared: $("collaboratorsCleared").checked,
+      parody_or_derivative: derivative,
+      derivative_permissions: $("derivativePermissions").value.trim()
+    };
     for (const [bucket, file] of [["creator-masters", master], ["creator-previews", preview], ["creator-artwork", art]]) {
       if (!file) continue;
       const limit = BUCKET_MAX_BYTES[bucket];
@@ -687,12 +728,15 @@ $("trackForm").addEventListener("submit", guarded(async (e) => {
       }
       if (!file.size) throw new Error(`${file.name} is empty. Choose a valid file.`);
     }
-    if (!$("ownsMaster").checked) throw new Error("Confirm your rights to the master recording.");
-    if (!$("collaboratorsCleared").checked) throw new Error("Confirm collaborator permissions before submitting.");
+    if (!rights.owns_master) throw new Error("Confirm your rights to the master recording.");
+    if (!rights.controls_composition) throw new Error("Confirm your rights to distribute the composition.");
+    if (!rights.samples_cleared) throw new Error("Confirm that samples are cleared, or none are used.");
+    if (!rights.collaborators_cleared) throw new Error("Confirm collaborator permissions before submitting.");
+    if (!$("releaseTerms").checked) throw new Error("Accept the release terms before submitting.");
+    if (price > 0 && !licenseTerms) throw new Error("Add terms for the commercial license, or clear its price.");
     const dur = await durationMs(master);
     if (!Number.isFinite(dur) || dur <= 0) throw new Error("The master audio could not be read. Try a supported audio file.");
 
-    submit.disabled = true;
     status("trackStatus", "Uploading private master…");
     const masterPath = await uploadGrant("creator-masters", master);
     uploaded.push({ bucket: "creator-masters", path: masterPath });
@@ -711,14 +755,6 @@ $("trackForm").addEventListener("submit", guarded(async (e) => {
     }
 
     const slug = slugify(title) + "-" + Math.random().toString(36).slice(2, 7);
-    const rights = {
-      owns_master: $("ownsMaster").checked,
-      controls_composition: $("controlsComposition").checked,
-      samples_cleared: $("samplesCleared").checked,
-      collaborators_cleared: $("collaboratorsCleared").checked,
-      parody_or_derivative: derivative,
-      derivative_permissions: $("derivativePermissions").value.trim()
-    };
 
     status("trackStatus", "Writing release record…");
     const inserted = await rest("creator_tracks", {
@@ -728,7 +764,7 @@ $("trackForm").addEventListener("submit", guarded(async (e) => {
         title,
         artist,
         slug,
-        description: $("trackDescription").value.trim(),
+        description,
         audio_url: previewUrl,
         poster_url: posterUrl,
         public: access === "public",
@@ -739,10 +775,10 @@ $("trackForm").addEventListener("submit", guarded(async (e) => {
         master_bucket: "creator-masters",
         master_path: masterPath,
         duration_ms: dur,
-        genre: $("trackGenre").value.trim(),
-        music_video_url: $("trackMusicVideo").value.trim(),
-        lyrics_url: $("trackLyricsUrl").value.trim(),
-        experience: experienceFromForm(),
+        genre,
+        music_video_url: musicVideo,
+        lyrics_url: lyricsUrl,
+        experience,
         rights_status: "incomplete",
         rights_declaration: rights
       })
@@ -750,7 +786,7 @@ $("trackForm").addEventListener("submit", guarded(async (e) => {
     const track = inserted?.[0];
     if (!track?.id) throw new Error("Release record was not returned.");
     createdTrackId = track.id;
-    await attachLyricSheet(track.id);
+    await attachLyricSheet(track.id, lyricSheet);
 
     await rest("music_rights_attestations", {
       method: "POST",
@@ -763,7 +799,7 @@ $("trackForm").addEventListener("submit", guarded(async (e) => {
         collaborators_cleared: rights.collaborators_cleared,
         parody_or_derivative: rights.parody_or_derivative,
         derivative_permissions: rights.derivative_permissions,
-        notes: $("trackDescription").value.trim()
+        notes: description
       })
     });
 
@@ -773,8 +809,6 @@ $("trackForm").addEventListener("submit", guarded(async (e) => {
     });
 
     committed = true;
-    const price = Math.round(Number($("licensePrice").value || 0) * 100);
-    const licenseTerms = $("licenseTerms").value.trim();
     let licenseWarning = "";
     if (price > 0 && licenseTerms) {
       try { await rest("music_license_offers", {
@@ -782,7 +816,7 @@ $("trackForm").addEventListener("submit", guarded(async (e) => {
         body: JSON.stringify({
           track_id: track.id,
           slug: "commercial-" + Math.random().toString(36).slice(2, 7),
-          title: $("licenseTitle").value.trim() || "Commercial license",
+          title: licenseTitle,
           license_type: "commercial_basic",
           price_cents: price,
           currency: "usd",
@@ -797,16 +831,20 @@ $("trackForm").addEventListener("submit", guarded(async (e) => {
       }
     }
 
-    const albumId = $("trackAlbum").value;
     let albumWarning = "";
     if (albumId) {
       try {
         await saveSettings((s) => {
           const a = (s.albums || []).find((x) => x && x.id === albumId);
-          if (a && Array.isArray(a.tracks) && a.tracks.length < PAGE.MAX_TRACKS) a.tracks.push(String(track.id).toLowerCase());
+          if (!a) throw new Error("That album was removed while the release uploaded.");
+          if (!Array.isArray(a.tracks)) a.tracks = [];
+          const id = String(track.id).toLowerCase();
+          if (a.tracks.includes(id)) return;
+          if (a.tracks.length >= PAGE.MAX_TRACKS) throw new Error("That album has reached its track limit.");
+          a.tracks.push(id);
         });
       } catch (albumErr) {
-        albumWarning = " It was not added to the album: add it from Your albums.";
+        albumWarning = " It was not added to the album: " + (albumErr.message || "add it from Your albums.");
       }
     }
     licenseWarning += albumWarning;
@@ -824,7 +862,10 @@ $("trackForm").addEventListener("submit", guarded(async (e) => {
     status("trackStatus", (derivative
       ? "Uploaded. Held for manual derivative/parody rights review."
       : "Uploaded. Submitted for rights and publication review.") + licenseWarning, licenseWarning ? "bad" : "good");
-    await loadTracks();
+    try { await loadTracks(); }
+    catch (_) {
+      status("trackStatus", "Release submitted." + licenseWarning + " Your releases could not refresh. Reload to see it before uploading again.", "bad");
+    }
     if (window.MCC_TRACK) window.MCC_TRACK("creator_track_submitted", { track_id: track.id, access_mode: access, derivative });
   } catch (err) {
     if (!committed && (createdTrackId || uploaded.length)) {
@@ -839,6 +880,8 @@ $("trackForm").addEventListener("submit", guarded(async (e) => {
       status("trackStatus", err.message || "Upload failed.", "bad");
     }
   } finally {
+    fields.forEach((el, i) => { el.disabled = disabledBefore[i]; });
+    form.removeAttribute("aria-busy");
     submit.disabled = false;
   }
 }));

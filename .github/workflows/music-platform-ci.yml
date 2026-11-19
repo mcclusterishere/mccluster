@@ -17,6 +17,8 @@ on:
       - 'supabase/functions/stripe-webhook/**'
       - 'supabase/migrations/**'
       - 'scripts/test/music-platform.test.mjs'
+      - 'scripts/test/creator-release-submission.test.mjs'
+      - 'scripts/test/music-playback-races.test.mjs'
       - 'js/chamber.js'
       - 'js/filament.js'
       - 'js/peaks.js'
@@ -70,6 +72,8 @@ on:
       - 'supabase/functions/stripe-webhook/**'
       - 'supabase/migrations/**'
       - 'scripts/test/music-platform.test.mjs'
+      - 'scripts/test/creator-release-submission.test.mjs'
+      - 'scripts/test/music-playback-races.test.mjs'
       - 'js/chamber.js'
       - 'js/filament.js'
       - 'js/peaks.js'
@@ -133,6 +137,10 @@ jobs:
           node --check js/filament.js
       - name: Run music platform contracts
         run: node --test scripts/test/music-platform.test.mjs
+      - name: Creator release submission survives slow metadata, edits and a failed refresh
+        run: node --test scripts/test/creator-release-submission.test.mjs
+      - name: Late access and gate replies cannot interrupt a newer song or undo Pause
+        run: node --test scripts/test/music-playback-races.test.mjs
       - name: Background playback contracts (no Web Audio on the deck, the audio session, the lifecycle guard)
         run: node --test scripts/test/music-background.test.mjs
       - name: Every public catalogue track has fresh peaks

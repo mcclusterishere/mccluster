@@ -1365,7 +1365,7 @@
       var key = btn.getAttribute("data-pv");
       if (pvKey === key) { pvStop(); return; }
       pvStop();
-      try { deck.pause(); } catch (e) {}
+      try { if (window.MCC_NP_PAUSE) window.MCC_NP_PAUSE(); else deck.pause(); } catch (e) {}
       pv.src = btn.getAttribute("data-src");
       pvBtn = btn;
       pvNowPlaying();
@@ -1513,16 +1513,17 @@
             art: r.getAttribute("data-art") || document.getElementById("albArt").getAttribute("src") };
         },
         play: function () { play(); },
-        pause: function () { deck.pause(); },
+        pause: function () { pauseDeck(); },
         previous: function () { prev(); },
         next: function () { next(); },
         /* the deck's own seeking guard keeps the one earned play from being rewound */
-        seek: function (t) { deck.currentTime = t; }
+        seek: function (t) { cancelPendingPlay(); deck.currentTime = t; }
       });
       return np;
     }
     function media() { var h = nowPlaying(); if (h) h.update(); }
     function load(i, at) {
+      cancelPendingPlay();
       var to = (i + rows.length) % rows.length;
       /* leaving a record mid-play spends it: the play was the grant */
       if (cur > -1 && cur !== to) spend(rows[cur]);
@@ -1567,6 +1568,19 @@
       document.getElementById("nowBy").textContent = rows[cur].getAttribute("data-artist") || ARTIST;
       media(); paintRows(); paintDeck();
     }
+    /* A slow gate or listen receipt belongs to the selection that asked for
+       it. A newer choice or Pause wins, even when the old reply arrives last. */
+    var playRequest = 0, pendingClaim = null;
+    function cancelPendingPlay() {
+      playRequest++;
+      if (pendingClaim && pendingClaim.row._gateOut) paintGate(pendingClaim.row, pendingClaim.row._gateOut);
+      pendingClaim = null;
+      if (finishPrime) finishPrime(false);
+    }
+    function pauseDeck() {
+      cancelPendingPlay();
+      deck.pause();
+    }
     /* A PLAY THAT DOES NOT START MUST SAY SO. deck.play() rejections were
        swallowed, so a track that could not load, or a browser that refused
        to start the sound, left the button on "Play" with nothing else
@@ -1585,6 +1599,7 @@
       });
     }
     function startDeck(row) {
+      if (finishPrime) finishPrime(false);
       audioSession();
       var p = deck.play();
       if (p && typeof p.catch === "function") p.catch(function (e) { playFailed(e, row); });
@@ -1594,27 +1609,38 @@
        Instagram browser a play() that late is no longer "from the tap" and
        is refused. Starting the element (muted) inside the tap itself keeps
        its permission for the real play that follows. */
-    var priming = false;
+    var priming = false, finishPrime = null;
     function primeDeck() {
       if (!deck.paused) return;
       try {
         priming = true;
         var wasMuted = deck.muted;
+        var request = playRequest, source = deck.src, finished = false;
         deck.muted = true;
+        var done = function (stop) {
+          if (finished) return;
+          finished = true;
+          if (stop && request === playRequest && source === deck.src) { try { deck.pause(); } catch (e) {} }
+          deck.muted = wasMuted;
+          priming = false;
+          finishPrime = null;
+        };
+        finishPrime = done;
         audioSession();
         var p = deck.play();
-        var done = function () { try { deck.pause(); } catch (e) {} deck.muted = wasMuted; priming = false; };
-        if (p && typeof p.then === "function") p.then(done, done); else done();
-      } catch (e) { priming = false; }
+        if (p && typeof p.then === "function") p.then(function () { done(true); }, function () { done(true); }); else done(true);
+      } catch (e) { if (finishPrime) finishPrime(false); else priming = false; }
     }
     function play(i, at) {
       var target = i !== undefined ? (i + rows.length) % rows.length : (cur < 0 ? 0 : cur);
       var row = rows[target];
+      if (pendingClaim && pendingClaim.target === target && pendingClaim.request === playRequest) return;
+      cancelPendingPlay();
       /* An earned record is spent the moment it is played, not before:
          ask the API for this one play, then load what it signs. */
       if (row && row.getAttribute("data-gate") === "earned" && !row.hasAttribute("data-granted") && window.MCC_GATED) {
         primeDeck();
-        claimThenPlay(target);
+        claimThenPlay(target, playRequest);
         return;
       }
       if (row && row.hasAttribute("data-gated-bucket") && !row.hasAttribute("data-granted")) {
@@ -1660,11 +1686,19 @@
       if (chip && ended) { chip.classList.remove("unlock--nudge"); void chip.offsetWidth; chip.classList.add("unlock--nudge"); }
       if (ended && window.MCC_TRACK) window.MCC_TRACK("gated_preview_end", { track: row.getAttribute("data-title"), album: ALBUM, gate: gate });
     }
-    function claimThenPlay(target) {
+    function claimThenPlay(target, request) {
+      if (request === undefined) { cancelPendingPlay(); request = playRequest; }
       var row = rows[target];
+      var pending = { target: target, request: request, row: row };
+      pendingClaim = pending;
       var slot = row.querySelector("[data-reclock]");
       if (slot) slot.innerHTML = '<span class="gonetxt">Opening&hellip;</span>';
-      window.MCC_GATED.claim(gateSpec(row)).then(function (out) {
+      return window.MCC_GATED.claim(gateSpec(row)).then(function (out) {
+        if (request !== playRequest || pendingClaim !== pending) {
+          if (window.MCC_GATED.forget) window.MCC_GATED.forget();
+          return;
+        }
+        pendingClaim = null;
         if (out.state !== "full") {
           /* not earned after all (another tab spent it, or signed out):
              say where they stand and play the preview */
@@ -1686,6 +1720,12 @@
         startDeck(row);
         gatedPlayEvent(row, true);
         if (window.MCC_TRACK) window.MCC_TRACK("album_play", { track: row.getAttribute("data-title"), album: ALBUM });
+      }).catch(function (error) {
+        if (request !== playRequest || pendingClaim !== pending) return;
+        pendingClaim = null;
+        if (finishPrime) finishPrime(true);
+        paintGate(row, { state: "unavailable" });
+        playFailed(error, row);
       });
     }
     /* The one play is over (it ended, or they moved on): the row goes back
@@ -1715,19 +1755,19 @@
       listen = h ? { row: row, handle: h } : null;
     }
     function next() { play(cur + 1); }
-    function prev() { if (deck.currentTime > 4) { deck.currentTime = 0; return; } play(cur - 1); }
+    function prev() { if (deck.currentTime > 4) { cancelPendingPlay(); deck.currentTime = 0; return; } play(cur - 1); }
 
     rows.forEach(function (row, i) {
       row.addEventListener("click", function () {
-        if (i === cur && !deck.paused) { deck.pause(); return; }
+        if (i === cur && !deck.paused) { pauseDeck(); return; }
         play(i);
       });
     });
     el("playAll").addEventListener("click", function () {
-      if (cur > -1 && !deck.paused) { deck.pause(); return; }
+      if (cur > -1 && !deck.paused) { pauseDeck(); return; }
       play(cur > -1 ? cur : 0);
     });
-    el("tpPlay").addEventListener("click", function () { if (deck.paused) play(); else deck.pause(); });
+    el("tpPlay").addEventListener("click", function () { if (deck.paused) play(); else pauseDeck(); });
     el("tpNext").addEventListener("click", next);
     el("tpPrev").addEventListener("click", prev);
     function seekFeedback(message) {
@@ -1746,7 +1786,7 @@
         seekFeedback("This one-pass track cannot be rewound.");
         return;
       }
-      try { deck.currentTime = target; seekFeedback(""); }
+      try { cancelPendingPlay(); deck.currentTime = target; seekFeedback(""); }
       catch (error) { seekFeedback("Seeking is not available for this track."); }
     }
     ["seek", "nowSeek"].forEach(function (id) {
@@ -1802,13 +1842,16 @@
       var wasPreview = !!(rows[cur] && rows[cur].hasAttribute("data-gated-bucket") && !rows[cur].hasAttribute("data-granted"));
       spend(rows[cur]);
       if (wasPreview) { previewNotice(rows[cur], true); return; }
+      if (pendingClaim && pendingClaim.request === playRequest) return;
       /* Played straight through, the album arrives at its closer having just
          earned it. Wait for the song that just ended to be counted, then ask
          for the play: earned, it plays in full; not, it says where the
          listener stands and plays the preview. */
       var upNext = (cur + 1) % rows.length;
       if (rows[upNext] && rows[upNext].hasAttribute("data-gated-bucket") && window.MCC_GATED && window.MCC_GATED.signedIn()) {
-        finished.then(function () { claimThenPlay(upNext); }, function () { claimThenPlay(upNext); });
+        var request = playRequest;
+        var advance = function () { if (request === playRequest) claimThenPlay(upNext); };
+        finished.then(advance, advance);
         return;
       }
       next(); // the record keeps spinning, wraps at the end
@@ -2179,7 +2222,7 @@
       if (cur > -1) { try { exp = JSON.parse(rows[cur].getAttribute("data-experience") || "{}"); } catch (e) {} }
       var context = { track: cur > -1 ? rows[cur].getAttribute("data-title") : null, album: ALBUM, surface: "album", track_view:false };
       lyrCtl = window.MCC_LYRICS ? window.MCC_LYRICS.mount(nowLyr, j, {
-        seek: function (t) { try { deck.currentTime = Math.max(0, t); } catch (e) {} if (deck.paused) play(); },
+        seek: function (t) { cancelPendingPlay(); try { deck.currentTime = Math.max(0, t); } catch (e) {} if (deck.paused) play(); },
         renderLine: function (p, text) {
           if (window.MCC_LYRIC_COMMERCE) return !!window.MCC_LYRIC_COMMERCE.renderLine(p, text, exp, context) || !!p.querySelector("a");
           p.textContent = text; return false;
@@ -2236,7 +2279,7 @@
     el("deckbar").querySelector(".deckbar__meta").addEventListener("click", openSheet);
     el("deckbar").querySelector(".deckbar__art").addEventListener("click", openSheet);
     el("nowDown").addEventListener("click", closeSheet);
-    el("nowPlay").addEventListener("click", function () { if (deck.paused) play(); else deck.pause(); });
+    el("nowPlay").addEventListener("click", function () { if (deck.paused) play(); else pauseDeck(); });
     el("nowNext").addEventListener("click", function () { next(); setTimeout(openSheet, 60); });
     el("nowPrev").addEventListener("click", function () { prev(); setTimeout(openSheet, 60); });
 
@@ -2246,7 +2289,7 @@
 
     /* the bar's Music tab: once for the sound (the old law) */
     window.MCC_NP_PLAY = function () { play(); };
-    window.MCC_NP_PAUSE = function () { deck.pause(); };
+    window.MCC_NP_PAUSE = function () { pauseDeck(); };
     restoreSeat();
     announce(false);
     if (window.MCC_TRACK) window.MCC_TRACK("here_view", { album: ALBUM });

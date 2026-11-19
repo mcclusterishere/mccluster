@@ -102,6 +102,41 @@ const OFFER = () => {
 };
 
 const SCENARIOS = {
+  /* The global account chip and the local Studio door must both be usable.
+     Overflow checks alone miss a fixed chip covering an otherwise fitting link. */
+  async music_contextbar(browser) {
+    const plane = makePlane();
+    for (const width of [320, 390, 1280]) {
+      for (const path of ['/listen.html', '/music-creator.html?handle=fixture-artist']) {
+        const ctx = await context(browser, plane, width);
+        const page = await ctx.newPage();
+        await seed(page, {});
+        await page.goto(HOUSE + path, { waitUntil: 'load' });
+        await until(page, () => !!document.getElementById('mccAuthChip'), null);
+        const layout = await page.evaluate(() => {
+          const studio = document.querySelector('.music-contextbar__nav a[href="creator.html"]');
+          const chip = document.getElementById('mccAuthChip');
+          if (!studio || !chip) return null;
+          const a = studio.getBoundingClientRect(), b = chip.getBoundingClientRect();
+          const hit = document.elementFromPoint(a.left + a.width / 2, a.top + a.height / 2);
+          return {
+            overlap: a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top,
+            reachable: hit === studio || studio.contains(hit), height: a.height,
+            scrollWidth: document.documentElement.scrollWidth, clientWidth: document.documentElement.clientWidth
+          };
+        });
+        const tag = `music header ${path} ${width}`;
+        check(!!layout && !layout.overlap, `${tag}: Creator Studio is clear of the account chip`);
+        check(!!layout && layout.reachable && layout.height >= 44, `${tag}: Creator Studio has a reachable 44px target`);
+        check(!!layout && layout.scrollWidth === layout.clientWidth, `${tag}: no horizontal overflow`);
+        if (SHOTS && width === 390) {
+          await page.screenshot({ path: join(SHOTS, path.startsWith('/listen') ? 'listen-header-390.png' : 'artist-header-390.png') });
+        }
+        await ctx.close();
+      }
+    }
+  },
+
   /* ---------- persona: Listen's offer (ACC-4) ---------- */
   async persona_listen(browser) {
     const plane = makePlane({ refreshDelayMs: 1500 });

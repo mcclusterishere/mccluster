@@ -400,3 +400,87 @@ crediting PRIM3, and the listen page holding a record from another device.
   17. iPad, Safari, the album and the listen page: rows 1 to 5 again, then AirPlay from the album's sheet, the
       listen page's sheet and the pocket.
 * Not in this slice: songs that end at navigation (slice M5), next songs that wait on the network (slice M3).
+
+## Recovery continuation: release submission, playback and the phone header
+
+Recovered base `69058f8997b36a5d1dad586481ef1febf1448373`, which already contains M1, M4 and M2. This continuation
+repairs observable problems in the current submission flow; it does not mark the remaining music slices complete.
+
+### Changes
+
+- Creator Studio locks the release form before reading the selected audio's duration. A second submit during that
+  asynchronous read cannot start another upload. The form restores each control's previous disabled state on
+  success or failure.
+- The chosen album, lyric sheet, metadata, rights declarations and optional license are captured before any
+  asynchronous work. A later repaint of the album selector or another form cannot change what the release submits.
+- A local audio probe that produces neither metadata nor an error ends after 15 seconds and releases its file
+  handle. Missing rights confirmations, release terms, or terms for a priced license are refused before upload.
+- If the selected album was deleted or filled while the track uploaded, the release remains submitted and the
+  receipt says why it was not attached. Reapplying an attachment does not duplicate the track ID.
+- If only the releases-list refresh fails after submission, the receipt still says the release was submitted and
+  asks the creator to reload before uploading again. It does not present the accepted submission as a failed upload.
+- The local music header reserves space for the fixed account chip, including the right safe-area inset. Its
+  Creator Studio link has a 44px target and the header can wrap at narrow widths.
+- Listen's access refresh, delayed metadata and first catalogue read cannot replace or restart a newer selection.
+  A superseded eligibility reply cannot spend an earned play. Pause cancels a pending open, and a later Resume
+  can open it again; repeated taps on the same pending song retain its one request.
+- The album's earned-play claim and automatic-next wait belong to the selection that asked for them. A newer
+  song, Pause, Previous or an explicit seek cancels their transport effect. Repeated taps while the same claim
+  opens do not spend a second claim. Priming the audio cannot later pause the newly selected song.
+
+The existing review and publication rules, private master storage, license activation controls, account fencing,
+and cautious cleanup after an uncertain write remain in force. These are submission repairs, not a new
+self-publication policy, batch album uploader or cross-page playback implementation.
+
+### Verification
+
+Node **22.23.5**, local synthetic records only:
+
+```
+node --test scripts/test/creator-release-submission.test.mjs \
+  scripts/test/music-creator-page.test.mjs scripts/test/music-accounts.test.mjs \
+  scripts/test/music-platform.test.mjs scripts/test/creator-onboarding.test.mjs \
+  scripts/test/music-playback-races.test.mjs scripts/test/here-album-commerce.test.mjs \
+  scripts/test/music-background.test.mjs scripts/test/now-playing-contract.test.mjs \
+  scripts/test/gated-audio.test.mjs scripts/test/music-track-lengths.test.mjs
+```
+
+**123 passed, 0 failed, 0 skipped.** The seven new submission cases all fail against the recovered base's Studio
+source and all pass with this continuation. They execute the real submission handler with isolated storage/database
+doubles, including a pending metadata read, changes during upload, a removed/full album, and a failed refresh after
+acceptance. The 16 playback cases execute the real engine and the album's transport functions: 12 fail at the
+recovered base, all 16 pass after the repairs. The four unchanged cases preserve full-song completion/queue advance,
+the intentional preview boundary, and duplicate-tap handling for a pending engine open, including a failed source
+request. JavaScript syntax, both
+album inline scripts and the scoped whitespace check also pass.
+
+The existing `music-accounts.e2e.mjs` now has a `music_contextbar` scenario: both Listen and the artist page at
+320, 390 and 1280px, checking actual chip/link intersection, a reachable 44px target, and horizontal overflow.
+The existing Music Platform CI runs it alongside the account scenarios and now runs the submission and playback tests.
+This new browser scenario has **not** passed locally: the executor refused Chromium's local socket creation.
+Its CI result and phone screenshots remain required before claiming the header is visually verified.
+
+### Complete-song evidence and remaining work
+
+The measured public file lengths still match `data/albums.json` and the server's track registry. The engine lets a
+full track continue past the preview boundary and advances on the media element's `ended` event; a protected preview
+still stops at its declared limit. The existing Worker stream forwards Range and preserves 206, Content-Range and
+Accept-Ranges. The private creator stream still checks entitlement and the pinned, reviewed master before signing
+its URL. This continuation changes no duration cap, purchase authorization, review requirement or gate policy.
+
+- **M3 remains partial.** The reproduced interruptions above are repaired. This is not proof of complete playback
+  over a slow/interrupted connection, next-song startup while a real iPhone is locked, or recovery after an expiring
+  stream. The gated one-play stream still has the existing five-minute/16-request allowance; the private master's
+  real duration and a physical-device complete play were not available to this local check.
+- **M5 remains open.** Listen and the artist/album pages are separate documents. The existing saved position and
+  Music-to-World continuity are present; this continuation does not keep one audio element alive across all music
+  navigation.
+- **Studio/album upload remains partial.** The current form uploads one track at a time and can attach it to an
+  existing album. Album grouping/order and the operator review desk exist. No batch album upload, resumable transfer,
+  or end-to-end authenticated production publication was completed here. Creators still submit to `pending_review`;
+  the existing operator verification and rights rules decide publication.
+
+The separate November 19 music maps referenced above were not present in the recovered repository, so their full
+remaining M3/M5/M6 acceptance criteria cannot be reconstructed from this record alone. Physical iPhone/iPad background
+endurance, lock-screen controls, AirPlay, the new header's browser result, and authenticated production
+upload/publication still need their own receipts.
