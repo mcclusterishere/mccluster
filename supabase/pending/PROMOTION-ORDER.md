@@ -590,3 +590,50 @@ For Matthew to decide, not changed here:
   401.
 - MAINTAIN for `anon` and `authenticated` on this and other tables is a platform-wide question (the Data API cannot use it), left
   as the media pointer guard left it.
+
+## 14. Mission catalog sources: Project Drawdown's source page (written 2026-11-19)
+
+| File | Changes | Callers | Proof before apply |
+|---|---|---|---|
+| `20261119140000_mission_catalog_sources_v1.sql` (+ `20261119140000_mission_catalog_sources_v1.rollback.sql`) | inserts the organization `project-drawdown` (nonprofit, unverified, no creator); creates `public.mission_catalog_sources` (catalog-keyed, draft/shown/hidden, the named words, facts and role line checks; SELECT for anon and authenticated, a shown row only; no write for any API role) and two SECURITY DEFINER functions for the house owner, `mission_catalog_source_owner_state` and `mission_catalog_source_command`, executable by `service_role` only; inserts one draft link for the catalog `drawdown` | the owner route `workers/mccluster/src/mission-sources.js` (the two functions) and the World's source page (the World's half of this work, B2, which lands separately; the table, read with `state=eq.shown`); both answer honestly while it is not applied | see below |
+
+What it is: the data and the owner controls of Project Drawdown's source page in the World, a page McCluster Corp makes and
+keeps, never Project Drawdown's account (`docs/control-plane/WORLD-MISSION-SOURCES.md`; decisions D1 to D14 there, each a
+default adopted pending Matthew's confirmation). **Inserting the organization row publishes it**: `network_organizations` is
+readable by anyone, so approving the file approves its name, type, description and website. The page itself stays a draft
+until the house owner shows it.
+
+**Prerequisite:** the mission publish (section 10.4, release step 9) applied and recorded (release step 11). The file refuses
+(55000, nothing changed) while no Drawdown mission is open, and when a `project-drawdown` organization exists that is not the row
+it writes. Independent of section 12 (E=UP) and section 13 (connections consent): any may come first, but the records that move
+them under `supabase/migrations/` are serial, one records change for every version applied since the last.
+
+**Not applied. Owner approval required.** Read production first (SELECT only): its ledger equals
+`supabase/production-ledger.json` (no unrecorded version), the publish row is present, the open Drawdown missions counted, no
+`project-drawdown` organization. Then apply on Matthew's approval of the exact text, with the Supabase MCP `apply_migration` (it
+runs as postgres) under the name `mission_catalog_sources_v1`, byte for byte. The ledger version is whatever the next row is then.
+
+**Verify** right after: one organization row and one draft link; anon REST answers `[]` for `mission_catalog_sources`; Control
+(Missions & fellows, Mission sources) shows Draft at revision 1; `?source=project-drawdown` says "That page is not available.".
+**Before Show:** Matthew confirms, outside this repository, that the written permission covers (a) a page headed by Project
+Drawdown's name on McCluster Corp's platform, which also sells sponsorships, (b) the 87 quotations there and (c) the citation;
+Show records only that date. Then Preview, then Show: that is the page's publication.
+
+**Roll back:** Hide in Control is instant for every new visit (pages already open keep the page until they reload). To withdraw
+the data, the rollback file with the owner's approval, as postgres, under `mission_catalog_sources_v1_rollback`: it refuses
+(55000), changing nothing, while the organization differs from the forward file's row or anything names it (an authenticity
+check, a group, a campaign, a member); otherwise it drops the two functions and the table and deletes the organization row,
+keeping the `control_audit` rows and touching no mission.
+
+**Records** after the apply, as release step 11 does: move the file to `supabase/migrations/` under its ledger version; the
+ledger, the drift contract, the schema manifest from the CI reset, the snapshot, `ledger-receipts.json`; remove its
+`live-callers.json` entries once the snapshot has the names; this section and `README.md`.
+
+Proof before apply (disposable databases only):
+`PGLITE_MODULE=<PGlite 0.3.14 dist/index.js> node scripts/test/mission-catalog-sources.integration.mjs` (76 checks over
+`supabase/tests/mission_catalog_sources.stub.sql`, production's default privileges, role check and organization checks, then nine
+mutated copies each failing a named check; CI matrix entry `mission-sources-store`) and
+`ALLOW_LOCAL_EUP_DB_TESTS=1 PG_BIN=<PostgreSQL 16 or 17 bin> PG_MODULE=<node-postgres> node scripts/test/mission-catalog-sources.native.integration.mjs`
+(87 checks: the same proof, one key from two sessions recorded once, a moved revision refused, the 5 s lock bound; passed on
+PostgreSQL 16.15 and 17.7 on 2026-11-19). The route over the real SQL: `scripts/test/mission-sources-owner.integration.mjs` (CI
+`mission-sources-owner`); the static checks: `node --test scripts/test/mission-catalog-sources-sql.test.mjs`.

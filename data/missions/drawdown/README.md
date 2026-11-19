@@ -47,8 +47,16 @@ decision.
 - **No images.** Every Explorer solution photo is credited to a stock agency, a
   photographer or another organization, or carries no credit. Drawdown's permission
   cannot cover third-party photographs, so none is used. Missions use the feed's own
-  icons. Drawdown's name and logo are registered trademarks: the name appears only in
-  credit lines, the logo nowhere, and nothing implies endorsement.
+  icons.
+- **The name and the logo.** Drawdown's name and logo are registered trademarks. The logo
+  appears nowhere, and nothing implies endorsement. The name appears in credit lines and,
+  since the owner's request of 2026-11-19 for a profile of Project Drawdown on this site
+  (built as a source page that McCluster Corp makes and Project Drawdown does not run: a
+  default adopted pending Matthew's confirmation, including that the written permission
+  covers it), as the heading of that page and on its door in each Drawdown mission's
+  dialog, only to identify the source. Any other place for the name needs a new dated
+  amendment. *(2026-11-19: this supersedes "the name appears only in credit lines" of
+  2026-11-17, for that page and its door only.)*
 
 ## How to display a mission
 

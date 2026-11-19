@@ -22,7 +22,7 @@ is `supabase/pending/PROMOTION-ORDER.md`, section 10.
 ## What ships, and what a visitor sees change
 
 At `12d9b458`, the head this record was written on, the release is 154 commits over `main` and 294 changed files;
-this record adds two commits and one file. `index.html`, `control.html`, `CNAME`, the music transport and its lyric
+this record adds two commits and one file. `index.html`, `CNAME`, the music transport and its lyric
 line (`js/world-audio-continuity.js`, `data/lyrics/`) are unchanged.
 
 | Part | What a visitor sees on the World (`https://mccluster.org/`, and `mnet.html` on Matthew's site) |
@@ -36,6 +36,7 @@ line (`js/world-audio-continuity.js`, `data/lyrics/`) are unchanged.
 | The first visit | The World opens with the globe and the missions at once and the privacy notice as a banner, not a full-screen wall. Nothing is recorded and no analytics request is made until the visitor agrees. Every other page of the house keeps its wall. |
 | The retired tagline | "Get Your Hu Up!" is gone from the World, `action/index.html`, `heal-the-3rd-world.html`, `mccluster-corp.html`, the member desk and the `/company` footer. Nothing replaces it. |
 | The environmental line | The Equity Uprise tab shows one plain line where the Environmental Justice panel will be, because the module is off (below). No observation posts, no layers on the globe. |
+| Project Drawdown's source page | Nothing yet. The code ships inert: no visitor sees a door or a page until its SQL is approved, applied after step 11, and the owner confirms the written permission's scope and shows it. Until then, once the World's half of this work (B2: the page, its door, the status line) is in, `?source=project-drawdown` says "That page is not available." on the feed's status line. |
 
 What else is in the merge, with nothing for a visitor to see:
 
@@ -50,16 +51,20 @@ What else is in the merge, with nothing for a visitor to see:
   ledger, the drift contract, the schema manifest, a 2026-11-18 production snapshot and a replay twin so a fresh CI reset
   passes the 2026-11-14 registry migration. The merge applies no SQL: the repository's migrations and production's
   ledger are the same 376.
-- **CI**: five workflow files change (86 lines in, 10 out). The World browser matrix has 34 suites (the door's two join
-  it in this release preparation); the Control workspace job runs the Control Room's AI browser suite; a root test runs
-  the deploy gate's merge-marker guard. `compute-node-ci.yml` gains a whole job, `browser-executor` (38 lines, its own
-  Playwright 1.63.0 install, the browser executor's real-Chromium tests, failing rather than skipping when Chromium is
-  missing) and a step asserting that the Core never depends on Playwright; that workflow starts on a push to
-  `core/compute-node-v1`, a branch that does not exist, or by dispatch, so the new job has never run in GitHub Actions and
-  runs only when dispatched. `api-economic-core-ci.yml` and `archive-browser-acceptance.yml` each drop the retired swipe
-  deck's test command (`scripts/test/mission-swipe-deck.test.mjs` in one, `scripts/e2e/mission-swipe.e2e.mjs` in the
-  other) with its path filters; the archive job's filters gain `mnet.html` and `js/mnet.js`. No deploy workflow and no
-  trigger changed.
+- **CI**: seven workflow files change (240 lines in, 13 out). The World browser matrix has 44 suites where `main` has 26
+  (both counted at `fc001103`; the door's two join it in this release preparation, and Project Drawdown's source page
+  adds three: `mission-sources-store`, `mission-sources-owner`, `mission-sources-control`); the Control workspace job
+  runs the Control Room's AI browser suite; a root test runs the deploy gate's merge-marker guard. `compute-node-ci.yml`
+  gains a whole job, `browser-executor` (38 lines, its own Playwright 1.63.0 install, the browser executor's
+  real-Chromium tests, failing rather than skipping when Chromium is missing) and a step asserting that the Core never
+  depends on Playwright; that workflow starts on a push to `core/compute-node-v1`, a branch that does not exist, or by
+  dispatch, so the new job has never run in GitHub Actions and runs only when dispatched. `music-platform-ci.yml` gains
+  the music module's playback, peaks and accounts checks and a `browser` job (99 lines). `api-economic-core-ci.yml` and
+  `archive-browser-acceptance.yml` each drop the retired swipe deck's test command
+  (`scripts/test/mission-swipe-deck.test.mjs` in one, `scripts/e2e/mission-swipe.e2e.mjs` in the other) with its path
+  filters; the archive job's filters gain `mnet.html` and `js/mnet.js`. One deploy workflow changes one command line:
+  `deploy-pages.yml`'s strip step also removes `data/missions/drawdown/` (the frozen mission catalog stays out of the
+  published site; the Cloudflare export refuses it too; the comment above the line says why). No trigger changed.
 
 ## What does not ship
 
@@ -71,6 +76,7 @@ What else is in the merge, with nothing for a visitor to see:
 | The 125 Drawdown missions as public missions | They are in production as hidden drafts. The publish is a separate, owner-approved SQL step in the deploy window (step 9). |
 | Mission pins | Production has none. Placing them is the owner's separate decision with its own SQL. |
 | Travel, the clip-campaign door, the Live room's action blocks | Still owner-only (`hu-travel-off`). |
+| Project Drawdown's source page: its SQL and its showing | A separate, owner-approved step after step 11 (below, Later). The organization row is public from the moment the SQL is applied. |
 
 ## Production today
 
@@ -144,12 +150,12 @@ procedure read, not one practised.
   prepared text. There is no template in the repository.
 - **Who approves:** the owner. Opening it deploys nothing. The "Protect Main" ruleset asks for GitHub's automatic code
   review and for every review thread to be resolved; it requires no human approval.
-- **Check right after:** 24 workflows start, 69 jobs in all: `architecture` (the one required
-  check), `contracts`, `scan`, `smoke`, Reconciliation CI's six jobs, "Validate authority, program, plans, and
-  building", and the path-filtered workflows this diff touches, among them the World browser matrix (34 suites, each
-  with a 60 minute limit; the longest here, `world-gate`, took 30 minutes on a machine that took 15 minutes for
-  `editorial-iphone-portrait`, which the workflow's last CI run did in under 8). The branch cleanup workflow starts
-  only when the pull request closes.
+- **Check right after:** 30 workflows start, 88 jobs in all (counted at `fc001103` from its workflow files and its
+  diff with `main`; 24 and 69 at `fc324947`): `architecture` (the one required check), `contracts`, `scan`, `smoke`,
+  Reconciliation CI's six jobs, "Validate authority, program, plans, and building", and the path-filtered workflows this
+  diff touches, among them the World browser matrix (44 suites, each with a 60 minute limit; the longest here,
+  `world-gate`, took 30 minutes on a machine that took 15 minutes for `editorial-iphone-portrait`, which the workflow's
+  last CI run did in under 8). The branch cleanup workflow starts only when the pull request closes.
 - **Roll back:** close the pull request.
 
 ### 3. Bring CI to green on the pull request's head
@@ -277,7 +283,9 @@ procedure read, not one practised.
   `workers/mccluster/src/platform-api.js`) reads `action_missions?status=eq.open&...&order=created_at.desc&limit=100`, so
   with 126 open missions the oldest 26 (the mission open before the import and 25 catalog missions) drop out of it. That
   picker is the house owner's today (the Live room's action blocks are owner-only).
-- **Roll back:** `supabase/pending/20261117100300_action_mission_drawdown_publish.rollback.sql` (11,851 bytes, md5
+- **Roll back:** If Project Drawdown's source page is shown, Hide it first (Control, Missions & fellows, Mission sources): a
+  shown page over a rolled-back publish lists no missions. Then
+  `supabase/pending/20261117100300_action_mission_drawdown_publish.rollback.sql` (11,851 bytes, md5
   `16cb998e034e30208bb99c098ca504b2`), with the owner's approval, applied the way the forward file was: the Supabase MCP
   `apply_migration` as postgres (its header and `supabase/pending/PROMOTION-ORDER.md` section 10 say so), under the name
   `action_mission_drawdown_publish_rollback`. It sets the 125 back to draft. Its first line, "never a forward migration",
@@ -326,6 +334,22 @@ procedure read, not one practised.
   request that sets `WORLD_PLACE_SCOPE_ENABLED = "true"`. A dashboard-only change is overwritten by the next deploy.
 - **The OVH Core promotion**, for the device-node work: the owner's dispatch of `promote-ovh-production.yml` in a chosen
   window, with its own preconditions. A ref rollback there is a forward promotion of a revert.
+- **Project Drawdown's source page** (`docs/control-plane/WORLD-MISSION-SOURCES.md`; every decision there a default adopted
+  pending Matthew's confirmation). *How:* after step 9 has published and step 11 has recorded it, read production (SELECT
+  only: the ledger equals `supabase/production-ledger.json`, the publish row is there, the open Drawdown missions counted, no
+  `project-drawdown` organization), then apply `supabase/pending/20261119140000_mission_catalog_sources_v1.sql` byte for
+  byte as postgres with `apply_migration` under `mission_catalog_sources_v1`; the ledger then has one more row, its number
+  named then. *Who approves:* Matthew, for the exact text: it publishes the organization row's words and adds the house
+  owner's commands (an authorization addition). *Check right after:* one organization row and one draft link; anon REST
+  answers `[]` for the link; Control shows Draft; `?source=project-drawdown` says "That page is not available."; the "Ask
+  for a change" route opens `https://mccluster.org/company`. *Before Show:* Matthew confirms, outside this repository, that
+  the written permission covers (a) a page headed by Project Drawdown's name on McCluster Corp's platform, which also sells
+  sponsorships, (b) the 87 quotations there and (c) the citation; Show records only that date. Then Preview, then Show: that
+  is the page's publication. *Roll back:* Hide (instant for every new visit; open pages keep it until they reload); or the
+  rollback file with his approval, as postgres, which refuses, changing nothing, while anything else names the
+  organization. *Record:* as step 11 (move to `supabase/migrations/` under its ledger version, the ledger, drift contract,
+  manifest from the CI reset, snapshot, `ledger-receipts.json`, `live-callers.json`, PROMOTION-ORDER, the pending README);
+  one records change covers every version applied since the last record.
 
 ## Fixed after the release review
 
@@ -393,13 +417,13 @@ build. They are the suites that cover what changed; the final verification after
 
 ## Checks run for this record
 
-Run on 2026-11-18 on one 4-CPU machine, one job at a time, each from its workflow's own commands. A pull request from
-the release branch starts 24 workflows and 69 jobs. Every one of them is a row below, with the commit it ran at. `12d9b458`
-is the head this record was written on; `fc324947` is the commit that added this record, its source-map entry and one
-paragraph of the door's record. The browser suites of the World matrix ran at `12d9b458` and read none of those
-files. Every other pull-request job ran at `fc324947`, each step stopping at its first failing command as a CI step
-does. The rows of the second table name their own commits; `b6008b2e` is the branch three commits before
-`12d9b458`, and the CI entries, the source-map entries and the notices fix lie between the two. The commit that
+Run on 2026-11-18 on one 4-CPU machine, one job at a time, each from its workflow's own commands. At `fc324947` a pull
+request from the release branch started 24 workflows and 69 jobs. Every one of them is a row below, with the commit it
+ran at. `12d9b458` is the head this record was written on; `fc324947` is the commit that added this record, its
+source-map entry and one paragraph of the door's record. The browser suites of the World matrix ran at `12d9b458` and
+read none of those files. Every other pull-request job ran at `fc324947`, each step stopping at its first failing
+command as a CI step does. The rows of the second table name their own commits; `b6008b2e` is the branch three commits
+before `12d9b458`, and the CI entries, the source-map entries and the notices fix lie between the two. The commit that
 added these tables changed nothing else in the repository.
 
 Local differences from CI: Playwright 1.63.0 with its own Chromium 153 where the workflows pin 1.57.0; Cesium 1.131.0
@@ -583,6 +607,16 @@ result here.
    that recording of the device identifier and the session stops. Decide which is true: the browser skips creating and
    sending the device and session ids whenever the signal is on, or the policy says the server discards them (whether
    the collector does was not read).
+11. **Project Drawdown's source page** (`docs/control-plane/WORLD-MISSION-SOURCES.md`, "What stays gated"): D1 to D14 and the six
+   further choices, each a default adopted pending his confirmation (the owner-only route, no admin clause in the read policy,
+   Show only with his recorded confirmation, the door at the foot of the mission dialog, no figures under the name, the
+   restrictive authenticity-check policy not staged); the written permission: where it is kept and whether it covers a page
+   headed by Project Drawdown's name on McCluster Corp's platform, the 87 quotations there and the citation; "McCluster Corp,
+   which runs this platform" as the maker; a restrictive insert policy on `authenticity_checks` so no member can name a
+   source's organization (a member can today, which makes the rollback refuse); a plainer corrections door on `/company`;
+   whether to stage the quotations' withdrawal and an attribution-removal template now; whether to replace
+   `solutions-catalog.json` in the tree with a copy without excerpts or image addresses; the area map and the facts' words;
+   phase 2.
 
 ## Status
 
@@ -601,3 +635,4 @@ result here.
 | The publish of the 125 missions | yes (pending SQL) | no | **not applied** | native proof on PostgreSQL 16.15 |
 | The CI entries and the source map | yes | no | not applicable | the jobs' own commands, here |
 | The release review's fixes (2026-11-19) | yes | no | no | unit tests and browser suites at `5d801add`, each test failing at `a8d2502d` without its fix but RM-7's ("Fixed after the release review") |
+| Project Drawdown's source page | yes for its SQL, owner route and Control card; the page and its door (B2) land separately | no | no; SQL not applied, page not shown | unit tests, PGlite and native proofs, Worker tests, browser fixtures (the Control card) |

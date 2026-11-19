@@ -99,3 +99,29 @@ test('"Fixed after the release review" accounts for every finding of the three r
   assert.ok(rows.length >= 11, 'eleven fixed rows carry a commit: ' + rows.length);
   assert.doesNotMatch(s, /RS9SHA|CHECKSBLOCK|ROW_[A-Z]/, 'no placeholder is left');
 });
+
+/* Project Drawdown's source page (docs/control-plane/WORLD-MISSION-SOURCES.md) is its own owner-approved step after the
+   publish is recorded: the SQL by apply_migration under its name, Show only after Matthew confirms the written permission's
+   scope, Hide before any roll back of the publish, and a rollback that refuses while anything else names the organization.
+   The CI line names the one deploy workflow line this work changes, and control.html is no longer called unchanged. */
+test('the record carries Project Drawdown\'s source page as its own step: SQL by name, permission before Show, Hide first, rollback refusal', () => {
+  const a = raw.indexOf('\n### Later, each its own step');
+  assert.ok(a >= 0, 'the Later section is in the record');
+  const later = flat(raw.slice(a, raw.indexOf('\n## ', a + 5)));
+  const entry = later.slice(later.indexOf("**Project Drawdown's source page**"));
+  assert.ok(entry.length > 0 && later.includes("**Project Drawdown's source page**"), 'the entry is in Later');
+  assert.match(entry, /`supabase\/pending\/20261119140000_mission_catalog_sources_v1\.sql` byte for byte as postgres with `apply_migration` under `mission_catalog_sources_v1`/);
+  assert.match(entry, /after step 9 has published and step 11 has recorded it/);
+  assert.match(entry, /\*Before Show:\* Matthew confirms, outside this repository, that the written permission covers \(a\)[^.]*\(b\) the 87 quotations there and \(c\) the citation/);
+  assert.match(entry, /\*Roll back:\* Hide \(instant for every new visit/);
+  assert.match(entry, /which refuses, changing nothing, while anything else names the organization/);
+  const s9 = step(9);
+  assert.match(s9, /\*\*Roll back:\*\* If Project Drawdown's source page is shown, Hide it first \(Control, Missions & fellows, Mission sources\): a shown page over a rolled-back publish lists no missions\./);
+  assert.ok(!doc.includes('No deploy workflow and no trigger changed.'), 'the CI line names the deploy workflow line');
+  assert.match(doc, /One deploy workflow changes one command line: `deploy-pages\.yml`'s strip step also removes `data\/missions\/drawdown\/`/);
+  const unchanged = /`index\.html`,.*?are unchanged\./.exec(doc);
+  assert.ok(unchanged, 'the unchanged-files sentence is in the record');
+  assert.ok(!unchanged[0].includes('control.html'), 'control.html changes in this release: ' + unchanged[0]);
+  assert.match(doc, /\| Project Drawdown's source page \| yes for its SQL, owner route and Control card; the page and its door \(B2\) land separately \| no \| no; SQL not applied, page not shown \|/);
+  assert.doesNotMatch(raw, /@@[A-Z0-9]+@@/, 'no placeholder is left');
+});

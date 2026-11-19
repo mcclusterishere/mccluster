@@ -1299,6 +1299,13 @@
       "rationale": "Control-plane design/record document; mentions Equity Uprise only as the program context for shared intelligence, fellowship, identity or mission governance. Defines no building geometry or new program capability."
     },
     {
+      "path": "docs/control-plane/WORLD-MISSION-SOURCES.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Record of Project Drawdown's source page in the World (what it is and is not, decisions D1 to D14 each a default adopted pending the owner's confirmation, the data, the owner's controls, what stays gated, the tests, the facts and their sources); names the Equity Uprise tab, the existing equity-uprise organization row and the Control path. No building capability, program or geometry."
+    },
+    {
       "path": "docs/control-plane/WORLD-RELEASE-20261118.md",
       "classification": "documentation_support",
       "capability_ids": [],

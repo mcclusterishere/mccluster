@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 761,
+  "candidate_count": 762,
   "capability_source_count": 104,
-  "support_only_count": 657,
-  "checks_total": 2942,
-  "checks_passed": 2942,
+  "support_only_count": 658,
+  "checks_total": 2946,
+  "checks_passed": 2946,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -178,6 +178,7 @@
     "docs/control-plane/WORLD-ENVIRONMENT.md",
     "docs/control-plane/WORLD-FEED-AND-MISSIONS-20261117.md",
     "docs/control-plane/WORLD-GLOBE-FEED-AND-ANALYTICS.md",
+    "docs/control-plane/WORLD-MISSION-SOURCES.md",
     "docs/control-plane/WORLD-RELEASE-20261118.md",
     "docs/control-plane/admin-evidence-20261020/README.md",
     "docs/control-plane/admin-evidence-20261020/event-taxonomy-snapshot.json",
@@ -775,7 +776,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "761 entries"
+      "detail": "762 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -3979,6 +3980,26 @@
     },
     {
       "name": "docs/control-plane/WORLD-GLOBE-FEED-AND-ANALYTICS.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/WORLD-MISSION-SOURCES.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/WORLD-MISSION-SOURCES.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/control-plane/WORLD-MISSION-SOURCES.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/WORLD-MISSION-SOURCES.md support rationale present",
       "passed": true,
       "detail": ""
     },
