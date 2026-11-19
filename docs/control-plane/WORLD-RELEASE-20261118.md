@@ -4,6 +4,15 @@ Status: a release candidate on the release branch. **Nothing in it is merged and
 site still serves `main` at `fc1986ec` (read on 2026-11-18, below). No pull request is open for it: the owner decides
 when to open one, and every later step that touches production waits for the owner's approval of that exact step.
 
+**The scope grew on 2026-11-19.** By the owner's direction of that day, the E=UP environmental event timeline is now part of
+this release: one canonical event id and revision driving the post, the globe object, the selection and the deep link; a
+qualifying public government observation published with no news coverage; USGS earthquakes as the first complete slice;
+the quake visuals, a shared time cursor, a non-WebGL fallback and reduced motion; owner controls for source health, review
+and rollback. It is built on this branch after the release review's fixes (below, "Fixed after the release review"), and the
+final verification of the whole release follows it: the counts, the check tables and step 2's numbers here describe the
+candidate before that work and are refreshed by that verification. Production policy changes for it (enabling the
+`environment` module, its SQL) stay the owner's separate go.
+
 This record says what the release changes for a visitor, what it leaves off, where production stands, the steps from a
 pull request to a verified public release, what was checked here and what could not be, and what the owner still has to
 decide. The build brief and its decisions are `docs/control-plane/WORLD-FEED-AND-MISSIONS-20261117.md`; the sign-in door is
@@ -20,7 +29,8 @@ line (`js/world-audio-continuity.js`, `data/lyrics/`) are unchanged.
 | --- | --- |
 | The feed's row | One row under the globe: Local, the Equity Uprise tab (the supplied mark alone, white by night and the supplied dark mark by day), Global (chosen on load), Live, News, People. A signed-out visitor and an ordinary member see nothing above it: no centre mode bar. The house owner keeps Travel and News feed. |
 | Missions as posts | Every open mission is a post the size of any other post. Global shows one after every three other items; the Equity Uprise tab lists them 20 at a time with Load more. The swipe deck is gone. Until the publish (step 9) a visitor sees the one mission that is open today; after it, that one and the 125 Project Drawdown missions, each with its credit. |
-| The mission dialog | Opens for a signed-out visitor: the description, the proof hint, the safety line, the quotation with its credit, the full credit line. Join asks a guest to sign in or create an account and keeps `?mission=<id>` in the address; Share copies a `?mission=<id>` link. On `mccluster.org`, `/mnet.html?mission=<id>` answers one 301 to `/?mission=<id>`. |
+| The mission dialog | Opens for a signed-out visitor: the description, the proof hint, the safety line, the quotation with its credit, the full credit line. Join asks a guest to sign in or create an account and keeps `?mission=<id>` in the address; Share copies a `?mission=<id>` link. On `mccluster.org`, `/mnet.html?mission=<id>` answers one 301 to `/?mission=<id>`: existing behaviour of the company host's router (unchanged on this branch), now covered by a Worker test (`workers/mccluster/test/company-site.test.mjs`). |
+| The member's Action Record | A member's own record (verified actions, points, missions in progress) above the open missions, reached from the profile; on `main` only the house owner reached it. No mark is painted behind its words, it reads 4.5:1 or better by day and by night, a mission's field is said in words, and leaving it no longer stops the globe (release review RS-1, RS-2, RS-3, RS-7). |
 | The country card | News in the last 24 hours, missions, posts and members for the country tapped, and the feed turns to Local with that place's missions and news. With no pins in production every country lists every open mission (a mission pinned nowhere can be done anywhere). The members figure shows a dash until `world_member_regions_v1.sql` (pending, not in this release) is applied. |
 | The sign-in door | Sign in and Create account rise over the living World as a door (a sheet on a phone, a card from 700 px, a column beside the Earth from 1100 px) instead of replacing it, with the way back to the World, the supplied mark as its crest, and the World's real pulse: the open mission, the countries in the news, the Docket 516R record. Every auth call sends what it sent before. |
 | The first visit | The World opens with the globe and the missions at once and the privacy notice as a banner, not a full-screen wall. Nothing is recorded and no analytics request is made until the visitor agrees. Every other page of the house keeps its wall. |
@@ -40,16 +50,23 @@ What else is in the merge, with nothing for a visitor to see:
   ledger, the drift contract, the schema manifest, a 2026-11-18 production snapshot and a replay twin so a fresh CI reset
   passes the 2026-11-14 registry migration. The merge applies no SQL: the repository's migrations and production's
   ledger are the same 376.
-- **CI**: the World browser matrix has 34 suites (the door's two join it in this release preparation); the Control
-  workspace job runs the Control Room's AI browser suite; a root test runs the deploy gate's merge-marker guard. No
-  deploy workflow and no trigger changed, only path filters and suite lists.
+- **CI**: five workflow files change (86 lines in, 10 out). The World browser matrix has 34 suites (the door's two join
+  it in this release preparation); the Control workspace job runs the Control Room's AI browser suite; a root test runs
+  the deploy gate's merge-marker guard. `compute-node-ci.yml` gains a whole job, `browser-executor` (38 lines, its own
+  Playwright 1.63.0 install, the browser executor's real-Chromium tests, failing rather than skipping when Chromium is
+  missing) and a step asserting that the Core never depends on Playwright; that workflow starts on a push to
+  `core/compute-node-v1`, a branch that does not exist, or by dispatch, so the new job has never run in GitHub Actions and
+  runs only when dispatched. `api-economic-core-ci.yml` and `archive-browser-acceptance.yml` each drop the retired swipe
+  deck's test command (`scripts/test/mission-swipe-deck.test.mjs` in one, `scripts/e2e/mission-swipe.e2e.mjs` in the
+  other) with its path filters; the archive job's filters gain `mnet.html` and `js/mnet.js`. No deploy workflow and no
+  trigger changed.
 
 ## What does not ship
 
 | Left off | Why, and what turns it on |
 | --- | --- |
 | The Core and laptop work (device nodes: the Windows GPU node, vision routing, the node's browser, the Core's agent loop) | The code is on the branch, but Core changes reach production only through the separate OVH promotion (`promote-ovh-production.yml`, the owner's dispatch) and a laptop install. Not part of this release. `supabase/pending/compute_claim_task_yield_v3.sql` is not applied and is not needed. |
-| The environmental module | `GET /v1/world/environment` and the seven layer routes answer 503 `module_policy_unavailable` until the owner installs the `environment` module in Control (System, E=Up, Overview, Modules), and 404 `module_disabled` until the owner enables it. Verified with fixtures only; production has never answered with the module on. |
+| The environmental module | `GET /v1/world/environment` and the seven layer routes answer 503 `module_policy_unavailable` until the owner installs the `environment` module in Control (System, E=Up, Overview, Modules), and 404 `module_disabled` until the owner enables it. Verified with fixtures only; production has never answered with the module on. Before it is enabled, the layer routes need the per-client rate limit, the negative caching and the bounded tides crawl the security review asked for (SEC-2, carried into the E=UP timeline work): today 60 distinct event ids make 60 upstream requests and one slow tides read runs 81 s. |
 | Opening on the visitor's country | `WORLD_PLACE_SCOPE_ENABLED` stays `"false"` in `workers/mccluster/wrangler.toml`, so the feed opens on Global. Turning it on is its own pull request after the public-only feed checks in `docs/action-network/WORLD-REGION-FEED-RELEASE.md`. |
 | The 125 Drawdown missions as public missions | They are in production as hidden drafts. The publish is a separate, owner-approved SQL step in the deploy window (step 9). |
 | Mission pins | Production has none. Placing them is the owner's separate decision with its own SQL. |
@@ -106,6 +123,12 @@ the old front-end runs against the new Worker; the Worker's changes are additive
 Agents do not open the pull request, merge, deploy, dispatch a workflow or apply SQL: each of those is the owner's, or an
 agent's only on the owner's explicit go for that step (`AGENTS.md`, "Autonomous operations contract").
 
+None of the three production rollbacks below (a Worker version rollback, a `gh-pages` restore, the publish rollback)
+has been exercised: nothing under `docs/` records a Worker version rolled back or `gh-pages` restored; the workflow's
+own automatic Worker rollback sits in its `deploy` job, which is not the path deploying today (Workers Builds; health
+reports `deployment_ref` `HEAD`); and the publish rollback has run only on a disposable PostgreSQL 16.15. Each is a
+procedure read, not one practised.
+
 ### 1. Freeze the head
 
 - **How:** nobody pushes to the release branch after the prepared head. Read it twice, minutes apart, with
@@ -139,8 +162,11 @@ agent's only on the owner's explicit go for that step (`AGENTS.md`, "Autonomous 
   artifact holds the manifest the reset built (`schema-manifest.json`): commit that file as
   `supabase/schema-manifest.json`, as the workflow's own comment says, and never edit the manifest by hand.
 - **Who approves:** nobody; this is the gate before the owner looks.
-- **Check right after:** `gh pr checks <number>` shows every check as a success, none cancelled. `npm audit` in
-  `contracts` reads the registry at run time (0 vulnerabilities on 2026-11-18), so look again just before the merge.
+- **Check right after:** `gh pr checks <number>` shows every check as a success, none cancelled, except two that skip
+  by design: "Publish generated building artifacts" (its job's `if` runs it only on a dispatch from a branch that asks for
+  it) and "Supabase Preview" ("This git branch is not associated with any Supabase Branch"; it was skipped on #793 and
+  on `a8d2502d` alike). Any other state of "Supabase Preview" on the pull request is a stop. `npm audit` in `contracts`
+  reads the registry at run time (0 vulnerabilities on 2026-11-18), so look again just before the merge.
 - **Roll back:** nothing to roll back.
 
 ### 4. The owner reviews the screens
@@ -156,9 +182,12 @@ agent's only on the owner's explicit go for that step (`AGENTS.md`, "Autonomous 
 ### 5. Before the merge: settle #760, hold other merges, write down the anchors
 
 - **How:** decide #760 first (below): merged before this release it forces a branch update, conflicts in
-  `js/live-content.js` and puts the wall back on the World. Hold every other merge to `main` until step 10 is done;
-  that includes the Dependabot pull requests (#806 to #811; #809 bumps Wrangler), #785 and #803, which touch files this
-  branch touches. Write down: the live Worker version (Cloudflare, Workers & Pages, `mccluster`, Deployments; today the
+  `js/live-content.js` and puts the wall back on the World. Hold every other merge to `main` until step 10 is done.
+  Read the open pull requests again at this step (`gh pr list --base main --state open`); on 2026-11-19 they included
+  the Dependabot pull requests #806, #807, #808, #810, #811, #816 and #817 (#817 bumps Wrangler from 4.156.0 to 4.162.0
+  and #816 `@fal-ai/client`, both in `workers/mccluster`; #809 was closed unmerged on 2026-11-18), and #785, #803, #758
+  (`js/control-room-v2.js`) and #679 (the Equity Uprise source map and its coverage report), which touch files this
+  branch touches. The rule is the hold, not the list. Write down: the live Worker version (Cloudflare, Workers & Pages, `mccluster`, Deployments; today the
   one named above, unless something newer exists), `gh-pages`, `main`, `deploy/ovh-production`, the ledger's count and
   latest row, and whether `FIRMS_MAP_KEY` is among the Worker's secrets (by name).
 - **Who approves:** the owner.
@@ -167,30 +196,47 @@ agent's only on the owner's explicit go for that step (`AGENTS.md`, "Autonomous 
 
 ### 6. Merge with a merge commit
 
-- **How:** "Create a merge commit". Never squash or rebase: the OVH promotion needs ancestry, and the commit hashes the
-  records quote must stay reachable. The merge at once sets off: the Worker deploy (about 30 seconds); CI on the merge
-  commit; `deploy-pages`, which waits for the gate; the Worker's observer job; IndexNow after Pages; and the branch
-  cleanup, **which deletes the release branch**, so nothing may be pushed to it again. The Supabase integration finds the
-  repository's migrations and production's ledger equal at 376 and has nothing to apply; no Edge Function changed.
+- **How:** a merge commit pinned to the frozen head: `gh pr merge <number> --merge --match-head-commit <frozen sha>`,
+  which refuses if the branch moved after step 1. The freeze is by agreement only: `gh pr merge` without that flag does
+  not refuse, the web button refuses only when the head moved after its page loaded, and the cleanup job deletes the
+  branch by name without comparing its tip, so a push after the last look rides into `main` and into the Worker within
+  30 seconds, and one between the merge and the delete is removed from the remote. Never squash or rebase: the OVH
+  promotion needs ancestry, and the commit hashes the records quote must stay reachable. The merge at once sets off: the
+  Worker deploy (about 30 seconds); CI on the merge commit; `deploy-pages`, which waits for the gate; the Worker's
+  observer job; IndexNow after Pages; and the branch cleanup, **which deletes the release branch**, so nothing may be
+  pushed to it again. The Supabase integration finds the repository's migrations and production's ledger equal at 376
+  and has nothing to apply; no Edge Function changed.
 - **Who approves:** the owner's explicit approval of this merge.
-- **Check right after:** the merge commit is on `main` with two parents, the old tip of `main` and the pull request's
-  head; the branch is gone.
+- **Check right after:** the merge commit is on `main` with two parents, the old tip of `main` and the frozen head; the
+  branch is gone; "Supabase Preview" on the merge commit is a success (as on `fc1986ec` and on #793's merge `7e41f0b3`),
+  and a catalog-only read of the ledger still finds 376 rows.
 - **Roll back:** each rail as in steps 7 and 8. A revert of the merge is its own pull request and needs a green
-  `architecture` check, because force pushes to `main` are blocked.
+  `architecture` check, because force pushes to `main` are blocked. A revert takes the twelve migration files and their
+  376-row records out of `main` while production keeps them, so the drift check and the Supabase integration then see
+  production versions the repository lacks (the #370 row of `docs/control-plane/SECURITY-POSTURE.md`). The release
+  branch is gone by then, so the release is re-landed as a revert of the revert on a new branch, through its own pull
+  request and this runbook from step 1.
 
 ### 7. Verify the Worker rail (about 30 seconds after the merge)
 
-- **How:** `GET https://api.mccluster.org/v1/health` until `deployment_sha` is the merge commit, with `deployment_ref`
-  `HEAD` and the six capability flags true; watch "Verify Cloudflare Git deployment" (it polls 18 times, 10 seconds
-  apart, then checks the MCP contract, the flags and the gate). Then: `/v1/world/environment` and
-  `/v1/world/environment/layers/fires` answer 503 `module_policy_unavailable`;
-  `https://mccluster.org/mnet.html?mission=<id>` answers one 301 to `/?mission=<id>`; `https://mccluster.org/company`
-  answers 200 without the tagline.
+- **How:** two reads tell the new Worker from the old: `GET https://api.mccluster.org/v1/health` until `deployment_sha`
+  is the merge commit, with `deployment_ref` `HEAD` and the six capability flags true; and
+  `https://mccluster.org/company` answering 200 without the tagline (the old Worker's page still carries it once). Watch
+  "Verify Cloudflare Git deployment" (it polls 18 times, 10 seconds apart, then checks the MCP contract, the flags and
+  the gate). Three more reads **must not change**, because the Worker live today already answers them this way:
+  `/v1/world/environment` and `/v1/world/environment/layers/fires` answer 503 `module_policy_unavailable`, and
+  `https://mccluster.org/mnet.html?mission=<id>` answers one 301 to `/?mission=<id>`.
 - **Who approves:** nobody; this rail is automatic and the operator watches it.
-- **Check right after:** all of the above within about three minutes of the merge.
+- **Check right after:** the direct reads above within about three minutes of the merge. The Worker's observer job
+  finishes only with the Pages gate, six minutes or more after the merge (six on #793's merge, 22:38:08 to 22:44:08),
+  and it goes red when any gate check fails even if the Worker is fine.
 - **Roll back:** in Cloudflare, `mccluster`, Deployments, roll back to the version written down in step 5 (or
-  `wrangler versions deploy <id>@100` with the owner's token). Do not run step 9. The next push to `main` deploys
-  whatever `main` then holds.
+  `wrangler versions deploy <id>@100` with the owner's token). Do not run step 9. Pages will still publish the new
+  front-end once the gate is green, about seven minutes after the merge, against the rolled-back Worker: that pairing is
+  safe for this diff (the live Worker already answers 503 `module_policy_unavailable` on every layer route, and the new
+  front-end then shows its plain line); to stop it anyway, cancel the `deploy-pages` run (`gh run cancel <run id>`)
+  before its publish job pushes `gh-pages`. The next push to `main` deploys whatever `main` then holds, to the Worker
+  and to Pages.
 
 ### 8. Verify the Pages rail, and the World on both hosts
 
@@ -204,24 +250,42 @@ agent's only on the owner's explicit go for that step (`AGENTS.md`, "Autonomous 
   mode bar; the privacy banner, not the wall; the plain environmental line; only the mission that was already open; the
   door from Join; `scrollWidth === clientWidth` at 390.
 - **Roll back:** if the publish refused, do not run step 9: re-run the failed check (a passing re-run supersedes it) and
-  re-dispatch `deploy-pages` from `main`, or roll the Worker back. To undo a bad publish, force `gh-pages` back to the
-  hash written down in step 5 (no ruleset covers it) or merge a revert.
+  re-dispatch `deploy-pages` from `main`, or roll the Worker back. One known cause of a red `contracts` was a timing race
+  in a Core test ("TERM to wrapper, bootstrap and bounded reload ...", ENOTEMPTY under load, already on `main`); this
+  branch removes it (release review RM-7), and a re-run is still the remedy if it recurs. To undo a bad publish, force
+  `gh-pages` back to the hash written down in step 5 (no ruleset covers it) or merge a revert. **A forced `gh-pages`
+  lasts only until the next push to `main`:** `deploy-pages` runs on every push to `main`, with no path filter, and ends
+  with `git push origin HEAD:refs/heads/gh-pages --force`, so the next fix, held pull request or Dependabot merge
+  republishes `main`'s tree and silently undoes it. While `gh-pages` is forced back, nothing merges to `main` until the
+  revert or the fix is the thing that merges.
 
 ### 9. Publish the 125 missions, only after steps 7 and 8 both report the merge commit
 
-- **How:** read first: the ledger holds the seven import parts and no publish row; 125 catalog missions are drafts with
-  125 details rows. Then apply `supabase/pending/20261117100300_action_mission_drawdown_publish.sql` from `main`, byte
-  for byte (23,619 bytes, md5 `9d5e9f4e9178bf52fac4255453787798`), with the Supabase MCP `apply_migration` as postgres,
+- **How:** wait ten minutes after `verify-live` has read the new stamp. It reads `index.html?verify=<stamp>-<n>`, which
+  bypasses caches, while Pages serves the pages with `max-age=600` and the apex root comes with `max-age=300`, so a
+  returning visitor's cached old page, whose swipe deck would show all 125, can stay in use for up to ten minutes. Then
+  read first: the ledger holds the seven import parts and no publish row; 125 catalog missions are drafts with 125
+  details rows. Then apply `supabase/pending/20261117100300_action_mission_drawdown_publish.sql` from `main`, byte for
+  byte (23,619 bytes, md5 `9d5e9f4e9178bf52fac4255453787798`), with the Supabase MCP `apply_migration` as postgres,
   under the name `action_mission_drawdown_publish`.
 - **Who approves:** the owner's go for this exact file at that moment. The timing is decided: with the deploy, after the
   new feed is live. Run before the new front-end is live, the old one would show all 125 in its swipe deck.
 - **Check right after:** the ledger has 377 rows and the newest is `action_mission_drawdown_publish`; the open missions
   are the earlier count plus 125; as a new visitor on `mccluster.org` the Equity Uprise tab lists 20 posts and Load more,
   Global shows one mission after every three items, a dialog shows its credit and DOI, `?mission=<id>` opens that
-  mission.
+  mission. One effect to expect: the Live room's mission picker (`/v1/mnet/live/options`,
+  `workers/mccluster/src/platform-api.js`) reads `action_missions?status=eq.open&...&order=created_at.desc&limit=100`, so
+  with 126 open missions the oldest 26 (the mission open before the import and 25 catalog missions) drop out of it. That
+  picker is the house owner's today (the Live room's action blocks are owner-only).
 - **Roll back:** `supabase/pending/20261117100300_action_mission_drawdown_publish.rollback.sql` (11,851 bytes, md5
-  `16cb998e034e30208bb99c098ca504b2`), as postgres, with the owner's approval: it sets the 125 back to draft. The import
-  rollback can follow only while nothing references a mission; one member's join blocks it.
+  `16cb998e034e30208bb99c098ca504b2`), with the owner's approval, applied the way the forward file was: the Supabase MCP
+  `apply_migration` as postgres (its header and `supabase/pending/PROMOTION-ORDER.md` section 10 say so), under the name
+  `action_mission_drawdown_publish_rollback`. It sets the 125 back to draft. Its first line, "never a forward migration",
+  keeps it out of the forward chain, but `apply_migration` still records it: the ledger then has 378 rows, and step 11
+  records both the publish and its rollback (each moved to `supabase/migrations/` under its own ledger version). Until
+  that lands, the Supabase integration fails every push while production holds versions the repository lacks
+  (`docs/control-plane/SECURITY-POSTURE.md`, the #370 row). The import rollback can follow only while nothing references
+  a mission; one member's join blocks it.
 
 ### 10. Try the guest sign-in and join once
 
@@ -235,12 +299,20 @@ agent's only on the owner's explicit go for that step (`AGENTS.md`, "Autonomous 
 ### 11. Record the publish in the repository
 
 - **How:** on a new branch: move the publish to `supabase/migrations/<its ledger version>_action_mission_drawdown_publish.sql`
-  (equal to the stored statement), update `supabase/production-ledger.json`, `core/drift-contract.json`,
-  `supabase/pending/live-callers.json` and the records that call it pending, run
-  `node scripts/control-plane-drift-contract-check.mjs`, and merge with a merge commit.
+  (equal to the stored statement; and its rollback under its own version if step 9's rollback ran). Give
+  `tools/build-mission-import.mjs` the publish's ledger version and migration path, as it already holds the seven
+  parts' (`APPLIED_IMPORT_PART_VERSIONS`; its `OUTPUT_FILES.publish` still names the pending path), and update
+  `scripts/test/mission-import.test.mjs`, which reads the publish through `OUTPUT_FILES` and counts what is still
+  pending. Update `supabase/production-ledger.json`, `core/drift-contract.json`, `supabase/pending/live-callers.json` and
+  the records that call it pending. Run `node tools/build-mission-import.mjs --check`,
+  `node --test scripts/test/*.test.mjs` and `node scripts/control-plane-drift-contract-check.mjs`, and merge with a
+  merge commit.
 - **Who approves:** the owner approves the merge.
-- **Check right after:** the drift check is ok at 377. Until this lands the Supabase integration sees a production
-  version the repository lacks; it has nothing to apply either way.
+- **Check right after:** all ten deploy-gate checks green on the records pull request, not the drift check alone: moving
+  the file without the generator and its test turns `contracts` red (the release review moved it in a scratch copy:
+  `--check` exited 1 and the unit test failed 8 of 26), and with `main` red the gate refuses every later Pages publish.
+  The drift check is then ok at 377 (378 with a rollback row). Until this lands the Supabase integration sees a
+  production version the repository lacks; it has nothing to apply either way.
 - **Roll back:** a revert; the change is records only.
 
 ### Later, each its own step
@@ -440,6 +512,13 @@ result here.
 9. **Deploy controls:** accept for this release that the Worker deploys before CI, or first move to the gated GitHub
    deploy (`docs/control-plane/DEPLOYMENT-CONTROLS-PROPOSAL.md`); and whether the World browser matrix and "Validate
    authority, program, plans, and building" become required checks.
+10. **Global Privacy Control and an agreed visitor** (security review SEC-5; already so on `main`, and `js/analytics.js`
+   and `privacy.html` are unchanged by this release). With Global Privacy Control on, before any answer nothing is
+   stored or sent; after "I agree & continue", the next page stores a device id and a session id and `POST /v1/collect`
+   carries `device_id` and `session_id`, while `privacy.html` says the signal is honoured "before sending anything" and
+   that recording of the device identifier and the session stops. Decide which is true: the browser skips creating and
+   sending the device and session ids whenever the signal is on, or the policy says the server discards them (whether
+   the collector does was not read).
 
 ## Status
 
