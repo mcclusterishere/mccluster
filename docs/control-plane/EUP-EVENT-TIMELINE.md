@@ -367,7 +367,8 @@ At `171bcaad` (the head this slice started from):
   - **Honest before anything is applied.** Until the five pending parts are applied their functions do not exist: a read answers 200
     with `store.status` `not_applied` (and the parts' paths) and everything else it knows (the module, the providers now); a
     command answers 503 `store_not_applied` and records nothing. An unreachable store is `store.status` `unavailable` on the health
-    read and 503 `storage_unavailable` elsewhere; on a command that is an unknown outcome. While the module is off every route still
+    read and 503 `storage_unavailable` elsewhere; on a command that is an unknown outcome, while a read only says that nothing was
+    read (a busy store: read again). While the module is off every route still
     answers: the owner sees sources, review and preview before anything is public, and nothing here installs, enables or changes
     the module.
 - **Control** (`js/control-room/eup-environment.js`, new, `window.CR.eupEnvironment`; created by `js/control-room/eup.js` as the
@@ -411,7 +412,7 @@ General-news and Drawdown-mission tests are unchanged.
 
 | Command | Result | At `171bcaad` (before) |
 | --- | --- | --- |
-| `cd workers/mccluster && node --import ./test/support/offline-network.mjs --test test/eup-environment-owner.test.mjs` | 15/15 pass | the file cannot load (`owner.js` does not exist) |
+| `cd workers/mccluster && node --import ./test/support/offline-network.mjs --test test/eup-environment-owner.test.mjs` | 15/15 pass | the file cannot load (`owner.js` does not exist); its read-wording assertions also fail against `5d1138d9`'s `owner.js` (14/15: a read was told "the outcome is unknown") |
 | `... --test test/eup-router.test.mjs test/eup-modules.test.mjs test/eup-overview-status.test.mjs test/world-environment.test.mjs test/world-environment-layers.test.mjs test/world-environment-guard.test.mjs` | 105/105 pass | |
 | `PGLITE_MODULE=<PGlite 0.3.14 dist/index.js> node scripts/test/eup-environment-owner.integration.mjs` | 9/9 pass | 8 fail, 1 passes (the owner-only routing already existed) |
 | `node --test scripts/test/control-eup-environment.test.mjs scripts/test/control-eup.test.mjs scripts/test/control-eup-league.test.mjs` | 63/63 pass | `control-eup-environment.test.mjs` cannot load; with the view file but without the `eup.js` hook 7 of its 8 fail (only the pure helpers pass) |
@@ -420,7 +421,7 @@ General-news and Drawdown-mission tests are unchanged.
 | `nice -n 15 node --test scripts/test/*.test.mjs` (the root suite, once; load 4.3 rising to 7.0) | 2,786 tests: 2,779 pass, 0 fail, 7 skipped (76.4 s) | |
 | `cd workers/mccluster && nice -n 15 node --import ./test/support/offline-network.mjs --test test/*.test.mjs` (the whole Worker suite, what its `npm test` runs) | 1,980 tests: 1,959 pass, 9 skipped, 12 fail, all twelve in `test/mnet-mission-flow.test.mjs`, which fail the same way at `171bcaad` (0/12; recorded by S0 as well) | the same 12 fail |
 | `python3 docs/design/equity-uprise-building/production/verify_equity_uprise_repo_sources.py` | 2,902/2,902 checks pass | |
-| `PGLITE_MODULE=<PGlite 0.3.14 dist/index.js> PLAYWRIGHT_DIR=<node_modules> node scripts/e2e/control-eup-environment.e2e.mjs <out>` (under the shared browser lock) | queued behind other agents' browser runs when this section was written; its result is recorded under "Browser run" below once it has run | |
+| `PGLITE_MODULE=<PGlite 0.3.14 dist/index.js> PLAYWRIGHT_DIR=<node_modules> flock <shared browser lock> nice -n 5 node scripts/e2e/control-eup-environment.e2e.mjs <out>` (at `4db88181`) | 101/101 checks pass: 31 each at 390, 820 and 1440 px, 7 with the store not applied and 1 for a plain member (both at 390 px); no horizontal overflow at any of the six steps (`scrollWidth === clientWidth`); on Sources every button at least 44 px tall and every field labelled, 44 px tall, 16 px type; load 3.7 when it ended | not run: one browser at a time is shared by every agent, and at `171bcaad` neither `control.html` nor `js/control-room/eup.js` has the tab the proof opens first |
 
 ### Deviations from the plan, with reasons
 
