@@ -89,6 +89,8 @@ const MESSAGES = Object.freeze({
   provider_refused: 'Only the seven government providers can be configured; news is never a provider',
   store_not_applied: 'The E=UP event store is not applied (supabase/pending/20261119100000_eup_environment_events_v1_01.sql to _05.sql); nothing was recorded',
   storage_unavailable: 'The E=UP event store did not answer readably; the outcome is unknown',
+  read_busy: 'The E=UP event store is busy; nothing was read. Read again',
+  read_unavailable: 'The E=UP event store did not answer readably; nothing is shown as if it had',
   invalid_target: 'The command target is not valid for this command',
   invalid_command: 'Unknown environment command',
   invalid_payload: 'The command payload is not valid for this command',
@@ -141,6 +143,8 @@ function storeState(error) {
   if (error?.status === 403) throw error;
   return { status: STORE_STATUS.unavailable, reason: error?.reason === 'store_busy' ? 'store_busy' : 'storage_unavailable' };
 }
+/* A failed read that is not a state, in words about reading (the command sentences speak of outcomes and of sending again). */
+const readRefusal = (fail, reason) => (reason === 'store_busy' ? fail(503, MESSAGES.read_busy, 'store_busy') : fail(503, MESSAGES.read_unavailable, 'storage_unavailable'));
 const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 /* The owner read as the store builds it (part 04): anything else is not drawn as if it were. */
 function ownerShape(v) {
@@ -293,9 +297,9 @@ async function review(env, url, { user, fetchImpl, fail, rpcTimeoutMs }) {
   try { v = await ownerRead(env, fetchImpl, fail, user.id, null, limit, rpcTimeoutMs); } catch (error) {
     const s = storeState(error);
     if (s.status === STORE_STATUS.not_applied) return { ok: true, schema: 'mccluster.environment-owner-review/v1', store: s, module: null, providers: [], review: null, decisions: [] };
-    throw fail(503, MESSAGES[s.reason] || MESSAGES.storage_unavailable, s.reason);
+    throw readRefusal(fail, s.reason);
   }
-  if (!ownerShape(v)) throw fail(503, MESSAGES.storage_unavailable, 'storage_unavailable');
+  if (!ownerShape(v)) throw readRefusal(fail, 'storage_unavailable');
   return { ok: true, schema: 'mccluster.environment-owner-review/v1', store: { status: STORE_STATUS.applied }, module: v.module,
     providers: v.providers.map((p) => (isObject(p) ? { provider: p.provider, label: PROVIDER_LABELS[p.provider] || p.provider, ...storeProvider(p) } : null)).filter(Boolean),
     review: v.review, decisions: v.decisions };
@@ -306,9 +310,9 @@ async function eventDetail(env, id, { user, fetchImpl, fail, rpcTimeoutMs }) {
   try { v = await ownerRead(env, fetchImpl, fail, user.id, id, 1, rpcTimeoutMs); } catch (error) {
     const s = storeState(error);
     if (s.status === STORE_STATUS.not_applied) return { ok: true, store: s, event: null };
-    throw fail(503, MESSAGES[s.reason] || MESSAGES.storage_unavailable, s.reason);
+    throw readRefusal(fail, s.reason);
   }
-  if (!ownerShape(v) || !Object.hasOwn(v, 'event') || (v.event !== null && !isObject(v.event))) throw fail(503, MESSAGES.storage_unavailable, 'storage_unavailable');
+  if (!ownerShape(v) || !Object.hasOwn(v, 'event') || (v.event !== null && !isObject(v.event))) throw readRefusal(fail, 'storage_unavailable');
   if (v.event === null) throw fail(404, MESSAGES.not_found, 'event_not_found');
   return { ok: true, store: { status: STORE_STATUS.applied }, event: v.event };
 }
@@ -337,10 +341,10 @@ async function preview(env, url, { user, fetchImpl, fail, rpcTimeoutMs }) {
     const s = storeState(read.error);
     if (s.status === STORE_STATUS.not_applied) return { ...base, store: s, events: [], next_cursor: null, sources: [] };
     if (read.error?.status === 422) throw read.error;
-    throw fail(503, MESSAGES[s.reason] || MESSAGES.storage_unavailable, s.reason);
+    throw readRefusal(fail, s.reason);
   }
   const v = read.value;
-  if (!isObject(v) || v.schema !== 'mccluster.environment-events/v1' || !Array.isArray(v.events) || !Array.isArray(v.sources)) throw fail(503, MESSAGES.storage_unavailable, 'storage_unavailable');
+  if (!isObject(v) || v.schema !== 'mccluster.environment-events/v1' || !Array.isArray(v.events) || !Array.isArray(v.sources)) throw readRefusal(fail, 'storage_unavailable');
   return { ...base, store: { status: STORE_STATUS.applied }, page_schema: v.schema, events: v.events, next_cursor: typeof v.next_cursor === 'string' ? v.next_cursor : null, sources: v.sources };
 }
 

@@ -195,7 +195,15 @@ test('review: the store applied answers the queue, the providers and the decisio
   assert.deepEqual(na.store, { status: 'not_applied', reason: 'store_not_applied', parts: [...ENVIRONMENT_STORE_PARTS] }); assert.equal(na.review, null);
   for (const store of [() => { throw new TypeError('down'); }, () => new Response(null, { status: 302, headers: { location: 'https://elsewhere.invalid/' } }), () => ({ schema: 'other' }), () => storeError('XX000')]) {
     const r5 = await run(get('/review'), fake({ store }));
-    assert.equal(r5.status, 503); assert.equal((await r5.json()).reason, 'storage_unavailable');
+    assert.equal(r5.status, 503); const b5 = await r5.json(); assert.equal(b5.reason, 'storage_unavailable');
+    assert.match(b5.error, /nothing is shown as if it had/); assert.doesNotMatch(b5.error, /outcome|command|again/, 'a read is never told of an outcome or of sending again');
+  }
+  /* a busy store on a read: nothing was read, read again; never the command sentence about sending the same key again */
+  for (const route of ['/review', '/events/' + encodeURIComponent(EVENT), '/preview']) {
+    const busy = await run(get(route), fake({ store: () => storeError('57014', 'canceling statement due to statement timeout') }));
+    const bb = await busy.json();
+    assert.equal(busy.status, 503, route); assert.equal(bb.reason, 'store_busy', route);
+    assert.equal(bb.error, 'The E=UP event store is busy; nothing was read. Read again', route); assert.doesNotMatch(JSON.stringify(bb), /statement timeout/, route);
   }
   for (const q of ['?limit=0', '?limit=201', '?limit=abc']) {
     const g = fake(); assert.equal((await run(get('/review' + q), g)).status, 400, q); assert.equal(g.calls.length, 0);

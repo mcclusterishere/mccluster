@@ -446,8 +446,8 @@ General-news and Drawdown-mission tests are unchanged.
 | --- | --- | --- |
 | `cd workers/mccluster && node --import ./test/support/offline-network.mjs --test test/eup-environment-owner.test.mjs` | 15/15 pass | the file cannot load (`owner.js` does not exist) |
 | `... --test test/eup-router.test.mjs test/eup-modules.test.mjs test/eup-overview-status.test.mjs test/world-environment.test.mjs test/world-environment-layers.test.mjs test/world-environment-guard.test.mjs` | 105/105 pass | |
-| `PGLITE_MODULE=<PGlite 0.3.14 dist/index.js> node scripts/test/eup-environment-owner.integration.mjs` | 8/8 pass | 7 fail, 1 passes (the owner-only routing already existed) |
-| `node --test scripts/test/control-eup-environment.test.mjs scripts/test/control-eup.test.mjs scripts/test/control-eup-league.test.mjs` | 62/62 pass | `control-eup-environment.test.mjs` cannot load; with the view file but without the `eup.js` hook 7 of its 8 fail (only the pure helpers pass) |
+| `PGLITE_MODULE=<PGlite 0.3.14 dist/index.js> node scripts/test/eup-environment-owner.integration.mjs` | 9/9 pass | 8 fail, 1 passes (the owner-only routing already existed) |
+| `node --test scripts/test/control-eup-environment.test.mjs scripts/test/control-eup.test.mjs scripts/test/control-eup-league.test.mjs` | 63/63 pass | `control-eup-environment.test.mjs` cannot load; with the view file but without the `eup.js` hook 7 of its 8 fail (only the pure helpers pass) |
 | `node --test scripts/test/rpc-names-exist.test.mjs` and `scripts/test/editorial-ci-partition.test.mjs` | 3/3 and 1/1 pass | |
 | after merging the branch head `5d801add` (release review RS-9): the owner and router Worker tests, `world-gate` and `world-news-tint` unit tests, the owner integration | 22/22, 28/28, 8/8 pass | |
 | `nice -n 15 node --test scripts/test/*.test.mjs` (the root suite, once; load 4.3 rising to 7.0) | 2,786 tests: 2,779 pass, 0 fail, 7 skipped (76.4 s) | |
