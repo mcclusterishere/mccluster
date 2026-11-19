@@ -661,6 +661,10 @@ button.mn__notification-action:disabled { opacity: 0.55; cursor: default; }
 .mn__record-receipt { min-height: 40px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 999px; background: var(--mn-hot); color: var(--mn-hot-ink); font-weight: 800; font-size: 0.82rem; text-decoration: none; }
 .mn__record-empty { margin: 12px 0 0; color: var(--mn-dim); font-size: 0.88rem; line-height: 1.5; }
 @media (prefers-reduced-motion: reduce) { .mn__record { animation: none; } }
+/* THE SMALL RED KICKERS BY NIGHT on the Action Record and the mission dialog (release review RS-7, 2026-11-19): the World's night
+   red (#e6002d, css/world-travel.css) reads 3.6 to 4.2:1 on their grounds, under 4.5:1 for 11 px type. They take a lifted crimson,
+   5.1:1 or better on every night ground they sit on; by day they keep the day red (css/daylight.css), 5.1:1 on white. */
+html:not([data-daylight="day"]) :is(#mnMissionsView, #mnMissionDialog) .mn__eyebrow { color: #ff4d6d; }
 .mn__record-unlock span { display: block; }
 .mn__fellow-note { margin-top: 6px; color: var(--mn-dim); font-size: 0.85rem; }
 .mn__fellow-open { margin-top: 10px; }

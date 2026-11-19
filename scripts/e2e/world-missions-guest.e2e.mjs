@@ -58,6 +58,7 @@ import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { missionRow, detailsRow } from '../../tools/build-mission-import.mjs';
+import { contrast as pixelContrast } from './support/world-gate-harness.mjs';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const OUT = process.argv[2] || join(ROOT, 'e2e-out', 'world-missions-guest');
@@ -884,6 +885,80 @@ try {
       await page.screenshot({ path: join(OUT, 'daylight-dialog-credit-390.png') });
       const heard = noise(world);
       check(scope, 'zero console errors and no 4xx', heard.console.length === 0 && heard.bad.length === 0, heard);
+      check(scope, 'no JavaScript errors', errors.length === 0, errors);
+    } finally { await ctx.close(); }
+  }
+
+  /* ---------- the member's Action Record, now every member's (release review RS-1, RS-3, RS-7, 2026-11-19) ----------
+     It painted the supplied emblem behind its words as a cropped, filtered watermark; by day its night veil left the black title at
+     1.1:1; by night its small red kickers read under 4.5:1; and a mission's field showed as its raw key ("mutual_aid"). Here no
+     supplied mark is painted as a background anywhere in the view, every word reads 4.5:1 (3:1 for large type) by the repository's
+     pixel reader by day and by night, and the field is said in words as the feed says it. */
+  const AID = mission('0e1f0000-0000-4000-8000-000000000009', 'Carry groceries for a neighbour', 'Carry one week of groceries for someone who cannot.', 'mutual_aid', ago(4));
+  for (const device of [VIEWPORTS[0], VIEWPORTS[2]]) for (const phase of ['night', 'day']) {
+    const scope = `member-action-record-${device.name}-${phase}`;
+    const { ctx, page, errors } = await open(device, `/mnet.html?view=feed&daylight=${phase}`, { member: true, missions: MISSIONS.concat([AID]) });
+    try {
+      /* the member's own path: the account menu, the profile, its Action Record */
+      await page.click('#mnMe'); await page.click('#mnMenu [data-mn-view="profile"]');
+      await page.waitForFunction(() => { const v = document.getElementById('mnProfileView'); return v && !v.hidden && v.getClientRects().length > 0; }, null, { timeout: 15000 }).catch(() => {});
+      await page.click('#mnProfileRecord [data-mn-view="missions"]');
+      await page.waitForFunction(() => { const v = document.getElementById('mnMissionsView'); return v && !v.hidden && v.getClientRects().length > 0 && document.querySelectorAll('#mnMissionList [data-mission]').length > 0; }, null, { timeout: 30000 });
+      await page.waitForTimeout(1500);
+      const marks = await page.evaluate(() => {
+        const MARK = /equity-uprise-(logo|mark)|m-mark|we-(logo|icon|mark)|prim3-(logo|mark|emblem)|hm-mark/i, out = [];
+        const view = document.getElementById('mnMissionsView');
+        for (const el of [view, ...view.querySelectorAll('*')]) for (const pseudo of [null, '::before', '::after']) {
+          const bg = getComputedStyle(el, pseudo).backgroundImage;
+          if (MARK.test(bg)) out.push((el.id || el.className || el.tagName) + (pseudo || '') + ' ' + bg.slice(0, 80));
+        }
+        return out;
+      });
+      check(scope, 'no supplied mark is painted as a background anywhere in the Action Record (the logo law)', marks.length === 0, marks);
+      const c = await pixelContrast(page, '#mnMissionsView');
+      check(scope, `every word in the Action Record reads 4.5:1 or better (3:1 large) by ${phase}, measured from the pixels`, c.items.length >= 10 && c.failures.length === 0,
+        { measured: c.items.length, failures: c.failures.map((f) => `${f.text} ${f.ratio}:1 (${f.size}px ${f.color})`) });
+      const fields = await page.evaluate(() => [...document.querySelectorAll('#mnMissionList [data-mission] .mn__eyebrow')].map((p) => p.textContent.trim()));
+      check(scope, 'a mission\'s field is said in words, as the feed says it, never as its raw key', fields.length >= 2 && fields.every((t) => !/_/.test(t)) && fields.includes('Mutual aid · difficulty 1'), fields);
+      const size = await fits(page);
+      check(scope, 'nothing scrolls sideways', size.sw === size.cw, size);
+      if (device.name === '390' || phase === 'day') await page.screenshot({ path: join(OUT, `${scope}.png`) });
+      check(scope, 'no JavaScript errors', errors.length === 0, errors);
+    } finally { await ctx.close(); }
+  }
+
+  /* ---------- the World hidden and shown again: the globe keeps rendering (release review RS-2, 2026-11-19) ----------
+     The Action Record and the profile hide the World, so the globe's canvas is 0 x 0; its ResizeObserver used to fit a whole
+     Earth to that and wrote Infinity into the camera, and on the way back Cesium stopped rendering with its error panel over the
+     Earth. A member goes profile, Action Record, back to the World; the globe must still draw. */
+  {
+    const scope = 'world-hidden-and-back-390';
+    const { ctx, page, errors } = await open(VIEWPORTS[0], '/mnet.html?view=feed&daylight=night', { member: true });
+    try {
+      await globeReady(page);
+      const globe = globeOf(page);
+      const camera = () => globe.evaluate(() => {
+        const v = window.HuGlobe && window.HuGlobe.viewer(); if (!v) return null;
+        const p = v.camera.positionWC, c = v.scene.canvas;
+        return { finite: [p.x, p.y, p.z].every(Number.isFinite), panel: !!document.querySelector('.cesium-widget-errorPanel'), loop: v.useDefaultRenderLoop, canvas: [c.clientWidth, c.clientHeight] };
+      });
+      const before = await camera();
+      await page.click('#mnMe'); await page.click('#mnMenu [data-mn-view="profile"]');
+      await page.waitForFunction(() => { const v = document.getElementById('mnProfileView'); return v && !v.hidden && v.getClientRects().length > 0; }, null, { timeout: 15000 }).catch(() => {});
+      await page.waitForTimeout(600);
+      await page.click('#mnProfileRecord [data-mn-view="missions"]');
+      await page.waitForFunction(() => { const v = document.getElementById('mnMissionsView'); return v && !v.hidden && v.getClientRects().length > 0; }, null, { timeout: 15000 });
+      await page.waitForTimeout(1200);
+      const hidden = await camera();
+      await page.click('#mnToWorld');
+      await page.waitForFunction(() => document.documentElement.classList.contains('mn-world-on'), null, { timeout: 15000 });
+      await page.waitForTimeout(1500);
+      /* one frame asked for and drawn: render-on-demand draws only when asked */
+      const drawn = await globe.evaluate(() => new Promise((done) => { const v = window.HuGlobe.viewer(); let n = 0; const off = v.scene.postRender.addEventListener(() => { n++; }); v.scene.requestRender(); setTimeout(() => { off(); done(n); }, 1500); }));
+      const back = await camera();
+      check(scope, 'the globe is up before the round trip', before && before.finite && !before.panel && before.canvas[0] > 0, before);
+      check(scope, 'while the Action Record hides the World the globe\'s canvas is 0 x 0 and its camera stays a real place', hidden && hidden.canvas[0] === 0 && hidden.finite && !hidden.panel, hidden);
+      check(scope, 'back on the World the globe still renders: no Cesium error panel, the render loop on, a finite camera, a frame drawn on request', back && !back.panel && back.loop && back.finite && back.canvas[0] > 0 && drawn > 0, { back, drawn });
       check(scope, 'no JavaScript errors', errors.length === 0, errors);
     } finally { await ctx.close(); }
   }

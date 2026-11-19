@@ -405,3 +405,16 @@ test('the feed\'s row reads Local, the Equity Uprise tab, Global, Live, News, Pe
   assert.equal(press('Home'), 'Local');
   assert.equal(press('End'), 'People');
 });
+
+/* release review RS-7 (2026-11-19): the member's Action Record printed a mission's field as its raw key ("mutual_aid ·
+   difficulty 1", uppercased to MUTUAL_AID) where the feed's post says "Mutual aid"; its cards now say it as the feed does */
+test('the Action Record says a mission\'s field in words, through the feed\'s own label, never the raw key', () => {
+  assert.equal(P.domainLabel('mutual_aid'), 'Mutual aid');
+  assert.equal(P.domainLabel('research'), 'Research');
+  const js = read('js/mnet.js');
+  const card = js.slice(js.indexOf('  function missionCard(m){'), js.indexOf('  function publicMission('));
+  assert.ok(card.length > 100, 'missionCard was found');
+  assert.doesNotMatch(card, /esc\(m\.domain/, 'the raw key is never printed');
+  assert.match(card, /<p class="mn__eyebrow">'\+esc\(missionDomainLabel\(m\)\)\+' · difficulty '/);
+  assert.match(js, /function missionDomainLabel\(m\)\{var d=\(m&&m\.domain\)\|\|"community";return \(MISSION_POSTS&&MISSION_POSTS\.domainLabel\?MISSION_POSTS\.domainLabel\(d\)/);
+});

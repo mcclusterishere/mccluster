@@ -134,6 +134,14 @@ html[data-daylight="day"] .mn__news-avatar { background:#000000; color:#ffffff; 
    empty room's card and the shapes a loading room shows take the day colours too. They stayed night-dark on the white
    page, so every room switch flashed dark blocks, and an empty card faded up through grey to black. */
 html[data-daylight="day"].hu-editorial :is(.mn__panel, .mn__empty) { background:#ffffff; border-color:#00000018; color:#000000; }
+/* THE ACTION RECORD BY DAY (release review RS-3, 2026-11-19): the view's veil (css/mnet.css, #mnMissionsView::after) is a night
+   gradient, and by day it lay under the day's black ink: the title read 1.1:1, Refresh 1.4:1. By day the view is the white page
+   like every other room; the points take a gold made for white (6.4:1) and a record's verified and rejected lines the day's green
+   and red (5.4:1 and 6.5:1, the panel's own day pair). scripts/e2e/world-missions-guest.e2e.mjs measures the view by day and night. */
+html[data-daylight="day"] #mnMissionsView::after { background:none; }
+html[data-daylight="day"] .mn__record-head strong { color:#7a5a00; }
+html[data-daylight="day"] .mn__record-item.is-verified button span { color:#0f7a3a; }
+html[data-daylight="day"] .mn__record-item.is-rejected button span { color:#b3261e; }
 html[data-daylight="day"] .mn__skel { background:#ffffff; box-shadow:inset 0 0 0 1px #00000018; }
 html[data-daylight="day"] .mn__skel i { background:linear-gradient(90deg, #ededed 0%, #f6f6f6 40%, #ededed 80%); background-size:240% 100%; }
 /* a change of phase while the World is already on screen (js/daylight.js) fades across instead of flipping */

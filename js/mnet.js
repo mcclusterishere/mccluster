@@ -4220,6 +4220,9 @@
     return "/mnet.html?"+q.toString();
   }
   function receiptHref(assignmentId){return "/receipt.html?a="+encodeURIComponent(assignmentId);}
+  /* the mission's field in words, as the feed's posts say it (js/world-mission-posts.js, domainLabel): "Mutual aid", never the
+     raw key "mutual_aid" (release review RS-7, 2026-11-19) */
+  function missionDomainLabel(m){var d=(m&&m.domain)||"community";return (MISSION_POSTS&&MISSION_POSTS.domainLabel?MISSION_POSTS.domainLabel(d):String(d).replace(/[_-]+/g," "))||"Mission";}
   function missionCard(m){
     var st=missions.stats[m.id]||{}, joined=Number(st.joined)||0, submitted=Number(st.submitted)||0, verified=Number(st.verified)||0;
     var activity=joined+" joined · "+verified+" completed"+(submitted?" · "+submitted+" awaiting review":"");
@@ -4233,7 +4236,7 @@
       (x.next_mission_title?'<p class="mn__hint">Next in this arc: '+esc(x.next_mission_title)+'</p>':"")+
       (x.previous_mission_title?'<p class="mn__hint">Opens once your \u201c'+esc(x.previous_mission_title)+'\u201d is verified</p>':"");
     var cta=x.cta_key==="business_listing"?' <button class="mn__quiet" type="button" data-open-mission="'+esc(m.id)+'" data-focus="business">'+esc(x.cta_label||"Put your Black business on the map")+'</button>':"";
-    return '<article class="mn__panel" data-mission="'+esc(m.id)+'"><p class="mn__eyebrow">'+esc(m.domain||"community")+' · difficulty '+esc(m.difficulty)+'</p><h3>'+esc(m.title)+'</h3><p>'+esc(m.description||"")+'</p><small>'+esc(m.base_points)+' base pts · '+esc((m.skills||[]).join(" · "))+'</small><p class="mn__hint">'+esc(activity)+'</p>'+extra+'<div><button class="mn__primary" type="button" data-open-mission="'+esc(m.id)+'">View mission</button>'+cta+'</div></article>';
+    return '<article class="mn__panel" data-mission="'+esc(m.id)+'"><p class="mn__eyebrow">'+esc(missionDomainLabel(m))+' · difficulty '+esc(m.difficulty)+'</p><h3>'+esc(m.title)+'</h3><p>'+esc(m.description||"")+'</p><small>'+esc(m.base_points)+' base pts · '+esc((m.skills||[]).join(" · "))+'</small><p class="mn__hint">'+esc(activity)+'</p>'+extra+'<div><button class="mn__primary" type="button" data-open-mission="'+esc(m.id)+'">View mission</button>'+cta+'</div></article>';
   }
   /* Public display name; stable mission IDs and the published historical source remain unchanged. */
   function publicMission(m) {
