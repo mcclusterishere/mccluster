@@ -908,6 +908,47 @@ try {
       }
     } finally { await ctx.close(); }
   }
+
+  /* ---------- the onboarding pages on a laptop's window: the floating bar never lies on the action (release review RS-4) ----------
+     At 1366 x 768 and 1280 x 720 the bar, centred over the pages' centred measure, covered most of the action's words at rest.
+     From 1100 px it steps aside; it is moved, never hidden, and the phone keeps it where it was. Each page at rest: wherever the
+     action is on screen, it is the topmost thing at its centre and four inner points (an action below the fold is not covered). */
+  if (runs('onboard-bar')) for (const [w, h] of [[1366, 768], [1280, 720], [1100, 700], [390, 844]]) {
+    const scope = `onboard-bar-${w}x${h}`;
+    const device = w === 390 ? DEVICES[390] : { name: `${w}x${h}`, viewport: { width: w, height: h }, mobile: false };
+    const { ctx, page } = await openWorld(browser, server.base, device, '/mnet.html?view=feed&finish=1', { phase: 'night', member: true, nextStep: 'profile', dpr: 1, globe: false });
+    const atRest = () => page.evaluate(() => {
+      const el = document.getElementById('mnProfileSave'), bar = document.querySelector('body > .appbar');
+      const g = el.getBoundingClientRect(), b = bar.getBoundingClientRect(), cs = getComputedStyle(bar);
+      const mx = g.left + g.width / 2, my = g.top + g.height / 2, inset = Math.min(g.height, g.width) / 2;
+      const pts = [[mx, my], [mx, g.top + 4], [mx, g.bottom - 4], [g.left + inset, my], [g.right - inset, my]].filter(([, y]) => y >= 0 && y < innerHeight);
+      const hits = pts.map(([x, y]) => { const e = document.elementFromPoint(x, y); return !!e && (e === el || el.contains(e)); });
+      return { step: document.getElementById('mnStepsCount').textContent, scrollY: Math.round(scrollY), shown: pts.length, hits, covered: hits.filter((x) => !x).length,
+        action: [Math.round(g.left), Math.round(g.top), Math.round(g.width), Math.round(g.height)], bar: [Math.round(b.left), Math.round(b.top), Math.round(b.width), Math.round(b.height)],
+        barShown: cs.display !== 'none' && cs.visibility === 'visible' && b.width > 0 && b.left >= 0 && b.right <= innerWidth && b.bottom <= innerHeight,
+        barMid: Math.round(b.left + b.width / 2), vw: innerWidth, overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth };
+    });
+    try {
+      await page.waitForSelector('#mnProfileGate:not([hidden])', { timeout: 60000 });
+      await page.waitForTimeout(900);
+      const seen = [await atRest()];
+      await page.fill('#mnHandle', 'fixture.member'); await page.fill('#mnDisplay', 'Fixture Member'); await page.waitForTimeout(700);
+      await page.click('#mnProfileSave');
+      await page.waitForFunction(() => document.getElementById('mnStepsCount').textContent === '2 / 3', null, { timeout: 15000 });
+      await page.evaluate(() => window.scrollTo(0, 0)); await page.waitForTimeout(500);
+      seen.push(await atRest());
+      await page.fill('#mnLegalName', 'Nadia Member'); await page.fill('#mnAddr1', '1 Main Street'); await page.fill('#mnCity', 'Bridgeport'); await page.fill('#mnRegion', 'CT'); await page.fill('#mnPostal', '06604');
+      await page.click('#mnProfileSave');
+      await page.waitForFunction(() => document.getElementById('mnStepsCount').textContent === '3 / 3', null, { timeout: 15000 });
+      await page.evaluate(() => window.scrollTo(0, 0)); await page.waitForTimeout(500);
+      seen.push(await atRest());
+      if (w === 1366) await page.screenshot({ path: join(OUT, `onboard-bar-${w}x${h}-3.png`) });
+      if (w >= 1100) check(scope, 'at rest on every page, wherever the action is on screen nothing lies on it', seen.every((s) => s.covered === 0) && seen.some((s) => s.shown > 0), seen);
+      check(scope, w >= 1100 ? 'the bar is moved, never hidden: whole on screen, beside the measure' : 'the phone keeps its bar where it was: whole on screen and centred',
+        seen.every((s) => s.barShown && (w >= 1100 ? s.barMid > s.vw / 2 + 300 : Math.abs(s.barMid - s.vw / 2) <= 1)), seen.map((s) => ({ bar: s.bar, barShown: s.barShown, vw: s.vw })));
+      check(scope, 'no sideways scroll', seen.every((s) => s.overflow === 0), seen.map((s) => s.overflow));
+    } finally { await ctx.close(); }
+  }
 } finally {
   await writeFile(join(OUT, 'results.json'), JSON.stringify({ at: new Date().toISOString(), cesium: !!process.env.CESIUM_DIR, results, frames }, null, 1));
   await browser.close();

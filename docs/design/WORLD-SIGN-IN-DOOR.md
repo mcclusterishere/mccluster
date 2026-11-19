@@ -23,7 +23,9 @@ The World's sign-in (`#mnSignedOut` in `mnet.html`) no longer replaces the World
 
 The three onboarding pages (`#mnProfileGate`) are still pages that replace the World (`html.mn-gate-on`, their padding
 clears the bar, their markup unchanged). They take the door's hand: the serif headline, the tokens, and a readable day page
-(it was black type on a near-black ground).
+(it was black type on a near-black ground). From 1100 px they keep one centred measure, and the floating bar steps aside to
+the right of it, moved and never hidden: centred over the measure it lay on the page's action at rest, over 87 % of its words
+at 1280 x 720 and 88 % at 1366 x 768 (release review RS-4, 2026-11-19). The phone keeps its bar where it was.
 
 Architecture: the "cinematic world" direction, with the "regal editorial" typography and craft grafted on, as judged on
 2026-11-18. "Get Your Hu Up!" is gone from the World (owner, 2026-11-17) and nothing replaces it.

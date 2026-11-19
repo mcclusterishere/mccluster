@@ -15,7 +15,8 @@
    edge. Motion respects prefers-reduced-motion (and css/mnet.css already stops every transition and animation inside .mn
    under it).
 
-   Every rule is scoped by #mnSignedOut, #mnProfileGate or html.mn-door-open. Fonts are self-hosted (OFL: the licences
+   Every rule is scoped by #mnSignedOut, #mnProfileGate, html.mn-door-open, or html.mn-gate-on (the onboarding pages' own
+   state, for the one rule that moves the floating bar beside them on a wide screen). Fonts are self-hosted (OFL: the licences
    travel in assets/fonts, THIRD-PARTY-NOTICES lists the files). css/mnet.css keeps its pinned gate rules; these win by
    specificity, never by !important (the reduced-motion block is the one exception).
    ============================================================ */
@@ -647,6 +648,10 @@ html[data-daylight="day"] #mnProfileGate.mn__onboard::before { background: #ffff
   #mnSignedOut .wg-credit { align-self: flex-start; margin: 10px 0 0; }
   /* the onboarding pages keep one centred measure on a wide screen (they are a form, not a spread) */
   #mnProfileGate.mn__onboard { padding-inline: max(0px, calc((100% - 600px) / 2)); }
+  /* and the floating bar steps aside, to the right of that measure, so it never lies on the page's action (release review
+     RS-4, 2026-11-19: centred over the centred measure, at rest it covered 87 % of the action's words at 1280 x 720 and
+     88 % at 1366 x 768). Nothing of the bar is hidden; the listening room keeps its own bar where it is. */
+  html.mn-gate-on body:not([data-world-audio-open]) > .appbar { margin-inline: auto calc(24px + env(safe-area-inset-right, 0px)); }
 }
 @media (min-width: 1100px) {
   @container (min-height: 170px) { #mnSignedOut .wg-pulse { justify-content: flex-start; } }

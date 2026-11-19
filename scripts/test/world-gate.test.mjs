@@ -110,7 +110,7 @@ test('the stylesheet keeps the law: mobile first, minmax(0, 1fr), 16 px controls
   assert.equal((code.match(/\b1fr\b/g) || []).length, (code.match(/minmax\(0, 1fr\)/g) || []).length, 'every 1fr is minmax(0, 1fr)');
   for (const r of all) {
     if (/^@(font-face|keyframes)/.test(r.head) || /^(from|to|\d+%)$/.test(r.head)) continue;
-    for (const sel of topLevel(r.head)) assert.match(sel, /^(html\[data-daylight="day"\] )?(#mnSignedOut|#mnProfileGate|html\.mn-door-open)/, 'scoped: ' + sel);
+    for (const sel of topLevel(r.head)) assert.match(sel, /^(html\[data-daylight="day"\] )?(#mnSignedOut|#mnProfileGate|html\.mn-door-open|html\.mn-gate-on )/, 'scoped: ' + sel);
     if (/\binput\b|\.mn__input|\bselect\b|\btextarea\b|\.mn__textarea/.test(r.head) && !/::placeholder/.test(r.head)) {
       for (const decl of r.body.split(';')) if (/^\s*font(-size)?\s*:/.test(decl)) assert.match(decl, /max\(16px,/, 'form controls at max(16px, ...): ' + r.head + ' { ' + decl.trim() + ' }');
     }
@@ -757,4 +757,20 @@ test('the sheet\'s measures: the action\'s need over the fade, and the scrolled 
   b.go.rect = { top: 1300, bottom: 1356, left: 22, right: 368, width: 346, height: 56 };
   b.sheet.dispatchEvent({ type: 'scroll' });
   assert.equal(b.door.style.getPropertyValue('--wg-need'), String(844 - (136 + 8 + 8) - 68) + 'px');
+});
+
+/* release review RS-4 (2026-11-19): on a laptop's window (1366 x 768, 1280 x 720) the floating bar, centred, lay on the
+   onboarding page's action at rest, over 87 % of its words, since the pages took one centred measure at 1100 px. From 1100 px
+   the bar steps aside, right of that measure; it is moved, never hidden, the phone keeps it where it was, and the listening
+   room's bar is left alone. The browser proof is scripts/e2e/world-gate.e2e.mjs (onboard-bar). */
+test('on a wide screen the floating bar steps aside from the onboarding pages\' measure, moved and never hidden', () => {
+  const all = rules(read('css/world-gate.css'));
+  const bar = all.filter((r) => /\.appbar/.test(r.head));
+  assert.equal(bar.length, 1, 'one rule touches the bar');
+  const [r] = bar;
+  assert.equal(r.head, 'html.mn-gate-on body:not([data-world-audio-open]) > .appbar');
+  assert.deepEqual(r.at, ['@media (min-width: 1100px)'], 'only where the measure is centred, and never on the phone');
+  assert.equal(r.body.trim().replace(/;$/, ''), 'margin-inline: auto calc(24px + env(safe-area-inset-right, 0px))', 'it moves the bar and does nothing else');
+  const measure = all.find((x) => x.head === '#mnProfileGate.mn__onboard' && x.at.length === 1 && x.at[0] === r.at[0]);
+  assert.ok(measure && /padding-inline: max\(0px, calc\(\(100% - 600px\) \/ 2\)\)/.test(measure.body), 'beside the rule that centres the measure');
 });
