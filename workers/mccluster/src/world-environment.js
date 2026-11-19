@@ -15,6 +15,8 @@ import { createEnvironmentServer } from '../../../vendor/equity-uprise/src/envir
 import { readModulePolicy as productPolicy, moduleRefusal } from '../../../vendor/equity-uprise/src/server/module-policy.mjs';
 import { handleEnvironmentLayers } from './world-environment-layers.js';
 import { OFF, gateAnswer, limitPublicRead, policyLoader, policyRead, sharedLayer } from './world-environment-guard.js';
+/* the public timeline from the event store, and the public feed's USGS rows from the same store (E=UP slice S4) */
+import { handleEnvironmentEvents, storeUsgsReader } from './world-environment-events.js';
 export { ENVIRONMENT_PATH, ENVIRONMENT_TEAM, ENVIRONMENT_ACTIONS, environmentFacts } from '../../../vendor/equity-uprise/src/environment/evidence.mjs';
 const PROVIDERS = { nws:fetchWeather, eonet:fetchNatural, usgs:fetchQuakes, nhc:fetchCyclones };
 const installation = Object.freeze({
@@ -41,18 +43,23 @@ export const FEED_SOURCE_TERMS = Object.freeze({
   usgs: Object.freeze({ attribution: 'U.S. Geological Survey, Earthquake Hazards Program', license: 'Public domain (U.S. Government work)' }),
   nhc: Object.freeze({ attribution: 'NOAA National Hurricane Center', license: 'Public domain (U.S. Government work)' })
 });
-export async function environmentFeed(env,{fetchImpl=fetch,cacheImpl=null}={}) {
+/* `usgs`: a reader for the USGS source in place of USGS's live feed. The public answer passes the event store's
+   (./world-environment-events.js storeUsgsReader: canonical ids and revisions, never a second id); the owner's live
+   provider check (./eup/environment/owner.js) passes none and reads USGS itself. An outcome's `extra` fields are added back
+   to its events by id, and its `reason` is the source's (E=UP slice S4). */
+export async function environmentFeed(env,{fetchImpl=fetch,cacheImpl=null,usgs=null}={}) {
   const outcomes=new Map();
   const feed=await productFeed({readSource:async spec=>{
-    const outcome=await sharedLayer({layer:spec.id,key:`consumer-environment-v1-${spec.id}`,ttl:spec.ttl,rows:spec.rows,fetcher:PROVIDERS[spec.id]},env,fetchImpl,cacheImpl);
+    const outcome=spec.id==='usgs'&&typeof usgs==='function'?await usgs(spec):await sharedLayer({layer:spec.id,key:`consumer-environment-v1-${spec.id}`,ttl:spec.ttl,rows:spec.rows,fetcher:PROVIDERS[spec.id]},env,fetchImpl,cacheImpl);
     outcomes.set(spec.id,outcome);return outcome;
   }});
-  return {...feed,sources:feed.sources.map(source=>{
+  return {...feed,events:feed.events.map(e=>{const x=outcomes.get(e.source?.id)?.extra?.get?.(e.id);return x?{...e,...x}:e;}),sources:feed.sources.map(source=>{
     const health=sourceHealth({...source,...FEED_SOURCE_TERMS[source.id]},outcomes.get(source.id));
     /* USGS's summary feed says when it was GENERATED (metadata.generated, which the shared reader keeps as observed_at for the
        owner's Halo layer); the source's latest observation is the newest origin time among the quakes served (E=UP slice S0, E6) */
     const observed=source.id==='usgs'?newestObserved(feed.events,'usgs'):source.observed_at;
-    return {...source,observed_at:observed,reason:health.reason,last_success_at:health.last_success_at,attribution:health.attribution,license:health.license};
+    const own=outcomes.get(source.id)?.reason;
+    return {...source,observed_at:observed,reason:typeof own==='string'?own:health.reason,last_success_at:health.last_success_at,attribution:health.attribution,license:health.license};
   })};
 }
 function newestObserved(events,provider){
@@ -103,11 +110,16 @@ export async function handleWorldEnvironment(request, env, options = {}) {
   const limited=limitPublicRead(request,env,options.limits);
   if(limited)return limited;
   const read=policyRead(env,fetchImpl);
-  const layer=await handleEnvironmentLayers(request,env,{...options,gate:()=>environmentGate(request,env,fetchImpl,read)});
+  const gate=()=>environmentGate(request,env,fetchImpl,read);
+  const events=await handleEnvironmentEvents(request,env,{...options,gate});
+  if(events)return events;
+  const layer=await handleEnvironmentLayers(request,env,{...options,gate});
   if(layer)return layer;
   /* a module never installed is off, before the pinned server, which would call any failed read an outage */
   if((await read()).refusal===OFF)return gateAnswer(request,env,{ok:false,code:OFF.code},OFF.status);
-  const planning=createMcClusterEnvironmentPlanning({request,env,fetchImpl,readEvent:async id=>(await environmentFeed(env,options)).events.find(event=>event.id===id)});
+  /* the public feed: its USGS rows from the event store, the same canonical ids as the timeline (E=UP slice S4) */
+  const publicFeed=()=>environmentFeed(env,{...options,usgs:storeUsgsReader(env,options)});
+  const planning=createMcClusterEnvironmentPlanning({request,env,fetchImpl,readEvent:async id=>(await publicFeed()).events.find(event=>event.id===id)});
   const controller=createEnvironmentServer({
     proofs:createEnvironmentProofAdapter(request,env,{fetchImpl}),
     planning,failureCodes:[...ENVIRONMENT_PROOF_ERRORS,...ENVIRONMENT_PLANNING_ERROR_CODES,'current_news_review_required',...MODULE_FAILURE_CODES],
@@ -115,7 +127,7 @@ export async function handleWorldEnvironment(request, env, options = {}) {
     loadPolicy:policyLoader(read,env,fetchImpl),
     authenticate:async()=>{const user=await bearerUser(request,env,fetchImpl);return user?{id:user.id,installationId:installation.id}:null;},
     isOwner:({principal})=>isHouseOwner(env,principal.id,fetchImpl),
-    readEvidence:()=>environmentFeed(env,options),
+    readEvidence:publicFeed,
     response:(req,body,status)=>reply(req,env,body,status),
     repository:{
       listMissions:(_context,{owner})=>missions(env,fetchImpl,owner),

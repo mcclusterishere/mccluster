@@ -19,7 +19,12 @@ function upstream(url) {
 // The persisted module policy the route reads first on every request (supabase/migrations/20261117144103_eup_module_policy_v1.sql).
 const POLICY_RPC='/rest/v1/rpc/eup_module_policy_read';
 const policyOf=(state='enabled',revision=3)=>({schema:'equity-uprise.module-policy/v1',installationId:'mccluster',moduleId:'environment',state,revision});
-const isPolicyRead=c=>c.url.endsWith(POLICY_RPC), isDomainRpc=c=>c.url.includes('/rpc/')&&!isPolicyRead(c);
+// E=UP event timeline slice S4 (changed on purpose): the public feed's USGS rows come from the event store's public page
+// (workers/mccluster/src/world-environment-events.js), a service-key READ like the policy's, never a domain write; the fake answers
+// it with the quake the live USGS fake used to supply (its off-host link is dropped, so the product's USGS home stands in, as before).
+const STORE_PAGE_RPC='/rest/v1/rpc/eup_environment_public_events', isStoreRead=c=>c.url.endsWith(STORE_PAGE_RPC);
+const storePage=()=>({schema:'mccluster.environment-events/v1',next_cursor:null,events:[{id:'usgs:quake1',revision:1,provider:'usgs',kind:'quake',state:'published',title:'Test quake',place:'Test quake',magnitude:4.6,magnitude_type:'mb',depth_km:10,lon:-72,lat:41,observed_at:new Date(Date.now()-30000).toISOString(),review_status:'automatic',tsunami:false,alert:null,source:{id:'quake1',url:'https://evil.example/steal',updated_at:null,fetched_at:new Date(Date.now()-10000).toISOString()},first_published_at:new Date(Date.now()-10000).toISOString(),revised_at:null,correction:null,news_coverage:[]}],sources:[{provider:'usgs',status:'ok',checked_at:new Date(Date.now()-10000).toISOString(),last_success_at:new Date(Date.now()-10000).toISOString()}]});
+const isPolicyRead=c=>c.url.endsWith(POLICY_RPC), isDomainRpc=c=>c.url.includes('/rpc/')&&!isPolicyRead(c)&&!isStoreRead(c);
 // policy: a policy object, a Response factory, or a function of the read's index (0 = the route gate, 1 = the mutation gate).
 function fake({owner=false,rpcData={},rpcStatus=200,rpcMessage='',rpcCode,reads=[],policy=policyOf()}={}) {
  const calls=[];let policyReads=0;
@@ -29,6 +34,7 @@ function fake({owner=false,rpcData={},rpcStatus=200,rpcMessage='',rpcCode,reads=
   if (String(url).includes('/auth/v1/user')) return json({id:USER});
   if (String(url).includes('/rest/v1/orgs?')) return json([{id:MISSION}]);
   if (String(url).includes('/rest/v1/org_members?')) return json(owner ? [{role:'owner'}] : []);
+  if (String(url).endsWith(STORE_PAGE_RPC)) return json(storePage());
   if (String(url).includes('/rest/v1/rpc/')) return json(rpcStatus===200?rpcData:{message:rpcMessage,...(rpcCode?{code:rpcCode}:{})},rpcStatus);
   if (String(url).includes('/rest/v1/')) return json(reads);
   return upstream(url);
