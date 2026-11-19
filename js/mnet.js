@@ -1283,7 +1283,8 @@
      under them; the buttons step down while it shows. A count the globe does not know yet is a dash, never a made-up zero. */
   function placeStats(s) {
     var n = function (v) { return typeof v === "number" && isFinite(v) && v >= 0 ? Math.round(v) : null; };
-    return s && typeof s === "object" ? { news: n(s.news), posts: n(s.posts), members: n(s.members), membersUnder: n(s.membersUnder) || 0, states: s.states === true } : { news: null, posts: null, members: null, membersUnder: 0, states: false };
+    /* newsOff: the globe has the news off for the Equity Uprise tab or the door (decision D9, slice S4); the card drops the count */
+    return s && typeof s === "object" ? { news: n(s.news), newsOff: s.newsOff === true, posts: n(s.posts), members: n(s.members), membersUnder: n(s.membersUnder) || 0, states: s.states === true } : { news: null, newsOff: false, posts: null, members: null, membersUnder: 0, states: false };
   }
   /* THE PLACE'S MISSIONS (owner, 2026-11-17: "when you click on America, you should be able to say, see X amount of news, X
      amount of missions"): the open missions pinned in the place plus the open missions with no pin at all, since those can be
@@ -1306,7 +1307,7 @@
     var sub = st8 ? c.name : s.states ? "Double-tap a state to choose it" : "";
     card.innerHTML = '<div class="mn__place-head"><span class="mn__place-name"><b>' + esc(st8 ? st8.name : c.name) + '</b>' + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</span>' +
       '<button type="button" class="mn__place-close" aria-label="' + esc(st8 ? "Show all of " + c.name : "Show every country") + '">\u00d7</button></div>' +
-      '<div class="mn__place-stats">' + cell(s.news, "news \u00b7 24 h") + cell(placeMissionCount(c), "missions") + (st8 ? (s.members === null ? "" : cell(s.members, "members")) : cell(s.posts, "posts") + members) + '</div>';
+      '<div class="mn__place-stats">' + (s.newsOff ? "" : cell(s.news, "news \u00b7 24 h")) + cell(placeMissionCount(c), "missions") + (st8 ? (s.members === null ? "" : cell(s.members, "members")) : cell(s.posts, "posts") + members) + '</div>';
     card.querySelector(".mn__place-close").onclick = function () { tellWorld(st8 ? { type: "hu:country-back" } : { type: "hu:select-country", code: null }); };
     card.hidden = false;
     placeCardRoom();
@@ -1584,7 +1585,7 @@
      modes it replaced (?mode=missions, ?mode=environment) */
   function feedScopeFromAddress() {
     var q = null; try { q = new URLSearchParams(location.search); } catch (_) { return ""; }
-    if (q.get("feed") === "equity" || q.has("completed") || q.get("mode") === "missions" || q.get("mode") === "environment") return "equity";
+    if (q.get("feed") === "equity" || q.has("completed") || q.has("event") || q.get("mode") === "missions" || q.get("mode") === "environment") return "equity";
     return "";
   }
   function feedMatches(item, query) {
@@ -2123,20 +2124,25 @@
        depend on them (js/world-environment-posts.js may be absent, as it is where this function runs alone in its test) */
     var observations = typeof tabObservations === "function" ? tabObservations() : [];
     var env = state.environment || {}, obsShown = env.shown > 0 ? env.shown : OBS_PAGE;
+    /* the timeline's own line (a deep link to an event that is not there) and its older pages (slice S4) */
+    var timeline = typeof TIMELINE !== "undefined" && TIMELINE ? TIMELINE : null, note = timeline ? timeline.note() : "", chosen = timeline ? timeline.selected() : "";
+    /* an event a deep link or Back named further down the list: the list opens down to it, so its post is there to see */
+    for (var ci = obsShown; chosen && ci < observations.length; ci++) if (observations[ci] && observations[ci].id === chosen) { obsShown = env.shown = ci + 1; break; }
     var observationList = function () {
-      if (!observations.length || typeof observationPostHtml !== "function") return "";
+      if ((!observations.length && !note) || typeof observationPostHtml !== "function") return "";
       return '<section class="mn__obs-list" aria-labelledby="mnObsHeading" data-observation-list>' +
         '<h2 class="mn__obs-heading" id="mnObsHeading">Environmental observations</h2>' +
+        (note ? '<p class="mn__feed-note" data-timeline-note>' + esc(note) + '</p>' : "") +
         /* newest first, the undated after the dated, each once (the pure module's own order, with no missions in it) */
         (typeof ENV_POSTS !== "undefined" && ENV_POSTS ? ENV_POSTS.interleaveByTime([], observations, { pageSize: obsShown }) : observations.slice(0, obsShown)).map(observationPostHtml).join("") +
-        (observations.length > obsShown ? '<button class="mn__more" type="button" data-observations-more>Show more observations</button>' : "") +
+        (observations.length > obsShown || (timeline && timeline.hasMore()) ? '<button class="mn__more" type="button" data-observations-more>Show more observations</button>' : "") +
         '</section>';
     };
     var missionMore = function (list) { return list.length > f.shown ? '<button class="mn__more" type="button" data-mission-feed-more>Load more missions</button>' : ""; };
     var bindObservations = function () {
       if (typeof bindObservationPosts === "function") bindObservationPosts(host);
       var more = host.querySelector("[data-observations-more]");
-      if (more) more.onclick = function () { env.shown = obsShown + OBS_PAGE; renderFeed(false); };
+      if (more) more.onclick = function () { env.shown = obsShown + OBS_PAGE; if (timeline && observations.length <= env.shown) timeline.more(); renderFeed(false); };
       var missions = host.querySelector("[data-mission-feed-more]");
       if (missions) missions.onclick = function () { f.shown += MISSION_POSTS ? MISSION_POSTS.PAGE : 20; renderFeed(false); };
     };
@@ -2209,8 +2215,18 @@
   /* the observation posts the Equity Uprise tab lists: every one, narrowed by the search as the feed is */
   function tabObservations() {
     var query = state.world.query, list = environmentPosts();
+    /* the timeline from the event store in place of the feed's quakes, one list by time (js/world-environment-timeline.js, slice S4) */
+    if (TIMELINE) list = TIMELINE.merged(list);
     return query ? list.filter(function (p) { return feedMatches(p, query); }) : list;
   }
+  /* THE TIMELINE FROM THE EVENT STORE (event timeline slice S4, 2026-11-19): its posts carry the store's canonical id and revision;
+     it asks the page to draw again when a page or a deep-linked event arrives, and to point the globe at the event a deep link or
+     Back chose (the same message Show on globe sends) */
+  var TIMELINE = window.MCC_ENVIRONMENT_TIMELINE || null;
+  if (TIMELINE) TIMELINE.attach({
+    render: function () { if (state.feedAnswered && !state.loadingFeed && (state.feedScope || "global") === "equity") renderFeed(false); },
+    focus: function (id) { tellWorld({ type: "hu:environment-focus", id: id }); }
+  });
   /* the observation posts' words as one ordered line (id, content hash, significance, source label, update time): a detail that
      changed none of them repaints nothing (review G1R-7; the tour re-selecting quakes, a refresh whose words did not change) */
   function environmentSignature() {
@@ -2244,17 +2260,23 @@
     var title = "mnObservationPost-" + String(p.id).replace(/[^a-zA-Z0-9_-]/g, "_"), href = p.source ? safeHttpUrl(p.source.url) : "", src = /^https:\/\//.test(href) ? href : "";
     var label = (p.source && p.source.label) || "", stamp = p.stamp && p.stamp.text ? p.stamp.text : "Time not supplied by provider";
     var sub = ENV_POSTS.TYPE + " · " + (label || "Source not named") + " · " + stamp + (p.updated_at ? " · Updated " + ENV_POSTS.agoLabel(new Date(p.updated_at).toISOString(), Date.now()) : "");
-    var body = (p.facts || []).map(function (f) { return f.label + ": " + f.value; }).concat(["Coverage: " + p.coverage, "Status: " + p.status + (p.reason ? " (" + p.reason + ")" : "")]).join(" · ");
-    return '<article class="mn__post-card mn__observation-post" data-observation-post="' + esc(p.id) + '" aria-labelledby="' + esc(title) + '">' +
+    /* a timeline post (slice S4) says automatic or reviewed where a live post says its coverage and status; its times, an official
+       correction (old -> new), a deep link's earlier corrections and a withdrawal follow on lines of their own; the one a deep link
+       or a choice named is marked current */
+    var tl = !!p.timeline, current = tl && typeof TIMELINE !== "undefined" && TIMELINE && TIMELINE.selected() === p.id;
+    var body = (p.facts || []).map(function (f) { return f.label + ": " + f.value; }).concat(tl ? (p.review ? [p.review] : []) : ["Coverage: " + p.coverage, "Status: " + p.status + (p.reason ? " (" + p.reason + ")" : "")]).join(" · ");
+    var lines = tl ? [[p.times, ""], [p.correction, " mn__timeline-correction"]].concat((p.earlier || []).map(function (t) { return [t, " mn__timeline-earlier"]; }), [[p.tombstone, " mn__timeline-tombstone"]])
+      .filter(function (l) { return l[0]; }).map(function (l) { return '<p class="mn__timeline-line' + l[1] + '">' + esc(l[0]) + '</p>'; }).join("") : "";
+    return '<article class="mn__post-card mn__observation-post' + (current ? ' is-current' : '') + '" data-observation-post="' + esc(p.id) + '"' + (tl ? ' data-timeline-post data-revision="' + esc(p.revision || "") + '"' : '') + (current ? ' aria-current="true"' : '') + ' aria-labelledby="' + esc(title) + '">' +
       '<div class="mn__post-main">' +
         '<div class="mn__post-head"><span class="mn__observation-post-icon" aria-hidden="true">' + (OBS_ICON[p.icon] || OBS_ICON.other) + '</span>' +
           '<div class="mn__author-meta"><span class="mn__author-name">' + esc(ENV_POSTS.AUTHOR) + '</span><div class="mn__author-sub">' + esc(sub) + '</div></div></div>' +
         '<p class="mn__observation-post-title" id="' + esc(title) + '">' + esc(p.title) + '</p>' +
-        '<p class="mn__post-body mn__observation-post-body">' + esc(body) + '</p>' +
+        '<p class="mn__post-body mn__observation-post-body">' + esc(body) + '</p>' + lines +
       '</div>' +
       '<div class="mn__post-actions">' +
         (p.lat === null || p.lon === null || p.lat === undefined || p.lon === undefined
-          ? '<button class="mn__action mn__observation-globe" type="button" disabled>' + OBS_ICON.globe + '<span class="mn__action-label">No mapped point</span></button>'
+          ? '<button class="mn__action mn__observation-globe" type="button" disabled>' + OBS_ICON.globe + '<span class="mn__action-label">' + (p.tombstone ? "Withdrawn: not on the globe" : "No mapped point") + '</span></button>'
           : '<button class="mn__action mn__observation-globe" type="button" data-observation-globe="' + esc(p.id) + '">' + OBS_ICON.globe + '<span class="mn__action-label">Show on globe</span></button>') +
         (src ? '<a class="mn__action mn__observation-source" href="' + esc(src) + '" target="_blank" rel="noopener noreferrer">' + OBS_ICON.link + '<span class="mn__action-label">Source: ' + esc(label || "provider") + '</span></a>' : '') +
       '</div></article>';
@@ -2264,9 +2286,12 @@
   function bindObservationPosts(root) {
     root.querySelectorAll("[data-observation-globe]").forEach(function (b) {
       b.onclick = function () {
-        var p = state.environment.posts[b.getAttribute("data-observation-globe")];
+        var id = b.getAttribute("data-observation-globe"), p = (TIMELINE && TIMELINE.post(id)) || state.environment.posts[id];
         if (!p) return;
         if ((state.feedScope || "global") !== "equity") setFeedScope("equity");
+        /* the address names an event the timeline holds, one history entry per event (?feed=equity&event=<id>; slice S4); the
+           timeline module decides which ids it holds (the store's providers, by canonical id) */
+        if (TIMELINE) TIMELINE.select(p.id, { push: true });
         tellWorld({ type: "hu:environment-focus", id: p.globe_id || p.id });
         document.documentElement.classList.remove("wt-expanded");
         var expand = document.querySelector(".mn__world-expand");

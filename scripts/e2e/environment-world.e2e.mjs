@@ -23,8 +23,10 @@
    measured.
 
    Release polish (2026-11-18), at every width: the news tint ("News mentions · last 24 h", the countries shaded by their stories)
-   shows on Global, steps aside with its legend in the Equity Uprise tab (the counts kept) and comes back exactly as it was when the
-   tab is left, by night and by day (review V2-M3); the observation list opens on two rows with the first post within one and a
+   shows on Global, steps aside with its legend in the Equity Uprise tab and comes back exactly as it was when the tab is left, by
+   night and by day (review V2-M3); CHANGED ON PURPOSE by decision D9 (E=UP event timeline slice S4, 2026-11-19, default adopted
+   pending Matthew's confirmation): in the tab the news layer itself is off, so the counts are no longer kept there (no heat, the
+   frame's news off) and are read again when the tab is left; the observation list opens on two rows with the first post within one and a
    half screens of the feed's row, its toggle lists all 65 in place and closes again from the keyboard, and the tour's scenes open
    no card in the panel (review V2-M2); Show on globe from Global keeps the clicked event selected over ten seconds of watching,
    where the panel's older selection used to echo back and take the globe (the G1 close-out's flip).
@@ -223,8 +225,8 @@ const esc = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 /* a time as the panel writes it (local, medium date, short time), the same rule the page uses */
 const localTime = (iso) => new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 /* THE NEWS TINT (release polish, review V2-M3): the countries' news shading and its legend inside the frame, as the frame's own hook
-   and the legend's DOM say; on Global they show, in the Equity Uprise tab they step aside with the counts kept, and leaving the tab
-   brings back exactly what was there */
+   and the legend's DOM say; on Global they show, in the Equity Uprise tab they step aside (since decision D9, slice S4, with the
+   news layer itself off: no counts), and leaving the tab brings back exactly what was there */
 const tint = (frame) => frame.evaluate(() => {
   const s = window.__huCountries ? window.__huCountries() : null, l = document.getElementById('heatLegend'), p = window.__huWorldNewsPins ? window.__huWorldNewsPins() : null;
   return { lines: s ? s.lines : null, heat: s && s.heat ? { countries: s.heat.countries, total: s.heat.total, shown: s.heat.shown } : null, legend: l ? { hidden: l.hidden, text: l.textContent.trim(), display: getComputedStyle(l).display } : null, news: p ? { on: p.on, tint: p.tint } : null };
@@ -236,7 +238,8 @@ const tintSame = (a, b) => JSON.stringify({ heat: a.heat, legend: a.legend }) ==
    borders do), so a tint that is hidden is hidden by the tab, never by the camera's height (the tour flies low) */
 const overEarth = async (frame) => { await frame.evaluate(() => window.__huCountriesCam && window.__huCountriesCam.view(-35, 25, 1.2e7)); return until(frame, () => { const s = window.__huCountries && window.__huCountries(); return !!s && s.lines === 1; }, null, 15000); };
 const tintShown = (frame) => until(frame, () => { const s = window.__huCountries && window.__huCountries(), l = document.getElementById('heatLegend'); return !!s && !!s.heat && s.heat.countries > 0 && s.heat.shown === true && !!l && l.hidden === false; }, null, 60000);
-const tintQuiet = (frame) => until(frame, () => { const s = window.__huCountries && window.__huCountries(), l = document.getElementById('heatLegend'); return !!s && !!s.heat && s.heat.shown === false && !!l && l.hidden === true; }, null, 30000);
+/* D9 (slice S4), on purpose: in the tab the news layer is off, so no counts are held (s.heat null) where they were kept before */
+const tintQuiet = (frame) => until(frame, () => { const s = window.__huCountries && window.__huCountries(), l = document.getElementById('heatLegend'), p = window.__huWorldNewsPins && window.__huWorldNewsPins(); return !!s && !s.heat && !!l && l.hidden === true && !!p && p.on === false && p.tint === false; }, null, 30000);
 /* THE LIST OPENS COMPACT (release polish, review V2-M2): the few rows, the toggle under them, and where the first post sits below the
    feed's row; opening the full list where a check needs a row that is not among the few */
 const listState = (page) => page.evaluate(() => {
@@ -403,10 +406,10 @@ for (const size of SIZES) {
   const dPaused = await until(page, () => document.getElementById('wePlay').textContent === 'Play tour', null, 10000) ? await dir(frame) : null;
   check(scope, 'Pause stops the tour and keeps its place', !!dPaused && dPaused.playing === false && (dPaused.index === indexAtPause || dPaused.index === (indexAtPause + 1) % 12), dPaused);
   /* with the tour paused the camera stays where it is put: over the whole Earth, where the shading would show, the Equity Uprise
-     tab keeps the news tint and its legend hidden, the counts kept for a country's card */
+     tab keeps the news tint and its legend hidden; since D9 (slice S4, on purpose) the news layer is off there, so no counts */
   await overEarth(frame);
   const tintOff = await tintQuiet(frame), tintTab = await tint(frame);
-  check(scope, 'in the Equity Uprise tab, over the whole Earth, the news tint and its legend stay hidden under the environmental layers; the counts stay for a country\'s card', tintOff && tintTab.lines === 1 && tintTab.heat.shown === false && tintTab.legend.hidden === true && tintTab.heat.total === tintGlobal.heat.total, tintTab);
+  check(scope, 'in the Equity Uprise tab, over the whole Earth, the news tint and its legend stay hidden under the environmental layers; D9: the news layer itself is off, no counts held', tintOff && tintTab.lines === 1 && tintTab.heat === null && tintTab.legend.hidden === true && tintTab.news.on === false && tintTab.news.tint === false, tintTab);
   /* choosing a quake in the list: the globe focuses it, the detail shows the recorded and retrieval times and the source, the
      ripple runs labelled under its bounded hold, the ShakeMap draws and reports, and the tour queue grows */
   await openList(page);
@@ -506,7 +509,9 @@ for (const size of SIZES) {
   check(scope, 'Global still carries the member posts and the news between them', await until(page, () => document.querySelectorAll('#mnFeed [data-post-id]').length >= 1 && document.querySelectorAll('#mnFeed [data-news-id]').length >= 1, null, 15000));
   await page.locator('[data-mn-view="discover"]:visible').first().click();
   check(scope, 'People asks a guest to sign in, as before', await until(page, () => !!document.getElementById('mnGuestWhy') && document.getElementById('mnGuestWhy').textContent === 'Sign in to find people.', null, 10000));
-  check(scope, 'the frame never requested the feed route and the page never requested a layer route', !requests.some((r) => r.by === 'globe' && r.path === '/v1/world/environment') && !requests.some((r) => r.by === 'page' && r.path.startsWith('/v1/world/environment/')) && requests.filter((r) => r.by === 'page' && r.path === '/v1/world/environment').length === 1, requests.filter((r) => r.path.startsWith('/v1/world/environment')).map((r) => r.by[0] + ':' + r.path.replace('/v1/world/environment', '')));
+  /* changed on purpose by E=UP slice S4: the page's one other read under the environment is its own timeline (/events, the event
+     store's public page; js/world-environment-timeline.js), never a layer route */
+  check(scope, 'the frame never requested the feed route and the page never requested a layer route (the timeline\'s own /events read aside)', !requests.some((r) => r.by === 'globe' && r.path === '/v1/world/environment') && !requests.some((r) => r.by === 'page' && r.path.startsWith('/v1/world/environment/') && !/^\/v1\/world\/environment\/events(\/|$)/.test(r.path)) && requests.filter((r) => r.by === 'page' && r.path === '/v1/world/environment').length === 1, requests.filter((r) => r.path.startsWith('/v1/world/environment')).map((r) => r.by[0] + ':' + r.path.replace('/v1/world/environment', '')));
   { const re = await renderError(frame); if (re) console.log(`INFO [${scope}] render error record ${JSON.stringify(re)}`); check(scope, 'no page errors', errors.length === 0, { errors, renderError: re && { message: re.message, position: re.position, bad: re.badPrimitives } }); }
   await ctx.close();
 }
@@ -691,7 +696,7 @@ for (const size of SIZES) {
   if ((await page.locator('#wePlay').textContent()) === 'Pause tour') { await page.locator('#wePlay').click(); await until(page, () => document.getElementById('wePlay').textContent === 'Play tour', null, 10000); }
   await overEarth(frame);
   const dayOff = await tintQuiet(frame), dayTab = await tint(frame);
-  check(scope, 'by day the Equity Uprise tab, over the whole Earth, hides the news tint and its legend, the counts kept', dayOff && dayTab.lines === 1 && dayTab.heat.shown === false && dayTab.legend.hidden === true && dayTab.heat.total === dayGlobal.heat.total, dayTab);
+  check(scope, 'by day the Equity Uprise tab, over the whole Earth, hides the news tint and its legend; D9: the news layer off, no counts held', dayOff && dayTab.lines === 1 && dayTab.heat === null && dayTab.legend.hidden === true && dayTab.news.on === false, dayTab);
   await page.waitForFunction(() => document.querySelectorAll('#mnFeed .mn__observation-post').length > 0 && document.querySelectorAll('#weSources > li').length >= 10, null, { timeout: 60000 });
   await page.locator('#wePanel details > summary').first().click();
   const contrast = await page.evaluate(() => {

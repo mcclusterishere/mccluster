@@ -341,9 +341,13 @@ function newsHeatCells(code){return fetch(API+'/v1/world/news-heat?country='+enc
    feed's scope is that tab (js/world-news-globe.js); the countries hide the shading and its legend and keep the counts, and show
    them again when the tab is left. Only an explicit false quiets it, so a page that never sends the flag keeps the tint. */
 function quietNewsTint(){if(countries&&countries.quietHeat)countries.quietHeat(newsTintQuiet)}
+/* THE NEWS LAYER OFF IN THE TAB AND BEHIND THE DOOR (event timeline slice S4, decision D9, default adopted pending Matthew's
+   confirmation): the page sends on:false with tint:false; the heat is not read (loadNewsHeat) and a country's card drops its news
+   count until the news is on again. Travel's own off (on:false, the tint flag kept) leaves the card as it was. */
+function newsCardOff(){if(countries&&countries.newsOff)countries.newsOff(!publicNewsOn&&newsTintQuiet)}
 function setWorldNewsPins(items,on,tint){
  if(!parentFrame||ANALYTICS)return;
- publicNewsOn=on===true;newsTintQuiet=tint===false;quietNewsTint();const seen=new Set();
+ publicNewsOn=on===true;newsTintQuiet=tint===false;quietNewsTint();newsCardOff();const seen=new Set();
  publicNewsItems=(Array.isArray(items)?items:[]).slice(0,120).flatMap(x=>{
   if(!x||typeof x.id!=='string'||x.id.length>110||seen.has(x.id)||!Number.isFinite(x.lat)||!Number.isFinite(x.lon)||Math.abs(x.lat)>90||Math.abs(x.lon)>180||(x.lat===0&&x.lon===0))return [];
   seen.add(x.id);return [{id:x.id,lat:x.lat,lon:x.lon}];
@@ -673,7 +677,7 @@ function searchPins(q){$('worldSearch').value=q;const t=q.trim().toLocaleLowerCa
 /* COUNTRIES (js/world-countries.js): borders, flags, the red-white-blue United States, the fade on zoom. A tapped country filters the pins
    to the missions pinned there (by the rows' own country codes; none means none) without moving the camera. */
 let countries=null;function inCountry(m){return !countries||countries.keep(m)}
-function mountCountries(){if(!window.HuCountries||ANALYTICS||!viewer)return;countries=HuCountries.mount(viewer,{quiet:EDITORIAL,missions:()=>allMissions,regions:()=>regions,missionsOn:()=>!NO_MISSIONS,heatCells:newsHeatCells,onLegend:()=>scheduleTravelControls(),onStats:s=>tell({type:'hu:place-stats',place:s}),onSelect:c=>{searchPins($('worldSearch').value);tell({type:'hu:country',country:c});/* Halo's Markets card listens (js/halo/markets.js) */try{window.dispatchEvent(new CustomEvent('hu:country',{detail:c}))}catch(e){}}});quietNewsTint();loadNewsHeat();loadMembers()}
+function mountCountries(){if(!window.HuCountries||ANALYTICS||!viewer)return;countries=HuCountries.mount(viewer,{quiet:EDITORIAL,missions:()=>allMissions,regions:()=>regions,missionsOn:()=>!NO_MISSIONS,heatCells:newsHeatCells,onLegend:()=>scheduleTravelControls(),onStats:s=>tell({type:'hu:place-stats',place:s}),onSelect:c=>{searchPins($('worldSearch').value);tell({type:'hu:country',country:c});/* Halo's Markets card listens (js/halo/markets.js) */try{window.dispatchEvent(new CustomEvent('hu:country',{detail:c}))}catch(e){}}});newsCardOff();quietNewsTint();loadNewsHeat();loadMembers()}
 /* three looks, one button: the lit Earth (real sun), the night Earth (city lights everywhere, the owner's World mockups), the street map */
 function setLayer(mode){layerMode=mode;const night=mode==='night',g=viewer.scene.globe;if(mapLayer)mapLayer.show=mode==='map'||(mode==='auto'&&streetAuto(viewer.camera.positionCartographic.height));
  if(dayLayer)dayLayer.show=EDITORIAL||!night;if(cloudLayer)cloudLayer.show=EDITORIAL||!night;if(nightLayer){nightLayer.dayAlpha=night?1:0;nightLayer.brightness=night?2.1:6}

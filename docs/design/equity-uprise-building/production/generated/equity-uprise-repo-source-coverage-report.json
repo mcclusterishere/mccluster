@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 762,
+  "candidate_count": 765,
   "capability_source_count": 104,
-  "support_only_count": 658,
-  "checks_total": 2946,
-  "checks_passed": 2946,
+  "support_only_count": 661,
+  "checks_total": 2958,
+  "checks_passed": 2958,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -364,6 +364,7 @@
     "js/world-countries.js",
     "js/world-environment-mccluster.mjs",
     "js/world-environment-posts.js",
+    "js/world-environment-timeline.js",
     "js/world-environment.mjs",
     "js/world-news-globe.js",
     "listen.html",
@@ -417,6 +418,7 @@
     "scripts/e2e/control-eup.e2e.mjs",
     "scripts/e2e/docket-cohort-showcase.e2e.mjs",
     "scripts/e2e/environment-globe.e2e.mjs",
+    "scripts/e2e/environment-timeline.e2e.mjs",
     "scripts/e2e/environment-world.e2e.mjs",
     "scripts/e2e/eu-building-visual.e2e.mjs",
     "scripts/e2e/eu-screens.e2e.mjs",
@@ -521,6 +523,7 @@
     "scripts/test/world-environment-lifecycle.test.mjs",
     "scripts/test/world-environment-panel.test.mjs",
     "scripts/test/world-environment-posts.test.mjs",
+    "scripts/test/world-environment-timeline.test.mjs",
     "scripts/test/world-environment.test.mjs",
     "scripts/test/world-first-and-layers.test.mjs",
     "scripts/test/world-gate.test.mjs",
@@ -776,7 +779,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "762 entries"
+      "detail": "765 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -7624,6 +7627,26 @@
       "detail": ""
     },
     {
+      "name": "js/world-environment-timeline.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/world-environment-timeline.js classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "js/world-environment-timeline.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/world-environment-timeline.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "js/world-environment.mjs capability ids known",
       "passed": true,
       "detail": ""
@@ -8640,6 +8663,26 @@
     },
     {
       "name": "scripts/e2e/environment-globe.e2e.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/environment-timeline.e2e.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/environment-timeline.e2e.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/e2e/environment-timeline.e2e.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/e2e/environment-timeline.e2e.mjs support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -10715,6 +10758,26 @@
     },
     {
       "name": "scripts/test/world-environment-posts.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/world-environment-timeline.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/world-environment-timeline.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/world-environment-timeline.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/world-environment-timeline.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     },

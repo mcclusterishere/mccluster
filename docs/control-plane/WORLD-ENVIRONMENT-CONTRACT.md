@@ -137,6 +137,59 @@ guard leaves them to the module gate. The owner-only Halo paths
 `/v1/world/geocode`) are unchanged and still refuse a guest or member with 403
 `admin_preview`; the tests assert both.
 
+### The public timeline from the event store (E=UP slice S4, 2026-11-19)
+
+Code: `workers/mccluster/src/world-environment-events.js`, reached through `handleWorldEnvironment` before the layer routes;
+tests: `workers/mccluster/test/world-environment-events.test.mjs` and, over the real pending SQL in PGlite,
+`scripts/test/eup-environment-timeline.integration.mjs`. The record is `docs/control-plane/EUP-EVENT-TIMELINE.md` (S4). The store
+is the pending `supabase/pending/20261119100000_eup_environment_events_v1_0*.sql`: not applied in production, so these routes
+answer 503 `events_unavailable` (`store_not_applied`) there until Matthew approves it, once the module itself is on.
+
+| Route (all `GET`) | Answers |
+| --- | --- |
+| `/v1/world/environment/events?since&until&cursor&limit` | One page of the timeline, newest observation first: `{ok, schema:'mccluster.environment-events/v1', events, next_cursor, sources:[{provider, status, checked_at, last_success_at}], query}`. `since` and `until` are ISO 8601 times (since before until), `cursor` is a `next_cursor` this route gave (`<epoch µs>\|<canonical id>`), `limit` 1 to 50 (20 when absent). Only providers the owner shows are listed. |
+| `/v1/world/environment/events/{id}` | One event for a deep link, by its canonical id or any alias (`<provider>:<provider id>`), merges followed: `{ok:true, schema:'mccluster.environment-event/v1', status, id, redirected_from, event}` with the event's correction `history` (newest first, at most 50); a held event or a hidden provider is 404 `{ok:false, code:'not_available'}`, an unknown or never-published one 404 `{ok:false, code:'not_found'}`. |
+
+- **The gate first**, the same as every route above (off 404 `module_disabled`, outage 503 `module_policy_unavailable`), and
+  the store's two public reads are gated in SQL by the same policy (EUM01 not installed, EUM03 disabled: 404; EUM00 the policy
+  unreadable: 503), so a route that forgot the gate would still be refused.
+- **Whitelisted, field by field.** A published event: `id, revision, provider, kind, state, title, place, magnitude,
+  magnitude_type, depth_km, lon, lat, observed_at, review_status, tsunami, alert, source {id, url, updated_at, fetched_at},
+  first_published_at, revised_at, correction {revision, cause, changes, recorded_at} | null, news_coverage [...]`. A tombstone
+  (`withdrawn_by_source` or `retracted`): `id, revision, provider, kind, state, title, place, magnitude, magnitude_type,
+  observed_at, source {id, url}, first_published_at, withdrawn_at, retracted_at`: no coordinates, so no globe object (decision
+  D12, default adopted pending Matthew's confirmation). Only the seven government providers pass; links are https on the
+  provider's own host. Nothing else the store keeps leaves (significance, decisions, actors, held events, store messages).
+- **Errors.** 400 `invalid_request` (a bad `since`, `until`, `cursor` or `limit`; the store's 22023), 400 `invalid_event` (not a
+  canonical id), 404 `not_found` (another path under `events/`), 405 `method_not_allowed`, 503 `events_unavailable` with `reason`
+  `store_not_applied` (PGRST202, 42883), `store_busy` (55P03, 57014) or `store_unavailable` (anything else, a redirect, a timeout,
+  an unreadable body). Store text never reaches an answer.
+- **At the edge at most 60 s.** A store answer is kept per Cloudflare location for 60 s
+  (`cache.mccluster.internal/world/environment/events/v1/{function}?{query}`) and a burst in one isolate shares one read; a
+  refusal is never kept. Answers are `private, no-store`, varying on Origin and Authorization. A page counts against the client's
+  public-read bucket, an event against its lookup bucket (`packages/release-policy/globe.mjs` routes `events` and `event`).
+
+**The feed's quakes come from the same store.** For the public answer of `GET /v1/world/environment` (and the planning reads
+that use it), the `usgs` source is the store's published quakes of the past day (at most 150), with their canonical ids
+(`usgs:<id>`) and each event's `revision` added to it; USGS's live summary feed is not read for the public feed (the owner's
+provider check in Control still reads it). There is never a live fallback with a second id: when the store cannot be read the
+source is `unavailable` with its reason. Its `fetched_at` and `last_success_at` are the store's last successful USGS read, its
+`coverage` "USGS earthquakes of the past day that the timeline publishes: by default M4.5 and larger, and any with a PAGER
+alert, a tsunami flag or a USGS significance above 600" (decision D7, default adopted pending Matthew's confirmation).
+
+| `usgs` `reason` | Meaning | Status |
+| --- | --- | --- |
+| `store_unavailable`, `store_busy` | The store did not answer readably, or was busy | `unavailable` |
+| `store_not_applied` | The store's SQL is not applied | `unavailable` |
+| `module_disabled` | The store found the module off within this request | `unavailable` |
+| `not_shown` | The owner has not shown USGS on the timeline (no rule yet, or hidden) | `unavailable` |
+| `no_reading` | Shown, but the store has never read USGS | `unavailable` (or `stale` with what it holds) |
+| `upstream_error` | The store's last read of USGS failed; the earlier events are served | `stale` |
+| `paused` | The owner paused the ingest; the earlier events are served | `stale` |
+| `not_recent` | The store's last read of USGS is older than 30 minutes | `stale` |
+
+The panel shows these codes as they are until its own words for them land (they are not in its table of reasons yet).
+
 **Never in an answer:** a credential (`FIRMS_MAP_KEY` travels only in the
 request URL to NASA and never into an answer, header, cache key, error or log
 line; the module logs nothing), a provider's error message, member data,

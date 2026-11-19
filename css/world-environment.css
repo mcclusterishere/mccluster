@@ -115,3 +115,12 @@ html.mn-feed-equity[data-we-feed="unavailable"] #weUnavailable,html.mn-feed-equi
    (js/mnet.js paintMissionFeed). The heading reads in the feed's dim ink, as the feed's own notes do, by night and by day. */
 .mn__obs-list { margin:20px 0 0;min-width:0; }
 .mn__obs-heading { margin:0 0 8px;color:var(--mn-dim,#a3a9af);font:700 13px/1.4 var(--mn-ui,system-ui,sans-serif);letter-spacing:.08em;text-transform:uppercase; }
+
+/* THE TIMELINE'S POSTS (event timeline slice S4, 2026-11-19; js/world-environment-timeline.js): under the facts, the times (the
+   revision, the provider's update, the retrieval) in the feed's dim ink, then an official correction (old → new) and a withdrawal
+   in its ink, each on a line of its own and never clamped. The event a deep link or a visitor's choice named is marked by an ink
+   rule on its leading edge, by night and by day (aria-current says it to a reader). Phone first: nothing here needs a breakpoint. */
+.mn__timeline-line { margin:4px 0 0;color:var(--mn-dim,#a3a9af);font:400 13px/1.45 var(--mn-ui,system-ui,sans-serif);overflow-wrap:anywhere; }
+.mn__timeline-correction, .mn__timeline-tombstone { color:var(--mn-ink); }
+.mn__timeline-tombstone { font-weight:600; }
+.hu-editorial #mnFeed .mn__observation-post.is-current { padding-left:12px;box-shadow:inset 3px 0 0 var(--mn-ink); }

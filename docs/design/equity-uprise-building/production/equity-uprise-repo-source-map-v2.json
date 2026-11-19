@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 748,
+  "candidate_count": 751,
   "capability_source_count": 104,
-  "support_only_count": 644,
+  "support_only_count": 647,
   "entries": [
     {
       "path": ".cursorrules",
@@ -2650,6 +2650,13 @@
       "rationale": "Pure rules that turn the environmental feed into observation posts for the consumer World (significance, time stamps, one post per event, the Equity Uprise tab's one list by time); no page, network or storage access. A World feed module, not a building capability."
     },
     {
+      "path": "js/world-environment-timeline.js",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "The consumer World's environmental timeline from the event store (E=UP slice S4): posts with the store's canonical id and revision, the provider's update and retrieval times, an official correction as old -> new and a withdrawal as a tombstone, one list with the live posts, and the deep link ?feed=equity&event=<id> with one history entry per chosen event. Names the Equity Uprise tab. A World feed module, not a building capability."
+    },
+    {
       "path": "js/world-environment.mjs",
       "classification": "shared_site_support",
       "capability_ids": [],
@@ -3041,6 +3048,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Browser test of the environmental globe inside its frame against fixtures (layer counts, legend, selection, policy gate, performance check); names Equity Uprise only to check the legend carries no brand name or logo. Not a building capability."
+    },
+    {
+      "path": "scripts/e2e/environment-timeline.e2e.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Browser test of the consumer World's environmental timeline at three widths with the real globe frame and the real Worker handler over the pending event store in PGlite: the deep link selects the post and the globe object, corrected and withdrawn events render, missions keep their own list, the news layer is off in the Equity Uprise tab and behind the sign-in door. Not a building capability."
     },
     {
       "path": "scripts/e2e/environment-world.e2e.mjs",
@@ -3771,6 +3785,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Unit test of the environmental observation posts (js/world-environment-posts.js) on the feed fixture; names the Equity Uprise tab's merged list and asserts the posts never write the brand out or show a logo. Not a building capability."
+    },
+    {
+      "path": "scripts/test/world-environment-timeline.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Unit test of the consumer World's environmental timeline module (js/world-environment-timeline.js): posts, corrections, tombstones, the merged list, the deep link address and history entries over a fake window; names the Equity Uprise tab and asserts the brand is never written out. Not a building capability."
     },
     {
       "path": "scripts/test/world-environment.test.mjs",

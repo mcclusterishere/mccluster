@@ -268,7 +268,7 @@
       card.innerHTML = '<div class="country-card__head">' + (p.flag && !quiet ? '<img class="country-card__flag" src="assets/flags/4x3/' + p.a2.toLowerCase() + '.svg" alt="" width="32" height="24">' : '') +
         '<span class="country-card__text"><b>' + escHtml(sp ? sp.name : p.name) + '</b>' + (sp ? '<small>' + escHtml(p.name) + '</small>' : missions) + '</span>' +
         '<button type="button" class="country-card__close" aria-label="' + (sp ? 'Show all of ' + escHtml(p.name) : 'Show every country') + '">×</button></div>' +
-        '<div class="country-card__stats">' + cell(stats.news, 'news · 24 h') + (sp ? (stats.members === null ? '' : cell(stats.members, 'members')) : cell(stats.posts, 'posts') + (stats.membersUnder ? '<span class="country-card__stat"><b>&lt;' + stats.membersUnder + '</b><small>members</small></span>' : cell(stats.members, 'members'))) + '</div>' +
+        '<div class="country-card__stats">' + (stats.newsOff ? '' : cell(stats.news, 'news · 24 h')) + (sp ? (stats.members === null ? '' : cell(stats.members, 'members')) : cell(stats.posts, 'posts') + (stats.membersUnder ? '<span class="country-card__stat"><b>&lt;' + stats.membersUnder + '</b><small>members</small></span>' : cell(stats.members, 'members'))) + '</div>' +
         (!sp && stats.states ? '<small class="country-card__hint">Double-tap a state to choose it</small>' : '');
       card.querySelector('button').onclick = () => (sp ? selectState(null) : select(null));
       card.hidden = false;
@@ -289,7 +289,16 @@
         else if (Number(m.countries[a2]) >= (Number(m.k) || 5)) members = Number(m.countries[a2]);
         else membersUnder = Number(m.k) || 5;
       }
-      return { news, posts: !sp && a2 && st.posts ? Number(st.posts[a2]) || 0 : null, members, membersUnder, states: !!(a2 && st.stateIndex && st.stateIndex[a2]) };
+      return { news, newsOff: st.newsOff === true, posts: !sp && a2 && st.posts ? Number(st.posts[a2]) || 0 : null, members, membersUnder, states: !!(a2 && st.stateIndex && st.stateIndex[a2]) };
+    }
+    /* THE NEWS LAYER OFF (event timeline slice S4, decision D9, default adopted pending Matthew's confirmation): while the page has
+       the news off for the Equity Uprise tab or the sign-in door (js/world-news-globe.js), the card drops its news count (never
+       a dash for a layer that is off) and tells the page so; it comes back when the news does */
+    function newsOff(on) {
+      const off = on === true;
+      if ((st.newsOff === true) === off) return;
+      st.newsOff = off;
+      restat();
     }
     /* what the page is told: the country, and the state picked in it, with its shape (the feed keeps the stories placed in it).
        stateOnly marks a state picked or let go inside the same country, so a listener that acts on a new country (Travel's
@@ -672,13 +681,13 @@
     const api = {
       /* the page calls this when the missions arrive: a country picked before then is applied again (card count, pin filter) */
       refresh: () => { if (!st.selected) return; const keepState = st.selectedState; select(st.features.find((f) => (f.properties.a2 || f.properties.a3) === st.selected) || null); if (keepState && st.selected) selectState(keepState); },
-      heat: setHeat, members: setMembers, quietHeat, backToCountry: () => { if (st.selectedState) selectState(null); }, click, keep, select: (code) => select(code ? st.features.find((f) => f.properties.a2 === code || f.properties.a3 === code) || null : null), setMode,
+      heat: setHeat, members: setMembers, quietHeat, newsOff, backToCountry: () => { if (st.selectedState) selectState(null); }, click, keep, select: (code) => select(code ? st.features.find((f) => f.properties.a2 === code || f.properties.a3 === code) || null : null), setMode,
       ready: () => st.ready,
       /* Natural Earth's label point for a country, where the globe marks it (the live badges in js/action-globe.js) */
       point: (code) => { const f = st.features.find((x) => x.properties.a2 === code); return f && Array.isArray(f.properties.label) ? f.properties.label.slice(0, 2) : null; },
       /* the country a point falls in on the drawn map: its ISO code (or Natural Earth's own code where it has none), else null */
       at: (lon, lat) => { const f = countryAt(st.features, lon, lat); return f ? f.properties.a2 || f.properties.a3 : null; },
-      state: () => ({ ready: st.ready, failed: st.failed, mode: st.mode, selected: st.selected, count: st.items.length, borders: st.borderCount, lines: Math.round(st.lineAlpha * 100) / 100, statesAlpha: Math.round(st.stateAlpha * 100) / 100, states: [...st.states.entries()].filter(([, s]) => s.primitive).map(([k]) => k).sort(), selectedStates: !!st.selectedStates, selectedState: st.selectedState ? st.selectedState.properties.key : null, heat: st.heat ? { countries: Object.keys(st.heatIds).length, total: st.heatTotal, shown: !!(st.heatFill && st.heatFill.show), quiet: st.heatQuiet, legend: !!legend && !legend.hidden, states: st.stateCounts ? Object.keys(st.stateCounts).length : 0, stateFill: !!st.stateHeat } : null, flags: st.flags ? st.flags.length : 0, labels: st.labels ? st.labels.length : 0, height: Math.round(st.height || 0), wash: Math.round(st.washAlpha * 100) / 100, alpha: Object.fromEntries(st.items.filter((x) => ['US', 'CA', 'MX', 'BR', 'RU', 'FR', 'GB', 'CU'].includes(x.code)).map((x) => [x.code, Math.round(x.alpha * 100) / 100])), card: card.hidden ? null : card.textContent }),
+      state: () => ({ ready: st.ready, failed: st.failed, mode: st.mode, selected: st.selected, count: st.items.length, borders: st.borderCount, lines: Math.round(st.lineAlpha * 100) / 100, statesAlpha: Math.round(st.stateAlpha * 100) / 100, states: [...st.states.entries()].filter(([, s]) => s.primitive).map(([k]) => k).sort(), selectedStates: !!st.selectedStates, selectedState: st.selectedState ? st.selectedState.properties.key : null, newsOff: st.newsOff === true, heat: st.heat ? { countries: Object.keys(st.heatIds).length, total: st.heatTotal, shown: !!(st.heatFill && st.heatFill.show), quiet: st.heatQuiet, legend: !!legend && !legend.hidden, states: st.stateCounts ? Object.keys(st.stateCounts).length : 0, stateFill: !!st.stateHeat } : null, flags: st.flags ? st.flags.length : 0, labels: st.labels ? st.labels.length : 0, height: Math.round(st.height || 0), wash: Math.round(st.washAlpha * 100) / 100, alpha: Object.fromEntries(st.items.filter((x) => ['US', 'CA', 'MX', 'BR', 'RU', 'FR', 'GB', 'CU'].includes(x.code)).map((x) => [x.code, Math.round(x.alpha * 100) / 100])), card: card.hidden ? null : card.textContent }),
     };
     window.__huCountries = api.state;
     window.__huCountryAt = api.at;
