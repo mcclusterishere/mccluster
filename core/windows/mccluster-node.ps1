@@ -195,7 +195,7 @@ function Get-McGpuForm {
       return 'unknown'
     }
     'intel' {
-      if ($n -match '\bArc\s+[AB]\d{3}\b') { return 'discrete' }
+      if ($n -match '\bArc(?:\(TM\))?\s+[AB]\d{3}\b') { return 'discrete' }
       return 'integrated'
     }
   }

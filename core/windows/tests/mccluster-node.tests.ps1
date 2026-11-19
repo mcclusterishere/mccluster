@@ -160,6 +160,8 @@ Assert-Equal 'integrated' (Get-McGpuForm 'amd' 'AMD Radeon(TM) Graphics') 'Radeo
 Assert-Equal 'unknown' (Get-McGpuForm 'amd' 'AMD Radeon Something') 'an unnamed amd adapter is unknown'
 Assert-Equal 'discrete' (Get-McGpuForm 'nvidia' 'NVIDIA GeForce RTX 4070') 'nvidia is discrete'
 Assert-Equal 'discrete' (Get-McGpuForm 'intel' 'Intel(R) Arc(TM) A770 Graphics') 'Arc A770 is discrete'
+Assert-Equal 'discrete' (Get-McGpuForm 'intel' 'Intel Arc A770 Graphics') 'Arc A770 without the trademark marker is discrete'
+Assert-Equal 'integrated' (Get-McGpuForm 'intel' 'Intel(R) Arc(TM) Graphics') 'Arc without a discrete card series is integrated'
 Assert-Equal 'integrated' (Get-McGpuForm 'intel' 'Intel(R) Iris(R) Xe Graphics') 'Iris Xe is integrated'
 Assert-Equal 'unknown' (Get-McGpuForm 'unknown' 'Whatever') 'unknown vendor is unknown form'
 Assert-True (Test-McThinkModel 'qwen3:8b') 'qwen3:8b takes the think key'
@@ -685,6 +687,7 @@ try {
   Assert-Equal 3 (@(([System.IO.File]::ReadAllText((Join-Path $tempRoot 'capabilities.json')) | ConvertFrom-Json).capabilities).Count) '-Browser -WhatIf changes no manifest'
 
   $script:MockAnswer = 'n'
+  $configBeforeDecline = [System.IO.File]::ReadAllBytes((Get-McNodeConfigPath $tempRoot))
   $declined = Invoke-McBrowserInstall -StateRoot $tempRoot -RepoPath $repoRoot
   Assert-Equal 2 $declined.ExitCode 'browser: declining the Chromium download exits 2'
   Assert-Equal $false $declined.Installed 'browser: declined is not installed'
@@ -694,7 +697,9 @@ try {
   Assert-Equal $false (Test-Path -LiteralPath (Join-Path $tempRoot 'browser-policy.json')) 'browser: no policy when declined'
   Assert-Equal $false (Test-Path -LiteralPath (Join-Path $tempRoot 'browser.cmd')) 'browser: no launcher when declined'
   Assert-Equal 3 (@(([System.IO.File]::ReadAllText((Join-Path $tempRoot 'capabilities.json')) | ConvertFrom-Json).capabilities).Count) 'browser: manifest unchanged when declined'
-  Assert-Null (Read-McNodeConfig $tempRoot).browser 'browser: node.config.json has no browser flag when declined'
+  Assert-Equal $false (Read-McNodeConfig $tempRoot).browser 'browser: node.config.json keeps browser disabled when declined'
+  $configAfterDecline = [System.IO.File]::ReadAllBytes((Get-McNodeConfigPath $tempRoot))
+  Assert-Equal ([Convert]::ToBase64String($configBeforeDecline)) ([Convert]::ToBase64String($configAfterDecline)) 'browser: declining changes no byte of node.config.json'
 
   $script:MockAnswer = 'y'; $script:MockNpmCalls.Clear(); $script:MockPlaywrightCalls.Clear(); $script:MockIcaclsCalls.Clear()
   $nodeTasksBefore = $script:MockTaskRegistrations
