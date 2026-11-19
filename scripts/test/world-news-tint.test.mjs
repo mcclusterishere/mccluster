@@ -18,12 +18,12 @@ const read = (p) => readFileSync(ROOT + p, 'utf8');
 const ORIGIN = 'https://world.example.invalid';
 
 /* js/world-news-globe.js in a sandbox: a frame that records what it is told, the World's mode and the feed's tab */
-function newsGlobe({ scope = 'global', mode = 'posts' } = {}) {
+function newsGlobe({ scope = 'global', mode = 'posts', door = false } = {}) {
   const sent = [], listeners = {}, frame = { contentWindow: { postMessage: (data, origin) => sent.push({ data: JSON.parse(JSON.stringify(data)), origin }) } };
   const node = () => ({ id: '', className: '', textContent: '', hidden: false, setAttribute() {}, append() {}, addEventListener() {}, close() {}, showModal() {} });
   const sandbox = {
     location: { origin: ORIGIN },
-    document: { getElementById: (id) => (id === 'mnWorldFrame' ? frame : null), createElement: node, body: { appendChild() {} }, documentElement: { dataset: {} } },
+    document: { getElementById: (id) => (id === 'mnWorldFrame' ? frame : null), createElement: node, body: { appendChild() {} }, documentElement: { dataset: {}, classList: { contains: (c) => door && c === 'mn-door-open' } } },
     addEventListener: (type, fn) => { (listeners[type] ||= []).push(fn); },
     MCC_WORLD_MODE: { get: () => mode, set() {} },
     MCC_FEED_SCOPE: { get: () => scope, set() {} },
@@ -37,6 +37,8 @@ function newsGlobe({ scope = 'global', mode = 'posts' } = {}) {
     sent, fire,
     setScope(next) { scope = next; fire('mcc:feed-scope', { detail: { scope: next } }); },
     setMode(next) { mode = next; fire('mcc:world-mode'); },
+    /* js/mnet.js showGate: html.mn-door-open, then mcc:door */
+    setDoor(open) { door = open; fire('mcc:door', { detail: { open } }); },
     ready() { fire('message', { source: frame.contentWindow, origin: ORIGIN, data: { type: 'hu:globe-ready', boot: 'b1' } }); },
     last: () => sent.filter((m) => m.data.type === 'hu:world-news-pins').at(-1).data
   };
@@ -143,4 +145,22 @@ test('the frame applies the page\'s tint flag to the countries, at mount too, an
   assert.match(c, /heat: setHeat, members: setMembers, quietHeat,/, 'the api says it');
   /* the card's news count still reads the counts, never the shading's visibility */
   assert.match(c, /const news = sp \? \(st\.stateCounts \? Number\(st\.stateCounts\[sp\.key\]\) \|\| 0 : null\) : \(st\.heat && a2 \? Number\(st\.heat\[a2\]\) \|\| 0 : null\);/);
+});
+
+/* release review RS-9 (2026-11-19): behind the sign-in door the shading's orange, gold and red competed with the card's gold and
+   read as a news map. While the door is open (html.mn-door-open; js/mnet.js says so with mcc:door) the tint steps aside, and it
+   comes back when the door closes, unless the tab is Equity Uprise. The browser proof is scripts/e2e/world-gate.e2e.mjs (door-art). */
+test('the tint steps aside while the sign-in door is open and comes back when it closes', () => {
+  const g = newsGlobe();
+  assert.equal(g.last().tint, true);
+  g.setDoor(true);
+  assert.equal(g.last().tint, false, 'the door open: no shading behind the card');
+  assert.equal(g.last().on, true, 'the news itself stays on');
+  g.setDoor(false);
+  assert.equal(g.last().tint, true, 'the door closed: the shading is back');
+  g.setScope('equity');
+  g.setDoor(true); g.setDoor(false);
+  assert.equal(g.last().tint, false, 'closing the door over the Equity Uprise tab leaves the tint quiet');
+  const landed = newsGlobe({ door: true });
+  assert.equal(landed.last().tint, false, 'a page that opens with the door up says so from the first message');
 });

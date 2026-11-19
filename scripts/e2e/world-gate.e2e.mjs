@@ -909,6 +909,47 @@ try {
     } finally { await ctx.close(); }
   }
 
+  /* ---------- the door's art direction (release review RS-9): no seam, no news map behind the card, the record's line whole ----------
+     At 1280 by day the veil let the white feed through as a grey column with a hard edge against the Earth's black; behind the
+     card the globe kept the news shading (orange, gold and red), which read as a news map; at 390 the record's line was cut to
+     "Bridg…". The veil is whole, the shading steps aside while the door is open (and comes back when it closes), and the record's
+     line takes a second line. */
+  if (runs('door-art')) for (const [w, phase] of [[1280, 'day'], [1280, 'night'], [390, 'night']]) {
+    const scope = `door-art-${w}-${phase}`;
+    const { ctx, page } = await openWorld(browser, server.base, DEVICES[w], '/mnet.html?view=feed', { phase, dpr: 1 });
+    const tint = () => page.evaluate(() => { try { return document.getElementById('mnWorldFrame').contentWindow.__huWorldNewsPins().tint; } catch (e) { return 'unread: ' + e.message; } });
+    try {
+      await worldReady(page);
+      await page.waitForFunction(() => { try { return typeof document.getElementById('mnWorldFrame').contentWindow.__huWorldNewsPins === 'function'; } catch (_) { return false; } }, null, { timeout: 60000 });
+      await page.waitForTimeout(1200);
+      const before = await tint();
+      await page.click('[data-guest-open="signin"]');
+      await opened(page);
+      await page.waitForTimeout(1500);
+      const during = await tint();
+      check(scope, 'the globe\'s news shading steps aside while the door is open', before === true && during === false, { before, during });
+      if (w === 1280) {
+        const buf = await page.screenshot();
+        const seam = await page.evaluate(async ({ b64 }) => {
+          const img = new Image(); img.src = 'data:image/png;base64,' + b64; await img.decode();
+          const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; const g = c.getContext('2d'); g.drawImage(img, 0, 0);
+          const L = parseInt(getComputedStyle(document.getElementById('mnSignedOut')).getPropertyValue('--wg-veil-left'), 10);
+          const band = (x0, x1) => { let n = 0, s = 0; for (let y = 150; y <= 600; y += 4) for (let x = x0; x <= x1; x += 2) { const d = g.getImageData(x, y, 1, 1).data; s += (d[0] + d[1] + d[2]) / 3; n++; } return Math.round(s / n * 10) / 10; };
+          return { left: L, stage: band(L - 14, L - 4), column: band(L + 3, L + 14) };
+        }, { b64: buf.toString('base64') });
+        check(scope, 'no seam where the stage meets the card\'s column: the two sides within 4 levels of each other', seam.left > 0 && Math.abs(seam.column - seam.stage) <= 4, seam);
+      } else {
+        const rec = await page.evaluate(() => { const c = document.getElementById('wgPulseRecord'), s = c && c.querySelector('.wg-card__s'); return c && s ? { shown: getComputedStyle(c).display !== 'none', text: s.textContent, cut: s.scrollHeight > s.clientHeight + 1 || s.scrollWidth > s.clientWidth + 1, lines: Math.round(s.getBoundingClientRect().height / parseFloat(getComputedStyle(s).lineHeight)) } : null; });
+        check(scope, 'the record\'s line is whole on the phone: on a second line, never cut', rec && rec.shown && !rec.cut && rec.lines === 2 && /Bridgeport, CT · Oct 5, 2025/.test(rec.text), rec);
+      }
+      await page.click('#mnSignedOut .wg-back');
+      await closed(page);
+      await page.waitForTimeout(1200);
+      const after = await tint();
+      check(scope, 'the shading comes back when the door closes', after === true, { after });
+    } finally { await ctx.close(); }
+  }
+
   /* ---------- the onboarding pages on a laptop's window: the floating bar never lies on the action (release review RS-4) ----------
      At 1366 x 768 and 1280 x 720 the bar, centred over the pages' centred measure, covered most of the action's words at rest.
      From 1100 px it steps aside; it is moved, never hidden, and the phone keeps it where it was. Each page at rest: wherever the

@@ -774,3 +774,21 @@ test('on a wide screen the floating bar steps aside from the onboarding pages\' 
   const measure = all.find((x) => x.head === '#mnProfileGate.mn__onboard' && x.at.length === 1 && x.at[0] === r.at[0]);
   assert.ok(measure && /padding-inline: max\(0px, calc\(\(100% - 600px\) \/ 2\)\)/.test(measure.body), 'beside the rule that centres the measure');
 });
+
+/* release review RS-9 (2026-11-19), the door's art direction: at 1280 by day the veil (0.94) let the white feed through as a
+   grey column with a hard edge against the Earth's black; behind the card the globe kept the news shading, which read as a
+   news map; at 390 the record's line was cut to "Bridg…". The browser proof is scripts/e2e/world-gate.e2e.mjs (door-art). */
+test('the door\'s art direction: a whole veil, no news shading behind the door, the record\'s line on two lines', () => {
+  const all = rules(read('css/world-gate.css'));
+  const veil = all.filter((r) => r.head === '#mnSignedOut .wg-veil' && r.at.length === 1 && r.at[0] === '@media (min-width: 1100px)');
+  assert.equal(veil.length, 1);
+  assert.match(veil[0].body, /background: rgb\(4, 6, 9\)/, 'the veil is whole: nothing of the day feed comes through as a grey column');
+  const rec = all.filter((r) => r.head === '#mnSignedOut #wgPulseRecord .wg-card__s' && !r.at.length).map((r) => r.body).join(';');
+  assert.match(rec, /-webkit-line-clamp: 2/); assert.match(rec, /white-space: normal/); assert.match(rec, /overflow: hidden/);
+  const third = all.filter((r) => r.head === '#mnSignedOut .wg-pulse > .wg-card:nth-child(3 of :not([hidden]))' && r.at.length);
+  assert.deepEqual(third.map((r) => r.at.join(' ')), ['@container (min-height: 267px)'], 'the third card waits for the room its second line needs');
+  const globe = read('js/world-news-globe.js'), page = read('js/mnet.js');
+  assert.match(globe, /tint:scope\(\) !== 'equity' && !doorOpen\(\)/, 'the shading steps aside behind the door');
+  assert.match(globe, /window\.addEventListener\('mcc:door', sync\);/, 'and comes back when the door closes');
+  assert.match(page, /if \(doorWas !== \(which === "signedout"\)\) \{ try \{ window\.dispatchEvent\(new CustomEvent\("mcc:door"/, 'the page says when the door opens and closes');
+});
