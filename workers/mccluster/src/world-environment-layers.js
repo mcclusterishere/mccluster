@@ -9,6 +9,7 @@
      GET /v1/world/environment/layers/tides             NOAA CO-OPS water-level stations and the latest level at 20 documented stations
      GET /v1/world/environment/tides/:station           one NOAA CO-OPS station's observed water level, last 24 h (MLLW, metres)
      GET /v1/world/environment/quakes/:event/shakemap   one USGS event's ShakeMap intensity (MMI) contours, on demand
+     GET /v1/world/environment/quakes/:event/rupture    one USGS event's documented rupture: the modelled up-dip edge of a finite-fault plane, or none
 
    PUBLIC, BEHIND THE SAME GATE AS GET /v1/world/environment. Every route asks `gate` first: the
    persisted environment module policy, read from the canonical store on every request and judged by
@@ -81,7 +82,10 @@ export const LAYER_SOURCES = Object.freeze({
     coverage: 'The products USGS lists for one earthquake' }),
   usgs_shakemap: Object.freeze({ id: 'usgs_shakemap', label: 'USGS ShakeMap', url: 'https://earthquake.usgs.gov/data/shakemap/',
     attribution: 'U.S. Geological Survey ShakeMap', license: 'Public domain (U.S. Government work)',
-    coverage: 'ShakeMap exists for about M5.4 and larger worldwide, and from about M3 to M3.5 in some U.S. regional networks' })
+    coverage: 'ShakeMap exists for about M5.4 and larger worldwide, and from about M3 to M3.5 in some U.S. regional networks' }),
+  usgs_rupture: Object.freeze({ id: 'usgs_rupture', label: 'USGS ShakeMap rupture', url: 'https://earthquake.usgs.gov/data/finitefault/',
+    attribution: 'U.S. Geological Survey, ShakeMap rupture and finite-fault products', license: 'Public domain (U.S. Government work)',
+    coverage: 'A modelled finite-fault plane exists for about a dozen earthquakes a year, all M6.5 and larger; every other quake is modelled as a point' })
 });
 
 /* ---------- answers ---------- */
@@ -611,12 +615,14 @@ export function readShakemapProduct(detail, id) {
   list.sort((a, b) => (finite(b.preferredWeight) ?? -Infinity) - (finite(a.preferredWeight) ?? -Infinity) || (finite(b.updateTime) ?? 0) - (finite(a.updateTime) ?? 0));
   const p = list[0], pp = p.properties && typeof p.properties === 'object' ? p.properties : {};
   const cont = p.contents && typeof p.contents === 'object' ? p.contents['download/cont_mmi.json'] : null;
+  const rupture = p.contents && typeof p.contents === 'object' ? p.contents['download/rupture.json'] : null;
   return {
     found: true, preferred_id: preferred,
     shakemap: {
       code: clip(p.code, 40), source: clip(p.source, 16), update_time: isoFromMs(p.updateTime), version: versionOf(pp.version),
       process_time: isoTime(pp['process-timestamp']), review_status: wordOf(pp['review-status']), map_status: wordOf(pp['map-status']),
-      max_mmi: within(pp.maxmmi, 0, 12, 1), contours_url: cont && typeof cont === 'object' ? providerUrl(cont.url, USGS_HOSTS) : null
+      max_mmi: within(pp.maxmmi, 0, 12, 1), contours_url: cont && typeof cont === 'object' ? providerUrl(cont.url, USGS_HOSTS) : null,
+      rupture_url: rupture && typeof rupture === 'object' ? providerUrl(rupture.url, USGS_HOSTS) : null
     }
   };
 }
@@ -709,6 +715,109 @@ async function shakemapAnswer(request, env, id, fetchImpl, cacheImpl) {
   });
 }
 
+/* ---------- documented rupture: the modelled up-dip edge of a USGS finite-fault plane (event timeline slice S5, D13) ----------
+   On demand, for one USGS event, through the same event detail as its ShakeMap (one read, kept 5 minutes, shared). The preferred
+   ShakeMap's own download/rupture.json is read from USGS's host and kept a day per product version. What may be drawn, and why:
+   USGS documents rupture geometry for about a dozen quakes a year (all M6.5 and up) as a modelled, dipping fault plane, a Polygon
+   or MultiPolygon in rupture.json whose reference names a finite-fault model (for example "Source: USGS NEIC Rapid Finite
+   Fault"); a quake modelled as a point has a Point there (reference "Origin"), and the file's "rupture type" says "rupture
+   extent" either way, so it decides nothing. Only the plane's up-dip edge (its shallowest side, the line a crack would follow if
+   the fault reached the surface) is answered, as a model: never a mapped surface crack. A Point, a plane without a named finite
+   fault, a plane with no depths or no clear top edge, and a quake USGS has withdrawn (its detail answers 409) draw nothing, each
+   with its reason. */
+export const RUPTURE = Object.freeze({ bytes: 200000, ttl: 86400, timeoutMs: 12000, maxPolygons: 8, maxVertices: 64 });
+const FINITE_FAULT = /finite[\s-]*fault/i;
+const round = (v, n) => Math.round(v * 10 ** n) / 10 ** n;
+/* the shallowest side of one closed ring of [lon, lat, depth km] vertices: the longest run of consecutive vertices (round the
+   ring) lying within 2 % of the plane's depth range (at least 50 m) of its top; null for a ring that is open, too short or too
+   long, carries a value off the globe or out of range, is level, or has no run of two */
+export function upDipEdge(ring, maxVertices = RUPTURE.maxVertices) {
+  if (!Array.isArray(ring) || ring.length < 4 || ring.length > maxVertices + 1) return null;
+  const pts = [];
+  for (const p of ring) {
+    if (!Array.isArray(p) || p.length < 3) return null;
+    const [lon, lat, depth] = p;
+    if (![lon, lat, depth].every((v) => typeof v === 'number' && Number.isFinite(v)) || Math.abs(lon) > 180 || Math.abs(lat) > 90 || depth < -10 || depth > 800) return null;
+    pts.push([lon, lat, depth]);
+  }
+  const first = pts[0], last = pts[pts.length - 1];
+  if (first[0] !== last[0] || first[1] !== last[1] || first[2] !== last[2]) return null;
+  pts.pop();
+  if (pts.length < 3) return null;
+  const depths = pts.map((p) => p[2]), top = Math.min(...depths), bottom = Math.max(...depths);
+  if (bottom - top < 0.5) return null;
+  const tolerance = Math.max(0.05, 0.02 * (bottom - top)), n = pts.length, onTop = pts.map((p) => p[2] <= top + tolerance);
+  let best = null;
+  for (let i = 0; i < n; i += 1) {
+    if (!onTop[i] || onTop[(i - 1 + n) % n]) continue;
+    const run = [];
+    for (let k = 0; k < n && onTop[(i + k) % n]; k += 1) run.push(pts[(i + k) % n]);
+    if (!best || run.length > best.length) best = run;
+  }
+  if (!best || best.length < 2) return null;
+  return { line: best.map((p) => [round(p[0], 5), round(p[1], 5)]), top, bottom };
+}
+/* rupture.json (a FeatureCollection with a metadata block) to what may be drawn */
+export function readRupture(fc, limits = RUPTURE) {
+  if (!fc || typeof fc !== 'object' || !Array.isArray(fc.features)) throw new UpstreamError('upstream_invalid_json', 'rupture is not a feature collection');
+  const meta = fc.metadata && typeof fc.metadata === 'object' ? fc.metadata : {};
+  const reference = typeof meta.reference === 'string' ? meta.reference.replace(/[\u0000-\u001f\u007f]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 200) : '';
+  const created = /Model created:\s*(\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(?::\d{2})?)/.exec(reference);
+  const base = { reference, reviewed: meta.reviewed === 'True' || meta.reviewed === true ? true : meta.reviewed === 'False' || meta.reviewed === false ? false : null, model_created: created ? created[1] : null };
+  const geometries = fc.features.map((f) => (f && f.geometry && typeof f.geometry === 'object' ? f.geometry : null)).filter(Boolean);
+  const polygons = [];
+  for (const g of geometries) {
+    if (g.type === 'Polygon' && Array.isArray(g.coordinates)) polygons.push(g.coordinates);
+    else if (g.type === 'MultiPolygon' && Array.isArray(g.coordinates)) for (const poly of g.coordinates) polygons.push(poly);
+  }
+  if (!polygons.length) return { ...base, finite: false, reason: geometries.some((g) => g.type === 'Point') ? 'point_source' : 'no_edge', edges: [] };
+  if (!FINITE_FAULT.test(reference)) return { ...base, finite: false, reason: 'not_finite_fault', edges: [] };
+  const edges = [];
+  let top = Infinity, bottom = -Infinity;
+  for (const poly of polygons.slice(0, limits.maxPolygons)) {
+    const edge = upDipEdge(Array.isArray(poly) ? poly[0] : null, limits.maxVertices);
+    if (!edge) continue;
+    edges.push(edge.line); top = Math.min(top, edge.top); bottom = Math.max(bottom, edge.bottom);
+  }
+  if (!edges.length) return { ...base, finite: false, reason: 'no_edge', edges: [] };
+  return { ...base, finite: true, reason: null, edges, top_depth_km: round(top, 1), bottom_depth_km: round(bottom, 1) };
+}
+async function ruptureAnswer(request, env, id, fetchImpl, cacheImpl) {
+  if (!USGS_EVENT_ID.test(id)) return refuse(request, env, 'invalid_event', 400);
+  /* the very read the ShakeMap route makes (same key, same fetcher): one detail per event, shared and coalesced */
+  const detail = await sharedLayer({ layer: 'shakemap_detail', key: `consumer-environment-v1-shakemap-${id}`, ttl: SHAKEMAP.detailTtl, rows: 'products', fetcher: (e, f) => fetchShakemapDetail(id, f) }, env, fetchImpl, cacheImpl, { lookup: true });
+  const sources = [sourceHealth(LAYER_SOURCES.usgs_event, detail)];
+  const base = {
+    ok: true, schema: 'world-environment-rupture/v1', event_id: id, generated_at: isoNow(), sources, modelled: true, label: 'modelled rupture plane (USGS finite fault)', edges: [],
+    notes: {
+      rupture: 'A USGS finite-fault model estimates the fault plane that slipped. The edge given is the plane\'s shallowest side, a model: not a crack mapped at the surface.',
+      point: 'Most earthquakes have no finite-fault model: USGS treats them as a point, and nothing is drawn.'
+    }
+  };
+  const d = detail.body && !detail.body.unavailable ? detail.body : null;
+  /* USGS answers 409 for an event it has deleted, which the detail reader says as withdrawn (slice S3): so is its rupture, even
+     over a copy kept from before the deletion */
+  if (d && d.withdrawn === true) return send(request, env, { ...base, available: false, reason: 'withdrawn' });
+  if (!d) return send(request, env, { ...base, available: false, reason: 'source_unavailable' });
+  if (!d.found) return send(request, env, { ...base, available: false, reason: 'event_not_found' });
+  if (!d.shakemap) return send(request, env, { ...base, usgs_preferred_id: d.preferred_id, available: false, reason: 'no_shakemap' });
+  const sm = d.shakemap, product = { usgs_preferred_id: d.preferred_id, version: sm.version, product_code: sm.code, product_source: sm.source, update_time: sm.update_time };
+  /* a copy kept before this reader existed cannot say whether a rupture file is listed */
+  if (sm.rupture_url === undefined) return send(request, env, { ...base, ...product, available: false, reason: 'source_unavailable' });
+  if (!sm.rupture_url) return send(request, env, { ...base, ...product, available: false, reason: 'no_rupture' });
+  const versionKey = [sm.source, sm.code, sm.version, Date.parse(sm.update_time)].map(keyPart).join('-');
+  const rupture = await sharedLayer({
+    layer: 'rupture', key: `consumer-environment-v1-rupture-${id}-${versionKey}`, ttl: RUPTURE.ttl, rows: 'edges',
+    fetcher: async (e, f) => readRupture(await upstream(sm.rupture_url, {}, f, boundedJson(RUPTURE.bytes), RUPTURE.timeoutMs))
+  }, env, fetchImpl, cacheImpl, { lookup: true });
+  sources.push(sourceHealth(LAYER_SOURCES.usgs_rupture, rupture));
+  const r = rupture.body && !rupture.body.unavailable ? rupture.body : null;
+  if (!r) return send(request, env, { ...base, ...product, available: false, reason: 'source_unavailable' });
+  const facts = { reference: r.reference || '', reviewed: r.reviewed === true ? true : r.reviewed === false ? false : null, model_created: r.model_created || null };
+  if (r.finite !== true) return send(request, env, { ...base, ...product, ...facts, available: false, reason: r.reason || 'no_edge' });
+  return send(request, env, { ...base, ...product, ...facts, available: true, reason: null, edges: Array.isArray(r.edges) ? r.edges : [], top_depth_km: r.top_depth_km, bottom_depth_km: r.bottom_depth_km });
+}
+
 /* ---------- the routes ---------- */
 function inNamespace(path) {
   if (!path.startsWith(ROOT + '/')) return false;
@@ -734,5 +843,6 @@ export async function handleEnvironmentLayers(request, env, { fetchImpl = fetch,
   if (route.id === 'tides') return send(request, env, await tidesAnswer(env, fetchImpl, cacheImpl, tideGapMs, tideDeadlineMs));
   if (route.id === 'water-level') return waterLevelAnswer(request, env, route.param, fetchImpl, cacheImpl);
   if (route.id === 'shakemap') return shakemapAnswer(request, env, route.param, fetchImpl, cacheImpl);
+  if (route.id === 'rupture') return ruptureAnswer(request, env, route.param, fetchImpl, cacheImpl);
   return refuse(request, env, 'not_found', 404);
 }

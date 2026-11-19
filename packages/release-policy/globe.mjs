@@ -36,7 +36,9 @@ export const ENVIRONMENT_PUBLIC_ROUTES = Object.freeze([
   Object.freeze({ id: 'eonet', pattern: /^\/v1\/world\/environment\/layers\/eonet$/ }),
   Object.freeze({ id: 'tides', pattern: /^\/v1\/world\/environment\/layers\/tides$/ }),
   Object.freeze({ id: 'water-level', pattern: /^\/v1\/world\/environment\/tides\/([^/]+)$/ }),
-  Object.freeze({ id: 'shakemap', pattern: /^\/v1\/world\/environment\/quakes\/([^/]+)\/shakemap$/ })
+  Object.freeze({ id: 'shakemap', pattern: /^\/v1\/world\/environment\/quakes\/([^/]+)\/shakemap$/ }),
+  /* a quake's documented rupture: the modelled up-dip edge of a USGS finite-fault plane, or none (event timeline slice S5) */
+  Object.freeze({ id: 'rupture', pattern: /^\/v1\/world\/environment\/quakes\/([^/]+)\/rupture$/ })
 ]);
 export function environmentRouteForPath(path) {
   for (const route of ENVIRONMENT_PUBLIC_ROUTES) {

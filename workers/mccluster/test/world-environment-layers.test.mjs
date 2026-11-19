@@ -76,7 +76,8 @@ function keysOf(v, out = new Set()) {
 
 /* ---------- the release policy and the gate ---------- */
 test('the release policy maps every public environmental path to the environment module, and none of them to a Halo feature', () => {
-  assert.deepEqual(ENVIRONMENT_PUBLIC_ROUTES.map((r) => r.id), ['feed', 'fires', 'perimeters', 'alerts', 'eonet', 'tides', 'water-level', 'shakemap']);
+  /* event timeline slice S5 (changed on purpose): a quake's documented rupture joins the public routes, behind the same gate */
+  assert.deepEqual(ENVIRONMENT_PUBLIC_ROUTES.map((r) => r.id), ['feed', 'fires', 'perimeters', 'alerts', 'eonet', 'tides', 'water-level', 'shakemap', 'rupture']);
   assert.deepEqual(environmentRouteForPath(P), { id: 'feed', module: 'environment', param: null });
   for (const path of LAYER_PATHS) {
     const route = environmentRouteForPath(path);
