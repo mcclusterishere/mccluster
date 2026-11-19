@@ -560,7 +560,9 @@ section here; no prerequisite.
 **Not applied. Owner approval required.** Apply only on Matthew's approval of the exact text, with the Supabase MCP
 `apply_migration` (it runs as postgres, the table's owner) under the name `network_connections_consent_guard_v1`; rerun the
 header's read-only check query first (it must still answer the three policies and true for all four member privileges), then
-promote with the steps in `README.md` ("To promote one").
+promote with the steps in `README.md` ("To promote one"). The CI reset holds the same hole today (`supabase/schema-manifest.json`:
+`authenticated=damrw` and the two policies, from the replay record). Once promoted, the reset applies the file after that record
+and closes it there too, so refresh the manifest from the reset's artifact in the same change, or its comparison fails.
 
 **Verify** with the same query afterwards: only `network_connections_member_read SELECT authenticated`; member SELECT true and
 INSERT, UPDATE, DELETE false; acl `{postgres=arwdDxtm/postgres,anon=rm/postgres,authenticated=rm/postgres,service_role=arwdDxtm/postgres}`;
