@@ -9,6 +9,8 @@ on:
       - 'creator.html'
       - 'music-creator.html'
       - 'music-admin.html'
+      - 'control.html'
+      - 'js/control-room/music-ops.js'
       - 'music-creator-terms.html'
       - 'data/albums.json'
       - 'js/music-*.js'
@@ -18,6 +20,8 @@ on:
       - 'supabase/migrations/**'
       - 'scripts/test/music-platform.test.mjs'
       - 'scripts/test/creator-release-submission.test.mjs'
+      - 'scripts/test/control-music-review.test.mjs'
+      - 'scripts/e2e/control-music-review.e2e.mjs'
       - 'scripts/test/music-playback-races.test.mjs'
       - 'js/chamber.js'
       - 'js/filament.js'
@@ -64,6 +68,8 @@ on:
       - 'creator.html'
       - 'music-creator.html'
       - 'music-admin.html'
+      - 'control.html'
+      - 'js/control-room/music-ops.js'
       - 'music-creator-terms.html'
       - 'data/albums.json'
       - 'js/music-*.js'
@@ -73,6 +79,8 @@ on:
       - 'supabase/migrations/**'
       - 'scripts/test/music-platform.test.mjs'
       - 'scripts/test/creator-release-submission.test.mjs'
+      - 'scripts/test/control-music-review.test.mjs'
+      - 'scripts/e2e/control-music-review.e2e.mjs'
       - 'scripts/test/music-playback-races.test.mjs'
       - 'js/chamber.js'
       - 'js/filament.js'
@@ -127,6 +135,7 @@ jobs:
           node --check js/music-community.js
           node --check js/music-creator-profile.js
           node --check js/music-admin.js
+          node --check js/control-room/music-ops.js
       - name: Parse creator studio module
         run: node --check js/music-creator-studio.js
       - name: Parse the album room's light, waveform and Now Playing helper
@@ -139,6 +148,8 @@ jobs:
         run: node --test scripts/test/music-platform.test.mjs
       - name: Creator release submission survives slow metadata, edits and a failed refresh
         run: node --test scripts/test/creator-release-submission.test.mjs
+      - name: Native Control publishes the verified release and handles stale, denied and uncertain outcomes
+        run: node --test scripts/test/control-music-review.test.mjs
       - name: Late access and gate replies cannot interrupt a newer song or undo Pause
         run: node --test scripts/test/music-playback-races.test.mjs
       - name: Background playback contracts (no Web Audio on the deck, the audio session, the lifecycle guard)
@@ -207,6 +218,10 @@ jobs:
         env:
           PLAYWRIGHT_DIR: /tmp/music-qa/node_modules
         run: node scripts/e2e/now-playing.e2e.mjs /tmp/music-proof/now-playing
+      - name: Native Control verifies the pinned audio before publication and reads back uncertain outcomes
+        env:
+          PLAYWRIGHT_DIR: /tmp/music-qa/node_modules
+        run: node scripts/e2e/control-music-review.e2e.mjs /tmp/music-proof/control-review
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
         with:
