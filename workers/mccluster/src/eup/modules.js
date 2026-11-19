@@ -90,7 +90,11 @@ async function call(env, fetchImpl, fail, name, args, errors = MODULE_POLICY_ERR
   if (!response.ok) {
     const code = typeof result?.code === 'string' ? result.code : '';
     const [status, reason] = Object.hasOwn(errors, code) ? errors[code] : [503, 'storage_unavailable'];
-    throw fail(status, MESSAGES[reason] || MESSAGES.storage_unavailable, reason);
+    /* the store's own SQLSTATE rides along (never its message), so a caller can tell the store's "no row" (EUM01) from a missing
+       function (42883), which the guard table names alike (world-environment-guard.js: off versus outage) */
+    const failure = fail(status, MESSAGES[reason] || MESSAGES.storage_unavailable, reason);
+    if (failure && typeof failure === 'object' && Object.hasOwn(errors, code)) failure.sqlstate = code;
+    throw failure;
   }
   return result;
 }

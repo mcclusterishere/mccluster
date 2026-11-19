@@ -22,7 +22,7 @@ const FIRES = JSON.parse(read('scripts/e2e/fixtures/environment/layers-fires.jso
 const FEED = JSON.parse(read('scripts/e2e/fixtures/environment/feed.json'));
 const flush = async (n = 4) => { for (let i = 0; i < n; i++) await new Promise((r) => setImmediate(r)); };
 
-function realm({ shakemap = null, doc = null } = {}) {
+function realm({ shakemap = null, doc = null, policy = null } = {}) {
   const color = (r, g, b, a) => ({ red: r, green: g, blue: b, alpha: a, withAlpha(x) { return color(r, g, b, x); } });
   const event = () => { const fns = new Set(); return { addEventListener: (f) => fns.add(f), removeEventListener: (f) => fns.delete(f), fire: (...a) => [...fns].forEach((f) => f(...a)) }; };
   class Collection { constructor() { this.items = []; this.show = true; this.ready = true; } add(o) { this.items.push(o); return o; } isDestroyed() { return false; } }
@@ -48,7 +48,7 @@ function realm({ shakemap = null, doc = null } = {}) {
   const director = { setQueue: (items, o) => queues.push({ ids: items.map((i) => i.id), significant: items.filter((i) => i.significant === true).map((i) => i.id), queue: o.queue }), state: () => ({ total: queues.length ? queues[queues.length - 1].significant.length : 0 }), scene: () => null, interrupt() {}, stop() {}, pure: null, attachInput() {} };
   const told = [];
   let handlers = null;
-  const client = { start(h) { handlers = h; }, stop() {}, isPolicy: () => false, shakemap: (id) => Promise.resolve(shakemap ? shakemap(id) : { ok: false, status: 'unavailable', reason: 'invalid_event', http: null }) };
+  const client = { start(h) { handlers = h; }, stop() {}, isPolicy: () => !!policy, policy: () => (policy ? { ...policy } : null), shakemap: (id) => Promise.resolve(shakemap ? shakemap(id) : { ok: false, status: 'unavailable', reason: 'invalid_event', http: null }) };
   const window = { matchMedia: () => ({ matches: true }), setTimeout, clearTimeout, performance, document: null };
   window.window = window;
   vm.runInNewContext(source, window);
@@ -56,7 +56,7 @@ function realm({ shakemap = null, doc = null } = {}) {
   assert.equal(L.mount({ viewer, Cesium, tell: (m) => told.push(m), governor: null, director, document: doc, client }), true);
   const on = () => L.onMessage({ type: 'hu:environment-layers', on: true, selected: '', replay: null, layers: {} });
   const layer = (name, body) => { const result = { ok: true, status: 'available', http: 200, body, fetched_at: null, generated_at: body.generated_at || null }; handlers.onData(name, body, result); handlers.onState(name, result); return result; };
-  return { L, queues, told, scene, window, on, layer, ground: () => scene.primitives.list.filter((p) => p instanceof Ground) };
+  return { L, queues, told, scene, window, on, layer, state: (name, result) => handlers.onState(name, result), ground: () => scene.primitives.list.filter((p) => p instanceof Ground) };
 }
 const quake = (id, over = {}) => ({ id, title: id, lat: 10, lon: 20, stale: false, category: 'quake', observed_at: '2026-11-17T10:00:00.000Z', fetched_at: '2026-11-17T20:00:00.000Z', facts: [{ label: 'Magnitude', value: '5.4' }, { label: 'Depth', value: '10 km' }], ...over });
 const ring = (lon, lat, d = 0.1) => [[lon, lat], [lon + d, lat], [lon + d, lat + d], [lon, lat + d], [lon, lat]];
@@ -296,4 +296,32 @@ test('RV2-10: the feed and pins fixtures never have an event, or a feed source r
     assert.ok(time(s.observed_at) <= time(s.fetched_at), `feed.json source ${s.id}: latest observation ${s.observed_at} after its retrieval ${s.fetched_at}`);
     assert.ok(time(s.fetched_at) <= time(s.last_success_at) || s.status !== 'available', `feed.json source ${s.id}: an available source succeeded when it was retrieved`);
   }
+});
+
+/* E=UP slice S0 (2026-11-19): off, outage, the visitor's network and no data, each named in the legend in its own words; before, one line
+   covered off and outage alike and a layer whose provider answered with nothing simply vanished from the legend */
+test('S0: the legend names off, an outage, an unreachable network and a layer with nothing to report, each in its own words', () => {
+  const E = realm().L.encodings;
+  for (const [policy, line, other] of [[{ reason: 'module_disabled', http: 404, gate: 'off' }, E.OFF_LINE, E.POLICY_LINE], [{ reason: 'module_policy_unavailable', http: 503, gate: 'outage' }, E.POLICY_LINE, E.OFF_LINE]]) {
+    const doc = legendDoc(), r = realm({ doc, policy });
+    r.on();
+    assert.ok(doc.list.lines.includes(line), `${policy.gate}: ${JSON.stringify(doc.list.lines)}`);
+    assert.ok(!doc.list.lines.includes(other));
+  }
+  assert.equal(E.OFF_LINE, 'Environmental layers are turned off for now');
+  assert.equal(E.POLICY_LINE, 'Environmental layers are not available right now');
+  /* every layer route out of reach from this browser: said, and never called off or an outage */
+  const netDoc = legendDoc(), net = realm({ doc: netDoc });
+  net.on();
+  for (const name of ['fires', 'perimeters', 'alerts', 'eonet', 'tides']) net.state(name, { ok: false, status: 'unavailable', reason: 'network', http: null });
+  assert.ok(netDoc.list.lines.includes(E.NETWORK_LINE), JSON.stringify(netDoc.list.lines));
+  assert.ok(!netDoc.list.lines.includes(E.OFF_LINE) && !netDoc.list.lines.includes(E.POLICY_LINE));
+  /* no data: the provider answered and reported nothing; one layer down for its own reason is not "nothing" */
+  const zeroDoc = legendDoc(), zero = realm({ doc: zeroDoc });
+  zero.on();
+  zero.layer('perimeters', { ok: true, schema: 'world-environment-perimeters/v1', generated_at: '2026-11-19T02:00:00.000Z', sources: [{ id: 'wfigs', label: 'NIFC WFIGS perimeters', status: 'available', fetched_at: '2026-11-19T02:00:00.000Z' }], perimeters: [], count: 0, total: 0 });
+  zero.state('alerts', { ok: false, status: 'unavailable', reason: 'http_500', http: 500 });
+  assert.ok(zeroDoc.list.lines.includes('Fire perimeters: none reported right now'), JSON.stringify(zeroDoc.list.lines));
+  assert.ok(!zeroDoc.list.lines.some((l) => /^Alerts: none/.test(l)), 'an unavailable layer is not "none reported"');
+  assert.ok(!zeroDoc.list.lines.includes(E.NETWORK_LINE));
 });

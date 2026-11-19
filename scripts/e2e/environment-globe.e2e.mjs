@@ -304,7 +304,9 @@ for (const [status, code] of [[503, 'module_policy_unavailable'], [404, 'module_
   const gated = await until(page, (c) => { const by = {}; for (const m of window.__fromGlobe) if (m.type === 'hu:environment-layer-state' && m.status === 'policy' && m.reason === c) by[m.layer] = true; return ['fires', 'perimeters', 'alerts', 'eonet', 'tides', 'shakemap'].every((l) => by[l]); }, code, 60000);
   const s = await env(frame);
   check(scope, `every layer reports status policy with reason ${code}`, gated && s.policy === true, s && s.states);
-  check(scope, 'the legend says the layers are not available right now', !!s && s.legend.includes('Environmental layers are not available right now') && (await frame.evaluate(() => !document.getElementById('envLegend').hidden && [...document.querySelectorAll('#envLegendList li')].some((li) => li.textContent === 'Environmental layers are not available right now'))), s && s.legend);
+  /* E=UP slice S0 (2026-11-19), changed on purpose: off (404 module_disabled) and an outage (503) are two lines in the legend */
+  const legendLine = status === 404 ? 'Environmental layers are turned off for now' : 'Environmental layers are not available right now';
+  check(scope, `the legend says "${legendLine}"`, !!s && s.legend.includes(legendLine) && (await frame.evaluate((t) => !document.getElementById('envLegend').hidden && [...document.querySelectorAll('#envLegendList li')].some((li) => li.textContent === t), legendLine)), s && s.legend);
   const before = requests.filter((p) => p.startsWith('/v1/world/environment/')).length;
   await page.waitForTimeout(30000);
   const after = requests.filter((p) => p.startsWith('/v1/world/environment/')).length;

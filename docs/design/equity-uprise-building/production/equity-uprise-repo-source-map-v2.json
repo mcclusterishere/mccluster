@@ -5336,6 +5336,13 @@
       "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; Worker strings only; not a building capability."
     },
     {
+      "path": "workers/mccluster/src/world-environment-guard.js",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "The consumer World environmental routes' public answers (off, outage and no data apart; the policy read once per request) and the bounds on their public reads (shared provider reads, a per-client limit); names the pinned Equity Uprise server. No building program."
+    },
+    {
       "path": "workers/mccluster/src/world-environment.js",
       "classification": "shared_backend_support",
       "capability_ids": [],
@@ -5467,6 +5474,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Worker test of the consumer World environmental mode with the persisted module policy; names the Equity Uprise policy schema identifier. Test only; no building capability, program or geometry."
+    },
+    {
+      "path": "workers/mccluster/test/world-environment-guard.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Worker test of the consumer World environmental routes' off, outage and no-data answers and of the bounds on their public reads; names the Equity Uprise policy schema identifier. Test only; no building capability, program or geometry."
     },
     {
       "path": "workers/mccluster/test/world-environment-layers.test.mjs",

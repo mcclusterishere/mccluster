@@ -45,20 +45,27 @@ export function mcclusterEnvironmentAdapter(w) {
   for (const type of ['mcc:world-mode', 'mcc:feed-scope']) w.addEventListener?.(type, relay);
   /* NEVER A BROKEN PANEL FOR THE PUBLIC (owner, 2026-11-17: the panel behind the tab "is a joke"; the panel's own fixes are a
      later slice). The page shows the panel once its source has answered with a feed the panel accepts (html[data-we-feed]
-     "ready"); until then nothing, and if that first read fails, one honest line in its place (mnet.html #weUnavailable,
-     css/world-environment.css). Production answers 503 until the owner releases the module (WORLD-ENVIRONMENT.md). Once the
-     panel has shown, a later failed refresh stays in the panel, which says so itself. */
+     "ready"); until then nothing, and if that first read fails, one honest line in its place, by cause (E=UP slice S0,
+     2026-11-19): "off" (the owner has not turned the reports on), "unavailable" (an outage or this browser's network) or "empty"
+     (every source answered and none reported an event), each its own line (mnet.html #weOff, #weUnavailable, #weEmpty;
+     css/world-environment.css). Once the panel has shown, a later failed refresh stays in the panel, which says so itself. */
   let shownOnce = false;
   const feedState = (value) => { if (!shownOnce) try { w.document?.documentElement.setAttribute('data-we-feed', value); } catch (_) {} };
   const request = (path, options) => {
     if (path !== '') return transport.request(path, options);
     feedState('checking');
     return transport.request(path, options).then((body) => {
-      try { normalizeFeed(body); } catch (error) { feedState('unavailable'); return body; }
+      let feed;
+      try { feed = normalizeFeed(body); } catch (error) { feedState('unavailable'); return body; }
+      /* NO DATA (E=UP slice S0): every source answered and none reported an event; with a source down the panel explains it */
+      if (!feed.events.length && feed.sources.length && feed.sources.every((s) => s.status === 'available')) { feedState('empty'); return body; }
       feedState('ready'); shownOnce = true;
       return body;
     }, (error) => {
-      if (error?.name !== 'AbortError') feedState('unavailable');
+      /* OFF IS NOT AN OUTAGE (E=UP slice S0, 2026-11-19): 404 module_disabled means the owner has not turned the reports on (never
+         installed or disabled: one answer); 503 module_policy_unavailable, any other refusal and a network failure are "not available
+         right now" */
+      if (error?.name !== 'AbortError') feedState(error?.code === 'module_disabled' && error?.status === 404 ? 'off' : 'unavailable');
       /* the same error object, so the gate's code (503 module_policy_unavailable, 404 module_disabled) the transport attached
          reaches the panel and, through its CustomEvent, the page (slice G1) */
       throw error;

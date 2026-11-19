@@ -139,3 +139,38 @@ test('the adapter passes the policy gate\'s code through the feed read: 503 modu
  await assert.rejects(()=>adapter.request(''),error=>error.status===503&&error.code===undefined,'only a string code is a code');
  assert.doesNotMatch(read('vendor/equity-uprise/src/environment/transport.mjs'),/api\.mccluster\.org|MCC_SUPA/);
 });
+/* E=UP slice S0 (2026-11-19): off, an outage and no data are three lines on the page, not one. html[data-we-feed] is "off" for 404
+   module_disabled (never installed or disabled: the owner has not turned the reports on), "unavailable" for 503 or any other failure
+   or the visitor's own network, "empty" when every source answered and none reported an event, and "ready" otherwise. mnet.html
+   carries one line for each; the panel shows only when ready. Before, every failure was "unavailable" and one sentence. */
+test('S0: the adapter sets html[data-we-feed] off, unavailable, empty or ready by cause, and mnet.html and the sheet carry a line for each',async()=>{
+ const {mcclusterEnvironmentAdapter}=await import('../../js/world-environment-mccluster.mjs');
+ const source=(id,status='available')=>({id,label:id,status,url:'https://example.gov/'});
+ const cases=[
+  ['off: 404 module_disabled',{status:404,body:{ok:false,code:'module_disabled'}},'off'],
+  ['outage: 503 module_policy_unavailable',{status:503,body:{ok:false,code:'module_policy_unavailable'}},'unavailable'],
+  ['outage: 503 without a code',{status:503,body:{error:'module_policy_unavailable'}},'unavailable'],
+  ['a 404 that is not the gate',{status:404,body:{ok:false,code:'not_found'}},'unavailable'],
+  ['the visitor\'s network',{throws:true},'unavailable'],
+  ['no data: every source answered, none reported an event',{status:200,body:{schema:'world-environment/v1',events:[],sources:[source('usgs'),source('nws')],missions:[]}},'empty'],
+  ['a source down and no events: the panel explains',{status:200,body:{schema:'world-environment/v1',events:[],sources:[source('usgs'),source('nws','unavailable')],missions:[]}},'ready'],
+  ['events',{status:200,body:{schema:'world-environment/v1',events:[row],sources:[source('usgs')],missions:[]}},'ready']
+ ];
+ for(const [label,answer,want] of cases){
+  const attrs={};
+  const w={MCC_SUPA:{token:async()=>null},fetch:async()=>{if(answer.throws)throw new TypeError('Failed to fetch');return {ok:answer.status<400,status:answer.status,json:async()=>answer.body};},document:{documentElement:{setAttribute:(k,v)=>{attrs[k]=v;}}}};
+  const adapter=mcclusterEnvironmentAdapter(w);
+  await adapter.request('').catch(()=>{});
+  assert.equal(attrs['data-we-feed'],want,label);
+ }
+ const html=read('mnet.html'),css=read('css/world-environment.css');
+ assert.match(html,/<p class="mn__we-note" id="weUnavailable" role="status">Environmental reports are not available right now\.<\/p>/);
+ assert.match(html,/<p class="mn__we-note" id="weOff" role="status">Environmental reports are turned off for now\.<\/p>/);
+ assert.match(html,/<p class="mn__we-note" id="weEmpty" role="status">No qualifying environmental events right now\.<\/p>/);
+ assert.match(css,/html\.mn-feed-equity\[data-we-feed="unavailable"\] #weUnavailable,html\.mn-feed-equity\[data-we-feed="off"\] #weOff,html\.mn-feed-equity\[data-we-feed="empty"\] #weEmpty \{ display:block; \}/);
+ assert.doesNotMatch(css,/\[data-we-feed="unavailable"\] \.mn__we-note/,'never every line at once');
+ /* the release review's two panel findings, fixed in McCluster's sheet (the vendored panel is unchanged): the search placeholder in the
+    panel's dim ink, and the sources summary a 44 px target */
+ assert.match(css,/\.we-panel input::placeholder \{ color:var\(--we-dim\);opacity:1; \}/);
+ assert.match(css,/\.we-panel details > summary \{ min-height:44px;/);
+});

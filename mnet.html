@@ -426,9 +426,12 @@
         <!-- ENVIRONMENTAL JUSTICE, behind the Equity Uprise tab and above its missions (owner, 2026-11-17; from 2026-11-07 it
              was a mode button in the centre of the globe). The panel shows and hides itself (js/world-environment-mccluster.mjs). -->
         <section id="wePanel" class="we-panel" aria-labelledby="weTitle" hidden></section>
-        <!-- the panel shows once its source has answered; while the source is unavailable the public gets this one honest line,
-             never a broken panel (js/world-environment-mccluster.mjs sets html[data-we-feed], css/world-environment.css) -->
+        <!-- the panel shows once its source has answered; until then the public gets one honest line by cause, never a broken
+             panel (js/world-environment-mccluster.mjs sets html[data-we-feed], css/world-environment.css): off, not available
+             right now (an outage or this browser's network), or nothing to report (E=UP slice S0, 2026-11-19) -->
         <p class="mn__we-note" id="weUnavailable" role="status">Environmental reports are not available right now.</p>
+        <p class="mn__we-note" id="weOff" role="status">Environmental reports are turned off for now.</p>
+        <p class="mn__we-note" id="weEmpty" role="status">No qualifying environmental events right now.</p>
         <aside class="mn__guest-card" id="mnGuestCard">
           <p>Sign in to share an update and connect.</p>
           <div class="mn__guest-card-row"><button class="mn__world-go" type="button" data-guest-open="signin">Sign in →</button><button class="mn__world-filter" type="button" data-guest-open="create">Create account</button></div>

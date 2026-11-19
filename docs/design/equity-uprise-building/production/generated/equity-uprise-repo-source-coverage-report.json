@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 747,
+  "candidate_count": 749,
   "capability_source_count": 104,
-  "support_only_count": 643,
-  "checks_total": 2886,
-  "checks_passed": 2886,
+  "support_only_count": 645,
+  "checks_total": 2894,
+  "checks_passed": 2894,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -732,6 +732,7 @@
     "workers/mccluster/src/seek-first/catalogs.js",
     "workers/mccluster/src/seek-first/equity-uprise-halo.js",
     "workers/mccluster/src/social/router.js",
+    "workers/mccluster/src/world-environment-guard.js",
     "workers/mccluster/src/world-environment.js",
     "workers/mccluster/src/world-layers.js",
     "workers/mccluster/test/company-site.test.mjs",
@@ -751,6 +752,7 @@
     "workers/mccluster/test/prim3-learning.test.mjs",
     "workers/mccluster/test/seek-first-catalogs.test.mjs",
     "workers/mccluster/test/world-environment-action-media.test.mjs",
+    "workers/mccluster/test/world-environment-guard.test.mjs",
     "workers/mccluster/test/world-environment-layers.test.mjs",
     "workers/mccluster/test/world-environment.test.mjs",
     "workers/mccluster/test/world-layers.test.mjs",
@@ -761,7 +763,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "747 entries"
+      "detail": "749 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -14709,6 +14711,26 @@
       "detail": ""
     },
     {
+      "name": "workers/mccluster/src/world-environment-guard.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/src/world-environment-guard.js classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "workers/mccluster/src/world-environment-guard.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/src/world-environment-guard.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "workers/mccluster/src/world-environment.js capability ids known",
       "passed": true,
       "detail": ""
@@ -15085,6 +15107,26 @@
     },
     {
       "name": "workers/mccluster/test/world-environment-action-media.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/world-environment-guard.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/world-environment-guard.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "workers/mccluster/test/world-environment-guard.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/test/world-environment-guard.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     },

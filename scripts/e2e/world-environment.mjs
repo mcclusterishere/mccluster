@@ -210,7 +210,7 @@ try{
  const fromGlobe=async(page,msg)=>{await globe(page).evaluate(m=>window.__send(m),msg);};
  /* postMessage is asynchronous: wait for the frame to have logged a matching message after index `after` */
  const waitGot=async(page,after,pred,what)=>{for(let i=0;i<100;i++){const list=(await got(page)).slice(after),hit=list.find(pred);if(hit)return hit;await page.waitForTimeout(50);}assert.fail('the frame never got '+what+': '+JSON.stringify((await got(page)).slice(after).map(m=>m.type)));};
- const feedSeq=page=>page.evaluate(()=>[...document.querySelectorAll('#mnFeed > article')].map(a=>a.hasAttribute('data-observation-post')?'o:'+a.getAttribute('data-observation-post'):a.hasAttribute('data-mission-post')?'m:'+a.getAttribute('data-mission-post'):a.hasAttribute('data-news-id')?'n':a.hasAttribute('data-post-id')?'p':'?'));
+ const feedSeq=page=>page.evaluate(()=>[...document.querySelectorAll('#mnFeed > article, #mnFeed > [data-observation-list] > article')].map(a=>a.hasAttribute('data-observation-post')?'o:'+a.getAttribute('data-observation-post'):a.hasAttribute('data-mission-post')?'m:'+a.getAttribute('data-mission-post'):a.hasAttribute('data-news-id')?'n':a.hasAttribute('data-post-id')?'p':'?'));
  /* the page, the panel and the feed must not scroll sideways; when the feed does, name what sticks out past its right edge */
  const fits=page=>page.evaluate(()=>{const feed=document.getElementById('mnFeed'),edge=feed.getBoundingClientRect().right+0.5;const over=[...feed.querySelectorAll('*')].filter(el=>el.getBoundingClientRect().right>edge&&el.getClientRects().length).slice(0,8).map(el=>el.tagName.toLowerCase()+'.'+[...el.classList].join('.')+'@'+Math.round(el.getBoundingClientRect().right-edge));return {sw:document.documentElement.scrollWidth,cw:document.documentElement.clientWidth,psw:document.getElementById('wePanel').scrollWidth,pcw:document.getElementById('wePanel').clientWidth,fsw:feed.scrollWidth,fcw:feed.clientWidth,over};});
  for(const device of WIDTHS){
@@ -225,21 +225,24 @@ try{
   const keyed=everything.filter(x=>/^[om]:/.test(x));assert.equal(new Set(keyed).size,keyed.length,'each observation and mission once');
   const typed=await page.evaluate(()=>[...document.querySelectorAll('#mnFeed .mn__observation-post')].map(a=>({id:a.getAttribute('data-observation-post'),author:a.querySelector('.mn__author-name').textContent,sub:a.querySelector('.mn__author-sub').textContent,title:a.querySelector('.mn__observation-post-title').textContent,body:a.querySelector('.mn__observation-post-body').textContent,globe:!!a.querySelector('[data-observation-globe]'),source:(a.querySelector('.mn__observation-source')||{}).href||'',icon:!!a.querySelector('.mn__observation-post-icon svg'),img:a.querySelectorAll('img').length})));
   for(const t of typed){assert.equal(t.author,'Environmental desk');assert.match(t.sub,/^Environmental observation · /);assert.match(t.sub,/ · (Recorded|Retrieved) /);assert.match(t.body,/Coverage: .+ · Status: (available|stale|unavailable)/);assert.ok(t.icon&&t.img===0,'a plain line icon, never a picture or the mark');assert.match(t.source,/^https:\/\//);}
-  /* the Equity Uprise tab: every observation and the missions in one list by time, newest first, each typed */
+  /* the Equity Uprise tab (E=UP slice S0, 2026-11-19, changed on purpose: decision D8, default adopted pending Matthew's
+     confirmation): the missions first, newest first, then every observation in its own list, newest first, each typed */
   await page.locator('#mnFeedScope [data-feed-scope="equity"]').click();
   await page.waitForFunction(()=>document.querySelectorAll('#mnFeed [data-mission-post]').length>0&&document.querySelectorAll('#mnFeed .mn__observation-post').length>0,null,{timeout:30000});
   await page.waitForFunction(()=>getComputedStyle(document.getElementById('wePanel')).display!=='none',null,{timeout:30000});
   const tab=await feedSeq(page);
-  const stamps=await page.evaluate(()=>[...document.querySelectorAll('#mnFeed > article')].map(a=>a.hasAttribute('data-observation-post')?{id:a.getAttribute('data-observation-post'),sub:a.querySelector('.mn__author-sub').textContent}:{mission:a.getAttribute('data-mission-post'),head:a.querySelector('.mn__author-name').textContent}));
+  const stamps=await page.evaluate(()=>[...document.querySelectorAll('#mnFeed > article, #mnFeed > [data-observation-list] > article')].map(a=>a.hasAttribute('data-observation-post')?{id:a.getAttribute('data-observation-post'),sub:a.querySelector('.mn__author-sub').textContent}:{mission:a.getAttribute('data-mission-post'),head:a.querySelector('.mn__author-name').textContent}));
   assert.ok(tab.some(x=>x.startsWith('m:'))&&tab.some(x=>x.startsWith('o:')),'missions and observations together: '+JSON.stringify(tab));
-  const expected=P.interleaveByTime(MISSIONS.map(m=>({missionPost:true,id:m.id,created_at:m.created_at})),P.observationPosts({events:FEED.events,sources:FEED.sources,unavailable:false,layers:{}},Date.now()),{pageSize:20}).map(x=>x.missionPost?'m:'+x.id:'o:'+x.id);
-  assert.deepEqual(tab,expected,'the page of twenty, by time, as the pure module orders it');
-  assert.equal(tab[0],'o:usgs:fx-gen-50','the newest quake leads');assert.equal(tab[1],'m:'+UUID(101),'then the mission created at 20:30');
+  const expected=[...MISSIONS].sort((a,b)=>Date.parse(b.created_at)-Date.parse(a.created_at)).map(m=>'m:'+m.id).concat(P.interleaveByTime([],P.observationPosts({events:FEED.events,sources:FEED.sources,unavailable:false,layers:{}},Date.now()),{pageSize:20}).map(x=>'o:'+x.id));
+  assert.deepEqual(tab,expected,'the missions, then a page of twenty observations by time, as the pure module orders them');
+  assert.equal(tab[0],'m:'+UUID(101),'the newest mission leads');assert.equal(tab.find(x=>x.startsWith('o:')),'o:usgs:fx-gen-50','the newest quake leads the observations');
   for(const s of stamps){if(s.mission)assert.match(s.head,/^Civic mission/);else assert.match(s.sub,/^Environmental observation · /);}
   const quakeSub=stamps.find(s=>s.id==='usgs:fx-gen-50').sub;
   assert.match(quakeSub,new RegExp('Recorded '+new Date('2026-11-17T20:50:00Z').toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'}).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')),'the recorded time, in local time: '+quakeSub);
-  /* Load more pages the merged list; the NHC storm, whose provider gives no time, sits among the undated at the end, labelled */
-  for(let i=0;i<4;i++){if(await page.locator('#mnMore').isHidden())break;await page.locator('#mnMore').click();await page.waitForTimeout(150);}
+  /* the observations page with their own button (the feed's Load more stays hidden in the tab); the NHC storm, whose provider gives
+     no time, sits among the undated at the end, labelled */
+  assert.equal(await page.locator('#mnMore').isHidden(),true,'the feed\'s Load more is hidden in the tab');
+  for(let i=0;i<6;i++){if(!(await page.locator('#mnFeed [data-observations-more]').count()))break;await page.locator('#mnFeed [data-observations-more]').click();await page.waitForTimeout(150);}
   const all=await page.evaluate(()=>[...document.querySelectorAll('#mnFeed .mn__observation-post')].map(a=>({id:a.getAttribute('data-observation-post'),sub:a.querySelector('.mn__author-sub').textContent,globe:a.querySelector('.mn__observation-globe').textContent.trim()})));
   assert.equal(all.length,FEED.events.length,'every observation is a post in the tab, the unplaced ones too');
   const storm=all.find(a=>a.id==='nhc:fx-al19');assert.match(storm.sub,/ · Retrieved .+ · source gives no event time$/);assert.equal(storm.globe,'Show on globe');
@@ -365,17 +368,19 @@ try{
  for(const code of ['503','404']){
   const {context,page,errors,requests}=await openPage(WIDTHS[0],{environment:code});
   await page.waitForFunction(()=>document.querySelectorAll('#mnFeed > article').length>0,null,{timeout:30000});
-  await page.waitForFunction(()=>document.documentElement.getAttribute('data-we-feed')==='unavailable',null,{timeout:30000});
+  /* E=UP slice S0 (2026-11-19), changed on purpose: 404 module_disabled is off and has its own line; 503 keeps the outage's line */
+  const state=code==='404'?'off':'unavailable',noteId=code==='404'?'weOff':'weUnavailable',line=code==='404'?'Environmental reports are turned off for now.':'Environmental reports are not available right now.';
+  await page.waitForFunction(v=>document.documentElement.getAttribute('data-we-feed')===v,state,{timeout:30000});
   await page.locator('#mnFeedScope [data-feed-scope="equity"]').click();
   await page.waitForFunction(()=>document.querySelectorAll('#mnFeed [data-mission-post]').length>0,null,{timeout:30000});
-  const tab=await page.evaluate(()=>({note:getComputedStyle(document.getElementById('weUnavailable')).display,text:document.getElementById('weUnavailable').textContent.trim(),panel:getComputedStyle(document.getElementById('wePanel')).display,posts:document.querySelectorAll('#mnFeed .mn__observation-post').length,missions:document.querySelectorAll('#mnFeed [data-mission-post]').length}));
-  assert.equal(tab.note,'block');assert.equal(tab.text,'Environmental reports are not available right now.');assert.equal(tab.panel,'none');assert.equal(tab.posts,0,'no observation posts while the module answers '+code);assert.equal(tab.missions,3,'the missions still post');
+  const tab=await page.evaluate(id=>({note:getComputedStyle(document.getElementById(id)).display,text:document.getElementById(id).textContent.trim(),shown:[...document.querySelectorAll('.mn__we-note')].filter(n=>getComputedStyle(n).display!=='none').map(n=>n.id),panel:getComputedStyle(document.getElementById('wePanel')).display,posts:document.querySelectorAll('#mnFeed .mn__observation-post').length,missions:document.querySelectorAll('#mnFeed [data-mission-post]').length}),noteId);
+  assert.equal(tab.note,'block');assert.equal(tab.text,line);assert.deepEqual(tab.shown,[noteId],'one line, the one for its cause');assert.equal(tab.panel,'none');assert.equal(tab.posts,0,'no observation posts while the module answers '+code);assert.equal(tab.missions,3,'the missions still post');
   await page.locator('#mnFeedScope [data-feed-scope="global"]').click();
   await page.waitForFunction(()=>document.querySelectorAll('#mnFeed > article').length>0,null,{timeout:10000});
   assert.equal(await page.locator('#mnFeed .mn__observation-post').count(),0);
   assert.equal(requests.filter(p=>p==='/v1/world/environment').length,1,'one read, no retry loop against a refusing gate');
   assert.deepEqual(errors,[]);
-  console.log(`PASS ${code} 390px: the honest line, no panel, zero observation posts, the missions untouched.`);
+  console.log(`PASS ${code} 390px: the ${state} line, no panel, zero observation posts, the missions untouched.`);
   await context.close();
  }
 }finally{await browser?.close();await new Promise(resolve=>server.close(resolve));}
