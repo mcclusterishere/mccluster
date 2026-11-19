@@ -18,14 +18,14 @@
 
 import { measurementContext } from './measurement.js';
 
-export const AUDIENCE_SCIENCE_VERSION = 'audience-science/v2';
+export const AUDIENCE_SCIENCE_VERSION = 'audience-science/v3';
 export const MAX_AUDIENCE_WINDOW_DAYS = 31;
 
 export const START_EVENT_NAMES = new Set([
   'album_play', 'song_start', 'track_start', 'music_play'
 ]);
 export const COMPLETE_EVENT_NAMES = new Set([
-  'music_complete', 'music_preview_complete'
+  'music_complete'
 ]);
 export const FULL_EVENT_NAMES = new Set(['music_full_play']);
 export const SHARE_EVENT_NAMES = new Set([
@@ -44,7 +44,7 @@ export const AUDIENCE_EVENT_NAMES = [
   'page_view', 'page_leave', 'acquired',
   ...START_EVENT_NAMES,
   'music_full_play', 'music_preview_play',
-  ...COMPLETE_EVENT_NAMES,
+  ...COMPLETE_EVENT_NAMES, 'music_preview_complete',
   ...SHARE_EVENT_NAMES,
   ...ACTION_EVENT_NAMES,
   ...INTENT_EVENT_NAMES,
@@ -130,7 +130,6 @@ function behaviorSignals(profile) {
   if (enough && profile.dominant_share >= 0.8) out.push('concentrated_attention');
   if (profile.distinct_tracks >= 4 && profile.normalized_entropy >= 0.65) out.push('broad_exploration');
   if (profile.music_starts >= 4 && profile.repeat_ratio >= 0.5) out.push('repeat_listening');
-  if (profile.music_starts >= 2 && profile.completion_rate >= 0.5) out.push('deep_listening');
   if (profile.sessions >= 2 || profile.active_days >= 2) out.push('returning');
   if (profile.action_events > 0) out.push('action_engaged');
   if (profile.intent_events > 0) out.push('purchase_intent');
@@ -154,7 +153,7 @@ function modelReadiness(profiles) {
 }
 
 export function summarizeAudienceScience(leanRows = [], identityRows = []) {
-  const identityByDevice = new Map();
+  const identityByEvent = new Map();
   const candidatesByDevice = new Map();
   for (const row of identityRows) {
     if (!row?.device_id || !row?.uid) continue;
@@ -162,10 +161,15 @@ export function summarizeAudienceScience(leanRows = [], identityRows = []) {
     const candidates = candidatesByDevice.get(device) || new Set();
     candidates.add(String(row.uid));
     candidatesByDevice.set(device, candidates);
-  }
-  for (const [device, candidates] of candidatesByDevice) {
-    // Shared devices are not evidence that all their visitors are one account.
-    if (candidates.size === 1) identityByDevice.set(device, [...candidates][0]);
+    // The lean row and raw row share an immutable event ID. A login elsewhere
+    // in this window is not evidence about who performed an earlier action.
+    if (row.id) {
+      const key = String(row.id);
+      const prior = identityByEvent.get(key);
+      const evidence = { device, uid: String(row.uid) };
+      identityByEvent.set(key, prior === null || (prior &&
+        (prior.device !== device || prior.uid !== evidence.uid)) ? null : evidence);
+    }
   }
 
   const buckets = new Map();
@@ -173,7 +177,8 @@ export function summarizeAudienceScience(leanRows = [], identityRows = []) {
   function getBucket(row) {
     const device = String(row?.device_id || '').trim();
     if (!device) return null;
-    const uid = identityByDevice.get(device) || null;
+    const identity = row.id ? identityByEvent.get(String(row.id)) : null;
+    const uid = identity?.device === device ? identity.uid : null;
     const key = uid ? 'u:' + uid : 'd:' + device;
     let b = buckets.get(key);
     if (!b) {
@@ -190,6 +195,8 @@ export function summarizeAudienceScience(leanRows = [], identityRows = []) {
         music_starts: 0,
         full_plays: 0,
         completions: 0,
+        preview_starts: 0,
+        preview_completions: 0,
         shares: 0,
         action_events: 0,
         intent_events: 0,
@@ -234,6 +241,8 @@ export function summarizeAudienceScience(leanRows = [], identityRows = []) {
     }
     if (FULL_EVENT_NAMES.has(name)) b.full_plays++;
     if (COMPLETE_EVENT_NAMES.has(name)) b.completions++;
+    if (name === 'music_preview_play') b.preview_starts++;
+    if (name === 'music_preview_complete') b.preview_completions++;
     if (SHARE_EVENT_NAMES.has(name)) b.shares++;
     if (ACTION_EVENT_NAMES.has(name)) b.action_events++;
     if (INTENT_EVENT_NAMES.has(name)) b.intent_events++;
@@ -262,7 +271,11 @@ export function summarizeAudienceScience(leanRows = [], identityRows = []) {
       music_starts: starts,
       full_plays: b.full_plays,
       completions: b.completions,
-      completion_rate: starts ? round(Math.min(1, b.completions / starts)) : 0,
+      preview_starts: b.preview_starts,
+      preview_completions: b.preview_completions,
+      // Legacy rows do not identify paired, eligible playback attempts.
+      completion_rate: null,
+      completion_rate_status: 'unavailable_unpaired_events',
       shares: b.shares,
       action_events: b.action_events,
       intent_events: b.intent_events,
@@ -319,8 +332,9 @@ export function summarizeAudienceScience(leanRows = [], identityRows = []) {
         repeat_ratio: '(music_starts - distinct_tracks) / music_starts'
       },
       exposure_warning: 'Observed attention is not the same as preference. The current event schema does not fully record every track a visitor was shown, so exposure-adjusted preference is not claimed.',
+      completion_policy: 'Separate preview and full completion report counts. Completion rate is unavailable without paired eligible playback attempts; counts do not prove listening or attention.',
       outcome_policy: 'Checkout events measure intent. account_created and action_complete are client-reported completions. Verified accounts, payments and action outcomes require their canonical backend records and are not measured here.',
-      identity_basis: 'Device IDs, linked only where exactly one account is observed for the device in the queried window; not a count of distinct people.',
+      identity_basis: 'Account only when the same event ID and device have a verified raw-row account. All other events remain device-only, including before login; profiles are not distinct people.',
       ambiguous_identity_devices: [...candidatesByDevice.values()].filter((x) => x.size > 1).length
     },
     totals: {
@@ -385,7 +399,7 @@ export function createAudienceScienceRoutes({ json, sbRowsPaged, finiteDate, req
         measurement: measurementContext({ metricVersion: AUDIENCE_SCIENCE_VERSION,
           since: since.toISOString(), until: until.toISOString(), clamped,
           datasets: { events: lean, identity }, unit: 'observed_profiles',
-          identityBasis: 'device_or_unambiguous_observed_account' }),
+          identityBasis: 'device_or_event_bound_account' }),
         ...summarizeAudienceScience(lean, identity)
       });
     }

@@ -297,7 +297,7 @@ test('owner analytics exposes the promised full suite without creating a second 
   assert.match(router,/await requireHouseOps\(env, user\)/);
   assert.match(router,/signup_rate_pct/);
   assert.match(router,/assisted_tracks/);
-  assert.match(router,/events\?uid=in\.\(/,
+  assert.match(router,/events\?site_id=is\.null&uid=in\.\(/,
     'historical identity bridge must be scoped to accounts in the selected range');
   assert.doesNotMatch(router,/events\?uid=not\.is\.null&device_id=not\.is\.null/,
     'never revive the rejected global oldest-row bridge scan');

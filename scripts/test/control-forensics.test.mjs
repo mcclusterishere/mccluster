@@ -64,7 +64,7 @@ test('events read as sentences in the right category', async () => {
   assert.equal(by(8).cat, 'friction');
   assert.equal(by(8).text, 'Rage-tapped “Save”');
   assert.equal(by(9).cat, 'convert');
-  assert.equal(by(9).text, 'Created an account after hearing “Docket 516R”');
+  assert.equal(by(9).text, 'Account creation reported');
   assert.equal(by(10).cat, 'action', 'an unknown event still renders, as a generic action');
   assert.equal(by(10).text, 'Mystery thing');
   assert.doesNotThrow(() => F.describe({ name: 'page_view', props: null }));
@@ -147,16 +147,16 @@ test('an opened session is a journey: KPIs, cards, page visits, background noise
   const html = F.render();
   assert.match(html, /class="crf crf--open"/);
   assert.equal((html.match(/class="crf-kpi"/g) || []).length, 7);
-  for (const title of ['Who', 'Arrived', 'Where', 'Device', 'Journey', 'Music heard']) assert.match(html, new RegExp('<h3>' + title));
+  for (const title of ['Who', 'Arrived', 'Where', 'Device', 'Journey', 'Music reports']) assert.match(html, new RegExp('<h3>' + title));
   assert.match(html, /2 page visits, 11 events/);
   assert.match(html, /data-crf-jump="0"><b>album<\/b>/);
   assert.match(html, /id="crf-visit-1"/);
   assert.match(html, /1m later/, 'the gap between page visits is shown');
   assert.match(html, /Played “Docket 516R”/);
-  assert.match(html, /Created an account after hearing “Docket 516R”/);
+  assert.match(html, /Account creation reported/);
   assert.match(html, /trial_reel/, 'arrival medium comes from the acquired event');
   assert.match(html, /openstreetmap\.org\/\?mlat=41\.76&mlon=-72\.68/);
-  assert.match(html, /Their journey begins/);
+  assert.match(html, /Earliest evidence in this window:/);
   assert.doesNotMatch(html, /Battery 50%/, 'device and background events are hidden by default');
   assert.match(html, /Show 1 device &amp; background events/);
   assert.doesNotMatch(html, /<img src=x/, 'recorded text is escaped');
@@ -164,7 +164,7 @@ test('an opened session is a journey: KPIs, cards, page visits, background noise
   assert.doesNotMatch(html, /class="crf-raw"/, 'raw JSON stays closed until a step is tapped');
   assert.match(html, /<h3>Where it went wrong <small>1<\/small>/);
   assert.match(html, /Rage-tapped “Save”/);
-  assert.match(html, /Then: created an account after hearing “Docket 516R” \(25s later\)/, 'what the visitor did next is told');
+  assert.match(html, /Then: account creation reported \(25s later\)/, 'what the visitor did next is told');
   assert.match(html, /<h3>Page by page/);
   assert.match(html, /1\. album<\/b><small>55s on screen · read 75% · 0 taps · 1 play<\/small>/);
   assert.match(html, /2\. account<\/b><small>[^<]*1 converted · 1 went wrong<\/small>/);
@@ -294,4 +294,28 @@ test('detail responses cannot overwrite back, filter, range or a newer session; 
  assert.equal(F.state.detail.session.session_id,'retried');
  session.onclick();F.mount(h,{request,range:{since:'2026-10-20',until:'2026-10-25'}});
  pending.shift().resolve({session:{session_id:'old-range'},events:[]});await tick();assert.equal(F.state.detail,null);
+});
+
+test('same-session scope changes and lazy history reject late responses from the previous account',async()=>{
+ const F=await load(),pending=[],A='u:723e4567-e89b-42d3-a456-426614174777',B='u:823e4567-e89b-42d3-a456-426614174888';
+ let scope=A;
+ const buttons={
+  '[data-crf-session]':{getAttribute:k=>k==='data-crf-session'?'shared-session':scope,closest:()=>true},
+  '[data-crf-history]':{},'[data-crf-back]':{}
+ };
+ const h={innerHTML:'',querySelector:()=>null,querySelectorAll:q=>buttons[q]?[buttons[q]]:[]};
+ const request=path=>path.includes('/sessions/')?new Promise((resolve,reject)=>pending.push({path,resolve,reject})):Promise.resolve({sessions:[],total:0,counts:{}});
+ const response=key=>({session:{session_id:'shared-session'},scope:{visitor_key:key},events:[],visitor:{key,history_status:'not_loaded'}});
+ F.mount(h,{request,range:RANGE_A});await tick();
+ buttons['[data-crf-session]'].onclick();const first=pending.shift();
+ scope=B;buttons['[data-crf-session]'].onclick();const second=pending.shift();
+ assert.equal(new URL(first.path,'https://fixture').searchParams.get('visitor_key'),A);
+ assert.equal(new URL(second.path,'https://fixture').searchParams.get('visitor_key'),B);
+ second.resolve(response(B));await tick();first.resolve(response(A));await tick();
+ assert.equal(F.state.detail.scope.visitor_key,B);
+ buttons['[data-crf-history]'].onclick();const history=pending.shift();
+ assert.equal(new URL(history.path,'https://fixture').searchParams.get('visitor_key'),B);
+ buttons['[data-crf-back]'].onclick();const back=pending.shift();
+ back.resolve(response(A));await tick();history.resolve({...response(B),visitor:{key:B,history_status:'ready',sessions:[]}});await tick();
+ assert.equal(F.state.detail.scope.visitor_key,A);assert.equal(F.state.detail.visitor.key,A);
 });

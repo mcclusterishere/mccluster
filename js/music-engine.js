@@ -20,7 +20,7 @@
   audio.preload = "metadata";
   audio.setAttribute("playsinline", "");
   var previewLimit = 0;
-  var startedAt = 0;
+  var measurement = null, playbackStarted = false, playbackFinished = false;
   var playbackRequest = 0;
   var CREATOR_TRACKS = {};
   var SB_URL = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
@@ -48,7 +48,11 @@
       album_slug: current.albumSlug,
       access_state: currentAccess
     } : {};
-    try { root.MCC_TRACK(name, Object.assign(base, extra || {})); } catch (e) {}
+    try { root.MCC_TRACK(name, Object.assign(base, measurement ? measurement.report() : {}, extra || {})); } catch (e) {}
+  }
+  function beginMeasurement() {
+    measurement = root.MCC_PLAYBACK ? root.MCC_PLAYBACK.create(audio) : null;
+    playbackStarted = false; playbackFinished = false;
   }
 
   function ensureUI() {
@@ -510,13 +514,13 @@
       dropListen();
       audio.src = out.url;
       audio.currentTime = 0;
-      startedAt = Date.now();
+      beginMeasurement();
       setMedia(t);
       paint();
-      trackEvent("music_play", { source: "creator_discovery", creator_track_id: t.creatorTrackId, access_state: out.state });
-      trackEvent(out.state === "full" ? "music_full_play" : "music_preview_play",
-        { source: "creator_discovery", creator_track_id: t.creatorTrackId });
-      return audio.play().then(function () { return out; }).catch(function () { return out; });
+      return audio.play().then(function () { return out; }).catch(function (err) {
+        if (request === playbackRequest) { trackEvent("music_error", { reason: "play_rejected", error_name: err && err.name || "Error" }); playbackFinished = true; }
+        return out;
+      });
     }).catch(function (err) {
       if (request === playbackRequest) { currentAccess = "unavailable"; paint(); }
       throw err;
@@ -578,12 +582,13 @@
         grantMax = 0;
         audio.src = out.url;
         audio.currentTime = 0;
-        startedAt = Date.now();
+        beginMeasurement();
         setMedia(t);
         paint();
-        trackEvent("music_play", { source: "discovery", access_state: out.state });
-        trackEvent(out.state === "full" ? "music_full_play" : "music_preview_play", { source: "discovery" });
-        return audio.play().then(function () { return out; }).catch(function () { return out; });
+        return audio.play().then(function () { return out; }).catch(function (err) {
+          if (request === playbackRequest) { trackEvent("music_error", { reason: "play_rejected", error_name: err && err.name || "Error" }); playbackFinished = true; }
+          return out;
+        });
       });
     }).catch(function (err) {
       if (request !== undefined && request !== playbackRequest) throw err;
@@ -609,6 +614,7 @@
       currentAccess = out.state;
       previewLimit = out.state === "preview" ? Number(current.gated.preview_seconds || 0) : 0;
       audio.src = out.url;
+      beginMeasurement();
       audio.addEventListener("loadedmetadata", function once() {
         audio.removeEventListener("loadedmetadata", once);
         try { audio.currentTime = Math.min(at, Math.max(0, audio.duration - .25)); } catch (e) {}
@@ -638,17 +644,42 @@
   }
   function granted() { return current && current.gated && currentAccess === "full"; }
   audio.addEventListener("play", function () { countStart(); paint(); syncNowFilm(false); });
+  // `play` is an intent/state transition and can precede buffering or a
+  // rejected play promise. `playing` is the browser's playback report.
+  audio.addEventListener("playing", function () {
+    if (!current || (currentAccess !== "full" && currentAccess !== "preview")) return;
+    if (playbackFinished || (measurement && !measurement.valid())) beginMeasurement();
+    if (!measurement && root.MCC_PLAYBACK) measurement = root.MCC_PLAYBACK.create(audio);
+    if (measurement) measurement.playing();
+    if (!playbackStarted) {
+      playbackStarted = true;
+      var context = { source: current.creatorTrackId ? "creator_discovery" : "discovery",
+        creator_track_id: current.creatorTrackId || undefined };
+      trackEvent("music_play", context);
+      trackEvent(currentAccess === "full" ? "music_full_play" : "music_preview_play", context);
+    }
+  });
   audio.addEventListener("seeking", function () {
+    if (measurement) measurement.seeking();
     if (granted() && audio.currentTime < grantMax - 0.75) audio.currentTime = grantMax;
   });
-  audio.addEventListener("pause", function () { paint(); syncNowFilm(false); });
+  audio.addEventListener("seeked", function () { if (measurement) measurement.resumeAfterSeek(); });
+  audio.addEventListener("ratechange", function () { if (measurement) { measurement.seeking(); measurement.resumeAfterSeek(); } });
+  audio.addEventListener("waiting", function () { if (measurement) measurement.waiting(); });
+  audio.addEventListener("stalled", function () { if (measurement) measurement.waiting(); });
+  audio.addEventListener("pause", function () { if (measurement) measurement.pause(); paint(); syncNowFilm(false); });
   audio.addEventListener("loadedmetadata", function () { paint(); syncNowFilm(true); });
   audio.addEventListener("timeupdate", function () {
+    if (measurement) measurement.sample();
     if (granted()) grantMax = Math.max(grantMax, audio.currentTime);
     if (previewLimit && audio.currentTime >= previewLimit) {
       audio.pause();
       audio.currentTime = Math.max(0, previewLimit - .05);
-      trackEvent("music_preview_complete", { preview_seconds: previewLimit });
+      if (playbackStarted && !playbackFinished) {
+        playbackFinished = true;
+        if (measurement) measurement.finish();
+        trackEvent("music_preview_complete", { preview_seconds: previewLimit });
+      }
     }
     paint();
     syncNowFilm(false);
@@ -660,8 +691,14 @@
       currentAccess = "spent";
       if (root.MCC_GATED) root.MCC_GATED.forget();
     }
-    trackEvent("music_complete", { listened_seconds: Math.round((Date.now() - startedAt) / 1000),
-      creator_track_id: current && current.creatorTrackId ? current.creatorTrackId : undefined });
+    if (playbackStarted && !playbackFinished) {
+      playbackFinished = true;
+      if (measurement) measurement.finish();
+      var seconds = measurement ? measurement.seconds() : null;
+      if (currentAccess === "preview") trackEvent("music_preview_complete", { listened_seconds: seconds });
+      else trackEvent("music_complete", { listened_seconds: seconds,
+        creator_track_id: current && current.creatorTrackId ? current.creatorTrackId : undefined });
+    }
     paint();
     if (!previewLimit && queue.length > 1) playAdjacent(1);
   });

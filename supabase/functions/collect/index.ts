@@ -253,6 +253,79 @@ async function resolveAnalyticsSite(body: Record<string, unknown>, h: Headers_) 
   }
 }
 
+// Ingress minimization applies to the Worker proxy AND direct/tenant callers.
+// It does not change consent gates, event names, verified identity or retry IDs.
+// Purpose allowlists retain diagnostics and playback facts without arbitrary prose.
+function diagnosticURL(value: unknown, base: string | null = null): string | null {
+  try {
+    const text = String(value || '');
+    if (!text) return null;
+    const url = new URL(text, base || 'https://redacted.invalid');
+    if (!/^(https?:|iabjs:|chrome-extension:|moz-extension:|safari-extension:|safari-web-extension:|webkit-masked-url:|resource:)$/.test(url.protocol)) return null;
+    const path = url.pathname.replace(/[A-Z0-9._%+-]+(?:@|%40)[A-Z0-9.-]+/ig, '[redacted]');
+    if (!base && !/^[a-z][a-z0-9+.-]*:/i.test(text) && !text.startsWith('//')) return path;
+    return (url.protocol === 'http:' || url.protocol === 'https:' ? url.origin : url.protocol + '//' + url.host) + path;
+  } catch { return null; }
+}
+function diagnosticText(value: unknown, base: string | null): string {
+  return String(value).replace(/(?:https?:\/\/|(?:iabjs|chrome-extension|moz-extension|safari-extension|safari-web-extension|webkit-masked-url|resource):\/\/)[^\s<>"']+/gi,
+    url => diagnosticURL(url, base) || '[redacted-url]')
+    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/ig, '[redacted-email]')
+    .replace(/\bBearer\s+[^\s,;]+/ig, 'Bearer [redacted]')
+    .replace(/\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/g, '[redacted-token]')
+    .replace(/(["']?(?:access_token|refresh_token|password|secret|api[-_]key|authorization)["']?\s*[:=]\s*)(?:"[^"]*"|'[^']*'|[^\s,;]+)/ig, '$1[redacted]')
+    .slice(0, 400);
+}
+function boundedProps(value: unknown, depth: number, base: string | null): unknown {
+  if (depth > 3) return null;
+  if (value == null || typeof value === 'boolean') return value;
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  if (typeof value === 'string') return diagnosticText(value, base);
+  if (Array.isArray(value)) return value.slice(0, 20).map(v => boundedProps(v, depth + 1, base));
+  if (typeof value !== 'object') return null;
+  const input = value as Record<string, unknown>, out: Record<string, unknown> = {};
+  for (const key of Object.keys(input).slice(0, 60)) {
+    if (/pass|pwd|token|secret|authorization|cookie|email|phone|address|card|cvc|cvv|^body$|^content$|^message$|__proto__|constructor|prototype/i.test(key)) continue;
+    out[key.slice(0, 80)] = /^(href|url|src|referrer)$/i.test(key) && typeof input[key] === 'string' && /[\/?#:]/.test(input[key] as string)
+      ? diagnosticURL(input[key], base) : boundedProps(input[key], depth + 1, base);
+  }
+  return out;
+}
+function budgetObject(value: Record<string, unknown>, maxBytes: number): Record<string, unknown> {
+  const result: Record<string, unknown> = {}, encoder = new TextEncoder();
+  let truncated = false;
+  for (const [key, field] of Object.entries(value)) {
+    result[key] = field;
+    if (encoder.encode(JSON.stringify(result)).length > maxBytes - 64) { delete result[key]; truncated = true; }
+  }
+  if (truncated) result.payload_truncated = true;
+  return result;
+}
+const diagnosticFields: Record<string, string> = {
+  js_error: 'msg src line col origin iab stack', js_rejection: 'msg name origin iab stack',
+  click: 'el href cta x y pct_x pct_y', dead_click: 'el href cta x y pct_x pct_y',
+  rage_click: 'el href cta x y pct_x pct_y', copy: 'chars'
+};
+const playbackFields = ('track track_id creator_track_id creator_handle artist album album_slug access_state source code msg stack src position_seconds page song ord pick pool at_s after_s trigger by playing ' +
+  'seconds elapsed_s listened_seconds duration duration_s position percent pct reason error_name state preview_seconds mode why ' +
+  'measurement_version playback_attempt_id playback_sequence playback_elapsed_ms validated_played_seconds unmeasured_gap_ms progress_discontinuities measurement_status').split(' ');
+const playbackEvents = new Set(['music_play','music_full_play','music_preview_play','music_preview_complete','music_complete','music_pause','music_resume','music_error',
+  'song_start','song_pause','song_resume','song_end','song_error','song_leave']);
+function eventProps(name: string, value: unknown, base: string | null): Record<string, unknown> {
+  let input = obj(value);
+  const fields = Object.prototype.hasOwnProperty.call(diagnosticFields, name) ? diagnosticFields[name].split(' ') : (playbackEvents.has(name) ? playbackFields : null);
+  if (fields) input = Object.fromEntries(fields.filter(key => Object.prototype.hasOwnProperty.call(input, key)).map(key => [key, input[key]]));
+  return budgetObject(obj(boundedProps(input, 0, base)), 8192);
+}
+function eventPath(value: unknown): string {
+  const text = String(value || '').split(/[?#]/)[0];
+  if (/^[a-z][a-z0-9+.-]*:/i.test(text) && !/^https?:/i.test(text)) return '';
+  const clean = /^https?:\/\//i.test(text) ? diagnosticURL(text) : text;
+  if (!clean) return '';
+  const path = /^https?:\/\//i.test(clean) ? new URL(clean).pathname : clean;
+  return diagnosticText(path.replace(/[A-Z0-9._%+-]+(?:@|%40)[A-Z0-9.-]+/ig, '[redacted]'), null).slice(0, MAX_PATH);
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return json({ ok: false, reason: "POST only" }, 405);
@@ -294,7 +367,8 @@ Deno.serve(async (req) => {
   const persistentAllowed = !minimized && (site.legacy || consentState === "granted");
   const deviceId = persistentAllowed ? str(body.device_id, 64) : null;
   const sessionId = persistentAllowed ? str(body.session_id, 64) : null;
-  const device = minimized ? {} : obj(body.device);
+  const sourceBase = site.host ? 'https://' + site.host : null;
+  const device = minimized ? {} : budgetObject(obj(boundedProps(obj(body.device), 0, sourceBase)), 2048);
 
   /* A stable, per-event UUID survives a proxy retry or a fallback from the
      Worker to this Edge Function. Unlike device/session IDs, this identifier
@@ -319,11 +393,11 @@ Deno.serve(async (req) => {
       name,
       // An opt-out is an aggregate event count, not a record of a personal URL
       // or arbitrary client-supplied metadata (which can contain PII/tokens).
-      path: minimized ? "/" : (str(ev.path, MAX_PATH) ?? ""),
-      props: minimized ? {} : obj(ev.props),
+      path: minimized ? "/" : eventPath(ev.path),
+      props: minimized ? {} : eventProps(name, ev.props, sourceBase),
       // The referrer is the browser's own report of where it came from, which
-      // is the only place that exists either. It is a claim, and a harmless one.
-      referrer: minimized ? null : str(ev.referrer, MAX_REF),
+      // is the only place that exists either. Queries, fragments and credentials are removed.
+      referrer: minimized ? null : diagnosticURL(str(ev.referrer, MAX_REF), sourceBase),
       // Observed. Never read from the body.
       uid,
       ip,

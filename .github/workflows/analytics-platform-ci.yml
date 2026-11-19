@@ -15,6 +15,14 @@ on:
       - 'workers/mccluster/src/analytics/**'
       - 'supabase/functions/collect/**'
       - 'supabase/migrations/**'
+      - 'supabase/pending/analytics_visitor_event_identity_v6.sql'
+      - 'supabase/pending/analytics_session_evidence_v6.sql'
+      - 'scripts/test/collect-gpc-sanitization.test.mjs'
+      - 'scripts/test/collect-idempotency.test.mjs'
+      - 'supabase/pending/analytics_tenant_history_restrict_v1.sql'
+      - 'scripts/test-analytics-identity-db.mjs'
+      - 'scripts/test/analytics-transport-privacy.test.mjs'
+      - 'scripts/test/playback-measurement.test.mjs'
       - 'scripts/test/analytics-platform.test.mjs'
       - 'scripts/test/account-identity-gate.test.mjs'
       - '.github/workflows/analytics-platform-ci.yml'
@@ -40,6 +48,25 @@ permissions:
   contents: read
 
 jobs:
+  measurement-integrity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Test event privacy, lifecycle, progress and account evidence
+        run: node --test scripts/test/analytics-transport-privacy.test.mjs scripts/test/analytics-outbox.test.mjs scripts/test/playback-measurement.test.mjs workers/mccluster/test/audience-science.test.mjs workers/mccluster/test/analytics-identity-evidence.test.mjs workers/mccluster/test/analytics-forensics.test.mjs scripts/test/collect-gpc-sanitization.test.mjs scripts/test/collect-idempotency.test.mjs
+      - name: Prepare isolated PostgreSQL engine
+        run: npm install --prefix /tmp/analytics-db-qa --ignore-scripts --no-audit --no-fund --no-save @electric-sql/pglite@0.5.10
+      - name: Validate dormant identity and tenant proposals with synthetic data
+        env:
+          PGLITE_MODULE_PATH: /tmp/analytics-db-qa/node_modules/@electric-sql/pglite/dist/index.js
+        run: node scripts/test-analytics-identity-db.mjs
+
   analytics-contract:
     runs-on: ubuntu-latest
     steps:
