@@ -280,6 +280,8 @@ Five pending parts and one rollback, `supabase/pending/20261119100000_eup_enviro
 | `node --test scripts/test/eup-environment-events-sql.test.mjs scripts/test/editorial-ci-partition.test.mjs` | 8/8 pass |
 | `node --test scripts/test/rpc-names-exist.test.mjs scripts/test/mission-import.test.mjs` | 29/29 pass |
 | `PGLITE_MODULE=<PGlite 0.3.14 dist/index.js> node scripts/test/eup-environment-plane.integration.mjs` (S0's plane, after the merge) | 6/6 pass |
+| `nice node --test scripts/test/*.test.mjs` (the whole root suite, once, load average 4.8 rising to 7.9) | 2,776 tests: 2,769 pass, 0 fail, 7 skipped (81.5 s) |
+| `python3 docs/design/equity-uprise-building/production/verify_equity_uprise_repo_sources.py` | 2,898/2,898 checks pass (no new file needs a map entry) |
 
 The native proof shows what one PGlite session cannot: two ingest runs of one provider queue on the provider lock and the second
 changes nothing; one idempotency key on two sessions runs once; an owner hold waits for an ingest that holds the event and is then
