@@ -2106,7 +2106,7 @@
   /* the Equity Uprise tab: every open mission, a page at a time (Load more), the search narrowing them as it narrows the feed;
      a country tapped on the globe never leaves the tab (hu:country): the list narrows to the place's missions under one line
      that says so, and the Environmental Justice panel stays.
-     TWO LISTS, NEVER ONE BY TIME (E=UP slice S0, 2026-11-19; decision D8, default adopted pending Matthew's confirmation): the
+     TWO LISTS, NEVER ONE BY TIME (event timeline slice S0, 2026-11-19; decision D8, default adopted pending Matthew's confirmation): the
      missions first, a page of twenty at a time, then the environmental observations under their own heading, a page at a time with
      their own button. One list by time put the Drawdown missions behind every current observation (USGS alone keeps up to 150 rows
      a day). Each list pages with its own button right under it, so the feed's own Load more stays hidden in this tab. */
@@ -2433,7 +2433,7 @@
       more.hidden = !(state.placeNews.before || (state.placeScope.enabled && state.placeScope.postBefore));
       return;
     }
-    /* the Equity Uprise tab pages its two lists with their own buttons, right under each (paintMissionFeed, E=UP slice S0) */
+    /* the Equity Uprise tab pages its two lists with their own buttons, right under each (paintMissionFeed, event timeline slice S0) */
     if (state.feedScope === "equity") {
       more.hidden = true;
       return;

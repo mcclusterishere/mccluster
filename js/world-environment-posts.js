@@ -13,7 +13,7 @@
      time, labelled as such; else "Time not supplied by provider". A fetch time never stands in the recorded slot.
    - observationPosts: one post per event id, by the system author "Environmental desk", typed "Environmental observation";
      fires are summarised per 1-degree area (never one post per detection); perimeters post with their acres and dates.
-   - interleaveByTime: one list of mission posts and observation posts, newest first (kept for its tests; since E=UP slice S0,
+   - interleaveByTime: one list of mission posts and observation posts, newest first (kept for its tests; since event timeline slice S0,
      2026-11-19, the Equity Uprise tab draws the missions and the observations as two lists, decision D8: js/mnet.js).
    - withObservations: Global carries the significant ones, one after every six other items, each once, never padding. */
 (function (root, factory) {
@@ -192,7 +192,7 @@
     if (rims && typeof rims === 'object' && Array.isArray(rims.top)) {
       for (const r of rims.top.slice(0, 10)) {
         if (!r || typeof r !== 'object' || typeof r.id !== 'string' || !r.id) continue;
-        /* ONE ID FOR THE POST AND THE GLOBE (E=UP slice S0, E2): the globe keys a perimeter wfigs:<NIFC id> (js/environment-layers.js,
+        /* ONE ID FOR THE POST AND THE GLOBE (event timeline slice S0, E2): the globe keys a perimeter wfigs:<NIFC id> (js/environment-layers.js,
            the contract's pick id) while the digest carries NIFC's own id, so Show on globe found nothing for a perimeter post */
         const gid = /^wfigs:/.test(r.id) ? r.id : 'wfigs:' + r.id;
         if (seen.has(gid)) continue;

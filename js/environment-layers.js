@@ -178,7 +178,7 @@
   };
   const legendFor = layer => LEGEND[layer] || '';
   const RIPPLE_LABEL = 'Ripple is illustrative: not a recording of shaking';
-  /* OFF, OUTAGE, THE VISITOR'S NETWORK AND NO DATA, EACH IN ITS OWN WORDS (E=UP slice S0, 2026-11-19): the gate refusing as off (404
+  /* OFF, OUTAGE, THE VISITOR'S NETWORK AND NO DATA, EACH IN ITS OWN WORDS (event timeline slice S0, 2026-11-19): the gate refusing as off (404
      module_disabled: the owner has not turned the layers on), as an outage (503 module_policy_unavailable), every layer route out of
      reach from this browser, and a layer whose provider answered with nothing, which is said rather than left out of the legend */
   const POLICY_LINE = 'Environmental layers are not available right now';

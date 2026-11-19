@@ -3,7 +3,7 @@
    message), the request carries only an accept header, credentials are omitted, nothing is stored in the browser and
    nothing is kept across activations. The Worker's gate is honoured and shown honestly: 503 module_policy_unavailable
    or 404 module_disabled puts every layer in the 'policy' state at once, aborts what is still pending, arms no
-   refresh timer (no retry loop against a disabled module). THE REFUSAL IS REMEMBERED (E=UP slice S0, 2026-11-19; the release
+   refresh timer (no retry loop against a disabled module). THE REFUSAL IS REMEMBERED (event timeline slice S0, 2026-11-19; the release
    review counted 6, 11, 16 and 21 requests after four activations of the tab while the module answered 503): one module policy
    governs every route, so an activation within the hold after a refusal says the same state again and asks nothing (off, 404
    module_disabled, the owner's decision: 5 minutes; outage, 503 module_policy_unavailable: 1 minute), and the first activation

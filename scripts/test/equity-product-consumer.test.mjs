@@ -27,8 +27,17 @@ test('Worker implements product server contracts over the existing auth and pers
   // loadPolicy reads module 'environment' through the one reader, which names the service-only RPC.
   assert.doesNotMatch(source,/implementationPolicy/);assert.doesNotMatch(source,/state\s*:\s*['"`](?:enabled|draining|disabled)['"`]/);
   assert.doesNotMatch(source,/equity-uprise\.module-policy\/v1/);
-  assert.match(source,/loadPolicy:\(\)=>readModulePolicy\(env,fetchImpl,'environment'\)/);
-  assert.match(source,/import \{[^}]*\breadModulePolicy\b[^}]*\} from '\.\/eup\/modules\.js'/);
+  // Changed on purpose 2026-11-19 (event timeline slice S0, docs/control-plane/EUP-EVENT-TIMELINE.md): the request's one policy read
+  // moved to ./world-environment-guard.js, so a never-installed module (the store's EUM01) answers off and the layer routes and the
+  // pinned server share one read. loadPolicy is that read (policyLoader over policyRead); both, and the mutation gate's second read,
+  // still go through the one reader, and the guard holds no policy literal either.
+  assert.match(source,/const read=policyRead\(env,fetchImpl\);/);
+  assert.match(source,/loadPolicy:policyLoader\(read,env,fetchImpl\)/);
+  assert.match(source,/import \{[^}]*\bpolicyLoader\b[^}]*\bpolicyRead\b[^}]*\} from '\.\/world-environment-guard\.js'/);
+  const guard=read('workers/mccluster/src/world-environment-guard.js').toString();
+  assert.match(guard,/import \{ readModulePolicy \} from '\.\/eup\/modules\.js'/);
+  assert.equal((guard.match(/readModulePolicy\(env, fetchImpl, 'environment'\)/g)||[]).length,2,'the request\'s read and the mutation gate\'s second read');
+  assert.doesNotMatch(guard,/state\s*:\s*['"`](?:enabled|draining|disabled)['"`]/);assert.doesNotMatch(guard,/equity-uprise\.module-policy\/v1/);
   const reader=read('workers/mccluster/src/eup/modules.js').toString();
   assert.match(reader,/export async function readModulePolicy\(env, fetchImpl, module\)/);
   assert.match(reader,/call\(env, fetchImpl, plain, 'eup_module_policy_read', \{ p_module: module \}/);
