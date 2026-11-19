@@ -626,6 +626,194 @@ General-news and Drawdown-mission tests are unchanged.
 - Decisions D5, D6, D7 and D20, and the bounds above, as adopted defaults. Nothing was applied, installed, enabled, flagged or
   published.
 
+## S4. The public USGS timeline from the store, behind the same gate
+
+### Present before
+
+At `df5e5a25` (the head this slice started from):
+
+- S1's pending store had its two public reads, gated in SQL by the module policy (`eup_environment_public_events`, a keyset page
+  newest observation first with the tombstones kept, and `eup_environment_public_event`, one event by canonical id or alias with
+  its correction history), but no route called them. S3's ingest could fill the store (flag off) and S2's Control could set the
+  USGS rule.
+- The public feed's `usgs` source was USGS's live all-day summary, read through the pinned product (`environmentFeed`) and the
+  owner's Halo first hop (`normalizeQuake`): ids `usgs:<the live preferred id>`, no revision, no alias, a deleted event simply
+  gone, USGS's own update time dropped.
+- The Equity Uprise tab listed the missions, then "Environmental observations" (S0, decision D8), rebuilt in page memory from the
+  panel's feed every read: no persistence, no history, no deep link. A post said Coverage and Status; Show on globe sent the
+  focus and wrote no address.
+- In the tab the news layer stayed on: the globe read `GET /v1/world/news-heat` every five minutes and a country's card said
+  "news · 24 h" (pinned as intended in `scripts/test/world-news-tint.test.mjs` and `scripts/e2e/environment-world.e2e.mjs`).
+  Behind the sign-in door the shading stepped aside (release review RS-9) but the news itself stayed on.
+
+### Integrated
+
+- **The public routes** (`workers/mccluster/src/world-environment-events.js`, new; committed as `cb5ed65c`):
+  `GET /v1/world/environment/events?since&until&cursor&limit` and `GET /v1/world/environment/events/{id}`, reached through
+  `handleWorldEnvironment` before the layer routes. The module gate runs first (off 404 `module_disabled`, outage 503
+  `module_policy_unavailable`, the store never read while it refuses); every field is whitelisted again, published events and
+  tombstones apart (a tombstone has no coordinates, so no globe object: decision D12, **default adopted pending Matthew's
+  confirmation**); a held event or a hidden provider is 404 `not_available`; store reads are kept at the edge at most 60 s and a
+  burst in one isolate shares one read, a refusal never kept; a deep link's one event counts as a lookup in the per-client limit
+  (`packages/release-policy/globe.mjs` routes `events` and `event`; `world-environment-guard.js`). The module imports one
+  response helper and nothing else; a static test walks the import graph of every public handler (no `intel/`, news pairing,
+  Halo directory, owner route or `core/` module). The contract is `WORLD-ENVIRONMENT-CONTRACT.md`, "The public timeline from
+  the event store".
+- **The feed's quakes from the same store** (`workers/mccluster/src/world-environment.js`): for the public answer of
+  `GET /v1/world/environment` and the planning reads that use it, the `usgs` source is the store's published quakes of the past
+  day (`storeUsgsReader`), so the feed builds the store's canonical ids, and each event carries its `revision`. A store that cannot
+  be read makes the source `unavailable` with its reason (`store_unavailable`, `store_not_applied`, `store_busy`, `not_shown`,
+  `no_reading`; `upstream_error`, `paused` and `not_recent` serve what the store holds as `stale`); USGS's live feed is never
+  read for a second id. The owner's live provider check in Control keeps reading USGS itself. Decision D7 (what qualifies),
+  **default adopted pending Matthew's confirmation**, is the store's own rule.
+- **The timeline in the tab** (`js/world-environment-timeline.js`, new, with one-line hooks in `js/mnet.js` and `mnet.html`):
+  - a post per public event carrying the canonical id (the post id and `globe_id`) and the revision: "M6.1 · <place>" (a
+    magnitude as USGS writes it, one decimal), Observed with how long ago, then a line "Revision 2 · USGS updated <time> ·
+    Retrieved <time>", "Reviewed by USGS" or "Automatic, not yet reviewed by USGS", an official correction in its own line
+    ("Corrected by USGS: magnitude 6.4 → 6.1; review automatic → reviewed"; "Restored by USGS", "Restored to an earlier USGS
+    reading"), a deep-linked event's earlier corrections from its history, and a withdrawal as a tombstone ("Withdrawn by USGS on
+    <date>", or "Withdrawn from the timeline on <date>" for the owner's retraction) whose globe button reads "Withdrawn: not on the
+    globe";
+  - one list with the live posts of the providers the store does not hold yet (NWS, NHC, EONET, FIRMS, WFIGS, CO-OPS), newest
+    first; while the store has older pages, a live post older than the oldest loaded timeline post waits, so what shows is a true
+    prefix; "Show more observations" asks the next page by the cursor;
+  - the missions keep their own list, first and on page one (decision D8, **default adopted pending Matthew's confirmation**);
+  - the timeline is read only after the panel's feed answered (a refusing gate is never asked again: the client already holds
+    the refusal), only while the tab is the scope or a deep link wants an event, at most once a minute, and a failed read is not
+    retried within the minute (the feed's own quakes, the same canonical ids, stay);
+  - the deep link `?feed=equity&event=<id>` opens the tab, marks the event's post (`aria-current="true"`, an ink rule on its
+    leading edge) and points the globe at the same id; an alias or a merge lands on the canonical id with the address replaced,
+    never a new entry; an event further down the list opens the list down to it; an unknown, held or unreadable event says so in
+    one line above the list; a frame that boots after the link spoke is told again on `hu:globe-ready` until it reports the
+    event selected (or the visitor's own pick);
+  - Show on globe on a post the store holds writes the address as one history entry (the same event again adds none); Back and
+    Forward choose from the address again.
+  - `css/world-environment.css`: the lines and the marked post, phone first, no breakpoint needed.
+- **D9: the news layer is off in the tab** (**default adopted pending Matthew's confirmation**). `js/world-news-globe.js` sends
+  `on:false` with `tint:false` while the feed's scope is the Equity Uprise tab: the globe reads no news heat (its five-minute read
+  stops), draws no shading, legend or story pin, and a country's card drops its news count, on the frame's card
+  (`js/world-countries.js`, `newsOff`) and on the page's (`js/mnet.js` place card); leaving the tab reads the counts again and
+  everything comes back as it was. Travel's own off (the tint flag kept) leaves both cards as they were.
+- **Carried release item 6: the door's backdrop goes as quiet as the tab.** While the sign-in door is open the same rule holds
+  (news off, no shading, no counts behind the card); it comes back when the door closes. The door's own "Last 24 hours" card reads
+  the news itself and is unchanged.
+- **The timeline plane** (`scripts/test/support/eup-environment-timeline-plane.mjs`): the real handler over the real policy and the
+  five pending parts in PGlite, the local stand-in for staging (decision D1, **default adopted pending Matthew's
+  confirmation**); a browser test's page origin is allowed beside the World's sites, so the Worker's own CORS rule answers it.
+
+### Touched paths
+
+The Worker part (`cb5ed65c`): `workers/mccluster/src/world-environment-events.js` (new), `workers/mccluster/src/world-environment.js`,
+`workers/mccluster/src/world-environment-guard.js`, `packages/release-policy/globe.mjs`,
+`workers/mccluster/test/world-environment-events.test.mjs` (new), `workers/mccluster/test/world-environment.test.mjs`,
+`workers/mccluster/test/world-environment-guard.test.mjs`, `workers/mccluster/test/world-environment-layers.test.mjs`,
+`scripts/test/support/eup-environment-timeline-plane.mjs` (new), `scripts/test/eup-environment-timeline.integration.mjs` (new),
+`scripts/test/support/eup-environment-plane.mjs`, `scripts/test/eup-environment-plane.integration.mjs`,
+`supabase/pending/live-callers.json`. The client part: `js/world-environment-timeline.js` (new), `js/mnet.js`, `mnet.html` (one
+script tag), `css/world-environment.css`, `js/world-news-globe.js`, `js/action-globe.js`, `js/world-countries.js`,
+`scripts/test/world-environment-timeline.test.mjs` (new), `scripts/e2e/environment-timeline.e2e.mjs` (new),
+`scripts/test/world-news-tint.test.mjs`, `scripts/e2e/environment-world.e2e.mjs`, the timeline plane (an `origins` option). Both:
+`.github/workflows/human-uprise-editorial.yml` (matrix entries `environment-timeline` and `environment-timeline-world`, their paths
+in the filter), `docs/control-plane/WORLD-ENVIRONMENT-CONTRACT.md`, the source map
+(`docs/design/equity-uprise-building/production/equity-uprise-repo-source-map-v2.json` with its generated coverage report) and
+this section.
+
+### Tests
+
+E=UP-only assertions changed on purpose, named in the commits: the Worker part's (`world-environment.test.mjs`: the fake answers
+the store's page and a store read is not a domain write; `world-environment-guard.test.mjs`: no data with the store's empty page,
+the feed asks three providers and the store once; `world-environment-layers.test.mjs`: the route ids gain `events` and `event`;
+S0's plane: a missing function is PGRST202 and USGS says `store_not_applied` there) and, for D9,
+`scripts/test/world-news-tint.test.mjs` (the three assertions that pinned "the news layer itself stays on" in the tab and behind
+the door now pin it off; titles to match; one test added for the card) and `scripts/e2e/environment-world.e2e.mjs` (its
+`tintQuiet` and the two tab checks, by night and by day, now require no counts held and the news off). General-news and
+Drawdown-mission tests are unchanged (`world-news-feed.test.mjs`, `world-mission-posts.test.mjs`, `world-missions-guest.e2e.mjs`).
+
+| Command | Result | Before the change |
+| --- | --- | --- |
+| `cd workers/mccluster && node --import ./test/support/offline-network.mjs --test test/world-environment-events.test.mjs` | 11/11 pass: the gate first; page and tombstone whitelists, value by value; the deep link by alias, tombstone, 404s and invalid ids; store refusals never kept; the 60 s cache and 20 concurrent requests sharing one store read; query validation; the feed's USGS from the store with its revision and no USGS call (the owner's live check still reads USGS); the USGS reasons table; the lookup limit; the static import graph | 0/11 at `df5e5a25` |
+| the same with `test/world-environment.test.mjs test/world-environment-guard.test.mjs test/world-environment-layers.test.mjs` | 79/79 pass at the merged head | |
+| `PGLITE_MODULE=<PGlite 0.3.14 dist/index.js> node scripts/test/eup-environment-timeline.integration.mjs` (CI `environment-timeline`) | 11/11 pass: store not applied; off before anything; enabled but no reading; E3 a qualifying quake publishes with no news and the M3.1 stays a candidate; news never a provider; a correction is revision 2 and the edge keeps the page a minute; an alias answers the canonical event; a deletion is a tombstone; an owner hold is 404 `not_available`; the cursor walks the timeline once; the gate stays first | 2/11 at `df5e5a25` (only the unchanged gate refusals) |
+| `PGLITE_MODULE=... node scripts/test/eup-environment-plane.integration.mjs` (S0's plane) | 6/6 pass | |
+| `node --test scripts/test/world-environment-timeline.test.mjs` (CI `environment-unit`) | 17/17 pass: posts, corrections and history, tombstones, the brand never written, the merged list and its true prefix, the address, the reads (only after the feed, the tab or a deep link, once a minute, never after a refusal, cleared by a later one), a failed read held a minute, deep links (canonical, alias with the address replaced, held, unknown, unreadable, tombstone), one history entry per chosen event and Back, older pages by the cursor, the globe told again on `hu:globe-ready`, the page's wiring | cannot load at `df5e5a25` (the module does not exist) |
+| `node --test scripts/test/world-news-tint.test.mjs` | 6/6 pass | 4 of 6 fail at `df5e5a25` (the three changed on purpose and the new card test) |
+| `node --test scripts/test/world-gate.test.mjs scripts/test/world-mission-posts.test.mjs scripts/test/rpc-names-exist.test.mjs scripts/test/editorial-ci-partition.test.mjs` | 23/23, 18/18, 3/3, 1/1 | `world-gate.test.mjs`'s door-art test failed once on a rewritten tint expression; the expression was put back as it was (the door's rule is unchanged) |
+| `node --test` over the 70 World, globe, news and environment test files | 698 tests: 695 pass, 2 skipped, 1 fail (that door-art test, before the expression was put back) | |
+| `python3 docs/design/equity-uprise-building/production/verify_equity_uprise_repo_sources.py` | 2,958/2,958 checks pass at the merged head (three new files mapped) | failed on the unmapped files |
+| `nice -n 15 node --test scripts/test/*.test.mjs` (the root suite, once, at the merged head; load 1.65 rising to 2.92) | 2,934 tests: 2,927 pass, 0 fail, 7 skipped (58.4 s) | |
+
+### Browser runs
+
+Chromium only (decision D18: never a claim about Safari or a device), one browser at a time under the shared lock.
+
+- `PGLITE_MODULE=<PGlite 0.3.14 dist/index.js> CESIUM_DIR=<Build/Cesium of 1.131> node scripts/e2e/environment-timeline.e2e.mjs`
+  (CI `environment-timeline-world`): **every check passed** (72) on its last two runs, the last at the merged head (100 to 110 s
+  each). At 390, 820 and 1280: the deep link opens the tab and lists the store's events newest first, each once by its canonical
+  id; the missions' own list first and whole; the linked post marked (`aria-current`) with its revision; the corrected event's
+  title, review, times and "Corrected by USGS: magnitude 6.4 → 6.1; review automatic → reviewed"; the tombstone "Withdrawn by USGS
+  on <date>" with its globe button disabled; the globe selecting the same id and drawing only the three published quakes; D9 (news
+  off, no shading, no news-heat read by the globe; a country picked in the tab shows missions, posts and members only); Show on
+  globe as one history entry, none for the same event again, Back marking the linked event on the page and on the globe; leaving
+  the tab bringing the news back; Global's cadence; no sideways scroll at 390; no page errors. Once: an alias landing on the
+  canonical id with the address replaced (one `replaceState`, no `pushState`), its post saying "Corrected by USGS: magnitude 6.6 →
+  6.3; magnitude type mi → mww; ..."; an unknown event's one line; the gate refusing (module disabled) with no timeline read at
+  all; the door at 1280 taking the news off and giving it back. Its first two runs failed, for reasons in the test, not the page:
+  the Worker's CORS answered `https://mccluster.org` to the test page's origin (the plane now allows that origin, as the Worker
+  allows its sites), and the country pick was posted from the frame to itself (the frame hears only its parent). Screenshots
+  (night, device scale 1): the deep-linked tab and the marked posts at each width, the quiet door at 1280; kept with the run's
+  output, not committed.
+- `CESIUM_DIR=... node scripts/e2e/environment-world.e2e.mjs` (changed on purpose for D9 and S0's request check): 231/231 checks
+  passed on its re-run at the merged head (load 3.2 rising to 5.8). Its first run, before the request check was changed, failed
+  four: that check at each width (the page's `/events` read, now allowed on purpose) and, at 1280, "with the tour paused the globe
+  renders on demand" (a `camera` hold read just after every hold had gone, load about 4: the timing-sensitive check S5 recorded;
+  on the re-run every hold went within 0.8 to 1.2 s of the pause).
+- `node scripts/e2e/world-missions-guest.e2e.mjs` (unchanged): 279/279 checks passed.
+- A mistake, recorded: once, a command meant to run one unit test file ran `node --test` with no file list (a search found nothing),
+  which runs every test the repository holds, including the Core browser executor's own Chromium tests, while this slice's e2e
+  chain held the browser lock; two browsers ran at once for about a minute. It ended by itself and left nothing running.
+
+### Deviations from the plan, with reasons
+
+- **A new client module beside the posts module.** The plan named `js/world-environment-posts.js` for the timeline's posts; they
+  are built in a new `js/world-environment-timeline.js` (pure parts and the page's controller), and the posts module is unchanged.
+  The store's public shape is not the panel's feed shape, and a new file with one-line hooks keeps the hunks in `js/mnet.js` and
+  `mnet.html` small while other work edits them.
+- **The browser proof is a new suite.** The plan put the deep link, the corrected and withdrawn events, the missions on page one
+  and Global's cadence in `scripts/e2e/environment-world.e2e.mjs`; they are in `scripts/e2e/environment-timeline.e2e.mjs`, which
+  answers every environmental read with the real Worker handler over the real pending SQL (a fixture route could not prove the
+  path from the store to the post and the globe). `environment-world.e2e.mjs` changed only on purpose: D9's tint checks, and S0's
+  "the page never requested a layer route", which now allows the page's own timeline read (`/events`); its Global cadence check
+  runs unchanged and passes.
+- **The store-held ids only.** Show on globe writes the address for an event the store holds (USGS today, by canonical id, from
+  the tab or from Global); a live post of another provider writes none, since its id is not the store's and a deep link to it
+  would answer "not on the timeline".
+- **A deep link to an event older than the globe's day** marks the post; the globe has no object for it (it draws the feed's
+  day), so its pending focus expires after 30 s, as any focus on an id the globe lacks does.
+- **The door's backdrop** (carried release item 6) goes as quiet as the tab: the news layer off, not only the shading. Whether the
+  environmental layers or the tour should also pause behind the door is a question for Matthew; nothing else changed there.
+- **Magnitudes** on the timeline's posts are written as USGS writes them (one decimal: "M5.0"); the live posts keep the feed's own
+  formatting ("M5"), so a whole-number quake reads one way in Global and the other in the tab until S9 brings the other sources
+  onto the same model.
+- **The panel's words for the new USGS reasons** (`store_not_applied`, `not_shown`, `no_reading`, `not_recent`, ...) are not
+  added: the panel is vendored (`vendor/equity-uprise/product-source.lock.json`) and shows an unknown reason as its code. A local
+  patch is a later slice's (D19).
+- **The e2e was not run at the pre-change head.** The fail-before proofs are the unit and integration tests (above); the browser
+  suite needs the new routes and module to exist at all.
+
+### Waiting for Matthew's separate go
+
+- The merge of this branch through a pull request he approves (also the Worker's deploy). Until then nothing here is live.
+- Applying S1's five parts in production (`supabase/pending/PROMOTION-ORDER.md` section 12), each on his approval of its exact
+  text. Until then the routes answer 503 `events_unavailable` (`store_not_applied`) once the module is on, and the feed's USGS
+  source says the same.
+- Setting the USGS rule in Control (his command), turning the ingest on (`EUP_ENVIRONMENT_USGS_INGEST_ENABLED`, a committed
+  configuration change: stays `"false"`), and installing then enabling the environment module (D3). Until the module is enabled
+  every route here answers 404 `module_disabled` and the tab shows S0's honest line.
+- Decisions D7, D8, D9 and D12 as used here, D1's local stand-in for staging, and the carried door item's reading (news off behind
+  the door; the environmental layers there unchanged): defaults adopted pending his confirmation.
+- Safari and real devices (D18): this slice ran in Chromium only.
+- Nothing was applied, installed, enabled, flagged, published or deployed by this slice.
+
 ## S5. Recognisable quakes, the expanding ripple, a cancellable push, contours and documented rupture
 
 ### Present before
