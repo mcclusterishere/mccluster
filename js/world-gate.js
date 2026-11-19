@@ -339,6 +339,12 @@
     btn.textContent = show ? "Hide" : "Show";
   }
   function hideAll() { var el = door(); if (el) each(el.querySelectorAll("[data-reveal]"), function (b) { setReveal(b, false); }); }
+  /* a closed door keeps no typed password: the next person at this screen could open it again and press Show (security
+     review SEC-4, 2026-11-19). The typed email stays. The submit reads the password before any close, so this never races it. */
+  function clearPasswords() {
+    ["mnPassword", "mnPassword2"].forEach(function (id) { var n = $(id); if (n) n.value = ""; });
+    rules();
+  }
   function rules() {
     var p = $("mnPassword"), p2 = $("mnPassword2"), hint = $("mnPasswordHint"), match = $("wgMatch");
     if (hint && p) hint.setAttribute("data-met", String(p.value || "").length >= 8 ? "true" : "false");
@@ -460,6 +466,7 @@
     el.classList.add("is-leaving");
     el.style.pointerEvents = "none";
     hideAll();
+    clearPasswords();
     dropDoor(kind);
     if (reduced() || doc.visibilityState === "hidden") finishHide();
     else gate.hideTimer = setTimeout(finishHide, LEAVE_MS);

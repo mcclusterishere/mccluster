@@ -81,8 +81,9 @@ mission: ". On a phone the way back reads "← Back" (the World's "← Back to t
   tapped. When the keyboard does rise, the door follows the visual viewport and the field being typed in stays in view.
 - **Closing.** The Back pill, Escape (a filled field lets go first; nothing while composing; the privacy notice's own Escape
   is its own), a tap on the scrim, the phone's Back, the mission card (a hand-off), a sign-in that worked. Inert comes off at
-  once; the sheet falls for 220 ms; focus goes back to what opened the door; the typed email stays; passwords are hidden
-  again. The World is where it was: no scroll to the top. A door asked for by a mission's Join goes back into that mission
+  once; the sheet falls for 220 ms; focus goes back to what opened the door; the typed email stays; passwords are emptied
+  and hidden again, so the next person at the same screen finds nothing to Show (security review SEC-4, 2026-11-19). The
+  World is where it was: no scroll to the top. A door asked for by a mission's Join goes back into that mission
   (its sheet opens again, `?mission=` kept), by the Back pill, Escape, the scrim and the phone's Back alike.
 - **History.** One entry while open (`{mccDoor: 1}`, same URL). A close from the page steps back over it; the phone's Back
   is the close; a hand-off or a success replaces it, so a later Back never reopens the door.

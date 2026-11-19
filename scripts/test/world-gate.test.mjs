@@ -506,6 +506,31 @@ test('Show / Hide toggles one field, and every field is hidden again on a mode c
   assert.equal(b.pass.type, 'password'); assert.equal(b.show1.getAttribute('aria-label'), 'Show password');
 });
 
+/* security review SEC-4 (2026-11-19): after a refused sign-in and the Back pill the closed door still held all 17 typed
+   characters, and the next person at the same screen could open Join and press Show */
+test('a closed door keeps no typed password, by any way out; the typed email stays and the rules reset', async () => {
+  const b = boot();
+  const type = (input, v) => { input.value = v; input.dispatchEvent({ type: 'input' }); };
+  b.open('create');
+  type(b.email, 'member@example.invalid');
+  type(b.pass, 'correct horse 17ch'); type(b.pass2, 'correct horse 17ch');
+  assert.equal(b.hint.getAttribute('data-met'), 'true');
+  b.back.click();
+  assert.equal(b.pass.value, '', 'the password is cleared');
+  assert.equal(b.pass2.value, '', 'and its confirmation');
+  assert.equal(b.email.value, 'member@example.invalid', 'the email stays');
+  assert.equal(b.hint.getAttribute('data-met'), 'false', 'the ring is empty again');
+  b.open('signin');
+  b.show1.click();
+  assert.equal(b.pass.type, 'text');
+  assert.equal(b.pass.value, '', 'Show reveals nothing of the earlier attempt');
+  /* Escape on an empty field closes the door the same way */
+  type(b.pass, 'another attempt');
+  b.show1.click();
+  b.gate.leave();
+  assert.equal(b.pass.value, '', 'cleared when the World closes the door too');
+});
+
 test('the live rules: the ring at eight characters, the match tick, and one announcement each time they come to match', async () => {
   const b = boot();
   b.open('create');
