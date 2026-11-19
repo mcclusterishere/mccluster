@@ -9,6 +9,28 @@ const source = readFileSync(new URL('../../../js/mnet.js', import.meta.url), 'ut
 const MISSION_POSTS = createRequire(import.meta.url)('../../../js/world-mission-posts.js');
 function deferred(){let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});return {promise,resolve,reject};}
 const settle=()=>new Promise(resolve=>setImmediate(resolve));
+/* the World's own address, where a visitor opens a mission from */
+const WORLD='/mnet.html?view=feed';
+/* the tab's session history, as a browser keeps it: each entry's state (a copy, as history.state is) and address, the calls
+   the page makes in order, and Back as a browser runs it, later and in a task of its own: the entry before becomes current and
+   popstate is dispatched with its state. press() is the phone's Back button: the same step, not a call the page makes. */
+function sessionHistory(href,dispatch){
+  const entries=[{state:null,url:href}],calls=[];
+  let index=0;
+  const copy=state=>state==null?null:structuredClone(state);
+  const step=()=>{if(index===0)return;index--;dispatch({type:'popstate',state:copy(entries[index].state)});};
+  return {
+    calls,
+    get index(){return index;},
+    get length(){return entries.length;},
+    get state(){return copy(entries[index].state);},
+    address(){return entries[index].url;},
+    pushState(state,_title,url){calls.push(['pushState',url]);entries.splice(index+1,entries.length,{state:copy(state),url});index++;},
+    replaceState(state,_title,url){calls.push(['replaceState',url]);entries[index]={state:copy(state),url};},
+    back(){calls.push(['back']);setImmediate(step);},
+    press(){setImmediate(step);}
+  };
+}
 /* a piece of the page, from the line that starts with `from` to the line that starts with `to` */
 function slice(from,to){
   const start=source.indexOf(from),end=source.indexOf(to,start+from.length);
@@ -18,8 +40,8 @@ function slice(from,to){
 /* the page's own first state of the mission feed, so the harness cannot drift from it */
 const MISSION_FEED=(()=>{const m=/\n\s*missionFeed: (\{[^\n]*\}),\n/.exec(source);assert.ok(m,'the page declares state.missionFeed');return m[1];})();
 class HarnessURL extends URL{static revokeObjectURL(){}}
-function harness(){
-  const handlers={};
+function harness({href=WORLD}={}){
+  const handlers={},listeners={};
   const nodes=new Map();
   function el(id){
     if(!nodes.has(id))nodes.set(id,{id,hidden:false,disabled:false,value:'',textContent:'',innerHTML:'',checked:false,open:false,focus(){},closest(){return null;},showModal(){this.open=true;},close(){this.open=false;},addEventListener(type,fn){handlers[id+':'+type]=fn;},querySelector(){return el('proofSubmit');}});
@@ -29,7 +51,10 @@ function harness(){
   const state={user:{id:'user-1'},guest:false,boot:{next_step:'ready'},stall:'',missionFeed:vm.runInNewContext('('+MISSION_FEED+')')};
   const session={access_token:'fixture-mission-session'};
   const missions={all:[],current:null,assignment:null,stats:{},campaign:'',content:'',source:'',attributedMission:'',liveSession:'',liveMission:'',returnHref:'',proofFile:null,proofPreview:''};
-  const stored=new Map(),hist=[];
+  const stored=new Map();
+  /* the page reads its address once as it loads (a shared link's ?mission=), and keeps the dialog's place in the history */
+  const history=sessionHistory(href,event=>(listeners[event.type]||[]).forEach(fn=>fn(event)));
+  const location={origin:'https://mccluster.org',get search(){return new URL(history.address(),this.origin).search;},assign(){}};
   const context={
     /* missions are public (owner, 2026-11-17): js/mnet.js has no switch for them, so the flow runs as it ships */
     missions,$:el,state,MCC:{session(){return session;}},MISSION_FIELDS:'id,title,status',MISSION_POSTS,
@@ -42,14 +67,16 @@ function harness(){
     fundState(){return Promise.resolve({open:false,note:''});},fundLineHtml(){return '';},
     missionHref:id=>'/mnet.html?mission='+id,loadMissions(){},
     uploadProofFile(){return Promise.resolve(null);},
-    history:{replaceState(a,b,url){hist.push(url);}},location:{assign(){},origin:'https://mccluster.org'},
+    history,location,
     sessionStorage:{getItem(k){return stored.has(k)?stored.get(k):null;},setItem(k,v){stored.set(k,String(v));}},
-    window:{MCC_TRACK(){}},URL:HarnessURL,
+    window:{MCC_TRACK(){},history,addEventListener(type,fn){(listeners[type]||=[]).push(fn);}},URL:HarnessURL,URLSearchParams,
     encodeURIComponent,Promise,console
   };
   const block=slice('  var missionOpenVersion=0;','  /* A shared mission link opens that mission');
-  /* the × button's close, which the dialog's cancel (Escape) runs too: the mission leaves the address */
-  const closeBlock=slice('  function closeMission(){','  var missionOpenVersion=0;');
+  /* the dialog's close and the history it keeps (release review RS-6): the shared link it landed on, the entry an open from the
+     World pushes, the × and Escape stepping back over it, and the phone's Back (popstate) closing it */
+  const closeBlock=slice('  var LANDING_MISSION=','  var missionOpenVersion=0;');
+  for(const part of ['  function missionAddress(','  function closeMission('])assert.ok(closeBlock.includes(part),'the dialog\'s history block still has '+part.trim());
   const fetchBlock=slice('  function fetchMission(id){','  function clearMissionCapture(){');
   const missionDisplay=slice('  function publicMission(m) {','  var MISSION_FIELDS=');
   // Exercise the real account predicates; only the UI prompt and transport are doubles.
@@ -62,7 +89,7 @@ function harness(){
   const feedConstants=slice('  var MISSION_ID = /^[0-9a-f-]{36}$/i;','  /* the open missions, read once');
   const detailsBlock=slice('  function loadMissionDetails(ids) {','  /* the details of what is on screen now;');
   vm.runInNewContext(escBlock+linkBlock+feedConstants+detailsBlock+sessionBlock+stepBlock+missionDisplay+fetchBlock+closeBlock+block+';globalThis.actions={openMission,joinMission,submitMissionProof,creditLinkHtml,closeMission};',context);
-  return {actions:context.actions,missions,calls,el,state,session,stored,hist};
+  return {actions:context.actions,missions,calls,el,state,session,stored,history};
 }
 const MISSION_A='0e1f0000-0000-4000-8000-00000000000a',MISSION_B='0e1f0000-0000-4000-8000-00000000000b';
 const detailReads=h=>h.calls.filter(c=>c.kind==='rest'&&/^action_mission_details\?/.test(c.path));
@@ -275,7 +302,9 @@ test('the dialog escapes every word of a mission and its details, and links only
 });
 /* ESCAPE IS THE × (review of W2, R5): the dialog's cancel runs the same close as its × button, so the mission leaves the address
    and neither a reload nor a guest's later sign-in brings back a mission the visitor dismissed; a mission still opening when
-   the dialog is dismissed never draws */
+   the dialog is dismissed never draws. Since release review RS-6 the mission leaves the address one of two ways: a mission opened
+   in the World has an entry of its own, which the close steps back over (history.back()) and whose popstate changes nothing
+   more; a mission landed on from a shared link replaced the address, which the close brings to rest (missionRestAddress()) */
 test('Escape closes the dialog as the × does: the mission leaves the address, and a late answer draws nothing',async()=>{
   assert.match(source,/\$\("mnMissionClose"\)\.addEventListener\("click",closeMission\);[\s\S]{0,700}\$\("mnMissionDialog"\)\.addEventListener\("cancel",function\(\)\{closeMission\(\);\}\);/,'the dialog\'s cancel runs closeMission, as the × button does');
   const h=harness();
@@ -286,10 +315,19 @@ test('Escape closes the dialog as the × does: the mission leaves the address, a
   detailReads(h)[0].resolve([]);
   await opening;
   assert.equal(h.el('mnMissionDialog').open,true);
-  assert.equal(h.hist.at(-1),'/mnet.html?mission='+MISSION_A,'the open mission is in the address');
+  assert.equal(h.history.address(),'/mnet.html?mission='+MISSION_A,'the open mission is in the address');
+  assert.equal(h.history.length,2,'on an entry of its own, over the World\'s');
+  assert.equal(h.history.state.mccMission,MISSION_A);
   h.actions.closeMission();
   assert.equal(h.el('mnMissionDialog').open,false);
-  assert.equal(h.hist.at(-1),'/mnet.html','and out of it once dismissed');
+  assert.deepEqual(h.history.calls.at(-1),['back'],'the close steps back over the mission\'s entry');
+  const reads=h.calls.length,made=h.history.calls.length;
+  await settle();
+  assert.equal(h.history.address(),WORLD,'and out of the address once dismissed: the visitor\'s own is back');
+  assert.equal(h.history.index,0);
+  assert.equal(h.el('mnMissionDialog').open,false,'the popstate that follows does not open it again');
+  assert.equal(h.calls.length,reads,'nor ask for the mission again');
+  assert.equal(h.history.calls.length,made,'nor navigate again');
   const late=h.actions.openMission(MISSION_B);
   h.calls.at(-1).resolve([{id:MISSION_B,title:'B',status:'open',skills:[]}]);
   await settle();
@@ -298,5 +336,64 @@ test('Escape closes the dialog as the × does: the mission leaves the address, a
   await late;
   assert.equal(h.el('mnMissionDialog').open,false,'dismissed while opening: it stays closed');
   assert.notEqual(h.el('mnMissionTitle').textContent,'B');
-  assert.equal(h.hist.at(-1),'/mnet.html');
+  assert.equal(h.history.address(),'/mnet.html');
+  assert.equal(h.history.index,0,'and no entry was pushed for it');
+  /* a mission landed on from a shared link: the landing replaced the address, so there is no entry to step back over */
+  const s=harness({href:'/mnet.html?mission='+MISSION_A});
+  s.state.user=null;s.state.guest=true;
+  const landing=s.actions.openMission(MISSION_A);
+  s.calls[0].resolve([{id:MISSION_A,title:'A',status:'open',skills:[]}]);
+  await settle();
+  detailReads(s)[0].resolve([]);
+  await landing;
+  assert.equal(s.el('mnMissionDialog').open,true);
+  assert.equal(s.history.address(),'/mnet.html?mission='+MISSION_A);
+  assert.equal(s.history.length,1,'the landing pushed nothing: its Back leaves as the link came');
+  assert.equal(s.history.state,null);
+  s.actions.closeMission();
+  await settle();
+  assert.equal(s.el('mnMissionDialog').open,false);
+  assert.equal(s.history.address(),'/mnet.html','the mission leaves the address: it comes to rest');
+  assert.ok(!s.history.calls.some(c=>c[0]==='back'),'with no entry of its own to step back over');
+});
+/* THE PHONE'S BACK (release review RS-6): the browser pops the entry the dialog pushed, and the page closes the dialog where the
+   visitor was with no navigation of its own; an answer still out for the mission it closed draws nothing */
+test('the phone\'s Back closes the dialog with no second navigation, and an answer still out draws nothing',async()=>{
+  const h=harness();
+  const opening=h.actions.openMission(MISSION_A);
+  h.calls[0].resolve([{id:MISSION_A,title:'A',status:'open',skills:[]}]);
+  await settle();
+  detailReads(h)[0].resolve([]);
+  await settle();
+  assert.equal(h.el('mnMissionDialog').open,true);
+  assert.equal(h.history.state.mccMission,MISSION_A,'opening from the World pushed the dialog\'s own entry');
+  const lookup=h.calls.find(c=>c.kind==='rest'&&c.path.startsWith('action_mission_assignments?mission_id=eq.'+MISSION_A));
+  assert.ok(lookup,'the member\'s assignment is still being read');
+  const made=h.history.calls.length;
+  h.history.press();
+  await settle();
+  assert.equal(h.el('mnMissionDialog').open,false,'Back closed the dialog');
+  assert.equal(h.history.address(),WORLD,'where the visitor was');
+  assert.deepEqual(h.history.calls.slice(made),[],'and the page made no navigation of its own: no back(), replaceState or pushState');
+  lookup.resolve([{id:'assignment-A',status:'in_progress'}]);
+  await opening;
+  assert.equal(h.missions.assignment,null,'the answer for the closed mission draws nothing');
+});
+/* the × hands closeMission its click event (the listener is closeMission itself): an event is not the browser's Back, so the ×
+   steps back over the dialog's entry as Escape does */
+test('the × click event is not taken for the browser\'s Back: the × steps back over the dialog\'s entry',async()=>{
+  assert.match(source,/\$\("mnMissionClose"\)\.addEventListener\("click",closeMission\);/,'the × passes its click event to closeMission');
+  const h=harness();
+  h.state.user=null;h.state.guest=true;
+  const opening=h.actions.openMission(MISSION_A);
+  h.calls[0].resolve([{id:MISSION_A,title:'A',status:'open',skills:[]}]);
+  await settle();
+  detailReads(h)[0].resolve([]);
+  await opening;
+  h.actions.closeMission({type:'click',target:h.el('mnMissionClose')});
+  assert.equal(h.el('mnMissionDialog').open,false);
+  assert.deepEqual(h.history.calls.at(-1),['back'],'the × steps back over the dialog\'s entry');
+  await settle();
+  assert.equal(h.history.address(),WORLD);
+  assert.equal(h.history.state,null,'and no mission entry is left current');
 });
