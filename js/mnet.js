@@ -45,6 +45,9 @@
     /* the environmental observation posts (js/world-environment-posts.js), by id and in the order the panel's feed gave them; whether
        the module is unavailable right now and the gate's code when it refused */
     environment: { posts: {}, order: [], unavailable: false, code: null },
+    /* a line the World owes the visitor that the feed's own reads must not wipe: a shared ?mission= link whose mission is gone
+       (release review RS-8); dropped when the visitor picks another tab */
+    feedNotice: "",
     /* a signed-out visitor on the World screen: public feed, no actions */
     guest: false
   };
@@ -131,6 +134,8 @@
     node.classList.toggle("is-error", kind === "error");
     node.classList.toggle("is-ok", kind === "ok");
   }
+  /* the feed's line back to rest: empty, or the notice the World still owes the visitor (state.feedNotice) */
+  function clearFeedStatus() { setStatus($("mnFeedStatus"), state.feedNotice || "", state.feedNotice ? "error" : ""); }
   /* One telemetry seam for the whole Equity Uprise. Product writes remain
      authoritative in the database; these events describe the journey around
      them so Control can answer which surfaces actually move people to act. */
@@ -554,8 +559,13 @@
     /* missions.deepLinked stays unset: signing in from this dialog must reopen the mission (openDeepLinkedMission) */
     if (id && /^[0-9a-f-]{36}$/i.test(id)) {
       setFeedScope("equity");
-      /* a mission that is gone says so on the World, not in the members' Missions room */
-      Promise.resolve(openMission(id)).then(function (r) { if (r && r.opened === false) setStatus($("mnFeedStatus"), r.message || "That mission is not available any more.", "error"); });
+      /* a mission that is gone says so on the World, not in the members' Missions room, and keeps saying so after the feed's
+         own reads answer (they clear the line; review RS-8 found it wiped before anyone could read it) */
+      Promise.resolve(openMission(id)).then(function (r) {
+        if (!r || r.opened !== false) return;
+        state.feedNotice = r.message || "That mission is not available any more.";
+        clearFeedStatus();
+      });
       return;
     }
     if (q.get("view") === "missions") setFeedScope("equity");
@@ -1486,6 +1496,8 @@
   function setFeedScope(scope) {
     var was = state.feedScope || "global";
     state.feedScope = FEED_SCOPES.indexOf(scope) >= 0 ? scope : "global";
+    /* another tab chosen: the gone mission's line has been read, and the line comes back to rest */
+    if (state.feedNotice && state.feedScope !== was) { state.feedNotice = ""; clearFeedStatus(); }
     paintFeedScope();
     if (was !== state.feedScope) showScopeTab();
     if (state.feedScope === "equity") showCompletedSeries();
@@ -2442,7 +2454,7 @@
       state.nextBefore = null;
       state.feed = [];
       state.feedAnswered = false;
-      setStatus($("mnFeedStatus"), "");
+      clearFeedStatus();
       if (!$("mnFeed").children.length) $("mnFeed").innerHTML = skeleton(3);
     }
     var publicRead = state.guest || !!needsStep() || !!state.stall;
@@ -2480,7 +2492,7 @@
         if (flags.some(Boolean)) { loadMissionStats(); renderFeed(false); }
       });
       paintMore();
-      setStatus($("mnFeedStatus"), "");
+      clearFeedStatus();
     }).catch(function (e) {
       state.feedAnswered = true;
       setStatus($("mnFeedStatus"), e.message || "Could not load the feed.", "error");
@@ -4397,13 +4409,44 @@
     if($("mnMissionProofType"))$("mnMissionProofType").value=String(file.type||"").indexOf("video/")===0?"video":"photo";
     setStatus($("mnMissionDialogStatus"),"Captured. Review it, add any detail you want, then submit.","ok");
   }
-  function closeMission(){
+  /* THE PHONE'S BACK CLOSES A MISSION'S DIALOG (release review RS-6, 2026-11-19), the door's way (js/world-gate.js): opening a
+     mission from the World pushes one entry that carries mccMission; Back pops it and the dialog closes; the × and Escape step
+     back over it, so the address is the visitor's own again. Only the landing of a shared ?mission= link replaces the address,
+     so Back from there leaves as the link came. */
+  var LANDING_MISSION=(function(){try{return new URLSearchParams(location.search).get("mission")||"";}catch(_){return "";}})();
+  var missionEntry={landed:false,expectPop:false,before:""};
+  function missionRestAddress(){return "/mnet.html"+(missions.campaign?"?view=missions&campaign="+encodeURIComponent(missions.campaign):"");}
+  function missionAddress(id){
+    var h=window.history,st=h&&h.state,href=missionHref(id);
+    if(!h)return;
+    try{
+      if(st&&st.mccMission){h.replaceState(Object.assign({},st,{mccMission:id}),"",href);return;}
+      if(!missionEntry.landed&&id===LANDING_MISSION){missionEntry.landed=true;h.replaceState(st||null,"",href);return;}
+      /* the address a Join kept for a sign-in that was not needed goes back to where the visitor was, under the new entry */
+      if(missionEntry.before){h.replaceState(st||null,"",missionEntry.before);missionEntry.before="";}
+      h.pushState(Object.assign({},st||{},{mccMission:id}),"",href);
+    }catch(_){}
+  }
+  function closeMission(fromHistory){
     missionOpenVersion++;
     var dlg=$("mnMissionDialog");if(dlg&&dlg.open)dlg.close();
     clearMissionCapture();
     if(missions.returnHref){location.assign(missions.returnHref);return;}
-    try{history.replaceState(null,"","/mnet.html"+(missions.campaign?"?view=missions&campaign="+encodeURIComponent(missions.campaign):""));}catch(_){}
+    if(fromHistory===true)return;
+    var st=window.history&&history.state;
+    if(st&&st.mccMission){missionEntry.expectPop=true;try{history.back();}catch(_){missionEntry.expectPop=false;}return;}
+    try{history.replaceState(null,"",missionRestAddress());}catch(_){}
   }
+  window.addEventListener("popstate",function(e){
+    var st=e&&"state" in e?e.state:history.state,dlg=$("mnMissionDialog");
+    if(missionEntry.expectPop){
+      missionEntry.expectPop=false;
+      /* stepped back onto an older mission entry (a sign-in's hand-off left one under the door's): the address comes to rest */
+      if(st&&st.mccMission&&dlg&&!dlg.open){var rest=Object.assign({},st);delete rest.mccMission;try{history.replaceState(Object.keys(rest).length?rest:null,"",missionRestAddress());}catch(_){}}
+      return;
+    }
+    if(dlg&&dlg.open&&!(st&&st.mccMission))closeMission(true);
+  });
   var missionOpenVersion=0;
   var ANTISOCIAL_ID="a17050c1-a551-4c5c-80c1-5a1750c1a001",antisocialLevel=1,antisocialVersion=0;
   var ANTISOCIAL_TITLES=["High Five","Five High Fives","Make Something Together"];
@@ -4597,7 +4640,7 @@
       if(!$("mnMissionDialog").open)$("mnMissionDialog").showModal();
       var credit=atCredit&&$("mnMissionCredit");
       if(credit){credit.focus({preventScroll:true});try{credit.scrollIntoView({block:"center"});}catch(_){}}
-      try{history.replaceState(null,"",missionHref(m.id));}catch(_){}
+      missionAddress(m.id);
       /* a guest is asked to sign in only where Join is offered: a paused or closed mission (the public may read those too) keeps
          the line that says it takes nobody new */
       if(!state.user||!state.user.id){if(open)setStatus($("mnMissionDialogStatus"),"Sign in to join this mission.");return {opened:true};}
@@ -4787,8 +4830,13 @@
   function acceptWorldMission(m){
     prepareWorldMission(m.id);
     /* Retain the selected mission through auth/onboarding. Returning opens
-       its real workflow; it does not silently submit another acceptance. */
-    try{history.replaceState(null,"",missionHref(m.id));}catch(_){}
+       its real workflow; it does not silently submit another acceptance.
+       Where the visitor was is remembered, so a member who needs no sign-in
+       gets that address back under the mission's own entry (missionAddress). */
+    try{
+      if(!/[?&]mission=/.test(location.search))missionEntry.before=location.pathname+location.search+location.hash;
+      history.replaceState(history.state,"",missionHref(m.id));
+    }catch(_){}
     if(state.guest||!sessionToken()){
       askToSignIn("mission");return Promise.resolve({accepted:false,message:"Sign in to continue with “"+m.title+"”."});
     }

@@ -776,14 +776,79 @@ try {
       const opened = await page.evaluate(() => new URL(location.href).searchParams.get('mission'));
       await page.keyboard.press('Escape');
       await page.waitForFunction(() => !document.getElementById('mnMissionDialog').open, null, { timeout: 5000 }).catch(() => {});
+      /* the dialog's own entry is stepped back over (release review RS-6), so the address is the visitor's own again */
+      await page.waitForFunction(() => !new URL(location.href).searchParams.get('mission'), null, { timeout: 5000 }).catch(() => {});
       const after = await page.evaluate(() => ({ open: document.getElementById('mnMissionDialog').open, href: location.pathname + location.search, feed: !document.getElementById('mnFeedView').hidden }));
-      check(scope, 'Escape closes the dialog as the × does: the mission leaves the address and the World stays', opened === COAL.row.id && !after.open && after.href === '/mnet.html' && after.feed, { opened, after });
+      check(scope, 'Escape closes the dialog as the × does: the mission leaves the address, the visitor\'s own comes back, and the World stays', opened === COAL.row.id && !after.open && after.href === '/mnet.html?view=feed&daylight=night' && after.feed, { opened, after });
       await page.reload({ waitUntil: 'domcontentloaded' });
       await page.waitForSelector('#mnFeed [data-post-id]', { timeout: 30000 }).catch(() => {});
       await page.waitForTimeout(800);
       check(scope, 'a reload after Escape does not bring the dismissed mission back', await page.evaluate(() => !document.getElementById('mnMissionDialog').open && !new URL(location.href).searchParams.get('mission')));
       const heard = noise(world);
       check(scope, 'zero console errors and no 4xx', heard.console.length === 0 && heard.bad.length === 0, heard);
+      check(scope, 'no JavaScript errors', errors.length === 0, errors);
+    } finally { await ctx.close(); }
+  }
+
+  /* ---------- the mission dialog is named by its title, and the phone's Back closes it (release review RS-5, RS-6) ----------
+     Details pushes one entry, the door's way: one Back closes the dialog and leaves the visitor on the World where they were, a
+     second Back leaves; the × steps back over the entry. A shared link's landing replaces instead, so its Back leaves as it came. */
+  {
+    const scope = 'guest-dialog-back-390';
+    const { ctx, page, errors } = await open(VIEWPORTS[0], '/mnet.html?view=feed&daylight=night');
+    try {
+      await page.waitForSelector(`#mnFeed [data-mission-post="${COAL.row.id}"] [data-mission-details]`, { timeout: 30000 });
+      const before = await page.evaluate(() => ({ href: location.pathname + location.search, length: history.length }));
+      await page.click(`#mnFeed [data-mission-post="${COAL.row.id}"] [data-mission-details]`);
+      await page.waitForSelector('#mnMissionDialog[open]', { timeout: 15000 });
+      const named = await page.getByRole('dialog', { name: COAL.row.title }).count();
+      check(scope, 'the mission dialog is named by its title (aria-labelledby, as the accessibility tree reads it)', named === 1 && await page.evaluate(() => document.getElementById('mnMissionDialog').getAttribute('aria-labelledby') === 'mnMissionTitle'), named);
+      const opened = await page.evaluate(() => ({ length: history.length, mission: new URL(location.href).searchParams.get('mission') }));
+      await page.goBack({ waitUntil: 'commit' }).catch(() => {});
+      await page.waitForFunction(() => !document.getElementById('mnMissionDialog').open, null, { timeout: 5000 }).catch(() => {});
+      const back = await page.evaluate(() => ({ open: document.getElementById('mnMissionDialog').open, href: location.pathname + location.search, world: document.documentElement.classList.contains('mn-world-on'), feed: !document.getElementById('mnFeedView').hidden }));
+      check(scope, 'Details pushes one entry; the phone\'s Back closes the dialog and leaves the visitor on the World where they were', opened.length === before.length + 1 && opened.mission === COAL.row.id
+        && !back.open && back.href === before.href && back.world && back.feed, { before, opened, back });
+      await page.click(`#mnFeed [data-mission-post="${COAL.row.id}"] [data-mission-details]`);
+      await page.waitForSelector('#mnMissionDialog[open]', { timeout: 15000 });
+      await page.click('#mnMissionClose');
+      await page.waitForFunction(() => !new URL(location.href).searchParams.get('mission'), null, { timeout: 5000 }).catch(() => {});
+      const shut = await page.evaluate(() => ({ open: document.getElementById('mnMissionDialog').open, href: location.pathname + location.search, state: history.state && history.state.mccMission }));
+      check(scope, 'the × steps back over the dialog\'s entry: no mission in the address, no entry left behind', !shut.open && shut.href === before.href && !shut.state, shut);
+      check(scope, 'no JavaScript errors', errors.length === 0, errors);
+    } finally { await ctx.close(); }
+  }
+  {
+    const scope = 'guest-shared-link-back-390';
+    const { ctx, page, errors } = await open(VIEWPORTS[0], `/mnet.html?mission=${COAL.row.id}&daylight=night`);
+    try {
+      await page.waitForSelector('#mnMissionDialog[open]', { timeout: 30000 });
+      const landed = await page.evaluate(() => ({ state: history.state && history.state.mccMission, mission: new URL(location.href).searchParams.get('mission') }));
+      /* read before leaving: the blank start the Back returns to cannot run this harness's storage set-up, and says so */
+      const worldErrors = errors.slice();
+      /* the tab's history before the link is only its blank start: one Back from the landing leaves the World */
+      await page.goBack({ waitUntil: 'commit' }).catch(() => {});
+      await page.waitForTimeout(400);
+      const left = page.url();
+      check(scope, 'a shared link\'s landing replaces the address instead of pushing: its Back leaves as the link came', !landed.state && landed.mission === COAL.row.id && !/mnet\.html/.test(left), { landed, left });
+      check(scope, 'no JavaScript errors', worldErrors.length === 0, worldErrors);
+    } finally { await ctx.close(); }
+  }
+
+  /* ---------- a shared link to a mission that is gone says so on the World (release review RS-8) ----------
+     The line was written, then wiped by the feed's own reads before anyone could read it. It now stays until another tab is chosen. */
+  {
+    const scope = 'guest-gone-mission-390';
+    const GONE = '0e1f0000-0000-4000-8000-0000000000ff';
+    const { ctx, page, errors } = await open(VIEWPORTS[0], `/mnet.html?mission=${GONE}&daylight=night`);
+    try {
+      await page.waitForSelector('#mnFeed [data-mission-post]', { timeout: 30000 });
+      await page.waitForTimeout(2500);
+      const seen = await page.evaluate(() => ({ scope: window.MCC_FEED_SCOPE.get(), line: document.getElementById('mnFeedStatus').textContent, shown: document.getElementById('mnFeedStatus').getClientRects().length > 0, dialog: document.getElementById('mnMissionDialog').open }));
+      check(scope, 'a link to a mission that is gone lands on the Equity Uprise tab and says so in the feed\'s line, after the feed has loaded', seen.scope === 'equity' && seen.shown && seen.line === 'That mission is not available any more.' && !seen.dialog, seen);
+      await page.click('#mnFeedScope [data-feed-scope="global"]');
+      await page.waitForTimeout(800);
+      check(scope, 'choosing another tab lets the line rest', await page.evaluate(() => document.getElementById('mnFeedStatus').textContent === ''));
       check(scope, 'no JavaScript errors', errors.length === 0, errors);
     } finally { await ctx.close(); }
   }

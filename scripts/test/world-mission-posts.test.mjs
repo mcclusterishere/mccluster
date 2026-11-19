@@ -418,3 +418,70 @@ test('the Action Record says a mission\'s field in words, through the feed\'s ow
   assert.match(card, /<p class="mn__eyebrow">'\+esc\(missionDomainLabel\(m\)\)\+' · difficulty '/);
   assert.match(js, /function missionDomainLabel\(m\)\{var d=\(m&&m\.domain\)\|\|"community";return \(MISSION_POSTS&&MISSION_POSTS\.domainLabel\?MISSION_POSTS\.domainLabel\(d\)/);
 });
+
+/* release review RS-5 and RS-6 (2026-11-19): the mission dialog had no accessible name, and the phone's Back left the World with
+   the dialog open (opening a mission replaced the address; nothing listened for popstate). The dialog is named by its title, and
+   opening a mission from the World pushes one entry, the door's way (js/world-gate.js): Back pops it and the dialog closes, the ×
+   steps back over it, and only a shared link's landing replaces the address. The page's own code, run on a fake history; the
+   browser proof is scripts/e2e/world-missions-guest.e2e.mjs (guest-dialog-back-390, guest-shared-link-back-390, guest-escape-390). */
+test('the mission dialog is named by its title; Back closes it, the × steps back over its entry, a shared link replaces', () => {
+  const html = read('mnet.html'), js = read('js/mnet.js');
+  assert.match(html, /<dialog class="mn__thread" id="mnMissionDialog" aria-labelledby="mnMissionTitle">\s*<div class="mn__thread-head"><strong id="mnMissionTitle">/);
+  const a = js.indexOf('  var LANDING_MISSION='), b = js.indexOf('  var missionOpenVersion=0;');
+  assert.ok(a > 0 && b > a, 'the dialog\'s history block was found');
+  const block = js.slice(a, b);
+  assert.doesNotMatch(js, /history\.replaceState\(null,"",missionHref\(m\.id\)\)/, 'opening a mission no longer replaces the visitor\'s address');
+  assert.match(js, /if\(!\$\("mnMissionDialog"\)\.open\)\$\("mnMissionDialog"\)\.showModal\(\);[^]{0,240}missionAddress\(m\.id\);/);
+  const ID = id(7), ID2 = id(8);
+  function visit(search) {
+    const start = '/mnet.html' + search, entries = [{ state: null, href: start }], heard = [], queued = [];
+    let at = 0;
+    const history = {
+      get state() { return entries[at].state; },
+      pushState(s, _t, href) { entries.splice(at + 1); entries.push({ state: s, href }); at++; },
+      replaceState(s, _t, href) { entries[at] = { state: s, href }; },
+      back() { if (at > 0) { at--; queued.push({ state: entries[at].state }); } }
+    };
+    const dlg = { open: false, close() { this.open = false; } };
+    const window = { history, addEventListener(t, fn) { if (t === 'popstate') heard.push(fn); } };
+    const location = { search, pathname: '/mnet.html', hash: '', assign() { throw new Error('no return address here'); } };
+    const api = new Function('window', 'history', 'location', '$', 'missionHref', 'missions', 'clearMissionCapture', 'URLSearchParams',
+      'var missionOpenVersion=0;\n' + block + '\nreturn { missionAddress: missionAddress, closeMission: closeMission, missionEntry: missionEntry };')(
+      window, history, location, () => dlg, (m) => '/mnet.html?mission=' + m, { returnHref: '', campaign: '' }, () => {}, URLSearchParams);
+    /* the browser fires popstate after back() returns; flush() is that moment */
+    const flush = () => { while (queued.length) { const e = queued.shift(); heard.forEach((fn) => fn(e)); } };
+    const open = (m) => { dlg.open = true; api.missionAddress(m); };
+    return { api, dlg, entries, flush, open, here: () => entries[at], start, back() { history.back(); flush(); } };
+  }
+  /* from the World: one entry pushed; the phone's Back closes the dialog where the visitor was */
+  const w = visit('?view=feed&daylight=night');
+  w.open(ID);
+  assert.equal(w.entries.length, 2, 'opening pushed one entry');
+  assert.equal(w.here().href, '/mnet.html?mission=' + ID);
+  assert.equal(w.here().state.mccMission, ID);
+  w.back();
+  assert.equal(w.dlg.open, false, 'Back closed the dialog');
+  assert.equal(w.here().href, w.start, 'and left the visitor where they were');
+  /* the ×: it steps back over the entry, and the popstate that follows closes nothing twice */
+  w.open(ID);
+  assert.equal(w.entries.length, 2, 'a second open reuses the place of the first entry');
+  w.api.closeMission(); w.flush();
+  assert.equal(w.dlg.open, false);
+  assert.equal(w.here().href, w.start, 'the × stepped back to the visitor\'s address');
+  assert.equal(w.here().state, null);
+  assert.equal(w.api.missionEntry.expectPop, false, 'the expected pop was consumed');
+  /* a shared link's landing replaces (its Back leaves as the link came); a mission opened after that pushes */
+  const s = visit('?mission=' + ID + '&daylight=night');
+  s.open(ID);
+  assert.equal(s.entries.length, 1, 'the landing pushed nothing');
+  assert.equal(s.here().state, null);
+  assert.equal(s.here().href, '/mnet.html?mission=' + ID);
+  s.api.closeMission(); s.flush();
+  assert.equal(s.dlg.open, false);
+  assert.equal(s.here().href, '/mnet.html', 'with no entry of its own, the × rests the address');
+  s.open(ID2);
+  assert.equal(s.entries.length, 2, 'a mission opened after the landing pushes its own entry');
+  s.back();
+  assert.equal(s.dlg.open, false);
+  assert.equal(s.here().href, '/mnet.html');
+});
