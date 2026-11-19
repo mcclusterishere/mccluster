@@ -27,6 +27,7 @@ import { checkoutReceipt } from './commerce/receipt.js';
 import { handleClippingRequest } from './clipping/router.js';
 import { runClipping } from './clipping/runner.js';
 import { collectorEnabled, runScheduledIntelCollectors } from './intel/usgs-collector.js';
+import { runUsgsIngest, usgsIngestEnabled } from './eup/environment/ingest.js';
 import { recentAudit } from './lib/audit.js';
 import { listObservabilityEvents, observeControlRequest, observeScheduled, pruneObservabilityEvents } from './lib/observability.js';
 
@@ -649,6 +650,13 @@ export default {
          returns before any network or database call when off. */
       (collectorEnabled(env) ? observeScheduled(env, ctx, 'intel.usgs_collector', () => runScheduledIntelCollectors(env)) : Promise.resolve(null)).catch((error) => {
         console.error(JSON.stringify({ event: 'intel_usgs_collector_failed', message: error instanceof Error ? error.message : String(error) }));
+      }),
+      /* E=UP environmental events (./eup/environment/ingest.js): the USGS ingest into the pending event store; off unless
+         EUP_ENVIRONMENT_USGS_INGEST_ENABLED is "true", and then returns before any network or store call. */
+      (usgsIngestEnabled(env) ? observeScheduled(env, ctx, 'eup.environment_usgs_ingest', () => runUsgsIngest(env, { scheduledTime: controller?.scheduledTime })) : Promise.resolve(null)).then((report) => {
+        if (report) (report.error ? console.error : console.log)(JSON.stringify({ event: 'eup_environment_usgs_ingest', ...report }));
+      }).catch((error) => {
+        console.error(JSON.stringify({ event: 'eup_environment_usgs_ingest_failed', message: error instanceof Error ? error.message : String(error) }));
       })
     ]));
   }

@@ -52,6 +52,7 @@
 --                                    attaches by itself and stays retractable, 'type_place_time' waits for the owner
 -- Entry points (EXECUTE for service_role only; the Worker is the only caller), with the part that creates each:
 --   eup_environment_ingest(provider, run_id, fetched_at, health, events)    one call per ingest run, idempotent per run id  [03]
+--   eup_environment_ingest_state(provider, since, limit)                    the ingest's read: rule, switches, published events  [03]
 --   eup_environment_public_events(since, until, cursor, limit)              a public timeline page, whitelisted fields  [02]
 --   eup_environment_public_event(id)                                        one event by canonical id or any alias  [02]
 --   eup_environment_owner_read(actor, event_id, limit)                      providers, health, review queue, decisions  [04]

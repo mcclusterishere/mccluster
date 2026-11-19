@@ -19,6 +19,7 @@ drop function if exists public.eup_environment_coverage_input(jsonb);
 drop function if exists public.eup_environment_owner_command(uuid, text, text, bigint, text, text, jsonb);
 drop function if exists public.eup_environment_owner_read(uuid, text, integer);
 -- part 03
+drop function if exists public.eup_environment_ingest_state(text, timestamptz, integer);
 drop function if exists public.eup_environment_ingest(text, text, timestamptz, jsonb, jsonb);
 drop function if exists public.eup_environment_usgs_input(jsonb);
 -- part 02

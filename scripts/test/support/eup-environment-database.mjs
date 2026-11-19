@@ -1,7 +1,7 @@
 // Isolated local PostgreSQL-compatible support for the pending E=UP environmental event store; never connects to
 // canonical Supabase. Applies the applied module policy (supabase/migrations/20261117144103_eup_module_policy_v1.sql)
 // and then the five pending parts, supabase/pending/20261119100000_eup_environment_events_v1_01.sql to _05.sql, in
-// order, and drives the store the way the Worker will: as service_role, through the seven entry points, never through
+// order, and drives the store the way the Worker will: as service_role, through the eight entry points, never through
 // the tables. scripts/test/eup-environment-events.integration.mjs uses createEnvironmentStoreDatabase(); the owner
 // routes, the ingest and the public routes of the later slices can use ENVIRONMENT_STORE_RPC as their PostgREST
 // stand-in.
@@ -32,6 +32,7 @@ export const STORE_TABLES = Object.freeze(['eup_environment_providers', 'eup_env
 export const STORE_ENTRY_POINTS = Object.freeze([
   'eup_environment_coverage_propose(jsonb)',
   'eup_environment_ingest(text,text,timestamp with time zone,jsonb,jsonb)',
+  'eup_environment_ingest_state(text,timestamp with time zone,integer)',
   'eup_environment_owner_command(uuid,text,text,bigint,text,text,jsonb)',
   'eup_environment_owner_preview(uuid,timestamp with time zone,timestamp with time zone,text,integer)',
   'eup_environment_owner_read(uuid,text,integer)',
@@ -59,6 +60,8 @@ const json = (v) => (v === undefined || v === null ? null : JSON.stringify(v));
 export const ENVIRONMENT_STORE_RPC = Object.freeze({
   eup_environment_ingest: (a) => ['select public.eup_environment_ingest($1, $2, $3::timestamptz, $4::jsonb, $5::jsonb) as r',
     [a.p_provider, a.p_run_id, a.p_fetched_at, json(a.p_health), json(a.p_events)]],
+  eup_environment_ingest_state: (a) => ['select public.eup_environment_ingest_state($1, $2::timestamptz, $3) as r',
+    [a.p_provider, a.p_since, a.p_limit ?? 200]],
   eup_environment_public_events: (a) => ['select public.eup_environment_public_events($1::timestamptz, $2::timestamptz, $3, $4) as r',
     [a.p_since ?? null, a.p_until ?? null, a.p_cursor ?? null, a.p_limit ?? 50]],
   eup_environment_public_event: (a) => ['select public.eup_environment_public_event($1) as r', [a.p_id]],

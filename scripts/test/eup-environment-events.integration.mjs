@@ -3,7 +3,7 @@
 // through scripts/test/support/eup-environment-database.mjs, with Supabase's default privileges switched on.
 // Proves: the parts apply in order, refuse out of order and without the module policy, apply twice without change, roll
 // back cleanly (the module policy untouched) and apply again identically; no row is created; no API role holds a table
-// or sequence privilege and service_role executes exactly the seven entry points; ingest is idempotent per run and per
+// or sequence privilege and service_role executes exactly the eight entry points; ingest is idempotent per run and per
 // content (a rerun writes no event row); a new revision only for a substantive change (D6, field by field, with the
 // thresholds); aliases resolve and a preferred-id change keeps one canonical id; an association of two stored events
 // becomes a redirect; a deletion is kept as a withdrawn revision and a tombstone, and a restore comes back; the D7 rule
@@ -94,8 +94,8 @@ try {
   }
   eq(await counts(), Object.fromEntries(STORE_TABLES.map((t) => [t, 0])), 'the five parts create no row in any of the seven tables');
   const first = await fingerprint();
-  eq(await objects(), { relations: 26, functions: 28, policy_functions: 9 },
-    'seven tables, seventeen indexes (seven primary keys, three unique keys, seven others), two identity sequences; 28 functions; the module policy\'s nine untouched');
+  eq(await objects(), { relations: 26, functions: 29, policy_functions: 9 },
+    'seven tables, seventeen indexes (seven primary keys, three unique keys, seven others), two identity sequences; 29 functions; the module policy\'s nine untouched');
   await store.apply();
   eq(await fingerprint(), first, 'the five parts applied a second time change nothing (idempotent)');
   await store.rollback();
@@ -135,11 +135,11 @@ try {
       has_function_privilege('authenticated', p.oid, 'EXECUTE') as a, has_function_privilege('anon', p.oid, 'EXECUTE') as n,
       has_function_privilege('public', p.oid, 'EXECUTE') as p, p.prosecdef as definer, coalesce(p.proconfig, '{}'::text[]) as config
     from pg_proc p where p.pronamespace = 'public'::regnamespace and p.proname like 'eup_environment%' order by 1`);
-  eq(fns.filter((f) => f.s).map((f) => f.f), [...STORE_ENTRY_POINTS], 'service_role executes exactly the seven entry points');
-  ok(fns.every((f) => !f.a && !f.n && !f.p), 'anon, authenticated and PUBLIC execute none of the 28 functions');
+  eq(fns.filter((f) => f.s).map((f) => f.f), [...STORE_ENTRY_POINTS], 'service_role executes exactly the eight entry points');
+  ok(fns.every((f) => !f.a && !f.n && !f.p), 'anon, authenticated and PUBLIC execute none of the 29 functions');
   ok(fns.every((f) => f.config.includes('search_path=""')), 'every function pins an empty search_path');
   eq(fns.filter((f) => f.definer).map((f) => f.f), [...STORE_ENTRY_POINTS.slice(0, 1), 'eup_environment_event_consistent()', ...STORE_ENTRY_POINTS.slice(1)],
-    'SECURITY DEFINER: the seven entry points, and the commit-time consistency trigger (it runs as whoever commits and only reads)');
+    'SECURITY DEFINER: the eight entry points, and the commit-time consistency trigger (it runs as whoever commits and only reads)');
   eq(fns.filter((f) => f.config.includes('lock_timeout=5s')).map((f) => f.f.split('(')[0]),
     ['eup_environment_coverage_propose', 'eup_environment_ingest', 'eup_environment_owner_command'], 'every writer bounds its lock wait at 5 s');
   for (const role of ['anon', 'authenticated']) {

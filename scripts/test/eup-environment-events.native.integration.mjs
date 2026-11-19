@@ -2,7 +2,7 @@
 // PGlite session (scripts/test/eup-environment-events.integration.mjs) cannot show:
 //   (a) the five parts on PostgreSQL 16 or 17 with the real API roles and Supabase-style default privileges: they apply
 //       in order, roll back and apply twice; no API role holds a table or sequence privilege; service_role executes
-//       exactly the seven entry points; every RPC commits as service_role (the commit-time consistency check included);
+//       exactly the eight entry points; every RPC commits as service_role (the commit-time consistency check included);
 //   (b) two ingest runs of one provider at once queue on the provider lock: the second waits, then finds what the first
 //       wrote and changes nothing;
 //   (c) one idempotency key on two sessions executes once: the second waits on the key lock and replays the receipt;
@@ -83,7 +83,7 @@ try {
   }
   const exec = (await admin.query(`select replace(p.oid::regprocedure::text, 'public.', '') as f from pg_proc p
     where p.pronamespace = 'public'::regnamespace and p.proname like 'eup_environment%' and has_function_privilege('service_role', p.oid, 'EXECUTE') order by 1`)).rows.map((r) => r.f);
-  eq(exec, [...STORE_ENTRY_POINTS], 'service_role executes exactly the seven entry points');
+  eq(exec, [...STORE_ENTRY_POINTS], 'service_role executes exactly the eight entry points');
   const anyApi = (await admin.query(`select bool_or(has_function_privilege('anon', p.oid, 'EXECUTE') or has_function_privilege('authenticated', p.oid, 'EXECUTE')) as a
     from pg_proc p where p.pronamespace = 'public'::regnamespace and p.proname like 'eup_environment%'`)).rows[0].a;
   eq(anyApi, false, 'anon and authenticated execute none of the store functions');

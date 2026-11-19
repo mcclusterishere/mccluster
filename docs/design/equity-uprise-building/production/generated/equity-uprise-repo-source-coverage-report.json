@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 751,
+  "candidate_count": 752,
   "capability_source_count": 104,
-  "support_only_count": 647,
-  "checks_total": 2902,
-  "checks_passed": 2902,
+  "support_only_count": 648,
+  "checks_total": 2906,
+  "checks_passed": 2906,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -738,6 +738,7 @@
     "workers/mccluster/src/world-layers.js",
     "workers/mccluster/test/company-site.test.mjs",
     "workers/mccluster/test/eup-environment-owner.test.mjs",
+    "workers/mccluster/test/eup-environment-usgs.test.mjs",
     "workers/mccluster/test/eup-import-runner.test.mjs",
     "workers/mccluster/test/eup-league-contract.test.mjs",
     "workers/mccluster/test/eup-league-media.test.mjs",
@@ -765,7 +766,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "751 entries"
+      "detail": "752 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -14829,6 +14830,26 @@
     },
     {
       "name": "workers/mccluster/test/eup-environment-owner.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/eup-environment-usgs.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/eup-environment-usgs.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "workers/mccluster/test/eup-environment-usgs.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/test/eup-environment-usgs.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     },

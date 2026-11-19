@@ -585,7 +585,8 @@ async function waterLevelAnswer(request, env, id, fetchImpl, cacheImpl) {
 
 /* ---------- ShakeMap: USGS intensity contours for one earthquake ----------
    On demand, for a USGS event id (two lower-case letters, then letters and digits). The event's detail
-   is read (kept 5 minutes; an unknown event is USGS's own 404, said so), its preferred ShakeMap product
+   is read (kept 5 minutes; an unknown event is USGS's own 404, said so; a deleted one is its 409, said as
+   withdrawn), its preferred ShakeMap product
    chosen (highest preferredWeight, then the latest update; a deleted product never), and that product's
    cont_mmi.json read from USGS's own host, kept a day per product version and update time, since a
    version's contours do not change. ShakeMap is a modelled estimate of shaking intensity (Modified
@@ -627,6 +628,8 @@ async function fetchShakemapDetail(id, fetchImpl) {
     detail = await upstream(shakemapDetailUrl(id), {}, fetchImpl, async (res) => (res.status === 204 ? null : boundedJson(SHAKEMAP.detailBytes)(res)), SHAKEMAP.timeoutMs);
   } catch (error) {
     if (error && error.code === 'upstream_http' && error.providerStatus === 404) return { found: false, preferred_id: null, shakemap: null };
+    /* a deleted event: USGS's own answer is 409 ("The requested event has been deleted"), not an outage (E=UP slice S3) */
+    if (error && error.code === 'upstream_http' && error.providerStatus === 409) return { found: true, withdrawn: true, preferred_id: null, shakemap: null };
     throw error;
   }
   return detail === null ? { found: false, preferred_id: null, shakemap: null } : readShakemapProduct(detail, id);
@@ -684,6 +687,7 @@ async function shakemapAnswer(request, env, id, fetchImpl, cacheImpl) {
   };
   const d = detail.body && !detail.body.unavailable ? detail.body : null;
   if (!d) return send(request, env, { ...base, available: false, reason: 'source_unavailable', contours: [] });
+  if (d.withdrawn) return send(request, env, { ...base, available: false, reason: 'withdrawn', contours: [] });
   if (!d.found) return send(request, env, { ...base, available: false, reason: 'event_not_found', contours: [] });
   if (!d.shakemap) return send(request, env, { ...base, usgs_preferred_id: d.preferred_id, available: false, reason: 'no_shakemap', contours: [] });
   const sm = d.shakemap;

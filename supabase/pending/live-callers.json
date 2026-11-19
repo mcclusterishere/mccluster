@@ -213,6 +213,20 @@
         "workers/mccluster/src/eup/intake.js"
       ]
     },
+    "eup_environment_ingest": {
+      "kind": "function",
+      "pending": "20261119100000_eup_environment_events_v1_03.sql",
+      "callers": [
+        "workers/mccluster/src/eup/environment/ingest.js"
+      ]
+    },
+    "eup_environment_ingest_state": {
+      "kind": "function",
+      "pending": "20261119100000_eup_environment_events_v1_03.sql",
+      "callers": [
+        "workers/mccluster/src/eup/environment/ingest.js"
+      ]
+    },
     "eup_environment_owner_command": {
       "kind": "function",
       "pending": "20261119100000_eup_environment_events_v1_04.sql",
