@@ -14,7 +14,9 @@ const content = '# McCluster recovery-timeout bootstrap v1; timeout only.\n[Serv
 
 function box(t) {
   const root = mkdtempSync(join(tmpdir(), 'mcc-bootstrap-'));
-  t.after(() => rmSync(root, { recursive: true, force: true }));
+  /* retried: a process the test killed can still be finishing a write into the box (release review RM-7, ENOTEMPTY once in
+     five full Core runs under load) */
+  t.after(() => rmSync(root, { recursive: true, force: true, maxRetries: 10, retryDelay: 50 }));
   const bin = join(root, 'bin'); mkdirSync(bin);
   const dropin = join(root, 'unit.d/90-mccluster-recovery-timeout-bootstrap.conf');
   writeFileSync(join(root, 'grace'), '1min 30s\n');
@@ -188,6 +190,14 @@ test('TERM to wrapper, bootstrap and bounded reload rolls back the timeout witho
     await pause(10);
   }
   assertNoWork(b);
+  /* the box's removal is registered first and runs first: end the wrapper's whole process group, and wait for it, before the
+     test returns, so nothing of it is still writing when the box goes (release review RM-7) */
+  await new Promise((resolve) => {
+    const exited = wrapper.exitCode !== null || wrapper.signalCode !== null;
+    if (!exited) wrapper.once('exit', resolve);
+    try { process.kill(-wrapper.pid, 'SIGKILL'); } catch { /* the group is already gone */ }
+    if (exited) resolve();
+  });
 });
 
 test('the next invocation cannot trust the installed file when effective grace is still old', (t) => {
