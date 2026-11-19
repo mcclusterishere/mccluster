@@ -48,6 +48,8 @@
     .play svg { width: 22px; height: 22px; fill: currentColor; }
   </style>
   <script src="js/live-content.js?v=__STAMP__"></script>
+  <!-- the one Now Playing owner (music slice M2): the lock screen names this record and its billed artist -->
+  <script src="js/now-playing.js?v=__STAMP__"></script>
 </head>
 <body data-no-appbar>
   <div class="card" id="card">
@@ -55,7 +57,7 @@
     <div class="mid">
       <p class="k"><a id="out" href="album.html" target="_blank" rel="noopener">McCluster Sound <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" style="vertical-align:-2px;display:inline-block"><path d="M7 17L17 7M9.5 7H17v7.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a></p>
       <h1 class="t" id="title">·</h1>
-      <p class="by">Matthew McCluster <span class="time" id="time"></span></p>
+      <p class="by"><span id="by">Matthew McCluster</span> <span class="time" id="time"></span></p>
       <button class="seek" id="seek" type="button" aria-label="Seek"><i><b id="fill"></b></i></button>
     </div>
     <button class="play" id="play" type="button" aria-label="Play or pause">
@@ -73,21 +75,49 @@
     var $ = function (id) { return document.getElementById(id); };
     function fmt(s) { s = Math.max(0, s | 0); return (s / 60 | 0) + ":" + ("0" + s % 60).slice(-2); }
 
-    fetch("data/albums.json").then(function (r) { return r.json(); }).then(function (d) {
-      var alb = null;
-      (d.albums || []).forEach(function (a) { if (a.slug === ALBUM) alb = a; });
-      if (!alb) alb = d.albums[0];
-      var t = alb.tracks[Math.min(T, alb.tracks.length - 1)];
+    /* the album's billed artist, never a blanket credit: PRIM3's songs are PRIM3's (music slice M2) */
+    var alb = null, at = 0, artist = "Matthew McCluster";
+    function seat(i, go) {
+      var t = alb.tracks[i];
+      at = i;
       $("title").textContent = t.title;
+      $("by").textContent = artist;
       $("art").src = t.art || alb.art;
       $("art").alt = alb.name;
       $("out").href = "album.html?album=" + encodeURIComponent(alb.slug);
       deck.src = t.src;
-      document.title = t.title + " — Matthew McCluster";
+      document.title = t.title + " — " + artist;
+      if (np) np.update();
+      if (go) { audioSession(); deck.play().catch(function () {}); }
+    }
+    fetch("data/albums.json").then(function (r) { return r.json(); }).then(function (d) {
+      (d.albums || []).forEach(function (a) { if (a.slug === ALBUM) alb = a; });
+      if (!alb) alb = d.albums[0];
+      artist = alb.artist || "Matthew McCluster";
+      seat(Math.min(T, alb.tracks.length - 1), false);
+      nowPlaying();
     }).catch(function () { $("title").textContent = "McCluster Sound"; });
 
+    /* before any sound, the device is told this is music (the playback audio session; js/now-playing.js) */
+    function audioSession() { if (window.MCC_NOW_PLAYING) window.MCC_NOW_PLAYING.claim(); }
+    /* THE LOCK SCREEN: the one owner (js/now-playing.js) names the song, its billed artist, the album
+       and its cover; previous and next walk the album the song came from; the song's end clears it */
+    var np = null;
+    function nowPlaying() {
+      if (!np && alb && window.MCC_NOW_PLAYING && window.MCC_NOW_PLAYING.bind) np = window.MCC_NOW_PLAYING.bind(deck, {
+        surface: "embed",
+        track: function () { var t = alb.tracks[at]; return t ? { title: t.title, artist: artist, album: alb.name, art: t.art || alb.art } : null; },
+        play: function () { audioSession(); deck.play().catch(function () {}); },
+        pause: function () { deck.pause(); },
+        previous: function () { if (deck.currentTime > 4 || at === 0) { deck.currentTime = 0; return; } seat(at - 1, true); },
+        next: function () { seat((at + 1) % alb.tracks.length, true); }
+      });
+      return np;
+    }
+    deck.addEventListener("ended", function () { if (np) np.clear(); });
+
     $("play").addEventListener("click", function () {
-      if (deck.paused) deck.play().catch(function () {}); else deck.pause();
+      if (deck.paused) { nowPlaying(); audioSession(); deck.play().catch(function () {}); } else deck.pause();
     });
     function paint() {
       $("ic").innerHTML = deck.paused ? '<path d="M8 5l11 7-11 7z"/>'

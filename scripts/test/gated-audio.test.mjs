@@ -148,7 +148,8 @@ test('an album billed to another name says so everywhere it credits', async () =
     assert.match(html, new RegExp(`getElementById\\("${id}"\\)\\.textContent = ARTIST`),
       `#${id} must follow the billed artist`);
   }
-  assert.match(html, /artist: ARTIST,/, 'MediaSession must follow the billed artist');
+  /* the lock screen (js/now-playing.js, music slice M2) names the playing row's billed artist, the page's when it has none */
+  assert.match(html, /artist: r\.getAttribute\("data-artist"\) \|\| ARTIST,/, 'MediaSession must follow the billed artist');
   assert.doesNotMatch(html, /artist: "Matthew McCluster"/, 'no hardcoded artist left in the player');
   assert.match(html, /© 2026 Matthew McCluster/, 'the rights notice stays with the owner');
 });

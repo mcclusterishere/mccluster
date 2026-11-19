@@ -105,9 +105,40 @@
      sync is a convenience rather than the mechanism, and a listener whose
      network drops mid-song should not be told about a failed write of a
      number. Local state stays authoritative for the session; the remote row
-     only ever wins on first mount, and only when it is genuinely newer. */
+     wins only when it is genuinely newer, which is when another device played
+     since this one did (resume across devices, decision D-8, a default pending
+     Matthew; it was asked only when this device had nothing at all, so a phone
+     with yesterday's record never heard what the laptop played today). */
+  /* WHO ASKS. Pages that load js/backend.js reach the row through MCC_SUPA, as before. The listen page and
+     the artist page do not load it; there the shared sign-in (js/mcc-auth.js) makes the call, with a fresh
+     token and one more try after a refusal (MCC.authFetch, music slice M4), so a member's listen page can
+     read and write the same row (resume across devices, decision D-8). */
+  var SB_URL = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
+  var SB_KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
+  function asker() {
+    var S = window.MCC_SUPA, M = window.MCC;
+    if (S && S.url && S.key && S.token) {
+      return { url: S.url, key: S.key, uid: function () { return S.uid && S.uid(); },
+        call: function (url, opts) {
+          return S.token().then(function (tok) {
+            if (!tok) return null;
+            opts.headers.Authorization = "Bearer " + tok;
+            return fetch(url, opts);
+          });
+        } };
+    }
+    if (M && typeof M.authFetch === "function" && typeof M.account === "function") {
+      return { url: SB_URL, key: SB_KEY, uid: function () {
+          var a = M.account();
+          return a && /^[0-9a-f-]{36}$/i.test(a) ? a : null;
+        },
+        call: function (url, opts) { return M.authFetch(url, opts); } };
+    }
+    return null;
+  }
   function signedIn() {
-    return Boolean(window.MCC_SUPA && window.MCC_SUPA.url && window.MCC_SUPA.key && window.MCC_SUPA.token);
+    var a = asker();
+    return !!(a && a.uid());
   }
 
   /* NOT PROVISIONED IS AN ANSWER, NOT A RETRY. When the listener_state table
@@ -125,29 +156,26 @@
 
   function remote(method, body, keepalive) {
     if (!signedIn() || parked()) return Promise.resolve(null);
-    return window.MCC_SUPA.token().then(function (tok) {
-      if (!tok) return null;
-      var uid = window.MCC_SUPA.uid && window.MCC_SUPA.uid();
-      if (!uid) return null;
-      var headers = { apikey: window.MCC_SUPA.key, Authorization: "Bearer " + tok };
-      var url = window.MCC_SUPA.url + "/rest/v1/listener_state";
-      var opts = { method: method, headers: headers, cache: "no-store" };
-      /* The last write of a listen happens as the page is being torn down,
-         and an ordinary fetch is cancelled the moment that starts. keepalive
-         hands the request to the browser to finish without us. */
-      if (keepalive) opts.keepalive = true;
-      if (method === "GET") {
-        url += "?profile_id=eq." + encodeURIComponent(uid) + "&select=state,updated_at&limit=1";
-      } else {
-        headers["Content-Type"] = "application/json";
-        headers.Prefer = "resolution=merge-duplicates,return=minimal";
-        opts.body = JSON.stringify({ profile_id: uid, state: body });
-      }
-      return fetch(url, opts).then(function (r) {
-        if (r.status === 404) { park(); return null; }
-        if (!r.ok) return null;
-        return r.status === 204 ? null : r.json().catch(function () { return null; });
-      });
+    var a = asker(), uid = a.uid();
+    var headers = { apikey: a.key };
+    var url = a.url + "/rest/v1/listener_state";
+    var opts = { method: method, headers: headers, cache: "no-store" };
+    /* The last write of a listen happens as the page is being torn down,
+       and an ordinary fetch is cancelled the moment that starts. keepalive
+       hands the request to the browser to finish without us. */
+    if (keepalive) opts.keepalive = true;
+    if (method === "GET") {
+      url += "?profile_id=eq." + encodeURIComponent(uid) + "&select=state,updated_at&limit=1";
+    } else {
+      headers["Content-Type"] = "application/json";
+      headers.Prefer = "resolution=merge-duplicates,return=minimal";
+      opts.body = JSON.stringify({ profile_id: uid, state: body });
+    }
+    return Promise.resolve().then(function () { return a.call(url, opts); }).then(function (r) {
+      if (!r) return null;
+      if (r.status === 404) { park(); return null; }
+      if (!r.ok) return null;
+      return r.status === 204 ? null : r.json().catch(function () { return null; });
     }).catch(function () { return null; });
   }
 
@@ -221,24 +249,27 @@
 
   var st = read();
 
-  /* A device that has never played anything has nothing local to go on. If
-     the listener is signed in, the record they left on another device is
-     worth asking for — that is the whole point of the shared row. Anonymous
-     visitors, which is most of them, fall out here immediately. */
-  if (!st) {
-    if (!signedIn()) return;
-    pullRemote().then(function (far) {
-      if (!far) return;
+  /* A signed-in listener's other devices may have played since this one did:
+     the shared row is asked (for a second and a half at most, so a slow
+     network never strands the record), and it wins only when it is newer.
+     Anonymous visitors, which is most of them, go straight on with what this
+     device holds, or fall out here when it holds nothing. */
+  if (!st && !signedIn()) return;
+  var asked = signedIn()
+    ? Promise.race([pullRemote(), new Promise(function (done) { setTimeout(function () { done(null); }, 1500); })])
+    : Promise.resolve(null);
+  asked.then(function (far) {
+    if (far) {
       /* Arriving from another device is not a reason to start making noise:
          autoplay would be refused here anyway, and a record the listener
          started on their phone should not ambush their laptop. Hold it. */
       far.playing = false;
       write(far);
       withNowPlaying(function () { begin(far); });
-    });
-    return;
-  }
-  withNowPlaying(function () { begin(st); });
+      return;
+    }
+    if (st) withNowPlaying(function () { begin(st); });
+  });
 
   function begin(state) {
   st = state;
@@ -293,6 +324,10 @@
       + '<span class="pocket__sub"></span>'
       + "</div>"
       + '<button class="pocket__play" type="button" aria-label="Play or pause">' + svg(ICON.pause) + "</button>"
+      /* AirPlay where WebKit offers it, shown while a device is in range (js/now-playing.js; decision D-8) */
+      + '<button class="pocket__air" type="button" aria-label="Play on another device" hidden>'
+      + '<svg class="pocket__airic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18v12h-7"/><path d="M3 10a10 10 0 0 1 8 8"/><path d="M3 14a6 6 0 0 1 4.5 4.5"/><path d="M3 18h.5"/></svg>'
+      + "</button>"
       + '<button class="pocket__x" type="button" aria-label="Close the player">'
       + svg("M6 6l12 12M18 6L6 18", "pocket__xic") + "</button>"
       + '<i class="pocket__bar"><b></b></i>';
@@ -327,7 +362,6 @@
     box.classList.add("is-held");
     playIc.setAttribute("d", ICON.play);
     sub("Tap to pick it back up");
-    setPlaybackState("paused");
   }
 
   /* ---------- the lock screen ---------- */
@@ -336,72 +370,33 @@
 
      Without this the record is an anonymous sound: the lock screen shows
      nothing, the headphone button does nothing, and pausing means finding the
-     tab again. MediaSession hands the OS the title, the record and the
-     artwork, and wires the hardware controls back to this widget — so it
-     behaves like every other thing that plays music on the device, including
-     while the phone is locked and the browser is in the background.
+     tab again. The device's Now Playing gets the title, the record and the
+     artwork, and its controls come back to this widget, so it behaves like
+     every other thing that plays music on the device.
 
-     The album page already did this; the pocket did not, so control was lost
-     the moment the listener left that one page. */
-  function media() {
-    return ("mediaSession" in navigator) ? navigator.mediaSession : null;
-  }
-
-  function setPlaybackState(state) {
-    var m = media();
-    if (!m) return;
-    try { m.playbackState = state; } catch (e) {}
-  }
-
-  function setMetadata() {
-    var m = media();
-    if (!m || typeof window.MediaMetadata !== "function") return;
-    var art = [];
-    if (st.poster) {
-      var poster = abs(st.poster);
-      /* One entry, unsized: the OS picks it up and scales it. Claiming sizes
-         we have not verified would just be wrong metadata. */
-      art.push({ src: poster });
-    }
-    try {
-      m.metadata = new window.MediaMetadata({
-        title: st.title || "The record",
-        artist: st.artist || "Matthew McCluster",
-        album: albumName(st.album),
-        artwork: art,
-      });
-    } catch (e) {}
-  }
-
-  function wireMediaControls() {
-    var m = media();
-    if (!m || !m.setActionHandler) return;
-    var on = function (name, fn) {
-      try { m.setActionHandler(name, fn); } catch (e) {}   /* unsupported action */
-    };
-    on("play", function () { if (audio && audio.paused) toggle(); });
-    on("pause", function () { if (audio && !audio.paused) toggle(); });
-    on("nexttrack", function () { if (audio) advance(); });
-    /* The OS stop control means the same thing the X means. */
-    on("stop", shut);
-    on("seekto", function (d) {
-      if (!audio || !d || typeof d.seekTime !== "number") return;
-      try { audio.currentTime = d.seekTime; } catch (e) {}
+     One owner writes the lock screen for every player (js/now-playing.js):
+     the pocket says which record it holds and what play, pause, previous,
+     next and stop mean here. It had no previous, and it showed the film's
+     poster unsized; the cover now is the album's own, at its true size and
+     type (music slice M2). */
+  var np = null, albumInfo = null;
+  function nowPlaying() {
+    if (np || !audio || !window.MCC_NOW_PLAYING || !window.MCC_NOW_PLAYING.bind) return np;
+    np = window.MCC_NOW_PLAYING.bind(audio, {
+      surface: "pocket",
+      track: function () {
+        var a = albumInfo || {};
+        return { title: st.title || "The record", artist: st.artist || a.artist || "Matthew McCluster",
+          album: a.name || albumName(st.album), art: st.art || a.art || "" };
+      },
+      play: function () { if (audio && audio.paused) toggle(); },
+      pause: function () { if (audio && !audio.paused) toggle(); },
+      previous: function () { if (audio) back(); },
+      next: function () { if (audio) advance(); },
+      /* the OS stop control means the same thing the X means */
+      stop: shut
     });
-  }
-
-  /* The scrubber on the lock screen needs a duration to draw. */
-  function setPositionState() {
-    var m = media();
-    if (!m || !m.setPositionState || !audio || !audio.duration) return;
-    if (!Number.isFinite(audio.duration)) return;
-    try {
-      m.setPositionState({
-        duration: audio.duration,
-        playbackRate: audio.playbackRate || 1,
-        position: Math.min(audio.currentTime, audio.duration),
-      });
-    } catch (e) {}
+    return np;
   }
 
   function start() {
@@ -434,12 +429,11 @@
        there, which is the point: the listener ends it, the file does not
        end it for them. */
     audio.addEventListener("ended", advance);
-    audio.addEventListener("durationchange", setPositionState);
     /* the song the album was playing goes on here: keep counting it */
     ledger(function (L) { if (!pocketListen) pocketListen = L.adopt(L.keyOf(st.src), pocketPlaying); });
 
-    setMetadata();
-    wireMediaControls();
+    nowPlaying();
+    if (window.MCC_NOW_PLAYING && window.MCC_NOW_PLAYING.airplay) window.MCC_NOW_PLAYING.airplay(box.querySelector(".pocket__air"), audio);
 
     /* A record that was paused when they left stays paused. Mounting it held
        gives them the transport back without starting sound they stopped. */
@@ -447,7 +441,6 @@
       playIc.setAttribute("d", ICON.play);
       box.classList.add("is-held");
       sub(wasPlaying ? "Tap to pick it back up" : albumName(st.album));
-      setPlaybackState("paused");
       return;
     }
 
@@ -455,8 +448,6 @@
     var pr = audio.play();
     if (pr && pr.then) {
       pr.then(function () {
-        setPlaybackState("playing");
-        setPositionState();
         var fp = film.play();
         if (fp && fp.catch) fp.catch(function () {});
       }).catch(markBlocked);
@@ -468,7 +459,6 @@
     var b = box.querySelector(".pocket__bar b");
     if (b) b.style.width = ((audio.currentTime / audio.duration) * 100).toFixed(2) + "%";
     if (lyric.lines.length) lyric.at(audio.currentTime);
-    setPositionState();   /* keeps the lock-screen scrubber honest */
     stash(!audio.paused);
   }
 
@@ -520,6 +510,8 @@
             return (a.tracks || []).some(function (t) { return t.src === st.src; });
           })[0];
         queue = alb ? (alb.tracks || []) : [];
+        albumInfo = alb ? { name: alb.name || "", art: alb.art || "", artist: alb.artist || "" } : null;
+        if (np) np.update();
         return queue;
       })
       .catch(function () { queue = []; return queue; });
@@ -547,17 +539,25 @@
     document.head.appendChild(tag);
   }
 
-  function advance() {
+  function advance() { roll(1); }
+  /* back: the top of this song once it is a few seconds in, as the album's
+     own previous does; otherwise the song before it on the record */
+  function back() {
+    if (audio && audio.currentTime > 4) { try { audio.currentTime = 0; } catch (e) {} return; }
+    roll(-1);
+  }
+  function roll(step) {
     /* ended or skipped: the API decides whether the song was heard through */
     if (pocketListen && window.MCC_LISTENS) window.MCC_LISTENS.finish(pocketListen);
     pocketListen = null;
-    var roll = function (list) {
+    var go = function (list) {
       var i = -1;
       for (var k = 0; k < list.length; k++) if (list[k].src === st.src) { i = k; break; }
-      var next = list.length ? list[(i + 1) % list.length] : null;
+      var next = list.length ? list[(i + step + list.length) % list.length] : null;
       /* no album, or an album of one: hold rather than loop a single track
-         forever, which is a different promise than "keep the record going" */
-      if (!next || next.src === st.src) { stash(false); box.classList.add("is-held"); return; }
+         forever, which is a different promise than "keep the record going";
+         the lock screen is handed back, the queue having ended */
+      if (!next || next.src === st.src) { stash(false); box.classList.add("is-held"); if (np) np.clear(); return; }
 
       st.src = next.src;
       st.video = next.video || "";
@@ -573,7 +573,7 @@
       if (st.poster) film.poster = abs(st.poster);
       if (st.video) { film.src = abs(st.video); film.load(); }
       loadLyrics();
-      setMetadata();   /* the lock screen is showing the last song otherwise */
+      if (np) np.update();   /* the lock screen is showing the last song otherwise */
 
       audio.src = abs(st.src);
       audio.currentTime = 0;
@@ -587,9 +587,9 @@
       lastStash = 0;
       stash(true);
       if (!next.gated) ledger(function (L) { pocketListen = L.start(L.keyOf(next), pocketPlaying); });
-      if (window.MCC_TRACK) window.MCC_TRACK("pocket_advance", { song: st.title });
+      if (window.MCC_TRACK) window.MCC_TRACK("pocket_advance", { song: st.title, step: step });
     };
-    if (queue) roll(queue); else loadAlbum().then(roll);
+    if (queue) go(queue); else loadAlbum().then(go);
   }
 
   function loadLyrics() {
@@ -620,8 +620,6 @@
           box.classList.remove("is-held");
           playIc.setAttribute("d", ICON.pause);
           sub(albumName(st.album));
-          setPlaybackState("playing");
-          setPositionState();
           var fp = film.play(); if (fp && fp.catch) fp.catch(function () {});
         }).catch(markBlocked);
       }
@@ -629,7 +627,6 @@
       audio.pause();
       film.pause();
       playIc.setAttribute("d", ICON.play);
-      setPlaybackState("paused");
       stash(false);
     }
   }
@@ -639,14 +636,7 @@
     if (audio) { audio.pause(); audio.src = ""; audio = null; }
     /* Hand the lock screen back. Leaving stale metadata there implies a
        player that no longer exists. */
-    var m = media();
-    if (m) {
-      setPlaybackState("none");
-      try { m.metadata = null; } catch (e) {}
-      ["play", "pause", "nexttrack", "stop", "seekto"].forEach(function (name) {
-        try { m.setActionHandler(name, null); } catch (e) {}
-      });
-    }
+    if (np) np.clear();
     /* The stop button is the one control that means it everywhere. */
     window.MCC_POCKET.clearEverywhere();
     document.documentElement.classList.remove("pocket-on");

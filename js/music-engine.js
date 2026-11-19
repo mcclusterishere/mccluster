@@ -118,6 +118,12 @@
             '<span id="musicNowAlbum"></span>' +
             '<span id="musicNowMode"></span>' +
           '</div>' +
+          /* AirPlay where WebKit offers it, shown only while a device is in range (js/now-playing.js; decision D-8) */
+          '<div class="music-now__devices">' +
+            '<button type="button" class="music-now__airplay" id="musicNowAirplay" aria-label="Play on another device" hidden>' +
+              '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18v12h-7"/><path d="M3 10a10 10 0 0 1 8 8"/><path d="M3 14a6 6 0 0 1 4.5 4.5"/><path d="M3 18h.5"/></svg>' +
+            '</button>' +
+          '</div>' +
         '</div>' +
       '</div>';
     doc.body.appendChild(now);
@@ -131,11 +137,14 @@
       trackEvent("music_seek", { position_seconds: Math.round(at) });
     }
     doc.getElementById("musicMiniPlay").addEventListener("click", function () {
-      if (!current) return;
+      if (!current) { if (held) resumeHeld(); return; }
       if (audio.paused) resumeCurrent().catch(function () {});
       else audio.pause();
     });
-    doc.getElementById("musicMiniOpen").addEventListener("click", openNow);
+    doc.getElementById("musicMiniOpen").addEventListener("click", function () {
+      if (!current && held) { resumeHeld().then(openNow); return; }
+      openNow();
+    });
     doc.getElementById("musicMiniSeek").addEventListener("click", function (e) { seekFrom(this, e); });
     doc.getElementById("musicNowSeek").addEventListener("click", function (e) { seekFrom(this, e); });
     doc.getElementById("musicNowClose").addEventListener("click", closeNow);
@@ -144,6 +153,7 @@
       if (audio.paused) resumeCurrent().catch(function () {});
       else audio.pause();
     });
+    if (root.MCC_NOW_PLAYING && root.MCC_NOW_PLAYING.airplay) root.MCC_NOW_PLAYING.airplay(doc.getElementById("musicNowAirplay"), audio);
     doc.getElementById("musicNowPrev").addEventListener("click", function () { playAdjacent(-1); });
     doc.getElementById("musicNowNext").addEventListener("click", function () { playAdjacent(1); });
     doc.getElementById("musicNowFilm").addEventListener("loadedmetadata", function () { syncNowFilm(true); });
@@ -255,7 +265,7 @@
 
   function paint() {
     var p = ensureUI();
-    if (!current) { p.hidden = true; return; }
+    if (!current) { if (held) paintHeld(p); else p.hidden = true; return; }
     p.hidden = false;
 
     var art = current.art || "assets/img/m-mark.png";
@@ -368,7 +378,8 @@
             var item = Object.assign({}, t, {
               albumSlug: a.slug,
               albumName: a.name,
-              artist: a.artist || a.by || "Matthew McCluster",
+              /* the album's billed artist; `by` is its tagline ("Have no fear."), never a name */
+              artist: a.artist || "Matthew McCluster",
               art: a.art
             });
             by[key(a.slug, t.title)] = item;
@@ -500,6 +511,7 @@
     }
     var request = ++playbackRequest;
     audio.pause();
+    held = null; resumeAt = null;
     current = t;
     currentAccess = "loading";
     announceSelection();
@@ -531,23 +543,30 @@
     });
   }
 
-  function setMedia(t) {
-    if (!("mediaSession" in navigator) || !root.MediaMetadata) return;
-    try {
-      navigator.mediaSession.metadata = new MediaMetadata({
-        title: t.title,
-        artist: t.artist || "Matthew McCluster",
-        album: t.albumName || "",
-        artwork: t.art ? [{ src: t.art }] : []
-      });
-      navigator.mediaSession.setActionHandler("play", function () { resumeCurrent().catch(function () {}); });
-      navigator.mediaSession.setActionHandler("pause", function () { audio.pause(); });
-      navigator.mediaSession.setActionHandler("previoustrack", function () { playAdjacent(-1); });
-      navigator.mediaSession.setActionHandler("nexttrack", function () { playAdjacent(1); });
-      navigator.mediaSession.setActionHandler("seekto", function (d) {
-        if (typeof d.seekTime === "number") audio.currentTime = previewLimit ? Math.min(d.seekTime, previewLimit) : d.seekTime;
-      });
-    } catch (e) {}
+  /* THE LOCK SCREEN. One owner speaks to the device's Now Playing for every player
+     (js/now-playing.js): this engine says what is playing and what play, pause,
+     previous, next and seek mean here; the owner writes the title, the artist, the
+     cover at its true size and type, playbackState and the position. Previous and
+     next on the lock screen move this queue (decision D-4: no 15-second skips). */
+  var nowPlaying = null;
+  function bindNowPlaying() {
+    if (nowPlaying || !root.MCC_NOW_PLAYING || !root.MCC_NOW_PLAYING.bind) return nowPlaying;
+    nowPlaying = root.MCC_NOW_PLAYING.bind(audio, {
+      surface: "listen",
+      track: function () {
+        return current ? { title: current.title, artist: current.artist || "Matthew McCluster", album: current.albumName || "", art: current.art } : null;
+      },
+      play: function () { return resumeCurrent(); },
+      pause: function () { audio.pause(); },
+      previous: function () { return playAdjacent(-1); },
+      next: function () { return playAdjacent(1); },
+      seek: function (t) { audio.currentTime = previewLimit ? Math.min(t, previewLimit) : t; }
+    });
+    return nowPlaying;
+  }
+  function setMedia() {
+    var h = bindNowPlaying();
+    if (h) h.update();
   }
 
   function openTrack(albumSlug, title, force) {
@@ -567,6 +586,8 @@
 
       request = ++playbackRequest;
       audio.pause();
+      var startAt = resumeAt && sameItem(resumeAt.item, t) ? resumeAt.at : 0;
+      resumeAt = null; held = null;
       current = t;
       currentAccess = "loading";
       announceSelection();
@@ -585,7 +606,9 @@
         dropListen();
         grantMax = 0;
         audio.src = out.url;
-        audio.currentTime = 0;
+        /* a record picked up from where it was left starts at that second (before metadata, this is
+           the element's start position); anything else from the top */
+        audio.currentTime = out.state === "full" && startAt > 0 ? startAt : 0;
         startedAt = Date.now();
         setMedia(t);
         paint();
@@ -696,6 +719,83 @@
     e.preventDefault();
     b.click();
   });
+
+  /* RESUME WHERE YOU LEFT OFF, ON ANY DEVICE (decision D-8, a default pending Matthew). The record this
+     engine plays is banked where the album and the pocket bank theirs (js/pip.js: this device, and for a
+     member the one listener_state row every device reads), and a visit with nothing chosen yet holds the
+     newest of the two in the mini player, paused at its second: one tap picks it up there. Nothing plays
+     by itself, and a held record is not a selection (the World's song still starts from the Globe). A
+     creator's release is not banked: its address is signed for one listener and expires. */
+  var held = null, resumeAt = null, bankedAt = 0;
+  function bank(force) {
+    if (!current || current.creatorTrackId || !current.src || !root.MCC_POCKET || !root.MCC_POCKET.save) return;
+    var now = Date.now();
+    if (!force && now - bankedAt < 2000) return;
+    bankedAt = now;
+    var film = current.music_video || current.video || "";
+    try {
+      root.MCC_POCKET.save({
+        src: current.src, title: current.title, album: current.albumSlug,
+        artist: current.artist || "Matthew McCluster", art: current.art || "",
+        music_video: film, video: film, poster: current.poster || "", lyrics: current.lyrics || "",
+        t: audio.currentTime || 0, playing: !audio.paused, at: now
+      }, !!force);
+    } catch (e) {}
+  }
+  function bankedItem(st) {
+    if (!library || !st || !st.title) return null;
+    var t = library[key(st.album, st.title)];
+    if (t) return t;
+    for (var k in library) if (Object.prototype.hasOwnProperty.call(library, k) && library[k].src === st.src) return library[k];
+    return null;
+  }
+  function paintHeld(p) {
+    var t = held.item;
+    p.hidden = false;
+    doc.getElementById("musicMiniArt").src = t.art || "assets/img/m-mark.png";
+    doc.getElementById("musicMiniTitle").textContent = t.title;
+    doc.getElementById("musicMiniAlbum").textContent = "Pick up at " + fmt(held.at);
+    var access = doc.getElementById("musicMiniAccess");
+    access.textContent = "";
+    access.className = "music-mini__access is-idle";
+    doc.getElementById("musicMiniTime").textContent = fmt(held.at) + " / " + (t.seconds ? fmt(t.seconds) : "--:--");
+    doc.getElementById("musicMiniFill").style.width = (t.seconds ? Math.min(100, held.at / t.seconds * 100) : 0) + "%";
+    doc.getElementById("musicMiniPlay").innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>';
+    doc.getElementById("musicMiniPlay").setAttribute("aria-label", "Play " + t.title + " from " + fmt(held.at));
+  }
+  function resumeHeld() {
+    var h = held;
+    if (!h) return Promise.resolve(null);
+    resumeAt = { item: h.item, at: h.at };
+    return openTrack(h.item.albumSlug, h.item.title, true).catch(function () { return null; });
+  }
+  function restore() {
+    if (current || held || !root.MCC_POCKET || !root.MCC_POCKET.read) return;
+    var near = null;
+    try { near = root.MCC_POCKET.read(); } catch (e) {}
+    /* the shared row answers only when it is newer than this device's own (js/pip.js pullRemote); the
+       catalogue is read only when there is a record to hold, so a first visit reads nothing more than before */
+    var far = root.MCC_POCKET.pull ? root.MCC_POCKET.pull() : null;
+    Promise.resolve(far).catch(function () { return null; }).then(function (f) {
+      var st = f || near;
+      if (!st || !st.title || current || held) return null;
+      return loadLibrary().then(function () {
+        var t = bankedItem(st);
+        if (!t || current || held) return;
+        var at = Math.max(0, Number(st.t) || 0);
+        held = { item: t, at: t.seconds ? Math.min(at, Math.max(0, t.seconds - 1)) : at };
+        paint();
+      });
+    }).catch(function () {});
+  }
+  audio.addEventListener("play", function () { bank(true); });
+  audio.addEventListener("pause", function () { bank(true); });
+  audio.addEventListener("timeupdate", function () { if (!audio.paused) bank(false); });
+  doc.addEventListener("visibilitychange", function () { if (doc.visibilityState === "hidden") bank(true); });
+  root.addEventListener("pagehide", function () { bank(true); });
+  if (doc.readyState === "loading") doc.addEventListener("DOMContentLoaded", restore);
+  else root.setTimeout(restore, 0);
+  bindNowPlaying();
 
   function hookGate() {
     if (!root.MCC_GATED) return false;

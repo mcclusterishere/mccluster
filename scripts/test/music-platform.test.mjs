@@ -178,8 +178,10 @@ test('unified transport expands from mini player into full Now Playing', async()
   assert.match(engine,/id = "musicNow"/);
   assert.match(engine,/function openNow\(\)/);
   assert.match(engine,/function playAdjacent\(delta\)/);
-  assert.match(engine,/setActionHandler\("previoustrack"/);
-  assert.match(engine,/setActionHandler\("nexttrack"/);
+  /* the lock screen's previous and next walk the same queue, through the one Now Playing owner (music slice M2) */
+  assert.match(engine,/MCC_NOW_PLAYING\.bind\(audio,/);
+  assert.match(engine,/previous: function \(\) \{ return playAdjacent\(-1\); \}/);
+  assert.match(engine,/next: function \(\) \{ return playAdjacent\(1\); \}/);
   assert.match(engine,/music_now_open/);
   assert.match(css,/\.music-now\.is-open/);
   assert.match(css,/\.music-mini__open/);

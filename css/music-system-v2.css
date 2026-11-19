@@ -442,6 +442,14 @@ body.music-v2 .music-launch .music-launch__terms a{display:inline;padding:0;bord
   color:rgba(255,255,255,.44);font-size:9px
 }
 .music-now__context span+span::before{content:"·";margin-right:7px}
+/* AirPlay where WebKit offers it, shown while a device is in range (js/now-playing.js); a 44px target */
+.music-now__devices{display:flex;justify-content:center}
+.music-now__airplay{
+  width:44px;height:44px;margin-top:12px;border:0;border-radius:50%;padding:0;cursor:pointer;
+  display:grid;place-items:center;background:rgba(255,255,255,.08);color:#fff
+}
+.music-now__airplay[hidden]{display:none}
+.music-now__airplay svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 body.music-now-open{overflow:hidden}
 
 /* ---------- CREATOR / ARTIST SURFACES: MOBILE FIRST ---------- */
