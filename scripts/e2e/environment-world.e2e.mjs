@@ -254,6 +254,20 @@ const stepCard = (page, title) => until(page, (t) => {
 }, title, 20000);
 const panelCard = (page) => page.evaluate(() => ({ card: !document.getElementById('weDetail').hidden, head: (document.getElementById('weDetail').textContent || '').replace(/\s+/g, ' ').slice(0, 120), pressed: [...document.querySelectorAll('#weEvents button[aria-pressed="true"] strong')].map((s) => s.textContent), scene: document.getElementById('weSceneStatus').textContent }));
 
+/* THE PANEL'S SEARCH PLACEHOLDER AND SOURCES SUMMARY (release review, carried into E=UP slice S0: the placeholder "Place or event"
+   measured 2.1 to 2.9:1 and the summary "Sources, coverage and limitations" was a 23 px target): the placeholder's own ink on the
+   field, and the summary's height */
+const panelReadable = (page) => page.evaluate(() => {
+  const rgb = (s) => { const m = /rgba?\((\d+), (\d+), (\d+)/.exec(s); return m ? [+m[1], +m[2], +m[3]] : [0, 0, 0]; };
+  const lum = ([r, g, b]) => { const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b); };
+  const input = document.getElementById('weSearch'), summary = document.querySelector('#wePanel details > summary');
+  const ink = getComputedStyle(input, '::placeholder').color, ground = getComputedStyle(input).backgroundColor, a = lum(rgb(ink)), b = lum(rgb(ground));
+  /* the measured ink is the placeholder's own: the panel's dim ink, not the field's typed ink */
+  const probe = document.createElement('span'); probe.style.color = 'var(--we-dim)'; input.parentNode.appendChild(probe);
+  const dim = getComputedStyle(probe).color; probe.remove();
+  return { placeholder: input.getAttribute('placeholder'), ink, dim, typed: getComputedStyle(input).color, ground, ratio: Math.round(((Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)) * 100) / 100, summary: Math.round(summary.getBoundingClientRect().height * 10) / 10 };
+});
+
 /* ---------- the main journey, at every width ---------- */
 for (const size of SIZES) {
   const scope = String(size.width);
@@ -287,6 +301,8 @@ for (const size of SIZES) {
   check(scope, 'counts match the fixtures: 50 quake discs and dots among 62 events, 600 fire footprints and 20 cells, 50 perimeters with rings, 70 alert polygons (25 zone-only and 5 rejected listed), 11 EONET points, 1 track, 1 polygon, 14 station columns with labels', !!c && c.events === 62 && c.quakes === 50 && c.quakeDiscs === 50 && c.firesNear === 600 && c.cells === 20 && c.perimeters === 50 && c.perimeterRings === 50 && c.alerts.drawn === 70 && c.alerts.zone_only === 25 && c.alerts.rejected === 5 && c.eonetPoints === 11 && c.eonetTracks === 1 && c.eonetPolygons === 1 && c.tides === 14 && c.tideLabels === 14, c);
   check(scope, 'the frame shows its legend, collapsed, naming the quantities, with no logo and no brand', await frame.evaluate(() => { const d = document.getElementById('envLegend'); return !!d && !d.hidden && !d.open && d.querySelectorAll('li').length >= 6 && !d.querySelector('img') && !/Equity Uprise/.test(d.textContent) && /Disc area shows magnitude/.test(d.textContent) && /MLLW, metres/.test(d.textContent); }));
   check(scope, 'with the layers on the governor is enabled with maximumRenderTimeChange 60 (on demand once the tour lets go of the camera, below)', (await gov(frame)).enabled === true && (await gov(frame)).maximumRenderTimeChange === 60, await gov(frame));
+  const readable = await panelReadable(page);
+  check(scope, 'the panel\'s search placeholder reads 4.5:1 or better on its field (2.1 to 2.9:1 before) and the sources summary is a 44 px target (23 px before)', readable.ink === readable.dim && readable.ratio >= 4.5 && readable.summary >= 44, readable);
   /* the panel's health rows: the four feed sources and the six layers the frame reported, in the Worker's words */
   await page.locator('#wePanel details > summary').first().click();
   const rowsOk = await until(page, () => document.querySelectorAll('#weSources > li').length >= 10, null, 30000);
@@ -690,6 +706,8 @@ for (const size of SIZES) {
   const low = contrast.rows.filter((r) => !r.missing && r.ratio < 4.5), missing = contrast.rows.filter((r) => r.missing && r.name !== 'scene status');
   check(scope, 'by day every measured pair reads 4.5:1 or better: the panel\'s words, buttons, status words, health reasons, list rows and the observation posts', contrast.phase === 'day' && low.length === 0 && missing.length === 0, contrast.rows.map((r) => r.missing ? r.name + ' missing' : r.name + ' ' + r.ratio));
   check(scope, 'the frame\'s legend summary reads 4.5:1 or better on its own ground', legend.ratio >= 4.5, legend);
+  const dayReadable = await panelReadable(page);
+  check(scope, 'by day the panel\'s search placeholder reads 4.5:1 or better and the sources summary is a 44 px target', dayReadable.ink === dayReadable.dim && dayReadable.ratio >= 4.5 && dayReadable.summary >= 44, dayReadable);
   const dims = await fits(page);
   check(scope, 'nothing scrolls sideways by day', dims.sw === dims.cw && dims.psw <= dims.pcw, dims);
   await shot(page, `environment-world-day-${size.width}`);
