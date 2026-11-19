@@ -39,6 +39,7 @@ function realm({ reduced = false, rupture = null, onActive = null } = {}) {
     GeometryInstance: Plain, EllipseGeometry: Plain, PolygonGeometry: Plain, PolygonHierarchy: class { constructor(p, h) { this.positions = p; this.holes = h || []; } }, GroundPolylineGeometry: Plain,
     PerInstanceColorAppearance: Object.assign(class extends Plain {}, { VERTEX_FORMAT: 1 }), PolylineColorAppearance: Plain, MaterialAppearance: Plain, Material,
     ColorGeometryInstanceAttribute: { fromColor: (c) => c, toValue: (c) => c }, ShowGeometryInstanceAttribute: class { constructor(v) { this.v = v; } static toValue(v) { return v; } },
+    DistanceDisplayConditionGeometryInstanceAttribute: class { constructor(near, far) { this.near = near; this.far = far; } },
     Math: { toRadians: (d) => d * RAD, toDegrees: (r) => r / RAD }, SceneMode: { SCENE2D: 2, SCENE3D: 3 }, EasingFunction: { CUBIC_IN_OUT: 'cubic' },
     SceneTransforms: { worldToWindowCoordinates: (scene, p) => screen(p.lon, p.lat) },
     BoundingSphere: class { constructor(c, r) { this.center = c; this.radius = r; } }, HeadingPitchRange: class { constructor(h, p, r) { this.heading = h; this.pitch = p; this.range = r; } }, Matrix4: { IDENTITY: 'I' }
@@ -119,6 +120,29 @@ test('each quake is a glyph, not a dot: one billboard per quake, the other event
   /* sized by magnitude: M6.3 larger than M3.1 */
   const size = (id) => glyphs.items.find((b) => b.id.id === id).width;
   assert.ok(size('usgs:big') > size('usgs:mid') && size('usgs:mid') > size('usgs:small'));
+});
+
+/* Cesium 1.131's EllipseGeometry steps round the rim by eight times its granularity, whatever the radius */
+const rimPoints = (granularity) => 4 * Math.ceil(Math.PI / 2 / (8 * granularity) - 1e-9);
+test('every quake disc is round where the push lands: 48 points round its rim, never the octagon of PI / 32, never thousands', () => {
+  const w = ready();
+  const discs = w.scene.primitives.list.flatMap((p) => p.geometryInstances || []).filter((i) => i.geometry && typeof i.geometry.semiMajorAxis === 'number' && i.id && /^usgs:/.test(i.id.id));
+  assert.deepEqual(discs.map((i) => i.id.id).sort(), ['usgs:big', 'usgs:mid', 'usgs:small'], 'one disc a quake');
+  /* the same step at every size: a step scaled to the radius gave a small disc tens of thousands of points and crashed the renderer */
+  assert.deepEqual(discs.map((i) => rimPoints(i.geometry.granularity)), [48, 48, 48]);
+  assert.equal(rimPoints(Math.PI / 32), 8, 'the step used before drew an octagon');
+});
+
+test('an energy disc steps back at a regional frame: hidden within five of its radii of the camera, 600 km at the least', () => {
+  const w = ready();
+  const discs = w.scene.primitives.list.flatMap((p) => p.geometryInstances || []).filter((i) => i.geometry && typeof i.geometry.semiMajorAxis === 'number' && i.id && /^usgs:/.test(i.id.id));
+  const near = Object.fromEntries(discs.map((i) => [i.id.id, i.attributes.distanceDisplayCondition && i.attributes.distanceDisplayCondition.near]));
+  /* M6.3: a 236 km disc, gone within 1,180 km; M4.8 and M3.1 within 600 km; the push lands 120-300 km away, so none of them covers it */
+  assert.equal(Math.round(near['usgs:big'] / 1000), 1180);
+  assert.deepEqual([near['usgs:mid'], near['usgs:small']], [600000, 600000]);
+  assert.ok(discs.every((i) => i.attributes.distanceDisplayCondition.far === Number.MAX_VALUE), 'and seen from any distance beyond');
+  const E = w.L.encodings;
+  assert.equal(E.discNearM(null), 600000); assert.equal(E.discNearM(E.quakeRadiusM(7)), 5 * E.quakeRadiusM(7));
 });
 
 test('a tap within 22 px of a glyph selects that quake and pushes to it; 30 px away it selects nothing; a mission pin keeps its tap', () => {

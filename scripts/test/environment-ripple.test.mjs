@@ -70,6 +70,9 @@ test('one ground primitive, built once and asynchronously at the regional radius
   assert.equal(prim.o.allowPicking, false);
   const geometry = prim.o.geometryInstances.geometry;
   assert.equal(geometry.semiMajorAxis, 175000); assert.equal(geometry.semiMinorAxis, 175000);
+  /* Cesium 1.131's EllipseGeometry steps round the rim by eight times its granularity at any radius: 96 points, not the 24 of PI / 90,
+     and never the many thousands a radius-scaled step gives (that geometry crashed the renderer) */
+  assert.equal(4 * Math.ceil(Math.PI / 2 / (8 * geometry.granularity) - 1e-9), 96, `rim points at granularity ${geometry.granularity}`);
   assert.deepEqual(w.holds[0], ['env-ripple', 6000], 'a bounded hold');
   /* not ready yet: nothing is written */
   w.advance(16);
@@ -149,5 +152,5 @@ test('the source: original ring material, no CallbackProperty, no breathing puls
   assert.doesNotMatch(source, /semiMajorAxis\s*=|\.semiMajorAxis\s*=/, 'no axis is ever reassigned');
   assert.match(source, /materialInput\.st/, 'the ring is placed by the material');
   assert.match(source, /u\.front1 = f\[0\]; u\.front2 = f\[1\];/, 'per frame only the two fronts are written');
-  assert.doesNotMatch(source, /God's Eye View|gods-eye-view/i, 'original code: no attribution needed, and the name stays out of product code');
+  assert.doesNotMatch(source, /god\W?s\W?eye\W?view/i, 'original code: no attribution needed, and the name stays out of product code');
 });

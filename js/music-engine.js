@@ -19,6 +19,10 @@
   var audio = new Audio();
   audio.preload = "metadata";
   audio.setAttribute("playsinline", "");
+  /* before every play(): tell the device this is music (the playback audio
+     session iOS keeps going with the screen locked; js/now-playing.js decides,
+     and does nothing in a browser without the API) */
+  function audioSession() { if (root.MCC_NOW_PLAYING) root.MCC_NOW_PLAYING.claim(); }
   var previewLimit = 0;
   var startedAt = 0;
   var playbackRequest = 0;
@@ -347,6 +351,7 @@
     if (currentAccess !== "full" && currentAccess !== "preview") {
       return current.creatorTrackId ? openCreatorTrack(current.creatorTrackId, true) : openTrack(current.albumSlug, current.title, true);
     }
+    audioSession();
     return audio.play();
   }
 
@@ -489,7 +494,7 @@
     var same = current && current.creatorTrackId === t.creatorTrackId;
     if (same && !force && currentAccess === "loading") return Promise.resolve({state:"loading"});
     if (same && !force && (currentAccess === "full" || currentAccess === "preview")) {
-      if (audio.paused) return audio.play().then(function () { return { state: currentAccess }; });
+      if (audio.paused) { audioSession(); return audio.play().then(function () { return { state: currentAccess }; }); }
       audio.pause();
       return Promise.resolve({ state: currentAccess });
     }
@@ -518,6 +523,7 @@
       trackEvent("music_play", { source: "creator_discovery", creator_track_id: t.creatorTrackId, access_state: out.state });
       trackEvent(out.state === "full" ? "music_full_play" : "music_preview_play",
         { source: "creator_discovery", creator_track_id: t.creatorTrackId });
+      audioSession();
       return audio.play().then(function () { return out; }).catch(function () { return out; });
     }).catch(function (err) {
       if (request === playbackRequest) { currentAccess = "unavailable"; paint(); }
@@ -554,7 +560,7 @@
       /* a spent play is not resumed: opening it again asks for a new one */
       if (same && !force && currentAccess === "loading") return {state:"loading"};
       if (same && !force && (currentAccess === "full" || currentAccess === "preview")) {
-        if (audio.paused) return audio.play().then(function () { return { state: currentAccess }; });
+        if (audio.paused) { audioSession(); return audio.play().then(function () { return { state: currentAccess }; }); }
         audio.pause();
         return { state: currentAccess };
       }
@@ -585,6 +591,7 @@
         paint();
         trackEvent("music_play", { source: "discovery", access_state: out.state });
         trackEvent(out.state === "full" ? "music_full_play" : "music_preview_play", { source: "discovery" });
+        audioSession();
         return audio.play().then(function () { return out; }).catch(function () { return out; });
       });
     }).catch(function (err) {
@@ -614,7 +621,7 @@
       audio.addEventListener("loadedmetadata", function once() {
         audio.removeEventListener("loadedmetadata", once);
         try { audio.currentTime = Math.min(at, Math.max(0, audio.duration - .25)); } catch (e) {}
-        if (wasPlaying) audio.play().catch(function () {});
+        if (wasPlaying) { audioSession(); audio.play().catch(function () {}); }
       });
       trackEvent("music_access_changed", { access_state: out.state });
       paint();

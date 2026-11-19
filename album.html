@@ -497,10 +497,12 @@
 
   <style>
     /* ============ THE SIGNAL — the room moves with the record ============
-       A single analyser on the deck feeds a light field, the EQ, and an
-       --amp variable the chrome breathes with. If WebAudio refuses (old
-       Safari, odd stacks), playback is untouched and the room falls back
-       to a gentler clockwork sway — the music never pays for the light. */
+       The record's own light, measured once from its file (data/peaks,
+       read at the deck's current second by js/chamber.js), feeds a light
+       field, the EQ, and an --amp variable the chrome breathes with. The
+       deck itself is never routed through Web Audio, so iOS keeps it
+       playing with the screen locked; a record nobody measured gets a
+       quiet, even light — the music never pays for the light. */
     #signal { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 1;
       pointer-events: none; /* a canvas keeps its intrinsic size under inset:0 —
       the room renders at 60% and stretches to the walls */
@@ -682,16 +684,14 @@
 
     <section id="album" aria-label="The album">
       <ul class="tr" id="tracks"></ul>
-      <!-- crossorigin is load-bearing, not decoration. A gated track plays
-           from a signed Supabase URL, which is another origin, and without
-           this the element is TAINTED: js/chamber.js runs the deck through
-           createMediaElementSource, and a tainted element pushes silence
-           through that graph. The record would look like it was playing and
-           make no sound. js/filament.js also refetches the source to draw
-           the waveform and cannot decode an opaque response. Supabase
-           Storage answers with access-control-allow-origin: *, so anonymous
-           CORS satisfies both, and same-origin tracks are unaffected. -->
-      <audio id="deck" preload="metadata" crossorigin="anonymous"></audio>
+      <!-- A plain element, played straight to the speaker: nothing on this
+           page routes it through Web Audio or reads its samples, because iOS
+           keeps a plain <audio> playing with the screen locked and silences
+           Web Audio (the room's light and the waveform come from data/peaks,
+           js/peaks.js). With no reader of its samples it needs no CORS opt-in
+           either: a signed or streamed master plays without depending on the
+           host's CORS answer. -->
+      <audio id="deck" preload="metadata"></audio>
     </section>
 
     <!-- THE TEST: a record that is also a test (CIA Mind Control) asks one
@@ -801,6 +801,11 @@
   <script src="js/lyric-commerce.js?v=__STAMP__"></script>
   <script src="js/lyrics-sync.js?v=__STAMP__"></script>
   <script src="js/music-direct.js?v=__STAMP__"></script>
+  <!-- the one helper every player asks before it plays (the playback audio
+       session, js/now-playing.js), and the measured light of each record
+       that js/chamber.js and js/filament.js read (js/peaks.js) -->
+  <script src="js/now-playing.js?v=__STAMP__"></script>
+  <script src="js/peaks.js?v=__STAMP__"></script>
   <script>
   /* ============================================================
      THE I AM HERE PLAYER: the album's own Spotify.
@@ -826,6 +831,11 @@
     var INLINE = {}; /* the cut's lyrics + reel ride the row, not files */
     var deck = document.getElementById("deck");
     var rows = [];
+    /* BEFORE ANY SOUND, TELL THE DEVICE THIS IS MUSIC. Where the browser has
+       an audio session (Safari, iOS 16.4 and later) it is set to playback, the
+       kind iOS keeps going with the screen locked; elsewhere nothing happens.
+       One helper decides that for every player (js/now-playing.js). */
+    function audioSession() { if (window.MCC_NOW_PLAYING) window.MCC_NOW_PLAYING.claim(); }
     /* HOUSE is whose records these are by default; ARTIST is who THIS
        album is billed to. They differ only when data/albums.json says so. */
     var HOUSE = "Matthew McCluster";
@@ -1322,6 +1332,7 @@
       pvStop();
       try { deck.pause(); } catch (e) {}
       pv.src = btn.getAttribute("data-src");
+      audioSession();
       var p = pv.play(); if (p && p.catch) p.catch(function () {});
       pvKey = key; btn.classList.add("on"); btn.innerHTML = PAUSE_IC;
       if (window.MCC_TRACK) window.MCC_TRACK("shelf_preview", { key: key });
@@ -1512,6 +1523,7 @@
       });
     }
     function startDeck(row) {
+      audioSession();
       var p = deck.play();
       if (p && typeof p.catch === "function") p.catch(function (e) { playFailed(e, row); });
     }
@@ -1527,6 +1539,7 @@
         priming = true;
         var wasMuted = deck.muted;
         deck.muted = true;
+        audioSession();
         var p = deck.play();
         var done = function () { try { deck.pause(); } catch (e) {} deck.muted = wasMuted; priming = false; };
         if (p && typeof p.then === "function") p.then(done, done); else done();
@@ -1604,7 +1617,10 @@
         grantMax = 0;
         if (cur === target) cur = -1;   /* force a fresh load of the master */
         load(target, 0);
-        probeDuration(row);
+        /* ONE PLAY, ONE REQUEST. The row's clock is read off the deck itself
+           when the master's length arrives (durationchange, below), not off a
+           second Audio: every request against the signed play spends it, and
+           that probe was one of three requests per play (music map 01 S3). */
         startDeck(row);
         gatedPlayEvent(row, true);
         if (window.MCC_TRACK) window.MCC_TRACK("album_play", { track: row.getAttribute("data-title"), album: ALBUM });
@@ -1697,6 +1713,13 @@
     deck.addEventListener("timeupdate", function () {
       if (granted()) grantMax = Math.max(grantMax, deck.currentTime);
       paintDeck(); roomTick(); if (++tick % 8 === 0) save();
+    });
+    /* a gated row's clock is the length of what the deck holds for it right
+       now: the public preview, or the master of the one earned play */
+    deck.addEventListener("durationchange", function () {
+      if (cur < 0 || !rows[cur].hasAttribute("data-gated-bucket") || !(deck.duration > 0) || !isFinite(deck.duration)) return;
+      var cell = rows[cur].querySelector(".d");
+      if (cell) cell.textContent = rowTime(deck.duration);
     });
     /* one play means one pass: the earned record cannot be rewound */
     deck.addEventListener("seeking", function () {

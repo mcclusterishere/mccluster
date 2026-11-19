@@ -2420,6 +2420,13 @@
       "rationale": "Shared Action Network frontend/runtime module with Equity Uprise context; not an independent Equity Uprise capability."
     },
     {
+      "path": "js/mission-source-words.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "The deny list a mission source's page, Control card and pending SQL share; names the brand only to refuse it. Not a building capability."
+    },
+    {
       "path": "js/mnet-clips.js",
       "classification": "shared_frontend_support",
       "capability_ids": [],
@@ -3526,6 +3533,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Test or behaviour harness for shared Action Network / intelligence governance; references Equity Uprise context but defines no program capability."
+    },
+    {
+      "path": "scripts/test/mission-catalog-sources-sql.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Static test of the pending mission catalog sources SQL pair (Project Drawdown as the credited source of the drawdown mission catalog): its guards, grants, functions, rollback and its words check equal to the shared deny list; names the brand only as a refused phrase. Test only; no building capability, program or geometry."
     },
     {
       "path": "scripts/test/mission-catalog.native.integration.mjs",
@@ -5014,6 +5028,13 @@
       "rationale": "Test or behaviour harness for shared Action Network / intelligence governance; references Equity Uprise context but defines no program capability."
     },
     {
+      "path": "supabase/tests/mission_catalog_sources.stub.sql",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Production-shaped test stub for the pending mission catalog sources SQL (default privileges, the house organization, control_audit, organizations, missions and details); its eu_is_admin() stand-in and the existing organization rows' seed text name the brand. Test only; never applied to a real project; no building capability."
+    },
+    {
       "path": "supabase/tests/music_label_artists.behaviour.sql",
       "classification": "test_support",
       "capability_ids": [],
@@ -5467,6 +5488,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Worker test for the owner-only mission proof media route; not a building capability."
+    },
+    {
+      "path": "workers/mccluster/test/mission-sources.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Worker test of the house owner's mission sources route (a mission catalog's source page in the World): owner-only answers, body rules, the store error table, no upstream text; names Equity Uprise only to assert the owner's sentences never carry the brand. Test only; no building capability, program or geometry."
     },
     {
       "path": "workers/mccluster/test/mnet-live.test.mjs",

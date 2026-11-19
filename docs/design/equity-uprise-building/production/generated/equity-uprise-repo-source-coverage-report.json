@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 754,
+  "candidate_count": 758,
   "capability_source_count": 104,
-  "support_only_count": 650,
-  "checks_total": 2914,
-  "checks_passed": 2914,
+  "support_only_count": 654,
+  "checks_total": 2930,
+  "checks_passed": 2930,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -332,6 +332,7 @@
     "js/masthead.js",
     "js/mccluster-creator-account.js",
     "js/member-desk-core.js",
+    "js/mission-source-words.js",
     "js/mnet-clips.js",
     "js/mnet-live.js",
     "js/mnet-tour.js",
@@ -486,6 +487,7 @@
     "scripts/test/identity-verification-levels.test.mjs",
     "scripts/test/logo-css-backgrounds.test.mjs",
     "scripts/test/member-desk.test.mjs",
+    "scripts/test/mission-catalog-sources-sql.test.mjs",
     "scripts/test/mission-catalog.native.integration.mjs",
     "scripts/test/mission-import.test.mjs",
     "scripts/test/mission-pins-arcs-business.test.mjs",
@@ -687,6 +689,7 @@
     "supabase/tests/identity_verification_levels.behaviour.sql",
     "supabase/tests/learning_evidence.behaviour.sql",
     "supabase/tests/mission_admin_approval.behaviour.sql",
+    "supabase/tests/mission_catalog_sources.stub.sql",
     "supabase/tests/music_label_artists.behaviour.sql",
     "supabase/tests/policy_fellowship_ladder.behaviour.sql",
     "supabase/tests/privilege_hygiene_v1.behaviour.sql",
@@ -751,6 +754,7 @@
     "workers/mccluster/test/human-uprise-site.test.mjs",
     "workers/mccluster/test/live-missions.test.mjs",
     "workers/mccluster/test/mission-proof-media.test.mjs",
+    "workers/mccluster/test/mission-sources.test.mjs",
     "workers/mccluster/test/mnet-live.test.mjs",
     "workers/mccluster/test/mnet-post-limits.test.mjs",
     "workers/mccluster/test/prim3-learning.test.mjs",
@@ -768,7 +772,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "754 entries"
+      "detail": "758 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -6991,6 +6995,26 @@
       "detail": ""
     },
     {
+      "name": "js/mission-source-words.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/mission-source-words.js classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "js/mission-source-words.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/mission-source-words.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "js/mnet-clips.js capability ids known",
       "passed": true,
       "detail": ""
@@ -10007,6 +10031,26 @@
     },
     {
       "name": "scripts/test/member-desk.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/mission-catalog-sources-sql.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/mission-catalog-sources-sql.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/mission-catalog-sources-sql.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/mission-catalog-sources-sql.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -13836,6 +13880,26 @@
       "detail": ""
     },
     {
+      "name": "supabase/tests/mission_catalog_sources.stub.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/mission_catalog_sources.stub.sql classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "supabase/tests/mission_catalog_sources.stub.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/tests/mission_catalog_sources.stub.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "supabase/tests/music_label_artists.behaviour.sql capability ids known",
       "passed": true,
       "detail": ""
@@ -15092,6 +15156,26 @@
     },
     {
       "name": "workers/mccluster/test/mission-proof-media.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/mission-sources.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/mission-sources.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "workers/mccluster/test/mission-sources.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/test/mission-sources.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     },
