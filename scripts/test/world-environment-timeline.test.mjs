@@ -170,7 +170,7 @@ function fakeWindow({ search = '', scope = 'global', answer } = {}) {
     setTimeout: () => 0, clearTimeout() {},
     async fetch(url, init) {
       calls.push({ url, init });
-      const a = answer(url, calls.length);
+      const a = await answer(url, calls.length);
       if (a instanceof Error) throw a;
       return { status: a.status, async json() { return a.body; } };
     }
@@ -194,6 +194,7 @@ function fakeWindow({ search = '', scope = 'global', answer } = {}) {
 const page = (events, next = null) => ({ status: 200, body: { ok: true, schema: 'mccluster.environment-events/v1', events, next_cursor: next, sources: [] } });
 const one = (event, status = 200) => ({ status, body: { ok: true, schema: 'mccluster.environment-event/v1', status: event.state, id: event.id, event } });
 const OPEN = { events: [], sources: [], layers: {} };
+const deferred = () => { let resolve; const promise = new Promise((r) => { resolve = r; }); return { promise, resolve }; };
 
 test('the timeline is read only after the feed answered, only for the tab or a deep link, at most once a minute, never after a refusal', async () => {
   const f = fakeWindow({ answer: () => page([quake()]) });
@@ -390,4 +391,85 @@ test('the module turned off after the timeline had loaded: its posts go with it,
   await f.settle();
   assert.equal(f.calls.length, 2, 'the feed answered again: read again');
   assert.equal(f.c.state().status, 'ready');
+});
+
+test('a delayed first page cannot repopulate a refused gate or replace a newly opened timeline', async () => {
+  const old = deferred(), fresh = quake({ id: 'usgs:new' });
+  const f = fakeWindow({ scope: 'equity', answer: (_url, n) => n === 1 ? old.promise : page([fresh]) });
+  f.feed(OPEN);
+  await f.settle();
+  f.feed({ unavailable: true, code: 'module_disabled' });
+  assert.deepEqual(f.c.state().posts, []);
+  f.feed(OPEN);
+  await f.settle();
+  assert.equal(f.calls.length, 2, 'the new gate generation may read without waiting for the old request');
+  assert.deepEqual(f.c.state().posts, [['usgs:new', 1, 'published']]);
+  old.resolve(page([quake()]));
+  await f.settle();
+  assert.deepEqual(f.c.state().posts, [['usgs:new', 1, 'published']], 'the old answer has no authority after a refusal');
+});
+
+test('a delayed older page or deep link cannot restore events after the gate refuses', async () => {
+  for (const kind of ['page', 'event']) {
+    const delayed = deferred();
+    const f = fakeWindow({ scope: 'equity', answer: (url) => url === API + '?limit=20' ? page([quake()], 'cursor') : delayed.promise });
+    f.feed(OPEN);
+    await f.settle();
+    const pending = kind === 'page' ? f.c.more() : f.c.open('usgs:older');
+    f.feed({ unavailable: true, code: 'module_disabled' });
+    delayed.resolve(kind === 'page' ? page([quake({ id: 'usgs:older' })]) : one(quake({ id: 'usgs:older' })));
+    await pending;
+    assert.deepEqual([f.c.state().status, f.c.state().posts, f.c.state().extra, f.c.selected()], ['idle', [], [], ''], kind);
+    f.frameSays({ type: 'hu:globe-ready' });
+    assert.deepEqual(f.focused, [], 'a withdrawn request never moves the globe: ' + kind);
+  }
+});
+
+test('a newer deep link or a visitor selection wins over a delayed earlier event', async () => {
+  const a = quake({ id: 'usgs:a' }), b = quake({ id: 'usgs:b' });
+  for (const action of ['open', 'select', 'back']) {
+    const delayed = deferred();
+    const f = fakeWindow({ scope: 'equity', answer: (url) => url.includes('?limit=') ? page(action === 'select' ? [b] : []) : url.endsWith('usgs%3Aa') ? delayed.promise : one(b) });
+    f.feed(OPEN);
+    await f.settle();
+    const pending = f.c.open('usgs:a', { fromAddress: true });
+    if (action === 'open') await f.c.open('usgs:b', { fromAddress: true });
+    else if (action === 'select') f.c.select('usgs:b', { push: true });
+    else f.back('?view=feed');
+    delayed.resolve(one(a));
+    await pending;
+    assert.equal(f.c.selected(), action === 'back' ? '' : 'usgs:b', action);
+    assert.ok(!f.focused.includes('usgs:a'), 'an old event never steals the camera: ' + action);
+    assert.equal(f.replaces.length, 0, 'an old alias cannot rewrite the address: ' + action);
+    assert.equal(f.c.note(), '');
+  }
+});
+
+test('a same-revision owner withdrawal replaces the cached published event', async () => {
+  const event = quake(), withdrawn = tomb({ id: event.id, revision: event.revision, state: 'retracted', retracted_at: '2026-11-19T12:00:00Z' });
+  const f = fakeWindow({ scope: 'equity', answer: (url) => url.includes('?limit=') ? page([event]) : one(withdrawn) });
+  f.feed(OPEN);
+  await f.settle();
+  await f.c.open(event.id);
+  const post = f.c.post(event.id);
+  assert.equal(post.state, 'retracted', 'owner actions change availability without a content revision');
+  assert.equal(post.lat, null);
+  assert.match(post.tombstone, /^Withdrawn from the timeline/);
+  const before = f.focused.length;
+  f.frameSays({ type: 'hu:globe-ready' });
+  assert.equal(f.focused.length, before, 'the withdrawn event is no longer a pending globe focus');
+});
+
+test('a held event read removes an older cached post and explains its absence', async () => {
+  const event = quake();
+  const f = fakeWindow({ scope: 'equity', answer: (url) => url.includes('?limit=') ? page([event]) : { status: 404, body: { code: 'not_available' } } });
+  f.feed(OPEN);
+  await f.settle();
+  await f.c.open(event.id);
+  assert.equal(f.c.post(event.id), null);
+  assert.equal(f.c.selected(), '');
+  assert.equal(f.c.note(), T.NOTES.held);
+  const before = f.focused.length;
+  f.frameSays({ type: 'hu:globe-ready' });
+  assert.equal(f.focused.length, before, 'a held event is no longer a pending globe focus');
 });

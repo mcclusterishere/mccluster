@@ -15,7 +15,7 @@ records one.
 **A public source page that McCluster Corp makes and keeps, not an account.** No one signs in as Project Drawdown, it posts
 nothing, and nothing implies that it endorses, runs, pays for or sponsors this platform.
 
-- **The page** (the World's half of this work, B2, builds it and lands separately; described here as specified): a sheet over
+- **The page** (the World's half, B2, implemented in `70b11591565a`; browser proof still pending): a sheet over
   the World at `?source=project-drawdown`, or a door at the foot of each Drawdown mission's dialog. The name in type; the role
   line "Missions written by McCluster Corp from Project Drawdown’s climate solutions."; the trust note "Made by McCluster Corp,
   which runs this platform. Project Drawdown does not run or pay for this page and has not endorsed this platform." with About
@@ -165,8 +165,33 @@ authenticity check without a returned row (PostgREST's `return=minimal`) still s
 | `scripts/test/publish-strip-parity.test.mjs`, `scripts/test/cloudflare-pages-stage.test.mjs` | D10 | root suite; export CI |
 | `scripts/test/mission-sources-records.test.mjs` | the README's rules and this record's words | root suite |
 
-The World's half (B2) is specified with its own tests, which land with it: `scripts/test/world-source-profile.test.mjs`,
-`scripts/test/mission-areas.test.mjs` and `scripts/e2e/world-source-profile.e2e.mjs`.
+The World's half (B2) landed its implementation and pure/static tests in `70b11591565a`:
+`scripts/test/world-source-profile.test.mjs` and `scripts/test/mission-areas.test.mjs`. The promised browser suite was missing
+at recovered head `69058f8997b3`; it was added during the recovery review below.
+
+## Recovery review, 2026-11-19
+
+The recovered branch contains the World page, its mission door, area mapping, search, credit, deep links and private owner
+preview. The earlier handoff's "first half" status is out of date. This changes no activation prerequisite: the 125 missions
+must be published and recorded before the source migration; the permission attestation and owner Show are still required.
+
+`scripts/e2e/world-source-profile.e2e.mjs` now exercises the actual World page at 390, 820 and 1280 px using synthetic backend
+answers and the catalog's actual 125 imported mission rows. It checks the public source filter, nine areas, exclusion of a
+returned draft, search and Escape, source sharing, mission opening and closing with history and focus, the mission's source
+door, hidden and absent sources, denied and private owner preview, recovery after a failed mission read, and phone overflow.
+The shared harness has an optional `beforeNavigate` hook so the fixture routes and external-request guard are in place before
+the first page loads. Existing callers do not use the hook. CI `world-source-profile` runs the two pure/static suites followed
+by this browser suite and saves its screenshots and result receipts.
+
+Local recovery evidence on Node 22.23.5: the 15 source-profile and 4 area tests pass (included in the combined 41/41 World unit
+result); the 4 source-record checks also pass, making the focused command 45/45.
+The source Worker suite passes 13/13 with the offline network guard. The existing owner-source integration suite passes 7/7
+against the real pending SQL in disposable PGlite, including owner enforcement in both the route and SQL, the dated Show
+attestation, public visibility after Show and Hide, and replay after a lost response.
+The browser launch is **blocked in this workspace**, before a page opens: system Chromium reports
+`ProcessSingleton socket() failed: Operation not permitted`. The new suite is syntax-checked and wired into CI; it has no
+passing browser result or screenshots yet. A green CI run and visual review remain release evidence to collect. No production SQL was
+applied and no page or Worker deployed by this review.
 
 ## Facts used, with sources and dates
 

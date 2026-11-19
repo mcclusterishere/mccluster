@@ -84,7 +84,8 @@ export const LAUNCH = { args: ['--no-sandbox', '--use-angle=swiftshader', '--ena
    bootstrap (next_step opts.nextStep). opts.reduced: prefers-reduced-motion. opts.banner: the privacy banner (no stored
    acknowledgement, the banner meta). opts.recordAuth: wrap MCC's auth calls so each call and its arguments are recorded
    (signInWithProvider is stubbed: it never leaves the page). opts.dpr: deviceScaleFactor (2 by default). opts.globe: false
-   leaves the globe's library out even when CESIUM_DIR is set. */
+   leaves the globe's library out even when CESIUM_DIR is set. opts.beforeNavigate may install additional fixture routes
+   before the first page loads; it receives { ctx, page, world }. */
 export async function openWorld(browser, base, device, path, opts = {}) {
   const o = { phase: 'night', missions: ONE_MISSION, heat: 'production', archive: 'ok', settings: { external: { email: true } }, token: 'ok', signup: 'confirm', member: false, nextStep: null, reduced: false, banner: false, recordAuth: false, dpr: 2, ...opts };
   const ctx = await browser.newContext({ serviceWorkers: 'block', viewport: device.viewport, deviceScaleFactor: o.dpr, isMobile: device.mobile, hasTouch: device.mobile, reducedMotion: o.reduced ? 'reduce' : 'no-preference' });
@@ -208,6 +209,7 @@ export async function openWorld(browser, base, device, path, opts = {}) {
   page.on('console', (m) => { if (m.type() === 'error') world.console.push({ text: m.text().slice(0, 300), url: (m.location() && m.location().url) || '' }); });
   page.on('response', (r) => { if (r.status() >= 400) world.bad.push({ status: r.status(), url: r.url().slice(0, 200) }); });
   page.on('requestfailed', (r) => { const f = r.failure(); if (f && !/ERR_ABORTED/.test(f.errorText) && !/cesium\.com|fonts\./.test(r.url())) world.bad.push({ status: 0, url: r.url().slice(0, 200), failure: f.errorText }); });
+  if (typeof o.beforeNavigate === 'function') await o.beforeNavigate({ ctx, page, world });
   const sep = path.includes('?') ? '&' : '?';
   await page.goto(base + path + sep + 'daylight=' + o.phase + (o.banner ? '&wgbanner=1' : ''), { waitUntil: 'domcontentloaded' });
   return { ctx, page, world };

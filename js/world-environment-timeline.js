@@ -180,6 +180,9 @@
   function createController(w, opts) {
     const o = opts || {}, api = o.api || API, clock = o.now || (() => Date.now());
     const st = { gate: 'unknown', status: 'idle', posts: [], next: null, loadedAt: 0, failedAt: 0, busy: false, extra: {}, selected: '', note: '', wanted: eventIdFromSearch(w.location && w.location.search) };
+    /* A refusal ends every read begun under the old gate. Event selection has its own generation so a late deep link cannot
+       take the camera or address back from a newer choice (including Back to an address without an event). */
+    let gateVersion = 0, selectionVersion = 0;
     let hooks = {};
     const scope = () => { try { return w.MCC_FEED_SCOPE && w.MCC_FEED_SCOPE.get ? w.MCC_FEED_SCOPE.get() : ''; } catch (e) { return ''; } };
     const changed = () => { try { if (hooks.render) hooks.render(); } catch (e) {} };
@@ -220,7 +223,10 @@
       try { frame = w.document.getElementById('mnWorldFrame'); } catch (e) { frame = null; }
       if (!frame || !ev || ev.source !== frame.contentWindow || ev.origin !== (w.location && w.location.origin)) return;
       const d = ev.data || {};
-      if (d.type === 'hu:environment-selected' && (d.id === focusWanted || d.via === 'pick')) focusWanted = '';
+      if (d.type === 'hu:environment-selected' && (d.id === focusWanted || d.via === 'pick')) {
+        focusWanted = '';
+        if (d.via === 'pick') { selectionVersion++; st.wanted = ''; }
+      }
       else if (d.type === 'hu:globe-ready' && focusWanted && scope() === 'equity' && hooks.focus) try { hooks.focus(focusWanted); } catch (e) {}
     }
     async function load(force) {
@@ -228,8 +234,10 @@
       if (!force && st.status === 'ready' && clock() - st.loadedAt < FRESH_MS) { if (st.wanted) open(st.wanted, { fromAddress: true }); return; }
       /* a failed read is not asked again within the minute: the page keeps the feed's own quakes (the same canonical ids) */
       if (!force && st.status === 'failed' && clock() - st.failedAt < FRESH_MS) { if (st.wanted) open(st.wanted, { fromAddress: true }); return; }
+      const gate = gateVersion;
       st.busy = true;
       const r = await getJson(api + '?limit=' + PAGE);
+      if (gate !== gateVersion || st.gate !== 'open') return;
       st.busy = false;
       const page = pageOf(r);
       if (page) { st.posts = []; take(page.events); st.next = typeof page.next_cursor === 'string' ? page.next_cursor : null; st.status = 'ready'; st.loadedAt = clock(); }
@@ -238,9 +246,11 @@
       if (st.wanted) open(st.wanted, { fromAddress: true });
     }
     async function more() {
-      if (st.status !== 'ready' || !st.next || st.busy) return;
+      if (st.gate !== 'open' || st.status !== 'ready' || !st.next || st.busy) return;
+      const gate = gateVersion;
       st.busy = true;
       const r = await getJson(api + '?limit=' + PAGE + '&cursor=' + encodeURIComponent(st.next));
+      if (gate !== gateVersion || st.gate !== 'open') return;
       st.busy = false;
       const page = pageOf(r);
       if (page) { take(page.events); st.next = typeof page.next_cursor === 'string' ? page.next_cursor : null; }
@@ -249,21 +259,27 @@
     /* the address named this event (a deep link, Back or Forward): marked and shown on the globe at once when a loaded page holds
        it; the event's own answer follows (an alias or a merge resolved to the canonical id, its correction history) */
     async function open(id, { fromAddress = false } = {}) {
+      const selection = ++selectionVersion, gate = gateVersion;
+      focusWanted = '';
       if (typeof id !== 'string' || !EVENT_ID.test(id)) { st.wanted = ''; st.note = NOTES.gone; changed(); return; }
       if (st.gate !== 'open') { st.wanted = id; return; }
       st.wanted = '';
       const known = find(id);
       if (known) { st.selected = known.id; st.note = ''; changed(); focus(known); }
       const r = await getJson(api + '/' + encodeURIComponent(id));
+      if (gate !== gateVersion || st.gate !== 'open' || selection !== selectionVersion) return;
       const p = r.status === 200 && r.body && r.body.event ? timelinePost(r.body.event, clock()) : null;
       if (p) {
         const have = find(p.id);
-        /* the page's post of the same revision gains the history the page carries none of; a newer answer replaces it */
-        if (have && have.revision === p.revision) { have.earlier = p.earlier; have.hash = postHash(have); }
-        else if (have && st.extra[p.id]) st.extra[p.id] = p;
+        /* Owner withdrawals and restores do not change the content revision. The whole detail answer is authoritative at the
+           same revision too; never let an older cached content revision replace a newer one already read. */
+        if (have && have.revision > p.revision) return;
+        if (have && st.extra[p.id]) st.extra[p.id] = p;
         else if (have) { const i = st.posts.indexOf(have); if (i >= 0) st.posts[i] = p; }
         else st.extra[p.id] = p;
-        if (!known) {
+        if (p.lat === null || p.lon === null) focusWanted = '';
+        if (!known || known.id !== p.id) {
+          if (known) { st.posts = st.posts.filter((row) => row.id !== known.id); delete st.extra[known.id]; }
           st.selected = p.id; st.note = '';
           /* an alias or a merge answers the canonical id: the address says the canonical id, with no new entry */
           if (fromAddress && p.id !== id) writeAddress(p.id, false);
@@ -271,7 +287,9 @@
         }
         changed(); return;
       }
-      if (known) return;
+      if (known && r.status !== 404) return;
+      if (known) { st.posts = st.posts.filter((row) => row.id !== known.id); delete st.extra[known.id]; }
+      st.selected = ''; focusWanted = '';
       st.note = r.status === 404 ? (r.body && r.body.code === 'not_available' ? NOTES.held : NOTES.gone) : NOTES.failed;
       changed();
     }
@@ -280,6 +298,7 @@
     function select(id, opts2) {
       const p = find(id);
       if (!p && !(typeof id === 'string' && EVENT_ID.test(id) && OWNED.includes(providerOf(id)))) return false;
+      selectionVersion++; st.wanted = ''; focusWanted = '';
       st.selected = p ? p.id : id; st.note = '';
       if (opts2 && opts2.push && eventIdFromSearch(w.location && w.location.search) !== st.selected) writeAddress(st.selected, true);
       changed();
@@ -291,8 +310,10 @@
       st.gate = d.unavailable === true ? 'refused' : 'open';
       /* the module turned off or became unreachable after the timeline had loaded: what it showed goes with it (the tab's honest
          line stands, as for the feed's own posts) */
-      if (st.gate === 'refused' && st.status !== 'idle') {
-        st.posts = []; st.extra = {}; st.next = null; st.status = 'idle'; st.loadedAt = 0; st.failedAt = 0; st.selected = ''; st.note = '';
+      if (st.gate === 'refused') {
+        gateVersion++; selectionVersion++; focusWanted = '';
+        st.posts = []; st.extra = {}; st.next = null; st.status = 'idle'; st.loadedAt = 0; st.failedAt = 0; st.busy = false; st.selected = ''; st.note = '';
+        st.wanted = eventIdFromSearch(w.location && w.location.search);
         changed();
         return;
       }
@@ -301,8 +322,9 @@
     function onScope() { if (st.gate === 'open' && scope() === 'equity') load(false); }
     function onPop() {
       const id = eventIdFromSearch(w.location && w.location.search);
+      selectionVersion++; st.wanted = ''; focusWanted = '';
       if (id === st.selected) return;
-      if (!id) { st.selected = ''; changed(); return; }
+      if (!id) { st.selected = ''; st.note = ''; changed(); return; }
       open(id, { fromAddress: true });
     }
     return {

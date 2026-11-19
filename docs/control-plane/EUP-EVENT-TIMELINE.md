@@ -1069,3 +1069,25 @@ these pages load).
 - A real-device pass (D18: WebKit was not run here and no device was used): on an iPhone at 390 px, the glyphs read from orbit,
   a tap lands within the 44 px target, a touch stops the push, the rings are seen from where the camera lands, and the tour's
   controls sit clear of the app bar at rest; then an iPad and desktop Safari.
+
+## Recovery review, 2026-11-19: delayed reads and changed event availability
+
+At recovered head `69058f8997b3`, the S4 timeline was already complete beyond the earlier handoff. A focused review found
+that a read begun before a module refusal could finish afterward and restore cleared events; a delayed deep link could also
+take selection and camera focus back from a newer choice. In addition, an owner withdrawal with the same content revision
+left its cached published post intact, and a held event's 404 left an older cached post visible.
+
+`js/world-environment-timeline.js` now tracks the gate generation and the selection generation. A refusal ends all reads from
+the old gate, clears the busy state and pending focus, and permits the next open gate to read immediately. A newer deep link,
+visitor selection or Back discards an older event answer. A same-revision detail answer replaces the cached event, including
+its availability and coordinates; a held or gone detail removes its cached post and shows the existing absence message.
+Neither a tombstone nor a held event leaves a pending globe focus. The Worker contract, pending SQL and source policy are
+unchanged.
+
+Five regression tests in `scripts/test/world-environment-timeline.test.mjs` fail against the recovered implementation and
+pass with this change. On Node 22.23.5 the focused suite passes **22/22**; the combined timeline, source-profile and area suites
+pass **41/41** (45/45 including the four source-record checks). These are local Node tests, not a new browser or device proof.
+The Worker timeline suite passes 11/11 with the offline network guard. The existing timeline integration suite passes 11/11
+against the real pending SQL in disposable PGlite, including off-before-store reads, alias resolution, corrections, owner
+holds, source withdrawals and pagination. The earlier Chromium receipts above remain records of the earlier implementation.
+No production migration, ingest enablement, module activation or deployment was performed by this review.
