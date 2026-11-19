@@ -1158,6 +1158,9 @@
       '</div>' + missionStatsHtml(c.mission_id) + globeChipHtml(c.mission_id) + '</div>';
   }
   function loadActionOfferCards(items) {
+    /* action_offer_cards is granted to signed-in members only (EXECUTE for authenticated, not anon): a guest's feed never
+       asks it (release review SEC-3; on main the owner-only switch kept everyone else from asking) */
+    if (state.guest) return Promise.resolve(false);
     var ids = (items || []).map(function (it) {
       var p = it.post;
       return p && p.content_id ? p.id : null;
