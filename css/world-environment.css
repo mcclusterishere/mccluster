@@ -80,7 +80,15 @@
    Uprise tab only (production answers 503 until the owner releases the module, docs/control-plane/WORLD-ENVIRONMENT.md). */
 html:not([data-we-feed="ready"]) #wePanel { display:none !important; }
 .mn__we-note { display:none;margin:2px 0 12px;color:var(--mn-dim,#a3a9af);font:400 14px/1.5 var(--mn-ui,system-ui,sans-serif); }
-html.mn-feed-equity[data-we-feed="unavailable"] .mn__we-note { display:block; }
+/* one line by cause (event timeline slice S0, 2026-11-19): off, not available right now, nothing to report */
+html.mn-feed-equity[data-we-feed="unavailable"] #weUnavailable,html.mn-feed-equity[data-we-feed="off"] #weOff,html.mn-feed-equity[data-we-feed="empty"] #weEmpty { display:block; }
+
+/* THE PANEL'S SEARCH AND ITS SOURCES SUMMARY (release review, carried into event timeline slice S0: the placeholder "Place or event" measured 2.1 to
+   2.9:1 and the summary "Sources, coverage and limitations" was a 23 px target). The placeholder takes the panel's dim ink, which
+   reads 4.5:1 or better on the field by night (#afbdc4 on #0c161c) and by day (css/daylight.css turns --we-dim and --we-bg); the
+   summary is a 44 px row. The panel itself is vendored and unchanged: this sheet is McCluster's. */
+.we-panel input::placeholder { color:var(--we-dim);opacity:1; }
+.we-panel details > summary { min-height:44px;box-sizing:border-box;padding:10px 0;cursor:pointer; }
 
 /* ENVIRONMENTAL OBSERVATION POSTS IN THE FEED (target 13; js/mnet.js observationPostHtml): a post's card and the mission post's
    sizes (css/human-uprise-editorial.css), a plain line icon in the feed's ink where a post keeps its avatar (never the brand's
@@ -95,3 +103,9 @@ html.mn-feed-equity[data-we-feed="unavailable"] .mn__we-note { display:block; }
 .hu-editorial #mnFeed .mn__observation-post .mn__post-actions { margin-top:6px; }
 .mn__observation-post .mn__post-actions a.mn__action { text-decoration:none;color:inherit; }
 .mn__observation-post .mn__action:disabled { opacity:.6;cursor:default; }
+
+/* THE EQUITY UPRISE TAB'S TWO LISTS (event timeline slice S0, 2026-11-19; decision D8, default adopted pending Matthew's confirmation): the
+   missions first, then the environmental observations under their own heading, each list paged by its own button right under it
+   (js/mnet.js paintMissionFeed). The heading reads in the feed's dim ink, as the feed's own notes do, by night and by day. */
+.mn__obs-list { margin:20px 0 0;min-width:0; }
+.mn__obs-heading { margin:0 0 8px;color:var(--mn-dim,#a3a9af);font:700 13px/1.4 var(--mn-ui,system-ui,sans-serif);letter-spacing:.08em;text-transform:uppercase; }

@@ -81,12 +81,15 @@ test('status derives from the sources: available over stale over unavailable; a 
   const eonet = await CLIENT.create({ fetchImpl: async () => json(BODIES.eonet), ...T }).fetchLayer('eonet');
   assert.equal(eonet.status, 'stale');
 });
-for (const [http, code] of [[503, 'module_policy_unavailable'], [404, 'module_disabled']]) {
-  test(`${http} ${code}: every layer goes policy, pending fetches abort, no refresh timer, one retry on the next activation`, async () => {
+/* E=UP slice S0 (2026-11-19), changed on purpose: the release review counted 6, 11, 16 and 21 requests after four activations of the
+   tab while the module answered 503; a refusal is now remembered for its hold (off 5 minutes, outage 1 minute), and the first
+   activation after the hold asks ONE route first */
+for (const [http, code, gate] of [[503, 'module_policy_unavailable', 'outage'], [404, 'module_disabled', 'off']]) {
+  test(`${http} ${code}: every layer goes policy (${gate}), pending fetches abort, no refresh timer, and no route is asked again within the hold`, async () => {
     const T = timers();
     const seen = [], states = [], data = [];
-    let holdOthers = true;
-    const client = CLIENT.create({
+    let holdOthers = true, now = 1000;
+    const client = CLIENT.create({ now: () => now,
       fetchImpl: (url, init) => {
         const layer = layerOf(url); seen.push(layer);
         if (layer === 'alerts') return Promise.resolve(json({ ok: false, code }, http));
@@ -106,14 +109,63 @@ for (const [http, code] of [[503, 'module_policy_unavailable'], [404, 'module_di
     assert.equal(client.isPolicy(), true);
     assert.deepEqual(T.pending().filter(t => t.ms >= 5000), [], 'no retry and no refresh timer against a disabled module');
     const alerts = await client.fetchLayer('alerts');
-    assert.deepEqual([alerts.ok, alerts.status, alerts.reason, alerts.http], [false, 'policy', code, http]);
-    client.stop();
-    holdOthers = false; seen.length = 0;
-    client.start({ onState() {}, onData() {} });
-    await flush(10);
-    assert.equal(seen.length, 5, 'the next activation retries once');
+    assert.deepEqual([alerts.ok, alerts.status, alerts.reason, alerts.http, alerts.gate], [false, 'policy', code, http, gate]);
+    assert.deepEqual(JSON.parse(JSON.stringify(client.policy())), { reason: code, http, gate, at: 1000 });
+    /* three more activations within the hold: the same state said again for every layer, and nothing asked */
+    for (let i = 0; i < 3; i++) {
+      client.stop();
+      holdOthers = false; seen.length = 0;
+      const again = [];
+      now += (CLIENT.HOLD_MS[gate] - 1) / 3;
+      client.start({ onState: (layer, state) => again.push([layer, state.status, state.reason, state.gate]), onData() {} });
+      await flush(10);
+      assert.equal(seen.length, 0, `activation ${i + 2} within the hold asks nothing`);
+      assert.deepEqual(again.map(([layer]) => layer).sort(), ['alerts', 'eonet', 'fires', 'perimeters', 'shakemap', 'tides']);
+      assert.ok(again.every(([, status, reason, g]) => status === 'policy' && reason === code && g === gate));
+    }
+    assert.deepEqual(T.pending().filter(t => t.ms >= 5000), [], 'still no timer');
   });
 }
+test('after the hold ONE route asks first: a refusal again holds again without asking the others; an answer lets the others go', async () => {
+  const T = timers();
+  let now = 0, refuse = true;
+  const seen = [];
+  const client = CLIENT.create({ now: () => now, ...T, hidden: () => false, fetchImpl: (url) => {
+    const layer = layerOf(url); seen.push(layer);
+    return Promise.resolve(refuse ? json({ ok: false, code: 'module_policy_unavailable' }, 503) : json(BODIES[layer]));
+  } });
+  client.start({ onState() {}, onData() {} });
+  await flush(10);
+  assert.equal(seen.length, 5, 'the first activation asks every route');
+  assert.equal(client.isPolicy(), true);
+  client.stop(); seen.length = 0;
+  now += CLIENT.HOLD_MS.outage;
+  client.start({ onState() {}, onData() {} });
+  await flush(10);
+  assert.deepEqual(seen, ['fires'], 'after the hold one route asks; it was refused, so the others are never asked');
+  assert.equal(client.isPolicy(), true);
+  client.stop(); seen.length = 0;
+  client.start({ onState() {}, onData() {} });
+  await flush(10);
+  assert.deepEqual(seen, [], 'the new refusal starts a new hold');
+  client.stop(); seen.length = 0; refuse = false;
+  now += CLIENT.HOLD_MS.outage;
+  const data = [];
+  client.start({ onState() {}, onData: (layer) => data.push(layer) });
+  await flush(20);
+  assert.deepEqual(seen, ['fires', 'perimeters', 'alerts', 'eonet', 'tides'], 'the gate answers: the first route, then the other four');
+  assert.deepEqual(data.sort(), ['alerts', 'eonet', 'fires', 'perimeters', 'tides']);
+  assert.equal(client.isPolicy(), false);
+});
+test('off, outage and the visitor\'s network are three states: gate off for 404 module_disabled, outage for 503, unavailable network for a failed fetch', async () => {
+  assert.equal(CLIENT.gateOf('module_disabled', 404), 'off');
+  assert.equal(CLIENT.gateOf('module_policy_unavailable', 503), 'outage');
+  assert.equal(CLIENT.gateOf('module_disabled', 503), 'outage', 'only the 404 answer is off');
+  assert.ok(CLIENT.HOLD_MS.off > CLIENT.HOLD_MS.outage, 'the owner\'s decision is held longer than an outage');
+  const T = timers();
+  const net = await CLIENT.create({ ...T, fetchImpl: () => Promise.reject(new TypeError('Failed to fetch')) }).fetchLayer('eonet');
+  assert.deepEqual([net.ok, net.status, net.reason, net.gate], [false, 'unavailable', 'network', undefined]);
+});
 test('G1R-2: the gate refuses while a sibling response is still being read: that layer ends in the policy state too, never unavailable http_503', async () => {
   const T = timers();
   const states = [], data = [];
@@ -156,7 +208,7 @@ test('G1R-2, the body-read guard: a ShakeMap whose 503 body is still being read 
   const result = await sm;
   assert.deepEqual([result.status, result.reason], ['policy', 'module_policy_unavailable'], 'the ShakeMap read the refusal aborted is in the policy state, never unavailable http_503');
   assert.equal(client.isPolicy(), true);
-  assert.deepEqual(JSON.parse(JSON.stringify(await client.shakemap('usgs:us7000tyhr'))), { ok: false, status: 'policy', reason: 'module_policy_unavailable', http: 503 }, 'and asked again, the refusal answers');
+  assert.deepEqual(JSON.parse(JSON.stringify(await client.shakemap('usgs:us7000tyhr'))), { ok: false, status: 'policy', reason: 'module_policy_unavailable', http: 503, gate: 'outage' }, 'and asked again, the refusal answers (E=UP S0: with the gate it stands for)');
   assert.ok(states.every(([, status]) => status === 'policy'));
 });
 test('G1R-2, the run() guard: a layer whose answer was read just before another route\'s refusal tells nothing after the policy state', async () => {

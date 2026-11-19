@@ -4,16 +4,17 @@
 import { createEnvironmentProofAdapter, ENVIRONMENT_PROOF_ERRORS } from './environment-proofs.js';
 import { createMcClusterEnvironmentPlanning, ENVIRONMENT_PLANNING_ERROR_CODES } from './environment-planning-mccluster.js';
 import { reply } from './lib/http.js';
-import { bearerUser, sourceHealth, trackedLayer } from './world-layers.js';
+import { bearerUser, sourceHealth } from './world-layers.js';
 import { fetchWeather, fetchNatural } from './world-events.js';
 import { fetchQuakes, fetchCyclones } from './world-halo-layers.js';
 import { service, uuid } from './world-cctv.js';
 import { isHouseOwner } from './world-access.js';
-import { readModulePolicy, MODULE_POLICY_ERRORS } from './eup/modules.js';
+import { MODULE_POLICY_ERRORS } from './eup/modules.js';
 import { environmentFeed as productFeed, clip } from '../../../vendor/equity-uprise/src/environment/evidence.mjs';
 import { createEnvironmentServer } from '../../../vendor/equity-uprise/src/environment/server.mjs';
 import { readModulePolicy as productPolicy, moduleRefusal } from '../../../vendor/equity-uprise/src/server/module-policy.mjs';
 import { handleEnvironmentLayers } from './world-environment-layers.js';
+import { OFF, gateAnswer, limitPublicRead, policyLoader, policyRead, sharedLayer } from './world-environment-guard.js';
 export { ENVIRONMENT_PATH, ENVIRONMENT_TEAM, ENVIRONMENT_ACTIONS, environmentFacts } from '../../../vendor/equity-uprise/src/environment/evidence.mjs';
 const PROVIDERS = { nws:fetchWeather, eonet:fetchNatural, usgs:fetchQuakes, nhc:fetchCyclones };
 const installation = Object.freeze({
@@ -21,9 +22,12 @@ const installation = Object.freeze({
   brand:{name:'McCluster'},modules:{environment:true}
 });
 // Module policy is the persisted owner decision, read from the canonical store on every request
-// (eup/modules.js -> eup_module_policy_read, service key, no cache). There is no built-in policy:
-// a missing row, an unapplied schema, an unreachable store or a malformed answer makes loadPolicy
-// throw, and the pinned server answers 503 module_policy_unavailable. Nothing defaults to on.
+// (eup/modules.js -> eup_module_policy_read, service key, no cache), once per request
+// (./world-environment-guard.js). There is no built-in policy and nothing defaults to on. Off, outage
+// and no data are three answers (E=UP slice S0, 2026-11-19): a module never installed (the store's
+// EUM01, no row) answers 404 module_disabled exactly as an installed, disabled one does; an unapplied
+// schema, an unreachable store, missing secrets or a malformed answer make loadPolicy throw, and the
+// pinned server answers 503 module_policy_unavailable.
 // A database refusal of a write (the module guard's SQLSTATEs) is passed to the pinned server with
 // the code and status it answers for the same state itself.
 const MODULE_REFUSALS = MODULE_POLICY_ERRORS.consumer;
@@ -40,13 +44,25 @@ export const FEED_SOURCE_TERMS = Object.freeze({
 export async function environmentFeed(env,{fetchImpl=fetch,cacheImpl=null}={}) {
   const outcomes=new Map();
   const feed=await productFeed({readSource:async spec=>{
-    const outcome=await trackedLayer({layer:spec.id,key:`consumer-environment-v1-${spec.id}`,ttl:spec.ttl,rows:spec.rows,fetcher:PROVIDERS[spec.id]},env,fetchImpl,cacheImpl);
+    const outcome=await sharedLayer({layer:spec.id,key:`consumer-environment-v1-${spec.id}`,ttl:spec.ttl,rows:spec.rows,fetcher:PROVIDERS[spec.id]},env,fetchImpl,cacheImpl);
     outcomes.set(spec.id,outcome);return outcome;
   }});
   return {...feed,sources:feed.sources.map(source=>{
     const health=sourceHealth({...source,...FEED_SOURCE_TERMS[source.id]},outcomes.get(source.id));
-    return {...source,reason:health.reason,last_success_at:health.last_success_at,attribution:health.attribution,license:health.license};
+    /* USGS's summary feed says when it was GENERATED (metadata.generated, which the shared reader keeps as observed_at for the
+       owner's Halo layer); the source's latest observation is the newest origin time among the quakes served (E=UP slice S0, E6) */
+    const observed=source.id==='usgs'?newestObserved(feed.events,'usgs'):source.observed_at;
+    return {...source,observed_at:observed,reason:health.reason,last_success_at:health.last_success_at,attribution:health.attribution,license:health.license};
   })};
+}
+function newestObserved(events,provider){
+  let best=null;
+  for(const e of Array.isArray(events)?events:[]){
+    if(!e||e.source?.id!==provider)continue;
+    const t=Date.parse(e.observed_at);
+    if(Number.isFinite(t)&&(best===null||t>best))best=t;
+  }
+  return best===null?null:new Date(best).toISOString();
 }
 async function rpc(request, env, name, args, fetchImpl, privileged = false) {
   const res = await fetchImpl(`${env.SUPABASE_URL}/rest/v1/rpc/${name}`, { method: 'POST', headers: {
@@ -67,27 +83,36 @@ async function missions(env, fetchImpl, owner = false) {
   return rows.filter(r => uuid(r.mission_id) && r.action_missions).map(r => ({ id: r.mission_id, event_id: r.event_id, action_id: r.action_id, title: r.action_missions.title, description: r.action_missions.description, status: r.action_missions.status, ...(owner ? { source_snapshot: r.source_snapshot } : {}) }));
 }
 /* The gate of the public environmental layers (./world-environment-layers.js): the same persisted
-   policy as GET /v1/world/environment, read on every request with the service key and judged by the
+   policy as GET /v1/world/environment, read once per request with the service key and judged by the
    pinned product's own rules (vendor module-policy.mjs), in the order its server applies them. A
-   missing, unapplied, unreachable or malformed policy is 503 module_policy_unavailable; disabled is 404
-   module_disabled; draining refuses writes only (these routes are reads). Never defaulted to on. */
-export async function environmentGate(request, env, fetchImpl = fetch) {
+   module never installed is off, 404 module_disabled, as a disabled one is; an unapplied, unreachable
+   or malformed policy is 503 module_policy_unavailable; draining refuses writes only (these routes are
+   reads). Never defaulted to on. `read` is the request's one read (policyRead); without one it reads. */
+export async function environmentGate(request, env, fetchImpl = fetch, read = policyRead(env, fetchImpl)) {
+  const first = await read();
+  if (first.refusal) return first.refusal;
   let policy;
-  try { policy = productPolicy(await readModulePolicy(env, fetchImpl, 'environment'), installation.id, 'environment'); }
+  try { policy = productPolicy(first.policy, installation.id, 'environment'); }
   catch { return { code: 'module_policy_unavailable', status: 503 }; }
   if (!installation.modules.environment) return { code: 'module_disabled', status: 404 };
   return moduleRefusal(policy, request.method);
 }
 export async function handleWorldEnvironment(request, env, options = {}) {
   const { fetchImpl=fetch }=options;
-  const layer=await handleEnvironmentLayers(request,env,{...options,gate:()=>environmentGate(request,env,fetchImpl)});
+  /* a client past its share of the public reads is told so before anything is read (release security review SEC-2) */
+  const limited=limitPublicRead(request,env,options.limits);
+  if(limited)return limited;
+  const read=policyRead(env,fetchImpl);
+  const layer=await handleEnvironmentLayers(request,env,{...options,gate:()=>environmentGate(request,env,fetchImpl,read)});
   if(layer)return layer;
+  /* a module never installed is off, before the pinned server, which would call any failed read an outage */
+  if((await read()).refusal===OFF)return gateAnswer(request,env,{ok:false,code:OFF.code},OFF.status);
   const planning=createMcClusterEnvironmentPlanning({request,env,fetchImpl,readEvent:async id=>(await environmentFeed(env,options)).events.find(event=>event.id===id)});
   const controller=createEnvironmentServer({
     proofs:createEnvironmentProofAdapter(request,env,{fetchImpl}),
     planning,failureCodes:[...ENVIRONMENT_PROOF_ERRORS,...ENVIRONMENT_PLANNING_ERROR_CODES,'current_news_review_required',...MODULE_FAILURE_CODES],
     installation,
-    loadPolicy:()=>readModulePolicy(env,fetchImpl,'environment'),
+    loadPolicy:policyLoader(read,env,fetchImpl),
     authenticate:async()=>{const user=await bearerUser(request,env,fetchImpl);return user?{id:user.id,installationId:installation.id}:null;},
     isOwner:({principal})=>isHouseOwner(env,principal.id,fetchImpl),
     readEvidence:()=>environmentFeed(env,options),

@@ -178,8 +178,15 @@
   };
   const legendFor = layer => LEGEND[layer] || '';
   const RIPPLE_LABEL = 'Ripple is illustrative: not a recording of shaking';
+  /* OFF, OUTAGE, THE VISITOR'S NETWORK AND NO DATA, EACH IN ITS OWN WORDS (event timeline slice S0, 2026-11-19): the gate refusing as off (404
+     module_disabled: the owner has not turned the layers on), as an outage (503 module_policy_unavailable), every layer route out of
+     reach from this browser, and a layer whose provider answered with nothing, which is said rather than left out of the legend */
   const POLICY_LINE = 'Environmental layers are not available right now';
-  const encodings = Object.freeze({ quakeRadiusM, depthColour, quakeFromFacts, frpColour, cellRadiusPx, cellColour, severityTint, stationColumnM, stationColour, mmiColour, eonetColour, lod, pickId, isEnvPick, providerOf, kindOf, factsFor, shakemapLabel, legendFor, RIPPLE_LABEL, POLICY_LINE });
+  const OFF_LINE = 'Environmental layers are turned off for now';
+  const NETWORK_LINE = 'Environmental layers could not be reached from this browser';
+  const LAYER_TITLES = Object.freeze({ fires: 'Fires', perimeters: 'Fire perimeters', alerts: 'Alerts', eonet: 'Natural events', tides: 'Water levels' });
+  const noneLine = layer => `${LAYER_TITLES[layer] || layer}: none reported right now`;
+  const encodings = Object.freeze({ quakeRadiusM, depthColour, quakeFromFacts, frpColour, cellRadiusPx, cellColour, severityTint, stationColumnM, stationColour, mmiColour, eonetColour, lod, pickId, isEnvPick, providerOf, kindOf, factsFor, shakemapLabel, legendFor, RIPPLE_LABEL, POLICY_LINE, OFF_LINE, NETWORK_LINE, noneLine });
   /* ENCODINGS_END */
 
   /* THE FEED PROVIDERS' TERMS ARRIVE WITH THE PINS (review G1R-10): the panel copies them from the feed's own source records (which
@@ -758,8 +765,9 @@
     box.hidden = !on;
     if (!on) { list.replaceChildren(); return; }
     const terms = layer => { const st = states[layer]; const s = st && Array.isArray(st.sources) ? st.sources.filter(x => x && typeof x === 'object') : []; const attribution = [...new Set(s.map(x => x.attribution).filter(Boolean))].join('; '); const license = [...new Set(s.map(x => x.license).filter(Boolean))].join('; '); return [attribution, license].filter(Boolean).join(' · '); };
-    const policy = client && client.isPolicy();
-    if (policy) legendLines.push(POLICY_LINE);
+    const policy = client && client.isPolicy() ? (typeof client.policy === 'function' && client.policy()) || {} : null;
+    if (policy) legendLines.push(policy.gate === 'off' ? OFF_LINE : POLICY_LINE);
+    else if (LAYER_KEYS.every(k => states[k] && states[k].status === 'unavailable' && (states[k].reason === 'network' || states[k].reason === 'timeout'))) legendLines.push(NETWORK_LINE);
     if (visible('events') && counts.events) {
       legendLines.push(`${LEGEND.events}`);
       /* the earthquake terms as the feed's own USGS record gave them with the pins; none given, none shown (review G1R-10) */
@@ -767,7 +775,11 @@
       if (counts.quakeDiscs) legendLines.push(`Earthquakes: ${LEGEND.quakes} ${usgs ? [usgs.attribution, usgs.license].filter(Boolean).join(' · ') : ''}`.trim());
     }
     for (const [layer, count] of [['fires', counts.firesNear + counts.cells], ['perimeters', counts.perimeters], ['alerts', counts.alerts.drawn], ['eonet', counts.eonetPoints + counts.eonetPolygons], ['tides', counts.tides]]) {
-      if (!visible(layer) || !count) continue;
+      if (!visible(layer)) continue;
+      /* no data: the provider answered (available or kept) and reported nothing at all, said in words, never a silent gap */
+      const st = states[layer];
+      if (!count && st && (st.status === 'available' || st.status === 'stale') && st.count === 0) { legendLines.push(noneLine(layer)); continue; }
+      if (!count) continue;
       legendLines.push(`${LEGEND[layer]} ${terms(layer)}`.trim());
     }
     if (counts.shakemapLines && visible('shakemap')) legendLines.push(`${LEGEND.shakemap} ${terms('shakemap')}`.trim());

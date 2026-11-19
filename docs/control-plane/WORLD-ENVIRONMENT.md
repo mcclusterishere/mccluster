@@ -179,8 +179,11 @@ Owner direction and the design: `WORLD-FEED-AND-MISSIONS-20261117.md` ("The envi
 and the contract's "Client" section in `WORLD-ENVIRONMENT-CONTRACT.md`. The slice has two lanes on the one globe: the
 iframe side (typed batched primitives, the layer client, the render governor and the scene director: `js/environment-layers.js`,
 `js/environment-layers-client.js`, `js/globe-render-governor.js`, `js/globe-scene-director.js`, with `scripts/e2e/environment-globe.e2e.mjs`
-and `scripts/perf/environment-globe-perf.mjs`) and the feed side recorded here. Nothing is deployed; production still answers
-503 `module_policy_unavailable` until the owner enables the module in Control, and the pending SQL is unchanged.
+and `scripts/perf/environment-globe-perf.mjs`) and the feed side recorded here. Nothing is deployed, and the pending SQL is
+unchanged. Production (`main`) answers 503 `module_policy_unavailable` because the module was never installed (zero policy rows,
+re-read 2026-11-19); since E=UP slice S0 (`EUP-EVENT-TIMELINE.md`) this branch's Worker answers a module never installed with
+404 `module_disabled`, the same "off" as an installed, disabled module, and keeps 503 for an outage. Install, then Enable, in
+Control are each the owner's own step.
 
 ### What was built on the feed side
 

@@ -3,8 +3,13 @@
    message), the request carries only an accept header, credentials are omitted, nothing is stored in the browser and
    nothing is kept across activations. The Worker's gate is honoured and shown honestly: 503 module_policy_unavailable
    or 404 module_disabled puts every layer in the 'policy' state at once, aborts what is still pending, arms no
-   refresh timer (no retry loop against a disabled module) and tries again only on the next activation. A network
-   failure or a timeout retries once after 5 s, then waits for the provider's refresh window. A refresh whose
+   refresh timer (no retry loop against a disabled module). THE REFUSAL IS REMEMBERED (event timeline slice S0, 2026-11-19; the release
+   review counted 6, 11, 16 and 21 requests after four activations of the tab while the module answered 503): one module policy
+   governs every route, so an activation within the hold after a refusal says the same state again and asks nothing (off, 404
+   module_disabled, the owner's decision: 5 minutes; outage, 503 module_policy_unavailable: 1 minute), and the first activation
+   after the hold asks ONE route, the others only once that answer is not a refusal. Off, outage and the visitor's own network are
+   three states: a policy result's `gate` names off or outage; a network failure or a timeout is 'unavailable' with that reason,
+   retried once after 5 s, then at the provider's refresh window. A refresh whose
    generated_at did not change hands nothing on, so geometry is rebuilt only when the data changed.
    Routes, schemas and windows: docs/control-plane/WORLD-ENVIRONMENT-CONTRACT.md. */
 (function (root) {
@@ -23,6 +28,9 @@
   const POLICY_CODES = Object.freeze(['module_policy_unavailable', 'module_disabled']);
   const EVENT_ID = /^[a-z]{2}[a-z0-9]{2,30}$/;
   const RETRY_MS = 5000, TIMEOUT_MS = 20000;
+  const HOLD_MS = Object.freeze({ off: 300000, outage: 60000 });
+  /* the gate's two refusals: 404 module_disabled is off (the owner has not turned the module on), anything else is an outage */
+  const gateOf = (reason, http) => (reason === 'module_disabled' && http === 404 ? 'off' : 'outage');
   const isoOrNull = v => (typeof v === 'string' && v.length <= 40 && Number.isFinite(Date.parse(v)) ? new Date(v).toISOString() : null);
 
   /* a layer is available if any of its sources is, else stale if any is, else unavailable */
@@ -40,10 +48,11 @@
     const unschedule = o.clearTimeout || (id => root.clearTimeout(id));
     const timeoutMs = Number.isFinite(o.timeoutMs) && o.timeoutMs > 0 ? o.timeoutMs : TIMEOUT_MS;
     const hidden = typeof o.hidden === 'function' ? o.hidden : () => false;
+    const clock = typeof o.now === 'function' ? o.now : () => Date.now();
     let policy = null, active = false, generation = 0, callbacks = null;
     const pending = new Set(), timers = new Map(), lastGenerated = new Map(), shakemaps = new Map();
 
-    const policyResult = () => ({ ok: false, status: 'policy', reason: policy.reason, http: policy.http });
+    const policyResult = () => ({ ok: false, status: 'policy', reason: policy.reason, http: policy.http, gate: policy.gate });
     async function request(path, schema) {
       const controller = new AbortController();
       pending.add(controller);
@@ -74,7 +83,7 @@
     }
     function enterPolicy(result) {
       if (policy) return;
-      policy = { reason: result.reason, http: result.http };
+      policy = { reason: result.reason, http: result.http, gate: gateOf(result.reason, result.http), at: clock() };
       for (const controller of [...pending]) { controller.policyAborted = true; controller.abort(); }
       for (const timer of timers.values()) unschedule(timer);
       timers.clear();
@@ -123,9 +132,22 @@
       const h = handlers || {};
       callbacks = { onState: typeof h.onState === 'function' ? h.onState : () => {}, onData: typeof h.onData === 'function' ? h.onData : () => {} };
       stopTimers();
-      active = true; generation += 1; policy = null;
+      active = true; generation += 1;
       shakemaps.clear(); lastGenerated.clear();
-      for (const layer of Array.isArray(h.layers) ? h.layers.filter(l => LAYERS.includes(l)) : LAYERS) run(layer, true);
+      const layers = Array.isArray(h.layers) ? h.layers.filter(l => LAYERS.includes(l)) : LAYERS.slice();
+      if (policy && clock() - policy.at < (HOLD_MS[policy.gate] || HOLD_MS.outage)) {
+        /* within the hold: the remembered refusal, said again, and nothing asked */
+        for (const layer of [...LAYERS, 'shakemap']) callbacks.onState(layer, policyResult());
+        return;
+      }
+      if (policy) {
+        /* the hold is over: one route asks whether the gate still refuses; the others wait for its answer */
+        policy = null;
+        const gen = generation, rest = layers.slice(1);
+        if (layers.length) run(layers[0], true).then(() => { if (active && gen === generation && !policy) for (const layer of rest) run(layer, true); });
+        return;
+      }
+      for (const layer of layers) run(layer, true);
     }
     function stopTimers() { for (const timer of timers.values()) unschedule(timer); timers.clear(); }
     function stop() {
@@ -149,5 +171,5 @@
     }
     return Object.freeze({ fetchLayer, start, stop, shakemap, refresh, isPolicy: () => policy !== null, policy: () => (policy ? { ...policy } : null), active: () => active });
   }
-  root.MCC_ENVIRONMENT_LAYERS_CLIENT = Object.freeze({ ROUTES, LAYERS, POLICY_CODES, create, statusFromSources });
+  root.MCC_ENVIRONMENT_LAYERS_CLIENT = Object.freeze({ ROUTES, LAYERS, POLICY_CODES, HOLD_MS, create, statusFromSources, gateOf });
 })(window);
