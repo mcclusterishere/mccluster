@@ -490,8 +490,12 @@
     document.documentElement.classList.remove("mn-boot-signin");
     document.documentElement.removeAttribute("data-boot-view");
     /* the bar's sign-in chip steps aside while the pages are up, as it does on the World; the door covers it */
+    var doorWas = document.documentElement.classList.contains("mn-door-open");
     document.documentElement.classList.toggle("mn-gate-on", which === "profile");
     document.documentElement.classList.toggle("mn-door-open", which === "signedout");
+    /* the World's own parts that change behind the door hear it open and close: the globe's news shading steps aside while
+       it is open (js/world-news-globe.js; release review RS-9) */
+    if (doorWas !== (which === "signedout")) { try { window.dispatchEvent(new CustomEvent("mcc:door", { detail: { open: which === "signedout" } })); } catch (_) {} }
     sizeWorld();
     if (gate && gate.shown) gate.shown(which);
   }

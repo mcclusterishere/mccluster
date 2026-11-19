@@ -131,14 +131,14 @@ html[data-daylight="day"] #mnSignedOut .wg-scrim {
 #mnSignedOut .wg-dateline { display: none; }
 /* the pulse on the phone: one card under another, full width, as many as the stage has room for (container heights are
    the stage's content box: the first card from 130 px, which is the open mission whenever there is one, a second from
-   190, all three from 250); nothing is cut at the edge */
+   190, all three from 267, since the record's line may take a second line, 17 px); nothing is cut at the edge */
 #mnSignedOut .wg-pulse {
   display: none; flex-direction: column; gap: 8px; margin: 0; padding: 0 16px; list-style: none; pointer-events: auto;
 }
 @container (min-height: 130px) { #mnSignedOut .wg-pulse { display: flex; } }
 #mnSignedOut .wg-pulse > .wg-card:nth-child(n + 2 of :not([hidden])) { display: none; }
 @container (min-height: 190px) { #mnSignedOut .wg-pulse > .wg-card:nth-child(2 of :not([hidden])) { display: flex; } }
-@container (min-height: 250px) { #mnSignedOut .wg-pulse > .wg-card:nth-child(3 of :not([hidden])) { display: flex; } }
+@container (min-height: 267px) { #mnSignedOut .wg-pulse > .wg-card:nth-child(3 of :not([hidden])) { display: flex; } }
 #mnSignedOut .wg-card {
   flex: none; display: flex; width: 100%; margin: 0;
   border-radius: 16px; background: var(--wg-chip); box-shadow: inset 0 0 0 1px var(--wg-chip-line); color: var(--wg-ink);
@@ -159,6 +159,10 @@ html[data-daylight="day"] #mnSignedOut .wg-scrim {
 #mnSignedOut .wg-card__s::before { content: "\00a0\00b7\00a0"; }
 #mnSignedOut .wg-card__pre { display: none; }
 #mnSignedOut .wg-card__s a { color: inherit; text-decoration: underline; text-decoration-color: var(--wg-gold-line); text-underline-offset: 3px; padding: 14px 0; margin: -14px 0; }
+/* the record's line takes a second line rather than being cut ("Bridg…" at 390, release review RS-9, 2026-11-19); it holds
+   no link, so it may clip both ways, and its kicker stands level with its first line */
+#mnSignedOut #wgPulseRecord .wg-card__s { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: normal; align-self: start; }
+#mnSignedOut #wgPulseRecord .wg-card__k { align-self: start; }
 #mnSignedOut .wg-credit {
   display: none; align-self: flex-start; max-width: calc(100% - 32px); margin: 10px 16px 0; padding: 3px 8px; border-radius: 6px;
   background: rgba(4, 6, 9, 0.78); color: #b9bfc6; font: 600 11px/1.35 var(--wg-ui); pointer-events: auto; overflow-wrap: anywhere;
@@ -631,10 +635,11 @@ html[data-daylight="day"] #mnProfileGate.mn__onboard::before { background: #ffff
       linear-gradient(180deg, rgb(4, 6, 9) 0, rgb(4, 6, 9) calc(var(--wg-head, 72px) + 2px), rgba(4, 6, 9, 0.258) calc(var(--wg-head, 72px) + 24px), rgba(4, 6, 9, 0.086) 50%, rgba(4, 6, 9, 0.258) 100%);
   }
   /* the veil covers the feed column only: its left edge is the globe frame's right edge, dark from that first pixel by
-     night and by day (no pale seam between the Earth and the card) */
+     night and by day (no pale seam between the Earth and the card), and whole: at 0.94 the day feed's white came through
+     as a grey column with a hard edge against the Earth's black (release review RS-9, 2026-11-19) */
   #mnSignedOut .wg-veil {
     top: 0; left: var(--wg-veil-left, 60%);
-    background: rgba(4, 6, 9, 0.94);
+    background: rgb(4, 6, 9);
   }
   #mnSignedOut .wg-back { margin-left: 32px; }
   /* the crest is centred over the Earth's column */

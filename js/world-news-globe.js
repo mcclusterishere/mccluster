@@ -26,9 +26,12 @@
      shading and its legend hide while the feed's scope is that tab (tint:false) and come back, the same, when it is left. The news
      stays on, so the globe keeps its counts: a country's card still says how many stories mention it. */
   const scope = () => window.MCC_FEED_SCOPE?.get?.() || 'global';
+  /* and behind the sign-in door (release review RS-9, 2026-11-19): the shading's orange, gold and red competed with the card's
+     gold and read as a news map; the door (html.mn-door-open, js/mnet.js showGate) says when it opens and closes (mcc:door) */
+  const doorOpen = () => document.documentElement.classList.contains('mn-door-open');
   function sync() {
     const on = mode() !== 'travel' && mode() !== 'environment';
-    send({type:'hu:world-news-pins',on,tint:scope() !== 'equity',items:on ? items().filter(geo).map(x => ({id:x.id,lat:x.lat,lon:x.lon})) : []});
+    send({type:'hu:world-news-pins',on,tint:scope() !== 'equity' && !doorOpen(),items:on ? items().filter(geo).map(x => ({id:x.id,lat:x.lat,lon:x.lon})) : []});
   }
 
   const reader = document.createElement('dialog');
@@ -97,6 +100,7 @@
   window.addEventListener('mcc:world-news-shown', sync);
   window.addEventListener('mcc:world-mode', sync);
   window.addEventListener('mcc:feed-scope', sync);
+  window.addEventListener('mcc:door', sync);
   window.addEventListener('message', e => {
     if (e.source !== frame.contentWindow || e.origin !== location.origin) return;
     const data = e.data || {};

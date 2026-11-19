@@ -155,7 +155,13 @@ mission: ". On a phone the way back reads "← Back" (the World's "← Back to t
   so the white mark is the right variant at every width) and costs the form no height. The dark variant is not used by
   the door. On a phone the way back reads "← Back", so the crest has the middle of the band.
 - On a phone the pulse is one card under another, full width (the row of three cut its second card at the screen's
-  edge): the first card from a 130 px stage (its content box), the second from 190, the third from 250.
+  edge): the first card from a 130 px stage (its content box), the second from 190, the third from 267. The record's line
+  takes a second line rather than being cut ("Bridg…" at 390; release review RS-9, 2026-11-19), so the third card waits for
+  the 17 px it needs.
+- Behind the door the globe's news shading steps aside (the page says the door opened and closed, `mcc:door`, and
+  `js/world-news-globe.js` sends `tint:false` while it is open): its orange, gold and red competed with the card's gold and
+  read as a news map. From 1100 px the veil over the feed is whole (`rgb(4, 6, 9)`): at 0.94 the day feed's white came
+  through as a grey column with a hard edge against the Earth's black (release review RS-9).
 - The sheet's top edge goes soft when its words are scrolled under it (a fade, as at the foot), so nothing is sliced.
 
 ## Tests
