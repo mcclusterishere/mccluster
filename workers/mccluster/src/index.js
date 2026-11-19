@@ -8,6 +8,7 @@ import whip from './whip/booking-gate.js';
 import {handleAtNight} from './at-night.js';
 import prim3 from './prim3/index.js';
 import { handlePrim3Levels, PRIM3_LEVELS_PREFIX } from './prim3/levels.js';
+import { handleMissionSources, MISSION_SOURCES_PREFIX } from './mission-sources.js';
 import { handleNewsDesk, NEWS_DESK_PATH } from './prim3/news-desk.js';
 import { handleLearning, LEARNING_PATH } from './prim3/learning.js';
 import seekFirst from './seek-first/index.js';
@@ -170,6 +171,7 @@ export default {
       if (path === PRIM3_LEVELS_PREFIX || path.startsWith(`${PRIM3_LEVELS_PREFIX}/`)) {
         return handlePrim3Levels(request, env, { requireHouseOwner });
       }
+      if (path === MISSION_SOURCES_PREFIX || path.startsWith(MISSION_SOURCES_PREFIX + '/')) return handleMissionSources(request, env, { requireHouseOwner });
 
       /* PRIM3 news desk: the 24 agents' briefs and reactions, owner only (./prim3/news-desk.js) */
       if (path === NEWS_DESK_PATH) {
