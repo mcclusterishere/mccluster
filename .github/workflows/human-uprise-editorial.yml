@@ -151,7 +151,8 @@ concurrency:
 jobs:
   browser:
     name: browser (${{ matrix.suite }})
-    runs-on: ubuntu-latest
+    # Keep the pinned Playwright browser dependencies on a supported image.
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     strategy:
       fail-fast: false

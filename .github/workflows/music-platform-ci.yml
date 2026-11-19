@@ -177,7 +177,8 @@ jobs:
           deno check --node-modules-dir=auto supabase/functions/music-direct-access/index.ts
 
   browser:
-    runs-on: ubuntu-latest
+    # The pinned Playwright browser dependencies require this supported image.
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262

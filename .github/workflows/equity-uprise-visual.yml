@@ -23,7 +23,8 @@ concurrency:
 jobs:
   rendered-building:
     name: Render B1–L7 at ${{ matrix.width }}px
-    runs-on: ubuntu-latest
+    # Keep the pinned Playwright browser dependencies on a supported image.
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     strategy:
       fail-fast: false
