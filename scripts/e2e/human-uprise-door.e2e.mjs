@@ -193,7 +193,12 @@ async function routeBackends(ctx) {
 
 /* ---------- the harness ---------- */
 await mkdir(OUT, { recursive: true });
-const browser = await chromium.launch(process.env.PW_CHROME ? { executablePath: process.env.PW_CHROME } : {});
+/* the software GL path every World suite launches with (LAUNCH in scripts/e2e/support/world-gate-harness.mjs). Since the globe
+   no longer stops for good after a hidden World (release review RS-2, 2026-11-19), it goes on drawing until 3d's context closes;
+   on Chromium's default path that left the GPU process busy into 3e, whose first screenshot then failed every time ("Unable to
+   capture screenshot"; an eight-second pause cured it too). On this path it does not. */
+const LAUNCH_ARGS = ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--disable-dev-shm-usage'];
+const browser = await chromium.launch(process.env.PW_CHROME ? { executablePath: process.env.PW_CHROME, args: LAUNCH_ARGS } : { args: LAUNCH_ARGS });
 const results = [];
 function check(scope, name, ok, detail) {
   results.push({ scope, name, ok: !!ok, detail });
