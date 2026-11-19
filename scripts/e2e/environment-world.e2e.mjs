@@ -16,7 +16,7 @@
    off; Local, News, the member posts and the guest's People gate are as before; nothing scrolls sideways; no page errors. Then,
    at 390: landing on ?feed=equity (the panel spoke before the globe was ready; hu:globe-ready makes it whole); at 1280, the globe's
    missions read held until a wheel has paused the tour, so the same globe says ready again late and the tour stays paused (review
-   RV2-1); reduced motion (no autostart, play refused, focus jumps, no ripple, the legend says animations are off); the gate
+   RV2-1); reduced motion (no autostart, play refused, focus jumps to the regional frame with a still ripple outline since slice S5, the legend says animations are off); the gate
    refusing the feed and the layers with 503 module_policy_unavailable and 404 module_disabled (the honest line, no panel, no
    posts, every layer in the policy state, no retry); one layer unavailable (perimeters 500) beside the stale natural-events
    layer, both reported truthfully; and the day palette's contrast at every width, with the layer rows and the frame's legend
@@ -296,6 +296,11 @@ for (const size of SIZES) {
   /* the Equity Uprise tab: the panel shows, the layers come on, the frame draws them */
   await openTab(page);
   const ready = await layersReady(frame);
+  /* S5-TOUR (event timeline slice S5; vendor/equity-uprise/product-source.lock.json): as the tab first shows the panel, no tour
+     control lies under the page's floating app bar or anything else (the release review saw Previous, Next and part of Replay
+     under it at 390 px; the tour's group now follows the description) */
+  const tourClear = await page.evaluate(() => { window.scrollTo(0, 0); const bar = document.querySelector('nav.appbar'), covered = [], shown = []; for (const id of ['wePlay', 'wePrev', 'weNext', 'weReplay']) { const el = document.getElementById(id), b = el.getBoundingClientRect(); if (b.top >= innerHeight) continue; shown.push(id); for (const [x, y] of [[b.left + 6, b.top + 6], [b.right - 6, b.top + 6], [b.left + 6, Math.min(innerHeight - 1, b.bottom - 6)], [b.right - 6, Math.min(innerHeight - 1, b.bottom - 6)]]) { const t = document.elementFromPoint(x, y); if (t && t !== el && !el.contains(t)) { covered.push(id); break; } } } return { shown, covered, barTop: bar ? Math.round(bar.getBoundingClientRect().top) : null, vh: innerHeight }; });
+  check(scope, 'S5-TOUR: as the tab opens, every tour control in view is clear of the floating app bar and of anything else', tourClear.covered.length === 0 && (size.width !== 390 || tourClear.shown.length === 4), tourClear);
   const s = await env(frame), c = s ? s.counts : null;
   check(scope, 'the tab turns the typed layers on and every layer route answers inside the frame', ready, s && s.states);
   check(scope, 'counts match the fixtures: 50 quake discs and dots among 62 events, 600 fire footprints and 20 cells, 50 perimeters with rings, 70 alert polygons (25 zone-only and 5 rejected listed), 11 EONET points, 1 track, 1 polygon, 14 station columns with labels', !!c && c.events === 62 && c.quakes === 50 && c.quakeDiscs === 50 && c.firesNear === 600 && c.cells === 20 && c.perimeters === 50 && c.perimeterRings === 50 && c.alerts.drawn === 70 && c.alerts.zone_only === 25 && c.alerts.rejected === 5 && c.eonetPoints === 11 && c.eonetTracks === 1 && c.eonetPolygons === 1 && c.tides === 14 && c.tideLabels === 14, c);
@@ -588,9 +593,13 @@ for (const size of SIZES) {
   await openList(page);
   await page.locator('#weEvents button', { hasText: QUAKE.title }).first().click();
   const focused = await until(frame, () => { const s = window.__mccEnvironmentLayers(); return !!s.selected && s.selected.id === 'usgs:us7000tyhr'; }, null, 20000);
+  /* E=UP event timeline slice S5 (2026-11-19), changed on purpose (decisions D14, D17): the focus still jumps with no flight, now to
+     the quake's regional frame (M5.4: 174 km away, 49.5 degrees down, about 132 km up; before S5, 900 km straight down), and the
+     ripple is a still outline at its regional radius (before S5: none) */
+  await until(frame, () => { const c = window.__mccEnvironmentLayers().camera; return !!c && !!c.last && c.last.id === 'usgs:us7000tyhr'; }, null, 10000);
   const height = await frame.evaluate(() => Math.round(window.HuGlobe.viewer().camera.positionCartographic.height));
   const s = await env(frame);
-  check(scope, 'focus jumps without a flight (the camera is already at 900 km), no ripple, and the legend says animations are off', focused && Math.abs(height - 900000) < 9000 && s.ripple === null && s.legend.includes('(animations off)'), { height, ripple: s.ripple });
+  check(scope, 'focus jumps with no flight to the quake\'s regional frame (about 132 km up), the ripple a still outline, and the legend says animations are off', focused && Math.abs(height - 132300) < 8000 && !!s.camera && s.camera.last.how === 'jump' && !!s.ripple && s.ripple.phase === 'outline' && s.legend.includes('(animations off)'), { height, camera: s.camera, ripple: s.ripple });
   { const re = await renderError(frame); if (re) console.log(`INFO [${scope}] render error record ${JSON.stringify(re)}`); check(scope, 'no page errors', errors.length === 0, { errors, renderError: re && { message: re.message, position: re.position, bad: re.badPrimitives } }); }
   await ctx.close();
 }

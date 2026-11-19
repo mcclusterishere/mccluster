@@ -43,8 +43,14 @@ this file in its header:
   manual-input interrupt (src/cameraVerbs.js).
 - js/environment-layers.js: the alpha-only pulse pattern
   (src/render/cesium/draw.js, pulseAlpha and runPulses) for the one labelled
-  ripple on a selected earthquake; the geometry is never touched after it is
-  built.
+  ripple on a selected earthquake, from slice G1 until the event timeline's
+  slice S5 (2026-11-19). S5 replaced that ripple with original code in
+  js/environment-ripple.js (rings moved outward by a material uniform over
+  geometry built once), so no adapted portion remains in either file; the
+  pointer in js/environment-layers.js is kept for that history. The quake
+  glyphs and labels (js/environment-quake-marks.js) and the push on a selection
+  (js/environment-camera.js) are original code: gods-eye-view and Hitman's Halo
+  were looked at for pacing and composition only, and nothing was copied.
 
 workers/mccluster/src/world-environment-layers.js calls helpers exported by
 world-halo-layers.js; its own code is not derived from gods-eye-view.

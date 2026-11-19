@@ -15,7 +15,7 @@
     },
     {
       "path": "src/environment/panel.mjs",
-      "sha256": "a714f6973b608a07cb2c3ac7d92b564c4850bef3db2a589dc4e7d93020116737"
+      "sha256": "41f12ad57d6b98decd40d494ea200239695918a620860bc81c0862ffb4529034"
     },
     {
       "path": "src/environment/server.mjs",
@@ -198,6 +198,25 @@
         "scripts/e2e/environment-world.e2e.mjs"
       ],
       "note": "Review of the release polish at e495b7ee (2026-11-18). Upstream Equity-Uprise still carries the unpatched files at base_commit; port these patches upstream before re-pinning."
+    },
+    {
+      "base_commit": "645d68a740c835271ca185c52e0b31220aab16ad",
+      "applied_in": "mcclusterishere/mccluster (this consumer checkout), not published upstream",
+      "date": "2026-11-19",
+      "files": [
+        "src/environment/panel.mjs"
+      ],
+      "defects": [
+        {
+          "id": "S5-TOUR",
+          "summary": "Event timeline slice S5 (release review, carried): at 390 px the World's floating app bar lay over the tour's controls (Previous, Next and part of Replay) where the panel first shows them. The tour's group (Play, Previous, Next, Replay and its status line) now follows the panel's description, before the sources toolbar and the feed's status line, so in the markup and on screen alike the globe's own controls come first and clear the bar at rest on a 390 x 844 phone; nothing is hidden and the order a keyboard meets them is the order they are shown."
+        }
+      ],
+      "regression_tests": [
+        "scripts/test/world-environment-panel.test.mjs",
+        "scripts/e2e/environment-world.e2e.mjs"
+      ],
+      "note": "Event timeline slice S5 (2026-11-19). Upstream Equity-Uprise still carries the unpatched files at base_commit; port these patches upstream before re-pinning."
     }
   ]
 }

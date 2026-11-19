@@ -180,3 +180,22 @@ test('the encodings read no clock and the legend sentences name their quantities
   assert.match(E.legendFor('shakemap'), /modelled/); assert.doesNotMatch(E.legendFor('shakemap'), /measured/);
   assert.equal(E.RIPPLE_LABEL, 'Ripple is illustrative: not a recording of shaking');
 });
+
+/* event timeline slice S5 (2026-11-19): the fire summaries step back, the quake glyph is in the legend, and a documented rupture
+   is called a model in words a visitor reads */
+test('fire summary cells are drawn 1.1 times their radius across (44 px at most, no longer 80) at half opacity; their size still grows with the power', () => {
+  assert.equal(E.cellPx(0), 4); assert.equal(E.cellPx(1e9), 44, 'the largest is 44 px');
+  assert.ok(E.cellPx(10) < E.cellPx(1000), 'larger power, larger cell');
+  assert.equal(E.CELL_ALPHA, 0.5);
+  assert.equal(E.cellRadiusPx(1e9), 40, 'the radius encoding itself is unchanged');
+});
+test('the quake legend names the glyph and its label; a rupture is the modelled up-dip edge, and nothing drawn says why', () => {
+  assert.match(E.legendFor('quakes'), /^Each quake is a seismograph glyph sized by magnitude; the largest are labelled with it \(M6\.3\) and a short place\./);
+  assert.match(E.legendFor('rupture'), /modelled up-dip edge of the fault plane USGS estimated \(finite fault model\): a model, not a mapped crack/);
+  assert.equal(E.RUPTURE_LABEL, 'modelled rupture plane (USGS finite fault)');
+  assert.equal(E.ruptureLine({ available: true, top_depth_km: 0.1, model_created: '2026-11-03 14:59:26' }), 'modelled rupture plane (USGS finite fault): up-dip edge drawn, top at 0.1 km depth, model of 2026-11-03');
+  assert.equal(E.ruptureLine({ available: false, reason: 'point_source' }), 'none drawn: USGS models this quake as a point (no finite-fault model)');
+  assert.equal(E.ruptureLine({ available: false, reason: 'withdrawn' }), 'none drawn: USGS has withdrawn this event');
+  assert.equal(E.ruptureLine({ available: false, reason: 'something new' }), 'none drawn');
+  assert.doesNotMatch(source, /crack (drawn|shown)/i, 'never called a crack');
+});

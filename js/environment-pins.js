@@ -55,7 +55,8 @@
         draw() { layers.redraw(); },
         destroy() { layers.setEvents([], { on: false, selected: '' }); },
         focus(id) { layers.focus(id); },
-        pick(picked) { return layers.pick(picked) === true; }
+        /* the tap's position lets a quake's glyph answer a tap within 22 px of it (event timeline slice S5) */
+        pick(picked, position) { return layers.pick(picked, position) === true; }
       };
     }
     /* the legacy entity renderer: the fallback only */

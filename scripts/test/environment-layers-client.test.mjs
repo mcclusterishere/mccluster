@@ -56,7 +56,9 @@ test('six routes, the fixed origin, GET with credentials omitted and only an acc
   }
   assert.deepEqual(Object.fromEntries(Object.entries(CLIENT.ROUTES).map(([k, r]) => [k, [r.schema, r.window]])), {
     fires: ['world-environment-fires/v1', 1800], perimeters: ['world-environment-perimeters/v1', 600], alerts: ['world-environment-alerts/v1', 120],
-    eonet: ['world-environment-eonet/v1', 600], tides: ['world-environment-tides/v1', 900], shakemap: ['world-environment-shakemap/v1', 300]
+    eonet: ['world-environment-eonet/v1', 600], tides: ['world-environment-tides/v1', 900], shakemap: ['world-environment-shakemap/v1', 300],
+    /* event timeline slice S5 (changed on purpose): a quake's documented rupture, asked like its ShakeMap */
+    rupture: ['world-environment-rupture/v1', 300]
   });
   assert.doesNotMatch(source, /location\.|localStorage|sessionStorage|document\./, 'the origin is a constant and nothing is stored');
   assert.match(source, /'https:\/\/api\.mccluster\.org'/);
@@ -303,4 +305,34 @@ test('while the document is hidden the refresh waits', async () => {
   hidden = false; T.fire(t => t.ms === 120000); await flush(10);
   assert.equal(seen.length, 2);
   client.stop();
+});
+
+/* event timeline slice S5 (2026-11-19): a quake's documented rupture is asked like its ShakeMap: credential-free, the id checked and
+   the prefix stripped, cached per activation (a failure not kept), and a refusal of the gate is the policy state for every layer */
+test('rupture: id validation, the prefix stripped, cached per activation, the gate\'s refusal entered for every layer', async () => {
+  const seen = [], T = timers();
+  const RUPTURE = { ok: true, schema: 'world-environment-rupture/v1', generated_at: '2026-11-19T05:00:00.000Z', sources: [{ id: 'usgs_event', status: 'available' }], event_id: 'us6000u43g', available: true, edges: [[[93.92, 32.27], [94, 32.56]]] };
+  const client = CLIENT.create({ fetchImpl: async (url, init) => { seen.push({ url, init }); return json(RUPTURE); }, now: () => 0, ...T });
+  const bad = await client.rupture('usgs:bad id!');
+  assert.equal(bad.reason, 'invalid_event'); assert.equal(seen.length, 0, 'nobody is asked for a bad id');
+  const first = await client.rupture('usgs:us6000u43g');
+  assert.equal(first.ok, true); assert.equal(first.body.available, true);
+  assert.deepEqual(seen.map((c) => c.url), [ORIGIN + '/v1/world/environment/quakes/us6000u43g/rupture']);
+  assert.equal(seen[0].init.credentials, 'omit'); assert.deepEqual({ ...seen[0].init.headers }, { accept: 'application/json' });
+  await client.rupture('us6000u43g');
+  assert.equal(seen.length, 1, 'cached while the tab is open');
+  /* a refusal: the gate's state, entered for every layer */
+  const states = [], T2 = timers();
+  const refused = CLIENT.create({ fetchImpl: async () => json({ ok: false, code: 'module_disabled' }, 404), now: () => 0, ...T2 });
+  refused.start({ onState: (layer, r) => states.push([layer, r.status]), onData: () => {}, layers: [] });
+  const r = await refused.rupture('us6000u43g');
+  assert.deepEqual([r.status, r.reason, r.gate], ['policy', 'module_disabled', 'off']);
+  assert.equal(refused.isPolicy(), true);
+  assert.ok(['fires', 'perimeters', 'alerts', 'eonet', 'tides', 'shakemap'].every((l) => states.some(([layer, st]) => layer === l && st === 'policy')));
+  /* a failed read is not kept: the next selection asks again */
+  let n = 0;
+  const flaky = CLIENT.create({ fetchImpl: async () => { n += 1; return n === 1 ? json({ error: 'down' }, 500) : json(RUPTURE); }, now: () => 0, ...timers() });
+  assert.equal((await flaky.rupture('us6000u43g')).ok, false);
+  assert.equal((await flaky.rupture('us6000u43g')).ok, true);
+  assert.equal(n, 2);
 });

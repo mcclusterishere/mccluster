@@ -10,7 +10,9 @@
    CDN when CESIUM_DIR is unset.
 
    Run:  node scripts/perf/environment-globe-perf.mjs [--root <dir>] [--modes off,on] [--sizes 390,1280]
-           [--settle 12000] [--window 10000] [--baseline <before.json>] [--check] [outDir]
+           [--settle 12000] [--window 10000] [--baseline <before.json>] [--check] [--missions] [outDir]
+   --missions (event timeline slice S5, D16): the globe draws two open missions' pins and halos, as the World does, instead of
+   none, so the legacy hold their pulse takes is part of what is measured.
    --baseline applies the pass rule against an earlier run's JSON and exits non-zero when a gating rule fails;
    --check is a short self-test (3 s settle, 3 s window, 390 only) used by scripts/e2e/environment-globe.e2e.mjs.
    Pass rule (docs/control-plane: the design of slice G1): after.on.idle10s.taskSec <= min(before.off.idle10s.taskSec,
@@ -28,6 +30,11 @@ const SELF_ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const args = process.argv.slice(2);
 const opt = (name, fallback) => { const i = args.indexOf(name); return i >= 0 && i + 1 < args.length ? args[i + 1] : fallback; };
 const CHECK = args.includes('--check');
+const MISSIONS = args.includes('--missions');
+const MISSION_PINS = [
+  { mission_id: '0e1f0000-0000-4000-8000-000000000002', title: 'Clean up the Mill River', description: 'Bag a block of shoreline with your neighbours.', action_path: 'show_up', region_key: 'US-CT', region_label: 'Connecticut', latitude: 41.6, longitude: -72.7 },
+  { mission_id: '0e1f0000-0000-4000-8000-000000000003', title: 'Plant a street tree', description: 'Join a planting crew and plant one tree.', action_path: 'show_up', region_key: 'BR-SP', region_label: 'Sao Paulo', latitude: -23.5, longitude: -46.6 }
+];
 const ROOT = resolve(opt('--root', SELF_ROOT));
 const MODES = (CHECK ? 'off,on' : opt('--modes', 'off,on')).split(',').map((s) => s.trim()).filter((s) => s === 'off' || s === 'on');
 const SIZES = (CHECK ? '390' : opt('--sizes', '390,1280')).split(',').map(Number).filter(Boolean);
@@ -35,7 +42,7 @@ const SETTLE_MS = CHECK ? 3000 : Number(opt('--settle', 12000));
 const WINDOW_MS = CHECK ? 3000 : Number(opt('--window', 10000));
 const FLIGHT_MS = CHECK ? 1500 : 3000;
 const BASELINE = opt('--baseline', null);
-const OUT = args.filter((a, i) => !a.startsWith('--') && (i === 0 || !args[i - 1].startsWith('--') || ['--check'].includes(args[i - 1]))).pop() || join(SELF_ROOT, 'e2e-out', 'environment-globe-perf');
+const OUT = args.filter((a, i) => !a.startsWith('--') && (i === 0 || !args[i - 1].startsWith('--') || ['--check', '--missions'].includes(args[i - 1]))).pop() || join(SELF_ROOT, 'e2e-out', 'environment-globe-perf');
 const require = createRequire(import.meta.url);
 let chromium;
 try { ({ chromium } = require('playwright')); }
@@ -76,7 +83,7 @@ async function measure(browser, size, mode) {
     if (p === '/v1/world/ion') return json(route, { available: false });
     return json(route, {});
   });
-  await ctx.route('https://zmnhbrjyhxzhkxmhkexs.supabase.co/**', (route) => json(route, []));
+  await ctx.route('https://zmnhbrjyhxzhkxmhkexs.supabase.co/**', (route) => json(route, MISSIONS && /\/rpc\/action_globe_public_region_missions$/.test(new URL(route.request().url()).pathname) ? MISSION_PINS : []));
   await ctx.route('https://gibs.earthdata.nasa.gov/**', (route) => route.fulfill({ status: 200, contentType: 'image/jpeg', headers: { 'access-control-allow-origin': '*' }, body: TILE }));
   await ctx.route('https://tile.openstreetmap.org/**', (route) => route.fulfill({ status: 200, contentType: 'image/jpeg', body: TILE }));
   if (process.env.CESIUM_DIR) await ctx.route('https://cesium.com/**/Build/Cesium/**', async (route) => {
@@ -95,7 +102,7 @@ async function measure(browser, size, mode) {
   cdp.on('Network.responseReceived', (e) => { sizes[e.requestId] = e.response.url; });
   cdp.on('Network.loadingFinished', (e) => { const u = sizes[e.requestId] || ''; const k = /cesium\.com/.test(u) ? 'cesium' : /gibs\.earthdata|openstreetmap/.test(u) ? 'tiles' : /\.(js|mjs)(\?|$)/.test(u) ? 'js' : /\.css(\?|$)/.test(u) ? 'css' : /\.(png|jpe?g|webp|svg)(\?|$)/.test(u) ? 'img' : 'other'; bytes[k] = (bytes[k] || 0) + e.encodedDataLength; });
   const t0 = Date.now();
-  await page.goto(`${HOST}?layers=${mode}`, { waitUntil: 'load' });
+  await page.goto(`${HOST}?layers=${mode}${MISSIONS ? '&missions=1' : ''}`, { waitUntil: 'load' });
   const loadMs = Date.now() - t0;
   await page.waitForFunction(() => window.__ready && window.__activated > 0, null, { timeout: 120000 });
   let frame = null;
@@ -113,6 +120,7 @@ async function measure(browser, size, mode) {
   const frames = await frame.evaluate(() => { window.HuGlobe.viewer().scene.postRender.removeEventListener(window.__perfCounter); return window.__perfFrames; });
   const governor = await frame.evaluate(() => (window.__mccGlobeGovernor ? window.__mccGlobeGovernor() : null));
   const counts = await frame.evaluate(() => (window.__mccEnvironmentLayers ? window.__mccEnvironmentLayers().counts : null));
+  const missionPins = await frame.evaluate(() => (window.__huMissionPins ? window.__huMissionPins() : null));
   /* the flight: the director's own play with the layers on, a plain flyTo of the same duration with them off */
   const sampler = (ms) => `new Promise((res) => { const scene = window.HuGlobe.viewer().scene, d = []; let last = performance.now(); const fn = () => { const t = performance.now(); d.push(t - last); last = t; }; scene.postRender.addEventListener(fn); setTimeout(() => { scene.postRender.removeEventListener(fn); d.shift(); const s = d.slice().sort((a, b) => a - b); res({ frames: d.length, meanMs: d.length ? Math.round(d.reduce((a, b) => a + b, 0) / d.length * 10) / 10 : null, p95Ms: s.length ? Math.round(s[Math.min(s.length - 1, Math.floor(s.length * 0.95))] * 10) / 10 : null }); }, ${ms}); })`;
   let flight;
@@ -125,7 +133,7 @@ async function measure(browser, size, mode) {
     flight = await frame.evaluate(`(() => { const v = window.HuGlobe.viewer(); v.camera.flyTo({ destination: Cesium.Cartesian3.fromDegrees(136.7444, 37.3664, 900000), duration: ${FLIGHT_MS / 1000}, easingFunction: Cesium.EasingFunction.CUBIC_IN_OUT }); return ${sampler(FLIGHT_MS)}; })()`);
   }
   const result = {
-    mode, size, typedLayers: typed, loadMs, gl, errors,
+    mode, size, typedLayers: typed, missions: MISSIONS, missionPins, loadMs, gl, errors,
     idle10s: { taskSec: +(m2.TaskDuration - m1.TaskDuration).toFixed(2), scriptSec: +(m2.ScriptDuration - m1.ScriptDuration).toFixed(2), layoutCount: m2.LayoutCount - m1.LayoutCount, recalcStyle: m2.RecalcStyleCount - m1.RecalcStyleCount, windowMs: WINDOW_MS },
     frames10s: frames, flight, jsHeapMB: Math.round(m2.JSHeapUsedSize / 1048576), governor, counts,
     transferKB: Object.fromEntries(Object.entries(bytes).map(([k, v]) => [k, Math.round(v / 1024)]))

@@ -1,12 +1,14 @@
 /* THE ENVIRONMENTAL GLOBE'S TYPED LAYERS (slice G1, 2026-11-17): earthquakes, satellite fire detections, fire
    perimeters, weather alerts, natural events, coastal water levels and ShakeMap contours on the one Cesium viewer,
    drawn as batched primitives (one collection per layer type, rebuilt only when the data changed, never per frame)
-   with per-layer pick ids. Every visual encodes a quantity the source reported and the legend says which. Nothing
-   flashes: the selection fades softly through instance attributes, and the one illustrative animation is a labelled
-   ripple on the selected earthquake, one ground primitive whose material alpha changes for at most 6 s under a
-   bounded render hold (the alpha-only pattern is adapted from gods-eye-view src/render/cesium/draw.js pulseAlpha and
-   runPulses, MIT, Copyright (c) 2026 Bilawal Sidhu, see THIRD-PARTY-NOTICES; Hitman's Halo recorded that 58 discs
-   with callback axes cost 32.4 ms a frame against 1.4 ms static). Geometry is never touched after construction.
+   with per-layer pick ids. Provenance: until the event timeline's slice S5 (2026-11-19) the selected quake's ripple
+   adapted the alpha-only pattern of gods-eye-view src/render/cesium/draw.js (pulseAlpha and runPulses), MIT,
+   Copyright (c) 2026 Bilawal Sidhu, see THIRD-PARTY-NOTICES; since S5 the ripple is original code in
+   js/environment-ripple.js, the quakes are glyphs and labels from js/environment-quake-marks.js and a chosen event is
+   pushed to by js/environment-camera.js. Every visual encodes a quantity the source reported and the legend says
+   which. Nothing flashes: the selection fades softly through instance attributes, and the one illustrative animation
+   is that labelled ripple, bounded to 6 s under a render hold (Hitman's Halo recorded that 58 discs with callback axes
+   cost 32.4 ms a frame against 1.4 ms static). Geometry is never touched after construction.
    This file fetches nothing itself (js/environment-layers-client.js does, without any credential), reads no clock in
    its pure encodings, and every selection answers with source, recorded time, retrieval time, coverage and status;
    a fetch time never stands in for an observation time. */
@@ -49,6 +51,11 @@
     return clamp(4 + 2.2 * Math.sqrt(s / 10), 4, 40);
   }
   const cellColour = cell => (cell && typeof cell.frp_sum_mw === 'number' && cell.frp_sum_mw > 0 ? frpColour(cell.frp_max_mw) : GREY);
+  /* a summary cell as drawn (event timeline slice S5): 1.1 times its radius across, so the largest is 44 px, no longer 80, and at
+     half opacity, so the fire summaries stay a quantity in the background and never outshine an earthquake's glyph; the size still
+     grows with the summed radiative power, as the legend says */
+  const cellPx = sumMw => Math.round(1.1 * cellRadiusPx(sumMw));
+  const CELL_ALPHA = 0.5;
   const SEVERITY = { Extreme: ['#b3001b', 0.3], Severe: ['#ff6a00', 0.26], Moderate: ['#ffcc00', 0.22], Minor: ['#3fa7ff', 0.18] };
   function severityTint(severity) {
     const row = Object.prototype.hasOwnProperty.call(SEVERITY, severity) ? SEVERITY[severity] : [GREY, 0.16];
@@ -168,7 +175,8 @@
   }
   const LEGEND = {
     events: 'Dots mark the feed\'s reported event positions (USGS, NWS, NASA EONET, NOAA NHC); an alert\'s dot is a vertex of its own polygon, never a centroid.',
-    quakes: 'Disc area shows magnitude (energy, 10^1.5M), not the area affected; capped at 1,000 km; colour shows depth: red shallow (<33 km) to blue deep (>=300 km).',
+    quakes: 'Each quake is a seismograph glyph sized by magnitude; the largest are labelled with it (M6.3) and a short place. Disc area shows magnitude (energy, 10^1.5M), not the area affected; capped at 1,000 km; colour shows depth: red shallow (<33 km) to blue deep (>=300 km).',
+    rupture: 'The bright line is the modelled up-dip edge of the fault plane USGS estimated (finite fault model): a model, not a mapped crack at the surface.',
     fires: 'Each dot is a satellite detection (375 m pixel), colour shows radiative power (MW): pale yellow <5 to white-hot >=200; far away, circles summarise a 1-degree area and their size shows the summed radiative power. A detection is not a confirmed fire or a perimeter.',
     perimeters: 'Fire perimeters as NIFC publishes them (generalised to about 200 m); operational mapping, not a legal boundary.',
     alerts: 'Alert polygons as NWS publishes them, tinted by severity (Extreme, Severe, Moderate, Minor); alerts that name zones only are listed, never placed.',
@@ -178,6 +186,14 @@
   };
   const legendFor = layer => LEGEND[layer] || '';
   const RIPPLE_LABEL = 'Ripple is illustrative: not a recording of shaking';
+  const RUPTURE_LABEL = 'modelled rupture plane (USGS finite fault)';
+  /* a rupture answer in words for the selection's facts: the drawn edge with its depth and model, or why nothing is drawn */
+  const RUPTURE_NONE = Object.freeze({ point_source: 'none drawn: USGS models this quake as a point (no finite-fault model)', not_finite_fault: 'none drawn: the rupture file names no finite-fault model', no_rupture: 'none drawn: USGS lists no rupture file for this quake', no_shakemap: 'none drawn: no ShakeMap, so no rupture file', no_edge: 'none drawn: the rupture plane has no up-dip edge to show', withdrawn: 'none drawn: USGS has withdrawn this event', event_not_found: 'none drawn: USGS does not know this event', source_unavailable: 'none drawn: USGS could not be read just now' });
+  function ruptureLine(body) {
+    const b = body || {};
+    if (b.available === true) return `${RUPTURE_LABEL}: up-dip edge drawn${typeof b.top_depth_km === 'number' ? `, top at ${b.top_depth_km} km depth` : ''}${typeof b.model_created === 'string' && b.model_created ? `, model of ${b.model_created.slice(0, 10)}` : ''}`;
+    return RUPTURE_NONE[b.reason] || 'none drawn';
+  }
   /* OFF, OUTAGE, THE VISITOR'S NETWORK AND NO DATA, EACH IN ITS OWN WORDS (event timeline slice S0, 2026-11-19): the gate refusing as off (404
      module_disabled: the owner has not turned the layers on), as an outage (503 module_policy_unavailable), every layer route out of
      reach from this browser, and a layer whose provider answered with nothing, which is said rather than left out of the legend */
@@ -186,7 +202,7 @@
   const NETWORK_LINE = 'Environmental layers could not be reached from this browser';
   const LAYER_TITLES = Object.freeze({ fires: 'Fires', perimeters: 'Fire perimeters', alerts: 'Alerts', eonet: 'Natural events', tides: 'Water levels' });
   const noneLine = layer => `${LAYER_TITLES[layer] || layer}: none reported right now`;
-  const encodings = Object.freeze({ quakeRadiusM, depthColour, quakeFromFacts, frpColour, cellRadiusPx, cellColour, severityTint, stationColumnM, stationColour, mmiColour, eonetColour, lod, pickId, isEnvPick, providerOf, kindOf, factsFor, shakemapLabel, legendFor, RIPPLE_LABEL, POLICY_LINE, OFF_LINE, NETWORK_LINE, noneLine });
+  const encodings = Object.freeze({ quakeRadiusM, depthColour, quakeFromFacts, frpColour, cellRadiusPx, cellPx, CELL_ALPHA, cellColour, severityTint, stationColumnM, stationColour, mmiColour, eonetColour, lod, pickId, isEnvPick, providerOf, kindOf, factsFor, shakemapLabel, legendFor, RIPPLE_LABEL, RUPTURE_LABEL, ruptureLine, POLICY_LINE, OFF_LINE, NETWORK_LINE, noneLine });
   /* ENCODINGS_END */
 
   /* THE FEED PROVIDERS' TERMS ARRIVE WITH THE PINS (review G1R-10): the panel copies them from the feed's own source records (which
@@ -204,19 +220,23 @@
   }
 
   /* ---------- runtime ---------- */
-  const DOT_HEIGHT = 2000, BUILD_MAX_MS = 30000, FADE_MS = 400, FADE_MAX_MS = 1000, RIPPLE_MS = 4500, RIPPLE_MAX_MS = 6000, REPLAY_FADE_MS = 300, FOCUS_SAFETY_MS = 600, PENDING_FOCUS_MS = 30000;
+  const DOT_HEIGHT = 2000, BUILD_MAX_MS = 30000, FADE_MS = 400, FADE_MAX_MS = 1000, REPLAY_FADE_MS = 300, FOCUS_SAFETY_MS = 600, PENDING_FOCUS_MS = 30000;
   let viewer = null, Cesium = null, tell = () => {}, governor = null, director = null, client = null, doc = null, mounted = false;
   let on = false, eventsOn = false, lodState = 'far', replayMode = null, pendingFocus = null, pendingFocusTimer = null, viewTarget = '3d';
   const layersOn = { fires: true, perimeters: true, alerts: true, eonet: true, tides: true };
   const data = { events: [], fires: null, perimeters: null, alerts: null, eonet: null, tides: null };
   const states = { events: null, fires: null, perimeters: null, alerts: null, eonet: null, tides: null, shakemap: null };
   const results = { fires: null, perimeters: null, alerts: null, eonet: null, tides: null };
-  const prims = { events: {}, fires: {}, perimeters: {}, alerts: {}, eonet: {}, tides: {}, shakemap: {} };
-  const counts = { events: 0, quakes: 0, quakeDiscs: 0, firesNear: 0, cells: 0, perimeters: 0, perimeterRings: 0, alerts: { drawn: 0, zone_only: 0, rejected: 0 }, eonetPoints: 0, eonetTracks: 0, eonetPolygons: 0, tides: 0, tideLabels: 0, shakemapLines: 0 };
+  const prims = { events: {}, fires: {}, perimeters: {}, alerts: {}, eonet: {}, tides: {}, shakemap: {}, rupture: {} };
+  const counts = { events: 0, quakes: 0, quakeDiscs: 0, glyphs: 0, firesNear: 0, cells: 0, perimeters: 0, perimeterRings: 0, alerts: { drawn: 0, zone_only: 0, rejected: 0 }, eonetPoints: 0, eonetTracks: 0, eonetPolygons: 0, tides: 0, tideLabels: 0, shakemapLines: 0, ruptureLines: 0 };
   const picks = new Map();
   const building = new Set();
   const deferred = [];
-  let selected = null, fade = null, ripple = null, lastRipple = null, shakemap = null, selectedLabel = null, eventsSignature = '', eventsTourSignature = '', legendLines = [], buildListener = null, feedTerms = Object.create(null);
+  let selected = null, fade = null, shakemap = null, rupture = null, selectedLabel = null, eventsSignature = '', eventsTourSignature = '', legendLines = [], buildListener = null, feedTerms = Object.create(null);
+  /* event timeline slice S5: the quake glyphs and labels, the ripple and the push, each its own module (loaded before this one) */
+  let marks = null, rippler = null, cam = null, onFrame = null, onActive = () => {};
+  const rippleNow = () => (rippler ? rippler.state() : null);
+  const glyphsOn = () => !!(marks && marks.usable());
   const pendingMessages = [];
 
   const now = () => Date.now();
@@ -298,7 +318,7 @@
     const P = prims.events;
     P.discs = removePrim(P.discs); P.dots = removePrim(P.dots);
     dropLayerPicks('events');
-    const discs = [], dots = new Cesium.PointPrimitiveCollection();
+    const discs = [], dots = new Cesium.PointPrimitiveCollection(), glyphItems = [], glyphs = glyphsOn();
     counts.events = data.events.length; counts.quakes = 0; counts.quakeDiscs = 0;
     for (const item of data.events) {
       const kind = kindOf(item);
@@ -313,12 +333,16 @@
           e.fills.push({ primitive: () => prims.events.discs, colour: css(colour, 0.35) });
           counts.quakeDiscs += 1;
         }
+        /* the quake's glyph (js/environment-quake-marks.js) is its mark and its tap target: no dot under it */
+        if (glyphs) { glyphItems.push({ id: item.id, pick: e.pick, lon: item.lon, lat: item.lat, mag: q.mag, colour, title: item.title, observed_at: item.observed_at, stale: item.stale === true }); continue; }
       }
       const dot = dots.add({ position: degrees(item.lon, item.lat, DOT_HEIGHT), pixelSize: size, color: css(colour, item.stale ? 0.6 : 1), outlineColor: css('#10251e'), outlineWidth: 1, id: e.pick });
       e.points.push({ point: dot, colour: css(colour, item.stale ? 0.6 : 1), size });
     }
     P.discs = groundFill(discs);
     P.dots = addPrim(dots);
+    counts.glyphs = glyphs ? marks.build(glyphItems) : 0;
+    if (glyphs) marks.select(selected && selected.layer === 'events' && selected.kind === 'quake' ? selected.id : null);
     if (selected && selected.layer === 'events') selected = getEntry('events', selected.id);
     if (replayMode) applyReplay(director && director.scene() ? findEntry(director.scene().id, 'events') : null);
   }
@@ -385,9 +409,9 @@
       if (getEntry('cells', id)) continue;
       const cell = { west: c[0], south: c[1], detections: c[2], frp_sum_mw: c[3], frp_max_mw: c[4], latest_acquired_at: c[5] };
       const e = entry('cells', id, 'fire_cell', { id, cell: c });
-      const r = cellRadiusPx(cell.frp_sum_mw), colour = css(cellColour(cell), 0.85);
-      const point = far.add({ position: degrees(c[0] + 0.5, c[1] + 0.5, DOT_HEIGHT), pixelSize: 2 * r, color: colour, outlineColor: css('#10251e', 0.8), outlineWidth: 1, id: e.pick });
-      e.points.push({ point, colour, size: 2 * r });
+      const px = cellPx(cell.frp_sum_mw), colour = css(cellColour(cell), CELL_ALPHA);
+      const point = far.add({ position: degrees(c[0] + 0.5, c[1] + 0.5, DOT_HEIGHT), pixelSize: px, color: colour, outlineColor: css('#10251e', 0.45), outlineWidth: 1, id: e.pick });
+      e.points.push({ point, colour, size: px });
       counts.cells += 1;
     }
     P.far = addPrim(far);
@@ -550,6 +574,40 @@
       updateLegend(); requestRender('shakemap');
     }).catch(() => {});
   }
+  /* ---------- documented rupture (event timeline slice S5, decision D13): only for a quake of M6 or more (USGS models a finite
+     fault for about a dozen quakes a year, all M6.5 and up), only the up-dip edge of a fault plane USGS modelled, drawn as a
+     bright ground line and called a model; a point source draws nothing and says so ---------- */
+  const RUPTURE_MIN_MAG = 6;
+  function clearRupture() { prims.rupture.lines = removePrim(prims.rupture.lines); counts.ruptureLines = 0; rupture = null; }
+  function drawRupture(quakeEntry, body) {
+    prims.rupture.lines = removePrim(prims.rupture.lines);
+    const lines = [];
+    for (const edge of Array.isArray(body.edges) ? body.edges.slice(0, 8) : []) {
+      const flat = [];
+      for (const p of Array.isArray(edge) ? edge.slice(0, 64) : []) if (Array.isArray(p) && typeof p[0] === 'number' && typeof p[1] === 'number' && Number.isFinite(p[0]) && Number.isFinite(p[1])) flat.push(p[0], p[1]);
+      if (flat.length < 4) continue;
+      const positions = Cesium.Cartesian3.fromDegreesArray(flat), pick = pickId({ layer: 'events', id: quakeEntry.id, kind: 'quake' });
+      /* a dark underlay and a hot core: the edge reads on any ground, by night and by day */
+      lines.push(lineInstance(positions, 7, '#140a06', 0.6, pick), lineInstance(positions, 3, '#fff1d6', 1, pick));
+    }
+    counts.ruptureLines = lines.length / 2;
+    prims.rupture.lines = groundLines(lines);
+    rupture = { quakeId: quakeEntry.id, body, edges: counts.ruptureLines };
+  }
+  function ruptureFor(e) {
+    if (!client || !on || typeof client.rupture !== 'function' || !(typeof e.mag === 'number' && e.mag >= RUPTURE_MIN_MAG)) return;
+    const id = e.id;
+    client.rupture(id).then(result => {
+      if (!selected || selected.id !== id) return;
+      /* nothing to say when the gate refused (the legend says so) or the id is not a USGS event id (nothing was asked) */
+      if (!result || result.status === 'policy' || result.reason === 'invalid_event') return;
+      const body = result.ok && result.body ? result.body : { available: false, reason: 'source_unavailable' };
+      if (body.available === true && Array.isArray(body.edges) && body.edges.length) drawRupture(e, body);
+      else { prims.rupture.lines = removePrim(prims.rupture.lines); counts.ruptureLines = 0; rupture = { quakeId: id, body, edges: 0 }; }
+      tellSelected(e, selected.via);
+      updateLegend(); applyVisibility(); requestRender('rupture');
+    }).catch(() => {});
+  }
 
   /* ---------- selection: a soft fade through instance attributes, never a rebuild, never blinking ---------- */
   function writeColour(fill, colour) {
@@ -584,33 +642,15 @@
     requestRender('fade');
   }
   function stopFade() { if (!fade) return; viewer.scene.preRender.removeEventListener(fade.step); for (const t of fade.targets) t.set(t.to); release(fade.owner); fade = null; }
-  /* the one illustrative animation: alpha only, bounded, labelled */
-  function startRipple(e) {
+  /* the one illustrative animation (event timeline slice S5): js/environment-ripple.js, two rings that travel outward to a regional
+     radius and are gone, or a still outline under reduced motion; `wait` holds the rings until the push has landed */
+  function startRipple(e, wait) {
     clearRipple();
-    if (!motionAllowed() || !groundOk()) return;
-    const lonLat = positionOf(e);
+    const lonLat = rippler ? positionOf(e) : null;
     if (!lonLat) return;
-    const r = Math.max(15000, 1.6 * (e.radius || 0));
-    const colour = css('#ffffff', 0.32);
-    let prim;
-    try {
-      prim = new Cesium.GroundPrimitive({ geometryInstances: new Cesium.GeometryInstance({ geometry: new Cesium.EllipseGeometry({ center: degrees(lonLat.lon, lonLat.lat), semiMajorAxis: r, semiMinorAxis: r, granularity: Math.PI / 32 }) }), appearance: new Cesium.MaterialAppearance({ material: Cesium.Material.fromType('Color', { color: colour }), flat: true, translucent: true }), allowPicking: false, asynchronous: false });
-    } catch (err) { return; }
-    addPrim(prim);
-    const t0 = now();
-    const step = () => {
-      const t = now() - t0;
-      if (t >= RIPPLE_MS) { clearRipple(); updateLegend(); return; }
-      const uniforms = prim.appearance && prim.appearance.material && prim.appearance.material.uniforms;
-      if (uniforms && uniforms.color) uniforms.color.alpha = 0.32 * (1 - (t % 1500) / 1500);
-    };
-    /* the frames write the alpha; the timer ends the ripple on time even when frames are sparse (software GL) */
-    ripple = { prim, step, startedAt: t0, timer: root.setTimeout(() => { if (ripple && ripple.prim === prim) { clearRipple(); updateLegend(); } }, RIPPLE_MS) };
-    hold('env-ripple', RIPPLE_MAX_MS);
-    viewer.scene.preRender.addEventListener(step);
-    requestRender('ripple');
+    rippler.start({ id: e.id, lon: lonLat.lon, lat: lonLat.lat, mag: e.mag, still: !motionAllowed(), wait: wait === true && motionAllowed() });
   }
-  function clearRipple() { if (!ripple) return; viewer.scene.preRender.removeEventListener(ripple.step); root.clearTimeout(ripple.timer); removePrim(ripple.prim); lastRipple = { startedAt: ripple.startedAt, endedAt: now() }; ripple = null; release('env-ripple'); requestRender('ripple-end'); }
+  function clearRipple() { if (rippler) rippler.clear(); }
   function positionOf(e) {
     const f = factsFor(e.kind, e.item);
     return f.lat === null || f.lon === null ? null : { lon: f.lon, lat: f.lat };
@@ -618,17 +658,35 @@
   function updateSelectedLabel() {
     if (selectedLabel) { prims.events.label = removePrim(prims.events.label); selectedLabel = null; }
     if (!selected) return;
+    /* a quake's label is its glyph's (js/environment-quake-marks.js), laid out with the others and kept inside the frame */
+    if (selected.layer === 'events' && selected.kind === 'quake' && glyphsOn() && marks.has(selected.id)) return;
     const pos = positionOf(selected);
     if (!pos) return;
+    /* never under the globe's limb (no depth test) and never off the frame's edge: it reads towards the centre */
+    const at = Cesium.SceneTransforms && (Cesium.SceneTransforms.worldToWindowCoordinates || Cesium.SceneTransforms.wgs84ToWindowCoordinates);
+    const w = at ? at(viewer.scene, degrees(pos.lon, pos.lat, DOT_HEIGHT)) : null, right = !!(w && Number.isFinite(w.x) && w.x > (viewer.scene.canvas.clientWidth || 0) / 2);
     const labels = new Cesium.LabelCollection();
-    labels.add({ position: degrees(pos.lon, pos.lat, DOT_HEIGHT), text: factsFor(selected.kind, selected.item).title.slice(0, 80), font: '600 12px system-ui,sans-serif', fillColor: Cesium.Color.WHITE, outlineColor: Cesium.Color.BLACK, outlineWidth: 3, style: Cesium.LabelStyle.FILL_AND_OUTLINE, pixelOffset: new Cesium.Cartesian2(0, -16), verticalOrigin: Cesium.VerticalOrigin.BOTTOM, id: selected.pick });
+    labels.add({ position: degrees(pos.lon, pos.lat, DOT_HEIGHT), text: factsFor(selected.kind, selected.item).title.slice(0, 80), font: '600 12px system-ui,sans-serif', fillColor: Cesium.Color.WHITE, outlineColor: Cesium.Color.BLACK, outlineWidth: 3, style: Cesium.LabelStyle.FILL_AND_OUTLINE, pixelOffset: new Cesium.Cartesian2(right ? -10 : 10, -14), verticalOrigin: Cesium.VerticalOrigin.BOTTOM, horizontalOrigin: right && Cesium.HorizontalOrigin ? Cesium.HorizontalOrigin.RIGHT : Cesium.HorizontalOrigin ? Cesium.HorizontalOrigin.LEFT : undefined, disableDepthTestDistance: Number.POSITIVE_INFINITY, id: selected.pick });
     selectedLabel = labels; prims.events.label = addPrim(labels);
   }
   function clearSelection() {
     const previous = selected; selected = null;
-    clearShakemap(); clearRipple(); updateSelectedLabel();
+    if (cam) cam.cancel('selection');
+    clearShakemap(); clearRupture(); clearRipple(); updateSelectedLabel();
+    if (glyphsOn()) marks.select(null);
     if (previous) startFade(previous, null);
     requestRender('deselect');
+  }
+  /* the push (js/environment-camera.js, decision D14): an explicit choice moves the camera to the event's regional frame; the
+     ripple begins once the camera has landed, or at once when nothing moves */
+  function pushTo(e, via) {
+    const pos = positionOf(e), Cam = root.MCC_ENVIRONMENT_CAMERA;
+    const go = () => { if (rippler) { const r = rippler.state(); if (r && r.id === e.id) rippler.go(); } };
+    if (!cam || !Cam || !pos) { go(); return 'none'; }
+    const pure = director ? director.pure : (root.MCC_GLOBE_DIRECTOR ? root.MCC_GLOBE_DIRECTOR.pure : null);
+    const measure = e.kind === 'quake' ? { mag: e.mag } : e.kind === 'natural' ? { category: e.item.event ? e.item.event.kind : e.item.category } : {};
+    const frame = Cam.pure.frameFor(e.kind, measure, pure ? pure.heightFor : null);
+    return cam.push({ id: e.id, lon: pos.lon, lat: pos.lat }, frame, via, go);
   }
   /* select by id (a feed id resolves to the events layer unless options.layer names another); pick() selects the exact entry */
   function select(id, via, options) {
@@ -639,11 +697,14 @@
   function selectEntry(e, via, options) {
     const previous = selected && selected !== e ? selected : null;
     if (selected === e) { if (via !== 'panel') tellSelected(e, via, options); return true; }
+    if (cam) cam.cancel('selection');
     selected = e; e.via = via || 'pick';
-    clearShakemap(); clearRipple();
+    clearShakemap(); clearRupture(); clearRipple();
     startFade(previous, e);
+    if (glyphsOn()) marks.select(e.layer === 'events' && e.kind === 'quake' ? e.id : null);
     updateSelectedLabel();
-    if (e.kind === 'quake') { if (motionAllowed()) startRipple(e); shakemapFor(e); }
+    /* a chosen quake (a tap, a post, a row) is pushed to, so its rings wait for the landing; the tour's arrival has landed already */
+    if (e.kind === 'quake') { startRipple(e, via === 'pick' || via === 'focus' || via === 'panel'); shakemapFor(e); ruptureFor(e); }
     if (replayMode && e.layer === 'events') applyReplay(e);
     if (via !== 'panel') tellSelected(e, via, options);
     updateLegend(); requestRender('select');
@@ -702,23 +763,40 @@
     if (sm) { const own = factsFor(e.kind, e.item); facts.observed_at = own.observed_at; facts.observed_label = own.observed_label; facts.observed_date_only = own.observed_date_only; }
     if (sm && Array.isArray(sm.contours) && !sm.contours.length) facts.facts.push({ label: 'ShakeMap contours', value: 'ShakeMap exists but has no contour (deep event)' });
     if (o.shakemapUnavailable) facts.facts.push({ label: 'ShakeMap', value: `no contours shown: ${o.shakemapUnavailable}` });
+    /* the rupture, once asked (M6 and up): the modelled edge drawn, or why nothing is (event timeline slice S5, D13) */
+    if (rupture && rupture.quakeId === e.id) facts.facts.push({ label: 'Rupture', value: ruptureLine(rupture.body) });
     const src = sourceOf(e);
     /* the contract's via is pick, focus or tour: a selection the panel's own list made is user-initiated, so it is told as focus
        (review G1R-9), also when its ShakeMap answers later */
-    tell({ type: 'hu:environment-selected', id: e.id, layer: e.layer, kind: e.kind, title: facts.title, facts: facts.facts, source: src.source, observed_at: facts.observed_at, observed_label: facts.observed_label, observed_date_only: facts.observed_date_only, fetched_at: src.fetched_at, coverage: src.coverage, status: src.status, reason: src.reason, lat: facts.lat, lon: facts.lon, via: via === 'panel' ? 'focus' : (via || 'pick'), illustrative: ripple ? RIPPLE_LABEL : null, modelled: !!sm });
+    tell({ type: 'hu:environment-selected', id: e.id, layer: e.layer, kind: e.kind, title: facts.title, facts: facts.facts, source: src.source, observed_at: facts.observed_at, observed_label: facts.observed_label, observed_date_only: facts.observed_date_only, fetched_at: src.fetched_at, coverage: src.coverage, status: src.status, reason: src.reason, lat: facts.lat, lon: facts.lon, via: via === 'panel' ? 'focus' : (via || 'pick'), illustrative: rippleNow() ? RIPPLE_LABEL : null, modelled: !!sm });
   }
-  function pick(picked) {
-    if (!mounted || !isEnvPick(picked)) return false;
+  /* a tap: `picked` is what Cesium found under the finger, `position` the tap in CSS px of the frame. A quake's glyph is its tap
+     target (event timeline slice S5): a tap within 22 px of a glyph's centre (a 44 px target) selects that quake when nothing
+     else claimed the tap (a mission pin, a satellite, an aircraft keep theirs), even over a fire cell or an alert's fill; a chosen
+     quake is pushed to */
+  function pick(picked, position) {
+    if (!mounted) return false;
+    const env = isEnvPick(picked), quake = env && picked.id.layer === 'events' && picked.id.kind === 'quake';
+    const unclaimed = !picked || env || picked.id === undefined || picked.id === null;
+    if (!quake && unclaimed && glyphsOn() && position && typeof position.x === 'number') {
+      const id = marks.hit(position.x, position.y), near = id ? getEntry('events', id) : null;
+      if (near) { selectEntry(near, 'pick'); pushTo(near, 'pick'); return true; }
+    }
+    if (!env) return false;
     const p = picked.id;
     const e = p.layer === 'shakemap' ? (shakemap ? findEntry(shakemap.quakeId, 'events') : null) : getEntry(p.layer, p.id);
     if (!e) return false;
     const contour = p.layer === 'shakemap' && shakemap ? shakemap.contours.find(c => `shakemap:${shakemap.body.event_id}:${c.mmi}` === p.id) || null : null;
     if (p.layer === 'shakemap' && selected === e) { tellSelected(e, 'pick', { contour }); return true; }
-    return selectEntry(e, 'pick', contour ? { contour } : undefined);
+    const chosen = selectEntry(e, 'pick', contour ? { contour } : undefined);
+    if (chosen && quake) pushTo(e, 'pick');
+    return chosen;
   }
 
-  /* ---------- the quake replay: discs later than the current scene hidden, the current one fading in ---------- */
+  /* ---------- the quake replay: discs, glyphs and labels later than the current scene hidden, the current disc fading in ---------- */
   function applyReplay(current) {
+    /* the glyphs and their labels follow the same cut (slice S5: before it the later quakes' dots stayed on) */
+    if (glyphsOn()) { const cut = replayMode && current && current.item ? Date.parse(current.item.observed_at) : NaN; marks.setCutoff(Number.isFinite(cut) ? cut : null); }
     const discs = prims.events.discs;
     if (!discs) return;
     const run = () => {
@@ -750,7 +828,8 @@
     set(P.alerts.fill, visible('alerts')); set(P.alerts.outline, visible('alerts'));
     set(P.eonet.points, visible('eonet')); set(P.eonet.tracks, visible('eonet')); set(P.eonet.polygons, visible('eonet'));
     set(P.tides.columns, visible('tides')); set(P.tides.labels, visible('tides'));
-    set(P.shakemap.lines, visible('shakemap'));
+    set(P.shakemap.lines, visible('shakemap')); set(P.rupture.lines, visible('shakemap'));
+    if (glyphsOn()) marks.setOn(visible('events'));
   }
   function onCameraChanged() {
     if (!viewer) return;
@@ -783,7 +862,8 @@
       legendLines.push(`${LEGEND[layer]} ${terms(layer)}`.trim());
     }
     if (counts.shakemapLines && visible('shakemap')) legendLines.push(`${LEGEND.shakemap} ${terms('shakemap')}`.trim());
-    if (ripple) legendLines.push(RIPPLE_LABEL);
+    if (counts.ruptureLines && visible('shakemap')) legendLines.push(LEGEND.rupture);
+    if (rippleNow()) legendLines.push(RIPPLE_LABEL);
     if (!motionAllowed()) legendLines.push('(animations off)');
     const items = legendLines.map(line => { const li = doc.createElement('li'); li.textContent = line; return li; });
     list.replaceChildren(...items);
@@ -844,6 +924,7 @@
   function activate() {
     on = true;
     if (governor) governor.enable();
+    onActive(true);
     for (const layer of LAYER_KEYS) { states[layer] = null; results[layer] = null; }
     states.shakemap = null;
     applyVisibility();
@@ -853,10 +934,12 @@
   }
   function deactivate() {
     if (director) director.stop();
-    stopFade(); clearRipple(); clearShakemap();
+    if (cam) cam.cancel('off');
+    stopFade(); clearRipple(); clearShakemap(); clearRupture();
     if (client) client.stop();
     for (const owner of ['env-select', 'env-ripple', 'env-focus', 'env-director', 'env-replay', 'env-build']) release(owner);
     on = false;
+    onActive(false);
     applyVisibility();
     if (governor) governor.disable();
     updateLegend(); requestRender('deactivate');
@@ -885,6 +968,9 @@
     pendingFocus = null;
     if (director) director.interrupt('input');
     select(id, 'focus');
+    /* the push (event timeline slice S5): a regional, cancellable frame; the older top-down flight below stays only for a frame
+       that was loaded without js/environment-camera.js */
+    if (cam) { pushTo(e, 'focus'); return; }
     const pos = positionOf(e);
     if (!pos) return;
     const pure = director ? director.pure : (root.MCC_GLOBE_DIRECTOR ? root.MCC_GLOBE_DIRECTOR.pure : null);
@@ -930,12 +1016,21 @@
     if (mounted || !o.viewer || !o.Cesium) return false;
     viewer = o.viewer; Cesium = o.Cesium; tell = typeof o.tell === 'function' ? o.tell : () => {};
     governor = o.governor || null; director = o.director || null; doc = o.document || root.document || null;
+    /* the frame is told when the layers go on and off (slice S5, D16: its halos stand still while they are on) */
+    onActive = typeof o.onActive === 'function' ? o.onActive : () => {};
     client = o.client || (root.MCC_ENVIRONMENT_LAYERS_CLIENT ? root.MCC_ENVIRONMENT_LAYERS_CLIENT.create({ hidden: () => !!(doc && doc.hidden) }) : null);
     lodState = lod(viewer.camera.positionCartographic.height);
     viewer.camera.changed.addEventListener(onCameraChanged);
     if (viewer.scene.morphStart) viewer.scene.morphStart.addEventListener(onMorphStart);
     if (viewer.scene.morphComplete) viewer.scene.morphComplete.addEventListener(onMorphComplete);
     if (director && typeof director.attachInput === 'function') director.attachInput({ canvas: viewer.scene.canvas, document: doc });
+    /* event timeline slice S5: the quake marks, the ripple and the push, when their modules are loaded (action-globe.html) */
+    const shared = { viewer, Cesium, document: doc, add: addPrim, remove: removePrim, hold, release, requestRender, motionAllowed, reducedMotion: () => !motionAllowed(), now };
+    if (root.MCC_ENVIRONMENT_QUAKE_MARKS) marks = root.MCC_ENVIRONMENT_QUAKE_MARKS.create(shared);
+    if (root.MCC_ENVIRONMENT_RIPPLE) rippler = root.MCC_ENVIRONMENT_RIPPLE.create(Object.assign({ onEnd: () => updateLegend() }, shared));
+    if (root.MCC_ENVIRONMENT_CAMERA) { cam = root.MCC_ENVIRONMENT_CAMERA.create(shared); cam.attachInput({ canvas: viewer.scene.canvas, document: doc }); }
+    /* the marks look at the view only on frames that are drawn anyway: a parked camera asks for nothing */
+    if (marks && viewer.scene.preRender) { onFrame = () => marks.frame(); viewer.scene.preRender.addEventListener(onFrame); }
     mounted = true;
     if (data.events.length) { eventsSignature = ''; setEvents(data.events, { on: eventsOn }); }
     for (const d of pendingMessages.splice(0)) onMessage(d);
@@ -953,14 +1048,20 @@
     return {
       on, lod: lodState, ready: !on || (LAYER_KEYS.every(k => terminal(states[k])) && building.size === 0), built: building.size === 0,
       counts: JSON.parse(JSON.stringify(counts)), states: Object.fromEntries(Object.entries(states).map(([k, s]) => [k, s ? { status: s.status, reason: s.reason, count: s.count, total: s.total, truncated: s.truncated, fetched_at: s.fetched_at, last_success_at: s.last_success_at, attribution: s.attribution, license: s.license, coverage: s.coverage } : null])),
-      selected: selected ? { id: selected.id, layer: selected.layer, kind: selected.kind } : null, ripple: ripple ? { active: true, startedAt: ripple.startedAt } : null, lastRipple: lastRipple ? { ...lastRipple } : null, pendingFocus, legend: legendLines.slice(),
+      selected: selected ? { id: selected.id, layer: selected.layer, kind: selected.kind } : null, ripple: rippleNow(), lastRipple: rippler ? rippler.last() : null, pendingFocus, legend: legendLines.slice(),
       replay: replayMode, layersOn: Object.assign({}, layersOn), eventsOn, policy: !!(client && client.isPolicy()), picks: picks.size, shakemap: shakemap ? { quakeId: shakemap.quakeId, lines: counts.shakemapLines, unavailable: shakemap.unavailable || null } : null,
+      rupture: rupture ? { quakeId: rupture.quakeId, lines: counts.ruptureLines, available: !!(rupture.body && rupture.body.available === true), reason: rupture.body ? rupture.body.reason || null : null } : null,
+      marks: marks ? marks.state() : null, camera: cam ? cam.state() : null,
       feedTerms: Object.keys(feedTerms).sort()
     };
   }
   function destroy() {
     if (!mounted) return;
+    if (onFrame) { viewer.scene.preRender.removeEventListener(onFrame); onFrame = null; }
+    if (cam) { cam.destroy(); cam = null; }
     deactivate();
+    if (marks) { marks.destroy(); marks = null; }
+    rippler = null;
     for (const group of Object.values(prims)) for (const k of Object.keys(group)) group[k] = removePrim(group[k]);
     if (buildListener) { viewer.scene.postRender.removeEventListener(buildListener); buildListener = null; }
     viewer.camera.changed.removeEventListener(onCameraChanged);
@@ -971,7 +1072,7 @@
     mounted = false;
   }
   root.MCC_ENVIRONMENT_LAYERS = Object.freeze({
-    encodings, isEnvPick, pickId, mount, onMessage, setEvents, redraw: () => { if (mounted) { applyVisibility(); updateLegend(); requestRender('redraw'); } }, focus, pick, select, destroy, debug,
+    encodings, isEnvPick, pickId, mount, onMessage, setEvents, redraw: () => { if (mounted) { applyVisibility(); updateLegend(); requestRender('redraw'); } }, focus, pick, select, destroy, debug, isOn: () => mounted && on,
     clearSelection: () => { if (mounted) clearSelection(); }
   });
 })(window);

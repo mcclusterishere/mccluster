@@ -854,3 +854,15 @@ test('RP-2: a row chosen in the open list keeps its place and the focus, through
   assert.equal(E.focused, list()[40].children[0]);
   h.mounted.destroy();
 });
+
+test('S5-TOUR (event timeline slice S5): the tour\'s controls follow the description, before the sources toolbar and the feed status, in the markup as on screen', () => {
+  /* the release review saw the World's floating app bar over Previous, Next and part of Replay at 390 px, where the panel showed
+     them at the foot of its first screen; the tour's group now comes right after the description, so a keyboard meets the
+     controls in the order they are shown and nothing is hidden (vendor/equity-uprise/product-source.lock.json, S5-TOUR) */
+  const source = read('vendor/equity-uprise/src/environment/panel.mjs');
+  const at = (needle) => { const i = source.indexOf(needle); assert.ok(i >= 0, needle); return i; };
+  const description = at('<p class="we-subtle">Government observations'), scene = at('<div class="we-scene"'), toolbar = at('<div class="we-toolbar">'), status = at('<p id="weStatus"'), view = at('<div class="we-view"');
+  assert.ok(description < scene && scene < toolbar && toolbar < status && status < view, JSON.stringify({ description, scene, toolbar, status, view }));
+  assert.equal(source.slice(description).indexOf('</p>') + '</p>'.length, scene - description, 'the tour group directly follows the description');
+  for (const id of ['wePlay', 'wePrev', 'weNext', 'weReplay', 'weSceneStatus']) assert.ok(source.indexOf(`id="${id}"`) > scene && source.indexOf(`id="${id}"`) < toolbar, id);
+});

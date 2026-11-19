@@ -22,7 +22,9 @@
     alerts: Object.freeze({ path: BASE + '/layers/alerts', schema: 'world-environment-alerts/v1', window: 120 }),
     eonet: Object.freeze({ path: BASE + '/layers/eonet', schema: 'world-environment-eonet/v1', window: 600 }),
     tides: Object.freeze({ path: BASE + '/layers/tides', schema: 'world-environment-tides/v1', window: 900 }),
-    shakemap: Object.freeze({ path: null, schema: 'world-environment-shakemap/v1', window: 300 })
+    shakemap: Object.freeze({ path: null, schema: 'world-environment-shakemap/v1', window: 300 }),
+    /* a quake's documented rupture (event timeline slice S5): asked for one selected quake of M6 or more, like its ShakeMap */
+    rupture: Object.freeze({ path: null, schema: 'world-environment-rupture/v1', window: 300 })
   });
   const LAYERS = Object.freeze(['fires', 'perimeters', 'alerts', 'eonet', 'tides']);
   const POLICY_CODES = Object.freeze(['module_policy_unavailable', 'module_disabled']);
@@ -50,7 +52,7 @@
     const hidden = typeof o.hidden === 'function' ? o.hidden : () => false;
     const clock = typeof o.now === 'function' ? o.now : () => Date.now();
     let policy = null, active = false, generation = 0, callbacks = null;
-    const pending = new Set(), timers = new Map(), lastGenerated = new Map(), shakemaps = new Map();
+    const pending = new Set(), timers = new Map(), lastGenerated = new Map(), shakemaps = new Map(), ruptures = new Map();
 
     const policyResult = () => ({ ok: false, status: 'policy', reason: policy.reason, http: policy.http, gate: policy.gate });
     async function request(path, schema) {
@@ -133,7 +135,7 @@
       callbacks = { onState: typeof h.onState === 'function' ? h.onState : () => {}, onData: typeof h.onData === 'function' ? h.onData : () => {} };
       stopTimers();
       active = true; generation += 1;
-      shakemaps.clear(); lastGenerated.clear();
+      shakemaps.clear(); ruptures.clear(); lastGenerated.clear();
       const layers = Array.isArray(h.layers) ? h.layers.filter(l => LAYERS.includes(l)) : LAYERS.slice();
       if (policy && clock() - policy.at < (HOLD_MS[policy.gate] || HOLD_MS.outage)) {
         /* within the hold: the remembered refusal, said again, and nothing asked */
@@ -154,22 +156,26 @@
       active = false; generation += 1; callbacks = null;
       for (const controller of [...pending]) controller.abort();
       stopTimers();
-      shakemaps.clear(); lastGenerated.clear();
+      shakemaps.clear(); ruptures.clear(); lastGenerated.clear();
     }
-    function shakemap(eventId) {
+    /* one on-demand read per event and activation (a ShakeMap, a rupture), cached while the tab is open; a failure is not kept */
+    function lookup(cache, eventId, suffix, schema) {
       const id = String(eventId === null || eventId === undefined ? '' : eventId).replace(/^usgs:/, '');
       if (!EVENT_ID.test(id)) return Promise.resolve({ ok: false, status: 'unavailable', reason: 'invalid_event', http: null, event_id: id });
       if (policy) return Promise.resolve(policyResult());
-      if (shakemaps.has(id)) return shakemaps.get(id);
-      const promise = request(BASE + '/quakes/' + id + '/shakemap', ROUTES.shakemap.schema).then(result => {
+      if (cache.has(id)) return cache.get(id);
+      const promise = request(BASE + '/quakes/' + id + '/' + suffix, schema).then(result => {
         if (result.status === 'policy') enterPolicy(result);
-        if (!result.ok && shakemaps.get(id) === promise) shakemaps.delete(id);
-        return result;
+        if (!result.ok && cache.get(id) === promise) cache.delete(id);
+        /* a refusal answers with the gate it stands for, the first time as every time after (event timeline slice S5) */
+        return result.status === 'policy' && policy ? policyResult() : result;
       });
-      shakemaps.set(id, promise);
+      cache.set(id, promise);
       return promise;
     }
-    return Object.freeze({ fetchLayer, start, stop, shakemap, refresh, isPolicy: () => policy !== null, policy: () => (policy ? { ...policy } : null), active: () => active });
+    const shakemap = eventId => lookup(shakemaps, eventId, 'shakemap', ROUTES.shakemap.schema);
+    const rupture = eventId => lookup(ruptures, eventId, 'rupture', ROUTES.rupture.schema);
+    return Object.freeze({ fetchLayer, start, stop, shakemap, rupture, refresh, isPolicy: () => policy !== null, policy: () => (policy ? { ...policy } : null), active: () => active });
   }
   root.MCC_ENVIRONMENT_LAYERS_CLIENT = Object.freeze({ ROUTES, LAYERS, POLICY_CODES, HOLD_MS, create, statusFromSources, gateOf });
 })(window);
