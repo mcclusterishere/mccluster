@@ -197,6 +197,28 @@
   };
   if (ownsPlayer) return;   // those pages have a better player than this one
 
+  /* BEFORE ANY SOUND, THE DEVICE IS TOLD THIS IS MUSIC. js/now-playing.js
+     holds the one rule (the playback audio session iOS keeps going with the
+     screen locked) for every player. The music pages carry it already; the
+     pocket rides about fifty others, so it fetches the helper itself and only
+     mounts once it has run (or failed, or two and a half seconds passed: a
+     hung request never strands the record). */
+  function audioSession() { if (window.MCC_NOW_PLAYING) window.MCC_NOW_PLAYING.claim(); }
+  function withNowPlaying(go) {
+    if (window.MCC_NOW_PLAYING) { go(); return; }
+    var done = false, once = function () { if (!done) { done = true; go(); } };
+    var tag = document.querySelector("script[data-mcc-now-playing]");
+    if (!tag) {
+      tag = document.createElement("script");
+      tag.src = abs("js/now-playing.js?v=__STAMP__");
+      tag.setAttribute("data-mcc-now-playing", "");
+      document.head.appendChild(tag);
+    }
+    tag.addEventListener("load", once);
+    tag.addEventListener("error", once);
+    setTimeout(once, 2500);
+  }
+
   var st = read();
 
   /* A device that has never played anything has nothing local to go on. If
@@ -212,11 +234,11 @@
          started on their phone should not ambush their laptop. Hold it. */
       far.playing = false;
       write(far);
-      begin(far);
+      withNowPlaying(function () { begin(far); });
     });
     return;
   }
-  begin(st);
+  withNowPlaying(function () { begin(st); });
 
   function begin(state) {
   st = state;
@@ -429,6 +451,7 @@
       return;
     }
 
+    audioSession();
     var pr = audio.play();
     if (pr && pr.then) {
       pr.then(function () {
@@ -554,6 +577,7 @@
 
       audio.src = abs(st.src);
       audio.currentTime = 0;
+      audioSession();
       var pr = audio.play();
       if (pr && pr.then) {
         pr.then(function () {
@@ -588,6 +612,7 @@
   function toggle() {
     if (!audio) return;
     if (audio.paused) {
+      audioSession();
       var pr = audio.play();
       if (pr && pr.then) {
         pr.then(function () {
