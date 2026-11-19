@@ -399,17 +399,17 @@
     chips.sort(function (a, b) { return b.count - a.count || a.label.localeCompare(b.label, 'en'); });
     return [{ domain: '', label: TEXT.allFields, count: list.length }].concat(chips);
   }
-  /* the list's polite line: how many, where, and what was searched */
+  /* the list's polite line: how many, where, and what was searched (areas: null when the areas could not load) */
   function statusLine(o) {
     var n = Number(o && o.count) || 0, field = o && o.field ? o.field + ' ' : '', q = o && o.query ? String(o.query).trim() : '';
-    var many = n + ' ' + field + missionsWord(n), verb = n === 1 ? 'matches' : 'match';
+    var many = n + ' ' + field + missionsWord(n), verb = n === 1 ? 'matches' : 'match', grouped = !(o && o.areas === null);
     if (q) {
       if (!n) return 'No mission here matches “' + q + '”.';
       if (o.areaName) return many + ' in ' + o.areaName + ' ' + verb + ' “' + q + '”.';
-      return many + ' ' + verb + ' “' + q + '”, in ' + countAreas(Number(o.areas) || 0) + '.';
+      return many + ' ' + verb + ' “' + q + '”' + (grouped ? ', in ' + countAreas(Number(o.areas) || 0) : '') + '.';
     }
     if (o && o.areaName) return many + ' in ' + o.areaName + ', easiest first.';
-    return many + ' in ' + countAreas(Number(o && o.areas) || 0) + ', easiest first.';
+    return many + (grouped ? ' in ' + countAreas(Number(o && o.areas) || 0) : '') + ', easiest first.';
   }
   /* the search field's placeholder */
   function placeholder(total, areaName) {
@@ -516,7 +516,607 @@
     return 'unavailable';
   }
 
+  /* =====================================================================================================================
+     THE PAGE (the World only; nothing below runs in node). A sheet over the World inside <main class="mn">
+     (#mnSourceDialog, after the mission dialog), and a door at the foot of each sourced mission's dialog (#mnMissionSource,
+     after Join and its status line, outside the mission's detail and credit, so its late arrival moves nothing above it).
+
+     History follows the mission dialog's model (js/mnet.js, RS-6): the door replaces the mission's entry with the page's
+     (Back then leaves the way the mission came); a landing on ?source= replaces the landing entry; a mission opened from a
+     row pushes its own entry over the page's, so Back closes the mission and then the page; the × and Escape step back over
+     an entry the page took from a mission, or put the address back without the page's keys. Focus: the name on open; the
+     dialog's own restoration on close (the opener, or the row a mission came from).
+     ===================================================================================================================== */
+  var doc = root.document || null;
+  var page = { sourcesP: null, landed: false, doorFor: '', cache: {}, sheet: null, expectPop: false, moduleClose: false, wired: false, copiedTimer: 0, statusTimer: 0, observer: null };
+  function $(id) { return doc ? doc.getElementById(id) : null; }
+  function mnet() { return root.MCC_MNET || null; }
+  function session() { try { return root.sessionStorage; } catch (e) { return null; } }
+  function wide() { try { return !!(root.matchMedia && root.matchMedia('(min-width: 1100px)').matches); } catch (e) { return false; } }
+  /* an element from text only: never markup from data */
+  function h(tag, attrs, kids) {
+    var n = doc.createElement(tag);
+    Object.keys(attrs || {}).forEach(function (k) {
+      var v = attrs[k];
+      if (v === null || v === undefined || v === false) return;
+      if (k === 'text') n.textContent = v;
+      else if (k === 'class') n.className = v;
+      else n.setAttribute(k, v === true ? '' : String(v));
+    });
+    (kids || []).forEach(function (c) {
+      if (c === null || c === undefined || c === false) return;
+      n.appendChild(typeof c === 'string' ? doc.createTextNode(c) : c);
+    });
+    return n;
+  }
+  /* the World's own line icon (js/mnet.js: ICON, PATH_ART), the only drawn shape on the page */
+  function worldIcon(name) {
+    var span = h('span', { class: 'mn__source-icon', 'data-world-icon': name, 'aria-hidden': 'true' });
+    var m = mnet(), art = m && typeof m.icon === 'function' ? m.icon(name) : '';
+    if (art) span.innerHTML = art;
+    return span;
+  }
+  /* a link that leaves for another site: secondary, in a new tab, said so to assistive technology */
+  function outLink(text, href, arrow) {
+    return h('a', { href: href, target: '_blank', rel: 'noopener noreferrer' }, [
+      text,
+      arrow === false ? null : h('span', { class: 'mn__source-out', 'aria-hidden': 'true', text: ' ↗' }),
+      h('span', { class: 'sr-only', text: TEXT.newTab })
+    ]);
+  }
+  /* a text with the searched words marked, from text nodes */
+  function marked(text, query) {
+    var frag = doc.createDocumentFragment();
+    highlight(text, query).forEach(function (p) { frag.appendChild(p.mark ? h('mark', { text: p.text }) : doc.createTextNode(p.text)); });
+    return frag;
+  }
+  function sources() {
+    if (!page.sourcesP) {
+      var m = mnet();
+      page.sourcesP = m && typeof m.sbRest === 'function'
+        ? loadSources({ sbRest: m.sbRest, storage: session() })
+        : Promise.resolve({ status: 'failed', sources: [] });
+    }
+    return page.sourcesP;
+  }
+  function notice(text) { var m = mnet(); if (m && typeof m.notice === 'function') m.notice(text); }
+
+  /* ---------- the door in a mission's dialog ---------- */
+  function mission(m, d) {
+    var door = $('mnMissionSource');
+    if (!door) return;
+    door.hidden = true;
+    door.textContent = '';
+    var id = m && m.id ? String(m.id) : '', catalog = d && typeof d.catalog === 'string' ? d.catalog : '';
+    page.doorFor = id;
+    if (!id || !CATALOG.test(catalog)) return;
+    var w = mnet();
+    if (!w || (typeof w.missionReturning === 'function' && w.missionReturning())) return;
+    sources().then(function (r) {
+      var dlg = $('mnMissionDialog'), s = null;
+      if (r.status !== 'ok' || page.doorFor !== id || !dlg || !dlg.open) return;
+      r.sources.forEach(function (x) { if (!s && x.catalog === catalog) s = x; });
+      if (!s) return;
+      var b = h('button', { type: 'button', class: 'mn__source-door-button' }, [
+        h('span', { class: 'mn__source-door-kicker', text: TEXT.kicker }), ' ',
+        h('span', { class: 'mn__source-door-name', text: s.name }), ' ',
+        h('span', { class: 'mn__source-door-line', text: TEXT.doorLine }), ' ',
+        h('span', { class: 'mn__source-door-go', 'aria-hidden': 'true', text: '›' })
+      ]);
+      b.addEventListener('click', function () { fromDoor(s); });
+      door.textContent = '';
+      door.appendChild(b);
+      door.hidden = false;
+    });
+  }
+  function fromDoor(s) {
+    var sheet = $('mnSourceDialog'), w = mnet();
+    if (!sheet || !w) return;
+    /* a mission opened from the page's own list: back to the page under it, never a second page */
+    if (sheet.open) { w.closeMission(false); return; }
+    var hist = root.history, st = hist && hist.state, pushed = !!(st && st.mccMission), next = Object.assign({}, st || {});
+    delete next.mccMission;
+    next.mccSource = s.slug;
+    try { hist.replaceState(next, '', sourceHref(root.location.hostname, s.slug, '', false)); } catch (e) { /* the page still opens */ }
+    w.closeMission(true);
+    openSheet(s, { entry: pushed ? 'pushed' : 'landed', state: 'shown' });
+  }
+
+  /* ---------- the address ---------- */
+  function landing() {
+    if (page.landed) return;
+    page.landed = true;
+    var a = parseAddress(root.location ? root.location.search : '');
+    if (!a) return;
+    if (!a.valid) { notice(TEXT.unavailable); return; }
+    if (a.preview) { previewLanding(a); return; }
+    sources().then(function (r) {
+      var s = null;
+      if (r.status === 'failed') { notice(TEXT.couldNotLoad); return; }
+      r.sources.forEach(function (x) { if (!s && x.slug === a.slug) s = x; });
+      if (!s) { notice(TEXT.unavailable); return; }
+      landOn(s, a, 'shown');
+    });
+  }
+  function previewLanding(a) {
+    var w = mnet();
+    if (!w || typeof w.api !== 'function' || (doc && doc.documentElement.classList.contains('mn-guest'))) { notice(TEXT.previewSignIn); return; }
+    readOwnerState(w.api).then(function (answer) {
+      var p = previewFrom(answer, a.slug);
+      if (p.error === 'unavailable') notice(TEXT.couldNotLoad);
+      else if (p.error) notice(TEXT.unavailable);
+      else landOn(p.source, a, p.state, true);
+    }, function (e) {
+      var k = previewError(e);
+      notice(k === 'signin' ? TEXT.previewSignIn : k === 'none' ? TEXT.unavailable : TEXT.couldNotLoad);
+    });
+  }
+  /* as a shared ?mission= link lands: the entry is replaced, so Back leaves the way the link came */
+  function landOn(s, a, state, preview) {
+    var hist = root.history, st = hist && hist.state;
+    try { hist.replaceState(Object.assign({}, st || {}, { mccSource: s.slug }), '', root.location.pathname + root.location.search + root.location.hash); } catch (e) { /* the page still opens */ }
+    openSheet(s, { entry: 'landed', area: a.area, state: state, preview: !!preview });
+  }
+  /* the page's own entry carries the area on show */
+  function address() {
+    var sh = page.sheet, hist = root.history, st = hist && hist.state;
+    if (!sh || !st || st.mccSource !== sh.source.slug) return;
+    var area = sh.view === 'list' || wide() ? sh.area : '';
+    try { hist.replaceState(st, '', sourceHref(root.location.hostname, sh.source.slug, area, sh.previewMode)); } catch (e) { /* the address stays */ }
+  }
+
+  /* ---------- the sheet ---------- */
+  function openSheet(s, o) {
+    var sheet = $('mnSourceDialog'), body = $('mnSourceBody'), kit = kitFor(s.catalog);
+    if (!sheet || !body || !kit) return;
+    wire(sheet, body);
+    var cached = page.cache[s.catalog] || {};
+    page.sheet = {
+      source: s, kit: kit, entry: o.entry, previewMode: !!o.preview, state: o.state || 'shown',
+      view: o.area ? 'list' : 'index', area: o.area || '', fromArea: '', query: '', field: '', searchFromIndex: false,
+      missions: cached.missions || null, missionsState: cached.missions ? 'ok' : 'loading',
+      map: cached.map || null, mapState: cached.map ? 'ok' : 'loading'
+    };
+    build(page.sheet, body);
+    render();
+    if (!sheet.open) sheet.showModal();
+    var name = $('mnSourceName');
+    if (name) name.focus();
+    watchName(sheet);
+    if (page.sheet.missionsState === 'loading') readMissionsOnce(page.sheet);
+    if (page.sheet.mapState === 'loading') readMapOnce(page.sheet);
+  }
+  function readMissionsOnce(sh) {
+    var w = mnet();
+    sh.missionsState = 'loading';
+    render();
+    Promise.resolve().then(function () { return readMissions(w.sbRest, sh.source.catalog); }).then(function (rows) {
+      var list = cleanMissions(rows, sh.source.catalog);
+      (page.cache[sh.source.catalog] = page.cache[sh.source.catalog] || {}).missions = list;
+      if (page.sheet !== sh) return;
+      sh.missions = list;
+      sh.missionsState = 'ok';
+      render();
+    }, function () {
+      if (page.sheet !== sh) return;
+      sh.missionsState = 'failed';
+      render();
+    });
+  }
+  function readMapOnce(sh) {
+    Promise.resolve().then(function () { return readAreas(function (u, init) { return root.fetch(u, init); }, sh.source.catalog); }).then(function (res) {
+      if (!res || !res.ok) throw new Error('areas');
+      return res.json();
+    }).then(function (json) {
+      var map = readAreaMap(json, sh.source.catalog);
+      if (!map) throw new Error('areas');
+      (page.cache[sh.source.catalog] = page.cache[sh.source.catalog] || {}).map = map;
+      if (page.sheet !== sh) return;
+      sh.map = map;
+      sh.mapState = 'ok';
+      render();
+    }).catch(function () {
+      if (page.sheet !== sh) return;
+      sh.mapState = 'failed';
+      render();
+    });
+  }
+  /* the parts that do not change while the page is open, in reading order: the head; the name, its role line, the trust
+     note with About and Ask for a change (their notes open in place under it), the facts line; the search; the areas; the
+     credit; then the list */
+  function build(sh, body) {
+    var s = sh.source, kit = sh.kit, hidden = sh.state !== 'shown';
+    body.textContent = '';
+    var head = h('div', { class: 'mn__source-head' }, [
+      h('div', { class: 'mn__source-head-left' }, [
+        h('p', { class: 'mn__source-kicker', text: TEXT.kicker }),
+        h('p', { class: 'mn__source-headname', 'aria-hidden': 'true', text: TEXT.kicker + ' · ' + s.name }),
+        h('button', { type: 'button', class: 'mn__source-back', 'data-act': 'back' }, [h('span', { 'aria-hidden': 'true', class: 'mn__source-back-chev', text: '‹' }), h('span', { text: TEXT.back })])
+      ]),
+      h('p', { class: 'mn__source-copied', role: 'status' }),
+      h('div', { class: 'mn__source-tools' }, [
+        hidden ? null : h('button', { type: 'button', class: 'mn__source-tool', 'aria-label': TEXT.share, 'data-act': 'share' }, [worldIcon('share')]),
+        h('button', { type: 'button', class: 'mn__source-tool', 'aria-label': TEXT.close, 'data-act': 'close' }, ['×'])
+      ])
+    ]);
+    var facts = factsLine(s);
+    var who = h('section', { class: 'mn__source-who' }, [
+      h('h2', { id: 'mnSourceName', class: 'mn__source-name', tabindex: '-1', text: s.name }),
+      h('p', { class: 'mn__source-role', text: s.role }),
+      h('div', { class: 'mn__source-trustbox' }, [
+        h('p', { id: 'mnSourceTrust', class: 'mn__source-trust', role: 'note' }, [h('strong', { text: kit.trustLead }), ' ' + kit.trustRest]),
+        h('div', { class: 'mn__source-trust-actions' }, [
+          h('button', { type: 'button', class: 'mn__source-link', 'aria-expanded': 'false', 'aria-controls': 'mnSourceAbout', 'data-act': 'toggle', text: TEXT.about }),
+          h('button', { type: 'button', class: 'mn__source-link', 'aria-expanded': 'false', 'aria-controls': 'mnSourceChange', 'data-act': 'toggle', text: TEXT.change })
+        ]),
+        h('div', { id: 'mnSourceChange', class: 'mn__source-change', hidden: true }, [
+          h('p', { text: kit.changeNote[0] }),
+          h('p', { text: kit.changeNote[1] }),
+          h('p', null, [outLink(kit.changeLink, kit.changeHref)])
+        ]),
+        aboutList(kit, s)
+      ]),
+      facts ? h('p', { class: 'mn__source-facts', text: facts }) : null
+    ]);
+    var search = h('div', { class: 'mn__source-search', role: 'search' }, [
+      h('input', { type: 'search', class: 'mn__source-input', id: 'mnSourceSearch', 'aria-label': TEXT.searchLabel, placeholder: TEXT.searchWaiting, autocomplete: 'off', spellcheck: 'false', enterkeyhint: 'search' })
+    ]);
+    var index = h('section', { class: 'mn__source-index', 'aria-labelledby': 'mnSourceAreasHead' }, [
+      h('div', { class: 'mn__source-section-head' }, [h('h3', { id: 'mnSourceAreasHead', class: 'mn__source-label', text: TEXT.areas }), h('p', { class: 'mn__source-note', text: TEXT.groupedNote })]),
+      h('ul', { class: 'mn__source-areas', id: 'mnSourceAreas' }),
+      h('div', { class: 'mn__source-state', id: 'mnSourceIndexState' })
+    ]);
+    var credit = h('section', { class: 'mn__source-credit', id: 'mnSourceCredit', 'aria-labelledby': 'mnSourceCreditHead' });
+    var list = h('section', { class: 'mn__source-list', 'aria-labelledby': 'mnSourceListHead' }, [
+      h('h3', { id: 'mnSourceListHead', class: 'mn__source-list-title', tabindex: '-1' }),
+      h('p', { class: 'mn__source-list-note', id: 'mnSourceListNote' }),
+      h('div', { class: 'mn__source-chips', id: 'mnSourceChips', role: 'group', 'aria-label': TEXT.field }),
+      h('p', { class: 'mn__source-status', id: 'mnSourceStatus', role: 'status' }),
+      h('div', { class: 'mn__source-results', id: 'mnSourceResults' }),
+      h('div', { class: 'mn__source-list-foot', id: 'mnSourceListFoot' })
+    ]);
+    var banner = sh.state === 'draft' ? TEXT.previewDraft : sh.state === 'hidden' ? TEXT.previewHidden : '';
+    body.appendChild(head);
+    body.appendChild(h('div', { class: 'mn__source-scroll' }, [
+      h('div', { class: 'mn__source-left' }, [banner ? h('p', { class: 'mn__source-preview', role: 'status', text: banner }) : null, who, search, index, credit]),
+      h('div', { class: 'mn__source-right' }, [list])
+    ]));
+  }
+  /* About this page: what it is, who made it, who runs it, the missions, ratings, the facts with their sources and the day
+     they were read, the areas, and since when it is on the platform */
+  function aboutList(kit, s) {
+    var dl = h('dl', { id: 'mnSourceAbout', class: 'mn__source-about', hidden: true });
+    kit.aboutRows.forEach(function (row) {
+      var dd = null;
+      if (row.id === 'A5') {
+        if (!s.facts.length) return;
+        dd = h('dd', null, s.facts.map(function (f) {
+          return h('p', { class: 'mn__source-fact' }, [h('span', { class: 'mn__source-fact-text', text: f.label + ': ' + f.value }), h('span', { class: 'mn__source-fact-source' }, [kit.sourceWord, outLink(f.where, f.href)])]);
+        }).concat(s.factsReadOn ? [h('p', { class: 'mn__source-dated', text: kit.factsRead + calendarDate(s.factsReadOn) + '.' })] : []));
+      } else if (row.id === 'A7') {
+        if (!s.shownOn) return;
+        dd = h('dd', { text: calendarDate(s.shownOn) });
+      } else dd = h('dd', { text: row.text });
+      dl.appendChild(h('div', { class: 'mn__source-about-row' }, [h('dt', { text: row.term }), dd]));
+    });
+    return dl;
+  }
+
+  /* ---------- what the sheet shows now ---------- */
+  function groupsOf(sh) { return sh.missionsState === 'ok' && sh.mapState === 'ok' ? groupMissions(sh.missions, sh.map) : []; }
+  function groupFor(sh, key) {
+    var g = null;
+    groupsOf(sh).forEach(function (x) { if (!g && x.key === key) g = x; });
+    return g;
+  }
+  function loading(sh) { return sh.missionsState === 'loading' || (sh.missionsState === 'ok' && sh.missions.length > 0 && sh.mapState === 'loading'); }
+  function render(o) {
+    var sh = page.sheet, sheet = $('mnSourceDialog');
+    if (!sh || !sheet) return;
+    /* an area the address named that this catalog does not have: the index */
+    if (sh.area && sh.area !== ALL && !loading(sh) && sh.missionsState === 'ok' && sh.mapState === 'ok' && !groupFor(sh, sh.area)) {
+      sh.area = ''; sh.view = 'index'; address();
+    }
+    if (sh.area && sh.mapState === 'failed') { sh.area = ALL; }
+    sheet.setAttribute('data-view', sh.view);
+    keepFocus(function () {
+      renderIndex(sh);
+      renderCredit(sh);
+      renderList(sh, o && o.statusDelay);
+    });
+    var input = $('mnSourceSearch'), area = sh.area && sh.area !== ALL ? groupFor(sh, sh.area) : null;
+    if (input) input.setAttribute('placeholder', area && (sh.view === 'list' || wide()) ? placeholder(0, area.name) : placeholder(sh.missionsState === 'ok' ? sh.missions.length : 0, ''));
+  }
+  /* a re-draw keeps the focus on the control that had it */
+  function keepFocus(draw) {
+    var a = doc.activeElement, key = '', value = '';
+    if (a && a.closest && a.closest('#mnSourceBody')) ['data-area', 'data-field', 'data-mission', 'data-act'].forEach(function (k) { if (!key && a.hasAttribute(k)) { key = k; value = a.getAttribute(k); } });
+    draw();
+    if (key && !a.isConnected) { var b = byData('#mnSourceBody', key, value); if (b) b.focus(); }
+  }
+  /* the first element under a container whose data attribute has this value (no selector is built from data) */
+  function byData(scope, key, value) {
+    var found = null;
+    Array.prototype.forEach.call(doc.querySelectorAll(scope + ' [' + key + ']'), function (n) { if (!found && n.getAttribute(key) === value) found = n; });
+    return found;
+  }
+  function skeleton(n) {
+    var out = [];
+    for (var i = 0; i < n; i += 1) out.push(h('li', { class: 'mn__source-skelrow', 'aria-hidden': 'true' }, [h('div', { class: 'mn__skel' }, [h('div', null, [h('i'), h('i', { class: 'is-short' })])])]));
+    return out;
+  }
+  function failed() {
+    return h('div', { class: 'mn__source-failed' }, [h('p', { text: TEXT.missionsFailed }), h('button', { type: 'button', class: 'mn__source-more', 'data-act': 'retry', text: TEXT.tryAgain })]);
+  }
+  function areaRow(key, name, count, under, current) {
+    return h('li', null, [h('button', { type: 'button', class: 'mn__source-area' + (key === ALL ? ' mn__source-area--all' : ''), 'data-area': key, 'aria-label': areaLabel(name, count), 'aria-current': current ? 'true' : null }, [
+      h('span', { class: 'mn__source-area-name', text: name }), ' ',
+      h('span', { class: 'mn__source-area-count', text: String(count) }), ' ',
+      h('span', { class: 'mn__source-chev', 'aria-hidden': 'true', text: '›' }),
+      under ? ' ' : null, under ? h('span', { class: 'mn__source-area-sample', text: under }) : null
+    ])]);
+  }
+  function renderIndex(sh) {
+    var ul = $('mnSourceAreas'), state = $('mnSourceIndexState');
+    if (!ul || !state) return;
+    var section = ul.parentNode;
+    ul.textContent = '';
+    state.textContent = '';
+    if (loading(sh)) { section.setAttribute('aria-busy', 'true'); skeleton(3).forEach(function (n) { ul.appendChild(n); }); return; }
+    section.removeAttribute('aria-busy');
+    if (sh.missionsState === 'failed') { state.appendChild(failed()); return; }
+    if (!sh.missions.length) { state.appendChild(h('p', { class: 'mn__source-empty', text: TEXT.noneOpen })); return; }
+    var on = wide() || sh.view === 'list', cur = sh.area || ALL;
+    ul.appendChild(areaRow(ALL, TEXT.allMissions, sh.missions.length, TEXT.allUnder, on && cur === ALL));
+    if (sh.mapState === 'failed') { state.appendChild(h('p', { class: 'mn__source-note mn__source-areas-failed', text: TEXT.areasFailed })); return; }
+    groupsOf(sh).forEach(function (g) { ul.appendChild(areaRow(g.key, g.name, g.count, g.sample.join(' · '), on && cur === g.key)); });
+  }
+  function creditLine(id, kit, counts) {
+    var c = kit.credit;
+    if (id === 'C1') return h('h3', { id: 'mnSourceCreditHead', class: 'mn__source-label', text: c.heading });
+    if (id === 'C2') return h('p', { text: c.written });
+    if (id === 'NR') return h('p', { text: c.ratings });
+    if (id === 'C3' || id === 'C4' || id === 'C5') {
+      return h('p', { class: 'mn__source-counted' }, creditPieces(kit, id, counts).map(function (p) { return p.num !== undefined ? h('b', { class: 'mn__source-num', text: String(p.num) }) : p.text; }));
+    }
+    if (id === 'C6') return h('p', { text: c.noImage });
+    if (id === 'TM') return h('p', { class: 'mn__source-tm', text: c.trademark });
+    if (id === 'C7') return h('p', { class: 'mn__source-cite-label', text: c.citedAs });
+    if (id === 'C8') return h('p', { class: 'mn__source-cite' }, [c.citeWho + ' (' + citationDate(CITATION_DAY) + '). ', h('cite', { text: c.citeTitle }), '. ', outLink(c.citeAddress, c.citeHref, false), '.']);
+    if (id === 'C9') {
+      var links = [];
+      c.links.forEach(function (l, i) { if (i) links.push(h('span', { class: 'mn__source-dot', 'aria-hidden': 'true', text: '·' })); links.push(outLink(l.text, l.href)); });
+      return h('p', { class: 'mn__source-links' }, links);
+    }
+    if (id === 'C10') return h('p', { text: c.inMission });
+    return h('p', null, [c.askLead, outLink(c.askLink, c.askHref)]);
+  }
+  function renderCredit(sh) {
+    var box = $('mnSourceCredit');
+    if (!box) return;
+    var counts = sh.missionsState === 'ok' ? creditCounts(sh.missions) : null;
+    box.textContent = '';
+    creditPlan(counts).forEach(function (id) { box.appendChild(creditLine(id, sh.kit, counts)); });
+  }
+  function missionRow(m, q) {
+    var meta = rowMeta(m);
+    return h('li', null, [h('button', { type: 'button', class: 'mn__source-row', 'data-mission': m.id, 'aria-label': m.title + (meta ? ', ' + meta : '') }, [
+      worldIcon('mission'),
+      h('span', { class: 'mn__source-row-text' }, [
+        h('span', { class: 'mn__source-row-title' }, [marked(m.title, q)]),
+        meta ? h('span', { class: 'mn__source-row-meta', text: meta }) : null,
+        m.description ? h('span', { class: 'mn__source-row-desc' }, [marked(m.description, q)]) : null
+      ]),
+      h('span', { class: 'mn__source-chev', 'aria-hidden': 'true', text: '›' })
+    ])]);
+  }
+  function rowsOf(list, q, cols) {
+    var ul = h('ul', { class: 'mn__source-rows' + (cols ? ' mn__source-rows--cols' : '') });
+    list.forEach(function (m) { ul.appendChild(missionRow(m, q)); });
+    return ul;
+  }
+  function setStatus(text, delay) {
+    var el = $('mnSourceStatus');
+    clearTimeout(page.statusTimer);
+    if (!el) return;
+    if (!delay) { el.textContent = text; return; }
+    page.statusTimer = setTimeout(function () { el.textContent = text; }, delay);
+  }
+  function renderList(sh, statusDelay) {
+    var title = $('mnSourceListHead'), note = $('mnSourceListNote'), chips = $('mnSourceChips'), results = $('mnSourceResults'), foot = $('mnSourceListFoot');
+    if (!title) return;
+    var area = sh.area && sh.area !== ALL ? groupFor(sh, sh.area) : null;
+    title.textContent = area ? area.name : TEXT.allMissions;
+    note.textContent = area ? sh.kit.areaNote : TEXT.allNote;
+    chips.textContent = '';
+    results.textContent = '';
+    foot.textContent = '';
+    if (loading(sh)) { results.setAttribute('aria-busy', 'true'); results.appendChild(h('ul', { class: 'mn__source-rows' }, skeleton(3))); setStatus(''); return; }
+    results.removeAttribute('aria-busy');
+    if (sh.missionsState === 'failed') { results.appendChild(failed()); setStatus(''); return; }
+    var all = sh.missions;
+    if (!all.length) { results.appendChild(h('p', { class: 'mn__source-empty', text: TEXT.noneOpen })); setStatus(''); return; }
+    var scope = area ? area.missions : all, q = sh.query.trim(), found = searchMissions(scope, q), list = fieldChips(found);
+    title.appendChild(doc.createTextNode(' '));
+    title.appendChild(h('span', { class: 'mn__source-count', text: String(area ? area.count : all.length) }));
+    if (sh.field && !list.some(function (c) { return c.domain === sh.field; })) sh.field = '';
+    if (found.length) list.forEach(function (c) {
+      chips.appendChild(h('button', { type: 'button', class: 'mn__source-chip', 'data-field': c.domain, 'aria-pressed': c.domain === sh.field ? 'true' : 'false' }, [c.label + ' ', h('b', { text: String(c.count) })]));
+    });
+    var shown = sh.field ? found.filter(function (m) { return m.domain === sh.field; }) : found, areas = 0;
+    if (!shown.length) {
+      results.appendChild(h('div', { class: 'mn__source-nomatch' }, [h('button', { type: 'button', class: 'mn__source-more', 'data-act': 'clear', text: TEXT.clearSearch })]));
+    } else if (area || sh.mapState !== 'ok') {
+      areas = area ? 1 : null;
+      results.appendChild(rowsOf(sortMissions(shown), q, true));
+    } else {
+      groupMissions(shown, sh.map).forEach(function (g) {
+        areas += 1;
+        var more = !q && g.count > PER_GROUP;
+        results.appendChild(h('section', { class: 'mn__source-group', 'aria-label': areaLabel(g.name, g.count) }, [
+          h('h4', { class: 'mn__source-group-head' }, [h('span', { text: g.name }), ' ', h('span', { class: 'mn__source-count', text: String(g.count) })]),
+          rowsOf(more ? g.missions.slice(0, PER_GROUP) : g.missions, q, true),
+          more ? h('button', { type: 'button', class: 'mn__source-more', 'data-area': g.key, text: 'Show all ' + g.count + ' in ' + g.name }) : null
+        ]));
+      });
+    }
+    var field = sh.field ? domainLabel(sh.field) : '';
+    setStatus(statusLine({ count: shown.length, query: q, areaName: area ? area.name : '', areas: areas, field: field }), statusDelay);
+    if (area && !q) {
+      var gs = groupsOf(sh), at = -1;
+      gs.forEach(function (g, i) { if (g.key === area.key) at = i; });
+      var next = at >= 0 ? gs[at + 1] : null;
+      if (next) foot.appendChild(h('button', { type: 'button', class: 'mn__source-next', 'data-area': next.key }, [
+        h('small', { text: TEXT.nextArea }), ' ', h('strong', { text: next.name }), ' ', h('span', { class: 'mn__source-count', text: String(next.count) })
+      ]));
+    }
+  }
+
+  /* ---------- what a visitor does ---------- */
+  function chooseArea(key) {
+    var sh = page.sheet;
+    if (!sh || (key !== ALL && !groupFor(sh, key))) return;
+    if (sh.searchFromIndex) { sh.query = ''; sh.searchFromIndex = false; var input = $('mnSourceSearch'); if (input) input.value = ''; }
+    sh.fromArea = key; sh.area = key; sh.view = 'list'; sh.field = '';
+    address();
+    render();
+    var scroller = doc.querySelector('#mnSourceBody .mn__source-scroll'), right = doc.querySelector('#mnSourceBody .mn__source-right');
+    if (scroller && !wide()) scroller.scrollTop = 0;
+    if (right) right.scrollTop = 0;
+    var title = $('mnSourceListHead');
+    if (title) title.focus();
+  }
+  function backToIndex() {
+    var sh = page.sheet;
+    if (!sh) return;
+    var from = sh.fromArea, input = $('mnSourceSearch');
+    sh.view = 'index'; sh.area = ''; sh.field = ''; sh.query = ''; sh.searchFromIndex = false;
+    if (input) input.value = '';
+    address();
+    render();
+    var row = from ? byData('#mnSourceAreas', 'data-area', from) : null;
+    if (row) row.focus();
+    else { var name = $('mnSourceName'); if (name) name.focus(); }
+  }
+  function onSearch() {
+    var sh = page.sheet, input = $('mnSourceSearch');
+    if (!sh || !input) return;
+    sh.query = input.value;
+    if (sh.query.trim() && sh.view === 'index' && !wide()) { sh.view = 'list'; sh.area = ''; sh.searchFromIndex = true; }
+    else if (!sh.query.trim() && sh.searchFromIndex) { sh.view = 'index'; sh.searchFromIndex = false; }
+    render({ statusDelay: 300 });
+  }
+  function clearSearch() {
+    var sh = page.sheet, input = $('mnSourceSearch');
+    if (!sh || !input) return;
+    input.value = '';
+    sh.query = '';
+    if (sh.searchFromIndex) { sh.view = 'index'; sh.searchFromIndex = false; }
+    render();
+    input.focus();
+  }
+  function share() {
+    var sh = page.sheet;
+    if (!sh) return;
+    var link = shareLink(sh.source.slug), nav = root.navigator;
+    if (!link) return;
+    var other = function () {
+      if (nav && nav.share) nav.share({ title: sh.source.name, url: link }).catch(function () {});
+      else root.prompt(TEXT.copyPrompt, link);
+    };
+    if (!(nav && nav.clipboard && nav.clipboard.writeText)) { other(); return; }
+    nav.clipboard.writeText(link).then(function () {
+      var said = doc.querySelector('#mnSourceBody .mn__source-copied');
+      if (!said) return;
+      said.textContent = TEXT.copied;
+      clearTimeout(page.copiedTimer);
+      page.copiedTimer = setTimeout(function () { if (said.isConnected) said.textContent = ''; }, 2400);
+    }, other);
+  }
+  function onClick(e) {
+    var t = e.target && e.target.closest ? e.target.closest('[data-act],[data-area],[data-mission],[data-field]') : null;
+    var sh = page.sheet;
+    if (!t || !sh) return;
+    if (t.hasAttribute('data-mission')) { var w = mnet(); if (w && typeof w.openMission === 'function') w.openMission(t.getAttribute('data-mission')); return; }
+    if (t.hasAttribute('data-area')) { chooseArea(t.getAttribute('data-area')); return; }
+    if (t.hasAttribute('data-field')) { sh.field = t.getAttribute('data-field') || ''; render(); return; }
+    var act = t.getAttribute('data-act');
+    if (act === 'close') closeSheet();
+    else if (act === 'share') share();
+    else if (act === 'back') backToIndex();
+    else if (act === 'clear') clearSearch();
+    else if (act === 'retry') readMissionsOnce(sh);
+    else if (act === 'toggle') {
+      var panel = $(t.getAttribute('aria-controls')), open = t.getAttribute('aria-expanded') !== 'true';
+      if (!panel) return;
+      t.setAttribute('aria-expanded', open ? 'true' : 'false');
+      panel.hidden = !open;
+    }
+  }
+  /* the head says the name once the name has scrolled away */
+  function watchName(sheet) {
+    if (page.observer) page.observer.disconnect();
+    page.observer = null;
+    var name = $('mnSourceName');
+    sheet.removeAttribute('data-scrolled');
+    if (!name || typeof root.IntersectionObserver !== 'function') return;
+    page.observer = new root.IntersectionObserver(function (entries) {
+      var last = entries[entries.length - 1];
+      if (last.isIntersecting) sheet.removeAttribute('data-scrolled'); else sheet.setAttribute('data-scrolled', '');
+    });
+    page.observer.observe(name);
+  }
+  /* the × and Escape: an entry the page took from a mission is stepped back over; a landed one is put back without the
+     page's keys */
+  function closeSheet() {
+    var sheet = $('mnSourceDialog'), sh = page.sheet, hist = root.history, st = hist && hist.state, ours = !!(st && st.mccSource);
+    if (!sheet) return;
+    if (sheet.open) { page.moduleClose = true; sheet.close(); }
+    if (!ours) return;
+    if (sh && sh.entry === 'pushed') { page.expectPop = true; try { hist.back(); } catch (e) { page.expectPop = false; } return; }
+    try { hist.replaceState(withoutSource(st), '', restHref(root.location.hostname, root.location.search)); } catch (e) { /* the address stays */ }
+  }
+  function afterClose() {
+    if (page.observer) page.observer.disconnect();
+    page.observer = null;
+    clearTimeout(page.statusTimer);
+    clearTimeout(page.copiedTimer);
+    page.sheet = null;
+    var body = $('mnSourceBody'), sheet = $('mnSourceDialog');
+    if (body) body.textContent = '';
+    if (sheet) { sheet.removeAttribute('data-view'); sheet.removeAttribute('data-scrolled'); }
+  }
+  function wire(sheet, body) {
+    if (page.wired) return;
+    page.wired = true;
+    body.addEventListener('click', onClick);
+    body.addEventListener('input', function (e) { if (e.target && e.target.id === 'mnSourceSearch') onSearch(); });
+    sheet.addEventListener('cancel', function (e) {
+      var input = $('mnSourceSearch');
+      if (input && input.value && e.cancelable) { e.preventDefault(); clearSearch(); return; }
+      if (e.cancelable) e.preventDefault();
+      closeSheet();
+    });
+    /* any close that was not the page's own (the sign-in door closes every open dialog; a forced close): the address
+       loses the page's keys without walking history */
+    sheet.addEventListener('close', function () {
+      var mine = page.moduleClose;
+      page.moduleClose = false;
+      afterClose();
+      if (mine) return;
+      var hist = root.history, st = hist && hist.state;
+      if (st && st.mccSource) { try { hist.replaceState(withoutSource(st), '', restHref(root.location.hostname, root.location.search)); } catch (e) { /* the address stays */ } }
+    });
+    /* Back: the page's own step is quiet; a step onto an entry without the page closes it; a forward step does not reopen it */
+    root.addEventListener('popstate', function (e) {
+      var st = e && 'state' in e ? e.state : root.history.state;
+      if (page.expectPop) { page.expectPop = false; return; }
+      if (sheet.open && !(st && st.mccSource)) { page.moduleClose = true; sheet.close(); }
+    });
+  }
+
   return {
+    mission: mission, landing: landing,
     TEXT: TEXT, KITS: KITS, SHARE_ORIGIN: SHARE_ORIGIN, CITATION_DAY: CITATION_DAY, ABSENT_KEY: ABSENT_KEY, PER_GROUP: PER_GROUP,
     kitFor: kitFor, parseAddress: parseAddress, areaKey: areaKey, worldPath: worldPath, sourceHref: sourceHref, restHref: restHref,
     shareLink: shareLink, withoutSource: withoutSource, cleanFacts: cleanFacts, cleanSource: cleanSource, sourceOf: sourceOf, linkIds: linkIds,

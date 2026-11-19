@@ -551,6 +551,7 @@
     setView("feed");
     loadFeed(true);
     openGuestMissionLink();
+    try { if (window.MCC_SOURCE_PROFILE) window.MCC_SOURCE_PROFILE.landing(); } catch (_) {}
   }
   /* A SHARED MISSION FOR A GUEST (owner, 2026-11-17: "people can just go look at the missions, sign in, get that user
      flow"). ?mission=<id> opens that mission's dialog over the World with the Equity Uprise tab chosen under it; its Join
@@ -739,6 +740,7 @@
       loadActionRecord();
       requestAnimationFrame(function () { moveThumb(false); });
       openDeepLinkedMission();
+      try { if (window.MCC_SOURCE_PROFILE) window.MCC_SOURCE_PROFILE.landing(); } catch (_) {}
       openDeepLinkedGroup();
       try {
         var publicHandle = new URLSearchParams(location.search).get("profile");
@@ -4224,7 +4226,14 @@
       missions.liveSession=String(sessionId);missions.liveMission=String(missionId);
       missions.content="";missions.source="";missions.attributedMission="";
       setView("missions");openMission(String(missionId));
-    }
+    },
+    /* Project Drawdown's source page (js/world-source-profile.js): a mission by id, the dialog closed with or without walking
+       history, a line on the feed's status, the World's own icons, and whether a ?return= address leaves on close */
+    openMission: function (id) { id = String(id || ""); if (!/^[0-9a-f-]{36}$/i.test(id)) return Promise.resolve({ opened: false }); prepareWorldMission(id); return openMission(id); },
+    closeMission: function (fromHistory) { closeMission(fromHistory === true); },
+    notice: function (text) { state.feedNotice = String(text || ""); clearFeedStatus(); },
+    icon: function (name) { return Object.prototype.hasOwnProperty.call(ICON, name) ? ICON[name] : Object.prototype.hasOwnProperty.call(PATH_ART, name) ? PATH_ART[name] : ""; },
+    missionReturning: function () { return !!missions.returnHref; }
   };
   /* DELETING THE ACCOUNT. The request is recorded at once and the desk
      completes it within 30 days; until then the member can keep the account. */
@@ -4664,6 +4673,7 @@
       if($("mnMissionProofType"))$("mnMissionProofType").value="video";
       $("mnMissionTitle").textContent=m.title;
       $("mnMissionDetail").innerHTML=missionDetailHtml(m,state.missionFeed.details[m.id]||null);
+      try{if(window.MCC_SOURCE_PROFILE)window.MCC_SOURCE_PROFILE.mission(m,state.missionFeed.details[m.id]||null);}catch(_){}
       if(m.id==="368fd75a-77d2-4de0-9722-17020674a914"){
         $("mnMissionDetail").innerHTML+='<p><a class="mn__primary" href="/mnet.html?view=missions#mnRecord">Policy team application → Action Record</a></p>';
       }

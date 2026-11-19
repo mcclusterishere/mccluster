@@ -28,6 +28,7 @@
   <link rel="stylesheet" href="css/mnet-audio.css?v=__STAMP__">
   <link rel="stylesheet" href="css/daylight.css?v=__STAMP__">
   <link rel="stylesheet" href="css/world-gate.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/world-source-profile.css?v=__STAMP__">
   <!-- day or night follows the real Sun before first paint (owner, 2026-10-19) -->
   <script src="js/daylight.js?v=__STAMP__"></script>
   <!-- NO SCREEN FLASHES (owner, 2026-10-20: "I'll see like other screens flash up instead of just a smooth transition from
@@ -575,7 +576,9 @@
           <p class="mn__status" id="mnAntisocialStatus" role="status"></p>
         </section>
         <p class="mn__status" id="mnMissionDialogStatus" role="status"></p>
+        <div class="mn__source-door" id="mnMissionSource" hidden></div>
       </dialog>
+      <dialog class="mn__thread mn__source" id="mnSourceDialog" aria-labelledby="mnSourceName" aria-describedby="mnSourceTrust"><div class="mn__source-body" id="mnSourceBody"></div></dialog>
 
       <section class="mn__view" id="mnDiscoverView" hidden>
         <div class="mn__section-head">
@@ -794,6 +797,7 @@
   <script src="js/world-gate.js?v=__STAMP__"></script>
   <script src="js/video-poster.js?v=__STAMP__"></script>
   <script src="js/mnet.js?v=__STAMP__"></script>
+  <script src="js/mission-source-words.js?v=__STAMP__"></script><script src="js/world-source-profile.js?v=__STAMP__"></script>
   <script src="js/docket-cohort-showcase.js?v=__STAMP__"></script><script src="js/world-news-globe.js?v=__STAMP__"></script>
   <!-- async: the Travel module (the house owner's alone, hu-travel-off) never holds the World's boot, which runs at
        DOMContentLoaded; it wires itself whenever it arrives -->
