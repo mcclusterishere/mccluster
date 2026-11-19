@@ -79,3 +79,23 @@ test('the record says the E=UP event timeline joined this release and the final 
   assert.match(doc, /final verification[^.]*follows/i);
   assert.match(doc, /Global Privacy Control/);
 });
+
+/* every finding of the three reviews of 2026-11-19 is accounted for in the record: fixed (with its commit and its test),
+   carried into the E=UP timeline rework, refuted, or the owner's to decide */
+test('"Fixed after the release review" accounts for every finding of the three reviews', () => {
+  const a = raw.indexOf('\n## Fixed after the release review');
+  assert.ok(a >= 0, 'the section is in the record');
+  const b = raw.indexOf('\n## ', a + 5);
+  const s = flat(raw.slice(a, b < 0 ? undefined : b));
+  for (const id of ['RS-1', 'RS-2', 'RS-3', 'RS-4', 'RS-5', 'RS-6', 'RS-7', 'RS-8', 'RS-9', 'SEC-1', 'SEC-2', 'SEC-3', 'SEC-4', 'SEC-5', 'RM-7']) {
+    assert.ok(s.includes(id), id + ' is accounted for');
+  }
+  assert.ok(s.includes('RM-1 to RM-6, RM-8 to RM-10'), 'the runbook findings');
+  assert.match(s, /SEC-2[^.]*carried into the E=UP timeline rework/);
+  assert.match(s, /SEC-5[^.]*owner's/);
+  assert.match(s, /refuted/);
+  /* each fixed row names its commit and the test that fails without it */
+  const rows = s.split(' | ').filter((cell) => /^`[0-9a-f]{8}`$|; `[0-9a-f]{8}`$/.test(cell.trim()));
+  assert.ok(rows.length >= 11, 'eleven fixed rows carry a commit: ' + rows.length);
+  assert.doesNotMatch(s, /RS9SHA|CHECKSBLOCK|ROW_[A-Z]/, 'no placeholder is left');
+});

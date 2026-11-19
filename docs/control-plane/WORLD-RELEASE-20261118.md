@@ -29,10 +29,10 @@ line (`js/world-audio-continuity.js`, `data/lyrics/`) are unchanged.
 | --- | --- |
 | The feed's row | One row under the globe: Local, the Equity Uprise tab (the supplied mark alone, white by night and the supplied dark mark by day), Global (chosen on load), Live, News, People. A signed-out visitor and an ordinary member see nothing above it: no centre mode bar. The house owner keeps Travel and News feed. |
 | Missions as posts | Every open mission is a post the size of any other post. Global shows one after every three other items; the Equity Uprise tab lists them 20 at a time with Load more. The swipe deck is gone. Until the publish (step 9) a visitor sees the one mission that is open today; after it, that one and the 125 Project Drawdown missions, each with its credit. |
-| The mission dialog | Opens for a signed-out visitor: the description, the proof hint, the safety line, the quotation with its credit, the full credit line. Join asks a guest to sign in or create an account and keeps `?mission=<id>` in the address; Share copies a `?mission=<id>` link. On `mccluster.org`, `/mnet.html?mission=<id>` answers one 301 to `/?mission=<id>`: existing behaviour of the company host's router (unchanged on this branch), now covered by a Worker test (`workers/mccluster/test/company-site.test.mjs`). |
+| The mission dialog | Opens for a signed-out visitor: the description, the proof hint, the safety line, the quotation with its credit, the full credit line. Join asks a guest to sign in or create an account and keeps `?mission=<id>` in the address; Share copies a `?mission=<id>` link. The dialog is named by its title, and the phone's Back closes it where the visitor was (release review RS-5, RS-6). On `mccluster.org`, `/mnet.html?mission=<id>` answers one 301 to `/?mission=<id>`: existing behaviour of the company host's router (unchanged on this branch), now covered by a Worker test (`workers/mccluster/test/company-site.test.mjs`). |
 | The member's Action Record | A member's own record (verified actions, points, missions in progress) above the open missions, reached from the profile; on `main` only the house owner reached it. No mark is painted behind its words, it reads 4.5:1 or better by day and by night, a mission's field is said in words, and leaving it no longer stops the globe (release review RS-1, RS-2, RS-3, RS-7). |
 | The country card | News in the last 24 hours, missions, posts and members for the country tapped, and the feed turns to Local with that place's missions and news. With no pins in production every country lists every open mission (a mission pinned nowhere can be done anywhere). The members figure shows a dash until `world_member_regions_v1.sql` (pending, not in this release) is applied. |
-| The sign-in door | Sign in and Create account rise over the living World as a door (a sheet on a phone, a card from 700 px, a column beside the Earth from 1100 px) instead of replacing it, with the way back to the World, the supplied mark as its crest, and the World's real pulse: the open mission, the countries in the news, the Docket 516R record. Every auth call sends what it sent before. |
+| The sign-in door | Sign in and Create account rise over the living World as a door (a sheet on a phone, a card from 700 px, a column beside the Earth from 1100 px) instead of replacing it, with the way back to the World, the supplied mark as its crest, and the World's real pulse: the open mission, the countries in the news, the Docket 516R record. Behind it the globe's news shading steps aside (release review RS-9). Every auth call sends what it sent before. |
 | The first visit | The World opens with the globe and the missions at once and the privacy notice as a banner, not a full-screen wall. Nothing is recorded and no analytics request is made until the visitor agrees. Every other page of the house keeps its wall. |
 | The retired tagline | "Get Your Hu Up!" is gone from the World, `action/index.html`, `heal-the-3rd-world.html`, `mccluster-corp.html`, the member desk and the `/company` footer. Nothing replaces it. |
 | The environmental line | The Equity Uprise tab shows one plain line where the Environmental Justice panel will be, because the module is off (below). No observation posts, no layers on the globe. |
@@ -327,6 +327,68 @@ procedure read, not one practised.
 - **The OVH Core promotion**, for the device-node work: the owner's dispatch of `promote-ovh-production.yml` in a chosen
   window, with its own preconditions. A ref rollback there is a forward promotion of a revert.
 
+## Fixed after the release review
+
+Three reviews read the candidate at `a8d2502d` on 2026-11-19: security (SEC-1 to SEC-5), the release's mechanics (RM-1 to
+RM-10) and what a visitor sees (RS-1 to RS-9). Each finding below was reproduced at `a8d2502d` first, fixed in the smallest
+truthful way in a commit of its own (findings on one surface share one), committed by path, and given a test that fails
+against `a8d2502d`'s files and passes after the fix; the one exception, RM-7, says so in its row. Nothing was skipped,
+switched off or quarantined. The E=UP timeline work (its first two stages, S0 and S1) was merged into the branch between
+these fixes and this section; at `5d801add`, the merge of the two, the release is 177 commits over `main` (`fc1986ec`,
+0 behind) and 319 changed files.
+
+| Finding | What was wrong at `a8d2502d` | The fix | The test that fails without it |
+| --- | --- | --- | --- |
+| RS-1 (blocker) | The member's Missions view, now reached by every member, painted the Equity Uprise emblem behind its words: cropped by its box, filtered and turned, which is drawing over a supplied mark | The rule is gone from `css/mnet.css`, with a dead rule of the same kind; `d6934049` | `scripts/test/logo-css-backgrounds.test.mjs` refuses a supplied mark used as a filtered, transformed, blended, cropped, covering or tiled background (2 of its 3 tests fail at `a8d2502d`) |
+| SEC-1 (major) | `?next=` could leave the site after sign-in: `/.//host` collapses to `//host` (`safeNext` in `js/mcc-auth.js`, and the copy in `login.html`) | Both refuse an answer that starts with two slashes or resolves to another origin; `262ce6c0` | `scripts/test/one-signup-flow.test.mjs`, two new tests (both fail at `a8d2502d`); in a browser, 3 escapes at `a8d2502d` and none after |
+| RS-2 (major) | With the World hidden (the Action Record, or a sign-in from a mission's Join and back) the globe's canvas was 0 x 0, the camera's home height infinite, and Cesium stopped with its error pane | The home height is used only while the canvas has a size; the resize watcher skips a 0 x 0 canvas; `6d921fb4`. The door suite then launches with the World suites' GL path (`bd80fdd6`, below) | `scripts/test/world-globe-hidden-canvas.test.mjs` (0 of 2 at `a8d2502d`); `world-missions-guest` e2e, `world-hidden-and-back-390` |
+| RS-3 (major) | The member's Action Record by day kept its night veil under the day's black ink: the title read 1.1:1, Refresh 1.4:1, the points 1.6:1 | By day the veil goes (`css/daylight.css`) and the view is the white page every other room is; the points take a gold made for white, a record's verified and rejected lines the day's green and red; `69180c42` | `world-missions-guest` e2e, `member-action-record-{390,1280}-{night,day}`, every text measured from pixels (14 checks fail at `a8d2502d`) |
+| RS-7 (minor) | The record printed a mission's field as its key ("MUTUAL_AID"), and the small red kickers of the record and the mission dialog ("Credit") read 3.6 to 4.2:1 by night | The field in words, through the feed's own label; the night kickers in `#ff4d6d`; `69180c42` | `scripts/test/world-mission-posts.test.mjs` (the label) and the e2e above. The finding's third part, the posts' grey meta line at 4.18:1, is refuted: at rest every such line reads 5.91 to 5.95:1 at 390 and 1280 by night; the 4.18 was a line at the viewport's foot crossed by the feed's 1 px border |
+| RM-1 to RM-6, RM-8 to RM-10 | The runbook: step 11 turned `contracts` red; rollbacks incomplete and never exercised; probes that pass on today's Worker; a stale list of pull requests; an understated CI line; checks skipped by design; two timings; the publish's known effect; a merge that pinned no commit | Steps 3 and 5 to 11 of this record and "What ships"; `eca77573` | `scripts/test/world-release-record.test.mjs` (none of its first 8 tests passes at `a8d2502d`) |
+| RM-7 (minor) | A Core test ("TERM to wrapper, bootstrap and bounded reload ...") raced its own clean-up under load, ENOTEMPTY (already so on `main`) | The test ends the wrapper's process group and waits for it before its box is removed, and the removal retries; `c4e39ecb` | The race was not reproduced here, so this one is a fix by construction, not a failing test: `core/test/deploy-timeout-bootstrap.test.mjs` passed eight runs in a row, 18 of 18 each |
+| SEC-3 (minor) | A guest's feed asked `action_offer_cards`, which production grants to signed-in members only | `loadActionOfferCards` asks nothing for a guest; `5f674418` | `scripts/test/creator-action-distribution.test.mjs` (fails at `a8d2502d`) |
+| SEC-4 (minor) | The door kept a typed password after it closed, and Show could reveal it on a shared device | Leaving the door empties both password fields and hides them again; `d1aa8bb5` | `scripts/test/world-gate.test.mjs` (20 of 21 at `a8d2502d`) |
+| RS-5, RS-6, RS-8 (minor) | The mission dialog had no name; the phone's Back left the World, or dropped `?mission=` with the dialog still open; a shared link to a mission that is gone switched tabs without a word | The dialog is named by its title; opening a mission from the World pushes one entry, the door's way (Back closes the dialog where the visitor was, the × and Escape step back over it, a shared link's landing replaces); the gone mission's line stays until another tab is chosen; `2855a4e9` | `scripts/test/world-mission-posts.test.mjs` (on a fake history), `scripts/test/world-news-feed.test.mjs` (the page's own `loadFeed`), and the `world-missions-guest` e2e (`guest-dialog-back-390`, `guest-shared-link-back-390`, `guest-gone-mission-390`, `guest-escape-390`); at `a8d2502d` three of them fail and the run stops when Back leaves the World |
+| RS-4 (minor) | From 1100 px the onboarding pages' centred measure lay under the centred floating bar: at rest 87 % of the action's words under it at 1280 x 720, 88 % at 1366 x 768 | From 1100 px the bar steps aside, right of the measure: moved, never hidden; the phone keeps it where it was; `7641000e` | `world-gate` e2e, `onboard-bar`, at 1366 x 768, 1280 x 720, 1100 x 700 and 390 x 844 (6 of 11 checks fail at `a8d2502d`); `scripts/test/world-gate.test.mjs` |
+| RS-9 (minor) | The door's art direction: at 1280 by day a grey column with a hard edge beside the Earth; the news shading behind the card; at 390 the record's line cut to "Bridg…" | The veil whole from 1100 px; the news shading steps aside while the door is open and comes back when it closes; the record's line takes a second line, and the third card waits for a 267 px stage; `09404805` | `world-gate` e2e, `door-art` (5 of 9 checks fail at `a8d2502d`); `scripts/test/world-news-tint.test.mjs`; `scripts/test/world-gate.test.mjs` |
+
+What the owner sees change: the Action Record (no mark behind it, readable by day and by night, the field in words), the
+phone's Back on a mission, the bar beside the onboarding pages on a laptop, and the door's backdrop and third card. The
+owner's ten renders of the door and the first onboarding page were made again at `5d801add`.
+
+Not fixed here:
+
+- **SEC-2** (no per-client rate limit, no negative caching and an unbounded tides crawl on the environmental layer routes,
+  inert while the module is off) is carried into the E=UP timeline rework; it is a prerequisite of enabling the module
+  ("What does not ship").
+- **SEC-3's second half:** two calls name functions production does not have (`action_globe_public_business_pins` in
+  `js/action-globe.js`, `action_mission_card_extras` in `js/mnet.js`). Both are on `main` too, fail quietly, and belong to
+  the build queue's W5 item.
+- **SEC-5** is the owner's to decide: decision 10 below.
+- **Carried into the E=UP timeline rework** from the surface review: the tab asks the five layer routes again on every
+  activation while the module answers 503, and off, outage and no data are not told apart; the quake discs read as plain
+  white circles; at 390 the music bar covers the panel's tour controls and the chosen event's label is clipped behind the
+  header; the panel's search placeholder reads 2.1 to 2.9:1 and its "Sources, coverage and limitations" summary is 23 px
+  high; with the E=UP layers on, the door's backdrop should go quiet too.
+
+Checks run on these fixes on 2026-11-19, on the same 4-CPU machine, shared with other sessions whose browser runs take
+turns with these through one lock; Playwright 1.63.0 with its Chromium 153, Cesium 1.131.0 from a local copy of the pinned
+build. They are the suites that cover what changed; the final verification after the E=UP work runs every pull-request job.
+
+| Check | At | Result |
+| --- | --- | --- |
+| `scripts/e2e/world-gate.e2e.mjs`, the whole suite | `09404805`, the tree before the merge | 577 of 577 (37 minutes; load 1.8 at the start, 3.4 at the end) |
+| its `door-art` and `onboard-bar` scenarios, again after the merge | `5d801add` | 20 of 20 |
+| `scripts/e2e/world-missions-guest.e2e.mjs`, the whole suite | `5d801add` | 279 of 279 (7 minutes; load 5.5 to 4.5) |
+| `scripts/e2e/sign-in.e2e.mjs`, the whole suite | `5d801add` | 174 of 174 (18 minutes; load 3.1 to 4.4) |
+| `scripts/e2e/world-first-visit.e2e.mjs`, the whole suite | `5d801add` | 83 of 83 (3 minutes) |
+| `scripts/e2e/human-uprise-door.e2e.mjs`, the whole suite | `bd80fdd6` | 122 of 122 (3 minutes). At `5d801add` it stopped twice after 78 checks, on a screenshot ("Unable to capture screenshot"): with RS-2's fix the globe keeps drawing after a hidden World, and on Chromium's default GL path that kept the GPU process busy into the next scenario (bisected to `6d921fb4`; 122 of 122 at `262ce6c0`). `bd80fdd6` gives the suite the software GL path every other World suite launches with; no check changed |
+| `scripts/e2e/environment-world.e2e.mjs`, the whole suite | `5d801add` | 222 checks, 0 failed, and the suite's own "all checks passed" (10 minutes; load 2.0 to 4.4) |
+| the unit tests that read `js/mnet.js`, `mnet.html` or `js/world-news-globe.js`, with the fixes' own | `5d801add` | 534 of 534 |
+| `node --test scripts/test/*.test.mjs`, the root suite of `contracts` | `5d801add`, with this record's section in the tree | the 294 other files: 2,770 tests, 2,763 passed, 0 failed, 7 skipped (55 s); this record's own test, `scripts/test/world-release-record.test.mjs`, 9 of 9 on this text |
+| the Equity Uprise source-map validator | `5d801add` | 750 candidates, 2,898 of 2,898 checks |
+| `core/test/deploy-timeout-bootstrap.test.mjs` | `c4e39ecb` | 18 of 18, eight runs in a row |
+
 ## Checks run for this record
 
 Run on 2026-11-18 on one 4-CPU machine, one job at a time, each from its workflow's own commands. A pull request from
@@ -536,3 +598,4 @@ result here.
 | The twelve applied migrations, ledger 376 | yes (records) | no | applied in production before this record | drift check; replay proof; production not read again |
 | The publish of the 125 missions | yes (pending SQL) | no | **not applied** | native proof on PostgreSQL 16.15 |
 | The CI entries and the source map | yes | no | not applicable | the jobs' own commands, here |
+| The release review's fixes (2026-11-19) | yes | no | no | unit tests and browser suites at `5d801add`, each test failing at `a8d2502d` without its fix but RM-7's ("Fixed after the release review") |
