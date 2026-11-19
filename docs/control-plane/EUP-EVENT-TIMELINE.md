@@ -166,8 +166,38 @@ The root suite's two failures: the World's page and script never write the mark 
 (`scripts/test/action-network-redesign.test.mjs`); and the consumer test pinned the inline `loadPolicy` S0 replaced
 (`scripts/test/equity-product-consumer.test.mjs`, changed on purpose).
 
-The browser suites (`scripts/e2e/environment-world.e2e.mjs` at 390, 820 and 1280, `world-environment.mjs`,
-`environment-globe.e2e.mjs`, `world-missions-guest.e2e.mjs`) are recorded under "Browser runs" below once run.
+### Browser runs
+
+One browser at a time (each command under the shared lock, `flock <lock> nice node <suite> <out>`), headless Chromium with
+SwiftShader, `CESIUM_DIR` the pinned Cesium 1.131.0 build, fixtures only (no network, no Supabase). The first three ran at
+`5e5397d3`; `environment-world.e2e.mjs` waited on the lock and ran at `5d1138d9` (the branch head with S1's records and S2's owner
+routes, which contains every S0 commit) with this section's e2e checks added.
+
+| Command | Result |
+| --- | --- |
+| `node scripts/e2e/world-environment.mjs <out>` | exit 0, 11 of 11 PASS: the page as it ships at 390, 820 and 1280, by day at each width, and the 503 and 404 lines at 390 (load 6.93 at the start) |
+| `node scripts/e2e/world-missions-guest.e2e.mjs <out>` (unchanged) | exit 0, 279/279 checks passed |
+| `node scripts/e2e/environment-globe.e2e.mjs <out>` | exit 0, 127 PASS, "all checks passed", including `scripts/perf/environment-globe-perf.mjs --check` |
+| `node scripts/e2e/environment-world.e2e.mjs <out>` | exit 0, 228 PASS, "all checks passed" (load 4.26 at the end) |
+
+What `environment-world.e2e.mjs` showed for S0:
+- **The two lists (D8)** at 390, 820 and 1280: the three missions first, then the observations under "Environmental observations",
+  each list newest first, each with its own more button; the feed's own Load more hidden in the tab.
+- **The perimeter seam (E2)** at each width: a perimeter post's Show on globe selects `wfigs:2026-CAXXX-000001` on the globe,
+  the post's own id.
+- **Off, outage and no data** at 390: 503 shows "Environmental reports are not available right now." and the frame's legend
+  "Environmental layers are not available right now"; 404 shows "Environmental reports are turned off for now." and "Environmental
+  layers are turned off for now"; a feed with nothing in it shows "No qualifying environmental events right now."; each with no
+  panel, no observation post and the three missions untouched, and nothing scrolls sideways at 390.
+- **No re-asking**: after the refusal, four activations of the tab asked the layer routes 5 times in all (each route once); the
+  release review had counted 6, 11, 16 and 21.
+- **The panel's two findings** at 390, 820 and 1280, by night and by day: the search placeholder is the panel's dim ink (checked
+  against `--we-dim` itself, so the field's typed ink cannot pass for it), 9.5:1 on its field by night and 8.76:1 by day; the
+  sources summary is 44 px tall.
+
+These browser checks were not run against the pre-change code: the off, outage and empty lines, the two lists and the seam rest on
+the unit and Worker tests above, which fail at `2855a4e9`; the placeholder and summary figures before (2.1 to 2.9:1, 23 px) are
+the release review's own measurements.
 
 ### Deviations from the plan, with reasons
 
@@ -183,6 +213,9 @@ The browser suites (`scripts/e2e/environment-world.e2e.mjs` at 390, 820 and 1280
   above the observations' own list (before, the observations alone).
 - **Coalescing in workerd.** Shared provider reads are proven in Node; that a waiter survives its leader's request being cancelled
   rests on the waiter's own 30 s timer, not on a workerd run.
+- **Visitor lines at one width.** The plan asked for the three visitor lines at 390, 820 and 1280; the browser proves them at 390
+  only (the line, the panel and the posts do not change with width), and the unit tests prove the page's states and the sheet's
+  rule for each.
 
 ### Waiting for Matthew's separate go
 
