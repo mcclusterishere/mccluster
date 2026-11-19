@@ -134,7 +134,7 @@ At `2855a4e9` (the head this slice started from; `a8d2502d` plus the release fix
 `js/world-environment-mccluster.mjs`, `js/world-environment-posts.js`, `js/mnet.js`, `mnet.html`, `css/world-environment.css`,
 `scripts/test/environment-layers-client.test.mjs`, `scripts/test/environment-layers-runtime.test.mjs`,
 `scripts/test/world-environment-posts.test.mjs`, `scripts/test/world-environment.test.mjs`,
-`scripts/test/support/eup-environment-plane.mjs` (new), `scripts/test/eup-environment-plane.integration.mjs` (new),
+`scripts/test/equity-product-consumer.test.mjs`, `scripts/test/support/eup-environment-plane.mjs` (new), `scripts/test/eup-environment-plane.integration.mjs` (new),
 `scripts/e2e/environment-world.e2e.mjs`, `scripts/e2e/world-environment.mjs`, `scripts/e2e/environment-globe.e2e.mjs`,
 `scripts/e2e/fixtures/environment/feed-empty.json` (new), `.github/workflows/human-uprise-editorial.yml` (the plane as matrix
 entry `environment-plane`, its paths in the filter), `docs/control-plane/WORLD-ENVIRONMENT.md`,
@@ -145,7 +145,8 @@ entry `environment-plane`, its paths in the filter), `docs/control-plane/WORLD-E
 
 E=UP-only assertions changed on purpose, each named in its commit: the Worker gate-collapse tests (EUM01 is now off, 404; 42883 and
 EUM00 join the outage cases), the layer client's "one retry on the next activation" (now: nothing within the hold), the ShakeMap
-policy result (it carries its gate), and in the e2e suites the single sentence, the one list by time and the legend line for 404.
+policy result (it carries its gate), the consumer test's pin of the inline `loadPolicy` (now the request's one read through the one
+reader), and in the e2e suites the single sentence, the one list by time and the legend line for 404.
 General-news and Drawdown-mission tests are unchanged (`world-missions-guest.e2e.mjs`, `world-mission-posts.test.mjs`,
 `world-news-feed.test.mjs`).
 
@@ -155,7 +156,15 @@ General-news and Drawdown-mission tests are unchanged (`world-missions-guest.e2e
 | `... --test test/world-environment.test.mjs test/world-environment-layers.test.mjs test/eup-modules.test.mjs` | 86/86 pass | the two new EUM01-is-off tests fail |
 | `PGLITE_MODULE=<PGlite 0.3.14 dist/index.js> node scripts/test/eup-environment-plane.integration.mjs` | 6/6 pass | 3 fail (not installed, installed-but-disabled bytes, USGS observed time); 3 pass (no data, draining, outage) |
 | `node --test scripts/test/world-environment*.test.mjs scripts/test/environment-*.test.mjs scripts/test/globe-*.test.mjs scripts/test/world-mission-posts.test.mjs scripts/test/world-news-feed.test.mjs` | 227/227 pass | |
-| `python3 docs/design/equity-uprise-building/production/verify_equity_uprise_repo_sources.py` | 2894/2894 checks pass | |
+| `node --test scripts/test/environment-layers-client.test.mjs scripts/test/environment-layers-runtime.test.mjs scripts/test/world-environment-posts.test.mjs scripts/test/world-environment.test.mjs scripts/test/equity-product-consumer.test.mjs` | 51/51 pass | 9 fail, 42 pass (the S0 tests: the hold three times, the three gate states, the ShakeMap gate, the legend, the consumer pin, the perimeter seam, the page states) |
+| `nice -n 15 node --test scripts/test/*.test.mjs` (the root suite, once) | 2769 tests: 2760 pass, 7 skipped, 2 fail; both were S0's own and are fixed in the next commit (below) | |
+| `node --test scripts/test/equity-product-consumer.test.mjs scripts/test/action-network-redesign.test.mjs` after that fix | 13/13 pass | |
+| `cd workers/mccluster && node --import ./test/support/offline-network.mjs --test test/*.test.mjs` (the whole Worker suite, what its `npm test` runs; at `3ffe3565`) | 1965 tests: 1944 pass, 9 skipped, 12 fail, all twelve in `test/mnet-mission-flow.test.mjs`, which fail the same way at `2855a4e9` (they pin a `js/mnet.js` shape the release fixes changed before this slice) | the same 12 fail |
+| `python3 docs/design/equity-uprise-building/production/verify_equity_uprise_repo_sources.py` | 2898/2898 checks pass | |
+
+The root suite's two failures: the World's page and script never write the mark out, not even in a comment, and S0's comments did
+(`scripts/test/action-network-redesign.test.mjs`); and the consumer test pinned the inline `loadPolicy` S0 replaced
+(`scripts/test/equity-product-consumer.test.mjs`, changed on purpose).
 
 The browser suites (`scripts/e2e/environment-world.e2e.mjs` at 390, 820 and 1280, `world-environment.mjs`,
 `environment-globe.e2e.mjs`, `world-missions-guest.e2e.mjs`) are recorded under "Browser runs" below once run.
